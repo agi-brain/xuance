@@ -17,23 +17,18 @@ and hope it can really become a zoo full of DRL algorithms.
 This project is supported by Peng Cheng Laboratory.
 
 ## Installation and Setup ##
+
 Step 1: Create and activate a new conda environment (python=3.7 is suggested):
-```
-$ conda create -n xuanpolicy python=3.7
-$ conda activate xuanpolicy
+
+```commandline
+conda create -n xuanpolicy python=3.7
+conda activate xuanpolicy
 ```
 
-Step 2: Install the python modules with:  
+step 2: Install the library:
 
-```
-$ pip install -r requirement.txt
-$ pip install -e git+https://github.com/cycraig/gym-platform#egg=gym_platform
-```
-
-step 3: Install the library:
-
-```
-$ pip install xuanpolicy
+```commandline
+pip install xuanpolicy
 ```
 Note: Some modules should be installed manually according to the difference devices. 
 
