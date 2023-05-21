@@ -1,0 +1,32 @@
+agent: "SACDIS"
+env_name: "toy"
+env_id: "CartPole-v0"
+policy: "Discrete_SAC"
+representation: "Basic_Identical"
+
+representation_hidden_size: [256,]
+
+actor_hidden_size: [128,128,]
+critic_hidden_size: [128,128,]
+
+nsize: 20000
+batchsize: 256
+actor_learning_rate: 0.001
+critic_learning_rate: 0.01
+gamma: 0.98
+tau: 0.005
+
+start_noise: 0.25
+end_noise: 0.05
+training_frequency: 2
+training_steps: 50000
+start_training: 2000
+action_type: "DISCRETE"
+
+use_obsnorm: False
+use_rewnorm: False
+obsnorm_range: 5
+rewnorm_range: 5
+
+logdir: "./logs/sacdis/"
+modeldir: "./models/sacdis/"

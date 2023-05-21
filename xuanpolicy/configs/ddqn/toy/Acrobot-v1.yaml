@@ -1,0 +1,29 @@
+agent: "DDQN"
+env_name: "toy"
+env_id: "Acrobot-v1"
+policy: "Basic_Q_network"
+representation: "Basic_MLP"
+
+representation_hidden_size: [128,]
+q_hidden_size: [128,]
+
+nsize: 20000
+batchsize: 128
+learning_rate: 0.001
+gamma: 0.99
+
+start_greedy: 0.5
+end_greedy: 0.01
+sync_frequency: 100
+training_frequency: 2
+training_steps: 30000
+start_training: 1000
+
+use_obsnorm: False
+use_rewnorm: False
+obsnorm_range: 5
+rewnorm_range: 5
+
+logdir: "./logs/ddqn/"
+modeldir: "./models/ddqn/"
+

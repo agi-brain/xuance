@@ -1,0 +1,32 @@
+agent: "PPO_Clip"
+env_name: "atari"
+env_id: "PongNoFrameskip-v4"
+representation: "Basic_CNN"
+policy: "Categorical_AC"
+
+# Good HyperParameters for Atari Games, Do not change them.
+kernels: [8, 4, 4, 4]
+strides: [4, 2, 2, 2]
+filters: [32, 32, 64, 64]
+actor_hidden_size: [128, 128]
+critic_hidden_size: [128, 128]
+
+training_steps: 250000
+nsteps: 256
+nepoch: 4
+nminibatch: 8
+learning_rate: 0.0007
+
+vf_coef: 0.25
+ent_coef: 0.01
+clip_range: 0.2
+gamma: 0.99
+lam: 0.95
+
+use_obsnorm: True
+use_rewnorm: True
+obsnorm_range: 5
+rewnorm_range: 5
+
+logdir: "./logs/ppoclip/"
+modeldir: "./models/ppoclip/"

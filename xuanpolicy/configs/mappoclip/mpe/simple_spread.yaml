@@ -1,0 +1,49 @@
+agent: "MAPPO_Clip"  # the learning algorithms
+env_name: "mpe"
+env_id: "simple_spread_v3"
+continuous_action: False
+policy: "Categorical_MAPPO_policy"
+representation: "Basic_Identical"
+vectorize: "Dummy_MAS"
+runner: "MARL"
+
+train_at_step: True
+representation_hidden_size: [32, ]  # the units for each hidden layer
+actor_hidden_size: [128, ]
+critic_hidden_size: [256, ]
+
+training_steps: 20000
+training_frequency: 1
+nsteps: 256
+nepoch: 5
+nminibatch: 2
+learning_rate: 0.001
+
+vf_coef: 0.5
+ent_coef: 0.01
+clip_grad: 0.5
+clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+clip_range: 0.2  # ratio clip range
+gamma: 0.95  # discount factor
+lam: 0.95
+
+n_tests: 5
+test_period: 100
+consider_terminal_states: False
+
+# tricks
+gae_lambda: 0.95
+use_grad_norm: True  # trick 2: gradient normalization
+max_grad_norm: 0.5
+use_value_clip: True  # trick 3: limit the value range
+value_clip_range: 0.1
+
+use_obsnorm: False
+use_rewnorm: False
+use_advnorm: False
+use_gae: True
+obsnorm_range: 5
+rewnorm_range: 5
+
+logdir: "./logs/mappoclip/"
+modeldir: "./models/mappoclip/"

@@ -1,0 +1,30 @@
+agent: "TD3"
+env_name: "toy"
+env_id: "Pendulum-v1"
+representation: "Basic_Identical"
+policy: "TD3_Policy"
+
+actor_hidden_size: [128,128]
+critic_hidden_size: [128,128]
+
+nsize: 20000
+batchsize: 256
+actor_learning_rate: 0.0005
+critic_learning_rate: 0.001
+gamma: 0.98
+tau: 0.005
+actor_delay: 3
+
+start_noise: 0.25
+end_noise: 0.05
+training_frequency: 2
+training_steps: 50000
+start_training: 2000
+
+use_obsnorm: False
+use_rewnorm: False
+obsnorm_range: 5
+rewnorm_range: 5
+
+logdir: "./logs/td3/"
+modeldir: "./models/td3/"

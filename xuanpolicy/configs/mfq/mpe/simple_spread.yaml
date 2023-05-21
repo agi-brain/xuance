@@ -1,0 +1,36 @@
+agent: "MFQ"  # the learning algorithms_marl
+env_name: "mpe"
+env_id: "simple_spread_v3"
+continuous_action: False
+policy: "MF_Q_network"
+representation: "Basic_Identical"
+vectorize: "Dummy_MAS"
+runner: "MARL"
+
+representation_hidden_size: [32, ]  # the units for each hidden layer
+q_hidden_size: [256, ]
+
+buffer_size: 200000
+batch_size: 256
+learning_rate: 0.001
+gamma: 0.95  # discount factor
+temperature: 0.1  # softmax for policy
+
+start_greedy: 0.0
+end_greedy: 0.95
+greedy_update_steps: 5000
+training_steps: 20000
+training_frequency: 1
+sync_frequency: 200
+
+n_tests: 5
+test_period: 100
+consider_terminal_states: False  # if consider the terminal states when calculate target Q-values.
+
+use_obsnorm: False
+use_rewnorm: False
+obsnorm_range: 5
+rewnorm_range: 5
+
+logdir: "./logs/mfq/"
+modeldir: "./models/mfq/"

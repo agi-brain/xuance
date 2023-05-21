@@ -1,0 +1,31 @@
+agent: "TD3"
+env_name: "mujoco"
+env_id: "InvertedPendulum-v2"
+representation: "Basic_Identical"
+policy: "TD3_Policy"
+
+representation_hidden_size: [128,]
+actor_hidden_size: [400,300]
+critic_hidden_size: [400,300]
+
+nsize: 200000
+batchsize: 128
+actor_learning_rate: 0.0005
+critic_learning_rate: 0.001
+gamma: 0.98
+tau: 0.005
+actor_delay: 3
+
+start_noise: 0.1
+end_noise: 0.1
+training_frequency: 1
+training_steps: 500000
+start_training: 10000
+
+use_obsnorm: False
+use_rewnorm: False
+obsnorm_range: 5
+rewnorm_range: 5
+
+logdir: "./logs/td3/"
+modeldir: "./models/td3/"

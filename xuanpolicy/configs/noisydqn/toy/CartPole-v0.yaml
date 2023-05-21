@@ -1,0 +1,28 @@
+agent: "NoisyDQN"
+env_name: "toy"
+env_id: "CartPole-v0"
+policy: "Noisy_Q_network"
+representation: "Basic_MLP"
+
+representation_hidden_size: [128,]
+q_hidden_size: [128,]
+
+nsize: 20000
+batchsize: 128
+learning_rate: 0.001
+gamma: 0.99
+
+start_noise: 0.05
+end_noise: 0.0
+sync_frequency: 100
+training_frequency: 2
+training_steps: 30000
+start_training: 1000
+
+use_obsnorm: False
+use_rewnorm: False
+obsnorm_range: 5
+rewnorm_range: 5
+
+logdir: "./logs/noisy_dqn/"
+modeldir: "./models/noisy_dqn/"

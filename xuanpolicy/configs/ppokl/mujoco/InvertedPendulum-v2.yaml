@@ -1,0 +1,31 @@
+agent: "PPO_KL"
+env_name: "mujoco"
+env_id: "InvertedPendulum-v2"
+representation: "Basic_MLP"
+policy: "Gaussian_AC"
+device: "cuda:0"
+
+representation_hidden_size: [256,]
+actor_hidden_size: [256,]
+critic_hidden_size: [256,]
+parallels: 8
+
+training_steps: 250000
+nsteps: 256
+nepoch: 6
+nminibatch: 4
+learning_rate: 0.0007
+
+vf_coef: 0.25
+ent_coef: 0.00
+target_kl: 0.001
+gamma: 0.98
+lam: 0.95
+
+use_obsnorm: True
+use_rewnorm: True
+obsnorm_range: 5
+rewnorm_range: 5
+
+logdir: "./logs/ppokl"
+modeldir: "./models/ppokl"

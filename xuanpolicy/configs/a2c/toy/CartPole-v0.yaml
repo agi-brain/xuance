@@ -1,0 +1,31 @@
+agent: "A2C"
+env_name: "toy"
+env_id: "CartPole-v0"
+policy: "Categorical_AC"
+representation: "Basic_MLP"
+
+representation_hidden_size: [256,]
+actor_hidden_size: [256,]
+critic_hidden_size: [256,]
+
+training_steps: 30000
+nsteps: 128
+nepoch: 1
+nminibatch: 1
+learning_rate: 0.0005
+parallels: 4
+
+vf_coef: 0.25
+ent_coef: 0.01
+clip_grad: 0.5
+clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+gamma: 0.98
+lam: 0.95
+
+use_obsnorm: True
+use_rewnorm: True
+obsnorm_range: 5
+rewnorm_range: 5
+
+logdir: "./logs/a2c/"
+modeldir: "./models/a2c/"
