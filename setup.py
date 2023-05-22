@@ -4,7 +4,7 @@ setup(
     name='xuanpolicy',
     packages=find_packages(include=['xuanpolicy', 'xuanpolicy.*']),
     package_data={"xuanpolicy": ["configs/*.yaml", "configs/*/*/*.yaml"]},
-    version='0.1.5',
+    version='0.1.6',
     description='XuanPolicy: A Comprehensive Deep Reinforcement Learning Library.',
     author='Wenzhang Liu, Wenzhe Cai, Kun Jiang, etc.',
     author_email='',
