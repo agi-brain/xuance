@@ -1,5 +1,5 @@
 agent: "TD3"
-env_name: "toy"
+env_name: "toy_env"
 env_id: "Pendulum-v1"
 representation: "Basic_Identical"
 policy: "TD3_Policy"

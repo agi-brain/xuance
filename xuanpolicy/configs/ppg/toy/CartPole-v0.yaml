@@ -1,5 +1,5 @@
 agent: "PPG"
-env_name: "toy"
+env_name: "toy_env"
 env_id: "CartPole-v0"
 representation: "Basic_MLP"
 policy: "Categorical_PPG"

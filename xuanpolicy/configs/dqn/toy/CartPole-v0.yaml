@@ -1,5 +1,5 @@
 agent: "DQN"
-env_name: "toy"
+env_name: "toy_env"
 env_id: "CartPole-v0"
 policy: "Basic_Q_network"
 representation: "Basic_MLP"

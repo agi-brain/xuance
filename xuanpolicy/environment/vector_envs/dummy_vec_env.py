@@ -132,7 +132,7 @@ class DummyVecEnv_MAS(DummyVecEnv):
     def reset(self):
         for e in range(self.num_envs):
             o = self.envs[e].reset()
-            self.buf_obs_dict[e].update(o[0])
+            self.buf_obs_dict[e].update(o)
             for h, agent_keys_h in enumerate(self.agent_keys):
                 self.buf_obs[h][e] = itemgetter(*agent_keys_h)(self.buf_obs_dict[e])
 
@@ -199,9 +199,9 @@ class DummyVecEnv_MAS(DummyVecEnv):
 
         return self.buf_obs, self.buf_rews, self.buf_dones, done_all, self.buf_infos
 
-    def render(self, time_delay=0.0, mode='human'):
+    def render(self, time_delay=0.0):
         time.sleep(time_delay)
-        return [env.render(mode) for env in self.envs]
+        return [env.render() for env in self.envs]
 
     def global_state(self):
         return np.array([env.state() for env in self.envs])

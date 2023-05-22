@@ -1,5 +1,5 @@
 agent: "DDPG"
-env_name: "toy"
+env_name: "toy_env"
 env_id: "Pendulum-v1"
 policy: "DDPG_Policy"
 representation: "Basic_MLP"

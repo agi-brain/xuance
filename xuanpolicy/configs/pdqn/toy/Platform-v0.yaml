@@ -1,5 +1,5 @@
 agent: "PDQN"
-env_name: "toy"
+env_name: "toy_env"
 env_id: "Platform-v0"
 policy: "PDQN_Policy"
 representation: "Basic_MLP"

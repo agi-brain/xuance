@@ -3,13 +3,13 @@ import importlib
 from .custom_envs.toy_env import Toy_Env
 from .custom_envs.mujoco_env import MuJoCo_Env
 from .custom_envs.atari_env import Atari_Env
-from xuanpolicy.environment.custom_envs.pettingzoo_env import PettingZooWrapper
+from .custom_envs.pettingzoo_env import PettingZoo_Env
 
 from .custom_envs.atari_env import ENVIRONMENT_IDS as ATARI_ENVIRONMENTS
 from .custom_envs.mujoco_env import ENVIRONMENT_IDS as MUJOCO_ENVIRONMENTS
 from .custom_envs.robotics_env import ENVIRONMENT_IDS as ROBOTICS_ENVIRONMENTS
 from .custom_envs.toy_env import ENVIRONMENT_IDS as TOY_ENVIRONMENTS
-from xuanpolicy.environment.custom_envs.pettingzoo_env import PETTINGZOO_ENVS
+from .custom_envs.pettingzoo_env import PETTINGZOO_ENVIRONMENTS
 
 from .vector_envs.vector_env import VecEnv
 from .vector_envs.dummy_vec_env import DummyVecEnv, DummyVecEnv_MAS
@@ -22,7 +22,7 @@ def make_envs(env_name: str,
               vectorize: str,
               parallels: int,
               continuous_action: bool = False,
-              render_mode: str = 'human',
+              render_mode: str = 'rgb_array',
               ):
     def _thunk():
         if env_id in TOY_ENVIRONMENTS:
@@ -31,11 +31,10 @@ def make_envs(env_name: str,
             env = MuJoCo_Env(env_id, seed)
         elif env_id in ATARI_ENVIRONMENTS:
             env = Atari_Env(env_id, seed)
-        elif env_name in PETTINGZOO_ENVS:
+        elif env_name in PETTINGZOO_ENVIRONMENTS:
             scienario = importlib.import_module('pettingzoo.' + env_name + '.' + env_id)
-            env = PettingZooWrapper(scienario.parallel_env(continuous_actions=continuous_action,
-                                                           render_mode=render_mode),
-                                    env_name+'.'+env_id)
+            env = PettingZoo_Env(scienario.parallel_env(continuous_actions=continuous_action, render_mode=render_mode),
+                                 env_name+'.'+env_id)
         else:
             raise NotImplementedError
         return env

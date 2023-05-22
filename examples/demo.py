@@ -1,7 +1,6 @@
 import xuanpolicy
 
-runner = xuanpolicy.get_runner(agent_name='maddpg',
-                               env_name="mpe/simple_spread",
-                               config_path='',
+runner = xuanpolicy.get_runner(agent_name=['iddpg', 'random'],
+                               env_name="mpe/simple_adversary",
                                is_test=False)
 runner.run()

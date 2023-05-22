@@ -1,4 +1,4 @@
-import gym
+from pettingzoo.utils.env import ParallelEnv
 import numpy as np
 import ctypes
 
@@ -41,12 +41,12 @@ MAGENT_ENVS_LARGE_SCALE_MARL = ['adversarial_pursuit_v3', 'battlefield_v3', 'bat
 MPE_ENVS_MARL = ['simple_adversary_v2', 'simple_crypto_v2', 'simple_push_v2', 'simple_reference_v2',
                  'simple_speaker_listener_v3', 'simple_spread_v2', 'simple_tag_v2', 'simple_v2', 'simple_world_comm_v2']
 SISL_ENVS_MARL = ['multiwalker_v7', 'pursuit_v3', 'waterworld_v3']
-PETTINGZOO_ENVS = ['atari', 'butterfly', 'classic', 'magent', 'mpe', 'sisl']
+PETTINGZOO_ENVIRONMENTS = ['atari', 'butterfly', 'classic', 'magent', 'mpe', 'sisl']
 
 
-class PettingZooWrapper(gym.Wrapper):
+class PettingZoo_Env(ParallelEnv):
     def __init__(self, env, scenario_name):
-        # super(PettingZooWrapper, self).__init__(env)
+        super(PettingZoo_Env, self).__init__()
         self.env = env
         self.scenario_name = scenario_name
         self.env.reset()
@@ -55,9 +55,10 @@ class PettingZooWrapper(gym.Wrapper):
             self.state_space = self.env.state_space
         except:
             self.state_space = None
-        self.action_spaces = self.env.action_spaces
-        self.observation_spaces = self.env.observation_spaces
-        self.agents = self.env.action_spaces.keys()
+
+        self.action_spaces = {k: self.env.action_space(k) for k in self.env.agents}
+        self.observation_spaces = {k: self.env.observation_space(k) for k in self.env.agents}
+        self.agents = self.env.agents
         self.n_agents_all = len(self.agents)
 
         self.handles = self.get_handles()
@@ -69,19 +70,23 @@ class PettingZooWrapper(gym.Wrapper):
         self.metadata = env.metadata
         # self._warn_double_wrap()
 
-        self.episode_length = 0
+        self.step_count = 0
         # assert self.spec.id in ENVIRONMENTS
 
         self.max_cycles = self.env.aec_env.env.env.max_cycles
 
     def step(self, action):
-        self.episode_length += 1
+        self.step_count += 1
         observations, rewards, terminations, truncations, infos = self.env.step(action)
+        for k, v in truncations.items():
+            if v is True:
+                terminations[k] = v
         return observations, rewards, terminations, truncations, infos
 
-    def reset(self):
-        self.episode_length = 0
-        return self.env.reset()
+    def reset(self, seed=None, options=None):
+        self.step_count = 0
+        observations, infos = self.env.reset()
+        return observations
 
     def state(self):
         try:
@@ -122,10 +127,11 @@ class PettingZooWrapper(gym.Wrapper):
         return mask
 
     def get_handles(self):
-        try: return self.env.handles
-        except:
-            try: return self.env.env.get_handles()
+        if hasattr(self.env, 'handles'):
+            return self.env.handles
+        else:
+            try:
+                return self.env.env.get_handles()
             except:
                 handles = [ctypes.c_int(h) for h in range(MPE_N_HANDLE_DICT[self.scenario_name])]
-                # print("env.handles is None, now is set as: ", handles)
                 return handles

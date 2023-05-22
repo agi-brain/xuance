@@ -1,5 +1,5 @@
 agent: "C51DQN"
-env_name: "toy"
+env_name: "toy_env"
 env_id: "Acrobot-v1"
 policy: "C51_Q_network"
 representation: "Basic_MLP"

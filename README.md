@@ -95,7 +95,7 @@ You can block any last five tricks as you like by changing the default parameter
 ```python
 import xuanpolicy as xp
 
-runner = xp.get_runner(agent_name='dqn', env_name='toy/CartPole-v0', is_test=False)
+runner = xp.get_runner(agent_name='dqn', env_name='toy_env/CartPole-v0', is_test=False)
 runner.run()
 ```
 

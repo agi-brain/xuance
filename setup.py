@@ -4,7 +4,7 @@ setup(
     name='xuanpolicy',
     packages=find_packages(include=['xuanpolicy', 'xuanpolicy.*']),
     package_data={"xuanpolicy": ["configs/*.yaml", "configs/*/*/*.yaml"]},
-    version='0.1.4',
+    version='0.1.5',
     description='XuanPolicy: A Comprehensive Deep Reinforcement Learning Library.',
     author='Wenzhang Liu, Wenzhe Cai, Kun Jiang, etc.',
     author_email='',
@@ -24,6 +24,16 @@ setup(
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
     ],
+    extras_require={
+        "torch": ["torch >= 1.13.0"],
+        "tensorflow": ["tensorflow == 2.6.0"],
+        "mindspore": ["mindspore >= 1.10.1"],
+        "all": [
+            "torch >= 1.13.0",
+            "tensorflow == 2.6.0",
+            "mindspore >= 1.10.1"
+        ]
+    },
     install_requires=[
         "numpy >= 1.19.5",
         "scipy >= 1.7.3",
@@ -33,11 +43,8 @@ setup(
         "mpi4py >= 3.1.3",
         "tqdm >= 4.0",
         "pyglet >= 1.5.15",
-        "torch >= 1.13.0",  # for PyTorch users
-        # "opencv-python >= 4.5.4.58",  # for Atari
-        # "mindspore",  # for MindSpore users
-        # "tensorflow >= 2.6.0"  # for TensorFlow2.0 Users
-        # "tensorboard >= 2.11.2"  # logger
+        "opencv-python >= 4.5.4.58",  # for Atari
+        "tensorboard >= 2.11.2"  # logger
     ],
     setup_requires=['pytest-runner'],
     tests_requires=['pytest'],

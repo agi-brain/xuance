@@ -7,6 +7,7 @@ from gym.spaces import Space, Dict
 from typing import Sequence
 from types import SimpleNamespace as SN
 from copy import deepcopy
+EPS = 1e-8
 
 
 def recursive_dict_update(basic_dict, target_dict):
@@ -88,10 +89,10 @@ def get_runner(agent_name,
     print("Calculating device:", device)
 
     if dl_toolbox == "torch":
-        from xuanpolicy.xuanpolicy_torch.runners import REGISTRY as run_REGISTRY
+        from xuanpolicy.torch.runners import REGISTRY as run_REGISTRY
         print("Deep learning toolbox: PyTorch.")
     elif dl_toolbox == "mindspore":
-        from xuanpolicy.xuanpolicy_ms.runners import REGISTRY as run_REGISTRY
+        from xuanpolicy.mindspore.runners import REGISTRY as run_REGISTRY
         from mindspore import context
         print("Deep learning toolbox: MindSpore.")
         if device != "Auto":
@@ -102,7 +103,7 @@ def get_runner(agent_name,
         context.set_context(mode=context.GRAPH_MODE)  # 静态图（断点无法进入）
         # context.set_context(mode=context.PYNATIVE_MODE)  # 动态图（便于调试）
     elif dl_toolbox == "tensorflow":
-        from xuanpolicy.xuanpolicy_tf.runners import REGISTRY as run_REGISTRY
+        from xuanpolicy.tensorflow.runners import REGISTRY as run_REGISTRY
         print("Deep learning toolbox: TensorFlow.")
         if device in ["cpu", "CPU"]:
             os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
@@ -113,15 +114,22 @@ def get_runner(agent_name,
             raise AttributeError("Cannot find a deep learning toolbox named " + dl_toolbox)
 
     if type(args) == list:
+        agents_name_string = []
         for i_alg in range(len(agent_name)):
+            if i_alg < len(agent_name) - 1:
+                agents_name_string.append(args[i_alg].agent + " vs")
+            else:
+                agents_name_string.append(args[i_alg].agent)
             args[i_alg].agent_name = agent_name[i_alg]
             notation = args[i_alg].dl_toolbox + '/'
             args[i_alg].modeldir = os.path.join(os.getcwd(), args[i_alg].modeldir + notation + args[i_alg].env_id + '/')
             args[i_alg].logdir = args[i_alg].logdir + notation + args[i_alg].env_id + '/'
-            if is_test is not None:
+            if is_test is True:
                 args[i_alg].test_mode = int(is_test)
                 args[i_alg].parallels = 1
-        print("Algorithm:", *[arg.agent for arg in args])
+
+        # print("Algorithm:", *[arg.agent for arg in args])
+        print("Algorithm:", *agents_name_string)
         print("Environment:", args[0].env_name)
         print("Scenario:", args[0].env_id)
     else:
@@ -129,7 +137,7 @@ def get_runner(agent_name,
         notation = args.dl_toolbox + '/'
         args.modeldir = os.path.join(os.getcwd(), args.modeldir + notation + args.env_id + '/')
         args.logdir = args.logdir + notation + args.env_id + '/'
-        if is_test is not None:
+        if is_test is True:
             args.test_mode = int(is_test)
             args.parallels = 1
         print("Algorithm:", args.agent)

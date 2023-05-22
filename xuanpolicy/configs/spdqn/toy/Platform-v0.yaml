@@ -1,5 +1,5 @@
 agent: "SPDQN"
-env_name: "toy"
+env_name: "toy_env"
 env_id: "Platform-v0"
 policy: "SPDQN_Policy"
 representation: "Basic_MLP"

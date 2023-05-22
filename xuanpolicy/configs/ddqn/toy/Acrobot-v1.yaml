@@ -1,5 +1,5 @@
 agent: "DDQN"
-env_name: "toy"
+env_name: "toy_env"
 env_id: "Acrobot-v1"
 policy: "Basic_Q_network"
 representation: "Basic_MLP"

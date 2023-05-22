@@ -1,5 +1,5 @@
 agent: "SAC"
-env_name: "toy"
+env_name: "toy_env"
 env_id: "Pendulum-v1"
 policy: "Gaussian_SAC"
 representation: "Basic_Identical"

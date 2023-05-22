@@ -1,5 +1,5 @@
 agent: "QRDQN"
-env_name: "toy"
+env_name: "toy_env"
 env_id: "CartPole-v0"
 policy: "QR_Q_network"
 representation: "Basic_MLP"
