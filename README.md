@@ -20,8 +20,6 @@
 
 [//]: # ([![GitHub license]&#40;https://img.shields.io/github/license/thu-ml/tianshou&#41;]&#40;https://github.com/thu-ml/tianshou/blob/master/LICENSE&#41;)
 
-Version: 0.1.6
-
 **XuanPolicy** is an open-source ensemble of Deep Reinforcement Learning (DRL) algorithm implementations.
 
 We call it as Xuan-Ce (玄策) in Chinese. 
