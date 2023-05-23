@@ -105,3 +105,6 @@ class RandomAgents(object):
         rand_a = [[self.action_space[agent].sample() for agent in self.agent_keys] for e in range(self.nenvs)]
         random_actions = np.array(rand_a)
         return random_actions
+
+    def load_model(self, model_dir):
+        return

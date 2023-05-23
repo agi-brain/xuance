@@ -50,8 +50,8 @@ def get_arguments(agent_name, env_name, config_path=None, parser_args=None):
         config_algo_default = [get_config(os.path.join(config_path_default, agent, file_name)) for agent in agent_name]
         configs = [recursive_dict_update(config_basic, config_i) for config_i in config_algo_default]
         if config_path is not None:
-            config_algo = get_config(os.path.join(main_path, config_path))
-            configs = [recursive_dict_update(config_i, config_algo) for config_i in configs]
+            config_algo = [get_config(os.path.join(main_path, _path)) for _path in config_path]
+            configs = [recursive_dict_update(config_i, config_algo[i]) for i, config_i in enumerate(configs)]
         if parser_args is not None:
             configs = [recursive_dict_update(config_i, parser_args.__dict__) for config_i in configs]
         args = [SN(**config_i) for config_i in configs]
@@ -132,6 +132,11 @@ def get_runner(agent_name,
         print("Algorithm:", *agents_name_string)
         print("Environment:", args[0].env_name)
         print("Scenario:", args[0].env_id)
+        for arg in args:
+            if arg.agent_name != "random":
+                runner = run_REGISTRY[arg.runner](args)
+                return runner
+        raise "Both sides of policies are random!"
     else:
         args.agent_name = agent_name
         notation = args.dl_toolbox + '/'
@@ -143,9 +148,8 @@ def get_runner(agent_name,
         print("Algorithm:", args.agent)
         print("Environment:", args.env_name)
         print("Scenario:", args.env_id)
-
-    runner = run_REGISTRY[args[0].runner](args) if type(args) == list else run_REGISTRY[args.runner](args)
-    return runner
+        runner = run_REGISTRY[args[0].runner](args) if type(args) == list else run_REGISTRY[args.runner](args)
+        return runner
 
 
 def create_directory(path):

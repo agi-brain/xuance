@@ -2,6 +2,7 @@ agent: "RANDOM"
 env_name: "mpe"
 env_id: "simple_adversary_v3"
 learner: "RANDOM"
+runner: "MARL"
 
 modeldir: ""
 logdir: ""

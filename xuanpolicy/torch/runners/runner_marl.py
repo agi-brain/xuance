@@ -11,7 +11,12 @@ from copy import deepcopy
 class Runner(Runner_Base_MARL):
     def __init__(self, args):
         self.args = args if type(args) == list else [args]
-        super(Runner, self).__init__(self.args[0])
+        for arg in self.args:
+            if arg.agent_name == "random":
+                continue
+            else:
+                super(Runner, self).__init__(arg)
+                break
 
         # environment details, representations, policies, optimizers, and agents.
         for h, arg in enumerate(self.args):
