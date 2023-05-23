@@ -147,7 +147,7 @@ $ tensorboard --logdir ./logs/
 ```
 If everything going well, you should get a similar display like below. 
 
-![Tensorboard](./common/debug.png)
+![Tensorboard](./figures/debug.png)
 
 To visualize the training scores, training times and the performance, you need to initialize the environment as 
 ```
