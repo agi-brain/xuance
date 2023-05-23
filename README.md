@@ -12,25 +12,6 @@
 
 [![pettingzoo](https://img.shields.io/badge/License-MIT-yellowgreen)](https://github.com/wenzhangliu/XuanPolicy/blob/master/LICENSE.txt)
 
-
-[//]: # ([![Conda]&#40;https://img.shields.io/conda/vn/conda-forge/tianshou&#41;]&#40;https://github.com/conda-forge/tianshou-feedstock&#41;)
-
-[//]: # ([![Read the Docs]&#40;https://img.shields.io/readthedocs/tianshou&#41;]&#40;https://tianshou.readthedocs.io/en/master&#41;)
-
-[//]: # ([![Read the Docs]&#40;https://img.shields.io/readthedocs/tianshou-docs-zh-cn?label=%E4%B8%AD%E6%96%87%E6%96%87%E6%A1%A3&#41;]&#40;https://tianshou.readthedocs.io/zh/master/&#41;)
-
-[//]: # ([![Unittest]&#40;https://github.com/thu-ml/tianshou/workflows/Unittest/badge.svg?branch=master&#41;]&#40;https://github.com/thu-ml/tianshou/actions&#41;)
-
-[//]: # ([![codecov]&#40;https://img.shields.io/codecov/c/gh/thu-ml/tianshou&#41;]&#40;https://codecov.io/gh/thu-ml/tianshou&#41;)
-
-[//]: # ([![GitHub issues]&#40;https://img.shields.io/github/issues/thu-ml/tianshou&#41;]&#40;https://github.com/thu-ml/tianshou/issues&#41;)
-
-[//]: # ([![GitHub stars]&#40;https://img.shields.io/github/stars/thu-ml/tianshou&#41;]&#40;https://github.com/thu-ml/tianshou/stargazers&#41;)
-
-[//]: # ([![GitHub forks]&#40;https://img.shields.io/github/forks/thu-ml/tianshou&#41;]&#40;https://github.com/thu-ml/tianshou/network&#41;)
-
-[//]: # ([![GitHub license]&#40;https://img.shields.io/github/license/thu-ml/tianshou&#41;]&#40;https://github.com/thu-ml/tianshou/blob/master/LICENSE&#41;)
-
 **XuanPolicy** is an open-source ensemble of Deep Reinforcement Learning (DRL) algorithm implementations.
 
 We call it as Xuan-Ce (玄策) in Chinese. 
@@ -197,26 +178,26 @@ This project is supported by Peng Cheng Laboratory.
 
 The library can be run at Linux, Windows, MacOS, and Euler OS, etc.
 
-Before installing XuanPolicy, you should install [Anaconda](https://www.anaconda.com/download) to prepare a python environment.
+Before installing **XuanPolicy**, you should install [Anaconda](https://www.anaconda.com/download) to prepare a python environment.
 
-After that, create a terminal and install XuanPolicy by the following steps.
+After that, create a terminal and install **XuanPolicy** by the following steps.
 
-Step 1: Create and activate a new conda environment (python>=3.7 is suggested):
+**Step 1**: Create and activate a new conda environment (python>=3.7 is suggested):
 
 ```commandline
 conda create -n xuanpolicy python=3.7
 conda activate xuanpolicy
 ```
 
-step 2: Install the library:
+**Step 2**: Install the library:
 
 ```commandline
 pip install xuanpolicy
 ```
 
-This command does not include the dependencies of deep learning toolboxes. To install the XuanPolicy with 
-deep learning tools, you can type `pip install xuanpolicy[torch]` for PyTorch, `pip install xuanpolicy[tensorflow]`
-for TensorFlow, `pip install xuanpolicy[mindspore]` for MindSpore, and `pip install xuanpolicy[all]` for all dependencies.
+This command does not include the dependencies of deep learning toolboxes. To install the **XuanPolicy** with 
+deep learning tools, you can type `pip install xuanpolicy[torch]` for **PyTorch**, `pip install xuanpolicy[tensorflow]`
+for **TensorFlow**, `pip install xuanpolicy[mindspore]` for **MindSpore**, and `pip install xuanpolicy[all]` for all dependencies.
 
 Note: Some extra packages should be installed manually for further usage. 
 
