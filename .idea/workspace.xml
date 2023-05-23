@@ -35,17 +35,17 @@
   "keyToString": {
     "RunOnceActivity.OpenProjectViewOnStart": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
-    "last_opened_file_path": "/home/wzliu/PCNL_XuanCe/XuanPolicy_Library/xuanpolicy/xuanpolicy/configs/random/mpe",
+    "last_opened_file_path": "/home/wzliu/PCNL_XuanCe/XuanPolicy_Library/xuanpolicy/examples",
     "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
   }
 }]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/examples" />
       <recent name="$PROJECT_DIR$/xuanpolicy/configs/random/mpe" />
       <recent name="$PROJECT_DIR$/xuanpolicy/configs/maddpg/mpe" />
       <recent name="$PROJECT_DIR$/xuanpolicy/configs/isac/mpe" />
       <recent name="$PROJECT_DIR$/xuanpolicy/configs/iddpg/mpe" />
-      <recent name="$PROJECT_DIR$/xuanpolicy/configs/matd3/mpe" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/figures" />
@@ -220,7 +220,14 @@
       <option name="project" value="LOCAL" />
       <updated>1684836636092</updated>
     </task>
-    <option name="localTasksCounter" value="13" />
+    <task id="LOCAL-00013" summary="update readme">
+      <created>1684837267730</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1684837267730</updated>
+    </task>
+    <option name="localTasksCounter" value="14" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">

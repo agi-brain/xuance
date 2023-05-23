@@ -1,6 +1,14 @@
 # XuanPolicy: A Comprehensive and Unified Deep Reinforcement Learning Library #
 
 [![PyPI](https://img.shields.io/badge/PyPI-0.1.6-green)](https://pypi.org/project/xuanpolicy/)
+[![PyTorch](https://img.shields.io/badge/PyTorch-%3E%3D1.13.0-red)](https://pytorch.org/get-started/locally/)
+[![TensorFlow](https://img.shields.io/badge/TensorFlow-%3E%3D2.6.0-orange)](https://www.tensorflow.org/install)
+[![MindSpore](https://img.shields.io/badge/MindSpore-%3E%3D1.10.1-blue)](https://www.mindspore.cn/install/en)
+[![Python](https://img.shields.io/badge/Python-3.7%7C3.8%7C3.9%7C3.10-yellow)](https://www.anaconda.com/download)
+
+[![gym](https://img.shields.io/badge/gym-%3E%3D0.21.0-blue)](https://www.gymlibrary.dev/)
+[![gymnasium](https://img.shields.io/badge/gymnasium-%3E%3D0.28.1-blue)](https://www.gymlibrary.dev/)
+[![pettingzoo](https://img.shields.io/badge/PettingZoo-%3E%3D1.23.0-blue)](https://pettingzoo.farama.org/)
 
 [//]: # ([![Conda]&#40;https://img.shields.io/conda/vn/conda-forge/tianshou&#41;]&#40;https://github.com/conda-forge/tianshou-feedstock&#41;)
 
@@ -35,9 +43,9 @@ and hope it can really become a zoo full of DRL algorithms.
 
 This project is supported by Peng Cheng Laboratory.
 
-## Currently Supported Agents ##
+## Currently Supported Agents
 
-### DRL ###
+### DRL
 - Vanilla Policy Gradient - PG [[Paper](https://proceedings.neurips.cc/paper/2001/file/4b86abe48d358ecf194c56c69108433e-Paper.pdf)]
 - Phasic Policy Gradient - PPG [[Paper](http://proceedings.mlr.press/v139/cobbe21a/cobbe21a.pdf)] [[Code](https://github.com/openai/phasic-policy-gradient)]
 - Advantage Actor Critic - A2C [[Paper](http://proceedings.mlr.press/v48/mniha16.pdf)] [[Code](https://github.com/openai/baselines/tree/master/baselines/a2c)]
@@ -61,7 +69,7 @@ This project is supported by Peng Cheng Laboratory.
 - Multi-pass parameterised deep Q network - MP-DQN [[Paper](https://arxiv.org/pdf/1905.04388.pdf)] [[Code](https://github.com/cycraig/MP-DQN)]
 - Split parameterised deep Q network - SP-DQN [[Paper](https://arxiv.org/pdf/1810.06394.pdf)]
 
-### MARL ###
+### MARL
 - Independent Q-learning - IQL [[Paper](https://hal.science/file/index/docid/720669/filename/Matignon2012independent.pdf)] [[Code](https://github.com/oxwhirl/pymarl)]
 - Value Decomposition Networks - VDN [[Paper](https://arxiv.org/pdf/1706.05296.pdf)] [[Code](https://github.com/oxwhirl/pymarl)]
 - Q-mixing networks - QMIX [[Paper](http://proceedings.mlr.press/v80/rashid18a/rashid18a.pdf)] [[Code](https://github.com/oxwhirl/pymarl)]
@@ -78,7 +86,7 @@ This project is supported by Peng Cheng Laboratory.
 - Multi-agent Soft Actor-Critic - MASAC [[Paper](https://arxiv.org/pdf/2104.06655.pdf)]
 - Multi-agent Twin Delayed Deep Deterministic Policy Gradient - MATD3 [[Paper](https://arxiv.org/pdf/1910.01465.pdf)]
 
-## Installation ##
+## Installation
 
 The library can be run at Linux, Windows, MacOS, and Euler OS, etc.
 
@@ -105,11 +113,12 @@ for TensorFlow, `pip install xuanpolicy[mindspore]` for MindSpore, and `pip inst
 
 Note: Some extra packages should be installed manually for further usage. 
 
-## Basic Usage ##
+## Basic Usage
 
-### Quickly Start ###
+### Quickly Start
 
-#### Train a model ####
+#### Train a Model
+
 ```python
 import xuanpolicy as xp
 
@@ -117,7 +126,8 @@ runner = xp.get_runner(agent_name='dqn', env_name='toy_env/CartPole-v0', is_test
 runner.run()
 ```
 
-#### Test the Model ####
+#### Test the Model
+
 ```python
 import xuanpolicy as xp
 
@@ -125,7 +135,7 @@ runner_test = xp.get_runner(agent_name='dqn', env_name='toy_env/CartPole-v0', is
 runner_test.run()
 ```
 
-## Logger ##
+## Logger
 You can use tensorboard to visualize what happened in the training process. After training, the log file will be automatically generated in the directory ".results/" and you should be able to see some training data after running the command.
 ``` 
 $ tensorboard --logdir ./logs/dqn/torch/CartPole-v0
@@ -134,13 +144,13 @@ If everything going well, you should get a similar display like below.
 
 ![Tensorboard](./figures/debug.png)
 
-## Selected Results ##
+## Selected Results
 
-### Toy Environments ###
+### Toy Environments
 
-### Mujoco Environments ###
+### Mujoco Environments
 
-### Pettingzoo Environments ###
+### Pettingzoo Environments
 
 ```
 @article{XuanPolicy2023,
