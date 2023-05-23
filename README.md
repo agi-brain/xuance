@@ -99,6 +99,100 @@ This project is supported by Peng Cheng Laboratory.
 
 </details>
 
+## Supported Environments
+
+### Toy Environments ([Classic Control](https://www.gymlibrary.dev/environments/classic_control/), [Box2D](https://www.gymlibrary.dev/environments/box2d/), [PlatformDomain](https://github.com/cycraig/gym-platform), etc.)
+
+<details close>
+<summary>(Click to show Toy environments)</summary>
+
+<table rules="none" align="center"><tr>
+<td> <center>
+<img src="./figures/toy/cart_pole.gif" height=100" /><br/><font color="AAAAAA">CartPole</font>
+</center></td>
+<td> <center>
+<img src="./figures/toy/pendulum.gif" height=100" /> <br/> <font color="AAAAAA">Pendulum</font>
+</center> </td>
+<td> <center>
+<img src="./figures/toy/acrobot.gif" height=100" /> <br/> <font color="AAAAAA">Acrobot</font>
+</center> </td>
+<td> <center>
+<img src="./figures/toy/mountain_car.gif" height=100" /> <br/> <font color="AAAAAA">MountainCar</font>
+</center> </td>
+</tr>
+</table>
+
+<table rules="none" align="center"> <tr>
+<td> <center>
+<img src="./figures/toy/lunar_lander.gif" height=100" /> <br/> <font color="AAAAAA">Lunar_lander</font>
+</center> </td>
+<td> <center>
+<img src="./figures/toy/platform_domain.png" width="365" height = "90" /> <br/> <font color="AAAAAA">PlatformDomain</font>
+</center> </td>
+<td> <center> <br/> <font color="AAAAAA">...</font>
+</center></td>
+</tr>
+</table>
+
+</details>
+
+### [MuJoCo Environments](https://www.gymlibrary.dev/environments/mujoco/)
+
+<details close>
+<summary>(Click to show MuJoCo environments)</summary>
+
+<table rules="none" align="center"><tr>
+<td> <center>
+<img src="./figures/mujoco/ant.gif" height=100" /><br/><font color="AAAAAA">Ant</font>
+</center></td>
+<td> <center>
+<img src="./figures/mujoco/half_cheetah.gif" height=100" /> <br/> <font color="AAAAAA">HalfCheetah</font>
+</center> </td>
+<td> <center>
+<img src="./figures/mujoco/hopper.gif" height=100" /> <br/> <font color="AAAAAA">Hopper</font>
+</center> </td>
+<td> <center>
+<img src="./figures/mujoco/humanoid.gif" height=100" /> <br/> <font color="AAAAAA">Humanoid</font>
+</center> </td>
+</tr>
+<tr>
+<td> <center>
+<img src="./figures/mujoco/inverted_pendulum.gif" height=100" /><br/><font color="AAAAAA">InvertedPendulum</font>
+</center></td>
+<td> <center>
+<img src="./figures/mujoco/reacher.gif" height=100" /> <br/> <font color="AAAAAA">Reacher</font>
+</center> </td>
+<td> <center>
+<img src="./figures/mujoco/swimmer.gif" height=100" /> <br/> <font color="AAAAAA">Swimmer</font>
+</center> </td>
+<td> <center>
+<img src="./figures/mujoco/walker2d.gif" height=100" /> <br/> <font color="AAAAAA">Walker2d</font>
+</center> </td>
+</tr>
+</table>
+</details>
+
+### [Atari Environments](https://pettingzoo.farama.org/environments/mpe/)
+
+<details close>
+<summary>(Click to show Atari environments)</summary>
+
+</details>
+
+### [MPE Environments](https://pettingzoo.farama.org/environments/mpe/)
+
+<details close>
+<summary>(Click to show MPE environments)</summary>
+
+</details>
+
+### [Magent](https://magent2.farama.org/)
+
+<details close>
+<summary>(Click to show Magent environments)</summary>
+
+</details>
+
 ## Installation
 
 The library can be run at Linux, Windows, MacOS, and Euler OS, etc.
