@@ -27,9 +27,7 @@ This project gives a thorough, high-quality and easy-to-understand implementatio
 and hope this implementation can give a hint on the magics of reinforcement learning.
 
 We expect it to be compatible with multiple deep learning toolboxes (torch, tensorflow, and mindspore),
-and hope it can really become a zoo full of DRL algorithms. 
-
-This project is supported by Peng Cheng Laboratory.
+and hope it can really become a zoo full of DRL algorithms.
 
 ## Currently Supported Agents
 

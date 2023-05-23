@@ -3,11 +3,6 @@
   <component name="ChangeListManager">
     <list default="true" id="62851020-300f-481b-93eb-77d698f2c903" name="Changes" comment="readme update">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/figures/magent/battlefield.gif.crdownload" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/figures/magent/combined_arms.gif.crdownload" beforeDir="false" afterPath="$PROJECT_DIR$/figures/magent/combined_arms.gif.crdownload" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/figures/magent/gather.gif.crdownload" beforeDir="false" afterPath="$PROJECT_DIR$/figures/magent/gather.gif.crdownload" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/setup.py" beforeDir="false" afterPath="$PROJECT_DIR$/setup.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -266,7 +261,14 @@
       <option name="project" value="LOCAL" />
       <updated>1684851359277</updated>
     </task>
-    <option name="localTasksCounter" value="19" />
+    <task id="LOCAL-00019" summary="readme update">
+      <created>1684854007002</created>
+      <option name="number" value="00019" />
+      <option name="presentableId" value="LOCAL-00019" />
+      <option name="project" value="LOCAL" />
+      <updated>1684854007002</updated>
+    </task>
+    <option name="localTasksCounter" value="20" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
