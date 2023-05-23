@@ -10,6 +10,9 @@
 [![gymnasium](https://img.shields.io/badge/gymnasium-%3E%3D0.28.1-blue)](https://www.gymlibrary.dev/)
 [![pettingzoo](https://img.shields.io/badge/PettingZoo-%3E%3D1.23.0-blue)](https://pettingzoo.farama.org/)
 
+[![pettingzoo](https://img.shields.io/badge/License-MIT-yellowgreen)](https://github.com/wenzhangliu/XuanPolicy/blob/master/LICENSE.txt)
+
+
 [//]: # ([![Conda]&#40;https://img.shields.io/conda/vn/conda-forge/tianshou&#41;]&#40;https://github.com/conda-forge/tianshou-feedstock&#41;)
 
 [//]: # ([![Read the Docs]&#40;https://img.shields.io/readthedocs/tianshou&#41;]&#40;https://tianshou.readthedocs.io/en/master&#41;)
