@@ -1,4 +1,4 @@
-# **XuanPolicy: A Comprehensive and Unified Deep Reinforcement Learning Library** #
+# XuanPolicy: A Comprehensive and Unified Deep Reinforcement Learning Library #
 
 [![PyPI](https://img.shields.io/pypi/v/xuanpolicy)](https://pypi.org/project/xuanpolicy/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-%3E%3D1.13.0-red)](https://pytorch.org/get-started/locally/)
