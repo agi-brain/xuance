@@ -1,0 +1,17 @@
+
+[docs]
+sphinx
+jaraco.packaging>=9
+rst.linker>=1.9
+jaraco.tidelift>=1.4
+
+[testing]
+pytest>=6
+pytest-checkdocs>=2.4
+pytest-flake8
+pytest-cov
+pytest-enabler>=1.0.1
+pytest-virtualenv
+types-setuptools
+pytest-black>=0.3.7
+pytest-mypy>=0.9.1

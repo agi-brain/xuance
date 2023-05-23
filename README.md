@@ -1,6 +1,6 @@
 # XuanPolicy: A Comprehensive and Unified Deep Reinforcement Learning Library #
 
-[![PyPI](https://img.shields.io/badge/PyPI-0.1.6-green)](https://pypi.org/project/xuanpolicy/)
+[![PyPI](https://img.shields.io/pypi/v/xuanpolicy)](https://pypi.org/project/xuanpolicy/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-%3E%3D1.13.0-red)](https://pytorch.org/get-started/locally/)
 [![TensorFlow](https://img.shields.io/badge/TensorFlow-%3E%3D2.6.0-orange)](https://www.tensorflow.org/install)
 [![MindSpore](https://img.shields.io/badge/MindSpore-%3E%3D1.10.1-blue)](https://www.mindspore.cn/install/en)
@@ -11,6 +11,10 @@
 [![pettingzoo](https://img.shields.io/badge/PettingZoo-%3E%3D1.23.0-blue)](https://pettingzoo.farama.org/)
 
 [![pettingzoo](https://img.shields.io/badge/License-MIT-yellowgreen)](https://github.com/wenzhangliu/XuanPolicy/blob/master/LICENSE.txt)
+![GitHub all releases](https://img.shields.io/github/downloads/wenzhangliu/XuanPolicy/total)
+![GitHub Repo stars](https://img.shields.io/github/stars/wenzhangliu/XuanPolicy)
+![GitHub forks](https://img.shields.io/github/forks/wenzhangliu/XuanPolicy)
+![GitHub watchers](https://img.shields.io/github/watchers/wenzhangliu/XuanPolicy)
 
 **XuanPolicy** is an open-source ensemble of Deep Reinforcement Learning (DRL) algorithm implementations.
 
