@@ -23,7 +23,7 @@
 **XuanPolicy** is an open-source ensemble of Deep Reinforcement Learning (DRL) algorithm implementations.
 
 We call it as Xuan-Ce (玄策) in Chinese. 
-"Xuan" means incredible and magic box, "Ce" means policy.
+"Xuan (玄)" means incredible and magic box, "Ce (策)" means policy.
 
 DRL algorithms are sensitive to hyper-parameters tuning, varying in performance with different tricks, 
 and suffering from unstable training processes, therefore, sometimes DRL algorithms seems elusive and "Xuan". 
