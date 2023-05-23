@@ -1,17 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="62851020-300f-481b-93eb-77d698f2c903" name="Changes" comment="marl: cooperative &amp; competitive">
+    <list default="true" id="62851020-300f-481b-93eb-77d698f2c903" name="Changes" comment="update readme">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/demo.py" beforeDir="false" afterPath="$PROJECT_DIR$/examples/demo.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/xuanpolicy/common/common_tools.py" beforeDir="false" afterPath="$PROJECT_DIR$/xuanpolicy/common/common_tools.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/xuanpolicy/common/debug.png" beforeDir="false" afterPath="$PROJECT_DIR$/figures/debug.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/xuanpolicy/configs/random/mpe/simple_adversary.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/xuanpolicy/configs/random/mpe/simple_adversary.yaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/xuanpolicy/configs/random/mpe/simple_push.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/xuanpolicy/configs/random/mpe/simple_push.yaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/xuanpolicy/configs/random/mpe/simple_spread.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/xuanpolicy/configs/random/mpe/simple_spread.yaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/xuanpolicy/torch/agents/agents_marl.py" beforeDir="false" afterPath="$PROJECT_DIR$/xuanpolicy/torch/agents/agents_marl.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/xuanpolicy/torch/runners/runner_marl.py" beforeDir="false" afterPath="$PROJECT_DIR$/xuanpolicy/torch/runners/runner_marl.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -171,7 +162,28 @@
       <option name="project" value="LOCAL" />
       <updated>1684760307981</updated>
     </task>
-    <option name="localTasksCounter" value="8" />
+    <task id="LOCAL-00008" summary="update readme">
+      <created>1684835024575</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1684835024575</updated>
+    </task>
+    <task id="LOCAL-00009" summary="update readme">
+      <created>1684835221243</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1684835221243</updated>
+    </task>
+    <task id="LOCAL-00010" summary="update readme">
+      <created>1684835301460</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1684835301460</updated>
+    </task>
+    <option name="localTasksCounter" value="11" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -191,7 +203,8 @@
     <MESSAGE value="version '0.1.4'" />
     <MESSAGE value="readme" />
     <MESSAGE value="marl: cooperative &amp; competitive" />
-    <option name="LAST_COMMIT_MESSAGE" value="marl: cooperative &amp; competitive" />
+    <MESSAGE value="update readme" />
+    <option name="LAST_COMMIT_MESSAGE" value="update readme" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
