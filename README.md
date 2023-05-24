@@ -261,7 +261,7 @@ If everything going well, you should get a similar display like below.
 
 ### Mujoco Environments
 
-### Pettingzoo Environments
+### MPE Environments
 
 ```
 @article{XuanPolicy2023,
