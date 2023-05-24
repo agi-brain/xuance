@@ -150,8 +150,8 @@ class ActorNet_SAC(nn.Module):
             layers.extend(mlp)
         self.device = device
         self.output = nn.Sequential(*layers)
-        self.out_mu = nn.Linear(hidden_sizes[0], action_dim, device=device)
-        self.out_std = nn.Linear(hidden_sizes[0], action_dim, device=device)
+        self.out_mu = nn.Linear(hidden_sizes[-1], action_dim, device=device)
+        self.out_std = nn.Linear(hidden_sizes[-1], action_dim, device=device)
 
     def forward(self, x: torch.tensor):
         output = self.output(x)
@@ -217,7 +217,7 @@ class SACPolicy(nn.Module):
         outputs = self.representation(observation)
         act_dist = self.target_actor(outputs['state'])
         act = act_dist.rsample()
-        act_log = act_dist.log_prob(act)
+        act_log = act_dist.log_prob(act).sum(-1)
         return outputs, act_log, self.target_critic(outputs['state'], act)
 
     def Qaction(self, observation: Union[np.ndarray, dict], action: torch.Tensor):
@@ -228,7 +228,7 @@ class SACPolicy(nn.Module):
         outputs = self.representation(observation)
         act_dist = self.actor(outputs['state'])
         act = act_dist.rsample()
-        act_log = act_dist.log_prob(act)
+        act_log = act_dist.log_prob(act).sum(-1)
         return outputs, act_log, self.critic(outputs['state'], act)
 
     def forward(self):
