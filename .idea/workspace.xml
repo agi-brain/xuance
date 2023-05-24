@@ -2,7 +2,11 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="62851020-300f-481b-93eb-77d698f2c903" name="Changes" comment="readme update">
+<<<<<<< HEAD
       <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+=======
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+>>>>>>> 478cfb190c70e7536a3359dd30e52a4300255097
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -268,6 +272,7 @@
       <option name="project" value="LOCAL" />
       <updated>1684854007002</updated>
     </task>
+<<<<<<< HEAD
     <task id="LOCAL-00020" summary="readme update">
       <created>1684854093942</created>
       <option name="number" value="00020" />
@@ -297,6 +302,9 @@
       <updated>1684895746598</updated>
     </task>
     <option name="localTasksCounter" value="24" />
+=======
+    <option name="localTasksCounter" value="20" />
+>>>>>>> 478cfb190c70e7536a3359dd30e52a4300255097
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">

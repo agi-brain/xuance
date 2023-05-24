@@ -22,11 +22,19 @@ We call it as **Xuan-Ce (玄策)** in Chinese.
 "**Xuan (玄)**" means incredible and magic box, "**Ce (策)**" means policy.
 
 DRL algorithms are sensitive to hyper-parameters tuning, varying in performance with different tricks, 
+<<<<<<< HEAD
 and suffering from unstable training processes, therefore, sometimes DRL algorithms seems elusive and "Xuan". 
 This project gives a thorough, high-quality and easy-to-understand implementation of DRL algorithms, 
 and hope this implementation can give a hint on the magics of reinforcement learning.
 
 We expect it to be compatible with multiple deep learning toolboxes (**[PyTorch]**, **TensorFlow**, and **MindSpore**),
+=======
+and suffering from unstable training processes, therefore, sometimes DRL algorithms seems elusive and "**Xuan**". 
+This project gives a thorough, high-quality and easy-to-understand implementation of DRL algorithms, 
+and hope this implementation can give a hint on the magics of reinforcement learning.
+
+We expect it to be compatible with multiple deep learning toolboxes (**PyTorch**, **TensorFlow**, and **MindSpore**),
+>>>>>>> 478cfb190c70e7536a3359dd30e52a4300255097
 and hope it can really become a zoo full of DRL algorithms.
 
 ## Currently Supported Agents
@@ -84,10 +92,17 @@ and hope it can really become a zoo full of DRL algorithms.
 
 ## Supported Environments
 
+<<<<<<< HEAD
 ### Toy Environments ([Classic Control](https://www.gymlibrary.dev/environments/classic_control/), [Box2D](https://www.gymlibrary.dev/environments/box2d/), etc.)
 
 <details close>
 <summary>(Click to show part of Toy environments)</summary>
+=======
+### Toy Environments ([Classic Control](https://www.gymlibrary.dev/environments/classic_control/), [Box2D](https://www.gymlibrary.dev/environments/box2d/), [PlatformDomain](https://github.com/cycraig/gym-platform), etc.)
+
+<details close>
+<summary>(Click to show Toy environments)</summary>
+>>>>>>> 478cfb190c70e7536a3359dd30e52a4300255097
 
 <table rules="none" align="center"><tr>
 <td> <center>
@@ -97,11 +112,31 @@ and hope it can really become a zoo full of DRL algorithms.
 <img src="./figures/toy/pendulum.gif" height=100" /> <br/> <font color="AAAAAA">Pendulum</font>
 </center> </td>
 <td> <center>
+<<<<<<< HEAD
 <img src="./figures/toy/lunar_lander.gif" height=100" /> <br/> <font color="AAAAAA">Lunar_lander</font>
 </center> </td>
 <td> <center>
 <br/> <font color="AAAAAA">...</font>
 </center> </td>
+=======
+<img src="./figures/toy/acrobot.gif" height=100" /> <br/> <font color="AAAAAA">Acrobot</font>
+</center> </td>
+<td> <center>
+<img src="./figures/toy/mountain_car.gif" height=100" /> <br/> <font color="AAAAAA">MountainCar</font>
+</center> </td>
+</tr>
+</table>
+
+<table rules="none" align="center"> <tr>
+<td> <center>
+<img src="./figures/toy/lunar_lander.gif" height=100" /> <br/> <font color="AAAAAA">Lunar_lander</font>
+</center> </td>
+<td> <center>
+<img src="./figures/toy/platform_domain.png" width="365" height = "90" /> <br/> <font color="AAAAAA">PlatformDomain</font>
+</center> </td>
+<td> <center> <br/> <font color="AAAAAA">...</font>
+</center></td>
+>>>>>>> 478cfb190c70e7536a3359dd30e52a4300255097
 </tr>
 </table>
 
@@ -110,7 +145,11 @@ and hope it can really become a zoo full of DRL algorithms.
 ### [MuJoCo Environments](https://www.gymlibrary.dev/environments/mujoco/)
 
 <details close>
+<<<<<<< HEAD
 <summary>(Click to show part of MuJoCo environments)</summary>
+=======
+<summary>(Click to show MuJoCo environments)</summary>
+>>>>>>> 478cfb190c70e7536a3359dd30e52a4300255097
 
 <table rules="none" align="center"><tr>
 <td> <center>
@@ -125,6 +164,7 @@ and hope it can really become a zoo full of DRL algorithms.
 <td> <center>
 <img src="./figures/mujoco/humanoid.gif" height=100" /> <br/> <font color="AAAAAA">Humanoid</font>
 </center> </td>
+<<<<<<< HEAD
 <td> <center>
 <br/> <font color="AAAAAA">...</font>
 </center> </td>
@@ -158,19 +198,48 @@ and hope it can really become a zoo full of DRL algorithms.
 </center> </td>
 </tr>
 </table>
+=======
+</tr>
+<tr>
+<td> <center>
+<img src="./figures/mujoco/inverted_pendulum.gif" height=100" /><br/><font color="AAAAAA">InvertedPendulum</font>
+</center></td>
+<td> <center>
+<img src="./figures/mujoco/reacher.gif" height=100" /> <br/> <font color="AAAAAA">Reacher</font>
+</center> </td>
+<td> <center>
+<img src="./figures/mujoco/swimmer.gif" height=100" /> <br/> <font color="AAAAAA">Swimmer</font>
+</center> </td>
+<td> <center>
+<img src="./figures/mujoco/walker2d.gif" height=100" /> <br/> <font color="AAAAAA">Walker2d</font>
+</center> </td>
+</tr>
+</table>
+</details>
+
+### [Atari Environments](https://pettingzoo.farama.org/environments/mpe/)
+
+<details close>
+<summary>(Click to show Atari environments)</summary>
+>>>>>>> 478cfb190c70e7536a3359dd30e52a4300255097
 
 </details>
 
 ### [MPE Environments](https://pettingzoo.farama.org/environments/mpe/)
 
 <details close>
+<<<<<<< HEAD
 <summary>(Click to show part of MPE environments)</summary>
+=======
+<summary>(Click to show MPE environments)</summary>
+>>>>>>> 478cfb190c70e7536a3359dd30e52a4300255097
 
 </details>
 
 ### [Magent](https://magent2.farama.org/)
 
 <details close>
+<<<<<<< HEAD
 <summary>(Click to show part of Magent environments)</summary>
 
 <table rules="none" align="center"><tr>
@@ -188,6 +257,9 @@ and hope it can really become a zoo full of DRL algorithms.
 </center> </td>
 </tr>
 </table>
+=======
+<summary>(Click to show Magent environments)</summary>
+>>>>>>> 478cfb190c70e7536a3359dd30e52a4300255097
 
 </details>
 
@@ -199,6 +271,7 @@ Before installing **XuanPolicy**, you should install [Anaconda](https://www.anac
 
 After that, create a terminal and install **XuanPolicy** by the following steps.
 
+<<<<<<< HEAD
 **Step 1**: Create a new conda environment (python>=3.7 is suggested):
 
 ```commandline
@@ -212,16 +285,31 @@ conda activate xuanpolicy
 ```
 
 **Step 3**: Install the library:
+=======
+**Step 1**: Create and activate a new conda environment (python>=3.7 is suggested):
+
+```commandline
+conda create -n xuanpolicy python=3.7
+conda activate xuanpolicy
+```
+
+**Step 2**: Install the library:
+>>>>>>> 478cfb190c70e7536a3359dd30e52a4300255097
 
 ```commandline
 pip install xuanpolicy
 ```
 
 This command does not include the dependencies of deep learning toolboxes. To install the **XuanPolicy** with 
+<<<<<<< HEAD
 deep learning tools, you can type `pip install xuanpolicy[torch]` for [PyTorch](https://pytorch.org/get-started/locally/),
 `pip install xuanpolicy[tensorflow]` for [TensorFlow](https://www.tensorflow.org/install),
 `pip install xuanpolicy[mindspore]` for [MindSpore](https://www.mindspore.cn/install/en),
 and `pip install xuanpolicy[all]` for all dependencies.
+=======
+deep learning tools, you can type `pip install xuanpolicy[torch]` for **PyTorch**, `pip install xuanpolicy[tensorflow]`
+for **TensorFlow**, `pip install xuanpolicy[mindspore]` for **MindSpore**, and `pip install xuanpolicy[all]` for all dependencies.
+>>>>>>> 478cfb190c70e7536a3359dd30e52a4300255097
 
 Note: Some extra packages should be installed manually for further usage. 
 
@@ -266,8 +354,13 @@ If everything going well, you should get a similar display like below.
 
 ```
 @article{XuanPolicy2023,
+<<<<<<< HEAD
     author = {Wenzhang Liu, Wenzhe Cai, Kun Jiang, Yuanda Wang, Guangran Cheng, Jiawei Wang, Jingyu Cao, Lele Xu, Chaoxu Mu, Changyin Sun},
     title = {XuanPolicy: A Comprehensive and Unified Deep Reinforcement Learning Library},
+=======
+    author = {Wenzhang Liu, Wenzhe Cai, Kun Jiang, and others},
+    title = {XuanPolicy: A Comprehensive Deep Reinforcement Learning Library},
+>>>>>>> 478cfb190c70e7536a3359dd30e52a4300255097
     year = {2023}
 }
 ```
