@@ -26,7 +26,10 @@ and suffering from unstable training processes, therefore, sometimes DRL algorit
 This project gives a thorough, high-quality and easy-to-understand implementation of DRL algorithms, 
 and hope this implementation can give a hint on the magics of reinforcement learning.
 
-We expect it to be compatible with multiple deep learning toolboxes (**PyTorch**, **TensorFlow**, and **MindSpore**),
+We expect it to be compatible with multiple deep learning toolboxes(
+**[PyTorch](https://pytorch.org/)**, 
+**[TensorFlow](https://www.tensorflow.org/)**, and 
+**[MindSpore](https://www.mindspore.cn/en)**),
 and hope it can really become a zoo full of DRL algorithms.
 
 ## Currently Supported Agents
@@ -131,7 +134,7 @@ and hope it can really become a zoo full of DRL algorithms.
 </table>
 </details>
 
-### [Atari Environments](https://pettingzoo.farama.org/environments/mpe/)
+### [Atari Environments](https://www.gymlibrary.dev/environments/atari/)
 
 <details close>
 <summary>(Click to show part of Atari environments)</summary>
@@ -164,6 +167,22 @@ and hope it can really become a zoo full of DRL algorithms.
 
 <details close>
 <summary>(Click to show part of MPE environments)</summary>
+
+<table rules="none" align="center"><tr>
+<td> <center>
+<img src="./figures/mpe/mpe_simple_push.gif" height=100" /><br/><font color="AAAAAA">Simple Push</font>
+</center></td>
+<td> <center>
+<img src="./figures/mpe/mpe_simple_reference.gif" height=100" /> <br/> <font color="AAAAAA">Simple Reference</font>
+</center> </td>
+<td> <center>
+<img src="./figures/mpe/mpe_simple_spread.gif" height=100" /> <br/> <font color="AAAAAA">Simple Spread</font>
+</center> </td>
+<td> <center>
+<br/> <font color="AAAAAA">...</font>
+</center> </td>
+</tr>
+</table>
 
 </details>
 
@@ -201,13 +220,13 @@ After that, create a terminal and install **XuanPolicy** by the following steps.
 **Step 1**: Create a new conda environment (python>=3.7 is suggested):
 
 ```commandline
-conda create -n xuanpolicy python=3.7
+conda create -n xpolicy python=3.7
 ```
 
 **Step 2**: Activate conda environment:
 
 ```commandline
-conda activate xuanpolicy
+conda activate xpolicy
 ```
 
 **Step 3**: Install the library:
