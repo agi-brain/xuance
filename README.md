@@ -266,8 +266,8 @@ If everything going well, you should get a similar display like below.
 
 ```
 @article{XuanPolicy2023,
-    author = {Wenzhang Liu, Wenzhe Cai, Kun Jiang, and others},
-    title = {XuanPolicy: A Comprehensive Deep Reinforcement Learning Library},
+    author = {Wenzhang Liu, Wenzhe Cai, Kun Jiang, Yuanda Wang, Guangran Cheng, Jiawei Wang, Jingyu Cao, Lele Xu, Chaoxu Mu, Changyin Sun},
+    title = {XuanPolicy: A Comprehensive and Unified Deep Reinforcement Learning Library},
     year = {2023}
 }
 ```
