@@ -1,0 +1,39 @@
+agent: "MADDPG"  # the learning algorithms_marl
+env_name: "mpe"
+env_id: "simple_spread_v3"
+continuous_action: True
+policy: "MADDPG_policy"
+representation: "Basic_Identical"
+vectorize: "Dummy_MAS"
+runner: "MARL"
+
+representation_hidden_size: [32, ]  # the units for each hidden layer
+actor_hidden_size: [256, ]
+critic_hidden_size: [256, ]
+activation: 'ReLU'
+activation_action: 'sigmoid'
+
+lr_a: 0.01  # learning rate for actor
+lr_c: 0.001  # learning rate for critic
+tau: 0.001  # soft update for target networks
+sigma: 0.1  # random noise for continuous actions
+clip_grad: 0.5
+
+buffer_size: 200000
+batch_size: 256
+gamma: 0.95  # discount factor
+
+training_steps: 30000
+training_frequency: 1
+
+n_tests: 5
+test_period: 100
+consider_terminal_states: False  # if consider the terminal states when calculate target Q-values.
+
+use_obsnorm: False
+use_rewnorm: False
+obsnorm_range: 5
+rewnorm_range: 5
+
+logdir: "./logs/maddpg/"
+modeldir: "./models/maddpg/"

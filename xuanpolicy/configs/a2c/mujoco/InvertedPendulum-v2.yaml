@@ -1,0 +1,32 @@
+agent: "A2C"
+env_name: "mujoco"
+env_id: "InvertedPendulum-v2"
+policy: "Gaussian_AC"
+representation: "Basic_MLP"
+device: "cuda:0"
+
+representation_hidden_size: [256,]
+actor_hidden_size: [256,]
+critic_hidden_size: [256,]
+
+parallels: 8
+training_steps: 250000
+nsteps: 64
+nepoch: 1
+nminibatch: 1
+learning_rate: 0.0007
+
+vf_coef: 0.25
+ent_coef: 0.0
+clip_grad: 0.5
+clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+gamma: 0.98
+lam: 0.95
+
+use_obsnorm: True
+use_rewnorm: True
+obsnorm_range: 5
+rewnorm_range: 5
+
+logdir: "./logs/a2c/"
+modeldir: "./models/a2c/"

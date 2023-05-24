@@ -1,0 +1,35 @@
+agent: "PPG"
+env_name: "mujoco"
+env_id: "InvertedPendulum-v2"
+representation: "Basic_MLP"
+policy: "Gaussian_PPG"
+device: "cuda:0"
+
+representation_hidden_size: [256,]
+actor_hidden_size: [256,]
+critic_hidden_size: [256,]
+
+parallels: 8
+training_steps: 250000
+nsteps: 256
+nminibatch: 4
+nepoch: 2
+policy_nepoch: 2
+value_nepoch: 4
+aux_nepoch: 8
+
+learning_rate: 0.0007
+
+ent_coef: 0.0
+clip_range: 0.25
+kl_beta: 2.0
+gamma: 0.98
+lam: 0.95
+
+use_obsnorm: True
+use_rewnorm: True
+obsnorm_range: 5
+rewnorm_range: 5
+
+logdir: "./logs/ppg"
+modeldir: "./models/ppg"

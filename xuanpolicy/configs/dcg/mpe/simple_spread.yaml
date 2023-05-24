@@ -1,0 +1,47 @@
+agent: "DCG"  # Options: DCG, DCG_S
+env_name: "mpe"
+env_id: "simple_spread_v3"
+continuous_action: False
+policy: "DCG_policy"
+representation: "Basic_MLP"
+vectorize: "Dummy_MAS"
+runner: "MARL"
+
+representation_hidden_size: [32, ]
+q_hidden_size: [128, ]  # the units for each hidden layer
+hidden_utility_dim: 256  # hidden units of the utility function
+hidden_payoff_dim: 256  # hidden units of the payoff function
+bias_net: "Basic_MLP"
+hidden_bias_dim: [256, ]  # hidden units of the bias network with global states as input
+
+low_rank_payoff: False  # low-rank approximation of payoff function
+payoff_rank: 5  # the rank K in the paper
+graph_type: "FULL"  # specific type of the coordination graph
+n_msg_iterations: 1  # number of iterations for message passing during belief propagation
+msg_normalized: True  # Message normalization during greedy action selection (Kok and Vlassis, 2006)
+
+buffer_size: 100000
+batch_size: 256
+learning_rate: 0.001
+gamma: 0.95  # discount factor
+
+start_greedy: 0.0
+end_greedy: 0.95
+greedy_update_steps: 5000
+training_steps: 20000
+training_frequency: 1
+sync_frequency: 200
+
+n_tests: 5
+test_period: 100
+double_q: True  # use double q learning
+consider_terminal_states: False  # if consider the terminal states when calculate target Q-values
+
+use_obsnorm: False
+use_rewnorm: False
+obsnorm_range: 5
+rewnorm_range: 5
+
+logdir: "./logs/dcg/"
+modeldir: "./models/dcg/"
+
