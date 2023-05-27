@@ -1,6 +1,6 @@
 # XuanPolicy: A Comprehensive and Unified Deep Reinforcement Learning Library #
 
-[![Documentation Status](https://readthedocs.org/projects/xuanpolicy/badge/?version=latest)](https://xuanpolicy.readthedocs.io/en/latest/?badge=latest)
+[![Documentation Status](https://xuanpolicy.readthedocs.io/en/latest/)](https://xuanpolicy.readthedocs.io/en/latest/)
 [![PyPI](https://img.shields.io/pypi/v/xuanpolicy)](https://pypi.org/project/xuanpolicy/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-%3E%3D1.13.0-red)](https://pytorch.org/get-started/locally/)
 [![TensorFlow](https://img.shields.io/badge/TensorFlow-%3E%3D2.6.0-orange)](https://www.tensorflow.org/install)
