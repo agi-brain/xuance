@@ -21,6 +21,30 @@ and hope it can really become a zoo full of DRL algorithms.
 .. _TensorFlow: https://www.tensorflow.org/
 .. _MindSpore: https://www.mindspore.cn/en
 
+Currently Supported Agents
+====================================
+
+Single-agent DRL
+------------------------
+.. toctree::
+   :maxdepth: 1
+   :caption: Single-agent DRL
+
+   agents/dqn
+   agents/ddqn
+   agents/vpg
+
+Multi-agent Reinforcement Learning (MARL)
+------------------------
+
+.. toctree::
+   :maxdepth: 1
+   :caption: MARL
+
+   agents/iql
+   agents/vdn
+   agents/qmix
+
 Installation
 ====================================
 
@@ -30,10 +54,4 @@ Tutorial
 ====================================
 
 
-.. toctree::
-   :maxdepth: 1
-   :caption: Agents
 
-   agents/dqn
-   agents/ddqn
-   agents/vpg
