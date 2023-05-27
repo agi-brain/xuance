@@ -54,7 +54,7 @@ class SAC_Agent(Agent):
 
     def _process_observation(self, observations):
         if self.use_obsnorm:
-            if isinstance(self.observation_space, gym.spaces.Dict):
+            if isinstance(self.observation_space, Dict):
                 for key in self.observation_space.spaces.keys():
                     observations[key] = np.clip(
                         (observations[key] - self.obs_rms.mean[key]) / (self.obs_rms.std[key] + EPS),
@@ -124,7 +124,7 @@ class SAC_Agent(Agent):
             obs = self._process_observation(obs)
             states, acts, = self._action(obs)
             next_obs, rewards, dones, infos = self.envs.step(acts)
-            self.envs.render()
+            self.envs.render("human")
             scores += rewards
             returns = self.gamma * returns + rewards
             obs = next_obs

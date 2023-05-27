@@ -14,7 +14,6 @@ class DummyVecEnv(VecEnv):
     Useful when debugging and when num_env == 1 (in the latter case,
     avoids communication overhead)
     """
-
     def __init__(self, env_fns):
         self.waiting = False
         self.closed = False
@@ -73,7 +72,7 @@ class DummyVecEnv(VecEnv):
             env.close()
 
     def get_images(self):
-        return [env.render("rgb_array") for env in self.envs]
+        return [env.render('rgb_array') for env in self.envs]
 
     def render(self, mode='human'):
         return super().render(mode=mode)

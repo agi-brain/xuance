@@ -29,6 +29,22 @@ class Agent(ABC):
     def load_model(self, path):
         self.learner.load_model(path)
 
+    def log_tb(self, infos: dict, n_steps: int):
+        """
+        infos: (dict) information to be visualized
+        n_steps: current step
+        """
+        for k, v in infos.items():
+           self.writer.add_scalars(k, {k: v}, n_steps)
+
+    def log_wandb(self, infos: dict, n_steps: int):
+        """
+        infos: (dict) information to be visualized
+        n_steps: current step
+        """
+        for k, v in infos.items():
+           wandb.log({k, v}, step=n_steps)
+
     @abstractmethod
     def _process_observation(self, observations):
         raise NotImplementedError

@@ -1,11 +1,11 @@
-ENVIRONMENT_IDS = ['Ant-v2', 'Ant-v3',
-                   'HalfCheetah-v2', 'HalfCheetah-v3',
-                   'Walker2d-v2', 'Walker2d-v3',
-                   'Hopper-v2', 'Hopper-v3',
-                   'Swimmer-v2', 'Swimmer-v3',
-                   'Reacher-v2', 'Reacher-v3',
-                   'Humanoid-v2', 'Humanoid-v3',
-                   'InvertedPendulum-v2']
+ENVIRONMENT_IDS = ['Ant-v2', 'Ant-v3', 'Ant-v4',
+                   'HalfCheetah-v2', 'HalfCheetah-v3', 'HalfCheetah-v4',
+                   'Walker2d-v2', 'Walker2d-v3', 'Walker2d-v4',
+                   'Hopper-v2', 'Hopper-v3', 'Hopper-v4',
+                   'Swimmer-v2', 'Swimmer-v3', 'Swimmer-v4',
+                   'Reacher-v2', 'Reacher-v3', 'Reacher-v4',
+                   'Humanoid-v2', 'Humanoid-v3', 'Humanoid-v4',
+                   'InvertedPendulum-v2', 'InvertedPendulum-v3',]
 import gym
 import numpy as np
 
