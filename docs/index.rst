@@ -26,6 +26,12 @@ Contents
 ====================================
 
 .. toctree::
+   :maxdepth: 0
+   :caption: Introduction
+
+   index
+
+.. toctree::
    :maxdepth: 1
    :caption: Included Algorithms
 
