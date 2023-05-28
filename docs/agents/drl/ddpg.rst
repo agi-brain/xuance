@@ -1,3 +1,3 @@
-DQN: Deep Q-Networks
+DDPG: Deep Deterministic Policy Gradient
 ===============================
 

@@ -1,3 +1,3 @@
-DQN: Deep Q-Networks
+Soft Actor-Critic
 ===============================
 
