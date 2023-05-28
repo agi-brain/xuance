@@ -1,9 +1,6 @@
-Deep Reinforcement Learning Algorithms
-====
-
 .. toctree::
    :maxdepth: 1
-   :caption: Single-agent DRL
+   :caption: Deep Reinforcement Learning
 
    drl/dqn
    drl/cdqn

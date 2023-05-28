@@ -9,27 +9,32 @@ After that, open a terminal and install **XuanPolicy** by the following steps.
 
 **Step 1**: Create a new conda environment (python>=3.7 is suggested):
 
-| conda create -n xpolicy python=3.7
+ | conda create -n xpolicy python=3.7
 
 **Step 2**: Activate conda environment:
 
-| conda activate xpolicy
+ | conda activate xpolicy
 
 **Step 3**: Install the library:
 
-| pip install xuanpolicy
+ | pip install xuanpolicy
 
-This command does not include the dependencies of deep learning toolboxes. To install the **XuanPolicy** with 
-deep learning tools, such as for PyTorch_, TensorFlow2_, MindSpore_, you can type
+This command does not include the dependencies of deep learning toolboxes. 
 
-| pip install xuanpolicy[torch]
+Install the **XuanPolicy** with PyTorch_:
 
-| pip install xuanpolicy[tensorflow]
+ | pip install xuanpolicy[torch]
 
-| pip install xuanpolicy[mindspore]
+Install the **XuanPolicy** with TensorFlow2_:
 
-For all dependencies, you can install it by typing:
-| pip install xuanpolicy[all]
+ | pip install xuanpolicy[tensorflow]
+
+Install the **XuanPolicy** with MindSpore_:
+ | pip install xuanpolicy[mindspore]
+
+Install the **XuanPolicy** with all dependencies:
+
+ | pip install xuanpolicy[all]
 
 Note: Some extra packages should be installed manually for further usage. 
 

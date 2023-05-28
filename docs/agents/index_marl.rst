@@ -1,9 +1,6 @@
-Deep Reinforcement Learning Algorithms
-====
-
 .. toctree::
    :maxdepth: 1
-   :caption: Single-agent DRL
+   :caption: Multi-Agent Reinforcement Learning
 
    marl/iql
    marl/vdn
