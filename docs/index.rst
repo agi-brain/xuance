@@ -25,8 +25,6 @@ and hope it can really become a zoo full of DRL algorithms.
 Currently Supported Agents
 ====================================
 
-Single-agent DRL
-------------------------
 .. toctree::
    :maxdepth: 2
    :caption: Single-agent DRL
@@ -53,9 +51,6 @@ Single-agent DRL
    agents/drl/td3
    agents/drl/ddpg
 
-Multi-agent Reinforcement Learning (MARL)
-------------------------
-
 .. toctree::
    :maxdepth: 2
    :caption: MARL
@@ -80,10 +75,24 @@ Multi-agent Reinforcement Learning (MARL)
 Installation
 ====================================
 
+.. toctree::
+   :maxdepth: 1
+   :caption: Installation
 
+   tutorials/installation
 
 Tutorial
 ====================================
+
+.. toctree::
+   :maxdepth: 1
+   :caption: How to use XuanPolicy?
+
+   tutorials/basic_usage
+   tutorials/professional_usage
+
+Components
+======
 
 
 
