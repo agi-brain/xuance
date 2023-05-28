@@ -1,3 +1,6 @@
+Multi-Agent Reinforcement Learning
+====
+
 .. toctree::
    :maxdepth: 1
    :caption: Multi-Agent Reinforcement Learning

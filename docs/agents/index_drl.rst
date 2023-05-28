@@ -1,3 +1,6 @@
+Deep Reinforcement Learning
+====
+
 .. toctree::
    :maxdepth: 1
    :caption: Deep Reinforcement Learning

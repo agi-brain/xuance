@@ -26,7 +26,7 @@ Contents
 ====================================
 
 .. toctree::
-   :maxdepth: 0
+   :maxdepth: 1
    :caption: Introduction
 
    index
