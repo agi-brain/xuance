@@ -26,51 +26,16 @@ Currently Supported Agents
 ====================================
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Single-agent DRL
 
-   agents/drl/dqn
-   agents/drl/cdqn
-   agents/drl/c51
-   agents/drl/cldqn
-   agents/drl/ddqn
-   agents/drl/dueldqn
-   agents/drl/ldqn
-   agents/drl/noisydqn
-   agents/drl/perdqn
-   agents/drl/qrdqn
-   agents/drl/vpg
-   agents/drl/ppg
-   agents/drl/ppo
-   agents/drl/pdqn
-   agents/drl/spdqn
-   agents/drl/mpdqn
-   agents/drl/a2c
-   agents/drl/sac
-   agents/drl/sac-dis
-   agents/drl/td3
-   agents/drl/ddpg
+   agents/index_drl
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: MARL
 
-   agents/marl/iql
-   agents/marl/vdn
-   agents/marl/qtran
-   agents/marl/qmix
-   agents/marl/wqmix
-   agents/marl/dcg
-   agents/marl/mfq
-   agents/marl/mfac
-   agents/marl/mappo
-   agents/marl/coma
-   agents/marl/isac
-   agents/marl/masac
-   agents/marl/iddpg
-   agents/marl/maddpg
-   agents/marl/matd3
-   agents/marl/vdac
+   agents/index_marl
 
 Installation
 ====================================
