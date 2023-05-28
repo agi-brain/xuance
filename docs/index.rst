@@ -22,42 +22,34 @@ and hope it can really become a zoo full of DRL algorithms.
 .. _MindSpore: https://www.mindspore.cn/en
 
 
-Currently Supported Agents
+Contents
 ====================================
 
 .. toctree::
    :maxdepth: 1
-   :caption: Single-agent DRL
+   :caption: Introduction
+
+   index
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Included Algorithms
 
    agents/index_drl
-
-.. toctree::
-   :maxdepth: 1
-   :caption: MARL
-
    agents/index_marl
 
-Installation
-====================================
+.. toctree::
+   :maxdepth: 1
+   :caption: How to start?
+
+   usage/installation
+   usage/basic_usage
+   usage/professional_usage
 
 .. toctree::
    :maxdepth: 1
-   :caption: Installation
+   :caption: Tutorials
 
-   tutorials/installation
-
-Tutorial
-====================================
-
-.. toctree::
-   :maxdepth: 1
-   :caption: How to use XuanPolicy?
-
-   tutorials/basic_usage
-   tutorials/professional_usage
-
-Components
-======
 
 
 
