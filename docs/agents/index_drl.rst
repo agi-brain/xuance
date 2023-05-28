@@ -3,7 +3,7 @@ Deep Reinforcement Learning
 
 .. toctree::
    :maxdepth: 1
-   :caption: Deep Reinforcement Learning
+   :caption: Included Algorithms
 
    drl/dqn
    drl/cdqn
