@@ -27,12 +27,6 @@ Contents
 
 .. toctree::
    :maxdepth: 1
-   :caption: Introduction
-
-   index
-
-.. toctree::
-   :maxdepth: 1
    :caption: Included Algorithms
 
    agents/index_drl
