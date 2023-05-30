@@ -95,13 +95,13 @@ and hope it can really become a zoo full of DRL algorithms.
 
 <table rules="none" align="center"><tr>
 <td> <center>
-<img src="./figures/toy/cart_pole.gif" height=100" /><br/><font color="AAAAAA">CartPole</font>
+<img src="./docs/figures/toy/cart_pole.gif" height=100" /><br/><font color="AAAAAA">CartPole</font>
 </center></td>
 <td> <center>
-<img src="./figures/toy/pendulum.gif" height=100" /> <br/> <font color="AAAAAA">Pendulum</font>
+<img src="./docs/figures/toy/pendulum.gif" height=100" /> <br/> <font color="AAAAAA">Pendulum</font>
 </center> </td>
 <td> <center>
-<img src="./figures/toy/lunar_lander.gif" height=100" /> <br/> <font color="AAAAAA">Lunar_lander</font>
+<img src="./docs/figures/toy/lunar_lander.gif" height=100" /> <br/> <font color="AAAAAA">Lunar_lander</font>
 </center> </td>
 <td> <center>
 <br/> <font color="AAAAAA">...</font>
@@ -117,16 +117,16 @@ and hope it can really become a zoo full of DRL algorithms.
 
 <table rules="none" align="center"><tr>
 <td> <center>
-<img src="./figures/mujoco/ant.gif" height=100" /><br/><font color="AAAAAA">Ant</font>
+<img src="./docs/figures/mujoco/ant.gif" height=100" /><br/><font color="AAAAAA">Ant</font>
 </center></td>
 <td> <center>
-<img src="./figures/mujoco/half_cheetah.gif" height=100" /> <br/> <font color="AAAAAA">HalfCheetah</font>
+<img src="./docs/figures/mujoco/half_cheetah.gif" height=100" /> <br/> <font color="AAAAAA">HalfCheetah</font>
 </center> </td>
 <td> <center>
-<img src="./figures/mujoco/hopper.gif" height=100" /> <br/> <font color="AAAAAA">Hopper</font>
+<img src="./docs/figures/mujoco/hopper.gif" height=100" /> <br/> <font color="AAAAAA">Hopper</font>
 </center> </td>
 <td> <center>
-<img src="./figures/mujoco/humanoid.gif" height=100" /> <br/> <font color="AAAAAA">Humanoid</font>
+<img src="./docs/figures/mujoco/humanoid.gif" height=100" /> <br/> <font color="AAAAAA">Humanoid</font>
 </center> </td>
 <td> <center>
 <br/> <font color="AAAAAA">...</font>
@@ -142,19 +142,19 @@ and hope it can really become a zoo full of DRL algorithms.
 
 <table rules="none" align="center"><tr>
 <td> <center>
-<img src="./figures/atari/breakout.gif" height=100" /><br/><font color="AAAAAA">Breakout</font>
+<img src="./docs/figures/atari/breakout.gif" height=100" /><br/><font color="AAAAAA">Breakout</font>
 </center></td>
 <td> <center>
-<img src="./figures/atari/boxing.gif" height=100" /> <br/> <font color="AAAAAA">Boxing</font>
+<img src="./docs/figures/atari/boxing.gif" height=100" /> <br/> <font color="AAAAAA">Boxing</font>
 </center> </td>
 <td> <center>
-<img src="./figures/atari/alien.gif" height=100" /> <br/> <font color="AAAAAA">Alien</font>
+<img src="./docs/figures/atari/alien.gif" height=100" /> <br/> <font color="AAAAAA">Alien</font>
 </center> </td>
 <td> <center>
-<img src="./figures/atari/adventure.gif" height=100" /> <br/> <font color="AAAAAA">Adventure</font>
+<img src="./docs/figures/atari/adventure.gif" height=100" /> <br/> <font color="AAAAAA">Adventure</font>
 </center> </td>
 <td> <center>
-<img src="./figures/atari/air_raid.gif" height=100" /> <br/> <font color="AAAAAA">Air Raid</font>
+<img src="./docs/figures/atari/air_raid.gif" height=100" /> <br/> <font color="AAAAAA">Air Raid</font>
 </center> </td>
 <td> <center>
 <br/> <font color="AAAAAA">...</font>
@@ -171,13 +171,13 @@ and hope it can really become a zoo full of DRL algorithms.
 
 <table rules="none" align="center"><tr>
 <td> <center>
-<img src="./figures/mpe/mpe_simple_push.gif" height=100" /><br/><font color="AAAAAA">Simple Push</font>
+<img src="./docs/figures/mpe/mpe_simple_push.gif" height=100" /><br/><font color="AAAAAA">Simple Push</font>
 </center></td>
 <td> <center>
-<img src="./figures/mpe/mpe_simple_reference.gif" height=100" /> <br/> <font color="AAAAAA">Simple Reference</font>
+<img src="./docs/figures/mpe/mpe_simple_reference.gif" height=100" /> <br/> <font color="AAAAAA">Simple Reference</font>
 </center> </td>
 <td> <center>
-<img src="./figures/mpe/mpe_simple_spread.gif" height=100" /> <br/> <font color="AAAAAA">Simple Spread</font>
+<img src="./docs/figures/mpe/mpe_simple_spread.gif" height=100" /> <br/> <font color="AAAAAA">Simple Spread</font>
 </center> </td>
 <td> <center>
 <br/> <font color="AAAAAA">...</font>
@@ -194,13 +194,13 @@ and hope it can really become a zoo full of DRL algorithms.
 
 <table rules="none" align="center"><tr>
 <td> <center>
-<img src="./figures/magent/battle.gif" height=100" /><br/><font color="AAAAAA">Battle</font>
+<img src="./docs/figures/magent/battle.gif" height=100" /><br/><font color="AAAAAA">Battle</font>
 </center></td>
 <td> <center>
-<img src="./figures/magent/tiger_deer.gif" height=100" /> <br/> <font color="AAAAAA">Tiger Deer</font>
+<img src="./docs/figures/magent/tiger_deer.gif" height=100" /> <br/> <font color="AAAAAA">Tiger Deer</font>
 </center> </td>
 <td> <center>
-<img src="./figures/magent/battlefield.gif" height=100" /> <br/> <font color="AAAAAA">Battle Field</font>
+<img src="./docs/figures/magent/battlefield.gif" height=100" /> <br/> <font color="AAAAAA">Battle Field</font>
 </center> </td>
 <td> <center>
 <br/> <font color="AAAAAA">...</font>
@@ -273,7 +273,7 @@ $ tensorboard --logdir ./logs/dqn/torch/CartPole-v0
 ```
 If everything going well, you should get a similar display like below. 
 
-![Tensorboard](./figures/debug.png)
+![Tensorboard](docs/figures/debug.png)
 
 ## Selected Results
 
