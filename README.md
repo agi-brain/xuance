@@ -1,5 +1,5 @@
 <div align="center">
-  <a href="https://xuanpolicy.readthedocs.io/"><img width="520px" height="auto" src="./docs/figures/logo_1.png"></a>
+  <a href="https://xuanpolicy.readthedocs.io/"><img width="auto" height="auto" src="./docs/figures/logo_1.png"></a>
 </div>
 
 # XuanPolicy: A Comprehensive and Unified Deep Reinforcement Learning Library
