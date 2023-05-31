@@ -1,1 +1,3 @@
-site_name: My Docs
+site_name: MkLorum
+site_url: https://xuanpolicy.readthedocs.io/
+theme: readthedocs
