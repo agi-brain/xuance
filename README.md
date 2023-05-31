@@ -1,6 +1,4 @@
-<div align="center">
-  <a href="https://xuanpolicy.readthedocs.io/"><img width="auto" height="auto" src="./docs/figures/logo_1.png"></a>
-</div>
+![logo](./docs/figures/logo_1.png)
 
 # XuanPolicy: A Comprehensive and Unified Deep Reinforcement Learning Library
 
