@@ -1,3 +1,7 @@
+<div align="center">
+  <a href="https://xuanpolicy.readthedocs.io/"><img width="520px" height="auto" src="./docs/figures/logo_1.png"></a>
+</div>
+
 # XuanPolicy: A Comprehensive and Unified Deep Reinforcement Learning Library
 
 [![Documentation Status](https://readthedocs.org/projects/xuanpolicy/badge/?version=latest)](https://xuanpolicy.readthedocs.io/en/latest/?badge=latest)
