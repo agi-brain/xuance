@@ -1,5 +1,10 @@
-Welcome to XuanPolicy!
-========================================
+.. XuanPolicy documentation master file, created by
+   sphinx-quickstart on Wed May 31 18:08:46 2023.
+   You can adapt this file completely to your liking, but it should at least
+   contain the root `toctree` directive.
+
+Welcome to XuanPolicy's documentation!
+======================================
 
 **XuanPolicy** is an open-source ensemble of Deep Reinforcement Learning (DRL) algorithm implementations.
 
@@ -22,33 +27,23 @@ and hope it can really become a zoo full of DRL algorithms.
 .. _MindSpore: https://www.mindspore.cn/en
 
 
-Contents
-====================================
-
 .. toctree::
-   :maxdepth: 1
-   :caption: Introduction
+   :maxdepth: 2
+   :caption: Contents:
 
    index
-
-.. toctree::
-   :maxdepth: 1
-   :caption: Included Algorithms
-
    agents/index_drl
    agents/index_marl
-
-.. toctree::
-   :maxdepth: 1
-   :caption: How to start?
-
    usage/installation
    usage/basic_usage
    usage/professional_usage
 
-.. toctree::
-   :maxdepth: 1
-   :caption: Tutorials
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
 
 
 
