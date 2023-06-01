@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Environments &mdash; XuanPolicy v0.1.7 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/fonts.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="configs setting" href="../components/configs.html" />
+    <link rel="prev" title="VDAC" href="../agents/marl/vdac.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> XuanPolicy
+            <img src="../../_static/logo_2.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">How to use:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../usage/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage/basic_usage.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage/professional_usage.html">Professional Usage</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Included algorithms:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../agents/index_drl.html">Deep Reinforcement Learning</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../agents/index_marl.html">Multi-Agent Reinforcement Learning</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Benchmark</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Environments</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#toy">Toy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#mujoco">MuJoCo</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#atari">Atari</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#mpe">MPE</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#magent">Magent</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API tutorials:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../components/configs.html">configs setting</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">XuanPolicy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a></li>
+      <li class="breadcrumb-item active">Environments</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/documents/benchmark/environments.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="environments">
+<h1>Environments<a class="headerlink" href="#environments" title="Permalink to this headline">¶</a></h1>
+<section id="toy">
+<h2>Toy<a class="headerlink" href="#toy" title="Permalink to this headline">¶</a></h2>
+<a class="reference internal image-reference" href="../../_images/cart_pole.gif"><img alt="../../_images/cart_pole.gif" src="../../_images/cart_pole.gif" style="height: 150px;" /></a>
+<a class="reference internal image-reference" href="../../_images/lunar_lander.gif"><img alt="../../_images/lunar_lander.gif" src="../../_images/lunar_lander.gif" style="height: 150px;" /></a>
+<a class="reference internal image-reference" href="../../_images/pendulum.gif"><img alt="../../_images/pendulum.gif" src="../../_images/pendulum.gif" style="height: 150px;" /></a>
+</section>
+<section id="mujoco">
+<h2>MuJoCo<a class="headerlink" href="#mujoco" title="Permalink to this headline">¶</a></h2>
+<a class="reference internal image-reference" href="../../_images/ant.gif"><img alt="../../_images/ant.gif" src="../../_images/ant.gif" style="height: 150px;" /></a>
+<a class="reference internal image-reference" href="../../_images/half_cheetah.gif"><img alt="../../_images/half_cheetah.gif" src="../../_images/half_cheetah.gif" style="height: 150px;" /></a>
+<a class="reference internal image-reference" href="../../_images/hopper.gif"><img alt="../../_images/hopper.gif" src="../../_images/hopper.gif" style="height: 150px;" /></a>
+<a class="reference internal image-reference" href="../../_images/humanoid.gif"><img alt="../../_images/humanoid.gif" src="../../_images/humanoid.gif" style="height: 150px;" /></a>
+</section>
+<section id="atari">
+<h2>Atari<a class="headerlink" href="#atari" title="Permalink to this headline">¶</a></h2>
+<a class="reference internal image-reference" href="../../_images/adventure.gif"><img alt="../../_images/adventure.gif" src="../../_images/adventure.gif" style="height: 150px;" /></a>
+<a class="reference internal image-reference" href="../../_images/air_raid.gif"><img alt="../../_images/air_raid.gif" src="../../_images/air_raid.gif" style="height: 150px;" /></a>
+<a class="reference internal image-reference" href="../../_images/alien.gif"><img alt="../../_images/alien.gif" src="../../_images/alien.gif" style="height: 150px;" /></a>
+<a class="reference internal image-reference" href="../../_images/boxing.gif"><img alt="../../_images/boxing.gif" src="../../_images/boxing.gif" style="height: 150px;" /></a>
+<a class="reference internal image-reference" href="../../_images/breakout.gif"><img alt="../../_images/breakout.gif" src="../../_images/breakout.gif" style="height: 150px;" /></a>
+</section>
+<section id="mpe">
+<h2>MPE<a class="headerlink" href="#mpe" title="Permalink to this headline">¶</a></h2>
+<a class="reference internal image-reference" href="../../_images/mpe_simple_push.gif"><img alt="../../_images/mpe_simple_push.gif" src="../../_images/mpe_simple_push.gif" style="height: 150px;" /></a>
+<a class="reference internal image-reference" href="../../_images/mpe_simple_reference.gif"><img alt="../../_images/mpe_simple_reference.gif" src="../../_images/mpe_simple_reference.gif" style="height: 150px;" /></a>
+<a class="reference internal image-reference" href="../../_images/mpe_simple_spread.gif"><img alt="../../_images/mpe_simple_spread.gif" src="../../_images/mpe_simple_spread.gif" style="height: 150px;" /></a>
+<a class="reference internal image-reference" href="../../_images/mpe_simple_world_comm.gif"><img alt="../../_images/mpe_simple_world_comm.gif" src="../../_images/mpe_simple_world_comm.gif" style="height: 150px;" /></a>
+</section>
+<section id="magent">
+<h2>Magent<a class="headerlink" href="#magent" title="Permalink to this headline">¶</a></h2>
+<a class="reference internal image-reference" href="../../_images/battle.gif"><img alt="../../_images/battle.gif" src="../../_images/battle.gif" style="height: 150px;" /></a>
+<a class="reference internal image-reference" href="../../_images/battlefield.gif"><img alt="../../_images/battlefield.gif" src="../../_images/battlefield.gif" style="height: 150px;" /></a>
+<a class="reference internal image-reference" href="../../_images/tiger_deer.gif"><img alt="../../_images/tiger_deer.gif" src="../../_images/tiger_deer.gif" style="height: 150px;" /></a>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../agents/marl/vdac.html" class="btn btn-neutral float-left" title="VDAC" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../components/configs.html" class="btn btn-neutral float-right" title="configs setting" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Wenzhang Liu, Wenzhe Cai, Kun Jiang, Yuanda Wang, Guangran Cheng, Jiawei Wang, Jingyu Cao, Lele Xu, Chaoxu Mu, and Changyin Sun.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

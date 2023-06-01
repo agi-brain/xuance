@@ -28,10 +28,6 @@ and hope it can really become a zoo full of DRL algorithms.
 
 .. toctree::
    :maxdepth: 1
-   :caption: Home:
-
-.. toctree::
-   :maxdepth: 1
    :caption: How to use:
 
    documents/usage/installation
@@ -44,6 +40,12 @@ and hope it can really become a zoo full of DRL algorithms.
 
    documents/agents/index_drl
    documents/agents/index_marl
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Benchmark
+
+   documents/benchmark/environments
 
 .. toctree::
    :maxdepth: 1
