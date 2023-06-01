@@ -1,6 +1,4 @@
-<center>
-<img src="./docs/source/figures/logo_1.png" />
-</center>
+![logo](./docs/source/figures/logo_1.png)
 
 # XuanPolicy: A Comprehensive and Unified Deep Reinforcement Learning Library
 
