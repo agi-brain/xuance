@@ -39,7 +39,7 @@ and hope it can really become a zoo full of DRL algorithms.
 
 ### DRL
 
-<details close>
+<details open>
 <summary>(Click to show all DRL agents)</summary>
 
 - Vanilla Policy Gradient - PG [[Paper](https://proceedings.neurips.cc/paper/2001/file/4b86abe48d358ecf194c56c69108433e-Paper.pdf)]
@@ -67,7 +67,7 @@ and hope it can really become a zoo full of DRL algorithms.
 </details>
 
 ### MARL
-<details close>
+<details open>
 <summary>(Click to show all MARL agents)</summary>
 
 - Independent Q-learning - IQL [[Paper](https://hal.science/file/index/docid/720669/filename/Matignon2012independent.pdf)] [[Code](https://github.com/oxwhirl/pymarl)]
@@ -92,7 +92,7 @@ and hope it can really become a zoo full of DRL algorithms.
 
 ### Toy Environments ([Classic Control](https://www.gymlibrary.dev/environments/classic_control/), [Box2D](https://www.gymlibrary.dev/environments/box2d/), etc.)
 
-<details close>
+<details open>
 <summary>(Click to show part of Toy environments)</summary>
 
 <table rules="none" align="center"><tr>
@@ -114,7 +114,7 @@ and hope it can really become a zoo full of DRL algorithms.
 
 ### [MuJoCo Environments](https://www.gymlibrary.dev/environments/mujoco/)
 
-<details close>
+<details open>
 <summary>(Click to show part of MuJoCo environments)</summary>
 
 <table rules="none" align="center"><tr>
@@ -139,7 +139,7 @@ and hope it can really become a zoo full of DRL algorithms.
 
 ### [Atari Environments](https://www.gymlibrary.dev/environments/atari/)
 
-<details close>
+<details open>
 <summary>(Click to show part of Atari environments)</summary>
 
 <table rules="none" align="center"><tr>
@@ -168,7 +168,7 @@ and hope it can really become a zoo full of DRL algorithms.
 
 ### [MPE Environments](https://pettingzoo.farama.org/environments/mpe/)
 
-<details close>
+<details open>
 <summary>(Click to show part of MPE environments)</summary>
 
 <table rules="none" align="center"><tr>
@@ -191,7 +191,7 @@ and hope it can really become a zoo full of DRL algorithms.
 
 ### [Magent](https://magent2.farama.org/)
 
-<details close>
+<details open>
 <summary>(Click to show part of Magent environments)</summary>
 
 <table rules="none" align="center"><tr>
