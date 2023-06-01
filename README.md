@@ -2,21 +2,21 @@
 
 # XuanPolicy: A Comprehensive and Unified Deep Reinforcement Learning Library
 
-[![Documentation Status](https://readthedocs.org/projects/xuanpolicy/badge/?version=latest)](https://xuanpolicy.readthedocs.io/en/latest/?badge=latest)
 [![PyPI](https://img.shields.io/pypi/v/xuanpolicy)](https://pypi.org/project/xuanpolicy/)
-[![PyTorch](https://img.shields.io/badge/PyTorch-%3E%3D1.13.0-red)](https://pytorch.org/get-started/locally/)
-[![TensorFlow](https://img.shields.io/badge/TensorFlow-%3E%3D2.6.0-orange)](https://www.tensorflow.org/install)
-[![MindSpore](https://img.shields.io/badge/MindSpore-%3E%3D1.10.1-blue)](https://www.mindspore.cn/install/en)
-[![Python](https://img.shields.io/badge/Python-3.7%7C3.8%7C3.9%7C3.10-yellow)](https://www.anaconda.com/download)
-
-[![gym](https://img.shields.io/badge/gym-%3E%3D0.21.0-blue)](https://www.gymlibrary.dev/)
-[![gymnasium](https://img.shields.io/badge/gymnasium-%3E%3D0.28.1-blue)](https://www.gymlibrary.dev/)
-[![pettingzoo](https://img.shields.io/badge/PettingZoo-%3E%3D1.23.0-blue)](https://pettingzoo.farama.org/)
-
-![GitHub](https://img.shields.io/github/license/agi-brain/xuanpolicy)
+[![Documentation Status](https://readthedocs.org/projects/xuanpolicy/badge/?version=latest)](https://xuanpolicy.readthedocs.io/en/latest/?badge=latest)
 ![GitHub Repo stars](https://img.shields.io/github/stars/wenzhangliu/XuanPolicy)
 ![GitHub forks](https://img.shields.io/github/forks/wenzhangliu/XuanPolicy)
 ![GitHub watchers](https://img.shields.io/github/watchers/wenzhangliu/XuanPolicy)
+![GitHub](https://img.shields.io/github/license/agi-brain/xuanpolicy)
+
+[![PyTorch](https://img.shields.io/badge/PyTorch-%3E%3D1.13.0-red)](https://pytorch.org/get-started/locally/)
+[![TensorFlow](https://img.shields.io/badge/TensorFlow-%3E%3D2.6.0-orange)](https://www.tensorflow.org/install)
+[![MindSpore](https://img.shields.io/badge/MindSpore-%3E%3D1.10.1-blue)](https://www.mindspore.cn/install/en)
+
+[![Python](https://img.shields.io/badge/Python-3.7%7C3.8%7C3.9%7C3.10-yellow)](https://www.anaconda.com/download)
+[![gym](https://img.shields.io/badge/gym-%3E%3D0.21.0-blue)](https://www.gymlibrary.dev/)
+[![gymnasium](https://img.shields.io/badge/gymnasium-%3E%3D0.28.1-blue)](https://www.gymlibrary.dev/)
+[![pettingzoo](https://img.shields.io/badge/PettingZoo-%3E%3D1.23.0-blue)](https://pettingzoo.farama.org/)
 
 **XuanPolicy** is an open-source ensemble of Deep Reinforcement Learning (DRL) algorithm implementations.
 
