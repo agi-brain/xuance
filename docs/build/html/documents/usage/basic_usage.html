@@ -44,8 +44,9 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Quick Start</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#train-a-model">Train a Model</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#test-the-model">Test the Model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#run-a-drl-agent">Run a DRL agent</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#run-an-marl-agent">Run an MARL agent</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#test">Test</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#logger">Logger</a></li>
 </ul>
 </li>
@@ -55,6 +56,10 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../agents/index_drl.html">Deep Reinforcement Learning</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../agents/index_marl.html">Multi-Agent Reinforcement Learning</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Benchmark</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../benchmark/environments.html">Environments</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API tutorials:</span></p>
 <ul>
@@ -87,16 +92,38 @@
              
   <section id="quick-start">
 <h1>Quick Start<a class="headerlink" href="#quick-start" title="Permalink to this headline">¶</a></h1>
-<section id="train-a-model">
-<h2>Train a Model<a class="headerlink" href="#train-a-model" title="Permalink to this headline">¶</a></h2>
+<section id="run-a-drl-agent">
+<h2>Run a DRL agent<a class="headerlink" href="#run-a-drl-agent" title="Permalink to this headline">¶</a></h2>
+<p>In XuanPolicy, it is easy to build a DRL agent. First you need to create a <em>runner</em>
+and specify the <code class="docutils literal notranslate"><span class="pre">agent_name</span></code>, <code class="docutils literal notranslate"><span class="pre">env_name</span></code>, then a runner that contains agent, policy, and envs, etc., will be built.
+Finally, execute <code class="docutils literal notranslate"><span class="pre">runner.run</span></code> and the agent’s model is training.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">xuanpolicy</span> <span class="k">as</span> <span class="nn">xp</span>
 <span class="n">runner</span> <span class="o">=</span> <span class="n">xp</span><span class="o">.</span><span class="n">get_runner</span><span class="p">(</span><span class="n">agent_name</span><span class="o">=</span><span class="s1">&#39;dqn&#39;</span><span class="p">,</span> <span class="n">env_name</span><span class="o">=</span><span class="s1">&#39;toy/CartPole-v0&#39;</span><span class="p">,</span> <span class="n">is_test</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="n">runner</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
 </pre></div>
 </div>
+<p>After training the agent, you can test and view the model by the following codes:</p>
 </section>
-<section id="test-the-model">
-<h2>Test the Model<a class="headerlink" href="#test-the-model" title="Permalink to this headline">¶</a></h2>
+<section id="run-an-marl-agent">
+<h2>Run an MARL agent<a class="headerlink" href="#run-an-marl-agent" title="Permalink to this headline">¶</a></h2>
+<p>XuanPolicy support MARL algorithms with both cooperative and competitive tasks.
+Similaly, you can start by:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">xuanpolicy</span> <span class="k">as</span> <span class="nn">xp</span>
+<span class="n">runner</span> <span class="o">=</span> <span class="n">xp</span><span class="o">.</span><span class="n">get_runner</span><span class="p">(</span><span class="n">agent_name</span><span class="o">=</span><span class="s1">&#39;maddpg&#39;</span><span class="p">,</span> <span class="n">env_name</span><span class="o">=</span><span class="s1">&#39;mpe/simple_spread&#39;</span><span class="p">,</span> <span class="n">is_test</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">runner</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>For competitve tasks in which agents can be divided to two or more sides, you can run a demo by:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">xuanpolicy</span> <span class="k">as</span> <span class="nn">xp</span>
+<span class="n">runner</span> <span class="o">=</span> <span class="n">xp</span><span class="o">.</span><span class="n">get_runner</span><span class="p">(</span><span class="n">agent_name</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;maddpg&quot;</span><span class="p">,</span> <span class="s2">&quot;iddpg&quot;</span><span class="p">],</span> <span class="n">env_name</span><span class="o">=</span><span class="s1">&#39;mpe/simple_push&#39;</span><span class="p">,</span> <span class="n">is_test</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">runner</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>In this demo, the agents in <a class="reference external" href="https://pettingzoo.farama.org/environments/mpe/simple_push/">mpe/simple_push</a> environment are divided into two sides, named “adversary_0” and “agent_0”.
+The “adversary”s are MADDPG agents, and the “agent”s are IDDPG agents.</p>
+</section>
+<section id="test">
+<h2>Test<a class="headerlink" href="#test" title="Permalink to this headline">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">xuanpolicy</span> <span class="k">as</span> <span class="nn">xp</span>
 <span class="n">runner_test</span> <span class="o">=</span> <span class="n">xp</span><span class="o">.</span><span class="n">get_runner</span><span class="p">(</span><span class="n">agent_name</span><span class="o">=</span><span class="s1">&#39;dqn&#39;</span><span class="p">,</span> <span class="n">env_name</span><span class="o">=</span><span class="s1">&#39;toy/CartPole-v0&#39;</span><span class="p">,</span> <span class="n">is_test</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="n">runner_test</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
