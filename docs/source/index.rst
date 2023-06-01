@@ -32,7 +32,7 @@ and hope it can really become a zoo full of DRL algorithms.
 
 .. toctree::
    :maxdepth: 1
-   :caption: How to use?:
+   :caption: How to use:
 
    documents/usage/installation
    documents/usage/basic_usage

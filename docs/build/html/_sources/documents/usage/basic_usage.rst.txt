@@ -1,8 +1,8 @@
-Basic Usage
+Quick Start
 =======================
 
 Train a Model
-----
+-----------------------
 
 :: 
 
@@ -11,7 +11,7 @@ Train a Model
     runner.run()
 
 Test the Model
-----
+-----------------------
 
 :: 
 
@@ -20,7 +20,7 @@ Test the Model
     runner_test.run()
 
 Logger
-----
+-----------------------
 
 You can use tensorboard to visualize what happened in the training process. After training, the log file will be automatically generated in the directory ".results/" and you should be able to see some training data after running the command.
 
