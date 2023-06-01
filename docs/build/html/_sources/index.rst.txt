@@ -27,12 +27,29 @@ and hope it can really become a zoo full of DRL algorithms.
 .. _MindSpore: https://www.mindspore.cn/en
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Contents:
+   :maxdepth: 1
+   :caption: Home:
+
+.. toctree::
+   :maxdepth: 1
+   :caption: How to use?:
 
    documents/usage/installation
    documents/usage/basic_usage
    documents/usage/professional_usage
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Included algorithms:
+
+   documents/agents/index_drl
+   documents/agents/index_marl
+
+.. toctree::
+   :maxdepth: 1
+   :caption: API tutorials:
+
+   documents/components/configs
 
 
 Indices and tables

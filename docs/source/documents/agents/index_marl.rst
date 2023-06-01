@@ -2,7 +2,7 @@ Multi-Agent Reinforcement Learning
 ==================================
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    :caption: Included Algorithms
 
    marl/iql

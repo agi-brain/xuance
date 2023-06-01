@@ -1,12 +1,14 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Installation &mdash; XuanPolicy v0.1.7 documentation</title>
       <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/fonts.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
@@ -14,9 +16,7 @@
         <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
         <script src="../../_static/jquery.js"></script>
         <script src="../../_static/underscore.js"></script>
-        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../../_static/doctools.js"></script>
-        <script src="../../_static/sphinx_highlight.js"></script>
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
@@ -29,25 +29,31 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-
-          
-          
-          <a href="../../index.html" class="icon icon-home">
-            XuanPolicy
+            <a href="../../index.html" class="icon icon-home"> XuanPolicy
+            <img src="../../_static/logo_2.png" class="logo" alt="Logo"/>
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+              <p class="caption" role="heading"><span class="caption-text">How to use?:</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="basic_usage.html">Basic Usage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="professional_usage.html">Further Usage</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Included algorithms:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../agents/index_drl.html">Deep Reinforcement Learning</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../agents/index_marl.html">Multi-Agent Reinforcement Learning</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API tutorials:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../components/configs.html">configs setting</a></li>
 </ul>
 
         </div>
@@ -63,7 +69,7 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li><a href="../../index.html" class="icon icon-home"></a></li>
       <li class="breadcrumb-item active">Installation</li>
       <li class="wy-breadcrumbs-aside">
             <a href="../../_sources/documents/usage/installation.rst.txt" rel="nofollow"> View page source</a>
@@ -75,16 +81,14 @@
            <div itemprop="articleBody">
              
   <section id="installation">
-<h1>Installation<a class="headerlink" href="#installation" title="Permalink to this heading">¶</a></h1>
+<h1>Installation<a class="headerlink" href="#installation" title="Permalink to this headline"></a></h1>
 <p>The library can be run at Linux, Windows, MacOS, and EulerOS, etc. It is easy to be installed.</p>
 <p>Before installing <strong>XuanPolicy</strong>, you should install <a class="reference external" href="https://www.anaconda.com/download">Anaconda</a> to prepare a python environment.</p>
 <p>After that, open a terminal and install <strong>XuanPolicy</strong> by the following steps.</p>
-<dl>
-<dt><strong>Step 1</strong>: Create a new conda environment (python&gt;=3.7 is suggested):</dt><dd><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">create</span> <span class="o">-</span><span class="n">n</span> <span class="n">xpolicy</span> <span class="n">python</span><span class="o">=</span><span class="mf">3.7</span>
+<p><strong>Step 1</strong>: Create a new conda environment (python&gt;=3.7 is suggested):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">create</span> <span class="o">-</span><span class="n">n</span> <span class="n">xpolicy</span> <span class="n">python</span><span class="o">=</span><span class="mf">3.7</span>
 </pre></div>
 </div>
-</dd>
-</dl>
 <p><strong>Step 2</strong>: Activate conda environment:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">activate</span> <span class="n">xpolicy</span>
 </pre></div>
