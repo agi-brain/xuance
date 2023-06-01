@@ -86,9 +86,9 @@
            <div itemprop="articleBody">
              
   <section id="basic-usage">
-<h1>Basic Usage<a class="headerlink" href="#basic-usage" title="Permalink to this headline">¶</a></h1>
+<h1>Basic Usage<a class="headerlink" href="#basic-usage" title="Permalink to this headline"></a></h1>
 <section id="train-a-model">
-<h2>Train a Model<a class="headerlink" href="#train-a-model" title="Permalink to this headline">¶</a></h2>
+<h2>Train a Model<a class="headerlink" href="#train-a-model" title="Permalink to this headline"></a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">xuanpolicy</span> <span class="k">as</span> <span class="nn">xp</span>
 <span class="n">runner</span> <span class="o">=</span> <span class="n">xp</span><span class="o">.</span><span class="n">get_runner</span><span class="p">(</span><span class="n">agent_name</span><span class="o">=</span><span class="s1">&#39;dqn&#39;</span><span class="p">,</span> <span class="n">env_name</span><span class="o">=</span><span class="s1">&#39;toy/CartPole-v0&#39;</span><span class="p">,</span> <span class="n">is_test</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="n">runner</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
@@ -96,7 +96,7 @@
 </div>
 </section>
 <section id="test-the-model">
-<h2>Test the Model<a class="headerlink" href="#test-the-model" title="Permalink to this headline">¶</a></h2>
+<h2>Test the Model<a class="headerlink" href="#test-the-model" title="Permalink to this headline"></a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">xuanpolicy</span> <span class="k">as</span> <span class="nn">xp</span>
 <span class="n">runner_test</span> <span class="o">=</span> <span class="n">xp</span><span class="o">.</span><span class="n">get_runner</span><span class="p">(</span><span class="n">agent_name</span><span class="o">=</span><span class="s1">&#39;dqn&#39;</span><span class="p">,</span> <span class="n">env_name</span><span class="o">=</span><span class="s1">&#39;toy/CartPole-v0&#39;</span><span class="p">,</span> <span class="n">is_test</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="n">runner_test</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
@@ -104,7 +104,7 @@
 </div>
 </section>
 <section id="logger">
-<h2>Logger<a class="headerlink" href="#logger" title="Permalink to this headline">¶</a></h2>
+<h2>Logger<a class="headerlink" href="#logger" title="Permalink to this headline"></a></h2>
 <p>You can use tensorboard to visualize what happened in the training process. After training, the log file will be automatically generated in the directory “.results/” and you should be able to see some training data after running the command.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">tensorboard</span> <span class="o">--</span><span class="n">logdir</span> <span class="o">./</span><span class="n">logs</span><span class="o">/</span><span class="n">dqn</span><span class="o">/</span><span class="n">torch</span><span class="o">/</span><span class="n">CartPole</span><span class="o">-</span><span class="n">v0</span>
 </pre></div>
