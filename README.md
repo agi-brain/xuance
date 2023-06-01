@@ -13,8 +13,7 @@
 [![gymnasium](https://img.shields.io/badge/gymnasium-%3E%3D0.28.1-blue)](https://www.gymlibrary.dev/)
 [![pettingzoo](https://img.shields.io/badge/PettingZoo-%3E%3D1.23.0-blue)](https://pettingzoo.farama.org/)
 
-[![pettingzoo](https://img.shields.io/badge/License-MIT-yellowgreen)](https://github.com/wenzhangliu/XuanPolicy/blob/master/LICENSE.txt)
-![GitHub all releases](https://img.shields.io/github/downloads/wenzhangliu/XuanPolicy/total)
+![GitHub](https://img.shields.io/github/license/agi-brain/xuanpolicy)
 ![GitHub Repo stars](https://img.shields.io/github/stars/wenzhangliu/XuanPolicy)
 ![GitHub forks](https://img.shields.io/github/forks/wenzhangliu/XuanPolicy)
 ![GitHub watchers](https://img.shields.io/github/watchers/wenzhangliu/XuanPolicy)
@@ -35,7 +34,11 @@ We expect it to be compatible with multiple deep learning toolboxes(
 **[MindSpore](https://www.mindspore.cn/en)**),
 and hope it can really become a zoo full of DRL algorithms.
 
-## Currently Supported Agents
+**[Full Documentation](https://xuanpolicy.readthedocs.io/)** |
+**[OpenI (启智社区)](https://openi.pcl.ac.cn/OpenRelearnware/XuanPolicy)** |
+**[XuanCe (Mini version)](https://github.com/wzcai99/xuance)**
+
+## Currently Included Algorithms
 
 ### DRL
 
@@ -66,7 +69,7 @@ and hope it can really become a zoo full of DRL algorithms.
 - Split parameterised deep Q network - SP-DQN [[Paper](https://arxiv.org/pdf/1810.06394.pdf)]
 </details>
 
-### MARL
+### Multi-Agent Reinforcement Learning (MARL)
 <details open>
 <summary>(Click to hide)</summary>
 
