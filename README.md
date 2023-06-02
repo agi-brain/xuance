@@ -34,7 +34,8 @@ We expect it to be compatible with multiple deep learning toolboxes(
 **[MindSpore](https://www.mindspore.cn/en)**),
 and hope it can really become a zoo full of DRL algorithms.
 
-**[Full Documentation](https://xuanpolicy.readthedocs.io/)** |
+**[Full Documentation](https://xuanpolicy.readthedocs.io/en/latest)** |
+**[中文文档](https://xuanpolicy.readthedocs.io/zh/latest/)** |
 **[OpenI (启智社区)](https://openi.pcl.ac.cn/OpenRelearnware/XuanPolicy)** |
 **[XuanCe (Mini version)](https://github.com/wzcai99/xuance)**
 
