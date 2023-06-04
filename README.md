@@ -278,9 +278,9 @@ You can use tensorboard to visualize what happened in the training process. Afte
 ``` 
 $ tensorboard --logdir ./logs/dqn/torch/CartPole-v0
 ```
-If everything going well, you should get a similar display like below. 
+<!-- If everything going well, you should get a similar display like below. 
 
-![Tensorboard](docs/source/figures/debug.png)
+![Tensorboard](docs/source/figures/debug.png) -->
 
 ## Selected Results
 
