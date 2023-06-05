@@ -36,6 +36,13 @@ and hope it can really become a zoo full of DRL algorithms.
 
 .. toctree::
    :maxdepth: 1
+   :caption: APIs:
+
+   documents/apis/common
+   documents/apis/environment
+   
+.. toctree::
+   :maxdepth: 1
    :caption: Included algorithms:
 
    documents/agents/index_drl
@@ -43,15 +50,13 @@ and hope it can really become a zoo full of DRL algorithms.
 
 .. toctree::
    :maxdepth: 1
-   :caption: Benchmark
+   :caption: Benchmarks
 
-   documents/benchmark/environments
-
-.. toctree::
-   :maxdepth: 1
-   :caption: API tutorials:
-
-   documents/components/configs
+   documents/benchmark/toy
+   documents/benchmark/mujoco
+   documents/benchmark/atari
+   documents/benchmark/mpe
+   documents/benchmark/magent
 
 
 Indices and tables
