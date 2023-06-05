@@ -14,7 +14,7 @@ class MuJoCo_Env(gym.Env):
     def __init__(self, env_id: str, seed: int):
         assert env_id in ENVIRONMENT_IDS
         self.env = gym.make(env_id)
-        self.env.seed(seed)
+        # self.env.seed(seed)
         self.observation_space = self.env.observation_space
         self.action_space = self.env.action_space
         self.metadata = self.env.metadata

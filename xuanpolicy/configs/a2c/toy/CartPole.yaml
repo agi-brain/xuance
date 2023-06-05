@@ -1,6 +1,6 @@
 agent: "A2C"
 env_name: "toy_env"
-env_id: "CartPole-v0"
+env_id: "CartPole-v1"
 policy: "Categorical_AC"
 representation: "Basic_MLP"
 

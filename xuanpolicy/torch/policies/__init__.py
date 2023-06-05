@@ -85,6 +85,8 @@ Policy_Inputs = {
                      "normalize", "initialize", "activation", "device"],
     "Categorical_PPG": ["action_space", "representation", "actor_hidden_size", "critic_hidden_size",
                         "normalize", "initialize", "activation", "device"],
+    "Gaussian_AC": ["action_space", "representation", "actor_hidden_size", "critic_hidden_size",
+                     "normalize", "initialize", "activation", "device"],
     "Gaussian_SAC": ["action_space", "representation", "actor_hidden_size", "critic_hidden_size",
                      "initialize", "activation", "device"],
     "Gaussian_Actor": ["action_space", "representation", "actor_hidden_size",

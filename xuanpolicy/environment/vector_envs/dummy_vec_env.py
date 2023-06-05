@@ -27,15 +27,17 @@ class DummyVecEnv(VecEnv):
         else:
             self.buf_obs = np.zeros(combined_shape(self.num_envs, self.obs_shape), dtype=np.float32)
         self.buf_dones = np.zeros((self.num_envs,), dtype=np.bool)
+        self.buf_trunctions = np.zeros((self.num_envs,), dtype=np.bool)
         self.buf_rews = np.zeros((self.num_envs,), dtype=np.float32)
         self.buf_infos = [{} for _ in range(self.num_envs)]
         self.actions = None
 
     def reset(self):
         for e in range(self.num_envs):
-            obs = self.envs[e].reset()
+            obs, info = self.envs[e].reset()
             self._save_obs(e, obs)
-        return self.buf_obs.copy()
+            self._save_infos(e, info)
+        return self.buf_obs.copy(), self.buf_infos.copy()
 
     def step_async(self, actions):
         if self.waiting == True:
@@ -59,12 +61,12 @@ class DummyVecEnv(VecEnv):
             raise NotSteppingError
         for e in range(self.num_envs):
             action = self.actions[e]
-            obs, self.buf_rews[e], self.buf_dones[e], self.buf_infos[e] = self.envs[e].step(action)
+            obs, self.buf_rews[e], self.buf_dones[e], self.buf_trunctions[e], self.buf_infos[e] = self.envs[e].step(action)
             if self.buf_dones[e]:
-                obs = self.envs[e].reset()
+                obs, self.buf_infos[e] = self.envs[e].reset()
             self._save_obs(e, obs)
         self.waiting = False
-        return self.buf_obs.copy(), self.buf_rews.copy(), self.buf_dones.copy(), self.buf_infos.copy()
+        return self.buf_obs.copy(), self.buf_rews.copy(), self.buf_dones.copy(), self.buf_trunctions.copy(), self.buf_infos.copy()
 
     def close_extras(self):
         self.closed = True
@@ -84,6 +86,9 @@ class DummyVecEnv(VecEnv):
                 self.buf_obs[k][e] = obs[k]
         else:
             self.buf_obs[e] = obs
+
+    def _save_infos(self, e, info):
+        self.buf_infos[e] = info
 
 
 class DummyVecEnv_MAS(DummyVecEnv):

@@ -86,14 +86,14 @@ class A2C_Agent(Agent):
         scores = np.zeros((self.nenvs,), np.float32)
         returns = np.zeros((self.nenvs,), np.float32)
 
-        obs = self.envs.reset()
+        obs, infos = self.envs.reset()
         for step in tqdm(range(train_steps)):
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
             states, acts, rets = self._action(obs)
-            next_obs, rewards, dones, infos = self.envs.step(acts)
+            next_obs, rewards, terminals, trunctions, infos = self.envs.step(acts)
             if self.render: self.envs.render()
-            self.memory.store(obs, acts, self._process_reward(rewards), rets, dones, states, {})
+            self.memory.store(obs, acts, self._process_reward(rewards), rets, terminals, states, {})
             if self.memory.full:
                 _, _, vals = self._action(self._process_observation(next_obs))
                 for i in range(self.nenvs):
@@ -106,7 +106,7 @@ class A2C_Agent(Agent):
             returns = self.gamma * returns + rewards
             obs = next_obs
             for i in range(self.nenvs):
-                if dones[i] == True:
+                if terminals[i] == True:
                     self.ret_rms.update(returns[i:i + 1])
                     self.memory.finish_path(0, i)
                     self.writer.add_scalars("returns-episode", {"env-%d" % i: scores[i]}, episodes[i])
@@ -125,16 +125,16 @@ class A2C_Agent(Agent):
         scores = np.zeros((self.nenvs,), np.float32)
         returns = np.zeros((self.nenvs,), np.float32)
 
-        obs = self.envs.reset()
+        obs, infos = self.envs.reset()
         for _ in tqdm(range(test_episodes)):
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
             states, acts, rets = self._action(obs)
-            next_obs, rewards, dones, infos = self.envs.step(acts)
+            next_obs, rewards, terminals, trunctions, infos = self.envs.step(acts)
             self.envs.render()
             scores += rewards
             returns = self.gamma * returns + rewards
             obs = next_obs
             for i in range(self.nenvs):
-                if dones[i] == True:
+                if terminals[i] == True:
                     scores[i], returns[i] = 0, 0
