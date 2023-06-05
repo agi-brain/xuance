@@ -16,8 +16,8 @@ from xuanpolicy.torch.policies import REGISTRY as REGISTRY_Policy
 from xuanpolicy.torch.utils.input_reformat import get_repre_in, get_policy_in_marl
 from xuanpolicy.torch.representations import REGISTRY as REGISTRY_Representation
 
-from .agent import Agent
-from .agents_marl import MARLAgents, RandomAgents, get_total_iters
+from .agent import Agent, get_total_iters
+from .agents_marl import MARLAgents, RandomAgents
 
 '''
 Single-Agent DRL algorithms

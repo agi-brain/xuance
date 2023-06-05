@@ -82,16 +82,15 @@ class DDPG_Agent(Agent):
         episodes = np.zeros((self.nenvs,), np.int32)
         scores = np.zeros((self.nenvs,), np.float32)
         returns = np.zeros((self.nenvs,), np.float32)
-        obs = self.envs.reset()
+        obs, infos = self.envs.reset()
         for step in tqdm(range(train_steps)):
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
             states, acts, = self._action(obs, self.noise_scale)
             if step < self.start_training:
                 acts = np.clip(np.random.randn(self.nenvs, self.action_space.shape[0]), -1, 1)
-            next_obs, rewards, dones, infos = self.envs.step(acts)
-            if self.render: self.envs.render()
-            self.memory.store(obs, acts, self._process_reward(rewards), dones, self._process_observation(next_obs),
+            next_obs, rewards, terminals, trunctions, infos = self.envs.step(acts)
+            self.memory.store(obs, acts, self._process_reward(rewards), terminals, self._process_observation(next_obs),
                               states, {})
             if step > self.start_training and step % self.train_frequency == 0:
                 obs_batch, act_batch, rew_batch, terminal_batch, next_batch, _, _ = self.memory.sample()
@@ -101,7 +100,7 @@ class DDPG_Agent(Agent):
             obs = next_obs
             self.noise_scale = self.start_noise - (self.start_noise - self.end_noise) / train_steps
             for i in range(self.nenvs):
-                if dones[i] == True:
+                if terminals[i] or trunctions[i]:
                     self.ret_rms.update(returns[i:i + 1])
                     self.writer.add_scalars("returns-episode", {"env-%d" % i: scores[i]}, episodes[i])
                     self.writer.add_scalars("returns-step", {"env-%d" % i: scores[i]}, step)
@@ -117,18 +116,17 @@ class DDPG_Agent(Agent):
         self.load_model(self.modeldir)
         scores = np.zeros((self.nenvs,), np.float32)
         returns = np.zeros((self.nenvs,), np.float32)
-        obs = self.envs.reset()
+        obs, infos = self.envs.reset()
         for _ in tqdm(range(test_steps)):
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
             states, acts, = self._action(obs, 0.0)
-            next_obs, rewards, dones, infos = self.envs.step(acts)
-            self.envs.render()
+            next_obs, rewards, terminals, trunctions, infos = self.envs.step(acts)
             scores += rewards
             returns = self.gamma * returns + rewards
             obs = next_obs
             for i in range(self.nenvs):
-                if dones[i] == True:
+                if terminals[i] or trunctions[i]:
                     scores[i], returns[i] = 0, 0
 
     def evaluate(self):

@@ -92,7 +92,6 @@ class A2C_Agent(Agent):
             obs = self._process_observation(obs)
             states, acts, rets = self._action(obs)
             next_obs, rewards, terminals, trunctions, infos = self.envs.step(acts)
-            if self.render: self.envs.render()
             self.memory.store(obs, acts, self._process_reward(rewards), rets, terminals, states, {})
             if self.memory.full:
                 _, _, vals = self._action(self._process_observation(next_obs))
@@ -131,7 +130,6 @@ class A2C_Agent(Agent):
             obs = self._process_observation(obs)
             states, acts, rets = self._action(obs)
             next_obs, rewards, terminals, trunctions, infos = self.envs.step(acts)
-            self.envs.render()
             scores += rewards
             returns = self.gamma * returns + rewards
             obs = next_obs

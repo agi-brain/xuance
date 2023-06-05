@@ -6,7 +6,7 @@ from gym import spaces
 class MPDQN_Agent(Agent):
     def __init__(self,
                  config: Namespace,
-                 envs: Toy_Env,
+                 envs: Gym_Env,
                  policy: nn.Module,
                  optimizer: Sequence[torch.optim.Optimizer],
                  scheduler: Optional[Sequence[torch.optim.lr_scheduler._LRScheduler]] = None,

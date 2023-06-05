@@ -35,7 +35,7 @@ class Agent(ABC):
         n_steps: current step
         """
         for k, v in infos.items():
-           self.writer.add_scalars(k, {k: v}, n_steps)
+            self.writer.add_scalars(k, {k: v}, n_steps)
 
     def log_wandb(self, infos: dict, n_steps: int):
         """
@@ -43,7 +43,7 @@ class Agent(ABC):
         n_steps: current step
         """
         for k, v in infos.items():
-           wandb.log({k, v}, step=n_steps)
+            wandb.log({k, v}, step=n_steps)
 
     @abstractmethod
     def _process_observation(self, observations):
@@ -64,3 +64,11 @@ class Agent(ABC):
     @abstractmethod
     def test(self, env, episodes):
         raise NotImplementedError
+
+
+def get_total_iters(agent_name, args):
+    if agent_name in ["A2C", "A3C", "PG", "PPO_Clip", "PPO_KL", "PPG", "VDAC", "COMA", "MFAC", "MAPPO_Clip",
+                      "MAPPO_KL"]:
+        return int(args.training_steps * args.nepoch * args.nminibatch / args.nsteps)
+    else:
+        return int(args.training_steps / args.training_frequency)

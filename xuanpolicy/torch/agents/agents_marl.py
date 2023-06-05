@@ -86,13 +86,6 @@ class linear_decay_or_increase(object):
             self.epsilon = min(self.epsilon + self.delta, self.end)
 
 
-def get_total_iters(agent_name, args):
-    if agent_name in ["A2C", "A3C", "PG", "PPO_Clip","PPO_KL","PPG","VDAC", "COMA", "MFAC", "MAPPO_Clip", "MAPPO_KL"]:
-        return int(args.training_steps * args.nepoch * args.nminibatch / args.nsteps)
-    else:
-        return int(args.training_steps / args.training_frequency)
-
-
 class RandomAgents(object):
     def __init__(self, args, envs, device=None):
         self.args = args

@@ -11,7 +11,7 @@ class Runner_Base(object):
                                   args.continuous_action, args.render_mode)
         else:
             self.envs = make_envs(args.env_name, args.env_id, args.seed, args.vectorize, args.parallels,
-                                  args.render_mode)
+                                  render_mode=args.render_mode)
 
         if args.vectorize != 'NOREQUIRED':
             self.n_envs = self.envs.num_envs

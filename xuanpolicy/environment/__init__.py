@@ -1,14 +1,8 @@
 import importlib
 
-from .custom_envs.toy_env import Toy_Env
-from .custom_envs.mujoco_env import MuJoCo_Env
-from .custom_envs.atari_env import Atari_Env
 from .custom_envs.pettingzoo_env import PettingZoo_Env
+from .custom_envs.gym_env import Gym_Env
 
-from .custom_envs.atari_env import ENVIRONMENT_IDS as ATARI_ENVIRONMENTS
-from .custom_envs.mujoco_env import ENVIRONMENT_IDS as MUJOCO_ENVIRONMENTS
-from .custom_envs.robotics_env import ENVIRONMENT_IDS as ROBOTICS_ENVIRONMENTS
-from .custom_envs.toy_env import ENVIRONMENT_IDS as TOY_ENVIRONMENTS
 from .custom_envs.pettingzoo_env import PETTINGZOO_ENVIRONMENTS
 
 from .vector_envs.vector_env import VecEnv
@@ -25,18 +19,12 @@ def make_envs(env_name: str,
               render_mode: str = 'rgb_array',
               ):
     def _thunk():
-        if env_id in TOY_ENVIRONMENTS:
-            env = Toy_Env(env_id, seed)
-        elif env_id in MUJOCO_ENVIRONMENTS:
-            env = MuJoCo_Env(env_id, seed)
-        elif env_id in ATARI_ENVIRONMENTS:
-            env = Atari_Env(env_id, seed)
-        elif env_name in PETTINGZOO_ENVIRONMENTS:
+        if env_name in PETTINGZOO_ENVIRONMENTS:
             scienario = importlib.import_module('pettingzoo.' + env_name + '.' + env_id)
             env = PettingZoo_Env(scienario.parallel_env(continuous_actions=continuous_action, render_mode=render_mode),
                                  env_name+'.'+env_id)
         else:
-            raise NotImplementedError
+            env = Gym_Env(env_id, seed, render_mode)
         return env
 
     if vectorize == "Subproc":

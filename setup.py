@@ -45,7 +45,7 @@ setup(
         "pyglet >= 1.5.15",
         "opencv-python >= 4.5.4.58",  # for Atari
         "pettingzoo >= 1.23.0",  # for MARL
-        "tensorboard >= 2.11.2"  # logger
+        "tensorboard >= 2.11.2",  # logger
     ],
     setup_requires=['pytest-runner'],
     tests_requires=['pytest'],

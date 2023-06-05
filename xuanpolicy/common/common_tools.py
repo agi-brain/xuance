@@ -127,6 +127,7 @@ def get_runner(agent_name,
             if is_test is True:
                 args[i_alg].test_mode = int(is_test)
                 args[i_alg].parallels = 1
+                args[i_alg].render_mode = "human"
 
         # print("Algorithm:", *[arg.agent for arg in args])
         print("Algorithm:", *agents_name_string)
@@ -145,6 +146,7 @@ def get_runner(agent_name,
         if is_test is True:
             args.test_mode = int(is_test)
             args.parallels = 1
+            args.render_mode = "human"
         print("Algorithm:", args.agent)
         print("Environment:", args.env_name)
         print("Scenario:", args.env_id)
