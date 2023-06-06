@@ -1,6 +1,6 @@
 agent: "DDPG"
 env_name: "mujoco"
-env_id: "Swimmer-v3"
+env_id: "Reacher-v4"
 policy: "DDPG_Policy"
 representation: "Basic_Identical"
 

@@ -62,8 +62,8 @@ class DummyVecEnv(VecEnv):
         for e in range(self.num_envs):
             action = self.actions[e]
             obs, self.buf_rews[e], self.buf_dones[e], self.buf_trunctions[e], self.buf_infos[e] = self.envs[e].step(action)
-            if self.buf_dones[e]:
-                obs, self.buf_infos[e] = self.envs[e].reset()
+            if self.buf_dones[e] or self.buf_trunctions[e]:
+                obs, _ = self.envs[e].reset()
             self._save_obs(e, obs)
         self.waiting = False
         return self.buf_obs.copy(), self.buf_rews.copy(), self.buf_dones.copy(), self.buf_trunctions.copy(), self.buf_infos.copy()

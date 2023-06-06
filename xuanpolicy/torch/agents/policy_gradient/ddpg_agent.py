@@ -31,7 +31,6 @@ class DDPG_Agent(Agent):
         self.representation_info_shape = policy.representation.output_shapes
         self.auxiliary_info_shape = {}
 
-        writer = SummaryWriter(config.logdir)
         memory = DummyOffPolicyBuffer(self.observation_space,
                                       self.action_space,
                                       self.representation_info_shape,
@@ -42,7 +41,6 @@ class DDPG_Agent(Agent):
         learner = DDPG_Learner(policy,
                                optimizer,
                                scheduler,
-                               writer,
                                config.device,
                                config.modeldir,
                                config.gamma,
@@ -50,11 +48,11 @@ class DDPG_Agent(Agent):
 
         self.obs_rms = RunningMeanStd(shape=space2shape(self.observation_space), comm=self.comm, use_mpi=False)
         self.ret_rms = RunningMeanStd(shape=(), comm=self.comm, use_mpi=False)
-        super(DDPG_Agent, self).__init__(envs, policy, memory, learner, writer, device, config.logdir, config.modeldir)
+        super(DDPG_Agent, self).__init__(config, envs, policy, memory, learner, device, config.logdir, config.modeldir)
 
     def _process_observation(self, observations):
         if self.use_obsnorm:
-            if isinstance(self.observation_space, gym.spaces.Dict):
+            if isinstance(self.observation_space, Dict):
                 for key in self.observation_space.spaces.keys():
                     observations[key] = np.clip(
                         (observations[key] - self.obs_rms.mean[key]) / (self.obs_rms.std[key] + EPS),
@@ -84,6 +82,7 @@ class DDPG_Agent(Agent):
         returns = np.zeros((self.nenvs,), np.float32)
         obs, infos = self.envs.reset()
         for step in tqdm(range(train_steps)):
+            step_info, episode_info = {}, {}
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
             states, acts, = self._action(obs, self.noise_scale)
@@ -94,20 +93,23 @@ class DDPG_Agent(Agent):
                               states, {})
             if step > self.start_training and step % self.train_frequency == 0:
                 obs_batch, act_batch, rew_batch, terminal_batch, next_batch, _, _ = self.memory.sample()
-                self.learner.update(obs_batch, act_batch, rew_batch, next_batch, terminal_batch)
+                step_info = self.learner.update(obs_batch, act_batch, rew_batch, next_batch, terminal_batch)
             scores += rewards
             returns = self.gamma * returns + rewards
             obs = next_obs
             self.noise_scale = self.start_noise - (self.start_noise - self.end_noise) / train_steps
+
             for i in range(self.nenvs):
                 if terminals[i] or trunctions[i]:
                     self.ret_rms.update(returns[i:i + 1])
-                    self.writer.add_scalars("returns-episode", {"env-%d" % i: scores[i]}, episodes[i])
-                    self.writer.add_scalars("returns-step", {"env-%d" % i: scores[i]}, step)
-                    scores[i] = 0
-                    returns[i] = 0
+                    step_info["returns-step"] = {"env-%d" % i: scores[i]}
+                    episode_info["returns-episode"] = {"env-%d" % i: scores[i]}
+                    scores[i], returns[i] = 0, 0
                     episodes[i] += 1
-            if step % 50000 == 0 or step == train_steps - 1:
+                    self.log_infos(step_info, step)
+                    self.log_infos(episode_info, episodes[i])
+
+            if step % self.config.save_model_frequency == 0 or step == train_steps - 1:
                 self.save_model()
                 np.save(self.modeldir + "/obs_rms.npy",
                         {'mean': self.obs_rms.mean, 'std': self.obs_rms.std, 'count': self.obs_rms.count})

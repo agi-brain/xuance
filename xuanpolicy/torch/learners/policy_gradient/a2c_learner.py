@@ -39,8 +39,13 @@ class A2C_Learner(Learner):
 
         # Logger
         lr = self.optimizer.state_dict()['param_groups'][0]['lr']
-        self.writer.add_scalar("actor-loss", a_loss.item(), self.iterations)
-        self.writer.add_scalar("critic-loss", c_loss.item(), self.iterations)
-        self.writer.add_scalar("entropy", e_loss.item(), self.iterations)
-        self.writer.add_scalar("learning_rate", lr, self.iterations)
-        self.writer.add_scalar("predict_value", v_pred.mean().item(), self.iterations)
+
+        info = {
+            "actor-loss": a_loss.item(),
+            "critic-loss": c_loss.item(),
+            "entropy": e_loss.item(),
+            "learning_rate": lr,
+            "predict_value": v_pred.mean().item()
+        }
+
+        return info

@@ -13,13 +13,11 @@ class Learner(ABC):
                  policy: torch.nn.Module,
                  optimizer: Union[torch.optim.Optimizer, Sequence[torch.optim.Optimizer]],
                  scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
-                 summary_writer: Optional[SummaryWriter] = None,
                  device: Optional[Union[int, str, torch.device]] = None,
                  modeldir: str = "./"):
         self.policy = policy
         self.optimizer = optimizer
         self.scheduler = scheduler
-        self.writer = summary_writer
         self.device = device
         self.modeldir = modeldir
         self.iterations = 0

@@ -1,9 +1,12 @@
+import wandb
+
 from .runner_basic import *
 from xuanpolicy.torch.agents import get_total_iters
 from xuanpolicy.torch.representations import REGISTRY as REGISTRY_Representation
 from xuanpolicy.torch.agents import REGISTRY as REGISTRY_Agent
 from xuanpolicy.torch.policies import REGISTRY as REGISTRY_Policy
 from xuanpolicy.torch.utils.input_reformat import get_repre_in, get_policy_in
+from xuanpolicy.torch.utils.operations import set_seed
 import itertools
 import torch
 import gym.spaces
@@ -68,7 +71,12 @@ class Runner_DRL(Runner_Base):
                                                              total_iters=get_total_iters(self.agent_name, self.args))
             self.agent = REGISTRY_Agent[self.agent_name](self.args, self.envs, policy, optimizer, lr_scheduler,
                                                          self.args.device)
+        set_seed(self.args.seed)
 
     def run(self):
         self.agent.test(self.args.test_steps) if self.args.test_mode else self.agent.train(self.args.training_steps)
         self.envs.close()
+        if self.agent.use_wandb:
+            wandb.finish()
+        else:
+            self.agent.writer.close()

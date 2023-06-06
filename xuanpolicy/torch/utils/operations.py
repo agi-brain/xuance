@@ -1,7 +1,17 @@
+import random
+
 import torch
 import torch.nn as nn
 import numpy as np
 from .distributions import CategoricalDistribution, DiagGaussianDistribution
+
+
+def set_seed(seed):
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    np.random.seed(seed)
+    random.seed(seed)
 
 
 def get_flat_grad(y: torch.Tensor, model: nn.Module) -> torch.Tensor:

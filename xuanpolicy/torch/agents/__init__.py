@@ -4,6 +4,7 @@ from argparse import Namespace
 from mpi4py import MPI
 from tqdm import tqdm
 from torch.utils.tensorboard import SummaryWriter
+import wandb
 import torch
 import torch.nn as nn
 import torch.nn.functional as F

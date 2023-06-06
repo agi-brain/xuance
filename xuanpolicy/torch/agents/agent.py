@@ -1,13 +1,13 @@
+import socket
 from xuanpolicy.torch.agents import *
-
 
 class Agent(ABC):
     def __init__(self,
+                 config: Namespace,
                  envs: VecEnv,
                  policy: nn.Module,
                  memory: Buffer,
                  learner: Learner,
-                 writer: SummaryWriter,
                  device: Optional[Union[str, int, torch.device]] = None,
                  logdir: str = "./logs/",
                  modeldir: str = "./models/",
@@ -16,7 +16,24 @@ class Agent(ABC):
         self.policy = policy
         self.memory = memory
         self.learner = learner
-        self.writer = writer
+        if config.logger == "tensorboard":
+            self.writer = SummaryWriter(config.logdir)
+            self.use_wandb = False
+        elif config.logger == "wandb":
+            config_dict = vars(config)
+            wandb.init(config=config_dict,
+                       project=config.project_name,
+                       entity=config.wandb_user_name,
+                       notes=socket.gethostname(),
+                       dir=os.path.join(os.getcwd(), config.logdir),
+                       group=config.env_name,
+                       job_type="training",
+                       name=config.env_id,
+                       reinit=True
+                       )
+            self.use_wandb = True
+        else:
+            raise "No logger is implemented."
         self.device = device
         self.logdir = logdir
         self.modeldir = modeldir
@@ -29,21 +46,20 @@ class Agent(ABC):
     def load_model(self, path):
         self.learner.load_model(path)
 
-    def log_tb(self, infos: dict, n_steps: int):
+    def log_infos(self, infos: dict, x_index: int):
         """
         infos: (dict) information to be visualized
         n_steps: current step
         """
-        for k, v in infos.items():
-            self.writer.add_scalars(k, {k: v}, n_steps)
-
-    def log_wandb(self, infos: dict, n_steps: int):
-        """
-        infos: (dict) information to be visualized
-        n_steps: current step
-        """
-        for k, v in infos.items():
-            wandb.log({k, v}, step=n_steps)
+        if self.use_wandb:
+            for k, v in infos.items():
+                wandb.log({k: v}, step=x_index)
+        else:
+            for k, v in infos.items():
+                try:
+                    self.writer.add_scalar(k, v, x_index)
+                except:
+                    self.writer.add_scalars(k, v, x_index)
 
     @abstractmethod
     def _process_observation(self, observations):
