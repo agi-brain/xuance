@@ -29,11 +29,11 @@ def get_config(file_name):
     return config_dict
 
 
-def get_arguments(agent_name, env_name, config_path=None, parser_args=None):
+def get_arguments(method, env, config_path=None, parser_args=None):
     """
     Get arguments from .yaml files
-    agent_name: the algorithm name that will be implemented,
-    env_name: env/scenario, e.g., classic/CartPole-v0,
+    method: the algorithm name that will be implemented,
+    env: env/scenario, e.g., classic/CartPole-v0,
     config_path: default is None, if None, the default configs (xuanpolicy/configs/.../*.yaml) will be loaded.
     parser_args: arguments that specified by parser tools.
     """
@@ -45,9 +45,9 @@ def get_arguments(agent_name, env_name, config_path=None, parser_args=None):
     config_basic = get_config(os.path.join(config_path_default, "basic.yaml"))
 
     ''' get the arguments from xuanpolicy/config/agent/env/scenario.yaml '''
-    file_name = env_name + ".yaml"
-    if type(agent_name) == list:
-        config_algo_default = [get_config(os.path.join(config_path_default, agent, file_name)) for agent in agent_name]
+    file_name = env + ".yaml"
+    if type(method) == list:
+        config_algo_default = [get_config(os.path.join(config_path_default, agent, file_name)) for agent in method]
         configs = [recursive_dict_update(config_basic, config_i) for config_i in config_algo_default]
         if config_path is not None:
             config_algo = [get_config(os.path.join(main_path, _path)) for _path in config_path]
@@ -55,8 +55,8 @@ def get_arguments(agent_name, env_name, config_path=None, parser_args=None):
         if parser_args is not None:
             configs = [recursive_dict_update(config_i, parser_args.__dict__) for config_i in configs]
         args = [SN(**config_i) for config_i in configs]
-    elif type(agent_name) == str:
-        config_algo_default = get_config(os.path.join(config_path_default, agent_name, file_name))
+    elif type(method) == str:
+        config_algo_default = get_config(os.path.join(config_path_default, method, file_name))
         configs = recursive_dict_update(config_basic, config_algo_default)
         if config_path is not None:
             config_algo = get_config(os.path.join(main_path, config_path))
@@ -69,20 +69,20 @@ def get_arguments(agent_name, env_name, config_path=None, parser_args=None):
     return args
 
 
-def get_runner(agent_name,
-               env_name,
+def get_runner(method,
+               env,
                config_path=None,
                parser_args=None,
                is_test=False):
     """
     This method returns a runner that specified by the users according to the inputs:
-    agent_name: the algorithm name that will be implemented,
-    env_name: env/scenario, e.g., classic/CartPole-v0,
+    method: the algorithm name that will be implemented,
+    env: env/scenario, e.g., classic/CartPole-v0,
     config_path: default is None, if None, the default configs (xuanpolicy/configs/.../*.yaml) will be loaded.
     parser_args: arguments that specified by parser tools.
     is_test: default is False, if True, it will load the models and run the environment with rendering.
     """
-    args = get_arguments(agent_name, env_name, config_path, parser_args)
+    args = get_arguments(method, env, config_path, parser_args)
 
     device = args[0].device if type(args) == list else args.device
     dl_toolbox = args[0].dl_toolbox if type(args) == list else args.dl_toolbox
@@ -124,10 +124,8 @@ def get_runner(agent_name,
             notation = args[i_alg].dl_toolbox + '/'
             args[i_alg].modeldir = os.path.join(os.getcwd(), args[i_alg].modeldir + notation + args[i_alg].env_id + '/')
             args[i_alg].logdir = args[i_alg].logdir + notation + args[i_alg].env_id + '/'
-            if is_test is True:
+            if is_test:
                 args[i_alg].test_mode = int(is_test)
-                args[i_alg].parallels = 1
-                args[i_alg].render_mode = "human"
 
         # print("Algorithm:", *[arg.agent for arg in args])
         print("Algorithm:", *agents_name_string)
@@ -139,14 +137,12 @@ def get_runner(agent_name,
                 return runner
         raise "Both sides of policies are random!"
     else:
-        args.agent_name = agent_name
+        args.agent_name = method
         notation = args.dl_toolbox + '/'
         args.modeldir = os.path.join(os.getcwd(), args.modeldir + notation + args.env_id + '/')
         args.logdir = args.logdir + notation + args.env_id + '/'
-        if is_test is True:
+        if is_test:
             args.test_mode = int(is_test)
-            args.parallels = 1
-            args.render_mode = "human"
         print("Algorithm:", args.agent)
         print("Environment:", args.env_name)
         print("Scenario:", args.env_id)

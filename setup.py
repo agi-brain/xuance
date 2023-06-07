@@ -46,6 +46,8 @@ setup(
         "opencv-python >= 4.5.4.58",  # for Atari
         "pettingzoo >= 1.23.0",  # for MARL
         "tensorboard >= 2.11.2",  # logger
+        "moviepy == 1.0.3",
+        "imageio == 2.9.0"
     ],
     setup_requires=['pytest-runner'],
     tests_requires=['pytest'],

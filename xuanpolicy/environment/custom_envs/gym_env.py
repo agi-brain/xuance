@@ -3,7 +3,7 @@ import gym
 
 class Gym_Env(gym.Wrapper):
     def __init__(self, env_id: str, seed: int, render_mode: str):
-        self.env = gym.make(env_id, render_mode=render_mode)
+        self.env = gym.make(env_id, render_mode="rgb_array")
         self.env.action_space.seed(seed=seed)
         self.env.reset(seed=seed)
         super(Gym_Env, self).__init__(self.env)

@@ -1,3 +1,5 @@
+import wandb
+
 from xuanpolicy.torch.agents import *
 
 
@@ -119,17 +121,30 @@ class DDPG_Agent(Agent):
         scores = np.zeros((self.nenvs,), np.float32)
         returns = np.zeros((self.nenvs,), np.float32)
         obs, infos = self.envs.reset()
-        for _ in tqdm(range(test_steps)):
+        videos = [[] for _ in range(self.nenvs)]
+        for step in tqdm(range(test_steps)):
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
             states, acts, = self._action(obs, 0.0)
             next_obs, rewards, terminals, trunctions, infos = self.envs.step(acts)
+            if self.config.render and self.config.render_mode == "rgb_array":
+                images = self.envs.render(self.config.render_mode)
+                for idx, img in enumerate(images):
+                    videos[idx].append(img)
+
             scores += rewards
             returns = self.gamma * returns + rewards
             obs = next_obs
             for i in range(self.nenvs):
                 if terminals[i] or trunctions[i]:
                     scores[i], returns[i] = 0, 0
+
+        if self.config.render and self.config.render_mode == "rgb_array":
+            videos_info = {
+                # batch, time, height, width, channel -> batch, time, channel, height, width
+                "Videos_Test": np.array(videos, dtype=np.uint8).transpose((0, 1, 4, 2, 3))
+            }
+            self.log_videos(videos_info)
 
     def evaluate(self):
         pass

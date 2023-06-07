@@ -31,8 +31,8 @@ class Agent(ABC):
                        notes=socket.gethostname(),
                        dir=wandb_dir,
                        group=config.env_name,
-                       job_type="training",
-                       name=config.env_id,
+                       job_type=config.env_id,
+                       name=config.seed,
                        reinit=True
                        )
             self.use_wandb = True
@@ -50,20 +50,28 @@ class Agent(ABC):
     def load_model(self, path):
         self.learner.load_model(path)
 
-    def log_infos(self, infos: dict, x_index: int):
+    def log_infos(self, info: dict, x_index: int):
         """
-        infos: (dict) information to be visualized
+        info: (dict) information to be visualized
         n_steps: current step
         """
         if self.use_wandb:
-            for k, v in infos.items():
+            for k, v in info.items():
                 wandb.log({k: v}, step=x_index)
         else:
-            for k, v in infos.items():
+            for k, v in info.items():
                 try:
                     self.writer.add_scalar(k, v, x_index)
                 except:
                     self.writer.add_scalars(k, v, x_index)
+
+    def log_videos(self, info: dict, fps: int):
+        if self.use_wandb:
+            for k, v in info.items():
+                wandb.log({k: wandb.Video(v, fps=fps, format='gif')})
+        else:
+            for k, v in info.items():
+                self.writer.add_video(k, v, fps=fps)
 
     @abstractmethod
     def _process_observation(self, observations):

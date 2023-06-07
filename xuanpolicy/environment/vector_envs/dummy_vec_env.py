@@ -74,9 +74,9 @@ class DummyVecEnv(VecEnv):
             env.close()
 
     def get_images(self):
-        return [env.render('rgb_array') for env in self.envs]
+        return [env.render() for env in self.envs]
 
-    def render(self, mode='human'):
+    def render(self, mode):
         return super().render(mode=mode)
 
     # save observation of indexes of e environment
