@@ -14,7 +14,6 @@ class MADQN_Learner(LearnerMAS):
                  policy: nn.Module,
                  optimizer: torch.optim.Optimizer,
                  scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
-                 summary_writer: Optional[SummaryWriter] = None,
                  device: Optional[Union[int, str, torch.device]] = None,
                  modeldir: str = "./",
                  gamma: float = 0.99,
@@ -23,7 +22,7 @@ class MADQN_Learner(LearnerMAS):
         self.gamma = gamma
         self.sync_frequency = sync_frequency
         self.mse_loss = nn.MSELoss()
-        super(MADQN_Learner, self).__init__(config, policy, optimizer, scheduler, summary_writer, device, modeldir)
+        super(MADQN_Learner, self).__init__(config, policy, optimizer, scheduler, device, modeldir)
 
     def update(self, sample):
         self.iterations += 1
@@ -53,6 +52,13 @@ class MADQN_Learner(LearnerMAS):
         if self.iterations % self.sync_frequency == 0:
             self.policy.copy_target()
         lr = self.optimizer.state_dict()['param_groups'][0]['lr']
-        self.writer.add_scalar("Qloss", loss.item(), self.iterations)
-        self.writer.add_scalar("learning_rate", lr, self.iterations)
-        self.writer.add_scalar("predictQ", predict_q.mean().item(), self.iterations)
+
+        info = {
+            "Qloss": loss.item(),
+            "learning_rate": lr,
+            "predictQ": predict_q.mean().item()
+        }
+
+        return info
+
+

@@ -6,13 +6,12 @@ class PPOCLIP_Learner(Learner):
                  policy: nn.Module,
                  optimizer: torch.optim.Optimizer,
                  scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
-                 summary_writer: Optional[SummaryWriter] = None,
                  device: Optional[Union[int, str, torch.device]] = None,
                  modeldir: str = "./",
                  vf_coef: float = 0.25,
                  ent_coef: float = 0.005,
                  clip_range: float = 0.25):
-        super(PPOCLIP_Learner, self).__init__(policy, optimizer, scheduler, summary_writer, device, modeldir)
+        super(PPOCLIP_Learner, self).__init__(policy, optimizer, scheduler, device, modeldir)
         self.vf_coef = vf_coef
         self.ent_coef = ent_coef
         self.clip_range = clip_range
@@ -42,9 +41,14 @@ class PPOCLIP_Learner(Learner):
         # Logger
         lr = self.optimizer.state_dict()['param_groups'][0]['lr']
         cr = ((ratio < 1 - self.clip_range).sum() + (ratio > 1 + self.clip_range).sum()) / ratio.shape[0]
-        self.writer.add_scalar("actor-loss", a_loss.item(), self.iterations)
-        self.writer.add_scalar("critic-loss", c_loss.item(), self.iterations)
-        self.writer.add_scalar("entropy", e_loss.item(), self.iterations)
-        self.writer.add_scalar("learning_rate", lr, self.iterations)
-        self.writer.add_scalar("predict_value", v_pred.mean().item(), self.iterations)
-        self.writer.add_scalar("clip_ratio", cr, self.iterations)
+        
+        info = {
+            "actor-loss": a_loss.item(),
+            "critic-loss": c_loss.item(),
+            "entropy": e_loss.item(),
+            "learning_rate": lr,
+            "predict_value": v_pred.mean().item(),
+            "clip_ratio": cr
+        }
+
+        return info

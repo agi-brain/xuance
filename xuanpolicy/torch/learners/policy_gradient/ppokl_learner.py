@@ -7,13 +7,12 @@ class PPOKL_Learner(Learner):
                  policy: nn.Module,
                  optimizer: torch.optim.Optimizer,
                  scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
-                 summary_writer: Optional[SummaryWriter] = None,
                  device: Optional[Union[int, str, torch.device]] = None,
                  modeldir: str = "./",
                  vf_coef: float = 0.25,
                  ent_coef: float = 0.005,
                  target_kl: float = 0.25):
-        super(PPOKL_Learner, self).__init__(policy, optimizer, scheduler, summary_writer, device, modeldir)
+        super(PPOKL_Learner, self).__init__(policy, optimizer, scheduler, device, modeldir)
         self.vf_coef = vf_coef
         self.ent_coef = ent_coef
         self.target_kl = target_kl
@@ -49,9 +48,15 @@ class PPOKL_Learner(Learner):
             self.scheduler.step()
         # Logger
         lr = self.optimizer.state_dict()['param_groups'][0]['lr']
-        self.writer.add_scalar("actor-loss", a_loss.item(), self.iterations)
-        self.writer.add_scalar("critic-loss", c_loss.item(), self.iterations)
-        self.writer.add_scalar("entropy", e_loss.item(), self.iterations)
-        self.writer.add_scalar("learning_rate", lr, self.iterations)
-        self.writer.add_scalar("kl", kl.item(), self.iterations)
-        self.writer.add_scalar("predict_value", v_pred.mean().item(), self.iterations)
+
+        info = {
+            "actor-loss": a_loss.item(),
+            "critic-loss": c_loss.item(),
+            "entropy": e_loss.item(),
+            "learning_rate": lr,
+            "kl": kl.item(),
+            "predict_value": v_pred.mean().item()
+        }
+
+        return info
+

@@ -124,3 +124,15 @@ class COMA_Learner(LearnerMAS):
         self.writer.add_scalar("advantage", advantages.mean().item(), self.iterations)
         self.writer.add_scalar("actor_gradient_norm", grad_norm_actor.item(), self.iterations)
         self.writer.add_scalar("critic_gradient_norm", grad_norm_critic.item(), self.iterations)
+
+        info = {
+            "learning_rate_actor": lr_a,
+            "learning_rate_critic": lr_c,
+            "actor_loss": loss_coma.item(),
+            "critic_loss": loss_c_item,
+            "advantage": advantages.mean().item(),
+            "actor_gradient_norm": grad_norm_actor.item(),
+            "critic_gradient_norm": grad_norm_critic.item()
+        }
+
+        return info

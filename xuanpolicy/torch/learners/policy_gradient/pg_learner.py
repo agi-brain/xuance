@@ -6,12 +6,11 @@ class PG_Learner(Learner):
                  policy: nn.Module,
                  optimizer: torch.optim.Optimizer,
                  scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
-                 summary_writer: Optional[SummaryWriter] = None,
                  device: Optional[Union[int, str, torch.device]] = None,
                  modeldir: str = "./",
                  ent_coef: float = 0.005,
                  clip_grad: Optional[float] = None):
-        super(PG_Learner, self).__init__(policy, optimizer, scheduler, summary_writer, device, modeldir)
+        super(PG_Learner, self).__init__(policy, optimizer, scheduler, device, modeldir)
         self.ent_coef = ent_coef
         self.clip_grad = clip_grad
 
@@ -35,6 +34,11 @@ class PG_Learner(Learner):
 
         # Logger
         lr = self.optimizer.state_dict()['param_groups'][0]['lr']
-        self.writer.add_scalar("actor-loss", a_loss.item(), self.iterations)
-        self.writer.add_scalar("entropy", e_loss.item(), self.iterations)
-        self.writer.add_scalar("learning_rate", lr, self.iterations)
+
+        info = {
+            "actor-loss": a_loss.item(),
+            "entropy": e_loss.item(),
+            "learning_rate": lr
+        }
+
+        return info

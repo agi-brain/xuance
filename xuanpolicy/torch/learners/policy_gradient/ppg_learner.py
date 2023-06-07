@@ -7,13 +7,12 @@ class PPG_Learner(Learner):
                  policy: nn.Module,
                  optimizer: torch.optim.Optimizer,
                  scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
-                 summary_writer: Optional[SummaryWriter] = None,
                  device: Optional[Union[int, str, torch.device]] = None,
                  modeldir: str = "./",
                  ent_coef: float = 0.005,
                  clip_range: float = 0.25,
                  kl_beta: float = 1.0):
-        super(PPG_Learner, self).__init__(policy, optimizer, scheduler, summary_writer, device, modeldir)
+        super(PPG_Learner, self).__init__(policy, optimizer, scheduler, device, modeldir)
         self.ent_coef = ent_coef
         self.clip_range = clip_range
         self.kl_beta = kl_beta
@@ -44,10 +43,16 @@ class PPG_Learner(Learner):
         # Logger
         lr = self.optimizer.state_dict()['param_groups'][0]['lr']
         cr = ((ratio < 1 - self.clip_range).sum() + (ratio > 1 + self.clip_range).sum()) / ratio.shape[0]
-        self.writer.add_scalar("actor-loss", a_loss.item(), self.policy_iterations)
-        self.writer.add_scalar("entropy", e_loss.item(), self.policy_iterations)
-        self.writer.add_scalar("learning_rate", lr, self.policy_iterations)
-        self.writer.add_scalar("clip_ratio", cr, self.policy_iterations)
+
+        info = {
+            "actor-loss": a_loss.item(),
+            "entropy": e_loss.item(),
+            "learning_rate": lr,
+            "clip_ratio": cr
+        }
+
+        return info
+
         self.policy_iterations += 1
 
     def update_critic(self, obs_batch, act_batch, ret_batch, adv_batch, old_dists):
@@ -57,7 +62,13 @@ class PPG_Learner(Learner):
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
-        self.writer.add_scalar("critic-loss", loss.item(), self.value_iterations)
+
+        info = {
+            "critic-loss": loss.item()
+        }
+
+        return info
+
         self.value_iterations += 1
 
     def update_auxiliary(self, obs_batch, act_batch, ret_batch, adv_batch, old_dists):
@@ -74,7 +85,12 @@ class PPG_Learner(Learner):
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
-        self.writer.add_scalar("kl-loss", loss.item(), self.value_iterations)
+
+        info = {
+            "kl-loss": loss.item()
+        }
+
+        return info
 
     def update(self):
         pass

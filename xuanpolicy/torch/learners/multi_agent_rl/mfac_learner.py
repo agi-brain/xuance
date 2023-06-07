@@ -15,7 +15,6 @@ class MFAC_Learner(LearnerMAS):
                  policy: nn.Module,
                  optimizer: Sequence[torch.optim.Optimizer],
                  scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
-                 summary_writer: Optional[SummaryWriter] = None,
                  device: Optional[Union[int, str, torch.device]] = None,
                  modeldir: str = "./",
                  gamma: float = 0.99,
@@ -23,7 +22,7 @@ class MFAC_Learner(LearnerMAS):
         self.gamma = gamma
         self.tau = config.tau
         self.mse_loss = nn.MSELoss()
-        super(MFAC_Learner, self).__init__(config, policy, optimizer, scheduler, summary_writer, device, modeldir)
+        super(MFAC_Learner, self).__init__(config, policy, optimizer, scheduler, device, modeldir)
         self.optimizer = {
             'actor': optimizer[0],
             'critic': optimizer[1]
@@ -94,9 +93,14 @@ class MFAC_Learner(LearnerMAS):
         # Logger
         lr_a = self.optimizer['actor'].state_dict()['param_groups'][0]['lr']
         lr_c = self.optimizer['critic'].state_dict()['param_groups'][0]['lr']
-        self.writer.add_scalar("learning_rate_actor", lr_a, self.iterations)
-        self.writer.add_scalar("learning_rate_critic", lr_c, self.iterations)
-        self.writer.add_scalar("actor_loss", loss_a.item(), self.iterations)
-        self.writer.add_scalar("critic_loss", loss_c.item(), self.iterations)
-        self.writer.add_scalar("actor_gradient_norm", grad_norm_actor.item(), self.iterations)
-        # self.writer.add_scalar("critic_gradient_norm", grad_norm_critic.item(), self.iterations)
+
+        info = {
+            "learning_rate_actor": lr_a,
+            "learning_rate_critic": lr_c,
+            "actor_loss": loss_a.item(),
+            "critic_loss": loss_c.item(),
+            "actor_gradient_norm": grad_norm_actor.item()
+        }
+
+        return info
+

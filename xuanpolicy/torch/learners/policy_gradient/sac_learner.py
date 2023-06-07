@@ -6,14 +6,13 @@ class SAC_Learner(Learner):
                  policy: nn.Module,
                  optimizers: Sequence[torch.optim.Optimizer],
                  schedulers: Sequence[torch.optim.lr_scheduler._LRScheduler],
-                 summary_writer: Optional[SummaryWriter] = None,
                  device: Optional[Union[int, str, torch.device]] = None,
                  modeldir: str = "./",
                  gamma: float = 0.99,
                  tau: float = 0.01):
         self.tau = tau
         self.gamma = gamma
-        super(SAC_Learner, self).__init__(policy, optimizers, schedulers, summary_writer, device, modeldir)
+        super(SAC_Learner, self).__init__(policy, optimizers, schedulers, device, modeldir)
 
     def update(self, obs_batch, act_batch, rew_batch, next_batch, terminal_batch):
         self.iterations += 1
@@ -45,8 +44,13 @@ class SAC_Learner(Learner):
 
         actor_lr = self.optimizer[0].state_dict()['param_groups'][0]['lr']
         critic_lr = self.optimizer[1].state_dict()['param_groups'][0]['lr']
-        self.writer.add_scalar("Qloss", q_loss.item(), self.iterations)
-        self.writer.add_scalar("Ploss", p_loss.item(), self.iterations)
-        self.writer.add_scalar("Qvalue", action_q.mean().item(), self.iterations)
-        self.writer.add_scalar("actor_lr", actor_lr, self.iterations)
-        self.writer.add_scalar("critic_lr", critic_lr, self.iterations)
+
+        info = {
+            "Qloss": q_loss.item(),
+            "Ploss": p_loss.item(),
+            "Qvalue": action_q.mean().item(),
+            "actor_lr": actor_lr,
+            "critic_lr": critic_lr
+        }
+
+        return info
