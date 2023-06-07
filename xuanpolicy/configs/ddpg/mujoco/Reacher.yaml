@@ -8,6 +8,7 @@ representation_hidden_size: [256, ]  # If you choose Basic_Identical representat
 actor_hidden_size: [256, ]
 critic_hidden_size: [256, 1]
 
+seed: 3577
 parallels: 4  # number of environments
 nsize: 50000  # replay buffer size
 batchsize: 256

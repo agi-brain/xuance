@@ -115,12 +115,12 @@ def get_runner(method,
 
     if type(args) == list:
         agents_name_string = []
-        for i_alg in range(len(agent_name)):
-            if i_alg < len(agent_name) - 1:
+        for i_alg in range(len(method)):
+            if i_alg < len(method) - 1:
                 agents_name_string.append(args[i_alg].agent + " vs")
             else:
                 agents_name_string.append(args[i_alg].agent)
-            args[i_alg].agent_name = agent_name[i_alg]
+            args[i_alg].agent_name = method[i_alg]
             notation = args[i_alg].dl_toolbox + '/'
             args[i_alg].modeldir = os.path.join(os.getcwd(), args[i_alg].modeldir + notation + args[i_alg].env_id + '/')
             args[i_alg].logdir = args[i_alg].logdir + notation + args[i_alg].env_id + '/'

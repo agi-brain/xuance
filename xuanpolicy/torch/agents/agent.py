@@ -32,7 +32,7 @@ class Agent(ABC):
                        dir=wandb_dir,
                        group=config.env_name,
                        job_type=config.env_id,
-                       name=config.seed,
+                       name="seed_" + str(config.seed),
                        reinit=True
                        )
             self.use_wandb = True

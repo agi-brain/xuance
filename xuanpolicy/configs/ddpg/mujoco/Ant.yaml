@@ -9,6 +9,7 @@ actor_hidden_size: [256, ]
 critic_hidden_size: [256, 1]
 activation: "LeakyReLU"
 
+seed: 3577
 parallels: 4  # number of environments
 nsize: 50000  # replay buffer size
 batchsize: 256
