@@ -3,7 +3,7 @@ dl_toolbox: "torch"  # The deep learning toolbox. Choices: "torch", "mindspore",
 runner: "DRL"  # Choices: "DRL", "MARL", "Mean_Field_MARL"
 project_name: "XuanPolicy_Benchmark"
 logger: "wandb"  # Choices: tensorboard, wandb.
-wandb_user_name: "wzliu"
+wandb_user_name: "papers_liu"
 
 parallels: 4
 seed: 2910

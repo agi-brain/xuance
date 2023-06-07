@@ -1,4 +1,5 @@
 import socket
+from pathlib import Path
 from xuanpolicy.torch.agents import *
 
 class Agent(ABC):
@@ -21,11 +22,14 @@ class Agent(ABC):
             self.use_wandb = False
         elif config.logger == "wandb":
             config_dict = vars(config)
+            wandb_dir = Path(os.path.join(os.getcwd(), config.logdir))
+            if not wandb_dir.exists():
+                os.makedirs(str(wandb_dir))
             wandb.init(config=config_dict,
                        project=config.project_name,
                        entity=config.wandb_user_name,
                        notes=socket.gethostname(),
-                       dir=os.path.join(os.getcwd(), config.logdir),
+                       dir=wandb_dir,
                        group=config.env_name,
                        job_type="training",
                        name=config.env_id,
