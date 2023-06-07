@@ -46,7 +46,6 @@ class MPDQN_Agent(Agent):
         self.epsilon_final = 0.1
         self.buffer_action_space = spaces.Box(np.zeros(4), np.ones(4), dtype=np.float64)
 
-        writer = SummaryWriter(config.logdir)
         memory = DummyOffPolicyBuffer(self.observation_space,
                                       self.buffer_action_space,
                                       self.representation_info_shape,
@@ -57,7 +56,6 @@ class MPDQN_Agent(Agent):
         learner = PDQN_Learner(policy,
                                optimizer,
                                scheduler,
-                               writer,
                                config.device,
                                config.modeldir,
                                config.gamma,
@@ -69,7 +67,7 @@ class MPDQN_Agent(Agent):
 
         self.obs_rms = RunningMeanStd(shape=space2shape(self.observation_space), comm=self.comm, use_mpi=False)
         self.ret_rms = RunningMeanStd(shape=(), comm=self.comm, use_mpi=False)
-        super(MPDQN_Agent, self).__init__(envs, policy, memory, learner, writer, device, config.logdir, config.modeldir)
+        super(MPDQN_Agent, self).__init__(envs, policy, memory, learner, device, config.logdir, config.modeldir)
 
     def _process_observation(self, observations):
         if self.use_obsnorm:
@@ -119,6 +117,7 @@ class MPDQN_Agent(Agent):
         returns = np.zeros((self.nenvs,), np.float32)
         obs, _ = self.envs.reset()
         for step in tqdm(range(train_steps)):
+            step_info, episode_info = {}, {}
             disaction, conaction, con_actions = self._action(obs)
             action = self.pad_action(disaction, conaction)
             action[1][disaction] = self.action_range[disaction] * (action[1][disaction] + 1) / 2. + self.action_low[disaction]
@@ -129,19 +128,21 @@ class MPDQN_Agent(Agent):
             self.memory.store(obs, acts, rewards, terminal, next_obs, state, {})
             if step > self.start_training and step % self.train_frequency == 0:
                 obs_batch, act_batch, rew_batch, terminal_batch, next_batch, _, _ = self.memory.sample()
-                self.learner.update(obs_batch, act_batch, rew_batch, next_batch, terminal_batch)
+                step_info = self.learner.update(obs_batch, act_batch, rew_batch, next_batch, terminal_batch)
             scores += rewards
             returns = self.gamma * returns + rewards
             obs = next_obs
             self.noise_scale = self.start_noise - (self.start_noise - self.end_noise) / train_steps
             if terminal == True:
-                self.writer.add_scalar("returns-episode", scores, episodes)
-                self.writer.add_scalar("returns-step", scores, step)
+                step_info["returns-episode"] = scores
+                episode_info["returns-episode"] = scores
                 scores = 0
                 returns = 0
                 episodes += 1
                 self.end_episode(episodes)
                 obs, _ = self.envs.reset()
+                self.log_infos(step_info, step)
+                self.log_infos(episode_info, episodes)
             if step % 50000 == 0 or step == train_steps - 1:
                 self.save_model()
                 np.save(self.modeldir + "/obs_rms.npy",

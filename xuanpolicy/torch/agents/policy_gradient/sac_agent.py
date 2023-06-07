@@ -31,7 +31,6 @@ class SAC_Agent(Agent):
         self.representation_info_shape = policy.representation.output_shapes
         self.auxiliary_info_shape = {}
 
-        writer = SummaryWriter(config.logdir)
         memory = DummyOffPolicyBuffer(self.observation_space,
                                       self.action_space,
                                       self.representation_info_shape,
@@ -42,7 +41,6 @@ class SAC_Agent(Agent):
         learner = SAC_Learner(policy,
                                optimizer,
                                scheduler,
-                               writer,
                                config.device,
                                config.modeldir,
                                config.gamma,
@@ -50,7 +48,7 @@ class SAC_Agent(Agent):
 
         self.obs_rms = RunningMeanStd(shape=space2shape(self.observation_space), comm=self.comm, use_mpi=False)
         self.ret_rms = RunningMeanStd(shape=(), comm=self.comm, use_mpi=False)
-        super(SAC_Agent, self).__init__(envs, policy, memory, learner, writer, device, config.logdir, config.modeldir)
+        super(SAC_Agent, self).__init__(envs, policy, memory, learner, device, config.logdir, config.modeldir)
 
     def _process_observation(self, observations):
         if self.use_obsnorm:
@@ -85,6 +83,7 @@ class SAC_Agent(Agent):
         returns = np.zeros((self.nenvs,), np.float32)
         obs = self.envs.reset()
         for step in tqdm(range(train_steps)):
+            step_info, episode_info = {}, {}
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
             states, acts = self._action(obs)
@@ -96,7 +95,7 @@ class SAC_Agent(Agent):
                               states, {})
             if step > self.start_training and step % self.train_frequency == 0:
                 obs_batch, act_batch, rew_batch, terminal_batch, next_batch, _, _ = self.memory.sample()
-                self.learner.update(obs_batch, act_batch, rew_batch, next_batch, terminal_batch)
+                step_info = self.learner.update(obs_batch, act_batch, rew_batch, next_batch, terminal_batch)
             scores += rewards
             returns = self.gamma * returns + rewards
             obs = next_obs
@@ -104,11 +103,14 @@ class SAC_Agent(Agent):
             for i in range(self.nenvs):
                 if dones[i] == True:
                     self.ret_rms.update(returns[i:i + 1])
-                    self.writer.add_scalars("returns-episode", {"env-%d" % i: scores[i]}, episodes[i])
-                    self.writer.add_scalars("returns-step", {"env-%d" % i: scores[i]}, step)
+                    step_info["returns-step"] = {"env-%d" % i: scores[i]}
+                    episode_info["returns-episode"] = {"env-%d" % i: scores[i]}
                     scores[i] = 0
                     returns[i] = 0
                     episodes[i] += 1
+                    self.log_infos(step_info, step)
+                    self.log_infos(episode_info, episodes[i])
+
             if step % 50000 == 0 or step == train_steps - 1:
                 self.save_model()
                 np.save(self.modeldir + "/obs_rms.npy",

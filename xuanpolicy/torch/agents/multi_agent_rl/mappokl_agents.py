@@ -32,7 +32,6 @@ class MAPPO_KL_Agents(MARLAgents):
         self.representation_info_shape = policy.representation.output_shapes
         self.auxiliary_info_shape = {}
 
-        writer = SummaryWriter(config.logdir)
         if config.state_space is not None:
             config.dim_state, state_shape = config.state_space.shape, config.state_space.shape
         else:
@@ -40,13 +39,13 @@ class MAPPO_KL_Agents(MARLAgents):
         memory = MARL_OnPolicyBuffer(state_shape, config.obs_shape, config.act_shape, config.rew_shape,
                                      config.done_shape, envs.num_envs, config.nsteps, config.nminibatch,
                                      config.use_gae, config.use_advnorm, config.gamma, config.lam)
-        learner = MAPPO_KL_Learner(config, policy, optimizer, scheduler, writer,
+        learner = MAPPO_KL_Learner(config, policy, optimizer, scheduler,
                                    config.device, config.modeldir, config.gamma)
 
         self.obs_rms = RunningMeanStd(shape=space2shape(self.observation_space[config.agent_keys[0]]),
                                       comm=self.comm, use_mpi=False)
         self.ret_rms = RunningMeanStd(shape=(), comm=self.comm, use_mpi=False)
-        super(MAPPO_KL_Agents, self).__init__(config, envs, policy, memory, learner, writer, device,
+        super(MAPPO_KL_Agents, self).__init__(config, envs, policy, memory, learner, device,
                                               config.logdir, config.modeldir)
 
     def _process_observation(self, observations):
@@ -88,7 +87,11 @@ class MAPPO_KL_Agents(MARLAgents):
 
     def train(self, i_episode):
         if self.memory.full:
+            info_train = {}
             for _ in range(self.args.nminibatch * self.args.nepoch):
                 sample = self.memory.sample()
-                self.learner.update(sample)
+                info_train = self.learner.update(sample)
             self.memory.clear()
+            return info_train
+        else:
+            return {}

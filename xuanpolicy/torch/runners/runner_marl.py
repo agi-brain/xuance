@@ -44,6 +44,7 @@ class Runner(Runner_Base_MARL):
         self.print_infos(self.args)
 
     def run_episode(self, episode, test_mode=False):
+        info_train = {}
         obs_n = self.envs.reset()
         state, agent_mask = self.envs.global_state(), self.envs.agent_mask()
 
@@ -65,7 +66,8 @@ class Runner(Runner_Base_MARL):
             else:
                 self.store_data(obs_n, next_obs_n, actions_dict, state, next_state, agent_mask, rew_n, done_n, self.envs)
                 for h, mas_group in enumerate(self.marl_agents):
-                    if self.args[h].train_at_step: self.marl_agents[h].train(episode)
+                    if self.args[h].train_at_step:
+                        info_train = self.marl_agents[h].train(episode)
 
             obs_n, state, act_mean_last = deepcopy(next_obs_n), deepcopy(next_state), deepcopy(actions_dict['act_mean'])
 
@@ -93,13 +95,13 @@ class Runner(Runner_Base_MARL):
                 if mas_group.args.agent_name == "random":
                     continue
                 if not self.args[h].train_at_step:
-                    mas_group.train(episode)
+                    info_train = mas_group.train(episode)
 
-        return scores
+        return scores, info_train
 
     def run(self):
         for i_episode in tqdm(range(self.n_episodes)):
-            self.run_episode(i_episode, test_mode=self.test_mode)
+            _, info_train = self.run_episode(i_episode, test_mode=self.test_mode)
 
             # test and save models
             if (i_episode % self.test_period == 0) and (not self.test_mode):

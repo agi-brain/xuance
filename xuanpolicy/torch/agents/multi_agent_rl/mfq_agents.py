@@ -31,7 +31,6 @@ class MFQ_Agents(MARLAgents):
         self.representation_info_shape = policy.representation.output_shapes
         self.auxiliary_info_shape = {}
 
-        writer = SummaryWriter(config.logdir)
         if config.state_space is not None:
             config.dim_state, state_shape = config.state_space.shape, config.state_space.shape
         else:
@@ -45,7 +44,7 @@ class MFQ_Agents(MARLAgents):
                                            envs.num_envs,
                                            config.buffer_size,
                                            config.batch_size)
-        learner = MFQ_Learner(config, policy, optimizer, scheduler, writer,
+        learner = MFQ_Learner(config, policy, optimizer, scheduler,
                               config.device, config.modeldir, config.gamma,
                               config.sync_frequency)
 
@@ -54,7 +53,7 @@ class MFQ_Agents(MARLAgents):
         self.ret_rms = RunningMeanStd(shape=(), comm=self.comm, use_mpi=False)
         self.epsilon_decay = linear_decay_or_increase(config.start_greedy, config.end_greedy,
                                                       config.greedy_update_steps)
-        super(MFQ_Agents, self).__init__(config, envs, policy, memory, learner, writer, device,
+        super(MFQ_Agents, self).__init__(config, envs, policy, memory, writer, device,
                                          config.logdir, config.modeldir)
 
     def _process_observation(self, observations):
@@ -104,8 +103,9 @@ class MFQ_Agents(MARLAgents):
 
     def train(self, i_episode):
         self.epsilon_decay.update()
-        for i in range(self.nenvs):
-            self.writer.add_scalars("epsilon", {"env-%d" % i: self.epsilon_decay.epsilon}, i_episode)
         if self.memory.can_sample(self.args.batch_size):
             sample = self.memory.sample()
-            self.learner.update(sample)
+            info_train = self.learner.update(sample)
+            return info_train
+        else:
+            return {}

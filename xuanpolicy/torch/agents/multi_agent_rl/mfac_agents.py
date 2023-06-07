@@ -34,7 +34,6 @@ class MFAC_Agents(MARLAgents):
         self.representation_info_shape = policy.representation.output_shapes
         self.auxiliary_info_shape = {}
 
-        writer = SummaryWriter(config.logdir)
         if config.state_space is not None:
             config.dim_state, state_shape = config.state_space.shape, config.state_space.shape
         else:
@@ -49,13 +48,13 @@ class MFAC_Agents(MARLAgents):
                                           config.nsteps,
                                           config.nminibatch,
                                           config.use_gae, config.use_advnorm, config.gamma, config.lam)
-        learner = MFAC_Learner(config, policy, optimizer, scheduler, writer,
+        learner = MFAC_Learner(config, policy, optimizer, scheduler,
                                config.device, config.modeldir, config.gamma)
 
         self.obs_rms = RunningMeanStd(shape=space2shape(self.observation_space[config.agent_keys[0]]),
                                       comm=self.comm, use_mpi=False)
         self.ret_rms = RunningMeanStd(shape=(), comm=self.comm, use_mpi=False)
-        super(MFAC_Agents, self).__init__(config, envs, policy, memory, learner, writer, device,
+        super(MFAC_Agents, self).__init__(config, envs, policy, memory, learner, device,
                                           config.logdir, config.modeldir)
 
     def _process_observation(self, observations):
@@ -104,7 +103,11 @@ class MFAC_Agents(MARLAgents):
 
     def train(self, i_episode):
         if self.memory.full:
+            info_train = {}
             for _ in range(self.args.nminibatch * self.args.nepoch):
                 sample = self.memory.sample()
-                self.learner.update(sample)
+                info_train = self.learner.update(sample)
             self.memory.clear()
+            return info_train
+        else:
+            return {}
