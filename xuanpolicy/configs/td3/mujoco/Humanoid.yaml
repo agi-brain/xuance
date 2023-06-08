@@ -1,6 +1,6 @@
 agent: "TD3"
 env_name: "mujoco"
-env_id: "InvertedPendulum-v4"
+env_id: "Humanoid-v4"
 policy: "TD3_Policy"
 representation: "Basic_Identical"
 

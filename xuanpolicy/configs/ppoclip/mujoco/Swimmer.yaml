@@ -1,6 +1,6 @@
-agent: "PPO_KL"
+agent: "PPO_Clip"
 env_name: "mujoco"
-env_id: "InvertedPendulum-v4"
+env_id: "Swimmer-v4"
 policy: "Gaussian_AC"
 representation: "Basic_MLP"
 
@@ -18,8 +18,9 @@ nminibatch: 8
 learning_rate: 0.0004
 
 vf_coef: 0.25
-ent_coef: 0.00
-target_kl: 0.01
+ent_coef: 0.0
+clip_range: 0.2
+clip_grad_norm: 0.5
 gamma: 0.99
 lam: 0.95
 
@@ -29,5 +30,5 @@ obsnorm_range: 5
 rewnorm_range: 5
 
 save_model_frequency: 10000
-logdir: "./logs/ppokl"
-modeldir: "./models/ppokl"
+logdir: "./logs/ppoclip/"
+modeldir: "./models/ppoclip/"

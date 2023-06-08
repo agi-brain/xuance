@@ -9,6 +9,7 @@ class PPOCLIP_Agent(Agent):
                  optimizer: torch.optim.Optimizer,
                  scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
                  device: Optional[Union[int, str, torch.device]] = None):
+        self.config = config
         self.render = config.render
         self.comm = MPI.COMM_WORLD
         self.nenvs = envs.num_envs
@@ -48,7 +49,7 @@ class PPOCLIP_Agent(Agent):
 
         self.obs_rms = RunningMeanStd(shape=space2shape(self.observation_space), comm=self.comm, use_mpi=False)
         self.ret_rms = RunningMeanStd(shape=(), comm=self.comm, use_mpi=False)
-        super(PPOCLIP_Agent, self).__init__(envs, policy, memory, learner, device, config.logdir,
+        super(PPOCLIP_Agent, self).__init__(config, envs, policy, memory, learner, device, config.logdir,
                                             config.modeldir)
 
     def _process_observation(self, observations):
@@ -85,16 +86,14 @@ class PPOCLIP_Agent(Agent):
         episodes = np.zeros((self.nenvs,), np.int32)
         scores = np.zeros((self.nenvs,), np.float32)
         returns = np.zeros((self.nenvs,), np.float32)
-
-        obs = self.envs.reset()
+        obs, infos = self.envs.reset()
         for step in tqdm(range(train_steps)):
             step_info, episode_info = {}, {}
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
             states, acts, rets, logps = self._action(obs)
-            next_obs, rewards, dones, infos = self.envs.step(acts)
-            if self.render: self.envs.render()
-            self.memory.store(obs, acts, self._process_reward(rewards), rets, dones, states, {"old_logp": logps})
+            next_obs, rewards, terminals, trunctions, infos = self.envs.step(acts)
+            self.memory.store(obs, acts, self._process_reward(rewards), rets, terminals, states, {"old_logp": logps})
             if self.memory.full:
                 _, _, vals, _ = self._action(self._process_observation(next_obs))
                 for i in range(self.nenvs):
@@ -107,7 +106,7 @@ class PPOCLIP_Agent(Agent):
             returns = self.gamma * returns + rewards
             obs = next_obs
             for i in range(self.nenvs):
-                if dones[i] == True:
+                if terminals[i] or trunctions[i]:
                     self.ret_rms.update(returns[i:i + 1])
                     self.memory.finish_path(0, i)
                     step_info["returns-step"] = {"env-%d" % i: scores[i]}
@@ -127,20 +126,29 @@ class PPOCLIP_Agent(Agent):
         self.load_model(self.modeldir)
         scores = np.zeros((self.nenvs,), np.float32)
         returns = np.zeros((self.nenvs,), np.float32)
-
-        obs = self.envs.reset()
+        obs, info = self.envs.reset()
+        videos = [[] for _ in range(self.nenvs)]
         for _ in tqdm(range(test_steps)):
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
             states, acts, rets, logps = self._action(obs)
-            next_obs, rewards, dones, infos = self.envs.step(acts)
-            self.envs.render()
+            next_obs, rewards, terminals, trunctions, infos = self.envs.step(acts)
+            if self.config.render and self.config.render_mode == "rgb_array":
+                images = self.envs.render(self.config.render_mode)
+                for idx, img in enumerate(images):
+                    videos[idx].append(img)
+
             scores += rewards
             returns = self.gamma * returns + rewards
             obs = next_obs
             for i in range(self.nenvs):
-                if dones[i] == True:
+                if terminals[i] or trunctions[i]:
                     scores[i], returns[i] = 0, 0
+
+        if self.config.render and self.config.render_mode == "rgb_array":
+            # batch, time, height, width, channel -> batch, time, channel, height, width
+            videos_info = {"Videos_Test": np.array(videos, dtype=np.uint8).transpose((0, 1, 4, 2, 3))}
+            self.log_videos(info=videos_info, fps=50)
 
     def evaluate(self):
         pass

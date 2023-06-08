@@ -71,7 +71,7 @@ class DDPG_Agent(Agent):
             return np.clip(rewards / std, -self.rewnorm_range, self.rewnorm_range)
         return rewards
 
-    def _action(self, obs, noise_scale):
+    def _action(self, obs, noise_scale=0.0):
         states, action = self.policy.action(obs, noise_scale)
         action = action.detach().cpu().numpy()
         for key in states.keys():
@@ -126,7 +126,7 @@ class DDPG_Agent(Agent):
         for step in tqdm(range(test_steps)):
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
-            states, acts, = self._action(obs, 0.0)
+            states, acts = self._action(obs, noise_scale=0.0)
             next_obs, rewards, terminals, trunctions, infos = self.envs.step(acts)
             if self.config.render and self.config.render_mode == "rgb_array":
                 images = self.envs.render(self.config.render_mode)

@@ -6,6 +6,7 @@ policy: "TD3_Policy"
 
 actor_hidden_size: [128,128]
 critic_hidden_size: [128,128]
+activation: "LeakyReLU"
 
 nsize: 20000
 batchsize: 256
@@ -13,7 +14,7 @@ actor_learning_rate: 0.0005
 critic_learning_rate: 0.001
 gamma: 0.98
 tau: 0.005
-actor_delay: 3
+actor_update_decay: 3
 
 start_noise: 0.25
 end_noise: 0.05
@@ -26,5 +27,6 @@ use_rewnorm: False
 obsnorm_range: 5
 rewnorm_range: 5
 
+save_model_frequency: 10000
 logdir: "./logs/td3/"
 modeldir: "./models/td3/"

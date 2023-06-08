@@ -35,6 +35,7 @@ class PPOCLIP_Learner(Learner):
         loss = a_loss - self.ent_coef * e_loss + self.vf_coef * c_loss
         self.optimizer.zero_grad()
         loss.backward()
+        torch.nn.utils.clip_grad_norm_(self.policy.parameters(), self.clip_range)
         self.optimizer.step()
         if self.scheduler is not None:
             self.scheduler.step()

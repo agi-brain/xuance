@@ -4,8 +4,8 @@ from xuanpolicy import get_runner
 
 def parse_args():
     parser = argparse.ArgumentParser("Multi-Agent Reinforcement Learning With Causality Detection.")
-    parser.add_argument("--method", type=str, default="sac")
-    parser.add_argument("--env", type=str, default="toy/Pendulum")
+    parser.add_argument("--method", type=str, default="ppokl")
+    parser.add_argument("--env", type=str, default="mujoco/InvertedPendulum")
     parser.add_argument("--test", type=int, default=0)
     return parser.parse_args()
 
