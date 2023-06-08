@@ -18,8 +18,8 @@ critic_learning_rate: 0.001
 gamma: 0.99
 tau: 0.01
 
-start_noise: 0.1
-end_noise: 0.1
+start_noise: 0.5
+end_noise: 0.01
 training_frequency: 1
 training_steps: 250000
 start_training: 10000

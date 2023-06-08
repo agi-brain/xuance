@@ -7,6 +7,7 @@ representation: "Basic_MLP"
 representation_hidden_size: [128,]
 actor_hidden_size: [400,300]
 critic_hidden_size: [400,300]
+activation: "ReLU"
 
 nsize: 200000
 batchsize: 256
@@ -27,5 +28,6 @@ use_rewnorm: False
 obsnorm_range: 5
 rewnorm_range: 5
 
+save_model_frequency: 10000
 logdir: "./logs/ddpg/"
 modeldir: "./models/ddpg/"

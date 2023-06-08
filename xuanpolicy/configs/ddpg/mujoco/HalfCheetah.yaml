@@ -7,6 +7,7 @@ representation: "Basic_Identical"
 representation_hidden_size: [256, ]  # If you choose Basic_Identical representation, then ignore this value
 actor_hidden_size: [256, ]
 critic_hidden_size: [256, 1]
+activation: "LeakyReLU"
 
 seed: 3577
 parallels: 4  # number of environments

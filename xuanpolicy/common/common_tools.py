@@ -126,6 +126,7 @@ def get_runner(method,
             args[i_alg].logdir = args[i_alg].logdir + notation + args[i_alg].env_id + '/'
             if is_test:
                 args[i_alg].test_mode = int(is_test)
+                args[i_alg].parallels = 1
 
         # print("Algorithm:", *[arg.agent for arg in args])
         print("Algorithm:", *agents_name_string)
@@ -143,6 +144,7 @@ def get_runner(method,
         args.logdir = args.logdir + notation + args.env_id + '/'
         if is_test:
             args.test_mode = int(is_test)
+            args.parallels = 1
         print("Algorithm:", args.agent)
         print("Environment:", args.env_name)
         print("Scenario:", args.env_id)

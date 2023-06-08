@@ -1,5 +1,6 @@
 from xuanpolicy.common import space2shape
 from copy import deepcopy
+from xuanpolicy.torch.utils import ActivatioFunctions
 from xuanpolicy.torch.policies import Policy_Inputs, Policy_Inputs_All
 from xuanpolicy.torch.representations import Representation_Inputs, Representation_Inputs_All
 from operator import itemgetter
@@ -24,7 +25,7 @@ def get_repre_in(args):
 
     input_dict["normalize"] = None
     input_dict["initialize"] = torch.nn.init.orthogonal_
-    input_dict["activation"] = torch.nn.ReLU
+    input_dict["activation"] = ActivatioFunctions[args.activation]
     input_dict["device"] = args.device
 
     input_list = itemgetter(*Representation_Inputs[representation_name])(input_dict)
@@ -55,7 +56,7 @@ def get_policy_in(args, representation):
             input_dict["critic_hidden_size"] = args.critic_hidden_size
     input_dict["normalize"] = None
     input_dict["initialize"] = torch.nn.init.orthogonal_
-    input_dict["activation"] = torch.nn.ReLU
+    input_dict["activation"] = ActivatioFunctions[args.activation]
     input_dict["device"] = args.device
     if policy_name == "Gaussian_Actor":
         input_dict["fixed_std"] = None
@@ -84,7 +85,7 @@ def get_policy_in_marl(args, representation, agent_keys, mixer=None, ff_mixer=No
         except: input_dict["critic_hidden_size"] = None
     input_dict["normalize"] = None
     input_dict["initialize"] = None
-    input_dict["activation"] = torch.nn.ReLU
+    input_dict["activation"] = ActivatioFunctions[args.activation]  # torch.nn.ReLU
 
     input_dict["device"] = args.device
     if policy_name == "Gaussian_Actor":

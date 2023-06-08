@@ -1,24 +1,26 @@
 agent: "SAC"
 env_name: "mujoco"
-env_id: "Ant-v3"
+env_id: "Ant-v4"
 policy: "Gaussian_SAC"
 representation: "Basic_MLP"
 
-representation_hidden_size: [128,]
+representation_hidden_size: [256,]
 actor_hidden_size: [256, ]
 critic_hidden_size: [256, ]
+activation: "LeakyReLU"
 
 nsize: 50000
+parallels: 16
 batchsize: 256
 actor_learning_rate: 0.001
 critic_learning_rate: 0.001
 gamma: 0.99
 alpha: 0.01
-tau: 0.01
+tau: 0.005
 learning_rate: 0.0007
 
-start_noise: 0.5
-end_noise: 0.01
+start_noise: 0.25
+end_noise: 0.05
 training_frequency: 1
 training_steps: 250000
 start_training: 10000
@@ -28,5 +30,6 @@ use_rewnorm: False
 obsnorm_range: 5
 rewnorm_range: 5
 
+save_model_frequency: 10000
 logdir: "./logs/sac/"
 modeldir: "./models/sac/"

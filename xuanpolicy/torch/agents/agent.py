@@ -30,8 +30,8 @@ class Agent(ABC):
                        entity=config.wandb_user_name,
                        notes=socket.gethostname(),
                        dir=wandb_dir,
-                       group=config.env_name,
-                       job_type=config.env_id,
+                       group=config.env,
+                       job_type=config.agent,
                        name="seed_" + str(config.seed),
                        reinit=True
                        )
@@ -90,7 +90,7 @@ class Agent(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def test(self, env, episodes):
+    def test(self, steps):
         raise NotImplementedError
 
 

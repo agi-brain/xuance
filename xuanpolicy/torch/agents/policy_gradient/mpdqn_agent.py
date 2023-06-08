@@ -67,7 +67,7 @@ class MPDQN_Agent(Agent):
 
         self.obs_rms = RunningMeanStd(shape=space2shape(self.observation_space), comm=self.comm, use_mpi=False)
         self.ret_rms = RunningMeanStd(shape=(), comm=self.comm, use_mpi=False)
-        super(MPDQN_Agent, self).__init__(envs, policy, memory, learner, device, config.logdir, config.modeldir)
+        super(MPDQN_Agent, self).__init__(config, envs, policy, memory, learner, device, config.logdir, config.modeldir)
 
     def _process_observation(self, observations):
         if self.use_obsnorm:

@@ -6,8 +6,10 @@ representation: "Basic_Identical"
 
 actor_hidden_size: [128,128,]
 critic_hidden_size: [128,128,]
+activation: "ReLU"
 
 nsize: 20000
+parallels: 16
 batchsize: 256
 actor_learning_rate: 0.001
 critic_learning_rate: 0.001
@@ -25,5 +27,6 @@ use_rewnorm: False
 obsnorm_range: 5
 rewnorm_range: 5
 
+save_model_frequency: 10000
 logdir: "./logs/sac/"
 modeldir: "./models/sac/"

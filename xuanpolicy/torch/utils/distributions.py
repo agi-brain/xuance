@@ -88,6 +88,9 @@ class DiagGaussianDistribution(Distribution):
     def stochastic_sample(self):
         return self.distribution.sample()
 
+    def rsample(self):
+        return self.distribution.rsample()
+
     def deterministic_sample(self):
         return self.mu
 

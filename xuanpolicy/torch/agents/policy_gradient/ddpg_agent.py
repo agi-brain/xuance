@@ -87,9 +87,10 @@ class DDPG_Agent(Agent):
             step_info, episode_info = {}, {}
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
-            states, acts, = self._action(obs, self.noise_scale)
+            states, acts = self._action(obs, self.noise_scale)
             if step < self.start_training:
-                acts = np.clip(np.random.randn(self.nenvs, self.action_space.shape[0]), -1, 1)
+                acts = [self.action_space.sample() for _ in range(self.nenvs)]
+
             next_obs, rewards, terminals, trunctions, infos = self.envs.step(acts)
             self.memory.store(obs, acts, self._process_reward(rewards), terminals, self._process_observation(next_obs),
                               states, {})
@@ -116,7 +117,7 @@ class DDPG_Agent(Agent):
                 np.save(self.modeldir + "/obs_rms.npy",
                         {'mean': self.obs_rms.mean, 'std': self.obs_rms.std, 'count': self.obs_rms.count})
 
-    def test(self, test_steps=10000, load_model=None):
+    def test(self, test_steps=10000):
         self.load_model(self.modeldir)
         scores = np.zeros((self.nenvs,), np.float32)
         returns = np.zeros((self.nenvs,), np.float32)
@@ -140,11 +141,9 @@ class DDPG_Agent(Agent):
                     scores[i], returns[i] = 0, 0
 
         if self.config.render and self.config.render_mode == "rgb_array":
-            videos_info = {
-                # batch, time, height, width, channel -> batch, time, channel, height, width
-                "Videos_Test": np.array(videos, dtype=np.uint8).transpose((0, 1, 4, 2, 3))
-            }
-            self.log_videos(videos_info)
+            # batch, time, height, width, channel -> batch, time, channel, height, width
+            videos_info = {"Videos_Test": np.array(videos, dtype=np.uint8).transpose((0, 1, 4, 2, 3))}
+            self.log_videos(info=videos_info, fps=50)
 
     def evaluate(self):
         pass

@@ -23,7 +23,7 @@ class DDPG_Learner(Learner):
         _, action_q = self.policy.Qaction(obs_batch, act_batch)
         # with torch.no_grad():
         _, target_q = self.policy.Qtarget(next_batch)
-        backup = rew_batch + self.gamma * target_q
+        backup = rew_batch + (1 - ter_batch) * self.gamma * target_q
         q_loss = F.mse_loss(backup.detach(), action_q)
         self.optimizer[1].zero_grad()
         q_loss.backward()

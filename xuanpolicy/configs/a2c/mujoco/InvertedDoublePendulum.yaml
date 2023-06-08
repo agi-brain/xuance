@@ -1,6 +1,6 @@
 agent: "A2C"
 env_name: "mujoco"
-env_id: "InvertedPendulum-v4"
+env_id: "InvertedDoublePendulum-v4"
 policy: "Gaussian_AC"
 representation: "Basic_MLP"
 
