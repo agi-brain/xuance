@@ -13,6 +13,7 @@ class Agent(ABC):
                  logdir: str = "./logs/",
                  modeldir: str = "./models/",
                  ):
+        self.config = config
         self.envs = envs
         self.policy = policy
         self.memory = memory
@@ -35,6 +36,7 @@ class Agent(ABC):
                        name="seed_" + str(config.seed),
                        reinit=True
                        )
+            os.environ["WANDB_SILENT"] = "True"
             self.use_wandb = True
         else:
             raise "No logger is implemented."

@@ -9,7 +9,6 @@ class PPOKL_Agent(Agent):
                  optimizer: torch.optim.Optimizer,
                  scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
                  device: Optional[Union[int, str, torch.device]] = None):
-        self.config = config
         self.render = config.render
         self.comm = MPI.COMM_WORLD
         self.nenvs = envs.num_envs

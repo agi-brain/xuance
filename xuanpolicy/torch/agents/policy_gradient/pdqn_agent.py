@@ -13,7 +13,6 @@ class PDQN_Agent(Agent):
                  optimizer: Sequence[torch.optim.Optimizer],
                  scheduler: Optional[Sequence[torch.optim.lr_scheduler._LRScheduler]] = None,
                  device: Optional[Union[int, str, torch.device]] = None):
-        self.config = config
         self.envs = envs
         self.comm = MPI.COMM_WORLD
         self.render = config.render

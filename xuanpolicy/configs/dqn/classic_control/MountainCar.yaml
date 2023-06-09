@@ -1,0 +1,30 @@
+agent: "DQN"
+env_name: "toy_env"
+env_id: "MountainCar-v0"
+policy: "Basic_Q_network"
+representation: "Basic_MLP"
+
+representation_hidden_size: [256, ]
+q_hidden_size: [256, ]
+activation: 'LeakyReLU'
+
+nsize: 20000
+batchsize: 256
+learning_rate: 0.1
+gamma: 0.99
+
+start_greedy: 1.0
+end_greedy: 0.01
+sync_frequency: 200
+training_frequency: 1
+training_steps: 250000
+start_training: 1000
+
+use_obsnorm: False
+use_rewnorm: False
+obsnorm_range: 5
+rewnorm_range: 5
+
+save_model_frequency: 10000
+logdir: "./logs/dqn/"
+modeldir: "./models/dqn/"
