@@ -1,22 +1,25 @@
-agent: "DDQN"
+agent: "C51DQN"
 env_name: "Classic Control"
-env_id: "CartPole-v1"
-policy: "Basic_Q_network"
+env_id: "Acrobot-v1"
+policy: "C51_Q_network"
 representation: "Basic_MLP"
 
 representation_hidden_size: [256,]
 q_hidden_size: [256,]
-activation: 'ReLU'
+activation: 'LeakyReLU'
 
 nsize: 20000
-batchsize: 128
+batchsize: 256
 learning_rate: 0.001
 gamma: 0.99
+vmin: 0
+vmax: 200
+atom_num: 51
 
-start_greedy: 0.5
+start_greedy: 0.25
 end_greedy: 0.01
 sync_frequency: 100
-training_frequency: 2
+training_frequency: 1
 training_steps: 30000
 start_training: 1000
 
@@ -26,6 +29,5 @@ obsnorm_range: 5
 rewnorm_range: 5
 
 save_model_frequency: 10000
-logdir: "./logs/ddqn/"
-modeldir: "./models/ddqn/"
-
+logdir: "./logs/c51/"
+modeldir: "./models/c51/"

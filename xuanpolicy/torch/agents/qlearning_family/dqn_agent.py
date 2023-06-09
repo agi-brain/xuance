@@ -107,7 +107,6 @@ class DQN_Agent(Agent):
                 if terminals[i] or trunctions[i]:
                     self.ret_rms.update(returns[i:i + 1])
                     step_info["returns-step/env-%d" % i] = scores[i]
-                    # step_info["returns-episode/env-%d" % i] = scores[i]
                     step_info["episode/env-%d" % i] = episodes[i]
                     scores[i], returns[i] = 0, 0
                     episodes[i] += 1

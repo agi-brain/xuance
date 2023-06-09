@@ -1,6 +1,6 @@
-agent: "DDQN"
-env_name: "Classic Control"
-env_id: "CartPole-v1"
+agent: "CDQN"
+env_name: "toy_env"
+env_id: "LunarLander-v2"
 policy: "Basic_Q_network"
 representation: "Basic_MLP"
 
@@ -9,7 +9,7 @@ q_hidden_size: [256,]
 activation: 'ReLU'
 
 nsize: 20000
-batchsize: 128
+batchsize: 256
 learning_rate: 0.001
 gamma: 0.99
 
@@ -26,6 +26,5 @@ obsnorm_range: 5
 rewnorm_range: 5
 
 save_model_frequency: 10000
-logdir: "./logs/ddqn/"
-modeldir: "./models/ddqn/"
-
+logdir: "./logs/cdqn/"
+modeldir: "./models/cdqn/"

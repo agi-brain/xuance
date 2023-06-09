@@ -103,12 +103,11 @@ class PG_Agent(Agent):
                 if terminals[i] or trunctions[i]:
                     self.ret_rms.update(returns[i:i + 1])
                     self.memory.finish_path(0, i)
-                    step_info["returns-step"] = {"env-%d" % i: scores[i]}
-                    episode_info["returns-episode"] = {"env-%d" % i: scores[i]}
+                    step_info["returns-step/env-%d" % i] = scores[i]
+                    step_info["episode/env-%d" % i] = episodes[i]
                     scores[i], returns[i] = 0, 0
                     episodes[i] += 1
                     self.log_infos(step_info, step)
-                    self.log_infos(episode_info, episodes[i])
 
             if step % self.config.save_model_frequency == 0 or step == train_steps - 1:
                 self.save_model()

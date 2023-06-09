@@ -47,7 +47,7 @@ class CDQN_Agent(Agent):
 
         self.obs_rms = RunningMeanStd(shape=space2shape(self.observation_space), comm=self.comm, use_mpi=False)
         self.ret_rms = RunningMeanStd(shape=(), comm=self.comm, use_mpi=False)
-        super(CDQN_Agent, self).__init__(envs, policy, memory, learner, device, config.logdir, config.modeldir)
+        super(CDQN_Agent, self).__init__(config, envs, policy, memory, learner, device, config.logdir, config.modeldir)
 
     def _process_observation(self, observations):
         if self.use_obsnorm:
@@ -83,16 +83,14 @@ class CDQN_Agent(Agent):
         episodes = np.zeros((self.nenvs,), np.int32)
         scores = np.zeros((self.nenvs,), np.float32)
         returns = np.zeros((self.nenvs,), np.float32)
-        obs = self.envs.reset()
+        obs, infos = self.envs.reset()
         for step in tqdm(range(train_steps)):
             step_info, episode_info = {}, {}
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
             states, acts = self._action(obs, self.egreedy)
-            next_obs, rewards, dones, infos = self.envs.step(acts)
-            if self.render: self.envs.render()
-
-            self.memory.store(obs, acts, self._process_reward(rewards), dones, self._process_observation(next_obs),
+            next_obs, rewards, terminals, trunctions, infos = self.envs.step(acts)
+            self.memory.store(obs, acts, self._process_reward(rewards), terminals, self._process_observation(next_obs),
                               states, {})
             if step > self.start_training and step % self.train_frequency == 0:
                 # training
@@ -105,40 +103,46 @@ class CDQN_Agent(Agent):
             self.egreedy = self.egreedy - (self.start_greedy - self.end_greedy) / train_steps
 
             for i in range(self.nenvs):
-                if dones[i] == True:
+                if terminals[i] or trunctions[i]:
                     self.ret_rms.update(returns[i:i + 1])
-                    step_info["returns-step"] = {"env-%d" % i: scores[i]}
-                    episode_info["returns-episode"] = {"env-%d" % i: scores[i]}
-                    scores[i] = 0
-                    returns[i] = 0
+                    step_info["returns-step/env-%d" % i] = scores[i]
+                    step_info["episode/env-%d" % i] = episodes[i]
+                    scores[i], returns[i] = 0, 0
                     episodes[i] += 1
                     self.log_infos(step_info, step)
-                    self.log_infos(episode_info, episodes[i])
 
-            if step % 50000 == 0 or step == train_steps - 1:
+            if step % self.config.save_model_frequency == 0 or step == train_steps - 1:
                 self.save_model()
                 np.save(self.modeldir + "/obs_rms.npy",
                         {'mean': self.obs_rms.mean, 'std': self.obs_rms.std, 'count': self.obs_rms.count})
 
-    def test(self, test_steps=10000, episode=0):
+    def test(self, test_steps=10000):
         self.load_model(self.modeldir)
         scores = np.zeros((self.nenvs,), np.float32)
         returns = np.zeros((self.nenvs,), np.float32)
-        obs = self.envs.reset()
+        obs, infos = self.envs.reset()
+        videos = [[] for _ in range(self.nenvs)]
         for _ in tqdm(range(test_steps)):
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
             states, acts = self._action(obs, egreedy=0.0)
-            next_obs, rewards, dones, infos = self.envs.step(acts)
-            self.envs.render()
+            next_obs, rewards, terminals, trunctions, infos = self.envs.step(acts)
+            if self.config.render and self.config.render_mode == "rgb_array":
+                images = self.envs.render(self.config.render_mode)
+                for idx, img in enumerate(images):
+                    videos[idx].append(img)
 
             scores += rewards
             returns = self.gamma * returns + rewards
             obs = next_obs
-
             for i in range(self.nenvs):
-                if dones[i] == True:
+                if terminals[i] or trunctions[i]:
                     scores[i], returns[i] = 0, 0
+
+        if self.config.render and self.config.render_mode == "rgb_array":
+            # batch, time, height, width, channel -> batch, time, channel, height, width
+            videos_info = {"Videos_Test": np.array(videos, dtype=np.uint8).transpose((0, 1, 4, 2, 3))}
+            self.log_videos(info=videos_info, fps=50)
 
     def evaluate(self):
         pass
