@@ -6,12 +6,7 @@ from xuanpolicy.environment import make_envs
 class Runner_Base(object):
     def __init__(self, args):
         # build environments
-        if hasattr(args, 'continuous_action'):
-            self.envs = make_envs(args.env_name, args.env_id, args.seed, args.vectorize, args.parallels,
-                                  args.continuous_action, args.render_mode)
-        else:
-            self.envs = make_envs(args.env_name, args.env_id, args.seed, args.vectorize, args.parallels,
-                                  render_mode=args.render_mode)
+        self.envs = make_envs(args)
 
         if args.vectorize != 'NOREQUIRED':
             self.n_envs = self.envs.num_envs

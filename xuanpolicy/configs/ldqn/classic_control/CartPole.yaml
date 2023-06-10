@@ -1,11 +1,12 @@
 agent: "LDQN"
 env_name: "toy_env"
-env_id: "CartPole-v0"
+env_id: "CartPole-v1"
 policy: "LDQN_Policy"
-representation: "Basic_MLP"
+representation: "L_DQN"
 
-representation_hidden_size: [128,]
-q_hidden_size: [128,]
+representation_hidden_size: [256,]
+q_hidden_size: [256,]
+activation: 'ReLU'
 
 nsize: 20000
 batchsize: 128
@@ -16,7 +17,7 @@ start_greedy: 0.5
 end_greedy: 0.01
 sync_frequency: 100
 training_frequency: 2
-training_steps: 50000
+training_steps: 30000
 start_training: 1000
 
 use_obsnorm: False
@@ -24,5 +25,6 @@ use_rewnorm: False
 obsnorm_range: 5
 rewnorm_range: 5
 
+save_model_frequency: 10000
 logdir: "./logs/ldqn/"
 modeldir: "./models/ldqn/"
