@@ -221,7 +221,7 @@ and hope it can really become a zoo full of DRL algorithms.
 The library can be run at Linux, Windows, MacOS, and EulerOS, etc.
 
 Before installing **XuanPolicy**, you should install [Anaconda](https://www.anaconda.com/download) to prepare a python environment.
-(Note: select a proper version of Anaconda from [**here**](https://repo.anaconda.com/archive/)!)
+(Note: select a proper version of Anaconda from [**here**](https://repo.anaconda.com/archive/).)
 
 After that, open a terminal and install **XuanPolicy** by the following steps.
 

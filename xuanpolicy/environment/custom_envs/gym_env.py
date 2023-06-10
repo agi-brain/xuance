@@ -16,8 +16,11 @@ class Gym_Env(gym.Wrapper):
     def close(self):
         self.env.close()
 
+    def render(self, mode):
+        return self.env.render()
 
-class Atari_Env(gym.Wrapper):
+
+class Atari_Env(gym.ObservationWrapper):
     def __init__(self,
                  env_id: str,
                  seed: int,
@@ -26,7 +29,7 @@ class Atari_Env(gym.Wrapper):
         self.env = gym.make(env_id,
                             render_mode=render_mode,
                             obs_type=obs_type,
-                            frameskip=1)
+                            frameskip=5)
         self.env.action_space.seed(seed=seed)
         self.env.reset(seed=seed)
         super(Atari_Env, self).__init__(self.env)
