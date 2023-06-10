@@ -47,7 +47,7 @@ class LDQN_Agent(Agent):
 
         self.obs_rms = RunningMeanStd(shape=space2shape(self.observation_space), comm=self.comm, use_mpi=False)
         self.ret_rms = RunningMeanStd(shape=(), comm=self.comm, use_mpi=False)
-        super(LDQN_Agent, self).__init__(envs, policy, memory, learner, device, config.logdir, config.modeldir)
+        super(LDQN_Agent, self).__init__(config, envs, policy, memory, learner, device, config.logdir, config.modeldir)
 
     def _process_observation(self, observations):
         if self.use_obsnorm:
@@ -68,7 +68,7 @@ class LDQN_Agent(Agent):
             return np.clip(rewards / std, -self.rewnorm_range, self.rewnorm_range)
         return rewards
 
-    def _action(self, obs, egreedy):
+    def _action(self, obs, egreedy=0.0):
         states, argmax_action, _, _ = self.policy(obs)
         random_action = np.random.choice(self.action_space.n, self.nenvs)
         if np.random.rand() < egreedy:
@@ -83,7 +83,7 @@ class LDQN_Agent(Agent):
         episodes = np.zeros((self.nenvs,), np.int32)
         scores = np.zeros((self.nenvs,), np.float32)
         returns = np.zeros((self.nenvs,), np.float32)
-        obs = self.envs.reset()
+        obs, infos = self.envs.reset()
         for step in tqdm(range(train_steps)):
             step_info, episode_info = {}, {}
             self.obs_rms.update(obs)

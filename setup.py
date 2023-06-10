@@ -38,8 +38,9 @@ setup(
         "numpy >= 1.19.5",
         "scipy >= 1.7.3",
         "PyYAML >= 6.0",
-        "gym >= 0.21.0",
-        "gymnasium >= 0.28.1",
+        "gym >= 0.26.2",
+        "box2d-py == 2.3.5"
+        "gymnasium == 0.28.1",
         "mpi4py >= 3.1.3",
         "tqdm >= 4.0",
         "pyglet >= 1.5.15",

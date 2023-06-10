@@ -330,3 +330,14 @@ class CL_DQN(nn.Module):
     def forward(self, observations: np.ndarray):
         state = torch.as_tensor(observations, dtype=torch.float32, device=self.device)
         return {'state': state}
+
+
+class Basic_RNN(nn.Module):
+    def __init__(self):
+        super(Basic_RNN, self).__init__()
+
+    def _create_network(self):
+        pass
+
+    def forward(self):
+        pass

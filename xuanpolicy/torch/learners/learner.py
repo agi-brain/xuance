@@ -25,7 +25,8 @@ class Learner(ABC):
     def save_model(self):
         time_string = time.asctime()
         time_string = time_string.replace(" ", "")
-        model_path = self.modeldir + "model-%s-%s.pth" % (time.asctime(), str(self.iterations))
+        time_string = time_string.replace(":", "_")
+        model_path = self.modeldir + "model-%s-%s.pth" % (time_string, str(self.iterations))
         torch.save(self.policy.state_dict(), model_path)
 
     def load_model(self, path):
