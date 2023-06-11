@@ -63,7 +63,7 @@ class Basic_CNN(nn.Module):
                  activation: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None):
         super(Basic_CNN, self).__init__()
-        self.input_shape = (input_shape[2], input_shape[0], input_shape[1])
+        self.input_shape = (input_shape[2], input_shape[0], input_shape[1])  # Channels x Height x Width
         self.kernels = kernels
         self.strides = strides
         self.filters = filters

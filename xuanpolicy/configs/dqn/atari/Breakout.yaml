@@ -1,24 +1,29 @@
 agent: "DQN"
 env_name: "Atari"
 env_id: "ALE/Breakout-v5"
-obs_type: "ram"
+obs_type: "rgb"  # choice for Atari env: ram, rgb, grayscale
 policy: "Basic_Q_network"
-representation: "Basic_MLP"
+representation: "Basic_CNN"
 
-representation_hidden_size: [256, 256]
-q_hidden_size: [256,]
-activation: 'ReLU'
+# the following three arguments are for "Basic_CNN" representation.
+filters: [16, 16, 32, 32]
+kernels: [8, 6, 4, 4]
+strides: [2, 2, 2, 2]
 
-nsize: 200000
+q_hidden_size: [128, ]
+activation: 'LeakyReLU'
+
+parallels: 8
+nsize: 10000
 batchsize: 256
-learning_rate: 0.001
+learning_rate: 0.00025
 gamma: 0.99
 
 start_greedy: 0.5
-end_greedy: 0.01
+end_greedy: 0.05
 sync_frequency: 100
-training_frequency: 2
-training_steps: 500000
+training_frequency: 1
+training_steps: 1250000
 start_training: 10000
 
 use_obsnorm: False

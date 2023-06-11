@@ -5,6 +5,7 @@ from typing import Any, Dict, Optional, Sequence, Tuple, Type, Union, Callable
 
 ModuleType = Type[nn.Module]
 
+
 def mlp_block(input_dim: int,
               output_dim: int,
               normalize: Optional[Union[nn.BatchNorm1d, nn.LayerNorm]] = None,
@@ -22,6 +23,7 @@ def mlp_block(input_dim: int,
         block.append(activation())
     return block, (output_dim,)
 
+
 def cnn_block(input_shape: Sequence[int],
               filter: int,
               kernel_size: int,
@@ -30,7 +32,7 @@ def cnn_block(input_shape: Sequence[int],
               activation: Optional[ModuleType] = None,
               initialize: Optional[Callable[[torch.Tensor], torch.Tensor]] = None,
               device: Optional[Union[str, int, torch.device]] = None
-              ) -> Sequence[ModuleType]:
+              ) -> Tuple[Sequence[ModuleType], Tuple]:
     assert len(input_shape) == 3  # CxHxW
     C, H, W = input_shape
     padding = int((kernel_size - stride) // 2)

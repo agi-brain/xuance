@@ -25,31 +25,31 @@ setup(
         'Programming Language :: Python :: 3.10',
     ],
     extras_require={
-        "torch": ["torch >= 1.13.0"],
-        "tensorflow": ["tensorflow == 2.6.0"],
-        "mindspore": ["mindspore >= 1.10.1"],
+        "torch": ["torch>=1.13.0"],
+        "tensorflow": ["tensorflow==2.6.0"],
+        "mindspore": ["mindspore>=1.10.1"],
         "all": [
-            "torch >= 1.13.0",
-            "tensorflow == 2.6.0",
-            "mindspore >= 1.10.1"
+            "torch>=1.13.0",
+            "tensorflow==2.6.0",
+            "mindspore>=1.10.1"
         ]
     },
     install_requires=[
-        "numpy >= 1.19.5",
-        "scipy >= 1.7.3",
-        "PyYAML >= 6.0",
-        "gym >= 0.26.2",
-        "box2d-py == 2.3.5"
-        "gymnasium == 0.28.1",
-        "mpi4py >= 3.1.3",
-        "tqdm >= 4.0",
-        "pyglet >= 1.5.15",
-        "opencv-python >= 4.5.4.58",  # for Atari
-        "pettingzoo >= 1.23.0",  # for MARL
-        "tensorboard >= 2.11.2",  # logger
-        "wandb >= 0.15.3"
-        "moviepy == 1.0.3",
-        "imageio == 2.9.0"
+        "numpy>=1.19.5",
+        "scipy>=1.7.3",
+        "PyYAML>=6.0",
+        "gym>=0.26.2",
+        "box2d-py==2.3.5"
+        "gymnasium==0.28.1",
+        "mpi4py>=3.1.3",
+        "tqdm>=4.0",
+        "pyglet>=1.5.15",
+        "opencv-python>=4.5.4.58",  # for Atari
+        "pettingzoo>=1.23.0",  # for MARL
+        "tensorboard>=2.11.2",  # logger
+        "wandb>=0.15.3"
+        "moviepy==1.0.3",
+        "imageio==2.9.0"
     ],
     setup_requires=['pytest-runner'],
     tests_requires=['pytest'],
