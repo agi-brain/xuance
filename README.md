@@ -4,10 +4,10 @@
 
 [![PyPI](https://img.shields.io/pypi/v/xuanpolicy)](https://pypi.org/project/xuanpolicy/)
 [![Documentation Status](https://readthedocs.org/projects/xuanpolicy/badge/?version=latest)](https://xuanpolicy.readthedocs.io/en/latest/?badge=latest)
+![GitHub](https://img.shields.io/github/license/agi-brain/xuanpolicy)
 ![GitHub Repo stars](https://img.shields.io/github/stars/agi-brain/xuanpolicy?style=social)
 ![GitHub forks](https://img.shields.io/github/forks/agi-brain/xuanpolicy?style=social)
 ![GitHub watchers](https://img.shields.io/github/watchers/agi-brain/xuanpolicy?style=social)
-![GitHub](https://img.shields.io/github/license/agi-brain/xuanpolicy)
 
 [![PyTorch](https://img.shields.io/badge/PyTorch-%3E%3D1.13.0-red)](https://pytorch.org/get-started/locally/)
 [![TensorFlow](https://img.shields.io/badge/TensorFlow-%3E%3D2.6.0-orange)](https://www.tensorflow.org/install)
