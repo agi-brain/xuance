@@ -84,11 +84,11 @@ class Atari_Env(gym.Wrapper):
         self.lifes = self.env.unwrapped.ale.lives()
         self.episode_done = False
         if self.obs_type == "rgb":
-            self.observation_space = gym.spaces.Box(low=0, high=255,
+            self.observation_space = gym.spaces.Box(low=0, high=1,
                                                     shape=(image_size[0], image_size[1], 3 * self.num_stack),
                                                     dtype=self.env.observation_space.dtype)
         elif self.obs_type == "grayscale":
-            self.observation_space = gym.spaces.Box(low=0, high=255,
+            self.observation_space = gym.spaces.Box(low=0, high=1,
                                                     shape=(image_size[0], image_size[1], self.num_stack),
                                                     dtype=self.env.observation_space.dtype)
         else:  # ram type
@@ -134,9 +134,12 @@ class Atari_Env(gym.Wrapper):
         return LazyFrames(list(self.frames))
 
     def observation(self, frame):
-        if self.obs_type == "rgb":
-            frame = cv2.resize(frame, self.image_size, interpolation=cv2.INTER_AREA)
-        return frame
+        if self.obs_type == "grayscale":
+            return np.expand_dims(cv2.resize(frame, self.image_size, interpolation=cv2.INTER_AREA), -1)
+        elif self.obs_type == "rgb":
+            return cv2.resize(frame, self.image_size, interpolation=cv2.INTER_AREA)
+        else:
+            return frame
 
 
 class LazyFrames(object):

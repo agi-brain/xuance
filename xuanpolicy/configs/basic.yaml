@@ -2,7 +2,7 @@ dl_toolbox: "torch"  # The deep learning toolbox. Choices: "torch", "mindspore",
 
 runner: "DRL"  # Choices: "DRL", "MARL", "Mean_Field_MARL"
 project_name: "XuanPolicy_Benchmark"
-logger: "tensorboard"  # Choices: tensorboard, wandb.
+logger: "wandb"  # Choices: tensorboard, wandb.
 wandb_user_name: "papers_liu"
 
 parallels: 10
@@ -13,7 +13,7 @@ render: True
 render_mode: 'rgb_array' # Choices: 'human', 'rgb_array'.
 render_delay: 0.02  # s
 test_mode: False
-test_steps: 20000
+test_steps: 2000
 
 device: "cuda:0"
 
