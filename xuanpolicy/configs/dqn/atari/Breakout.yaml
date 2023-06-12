@@ -1,7 +1,10 @@
 agent: "DQN"
 env_name: "Atari"
 env_id: "ALE/Breakout-v5"
-obs_type: "rgb"  # choice for Atari env: ram, rgb, grayscale
+obs_type: "grayscale"  # choice for Atari env: ram, rgb, grayscale
+img_size: [84, 84]  # default is 210 x 160 in gym[Atari]
+num_stack: 4  # frame stack trick
+frame_skip: 4  # frame skip trick
 policy: "Basic_Q_network"
 representation: "Basic_CNN"
 
@@ -15,7 +18,7 @@ activation: 'LeakyReLU'
 
 parallels: 8
 nsize: 10000
-batchsize: 256
+batchsize: 64
 learning_rate: 0.00025
 gamma: 0.99
 
@@ -31,6 +34,6 @@ use_rewnorm: False
 obsnorm_range: 5
 rewnorm_range: 5
 
-save_model_frequency: 10000
+save_model_frequency: 50000
 logdir: "./logs/dqn/"
 modeldir: "./models/dqn/"

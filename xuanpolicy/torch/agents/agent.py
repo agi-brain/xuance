@@ -1,4 +1,5 @@
 import socket
+import time
 from pathlib import Path
 from xuanpolicy.torch.agents import *
 
@@ -18,8 +19,13 @@ class Agent(ABC):
         self.policy = policy
         self.memory = memory
         self.learner = learner
+
         if config.logger == "tensorboard":
-            self.writer = SummaryWriter(config.logdir)
+            time_string = time.asctime().replace(" ", "").replace(":", "_")
+            log_dir = os.path.join(os.getcwd(), config.logdir) + "/" + time_string
+            if not os.path.exists(log_dir):
+                os.makedirs(log_dir)
+            self.writer = SummaryWriter(log_dir)
             self.use_wandb = False
         elif config.logger == "wandb":
             config_dict = vars(config)
@@ -33,7 +39,7 @@ class Agent(ABC):
                        dir=wandb_dir,
                        group=config.env,
                        job_type=config.agent,
-                       name="seed_" + str(config.seed),
+                       name=time.asctime(),
                        reinit=True
                        )
             os.environ["WANDB_SILENT"] = "True"

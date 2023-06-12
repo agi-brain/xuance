@@ -2,7 +2,7 @@ import importlib
 from argparse import Namespace
 
 from .custom_envs.pettingzoo_env import PettingZoo_Env
-from .custom_envs.gym_env import Gym_Env, Atari_Env
+from .custom_envs.gym_env import Gym_Env, MountainCar, Atari_Env
 
 from .custom_envs.pettingzoo_env import PETTINGZOO_ENVIRONMENTS
 
@@ -15,10 +15,14 @@ def make_envs(config: Namespace):
     def _thunk():
         if config.env_name in PETTINGZOO_ENVIRONMENTS:
             scienario = importlib.import_module('pettingzoo.' + config.env_name + '.' + config.env_id)
-            env = PettingZoo_Env(scienario.parallel_env(continuous_actions=config.continuous_action, render_mode=render_mode),
+            env = PettingZoo_Env(scienario.parallel_env(continuous_actions=config.continuous_action,
+                                                        render_mode=config.render_mode),
                                  config.env_name+'.'+config.env_id)
         elif config.env_name == "Atari":
-            env = Atari_Env(config.env_id, config.seed, config.render_mode, config.obs_type)
+            env = Atari_Env(config.env_id, config.seed, config.render_mode,
+                            config.obs_type, config.frame_skip, config.num_stack, config.img_size)
+        elif config.env_id.__contains__("MountainCar"):
+            env = MountainCar(config.env_id, config.seed, config.render_mode)
         else:
             env = Gym_Env(config.env_id, config.seed, config.render_mode)
         return env
