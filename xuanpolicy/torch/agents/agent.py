@@ -42,7 +42,7 @@ class Agent(ABC):
                        name=time.asctime(),
                        reinit=True
                        )
-            os.environ["WANDB_SILENT"] = "True"
+            # os.environ["WANDB_SILENT"] = "True"
             self.use_wandb = True
         else:
             raise "No logger is implemented."
