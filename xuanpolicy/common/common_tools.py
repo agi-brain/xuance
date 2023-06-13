@@ -29,7 +29,7 @@ def get_config(file_name):
     return config_dict
 
 
-def get_arguments(method, env, config_path=None, parser_args=None):
+def get_arguments(method, env, env_id, config_path=None, parser_args=None):
     """
     Get arguments from .yaml files
     method: the algorithm name that will be implemented,
@@ -45,7 +45,11 @@ def get_arguments(method, env, config_path=None, parser_args=None):
     config_basic = get_config(os.path.join(config_path_default, "basic.yaml"))
 
     ''' get the arguments from xuanpolicy/config/agent/env/scenario.yaml '''
-    file_name = env + ".yaml"
+    if env in ["atari", "mujoco"]:
+        file_name = env + ".yaml"
+    else:
+        file_name = env + "/" + env_id + ".yaml"
+
     if type(method) == list:
         config_algo_default = [get_config(os.path.join(config_path_default, agent, file_name)) for agent in method]
         configs = [recursive_dict_update(config_basic, config_i) for config_i in config_algo_default]
@@ -66,11 +70,15 @@ def get_arguments(method, env, config_path=None, parser_args=None):
         args = SN(**configs)
     else:
         raise "Unsupported agent_name or env_name!"
+
+    if env in ["atari", "mujoco"]:
+        args.env_id = env_id
     return args
 
 
 def get_runner(method,
                env,
+               env_id,
                config_path=None,
                parser_args=None,
                is_test=False):
@@ -82,7 +90,7 @@ def get_runner(method,
     parser_args: arguments that specified by parser tools.
     is_test: default is False, if True, it will load the models and run the environment with rendering.
     """
-    args = get_arguments(method, env, config_path, parser_args)
+    args = get_arguments(method, env, env_id, config_path, parser_args)
 
     device = args[0].device if type(args) == list else args.device
     dl_toolbox = args[0].dl_toolbox if type(args) == list else args.dl_toolbox
