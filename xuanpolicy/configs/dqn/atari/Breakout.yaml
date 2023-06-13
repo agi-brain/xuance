@@ -10,17 +10,17 @@ policy: "Basic_Q_network"
 representation: "Basic_CNN"
 
 # the following three arguments are for "Basic_CNN" representation.
-filters: [16, 16, 32, 32]  # [32, 64, 64]
-kernels: [8, 6, 4, 4]
-strides: [2, 2, 2, 2]
+filters: [32, 64, 64]
+kernels: [8, 4, 3]
+strides: [4, 2, 1]
 
-q_hidden_size: [128, ]
+q_hidden_size: [512, ]
 activation: 'LeakyReLU'
 
 seed: 1069
 parallels: 8
 nsize: 10000
-batchsize: 128
+batchsize: 32
 learning_rate: 0.00025
 gamma: 0.99
 
@@ -36,7 +36,7 @@ use_rewnorm: False
 obsnorm_range: 5
 rewnorm_range: 5
 
-test_steps: 10000
-save_model_frequency: 5000
+test_steps: 5000
+save_model_frequency: 50000
 logdir: "./logs/dqn/"
 modeldir: "./models/dqn/"
