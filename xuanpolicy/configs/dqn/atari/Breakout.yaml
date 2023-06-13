@@ -5,28 +5,29 @@ obs_type: "grayscale"  # choice for Atari env: ram, rgb, grayscale
 img_size: [84, 84]  # default is 210 x 160 in gym[Atari]
 num_stack: 4  # frame stack trick
 frame_skip: 4  # frame skip trick
+noop_max: 30  # Do no-op action for a number of steps in [1, noop_max].
 policy: "Basic_Q_network"
 representation: "Basic_CNN"
 
 # the following three arguments are for "Basic_CNN" representation.
-filters: [16, 16, 32, 32]
-kernels: [8, 6, 4, 4]
-strides: [2, 2, 2, 2]
+filters: [32, 64, 64]
+kernels: [8, 4, 3]
+strides: [4, 2, 1]
 
-q_hidden_size: [128, ]
-activation: 'LeakyReLU'
+q_hidden_size: [512, ]
+activation: 'ReLU'
 
 parallels: 8
 nsize: 10000
-batchsize: 64
+batchsize: 32
 learning_rate: 0.00025
 gamma: 0.99
 
-start_greedy: 0.5
-end_greedy: 0.05
-sync_frequency: 100
+start_greedy: 1.0
+end_greedy: 0.1
+sync_frequency: 1000
 training_frequency: 1
-training_steps: 1250000
+training_steps: 10000000  # 10e6
 start_training: 10000
 
 use_obsnorm: False
@@ -34,7 +35,7 @@ use_rewnorm: False
 obsnorm_range: 5
 rewnorm_range: 5
 
-test_steps: 20000
+test_steps: 5000
 save_model_frequency: 50000
 logdir: "./logs/dqn/"
 modeldir: "./models/dqn/"

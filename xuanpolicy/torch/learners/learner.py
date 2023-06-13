@@ -3,7 +3,6 @@ import time
 import torch.nn.functional as F
 from abc import ABC, abstractmethod
 from typing import Optional, Sequence, Union
-from torch.utils.tensorboard import SummaryWriter
 from argparse import Namespace
 import os
 
@@ -45,7 +44,6 @@ class LearnerMAS(ABC):
                  policy: torch.nn.Module,
                  optimizer: Union[torch.optim.Optimizer, Sequence[torch.optim.Optimizer]],
                  scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
-                 summary_writer: Optional[SummaryWriter] = None,
                  device: Optional[Union[int, str, torch.device]] = None,
                  modeldir: str = "./"):
         self.args = config
@@ -64,7 +62,6 @@ class LearnerMAS(ABC):
         self.policy = policy
         self.optimizer = optimizer
         self.scheduler = scheduler
-        self.writer = summary_writer
         self.device = device
         self.modeldir = modeldir
         self.iterations = 0
@@ -73,9 +70,8 @@ class LearnerMAS(ABC):
         return F.one_hot(actions_int.long(), num_classes=num_actions)
 
     def save_model(self):
-        time_string = time.asctime()
-        time_string = time_string.replace(" ", "")
-        model_path = self.modeldir + "model-%s-%s.pth" % (time.asctime(), str(self.iterations))
+        time_string = time.asctime().replace(" ", "").replace(":", "_")
+        model_path = self.modeldir + "model-%s-%s.pth" % (time_string, str(self.iterations))
         torch.save(self.policy.state_dict(), model_path)
 
     def load_model(self, path):

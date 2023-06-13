@@ -37,10 +37,11 @@ class Runner_Base_MARL(Runner_Base):
         self.render_delay = args.render_delay
 
         self.train_at_step = args.train_at_step
-        self.n_episodes = args.training_steps
+        self.n_steps = args.training_steps
         self.n_tests = args.n_tests
         self.test_period = args.test_period
         self.test_mode = args.test_mode
+        self.save_model_frequency = args.save_model_frequency
         self.marl_agents = []
         self.marl_names = []
 

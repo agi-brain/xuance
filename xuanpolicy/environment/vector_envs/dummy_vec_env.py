@@ -117,12 +117,14 @@ class DummyVecEnv_MAS(DummyVecEnv):
                              range(self.num_envs)]
         self.buf_rews_dict = [{k: 0.0 for k in self.keys} for _ in range(self.num_envs)]
         self.buf_dones_dict = [{k: False for k in self.keys} for _ in range(self.num_envs)]
+        self.buf_trunctions_dict = [{k: False for k in self.keys} for _ in range(self.num_envs)]
         self.buf_infos_dict = [{k: {} for k in self.keys} for _ in range(self.num_envs)]
         # buffer of numpy data
         self.buf_obs = [np.zeros((self.num_envs, n) + tuple(self.obs_shapes[h]), dtype=self.obs_dtype) for h, n in
                         enumerate(self.n_agents)]
         self.buf_rews = [np.zeros((self.num_envs, n, 1), dtype=np.float32) for n in self.n_agents]
         self.buf_dones = [np.ones((self.num_envs, n), dtype=np.bool) for n in self.n_agents]
+        self.buf_trunctions = [np.ones((self.num_envs, n), dtype=np.bool) for n in self.n_agents]
         self.buf_infos = [[None for _ in range(self.num_envs)] for _ in self.n_agents]
 
         self.actions = None
@@ -132,6 +134,7 @@ class DummyVecEnv_MAS(DummyVecEnv):
         self.buf_obs_dict[i_env] = {k: np.zeros(tuple(self.shapes[k]), dtype=self.dtypes[k]) for k in self.keys}
         self.buf_rews_dict[i_env] = {k: 0.0 for k in self.keys}
         self.buf_dones_dict[i_env] = {k: False for k in self.keys}
+        self.buf_trunctions_dict[i_env] = {k: False for k in self.keys}
         self.buf_infos_dict[i_env] = {k: {} for k in self.keys}
 
     def reset(self):
@@ -188,15 +191,19 @@ class DummyVecEnv_MAS(DummyVecEnv):
             self.buf_obs_dict[e].update(o)
             self.buf_rews_dict[e].update(r)
             self.buf_dones_dict[e].update(d)
+            self.buf_trunctions_dict[e].update(t)
             self.buf_infos_dict[e].update(info)
+            if all(self.buf_dones_dict[e].values()) or all(self.buf_dones_dict[e].values()):
+                obs = self.envs[e].reset()
+                self.buf_obs_dict[e].update(obs)
             # resort the data as group-wise
             for h, agent_keys_h in enumerate(self.agent_keys):
                 getter = itemgetter(*agent_keys_h)
                 self.buf_obs[h][e] = getter(self.buf_obs_dict[e])
                 self.buf_rews[h][e, :, 0] = getter(self.buf_rews_dict[e])
                 self.buf_dones[h][e] = getter(self.buf_dones_dict[e])
+                self.buf_trunctions[h][e] = getter(self.buf_trunctions_dict[e])
                 self.buf_infos[h][e] = getter(self.buf_infos_dict[e])
-
             try:
                 done_all.append(all(itemgetter(*list(self.keys))(self.buf_dones_dict[e])))
             except:

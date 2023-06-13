@@ -128,7 +128,7 @@ class DQN_Agent(Agent):
             obs = self._process_observation(obs)
             states, acts = self._action(obs, egreedy=0.0)
             next_obs, rewards, terminals, trunctions, infos = self.envs.step(acts)
-            if self.config.render and self.config.render_mode == "rgb_array":
+            if self.config.render_mode == "rgb_array":
                 images = self.envs.render(self.config.render_mode)
                 for idx, img in enumerate(images):
                     videos[idx].append(img)
@@ -140,7 +140,7 @@ class DQN_Agent(Agent):
                 if terminals[i] or trunctions[i]:
                     scores[i], returns[i] = 0, 0
 
-        if self.config.render and self.config.render_mode == "rgb_array":
+        if self.config.render_mode == "rgb_array":
             # batch, time, height, width, channel -> batch, time, channel, height, width
             videos_info = {"Videos_Test": np.array(videos, dtype=np.uint8).transpose((0, 1, 4, 2, 3))}
             self.log_videos(info=videos_info, fps=50)

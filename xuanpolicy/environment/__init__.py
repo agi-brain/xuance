@@ -20,7 +20,7 @@ def make_envs(config: Namespace):
                                  config.env_name+'.'+config.env_id)
         elif config.env_name == "Atari":
             env = Atari_Env(config.env_id, config.seed, config.render_mode,
-                            config.obs_type, config.frame_skip, config.num_stack, config.img_size)
+                            config.obs_type, config.frame_skip, config.num_stack, config.img_size, config.noop_max)
         elif config.env_id.__contains__("MountainCar"):
             env = MountainCar(config.env_id, config.seed, config.render_mode)
         else:

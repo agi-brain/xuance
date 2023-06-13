@@ -100,23 +100,58 @@ class Runner(Runner_Base_MARL):
         return scores, info_train
 
     def run(self):
-        for i_episode in tqdm(range(self.n_episodes)):
-            _, info_train = self.run_episode(i_episode, test_mode=self.test_mode)
+        info_train = {}
+        obs_n = self.envs.reset()
+        state, agent_mask = self.envs.global_state(), self.envs.agent_mask()
 
-            # test and save models
-            if (i_episode % self.test_period == 0) and (not self.test_mode):
-                reward = np.zeros([self.n_handles, self.n_envs, 1])
-                for i_test in range(self.n_tests):
-                    r_episode = self.run_episode(i_episode, test_mode=True)
-                    reward += r_episode
-                reward = reward / self.n_tests
+        scores = np.zeros([self.n_handles, self.n_envs, 1], dtype=np.float32)
+        done_envs = np.zeros([self.n_envs, 1], dtype=np.bool)
+        act_mean_last = [np.zeros([self.n_envs, arg.dim_act]) for arg in self.args]
+
+        for step in tqdm(range(self.n_steps)):
+            actions_dict = self.get_actions(obs_n, step, False, act_mean_last, agent_mask, state)
+            actions_execute = self.combine_env_actions(actions_dict['actions_n'])
+            next_obs_n, rew_n, terminated_n, truncated_n, info = self.envs.step(actions_execute)
+            next_state, agent_mask = self.envs.global_state(), self.envs.agent_mask()
+
+            if self.render or self.test_mode:
+                time.sleep(self.render_delay)
+
+            for h in range(self.n_handles):
+                scores[h] += (1-done_envs) * np.mean(rew_n[h] * agent_mask[h][:, :, np.newaxis], axis=1)
+
+            self.store_data(obs_n, next_obs_n, actions_dict, state, next_state, agent_mask, rew_n, terminated_n, self.envs)
+            for h, mas_group in enumerate(self.marl_agents):
+                if self.args[h].train_at_step:
+                    info_train = self.marl_agents[h].train(step)
+
+            obs_n, state, act_mean_last = deepcopy(next_obs_n), deepcopy(next_state), deepcopy(actions_dict['act_mean'])
+
+            for e, d in enumerate(truncated_n):
+                if d:  # if done, then reset this environment
+                    done_envs[e], obs_reset = d, self.envs.reset_one_env(e)
+                    state[e] = self.envs.global_state_one_env(e)
+                    for h, mas_group in enumerate(self.marl_agents):
+                        if mas_group.args.agent_name == "random":
+                            continue
+                        obs_n[h][e], act_mean_last[h][e] = obs_reset[h], np.zeros([self.args[h].dim_act])
+                        if (self.marl_names[h] in ["MAPPO", "CID_Simple", "VDAC"]) and (not self.args[h].consider_terminal_states):
+                            value_next_e = mas_group.value(next_obs_n[h], next_state)[e]
+                        else:
+                            value_next_e = np.zeros([mas_group.n_agents, 1])
+                        mas_group.memory.finish_ac_path(value_next_e, e)
+
+            for i in range(self.n_envs):
+                if terminated_n[0][i].all() or truncated_n[i]:
+                    for h, mas_group in enumerate(self.marl_agents):
+                        if mas_group.args.agent_name == "random":
+                            continue
+                        info_train["returns-step/env-%d" % i] = scores[h, i]
+                        mas_group.log_infos(info_train, step)
+
+            if step % self.save_model_frequency == 0 or step == self.n_steps - 1:
                 for h, mas_group in enumerate(self.marl_agents):
-                    if mas_group.args.agent_name == "random":
-                        continue
-                    for i in range(self.n_envs):
-                        self.marl_agents[h].writer.add_scalars("reward_mean", {"env-%d" % i: reward[h, i]}, i_episode)
-                    if i_episode % 5000 == 0 or i_episode == self.n_episodes - 1:
-                        mas_group.save_model()
+                    mas_group.save_model()
 
         self.envs.close()
 

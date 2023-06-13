@@ -12,6 +12,7 @@ class Gym_Env(gym.Wrapper):
         seed: random seed.
         render_mode: "rgb_array", "human"
     """
+
     def __init__(self, env_id: str, seed: int, render_mode: str):
         self.env = gym.make(env_id, render_mode=render_mode)
         self.env.action_space.seed(seed=seed)
@@ -60,14 +61,16 @@ class Atari_Env(gym.Wrapper):
         num_stack: int, the number of stacked frames if you use the frame stacking trick.
         image_size: This argument determines the size of observation image, default is [210, 160].
     """
+
     def __init__(self,
                  env_id: str,
                  seed: int,
-                 render_mode: str,
-                 obs_type: str,
-                 frame_skip: int,
-                 num_stack: int,
-                 image_size: Sequence[int],
+                 render_mode: str = "rgb_array",
+                 obs_type: str = "grayscale",
+                 frame_skip: int = 4,
+                 num_stack: int = 4,
+                 image_size: Sequence[int] = None,
+                 noop_max: int = 30,
                  ):
         self.env = gym.make(env_id,
                             render_mode=render_mode,
@@ -80,19 +83,26 @@ class Atari_Env(gym.Wrapper):
         self.num_stack = num_stack
         self.obs_type = obs_type
         self.frames = deque([], maxlen=self.num_stack)
-        self.image_size = image_size
+        self.image_size = [210, 160] if image_size is None else image_size
+        self.noop_max = noop_max
         self.lifes = self.env.unwrapped.ale.lives()
-        self.episode_done = False
+        self.episode_done = True
+        self.grayscale, self.rgb = False, False
         if self.obs_type == "rgb":
+            self.rgb = True
             self.observation_space = gym.spaces.Box(low=0, high=1,
                                                     shape=(image_size[0], image_size[1], 3 * self.num_stack),
-                                                    dtype=self.env.observation_space.dtype)
+                                                    dtype=np.float32)
         elif self.obs_type == "grayscale":
+            self.grayscale = True
             self.observation_space = gym.spaces.Box(low=0, high=1,
                                                     shape=(image_size[0], image_size[1], self.num_stack),
-                                                    dtype=self.env.observation_space.dtype)
+                                                    dtype=np.float32)
         else:  # ram type
             self.observation_space = self.env.observation_space
+        assert self.env.unwrapped.get_action_meanings()[0] == "NOOP"
+        assert self.env.unwrapped.get_action_meanings()[1] == "FIRE"
+        assert len(self.env.unwrapped.get_action_meanings()) >= 3
         self.action_space = self.env.action_space
         self.metadata = self.env.metadata
         self.reward_range = self.env.reward_range
@@ -104,9 +114,19 @@ class Atari_Env(gym.Wrapper):
 
     def reset(self):
         if self.episode_done:
-            obs = self.env.reset()
+            self.env.reset()
+            num_noops = np.random.randint(0, self.noop_max)
+            for _ in range(num_noops):
+                obs, _, done, _ = self.env.unwrapped.step(0)
+                if done:
+                    self.env.reset()
+
+            obs, _, done, _ = self.env.unwrapped.step(1)
+            if done:
+                obs = self.env.reset()
         else:
             obs, _, _, _ = self.env.unwrapped.step(0)  # no-op action
+
         for _ in range(self.num_stack):
             self.frames.append(self.observation(obs))
         self._episode_step = 0
@@ -127,19 +147,22 @@ class Atari_Env(gym.Wrapper):
         else:
             truncated = False
         self.lifes = lives
-        return self._get_obs(), reward, terminated, truncated, info
+        return self._get_obs(), self.reward(reward), terminated, truncated, info
 
     def _get_obs(self):
         assert len(self.frames) == self.num_stack
         return LazyFrames(list(self.frames))
 
+    def reward(self, reward):
+        return np.sign(reward)
+
     def observation(self, frame):
-        if self.obs_type == "grayscale":
-            return np.expand_dims(cv2.resize(frame, self.image_size, interpolation=cv2.INTER_AREA), -1)
-        elif self.obs_type == "rgb":
-            return cv2.resize(frame, self.image_size, interpolation=cv2.INTER_AREA)
+        if self.grayscale:
+            return np.expand_dims(cv2.resize(frame, self.image_size, interpolation=cv2.INTER_AREA), -1) / 255.0
+        elif self.rgb:
+            return cv2.resize(frame, self.image_size, interpolation=cv2.INTER_AREA) / 255.0
         else:
-            return frame
+            return frame / 255.0
 
 
 class LazyFrames(object):

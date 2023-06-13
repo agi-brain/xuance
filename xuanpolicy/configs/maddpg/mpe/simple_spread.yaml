@@ -23,7 +23,7 @@ buffer_size: 200000
 batch_size: 256
 gamma: 0.95  # discount factor
 
-training_steps: 30000
+training_steps: 20000000
 training_frequency: 1
 
 n_tests: 5
@@ -35,5 +35,6 @@ use_rewnorm: False
 obsnorm_range: 5
 rewnorm_range: 5
 
+save_model_frequency: 10000
 logdir: "./logs/maddpg/"
 modeldir: "./models/maddpg/"
