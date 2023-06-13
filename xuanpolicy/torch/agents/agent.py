@@ -3,6 +3,7 @@ import time
 from pathlib import Path
 from xuanpolicy.torch.agents import *
 
+
 class Agent(ABC):
     def __init__(self,
                  config: Namespace,
