@@ -1,0 +1,41 @@
+agent: "PPO_Clip"
+env_name: "Atari"
+env_id: "ALE/Breakout-v5"
+obs_type: "grayscale"  # choice for Atari env: ram, rgb, grayscale
+img_size: [84, 84]  # default is 210 x 160 in gym[Atari]
+num_stack: 4  # frame stack trick
+frame_skip: 4  # frame skip trick
+noop_max: 30  # Do no-op action for a number of steps in [1, noop_max].
+representation: "Basic_CNN"
+policy: "Categorical_AC"
+
+# Good HyperParameters for Atari Games, Do not change them.
+filters: [32, 32, 64, 64]
+kernels: [8, 4, 4, 4]
+strides: [4, 2, 2, 2]
+actor_hidden_size: [128, 128]
+critic_hidden_size: [128, 128]
+activation: "LeakyReLU"
+
+parallels: 8
+training_steps: 250000
+nsteps: 256
+nepoch: 4
+nminibatch: 8
+learning_rate: 0.0007
+
+vf_coef: 0.25
+ent_coef: 0.01
+clip_range: 0.2
+gamma: 0.99
+lam: 0.95
+
+use_obsnorm: True
+use_rewnorm: True
+obsnorm_range: 5
+rewnorm_range: 5
+
+test_steps: 10000
+save_model_frequency: 50000
+logdir: "./logs/ppoclip/"
+modeldir: "./models/ppoclip/"

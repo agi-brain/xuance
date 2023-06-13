@@ -1,25 +1,21 @@
-agent: "PPG"
+agent: "PG"
 env_name: "Classic Control"
 env_id: "CartPole-v1"
 representation: "Basic_MLP"
-policy: "Categorical_PPG"
+policy: "Categorical_Actor"
 
 representation_hidden_size: [128,]
 actor_hidden_size: [128,]
-critic_hidden_size: [128,]
 
 training_steps: 30000
-nsteps: 256
-nepoch: 8
-policy_nepoch: 4
-value_nepoch: 8 
-aux_nepoch: 8
+nsteps: 128
+nepoch: 1
 nminibatch: 1
 learning_rate: 0.0004
 
 ent_coef: 0.01
-clip_range: 0.2
-kl_beta: 1.0
+clip_grad: 0.5
+clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
 gamma: 0.98
 lam: 0.95
 
@@ -28,5 +24,5 @@ use_rewnorm: True
 obsnorm_range: 5
 rewnorm_range: 5
 
-logdir: "./logs/ppg/"
-modeldir: "./models/ppg/"
+logdir: "./logs/pg/"
+modeldir: "./models/pg/"

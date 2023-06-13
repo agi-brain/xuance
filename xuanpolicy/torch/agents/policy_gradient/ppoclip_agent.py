@@ -101,6 +101,7 @@ class PPOCLIP_Agent(Agent):
                     obs_batch, act_batch, ret_batch, adv_batch, _, aux_batch = self.memory.sample()
                     step_info = self.learner.update(obs_batch, act_batch, ret_batch, adv_batch, aux_batch['old_logp'])
                 self.memory.clear()
+                self.log_infos(step_info, step)
             scores += rewards
             returns = self.gamma * returns + rewards
             obs = next_obs
@@ -108,15 +109,13 @@ class PPOCLIP_Agent(Agent):
                 if terminals[i] or trunctions[i]:
                     self.ret_rms.update(returns[i:i + 1])
                     self.memory.finish_path(0, i)
-                    step_info["returns-step"] = {"env-%d" % i: scores[i]}
-                    episode_info["returns-episode"] = {"env-%d" % i: scores[i]}
-                    scores[i] = 0
-                    returns[i] = 0
+                    step_info["returns-step/env-%d" % i] = scores[i]
+                    step_info["episode/env-%d" % i] = episodes[i]
+                    scores[i], returns[i] = 0, 0
                     episodes[i] += 1
                     self.log_infos(step_info, step)
-                    self.log_infos(episode_info, episodes[i])
 
-            if step % 50000 == 0 or step == train_steps - 1:
+            if step % self.config.save_model_frequency == 0 or step == train_steps - 1:
                 self.save_model()
                 np.save(self.modeldir + "/obs_rms.npy",
                         {'mean': self.obs_rms.mean, 'std': self.obs_rms.std, 'count': self.obs_rms.count})
@@ -132,7 +131,7 @@ class PPOCLIP_Agent(Agent):
             obs = self._process_observation(obs)
             states, acts, rets, logps = self._action(obs)
             next_obs, rewards, terminals, trunctions, infos = self.envs.step(acts)
-            if self.config.render and self.config.render_mode == "rgb_array":
+            if self.config.render_mode == "rgb_array":
                 images = self.envs.render(self.config.render_mode)
                 for idx, img in enumerate(images):
                     videos[idx].append(img)
@@ -144,7 +143,7 @@ class PPOCLIP_Agent(Agent):
                 if terminals[i] or trunctions[i]:
                     scores[i], returns[i] = 0, 0
 
-        if self.config.render and self.config.render_mode == "rgb_array":
+        if self.config.render_mode == "rgb_array":
             # batch, time, height, width, channel -> batch, time, channel, height, width
             videos_info = {"Videos_Test": np.array(videos, dtype=np.uint8).transpose((0, 1, 4, 2, 3))}
             self.log_videos(info=videos_info, fps=50)

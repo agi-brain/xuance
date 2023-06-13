@@ -38,7 +38,7 @@ class Agent(ABC):
                        entity=config.wandb_user_name,
                        notes=socket.gethostname(),
                        dir=wandb_dir,
-                       group=config.env,
+                       group=config.env_id,
                        job_type=config.agent,
                        name=time.asctime(),
                        reinit=True

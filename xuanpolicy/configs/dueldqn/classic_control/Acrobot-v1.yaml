@@ -1,15 +1,14 @@
-agent: "CDQN"
-env_name: "toy_env"
-env_id: "LunarLander-v2"
-policy: "CDQN_Policy"
+agent: "Duel_DQN"
+env_name: "classic_control"
+env_id: "Acrobot-v1"
+policy: "Duel_Q_network"
 representation: "Basic_MLP"
 
-representation_hidden_size: [256,]
-q_hidden_size: [256,]
-activation: 'ReLU'
+representation_hidden_size: [128, ]
+q_hidden_size: [128, ]
 
 nsize: 20000
-batchsize: 256
+batchsize: 128
 learning_rate: 0.001
 gamma: 0.99
 
@@ -25,6 +24,5 @@ use_rewnorm: False
 obsnorm_range: 5
 rewnorm_range: 5
 
-save_model_frequency: 10000
-logdir: "./logs/cdqn/"
-modeldir: "./models/cdqn/"
+logdir: "./logs/dueldqn/"
+modeldir: "./models/dueldqn/"

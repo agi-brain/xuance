@@ -2,7 +2,7 @@ from .operations import *
 from .layers import *
 from .distributions import *
 
-ActivatioFunctions = {
+ActivationFunctions = {
     "ReLU": nn.ReLU,
     "LeakyReLU": nn.LeakyReLU,
     "Tanh": nn.Tanh,
