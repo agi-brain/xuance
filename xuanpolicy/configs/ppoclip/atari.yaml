@@ -18,7 +18,7 @@ critic_hidden_size: [128, 128]
 activation: "LeakyReLU"
 
 parallels: 8
-training_steps: 250000
+training_steps: 1250000
 nsteps: 256
 nepoch: 4
 nminibatch: 8

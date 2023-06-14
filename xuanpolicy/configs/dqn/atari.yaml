@@ -14,7 +14,7 @@ filters: [16, 16, 32, 32]  # [32, 64, 64]
 kernels: [8, 6, 4, 4]  # [8, 4, 3]
 strides: [2, 2, 2, 2]  # [4, 2, 1]
 
-q_hidden_size: [128, ]
+q_hidden_size: []
 activation: "LeakyReLU"
 
 seed: 1069
@@ -24,7 +24,7 @@ batchsize: 64
 learning_rate: 0.00025
 gamma: 0.99
 
-start_greedy: 1.0
+start_greedy: 0.5
 end_greedy: 0.05
 sync_frequency: 500
 training_frequency: 1
