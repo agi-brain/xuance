@@ -142,27 +142,24 @@ class Atari_Env(gym.Wrapper):
         self.episode_done = terminated
         if (lives < self.lifes) and (lives > 0):
             terminated = True
-        if self._episode_step >= self.env._max_episode_steps:
-            truncated = True
-        else:
-            truncated = False
+        truncated = self.episode_done
         self.lifes = lives
-        return self._get_obs(), self.reward(reward), terminated, truncated, info
+        return self._get_obs(), reward, terminated, truncated, info
 
     def _get_obs(self):
         assert len(self.frames) == self.num_stack
         return LazyFrames(list(self.frames))
 
-    def reward(self, reward):
-        return np.sign(reward)
+    # def reward(self, reward):
+    #     return np.sign(reward)
 
     def observation(self, frame):
         if self.grayscale:
-            return np.expand_dims(cv2.resize(frame, self.image_size, interpolation=cv2.INTER_AREA), -1) / 255.0
+            return np.expand_dims(cv2.resize(frame, self.image_size, interpolation=cv2.INTER_AREA), -1).astype(np.float32) / 255.0
         elif self.rgb:
-            return cv2.resize(frame, self.image_size, interpolation=cv2.INTER_AREA) / 255.0
+            return cv2.resize(frame, self.image_size, interpolation=cv2.INTER_AREA).astype(np.float32) / 255.0
         else:
-            return frame / 255.0
+            return frame.astype(np.float32) / 255.0
 
 
 class LazyFrames(object):
