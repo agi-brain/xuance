@@ -144,14 +144,14 @@ class Atari_Env(gym.Wrapper):
             terminated = True
         truncated = self.episode_done
         self.lifes = lives
-        return self._get_obs(), self.reward(reward), terminated, truncated, info
+        return self._get_obs(), reward, terminated, truncated, info
 
     def _get_obs(self):
         assert len(self.frames) == self.num_stack
         return LazyFrames(list(self.frames))
 
-    def reward(self, reward):
-        return np.sign(reward)
+    # def reward(self, reward):
+    #     return np.sign(reward)
 
     def observation(self, frame):
         if self.grayscale:
