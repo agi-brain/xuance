@@ -1,3 +1,5 @@
+import numpy as np
+
 from xuanpolicy.torch.agents import *
 
 
@@ -65,7 +67,9 @@ class DQN_Agent(Agent):
     def _process_reward(self, rewards):
         if self.use_rewnorm:
             std = np.clip(self.ret_rms.std, 0.1, 100)
-            return np.clip(rewards / std, -self.rewnorm_range, self.rewnorm_range)
+            rewards = np.clip(rewards / std, -self.rewnorm_range, self.rewnorm_range)
+        if self.atari:
+            rewards = np.sign(rewards)
         return rewards
 
     def _action(self, obs, egreedy=0.0):
@@ -148,5 +152,5 @@ class DQN_Agent(Agent):
             videos_info = {"Videos_Test": np.array(videos, dtype=np.uint8).transpose((0, 1, 4, 2, 3))}
             self.log_videos(info=videos_info, fps=50)
 
-    def evaluate(self):
+    def benchmark(self):
         pass

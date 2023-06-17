@@ -52,6 +52,7 @@ class Agent(ABC):
         self.modeldir = modeldir
         create_directory(logdir)
         create_directory(modeldir)
+        self.atari = True if self.config.env_name == "Atari" else False
 
     def save_model(self):
         self.learner.save_model()

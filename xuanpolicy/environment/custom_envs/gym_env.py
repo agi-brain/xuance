@@ -115,20 +115,20 @@ class Atari_Env(gym.Wrapper):
     def reset(self):
         if self.episode_done:
             self.env.reset()
+            # Execute NoOp actions
             num_noops = np.random.randint(0, self.noop_max)
             for _ in range(num_noops):
                 obs, _, done, _ = self.env.unwrapped.step(0)
                 if done:
                     self.env.reset()
-
+            # try to fire
             obs, _, done, _ = self.env.unwrapped.step(1)
             if done:
                 obs = self.env.reset()
-        else:
-            obs, _, _, _ = self.env.unwrapped.step(0)  # no-op action
+            # stack reset observations
+            for _ in range(self.num_stack):
+                self.frames.append(self.observation(obs))
 
-        for _ in range(self.num_stack):
-            self.frames.append(self.observation(obs))
         self._episode_step = 0
         self.lifes = self.env.unwrapped.ale.lives()
         self.episode_done = False
