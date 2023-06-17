@@ -11,6 +11,7 @@ class ISAC_Learner(LearnerMAS):
                  policy: nn.Module,
                  optimizer: Sequence[torch.optim.Optimizer],
                  scheduler: Sequence[torch.optim.lr_scheduler._LRScheduler] = None,
+                 summary_writer: Optional[SummaryWriter] = None,
                  device: Optional[Union[int, str, torch.device]] = None,
                  modeldir: str = "./",
                  gamma: float = 0.99,
@@ -21,7 +22,7 @@ class ISAC_Learner(LearnerMAS):
         self.alpha = config.alpha
         self.sync_frequency = sync_frequency
         self.mse_loss = nn.MSELoss()
-        super(ISAC_Learner, self).__init__(config, policy, optimizer, scheduler, device, modeldir)
+        super(ISAC_Learner, self).__init__(config, policy, optimizer, scheduler, summary_writer, device, modeldir)
         self.optimizer = {
             'actor': optimizer[0],
             'critic': optimizer[1]
@@ -77,13 +78,8 @@ class ISAC_Learner(LearnerMAS):
 
         lr_a = self.optimizer['actor'].state_dict()['param_groups'][0]['lr']
         lr_c = self.optimizer['critic'].state_dict()['param_groups'][0]['lr']
-
-        info = {
-            "learning_rate_actor": lr_a,
-            "learning_rate_critic": lr_c,
-            "loss_actor": loss_a.item(),
-            "loss_critic": loss_c.item(),
-            "predictQ": q_eval.mean().item()
-        }
-
-        return info
+        self.writer.add_scalar("learning_rate_actor", lr_a, self.iterations)
+        self.writer.add_scalar("learning_rate_critic", lr_c, self.iterations)
+        self.writer.add_scalar("loss_actor", loss_a.item(), self.iterations)
+        self.writer.add_scalar("loss_critic", loss_c.item(), self.iterations)
+        self.writer.add_scalar("predictQ", q_eval.mean().item(), self.iterations)

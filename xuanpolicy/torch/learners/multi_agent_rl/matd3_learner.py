@@ -10,6 +10,7 @@ class MATD3_Learner(LearnerMAS):
                  policy: nn.Module,
                  optimizer: Sequence[torch.optim.Optimizer],
                  scheduler: Sequence[torch.optim.lr_scheduler._LRScheduler] = None,
+                 summary_writer: Optional[SummaryWriter] = None,
                  device: Optional[Union[int, str, torch.device]] = None,
                  modeldir: str = "./",
                  gamma: float = 0.99,
@@ -21,7 +22,7 @@ class MATD3_Learner(LearnerMAS):
         self.delay = delay
         self.sync_frequency = sync_frequency
         self.mse_loss = nn.MSELoss()
-        super(MATD3_Learner, self).__init__(config, policy, optimizer, scheduler, device, modeldir)
+        super(MATD3_Learner, self).__init__(config, policy, optimizer, scheduler, summary_writer, device, modeldir)
         self.optimizer = {
             'actor': optimizer[0],
             'critic_A': optimizer[1],
@@ -79,15 +80,10 @@ class MATD3_Learner(LearnerMAS):
         lr_a = self.optimizer['actor'].state_dict()['param_groups'][0]['lr']
         lr_c_A = self.optimizer['critic_A'].state_dict()['param_groups'][0]['lr']
         lr_c_B = self.optimizer['critic_B'].state_dict()['param_groups'][0]['lr']
-
-        info = {
-            "learning_rate_actor": lr_a,
-            "learning_rate_critic_A": lr_c_A,
-            "learning_rate_critic_B": lr_c_B,
-            "loss_critic_A": loss_c.item(),
-            "loss_critic_B": loss_c.item()
-        }
+        self.writer.add_scalar("learning_rate_actor", lr_a, self.iterations)
+        self.writer.add_scalar("learning_rate_critic_A", lr_c_A, self.iterations)
+        self.writer.add_scalar("learning_rate_critic_B", lr_c_B, self.iterations)
         if self.iterations % self.delay == 0:
-            info["loss_actor"] = p_loss.item()
-
-        return info
+            self.writer.add_scalar("loss_actor", p_loss.item(), self.iterations)
+        self.writer.add_scalar("loss_critic_A", loss_c.item(), self.iterations)
+        self.writer.add_scalar("loss_critic_B", loss_c.item(), self.iterations)

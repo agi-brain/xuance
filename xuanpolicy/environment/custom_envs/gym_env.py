@@ -23,12 +23,29 @@ class Gym_Env(gym.Wrapper):
         self.action_space = self.env.action_space
         self.metadata = self.env.metadata
         self.reward_range = self.env.reward_range
+        self._episode_step = 0
+        self._episode_score = 0.0
 
     def close(self):
         self.env.close()
 
     def render(self, mode):
         return self.env.render()
+
+    def reset(self):
+        obs, info = self.env.reset()
+        self._episode_step = 0
+        self._episode_score = 0.0
+        info["episode_step"] = self._episode_step
+        return obs, info
+
+    def step(self, actions):
+        observation, reward, terminated, truncated, info = self.env.step(actions)
+        self._episode_step += 1
+        self._episode_score += reward
+        info["episode_step"] = self._episode_step
+        info["episode_score"] = self._episode_score
+        return observation, reward, terminated, truncated, info
 
 
 class MountainCar(Gym_Env):
@@ -37,6 +54,10 @@ class MountainCar(Gym_Env):
 
     def step(self, actions):
         observation, reward, terminated, truncated, info = self.env.step(actions)
+        self._episode_step += 1
+        self._episode_score += reward
+        info["episode_step"] = self._episode_step
+        info["episode_score"] = self._episode_score
         if observation[0] >= self.env.unwrapped.goal_position:
             terminated = True
             reward += 10
@@ -108,11 +129,13 @@ class Atari_Env(gym.Wrapper):
         self.reward_range = self.env.reward_range
         self._render_mode = render_mode
         self._episode_step = 0
+        self._episode_score = 0.0
 
     def close(self):
         self.env.close()
 
     def reset(self):
+        info = {}
         if self.episode_done:
             self.env.reset()
             # Execute NoOp actions
@@ -129,14 +152,16 @@ class Atari_Env(gym.Wrapper):
             for _ in range(self.num_stack):
                 self.frames.append(self.observation(obs))
 
-        self._episode_step = 0
+            self._episode_step = 0
+            self._episode_score = 0.0
+            info["episode_step"] = 0
+
         self.lifes = self.env.unwrapped.ale.lives()
         self.episode_done = False
-        return self._get_obs(), {}
+        return self._get_obs(), info
 
     def step(self, actions):
         observation, reward, terminated, info = self.env.unwrapped.step(actions)
-        self._episode_step += 1
         self.frames.append(self.observation(observation))
         lives = self.env.unwrapped.ale.lives()
         self.episode_done = terminated
@@ -144,14 +169,15 @@ class Atari_Env(gym.Wrapper):
             terminated = True
         truncated = self.episode_done
         self.lifes = lives
-        return self._get_obs(), reward, terminated, truncated, info
+        self._episode_step += 1
+        self._episode_score += reward
+        info["episode_score"] = self._episode_score
+        info["episode_step"] = self._episode_step
+        return self._get_obs(), self.reward(reward), terminated, truncated, info
 
     def _get_obs(self):
         assert len(self.frames) == self.num_stack
         return LazyFrames(list(self.frames))
-
-    # def reward(self, reward):
-    #     return np.sign(reward)
 
     def observation(self, frame):
         if self.grayscale:
@@ -160,6 +186,9 @@ class Atari_Env(gym.Wrapper):
             return cv2.resize(frame, self.image_size, interpolation=cv2.INTER_AREA).astype(np.float32) / 255.0
         else:
             return frame.astype(np.float32) / 255.0
+
+    def reward(self, reward):
+        return np.sign(reward)
 
 
 class LazyFrames(object):

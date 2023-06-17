@@ -13,6 +13,7 @@ class MAPPO_Clip_Learner(LearnerMAS):
                  policy: nn.Module,
                  optimizer: torch.optim.Optimizer,
                  scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
+                 summary_writer: Optional[SummaryWriter] = None,
                  device: Optional[Union[int, str, torch.device]] = None,
                  modeldir: str = "./",
                  gamma: float = 0.99,
@@ -21,7 +22,7 @@ class MAPPO_Clip_Learner(LearnerMAS):
         self.clip_range = config.clip_range
         self.value_clip_range = config.value_clip_range
         self.mse_loss = nn.MSELoss()
-        super(MAPPO_Clip_Learner, self).__init__(config, policy, optimizer, scheduler, device, modeldir)
+        super(MAPPO_Clip_Learner, self).__init__(config, policy, optimizer, scheduler, summary_writer, device, modeldir)
 
     def update(self, sample):
         self.iterations += 1
@@ -69,14 +70,9 @@ class MAPPO_Clip_Learner(LearnerMAS):
 
         # Logger
         lr = self.optimizer.state_dict()['param_groups'][0]['lr']
-
-        info = {
-            "learning_rate": lr,
-            "actor_loss": loss_a.item(),
-            "critic_loss": loss_c.item(),
-            "entropy": loss_e.item(),
-            "loss": loss.item(),
-            "predict_value": value.mean().item()
-        }
-
-        return info
+        self.writer.add_scalar("learning_rate", lr, self.iterations)
+        self.writer.add_scalar("actor_loss", loss_a.item(), self.iterations)
+        self.writer.add_scalar("critic_loss", loss_c.item(), self.iterations)
+        self.writer.add_scalar("entropy", loss_e.item(), self.iterations)
+        self.writer.add_scalar("loss", loss.item(), self.iterations)
+        self.writer.add_scalar("predict_value", value.mean().item(), self.iterations)

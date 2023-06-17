@@ -25,6 +25,8 @@ use_rewnorm: False
 obsnorm_range: 5
 rewnorm_range: 5
 
-save_model_frequency: 10000
+test_steps: 10000
+eval_interval: 1000
+test_episode: 5
 logdir: "./logs/dqn/"
 modeldir: "./models/dqn/"

@@ -6,13 +6,14 @@ class SPDQN_Learner(Learner):
                  policy: nn.Module,
                  optimizers: Sequence[torch.optim.Optimizer],
                  schedulers: Sequence[torch.optim.lr_scheduler._LRScheduler],
+                 summary_writer: Optional[SummaryWriter] = None,
                  device: Optional[Union[int, str, torch.device]] = None,
                  modeldir: str = "./",
                  gamma: float = 0.99,
                  tau: float = 0.01):
         self.tau = tau
         self.gamma = gamma
-        super(SPDQN_Learner, self).__init__(policy, optimizers, schedulers, device, modeldir)
+        super(SPDQN_Learner, self).__init__(policy, optimizers, schedulers, summary_writer, device, modeldir)
 
     def update(self, obs_batch, act_batch, rew_batch, next_batch, terminal_batch):
         self.iterations += 1
@@ -53,10 +54,6 @@ class SPDQN_Learner(Learner):
 
         self.policy.soft_update(self.tau)
 
-        info = {
-            "Q_loss": q_loss.item(),
-            "P_loss": q_loss.item(),
-            "Qvalue": eval_q.mean().item()
-        }
-
-        return info
+        self.writer.add_scalar("Q_loss", q_loss.item(), self.iterations)
+        self.writer.add_scalar("P_loss", q_loss.item(), self.iterations)
+        self.writer.add_scalar('Qvalue', eval_q.mean().item(), self.iterations)

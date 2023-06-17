@@ -68,8 +68,6 @@ class DQN_Agent(Agent):
         if self.use_rewnorm:
             std = np.clip(self.ret_rms.std, 0.1, 100)
             rewards = np.clip(rewards / std, -self.rewnorm_range, self.rewnorm_range)
-        if self.atari:
-            rewards = np.sign(rewards)
         return rewards
 
     def _action(self, obs, egreedy=0.0):
@@ -83,12 +81,9 @@ class DQN_Agent(Agent):
             states[key] = states[key].detach().cpu().numpy()
         return states, action
 
-    def train(self, train_steps=10000):
-        episodes = np.zeros((self.nenvs,), np.int32)
-        scores = np.zeros((self.nenvs,), np.float32)
-        returns = np.zeros((self.nenvs,), np.float32)
+    def train(self, train_steps):
         obs, info = self.envs.reset()
-        for step in tqdm(range(train_steps)):
+        for _ in tqdm(range(train_steps)):
             step_info, episode_info = {}, {}
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
@@ -97,60 +92,68 @@ class DQN_Agent(Agent):
 
             self.memory.store(obs, acts, self._process_reward(rewards), terminals, self._process_observation(next_obs),
                               states, {})
-            if step > self.start_training and step % self.train_frequency == 0:
+            if self.current_step > self.start_training and self.current_step % self.train_frequency == 0:
                 # training
                 obs_batch, act_batch, rew_batch, terminal_batch, next_batch, _, _ = self.memory.sample()
                 step_info = self.learner.update(obs_batch, act_batch, rew_batch, next_batch, terminal_batch)
 
-            scores += rewards
-            returns = self.gamma * returns + rewards
-            obs = next_obs
-            self.egreedy = self.egreedy - (self.start_greedy - self.end_greedy) / train_steps
-
             for i in range(self.nenvs):
                 if terminals[i] or trunctions[i]:
-                    if (self.config.env_name == "Atari") and (~trunctions[i]):
+                    if self.atari and (~trunctions[i]):
                         pass
                     else:
-                        self.ret_rms.update(returns[i:i + 1])
-                        step_info["returns-step/env-%d" % i] = scores[i]
-                        step_info["episode/env-%d" % i] = episodes[i]
-                        scores[i], returns[i] = 0, 0
-                        episodes[i] += 1
-                        self.log_infos(step_info, step)
+                        self.current_episode[i] += 1
+                        if self.use_wandb:
+                            step_info["returns-step/env-%d" % i] = infos[i]["episode_score"]
+                        else:
+                            step_info["Episode-Rewards"] = {"env-%d"%i: infos[i]["episode_score"]}
+                        self.log_infos(step_info, self.current_step)
 
-            if step % self.config.save_model_frequency == 0 or step == train_steps - 1:
-                self.save_model()
-                np.save(self.modeldir + "/obs_rms.npy",
-                        {'mean': self.obs_rms.mean, 'std': self.obs_rms.std, 'count': self.obs_rms.count})
+            obs = next_obs
+            self.current_step += 1
+            self.egreedy = self.egreedy - (self.start_greedy - self.end_greedy) / train_steps
 
-    def test(self, test_steps=10000, episode=0):
-        self.load_model(self.modeldir)
-        scores = np.zeros((self.nenvs,), np.float32)
-        returns = np.zeros((self.nenvs,), np.float32)
-        obs, infos = self.envs.reset()
-        videos = [[] for _ in range(self.nenvs)]
-        for _ in tqdm(range(test_steps)):
+    def test(self, env_fn, test_episode=10):
+        envs = env_fn()
+        num_envs = envs.num_envs
+        videos, episode_videos = [[] for _ in range(num_envs)], []
+        current_episode, scores, best_score = 0, [], -np.inf
+        obs, infos = envs.reset()
+        if self.config.render_mode == "rgb_array":
+            images = envs.render(self.config.render_mode)
+            for idx, img in enumerate(images):
+                videos[idx].append(img)
+
+        while current_episode < test_episode:
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
             states, acts = self._action(obs, egreedy=0.0)
-            next_obs, rewards, terminals, trunctions, infos = self.envs.step(acts)
+            next_obs, rewards, terminals, trunctions, infos = envs.step(acts)
             if self.config.render_mode == "rgb_array":
-                images = self.envs.render(self.config.render_mode)
+                images = envs.render(self.config.render_mode)
                 for idx, img in enumerate(images):
                     videos[idx].append(img)
 
-            scores += rewards
-            returns = self.gamma * returns + rewards
-            obs = next_obs
-            for i in range(self.nenvs):
+            for i in range(num_envs):
                 if terminals[i] or trunctions[i]:
-                    scores[i], returns[i] = 0, 0
+                    if self.atari and (~trunctions[i]):
+                        pass
+                    else:
+                        scores.append(infos[i]["episode_score"])
+                        current_episode += 1
+                        if best_score < infos[i]["episode_score"]:
+                            best_score = infos[i]["episode_score"]
+                            episode_videos = videos[i].copy()
+                        if self.config.test_mode:
+                            print("Episode: %d, Score: %.2f" % (current_episode, infos[i]["episode_score"]))
+            obs = next_obs
 
-        if self.config.render_mode == "rgb_array":
-            # batch, time, height, width, channel -> batch, time, channel, height, width
-            videos_info = {"Videos_Test": np.array(videos, dtype=np.uint8).transpose((0, 1, 4, 2, 3))}
+        if self.config.render_mode == "rgb_array" and self.render:
+            # time, height, width, channel -> time, channel, height, width
+            videos_info = {"Videos_Test": np.array([episode_videos], dtype=np.uint8).transpose((0, 1, 4, 2, 3))}
             self.log_videos(info=videos_info, fps=50)
 
-    def benchmark(self):
-        pass
+        if self.config.test_mode:
+            print("Best Score: %.2f" % (best_score))
+
+        return scores

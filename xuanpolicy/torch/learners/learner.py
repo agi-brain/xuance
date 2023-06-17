@@ -21,14 +21,12 @@ class Learner(ABC):
         self.modeldir = modeldir
         self.iterations = 0
 
-    def save_model(self):
-        time_string = time.asctime().replace(" ", "").replace(":", "_")
-        model_path = self.modeldir + "model-%s-%s.pth" % (time_string, str(self.iterations))
+    def save_model(self, model_name):
+        model_path = self.modeldir + model_name
         torch.save(self.policy.state_dict(), model_path)
 
     def load_model(self, path):
         model_names = os.listdir(path)
-        model_names.remove('obs_rms.npy')
         model_names.sort()
         model_path = path + model_names[-1]
         self.policy.load_state_dict(torch.load(model_path))

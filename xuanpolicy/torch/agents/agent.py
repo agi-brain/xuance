@@ -53,9 +53,11 @@ class Agent(ABC):
         create_directory(logdir)
         create_directory(modeldir)
         self.atari = True if self.config.env_name == "Atari" else False
+        self.current_step = 0
+        self.current_episode = np.zeros((self.envs.num_envs,), np.int32)
 
-    def save_model(self):
-        self.learner.save_model()
+    def save_model(self, model_name):
+        self.learner.save_model(model_name)
 
     def load_model(self, path):
         self.learner.load_model(path)
