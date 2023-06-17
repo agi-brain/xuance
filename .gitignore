@@ -3,4 +3,5 @@
 .DS_Store
 logs/
 models/
+**/__pycache__
 /docs/build
