@@ -4,4 +4,3 @@
 logs/
 models/
 **/__pycache__
-/docs/build
