@@ -98,7 +98,7 @@ class Atari_Env(gym.Wrapper):
                             obs_type=obs_type,
                             frameskip=frame_skip)
         self.env.action_space.seed(seed=seed)
-        self.env.reset(seed=seed)
+        self.env.unwrapped.reset(seed=seed)
         super(Atari_Env, self).__init__(self.env)
         # self.env.seed(seed)
         self.num_stack = num_stack
@@ -111,14 +111,14 @@ class Atari_Env(gym.Wrapper):
         self.grayscale, self.rgb = False, False
         if self.obs_type == "rgb":
             self.rgb = True
-            self.observation_space = gym.spaces.Box(low=0, high=1,
+            self.observation_space = gym.spaces.Box(low=0, high=255,
                                                     shape=(image_size[0], image_size[1], 3 * self.num_stack),
-                                                    dtype=np.float32)
+                                                    dtype=np.uint8)
         elif self.obs_type == "grayscale":
             self.grayscale = True
-            self.observation_space = gym.spaces.Box(low=0, high=1,
+            self.observation_space = gym.spaces.Box(low=0, high=255,
                                                     shape=(image_size[0], image_size[1], self.num_stack),
-                                                    dtype=np.float32)
+                                                    dtype=np.uint8)
         else:  # ram type
             self.observation_space = self.env.observation_space
         assert self.env.unwrapped.get_action_meanings()[0] == "NOOP"
@@ -134,20 +134,23 @@ class Atari_Env(gym.Wrapper):
     def close(self):
         self.env.close()
 
+    def render(self, render_mode):
+        return self.env.unwrapped.render(render_mode)
+
     def reset(self):
         info = {}
         if self.episode_done:
-            self.env.reset()
+            self.env.unwrapped.reset()
             # Execute NoOp actions
             num_noops = np.random.randint(0, self.noop_max)
             for _ in range(num_noops):
                 obs, _, done, _ = self.env.unwrapped.step(0)
                 if done:
-                    self.env.reset()
+                    self.env.unwrapped.reset()
             # try to fire
             obs, _, done, _ = self.env.unwrapped.step(1)
             if done:
-                obs = self.env.reset()
+                obs = self.env.unwrapped.reset()
             # stack reset observations
             for _ in range(self.num_stack):
                 self.frames.append(self.observation(obs))
@@ -181,11 +184,11 @@ class Atari_Env(gym.Wrapper):
 
     def observation(self, frame):
         if self.grayscale:
-            return np.expand_dims(cv2.resize(frame, self.image_size, interpolation=cv2.INTER_AREA), -1).astype(np.float32) / 255.0
+            return np.expand_dims(cv2.resize(frame, self.image_size, interpolation=cv2.INTER_AREA), -1)
         elif self.rgb:
-            return cv2.resize(frame, self.image_size, interpolation=cv2.INTER_AREA).astype(np.float32) / 255.0
+            return cv2.resize(frame, self.image_size, interpolation=cv2.INTER_AREA)
         else:
-            return frame.astype(np.float32) / 255.0
+            return frame
 
     def reward(self, reward):
         return np.sign(reward)

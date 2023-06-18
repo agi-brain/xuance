@@ -1,4 +1,5 @@
 agent: "DQN"
+vectorize: "Dummy_Atari"
 env_name: "Atari"
 env_id: "ALE/Breakout-v5"
 obs_type: "grayscale"  # choice for Atari env: ram, rgb, grayscale
@@ -10,25 +11,25 @@ policy: "Basic_Q_network"
 representation: "Basic_CNN"
 
 # the following three arguments are for "Basic_CNN" representation.
-filters: [16, 16, 32, 32]  # [32, 64, 64]
-kernels: [8, 6, 4, 4]  # [8, 4, 3]
-strides: [2, 2, 2, 2]  # [4, 2, 1]
+filters: [32, 64, 64]  #  [16, 16, 32, 32]
+kernels: [8, 4, 3]  # [8, 6, 4, 4]
+strides: [4, 2, 1]  # [2, 2, 2, 2]
 
-q_hidden_size: [128, ]
+q_hidden_size: [512, ]
 activation: "ReLU"
 
 seed: 1069
 parallels: 4
-nsize: 25000
-batchsize: 64
-learning_rate: 0.00025
+nsize: 100000
+batchsize: 32  # 64
+learning_rate: 0.0001
 gamma: 0.99
 
 start_greedy: 0.5
 end_greedy: 0.05
 sync_frequency: 500
 training_frequency: 1
-training_steps: 100000000  # 100e6
+training_steps: 10000000  # 10M
 start_training: 10000
 
 use_obsnorm: False
@@ -38,6 +39,6 @@ rewnorm_range: 5
 
 test_steps: 10000
 eval_interval: 100000
-test_episode: 1
+test_episode: 3
 logdir: "./logs/dqn/"
 modeldir: "./models/dqn/"

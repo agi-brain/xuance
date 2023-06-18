@@ -51,6 +51,14 @@ class DQN_Agent(Agent):
         self.obs_rms = RunningMeanStd(shape=space2shape(self.observation_space), comm=self.comm, use_mpi=False)
         self.ret_rms = RunningMeanStd(shape=(), comm=self.comm, use_mpi=False)
         super(DQN_Agent, self).__init__(config, envs, policy, memory, learner, device, config.logdir, config.modeldir)
+        if self.atari:
+            self.memory = DummyOffPolicyBuffer_Atari(self.observation_space,
+                                                     self.action_space,
+                                                     self.representation_info_shape,
+                                                     self.auxiliary_info_shape,
+                                                     self.nenvs,
+                                                     config.nsize,
+                                                     config.batchsize)
 
     def _process_observation(self, observations):
         if self.use_obsnorm:
@@ -83,9 +91,9 @@ class DQN_Agent(Agent):
         return states, action
 
     def train(self, train_steps):
-        obs, info = self.envs.reset()
+        obs = self.envs.buf_obs
         for _ in tqdm(range(train_steps), position=1, desc="Step ", leave=False, colour='white'):
-            step_info, episode_info = {}, {}
+            step_info = {}
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
             states, acts = self._action(obs, self.egreedy)
@@ -120,7 +128,7 @@ class DQN_Agent(Agent):
         videos, episode_videos = [[] for _ in range(num_envs)], []
         current_episode, scores, best_score = 0, [], -np.inf
         obs, infos = envs.reset()
-        if self.config.render_mode == "rgb_array":
+        if self.config.render_mode == "rgb_array" and self.render:
             images = envs.render(self.config.render_mode)
             for idx, img in enumerate(images):
                 videos[idx].append(img)
@@ -130,7 +138,7 @@ class DQN_Agent(Agent):
             obs = self._process_observation(obs)
             states, acts = self._action(obs, egreedy=0.0)
             next_obs, rewards, terminals, trunctions, infos = envs.step(acts)
-            if self.config.render_mode == "rgb_array":
+            if self.config.render_mode == "rgb_array" and self.render:
                 images = envs.render(self.config.render_mode)
                 for idx, img in enumerate(images):
                     videos[idx].append(img)
@@ -156,5 +164,7 @@ class DQN_Agent(Agent):
 
         if self.config.test_mode:
             print("Best Score: %.2f" % (best_score))
+
+        envs.close()
 
         return scores

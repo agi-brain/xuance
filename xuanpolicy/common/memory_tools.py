@@ -8,7 +8,7 @@ from xuanpolicy.common import space2shape
 from xuanpolicy.common.segtree_tool import SumSegmentTree, MinSegmentTree
 
 
-def create_memory(shape: Optional[Union[tuple, dict]], nenvs: int, nsize: int):
+def create_memory(shape: Optional[Union[tuple, dict]], nenvs: int, nsize: int, dtype=np.float32):
     if shape == None:
         return None
     elif isinstance(shape, dict):
@@ -17,10 +17,10 @@ def create_memory(shape: Optional[Union[tuple, dict]], nenvs: int, nsize: int):
             if value is None:  # save an object type
                 memory[key] = np.zeros([nenvs, nsize], dtype=object)
             else:
-                memory[key] = np.zeros([nenvs, nsize] + list(value), dtype=np.float32)
+                memory[key] = np.zeros([nenvs, nsize] + list(value), dtype=dtype)
         return memory
     elif isinstance(shape, tuple):
-        return np.zeros([nenvs, nsize] + list(shape), np.float32)
+        return np.zeros([nenvs, nsize] + list(shape), dtype)
     else:
         raise NotImplementedError
 
@@ -339,5 +339,30 @@ class PerOffPolicyBuffer(Buffer):
 
                 self._max_priority[i] = max(self._max_priority[i], priority)
 
-# # TODOs
-# class CentralizedOffPolicyBuffer(Buffer):
+
+class DummyOffPolicyBuffer_Atari(DummyOffPolicyBuffer):
+    def __init__(self,
+                 observation_space: Space,
+                 action_space: Space,
+                 representation_shape: Optional[dict],
+                 auxiliary_shape: Optional[dict],
+                 nenvs: int,
+                 nsize: int,
+                 batchsize: int):
+        super(DummyOffPolicyBuffer_Atari, self).__init__(observation_space, action_space,
+                                                         representation_shape,
+                                                         auxiliary_shape,
+                                                         nenvs,
+                                                         nsize,
+                                                         batchsize)
+        self.observations = create_memory(space2shape(self.observation_space), self.nenvs, self.nsize, np.uint8)
+        self.next_observations = create_memory(space2shape(self.observation_space), self.nenvs, self.nsize, np.uint8)
+
+    def clear(self):
+        self.observations = create_memory(space2shape(self.observation_space), self.nenvs, self.nsize, np.uint8)
+        self.next_observations = create_memory(space2shape(self.observation_space), self.nenvs, self.nsize, np.uint8)
+        self.actions = create_memory(space2shape(self.action_space), self.nenvs, self.nsize)
+        self.representation_infos = create_memory(self.representation_shape, self.nenvs, self.nsize)
+        self.auxiliary_infos = create_memory(self.auxiliary_shape, self.nenvs, self.nsize)
+        self.rewards = create_memory((), self.nenvs, self.nsize)
+        self.terminals = create_memory((), self.nenvs, self.nsize)

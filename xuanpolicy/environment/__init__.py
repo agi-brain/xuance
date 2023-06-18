@@ -7,7 +7,7 @@ from .custom_envs.gym_env import Gym_Env, MountainCar, Atari_Env
 from .custom_envs.pettingzoo_env import PETTINGZOO_ENVIRONMENTS
 
 from .vector_envs.vector_env import VecEnv
-from .vector_envs.dummy_vec_env import DummyVecEnv, DummyVecEnv_MAS
+from .vector_envs.dummy_vec_env import DummyVecEnv, DummyVecEnv_MAS, DummyVecEnv_Atari
 from .vector_envs.subproc_vec_env import SubprocVecEnv
 
 
@@ -33,6 +33,8 @@ def make_envs(config: Namespace):
         return DummyVecEnv([_thunk for _ in range(config.parallels)])
     elif config.vectorize == "Dummy_MAS":
         return DummyVecEnv_MAS([_thunk for _ in range(config.parallels)])
+    elif config.vectorize == "Dummy_Atari":
+        return DummyVecEnv_Atari([_thunk for _ in range(config.parallels)])
     elif config.vectorize == "NOREQUIRED":
         return _thunk()
     else:

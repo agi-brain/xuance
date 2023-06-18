@@ -86,6 +86,7 @@ class Basic_CNN(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, observations: np.ndarray):
+        observations = observations / 255.0
         tensor_observation = torch.as_tensor(np.transpose(observations, (0, 3, 1, 2)), dtype=torch.float32,
                                              device=self.device)
         return {'state': self.model(tensor_observation)}

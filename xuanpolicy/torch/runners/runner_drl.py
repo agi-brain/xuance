@@ -80,6 +80,7 @@ class Runner_DRL(Runner_Base):
                 args_test = deepcopy(self.args)
                 return make_envs(args_test)
 
+            self.agent.render = True
             self.agent.load_model(self.agent.modeldir)
             self.agent.test(env_fn, self.args.test_episode)
         else:
@@ -101,17 +102,12 @@ class Runner_DRL(Runner_Base):
         train_steps = self.args.training_steps
         eval_interval = self.args.eval_interval
         test_episode = self.args.test_episode
-        num_epoch = int(train_steps / eval_interval) + 1
-        test_scores = self.agent.test(env_fn, test_episode)
-        best_scores_info = {"mean": np.mean(test_scores),
-                            "std": np.std(test_scores),
+        num_epoch = int(train_steps / eval_interval)
+        best_scores_info = {"mean": -np.inf,
+                            "std": 0.0,
                             "step": self.agent.current_step}
-        for epoch in tqdm(range(num_epoch), position=0, desc="Epoch", leave=False, colour='green'):
-            if epoch == (num_epoch - 1):
-                train_step = train_steps - eval_interval * epoch
-            else:
-                train_step = eval_interval
-            self.agent.train(train_step)
+        for _ in tqdm(range(num_epoch), position=0, desc="Epoch", leave=False, colour='green'):
+            self.agent.train(eval_interval)
             test_scores = self.agent.test(env_fn, test_episode)
 
             if np.mean(test_scores) > best_scores_info["mean"]:
