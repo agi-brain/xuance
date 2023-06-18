@@ -1,7 +1,6 @@
 import numpy as np
 
 from xuanpolicy.torch.agents import *
-from alive_progress import alive_bar
 
 
 class DQN_Agent(Agent):

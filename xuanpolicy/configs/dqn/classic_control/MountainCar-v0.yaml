@@ -17,7 +17,7 @@ start_greedy: 1.0
 end_greedy: 0.01
 sync_frequency: 200
 training_frequency: 2
-training_steps: 1500000
+training_steps: 2000000  # 2M
 start_training: 1000
 
 use_obsnorm: False

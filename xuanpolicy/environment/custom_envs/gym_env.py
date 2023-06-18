@@ -51,6 +51,20 @@ class Gym_Env(gym.Wrapper):
 class MountainCar(Gym_Env):
     def __init__(self, env_id: str, seed: int, render_mode: str):
         super(MountainCar, self).__init__(env_id, seed, render_mode)
+        self.num_stack = 4
+        self.frames = deque([], maxlen=self.num_stack)
+        self.observation_space = gym.spaces.Box(low=np.array([-1.2, -0.07, -1.2, -0.07, -1.2, -0.07, -1.2, -0.07]),
+                                                high=np.array([0.6, 0.07, 0.6, 0.07, 0.6, 0.07, 0.6, 0.07]),
+                                                shape=(8,), dtype=np.float32)
+
+    def reset(self):
+        obs, info = self.env.reset()
+        self._episode_step = 0
+        self._episode_score = 0.0
+        info["episode_step"] = self._episode_step
+        for i in range(self.num_stack):
+            self.frames.append(obs)
+        return LazyFrames(list(self.frames)), info
 
     def step(self, actions):
         observation, reward, terminated, truncated, info = self.env.step(actions)
@@ -60,9 +74,10 @@ class MountainCar(Gym_Env):
         info["episode_score"] = self._episode_score
 
         reward += 10 * observation[0]
-        # reward -= 5 * observation[1] ** 2
+        reward += observation[1] ** 2
+        self.frames.append(observation)
 
-        return observation, reward, terminated, truncated, info
+        return LazyFrames(list(self.frames)), reward, terminated, truncated, info
 
 
 class Atari_Env(gym.Wrapper):
