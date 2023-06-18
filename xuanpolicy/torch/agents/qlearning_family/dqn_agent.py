@@ -113,9 +113,9 @@ class DQN_Agent(Agent):
                     else:
                         self.current_episode[i] += 1
                         if self.use_wandb:
-                            step_info["returns-step/env-%d" % i] = infos[i]["episode_score"]
+                            step_info["Train-Episode-Rewards/env-%d" % i] = infos[i]["episode_score"]
                         else:
-                            step_info["Episode-Rewards"] = {"env-%d" % i: infos[i]["episode_score"]}
+                            step_info["Train-Episode-Rewards"] = {"env-%d" % i: infos[i]["episode_score"]}
                         self.log_infos(step_info, self.current_step)
 
             obs = next_obs
@@ -166,5 +166,8 @@ class DQN_Agent(Agent):
             print("Best Score: %.2f" % (best_score))
 
         envs.close()
+
+        test_info = {"Test-Episode-Rewards/Mean-Score": np.mean(scores)}
+        self.log_infos(test_info, self.current_step)
 
         return scores

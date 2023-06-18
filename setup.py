@@ -39,9 +39,9 @@ setup(
         "scipy>=1.7.3",
         "PyYAML>=6.0",
         "gym==0.26.2",
-        "box2d-py==2.3.5"
+        "box2d-py==2.3.5",
         "gymnasium==0.28.1",
-        "gym-notices==0.0.8"
+        "gym-notices==0.0.8",
         "mpi4py>=3.1.3",
         "tqdm>=4.0",
         "pyglet>=1.5.15",
@@ -50,7 +50,7 @@ setup(
         "ale-py==0.7.5",
         "pettingzoo>=1.23.0",  # for MARL
         "tensorboard>=2.11.2",  # logger
-        "wandb>=0.15.3"
+        "wandb>=0.15.3",
         "moviepy==1.0.3",
         "imageio==2.9.0"
     ],
