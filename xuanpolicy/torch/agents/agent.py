@@ -102,7 +102,7 @@ class Agent(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def test(self, steps):
+    def test(self, env_fn, steps):
         raise NotImplementedError
 
 

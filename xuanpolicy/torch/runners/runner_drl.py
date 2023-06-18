@@ -11,6 +11,7 @@ import torch
 import gym.spaces
 import numpy as np
 from copy import deepcopy
+from tqdm import tqdm
 
 
 class Runner_DRL(Runner_Base):
@@ -105,7 +106,7 @@ class Runner_DRL(Runner_Base):
         best_scores_info = {"mean": np.mean(test_scores),
                             "std": np.std(test_scores),
                             "step": self.agent.current_step}
-        for epoch in range(num_epoch):
+        for epoch in tqdm(range(num_epoch), position=0, desc="Epoch", leave=False, colour='green'):
             if epoch == (num_epoch - 1):
                 train_step = train_steps - eval_interval * epoch
             else:

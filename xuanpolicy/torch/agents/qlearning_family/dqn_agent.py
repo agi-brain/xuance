@@ -1,6 +1,7 @@
 import numpy as np
 
 from xuanpolicy.torch.agents import *
+from alive_progress import alive_bar
 
 
 class DQN_Agent(Agent):
@@ -83,7 +84,7 @@ class DQN_Agent(Agent):
 
     def train(self, train_steps):
         obs, info = self.envs.reset()
-        for _ in tqdm(range(train_steps)):
+        for _ in tqdm(range(train_steps), position=1, desc="Step ", leave=False, colour='white'):
             step_info, episode_info = {}, {}
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
@@ -106,14 +107,14 @@ class DQN_Agent(Agent):
                         if self.use_wandb:
                             step_info["returns-step/env-%d" % i] = infos[i]["episode_score"]
                         else:
-                            step_info["Episode-Rewards"] = {"env-%d"%i: infos[i]["episode_score"]}
+                            step_info["Episode-Rewards"] = {"env-%d" % i: infos[i]["episode_score"]}
                         self.log_infos(step_info, self.current_step)
 
             obs = next_obs
             self.current_step += 1
-            self.egreedy = self.egreedy - (self.start_greedy - self.end_greedy) / train_steps
+            self.egreedy = self.egreedy - (self.start_greedy - self.end_greedy) / self.config.training_steps
 
-    def test(self, env_fn, test_episode=10):
+    def test(self, env_fn, test_episode):
         envs = env_fn()
         num_envs = envs.num_envs
         videos, episode_videos = [[] for _ in range(num_envs)], []
