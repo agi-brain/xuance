@@ -1,4 +1,5 @@
 agent: "PPO_Clip"
+vectorize: "Dummy_Atari"
 env_name: "Atari"
 env_id: "ALE/Breakout-v5"
 obs_type: "grayscale"  # choice for Atari env: ram, rgb, grayscale
@@ -36,6 +37,7 @@ obsnorm_range: 5
 rewnorm_range: 5
 
 test_steps: 10000
-save_model_frequency: 50000
-logdir: "./logs/ppoclip/"
-modeldir: "./models/ppoclip/"
+eval_interval: 100000
+test_episode: 3
+logdir: "./logs/ppo/"
+modeldir: "./models/ppo/"

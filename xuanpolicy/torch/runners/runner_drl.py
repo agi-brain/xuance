@@ -83,8 +83,10 @@ class Runner_DRL(Runner_Base):
             self.agent.render = True
             self.agent.load_model(self.agent.modeldir)
             self.agent.test(env_fn, self.args.test_episode)
+            print("Finish testing.")
         else:
             self.agent.train(self.args.training_steps)
+            print("Finish training.")
             self.agent.save_model("final_train_model.path")
 
         self.envs.close()
@@ -97,7 +99,7 @@ class Runner_DRL(Runner_Base):
         # test environment
         def env_fn():
             args_test = deepcopy(self.args)
-            args_test.parallels = 1
+            args_test.parallels = 3
             return make_envs(args_test)
         train_steps = self.args.training_steps
         eval_interval = self.args.eval_interval

@@ -366,3 +366,30 @@ class DummyOffPolicyBuffer_Atari(DummyOffPolicyBuffer):
         self.auxiliary_infos = create_memory(self.auxiliary_shape, self.nenvs, self.nsize)
         self.rewards = create_memory((), self.nenvs, self.nsize)
         self.terminals = create_memory((), self.nenvs, self.nsize)
+
+
+class DummyOnPolicyBuffer_Atari(DummyOnPolicyBuffer):
+    def __init__(self, observation_space: Space,
+                 action_space: Space,
+                 representation_shape: Optional[dict],
+                 auxiliary_shape: Optional[dict],
+                 nenvs: int,
+                 nsize: int,
+                 nminibatch: int,
+                 gamma: float = 0.99,
+                 lam: float = 0.95):
+        super(DummyOnPolicyBuffer_Atari, self).__init__(observation_space, action_space,
+                 representation_shape, auxiliary_shape, nenvs, nsize, nminibatch, gamma, lam)
+        self.observations = create_memory(space2shape(self.observation_space), self.nenvs, self.nsize, np.uint8)
+
+    def clear(self):
+        self.ptr, self.size = 0, 0
+        self.observations = create_memory(space2shape(self.observation_space), self.nenvs, self.nsize, np.uint8)
+        self.actions = create_memory(space2shape(self.action_space), self.nenvs, self.nsize)
+        self.representation_infos = create_memory(self.representation_shape, self.nenvs, self.nsize)
+        self.auxiliary_infos = create_memory(self.auxiliary_shape, self.nenvs, self.nsize)
+        self.rewards = create_memory((), self.nenvs, self.nsize)
+        self.returns = create_memory((), self.nenvs, self.nsize)
+        self.advantages = create_memory((), self.nenvs, self.nsize)
+
+

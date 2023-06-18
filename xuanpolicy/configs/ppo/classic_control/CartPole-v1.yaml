@@ -1,22 +1,23 @@
-agent: "PPO_KL"
-env_name: "toy_env"
-env_id: "CartPole-v0"
+agent: "PPO_Clip"  # Choice: PPO_Clip, PPO_KL
+env_name: "Classic Control"
+env_id: "CartPole-v1"
 representation: "Basic_MLP"
 policy: "Categorical_AC"
 
 representation_hidden_size: [128,]
 actor_hidden_size: [128,]
 critic_hidden_size: [128,]
+activation: 'LeakyReLU'
 
 training_steps: 30000
-nsteps: 512
+nsteps: 256
 nepoch: 8
 nminibatch: 8
 learning_rate: 0.0004
 
 vf_coef: 0.25
 ent_coef: 0.01
-target_kl: 0.25
+clip_range: 0.2
 gamma: 0.98
 lam: 0.95
 
@@ -25,5 +26,8 @@ use_rewnorm: True
 obsnorm_range: 5
 rewnorm_range: 5
 
-logdir: "./logs/ppokl/"
-modeldir: "./models/ppokl/"
+test_steps: 10000
+eval_interval: 5000
+test_episode: 5
+logdir: "./logs/ppo/"
+modeldir: "./models/ppo/"

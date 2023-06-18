@@ -51,6 +51,8 @@ class Gym_Env(gym.Wrapper):
 class MountainCar(Gym_Env):
     def __init__(self, env_id: str, seed: int, render_mode: str):
         super(MountainCar, self).__init__(env_id, seed, render_mode)
+        self.pre_position = self.env.unwrapped.goal_position
+        self.pre_velocity = self.env.unwrapped.goal_velocity
 
     def step(self, actions):
         observation, reward, terminated, truncated, info = self.env.step(actions)
@@ -58,9 +60,11 @@ class MountainCar(Gym_Env):
         self._episode_score += reward
         info["episode_step"] = self._episode_step
         info["episode_score"] = self._episode_score
-        if observation[0] >= self.env.unwrapped.goal_position:
-            terminated = True
-            reward += 10
+
+        # reward += 10 * (observation[0] - self.env.unwrapped.goal_position) + 10 * (observation[1] ** 2 - self. ** 2)
+        self.pre_position = self.env.unwrapped.state[1]
+        self.pre_velocity = observation[1]
+
         return observation, reward, terminated, truncated, info
 
 

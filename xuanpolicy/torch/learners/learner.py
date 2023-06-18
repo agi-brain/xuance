@@ -27,6 +27,8 @@ class Learner(ABC):
 
     def load_model(self, path):
         model_names = os.listdir(path)
+        if os.path.exists(path + "obs_rms.npy"):
+            model_names.remove("obs_rms.npy")
         model_names.sort()
         model_path = path + model_names[-1]
         self.policy.load_state_dict(torch.load(model_path))
