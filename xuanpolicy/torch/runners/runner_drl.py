@@ -99,7 +99,7 @@ class Runner_DRL(Runner_Base):
         # test environment
         def env_fn():
             args_test = deepcopy(self.args)
-            args_test.parallels = 3
+            args_test.parallels = 1
             return make_envs(args_test)
         train_steps = self.args.training_steps
         eval_interval = self.args.eval_interval

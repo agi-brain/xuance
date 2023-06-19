@@ -19,7 +19,7 @@ q_hidden_size: [512, ]
 activation: "ReLU"
 
 seed: 1069
-parallels: 4
+parallels: 5
 nsize: 100000
 batchsize: 32  # 64
 learning_rate: 0.0001
@@ -39,6 +39,6 @@ rewnorm_range: 5
 
 test_steps: 10000
 eval_interval: 100000
-test_episode: 3
+test_episode: 1
 logdir: "./logs/dqn/"
 modeldir: "./models/dqn/"

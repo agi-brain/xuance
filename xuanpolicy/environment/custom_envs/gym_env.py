@@ -56,6 +56,7 @@ class MountainCar(Gym_Env):
         self.observation_space = gym.spaces.Box(low=np.array([-1.2, -0.07, -1.2, -0.07, -1.2, -0.07, -1.2, -0.07]),
                                                 high=np.array([0.6, 0.07, 0.6, 0.07, 0.6, 0.07, 0.6, 0.07]),
                                                 shape=(8,), dtype=np.float32)
+        self.pre_position = 0.0
 
     def reset(self):
         obs, info = self.env.reset()
@@ -64,6 +65,7 @@ class MountainCar(Gym_Env):
         info["episode_step"] = self._episode_step
         for i in range(self.num_stack):
             self.frames.append(obs)
+        self.pre_position = obs[0]
         return LazyFrames(list(self.frames)), info
 
     def step(self, actions):
@@ -74,8 +76,10 @@ class MountainCar(Gym_Env):
         info["episode_score"] = self._episode_score
 
         reward += 10 * observation[0]
-        reward += observation[1] ** 2
+        reward + 10 * (observation[0] - self.pre_position)
+        # reward += observation[1] ** 2
         self.frames.append(observation)
+        self.pre_position = observation[0]
 
         return LazyFrames(list(self.frames)), reward, terminated, truncated, info
 
