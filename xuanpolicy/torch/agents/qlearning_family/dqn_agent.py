@@ -111,7 +111,7 @@ class DQN_Agent(Agent):
                         pass
                     else:
                         self.current_episode[i] += 1
-                        step_info["Episode-Steps"] = infos["episode_step"]
+                        step_info["Episode-Steps"] = infos[i]["episode_step"]
                         if self.use_wandb:
                             step_info["Train-Episode-Rewards/env-%d" % i] = infos[i]["episode_score"]
                         else:
