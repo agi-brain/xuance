@@ -1,5 +1,5 @@
 agent: "DQN"
-env_name: "toy_env"
+env_name: "Classic Control"
 env_id: "LunarLander-v2"
 policy: "Basic_Q_network"
 representation: "Basic_MLP"
