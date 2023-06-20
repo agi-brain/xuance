@@ -1,7 +1,8 @@
 from xuanpolicy.torch.agents import *
+from collections import deque
 
 
-class CDQN_Agent(Agent):
+class DRQN_Agent(Agent):
     def __init__(self,
                  config: Namespace,
                  envs: VecEnv,
@@ -29,6 +30,7 @@ class CDQN_Agent(Agent):
         self.action_space = envs.action_space
         self.representation_info_shape = policy.representation.output_shapes
         self.auxiliary_info_shape = {}
+        self.sequence_length = config.sequence_length
 
         memory = DummyOffPolicyBuffer(self.observation_space,
                                       self.action_space,
@@ -37,17 +39,17 @@ class CDQN_Agent(Agent):
                                       self.nenvs,
                                       config.nsize,
                                       config.batchsize)
-        learner = DQN_Learner(policy,
-                              optimizer,
-                              scheduler,
-                              config.device,
-                              config.modeldir,
-                              config.gamma,
-                              config.sync_frequency)
+        learner = DRQN_Learner(policy,
+                               optimizer,
+                               scheduler,
+                               config.device,
+                               config.modeldir,
+                               config.gamma,
+                               config.sync_frequency)
 
         self.obs_rms = RunningMeanStd(shape=space2shape(self.observation_space), comm=self.comm, use_mpi=False)
         self.ret_rms = RunningMeanStd(shape=(), comm=self.comm, use_mpi=False)
-        super(CDQN_Agent, self).__init__(config, envs, policy, memory, learner, device, config.logdir, config.modeldir)
+        super(DRQN_Agent, self).__init__(config, envs, policy, memory, learner, device, config.logdir, config.modeldir)
 
     def _process_observation(self, observations):
         if self.use_obsnorm:
@@ -68,8 +70,8 @@ class CDQN_Agent(Agent):
             return np.clip(rewards / std, -self.rewnorm_range, self.rewnorm_range)
         return rewards
 
-    def _action(self, obs, egreedy):
-        states, argmax_action, _, _ = self.policy(obs)
+    def _action(self, obs, hidden=None, egreedy=0.0):
+        states, argmax_action, _, _, hidden_n = self.policy(obs, hidden)
         random_action = np.random.choice(self.action_space.n, self.nenvs)
         if np.random.rand() < egreedy:
             action = random_action
@@ -84,12 +86,16 @@ class CDQN_Agent(Agent):
         scores = np.zeros((self.nenvs,), np.float32)
         returns = np.zeros((self.nenvs,), np.float32)
         obs, infos = self.envs.reset()
+        obs_queue = deque([obs], maxlen=self.sequence_length)
+        for _ in range(self.sequence_length):
+            obs_queue.append(obs)
         for step in tqdm(range(train_steps)):
             step_info, episode_info = {}, {}
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
-            states, acts = self._action(obs, self.egreedy)
+            states, acts = self._action(obs_queue, hidden, self.egreedy)
             next_obs, rewards, terminals, trunctions, infos = self.envs.step(acts)
+
             self.memory.store(obs, acts, self._process_reward(rewards), terminals, self._process_observation(next_obs),
                               states, {})
             if step > self.start_training and step % self.train_frequency == 0:
@@ -116,7 +122,7 @@ class CDQN_Agent(Agent):
                 np.save(self.modeldir + "/obs_rms.npy",
                         {'mean': self.obs_rms.mean, 'std': self.obs_rms.std, 'count': self.obs_rms.count})
 
-    def test(self, test_steps=10000):
+    def test(self, test_steps=10000, episode=0):
         self.load_model(self.modeldir)
         scores = np.zeros((self.nenvs,), np.float32)
         returns = np.zeros((self.nenvs,), np.float32)

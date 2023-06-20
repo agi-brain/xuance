@@ -122,14 +122,13 @@ class DQN_Agent(Agent):
             self.current_step += 1
             self.egreedy = self.egreedy - (self.start_greedy - self.end_greedy) / self.config.training_steps
 
-    def test(self, env_fn, test_episode):
-        envs = env_fn()
-        num_envs = envs.num_envs
+    def test(self, test_episode):
+        num_envs = self.test_envs.num_envs
         videos, episode_videos = [[] for _ in range(num_envs)], []
         current_episode, scores, best_score = 0, [], -np.inf
-        obs, infos = envs.reset()
+        obs, infos = self.test_envs.reset()
         if self.config.render_mode == "rgb_array" and self.render:
-            images = envs.render(self.config.render_mode)
+            images = self.test_envs.render(self.config.render_mode)
             for idx, img in enumerate(images):
                 videos[idx].append(img)
 
@@ -137,9 +136,9 @@ class DQN_Agent(Agent):
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
             states, acts = self._action(obs, egreedy=0.0)
-            next_obs, rewards, terminals, trunctions, infos = envs.step(acts)
+            next_obs, rewards, terminals, trunctions, infos = self.test_envs.step(acts)
             if self.config.render_mode == "rgb_array" and self.render:
-                images = envs.render(self.config.render_mode)
+                images = self.test_envs.render(self.config.render_mode)
                 for idx, img in enumerate(images):
                     videos[idx].append(img)
 
@@ -164,8 +163,6 @@ class DQN_Agent(Agent):
 
         if self.config.test_mode:
             print("Best Score: %.2f" % (best_score))
-
-        envs.close()
 
         test_info = {"Test-Episode-Rewards/Mean-Score": np.mean(scores)}
         self.log_infos(test_info, self.current_step)

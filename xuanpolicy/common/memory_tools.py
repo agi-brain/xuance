@@ -25,6 +25,23 @@ def create_memory(shape: Optional[Union[tuple, dict]], nenvs: int, nsize: int, d
         raise NotImplementedError
 
 
+def create_memory_rnn(shape: Optional[Union[tuple, dict]], nenvs: int, nsize: int, episode_length: int, dtype=np.float32):
+    if shape is None:
+        return None
+    elif isinstance(shape, dict):
+        memory = {}
+        for key, value in zip(shape.keys(), shape.values()):
+            if value is None:  # save an object type
+                memory[key] = np.zeros([nenvs, nsize, episode_length], dtype=object)
+            else:
+                memory[key] = np.zeros([nenvs, nsize, episode_length] + list(value), dtype=dtype)
+        return memory
+    elif isinstance(shape, tuple):
+        return np.zeros([nenvs, nsize, episode_length] + list(shape), dtype)
+    else:
+        raise NotImplementedError
+
+
 def store_element(data: Optional[Union[np.ndarray, dict, float]], memory: Union[dict, np.ndarray], ptr: int):
     if data is None:
         return
@@ -35,7 +52,18 @@ def store_element(data: Optional[Union[np.ndarray, dict, float]], memory: Union[
         memory[:, ptr] = data
 
 
-def sample_batch(memory: Optional[Union[np.ndarray, dict]], index: np.ndarray):
+def store_element_rnn(data: Optional[Union[np.ndarray, dict, float]], memory: Union[dict, np.ndarray],
+                      ptr_episode: int, ptr_step: int):
+    if data is None:
+        return
+    elif isinstance(data, dict):
+        for key, value in zip(data.keys(), data.values()):
+            memory[key][:, ptr_episode, ptr_step] = data[key]
+    else:
+        memory[:, ptr_episode, ptr_step] = data
+
+
+def sample_batch(memory: Optional[Union[np.ndarray, dict]], index: Optional[Union[np.ndarray, tuple]]):
     if memory is None:
         return None
     elif isinstance(memory, dict):
@@ -210,6 +238,64 @@ class DummyOffPolicyBuffer(Buffer):
         return obs_batch, act_batch, rew_batch, terminal_batch, next_batch, rep_batch, aux_batch
 
 
+class RecurrentOffPolicyBuffer(Buffer):
+    def __init__(self,
+                 observation_space: Space,
+                 action_space: Space,
+                 representation_shape: Optional[dict],
+                 auxiliary_shape: Optional[dict],
+                 nenvs: int,
+                 nsize: int,
+                 batchsize: int,
+                 episode_length: int,
+                 sequence_length: int,
+                 rnn_state_dim: int):
+        super(RecurrentOffPolicyBuffer, self).__init__(observation_space,
+                                                       action_space,
+                                                       representation_shape,
+                                                       auxiliary_shape)
+        self.nenvs, self.nsize, self.episode_length, self.batchsize = nenvs, nsize, episode_length, batchsize
+        self.sequence_length, self.rnn_state_dim = sequence_length, rnn_state_dim
+        self.observations = create_memory_rnn(space2shape(self.observation_space), self.nenvs, self.nsize, self.episode_length)
+        self.actions = create_memory_rnn(space2shape(self.action_space), self.nenvs, self.nsize, self.episode_length)
+        self.rewards = create_memory_rnn((), self.nenvs, self.nsize, self.episode_length)
+        self.terminals = create_memory_rnn((), self.nenvs, self.nsize, self.episode_length)
+        self.episode_end_step = create_memory((), self.nenvs, self.nsize)
+        self.obs_queue = create_memory(space2shape(self.observation_space), self.nenvs, self.sequence_length)
+        self.rnn_state_queue = create_memory((self.rnn_state_dim, ), self.nenvs, self.sequence_length)
+        self.ptr_step = 0
+
+    def clear(self):
+        self.observations = create_memory_rnn(space2shape(self.observation_space), self.nenvs, self.nsize, self.episode_length)
+        self.actions = create_memory_rnn(space2shape(self.action_space), self.nenvs, self.nsize, self.episode_length)
+        self.rewards = create_memory_rnn((), self.nenvs, self.nsize, self.episode_length)
+        self.terminals = create_memory_rnn((), self.nenvs, self.nsize, self.episode_length)
+
+    def clear_sequence(self):
+        self.obs_queue = create_memory(space2shape(self.observation_space), self.nenvs, self.sequence_length)
+        self.rnn_state_queue = create_memory((self.rnn_state_dim,), self.nenvs, self.sequence_length)
+
+    def store(self, obs, acts, rews, terminals):
+        store_element(obs, self.observations, self.ptr)
+        store_element(acts, self.actions, self.ptr)
+        store_element(rews, self.rewards, self.ptr)
+        store_element(terminals, self.terminals, self.ptr)
+
+    def update_episode(self, i_env, n_steps):
+        self.episode_end_step[i_env, self.ptr] = n_steps
+        self.ptr[i_env] = (self.ptr[i_env] + 1) % self.nsize
+        self.size = min(self.size + 1, self.size)
+
+    def sample(self):
+        env_choices = np.random.choice(self.nenvs, self.batchsize)
+        step_choices = np.random.choice(self.size, self.batchsize)
+        obs_batch = sample_batch(self.observations, tuple([env_choices, step_choices]))
+        act_batch = sample_batch(self.actions, tuple([env_choices, step_choices]))
+        rew_batch = sample_batch(self.rewards, tuple([env_choices, step_choices]))
+        terminal_batch = sample_batch(self.terminals, tuple([env_choices, step_choices]))
+        return obs_batch, act_batch, rew_batch, terminal_batch
+
+
 class PerOffPolicyBuffer(Buffer):
     def __init__(self,
                  observation_space: Space,
@@ -379,7 +465,8 @@ class DummyOnPolicyBuffer_Atari(DummyOnPolicyBuffer):
                  gamma: float = 0.99,
                  lam: float = 0.95):
         super(DummyOnPolicyBuffer_Atari, self).__init__(observation_space, action_space,
-                 representation_shape, auxiliary_shape, nenvs, nsize, nminibatch, gamma, lam)
+                                                        representation_shape, auxiliary_shape, nenvs, nsize, nminibatch,
+                                                        gamma, lam)
         self.observations = create_memory(space2shape(self.observation_space), self.nenvs, self.nsize, np.uint8)
 
     def clear(self):
@@ -391,5 +478,3 @@ class DummyOnPolicyBuffer_Atari(DummyOnPolicyBuffer):
         self.rewards = create_memory((), self.nenvs, self.nsize)
         self.returns = create_memory((), self.nenvs, self.nsize)
         self.advantages = create_memory((), self.nenvs, self.nsize)
-
-

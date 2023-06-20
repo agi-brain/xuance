@@ -1,0 +1,36 @@
+agent: "DRQN"  # deep recurrent Q-networks
+env_name: "Classic Control"
+env_id: "CartPole-v1"
+policy: "DRQN_Policy"
+representation: "Basic_MLP"
+recurrent: "GRU"
+
+representation_hidden_size: [256,]
+q_hidden_size: [256,]
+activation: 'ReLU'
+
+recurrent_hidden_size: 256
+recurrent_hidden_layer: 1
+dropout: 0
+sequence_length: 10
+
+nsize: 20000
+batchsize: 128
+learning_rate: 0.001
+gamma: 0.99
+
+start_greedy: 0.5
+end_greedy: 0.01
+sync_frequency: 100
+training_frequency: 2
+training_steps: 30000
+start_training: 1000
+
+use_obsnorm: False
+use_rewnorm: False
+obsnorm_range: 5
+rewnorm_range: 5
+
+save_model_frequency: 10000
+logdir: "./logs/drqn/"
+modeldir: "./models/drqn/"

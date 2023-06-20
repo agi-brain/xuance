@@ -1,5 +1,5 @@
 import time
-
+from copy import deepcopy
 from xuanpolicy.environment import make_envs
 
 
@@ -8,6 +8,14 @@ class Runner_Base(object):
         # build environments
         self.envs = make_envs(args)
         self.envs.reset()
+        if args.test_mode:
+            def env_fn():
+                args_test = deepcopy(args)
+                args_test.parallels = 1
+                return make_envs(args_test)
+
+            self.test_envs = env_fn()
+            self.test_envs.reset()
 
         if args.vectorize != 'NOREQUIRED':
             self.n_envs = self.envs.num_envs

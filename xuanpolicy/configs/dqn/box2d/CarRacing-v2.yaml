@@ -1,15 +1,15 @@
-agent: "DRQN"
-env_name: "toy_env"
-env_id: "CartPole-v1"
+agent: "DQN"
+env_name: "Classic Control"
+env_id: "CarRacing-v2"
 policy: "Basic_Q_network"
-representation: "Basic_RNN"
+representation: "Basic_MLP"
 
 representation_hidden_size: [256,]
 q_hidden_size: [256,]
 activation: 'ReLU'
 
 nsize: 20000
-batchsize: 128
+batchsize: 256
 learning_rate: 0.001
 gamma: 0.99
 
@@ -26,5 +26,5 @@ obsnorm_range: 5
 rewnorm_range: 5
 
 save_model_frequency: 10000
-logdir: "./logs/drqn/"
-modeldir: "./models/drqn/"
+logdir: "./logs/dqn/"
+modeldir: "./models/dqn/"

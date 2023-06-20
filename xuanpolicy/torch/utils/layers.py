@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
-import numpy as np
-from typing import Any, Dict, Optional, Sequence, Tuple, Type, Union, Callable
+from typing import Optional, Sequence, Tuple, Type, Union, Callable
 
 ModuleType = Type[nn.Module]
 
@@ -69,11 +68,13 @@ def pooling_block(input_shape: Sequence[int],
 
 def gru_block(input_dim: Sequence[int],
               output_dim: int,
+              num_layers: int,
               dropout: float = 0,
               initialize: Optional[Callable[[torch.Tensor], torch.Tensor]] = None,
               device: Optional[Union[str, int, torch.device]] = None) -> ModuleType:
     gru = nn.GRU(input_size=input_dim,
                  hidden_size=output_dim,
+                 num_layers=num_layers,
                  batch_first=True,
                  dropout=dropout,
                  device=device)
@@ -87,11 +88,13 @@ def gru_block(input_dim: Sequence[int],
 
 def lstm_block(input_dim: Sequence[int],
                output_dim: int,
+               num_layers: int,
                dropout: float = 0,
                initialize: Optional[Callable[[torch.Tensor], torch.Tensor]] = None,
                device: Optional[Union[str, int, torch.device]] = None) -> ModuleType:
     lstm = nn.LSTM(input_size=input_dim,
                    hidden_size=output_dim,
+                   num_layers=num_layers,
                    batch_first=True,
                    dropout=dropout,
                    device=device)

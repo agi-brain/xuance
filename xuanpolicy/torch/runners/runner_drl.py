@@ -37,7 +37,10 @@ class Runner_DRL(Runner_Base):
         representation = REGISTRY_Representation[self.args.representation](*input_representation)
 
         input_policy = get_policy_in(self.args, representation)
-        policy = REGISTRY_Policy[self.args.policy](*input_policy)
+        if self.agent_name == "DRQN":
+            policy = REGISTRY_Policy[self.args.policy](**input_policy)
+        else:
+            policy = REGISTRY_Policy[self.args.policy](*input_policy)
 
         if self.agent_name in ["DDPG", "TD3", "SAC", "SACDIS"]:
             actor_optimizer = torch.optim.Adam(policy.actor.parameters(), self.args.actor_learning_rate)
@@ -101,6 +104,7 @@ class Runner_DRL(Runner_Base):
             args_test = deepcopy(self.args)
             args_test.parallels = 1
             return make_envs(args_test)
+        self.agent.test_envs = env_fn()
         train_steps = self.args.training_steps
         eval_interval = self.args.eval_interval
         test_episode = self.args.test_episode
@@ -110,7 +114,7 @@ class Runner_DRL(Runner_Base):
                             "step": self.agent.current_step}
         for _ in tqdm(range(num_epoch), position=0, desc="Epoch", leave=False, colour='green'):
             self.agent.train(eval_interval)
-            test_scores = self.agent.test(env_fn, test_episode)
+            test_scores = self.agent.test(test_episode)
 
             if np.mean(test_scores) > best_scores_info["mean"]:
                 best_scores_info = {"mean": np.mean(test_scores),

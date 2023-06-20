@@ -1,7 +1,7 @@
 from xuanpolicy.torch.learners import *
 
 
-class CLDQN_Learner(Learner):
+class DRQN_Learner(Learner):
     def __init__(self,
                  policy: nn.Module,
                  optimizer: torch.optim.Optimizer,
@@ -13,7 +13,7 @@ class CLDQN_Learner(Learner):
                  sync_frequency: int = 100):
         self.gamma = gamma
         self.sync_frequency = sync_frequency
-        super(CLDQN_Learner, self).__init__(policy, optimizer, scheduler, summary_writer, device, modeldir)
+        super(DRQN_Learner, self).__init__(policy, optimizer, scheduler, device, modeldir)
 
     def update(self, obs_batch, act_batch, rew_batch, next_batch, terminal_batch):
         self.iterations += 1
