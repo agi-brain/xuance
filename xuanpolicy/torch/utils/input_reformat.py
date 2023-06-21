@@ -63,7 +63,7 @@ def get_policy_in(args, representation):
     if policy_name == "DRQN_Policy":
         input_dict["recurrent"] = args.recurrent
         input_dict["recurrent_hidden_size"] = args.recurrent_hidden_size
-        input_dict["recurrent_hidden_layer"] = args.recurrent_hidden_layer
+        input_dict["sequence_length"] = args.sequence_length
         input_dict["dropout"] = args.dropout
         return input_dict
     input_list = itemgetter(*Policy_Inputs[policy_name])(input_dict)

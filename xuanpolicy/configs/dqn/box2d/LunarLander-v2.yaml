@@ -4,20 +4,21 @@ env_id: "LunarLander-v2"
 policy: "Basic_Q_network"
 representation: "Basic_MLP"
 
-representation_hidden_size: [256,]
-q_hidden_size: [256,]
+representation_hidden_size: [128,]
+q_hidden_size: [128,]
 activation: 'ReLU'
 
-nsize: 20000
+nsize: 10000
 batchsize: 256
 learning_rate: 0.001
 gamma: 0.99
 
 start_greedy: 0.5
 end_greedy: 0.01
-sync_frequency: 100
-training_frequency: 2
-training_steps: 30000
+decay_step_greedy: 10000
+sync_frequency: 50
+training_frequency: 1
+training_steps: 20000
 start_training: 1000
 
 use_obsnorm: False
@@ -25,6 +26,8 @@ use_rewnorm: False
 obsnorm_range: 5
 rewnorm_range: 5
 
-save_model_frequency: 10000
+test_steps: 10000
+eval_interval: 5000
+test_episode: 1
 logdir: "./logs/dqn/"
 modeldir: "./models/dqn/"

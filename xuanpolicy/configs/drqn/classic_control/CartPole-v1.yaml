@@ -10,9 +10,8 @@ q_hidden_size: [256,]
 activation: 'ReLU'
 
 recurrent_hidden_size: 256
-recurrent_hidden_layer: 1
 dropout: 0
-sequence_length: 10
+sequence_length: 8
 
 nsize: 20000
 batchsize: 128

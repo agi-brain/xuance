@@ -1,3 +1,5 @@
+import copy
+
 import tensorboard.plugins.text.text_plugin
 import torch
 
@@ -35,25 +37,26 @@ class BasicRecurrent(nn.Module):
         if kwargs["recurrent"] == "GRU":
             output = gru_block(kwargs["input_dim"],
                                kwargs["recurrent_hidden_size"],
-                               kwargs["recurrent_hidden_layer"],
+                               kwargs["sequence_length"],
                                kwargs["dropout"],
                                kwargs["initialize"],
                                kwargs["device"])
         elif kwargs["recurrent"] == "LSTM":
             output = lstm_block(kwargs["input_dim"],
                                 kwargs["recurrent_hidden_size"],
-                                kwargs["recurrent_hidden_layer"],
+                                kwargs["sequence_length"],
                                 kwargs["dropout"],
                                 kwargs["initialize"],
                                 kwargs["device"])
         else:
             raise "Unknown recurrent module!"
         self.hidden = output
-        self.model = mlp_block(kwargs["recurrent_hidden_size"], kwargs["action_dim"], None, None, None, kwargs["device"])[0]
+        fc_layer = mlp_block(kwargs["recurrent_hidden_size"], kwargs["action_dim"], None, None, None, kwargs["device"])[0]
+        self.model = nn.Sequential(*fc_layer)
 
     def forward(self, x: torch.Tensor, h: torch.Tensor):
         output, hn = self.hidden(x, h)
-        return hn, self.model(output)
+        return hn[-1], self.model(output[:, -1])
 
 
 class DuelQhead(nn.Module):
@@ -153,6 +156,7 @@ class BasicQnetwork(nn.Module):
         super(BasicQnetwork, self).__init__()
         self.action_dim = action_space.n
         self.representation = representation
+        self.target_representation = copy.deepcopy(representation)
         self.representation_info_shape = self.representation.output_shapes
         self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, hidden_size,
                                      normalize, initialize, activation, device)
@@ -161,12 +165,19 @@ class BasicQnetwork(nn.Module):
     def forward(self, observation: Union[np.ndarray, dict]):
         outputs = self.representation(observation)
         evalQ = self.eval_Qhead(outputs['state'])
-        targetQ = self.target_Qhead(outputs['state'])
         argmax_action = evalQ.argmax(dim=-1)
-        return outputs, argmax_action, evalQ, targetQ.detach()
+        return outputs, argmax_action, evalQ
+
+    def target(self, observation: Union[np.ndarray, dict]):
+        outputs_target = self.target_representation(observation)
+        targetQ = self.target_Qhead(outputs_target['state'])
+        argmax_action = targetQ.argmax(dim=-1)
+        return outputs_target, argmax_action, targetQ.detach()
 
     def copy_target(self):
         for ep, tp in zip(self.eval_Qhead.parameters(), self.target_Qhead.parameters()):
+            tp.data.copy_(ep)
+        for ep, tp in zip(self.representation.parameters(), self.target_representation.parameters()):
             tp.data.copy_(ep)
 
 
@@ -722,8 +733,10 @@ class DRQNPolicy(nn.Module):
                  representation: Basic_Identical,
                  **kwargs):
         super(DRQNPolicy, self).__init__()
+        self.device = kwargs['device']
         self.action_dim = action_space.n
         self.representation = representation
+        self.target_representation = copy.deepcopy(representation)
         self.representation_info_shape = self.representation.output_shapes
         kwargs["input_dim"] = self.representation.output_shapes['state'][0]
         kwargs["action_dim"] = self.action_dim
@@ -731,12 +744,21 @@ class DRQNPolicy(nn.Module):
         self.target_Qhead = copy.deepcopy(self.eval_Qhead)
 
     def forward(self, observation: Union[np.ndarray, dict], hidden: Union[np.ndarray, dict]):
+        observation, hidden = torch.Tensor(observation), torch.Tensor(hidden).to(self.device)
         outputs = self.representation(observation)
         hidden_n, evalQ = self.eval_Qhead(outputs['state'], hidden)
-        _, targetQ = self.target_Qhead(outputs['state'])
         argmax_action = evalQ.argmax(dim=-1)
-        return outputs, argmax_action, evalQ, targetQ.detach(), hidden_n
+        return outputs, argmax_action, evalQ, hidden_n
+
+    def target(self, observation: Union[np.ndarray, dict], hidden: Union[np.ndarray, dict]):
+        outputs = self.representation(observation)
+        hidden = torch.Tensor(hidden).to(self.device)
+        hidden_n, targetQ = self.target_Qhead(outputs['state'], hidden)
+        argmax_action = targetQ.argmax(dim=-1)
+        return outputs, argmax_action, targetQ.detach(), hidden_n
 
     def copy_target(self):
+        for ep, tp in zip(self.eval_Qhead.parameters(), self.target_Qhead.parameters()):
+            tp.data.copy_(ep)
         for ep, tp in zip(self.eval_Qhead.parameters(), self.target_Qhead.parameters()):
             tp.data.copy_(ep)

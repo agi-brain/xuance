@@ -32,13 +32,16 @@ class DRQN_Agent(Agent):
         self.auxiliary_info_shape = {}
         self.sequence_length = config.sequence_length
 
-        memory = DummyOffPolicyBuffer(self.observation_space,
-                                      self.action_space,
-                                      self.representation_info_shape,
-                                      self.auxiliary_info_shape,
-                                      self.nenvs,
-                                      config.nsize,
-                                      config.batchsize)
+        memory = RecurrentOffPolicyBuffer(self.observation_space,
+                                          self.action_space,
+                                          self.representation_info_shape,
+                                          self.auxiliary_info_shape,
+                                          self.nenvs,
+                                          config.nsize,
+                                          config.batchsize,
+                                          episode_length=envs.max_episode_length,
+                                          sequence_length=config.sequence_length,
+                                          rnn_state_dim=config.recurrent_hidden_size)
         learner = DRQN_Learner(policy,
                                optimizer,
                                scheduler,
@@ -71,84 +74,97 @@ class DRQN_Agent(Agent):
         return rewards
 
     def _action(self, obs, hidden=None, egreedy=0.0):
-        states, argmax_action, _, _, hidden_n = self.policy(obs, hidden)
+        _, argmax_action, _, hidden_n = self.policy(obs, hidden)
         random_action = np.random.choice(self.action_space.n, self.nenvs)
         if np.random.rand() < egreedy:
             action = random_action
         else:
             action = argmax_action.detach().cpu().numpy()
-        for key in states.keys():
-            states[key] = states[key].detach().cpu().numpy()
-        return states, action
+        return action, hidden_n.detach().cpu().numpy()
 
-    def train(self, train_steps=10000):
-        episodes = np.zeros((self.nenvs,), np.int32)
-        scores = np.zeros((self.nenvs,), np.float32)
-        returns = np.zeros((self.nenvs,), np.float32)
-        obs, infos = self.envs.reset()
-        obs_queue = deque([obs], maxlen=self.sequence_length)
-        for _ in range(self.sequence_length):
-            obs_queue.append(obs)
-        for step in tqdm(range(train_steps)):
-            step_info, episode_info = {}, {}
+    def train(self, train_steps):
+        obs = self.envs.buf_obs
+        for i in range(self.nenvs):
+            self.memory.episode_start(obs[i], i)
+        for _ in tqdm(range(train_steps), position=1, desc="Step ", leave=False, colour='white'):
+            step_info = {}
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
-            states, acts = self._action(obs_queue, hidden, self.egreedy)
+            acts, rnn_state = self._action(self.memory.obs_queue, self.memory.rnn_state_queue, self.egreedy)
             next_obs, rewards, terminals, trunctions, infos = self.envs.step(acts)
 
-            self.memory.store(obs, acts, self._process_reward(rewards), terminals, self._process_observation(next_obs),
-                              states, {})
-            if step > self.start_training and step % self.train_frequency == 0:
+            self.memory.store(obs, rnn_state, acts, self._process_reward(rewards), terminals)
+            if self.current_step > self.start_training and self.current_step % self.train_frequency == 0:
                 # training
-                obs_batch, act_batch, rew_batch, terminal_batch, next_batch, _, _ = self.memory.sample()
-                step_info = self.learner.update(obs_batch, act_batch, rew_batch, next_batch, terminal_batch)
-
-            scores += rewards
-            returns = self.gamma * returns + rewards
-            obs = next_obs
-            self.egreedy = self.egreedy - (self.start_greedy - self.end_greedy) / train_steps
+                obs_batch, rnn_batch, act_batch, rew_batch, next_batch, terminal_batch = self.memory.sample()
+                step_info = self.learner.update(obs_batch, rnn_batch, act_batch, rew_batch, next_batch, terminal_batch)
 
             for i in range(self.nenvs):
                 if terminals[i] or trunctions[i]:
-                    self.ret_rms.update(returns[i:i + 1])
-                    step_info["returns-step/env-%d" % i] = scores[i]
-                    step_info["episode/env-%d" % i] = episodes[i]
-                    scores[i], returns[i] = 0, 0
-                    episodes[i] += 1
-                    self.log_infos(step_info, step)
+                    if self.atari and (~trunctions[i]):
+                        pass
+                    else:
+                        self.current_episode[i] += 1
+                        self.memory.finish_path(i, infos[i]["episode_step"])
+                        self.memory.episode_start(self.envs.buf_obs[i], i)
+                        step_info["Episode-Steps"] = infos[i]["episode_step"]
+                        if self.use_wandb:
+                            step_info["Train-Episode-Rewards/env-%d" % i] = infos[i]["episode_score"]
+                        else:
+                            step_info["Train-Episode-Rewards"] = {"env-%d" % i: infos[i]["episode_score"]}
+                        self.log_infos(step_info, self.current_step)
 
-            if step % self.config.save_model_frequency == 0 or step == train_steps - 1:
-                self.save_model()
-                np.save(self.modeldir + "/obs_rms.npy",
-                        {'mean': self.obs_rms.mean, 'std': self.obs_rms.std, 'count': self.obs_rms.count})
+            obs = next_obs
+            self.memory.local_append(obs, rnn_state)
+            self.current_step += 1
+            self.egreedy = self.egreedy - (self.start_greedy - self.end_greedy) / self.config.training_steps
 
-    def test(self, test_steps=10000, episode=0):
-        self.load_model(self.modeldir)
-        scores = np.zeros((self.nenvs,), np.float32)
-        returns = np.zeros((self.nenvs,), np.float32)
-        obs, infos = self.envs.reset()
-        videos = [[] for _ in range(self.nenvs)]
-        for _ in tqdm(range(test_steps)):
+    def test(self, env_fn, test_episodes):
+        test_envs = env_fn()
+        num_envs = test_envs.num_envs
+        videos, episode_videos = [[] for _ in range(num_envs)], []
+        current_episode, scores, best_score = 0, [], -np.inf
+        obs, infos = test_envs.reset()
+        if self.config.render_mode == "rgb_array" and self.render:
+            images = test_envs.render(self.config.render_mode)
+            for idx, img in enumerate(images):
+                videos[idx].append(img)
+
+        while current_episode < test_episodes:
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
             states, acts = self._action(obs, egreedy=0.0)
-            next_obs, rewards, terminals, trunctions, infos = self.envs.step(acts)
-            if self.config.render and self.config.render_mode == "rgb_array":
-                images = self.envs.render(self.config.render_mode)
+            next_obs, rewards, terminals, trunctions, infos = test_envs.step(acts)
+            if self.config.render_mode == "rgb_array" and self.render:
+                images = test_envs.render(self.config.render_mode)
                 for idx, img in enumerate(images):
                     videos[idx].append(img)
 
-            scores += rewards
-            returns = self.gamma * returns + rewards
-            obs = next_obs
-            for i in range(self.nenvs):
+            for i in range(num_envs):
                 if terminals[i] or trunctions[i]:
-                    scores[i], returns[i] = 0, 0
+                    if self.atari and (~trunctions[i]):
+                        pass
+                    else:
+                        scores.append(infos[i]["episode_score"])
+                        current_episode += 1
+                        if best_score < infos[i]["episode_score"]:
+                            best_score = infos[i]["episode_score"]
+                            episode_videos = videos[i].copy()
+                        if self.config.test_mode:
+                            print("Episode: %d, Score: %.2f" % (current_episode, infos[i]["episode_score"]))
+            obs = next_obs
 
-        if self.config.render and self.config.render_mode == "rgb_array":
-            # batch, time, height, width, channel -> batch, time, channel, height, width
-            videos_info = {"Videos_Test": np.array(videos, dtype=np.uint8).transpose((0, 1, 4, 2, 3))}
+        if self.config.render_mode == "rgb_array" and self.render:
+            # time, height, width, channel -> time, channel, height, width
+            videos_info = {"Videos_Test": np.array([episode_videos], dtype=np.uint8).transpose((0, 1, 4, 2, 3))}
             self.log_videos(info=videos_info, fps=50)
 
-    def evaluate(self):
-        pass
+        if self.config.test_mode:
+            print("Best Score: %.2f" % (best_score))
+
+        test_info = {"Test-Episode-Rewards/Mean-Score": np.mean(scores)}
+        self.log_infos(test_info, self.current_step)
+
+        test_envs.close()
+
+        return scores

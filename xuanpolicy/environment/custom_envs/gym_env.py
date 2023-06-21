@@ -13,8 +13,8 @@ class Gym_Env(gym.Wrapper):
         render_mode: "rgb_array", "human"
     """
 
-    def __init__(self, env_id: str, seed: int, render_mode: str):
-        self.env = gym.make(env_id, render_mode=render_mode)
+    def __init__(self, env_id: str, seed: int, render_mode: str, **kwargs):
+        self.env = gym.make(env_id, render_mode=render_mode, **kwargs)
         self.env.action_space.seed(seed=seed)
         self.env.reset(seed=seed)
         super(Gym_Env, self).__init__(self.env)

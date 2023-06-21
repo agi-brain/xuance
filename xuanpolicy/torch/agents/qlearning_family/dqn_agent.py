@@ -1,5 +1,3 @@
-import numpy as np
-
 from xuanpolicy.torch.agents import *
 
 
@@ -79,31 +77,29 @@ class DQN_Agent(Agent):
         return rewards
 
     def _action(self, obs, egreedy=0.0):
-        states, argmax_action, _, _ = self.policy(obs)
+        _, argmax_action, _ = self.policy(obs)
         random_action = np.random.choice(self.action_space.n, self.nenvs)
         if np.random.rand() < egreedy:
             action = random_action
         else:
             action = argmax_action.detach().cpu().numpy()
-        for key in states.keys():
-            states[key] = states[key].detach().cpu().numpy()
-        return states, action
+        return action
 
     def train(self, train_steps):
         obs = self.envs.buf_obs
-        for _ in tqdm(range(train_steps), position=1, desc="Step ", leave=False, colour='white'):
+        for _ in tqdm(range(train_steps)):
             step_info = {}
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
-            states, acts = self._action(obs, self.egreedy)
+            acts = self._action(obs, self.egreedy)
             next_obs, rewards, terminals, trunctions, infos = self.envs.step(acts)
 
-            self.memory.store(obs, acts, self._process_reward(rewards), terminals, self._process_observation(next_obs),
-                              states, {})
+            self.memory.store(obs, acts, self._process_reward(rewards), terminals, self._process_observation(next_obs))
             if self.current_step > self.start_training and self.current_step % self.train_frequency == 0:
                 # training
-                obs_batch, act_batch, rew_batch, terminal_batch, next_batch, _, _ = self.memory.sample()
+                obs_batch, act_batch, rew_batch, terminal_batch, next_batch = self.memory.sample()
                 step_info = self.learner.update(obs_batch, act_batch, rew_batch, next_batch, terminal_batch)
+                step_info["epsilon-greedy"] = self.egreedy
 
             for i in range(self.nenvs):
                 if terminals[i] or trunctions[i]:
@@ -120,25 +116,27 @@ class DQN_Agent(Agent):
 
             obs = next_obs
             self.current_step += 1
-            self.egreedy = self.egreedy - (self.start_greedy - self.end_greedy) / self.config.training_steps
+            if self.egreedy > self.end_greedy:
+                self.egreedy = self.egreedy - (self.start_greedy - self.end_greedy) / self.config.decay_step_greedy
 
-    def test(self, test_episode):
-        num_envs = self.test_envs.num_envs
+    def test(self, env_fn, test_episodes):
+        test_envs = env_fn()
+        num_envs = test_envs.num_envs
         videos, episode_videos = [[] for _ in range(num_envs)], []
         current_episode, scores, best_score = 0, [], -np.inf
-        obs, infos = self.test_envs.reset()
+        obs, infos = test_envs.reset()
         if self.config.render_mode == "rgb_array" and self.render:
-            images = self.test_envs.render(self.config.render_mode)
+            images = test_envs.render(self.config.render_mode)
             for idx, img in enumerate(images):
                 videos[idx].append(img)
 
-        while current_episode < test_episode:
+        while current_episode < test_episodes:
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
-            states, acts = self._action(obs, egreedy=0.0)
-            next_obs, rewards, terminals, trunctions, infos = self.test_envs.step(acts)
+            acts = self._action(obs, egreedy=0.0)
+            next_obs, rewards, terminals, trunctions, infos = test_envs.step(acts)
             if self.config.render_mode == "rgb_array" and self.render:
-                images = self.test_envs.render(self.config.render_mode)
+                images = test_envs.render(self.config.render_mode)
                 for idx, img in enumerate(images):
                     videos[idx].append(img)
 
@@ -166,5 +164,7 @@ class DQN_Agent(Agent):
 
         test_info = {"Test-Episode-Rewards/Mean-Score": np.mean(scores)}
         self.log_infos(test_info, self.current_step)
+
+        test_envs.close()
 
         return scores

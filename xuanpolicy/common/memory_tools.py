@@ -6,6 +6,7 @@ from abc import ABC, abstractmethod
 from typing import Optional, Union
 from xuanpolicy.common import space2shape
 from xuanpolicy.common.segtree_tool import SumSegmentTree, MinSegmentTree
+from collections import deque
 
 
 def create_memory(shape: Optional[Union[tuple, dict]], nenvs: int, nsize: int, dtype=np.float32):
@@ -53,14 +54,14 @@ def store_element(data: Optional[Union[np.ndarray, dict, float]], memory: Union[
 
 
 def store_element_rnn(data: Optional[Union[np.ndarray, dict, float]], memory: Union[dict, np.ndarray],
-                      ptr_episode: int, ptr_step: int):
+                      ptr: Optional[Union[np.ndarray, tuple]]):
     if data is None:
         return
     elif isinstance(data, dict):
         for key, value in zip(data.keys(), data.values()):
-            memory[key][:, ptr_episode, ptr_step] = data[key]
+            memory[key][ptr] = data[key]
     else:
-        memory[:, ptr_episode, ptr_step] = data
+        memory[ptr] = data
 
 
 def sample_batch(memory: Optional[Union[np.ndarray, dict]], index: Optional[Union[np.ndarray, tuple]]):
@@ -98,6 +99,9 @@ class Buffer(ABC):
     @abstractmethod
     def sample(self, *args):
         raise NotImplementedError
+
+    def finish_path(self, *args):
+        pass
 
 
 class DummyOnPolicyBuffer(Buffer):
@@ -200,8 +204,6 @@ class DummyOffPolicyBuffer(Buffer):
         self.observations = create_memory(space2shape(self.observation_space), self.nenvs, self.nsize)
         self.next_observations = create_memory(space2shape(self.observation_space), self.nenvs, self.nsize)
         self.actions = create_memory(space2shape(self.action_space), self.nenvs, self.nsize)
-        self.representation_infos = create_memory(self.representation_shape, self.nenvs, self.nsize)
-        self.auxiliary_infos = create_memory(self.auxiliary_shape, self.nenvs, self.nsize)
         self.rewards = create_memory((), self.nenvs, self.nsize)
         self.terminals = create_memory((), self.nenvs, self.nsize)
 
@@ -209,19 +211,15 @@ class DummyOffPolicyBuffer(Buffer):
         self.observations = create_memory(space2shape(self.observation_space), self.nenvs, self.nsize)
         self.next_observations = create_memory(space2shape(self.observation_space), self.nenvs, self.nsize)
         self.actions = create_memory(space2shape(self.action_space), self.nenvs, self.nsize)
-        self.representation_infos = create_memory(self.representation_shape, self.nenvs, self.nsize)
-        self.auxiliary_infos = create_memory(self.auxiliary_shape, self.nenvs, self.nsize)
         self.rewards = create_memory((), self.nenvs, self.nsize)
         self.terminals = create_memory((), self.nenvs, self.nsize)
 
-    def store(self, obs, acts, rews, terminals, next_obs, rep_info, aux_info):
+    def store(self, obs, acts, rews, terminals, next_obs):
         store_element(obs, self.observations, self.ptr)
         store_element(acts, self.actions, self.ptr)
         store_element(rews, self.rewards, self.ptr)
         store_element(terminals, self.terminals, self.ptr)
         store_element(next_obs, self.next_observations, self.ptr)
-        store_element(rep_info, self.representation_infos, self.ptr)
-        store_element(aux_info, self.auxiliary_infos, self.ptr)
         self.ptr = (self.ptr + 1) % self.nsize
         self.size = min(self.size + 1, self.nsize)
 
@@ -233,9 +231,7 @@ class DummyOffPolicyBuffer(Buffer):
         rew_batch = sample_batch(self.rewards, tuple([env_choices, step_choices]))
         terminal_batch = sample_batch(self.terminals, tuple([env_choices, step_choices]))
         next_batch = sample_batch(self.next_observations, tuple([env_choices, step_choices]))
-        rep_batch = sample_batch(self.representation_infos, tuple([env_choices, step_choices]))
-        aux_batch = sample_batch(self.auxiliary_infos, tuple([env_choices, step_choices]))
-        return obs_batch, act_batch, rew_batch, terminal_batch, next_batch, rep_batch, aux_batch
+        return obs_batch, act_batch, rew_batch, terminal_batch, next_batch
 
 
 class RecurrentOffPolicyBuffer(Buffer):
@@ -257,43 +253,69 @@ class RecurrentOffPolicyBuffer(Buffer):
         self.nenvs, self.nsize, self.episode_length, self.batchsize = nenvs, nsize, episode_length, batchsize
         self.sequence_length, self.rnn_state_dim = sequence_length, rnn_state_dim
         self.observations = create_memory_rnn(space2shape(self.observation_space), self.nenvs, self.nsize, self.episode_length)
+        self.rnn_states = create_memory_rnn((self.rnn_state_dim, ), self.nenvs, self.nsize, self.episode_length)
         self.actions = create_memory_rnn(space2shape(self.action_space), self.nenvs, self.nsize, self.episode_length)
         self.rewards = create_memory_rnn((), self.nenvs, self.nsize, self.episode_length)
         self.terminals = create_memory_rnn((), self.nenvs, self.nsize, self.episode_length)
         self.episode_end_step = create_memory((), self.nenvs, self.nsize)
-        self.obs_queue = create_memory(space2shape(self.observation_space), self.nenvs, self.sequence_length)
-        self.rnn_state_queue = create_memory((self.rnn_state_dim, ), self.nenvs, self.sequence_length)
-        self.ptr_step = 0
+
+        self.obs_queue = [deque([], maxlen=self.sequence_length) for _ in range(self.nenvs)]
+        self.rnn_state_queue = deque([], maxlen=self.sequence_length)
+        for i in range(self.sequence_length):
+            self.rnn_state_queue.append(np.zeros([self.nenvs, self.rnn_state_dim]))
+
+        self.ptr_episode = np.zeros([self.nenvs], dtype=np.int64)
+        self.ptr_step = np.zeros([self.nenvs], dtype=np.int64)
+        self.index_static = np.arange(self.nenvs)
+
+    @property
+    def full(self):
+        return self.size >= self.nsize
 
     def clear(self):
         self.observations = create_memory_rnn(space2shape(self.observation_space), self.nenvs, self.nsize, self.episode_length)
+        self.rnn_states = create_memory_rnn((self.rnn_state_dim,), self.nenvs, self.nsize, self.episode_length)
         self.actions = create_memory_rnn(space2shape(self.action_space), self.nenvs, self.nsize, self.episode_length)
         self.rewards = create_memory_rnn((), self.nenvs, self.nsize, self.episode_length)
         self.terminals = create_memory_rnn((), self.nenvs, self.nsize, self.episode_length)
 
-    def clear_sequence(self):
-        self.obs_queue = create_memory(space2shape(self.observation_space), self.nenvs, self.sequence_length)
-        self.rnn_state_queue = create_memory((self.rnn_state_dim,), self.nenvs, self.sequence_length)
+    def episode_start(self, obs, env_id):
+        for i in range(self.sequence_length):
+            self.obs_queue[env_id].append(obs)
+            self.rnn_state_queue[i][env_id] = np.zeros([self.rnn_state_dim])
 
-    def store(self, obs, acts, rews, terminals):
-        store_element(obs, self.observations, self.ptr)
-        store_element(acts, self.actions, self.ptr)
-        store_element(rews, self.rewards, self.ptr)
-        store_element(terminals, self.terminals, self.ptr)
+    def local_append(self, obs, rnn_state):
+        for i_env in range(self.nenvs):
+            self.obs_queue[i_env].append(obs[i_env])
+        self.rnn_state_queue.append(rnn_state)
 
-    def update_episode(self, i_env, n_steps):
-        self.episode_end_step[i_env, self.ptr] = n_steps
-        self.ptr[i_env] = (self.ptr[i_env] + 1) % self.nsize
-        self.size = min(self.size + 1, self.size)
+    def store(self, obs, rnn_state, acts, rews, terminals):
+        push_index = tuple([self.index_static, self.ptr_episode, self.ptr_step])
+        store_element_rnn(obs, self.observations, push_index)
+        store_element_rnn(rnn_state, self.rnn_states, push_index)
+        store_element_rnn(acts, self.actions, push_index)
+        store_element_rnn(rews, self.rewards, push_index)
+        store_element_rnn(terminals, self.terminals, push_index)
+        self.size = min(self.size + 1, self.nsize)
 
     def sample(self):
         env_choices = np.random.choice(self.nenvs, self.batchsize)
+        episode_choices = np.random.choice(self.size, self.batchsize)
+        step_choices = np.random.choice()
         step_choices = np.random.choice(self.size, self.batchsize)
         obs_batch = sample_batch(self.observations, tuple([env_choices, step_choices]))
+        next_batch = sample_batch(self.observations, tuple([env_choices, step_choices+1]))
+        rnn_batch = sample_batch(self.rnn_states, tuple([env_choices, step_choices]))
         act_batch = sample_batch(self.actions, tuple([env_choices, step_choices]))
         rew_batch = sample_batch(self.rewards, tuple([env_choices, step_choices]))
         terminal_batch = sample_batch(self.terminals, tuple([env_choices, step_choices]))
-        return obs_batch, act_batch, rew_batch, terminal_batch
+        return obs_batch, rnn_batch, act_batch, rew_batch, next_batch, terminal_batch
+
+    def finish_path(self, env_id, n_steps):
+        self.episode_end_step[env_id, self.ptr_episode[env_id]] = n_steps
+        self.ptr_episode[env_id] = (self.ptr_episode[env_id] + 1) % self.nsize
+        self.ptr_step[env_id] = 0
+        self.size = min(self.size + 1, self.size)
 
 
 class PerOffPolicyBuffer(Buffer):

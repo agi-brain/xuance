@@ -23,6 +23,8 @@ def make_envs(config: Namespace):
                             config.obs_type, config.frame_skip, config.num_stack, config.img_size, config.noop_max)
         elif config.env_id.__contains__("MountainCar"):
             env = MountainCar(config.env_id, config.seed, config.render_mode)
+        elif config.env_id.__contains__("CarRacing"):
+            env = Gym_Env(config.env_id, config.seed, config.render_mode, continuous=False)
         else:
             env = Gym_Env(config.env_id, config.seed, config.render_mode)
         return env
