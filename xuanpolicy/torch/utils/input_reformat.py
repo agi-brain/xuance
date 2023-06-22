@@ -38,7 +38,7 @@ def get_policy_in(args, representation):
     input_dict = deepcopy(Policy_Inputs_All)
     input_dict["action_space"] = args.action_space
     input_dict["representation"] = representation
-    if policy_name in ["Basic_Q_network", "Duel_Q_network", "Noisy_Q_network", "C51_Q_network", "QR_Q_network", "CDQN_Policy", "LDQN_Policy", "CLDQN_Policy", "DRQN_Policy"]:
+    if policy_name in ["Basic_Q_network", "Duel_Q_network", "Noisy_Q_network", "C51_Q_network", "QR_Q_network", "CDQN_Policy", "LDQN_Policy", "CLDQN_Policy"]:
         input_dict["hidden_sizes"] = args.q_hidden_size
         if policy_name == "C51_Q_network":
             input_dict['vmin'] = args.vmin
@@ -50,6 +50,11 @@ def get_policy_in(args, representation):
         input_dict['observation_space'] = args.observation_space
         input_dict['conactor_hidden_size'] = args.conactor_hidden_size
         input_dict['qnetwork_hidden_size'] = args.qnetwork_hidden_size
+    elif policy_name in ['DRQN_Policy']:
+        input_dict["recurrent"] = args.recurrent
+        input_dict["recurrent_hidden_size"] = args.recurrent_hidden_size
+        input_dict["recurrent_layer_N"] = args.recurrent_layer_N
+        input_dict["dropout"] = args.dropout
     else:
         input_dict["actor_hidden_size"] = args.actor_hidden_size
         if policy_name in ["Categorical_AC", "Categorical_PPG", "Gaussian_AC", "Discrete_SAC", "Gaussian_SAC", "Gaussian_PPG", "DDPG_Policy", "TD3_Policy"]:
@@ -61,10 +66,6 @@ def get_policy_in(args, representation):
     if policy_name == "Gaussian_Actor":
         input_dict["fixed_std"] = None
     if policy_name == "DRQN_Policy":
-        input_dict["recurrent"] = args.recurrent
-        input_dict["recurrent_hidden_size"] = args.recurrent_hidden_size
-        input_dict["sequence_length"] = args.sequence_length
-        input_dict["dropout"] = args.dropout
         return input_dict
     input_list = itemgetter(*Policy_Inputs[policy_name])(input_dict)
     return list(input_list)

@@ -26,7 +26,8 @@ def create_memory(shape: Optional[Union[tuple, dict]], nenvs: int, nsize: int, d
         raise NotImplementedError
 
 
-def create_memory_rnn(shape: Optional[Union[tuple, dict]], nenvs: int, nsize: int, episode_length: int, dtype=np.float32):
+def create_memory_rnn(shape: Optional[Union[tuple, dict]], nenvs: int, nsize: int, episode_length: int,
+                      dtype=np.float32):
     if shape is None:
         return None
     elif isinstance(shape, dict):
@@ -51,17 +52,6 @@ def store_element(data: Optional[Union[np.ndarray, dict, float]], memory: Union[
             memory[key][:, ptr] = data[key]
     else:
         memory[:, ptr] = data
-
-
-def store_element_rnn(data: Optional[Union[np.ndarray, dict, float]], memory: Union[dict, np.ndarray],
-                      ptr: Optional[Union[np.ndarray, tuple]]):
-    if data is None:
-        return
-    elif isinstance(data, dict):
-        for key, value in zip(data.keys(), data.values()):
-            memory[key][ptr] = data[key]
-    else:
-        memory[ptr] = data
 
 
 def sample_batch(memory: Optional[Union[np.ndarray, dict]], index: Optional[Union[np.ndarray, tuple]]):
@@ -243,79 +233,49 @@ class RecurrentOffPolicyBuffer(Buffer):
                  nenvs: int,
                  nsize: int,
                  batchsize: int,
-                 episode_length: int,
-                 sequence_length: int,
-                 rnn_state_dim: int):
+                 episode_length: int):
         super(RecurrentOffPolicyBuffer, self).__init__(observation_space,
                                                        action_space,
                                                        representation_shape,
                                                        auxiliary_shape)
         self.nenvs, self.nsize, self.episode_length, self.batchsize = nenvs, nsize, episode_length, batchsize
-        self.sequence_length, self.rnn_state_dim = sequence_length, rnn_state_dim
-        self.observations = create_memory_rnn(space2shape(self.observation_space), self.nenvs, self.nsize, self.episode_length)
-        self.rnn_states = create_memory_rnn((self.rnn_state_dim, ), self.nenvs, self.nsize, self.episode_length)
+
+        self.observations = create_memory_rnn(space2shape(self.observation_space), self.nenvs, self.nsize, self.episode_length+1)
         self.actions = create_memory_rnn(space2shape(self.action_space), self.nenvs, self.nsize, self.episode_length)
         self.rewards = create_memory_rnn((), self.nenvs, self.nsize, self.episode_length)
         self.terminals = create_memory_rnn((), self.nenvs, self.nsize, self.episode_length)
-        self.episode_end_step = create_memory((), self.nenvs, self.nsize)
-
-        self.obs_queue = [deque([], maxlen=self.sequence_length) for _ in range(self.nenvs)]
-        self.rnn_state_queue = deque([], maxlen=self.sequence_length)
-        for i in range(self.sequence_length):
-            self.rnn_state_queue.append(np.zeros([self.nenvs, self.rnn_state_dim]))
-
-        self.ptr_episode = np.zeros([self.nenvs], dtype=np.int64)
-        self.ptr_step = np.zeros([self.nenvs], dtype=np.int64)
-        self.index_static = np.arange(self.nenvs)
+        self.fills = create_memory_rnn((), self.nenvs, self.nsize, self.episode_length)
 
     @property
     def full(self):
         return self.size >= self.nsize
 
     def clear(self):
-        self.observations = create_memory_rnn(space2shape(self.observation_space), self.nenvs, self.nsize, self.episode_length)
-        self.rnn_states = create_memory_rnn((self.rnn_state_dim,), self.nenvs, self.nsize, self.episode_length)
+        self.observations = create_memory_rnn(space2shape(self.observation_space), self.nenvs, self.nsize,
+                                              self.episode_length + 1)
         self.actions = create_memory_rnn(space2shape(self.action_space), self.nenvs, self.nsize, self.episode_length)
         self.rewards = create_memory_rnn((), self.nenvs, self.nsize, self.episode_length)
         self.terminals = create_memory_rnn((), self.nenvs, self.nsize, self.episode_length)
+        self.fills = create_memory_rnn((), self.nenvs, self.nsize, self.episode_length)
 
-    def episode_start(self, obs, env_id):
-        for i in range(self.sequence_length):
-            self.obs_queue[env_id].append(obs)
-            self.rnn_state_queue[i][env_id] = np.zeros([self.rnn_state_dim])
-
-    def local_append(self, obs, rnn_state):
-        for i_env in range(self.nenvs):
-            self.obs_queue[i_env].append(obs[i_env])
-        self.rnn_state_queue.append(rnn_state)
-
-    def store(self, obs, rnn_state, acts, rews, terminals):
-        push_index = tuple([self.index_static, self.ptr_episode, self.ptr_step])
-        store_element_rnn(obs, self.observations, push_index)
-        store_element_rnn(rnn_state, self.rnn_states, push_index)
-        store_element_rnn(acts, self.actions, push_index)
-        store_element_rnn(rews, self.rewards, push_index)
-        store_element_rnn(terminals, self.terminals, push_index)
+    def store(self, obs, acts, rews, terminals, fills=None):
+        store_element(obs, self.observations, self.ptr)
+        store_element(acts, self.actions, self.ptr)
+        store_element(rews, self.rewards, self.ptr)
+        store_element(terminals, self.terminals, self.ptr)
+        store_element(fills, self.fills, self.ptr)
+        self.ptr = (self.ptr + 1) % self.nsize
         self.size = min(self.size + 1, self.nsize)
 
     def sample(self):
         env_choices = np.random.choice(self.nenvs, self.batchsize)
         episode_choices = np.random.choice(self.size, self.batchsize)
-        step_choices = np.random.choice()
-        step_choices = np.random.choice(self.size, self.batchsize)
-        obs_batch = sample_batch(self.observations, tuple([env_choices, step_choices]))
-        next_batch = sample_batch(self.observations, tuple([env_choices, step_choices+1]))
-        rnn_batch = sample_batch(self.rnn_states, tuple([env_choices, step_choices]))
-        act_batch = sample_batch(self.actions, tuple([env_choices, step_choices]))
-        rew_batch = sample_batch(self.rewards, tuple([env_choices, step_choices]))
-        terminal_batch = sample_batch(self.terminals, tuple([env_choices, step_choices]))
-        return obs_batch, rnn_batch, act_batch, rew_batch, next_batch, terminal_batch
-
-    def finish_path(self, env_id, n_steps):
-        self.episode_end_step[env_id, self.ptr_episode[env_id]] = n_steps
-        self.ptr_episode[env_id] = (self.ptr_episode[env_id] + 1) % self.nsize
-        self.ptr_step[env_id] = 0
-        self.size = min(self.size + 1, self.size)
+        obs_batch = sample_batch(self.observations, tuple([env_choices, episode_choices]))
+        act_batch = sample_batch(self.actions, tuple([env_choices, episode_choices]))
+        rew_batch = sample_batch(self.rewards, tuple([env_choices, episode_choices]))
+        terminal_batch = sample_batch(self.terminals, tuple([env_choices, episode_choices]))
+        fill_batch = sample_batch(self.fills, tuple([env_choices, episode_choices]))
+        return obs_batch, act_batch, rew_batch, terminal_batch, fill_batch
 
 
 class PerOffPolicyBuffer(Buffer):

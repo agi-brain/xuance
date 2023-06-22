@@ -68,7 +68,7 @@ def pooling_block(input_shape: Sequence[int],
 
 def gru_block(input_dim: Sequence[int],
               output_dim: int,
-              num_layers: int,
+              num_layers: int = 1,
               dropout: float = 0,
               initialize: Optional[Callable[[torch.Tensor], torch.Tensor]] = None,
               device: Optional[Union[str, int, torch.device]] = None) -> ModuleType:
@@ -88,7 +88,7 @@ def gru_block(input_dim: Sequence[int],
 
 def lstm_block(input_dim: Sequence[int],
                output_dim: int,
-               num_layers: int,
+               num_layers: int = 1,
                dropout: float = 0,
                initialize: Optional[Callable[[torch.Tensor], torch.Tensor]] = None,
                device: Optional[Union[str, int, torch.device]] = None) -> ModuleType:

@@ -25,13 +25,13 @@ setup(
         'Programming Language :: Python :: 3.10',
     ],
     extras_require={
-        "torch": ["torch>=1.13.0"],
+        "torch": ["torch==1.13.0"],
         "tensorflow": ["tensorflow==2.6.0"],
-        "mindspore": ["mindspore>=1.10.1"],
+        "mindspore": ["mindspore==1.10.1"],
         "all": [
-            "torch>=1.13.0",
+            "torch==1.13.0",
             "tensorflow==2.6.0",
-            "mindspore>=1.10.1"
+            "mindspore==1.10.1"
         ]
     },
     install_requires=[
@@ -48,7 +48,7 @@ setup(
         "opencv-python>=4.5.4.58",  # for Atari
         "atari-py==0.2.9",
         "ale-py==0.7.5",
-        "pettingzoo>=1.23.0",  # for MARL
+        "pettingzoo==1.23.0",  # for MARL
         "tensorboard>=2.11.2",  # logger
         "wandb>=0.15.3",
         "moviepy==1.0.3",
