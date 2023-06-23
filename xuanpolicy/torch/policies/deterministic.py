@@ -755,25 +755,23 @@ class DRQNPolicy(nn.Module):
         self.eval_Qhead = BasicRecurrent(**kwargs)
         self.target_Qhead = copy.deepcopy(self.eval_Qhead)
 
-    def forward(self, observation: Union[np.ndarray, dict], *hidden_states: torch.Tensor,
-                cell_states: torch.Tensor = None):
+    def forward(self, observation: Union[np.ndarray, dict], *rnn_hidden: torch.Tensor):
         observation = torch.Tensor(observation)
         outputs = self.representation(observation)
         if self.lstm:
-            hidden_states, cell_states, evalQ = self.eval_Qhead(outputs['state'], hidden_states, cell_states)
+            hidden_states, cell_states, evalQ = self.eval_Qhead(outputs['state'], rnn_hidden[0], rnn_hidden[1])
         else:
-            hidden_states, evalQ = self.eval_Qhead(outputs['state'], hidden_states)
+            hidden_states, evalQ = self.eval_Qhead(outputs['state'], rnn_hidden[0])
             cell_states = None
         argmax_action = evalQ[:, -1].argmax(dim=-1)
         return outputs, argmax_action, evalQ, (hidden_states, cell_states)
 
-    def target(self, observation: Union[np.ndarray, dict], hidden_states: torch.Tensor,
-               cell_states: torch.Tensor = None):
+    def target(self, observation: Union[np.ndarray, dict], *rnn_hidden: torch.Tensor):
         outputs = self.representation(observation)
         if self.lstm:
-            hidden_states, cell_states, targetQ = self.target_Qhead(outputs['state'], hidden_states, cell_states)
+            hidden_states, cell_states, targetQ = self.target_Qhead(outputs['state'], rnn_hidden[0], rnn_hidden[1])
         else:
-            hidden_states, targetQ = self.target_Qhead(outputs['state'], hidden_states)
+            hidden_states, targetQ = self.target_Qhead(outputs['state'], rnn_hidden[0])
             cell_states = None
         argmax_action = targetQ.argmax(dim=-1)
         return outputs, argmax_action, targetQ.detach(), (hidden_states, cell_states)

@@ -79,10 +79,7 @@ class DRQN_Agent(Agent):
         return rewards
 
     def _action(self, obs, egreedy=0.0, rnn_hidden=None):
-        if self.lstm:
-            _, argmax_action, _, rnn_hidden_next = self.policy(obs[:, np.newaxis], rnn_hidden[0], rnn_hidden[1])
-        else:
-            _, argmax_action, _, rnn_hidden_next = self.policy(obs[:, np.newaxis], rnn_hidden)
+        _, argmax_action, _, rnn_hidden_next = self.policy(obs[:, np.newaxis], *rnn_hidden)
         random_action = np.random.choice(self.action_space.n, self.nenvs)
         if np.random.rand() < egreedy:
             action = random_action

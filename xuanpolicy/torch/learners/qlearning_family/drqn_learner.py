@@ -24,18 +24,10 @@ class DRQN_Learner(Learner):
         fill_batch = torch.as_tensor(fill_batch, device=self.device)
         batch_size = obs_batch.shape[0]
 
-        # self.policy.init_hidden(batch_size)
-        # self.policy.init_hidden_target(batch_size)
         rnn_hidden = self.policy.init_hidden(batch_size)
-        if self.policy.lstm:
-            _, _, evalQ, _ = self.policy(obs_batch[:, 0:-1], rnn_hidden[0], rnn_hidden[1])
-        else:
-            _, _, evalQ, _ = self.policy(obs_batch[:, 0:-1], rnn_hidden)
+        _, _, evalQ, _ = self.policy(obs_batch[:, 0:-1], *rnn_hidden)
         target_rnn_hidden = self.policy.init_hidden(batch_size)
-        if self.policy.lstm:
-            _, _, targetQ, _ = self.policy.target(obs_batch[:, 1:], target_rnn_hidden[0], target_rnn_hidden[1])
-        else:
-            _, _, targetQ, _ = self.policy.target(obs_batch[:, 1:], target_rnn_hidden)
+        _, _, targetQ, _ = self.policy.target(obs_batch[:, 1:], *target_rnn_hidden)
         targetQ = targetQ.max(dim=-1).values
 
         targetQ = rew_batch + self.gamma * (1 - ter_batch) * targetQ
