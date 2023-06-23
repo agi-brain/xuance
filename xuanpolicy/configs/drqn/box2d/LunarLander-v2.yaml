@@ -1,6 +1,6 @@
 agent: "DRQN"  # deep recurrent Q-networks
-env_name: "Classic Control"
-env_id: "CartPole-v1"
+env_name: "Box2D"
+env_id: "LunarLander-v2"
 policy: "DRQN_Policy"
 representation: "Basic_MLP"
 rnn: "LSTM"
@@ -14,12 +14,12 @@ activation: 'ReLU'
 parallels: 10
 max_episode_length: -1  # -1: set max_episode_length the same as the env's default value.
 nsize: 100  # memory size for each parallel
-batchsize: 256  # batch size for training
+batchsize: 4  # batch size for training
 learning_rate: 0.001
 gamma: 0.99
 
 start_greedy: 0.5
-end_greedy: 0.1
+end_greedy: 0.01
 decay_episodes_greedy: 800
 sync_frequency: 50
 training_frequency: 1

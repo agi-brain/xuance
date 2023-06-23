@@ -6,15 +6,13 @@ Deep Reinforcement Learning
    :caption: Included Algorithms
 
    drl/dqn
-   drl/cdqn
    drl/c51
-   drl/cldqn
    drl/ddqn
    drl/dueldqn
-   drl/ldqn
    drl/noisydqn
    drl/perdqn
    drl/qrdqn
+   drl/drqn
    drl/vpg
    drl/ppg
    drl/ppo

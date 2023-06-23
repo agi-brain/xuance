@@ -25,8 +25,8 @@ class DRQN_Learner(Learner):
         batch_size = obs_batch.shape[0]
 
         self.policy.init_hidden(batch_size)
-        _, _, evalQ = self.policy(obs_batch[:, 0:-1])
         self.policy.init_hidden_target(batch_size)
+        _, _, evalQ = self.policy(obs_batch[:, 0:-1])
         _, _, targetQ = self.policy.target(obs_batch[:, 1:])
         targetQ = targetQ.max(dim=-1).values
 

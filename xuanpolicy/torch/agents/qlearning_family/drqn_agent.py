@@ -91,6 +91,7 @@ class DRQN_Agent(Agent):
         obs, infos = self.envs.reset()
         dones = [False for _ in range(self.nenvs)]
         obs_queue = np.zeros((self.nenvs, self.max_episode_length + 1) + self.observation_space.shape)
+        obs_queue[:, 0] = self._process_observation(obs)
         act_queue = np.zeros((self.nenvs, self.max_episode_length) + space2shape(self.action_space))
         rew_queue = np.zeros((self.nenvs, self.max_episode_length, ))
         terminal_queue = np.zeros((self.nenvs, self.max_episode_length, ), np.bool)
@@ -106,10 +107,11 @@ class DRQN_Agent(Agent):
             for i in range(self.nenvs):
                 if not dones[i]:
                     filled_queue[i, step] = 1
-                if terminals[i] or trunctions[i]:
+                if terminals[i] or trunctions[i] or step >= (self.max_episode_length-1):
                     if self.atari and (~trunctions[i]):
                         pass
                     else:
+                        self.policy.init_hidden(self.nenvs, i)
                         dones[i] = True
                         if self.use_wandb:
                             episode_info["Episode-Steps/env-%d" % i] = infos[i]["episode_step"]
@@ -157,7 +159,7 @@ class DRQN_Agent(Agent):
             for idx, img in enumerate(images):
                 videos[idx].append(img)
 
-        self.policy.init_hidden(self.nenvs)
+        self.policy.init_hidden(num_envs)
         while current_episode < test_episodes:
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
@@ -173,6 +175,7 @@ class DRQN_Agent(Agent):
                     if self.atari and (~trunctions[i]):
                         pass
                     else:
+                        self.policy.init_hidden(num_envs, i)
                         scores.append(infos[i]["episode_score"])
                         current_episode += 1
                         if best_score < infos[i]["episode_score"]:
@@ -185,13 +188,13 @@ class DRQN_Agent(Agent):
         if self.config.render_mode == "rgb_array" and self.render:
             # time, height, width, channel -> time, channel, height, width
             videos_info = {"Videos_Test": np.array([episode_videos], dtype=np.uint8).transpose((0, 1, 4, 2, 3))}
-            self.log_videos(info=videos_info, fps=50)
+            self.log_videos(info=videos_info, fps=50, x_index=self.current_episode)
 
         if self.config.test_mode:
             print("Best Score: %.2f" % (best_score))
 
         test_info = {"Test-Episode-Rewards/Mean-Score": np.mean(scores)}
-        self.log_infos(test_info, self.current_step)
+        self.log_infos(test_info, self.current_episode)
 
         test_envs.close()
 

@@ -77,13 +77,13 @@ class Agent(ABC):
                 except:
                     self.writer.add_scalars(k, v, x_index)
 
-    def log_videos(self, info: dict, fps: int):
+    def log_videos(self, info: dict, fps: int, x_index: int=0):
         if self.use_wandb:
             for k, v in info.items():
-                wandb.log({k: wandb.Video(v, fps=fps, format='gif')})
+                wandb.log({k: wandb.Video(v, fps=fps, format='gif')}, step=x_index)
         else:
             for k, v in info.items():
-                self.writer.add_video(k, v, fps=fps)
+                self.writer.add_video(k, v, fps=fps, global_step=x_index)
 
     @abstractmethod
     def _process_observation(self, observations):

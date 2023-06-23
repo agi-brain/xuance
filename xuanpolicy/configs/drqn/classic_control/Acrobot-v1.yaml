@@ -1,6 +1,6 @@
 agent: "DRQN"  # deep recurrent Q-networks
 env_name: "Classic Control"
-env_id: "CartPole-v1"
+env_id: "Acrobot-v1"
 policy: "DRQN_Policy"
 representation: "Basic_MLP"
 rnn: "LSTM"
@@ -23,7 +23,7 @@ end_greedy: 0.1
 decay_episodes_greedy: 800
 sync_frequency: 50
 training_frequency: 1
-n_trains_per_episode: 1
+n_trains_per_episode: 10
 training_steps: 1000  # number of training episodes
 start_training: 100
 

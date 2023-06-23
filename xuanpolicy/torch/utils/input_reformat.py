@@ -51,7 +51,7 @@ def get_policy_in(args, representation):
         input_dict['conactor_hidden_size'] = args.conactor_hidden_size
         input_dict['qnetwork_hidden_size'] = args.qnetwork_hidden_size
     elif policy_name in ['DRQN_Policy']:
-        input_dict["recurrent"] = args.recurrent
+        input_dict["rnn"] = args.rnn
         input_dict["recurrent_hidden_size"] = args.recurrent_hidden_size
         input_dict["recurrent_layer_N"] = args.recurrent_layer_N
         input_dict["dropout"] = args.dropout

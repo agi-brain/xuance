@@ -75,8 +75,8 @@ class MountainCar(Gym_Env):
         info["episode_step"] = self._episode_step
         info["episode_score"] = self._episode_score
 
-        reward += 10 * observation[0]
-        reward + 10 * (observation[0] - self.pre_position)
+        # reward += 10 * observation[0]
+        # reward + 10 * (observation[0] - self.pre_position)
         # reward += observation[1] ** 2
         self.frames.append(observation)
         self.pre_position = observation[0]

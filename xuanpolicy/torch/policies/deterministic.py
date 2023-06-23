@@ -34,14 +34,16 @@ class BasicQhead(nn.Module):
 class BasicRecurrent(nn.Module):
     def __init__(self, **kwargs):
         super(BasicRecurrent, self).__init__()
-        if kwargs["recurrent"] == "GRU":
+        self.lstm = False
+        if kwargs["rnn"] == "GRU":
             output = gru_block(kwargs["input_dim"],
                                kwargs["recurrent_hidden_size"],
                                kwargs["recurrent_layer_N"],
                                kwargs["dropout"],
                                kwargs["initialize"],
                                kwargs["device"])
-        elif kwargs["recurrent"] == "LSTM":
+        elif kwargs["rnn"] == "LSTM":
+            self.lstm = True
             output = lstm_block(kwargs["input_dim"],
                                 kwargs["recurrent_hidden_size"],
                                 kwargs["recurrent_layer_N"],
@@ -55,10 +57,14 @@ class BasicRecurrent(nn.Module):
             0]
         self.model = nn.Sequential(*fc_layer)
 
-    def forward(self, x: torch.Tensor, h: torch.Tensor):
+    def forward(self, x: torch.Tensor, h: torch.Tensor, c: torch.Tensor = None):
         self.rnn_layer.flatten_parameters()
-        output, hn = self.rnn_layer(x, h)
-        return hn, self.model(output)
+        if self.lstm:
+            output, (hn, cn) = self.rnn_layer(x, (h, c))
+            return hn, cn, self.model(output)
+        else:
+            output, hn = self.rnn_layer(x, h)
+            return hn, self.model(output)
 
 
 class DuelQhead(nn.Module):
@@ -745,30 +751,55 @@ class DRQNPolicy(nn.Module):
         self.representation_info_shape = self.representation.output_shapes
         kwargs["input_dim"] = self.representation.output_shapes['state'][0]
         kwargs["action_dim"] = self.action_dim
+        self.lstm = True if kwargs["rnn"] == "LSTM" else False
         self.eval_Qhead = BasicRecurrent(**kwargs)
         self.target_Qhead = copy.deepcopy(self.eval_Qhead)
-        self.hidden_states = None
-        self.target_hidden_states = None
+        self.hidden_states = torch.zeros(size=(self.recurrent_layer_N, 1, self.rnn_hidden_dim)).to(self.device)
+        self.target_hidden_states = torch.zeros_like(self.hidden_states)
+        if self.lstm:
+            self.cell_states = torch.zeros_like(self.hidden_states).to(self.device)
+            self.target_cell_states = torch.zeros_like(self.target_hidden_states).to(self.device)
 
     def forward(self, observation: Union[np.ndarray, dict]):
         observation = torch.Tensor(observation)
         outputs = self.representation(observation)
-        self.hidden_states, evalQ = self.eval_Qhead(outputs['state'], self.hidden_states)
+        if self.lstm:
+            self.hidden_states, self.cell_states, evalQ = self.eval_Qhead(outputs['state'], self.hidden_states,
+                                                                          self.cell_states)
+        else:
+            self.hidden_states, evalQ = self.eval_Qhead(outputs['state'], self.hidden_states)
         argmax_action = evalQ[:, -1].argmax(dim=-1)
         return outputs, argmax_action, evalQ
 
     def target(self, observation: Union[np.ndarray, dict]):
         outputs = self.representation(observation)
-        self.target_hidden_states, targetQ = self.target_Qhead(outputs['state'], self.target_hidden_states)
+        if self.lstm:
+            self.target_hidden_states, self.target_cell_states, targetQ = self.target_Qhead(outputs['state'],
+                                                                                            self.target_hidden_states,
+                                                                                            self.target_cell_states)
+        else:
+            self.target_hidden_states, targetQ = self.target_Qhead(outputs['state'], self.target_hidden_states)
         argmax_action = targetQ.argmax(dim=-1)
         return outputs, argmax_action, targetQ.detach()
 
-    def init_hidden(self, batch: int):
-        self.hidden_states = torch.zeros(size=(self.recurrent_layer_N, batch, self.rnn_hidden_dim)).to(self.device)
+    def init_hidden(self, batch, i_batch=None):
+        if i_batch is None:
+            self.hidden_states = torch.zeros(size=(self.recurrent_layer_N, batch, self.rnn_hidden_dim)).to(self.device)
+            if self.lstm:
+                self.cell_states = torch.zeros_like(self.hidden_states).to(self.device)
+        else:
+            self.hidden_states[:, i_batch] = torch.zeros(size=(self.recurrent_layer_N, self.rnn_hidden_dim)).to(
+                self.device)
+            if self.lstm:
+                self.cell_states[:, i_batch] = torch.zeros(size=(self.recurrent_layer_N, self.rnn_hidden_dim)).to(
+                    self.device)
 
     def init_hidden_target(self, batch: int):
         self.target_hidden_states = torch.zeros(size=(self.recurrent_layer_N, batch, self.rnn_hidden_dim)).to(
             self.device)
+        if self.lstm:
+            self.target_cell_states = torch.zeros(size=(self.recurrent_layer_N, batch, self.rnn_hidden_dim)).to(
+                self.device)
 
     def copy_target(self):
         for ep, tp in zip(self.eval_Qhead.parameters(), self.target_Qhead.parameters()):
