@@ -57,7 +57,6 @@ class DRQN_Agent(Agent):
         self.ret_rms = RunningMeanStd(shape=(), comm=self.comm, use_mpi=False)
         super(DRQN_Agent, self).__init__(config, envs, policy, memory, learner, device, config.logdir, config.modeldir)
         self.current_episode = 0
-        self.lstm = True if config.rnn == "LSTM" else False
 
     def _process_observation(self, observations):
         if self.use_obsnorm:
@@ -78,17 +77,14 @@ class DRQN_Agent(Agent):
             return np.clip(rewards / std, -self.rewnorm_range, self.rewnorm_range)
         return rewards
 
-    def _action(self, obs, egreedy=0.0, rnn_hidden=None):
-        if self.lstm:
-            _, argmax_action, _, rnn_hidden_next = self.policy(obs[:, np.newaxis], rnn_hidden[0], rnn_hidden[1])
-        else:
-            _, argmax_action, _, rnn_hidden_next = self.policy(obs[:, np.newaxis], rnn_hidden)
+    def _action(self, obs, egreedy=0.0):
+        _, argmax_action, _ = self.policy(obs[:, np.newaxis])
         random_action = np.random.choice(self.action_space.n, self.nenvs)
         if np.random.rand() < egreedy:
             action = random_action
         else:
             action = argmax_action.detach().cpu().numpy()
-        return action, rnn_hidden_next
+        return action
 
     def run_episode(self):
         episode_info = {}
@@ -101,11 +97,11 @@ class DRQN_Agent(Agent):
         terminal_queue = np.zeros((self.nenvs, self.max_episode_length, ), np.bool)
         filled_queue = np.zeros((self.nenvs, self.max_episode_length, ), np.bool)
         step = 0
-        rnn_hidden = self.policy.init_hidden(self.nenvs)
+        self.policy.init_hidden(self.nenvs)
         while not all(dones):
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
-            acts, rnn_hidden = self._action(obs, self.egreedy, rnn_hidden)
+            acts = self._action(obs, self.egreedy)
             next_obs, rewards, terminals, trunctions, infos = self.envs.step(acts)
 
             for i in range(self.nenvs):
@@ -115,7 +111,7 @@ class DRQN_Agent(Agent):
                     if self.atari and (~trunctions[i]):
                         pass
                     else:
-                        rnn_hidden = self.policy.init_hidden_item(rnn_hidden, i)
+                        self.policy.init_hidden(self.nenvs, i)
                         dones[i] = True
                         if self.use_wandb:
                             episode_info["Episode-Steps/env-%d" % i] = infos[i]["episode_step"]
@@ -135,6 +131,9 @@ class DRQN_Agent(Agent):
     def train(self, train_episodes):
         train_info = {}
         for _ in tqdm(range(train_episodes)):
+
+
+
             obs_queue, act_queue, rew_queue, terminal_queue, filled_queue, episode_info = self.run_episode()
 
             self.memory.store(obs_queue, act_queue, rew_queue, terminal_queue, filled_queue)
@@ -163,11 +162,11 @@ class DRQN_Agent(Agent):
             for idx, img in enumerate(images):
                 videos[idx].append(img)
 
-        rnn_hidden = self.policy.init_hidden(num_envs)
+        self.policy.init_hidden(num_envs)
         while current_episode < test_episodes:
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
-            acts, rnn_hidden = self._action(obs, egreedy=0.0, rnn_hidden=rnn_hidden)
+            acts = self._action(obs, egreedy=0.0)
             next_obs, rewards, terminals, trunctions, infos = test_envs.step(acts)
             if self.config.render_mode == "rgb_array" and self.render:
                 images = test_envs.render(self.config.render_mode)
@@ -179,7 +178,7 @@ class DRQN_Agent(Agent):
                     if self.atari and (~trunctions[i]):
                         pass
                     else:
-                        rnn_hidden = self.policy.init_hidden_item(rnn_hidden, i)
+                        self.policy.init_hidden(num_envs, i)
                         scores.append(infos[i]["episode_score"])
                         current_episode += 1
                         if best_score < infos[i]["episode_score"]:
