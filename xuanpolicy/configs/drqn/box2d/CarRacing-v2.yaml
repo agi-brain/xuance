@@ -1,0 +1,44 @@
+agent: "DRQN"
+env_name: "Box2D"
+env_id: "CarRacing-v2"
+policy: "DRQN_Policy"
+representation: "Basic_CNN"
+rnn: "LSTM"
+
+# the following three arguments are for "Basic_CNN" representation.
+filters: [16, 16, 32]  #  [16, 16, 32, 32]
+kernels: [8, 4, 3]  # [8, 6, 4, 4]
+strides: [4, 2, 1]  # [2, 2, 2, 2]
+
+representation_hidden_size: [128,]
+recurrent_hidden_size: 128
+recurrent_layer_N: 2
+dropout: 0
+activation: 'ReLU'
+
+seed: 1
+parallels: 2
+max_episode_length: -1  # -1: set max_episode_length the same as the env's default value.
+nsize: 100
+batchsize: 8
+learning_rate: 0.0001
+gamma: 0.99
+
+start_greedy: 0.5
+end_greedy: 0.01
+decay_episodes_greedy: 50
+sync_frequency: 500
+training_frequency: 1
+training_steps: 600  # number of training episodes
+start_training: 2
+lookup_length: 30
+
+use_obsnorm: False
+use_rewnorm: False
+obsnorm_range: 5
+rewnorm_range: 5
+
+eval_interval: 50
+test_episode: 3
+logdir: "./logs/drqn/"
+modeldir: "./models/drqn/"

@@ -7,6 +7,7 @@ from typing import Optional, Union
 from xuanpolicy.common import space2shape
 from xuanpolicy.common.segtree_tool import SumSegmentTree, MinSegmentTree
 from collections import deque
+from typing import Dict
 
 
 def create_memory(shape: Optional[Union[tuple, dict]], nenvs: int, nsize: int, dtype=np.float32):
@@ -22,24 +23,6 @@ def create_memory(shape: Optional[Union[tuple, dict]], nenvs: int, nsize: int, d
         return memory
     elif isinstance(shape, tuple):
         return np.zeros([nenvs, nsize] + list(shape), dtype)
-    else:
-        raise NotImplementedError
-
-
-def create_memory_rnn(shape: Optional[Union[tuple, dict]], nenvs: int, nsize: int, episode_length: int,
-                      dtype=np.float32):
-    if shape is None:
-        return None
-    elif isinstance(shape, dict):
-        memory = {}
-        for key, value in zip(shape.keys(), shape.values()):
-            if value is None:  # save an object type
-                memory[key] = np.zeros([nenvs, nsize, episode_length], dtype=object)
-            else:
-                memory[key] = np.zeros([nenvs, nsize, episode_length] + list(value), dtype=dtype)
-        return memory
-    elif isinstance(shape, tuple):
-        return np.zeros([nenvs, nsize, episode_length] + list(shape), dtype)
     else:
         raise NotImplementedError
 
@@ -92,6 +75,39 @@ class Buffer(ABC):
 
     def finish_path(self, *args):
         pass
+
+
+class EpisodeBuffer:
+    def __init__(self):
+        self.obs = []
+        self.action = []
+        self.reward = []
+        self.done = []
+
+    def put(self, transition):
+        self.obs.append(transition[0])
+        self.action.append(transition[1])
+        self.reward.append(transition[2])
+        self.done.append(transition[3])
+
+    def sample(self, lookup_step=None, idx=None) -> Dict[str, np.ndarray]:
+        obs = np.array(self.obs)
+        action = np.array(self.action)
+        reward = np.array(self.reward)
+        done = np.array(self.done)
+
+        obs = obs[idx:idx+lookup_step+1]
+        action = action[idx:idx+lookup_step]
+        reward = reward[idx:idx+lookup_step]
+        done = done[idx:idx+lookup_step]
+
+        return dict(obs=obs,
+                    acts=action,
+                    rews=reward,
+                    done=done)
+
+    def __len__(self) -> int:
+        return len(self.action)
 
 
 class DummyOnPolicyBuffer(Buffer):
@@ -233,49 +249,53 @@ class RecurrentOffPolicyBuffer(Buffer):
                  nenvs: int,
                  nsize: int,
                  batchsize: int,
-                 episode_length: int):
+                 episode_length: int,
+                 lookup_length: int):
         super(RecurrentOffPolicyBuffer, self).__init__(observation_space,
                                                        action_space,
                                                        representation_shape,
                                                        auxiliary_shape)
         self.nenvs, self.nsize, self.episode_length, self.batchsize = nenvs, nsize, episode_length, batchsize
-
-        self.observations = create_memory_rnn(space2shape(self.observation_space), self.nenvs, self.nsize, self.episode_length+1)
-        self.actions = create_memory_rnn(space2shape(self.action_space), self.nenvs, self.nsize, self.episode_length)
-        self.rewards = create_memory_rnn((), self.nenvs, self.nsize, self.episode_length)
-        self.terminals = create_memory_rnn((), self.nenvs, self.nsize, self.episode_length)
-        self.fills = create_memory_rnn((), self.nenvs, self.nsize, self.episode_length)
+        self.lookup_length = lookup_length
+        self.memory = deque(maxlen=self.nsize)
 
     @property
     def full(self):
         return self.size >= self.nsize
 
-    def clear(self):
-        self.observations = create_memory_rnn(space2shape(self.observation_space), self.nenvs, self.nsize,
-                                              self.episode_length + 1)
-        self.actions = create_memory_rnn(space2shape(self.action_space), self.nenvs, self.nsize, self.episode_length)
-        self.rewards = create_memory_rnn((), self.nenvs, self.nsize, self.episode_length)
-        self.terminals = create_memory_rnn((), self.nenvs, self.nsize, self.episode_length)
-        self.fills = create_memory_rnn((), self.nenvs, self.nsize, self.episode_length)
+    def clear(self, *args):
+        self.memory = deque(maxlen=self.nsize)
 
-    def store(self, obs, acts, rews, terminals, fills=None):
-        store_element(obs, self.observations, self.ptr)
-        store_element(acts, self.actions, self.ptr)
-        store_element(rews, self.rewards, self.ptr)
-        store_element(terminals, self.terminals, self.ptr)
-        store_element(fills, self.fills, self.ptr)
+    def store(self, episode):
+        self.memory.append(episode)
         self.ptr = (self.ptr + 1) % self.nsize
         self.size = min(self.size + 1, self.nsize)
 
     def sample(self):
-        env_choices = np.random.choice(self.nenvs, self.batchsize)
-        episode_choices = np.random.choice(self.size, self.batchsize)
-        obs_batch = sample_batch(self.observations, tuple([env_choices, episode_choices]))
-        act_batch = sample_batch(self.actions, tuple([env_choices, episode_choices]))
-        rew_batch = sample_batch(self.rewards, tuple([env_choices, episode_choices]))
-        terminal_batch = sample_batch(self.terminals, tuple([env_choices, episode_choices]))
-        fill_batch = sample_batch(self.fills, tuple([env_choices, episode_choices]))
-        return obs_batch, act_batch, rew_batch, terminal_batch, fill_batch
+        obs_batch, act_batch, rew_batch, terminal_batch = [], [], [], []
+        episode_choices = np.random.choice(self.memory, self.batchsize)
+        length_min = self.episode_length
+        for episode in episode_choices:
+            length_min = min(length_min, len(episode))
+
+        if length_min > self.lookup_length:
+            for episode in episode_choices:
+                start_idx = np.random.randint(0, len(episode)-self.lookup_length+1)
+                sampled_data = episode.sample(lookup_step=self.lookup_length, idx=start_idx)
+                obs_batch.append(sampled_data["obs"])
+                act_batch.append(sampled_data["acts"])
+                rew_batch.append(sampled_data["rews"])
+                terminal_batch.append(sampled_data["done"])
+        else:
+            for episode in episode_choices:
+                start_idx = np.random.randint(0, len(episode) - length_min + 1)
+                sampled_data = episode.sample(lookup_step=length_min, idx=start_idx)
+                obs_batch.append(sampled_data["obs"])
+                act_batch.append(sampled_data["acts"])
+                rew_batch.append(sampled_data["rews"])
+                terminal_batch.append(sampled_data["done"])
+
+        return np.array(obs_batch), np.array(act_batch), np.array(rew_batch), np.array(terminal_batch)
 
 
 class PerOffPolicyBuffer(Buffer):

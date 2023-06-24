@@ -1,5 +1,5 @@
 agent: "DRQN"  # deep recurrent Q-networks
-env_name: "Box2D"
+env_name: "Classic Control"
 env_id: "LunarLander-v2"
 policy: "DRQN_Policy"
 representation: "Basic_MLP"
@@ -12,27 +12,27 @@ dropout: 0
 activation: 'ReLU'
 
 parallels: 10
-max_episode_length: -1  # -1: set max_episode_length the same as the env's default value.
-nsize: 100  # memory size for each parallel
-batchsize: 4  # batch size for training
+nsize: 10000  # memory size for each parallel
+batchsize: 32  # batch size for training
 learning_rate: 0.001
 gamma: 0.99
 
 start_greedy: 0.5
 end_greedy: 0.01
-decay_episodes_greedy: 800
+decay_step_greedy: 10000
 sync_frequency: 50
 training_frequency: 1
-n_trains_per_episode: 1
-training_steps: 1000  # number of training episodes
-start_training: 100
+training_steps: 30000
+start_training: 1000
+lookup_length: 50
 
 use_obsnorm: False
 use_rewnorm: False
 obsnorm_range: 5
 rewnorm_range: 5
 
-eval_interval: 100
+test_steps: 10000
+eval_interval: 5000
 test_episode: 3
 logdir: "./logs/drqn/"
 modeldir: "./models/drqn/"

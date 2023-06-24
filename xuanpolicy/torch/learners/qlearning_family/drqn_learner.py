@@ -16,27 +16,26 @@ class DRQN_Learner(Learner):
         self.sync_frequency = sync_frequency
         super(DRQN_Learner, self).__init__(policy, optimizer, scheduler, device, modeldir)
 
-    def update(self, obs_batch, act_batch, rew_batch, terminal_batch, fill_batch):
+    def update(self, obs_batch, act_batch, rew_batch, terminal_batch):
         self.iterations += 1
         act_batch = torch.as_tensor(act_batch, device=self.device)
         rew_batch = torch.as_tensor(rew_batch, device=self.device)
-        ter_batch = torch.as_tensor(terminal_batch, device=self.device)
-        fill_batch = torch.as_tensor(fill_batch, device=self.device)
+        ter_batch = torch.as_tensor(terminal_batch, device=self.device, dtype=torch.float)
         batch_size = obs_batch.shape[0]
 
         rnn_hidden = self.policy.init_hidden(batch_size)
         _, _, evalQ, _ = self.policy(obs_batch[:, 0:-1], *rnn_hidden)
         target_rnn_hidden = self.policy.init_hidden(batch_size)
-        _, _, targetQ, _ = self.policy.target(obs_batch[:, 1:], *target_rnn_hidden)
-        targetQ = targetQ.max(dim=-1).values
+        _, targetA, targetQ, _ = self.policy.target(obs_batch[:, 1:], *target_rnn_hidden)
+        # targetQ = targetQ.max(dim=-1).values
+
+        targetA = F.one_hot(targetA, targetQ.shape[-1])
+        targetQ = (targetQ * targetA).sum(dim=-1)
 
         targetQ = rew_batch + self.gamma * (1 - ter_batch) * targetQ
         predictQ = (evalQ * F.one_hot(act_batch.long(), evalQ.shape[-1])).sum(dim=-1)
 
-        predictQ *= fill_batch
-        targetQ *= fill_batch
-
-        loss = ((predictQ - targetQ) ** 2).sum() / fill_batch.sum()
+        loss = F.mse_loss(predictQ, targetQ)
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()

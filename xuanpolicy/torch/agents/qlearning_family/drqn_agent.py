@@ -33,10 +33,6 @@ class DRQN_Agent(Agent):
         self.representation_info_shape = policy.representation.output_shapes
         self.auxiliary_info_shape = {}
 
-        if config.max_episode_length == -1:
-            self.max_episode_length = envs.max_episode_length
-        else:
-            self.max_episode_length = config.max_episode_length
         memory = RecurrentOffPolicyBuffer(self.observation_space,
                                           self.action_space,
                                           self.representation_info_shape,
@@ -44,7 +40,8 @@ class DRQN_Agent(Agent):
                                           self.nenvs,
                                           config.nsize,
                                           config.batchsize,
-                                          episode_length=self.max_episode_length)
+                                          episode_length=envs.max_episode_length,
+                                          lookup_length=config.lookup_length)
         learner = DRQN_Learner(policy,
                                optimizer,
                                scheduler,
@@ -56,7 +53,6 @@ class DRQN_Agent(Agent):
         self.obs_rms = RunningMeanStd(shape=space2shape(self.observation_space), comm=self.comm, use_mpi=False)
         self.ret_rms = RunningMeanStd(shape=(), comm=self.comm, use_mpi=False)
         super(DRQN_Agent, self).__init__(config, envs, policy, memory, learner, device, config.logdir, config.modeldir)
-        self.current_episode = 0
         self.lstm = True if config.rnn == "LSTM" else False
 
     def _process_observation(self, observations):
@@ -87,67 +83,50 @@ class DRQN_Agent(Agent):
             action = argmax_action.detach().cpu().numpy()
         return action, rnn_hidden_next
 
-    def run_episode(self):
-        episode_info = {}
-        obs, infos = self.envs.reset()
+    def train(self, train_steps):
+        obs = self.envs.buf_obs
+        episode_data = [EpisodeBuffer() for _ in range(self.nenvs)]
+        for i_env in range(self.nenvs):
+            episode_data[i_env].obs.append(self._process_observation(obs[i_env]))
+        self.rnn_hidden = self.policy.init_hidden(self.nenvs)
         dones = [False for _ in range(self.nenvs)]
-        obs_queue = np.zeros((self.nenvs, self.max_episode_length + 1) + self.observation_space.shape)
-        obs_queue[:, 0] = self._process_observation(obs)
-        act_queue = np.zeros((self.nenvs, self.max_episode_length) + space2shape(self.action_space))
-        rew_queue = np.zeros((self.nenvs, self.max_episode_length, ))
-        terminal_queue = np.zeros((self.nenvs, self.max_episode_length, ), np.bool)
-        filled_queue = np.zeros((self.nenvs, self.max_episode_length, ), np.bool)
-        step = 0
-        rnn_hidden = self.policy.init_hidden(self.nenvs)
-        while not all(dones):
+        for _ in tqdm(range(train_steps)):
+            step_info = {}
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
-            acts, rnn_hidden = self._action(obs, self.egreedy, rnn_hidden)
+            acts, self.rnn_hidden = self._action(obs, self.egreedy, self.rnn_hidden)
             next_obs, rewards, terminals, trunctions, infos = self.envs.step(acts)
 
+            if (self.current_step > self.start_training) and (self.current_step % self.train_frequency == 0):
+                # training
+                obs_batch, act_batch, rew_batch, terminal_batch = self.memory.sample()
+                step_info = self.learner.update(obs_batch, act_batch, rew_batch, terminal_batch)
+                step_info["epsilon-greedy"] = self.egreedy
+
+            obs = next_obs
             for i in range(self.nenvs):
-                if not dones[i]:
-                    filled_queue[i, step] = 1
-                if terminals[i] or trunctions[i] or step >= (self.max_episode_length-1):
+                episode_data[i].put([self._process_observation(obs[i]), acts[i], self._process_reward(rewards[i]), terminals[i]])
+                if terminals[i] or trunctions[i]:
                     if self.atari and (~trunctions[i]):
                         pass
                     else:
-                        rnn_hidden = self.policy.init_hidden_item(rnn_hidden, i)
+                        self.rnn_hidden = self.policy.init_hidden_item(self.rnn_hidden, i)
                         dones[i] = True
+                        self.current_episode[i] += 1
                         if self.use_wandb:
-                            episode_info["Episode-Steps/env-%d" % i] = infos[i]["episode_step"]
-                            episode_info["Train-Episode-Rewards/env-%d" % i] = infos[i]["episode_score"]
+                            step_info["Episode-Steps/env-%d" % i] = infos[i]["episode_step"]
+                            step_info["Train-Episode-Rewards/env-%d" % i] = infos[i]["episode_score"]
                         else:
-                            episode_info["Episode-Steps"] = {"env-%d" % i: infos[i]["episode_step"]}
-                            episode_info["Train-Episode-Rewards"] = {"env-%d" % i: infos[i]["episode_score"]}
+                            step_info["Episode-Steps"] = {"env-%d" % i: infos[i]["episode_step"]}
+                            step_info["Train-Episode-Rewards"] = {"env-%d" % i: infos[i]["episode_score"]}
+                        self.log_infos(step_info, self.current_step)
+                        self.memory.store(episode_data[i])
+                        episode_data[i] = EpisodeBuffer()
+                        episode_data[i].obs.append(self._process_observation(obs[i]))
 
-            obs = next_obs
-            obs_queue[:, step + 1], act_queue[:, step] = self._process_observation(obs), acts
-            rew_queue[:, step], terminal_queue[:, step] = self._process_reward(rewards), terminals
             self.current_step += 1
-            step += 1
-
-        return obs_queue, act_queue, rew_queue, terminal_queue, filled_queue, episode_info
-
-    def train(self, train_episodes):
-        train_info = {}
-        for _ in tqdm(range(train_episodes)):
-            obs_queue, act_queue, rew_queue, terminal_queue, filled_queue, episode_info = self.run_episode()
-
-            self.memory.store(obs_queue, act_queue, rew_queue, terminal_queue, filled_queue)
-            if self.current_step > self.start_training and self.current_step % self.train_frequency == 0:
-                # training
-                for _ in range(self.config.n_trains_per_episode):
-                    obs_batch, act_batch, rew_batch, terminal_batch, fill_batch = self.memory.sample()
-                    train_info = self.learner.update(obs_batch, act_batch, rew_batch, terminal_batch, fill_batch)
-
-            self.current_episode += 1
             if self.egreedy > self.end_greedy:
-                self.egreedy = self.egreedy - (self.start_greedy - self.end_greedy) / self.config.decay_episodes_greedy
-            episode_info["epsilon-greedy"] = self.egreedy
-
-            self.log_infos(episode_info, self.current_episode)
-            self.log_infos(train_info, self.current_episode)
+                self.egreedy = self.egreedy - (self.start_greedy - self.end_greedy) / self.config.decay_step_greedy
 
     def test(self, env_fn, test_episodes):
         test_envs = env_fn()
@@ -189,13 +168,13 @@ class DRQN_Agent(Agent):
         if self.config.render_mode == "rgb_array" and self.render:
             # time, height, width, channel -> time, channel, height, width
             videos_info = {"Videos_Test": np.array([episode_videos], dtype=np.uint8).transpose((0, 1, 4, 2, 3))}
-            self.log_videos(info=videos_info, fps=50, x_index=self.current_episode)
+            self.log_videos(info=videos_info, fps=50, x_index=self.current_step)
 
         if self.config.test_mode:
             print("Best Score: %.2f" % (best_score))
 
         test_info = {"Test-Episode-Rewards/Mean-Score": np.mean(scores)}
-        self.log_infos(test_info, self.current_episode)
+        self.log_infos(test_info, self.current_step)
 
         test_envs.close()
 

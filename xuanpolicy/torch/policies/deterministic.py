@@ -752,12 +752,17 @@ class DRQNPolicy(nn.Module):
         kwargs["input_dim"] = self.representation.output_shapes['state'][0]
         kwargs["action_dim"] = self.action_dim
         self.lstm = True if kwargs["rnn"] == "LSTM" else False
+        self.cnn = True if self.representation._get_name() == "Basic_CNN" else False
         self.eval_Qhead = BasicRecurrent(**kwargs)
         self.target_Qhead = copy.deepcopy(self.eval_Qhead)
 
     def forward(self, observation: Union[np.ndarray, dict], *rnn_hidden: torch.Tensor):
-        observation = torch.Tensor(observation)
-        outputs = self.representation(observation)
+        if self.cnn:
+            obs_shape = observation.shape
+            outputs = self.representation(observation.reshape((-1,)+obs_shape[-3:]))
+            outputs['state'] = outputs['state'].reshape(obs_shape[0:-3]+(-1,))
+        else:
+            outputs = self.representation(observation)
         if self.lstm:
             hidden_states, cell_states, evalQ = self.eval_Qhead(outputs['state'], rnn_hidden[0], rnn_hidden[1])
         else:
@@ -767,7 +772,12 @@ class DRQNPolicy(nn.Module):
         return outputs, argmax_action, evalQ, (hidden_states, cell_states)
 
     def target(self, observation: Union[np.ndarray, dict], *rnn_hidden: torch.Tensor):
-        outputs = self.representation(observation)
+        if self.cnn:
+            obs_shape = observation.shape
+            outputs = self.representation(observation.reshape((-1,)+obs_shape[-3:]))
+            outputs['state'] = outputs['state'].reshape(obs_shape[0:-3]+(-1,))
+        else:
+            outputs = self.representation(observation)
         if self.lstm:
             hidden_states, cell_states, targetQ = self.target_Qhead(outputs['state'], rnn_hidden[0], rnn_hidden[1])
         else:
