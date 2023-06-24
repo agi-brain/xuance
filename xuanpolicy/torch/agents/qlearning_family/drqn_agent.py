@@ -122,6 +122,7 @@ class DRQN_Agent(Agent):
                         self.log_infos(step_info, self.current_step)
                         self.memory.store(episode_data[i])
                         episode_data[i] = EpisodeBuffer()
+                        obs[i] = infos[i]["reset_obs"]
                         episode_data[i].obs.append(self._process_observation(obs[i]))
 
             self.current_step += 1
@@ -150,11 +151,13 @@ class DRQN_Agent(Agent):
                 for idx, img in enumerate(images):
                     videos[idx].append(img)
 
+            obs = next_obs
             for i in range(num_envs):
                 if terminals[i] or trunctions[i]:
                     if self.atari and (~trunctions[i]):
                         pass
                     else:
+                        obs[i] = infos[i]["reset_obs"]
                         rnn_hidden = self.policy.init_hidden_item(rnn_hidden, i)
                         scores.append(infos[i]["episode_score"])
                         current_episode += 1
@@ -163,7 +166,6 @@ class DRQN_Agent(Agent):
                             episode_videos = videos[i].copy()
                         if self.config.test_mode:
                             print("Episode: %d, Score: %.2f" % (current_episode, infos[i]["episode_score"]))
-            obs = next_obs
 
         if self.config.render_mode == "rgb_array" and self.render:
             # time, height, width, channel -> time, channel, height, width

@@ -18,19 +18,18 @@ activation: 'ReLU'
 
 seed: 1
 parallels: 2
-max_episode_length: -1  # -1: set max_episode_length the same as the env's default value.
-nsize: 100
+nsize: 10000
 batchsize: 8
 learning_rate: 0.0001
 gamma: 0.99
 
 start_greedy: 0.5
 end_greedy: 0.01
-decay_episodes_greedy: 50
+decay_step_greedy: 50000
 sync_frequency: 500
 training_frequency: 1
-training_steps: 600  # number of training episodes
-start_training: 2
+training_steps: 200000
+start_training: 1000
 lookup_length: 30
 
 use_obsnorm: False
@@ -38,7 +37,8 @@ use_rewnorm: False
 obsnorm_range: 5
 rewnorm_range: 5
 
-eval_interval: 50
-test_episode: 3
+test_steps: 10000
+eval_interval: 10000
+test_episode: 1
 logdir: "./logs/drqn/"
 modeldir: "./models/drqn/"

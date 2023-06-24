@@ -101,11 +101,13 @@ class DQN_Agent(Agent):
                 step_info = self.learner.update(obs_batch, act_batch, rew_batch, next_batch, terminal_batch)
                 step_info["epsilon-greedy"] = self.egreedy
 
+            obs = next_obs
             for i in range(self.nenvs):
                 if terminals[i] or trunctions[i]:
                     if self.atari and (~trunctions[i]):
                         pass
                     else:
+                        obs[i] = infos[i]["reset_obs"]
                         self.current_episode[i] += 1
                         step_info["Episode-Steps"] = infos[i]["episode_step"]
                         if self.use_wandb:
@@ -114,7 +116,6 @@ class DQN_Agent(Agent):
                             step_info["Train-Episode-Rewards"] = {"env-%d" % i: infos[i]["episode_score"]}
                         self.log_infos(step_info, self.current_step)
 
-            obs = next_obs
             self.current_step += 1
             if self.egreedy > self.end_greedy:
                 self.egreedy = self.egreedy - (self.start_greedy - self.end_greedy) / self.config.decay_step_greedy
@@ -140,11 +141,13 @@ class DQN_Agent(Agent):
                 for idx, img in enumerate(images):
                     videos[idx].append(img)
 
+            obs = next_obs
             for i in range(num_envs):
                 if terminals[i] or trunctions[i]:
                     if self.atari and (~trunctions[i]):
                         pass
                     else:
+                        obs[i] = infos[i]["reset_obs"]
                         scores.append(infos[i]["episode_score"])
                         current_episode += 1
                         if best_score < infos[i]["episode_score"]:
@@ -152,7 +155,6 @@ class DQN_Agent(Agent):
                             episode_videos = videos[i].copy()
                         if self.config.test_mode:
                             print("Episode: %d, Score: %.2f" % (current_episode, infos[i]["episode_score"]))
-            obs = next_obs
 
         if self.config.render_mode == "rgb_array" and self.render:
             # time, height, width, channel -> time, channel, height, width

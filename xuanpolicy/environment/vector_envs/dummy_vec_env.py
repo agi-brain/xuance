@@ -1,3 +1,5 @@
+import copy
+
 from .vector_env import VecEnv, AlreadySteppingError, NotSteppingError
 from .env_utils import obs_n_space_info
 from xuanpolicy.common import space2shape, combined_shape
@@ -64,7 +66,8 @@ class DummyVecEnv(VecEnv):
             action = self.actions[e]
             obs, self.buf_rews[e], self.buf_dones[e], self.buf_trunctions[e], self.buf_infos[e] = self.envs[e].step(action)
             if self.buf_dones[e] or self.buf_trunctions[e]:
-                obs, _ = self.envs[e].reset()
+                obs_reset, _ = self.envs[e].reset()
+                self.buf_infos[e]["reset_obs"] = obs_reset
             self._save_obs(e, obs)
         self.waiting = False
         return self.buf_obs.copy(), self.buf_rews.copy(), self.buf_dones.copy(), self.buf_trunctions.copy(), self.buf_infos.copy()
