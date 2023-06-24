@@ -10,17 +10,16 @@ filters: [16, 16, 32]  #  [16, 16, 32, 32]
 kernels: [8, 4, 3]  # [8, 6, 4, 4]
 strides: [4, 2, 1]  # [2, 2, 2, 2]
 
-representation_hidden_size: [128,]
-recurrent_hidden_size: 128
-recurrent_layer_N: 2
+recurrent_hidden_size: 512
+recurrent_layer_N: 1
 dropout: 0
 activation: 'ReLU'
 
 seed: 1
 parallels: 2
-nsize: 10000
-batchsize: 8
-learning_rate: 0.0001
+nsize: 1000
+batchsize: 8  # batch size for training
+learning_rate: 0.001
 gamma: 0.99
 
 start_greedy: 0.5
@@ -30,7 +29,7 @@ sync_frequency: 500
 training_frequency: 1
 training_steps: 200000
 start_training: 1000
-lookup_length: 30
+lookup_length: 50
 
 use_obsnorm: False
 use_rewnorm: False
