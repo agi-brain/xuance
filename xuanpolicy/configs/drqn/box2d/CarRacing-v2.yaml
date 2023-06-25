@@ -17,7 +17,7 @@ activation: 'ReLU'
 
 seed: 1
 parallels: 2
-nsize: 1000
+nsize: 100
 batchsize: 8  # batch size for training
 learning_rate: 0.001
 gamma: 0.99

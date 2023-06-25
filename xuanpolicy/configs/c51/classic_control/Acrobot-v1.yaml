@@ -16,18 +16,21 @@ vmin: 0
 vmax: 200
 atom_num: 51
 
-start_greedy: 0.25
+start_greedy: 0.5
 end_greedy: 0.01
+decay_step_greedy: 20000
 sync_frequency: 100
 training_frequency: 1
-training_steps: 30000
-start_training: 1000
+training_steps: 50000
+start_training: 5000
 
 use_obsnorm: False
 use_rewnorm: False
 obsnorm_range: 5
 rewnorm_range: 5
 
-save_model_frequency: 10000
+test_steps: 10000
+eval_interval: 5000
+test_episode: 1
 logdir: "./logs/c51/"
 modeldir: "./models/c51/"
