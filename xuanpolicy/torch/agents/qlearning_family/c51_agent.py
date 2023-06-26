@@ -48,6 +48,14 @@ class C51_Agent(Agent):
         self.obs_rms = RunningMeanStd(shape=space2shape(self.observation_space), comm=self.comm, use_mpi=False)
         self.ret_rms = RunningMeanStd(shape=(), comm=self.comm, use_mpi=False)
         super(C51_Agent, self).__init__(config, envs, policy, memory, learner, device, config.logdir, config.modeldir)
+        if self.atari:
+            self.memory = DummyOffPolicyBuffer_Atari(self.observation_space,
+                                                     self.action_space,
+                                                     self.representation_info_shape,
+                                                     self.auxiliary_info_shape,
+                                                     self.nenvs,
+                                                     config.nsize,
+                                                     config.batchsize)
 
     def _process_observation(self, observations):
         if self.use_obsnorm:
@@ -69,7 +77,7 @@ class C51_Agent(Agent):
         return rewards
 
     def _action(self, obs, egreedy=0.0):
-        _, argmax_action, _, _ = self.policy(obs)
+        _, argmax_action, _ = self.policy(obs)
         random_action = np.random.choice(self.action_space.n, self.nenvs)
         if np.random.rand() < egreedy:
             action = random_action
@@ -101,10 +109,11 @@ class C51_Agent(Agent):
                     else:
                         obs[i] = infos[i]["reset_obs"]
                         self.current_episode[i] += 1
-                        step_info["Episode-Steps"] = infos[i]["episode_step"]
                         if self.use_wandb:
+                            step_info["Episode-Steps/env-%d" % i] = infos[i]["episode_step"]
                             step_info["Train-Episode-Rewards/env-%d" % i] = infos[i]["episode_score"]
                         else:
+                            step_info["Episode-Steps"] = {"env-%d" % i: infos[i]["episode_step"]}
                             step_info["Train-Episode-Rewards"] = {"env-%d" % i: infos[i]["episode_score"]}
                         self.log_infos(step_info, self.current_step)
 
@@ -162,6 +171,3 @@ class C51_Agent(Agent):
         test_envs.close()
 
         return scores
-
-    def evaluate(self):
-        pass

@@ -1,21 +1,22 @@
-agent: "QRDQN"
-env_name: "toy_env"
-env_id: "CartPole-v0"
-policy: "QR_Q_network"
+agent: "DDQN"
+env_name: "Box2D"
+env_id: "LunarLander-v2"
+policy: "Basic_Q_network"
 representation: "Basic_MLP"
 
 representation_hidden_size: [128,]
 q_hidden_size: [128,]
+activation: 'ReLU'
 
-nsize: 20000
+nsize: 10000
 batchsize: 256
 learning_rate: 0.001
 gamma: 0.99
-quantile_num: 20
 
-start_greedy: 0.25
+start_greedy: 0.5
 end_greedy: 0.01
-sync_frequency: 100
+decay_step_greedy: 10000
+sync_frequency: 50
 training_frequency: 1
 training_steps: 30000
 start_training: 1000
@@ -25,5 +26,8 @@ use_rewnorm: False
 obsnorm_range: 5
 rewnorm_range: 5
 
-logdir: "./logs/qrdqn/"
-modeldir: "./models/qrdqn/"
+test_steps: 10000
+eval_interval: 5000
+test_episode: 1
+logdir: "./logs/ddqn/"
+modeldir: "./models/ddqn/"

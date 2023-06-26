@@ -201,6 +201,7 @@ class DuelQnetwork(nn.Module):
         super(DuelQnetwork, self).__init__()
         self.action_dim = action_space.n
         self.representation = representation
+        self.target_representation = copy.deepcopy(representation)
         self.representation_info_shape = self.representation.output_shapes
         self.eval_Qhead = DuelQhead(self.representation.output_shapes['state'][0], self.action_dim, hidden_size,
                                     normalize, initialize, activation, device)
@@ -209,11 +210,18 @@ class DuelQnetwork(nn.Module):
     def forward(self, observation: Union[np.ndarray, dict]):
         outputs = self.representation(observation)
         evalQ = self.eval_Qhead(outputs['state'])
-        targetQ = self.target_Qhead(outputs['state'])
         argmax_action = evalQ.argmax(dim=-1)
-        return outputs, argmax_action, evalQ, targetQ
+        return outputs, argmax_action, evalQ
+
+    def target(self, observation: Union[np.ndarray, dict]):
+        outputs = self.target_representation(observation)
+        targetQ = self.target_Qhead(outputs['state'])
+        argmax_action = targetQ.argmax(dim=-1)
+        return outputs, argmax_action, targetQ
 
     def copy_target(self):
+        for ep, tp in zip(self.representation.parameters(), self.target_representation.parameters()):
+            tp.data.copy_(ep)
         for ep, tp in zip(self.eval_Qhead.parameters(), self.target_Qhead.parameters()):
             tp.data.copy_(ep)
 
@@ -230,10 +238,12 @@ class NoisyQnetwork(nn.Module):
         super(NoisyQnetwork, self).__init__()
         self.action_dim = action_space.n
         self.representation = representation
+        self.target_representation = copy.deepcopy(representation)
         self.representation_info_shape = self.representation.output_shapes
         self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, hidden_size,
                                      normalize, initialize, activation, device)
         self.target_Qhead = copy.deepcopy(self.eval_Qhead)
+        self.noise_scale = 0.0
 
     def update_noise(self, noisy_bound: float = 0.0):
         self.eval_noise_parameter = []
@@ -244,16 +254,25 @@ class NoisyQnetwork(nn.Module):
 
     def forward(self, observation: Union[np.ndarray, dict]):
         outputs = self.representation(observation)
+        self.update_noise(self.noise_scale)
         for parameter, noise_param in zip(self.eval_Qhead.parameters(), self.eval_noise_parameter):
             parameter.data.copy_(parameter.data + noise_param)
+        evalQ = self.eval_Qhead(outputs['state'])
+        argmax_action = evalQ.argmax(dim=-1)
+        return outputs, argmax_action, evalQ
+
+    def target(self, observation: Union[np.ndarray, dict]):
+        outputs = self.target_representation(observation)
+        self.update_noise(self.noise_scale)
         for parameter, noise_param in zip(self.target_Qhead.parameters(), self.target_noise_parameter):
             parameter.data.copy_(parameter.data + noise_param)
-        evalQ = self.eval_Qhead(outputs['state'])
         targetQ = self.target_Qhead(outputs['state'])
-        argmax_action = evalQ.argmax(dim=-1)
-        return outputs, argmax_action, evalQ, targetQ.detach()
+        argmax_action = targetQ.argmax(dim=-1)
+        return outputs, argmax_action, targetQ.detach()
 
     def copy_target(self):
+        for ep, tp in zip(self.representation.parameters(), self.target_representation.parameters()):
+            tp.data.copy_(ep)
         for ep, tp in zip(self.eval_Qhead.parameters(), self.target_Qhead.parameters()):
             tp.data.copy_(ep)
 
@@ -277,6 +296,7 @@ class C51Qnetwork(nn.Module):
         self.vmin = vmin
         self.vmax = vmax
         self.representation = representation
+        self.target_representation = copy.deepcopy(representation)
         self.representation_info_shape = self.representation.output_shapes
         self.eval_Zhead = C51Qhead(self.representation.output_shapes['state'][0], self.action_dim, self.atom_num,
                                    hidden_size,
@@ -291,10 +311,18 @@ class C51Qnetwork(nn.Module):
         eval_Z = self.eval_Zhead(outputs['state'])
         eval_Q = (self.supports * eval_Z).sum(-1)
         argmax_action = eval_Q.argmax(dim=-1)
+        return outputs, argmax_action, eval_Z
+
+    def target(self, observation: Union[np.ndarray, dict]):
+        outputs = self.target_representation(observation)
         target_Z = self.target_Zhead(outputs['state'])
-        return outputs, argmax_action, eval_Z, target_Z
+        target_Q = (self.supports * target_Z).sum(-1)
+        argmax_action = target_Q.argmax(dim=-1)
+        return outputs, argmax_action, target_Z
 
     def copy_target(self):
+        for ep, tp in zip(self.representation.parameters(), self.target_representation.parameters()):
+            tp.data.copy_(ep)
         for ep, tp in zip(self.eval_Zhead.parameters(), self.target_Zhead.parameters()):
             tp.data.copy_(ep)
 
@@ -314,6 +342,7 @@ class QRDQN_Network(nn.Module):
         self.action_dim = action_space.n
         self.quantile_num = quantile_num
         self.representation = representation
+        self.target_representation = copy.deepcopy(representation)
         self.representation_info_shape = self.representation.output_shapes
         self.eval_Zhead = QRDQNhead(self.representation.output_shapes['state'][0], self.action_dim, self.quantile_num,
                                     hidden_size,
@@ -325,10 +354,18 @@ class QRDQN_Network(nn.Module):
         eval_Z = self.eval_Zhead(outputs['state'])
         eval_Q = eval_Z.mean(dim=-1)
         argmax_action = eval_Q.argmax(dim=-1)
+        return outputs, argmax_action, eval_Z
+
+    def target(self, observation: Union[np.ndarray, dict]):
+        outputs = self.target_representation(observation)
         target_Z = self.target_Zhead(outputs['state'])
-        return outputs, argmax_action, eval_Z, target_Z
+        target_Q = target_Z.mean(dim=-1)
+        argmax_action = target_Q.argmax(dim=-1)
+        return outputs, argmax_action, target_Z
 
     def copy_target(self):
+        for ep, tp in zip(self.representation.parameters(), self.target_representation.parameters()):
+            tp.data.copy_(ep)
         for ep, tp in zip(self.eval_Zhead.parameters(), self.target_Zhead.parameters()):
             tp.data.copy_(ep)
 
@@ -389,7 +426,7 @@ class DDPGPolicy(nn.Module):
         self.action_dim = action_space.shape[0]
         self.representation = representation
         self.representation_info_shape = self.representation.output_shapes
-
+        self.target_representation = copy.deepcopy(representation)
         self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size, initialize,
                               activation, device)
         self.critic = CriticNet(representation.output_shapes['state'][0], self.action_dim, critic_hidden_size,
@@ -420,6 +457,9 @@ class DDPGPolicy(nn.Module):
         return super().forward()
 
     def soft_update(self, tau=0.005):
+        for ep, tp in zip(self.representation.parameters(), self.target_representation.parameters()):
+            tp.data.mul_(1 - tau)
+            tp.data.add_(tau * ep.data)
         for ep, tp in zip(self.actor.parameters(), self.target_actor.parameters()):
             tp.data.mul_(1 - tau)
             tp.data.add_(tau * ep.data)
@@ -442,6 +482,7 @@ class TD3Policy(nn.Module):
         super(TD3Policy, self).__init__()
         self.action_dim = action_space.shape[0]
         self.representation = representation
+        self.target_representation = copy.deepcopy(representation)
         self.representation_info_shape = self.representation.output_shapes
         self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size,
                               initialize, activation, device)
@@ -483,6 +524,9 @@ class TD3Policy(nn.Module):
         return outputs, (qa + qb) / 2.0
 
     def soft_update(self, tau=0.005):
+        for ep, tp in zip(self.representation.parameters(), self.target_representation.parameters()):
+            tp.data.mul_(1 - tau)
+            tp.data.add_(tau * ep.data)
         for ep, tp in zip(self.actor.parameters(), self.target_actor.parameters()):
             tp.data.mul_(1 - tau)
             tp.data.add_(tau * ep.data)
@@ -507,6 +551,7 @@ class PDQNPolicy(nn.Module):
                  device: Optional[Union[str, int, torch.device]] = None):
         super(PDQNPolicy, self).__init__()
         self.representation = representation
+        self.target_representation = copy.deepcopy(representation)
         self.observation_space = observation_space
         self.action_space = action_space
         self.num_disact = self.action_space.spaces[0].n
@@ -546,6 +591,9 @@ class PDQNPolicy(nn.Module):
         return policy_q
 
     def soft_update(self, tau=0.005):
+        for ep, tp in zip(self.representation.parameters(), self.target_representation.parameters()):
+            tp.data.mul_(1 - tau)
+            tp.data.add_(tau * ep.data)
         for ep, tp in zip(self.conactor.parameters(), self.target_conactor.parameters()):
             tp.data.mul_(1 - tau)
             tp.data.add_(tau * ep.data)
@@ -567,6 +615,7 @@ class MPDQNPolicy(nn.Module):
                  device: Optional[Union[str, int, torch.device]] = None):
         super(MPDQNPolicy, self).__init__()
         self.representation = representation
+        self.target_representation = copy.deepcopy(representation)
         self.observation_space = observation_space
         self.obs_size = self.observation_space.shape[0]
         self.action_space = action_space
@@ -649,6 +698,9 @@ class MPDQNPolicy(nn.Module):
         return Q
 
     def soft_update(self, tau=0.005):
+        for ep, tp in zip(self.representation.parameters(), self.target_representation.parameters()):
+            tp.data.mul_(1 - tau)
+            tp.data.add_(tau * ep.data)
         for ep, tp in zip(self.conactor.parameters(), self.target_conactor.parameters()):
             tp.data.mul_(1 - tau)
             tp.data.add_(tau * ep.data)
@@ -670,6 +722,7 @@ class SPDQNPolicy(nn.Module):
                  device: Optional[Union[str, int, torch.device]] = None):
         super(SPDQNPolicy, self).__init__()
         self.representation = representation
+        self.target_representation = copy.deepcopy(representation)
         self.observation_space = observation_space
         self.action_space = action_space
         self.num_disact = self.action_space.spaces[0].n
@@ -728,6 +781,9 @@ class SPDQNPolicy(nn.Module):
         return Q
 
     def soft_update(self, tau=0.005):
+        for ep, tp in zip(self.representation.parameters(), self.target_representation.parameters()):
+            tp.data.mul_(1 - tau)
+            tp.data.add_(tau * ep.data)
         for ep, tp in zip(self.conactor.parameters(), self.target_conactor.parameters()):
             tp.data.mul_(1 - tau)
             tp.data.add_(tau * ep.data)
@@ -759,8 +815,8 @@ class DRQNPolicy(nn.Module):
     def forward(self, observation: Union[np.ndarray, dict], *rnn_hidden: torch.Tensor):
         if self.cnn:
             obs_shape = observation.shape
-            outputs = self.representation(observation.reshape((-1,)+obs_shape[-3:]))
-            outputs['state'] = outputs['state'].reshape(obs_shape[0:-3]+(-1,))
+            outputs = self.representation(observation.reshape((-1,) + obs_shape[-3:]))
+            outputs['state'] = outputs['state'].reshape(obs_shape[0:-3] + (-1,))
         else:
             outputs = self.representation(observation)
         if self.lstm:
@@ -774,8 +830,8 @@ class DRQNPolicy(nn.Module):
     def target(self, observation: Union[np.ndarray, dict], *rnn_hidden: torch.Tensor):
         if self.cnn:
             obs_shape = observation.shape
-            outputs = self.representation(observation.reshape((-1,)+obs_shape[-3:]))
-            outputs['state'] = outputs['state'].reshape(obs_shape[0:-3]+(-1,))
+            outputs = self.representation(observation.reshape((-1,) + obs_shape[-3:]))
+            outputs['state'] = outputs['state'].reshape(obs_shape[0:-3] + (-1,))
         else:
             outputs = self.representation(observation)
         if self.lstm:

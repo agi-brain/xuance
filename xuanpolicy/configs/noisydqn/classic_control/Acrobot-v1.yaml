@@ -1,11 +1,12 @@
 agent: "NoisyDQN"
-env_name: "toy_env"
+env_name: "Classic Control"
 env_id: "Acrobot-v1"
 policy: "Noisy_Q_network"
 representation: "Basic_MLP"
 
 representation_hidden_size: [128,]
 q_hidden_size: [128,]
+activation: 'ReLU'
 
 nsize: 20000
 batchsize: 128
@@ -14,9 +15,10 @@ gamma: 0.99
 
 start_noise: 0.05
 end_noise: 0.0
+decay_step_noise: 50000
 sync_frequency: 100
 training_frequency: 2
-training_steps: 30000
+training_steps: 50000
 start_training: 1000
 
 use_obsnorm: False
@@ -24,5 +26,8 @@ use_rewnorm: False
 obsnorm_range: 5
 rewnorm_range: 5
 
+test_steps: 10000
+eval_interval: 5000
+test_episode: 1
 logdir: "./logs/noisy_dqn/"
 modeldir: "./models/noisy_dqn/"

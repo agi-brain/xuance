@@ -1,0 +1,36 @@
+agent: "PerDQN"
+env_name: "Classic Control"
+env_id: "LunarLander-v2"
+policy: "Basic_Q_network"
+representation: "Basic_MLP"
+
+representation_hidden_size: [128,]
+q_hidden_size: [128,]
+activation: 'ReLU'
+
+nsize: 20000
+batchsize: 128
+learning_rate: 0.001
+gamma: 0.99
+
+start_greedy: 0.5
+end_greedy: 0.1
+decay_step_greedy: 20000
+sync_frequency: 100
+training_frequency: 4
+training_steps: 50000
+start_training: 1000
+
+use_obsnorm: False
+use_rewnorm: False
+obsnorm_range: 5
+rewnorm_range: 5
+
+PER_alpha: 0.5
+PER_beta0: 0.4
+
+test_steps: 10000
+eval_interval: 5000
+test_episode: 1
+logdir: "./logs/perdqn/"
+modeldir: "./models/perdqn/"

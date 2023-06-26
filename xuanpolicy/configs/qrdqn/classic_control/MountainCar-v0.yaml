@@ -1,11 +1,12 @@
 agent: "QRDQN"
-env_name: "toy_env"
-env_id: "Acrobot-v1"
+env_name: "Classic Control"
+env_id: "MountainCar-v0"
 policy: "QR_Q_network"
 representation: "Basic_MLP"
 
 representation_hidden_size: [128,]
 q_hidden_size: [128,]
+activation: 'ReLU'
 
 nsize: 20000
 batchsize: 256
@@ -15,6 +16,7 @@ quantile_num: 20
 
 start_greedy: 0.25
 end_greedy: 0.01
+decay_step_greedy: 30000
 sync_frequency: 100
 training_frequency: 1
 training_steps: 30000
@@ -25,5 +27,8 @@ use_rewnorm: False
 obsnorm_range: 5
 rewnorm_range: 5
 
+test_steps: 10000
+eval_interval: 5000
+test_episode: 1
 logdir: "./logs/qrdqn/"
 modeldir: "./models/qrdqn/"

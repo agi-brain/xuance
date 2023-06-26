@@ -130,8 +130,6 @@ class DummyOnPolicyBuffer(Buffer):
         self.start_ids = np.zeros(self.nenvs, np.int64)
         self.observations = create_memory(space2shape(self.observation_space), self.nenvs, self.nsize)
         self.actions = create_memory(space2shape(self.action_space), self.nenvs, self.nsize)
-        self.representation_infos = create_memory(self.representation_shape, self.nenvs, self.nsize)
-        self.auxiliary_infos = create_memory(self.auxiliary_shape, self.nenvs, self.nsize)
         self.rewards = create_memory((), self.nenvs, self.nsize)
         self.returns = create_memory((), self.nenvs, self.nsize)
         self.terminals = create_memory((), self.nenvs, self.nsize)
@@ -145,20 +143,16 @@ class DummyOnPolicyBuffer(Buffer):
         self.ptr, self.size = 0, 0
         self.observations = create_memory(space2shape(self.observation_space), self.nenvs, self.nsize)
         self.actions = create_memory(space2shape(self.action_space), self.nenvs, self.nsize)
-        self.representation_infos = create_memory(self.representation_shape, self.nenvs, self.nsize)
-        self.auxiliary_infos = create_memory(self.auxiliary_shape, self.nenvs, self.nsize)
         self.rewards = create_memory((), self.nenvs, self.nsize)
         self.returns = create_memory((), self.nenvs, self.nsize)
         self.advantages = create_memory((), self.nenvs, self.nsize)
 
-    def store(self, obs, acts, rews, rets, terminals, rep_info, aux_info):
+    def store(self, obs, acts, rews, rets, terminals):
         store_element(obs, self.observations, self.ptr)
         store_element(acts, self.actions, self.ptr)
         store_element(rews, self.rewards, self.ptr)
         store_element(rets, self.returns, self.ptr)
         store_element(terminals, self.terminals, self.ptr)
-        store_element(rep_info, self.representation_infos, self.ptr)
-        store_element(aux_info, self.auxiliary_infos, self.ptr)
         self.ptr = (self.ptr + 1) % self.nsize
         self.size = min(self.size + 1, self.nsize)
 
@@ -186,11 +180,9 @@ class DummyOnPolicyBuffer(Buffer):
         act_batch = sample_batch(self.actions, tuple([env_choices, step_choices]))
         ret_batch = sample_batch(self.returns, tuple([env_choices, step_choices]))
         adv_batch = sample_batch(self.advantages, tuple([env_choices, step_choices]))
-        rep_batch = sample_batch(self.representation_infos, tuple([env_choices, step_choices]))
-        aux_batch = sample_batch(self.auxiliary_infos, tuple([env_choices, step_choices]))
         adv_batch = (adv_batch - np.mean(self.advantages)) / (np.std(self.advantages) + 1e-8)
 
-        return obs_batch, act_batch, ret_batch, adv_batch, rep_batch, aux_batch
+        return obs_batch, act_batch, ret_batch, adv_batch
 
 
 class DummyOffPolicyBuffer(Buffer):
@@ -316,8 +308,6 @@ class PerOffPolicyBuffer(Buffer):
         self.observations = create_memory(space2shape(self.observation_space), self.nenvs, self.nsize)
         self.next_observations = create_memory(space2shape(self.observation_space), self.nenvs, self.nsize)
         self.actions = create_memory(space2shape(self.action_space), self.nenvs, self.nsize)
-        self.representation_infos = create_memory(self.representation_shape, self.nenvs, self.nsize)
-        self.auxiliary_infos = create_memory(self.auxiliary_shape, self.nenvs, self.nsize)
         self.rewards = create_memory((), self.nenvs, self.nsize)
         self.terminals = create_memory((), self.nenvs, self.nsize)
 
@@ -350,21 +340,17 @@ class PerOffPolicyBuffer(Buffer):
         self.observations = create_memory(space2shape(self.observation_space), self.nenvs, self.nsize)
         self.next_observations = create_memory(space2shape(self.observation_space), self.nenvs, self.nsize)
         self.actions = create_memory(space2shape(self.action_space), self.nenvs, self.nsize)
-        self.representation_infos = create_memory(self.representation_shape, self.nenvs, self.nsize)
-        self.auxiliary_infos = create_memory(self.auxiliary_shape, self.nenvs, self.nsize)
         self.rewards = create_memory((), self.nenvs, self.nsize)
         self.terminals = create_memory((), self.nenvs, self.nsize)
         self._it_sum = []
         self._it_min = []
 
-    def store(self, obs, acts, rews, terminals, next_obs, rep_info, aux_info):
+    def store(self, obs, acts, rews, terminals, next_obs):
         store_element(obs, self.observations, self.ptr)
         store_element(acts, self.actions, self.ptr)
         store_element(rews, self.rewards, self.ptr)
         store_element(terminals, self.terminals, self.ptr)
         store_element(next_obs, self.next_observations, self.ptr)
-        store_element(rep_info, self.representation_infos, self.ptr)
-        store_element(aux_info, self.auxiliary_infos, self.ptr)
 
         # prioritized process
         for i in range(self.nenvs):
@@ -401,8 +387,6 @@ class PerOffPolicyBuffer(Buffer):
         rew_batch = sample_batch(self.rewards, tuple([env_choices, step_choices.flatten()]))
         terminal_batch = sample_batch(self.terminals, tuple([env_choices, step_choices.flatten()]))
         next_batch = sample_batch(self.next_observations, tuple([env_choices, step_choices.flatten()]))
-        rep_batch = sample_batch(self.representation_infos, tuple([env_choices, step_choices.flatten()]))
-        aux_batch = sample_batch(self.auxiliary_infos, tuple([env_choices, step_choices.flatten()]))
 
         # return tuple(list(encoded_sample) + [weights, idxes])
         return (obs_batch,
@@ -410,8 +394,6 @@ class PerOffPolicyBuffer(Buffer):
                 rew_batch,
                 terminal_batch,
                 next_batch,
-                rep_batch,
-                aux_batch,
                 weights,
                 step_choices)
 

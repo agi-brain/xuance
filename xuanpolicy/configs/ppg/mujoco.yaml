@@ -8,8 +8,9 @@ device: "cuda:0"
 representation_hidden_size: [256,]
 actor_hidden_size: [256,]
 critic_hidden_size: [256,]
+activation: "LeakyReLU"
 
-parallels: 8
+parallels: 16
 training_steps: 250000
 nsteps: 256
 nminibatch: 4
@@ -31,5 +32,8 @@ use_rewnorm: True
 obsnorm_range: 5
 rewnorm_range: 5
 
+test_steps: 10000
+eval_interval: 5000
+test_episode: 1
 logdir: "./logs/ppg"
 modeldir: "./models/ppg"

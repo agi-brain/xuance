@@ -1,22 +1,24 @@
 agent: "Duel_DQN"
-env_name: "classic_control"
+env_name: "Classic Control"
 env_id: "Acrobot-v1"
 policy: "Duel_Q_network"
 representation: "Basic_MLP"
 
 representation_hidden_size: [128, ]
 q_hidden_size: [128, ]
+activation: 'ReLU'
 
-nsize: 20000
-batchsize: 128
+nsize: 10000
+batchsize: 256
 learning_rate: 0.001
 gamma: 0.99
 
 start_greedy: 0.5
 end_greedy: 0.01
-sync_frequency: 100
-training_frequency: 2
-training_steps: 30000
+decay_step_greedy: 20000
+sync_frequency: 50
+training_frequency: 1
+training_steps: 50000
 start_training: 1000
 
 use_obsnorm: False
@@ -24,5 +26,8 @@ use_rewnorm: False
 obsnorm_range: 5
 rewnorm_range: 5
 
+test_steps: 10000
+eval_interval: 5000
+test_episode: 1
 logdir: "./logs/dueldqn/"
 modeldir: "./models/dueldqn/"

@@ -19,8 +19,8 @@ class C51_Learner(Learner):
         act_batch = torch.as_tensor(act_batch, device=self.device).long()
         rew_batch = torch.as_tensor(rew_batch, device=self.device)
         ter_batch = torch.as_tensor(terminal_batch, device=self.device)
-        _, _, evalZ, _ = self.policy(obs_batch)
-        _, targetA, _, targetZ = self.policy(next_batch)
+        _, _, evalZ = self.policy(obs_batch)
+        _, targetA, targetZ = self.policy.target(next_batch)
 
         current_dist = (evalZ * F.one_hot(act_batch, evalZ.shape[1]).unsqueeze(-1)).sum(1)
         target_dist = (targetZ * F.one_hot(targetA.detach(), evalZ.shape[1]).unsqueeze(-1)).sum(1).detach()

@@ -8,7 +8,7 @@ representation_hidden_size: [128,]
 q_hidden_size: [128,]
 activation: 'ReLU'
 
-nsize: 10000
+nsize: 20000
 batchsize: 256
 learning_rate: 0.001
 gamma: 0.99
@@ -16,7 +16,7 @@ vmin: 0
 vmax: 200
 atom_num: 51
 
-start_greedy: 0.25
+start_greedy: 0.5
 end_greedy: 0.01
 decay_step_greedy: 10000
 sync_frequency: 100

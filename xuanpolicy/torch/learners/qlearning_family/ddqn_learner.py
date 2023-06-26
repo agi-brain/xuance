@@ -20,8 +20,8 @@ class DDQN_Learner(Learner):
         rew_batch = torch.as_tensor(rew_batch, device=self.device)
         ter_batch = torch.as_tensor(terminal_batch, device=self.device)
 
-        _, _, evalQ, _ = self.policy(obs_batch)
-        _, targetA, _, targetQ = self.policy(next_batch)
+        _, _, evalQ = self.policy(obs_batch)
+        _, targetA, targetQ = self.policy(next_batch)
 
         targetA = F.one_hot(targetA, targetQ.shape[-1])
         targetQ = (targetQ * targetA).sum(dim=-1)

@@ -6,11 +6,12 @@ policy: "Categorical_Actor"
 
 representation_hidden_size: [128,]
 actor_hidden_size: [128,]
+activation: 'ReLU'
 
 training_steps: 30000
 nsteps: 128
-nepoch: 1
-nminibatch: 1
+nepoch: 3
+nminibatch: 2
 learning_rate: 0.0004
 
 ent_coef: 0.01
@@ -24,5 +25,8 @@ use_rewnorm: True
 obsnorm_range: 5
 rewnorm_range: 5
 
+test_steps: 10000
+eval_interval: 5000
+test_episode: 1
 logdir: "./logs/pg/"
 modeldir: "./models/pg/"

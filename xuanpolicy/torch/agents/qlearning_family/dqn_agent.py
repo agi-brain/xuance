@@ -109,10 +109,11 @@ class DQN_Agent(Agent):
                     else:
                         obs[i] = infos[i]["reset_obs"]
                         self.current_episode[i] += 1
-                        step_info["Episode-Steps"] = infos[i]["episode_step"]
                         if self.use_wandb:
+                            step_info["Episode-Steps/env-%d" % i] = infos[i]["episode_step"]
                             step_info["Train-Episode-Rewards/env-%d" % i] = infos[i]["episode_score"]
                         else:
+                            step_info["Episode-Steps"] = {"env-%d" % i: infos[i]["episode_step"]}
                             step_info["Train-Episode-Rewards"] = {"env-%d" % i: infos[i]["episode_score"]}
                         self.log_infos(step_info, self.current_step)
 
