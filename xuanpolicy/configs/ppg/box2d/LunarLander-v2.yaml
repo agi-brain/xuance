@@ -1,0 +1,36 @@
+agent: "PPG"
+env_name: "Box2D"
+env_id: "LunarLander-v2"
+representation: "Basic_MLP"
+policy: "Categorical_PPG"
+
+representation_hidden_size: [128,]
+actor_hidden_size: [128,]
+critic_hidden_size: [128,]
+activation: "ReLU"
+
+training_steps: 30000
+nsteps: 256
+nepoch: 8
+policy_nepoch: 4
+value_nepoch: 8 
+aux_nepoch: 8
+nminibatch: 1
+learning_rate: 0.0004
+
+ent_coef: 0.01
+clip_range: 0.2
+kl_beta: 1.0
+gamma: 0.98
+lam: 0.95
+
+use_obsnorm: True
+use_rewnorm: True
+obsnorm_range: 5
+rewnorm_range: 5
+
+test_steps: 10000
+eval_interval: 5000
+test_episode: 1
+logdir: "./logs/ppg/"
+modeldir: "./models/ppg/"

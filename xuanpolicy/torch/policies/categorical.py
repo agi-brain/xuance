@@ -114,10 +114,9 @@ class PPGActorCritic(nn.Module):
         assert isinstance(action_space, Discrete)
         super(PPGActorCritic, self).__init__()
         self.action_dim = action_space.n
-        self.representation = representation
-        self.policy_representation = representation
+        self.actor_representation = representation
         self.critic_representation = copy.deepcopy(representation)
-        self.representation_info_shape = self.policy_representation.output_shapes
+        self.representation_info_shape = self.actor_representation.output_shapes
 
         self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size,
                               normalize, initialize, activation, device)
@@ -127,7 +126,7 @@ class PPGActorCritic(nn.Module):
                                     normalize, initialize, activation, device)
 
     def forward(self, observation: Union[np.ndarray, dict]):
-        policy_outputs = self.policy_representation(observation)
+        policy_outputs = self.actor_representation(observation)
         critic_outputs = self.critic_representation(observation)
         a = self.actor(policy_outputs['state'])
         v = self.critic(critic_outputs['state'])

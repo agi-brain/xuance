@@ -115,9 +115,9 @@ class PPGActorCritic(nn.Module):
         assert isinstance(action_space, Box)
         super(PPGActorCritic, self).__init__()
         self.action_dim = action_space.shape[0]
-        self.policy_representation = representation
+        self.actor_representation = representation
         self.critic_representation = copy.deepcopy(representation)
-        self.representation_info_shape = self.policy_representation.output_shapes
+        self.representation_info_shape = self.actor_representation.output_shapes
         self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size,
                               normalize, initialize, activation, device)
         self.critic = CriticNet(representation.output_shapes['state'][0], critic_hidden_size,
@@ -126,11 +126,11 @@ class PPGActorCritic(nn.Module):
                                     normalize, initialize, activation, device)
 
     def forward(self, observation: Union[np.ndarray, dict]):
-        policy_outputs = self.policy_representation(observation)
+        policy_outputs = self.actor_representation(observation)
         critic_outputs = self.critic_representation(observation)
         a = self.actor(policy_outputs['state'])
         v = self.critic(critic_outputs['state'])
-        aux_v = self.aux_critic(policy_outputs)
+        aux_v = self.aux_critic(policy_outputs['state'])
         return policy_outputs, a, v, aux_v
 
 
@@ -197,44 +197,53 @@ class SACPolicy(nn.Module):
         assert isinstance(action_space, Box)
         super(SACPolicy, self).__init__()
         self.action_dim = action_space.shape[0]
-        self.representation = representation
-        self.representation_info_shape = self.representation.output_shapes
-
+        self.representation_info_shape = representation.output_shapes
+        self.representation_actor = representation
+        self.representation_critic = copy.deepcopy(representation)
         self.actor = ActorNet_SAC(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size,
                                   initialize, activation, device)
         self.critic = CriticNet_SAC(representation.output_shapes['state'][0], self.action_dim, critic_hidden_size,
                                     initialize, activation, device)
+        self.target_representation_actor = copy.deepcopy(self.representation_actor)
         self.target_actor = copy.deepcopy(self.actor)
+        self.target_representation_critic = copy.deepcopy(self.representation_critic)
         self.target_critic = copy.deepcopy(self.critic)
 
     def action(self, observation: Union[np.ndarray, dict]):
-        outputs = self.representation(observation)
+        outputs = self.representation_actor(observation)
         act_dist = self.actor(outputs['state'])
-
         return outputs, act_dist
 
     def Qtarget(self, observation: Union[np.ndarray, dict]):
-        outputs = self.representation(observation)
-        act_dist = self.target_actor(outputs['state'])
+        outputs_actor = self.target_representation_actor(observation)
+        outputs_critic = self.target_representation_critic(observation)
+        act_dist = self.target_actor(outputs_actor['state'])
         act = act_dist.rsample()
         act_log = act_dist.log_prob(act).sum(-1)
-        return outputs, act_log, self.target_critic(outputs['state'], act)
+        return act_log, self.target_critic(outputs_critic['state'], act)
 
     def Qaction(self, observation: Union[np.ndarray, dict], action: torch.Tensor):
-        outputs = self.representation(observation)
-        return outputs, self.critic(outputs['state'], action)
+        outputs_critic = self.representation_critic(observation)
+        return self.critic(outputs_critic['state'], action)
 
     def Qpolicy(self, observation: Union[np.ndarray, dict]):
-        outputs = self.representation(observation)
-        act_dist = self.actor(outputs['state'])
+        outputs_actor = self.representation_actor(observation)
+        outputs_critic = self.representation_critic(observation)
+        act_dist = self.actor(outputs_actor['state'])
         act = act_dist.rsample()
         act_log = act_dist.log_prob(act).sum(-1)
-        return outputs, act_log, self.critic(outputs['state'], act)
+        return act_log, self.critic(outputs_critic['state'], act)
 
     def forward(self):
         return super().forward()
 
     def soft_update(self, tau=0.005):
+        for ep, tp in zip(self.representation_actor.parameters(), self.target_representation_actor.parameters()):
+            tp.data.mul_(1 - tau)
+            tp.data.add_(tau * ep.data)
+        for ep, tp in zip(self.representation_critic.parameters(), self.target_representation_critic.parameters()):
+            tp.data.mul_(1 - tau)
+            tp.data.add_(tau * ep.data)
         for ep, tp in zip(self.actor.parameters(), self.target_actor.parameters()):
             tp.data.mul_(1 - tau)
             tp.data.add_(tau * ep.data)

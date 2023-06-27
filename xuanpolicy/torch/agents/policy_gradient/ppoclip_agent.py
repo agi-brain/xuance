@@ -81,31 +81,29 @@ class PPOCLIP_Agent(Agent):
         return rewards
 
     def _action(self, obs):
-        states, dists, vs = self.policy(obs)
+        _, dists, vs = self.policy(obs)
         acts = dists.stochastic_sample()
         logps = dists.log_prob(acts)
-        for key in states.keys():
-            states[key] = states[key].detach().cpu().numpy()
         vs = vs.detach().cpu().numpy()
         acts = acts.detach().cpu().numpy()
         logps = logps.detach().cpu().numpy()
-        return states, acts, vs, logps
+        return acts, vs, logps
 
     def train(self, train_steps=10000):
         obs = self.envs.buf_obs
-        for _ in tqdm(range(train_steps), position=1, desc="Step ", leave=False, colour='white'):
+        for _ in tqdm(range(train_steps)):
             step_info = {}
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
-            states, acts, rets, logps = self._action(obs)
+            acts, rets, logps = self._action(obs)
             next_obs, rewards, terminals, trunctions, infos = self.envs.step(acts)
-            self.memory.store(obs, acts, self._process_reward(rewards), rets, terminals, states, {"old_logp": logps})
+            self.memory.store(obs, acts, self._process_reward(rewards), rets, terminals, {"old_logp": logps})
             if self.memory.full:
-                _, _, vals, _ = self._action(self._process_observation(next_obs))
+                _, vals, _ = self._action(self._process_observation(next_obs))
                 for i in range(self.nenvs):
                     self.memory.finish_path(vals[i], i)
                 for _ in range(self.nminibatch * self.nepoch):
-                    obs_batch, act_batch, ret_batch, adv_batch, _, aux_batch = self.memory.sample()
+                    obs_batch, act_batch, ret_batch, adv_batch, aux_batch = self.memory.sample()
                     step_info = self.learner.update(obs_batch, act_batch, ret_batch, adv_batch, aux_batch['old_logp'])
                 self.memory.clear()
                 self.log_infos(step_info, self.current_step)
@@ -140,7 +138,7 @@ class PPOCLIP_Agent(Agent):
         while current_episode < test_episode:
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
-            states, acts, rets, logps = self._action(obs)
+            acts, rets, logps = self._action(obs)
             next_obs, rewards, terminals, trunctions, infos = envs.step(acts)
             if self.config.render_mode == "rgb_array" and self.render:
                 images = envs.render(self.config.render_mode)

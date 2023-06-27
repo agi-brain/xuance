@@ -2,12 +2,12 @@ agent: "SACDIS"
 env_name: "Classic Control"
 env_id: "CartPole-v1"
 policy: "Discrete_SAC"
-representation: "Basic_Identical"
+representation: "Basic_MLP"
 
 representation_hidden_size: [256,]
-
 actor_hidden_size: [128,128,]
 critic_hidden_size: [128,128,]
+activation: 'ReLU'
 
 nsize: 20000
 batchsize: 256
@@ -28,5 +28,8 @@ use_rewnorm: False
 obsnorm_range: 5
 rewnorm_range: 5
 
+test_steps: 10000
+eval_interval: 5000
+test_episode: 1
 logdir: "./logs/sacdis/"
 modeldir: "./models/sacdis/"

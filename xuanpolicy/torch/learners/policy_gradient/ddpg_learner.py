@@ -20,9 +20,9 @@ class DDPG_Learner(Learner):
         rew_batch = torch.as_tensor(rew_batch, device=self.device)
         ter_batch = torch.as_tensor(terminal_batch, device=self.device)
         # critic update
-        _, action_q = self.policy.Qaction(obs_batch, act_batch)
+        action_q = self.policy.Qaction(obs_batch, act_batch)
         # with torch.no_grad():
-        _, target_q = self.policy.Qtarget(next_batch)
+        target_q = self.policy.Qtarget(next_batch)
         backup = rew_batch + (1 - ter_batch) * self.gamma * target_q
         q_loss = F.mse_loss(backup.detach(), action_q)
         self.optimizer[1].zero_grad()
@@ -30,7 +30,7 @@ class DDPG_Learner(Learner):
         self.optimizer[1].step()
 
         # actor update
-        _, policy_q = self.policy.Qpolicy(obs_batch)
+        policy_q = self.policy.Qpolicy(obs_batch)
         p_loss = -policy_q.mean()
         self.optimizer[0].zero_grad()
         p_loss.backward()

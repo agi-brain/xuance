@@ -134,6 +134,7 @@ class DummyOnPolicyBuffer(Buffer):
         self.returns = create_memory((), self.nenvs, self.nsize)
         self.terminals = create_memory((), self.nenvs, self.nsize)
         self.advantages = create_memory((), self.nenvs, self.nsize)
+        self.auxiliary_infos = create_memory(self.auxiliary_shape, self.nenvs, self.nsize)
 
     @property
     def full(self):
@@ -146,13 +147,15 @@ class DummyOnPolicyBuffer(Buffer):
         self.rewards = create_memory((), self.nenvs, self.nsize)
         self.returns = create_memory((), self.nenvs, self.nsize)
         self.advantages = create_memory((), self.nenvs, self.nsize)
+        self.auxiliary_infos = create_memory(self.auxiliary_shape, self.nenvs, self.nsize)
 
-    def store(self, obs, acts, rews, rets, terminals):
+    def store(self, obs, acts, rews, rets, terminals, aux_info=None):
         store_element(obs, self.observations, self.ptr)
         store_element(acts, self.actions, self.ptr)
         store_element(rews, self.rewards, self.ptr)
         store_element(rets, self.returns, self.ptr)
         store_element(terminals, self.terminals, self.ptr)
+        store_element(aux_info, self.auxiliary_infos, self.ptr)
         self.ptr = (self.ptr + 1) % self.nsize
         self.size = min(self.size + 1, self.nsize)
 
@@ -181,8 +184,9 @@ class DummyOnPolicyBuffer(Buffer):
         ret_batch = sample_batch(self.returns, tuple([env_choices, step_choices]))
         adv_batch = sample_batch(self.advantages, tuple([env_choices, step_choices]))
         adv_batch = (adv_batch - np.mean(self.advantages)) / (np.std(self.advantages) + 1e-8)
+        aux_batch = sample_batch(self.auxiliary_infos, tuple([env_choices, step_choices]))
 
-        return obs_batch, act_batch, ret_batch, adv_batch
+        return obs_batch, act_batch, ret_batch, adv_batch, aux_batch
 
 
 class DummyOffPolicyBuffer(Buffer):

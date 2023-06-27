@@ -118,7 +118,7 @@ class DQN_Agent(Agent):
                         self.log_infos(step_info, self.current_step)
 
             self.current_step += 1
-            if self.egreedy > self.end_greedy:
+            if self.egreedy >= self.end_greedy:
                 self.egreedy = self.egreedy - (self.start_greedy - self.end_greedy) / self.config.decay_step_greedy
 
     def test(self, env_fn, test_episodes):

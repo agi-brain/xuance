@@ -1,12 +1,13 @@
 agent: "PPG"
-env_name: "Classic Control"
-env_id: "CartPole-v1"
+env_name: "Box2D"
+env_id: "BipedalWalker-v3"
 representation: "Basic_MLP"
-policy: "Categorical_PPG"
+policy: "Gaussian_PPG"
 
 representation_hidden_size: [128,]
 actor_hidden_size: [128,]
 critic_hidden_size: [128,]
+activation: "LeakyReLU"
 
 training_steps: 30000
 nsteps: 256
@@ -15,7 +16,7 @@ policy_nepoch: 4
 value_nepoch: 8 
 aux_nepoch: 8
 nminibatch: 1
-learning_rate: 0.0004
+learning_rate: 0.001
 
 ent_coef: 0.01
 clip_range: 0.2
@@ -28,5 +29,8 @@ use_rewnorm: True
 obsnorm_range: 5
 rewnorm_range: 5
 
+test_steps: 10000
+eval_interval: 5000
+test_episode: 1
 logdir: "./logs/ppg/"
 modeldir: "./models/ppg/"

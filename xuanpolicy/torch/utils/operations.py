@@ -51,6 +51,14 @@ def split_distributions(distribution):
             dist = CategoricalDistribution(logits.shape[-1])
             dist.set_param(logit.unsqueeze(0).detach())
             return_list.append(dist)
+    elif isinstance(distribution, DiagGaussianDistribution):
+        shape = distribution.mu.shape
+        means = distribution.mu.view(-1, shape[-1])
+        std = distribution.std
+        for mu in means:
+            dist = DiagGaussianDistribution(shape[-1])
+            dist.set_param(mu.detach(), std.detach())
+            return_list.append(dist)
     else:
         raise NotImplementedError
     return np.array(return_list).reshape(shape[:-1])
@@ -62,6 +70,17 @@ def merge_distributions(distribution_list):
         action_dim = logits.shape[-1]
         dist = CategoricalDistribution(action_dim)
         dist.set_param(logits.detach())
+        return dist
+    elif isinstance(distribution_list[0], DiagGaussianDistribution):
+        shape = distribution_list.shape
+        distribution_list = distribution_list.reshape([-1])
+        mu = torch.cat([dist.mu for dist in distribution_list], dim=0)
+        std = torch.cat([dist.std for dist in distribution_list], dim=0)
+        action_dim = distribution_list[0].mu.shape[-1]
+        dist = DiagGaussianDistribution(action_dim)
+        mu = mu.view(shape + (action_dim, ))
+        std = std.view(shape + (action_dim,))
+        dist.set_param(mu, std)
         return dist
     elif isinstance(distribution_list[0, 0], CategoricalDistribution):
         shape = distribution_list.shape

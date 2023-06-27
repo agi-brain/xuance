@@ -3,7 +3,6 @@ env_name: "MuJoCo"
 env_id: "InvertedPendulum-v2"
 representation: "Basic_MLP"
 policy: "Gaussian_PPG"
-device: "cuda:0"
 
 representation_hidden_size: [256,]
 actor_hidden_size: [256,]

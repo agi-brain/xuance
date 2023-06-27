@@ -2,7 +2,7 @@ agent: "SAC"
 env_name: "MuJoCo"
 env_id: "Ant-v4"
 policy: "Gaussian_SAC"
-representation: "Basic_Identical"
+representation: "Basic_MLP"
 
 representation_hidden_size: [256,]
 actor_hidden_size: [256, ]
@@ -30,6 +30,8 @@ use_rewnorm: False
 obsnorm_range: 5
 rewnorm_range: 5
 
-save_model_frequency: 10000
+test_steps: 10000
+eval_interval: 5000
+test_episode: 1
 logdir: "./logs/sac/"
 modeldir: "./models/sac/"

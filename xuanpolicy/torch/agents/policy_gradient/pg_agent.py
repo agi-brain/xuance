@@ -88,7 +88,7 @@ class PG_Agent(Agent):
                 for i in range(self.nenvs):
                     self.memory.finish_path(rewards[i], i)
                 for _ in range(self.nminibatch * self.nepoch):
-                    obs_batch, act_batch, ret_batch, _ = self.memory.sample()
+                    obs_batch, act_batch, ret_batch, _, _ = self.memory.sample()
                     step_info = self.learner.update(obs_batch, act_batch, ret_batch)
                 self.memory.clear()
             obs = next_obs

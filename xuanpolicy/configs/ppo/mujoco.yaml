@@ -1,7 +1,7 @@
-agent: "PPO_Clip"
+agent: "PPO_Clip"  # choice: PPO_Clip, PPO_KL
 env_name: "MuJoCo"
 env_id: "Ant-v4"
-policy: "Gaussian_AC"
+policy: "Gaussian_AC"  # choice: Gaussian_AC for continuous actions, Categorical_AC for discrete actions.
 representation: "Basic_MLP"
 
 representation_hidden_size: [256,]
@@ -29,6 +29,8 @@ use_rewnorm: True
 obsnorm_range: 5
 rewnorm_range: 5
 
-save_model_frequency: 10000
+test_steps: 10000
+eval_interval: 5000
+test_episode: 1
 logdir: "./logs/ppo/"
 modeldir: "./models/ppo/"

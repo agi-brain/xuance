@@ -20,9 +20,9 @@ class SAC_Learner(Learner):
         rew_batch = torch.as_tensor(rew_batch, device=self.device)
         ter_batch = torch.as_tensor(terminal_batch, device=self.device)
         # critic update
-        _, action_q = self.policy.Qaction(obs_batch, act_batch)
+        action_q = self.policy.Qaction(obs_batch, act_batch)
         # with torch.no_grad():
-        _, log_pi_next, target_q = self.policy.Qtarget(next_batch)
+        log_pi_next, target_q = self.policy.Qtarget(next_batch)
         backup = rew_batch + self.gamma * (target_q - 0.01 * log_pi_next.reshape([-1]))
         q_loss = F.mse_loss(action_q, backup.detach())
         self.optimizer[1].zero_grad()
@@ -30,7 +30,7 @@ class SAC_Learner(Learner):
         self.optimizer[1].step()
 
         # actor update
-        _, log_pi, policy_q = self.policy.Qpolicy(obs_batch)
+        log_pi, policy_q = self.policy.Qpolicy(obs_batch)
         p_loss = (0.01 * log_pi.reshape([-1]) - policy_q).mean()
         self.optimizer[0].zero_grad()
         p_loss.backward()
