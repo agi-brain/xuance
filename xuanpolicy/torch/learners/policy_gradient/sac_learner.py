@@ -23,7 +23,7 @@ class SAC_Learner(Learner):
         action_q = self.policy.Qaction(obs_batch, act_batch)
         # with torch.no_grad():
         log_pi_next, target_q = self.policy.Qtarget(next_batch)
-        backup = rew_batch + self.gamma * (target_q - 0.01 * log_pi_next.reshape([-1]))
+        backup = rew_batch + (1-ter_batch) * self.gamma * (target_q - 0.01 * log_pi_next.reshape([-1]))
         q_loss = F.mse_loss(action_q, backup.detach())
         self.optimizer[1].zero_grad()
         q_loss.backward()

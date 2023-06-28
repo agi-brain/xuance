@@ -10,16 +10,9 @@ class SAC_Agent(Agent):
                  scheduler: Optional[Sequence[torch.optim.lr_scheduler._LRScheduler]] = None,
                  device: Optional[Union[int, str, torch.device]] = None):
         self.render = config.render
-        self.comm = MPI.COMM_WORLD
         self.nenvs = envs.num_envs
-        self.render = config.render
 
         self.gamma = config.gamma
-        self.use_obsnorm = config.use_obsnorm
-        self.use_rewnorm = config.use_rewnorm
-        self.obsnorm_range = config.obsnorm_range
-        self.rewnorm_range = config.rewnorm_range
-
         self.train_frequency = config.training_frequency
         self.start_training = config.start_training
         self.start_noise = config.start_noise
@@ -45,32 +38,10 @@ class SAC_Agent(Agent):
                               config.modeldir,
                               config.gamma,
                               config.tau)
-
-        self.obs_rms = RunningMeanStd(shape=space2shape(self.observation_space), comm=self.comm, use_mpi=False)
-        self.ret_rms = RunningMeanStd(shape=(), comm=self.comm, use_mpi=False)
         super(SAC_Agent, self).__init__(config, envs, policy, memory, learner, device, config.logdir, config.modeldir)
 
-    def _process_observation(self, observations):
-        if self.use_obsnorm:
-            if isinstance(self.observation_space, Dict):
-                for key in self.observation_space.spaces.keys():
-                    observations[key] = np.clip(
-                        (observations[key] - self.obs_rms.mean[key]) / (self.obs_rms.std[key] + EPS),
-                        -self.obsnorm_range, self.obsnorm_range)
-            else:
-                observations = np.clip((observations - self.obs_rms.mean) / (self.obs_rms.std + EPS),
-                                       -self.obsnorm_range, self.obsnorm_range)
-            return observations
-        return observations
-
-    def _process_reward(self, rewards):
-        if self.use_rewnorm:
-            std = np.clip(self.ret_rms.std, 0.1, 100)
-            return np.clip(rewards / std, -self.rewnorm_range, self.rewnorm_range)
-        return rewards
-
     def _action(self, obs):
-        _, act_dist = self.policy.action(obs)
+        _, act_dist = self.policy(obs)
         action = act_dist.sample()
         action = action.detach().cpu().numpy()
         return action
@@ -91,10 +62,13 @@ class SAC_Agent(Agent):
                 obs_batch, act_batch, rew_batch, terminal_batch, next_batch = self.memory.sample()
                 step_info = self.learner.update(obs_batch, act_batch, rew_batch, next_batch, terminal_batch)
 
+            self.returns = self.gamma * self.returns + rewards
             obs = next_obs
             for i in range(self.nenvs):
                 if terminals[i] or trunctions[i]:
                     obs[i] = infos[i]["reset_obs"]
+                    self.ret_rms.update(self.returns[i:i + 1])
+                    self.returns[i] = 0.0
                     self.current_episode[i] += 1
                     if self.use_wandb:
                         step_info["Episode-Steps/env-%d" % i] = infos[i]["episode_step"]

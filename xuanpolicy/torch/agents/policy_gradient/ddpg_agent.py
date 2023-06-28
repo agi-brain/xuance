@@ -12,16 +12,9 @@ class DDPG_Agent(Agent):
                  scheduler: Optional[Sequence[torch.optim.lr_scheduler._LRScheduler]] = None,
                  device: Optional[Union[int, str, torch.device]] = None):
         self.render = config.render
-        self.comm = MPI.COMM_WORLD
         self.nenvs = envs.num_envs
-        self.render = config.render
 
         self.gamma = config.gamma
-        self.use_obsnorm = config.use_obsnorm
-        self.use_rewnorm = config.use_rewnorm
-        self.obsnorm_range = config.obsnorm_range
-        self.rewnorm_range = config.rewnorm_range
-
         self.train_frequency = config.training_frequency
         self.start_training = config.start_training
         self.start_noise = config.start_noise
@@ -30,7 +23,7 @@ class DDPG_Agent(Agent):
 
         self.observation_space = envs.observation_space
         self.action_space = envs.action_space
-        self.representation_info_shape = policy.representation_actor.output_shapes
+        self.representation_info_shape = policy.representation.output_shapes
         self.auxiliary_info_shape = {}
 
         memory = DummyOffPolicyBuffer(self.observation_space,
@@ -47,32 +40,10 @@ class DDPG_Agent(Agent):
                                config.modeldir,
                                config.gamma,
                                config.tau)
-
-        self.obs_rms = RunningMeanStd(shape=space2shape(self.observation_space), comm=self.comm, use_mpi=False)
-        self.ret_rms = RunningMeanStd(shape=(), comm=self.comm, use_mpi=False)
         super(DDPG_Agent, self).__init__(config, envs, policy, memory, learner, device, config.logdir, config.modeldir)
 
-    def _process_observation(self, observations):
-        if self.use_obsnorm:
-            if isinstance(self.observation_space, Dict):
-                for key in self.observation_space.spaces.keys():
-                    observations[key] = np.clip(
-                        (observations[key] - self.obs_rms.mean[key]) / (self.obs_rms.std[key] + EPS),
-                        -self.obsnorm_range, self.obsnorm_range)
-            else:
-                observations = np.clip((observations - self.obs_rms.mean) / (self.obs_rms.std + EPS),
-                                       -self.obsnorm_range, self.obsnorm_range)
-            return observations
-        return observations
-
-    def _process_reward(self, rewards):
-        if self.use_rewnorm:
-            std = np.clip(self.ret_rms.std, 0.1, 100)
-            return np.clip(rewards / std, -self.rewnorm_range, self.rewnorm_range)
-        return rewards
-
     def _action(self, obs, noise_scale=0.0):
-        _, action = self.policy.action(obs, noise_scale)
+        _, action = self.policy(obs, noise_scale)
         action = action.detach().cpu().numpy()
         return action
 
@@ -92,10 +63,13 @@ class DDPG_Agent(Agent):
                 step_info = self.learner.update(obs_batch, act_batch, rew_batch, next_batch, terminal_batch)
                 step_info["noise_scale"] = self.noise_scale
 
+            self.returns = self.gamma * self.returns + rewards
             obs = next_obs
             for i in range(self.nenvs):
                 if terminals[i] or trunctions[i]:
                     obs[i] = infos[i]["reset_obs"]
+                    self.ret_rms.update(self.returns[i:i + 1])
+                    self.returns[i] = 0.0
                     self.current_episode[i] += 1
                     if self.use_wandb:
                         step_info["Episode-Steps/env-%d" % i] = infos[i]["episode_step"]

@@ -1,28 +1,26 @@
 agent: "TD3"
-env_name: "MuJoCo"
-env_id: "Ant-v4"
-policy: "TD3_Policy"
+env_name: "Box2D"
+env_id: "BipedalWalker-v3"
 representation: "Basic_Identical"
+policy: "TD3_Policy"
 
 actor_hidden_size: [256, ]
 critic_hidden_size: [256, ]
 activation: "LeakyReLU"
 
-seed: 6782
-parallels: 4  # number of environments
-nsize: 50000
+nsize: 20000
 batchsize: 256
-actor_learning_rate: 0.001
-actor_update_decay: 3
+actor_learning_rate: 0.0005
 critic_learning_rate: 0.001
-gamma: 0.99
-tau: 0.01
+gamma: 0.98
+tau: 0.005
+actor_update_decay: 3
 
-start_noise: 0.5
-end_noise: 0.01
-training_frequency: 1
-training_steps: 250000
-start_training: 10000
+start_noise: 0.25
+end_noise: 0.05
+training_frequency: 2
+training_steps: 50000
+start_training: 2000
 
 use_obsnorm: False
 use_rewnorm: False

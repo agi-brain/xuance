@@ -2,11 +2,11 @@ agent: "DDPG"
 env_name: "MuJoCo"
 env_id: "Ant-v4"
 policy: "DDPG_Policy"
-representation: "Basic_MLP"
+representation: "Basic_Identical"
 
-representation_hidden_size: [256, ]  # If you choose Basic_Identical representation, then ignore this value
-actor_hidden_size: [256, ]
-critic_hidden_size: [256, 1]
+representation_hidden_size:  # If you choose Basic_Identical representation, then ignore this value
+actor_hidden_size: [256, 256]
+critic_hidden_size: [256, 256]
 activation: "LeakyReLU"
 
 seed: 3577

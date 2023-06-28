@@ -1,29 +1,27 @@
 agent: "SAC"
-env_name: "MuJoCo"
-env_id: "Ant-v4"
+env_name: "Classic Control"
+env_id: "Pendulum-v1"
 policy: "Gaussian_SAC"
-representation: "Basic_Identical"
+representation: "Basic_MLP"
 
 representation_hidden_size: [256,]
-actor_hidden_size: [256, 256]
-critic_hidden_size: [256, 256]
-activation: "LeakyReLU"
+actor_hidden_size: [256,]
+critic_hidden_size: [256,]
+activation: "ReLU"
 
-nsize: 50000
+nsize: 20000
 parallels: 16
 batchsize: 256
 actor_learning_rate: 0.001
 critic_learning_rate: 0.001
-gamma: 0.99
-alpha: 0.01
+gamma: 0.98
 tau: 0.005
-learning_rate: 0.0007
 
 start_noise: 0.25
 end_noise: 0.05
-training_frequency: 1
-training_steps: 250000
-start_training: 1000
+training_frequency: 2
+training_steps: 50000
+start_training: 2000
 
 use_obsnorm: False
 use_rewnorm: False

@@ -1,5 +1,3 @@
-import torch
-
 from xuanpolicy.torch.policies import *
 from xuanpolicy.torch.utils import *
 from xuanpolicy.torch.representations import Basic_Identical
@@ -64,18 +62,20 @@ class ActorCriticPolicy(nn.Module):
         assert isinstance(action_space, Box)
         super(ActorCriticPolicy, self).__init__()
         self.action_dim = action_space.shape[0]
-        self.representation = representation
-        self.representation_info_shape = self.representation.output_shapes
+        self.representation_actor = representation
+        self.representation_critic = copy.deepcopy(representation)
+        self.representation_info_shape = representation.output_shapes
         self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size,
                               normalize, initialize, activation, device)
         self.critic = CriticNet(representation.output_shapes['state'][0], critic_hidden_size,
                                 normalize, initialize, activation, device)
 
     def forward(self, observation: Union[np.ndarray, dict]):
-        outputs = self.representation(observation)
-        a = self.actor(outputs['state'])
-        v = self.critic(outputs['state'])
-        return outputs, a, v
+        outputs_actor = self.representation_actor(observation)
+        outputs_critic = self.representation_critic(observation)
+        a = self.actor(outputs_actor['state'])
+        v = self.critic(outputs_critic['state'])
+        return (outputs_actor, outputs_critic), a, v
 
 
 class ActorPolicy(nn.Module):
@@ -139,6 +139,7 @@ class ActorNet_SAC(nn.Module):
                  state_dim: int,
                  action_dim: int,
                  hidden_sizes: Sequence[int],
+                 normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., torch.Tensor]] = None,
                  activation: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None):
@@ -146,16 +147,16 @@ class ActorNet_SAC(nn.Module):
         layers = []
         input_shape = (state_dim,)
         for h in hidden_sizes:
-            mlp, input_shape = mlp_block(input_shape[0], h, None, activation, initialize, device)
+            mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initialize, device)
             layers.extend(mlp)
         self.device = device
         self.output = nn.Sequential(*layers)
-        self.out_mu = nn.Linear(hidden_sizes[-1], action_dim, device=device)
+        self.out_mu = nn.Sequential(nn.Linear(hidden_sizes[-1], action_dim, device=device), nn.Tanh())
         self.out_std = nn.Linear(hidden_sizes[-1], action_dim, device=device)
 
     def forward(self, x: torch.tensor):
         output = self.output(x)
-        mu = torch.tanh(self.out_mu(output))
+        mu = self.out_mu(output)
         # std = torch.tanh(self.out_std(output))
         std = torch.clamp(self.out_std(output), -20, 2)
         std = std.exp()
@@ -169,6 +170,7 @@ class CriticNet_SAC(nn.Module):
                  state_dim: int,
                  action_dim: int,
                  hidden_sizes: Sequence[int],
+                 normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., torch.Tensor]] = None,
                  activation: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None):
@@ -176,7 +178,7 @@ class CriticNet_SAC(nn.Module):
         layers = []
         input_shape = (state_dim + action_dim,)
         for h in hidden_sizes:
-            mlp, input_shape = mlp_block(input_shape[0], h, None, activation, initialize, device)
+            mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initialize, device)
             layers.extend(mlp)
         layers.extend(mlp_block(input_shape[0], 1, None, None, initialize, device)[0])
         self.model = nn.Sequential(*layers)
@@ -191,6 +193,7 @@ class SACPolicy(nn.Module):
                  representation: Basic_Identical,
                  actor_hidden_size: Sequence[int],
                  critic_hidden_size: Sequence[int],
+                 normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., torch.Tensor]] = None,
                  activation: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None):
@@ -201,18 +204,19 @@ class SACPolicy(nn.Module):
         self.representation_actor = representation
         self.representation_critic = copy.deepcopy(representation)
         self.actor = ActorNet_SAC(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size,
-                                  initialize, activation, device)
+                                  normalize, initialize, activation, device)
         self.critic = CriticNet_SAC(representation.output_shapes['state'][0], self.action_dim, critic_hidden_size,
-                                    initialize, activation, device)
+                                    normalize, initialize, activation, device)
+
         self.target_representation_actor = copy.deepcopy(self.representation_actor)
         self.target_actor = copy.deepcopy(self.actor)
         self.target_representation_critic = copy.deepcopy(self.representation_critic)
         self.target_critic = copy.deepcopy(self.critic)
 
-    def action(self, observation: Union[np.ndarray, dict]):
-        outputs = self.representation_actor(observation)
-        act_dist = self.actor(outputs['state'])
-        return outputs, act_dist
+    def forward(self, observation: Union[np.ndarray, dict]):
+        outputs_actor = self.representation_actor(observation)
+        act_dist = self.actor(outputs_actor['state'])
+        return outputs_actor, act_dist
 
     def Qtarget(self, observation: Union[np.ndarray, dict]):
         outputs_actor = self.target_representation_actor(observation)
@@ -233,9 +237,6 @@ class SACPolicy(nn.Module):
         act = act_dist.rsample()
         act_log = act_dist.log_prob(act).sum(-1)
         return act_log, self.critic(outputs_critic['state'], act)
-
-    def forward(self):
-        return super().forward()
 
     def soft_update(self, tau=0.005):
         for ep, tp in zip(self.representation_actor.parameters(), self.target_representation_actor.parameters()):

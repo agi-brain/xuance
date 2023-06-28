@@ -1,3 +1,5 @@
+import copy
+
 import torch.distributions
 
 from xuanpolicy.torch.policies import *
@@ -64,18 +66,20 @@ class ActorCriticPolicy(nn.Module):
         super(ActorCriticPolicy, self).__init__()
         self.device = device
         self.action_dim = action_space.n
-        self.representation = representation
-        self.representation_info_shape = self.representation.output_shapes
+        self.representation_actor = representation
+        self.representation_critic = copy.deepcopy(self.representation_actor)
+        self.representation_info_shape = representation.output_shapes
         self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size,
                               normalize, initialize, activation, device)
         self.critic = CriticNet(representation.output_shapes['state'][0], critic_hidden_size,
                                 normalize, initialize, activation, device)
 
     def forward(self, observation: Union[np.ndarray, dict]):
-        outputs = self.representation(observation)
-        a = self.actor(outputs['state'])
-        v = self.critic(outputs['state'])
-        return outputs, a, v
+        outputs_actor = self.representation_actor(observation)
+        outputs_critic = self.representation_critic(observation)
+        a = self.actor(outputs_actor['state'])
+        v = self.critic(outputs_critic['state'])
+        return (outputs_actor, outputs_critic), a, v
 
 
 class ActorPolicy(nn.Module):

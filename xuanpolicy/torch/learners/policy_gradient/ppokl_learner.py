@@ -24,7 +24,7 @@ class PPOKL_Learner(Learner):
         ret_batch = torch.as_tensor(ret_batch, device=self.device)
         adv_batch = torch.as_tensor(adv_batch, device=self.device)
 
-        outputs, a_dist, v_pred = self.policy(obs_batch)
+        _, a_dist, v_pred = self.policy(obs_batch)
         log_prob = a_dist.log_prob(act_batch)
         old_dist = merge_distributions(old_dists)
         kl = a_dist.kl_divergence(old_dist).mean()

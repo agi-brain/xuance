@@ -1,27 +1,25 @@
 agent: "A2C"
-env_name: "MuJoCo"
-env_id: "Ant-v4"
+env_name: "Box2D"
+env_id: "BipedalWalker-v3"
 policy: "Gaussian_AC"
 representation: "Basic_MLP"
 
 representation_hidden_size: [256,]
 actor_hidden_size: [256,]
 critic_hidden_size: [256,]
-activation: "LeakyReLU"
+activation: 'LeakyReLU'
 
-seed: 6782
-parallels: 16
-training_steps: 62500
-nsteps: 16
+training_steps: 30000
+nsteps: 128
 nepoch: 1
 nminibatch: 1
-learning_rate: 0.0007
+learning_rate: 0.0004
 
 vf_coef: 0.25
-ent_coef: 0.0
+ent_coef: 0.01
 clip_grad: 0.5
 clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
-gamma: 0.99
+gamma: 0.98
 lam: 0.95
 
 use_obsnorm: True
@@ -31,6 +29,6 @@ rewnorm_range: 5
 
 test_steps: 10000
 eval_interval: 5000
-test_episode: 1
+test_episode: 3
 logdir: "./logs/a2c/"
 modeldir: "./models/a2c/"

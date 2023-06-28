@@ -425,48 +425,34 @@ class DDPGPolicy(nn.Module):
         super(DDPGPolicy, self).__init__()
         self.action_dim = action_space.shape[0]
         self.representation_info_shape = representation.output_shapes
-        self.representation_actor = representation
-        self.representation_critic = copy.deepcopy(representation)
+        self.representation = representation
         self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size, initialize,
                               activation, device)
         self.critic = CriticNet(representation.output_shapes['state'][0], self.action_dim, critic_hidden_size,
                                 initialize, activation, device)
-        self.target_representation_actor = copy.deepcopy(self.representation_actor)
         self.target_actor = copy.deepcopy(self.actor)
-        self.target_representation_critic = copy.deepcopy(self.representation_critic)
         self.target_critic = copy.deepcopy(self.critic)
 
-    def action(self, observation: Union[np.ndarray, dict], noise_scale: float):
-        outputs = self.representation_actor(observation)
+    def forward(self, observation: Union[np.ndarray, dict], noise_scale: float):
+        outputs = self.representation(observation)
         act = self.actor(outputs['state'])
         noise = torch.randn_like(act) * noise_scale
         return outputs, (act + noise).clamp(-1, 1)
 
     def Qtarget(self, observation: Union[np.ndarray, dict]):
-        outputs_actor = self.target_representation_actor(observation)
-        outputs_critic = self.target_representation_critic(observation)
-        act = self.target_actor(outputs_actor['state'])
-        return self.target_critic(outputs_critic['state'], act)
+        outputs = self.representation(observation)
+        act = self.target_actor(outputs['state'])
+        return self.target_critic(outputs['state'], act)
 
     def Qaction(self, observation: Union[np.ndarray, dict], action: torch.Tensor):
-        outputs_critic = self.representation_critic(observation)
-        return self.critic(outputs_critic['state'], action)
+        outputs = self.representation(observation)
+        return self.critic(outputs['state'], action)
 
     def Qpolicy(self, observation: Union[np.ndarray, dict]):
-        outputs_actor = self.representation_actor(observation)
-        outputs_critic = self.representation_critic(observation)
-        return self.critic(outputs_critic['state'], self.actor(outputs_actor['state']))
-
-    def forward(self):
-        return super().forward()
+        outputs = self.representation(observation)
+        return self.critic(outputs['state'], self.actor(outputs['state']))
 
     def soft_update(self, tau=0.005):
-        for ep, tp in zip(self.representation_actor.parameters(), self.target_representation_actor.parameters()):
-            tp.data.mul_(1 - tau)
-            tp.data.add_(tau * ep.data)
-        for ep, tp in zip(self.representation_critic.parameters(), self.target_representation_critic.parameters()):
-            tp.data.mul_(1 - tau)
-            tp.data.add_(tau * ep.data)
         for ep, tp in zip(self.actor.parameters(), self.target_actor.parameters()):
             tp.data.mul_(1 - tau)
             tp.data.add_(tau * ep.data)
@@ -489,7 +475,6 @@ class TD3Policy(nn.Module):
         super(TD3Policy, self).__init__()
         self.action_dim = action_space.shape[0]
         self.representation = representation
-        self.target_representation = copy.deepcopy(representation)
         self.representation_info_shape = self.representation.output_shapes
         self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size,
                               initialize, activation, device)
@@ -531,9 +516,6 @@ class TD3Policy(nn.Module):
         return outputs, (qa + qb) / 2.0
 
     def soft_update(self, tau=0.005):
-        for ep, tp in zip(self.representation.parameters(), self.target_representation.parameters()):
-            tp.data.mul_(1 - tau)
-            tp.data.add_(tau * ep.data)
         for ep, tp in zip(self.actor.parameters(), self.target_actor.parameters()):
             tp.data.mul_(1 - tau)
             tp.data.add_(tau * ep.data)

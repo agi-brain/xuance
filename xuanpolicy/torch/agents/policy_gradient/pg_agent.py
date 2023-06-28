@@ -9,35 +9,31 @@ class PG_Agent(Agent):
                  optimizer: torch.optim.Optimizer,
                  scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
                  device: Optional[Union[int, str, torch.device]] = None):
-        self.comm = MPI.COMM_WORLD
+        self.render = config.render
         self.nenvs = envs.num_envs
         self.nsteps = config.nsteps
         self.nminibatch = config.nminibatch
         self.nepoch = config.nepoch
-        self.render = config.render
 
         self.gamma = config.gamma
         self.lam = config.lam
-        self.use_obsnorm = config.use_obsnorm
-        self.use_rewnorm = config.use_rewnorm
-        self.obsnorm_range = config.obsnorm_range
-        self.rewnorm_range = config.rewnorm_range
         self.clip_grad = config.clip_grad
-
         self.observation_space = envs.observation_space
         self.action_space = envs.action_space
         self.representation_info_shape = policy.representation.output_shapes
         self.auxiliary_info_shape = {}
+        self.atari = True if config.env_name == "Atari" else False
+        Buffer = DummyOnPolicyBuffer_Atari if self.atari else DummyOnPolicyBuffer
 
-        memory = DummyOnPolicyBuffer(self.observation_space,
-                                     self.action_space,
-                                     self.representation_info_shape,
-                                     self.auxiliary_info_shape,
-                                     self.nenvs,
-                                     self.nsteps,
-                                     self.nminibatch,
-                                     self.gamma,
-                                     self.lam)
+        memory = Buffer(self.observation_space,
+                        self.action_space,
+                        self.representation_info_shape,
+                        self.auxiliary_info_shape,
+                        self.nenvs,
+                        self.nsteps,
+                        self.nminibatch,
+                        self.gamma,
+                        self.lam)
         learner = PG_Learner(policy,
                              optimizer,
                              scheduler,
@@ -45,29 +41,7 @@ class PG_Agent(Agent):
                              config.modeldir,
                              config.ent_coef,
                              config.clip_grad)
-
-        self.obs_rms = RunningMeanStd(shape=space2shape(self.observation_space), comm=self.comm, use_mpi=False)
-        self.ret_rms = RunningMeanStd(shape=(), comm=self.comm, use_mpi=False)
         super(PG_Agent, self).__init__(config, envs, policy, memory, learner, device, config.logdir, config.modeldir)
-
-    def _process_observation(self, observations):
-        if self.use_obsnorm:
-            if isinstance(self.observation_space, Dict):
-                for key in self.observation_space.spaces.keys():
-                    observations[key] = np.clip(
-                        (observations[key] - self.obs_rms.mean[key]) / (self.obs_rms.std[key] + EPS),
-                        -self.obsnorm_range, self.obsnorm_range)
-            else:
-                observations = np.clip((observations - self.obs_rms.mean) / (self.obs_rms.std + EPS),
-                                       -self.obsnorm_range, self.obsnorm_range)
-            return observations
-        return observations
-
-    def _process_reward(self, rewards):
-        if self.use_rewnorm:
-            std = np.clip(self.ret_rms.std, 0.1, 100)
-            return np.clip(rewards / std, -self.rewnorm_range, self.rewnorm_range)
-        return rewards
 
     def _action(self, obs):
         _, dists = self.policy(obs)
@@ -91,14 +65,18 @@ class PG_Agent(Agent):
                     obs_batch, act_batch, ret_batch, _, _ = self.memory.sample()
                     step_info = self.learner.update(obs_batch, act_batch, ret_batch)
                 self.memory.clear()
+
+            self.returns = self.gamma * self.returns + rewards
             obs = next_obs
             for i in range(self.nenvs):
                 if terminals[i] or trunctions[i]:
                     if self.atari and (~trunctions[i]):
                         pass
                     else:
-                        self.memory.finish_path(0, i)
                         obs[i] = infos[i]["reset_obs"]
+                        self.ret_rms.update(self.returns[i:i + 1])
+                        self.returns[i] = 0.0
+                        self.memory.finish_path(0, i)
                         self.current_episode[i] += 1
                         if self.use_wandb:
                             step_info["Episode-Steps/env-%d" % i] = infos[i]["episode_step"]

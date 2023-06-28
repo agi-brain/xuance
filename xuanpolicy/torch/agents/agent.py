@@ -21,6 +21,17 @@ class Agent(ABC):
         self.memory = memory
         self.learner = learner
 
+        self.observation_space = envs.observation_space
+        self.comm = MPI.COMM_WORLD
+        self.obs_rms = RunningMeanStd(shape=space2shape(self.observation_space), comm=self.comm, use_mpi=False)
+        self.ret_rms = RunningMeanStd(shape=(), comm=self.comm, use_mpi=False)
+        self.use_obsnorm = config.use_obsnorm
+        self.use_rewnorm = config.use_rewnorm
+        self.obsnorm_range = config.obsnorm_range
+        self.rewnorm_range = config.rewnorm_range
+        self.returns = np.zeros((self.envs.num_envs,), np.float32)
+
+        # logger
         if config.logger == "tensorboard":
             time_string = time.asctime().replace(" ", "").replace(":", "_")
             log_dir = os.path.join(os.getcwd(), config.logdir) + "/" + time_string
@@ -47,12 +58,12 @@ class Agent(ABC):
             self.use_wandb = True
         else:
             raise "No logger is implemented."
+
         self.device = device
         self.logdir = logdir
         self.modeldir = modeldir
         create_directory(logdir)
         create_directory(modeldir)
-        self.atari = True if self.config.env_name == "Atari" else False
         self.current_step = 0
         self.current_episode = np.zeros((self.envs.num_envs,), np.int32)
 
@@ -85,13 +96,26 @@ class Agent(ABC):
             for k, v in info.items():
                 self.writer.add_video(k, v, fps=fps, global_step=x_index)
 
-    @abstractmethod
     def _process_observation(self, observations):
-        raise NotImplementedError
+        if self.use_obsnorm:
+            if isinstance(self.observation_space, Dict):
+                for key in self.observation_space.spaces.keys():
+                    observations[key] = np.clip(
+                        (observations[key] - self.obs_rms.mean[key]) / (self.obs_rms.std[key] + EPS),
+                        -self.obsnorm_range, self.obsnorm_range)
+            else:
+                observations = np.clip((observations - self.obs_rms.mean) / (self.obs_rms.std + EPS),
+                                       -self.obsnorm_range, self.obsnorm_range)
+            return observations
+        else:
+            return observations
 
-    @abstractmethod
     def _process_reward(self, rewards):
-        raise NotImplementedError
+        if self.use_rewnorm:
+            std = np.clip(self.ret_rms.std, 0.1, 100)
+            return np.clip(rewards / std, -self.rewnorm_range, self.rewnorm_range)
+        else:
+            return rewards
 
     @abstractmethod
     def _action(self, observations):

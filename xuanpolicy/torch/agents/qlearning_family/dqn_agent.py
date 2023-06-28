@@ -10,15 +10,9 @@ class DQN_Agent(Agent):
                  scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
                  device: Optional[Union[int, str, torch.device]] = None):
         self.render = config.render
-        self.comm = MPI.COMM_WORLD
         self.nenvs = envs.num_envs
 
         self.gamma = config.gamma
-        self.use_obsnorm = config.use_obsnorm
-        self.use_rewnorm = config.use_rewnorm
-        self.obsnorm_range = config.obsnorm_range
-        self.rewnorm_range = config.rewnorm_range
-
         self.train_frequency = config.training_frequency
         self.start_training = config.start_training
         self.start_greedy = config.start_greedy
@@ -29,14 +23,15 @@ class DQN_Agent(Agent):
         self.action_space = envs.action_space
         self.representation_info_shape = policy.representation.output_shapes
         self.auxiliary_info_shape = {}
-
-        memory = DummyOffPolicyBuffer(self.observation_space,
-                                      self.action_space,
-                                      self.representation_info_shape,
-                                      self.auxiliary_info_shape,
-                                      self.nenvs,
-                                      config.nsize,
-                                      config.batchsize)
+        self.atari = True if config.env_name == "Atari" else False
+        Buffer = DummyOffPolicyBuffer_Atari if self.atari else DummyOffPolicyBuffer
+        memory = Buffer(self.observation_space,
+                        self.action_space,
+                        self.representation_info_shape,
+                        self.auxiliary_info_shape,
+                        self.nenvs,
+                        config.nsize,
+                        config.batchsize)
         learner = DQN_Learner(policy,
                               optimizer,
                               scheduler,
@@ -44,37 +39,7 @@ class DQN_Agent(Agent):
                               config.modeldir,
                               config.gamma,
                               config.sync_frequency)
-
-        self.obs_rms = RunningMeanStd(shape=space2shape(self.observation_space), comm=self.comm, use_mpi=False)
-        self.ret_rms = RunningMeanStd(shape=(), comm=self.comm, use_mpi=False)
         super(DQN_Agent, self).__init__(config, envs, policy, memory, learner, device, config.logdir, config.modeldir)
-        if self.atari:
-            self.memory = DummyOffPolicyBuffer_Atari(self.observation_space,
-                                                     self.action_space,
-                                                     self.representation_info_shape,
-                                                     self.auxiliary_info_shape,
-                                                     self.nenvs,
-                                                     config.nsize,
-                                                     config.batchsize)
-
-    def _process_observation(self, observations):
-        if self.use_obsnorm:
-            if isinstance(self.observation_space, Dict):
-                for key in self.observation_space.spaces.keys():
-                    observations[key] = np.clip(
-                        (observations[key] - self.obs_rms.mean[key]) / (self.obs_rms.std[key] + EPS),
-                        -self.obsnorm_range, self.obsnorm_range)
-            else:
-                observations = np.clip((observations - self.obs_rms.mean) / (self.obs_rms.std + EPS),
-                                       -self.obsnorm_range, self.obsnorm_range)
-            return observations
-        return observations
-
-    def _process_reward(self, rewards):
-        if self.use_rewnorm:
-            std = np.clip(self.ret_rms.std, 0.1, 100)
-            rewards = np.clip(rewards / std, -self.rewnorm_range, self.rewnorm_range)
-        return rewards
 
     def _action(self, obs, egreedy=0.0):
         _, argmax_action, _ = self.policy(obs)
