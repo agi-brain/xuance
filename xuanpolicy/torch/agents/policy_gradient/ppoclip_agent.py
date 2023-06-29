@@ -20,30 +20,20 @@ class PPOCLIP_Agent(Agent):
         self.lam = config.lam
         self.observation_space = envs.observation_space
         self.action_space = envs.action_space
-        self.representation_info_shape = policy.representation.output_shapes
+        self.representation_info_shape = policy.representation_actor.output_shapes
         self.auxiliary_info_shape = {"old_logp": ()}
 
         self.atari = True if config.env_name == "Atari" else False
-        if self.atari:
-            memory = DummyOnPolicyBuffer_Atari(self.observation_space,
-                                               self.action_space,
-                                               self.representation_info_shape,
-                                               self.auxiliary_info_shape,
-                                               self.nenvs,
-                                               self.nsteps,
-                                               self.nminibatch,
-                                               self.gamma,
-                                               self.lam)
-        else:
-            memory = DummyOnPolicyBuffer(self.observation_space,
-                                         self.action_space,
-                                         self.representation_info_shape,
-                                         self.auxiliary_info_shape,
-                                         self.nenvs,
-                                         self.nsteps,
-                                         self.nminibatch,
-                                         self.gamma,
-                                         self.lam)
+        Buffer = DummyOnPolicyBuffer_Atari if self.atari else DummyOnPolicyBuffer_Atari
+        memory = Buffer(self.observation_space,
+                        self.action_space,
+                        self.representation_info_shape,
+                        self.auxiliary_info_shape,
+                        self.nenvs,
+                        self.nsteps,
+                        self.nminibatch,
+                        self.gamma,
+                        self.lam)
         learner = PPOCLIP_Learner(policy,
                                   optimizer,
                                   scheduler,

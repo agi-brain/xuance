@@ -1,4 +1,5 @@
 agent: "A2C"
+vectorize: "Dummy_Atari"
 env_name: "Atari"
 env_id: "ALE/Breakout-v5"
 obs_type: "grayscale"  # choice for Atari env: ram, rgb, grayscale
@@ -10,12 +11,11 @@ policy: "Categorical_AC"
 representation: "Basic_CNN"
 
 # the following three arguments are for "Basic_CNN" representation.
-filters: [16, 16, 32, 32]  # [32, 64, 64]
-kernels: [8, 6, 4, 4]  # [8, 4, 3]
-strides: [2, 2, 2, 2]  # [4, 2, 1]
-
-actor_hidden_size: [256,]
-critic_hidden_size: [256,]
+filters: [32, 32, 64, 64]
+kernels: [8, 4, 4, 4]
+strides: [4, 2, 2, 2]
+actor_hidden_size: [128, 128]
+critic_hidden_size: [128, 128]
 activation: "LeakyReLU"
 
 parallels: 8
@@ -39,6 +39,6 @@ rewnorm_range: 5
 
 test_steps: 10000
 eval_interval: 100000
-test_episode: 3
+test_episode: 1
 logdir: "./logs/a2c/"
 modeldir: "./models/a2c/"
