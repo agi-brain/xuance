@@ -3,7 +3,7 @@ from xuanpolicy import get_runner
 
 
 def parse_args():
-    parser = argparse.ArgumentParser("Multi-Agent Reinforcement Learning With Causality Detection.")
+    parser = argparse.ArgumentParser("Run a demo.")
     parser.add_argument("--method", type=str, default="sac")
     parser.add_argument("--env", type=str, default="mujoco")
     parser.add_argument("--env-id", type=str, default="Ant-v4")
