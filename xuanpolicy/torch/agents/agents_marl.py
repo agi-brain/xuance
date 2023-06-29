@@ -25,6 +25,7 @@ class MARLAgents(object):
         self.dim_id = self.n_agents
         self.device = torch.device("cuda" if (torch.cuda.is_available() and config.device in ["gpu", "cuda:0"]) else "cpu")
         self.envs = envs
+
         if config.logger == "tensorboard":
             time_string = time.asctime().replace(" ", "").replace(":", "_")
             log_dir = os.path.join(os.getcwd(), config.logdir) + "/" + time_string
@@ -105,7 +106,7 @@ class MARLAgents(object):
             return greedy_actions
 
     def train(self, i_episode):
-        return
+        raise NotImplementedError
 
 
 class linear_decay_or_increase(object):

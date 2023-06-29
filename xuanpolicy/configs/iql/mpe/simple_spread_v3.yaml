@@ -9,6 +9,7 @@ runner: "MPE_Runner"
 
 representation_hidden_size: [32, ]  # the units for each hidden layer
 q_hidden_size: [128, ]
+activation: "ReLU"
 
 buffer_size: 100000
 batch_size: 256
@@ -26,11 +27,6 @@ n_tests: 5
 test_period: 100
 double_q: True  # use double q learning
 consider_terminal_states: False  # if consider the terminal states when calculate target Q-values.
-
-use_obsnorm: False
-use_rewnorm: False
-obsnorm_range: 5
-rewnorm_range: 5
 
 logdir: "./logs/iql/"
 modeldir: "./models/iql/"
