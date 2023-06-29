@@ -280,15 +280,33 @@ $ tensorboard --logdir ./logs/dqn/torch/CartPole-v0
 
 ![Tensorboard](docs/source/figures/debug.png) -->
 
-## Selected Results
+## Part of Benchmarks
 
-### Toy Environments
+### Mujoco Environment (Ongoing)
 
-### Mujoco Environments
+| Task        | DDPG   | TD3     | PG | A2C     | PPO    | PPG | SAC |
+|-------------|--------|---------|----|---------|--------|-----|-----|
+| Ant         | 1472.8 | 4822.9  |    | 1420.4  | 2810.7 |     |     |
+| HalfCheetah | 10093  | 10718.1 |    | 2674.5  | 4628.4 |     |     |
+| Hopper      | 3434.9 | 3492.4  |    | 825.9   | 3450.1 |     |     |
+| Walker2d    | 2443.7 | 4307.9  |    | 970.6   | 4318.6 |     |     |
+| Swimmer     | 67.7   | 59.9    |    | 51.4    | 108.9  |     |     |
+| Humanoid    | 99     | 547.88  |    | 240.9   | 705.5  |     |     |
+| Reacher     | -4.05  | -4.07   |    | -11.7   | -8.1   |     |     |
+| Ipendulum   | 1000   | 1000    |    | 1000    | 1000   |     |     |
+| IDPendulum  | 9359.8 | 9358.9  |    | 9357.8  | 9359.1 |     |     |
+
+### Atari Environment (Ongoing)
+
+| Task     | DQN | DDQN | C51 | A2C | PPO |
+|----------|-----|------|-----|-----|-----|
+| Breakout |     |      | 431 |     |     |
+| Pong     |     |      | 20  |     |     |
 
 
+### MPE Environment (Ongoing)
 
-### MPE Environments
+
 
 ```
 @misc{XuanPolicy2023,
