@@ -9,7 +9,7 @@ actor_hidden_size: [256, ]
 critic_hidden_size: [256, ]
 activation: "LeakyReLU"
 
-seed: 3577
+seed: 19089
 parallels: 4  # number of environments
 nsize: 50000  # replay buffer size
 batchsize: 256
@@ -31,6 +31,6 @@ rewnorm_range: 5
 
 test_steps: 10000
 eval_interval: 5000
-test_episode: 1
+test_episode: 5
 logdir: "./logs/ddpg/"
 modeldir: "./models/ddpg/"

@@ -436,12 +436,13 @@ class DDPGPolicy(nn.Module):
     def forward(self, observation: Union[np.ndarray, dict], noise_scale: float):
         outputs = self.representation(observation)
         act = self.actor(outputs['state'])
-        noise = torch.randn_like(act) * noise_scale
-        return outputs, (act + noise).clamp(-1, 1)
+        return outputs, act
 
     def Qtarget(self, observation: Union[np.ndarray, dict]):
         outputs = self.representation(observation)
         act = self.target_actor(outputs['state'])
+        # noise = torch.randn_like(act).clamp(-1, 1) * 0.1
+        # act = (act + noise).clamp(-1, 1)
         return self.target_critic(outputs['state'], act)
 
     def Qaction(self, observation: Union[np.ndarray, dict], action: torch.Tensor):
@@ -489,13 +490,12 @@ class TD3Policy(nn.Module):
     def action(self, observation: Union[np.ndarray, dict], noise_scale: float):
         outputs = self.representation(observation)
         act = self.actor(outputs['state'])
-        noise = torch.randn_like(act).clamp(-1, 1) * noise_scale
-        return outputs, (act + noise).clamp(-1, 1)
+        return outputs, act
 
     def Qtarget(self, observation: Union[np.ndarray, dict]):
         outputs = self.representation(observation)
         act = self.target_actor(outputs['state'])
-        noise = torch.randn_like(act).clamp(-1, 1) * 0.1
+        noise = torch.randn_like(act).clamp(-0.1, 0.1) * 0.1
         act = (act + noise).clamp(-1, 1)
         qa = self.target_criticA(outputs['state'], act).unsqueeze(dim=1)
         qb = self.target_criticB(outputs['state'], act).unsqueeze(dim=1)

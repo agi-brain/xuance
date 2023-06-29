@@ -10,7 +10,6 @@ class PPOCLIP_Agent(Agent):
                  scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
                  device: Optional[Union[int, str, torch.device]] = None):
         self.render = config.render
-        self.comm = MPI.COMM_WORLD
         self.nenvs = envs.num_envs
         self.nsteps = config.nsteps
         self.nminibatch = config.nminibatch
@@ -20,7 +19,7 @@ class PPOCLIP_Agent(Agent):
         self.lam = config.lam
         self.observation_space = envs.observation_space
         self.action_space = envs.action_space
-        self.representation_info_shape = policy.representation_actor.output_shapes
+        self.representation_info_shape = policy.representation.output_shapes
         self.auxiliary_info_shape = {"old_logp": ()}
 
         self.atari = True if config.env_name == "Atari" else False
@@ -42,9 +41,6 @@ class PPOCLIP_Agent(Agent):
                                   config.vf_coef,
                                   config.ent_coef,
                                   config.clip_range)
-
-        self.obs_rms = RunningMeanStd(shape=space2shape(self.observation_space), comm=self.comm, use_mpi=False)
-        self.ret_rms = RunningMeanStd(shape=(), comm=self.comm, use_mpi=False)
         super(PPOCLIP_Agent, self).__init__(config, envs, policy, memory, learner, device, config.logdir,
                                             config.modeldir)
 
@@ -75,7 +71,6 @@ class PPOCLIP_Agent(Agent):
                     obs_batch, act_batch, ret_batch, adv_batch, aux_batch = self.memory.sample()
                     step_info = self.learner.update(obs_batch, act_batch, ret_batch, adv_batch, aux_batch['old_logp'])
                 self.memory.clear()
-                self.log_infos(step_info, self.current_step)
 
             self.returns = self.gamma * self.returns + rewards
             obs = next_obs

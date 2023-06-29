@@ -44,7 +44,8 @@ class TD3_Agent(Agent):
     def _action(self, obs, noise_scale=0.0):
         _, action = self.policy.action(obs, noise_scale)
         action = action.detach().cpu().numpy()
-        return action
+        action = action + np.random.normal(size=action.shape) * noise_scale
+        return np.clip(action, -1, 1)
 
     def train(self, train_steps):
         obs = self.envs.buf_obs
@@ -80,7 +81,7 @@ class TD3_Agent(Agent):
 
             self.current_step += 1
             if self.noise_scale >= self.end_noise:
-                self.noise_scale = self.start_noise - (self.start_noise - self.end_noise) / self.config.training_steps
+                self.noise_scale = self.noise_scale - (self.start_noise - self.end_noise) / self.config.training_steps
 
     def test(self, env_fn, test_episodes):
         test_envs = env_fn()

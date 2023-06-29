@@ -21,7 +21,7 @@ class A2C_Agent(Agent):
 
         self.observation_space = envs.observation_space
         self.action_space = envs.action_space
-        self.representation_info_shape = policy.representation_actor.output_shapes
+        self.representation_info_shape = policy.representation.output_shapes
         self.auxiliary_info_shape = {}
         self.atari = True if config.env_name == "Atari" else False
         Buffer = DummyOnPolicyBuffer_Atari if self.atari else DummyOnPolicyBuffer

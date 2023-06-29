@@ -5,7 +5,7 @@ continuous_action: False
 policy: "Basic_Q_network_marl"
 representation: "Basic_MLP"
 vectorize: "Dummy_MAS"
-runner: "MARL"
+runner: "MPE_Runner"
 
 representation_hidden_size: [32, ]  # the units for each hidden layer
 q_hidden_size: [128, ]

@@ -19,11 +19,11 @@ critic_hidden_size: [128, 128]
 activation: "LeakyReLU"
 
 parallels: 8
-training_steps: 1250000
+training_steps: 10000000  # 10M
 nsteps: 256
 nepoch: 4
 nminibatch: 8
-learning_rate: 0.0007
+learning_rate: 0.00025
 
 vf_coef: 0.25
 ent_coef: 0.01
@@ -31,8 +31,8 @@ clip_range: 0.2
 gamma: 0.99
 lam: 0.95
 
-use_obsnorm: True
-use_rewnorm: True
+use_obsnorm: False
+use_rewnorm: False
 obsnorm_range: 5
 rewnorm_range: 5
 
