@@ -4,7 +4,7 @@ from xuanpolicy.torch.agents import *
 class VDAC_Agents(MARLAgents):
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecEnv_MAS,
+                 envs: DummyVecEnv_Pettingzoo,
                  device: Optional[Union[int, str, torch.device]] = None):
         self.comm = MPI.COMM_WORLD
         self.device = torch.device("cuda" if (torch.cuda.is_available() and config.device in ["gpu", "cuda:0"]) else "cpu")

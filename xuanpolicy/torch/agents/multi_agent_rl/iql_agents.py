@@ -5,7 +5,7 @@ from xuanpolicy.torch.agents.agents_marl import linear_decay_or_increase
 class IQL_Agents(MARLAgents):
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecEnv_MAS,
+                 envs: DummyVecEnv_Pettingzoo,
                  device: Optional[Union[int, str, torch.device]] = None):
         self.gamma = config.gamma
         self.start_greedy = config.start_greedy

@@ -115,6 +115,7 @@ class MPE_Runner(Runner_Base_MARL):
             next_state, agent_mask = self.envs.global_state(), self.envs.agent_mask()
 
             if self.render or self.test_mode:
+                self.envs.render()
                 time.sleep(self.render_delay)
 
             for h in range(self.n_handles):
@@ -148,10 +149,6 @@ class MPE_Runner(Runner_Base_MARL):
                             continue
                         info_train["returns-step/env-%d" % i] = scores[h, i]
                         mas_group.log_infos(info_train, step)
-
-            if step % self.save_model_frequency == 0 or step == self.n_steps - 1:
-                for h, mas_group in enumerate(self.marl_agents):
-                    mas_group.save_model()
 
         self.envs.close()
 

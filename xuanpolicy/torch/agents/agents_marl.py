@@ -7,7 +7,7 @@ from pathlib import Path
 class MARLAgents(object):
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecEnv_MAS,
+                 envs: DummyVecEnv_Pettingzoo,
                  policy: nn.Module,
                  memory: BaseBuffer,
                  learner: LearnerMAS,

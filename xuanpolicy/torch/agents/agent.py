@@ -7,7 +7,7 @@ from xuanpolicy.torch.agents import *
 class Agent(ABC):
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecEnv,
+                 envs: DummyVecEnv_Gym,
                  policy: nn.Module,
                  memory: Buffer,
                  learner: Learner,
