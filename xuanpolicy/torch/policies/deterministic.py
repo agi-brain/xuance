@@ -433,7 +433,7 @@ class DDPGPolicy(nn.Module):
         self.target_actor = copy.deepcopy(self.actor)
         self.target_critic = copy.deepcopy(self.critic)
 
-    def forward(self, observation: Union[np.ndarray, dict], noise_scale: float):
+    def forward(self, observation: Union[np.ndarray, dict]):
         outputs = self.representation(observation)
         act = self.actor(outputs['state'])
         return outputs, act
@@ -487,7 +487,7 @@ class TD3Policy(nn.Module):
         self.target_criticA = copy.deepcopy(self.criticA)
         self.target_criticB = copy.deepcopy(self.criticB)
 
-    def action(self, observation: Union[np.ndarray, dict], noise_scale: float):
+    def action(self, observation: Union[np.ndarray, dict]):
         outputs = self.representation(observation)
         act = self.actor(outputs['state'])
         return outputs, act

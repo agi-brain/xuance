@@ -67,6 +67,7 @@ class ActorCriticPolicy(nn.Module):
         self.device = device
         self.action_dim = action_space.n
         self.representation = representation
+        self.representation_critic = copy.deepcopy(representation)
         self.representation_info_shape = representation.output_shapes
         self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size,
                               normalize, initialize, activation, device)
@@ -74,10 +75,12 @@ class ActorCriticPolicy(nn.Module):
                                 normalize, initialize, activation, device)
 
     def forward(self, observation: Union[np.ndarray, dict]):
-        outputs = self.representation(observation)
-        a = self.actor(outputs['state'])
-        v = self.critic(outputs['state'])
-        return outputs, a, v
+        outputs_policy = self.representation(observation)
+        outputs_critic = self.representation_critic(observation)
+        a = self.actor(outputs_policy['state'])
+        v = self.critic(outputs_critic['state'])
+        return {"outputs_policy": outputs_policy,
+                "outputs_critic": outputs_critic}, a, v
 
 
 class ActorPolicy(nn.Module):
@@ -199,43 +202,46 @@ class SACDISPolicy(nn.Module):
         super(SACDISPolicy, self).__init__()
         self.action_dim = action_space.n
         self.representation = representation
+        self.representation_critic = copy.deepcopy(representation)
         self.representation_info_shape = self.representation.output_shapes
-
         self.actor = ActorNet_SACDIS(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size,
                                      normalize, initialize, activation, device)
         self.critic = CriticNet_SACDIS(representation.output_shapes['state'][0], self.action_dim, critic_hidden_size,
                                        initialize, activation, device)
+        self.target_representation_critic = copy.deepcopy(self.representation_critic)
         self.target_critic = copy.deepcopy(self.critic)
 
-    def action(self, observation: Union[np.ndarray, dict]):
+    def forward(self, observation: Union[np.ndarray, dict]):
         outputs = self.representation(observation)
         act_prob, act_distribution = self.actor(outputs['state'])
         return outputs, act_prob, act_distribution
 
     def Qtarget(self, observation: Union[np.ndarray, dict]):
-        outputs = self.representation(observation)
-        act_prob, act_distribution = self.actor(outputs['state'])
+        outputs_actor = self.representation(observation)
+        outputs_critic = self.target_representation_critic(observation)
+        act_prob, act_distribution = self.actor(outputs_actor['state'])
         # z = act_prob == 0.0
         # z = z.float() * 1e-8
         log_action_prob = torch.log(act_prob + 1e-5)
-        return outputs, act_prob, log_action_prob, self.target_critic(outputs['state'])
+        return act_prob, log_action_prob, self.target_critic(outputs_critic['state'])
 
     def Qaction(self, observation: Union[np.ndarray, dict]):
-        outputs = self.representation(observation)
-        return outputs, self.critic(outputs['state'])
+        outputs_critic = self.representation_critic(observation)
+        return outputs_critic, self.critic(outputs_critic['state'])
 
     def Qpolicy(self, observation: Union[np.ndarray, dict]):
-        outputs = self.representation(observation)
-        act_prob, act_distribution = self.actor(outputs['state'])
+        outputs_actor = self.representation(observation)
+        outputs_critic = self.representation(observation)
+        act_prob, act_distribution = self.actor(outputs_actor['state'])
         # z = act_prob == 0.0
         # z = z.float() * 1e-8
         log_action_prob = torch.log(act_prob + 1e-5)
-        return outputs, act_prob, log_action_prob, self.critic(outputs['state'])
-
-    def forward(self):
-        return super().forward()
+        return act_prob, log_action_prob, self.critic(outputs_critic['state'])
 
     def soft_update(self, tau=0.005):
+        for ep, tp in zip(self.representation_critic.parameters(), self.target_representation_critic.parameters()):
+            tp.data.mul_(1 - tau)
+            tp.data.add_(tau * ep.data)
         for ep, tp in zip(self.critic.parameters(), self.target_critic.parameters()):
             tp.data.mul_(1 - tau)
             tp.data.add_(tau * ep.data)

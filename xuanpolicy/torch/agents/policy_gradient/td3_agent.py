@@ -42,7 +42,7 @@ class TD3_Agent(Agent):
         super(TD3_Agent, self).__init__(config, envs, policy, memory, learner, device, config.logdir, config.modeldir)
 
     def _action(self, obs, noise_scale=0.0):
-        _, action = self.policy.action(obs, noise_scale)
+        _, action = self.policy.action(obs)
         action = action.detach().cpu().numpy()
         action = action + np.random.normal(size=action.shape) * noise_scale
         return np.clip(action, -1, 1)
