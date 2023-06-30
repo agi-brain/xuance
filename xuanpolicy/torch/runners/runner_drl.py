@@ -88,7 +88,8 @@ class Runner_DRL(Runner_Base):
             self.agent.test(env_fn, self.args.test_episode)
             print("Finish testing.")
         else:
-            self.agent.train(self.args.training_steps)
+            n_train_steps = self.args.training_steps // self.n_envs
+            self.agent.train(n_train_steps)
             print("Finish training.")
             self.agent.save_model("final_train_model.path")
 
@@ -104,12 +105,14 @@ class Runner_DRL(Runner_Base):
             args_test = deepcopy(self.args)
             args_test.parallels = args_test.test_episode
             return make_envs(args_test)
-        train_steps = self.args.training_steps
+        train_steps = self.args.training_steps // self.n_envs
         eval_interval = self.args.eval_interval
         test_episode = self.args.test_episode
         num_epoch = int(train_steps / eval_interval)
-        best_scores_info = {"mean": -np.inf,
-                            "std": 0.0,
+
+        test_scores = self.agent.test(env_fn, test_episode)
+        best_scores_info = {"mean": np.mean(test_scores),
+                            "std": np.std(test_scores),
                             "step": self.agent.current_step}
         for i_epoch in range(num_epoch):
             print("Epoch: %d/%d:" % (i_epoch, num_epoch))

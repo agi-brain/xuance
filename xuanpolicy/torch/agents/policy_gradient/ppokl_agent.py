@@ -10,7 +10,6 @@ class PPOKL_Agent(Agent):
                  scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
                  device: Optional[Union[int, str, torch.device]] = None):
         self.render = config.render
-        self.comm = MPI.COMM_WORLD
         self.nenvs = envs.num_envs
         self.nsteps = config.nsteps
         self.nminibatch = config.nminibatch
@@ -18,25 +17,22 @@ class PPOKL_Agent(Agent):
 
         self.gamma = config.gamma
         self.lam = config.lam
-        self.use_obsnorm = config.use_obsnorm
-        self.use_rewnorm = config.use_rewnorm
-        self.obsnorm_range = config.obsnorm_range
-        self.rewnorm_range = config.rewnorm_range
-
         self.observation_space = envs.observation_space
         self.action_space = envs.action_space
         self.representation_info_shape = policy.representation_actor.output_shapes
         self.auxiliary_info_shape = {"old_dist": None}
 
-        memory = DummyOnPolicyBuffer(self.observation_space,
-                                     self.action_space,
-                                     self.representation_info_shape,
-                                     self.auxiliary_info_shape,
-                                     self.nenvs,
-                                     self.nsteps,
-                                     self.nminibatch,
-                                     self.gamma,
-                                     self.lam)
+        self.atari = True if config.env_name == "Atari" else False
+        Buffer = DummyOnPolicyBuffer_Atari if self.atari else DummyOnPolicyBuffer_Atari
+        memory = Buffer(self.observation_space,
+                        self.action_space,
+                        self.representation_info_shape,
+                        self.auxiliary_info_shape,
+                        self.nenvs,
+                        self.nsteps,
+                        self.nminibatch,
+                        self.gamma,
+                        self.lam)
         learner = PPOKL_Learner(policy,
                                 optimizer,
                                 scheduler,
@@ -45,40 +41,8 @@ class PPOKL_Agent(Agent):
                                 config.vf_coef,
                                 config.ent_coef,
                                 config.target_kl)
-
-        self.obs_rms = RunningMeanStd(shape=space2shape(self.observation_space), comm=self.comm, use_mpi=False)
-        self.ret_rms = RunningMeanStd(shape=(), comm=self.comm, use_mpi=False)
         super(PPOKL_Agent, self).__init__(config, envs, policy, memory, learner, device, config.logdir,
                                           config.modeldir)
-        if self.atari:
-            self.memory = DummyOnPolicyBuffer_Atari(self.observation_space,
-                                                    self.action_space,
-                                                    self.representation_info_shape,
-                                                    self.auxiliary_info_shape,
-                                                    self.nenvs,
-                                                    self.nsteps,
-                                                    self.nminibatch,
-                                                    self.gamma,
-                                                    self.lam)
-
-    def _process_observation(self, observations):
-        if self.use_obsnorm:
-            if isinstance(self.observation_space, Dict):
-                for key in self.observation_space.spaces.keys():
-                    observations[key] = np.clip(
-                        (observations[key] - self.obs_rms.mean[key]) / (self.obs_rms.std[key] + EPS),
-                        -self.obsnorm_range, self.obsnorm_range)
-            else:
-                observations = np.clip((observations - self.obs_rms.mean) / (self.obs_rms.std + EPS),
-                                       -self.obsnorm_range, self.obsnorm_range)
-            return observations
-        return observations
-
-    def _process_reward(self, rewards):
-        if self.use_rewnorm:
-            std = np.clip(self.ret_rms.std, 0.1, 100)
-            return np.clip(rewards / std, -self.rewnorm_range, self.rewnorm_range)
-        return rewards
 
     def _action(self, obs):
         _, dists, vs = self.policy(obs)
@@ -124,7 +88,7 @@ class PPOKL_Agent(Agent):
                             step_info["Train-Episode-Rewards"] = {"env-%d" % i: infos[i]["episode_score"]}
                         self.log_infos(step_info, self.current_step)
 
-            self.current_step += 1
+            self.current_step += self.nenvs
 
     def test(self, env_fn, test_episode):
         test_envs = env_fn()

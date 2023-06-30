@@ -10,15 +10,9 @@ class C51_Agent(Agent):
                  scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
                  device: Optional[Union[int, str, torch.device]] = None):
         self.render = config.render
-        self.comm = MPI.COMM_WORLD
         self.nenvs = envs.num_envs
 
         self.gamma = config.gamma
-        self.use_obsnorm = config.use_obsnorm
-        self.use_rewnorm = config.use_rewnorm
-        self.obsnorm_range = config.obsnorm_range
-        self.rewnorm_range = config.rewnorm_range
-
         self.train_frequency = config.training_frequency
         self.start_training = config.start_training
         self.start_greedy = config.start_greedy
@@ -30,13 +24,15 @@ class C51_Agent(Agent):
         self.representation_info_shape = policy.representation.output_shapes
         self.auxiliary_info_shape = {}
 
-        memory = DummyOffPolicyBuffer(self.observation_space,
-                                      self.action_space,
-                                      self.representation_info_shape,
-                                      self.auxiliary_info_shape,
-                                      self.nenvs,
-                                      config.nsize,
-                                      config.batchsize)
+        self.atari = True if config.env_name == "Atari" else False
+        Buffer = DummyOffPolicyBuffer_Atari if self.atari else DummyOffPolicyBuffer
+        memory = Buffer(self.observation_space,
+                        self.action_space,
+                        self.representation_info_shape,
+                        self.auxiliary_info_shape,
+                        self.nenvs,
+                        config.nsize,
+                        config.batchsize)
         learner = C51_Learner(policy,
                               optimizer,
                               scheduler,
@@ -44,37 +40,7 @@ class C51_Agent(Agent):
                               config.modeldir,
                               config.gamma,
                               config.sync_frequency)
-
-        self.obs_rms = RunningMeanStd(shape=space2shape(self.observation_space), comm=self.comm, use_mpi=False)
-        self.ret_rms = RunningMeanStd(shape=(), comm=self.comm, use_mpi=False)
         super(C51_Agent, self).__init__(config, envs, policy, memory, learner, device, config.logdir, config.modeldir)
-        if self.atari:
-            self.memory = DummyOffPolicyBuffer_Atari(self.observation_space,
-                                                     self.action_space,
-                                                     self.representation_info_shape,
-                                                     self.auxiliary_info_shape,
-                                                     self.nenvs,
-                                                     config.nsize,
-                                                     config.batchsize)
-
-    def _process_observation(self, observations):
-        if self.use_obsnorm:
-            if isinstance(self.observation_space, Dict):
-                for key in self.observation_space.spaces.keys():
-                    observations[key] = np.clip(
-                        (observations[key] - self.obs_rms.mean[key]) / (self.obs_rms.std[key] + EPS),
-                        -self.obsnorm_range, self.obsnorm_range)
-            else:
-                observations = np.clip((observations - self.obs_rms.mean) / (self.obs_rms.std + EPS),
-                                       -self.obsnorm_range, self.obsnorm_range)
-            return observations
-        return observations
-
-    def _process_reward(self, rewards):
-        if self.use_rewnorm:
-            std = np.clip(self.ret_rms.std, 0.1, 100)
-            return np.clip(rewards / std, -self.rewnorm_range, self.rewnorm_range)
-        return rewards
 
     def _action(self, obs, egreedy=0.0):
         _, argmax_action, _ = self.policy(obs)
@@ -117,7 +83,7 @@ class C51_Agent(Agent):
                             step_info["Train-Episode-Rewards"] = {"env-%d" % i: infos[i]["episode_score"]}
                         self.log_infos(step_info, self.current_step)
 
-            self.current_step += 1
+            self.current_step += self.nenvs
             if self.egreedy > self.end_greedy:
                 self.egreedy = self.egreedy - (self.start_greedy - self.end_greedy) / self.config.decay_step_greedy
 

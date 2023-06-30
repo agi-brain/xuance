@@ -4,7 +4,7 @@ from xuanpolicy import get_runner
 
 def parse_args():
     parser = argparse.ArgumentParser("Run benchmark results.")
-    parser.add_argument("--method", type=str, default="drqn")
+    parser.add_argument("--method", type=str, default="a2c")
     parser.add_argument("--env", type=str, default="classic_control")
     parser.add_argument("--env-id", type=str, default="CartPole-v1")
     parser.add_argument("--device", type=str, default="cuda:0")

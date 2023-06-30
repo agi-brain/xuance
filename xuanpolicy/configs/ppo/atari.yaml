@@ -37,7 +37,7 @@ obsnorm_range: 5
 rewnorm_range: 5
 
 test_steps: 10000
-eval_interval: 100000
-test_episode: 1
+eval_interval: 12500
+test_episode: 5
 logdir: "./logs/ppo/"
 modeldir: "./models/ppo/"

@@ -11,7 +11,7 @@ activation: "LeakyReLU"
 
 seed: 6782
 parallels: 16
-training_steps: 62500
+training_steps: 1000000  # 1M
 nsteps: 16
 nepoch: 1
 nminibatch: 1
@@ -30,7 +30,7 @@ obsnorm_range: 5
 rewnorm_range: 5
 
 test_steps: 10000
-eval_interval: 5000
+eval_interval: 10000
 test_episode: 5
 logdir: "./logs/a2c/"
 modeldir: "./models/a2c/"
