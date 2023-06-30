@@ -105,7 +105,7 @@ class Runner_DRL(Runner_Base):
             args_test = deepcopy(self.args)
             args_test.parallels = args_test.test_episode
             return make_envs(args_test)
-        train_steps = self.args.training_steps // self.n_envs
+        train_steps = self.args.training_steps
         eval_interval = self.args.eval_interval
         test_episode = self.args.test_episode
         num_epoch = int(train_steps / eval_interval)

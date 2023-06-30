@@ -78,7 +78,7 @@ class SAC_Agent(Agent):
                         step_info["Train-Episode-Rewards"] = {"env-%d" % i: infos[i]["episode_score"]}
                     self.log_infos(step_info, self.current_step)
 
-            self.current_step += self.nenvs
+            self.current_step += 1
 
     def test(self, env_fn, test_episodes):
         test_envs = env_fn()
