@@ -18,7 +18,7 @@ q_hidden_size: [128, ]
 activation: 'LeakyReLU'
 
 seed: 1069
-parallels: 8
+parallels: 5
 nsize: 10000
 batchsize: 64
 learning_rate: 0.00025
@@ -28,7 +28,7 @@ start_greedy: 1.0
 end_greedy: 0.05
 sync_frequency: 500
 training_frequency: 1
-training_steps: 10000000  # 10e6
+training_steps: 50000000  # 50M
 start_training: 10000
 
 use_obsnorm: False

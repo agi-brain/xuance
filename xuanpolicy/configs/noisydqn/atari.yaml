@@ -30,7 +30,7 @@ end_noise: 0.0
 decay_step_greedy: 1000000  # 1M
 sync_frequency: 500
 training_frequency: 1
-training_steps: 10000000  # 10M
+training_steps: 50000000  # 50M
 start_training: 10000
 
 use_obsnorm: False
