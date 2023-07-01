@@ -35,17 +35,9 @@ class COMA_Learner(LearnerMAS):
 
     def build_td_lambda(self, rewards, terminated, agent_mask, target_q_a, max_step_len):
         returns = target_q_a.new_zeros(*target_q_a.shape)
-        if self.args.consider_terminal_states:
-            returns[:, -1] = target_q_a[:, -1] * (1 - terminated.sum(dim=1))
-            for t in range(max_step_len - 2, -1, -1):
-                returns[:, t] = self.td_lambda * self.gamma * returns[:, t + 1] + (
-                        rewards[:, t] + (1 - self.td_lambda) * self.gamma * target_q_a[:, t + 1] * (
-                        1 - terminated[:, t])) * agent_mask[:, t]
-        else:
-            returns[:, -1] = target_q_a[:, -1]
-            for t in range(max_step_len - 2, -1, -1):
-                returns[:, t] = self.td_lambda * self.gamma * returns[:, t + 1] + (
-                            rewards[:, t] + (1 - self.td_lambda) * self.gamma * target_q_a[:, t + 1]) * agent_mask[:, t]
+        returns[:, -1] = target_q_a[:, -1] * (1 - terminated.sum(dim=1))
+        for t in range(max_step_len - 2, -1, -1):
+            returns[:, t] = self.td_lambda * self.gamma * returns[:, t + 1] + (rewards[:, t] + (1 - self.td_lambda) * self.gamma * target_q_a[:, t + 1] * (1 - terminated[:, t])) * agent_mask[:, t]
         return returns[:, 0:-1]
 
     def update(self, sample):
@@ -69,15 +61,15 @@ class COMA_Learner(LearnerMAS):
 
         loss_c_item = 0.0
         q_eval = torch.zeros_like(target_q_eval)[:, :-1]
-        for t in reversed(range(step_len-1)):
-            agent_mask_t = agent_mask[:, t:t+1]
+        for t in reversed(range(step_len - 1)):
+            agent_mask_t = agent_mask[:, t:t + 1]
             actions_t = actions[:, t].unsqueeze(-2)
             critic_in = self.policy.build_critic_in(state_repeat, obs, actions_onehot, IDs, t)
             q_eval_t = self.policy.critic(critic_in)
-            q_eval[:, t:t+1] = q_eval_t
+            q_eval[:, t:t + 1] = q_eval_t
             q_eval_a_t = q_eval_t.gather(-1, actions_t.unsqueeze(-1).long()).view(batch_size, 1, self.n_agents)
             q_eval_a_t *= agent_mask_t
-            target_t = targets[:, t:t+1]
+            target_t = targets[:, t:t + 1]
 
             self.iterations_critic += 1
             loss_c = self.mse_loss(q_eval_a_t, target_t.detach())
@@ -99,7 +91,7 @@ class COMA_Learner(LearnerMAS):
         pi_log_prob = pi_dist.log_prob(actions)[:, :-1]
         baseline = (pi * q_eval).sum(-1).detach()
 
-        q_eval_a = q_eval.gather(-1, actions[:, :-1].unsqueeze(-1).long()).view(batch_size, step_len-1, self.n_agents)
+        q_eval_a = q_eval.gather(-1, actions[:, :-1].unsqueeze(-1).long()).view(batch_size, step_len - 1, self.n_agents)
         advantages = (q_eval_a - baseline).detach()
 
         self.iterations_actor += 1

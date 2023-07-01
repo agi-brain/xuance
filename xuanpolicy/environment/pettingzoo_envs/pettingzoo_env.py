@@ -32,12 +32,10 @@ class PettingZoo_Env(ParallelEnv):
         # self.reward_range = env.reward_range
         self.metadata = self.env.metadata
         # self._warn_double_wrap()
-
-        self._episode_step = 0
-        self._episode_score = 0.0
         # assert self.spec.id in ENVIRONMENTS
 
         self.max_cycles = self.env.aec_env.env.env.max_cycles
+        self.individual_episode_reward = {k: 0.0 for k in self.agents}
 
     def close(self):
         self.env.close()
@@ -47,18 +45,19 @@ class PettingZoo_Env(ParallelEnv):
 
     def reset(self, seed=None, options=None):
         observations, infos = self.env.reset()
-        self._episode_step = 0
-        self._episode_score = 0.0
-        infos["episode_step"] = self._episode_step
-        return observations, infos
+        for agent_key in self.agents:
+            self.individual_episode_reward[agent_key] = 0.0
+        reset_info = {"infos": infos,
+                      "individual_episode_rewards": self.individual_episode_reward}
+        return observations, reset_info
 
     def step(self, actions):
         observations, rewards, terminations, truncations, infos = self.env.step(actions)
-        self._episode_step += 1
-        self._episode_score += rewards
-        infos["episode_step"] = self._episode_step
-        infos["episode_score"] = self._episode_score
-        return observations, rewards, terminations, truncations, infos
+        for k, v in rewards.items():
+            self.individual_episode_reward[k] += v
+        step_info = {"infos": infos,
+                     "individual_episode_rewards": self.individual_episode_reward}
+        return observations, rewards, terminations, truncations, step_info
 
     def state(self):
         try:

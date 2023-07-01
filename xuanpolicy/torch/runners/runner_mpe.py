@@ -16,7 +16,10 @@ class MPE_Runner(Runner_Base_MARL):
                 continue
             else:
                 super(MPE_Runner, self).__init__(arg)
+                self.training_steps = arg.training_steps
+                self.training_frequency = arg.training_frequency
                 break
+        self.episode_length = self.envs.max_episode_length
 
         # environment details, representations, policies, optimizers, and agents.
         for h, arg in enumerate(self.args):
@@ -43,112 +46,117 @@ class MPE_Runner(Runner_Base_MARL):
 
         self.print_infos(self.args)
 
-    def run_episode(self, episode, test_mode=False):
-        info_train = {}
-        obs_n = self.envs.reset()
+    def train_episode(self, n_episodes):
+        obs_n = self.envs.buf_obs
         state, agent_mask = self.envs.global_state(), self.envs.agent_mask()
 
-        scores = np.zeros([self.n_handles, self.n_envs, 1], dtype=np.float32)
-        done_envs = np.zeros([self.n_envs, 1], dtype=np.bool)
         act_mean_last = [np.zeros([self.n_envs, arg.dim_act]) for arg in self.args]
+        terminal_handle = np.zeros([self.n_handles, self.n_envs], dtype=np.bool)
+        truncate_handle = np.zeros([self.n_handles, self.n_envs], dtype=np.bool)
+        episode_score = np.zeros([self.n_handles, self.n_envs, 1], dtype=np.float32)
+        episode_info = {}
+        for i_episode in range(n_episodes):
+            for step in range(self.episode_length):
+                actions_dict = self.get_actions(obs_n, self.current_episode, False, act_mean_last, agent_mask, state)
+                actions_execute = self.combine_env_actions(actions_dict['actions_n'])
+                next_obs_n, rew_n, terminated_n, truncated_n, infos = self.envs.step(actions_execute)
+                next_state, agent_mask = self.envs.global_state(), self.envs.agent_mask()
 
-        while True:
-            actions_dict = self.get_actions(obs_n, episode, test_mode, act_mean_last, agent_mask, state)
-            actions_execute = self.combine_env_actions(actions_dict['actions_n'])
-            next_obs_n, rew_n, done_n, dones, info = self.envs.step(actions_execute)
-            next_state, agent_mask = self.envs.global_state(), self.envs.agent_mask()
+                self.store_data(obs_n, next_obs_n, actions_dict, state, next_state, agent_mask, rew_n, terminated_n, self.envs)
+                obs_n, state, act_mean_last = deepcopy(next_obs_n), deepcopy(next_state), deepcopy(actions_dict['act_mean'])
 
-            if self.render or self.test_mode:
-                time.sleep(self.render_delay)
-            if test_mode:
-                for h in range(self.n_handles):
-                    scores[h] += (1-done_envs) * np.mean(rew_n[h] * agent_mask[h][:, :, np.newaxis], axis=1)
-            else:
-                self.store_data(obs_n, next_obs_n, actions_dict, state, next_state, agent_mask, rew_n, done_n, self.envs)
                 for h, mas_group in enumerate(self.marl_agents):
-                    if self.args[h].train_at_step:
-                        info_train = self.marl_agents[h].train(episode)
+                    episode_score[h] += np.mean(rew_n[h] * agent_mask[h][:, :, np.newaxis], axis=1)
+                    terminal_handle[h] = terminated_n[h].all(axis=-1)
+                    truncate_handle[h] = truncated_n[h].all(axis=-1)
 
-            obs_n, state, act_mean_last = deepcopy(next_obs_n), deepcopy(next_state), deepcopy(actions_dict['act_mean'])
-
-            for e, d in enumerate(dones):
-                if d:  # if done, then reset this environment
-                    done_envs[e], obs_reset = d, self.envs.reset_one_env(e)
-                    state[e] = self.envs.global_state_one_env(e)
-                    if not test_mode:
+                for i in range(self.n_envs):
+                    if terminal_handle.all(axis=0)[i] or truncate_handle.all(axis=0)[i]:
+                        state[i] = self.envs.global_state_one_env(i)
+                        self.current_episode[i] += 1
                         for h, mas_group in enumerate(self.marl_agents):
                             if mas_group.args.agent_name == "random":
                                 continue
-                            obs_n[h][e], act_mean_last[h][e] = obs_reset[h], np.zeros([self.args[h].dim_act])
+                            obs_n[h][i] = infos[i]["reset_obs"][h]
+                            act_mean_last[h][i] = np.zeros([self.args[h].dim_act])
                             if (self.marl_names[h] in ["MAPPO", "CID_Simple", "VDAC"]) and (not self.args[h].consider_terminal_states):
-                                value_next_e = mas_group.value(next_obs_n[h], next_state)[e]
+                                value_next_e = mas_group.value(next_obs_n[h], next_state)[i]
                             else:
                                 value_next_e = np.zeros([mas_group.n_agents, 1])
-                            mas_group.memory.finish_ac_path(value_next_e, e)
-
-            if all(done_envs):
-                break
-
-        # train the model
-        if not test_mode:
-            for h, mas_group in enumerate(self.marl_agents):
-                if mas_group.args.agent_name == "random":
-                    continue
-                if not self.args[h].train_at_step:
-                    info_train = mas_group.train(episode)
-
-        return scores, info_train
-
-    def run(self):
-        info_train = {}
-        obs_n = self.envs.reset()
-        state, agent_mask = self.envs.global_state(), self.envs.agent_mask()
-
-        scores = np.zeros([self.n_handles, self.n_envs, 1], dtype=np.float32)
-        done_envs = np.zeros([self.n_envs, 1], dtype=np.bool)
-        act_mean_last = [np.zeros([self.n_envs, arg.dim_act]) for arg in self.args]
-
-        for step in tqdm(range(self.n_steps)):
-            actions_dict = self.get_actions(obs_n, step, False, act_mean_last, agent_mask, state)
-            actions_execute = self.combine_env_actions(actions_dict['actions_n'])
-            next_obs_n, rew_n, terminated_n, truncated_n, info = self.envs.step(actions_execute)
-            next_state, agent_mask = self.envs.global_state(), self.envs.agent_mask()
-
-            if self.render or self.test_mode:
-                self.envs.render()
-                time.sleep(self.render_delay)
-
+                            mas_group.memory.finish_ac_path(value_next_e, i)
+                            episode_score[h, i] = np.mean(infos[i]["individual_episode_rewards"][h])
+                self.current_step += self.n_envs
+            self.current_episode += self.n_envs
             for h in range(self.n_handles):
-                scores[h] += (1-done_envs) * np.mean(rew_n[h] * agent_mask[h][:, :, np.newaxis], axis=1)
+                episode_info["Train_Episode_Score/side_%d" % h] = episode_score.mean(axis=1)
+                episode_info["Train_Episode_Score_std/side_%d" % h] = episode_score.std(axis=1)
 
-            self.store_data(obs_n, next_obs_n, actions_dict, state, next_state, agent_mask, rew_n, terminated_n, self.envs)
-            for h, mas_group in enumerate(self.marl_agents):
-                if self.args[h].train_at_step:
-                    info_train = self.marl_agents[h].train(step)
+            # train the model
+            if self.current_step % self.training_frequency == 0:
+                for h, mas_group in enumerate(self.marl_agents):
+                    if mas_group.args.agent_name == "random":
+                        continue
+                    train_info = self.marl_agents[h].train(self.current_episode)
+                    mas_group.log_infos(train_info, self.current_step)
+                    mas_group.log_infos(episode_info, self.current_step)
+
+    def test_episode(self, env_fn, n_episodes):
+        test_envs = env_fn()
+        num_envs = test_envs.num_envs
+        videos, episode_videos = [[] for _ in range(num_envs)], []
+        obs_n, infos = test_envs.reset()
+        state, agent_mask = test_envs.global_state(), test_envs.agent_mask()
+        if self.args_base.render_mode == "rgb_array" and self.render:
+            images = test_envs.render(self.args_base.render_mode)
+            for idx, img in enumerate(images):
+                videos[idx].append(img)
+
+        act_mean_last = [np.zeros([num_envs, arg.dim_act]) for arg in self.args]
+        terminal_handle = np.zeros([self.n_handles, num_envs], dtype=np.bool)
+        truncate_handle = np.zeros([self.n_handles, num_envs], dtype=np.bool)
+        episode_score = np.zeros([self.n_handles, num_envs, 1], dtype=np.float32)
+        for step in range(self.episode_length):
+            actions_dict = self.get_actions(obs_n, 0, False, act_mean_last, agent_mask, state)
+            actions_execute = self.combine_env_actions(actions_dict['actions_n'])
+            next_obs_n, rew_n, terminated_n, truncated_n, infos = test_envs.step(actions_execute)
+            next_state, agent_mask = test_envs.global_state(), test_envs.agent_mask()
 
             obs_n, state, act_mean_last = deepcopy(next_obs_n), deepcopy(next_state), deepcopy(actions_dict['act_mean'])
 
-            for e, d in enumerate(truncated_n):
-                if d:  # if done, then reset this environment
-                    done_envs[e], obs_reset = d, self.envs.reset_one_env(e)
-                    state[e] = self.envs.global_state_one_env(e)
-                    for h, mas_group in enumerate(self.marl_agents):
-                        if mas_group.args.agent_name == "random":
-                            continue
-                        obs_n[h][e], act_mean_last[h][e] = obs_reset[h], np.zeros([self.args[h].dim_act])
-                        if (self.marl_names[h] in ["MAPPO", "CID_Simple", "VDAC"]) and (not self.args[h].consider_terminal_states):
-                            value_next_e = mas_group.value(next_obs_n[h], next_state)[e]
-                        else:
-                            value_next_e = np.zeros([mas_group.n_agents, 1])
-                        mas_group.memory.finish_ac_path(value_next_e, e)
+            for h, mas_group in enumerate(self.marl_agents):
+                episode_score[h] += np.mean(rew_n[h] * agent_mask[h][:, :, np.newaxis], axis=1)
+                terminal_handle[h] = terminated_n[h].all(axis=-1)
+                truncate_handle[h] = truncated_n[h].all(axis=-1)
 
-            for i in range(self.n_envs):
-                if terminated_n[0][i].all() or truncated_n[i]:
+            for i in range(num_envs):
+                if terminal_handle.all(axis=0)[i] or truncate_handle.all(axis=0)[i]:
+                    state[i] = test_envs.global_state_one_env(i)
                     for h, mas_group in enumerate(self.marl_agents):
                         if mas_group.args.agent_name == "random":
                             continue
-                        info_train["returns-step/env-%d" % i] = scores[h, i]
-                        mas_group.log_infos(info_train, step)
+                        obs_n[h][i] = infos[i]["reset_obs"][h]
+                        act_mean_last[h][i] = np.zeros([self.args[h].dim_act])
+
+                        episode_score[h][i] = 0.0
+
+    def run(self):
+        def env_fn(self):
+            args_test = deepcopy(self.args_base)
+            args_test.parallels = 1
+            return make_envs(args_test)
+        train_episodes = self.args_base.training_steps // self.episode_length // self.n_envs
+        eval_interval = self.args_base.eval_interval
+        test_episode = self.args_base.test_episode
+        num_epoch = int(train_episodes / eval_interval)
+        n_episodes = self.training_steps // self.episode_length // self.n_envs
+        for i_epoch in range(num_epoch):
+            self.train_episode(n_episodes=eval_interval)
+            self.test_episode(env_fn, test_episode)
+
+        for i_episode in tqdm(range(n_episodes)):
+            self.train_episode(i_episode)
+
+
 
         self.envs.close()
 

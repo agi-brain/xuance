@@ -62,10 +62,7 @@ class MFAC_Learner(LearnerMAS):
         shape = q_eval_next.shape
         v_mf = torch.bmm(q_eval_next.view(-1, 1, shape[-1]), target_pi_next.view(-1, shape[-1], 1))
         v_mf = v_mf.view(*(list(shape[0:-1]) + [1]))
-        if self.args.consider_terminal_states:
-            q_target = rewards + (1 - terminals) * self.args.gamma * v_mf
-        else:
-            q_target = rewards + self.args.gamma * v_mf
+        q_target = rewards + (1 - terminals) * self.args.gamma * v_mf
         td_error = (q_eval_a - q_target.detach()) * agent_mask
         loss_c = (td_error ** 2).sum() / agent_mask.sum()
         self.optimizer["critic"].zero_grad()

@@ -1,25 +1,26 @@
-agent: "VDAC"  # the learning algorithms_marl
+agent: "MFAC"  # the learning algorithms_marl
 env_name: "mpe"
 env_id: "simple_spread_v3"
 continuous_action: False
-policy: "Categorical_MAAC_policy"
+policy: "Categorical_MFAC_policy"
 representation: "Basic_Identical"
 vectorize: "Dummy_MAS"
 runner: "MARL"
 
-mixer: "VDN"
+#train_at_step: True
 representation_hidden_size: [32, ]  # the units for each hidden layer
-actor_hidden_size: [128,]
-critic_hidden_size: [128,]
-hidden_dim_mixing_net: 64  # hidden units of mixing network
-hidden_dim_hyper_net: 64  # hidden units of hyper network
+actor_hidden_size: [128, ]
+critic_hidden_size: [128, ]
 
-training_steps: 20000
+lr_a: 0.001
+lr_c: 0.001
+training_steps: 30000
 training_frequency: 1
-nsteps: 128
+nsteps: 256
 nepoch: 5
 nminibatch: 1
-learning_rate: 0.001
+temperature: 0.1  # softmax for policy
+tau: 0.005  # soft update factor for MFAC
 
 vf_coef: 0.25
 ent_coef: 0.01
@@ -30,14 +31,9 @@ lam: 0.95
 
 n_tests: 5
 test_period: 100
-consider_terminal_states: False
 
-use_obsnorm: False
-use_rewnorm: False
 use_advnorm: False
 use_gae: True
-obsnorm_range: 5
-rewnorm_range: 5
 
-logdir: "./logs/vdac/"
-modeldir: "./models/vdac/"
+logdir: "./logs/mfac/"
+modeldir: "./models/mfac/"

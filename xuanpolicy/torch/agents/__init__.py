@@ -62,7 +62,6 @@ from .multi_agent_rl.mfac_agents import MFAC_Agents
 from .multi_agent_rl.mappo_agents import MAPPO_Agents
 from .multi_agent_rl.isac_agents import ISAC_Agents
 from .multi_agent_rl.masac_agents import MASAC_Agents
-from .multi_agent_rl.madqn_agents import MADQN_Agents
 from .multi_agent_rl.matd3_agents import MATD3_Agents
 
 REGISTRY = {

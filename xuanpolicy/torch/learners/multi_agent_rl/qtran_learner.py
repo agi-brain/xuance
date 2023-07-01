@@ -48,10 +48,7 @@ class QTRAN_Learner(LearnerMAS):
         q_joint_next, _ = self.policy.target_qtran_net(hidden_n_next['state'] * hidden_mask,
                                                        self.onehot_action(actions_next_greedy,
                                                                           self.dim_act) * actions_mask)
-        if self.args.consider_terminal_states:
-            y_dqn = rewards + (1 - terminals) * self.args.gamma * q_joint_next
-        else:
-            y_dqn = rewards + self.args.gamma * q_joint_next
+        y_dqn = rewards + (1 - terminals) * self.args.gamma * q_joint_next
         loss_td = self.mse_loss(q_joint, y_dqn.detach())
 
         action_greedy = q_eval.argmax(dim=-1, keepdim=False)  # \bar{u}

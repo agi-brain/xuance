@@ -4,11 +4,12 @@ env_id: "simple_spread_v3"
 continuous_action: False
 policy: "Mixing_Q_network"
 representation: "Basic_MLP"
-vectorize: "Dummy_MAS"
-runner: "MARL"
+vectorize: "Dummy_Pettingzoo"
+runner: "MPE_Runner"
 
-representation_hidden_size: [32, ]
-q_hidden_size: [128, ]  # the units for each hidden layer
+representation_hidden_size: [64, ]
+q_hidden_size: [64, ]  # the units for each hidden layer
+activation: "ReLU"
 
 buffer_size: 100000
 batch_size: 256
@@ -18,19 +19,13 @@ gamma: 0.95  # discount factor
 start_greedy: 0.0
 end_greedy: 0.95
 greedy_update_steps: 5000
-training_steps: 20000
+training_steps: 20000000  # 20M
 training_frequency: 1
 sync_frequency: 200
 
 n_tests: 5
 test_period: 100
 double_q: True  # use double q learning
-consider_terminal_states: False  # if consider the terminal states when calculate target Q-values
-
-use_obsnorm: False
-use_rewnorm: False
-obsnorm_range: 5
-rewnorm_range: 5
 
 logdir: "./logs/vdn/"
 modeldir: "./models/vdn/"

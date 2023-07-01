@@ -1,3 +1,5 @@
+import copy
+
 from xuanpolicy.environment.vector_envs.vector_env import VecEnv, AlreadySteppingError, NotSteppingError
 from xuanpolicy.environment.vector_envs.env_utils import obs_n_space_info
 from xuanpolicy.environment.gym_envs.gym_vec_env import DummyVecEnv_Gym
@@ -39,8 +41,8 @@ class DummyVecEnv_Pettingzoo(DummyVecEnv_Gym):
         self.buf_rews = [np.zeros((self.num_envs, n, 1), dtype=np.float32) for n in self.n_agents]
         self.buf_dones = [np.ones((self.num_envs, n), dtype=np.bool) for n in self.n_agents]
         self.buf_trunctions = [np.ones((self.num_envs, n), dtype=np.bool) for n in self.n_agents]
-        self.buf_infos = [[None for _ in range(self.num_envs)] for _ in self.n_agents]
 
+        self.max_episode_length = env.max_cycles
         self.actions = None
 
     def empty_dict_buffers(self, i_env):
@@ -55,11 +57,10 @@ class DummyVecEnv_Pettingzoo(DummyVecEnv_Gym):
         for e in range(self.num_envs):
             obs, info = self.envs[e].reset()
             self.buf_obs_dict[e].update(obs)
-            self.buf_infos[e].update(info)
+            self.buf_infos_dict[e].update(info["infos"])
             for h, agent_keys_h in enumerate(self.agent_keys):
                 self.buf_obs[h][e] = itemgetter(*agent_keys_h)(self.buf_obs_dict[e])
-
-        return self.buf_obs.copy(), self.buf_infos.copy()
+        return self.buf_obs.copy(), self.buf_infos_dict.copy()
 
     def reset_one_env(self, e):
         o = self.envs[e].reset()
@@ -79,7 +80,7 @@ class DummyVecEnv_Pettingzoo(DummyVecEnv_Gym):
         return max(size_obs_n)
 
     def step_async(self, actions):
-        if self.waiting == True:
+        if self.waiting:
             raise AlreadySteppingError
         listify = True
         try:
@@ -87,15 +88,17 @@ class DummyVecEnv_Pettingzoo(DummyVecEnv_Gym):
                 listify = False
         except TypeError:
             pass
-        if listify == False:
+        if not listify:
             self.actions = actions
         else:
             assert self.num_envs == 1, "actions {} is either not a list or has a wrong size - cannot match to {} environments".format(
                 actions, self.num_envs)
             self.actions = [actions]
+        self.waiting = True
 
     def step_wait(self):
-        done_all = []
+        if not self.waiting:
+            raise NotSteppingError
 
         for e in range(self.num_envs):
             action_n = self.actions[e]
@@ -107,27 +110,31 @@ class DummyVecEnv_Pettingzoo(DummyVecEnv_Gym):
             self.buf_rews_dict[e].update(r)
             self.buf_dones_dict[e].update(d)
             self.buf_trunctions_dict[e].update(t)
-            self.buf_infos_dict[e].update(info)
-            if all(self.buf_dones_dict[e].values()) or all(self.buf_dones_dict[e].values()):
-                obs = self.envs[e].reset()
-                self.buf_obs_dict[e].update(obs)
+            self.buf_infos_dict[e].update(info["infos"])
+
             # resort the data as group-wise
+            episode_scores = []
             for h, agent_keys_h in enumerate(self.agent_keys):
                 getter = itemgetter(*agent_keys_h)
                 self.buf_obs[h][e] = getter(self.buf_obs_dict[e])
                 self.buf_rews[h][e, :, 0] = getter(self.buf_rews_dict[e])
                 self.buf_dones[h][e] = getter(self.buf_dones_dict[e])
                 self.buf_trunctions[h][e] = getter(self.buf_trunctions_dict[e])
-                self.buf_infos[h][e] = getter(self.buf_infos_dict[e])
-            try:
-                done_all.append(all(itemgetter(*list(self.keys))(self.buf_dones_dict[e])))
-            except:
-                done_all.append(itemgetter(*list(self.keys))(self.buf_dones_dict[e]))
+                episode_scores.append(getter(info["individual_episode_rewards"]))
+            self.buf_infos_dict[e]["individual_episode_rewards"] = episode_scores
 
-        return self.buf_obs, self.buf_rews, self.buf_dones, done_all, self.buf_infos
+            if all(self.buf_dones_dict[e].values()) or all(self.buf_trunctions_dict[e].values()):
+                obs_reset, _ = self.envs[e].reset()
+                obs_reset_handles = []
+                for h, agent_keys_h in enumerate(self.agent_keys):
+                    getter = itemgetter(*agent_keys_h)
+                    obs_reset_handles.append(np.array(getter(obs_reset)))
 
-    def render(self, time_delay=0.0):
-        time.sleep(time_delay)
+                self.buf_infos_dict[e]["reset_obs"] = obs_reset_handles
+        self.waiting = False
+        return self.buf_obs.copy(), self.buf_rews.copy(), self.buf_dones.copy(), self.buf_trunctions.copy(), self.buf_infos_dict.copy()
+
+    def render(self, mode=None):
         return [env.render() for env in self.envs]
 
     def global_state(self):

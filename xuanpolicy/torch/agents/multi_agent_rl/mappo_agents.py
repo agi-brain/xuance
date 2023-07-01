@@ -6,14 +6,7 @@ class MAPPO_Agents(MARLAgents):
                  config: Namespace,
                  envs: DummyVecEnv_Pettingzoo,
                  device: Optional[Union[int, str, torch.device]] = None):
-        self.comm = MPI.COMM_WORLD
-
         self.gamma = config.gamma
-        self.use_obsnorm = config.use_obsnorm
-        self.use_rewnorm = config.use_rewnorm
-        self.obsnorm_range = config.obsnorm_range
-        self.rewnorm_range = config.rewnorm_range
-
         if config.state_space is not None:
             config.dim_state, state_shape = config.state_space.shape, config.state_space.shape
         else:
@@ -41,30 +34,7 @@ class MAPPO_Agents(MARLAgents):
                                      config.use_gae, config.use_advnorm, config.gamma, config.lam)
         learner = MAPPO_Clip_Learner(config, policy, optimizer, scheduler,
                                      config.device, config.modeldir, config.gamma)
-
-        self.obs_rms = RunningMeanStd(shape=space2shape(self.observation_space[config.agent_keys[0]]),
-                                      comm=self.comm, use_mpi=False)
-        self.ret_rms = RunningMeanStd(shape=(), comm=self.comm, use_mpi=False)
         super(MAPPO_Agents, self).__init__(config, envs, policy, memory, learner, device, config.logdir, config.modeldir)
-
-    def _process_observation(self, observations):
-        if self.use_obsnorm:
-            if isinstance(self.observation_space, Dict):
-                for key in self.observation_space.spaces.keys():
-                    observations[key] = np.clip(
-                        (observations[key] - self.obs_rms.mean[key]) / (self.obs_rms.std[key] + EPS),
-                        -self.obsnorm_range, self.obsnorm_range)
-            else:
-                observations = np.clip((observations - self.obs_rms.mean) / (self.obs_rms.std + EPS),
-                                       -self.obsnorm_range, self.obsnorm_range)
-            return observations
-        return observations
-
-    def _process_reward(self, rewards):
-        if self.use_rewnorm:
-            std = np.clip(self.ret_rms.std, 0.1, 100)
-            return np.clip(rewards / std, -self.rewnorm_range, self.rewnorm_range)
-        return rewards
 
     def act(self, obs_n, episode, test_mode, state=None, noise=False):
         batch_size = len(obs_n)

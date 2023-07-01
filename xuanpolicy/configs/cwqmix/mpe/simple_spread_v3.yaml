@@ -1,4 +1,4 @@
-agent: "OWQMIX"  # the learning algorithms_marl
+agent: "CWQMIX"  # choice: CWQMIX, OWQMIX
 env_name: "mpe"
 env_id: "simple_spread_v3"
 continuous_action: False
@@ -28,12 +28,6 @@ sync_frequency: 200
 n_tests: 5
 test_period: 100
 double_q: True  # use double q learning
-consider_terminal_states: False  # if consider the terminal states when calculate target Q-values.
 
-use_obsnorm: False
-use_rewnorm: False
-obsnorm_range: 5
-rewnorm_range: 5
-
-logdir: "./logs/owqmix/"
-modeldir: "./models/owqmix/"
+logdir: "./logs/wqmix/"
+modeldir: "./models/wqmix/"

@@ -8,10 +8,8 @@ wandb_user_name: "papers_liu"
 parallels: 10
 seed: 2910
 vectorize: "Dummy_Gym"  # choices: [Dummy_Gym, Dummy_Pettingzoo, Dummy_Atari, Subproc, NOREQUIRED]
-train_at_step: False  # True: train once after a step; False: train after an episode.
 render: False
 render_mode: 'rgb_array' # Choices: 'human', 'rgb_array'.
-render_delay: 0.02  # s
 test_mode: False
 test_steps: 2000
 

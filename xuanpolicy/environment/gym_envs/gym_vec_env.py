@@ -38,7 +38,7 @@ class DummyVecEnv_Gym(VecEnv):
         return self.buf_obs.copy(), self.buf_infos.copy()
 
     def step_async(self, actions):
-        if self.waiting == True:
+        if self.waiting:
             raise AlreadySteppingError
         listify = True
         try:
@@ -46,7 +46,7 @@ class DummyVecEnv_Gym(VecEnv):
                 listify = False
         except TypeError:
             pass
-        if listify == False:
+        if not listify:
             self.actions = actions
         else:
             assert self.num_envs == 1, "actions {} is either not a list or has a wrong size - cannot match to {} environments".format(
@@ -55,7 +55,7 @@ class DummyVecEnv_Gym(VecEnv):
         self.waiting = True
 
     def step_wait(self):
-        if self.waiting == False:
+        if not self.waiting:
             raise NotSteppingError
         for e in range(self.num_envs):
             action = self.actions[e]

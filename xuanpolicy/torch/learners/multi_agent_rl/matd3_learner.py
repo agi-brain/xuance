@@ -47,10 +47,7 @@ class MATD3_Learner(LearnerMAS):
         _, action_q = self.policy.Qaction(obs, actions, IDs)
         actions_next = self.policy.target_actor(obs_next, IDs)
         _, target_q = self.policy.Qtarget(obs_next, actions_next, IDs)
-        if self.args.consider_terminal_states:
-            q_target = rewards + (1 - terminals) * self.args.gamma * target_q
-        else:
-            q_target = rewards + self.args.gamma * target_q
+        q_target = rewards + (1 - terminals) * self.args.gamma * target_q
         td_error = (action_q - q_target.detach()) * agent_mask
         loss_c = (td_error ** 2).sum() / agent_mask.sum()
         # loss_c = F.mse_loss(torch.tile(q_target.detach(), (1, 2)), action_q)

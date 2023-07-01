@@ -30,14 +30,9 @@ td_lambda: 0.8
 
 n_tests: 5
 test_period: 100
-consider_terminal_states: False
 
-use_obsnorm: False
-use_rewnorm: False
 use_advnorm: False
 use_gae: True
-obsnorm_range: 5
-rewnorm_range: 5
 
 logdir: "./logs/coma/"
 modeldir: "./models/coma/"

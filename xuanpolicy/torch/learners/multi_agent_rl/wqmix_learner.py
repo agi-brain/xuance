@@ -56,10 +56,7 @@ class WQMIX_Learner(LearnerMAS):
         q_eval_next_centralized = self.policy.target_q_centralized(obs_next, IDs).gather(-1, action_next_greedy)
         q_tot_next_centralized = self.policy.target_q_feedforward(q_eval_next_centralized*agent_mask, state_next)
 
-        if self.args.consider_terminal_states:
-            target_value = rewards + (1 - terminals) * self.args.gamma * q_tot_next_centralized
-        else:
-            target_value = rewards + self.args.gamma * q_tot_next_centralized
+        target_value = rewards + (1 - terminals) * self.args.gamma * q_tot_next_centralized
         td_error = q_tot_eval - target_value.detach()
 
         # calculate weights

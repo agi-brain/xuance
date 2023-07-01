@@ -42,10 +42,7 @@ class IDDPG_Learner(LearnerMAS):
 
         q_eval = self.policy.critic(obs, actions, IDs)
         q_next = self.policy.target_critic(obs_next, self.policy.target_actor(obs_next, IDs), IDs)
-        if self.args.consider_terminal_states:
-            q_target = rewards + (1-terminals) * self.args.gamma * q_next
-        else:
-            q_target = rewards + self.args.gamma * q_next
+        q_target = rewards + (1-terminals) * self.args.gamma * q_next
 
         # calculate the loss function
         _, actions_eval = self.policy(obs, IDs)

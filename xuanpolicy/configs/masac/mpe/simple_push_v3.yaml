@@ -1,8 +1,8 @@
-agent: "ISAC"  # the learning algorithms_marl
+agent: "MASAC"  # the learning algorithms_marl
 env_name: "mpe"
 env_id: "simple_push_v3"
 continuous_action: True
-policy: "Gaussian_ISAC_policy"
+policy: "Gaussian_MASAC_policy"
 representation: "Basic_Identical"
 vectorize: "Dummy_MAS"
 runner: "MARL"
@@ -28,12 +28,6 @@ training_frequency: 1
 
 n_tests: 5
 test_period: 100
-consider_terminal_states: False  # if consider the terminal states when calculate target Q-values.
 
-use_obsnorm: False
-use_rewnorm: False
-obsnorm_range: 5
-rewnorm_range: 5
-
-logdir: "./logs/isac/"
-modeldir: "./models/isac/"
+logdir: "./logs/masac/"
+modeldir: "./models/masac/"

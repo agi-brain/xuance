@@ -41,10 +41,7 @@ class IQL_Learner(LearnerMAS):
         else:
             q_next_a = q_next.max(dim=-1, keepdim=True).values
 
-        if self.args.consider_terminal_states:
-            q_target = rewards + (1-terminals) * self.args.gamma * q_next_a
-        else:
-            q_target = rewards + self.args.gamma * q_next_a
+        q_target = rewards + (1-terminals) * self.args.gamma * q_next_a
 
         # calculate the loss function
         q_eval_a *= agent_mask

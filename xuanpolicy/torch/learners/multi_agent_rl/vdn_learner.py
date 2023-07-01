@@ -29,7 +29,7 @@ class VDN_Learner(LearnerMAS):
         actions = torch.Tensor(sample['actions']).to(self.device)
         obs_next = torch.Tensor(sample['obs_next']).to(self.device)
         rewards = torch.Tensor(sample['rewards']).mean(dim=1).to(self.device)
-        terminals = torch.Tensor(sample['terminals']).float().view(-1, self.n_agents, 1).to(self.device)
+        terminals = torch.Tensor(sample['terminals']).all(dim=1, keepdims=True).float().to(self.device)
         agent_mask = torch.Tensor(sample['agent_mask']).float().view(-1, self.n_agents, 1).to(self.device)
         IDs = torch.eye(self.n_agents).unsqueeze(0).expand(self.args.batch_size, -1, -1).to(self.device)
 
@@ -43,10 +43,7 @@ class VDN_Learner(LearnerMAS):
         else:
             q_next_a = q_next.max(dim=-1, keepdim=True).values
         q_tot_next = self.policy.target_Q_tot(q_next_a * agent_mask)
-        if self.args.consider_terminal_states:
-            q_tot_target = rewards + (1-terminals) * self.args.gamma * q_tot_next
-        else:
-            q_tot_target = rewards + self.args.gamma * q_tot_next
+        q_tot_target = rewards + (1-terminals) * self.args.gamma * q_tot_next
 
         # calculate the loss function
         loss = self.mse_loss(q_tot_eval, q_tot_target.detach())

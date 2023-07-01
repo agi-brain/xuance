@@ -11,23 +11,23 @@ representation: "Basic_CNN"
 policy: "Categorical_AC"
 
 # Good HyperParameters for Atari Games, Do not change them.
-filters: [32, 32, 64, 64]
-kernels: [8, 4, 4, 4]
-strides: [4, 2, 2, 2]
-actor_hidden_size: [128, 128]
-critic_hidden_size: [128, 128]
-activation: "LeakyReLU"
+filters: [32, 64, 64]
+kernels: [8, 4, 3]
+strides: [4, 2, 1]
+actor_hidden_size: [512, ]
+critic_hidden_size: [512, ]
+activation: "ReLU"
 
 parallels: 8
 training_steps: 10000000  # 10M
-nsteps: 256
+nsteps: 128
 nepoch: 4
-nminibatch: 8
+nminibatch: 4
 learning_rate: 0.00025
 
 vf_coef: 0.25
 ent_coef: 0.01
-clip_range: 0.2
+clip_range: 0.1
 gamma: 0.99
 lam: 0.95
 
@@ -37,7 +37,7 @@ obsnorm_range: 5
 rewnorm_range: 5
 
 test_steps: 10000
-eval_interval: 100000
-test_episode: 5
+eval_interval: 12500
+test_episode: 1
 logdir: "./logs/ppo/"
 modeldir: "./models/ppo/"

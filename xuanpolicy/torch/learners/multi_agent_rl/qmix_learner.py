@@ -45,10 +45,7 @@ class QMIX_Learner(LearnerMAS):
         else:
             q_next_a = q_next.max(dim=-1, keepdim=True).values
         q_tot_next = self.policy.target_Q_tot(q_next_a * agent_mask, state_next)
-        if self.args.consider_terminal_states:
-            q_tot_target = rewards + (1-terminals) * self.args.gamma * q_tot_next
-        else:
-            q_tot_target = rewards + self.args.gamma * q_tot_next
+        q_tot_target = rewards + (1-terminals) * self.args.gamma * q_tot_next
 
         # calculate the loss function
         loss = self.mse_loss(q_tot_eval, q_tot_target.detach())

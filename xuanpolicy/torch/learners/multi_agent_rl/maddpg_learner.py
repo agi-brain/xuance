@@ -57,10 +57,7 @@ class MADDPG_Learner(LearnerMAS):
         actions_next = self.policy.target_actor(obs_next, IDs)
         q_eval = self.policy.critic(obs, actions, IDs)
         q_next = self.policy.target_critic(obs_next, actions_next, IDs)
-        if self.args.consider_terminal_states:
-            q_target = rewards + (1 - terminals) * self.args.gamma * q_next
-        else:
-            q_target = rewards + self.args.gamma * q_next
+        q_target = rewards + (1 - terminals) * self.args.gamma * q_next
         td_error = (q_eval - q_target.detach()) * agent_mask
         loss_c = (td_error ** 2).sum() / agent_mask.sum()
         self.optimizer['critic'].zero_grad()

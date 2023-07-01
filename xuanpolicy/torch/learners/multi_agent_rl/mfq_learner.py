@@ -49,10 +49,7 @@ class MFQ_Learner(LearnerMAS):
         pi = self.get_boltzmann_policy(q_next)
         v_mf = torch.bmm(q_next.view(-1, 1, shape[-1]), pi.unsqueeze(-1).view(-1, shape[-1], 1))
         v_mf = v_mf.view(*(list(shape[0:-1]) + [1]))
-        if self.args.consider_terminal_states:
-            q_target = rewards + (1 - terminals) * self.args.gamma * v_mf
-        else:
-            q_target = rewards + self.args.gamma * v_mf
+        q_target = rewards + (1 - terminals) * self.args.gamma * v_mf
 
         # calculate the loss function
         td_error = (q_eval_a - q_target.detach()) * agent_mask

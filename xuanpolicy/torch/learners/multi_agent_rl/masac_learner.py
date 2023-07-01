@@ -46,10 +46,7 @@ class MASAC_Learner(LearnerMAS):
         actions_next = actions_next_dist.rsample()
         log_pi_a_next = actions_next_dist.log_prob(actions_next)
         q_next = self.policy.target_critic(obs_next, actions_next, IDs)
-        if self.args.consider_terminal_states:
-            q_target = rewards + (1-terminals) * self.args.gamma * (q_next - self.alpha * log_pi_a_next.unsqueeze(dim=-1))
-        else:
-            q_target = rewards + self.args.gamma * (q_next - self.alpha * log_pi_a_next.unsqueeze(dim=-1))
+        q_target = rewards + (1-terminals) * self.args.gamma * (q_next - self.alpha * log_pi_a_next.unsqueeze(dim=-1))
 
         # calculate the loss function
         _, actions_dist = self.policy(obs, IDs)

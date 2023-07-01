@@ -102,10 +102,7 @@ class DCG_Learner(LearnerMAS):
             action_next_greedy = torch.Tensor(self.act(obs_next.cpu())).to(self.device)
             q_next_a = self.q_dcg(obs_next, action_next_greedy, states=state_next, use_target_net=True)
 
-        if self.args.consider_terminal_states:
-            q_target = rewards + (1-terminals) * self.args.gamma * q_next_a
-        else:
-            q_target = rewards + self.args.gamma * q_next_a
+        q_target = rewards + (1-terminals) * self.args.gamma * q_next_a
 
         # calculate the loss function
         loss = self.mse_loss(q_eval_a, q_target.detach())

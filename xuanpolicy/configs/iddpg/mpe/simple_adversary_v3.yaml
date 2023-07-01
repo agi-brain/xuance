@@ -1,8 +1,8 @@
-agent: "MATD3"  # the learning algorithms_marl
+agent: "IDDPG"  # the learning algorithms_marl
 env_name: "mpe"
-env_id: "simple_push_v3"
+env_id: "simple_adversary_v3"
 continuous_action: True
-policy: "MATD3_policy"
+policy: "Independent_DDPG_policy"
 representation: "Basic_Identical"
 vectorize: "Dummy_MAS"
 runner: "MARL"
@@ -21,17 +21,11 @@ buffer_size: 200000
 batch_size: 256
 gamma: 0.95  # discount factor
 
-training_steps: 15000
+training_steps: 30000
 training_frequency: 1
 
 n_tests: 5
 test_period: 100
-consider_terminal_states: False  # if consider the terminal states when calculate target Q-values.
 
-use_obsnorm: False
-use_rewnorm: False
-obsnorm_range: 5
-rewnorm_range: 5
-
-logdir: "./logs/matd3/"
-modeldir: "./models/matd3/"
+logdir: "./logs/iddpg/"
+modeldir: "./models/iddpg/"

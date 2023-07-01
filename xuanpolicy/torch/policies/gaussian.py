@@ -65,7 +65,6 @@ class ActorCriticPolicy(nn.Module):
         super(ActorCriticPolicy, self).__init__()
         self.action_dim = action_space.shape[0]
         self.representation = representation
-        self.representation_critic = copy.deepcopy(representation)
         self.representation_info_shape = representation.output_shapes
         self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size,
                               normalize, initialize, activation, device)
@@ -73,12 +72,10 @@ class ActorCriticPolicy(nn.Module):
                                 normalize, initialize, activation, device)
 
     def forward(self, observation: Union[np.ndarray, dict]):
-        outputs_policy = self.representation(observation)
-        outputs_critic = self.representation_critic(observation)
-        a = self.actor(outputs_policy['state'])
-        v = self.critic(outputs_critic['state'])
-        return {"outputs_policy": outputs_policy,
-                "outputs_critic": outputs_critic}, a, v
+        outputs = self.representation(observation)
+        a = self.actor(outputs['state'])
+        v = self.critic(outputs['state'])
+        return outputs, a, v
 
 
 class ActorPolicy(nn.Module):
