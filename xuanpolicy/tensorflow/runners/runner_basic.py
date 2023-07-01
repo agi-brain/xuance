@@ -1,22 +1,22 @@
 import time
+import os
+import socket
+from pathlib import Path
+import wandb
+from torch.utils.tensorboard import SummaryWriter
 from xuanpolicy.environment import make_envs
 import tensorflow.keras as tk
+import numpy as np
 
 
 class Runner_Base(object):
     def __init__(self, args):
         # build environments
-        if hasattr(args, 'continuous_action'):
-            self.envs = make_envs(args.env_name, args.env_id, args.seed, args.vectorize, args.parallels,
-                                  args.continuous_action, args.render_mode)
-        else:
-            self.envs = make_envs(args.env_name, args.env_id, args.seed, args.vectorize, args.parallels,
-                                  args.render_mode)
+        self.envs = make_envs(args)
+        self.envs.reset()
 
         if args.vectorize != 'NOREQUIRED':
             self.n_envs = self.envs.num_envs
-
-        self.train_at_step = args.train_at_step
 
     def run(self):
         pass
@@ -27,6 +27,7 @@ class Runner_Base(object):
 
 class Runner_Base_MARL(Runner_Base):
     def __init__(self, args):
+        self.args_base = args
         if args.test_mode:
             args.render_mode = 'human'
         super(Runner_Base_MARL, self).__init__(args)
@@ -39,15 +40,45 @@ class Runner_Base_MARL(Runner_Base):
         self.agent_keys_all = self.envs.keys
         self.n_agents_all = len(self.agent_keys_all)
         self.render = args.render
-        self.render_delay = args.render_delay
 
-        self.train_at_step = args.train_at_step
-        self.n_episodes = args.training_steps
+        self.n_steps = args.training_steps
         self.n_tests = args.n_tests
         self.test_period = args.test_period
         self.test_mode = args.test_mode
         self.marl_agents = []
         self.marl_names = []
+        self.current_step = 0
+        self.current_episode = np.zeros((self.envs.num_envs,), np.int32)
+
+        if args.logger == "tensorboard":
+            time_string = time.asctime().replace(" ", "").replace(":", "_")
+            log_dir = os.path.join(os.getcwd(), args.logdir) + "/" + time_string
+            if not os.path.exists(log_dir):
+                os.makedirs(log_dir)
+            self.writer = SummaryWriter(log_dir)
+            self.use_wandb = False
+        elif args.logger == "wandb":
+            config_dict = vars(args)
+            wandb_dir = Path(os.path.join(os.getcwd(), args.logdir))
+            if not wandb_dir.exists():
+                os.makedirs(str(wandb_dir))
+            wandb.init(config=config_dict,
+                       project=args.project_name,
+                       entity=args.wandb_user_name,
+                       notes=socket.gethostname(),
+                       dir=wandb_dir,
+                       group=args.env_id,
+                       job_type=args.agent,
+                       name=time.asctime(),
+                       reinit=True
+                       )
+            # os.environ["WANDB_SILENT"] = "True"
+            self.use_wandb = True
+        else:
+            raise "No logger is implemented."
+
+        self.current_step = 0
+        self.current_episode = 0
 
     def combine_env_actions(self, actions):
         actions_envs = []

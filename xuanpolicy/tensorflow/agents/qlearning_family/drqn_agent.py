@@ -1,7 +1,7 @@
 from xuanpolicy.tensorflow.agents import *
 
 
-class DQN_Agent(Agent):
+class DRQN_Agent(Agent):
     def __init__(self,
                  config: Namespace,
                  envs: VecEnv,
@@ -23,54 +23,62 @@ class DQN_Agent(Agent):
         self.representation_info_shape = policy.representation.output_shapes
         self.auxiliary_info_shape = {}
         self.atari = True if config.env_name == "Atari" else False
-        Buffer = DummyOffPolicyBuffer_Atari if self.atari else DummyOffPolicyBuffer
-        memory = Buffer(self.observation_space,
-                        self.action_space,
-                        self.representation_info_shape,
-                        self.auxiliary_info_shape,
-                        self.nenvs,
-                        config.nsize,
-                        config.batchsize)
-        learner = DQN_Learner(policy,
-                              optimizer,
-                              config.device,
-                              config.modeldir,
-                              config.gamma,
-                              config.sync_frequency)
-        super(DQN_Agent, self).__init__(config, envs, policy, memory, learner, device, config.logdir, config.modeldir)
+        memory = RecurrentOffPolicyBuffer(self.observation_space,
+                                          self.action_space,
+                                          self.representation_info_shape,
+                                          self.auxiliary_info_shape,
+                                          self.nenvs,
+                                          config.nsize,
+                                          config.batchsize,
+                                          episode_length=envs.max_episode_length,
+                                          lookup_length=config.lookup_length)
+        learner = DRQN_Learner(policy,
+                               optimizer,
+                               config.device,
+                               config.modeldir,
+                               config.gamma,
+                               config.sync_frequency)
+        super(DRQN_Agent, self).__init__(config, envs, policy, memory, learner, device, config.logdir, config.modeldir)
+        self.lstm = True if config.rnn == "LSTM" else False
 
-    def _action(self, obs, egreedy=0.0):
-        _, argmax_action, _, _ = self.policy(obs)
+    def _action(self, obs, egreedy=0.0, rnn_hidden=None):
+        _, argmax_action, _, rnn_hidden_next = self.policy(obs[:, np.newaxis], *rnn_hidden)
         random_action = np.random.choice(self.action_space.n, self.nenvs)
         if np.random.rand() < egreedy:
             action = random_action
         else:
-            action = argmax_action.numpy()
-        return action
+            action = argmax_action.detach().cpu().numpy()
+        return action, rnn_hidden_next
 
     def train(self, train_steps):
         obs = self.envs.buf_obs
+        episode_data = [EpisodeBuffer() for _ in range(self.nenvs)]
+        for i_env in range(self.nenvs):
+            episode_data[i_env].obs.append(self._process_observation(obs[i_env]))
+        self.rnn_hidden = self.policy.init_hidden(self.nenvs)
+        dones = [False for _ in range(self.nenvs)]
         for _ in tqdm(range(train_steps)):
             step_info = {}
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
-            acts = self._action(obs, self.egreedy)
+            acts, self.rnn_hidden = self._action(obs, self.egreedy, self.rnn_hidden)
             next_obs, rewards, terminals, trunctions, infos = self.envs.step(acts)
 
-            self.memory.store(obs, acts, self._process_reward(rewards), terminals, self._process_observation(next_obs))
-            if self.current_step > self.start_training and self.current_step % self.train_frequency == 0:
+            if (self.current_step > self.start_training) and (self.current_step % self.train_frequency == 0):
                 # training
-                obs_batch, act_batch, rew_batch, terminal_batch, next_batch = self.memory.sample()
-                step_info = self.learner.update(obs_batch, act_batch, rew_batch, next_batch, terminal_batch)
+                obs_batch, act_batch, rew_batch, terminal_batch = self.memory.sample()
+                step_info = self.learner.update(obs_batch, act_batch, rew_batch, terminal_batch)
                 step_info["epsilon-greedy"] = self.egreedy
 
             obs = next_obs
             for i in range(self.nenvs):
+                episode_data[i].put([self._process_observation(obs[i]), acts[i], self._process_reward(rewards[i]), terminals[i]])
                 if terminals[i] or trunctions[i]:
                     if self.atari and (~trunctions[i]):
                         pass
                     else:
-                        obs[i] = infos[i]["reset_obs"]
+                        self.rnn_hidden = self.policy.init_hidden_item(self.rnn_hidden, i)
+                        dones[i] = True
                         self.current_episode[i] += 1
                         if self.use_wandb:
                             step_info["Episode-Steps/env-%d" % i] = infos[i]["episode_step"]
@@ -79,9 +87,13 @@ class DQN_Agent(Agent):
                             step_info["Episode-Steps"] = {"env-%d" % i: infos[i]["episode_step"]}
                             step_info["Train-Episode-Rewards"] = {"env-%d" % i: infos[i]["episode_score"]}
                         self.log_infos(step_info, self.current_step)
+                        self.memory.store(episode_data[i])
+                        episode_data[i] = EpisodeBuffer()
+                        obs[i] = infos[i]["reset_obs"]
+                        episode_data[i].obs.append(self._process_observation(obs[i]))
 
-            self.current_step += 1
-            if self.egreedy >= self.end_greedy:
+            self.current_step += self.nenvs
+            if self.egreedy > self.end_greedy:
                 self.egreedy = self.egreedy - (self.start_greedy - self.end_greedy) / self.config.decay_step_greedy
 
     def test(self, env_fn, test_episodes):
@@ -95,10 +107,11 @@ class DQN_Agent(Agent):
             for idx, img in enumerate(images):
                 videos[idx].append(img)
 
+        rnn_hidden = self.policy.init_hidden(num_envs)
         while current_episode < test_episodes:
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
-            acts = self._action(obs, egreedy=0.0)
+            acts, rnn_hidden = self._action(obs, egreedy=0.0, rnn_hidden=rnn_hidden)
             next_obs, rewards, terminals, trunctions, infos = test_envs.step(acts)
             if self.config.render_mode == "rgb_array" and self.render:
                 images = test_envs.render(self.config.render_mode)
@@ -112,6 +125,7 @@ class DQN_Agent(Agent):
                         pass
                     else:
                         obs[i] = infos[i]["reset_obs"]
+                        rnn_hidden = self.policy.init_hidden_item(rnn_hidden, i)
                         scores.append(infos[i]["episode_score"])
                         current_episode += 1
                         if best_score < infos[i]["episode_score"]:

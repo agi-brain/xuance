@@ -43,14 +43,12 @@ class DDQN_Agent(Agent):
         super(DDQN_Agent, self).__init__(config, envs, policy, memory, learner, device, config.logdir, config.modeldir)
 
     def _action(self, obs, egreedy=0.0):
-        states, argmax_action, _ = self.policy(obs)
+        _, argmax_action, _ = self.policy(obs)
         random_action = np.random.choice(self.action_space.n, self.nenvs)
         if np.random.rand() < egreedy:
             action = random_action
         else:
             action = argmax_action.detach().cpu().numpy()
-        for key in states.keys():
-            states[key] = states[key].detach().cpu().numpy()
         return action
 
     def train(self, train_steps):

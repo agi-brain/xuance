@@ -7,6 +7,7 @@ from xuanpolicy.tensorflow.utils.input_reformat import get_repre_in, get_policy_
 import tensorflow.keras as tk
 import gym.spaces
 import numpy as np
+from copy import deepcopy
 
 
 class Runner_DRL(Runner_Base):
@@ -66,5 +67,61 @@ class Runner_DRL(Runner_Base):
             self.agent = REGISTRY_Agent[self.agent_name](self.args, self.envs, policy, optimizer, self.args.device)
 
     def run(self):
-        self.agent.test(self.args.test_steps) if self.args.test_mode else self.agent.train(self.args.training_steps)
+        if self.args.test_mode:
+            def env_fn():
+                args_test = deepcopy(self.args)
+                args_test.parallels = 1
+                return make_envs(args_test)
+
+            self.agent.render = True
+            self.agent.load_model(self.agent.modeldir)
+            self.agent.test(env_fn, self.args.test_episode)
+            print("Finish testing.")
+        else:
+            n_train_steps = self.args.training_steps
+            self.agent.train(n_train_steps)
+            print("Finish training.")
+            self.agent.save_model("final_train_model.path")
+
         self.envs.close()
+        if self.agent.use_wandb:
+            wandb.finish()
+        else:
+            self.agent.writer.close()
+
+    def benchmark(self):
+        # test environment
+        def env_fn():
+            args_test = deepcopy(self.args)
+            args_test.parallels = args_test.test_episode
+            return make_envs(args_test)
+
+        train_steps = self.args.training_steps // self.n_envs
+        eval_interval = self.args.eval_interval
+        test_episode = self.args.test_episode
+        num_epoch = int(train_steps / eval_interval)
+
+        test_scores = self.agent.test(env_fn, test_episode)
+        best_scores_info = {"mean": np.mean(test_scores),
+                            "std": np.std(test_scores),
+                            "step": self.agent.current_step}
+        for i_epoch in range(num_epoch):
+            print("Epoch: %d/%d:" % (i_epoch, num_epoch))
+            self.agent.train(eval_interval)
+            test_scores = self.agent.test(env_fn, test_episode)
+
+            if np.mean(test_scores) > best_scores_info["mean"]:
+                best_scores_info = {"mean": np.mean(test_scores),
+                                    "std": np.std(test_scores),
+                                    "step": self.agent.current_step}
+                # save best model
+                self.agent.save_model(model_name="best_model.pth")
+
+        # end benchmarking
+        print("Best Model Score: %.2f, std=%.2f" % (best_scores_info["mean"], best_scores_info["std"]))
+
+        self.envs.close()
+        if self.agent.use_wandb:
+            wandb.finish()
+        else:
+            self.agent.writer.close()

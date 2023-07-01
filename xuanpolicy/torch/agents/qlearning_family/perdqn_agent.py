@@ -26,7 +26,8 @@ class PerDQN_Agent(Agent):
         
         self.PER_beta0 = config.PER_beta0
         self.PER_beta = config.PER_beta0
-        
+
+        self.atari = True if config.env_name == "Atari" else False
         memory = PerOffPolicyBuffer(self.observation_space,
                                       self.action_space,
                                       self.representation_info_shape,

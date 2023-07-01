@@ -11,7 +11,6 @@ import torch
 import gym.spaces
 import numpy as np
 from copy import deepcopy
-from tqdm import tqdm
 
 
 class Runner_DRL(Runner_Base):

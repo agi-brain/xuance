@@ -6,18 +6,16 @@ class Learner(ABC):
     def __init__(self,
                  policy: tk.Model,
                  optimizer: Union[tk.optimizers.Optimizer, Sequence[tk.optimizers.Optimizer]],
-                 summary_writer: Optional[tf.summary.SummaryWriter] = None,
                  device: str = "cpu:0",
                  modeldir: str = "./"):
         self.policy = policy
         self.optimizer = optimizer
-        self.writer = summary_writer
         self.device = device
         self.modeldir = modeldir
         self.iterations = 0
 
-    def save_model(self):
-        model_path = self.modeldir + "model-%s-%s" % (time.asctime(), str(self.iterations))
+    def save_model(self, model_name):
+        model_path = self.modeldir + model_name
         self.policy.save(model_path)
 
     def load_model(self, path):
