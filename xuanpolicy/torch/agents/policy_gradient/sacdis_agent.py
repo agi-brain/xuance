@@ -62,7 +62,7 @@ class SACDIS_Agent(Agent):
                 obs_batch, act_batch, rew_batch, terminal_batch, next_batch = self.memory.sample()
                 step_info = self.learner.update(obs_batch, act_batch, rew_batch, next_batch, terminal_batch)
 
-            returns = self.gamma * self.returns + rewards
+            self.returns = self.gamma * self.returns + rewards
             obs = next_obs
             for i in range(self.nenvs):
                 if terminals[i] or trunctions[i]:
@@ -80,7 +80,7 @@ class SACDIS_Agent(Agent):
                             step_info["Episode-Steps"] = {"env-%d" % i: infos[i]["episode_step"]}
                             step_info["Train-Episode-Rewards"] = {"env-%d" % i: infos[i]["episode_score"]}
                         self.log_infos(step_info, self.current_step)
-            self.current_step += 1
+            self.current_step += self.nenvs
 
     def test(self, env_fn, test_episodes):
         test_envs = env_fn()

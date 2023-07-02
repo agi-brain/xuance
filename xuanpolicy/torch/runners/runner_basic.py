@@ -75,7 +75,30 @@ class Runner_Base_MARL(Runner_Base):
             raise "No logger is implemented."
 
         self.current_step = 0
-        self.current_episode = 0
+        self.current_episode = np.zeros((self.envs.num_envs,), np.int32)
+
+    def log_infos(self, info: dict, x_index: int):
+        """
+        info: (dict) information to be visualized
+        n_steps: current step
+        """
+        if self.use_wandb:
+            for k, v in info.items():
+                wandb.log({k: v}, step=x_index)
+        else:
+            for k, v in info.items():
+                try:
+                    self.writer.add_scalar(k, v, x_index)
+                except:
+                    self.writer.add_scalars(k, v, x_index)
+
+    def log_videos(self, info: dict, fps: int, x_index: int=0):
+        if self.use_wandb:
+            for k, v in info.items():
+                wandb.log({k: wandb.Video(v, fps=fps, format='gif')}, step=x_index)
+        else:
+            for k, v in info.items():
+                self.writer.add_video(k, v, fps=fps, global_step=x_index)
 
     def combine_env_actions(self, actions):
         actions_envs = []
@@ -86,31 +109,31 @@ class Runner_Base_MARL(Runner_Base):
             actions_envs.append(act_handle)
         return actions_envs
 
-    def get_actions(self, obs_n, episode, test_mode, act_mean_last, agent_mask, state):
+    def get_actions(self, obs_n, test_mode, act_mean_last, agent_mask, state):
         actions_n, log_pi_n, values_n, actions_n_onehot = [], [], [], []
         act_mean_current = act_mean_last
         for h, mas_group in enumerate(self.marl_agents):
             if self.marl_names[h] == "MFQ":
-                a, a_mean = mas_group.act(obs_n[h], episode, test_mode, act_mean_last[h], agent_mask[h],
+                a, a_mean = mas_group.act(obs_n[h], test_mode, act_mean_last[h], agent_mask[h],
                                           noise=(not test_mode))
                 act_mean_current[h] = a_mean
             elif self.marl_names[h] == "MFAC":
-                a, a_mean = mas_group.act(obs_n[h], episode, test_mode, act_mean_last[h], agent_mask[h],
+                a, a_mean = mas_group.act(obs_n[h], test_mode, act_mean_last[h], agent_mask[h],
                                                   noise=(not test_mode))
                 act_mean_current[h] = a_mean
             elif self.marl_names[h] in ["MAPPO_KL", "MAPPO_Clip", "CID_Simple"]:
-                a, log_pi, values = mas_group.act(obs_n[h], episode, test_mode, state=state, noise=(not test_mode))
+                a, log_pi, values = mas_group.act(obs_n[h], test_mode, state=state, noise=(not test_mode))
                 log_pi_n.append(log_pi)
                 values_n.append(values)
             elif self.marl_names[h] in ["VDAC"]:
-                a, values = mas_group.act(obs_n[h], episode, test_mode, state=state, noise=(not test_mode))
+                a, values = mas_group.act(obs_n[h], test_mode, state=state, noise=(not test_mode))
                 values_n.append(values)
                 log_pi_n.append(None)
             elif self.marl_names[h] in ["COMA"]:
-                a, a_onehot = mas_group.act(obs_n[h], episode, test_mode, noise=(not test_mode))
+                a, a_onehot = mas_group.act(obs_n[h], test_mode, noise=(not test_mode))
                 actions_n_onehot.append(a_onehot)
             else:
-                a = mas_group.act(obs_n[h], episode, test_mode, noise=(not test_mode))
+                a = mas_group.act(obs_n[h], test_mode, noise=(not test_mode))
             actions_n.append(a)
         return {'actions_n': actions_n, 'log_pi': log_pi_n, 'act_mean': act_mean_current,
                 'act_n_onehot': actions_n_onehot, 'values': values_n}

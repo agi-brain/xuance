@@ -146,6 +146,7 @@ class DummyOnPolicyBuffer(Buffer):
         self.actions = create_memory(space2shape(self.action_space), self.nenvs, self.nsize)
         self.rewards = create_memory((), self.nenvs, self.nsize)
         self.returns = create_memory((), self.nenvs, self.nsize)
+        self.terminals = create_memory((), self.nenvs, self.nsize)
         self.advantages = create_memory((), self.nenvs, self.nsize)
         self.auxiliary_infos = create_memory(self.auxiliary_shape, self.nenvs, self.nsize)
 

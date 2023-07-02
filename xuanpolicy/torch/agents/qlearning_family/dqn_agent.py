@@ -82,7 +82,7 @@ class DQN_Agent(Agent):
                             step_info["Train-Episode-Rewards"] = {"env-%d" % i: infos[i]["episode_score"]}
                         self.log_infos(step_info, self.current_step)
 
-            self.current_step += 1
+            self.current_step += self.nenvs
             if self.egreedy >= self.end_greedy:
                 self.egreedy = self.egreedy - (self.start_greedy - self.end_greedy) / self.config.decay_step_greedy
 

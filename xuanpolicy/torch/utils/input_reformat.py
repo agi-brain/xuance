@@ -18,10 +18,12 @@ def get_repre_in(args):
     if representation_name in ["Basic_MLP", "CoG_MLP"]:
         input_dict["hidden_sizes"] = args.representation_hidden_size
     else:
-        if representation_name in ["Basic_CNN", "CoG_CNN"]:
+        if representation_name in ["Basic_CNN", "CoG_CNN", "CNN_FC"]:
             input_dict["kernels"] = args.kernels
             input_dict["strides"] = args.strides
             input_dict["filters"] = args.filters
+        if representation_name in ["CNN_FC"]:
+            input_dict["fc_hidden_sizes"] = args.fc_hidden_sizes
 
     input_dict["normalize"] = None
     input_dict["initialize"] = torch.nn.init.orthogonal_

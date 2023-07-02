@@ -70,7 +70,7 @@ class Runner_DRL(Runner_Base):
                                                          [conactor_lr_scheduler, qnetwork_lr_scheduler], self.args.device)
         else:
             optimizer = torch.optim.Adam(policy.parameters(), self.args.learning_rate, eps=1e-5)
-            lr_scheduler = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=1.0, end_factor=0.5,
+            lr_scheduler = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=1.0, end_factor=0.0,
                                                              total_iters=get_total_iters(self.agent_name, self.args))
             self.agent = REGISTRY_Agent[self.agent_name](self.args, self.envs, policy, optimizer, lr_scheduler,
                                                          self.args.device)
@@ -87,7 +87,7 @@ class Runner_DRL(Runner_Base):
             self.agent.test(env_fn, self.args.test_episode)
             print("Finish testing.")
         else:
-            n_train_steps = self.args.training_steps
+            n_train_steps = self.args.training_steps // self.n_envs
             self.agent.train(n_train_steps)
             print("Finish training.")
             self.agent.save_model("final_train_model.path")

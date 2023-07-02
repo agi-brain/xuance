@@ -76,13 +76,13 @@ class PPOCLIP_Agent(Agent):
             obs = next_obs
             for i in range(self.nenvs):
                 if terminals[i] or trunctions[i]:
+                    self.memory.finish_path(0, i)
                     if self.atari and (~trunctions[i]):
                         pass
                     else:
                         obs[i] = infos[i]["reset_obs"]
                         self.ret_rms.update(self.returns[i:i + 1])
                         self.returns[i] = 0.0
-                        self.memory.finish_path(0, i)
                         self.current_episode[i] += 1
                         if self.use_wandb:
                             step_info["Episode-Steps/env-%d" % i] = infos[i]["episode_step"]

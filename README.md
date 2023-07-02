@@ -298,10 +298,11 @@ $ tensorboard --logdir ./logs/dqn/torch/CartPole-v0
 
 ### Atari Environment (Ongoing)
 
-| Task     | DQN | DDQN | C51 | A2C | PPO |
-|----------|-----|------|-----|-----|-----|
-| Breakout |     |      | 431 |     |     |
-| Pong     |     |      | 20  |     |     |
+| Task            | DQN     | DDQN | C51   | A2C | PPO |
+|-----------------|---------|------|-------|-----|-----|
+| ALE/Breakout-v5 | 424.0   |      | 431.0 |     |     |
+| ALE/Pong-v5     | 21.0    |      | 20.0  |     |     |
+| ALE/Qbert-v5    | 16350.0 |      |       |     |     |
 
 
 ### MPE Environment (Ongoing)

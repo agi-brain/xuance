@@ -85,7 +85,7 @@ class MARLAgents(object):
     def load_model(self, path):
         self.learner.load_model(path)
 
-    def act(self, obs_n, episode, test_mode, noise=False):
+    def act(self, obs_n, test_mode, noise=False):
         if not test_mode:
             epsilon = self.epsilon_decay.epsilon
         else:

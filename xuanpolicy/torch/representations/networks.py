@@ -92,6 +92,52 @@ class Basic_CNN(nn.Module):
         return {'state': self.model(tensor_observation)}
 
 
+class CNN_FC(nn.Module):
+    def __init__(self,
+                 input_shape: Sequence[int],
+                 kernels: Sequence[int],
+                 strides: Sequence[int],
+                 filters: Sequence[int],
+                 normalize: Optional[ModuleType] = None,
+                 initialize: Optional[Callable[..., torch.Tensor]] = None,
+                 activation: Optional[ModuleType] = None,
+                 device: Optional[Union[str, int, torch.device]] = None,
+                 fc_hidden_sizes: Sequence[int] = ()):
+        super(CNN_FC, self).__init__()
+        self.input_shape = (input_shape[2], input_shape[0], input_shape[1])  # Channels x Height x Width
+        self.kernels = kernels
+        self.strides = strides
+        self.filters = filters
+        self.normalize = normalize
+        self.initialize = initialize
+        self.activation = activation
+        self.device = device
+        self.fc_hidden_sizes = fc_hidden_sizes
+        self.output_shapes = {'state': (fc_hidden_sizes[-1],)}
+        self.model = self._create_network()
+
+    def _create_network(self):
+        layers = []
+        input_shape = self.input_shape
+        for k, s, f in zip(self.kernels, self.strides, self.filters):
+            cnn, input_shape = cnn_block(input_shape, f, k, s, self.normalize, self.activation, self.initialize,
+                                         self.device)
+            layers.extend(cnn)
+        layers.append(nn.Flatten())
+        input_shape = (np.prod(input_shape, dtype=np.int), )
+        for h in self.fc_hidden_sizes:
+            mlp, input_shape = mlp_block(input_shape[0], h, self.normalize, self.activation, self.initialize,
+                                         self.device)
+            layers.extend(mlp)
+        return nn.Sequential(*layers)
+
+    def forward(self, observations: np.ndarray):
+        observations = observations / 255.0
+        tensor_observation = torch.as_tensor(np.transpose(observations, (0, 3, 1, 2)), dtype=torch.float32,
+                                             device=self.device)
+        return {'state': self.model(tensor_observation)}
+
+
 class CoG_CNN(nn.Module):
     def __init__(self,
                  input_shape: Sequence[int],
@@ -227,110 +273,6 @@ class CoG_RNN(nn.Module):
         fusion_feature = self.fusion_model(torch.cat((laser_feature, pose_feature), dim=-1))
 
         return {'state': fusion_feature * goal_feature}
-
-
-class C_DQN(nn.Module):
-    def __init__(self,
-                 input_shape: Sequence[int],
-                 kernels: Sequence[int],
-                 strides: Sequence[int],
-                 filters: Sequence[int],
-                 normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., torch.Tensor]] = None,
-                 activation: Optional[ModuleType] = None,
-                 device: Optional[Union[str, int, torch.device]] = None):
-        super(C_DQN, self).__init__()
-        self.input_shape = (input_shape[2], input_shape[0], input_shape[1])
-        self.kernels = kernels
-        self.strides = strides
-        self.filters = filters
-        self.normalize = normalize
-        self.initialize = initialize
-        self.activation = activation
-        self.device = device
-        self.output_shapes = {'state': (filters[-1],)}
-        self.model = self._create_network()
-
-    def _create_network(self):
-        layers = []
-        input_shape = self.input_shape
-        for k, s, f in zip(self.kernels, self.strides, self.filters):
-            cnn, input_shape = cnn_block(input_shape, f, k, s, self.normalize, self.activation, self.initialize,
-                                         self.device)
-            layers.extend(cnn)
-        layers.append(nn.AdaptiveMaxPool2d((1, 1)))
-        layers.append(nn.Flatten())
-        return nn.Sequential(*layers)
-
-    def forward(self, observations: np.ndarray):
-        tensor_observation = torch.as_tensor(np.transpose(observations, (0, 3, 1, 2)), dtype=torch.float32,
-                                             device=self.device)
-        return {'state': self.model(tensor_observation)}
-
-
-class L_DQN(nn.Module):
-    def __init__(self,
-                 input_shape: Sequence[int],
-                 output_shape: int,
-                 dropout: float = 0,
-                 initialize: Optional[Callable[..., torch.Tensor]] = None,
-                 device: Optional[Union[str, int, torch.device]] = None):
-        super(L_DQN, self).__init__()
-        assert len(input_shape) == 1
-        self.output_shape = output_shape
-        self.device = device
-        self.dropout = dropout
-        self.initialize = initialize
-        self.device = device
-        self.model = self._create_network()
-
-    def _create_network(self):
-        input_shape = self.input_shape
-        lstm = lstm_block(input_shape, self.output_shape, self.dropout, self.initialize, self.device)
-        return lstm
-
-    def forward(self, observations: np.ndarray):
-        state = torch.as_tensor(observations, dtype=torch.float32, device=self.device)
-        return {'state': state}
-
-
-class CL_DQN(nn.Module):
-    def __init__(self,
-                 input_shape: Sequence[int],
-                 kernels: Sequence[int],
-                 strides: Sequence[int],
-                 filters: Sequence[int],
-                 output_shape: int,
-                 dropout: float = 0,
-                 normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., torch.Tensor]] = None,
-                 activation: Optional[ModuleType] = None,
-                 device: Optional[Union[str, int, torch.device]] = None):
-        super(CL_DQN, self).__init__()
-        self.input_shape = (input_shape[2], input_shape[0], input_shape[1])
-        self.kernels = kernels
-        self.strides = strides
-        self.filters = filters
-        self.output_shape = output_shape
-        self.dropout = dropout
-        self.normalize = normalize
-        self.initialize = initialize
-        self.activation = activation
-        self.device = device
-        self.output_shapes = {'state': (filters[-1],)}
-        self.model = self._create_network()
-
-    def _create_network(self):
-        input_shape = self.input_shape
-        for k, s, f in zip(self.kernels, self.strides, self.filters):
-            cnn, input_shape = cnn_block(input_shape, f, k, s, self.normalize, self.activation, self.initialize,
-                                         self.device)
-        lstm = lstm_block(input_shape, self.output_shape, self.dropout, self.initialize, self.device)
-        return lstm
-
-    def forward(self, observations: np.ndarray):
-        state = torch.as_tensor(observations, dtype=torch.float32, device=self.device)
-        return {'state': state}
 
 
 class Basic_RNN(nn.Module):

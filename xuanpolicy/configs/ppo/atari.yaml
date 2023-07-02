@@ -7,19 +7,20 @@ img_size: [84, 84]  # default is 210 x 160 in gym[Atari]
 num_stack: 4  # frame stack trick
 frame_skip: 4  # frame skip trick
 noop_max: 30  # Do no-op action for a number of steps in [1, noop_max].
-representation: "Basic_CNN"
+representation: "CNN_FC"  # CNN and FC layers
 policy: "Categorical_AC"
 
 # Good HyperParameters for Atari Games, Do not change them.
 filters: [32, 64, 64]
 kernels: [8, 4, 3]
 strides: [4, 2, 1]
-actor_hidden_size: [512, ]
-critic_hidden_size: [512, ]
+fc_hidden_sizes: [512, ]  # fully connected layer hidden sizes.
+actor_hidden_size: []
+critic_hidden_size: []
 activation: "ReLU"
 
 parallels: 8
-training_steps: 10000000  # 20M
+training_steps: 10000000  # 10M
 nsteps: 128
 nepoch: 4
 nminibatch: 4
@@ -29,7 +30,7 @@ vf_coef: 0.25
 ent_coef: 0.01
 clip_range: 0.1
 gamma: 0.99
-lam: 0.95
+lam: 0.95  # gae_lambda: Lambda parameter for calculating N-step advantage
 
 use_obsnorm: False
 use_rewnorm: False
