@@ -105,6 +105,5 @@ REGISTRY = {
     "MAPPO": MAPPO_Agents,
     "ISAC": ISAC_Agents,
     "MASAC": MASAC_Agents,
-    "MADQN": MADQN_Agents,
     "MATD3": MATD3_Agents,
 }

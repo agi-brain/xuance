@@ -10,7 +10,6 @@ class IQL_Learner(LearnerMAS):
                  config: Namespace,
                  policy: tk.Model,
                  optimizer: tk.optimizers.Optimizer,
-                 summary_writer: Optional[SummaryWriter] = None,
                  device: str = "cpu:0",
                  modeldir: str = "./",
                  gamma: float = 0.99,
@@ -18,7 +17,7 @@ class IQL_Learner(LearnerMAS):
                  ):
         self.gamma = gamma
         self.sync_frequency = sync_frequency
-        super(IQL_Learner, self).__init__(config, policy, optimizer, summary_writer, device, modeldir)
+        super(IQL_Learner, self).__init__(config, policy, optimizer, device, modeldir)
 
     def update(self, sample):
         self.iterations += 1
@@ -46,10 +45,7 @@ class IQL_Learner(LearnerMAS):
                 else:
                     q_next_a = tf.reduce_max(q_next, axis=-1, keepdims=True)
 
-                if self.args.consider_terminal_states:
-                    q_target = rewards + (1-terminals) * self.args.gamma * q_next_a
-                else:
-                    q_target = rewards + self.args.gamma * q_next_a
+                q_target = rewards + (1-terminals) * self.args.gamma * q_next_a
 
                 # calculate the loss function
                 q_eval_a *= agent_mask
@@ -68,6 +64,11 @@ class IQL_Learner(LearnerMAS):
                 self.policy.copy_target()
 
             lr = self.optimizer._decayed_lr(tf.float32)
-            self.writer.add_scalar("learning_rate", lr.numpy(), self.iterations)
-            self.writer.add_scalar("loss_Q", loss.numpy(), self.iterations)
-            self.writer.add_scalar("predictQ", tf.math.reduce_mean(q_eval_a).numpy(), self.iterations)
+
+            info = {
+                "learning_rate": lr.numpy(),
+                "loss_Q": loss.numpy(),
+                "predictQ": tf.math.reduce_mean(q_eval_a).numpy()
+            }
+
+            return info

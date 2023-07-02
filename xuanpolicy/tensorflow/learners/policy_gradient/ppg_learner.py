@@ -8,13 +8,12 @@ class PPG_Learner(Learner):
     def __init__(self,
                  policy: tk.Model,
                  optimizer: tk.optimizers.Optimizer,
-                 summary_writer: Optional[SummaryWriter] = None,
                  device: str = "cpu:0",
                  modeldir: str = "./",
                  ent_coef: float = 0.005,
                  clip_range: float = 0.25,
                  kl_beta: float = 1.0):
-        super(PPG_Learner, self).__init__(policy, optimizer, summary_writer, device, modeldir)
+        super(PPG_Learner, self).__init__(policy, optimizer, device, modeldir)
         self.ent_coef = ent_coef
         self.clip_range = clip_range
         self.kl_beta = kl_beta
@@ -49,11 +48,15 @@ class PPG_Learner(Learner):
                     if grad is not None
                 ])
             lr_policy = self.optimizer._decayed_lr(tf.float32)
-            # Logger
-            self.writer.add_scalar("actor-loss", a_loss.numpy(), self.policy_iterations)
-            self.writer.add_scalar("entropy", e_loss.numpy(), self.policy_iterations)
-            self.writer.add_scalar("lr_policy", lr_policy.numpy(), self.iterations)
+
+            info = {
+                "actor-loss": a_loss.numpy(),
+                "entropy": e_loss.numpy(),
+                "learning_rate": lr_policy.numpy(),
+            }
             self.policy_iterations += 1
+
+            return info
 
     def update_critic(self, obs_batch, act_batch, ret_batch, adv_batch, old_dists):
         with tf.device(self.device):
@@ -68,9 +71,12 @@ class PPG_Learner(Learner):
                     if grad is not None
                 ])
             lr_critic = self.optimizer._decayed_lr(tf.float32)
-            self.writer.add_scalar("critic-loss", loss.numpy(), self.value_iterations)
-            self.writer.add_scalar("lr_critic", lr_critic.numpy(), self.iterations)
+            info = {
+                "critic-loss": loss.item(),
+                "lr_critic": lr_critic.numpy()
+            }
             self.value_iterations += 1
+            return info
 
     def update_auxiliary(self, obs_batch, act_batch, ret_batch, adv_batch, old_dists):
         with tf.device(self.device):
@@ -93,40 +99,12 @@ class PPG_Learner(Learner):
                     if grad is not None
                 ])
             lr_aux = self.optimizer._decayed_lr(tf.float32)
-            self.writer.add_scalar("kl-loss", loss.numpy(), self.value_iterations)
-            self.writer.add_scalar("lr_aux", lr_aux.numpy(), self.iterations)
+
+            info = {
+                "kl-loss": loss.numpy(),
+                "lr_aux": lr_aux.numpy()
+            }
+            return info
 
     def update(self):
         pass
-
-    # def update(self, obs_batch, act_batch, ret_batch, adv_batch, old_logp):
-    #    #self.iterations += 1
-    #     act_batch = torch.as_tensor(act_batch, device=self.device)
-    #     ret_batch = torch.as_tensor(ret_batch, device=self.device)
-    #     adv_batch = torch.as_tensor(adv_batch, device=self.device)
-    #     old_logp_batch = torch.as_tensor(old_logp, device=self.device)
-    #     outputs, a_dist, v_pred = self.policy(obs_batch)
-    #     log_prob = a_dist.log_prob(act_batch)
-
-    #     # ppo-clip core implementations 
-    #     ratio = (log_prob - old_logp_batch).exp().float()
-    #     surrogate1 = ratio.clamp(1.0 - self.clip_range, 1.0 + self.clip_range) * adv_batch
-    #     surrogate2 = adv_batch * ratio
-    #     a_loss = -torch.minimum(surrogate1, surrogate2).mean()
-    #     c_loss = F.mse_loss(v_pred, ret_batch)
-    #     e_loss = a_dist.entropy().mean()
-    #     loss = a_loss - self.ent_coef * e_loss + self.vf_coef * c_loss
-    #     self.optimizer.zero_grad()
-    #     loss.backward()
-    #     self.optimizer.step()
-    #     if self.scheduler is not None:
-    #         self.scheduler.step()
-    #     # Logger
-    #     lr = self.optimizer.state_dict()['param_groups'][0]['lr']
-    #     cr = ((ratio < 1 - self.clip_range).sum() + (ratio > 1 + self.clip_range).sum()) / ratio.shape[0]
-    #     self.writer.add_scalar("actor-loss", a_loss.item(), self.iterations)
-    #     self.writer.add_scalar("critic-loss", c_loss.item(), self.iterations)
-    #     self.writer.add_scalar("entropy", e_loss.item(), self.iterations)
-    #     self.writer.add_scalar("learning_rate", lr, self.iterations)
-    #     self.writer.add_scalar("predict_value", v_pred.mean().item(), self.iterations)
-    #     self.writer.add_scalar("clip_ratio", cr, self.iterations)

@@ -10,7 +10,6 @@ class MATD3_Learner(LearnerMAS):
                  config: Namespace,
                  policy: tk.Model,
                  optimizer: Sequence[tk.optimizers.Optimizer],
-                 summary_writer: Optional[SummaryWriter] = None,
                  device: str = "cpu:0",
                  modeldir: str = "./",
                  gamma: float = 0.99,
@@ -21,7 +20,7 @@ class MATD3_Learner(LearnerMAS):
         self.tau = config.tau
         self.delay = delay
         self.sync_frequency = sync_frequency
-        super(MATD3_Learner, self).__init__(config, policy, optimizer, summary_writer, device, modeldir)
+        super(MATD3_Learner, self).__init__(config, policy, optimizer, device, modeldir)
         self.optimizer = {
             'actor': optimizer[0],
             'critic': optimizer[1]
@@ -58,10 +57,7 @@ class MATD3_Learner(LearnerMAS):
                 inputs_next = {"obs": obs_next, "ids": IDs}
                 actions_next = self.policy.target_actor(inputs_next)
                 _, target_q = self.policy.target_critic(obs_next, actions_next, IDs)
-                if self.args.consider_terminal_states:
-                    q_target = rewards + (1 - terminals) * self.args.gamma * target_q
-                else:
-                    q_target = rewards + self.args.gamma * target_q
+                q_target = rewards + (1 - terminals) * self.args.gamma * target_q
                 y_pred = tf.reshape(action_q * agent_mask, [-1])
                 q_target = tf.tile(q_target, (1, 1, 2))
                 y_true = tf.reshape(tf.stop_gradient(q_target * agent_mask), [-1])
@@ -90,9 +86,14 @@ class MATD3_Learner(LearnerMAS):
 
             lr_a = self.optimizer['actor']._decayed_lr(tf.float32)
             lr_c = self.optimizer['critic']._decayed_lr(tf.float32)
-            self.writer.add_scalar("learning_rate_actor", lr_a.numpy(), self.iterations)
-            self.writer.add_scalar("learning_rate_critic_A", lr_c.numpy(), self.iterations)
+
+            info = {
+                "learning_rate_actor": lr_a.numpy(),
+                "learning_rate_critic_A": lr_c.numpy(),
+                "loss_critic": loss_c.numpy(),
+                "predictQ": tf.math.reduce_mean(action_q).numpy()
+            }
             if self.iterations % self.delay == 0:
-                self.writer.add_scalar("loss_actor", p_loss.numpy(), self.iterations)
-            self.writer.add_scalar("loss_critic", loss_c.numpy(), self.iterations)
-            self.writer.add_scalar("predictQ", tf.math.reduce_mean(action_q).numpy(), self.iterations)
+                info["loss_actor"] = p_loss.numpy()
+
+            return info

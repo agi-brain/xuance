@@ -12,7 +12,6 @@ class WQMIX_Learner(LearnerMAS):
                  config: Namespace,
                  policy: tk.Model,
                  optimizer: tk.optimizers.Optimizer,
-                 summary_writer: Optional[SummaryWriter] = None,
                  device: str = "cpu:0",
                  modeldir: str = "./",
                  gamma: float = 0.99,
@@ -21,7 +20,7 @@ class WQMIX_Learner(LearnerMAS):
         self.alpha = config.alpha
         self.gamma = gamma
         self.sync_frequency = sync_frequency
-        super(WQMIX_Learner, self).__init__(config, policy, optimizer, summary_writer, device, modeldir)
+        super(WQMIX_Learner, self).__init__(config, policy, optimizer, device, modeldir)
 
     def update(self, sample):
         self.iterations += 1
@@ -61,10 +60,7 @@ class WQMIX_Learner(LearnerMAS):
                 q_eval_next_centralized = tf.gather(self.policy.target_q_centralized(inputs_target), action_next_greedy, axis=-1, batch_dims=-1)
                 q_tot_next_centralized = self.policy.target_q_feedforward(q_eval_next_centralized*agent_mask, state_next)
 
-                if self.args.consider_terminal_states:
-                    target_value = rewards + (1 - terminals) * self.args.gamma * q_tot_next_centralized
-                else:
-                    target_value = rewards + self.args.gamma * q_tot_next_centralized
+                target_value = rewards + (1 - terminals) * self.args.gamma * q_tot_next_centralized
                 td_error = q_tot_eval - tf.stop_gradient(target_value)
 
                 # calculate weights
@@ -99,8 +95,13 @@ class WQMIX_Learner(LearnerMAS):
                 self.policy.copy_target()
 
             lr = self.optimizer._decayed_lr(tf.float32)
-            self.writer.add_scalar("learning_rate", lr.numpy(), self.iterations)
-            self.writer.add_scalar("loss_Qmix", loss_qmix.numpy(), self.iterations)
-            self.writer.add_scalar("loss_central", loss_central.numpy(), self.iterations)
-            self.writer.add_scalar("loss", loss.numpy(), self.iterations)
-            self.writer.add_scalar("predictQ", tf.math.reduce_mean(q_tot_eval).numpy(), self.iterations)
+
+            info = {
+                "learning_rate": lr.numpy(),
+                "loss_Qmix": loss_qmix.numpy(),
+                "loss_central": loss_central.numpy(),
+                "loss": loss.numpy(),
+                "predictQ": tf.math.reduce_mean(q_tot_eval).numpy()
+            }
+
+            return info

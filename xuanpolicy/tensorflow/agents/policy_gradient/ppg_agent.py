@@ -8,9 +8,7 @@ class PPG_Agent(Agent):
                  policy: tk.Model,
                  optimizer: tk.optimizers.Optimizer,
                  device: str = 'cpu'):
-        self.config = config
         self.render = config.render
-        self.comm = MPI.COMM_WORLD
         self.nenvs = envs.num_envs
         self.nsteps = config.nsteps
         self.nminibatch = config.nminibatch
@@ -20,17 +18,11 @@ class PPG_Agent(Agent):
 
         self.gamma = config.gamma
         self.lam = config.lam
-        self.use_obsnorm = config.use_obsnorm
-        self.use_rewnorm = config.use_rewnorm
-        self.obsnorm_range = config.obsnorm_range
-        self.rewnorm_range = config.rewnorm_range
-
         self.observation_space = envs.observation_space
         self.action_space = envs.action_space
         self.representation_info_shape = policy.representation.output_shapes
         self.auxiliary_info_shape = {"old_dist": None}
 
-        writer = SummaryWriter(config.logdir)
         memory = DummyOnPolicyBuffer(self.observation_space,
                                      self.action_space,
                                      self.representation_info_shape,
@@ -42,121 +34,117 @@ class PPG_Agent(Agent):
                                      self.lam)
         learner = PPG_Learner(policy,
                               optimizer,
-                              writer,
                               config.device,
                               config.modeldir,
                               config.ent_coef,
                               config.clip_range,
                               config.kl_beta)
-
-        self.obs_rms = RunningMeanStd(shape=space2shape(self.observation_space), comm=self.comm, use_mpi=False)
-        self.ret_rms = RunningMeanStd(shape=(), comm=self.comm, use_mpi=False)
-        super(PPG_Agent, self).__init__(envs, policy, memory, learner, writer, device, config.logdir,
-                                        config.modeldir)
-
-    def _process_observation(self, observations):
-        if self.use_obsnorm:
-            if isinstance(self.observation_space, Dict):
-                for key in self.observation_space.spaces.keys():
-                    observations[key] = np.clip(
-                        (observations[key] - self.obs_rms.mean[key]) / (self.obs_rms.std[key] + EPS),
-                        -self.obsnorm_range, self.obsnorm_range)
-            else:
-                observations = np.clip((observations - self.obs_rms.mean) / (self.obs_rms.std + EPS),
-                                       -self.obsnorm_range, self.obsnorm_range)
-            return observations
-        return observations
-
-    def _process_reward(self, rewards):
-        if self.use_rewnorm:
-            std = np.clip(self.ret_rms.std, 0.1, 100)
-            return np.clip(rewards / std, -self.rewnorm_range, self.rewnorm_range)
-        return rewards
+        super(PPG_Agent, self).__init__(config, envs, policy, memory, learner, device, config.logdir, config.modeldir)
 
     def _action(self, obs):
-        states, _, vs, _ = self.policy(obs)
+        _, _, vs, _ = self.policy(obs)
         dists = self.policy.actor.dist
         acts = dists.stochastic_sample()
-        for key in states.keys():
-            states[key] = states[key].numpy()
         vs = vs.numpy()
         acts = acts.numpy()
-        return states, acts, vs, split_distributions(dists)
+        return acts, vs, split_distributions(dists)
 
-    def train(self, train_steps=10000):
-        episodes = np.zeros((self.nenvs,), np.int32)
-        scores = np.zeros((self.nenvs,), np.float32)
-        returns = np.zeros((self.nenvs,), np.float32)
-
-        obs = self.envs.reset()
-        for step in tqdm(range(train_steps)):
+    def train(self, train_steps):
+        obs = self.envs.buf_obs
+        for _ in tqdm(range(train_steps)):
+            step_info = {}
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
-            states, acts, rets, dists = self._action(obs)
-            next_obs, rewards, dones, infos = self.envs.step(acts)
-            if self.render: self.envs.render()
-            self.memory.store(obs, acts, self._process_reward(rewards), rets, dones, states, {"old_dist": dists})
+            acts, rets, dists = self._action(obs)
+            next_obs, rewards, terminals, trunctions, infos = self.envs.step(acts)
+
+            self.memory.store(obs, acts, self._process_reward(rewards), rets, terminals, {"old_dist": dists})
             if self.memory.full:
-                _, _, vals, _ = self._action(self._process_observation(next_obs))
+                _, vals, _ = self._action(self._process_observation(next_obs))
                 for i in range(self.nenvs):
                     self.memory.finish_path(vals[i], i)
                 # policy update
                 for _ in range(self.nminibatch * self.policy_nepoch):
-                    obs_batch, act_batch, ret_batch, adv_batch, _, aux_batch = self.memory.sample()
-                    self.learner.update_policy(obs_batch, act_batch, ret_batch, adv_batch, aux_batch['old_dist'])
+                    obs_batch, act_batch, ret_batch, adv_batch, aux_batch = self.memory.sample()
+                    step_info.update(
+                        self.learner.update_policy(obs_batch, act_batch, ret_batch, adv_batch, aux_batch['old_dist']))
                 # critic update
                 for _ in range(self.nminibatch * self.value_nepoch):
-                    obs_batch, act_batch, ret_batch, adv_batch, _, aux_batch = self.memory.sample()
-                    self.learner.update_critic(obs_batch, act_batch, ret_batch, adv_batch, aux_batch['old_dist'])
+                    obs_batch, act_batch, ret_batch, adv_batch, aux_batch = self.memory.sample()
+                    step_info.update(
+                        self.learner.update_critic(obs_batch, act_batch, ret_batch, adv_batch, aux_batch['old_dist']))
 
                 # update old_prob
-                buffer_obs_shape = self.memory.observations.shape
-                buffer_obs = self.memory.observations.reshape([-1, buffer_obs_shape[-1]])
+                buffer_obs = self.memory.observations
                 buffer_act = self.memory.actions
-                _, new_logits, _, _ = self.policy(buffer_obs)
-                self.policy.actor.dist.set_param(tf.reshape(new_logits, buffer_obs_shape[0:-1]+(-1, )))
-                new_dist = self.policy.actor.dist
+                _, new_dist, _, _ = self.policy(buffer_obs)
                 self.memory.auxiliary_infos['old_dist'] = split_distributions(new_dist)
                 for _ in range(self.nminibatch * self.aux_nepoch):
-                    obs_batch, act_batch, ret_batch, adv_batch, _, aux_batch = self.memory.sample()
-                    self.learner.update_auxiliary(obs_batch, act_batch, ret_batch, adv_batch, aux_batch['old_dist'])
+                    obs_batch, act_batch, ret_batch, adv_batch, aux_batch = self.memory.sample()
+                    step_info.update(self.learner.update_auxiliary(obs_batch, act_batch, ret_batch, adv_batch,
+                                                                   aux_batch['old_dist']))
                 self.memory.clear()
-            scores += rewards
-            returns = self.gamma * returns + rewards
+
             obs = next_obs
             for i in range(self.nenvs):
-                if dones[i] == True:
-                    self.ret_rms.update(returns[i:i + 1])
+                if terminals[i] or trunctions[i]:
+                    obs[i] = infos[i]["reset_obs"]
                     self.memory.finish_path(0, i)
-                    self.writer.add_scalars("returns-episode", {"env-%d" % i: scores[i]}, episodes[i])
-                    self.writer.add_scalars("returns-step", {"env-%d" % i: scores[i]}, step)
-                    scores[i] = 0
-                    returns[i] = 0
-                    episodes[i] += 1
+                    self.current_episode[i] += 1
+                    if self.use_wandb:
+                        step_info["Episode-Steps/env-%d" % i] = infos[i]["episode_step"]
+                        step_info["Train-Episode-Rewards/env-%d" % i] = infos[i]["episode_score"]
+                    else:
+                        step_info["Episode-Steps"] = {"env-%d" % i: infos[i]["episode_step"]}
+                        step_info["Train-Episode-Rewards"] = {"env-%d" % i: infos[i]["episode_score"]}
+                    self.log_infos(step_info, self.current_step)
 
-            if step % 50000 == 0 or step == train_steps - 1:
-                self.save_model()
-                np.save(self.modeldir + "/obs_rms.npy",
-                        {'mean': self.obs_rms.mean, 'std': self.obs_rms.std, 'count': self.obs_rms.count})
+            self.current_step += 1
 
-    def test(self, test_steps=10000, load_model=None):
-        self.load_model(self.modeldir)
-        scores = np.zeros((self.nenvs,), np.float32)
-        returns = np.zeros((self.nenvs,), np.float32)
+    def test(self, env_fn, test_episodes):
+        test_envs = env_fn()
+        num_envs = test_envs.num_envs
+        videos, episode_videos = [[] for _ in range(num_envs)], []
+        current_episode, scores, best_score = 0, [], -np.inf
+        obs, infos = test_envs.reset()
+        if self.config.render_mode == "rgb_array" and self.render:
+            images = test_envs.render(self.config.render_mode)
+            for idx, img in enumerate(images):
+                videos[idx].append(img)
 
-        obs = self.envs.reset()
-        for _ in tqdm(range(test_steps)):
+        while current_episode < test_episodes:
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
-            states, acts, rets, logps = self._action(obs)
-            next_obs, rewards, dones, infos = self.envs.step(acts)
-            self.envs.render()
-            scores += rewards
-            returns = self.gamma * returns + rewards
-            obs = next_obs
-            for i in range(self.nenvs):
-                if dones[i] == True:
-                    scores[i], returns[i] = 0, 0
+            acts, rets, logps = self._action(obs)
+            next_obs, rewards, terminals, trunctions, infos = test_envs.step(acts)
+            if self.config.render_mode == "rgb_array" and self.render:
+                images = test_envs.render(self.config.render_mode)
+                for idx, img in enumerate(images):
+                    videos[idx].append(img)
 
-    def evaluate(self):
-        pass
+            obs = next_obs
+            for i in range(num_envs):
+                if terminals[i] or trunctions[i]:
+                    obs[i] = infos[i]["reset_obs"]
+                    scores.append(infos[i]["episode_score"])
+                    current_episode += 1
+                    if best_score < infos[i]["episode_score"]:
+                        best_score = infos[i]["episode_score"]
+                        episode_videos = videos[i].copy()
+                    if self.config.test_mode:
+                        print("Episode: %d, Score: %.2f" % (current_episode, infos[i]["episode_score"]))
+
+        if self.config.render_mode == "rgb_array" and self.render:
+            # time, height, width, channel -> time, channel, height, width
+            videos_info = {"Videos_Test": np.array([episode_videos], dtype=np.uint8).transpose((0, 1, 4, 2, 3))}
+            self.log_videos(info=videos_info, fps=50, x_index=self.current_step)
+
+        if self.config.test_mode:
+            print("Best Score: %.2f" % (best_score))
+
+        test_info = {"Test-Episode-Rewards/Mean-Score": np.mean(scores)}
+        self.log_infos(test_info, self.current_step)
+
+        test_envs.close()
+
+        return scores

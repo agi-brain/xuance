@@ -4,11 +4,10 @@ from xuanpolicy.tensorflow.agents import *
 class MARLAgents(object):
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecEnv_MAS,
+                 envs: DummyVecEnv_Pettingzoo,
                  policy: tk.Model,
                  memory: BaseBuffer,
                  learner: LearnerMAS,
-                 writer: Optional[tf.summary.SummaryWriter] = None,
                  device: str = "cpu:0",
                  logdir: str = "./logs/",
                  modeldir: str = "./models/",
@@ -29,7 +28,6 @@ class MARLAgents(object):
         self.policy = policy
         self.memory = memory
         self.learner = learner
-        self.writer = writer
         self.device = device
         self.logdir = logdir
         self.modeldir = modeldir

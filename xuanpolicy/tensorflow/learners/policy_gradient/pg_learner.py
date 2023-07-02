@@ -5,12 +5,11 @@ class PG_Learner(Learner):
     def __init__(self,
                  policy: tk.Model,
                  optimizer: tk.optimizers.Optimizer,
-                 summary_writer: Optional[SummaryWriter] = None,
                  device: str = "cpu:0",
                  modeldir: str = "./",
                  ent_coef: float = 0.005,
                  clip_grad: Optional[float] = None):
-        super(PG_Learner, self).__init__(policy, optimizer, summary_writer, device, modeldir)
+        super(PG_Learner, self).__init__(policy, optimizer, device, modeldir)
         self.ent_coef = ent_coef
         self.clip_grad = clip_grad
 
@@ -38,6 +37,11 @@ class PG_Learner(Learner):
                 ])
 
             lr = self.optimizer._decayed_lr(tf.float32)
-            self.writer.add_scalar("actor-loss", a_loss.numpy(), self.iterations)
-            self.writer.add_scalar("entropy", e_loss.numpy(), self.iterations)
-            self.writer.add_scalar("lr", lr.numpy(), self.iterations)
+
+            info = {
+                "actor-loss": a_loss.numpy(),
+                "entropy": e_loss.numpy(),
+                "learning_rate": lr.numpy()
+            }
+
+            return info

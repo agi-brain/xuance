@@ -5,13 +5,12 @@ class A2C_Learner(Learner):
     def __init__(self,
                  policy: tk.Model,
                  optimizer: tk.optimizers.Optimizer,
-                 summary_writer: Optional[SummaryWriter] = None,
                  device: str = "cpu:0",
                  modeldir: str = "./",
                  vf_coef: float = 0.25,
                  ent_coef: float = 0.005,
                  clip_grad: Optional[float] = None):
-        super(A2C_Learner, self).__init__(policy, optimizer, summary_writer, device, modeldir)
+        super(A2C_Learner, self).__init__(policy, optimizer, device, modeldir)
         self.vf_coef = vf_coef
         self.ent_coef = ent_coef
         self.clip_grad = clip_grad
@@ -41,9 +40,13 @@ class A2C_Learner(Learner):
                 ])
 
             lr = self.optimizer._decayed_lr(tf.float32)
-            # Logger
-            self.writer.add_scalar("actor-loss", a_loss.numpy(), self.iterations)
-            self.writer.add_scalar("critic-loss", c_loss.numpy(), self.iterations)
-            self.writer.add_scalar("entropy", e_loss.numpy(), self.iterations)
-            self.writer.add_scalar("predict_value", tf.math.reduce_mean(v_pred).numpy(), self.iterations)
-            self.writer.add_scalar("lr", lr.numpy(), self.iterations)
+
+            info = {
+                "actor-loss": a_loss.numpy(),
+                "critic-loss": c_loss.numpy(),
+                "entropy": e_loss.numpy(),
+                "learning_rate": lr.numpy(),
+                "predict_value": tf.math.reduce_mean(v_pred).numpy()
+            }
+
+            return info

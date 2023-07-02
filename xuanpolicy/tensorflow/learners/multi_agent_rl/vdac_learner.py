@@ -11,13 +11,12 @@ class VDAC_Learner(LearnerMAS):
                  config: Namespace,
                  policy: tk.Model,
                  optimizer: tk.optimizers.Optimizer,
-                 summary_writer: Optional[SummaryWriter] = None,
                  device: str = "cpu:0",
                  modeldir: str = "./",
                  gamma: float = 0.99,
                  ):
         self.gamma = gamma
-        super(VDAC_Learner, self).__init__(config, policy, optimizer, summary_writer, device, modeldir)
+        super(VDAC_Learner, self).__init__(config, policy, optimizer, device, modeldir)
 
     def save_model(self):
         model_path = self.modeldir + "model-%s-%s" % (time.asctime(), str(self.iterations))
@@ -69,9 +68,14 @@ class VDAC_Learner(LearnerMAS):
 
             # Logger
             lr = self.optimizer._decayed_lr(tf.float32)
-            self.writer.add_scalar("learning_rate", lr.numpy(), self.iterations)
-            self.writer.add_scalar("actor_loss", loss_a.numpy(), self.iterations)
-            self.writer.add_scalar("critic_loss", loss_c.numpy(), self.iterations)
-            self.writer.add_scalar("entropy", loss_e.numpy(), self.iterations)
-            self.writer.add_scalar("loss", loss.numpy(), self.iterations)
-            self.writer.add_scalar("predict_value", tf.math.reduce_mean(v_pred).numpy(), self.iterations)
+
+            info = {
+                "learning_rate": lr.numpy(),
+                "actor_loss": loss_a.numpy(),
+                "critic_loss": loss_c.numpy(),
+                "entropy": loss_e.numpy(),
+                "loss": loss.numpy(),
+                "predict_value": tf.math.reduce_mean(v_pred).numpy()
+            }
+
+            return info

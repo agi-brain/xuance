@@ -12,7 +12,6 @@ class QTRAN_Learner(LearnerMAS):
                  config: Namespace,
                  policy: tk.Model,
                  optimizer: tk.optimizers.Optimizer,
-                 summary_writer: Optional[SummaryWriter] = None,
                  device: str = "cpu:0",
                  modeldir: str = "./",
                  gamma: float = 0.99,
@@ -20,7 +19,7 @@ class QTRAN_Learner(LearnerMAS):
                  ):
         self.gamma = gamma
         self.sync_frequency = sync_frequency
-        super(QTRAN_Learner, self).__init__(config, policy, optimizer, summary_writer, device, modeldir)
+        super(QTRAN_Learner, self).__init__(config, policy, optimizer, device, modeldir)
 
     def update(self, sample):
         self.iterations += 1
@@ -54,10 +53,7 @@ class QTRAN_Learner(LearnerMAS):
                 q_joint_next, _ = self.policy.target_qtran_net(hidden_n_next * hidden_mask,
                                                                self.onehot_action(actions_next_greedy,
                                                                                   self.dim_act) * actions_mask)
-                if self.args.consider_terminal_states:
-                    y_dqn = rewards + (1 - terminals) * self.args.gamma * q_joint_next
-                else:
-                    y_dqn = rewards + self.args.gamma * q_joint_next
+                y_dqn = rewards + (1 - terminals) * self.args.gamma * q_joint_next
                 y_dqn = tf.stop_gradient(tf.reshape(y_dqn, [-1]))
                 q_joint = tf.reshape(q_joint, [-1])
                 loss_td = tk.losses.mean_squared_error(y_dqn, q_joint)
@@ -102,9 +98,14 @@ class QTRAN_Learner(LearnerMAS):
                     self.policy.copy_target()
 
                 lr = self.optimizer._decayed_lr(tf.float32)
-                self.writer.add_scalar("learning_rate", lr.numpy(), self.iterations)
-                self.writer.add_scalar("loss_td", loss_td.numpy(), self.iterations)
-                self.writer.add_scalar("loss_opt", loss_opt.numpy(), self.iterations)
-                self.writer.add_scalar("loss_nopt", loss_nopt.numpy(), self.iterations)
-                self.writer.add_scalar("loss", loss.numpy(), self.iterations)
-                self.writer.add_scalar("predictQ", tf.math.reduce_mean(q_eval_a).numpy(), self.iterations)
+
+                info = {
+                    "learning_rate": lr.numpy(),
+                    "loss_td": loss_td.numpy(),
+                    "loss_opt": loss_opt.numpy(),
+                    "loss_nopt": loss_nopt.numpy(),
+                    "loss": loss.numpy(),
+                    "predictQ": tf.math.reduce_mean(q_eval_a).numpy()
+                }
+
+                return info

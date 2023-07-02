@@ -11,7 +11,6 @@ class COMA_Learner(LearnerMAS):
                  config: Namespace,
                  policy: tk.Model,
                  optimizer: Sequence[tk.optimizers.Optimizer],
-                 summary_writer: Optional[SummaryWriter] = None,
                  device: str = "cpu:0",
                  modeldir: str = "./",
                  gamma: float = 0.99,
@@ -20,7 +19,7 @@ class COMA_Learner(LearnerMAS):
         self.gamma = gamma
         self.td_lambda = config.td_lambda
         self.sync_frequency = sync_frequency
-        super(COMA_Learner, self).__init__(config, policy, optimizer, summary_writer, device, modeldir)
+        super(COMA_Learner, self).__init__(config, policy, optimizer, device, modeldir)
         self.optimizer = {
             'actor': optimizer[0],
             'critic': optimizer[1]
@@ -47,17 +46,9 @@ class COMA_Learner(LearnerMAS):
         agent_mask = agent_mask.numpy()
         target_q_a = target_q_a.numpy()
         returns = np.zeros_like(target_q_a)
-        if self.args.consider_terminal_states:
-            returns[:, -1] = target_q_a[:, -1] * (1 - terminated.sum(dim=1))
-            for t in range(max_step_len - 2, -1, -1):
-                returns[:, t] = self.td_lambda * self.gamma * returns[:, t + 1] + (
-                        rewards[:, t] + (1 - self.td_lambda) * self.gamma * target_q_a[:, t + 1] * (
-                        1 - terminated[:, t])) * agent_mask[:, t]
-        else:
-            returns[:, -1] = target_q_a[:, -1]
-            for t in range(max_step_len - 2, -1, -1):
-                returns[:, t] = self.td_lambda * self.gamma * returns[:, t + 1] + (
-                            rewards[:, t] + (1 - self.td_lambda) * self.gamma * target_q_a[:, t + 1]) * agent_mask[:, t]
+        returns[:, -1] = target_q_a[:, -1] * (1 - terminated.sum(dim=1))
+        for t in range(max_step_len - 2, -1, -1):
+            returns[:, t] = self.td_lambda * self.gamma * returns[:, t + 1] + (rewards[:, t] + (1 - self.td_lambda) * self.gamma * target_q_a[:, t + 1] * (1 - terminated[:, t])) * agent_mask[:, t]
         return tf.convert_to_tensor(returns[:, 0:-1])
 
     def update(self, sample):
@@ -136,8 +127,13 @@ class COMA_Learner(LearnerMAS):
             # Logger
             lr_a = self.optimizer['actor']._decayed_lr(tf.float32)
             lr_c = self.optimizer['critic']._decayed_lr(tf.float32)
-            self.writer.add_scalar("learning_rate_actor", lr_a.numpy(), self.iterations)
-            self.writer.add_scalar("learning_rate_critic", lr_c.numpy(), self.iterations)
-            self.writer.add_scalar("actor_loss", loss_coma.numpy(), self.iterations)
-            self.writer.add_scalar("critic_loss", loss_c_item.numpy(), self.iterations)
-            self.writer.add_scalar("advantage", tf.math.reduce_mean(advantages).numpy(), self.iterations)
+
+            info = {
+                "learning_rate_actor": lr_a.numpy(),
+                "learning_rate_critic": lr_c.numpy(),
+                "actor_loss": loss_coma.numpy(),
+                "critic_loss": loss_c_item.numpy(),
+                "advantage": tf.math.reduce_mean(advantages).numpy()
+            }
+
+            return info

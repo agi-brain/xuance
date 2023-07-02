@@ -133,6 +133,6 @@ class Agent(ABC):
 def get_total_iters(agent_name, args):
     if agent_name in ["A2C", "A3C", "PG", "PPO_Clip", "PPO_KL", "PPG", "VDAC", "COMA", "MFAC", "MAPPO_Clip",
                       "MAPPO_KL"]:
-        return int(args.training_steps * args.nepoch * args.nminibatch / args.nsteps)
+        return int(args.training_steps / args.parallels / args.nsteps * args.nepoch * args.nminibatch)
     else:
         return int(args.training_steps / args.training_frequency)

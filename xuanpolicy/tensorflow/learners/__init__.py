@@ -47,5 +47,4 @@ from .multi_agent_rl.mappoclip_learner import MAPPO_Clip_Learner
 from .multi_agent_rl.mappokl_learner import MAPPO_KL_Learner
 from .multi_agent_rl.isac_learner import ISAC_Learner
 from .multi_agent_rl.masac_learner import MASAC_Learner
-from .multi_agent_rl.maac_learner import MAAC_Learner
 from .multi_agent_rl.matd3_learner import MATD3_Learner

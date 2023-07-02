@@ -20,11 +20,6 @@ class PPG_Agent(Agent):
         
         self.gamma = config.gamma
         self.lam = config.lam
-        self.use_obsnorm = config.use_obsnorm
-        self.use_rewnorm = config.use_rewnorm
-        self.obsnorm_range = config.obsnorm_range
-        self.rewnorm_range = config.rewnorm_range
-
         self.observation_space = envs.observation_space
         self.action_space = envs.action_space
         self.representation_info_shape = policy.actor_representation.output_shapes
@@ -52,25 +47,6 @@ class PPG_Agent(Agent):
         self.ret_rms = RunningMeanStd(shape=(), comm=self.comm, use_mpi=False)
         super(PPG_Agent, self).__init__(config, envs, policy, memory, learner, device, config.logdir, config.modeldir)
 
-    def _process_observation(self, observations):
-        if self.use_obsnorm:
-            if isinstance(self.observation_space, Dict):
-                for key in self.observation_space.spaces.keys():
-                    observations[key] = np.clip(
-                        (observations[key] - self.obs_rms.mean[key]) / (self.obs_rms.std[key] + EPS),
-                        -self.obsnorm_range, self.obsnorm_range)
-            else:
-                observations = np.clip((observations - self.obs_rms.mean) / (self.obs_rms.std + EPS),
-                                       -self.obsnorm_range, self.obsnorm_range)
-            return observations
-        return observations
-
-    def _process_reward(self, rewards):
-        if self.use_rewnorm:
-            std = np.clip(self.ret_rms.std, 0.1, 100)
-            return np.clip(rewards / std, -self.rewnorm_range, self.rewnorm_range)
-        return rewards
-
     def _action(self, obs):
         _, dists, vs, _ = self.policy(obs)
         acts = dists.stochastic_sample()
@@ -78,7 +54,7 @@ class PPG_Agent(Agent):
         acts = acts.detach().cpu().numpy()
         return acts, vs, split_distributions(dists)
 
-    def train(self, train_steps=10000):
+    def train(self, train_steps):
         obs = self.envs.buf_obs
         for _ in tqdm(range(train_steps)):
             step_info = {}

@@ -119,6 +119,7 @@ class Atari_Env(gym.Wrapper):
                             frameskip=frame_skip)
         self.env.action_space.seed(seed=seed)
         self.env.unwrapped.reset(seed=seed)
+        self.max_episode_length = self.env._max_episode_steps
         super(Atari_Env, self).__init__(self.env)
         # self.env.seed(seed)
         self.num_stack = num_stack
@@ -187,6 +188,9 @@ class Atari_Env(gym.Wrapper):
         observation, reward, terminated, info = self.env.unwrapped.step(actions)
         self.frames.append(self.observation(observation))
         lives = self.env.unwrapped.ale.lives()
+        # avoid environment bug
+        if self._episode_step >= self.max_episode_length:
+            terminated = True
         self.episode_done = terminated
         if (lives < self.lifes) and (lives > 0):
             terminated = True

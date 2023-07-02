@@ -12,7 +12,6 @@ class MFQ_Learner(LearnerMAS):
                  config: Namespace,
                  policy: tk.Model,
                  optimizer: tk.optimizers.Optimizer,
-                 summary_writer: Optional[SummaryWriter] = None,
                  device: str = "cpu:0",
                  modeldir: str = "./",
                  gamma: float = 0.99,
@@ -21,7 +20,7 @@ class MFQ_Learner(LearnerMAS):
         self.gamma = gamma
         self.temperature = config.temperature
         self.sync_frequency = sync_frequency
-        super(MFQ_Learner, self).__init__(config, policy, optimizer, summary_writer, device, modeldir)
+        super(MFQ_Learner, self).__init__(config, policy, optimizer, device, modeldir)
 
     def save_model(self):
         model_path = self.modeldir + "model-%s-%s" % (time.asctime(), str(self.iterations))
@@ -67,10 +66,7 @@ class MFQ_Learner(LearnerMAS):
                 v_mf = tf.linalg.matmul(tf.reshape(q_next, (-1, 1, shape[-1])),
                                         tf.reshape(tf.expand_dims(pi, axis=-1), (-1, shape[-1], 1)))
                 v_mf = tf.reshape(v_mf, shape[0:-1] + (1,))
-                if self.args.consider_terminal_states:
-                    q_target = rewards + (1 - terminals) * self.args.gamma * v_mf
-                else:
-                    q_target = rewards + self.args.gamma * v_mf
+                q_target = rewards + (1 - terminals) * self.args.gamma * v_mf
 
                 # calculate the loss function
                 y_true = tf.reshape(tf.stop_gradient(q_target * agent_mask), [-1])
@@ -87,6 +83,11 @@ class MFQ_Learner(LearnerMAS):
                 self.policy.copy_target()
 
             lr = self.optimizer._decayed_lr(tf.float32)
-            self.writer.add_scalar("learning_rate", lr.numpy(), self.iterations)
-            self.writer.add_scalar("loss_Q", loss.numpy(), self.iterations)
-            self.writer.add_scalar("predictQ", tf.math.reduce_mean(q_eval_a).numpy(), self.iterations)
+
+            info = {
+                "learning_rate": lr.numpy(),
+                "loss_Q": loss.numpy(),
+                "predictQ": tf.math.reduce_mean(q_eval_a).numpy()
+            }
+
+            return info

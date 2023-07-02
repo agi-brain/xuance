@@ -3,7 +3,6 @@ DCG: Deep coordination graphs
 Paper link: http://proceedings.mlr.press/v119/boehmer20a/boehmer20a.pdf
 Implementation: TensorFlow 2.X
 """
-import numpy as np
 import torch
 
 from xuanpolicy.tensorflow.learners import *
@@ -15,7 +14,6 @@ class DCG_Learner(LearnerMAS):
                  config: Namespace,
                  policy: tk.Model,
                  optimizer: tk.optimizers.Optimizer,
-                 summary_writer: Optional[SummaryWriter] = None,
                  device: str = "cpu:0",
                  modeldir: str = "./",
                  gamma: float = 0.99,
@@ -23,7 +21,7 @@ class DCG_Learner(LearnerMAS):
                  ):
         self.gamma = gamma
         self.sync_frequency = sync_frequency
-        super(DCG_Learner, self).__init__(config, policy, optimizer, summary_writer, device, modeldir)
+        super(DCG_Learner, self).__init__(config, policy, optimizer, device, modeldir)
 
     def save_model(self):
         pass
@@ -160,10 +158,7 @@ class DCG_Learner(LearnerMAS):
                 q_next_a = self.q_dcg(tf.reshape(obs_next, [-1, self.dim_obs[0]]), action_next_greedy, batch_size, states=state_next, use_target_net=True)
                 q_next_a = tf.stop_gradient(q_next_a)
 
-                if self.args.consider_terminal_states:
-                    q_target = rewards + (1-terminals) * self.args.gamma * q_next_a
-                else:
-                    q_target = rewards + self.args.gamma * q_next_a
+                q_target = rewards + (1-terminals) * self.args.gamma * q_next_a
 
                 # calculate the loss function
                 y_true = tf.stop_gradient(tf.reshape(q_target, [-1]))
@@ -180,6 +175,11 @@ class DCG_Learner(LearnerMAS):
                 self.policy.copy_target()
 
             lr = self.optimizer._decayed_lr(tf.float32)
-            self.writer.add_scalar("learning_rate", lr.numpy(), self.iterations)
-            self.writer.add_scalar("loss_Q", loss.numpy(), self.iterations)
-            self.writer.add_scalar("predictQ", tf.math.reduce_mean(q_eval_a).numpy(), self.iterations)
+
+            info = {
+                "learning_rate": lr.numpy(),
+                "loss_Q": loss.numpy(),
+                "predictQ": tf.math.reduce_mean(q_eval_a).numpy()
+            }
+
+            return info

@@ -39,7 +39,6 @@ class LearnerMAS(ABC):
                  config: Namespace,
                  policy: tk.Model,
                  optimizer: Union[tk.optimizers.Optimizer, Sequence[tk.optimizers.Optimizer]],
-                 summary_writer: Optional[tf.summary.SummaryWriter] = None,
                  device: str = "cpu:0",
                  modeldir: str = "./"):
         self.args = config
@@ -54,7 +53,6 @@ class LearnerMAS(ABC):
 
         self.policy = policy
         self.optimizer = optimizer
-        self.writer = summary_writer
         self.device = device
         self.modeldir = modeldir
         self.iterations = 0

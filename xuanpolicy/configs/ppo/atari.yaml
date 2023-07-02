@@ -19,7 +19,7 @@ critic_hidden_size: [512, ]
 activation: "ReLU"
 
 parallels: 8
-training_steps: 10000000  # 10M
+training_steps: 10000000  # 20M
 nsteps: 128
 nepoch: 4
 nminibatch: 4
@@ -38,6 +38,6 @@ rewnorm_range: 5
 
 test_steps: 10000
 eval_interval: 12500
-test_episode: 1
+test_episode: 3
 logdir: "./logs/ppo/"
 modeldir: "./models/ppo/"
