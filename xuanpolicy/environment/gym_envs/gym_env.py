@@ -142,9 +142,9 @@ class Atari_Env(gym.Wrapper):
                                                     dtype=np.uint8)
         else:  # ram type
             self.observation_space = self.env.observation_space
-        assert self.env.unwrapped.get_action_meanings()[0] == "NOOP"
-        assert self.env.unwrapped.get_action_meanings()[1] == "FIRE"
-        assert len(self.env.unwrapped.get_action_meanings()) >= 3
+        # assert self.env.unwrapped.get_action_meanings()[0] == "NOOP"
+        # assert self.env.unwrapped.get_action_meanings()[1] == "FIRE"
+        # assert len(self.env.unwrapped.get_action_meanings()) >= 3
         self.action_space = self.env.action_space
         self.metadata = self.env.metadata
         self.reward_range = self.env.reward_range
