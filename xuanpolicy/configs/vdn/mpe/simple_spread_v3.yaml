@@ -6,6 +6,7 @@ policy: "Mixing_Q_network"
 representation: "Basic_MLP"
 vectorize: "Dummy_Pettingzoo"
 runner: "MPE_Runner"
+off_policy: True
 
 representation_hidden_size: [64, ]
 q_hidden_size: [64, ]  # the units for each hidden layer
@@ -26,11 +27,10 @@ training_frequency: 1
 sync_frequency: 100
 
 n_tests: 5
-test_period: 100
 double_q: True  # use double q learning
 
 test_episodes: 10
-eval_interval: 10000
-test_episode: 1
+eval_interval: 20000
+test_episode: 5
 logdir: "./logs/vdn/"
 modeldir: "./models/vdn/"

@@ -10,7 +10,6 @@ class PPG_Agent(Agent):
                  scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
                  device: Optional[Union[int, str, torch.device]] = None):
         self.render = config.render
-        self.comm = MPI.COMM_WORLD
         self.nenvs = envs.num_envs
         self.nsteps = config.nsteps
         self.nminibatch = config.nminibatch
@@ -42,9 +41,6 @@ class PPG_Agent(Agent):
                               config.ent_coef,
                               config.clip_range,
                               config.kl_beta)
-
-        self.obs_rms = RunningMeanStd(shape=space2shape(self.observation_space), comm=self.comm, use_mpi=False)
-        self.ret_rms = RunningMeanStd(shape=(), comm=self.comm, use_mpi=False)
         super(PPG_Agent, self).__init__(config, envs, policy, memory, learner, device, config.logdir, config.modeldir)
 
     def _action(self, obs):

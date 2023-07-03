@@ -4,31 +4,34 @@ env_id: "simple_spread_v3"
 continuous_action: True
 policy: "MADDPG_policy"
 representation: "Basic_Identical"
-vectorize: "Dummy_MAS"
-runner: "MARL"
+vectorize: "Dummy_Pettingzoo"
+runner: "MPE_Runner"
 
-representation_hidden_size: [32, ]  # the units for each hidden layer
-actor_hidden_size: [256, ]
-critic_hidden_size: [256, ]
-activation: 'ReLU'
+representation_hidden_size: [64, ]  # the units for each hidden layer
+actor_hidden_size: [64, ]
+critic_hidden_size: [64, ]
+activation: 'LeakyReLU'
 activation_action: 'sigmoid'
 
-lr_a: 0.01  # learning rate for actor
-lr_c: 0.001  # learning rate for critic
-tau: 0.001  # soft update for target networks
-sigma: 0.1  # random noise for continuous actions
-clip_grad: 0.5
-
+seed: 1
+parallels: 128
 buffer_size: 200000
 batch_size: 256
+lr_a: 0.01  # learning rate for actor
+lr_c: 0.001  # learning rate for critic
 gamma: 0.95  # discount factor
+tau: 0.001  # soft update for target networks
+clip_grad: 0.5
 
-training_steps: 20000000
+start_noise: 1.0
+end_noise: 0.01
+training_steps: 2000000
 training_frequency: 1
 
 n_tests: 5
-test_period: 100
 
-save_model_frequency: 10000
+test_episodes: 10
+eval_interval: 10000
+test_episode: 1
 logdir: "./logs/maddpg/"
 modeldir: "./models/maddpg/"

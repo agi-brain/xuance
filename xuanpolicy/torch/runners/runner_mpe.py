@@ -18,6 +18,8 @@ class MPE_Runner(Runner_Base_MARL):
                 super(MPE_Runner, self).__init__(arg)
                 self.training_steps = arg.training_steps
                 self.training_frequency = arg.training_frequency
+                self.off_policy = arg.off_policy
+                self.on_policy = not self.off_policy
                 break
         self.episode_length = self.envs.max_episode_length
 
@@ -63,6 +65,16 @@ class MPE_Runner(Runner_Base_MARL):
                 next_state, agent_mask = self.envs.global_state(), self.envs.agent_mask()
 
                 self.store_data(obs_n, next_obs_n, actions_dict, state, next_state, agent_mask, rew_n, terminated_n, self.envs)
+
+                # train the model for off-policy
+                if self.off_policy and (self.current_step % self.training_frequency == 0):
+                    for h, mas_group in enumerate(self.marl_agents):
+                        if mas_group.args.agent_name == "random":
+                            continue
+                        train_info = self.marl_agents[h].train(self.current_episode)
+                        mas_group.log_infos(train_info, self.current_step)
+                        mas_group.log_infos(episode_info, self.current_step)
+
                 obs_n, state, act_mean_last = deepcopy(next_obs_n), deepcopy(next_state), deepcopy(actions_dict['act_mean'])
 
                 for h, mas_group in enumerate(self.marl_agents):
@@ -86,19 +98,21 @@ class MPE_Runner(Runner_Base_MARL):
                             mas_group.memory.finish_ac_path(value_next_e, i)
                             episode_score[h, i] = np.mean(infos[i]["individual_episode_rewards"][h])
                 self.current_step += self.n_envs
-            self.current_episode += self.n_envs
+
             for h in range(self.n_handles):
                 episode_info["Train_Episode_Score/side_%d" % h] = episode_score.mean(axis=1)
                 episode_info["Train_Episode_Score_std/side_%d" % h] = episode_score.std(axis=1)
 
-            # train the model
-            if self.current_step % self.training_frequency == 0:
+            # train the model for on-policy
+            if self.on_policy and (self.current_step % self.training_frequency == 0):
                 for h, mas_group in enumerate(self.marl_agents):
                     if mas_group.args.agent_name == "random":
                         continue
                     train_info = self.marl_agents[h].train(self.current_episode)
                     mas_group.log_infos(train_info, self.current_step)
                     mas_group.log_infos(episode_info, self.current_step)
+
+            self.current_episode += self.n_envs
 
     def test_episode(self, env_fn, n_episodes):
         test_envs = env_fn()
@@ -139,7 +153,7 @@ class MPE_Runner(Runner_Base_MARL):
 
     def run(self):
         if self.args_base.test_mode:
-            def env_fn(self):
+            def env_fn():
                 args_test = deepcopy(self.args_base)
                 args_test.parallels = 1
                 return make_envs(args_test)
@@ -162,15 +176,16 @@ class MPE_Runner(Runner_Base_MARL):
             self.writer.close()
 
     def benchmark(self):
-        def env_fn(self):
+        def env_fn():
             args_test = deepcopy(self.args_base)
             args_test.parallels = 1
             return make_envs(args_test)
         train_episodes = self.args_base.training_steps // self.episode_length // self.n_envs
-        eval_interval = self.args_base.eval_interval
+        eval_interval = self.args_base.eval_interval // self.episode_length // self.n_envs
         test_episode = self.args_base.test_episode
         num_epoch = int(train_episodes / eval_interval)
         for i_epoch in range(num_epoch):
+            print("Epoch: %d/%d:" % (i_epoch, num_epoch))
             self.train_episode(n_episodes=eval_interval)
             self.test_episode(env_fn, test_episode)
 

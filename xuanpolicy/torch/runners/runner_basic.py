@@ -40,7 +40,6 @@ class Runner_Base_MARL(Runner_Base):
 
         self.n_steps = args.training_steps
         self.n_tests = args.n_tests
-        self.test_period = args.test_period
         self.test_mode = args.test_mode
         self.marl_agents = []
         self.marl_names = []

@@ -10,7 +10,7 @@ critic_hidden_size: [256, 256]
 activation: "LeakyReLU"
 
 nsize: 50000
-parallels: 16
+parallels: 4
 batchsize: 256
 actor_learning_rate: 0.001
 critic_learning_rate: 0.001
@@ -20,7 +20,7 @@ tau: 0.005
 learning_rate: 0.0007
 
 start_noise: 0.25
-end_noise: 0.05
+end_noise: 0.01
 training_frequency: 1
 training_steps: 250000
 start_training: 1000

@@ -120,18 +120,19 @@ class DummyOnPolicyBuffer(Buffer):
                  nsize: int,
                  nminibatch: int,
                  gamma: float = 0.99,
-                 lam: float = 0.95):
+                 gae_lam: float = 0.95):
         super(DummyOnPolicyBuffer, self).__init__(observation_space,
                                                   action_space,
                                                   representation_shape,
                                                   auxiliary_shape)
         self.nenvs, self.nsize, self.nminibatch = nenvs, nsize, nminibatch
-        self.gamma, self.lam = gamma, lam
+        self.gamma, self.gae_lam = gamma, gae_lam
         self.start_ids = np.zeros(self.nenvs, np.int64)
         self.observations = create_memory(space2shape(self.observation_space), self.nenvs, self.nsize)
         self.actions = create_memory(space2shape(self.action_space), self.nenvs, self.nsize)
         self.rewards = create_memory((), self.nenvs, self.nsize)
         self.returns = create_memory((), self.nenvs, self.nsize)
+        self.values = create_memory((), self.nenvs, self.nsize)
         self.terminals = create_memory((), self.nenvs, self.nsize)
         self.advantages = create_memory((), self.nenvs, self.nsize)
         self.auxiliary_infos = create_memory(self.auxiliary_shape, self.nenvs, self.nsize)
@@ -146,30 +147,46 @@ class DummyOnPolicyBuffer(Buffer):
         self.actions = create_memory(space2shape(self.action_space), self.nenvs, self.nsize)
         self.rewards = create_memory((), self.nenvs, self.nsize)
         self.returns = create_memory((), self.nenvs, self.nsize)
+        self.values = create_memory((), self.nenvs, self.nsize)
         self.terminals = create_memory((), self.nenvs, self.nsize)
         self.advantages = create_memory((), self.nenvs, self.nsize)
         self.auxiliary_infos = create_memory(self.auxiliary_shape, self.nenvs, self.nsize)
 
-    def store(self, obs, acts, rews, rets, terminals, aux_info=None):
+    def store(self, obs, acts, rews, value, terminals, aux_info=None):
         store_element(obs, self.observations, self.ptr)
         store_element(acts, self.actions, self.ptr)
         store_element(rews, self.rewards, self.ptr)
-        store_element(rets, self.returns, self.ptr)
+        store_element(value, self.values, self.ptr)
         store_element(terminals, self.terminals, self.ptr)
         store_element(aux_info, self.auxiliary_infos, self.ptr)
         self.ptr = (self.ptr + 1) % self.nsize
         self.size = min(self.size + 1, self.nsize)
 
-    def finish_path(self, val, i):
+    def finish_path(self, val, done, i):
         if self.full:
             path_slice = np.arange(self.start_ids[i], self.nsize).astype(np.int32)
         else:
             path_slice = np.arange(self.start_ids[i], self.ptr).astype(np.int32)
-        rewards = np.append(np.array(self.rewards[i, path_slice]), [val], axis=0)
-        critics = np.append(np.array(self.returns[i, path_slice]), [val], axis=0)
-        returns = discount_cumsum(rewards, self.gamma)[:-1]
-        deltas = rewards[:-1] + self.gamma * critics[1:] - critics[:-1]
-        advantages = discount_cumsum(deltas, self.gamma * self.lam)
+
+        # rewards = np.append(np.array(self.rewards[i, path_slice]), [val], axis=0)
+        # critics = np.append(np.array(self.returns[i, path_slice]), [val], axis=0)
+        # returns = discount_cumsum(rewards, self.gamma)[:-1]
+        # deltas = rewards[:-1] + self.gamma * critics[1:] - critics[:-1]
+        # advantages = discount_cumsum(deltas, self.gamma * self.gae_lam)
+
+        ## use gae
+        rewards = np.array(self.rewards[i, path_slice])
+        vs = np.append(np.array(self.values[i, path_slice]), [val], axis=0)
+        dones = np.append(np.array(self.terminals[i, path_slice]), [done], axis=0)
+        advantages = np.zeros_like(rewards)
+        last_gae_lam = 0
+        step_nums = len(path_slice)
+        for t in reversed(range(step_nums)):
+            delta = rewards[t] + self.gamma * vs[t + 1] - vs[t]
+            advantages[t] = last_gae_lam = delta + (1 - dones[t + 1]) * self.gamma * self.gae_lam * last_gae_lam
+        returns = advantages + vs[:-1]
+        ##
+
         self.returns[i, path_slice] = returns
         self.advantages[i, path_slice] = advantages
         self.start_ids[i] = self.ptr
@@ -183,11 +200,12 @@ class DummyOnPolicyBuffer(Buffer):
         obs_batch = sample_batch(self.observations, tuple([env_choices, step_choices]))
         act_batch = sample_batch(self.actions, tuple([env_choices, step_choices]))
         ret_batch = sample_batch(self.returns, tuple([env_choices, step_choices]))
+        val_batch = sample_batch(self.values, tuple([env_choices, step_choices]))
         adv_batch = sample_batch(self.advantages, tuple([env_choices, step_choices]))
         adv_batch = (adv_batch - np.mean(self.advantages)) / (np.std(self.advantages) + 1e-8)
         aux_batch = sample_batch(self.auxiliary_infos, tuple([env_choices, step_choices]))
 
-        return obs_batch, act_batch, ret_batch, adv_batch, aux_batch
+        return obs_batch, act_batch, ret_batch, val_batch, adv_batch, aux_batch
 
 
 class DummyOffPolicyBuffer(Buffer):

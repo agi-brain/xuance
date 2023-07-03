@@ -26,11 +26,16 @@ nepoch: 4
 nminibatch: 4
 learning_rate: 0.00025
 
-vf_coef: 0.25
+use_gae: True
+use_grad_clip: True
+use_value_loss_clip: True
+
+vf_coef: 0.5
 ent_coef: 0.01
 clip_range: 0.1
+clip_grad_norm: 0.5
 gamma: 0.99
-lam: 0.95  # gae_lambda: Lambda parameter for calculating N-step advantage
+gae_lam: 0.95  # gae_lambda: Lambda parameter for calculating N-step advantage
 
 use_obsnorm: False
 use_rewnorm: False

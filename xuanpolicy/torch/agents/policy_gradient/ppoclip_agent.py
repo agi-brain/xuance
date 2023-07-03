@@ -16,7 +16,7 @@ class PPOCLIP_Agent(Agent):
         self.nepoch = config.nepoch
 
         self.gamma = config.gamma
-        self.lam = config.lam
+        self.gae_lam = config.gae_lam
         self.observation_space = envs.observation_space
         self.action_space = envs.action_space
         self.representation_info_shape = policy.representation.output_shapes
@@ -32,15 +32,18 @@ class PPOCLIP_Agent(Agent):
                         self.nsteps,
                         self.nminibatch,
                         self.gamma,
-                        self.lam)
+                        self.gae_lam)
         learner = PPOCLIP_Learner(policy,
                                   optimizer,
                                   scheduler,
                                   config.device,
                                   config.modeldir,
-                                  config.vf_coef,
-                                  config.ent_coef,
-                                  config.clip_range)
+                                  vf_coef=config.vf_coef,
+                                  ent_coef=config.ent_coef,
+                                  clip_range=config.clip_range,
+                                  clip_grad_norm=config.clip_grad_norm,
+                                  use_grad_clip=config.use_grad_clip,
+                                  use_value_loss_clip=config.use_value_loss_clip)
         super(PPOCLIP_Agent, self).__init__(config, envs, policy, memory, learner, device, config.logdir,
                                             config.modeldir)
 
@@ -59,30 +62,30 @@ class PPOCLIP_Agent(Agent):
             step_info = {}
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
-            acts, rets, logps = self._action(obs)
+            acts, value, logps = self._action(obs)
             next_obs, rewards, terminals, trunctions, infos = self.envs.step(acts)
 
-            self.memory.store(obs, acts, self._process_reward(rewards), rets, terminals, {"old_logp": logps})
+            self.memory.store(obs, acts, self._process_reward(rewards), value, terminals, {"old_logp": logps})
             if self.memory.full:
                 _, vals, _ = self._action(self._process_observation(next_obs))
                 for i in range(self.nenvs):
-                    self.memory.finish_path(vals[i], i)
+                    self.memory.finish_path(vals[i], 0, i)
                 for _ in range(self.nminibatch * self.nepoch):
-                    obs_batch, act_batch, ret_batch, adv_batch, aux_batch = self.memory.sample()
-                    step_info = self.learner.update(obs_batch, act_batch, ret_batch, adv_batch, aux_batch['old_logp'])
+                    obs_batch, act_batch, ret_batch, value_batch, adv_batch, aux_batch = self.memory.sample()
+                    step_info = self.learner.update(obs_batch, act_batch, ret_batch, value_batch, adv_batch, aux_batch['old_logp'])
                 self.memory.clear()
 
-            self.returns = self.gamma * self.returns + rewards
+            self.returns = (1 - terminals) * self.gamma * self.returns + rewards
             obs = next_obs
             for i in range(self.nenvs):
                 if terminals[i] or trunctions[i]:
-                    self.memory.finish_path(0, i)
+                    self.memory.finish_path(0, 1, i)
+                    self.ret_rms.update(self.returns[i:i + 1])
+                    self.returns[i] = 0.0
                     if self.atari and (~trunctions[i]):
                         pass
                     else:
                         obs[i] = infos[i]["reset_obs"]
-                        self.ret_rms.update(self.returns[i:i + 1])
-                        self.returns[i] = 0.0
                         self.current_episode[i] += 1
                         if self.use_wandb:
                             step_info["Episode-Steps/env-%d" % i] = infos[i]["episode_step"]

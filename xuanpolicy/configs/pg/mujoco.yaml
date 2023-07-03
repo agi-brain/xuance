@@ -9,7 +9,7 @@ actor_hidden_size: [256,]
 activation: "LeakyReLU"
 
 parallels: 16
-training_steps: 62500
+training_steps: 1000000  # 1M
 nsteps: 256
 nepoch: 1
 nminibatch: 1 
