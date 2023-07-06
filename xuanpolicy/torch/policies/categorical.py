@@ -7,6 +7,12 @@ from xuanpolicy.torch.utils import *
 from xuanpolicy.torch.representations import Basic_Identical
 
 
+def _init_layer(layer, gain=np.sqrt(2), bias=0.0):
+    nn.init.orthogonal_(layer.weight, gain=gain)
+    nn.init.constant_(layer.bias, bias)
+    return layer
+
+
 class ActorNet(nn.Module):
     def __init__(self,
                  state_dim: int,
@@ -22,7 +28,7 @@ class ActorNet(nn.Module):
         for h in hidden_sizes:
             mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initialize, device)
             layers.extend(mlp)
-        layers.extend(mlp_block(input_shape[0], action_dim, None, None, None, device)[0])
+        layers.extend(mlp_block(input_shape[0], action_dim, None, None, initialize, device)[0])
         self.model = nn.Sequential(*layers)
         self.dist = CategoricalDistribution(action_dim)
 
@@ -45,7 +51,7 @@ class CriticNet(nn.Module):
         for h in hidden_sizes:
             mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initialize, device)
             layers.extend(mlp)
-        layers.extend(mlp_block(input_shape[0], 1, None, None, None, device)[0])
+        layers.extend(mlp_block(input_shape[0], 1, None, None, initialize, device)[0])
         self.model = nn.Sequential(*layers)
 
     def forward(self, x: torch.Tensor):

@@ -128,7 +128,7 @@ class Atari_Env(gym.Wrapper):
         self.image_size = [210, 160] if image_size is None else image_size
         self.noop_max = noop_max
         self.lifes = self.env.unwrapped.ale.lives()
-        self.episode_done = True
+        self.was_real_done = True
         self.grayscale, self.rgb = False, False
         if self.obs_type == "rgb":
             self.rgb = True
@@ -160,7 +160,7 @@ class Atari_Env(gym.Wrapper):
 
     def reset(self):
         info = {}
-        if self.episode_done:
+        if self.was_real_done:
             self.env.unwrapped.reset()
             # Execute NoOp actions
             num_noops = np.random.randint(0, self.noop_max)
@@ -179,9 +179,13 @@ class Atari_Env(gym.Wrapper):
             self._episode_step = 0
             self._episode_score = 0.0
             info["episode_step"] = 0
+        else:
+            obs, _, done, _ = self.env.unwrapped.step(0)
+            for _ in range(self.num_stack):
+                self.frames.append(self.observation(obs))
 
         self.lifes = self.env.unwrapped.ale.lives()
-        self.episode_done = False
+        self.was_real_done = False
         return self._get_obs(), info
 
     def step(self, actions):
@@ -191,10 +195,10 @@ class Atari_Env(gym.Wrapper):
         # avoid environment bug
         if self._episode_step >= self.max_episode_length:
             terminated = True
-        self.episode_done = terminated
+        self.was_real_done = terminated
         if (lives < self.lifes) and (lives > 0):
             terminated = True
-        truncated = self.episode_done
+        truncated = self.was_real_done
         self.lifes = lives
         self._episode_step += 1
         self._episode_score += reward

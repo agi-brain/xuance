@@ -92,7 +92,7 @@ class Basic_CNN(nn.Module):
         return {'state': self.model(tensor_observation)}
 
 
-class CNN_FC(nn.Module):
+class AC_CNN_Atari(nn.Module):
     def __init__(self,
                  input_shape: Sequence[int],
                  kernels: Sequence[int],
@@ -103,7 +103,7 @@ class CNN_FC(nn.Module):
                  activation: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None,
                  fc_hidden_sizes: Sequence[int] = ()):
-        super(CNN_FC, self).__init__()
+        super(AC_CNN_Atari, self).__init__()
         self.input_shape = (input_shape[2], input_shape[0], input_shape[1])  # Channels x Height x Width
         self.kernels = kernels
         self.strides = strides
@@ -116,18 +116,23 @@ class CNN_FC(nn.Module):
         self.output_shapes = {'state': (fc_hidden_sizes[-1],)}
         self.model = self._create_network()
 
+    def _init_layer(self, layer, gain=np.sqrt(2), bias=0.0):
+        nn.init.orthogonal_(layer.weight, gain=gain)
+        nn.init.constant_(layer.bias, bias)
+        return layer
+
     def _create_network(self):
         layers = []
         input_shape = self.input_shape
         for k, s, f in zip(self.kernels, self.strides, self.filters):
-            cnn, input_shape = cnn_block(input_shape, f, k, s, self.normalize, self.activation, self.initialize,
-                                         self.device)
+            cnn, input_shape = cnn_block(input_shape, f, k, s, None, self.activation, None, self.device)
+            cnn[0] = self._init_layer(cnn[0])
             layers.extend(cnn)
         layers.append(nn.Flatten())
         input_shape = (np.prod(input_shape, dtype=np.int), )
         for h in self.fc_hidden_sizes:
-            mlp, input_shape = mlp_block(input_shape[0], h, self.normalize, self.activation, self.initialize,
-                                         self.device)
+            mlp, input_shape = mlp_block(input_shape[0], h, None, self.activation, None, self.device)
+            mlp[0] = self._init_layer(mlp[0])
             layers.extend(mlp)
         return nn.Sequential(*layers)
 

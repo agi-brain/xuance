@@ -18,11 +18,11 @@ def get_repre_in(args):
     if representation_name in ["Basic_MLP", "CoG_MLP"]:
         input_dict["hidden_sizes"] = args.representation_hidden_size
     else:
-        if representation_name in ["Basic_CNN", "CoG_CNN", "CNN_FC"]:
+        if representation_name in ["Basic_CNN", "CoG_CNN", "AC_CNN_Atari"]:
             input_dict["kernels"] = args.kernels
             input_dict["strides"] = args.strides
             input_dict["filters"] = args.filters
-        if representation_name in ["CNN_FC"]:
+        if representation_name in ["AC_CNN_Atari"]:
             input_dict["fc_hidden_sizes"] = args.fc_hidden_sizes
 
     input_dict["normalize"] = None

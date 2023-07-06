@@ -6,7 +6,7 @@ policy: "Mixing_Q_network"
 representation: "Basic_MLP"
 vectorize: "Dummy_Pettingzoo"
 runner: "MPE_Runner"
-off_policy: True
+on_policy: False
 
 representation_hidden_size: [64, ]
 q_hidden_size: [64, ]  # the units for each hidden layer

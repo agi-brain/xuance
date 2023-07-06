@@ -1,3 +1,5 @@
+import numpy as np
+
 from xuanpolicy.torch.agents import *
 
 
@@ -24,6 +26,8 @@ class PPOCLIP_Agent(Agent):
 
         self.atari = True if config.env_name == "Atari" else False
         Buffer = DummyOnPolicyBuffer_Atari if self.atari else DummyOnPolicyBuffer_Atari
+        self.buffer_size = self.nenvs * self.nsteps
+        self.batch_size = self.buffer_size // self.nepoch
         memory = Buffer(self.observation_space,
                         self.action_space,
                         self.representation_info_shape,
@@ -69,17 +73,25 @@ class PPOCLIP_Agent(Agent):
             if self.memory.full:
                 _, vals, _ = self._action(self._process_observation(next_obs))
                 for i in range(self.nenvs):
-                    self.memory.finish_path(vals[i], 0, i)
-                for _ in range(self.nminibatch * self.nepoch):
-                    obs_batch, act_batch, ret_batch, value_batch, adv_batch, aux_batch = self.memory.sample()
-                    step_info = self.learner.update(obs_batch, act_batch, ret_batch, value_batch, adv_batch, aux_batch['old_logp'])
+                    if terminals[i]:
+                        self.memory.finish_path(0.0, i)
+                    else:
+                        self.memory.finish_path(vals[i], i)
+                indexes = np.arange(self.buffer_size)
+                for _ in range(self.nepoch):
+                    np.random.shuffle(indexes)
+                    for start in range(0, self.buffer_size, self.batch_size):
+                        end = start + self.batch_size
+                        sample_idx = indexes[start:end]
+                        obs_batch, act_batch, ret_batch, value_batch, adv_batch, aux_batch = self.memory.sample(sample_idx)
+                        step_info = self.learner.update(obs_batch, act_batch, ret_batch, value_batch, adv_batch, aux_batch['old_logp'])
+
                 self.memory.clear()
 
             self.returns = (1 - terminals) * self.gamma * self.returns + rewards
             obs = next_obs
             for i in range(self.nenvs):
                 if terminals[i] or trunctions[i]:
-                    self.memory.finish_path(0, 1, i)
                     self.ret_rms.update(self.returns[i:i + 1])
                     self.returns[i] = 0.0
                     if self.atari and (~trunctions[i]):

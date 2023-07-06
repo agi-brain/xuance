@@ -126,6 +126,7 @@ class DummyOnPolicyBuffer(Buffer):
                                                   representation_shape,
                                                   auxiliary_shape)
         self.nenvs, self.nsize, self.nminibatch = nenvs, nsize, nminibatch
+        self.buffer_size = self.nsize * self.nenvs
         self.gamma, self.gae_lam = gamma, gae_lam
         self.start_ids = np.zeros(self.nenvs, np.int64)
         self.observations = create_memory(space2shape(self.observation_space), self.nenvs, self.nsize)
@@ -162,7 +163,7 @@ class DummyOnPolicyBuffer(Buffer):
         self.ptr = (self.ptr + 1) % self.nsize
         self.size = min(self.size + 1, self.nsize)
 
-    def finish_path(self, val, done, i):
+    def finish_path(self, val, i):
         if self.full:
             path_slice = np.arange(self.start_ids[i], self.nsize).astype(np.int32)
         else:
@@ -177,13 +178,13 @@ class DummyOnPolicyBuffer(Buffer):
         ## use gae
         rewards = np.array(self.rewards[i, path_slice])
         vs = np.append(np.array(self.values[i, path_slice]), [val], axis=0)
-        dones = np.append(np.array(self.terminals[i, path_slice]), [done], axis=0)
+        dones = np.array(self.terminals[i, path_slice])
         advantages = np.zeros_like(rewards)
         last_gae_lam = 0
         step_nums = len(path_slice)
         for t in reversed(range(step_nums)):
-            delta = rewards[t] + self.gamma * vs[t + 1] - vs[t]
-            advantages[t] = last_gae_lam = delta + (1 - dones[t + 1]) * self.gamma * self.gae_lam * last_gae_lam
+            delta = rewards[t] + (1 - dones[t]) * self.gamma * vs[t + 1] - vs[t]
+            advantages[t] = last_gae_lam = delta + (1 - dones[t]) * self.gamma * self.gae_lam * last_gae_lam
         returns = advantages + vs[:-1]
         ##
 
@@ -191,18 +192,28 @@ class DummyOnPolicyBuffer(Buffer):
         self.advantages[i, path_slice] = advantages
         self.start_ids[i] = self.ptr
 
-    def sample(self):
+    def sample(self, indexes):
         assert self.full, "Not enough transitions for on-policy buffer to random sample"
 
-        env_choices = np.random.choice(self.nenvs, self.nenvs * self.nsize // self.nminibatch)
-        step_choices = np.random.choice(self.nsize, self.nenvs * self.nsize // self.nminibatch)
+        env_choices, step_choices = divmod(indexes, self.nsize)
 
+        # obs_batch = self.observations.reshape((self.buffer_size,) + space2shape(self.observation_space))[indexes]
+        # act_batch = self.actions.reshape((self.buffer_size, ) + space2shape(self.action_space))[indexes]
+        # ret_batch = self.returns.reshape([self.buffer_size])[indexes]
+        # val_batch = self.values.reshape([self.buffer_size])[indexes]
+        # adv_batch = self.advantages.reshape([self.buffer_size])[indexes]
+        # adv_batch = (adv_batch - np.mean(self.advantages)) / (np.std(self.advantages) + 1e-8)
+        # aux_batch = {"old_logp": self.auxiliary_infos['old_logp'].reshape([self.buffer_size])[indexes]}
+
+        # env_choices = np.random.choice(self.nenvs, self.nenvs * self.nsize // self.nminibatch)
+        # step_choices = np.random.choice(self.nsize, self.nenvs * self.nsize // self.nminibatch)
+        #
         obs_batch = sample_batch(self.observations, tuple([env_choices, step_choices]))
         act_batch = sample_batch(self.actions, tuple([env_choices, step_choices]))
         ret_batch = sample_batch(self.returns, tuple([env_choices, step_choices]))
         val_batch = sample_batch(self.values, tuple([env_choices, step_choices]))
         adv_batch = sample_batch(self.advantages, tuple([env_choices, step_choices]))
-        adv_batch = (adv_batch - np.mean(self.advantages)) / (np.std(self.advantages) + 1e-8)
+        adv_batch = (adv_batch - np.mean(adv_batch)) / (np.std(adv_batch) + 1e-8)
         aux_batch = sample_batch(self.auxiliary_infos, tuple([env_choices, step_choices]))
 
         return obs_batch, act_batch, ret_batch, val_batch, adv_batch, aux_batch

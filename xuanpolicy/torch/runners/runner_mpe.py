@@ -18,8 +18,6 @@ class MPE_Runner(Runner_Base_MARL):
                 super(MPE_Runner, self).__init__(arg)
                 self.training_steps = arg.training_steps
                 self.training_frequency = arg.training_frequency
-                self.off_policy = arg.off_policy
-                self.on_policy = not self.off_policy
                 break
         self.episode_length = self.envs.max_episode_length
 
@@ -67,13 +65,12 @@ class MPE_Runner(Runner_Base_MARL):
                 self.store_data(obs_n, next_obs_n, actions_dict, state, next_state, agent_mask, rew_n, terminated_n, self.envs)
 
                 # train the model for off-policy
-                if self.off_policy and (self.current_step % self.training_frequency == 0):
+                if self.current_step % self.training_frequency == 0:
                     for h, mas_group in enumerate(self.marl_agents):
                         if mas_group.args.agent_name == "random":
                             continue
-                        train_info = self.marl_agents[h].train(self.current_episode)
-                        mas_group.log_infos(train_info, self.current_step)
-                        mas_group.log_infos(episode_info, self.current_step)
+                        if not mas_group.on_policy:
+                            train_info = self.marl_agents[h].train(self.current_episode)
 
                 obs_n, state, act_mean_last = deepcopy(next_obs_n), deepcopy(next_state), deepcopy(actions_dict['act_mean'])
 
@@ -91,11 +88,9 @@ class MPE_Runner(Runner_Base_MARL):
                                 continue
                             obs_n[h][i] = infos[i]["reset_obs"][h]
                             act_mean_last[h][i] = np.zeros([self.args[h].dim_act])
-                            if (self.marl_names[h] in ["MAPPO", "CID_Simple", "VDAC"]) and (not self.args[h].consider_terminal_states):
+                            if mas_group.args.on_policy:
                                 value_next_e = mas_group.value(next_obs_n[h], next_state)[i]
-                            else:
-                                value_next_e = np.zeros([mas_group.n_agents, 1])
-                            mas_group.memory.finish_ac_path(value_next_e, i)
+                                mas_group.memory.finish_ac_path(value_next_e, i)
                             episode_score[h, i] = np.mean(infos[i]["individual_episode_rewards"][h])
                 self.current_step += self.n_envs
 
@@ -104,11 +99,12 @@ class MPE_Runner(Runner_Base_MARL):
                 episode_info["Train_Episode_Score_std/side_%d" % h] = episode_score.std(axis=1)
 
             # train the model for on-policy
-            if self.on_policy and (self.current_step % self.training_frequency == 0):
+            if self.current_step % self.training_frequency == 0:
                 for h, mas_group in enumerate(self.marl_agents):
                     if mas_group.args.agent_name == "random":
                         continue
-                    train_info = self.marl_agents[h].train(self.current_episode)
+                    if not mas_group.on_policy:
+                        train_info = self.marl_agents[h].train(self.current_episode)
                     mas_group.log_infos(train_info, self.current_step)
                     mas_group.log_infos(episode_info, self.current_step)
 
