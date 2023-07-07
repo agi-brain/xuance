@@ -1,5 +1,6 @@
 from pettingzoo.utils.env import ParallelEnv
 from xuanpolicy.environment.pettingzoo.pettingzoo_env import PettingZoo_Env
+from xuanpolicy.environment.magent2 import AGENT_NAME_DICT
 import importlib
 
 
@@ -29,6 +30,7 @@ class MAgent_Env(PettingZoo_Env, ParallelEnv):
         self.scenario_name = 'magent2.' + env_id
         self.handles = self.env.handles
         self.n_handles = len(self.handles)
+        self.side_names = AGENT_NAME_DICT[env_id]
         self.env.reset(seed)
 
         self.state_space = self.env.state_space

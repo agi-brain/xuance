@@ -15,6 +15,7 @@ from copy import deepcopy
 class Pettingzoo_Runner(Runner_Base):
     def __init__(self, args):
         self.args = args if type(args) == list else [args]
+        self.fps = 20
         for arg in self.args:
             if arg.agent_name == "random":
                 continue
@@ -71,13 +72,15 @@ class Pettingzoo_Runner(Runner_Base):
 
                 self.current_step = 0
                 self.current_episode = np.zeros((self.envs.num_envs,), np.int32)
+                break
 
         self.episode_length = self.envs.max_episode_length
 
         # environment details, representations, policies, optimizers, and agents.
         for h, arg in enumerate(self.args):
+            arg.handle_name = self.envs.envs[0].side_names[h]
             if self.n_handles > 1 and arg.agent != "RANDOM":
-                arg.modeldir += "side_{}/".format(h)
+                arg.modeldir += "side_{}/".format(arg.handle_name)
             arg.handle, arg.n_agents = h, self.envs.n_agents[h]
             arg.agent_keys, arg.agent_ids = self.agent_keys[h], self.agent_ids[h]
             arg.state_space = self.envs.state_space
@@ -225,7 +228,7 @@ class Pettingzoo_Runner(Runner_Base):
 
             if self.n_handles > 1:
                 for h in range(self.n_handles):
-                    episode_info["Train_Episode_Score/side_%d" % h] = episode_score[h].mean()
+                    episode_info["Train_Episode_Score/side_{}".format(self.args[h].handle_name)] = episode_score[h].mean()
             else:
                 episode_info["Train_Episode_Score"] = episode_score[0].mean()
 
@@ -289,11 +292,11 @@ class Pettingzoo_Runner(Runner_Base):
         if self.args_base.render_mode == "rgb_array" and self.render:
             # time, height, width, channel -> time, channel, height, width
             videos_info = {"Videos_Test": np.array(videos, dtype=np.uint8).transpose((0, 1, 4, 2, 3))}
-            self.log_videos(info=videos_info, fps=20, x_index=self.current_step)
+            self.log_videos(info=videos_info, fps=self.fps, x_index=self.current_step)
 
         if self.n_handles > 1:
             for h in range(self.n_handles):
-                test_info["Test-Episode-Rewards/Side-%d" % h] = scores[h]
+                test_info["Test-Episode-Rewards/Side_{}".format(self.args[h].handle_name)] = scores[h]
         else:
             test_info["Test-Episode-Rewards"] = scores[0]
         self.log_infos(test_info, self.current_step)

@@ -321,7 +321,7 @@ $ tensorboard --logdir ./logs/dqn/torch/CartPole-v0
 | Task            | DQN     | DDQN | C51     | DRQN | A2C | PPO    |
 |-----------------|---------|------|---------|------|-----|--------|
 | ALE/Breakout-v5 | 424.0   |      | 431.0   |      |     | 371.67 |
-| ALE/Pong-v5     | 21.0    |      | 20.0    |      |     |        |
+| ALE/Pong-v5     | 21.0    |      | 20.0    |      |     | 21.0   |
 | ALE/Qbert-v5    | 16350.0 |      | running |      |     |        |
 | ALE/Freeway-v5  | running |      | running |      |     |        |
 

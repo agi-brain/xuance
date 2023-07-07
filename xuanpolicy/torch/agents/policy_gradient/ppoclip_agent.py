@@ -47,8 +47,7 @@ class PPOCLIP_Agent(Agent):
                                   clip_range=config.clip_range,
                                   clip_grad_norm=config.clip_grad_norm,
                                   use_grad_clip=config.use_grad_clip)
-        super(PPOCLIP_Agent, self).__init__(config, envs, policy, memory, learner, device, config.logdir,
-                                            config.modeldir)
+        super(PPOCLIP_Agent, self).__init__(config, envs, policy, memory, learner, device, config.logdir, config.modeldir)
 
     def _action(self, obs):
         _, dists, vs = self.policy(obs)
