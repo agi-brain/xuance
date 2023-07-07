@@ -46,7 +46,7 @@ class MFQ_Agents(MARLAgents):
         super(MFQ_Agents, self).__init__(config, envs, policy, memory, learner, device,
                                          config.logdir, config.modeldir)
 
-    def act(self, obs_n, episode, test_mode, act_mean=None, agent_mask=None, noise=False):
+    def act(self, obs_n, test_mode, act_mean=None, agent_mask=None, noise=False):
         if not test_mode:
             epsilon = self.epsilon_decay.epsilon
         else:
@@ -74,9 +74,6 @@ class MFQ_Agents(MARLAgents):
 
     def train(self, i_episode):
         self.epsilon_decay.update()
-        if self.memory.can_sample(self.args.batch_size):
-            sample = self.memory.sample()
-            info_train = self.learner.update(sample)
-            return info_train
-        else:
-            return {}
+        sample = self.memory.sample()
+        info_train = self.learner.update(sample)
+        return info_train

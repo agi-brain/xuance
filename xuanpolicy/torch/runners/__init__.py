@@ -1,8 +1,10 @@
-from .runner_drl import Runner_DRL as DRL_runner
-from .runner_mpe import MPE_Runner as MPE_Runner
+from .runner_drl import Runner_DRL
+from .runner_pettingzoo import Pettingzoo_Runner
+from .runner_magent import MAgent_Runner
 
 REGISTRY = {
     "DL_toolbox": "PyTorch",
-    "DRL": DRL_runner,
-    "MPE_Runner": MPE_Runner
+    "DRL": Runner_DRL,
+    "Pettingzoo_Runner": Pettingzoo_Runner,
+    "MAgent_Runner": MAgent_Runner
 }

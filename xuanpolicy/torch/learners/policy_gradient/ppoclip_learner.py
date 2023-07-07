@@ -15,7 +15,6 @@ class PPOCLIP_Learner(Learner):
                  clip_range: float = 0.25,
                  clip_grad_norm: float = 0.25,
                  use_grad_clip: bool = True,
-                 use_value_loss_clip: bool = False,
                  ):
         super(PPOCLIP_Learner, self).__init__(policy, optimizer, scheduler, device, modeldir)
         self.vf_coef = vf_coef
@@ -23,7 +22,6 @@ class PPOCLIP_Learner(Learner):
         self.clip_range = clip_range
         self.clip_grad_norm = clip_grad_norm
         self.use_grad_clip = use_grad_clip
-        self.use_value_loss_clip = use_value_loss_clip
 
     def update(self, obs_batch, act_batch, ret_batch, value_batch, adv_batch, old_logp):
         self.iterations += 1
@@ -42,13 +40,7 @@ class PPOCLIP_Learner(Learner):
         surrogate2 = adv_batch * ratio
         a_loss = -torch.minimum(surrogate1, surrogate2).mean()
 
-        if self.use_value_loss_clip:
-            v_pred_clipped = value_batch + (v_pred - value_batch).clamp(-self.clip_range, self.clip_range)
-            c_loss_origin = (v_pred - ret_batch) ** 2
-            c_loss_clipped = (v_pred_clipped - ret_batch) ** 2
-            c_loss = torch.maximum(c_loss_origin, c_loss_clipped).mean()
-        else:
-            c_loss = F.mse_loss(v_pred, ret_batch)
+        c_loss = F.mse_loss(v_pred, ret_batch)
 
         e_loss = a_dist.entropy().mean()
         loss = a_loss - self.ent_coef * e_loss + self.vf_coef * c_loss

@@ -63,7 +63,7 @@ class CidPreTrainBuffer(ABC):
         for k in self.keys:
             self.data[k][self.ptr: ptr_end] = step_data[k]
 
-        self.ptr = (ptr_end) % self.buffer_size
+        self.ptr = ptr_end % self.buffer_size
         self.size = np.min([self.size + 1, self.buffer_size])
 
     def can_sample(self, batch_size):
@@ -80,33 +80,31 @@ class MARL_OffPolicyBuffer(BaseBuffer, ABC):
     def __init__(self, state_space, obs_space, act_space, rew_space, done_space, n_envs, buffer_size, batch_size):
         super(MARL_OffPolicyBuffer, self).__init__(obs_space, act_space, rew_space, n_envs, buffer_size, batch_size)
         self.state_space = state_space
-        self.buffer_size = buffer_size
+        self.nsize = buffer_size
+        self.buffer_size = buffer_size * self.n_envs
         self.n_envs = n_envs
         self.total_buffer_size = buffer_size * n_envs
         self.n_agents = act_space[0]
 
         self.data = {
-            'obs': np.zeros((self.n_envs, self.buffer_size) + obs_space).astype(np.float32),
-            'actions': np.zeros((self.n_envs, self.buffer_size) + act_space).astype(np.float32),
-            'obs_next': np.zeros((self.n_envs, self.buffer_size) + obs_space).astype(np.float32),
-            'rewards': np.zeros((self.n_envs, self.buffer_size) + rew_space).astype(np.float32),
-            'terminals': np.zeros((self.n_envs, self.buffer_size) + done_space).astype(np.bool),
-            'agent_mask': np.ones((self.n_envs, self.buffer_size, self.n_agents)).astype(np.bool)
+            'obs': np.zeros((self.n_envs, self.nsize) + obs_space).astype(np.float32),
+            'actions': np.zeros((self.n_envs, self.nsize) + act_space).astype(np.float32),
+            'obs_next': np.zeros((self.n_envs, self.nsize) + obs_space).astype(np.float32),
+            'rewards': np.zeros((self.n_envs, self.nsize) + rew_space).astype(np.float32),
+            'terminals': np.zeros((self.n_envs, self.nsize) + done_space).astype(np.bool),
+            'agent_mask': np.ones((self.n_envs, self.nsize, self.n_agents)).astype(np.bool)
         }
 
         if state_space is not None:
-            self.data.update({'state': np.zeros((self.n_envs, self.buffer_size) + state_space).astype(np.float32),
-                              'state_next': np.zeros((self.n_envs, self.buffer_size) + state_space).astype(np.float32)})
+            self.data.update({'state': np.zeros((self.n_envs, self.nsize) + state_space).astype(np.float32),
+                              'state_next': np.zeros((self.n_envs, self.nsize) + state_space).astype(np.float32)})
         self.keys = self.data.keys()
 
     def store(self, step_data):
-        ptr_end = self.ptr + self.n_envs
-
         for k in self.keys:
             self.data[k][:, self.ptr] = step_data[k]
-
-        self.ptr = (ptr_end) % self.buffer_size
-        self.size = np.min([self.size + 1, self.buffer_size])
+        self.ptr = (self.ptr + 1) % self.nsize
+        self.size = np.min([self.size + 1, self.nsize])
 
     def sample(self):
         env_choices = np.random.choice(self.n_envs, self.batch_size)
@@ -123,18 +121,17 @@ class MeanField_OffPolicyBuffer(MARL_OffPolicyBuffer):
         super(MeanField_OffPolicyBuffer, self).__init__(state_space, obs_space, act_space, rew_space, done_space,
                                                         n_envs, buffer_size, batch_size)
         self.prob_shape = prob_shape
-        self.data.update({"act_mean": np.zeros((self.buffer_size,) + prob_shape).astype(np.float32)})
+        self.data.update({"act_mean": np.zeros((self.n_envs, self.nsize,) + prob_shape).astype(np.float32)})
         self.keys = self.data.keys()
 
     def sample(self):
-        assert self.can_sample(self.batch_size)
-
-        random_batch_index = np.random.choice(self.size, size=self.batch_size, replace=False)
-        samples = {k: self.data[k][random_batch_index] for k in self.keys}
+        env_choices = np.random.choice(self.n_envs, self.batch_size)
+        step_choices = np.random.choice(self.size, self.batch_size)
+        samples = {k: self.data[k][env_choices, step_choices] for k in self.keys}
         samples.update({'batch_size': self.batch_size})
 
-        next_index = (random_batch_index + 1) % self.size
-        samples.update({'act_mean_next': self.data['act_mean'][next_index]})
+        next_index = (step_choices + 1) % self.nsize
+        samples.update({'act_mean_next': self.data['act_mean'][env_choices, next_index]})
 
         return samples
 

@@ -28,7 +28,6 @@ learning_rate: 0.00025
 
 use_gae: True
 use_grad_clip: True
-use_value_loss_clip: False
 
 vf_coef: 0.25
 ent_coef: 0.01

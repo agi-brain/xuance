@@ -2,13 +2,13 @@ import copy
 
 from xuanpolicy.environment.vector_envs.vector_env import VecEnv, AlreadySteppingError, NotSteppingError
 from xuanpolicy.environment.vector_envs.env_utils import obs_n_space_info
-from xuanpolicy.environment.gym_envs.gym_vec_env import DummyVecEnv_Gym
+from xuanpolicy.environment.pettingzoo.pettingzoo_vec_env import DummyVecEnv_Pettingzoo
 from operator import itemgetter
 import numpy as np
 import time
 
 
-class DummyVecEnv_Pettingzoo(DummyVecEnv_Gym):
+class DummyVecEnv_MAgent(DummyVecEnv_Pettingzoo):
     def __init__(self, env_fns):
         self.waiting = False
         self.envs = [fn() for fn in env_fns]
@@ -36,7 +36,7 @@ class DummyVecEnv_Pettingzoo(DummyVecEnv_Gym):
         self.buf_trunctions_dict = [{k: False for k in self.keys} for _ in range(self.num_envs)]
         self.buf_infos_dict = [{} for _ in range(self.num_envs)]
         # buffer of numpy data
-        self.buf_obs = [np.zeros((self.num_envs, n) + tuple(self.obs_shapes[h]), dtype=self.obs_dtype) for h, n in
+        self.buf_obs = [np.zeros((self.num_envs, n, np.prod(self.obs_shapes[h])), dtype=self.obs_dtype) for h, n in
                         enumerate(self.n_agents)]
         self.buf_rews = [np.zeros((self.num_envs, n, 1), dtype=np.float32) for n in self.n_agents]
         self.buf_dones = [np.ones((self.num_envs, n), dtype=np.bool) for n in self.n_agents]

@@ -1,13 +1,15 @@
 from argparse import Namespace
 
-from xuanpolicy.environment.pettingzoo_envs.pettingzoo_env import PettingZoo_Env
-from xuanpolicy.environment.gym_envs.gym_env import Gym_Env, MountainCar, Atari_Env
+from xuanpolicy.environment.gym.gym_env import Gym_Env, MountainCar, Atari_Env
+from xuanpolicy.environment.pettingzoo.pettingzoo_env import PettingZoo_Env
+from xuanpolicy.environment.magent2.magent_env import MAgent_Env
 
-from .pettingzoo_envs import PETTINGZOO_ENVIRONMENTS
+from .pettingzoo import PETTINGZOO_ENVIRONMENTS
 
 from .vector_envs.vector_env import VecEnv
-from xuanpolicy.environment.gym_envs.gym_vec_env import DummyVecEnv_Gym, DummyVecEnv_Atari
-from xuanpolicy.environment.pettingzoo_envs.pettingzoo_vec_env import DummyVecEnv_Pettingzoo
+from xuanpolicy.environment.gym.gym_vec_env import DummyVecEnv_Gym, DummyVecEnv_Atari
+from xuanpolicy.environment.pettingzoo.pettingzoo_vec_env import DummyVecEnv_Pettingzoo
+from xuanpolicy.environment.magent2.magent_vec_env import DummyVecEnv_MAgent
 from .vector_envs.subproc_vec_env import SubprocVecEnv
 
 
@@ -17,6 +19,13 @@ def make_envs(config: Namespace):
             env = PettingZoo_Env(config.env_name, config.env_id, config.seed,
                                  continuous=config.continuous_action,
                                  render_mode=config.render_mode)
+        elif config.env_name == "MAgent2":
+            env = MAgent_Env(config.env_id, config.seed,
+                             minimap_mode=config.minimap_mode,
+                             max_cycles=config.max_cycles,
+                             extra_features=config.extra_features,
+                             map_size=config.map_size,
+                             render_mode=config.render_mode)
         elif config.env_name == "Atari":
             env = Atari_Env(config.env_id, config.seed, config.render_mode,
                             config.obs_type, config.frame_skip, config.num_stack, config.img_size, config.noop_max)
@@ -34,6 +43,8 @@ def make_envs(config: Namespace):
         return DummyVecEnv_Gym([_thunk for _ in range(config.parallels)])
     elif config.vectorize == "Dummy_Pettingzoo":
         return DummyVecEnv_Pettingzoo([_thunk for _ in range(config.parallels)])
+    elif config.vectorize == "Dummy_MAgent":
+        return DummyVecEnv_MAgent([_thunk for _ in range(config.parallels)])
     elif config.vectorize == "Dummy_Atari":
         return DummyVecEnv_Atari([_thunk for _ in range(config.parallels)])
     elif config.vectorize == "NOREQUIRED":

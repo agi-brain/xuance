@@ -2,7 +2,7 @@ from pettingzoo.utils.env import ParallelEnv
 import numpy as np
 import ctypes
 import importlib
-from xuanpolicy.environment.pettingzoo_envs import AGENT_NAME_DICT
+from xuanpolicy.environment.pettingzoo import AGENT_NAME_DICT
 
 
 class PettingZoo_Env(ParallelEnv):

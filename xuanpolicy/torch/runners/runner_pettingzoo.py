@@ -12,7 +12,7 @@ import numpy as np
 from copy import deepcopy
 
 
-class MPE_Runner(Runner_Base):
+class Pettingzoo_Runner(Runner_Base):
     def __init__(self, args):
         self.args = args if type(args) == list else [args]
         for arg in self.args:
@@ -20,7 +20,7 @@ class MPE_Runner(Runner_Base):
                 continue
             else:
                 self.args_base = arg
-                super(MPE_Runner, self).__init__(arg)
+                super(Pettingzoo_Runner, self).__init__(arg)
                 self.training_steps = arg.training_steps
                 self.training_frequency = arg.training_frequency
 
@@ -89,7 +89,10 @@ class MPE_Runner(Runner_Base):
                 arg.dim_act = self.envs.action_space[self.agent_keys[h][0]].n
                 arg.act_shape = (arg.n_agents,)
             arg.action_space = self.envs.action_space
-            arg.dim_obs = self.envs.observation_space[self.agent_keys[h][0]].shape
+            if arg.env_name == "MAgent2":
+                arg.dim_obs = (np.prod(self.envs.observation_space[self.agent_keys[h][0]].shape), )
+            else:
+                arg.dim_obs = self.envs.observation_space[self.agent_keys[h][0]].shape
             arg.obs_shape = (arg.n_agents,) + arg.dim_obs
             arg.rew_shape, arg.done_shape, arg.act_prob_shape = (arg.n_agents, 1), (arg.n_agents,), (arg.dim_act,)
             self.marl_agents.append(REGISTRY_Agent[arg.agent](arg, self.envs, arg.device))

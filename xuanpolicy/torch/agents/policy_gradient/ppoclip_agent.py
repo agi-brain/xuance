@@ -46,8 +46,7 @@ class PPOCLIP_Agent(Agent):
                                   ent_coef=config.ent_coef,
                                   clip_range=config.clip_range,
                                   clip_grad_norm=config.clip_grad_norm,
-                                  use_grad_clip=config.use_grad_clip,
-                                  use_value_loss_clip=config.use_value_loss_clip)
+                                  use_grad_clip=config.use_grad_clip)
         super(PPOCLIP_Agent, self).__init__(config, envs, policy, memory, learner, device, config.logdir,
                                             config.modeldir)
 
