@@ -17,6 +17,7 @@ class MARLAgents(object):
                  ):
         self.args = config
         self.handle = config.handle
+        self.on_policy = config.on_policy
         self.n_agents = config.n_agents
         self.agent_keys = config.agent_keys
         self.agent_index = config.agent_ids
@@ -25,33 +26,7 @@ class MARLAgents(object):
         self.dim_id = self.n_agents
         self.device = torch.device("cuda" if (torch.cuda.is_available() and config.device in ["gpu", "cuda:0"]) else "cpu")
         self.envs = envs
-
-        if config.logger == "tensorboard":
-            time_string = time.asctime().replace(" ", "").replace(":", "_")
-            log_dir = os.path.join(os.getcwd(), config.logdir) + "/" + time_string
-            if not os.path.exists(log_dir):
-                os.makedirs(log_dir)
-            self.writer = SummaryWriter(log_dir)
-            self.use_wandb = False
-        elif config.logger == "wandb":
-            config_dict = vars(config)
-            wandb_dir = Path(os.path.join(os.getcwd(), config.logdir))
-            if not wandb_dir.exists():
-                os.makedirs(str(wandb_dir))
-            wandb.init(config=config_dict,
-                       project=config.project_name,
-                       entity=config.wandb_user_name,
-                       notes=socket.gethostname(),
-                       dir=wandb_dir,
-                       group=config.env,
-                       job_type=config.agent,
-                       name=time.asctime(),
-                       reinit=True
-                       )
-            os.environ["WANDB_SILENT"] = "True"
-            self.use_wandb = True
-        else:
-            raise "No logger is implemented."
+        self.start_training = config.start_training
 
         self.render = config.render
         self.nenvs = envs.num_envs
@@ -64,23 +39,8 @@ class MARLAgents(object):
         create_directory(logdir)
         create_directory(modeldir)
 
-    def log_infos(self, info: dict, x_index: int):
-        """
-        info: (dict) information to be visualized
-        n_steps: current step
-        """
-        if self.use_wandb:
-            for k, v in info.items():
-                wandb.log({k: v}, step=x_index)
-        else:
-            for k, v in info.items():
-                try:
-                    self.writer.add_scalar(k, v, x_index)
-                except:
-                    self.writer.add_scalars(k, v, x_index)
-
-    def save_model(self):
-        self.learner.save_model()
+    def save_model(self, model_name):
+        self.learner.save_model(model_name)
 
     def load_model(self, path):
         self.learner.load_model(path)

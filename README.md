@@ -92,7 +92,7 @@ and hope it can really become a zoo full of DRL algorithms.
 
 ## Supported Environments
 
-### Toy Environments ([Classic Control](https://www.gymlibrary.dev/environments/classic_control/), [Box2D](https://www.gymlibrary.dev/environments/box2d/), etc.)
+### [Classic Control](https://www.gymlibrary.dev/environments/classic_control/)
 
 <details open>
 <summary>(Click to hide)</summary>
@@ -105,10 +105,30 @@ and hope it can really become a zoo full of DRL algorithms.
 <img src="./docs/source/figures/toy/pendulum.gif" height=100" /> <br/> <font color="AAAAAA">Pendulum</font>
 </center> </td>
 <td> <center>
-<img src="./docs/source/figures/toy/lunar_lander.gif" height=100" /> <br/> <font color="AAAAAA">Lunar_lander</font>
+<img src="./docs/source/figures/toy/acrobot.gif" height=100" /> <br/> <font color="AAAAAA">Acrobot</font>
 </center> </td>
 <td> <center>
 <br/> <font color="AAAAAA">...</font>
+</tr>
+</table>
+
+</details>
+
+### [Box2D](https://www.gymlibrary.dev/environments/box2d/)
+
+<details open>
+<summary>(Click to hide)</summary>
+
+<table rules="none" align="center"><tr>
+<td> <center>
+<img src="./docs/source/figures/box2d/bipedal_walker.gif" height=100" /><br/><font color="AAAAAA">CartPole</font>
+</center></td>
+<td> <center>
+<img src="./docs/source/figures/box2d/car_racing.gif" height=100" /> <br/> <font color="AAAAAA">Pendulum</font>
+</center> </td>
+<td> <center>
+<img src="./docs/source/figures/box2d/lunar_lander.gif" height=100" /> <br/> <font color="AAAAAA">Acrobot</font>
+</center> </td>
 </tr>
 </table>
 

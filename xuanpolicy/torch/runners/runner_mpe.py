@@ -1,6 +1,10 @@
+import os
+import socket
 import time
-
-from .runner_basic import *
+from pathlib import Path
+import wandb
+from torch.utils.tensorboard import SummaryWriter
+from .runner_basic import Runner_Base, make_envs
 from xuanpolicy.torch.agents import REGISTRY as REGISTRY_Agent
 from gymnasium.spaces.box import Box
 from tqdm import tqdm
@@ -8,17 +12,66 @@ import numpy as np
 from copy import deepcopy
 
 
-class MPE_Runner(Runner_Base_MARL):
+class MPE_Runner(Runner_Base):
     def __init__(self, args):
         self.args = args if type(args) == list else [args]
         for arg in self.args:
             if arg.agent_name == "random":
                 continue
             else:
+                self.args_base = arg
                 super(MPE_Runner, self).__init__(arg)
                 self.training_steps = arg.training_steps
                 self.training_frequency = arg.training_frequency
-                break
+
+                # build environments
+                self.n_handles = len(self.envs.handles)
+                self.loss = [[0.0] for _ in range(self.n_handles)]
+
+                self.agent_keys = self.envs.agent_keys
+                self.agent_ids = self.envs.agent_ids
+                self.agent_keys_all = self.envs.keys
+                self.n_agents_all = len(self.agent_keys_all)
+                self.render = arg.render
+
+                self.n_steps = arg.training_steps
+                self.n_tests = arg.n_tests
+                self.test_mode = arg.test_mode
+                self.marl_agents = []
+                self.marl_names = []
+                self.current_step = 0
+                self.current_episode = np.zeros((self.envs.num_envs,), np.int32)
+
+                if arg.logger == "tensorboard":
+                    time_string = time.asctime().replace(" ", "").replace(":", "_")
+                    log_dir = os.path.join(os.getcwd(), arg.logdir) + "/" + time_string
+                    if not os.path.exists(log_dir):
+                        os.makedirs(log_dir)
+                    self.writer = SummaryWriter(log_dir)
+                    self.use_wandb = False
+                elif arg.logger == "wandb":
+                    config_dict = vars(arg)
+                    wandb_dir = Path(os.path.join(os.getcwd(), arg.logdir))
+                    if not wandb_dir.exists():
+                        os.makedirs(str(wandb_dir))
+                    wandb.init(config=config_dict,
+                               project=arg.project_name,
+                               entity=arg.wandb_user_name,
+                               notes=socket.gethostname(),
+                               dir=wandb_dir,
+                               group=arg.env_id,
+                               job_type=arg.agent,
+                               name=time.asctime(),
+                               reinit=True
+                               )
+                    # os.environ["WANDB_SILENT"] = "True"
+                    self.use_wandb = True
+                else:
+                    raise "No logger is implemented."
+
+                self.current_step = 0
+                self.current_episode = np.zeros((self.envs.num_envs,), np.int32)
+
         self.episode_length = self.envs.max_episode_length
 
         # environment details, representations, policies, optimizers, and agents.
@@ -46,6 +99,79 @@ class MPE_Runner(Runner_Base_MARL):
 
         self.print_infos(self.args)
 
+    def log_infos(self, info: dict, x_index: int):
+        """
+        info: (dict) information to be visualized
+        n_steps: current step
+        """
+        if self.use_wandb:
+            for k, v in info.items():
+                wandb.log({k: v}, step=x_index)
+        else:
+            for k, v in info.items():
+                try:
+                    self.writer.add_scalar(k, v, x_index)
+                except:
+                    self.writer.add_scalars(k, v, x_index)
+
+    def log_videos(self, info: dict, fps: int, x_index: int=0):
+        if self.use_wandb:
+            for k, v in info.items():
+                wandb.log({k: wandb.Video(v, fps=fps, format='gif')}, step=x_index)
+        else:
+            for k, v in info.items():
+                self.writer.add_video(k, v, fps=fps, global_step=x_index)
+
+    def print_infos(self, args):
+        infos = []
+        for h, arg in enumerate(args):
+            agent_name = self.envs.agent_keys[h][0][0:-2]
+            if arg.n_agents == 1:
+                infos.append(agent_name + ": {} agent".format(arg.n_agents) + ", {}".format(arg.agent))
+            else:
+                infos.append(agent_name + ": {} agents".format(arg.n_agents) + ", {}".format(arg.agent))
+        print(infos)
+        time.sleep(0.01)
+
+    def combine_env_actions(self, actions):
+        actions_envs = []
+        num_env = actions[0].shape[0]
+        for e in range(num_env):
+            act_handle = {}
+            for h, keys in enumerate(self.agent_keys):
+                act_handle.update({agent_name: actions[h][e][i] for i, agent_name in enumerate(keys)})
+            actions_envs.append(act_handle)
+        return actions_envs
+
+    def get_actions(self, obs_n, test_mode, act_mean_last, agent_mask, state):
+        actions_n, log_pi_n, values_n, actions_n_onehot = [], [], [], []
+        act_mean_current = act_mean_last
+        for h, mas_group in enumerate(self.marl_agents):
+            if self.marl_names[h] == "MFQ":
+                a, a_mean = mas_group.act(obs_n[h], test_mode, act_mean_last[h], agent_mask[h],
+                                          noise=(not test_mode))
+                act_mean_current[h] = a_mean
+            elif self.marl_names[h] == "MFAC":
+                a, a_mean = mas_group.act(obs_n[h], test_mode, act_mean_last[h], agent_mask[h],
+                                                  noise=(not test_mode))
+                act_mean_current[h] = a_mean
+            elif self.marl_names[h] in ["MAPPO_KL", "MAPPO_Clip", "CID_Simple"]:
+                a, log_pi, values = mas_group.act(obs_n[h], test_mode, state=state, noise=(not test_mode))
+                log_pi_n.append(log_pi)
+                values_n.append(values)
+            elif self.marl_names[h] in ["VDAC"]:
+                a, values = mas_group.act(obs_n[h], test_mode, state=state, noise=(not test_mode))
+                values_n.append(values)
+                log_pi_n.append(None)
+            elif self.marl_names[h] in ["COMA"]:
+                a, a_onehot = mas_group.act(obs_n[h], test_mode, noise=(not test_mode))
+                actions_n_onehot.append(a_onehot)
+            else:
+                a = mas_group.act(obs_n[h], test_mode, noise=(not test_mode))
+            actions_n.append(a)
+        return {'actions_n': actions_n, 'log_pi': log_pi_n, 'act_mean': act_mean_current,
+                'act_n_onehot': actions_n_onehot, 'values': values_n}
+
     def train_episode(self, n_episodes):
         obs_n = self.envs.buf_obs
         state, agent_mask = self.envs.global_state(), self.envs.agent_mask()
@@ -54,8 +180,8 @@ class MPE_Runner(Runner_Base_MARL):
         terminal_handle = np.zeros([self.n_handles, self.n_envs], dtype=np.bool)
         truncate_handle = np.zeros([self.n_handles, self.n_envs], dtype=np.bool)
         episode_score = np.zeros([self.n_handles, self.n_envs, 1], dtype=np.float32)
-        episode_info = {}
-        for i_episode in tqdm(range(n_episodes)):
+        episode_info, train_info = {}, {}
+        for _ in tqdm(range(n_episodes)):
             for step in range(self.episode_length):
                 actions_dict = self.get_actions(obs_n, False, act_mean_last, agent_mask, state)
                 actions_execute = self.combine_env_actions(actions_dict['actions_n'])
@@ -70,7 +196,7 @@ class MPE_Runner(Runner_Base_MARL):
                         if mas_group.args.agent_name == "random":
                             continue
                         if not mas_group.on_policy:
-                            train_info = self.marl_agents[h].train(self.current_episode)
+                            train_info = self.marl_agents[h].train(self.current_step)
 
                 obs_n, state, act_mean_last = deepcopy(next_obs_n), deepcopy(next_state), deepcopy(actions_dict['act_mean'])
 
@@ -88,15 +214,17 @@ class MPE_Runner(Runner_Base_MARL):
                                 continue
                             obs_n[h][i] = infos[i]["reset_obs"][h]
                             act_mean_last[h][i] = np.zeros([self.args[h].dim_act])
-                            if mas_group.args.on_policy:
+                            if mas_group.on_policy:
                                 value_next_e = mas_group.value(next_obs_n[h], next_state)[i]
                                 mas_group.memory.finish_ac_path(value_next_e, i)
                             episode_score[h, i] = np.mean(infos[i]["individual_episode_rewards"][h])
                 self.current_step += self.n_envs
 
-            for h in range(self.n_handles):
-                episode_info["Train_Episode_Score/side_%d" % h] = episode_score.mean(axis=1)
-                episode_info["Train_Episode_Score_std/side_%d" % h] = episode_score.std(axis=1)
+            if self.n_handles > 1:
+                for h in range(self.n_handles):
+                    episode_info["Train_Episode_Score/side_%d" % h] = episode_score[h].mean()
+            else:
+                episode_info["Train_Episode_Score"] = episode_score[0].mean()
 
             # train the model for on-policy
             if self.current_step % self.training_frequency == 0:
@@ -104,14 +232,15 @@ class MPE_Runner(Runner_Base_MARL):
                     if mas_group.args.agent_name == "random":
                         continue
                     if not mas_group.on_policy:
-                        train_info = self.marl_agents[h].train(self.current_episode)
-                    mas_group.log_infos(train_info, self.current_step)
-                    mas_group.log_infos(episode_info, self.current_step)
+                        train_info = self.marl_agents[h].train(self.current_step)
+                    self.log_infos(train_info, self.current_step)
+                    self.log_infos(episode_info, self.current_step)
 
             self.current_episode += self.n_envs
 
     def test_episode(self, env_fn, n_episodes):
         test_envs = env_fn()
+        test_info = {}
         num_envs = test_envs.num_envs
         videos, episode_videos = [[] for _ in range(num_envs)], []
         obs_n, infos = test_envs.reset()
@@ -125,27 +254,50 @@ class MPE_Runner(Runner_Base_MARL):
         terminal_handle = np.zeros([self.n_handles, num_envs], dtype=np.bool)
         truncate_handle = np.zeros([self.n_handles, num_envs], dtype=np.bool)
         episode_score = np.zeros([self.n_handles, num_envs, 1], dtype=np.float32)
-        for _ in range(n_episodes):
-            for step in range(self.episode_length):
-                actions_dict = self.get_actions(obs_n, True, act_mean_last, agent_mask, state)
-                actions_execute = self.combine_env_actions(actions_dict['actions_n'])
-                next_obs_n, rew_n, terminated_n, truncated_n, infos = test_envs.step(actions_execute)
-                next_state, agent_mask = test_envs.global_state(), test_envs.agent_mask()
+        for step in range(self.episode_length):
+            actions_dict = self.get_actions(obs_n, True, act_mean_last, agent_mask, state)
+            actions_execute = self.combine_env_actions(actions_dict['actions_n'])
+            next_obs_n, rew_n, terminated_n, truncated_n, infos = test_envs.step(actions_execute)
+            # time.sleep(0.02)
+            if self.args_base.render_mode == "rgb_array" and self.render:
+                images = test_envs.render(self.args_base.render_mode)
+                for idx, img in enumerate(images):
+                    videos[idx].append(img)
 
-                obs_n, state, act_mean_last = deepcopy(next_obs_n), deepcopy(next_state), deepcopy(actions_dict['act_mean'])
+            next_state, agent_mask = test_envs.global_state(), test_envs.agent_mask()
 
-                for h, mas_group in enumerate(self.marl_agents):
-                    episode_score[h] += np.mean(rew_n[h] * agent_mask[h][:, :, np.newaxis], axis=1)
-                    terminal_handle[h] = terminated_n[h].all(axis=-1)
-                    truncate_handle[h] = truncated_n[h].all(axis=-1)
+            obs_n, state, act_mean_last = deepcopy(next_obs_n), deepcopy(next_state), deepcopy(actions_dict['act_mean'])
 
-                for i in range(num_envs):
-                    if terminal_handle.all(axis=0)[i] or truncate_handle.all(axis=0)[i]:
-                        state[i] = test_envs.global_state_one_env(i)
-                        for h, mas_group in enumerate(self.marl_agents):
-                            obs_n[h][i] = infos[i]["reset_obs"][h]
-                            act_mean_last[h][i] = np.zeros([self.args[h].dim_act])
-                            episode_score[h][i] = 0.0
+            for h, mas_group in enumerate(self.marl_agents):
+                episode_score[h] += np.mean(rew_n[h] * agent_mask[h][:, :, np.newaxis], axis=1)
+                terminal_handle[h] = terminated_n[h].all(axis=-1)
+                truncate_handle[h] = truncated_n[h].all(axis=-1)
+
+            for i in range(num_envs):
+                if terminal_handle.all(axis=0)[i] or truncate_handle.all(axis=0)[i]:
+                    state[i] = test_envs.global_state_one_env(i)
+                    for h, mas_group in enumerate(self.marl_agents):
+                        obs_n[h][i] = infos[i]["reset_obs"][h]
+                        act_mean_last[h][i] = np.zeros([self.args[h].dim_act])
+        scores = episode_score.mean(axis=1).reshape([self.n_handles])
+        if self.args_base.test_mode:
+            print("Mean score: ", scores)
+
+        if self.args_base.render_mode == "rgb_array" and self.render:
+            # time, height, width, channel -> time, channel, height, width
+            videos_info = {"Videos_Test": np.array(videos, dtype=np.uint8).transpose((0, 1, 4, 2, 3))}
+            self.log_videos(info=videos_info, fps=20, x_index=self.current_step)
+
+        if self.n_handles > 1:
+            for h in range(self.n_handles):
+                test_info["Test-Episode-Rewards/Side-%d" % h] = scores[h]
+        else:
+            test_info["Test-Episode-Rewards"] = scores[0]
+        self.log_infos(test_info, self.current_step)
+
+        test_envs.close()
+
+        return scores
 
     def run(self):
         if self.args_base.test_mode:

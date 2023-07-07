@@ -101,6 +101,7 @@ class Atari_Env(gym.Wrapper):
         frame_skip: int or a tuple of two ints. This argument controls stochastic frame skipping, as described in the section on stochasticity.
         num_stack: int, the number of stacked frames if you use the frame stacking trick.
         image_size: This argument determines the size of observation image, default is [210, 160].
+        noop_max: max times of noop action for env.reset().
     """
 
     def __init__(self,

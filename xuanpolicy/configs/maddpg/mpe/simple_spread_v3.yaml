@@ -6,6 +6,7 @@ policy: "MADDPG_policy"
 representation: "Basic_Identical"
 vectorize: "Dummy_Pettingzoo"
 runner: "MPE_Runner"
+on_policy: False
 
 representation_hidden_size: [64, ]  # the units for each hidden layer
 actor_hidden_size: [64, ]
@@ -14,8 +15,8 @@ activation: 'LeakyReLU'
 activation_action: 'sigmoid'
 
 seed: 1
-parallels: 128
-buffer_size: 200000
+parallels: 16
+buffer_size: 5000
 batch_size: 256
 lr_a: 0.01  # learning rate for actor
 lr_c: 0.001  # learning rate for critic
@@ -25,13 +26,14 @@ clip_grad: 0.5
 
 start_noise: 1.0
 end_noise: 0.01
-training_steps: 2000000
+sigma: 0.1
+start_training: 1000  # start training after n episodes
+training_steps: 10000000
 training_frequency: 1
 
 n_tests: 5
-
 test_episodes: 10
-eval_interval: 10000
-test_episode: 1
+eval_interval: 20000
+test_episode: 5
 logdir: "./logs/maddpg/"
 modeldir: "./models/maddpg/"

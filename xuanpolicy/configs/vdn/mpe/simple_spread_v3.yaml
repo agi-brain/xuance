@@ -13,24 +13,24 @@ q_hidden_size: [64, ]  # the units for each hidden layer
 activation: "ReLU"
 
 seed: 1
-parallels: 128
+parallels: 16
 buffer_size: 5000
-batch_size: 32
-learning_rate: 0.0007
+batch_size: 256
+learning_rate: 0.001
 gamma: 0.99  # discount factor
+double_q: True  # use double q learning
 
 start_greedy: 0.0
 end_greedy: 0.95
-greedy_update_steps: 5000
-training_steps: 2000000  # 2M
+greedy_update_steps: 1000000
+start_training: 1000  # start training after n episodes
+training_steps: 10000000  # 10M
 training_frequency: 1
 sync_frequency: 100
 
 n_tests: 5
-double_q: True  # use double q learning
-
 test_episodes: 10
-eval_interval: 20000
+eval_interval: 100000
 test_episode: 5
 logdir: "./logs/vdn/"
 modeldir: "./models/vdn/"

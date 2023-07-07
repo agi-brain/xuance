@@ -26,9 +26,6 @@ class BaseBuffer(ABC):
     def clear(self, *args):
         raise NotImplementedError
 
-    def can_sample(self, *args):
-        raise NotImplementedError
-
     @abstractmethod
     def sample(self, *args):
         raise NotImplementedError
@@ -83,41 +80,39 @@ class MARL_OffPolicyBuffer(BaseBuffer, ABC):
     def __init__(self, state_space, obs_space, act_space, rew_space, done_space, n_envs, buffer_size, batch_size):
         super(MARL_OffPolicyBuffer, self).__init__(obs_space, act_space, rew_space, n_envs, buffer_size, batch_size)
         self.state_space = state_space
-        self.buffer_size = buffer_size * n_envs
-        self.env_buffer_size = buffer_size
+        self.buffer_size = buffer_size
+        self.n_envs = n_envs
+        self.total_buffer_size = buffer_size * n_envs
         self.n_agents = act_space[0]
 
         self.data = {
-            'obs': np.zeros((self.buffer_size,) + obs_space).astype(np.float32),
-            'actions': np.zeros((self.buffer_size,) + act_space).astype(np.float32),
-            'obs_next': np.zeros((self.buffer_size,) + obs_space).astype(np.float32),
-            'rewards': np.zeros((self.buffer_size,) + rew_space).astype(np.float32),
-            'terminals': np.zeros((self.buffer_size,) + done_space).astype(np.bool),
-            'agent_mask': np.ones((self.buffer_size, self.n_agents)).astype(np.bool)
+            'obs': np.zeros((self.n_envs, self.buffer_size) + obs_space).astype(np.float32),
+            'actions': np.zeros((self.n_envs, self.buffer_size) + act_space).astype(np.float32),
+            'obs_next': np.zeros((self.n_envs, self.buffer_size) + obs_space).astype(np.float32),
+            'rewards': np.zeros((self.n_envs, self.buffer_size) + rew_space).astype(np.float32),
+            'terminals': np.zeros((self.n_envs, self.buffer_size) + done_space).astype(np.bool),
+            'agent_mask': np.ones((self.n_envs, self.buffer_size, self.n_agents)).astype(np.bool)
         }
 
         if state_space is not None:
-            self.data.update({'state': np.zeros((self.buffer_size,) + state_space).astype(np.float32),
-                              'state_next': np.zeros((self.buffer_size,) + state_space).astype(np.float32)})
+            self.data.update({'state': np.zeros((self.n_envs, self.buffer_size) + state_space).astype(np.float32),
+                              'state_next': np.zeros((self.n_envs, self.buffer_size) + state_space).astype(np.float32)})
         self.keys = self.data.keys()
 
     def store(self, step_data):
         ptr_end = self.ptr + self.n_envs
 
         for k in self.keys:
-            self.data[k][self.ptr: ptr_end] = step_data[k]
+            self.data[k][:, self.ptr] = step_data[k]
 
         self.ptr = (ptr_end) % self.buffer_size
         self.size = np.min([self.size + 1, self.buffer_size])
 
-    def can_sample(self, batch_size):
-        return self.size >= batch_size
-
     def sample(self):
-        assert self.can_sample(self.batch_size)
+        env_choices = np.random.choice(self.n_envs, self.batch_size)
+        step_choices = np.random.choice(self.size, self.batch_size)
 
-        random_batch_index = np.random.choice(self.size, size=self.batch_size, replace=False)
-        samples = {k: self.data[k][random_batch_index] for k in self.keys}
+        samples = {k: self.data[k][env_choices, step_choices] for k in self.keys}
         samples.update({'batch_size': self.batch_size})
         return samples
 

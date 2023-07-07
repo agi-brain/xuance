@@ -46,9 +46,9 @@ class VDN_Agents(MARLAgents):
         super(VDN_Agents, self).__init__(config, envs, policy, memory, learner, device,
                                          config.logdir, config.modeldir)
 
-    def train(self, i_episode):
+    def train(self, i_step):
         self.epsilon_decay.update()
-        if self.memory.can_sample(self.args.batch_size):
+        if i_step > self.start_training:
             sample = self.memory.sample()
             info_train = self.learner.update(sample)
             return info_train

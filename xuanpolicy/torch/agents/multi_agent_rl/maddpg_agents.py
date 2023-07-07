@@ -45,7 +45,7 @@ class MADDPG_Agents(MARLAgents):
         super(MADDPG_Agents, self).__init__(config, envs, policy, memory, learner, device,
                                             config.logdir, config.modeldir)
 
-    def act(self, obs_n, episode, test_mode, noise=False):
+    def act(self, obs_n, test_mode, noise=False):
         batch_size = len(obs_n)
         agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(batch_size, -1, -1).to(self.device)
         _, actions = self.policy(torch.Tensor(obs_n), agents_id)
@@ -56,9 +56,6 @@ class MADDPG_Agents(MARLAgents):
         return actions
 
     def train(self, i_episode):
-        if self.memory.can_sample(self.args.batch_size):
-            sample = self.memory.sample()
-            info_train = self.learner.update(sample)
-            return info_train
-        else:
-            return {}
+        sample = self.memory.sample()
+        info_train = self.learner.update(sample)
+        return info_train

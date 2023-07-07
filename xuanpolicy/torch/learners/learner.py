@@ -69,9 +69,8 @@ class LearnerMAS(ABC):
     def onehot_action(self, actions_int, num_actions):
         return F.one_hot(actions_int.long(), num_classes=num_actions)
 
-    def save_model(self):
-        time_string = time.asctime().replace(" ", "").replace(":", "_")
-        model_path = self.modeldir + "model-%s-%s.pth" % (time_string, str(self.iterations))
+    def save_model(self, model_name):
+        model_path = self.modeldir + model_name
         torch.save(self.policy.state_dict(), model_path)
 
     def load_model(self, path):

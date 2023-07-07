@@ -11,10 +11,10 @@ representation: "AC_CNN_Atari"  # CNN and FC layers
 policy: "Categorical_AC"
 
 # Good HyperParameters for Atari Games, Do not change them.
-filters: [32, 32, 64, 64]
-kernels: [8, 4, 4, 4]
-strides: [4, 2, 2, 2]
-fc_hidden_sizes: [128, 128]  # fully connected layer hidden sizes.
+filters: [32, 64, 64]
+kernels: [8, 4, 3]
+strides: [4, 2, 1]
+fc_hidden_sizes: [512, ]  # fully connected layer hidden sizes.
 actor_hidden_size: []
 critic_hidden_size: []
 activation: "ReLU"
@@ -24,15 +24,15 @@ training_steps: 10000000  # 10M
 nsteps: 128
 nepoch: 4
 nminibatch: 4
-learning_rate: 0.0007
+learning_rate: 0.00025
 
 use_gae: True
 use_grad_clip: True
 use_value_loss_clip: False
 
-vf_coef: 0.5
+vf_coef: 0.25
 ent_coef: 0.01
-clip_range: 0.1
+clip_range: 0.2
 clip_grad_norm: 0.5
 gamma: 0.99
 gae_lam: 0.95  # gae_lambda: Lambda parameter for calculating N-step advantage
