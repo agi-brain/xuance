@@ -41,16 +41,36 @@ class VDN_Agents(MARLAgents):
         learner = VDN_Learner(config, policy, optimizer, scheduler,
                               config.device, config.modeldir, config.gamma,
                               config.sync_frequency)
-        self.epsilon_decay = linear_decay_or_increase(config.start_greedy, config.end_greedy,
-                                                      config.greedy_update_steps)
+        self.start_greedy, self.end_greedy = config.start_greedy, config.end_greedy
+        self.egreedy = self.start_greedy
+        self.delta_egreedy = (self.start_greedy - self.end_greedy) / (config.decay_step_greedy / envs.num_envs / envs.max_episode_length)
         super(VDN_Agents, self).__init__(config, envs, policy, memory, learner, device,
                                          config.logdir, config.modeldir)
 
+    def act(self, obs_n, test_mode=False):
+        batch_size = obs_n.shape[0]
+        agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(batch_size, -1, -1).to(self.device)
+        obs_in = torch.Tensor(obs_n).view([batch_size, self.n_agents, -1]).to(self.device)
+        _, greedy_actions, _ = self.policy(obs_in, agents_id)
+        greedy_actions = greedy_actions.cpu().detach().numpy()
+
+        if test_mode:
+            return greedy_actions
+        else:
+            random_actions = np.random.choice(self.dim_act, [self.nenvs, self.n_agents])
+            if np.random.rand() < self.egreedy:
+                return random_actions
+            else:
+                return greedy_actions
+
     def train(self, i_step):
-        self.epsilon_decay.update()
+        if self.egreedy >= self.end_greedy:
+            self.egreedy -= self.delta_egreedy
+
         if i_step > self.start_training:
             sample = self.memory.sample()
             info_train = self.learner.update(sample)
+            info_train["epsilon-greedy"] = self.egreedy
             return info_train
         else:
             return {}

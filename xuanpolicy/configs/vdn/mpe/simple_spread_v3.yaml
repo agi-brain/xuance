@@ -5,7 +5,7 @@ continuous_action: False
 policy: "Mixing_Q_network"
 representation: "Basic_MLP"
 vectorize: "Dummy_Pettingzoo"
-runner: "MPE_Runner"
+runner: "Pettingzoo_Runner"
 on_policy: False
 
 representation_hidden_size: [64, ]
@@ -20,13 +20,17 @@ learning_rate: 0.001
 gamma: 0.99  # discount factor
 double_q: True  # use double q learning
 
-start_greedy: 0.0
-end_greedy: 0.95
-greedy_update_steps: 1000000
+start_greedy: 1.0
+end_greedy: 0.05
+decay_step_greedy: 2500000
 start_training: 1000  # start training after n episodes
-training_steps: 10000000  # 10M
+running_steps: 10000000  # 10M
+train_per_step: False  # True: train model per step; False: train model per episode.
 training_frequency: 1
 sync_frequency: 100
+
+use_grad_clip: False
+grad_clip_norm: 0.5
 
 n_tests: 5
 test_episodes: 10

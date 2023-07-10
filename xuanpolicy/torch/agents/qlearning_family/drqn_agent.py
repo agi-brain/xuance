@@ -27,6 +27,7 @@ class DRQN_Agent(Agent):
         self.representation_info_shape = policy.representation.output_shapes
         self.auxiliary_info_shape = {}
 
+        self.atari = True if config.env_name == "Atari" else False
         memory = RecurrentOffPolicyBuffer(self.observation_space,
                                           self.action_space,
                                           self.representation_info_shape,

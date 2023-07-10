@@ -45,15 +45,17 @@ class MADDPG_Agents(MARLAgents):
         super(MADDPG_Agents, self).__init__(config, envs, policy, memory, learner, device,
                                             config.logdir, config.modeldir)
 
-    def act(self, obs_n, test_mode, noise=False):
+    def act(self, obs_n, test_mode):
         batch_size = len(obs_n)
         agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(batch_size, -1, -1).to(self.device)
         _, actions = self.policy(torch.Tensor(obs_n), agents_id)
         actions = actions.cpu().detach().numpy()
-        if noise:
+        if test_mode:
+            return actions
+        else:
             actions += np.random.normal(0, self.args.sigma, size=actions.shape)
             actions = np.clip(actions, self.actions_low, self.actions_high)
-        return actions
+            return actions
 
     def train(self, i_episode):
         sample = self.memory.sample()

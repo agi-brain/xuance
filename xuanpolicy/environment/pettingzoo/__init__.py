@@ -20,9 +20,5 @@ BUTTERFLY_ENVS_MARL = ['cooperative_pong_v3', 'knights_archers_zombies_v7', 'pis
 CLASSIC_ENVS_MARL = ['backgammon_v3', 'checkers_v3', 'chess_v4', 'connect_four_v3', 'dou_dizhu_v4', 'gin_rummy_v4',
                      'go_v5', 'hanabi_v4', 'leduc_holdem_v4', 'mahjong_v4', 'rps_v2', 'texas_holdem_no_limit_v5',
                      'texas_holdem_v4', 'tictactoe_v3', 'uno_v4']
-MAGENT_ENVS_LARGE_SCALE_MARL = ['adversarial_pursuit_v3', 'battlefield_v3', 'battle_v3', 'combined_arms_v5',
-                                'gather_v3', 'magent_env', 'tiger_deer_v3']
-MPE_ENVS_MARL = ['simple_adversary_v2', 'simple_crypto_v2', 'simple_push_v2', 'simple_reference_v2',
-                 'simple_speaker_listener_v3', 'simple_spread_v2', 'simple_tag_v2', 'simple_v2', 'simple_world_comm_v2']
 SISL_ENVS_MARL = ['multiwalker_v7', 'pursuit_v3', 'waterworld_v3']
-PETTINGZOO_ENVIRONMENTS = ['atari', 'butterfly', 'classic', 'magent', 'mpe', 'sisl']
+PETTINGZOO_ENVIRONMENTS = ['atari', 'butterfly', 'classic', 'mpe', 'sisl']

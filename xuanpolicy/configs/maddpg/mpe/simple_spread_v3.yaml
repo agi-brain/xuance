@@ -5,7 +5,7 @@ continuous_action: True
 policy: "MADDPG_policy"
 representation: "Basic_Identical"
 vectorize: "Dummy_Pettingzoo"
-runner: "MPE_Runner"
+runner: "Pettingzoo_Runner"
 on_policy: False
 
 representation_hidden_size: [64, ]  # the units for each hidden layer
@@ -33,7 +33,7 @@ training_frequency: 1
 
 n_tests: 5
 test_episodes: 10
-eval_interval: 20000
+eval_interval: 100000
 test_episode: 5
 logdir: "./logs/maddpg/"
 modeldir: "./models/maddpg/"

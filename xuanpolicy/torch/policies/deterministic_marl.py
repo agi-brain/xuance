@@ -1,3 +1,5 @@
+import copy
+
 from xuanpolicy.torch.policies import *
 from xuanpolicy.torch.utils import *
 from xuanpolicy.torch.representations import Basic_Identical
@@ -41,8 +43,8 @@ class BasicQnetwork(nn.Module):
         super(BasicQnetwork, self).__init__()
         self.action_dim = action_space.n
         self.representation = representation
+        self.target_representation = copy.deepcopy(self.representation)
         self.representation_info_shape = self.representation.output_shapes
-
         self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, n_agents,
                                      hidden_size, normalize, initialize, activation, device)
         self.target_Qhead = copy.deepcopy(self.eval_Qhead)
@@ -55,11 +57,13 @@ class BasicQnetwork(nn.Module):
         return outputs, argmax_action, evalQ
 
     def target_Q(self, observation: torch.Tensor, agent_ids: torch.Tensor):
-        outputs = self.representation(observation)
+        outputs = self.target_representation(observation)
         q_inputs = torch.concat([outputs['state'], agent_ids], dim=-1)
         return self.target_Qhead(q_inputs)
 
     def copy_target(self):
+        for ep, tp in zip(self.representation.parameters(), self.target_representation.parameters()):
+            tp.data.copy_(ep)
         for ep, tp in zip(self.eval_Qhead.parameters(), self.target_Qhead.parameters()):
             tp.data.copy_(ep)
 
@@ -77,6 +81,7 @@ class MFQnetwork(nn.Module):
         super(MFQnetwork, self).__init__()
         self.action_dim = action_space.n
         self.representation = representation
+        self.target_representation = copy.deepcopy(self.representation)
         self.representation_info_shape = self.representation.output_shapes
 
         self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0] + self.action_dim, self.action_dim,
@@ -95,11 +100,13 @@ class MFQnetwork(nn.Module):
         return dist.sample()
 
     def target_Q(self, observation: torch.Tensor, actions_mean: torch.Tensor, agent_ids: torch.Tensor):
-        outputs = self.representation(observation)
+        outputs = self.target_representation(observation)
         q_inputs = torch.concat([outputs['state'], actions_mean, agent_ids], dim=-1)
         return self.target_Qhead(q_inputs)
 
     def copy_target(self):
+        for ep, tp in zip(self.representation.parameters(), self.target_representation.parameters()):
+            tp.data.copy_(ep)
         for ep, tp in zip(self.eval_Qhead.parameters(), self.target_Qhead.parameters()):
             tp.data.copy_(ep)
 
@@ -118,6 +125,7 @@ class MixingQnetwork(nn.Module):
         super(MixingQnetwork, self).__init__()
         self.action_dim = action_space.n
         self.representation = representation
+        self.target_representation = copy.deepcopy(self.representation)
         self.representation_info_shape = self.representation.output_shapes
         self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, n_agents,
                                      hidden_size, normalize, initialize, activation, device)
@@ -133,7 +141,7 @@ class MixingQnetwork(nn.Module):
         return outputs, argmax_action, evalQ
 
     def target_Q(self, observation: torch.Tensor, agent_ids: torch.Tensor):
-        outputs = self.representation(observation)
+        outputs = self.target_representation(observation)
         q_inputs = torch.concat([outputs['state'], agent_ids], dim=-1)
         return self.target_Qhead(q_inputs)
 
@@ -144,6 +152,8 @@ class MixingQnetwork(nn.Module):
         return self.target_Qtot(q, states)
 
     def copy_target(self):
+        for ep, tp in zip(self.representation.parameters(), self.target_representation.parameters()):
+            tp.data.copy_(ep)
         for ep, tp in zip(self.eval_Qhead.parameters(), self.target_Qhead.parameters()):
             tp.data.copy_(ep)
         for ep, tp in zip(self.eval_Qtot.parameters(), self.target_Qtot.parameters()):
@@ -175,11 +185,13 @@ class Weighted_MixingQnetwork(MixingQnetwork):
         return self.eval_Qhead_centralized(q_inputs)
 
     def target_q_centralized(self, observation: torch.Tensor, agent_ids: torch.Tensor):
-        outputs = self.representation(observation)
+        outputs = self.target_representation(observation)
         q_inputs = torch.concat([outputs['state'], agent_ids], dim=-1)
         return self.target_Qhead_centralized(q_inputs)
 
     def copy_target(self):
+        for ep, tp in zip(self.representation.parameters(), self.target_representation.parameters()):
+            tp.data.copy_(ep)
         for ep, tp in zip(self.eval_Qhead.parameters(), self.target_Qhead.parameters()):
             tp.data.copy_(ep)
         for ep, tp in zip(self.eval_Qtot.parameters(), self.target_Qtot.parameters()):
@@ -205,6 +217,7 @@ class Qtran_MixingQnetwork(nn.Module):
         super(Qtran_MixingQnetwork, self).__init__()
         self.action_dim = action_space.n
         self.representation = representation
+        self.target_representation = copy.deepcopy(self.representation)
         self.representation_info_shape = self.representation.output_shapes
         self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, n_agents,
                                      hidden_size, normalize, initialize, activation, device)
@@ -221,11 +234,13 @@ class Qtran_MixingQnetwork(nn.Module):
         return outputs, argmax_action, evalQ
 
     def target_Q(self, observation: torch.Tensor, agent_ids: torch.Tensor):
-        outputs = self.representation(observation)
+        outputs = self.target_representation(observation)
         q_inputs = torch.concat([outputs['state'], agent_ids], dim=-1)
         return outputs, self.target_Qhead(q_inputs)
 
     def copy_target(self):
+        for ep, tp in zip(self.representation.parameters(), self.target_representation.parameters()):
+            tp.data.copy_(ep)
         for ep, tp in zip(self.eval_Qhead.parameters(), self.target_Qhead.parameters()):
             tp.data.copy_(ep)
         for ep, tp in zip(self.qtran_net.parameters(), self.target_qtran_net.parameters()):
@@ -249,6 +264,7 @@ class DCG_policy(nn.Module):
         super(DCG_policy, self).__init__()
         self.action_dim = action_space.n
         self.representation = representation
+        self.target_representation = copy.deepcopy(self.representation)
         self.utility = utility
         self.target_utility = copy.deepcopy(self.utility)
         self.payoffs = payoffs
@@ -269,6 +285,8 @@ class DCG_policy(nn.Module):
         return outputs, argmax_action, evalQ
 
     def copy_target(self):
+        for ep, tp in zip(self.representation.parameters(), self.target_representation.parameters()):
+            tp.data.copy_(ep)
         for ep, tp in zip(self.utility.parameters(), self.target_utility.parameters()):
             tp.data.copy_(ep)
         for ep, tp in zip(self.payoffs.parameters(), self.target_payoffs.parameters()):

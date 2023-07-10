@@ -32,7 +32,7 @@ class WQMIX_Learner(LearnerMAS):
         state_next = torch.Tensor(sample['state_next']).to(self.device)
         obs_next = torch.Tensor(sample['obs_next']).to(self.device)
         rewards = torch.Tensor(sample['rewards']).mean(dim=1).to(self.device)
-        terminals = torch.Tensor(sample['terminals']).float().view(-1, self.n_agents, 1).to(self.device)
+        terminals = torch.Tensor(sample['terminals']).all(dim=1, keepdims=True).float().to(self.device)
         agent_mask = torch.Tensor(sample['agent_mask']).float().view(-1, self.n_agents, 1).to(self.device)
         IDs = torch.eye(self.n_agents).unsqueeze(0).expand(self.args.batch_size, -1, -1).to(self.device)
 
@@ -79,6 +79,8 @@ class WQMIX_Learner(LearnerMAS):
         loss = loss_qmix + loss_central
         self.optimizer.zero_grad()
         loss.backward()
+        if self.args.use_grad_clip:
+            torch.nn.utils.clip_grad_norm_(self.policy.parameters(), self.args.grad_clip_norm)
         self.optimizer.step()
         if self.scheduler is not None:
             self.scheduler.step()

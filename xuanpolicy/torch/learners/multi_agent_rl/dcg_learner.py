@@ -25,7 +25,7 @@ class DCG_Learner(LearnerMAS):
 
     def get_graph_values(self, obs_n, use_target_net=False):
         if use_target_net:
-            hidden_states = self.policy.representation(obs_n)['state']
+            hidden_states = self.policy.target_representation(obs_n)['state']
             utilities = self.policy.target_utility(hidden_states)
             payoff = self.policy.target_payoffs(hidden_states, self.policy.graph.edges_from, self.policy.graph.edges_to)
         else:

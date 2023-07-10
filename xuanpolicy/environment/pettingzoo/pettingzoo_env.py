@@ -13,6 +13,7 @@ class PettingZoo_Env(ParallelEnv):
                                          render_mode=kwargs["render_mode"])
         self.scenario_name = env_name + "." + env_id
         self.n_handles = len(AGENT_NAME_DICT[self.scenario_name])
+        self.side_names = AGENT_NAME_DICT[self.scenario_name]
         self.env.reset(seed)
         try:
             self.state_space = self.env.state_space

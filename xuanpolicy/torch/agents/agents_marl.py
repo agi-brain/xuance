@@ -45,27 +45,10 @@ class MARLAgents(object):
     def load_model(self, path):
         self.learner.load_model(path)
 
-    def act(self, obs_n, test_mode, noise=False):
-        if not test_mode:
-            epsilon = self.epsilon_decay.epsilon
-        else:
-            epsilon = 1.0
-        batch_size = obs_n.shape[0]
-        agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(batch_size, -1, -1).to(self.device)
+    def act(self, **kwargs):
+        raise NotImplementedError
 
-        obs_in = torch.Tensor(obs_n).view([batch_size, self.n_agents, -1]).to(self.device)
-
-        _, greedy_actions, _ = self.policy(obs_in, agents_id)
-        greedy_actions = greedy_actions.cpu().detach().numpy()
-        if noise:
-            random_variable = np.random.random(greedy_actions.shape)
-            action_pick = np.int32((random_variable < epsilon))
-            random_actions = np.array([[self.args.action_space[agent].sample() for agent in self.agent_keys]])
-            return action_pick * greedy_actions + (1 - action_pick) * random_actions
-        else:
-            return greedy_actions
-
-    def train(self, i_episode):
+    def train(self, **kwargs):
         raise NotImplementedError
 
 

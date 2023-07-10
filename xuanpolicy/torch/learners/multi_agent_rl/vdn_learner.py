@@ -49,6 +49,8 @@ class VDN_Learner(LearnerMAS):
         loss = self.mse_loss(q_tot_eval, q_tot_target.detach())
         self.optimizer.zero_grad()
         loss.backward()
+        if self.args.use_grad_clip:
+            torch.nn.utils.clip_grad_norm_(self.policy.parameters(), self.args.grad_clip_norm)
         self.optimizer.step()
         if self.scheduler is not None:
             self.scheduler.step()

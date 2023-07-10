@@ -28,7 +28,8 @@ start_greedy: 0.0
 end_greedy: 0.95
 greedy_update_steps: 5000
 start_training: 1000  # start training after n episodes
-training_steps: 1000000
+running_steps: 1000000
+train_per_step: False  # True: train model per step; False: train model per episode.
 training_frequency: 1
 sync_frequency: 200
 

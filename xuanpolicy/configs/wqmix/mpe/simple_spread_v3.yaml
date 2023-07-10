@@ -4,30 +4,37 @@ env_id: "simple_spread_v3"
 continuous_action: False
 policy: "Weighted_Mixing_Q_network"
 representation: "Basic_MLP"
-vectorize: "Dummy_MAS"
-runner: "MARL"
+vectorize: "Dummy_Pettingzoo"
+runner: "Pettingzoo_Runner"
+on_policy: False
 
 representation_hidden_size: [256, ]
 q_hidden_size: [256, ]  # the units for each hidden layer
 hidden_dim_mixing_net: 64  # hidden units of mixing network
 hidden_dim_hyper_net: 64  # hidden units of hyper network
+activation: "ReLU"
 alpha: 0.1
 
 buffer_size: 100000
 batch_size: 256
 learning_rate: 0.001
 gamma: 0.95  # discount factor
+double_q: True  # use double q learning
 
-start_greedy: 0.0
-end_greedy: 0.95
-greedy_update_steps: 5000
-training_steps: 20000
+start_greedy: 0.5
+end_greedy: 0.05
+decay_step_greedy: 1000000  # 1M
+start_training: 1000  # start training after n episodes
+training_steps: 10000000  # 10M
 training_frequency: 1
 sync_frequency: 200
 
-n_tests: 5
-test_period: 100
-double_q: True  # use double q learning
+use_grad_clip: False
+grad_clip_norm: 0.5
 
+n_tests: 5
+test_episodes: 10
+eval_interval: 100000
+test_episode: 5
 logdir: "./logs/wqmix/"
 modeldir: "./models/wqmix/"
