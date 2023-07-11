@@ -322,7 +322,7 @@ $ tensorboard --logdir ./logs/dqn/torch/CartPole-v0
 |-----------------|---------|------|----------|---------|
 | ALE/Breakout-v5 | 424.0   |      | 431.0    | 371.67  |
 | ALE/Pong-v5     | 21.0    |      | 20.0     | 21.0    |
-| ALE/Qbert-v5    | 16350.0 |      | running  | 20050.0 |
+| ALE/Qbert-v5    | 16350.0 |      | 12875.0  | 20050.0 |
 | ALE/Freeway-v5  | running |      | running  | 34.0    |
 
 

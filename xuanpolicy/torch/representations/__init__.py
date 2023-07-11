@@ -5,10 +5,9 @@ import numpy as np
 from typing import Sequence, Union, Optional, Callable
 from xuanpolicy.torch.utils.layers import *
 
-from .networks import Basic_MLP
-from .networks import Basic_Identical
-from .networks import Basic_CNN, AC_CNN_Atari
-from .networks import CoG_MLP, CoG_RNN, CoG_CNN
+from .mlp import Basic_Identical, Basic_MLP, CoG_MLP
+from .cnn import Basic_CNN, CoG_CNN, AC_CNN_Atari
+from .rnn import Basic_RNN, CoG_RNN
 
 REGISTRY = {
     "Basic_MLP": Basic_MLP,

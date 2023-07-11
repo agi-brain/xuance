@@ -9,10 +9,11 @@ class WQMIX_Agents(MARLAgents):
                  device: Optional[Union[int, str, torch.device]] = None):
         self.alpha = config.alpha
         self.gamma = config.gamma
+        self.start_greedy, self.end_greedy = config.start_greedy, config.end_greedy
+        self.egreedy = self.start_greedy
+        self.delta_egreedy = (self.start_greedy - self.end_greedy) / (
+                    config.decay_step_greedy / envs.num_envs / envs.max_episode_length)
 
-        self.start_greedy = config.start_greedy
-        self.end_greedy = config.end_greedy
-        self.egreedy = config.start_greedy
         if config.state_space is not None:
             config.dim_state, state_shape = config.state_space.shape, config.state_space.shape
         else:
@@ -44,9 +45,6 @@ class WQMIX_Agents(MARLAgents):
         learner = WQMIX_Learner(config, policy, optimizer, scheduler,
                                 config.device, config.modeldir, config.gamma,
                                 config.sync_frequency)
-        self.start_greedy, self.end_greedy = config.start_greedy, config.end_greedy
-        self.egreedy = self.start_greedy
-        self.delta_egreedy = (self.start_greedy - self.end_greedy) / (config.decay_step_greedy / envs.num_envs)
         super(WQMIX_Agents, self).__init__(config, envs, policy, memory, learner, device,
                                            config.logdir, config.modeldir)
 

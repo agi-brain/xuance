@@ -1,7 +1,5 @@
 import torch.nn
-
 from xuanpolicy.torch.agents import *
-from xuanpolicy.torch.agents.agents_marl import linear_decay_or_increase
 
 
 class DCG_Agents(MARLAgents):
@@ -10,10 +8,6 @@ class DCG_Agents(MARLAgents):
                  envs: DummyVecEnv_Pettingzoo,
                  device: Optional[Union[int, str, torch.device]] = None):
         self.gamma = config.gamma
-        self.start_greedy = config.start_greedy
-        self.end_greedy = config.end_greedy
-        self.egreedy = config.start_greedy
-
         input_representation = get_repre_in(config)
         representation = REGISTRY_Representation[config.representation](*input_representation)
         repre_state_dim = config.representation_hidden_size[-1]
@@ -57,19 +51,23 @@ class DCG_Agents(MARLAgents):
                               config.device, config.modeldir, config.gamma,
                               config.sync_frequency)
 
-        self.epsilon_decay = linear_decay_or_increase(config.start_greedy, config.end_greedy,
-                                                      config.greedy_update_steps)
-        super(DCG_Agents, self).__init__(config, envs, policy, memory, learner, device,
-                                         config.logdir, config.modeldir)
+        self.start_greedy, self.end_greedy = config.start_greedy, config.end_greedy
+        self.egreedy = self.start_greedy
+        self.delta_egreedy = (self.start_greedy - self.end_greedy) / (
+                    config.decay_step_greedy / envs.num_envs / envs.max_episode_length)
+        super(DCG_Agents, self).__init__(config, envs, policy, memory, learner, device, config.logdir, config.modeldir)
 
-    def act(self, obs_n, episode=None, test_mode=True, noise=False):
-        return self.learner.act(obs_n, episode, test_mode, noise)
+    def act(self, obs_n, test_mode=False):
+        return self.learner.act(obs_n)
 
-    def train(self, i_episode):
-        self.epsilon_decay.update()
-        if self.memory.can_sample(self.args.batch_size):
+    def train(self, i_step):
+        if self.egreedy >= self.end_greedy:
+            self.egreedy -= self.delta_egreedy
+
+        if i_step > self.start_training:
             sample = self.memory.sample()
             info_train = self.learner.update(sample)
+            info_train["epsilon-greedy"] = self.egreedy
             return info_train
         else:
             return {}

@@ -121,29 +121,42 @@ class MixingQnetwork(nn.Module):
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., torch.Tensor]] = None,
                  activation: Optional[ModuleType] = None,
-                 device: Optional[Union[str, int, torch.device]] = None):
+                 device: Optional[Union[str, int, torch.device]] = None,
+                 **kwargs):
         super(MixingQnetwork, self).__init__()
         self.action_dim = action_space.n
         self.representation = representation
         self.target_representation = copy.deepcopy(self.representation)
         self.representation_info_shape = self.representation.output_shapes
+        self.lstm = True if kwargs["rnn"] == "LSTM" else False
+        self.use_rnn = True if kwargs["use_recurrent"] else False
         self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, n_agents,
                                      hidden_size, normalize, initialize, activation, device)
         self.target_Qhead = copy.deepcopy(self.eval_Qhead)
         self.eval_Qtot = mixer
         self.target_Qtot = copy.deepcopy(self.eval_Qtot)
 
-    def forward(self, observation: torch.Tensor, agent_ids: torch.Tensor):
-        outputs = self.representation(observation)
+    def forward(self, observation: torch.Tensor, agent_ids: torch.Tensor, *rnn_hidden: torch.Tensor):
+        if self.use_rnn:
+            outputs = self.representation(observation, rnn_hidden)
+            rnn_hidden = (outputs['rnn_hidden'], outputs['rnn_cell'])
+        else:
+            outputs = self.representation(observation)
+            rnn_hidden = None
         q_inputs = torch.concat([outputs['state'], agent_ids], dim=-1)
         evalQ = self.eval_Qhead(q_inputs)
         argmax_action = evalQ.argmax(dim=-1, keepdim=False)
-        return outputs, argmax_action, evalQ
+        return rnn_hidden, argmax_action, evalQ
 
-    def target_Q(self, observation: torch.Tensor, agent_ids: torch.Tensor):
-        outputs = self.target_representation(observation)
+    def target_Q(self, observation: torch.Tensor, agent_ids: torch.Tensor, *rnn_hidden: torch.Tensor):
+        if self.use_rnn:
+            outputs = self.target_representation(observation, rnn_hidden)
+            rnn_hidden = (outputs['rnn_hidden'], outputs['rnn_cell'])
+        else:
+            outputs = self.target_representation(observation)
+            rnn_hidden = None
         q_inputs = torch.concat([outputs['state'], agent_ids], dim=-1)
-        return self.target_Qhead(q_inputs)
+        return rnn_hidden, self.target_Qhead(q_inputs)
 
     def Q_tot(self, q, states=None):
         return self.eval_Qtot(q, states)

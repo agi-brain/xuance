@@ -20,6 +20,7 @@ class VDN_Learner(LearnerMAS):
                  ):
         self.gamma = gamma
         self.sync_frequency = sync_frequency
+        self.use_recurrent = config.use_recurrent
         self.mse_loss = nn.MSELoss()
         super(VDN_Learner, self).__init__(config, policy, optimizer, scheduler, device, modeldir)
 
@@ -32,11 +33,14 @@ class VDN_Learner(LearnerMAS):
         terminals = torch.Tensor(sample['terminals']).all(dim=1, keepdims=True).float().to(self.device)
         agent_mask = torch.Tensor(sample['agent_mask']).float().view(-1, self.n_agents, 1).to(self.device)
         IDs = torch.eye(self.n_agents).unsqueeze(0).expand(self.args.batch_size, -1, -1).to(self.device)
+        batch_size = actions.shape[0]
 
-        _, _, q_eval = self.policy(obs, IDs)
+        rnn_hidden = self.policy.representation.init_hidden(batch_size) if self.use_recurrent else [None]
+        _, _, q_eval = self.policy(obs, IDs, *rnn_hidden)
         q_eval_a = q_eval.gather(-1, actions.long().view([self.args.batch_size, self.n_agents, 1]))
         q_tot_eval = self.policy.Q_tot(q_eval_a * agent_mask)
-        q_next = self.policy.target_Q(obs_next, IDs)
+        target_rnn_hidden = self.policy.target_representation.init_hidden(batch_size) if self.use_recurrent else [None]
+        _, q_next = self.policy.target_Q(obs_next, IDs, *target_rnn_hidden)
         if self.args.double_q:
             _, action_next_greedy, _ = self.policy(obs_next, IDs)
             q_next_a = q_next.gather(-1, action_next_greedy.unsqueeze(-1).long().detach())

@@ -37,7 +37,6 @@ class Pettingzoo_Runner(Runner_Base):
                 self.render = arg.render
 
                 self.n_steps = arg.running_steps
-                self.n_tests = arg.n_tests
                 self.test_mode = arg.test_mode
                 self.marl_agents = []
                 self.marl_names = []
@@ -154,6 +153,7 @@ class Pettingzoo_Runner(Runner_Base):
         actions_n, log_pi_n, values_n, actions_n_onehot = [], [], [], []
         act_mean_current = act_mean_last
         for h, mas_group in enumerate(self.marl_agents):
+            rnn_hidden = mas_group.rnn_hidden if mas_group.use_recurrent else [None]
             if self.marl_names[h] == "MFQ":
                 a, a_mean = mas_group.act(obs_n[h], test_mode, act_mean_last[h], agent_mask[h])
                 act_mean_current[h] = a_mean
@@ -172,7 +172,7 @@ class Pettingzoo_Runner(Runner_Base):
                 a, a_onehot = mas_group.act(obs_n[h], test_mode)
                 actions_n_onehot.append(a_onehot)
             else:
-                a = mas_group.act(obs_n[h], test_mode)
+                mas_group.rnn_hidden, a = mas_group.act(obs_n[h], *rnn_hidden, test_mode=test_mode)
             actions_n.append(a)
         return {'actions_n': actions_n, 'log_pi': log_pi_n, 'act_mean': act_mean_current,
                 'act_n_onehot': actions_n_onehot, 'values': values_n}
@@ -187,6 +187,9 @@ class Pettingzoo_Runner(Runner_Base):
         episode_score = np.zeros([self.n_handles, self.n_envs, 1], dtype=np.float32)
         episode_info, train_info = {}, {}
         for _ in tqdm(range(n_episodes)):
+            for h, mas_group in enumerate(self.marl_agents):
+                if mas_group.use_recurrent:
+                    mas_group.rnn_hidden = mas_group.policy.representation.init_hidden(self.n_envs)
             for step in range(self.episode_length):
                 actions_dict = self.get_actions(obs_n, False, act_mean_last, agent_mask, state)
                 actions_execute = self.combine_env_actions(actions_dict['actions_n'])
@@ -253,16 +256,18 @@ class Pettingzoo_Runner(Runner_Base):
             images = test_envs.render(self.args_base.render_mode)
             for idx, img in enumerate(images):
                 videos[idx].append(img)
-
         act_mean_last = [np.zeros([num_envs, arg.dim_act]) for arg in self.args]
         terminal_handle = np.zeros([self.n_handles, num_envs], dtype=np.bool)
         truncate_handle = np.zeros([self.n_handles, num_envs], dtype=np.bool)
         episode_score = np.zeros([self.n_handles, num_envs, 1], dtype=np.float32)
+
+        for h, mas_group in enumerate(self.marl_agents):
+            if mas_group.use_recurrent:
+                mas_group.rnn_hidden = mas_group.policy.representation.init_hidden(self.n_envs)
         for step in range(self.episode_length):
             actions_dict = self.get_actions(obs_n, True, act_mean_last, agent_mask, state)
             actions_execute = self.combine_env_actions(actions_dict['actions_n'])
             next_obs_n, rew_n, terminated_n, truncated_n, infos = test_envs.step(actions_execute)
-            # time.sleep(0.02)
             if self.args_base.render_mode == "rgb_array" and self.render:
                 images = test_envs.render(self.args_base.render_mode)
                 for idx, img in enumerate(images):
@@ -315,7 +320,7 @@ class Pettingzoo_Runner(Runner_Base):
             self.test_episode(env_fn)
             print("Finish testing.")
         else:
-            n_train_episodes = self.args_base.training_steps // self.episode_length // self.n_envs
+            n_train_episodes = self.args_base.running_steps // self.episode_length // self.n_envs
             self.train_episode(n_train_episodes)
             print("Finish training.")
             for h, mas_group in enumerate(self.marl_agents):
