@@ -9,9 +9,12 @@ class MFQ_Agents(MARLAgents):
                  device: Optional[Union[int, str, torch.device]] = None):
         self.gamma = config.gamma
 
-        self.start_greedy = config.start_greedy
-        self.end_greedy = config.end_greedy
-        self.egreedy = config.start_greedy
+        self.start_greedy, self.end_greedy = config.start_greedy, config.end_greedy
+        self.egreedy = self.start_greedy
+        self.delta_egreedy = (self.start_greedy - self.end_greedy) / (
+                config.decay_step_greedy / envs.num_envs / envs.max_episode_length)
+        self.use_recurrent, self.rnn = config.use_recurrent, config.rnn
+        self.rnn_hidden = None
 
         input_representation = get_repre_in(config)
         representation = REGISTRY_Representation[config.representation](*input_representation)
@@ -41,22 +44,19 @@ class MFQ_Agents(MARLAgents):
         learner = MFQ_Learner(config, policy, optimizer, scheduler,
                               config.device, config.modeldir, config.gamma,
                               config.sync_frequency)
-        self.epsilon_decay = linear_decay_or_increase(config.start_greedy, config.end_greedy,
-                                                      config.greedy_update_steps)
         super(MFQ_Agents, self).__init__(config, envs, policy, memory, learner, device,
                                          config.logdir, config.modeldir)
 
-    def act(self, obs_n, test_mode, act_mean=None, agent_mask=None, noise=False):
-        if not test_mode:
-            epsilon = self.epsilon_decay.epsilon
-        else:
-            epsilon = 1.0
+    def act(self, obs_n, *rnn_hidden, test_mode=False, act_mean=None, agent_mask=None):
         batch_size = obs_n.shape[0]
         agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(batch_size, -1, -1).to(self.device)
         obs_in = torch.Tensor(obs_n).to(self.device)
         act_mean = torch.Tensor(act_mean).unsqueeze(dim=-2).repeat(1, self.n_agents, 1).to(self.device)
 
-        _, greedy_actions, q_output = self.policy(obs_in, act_mean, agents_id)
+        if self.use_recurrent:
+            hidden_state, greedy_actions, q_output = self.policy(obs_in, act_mean, agents_id, *rnn_hidden)
+        else:
+            hidden_state, greedy_actions, q_output = self.policy(obs_in, act_mean, agents_id)
         n_alive = torch.Tensor(agent_mask).sum(dim=-1).unsqueeze(-1).repeat(1, self.dim_act).to(self.device)
         action_n_mask = torch.Tensor(agent_mask).unsqueeze(-1).repeat(1, 1, self.dim_act).to(self.device)
         act_neighbor_sample = self.policy.sample_actions(logits=q_output).to(self.device)
@@ -64,16 +64,23 @@ class MFQ_Agents(MARLAgents):
         act_mean_current = act_neighbor_onehot.float().sum(dim=1) / n_alive
         act_mean_current = act_mean_current.cpu().detach().numpy()
         greedy_actions = greedy_actions.cpu().detach().numpy()
-        if noise:
-            random_variable = np.random.rand(batch_size, self.n_agents).reshape(greedy_actions.shape)
-            action_pick = np.int32((random_variable < epsilon))
-            random_actions = np.array([[self.args.action_space[agent].sample() for agent in self.agent_keys]])
-            return action_pick * greedy_actions + (1 - action_pick) * random_actions, act_mean_current
+        if test_mode:
+            return hidden_state, greedy_actions, act_mean_current
         else:
-            return greedy_actions, act_mean_current
+            random_actions = np.array([[self.args.action_space[agent].sample() for agent in self.agent_keys]])
+            if np.random.rand() < self.egreedy:
+                return hidden_state, random_actions, act_mean_current
+            else:
+                return hidden_state, greedy_actions, act_mean_current
 
-    def train(self, i_episode):
-        self.epsilon_decay.update()
-        sample = self.memory.sample()
-        info_train = self.learner.update(sample)
-        return info_train
+    def train(self, i_step):
+        if self.egreedy >= self.end_greedy:
+            self.egreedy -= self.delta_egreedy
+
+        if i_step > self.start_training:
+            sample = self.memory.sample()
+            info_train = self.learner.update(sample)
+            info_train["epsilon-greedy"] = self.egreedy
+            return info_train
+        else:
+            return {}

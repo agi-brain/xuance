@@ -20,7 +20,7 @@ tau: 0.005
 start_noise: 0.25
 end_noise: 0.05
 training_frequency: 2
-training_steps: 50000
+running_steps: 50000
 start_training: 2000
 
 use_obsnorm: False

@@ -30,7 +30,7 @@ end_greedy: 0.05
 decay_step_greedy: 1000000  # 1M
 sync_frequency: 500
 training_frequency: 1
-training_steps: 50000000  # 50M
+running_steps: 50000000  # 50M
 start_training: 10000
 
 use_obsnorm: False

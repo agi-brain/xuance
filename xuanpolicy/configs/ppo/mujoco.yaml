@@ -11,7 +11,7 @@ activation: "LeakyReLU"
 
 seed: 79811
 parallels: 16
-training_steps: 62500
+running_steps: 62500
 nsteps: 256
 nepoch: 16
 nminibatch: 8

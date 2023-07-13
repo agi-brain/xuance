@@ -8,7 +8,7 @@ representation_hidden_size: [128,]
 actor_hidden_size: [128,]
 activation: 'ReLU'
 
-training_steps: 30000
+running_steps: 30000
 nsteps: 128
 nepoch: 3
 nminibatch: 1

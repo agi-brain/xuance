@@ -4,7 +4,7 @@ from xuanpolicy.torch.representations import *
 class Basic_RNN(nn.Module):
     def __init__(self,
                  input_shape: Sequence[int],
-                 hidden_shape: dict,
+                 hidden_sizes: dict,
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., torch.Tensor]] = None,
                  activation: Optional[ModuleType] = None,
@@ -13,8 +13,8 @@ class Basic_RNN(nn.Module):
                  ):
         super(Basic_RNN, self).__init__()
         self.input_shape = input_shape
-        self.fc_hidden_sizes = hidden_shape["fc_hidden_sizes"]
-        self.recurrent_hidden_size = hidden_shape["recurrent_hidden_size"]
+        self.fc_hidden_sizes = hidden_sizes["fc_hidden_sizes"]
+        self.recurrent_hidden_size = hidden_sizes["recurrent_hidden_size"]
         self.N_recurrent_layer = kwargs["N_recurrent_layers"]
         self.dropout = kwargs["dropout"]
         self.lstm = True if kwargs["rnn"] == "LSTM" else False
@@ -22,7 +22,7 @@ class Basic_RNN(nn.Module):
         self.initialize = initialize
         self.activation = activation
         self.device = device
-        self.output_shapes = {'state': (kwargs["recurrent_hidden_size"],)}
+        self.output_shapes = {'state': (hidden_sizes["recurrent_hidden_size"],)}
         self.mlp, self.rnn = self._create_network()
 
     def _create_network(self):
@@ -44,10 +44,10 @@ class Basic_RNN(nn.Module):
         mlp_output = self.mlp(x)
         self.rnn.flatten_parameters()
         if self.lstm:
-            output, (hn, cn) = self.rnn_layer(mlp_output, (h, c))
+            output, (hn, cn) = self.rnn(mlp_output, (h, c))
             return {"state": output, "rnn_hidden": hn, "rnn_cell": cn}
         else:
-            output, hn = self.rnn_layer(mlp_output, h)
+            output, hn = self.rnn(mlp_output, h)
             return {"state": output, "rnn_hidden": hn, "rnn_cell": None}
 
     def init_hidden(self, batch):

@@ -30,50 +30,8 @@ class BaseBuffer(ABC):
     def sample(self, *args):
         raise NotImplementedError
 
-    def finish_ac_path(self, value, i_env):
+    def finish_path(self, value, i_env):
         return
-
-
-class CidPreTrainBuffer(ABC):
-    def __init__(self, state_space, act_space, rew_space, n_envs, buffer_size, batch_size):
-        self.state_space = state_space
-        self.act_space = act_space
-        self.rew_space = rew_space
-        self.n_envs = n_envs
-        self.buffer_size = buffer_size
-        self.n_minibatch = batch_size
-        self.batch_size = batch_size
-        self.ptr = 0  # last data pointer
-        self.size = 0  # current buffer size
-
-        self.data = {
-            'state': np.zeros((self.buffer_size,) + state_space).astype(np.float32),
-            'actions': np.zeros((self.buffer_size,) + act_space).astype(np.float32),
-            'rewards': np.zeros((self.buffer_size,) + rew_space).astype(np.float32),
-        }
-
-        self.keys = self.data.keys()
-
-    def full(self):
-        return self.size >= self.buffer_size
-
-    def store(self, step_data):
-        ptr_end = self.ptr + self.n_envs
-
-        for k in self.keys:
-            self.data[k][self.ptr: ptr_end] = step_data[k]
-
-        self.ptr = ptr_end % self.buffer_size
-        self.size = np.min([self.size + 1, self.buffer_size])
-
-    def can_sample(self, batch_size):
-        return self.size >= batch_size
-
-    def sample(self):
-        assert self.can_sample(self.batch_size)
-        random_batch_index = np.random.choice(self.size, size=self.batch_size, replace=False)
-        samples = {k: self.data[k][random_batch_index] for k in self.keys}
-        return samples
 
 
 class MARL_OffPolicyBuffer(BaseBuffer, ABC):
@@ -136,14 +94,6 @@ class MeanField_OffPolicyBuffer(MARL_OffPolicyBuffer):
         return samples
 
 
-class CID_Buffer_OffPolicy(MARL_OffPolicyBuffer):
-    def __init__(self, state_space, obs_space, act_space, rew_space, done_space, n_envs, buffer_size, batch_size):
-        super(CID_Buffer_OffPolicy, self).__init__(state_space, obs_space, act_space, rew_space, done_space, n_envs,
-                                                   buffer_size, batch_size)
-        self.data.update({"rewards_assign": np.zeros((self.buffer_size,) + rew_space).astype(np.float32)})
-        self.keys = self.data.keys()
-
-
 class MARL_OnPolicyBuffer(BaseBuffer, ABC):
     def __init__(self, state_space, obs_space, act_space, rew_space, done_space, n_envs,
                  n_steps, n_minibatch, use_gae=True, use_advnorm=False, gamma=0.99, lam=0.95):
@@ -195,7 +145,7 @@ class MARL_OnPolicyBuffer(BaseBuffer, ABC):
         self.ptr = (self.ptr + 1) % self.n_steps
         self.size = np.min([self.size + 1, self.n_steps])
 
-    def finish_ac_path(self, value, i_env):  # when an episode is finished
+    def finish_path(self, value, i_env):  # when an episode is finished
         if self.size == 0:
             return
         end_id = self.n_steps if (self.ptr == 0) else self.ptr

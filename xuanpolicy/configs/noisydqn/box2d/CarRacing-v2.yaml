@@ -24,7 +24,7 @@ end_noise: 0.0
 decay_step_noise: 200000
 sync_frequency: 500
 training_frequency: 1
-training_steps: 200000
+running_steps: 200000
 start_training: 1000
 
 use_obsnorm: False

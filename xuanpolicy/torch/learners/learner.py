@@ -47,10 +47,10 @@ class LearnerMAS(ABC):
                  device: Optional[Union[int, str, torch.device]] = None,
                  modeldir: str = "./"):
         self.args = config
-        self.handle = config.handle
+        # self.handle = config.handle
         self.n_agents = config.n_agents
-        self.agent_keys = config.agent_keys
-        self.agent_index = config.agent_ids
+        # self.agent_keys = config.agent_keys
+        # self.agent_index = config.agent_ids
         self.dim_obs = self.args.dim_obs
         self.dim_act = self.args.dim_act
         self.dim_id = self.n_agents

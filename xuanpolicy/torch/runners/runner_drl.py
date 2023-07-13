@@ -87,7 +87,7 @@ class Runner_DRL(Runner_Base):
             self.agent.test(env_fn, self.args.test_episode)
             print("Finish testing.")
         else:
-            n_train_steps = self.args.training_steps // self.n_envs
+            n_train_steps = self.args.running_steps // self.n_envs
             self.agent.train(n_train_steps)
             print("Finish training.")
             self.agent.save_model("final_train_model.path")
@@ -104,7 +104,7 @@ class Runner_DRL(Runner_Base):
             args_test = deepcopy(self.args)
             args_test.parallels = args_test.test_episode
             return make_envs(args_test)
-        train_steps = self.args.training_steps // self.n_envs
+        train_steps = self.args.running_steps // self.n_envs
         eval_interval = self.args.eval_interval
         test_episode = self.args.test_episode
         num_epoch = int(train_steps / eval_interval)

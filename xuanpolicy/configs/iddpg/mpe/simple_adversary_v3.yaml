@@ -21,7 +21,7 @@ buffer_size: 200000
 batch_size: 256
 gamma: 0.95  # discount factor
 
-training_steps: 30000
+running_steps: 30000
 training_frequency: 1
 
 n_tests: 5

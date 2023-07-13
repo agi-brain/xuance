@@ -20,16 +20,17 @@ activation: "ReLU"
 
 seed: 1069
 parallels: 5
-nsize: 10000
-batchsize: 64
-learning_rate: 0.00025
+nsize: 100000
+batchsize: 32
+learning_rate: 0.0001
 gamma: 0.99
 
-start_greedy: 1.0
+start_greedy: 0.5
 end_greedy: 0.05
+decay_step_greedy: 1000000  # 1M
 sync_frequency: 500
 training_frequency: 1
-training_steps: 50000000  # 50e6
+running_steps: 50000000  # 50e6
 start_training: 10000
 
 use_obsnorm: False
@@ -40,5 +41,5 @@ rewnorm_range: 5
 test_steps: 10000
 eval_interval: 100000
 test_episode: 3
-logdir: "./logs/dqn/"
-modeldir: "./models/dqn/"
+logdir: "./logs/ddqn/"
+modeldir: "./models/ddqn/"

@@ -1,11 +1,9 @@
-import copy
-
 from xuanpolicy.environment.vector_envs.vector_env import VecEnv, AlreadySteppingError, NotSteppingError
 from xuanpolicy.environment.vector_envs.env_utils import obs_n_space_info
 from xuanpolicy.environment.gym.gym_vec_env import DummyVecEnv_Gym
 from operator import itemgetter
+from gymnasium.spaces.box import Box
 import numpy as np
-import time
 
 
 class DummyVecEnv_Pettingzoo(DummyVecEnv_Gym):
@@ -19,12 +17,14 @@ class DummyVecEnv_Pettingzoo(DummyVecEnv_Gym):
         obs_n_space = env.observation_spaces  # [Box(dim_o), Box(dim_o), ...] ----> dict
         self.agent_ids = env.agent_ids
         self.n_agents = [env.get_num(h) for h in self.handles]
-        # self.agent_keys = [env.get_agent_key(h) for h in self.handles]
 
         self.keys, self.shapes, self.dtypes = obs_n_space_info(obs_n_space)
         self.agent_keys = [[self.keys[k] for k in ids] for ids in self.agent_ids]
+        if isinstance(env.action_spaces[self.agent_keys[0][0]], Box):
+            self.act_dim = [env.action_spaces[keys[0]].shape[0] for keys in self.agent_keys]
+        else:
+            self.act_dim = [env.action_spaces[keys[0]].n for keys in self.agent_keys]
         self.n_agent_all = len(self.keys)
-        # max_obs_shape = self._get_max_obs_shape(self.keys, self.observation_space)
         self.obs_shapes = [self.shapes[self.agent_keys[h.value][0]] for h in self.handles]
         self.obs_dtype = self.dtypes[self.keys[0]]
 
@@ -149,5 +149,8 @@ class DummyVecEnv_Pettingzoo(DummyVecEnv_Gym):
             mask = env.get_agent_mask()
             for h, ids in enumerate(self.agent_ids):
                 agent_mask[h][e] = mask[ids]
-
         return agent_mask
+
+    def available_actions(self):
+        act_mask = [np.ones([self.num_envs, n, self.act_dim[h]], dtype=np.bool) for h, n in enumerate(self.n_agents)]
+        return np.array(act_mask)

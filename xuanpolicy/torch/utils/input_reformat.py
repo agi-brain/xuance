@@ -12,6 +12,8 @@ def get_repre_in(args):
     input_dict = deepcopy(Representation_Inputs_All)
     if args.env_name == "MAgent2":
         input_dict["input_shape"] = args.dim_obs
+    elif args.env_name == "StarCraft2":
+        input_dict["input_shape"] = (args.dim_obs, )
     elif isinstance(args.observation_space, dict):
         input_dict["input_shape"] = space2shape(args.observation_space[args.agent_keys[0]])
     else:
@@ -19,6 +21,11 @@ def get_repre_in(args):
 
     if representation_name in ["Basic_MLP", "CoG_MLP"]:
         input_dict["hidden_sizes"] = args.representation_hidden_size
+    elif representation_name in ["Basic_RNN"]:
+        input_dict["hidden_sizes"] = {
+            "fc_hidden_sizes": args.fc_hidden_sizes,
+            "recurrent_hidden_size": args.recurrent_hidden_size
+        }
     else:
         if representation_name in ["Basic_CNN", "CoG_CNN", "AC_CNN_Atari"]:
             input_dict["kernels"] = args.kernels
@@ -75,12 +82,17 @@ def get_policy_in(args, representation):
     return list(input_list)
 
 
-def get_policy_in_marl(args, representation, agent_keys, mixer=None, ff_mixer=None, qtran_mixer=None):
+def get_policy_in_marl(args, representation, mixer=None, ff_mixer=None, qtran_mixer=None):
     policy_name = args.policy
     input_dict = deepcopy(Policy_Inputs_All)
     try: input_dict["state_dim"] = args.dim_state[0]
     except: input_dict["state_dim"] = None
-    input_dict["action_space"] = args.action_space[agent_keys[0]]
+
+    if args.env_name == "StarCraft2":
+        input_dict["action_space"] = args.action_space
+    else:
+        input_dict["action_space"] = args.action_space[args.agent_keys[0]]
+
     try: input_dict["n_agents"] = args.n_agents
     except: input_dict["n_agents"] = 1
     input_dict["representation"] = representation

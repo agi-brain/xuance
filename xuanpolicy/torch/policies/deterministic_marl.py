@@ -1,5 +1,8 @@
 import copy
 
+import numpy as np
+import torch
+
 from xuanpolicy.torch.policies import *
 from xuanpolicy.torch.utils import *
 from xuanpolicy.torch.representations import Basic_Identical
@@ -136,21 +139,26 @@ class MixingQnetwork(nn.Module):
         self.eval_Qtot = mixer
         self.target_Qtot = copy.deepcopy(self.eval_Qtot)
 
-    def forward(self, observation: torch.Tensor, agent_ids: torch.Tensor, *rnn_hidden: torch.Tensor):
+    def forward(self, observation: torch.Tensor, agent_ids: torch.Tensor,
+                *rnn_hidden: torch.Tensor, avail_actions=None):
         if self.use_rnn:
-            outputs = self.representation(observation, rnn_hidden)
+            outputs = self.representation(observation, *rnn_hidden)
             rnn_hidden = (outputs['rnn_hidden'], outputs['rnn_cell'])
         else:
             outputs = self.representation(observation)
             rnn_hidden = None
         q_inputs = torch.concat([outputs['state'], agent_ids], dim=-1)
         evalQ = self.eval_Qhead(q_inputs)
+        if avail_actions is not None:
+            avail_actions = torch.Tensor(avail_actions)
+            evalQ[avail_actions == 0] = -torch.inf
         argmax_action = evalQ.argmax(dim=-1, keepdim=False)
+
         return rnn_hidden, argmax_action, evalQ
 
     def target_Q(self, observation: torch.Tensor, agent_ids: torch.Tensor, *rnn_hidden: torch.Tensor):
         if self.use_rnn:
-            outputs = self.target_representation(observation, rnn_hidden)
+            outputs = self.target_representation(observation, *rnn_hidden)
             rnn_hidden = (outputs['rnn_hidden'], outputs['rnn_cell'])
         else:
             outputs = self.target_representation(observation)

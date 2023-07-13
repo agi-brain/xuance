@@ -33,7 +33,7 @@ end_greedy: 0.05
 decay_step_greedy: 1000000
 sync_frequency: 500
 training_frequency: 1
-training_steps: 10000000
+running_steps: 10000000
 start_training: 10000
 lookup_length: 50
 

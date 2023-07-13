@@ -22,7 +22,7 @@ end_greedy: 0.01
 decay_step_greedy: 5000
 sync_frequency: 50
 training_frequency: 1
-training_steps: 30000
+running_steps: 30000
 start_training: 1000
 lookup_length: 50
 

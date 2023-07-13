@@ -19,7 +19,7 @@ learning_rate: 0.0007
 start_noise: 0.1
 end_noise: 0.1
 training_frequency: 1
-training_steps: 50000
+running_steps: 50000
 start_training: 1000
 
 use_obsnorm: False

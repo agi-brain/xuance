@@ -9,7 +9,7 @@ actor_hidden_size: [256,]
 critic_hidden_size: [256,]
 activation: 'LeakyReLU'
 
-training_steps: 30000
+running_steps: 30000
 nsteps: 128
 nepoch: 1
 nminibatch: 1

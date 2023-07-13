@@ -18,7 +18,7 @@ end_greedy: 0.1
 decay_step_greedy: 20000
 sync_frequency: 100
 training_frequency: 4
-training_steps: 50000
+running_steps: 50000
 start_training: 1000
 
 use_obsnorm: False
