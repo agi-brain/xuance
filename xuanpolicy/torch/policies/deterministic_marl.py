@@ -151,8 +151,11 @@ class MixingQnetwork(nn.Module):
         evalQ = self.eval_Qhead(q_inputs)
         if avail_actions is not None:
             avail_actions = torch.Tensor(avail_actions)
-            evalQ[avail_actions == 0] = -torch.inf
-        argmax_action = evalQ.argmax(dim=-1, keepdim=False)
+            evalQ_detach = evalQ.clone().detach()
+            evalQ_detach[avail_actions == 0] = -9999999
+            argmax_action = evalQ_detach.argmax(dim=-1, keepdim=False)
+        else:
+            argmax_action = evalQ.argmax(dim=-1, keepdim=False)
 
         return rnn_hidden, argmax_action, evalQ
 

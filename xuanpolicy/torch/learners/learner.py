@@ -83,3 +83,7 @@ class LearnerMAS(ABC):
     @abstractmethod
     def update(self, *args):
         raise NotImplementedError
+
+    @abstractmethod
+    def update_recurrent(self, *args):
+        return

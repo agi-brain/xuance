@@ -30,7 +30,7 @@ class BaseBuffer(ABC):
     def sample(self, *args):
         raise NotImplementedError
 
-    def finish_path(self, value, i_env):
+    def finish_path(self, *args):
         return
 
 
@@ -73,7 +73,49 @@ class MARL_OffPolicyBuffer(BaseBuffer, ABC):
         return samples
 
 
-class MeanField_OffPolicyBuffer(MARL_OffPolicyBuffer):
+class MARL_OffPolicyBuffer_RNN(BaseBuffer, ABC):
+    def __init__(self, n_agents, state_space, dim_obs, dim_act, rew_space,
+                 n_envs, buffer_size, max_episode_length, batch_size):
+        super(MARL_OffPolicyBuffer_RNN, self).__init__(dim_obs, dim_act, rew_space, n_envs, buffer_size, batch_size)
+        self.state_space = state_space
+        self.buffer_size = buffer_size
+        self.n_envs = n_envs
+        self.max_episode_length = max_episode_length
+        self.n_agents = n_agents
+        self.env_ptr = range(self.n_envs)
+
+        self.sequence_shape = (self.buffer_size, self.max_episode_length)
+        self.data = {
+            'obs': np.zeros((self.buffer_size, self.n_agents, self.max_episode_length + 1, dim_obs), np.float),
+            'actions': np.zeros((self.buffer_size, self.n_agents, self.max_episode_length), np.int),
+            'rewards': np.zeros((self.buffer_size, self.max_episode_length, 1), np.float),
+            'terminals': np.zeros((self.buffer_size, self.max_episode_length, 1), np.bool),
+            'avail_actions': np.ones((self.buffer_size, self.n_agents, self.max_episode_length + 1, dim_act), np.bool),
+            'filled': np.zeros((self.buffer_size, self.max_episode_length, 1)).astype(np.bool)
+        }
+
+        if state_space is not None:
+            self.store_global_state =True
+            self.data.update({'state': np.zeros(
+                (self.buffer_size, self.max_episode_length + 1) + state_space).astype(np.float32)})
+        else:
+            self.store_global_state = False
+        self.keys = self.data.keys()
+
+    def store(self, i_env, episode_data):
+        for k in self.keys:
+            self.data[k][self.ptr] = episode_data[k][i_env]
+        self.ptr = (self.ptr + 1) % self.buffer_size
+        self.size = np.min([self.size + 1, self.buffer_size])
+
+    def sample(self):
+        sample_choices = np.random.choice(self.size, self.batch_size)
+        samples = {k: self.data[k][sample_choices] for k in self.keys}
+        samples.update({'batch_size': self.batch_size})
+        return samples
+
+
+class MeanField_OffPolicyBuffer(MARL_OffPolicyBuffer, ABC):
     def __init__(self, state_space, obs_space, act_space, prob_shape, rew_space, done_space, n_envs, buffer_size,
                  batch_size):
         super(MeanField_OffPolicyBuffer, self).__init__(state_space, obs_space, act_space, rew_space, done_space,
@@ -304,50 +346,3 @@ class COMA_Buffer(BaseBuffer, ABC):
         samples = {k: self.data[k][random_env_index, random_buffer_index] for k in self.keys}
         samples.update({'batch_size': self.batch_size})
         return samples
-
-
-class CID_Buffer(MARL_OnPolicyBuffer):
-    def __init__(self, state_space, obs_space, act_space, act_prob_space, rew_space, done_space, n_envs,
-                 n_steps, n_minibatch, use_gae=True, use_advnorm=False, gamma=0.99, lam=0.95):
-        super(CID_Buffer, self).__init__(state_space, obs_space, act_space, act_prob_space, rew_space, done_space,
-                                         n_envs,
-                                         n_steps, n_minibatch, use_gae, use_advnorm, gamma, lam)
-        self.data = {}
-        self.clear()
-        self.keys = self.data.keys()
-        self.data_shapes = {k: self.data[k].shape for k in self.keys}
-
-    def clear(self):
-        self.data.update({
-            'obs': np.zeros((self.n_envs, self.n_steps,) + self.obs_space).astype(np.float32),
-            'state': np.zeros((self.n_envs, self.n_steps,) + self.state_space).astype(np.float32),
-            'actions': np.zeros((self.n_envs, self.n_steps,) + self.act_space).astype(np.float32),
-            'rewards': np.zeros((self.n_envs, self.n_steps,) + self.rew_space).astype(np.float32),
-            'rewards_assign': np.zeros((self.n_envs, self.n_steps,) + self.rew_space).astype(np.float32),
-            'values': np.zeros((self.n_envs, self.n_steps,) + self.rew_space).astype(np.float32),
-            'log_pi_old': np.zeros((self.n_envs, self.n_steps, self.n_agents,)).astype(np.float32),
-            'advantages': np.zeros((self.n_envs, self.n_steps,) + self.rew_space).astype(np.float32),
-            'terminals': np.zeros((self.n_envs, self.n_steps,) + self.done_space).astype(np.bool),
-            'agent_mask': np.ones((self.n_envs, self.n_steps, self.n_agents)).astype(np.bool),
-            'act_mean': np.zeros((self.n_envs, self.n_steps,) + self.act_prob_space).astype(np.float32)
-        })
-
-        self.ptr = 0  # current pointer
-        self.size = 0  # current buffer size
-        self.start_ids = np.zeros(self.n_envs)
-
-    def finish_ac_path(self, value, i_env):  # when an episode is finished
-        if self.size == 0:
-            return
-        end_id = self.n_steps if (self.ptr == 0) else self.ptr
-        path_slice = np.arange(self.start_ids[i_env], end_id).astype(np.int32)
-        if self.full:
-            path_slice = np.arange(self.start_ids[i_env], self.buffer_size).astype(np.int32)
-        rewards = np.append(np.array(self.data['rewards_assign'][i_env, path_slice]), [value], axis=0)
-        returns = np.append(np.array(self.data['values'][i_env, path_slice]), [value], axis=0)
-        deltas = rewards[:-1] + self.gamma * returns[1:] - returns[:-1]
-        advantages = discount_cumsum(deltas, self.gamma * self.gae_lambda) if self.use_gae else deltas
-        returns = discount_cumsum(rewards, self.gamma)[:-1]
-        self.data['values'][i_env, path_slice] = returns
-        self.data['advantages'][i_env, path_slice] = advantages
-        self.start_ids[i_env] = self.ptr

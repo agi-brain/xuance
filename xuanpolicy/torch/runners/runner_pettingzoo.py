@@ -258,8 +258,6 @@ class Pettingzoo_Runner(Runner_Base):
                     self.log_infos(train_info, self.current_step)
                     self.log_infos(episode_info, self.current_step)
 
-            self.current_episode += self.n_envs
-
     def test_episode(self, env_fn):
         test_envs = env_fn()
         test_info = {}

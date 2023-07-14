@@ -1,5 +1,3 @@
-import torch
-
 from xuanpolicy.torch.agents import *
 
 
@@ -12,7 +10,7 @@ class VDN_Agents(MARLAgents):
         self.start_greedy, self.end_greedy = config.start_greedy, config.end_greedy
         self.egreedy = self.start_greedy
         self.delta_egreedy = (self.start_greedy - self.end_greedy) / (
-                    config.decay_step_greedy / envs.num_envs / envs.max_episode_length)
+                config.decay_step_greedy / envs.num_envs / envs.max_episode_length)
 
         input_representation = get_repre_in(config)
         self.use_recurrent, self.rnn_hidden = config.use_recurrent, config.rnn
@@ -40,14 +38,25 @@ class VDN_Agents(MARLAgents):
             config.dim_state, state_shape = config.state_space.shape, config.state_space.shape
         else:
             config.dim_state, state_shape = None, None
-        memory = MARL_OffPolicyBuffer(state_shape,
-                                      config.obs_shape,
-                                      config.act_shape,
-                                      config.rew_shape,
-                                      config.done_shape,
-                                      envs.num_envs,
-                                      config.buffer_size,
-                                      config.batch_size)
+        if self.use_recurrent:
+            memory = MARL_OffPolicyBuffer_RNN(config.n_agents,
+                                              state_shape,
+                                              config.dim_obs,
+                                              config.dim_act,
+                                              config.rew_shape,
+                                              envs.num_envs,
+                                              config.buffer_size,
+                                              envs.max_episode_length,
+                                              config.batch_size)
+        else:
+            memory = MARL_OffPolicyBuffer(state_shape,
+                                          config.obs_shape,
+                                          config.act_shape,
+                                          config.rew_shape,
+                                          config.done_shape,
+                                          envs.num_envs,
+                                          config.buffer_size,
+                                          config.batch_size)
         learner = VDN_Learner(config, policy, optimizer, scheduler,
                               config.device, config.modeldir, config.gamma,
                               config.sync_frequency)
@@ -82,7 +91,10 @@ class VDN_Agents(MARLAgents):
 
         if i_step > self.start_training:
             sample = self.memory.sample()
-            info_train = self.learner.update(sample)
+            if self.use_recurrent:
+                info_train = self.learner.update_recurrent(sample)
+            else:
+                info_train = self.learner.update(sample)
             info_train["epsilon-greedy"] = self.egreedy
             return info_train
         else:

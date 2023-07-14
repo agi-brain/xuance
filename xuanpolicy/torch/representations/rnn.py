@@ -45,23 +45,23 @@ class Basic_RNN(nn.Module):
         self.rnn.flatten_parameters()
         if self.lstm:
             output, (hn, cn) = self.rnn(mlp_output, (h, c))
-            return {"state": output, "rnn_hidden": hn, "rnn_cell": cn}
+            return {"state": output, "rnn_hidden": hn.detach(), "rnn_cell": cn.detach()}
         else:
             output, hn = self.rnn(mlp_output, h)
-            return {"state": output, "rnn_hidden": hn, "rnn_cell": None}
+            return {"state": output, "rnn_hidden": hn.detach(), "rnn_cell": None}
 
     def init_hidden(self, batch):
         hidden_states = torch.zeros(size=(self.N_recurrent_layer, batch, self.recurrent_hidden_size)).to(self.device)
         cell_states = torch.zeros_like(hidden_states).to(self.device) if self.lstm else None
         return hidden_states, cell_states
 
-    def init_hidden_item(self, rnn_hidden, i):
+    def init_hidden_item(self, i, *rnn_hidden):
         if self.lstm:
             rnn_hidden[0][:, i] = torch.zeros(size=(self.N_recurrent_layer, self.recurrent_hidden_size)).to(self.device)
             rnn_hidden[1][:, i] = torch.zeros(size=(self.N_recurrent_layer, self.recurrent_hidden_size)).to(self.device)
             return rnn_hidden
         else:
-            rnn_hidden[:, i] = torch.zeros(size=(self.N_recurrent_layer, self.recurrent_hidden_size)).to(self.device)
+            rnn_hidden[0][:, i] = torch.zeros(size=(self.N_recurrent_layer, self.recurrent_hidden_size)).to(self.device)
             return rnn_hidden
 
 
