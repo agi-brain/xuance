@@ -36,7 +36,7 @@ class QMIX_mixer(nn.Module):
     def forward(self, values_n, states):
         states = torch.as_tensor(states, dtype=torch.float32, device=self.device)
         states = states.reshape(-1, self.dim_state)
-        agent_qs = values_n.view(-1, 1, self.n_agents)
+        agent_qs = values_n.reshape(-1, 1, self.n_agents)
         # First layer
         w_1 = torch.abs(self.hyper_w_1(states))
         w_1 = w_1.view(-1, self.n_agents, self.dim_hidden)

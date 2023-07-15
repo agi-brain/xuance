@@ -372,8 +372,8 @@ class Pettingzoo_Runner(Runner_Base):
                         "std": np.std(test_scores, axis=1).reshape([self.n_handles]),
                         "step": self.current_step
                     }
-                # save best model
-                self.marl_agents[h].save_model("best_model.pth")
+                    # save best model
+                    self.marl_agents[h].save_model("best_model.pth")
 
         # end benchmarking
         print("Finish benchmarking.")

@@ -2,7 +2,7 @@ agent: "VDN"  # the learning algorithms_marl
 global_state: False
 env_name: "StarCraft2"
 env_id: "3m"
-continuous_action: False
+fps: 15
 policy: "Mixing_Q_network"
 representation: "Basic_RNN"
 vectorize: "Dummy_StarCraft2"

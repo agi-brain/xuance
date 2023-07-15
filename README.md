@@ -339,3 +339,11 @@ $ tensorboard --logdir ./logs/dqn/torch/CartPole-v0
 }
 ```
 
+### StarCraft2 Environment
+
+Test win rate:
+
+| Map   | IQL  | VDN  | QMIX | WQMIX | DCG |
+|-------|------|------|------|-------|-----|
+| 3m    | 0.88 | 0.98 |      |       |     |
+| 8m    |      |      |      |       |     |
