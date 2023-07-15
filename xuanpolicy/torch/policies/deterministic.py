@@ -174,7 +174,7 @@ class BasicQnetwork(nn.Module):
         outputs_target = self.target_representation(observation)
         targetQ = self.target_Qhead(outputs_target['state'])
         argmax_action = targetQ.argmax(dim=-1)
-        return outputs_target.detach(), argmax_action.detach(), targetQ.detach()
+        return outputs_target, argmax_action.detach(), targetQ.detach()
 
     def copy_target(self):
         for ep, tp in zip(self.representation.parameters(), self.target_representation.parameters()):
