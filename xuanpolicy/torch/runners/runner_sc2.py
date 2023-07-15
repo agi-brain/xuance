@@ -15,7 +15,7 @@ from tqdm import tqdm
 class SC2_Runner(Runner_Base):
     def __init__(self, args):
         super(SC2_Runner, self).__init__(args)
-        self.fps = 20
+        self.fps = 10
         self.args = args
         self.render = args.render
         if args.logger == "tensorboard":
@@ -301,7 +301,7 @@ class SC2_Runner(Runner_Base):
 
         # end benchmarking
         print("Finish benchmarking.")
-        print("Best Score: ", best_score["mean"], "Std: ", best_win_rate["std"])
+        print("Best Score: ", best_score["mean"], "Std: ", best_score["std"])
         print("Best Win Rate: ", best_win_rate)
 
         self.envs.close()
