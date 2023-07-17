@@ -215,21 +215,28 @@ class Weighted_MixingQnetwork(MixingQnetwork):
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., torch.Tensor]] = None,
                  activation: Optional[ModuleType] = None,
-                 device: Optional[Union[str, int, torch.device]] = None):
+                 device: Optional[Union[str, int, torch.device]] = None,
+                 **kwargs):
         super(Weighted_MixingQnetwork, self).__init__(action_space, n_agents, representation, mixer, hidden_size,
-                                                      normalize, initialize, activation, device)
+                                                      normalize, initialize, activation, device, **kwargs)
         self.eval_Qhead_centralized = copy.deepcopy(self.eval_Qhead)
         self.target_Qhead_centralized = copy.deepcopy(self.eval_Qhead_centralized)
         self.q_feedforward = ff_mixer
         self.target_q_feedforward = copy.deepcopy(self.q_feedforward)
 
-    def q_centralized(self, observation: torch.Tensor, agent_ids: torch.Tensor):
-        outputs = self.representation(observation)
+    def q_centralized(self, observation: torch.Tensor, agent_ids: torch.Tensor, *rnn_hidden: torch.Tensor):
+        if self.use_rnn:
+            outputs = self.representation(observation, *rnn_hidden)
+        else:
+            outputs = self.representation(observation)
         q_inputs = torch.concat([outputs['state'], agent_ids], dim=-1)
         return self.eval_Qhead_centralized(q_inputs)
 
-    def target_q_centralized(self, observation: torch.Tensor, agent_ids: torch.Tensor):
-        outputs = self.target_representation(observation)
+    def target_q_centralized(self, observation: torch.Tensor, agent_ids: torch.Tensor, *rnn_hidden: torch.Tensor):
+        if self.use_rnn:
+            outputs = self.target_representation(observation, *rnn_hidden)
+        else:
+            outputs = self.target_representation(observation)
         q_inputs = torch.concat([outputs['state'], agent_ids], dim=-1)
         return self.target_Qhead_centralized(q_inputs)
 
@@ -303,12 +310,14 @@ class DCG_policy(nn.Module):
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., torch.Tensor]] = None,
                  activation: Optional[ModuleType] = None,
-                 device: Optional[Union[str, int, torch.device]] = None
-                 ):
+                 device: Optional[Union[str, int, torch.device]] = None,
+                 **kwargs):
         super(DCG_policy, self).__init__()
         self.action_dim = action_space.n
         self.representation = representation
         self.target_representation = copy.deepcopy(self.representation)
+        self.lstm = True if kwargs["rnn"] == "LSTM" else False
+        self.use_rnn = True if kwargs["use_recurrent"] else False
         self.utility = utility
         self.target_utility = copy.deepcopy(self.utility)
         self.payoffs = payoffs
@@ -321,12 +330,24 @@ class DCG_policy(nn.Module):
                                    normalize, initialize, activation, device)
             self.target_bias = copy.deepcopy(self.bias)
 
-    def forward(self, observation: torch.Tensor, agent_ids: torch.Tensor):
-        outputs = self.representation(observation)
+    def forward(self, observation: torch.Tensor, agent_ids: torch.Tensor,
+                *rnn_hidden: torch.Tensor, avail_actions=None):
+        if self.use_rnn:
+            outputs = self.representation(observation, *rnn_hidden)
+            rnn_hidden = (outputs['rnn_hidden'], outputs['rnn_cell'])
+        else:
+            outputs = self.representation(observation)
+            rnn_hidden = None
         q_inputs = torch.concat([outputs['state'], agent_ids], dim=-1)
         evalQ = self.eval_Qhead(q_inputs)
-        argmax_action = evalQ.argmax(dim=-1, keepdim=False)
-        return outputs, argmax_action, evalQ
+        if avail_actions is not None:
+            avail_actions = torch.Tensor(avail_actions)
+            evalQ_detach = evalQ.clone().detach()
+            evalQ_detach[avail_actions == 0] = -9999999
+            argmax_action = evalQ_detach.argmax(dim=-1, keepdim=False)
+        else:
+            argmax_action = evalQ.argmax(dim=-1, keepdim=False)
+        return rnn_hidden, argmax_action, evalQ
 
     def copy_target(self):
         for ep, tp in zip(self.representation.parameters(), self.target_representation.parameters()):

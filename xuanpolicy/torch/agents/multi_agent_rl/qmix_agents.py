@@ -18,7 +18,7 @@ class QMIX_Agents(MARLAgents):
             config.dim_state, state_shape = None, None
 
         input_representation = get_repre_in(config)
-        self.use_recurrent, self.rnn_hidden = config.use_recurrent, config.rnn
+        self.use_recurrent = config.use_recurrent
         if self.use_recurrent:
             kwargs_rnn = {"N_recurrent_layers": config.N_recurrent_layers,
                           "dropout": config.dropout,
@@ -62,8 +62,7 @@ class QMIX_Agents(MARLAgents):
         learner = QMIX_Learner(config, policy, optimizer, scheduler,
                                config.device, config.modeldir, config.gamma,
                                config.sync_frequency)
-        super(QMIX_Agents, self).__init__(config, envs, policy, memory, learner, device,
-                                          config.logdir, config.modeldir)
+        super(QMIX_Agents, self).__init__(config, envs, policy, memory, learner, device, config.logdir, config.modeldir)
 
     def act(self, obs_n, *rnn_hidden, avail_actions=None, test_mode=False):
         batch_size = obs_n.shape[0]

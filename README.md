@@ -234,6 +234,10 @@ and hope it can really become a zoo full of DRL algorithms.
 
 </details>
 
+### [SMAC](https://github.com/oxwhirl/smac)
+
+StarCraft Multi-Agentt Challenge.
+
 ## Installation
 
 The library can be run at Linux, Windows, MacOS, and EulerOS, etc.
@@ -318,15 +322,36 @@ $ tensorboard --logdir ./logs/dqn/torch/CartPole-v0
 
 ### Atari Environment (Ongoing)
 
-| Task            | DQN     | DDQN | C51     | PPO     |
-|-----------------|---------|------|---------|---------|
-| ALE/Breakout-v5 | 424.0   |      | 431.0   | 371.67  |
-| ALE/Pong-v5     | 21.0    |      | 20.0    | 21.0    |
-| ALE/Qbert-v5    | 16350.0 |      | 12875.0 | 20050.0 |
-| ALE/Freeway-v5  | 34.00   |      | 33.0    | 34.0    |
+| Task            | DQN     | C51     | PPO     |
+|-----------------|---------|---------|---------|
+| ALE/Breakout-v5 | 424.0   | 431.0   | 371.67  |
+| ALE/Pong-v5     | 21.0    | 20.0    | 21.0    |
+| ALE/Qbert-v5    | 16350.0 | 12875.0 | 20050.0 |
+| ALE/Freeway-v5  | 34.00   | 33.0    | 34.0    |
+| ALE/AirRaid-v5  |         |         | 9283.33 |
+| ALE/Alien-v5    |         |         | 2313.33 |
 
 
 ### MPE Environment (Ongoing)
+
+### StarCraft2 Environment (Ongoing)
+
+Test win rate:
+
+| Map              | IQL   | VDN  | QMIX | QTRAN | WQMIX | DCG | COMA | VDAC | MAPPO |
+|------------------|-------|------|------|-------|-------|-----|------|------|-------|
+| 3m               | 0.88  | 0.98 | 0.98 |       | 0.94  |     |      |      |       |
+| 5m               |       |      |      |       |       |     |      |      |       |
+| 8m               |       |      |      |       |       |     |      |      |       |
+| 2s3z             |       |      |      |       |       |     |      |      |       |
+| 3s5z             |       |      |      |       |       |     |      |      |       |
+| 1c_3s_5z         |       |      |      |       |       |     |      |      |       |
+| so_many_baneling |       |      |      |       |       |     |      |      |       |
+| 8m_vs_9m         |       |      |      |       |       |     |      |      |       |
+| 3s_vs_5z         |       |      |      |       |       |     |      |      |       |
+| 3s5z             |       |      |      |       |       |     |      |      |       |
+| MMM2             |       |      |      |       |       |     |      |      |       |
+| micro_focus      |       |      |      |       |       |     |      |      |       |
 
 
 
@@ -338,12 +363,3 @@ $ tensorboard --logdir ./logs/dqn/torch/CartPole-v0
     year={2023},
 }
 ```
-
-### StarCraft2 Environment
-
-Test win rate:
-
-| Map   | IQL  | VDN  | QMIX | WQMIX | DCG |
-|-------|------|------|------|-------|-----|
-| 3m    | 0.88 | 0.98 |      |       |     |
-| 8m    |      |      |      |       |     |

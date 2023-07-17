@@ -19,23 +19,36 @@ class DCG_Learner(LearnerMAS):
                  sync_frequency: int = 100
                  ):
         self.gamma = gamma
+        self.use_recurrent = config.use_recurrent
         self.sync_frequency = sync_frequency
         self.mse_loss = nn.MSELoss()
         super(DCG_Learner, self).__init__(config, policy, optimizer, scheduler, device, modeldir)
 
-    def get_graph_values(self, obs_n, use_target_net=False):
+    def get_graph_values(self, obs_n, *rnn_hidden, use_target_net=False):
         if use_target_net:
-            hidden_states = self.policy.target_representation(obs_n)['state']
+            if self.use_recurrent:
+                outputs = self.policy.target_representation(obs_n, *rnn_hidden)
+                hidden_states = outputs['state']
+                rnn_hidden = (outputs['rnn_hidden'], outputs['rnn_cell'])
+            else:
+                hidden_states = self.policy.target_representation(obs_n)['state']
+                rnn_hidden = None
             utilities = self.policy.target_utility(hidden_states)
             payoff = self.policy.target_payoffs(hidden_states, self.policy.graph.edges_from, self.policy.graph.edges_to)
         else:
-            hidden_states = self.policy.representation(obs_n)['state']
+            if self.use_recurrent:
+                outputs = self.policy.representation(obs_n, *rnn_hidden)
+                hidden_states = outputs['state']
+                rnn_hidden = (outputs['rnn_hidden'], outputs['rnn_cell'])
+            else:
+                hidden_states = self.policy.representation(obs_n)['state']
+                rnn_hidden = None
             utilities = self.policy.utility(hidden_states)
             payoff = self.policy.payoffs(hidden_states, self.policy.graph.edges_from, self.policy.graph.edges_to)
-        return utilities, payoff
+        return rnn_hidden, utilities, payoff
 
     def q_dcg(self, obs_n, actions, states=None, use_target_net=False):
-        f_i, f_ij = self.get_graph_values(obs_n, use_target_net)
+        _, f_i, f_ij = self.get_graph_values(obs_n, use_target_net)
         f_i_mean = f_i.double() / self.policy.graph.n_vertexes
         f_ij_mean = f_ij.double() / self.policy.graph.n_edges
         utilities = f_i_mean.gather(-1, actions.unsqueeze(dim=-1).long()).sum(dim=1)
@@ -49,10 +62,10 @@ class DCG_Learner(LearnerMAS):
         else:
             return utilities + payoffs
 
-    def act(self, obs_n):
+    def act(self, obs_n, *rnn_hidden, avail_actions=None, test_mode=False):
         obs_n = torch.Tensor(obs_n).to(self.device)
         with torch.no_grad():
-            f_i, f_ij = self.get_graph_values(obs_n)
+            rnn_hidden, f_i, f_ij = self.get_graph_values(obs_n, *rnn_hidden)
         n_edges = self.policy.graph.n_edges
         n_vertexes = self.policy.graph.n_vertexes
         f_i_mean = f_i.double() / n_vertexes
@@ -67,7 +80,7 @@ class DCG_Learner(LearnerMAS):
         msg_backward = torch_scatter.scatter_add(src=msg_ji, index=self.policy.graph.edges_from, dim=1, dim_size=n_vertexes)
         utility = f_i_mean + msg_forward + msg_backward
         if len(self.policy.graph.edges) == 0:
-            return utility.argmax(dim=-1).cpu().numpy()
+            return rnn_hidden, utility.argmax(dim=-1).cpu().numpy()
         else:
             for i in range(self.args.n_msg_iterations):
                 joint_forward = (utility[:, self.policy.graph.edges_from, :] - msg_ji).unsqueeze(dim=-1) + f_ij_mean
@@ -83,7 +96,7 @@ class DCG_Learner(LearnerMAS):
                 msg_backward = torch_scatter.scatter_add(src=msg_ji, index=self.policy.graph.edges_from, dim=1,
                                                          dim_size=n_vertexes)
                 utility = f_i_mean + msg_forward + msg_backward
-            return utility.argmax(dim=-1).cpu().numpy()
+            return rnn_hidden, utility.argmax(dim=-1).cpu().numpy()
 
     def update(self, sample):
         self.iterations += 1
@@ -99,7 +112,8 @@ class DCG_Learner(LearnerMAS):
 
         q_eval_a = self.q_dcg(obs, actions, states=state, use_target_net=False)
         with torch.no_grad():
-            action_next_greedy = torch.Tensor(self.act(obs_next.cpu())).to(self.device)
+            _, action_next_greedy = self.act(obs_next.cpu())
+            action_next_greedy = torch.Tensor(action_next_greedy).to(self.device)
             q_next_a = self.q_dcg(obs_next, action_next_greedy, states=state_next, use_target_net=True)
 
         q_target = rewards + (1-terminals) * self.args.gamma * q_next_a
@@ -125,3 +139,6 @@ class DCG_Learner(LearnerMAS):
         }
 
         return info
+
+    def update_recurrent(self, *args):
+        return

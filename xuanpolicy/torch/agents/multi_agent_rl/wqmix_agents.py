@@ -1,5 +1,4 @@
 from xuanpolicy.torch.agents import *
-from xuanpolicy.torch.agents.agents_marl import linear_decay_or_increase
 
 
 class WQMIX_Agents(MARLAgents):
@@ -20,12 +19,21 @@ class WQMIX_Agents(MARLAgents):
             config.dim_state, state_shape = None, None
 
         input_representation = get_repre_in(config)
-        representation = REGISTRY_Representation[config.representation](*input_representation)
+        self.use_recurrent = config.use_recurrent
+        if self.use_recurrent:
+            kwargs_rnn = {"N_recurrent_layers": config.N_recurrent_layers,
+                          "dropout": config.dropout,
+                          "rnn": config.rnn}
+            representation = REGISTRY_Representation[config.representation](*input_representation, **kwargs_rnn)
+        else:
+            representation = REGISTRY_Representation[config.representation](*input_representation)
         mixer = QMIX_mixer(config.dim_state[0], config.hidden_dim_mixing_net, config.hidden_dim_hyper_net,
                            config.n_agents, device)
         ff_mixer = QMIX_FF_mixer(config.dim_state[0], config.hidden_dim_mixing_net, config.n_agents, device)
-        input_policy = get_policy_in_marl(config, representation, config.agent_keys, mixer, ff_mixer)
-        policy = REGISTRY_Policy[config.policy](*input_policy)
+        input_policy = get_policy_in_marl(config, representation, mixer=mixer, ff_mixer=ff_mixer)
+        policy = REGISTRY_Policy[config.policy](*input_policy,
+                                                use_recurrent=config.use_recurrent,
+                                                rnn=config.rnn)
         optimizer = torch.optim.Adam(policy.parameters(), config.learning_rate, eps=1e-5)
         scheduler = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=1.0, end_factor=0.5,
                                                       total_iters=get_total_iters(config.agent_name, config))
@@ -34,35 +42,52 @@ class WQMIX_Agents(MARLAgents):
         self.representation_info_shape = policy.representation.output_shapes
         self.auxiliary_info_shape = {}
 
-        memory = MARL_OffPolicyBuffer(state_shape,
-                                      config.obs_shape,
-                                      config.act_shape,
-                                      config.rew_shape,
-                                      config.done_shape,
-                                      envs.num_envs,
-                                      config.buffer_size,
-                                      config.batch_size)
+        if self.use_recurrent:
+            memory = MARL_OffPolicyBuffer_RNN(config.n_agents,
+                                              state_shape,
+                                              config.dim_obs,
+                                              config.dim_act,
+                                              config.rew_shape,
+                                              envs.num_envs,
+                                              config.buffer_size,
+                                              envs.max_episode_length,
+                                              config.batch_size)
+        else:
+            memory = MARL_OffPolicyBuffer(state_shape,
+                                          config.obs_shape,
+                                          config.act_shape,
+                                          config.rew_shape,
+                                          config.done_shape,
+                                          envs.num_envs,
+                                          config.buffer_size,
+                                          config.batch_size)
         learner = WQMIX_Learner(config, policy, optimizer, scheduler,
                                 config.device, config.modeldir, config.gamma,
                                 config.sync_frequency)
         super(WQMIX_Agents, self).__init__(config, envs, policy, memory, learner, device,
                                            config.logdir, config.modeldir)
 
-    def act(self, obs_n, test_mode=False):
+    def act(self, obs_n, *rnn_hidden, avail_actions=None, test_mode=False):
         batch_size = obs_n.shape[0]
         agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(batch_size, -1, -1).to(self.device)
         obs_in = torch.Tensor(obs_n).view([batch_size, self.n_agents, -1]).to(self.device)
-        _, greedy_actions, _ = self.policy(obs_in, agents_id)
+        if self.use_recurrent:
+            hidden_state, greedy_actions, _ = self.policy(obs_in, agents_id, *rnn_hidden, avail_actions=avail_actions)
+        else:
+            hidden_state, greedy_actions, _ = self.policy(obs_in, agents_id, avail_actions=avail_actions)
         greedy_actions = greedy_actions.cpu().detach().numpy()
 
         if test_mode:
-            return greedy_actions
+            return hidden_state, greedy_actions
         else:
-            random_actions = np.random.choice(self.dim_act, [self.nenvs, self.n_agents])
-            if np.random.rand() < self.egreedy:
-                return random_actions
+            if avail_actions is None:
+                random_actions = np.random.choice(self.dim_act, [self.nenvs, self.n_agents])
             else:
-                return greedy_actions
+                random_actions = Categorical(torch.Tensor(avail_actions)).sample().numpy()
+            if np.random.rand() < self.egreedy:
+                return hidden_state, random_actions
+            else:
+                return hidden_state, greedy_actions
 
     def train(self, i_step):
         if self.egreedy >= self.end_greedy:
@@ -70,7 +95,10 @@ class WQMIX_Agents(MARLAgents):
 
         if i_step > self.start_training:
             sample = self.memory.sample()
-            info_train = self.learner.update(sample)
+            if self.use_recurrent:
+                info_train = self.learner.update_recurrent(sample)
+            else:
+                info_train = self.learner.update(sample)
             info_train["epsilon-greedy"] = self.egreedy
             return info_train
         else:

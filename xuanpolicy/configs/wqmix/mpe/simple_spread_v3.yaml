@@ -3,11 +3,13 @@ env_name: "mpe"
 env_id: "simple_spread_v3"
 continuous_action: False
 policy: "Weighted_Mixing_Q_network"
-representation: "Basic_Identical"
+representation: "Basic_MLP"
 vectorize: "Dummy_Pettingzoo"
 runner: "Pettingzoo_Runner"
 on_policy: False
 
+use_recurrent: False
+rnn:
 representation_hidden_size: [128, ]  # for Basic_MLP representation
 q_hidden_size: [128, ]  # the units for each hidden layer
 hidden_dim_mixing_net: 64  # hidden units of mixing network

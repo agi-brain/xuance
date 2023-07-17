@@ -13,7 +13,7 @@ class VDN_Agents(MARLAgents):
                 config.decay_step_greedy / envs.num_envs / envs.max_episode_length)
 
         input_representation = get_repre_in(config)
-        self.use_recurrent, self.rnn_hidden = config.use_recurrent, config.rnn
+        self.use_recurrent = config.use_recurrent
         if self.use_recurrent:
             kwargs_rnn = {"N_recurrent_layers": config.N_recurrent_layers,
                           "dropout": config.dropout,

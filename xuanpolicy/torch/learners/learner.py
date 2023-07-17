@@ -87,3 +87,6 @@ class LearnerMAS(ABC):
     @abstractmethod
     def update_recurrent(self, *args):
         return
+
+    def act(self, *args, **kwargs):
+        pass
