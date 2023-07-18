@@ -1,5 +1,4 @@
 agent: "DCG"  # Options: DCG, DCG_S
-globals_state: True
 env_name: "StarCraft2"
 env_id: "3m"
 fps: 15

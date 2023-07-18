@@ -90,3 +90,6 @@ class LearnerMAS(ABC):
 
     def act(self, *args, **kwargs):
         pass
+
+    def get_hidden_states(self, *args):
+        pass

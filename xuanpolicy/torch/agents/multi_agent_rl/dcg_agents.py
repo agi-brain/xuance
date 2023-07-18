@@ -22,7 +22,7 @@ class DCG_Agents(MARLAgents):
             representation = REGISTRY_Representation[config.representation](*input_representation, **kwargs_rnn)
         else:
             representation = REGISTRY_Representation[config.representation](*input_representation)
-        repre_state_dim = config.representation_hidden_size[-1]
+        repre_state_dim = representation.output_shapes['state'][0]
         from xuanpolicy.torch.policies.coordination_graph import DCG_utility, DCG_payoff, Coordination_Graph
         utility = DCG_utility(repre_state_dim, config.hidden_utility_dim, config.dim_act).to(device)
         payoffs = DCG_payoff(repre_state_dim * 2, config.hidden_payoff_dim, config.dim_act, config).to(device)
@@ -58,14 +58,26 @@ class DCG_Agents(MARLAgents):
             config.dim_state, state_shape = config.state_space.shape, config.state_space.shape
         else:
             config.dim_state, state_shape = None, None
-        memory = MARL_OffPolicyBuffer(state_shape,
-                                      config.obs_shape,
-                                      config.act_shape,
-                                      config.rew_shape,
-                                      config.done_shape,
-                                      envs.num_envs,
-                                      config.buffer_size,
-                                      config.batch_size)
+
+        if self.use_recurrent:
+            memory = MARL_OffPolicyBuffer_RNN(config.n_agents,
+                                              state_shape,
+                                              config.dim_obs,
+                                              config.dim_act,
+                                              config.rew_shape,
+                                              envs.num_envs,
+                                              config.buffer_size,
+                                              envs.max_episode_length,
+                                              config.batch_size)
+        else:
+            memory = MARL_OffPolicyBuffer(state_shape,
+                                          config.obs_shape,
+                                          config.act_shape,
+                                          config.rew_shape,
+                                          config.done_shape,
+                                          envs.num_envs,
+                                          config.buffer_size,
+                                          config.batch_size)
         from xuanpolicy.torch.learners.multi_agent_rl.dcg_learner import DCG_Learner
         learner = DCG_Learner(config, policy, optimizer, scheduler,
                               config.device, config.modeldir, config.gamma,
@@ -73,7 +85,11 @@ class DCG_Agents(MARLAgents):
         super(DCG_Agents, self).__init__(config, envs, policy, memory, learner, device, config.logdir, config.modeldir)
 
     def act(self, obs_n, *rnn_hidden, avail_actions=None, test_mode=False):
-        return self.learner.act(obs_n, *rnn_hidden, avail_actions=avail_actions, test_mode=test_mode)
+        obs_n = torch.Tensor(obs_n).to(self.device)
+        with torch.no_grad():
+            rnn_hidden_next, hidden_states = self.learner.get_hidden_states(obs_n, *rnn_hidden)
+            actions = self.learner.act(hidden_states, avail_actions=avail_actions)
+        return rnn_hidden_next, actions.cpu().detach().numpy()
 
     def train(self, i_step):
         if self.egreedy >= self.end_greedy:

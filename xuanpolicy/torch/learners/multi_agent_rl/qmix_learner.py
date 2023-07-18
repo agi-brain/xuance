@@ -80,7 +80,6 @@ class QMIX_Learner(LearnerMAS):
         episode_length = actions.shape[2]
         IDs = torch.eye(self.n_agents).unsqueeze(1).unsqueeze(0).expand(batch_size, -1, episode_length + 1, -1).to(
             self.device)
-        batch_size = actions.shape[0]
 
         # Current Q
         rnn_hidden = self.policy.representation.init_hidden(batch_size * self.n_agents)
