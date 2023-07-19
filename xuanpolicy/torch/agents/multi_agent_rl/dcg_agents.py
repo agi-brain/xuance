@@ -88,8 +88,20 @@ class DCG_Agents(MARLAgents):
         obs_n = torch.Tensor(obs_n).to(self.device)
         with torch.no_grad():
             rnn_hidden_next, hidden_states = self.learner.get_hidden_states(obs_n, *rnn_hidden)
-            actions = self.learner.act(hidden_states, avail_actions=avail_actions)
-        return rnn_hidden_next, actions.cpu().detach().numpy()
+            greedy_actions = self.learner.act(hidden_states, avail_actions=avail_actions)
+        greedy_actions = greedy_actions.cpu().detach().numpy()
+
+        if test_mode:
+            return rnn_hidden_next, greedy_actions
+        else:
+            if avail_actions is None:
+                random_actions = np.random.choice(self.dim_act, [self.nenvs, self.n_agents])
+            else:
+                random_actions = Categorical(torch.Tensor(avail_actions)).sample().numpy()
+            if np.random.rand() < self.egreedy:
+                return rnn_hidden_next, random_actions
+            else:
+                return rnn_hidden_next, greedy_actions
 
     def train(self, i_step):
         if self.egreedy >= self.end_greedy:
