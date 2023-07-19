@@ -172,22 +172,19 @@ class DCG_Learner(LearnerMAS):
                                                   *rnn_hidden, use_target_net=False)
         hidden_states = hidden_states.view(batch_size, self.n_agents, episode_length + 1, -1).transpose(1, 2)
         batch_transitions = batch_size * episode_length
-        hidden_states_next = hidden_states[:, :-1].reshape(batch_transitions, self.n_agents, self.dim_hidden_state)
-        hidden_states = hidden_states[:, 1:].reshape(batch_transitions, self.n_agents, self.dim_hidden_state)
         actions = actions.transpose(1, 2).reshape(batch_transitions, self.n_agents)
-        q_eval_a = self.q_dcg(hidden_states, actions,
-                              states=state[:, :-1].reshape(batch_transitions, -1),
+        q_eval_a = self.q_dcg(hidden_states[:, :-1].reshape(batch_transitions, self.n_agents, self.dim_hidden_state),
+                              actions, states=state[:, :-1].reshape(batch_transitions, -1),
                               use_target_net=False)
         with torch.no_grad():
-            avail_actions = avail_actions.transpose(1, 2)[:, 1:].reshape(batch_transitions, self.n_agents, self.dim_act)
-            action_next_greedy = self.act(hidden_states_next, avail_actions=avail_actions)
-            action_next_greedy = torch.Tensor(action_next_greedy).to(self.device)
+            avail_a_next = avail_actions.transpose(1, 2)[:, 1:].reshape(batch_transitions, self.n_agents, self.dim_act)
+            hidden_states_next = hidden_states[:, 1:].reshape(batch_transitions, self.n_agents, self.dim_hidden_state)
+            action_next_greedy = torch.Tensor(self.act(hidden_states_next, avail_actions=avail_a_next)).to(self.device)
             rnn_hidden_target = self.policy.target_representation.init_hidden(batch_size * self.n_agents)
-            _, hidden_states_target = self.get_hidden_states(obs.view(-1, episode_length + 1, self.dim_obs),
-                                                             *rnn_hidden_target, use_target_net=True)
-            hidden_states_target = hidden_states_target[:, 1:].view(batch_size, self.n_agents, episode_length, -1)
-            hidden_states_target = hidden_states_target.transpose(1, 2)
-            q_next_a = self.q_dcg(hidden_states_target.reshape(batch_transitions, self.n_agents, self.dim_hidden_state),
+            _, hidden_states_tar = self.get_hidden_states(obs[:, :, 1:].view(-1, episode_length, self.dim_obs),
+                                                          *rnn_hidden_target, use_target_net=True)
+            hidden_states_tar = hidden_states_tar.view(batch_size, self.n_agents, episode_length, -1).transpose(1, 2)
+            q_next_a = self.q_dcg(hidden_states_tar.reshape(batch_transitions, self.n_agents, self.dim_hidden_state),
                                   action_next_greedy,
                                   states=state[:, 1:].reshape(batch_transitions, -1),
                                   use_target_net=True)
