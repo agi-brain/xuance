@@ -40,5 +40,5 @@ rewnorm_range: 5
 test_steps: 10000
 eval_interval: 100000
 test_episode: 1
-logdir: "./logs/a2c/"
-modeldir: "./models/a2c/"
+log_dir: "./logs/a2c/"
+model_dir: "./models/a2c/"

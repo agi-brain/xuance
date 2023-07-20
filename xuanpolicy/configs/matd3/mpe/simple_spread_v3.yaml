@@ -27,5 +27,5 @@ training_frequency: 1
 n_tests: 5
 test_period: 100
 
-logdir: "./logs/matd3/"
-modeldir: "./models/matd3/"
+log_dir: "./logs/matd3/"
+model_dir: "./models/matd3/"

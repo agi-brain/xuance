@@ -37,11 +37,11 @@ class PPG_Agent(Agent):
                               optimizer,
                               scheduler,
                               config.device,
-                              config.modeldir,
+                              config.model_dir,
                               config.ent_coef,
                               config.clip_range,
                               config.kl_beta)
-        super(PPG_Agent, self).__init__(config, envs, policy, memory, learner, device, config.logdir, config.modeldir)
+        super(PPG_Agent, self).__init__(config, envs, policy, memory, learner, device, config.log_dir, config.model_dir)
 
     def _action(self, obs):
         _, dists, vs, _ = self.policy(obs)

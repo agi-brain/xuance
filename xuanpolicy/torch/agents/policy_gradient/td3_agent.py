@@ -35,11 +35,11 @@ class TD3_Agent(Agent):
                               optimizer,
                               scheduler,
                               config.device,
-                              config.modeldir,
+                              config.model_dir,
                               config.gamma,
                               config.tau,
                               config.actor_update_decay)
-        super(TD3_Agent, self).__init__(config, envs, policy, memory, learner, device, config.logdir, config.modeldir)
+        super(TD3_Agent, self).__init__(config, envs, policy, memory, learner, device, config.log_dir, config.model_dir)
 
     def _action(self, obs, noise_scale=0.0):
         _, action = self.policy.action(obs)

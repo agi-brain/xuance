@@ -329,7 +329,7 @@ $ tensorboard --logdir ./logs/dqn/torch/CartPole-v0
 | ALE/Qbert-v5    | 16350.0 | 12875.0 | 20050.0 |
 | ALE/Freeway-v5  | 34.00   | 33.0    | 34.0    |
 | ALE/AirRaid-v5  |         | 5450.00 | 9283.33 |
-| ALE/Alien-v5    |         |         | 2313.33 |
+| ALE/Alien-v5    |         | 2413.33 | 2313.33 |
 
 
 ### MPE Environment (Ongoing)

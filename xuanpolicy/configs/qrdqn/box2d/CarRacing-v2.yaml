@@ -36,5 +36,5 @@ rewnorm_range: 5
 test_steps: 10000
 eval_interval: 10000
 test_episode: 1
-logdir: "./logs/qrdqn/"
-modeldir: "./models/qrdqn/"
+log_dir: "./logs/qrdqn/"
+model_dir: "./models/qrdqn/"

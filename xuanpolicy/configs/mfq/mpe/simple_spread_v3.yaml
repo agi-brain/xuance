@@ -26,5 +26,5 @@ sync_frequency: 200
 n_tests: 5
 test_period: 100
 
-logdir: "./logs/mfq/"
-modeldir: "./models/mfq/"
+log_dir: "./logs/mfq/"
+model_dir: "./models/mfq/"

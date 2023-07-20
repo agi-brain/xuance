@@ -15,7 +15,7 @@ class MADDPG_Learner(LearnerMAS):
                  optimizer: Sequence[torch.optim.Optimizer],
                  scheduler: Sequence[torch.optim.lr_scheduler._LRScheduler] = None,
                  device: Optional[Union[int, str, torch.device]] = None,
-                 modeldir: str = "./",
+                 model_dir: str = "./",
                  gamma: float = 0.99,
                  sync_frequency: int = 100
                  ):
@@ -23,7 +23,7 @@ class MADDPG_Learner(LearnerMAS):
         self.tau = config.tau
         self.sync_frequency = sync_frequency
         self.mse_loss = nn.MSELoss()
-        super(MADDPG_Learner, self).__init__(config, policy, optimizer, scheduler, device, modeldir)
+        super(MADDPG_Learner, self).__init__(config, policy, optimizer, scheduler, device, model_dir)
         self.optimizer = {
             'actor': optimizer[0],
             'critic': optimizer[1]

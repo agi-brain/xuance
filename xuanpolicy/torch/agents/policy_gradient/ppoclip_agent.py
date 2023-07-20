@@ -41,13 +41,14 @@ class PPOCLIP_Agent(Agent):
                                   optimizer,
                                   scheduler,
                                   config.device,
-                                  config.modeldir,
+                                  config.model_dir,
                                   vf_coef=config.vf_coef,
                                   ent_coef=config.ent_coef,
                                   clip_range=config.clip_range,
                                   clip_grad_norm=config.clip_grad_norm,
                                   use_grad_clip=config.use_grad_clip)
-        super(PPOCLIP_Agent, self).__init__(config, envs, policy, memory, learner, device, config.logdir, config.modeldir)
+        super(PPOCLIP_Agent, self).__init__(config, envs, policy, memory, learner, device,
+                                            config.log_dir, config.model_dir)
 
     def _action(self, obs):
         _, dists, vs = self.policy(obs)

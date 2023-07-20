@@ -1,4 +1,3 @@
-import copy
 import os
 import socket
 from pathlib import Path
@@ -21,14 +20,14 @@ class SC2_Runner(Runner_Base):
         self.test_envs = None
         if args.logger == "tensorboard":
             time_string = time.asctime().replace(" ", "").replace(":", "_")
-            log_dir = os.path.join(os.getcwd(), args.logdir) + "/" + time_string
+            log_dir = os.path.join(os.getcwd(), args.log_dir) + "/" + time_string
             if not os.path.exists(log_dir):
                 os.makedirs(log_dir)
             self.writer = SummaryWriter(log_dir)
             self.use_wandb = False
         elif args.logger == "wandb":
             config_dict = vars(args)
-            wandb_dir = Path(os.path.join(os.getcwd(), args.logdir))
+            wandb_dir = Path(os.path.join(os.getcwd(), args.log_dir))
             if not wandb_dir.exists():
                 os.makedirs(str(wandb_dir))
             wandb.init(config=config_dict,
@@ -47,20 +46,19 @@ class SC2_Runner(Runner_Base):
 
         self.running_steps = args.running_steps
         self.training_frequency = args.training_frequency
-        self.train_per_step = args.train_per_step
         self.current_step = 0
         self.envs_step = np.zeros((self.envs.num_envs,), np.int32)
         self.current_episode = np.zeros((self.envs.num_envs,), np.int32)
         self.episode_length = self.envs.max_episode_length
         self.filled = np.zeros((self.n_envs, self.episode_length, 1), np.int32)
         self.rnn_hidden = None
-        self.num_agents = args.n_agents = self.envs.num_agents
-        self.num_enemies = self.envs.num_enemies
+        self.get_agent_num()
+        args.n_agents = self.num_agents
         self.dim_obs, self.dim_act, self.dim_state = self.envs.dim_obs, self.envs.dim_act, self.envs.dim_state
         args.dim_obs, args.dim_act = self.dim_obs, self.dim_act
         args.obs_shape = (self.num_agents, self.dim_obs)
         args.act_shape = (self.num_agents, )
-        args.rew_shape, args.done_shape = (1, ), (1, )
+        args.rew_shape, args.done_shape = (self.envs.dim_reward, ), (1, )
         args.action_space = self.envs.action_space
         args.state_space = self.envs.state_space
         self.episode_buffer = {
@@ -77,6 +75,9 @@ class SC2_Runner(Runner_Base):
         # environment details, representations, policies, optimizers, and agents.
         self.agents = REGISTRY_Agent[args.agent](args, self.envs, args.device)
         self.rnn_hidden = self.agents.policy.representation.init_hidden(self.n_envs)
+
+    def get_agent_num(self):
+        self.num_agents, self.num_enemies = self.envs.num_agents, self.envs.num_enemies
 
     def log_infos(self, info: dict, x_index: int):
         """
@@ -176,11 +177,11 @@ class SC2_Runner(Runner_Base):
             episode_info["Train-Results/Win-Rate"] = win_rate
             episode_info["Train-Results/Dead-Ratio"] = dead_ratio
             episode_info["Train-Results/Enemy-Dead-Ratio"] = enemy_dead_ratio
-            if not self.train_per_step:
-                train_info = self.agents.train(self.current_step)
-                # Log train info:
-                self.log_infos(train_info, self.current_step)
-                self.log_infos(episode_info, self.current_step)
+
+            train_info = self.agents.train(self.current_step)
+            # Log train info:
+            self.log_infos(train_info, self.current_step)
+            self.log_infos(episode_info, self.current_step)
             self.rnn_hidden = rnn_hidden
 
     def test_episode(self, n_episodes):
@@ -251,12 +252,12 @@ class SC2_Runner(Runner_Base):
 
     def run(self):
         if self.args.test_mode:
-            arg_test = copy.deepcopy(self.args)
+            arg_test = deepcopy(self.args)
             arg_test.parallels = 1
             self.test_envs = make_envs(arg_test)
             self.render = True
             n_test_episodes = self.args.test_episode
-            self.agents.load_model(self.agents.modeldir)
+            self.agents.load_model(self.agents.model_dir)
             self.test_episode(n_test_episodes)
             print("Finish testing.")
         else:
@@ -272,7 +273,7 @@ class SC2_Runner(Runner_Base):
             self.writer.close()
 
     def benchmark(self):
-        arg_test = copy.deepcopy(self.args)
+        arg_test = deepcopy(self.args)
         arg_test.parallels = 1
         self.test_envs = make_envs(arg_test)
 

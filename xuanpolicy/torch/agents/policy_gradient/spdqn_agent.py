@@ -55,7 +55,7 @@ class SPDQN_Agent(Agent):
                                optimizer,
                                scheduler,
                                config.device,
-                               config.modeldir,
+                               config.model_dir,
                                config.gamma,
                                config.tau)
 
@@ -65,7 +65,7 @@ class SPDQN_Agent(Agent):
 
         self.obs_rms = RunningMeanStd(shape=space2shape(self.observation_space), comm=self.comm, use_mpi=False)
         self.ret_rms = RunningMeanStd(shape=(), comm=self.comm, use_mpi=False)
-        super(SPDQN_Agent, self).__init__(envs, policy, memory, learner, device, config.logdir, config.modeldir)
+        super(SPDQN_Agent, self).__init__(envs, policy, memory, learner, device, config.log_dir, config.model_dir)
 
     def _process_observation(self, observations):
         if self.use_obsnorm:
@@ -143,7 +143,7 @@ class SPDQN_Agent(Agent):
                 self.log_infos(episode_info, episodes)
             if step % 50000 == 0 or step == train_steps - 1:
                 self.save_model()
-                np.save(self.modeldir + "/obs_rms.npy",
+                np.save(self.model_dir + "/obs_rms.npy",
                         {'mean': self.obs_rms.mean, 'std': self.obs_rms.std, 'count': self.obs_rms.count})
 
     def end_episode(self, episode):
@@ -154,7 +154,7 @@ class SPDQN_Agent(Agent):
             self.epsilon = self.epsilon_final
 
     def test(self, test_steps=10000, load_model=None):
-        self.load_model(self.modeldir)
+        self.load_model(self.model_dir)
         scores = np.zeros((self.nenvs,), np.float32)
         returns = np.zeros((self.nenvs,), np.float32)
         obs, _ = self.envs.reset()

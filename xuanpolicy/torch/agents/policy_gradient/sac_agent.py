@@ -35,10 +35,10 @@ class SAC_Agent(Agent):
                               optimizer,
                               scheduler,
                               config.device,
-                              config.modeldir,
+                              config.model_dir,
                               config.gamma,
                               config.tau)
-        super(SAC_Agent, self).__init__(config, envs, policy, memory, learner, device, config.logdir, config.modeldir)
+        super(SAC_Agent, self).__init__(config, envs, policy, memory, learner, device, config.log_dir, config.model_dir)
 
     def _action(self, obs):
         _, act_dist = self.policy(obs)

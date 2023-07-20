@@ -50,5 +50,5 @@ value_clip_range: 0.1
 use_advnorm: False
 use_gae: True
 
-logdir: "./logs/mappo/"
-modeldir: "./models/mappo/"
+log_dir: "./logs/mappo/"
+model_dir: "./models/mappo/"

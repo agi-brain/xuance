@@ -37,12 +37,12 @@ class PPOKL_Agent(Agent):
                                 optimizer,
                                 scheduler,
                                 config.device,
-                                config.modeldir,
+                                config.model_dir,
                                 config.vf_coef,
                                 config.ent_coef,
                                 config.target_kl)
-        super(PPOKL_Agent, self).__init__(config, envs, policy, memory, learner, device, config.logdir,
-                                          config.modeldir)
+        super(PPOKL_Agent, self).__init__(config, envs, policy, memory, learner, device,
+                                          config.log_dir, config.model_dir)
 
     def _action(self, obs):
         _, dists, vs = self.policy(obs)

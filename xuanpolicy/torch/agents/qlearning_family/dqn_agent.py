@@ -36,10 +36,10 @@ class DQN_Agent(Agent):
                               optimizer,
                               scheduler,
                               config.device,
-                              config.modeldir,
+                              config.model_dir,
                               config.gamma,
                               config.sync_frequency)
-        super(DQN_Agent, self).__init__(config, envs, policy, memory, learner, device, config.logdir, config.modeldir)
+        super(DQN_Agent, self).__init__(config, envs, policy, memory, learner, device, config.log_dir, config.model_dir)
 
     def _action(self, obs, egreedy=0.0):
         _, argmax_action, _ = self.policy(obs)

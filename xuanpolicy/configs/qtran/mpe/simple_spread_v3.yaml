@@ -29,5 +29,5 @@ n_tests: 5
 test_period: 100
 double_q: True  # use double q learning
 
-logdir: "./logs/qtran/"
-modeldir: "./models/qtran/"
+log_dir: "./logs/qtran/"
+model_dir: "./models/qtran/"

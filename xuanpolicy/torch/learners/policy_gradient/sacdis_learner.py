@@ -7,12 +7,12 @@ class SACDIS_Learner(Learner):
                  optimizers: Sequence[torch.optim.Optimizer],
                  schedulers: Sequence[torch.optim.lr_scheduler._LRScheduler],
                  device: Optional[Union[int, str, torch.device]] = None,
-                 modeldir: str = "./",
+                 model_dir: str = "./",
                  gamma: float = 0.99,
                  tau: float = 0.01):
         self.tau = tau
         self.gamma = gamma
-        super(SACDIS_Learner, self).__init__(policy, optimizers, schedulers, device, modeldir)
+        super(SACDIS_Learner, self).__init__(policy, optimizers, schedulers, device, model_dir)
 
     def update(self, obs_batch, act_batch, rew_batch, next_batch, terminal_batch):
         self.iterations += 1

@@ -23,27 +23,28 @@ class PerDQN_Agent(Agent):
         self.action_space = envs.action_space
         self.representation_info_shape = policy.representation.output_shapes
         self.auxiliary_info_shape = {}
-        
+
         self.PER_beta0 = config.PER_beta0
         self.PER_beta = config.PER_beta0
 
         self.atari = True if config.env_name == "Atari" else False
         memory = PerOffPolicyBuffer(self.observation_space,
-                                      self.action_space,
-                                      self.representation_info_shape,
-                                      self.auxiliary_info_shape,
-                                      self.nenvs,
-                                      config.nsize,
-                                      config.batchsize,
-                                      config.PER_alpha)
+                                    self.action_space,
+                                    self.representation_info_shape,
+                                    self.auxiliary_info_shape,
+                                    self.nenvs,
+                                    config.nsize,
+                                    config.batchsize,
+                                    config.PER_alpha)
         learner = PerDQN_Learner(policy,
-                              optimizer,
-                              scheduler,
-                              config.device,
-                              config.modeldir,
-                              config.gamma,
-                              config.sync_frequency)
-        super(PerDQN_Agent, self).__init__(config, envs, policy, memory, learner, device, config.logdir, config.modeldir)
+                                 optimizer,
+                                 scheduler,
+                                 config.device,
+                                 config.model_dir,
+                                 config.gamma,
+                                 config.sync_frequency)
+        super(PerDQN_Agent, self).__init__(config, envs, policy, memory, learner, device,
+                                           config.log_dir, config.model_dir)
 
     def _action(self, obs, egreedy=0.0):
         _, argmax_action, _ = self.policy(obs)
@@ -66,11 +67,12 @@ class PerDQN_Agent(Agent):
             self.memory.store(obs, acts, self._process_reward(rewards), terminals, self._process_observation(next_obs))
             if self.current_step > self.start_training and self.current_step % self.train_frequency == 0:
                 # training
-                obs_batch, act_batch, rew_batch, terminal_batch, next_batch, weights, idxes = self.memory.sample(self.PER_beta)
+                obs_batch, act_batch, rew_batch, terminal_batch, next_batch, weights, idxes = self.memory.sample(
+                    self.PER_beta)
                 td_error, step_info = self.learner.update(obs_batch, act_batch, rew_batch, next_batch, terminal_batch)
                 self.memory.update_priorities(idxes, td_error)
                 step_info["epsilon-greedy"] = self.egreedy
-            self.PER_beta += (1-self.PER_beta0)/train_steps
+            self.PER_beta += (1 - self.PER_beta0) / train_steps
 
             obs = next_obs
             self.egreedy = self.egreedy - (self.start_greedy - self.end_greedy) / train_steps

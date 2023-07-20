@@ -83,7 +83,7 @@ class Runner_DRL(Runner_Base):
                 args_test.parallels = 1
                 return make_envs(args_test)
             self.agent.render = True
-            self.agent.load_model(self.agent.modeldir)
+            self.agent.load_model(self.agent.model_dir)
             self.agent.test(env_fn, self.args.test_episode)
             print("Finish testing.")
         else:

@@ -34,5 +34,5 @@ test_period: 100
 use_advnorm: False
 use_gae: True
 
-logdir: "./logs/coma/"
-modeldir: "./models/coma/"
+log_dir: "./logs/coma/"
+model_dir: "./models/coma/"

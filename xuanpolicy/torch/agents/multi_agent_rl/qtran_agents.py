@@ -48,13 +48,13 @@ class QTRAN_Agents(MARLAgents):
                                       config.buffer_size,
                                       config.batch_size)
         learner = QTRAN_Learner(config, policy, optimizer, scheduler,
-                                config.device, config.modeldir, config.gamma,
+                                config.device, config.model_dir, config.gamma,
                                 config.sync_frequency)
 
         self.epsilon_decay = linear_decay_or_increase(config.start_greedy, config.end_greedy,
                                                       config.greedy_update_steps)
         super(QTRAN_Agents, self).__init__(config, envs, policy, memory, learner, device,
-                                           config.logdir, config.modeldir)
+                                           config.log_dir, config.model_dir)
 
     def train(self, i_episode):
         self.epsilon_decay.update()

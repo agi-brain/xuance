@@ -9,14 +9,14 @@ class PPOCLIP_Learner(Learner):
                  optimizer: torch.optim.Optimizer,
                  scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
                  device: Optional[Union[int, str, torch.device]] = None,
-                 modeldir: str = "./",
+                 model_dir: str = "./",
                  vf_coef: float = 0.25,
                  ent_coef: float = 0.005,
                  clip_range: float = 0.25,
                  clip_grad_norm: float = 0.25,
                  use_grad_clip: bool = True,
                  ):
-        super(PPOCLIP_Learner, self).__init__(policy, optimizer, scheduler, device, modeldir)
+        super(PPOCLIP_Learner, self).__init__(policy, optimizer, scheduler, device, model_dir)
         self.vf_coef = vf_coef
         self.ent_coef = ent_coef
         self.clip_range = clip_range

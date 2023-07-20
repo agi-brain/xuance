@@ -38,12 +38,12 @@ class COMA_Agents(MARLAgents):
                              config.rew_shape, config.done_shape, envs.num_envs,
                              config.buffer_size, config.batch_size, envs.envs[0].max_cycles)
         learner = COMA_Learner(config, policy, optimizer, scheduler,
-                               config.device, config.modeldir, config.gamma, config.sync_frequency)
+                               config.device, config.model_dir, config.gamma, config.sync_frequency)
 
         self.epsilon_decay = linear_decay_or_increase(config.start_greedy, config.end_greedy,
                                                       config.greedy_update_steps)
         super(COMA_Agents, self).__init__(config, envs, policy, memory, learner, device,
-                                          config.logdir, config.modeldir)
+                                          config.log_dir, config.model_dir)
 
     def act(self, obs_n, episode, test_mode, noise=False):
         batch_size = len(obs_n)

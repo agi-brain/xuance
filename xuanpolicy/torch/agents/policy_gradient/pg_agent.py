@@ -38,10 +38,10 @@ class PG_Agent(Agent):
                              optimizer,
                              scheduler,
                              config.device,
-                             config.modeldir,
+                             config.model_dir,
                              config.ent_coef,
                              config.clip_grad)
-        super(PG_Agent, self).__init__(config, envs, policy, memory, learner, device, config.logdir, config.modeldir)
+        super(PG_Agent, self).__init__(config, envs, policy, memory, learner, device, config.log_dir, config.model_dir)
 
     def _action(self, obs):
         _, dists = self.policy(obs)

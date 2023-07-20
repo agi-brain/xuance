@@ -30,5 +30,5 @@ rewnorm_range: 5
 test_steps: 10000
 eval_interval: 5000
 test_episode: 1
-logdir: "./logs/ddpg/"
-modeldir: "./models/ddpg/"
+log_dir: "./logs/ddpg/"
+model_dir: "./models/ddpg/"

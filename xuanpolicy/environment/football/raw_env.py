@@ -2,6 +2,8 @@ import gfootball.env as football_env
 from . import GFOOTBALL_ENV_ID
 from gfootball.env.football_env import FootballEnv
 from gfootball.env import config
+from gfootball.env.wrappers import Simple115StateWrapper
+import numpy as np
 
 
 class football_raw_env(FootballEnv):
@@ -62,3 +64,31 @@ class football_raw_env(FootballEnv):
         obs, reward, terminated, info = self.env.step(action)
         truncated = False
         return obs, reward, terminated, truncated, info
+
+    def state(self):
+        def do_flatten(obj):
+            """Run flatten on either python list or numpy array."""
+            if type(obj) == list:
+                return np.array(obj).flatten()
+            elif type(obj) == int:
+                return np.array([obj])
+            else:
+                return obj.flatten()
+
+        original_obs = self.env._env._observation
+        state = []
+        for k, v in original_obs.items():
+            if k == "ball_owned_team":
+                if v == -1:
+                    state.extend([1, 0, 0])
+                elif v == 0:
+                    state.extend([0, 1, 0])
+                else:
+                    state.extend([0, 0, 1])
+            elif k == "game_mode":
+                game_mode = [0] * 7
+                game_mode[v] = 1
+                state.extend(game_mode)
+            else:
+                state.extend(do_flatten(v))
+        return state

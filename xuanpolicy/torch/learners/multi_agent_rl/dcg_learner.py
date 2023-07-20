@@ -14,7 +14,7 @@ class DCG_Learner(LearnerMAS):
                  optimizer: torch.optim.Optimizer,
                  scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
                  device: Optional[Union[int, str, torch.device]] = None,
-                 modeldir: str = "./",
+                 model_dir: str = "./",
                  gamma: float = 0.99,
                  sync_frequency: int = 100
                  ):
@@ -23,7 +23,7 @@ class DCG_Learner(LearnerMAS):
         self.sync_frequency = sync_frequency
         self.dim_hidden_state = policy.representation.output_shapes['state'][0]
         self.mse_loss = nn.MSELoss()
-        super(DCG_Learner, self).__init__(config, policy, optimizer, scheduler, device, modeldir)
+        super(DCG_Learner, self).__init__(config, policy, optimizer, scheduler, device, model_dir)
 
     def get_hidden_states(self, obs_n, *rnn_hidden, use_target_net=False):
         if self.use_recurrent:

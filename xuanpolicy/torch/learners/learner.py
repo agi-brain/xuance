@@ -13,16 +13,16 @@ class Learner(ABC):
                  optimizer: Union[torch.optim.Optimizer, Sequence[torch.optim.Optimizer]],
                  scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
                  device: Optional[Union[int, str, torch.device]] = None,
-                 modeldir: str = "./"):
+                 model_dir: str = "./"):
         self.policy = policy
         self.optimizer = optimizer
         self.scheduler = scheduler
         self.device = device
-        self.modeldir = modeldir
+        self.model_dir = model_dir
         self.iterations = 0
 
     def save_model(self, model_name):
-        model_path = self.modeldir + model_name
+        model_path = self.model_dir + model_name
         torch.save(self.policy.state_dict(), model_path)
 
     def load_model(self, path):
@@ -45,7 +45,7 @@ class LearnerMAS(ABC):
                  optimizer: Union[torch.optim.Optimizer, Sequence[torch.optim.Optimizer]],
                  scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
                  device: Optional[Union[int, str, torch.device]] = None,
-                 modeldir: str = "./"):
+                 model_dir: str = "./"):
         self.args = config
         # self.handle = config.handle
         self.n_agents = config.n_agents
@@ -63,14 +63,14 @@ class LearnerMAS(ABC):
         self.optimizer = optimizer
         self.scheduler = scheduler
         self.device = device
-        self.modeldir = modeldir
+        self.model_dir = model_dir
         self.iterations = 0
 
     def onehot_action(self, actions_int, num_actions):
         return F.one_hot(actions_int.long(), num_classes=num_actions)
 
     def save_model(self, model_name):
-        model_path = self.modeldir + model_name
+        model_path = self.model_dir + model_name
         torch.save(self.policy.state_dict(), model_path)
 
     def load_model(self, path):

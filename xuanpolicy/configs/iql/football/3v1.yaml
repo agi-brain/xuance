@@ -54,4 +54,4 @@ eval_interval: 10000
 test_episode: 20
 log_dir: "./logs/iql/"
 model_dir: "./models/iql/"
-videos_dir: "./videos/iql"
+videos_dir: "./videos/iql/"

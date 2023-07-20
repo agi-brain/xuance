@@ -25,7 +25,7 @@ use_rewnorm: False
 obsnorm_range: 5
 rewnorm_range: 5
 
-logdir: "./logs/spdqn/"
-modeldir: "./models/spdqn/"
+log_dir: "./logs/spdqn/"
+model_dir: "./models/spdqn/"
 
 vectorize: NOREQUIRED

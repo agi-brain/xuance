@@ -34,5 +34,5 @@ test_period: 100
 use_advnorm: False
 use_gae: True
 
-logdir: "./logs/vdac/"
-modeldir: "./models/vdac/"
+log_dir: "./logs/vdac/"
+model_dir: "./models/vdac/"

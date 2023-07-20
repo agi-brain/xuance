@@ -14,6 +14,7 @@ class StarCraft2_Env:
         self.dim_state = env_info["state_shape"]
         self.dim_obs = env_info["obs_shape"]
         self.dim_act = self.n_actions = env_info["n_actions"]
+        self.dim_reward = 1
         self.max_cycles = env_info["episode_limit"]
         self._episode_step = 0
         self._episode_score = 0

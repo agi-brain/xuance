@@ -62,10 +62,10 @@ class WQMIX_Agents(MARLAgents):
                                           config.buffer_size,
                                           config.batch_size)
         learner = WQMIX_Learner(config, policy, optimizer, scheduler,
-                                config.device, config.modeldir, config.gamma,
+                                config.device, config.model_dir, config.gamma,
                                 config.sync_frequency)
         super(WQMIX_Agents, self).__init__(config, envs, policy, memory, learner, device,
-                                           config.logdir, config.modeldir)
+                                           config.log_dir, config.model_dir)
 
     def act(self, obs_n, *rnn_hidden, avail_actions=None, test_mode=False):
         batch_size = obs_n.shape[0]

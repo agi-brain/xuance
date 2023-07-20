@@ -35,5 +35,5 @@ rewnorm_range: 5
 test_steps: 10000
 eval_interval: 10000
 test_episode: 1
-logdir: "./logs/dueldqn/"
-modeldir: "./models/dueldqn/"
+log_dir: "./logs/dueldqn/"
+model_dir: "./models/dueldqn/"

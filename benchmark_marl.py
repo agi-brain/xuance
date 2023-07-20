@@ -4,9 +4,9 @@ from xuanpolicy import get_runner
 
 def parse_args():
     parser = argparse.ArgumentParser("Run an MARL demo.")
-    parser.add_argument("--method", type=str, default=["mfq", "mfq"])
-    parser.add_argument("--env", type=str, default="magent2")
-    parser.add_argument("--env-id", type=str, default="adversarial_pursuit_v4")
+    parser.add_argument("--method", type=str, default="iql")
+    parser.add_argument("--env", type=str, default="football")
+    parser.add_argument("--env-id", type=str, default="3v1")
     parser.add_argument("--test", type=int, default=0)
     parser.add_argument("--device", type=str, default="cuda:0")
     return parser.parse_args()

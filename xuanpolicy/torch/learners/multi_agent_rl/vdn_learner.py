@@ -14,7 +14,7 @@ class VDN_Learner(LearnerMAS):
                  optimizer: torch.optim.Optimizer,
                  scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
                  device: Optional[Union[int, str, torch.device]] = None,
-                 modeldir: str = "./",
+                 model_dir: str = "./",
                  gamma: float = 0.99,
                  sync_frequency: int = 100
                  ):
@@ -22,7 +22,7 @@ class VDN_Learner(LearnerMAS):
         self.sync_frequency = sync_frequency
         self.use_recurrent = config.use_recurrent
         self.mse_loss = nn.MSELoss()
-        super(VDN_Learner, self).__init__(config, policy, optimizer, scheduler, device, modeldir)
+        super(VDN_Learner, self).__init__(config, policy, optimizer, scheduler, device, model_dir)
 
     def update(self, sample):
         self.iterations += 1

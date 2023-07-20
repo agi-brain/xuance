@@ -41,14 +41,14 @@ class Pettingzoo_Runner(Runner_Base):
 
                 if arg.logger == "tensorboard":
                     time_string = time.asctime().replace(" ", "").replace(":", "_")
-                    log_dir = os.path.join(os.getcwd(), arg.logdir) + "/" + time_string
+                    log_dir = os.path.join(os.getcwd(), arg.log_dir) + "/" + time_string
                     if not os.path.exists(log_dir):
                         os.makedirs(log_dir)
                     self.writer = SummaryWriter(log_dir)
                     self.use_wandb = False
                 elif arg.logger == "wandb":
                     config_dict = vars(arg)
-                    wandb_dir = Path(os.path.join(os.getcwd(), arg.logdir))
+                    wandb_dir = Path(os.path.join(os.getcwd(), arg.log_dir))
                     if not wandb_dir.exists():
                         os.makedirs(str(wandb_dir))
                     wandb.init(config=config_dict,
@@ -75,7 +75,7 @@ class Pettingzoo_Runner(Runner_Base):
         for h, arg in enumerate(self.args):
             arg.handle_name = self.envs.envs[0].side_names[h]
             if self.n_handles > 1 and arg.agent != "RANDOM":
-                arg.modeldir += "{}/".format(arg.handle_name)
+                arg.model_dir += "{}/".format(arg.handle_name)
             arg.handle, arg.n_agents = h, self.envs.n_agents[h]
             arg.agent_keys, arg.agent_ids = self.agent_keys[h], self.agent_ids[h]
             arg.state_space = self.envs.state_space
@@ -96,7 +96,7 @@ class Pettingzoo_Runner(Runner_Base):
             self.marl_agents.append(REGISTRY_Agent[arg.agent](arg, self.envs, arg.device))
             self.marl_names.append(arg.agent)
             if arg.test_mode:
-                self.marl_agents[h].load_model(arg.modeldir)
+                self.marl_agents[h].load_model(arg.model_dir)
 
         self.print_infos(self.args)
 
@@ -326,7 +326,7 @@ class Pettingzoo_Runner(Runner_Base):
                 return make_envs(args_test)
             self.render = True
             for h, mas_group in enumerate(self.marl_agents):
-                mas_group.load_model(mas_group.modeldir)
+                mas_group.load_model(mas_group.model_dir)
             self.test_episode(env_fn)
             print("Finish testing.")
         else:

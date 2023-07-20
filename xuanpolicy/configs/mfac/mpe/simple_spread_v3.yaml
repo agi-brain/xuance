@@ -35,5 +35,5 @@ test_period: 100
 use_advnorm: False
 use_gae: True
 
-logdir: "./logs/mfac/"
-modeldir: "./models/mfac/"
+log_dir: "./logs/mfac/"
+model_dir: "./models/mfac/"

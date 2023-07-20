@@ -12,8 +12,8 @@ class Agent(ABC):
                  memory: Buffer,
                  learner: Learner,
                  device: Optional[Union[str, int, torch.device]] = None,
-                 logdir: str = "./logs/",
-                 modeldir: str = "./models/",
+                 log_dir: str = "./logs/",
+                 model_dir: str = "./models/",
                  ):
         self.config = config
         self.envs = envs
@@ -34,14 +34,14 @@ class Agent(ABC):
         # logger
         if config.logger == "tensorboard":
             time_string = time.asctime().replace(" ", "").replace(":", "_")
-            log_dir = os.path.join(os.getcwd(), config.logdir) + "/" + time_string
+            log_dir = os.path.join(os.getcwd(), config.log_dir) + "/" + time_string
             if not os.path.exists(log_dir):
                 os.makedirs(log_dir)
             self.writer = SummaryWriter(log_dir)
             self.use_wandb = False
         elif config.logger == "wandb":
             config_dict = vars(config)
-            wandb_dir = Path(os.path.join(os.getcwd(), config.logdir))
+            wandb_dir = Path(os.path.join(os.getcwd(), config.log_dir))
             if not wandb_dir.exists():
                 os.makedirs(str(wandb_dir))
             wandb.init(config=config_dict,
@@ -60,10 +60,10 @@ class Agent(ABC):
             raise "No logger is implemented."
 
         self.device = device
-        self.logdir = logdir
-        self.modeldir = modeldir
-        create_directory(logdir)
-        create_directory(modeldir)
+        self.log_dir = log_dir
+        self.model_dir = model_dir
+        create_directory(log_dir)
+        create_directory(model_dir)
         self.current_step = 0
         self.current_episode = np.zeros((self.envs.num_envs,), np.int32)
 

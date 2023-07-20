@@ -14,14 +14,14 @@ class MAPPO_Clip_Learner(LearnerMAS):
                  optimizer: torch.optim.Optimizer,
                  scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
                  device: Optional[Union[int, str, torch.device]] = None,
-                 modeldir: str = "./",
+                 model_dir: str = "./",
                  gamma: float = 0.99,
                  ):
         self.gamma = gamma
         self.clip_range = config.clip_range
         self.value_clip_range = config.value_clip_range
         self.mse_loss = nn.MSELoss()
-        super(MAPPO_Clip_Learner, self).__init__(config, policy, optimizer, scheduler, device, modeldir)
+        super(MAPPO_Clip_Learner, self).__init__(config, policy, optimizer, scheduler, device, model_dir)
 
     def update(self, sample):
         self.iterations += 1

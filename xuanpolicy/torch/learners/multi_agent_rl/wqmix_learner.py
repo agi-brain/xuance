@@ -14,7 +14,7 @@ class WQMIX_Learner(LearnerMAS):
                  optimizer: torch.optim.Optimizer,
                  scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
                  device: Optional[Union[int, str, torch.device]] = None,
-                 modeldir: str = "./",
+                 model_dir: str = "./",
                  gamma: float = 0.99,
                  sync_frequency: int = 100
                  ):
@@ -22,7 +22,7 @@ class WQMIX_Learner(LearnerMAS):
         self.gamma = gamma
         self.sync_frequency = sync_frequency
         self.mse_loss = nn.MSELoss()
-        super(WQMIX_Learner, self).__init__(config, policy, optimizer, scheduler, device, modeldir)
+        super(WQMIX_Learner, self).__init__(config, policy, optimizer, scheduler, device, model_dir)
 
     def update(self, sample):
         self.iterations += 1

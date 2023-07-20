@@ -8,12 +8,12 @@ class SPDQN_Learner(Learner):
                  schedulers: Sequence[torch.optim.lr_scheduler._LRScheduler],
                  summary_writer: Optional[SummaryWriter] = None,
                  device: Optional[Union[int, str, torch.device]] = None,
-                 modeldir: str = "./",
+                 model_dir: str = "./",
                  gamma: float = 0.99,
                  tau: float = 0.01):
         self.tau = tau
         self.gamma = gamma
-        super(SPDQN_Learner, self).__init__(policy, optimizers, schedulers, summary_writer, device, modeldir)
+        super(SPDQN_Learner, self).__init__(policy, optimizers, schedulers, summary_writer, device, model_dir)
 
     def update(self, obs_batch, act_batch, rew_batch, next_batch, terminal_batch):
         self.iterations += 1

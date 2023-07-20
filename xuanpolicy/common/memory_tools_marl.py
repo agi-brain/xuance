@@ -88,7 +88,7 @@ class MARL_OffPolicyBuffer_RNN(BaseBuffer, ABC):
         self.data = {
             'obs': np.zeros((self.buffer_size, self.n_agents, self.max_episode_length + 1, dim_obs), np.float),
             'actions': np.zeros((self.buffer_size, self.n_agents, self.max_episode_length), np.int),
-            'rewards': np.zeros((self.buffer_size, self.max_episode_length, 1), np.float),
+            'rewards': np.zeros((self.buffer_size, self.max_episode_length) + rew_space, np.float),
             'terminals': np.zeros((self.buffer_size, self.max_episode_length, 1), np.bool),
             'avail_actions': np.ones((self.buffer_size, self.n_agents, self.max_episode_length + 1, dim_act), np.bool),
             'filled': np.zeros((self.buffer_size, self.max_episode_length, 1)).astype(np.bool)

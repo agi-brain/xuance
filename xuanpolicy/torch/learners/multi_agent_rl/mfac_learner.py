@@ -16,13 +16,13 @@ class MFAC_Learner(LearnerMAS):
                  optimizer: Sequence[torch.optim.Optimizer],
                  scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
                  device: Optional[Union[int, str, torch.device]] = None,
-                 modeldir: str = "./",
+                 model_dir: str = "./",
                  gamma: float = 0.99,
                  ):
         self.gamma = gamma
         self.tau = config.tau
         self.mse_loss = nn.MSELoss()
-        super(MFAC_Learner, self).__init__(config, policy, optimizer, scheduler, device, modeldir)
+        super(MFAC_Learner, self).__init__(config, policy, optimizer, scheduler, device, model_dir)
         self.optimizer = {
             'actor': optimizer[0],
             'critic': optimizer[1]

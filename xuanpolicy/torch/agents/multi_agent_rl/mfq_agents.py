@@ -42,10 +42,10 @@ class MFQ_Agents(MARLAgents):
                                            config.buffer_size,
                                            config.batch_size)
         learner = MFQ_Learner(config, policy, optimizer, scheduler,
-                              config.device, config.modeldir, config.gamma,
+                              config.device, config.model_dir, config.gamma,
                               config.sync_frequency)
         super(MFQ_Agents, self).__init__(config, envs, policy, memory, learner, device,
-                                         config.logdir, config.modeldir)
+                                         config.log_dir, config.model_dir)
 
     def act(self, obs_n, *rnn_hidden, test_mode=False, act_mean=None, agent_mask=None):
         batch_size = obs_n.shape[0]

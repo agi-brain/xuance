@@ -12,14 +12,13 @@ class IQL_Learner(LearnerMAS):
                  optimizer: torch.optim.Optimizer,
                  scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
                  device: Optional[Union[int, str, torch.device]] = None,
-                 modeldir: str = "./",
+                 model_dir: str = "./",
                  gamma: float = 0.99,
-                 sync_frequency: int = 100
-                 ):
+                 sync_frequency: int = 100):
         self.gamma = gamma
         self.sync_frequency = sync_frequency
         self.mse_loss = nn.MSELoss()
-        super(IQL_Learner, self).__init__(config, policy, optimizer, scheduler, device, modeldir)
+        super(IQL_Learner, self).__init__(config, policy, optimizer, scheduler, device, model_dir)
 
     def update(self, sample):
         self.iterations += 1
@@ -69,7 +68,7 @@ class IQL_Learner(LearnerMAS):
         self.iterations += 1
         obs = torch.Tensor(sample['obs']).to(self.device)
         actions = torch.Tensor(sample['actions']).to(self.device)
-        rewards = torch.Tensor(sample['rewards']).to(self.device)
+        rewards = torch.Tensor(sample['rewards']).mean(dim=-1, keepdims=True).to(self.device)
         terminals = torch.Tensor(sample['terminals']).float().to(self.device)
         avail_actions = torch.Tensor(sample['avail_actions']).float().to(self.device)
         filled = torch.Tensor(sample['filled']).float().to(self.device)

@@ -12,8 +12,8 @@ class MARLAgents(object):
                  memory: BaseBuffer,
                  learner: LearnerMAS,
                  device: Optional[Union[str, int, torch.device]] = None,
-                 logdir: str = "./logs/",
-                 modeldir: str = "./models/",
+                 log_dir: str = "./logs/",
+                 model_dir: str = "./models/",
                  ):
         self.args = config
         # self.handle = config.handle
@@ -34,10 +34,10 @@ class MARLAgents(object):
         self.memory = memory
         self.learner = learner
         self.device = device
-        self.logdir = logdir
-        self.modeldir = modeldir
-        create_directory(logdir)
-        create_directory(modeldir)
+        self.log_dir = log_dir
+        self.model_dir = model_dir
+        create_directory(log_dir)
+        create_directory(model_dir)
 
     def save_model(self, model_name):
         self.learner.save_model(model_name)

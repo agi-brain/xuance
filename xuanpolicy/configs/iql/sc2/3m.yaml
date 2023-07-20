@@ -44,5 +44,5 @@ grad_clip_norm: 0.5
 
 eval_interval: 10000
 test_episode: 20
-logdir: "./logs/iql/"
-modeldir: "./models/iql/"
+log_dir: "./logs/iql/"
+model_dir: "./models/iql/"

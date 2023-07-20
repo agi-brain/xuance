@@ -35,5 +35,5 @@ n_tests: 5
 test_episodes: 10
 eval_interval: 100000
 test_episode: 5
-logdir: "./logs/maddpg/"
-modeldir: "./models/maddpg/"
+log_dir: "./logs/maddpg/"
+model_dir: "./models/maddpg/"

@@ -4,5 +4,5 @@ env_id: "simple_push_v3"
 learner: "RANDOM"
 runner: "MARL"
 
-modeldir: ""
-logdir: ""
+model_dir: ""
+log_dir: ""

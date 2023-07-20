@@ -37,10 +37,11 @@ class NoisyDQN_Agent(Agent):
                               optimizer,
                               scheduler,
                               config.device,
-                              config.modeldir,
+                              config.model_dir,
                               config.gamma,
                               config.sync_frequency)
-        super(NoisyDQN_Agent, self).__init__(config, envs, policy, memory, learner, device, config.logdir, config.modeldir)
+        super(NoisyDQN_Agent, self).__init__(config, envs, policy, memory, learner, device,
+                                             config.log_dir, config.model_dir)
 
     def _action(self, obs):
         self.policy.noise_scale = self.noise_scale

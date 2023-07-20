@@ -13,12 +13,12 @@ class VDAC_Learner(LearnerMAS):
                  optimizer: torch.optim.Optimizer,
                  scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
                  device: Optional[Union[int, str, torch.device]] = None,
-                 modeldir: str = "./",
+                 model_dir: str = "./",
                  gamma: float = 0.99,
                  ):
         self.gamma = gamma
         self.mse_loss = nn.MSELoss()
-        super(VDAC_Learner, self).__init__(config, policy, optimizer, scheduler, device, modeldir)
+        super(VDAC_Learner, self).__init__(config, policy, optimizer, scheduler, device, model_dir)
 
     def update(self, sample):
         self.iterations += 1

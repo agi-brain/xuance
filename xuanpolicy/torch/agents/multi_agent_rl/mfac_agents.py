@@ -42,9 +42,9 @@ class MFAC_Agents(MARLAgents):
                                           config.nminibatch,
                                           config.use_gae, config.use_advnorm, config.gamma, config.lam)
         learner = MFAC_Learner(config, policy, optimizer, scheduler,
-                               config.device, config.modeldir, config.gamma)
+                               config.device, config.model_dir, config.gamma)
         super(MFAC_Agents, self).__init__(config, envs, policy, memory, learner, device,
-                                          config.logdir, config.modeldir)
+                                          config.log_dir, config.model_dir)
 
     def act(self, obs_n, episode, test_mode, act_mean=None, agent_mask=None, noise=False):
         batch_size = len(obs_n)

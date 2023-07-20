@@ -41,9 +41,9 @@ class MADDPG_Agents(MARLAgents):
                                       config.buffer_size,
                                       config.batch_size)
         learner = MADDPG_Learner(config, policy, optimizer, scheduler,
-                                 config.device, config.modeldir, config.gamma)
+                                 config.device, config.model_dir, config.gamma)
         super(MADDPG_Agents, self).__init__(config, envs, policy, memory, learner, device,
-                                            config.logdir, config.modeldir)
+                                            config.log_dir, config.model_dir)
 
     def act(self, obs_n, test_mode):
         batch_size = len(obs_n)

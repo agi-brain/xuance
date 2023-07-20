@@ -44,5 +44,5 @@ rewnorm_range: 5
 test_steps: 10000
 eval_interval: 12500
 test_episode: 3
-logdir: "./logs/ppo/"
-modeldir: "./models/ppo/"
+log_dir: "./logs/ppo/"
+model_dir: "./models/ppo/"

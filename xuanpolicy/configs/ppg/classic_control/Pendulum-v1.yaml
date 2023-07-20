@@ -32,5 +32,5 @@ rewnorm_range: 5
 test_steps: 10000
 eval_interval: 5000
 test_episode: 1
-logdir: "./logs/ppg/"
-modeldir: "./models/ppg/"
+log_dir: "./logs/ppg/"
+model_dir: "./models/ppg/"

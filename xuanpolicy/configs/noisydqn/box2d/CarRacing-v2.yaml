@@ -35,5 +35,5 @@ rewnorm_range: 5
 test_steps: 10000
 eval_interval: 10000
 test_episode: 1
-logdir: "./logs/noisy_dqn/"
-modeldir: "./models/noisy_dqn/"
+log_dir: "./logs/noisy_dqn/"
+model_dir: "./models/noisy_dqn/"

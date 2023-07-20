@@ -80,9 +80,10 @@ class DCG_Agents(MARLAgents):
                                           config.batch_size)
         from xuanpolicy.torch.learners.multi_agent_rl.dcg_learner import DCG_Learner
         learner = DCG_Learner(config, policy, optimizer, scheduler,
-                              config.device, config.modeldir, config.gamma,
+                              config.device, config.model_dir, config.gamma,
                               config.sync_frequency)
-        super(DCG_Agents, self).__init__(config, envs, policy, memory, learner, device, config.logdir, config.modeldir)
+        super(DCG_Agents, self).__init__(config, envs, policy, memory, learner, device,
+                                         config.log_dir, config.model_dir)
 
     def act(self, obs_n, *rnn_hidden, avail_actions=None, test_mode=False):
         obs_n = torch.Tensor(obs_n).to(self.device)

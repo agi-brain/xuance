@@ -15,6 +15,7 @@ class DummyVecEnv_StarCraft2(VecEnv):
         self.obs_shape = (env.n_agents, env.dim_obs)
         self.act_shape = (env.n_agents, env.n_actions)
         self.dim_obs, self.dim_state, self.dim_act = env.dim_obs, env.dim_state, env.dim_act
+        self.dim_reward = env.dim_reward
         self.action_space = Discrete(n=self.dim_act)
         self.state_space = Box(low=-np.inf, high=np.inf, shape=[self.dim_state, ])
         self.buf_obs = np.zeros(combined_shape(self.num_envs, self.obs_shape), dtype=np.float32)

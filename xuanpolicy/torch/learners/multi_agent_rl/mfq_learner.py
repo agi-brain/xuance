@@ -14,7 +14,7 @@ class MFQ_Learner(LearnerMAS):
                  optimizer: torch.optim.Optimizer,
                  scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
                  device: Optional[Union[int, str, torch.device]] = None,
-                 modeldir: str = "./",
+                 model_dir: str = "./",
                  gamma: float = 0.99,
                  sync_frequency: int = 100
                  ):
@@ -23,7 +23,7 @@ class MFQ_Learner(LearnerMAS):
         self.sync_frequency = sync_frequency
         self.mse_loss = nn.MSELoss()
         self.softmax = torch.nn.Softmax(dim=-1)
-        super(MFQ_Learner, self).__init__(config, policy, optimizer, scheduler, device, modeldir)
+        super(MFQ_Learner, self).__init__(config, policy, optimizer, scheduler, device, model_dir)
 
     def get_boltzmann_policy(self, q):
         return self.softmax(q / self.temperature)

@@ -11,17 +11,18 @@ class DummyVecEnv_GFootball(VecEnv):
         self.envs = [fn() for fn in env_fns]
         env = self.envs[0]
         VecEnv.__init__(self, len(env_fns), env.dim_obs, env.n_actions)
-        self.num_agents, self.num_enemies = env.n_agents, env.n_enemies
+        self.num_agents, self.num_adversaries = env.n_agents, env.n_adversaries
         self.obs_shape = (env.n_agents, env.dim_obs)
         self.act_shape = (env.n_agents, env.n_actions)
         self.dim_obs, self.dim_state, self.dim_act = env.dim_obs, env.dim_state, env.dim_act
+        self.dim_reward = env.dim_reward
         self.action_space = Discrete(n=self.dim_act)
         self.state_space = Box(low=-np.inf, high=np.inf, shape=[self.dim_state, ])
         self.buf_obs = np.zeros(combined_shape(self.num_envs, self.obs_shape), dtype=np.float32)
         self.buf_state = np.zeros(combined_shape(self.num_envs, self.dim_state), dtype=np.float32)
         self.buf_dones = np.zeros((self.num_envs, 1), dtype=np.bool)
         self.buf_trunctions = np.zeros((self.num_envs, 1), dtype=np.bool)
-        self.buf_rews = np.zeros((self.num_envs, 1), dtype=np.float32)
+        self.buf_rews = np.zeros((self.num_envs, self.num_agents, ), dtype=np.float32)
         self.buf_infos = [{} for _ in range(self.num_envs)]
         self.actions = None
         self.battles_game = np.zeros(self.num_envs, np.int32)
@@ -60,15 +61,12 @@ class DummyVecEnv_GFootball(VecEnv):
             raise NotSteppingError
         for e in range(self.num_envs):
             action = self.actions[e]
-            obs, state, self.buf_rews[e], self.buf_dones[e], self.buf_trunctions[e], self.buf_infos[e] = self.envs[
-                e].step(action)
+            obs, state, self.buf_rews[e], self.buf_dones[e], self.buf_trunctions[e], self.buf_infos[e] = self.envs[e].step(action)
             if self.buf_dones[e] or self.buf_trunctions[e]:
                 self.battles_game[e] += 1
-                if self.buf_infos[e]['battle_won']:
+                if self.buf_infos[e]['score_reward'] > 0:
                     self.battles_won[e] += 1
-                self.dead_allies_count[e] += self.buf_infos[e]['dead_allies']
-                self.dead_enemies_count[e] += self.buf_infos[e]['dead_enemies']
-                self.buf_infos[e]["avail_actions"] = np.array(self.envs[e].get_avail_actions())
+                self.buf_infos[e]["avail_actions"] = np.ones([self.num_agents, self.dim_act], dtype=np.bool)
                 obs_reset, state_reset, _ = self.envs[e].reset()
                 self.buf_infos[e]["reset_obs"] = np.array(obs_reset)
                 self.buf_infos[e]["reset_state"] = np.array(state_reset)
@@ -88,10 +86,7 @@ class DummyVecEnv_GFootball(VecEnv):
         return [env.render("rgb_array") for env in self.envs]
 
     def render(self, mode):
-        return [env.render(mode) for env in self.envs]
+        return [env.render() for env in self.envs]
 
     def get_avail_actions(self):
-        available_actions = []
-        for i_env, env in enumerate(self.envs):
-            available_actions.append(env.get_avail_actions())
-        return np.array(available_actions)
+        return np.ones([self.num_envs, self.num_agents, self.dim_act], dtype=np.bool)
