@@ -82,13 +82,6 @@ class VecEnv(ABC):
         pass
 
     @abstractmethod
-    def get_images(self):
-        """
-        Return RGB images from each environment
-        """
-        pass
-
-    @abstractmethod
     def close_extras(self):
         """
         Clean up the  extra resources, beyond what's in this base class.
@@ -101,15 +94,7 @@ class VecEnv(ABC):
         return self.step_wait()
 
     def render(self, mode):
-        imgs = self.get_images()
-        big_img = tile_images(imgs)
-        if mode == "human":
-            cv2.imshow("render", cv2.cvtColor(big_img, cv2.COLOR_RGB2BGR))
-            cv2.waitKey(1)
-        elif mode == "rgb_array":
-            return imgs
-        else:
-            raise NotImplementedError
+        raise NotImplementedError
 
     def close(self):
         if self.closed == True:

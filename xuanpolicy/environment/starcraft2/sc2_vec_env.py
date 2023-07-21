@@ -84,9 +84,6 @@ class DummyVecEnv_StarCraft2(VecEnv):
         for env in self.envs:
             env.close()
 
-    def get_images(self):
-        return [env.render("rgb_array") for env in self.envs]
-
     def render(self, mode):
         return [env.render(mode) for env in self.envs]
 

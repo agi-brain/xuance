@@ -254,8 +254,8 @@ class SC2_Runner(Runner_Base):
         if self.args.test_mode:
             arg_test = deepcopy(self.args)
             arg_test.parallels = 1
+            self.render = arg_test.render = True
             self.test_envs = make_envs(arg_test)
-            self.render = True
             n_test_episodes = self.args.test_episode
             self.agents.load_model(self.agents.model_dir)
             self.test_episode(n_test_episodes)

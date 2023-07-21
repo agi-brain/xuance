@@ -1,12 +1,4 @@
-import copy
-import os
-import socket
-from pathlib import Path
-from .runner_sc2 import SC2_Runner, make_envs
-from xuanpolicy.torch.agents import REGISTRY as REGISTRY_Agent
-import wandb
-from torch.utils.tensorboard import SummaryWriter
-import time
+from .runner_sc2 import SC2_Runner
 import numpy as np
 from copy import deepcopy
 from tqdm import tqdm
@@ -15,6 +7,7 @@ from tqdm import tqdm
 class Football_Runner(SC2_Runner):
     def __init__(self, args):
         self.num_agents, self.num_adversaries = 0, 0
+        args.render = False
         super(Football_Runner, self).__init__(args)
         self.episode_buffer = {
             'obs': np.zeros((self.n_envs, self.num_agents, self.episode_length + 1, self.dim_obs), dtype=np.float32),
@@ -89,13 +82,8 @@ class Football_Runner(SC2_Runner):
 
     def test_episode(self, n_episodes):
         num_envs = self.test_envs.num_envs
-        videos, episode_videos = [[] for _ in range(n_episodes)], []
         episode_score = []
         obs_n, state, infos = self.test_envs.reset()
-        if self.args.render_mode == "rgb_array" and self.render:
-            images = self.test_envs.render(self.args.render_mode)
-            for idx, img in enumerate(images):
-                videos[idx].append(img)
         best_score = -np.inf
 
         rnn_hidden = self.agents.policy.representation.init_hidden(num_envs)
@@ -105,10 +93,6 @@ class Football_Runner(SC2_Runner):
                 available_actions = self.test_envs.get_avail_actions()
                 actions_dict = self.get_actions(obs_n, available_actions, *rnn_hidden, test_mode=True)
                 next_obs_n, next_state, rewards, terminated, truncated, info = self.test_envs.step(actions_dict['actions_n'])
-                if self.args.render_mode == "rgb_array" and self.render:
-                    images = self.test_envs.render(self.args.render_mode)
-                    for idx, img in enumerate(images):
-                        videos[idx].append(img)
 
                 rnn_hidden = actions_dict['rnn_hidden']
                 obs_n, state = deepcopy(next_obs_n), deepcopy(next_state)
@@ -120,7 +104,6 @@ class Football_Runner(SC2_Runner):
                         episode_score.append(info[i_env]["episode_score"])
                         if best_score < episode_score[-1]:
                             best_score = episode_score[-1]
-                            episode_videos = videos[i_env].copy()
 
         episode_score = np.array(episode_score)
         scores_mean = np.mean(episode_score)
@@ -131,11 +114,6 @@ class Football_Runner(SC2_Runner):
 
         if self.args.test_mode:
             print("Mean score: %.4f, Test Win Rate: %.4f." % (scores_mean, win_rate))
-
-        # if self.args.render_mode == "rgb_array" and self.render:
-        #     # time, height, width, channel -> time, channel, height, width
-        #     videos_info = {"Videos_Test": np.array([episode_videos], dtype=np.uint8).transpose((0, 1, 4, 2, 3))}
-        #     self.log_videos(info=videos_info, fps=self.fps, x_index=self.current_step)
 
         test_info = {
             "Test-Results/Mean-Episode-Rewards": scores_mean,

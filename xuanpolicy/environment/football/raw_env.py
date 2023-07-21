@@ -9,11 +9,19 @@ import numpy as np
 class football_raw_env(FootballEnv):
     def __init__(self, args):
         write_goal_dumps = False
-        write_full_episode_dumps = False
+        dump_frequency = 1
         extra_players = None
-        write_video = False
         other_config_options = {}
         self.env_id = GFOOTBALL_ENV_ID[args.env_id]
+        if args.render:
+            write_full_episode_dumps = True
+            render = True
+            write_video = True
+        else:
+            write_full_episode_dumps = False
+            render = False
+            write_video = False
+
         self.env = football_env.create_environment(
             env_name=self.env_id,
             stacked=args.use_stacked_frames,
@@ -21,9 +29,9 @@ class football_raw_env(FootballEnv):
             rewards=args.rewards_type,
             write_goal_dumps=write_goal_dumps,
             write_full_episode_dumps=write_full_episode_dumps,
-            render=False,
+            render=render,
             write_video=write_video,
-            dump_frequency=1,
+            dump_frequency=dump_frequency,
             logdir=args.videos_dir,
             extra_players=extra_players,
             number_of_left_players_agent_controls=args.num_agent,

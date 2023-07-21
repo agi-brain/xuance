@@ -1,4 +1,4 @@
-agent: "IQL"  # the learning algorithms_marl
+agent: "VDN"  # the learning algorithms_marl
 global_state: False
 # environment settings
 env_name: "Football"
@@ -11,7 +11,7 @@ rewards_type: "scoring,checkpoints"  # comma separated list of rewards to be add
 smm_width: 96  # width of super minimap
 smm_height: 72  # height of super minimap
 fps: 15
-policy: "Basic_Q_network_marl"
+policy: "Mixing_Q_network"
 representation: "Basic_RNN"
 vectorize: "Dummy_Football"
 runner: "Football_Runner"
@@ -52,6 +52,6 @@ grad_clip_norm: 0.5
 
 eval_interval: 250000
 test_episode: 20
-log_dir: "./logs/iql/"
-model_dir: "./models/iql/"
-videos_dir: "./videos/iql/"
+log_dir: "./logs/vdn/"
+model_dir: "./models/vdn/"
+videos_dir: "./videos/vdn/"

@@ -30,7 +30,7 @@ end_greedy: 0.05
 decay_step_greedy: 1000000  # 1M
 sync_frequency: 500
 training_frequency: 1
-running_steps: 50000000  # 10M
+running_steps: 50000000  # 50M
 start_training: 10000
 
 use_obsnorm: False
@@ -42,7 +42,7 @@ PER_alpha: 0.5
 PER_beta0: 0.4
 
 test_steps: 10000
-eval_interval: 100000
+eval_interval: 500000
 test_episode: 1
 log_dir: "./logs/perdqn/"
 model_dir: "./models/perdqn/"

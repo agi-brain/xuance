@@ -51,11 +51,11 @@ class MADDPG_Agents(MARLAgents):
         _, actions = self.policy(torch.Tensor(obs_n), agents_id)
         actions = actions.cpu().detach().numpy()
         if test_mode:
-            return actions
+            return None, actions
         else:
             actions += np.random.normal(0, self.args.sigma, size=actions.shape)
             actions = np.clip(actions, self.actions_low, self.actions_high)
-            return actions
+            return None, actions
 
     def train(self, i_episode):
         sample = self.memory.sample()

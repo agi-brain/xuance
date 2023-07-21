@@ -84,9 +84,8 @@ class LearnerMAS(ABC):
     def update(self, *args):
         raise NotImplementedError
 
-    @abstractmethod
     def update_recurrent(self, *args):
-        return
+        pass
 
     def act(self, *args, **kwargs):
         pass
