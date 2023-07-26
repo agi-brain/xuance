@@ -1,10 +1,12 @@
 agent: "MAPPO"
 env_name: "StarCraft2"
 env_id: "3m"
-policy: "Categorical_MAPPO_policy"
+fps: 15
+policy: "Categorical_MAAC_Policy"
 representation: "Basic_RNN"
 vectorize: "Dummy_StarCraft2"
 runner: "StarCraft2_Runner"
+on_policy: True
 
 # recurrent settings for Basic_RNN representation
 use_recurrent: True
@@ -15,40 +17,41 @@ recurrent_hidden_size: 64
 N_recurrent_layers: 1
 dropout: 0
 
-representation_hidden_size: [32, ]  # the units for each hidden layer
-actor_hidden_size: [128, ]
+representation_hidden_size: [64, ]  # the units for each hidden layer
+actor_hidden_size: [64, ]
 critic_hidden_size: [256, ]
+activation: "ReLU"
 
 seed: 1
 parallels: 1
-training_steps: 20000
-training_frequency: 1
-nsteps: 256
-nepoch: 5
-nminibatch: 2
+n_size: 40
+n_epoch: 10
 learning_rate: 0.001
 
 vf_coef: 0.5
 ent_coef: 0.01
 target_kl: 0.25
-clip_grad: 0.5
+clip_range: 0.2
 clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
-clip_range: 0.2  # ratio clip range
 gamma: 0.95  # discount factor
-lam: 0.95
-
-n_tests: 5
-test_period: 100
 
 # tricks
-gae_lambda: 0.95
-use_grad_norm: True  # trick 2: gradient normalization
+use_centralized_V: True  # a centralized critic network that take all features as input
+use_grad_norm: True  # gradient normalization
+clip_grad: 0.5
 max_grad_norm: 0.5
-use_value_clip: True  # trick 3: limit the value range
-value_clip_range: 0.1
-
-use_advnorm: False
+use_value_clip: True  # limit the value range
+value_clip_range: 0.2
+use_advnorm: True
 use_gae: True
+gae_lambda: 0.95
 
+start_training: 1
+running_steps: 1000000
+train_per_step: True
+training_frequency: 1
+
+eval_interval: 10000
+test_episode: 20
 log_dir: "./logs/mappo/"
 model_dir: "./models/mappo/"

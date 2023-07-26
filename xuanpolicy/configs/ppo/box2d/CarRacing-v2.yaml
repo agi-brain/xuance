@@ -15,13 +15,12 @@ activation: "ReLU"
 
 seed: 1
 parallels: 2
-running_steps: 30000
-nsteps: 256
-nepoch: 8
-nminibatch: 8
+running_steps: 300000
+n_steps: 256
+n_epoch: 8
+n_minibatch: 8
 learning_rate: 0.0004
 
-use_gae: True
 use_grad_clip: True
 
 vf_coef: 0.25
@@ -29,7 +28,9 @@ ent_coef: 0.01
 clip_range: 0.2
 clip_grad_norm: 0.5
 gamma: 0.99
-gae_lam: 0.95  # gae_lambda: Lambda parameter for calculating N-step advantage
+use_gae: True
+gae_lambda: 0.95  # gae_lambda: Lambda parameter for calculating N-step advantage
+use_advnorm: True
 
 use_obsnorm: False
 use_rewnorm: False
@@ -37,7 +38,7 @@ obsnorm_range: 5
 rewnorm_range: 5
 
 test_steps: 10000
-eval_interval: 5000
+eval_interval: 50000
 test_episode: 3
 log_dir: "./logs/ppo/"
 model_dir: "./models/ppo/"

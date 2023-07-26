@@ -20,8 +20,8 @@ activation: "ReLU"
 
 seed: 1069
 parallels: 5
-nsize: 100000
-batchsize: 32  # 64
+n_size: 100000
+batch_size: 32  # 64
 learning_rate: 0.0001
 gamma: 0.99
 
@@ -39,7 +39,7 @@ obsnorm_range: 5
 rewnorm_range: 5
 
 test_steps: 10000
-save_model_frequency: 50000
+save_model_frequency: 500000
 test_episode: 1
 log_dir: "./logs/dueldqn/"
 model_dir: "./models/dueldqn/"

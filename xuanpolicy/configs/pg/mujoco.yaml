@@ -8,18 +8,21 @@ representation_hidden_size: [256,]
 actor_hidden_size: [256,]
 activation: "LeakyReLU"
 
+seed: 1
 parallels: 16
 running_steps: 1000000  # 1M
-nsteps: 256
-nepoch: 1
-nminibatch: 1 
+n_steps: 256
+n_epoch: 1
+n_minibatch: 1
 learning_rate: 0.0007
 
 ent_coef: 0.0
 clip_grad: 0.5
 clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
 gamma: 0.99
-lam: 0.95
+use_gae: False
+gae_lambda: 0.95
+use_advnorm: False
 
 use_obsnorm: True
 use_rewnorm: True
@@ -27,7 +30,7 @@ obsnorm_range: 5
 rewnorm_range: 5
 
 test_steps: 10000
-eval_interval: 5000
+eval_interval: 50000
 test_episode: 5
 log_dir: "./logs/pg/"
 model_dir: "./models/pg/"

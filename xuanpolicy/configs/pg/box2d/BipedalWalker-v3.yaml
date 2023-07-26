@@ -8,17 +8,21 @@ representation_hidden_size: [128,]
 actor_hidden_size: [128,]
 activation: 'ReLU'
 
+seed: 1
+parallels: 10
 running_steps: 100000
-nsteps: 1024
-nepoch: 3
-nminibatch: 1
+n_steps: 1024
+n_epoch: 3
+n_minibatch: 1
 learning_rate: 0.0004
 
 ent_coef: 0.01
 clip_grad: 0.5
 clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
 gamma: 0.98
-lam: 0.95
+use_gae: False
+gae_lambda: 0.95
+use_advnorm: False
 
 use_obsnorm: True
 use_rewnorm: True

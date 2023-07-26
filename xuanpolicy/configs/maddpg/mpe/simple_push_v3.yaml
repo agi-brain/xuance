@@ -2,7 +2,7 @@ agent: "MADDPG"  # the learning algorithms_marl
 env_name: "mpe"
 env_id: "simple_push_v3"
 continuous_action: True
-policy: "MADDPG_policy"
+policy: "MADDPG_Policy"
 representation: "Basic_Identical"
 vectorize: "Dummy_MAS"
 runner: "MARL"

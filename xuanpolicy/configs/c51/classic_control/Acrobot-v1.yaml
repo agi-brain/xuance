@@ -8,8 +8,10 @@ representation_hidden_size: [128,]
 q_hidden_size: [128,]
 activation: 'ReLU'
 
-nsize: 20000
-batchsize: 256
+seed: 1
+parallels: 10
+n_size: 20000
+batch_size: 256
 learning_rate: 0.001
 gamma: 0.99
 vmin: 0
@@ -21,7 +23,7 @@ end_greedy: 0.01
 decay_step_greedy: 10000
 sync_frequency: 100
 training_frequency: 1
-running_steps: 20000
+running_steps: 300000
 start_training: 1000
 
 use_obsnorm: False
@@ -30,7 +32,7 @@ obsnorm_range: 5
 rewnorm_range: 5
 
 test_steps: 10000
-eval_interval: 5000
+eval_interval: 50000
 test_episode: 1
 log_dir: "./logs/c51/"
 model_dir: "./models/c51/"

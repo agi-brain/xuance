@@ -11,8 +11,8 @@ activation: "LeakyReLU"
 
 seed: 19089
 parallels: 4  # number of environments
-nsize: 50000  # replay buffer size
-batchsize: 256
+n_size: 50000  # replay buffer size
+batch_size: 256
 actor_learning_rate: 0.001
 critic_learning_rate: 0.001
 gamma: 0.99

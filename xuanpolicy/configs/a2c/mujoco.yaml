@@ -12,9 +12,9 @@ activation: "LeakyReLU"
 seed: 6782
 parallels: 16
 running_steps: 1000000  # 1M
-nsteps: 16
-nepoch: 1
-nminibatch: 1
+n_steps: 16
+n_epoch: 1
+n_minibatch: 1
 learning_rate: 0.0007
 
 vf_coef: 0.25
@@ -22,7 +22,9 @@ ent_coef: 0.0
 clip_grad: 0.5
 clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
 gamma: 0.99
-lam: 0.95
+use_gae: True
+gae_lambda: 0.95
+use_advnorm: True
 
 use_obsnorm: True
 use_rewnorm: True

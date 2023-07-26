@@ -9,11 +9,12 @@ actor_hidden_size: [256,]
 critic_hidden_size: [256,]
 activation: "LeakyReLU"
 
+seed: 1
 parallels: 16
 running_steps: 1000000  # 1M
-nsteps: 256
-nminibatch: 4
-nepoch: 2
+n_steps: 256
+n_minibatch: 4
+n_epoch: 1
 policy_nepoch: 2
 value_nepoch: 4
 aux_nepoch: 8
@@ -24,7 +25,9 @@ ent_coef: 0.0
 clip_range: 0.25
 kl_beta: 2.0
 gamma: 0.98
-lam: 0.95
+use_gae: True
+gae_lambda: 0.95
+use_advnorm: True
 
 use_obsnorm: True
 use_rewnorm: True
@@ -32,7 +35,7 @@ obsnorm_range: 5
 rewnorm_range: 5
 
 test_steps: 10000
-eval_interval: 5000
+eval_interval: 10000
 test_episode: 5
 log_dir: "./logs/ppg/"
 model_dir: "./models/ppg/"

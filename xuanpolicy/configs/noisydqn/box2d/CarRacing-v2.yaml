@@ -14,8 +14,8 @@ activation: 'ReLU'
 
 seed: 1
 parallels: 2
-nsize: 10000
-batchsize: 32
+n_size: 10000
+batch_size: 32
 learning_rate: 0.0001
 gamma: 0.99
 
@@ -24,7 +24,7 @@ end_noise: 0.0
 decay_step_noise: 200000
 sync_frequency: 500
 training_frequency: 1
-running_steps: 200000
+running_steps: 2000000
 start_training: 1000
 
 use_obsnorm: False
@@ -33,7 +33,7 @@ obsnorm_range: 5
 rewnorm_range: 5
 
 test_steps: 10000
-eval_interval: 10000
+eval_interval: 100000
 test_episode: 1
 log_dir: "./logs/noisy_dqn/"
 model_dir: "./models/noisy_dqn/"

@@ -8,8 +8,10 @@ representation_hidden_size: [256, ]
 q_hidden_size: [256, ]
 activation: 'LeakyReLU'
 
-nsize: 20000
-batchsize: 256
+seed: 1
+parallels: 10
+n_size: 20000
+batch_size: 256
 learning_rate: 0.1
 gamma: 0.99
 
@@ -26,7 +28,7 @@ obsnorm_range: 5
 rewnorm_range: 5
 
 test_steps: 10000
-eval_interval: 5000
+eval_interval: 50000
 test_episode: 5
 log_dir: "./logs/dqn/"
 model_dir: "./models/dqn/"

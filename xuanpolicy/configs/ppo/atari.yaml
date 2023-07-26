@@ -19,14 +19,14 @@ actor_hidden_size: []
 critic_hidden_size: []
 activation: "ReLU"
 
+seed: 1
 parallels: 8
 running_steps: 10000000  # 10M
-nsteps: 128
-nepoch: 4
-nminibatch: 4
+n_steps: 128
+n_epoch: 4
+n_minibatch: 4
 learning_rate: 0.00025
 
-use_gae: True
 use_grad_clip: True
 
 vf_coef: 0.25
@@ -34,7 +34,9 @@ ent_coef: 0.01
 clip_range: 0.2
 clip_grad_norm: 0.5
 gamma: 0.99
-gae_lam: 0.95  # gae_lambda: Lambda parameter for calculating N-step advantage
+use_gae: True
+gae_lambda: 0.95  # gae_lambda: Lambda parameter for calculating N-step advantage
+use_advnorm: True
 
 use_obsnorm: False
 use_rewnorm: False
@@ -42,7 +44,7 @@ obsnorm_range: 5
 rewnorm_range: 5
 
 test_steps: 10000
-eval_interval: 12500
+eval_interval: 100000
 test_episode: 3
 log_dir: "./logs/ppo/"
 model_dir: "./models/ppo/"

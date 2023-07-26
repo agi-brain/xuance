@@ -23,8 +23,8 @@ activation: 'ReLU'
 
 seed: 1
 parallels: 5
-nsize: 1000
-batchsize: 8  # batch size for training
+n_size: 1000
+batch_size: 8  # batch size for training
 learning_rate: 0.0001
 gamma: 0.99
 
@@ -43,7 +43,7 @@ obsnorm_range: 5
 rewnorm_range: 5
 
 test_steps: 10000
-eval_interval: 10000
+eval_interval: 100000
 test_episode: 1
 log_dir: "./logs/drqn/"
 model_dir: "./models/drqn/"

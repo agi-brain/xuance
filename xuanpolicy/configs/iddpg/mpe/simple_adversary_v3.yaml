@@ -11,6 +11,8 @@ representation_hidden_size: [32, ]  # the units for each hidden layer
 actor_hidden_size: [256, ]
 critic_hidden_size: [256, ]
 
+seed: 1
+parallels: 10
 lr_a: 0.01  # learning rate for actor
 lr_c: 0.001  # learning rate for critic
 tau: 0.001  # soft update for target networks
