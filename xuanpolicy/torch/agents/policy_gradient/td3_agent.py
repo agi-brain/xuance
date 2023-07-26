@@ -4,13 +4,13 @@ from xuanpolicy.torch.agents import *
 class TD3_Agent(Agent):
     def __init__(self,
                  config: Namespace,
-                 envs: VecEnv,
+                 envs: DummyVecEnv_Gym,
                  policy: nn.Module,
                  optimizer: Sequence[torch.optim.Optimizer],
                  scheduler: Optional[Sequence[torch.optim.lr_scheduler._LRScheduler]] = None,
                  device: Optional[Union[int, str, torch.device]] = None):
         self.render = config.render
-        self.nenvs = envs.num_envs
+        self.n_envs = envs.num_envs
 
         self.gamma = config.gamma
         self.train_frequency = config.training_frequency
@@ -21,16 +21,14 @@ class TD3_Agent(Agent):
 
         self.observation_space = envs.observation_space
         self.action_space = envs.action_space
-        self.representation_info_shape = policy.representation.output_shapes
         self.auxiliary_info_shape = {}
 
         memory = DummyOffPolicyBuffer(self.observation_space,
                                       self.action_space,
-                                      self.representation_info_shape,
                                       self.auxiliary_info_shape,
-                                      self.nenvs,
-                                      config.nsize,
-                                      config.batchsize)
+                                      self.n_envs,
+                                      config.n_size,
+                                      config.batch_size)
         learner = TD3_Learner(policy,
                               optimizer,
                               scheduler,
@@ -55,17 +53,18 @@ class TD3_Agent(Agent):
             obs = self._process_observation(obs)
             acts = self._action(obs, self.noise_scale)
             if self.current_step < self.start_training:
-                acts = [self.action_space.sample() for _ in range(self.nenvs)]
+                acts = [self.action_space.sample() for _ in range(self.n_envs)]
             next_obs, rewards, terminals, trunctions, infos = self.envs.step(acts)
             self.memory.store(obs, acts, self._process_reward(rewards), terminals, self._process_observation(next_obs))
             if self.current_step > self.start_training and self.current_step % self.train_frequency == 0:
                 obs_batch, act_batch, rew_batch, terminal_batch, next_batch = self.memory.sample()
                 step_info = self.learner.update(obs_batch, act_batch, rew_batch, next_batch, terminal_batch)
                 step_info["noise_scale"] = self.noise_scale
+                self.log_infos(step_info, self.current_step)
 
             self.returns = self.gamma * self.returns + rewards
             obs = next_obs
-            for i in range(self.nenvs):
+            for i in range(self.n_envs):
                 if terminals[i] or trunctions[i]:
                     obs[i] = infos[i]["reset_obs"]
                     self.ret_rms.update(self.returns[i:i + 1])
@@ -79,9 +78,9 @@ class TD3_Agent(Agent):
                         step_info["Train-Episode-Rewards"] = {"env-%d" % i: infos[i]["episode_score"]}
                     self.log_infos(step_info, self.current_step)
 
-            self.current_step += self.nenvs
+            self.current_step += self.n_envs
             if self.noise_scale >= self.end_noise:
-                self.noise_scale = self.noise_scale - (self.start_noise - self.end_noise) / self.config.training_steps
+                self.noise_scale = self.noise_scale - (self.start_noise - self.end_noise) / self.config.running_steps
 
     def test(self, env_fn, test_episodes):
         test_envs = env_fn()

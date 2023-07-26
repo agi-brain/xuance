@@ -4,19 +4,19 @@ from xuanpolicy.torch.agents import *
 class PG_Agent(Agent):
     def __init__(self,
                  config: Namespace,
-                 envs: VecEnv,
+                 envs: DummyVecEnv_Gym,
                  policy: nn.Module,
                  optimizer: torch.optim.Optimizer,
                  scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
                  device: Optional[Union[int, str, torch.device]] = None):
         self.render = config.render
-        self.nenvs = envs.num_envs
-        self.nsteps = config.nsteps
-        self.nminibatch = config.nminibatch
-        self.nepoch = config.nepoch
+        self.n_envs = envs.num_envs
+        self.n_steps = config.n_steps
+        self.n_minibatch = config.n_minibatch
+        self.n_epoch = config.n_epoch
 
         self.gamma = config.gamma
-        self.lam = config.lam
+        self.gae_lam = config.gae_lambda
         self.clip_grad = config.clip_grad
         self.observation_space = envs.observation_space
         self.action_space = envs.action_space
@@ -24,16 +24,17 @@ class PG_Agent(Agent):
         self.auxiliary_info_shape = {}
         self.atari = True if config.env_name == "Atari" else False
         Buffer = DummyOnPolicyBuffer_Atari if self.atari else DummyOnPolicyBuffer
-
+        self.buffer_size = self.n_envs * self.n_steps
+        self.batch_size = self.buffer_size // self.n_epoch
         memory = Buffer(self.observation_space,
                         self.action_space,
-                        self.representation_info_shape,
                         self.auxiliary_info_shape,
-                        self.nenvs,
-                        self.nsteps,
-                        self.nminibatch,
+                        self.n_envs,
+                        self.n_steps,
+                        config.use_gae,
+                        config.use_advnorm,
                         self.gamma,
-                        self.lam)
+                        self.gae_lam)
         learner = PG_Learner(policy,
                              optimizer,
                              scheduler,
@@ -59,23 +60,29 @@ class PG_Agent(Agent):
             next_obs, rewards, terminals, trunctions, infos = self.envs.step(acts)
             self.memory.store(obs, acts, self._process_reward(rewards), 0, terminals)
             if self.memory.full:
-                for i in range(self.nenvs):
-                    self.memory.finish_path(rewards[i], i)
-                for _ in range(self.nminibatch * self.nepoch):
-                    obs_batch, act_batch, ret_batch, _, _ = self.memory.sample()
-                    step_info = self.learner.update(obs_batch, act_batch, ret_batch)
+                for i in range(self.n_envs):
+                    self.memory.finish_path(self._process_reward(rewards)[i], i)
+                indexes = np.arange(self.buffer_size)
+                for _ in range(self.n_epoch):
+                    np.random.shuffle(indexes)
+                    for start in range(0, self.buffer_size, self.batch_size):
+                        end = start + self.batch_size
+                        sample_idx = indexes[start:end]
+                        obs_batch, act_batch, ret_batch, _, _, _ = self.memory.sample(sample_idx)
+                        step_info = self.learner.update(obs_batch, act_batch, ret_batch)
+                self.log_infos(step_info, self.current_step)
                 self.memory.clear()
 
             self.returns = self.gamma * self.returns + rewards
             obs = next_obs
-            for i in range(self.nenvs):
+            for i in range(self.n_envs):
                 if terminals[i] or trunctions[i]:
+                    self.ret_rms.update(self.returns[i:i + 1])
+                    self.returns[i] = 0.0
                     if self.atari and (~trunctions[i]):
                         pass
                     else:
                         obs[i] = infos[i]["reset_obs"]
-                        self.ret_rms.update(self.returns[i:i + 1])
-                        self.returns[i] = 0.0
                         self.memory.finish_path(0, i)
                         self.current_episode[i] += 1
                         if self.use_wandb:
@@ -85,8 +92,7 @@ class PG_Agent(Agent):
                             step_info["Episode-Steps"] = {"env-%d" % i: infos[i]["episode_step"]}
                             step_info["Train-Episode-Rewards"] = {"env-%d" % i: infos[i]["episode_score"]}
                         self.log_infos(step_info, self.current_step)
-
-            self.current_step += self.nenvs
+            self.current_step += self.n_envs
 
     def test(self, env_fn, test_episodes):
         test_envs = env_fn()

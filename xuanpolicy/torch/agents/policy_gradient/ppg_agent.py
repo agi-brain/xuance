@@ -4,35 +4,38 @@ from xuanpolicy.torch.agents import *
 class PPG_Agent(Agent):
     def __init__(self,
                  config: Namespace,
-                 envs: VecEnv,
+                 envs: DummyVecEnv_Gym,
                  policy: nn.Module,
                  optimizer: torch.optim.Optimizer,
                  scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
                  device: Optional[Union[int, str, torch.device]] = None):
         self.render = config.render
-        self.nenvs = envs.num_envs
-        self.nsteps = config.nsteps
-        self.nminibatch = config.nminibatch
+        self.n_envs = envs.num_envs
+        self.n_steps = config.n_steps
+        self.n_minibatch = config.n_minibatch
+        self.n_epoch = config.n_epoch
         self.policy_nepoch = config.policy_nepoch
         self.value_nepoch = config.value_nepoch
         self.aux_nepoch = config.aux_nepoch
         
         self.gamma = config.gamma
-        self.lam = config.lam
+        self.gae_lam = config.gae_lambda
         self.observation_space = envs.observation_space
         self.action_space = envs.action_space
         self.representation_info_shape = policy.actor_representation.output_shapes
         self.auxiliary_info_shape = {"old_dist": None}
 
+        self.buffer_size = self.n_envs * self.n_steps
+        self.batch_size = self.buffer_size // self.n_epoch
         memory = DummyOnPolicyBuffer(self.observation_space,
                                      self.action_space,
-                                     self.representation_info_shape,
                                      self.auxiliary_info_shape,
-                                     self.nenvs,
-                                     self.nsteps,
-                                     self.nminibatch,
+                                     self.n_envs,
+                                     self.n_steps,
+                                     config.use_gae,
+                                     config.use_advnorm,
                                      self.gamma,
-                                     self.lam)
+                                     self.gae_lam)
         learner = PPG_Learner(policy,
                               optimizer,
                               scheduler,
@@ -62,29 +65,46 @@ class PPG_Agent(Agent):
             self.memory.store(obs, acts, self._process_reward(rewards), rets, terminals, {"old_dist": dists})
             if self.memory.full:
                 _, vals, _ = self._action(self._process_observation(next_obs))
-                for i in range(self.nenvs):
+                for i in range(self.n_envs):
                     self.memory.finish_path(vals[i], i)
                 # policy update
-                for _ in range(self.nminibatch * self.policy_nepoch):
-                    obs_batch, act_batch, ret_batch, adv_batch, aux_batch = self.memory.sample()
-                    step_info.update(self.learner.update_policy(obs_batch, act_batch, ret_batch, adv_batch, aux_batch['old_dist']))
+                indexes = np.arange(self.buffer_size)
+                for _ in range(self.policy_nepoch):
+                    np.random.shuffle(indexes)
+                    for start in range(0, self.buffer_size, self.batch_size):
+                        end = start + self.batch_size
+                        sample_idx = indexes[start:end]
+                        obs_batch, act_batch, ret_batch, _, adv_batch, aux_batch = self.memory.sample(sample_idx)
+                        step_info.update(self.learner.update_policy(obs_batch, act_batch, ret_batch, adv_batch,
+                                                                    aux_batch['old_dist']))
                 # critic update
-                for _ in range(self.nminibatch * self.value_nepoch):
-                    obs_batch, act_batch, ret_batch, adv_batch, aux_batch = self.memory.sample()
-                    step_info.update(self.learner.update_critic(obs_batch, act_batch, ret_batch, adv_batch, aux_batch['old_dist']))
+                for _ in range(self.value_nepoch):
+                    np.random.shuffle(indexes)
+                    for start in range(0, self.buffer_size, self.batch_size):
+                        end = start + self.batch_size
+                        sample_idx = indexes[start:end]
+                        obs_batch, act_batch, ret_batch, _, adv_batch, aux_batch = self.memory.sample(sample_idx)
+                        step_info.update(self.learner.update_critic(obs_batch, act_batch, ret_batch, adv_batch,
+                                                                    aux_batch['old_dist']))
                     
                 # update old_prob
                 buffer_obs = self.memory.observations
                 buffer_act = self.memory.actions
                 _, new_dist, _, _ = self.policy(buffer_obs)
                 self.memory.auxiliary_infos['old_dist'] = split_distributions(new_dist)
-                for _ in range(self.nminibatch * self.aux_nepoch):
-                    obs_batch, act_batch, ret_batch, adv_batch, aux_batch = self.memory.sample()
-                    step_info.update(self.learner.update_auxiliary(obs_batch, act_batch, ret_batch, adv_batch, aux_batch['old_dist']))
+                for _ in range(self.aux_nepoch):
+                    np.random.shuffle(indexes)
+                    for start in range(0, self.buffer_size, self.batch_size):
+                        end = start + self.batch_size
+                        sample_idx = indexes[start:end]
+                        obs_batch, act_batch, ret_batch, _, adv_batch, aux_batch = self.memory.sample(sample_idx)
+                        step_info.update(self.learner.update_auxiliary(obs_batch, act_batch, ret_batch, adv_batch,
+                                                                       aux_batch['old_dist']))
+                self.log_infos(step_info, self.current_step)
                 self.memory.clear()
 
             obs = next_obs
-            for i in range(self.nenvs):
+            for i in range(self.n_envs):
                 if terminals[i] or trunctions[i]:
                     obs[i] = infos[i]["reset_obs"]
                     self.memory.finish_path(0, i)
@@ -97,7 +117,7 @@ class PPG_Agent(Agent):
                         step_info["Train-Episode-Rewards"] = {"env-%d" % i: infos[i]["episode_score"]}
                     self.log_infos(step_info, self.current_step)
 
-            self.current_step += self.nenvs
+            self.current_step += self.n_envs
 
     def test(self, env_fn, test_episodes):
         test_envs = env_fn()

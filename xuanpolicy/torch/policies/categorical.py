@@ -68,7 +68,6 @@ class ActorCriticPolicy(nn.Module):
                  initialize: Optional[Callable[..., torch.Tensor]] = None,
                  activation: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None):
-        assert isinstance(action_space, Discrete)
         super(ActorCriticPolicy, self).__init__()
         self.device = device
         self.action_dim = action_space.n
@@ -95,7 +94,6 @@ class ActorPolicy(nn.Module):
                  initialize: Optional[Callable[..., torch.Tensor]] = None,
                  activation: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None):
-        assert isinstance(action_space, Discrete)
         super(ActorPolicy, self).__init__()
         self.action_dim = action_space.n
         self.representation = representation
@@ -119,11 +117,11 @@ class PPGActorCritic(nn.Module):
                  initialize: Optional[Callable[..., torch.Tensor]] = None,
                  activation: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None):
-        assert isinstance(action_space, Discrete)
         super(PPGActorCritic, self).__init__()
         self.action_dim = action_space.n
         self.actor_representation = representation
         self.critic_representation = copy.deepcopy(representation)
+        self.aux_critic_representation = copy.deepcopy(representation)
         self.representation_info_shape = self.actor_representation.output_shapes
 
         self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size,
@@ -136,9 +134,10 @@ class PPGActorCritic(nn.Module):
     def forward(self, observation: Union[np.ndarray, dict]):
         policy_outputs = self.actor_representation(observation)
         critic_outputs = self.critic_representation(observation)
+        aux_critic_outputs = self.aux_critic_representation(observation)
         a = self.actor(policy_outputs['state'])
         v = self.critic(critic_outputs['state'])
-        aux_v = self.aux_critic(policy_outputs['state'])
+        aux_v = self.aux_critic(aux_critic_outputs['state'])
         return policy_outputs, a, v, aux_v
 
 
@@ -201,7 +200,6 @@ class SACDISPolicy(nn.Module):
                  initialize: Optional[Callable[..., torch.Tensor]] = None,
                  activation: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None):
-        # assert isinstance(action_space, Box)
         super(SACDISPolicy, self).__init__()
         self.action_dim = action_space.n
         self.representation = representation

@@ -44,6 +44,7 @@ class SC2_Runner(Runner_Base):
         else:
             raise "No logger is implemented."
 
+        self.on_policy = self.args.on_policy
         self.running_steps = args.running_steps
         self.training_frequency = args.training_frequency
         self.current_step = 0
@@ -51,30 +52,40 @@ class SC2_Runner(Runner_Base):
         self.current_episode = np.zeros((self.envs.num_envs,), np.int32)
         self.episode_length = self.envs.max_episode_length
         self.filled = np.zeros((self.n_envs, self.episode_length, 1), np.int32)
-        self.rnn_hidden = None
         self.get_agent_num()
         args.n_agents = self.num_agents
         self.dim_obs, self.dim_act, self.dim_state = self.envs.dim_obs, self.envs.dim_act, self.envs.dim_state
         args.dim_obs, args.dim_act = self.dim_obs, self.dim_act
-        args.obs_shape = (self.num_agents, self.dim_obs)
-        args.act_shape = (self.num_agents, )
-        args.rew_shape, args.done_shape = (self.envs.dim_reward, ), (1, )
+        args.obs_shape, args.act_shape = (self.dim_obs, ), ()
+        args.rew_shape = args.done_shape = (1, )
         args.action_space = self.envs.action_space
         args.state_space = self.envs.state_space
         self.episode_buffer = {
-            'obs': np.zeros((self.n_envs, self.num_agents, self.episode_length + 1, self.dim_obs), dtype=np.float32),
-            'actions': np.zeros((self.n_envs, self.num_agents, self.episode_length, ), dtype=np.float32),
-            'state': np.zeros((self.n_envs, self.episode_length + 1, self.dim_state), dtype=np.float32),
-            'rewards': np.zeros([self.n_envs, self.episode_length, 1], dtype=np.float32),
-            'terminals': np.zeros([self.n_envs, self.episode_length, 1], dtype=np.bool),
-            'avail_actions': np.ones([self.n_envs, self.num_agents, self.episode_length + 1, self.dim_act], dtype=np.bool),
+            'obs': np.zeros((self.n_envs, self.num_agents, self.episode_length + 1) + args.obs_shape, dtype=np.float32),
+            'actions': np.zeros((self.n_envs, self.num_agents, self.episode_length) + args.act_shape, dtype=np.float32),
+            'state': np.zeros((self.n_envs, self.episode_length + 1) + args.state_space.shape, dtype=np.float32),
+            'rewards': np.zeros((self.n_envs, self.num_agents, self.episode_length) + args.rew_shape, dtype=np.float32),
+            'terminals': np.zeros((self.n_envs, self.episode_length) + args.done_shape, dtype=np.bool),
+            'avail_actions': np.ones((self.n_envs, self.num_agents, self.episode_length + 1, self.dim_act), dtype=np.bool),
             'filled': np.zeros((self.n_envs, self.episode_length, 1), dtype=np.bool),
         }
+        if self.on_policy:
+            self.episode_buffer.update({
+                'values': np.zeros((self.n_envs, self.episode_length) + args.rew_shape, np.float32),
+                'returns': np.zeros((self.n_envs, self.episode_length) + args.rew_shape, np.float32),
+                'advantages': np.zeros((self.n_envs, self.episode_length) + args.rew_shape, np.float32),
+                'log_pi_old': np.zeros((self.n_envs, self.episode_length, self.num_agents,), np.float32)
+            })
         self.env_ptr = range(self.n_envs)
 
         # environment details, representations, policies, optimizers, and agents.
         self.agents = REGISTRY_Agent[args.agent](args, self.envs, args.device)
-        self.rnn_hidden = self.agents.policy.representation.init_hidden(self.n_envs)
+        # initialize hidden units for RNN.
+        self.rnn_hidden = self.agents.policy.representation.init_hidden(self.n_envs * self.num_agents)
+        if self.on_policy:
+            self.rnn_hidden_critic = self.agents.policy.representation_critic.init_hidden(self.n_envs * self.num_agents)
+        else:
+            self.rnn_hidden_critic = None
 
     def get_agent_num(self):
         self.num_agents, self.num_enemies = self.envs.num_agents, self.envs.num_enemies
@@ -102,22 +113,33 @@ class SC2_Runner(Runner_Base):
             for k, v in info.items():
                 self.writer.add_video(k, v, fps=fps, global_step=x_index)
 
-    def get_actions(self, obs_n, avail_actions, *rnn_hidden, test_mode=False):
-        log_pi_n, values_n, actions_n_onehot = [], [], []
-        rnn_hidden_next, actions_n = self.agents.act(obs_n, *rnn_hidden,
-                                                     avail_actions=avail_actions, test_mode=test_mode)
-        # rnn_hidden_next = self.rnn_hidden
+    def get_actions(self, obs_n, avail_actions, *rnn_hidden, state=None, test_mode=False):
+        log_pi_n, values_n, actions_n_onehot = None, None, None
+        rnn_hidden_policy, rnn_hidden_critic = rnn_hidden[0], rnn_hidden[1]
+        if self.on_policy:
+            rnn_hidden_next, actions_n, log_pi_n = self.agents.act(obs_n, *rnn_hidden_policy,
+                                                                   avail_actions=avail_actions,
+                                                                   test_mode=test_mode)
+            rnn_hidden_critic_next, values_n = self.agents.values(obs_n, *rnn_hidden_critic,
+                                                                  state=state)
+        else:
+            rnn_hidden_next, actions_n = self.agents.act(obs_n, *rnn_hidden_policy,
+                                                         avail_actions=avail_actions, test_mode=test_mode)
+            rnn_hidden_critic_next = None
         return {'actions_n': actions_n, 'log_pi': log_pi_n,
-                'rnn_hidden': rnn_hidden_next,
+                'rnn_hidden': rnn_hidden_next, 'rnn_hidden_critic': rnn_hidden_critic_next,
                 'act_n_onehot': actions_n_onehot, 'values': values_n}
 
     def store_data(self, t_envs, obs_n, actions_dict, state, rewards, terminated, avail_actions):
         self.episode_buffer['obs'][self.env_ptr, :, t_envs] = obs_n
         self.episode_buffer['actions'][self.env_ptr, :, t_envs] = actions_dict['actions_n']
         self.episode_buffer['state'][self.env_ptr, t_envs] = state
-        self.episode_buffer['rewards'][self.env_ptr, t_envs] = rewards
+        self.episode_buffer['rewards'][self.env_ptr, :, t_envs] = rewards
         self.episode_buffer['terminals'][self.env_ptr, t_envs] = terminated
         self.episode_buffer['avail_actions'][self.env_ptr, :, t_envs] = avail_actions
+        if self.on_policy:
+            self.episode_buffer['values'][self.env_ptr, t_envs] = actions_dict['values']
+            self.episode_buffer['log_pi_old'][self.env_ptr, t_envs] = actions_dict['log_pi']
 
     def store_terminal_data(self, i_env, t_env, obs_n, state, last_avail_actions, filled):
         self.episode_buffer['obs'][i_env, :, t_env] = obs_n[i_env]
@@ -128,27 +150,40 @@ class SC2_Runner(Runner_Base):
     def train_episode(self, n_episodes):
         step_info, episode_info, train_info = {}, {}, {}
         obs_n, state = self.envs.buf_obs, self.envs.buf_state
-        rnn_hidden = self.rnn_hidden
+        rnn_hidden, rnn_hidden_critic = self.rnn_hidden, self.rnn_hidden_critic
         battles_game, battles_won = self.envs.battles_game.sum(), self.envs.battles_won.sum()
         dead_allies, dead_enemies = self.envs.dead_allies_count.sum(), self.envs.dead_enemies_count.sum()
         for _ in tqdm(range(n_episodes)):
             for step in range(self.episode_length):
                 available_actions = self.envs.get_avail_actions()
-                actions_dict = self.get_actions(obs_n, available_actions, *rnn_hidden, test_mode=False)
+                actions_dict = self.get_actions(obs_n, available_actions, rnn_hidden, rnn_hidden_critic, test_mode=False)
                 next_obs_n, next_state, rewards, terminated, truncated, info = self.envs.step(actions_dict['actions_n'])
                 self.filled[self.env_ptr, self.envs_step] = np.ones([self.n_envs, 1])
-                rnn_hidden = actions_dict['rnn_hidden']
                 self.store_data(self.envs_step, obs_n, actions_dict, state, rewards, terminated, available_actions)
 
                 self.envs_step += 1
+                rnn_hidden, rnn_hidden_critic = actions_dict['rnn_hidden'], actions_dict['rnn_hidden_critic']
                 obs_n, state = deepcopy(next_obs_n), deepcopy(next_state)
                 for i_env in range(self.n_envs):
-                    if terminated[i_env] or truncated[i_env]:
-                        rnn_hidden = self.agents.policy.representation.init_hidden_item(i_env, *rnn_hidden)
+                    if terminated[i_env] or truncated[i_env]:  # terminated
+                        agent_hidden_select = np.arange(i_env * self.num_agents, (i_env + 1) * self.num_agents)
+                        rnn_hidden = self.agents.policy.representation.init_hidden_item(agent_hidden_select,
+                                                                                        *rnn_hidden)
                         # store trajectory data:
                         last_avail_actions = info[i_env]["avail_actions"]
                         self.store_terminal_data(i_env, self.envs_step, obs_n, state, last_avail_actions, self.filled)
-                        self.agents.memory.store(i_env, self.episode_buffer)
+                        if self.on_policy:
+                            if terminated[i_env]:
+                                values_next = np.array([0.0 for _ in range(self.num_agents)])
+                            else:
+                                _, values_next = self.agents.values([obs_n[i_env]], *rnn_hidden_critic, state=[state[i_env]])
+                            rnn_hidden_critic = self.agents.policy.representation_critic.init_hidden_item(agent_hidden_select,
+                                                                                                          *rnn_hidden_critic)
+                            self.agents.memory.finish_path(values_next, i_env, episode_data=self.episode_buffer,
+                                                           current_t=self.envs_step[i_env])
+                            train_info = self.agents.train(self.current_step)
+                        else:
+                            self.agents.memory.store(self.episode_buffer, i_env)
                         # prepare for next episode:
                         self.filled[i_env] = np.zeros([self.episode_length, 1], np.int32)
                         self.current_episode[i_env] += 1
@@ -178,11 +213,12 @@ class SC2_Runner(Runner_Base):
             episode_info["Train-Results/Dead-Ratio"] = dead_ratio
             episode_info["Train-Results/Enemy-Dead-Ratio"] = enemy_dead_ratio
 
-            train_info = self.agents.train(self.current_step)
+            if not self.on_policy:
+                train_info = self.agents.train(self.current_step)
             # Log train info:
             self.log_infos(train_info, self.current_step)
             self.log_infos(episode_info, self.current_step)
-            self.rnn_hidden = rnn_hidden
+            self.rnn_hidden, self.rnn_hidden_critic = rnn_hidden, rnn_hidden_critic
 
     def test_episode(self, n_episodes):
         num_envs = self.test_envs.num_envs
@@ -195,25 +231,35 @@ class SC2_Runner(Runner_Base):
                 videos[idx].append(img)
         best_score = -np.inf
 
-        rnn_hidden = self.agents.policy.representation.init_hidden(num_envs)
+        rnn_hidden = self.agents.policy.representation.init_hidden(num_envs * self.num_agents)
+        if self.on_policy:
+            rnn_hidden_critic = self.agents.policy.representation_critic.init_hidden(num_envs * self.num_agents)
+        else:
+            rnn_hidden_critic = None
+
         battles_game, battles_won = self.test_envs.battles_game.sum(), self.test_envs.battles_won.sum()
         dead_allies, dead_enemies = self.test_envs.dead_allies_count.sum(), self.test_envs.dead_enemies_count.sum()
         for i_episode in range(n_episodes):
             for step in range(self.episode_length):
                 available_actions = self.test_envs.get_avail_actions()
-                actions_dict = self.get_actions(obs_n, available_actions, *rnn_hidden, test_mode=True)
+                actions_dict = self.get_actions(obs_n, available_actions, rnn_hidden, rnn_hidden_critic, test_mode=True)
                 next_obs_n, next_state, rewards, terminated, truncated, info = self.test_envs.step(actions_dict['actions_n'])
                 if self.args.render_mode == "rgb_array" and self.render:
                     images = self.test_envs.render(self.args.render_mode)
                     for idx, img in enumerate(images):
                         videos[idx].append(img)
 
-                rnn_hidden = actions_dict['rnn_hidden']
+                rnn_hidden, rnn_hidden_critic = actions_dict['rnn_hidden'], actions_dict['rnn_hidden_critic']
                 obs_n, state = deepcopy(next_obs_n), deepcopy(next_state)
                 for i_env in range(self.n_envs):
                     if terminated[i_env] or truncated[i_env]:
                         # prepare for next episode:
-                        rnn_hidden = self.agents.policy.representation.init_hidden_item(i_env, *rnn_hidden)
+                        agent_hidden_select = np.arange(i_env * self.num_agents, (i_env + 1) * self.num_agents)
+                        rnn_hidden = self.agents.policy.representation.init_hidden_item(agent_hidden_select,
+                                                                                        *rnn_hidden)
+                        if self.on_policy:
+                            rnn_hidden_critic = self.agents.policy.representation_critic.init_hidden_item(agent_hidden_select,
+                                                                                                          *rnn_hidden_critic)
                         obs_n[i_env], state[i_env] = info[i_env]["reset_obs"], info[i_env]["reset_state"]
                         episode_score.append(info[i_env]["episode_score"])
                         if best_score < episode_score[-1]:
@@ -310,7 +356,7 @@ class SC2_Runner(Runner_Base):
         # end benchmarking
         print("Finish benchmarking.")
         print("Best Score: ", best_score["mean"], "Std: ", best_score["std"])
-        print("Best Win Rate: ", best_win_rate)
+        print("Best Win Rate: {}%".format(best_win_rate * 100))
 
         self.envs.close()
         self.test_envs.close()

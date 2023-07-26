@@ -1,5 +1,3 @@
-import torch
-
 from xuanpolicy.torch.learners import *
 
 

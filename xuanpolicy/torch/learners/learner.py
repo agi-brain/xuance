@@ -47,10 +47,7 @@ class LearnerMAS(ABC):
                  device: Optional[Union[int, str, torch.device]] = None,
                  model_dir: str = "./"):
         self.args = config
-        # self.handle = config.handle
         self.n_agents = config.n_agents
-        # self.agent_keys = config.agent_keys
-        # self.agent_index = config.agent_ids
         self.dim_obs = self.args.dim_obs
         self.dim_act = self.args.dim_act
         self.dim_id = self.n_agents
@@ -75,7 +72,6 @@ class LearnerMAS(ABC):
 
     def load_model(self, path):
         model_names = os.listdir(path)
-        # model_names.remove('obs_rms.npy')
         model_names.sort()
         model_path = path + model_names[-1]
         self.policy.load_state_dict(torch.load(model_path))

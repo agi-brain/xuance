@@ -1,33 +1,50 @@
 import random
 import numpy as np
-from xuanpolicy.common import discount_cumsum
 from gym import Space
 from abc import ABC, abstractmethod
 from typing import Optional, Union
-from xuanpolicy.common import space2shape
+from xuanpolicy.common import space2shape, discount_cumsum
 from xuanpolicy.common.segtree_tool import SumSegmentTree, MinSegmentTree
 from collections import deque
 from typing import Dict
 
 
-def create_memory(shape: Optional[Union[tuple, dict]], nenvs: int, nsize: int, dtype=np.float32):
-    if shape == None:
+def create_memory(shape: Optional[Union[tuple, dict]],
+                  n_envs: int,
+                  n_size: int,
+                  dtype: type = np.float32):
+    """
+    Create a numpy array for memory data.
+        shape: data shape.
+        n_envs: number of parallel environments.
+        n_size: length of data sequence for each environment.
+        dtype: numpy data type.
+    """
+    if shape is None:
         return None
     elif isinstance(shape, dict):
         memory = {}
         for key, value in zip(shape.keys(), shape.values()):
             if value is None:  # save an object type
-                memory[key] = np.zeros([nenvs, nsize], dtype=object)
+                memory[key] = np.zeros([n_envs, n_size], dtype=object)
             else:
-                memory[key] = np.zeros([nenvs, nsize] + list(value), dtype=dtype)
+                memory[key] = np.zeros([n_envs, n_size] + list(value), dtype=dtype)
         return memory
     elif isinstance(shape, tuple):
-        return np.zeros([nenvs, nsize] + list(shape), dtype)
+        return np.zeros([n_envs, n_size] + list(shape), dtype)
     else:
         raise NotImplementedError
 
 
-def store_element(data: Optional[Union[np.ndarray, dict, float]], memory: Union[dict, np.ndarray], ptr: int):
+def store_element(data: Optional[Union[np.ndarray, dict, float]],
+                  memory: Union[dict, np.ndarray],
+                  ptr: int):
+    """
+    Insert a step of data into current memory.
+        data: target data that to be stored.
+        memory: the memory where data will be stored.
+        ptr: pointer to the location for the data.
+    """
     if data is None:
         return
     elif isinstance(data, dict):
@@ -37,7 +54,13 @@ def store_element(data: Optional[Union[np.ndarray, dict, float]], memory: Union[
         memory[:, ptr] = data
 
 
-def sample_batch(memory: Optional[Union[np.ndarray, dict]], index: Optional[Union[np.ndarray, tuple]]):
+def sample_batch(memory: Optional[Union[np.ndarray, dict]],
+                 index: Optional[Union[np.ndarray, tuple]]):
+    """
+    Sample a batch of data from the selected memory.
+        memory: memory that contains experience data.
+        index: pointer to the location for the selected data.
+    """
     if memory is None:
         return None
     elif isinstance(memory, dict):
@@ -50,16 +73,20 @@ def sample_batch(memory: Optional[Union[np.ndarray, dict]], index: Optional[Unio
 
 
 class Buffer(ABC):
+    """
+    Basic buffer single-agent DRL algorithms.
+    """
     def __init__(self,
                  observation_space: Space,
                  action_space: Space,
-                 representation_info_shape: Optional[dict],
                  auxiliary_info_shape: Optional[dict]):
         self.observation_space = observation_space
         self.action_space = action_space
-        self.representation_shape = representation_info_shape
         self.auxiliary_shape = auxiliary_info_shape
         self.size, self.ptr = 0, 0
+
+    def full(self):
+        pass
 
     @abstractmethod
     def store(self, *args):
@@ -78,6 +105,9 @@ class Buffer(ABC):
 
 
 class EpisodeBuffer:
+    """
+    Episode buffer for DRQN agent.
+    """
     def __init__(self):
         self.obs = []
         self.action = []
@@ -96,10 +126,10 @@ class EpisodeBuffer:
         reward = np.array(self.reward)
         done = np.array(self.done)
 
-        obs = obs[idx:idx+lookup_step+1]
-        action = action[idx:idx+lookup_step]
-        reward = reward[idx:idx+lookup_step]
-        done = done[idx:idx+lookup_step]
+        obs = obs[idx:idx + lookup_step + 1]
+        action = action[idx:idx + lookup_step]
+        reward = reward[idx:idx + lookup_step]
+        done = done[idx:idx + lookup_step]
 
         return dict(obs=obs,
                     acts=action,
@@ -111,47 +141,57 @@ class EpisodeBuffer:
 
 
 class DummyOnPolicyBuffer(Buffer):
+    """
+    Replay buffer for on-policy DRL algorithms.
+        observation_space: the observation space of the environment.
+        action_space: the action space of the environment.
+        auxiliary_shape: data shape of auxiliary information (if exists).
+        n_envs: number of parallel environments.
+        n_size: max length of steps to store for one environment.
+        use_gae: if use GAE trick.
+        use_advnorm: if use Advantage normalization trick.
+        gamma: discount factor.
+        gae_lam: gae lambda.
+    """
     def __init__(self,
                  observation_space: Space,
                  action_space: Space,
-                 representation_shape: Optional[dict],
                  auxiliary_shape: Optional[dict],
-                 nenvs: int,
-                 nsize: int,
-                 nminibatch: int,
+                 n_envs: int,
+                 n_size: int,
+                 use_gae: bool = True,
+                 use_advnorm: bool = True,
                  gamma: float = 0.99,
                  gae_lam: float = 0.95):
-        super(DummyOnPolicyBuffer, self).__init__(observation_space,
-                                                  action_space,
-                                                  representation_shape,
-                                                  auxiliary_shape)
-        self.nenvs, self.nsize, self.nminibatch = nenvs, nsize, nminibatch
-        self.buffer_size = self.nsize * self.nenvs
+        super(DummyOnPolicyBuffer, self).__init__(observation_space, action_space, auxiliary_shape)
+        self.n_envs, self.n_size = n_envs, n_size
+        self.buffer_size = self.n_size * self.n_envs
+        self.use_gae, self.use_advnorm = use_gae, use_advnorm
         self.gamma, self.gae_lam = gamma, gae_lam
-        self.start_ids = np.zeros(self.nenvs, np.int64)
-        self.observations = create_memory(space2shape(self.observation_space), self.nenvs, self.nsize)
-        self.actions = create_memory(space2shape(self.action_space), self.nenvs, self.nsize)
-        self.rewards = create_memory((), self.nenvs, self.nsize)
-        self.returns = create_memory((), self.nenvs, self.nsize)
-        self.values = create_memory((), self.nenvs, self.nsize)
-        self.terminals = create_memory((), self.nenvs, self.nsize)
-        self.advantages = create_memory((), self.nenvs, self.nsize)
-        self.auxiliary_infos = create_memory(self.auxiliary_shape, self.nenvs, self.nsize)
+        self.start_ids = np.zeros(self.n_envs, np.int64)
+        self.observations = create_memory(space2shape(self.observation_space), self.n_envs, self.n_size)
+        self.actions = create_memory(space2shape(self.action_space), self.n_envs, self.n_size)
+        self.rewards = create_memory((), self.n_envs, self.n_size)
+        self.returns = create_memory((), self.n_envs, self.n_size)
+        self.values = create_memory((), self.n_envs, self.n_size)
+        self.terminals = create_memory((), self.n_envs, self.n_size)
+        self.advantages = create_memory((), self.n_envs, self.n_size)
+        self.auxiliary_infos = create_memory(self.auxiliary_shape, self.n_envs, self.n_size)
 
     @property
     def full(self):
-        return self.size >= self.nsize
+        return self.size >= self.n_size
 
     def clear(self):
         self.ptr, self.size = 0, 0
-        self.observations = create_memory(space2shape(self.observation_space), self.nenvs, self.nsize)
-        self.actions = create_memory(space2shape(self.action_space), self.nenvs, self.nsize)
-        self.rewards = create_memory((), self.nenvs, self.nsize)
-        self.returns = create_memory((), self.nenvs, self.nsize)
-        self.values = create_memory((), self.nenvs, self.nsize)
-        self.terminals = create_memory((), self.nenvs, self.nsize)
-        self.advantages = create_memory((), self.nenvs, self.nsize)
-        self.auxiliary_infos = create_memory(self.auxiliary_shape, self.nenvs, self.nsize)
+        self.observations = create_memory(space2shape(self.observation_space), self.n_envs, self.n_size)
+        self.actions = create_memory(space2shape(self.action_space), self.n_envs, self.n_size)
+        self.rewards = create_memory((), self.n_envs, self.n_size)
+        self.returns = create_memory((), self.n_envs, self.n_size)
+        self.values = create_memory((), self.n_envs, self.n_size)
+        self.terminals = create_memory((), self.n_envs, self.n_size)
+        self.advantages = create_memory((), self.n_envs, self.n_size)
+        self.auxiliary_infos = create_memory(self.auxiliary_shape, self.n_envs, self.n_size)
 
     def store(self, obs, acts, rews, value, terminals, aux_info=None):
         store_element(obs, self.observations, self.ptr)
@@ -160,33 +200,29 @@ class DummyOnPolicyBuffer(Buffer):
         store_element(value, self.values, self.ptr)
         store_element(terminals, self.terminals, self.ptr)
         store_element(aux_info, self.auxiliary_infos, self.ptr)
-        self.ptr = (self.ptr + 1) % self.nsize
-        self.size = min(self.size + 1, self.nsize)
+        self.ptr = (self.ptr + 1) % self.n_size
+        self.size = min(self.size + 1, self.n_size)
 
     def finish_path(self, val, i):
         if self.full:
-            path_slice = np.arange(self.start_ids[i], self.nsize).astype(np.int32)
+            path_slice = np.arange(self.start_ids[i], self.n_size).astype(np.int32)
         else:
             path_slice = np.arange(self.start_ids[i], self.ptr).astype(np.int32)
-
-        # rewards = np.append(np.array(self.rewards[i, path_slice]), [val], axis=0)
-        # critics = np.append(np.array(self.returns[i, path_slice]), [val], axis=0)
-        # returns = discount_cumsum(rewards, self.gamma)[:-1]
-        # deltas = rewards[:-1] + self.gamma * critics[1:] - critics[:-1]
-        # advantages = discount_cumsum(deltas, self.gamma * self.gae_lam)
-
-        ## use gae
-        rewards = np.array(self.rewards[i, path_slice])
         vs = np.append(np.array(self.values[i, path_slice]), [val], axis=0)
-        dones = np.array(self.terminals[i, path_slice])
-        advantages = np.zeros_like(rewards)
-        last_gae_lam = 0
-        step_nums = len(path_slice)
-        for t in reversed(range(step_nums)):
-            delta = rewards[t] + (1 - dones[t]) * self.gamma * vs[t + 1] - vs[t]
-            advantages[t] = last_gae_lam = delta + (1 - dones[t]) * self.gamma * self.gae_lam * last_gae_lam
-        returns = advantages + vs[:-1]
-        ##
+        if self.use_gae:  # use gae
+            rewards = np.array(self.rewards[i, path_slice])
+            advantages = np.zeros_like(rewards)
+            dones = np.array(self.terminals[i, path_slice])
+            last_gae_lam = 0
+            step_nums = len(path_slice)
+            for t in reversed(range(step_nums)):
+                delta = rewards[t] + (1 - dones[t]) * self.gamma * vs[t + 1] - vs[t]
+                advantages[t] = last_gae_lam = delta + (1 - dones[t]) * self.gamma * self.gae_lam * last_gae_lam
+            returns = advantages + vs[:-1]
+        else:
+            rewards = np.append(np.array(self.rewards[i, path_slice]), [val], axis=0)
+            returns = discount_cumsum(rewards, self.gamma)[:-1]
+            advantages = rewards[:-1] + self.gamma * vs[1:] - vs[:-1]
 
         self.returns[i, path_slice] = returns
         self.advantages[i, path_slice] = advantages
@@ -195,56 +231,52 @@ class DummyOnPolicyBuffer(Buffer):
     def sample(self, indexes):
         assert self.full, "Not enough transitions for on-policy buffer to random sample"
 
-        env_choices, step_choices = divmod(indexes, self.nsize)
+        env_choices, step_choices = divmod(indexes, self.n_size)
 
-        # obs_batch = self.observations.reshape((self.buffer_size,) + space2shape(self.observation_space))[indexes]
-        # act_batch = self.actions.reshape((self.buffer_size, ) + space2shape(self.action_space))[indexes]
-        # ret_batch = self.returns.reshape([self.buffer_size])[indexes]
-        # val_batch = self.values.reshape([self.buffer_size])[indexes]
-        # adv_batch = self.advantages.reshape([self.buffer_size])[indexes]
-        # adv_batch = (adv_batch - np.mean(self.advantages)) / (np.std(self.advantages) + 1e-8)
-        # aux_batch = {"old_logp": self.auxiliary_infos['old_logp'].reshape([self.buffer_size])[indexes]}
-
-        # env_choices = np.random.choice(self.nenvs, self.nenvs * self.nsize // self.nminibatch)
-        # step_choices = np.random.choice(self.nsize, self.nenvs * self.nsize // self.nminibatch)
-        #
         obs_batch = sample_batch(self.observations, tuple([env_choices, step_choices]))
         act_batch = sample_batch(self.actions, tuple([env_choices, step_choices]))
         ret_batch = sample_batch(self.returns, tuple([env_choices, step_choices]))
         val_batch = sample_batch(self.values, tuple([env_choices, step_choices]))
         adv_batch = sample_batch(self.advantages, tuple([env_choices, step_choices]))
-        adv_batch = (adv_batch - np.mean(adv_batch)) / (np.std(adv_batch) + 1e-8)
+        if self.use_advnorm:
+            adv_batch = (adv_batch - np.mean(adv_batch)) / (np.std(adv_batch) + 1e-8)
         aux_batch = sample_batch(self.auxiliary_infos, tuple([env_choices, step_choices]))
 
         return obs_batch, act_batch, ret_batch, val_batch, adv_batch, aux_batch
 
 
 class DummyOffPolicyBuffer(Buffer):
+    """
+    Replay buffer for off-policy DRL algorithms.
+        observation_space: the observation space of the environment.
+        action_space: the action space of the environment.
+        auxiliary_shape: data shape of auxiliary information (if exists).
+        n_envs: number of parallel environments.
+        n_size: max length of steps to store for one environment.
+        batch_size: batch size of transition data for a sample.
+    """
     def __init__(self,
                  observation_space: Space,
                  action_space: Space,
-                 representation_shape: Optional[dict],
                  auxiliary_shape: Optional[dict],
-                 nenvs: int,
-                 nsize: int,
-                 batchsize: int):
-        super(DummyOffPolicyBuffer, self).__init__(observation_space,
-                                                   action_space,
-                                                   representation_shape,
-                                                   auxiliary_shape)
-        self.nenvs, self.nsize, self.batchsize = nenvs, nsize, batchsize
-        self.observations = create_memory(space2shape(self.observation_space), self.nenvs, self.nsize)
-        self.next_observations = create_memory(space2shape(self.observation_space), self.nenvs, self.nsize)
-        self.actions = create_memory(space2shape(self.action_space), self.nenvs, self.nsize)
-        self.rewards = create_memory((), self.nenvs, self.nsize)
-        self.terminals = create_memory((), self.nenvs, self.nsize)
+                 n_envs: int,
+                 n_size: int,
+                 batch_size: int):
+        super(DummyOffPolicyBuffer, self).__init__(observation_space, action_space, auxiliary_shape)
+        self.n_envs, self.n_size, self.batch_size = n_envs, n_size, batch_size
+        self.observations = create_memory(space2shape(self.observation_space), self.n_envs, self.n_size)
+        self.next_observations = create_memory(space2shape(self.observation_space), self.n_envs, self.n_size)
+        self.actions = create_memory(space2shape(self.action_space), self.n_envs, self.n_size)
+        self.auxiliary_infos = create_memory(self.auxiliary_shape, self.n_envs, self.n_size)
+        self.rewards = create_memory((), self.n_envs, self.n_size)
+        self.terminals = create_memory((), self.n_envs, self.n_size)
 
     def clear(self):
-        self.observations = create_memory(space2shape(self.observation_space), self.nenvs, self.nsize)
-        self.next_observations = create_memory(space2shape(self.observation_space), self.nenvs, self.nsize)
-        self.actions = create_memory(space2shape(self.action_space), self.nenvs, self.nsize)
-        self.rewards = create_memory((), self.nenvs, self.nsize)
-        self.terminals = create_memory((), self.nenvs, self.nsize)
+        self.observations = create_memory(space2shape(self.observation_space), self.n_envs, self.n_size)
+        self.next_observations = create_memory(space2shape(self.observation_space), self.n_envs, self.n_size)
+        self.actions = create_memory(space2shape(self.action_space), self.n_envs, self.n_size)
+        self.rewards = create_memory((), self.n_envs, self.n_size)
+        self.terminals = create_memory((), self.n_envs, self.n_size)
 
     def store(self, obs, acts, rews, terminals, next_obs):
         store_element(obs, self.observations, self.ptr)
@@ -252,12 +284,12 @@ class DummyOffPolicyBuffer(Buffer):
         store_element(rews, self.rewards, self.ptr)
         store_element(terminals, self.terminals, self.ptr)
         store_element(next_obs, self.next_observations, self.ptr)
-        self.ptr = (self.ptr + 1) % self.nsize
-        self.size = min(self.size + 1, self.nsize)
+        self.ptr = (self.ptr + 1) % self.n_size
+        self.size = min(self.size + 1, self.n_size)
 
     def sample(self):
-        env_choices = np.random.choice(self.nenvs, self.batchsize)
-        step_choices = np.random.choice(self.size, self.batchsize)
+        env_choices = np.random.choice(self.n_envs, self.batch_size)
+        step_choices = np.random.choice(self.size, self.batch_size)
         obs_batch = sample_batch(self.observations, tuple([env_choices, step_choices]))
         act_batch = sample_batch(self.actions, tuple([env_choices, step_choices]))
         rew_batch = sample_batch(self.rewards, tuple([env_choices, step_choices]))
@@ -267,46 +299,53 @@ class DummyOffPolicyBuffer(Buffer):
 
 
 class RecurrentOffPolicyBuffer(Buffer):
+    """
+    Replay buffer for DRQN-based algorithms.
+        observation_space: the observation space of the environment.
+        action_space: the action space of the environment.
+        auxiliary_shape: data shape of auxiliary information (if exists).
+        n_envs: number of parallel environments.
+        n_size: max length of steps to store for one environment.
+        batch_size: batch size of transition data for a sample.
+        episode_length: data length for an episode.
+        lookup_length: the length of history data.
+    """
     def __init__(self,
                  observation_space: Space,
                  action_space: Space,
-                 representation_shape: Optional[dict],
                  auxiliary_shape: Optional[dict],
-                 nenvs: int,
-                 nsize: int,
-                 batchsize: int,
+                 n_envs: int,
+                 n_size: int,
+                 batch_size: int,
                  episode_length: int,
                  lookup_length: int):
-        super(RecurrentOffPolicyBuffer, self).__init__(observation_space,
-                                                       action_space,
-                                                       representation_shape,
-                                                       auxiliary_shape)
-        self.nenvs, self.nsize, self.episode_length, self.batchsize = nenvs, nsize, episode_length, batchsize
+        super(RecurrentOffPolicyBuffer, self).__init__(observation_space, action_space, auxiliary_shape)
+        self.n_envs, self.n_size, self.episode_length, self.batch_size = n_envs, n_size, episode_length, batch_size
         self.lookup_length = lookup_length
-        self.memory = deque(maxlen=self.nsize)
+        self.memory = deque(maxlen=self.n_size)
 
     @property
     def full(self):
-        return self.size >= self.nsize
+        return self.size >= self.n_size
 
     def clear(self, *args):
-        self.memory = deque(maxlen=self.nsize)
+        self.memory = deque(maxlen=self.n_size)
 
     def store(self, episode):
         self.memory.append(episode)
-        self.ptr = (self.ptr + 1) % self.nsize
-        self.size = min(self.size + 1, self.nsize)
+        self.ptr = (self.ptr + 1) % self.n_size
+        self.size = min(self.size + 1, self.n_size)
 
     def sample(self):
         obs_batch, act_batch, rew_batch, terminal_batch = [], [], [], []
-        episode_choices = np.random.choice(self.memory, self.batchsize)
+        episode_choices = np.random.choice(self.memory, self.batch_size)
         length_min = self.episode_length
         for episode in episode_choices:
             length_min = min(length_min, len(episode))
 
         if length_min > self.lookup_length:
             for episode in episode_choices:
-                start_idx = np.random.randint(0, len(episode)-self.lookup_length+1)
+                start_idx = np.random.randint(0, len(episode) - self.lookup_length + 1)
                 sampled_data = episode.sample(lookup_step=self.lookup_length, idx=start_idx)
                 obs_batch.append(sampled_data["obs"])
                 act_batch.append(sampled_data["acts"])
@@ -325,40 +364,46 @@ class RecurrentOffPolicyBuffer(Buffer):
 
 
 class PerOffPolicyBuffer(Buffer):
+    """
+    Prioritized Replay Buffer.
+        observation_space: the observation space of the environment.
+        action_space: the action space of the environment.
+        auxiliary_shape: data shape of auxiliary information (if exists).
+        n_envs: number of parallel environments.
+        n_size: max length of steps to store for one environment.
+        batch_size: batch size of transition data for a sample.
+        alpha: prioritized factor.
+    """
     def __init__(self,
                  observation_space: Space,
                  action_space: Space,
-                 representation_shape: Optional[dict],
                  auxiliary_shape: Optional[dict],
-                 nenvs: int,
-                 nsize: int,
-                 batchsize: int,
-                 alpha=0.6):
-        super(PerOffPolicyBuffer, self).__init__(observation_space,
-                                                 action_space,
-                                                 representation_shape,
-                                                 auxiliary_shape)
-        self.nenvs, self.nsize, self.batchsize = nenvs, nsize, batchsize
-        self.observations = create_memory(space2shape(self.observation_space), self.nenvs, self.nsize)
-        self.next_observations = create_memory(space2shape(self.observation_space), self.nenvs, self.nsize)
-        self.actions = create_memory(space2shape(self.action_space), self.nenvs, self.nsize)
-        self.rewards = create_memory((), self.nenvs, self.nsize)
-        self.terminals = create_memory((), self.nenvs, self.nsize)
+                 n_envs: int,
+                 n_size: int,
+                 batch_size: int,
+                 alpha: float = 0.6):
+        super(PerOffPolicyBuffer, self).__init__(observation_space, action_space, auxiliary_shape)
+        self.n_envs, self.n_size, self.batch_size = n_envs, n_size, batch_size
+        self.observations = create_memory(space2shape(self.observation_space), self.n_envs, self.n_size)
+        self.next_observations = create_memory(space2shape(self.observation_space), self.n_envs, self.n_size)
+        self.actions = create_memory(space2shape(self.action_space), self.n_envs, self.n_size)
+        self.rewards = create_memory((), self.n_envs, self.n_size)
+        self.terminals = create_memory((), self.n_envs, self.n_size)
 
         self._alpha = alpha
 
         # set segment tree size
         it_capacity = 1
-        while it_capacity < self.nsize:
+        while it_capacity < self.n_size:
             it_capacity *= 2
 
         # init segment tree
         self._it_sum = []
         self._it_min = []
-        for _ in range(nenvs):
+        for _ in range(n_envs):
             self._it_sum.append(SumSegmentTree(it_capacity))
             self._it_min.append(MinSegmentTree(it_capacity))
-        self._max_priority = np.ones((nenvs))
+        self._max_priority = np.ones((n_envs))
 
     def _sample_proportional(self, env_idx, batch_size):
         res = []
@@ -371,11 +416,11 @@ class PerOffPolicyBuffer(Buffer):
         return res
 
     def clear(self):
-        self.observations = create_memory(space2shape(self.observation_space), self.nenvs, self.nsize)
-        self.next_observations = create_memory(space2shape(self.observation_space), self.nenvs, self.nsize)
-        self.actions = create_memory(space2shape(self.action_space), self.nenvs, self.nsize)
-        self.rewards = create_memory((), self.nenvs, self.nsize)
-        self.terminals = create_memory((), self.nenvs, self.nsize)
+        self.observations = create_memory(space2shape(self.observation_space), self.n_envs, self.n_size)
+        self.next_observations = create_memory(space2shape(self.observation_space), self.n_envs, self.n_size)
+        self.actions = create_memory(space2shape(self.action_space), self.n_envs, self.n_size)
+        self.rewards = create_memory((), self.n_envs, self.n_size)
+        self.terminals = create_memory((), self.n_envs, self.n_size)
         self._it_sum = []
         self._it_min = []
 
@@ -387,22 +432,22 @@ class PerOffPolicyBuffer(Buffer):
         store_element(next_obs, self.next_observations, self.ptr)
 
         # prioritized process
-        for i in range(self.nenvs):
+        for i in range(self.n_envs):
             self._it_sum[i][self.ptr] = self._max_priority[i] ** self._alpha
             self._it_min[i][self.ptr] = self._max_priority[i] ** self._alpha
 
-        self.ptr = (self.ptr + 1) % self.nsize
-        self.size = min(self.size + 1, self.nsize)
+        self.ptr = (self.ptr + 1) % self.n_size
+        self.size = min(self.size + 1, self.n_size)
 
     def sample(self, beta):
-        env_choices = np.array(range(self.nenvs)).repeat(int(self.batchsize / self.nenvs))
-        step_choices = np.zeros((self.nenvs, int(self.batchsize / self.nenvs)))
-        weights = np.zeros((self.nenvs, int(self.batchsize / self.nenvs)))
+        env_choices = np.array(range(self.n_envs)).repeat(int(self.batch_size / self.n_envs))
+        step_choices = np.zeros((self.n_envs, int(self.batch_size / self.n_envs)))
+        weights = np.zeros((self.n_envs, int(self.batch_size / self.n_envs)))
 
         assert beta > 0
 
-        for i in range(self.nenvs):
-            idxes = self._sample_proportional(i, int(self.batchsize / self.nenvs))
+        for i in range(self.n_envs):
+            idxes = self._sample_proportional(i, int(self.batch_size / self.n_envs))
 
             weights_ = []
             p_min = self._it_min[i].min() / self._it_sum[i].sum()
@@ -432,8 +477,8 @@ class PerOffPolicyBuffer(Buffer):
                 step_choices)
 
     def update_priorities(self, idxes, priorities):
-        priorities = priorities.reshape((self.nenvs, int(self.batchsize / self.nenvs)))
-        for i in range(self.nenvs):
+        priorities = priorities.reshape((self.n_envs, int(self.batch_size / self.n_envs)))
+        for i in range(self.n_envs):
             for idx, priority in zip(idxes[i], priorities[i]):
                 if priority == 0:
                     priority += 1e-8
@@ -445,54 +490,68 @@ class PerOffPolicyBuffer(Buffer):
 
 
 class DummyOffPolicyBuffer_Atari(DummyOffPolicyBuffer):
+    """
+    Replay buffer for off-policy DRL algorithms and Atari tasks.
+        observation_space: the observation space of the environment.
+        action_space: the action space of the environment.
+        auxiliary_shape: data shape of auxiliary information (if exists).
+        n_envs: number of parallel environments.
+        n_size: max length of steps to store for one environment.
+        batch_size: batch size of transition data for a sample.
+    """
     def __init__(self,
                  observation_space: Space,
                  action_space: Space,
-                 representation_shape: Optional[dict],
                  auxiliary_shape: Optional[dict],
-                 nenvs: int,
-                 nsize: int,
-                 batchsize: int):
-        super(DummyOffPolicyBuffer_Atari, self).__init__(observation_space, action_space,
-                                                         representation_shape,
-                                                         auxiliary_shape,
-                                                         nenvs,
-                                                         nsize,
-                                                         batchsize)
-        self.observations = create_memory(space2shape(self.observation_space), self.nenvs, self.nsize, np.uint8)
-        self.next_observations = create_memory(space2shape(self.observation_space), self.nenvs, self.nsize, np.uint8)
+                 n_envs: int,
+                 n_size: int,
+                 batch_size: int):
+        super(DummyOffPolicyBuffer_Atari, self).__init__(observation_space, action_space, auxiliary_shape,
+                                                         n_envs, n_size, batch_size)
+        self.observations = create_memory(space2shape(self.observation_space), self.n_envs, self.n_size, np.uint8)
+        self.next_observations = create_memory(space2shape(self.observation_space), self.n_envs, self.n_size, np.uint8)
 
     def clear(self):
-        self.observations = create_memory(space2shape(self.observation_space), self.nenvs, self.nsize, np.uint8)
-        self.next_observations = create_memory(space2shape(self.observation_space), self.nenvs, self.nsize, np.uint8)
-        self.actions = create_memory(space2shape(self.action_space), self.nenvs, self.nsize)
-        self.representation_infos = create_memory(self.representation_shape, self.nenvs, self.nsize)
-        self.auxiliary_infos = create_memory(self.auxiliary_shape, self.nenvs, self.nsize)
-        self.rewards = create_memory((), self.nenvs, self.nsize)
-        self.terminals = create_memory((), self.nenvs, self.nsize)
+        self.observations = create_memory(space2shape(self.observation_space), self.n_envs, self.n_size, np.uint8)
+        self.next_observations = create_memory(space2shape(self.observation_space), self.n_envs, self.n_size, np.uint8)
+        self.actions = create_memory(space2shape(self.action_space), self.n_envs, self.n_size)
+        self.auxiliary_infos = create_memory(self.auxiliary_shape, self.n_envs, self.n_size)
+        self.rewards = create_memory((), self.n_envs, self.n_size)
+        self.terminals = create_memory((), self.n_envs, self.n_size)
 
 
 class DummyOnPolicyBuffer_Atari(DummyOnPolicyBuffer):
-    def __init__(self, observation_space: Space,
+    """
+    Replay buffer for on-policy DRL algorithms and Atari tasks.
+        observation_space: the observation space of the environment.
+        action_space: the action space of the environment.
+        auxiliary_shape: data shape of auxiliary information (if exists).
+        n_envs: number of parallel environments.
+        n_size: max length of steps to store for one environment.
+        use_gae: if use GAE trick.
+        use_advnorm: if use Advantage normalization trick.
+        gamma: discount factor.
+        gae_lam: gae lambda.
+    """
+    def __init__(self,
+                 observation_space: Space,
                  action_space: Space,
-                 representation_shape: Optional[dict],
                  auxiliary_shape: Optional[dict],
-                 nenvs: int,
-                 nsize: int,
-                 nminibatch: int,
+                 n_envs: int,
+                 n_size: int,
+                 use_gae: bool = True,
+                 use_advnorm: bool = True,
                  gamma: float = 0.99,
-                 lam: float = 0.95):
-        super(DummyOnPolicyBuffer_Atari, self).__init__(observation_space, action_space,
-                                                        representation_shape, auxiliary_shape, nenvs, nsize, nminibatch,
-                                                        gamma, lam)
-        self.observations = create_memory(space2shape(self.observation_space), self.nenvs, self.nsize, np.uint8)
+                 gae_lam: float = 0.95):
+        super(DummyOnPolicyBuffer_Atari, self).__init__(observation_space, action_space, auxiliary_shape,
+                                                        n_envs, n_size, use_gae, use_advnorm, gamma, gae_lam)
+        self.observations = create_memory(space2shape(self.observation_space), self.n_envs, self.n_size, np.uint8)
 
     def clear(self):
         self.ptr, self.size = 0, 0
-        self.observations = create_memory(space2shape(self.observation_space), self.nenvs, self.nsize, np.uint8)
-        self.actions = create_memory(space2shape(self.action_space), self.nenvs, self.nsize)
-        self.representation_infos = create_memory(self.representation_shape, self.nenvs, self.nsize)
-        self.auxiliary_infos = create_memory(self.auxiliary_shape, self.nenvs, self.nsize)
-        self.rewards = create_memory((), self.nenvs, self.nsize)
-        self.returns = create_memory((), self.nenvs, self.nsize)
-        self.advantages = create_memory((), self.nenvs, self.nsize)
+        self.observations = create_memory(space2shape(self.observation_space), self.n_envs, self.n_size, np.uint8)
+        self.actions = create_memory(space2shape(self.action_space), self.n_envs, self.n_size)
+        self.auxiliary_infos = create_memory(self.auxiliary_shape, self.n_envs, self.n_size)
+        self.rewards = create_memory((), self.n_envs, self.n_size)
+        self.returns = create_memory((), self.n_envs, self.n_size)
+        self.advantages = create_memory((), self.n_envs, self.n_size)

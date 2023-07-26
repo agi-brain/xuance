@@ -14,7 +14,7 @@ class StarCraft2_Env:
         self.dim_state = env_info["state_shape"]
         self.dim_obs = env_info["obs_shape"]
         self.dim_act = self.n_actions = env_info["n_actions"]
-        self.dim_reward = 1
+        self.dim_reward = self.n_agents
         self.max_cycles = env_info["episode_limit"]
         self._episode_step = 0
         self._episode_score = 0
@@ -50,11 +50,12 @@ class StarCraft2_Env:
         state = self.env.get_state()
         self._episode_step += 1
         self._episode_score += reward
+        reward_n = np.array([[reward] for _ in range(self.n_agents)])
         self.buf_info = copy.deepcopy(info)
         info["episode_step"] = self._episode_step
         info["episode_score"] = self._episode_score
         truncated = True if self._episode_step >= self.max_cycles else False
-        return obs, state, reward, terminated, truncated, info
+        return obs, state, reward_n, terminated, truncated, info
 
     def get_avail_actions(self):
         return self.env.get_avail_actions()

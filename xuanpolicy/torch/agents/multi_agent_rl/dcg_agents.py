@@ -59,25 +59,11 @@ class DCG_Agents(MARLAgents):
         else:
             config.dim_state, state_shape = None, None
 
-        if self.use_recurrent:
-            memory = MARL_OffPolicyBuffer_RNN(config.n_agents,
-                                              state_shape,
-                                              config.dim_obs,
-                                              config.dim_act,
-                                              config.rew_shape,
-                                              envs.num_envs,
-                                              config.buffer_size,
-                                              envs.max_episode_length,
-                                              config.batch_size)
-        else:
-            memory = MARL_OffPolicyBuffer(state_shape,
-                                          config.obs_shape,
-                                          config.act_shape,
-                                          config.rew_shape,
-                                          config.done_shape,
-                                          envs.num_envs,
-                                          config.buffer_size,
-                                          config.batch_size)
+        buffer = MARL_OffPolicyBuffer_RNN if self.use_recurrent else MARL_OffPolicyBuffer
+        input_buffer = (config.n_agents, state_shape, config.obs_shape, config.act_shape, config.rew_shape,
+                        config.done_shape, envs.num_envs, config.buffer_size, config.batch_size)
+        memory = buffer(*input_buffer, max_episode_length=envs.max_episode_length, dim_act=config.dim_act)
+
         from xuanpolicy.torch.learners.multi_agent_rl.dcg_learner import DCG_Learner
         learner = DCG_Learner(config, policy, optimizer, scheduler,
                               config.device, config.model_dir, config.gamma,
@@ -86,10 +72,13 @@ class DCG_Agents(MARLAgents):
                                          config.log_dir, config.model_dir)
 
     def act(self, obs_n, *rnn_hidden, avail_actions=None, test_mode=False):
+        batch_size = obs_n.shape[0]
         obs_n = torch.Tensor(obs_n).to(self.device)
         with torch.no_grad():
-            rnn_hidden_next, hidden_states = self.learner.get_hidden_states(obs_n, *rnn_hidden)
-            greedy_actions = self.learner.act(hidden_states, avail_actions=avail_actions)
+            obs_in = obs_n.view(batch_size * self.n_agents, 1, -1)
+            rnn_hidden_next, hidden_states = self.learner.get_hidden_states(obs_in, *rnn_hidden)
+            greedy_actions = self.learner.act(hidden_states.view(batch_size, self.n_agents, -1),
+                                              avail_actions=avail_actions)
         greedy_actions = greedy_actions.cpu().detach().numpy()
 
         if test_mode:

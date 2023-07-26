@@ -14,6 +14,7 @@ class DummyVecEnv_StarCraft2(VecEnv):
         self.num_agents, self.num_enemies = env.n_agents, env.n_enemies
         self.obs_shape = (env.n_agents, env.dim_obs)
         self.act_shape = (env.n_agents, env.n_actions)
+        self.rew_shape = (env.n_agents, 1)
         self.dim_obs, self.dim_state, self.dim_act = env.dim_obs, env.dim_state, env.dim_act
         self.dim_reward = env.dim_reward
         self.action_space = Discrete(n=self.dim_act)
@@ -22,7 +23,7 @@ class DummyVecEnv_StarCraft2(VecEnv):
         self.buf_state = np.zeros(combined_shape(self.num_envs, self.dim_state), dtype=np.float32)
         self.buf_dones = np.zeros((self.num_envs, 1), dtype=np.bool)
         self.buf_trunctions = np.zeros((self.num_envs, 1), dtype=np.bool)
-        self.buf_rews = np.zeros((self.num_envs, 1), dtype=np.float32)
+        self.buf_rews = np.zeros((self.num_envs, ) + self.rew_shape, dtype=np.float32)
         self.buf_infos = [{} for _ in range(self.num_envs)]
         self.actions = None
         self.battles_game = np.zeros(self.num_envs, np.int32)

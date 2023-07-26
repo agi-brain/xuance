@@ -61,7 +61,6 @@ class ActorCriticPolicy(nn.Module):
                  initialize: Optional[Callable[..., torch.Tensor]] = None,
                  activation: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None):
-        assert isinstance(action_space, Box)
         super(ActorCriticPolicy, self).__init__()
         self.action_dim = action_space.shape[0]
         self.representation = representation
@@ -88,7 +87,6 @@ class ActorPolicy(nn.Module):
                  activation: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None,
                  fixed_std: bool = True):
-        assert isinstance(action_space, Box)
         super(ActorPolicy, self).__init__()
         self.action_dim = action_space.shape[0]
         self.representation = representation
@@ -112,7 +110,6 @@ class PPGActorCritic(nn.Module):
                  initialize: Optional[Callable[..., torch.Tensor]] = None,
                  activation: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None):
-        assert isinstance(action_space, Box)
         super(PPGActorCritic, self).__init__()
         self.action_dim = action_space.shape[0]
         self.actor_representation = representation
@@ -197,7 +194,6 @@ class SACPolicy(nn.Module):
                  initialize: Optional[Callable[..., torch.Tensor]] = None,
                  activation: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None):
-        assert isinstance(action_space, Box)
         super(SACPolicy, self).__init__()
         self.action_dim = action_space.shape[0]
         self.representation_info_shape = representation.output_shapes

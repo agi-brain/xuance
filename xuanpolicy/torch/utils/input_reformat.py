@@ -106,8 +106,12 @@ def get_policy_in_marl(args, representation, mixer=None, ff_mixer=None, qtran_mi
         input_dict["actor_hidden_size"] = args.actor_hidden_size
         try: input_dict["critic_hidden_size"] = args.critic_hidden_size
         except: input_dict["critic_hidden_size"] = None
-    input_dict["normalize"] = None
-    input_dict["initialize"] = None
+    if args.agent in ["MAPPO"]:
+        input_dict["normalize"] = None
+        input_dict["initialize"] = torch.nn.init.orthogonal_
+    else:
+        input_dict["normalize"] = None
+        input_dict["initialize"] = None
     input_dict["activation"] = ActivationFunctions[args.activation]  # torch.nn.ReLU
 
     input_dict["device"] = args.device

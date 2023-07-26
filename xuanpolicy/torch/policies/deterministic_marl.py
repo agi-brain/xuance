@@ -425,7 +425,6 @@ class Basic_DDPG_policy(nn.Module):
                  activation: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None
                  ):
-        assert isinstance(action_space, Box_pettingzoo)
         super(Basic_DDPG_policy, self).__init__()
         self.action_dim = action_space.shape[0]
         self.n_agents = n_agents
@@ -483,7 +482,6 @@ class MADDPG_policy(Basic_DDPG_policy):
                  activation: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None
                  ):
-        assert isinstance(action_space, Box_pettingzoo)
         super(MADDPG_policy, self).__init__(action_space, n_agents, representation,
                                             actor_hidden_size, critic_hidden_size,
                                             normalize, initialize, activation, device)
@@ -519,7 +517,6 @@ class MATD3_policy(Basic_DDPG_policy):
                  activation: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None
                  ):
-        assert isinstance(action_space, Box)
         super(MATD3_policy, self).__init__(action_space, n_agents, representation,
                                            actor_hidden_size, critic_hidden_size,
                                            normalize, initialize, activation, device)

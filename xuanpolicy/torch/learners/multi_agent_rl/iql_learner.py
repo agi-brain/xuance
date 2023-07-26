@@ -68,7 +68,7 @@ class IQL_Learner(LearnerMAS):
         self.iterations += 1
         obs = torch.Tensor(sample['obs']).to(self.device)
         actions = torch.Tensor(sample['actions']).to(self.device)
-        rewards = torch.Tensor(sample['rewards']).mean(dim=-1, keepdims=True).to(self.device)
+        rewards = torch.Tensor(sample['rewards']).mean(dim=1, keepdims=True).to(self.device)
         terminals = torch.Tensor(sample['terminals']).float().to(self.device)
         avail_actions = torch.Tensor(sample['avail_actions']).float().to(self.device)
         filled = torch.Tensor(sample['filled']).float().to(self.device)
@@ -102,15 +102,15 @@ class IQL_Learner(LearnerMAS):
         else:
             q_next_a = q_next.max(dim=-1, keepdim=True).values
 
-        filled = filled.unsqueeze(1).expand(batch_size, self.n_agents, episode_length, 1)
-        rewards = rewards.unsqueeze(1).expand(batch_size, self.n_agents, episode_length, 1)
+        filled_n = filled.unsqueeze(1).expand(-1, self.n_agents, -1, -1)
+        rewards = rewards.expand(-1, self.n_agents, -1, -1)
         terminals = terminals.unsqueeze(1).expand(batch_size, self.n_agents, episode_length, 1)
         q_target = rewards + (1 - terminals) * self.args.gamma * q_next_a
 
         # calculate the loss function
         td_errors = q_eval_a - q_target.detach()
-        td_errors *= filled
-        loss = (td_errors ** 2).sum() / filled.sum()
+        td_errors *= filled_n
+        loss = (td_errors ** 2).sum() / filled_n.sum()
         self.optimizer.zero_grad()
         loss.backward()
         if self.args.use_grad_clip:

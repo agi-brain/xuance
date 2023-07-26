@@ -158,7 +158,7 @@ class DCG_Learner(LearnerMAS):
         state = torch.Tensor(sample['state']).to(self.device)
         obs = torch.Tensor(sample['obs']).to(self.device)
         actions = torch.Tensor(sample['actions']).to(self.device)
-        rewards = torch.Tensor(sample['rewards']).to(self.device)
+        rewards = torch.Tensor(sample['rewards']).mean(dim=1, keepdims=False).to(self.device)
         terminals = torch.Tensor(sample['terminals']).float().to(self.device)
         avail_actions = torch.Tensor(sample['avail_actions']).float().to(self.device)
         filled = torch.Tensor(sample['filled']).float().to(self.device)

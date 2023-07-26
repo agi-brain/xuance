@@ -24,7 +24,7 @@ class SACDIS_Learner(Learner):
         _, action_q = self.policy.Qaction(obs_batch)
         action_q = action_q.gather(1, act_batch.long())
         # with torch.no_grad():
-        _, action_prob_next, log_pi_next, target_q = self.policy.Qtarget(next_batch)
+        action_prob_next, log_pi_next, target_q = self.policy.Qtarget(next_batch)
         target_q = action_prob_next * (target_q - 0.01 * log_pi_next)
         target_q = target_q.sum(dim=1).unsqueeze(-1)
         rew = torch.unsqueeze(rew_batch, -1)
@@ -35,7 +35,7 @@ class SACDIS_Learner(Learner):
         self.optimizer[1].step()
 
         # actor update
-        _, action_prob, log_pi, policy_q = self.policy.Qpolicy(obs_batch)
+        action_prob, log_pi, policy_q = self.policy.Qpolicy(obs_batch)
         inside_term = 0.01 * log_pi - policy_q
         p_loss = (action_prob * inside_term).sum(dim=1).mean()
         # p_loss = (inside_term).sum(dim=1).mean()

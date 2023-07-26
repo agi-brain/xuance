@@ -37,25 +37,12 @@ class IQL_Agents(MARLAgents):
             config.dim_state, state_shape = config.state_space.shape, config.state_space.shape
         else:
             config.dim_state, state_shape = None, None
-        if self.use_recurrent:
-            memory = MARL_OffPolicyBuffer_RNN(config.n_agents,
-                                              state_shape,
-                                              config.dim_obs,
-                                              config.dim_act,
-                                              config.rew_shape,
-                                              envs.num_envs,
-                                              config.buffer_size,
-                                              envs.max_episode_length,
-                                              config.batch_size)
-        else:
-            memory = MARL_OffPolicyBuffer(state_shape,
-                                          config.obs_shape,
-                                          config.act_shape,
-                                          config.rew_shape,
-                                          config.done_shape,
-                                          envs.num_envs,
-                                          config.buffer_size,
-                                          config.batch_size)
+
+        buffer = MARL_OffPolicyBuffer_RNN if self.use_recurrent else MARL_OffPolicyBuffer
+        input_buffer = (config.n_agents, state_shape, config.obs_shape, config.act_shape, config.rew_shape,
+                        config.done_shape, envs.num_envs, config.buffer_size, config.batch_size)
+        memory = buffer(*input_buffer, max_episode_length=envs.max_episode_length, dim_act=config.dim_act)
+
         learner = IQL_Learner(config, policy, optimizer, scheduler, config.device, config.model_dir, config.gamma,
                               config.sync_frequency)
         super(IQL_Agents, self).__init__(config, envs, policy, memory, learner, device,
@@ -66,7 +53,12 @@ class IQL_Agents(MARLAgents):
         agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(batch_size, -1, -1).to(self.device)
         obs_in = torch.Tensor(obs_n).view([batch_size, self.n_agents, -1]).to(self.device)
         if self.use_recurrent:
-            hidden_state, greedy_actions, _ = self.policy(obs_in, agents_id, *rnn_hidden, avail_actions=avail_actions)
+            batch_agents = batch_size * self.n_agents
+            hidden_state, greedy_actions, _ = self.policy(obs_in.view(batch_agents, 1, -1),
+                                                          agents_id.view(batch_agents, 1, -1),
+                                                          *rnn_hidden,
+                                                          avail_actions=avail_actions.reshape(batch_agents, 1, -1))
+            greedy_actions = greedy_actions.view(batch_size, self.n_agents)
         else:
             hidden_state, greedy_actions, _ = self.policy(obs_in, agents_id, avail_actions=avail_actions)
         greedy_actions = greedy_actions.cpu().detach().numpy()
@@ -97,4 +89,3 @@ class IQL_Agents(MARLAgents):
             return info_train
         else:
             return {}
-

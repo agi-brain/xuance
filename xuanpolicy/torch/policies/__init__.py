@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import copy
 from typing import Sequence, Optional, Callable, Union
-from gym.spaces import Space, Box, Discrete, Dict
+from gymnasium.spaces import Space, Box, Discrete, Dict
 
 from .categorical import ActorCriticPolicy as Categorical_AC_Policy
 from .categorical import ActorPolicy as Categorical_Actor_Policy
@@ -22,8 +22,8 @@ from .deterministic_marl import BasicQnetwork as BasicQnetwork_marl
 from .deterministic_marl import Basic_DDPG_policy as BasicDDPG_marl
 from .deterministic_marl import MFQnetwork, MixingQnetwork, Weighted_MixingQnetwork, Qtran_MixingQnetwork, DCG_policy, \
     Basic_DDPG_policy, MADDPG_policy, MATD3_policy
-from .categorical_marl import MultiAgentActorCriticPolicy, MeanFieldActorCriticPolicy, COMAPolicy
-from .categorical_marl import MAPPO_ActorCriticPolicy as Categotical_MAPPO
+from .categorical_marl import MeanFieldActorCriticPolicy, COMAPolicy
+from .categorical_marl import MAAC_Policy as Categorical_MAAC_Policy
 from .gaussian_marl import Basic_ISAC_policy as Gaussian_ISAC
 from .gaussian_marl import MASAC_policy as Gaussian_MASAC
 
@@ -62,16 +62,15 @@ REGISTRY = {
     "Weighted_Mixing_Q_network": Weighted_MixingQnetwork,
     "Qtran_Mixing_Q_network": Qtran_MixingQnetwork,
     "DCG_policy": DCG_policy,
-    "Categorical_MAAC_policy": MultiAgentActorCriticPolicy,
-    "Categorical_COMA_policy": COMAPolicy,
-    "Independent_DDPG_policy": BasicDDPG_marl,
-    "MADDPG_policy": MADDPG_policy,
+    "Categorical_MAAC_Policy": Categorical_MAAC_Policy,
+    "Categorical_COMA_Policy": COMAPolicy,
+    "Independent_DDPG_Policy": BasicDDPG_marl,
+    "MADDPG_Policy": MADDPG_policy,
     "MF_Q_network": MFQnetwork,
-    "Categorical_MFAC_policy": MeanFieldActorCriticPolicy,
-    "Categorical_MAPPO_policy": Categotical_MAPPO,
-    "Gaussian_ISAC_policy": Gaussian_ISAC,
-    "Gaussian_MASAC_policy": Gaussian_MASAC,
-    "MATD3_policy": MATD3_policy
+    "Categorical_MFAC_Policy": MeanFieldActorCriticPolicy,
+    "Gaussian_ISAC_Policy": Gaussian_ISAC,
+    "Gaussian_MASAC_Policy": Gaussian_MASAC,
+    "MATD3_Policy": MATD3_policy
 }
 
 Policy_Inputs = {
@@ -131,25 +130,23 @@ Policy_Inputs = {
                                   "normalize", "initialize", "activation", "device"],
     "Qtran_Mixing_Q_network": ["action_space", "n_agents", "representation", "mixer", "qtran_mixer", "hidden_sizes",
                                "normalize", "initialize", "activation", "device"],
-    "Categorical_MAAC_policy": ["action_space", "n_agents", "representation", "mixer", "actor_hidden_size",
+    "Categorical_MAAC_Policy": ["action_space", "n_agents", "representation", "mixer", "actor_hidden_size",
                                 "critic_hidden_size", "normalize", "initialize", "activation", "device"],
-    "Categorical_MAPPO_policy": ["state_dim", "action_space", "n_agents", "representation", "actor_hidden_size",
-                                 "critic_hidden_size", "normalize", "initialize", "activation", "device"],
-    "Categorical_MFAC_policy": ["action_space", "n_agents", "representation", "actor_hidden_size",
+    "Categorical_MFAC_Policy": ["action_space", "n_agents", "representation", "actor_hidden_size",
                                 "critic_hidden_size", "normalize", "initialize", "activation", "device"],
-    "Categorical_COMA_policy": ["state_dim", "action_space", "n_agents", "representation", "actor_hidden_size",
+    "Categorical_COMA_Policy": ["state_dim", "action_space", "n_agents", "representation", "actor_hidden_size",
                                 "critic_hidden_size", "normalize", "initialize", "activation", "device"],
-    "Independent_DDPG_policy": ["action_space", "n_agents", "representation", "actor_hidden_size",
+    "Independent_DDPG_Policy": ["action_space", "n_agents", "representation", "actor_hidden_size",
                                 "critic_hidden_size", "normalize", "initialize", "activation", "device"],
-    "MADDPG_policy": ["action_space", "n_agents", "representation", "actor_hidden_size", "critic_hidden_size",
+    "MADDPG_Policy": ["action_space", "n_agents", "representation", "actor_hidden_size", "critic_hidden_size",
                       "normalize", "initialize", "activation", "device"],
     "MF_Q_network": ["action_space", "n_agents", "representation", "hidden_sizes",
                      "normalize", "initialize", "activation", "device"],
-    "Gaussian_ISAC_policy": ["action_space", "n_agents", "representation", "actor_hidden_size",
+    "Gaussian_ISAC_Policy": ["action_space", "n_agents", "representation", "actor_hidden_size",
                              "critic_hidden_size", "normalize", "initialize", "activation", "device"],
-    "Gaussian_MASAC_policy": ["action_space", "n_agents", "representation", "actor_hidden_size", "critic_hidden_size",
+    "Gaussian_MASAC_Policy": ["action_space", "n_agents", "representation", "actor_hidden_size", "critic_hidden_size",
                               "normalize", "initialize", "activation", "device"],
-    "MATD3_policy": ["action_space", "n_agents", "representation", "actor_hidden_size", "critic_hidden_size",
+    "MATD3_Policy": ["action_space", "n_agents", "representation", "actor_hidden_size", "critic_hidden_size",
                      "normalize", "initialize", "activation", "device"],
 }
 

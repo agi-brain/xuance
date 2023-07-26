@@ -82,16 +82,17 @@ class Pettingzoo_Runner(Runner_Base):
             arg.observation_space = self.envs.observation_space
             if isinstance(self.envs.action_space[self.agent_keys[h][0]], Box):
                 arg.dim_act = self.envs.action_space[self.agent_keys[h][0]].shape[0]
-                arg.act_shape = (arg.n_agents, arg.dim_act)
+                arg.act_shape = (arg.dim_act, )
             else:
                 arg.dim_act = self.envs.action_space[self.agent_keys[h][0]].n
-                arg.act_shape = (arg.n_agents,)
+                arg.act_shape = ()
             arg.action_space = self.envs.action_space
             if arg.env_name == "MAgent2":
-                arg.dim_obs = (np.prod(self.envs.observation_space[self.agent_keys[h][0]].shape), )
+                arg.obs_shape = (np.prod(self.envs.observation_space[self.agent_keys[h][0]].shape), )
+                arg.dim_obs = arg.obs_shape[0]
             else:
-                arg.dim_obs = self.envs.observation_space[self.agent_keys[h][0]].shape
-            arg.obs_shape = (arg.n_agents,) + arg.dim_obs
+                arg.obs_shape = self.envs.observation_space[self.agent_keys[h][0]].shape
+                arg.dim_obs = arg.obs_shape[0]
             arg.rew_shape, arg.done_shape, arg.act_prob_shape = (arg.n_agents, 1), (arg.n_agents,), (arg.dim_act,)
             self.marl_agents.append(REGISTRY_Agent[arg.agent](arg, self.envs, arg.device))
             self.marl_names.append(arg.agent)
@@ -154,8 +155,9 @@ class Pettingzoo_Runner(Runner_Base):
             elif self.marl_names[h] == "MFAC":
                 a, a_mean = mas_group.act(obs_n[h], test_mode, act_mean_last[h], agent_mask[h])
                 act_mean_current[h] = a_mean
-            elif self.marl_names[h] in ["MAPPO_KL", "MAPPO_Clip", "CID_Simple"]:
-                a, log_pi, values = mas_group.act(obs_n[h], test_mode, state=state)
+            elif self.marl_names[h] in ["MAPPO"]:
+                _, a, log_pi = mas_group.act(obs_n[h], test_mode=test_mode, state=state)
+                _, values = mas_group.values(obs_n[h], state=state)
                 log_pi_n.append(log_pi)
                 values_n.append(values)
             elif self.marl_names[h] in ["VDAC"]:
@@ -171,23 +173,25 @@ class Pettingzoo_Runner(Runner_Base):
         return {'actions_n': actions_n, 'log_pi': log_pi_n, 'act_mean': act_mean_current,
                 'act_n_onehot': actions_n_onehot, 'values': values_n}
 
-    def store_data(self, obs_n, next_obs_n, actions_dict, state, next_state, agent_mask, rew_n, done_n, env):
+    def store_data(self, obs_n, next_obs_n, actions_dict, state, next_state, agent_mask, rew_n, done_n):
         for h, mas_group in enumerate(self.marl_agents):
             if mas_group.args.agent_name == "random":
                 continue
             data_step = {'obs': obs_n[h], 'obs_next': next_obs_n[h], 'actions': actions_dict['actions_n'][h],
                          'state': state, 'state_next': next_state, 'rewards': rew_n[h],
                          'agent_mask': agent_mask[h], 'terminals': done_n[h]}
-            if self.marl_names[h] in ["CID_Simple", "CID_Rainbow"]:
-                rew_n_assign = mas_group.reward_shaping(state, obs_n[h], actions_dict['actions_n'][h], rew_n[h], env)
-                data_step['rewards_assign'] = rew_n_assign
-            elif self.marl_names[h] in ["MAPPO_KL", "MAPPO_Clip", "VDAC"]:
-                if self.marl_names[h] == "MAPPO_KL":
-                    data_step['values'] = actions_dict['values'][h]
-                    data_step['pi_dist_old'] = actions_dict['log_pi'][h]
-                else:
-                    data_step['values'] = actions_dict['values'][h]
-                    data_step['log_pi_old'] = actions_dict['log_pi'][h]
+            if self.marl_names[h] in ["MAPPO", "VDAC"]:
+                data_step['values'] = actions_dict['values'][h]
+                data_step['log_pi_old'] = actions_dict['log_pi'][h]
+                mas_group.memory.store(data_step)
+                if mas_group.memory.full:
+                    _, values_next = mas_group.values(next_obs_n[h], state=next_state)
+                    for i_env in range(self.n_envs):
+                        if done_n[h][i_env].all():
+                            mas_group.memory.finish_path(0.0, i_env)
+                        else:
+                            mas_group.memory.finish_path(values_next[i_env], i_env)
+                continue
             elif self.marl_names[h] in ["COMA"]:
                 data_step['actions_onehot'] = actions_dict['act_n_onehot'][h]
             elif self.marl_names[h] in ["MFQ", "MFAC"]:
@@ -211,7 +215,7 @@ class Pettingzoo_Runner(Runner_Base):
                 next_obs_n, rew_n, terminated_n, truncated_n, infos = self.envs.step(actions_execute)
                 next_state, agent_mask = self.envs.global_state(), self.envs.agent_mask()
 
-                self.store_data(obs_n, next_obs_n, actions_dict, state, next_state, agent_mask, rew_n, terminated_n, self.envs)
+                self.store_data(obs_n, next_obs_n, actions_dict, state, next_state, agent_mask, rew_n, terminated_n)
 
                 # train the model for each step
                 if self.train_per_step:
@@ -228,19 +232,19 @@ class Pettingzoo_Runner(Runner_Base):
                     terminal_handle[h] = terminated_n[h].all(axis=-1)
                     truncate_handle[h] = truncated_n[h].all(axis=-1)
 
-                for i in range(self.n_envs):
-                    if terminal_handle.all(axis=0)[i] or truncate_handle.all(axis=0)[i]:
-                        state[i] = self.envs.global_state_one_env(i)
-                        self.current_episode[i] += 1
+                for i_env in range(self.n_envs):
+                    if terminal_handle.all(axis=0)[i_env] or truncate_handle.all(axis=0)[i_env]:
+                        state[i_env] = self.envs.global_state_one_env(i_env)
+                        self.current_episode[i_env] += 1
                         for h, mas_group in enumerate(self.marl_agents):
                             if mas_group.args.agent_name == "random":
                                 continue
-                            act_mean_last[h][i] = np.zeros([self.args[h].dim_act])
+                            act_mean_last[h][i_env] = np.zeros([self.args[h].dim_act])
                             if mas_group.on_policy:
-                                value_next_e = mas_group.value(next_obs_n[h], next_state)[i]
-                                mas_group.memory.finish_path(value_next_e, i)
-                            obs_n[h][i] = infos[i]["reset_obs"][h]
-                            episode_score[h, i] = np.mean(infos[i]["individual_episode_rewards"][h])
+                                _, value_next_e = mas_group.values(next_obs_n[h], state=next_state)
+                                mas_group.memory.finish_path(value_next_e[i_env], i_env)
+                            obs_n[h][i_env] = infos[i_env]["reset_obs"][h]
+                            episode_score[h, i_env] = np.mean(infos[i_env]["individual_episode_rewards"][h])
                 self.current_step += self.n_envs
 
             if self.n_handles > 1:
@@ -255,8 +259,8 @@ class Pettingzoo_Runner(Runner_Base):
                     if mas_group.args.agent_name == "random":
                         continue
                     train_info = self.marl_agents[h].train(self.current_step)
-                    self.log_infos(train_info, self.current_step)
-                    self.log_infos(episode_info, self.current_step)
+            self.log_infos(train_info, self.current_step)
+            self.log_infos(episode_info, self.current_step)
 
     def test_episode(self, env_fn):
         test_envs = env_fn()
