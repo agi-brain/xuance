@@ -1,6 +1,6 @@
 from xuanpolicy.common import space2shape
 from copy import deepcopy
-from xuanpolicy.torch.utils import ActivationFunctions
+from xuanpolicy.torch.utils import ActivationFunctions, NormalizeFunctions, InitializeFunctions
 from xuanpolicy.torch.policies import Policy_Inputs, Policy_Inputs_All
 from xuanpolicy.torch.representations import Representation_Inputs, Representation_Inputs_All
 from operator import itemgetter
@@ -34,7 +34,7 @@ def get_repre_in(args):
         if representation_name in ["AC_CNN_Atari"]:
             input_dict["fc_hidden_sizes"] = args.fc_hidden_sizes
 
-    input_dict["normalize"] = None
+    input_dict["normalize"] = NormalizeFunctions[args.normalize] if hasattr(args, "normalize") else None
     input_dict["initialize"] = torch.nn.init.orthogonal_
     input_dict["activation"] = ActivationFunctions[args.activation]
     input_dict["device"] = args.device
@@ -70,7 +70,7 @@ def get_policy_in(args, representation):
         input_dict["actor_hidden_size"] = args.actor_hidden_size
         if policy_name in ["Categorical_AC", "Categorical_PPG", "Gaussian_AC", "Discrete_SAC", "Gaussian_SAC", "Gaussian_PPG", "DDPG_Policy", "TD3_Policy"]:
             input_dict["critic_hidden_size"] = args.critic_hidden_size
-    input_dict["normalize"] = None
+    input_dict["normalize"] = NormalizeFunctions[args.normalize] if hasattr(args, "normalize") else None
     input_dict["initialize"] = torch.nn.init.orthogonal_
     input_dict["activation"] = ActivationFunctions[args.activation]
     input_dict["device"] = args.device
@@ -106,13 +106,10 @@ def get_policy_in_marl(args, representation, mixer=None, ff_mixer=None, qtran_mi
         input_dict["actor_hidden_size"] = args.actor_hidden_size
         try: input_dict["critic_hidden_size"] = args.critic_hidden_size
         except: input_dict["critic_hidden_size"] = None
-    if args.agent in ["MAPPO"]:
-        input_dict["normalize"] = None
-        input_dict["initialize"] = torch.nn.init.orthogonal_
-    else:
-        input_dict["normalize"] = None
-        input_dict["initialize"] = None
-    input_dict["activation"] = ActivationFunctions[args.activation]  # torch.nn.ReLU
+
+    input_dict["initialize"] = InitializeFunctions[args.initialize] if hasattr(args, "initialize") else None
+    input_dict["normalize"] = NormalizeFunctions[args.normalize] if hasattr(args, "normalize") else None
+    input_dict["activation"] = ActivationFunctions[args.activation]
 
     input_dict["device"] = args.device
     if policy_name == "Gaussian_Actor":

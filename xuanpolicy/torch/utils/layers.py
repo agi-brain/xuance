@@ -16,10 +16,10 @@ def mlp_block(input_dim: int,
     if initialize is not None:
         initialize(linear.weight)
     block.append(linear)
-    if normalize is not None:
-        block.append(normalize(output_dim, device=device))
     if activation is not None:
         block.append(activation())
+    if normalize is not None:
+        block.append(normalize(output_dim, device=device))
     return block, (output_dim,)
 
 
@@ -43,6 +43,8 @@ def cnn_block(input_shape: Sequence[int],
     C = filter
     H = int((H + 2 * padding - (kernel_size - 1) - 1) / stride + 1)
     W = int((W + 2 * padding - (kernel_size - 1) - 1) / stride + 1)
+    if activation is not None:
+        block.append(activation())
     if normalize is not None:
         if normalize == nn.GroupNorm:
             block.append(normalize(C // 2, C, device=device))
@@ -50,8 +52,6 @@ def cnn_block(input_shape: Sequence[int],
             block.append(normalize((C, H, W), device=device))
         else:
             block.append(normalize(C, device=device))
-    if activation is not None:
-        block.append(activation())
     return block, (C, H, W)
 
 
@@ -66,12 +66,12 @@ def pooling_block(input_shape: Sequence[int],
     return block
 
 
-def gru_block(input_dim: Sequence[int],
+def gru_block(input_dim: int,
               output_dim: int,
               num_layers: int = 1,
               dropout: float = 0,
               initialize: Optional[Callable[[torch.Tensor], torch.Tensor]] = None,
-              device: Optional[Union[str, int, torch.device]] = None) -> ModuleType:
+              device: Optional[Union[str, int, torch.device]] = None) -> Tuple[nn.Module, int]:
     gru = nn.GRU(input_size=input_dim,
                  hidden_size=output_dim,
                  num_layers=num_layers,
@@ -83,15 +83,15 @@ def gru_block(input_dim: Sequence[int],
             for weight in weight_list:
                 if len(weight.shape) > 1:
                     initialize(weight)
-    return gru
+    return gru, output_dim
 
 
-def lstm_block(input_dim: Sequence[int],
+def lstm_block(input_dim: int,
                output_dim: int,
                num_layers: int = 1,
                dropout: float = 0,
                initialize: Optional[Callable[[torch.Tensor], torch.Tensor]] = None,
-               device: Optional[Union[str, int, torch.device]] = None) -> ModuleType:
+               device: Optional[Union[str, int, torch.device]] = None) -> Tuple[nn.Module, int]:
     lstm = nn.LSTM(input_size=input_dim,
                    hidden_size=output_dim,
                    num_layers=num_layers,
@@ -103,4 +103,4 @@ def lstm_block(input_dim: Sequence[int],
             for weight in weight_list:
                 if len(weight.shape) > 1:
                     initialize(weight)
-    return lstm
+    return lstm, output_dim

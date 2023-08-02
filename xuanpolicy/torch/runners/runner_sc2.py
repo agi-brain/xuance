@@ -71,10 +71,10 @@ class SC2_Runner(Runner_Base):
         }
         if self.on_policy:
             self.episode_buffer.update({
-                'values': np.zeros((self.n_envs, self.episode_length) + args.rew_shape, np.float32),
-                'returns': np.zeros((self.n_envs, self.episode_length) + args.rew_shape, np.float32),
-                'advantages': np.zeros((self.n_envs, self.episode_length) + args.rew_shape, np.float32),
-                'log_pi_old': np.zeros((self.n_envs, self.episode_length, self.num_agents,), np.float32)
+                'values': np.zeros((self.n_envs, self.num_agents, self.episode_length) + args.rew_shape, np.float32),
+                'returns': np.zeros((self.n_envs, self.num_agents, self.episode_length) + args.rew_shape, np.float32),
+                'advantages': np.zeros((self.n_envs, self.num_agents, self.episode_length) + args.rew_shape, np.float32),
+                'log_pi_old': np.zeros((self.n_envs, self.num_agents, self.episode_length,), np.float32)
             })
         self.env_ptr = range(self.n_envs)
 
@@ -138,8 +138,8 @@ class SC2_Runner(Runner_Base):
         self.episode_buffer['terminals'][self.env_ptr, t_envs] = terminated
         self.episode_buffer['avail_actions'][self.env_ptr, :, t_envs] = avail_actions
         if self.on_policy:
-            self.episode_buffer['values'][self.env_ptr, t_envs] = actions_dict['values']
-            self.episode_buffer['log_pi_old'][self.env_ptr, t_envs] = actions_dict['log_pi']
+            self.episode_buffer['values'][self.env_ptr, :, t_envs] = actions_dict['values']
+            self.episode_buffer['log_pi_old'][self.env_ptr, :, t_envs] = actions_dict['log_pi']
 
     def store_terminal_data(self, i_env, t_env, obs_n, state, last_avail_actions, filled):
         self.episode_buffer['obs'][i_env, :, t_env] = obs_n[i_env]
@@ -156,7 +156,8 @@ class SC2_Runner(Runner_Base):
         for _ in tqdm(range(n_episodes)):
             for step in range(self.episode_length):
                 available_actions = self.envs.get_avail_actions()
-                actions_dict = self.get_actions(obs_n, available_actions, rnn_hidden, rnn_hidden_critic, test_mode=False)
+                actions_dict = self.get_actions(obs_n, available_actions, rnn_hidden, rnn_hidden_critic,
+                                                test_mode=False)
                 next_obs_n, next_state, rewards, terminated, truncated, info = self.envs.step(actions_dict['actions_n'])
                 self.filled[self.env_ptr, self.envs_step] = np.ones([self.n_envs, 1])
                 self.store_data(self.envs_step, obs_n, actions_dict, state, rewards, terminated, available_actions)
@@ -166,8 +167,8 @@ class SC2_Runner(Runner_Base):
                 obs_n, state = deepcopy(next_obs_n), deepcopy(next_state)
                 for i_env in range(self.n_envs):
                     if terminated[i_env] or truncated[i_env]:  # terminated
-                        agent_hidden_select = np.arange(i_env * self.num_agents, (i_env + 1) * self.num_agents)
-                        rnn_hidden = self.agents.policy.representation.init_hidden_item(agent_hidden_select,
+                        batch_select = np.arange(i_env * self.num_agents, (i_env + 1) * self.num_agents)
+                        rnn_hidden = self.agents.policy.representation.init_hidden_item(batch_select,
                                                                                         *rnn_hidden)
                         # store trajectory data:
                         last_avail_actions = info[i_env]["avail_actions"]
@@ -177,10 +178,11 @@ class SC2_Runner(Runner_Base):
                                 values_next = np.array([0.0 for _ in range(self.num_agents)])
                             else:
                                 _, values_next = self.agents.values([obs_n[i_env]], *rnn_hidden_critic, state=[state[i_env]])
-                            rnn_hidden_critic = self.agents.policy.representation_critic.init_hidden_item(agent_hidden_select,
+                            rnn_hidden_critic = self.agents.policy.representation_critic.init_hidden_item(batch_select,
                                                                                                           *rnn_hidden_critic)
                             self.agents.memory.finish_path(values_next, i_env, episode_data=self.episode_buffer,
-                                                           current_t=self.envs_step[i_env])
+                                                           current_t=self.envs_step[i_env],
+                                                           value_normalizer=self.agents.learner.value_normalizer)
                             train_info = self.agents.train(self.current_step)
                         else:
                             self.agents.memory.store(self.episode_buffer, i_env)
@@ -218,7 +220,7 @@ class SC2_Runner(Runner_Base):
             # Log train info:
             self.log_infos(train_info, self.current_step)
             self.log_infos(episode_info, self.current_step)
-            self.rnn_hidden, self.rnn_hidden_critic = rnn_hidden, rnn_hidden_critic
+        self.rnn_hidden, self.rnn_hidden_critic = rnn_hidden, rnn_hidden_critic
 
     def test_episode(self, n_episodes):
         num_envs = self.test_envs.num_envs
@@ -242,7 +244,8 @@ class SC2_Runner(Runner_Base):
         for i_episode in range(n_episodes):
             for step in range(self.episode_length):
                 available_actions = self.test_envs.get_avail_actions()
-                actions_dict = self.get_actions(obs_n, available_actions, rnn_hidden, rnn_hidden_critic, test_mode=True)
+                actions_dict = self.get_actions(obs_n, available_actions, rnn_hidden, rnn_hidden_critic,
+                                                test_mode=True)
                 next_obs_n, next_state, rewards, terminated, truncated, info = self.test_envs.step(actions_dict['actions_n'])
                 if self.args.render_mode == "rgb_array" and self.render:
                     images = self.test_envs.render(self.args.render_mode)
@@ -251,7 +254,7 @@ class SC2_Runner(Runner_Base):
 
                 rnn_hidden, rnn_hidden_critic = actions_dict['rnn_hidden'], actions_dict['rnn_hidden_critic']
                 obs_n, state = deepcopy(next_obs_n), deepcopy(next_state)
-                for i_env in range(self.n_envs):
+                for i_env in range(num_envs):
                     if terminated[i_env] or truncated[i_env]:
                         # prepare for next episode:
                         agent_hidden_select = np.arange(i_env * self.num_agents, (i_env + 1) * self.num_agents)

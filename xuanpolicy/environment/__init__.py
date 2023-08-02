@@ -7,7 +7,7 @@ from .vector_envs.vector_env import VecEnv
 from xuanpolicy.environment.gym.gym_vec_env import DummyVecEnv_Gym, DummyVecEnv_Atari
 from xuanpolicy.environment.pettingzoo.pettingzoo_vec_env import DummyVecEnv_Pettingzoo
 from xuanpolicy.environment.magent2.magent_vec_env import DummyVecEnv_MAgent
-from xuanpolicy.environment.starcraft2.sc2_vec_env import DummyVecEnv_StarCraft2
+from xuanpolicy.environment.starcraft2.sc2_vec_env import SubprocVecEnv_StarCraft2
 from xuanpolicy.environment.football.gfootball_vec_env import DummyVecEnv_GFootball
 
 from .vector_envs.subproc_vec_env import SubprocVecEnv
@@ -55,7 +55,7 @@ def make_envs(config: Namespace):
     elif config.vectorize == "Dummy_MAgent":
         return DummyVecEnv_MAgent([_thunk for _ in range(config.parallels)])
     elif config.vectorize == "Dummy_StarCraft2":
-        return DummyVecEnv_StarCraft2([_thunk for _ in range(config.parallels)])
+        return SubprocVecEnv_StarCraft2([_thunk for _ in range(config.parallels)])
     elif config.vectorize == "Dummy_Football":
         return DummyVecEnv_GFootball([_thunk for _ in range(config.parallels)])
     elif config.vectorize == "Dummy_Atari":

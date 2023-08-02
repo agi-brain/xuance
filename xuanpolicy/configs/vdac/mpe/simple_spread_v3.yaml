@@ -3,36 +3,47 @@ env_name: "mpe"
 env_id: "simple_spread_v3"
 continuous_action: False
 policy: "Categorical_MAAC_policy"
-representation: "Basic_Identical"
-vectorize: "Dummy_MAS"
-runner: "MARL"
+representation: "Basic_MLP"
+vectorize: "Dummy_Pettingzoo"
+runner: "Pettingzoo_Runner"
+on_policy: True
 
+use_recurrent: False
+rnn:
 mixer: "VDN"
-representation_hidden_size: [32, ]  # the units for each hidden layer
-actor_hidden_size: [128,]
-critic_hidden_size: [128,]
+representation_hidden_size: [64, ]  # the units for each hidden layer
+actor_hidden_size: [64,]
+critic_hidden_size: [64,]
+activation: "ReLU"
+
 hidden_dim_mixing_net: 64  # hidden units of mixing network
 hidden_dim_hyper_net: 64  # hidden units of hyper network
 
-training_steps: 20000
-training_frequency: 1
-nsteps: 128
-nepoch: 5
-nminibatch: 1
-learning_rate: 0.001
+seed: 1
+parallels: 128
+n_size: 25
+n_epoch: 10
+n_minibatch: 1
+learning_rate: 0.0007
 
-vf_coef: 0.25
-ent_coef: 0.01
+clip_range: 0.2
+gamma: 0.95
+
+# tricks
+use_grad_norm: True  # gradient normalization
 clip_grad: 0.5
-clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
-gamma: 0.95  # discount factor
-lam: 0.95
-
-n_tests: 5
-test_period: 100
-
-use_advnorm: False
+max_grad_norm: 0.5
+use_advnorm: True
 use_gae: True
+gae_lambda: 0.95
 
+start_training: 1
+running_steps: 10000000  # 10M
+train_per_step: True
+training_frequency: 1
+
+test_steps: 10000
+eval_interval: 100000
+test_episodes: 5
 log_dir: "./logs/vdac/"
 model_dir: "./models/vdac/"

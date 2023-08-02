@@ -73,7 +73,7 @@ class CentralizedCritic(nn.Module):
         return self.model(x)
 
 
-class COMA_CriticNet(nn.Module):
+class COMA_Critic(nn.Module):
     def __init__(self,
                  state_dim: int,
                  obs_dim: int,
@@ -84,7 +84,7 @@ class COMA_CriticNet(nn.Module):
                  initialize: Optional[Callable[..., torch.Tensor]] = None,
                  activation: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None):
-        super(COMA_CriticNet, self).__init__()
+        super(COMA_Critic, self).__init__()
         layers = []
         input_shape = (state_dim + obs_dim + act_dim * n_agents + n_agents,)
         for h in hidden_sizes:
@@ -143,12 +143,10 @@ class MAAC_Policy(nn.Module):
         act_logits = self.actor(actor_input)
         if avail_actions is not None:
             avail_actions = torch.Tensor(avail_actions)
-            act_logits_detach = act_logits.clone().detach()
-            act_logits_detach[avail_actions == 0] = -1e10
-            self.pi_dist.set_param(logits=act_logits_detach)
+            act_logits[avail_actions == 0] = -1e10
+            self.pi_dist.set_param(logits=act_logits)
         else:
-            self.pi_dist.set_param(act_logits)
-
+            self.pi_dist.set_param(logits=act_logits)
         return rnn_hidden, self.pi_dist
 
     def get_values(self, observation: torch.Tensor, agent_ids: torch.Tensor,
@@ -168,7 +166,7 @@ class MAAC_Policy(nn.Module):
         if self.centralized_V:  # use centralize critic with global features input
             if len(shape_obs) == 4:  # for critic training
                 batch_size, n_agent, episode_length = shape_obs[0], shape_obs[1], shape_obs[2]
-                critic_in = outputs['state'].transpose(1, 2).view(batch_size, episode_length, -1)
+                critic_in = outputs['state'].transpose(1, 2).reshape(batch_size, episode_length, -1)
                 v = self.critic(critic_in).unsqueeze(1).expand(-1, self.n_agents, -1, -1)
             else:  # agent-environment interaction
                 batch_size = observation.shape[0]
@@ -177,7 +175,7 @@ class MAAC_Policy(nn.Module):
         else:
             if len(shape_obs) == 4:  # for critic training
                 batch_size, n_agent, episode_length = shape_obs[0], shape_obs[1], shape_obs[2]
-                critic_in = outputs['state'].transpose(1, 2).view(batch_size, episode_length, -1)
+                critic_in = outputs['state'].transpose(1, 2).reshape(batch_size, episode_length, -1)
                 critic_in = torch.concat([critic_in, agent_ids], dim=-1)
                 v = self.critic(critic_in).unsqueeze(-1)
             else:  # agent-environment interaction

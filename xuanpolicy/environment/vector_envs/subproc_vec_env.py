@@ -4,6 +4,7 @@ import multiprocessing as mp
 import os
 import contextlib
 
+
 @contextlib.contextmanager
 def clear_mpi_env_vars():
     """
@@ -22,11 +23,13 @@ def clear_mpi_env_vars():
     finally:
         os.environ.update(removed_environment)
 
+
 def flatten_list(l):
-    assert isinstance(l,(list,tuple))
+    assert isinstance(l, (list, tuple))
     assert len(l) > 0
-    assert all([len(l_)>0 for l_ in l])
+    assert all([len(l_) > 0 for l_ in l])
     return [l__ for l_ in l for l__ in l_]
+
 
 def flatten_obs(obs):
     assert isinstance(obs, (list, tuple))
@@ -37,19 +40,23 @@ def flatten_obs(obs):
     else:
         return np.stack(obs)
 
+
 class CloudpickleWrapper(object):
     """
     Uses cloudpickle to serialize contents (otherwise multiprocessing tries to use pickle)
     """
+
     def __init__(self, x):
         self.x = x
 
     def __getstate__(self):
         import cloudpickle
         return cloudpickle.dumps(self.x)
+
     def __setstate__(self, ob):
         import pickle
         self.x = pickle.loads(ob)
+
 
 def worker(remote, parent_remote, env_fn_wrappers):
     def step_env(env, action):
@@ -57,6 +64,7 @@ def worker(remote, parent_remote, env_fn_wrappers):
         if done:
             ob = env.reset()
         return ob, reward, done, info
+
     parent_remote.close()
     envs = [env_fn_wrapper() for env_fn_wrapper in env_fn_wrappers.x]
     try:
@@ -67,12 +75,12 @@ def worker(remote, parent_remote, env_fn_wrappers):
             elif cmd == 'reset':
                 remote.send([env.reset() for env in envs])
             elif cmd == 'render':
-                remote.send([env.render(mode) for env,mode in zip(envs,data)])
+                remote.send([env.render(mode) for env, mode in zip(envs, data)])
             elif cmd == 'close':
                 remote.close()
                 break
-            elif cmd == 'get_spaces_spec':
-                remote.send(CloudpickleWrapper((envs[0].observation_space, envs[0].action_space, envs[0].spec)))
+            elif cmd == 'get_spaces':
+                remote.send(CloudpickleWrapper((envs[0].observation_space, envs[0].action_space)))
             else:
                 raise NotImplementedError
     except KeyboardInterrupt:
@@ -81,11 +89,13 @@ def worker(remote, parent_remote, env_fn_wrappers):
         for env in envs:
             env.close()
 
+
 class SubprocVecEnv(VecEnv):
     """
     VecEnv that runs multiple environments in parallel in subproceses and communicates with them via pipes.
     Recommended to use when num_envs > 1 and step() can be a bottleneck.
     """
+
     def __init__(self, env_fns, spaces=None, context='spawn', in_series=1):
         """
         Arguments:
@@ -111,8 +121,8 @@ class SubprocVecEnv(VecEnv):
         for remote in self.work_remotes:
             remote.close()
 
-        self.remotes[0].send(('get_spaces_spec', None))
-        observation_space, action_space, self.spec = self.remotes[0].recv().x
+        self.remotes[0].send(('get_spaces', None))
+        observation_space, action_space = self.remotes[0].recv().x
         self.viewer = None
         VecEnv.__init__(self, nenvs, observation_space, action_space)
 

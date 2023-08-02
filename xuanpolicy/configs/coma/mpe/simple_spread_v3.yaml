@@ -2,37 +2,43 @@ agent: "COMA"  # the learning algorithms_marl
 env_name: "mpe"
 env_id: "simple_spread_v3"
 continuous_action: False
-policy: "Categorical_COMA_policy"
-representation: "Basic_Identical"
-vectorize: "Dummy_MAS"
-runner: "MARL"
+policy: "Categorical_COMA_Policy"
+representation: "Basic_MLP"
+vectorize: "Dummy_Pettingzoo"
+runner: "Pettingzoo_Runner"
+on_policy: True
 
+use_recurrent: False
+rnn:
 representation_hidden_size: [32, ]  # the units for each hidden layer
 actor_hidden_size: [128, ]
 critic_hidden_size: [128, ]
+activation: "ReLU"
 
-start_greedy: 0.0
-end_greedy: 0.95
-greedy_update_steps: 5000
-training_steps: 20000
-training_frequency: 1
-sync_frequency: 200
-
-buffer_size: 8
-batch_size: 8
+seed: 1
+parallels: 10
+n_size: 25
+n_epoch: 10
+n_minibatch: 1
 learning_rate_actor: 0.001
 learning_rate_critic: 0.001
 
 clip_grad: 0.5
 clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
 gamma: 0.95  # discount factor
-td_lambda: 0.8
+gae_lambda: 0.8
 
-n_tests: 5
-test_period: 100
+start_training: 1
+running_steps: 10000000
+train_per_step: True
+training_frequency: 1
+sync_frequency: 200
 
-use_advnorm: False
+use_advnorm: True
 use_gae: True
 
+test_steps: 10000
+eval_interval: 100000
+test_episode: 5
 log_dir: "./logs/coma/"
 model_dir: "./models/coma/"

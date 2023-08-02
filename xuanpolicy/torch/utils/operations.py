@@ -6,6 +6,14 @@ import numpy as np
 from .distributions import CategoricalDistribution, DiagGaussianDistribution
 
 
+def update_linear_decay(optimizer, step, total_steps, initial_lr, end_factor):
+    lr = initial_lr * (1 - step / float(total_steps))
+    if lr < end_factor * initial_lr:
+        lr = end_factor * initial_lr
+    for param_group in optimizer.param_groups:
+        param_group['lr'] = lr
+
+
 def set_seed(seed):
     torch.manual_seed(seed)
     torch.cuda.manual_seed(seed)

@@ -11,3 +11,15 @@ ActivationFunctions = {
     "Softmax2d": nn.Softmax2d,
     "Elu": nn.ELU,
 }
+
+NormalizeFunctions = {
+    "LayerNorm": nn.LayerNorm,
+    "GroupNorm": nn.GroupNorm,
+    "BatchNorm": nn.BatchNorm1d,
+    "BatchNorm2d": nn.BatchNorm2d,
+    "InstanceNorm2d": nn.InstanceNorm2d
+}
+
+InitializeFunctions = {
+    "orthogonal": torch.nn.init.orthogonal_
+}

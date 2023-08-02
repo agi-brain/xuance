@@ -221,7 +221,7 @@ class MARL_OnPolicyBuffer(BaseBuffer):
         self.ptr = (self.ptr + 1) % self.n_size
         self.size = min(self.size + 1, self.n_size)
 
-    def finish_path(self, value, i_env):  # when an episode is finished
+    def finish_path(self, value, i_env, value_normalizer=None):  # when an episode is finished
         if self.size == 0:
             return
         if self.full:
@@ -233,17 +233,21 @@ class MARL_OnPolicyBuffer(BaseBuffer):
         rewards = np.array(self.data['rewards'][i_env, path_slice])
         vs = np.append(np.array(self.data['values'][i_env, path_slice]), [value], axis=0)
         dones = np.array(self.data['terminals'][i_env, path_slice])[:, :, None]
-        advantages = np.zeros_like(rewards)
+        returns = np.zeros_like(rewards)
         last_gae_lam = 0
         step_nums = len(path_slice)
-        for t in reversed(range(step_nums)):
-            delta = rewards[t] + (1 - dones[t]) * self.gamma * vs[t + 1] - vs[t]
-            if self.use_gae:
-                advantages[t] = last_gae_lam = delta + (1 - dones[t]) * self.gamma * self.gae_lambda * last_gae_lam
-            else:
-                advantages[t] = delta
-        returns = advantages + vs[:-1]
 
+        if self.use_gae:
+            for t in reversed(range(step_nums)):
+                delta = rewards[t] + (1 - dones[t]) * self.gamma * vs[t + 1] - vs[t]
+                last_gae_lam = delta + (1 - dones[t]) * self.gamma * self.gae_lambda * last_gae_lam
+                returns[t] = last_gae_lam + vs[t]
+        else:
+            returns = np.append(returns, [value], axis=0)
+            for t in reversed(range(step_nums)):
+                returns[t] = rewards[t] + (1 - dones[t]) * self.gamma * returns[t + 1]
+
+        advantages = returns - vs[:-1]
         self.data['returns'][i_env, path_slice] = returns
         self.data['advantages'][i_env, path_slice] = advantages
         self.start_ids[i_env] = self.ptr
@@ -289,15 +293,19 @@ class MARL_OnPolicyBuffer_RNN(MARL_OnPolicyBuffer):
                                                       done_space, n_envs, n_size, use_gae, use_advnorm, gamma, gae_lam,
                                                       **kwargs)
 
+    @property
+    def full(self):
+        return self.size >= self.buffer_size
+
     def clear(self):
         self.data = {
             'obs': np.zeros((self.buffer_size, self.n_agents, self.max_eps_len + 1) + self.obs_space, np.float32),
             'actions': np.zeros((self.buffer_size, self.n_agents, self.max_eps_len) + self.act_space, np.float32),
-            'rewards': np.zeros((self.buffer_size, self.max_eps_len) + self.rew_space, np.float32),
-            'returns': np.zeros((self.buffer_size, self.max_eps_len) + self.rew_space, np.float32),
-            'values': np.zeros((self.buffer_size, self.max_eps_len) + self.rew_space, np.float32),
-            'log_pi_old': np.zeros((self.buffer_size, self.max_eps_len, self.n_agents,), np.float32),
-            'advantages': np.zeros((self.buffer_size, self.max_eps_len) + self.rew_space, np.float32),
+            'rewards': np.zeros((self.buffer_size, self.n_agents, self.max_eps_len) + self.rew_space, np.float32),
+            'returns': np.zeros((self.buffer_size, self.n_agents, self.max_eps_len) + self.rew_space, np.float32),
+            'values': np.zeros((self.buffer_size, self.n_agents, self.max_eps_len) + self.rew_space, np.float32),
+            'advantages': np.zeros((self.buffer_size, self.n_agents, self.max_eps_len) + self.rew_space, np.float32),
+            'log_pi_old': np.zeros((self.buffer_size, self.n_agents, self.max_eps_len,), np.float32),
             'terminals': np.zeros((self.buffer_size, self.max_eps_len) + self.done_space, np.bool),
             'avail_actions': np.ones((self.buffer_size, self.n_agents, self.max_eps_len + 1, self.dim_act), np.bool),
             'filled': np.zeros((self.buffer_size, self.max_eps_len, 1), np.bool)
@@ -312,32 +320,44 @@ class MARL_OnPolicyBuffer_RNN(MARL_OnPolicyBuffer):
         for k in self.keys:
             if k in episode_data_keys:
                 self.data[k][self.ptr] = episode_data[k][i_env]
-        self.ptr = (self.ptr + 1) % self.n_size
-        self.size = min(self.size + 1, self.n_size)
+        self.ptr = (self.ptr + 1) % self.buffer_size
+        self.size = min(self.size + 1, self.buffer_size)
 
-    def finish_path(self, value, i_env, episode_data=None, current_t=None):  # when an episode is finished
+    def finish_path(self, value, i_env, episode_data=None, current_t=None, value_normalizer=None):
+        """ when an episode is finished. """
         if current_t > self.max_eps_len:
             path_slice = np.arange(0, self.max_eps_len).astype(np.int32)
         else:
             path_slice = np.arange(0, current_t).astype(np.int32)
 
         # calculate advantages and returns
-        rewards = np.array(episode_data['rewards'][i_env, path_slice])
-        vs = np.append(np.array(episode_data['values'][i_env, path_slice]), [np.reshape(value, self.rew_space)], axis=0)
+        rewards = np.array(episode_data['rewards'][i_env, :, path_slice])
+        vs = np.append(np.array(episode_data['values'][i_env, :, path_slice]), [value.reshape(self.n_agents, 1)], axis=0)
         dones = np.array(episode_data['terminals'][i_env, path_slice])[:, :, None]
-        advantages = np.zeros_like(rewards)
+        returns = np.zeros_like(rewards)
         last_gae_lam = 0
         step_nums = len(path_slice)
-        for t in reversed(range(step_nums)):
-            delta = rewards[t] + (1 - dones[t]) * self.gamma * vs[t + 1] - vs[t]
-            if self.use_gae:
-                advantages[t] = last_gae_lam = delta + (1 - dones[t]) * self.gamma * self.gae_lambda * last_gae_lam
-            else:
-                advantages[t] = delta
-        returns = advantages + vs[:-1]
+        use_value_norm = False if (value_normalizer is None) else True
 
-        episode_data['returns'][i_env, path_slice] = returns
-        episode_data['advantages'][i_env, path_slice] = advantages
+        if self.use_gae:
+            for t in reversed(range(step_nums)):
+                if use_value_norm:
+                    vs_t, vs_next = value_normalizer.denormalize(vs[t]), value_normalizer.denormalize(vs[t+1])
+                else:
+                    vs_t, vs_next = vs[t], vs[t+1]
+                delta = rewards[t] + (1 - dones[t]) * self.gamma * vs_next - vs_t
+                last_gae_lam = delta + (1 - dones[t]) * self.gamma * self.gae_lambda * last_gae_lam
+                returns[t] = last_gae_lam + vs_t
+            advantages = returns - value_normalizer.denormalize(vs[:-1]) if use_value_norm else returns - vs[:-1]
+        else:
+            returns = np.append(returns, [value.reshape(self.n_agents, 1)], axis=0)
+            for t in reversed(range(step_nums)):
+                returns[t] = rewards[t] + (1 - dones[t]) * self.gamma * returns[t + 1]
+            advantages = returns - value_normalizer.denormalize(vs) if use_value_norm else returns - vs
+            advantages = advantages[:-1]
+
+        episode_data['returns'][i_env, :, path_slice] = returns
+        episode_data['advantages'][i_env, :, path_slice] = advantages
         self.store(episode_data, i_env)
 
     def sample(self, indexes):
@@ -352,9 +372,9 @@ class MARL_OnPolicyBuffer_RNN(MARL_OnPolicyBuffer):
                 adv_batch = self.data[k][indexes]
                 if self.use_advantage_norm:
                     adv_batch_copy = adv_batch.copy()
-                    filled_batch_n = filled_batch[:, :, None, :].repeat(self.n_agents, axis=2)
+                    filled_batch_n = filled_batch[:, None, :, :].repeat(self.n_agents, axis=1)
                     adv_batch_copy[filled_batch_n == 0] = np.nan
-                    adv_batch = (adv_batch - np.nanmean(adv_batch)) / (np.nanstd(adv_batch) + 1e-8)
+                    adv_batch = (adv_batch - np.nanmean(adv_batch_copy)) / (np.nanstd(adv_batch_copy) + 1e-8)
                 samples[k] = adv_batch
             else:
                 samples[k] = self.data[k][indexes]

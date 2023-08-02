@@ -5,6 +5,8 @@ https://arxiv.org/pdf/2103.01955.pdf
 Implementation: Pytorch
 """
 from xuanpolicy.torch.learners import *
+from xuanpolicy.torch.utils.value_norm import ValueNorm
+from xuanpolicy.torch.utils.operations import update_linear_decay
 
 
 class MAPPO_Clip_Learner(LearnerMAS):
@@ -19,11 +21,25 @@ class MAPPO_Clip_Learner(LearnerMAS):
                  ):
         self.gamma = gamma
         self.clip_range = config.clip_range
-        self.use_grad_norm, self.clip_grad = config.use_grad_norm, config.clip_grad
+        self.use_linear_lr_decay = config.use_linear_lr_decay
+        self.use_grad_norm, self.max_grad_norm = config.use_grad_norm, config.max_grad_norm
         self.use_value_clip, self.value_clip_range = config.use_value_clip, config.value_clip_range
+        self.use_huber_loss, self.huber_delta = config.use_huber_loss, config.huber_delta
+        self.use_value_norm = config.use_value_norm
         self.vf_coef, self.ent_coef = config.vf_coef, config.ent_coef
         self.mse_loss = nn.MSELoss()
+        self.huber_loss = nn.HuberLoss(reduction="none", delta=self.huber_delta)
         super(MAPPO_Clip_Learner, self).__init__(config, policy, optimizer, scheduler, device, model_dir)
+        if self.use_value_norm:
+            self.value_normalizer = ValueNorm(1).to(device)
+        else:
+            self.value_normalizer = None
+        self.lr = config.learning_rate
+        self.end_factor_lr_decay = config.end_factor_lr_decay
+
+    def lr_decay(self, i_step):
+        if self.use_linear_lr_decay:
+            update_linear_decay(self.optimizer, i_step, self.running_steps, self.lr, self.end_factor_lr_decay)
 
     def update(self, sample):
         info = {}
@@ -31,6 +47,7 @@ class MAPPO_Clip_Learner(LearnerMAS):
         state = torch.Tensor(sample['state']).to(self.device)
         obs = torch.Tensor(sample['obs']).to(self.device)
         actions = torch.Tensor(sample['actions']).to(self.device)
+        values = torch.Tensor(sample['values']).to(self.device)
         returns = torch.Tensor(sample['returns']).to(self.device)
         advantages = torch.Tensor(sample['advantages']).to(self.device)
         log_pi_old = torch.Tensor(sample['log_pi_old']).to(self.device)
@@ -52,22 +69,31 @@ class MAPPO_Clip_Learner(LearnerMAS):
         loss_e = entropy.mean()
 
         # critic loss
-        _, value = self.policy.get_values(obs, IDs)
-        value = value * agent_mask
+        _, value_pred = self.policy.get_values(obs, IDs)
+        value_pred = value_pred
+        value_target = returns
         if self.use_value_clip:
-            value_clipped = returns + (value - returns).clamp(-self.value_clip_range, self.value_clip_range)
-            value_target = advantages_mask + returns * agent_mask
-            loss_v = (value - value_target) ** 2
-            loss_v_clipped = (value_clipped * agent_mask - value_target) ** 2
-            loss_c = torch.max(loss_v, loss_v_clipped).mean()
+            value_clipped = values + (value_pred - values).clamp(-self.value_clip_range, self.value_clip_range)
+            if self.use_huber_loss:
+                loss_v = self.huber_loss(value_pred, value_target)
+                loss_v_clipped = self.huber_loss(value_clipped, value_target)
+            else:
+                loss_v = (value_pred - value_target) ** 2
+                loss_v_clipped = (value_clipped - value_target) ** 2
+            loss_c = torch.max(loss_v, loss_v_clipped) * agent_mask
+            loss_c = loss_c.sum() / agent_mask.sum()
         else:
-            loss_c = self.mse_loss(value, returns.detach() * agent_mask)
+            if self.use_huber_loss:
+                loss_v = self.huber_loss(value_pred, value_target) * agent_mask
+            else:
+                loss_v = ((value_pred - value_target) ** 2) * agent_mask
+            loss_c = loss_v.sum() / agent_mask.sum()
 
         loss = loss_a + self.vf_coef * loss_c - self.ent_coef * loss_e
         self.optimizer.zero_grad()
         loss.backward()
         if self.use_grad_norm:
-            grad_norm = torch.nn.utils.clip_grad_norm_(self.policy.parameters(), self.clip_grad)
+            grad_norm = torch.nn.utils.clip_grad_norm_(self.policy.parameters(), self.max_grad_norm)
             info["gradient_norm"] = grad_norm.item()
         self.optimizer.step()
         if self.scheduler is not None:
@@ -82,7 +108,7 @@ class MAPPO_Clip_Learner(LearnerMAS):
             "critic_loss": loss_c.item(),
             "entropy": loss_e.item(),
             "loss": loss.item(),
-            "predict_value": value.mean().item()
+            "predict_value": value_pred.mean().item()
         })
 
         return info
@@ -93,6 +119,7 @@ class MAPPO_Clip_Learner(LearnerMAS):
         state = torch.Tensor(sample['state']).to(self.device)
         obs = torch.Tensor(sample['obs']).to(self.device)
         actions = torch.Tensor(sample['actions']).to(self.device)
+        values = torch.Tensor(sample['values']).to(self.device)
         returns = torch.Tensor(sample['returns']).to(self.device)
         advantages = torch.Tensor(sample['advantages']).to(self.device)
         log_pi_old = torch.Tensor(sample['log_pi_old']).to(self.device)
@@ -110,13 +137,11 @@ class MAPPO_Clip_Learner(LearnerMAS):
                                  *rnn_hidden_actor,
                                  avail_actions=avail_actions[:, :, :-1].view(-1, episode_length, self.dim_act))
         log_pi = pi_dist.log_prob(actions.view(-1, episode_length)).view(batch_size, self.n_agents, episode_length)
-        log_pi_old = log_pi_old.transpose(1, 2)
         ratio = torch.exp(log_pi - log_pi_old).unsqueeze(-1)
         filled_n = filled.unsqueeze(1).expand(batch_size, self.n_agents, episode_length, 1)
-        advantages_mask = advantages.detach().transpose(1, 2) * filled_n
-        surrogate1 = ratio * advantages_mask
-        surrogate2 = torch.clip(ratio, 1 - self.clip_range, 1 + self.clip_range) * advantages_mask
-        loss_a = -torch.sum(torch.min(surrogate1, surrogate2)) / filled_n.sum()
+        surrogate1 = ratio * advantages
+        surrogate2 = torch.clip(ratio, 1 - self.clip_range, 1 + self.clip_range) * advantages
+        loss_a = -(torch.min(surrogate1, surrogate2) * filled_n).sum() / filled_n.sum()
 
         # entropy loss
         entropy = pi_dist.entropy().reshape(batch_size, self.n_agents, episode_length, 1)
@@ -125,25 +150,39 @@ class MAPPO_Clip_Learner(LearnerMAS):
 
         # critic loss
         rnn_hidden_critic = self.policy.representation_critic.init_hidden(batch_size * self.n_agents)
-        _, value = self.policy.get_values(obs[:, :, :-1], IDs[:, :, :-1], *rnn_hidden_critic)
-        value = value * filled_n
-        returns = returns.transpose(1, 2) * filled_n
+        _, value_pred = self.policy.get_values(obs[:, :, :-1], IDs[:, :, :-1], *rnn_hidden_critic)
+        value_target = returns.reshape(-1, 1)
+        values = values.reshape(-1, 1)
+        value_pred = value_pred.reshape(-1, 1)
+        filled_all = filled_n.reshape(-1, 1)
         if self.use_value_clip:
-            value_clipped = returns + (value - returns).clamp(-self.value_clip_range, self.value_clip_range)
-            value_target = advantages_mask + returns
-            loss_v = (value - value_target) ** 2
-            loss_v_clipped = (value_clipped - value_target) ** 2
-            loss_c = torch.max(loss_v, loss_v_clipped)
-            loss_c = loss_c.sum() / filled_n.sum()
+            value_clipped = values + (value_pred - values).clamp(-self.value_clip_range, self.value_clip_range)
+            if self.use_value_norm:
+                self.value_normalizer.update(value_target)
+                value_target = self.value_normalizer.normalize(value_target)
+            if self.use_huber_loss:
+                loss_v = self.huber_loss(value_pred, value_target)
+                loss_v_clipped = self.huber_loss(value_clipped, value_target)
+            else:
+                loss_v = (value_pred - value_target) ** 2
+                loss_v_clipped = (value_clipped - value_target) ** 2
+            loss_c = torch.max(loss_v, loss_v_clipped) * filled_all
+            loss_c = loss_c.sum() / filled_all.sum()
         else:
-            error_c = (value - returns.detach()) * filled_n
-            loss_c = (error_c ** 2).sum() / filled_n.sum()
+            if self.use_value_norm:
+                self.value_normalizer.update(value_target)
+                value_pred = self.value_normalizer.normalize(value_pred)
+            if self.use_huber_loss:
+                loss_v = self.huber_loss(value_pred, value_target)
+            else:
+                loss_v = (value_pred - value_target) ** 2
+            loss_c = (loss_v * filled_all).sum() / filled_all.sum()
 
         loss = loss_a + self.vf_coef * loss_c - self.ent_coef * loss_e
         self.optimizer.zero_grad()
         loss.backward()
         if self.use_grad_norm:
-            grad_norm = torch.nn.utils.clip_grad_norm_(self.policy.parameters(), self.clip_grad)
+            grad_norm = torch.nn.utils.clip_grad_norm_(self.policy.parameters(), self.max_grad_norm)
             info["gradient_norm"] = grad_norm.item()
         self.optimizer.step()
         if self.scheduler is not None:
@@ -158,7 +197,7 @@ class MAPPO_Clip_Learner(LearnerMAS):
             "critic_loss": loss_c.item(),
             "entropy": loss_e.item(),
             "loss": loss.item(),
-            "predict_value": value.mean().item()
+            "predict_value": value_pred.mean().item()
         })
 
         return info

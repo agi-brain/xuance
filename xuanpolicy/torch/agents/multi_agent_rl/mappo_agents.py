@@ -1,5 +1,3 @@
-import numpy as np
-
 from xuanpolicy.torch.agents import *
 
 
@@ -12,6 +10,7 @@ class MAPPO_Agents(MARLAgents):
         self.n_envs = envs.num_envs
         self.n_size = config.n_size
         self.n_epoch = config.n_epoch
+        self.n_minibatch = config.n_minibatch
         if config.state_space is not None:
             config.dim_state, state_shape = config.state_space.shape, config.state_space.shape
         else:
@@ -32,12 +31,11 @@ class MAPPO_Agents(MARLAgents):
                                                 use_centralized_V=config.use_centralized_V,
                                                 use_recurrent=config.use_recurrent,
                                                 rnn=config.rnn)
-        optimizer = torch.optim.Adam(policy.parameters(), config.learning_rate, eps=1e-5)
-        scheduler = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=1.0, end_factor=0.5,
-                                                      total_iters=get_total_iters(config.agent_name, config))
+        optimizer = torch.optim.Adam(policy.parameters(),
+                                     lr=config.learning_rate, eps=1e-5,
+                                     weight_decay=config.weight_decay)
         self.observation_space = envs.observation_space
         self.action_space = envs.action_space
-        self.representation_info_shape = policy.representation.output_shapes
         self.auxiliary_info_shape = {}
 
         buffer = MARL_OnPolicyBuffer_RNN if self.use_recurrent else MARL_OnPolicyBuffer
@@ -46,8 +44,9 @@ class MAPPO_Agents(MARLAgents):
                         config.use_gae, config.use_advnorm, config.gamma, config.gae_lambda)
         memory = buffer(*input_buffer, max_episode_length=envs.max_episode_length, dim_act=config.dim_act)
         self.buffer_size = memory.buffer_size
-        self.batch_size = self.buffer_size // self.n_epoch
-        learner = MAPPO_Clip_Learner(config, policy, optimizer, scheduler,
+        self.batch_size = self.buffer_size // self.n_minibatch
+
+        learner = MAPPO_Clip_Learner(config, policy, optimizer, None,
                                      config.device, config.model_dir, config.gamma)
         super(MAPPO_Agents, self).__init__(config, envs, policy, memory, learner, device,
                                            config.log_dir, config.model_dir)
@@ -58,11 +57,18 @@ class MAPPO_Agents(MARLAgents):
         agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(batch_size, -1, -1).to(self.device)
         obs_in = torch.Tensor(obs_n).view([batch_size, self.n_agents, -1]).to(self.device)
         if self.use_recurrent:
-            hidden_state, dists = self.policy(obs_in, agents_id, *rnn_hidden, avail_actions=avail_actions)
+            batch_agents = batch_size * self.n_agents
+            hidden_state, dists = self.policy(obs_in.view(batch_agents, 1, -1),
+                                              agents_id.view(batch_agents, 1, -1),
+                                              *rnn_hidden,
+                                              avail_actions=avail_actions.reshape(batch_agents, 1, -1))
+            actions = dists.stochastic_sample()
+            log_pi_a = dists.log_prob(actions).reshape(batch_size, self.n_agents)
+            actions = actions.reshape(batch_size, self.n_agents)
         else:
             hidden_state, dists = self.policy(obs_in, agents_id, avail_actions=avail_actions)
-        actions = dists.stochastic_sample()
-        log_pi_a = dists.log_prob(actions)
+            actions = dists.stochastic_sample()
+            log_pi_a = dists.log_prob(actions)
         return hidden_state, actions.detach().cpu().numpy(), log_pi_a.detach().cpu().numpy()
 
     def values(self, obs_n, *rnn_hidden, state=None):
@@ -70,14 +76,18 @@ class MAPPO_Agents(MARLAgents):
         agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(batch_size, -1, -1).to(self.device)
         obs_in = torch.Tensor(obs_n).view([batch_size, self.n_agents, -1]).to(self.device)
         if self.use_recurrent:
-            hidden_state, values_n = self.policy.get_values(obs_in, agents_id, *rnn_hidden)
+            hidden_state, values_n = self.policy.get_values(obs_in.unsqueeze(2),  # add a sequence length axis.
+                                                            agents_id.unsqueeze(2),
+                                                            *rnn_hidden)
+            values_n = values_n.squeeze(2)  # recover the shape.
         else:
             hidden_state, values_n = self.policy.get_values(obs_in, agents_id)
-        values = values_n.mean(dim=1) if self.share_values else values_n
+        # values = values_n.mean(dim=1) if self.share_values else values_n
+        values = values_n
 
         return hidden_state, values.detach().cpu().numpy()
 
-    def train(self, i_episode):
+    def train(self, i_step):
         if self.memory.full:
             info_train = {}
             indexes = np.arange(self.buffer_size)
@@ -91,6 +101,7 @@ class MAPPO_Agents(MARLAgents):
                         info_train = self.learner.update_recurrent(sample)
                     else:
                         info_train = self.learner.update(sample)
+            self.learner.lr_decay(i_step)
             self.memory.clear()
             return info_train
         else:

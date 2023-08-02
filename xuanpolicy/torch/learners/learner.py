@@ -46,6 +46,7 @@ class LearnerMAS(ABC):
                  scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
                  device: Optional[Union[int, str, torch.device]] = None,
                  model_dir: str = "./"):
+        self.value_normalizer = None
         self.args = config
         self.n_agents = config.n_agents
         self.dim_obs = self.args.dim_obs
@@ -61,6 +62,7 @@ class LearnerMAS(ABC):
         self.scheduler = scheduler
         self.device = device
         self.model_dir = model_dir
+        self.running_steps = config.running_steps
         self.iterations = 0
 
     def onehot_action(self, actions_int, num_actions):
@@ -87,4 +89,7 @@ class LearnerMAS(ABC):
         pass
 
     def get_hidden_states(self, *args):
+        pass
+
+    def lr_decay(self, *args):
         pass
