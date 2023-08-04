@@ -10,11 +10,13 @@ def mlp_block(input_dim: int,
               normalize: Optional[Union[nn.BatchNorm1d, nn.LayerNorm]] = None,
               activation: Optional[ModuleType] = None,
               initialize: Optional[Callable[[torch.Tensor], torch.Tensor]] = None,
+              gain: float = 1.0,
               device: Optional[Union[str, int, torch.device]] = None) -> Tuple[Sequence[ModuleType], Tuple[int]]:
     block = []
     linear = nn.Linear(input_dim, output_dim, device=device)
     if initialize is not None:
-        initialize(linear.weight)
+        initialize(linear.weight, gain)
+        nn.init.constant_(linear.bias, 0)
     block.append(linear)
     if activation is not None:
         block.append(activation())
@@ -39,6 +41,7 @@ def cnn_block(input_shape: Sequence[int],
     cnn = nn.Conv2d(C, filter, kernel_size, stride, padding=padding, device=device)
     if initialize is not None:
         initialize(cnn.weight)
+        nn.init.constant_(cnn.bias, 0)
     block.append(cnn)
     C = filter
     H = int((H + 2 * padding - (kernel_size - 1) - 1) / stride + 1)
@@ -83,6 +86,8 @@ def gru_block(input_dim: int,
             for weight in weight_list:
                 if len(weight.shape) > 1:
                     initialize(weight)
+                else:
+                    nn.init.constant_(weight, 0)
     return gru, output_dim
 
 
@@ -103,4 +108,6 @@ def lstm_block(input_dim: int,
             for weight in weight_list:
                 if len(weight.shape) > 1:
                     initialize(weight)
+                else:
+                    nn.init.constant_(weight, 0)
     return lstm, output_dim

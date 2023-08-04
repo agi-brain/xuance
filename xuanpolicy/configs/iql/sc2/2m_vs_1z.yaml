@@ -1,9 +1,9 @@
-agent: "QMIX"  # the learning algorithms_marl
-global_state: True
+agent: "IQL"  # the learning algorithms_marl
+global_state: False
 env_name: "StarCraft2"
-env_id: "3m"
+env_id: "2m_vs_1z"
 fps: 15
-policy: "Mixing_Q_network"
+policy: "Basic_Q_network_marl"
 representation: "Basic_RNN"
 vectorize: "Dummy_StarCraft2"
 runner: "StarCraft2_Runner"
@@ -21,9 +21,6 @@ dropout: 0
 representation_hidden_size: [64, ]
 q_hidden_size: [64, ]  # the units for each hidden layer
 activation: "ReLU"
-
-hidden_dim_mixing_net: 64  # hidden units of mixing network
-hidden_dim_hyper_net: 64  # hidden units of hyper network
 
 seed: 1
 parallels: 1
@@ -47,5 +44,5 @@ grad_clip_norm: 0.5
 
 eval_interval: 5000
 test_episode: 10
-log_dir: "./logs/qmix/"
-model_dir: "./models/qmix/"
+log_dir: "./logs/iql/"
+model_dir: "./models/iql/"

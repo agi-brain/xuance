@@ -43,6 +43,6 @@ use_grad_clip: False
 grad_clip_norm: 0.5
 
 eval_interval: 5000
-test_episode: 20
+test_episode: 10
 log_dir: "./logs/vdn/"
 model_dir: "./models/vdn/"

@@ -1,5 +1,3 @@
-import torch
-
 from xuanpolicy.torch.policies import *
 from xuanpolicy.torch.utils import *
 from xuanpolicy.torch.representations import Basic_Identical
@@ -14,15 +12,17 @@ class ActorNet(nn.Module):
                  hidden_sizes: Sequence[int],
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., torch.Tensor]] = None,
+                 gain: float = 1.0,
                  activation: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None):
         super(ActorNet, self).__init__()
         layers = []
         input_shape = (state_dim + n_agents,)
         for h in hidden_sizes:
-            mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initialize, device)
+            mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initialize,
+                                         device=device)
             layers.extend(mlp)
-        layers.extend(mlp_block(input_shape[0], action_dim, None, None, None, device)[0])
+        layers.extend(mlp_block(input_shape[0], action_dim, None, None, initialize, gain, device)[0])
         self.pi_logits = nn.Sequential(*layers)
 
     def forward(self, x: torch.Tensor):
@@ -42,31 +42,11 @@ class CriticNet(nn.Module):
         layers = []
         input_shape = (state_dim + n_agents,)
         for h in hidden_sizes:
-            mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initialize, device)
+            mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initialize,
+                                         device=device)
             layers.extend(mlp)
-        layers.extend(mlp_block(input_shape[0], 1, None, None, None, device)[0])
-        self.model = nn.Sequential(*layers)
-
-    def forward(self, x: torch.Tensor):
-        return self.model(x)[:, :, 0]
-
-
-class CentralizedCritic(nn.Module):
-    def __init__(self,
-                 state_dim: int,
-                 n_agents: int,
-                 hidden_sizes: Sequence[int],
-                 normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., torch.Tensor]] = None,
-                 activation: Optional[ModuleType] = None,
-                 device: Optional[Union[str, int, torch.device]] = None):
-        super(CentralizedCritic, self).__init__()
-        layers = []
-        input_shape = (state_dim * n_agents,)
-        for h in hidden_sizes:
-            mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initialize, device)
-            layers.extend(mlp)
-        layers.extend(mlp_block(input_shape[0], 1, None, None, None, device)[0])
+        layers.extend(mlp_block(input_shape[0], 1, None, None, initialize,
+                                device=device)[0])
         self.model = nn.Sequential(*layers)
 
     def forward(self, x: torch.Tensor):
@@ -101,6 +81,7 @@ class MAAC_Policy(nn.Module):
     """
     MAAC_Policy: Multi-Agent Actor-Critic Policy
     """
+
     def __init__(self,
                  action_space: Discrete,
                  n_agents: int,
@@ -117,17 +98,15 @@ class MAAC_Policy(nn.Module):
         self.device = device
         self.action_dim = action_space.n
         self.n_agents = n_agents
-        self.representation = representation
-        self.representation_critic = copy.deepcopy(self.representation)
+        self.representation = representation[0]
+        self.representation_critic = representation[1]
         self.representation_info_shape = self.representation.output_shapes
         self.lstm = True if kwargs["rnn"] == "LSTM" else False
         self.use_rnn = True if kwargs["use_recurrent"] else False
-        self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim, n_agents,
-                              actor_hidden_size, normalize, initialize, activation, device)
-        self.centralized_V = True if kwargs['use_centralized_V'] else False
-        critic_net = CentralizedCritic if self.centralized_V else CriticNet
-        self.critic = critic_net(representation.output_shapes['state'][0], n_agents, critic_hidden_size,
-                                 normalize, initialize, activation, device)
+        self.actor = ActorNet(self.representation.output_shapes['state'][0], self.action_dim, n_agents,
+                              actor_hidden_size, normalize, initialize, kwargs['gain'], activation, device)
+        self.critic = CriticNet(self.representation_critic.output_shapes['state'][0], n_agents, critic_hidden_size,
+                                normalize, initialize, activation, device)
         self.mixer = mixer
         self.pi_dist = CategoricalDistribution(self.action_dim)
 
@@ -149,38 +128,20 @@ class MAAC_Policy(nn.Module):
             self.pi_dist.set_param(logits=act_logits)
         return rnn_hidden, self.pi_dist
 
-    def get_values(self, observation: torch.Tensor, agent_ids: torch.Tensor,
-                   *rnn_hidden: torch.Tensor):
-        shape_obs = observation.shape
+    def get_values(self, critic_in: torch.Tensor, agent_ids: torch.Tensor, *rnn_hidden: torch.Tensor):
+        shape_obs = critic_in.shape
+        # get representation features
         if self.use_rnn:
-            if len(shape_obs) == 4:  # for critic training
-                batch_size, n_agent, episode_length, dim_obs = shape_obs[0], shape_obs[1], shape_obs[2], shape_obs[3]
-                outputs = self.representation_critic(observation.view(-1, episode_length, dim_obs), *rnn_hidden)
-                outputs['state'] = outputs['state'].view(batch_size, n_agent, episode_length, -1)
-            else:  # for interaction
-                outputs = self.representation_critic(observation, *rnn_hidden)
+            batch_size, n_agent, episode_length, dim_obs = tuple(shape_obs)
+            outputs = self.representation_critic(critic_in.reshape(-1, episode_length, dim_obs), *rnn_hidden)
+            outputs['state'] = outputs['state'].view(batch_size, n_agent, episode_length, -1)
             rnn_hidden = (outputs['rnn_hidden'], outputs['rnn_cell'])
         else:
-            outputs = self.representation_critic(observation)
+            outputs = self.representation_critic(critic_in)
             rnn_hidden = None
-        if self.centralized_V:  # use centralize critic with global features input
-            if len(shape_obs) == 4:  # for critic training
-                batch_size, n_agent, episode_length = shape_obs[0], shape_obs[1], shape_obs[2]
-                critic_in = outputs['state'].transpose(1, 2).reshape(batch_size, episode_length, -1)
-                v = self.critic(critic_in).unsqueeze(1).expand(-1, self.n_agents, -1, -1)
-            else:  # agent-environment interaction
-                batch_size = observation.shape[0]
-                critic_in = outputs['state'].reshape(batch_size, -1)
-                v = self.critic(critic_in).unsqueeze(1).expand(-1, self.n_agents, -1)
-        else:
-            if len(shape_obs) == 4:  # for critic training
-                batch_size, n_agent, episode_length = shape_obs[0], shape_obs[1], shape_obs[2]
-                critic_in = outputs['state'].transpose(1, 2).reshape(batch_size, episode_length, -1)
-                critic_in = torch.concat([critic_in, agent_ids], dim=-1)
-                v = self.critic(critic_in).unsqueeze(-1)
-            else:  # agent-environment interaction
-                critic_input = torch.concat([outputs['state'], agent_ids], dim=-1)
-                v = self.critic(critic_input).unsqueeze(-1)
+        # get critic values
+        critic_in = torch.concat([outputs['state'], agent_ids], dim=-1)
+        v = self.critic(critic_in)
         return rnn_hidden, v
 
     def value_tot(self, values_n: torch.Tensor, global_state=None):

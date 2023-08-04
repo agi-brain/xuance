@@ -1,3 +1,5 @@
+import torch
+
 from xuanpolicy.torch.agents import *
 
 
@@ -12,25 +14,27 @@ class MAPPO_Agents(MARLAgents):
         self.n_epoch = config.n_epoch
         self.n_minibatch = config.n_minibatch
         if config.state_space is not None:
-            config.dim_state, state_shape = config.state_space.shape, config.state_space.shape
+            config.dim_state, state_shape = config.state_space.shape[0], config.state_space.shape
         else:
             config.dim_state, state_shape = None, None
 
         input_representation = get_repre_in(config)
         self.use_recurrent = config.use_recurrent
-        if self.use_recurrent:
-            kwargs_rnn = {"N_recurrent_layers": config.N_recurrent_layers,
-                          "dropout": config.dropout,
-                          "rnn": config.rnn}
-            representation = REGISTRY_Representation[config.representation](*input_representation, **kwargs_rnn)
-        else:
-            representation = REGISTRY_Representation[config.representation](*input_representation)
-
-        input_policy = get_policy_in_marl(config, representation)
+        self.use_global_state = config.use_global_state
+        # create representation for actor
+        kwargs_rnn = {"N_recurrent_layers": config.N_recurrent_layers,
+                      "dropout": config.dropout,
+                      "rnn": config.rnn} if self.use_recurrent else {}
+        representation = REGISTRY_Representation[config.representation](*input_representation, **kwargs_rnn)
+        # create representation for critic
+        input_representation[0] = (config.dim_state,) if self.use_global_state else (config.dim_obs * config.n_agents,)
+        representation_critic = REGISTRY_Representation[config.representation](*input_representation, **kwargs_rnn)
+        # create policy
+        input_policy = get_policy_in_marl(config, (representation, representation_critic))
         policy = REGISTRY_Policy[config.policy](*input_policy,
-                                                use_centralized_V=config.use_centralized_V,
                                                 use_recurrent=config.use_recurrent,
-                                                rnn=config.rnn)
+                                                rnn=config.rnn,
+                                                gain=config.gain)
         optimizer = torch.optim.Adam(policy.parameters(),
                                      lr=config.learning_rate, eps=1e-5,
                                      weight_decay=config.weight_decay)
@@ -74,18 +78,22 @@ class MAPPO_Agents(MARLAgents):
     def values(self, obs_n, *rnn_hidden, state=None):
         batch_size = len(obs_n)
         agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(batch_size, -1, -1).to(self.device)
-        obs_in = torch.Tensor(obs_n).view([batch_size, self.n_agents, -1]).to(self.device)
+        # build critic input
+        if self.use_global_state:
+            state = torch.Tensor(state).unsqueeze(1).to(self.device)
+            critic_in = state.expand(-1, self.n_agents, -1)
+        else:
+            critic_in = torch.Tensor(obs_n).view([batch_size, 1, -1]).to(self.device)
+            critic_in = critic_in.expand(-1, self.n_agents, -1)
         if self.use_recurrent:
-            hidden_state, values_n = self.policy.get_values(obs_in.unsqueeze(2),  # add a sequence length axis.
+            hidden_state, values_n = self.policy.get_values(critic_in.unsqueeze(2),  # add a sequence length axis.
                                                             agents_id.unsqueeze(2),
                                                             *rnn_hidden)
-            values_n = values_n.squeeze(2)  # recover the shape.
+            values_n = values_n.squeeze(2)
         else:
-            hidden_state, values_n = self.policy.get_values(obs_in, agents_id)
-        # values = values_n.mean(dim=1) if self.share_values else values_n
-        values = values_n
+            hidden_state, values_n = self.policy.get_values(critic_in, agents_id)
 
-        return hidden_state, values.detach().cpu().numpy()
+        return hidden_state, values_n.detach().cpu().numpy()
 
     def train(self, i_step):
         if self.memory.full:

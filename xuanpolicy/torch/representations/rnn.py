@@ -36,7 +36,7 @@ class Basic_RNN(nn.Module):
         input_shape = self.input_shape
         for h in self.fc_hidden_sizes:
             mlp_layer, input_shape = mlp_block(input_shape[0], h, self.normalize, self.activation, self.initialize,
-                                               self.device)
+                                               device=self.device)
             layers.extend(mlp_layer)
         if self.lstm:
             rnn_layer, input_shape = lstm_block(input_shape[0], self.recurrent_hidden_size, self.N_recurrent_layer,
@@ -73,3 +73,6 @@ class Basic_RNN(nn.Module):
         else:
             rnn_hidden[0][:, i] = torch.zeros(size=(self.N_recurrent_layer, self.recurrent_hidden_size)).to(self.device)
             return rnn_hidden
+
+    def get_hidden_item(self, i, *rnn_hidden):
+        return (rnn_hidden[0][:, i], rnn_hidden[1][:, i]) if self.lstm else (rnn_hidden[0][:, i], None)

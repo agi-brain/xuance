@@ -26,6 +26,7 @@ class MAPPO_Clip_Learner(LearnerMAS):
         self.use_value_clip, self.value_clip_range = config.use_value_clip, config.value_clip_range
         self.use_huber_loss, self.huber_delta = config.use_huber_loss, config.huber_delta
         self.use_value_norm = config.use_value_norm
+        self.use_global_state = config.use_global_state
         self.vf_coef, self.ent_coef = config.vf_coef, config.ent_coef
         self.mse_loss = nn.MSELoss()
         self.huber_loss = nn.HuberLoss(reduction="none", delta=self.huber_delta)
@@ -117,6 +118,8 @@ class MAPPO_Clip_Learner(LearnerMAS):
         info = {}
         self.iterations += 1
         state = torch.Tensor(sample['state']).to(self.device)
+        if self.use_global_state:
+            state = state.unsqueeze(1).expand(-1, self.n_agents, -1, -1)
         obs = torch.Tensor(sample['obs']).to(self.device)
         actions = torch.Tensor(sample['actions']).to(self.device)
         values = torch.Tensor(sample['values']).to(self.device)
@@ -150,7 +153,12 @@ class MAPPO_Clip_Learner(LearnerMAS):
 
         # critic loss
         rnn_hidden_critic = self.policy.representation_critic.init_hidden(batch_size * self.n_agents)
-        _, value_pred = self.policy.get_values(obs[:, :, :-1], IDs[:, :, :-1], *rnn_hidden_critic)
+        if self.use_global_state:
+            _, value_pred = self.policy.get_values(state[:, :, :-1], IDs[:, :, :-1], *rnn_hidden_critic)
+        else:
+            critic_in = obs[:, :, :-1].transpose(1, 2).reshape(batch_size, episode_length, -1)
+            critic_in = critic_in.unsqueeze(1).expand(-1, self.n_agents, -1, -1)
+            _, value_pred = self.policy.get_values(critic_in, IDs[:, :, :-1], *rnn_hidden_critic)
         value_target = returns.reshape(-1, 1)
         values = values.reshape(-1, 1)
         value_pred = value_pred.reshape(-1, 1)

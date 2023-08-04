@@ -37,7 +37,7 @@ class SC2_Runner(Runner_Base):
                        dir=wandb_dir,
                        group=args.env_id,
                        job_type=args.agent,
-                       name=time.asctime(),
+                       name=args.seed,
                        reinit=True
                        )
             self.use_wandb = True
@@ -120,8 +120,11 @@ class SC2_Runner(Runner_Base):
             rnn_hidden_next, actions_n, log_pi_n = self.agents.act(obs_n, *rnn_hidden_policy,
                                                                    avail_actions=avail_actions,
                                                                    test_mode=test_mode)
-            rnn_hidden_critic_next, values_n = self.agents.values(obs_n, *rnn_hidden_critic,
-                                                                  state=state)
+            if test_mode:
+                rnn_hidden_critic_next, values_n = None, 0
+            else:
+                rnn_hidden_critic_next, values_n = self.agents.values(obs_n, *rnn_hidden_critic,
+                                                                      state=state)
         else:
             rnn_hidden_next, actions_n = self.agents.act(obs_n, *rnn_hidden_policy,
                                                          avail_actions=avail_actions, test_mode=test_mode)
@@ -157,7 +160,7 @@ class SC2_Runner(Runner_Base):
             for step in range(self.episode_length):
                 available_actions = self.envs.get_avail_actions()
                 actions_dict = self.get_actions(obs_n, available_actions, rnn_hidden, rnn_hidden_critic,
-                                                test_mode=False)
+                                                state=state, test_mode=False)
                 next_obs_n, next_state, rewards, terminated, truncated, info = self.envs.step(actions_dict['actions_n'])
                 self.filled[self.env_ptr, self.envs_step] = np.ones([self.n_envs, 1])
                 self.store_data(self.envs_step, obs_n, actions_dict, state, rewards, terminated, available_actions)
@@ -177,13 +180,17 @@ class SC2_Runner(Runner_Base):
                             if terminated[i_env]:
                                 values_next = np.array([0.0 for _ in range(self.num_agents)])
                             else:
-                                _, values_next = self.agents.values([obs_n[i_env]], *rnn_hidden_critic, state=[state[i_env]])
+                                rnn_h_critic_i = self.agents.policy.representation_critic.get_hidden_item(batch_select,
+                                                                                                          *rnn_hidden_critic)
+                                _, values_next = self.agents.values([obs_n[i_env]], *rnn_h_critic_i, state=[state[i_env]])
                             rnn_hidden_critic = self.agents.policy.representation_critic.init_hidden_item(batch_select,
                                                                                                           *rnn_hidden_critic)
                             self.agents.memory.finish_path(values_next, i_env, episode_data=self.episode_buffer,
                                                            current_t=self.envs_step[i_env],
                                                            value_normalizer=self.agents.learner.value_normalizer)
                             train_info = self.agents.train(self.current_step)
+
+                            self.log_infos(train_info, self.current_step)
                         else:
                             self.agents.memory.store(self.episode_buffer, i_env)
                         # prepare for next episode:
@@ -214,17 +221,17 @@ class SC2_Runner(Runner_Base):
             episode_info["Train-Results/Win-Rate"] = win_rate
             episode_info["Train-Results/Dead-Ratio"] = dead_ratio
             episode_info["Train-Results/Enemy-Dead-Ratio"] = enemy_dead_ratio
+            self.log_infos(episode_info, self.current_step)
 
             if not self.on_policy:
                 train_info = self.agents.train(self.current_step)
-            # Log train info:
-            self.log_infos(train_info, self.current_step)
-            self.log_infos(episode_info, self.current_step)
+                self.log_infos(train_info, self.current_step)
+
         self.rnn_hidden, self.rnn_hidden_critic = rnn_hidden, rnn_hidden_critic
 
     def test_episode(self, n_episodes):
         num_envs = self.test_envs.num_envs
-        videos, episode_videos = [[] for _ in range(n_episodes)], []
+        videos, episode_videos = [[] for _ in range(num_envs)], []
         episode_score = []
         obs_n, state, infos = self.test_envs.reset()
         if self.args.render_mode == "rgb_array" and self.render:
@@ -234,25 +241,20 @@ class SC2_Runner(Runner_Base):
         best_score = -np.inf
 
         rnn_hidden = self.agents.policy.representation.init_hidden(num_envs * self.num_agents)
-        if self.on_policy:
-            rnn_hidden_critic = self.agents.policy.representation_critic.init_hidden(num_envs * self.num_agents)
-        else:
-            rnn_hidden_critic = None
 
         battles_game, battles_won = self.test_envs.battles_game.sum(), self.test_envs.battles_won.sum()
         dead_allies, dead_enemies = self.test_envs.dead_allies_count.sum(), self.test_envs.dead_enemies_count.sum()
         for i_episode in range(n_episodes):
             for step in range(self.episode_length):
                 available_actions = self.test_envs.get_avail_actions()
-                actions_dict = self.get_actions(obs_n, available_actions, rnn_hidden, rnn_hidden_critic,
-                                                test_mode=True)
+                actions_dict = self.get_actions(obs_n, available_actions, rnn_hidden, None, test_mode=True)
                 next_obs_n, next_state, rewards, terminated, truncated, info = self.test_envs.step(actions_dict['actions_n'])
                 if self.args.render_mode == "rgb_array" and self.render:
                     images = self.test_envs.render(self.args.render_mode)
                     for idx, img in enumerate(images):
                         videos[idx].append(img)
 
-                rnn_hidden, rnn_hidden_critic = actions_dict['rnn_hidden'], actions_dict['rnn_hidden_critic']
+                rnn_hidden = actions_dict['rnn_hidden']
                 obs_n, state = deepcopy(next_obs_n), deepcopy(next_state)
                 for i_env in range(num_envs):
                     if terminated[i_env] or truncated[i_env]:
@@ -260,14 +262,12 @@ class SC2_Runner(Runner_Base):
                         agent_hidden_select = np.arange(i_env * self.num_agents, (i_env + 1) * self.num_agents)
                         rnn_hidden = self.agents.policy.representation.init_hidden_item(agent_hidden_select,
                                                                                         *rnn_hidden)
-                        if self.on_policy:
-                            rnn_hidden_critic = self.agents.policy.representation_critic.init_hidden_item(agent_hidden_select,
-                                                                                                          *rnn_hidden_critic)
                         obs_n[i_env], state[i_env] = info[i_env]["reset_obs"], info[i_env]["reset_state"]
                         episode_score.append(info[i_env]["episode_score"])
                         if best_score < episode_score[-1]:
                             best_score = episode_score[-1]
                             episode_videos = videos[i_env].copy()
+                        videos[i_env] = []
 
         episode_score = np.array(episode_score)
         scores_mean = np.mean(episode_score)

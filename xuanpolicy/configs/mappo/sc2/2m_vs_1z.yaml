@@ -1,6 +1,6 @@
 agent: "MAPPO"
 env_name: "StarCraft2"
-env_id: "3m"
+env_id: "2m_vs_1z"
 fps: 15
 policy: "Categorical_MAAC_Policy"
 representation: "Basic_RNN"
@@ -26,7 +26,7 @@ activation: "ReLU"
 
 seed: 1
 parallels: 8
-n_size: 128
+n_size: 16
 n_epoch: 15
 n_minibatch: 1
 learning_rate: 0.0007  # 7e-4
@@ -42,7 +42,7 @@ gamma: 0.99  # discount factor
 # tricks
 use_linear_lr_decay: False  # if use linear learning rate decay
 end_factor_lr_decay: 0.5
-use_global_state: False  # if use global state to replace joint observations
+use_global_state: False  # if use global state to replace merged observations
 use_grad_norm: True  # gradient normalization
 max_grad_norm: 10.0
 use_value_clip: True  # limit the value range

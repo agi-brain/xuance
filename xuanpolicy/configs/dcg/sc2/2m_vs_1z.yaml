@@ -1,6 +1,6 @@
 agent: "DCG"  # Options: DCG, DCG_S
 env_name: "StarCraft2"
-env_id: "3m"
+env_id: "2m_vs_1z"
 fps: 15
 policy: "DCG_policy"
 representation: "Basic_RNN"

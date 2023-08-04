@@ -42,7 +42,7 @@ class Basic_MLP(nn.Module):
         input_shape = self.input_shape
         for h in self.hidden_sizes:
             mlp, input_shape = mlp_block(input_shape[0], h, self.normalize, self.activation, self.initialize,
-                                         self.device)
+                                         device=self.device)
             layers.extend(mlp)
         return nn.Sequential(*layers)
 
