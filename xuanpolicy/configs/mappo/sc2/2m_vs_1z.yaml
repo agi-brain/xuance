@@ -25,8 +25,8 @@ critic_hidden_size: []
 activation: "ReLU"
 
 seed: 1
-parallels: 8
-n_size: 16
+parallels: 1
+n_size: 128
 n_epoch: 15
 n_minibatch: 1
 learning_rate: 0.0007  # 7e-4
@@ -60,6 +60,6 @@ train_per_step: True
 training_frequency: 1
 
 eval_interval: 5000
-test_episode: 5
+test_episode: 10
 log_dir: "./logs/mappo/"
 model_dir: "./models/mappo/"

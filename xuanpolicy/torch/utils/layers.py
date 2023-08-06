@@ -10,12 +10,11 @@ def mlp_block(input_dim: int,
               normalize: Optional[Union[nn.BatchNorm1d, nn.LayerNorm]] = None,
               activation: Optional[ModuleType] = None,
               initialize: Optional[Callable[[torch.Tensor], torch.Tensor]] = None,
-              gain: float = 1.0,
               device: Optional[Union[str, int, torch.device]] = None) -> Tuple[Sequence[ModuleType], Tuple[int]]:
     block = []
     linear = nn.Linear(input_dim, output_dim, device=device)
     if initialize is not None:
-        initialize(linear.weight, gain)
+        initialize(linear.weight)
         nn.init.constant_(linear.bias, 0)
     block.append(linear)
     if activation is not None:

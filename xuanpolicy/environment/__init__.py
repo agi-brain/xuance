@@ -4,7 +4,7 @@ from xuanpolicy.environment.gym.gym_env import Gym_Env, MountainCar
 from .pettingzoo import PETTINGZOO_ENVIRONMENTS
 
 from .vector_envs.vector_env import VecEnv
-from xuanpolicy.environment.gym.gym_vec_env import DummyVecEnv_Gym, DummyVecEnv_Atari
+from xuanpolicy.environment.gym.gym_vec_env import DummyVecEnv_Gym, DummyVecEnv_Atari, SubprocVecEnv_Gym, SubprocVecEnv_Atari
 from xuanpolicy.environment.pettingzoo.pettingzoo_vec_env import DummyVecEnv_Pettingzoo
 from xuanpolicy.environment.magent2.magent_vec_env import DummyVecEnv_MAgent
 from xuanpolicy.environment.starcraft2.sc2_vec_env import SubprocVecEnv_StarCraft2

@@ -327,6 +327,8 @@ $ tensorboard --logdir ./logs/dqn/torch/CartPole-v0
 | ALE/AirRaid-v5  | 7316.67 | 5450.00 | 9283.33 |
 | ALE/Alien-v5    | 2676.67 | 2413.33 | 2313.33 |
 | ALE/Amidar-v5   | 627.00  | 293.0   | 964.67  |
+| ALE/Assault-v5  | 9981.67 |         |         |
+| ALE/Asterix-v5  |         |         |         |
 | ALE/Bowling-v5  | 92.00   | 56.67   | 76.00   |
 | ALE/Breakout-v5 | 415.33  | 431.0   | 371.67  |
 | ALE/Freeway-v5  | 34.00   | 33.0    | 34.0    |

@@ -47,8 +47,7 @@ class BasicRecurrent(nn.Module):
         else:
             raise "Unknown recurrent module!"
         self.rnn_layer = output
-        fc_layer = mlp_block(kwargs["recurrent_hidden_size"], kwargs["action_dim"], None, None, None, kwargs["device"])[
-            0]
+        fc_layer = mlp_block(kwargs["recurrent_hidden_size"], kwargs["action_dim"], None, None, None, kwargs["device"])[0]
         self.model = nn.Sequential(*fc_layer)
 
     def forward(self, x: torch.Tensor, h: torch.Tensor, c: torch.Tensor = None):
