@@ -22,7 +22,7 @@ class ActorNet(nn.Module):
             mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initialize,
                                          device=device)
             layers.extend(mlp)
-        layers.extend(mlp_block(input_shape[0], action_dim, None, None, initialize, gain, device)[0])
+        layers.extend(mlp_block(input_shape[0], action_dim, None, None, initialize, device)[0])
         self.pi_logits = nn.Sequential(*layers)
 
     def forward(self, x: torch.Tensor):
@@ -42,11 +42,9 @@ class CriticNet(nn.Module):
         layers = []
         input_shape = (state_dim + n_agents,)
         for h in hidden_sizes:
-            mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initialize,
-                                         device=device)
+            mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initialize, device=device)
             layers.extend(mlp)
-        layers.extend(mlp_block(input_shape[0], 1, None, None, initialize,
-                                device=device)[0])
+        layers.extend(mlp_block(input_shape[0], 1, None, None, initialize, device=device)[0])
         self.model = nn.Sequential(*layers)
 
     def forward(self, x: torch.Tensor):
