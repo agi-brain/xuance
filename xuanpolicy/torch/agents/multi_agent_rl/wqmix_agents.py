@@ -29,7 +29,7 @@ class WQMIX_Agents(MARLAgents):
             representation = REGISTRY_Representation[config.representation](*input_representation)
         mixer = QMIX_mixer(config.dim_state[0], config.hidden_dim_mixing_net, config.hidden_dim_hyper_net,
                            config.n_agents, device)
-        ff_mixer = QMIX_FF_mixer(config.dim_state[0], config.hidden_dim_mixing_net, config.n_agents, device)
+        ff_mixer = QMIX_FF_mixer(config.dim_state[0], config.hidden_dim_ff_mix_net, config.n_agents, device)
         input_policy = get_policy_in_marl(config, representation, mixer=mixer, ff_mixer=ff_mixer)
         policy = REGISTRY_Policy[config.policy](*input_policy,
                                                 use_recurrent=config.use_recurrent,

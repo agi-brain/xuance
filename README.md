@@ -322,20 +322,21 @@ $ tensorboard --logdir ./logs/dqn/torch/CartPole-v0
 
 ### Atari Environment (Ongoing)
 
-| Task              | DQN      | C51     | PPO     |
-|-------------------|----------|---------|---------|
-| ALE/AirRaid-v5    | 7316.67  | 5450.00 | 9283.33 |
-| ALE/Alien-v5      | 2676.67  | 2413.33 | 2313.33 |
-| ALE/Amidar-v5     | 627.00   | 293.0   | 964.67  |
-| ALE/Assault-v5    | 9981.67  |         | 6265.67 |
-| ALE/Asterix-v5    | 30516.67 |         | 2900.00 |
-| ALE/Asteroids-v5  |          |         | 3430.00 |
-| ALE/Bowling-v5    | 92.00    | 56.67   | 76.00   |
-| ALE/Breakout-v5   | 415.33   | 431.0   | 371.67  |
-| ALE/Freeway-v5    | 34.00    | 33.0    | 34.0    |
-| ALE/MsPacman-v5   | 4650.00  | 4690.00 | 4120.00 |
-| ALE/Pong-v5       | 21.0     | 20.0    | 21.0    |
-| ALE/Qbert-v5      | 16350.0  | 12875.0 | 20050.0 |
+| Task              | DQN      | C51      | PPO     |
+|-------------------|----------|----------|---------|
+| ALE/AirRaid-v5    | 7316.67  | 5450.00  | 9283.33 |
+| ALE/Alien-v5      | 2676.67  | 2413.33  | 2313.33 |
+| ALE/Amidar-v5     | 627.00   | 293.0    | 964.67  |
+| ALE/Assault-v5    | 9981.67  | 9088.67  | 6265.67 |
+| ALE/Asterix-v5    | 30516.67 | 12866.67 | 2900.00 |
+| ALE/Asteroids-v5  | 1393.33  | 2180.0   | 3430.00 |
+| ALE/Atlantis-v5   |          |          |         |
+| ALE/Bowling-v5    | 92.00    | 56.67    | 76.00   |
+| ALE/Breakout-v5   | 415.33   | 431.0    | 371.67  |
+| ALE/Freeway-v5    | 34.00    | 33.0     | 34.0    |
+| ALE/MsPacman-v5   | 4650.00  | 4690.00  | 4120.00 |
+| ALE/Pong-v5       | 21.0     | 20.0     | 21.0    |
+| ALE/Qbert-v5      | 16350.0  | 12875.0  | 20050.0 |
 
 
 

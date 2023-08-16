@@ -35,7 +35,7 @@ weight_decay: 0
 vf_coef: 1.0
 ent_coef: 0.01
 target_kl: 0.25
-clip_range: 0.2
+clip_range: 0.05
 clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
 gamma: 0.99  # discount factor
 
@@ -46,7 +46,7 @@ use_global_state: False  # if use global state to replace joint observations
 use_grad_norm: True  # gradient normalization
 max_grad_norm: 10.0
 use_value_clip: True  # limit the value range
-value_clip_range: 0.2
+value_clip_range: 0.05
 use_value_norm: True  # use running mean and std to normalize rewards.
 use_huber_loss: True  # True: use huber loss; False: use MSE loss.
 huber_delta: 10.0

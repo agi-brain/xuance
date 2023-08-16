@@ -1,4 +1,4 @@
-agent: "CWQMIX"  # choice: CWQMIX, OWQMIX
+agent: "OWQMIX"  # choice: CWQMIX, OWQMIX
 env_name: "StarCraft2"
 env_id: "25m"
 fps: 15
@@ -22,8 +22,10 @@ q_hidden_size: [64, ]  # the units for each hidden layer
 activation: "ReLU"
 alpha: 0.1
 
-hidden_dim_mixing_net: 64  # hidden units of mixing network
+hidden_dim_mixing_net: 32  # hidden units of mixing network
 hidden_dim_hyper_net: 64  # hidden units of hyper network
+
+hidden_dim_ff_mix_net: 256  # hidden units of mixing network
 
 seed: 1
 parallels: 1

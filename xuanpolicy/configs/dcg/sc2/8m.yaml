@@ -17,18 +17,18 @@ recurrent_hidden_size: 64
 N_recurrent_layers: 1
 dropout: 0
 
-representation_hidden_size: [32, ]
-q_hidden_size: [128, ]  # the units for each hidden layer
-hidden_utility_dim: 256  # hidden units of the utility function
-hidden_payoff_dim: 256  # hidden units of the payoff function
+representation_hidden_size: [64, ]
+q_hidden_size: [64, ]  # the units for each hidden layer
+hidden_utility_dim: 64  # hidden units of the utility function
+hidden_payoff_dim: 64  # hidden units of the payoff function
 bias_net: "Basic_MLP"
-hidden_bias_dim: [256, ]  # hidden units of the bias network with global states as input
+hidden_bias_dim: [64, ]  # hidden units of the bias network with global states as input
 activation: "ReLU"
 
 low_rank_payoff: False  # low-rank approximation of payoff function
 payoff_rank: 5  # the rank K in the paper
 graph_type: "FULL"  # specific type of the coordination graph
-n_msg_iterations: 1  # number of iterations for message passing during belief propagation
+n_msg_iterations: 8  # number of iterations for message passing during belief propagation
 msg_normalized: True  # Message normalization during greedy action selection (Kok and Vlassis, 2006)
 
 seed: 1
@@ -36,7 +36,7 @@ parallels: 1
 buffer_size: 5000
 batch_size: 32
 learning_rate: 0.0007
-gamma: 0.95  # discount factor
+gamma: 0.99  # discount factor
 double_q: True  # use double q learning
 
 start_greedy: 1.0
