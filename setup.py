@@ -5,13 +5,13 @@ setup(
     packages=find_packages(include=['xuanpolicy', 'xuanpolicy.*']),
     package_data={"xuanpolicy": ["configs/*.yaml", "configs/*/*/*.yaml"]},
     version='0.1.7',
-    description='XuanPolicy: A Comprehensive Deep Reinforcement Learning Library.',
+    description='XuanPolicy: A Comprehensive and Unified Deep Reinforcement Learning Library.',
     author='Wenzhang Liu, Wenzhe Cai, Kun Jiang, etc.',
     author_email='',
     license='MIT',
     url='',
     download_url='',
-    keywords=['deep reinforcement learning', 'software library', 'platform'],
+    keywords=['deep reinforcement learning', 'software library', 'PyTorch', 'TensorFlow2', 'MindSpore'],
     classifiers=[
         'Development Status :: 4 - Beta',
         # Chose either "3 - Alpha", "4 - Beta" or "5 - Production/Stable" as the current state of your package
@@ -35,22 +35,23 @@ setup(
         ]
     },
     install_requires=[
-        "numpy>=1.19.5",
-        "scipy>=1.7.3",
-        "PyYAML>=6.0",
+        "numpy==1.21.6",
+        "scipy==1.7.3",
+        "PyYAML==6.0",
         "gym==0.26.2",
-        "box2d-py==2.3.5",
         "gymnasium==0.28.1",
         "gym-notices==0.0.8",
-        "mpi4py>=3.1.3",
-        "tqdm>=4.0",
-        "pyglet>=1.5.15",
-        "opencv-python>=4.5.4.58",  # for Atari
+        "gym-platform==0.0.1",
+        "box2d-py==2.3.5",
+        "mpi4py==3.1.3",
+        "tqdm==4.62.3",
+        "pyglet==1.5.15",
+        "opencv-python==4.5.4.58",  # for Atari
         "atari-py==0.2.9",
         "ale-py==0.7.5",
         "pettingzoo==1.23.0",  # for MARL
-        "tensorboard>=2.11.2",  # logger
-        "wandb>=0.15.3",
+        "tensorboard==2.11.2",  # logger
+        "wandb==0.15.3",
         "moviepy==1.0.3",
         "imageio==2.9.0"
     ],

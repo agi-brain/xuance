@@ -331,6 +331,7 @@ $ tensorboard --logdir ./logs/dqn/torch/CartPole-v0
 | ALE/Asterix-v5   | 30516.67 | 12866.67 | 2900.00 |
 | ALE/Asteroids-v5 | 1393.33  | 2180.0   | 3430.00 |
 | ALE/Atlantis-v5  | 294600.0 |          |         |
+| ALE/BankHeist-v5 |          |          |         |
 | ALE/Bowling-v5   | 92.00    | 56.67    | 76.00   |
 | ALE/Breakout-v5  | 415.33   | 431.0    | 371.67  |
 | ALE/Freeway-v5   | 34.00    | 33.0     | 34.0    |
