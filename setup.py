@@ -12,7 +12,7 @@ setup(
                 "environment/magent2/libmagent.so"  # for magent2 environment
             ]
     },
-    version='0.1.8.1',
+    version='0.1.8.2',
     description='XuanPolicy: A Comprehensive and Unified Deep Reinforcement Learning Library.',
     author='Wenzhang Liu, Wenzhe Cai, Kun Jiang, etc.',
     author_email='',
@@ -49,7 +49,6 @@ setup(
         "gym==0.26.2",
         "gymnasium==0.28.1",
         "gym-notices==0.0.8",
-        "gym-platform==0.0.1",
         "box2d-py==2.3.5",
         "mpi4py==3.1.3",
         "tqdm==4.62.3",
