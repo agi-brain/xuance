@@ -1,0 +1,24 @@
+Metadata-Version: 2.1
+Name: xuanpolicy
+Version: 0.1.8.1
+Summary: XuanPolicy: A Comprehensive and Unified Deep Reinforcement Learning Library.
+Home-page: 
+Download-URL: 
+Author: Wenzhang Liu, Wenzhe Cai, Kun Jiang, etc.
+Author-email: 
+License: MIT
+Keywords: deep reinforcement learning,software library,PyTorch,TensorFlow2,MindSpore
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: Topic :: Software Development :: Build Tools
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Provides-Extra: torch
+Provides-Extra: tensorflow
+Provides-Extra: mindspore
+Provides-Extra: all
+License-File: LICENSE.txt

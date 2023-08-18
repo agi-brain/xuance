@@ -3,8 +3,16 @@ from setuptools import find_packages, setup
 setup(
     name='xuanpolicy',
     packages=find_packages(include=['xuanpolicy', 'xuanpolicy.*']),
-    package_data={"xuanpolicy": ["configs/*.yaml", "configs/*/*/*.yaml"]},
-    version='0.1.7',
+    package_data={
+        "xuanpolicy":
+            [
+                "configs/*.yaml",
+                "configs/*/*.yaml",
+                "configs/*/*/*.yaml",
+                "environment/magent2/libmagent.so"  # for magent2 environment
+            ]
+    },
+    version='0.1.8.1',
     description='XuanPolicy: A Comprehensive and Unified Deep Reinforcement Learning Library.',
     author='Wenzhang Liu, Wenzhe Cai, Kun Jiang, etc.',
     author_email='',
