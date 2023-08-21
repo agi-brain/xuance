@@ -131,7 +131,10 @@ class NoisyDQN_Agent(Agent):
         if self.config.test_mode:
             print("Best Score: %.2f" % (best_score))
 
-        test_info = {"Test-Episode-Rewards/Mean-Score": np.mean(scores)}
+        test_info = {
+            "Test-Episode-Rewards/Mean-Score": np.mean(scores),
+            "Test-Episode-Rewards/Std-Score": np.std(scores)
+        }
         self.log_infos(test_info, self.current_step)
 
         test_envs.close()
