@@ -330,60 +330,114 @@ $ tensorboard --logdir ./logs/dqn/torch/CartPole-v0
 | ALE/Assault-v5          | 9981.67  | 9088.67  | 6265.67 |
 | ALE/Asterix-v5          | 30516.67 | 12866.67 | 2900.00 |
 | ALE/Asteroids-v5        | 1393.33  | 2180.0   | 3430.00 |
-| ALE/Atlantis-v5         | 294600.0 | 30266.67 |         |
-| ALE/BankHeist-v5        | 1190.0   |          |         |
-| ALE/BattleZone-v5       |          |          |         |
-| ALE/BeamRider-v5        |          |          |         |
-| ALE/Berzerk-v5          |          |          |         |
-| ALE/Bowling-v5          | 92.00    | 56.67    | 76.00   |
-| ALE/Boxing-v5           |          |          |         |
-| ALE/Breakout-v5         | 415.33   | 431.0    | 371.67  |
-| ALE/Carnival-v5         |          |          |         |
-| ALE/Centipede-v5        |          |          |         |
-| ALE/ChopperCommand-v5   |          |          |         |
-| ALE/CrazyClimber-v5     |          |          |         |
-| ALE/Defender-v5         |          |          |         |
-| ALE/DemonAttack-v5      |          |          |         |
-| ALE/DoubleDunk-v5       |          |          |         |
-| ALE/ElevatorAction-v5   |          |          |         |
-| ALE/Enduro-v5           |          |          |         |
-| ALE/FishingDerby-v5     |          |          |         |
-| ALE/Freeway-v5          | 34.00    | 33.0     | 34.0    |
-| ALE/Frostbite-v5        |          |          |         |
-| ALE/Gopher-v5           |          |          |         |
-| ALE/Gravitar-v5         |          |          |         |
-| ALE/Hero-v5             |          |          |         |
-| ALE/IceHockey-v5        |          |          |         |
-| ALE/Jamesbond-v5        |          |          |         |
-| ALE/JourneyEscape-v5    |          |          |         |
-| ALE/Kangaroo-v5         |          |          |         |
-| ALE/Krull-v5            |          |          |         |
-| ALE/KungFuMaster-v5     |          |          |         |
-| ALE/MontezumaRevenge-v5 |          |          |         |
-| ALE/MsPacman-v5         | 4650.00  | 4690.00  | 4120.00 |
-| ALE/NameThisGame-v5     |          |          |         |
-| ALE/Phoenix-v5          |          |          |         |
-| ALE/Pitfall-v5          |          |          |         |
-| ALE/Pong-v5             | 21.0     | 20.0     | 21.0    |
-| ALE/Pooyan-v5           |          |          |         |
-| ALE/PrivateEye-v5       |          |          |         |
-| ALE/Qbert-v5            | 16350.0  | 12875.0  | 20050.0 |
-| ALE/Riverraid-v5        |          |          |         |
-| ALE/RoadRunner-v0       |          |          |         |
-| ALE/Robotank-v0         |          |          |         |
-| ALE/Seaquest-v0         |          |          |         |
-| ALE/Skiing-v0           |          |          |         |
-| ALE/Solaris-v5          |          |          |         |
-| ALE/SpaceInvaders-v5    |          |          |         |
-| ALE/StarGunner-v5       |          |          |         |
-| ALE/Tennis-v5           |          |          |         |
-| ALE/TimePilot-v5        |          |          |         |
-| ALE/Tutankham-v5        |          |          |         |
-| ALE/UpNDown-v5          |          |          |         |
-| ALE/Venture-v5          |          |          |         |
-| ALE/VideoPinball-v5     |          |          |         |
-| ALE/WizardOfWor-v5      |          |          |         |
-| ALE/Zaxxon-v5           |          |          |         |
+
+[//]: # (| ALE/Atlantis-v5         | 294600.0 | 30266.67 |         |)
+
+[//]: # (| ALE/BankHeist-v5        | 1190.0   |          |         |)
+
+[//]: # (| ALE/BattleZone-v5       |          |          |         |)
+
+[//]: # (| ALE/BeamRider-v5        |          |          |         |)
+
+[//]: # (| ALE/Berzerk-v5          |          |          |         |)
+
+[//]: # (| ALE/Bowling-v5          | 92.00    | 56.67    | 76.00   |)
+
+[//]: # (| ALE/Boxing-v5           |          |          |         |)
+
+[//]: # (| ALE/Breakout-v5         | 415.33   | 431.0    | 371.67  |)
+
+[//]: # (| ALE/Carnival-v5         |          |          |         |)
+
+[//]: # (| ALE/Centipede-v5        |          |          |         |)
+
+[//]: # (| ALE/ChopperCommand-v5   |          |          |         |)
+
+[//]: # (| ALE/CrazyClimber-v5     |          |          |         |)
+
+[//]: # (| ALE/Defender-v5         | 11550.0  |          |         |)
+
+[//]: # (| ALE/DemonAttack-v5      |          |          |         |)
+
+[//]: # (| ALE/DoubleDunk-v5       |          |          |         |)
+
+[//]: # (| ALE/ElevatorAction-v5   |          |          |         |)
+
+[//]: # (| ALE/Enduro-v5           |          |          |         |)
+
+[//]: # (| ALE/FishingDerby-v5     |          |          |         |)
+
+[//]: # (| ALE/Freeway-v5          | 34.00    | 33.0     | 34.0    |)
+
+[//]: # (| ALE/Frostbite-v5        |          |          |         |)
+
+[//]: # (| ALE/Gopher-v5           |          |          |         |)
+
+[//]: # (| ALE/Gravitar-v5         |          |          |         |)
+
+[//]: # (| ALE/Hero-v5             |          |          |         |)
+
+[//]: # (| ALE/IceHockey-v5        |          |          |         |)
+
+[//]: # (| ALE/Jamesbond-v5        |          |          |         |)
+
+[//]: # (| ALE/JourneyEscape-v5    |          |          |         |)
+
+[//]: # (| ALE/Kangaroo-v5         |          |          |         |)
+
+[//]: # (| ALE/Krull-v5            |          |          |         |)
+
+[//]: # (| ALE/KungFuMaster-v5     |          |          |         |)
+
+[//]: # (| ALE/MontezumaRevenge-v5 |          |          |         |)
+
+[//]: # (| ALE/MsPacman-v5         | 4650.00  | 4690.00  | 4120.00 |)
+
+[//]: # (| ALE/NameThisGame-v5     |          |          |         |)
+
+[//]: # (| ALE/Phoenix-v5          |          |          |         |)
+
+[//]: # (| ALE/Pitfall-v5          |          |          |         |)
+
+[//]: # (| ALE/Pong-v5             | 21.0     | 20.0     | 21.0    |)
+
+[//]: # (| ALE/Pooyan-v5           |          |          |         |)
+
+[//]: # (| ALE/PrivateEye-v5       |          |          |         |)
+
+[//]: # (| ALE/Qbert-v5            | 16350.0  | 12875.0  | 20050.0 |)
+
+[//]: # (| ALE/Riverraid-v5        |          |          |         |)
+
+[//]: # (| ALE/RoadRunner-v0       |          |          |         |)
+
+[//]: # (| ALE/Robotank-v0         |          |          |         |)
+
+[//]: # (| ALE/Seaquest-v0         |          |          |         |)
+
+[//]: # (| ALE/Skiing-v0           |          |          |         |)
+
+[//]: # (| ALE/Solaris-v5          |          |          |         |)
+
+[//]: # (| ALE/SpaceInvaders-v5    |          |          |         |)
+
+[//]: # (| ALE/StarGunner-v5       |          |          |         |)
+
+[//]: # (| ALE/Tennis-v5           |          |          |         |)
+
+[//]: # (| ALE/TimePilot-v5        |          |          |         |)
+
+[//]: # (| ALE/Tutankham-v5        |          |          |         |)
+
+[//]: # (| ALE/UpNDown-v5          |          |          |         |)
+
+[//]: # (| ALE/Venture-v5          |          |          |         |)
+
+[//]: # (| ALE/VideoPinball-v5     |          |          |         |)
+
+[//]: # (| ALE/WizardOfWor-v5      |          |          |         |)
+
+[//]: # (| ALE/Zaxxon-v5           |          |          |         |)
 
 
 
