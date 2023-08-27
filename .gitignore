@@ -6,6 +6,6 @@ dist/
 .eggs/
 xuanpolicy.egg-info/
 models/
-*.sh/
+*.sh
 .VSCodeCounter/
 **/__pycache__
