@@ -46,7 +46,7 @@ class MARL_OffPolicyBuffer(BaseBuffer):
         batch_size: batch size of transition data for a sample.
     """
     def __init__(self, n_agents, state_space, obs_space, act_space, rew_space, done_space,
-                 n_envs, n_size, batch_size):
+                 n_envs, n_size, batch_size, **kwargs):
         super(MARL_OffPolicyBuffer, self).__init__(n_agents, state_space, obs_space, act_space, rew_space, done_space,
                                                    n_envs, n_size)
         self.buffer_size = n_size * n_envs
@@ -61,9 +61,9 @@ class MARL_OffPolicyBuffer(BaseBuffer):
 
     def clear(self):
         self.data = {
-            'obs': np.zeros((self.n_envs, self.n_size) + self.obs_space).astype(np.float32),
-            'actions': np.zeros((self.n_envs, self.n_size) + self.act_space).astype(np.float32),
-            'obs_next': np.zeros((self.n_envs, self.n_size) + self.obs_space).astype(np.float32),
+            'obs': np.zeros((self.n_envs, self.n_size, self.n_agents) + self.obs_space).astype(np.float32),
+            'actions': np.zeros((self.n_envs, self.n_size, self.n_agents) + self.act_space).astype(np.float32),
+            'obs_next': np.zeros((self.n_envs, self.n_size, self.n_agents) + self.obs_space).astype(np.float32),
             'rewards': np.zeros((self.n_envs, self.n_size) + self.rew_space).astype(np.float32),
             'terminals': np.zeros((self.n_envs, self.n_size) + self.done_space).astype(np.bool),
             'agent_mask': np.ones((self.n_envs, self.n_size, self.n_agents)).astype(np.bool)

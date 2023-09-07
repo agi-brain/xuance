@@ -32,7 +32,8 @@ class MADDPG_Agents(MARLAgents):
             config.dim_state, state_shape = config.state_space.shape, config.state_space.shape
         else:
             config.dim_state, state_shape = None, None
-        memory = MARL_OffPolicyBuffer(state_shape,
+        memory = MARL_OffPolicyBuffer(config.n_agents,
+                                      state_shape,
                                       config.obs_shape,
                                       config.act_shape,
                                       config.rew_shape,

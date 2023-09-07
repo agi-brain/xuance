@@ -9,13 +9,21 @@ runner: "Pettingzoo_Runner"
 on_policy: False
 
 use_recurrent: False
-rnn:
+rnn: "GRU"
+recurrent_layer_N: 1
+fc_hidden_sizes: [ 64, ]
+recurrent_hidden_size: 64
+N_recurrent_layers: 1
+dropout: 0
+
 representation_hidden_size: [128, ]  # for Basic_MLP representation
 q_hidden_size: [128, ]  # the units for each hidden layer
-hidden_dim_mixing_net: 64  # hidden units of mixing network
-hidden_dim_hyper_net: 64  # hidden units of hyper network
 activation: "ReLU"
 alpha: 0.1
+
+hidden_dim_mixing_net: 32  # hidden units of mixing network
+hidden_dim_hyper_net: 64  # hidden units of hyper network
+hidden_dim_ff_mix_net: 256  # hidden units of mixing network
 
 seed: 1
 parallels: 16
