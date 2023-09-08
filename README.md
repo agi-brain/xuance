@@ -282,7 +282,10 @@ Note: Some extra packages should be installed manually for further usage.
 ```python
 import xuanpolicy as xp
 
-runner = xp.get_runner(method='dqn', env='classic_control', env_id='CartPole-v1', is_test=False)
+runner = xp.get_runner(method='dqn', 
+                       env='classic_control', 
+                       env_id='CartPole-v1', 
+                       is_test=False)
 runner.run()
 ```
 
@@ -291,7 +294,10 @@ runner.run()
 ```python
 import xuanpolicy as xp
 
-runner_test = xp.get_runner(method='dqn', env='classic_control', env_id='CartPole-v1', is_test=True)
+runner_test = xp.get_runner(method='dqn', 
+                            env='classic_control', 
+                            env_id='CartPole-v1', 
+                            is_test=True)
 runner_test.run()
 ```
 
