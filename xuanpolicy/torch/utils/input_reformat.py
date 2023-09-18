@@ -10,9 +10,7 @@ import torch
 def get_repre_in(args):
     representation_name = args.representation
     input_dict = deepcopy(Representation_Inputs_All)
-    if args.env_name == "MAgent2":
-        input_dict["input_shape"] = args.dim_obs
-    elif args.env_name in ["StarCraft2", "Football"]:
+    if args.env_name in ["StarCraft2", "Football", "MAgent2"]:
         input_dict["input_shape"] = (args.dim_obs, )
     elif isinstance(args.observation_space, dict):
         input_dict["input_shape"] = space2shape(args.observation_space[args.agent_keys[0]])
