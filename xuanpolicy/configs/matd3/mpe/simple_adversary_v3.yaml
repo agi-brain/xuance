@@ -1,8 +1,8 @@
-agent: "IDDPG"  # the learning algorithms_marl
+agent: "MATD3"  # the learning algorithms_marl
 env_name: "mpe"
-env_id: "simple_spread_v3"
+env_id: "simple_adversary_v3"
 continuous_action: True
-policy: "Independent_DDPG_Policy"
+policy: "MATD3_Policy"
 representation: "Basic_Identical"
 vectorize: "Dummy_Pettingzoo"
 runner: "Pettingzoo_Runner"
@@ -24,7 +24,7 @@ tau: 0.001  # soft update for target networks
 
 start_noise: 1.0
 end_noise: 0.01
-sigma: 0.1  # random noise for continuous actions
+sigma: 0.1
 start_training: 1000  # start training after n episodes
 running_steps: 10000000
 train_per_step: False  # True: train model per step; False: train model per episode.
@@ -35,5 +35,5 @@ grad_clip_norm: 0.5
 
 eval_interval: 100000
 test_episode: 5
-log_dir: "./logs/iddpg/"
-model_dir: "./models/iddpg/"
+log_dir: "./logs/matd3/"
+model_dir: "./models/matd3/"

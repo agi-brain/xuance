@@ -135,7 +135,9 @@ class MAAC_Policy(nn.Module):
             outputs['state'] = outputs['state'].view(batch_size, n_agent, episode_length, -1)
             rnn_hidden = (outputs['rnn_hidden'], outputs['rnn_cell'])
         else:
-            outputs = self.representation_critic(critic_in)
+            batch_size, n_agent, dim_obs = tuple(shape_obs)
+            outputs = self.representation_critic(critic_in.reshape(-1, dim_obs))
+            outputs['state'] = outputs['state'].view(batch_size, n_agent, -1)
             rnn_hidden = None
         # get critic values
         critic_in = torch.concat([outputs['state'], agent_ids], dim=-1)

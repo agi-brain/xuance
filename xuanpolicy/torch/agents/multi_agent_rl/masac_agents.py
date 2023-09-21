@@ -32,7 +32,8 @@ class MASAC_Agents(MARLAgents):
             config.dim_state, state_shape = config.state_space.shape, config.state_space.shape
         else:
             config.dim_state, state_shape = None, None
-        memory = MARL_OffPolicyBuffer(state_shape,
+        memory = MARL_OffPolicyBuffer(config.n_agents,
+                                      state_shape,
                                       config.obs_shape,
                                       config.act_shape,
                                       config.rew_shape,
@@ -44,21 +45,18 @@ class MASAC_Agents(MARLAgents):
                                 config.device, config.model_dir, config.gamma)
         super(MASAC_Agents, self).__init__(config, envs, policy, memory, learner, device,
                                            config.log_dir, config.model_dir)
+        self.on_policy = False
 
-    def act(self, obs_n, episode, test_mode, state=None, noise=False):
+    def act(self, obs_n, test_mode):
         batch_size = len(obs_n)
         agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(batch_size, -1, -1).to(self.device)
         _, dists = self.policy(obs_n, agents_id)
         acts = dists.rsample()
         actions = acts.cpu().detach().numpy()
         actions = np.clip(actions, self.actions_low, self.actions_high)
-        return actions
+        return None, actions
 
     def train(self, i_episode):
-        if self.memory.can_sample(self.args.batch_size):
-            sample = self.memory.sample()
-            info_train = self.learner.update(sample)
-            return info_train
-        else:
-            return {}
-
+        sample = self.memory.sample()
+        info_train = self.learner.update(sample)
+        return info_train

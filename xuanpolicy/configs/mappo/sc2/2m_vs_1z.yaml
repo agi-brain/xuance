@@ -6,7 +6,6 @@ policy: "Categorical_MAAC_Policy"
 representation: "Basic_RNN"
 vectorize: "Dummy_StarCraft2"
 runner: "StarCraft2_Runner"
-on_policy: True
 
 # recurrent settings for Basic_RNN representation
 use_recurrent: True
@@ -59,7 +58,8 @@ running_steps: 1000000
 train_per_step: True
 training_frequency: 1
 
-eval_interval: 5000
-test_episode: 10
+test_steps: 10000
+eval_interval: 100000
+test_episode: 5
 log_dir: "./logs/mappo/"
 model_dir: "./models/mappo/"

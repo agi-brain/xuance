@@ -56,7 +56,7 @@ class ISAC_Learner(LearnerMAS):
         # loss_a = (- self.policy.critic(obs, actions_eval, IDs)) * agent_mask.sum() / agent_mask.sum()
         self.optimizer['actor'].zero_grad()
         loss_a.backward()
-        torch.nn.utils.clip_grad_norm_(self.policy.parameters_actor, self.args.clip_grad)
+        torch.nn.utils.clip_grad_norm_(self.policy.parameters_actor, self.args.grad_clip_norm)
         self.optimizer['actor'].step()
         if self.scheduler['actor'] is not None:
             self.scheduler['actor'].step()
@@ -65,7 +65,7 @@ class ISAC_Learner(LearnerMAS):
         loss_c = (td_error ** 2).sum() / agent_mask.sum()
         self.optimizer['critic'].zero_grad()
         loss_c.backward()
-        torch.nn.utils.clip_grad_norm_(self.policy.parameters_critic, self.args.clip_grad)
+        torch.nn.utils.clip_grad_norm_(self.policy.parameters_critic, self.args.grad_clip_norm)
         self.optimizer['critic'].step()
         if self.scheduler['critic'] is not None:
             self.scheduler['critic'].step()

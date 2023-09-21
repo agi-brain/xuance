@@ -35,7 +35,8 @@ class MATD3_Agents(MARLAgents):
             config.dim_state, state_shape = config.state_space.shape, config.state_space.shape
         else:
             config.dim_state, state_shape = None, None
-        memory = MARL_OffPolicyBuffer(state_shape,
+        memory = MARL_OffPolicyBuffer(config.n_agents,
+                                      state_shape,
                                       config.obs_shape,
                                       config.act_shape,
                                       config.rew_shape,
@@ -44,24 +45,24 @@ class MATD3_Agents(MARLAgents):
                                       config.buffer_size,
                                       config.batch_size)
         learner = MATD3_Learner(config, policy, optimizer, scheduler,
-                                 config.device, config.model_dir, config.gamma)
+                                config.device, config.model_dir, config.gamma)
         super(MATD3_Agents, self).__init__(config, envs, policy, memory, learner, device,
-                                            config.log_dir, config.model_dir)
+                                           config.log_dir, config.model_dir)
+        self.on_policy = False
 
-    def act(self, obs_n, episode, test_mode, noise=False):
+    def act(self, obs_n, test_mode):
         batch_size = len(obs_n)
         agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(batch_size, -1, -1).to(self.device)
         _, actions = self.policy(torch.Tensor(obs_n), agents_id)
         actions = actions.cpu().detach().numpy()
-        if noise:
+        if test_mode:
+            return None, actions
+        else:
             actions += np.random.normal(0, self.args.sigma, size=actions.shape)
             actions = np.clip(actions, self.actions_low, self.actions_high)
-        return actions
+            return None, actions
 
     def train(self, i_episode):
-        if self.memory.can_sample(self.args.batch_size):
-            sample = self.memory.sample()
-            info_train = self.learner.update(sample)
-            return info_train
-        else:
-            return {}
+        sample = self.memory.sample()
+        info_train = self.learner.update(sample)
+        return info_train

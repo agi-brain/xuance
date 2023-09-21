@@ -1,8 +1,8 @@
-agent: "IDDPG"  # the learning algorithms_marl
+agent: "MASAC"  # the learning algorithms_marl
 env_name: "mpe"
-env_id: "simple_spread_v3"
+env_id: "simple_adversary_v3"
 continuous_action: True
-policy: "Independent_DDPG_Policy"
+policy: "Gaussian_MASAC_Policy"
 representation: "Basic_Identical"
 vectorize: "Dummy_Pettingzoo"
 runner: "Pettingzoo_Runner"
@@ -15,12 +15,13 @@ activation_action: 'sigmoid'
 
 seed: 1
 parallels: 16
-buffer_size: 5000
+buffer_size: 100000
 batch_size: 256
 lr_a: 0.01  # learning rate for actor
 lr_c: 0.001  # learning rate for critic
 gamma: 0.95  # discount factor
 tau: 0.001  # soft update for target networks
+alpha: 0.01
 
 start_noise: 1.0
 end_noise: 0.01
@@ -35,5 +36,5 @@ grad_clip_norm: 0.5
 
 eval_interval: 100000
 test_episode: 5
-log_dir: "./logs/iddpg/"
-model_dir: "./models/iddpg/"
+log_dir: "./logs/masac/"
+model_dir: "./models/masac/"

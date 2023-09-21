@@ -55,6 +55,7 @@ class MAPPO_Agents(MARLAgents):
         super(MAPPO_Agents, self).__init__(config, envs, policy, memory, learner, device,
                                            config.log_dir, config.model_dir)
         self.share_values = True if config.rew_shape[0] == 1 else False
+        self.on_policy = True
 
     def act(self, obs_n, *rnn_hidden, avail_actions=None, state=None, test_mode=False):
         batch_size = len(obs_n)

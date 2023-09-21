@@ -54,7 +54,7 @@ class MATD3_Learner(LearnerMAS):
         self.optimizer['critic_B'].zero_grad()
         self.optimizer['critic_A'].zero_grad()
         loss_c.backward()
-        torch.nn.utils.clip_grad_norm_(self.policy.parameters_critic, self.args.clip_grad)
+        torch.nn.utils.clip_grad_norm_(self.policy.parameters_critic, self.args.grad_clip_norm)
         self.optimizer['critic_A'].step()
         self.optimizer['critic_B'].step()
         if self.scheduler['critic_A'] is not None:

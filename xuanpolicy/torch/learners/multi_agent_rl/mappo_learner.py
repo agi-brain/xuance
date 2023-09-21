@@ -70,7 +70,9 @@ class MAPPO_Clip_Learner(LearnerMAS):
         loss_e = entropy.mean()
 
         # critic loss
-        _, value_pred = self.policy.get_values(obs, IDs)
+        critic_in = torch.Tensor(obs).view([batch_size, 1, -1]).to(self.device)
+        critic_in = critic_in.expand(-1, self.n_agents, -1)
+        _, value_pred = self.policy.get_values(critic_in, IDs)
         value_pred = value_pred
         value_target = returns
         if self.use_value_clip:
