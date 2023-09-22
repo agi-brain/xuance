@@ -3,6 +3,7 @@ env_name: "Box2D"
 env_id: "BipedalWalker-v3"
 policy: "Gaussian_AC"
 representation: "Basic_MLP"
+runner: "DRL"
 
 representation_hidden_size: [64,]
 actor_hidden_size: [64,]

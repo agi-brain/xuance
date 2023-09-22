@@ -9,6 +9,7 @@ frame_skip: 4  # frame skip trick
 noop_max: 30  # Do no-op action for a number of steps in [1, noop_max].
 representation: "AC_CNN_Atari"  # CNN and FC layers
 policy: "Categorical_AC"
+runner: "DRL"
 
 # Good HyperParameters for Atari Games, Do not change them.
 filters: [32, 64, 64]

@@ -3,6 +3,7 @@ env_name: "MuJoCo"
 env_id: "Ant-v4"
 policy: "DDPG_Policy"
 representation: "Basic_Identical"
+runner: "DRL"
 
 representation_hidden_size:  # If you choose Basic_Identical representation, then ignore this value
 actor_hidden_size: [256, ]

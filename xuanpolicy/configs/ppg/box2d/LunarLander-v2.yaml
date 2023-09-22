@@ -3,6 +3,7 @@ env_name: "Box2D"
 env_id: "LunarLander-v2"
 representation: "Basic_MLP"
 policy: "Categorical_PPG"
+runner: "DRL"
 
 representation_hidden_size: [128,]
 actor_hidden_size: [128,]

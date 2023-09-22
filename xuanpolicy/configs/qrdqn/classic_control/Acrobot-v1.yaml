@@ -3,6 +3,7 @@ env_name: "Classic Control"
 env_id: "Acrobot-v1"
 policy: "QR_Q_network"
 representation: "Basic_MLP"
+runner: "DRL"
 
 representation_hidden_size: [128,]
 q_hidden_size: [128,]

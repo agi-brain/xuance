@@ -9,6 +9,7 @@ frame_skip: 4  # frame skip trick
 noop_max: 30  # Do no-op action for a number of steps in [1, noop_max].
 policy: "Noisy_Q_network"
 representation: "Basic_CNN"
+runner: "DRL"
 
 # the following three arguments are for "Basic_CNN" representation.
 filters: [32, 64, 64]  #  [16, 16, 32, 32]

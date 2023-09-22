@@ -3,6 +3,7 @@ env_name: "MuJoCo"
 env_id: "Ant-v4"
 policy: "TD3_Policy"
 representation: "Basic_Identical"
+runner: "DRL"
 
 actor_hidden_size: [256, ]
 critic_hidden_size: [256, ]

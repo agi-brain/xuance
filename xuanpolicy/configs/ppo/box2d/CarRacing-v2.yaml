@@ -3,6 +3,7 @@ env_name: "Box2D"
 env_id: "CarRacing-v2"
 representation: "Basic_CNN"
 policy: "Categorical_AC"
+runner: "DRL"
 
 # the following three arguments are for "Basic_CNN" representation.
 filters: [16, 16, 32]  #  [16, 16, 32, 32]

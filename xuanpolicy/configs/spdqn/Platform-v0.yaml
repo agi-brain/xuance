@@ -3,6 +3,7 @@ env_name: "Platform"
 env_id: "Platform-v0"
 policy: "SPDQN_Policy"
 representation: "Basic_MLP"
+runner: "DRL"
 
 representation_hidden_size: [128,]
 conactor_hidden_size: [128,]

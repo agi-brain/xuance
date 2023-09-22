@@ -3,6 +3,7 @@ env_name: "MuJoCo"
 env_id: "Ant-v4"
 policy: "Gaussian_AC"
 representation: "Basic_MLP"
+runner: "DRL"
 
 representation_hidden_size: [256,]
 actor_hidden_size: [256,]

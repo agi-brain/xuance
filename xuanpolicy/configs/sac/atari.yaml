@@ -9,6 +9,7 @@ frame_skip: 4  # frame skip trick
 noop_max: 30  # Do no-op action for a number of steps in [1, noop_max].
 representation: "Basic_CNN"
 policy: "Discrete_SAC"
+runner: "DRL"
 
 filters: [32, 32, 64, 64]
 kernels: [8, 4, 4, 4]
