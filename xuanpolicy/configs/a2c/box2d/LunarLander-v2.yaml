@@ -1,6 +1,7 @@
 agent: "A2C"
 env_name: "Box2D"
 env_id: "LunarLander-v2"
+vectorize: "Dummy_Gym"
 policy: "Categorical_AC"
 representation: "Basic_MLP"
 runner: "DRL"

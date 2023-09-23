@@ -21,8 +21,7 @@ class Learner(ABC):
         self.model_dir = model_dir
         self.iterations = 0
 
-    def save_model(self, model_name):
-        model_path = self.model_dir + model_name
+    def save_model(self, model_path):
         torch.save(self.policy.state_dict(), model_path)
 
     def load_model(self, path):

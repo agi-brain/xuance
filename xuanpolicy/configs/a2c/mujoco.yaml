@@ -1,6 +1,7 @@
 agent: "A2C"
 env_name: "MuJoCo"
 env_id: "Ant-v4"
+vectorize: "Dummy_Gym"
 policy: "Gaussian_AC"
 representation: "Basic_MLP"
 runner: "DRL"
@@ -33,7 +34,7 @@ obsnorm_range: 5
 rewnorm_range: 5
 
 test_steps: 10000
-eval_interval: 10000
+eval_interval: 5000
 test_episode: 5
 log_dir: "./logs/a2c/"
 model_dir: "./models/a2c/"

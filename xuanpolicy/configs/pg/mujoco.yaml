@@ -1,12 +1,13 @@
 agent: "PG"
 env_name: "MuJoCo"
 env_id: "Ant-v4"
+vectorize: "Dummy_Gym"
 policy: "Gaussian_Actor"
 representation: "Basic_MLP"
 runner: "DRL"
 
-representation_hidden_size: [256,]
-actor_hidden_size: [256,]
+representation_hidden_size: [256, 256]
+actor_hidden_size: []
 activation: "LeakyReLU"
 
 seed: 1
@@ -15,7 +16,7 @@ running_steps: 1000000  # 1M
 n_steps: 256
 n_epoch: 1
 n_minibatch: 1
-learning_rate: 0.0007
+learning_rate: 0.0007  # 7e-4
 
 ent_coef: 0.0
 clip_grad: 0.5
@@ -31,7 +32,7 @@ obsnorm_range: 5
 rewnorm_range: 5
 
 test_steps: 10000
-eval_interval: 50000
+eval_interval: 5000
 test_episode: 5
 log_dir: "./logs/pg/"
 model_dir: "./models/pg/"

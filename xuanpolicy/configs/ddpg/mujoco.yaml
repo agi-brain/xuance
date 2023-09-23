@@ -1,13 +1,14 @@
 agent: "DDPG"
 env_name: "MuJoCo"
 env_id: "Ant-v4"
+vectorize: "Dummy_Gym"
 policy: "DDPG_Policy"
 representation: "Basic_Identical"
 runner: "DRL"
 
 representation_hidden_size:  # If you choose Basic_Identical representation, then ignore this value
-actor_hidden_size: [256, ]
-critic_hidden_size: [256, ]
+actor_hidden_size: [64, 64]
+critic_hidden_size: [64, 64]
 activation: "LeakyReLU"
 
 seed: 19089
@@ -22,7 +23,7 @@ tau: 0.01
 start_noise: 0.5
 end_noise: 0.01
 training_frequency: 1
-running_steps: 250000
+running_steps: 1000000  # 1M
 start_training: 10000
 
 use_obsnorm: False

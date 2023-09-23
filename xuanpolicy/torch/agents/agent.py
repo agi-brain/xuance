@@ -31,10 +31,15 @@ class Agent(ABC):
         self.rewnorm_range = config.rewnorm_range
         self.returns = np.zeros((self.envs.num_envs,), np.float32)
 
+        time_string = time.asctime().replace(" ", "").replace(":", "_")
+        seed = f"seed_{self.config.seed}_"
+        model_dir = os.path.join(os.getcwd(), config.model_dir, seed + time_string)
+        if not os.path.exists(model_dir):
+            os.makedirs(model_dir)
+
         # logger
         if config.logger == "tensorboard":
-            time_string = time.asctime().replace(" ", "").replace(":", "_")
-            log_dir = os.path.join(os.getcwd(), config.log_dir) + "/" + time_string
+            log_dir = os.path.join(os.getcwd(), config.log_dir, seed + time_string)
             if not os.path.exists(log_dir):
                 os.makedirs(log_dir)
             self.writer = SummaryWriter(log_dir)
@@ -63,12 +68,12 @@ class Agent(ABC):
         self.log_dir = log_dir
         self.model_dir = model_dir
         create_directory(log_dir)
-        create_directory(model_dir)
         self.current_step = 0
         self.current_episode = np.zeros((self.envs.num_envs,), np.int32)
 
     def save_model(self, model_name):
-        self.learner.save_model(model_name)
+        model_path = self.model_dir + "/" + model_name
+        self.learner.save_model(model_path)
 
     def load_model(self, path):
         self.learner.load_model(path)

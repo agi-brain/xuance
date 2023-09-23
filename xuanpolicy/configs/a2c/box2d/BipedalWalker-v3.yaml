@@ -1,6 +1,7 @@
 agent: "A2C"
 env_name: "Box2D"
 env_id: "BipedalWalker-v3"
+vectorize: "Dummy_Gym"
 policy: "Gaussian_AC"
 representation: "Basic_MLP"
 runner: "DRL"

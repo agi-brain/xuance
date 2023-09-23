@@ -1,6 +1,7 @@
 agent: "PPO_Clip"  # Choice: PPO_Clip, PPO_KL
 env_name: "Box2D"
 env_id: "BipedalWalker-v3"
+vectorize: "Dummy_Gym"
 representation: "Basic_MLP"
 policy: "Gaussian_AC"
 runner: "DRL"
