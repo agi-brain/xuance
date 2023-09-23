@@ -12,13 +12,13 @@ setup(
                 "environment/magent2/libmagent.so"  # for magent2 environment
             ]
     },
-    version='0.1.10',
+    version='0.1.11',
     description='XuanPolicy: A Comprehensive and Unified Deep Reinforcement Learning Library.',
-    author='Wenzhang Liu, Wenzhe Cai, Kun Jiang, etc.',
+    author='XuanPolicy contributors.',
     author_email='',
     license='MIT',
     url='',
-    download_url='',
+    download_url='https://github.com/agi-brain/xuanpolicy.git',
     keywords=['deep reinforcement learning', 'software library', 'PyTorch', 'TensorFlow2', 'MindSpore'],
     classifiers=[
         'Development Status :: 4 - Beta',
