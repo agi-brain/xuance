@@ -1,6 +1,7 @@
 agent: "PDQN"
 env_name: "Platform"
 env_id: "Platform-v0"
+vectorize: "Dummy_Gym"
 policy: "PDQN_Policy"
 representation: "Basic_MLP"
 runner: "DRL"
@@ -28,5 +29,3 @@ rewnorm_range: 5
 
 log_dir: "./logs/pdqn/"
 model_dir: "./models/pdqn/"
-
-vectorize: NOREQUIRED

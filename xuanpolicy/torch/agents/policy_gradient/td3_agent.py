@@ -36,7 +36,7 @@ class TD3_Agent(Agent):
                               config.model_dir,
                               config.gamma,
                               config.tau,
-                              config.actor_update_decay)
+                              config.actor_update_delay)
         super(TD3_Agent, self).__init__(config, envs, policy, memory, learner, device, config.log_dir, config.model_dir)
 
     def _action(self, obs, noise_scale=0.0):

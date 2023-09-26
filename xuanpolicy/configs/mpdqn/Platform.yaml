@@ -1,6 +1,7 @@
 agent: "MPDQN"
 env_name: "Platform"
 env_id: "Platform-v0"
+vectorize: "Dummy_Gym"
 policy: "MPDQN_Policy"
 representation: "Basic_MLP"
 runner: "DRL"
@@ -29,4 +30,3 @@ rewnorm_range: 5
 log_dir: "./logs/mpdqn/"
 model_dir: "./models/mpdqn/"
 
-vectorize: NOREQUIRED

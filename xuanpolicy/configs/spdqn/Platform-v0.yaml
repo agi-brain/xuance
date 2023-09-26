@@ -1,6 +1,7 @@
 agent: "SPDQN"
 env_name: "Platform"
 env_id: "Platform-v0"
+vectorize: "Dummy_Gym"
 policy: "SPDQN_Policy"
 representation: "Basic_MLP"
 runner: "DRL"
@@ -28,5 +29,3 @@ rewnorm_range: 5
 
 log_dir: "./logs/spdqn/"
 model_dir: "./models/spdqn/"
-
-vectorize: NOREQUIRED

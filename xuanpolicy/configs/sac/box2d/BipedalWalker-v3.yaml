@@ -1,6 +1,7 @@
 agent: "SAC"
 env_name: "Box2D"
 env_id: "BipedalWalker-v3"
+vectorize: "Dummy_Gym"
 policy: "Gaussian_SAC"
 representation: "Basic_MLP"
 runner: "DRL"
