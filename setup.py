@@ -12,7 +12,7 @@ setup(
                 "environment/magent2/libmagent.so"  # for magent2 environment
             ]
     },
-    version='0.1.11',
+    version='0.1.11.2',
     description='XuanPolicy: A Comprehensive and Unified Deep Reinforcement Learning Library.',
     author='XuanPolicy contributors.',
     author_email='',
