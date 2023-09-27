@@ -33,9 +33,9 @@ class Agent(ABC):
 
         time_string = time.asctime().replace(" ", "").replace(":", "_")
         seed = f"seed_{self.config.seed}_"
-        model_dir = os.path.join(os.getcwd(), config.model_dir, seed + time_string)
-        if not os.path.exists(model_dir):
-            os.makedirs(model_dir)
+        model_dir_save = os.path.join(os.getcwd(), model_dir, seed + time_string)
+        if (not os.path.exists(model_dir_save)) and (not config.test_mode):
+            os.makedirs(model_dir_save)
 
         # logger
         if config.logger == "tensorboard":
@@ -66,17 +66,18 @@ class Agent(ABC):
 
         self.device = device
         self.log_dir = log_dir
-        self.model_dir = model_dir
+        self.model_dir_save = model_dir_save
+        self.model_dir_load = model_dir
         create_directory(log_dir)
         self.current_step = 0
         self.current_episode = np.zeros((self.envs.num_envs,), np.int32)
 
     def save_model(self, model_name):
-        model_path = self.model_dir + "/" + model_name
+        model_path = self.model_dir_save + "/" + model_name
         self.learner.save_model(model_path)
 
-    def load_model(self, path):
-        self.learner.load_model(path)
+    def load_model(self, path, seed=1):
+        self.learner.load_model(path, seed)
 
     def log_infos(self, info: dict, x_index: int):
         """

@@ -83,8 +83,9 @@ class Runner_DRL(Runner_Base):
                 args_test.parallels = 1
                 return make_envs(args_test)
             self.agent.render = True
-            self.agent.load_model(self.agent.model_dir)
-            self.agent.test(env_fn, self.args.test_episode)
+            self.agent.load_model(self.agent.model_dir_load, self.args.seed)
+            scores = self.agent.test(env_fn, self.args.test_episode)
+            print(f"Mean Score: {np.mean(scores)}, Std: {np.std(scores)}")
             print("Finish testing.")
         else:
             n_train_steps = self.args.running_steps // self.n_envs
