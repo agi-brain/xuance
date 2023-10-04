@@ -74,7 +74,6 @@ class Runner_DRL(Runner_Base):
                                                              total_iters=get_total_iters(self.agent_name, self.args))
             self.agent = REGISTRY_Agent[self.agent_name](self.args, self.envs, policy, optimizer, lr_scheduler,
                                                          self.args.device)
-        set_seed(self.args.seed)
 
     def run(self):
         if self.args.test_mode:
@@ -91,7 +90,7 @@ class Runner_DRL(Runner_Base):
             n_train_steps = self.args.running_steps // self.n_envs
             self.agent.train(n_train_steps)
             print("Finish training.")
-            self.agent.save_model("final_train_model.path")
+            self.agent.save_model("final_train_model.pth")
 
         self.envs.close()
         if self.agent.use_wandb:

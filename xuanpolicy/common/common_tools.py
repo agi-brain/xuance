@@ -148,8 +148,8 @@ def get_runner(method,
     else:
         args.agent_name = method
         notation = args.dl_toolbox + '/'
-        args.model_dir = os.path.join(os.getcwd(), args.model_dir + notation + args.env_id + '/')
-        args.log_dir = args.log_dir + notation + args.env_id + '/'
+        args.model_dir = os.path.join(os.getcwd(), args.model_dir, args.dl_toolbox, args.env_id)
+        args.log_dir = os.path.join(args.log_dir, notation, args.env_id)
         if is_test:
             args.test_mode = int(is_test)
             args.parallels = 1

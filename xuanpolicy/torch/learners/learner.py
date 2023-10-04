@@ -30,6 +30,7 @@ class Learner(ABC):
             '''Change directory to the specified seed (if exists)'''
             if f"seed_{seed}" in f:
                 path = os.path.join(path, f)
+                break
         model_names = os.listdir(path)
         if os.path.exists(path + "/obs_rms.npy"):
             model_names.remove("obs_rms.npy")

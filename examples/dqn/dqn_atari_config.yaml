@@ -1,7 +1,15 @@
+dl_toolbox: "torch"  # The deep learning toolbox. Choices: "torch", "mindspore", "tensorlayer"
+project_name: "XuanPolicy_Benchmark"
+logger: "tensorboard"  # Choices: tensorboard, wandb.
+wandb_user_name: "your_user_name"
+render: False
+render_mode: 'rgb_array' # Choices: 'human', 'rgb_array'.
+test_mode: False
+device: "cuda:0"
+
 agent: "DQN"
 vectorize: "Dummy_Atari"
 env_name: "Atari"
-env_id: "ALE/Breakout-v5"
 obs_type: "grayscale"  # choice for Atari env: ram, rgb, grayscale
 img_size: [84, 84]  # default is 210 x 160 in gym[Atari]
 num_stack: 4  # frame stack trick
@@ -41,6 +49,6 @@ rewnorm_range: 5
 
 test_steps: 10000
 eval_interval: 500000
-test_episode: 5
+test_episode: 3
 log_dir: "./logs/dqn/"
 model_dir: "./models/dqn/"

@@ -10,9 +10,7 @@ class Runner_Base(object):
         # build environments
         self.envs = make_envs(args)
         self.envs.reset()
-
-        if args.vectorize != 'NOREQUIRED':
-            self.n_envs = self.envs.num_envs
+        self.n_envs = self.envs.num_envs
 
     def run(self):
         pass

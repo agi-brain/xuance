@@ -148,7 +148,7 @@ class QRDQNhead(nn.Module):
 class BasicQnetwork(nn.Module):
     def __init__(self,
                  action_space: Discrete,
-                 representation: Basic_Identical,
+                 representation: nn.Module,
                  hidden_size: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., torch.Tensor]] = None,
