@@ -86,6 +86,7 @@ class MAPPO_Agents(MARLAgents):
         else:
             critic_in = torch.Tensor(obs_n).view([batch_size, 1, -1]).to(self.device)
             critic_in = critic_in.expand(-1, self.n_agents, -1)
+        # get critic values
         if self.use_recurrent:
             hidden_state, values_n = self.policy.get_values(critic_in.unsqueeze(2),  # add a sequence length axis.
                                                             agents_id.unsqueeze(2),

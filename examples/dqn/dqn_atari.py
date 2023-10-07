@@ -3,7 +3,6 @@ import argparse
 from copy import deepcopy
 import numpy as np
 import torch.optim
-import wandb
 
 from xuanpolicy import get_arguments
 from xuanpolicy.common import space2shape
@@ -19,7 +18,8 @@ def parse_args():
     parser.add_argument("--env-id", type=str, default="ALE/Breakout-v5")
     parser.add_argument("--test", type=int, default=0)
     parser.add_argument("--device", type=str, default="cuda:0")
-    parser.add_argument("--benchmark", type=int, default=0)
+    parser.add_argument("--benchmark", type=int, default=1)
+    parser.add_argument("--config", type=str, default="./dqn_atari_config.yaml")
 
     return parser.parse_args()
 
@@ -121,10 +121,7 @@ def run(args):
 
     # the end.
     envs.close()
-    if agent.use_wandb:
-        wandb.finish()
-    else:
-        agent.writer.close()
+    agent.finish()
 
 
 if __name__ == "__main__":

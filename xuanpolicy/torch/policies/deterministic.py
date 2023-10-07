@@ -185,7 +185,7 @@ class BasicQnetwork(nn.Module):
 class DuelQnetwork(nn.Module):
     def __init__(self,
                  action_space: Space,
-                 representation: Basic_Identical,
+                 representation: nn.Module,
                  hidden_size: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., torch.Tensor]] = None,
@@ -222,7 +222,7 @@ class DuelQnetwork(nn.Module):
 class NoisyQnetwork(nn.Module):
     def __init__(self,
                  action_space: Discrete,
-                 representation: Basic_Identical,
+                 representation: nn.Module,
                  hidden_size: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., torch.Tensor]] = None,
@@ -276,7 +276,7 @@ class C51Qnetwork(nn.Module):
                  atom_num: int,
                  vmin: float,
                  vmax: float,
-                 representation: Basic_Identical,
+                 representation: nn.Module,
                  hidden_size: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., torch.Tensor]] = None,
@@ -323,7 +323,7 @@ class QRDQN_Network(nn.Module):
     def __init__(self,
                  action_space: Discrete,
                  quantile_num: int,
-                 representation: Basic_Identical,
+                 representation: nn.Module,
                  hidden_size: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., torch.Tensor]] = None,
@@ -406,7 +406,7 @@ class CriticNet(nn.Module):
 class DDPGPolicy(nn.Module):
     def __init__(self,
                  action_space: Space,
-                 representation: Basic_Identical,
+                 representation: nn.Module,
                  actor_hidden_size: Sequence[int],
                  critic_hidden_size: Sequence[int],
                  initialize: Optional[Callable[..., torch.Tensor]] = None,
@@ -455,7 +455,7 @@ class DDPGPolicy(nn.Module):
 class TD3Policy(nn.Module):
     def __init__(self,
                  action_space: Space,
-                 representation: Basic_Identical,
+                 representation: nn.Module,
                  actor_hidden_size: Sequence[int],
                  critic_hidden_size: Sequence[int],
                  normalize: Optional[ModuleType] = None,
@@ -520,7 +520,7 @@ class PDQNPolicy(nn.Module):
     def __init__(self,
                  observation_space,
                  action_space,
-                 representation: Basic_Identical,
+                 representation: nn.Module,
                  conactor_hidden_size: Sequence[int],
                  qnetwork_hidden_size: Sequence[int],
                  normalize: Optional[ModuleType] = None,
@@ -584,7 +584,7 @@ class MPDQNPolicy(nn.Module):
     def __init__(self,
                  observation_space,
                  action_space,
-                 representation: Basic_Identical,
+                 representation: nn.Module,
                  conactor_hidden_size: Sequence[int],
                  qnetwork_hidden_size: Sequence[int],
                  normalize: Optional[ModuleType] = None,
@@ -691,7 +691,7 @@ class SPDQNPolicy(nn.Module):
     def __init__(self,
                  observation_space,
                  action_space,
-                 representation: Basic_Identical,
+                 representation: nn.Module,
                  conactor_hidden_size: Sequence[int],
                  qnetwork_hidden_size: Sequence[int],
                  normalize: Optional[ModuleType] = None,
@@ -773,7 +773,7 @@ class SPDQNPolicy(nn.Module):
 class DRQNPolicy(nn.Module):
     def __init__(self,
                  action_space: Discrete,
-                 representation: Basic_Identical,
+                 representation: nn.Module,
                  **kwargs):
         super(DRQNPolicy, self).__init__()
         self.device = kwargs['device']

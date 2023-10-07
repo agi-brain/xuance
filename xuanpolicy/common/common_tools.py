@@ -60,11 +60,18 @@ def get_arguments(method, env, env_id, config_path=None, parser_args=None):
             configs = [recursive_dict_update(config_i, parser_args.__dict__) for config_i in configs]
         args = [SN(**config_i) for config_i in configs]
     elif type(method) == str:
-        config_algo_default = get_config(os.path.join(config_path_default, method, file_name))
-        configs = recursive_dict_update(config_basic, config_algo_default)
+        # load method-wise config if exists.
+        method_config = os.path.join(config_path_default, method, file_name)
+        if os.path.exists(method_config):
+            config_algo_default = get_config(method_config)
+            configs = recursive_dict_update(config_basic, config_algo_default)
+        else:
+            configs = config_basic
+        # load self defined config if exists.
         if config_path is not None:
             config_algo = get_config(os.path.join(main_path, config_path))
             configs = recursive_dict_update(configs, config_algo)
+        # load parser_args and rewrite the parameters if their names are same.
         if parser_args is not None:
             configs = recursive_dict_update(configs, parser_args.__dict__)
         args = SN(**configs)

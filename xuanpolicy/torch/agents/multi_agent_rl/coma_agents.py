@@ -1,3 +1,5 @@
+import torch
+
 from xuanpolicy.torch.agents import *
 from xuanpolicy.torch.agents.agents_marl import linear_decay_or_increase
 
@@ -8,6 +10,11 @@ class COMA_Agents(MARLAgents):
                  envs: DummyVecEnv_Pettingzoo,
                  device: Optional[Union[int, str, torch.device]] = None):
         self.gamma = config.gamma
+        self.start_greedy, self.end_greedy = config.start_greedy, config.end_greedy
+        self.egreedy = self.start_greedy
+        self.delta_egreedy = (self.start_greedy - self.end_greedy) / (
+                config.decay_step_greedy / envs.num_envs / envs.max_episode_length)
+
         self.n_envs = envs.num_envs
         self.n_size = config.n_size
         self.n_epoch = config.n_epoch
@@ -19,16 +26,22 @@ class COMA_Agents(MARLAgents):
 
         input_representation = get_repre_in(config)
         self.use_recurrent = config.use_recurrent
-        if self.use_recurrent:
-            kwargs_rnn = {"N_recurrent_layers": config.N_recurrent_layers,
-                          "dropout": config.dropout,
-                          "rnn": config.rnn}
-            representation = REGISTRY_Representation[config.representation](*input_representation, **kwargs_rnn)
-        else:
-            representation = REGISTRY_Representation[config.representation](*input_representation)
-
-        input_policy = get_policy_in_marl(config, representation, config.agent_keys, None)
-        policy = REGISTRY_Policy[config.policy](*input_policy)
+        self.use_global_state = config.use_global_state
+        kwargs_rnn = {"N_recurrent_layers": config.N_recurrent_layers,
+                      "dropout": config.dropout,
+                      "rnn": config.rnn} if self.use_recurrent else {}
+        representation = REGISTRY_Representation[config.representation](*input_representation, **kwargs_rnn)
+        # create representation for COMA critic
+        input_representation[0] = config.dim_obs + config.dim_act * config.n_agents
+        if self.use_global_state:
+            input_representation[0] += config.dim_state
+        representation_critic = REGISTRY_Representation[config.representation](*input_representation, **kwargs_rnn)
+        # create policy
+        input_policy = get_policy_in_marl(config, (representation, representation_critic))
+        policy = REGISTRY_Policy[config.policy](*input_policy,
+                                                use_recurrent=config.use_recurrent,
+                                                rnn=config.rnn,
+                                                gain=config.gain)
         optimizer = [torch.optim.Adam(policy.parameters_actor, config.learning_rate_actor, eps=1e-5),
                      torch.optim.Adam(policy.parameters_critic, config.learning_rate_critic, eps=1e-5)]
         scheduler = [torch.optim.lr_scheduler.LinearLR(optimizer[0], start_factor=1.0, end_factor=0.5,
@@ -46,14 +59,12 @@ class COMA_Agents(MARLAgents):
             config.dim_state, state_shape = None, None
         config.act_onehot_shape = config.act_shape + tuple([config.dim_act])
 
-        # memory = COMA_Buffer(state_shape, config.obs_shape, config.act_shape, config.act_onehot_shape,
-        #                      config.rew_shape, config.done_shape, envs.num_envs,
-        #                      config.buffer_size, config.batch_size, envs.envs[0].max_cycles)
-        buffer = MARL_OnPolicyBuffer_RNN if self.use_recurrent else MARL_OnPolicyBuffer
+        buffer = MARL_OnPolicyBuffer_RNN if self.use_recurrent else COMA_Buffer
         input_buffer = (config.n_agents, config.state_space.shape, config.obs_shape, config.act_shape, config.rew_shape,
                         config.done_shape, envs.num_envs, config.n_size,
                         config.use_gae, config.use_advnorm, config.gamma, config.gae_lambda)
-        memory = buffer(*input_buffer, max_episode_length=envs.max_episode_length, dim_act=config.dim_act)
+        memory = buffer(*input_buffer, max_episode_length=envs.max_episode_length,
+                        dim_act=config.dim_act, td_lambda=config.td_lambda)
         self.buffer_size = memory.buffer_size
         self.batch_size = self.buffer_size // self.n_minibatch
 
@@ -62,30 +73,72 @@ class COMA_Agents(MARLAgents):
 
         super(COMA_Agents, self).__init__(config, envs, policy, memory, learner, device,
                                           config.log_dir, config.model_dir)
+        self.on_policy = True
 
-    def act(self, obs_n, episode, test_mode, noise=False):
+    def act(self, obs_n, *rnn_hidden, avail_actions=None, test_mode=False):
         batch_size = len(obs_n)
         agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(batch_size, -1, -1).to(self.device)
-        states, dists = self.policy(obs_n, agents_id)
-        # acts = dists.stochastic_sample()  # stochastic policy
-        epsilon = 1.0 if test_mode else self.epsilon_decay.epsilon
-        greedy_actions = dists.logits.argmax(dim=-1, keepdims=False)
-        if noise:
-            random_variable = np.random.random(greedy_actions.shape)
-            action_pick = np.int32((random_variable < epsilon))
-            random_actions = np.array([[self.args.action_space[agent].sample() for agent in self.agent_keys]])
-            actions_select = action_pick * greedy_actions.cpu().numpy() + (1 - action_pick) * random_actions
-            actions_onehot = self.learner.onehot_action(torch.Tensor(actions_select), self.dim_act)
-            return actions_select, actions_onehot.detach().cpu().numpy()
+        obs_in = torch.Tensor(obs_n).view([batch_size, self.n_agents, -1]).to(self.device)
+        if self.use_recurrent:
+            batch_agents = batch_size * self.n_agents
+            hidden_state, action_probs = self.policy(obs_in.view(batch_agents, 1, -1),
+                                                     agents_id.view(batch_agents, 1, -1),
+                                                     *rnn_hidden,
+                                                     avail_actions=avail_actions.reshape(batch_agents, 1, -1))
+            action_probs = action_probs.view(batch_size, self.n_agents)
         else:
-            actions_onehot = self.learner.onehot_action(greedy_actions, self.dim_act)
-            return greedy_actions.detach().cpu().numpy(), actions_onehot.detach().cpu().numpy()
+            hidden_state, action_probs = self.policy(obs_in, agents_id, avail_actions=avail_actions)
 
-    def train(self, i_episode):
-        self.epsilon_decay.update()
+        if test_mode:
+            _, picked_actions = action_probs.max()
+        else:
+            picked_actions = Categorical(action_probs).sample()
+        onehot_actions = self.learner.onehot_action(picked_actions, self.dim_act)
+        return hidden_state, picked_actions.detach().cpu().numpy(), onehot_actions.detach().cpu().numpy()
+
+    def values(self, obs_n, actions_n, actions_onehot, *rnn_hidden, state=None):
+        batch_size = len(obs_n)
+        # build critic input
+        obs_n = torch.Tensor(obs_n).to(self.device)
+        actions_n = torch.Tensor(actions_n).unsqueeze(-1).to(self.device)
+        actions_in = torch.Tensor(actions_onehot).unsqueeze(1).to(self.device)
+        actions_in = actions_in.view(batch_size, 1, -1).repeat(1, self.n_agents, 1)
+        agent_mask = 1 - torch.eye(self.n_agents, device=self.device)
+        agent_mask = agent_mask.view(-1, 1).repeat(1, self.dim_act).view(self.n_agents, -1)
+        actions_in = actions_in * agent_mask.unsqueeze(0)
+        if self.use_global_state:
+            state = torch.Tensor(state).unsqueeze(1).to(self.device).repeat(1, self.n_agents, 1)
+            critic_in = torch.concat([state, obs_n, actions_in], dim=-1)
+        else:
+            critic_in = torch.concat([obs_n, actions_in])
+        # get critic values
+        if self.use_recurrent:
+            hidden_state, values_n = self.policy.get_values(critic_in.unsqueeze(2), *rnn_hidden, target=True)
+            values_n = values_n.squeeze(2)
+        else:
+            hidden_state, values_n = self.policy.get_values(critic_in, target=True)
+
+        target_values = values_n.gather(-1, actions_n.long())
+        return hidden_state, target_values.detach().cpu().numpy()
+
+    def train(self, i_step):
+        if self.egreedy >= self.end_greedy:
+            self.egreedy -= self.delta_egreedy
         if self.memory.full:
-            sample = self.memory.sample()
-            info_train = self.learner.update(sample)
+            info_train = {}
+            indexes = np.arange(self.buffer_size)
+            for _ in range(self.n_epoch):
+                np.random.shuffle(indexes)
+                for start in range(0, self.buffer_size, self.batch_size):
+                    end = start + self.batch_size
+                    sample_idx = indexes[start:end]
+                    sample = self.memory.sample(sample_idx)
+                    if self.use_recurrent:
+                        info_train = self.learner.update_recurrent(sample, self.egreedy)
+                    else:
+                        info_train = self.learner.update(sample, self.egreedy)
+            self.learner.lr_decay(i_step)
+            self.memory.clear()
             return info_train
         else:
             return {}

@@ -1,3 +1,5 @@
+import os.path
+
 from xuanpolicy.torch.agents import *
 import socket
 import time
@@ -31,15 +33,16 @@ class MARLAgents(object):
         self.learner = learner
         self.device = device
         self.log_dir = log_dir
-        self.model_dir = model_dir
+        self.model_dir_save, self.model_dir_load = config.model_dir_save, config.model_dir_load
         create_directory(log_dir)
         create_directory(model_dir)
 
     def save_model(self, model_name):
-        self.learner.save_model(model_name)
+        model_path = os.path.join(self.model_dir_save, model_name)
+        self.learner.save_model(model_path)
 
-    def load_model(self, path):
-        self.learner.load_model(path)
+    def load_model(self, path, seed=1):
+        self.learner.load_model(path, seed)
 
     def act(self, **kwargs):
         raise NotImplementedError

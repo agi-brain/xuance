@@ -135,6 +135,12 @@ class Agent(ABC):
     def test(self, env_fn, steps):
         raise NotImplementedError
 
+    def finish(self):
+        if self.use_wandb:
+            wandb.finish()
+        else:
+            self.writer.close()
+
 
 def get_total_iters(agent_name, args):
     if agent_name in ["A2C", "A3C", "PG", "PPO_Clip", "PPO_KL", "PPG", "VDAC", "COMA", "MFAC", "MAPPO"]:

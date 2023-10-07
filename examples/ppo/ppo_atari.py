@@ -13,13 +13,13 @@ from xuanpolicy.torch.utils import ActivationFunctions
 
 def parse_args():
     parser = argparse.ArgumentParser("Example of XuanPolicy.")
-    parser.add_argument("--method", type=str, default="ddpg")
-    parser.add_argument("--env", type=str, default="mujoco")
-    parser.add_argument("--env-id", type=str, default="InvertedPendulum-v4")
+    parser.add_argument("--method", type=str, default="ppo")
+    parser.add_argument("--env", type=str, default="atari")
+    parser.add_argument("--env-id", type=str, default="ALE/Breakout-v5")
     parser.add_argument("--test", type=int, default=0)
     parser.add_argument("--device", type=str, default="cuda:0")
-    parser.add_argument("--benchmark", type=int, default=0)
-    parser.add_argument("--config", type=str, default="./ddpg_mujoco_config.yaml")
+    parser.add_argument("--benchmark", type=int, default=1)
+    parser.add_argument("--config", type=str, default="./ppo_atari_config.yaml")
 
     return parser.parse_args()
 
@@ -38,39 +38,44 @@ def run(args):
     args.action_space = envs.action_space
     n_envs = envs.num_envs
 
-    # prepare the Representation
-    from xuanpolicy.torch.representations import Basic_Identical
-    representation = Basic_Identical(input_shape=space2shape(args.observation_space),
-                                     device=args.device)
+    # prepare representation
+    from xuanpolicy.torch.representations import AC_CNN_Atari
+    representation = AC_CNN_Atari(input_shape=space2shape(args.observation_space),
+                                  kernels=args.kernels,
+                                  strides=args.strides,
+                                  filters=args.filters,
+                                  normalize=None,
+                                  initialize=torch.nn.init.orthogonal_,
+                                  activation=ActivationFunctions[args.activation],
+                                  device=args.device,
+                                  fc_hidden_sizes=args.fc_hidden_sizes)
 
-    # prepare the Policy
-    from xuanpolicy.torch.policies import DDPGPolicy
-    policy = DDPGPolicy(action_space=args.action_space,
-                        representation=representation,
-                        actor_hidden_size=args.actor_hidden_size,
-                        critic_hidden_size=args.critic_hidden_size,
-                        initialize=None,
-                        activation=ActivationFunctions[args.activation],
-                        device=args.device)
+    # prepare policy
+    from xuanpolicy.torch.policies import Categorical_AC_Policy
+    policy = Categorical_AC_Policy(action_space=args.action_space,
+                                   representation=representation,
+                                   actor_hidden_size=args.actor_hidden_size,
+                                   critic_hidden_size=args.critic_hidden_size,
+                                   normalize=None,
+                                   initialize=torch.nn.init.orthogonal_,
+                                   activation=ActivationFunctions[args.activation],
+                                   device=args.device)
 
-    # prepare the Agent
-    from xuanpolicy.torch.agents import DDPG_Agent, get_total_iters
-    actor_optimizer = torch.optim.Adam(policy.actor.parameters(), args.actor_learning_rate)
-    critic_optimizer = torch.optim.Adam(policy.critic.parameters(), args.critic_learning_rate)
-    actor_lr_scheduler = torch.optim.lr_scheduler.LinearLR(actor_optimizer, start_factor=1.0, end_factor=0.25,
-                                                           total_iters=get_total_iters(agent_name, args))
-    critic_lr_scheduler = torch.optim.lr_scheduler.LinearLR(critic_optimizer, start_factor=1.0, end_factor=0.25,
-                                                            total_iters=get_total_iters(agent_name, args))
-    agent = DDPG_Agent(config=args,
-                       envs=envs,
-                       policy=policy,
-                       optimizer=[actor_optimizer, critic_optimizer],
-                       scheduler=[actor_lr_scheduler, critic_lr_scheduler],
-                       device=args.device)
+    # prepare agent
+    from xuanpolicy.torch.agents import PPOCLIP_Agent, get_total_iters
+    optimizer = torch.optim.Adam(policy.parameters(), args.learning_rate, eps=1e-5)
+    lr_scheduler = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=1.0, end_factor=0.0,
+                                                     total_iters=get_total_iters(agent_name, args))
+    agent = PPOCLIP_Agent(config=args,
+                          envs=envs,
+                          policy=policy,
+                          optimizer=optimizer,
+                          scheduler=lr_scheduler,
+                          device=args.device)
 
     # start running
     envs.reset()
-    if args.benchmark:
+    if args.benchmark:  # run benchmark
         def env_fn():
             args_test = deepcopy(args)
             args_test.parallels = args_test.test_episode
@@ -99,12 +104,12 @@ def run(args):
         # end benchmarking
         print("Best Model Score: %.2f, std=%.2f" % (best_scores_info["mean"], best_scores_info["std"]))
     else:
-        if not args.test:  # train the model
+        if not args.test:  # train the model without testing
             n_train_steps = args.running_steps // n_envs
             agent.train(n_train_steps)
             agent.save_model("final_train_model.pth")
             print("Finish training!")
-        else:  # test the model
+        else:  # test a trained model
             def env_fn():
                 args_test = deepcopy(args)
                 args_test.parallels = 1

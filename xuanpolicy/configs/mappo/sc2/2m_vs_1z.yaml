@@ -6,6 +6,7 @@ policy: "Categorical_MAAC_Policy"
 representation: "Basic_RNN"
 vectorize: "Dummy_StarCraft2"
 runner: "StarCraft2_Runner"
+on_policy: True
 
 # recurrent settings for Basic_RNN representation
 use_recurrent: True

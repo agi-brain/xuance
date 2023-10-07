@@ -39,9 +39,15 @@ class Pettingzoo_Runner(Runner_Base):
                 self.marl_agents, self.marl_names = [], []
                 self.current_step, self.current_episode = 0, np.zeros((self.envs.num_envs,), np.int32)
 
+                time_string = time.asctime().replace(" ", "").replace(":", "_")
+                seed = f"seed_{arg.seed}_"
+                arg.model_dir_load = args.model_dir
+                arg.model_dir_save = os.path.join(os.getcwd(), args.model_dir, seed + time_string)
+                if (not os.path.exists(arg.model_dir_save)) and (not args.test_mode):
+                    os.makedirs(arg.model_dir_save)
+
                 if arg.logger == "tensorboard":
-                    time_string = time.asctime().replace(" ", "").replace(":", "_")
-                    log_dir = os.path.join(os.getcwd(), arg.log_dir) + "/" + time_string
+                    log_dir = os.path.join(os.getcwd(), args.log_dir, seed + time_string)
                     if not os.path.exists(log_dir):
                         os.makedirs(log_dir)
                     self.writer = SummaryWriter(log_dir)
@@ -165,7 +171,8 @@ class Pettingzoo_Runner(Runner_Base):
                 values_n.append(values)
                 log_pi_n.append(None)
             elif self.marl_names[h] in ["COMA"]:
-                a, a_onehot = mas_group.act(obs_n[h], test_mode)
+                _, a, a_onehot = mas_group.act(obs_n[h], test_mode)
+                _, values = mas_group.values(obs_n[h], a, a_onehot, state=state)
                 actions_n_onehot.append(a_onehot)
             else:
                 _, a = mas_group.act(obs_n[h], test_mode=test_mode)
@@ -241,7 +248,13 @@ class Pettingzoo_Runner(Runner_Base):
                                 continue
                             act_mean_last[h][i_env] = np.zeros([self.args[h].dim_act])
                             if mas_group.on_policy:
-                                _, value_next_e = mas_group.values(next_obs_n[h], state=next_state)
+                                if mas_group.args.agent == "COMA":
+                                    _, value_next_e = mas_group.values(next_obs_n[h],
+                                                                       actions_dict['actions_n'][h],
+                                                                       actions_dict['act_n_onehot'],
+                                                                       state=next_state)
+                                else:
+                                    _, value_next_e = mas_group.values(next_obs_n[h], state=next_state)
                                 mas_group.memory.finish_path(value_next_e[i_env], i_env)
                             obs_n[h][i_env] = infos[i_env]["reset_obs"][h]
                             episode_score[h, i_env] = np.mean(infos[i_env]["individual_episode_rewards"][h])

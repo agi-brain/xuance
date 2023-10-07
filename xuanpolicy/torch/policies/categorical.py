@@ -61,7 +61,7 @@ class CriticNet(nn.Module):
 class ActorCriticPolicy(nn.Module):
     def __init__(self,
                  action_space: Space,
-                 representation: ModuleType,
+                 representation: nn.Module,
                  actor_hidden_size: Sequence[int] = None,
                  critic_hidden_size: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,
@@ -88,7 +88,7 @@ class ActorCriticPolicy(nn.Module):
 class ActorPolicy(nn.Module):
     def __init__(self,
                  action_space: Space,
-                 representation: ModuleType,
+                 representation: nn.Module,
                  actor_hidden_size: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., torch.Tensor]] = None,
@@ -110,7 +110,7 @@ class ActorPolicy(nn.Module):
 class PPGActorCritic(nn.Module):
     def __init__(self,
                  action_space: Space,
-                 representation: ModuleType,
+                 representation: nn.Module,
                  actor_hidden_size: Sequence[int] = None,
                  critic_hidden_size: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,
@@ -193,7 +193,7 @@ class ActorNet_SACDIS(nn.Module):
 class SACDISPolicy(nn.Module):
     def __init__(self,
                  action_space: Space,
-                 representation: Basic_Identical,
+                 representation: nn.Module,
                  actor_hidden_size: Sequence[int],
                  critic_hidden_size: Sequence[int],
                  normalize: Optional[ModuleType] = None,

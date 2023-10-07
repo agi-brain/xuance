@@ -21,12 +21,13 @@ class SC2_Runner(Runner_Base):
 
         time_string = time.asctime().replace(" ", "").replace(":", "_")
         seed = f"seed_{self.args.seed}_"
+        self.args.model_dir_load = args.model_dir
         self.args.model_dir_save = os.path.join(os.getcwd(), args.model_dir, seed + time_string)
         if (not os.path.exists(self.args.model_dir_save)) and (not args.test_mode):
             os.makedirs(self.args.model_dir_save)
 
         if args.logger == "tensorboard":
-            log_dir = os.path.join(os.getcwd(), args.log_dir) + "/" + time_string
+            log_dir = os.path.join(os.getcwd(), args.log_dir, seed + time_string)
             if not os.path.exists(log_dir):
                 os.makedirs(log_dir)
             self.writer = SummaryWriter(log_dir)
@@ -312,7 +313,7 @@ class SC2_Runner(Runner_Base):
             self.render = arg_test.render = True
             self.test_envs = make_envs(arg_test)
             n_test_episodes = self.args.test_episode
-            self.agents.load_model(self.agents.model_dir)
+            self.agents.load_model(self.args.model_dir_load)
             self.test_episode(n_test_episodes)
             print("Finish testing.")
         else:
