@@ -134,7 +134,7 @@ Policy_Inputs = {
                                 "critic_hidden_size", "normalize", "initialize", "activation", "device"],
     "Categorical_MFAC_Policy": ["action_space", "n_agents", "representation", "actor_hidden_size",
                                 "critic_hidden_size", "normalize", "initialize", "activation", "device"],
-    "Categorical_COMA_Policy": ["state_dim", "action_space", "n_agents", "representation", "actor_hidden_size",
+    "Categorical_COMA_Policy": ["action_space", "n_agents", "representation", "actor_hidden_size",
                                 "critic_hidden_size", "normalize", "initialize", "activation", "device"],
     "Independent_DDPG_Policy": ["action_space", "n_agents", "representation", "actor_hidden_size",
                                 "critic_hidden_size", "normalize", "initialize", "activation", "device"],

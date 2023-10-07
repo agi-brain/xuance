@@ -14,6 +14,8 @@ class DummyVecEnv_Pettingzoo(DummyVecEnv_Gym):
         self.handles = env.handles
         VecEnv.__init__(self, len(env_fns), env.observation_spaces, env.action_spaces)
         self.state_space = env.state_space
+        self.state_shape = self.state_space.shape
+        self.state_dtype = self.state_space.dtype
         obs_n_space = env.observation_spaces  # [Box(dim_o), Box(dim_o), ...] ----> dict
         self.agent_ids = env.agent_ids
         self.n_agents = [env.get_num(h) for h in self.handles]
@@ -36,6 +38,8 @@ class DummyVecEnv_Pettingzoo(DummyVecEnv_Gym):
         self.buf_trunctions_dict = [{k: False for k in self.keys} for _ in range(self.num_envs)]
         self.buf_infos_dict = [{} for _ in range(self.num_envs)]
         # buffer of numpy data
+        self.buf_state = np.zeros((self.num_envs, ) + self.state_shape, dtype=self.state_dtype)
+        self.buf_agent_mask = [np.ones([self.num_envs, n], dtype=np.bool) for n in self.n_agents]
         self.buf_obs = [np.zeros((self.num_envs, n) + tuple(self.obs_shapes[h]), dtype=self.obs_dtype) for h, n in
                         enumerate(self.n_agents)]
         self.buf_rews = [np.zeros((self.num_envs, n, 1), dtype=np.float32) for n in self.n_agents]
@@ -103,6 +107,7 @@ class DummyVecEnv_Pettingzoo(DummyVecEnv_Gym):
         for e in range(self.num_envs):
             action_n = self.actions[e]
             o, r, d, t, info = self.envs[e].step(action_n)
+            self.buf_state[e] = self.envs[e].state()
             if len(o.keys()) < self.n_agent_all:
                 self.empty_dict_buffers(e)
             # update the data of alive agents
@@ -114,8 +119,10 @@ class DummyVecEnv_Pettingzoo(DummyVecEnv_Gym):
 
             # resort the data as group-wise
             episode_scores = []
+            mask = self.envs[e].get_agent_mask()
             for h, agent_keys_h in enumerate(self.agent_keys):
                 getter = itemgetter(*agent_keys_h)
+                self.buf_agent_mask[h][e] = mask[self.agent_ids[h]]
                 self.buf_obs[h][e] = getter(self.buf_obs_dict[e])
                 self.buf_rews[h][e, :, 0] = getter(self.buf_rews_dict[e])
                 self.buf_dones[h][e] = getter(self.buf_dones_dict[e])
@@ -125,12 +132,18 @@ class DummyVecEnv_Pettingzoo(DummyVecEnv_Gym):
 
             if all(self.buf_dones_dict[e].values()) or all(self.buf_trunctions_dict[e].values()):
                 obs_reset, _ = self.envs[e].reset()
-                obs_reset_handles = []
+                state_reset = self.envs[e].state()
+                mask_reset = self.envs[e].get_agent_mask()
+                obs_reset_handles, mask_reset_handles = [], []
                 for h, agent_keys_h in enumerate(self.agent_keys):
                     getter = itemgetter(*agent_keys_h)
                     obs_reset_handles.append(np.array(getter(obs_reset)))
+                    mask_reset_handles.append(mask_reset[self.agent_ids[h]])
 
                 self.buf_infos_dict[e]["reset_obs"] = obs_reset_handles
+                self.buf_infos_dict[e]["reset_agent_mask"] = mask_reset_handles
+                self.buf_infos_dict[e]["reset_state"] = state_reset
+
         self.waiting = False
         return self.buf_obs.copy(), self.buf_rews.copy(), self.buf_dones.copy(), self.buf_trunctions.copy(), self.buf_infos_dict.copy()
 
@@ -138,18 +151,13 @@ class DummyVecEnv_Pettingzoo(DummyVecEnv_Gym):
         return [env.render() for env in self.envs]
 
     def global_state(self):
-        return np.array([env.state() for env in self.envs])
+        return self.buf_state
 
     def global_state_one_env(self, e):
         return np.array(self.envs[e].state())
 
     def agent_mask(self):
-        agent_mask = [np.ones([self.num_envs, n], dtype=np.bool) for n in self.n_agents]
-        for e, env in enumerate(self.envs):
-            mask = env.get_agent_mask()
-            for h, ids in enumerate(self.agent_ids):
-                agent_mask[h][e] = mask[ids]
-        return agent_mask
+        return self.buf_agent_mask
 
     def available_actions(self):
         act_mask = [np.ones([self.num_envs, n, self.act_dim[h]], dtype=np.bool) for h, n in enumerate(self.n_agents)]

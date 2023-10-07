@@ -42,9 +42,7 @@ class COMA_Learner(LearnerMAS):
         obs = torch.Tensor(sample['obs']).to(self.device)
         actions = torch.Tensor(sample['actions']).to(self.device)
         actions_onehot = torch.Tensor(sample['actions_onehot']).to(self.device)
-        rewards = torch.Tensor(sample['rewards']).mean(dim=1).to(self.device)
         targets = torch.Tensor(sample['returns']).squeeze(-1).to(self.device)
-        terminals = torch.Tensor(sample['terminals']).float().to(self.device)
         agent_mask = torch.Tensor(sample['agent_mask']).float().to(self.device)
         batch_size = obs.shape[0]
         IDs = torch.eye(self.n_agents).unsqueeze(0).expand(batch_size, -1, -1).to(self.device)
@@ -64,7 +62,7 @@ class COMA_Learner(LearnerMAS):
         q_eval_a = q_eval.gather(-1, actions.unsqueeze(-1).long()).squeeze(-1)
         q_eval_a *= agent_mask
         targets *= agent_mask
-        loss_c = self.mse_loss(q_eval_a, targets.detach())
+        loss_c = ((q_eval_a - targets.detach()) ** 2).sum() / agent_mask.sum()
         self.optimizer['critic'].zero_grad()
         loss_c.backward()
         grad_norm_critic = torch.nn.utils.clip_grad_norm_(self.policy.parameters_critic, self.args.clip_grad)

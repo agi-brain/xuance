@@ -12,8 +12,7 @@ class COMA_Agents(MARLAgents):
         self.gamma = config.gamma
         self.start_greedy, self.end_greedy = config.start_greedy, config.end_greedy
         self.egreedy = self.start_greedy
-        self.delta_egreedy = (self.start_greedy - self.end_greedy) / (
-                config.decay_step_greedy / envs.num_envs / envs.max_episode_length)
+        self.delta_egreedy = (self.start_greedy - self.end_greedy) / config.decay_step_greedy
 
         self.n_envs = envs.num_envs
         self.n_size = config.n_size
@@ -84,7 +83,8 @@ class COMA_Agents(MARLAgents):
             hidden_state, action_probs = self.policy(obs_in.view(batch_agents, 1, -1),
                                                      agents_id.view(batch_agents, 1, -1),
                                                      *rnn_hidden,
-                                                     avail_actions=avail_actions.reshape(batch_agents, 1, -1))
+                                                     avail_actions=avail_actions.reshape(batch_agents, 1, -1),
+                                                     epsilon=self.egreedy)
             action_probs = action_probs.view(batch_size, self.n_agents)
         else:
             hidden_state, action_probs = self.policy(obs_in, agents_id, avail_actions=avail_actions)
@@ -123,7 +123,7 @@ class COMA_Agents(MARLAgents):
 
     def train(self, i_step):
         if self.egreedy >= self.end_greedy:
-            self.egreedy -= self.delta_egreedy
+            self.egreedy = self.start_greedy - self.delta_egreedy * i_step
         if self.memory.full:
             info_train = {}
             indexes = np.arange(self.buffer_size)
@@ -137,8 +137,8 @@ class COMA_Agents(MARLAgents):
                         info_train = self.learner.update_recurrent(sample, self.egreedy)
                     else:
                         info_train = self.learner.update(sample, self.egreedy)
-            self.learner.lr_decay(i_step)
             self.memory.clear()
+            info_train["epsilon-greedy"] = self.egreedy
             return info_train
         else:
-            return {}
+            return {"epsilon-greedy": self.egreedy}

@@ -45,6 +45,7 @@ class MADDPG_Agents(MARLAgents):
                                  config.device, config.model_dir, config.gamma)
         super(MADDPG_Agents, self).__init__(config, envs, policy, memory, learner, device,
                                             config.log_dir, config.model_dir)
+        self.on_policy = False
 
     def act(self, obs_n, test_mode):
         batch_size = len(obs_n)

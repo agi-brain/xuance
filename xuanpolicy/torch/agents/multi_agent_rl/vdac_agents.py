@@ -45,6 +45,7 @@ class VDAC_Agents(MARLAgents):
                                config.device, config.model_dir, config.gamma)
         super(VDAC_Agents, self).__init__(config, envs, policy, memory, learner, device,
                                           config.log_dir, config.model_dir)
+        self.on_policy = True
 
     def act(self, obs_n, episode, test_mode, state=None, noise=False):
         batch_size = len(obs_n)

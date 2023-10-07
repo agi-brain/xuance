@@ -62,7 +62,7 @@ class PettingZoo_Env(ParallelEnv):
 
     def state(self):
         try:
-            return self.env.state()
+            return np.array(self.env.state())
         except:
             return None
 

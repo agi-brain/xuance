@@ -12,6 +12,7 @@ class QTRAN_Agents(MARLAgents):
         self.start_greedy = config.start_greedy
         self.end_greedy = config.end_greedy
         self.egreedy = config.start_greedy
+        self.delta_egreedy = (self.start_greedy - self.end_greedy) / config.decay_step_greedy
         if config.state_space is not None:
             config.dim_state, state_shape = config.state_space.shape, config.state_space.shape
         else:
@@ -55,6 +56,7 @@ class QTRAN_Agents(MARLAgents):
                                                       config.greedy_update_steps)
         super(QTRAN_Agents, self).__init__(config, envs, policy, memory, learner, device,
                                            config.log_dir, config.model_dir)
+        self.on_policy = False
 
     def train(self, i_episode):
         self.epsilon_decay.update()

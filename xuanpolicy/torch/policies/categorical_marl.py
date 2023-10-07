@@ -1,3 +1,5 @@
+import torch
+
 from xuanpolicy.torch.policies import *
 from xuanpolicy.torch.utils import *
 from xuanpolicy.torch.representations import Basic_Identical
@@ -150,7 +152,6 @@ class MAAC_Policy(nn.Module):
 
 class COMAPolicy(nn.Module):
     def __init__(self,
-                 state_dim: int,
                  action_space: Discrete,
                  n_agents: int,
                  representation: nn.Module,
@@ -178,6 +179,7 @@ class COMAPolicy(nn.Module):
         self.target_critic = copy.deepcopy(self.critic)
         self.parameters_critic = list(self.representation_critic.parameters()) + list(self.critic.parameters())
         self.parameters_actor = list(self.representation.parameters()) + list(self.actor.parameters())
+        self.pi_dist = CategoricalDistribution(self.action_dim)
 
     def forward(self, observation: torch.Tensor, agent_ids: torch.Tensor,
                 *rnn_hidden: torch.Tensor, avail_actions=None, epsilon=0.0):
@@ -217,10 +219,7 @@ class COMAPolicy(nn.Module):
             rnn_hidden = None
         # get critic values
         critic_in = outputs['state']
-        if target:
-            v = self.target_critic(critic_in)
-        else:
-            v = self.critic(critic_in)
+        v = self.target_critic(critic_in) if target else self.critic(critic_in)
         return rnn_hidden, v
 
     def copy_target(self):

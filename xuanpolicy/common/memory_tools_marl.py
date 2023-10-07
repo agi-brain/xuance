@@ -506,7 +506,6 @@ class COMA_Buffer(MARL_OnPolicyBuffer):
             'returns': np.zeros((self.n_envs, self.n_size,) + self.rew_space).astype(np.float32),
             'values': np.zeros((self.n_envs, self.n_size, self.n_agents, 1)).astype(np.float32),
             'log_pi_old': np.zeros((self.n_envs, self.n_size, self.n_agents,)).astype(np.float32),
-            'advantages': np.zeros((self.n_envs, self.n_size,) + self.rew_space).astype(np.float32),
             'terminals': np.zeros((self.n_envs, self.n_size,) + self.done_space).astype(np.bool),
             'agent_mask': np.ones((self.n_envs, self.n_size, self.n_agents)).astype(np.bool),
         }
@@ -535,7 +534,5 @@ class COMA_Buffer(MARL_OnPolicyBuffer):
         for t in reversed(range(step_nums)):
             returns[t] = self.td_lambda * self.gamma * returns[t+1] + \
                          rewards[t] + (1 - self.td_lambda) * self.gamma * vs[t+1] * (1 - dones[t])
-        advantages = returns[:-1] - vs[:-1]
-        self.data['returns'][i_env, path_slice] = returns[0:-1]
-        self.data['advantages'][i_env, path_slice] = advantages
+        self.data['returns'][i_env, path_slice] = returns[:-1]
         self.start_ids[i_env] = self.ptr

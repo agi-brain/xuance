@@ -9,8 +9,7 @@ class VDN_Agents(MARLAgents):
         self.gamma = config.gamma
         self.start_greedy, self.end_greedy = config.start_greedy, config.end_greedy
         self.egreedy = self.start_greedy
-        self.delta_egreedy = (self.start_greedy - self.end_greedy) / (
-                config.decay_step_greedy / envs.num_envs / envs.max_episode_length)
+        self.delta_egreedy = (self.start_greedy - self.end_greedy) / config.decay_step_greedy
 
         input_representation = get_repre_in(config)
         self.use_recurrent = config.use_recurrent
@@ -49,6 +48,7 @@ class VDN_Agents(MARLAgents):
                               config.sync_frequency)
         super(VDN_Agents, self).__init__(config, envs, policy, memory, learner, device,
                                          config.log_dir, config.model_dir)
+        self.on_policy = False
 
     def act(self, obs_n, *rnn_hidden, avail_actions=None, test_mode=False):
         batch_size = obs_n.shape[0]
@@ -79,7 +79,7 @@ class VDN_Agents(MARLAgents):
 
     def train(self, i_step):
         if self.egreedy >= self.end_greedy:
-            self.egreedy -= self.delta_egreedy
+            self.egreedy = self.start_greedy - self.delta_egreedy * i_step
 
         if i_step > self.start_training:
             sample = self.memory.sample()
