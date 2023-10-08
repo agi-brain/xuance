@@ -23,13 +23,13 @@ parallels: 10
 n_size: 25
 n_epoch: 10
 n_minibatch: 1
-learning_rate_actor: 0.0005
-learning_rate_critic: 0.0005
+learning_rate_actor: 0.0007
+learning_rate_critic: 0.0007
 
 clip_grad: 10
 clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
 gamma: 0.95  # discount factor
-td_lambda: 0.8
+td_lambda: 0.1
 
 start_greedy: 0.5
 end_greedy: 0.01

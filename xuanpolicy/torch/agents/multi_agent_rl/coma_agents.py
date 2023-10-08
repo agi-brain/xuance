@@ -78,21 +78,20 @@ class COMA_Agents(MARLAgents):
         batch_size = len(obs_n)
         agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(batch_size, -1, -1).to(self.device)
         obs_in = torch.Tensor(obs_n).view([batch_size, self.n_agents, -1]).to(self.device)
+        epsilon = 0.0 if test_mode else self.egreedy
         if self.use_recurrent:
             batch_agents = batch_size * self.n_agents
             hidden_state, action_probs = self.policy(obs_in.view(batch_agents, 1, -1),
                                                      agents_id.view(batch_agents, 1, -1),
                                                      *rnn_hidden,
                                                      avail_actions=avail_actions.reshape(batch_agents, 1, -1),
-                                                     epsilon=self.egreedy)
+                                                     epsilon=epsilon)
             action_probs = action_probs.view(batch_size, self.n_agents)
         else:
-            hidden_state, action_probs = self.policy(obs_in, agents_id, avail_actions=avail_actions)
-
-        if test_mode:
-            _, picked_actions = action_probs.max()
-        else:
-            picked_actions = Categorical(action_probs).sample()
+            hidden_state, action_probs = self.policy(obs_in, agents_id,
+                                                     avail_actions=avail_actions,
+                                                     epsilon=epsilon)
+        picked_actions = Categorical(action_probs).sample()
         onehot_actions = self.learner.onehot_action(picked_actions, self.dim_act)
         return hidden_state, picked_actions.detach().cpu().numpy(), onehot_actions.detach().cpu().numpy()
 

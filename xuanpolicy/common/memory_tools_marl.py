@@ -532,7 +532,7 @@ class COMA_Buffer(MARL_OnPolicyBuffer):
         returns = np.zeros_like(vs)
         step_nums = len(path_slice)
         for t in reversed(range(step_nums)):
-            returns[t] = self.td_lambda * self.gamma * returns[t+1] + \
-                         rewards[t] + (1 - self.td_lambda) * self.gamma * vs[t+1] * (1 - dones[t])
+            returns[t] = self.td_lambda * self.gamma * returns[t + 1] + \
+                         rewards[t] + (1 - self.td_lambda) * self.gamma * vs[t + 1] * (1 - dones[t])
         self.data['returns'][i_env, path_slice] = returns[:-1]
         self.start_ids[i_env] = self.ptr
