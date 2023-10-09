@@ -172,7 +172,7 @@ class Pettingzoo_Runner(Runner_Base):
                 log_pi_n.append(None)
             elif self.marl_names[h] in ["COMA"]:
                 _, a, a_onehot = mas_group.act(obs_n[h], test_mode)
-                _, values = mas_group.values(obs_n[h], a, a_onehot, state=state)
+                _, values = mas_group.values(obs_n[h], state=state, actions_n=a, actions_onehot=a_onehot)
                 actions_n_onehot.append(a_onehot)
                 values_n.append(values)
             else:

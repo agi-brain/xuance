@@ -166,18 +166,19 @@ class COMAPolicy(nn.Module):
         self.device = device
         self.action_dim = action_space.n
         self.n_agents = n_agents
-        self.representation = representation[0]
-        self.representation_critic = representation[1]
+        self.representation = representation
         self.representation_info_shape = self.representation.output_shapes
         self.lstm = True if kwargs["rnn"] == "LSTM" else False
         self.use_rnn = True if kwargs["use_recurrent"] else False
         self.actor = ActorNet(self.representation.output_shapes['state'][0], self.action_dim, n_agents,
                               actor_hidden_size, normalize, initialize, kwargs['gain'], activation, device)
-        self.critic = COMA_Critic(self.representation_critic.output_shapes['state'][0], self.action_dim,
-                                  critic_hidden_size, normalize, initialize, activation, device)
-        self.target_representation_critic = copy.deepcopy(self.representation_critic)
+        critic_input_dim = self.representation.input_shape[0] + self.action_dim * self.n_agents
+        if kwargs["use_global_state"]:
+            critic_input_dim += kwargs["dim_state"]
+        self.critic = COMA_Critic(critic_input_dim, self.action_dim, critic_hidden_size,
+                                  normalize, initialize, activation, device)
         self.target_critic = copy.deepcopy(self.critic)
-        self.parameters_critic = list(self.representation_critic.parameters()) + list(self.critic.parameters())
+        self.parameters_critic = list(self.critic.parameters())
         self.parameters_actor = list(self.representation.parameters()) + list(self.actor.parameters())
         self.pi_dist = CategoricalDistribution(self.action_dim)
 
@@ -199,33 +200,12 @@ class COMAPolicy(nn.Module):
         return rnn_hidden, act_probs
 
     def get_values(self, critic_in: torch.Tensor, *rnn_hidden: torch.Tensor, target=False):
-        shape_in = critic_in.shape
-        # get representation features
-        if self.use_rnn:
-            batch_size, n_agent, episode_length, dim_critic_in = tuple(shape_in)
-            if target:
-                outputs = self.target_representation_critic(critic_in.reshape(-1, episode_length, dim_critic_in), *rnn_hidden)
-            else:
-                outputs = self.representation_critic(critic_in.reshape(-1, episode_length, dim_critic_in), *rnn_hidden)
-            outputs['state'] = outputs['state'].view(batch_size, n_agent, episode_length, -1)
-            rnn_hidden = (outputs['rnn_hidden'], outputs['rnn_cell'])
-        else:
-            batch_size, n_agent, dim_critic_in = tuple(shape_in)
-            if target:
-                outputs = self.target_representation_critic(critic_in.reshape(-1, dim_critic_in))
-            else:
-                outputs = self.representation_critic(critic_in.reshape(-1, dim_critic_in))
-            outputs['state'] = outputs['state'].view(batch_size, n_agent, -1)
-            rnn_hidden = None
         # get critic values
-        critic_in = outputs['state']
         v = self.target_critic(critic_in) if target else self.critic(critic_in)
-        return rnn_hidden, v
+        return [None, None], v
 
     def copy_target(self):
         for ep, tp in zip(self.critic.parameters(), self.target_critic.parameters()):
-            tp.data.copy_(ep)
-        for ep, tp in zip(self.representation_critic.parameters(), self.target_representation_critic.parameters()):
             tp.data.copy_(ep)
 
 

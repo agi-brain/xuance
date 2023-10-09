@@ -51,7 +51,6 @@ class SC2_Runner(Runner_Base):
         else:
             raise "No logger is implemented."
 
-        self.on_policy = self.args.on_policy
         self.running_steps = args.running_steps
         self.training_frequency = args.training_frequency
         self.current_step = 0
@@ -63,36 +62,44 @@ class SC2_Runner(Runner_Base):
         args.n_agents = self.num_agents
         self.dim_obs, self.dim_act, self.dim_state = self.envs.dim_obs, self.envs.dim_act, self.envs.dim_state
         args.dim_obs, args.dim_act = self.dim_obs, self.dim_act
-        args.obs_shape, args.act_shape = (self.dim_obs, ), ()
-        args.rew_shape = args.done_shape = (1, )
+        args.obs_shape, args.act_shape = (self.dim_obs,), ()
+        args.rew_shape = args.done_shape = (1,)
         args.action_space = self.envs.action_space
         args.state_space = self.envs.state_space
+
+        # environment details, representations, policies, optimizers, and agents.
+        self.agents = REGISTRY_Agent[args.agent](args, self.envs, args.device)
+        self.on_policy = self.agents.on_policy
         self.episode_buffer = {
             'obs': np.zeros((self.n_envs, self.num_agents, self.episode_length + 1) + args.obs_shape, dtype=np.float32),
             'actions': np.zeros((self.n_envs, self.num_agents, self.episode_length) + args.act_shape, dtype=np.float32),
             'state': np.zeros((self.n_envs, self.episode_length + 1) + args.state_space.shape, dtype=np.float32),
             'rewards': np.zeros((self.n_envs, self.num_agents, self.episode_length) + args.rew_shape, dtype=np.float32),
             'terminals': np.zeros((self.n_envs, self.episode_length) + args.done_shape, dtype=np.bool),
-            'avail_actions': np.ones((self.n_envs, self.num_agents, self.episode_length + 1, self.dim_act), dtype=np.bool),
+            'avail_actions': np.ones((self.n_envs, self.num_agents, self.episode_length + 1, self.dim_act),
+                                     dtype=np.bool),
             'filled': np.zeros((self.n_envs, self.episode_length, 1), dtype=np.bool),
         }
         if self.on_policy:
             self.episode_buffer.update({
                 'values': np.zeros((self.n_envs, self.num_agents, self.episode_length) + args.rew_shape, np.float32),
                 'returns': np.zeros((self.n_envs, self.num_agents, self.episode_length) + args.rew_shape, np.float32),
-                'advantages': np.zeros((self.n_envs, self.num_agents, self.episode_length) + args.rew_shape, np.float32),
-                'log_pi_old': np.zeros((self.n_envs, self.num_agents, self.episode_length,), np.float32)
+                'advantages': np.zeros((self.n_envs, self.num_agents, self.episode_length) + args.rew_shape,
+                                       np.float32),
+                'log_pi_old': np.zeros((self.n_envs, self.num_agents, self.episode_length,), np.float32),
             })
+            if self.args.agent == "COMA":
+                self.episode_buffer.update({
+                    'actions_onehot': np.zeros((self.n_envs, self.num_agents, self.episode_length, self.dim_act),
+                                               dtype=np.float32)})
         self.env_ptr = range(self.n_envs)
 
-        # environment details, representations, policies, optimizers, and agents.
-        self.agents = REGISTRY_Agent[args.agent](args, self.envs, args.device)
         # initialize hidden units for RNN.
         self.rnn_hidden = self.agents.policy.representation.init_hidden(self.n_envs * self.num_agents)
-        if self.on_policy:
+        if self.on_policy and self.args.agent != "COMA":
             self.rnn_hidden_critic = self.agents.policy.representation_critic.init_hidden(self.n_envs * self.num_agents)
         else:
-            self.rnn_hidden_critic = None
+            self.rnn_hidden_critic = [None, None]
 
     def get_agent_num(self):
         self.num_agents, self.num_enemies = self.envs.num_agents, self.envs.num_enemies
@@ -124,14 +131,19 @@ class SC2_Runner(Runner_Base):
         log_pi_n, values_n, actions_n_onehot = None, None, None
         rnn_hidden_policy, rnn_hidden_critic = rnn_hidden[0], rnn_hidden[1]
         if self.on_policy:
-            rnn_hidden_next, actions_n, log_pi_n = self.agents.act(obs_n, *rnn_hidden_policy,
-                                                                   avail_actions=avail_actions,
-                                                                   test_mode=test_mode)
+            if self.args.agent == "COMA":
+                rnn_hidden_next, actions_n, actions_n_onehot = self.agents.act(obs_n, *rnn_hidden_policy,
+                                                                               avail_actions=avail_actions,
+                                                                               test_mode=test_mode)
+            else:
+                rnn_hidden_next, actions_n, log_pi_n = self.agents.act(obs_n, *rnn_hidden_policy,
+                                                                       avail_actions=avail_actions,
+                                                                       test_mode=test_mode)
             if test_mode:
                 rnn_hidden_critic_next, values_n = None, 0
             else:
-                rnn_hidden_critic_next, values_n = self.agents.values(obs_n, *rnn_hidden_critic,
-                                                                      state=state)
+                kwargs = {"state": state, "actions_n": actions_n, "actions_onehot": actions_n_onehot}
+                rnn_hidden_critic_next, values_n = self.agents.values(obs_n, *rnn_hidden_critic, **kwargs)
         else:
             rnn_hidden_next, actions_n = self.agents.act(obs_n, *rnn_hidden_policy,
                                                          avail_actions=avail_actions, test_mode=test_mode)
@@ -150,6 +162,8 @@ class SC2_Runner(Runner_Base):
         if self.on_policy:
             self.episode_buffer['values'][self.env_ptr, :, t_envs] = actions_dict['values']
             self.episode_buffer['log_pi_old'][self.env_ptr, :, t_envs] = actions_dict['log_pi']
+            if self.args.agent == "COMA":
+                self.episode_buffer['actions_onehot'][self.env_ptr, :, t_envs] = actions_dict['act_n_onehot']
 
     def store_terminal_data(self, i_env, t_env, obs_n, state, last_avail_actions, filled):
         self.episode_buffer['obs'][i_env, :, t_env] = obs_n[i_env]
@@ -189,9 +203,15 @@ class SC2_Runner(Runner_Base):
                             else:
                                 rnn_h_critic_i = self.agents.policy.representation_critic.get_hidden_item(batch_select,
                                                                                                           *rnn_hidden_critic)
-                                _, values_next = self.agents.values([obs_n[i_env]], *rnn_h_critic_i, state=[state[i_env]])
-                            rnn_hidden_critic = self.agents.policy.representation_critic.init_hidden_item(batch_select,
-                                                                                                          *rnn_hidden_critic)
+                                kwargs = {"state": [state[i_env]],
+                                          "actions_n": actions_dict['actions_n'][i_env],
+                                          "actions_onehot": actions_dict['act_n_onehot'][i_env]}
+                                _, values_next = self.agents.values([obs_n[i_env]], *rnn_h_critic_i, **kwargs)
+                            if self.args.agent != "COMA":
+                                rnn_hidden_critic = self.agents.policy.representation_critic.init_hidden_item(batch_select,
+                                                                                                              *rnn_hidden_critic)
+                            else:
+                                rnn_hidden_critic = [None, None]
                             self.agents.memory.finish_path(values_next, i_env, episode_data=self.episode_buffer,
                                                            current_t=self.envs_step[i_env],
                                                            value_normalizer=self.agents.learner.value_normalizer)
@@ -211,7 +231,8 @@ class SC2_Runner(Runner_Base):
                             step_info["Train-Episode-Rewards/env-%d" % i_env] = info[i_env]["episode_score"]
                         else:
                             step_info["Train-Results/Episode-Steps"] = {"env-%d" % i_env: info[i_env]["episode_step"]}
-                            step_info["Train-Results/Episode-Rewards"] = {"env-%d" % i_env: info[i_env]["episode_score"]}
+                            step_info["Train-Results/Episode-Rewards"] = {
+                                "env-%d" % i_env: info[i_env]["episode_score"]}
                         self.log_infos(step_info, self.current_step)
 
                 self.current_step += self.n_envs
@@ -255,7 +276,8 @@ class SC2_Runner(Runner_Base):
             for step in range(self.episode_length):
                 available_actions = self.test_envs.get_avail_actions()
                 actions_dict = self.get_actions(obs_n, available_actions, rnn_hidden, None, test_mode=True)
-                next_obs_n, next_state, rewards, terminated, truncated, info = self.test_envs.step(actions_dict['actions_n'])
+                next_obs_n, next_state, rewards, terminated, truncated, info = self.test_envs.step(
+                    actions_dict['actions_n'])
                 if self.args.render_mode == "rgb_array" and self.render:
                     images = self.test_envs.render(self.args.render_mode)
                     for idx, img in enumerate(images):
@@ -374,4 +396,3 @@ class SC2_Runner(Runner_Base):
             wandb.finish()
         else:
             self.writer.close()
-

@@ -1,26 +1,33 @@
 agent: "COMA"  # the learning algorithms_marl
-env_name: "mpe"
+env_name: "StarCraft2"
 env_id: "simple_spread_v3"
-continuous_action: False
+fps: 15
 policy: "Categorical_COMA_Policy"
-representation: "Basic_MLP"
-representation_critic: "Basic_MLP"
-vectorize: "Dummy_Pettingzoo"
-runner: "Pettingzoo_Runner"
+representation: "Basic_RNN"
+vectorize: "Dummy_StarCraft2"
+runner: "StarCraft2_Runner"
 
-use_recurrent: False
-rnn:
-representation_hidden_size: [128, ]
+render: True
+
+use_recurrent: True
+rnn: "GRU"
+recurrent_layer_N: 1
+fc_hidden_sizes: [64, ]
+recurrent_hidden_size: 64
+N_recurrent_layers: 1
+dropout: 0
+normalize: "LayerNorm"
+initialize: "orthogonal"
 gain: 0.01
 
-actor_hidden_size: [128, ]
-critic_hidden_size: [128, ]
+actor_hidden_size: [64, ]
+critic_hidden_size: [128, 128]
 activation: "ReLU"
 
 seed: 1
-parallels: 10
-n_size: 25
-n_epoch: 10
+parallels: 1
+n_size: 128
+n_epoch: 15
 n_minibatch: 1
 learning_rate_actor: 0.0007
 learning_rate_critic: 0.0007
@@ -28,7 +35,7 @@ learning_rate_critic: 0.0007
 clip_grad: 10
 clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
 gamma: 0.95  # discount factor
-td_lambda: 0.1
+td_lambda: 0.8
 
 start_greedy: 0.5
 end_greedy: 0.01
@@ -41,12 +48,12 @@ use_gae: True
 gae_lambda: 0.95
 
 start_training: 1
-running_steps: 10000000
+running_steps: 1000000
 train_per_step: True
 training_frequency: 1
 
 test_steps: 10000
-eval_interval: 100000
-test_episode: 5
+eval_interval: 5000
+test_episode: 10
 log_dir: "./logs/coma/"
 model_dir: "./models/coma/"

@@ -7,8 +7,8 @@ from operator import itemgetter
 import torch
 
 
-def get_repre_in(args):
-    representation_name = args.representation
+def get_repre_in(args, name=None):
+    representation_name = args.representation if name is None else name
     input_dict = deepcopy(Representation_Inputs_All)
     if args.env_name in ["StarCraft2", "Football", "MAgent2"]:
         input_dict["input_shape"] = (args.dim_obs, )

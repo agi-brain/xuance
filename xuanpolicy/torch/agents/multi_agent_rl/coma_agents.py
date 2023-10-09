@@ -19,10 +19,11 @@ class COMA_Agents(MARLAgents):
         self.n_epoch = config.n_epoch
         self.n_minibatch = config.n_minibatch
         if config.state_space is not None:
-            config.dim_state, state_shape = config.state_space.shape, config.state_space.shape
+            config.dim_state, state_shape = config.state_space.shape[0], config.state_space.shape
         else:
             config.dim_state, state_shape = None, None
 
+        # create representation for COMA actor
         input_representation = get_repre_in(config)
         self.use_recurrent = config.use_recurrent
         self.use_global_state = config.use_global_state
@@ -30,17 +31,14 @@ class COMA_Agents(MARLAgents):
                       "dropout": config.dropout,
                       "rnn": config.rnn} if self.use_recurrent else {}
         representation = REGISTRY_Representation[config.representation](*input_representation, **kwargs_rnn)
-        # create representation for COMA critic
-        input_representation[0] = config.dim_obs + config.dim_act * config.n_agents
-        if self.use_global_state:
-            input_representation[0] += config.dim_state
-        representation_critic = REGISTRY_Representation[config.representation](*input_representation, **kwargs_rnn)
         # create policy
-        input_policy = get_policy_in_marl(config, (representation, representation_critic))
+        input_policy = get_policy_in_marl(config, representation)
         policy = REGISTRY_Policy[config.policy](*input_policy,
                                                 use_recurrent=config.use_recurrent,
                                                 rnn=config.rnn,
-                                                gain=config.gain)
+                                                gain=config.gain,
+                                                use_global_state=self.use_global_state,
+                                                dim_state=config.dim_state)
         optimizer = [torch.optim.Adam(policy.parameters_actor, config.learning_rate_actor, eps=1e-5),
                      torch.optim.Adam(policy.parameters_critic, config.learning_rate_critic, eps=1e-5)]
         scheduler = [torch.optim.lr_scheduler.LinearLR(optimizer[0], start_factor=1.0, end_factor=0.5,
@@ -58,7 +56,7 @@ class COMA_Agents(MARLAgents):
             config.dim_state, state_shape = None, None
         config.act_onehot_shape = config.act_shape + tuple([config.dim_act])
 
-        buffer = MARL_OnPolicyBuffer_RNN if self.use_recurrent else COMA_Buffer
+        buffer = COMA_Buffer_RNN if self.use_recurrent else COMA_Buffer
         input_buffer = (config.n_agents, config.state_space.shape, config.obs_shape, config.act_shape, config.rew_shape,
                         config.done_shape, envs.num_envs, config.n_size,
                         config.use_gae, config.use_advnorm, config.gamma, config.gae_lambda)
@@ -86,7 +84,7 @@ class COMA_Agents(MARLAgents):
                                                      *rnn_hidden,
                                                      avail_actions=avail_actions.reshape(batch_agents, 1, -1),
                                                      epsilon=epsilon)
-            action_probs = action_probs.view(batch_size, self.n_agents)
+            action_probs = action_probs.view(batch_size, self.n_agents, self.dim_act)
         else:
             hidden_state, action_probs = self.policy(obs_in, agents_id,
                                                      avail_actions=avail_actions,
@@ -95,7 +93,7 @@ class COMA_Agents(MARLAgents):
         onehot_actions = self.learner.onehot_action(picked_actions, self.dim_act)
         return hidden_state, picked_actions.detach().cpu().numpy(), onehot_actions.detach().cpu().numpy()
 
-    def values(self, obs_n, actions_n, actions_onehot, *rnn_hidden, state=None):
+    def values(self, obs_n, *rnn_hidden, state=None, actions_n=None, actions_onehot=None):
         batch_size = len(obs_n)
         # build critic input
         obs_n = torch.Tensor(obs_n).to(self.device)
@@ -111,11 +109,7 @@ class COMA_Agents(MARLAgents):
         else:
             critic_in = torch.concat([obs_n, actions_in])
         # get critic values
-        if self.use_recurrent:
-            hidden_state, values_n = self.policy.get_values(critic_in.unsqueeze(2), *rnn_hidden, target=True)
-            values_n = values_n.squeeze(2)
-        else:
-            hidden_state, values_n = self.policy.get_values(critic_in, target=True)
+        hidden_state, values_n = self.policy.get_values(critic_in, target=True)
 
         target_values = values_n.gather(-1, actions_n.long())
         return hidden_state, target_values.detach().cpu().numpy()
