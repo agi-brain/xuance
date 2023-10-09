@@ -9,10 +9,11 @@ setup(
                 "configs/*.yaml",
                 "configs/*/*.yaml",
                 "configs/*/*/*.yaml",
-                "environment/magent2/libmagent.so"  # for magent2 environment
+                "environment/magent2/libmagent.so",  # for magent2 environment
+                "environment/magent2/magent.dll",  # for magent2 environment
             ]
     },
-    version='0.1.11.2',
+    version='0.1.11.3',
     description='XuanPolicy: A Comprehensive and Unified Deep Reinforcement Learning Library.',
     author='XuanPolicy contributors.',
     author_email='',

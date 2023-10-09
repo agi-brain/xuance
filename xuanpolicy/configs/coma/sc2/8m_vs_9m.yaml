@@ -1,6 +1,6 @@
 agent: "COMA"  # the learning algorithms_marl
 env_name: "StarCraft2"
-env_id: "3m"
+env_id: "8m_vs_9m"
 fps: 15
 policy: "Categorical_COMA_Policy"
 representation: "Basic_RNN"
@@ -46,12 +46,12 @@ use_gae: True
 gae_lambda: 0.95
 
 start_training: 1
-running_steps: 1000000
+running_steps: 10000000
 train_per_step: True
 training_frequency: 1
 
 test_steps: 10000
-eval_interval: 5000
+eval_interval: 50000
 test_episode: 10
 log_dir: "./logs/coma/"
 model_dir: "./models/coma/"

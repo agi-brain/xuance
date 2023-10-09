@@ -1,6 +1,6 @@
 agent: "COMA"  # the learning algorithms_marl
 env_name: "StarCraft2"
-env_id: "3m"
+env_id: "corridor"
 fps: 15
 policy: "Categorical_COMA_Policy"
 representation: "Basic_RNN"
@@ -37,7 +37,7 @@ td_lambda: 0.1
 
 start_greedy: 0.5
 end_greedy: 0.01
-decay_step_greedy: 2500000
+decay_step_greedy: 1000000
 sync_frequency: 200
 
 use_global_state: True  # if use global state to replace merged observations
@@ -46,12 +46,12 @@ use_gae: True
 gae_lambda: 0.95
 
 start_training: 1
-running_steps: 1000000
+running_steps: 10000000
 train_per_step: True
 training_frequency: 1
 
 test_steps: 10000
-eval_interval: 5000
+eval_interval: 50000
 test_episode: 10
 log_dir: "./logs/coma/"
 model_dir: "./models/coma/"
