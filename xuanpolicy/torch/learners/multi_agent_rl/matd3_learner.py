@@ -39,8 +39,8 @@ class MATD3_Learner(LearnerMAS):
         actions = torch.Tensor(sample['actions']).to(self.device)
         obs_next = torch.Tensor(sample['obs_next']).to(self.device)
         rewards = torch.Tensor(sample['rewards']).to(self.device)
-        terminals = torch.Tensor(sample['terminals']).float().view(-1, self.n_agents, 1).to(self.device)
-        agent_mask = torch.Tensor(sample['agent_mask']).float().view(-1, self.n_agents, 1).to(self.device)
+        terminals = torch.Tensor(sample['terminals']).float().reshape(-1, self.n_agents, 1).to(self.device)
+        agent_mask = torch.Tensor(sample['agent_mask']).float().reshape(-1, self.n_agents, 1).to(self.device)
         IDs = torch.eye(self.n_agents).unsqueeze(0).expand(self.args.batch_size, -1, -1).to(self.device)
 
         # train critic

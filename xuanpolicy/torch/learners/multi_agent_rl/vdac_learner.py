@@ -28,7 +28,7 @@ class VDAC_Learner(LearnerMAS):
         returns = torch.Tensor(sample['values']).mean(dim=1).to(self.device)
         rewards = torch.Tensor(sample['rewards']).mean(dim=1).to(self.device)
         advantages = torch.Tensor(sample['advantages']).to(self.device)
-        agent_mask = torch.Tensor(sample['agent_mask']).float().view(-1, self.n_agents, 1).to(self.device)
+        agent_mask = torch.Tensor(sample['agent_mask']).float().reshape(-1, self.n_agents, 1).to(self.device)
         batch_size = obs.shape[0]
         IDs = torch.eye(self.n_agents).unsqueeze(0).expand(batch_size, -1, -1).to(self.device)
 

@@ -102,7 +102,7 @@ class DCG_Learner(LearnerMAS):
         actions_ij = (actions[:, self.policy.graph.edges_from] * self.dim_act + actions[:,
                                                                                 self.policy.graph.edges_to]).unsqueeze(
             -1)
-        payoffs = f_ij_mean.view(list(f_ij_mean.shape[0:-2]) + [-1]).gather(-1, actions_ij.long()).sum(dim=1)
+        payoffs = f_ij_mean.reshape(list(f_ij_mean.shape[0:-2]) + [-1]).gather(-1, actions_ij.long()).sum(dim=1)
         if self.args.agent == "DCG_S":
             state_value = self.policy.bias(states)
             return utilities + payoffs + state_value
@@ -118,7 +118,7 @@ class DCG_Learner(LearnerMAS):
         obs_next = torch.Tensor(sample['obs_next']).to(self.device)
         rewards = torch.Tensor(sample['rewards']).mean(dim=1).to(self.device)
         terminals = torch.Tensor(sample['terminals']).all(dim=1, keepdims=True).float().to(self.device)
-        agent_mask = torch.Tensor(sample['agent_mask']).float().view(-1, self.n_agents, 1).to(self.device)
+        agent_mask = torch.Tensor(sample['agent_mask']).float().reshape(-1, self.n_agents, 1).to(self.device)
         IDs = torch.eye(self.n_agents).unsqueeze(0).expand(self.args.batch_size, -1, -1).to(self.device)
 
         _, hidden_states = self.get_hidden_states(obs, use_target_net=False)
@@ -168,9 +168,9 @@ class DCG_Learner(LearnerMAS):
             self.device)
 
         rnn_hidden = self.policy.representation.init_hidden(batch_size * self.n_agents)
-        _, hidden_states = self.get_hidden_states(obs.view(-1, episode_length + 1, self.dim_obs),
+        _, hidden_states = self.get_hidden_states(obs.reshape(-1, episode_length + 1, self.dim_obs),
                                                   *rnn_hidden, use_target_net=False)
-        hidden_states = hidden_states.view(batch_size, self.n_agents, episode_length + 1, -1).transpose(1, 2)
+        hidden_states = hidden_states.reshape(batch_size, self.n_agents, episode_length + 1, -1).transpose(1, 2)
         batch_transitions = batch_size * episode_length
         actions = actions.transpose(1, 2).reshape(batch_transitions, self.n_agents)
         q_eval_a = self.q_dcg(hidden_states[:, :-1].reshape(batch_transitions, self.n_agents, self.dim_hidden_state),
@@ -181,9 +181,9 @@ class DCG_Learner(LearnerMAS):
             hidden_states_next = hidden_states[:, 1:].reshape(batch_transitions, self.n_agents, self.dim_hidden_state)
             action_next_greedy = torch.Tensor(self.act(hidden_states_next, avail_actions=avail_a_next)).to(self.device)
             rnn_hidden_target = self.policy.target_representation.init_hidden(batch_size * self.n_agents)
-            _, hidden_states_tar = self.get_hidden_states(obs[:, :, 1:].view(-1, episode_length, self.dim_obs),
+            _, hidden_states_tar = self.get_hidden_states(obs[:, :, 1:].reshape(-1, episode_length, self.dim_obs),
                                                           *rnn_hidden_target, use_target_net=True)
-            hidden_states_tar = hidden_states_tar.view(batch_size, self.n_agents, episode_length, -1).transpose(1, 2)
+            hidden_states_tar = hidden_states_tar.reshape(batch_size, self.n_agents, episode_length, -1).transpose(1, 2)
             q_next_a = self.q_dcg(hidden_states_tar.reshape(batch_transitions, self.n_agents, self.dim_hidden_state),
                                   action_next_greedy,
                                   states=state[:, 1:].reshape(batch_transitions, -1),

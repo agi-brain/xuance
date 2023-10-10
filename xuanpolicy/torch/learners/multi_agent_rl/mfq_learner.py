@@ -36,19 +36,19 @@ class MFQ_Learner(LearnerMAS):
         act_mean = torch.Tensor(sample['act_mean']).to(self.device)
         act_mean_next = torch.Tensor(sample['act_mean_next']).to(self.device)
         rewards = torch.Tensor(sample['rewards']).to(self.device)
-        terminals = torch.Tensor(sample['terminals']).float().view(-1, self.n_agents, 1).to(self.device)
-        agent_mask = torch.Tensor(sample['agent_mask']).float().view(-1, self.n_agents, 1).to(self.device)
+        terminals = torch.Tensor(sample['terminals']).float().reshape(-1, self.n_agents, 1).to(self.device)
+        agent_mask = torch.Tensor(sample['agent_mask']).float().reshape(-1, self.n_agents, 1).to(self.device)
         IDs = torch.eye(self.n_agents).unsqueeze(0).expand(self.args.batch_size, -1, -1).to(self.device)
 
         act_mean = act_mean.unsqueeze(1).repeat([1, self.n_agents, 1])
         act_mean_next = act_mean_next.unsqueeze(1).repeat([1, self.n_agents, 1])
         _, _, q_eval = self.policy(obs, act_mean, IDs)
-        q_eval_a = q_eval.gather(-1, actions.long().view([self.args.batch_size, self.n_agents, 1]))
+        q_eval_a = q_eval.gather(-1, actions.long().reshape([self.args.batch_size, self.n_agents, 1]))
         q_next = self.policy.target_Q(obs_next, act_mean_next, IDs)
         shape = q_next.shape
         pi = self.get_boltzmann_policy(q_next)
-        v_mf = torch.bmm(q_next.view(-1, 1, shape[-1]), pi.unsqueeze(-1).view(-1, shape[-1], 1))
-        v_mf = v_mf.view(*(list(shape[0:-1]) + [1]))
+        v_mf = torch.bmm(q_next.reshape(-1, 1, shape[-1]), pi.unsqueeze(-1).reshape(-1, shape[-1], 1))
+        v_mf = v_mf.reshape(*(list(shape[0:-1]) + [1]))
         q_target = rewards + (1 - terminals) * self.args.gamma * v_mf
 
         # calculate the loss function

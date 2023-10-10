@@ -32,11 +32,11 @@ class QMIX_Learner(LearnerMAS):
         obs_next = torch.Tensor(sample['obs_next']).to(self.device)
         rewards = torch.Tensor(sample['rewards']).mean(dim=1).to(self.device)
         terminals = torch.Tensor(sample['terminals']).all(dim=1, keepdims=True).float().to(self.device)
-        agent_mask = torch.Tensor(sample['agent_mask']).float().view(-1, self.n_agents, 1).to(self.device)
+        agent_mask = torch.Tensor(sample['agent_mask']).float().reshape(-1, self.n_agents, 1).to(self.device)
         IDs = torch.eye(self.n_agents).unsqueeze(0).expand(self.args.batch_size, -1, -1).to(self.device)
 
         _, _, q_eval = self.policy(obs, IDs)
-        q_eval_a = q_eval.gather(-1, actions.long().view([self.args.batch_size, self.n_agents, 1]))
+        q_eval_a = q_eval.gather(-1, actions.long().reshape([self.args.batch_size, self.n_agents, 1]))
         q_tot_eval = self.policy.Q_tot(q_eval_a * agent_mask, state)
         _, q_next = self.policy.target_Q(obs_next, IDs)
         if self.args.double_q:
@@ -83,22 +83,22 @@ class QMIX_Learner(LearnerMAS):
 
         # Current Q
         rnn_hidden = self.policy.representation.init_hidden(batch_size * self.n_agents)
-        _, actions_greedy, q_eval = self.policy(obs.view(-1, episode_length + 1, self.dim_obs),
-                                                IDs.view(-1, episode_length + 1, self.n_agents),
+        _, actions_greedy, q_eval = self.policy(obs.reshape(-1, episode_length + 1, self.dim_obs),
+                                                IDs.reshape(-1, episode_length + 1, self.n_agents),
                                                 *rnn_hidden,
-                                                avail_actions=avail_actions.view(-1, episode_length + 1, self.dim_act))
-        q_eval = q_eval[:, :-1].view(batch_size, self.n_agents, episode_length, self.dim_act)
-        actions_greedy = actions_greedy.view(batch_size, self.n_agents, episode_length + 1, 1)
-        q_eval_a = q_eval.gather(-1, actions.long().view([self.args.batch_size, self.n_agents, episode_length, 1]))
+                                                avail_actions=avail_actions.reshape(-1, episode_length + 1, self.dim_act))
+        q_eval = q_eval[:, :-1].reshape(batch_size, self.n_agents, episode_length, self.dim_act)
+        actions_greedy = actions_greedy.reshape(batch_size, self.n_agents, episode_length + 1, 1)
+        q_eval_a = q_eval.gather(-1, actions.long().reshape([self.args.batch_size, self.n_agents, episode_length, 1]))
         q_eval_a = q_eval_a.transpose(1, 2).reshape(-1, self.n_agents, 1)
         q_tot_eval = self.policy.Q_tot(q_eval_a, state[:, :-1])
 
         # Target Q
         target_rnn_hidden = self.policy.target_representation.init_hidden(batch_size * self.n_agents)
-        _, q_next = self.policy.target_Q(obs.view(-1, episode_length + 1, self.dim_obs),
-                                         IDs.view(-1, episode_length + 1, self.n_agents),
+        _, q_next = self.policy.target_Q(obs.reshape(-1, episode_length + 1, self.dim_obs),
+                                         IDs.reshape(-1, episode_length + 1, self.n_agents),
                                          *target_rnn_hidden)
-        q_next = q_next[:, 1:].view(batch_size, self.n_agents, episode_length, self.dim_act)
+        q_next = q_next[:, 1:].reshape(batch_size, self.n_agents, episode_length, self.dim_act)
         q_next[avail_actions[:, :, 1:] == 0] = -9999999
 
         # use double-q trick

@@ -48,9 +48,9 @@ class COMA_Learner(LearnerMAS):
         IDs = torch.eye(self.n_agents).unsqueeze(0).expand(batch_size, -1, -1).to(self.device)
 
         # build critic input
-        actions_in = actions_onehot.unsqueeze(1).view(batch_size, 1, -1).repeat(1, self.n_agents, 1)
+        actions_in = actions_onehot.unsqueeze(1).reshape(batch_size, 1, -1).repeat(1, self.n_agents, 1)
         actions_in_mask = 1 - torch.eye(self.n_agents, device=self.device)
-        actions_in_mask = actions_in_mask.view(-1, 1).repeat(1, self.dim_act).view(self.n_agents, -1)
+        actions_in_mask = actions_in_mask.reshape(-1, 1).repeat(1, self.dim_act).reshape(self.n_agents, -1)
         actions_in = actions_in * actions_in_mask.unsqueeze(0)
         if self.use_global_state:
             state = state.unsqueeze(1).repeat(1, self.n_agents, 1)

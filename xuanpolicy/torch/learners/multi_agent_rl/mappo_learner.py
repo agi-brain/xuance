@@ -52,14 +52,14 @@ class MAPPO_Clip_Learner(LearnerMAS):
         returns = torch.Tensor(sample['returns']).to(self.device)
         advantages = torch.Tensor(sample['advantages']).to(self.device)
         log_pi_old = torch.Tensor(sample['log_pi_old']).to(self.device)
-        agent_mask = torch.Tensor(sample['agent_mask']).float().view(-1, self.n_agents, 1).to(self.device)
+        agent_mask = torch.Tensor(sample['agent_mask']).float().reshape(-1, self.n_agents, 1).to(self.device)
         batch_size = obs.shape[0]
         IDs = torch.eye(self.n_agents).unsqueeze(0).expand(batch_size, -1, -1).to(self.device)
 
         # actor loss
         _, pi_dist = self.policy(obs, IDs)
         log_pi = pi_dist.log_prob(actions)
-        ratio = torch.exp(log_pi - log_pi_old).view(batch_size, self.n_agents, 1)
+        ratio = torch.exp(log_pi - log_pi_old).reshape(batch_size, self.n_agents, 1)
         advantages_mask = advantages.detach() * agent_mask
         surrogate1 = ratio * advantages_mask
         surrogate2 = torch.clip(ratio, 1 - self.clip_range, 1 + self.clip_range) * advantages_mask
@@ -70,7 +70,7 @@ class MAPPO_Clip_Learner(LearnerMAS):
         loss_e = entropy.mean()
 
         # critic loss
-        critic_in = torch.Tensor(obs).view([batch_size, 1, -1]).to(self.device)
+        critic_in = torch.Tensor(obs).reshape([batch_size, 1, -1]).to(self.device)
         critic_in = critic_in.expand(-1, self.n_agents, -1)
         _, value_pred = self.policy.get_values(critic_in, IDs)
         value_pred = value_pred
@@ -137,11 +137,11 @@ class MAPPO_Clip_Learner(LearnerMAS):
 
         # actor loss
         rnn_hidden_actor = self.policy.representation.init_hidden(batch_size * self.n_agents)
-        _, pi_dist = self.policy(obs[:, :, :-1].view(-1, episode_length, self.dim_obs),
-                                 IDs[:, :, :-1].view(-1, episode_length, self.n_agents),
+        _, pi_dist = self.policy(obs[:, :, :-1].reshape(-1, episode_length, self.dim_obs),
+                                 IDs[:, :, :-1].reshape(-1, episode_length, self.n_agents),
                                  *rnn_hidden_actor,
-                                 avail_actions=avail_actions[:, :, :-1].view(-1, episode_length, self.dim_act))
-        log_pi = pi_dist.log_prob(actions.view(-1, episode_length)).view(batch_size, self.n_agents, episode_length)
+                                 avail_actions=avail_actions[:, :, :-1].reshape(-1, episode_length, self.dim_act))
+        log_pi = pi_dist.log_prob(actions.reshape(-1, episode_length)).reshape(batch_size, self.n_agents, episode_length)
         ratio = torch.exp(log_pi - log_pi_old).unsqueeze(-1)
         filled_n = filled.unsqueeze(1).expand(batch_size, self.n_agents, episode_length, 1)
         surrogate1 = ratio * advantages
