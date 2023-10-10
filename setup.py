@@ -10,7 +10,7 @@ setup(
                 "configs/*/*.yaml",
                 "configs/*/*/*.yaml",
                 "environment/magent2/libmagent.so",  # for magent2 environment
-                "environment/magent2/magent.dll",  # for magent2 environment
+                "environment/magent2/magent.dll"  # for magent2 environment
             ]
     },
     version='0.1.11.3',
