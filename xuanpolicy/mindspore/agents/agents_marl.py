@@ -13,8 +13,7 @@ class MARLAgents(object):
                  learner: LearnerMAS,
                  writer: SummaryWriter,
                  logdir: str = "./logs/",
-                 modeldir: str = "./models/",
-                 ):
+                 modeldir: str = "./models/"):
         self.args = config
         self.handle = config.handle
         self.n_agents = config.n_agents

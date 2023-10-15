@@ -1,4 +1,6 @@
 import argparse
+
+import xuanpolicy.torch.agents
 from xuanpolicy import get_runner
 
 

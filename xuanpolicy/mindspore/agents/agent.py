@@ -9,8 +9,7 @@ class Agent(ABC):
                  learner: Learner,
                  writer: SummaryWriter,
                  logdir: str = "./logs/",
-                 modeldir: str = "./models/",
-                 ):
+                 modeldir: str = "./models/"):
         self.envs = envs
         self.policy = policy
         self.memory = memory

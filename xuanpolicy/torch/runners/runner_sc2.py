@@ -142,7 +142,9 @@ class SC2_Runner(Runner_Base):
             if test_mode:
                 rnn_hidden_critic_next, values_n = None, 0
             else:
-                kwargs = {"state": state, "actions_n": actions_n, "actions_onehot": actions_n_onehot}
+                kwargs = {"state": state}
+                if self.args.agent == "COMA":
+                    kwargs.update({"actions_n": actions_n, "actions_onehot": actions_n_onehot})
                 rnn_hidden_critic_next, values_n = self.agents.values(obs_n, *rnn_hidden_critic, **kwargs)
         else:
             rnn_hidden_next, actions_n = self.agents.act(obs_n, *rnn_hidden_policy,

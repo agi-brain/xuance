@@ -1,9 +1,5 @@
 import os.path
-
 from xuanpolicy.torch.agents import *
-import socket
-import time
-from pathlib import Path
 
 
 class MARLAgents(object):
@@ -15,14 +11,14 @@ class MARLAgents(object):
                  learner: LearnerMAS,
                  device: Optional[Union[str, int, torch.device]] = None,
                  log_dir: str = "./logs/",
-                 model_dir: str = "./models/",
-                 ):
+                 model_dir: str = "./models/"):
         self.args = config
         self.n_agents = config.n_agents
         self.dim_obs = self.args.dim_obs
         self.dim_act = self.args.dim_act
         self.dim_id = self.n_agents
-        self.device = torch.device("cuda" if (torch.cuda.is_available() and config.device in ["gpu", "cuda:0"]) else "cpu")
+        self.device = torch.device(
+            "cuda" if (torch.cuda.is_available() and config.device in ["gpu", "cuda:0"]) else "cpu")
         self.envs = envs
         self.start_training = config.start_training
 

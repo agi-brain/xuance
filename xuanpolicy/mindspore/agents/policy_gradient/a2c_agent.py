@@ -7,8 +7,7 @@ class A2C_Agent(Agent):
                  envs: VecEnv,
                  policy: nn.Cell,
                  optimizer: nn.Optimizer,
-                 scheduler: Optional[nn.exponential_decay_lr] = None
-                 ):
+                 scheduler: Optional[nn.exponential_decay_lr] = None):
         self.config = config
         self.render = config.render
         self.comm = MPI.COMM_WORLD

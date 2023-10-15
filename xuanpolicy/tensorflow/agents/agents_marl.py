@@ -10,8 +10,7 @@ class MARLAgents(object):
                  learner: LearnerMAS,
                  device: str = "cpu:0",
                  logdir: str = "./logs/",
-                 modeldir: str = "./models/",
-                 ):
+                 modeldir: str = "./models/"):
         self.args = config
         self.handle = config.handle
         self.n_agents = config.n_agents
@@ -86,7 +85,7 @@ class linear_decay_or_increase(object):
 
 
 def get_total_iters(agent_name, args):
-    if agent_name in ["A2C", "PG", "PPO_Clip","PPO_KL","PPG","VDAC", "COMA", "MFAC", "MAPPO_Clip", "MAPPO_KL"]:
+    if agent_name in ["A2C", "PG", "PPO_Clip", "PPO_KL", "PPG", "VDAC", "COMA", "MFAC", "MAPPO_Clip", "MAPPO_KL"]:
         return int(args.training_steps * args.nepoch * args.nminibatch / args.nsteps)
     else:
         return int(args.training_steps / args.training_frequency)

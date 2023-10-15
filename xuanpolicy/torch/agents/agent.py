@@ -13,8 +13,7 @@ class Agent(ABC):
                  learner: Learner,
                  device: Optional[Union[str, int, torch.device]] = None,
                  log_dir: str = "./logs/",
-                 model_dir: str = "./models/",
-                 ):
+                 model_dir: str = "./models/"):
         self.config = config
         self.envs = envs
         self.policy = policy
