@@ -47,7 +47,7 @@ class MFQ_Agents(MARLAgents):
                                          config.log_dir, config.model_dir)
         self.on_policy = False
 
-    def act(self, obs_n, *rnn_hidden, test_mode=False, act_mean=None, agent_mask=None):
+    def act(self, obs_n, *rnn_hidden, act_mean=None, agent_mask=None, test_mode=False):
         batch_size = obs_n.shape[0]
         agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(batch_size, -1, -1).to(self.device)
         obs_in = torch.Tensor(obs_n).to(self.device)

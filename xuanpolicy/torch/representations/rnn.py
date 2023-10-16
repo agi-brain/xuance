@@ -9,8 +9,7 @@ class Basic_RNN(nn.Module):
                  initialize: Optional[Callable[..., torch.Tensor]] = None,
                  activation: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None,
-                 **kwargs
-                 ):
+                 **kwargs):
         super(Basic_RNN, self).__init__()
         self.input_shape = input_shape
         self.fc_hidden_sizes = hidden_sizes["fc_hidden_sizes"]
