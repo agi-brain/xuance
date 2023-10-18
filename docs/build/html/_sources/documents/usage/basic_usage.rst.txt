@@ -94,9 +94,9 @@ After completing the model training, the log files are stored in the "log" folde
 The specific path depends on the user's actual configuration.
 Taking the path "./logs/dqn/torch/CartPole-v0" as an example, users can visualize the logs using the following command:
 
-.. code-block:: console
+.. code-block:: bash
 
-    $ tensorboard --logdir ./logs/dqn/torch/CartPole-v1/
+    tensorboard --logdir ./logs/dqn/torch/CartPole-v1/
 
 **2. W&B**
 

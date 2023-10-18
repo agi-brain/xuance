@@ -17,47 +17,47 @@ Install via PyPI
 
 **Step 1**: Create a new conda environment (python>=3.7 is suggested).
 
-.. code-block:: console
+.. code-block:: bash
 
-    $ conda create -n xpolicy python=3.7
+    conda create -n xpolicy python=3.7
 
 **Step 2**: Activate conda environment.
 
-.. code-block:: console
+.. code-block:: bash
     
-    $ conda activate xpolicy
+    conda activate xpolicy
 
 **Step 3**: Install the library.
 
-.. code-block:: console
+.. code-block:: bash
     
-    $ pip install xuanpolicy
+    pip install xuanpolicy
 
 This command does not include the dependencies of deep learning toolboxes. 
 
 You can also install the **XuanPolicy** with PyTorch_, TensorFlow2_, MindSpore_, or all of them.
 
-.. code-block:: console
+.. code-block:: bash
     
-    $ pip install xuanpolicy[torch]
+    pip install xuanpolicy[torch]
 
 or
 
-.. code-block:: console
+.. code-block:: bash
     
-    $ pip install xuanpolicy[tensorflow]
+    pip install xuanpolicy[tensorflow]
 
 or
 
-.. code-block:: console
+.. code-block:: bash
     
-    $ pip install xuanpolicy[mindspore]
+    pip install xuanpolicy[mindspore]
 
 or
 
-.. code-block:: console
+.. code-block:: bash
 
-    $ pip install xuanpolicy[all]
+    pip install xuanpolicy[all]
 
 Install from GitHub repository
 ---------------------------------------------
@@ -70,33 +70,33 @@ Alternatively, you can install XuanPolicy from its GitHub repository.
 
 **Step 1**: Create a new conda environment (python>=3.7 is suggested).
 
-.. code-block:: console
+.. code-block:: bash
 
-    $ conda create -n xpolicy python=3.7
+    conda create -n xpolicy python=3.7
 
 **Step 2**: Activate conda environment.
 
-.. code-block:: console
+.. code-block:: bash
 
-    $ conda activate xpolicy
+    conda activate xpolicy
 
 **Step 3**: Download the source code of XuanPolicy from GitHub.
 
-.. code-block:: console
+.. code-block:: bash
 
-    $ git clone https://github.com/agi-brain/xuanpolicy.git
+    git clone https://github.com/agi-brain/xuanpolicy.git
 
 **Step 4**: Change directory to the xuanpolicy.
 
-.. code-block:: console
+.. code-block:: bash
 
-    $ cd xuanpolicy
+    cd xuanpolicy
 
 **Step 5**: Install xuanpolicy.
 
-.. code-block:: console
+.. code-block:: bash
 
-    $ pip install -e .
+    pip install -e .
 
 .. note::
 

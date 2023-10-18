@@ -250,9 +250,9 @@ Here is an example definition of the run() function with comments:
 
 After finishing the above three steps, you can run the `python_mujoco.py` file in console and train the model:
 
-.. code-block:: console
+.. code-block:: bash
 
-    $ python ppo_mujoco.py --method ppo --env mujoco --env-id Ant-v4
+    python ppo_mujoco.py --method ppo --env mujoco --env-id Ant-v4
 
 The source code of this example can be visited at the following link:
 
