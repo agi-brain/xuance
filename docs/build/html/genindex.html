@@ -3,11 +3,13 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Index &mdash; XuanPolicy v0.1.7 documentation</title>
+  <title>Index &mdash; 玄策 v0.1.11 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="_static/custom.css" type="text/css" />
       <link rel="stylesheet" href="_static/fonts.css" type="text/css" />
+      <link rel="stylesheet" href="_static/copybutton.css" type="text/css" />
+      <link rel="stylesheet" href="_static/tabs.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
@@ -15,7 +17,12 @@
         <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/jquery.js"></script>
         <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
+        <script src="_static/clipboard.min.js"></script>
+        <script src="_static/copybutton.js"></script>
+        <script src="_static/tabs.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="#" />
     <link rel="search" title="Search" href="search.html" /> 
@@ -26,12 +33,16 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-            <a href="index.html" class="icon icon-home"> XuanPolicy
-            <img src="_static/logo_2.png" class="logo" alt="Logo"/>
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            玄策
+              <img src="_static/logo_2.png" class="logo" alt="Logo"/>
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
@@ -43,15 +54,17 @@
 <li class="toctree-l1"><a class="reference internal" href="documents/usage/basic_usage.html">Quick Start</a></li>
 <li class="toctree-l1"><a class="reference internal" href="documents/usage/professional_usage.html">Professional Usage</a></li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">APIs:</span></p>
+<p class="caption" role="heading"><span class="caption-text">API:</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="documents/apis/common.html">common</a></li>
-<li class="toctree-l1"><a class="reference internal" href="documents/apis/environment.html">environments</a></li>
-</ul>
-<p class="caption" role="heading"><span class="caption-text">Included algorithms:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="documents/agents/index_drl.html">Deep Reinforcement Learning</a></li>
-<li class="toctree-l1"><a class="reference internal" href="documents/agents/index_marl.html">Multi-Agent Reinforcement Learning</a></li>
+<li class="toctree-l1"><a class="reference internal" href="documents/api/agents.html">Agents</a></li>
+<li class="toctree-l1"><a class="reference internal" href="documents/api/representations.html">Representations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="documents/api/policies.html">Policies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="documents/api/learners.html">Learners</a></li>
+<li class="toctree-l1"><a class="reference internal" href="documents/api/runners.html">Runners</a></li>
+<li class="toctree-l1"><a class="reference internal" href="documents/api/utils.html">Utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="documents/api/configs.html">Configs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="documents/api/common.html">Common</a></li>
+<li class="toctree-l1"><a class="reference internal" href="documents/api/environments.html">Environments</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Benchmarks</span></p>
 <ul>
@@ -61,6 +74,11 @@
 <li class="toctree-l1"><a class="reference internal" href="documents/benchmark/mpe.html">MPE benchmarks</a></li>
 <li class="toctree-l1"><a class="reference internal" href="documents/benchmark/magent.html">Magent benchmarks</a></li>
 </ul>
+<p class="caption" role="heading"><span class="caption-text">Algorithms:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="documents/algorithms/index_drl.html">Deep Reinforcement Learning</a></li>
+<li class="toctree-l1"><a class="reference internal" href="documents/algorithms/index_marl.html">Multi-Agent Reinforcement Learning</a></li>
+</ul>
 
         </div>
       </div>
@@ -68,14 +86,14 @@
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="index.html">XuanPolicy</a>
+          <a href="index.html">玄策</a>
       </nav>
 
       <div class="wy-nav-content">
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="index.html" class="icon icon-home"></a></li>
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
       <li class="breadcrumb-item active">Index</li>
       <li class="wy-breadcrumbs-aside">
       </li>
@@ -89,8 +107,1196 @@
 <h1 id="index">Index</h1>
 
 <div class="genindex-jumpbox">
+ <a href="#B"><strong>B</strong></a>
+ | <a href="#X"><strong>X</strong></a>
  
 </div>
+<h2 id="B">B</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li>
+    built-in function
+
+      <ul>
+        <li><a href="documents/api/agents/marl/coma.html#xuanpolicy.torch.agent.mutli_agent_rl.coma_agents.COMA_Agents.act">xuanpolicy.torch.agent.mutli_agent_rl.coma_agents.COMA_Agents.act()</a>
+</li>
+        <li><a href="documents/api/agents/marl/coma.html#xuanpolicy.torch.agent.mutli_agent_rl.coma_agents.COMA_Agents.train">xuanpolicy.torch.agent.mutli_agent_rl.coma_agents.COMA_Agents.train()</a>
+</li>
+        <li><a href="documents/api/agents/marl/dcg.html#xuanpolicy.torch.agent.mutli_agent_rl.dcg_agents.DCG_Agents.act">xuanpolicy.torch.agent.mutli_agent_rl.dcg_agents.DCG_Agents.act()</a>
+</li>
+        <li><a href="documents/api/agents/marl/dcg.html#xuanpolicy.torch.agent.mutli_agent_rl.dcg_agents.DCG_Agents.train">xuanpolicy.torch.agent.mutli_agent_rl.dcg_agents.DCG_Agents.train()</a>
+</li>
+        <li><a href="documents/api/agents/marl/iddpg.html#xuanpolicy.torch.agent.mutli_agent_rl.iddpg_agents.IDDPG_Agents.act">xuanpolicy.torch.agent.mutli_agent_rl.iddpg_agents.IDDPG_Agents.act()</a>
+</li>
+        <li><a href="documents/api/agents/marl/iddpg.html#xuanpolicy.torch.agent.mutli_agent_rl.iddpg_agents.IDDPG_Agents.train">xuanpolicy.torch.agent.mutli_agent_rl.iddpg_agents.IDDPG_Agents.train()</a>
+</li>
+        <li><a href="documents/api/agents/marl/iql.html#xuanpolicy.torch.agent.mutli_agent_rl.iql_agents.IQL_Agents.act">xuanpolicy.torch.agent.mutli_agent_rl.iql_agents.IQL_Agents.act()</a>
+</li>
+        <li><a href="documents/api/agents/marl/iql.html#xuanpolicy.torch.agent.mutli_agent_rl.iql_agents.IQL_Agents.train">xuanpolicy.torch.agent.mutli_agent_rl.iql_agents.IQL_Agents.train()</a>
+</li>
+        <li><a href="documents/api/agents/marl/isac.html#xuanpolicy.torch.agent.mutli_agent_rl.isac_agents.ISAC_Agents.act">xuanpolicy.torch.agent.mutli_agent_rl.isac_agents.ISAC_Agents.act()</a>
+</li>
+        <li><a href="documents/api/agents/marl/isac.html#xuanpolicy.torch.agent.mutli_agent_rl.isac_agents.ISAC_Agents.train">xuanpolicy.torch.agent.mutli_agent_rl.isac_agents.ISAC_Agents.train()</a>
+</li>
+        <li><a href="documents/api/agents/marl/maddpg.html#xuanpolicy.torch.agent.mutli_agent_rl.maddpg_agents.MADDPG_Agents.act">xuanpolicy.torch.agent.mutli_agent_rl.maddpg_agents.MADDPG_Agents.act()</a>
+</li>
+        <li><a href="documents/api/agents/marl/maddpg.html#xuanpolicy.torch.agent.mutli_agent_rl.maddpg_agents.MADDPG_Agents.train">xuanpolicy.torch.agent.mutli_agent_rl.maddpg_agents.MADDPG_Agents.train()</a>
+</li>
+        <li><a href="documents/api/agents/marl/mappo.html#xuanpolicy.torch.agent.mutli_agent_rl.mappo_agents.MAPPO_Agents.act">xuanpolicy.torch.agent.mutli_agent_rl.mappo_agents.MAPPO_Agents.act()</a>
+</li>
+        <li><a href="documents/api/agents/marl/mappo.html#xuanpolicy.torch.agent.mutli_agent_rl.mappo_agents.MAPPO_Agents.train">xuanpolicy.torch.agent.mutli_agent_rl.mappo_agents.MAPPO_Agents.train()</a>
+</li>
+        <li><a href="documents/api/agents/marl/masac.html#xuanpolicy.torch.agent.mutli_agent_rl.masac_agents.MASAC_Agents.act">xuanpolicy.torch.agent.mutli_agent_rl.masac_agents.MASAC_Agents.act()</a>
+</li>
+        <li><a href="documents/api/agents/marl/masac.html#xuanpolicy.torch.agent.mutli_agent_rl.masac_agents.MASAC_Agents.train">xuanpolicy.torch.agent.mutli_agent_rl.masac_agents.MASAC_Agents.train()</a>
+</li>
+        <li><a href="documents/api/agents/marl/matd3.html#xuanpolicy.torch.agent.mutli_agent_rl.matd3_agents.MATD3_Agents.act">xuanpolicy.torch.agent.mutli_agent_rl.matd3_agents.MATD3_Agents.act()</a>
+</li>
+        <li><a href="documents/api/agents/marl/matd3.html#xuanpolicy.torch.agent.mutli_agent_rl.matd3_agents.MATD3_Agents.train">xuanpolicy.torch.agent.mutli_agent_rl.matd3_agents.MATD3_Agents.train()</a>
+</li>
+        <li><a href="documents/api/agents/marl/mfq.html#xuanpolicy.torch.agent.mutli_agent_rl.mfq_agents.MFQ_Agents.act">xuanpolicy.torch.agent.mutli_agent_rl.mfq_agents.MFQ_Agents.act()</a>
+</li>
+        <li><a href="documents/api/agents/marl/mfq.html#xuanpolicy.torch.agent.mutli_agent_rl.mfq_agents.MFQ_Agents.train">xuanpolicy.torch.agent.mutli_agent_rl.mfq_agents.MFQ_Agents.train()</a>
+</li>
+        <li><a href="documents/api/agents/marl/qmix.html#xuanpolicy.torch.agent.mutli_agent_rl.qmix_agents.QMIX_Agents.act">xuanpolicy.torch.agent.mutli_agent_rl.qmix_agents.QMIX_Agents.act()</a>
+</li>
+        <li><a href="documents/api/agents/marl/qmix.html#xuanpolicy.torch.agent.mutli_agent_rl.qmix_agents.QMIX_Agents.train">xuanpolicy.torch.agent.mutli_agent_rl.qmix_agents.QMIX_Agents.train()</a>
+</li>
+        <li><a href="documents/api/agents/marl/qtran.html#xuanpolicy.torch.agent.mutli_agent_rl.qtran_agents.QTRAN_Agents.train">xuanpolicy.torch.agent.mutli_agent_rl.qtran_agents.QTRAN_Agents.train()</a>
+</li>
+        <li><a href="documents/api/agents/marl/vdn.html#xuanpolicy.torch.agent.mutli_agent_rl.vdn_agents.VDN_Agents.act">xuanpolicy.torch.agent.mutli_agent_rl.vdn_agents.VDN_Agents.act()</a>
+</li>
+        <li><a href="documents/api/agents/marl/vdn.html#xuanpolicy.torch.agent.mutli_agent_rl.vdn_agents.VDN_Agents.train">xuanpolicy.torch.agent.mutli_agent_rl.vdn_agents.VDN_Agents.train()</a>
+</li>
+        <li><a href="documents/api/agents/marl/wqmix.html#xuanpolicy.torch.agent.mutli_agent_rl.wqmix_agents.WQMIX_Agents.act">xuanpolicy.torch.agent.mutli_agent_rl.wqmix_agents.WQMIX_Agents.act()</a>
+</li>
+        <li><a href="documents/api/agents/marl/wqmix.html#xuanpolicy.torch.agent.mutli_agent_rl.wqmix_agents.WQMIX_Agents.train">xuanpolicy.torch.agent.mutli_agent_rl.wqmix_agents.WQMIX_Agents.train()</a>
+</li>
+        <li><a href="documents/api/agents/drl/a2c.html#xuanpolicy.torch.agent.policy_gradient.a2c_agent.A2C_Agent._action">xuanpolicy.torch.agent.policy_gradient.a2c_agent.A2C_Agent._action()</a>
+</li>
+        <li><a href="documents/api/agents/drl/a2c.html#xuanpolicy.torch.agent.policy_gradient.a2c_agent.A2C_Agent.test">xuanpolicy.torch.agent.policy_gradient.a2c_agent.A2C_Agent.test()</a>
+</li>
+        <li><a href="documents/api/agents/drl/a2c.html#xuanpolicy.torch.agent.policy_gradient.a2c_agent.A2C_Agent.train">xuanpolicy.torch.agent.policy_gradient.a2c_agent.A2C_Agent.train()</a>
+</li>
+        <li><a href="documents/api/agents/drl/ddpg.html#xuanpolicy.torch.agent.policy_gradient.ddpg_agent.DDPG_Agent._action">xuanpolicy.torch.agent.policy_gradient.ddpg_agent.DDPG_Agent._action()</a>
+</li>
+        <li><a href="documents/api/agents/drl/ddpg.html#xuanpolicy.torch.agent.policy_gradient.ddpg_agent.DDPG_Agent.test">xuanpolicy.torch.agent.policy_gradient.ddpg_agent.DDPG_Agent.test()</a>
+</li>
+        <li><a href="documents/api/agents/drl/ddpg.html#xuanpolicy.torch.agent.policy_gradient.ddpg_agent.DDPG_Agent.train">xuanpolicy.torch.agent.policy_gradient.ddpg_agent.DDPG_Agent.train()</a>
+</li>
+        <li><a href="documents/api/agents/drl/mpdqn.html#xuanpolicy.torch.agent.policy_gradient.mpdqn_agent.MPDQN_Agent._action">xuanpolicy.torch.agent.policy_gradient.mpdqn_agent.MPDQN_Agent._action()</a>
+</li>
+        <li><a href="documents/api/agents/drl/mpdqn.html#xuanpolicy.torch.agent.policy_gradient.mpdqn_agent.MPDQN_Agent.pad_action">xuanpolicy.torch.agent.policy_gradient.mpdqn_agent.MPDQN_Agent.pad_action()</a>
+</li>
+        <li><a href="documents/api/agents/drl/mpdqn.html#xuanpolicy.torch.agent.policy_gradient.mpdqn_agent.MPDQN_Agent.test">xuanpolicy.torch.agent.policy_gradient.mpdqn_agent.MPDQN_Agent.test()</a>
+</li>
+        <li><a href="documents/api/agents/drl/mpdqn.html#xuanpolicy.torch.agent.policy_gradient.mpdqn_agent.MPDQN_Agent.train">xuanpolicy.torch.agent.policy_gradient.mpdqn_agent.MPDQN_Agent.train()</a>
+</li>
+        <li><a href="documents/api/agents/drl/pdqn.html#xuanpolicy.torch.agent.policy_gradient.pdqn_agent.PDQN_Agent._action">xuanpolicy.torch.agent.policy_gradient.pdqn_agent.PDQN_Agent._action()</a>
+</li>
+        <li><a href="documents/api/agents/drl/pdqn.html#xuanpolicy.torch.agent.policy_gradient.pdqn_agent.PDQN_Agent.pad_action">xuanpolicy.torch.agent.policy_gradient.pdqn_agent.PDQN_Agent.pad_action()</a>
+</li>
+        <li><a href="documents/api/agents/drl/pdqn.html#xuanpolicy.torch.agent.policy_gradient.pdqn_agent.PDQN_Agent.test">xuanpolicy.torch.agent.policy_gradient.pdqn_agent.PDQN_Agent.test()</a>
+</li>
+        <li><a href="documents/api/agents/drl/pdqn.html#xuanpolicy.torch.agent.policy_gradient.pdqn_agent.PDQN_Agent.train">xuanpolicy.torch.agent.policy_gradient.pdqn_agent.PDQN_Agent.train()</a>
+</li>
+        <li><a href="documents/api/agents/drl/pg.html#xuanpolicy.torch.agent.policy_gradient.pg_agent.PG_Agent._action">xuanpolicy.torch.agent.policy_gradient.pg_agent.PG_Agent._action()</a>
+</li>
+        <li><a href="documents/api/agents/drl/pg.html#xuanpolicy.torch.agent.policy_gradient.pg_agent.PG_Agent.test">xuanpolicy.torch.agent.policy_gradient.pg_agent.PG_Agent.test()</a>
+</li>
+        <li><a href="documents/api/agents/drl/pg.html#xuanpolicy.torch.agent.policy_gradient.pg_agent.PG_Agent.train">xuanpolicy.torch.agent.policy_gradient.pg_agent.PG_Agent.train()</a>
+</li>
+        <li><a href="documents/api/agents/drl/ppg.html#xuanpolicy.torch.agent.policy_gradient.ppg_agent.PPG_Agent._action">xuanpolicy.torch.agent.policy_gradient.ppg_agent.PPG_Agent._action()</a>
+</li>
+        <li><a href="documents/api/agents/drl/ppg.html#xuanpolicy.torch.agent.policy_gradient.ppg_agent.PPG_Agent.test">xuanpolicy.torch.agent.policy_gradient.ppg_agent.PPG_Agent.test()</a>
+</li>
+        <li><a href="documents/api/agents/drl/ppg.html#xuanpolicy.torch.agent.policy_gradient.ppg_agent.PPG_Agent.train">xuanpolicy.torch.agent.policy_gradient.ppg_agent.PPG_Agent.train()</a>
+</li>
+        <li><a href="documents/api/agents/drl/ppo_clip.html#xuanpolicy.torch.agent.policy_gradient.ppoclip_agent.PPOCLIP_Agent._action">xuanpolicy.torch.agent.policy_gradient.ppoclip_agent.PPOCLIP_Agent._action()</a>
+</li>
+        <li><a href="documents/api/agents/drl/ppo_clip.html#xuanpolicy.torch.agent.policy_gradient.ppoclip_agent.PPOCLIP_Agent.test">xuanpolicy.torch.agent.policy_gradient.ppoclip_agent.PPOCLIP_Agent.test()</a>
+</li>
+        <li><a href="documents/api/agents/drl/ppo_clip.html#xuanpolicy.torch.agent.policy_gradient.ppoclip_agent.PPOCLIP_Agent.train">xuanpolicy.torch.agent.policy_gradient.ppoclip_agent.PPOCLIP_Agent.train()</a>
+</li>
+        <li><a href="documents/api/agents/drl/ppo_kl.html#xuanpolicy.torch.agent.policy_gradient.ppokl_agent.PPOKL_Agent._action">xuanpolicy.torch.agent.policy_gradient.ppokl_agent.PPOKL_Agent._action()</a>
+</li>
+        <li><a href="documents/api/agents/drl/ppo_kl.html#xuanpolicy.torch.agent.policy_gradient.ppokl_agent.PPOKL_Agent.test">xuanpolicy.torch.agent.policy_gradient.ppokl_agent.PPOKL_Agent.test()</a>
+</li>
+        <li><a href="documents/api/agents/drl/ppo_kl.html#xuanpolicy.torch.agent.policy_gradient.ppokl_agent.PPOKL_Agent.train">xuanpolicy.torch.agent.policy_gradient.ppokl_agent.PPOKL_Agent.train()</a>
+</li>
+        <li><a href="documents/api/agents/drl/sac.html#xuanpolicy.torch.agent.policy_gradient.sac_agent.SAC_Agent._action">xuanpolicy.torch.agent.policy_gradient.sac_agent.SAC_Agent._action()</a>
+</li>
+        <li><a href="documents/api/agents/drl/sac.html#xuanpolicy.torch.agent.policy_gradient.sac_agent.SAC_Agent.test">xuanpolicy.torch.agent.policy_gradient.sac_agent.SAC_Agent.test()</a>
+</li>
+        <li><a href="documents/api/agents/drl/sac.html#xuanpolicy.torch.agent.policy_gradient.sac_agent.SAC_Agent.train">xuanpolicy.torch.agent.policy_gradient.sac_agent.SAC_Agent.train()</a>
+</li>
+        <li><a href="documents/api/agents/drl/sac_dis.html#xuanpolicy.torch.agent.policy_gradient.sacdis_agent.SACDIS_Agent._action">xuanpolicy.torch.agent.policy_gradient.sacdis_agent.SACDIS_Agent._action()</a>
+</li>
+        <li><a href="documents/api/agents/drl/sac_dis.html#xuanpolicy.torch.agent.policy_gradient.sacdis_agent.SACDIS_Agent.test">xuanpolicy.torch.agent.policy_gradient.sacdis_agent.SACDIS_Agent.test()</a>
+</li>
+        <li><a href="documents/api/agents/drl/sac_dis.html#xuanpolicy.torch.agent.policy_gradient.sacdis_agent.SACDIS_Agent.train">xuanpolicy.torch.agent.policy_gradient.sacdis_agent.SACDIS_Agent.train()</a>
+</li>
+        <li><a href="documents/api/agents/drl/spdqn.html#xuanpolicy.torch.agent.policy_gradient.spdqn_agent.SPDQN_Agent._action">xuanpolicy.torch.agent.policy_gradient.spdqn_agent.SPDQN_Agent._action()</a>
+</li>
+        <li><a href="documents/api/agents/drl/spdqn.html#xuanpolicy.torch.agent.policy_gradient.spdqn_agent.SPDQN_Agent.pad_action">xuanpolicy.torch.agent.policy_gradient.spdqn_agent.SPDQN_Agent.pad_action()</a>
+</li>
+        <li><a href="documents/api/agents/drl/spdqn.html#xuanpolicy.torch.agent.policy_gradient.spdqn_agent.SPDQN_Agent.test">xuanpolicy.torch.agent.policy_gradient.spdqn_agent.SPDQN_Agent.test()</a>
+</li>
+        <li><a href="documents/api/agents/drl/spdqn.html#xuanpolicy.torch.agent.policy_gradient.spdqn_agent.SPDQN_Agent.train">xuanpolicy.torch.agent.policy_gradient.spdqn_agent.SPDQN_Agent.train()</a>
+</li>
+        <li><a href="documents/api/agents/drl/td3.html#xuanpolicy.torch.agent.policy_gradient.td3_agent.TD3_Agent._action">xuanpolicy.torch.agent.policy_gradient.td3_agent.TD3_Agent._action()</a>
+</li>
+        <li><a href="documents/api/agents/drl/td3.html#xuanpolicy.torch.agent.policy_gradient.td3_agent.TD3_Agent.test">xuanpolicy.torch.agent.policy_gradient.td3_agent.TD3_Agent.test()</a>
+</li>
+        <li><a href="documents/api/agents/drl/td3.html#xuanpolicy.torch.agent.policy_gradient.td3_agent.TD3_Agent.train">xuanpolicy.torch.agent.policy_gradient.td3_agent.TD3_Agent.train()</a>
+</li>
+        <li><a href="documents/api/agents/drl/c51.html#xuanpolicy.torch.agent.qlearning_family.c51_agent.C51_Agent._action">xuanpolicy.torch.agent.qlearning_family.c51_agent.C51_Agent._action()</a>
+</li>
+        <li><a href="documents/api/agents/drl/c51.html#xuanpolicy.torch.agent.qlearning_family.c51_agent.C51_Agent.test">xuanpolicy.torch.agent.qlearning_family.c51_agent.C51_Agent.test()</a>
+</li>
+        <li><a href="documents/api/agents/drl/c51.html#xuanpolicy.torch.agent.qlearning_family.c51_agent.C51_Agent.train">xuanpolicy.torch.agent.qlearning_family.c51_agent.C51_Agent.train()</a>
+</li>
+        <li><a href="documents/api/agents/drl/ddqn.html#xuanpolicy.torch.agent.qlearning_family.ddqn_agent.DDQN_Agent._action">xuanpolicy.torch.agent.qlearning_family.ddqn_agent.DDQN_Agent._action()</a>
+</li>
+        <li><a href="documents/api/agents/drl/ddqn.html#xuanpolicy.torch.agent.qlearning_family.ddqn_agent.DDQN_Agent.test">xuanpolicy.torch.agent.qlearning_family.ddqn_agent.DDQN_Agent.test()</a>
+</li>
+        <li><a href="documents/api/agents/drl/ddqn.html#xuanpolicy.torch.agent.qlearning_family.ddqn_agent.DDQN_Agent.train">xuanpolicy.torch.agent.qlearning_family.ddqn_agent.DDQN_Agent.train()</a>
+</li>
+        <li><a href="documents/api/agents/drl/dqn.html#xuanpolicy.torch.agent.qlearning_family.dqn_agent.DQN_Agent._action">xuanpolicy.torch.agent.qlearning_family.dqn_agent.DQN_Agent._action()</a>
+</li>
+        <li><a href="documents/api/agents/drl/dqn.html#xuanpolicy.torch.agent.qlearning_family.dqn_agent.DQN_Agent.test">xuanpolicy.torch.agent.qlearning_family.dqn_agent.DQN_Agent.test()</a>
+</li>
+        <li><a href="documents/api/agents/drl/dqn.html#xuanpolicy.torch.agent.qlearning_family.dqn_agent.DQN_Agent.train">xuanpolicy.torch.agent.qlearning_family.dqn_agent.DQN_Agent.train()</a>
+</li>
+        <li><a href="documents/api/agents/drl/dueldqn.html#xuanpolicy.torch.agent.qlearning_family.dueldqn_agent.DuelDQN_Agent._action">xuanpolicy.torch.agent.qlearning_family.dueldqn_agent.DuelDQN_Agent._action()</a>
+</li>
+        <li><a href="documents/api/agents/drl/dueldqn.html#xuanpolicy.torch.agent.qlearning_family.dueldqn_agent.DuelDQN_Agent.test">xuanpolicy.torch.agent.qlearning_family.dueldqn_agent.DuelDQN_Agent.test()</a>
+</li>
+        <li><a href="documents/api/agents/drl/dueldqn.html#xuanpolicy.torch.agent.qlearning_family.dueldqn_agent.DuelDQN_Agent.train">xuanpolicy.torch.agent.qlearning_family.dueldqn_agent.DuelDQN_Agent.train()</a>
+</li>
+        <li><a href="documents/api/agents/drl/noisydqn.html#xuanpolicy.torch.agent.qlearning_family.noisydqn_agent.NoisyDQN_Agent._action">xuanpolicy.torch.agent.qlearning_family.noisydqn_agent.NoisyDQN_Agent._action()</a>
+</li>
+        <li><a href="documents/api/agents/drl/noisydqn.html#xuanpolicy.torch.agent.qlearning_family.noisydqn_agent.NoisyDQN_Agent.test">xuanpolicy.torch.agent.qlearning_family.noisydqn_agent.NoisyDQN_Agent.test()</a>
+</li>
+        <li><a href="documents/api/agents/drl/noisydqn.html#xuanpolicy.torch.agent.qlearning_family.noisydqn_agent.NoisyDQN_Agent.train">xuanpolicy.torch.agent.qlearning_family.noisydqn_agent.NoisyDQN_Agent.train()</a>
+</li>
+        <li><a href="documents/api/agents/drl/perdqn.html#xuanpolicy.torch.agent.qlearning_family.perdqn_agent.PerDQN_Agent._action">xuanpolicy.torch.agent.qlearning_family.perdqn_agent.PerDQN_Agent._action()</a>
+</li>
+        <li><a href="documents/api/agents/drl/perdqn.html#xuanpolicy.torch.agent.qlearning_family.perdqn_agent.PerDQN_Agent.test">xuanpolicy.torch.agent.qlearning_family.perdqn_agent.PerDQN_Agent.test()</a>
+</li>
+        <li><a href="documents/api/agents/drl/perdqn.html#xuanpolicy.torch.agent.qlearning_family.perdqn_agent.PerDQN_Agent.train">xuanpolicy.torch.agent.qlearning_family.perdqn_agent.PerDQN_Agent.train()</a>
+</li>
+        <li><a href="documents/api/agents/drl/qrdqn.html#xuanpolicy.torch.agent.qlearning_family.qrdqn_agent.QRDQN_Agent._action">xuanpolicy.torch.agent.qlearning_family.qrdqn_agent.QRDQN_Agent._action()</a>
+</li>
+        <li><a href="documents/api/agents/drl/qrdqn.html#xuanpolicy.torch.agent.qlearning_family.qrdqn_agent.QRDQN_Agent.test">xuanpolicy.torch.agent.qlearning_family.qrdqn_agent.QRDQN_Agent.test()</a>
+</li>
+        <li><a href="documents/api/agents/drl/qrdqn.html#xuanpolicy.torch.agent.qlearning_family.qrdqn_agent.QRDQN_Agent.train">xuanpolicy.torch.agent.qlearning_family.qrdqn_agent.QRDQN_Agent.train()</a>
+</li>
+        <li><a href="documents/api/agents/drl/basic_drl_class.html#xuanpolicy.torch.agents.agent.Agent._action">xuanpolicy.torch.agents.agent.Agent._action()</a>
+</li>
+        <li><a href="documents/api/agents/drl/basic_drl_class.html#xuanpolicy.torch.agents.agent.Agent._process_observation">xuanpolicy.torch.agents.agent.Agent._process_observation()</a>
+</li>
+        <li><a href="documents/api/agents/drl/basic_drl_class.html#xuanpolicy.torch.agents.agent.Agent._process_reward">xuanpolicy.torch.agents.agent.Agent._process_reward()</a>
+</li>
+        <li><a href="documents/api/agents/drl/basic_drl_class.html#xuanpolicy.torch.agents.agent.Agent.finish">xuanpolicy.torch.agents.agent.Agent.finish()</a>
+</li>
+        <li><a href="documents/api/agents/drl/basic_drl_class.html#xuanpolicy.torch.agents.agent.Agent.load_model">xuanpolicy.torch.agents.agent.Agent.load_model()</a>
+</li>
+        <li><a href="documents/api/agents/drl/basic_drl_class.html#xuanpolicy.torch.agents.agent.Agent.log_infos">xuanpolicy.torch.agents.agent.Agent.log_infos()</a>
+</li>
+        <li><a href="documents/api/agents/drl/basic_drl_class.html#xuanpolicy.torch.agents.agent.Agent.log_videos">xuanpolicy.torch.agents.agent.Agent.log_videos()</a>
+</li>
+        <li><a href="documents/api/agents/drl/basic_drl_class.html#xuanpolicy.torch.agents.agent.Agent.save_model">xuanpolicy.torch.agents.agent.Agent.save_model()</a>
+</li>
+        <li><a href="documents/api/agents/drl/basic_drl_class.html#xuanpolicy.torch.agents.agent.Agent.test">xuanpolicy.torch.agents.agent.Agent.test()</a>
+</li>
+        <li><a href="documents/api/agents/drl/basic_drl_class.html#xuanpolicy.torch.agents.agent.Agent.train">xuanpolicy.torch.agents.agent.Agent.train()</a>
+</li>
+        <li><a href="documents/api/agents/marl/basic_marl_class.html#xuanpolicy.torch.agents.agents_marl.linear_decay_or_increase.update">xuanpolicy.torch.agents.agents_marl.linear_decay_or_increase.update()</a>
+</li>
+        <li><a href="documents/api/agents/marl/basic_marl_class.html#xuanpolicy.torch.agents.agents_marl.MARLAgent.act">xuanpolicy.torch.agents.agents_marl.MARLAgent.act()</a>
+</li>
+        <li><a href="documents/api/agents/marl/basic_marl_class.html#xuanpolicy.torch.agents.agents_marl.MARLAgent.load_model">xuanpolicy.torch.agents.agents_marl.MARLAgent.load_model()</a>
+</li>
+        <li><a href="documents/api/agents/marl/basic_marl_class.html#xuanpolicy.torch.agents.agents_marl.MARLAgent.save_model">xuanpolicy.torch.agents.agents_marl.MARLAgent.save_model()</a>
+</li>
+        <li><a href="documents/api/agents/marl/basic_marl_class.html#xuanpolicy.torch.agents.agents_marl.MARLAgent.train">xuanpolicy.torch.agents.agents_marl.MARLAgent.train()</a>
+</li>
+        <li><a href="documents/api/agents/marl/basic_marl_class.html#xuanpolicy.torch.agents.agents_marl.RandomAgents.act">xuanpolicy.torch.agents.agents_marl.RandomAgents.act()</a>
+</li>
+        <li><a href="documents/api/learners/learner.html#xuanpolicy.torch.learners.learner.Learner.load_model">xuanpolicy.torch.learners.learner.Learner.load_model()</a>
+</li>
+        <li><a href="documents/api/learners/learner.html#xuanpolicy.torch.learners.learner.Learner.save_model">xuanpolicy.torch.learners.learner.Learner.save_model()</a>
+</li>
+        <li><a href="documents/api/learners/learner.html#xuanpolicy.torch.learners.learner.Learner.update">xuanpolicy.torch.learners.learner.Learner.update()</a>
+</li>
+        <li><a href="documents/api/representations/cnn.html#xuanpolicy.torch.representations.cnn.AC_CNN_Atari._create_network">xuanpolicy.torch.representations.cnn.AC_CNN_Atari._create_network()</a>
+</li>
+        <li><a href="documents/api/representations/cnn.html#xuanpolicy.torch.representations.cnn.AC_CNN_Atari._init_layer">xuanpolicy.torch.representations.cnn.AC_CNN_Atari._init_layer()</a>
+</li>
+        <li><a href="documents/api/representations/cnn.html#xuanpolicy.torch.representations.cnn.AC_CNN_Atari.forward">xuanpolicy.torch.representations.cnn.AC_CNN_Atari.forward()</a>
+</li>
+        <li><a href="documents/api/representations/cnn.html#xuanpolicy.torch.representations.cnn.Basic_CNN._create_network">xuanpolicy.torch.representations.cnn.Basic_CNN._create_network()</a>
+</li>
+        <li><a href="documents/api/representations/cnn.html#xuanpolicy.torch.representations.cnn.Basic_CNN.forward">xuanpolicy.torch.representations.cnn.Basic_CNN.forward()</a>
+</li>
+        <li><a href="documents/api/representations/mlp.html#xuanpolicy.torch.representations.mlp.Basic_Identical.forward">xuanpolicy.torch.representations.mlp.Basic_Identical.forward()</a>
+</li>
+        <li><a href="documents/api/representations/mlp.html#xuanpolicy.torch.representations.mlp.Basic_MLP._create_network">xuanpolicy.torch.representations.mlp.Basic_MLP._create_network()</a>
+</li>
+        <li><a href="documents/api/representations/mlp.html#xuanpolicy.torch.representations.mlp.Basic_MLP.forward">xuanpolicy.torch.representations.mlp.Basic_MLP.forward()</a>
+</li>
+        <li><a href="documents/api/representations/rnn.html#xuanpolicy.torch.representations.rnn.Basic_RNN._create_network">xuanpolicy.torch.representations.rnn.Basic_RNN._create_network()</a>
+</li>
+        <li><a href="documents/api/representations/rnn.html#xuanpolicy.torch.representations.rnn.Basic_RNN.forward">xuanpolicy.torch.representations.rnn.Basic_RNN.forward()</a>
+</li>
+        <li><a href="documents/api/representations/rnn.html#xuanpolicy.torch.representations.rnn.Basic_RNN.get_hidden_item">xuanpolicy.torch.representations.rnn.Basic_RNN.get_hidden_item()</a>
+</li>
+        <li><a href="documents/api/representations/rnn.html#xuanpolicy.torch.representations.rnn.Basic_RNN.init_hidden">xuanpolicy.torch.representations.rnn.Basic_RNN.init_hidden()</a>
+</li>
+        <li><a href="documents/api/representations/rnn.html#xuanpolicy.torch.representations.rnn.Basic_RNN.init_hidden_item">xuanpolicy.torch.representations.rnn.Basic_RNN.init_hidden_item()</a>
+</li>
+      </ul></li>
+  </ul></td>
+</tr></table>
+
+<h2 id="X">X</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="documents/api/agents/marl/basic_marl_class.html#xuanpolicy.mindspore.agents.agents_marl.MARLAgent">xuanpolicy.mindspore.agents.agents_marl.MARLAgent (built-in class)</a>
+</li>
+      <li><a href="documents/api/agents/drl/basic_drl_class.html#xuanpolicy.mindsporetensorflow.agent.agent.Agent">xuanpolicy.mindsporetensorflow.agent.agent.Agent (built-in class)</a>
+</li>
+      <li><a href="documents/api/agents/marl/basic_marl_class.html#xuanpolicy.tensorflow.agents.agents_marl.MARLAgent">xuanpolicy.tensorflow.agents.agents_marl.MARLAgent (built-in class)</a>
+</li>
+      <li><a href="documents/api/agents/drl/basic_drl_class.html#xuanpolicy.tensorflowtensorflow.agent.agent.Agent">xuanpolicy.tensorflowtensorflow.agent.agent.Agent (built-in class)</a>
+</li>
+      <li><a href="documents/api/agents/marl/coma.html#xuanpolicy.torch.agent.mutli_agent_rl.coma_agents.COMA_Agents">xuanpolicy.torch.agent.mutli_agent_rl.coma_agents.COMA_Agents (built-in class)</a>
+</li>
+      <li>
+    xuanpolicy.torch.agent.mutli_agent_rl.coma_agents.COMA_Agents.act()
+
+      <ul>
+        <li><a href="documents/api/agents/marl/coma.html#xuanpolicy.torch.agent.mutli_agent_rl.coma_agents.COMA_Agents.act">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.agent.mutli_agent_rl.coma_agents.COMA_Agents.train()
+
+      <ul>
+        <li><a href="documents/api/agents/marl/coma.html#xuanpolicy.torch.agent.mutli_agent_rl.coma_agents.COMA_Agents.train">built-in function</a>
+</li>
+      </ul></li>
+      <li><a href="documents/api/agents/marl/dcg.html#xuanpolicy.torch.agent.mutli_agent_rl.dcg_agents.DCG_Agents">xuanpolicy.torch.agent.mutli_agent_rl.dcg_agents.DCG_Agents (built-in class)</a>
+</li>
+      <li>
+    xuanpolicy.torch.agent.mutli_agent_rl.dcg_agents.DCG_Agents.act()
+
+      <ul>
+        <li><a href="documents/api/agents/marl/dcg.html#xuanpolicy.torch.agent.mutli_agent_rl.dcg_agents.DCG_Agents.act">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.agent.mutli_agent_rl.dcg_agents.DCG_Agents.train()
+
+      <ul>
+        <li><a href="documents/api/agents/marl/dcg.html#xuanpolicy.torch.agent.mutli_agent_rl.dcg_agents.DCG_Agents.train">built-in function</a>
+</li>
+      </ul></li>
+      <li><a href="documents/api/agents/marl/iddpg.html#xuanpolicy.torch.agent.mutli_agent_rl.iddpg_agents.IDDPG_Agents">xuanpolicy.torch.agent.mutli_agent_rl.iddpg_agents.IDDPG_Agents (built-in class)</a>
+</li>
+      <li>
+    xuanpolicy.torch.agent.mutli_agent_rl.iddpg_agents.IDDPG_Agents.act()
+
+      <ul>
+        <li><a href="documents/api/agents/marl/iddpg.html#xuanpolicy.torch.agent.mutli_agent_rl.iddpg_agents.IDDPG_Agents.act">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.agent.mutli_agent_rl.iddpg_agents.IDDPG_Agents.train()
+
+      <ul>
+        <li><a href="documents/api/agents/marl/iddpg.html#xuanpolicy.torch.agent.mutli_agent_rl.iddpg_agents.IDDPG_Agents.train">built-in function</a>
+</li>
+      </ul></li>
+      <li><a href="documents/api/agents/marl/ippo.html#xuanpolicy.torch.agent.mutli_agent_rl.ippo_agents.IPPO_Agents">xuanpolicy.torch.agent.mutli_agent_rl.ippo_agents.IPPO_Agents (built-in class)</a>
+</li>
+      <li><a href="documents/api/agents/marl/iql.html#xuanpolicy.torch.agent.mutli_agent_rl.iql_agents.IQL_Agents">xuanpolicy.torch.agent.mutli_agent_rl.iql_agents.IQL_Agents (built-in class)</a>
+</li>
+      <li>
+    xuanpolicy.torch.agent.mutli_agent_rl.iql_agents.IQL_Agents.act()
+
+      <ul>
+        <li><a href="documents/api/agents/marl/iql.html#xuanpolicy.torch.agent.mutli_agent_rl.iql_agents.IQL_Agents.act">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.agent.mutli_agent_rl.iql_agents.IQL_Agents.train()
+
+      <ul>
+        <li><a href="documents/api/agents/marl/iql.html#xuanpolicy.torch.agent.mutli_agent_rl.iql_agents.IQL_Agents.train">built-in function</a>
+</li>
+      </ul></li>
+      <li><a href="documents/api/agents/marl/isac.html#xuanpolicy.torch.agent.mutli_agent_rl.isac_agents.ISAC_Agents">xuanpolicy.torch.agent.mutli_agent_rl.isac_agents.ISAC_Agents (built-in class)</a>
+</li>
+      <li>
+    xuanpolicy.torch.agent.mutli_agent_rl.isac_agents.ISAC_Agents.act()
+
+      <ul>
+        <li><a href="documents/api/agents/marl/isac.html#xuanpolicy.torch.agent.mutli_agent_rl.isac_agents.ISAC_Agents.act">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.agent.mutli_agent_rl.isac_agents.ISAC_Agents.train()
+
+      <ul>
+        <li><a href="documents/api/agents/marl/isac.html#xuanpolicy.torch.agent.mutli_agent_rl.isac_agents.ISAC_Agents.train">built-in function</a>
+</li>
+      </ul></li>
+      <li><a href="documents/api/agents/marl/maddpg.html#xuanpolicy.torch.agent.mutli_agent_rl.maddpg_agents.MADDPG_Agents">xuanpolicy.torch.agent.mutli_agent_rl.maddpg_agents.MADDPG_Agents (built-in class)</a>
+</li>
+      <li>
+    xuanpolicy.torch.agent.mutli_agent_rl.maddpg_agents.MADDPG_Agents.act()
+
+      <ul>
+        <li><a href="documents/api/agents/marl/maddpg.html#xuanpolicy.torch.agent.mutli_agent_rl.maddpg_agents.MADDPG_Agents.act">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.agent.mutli_agent_rl.maddpg_agents.MADDPG_Agents.train()
+
+      <ul>
+        <li><a href="documents/api/agents/marl/maddpg.html#xuanpolicy.torch.agent.mutli_agent_rl.maddpg_agents.MADDPG_Agents.train">built-in function</a>
+</li>
+      </ul></li>
+      <li><a href="documents/api/agents/marl/mappo.html#xuanpolicy.torch.agent.mutli_agent_rl.mappo_agents.MAPPO_Agents">xuanpolicy.torch.agent.mutli_agent_rl.mappo_agents.MAPPO_Agents (built-in class)</a>
+</li>
+      <li>
+    xuanpolicy.torch.agent.mutli_agent_rl.mappo_agents.MAPPO_Agents.act()
+
+      <ul>
+        <li><a href="documents/api/agents/marl/mappo.html#xuanpolicy.torch.agent.mutli_agent_rl.mappo_agents.MAPPO_Agents.act">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.agent.mutli_agent_rl.mappo_agents.MAPPO_Agents.train()
+
+      <ul>
+        <li><a href="documents/api/agents/marl/mappo.html#xuanpolicy.torch.agent.mutli_agent_rl.mappo_agents.MAPPO_Agents.train">built-in function</a>
+</li>
+      </ul></li>
+      <li><a href="documents/api/agents/marl/masac.html#xuanpolicy.torch.agent.mutli_agent_rl.masac_agents.MASAC_Agents">xuanpolicy.torch.agent.mutli_agent_rl.masac_agents.MASAC_Agents (built-in class)</a>
+</li>
+      <li>
+    xuanpolicy.torch.agent.mutli_agent_rl.masac_agents.MASAC_Agents.act()
+
+      <ul>
+        <li><a href="documents/api/agents/marl/masac.html#xuanpolicy.torch.agent.mutli_agent_rl.masac_agents.MASAC_Agents.act">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.agent.mutli_agent_rl.masac_agents.MASAC_Agents.train()
+
+      <ul>
+        <li><a href="documents/api/agents/marl/masac.html#xuanpolicy.torch.agent.mutli_agent_rl.masac_agents.MASAC_Agents.train">built-in function</a>
+</li>
+      </ul></li>
+      <li><a href="documents/api/agents/marl/matd3.html#xuanpolicy.torch.agent.mutli_agent_rl.matd3_agents.MATD3_Agents">xuanpolicy.torch.agent.mutli_agent_rl.matd3_agents.MATD3_Agents (built-in class)</a>
+</li>
+      <li>
+    xuanpolicy.torch.agent.mutli_agent_rl.matd3_agents.MATD3_Agents.act()
+
+      <ul>
+        <li><a href="documents/api/agents/marl/matd3.html#xuanpolicy.torch.agent.mutli_agent_rl.matd3_agents.MATD3_Agents.act">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.agent.mutli_agent_rl.matd3_agents.MATD3_Agents.train()
+
+      <ul>
+        <li><a href="documents/api/agents/marl/matd3.html#xuanpolicy.torch.agent.mutli_agent_rl.matd3_agents.MATD3_Agents.train">built-in function</a>
+</li>
+      </ul></li>
+      <li><a href="documents/api/agents/marl/mfq.html#xuanpolicy.torch.agent.mutli_agent_rl.mfq_agents.MFQ_Agents">xuanpolicy.torch.agent.mutli_agent_rl.mfq_agents.MFQ_Agents (built-in class)</a>
+</li>
+      <li>
+    xuanpolicy.torch.agent.mutli_agent_rl.mfq_agents.MFQ_Agents.act()
+
+      <ul>
+        <li><a href="documents/api/agents/marl/mfq.html#xuanpolicy.torch.agent.mutli_agent_rl.mfq_agents.MFQ_Agents.act">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.agent.mutli_agent_rl.mfq_agents.MFQ_Agents.train()
+
+      <ul>
+        <li><a href="documents/api/agents/marl/mfq.html#xuanpolicy.torch.agent.mutli_agent_rl.mfq_agents.MFQ_Agents.train">built-in function</a>
+</li>
+      </ul></li>
+      <li><a href="documents/api/agents/marl/qmix.html#xuanpolicy.torch.agent.mutli_agent_rl.qmix_agents.QMIX_Agents">xuanpolicy.torch.agent.mutli_agent_rl.qmix_agents.QMIX_Agents (built-in class)</a>
+</li>
+      <li>
+    xuanpolicy.torch.agent.mutli_agent_rl.qmix_agents.QMIX_Agents.act()
+
+      <ul>
+        <li><a href="documents/api/agents/marl/qmix.html#xuanpolicy.torch.agent.mutli_agent_rl.qmix_agents.QMIX_Agents.act">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.agent.mutli_agent_rl.qmix_agents.QMIX_Agents.train()
+
+      <ul>
+        <li><a href="documents/api/agents/marl/qmix.html#xuanpolicy.torch.agent.mutli_agent_rl.qmix_agents.QMIX_Agents.train">built-in function</a>
+</li>
+      </ul></li>
+      <li><a href="documents/api/agents/marl/qtran.html#xuanpolicy.torch.agent.mutli_agent_rl.qtran_agents.QTRAN_Agents">xuanpolicy.torch.agent.mutli_agent_rl.qtran_agents.QTRAN_Agents (built-in class)</a>
+</li>
+      <li>
+    xuanpolicy.torch.agent.mutli_agent_rl.qtran_agents.QTRAN_Agents.train()
+
+      <ul>
+        <li><a href="documents/api/agents/marl/qtran.html#xuanpolicy.torch.agent.mutli_agent_rl.qtran_agents.QTRAN_Agents.train">built-in function</a>
+</li>
+      </ul></li>
+      <li><a href="documents/api/agents/marl/vdn.html#xuanpolicy.torch.agent.mutli_agent_rl.vdn_agents.VDN_Agents">xuanpolicy.torch.agent.mutli_agent_rl.vdn_agents.VDN_Agents (built-in class)</a>
+</li>
+      <li>
+    xuanpolicy.torch.agent.mutli_agent_rl.vdn_agents.VDN_Agents.act()
+
+      <ul>
+        <li><a href="documents/api/agents/marl/vdn.html#xuanpolicy.torch.agent.mutli_agent_rl.vdn_agents.VDN_Agents.act">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.agent.mutli_agent_rl.vdn_agents.VDN_Agents.train()
+
+      <ul>
+        <li><a href="documents/api/agents/marl/vdn.html#xuanpolicy.torch.agent.mutli_agent_rl.vdn_agents.VDN_Agents.train">built-in function</a>
+</li>
+      </ul></li>
+      <li><a href="documents/api/agents/marl/wqmix.html#xuanpolicy.torch.agent.mutli_agent_rl.wqmix_agents.WQMIX_Agents">xuanpolicy.torch.agent.mutli_agent_rl.wqmix_agents.WQMIX_Agents (built-in class)</a>
+</li>
+      <li>
+    xuanpolicy.torch.agent.mutli_agent_rl.wqmix_agents.WQMIX_Agents.act()
+
+      <ul>
+        <li><a href="documents/api/agents/marl/wqmix.html#xuanpolicy.torch.agent.mutli_agent_rl.wqmix_agents.WQMIX_Agents.act">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.agent.mutli_agent_rl.wqmix_agents.WQMIX_Agents.train()
+
+      <ul>
+        <li><a href="documents/api/agents/marl/wqmix.html#xuanpolicy.torch.agent.mutli_agent_rl.wqmix_agents.WQMIX_Agents.train">built-in function</a>
+</li>
+      </ul></li>
+      <li><a href="documents/api/agents/drl/a2c.html#xuanpolicy.torch.agent.policy_gradient.a2c_agent.A2C_Agent">xuanpolicy.torch.agent.policy_gradient.a2c_agent.A2C_Agent (built-in class)</a>
+</li>
+      <li>
+    xuanpolicy.torch.agent.policy_gradient.a2c_agent.A2C_Agent._action()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/a2c.html#xuanpolicy.torch.agent.policy_gradient.a2c_agent.A2C_Agent._action">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.agent.policy_gradient.a2c_agent.A2C_Agent.test()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/a2c.html#xuanpolicy.torch.agent.policy_gradient.a2c_agent.A2C_Agent.test">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.agent.policy_gradient.a2c_agent.A2C_Agent.train()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/a2c.html#xuanpolicy.torch.agent.policy_gradient.a2c_agent.A2C_Agent.train">built-in function</a>
+</li>
+      </ul></li>
+      <li><a href="documents/api/agents/drl/ddpg.html#xuanpolicy.torch.agent.policy_gradient.ddpg_agent.DDPG_Agent">xuanpolicy.torch.agent.policy_gradient.ddpg_agent.DDPG_Agent (built-in class)</a>
+</li>
+      <li>
+    xuanpolicy.torch.agent.policy_gradient.ddpg_agent.DDPG_Agent._action()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/ddpg.html#xuanpolicy.torch.agent.policy_gradient.ddpg_agent.DDPG_Agent._action">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.agent.policy_gradient.ddpg_agent.DDPG_Agent.test()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/ddpg.html#xuanpolicy.torch.agent.policy_gradient.ddpg_agent.DDPG_Agent.test">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.agent.policy_gradient.ddpg_agent.DDPG_Agent.train()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/ddpg.html#xuanpolicy.torch.agent.policy_gradient.ddpg_agent.DDPG_Agent.train">built-in function</a>
+</li>
+      </ul></li>
+      <li><a href="documents/api/agents/drl/mpdqn.html#xuanpolicy.torch.agent.policy_gradient.mpdqn_agent.MPDQN_Agent">xuanpolicy.torch.agent.policy_gradient.mpdqn_agent.MPDQN_Agent (built-in class)</a>
+</li>
+      <li>
+    xuanpolicy.torch.agent.policy_gradient.mpdqn_agent.MPDQN_Agent._action()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/mpdqn.html#xuanpolicy.torch.agent.policy_gradient.mpdqn_agent.MPDQN_Agent._action">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.agent.policy_gradient.mpdqn_agent.MPDQN_Agent.pad_action()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/mpdqn.html#xuanpolicy.torch.agent.policy_gradient.mpdqn_agent.MPDQN_Agent.pad_action">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.agent.policy_gradient.mpdqn_agent.MPDQN_Agent.test()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/mpdqn.html#xuanpolicy.torch.agent.policy_gradient.mpdqn_agent.MPDQN_Agent.test">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.agent.policy_gradient.mpdqn_agent.MPDQN_Agent.train()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/mpdqn.html#xuanpolicy.torch.agent.policy_gradient.mpdqn_agent.MPDQN_Agent.train">built-in function</a>
+</li>
+      </ul></li>
+      <li><a href="documents/api/agents/drl/pdqn.html#xuanpolicy.torch.agent.policy_gradient.pdqn_agent.PDQN_Agent">xuanpolicy.torch.agent.policy_gradient.pdqn_agent.PDQN_Agent (built-in class)</a>
+</li>
+      <li>
+    xuanpolicy.torch.agent.policy_gradient.pdqn_agent.PDQN_Agent._action()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/pdqn.html#xuanpolicy.torch.agent.policy_gradient.pdqn_agent.PDQN_Agent._action">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.agent.policy_gradient.pdqn_agent.PDQN_Agent.pad_action()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/pdqn.html#xuanpolicy.torch.agent.policy_gradient.pdqn_agent.PDQN_Agent.pad_action">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.agent.policy_gradient.pdqn_agent.PDQN_Agent.test()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/pdqn.html#xuanpolicy.torch.agent.policy_gradient.pdqn_agent.PDQN_Agent.test">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.agent.policy_gradient.pdqn_agent.PDQN_Agent.train()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/pdqn.html#xuanpolicy.torch.agent.policy_gradient.pdqn_agent.PDQN_Agent.train">built-in function</a>
+</li>
+      </ul></li>
+      <li><a href="documents/api/agents/drl/pg.html#xuanpolicy.torch.agent.policy_gradient.pg_agent.PG_Agent">xuanpolicy.torch.agent.policy_gradient.pg_agent.PG_Agent (built-in class)</a>
+</li>
+      <li>
+    xuanpolicy.torch.agent.policy_gradient.pg_agent.PG_Agent._action()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/pg.html#xuanpolicy.torch.agent.policy_gradient.pg_agent.PG_Agent._action">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.agent.policy_gradient.pg_agent.PG_Agent.test()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/pg.html#xuanpolicy.torch.agent.policy_gradient.pg_agent.PG_Agent.test">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.agent.policy_gradient.pg_agent.PG_Agent.train()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/pg.html#xuanpolicy.torch.agent.policy_gradient.pg_agent.PG_Agent.train">built-in function</a>
+</li>
+      </ul></li>
+      <li><a href="documents/api/agents/drl/ppg.html#xuanpolicy.torch.agent.policy_gradient.ppg_agent.PPG_Agent">xuanpolicy.torch.agent.policy_gradient.ppg_agent.PPG_Agent (built-in class)</a>
+</li>
+      <li>
+    xuanpolicy.torch.agent.policy_gradient.ppg_agent.PPG_Agent._action()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/ppg.html#xuanpolicy.torch.agent.policy_gradient.ppg_agent.PPG_Agent._action">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.agent.policy_gradient.ppg_agent.PPG_Agent.test()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/ppg.html#xuanpolicy.torch.agent.policy_gradient.ppg_agent.PPG_Agent.test">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.agent.policy_gradient.ppg_agent.PPG_Agent.train()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/ppg.html#xuanpolicy.torch.agent.policy_gradient.ppg_agent.PPG_Agent.train">built-in function</a>
+</li>
+      </ul></li>
+      <li><a href="documents/api/agents/drl/ppo_clip.html#xuanpolicy.torch.agent.policy_gradient.ppoclip_agent.PPOCLIP_Agent">xuanpolicy.torch.agent.policy_gradient.ppoclip_agent.PPOCLIP_Agent (built-in class)</a>
+</li>
+      <li>
+    xuanpolicy.torch.agent.policy_gradient.ppoclip_agent.PPOCLIP_Agent._action()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/ppo_clip.html#xuanpolicy.torch.agent.policy_gradient.ppoclip_agent.PPOCLIP_Agent._action">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.agent.policy_gradient.ppoclip_agent.PPOCLIP_Agent.test()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/ppo_clip.html#xuanpolicy.torch.agent.policy_gradient.ppoclip_agent.PPOCLIP_Agent.test">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.agent.policy_gradient.ppoclip_agent.PPOCLIP_Agent.train()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/ppo_clip.html#xuanpolicy.torch.agent.policy_gradient.ppoclip_agent.PPOCLIP_Agent.train">built-in function</a>
+</li>
+      </ul></li>
+      <li><a href="documents/api/agents/drl/ppo_kl.html#xuanpolicy.torch.agent.policy_gradient.ppokl_agent.PPOKL_Agent">xuanpolicy.torch.agent.policy_gradient.ppokl_agent.PPOKL_Agent (built-in class)</a>
+</li>
+      <li>
+    xuanpolicy.torch.agent.policy_gradient.ppokl_agent.PPOKL_Agent._action()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/ppo_kl.html#xuanpolicy.torch.agent.policy_gradient.ppokl_agent.PPOKL_Agent._action">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.agent.policy_gradient.ppokl_agent.PPOKL_Agent.test()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/ppo_kl.html#xuanpolicy.torch.agent.policy_gradient.ppokl_agent.PPOKL_Agent.test">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.agent.policy_gradient.ppokl_agent.PPOKL_Agent.train()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/ppo_kl.html#xuanpolicy.torch.agent.policy_gradient.ppokl_agent.PPOKL_Agent.train">built-in function</a>
+</li>
+      </ul></li>
+      <li><a href="documents/api/agents/drl/sac.html#xuanpolicy.torch.agent.policy_gradient.sac_agent.SAC_Agent">xuanpolicy.torch.agent.policy_gradient.sac_agent.SAC_Agent (built-in class)</a>
+</li>
+      <li>
+    xuanpolicy.torch.agent.policy_gradient.sac_agent.SAC_Agent._action()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/sac.html#xuanpolicy.torch.agent.policy_gradient.sac_agent.SAC_Agent._action">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.agent.policy_gradient.sac_agent.SAC_Agent.test()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/sac.html#xuanpolicy.torch.agent.policy_gradient.sac_agent.SAC_Agent.test">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.agent.policy_gradient.sac_agent.SAC_Agent.train()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/sac.html#xuanpolicy.torch.agent.policy_gradient.sac_agent.SAC_Agent.train">built-in function</a>
+</li>
+      </ul></li>
+      <li><a href="documents/api/agents/drl/sac_dis.html#xuanpolicy.torch.agent.policy_gradient.sacdis_agent.SACDIS_Agent">xuanpolicy.torch.agent.policy_gradient.sacdis_agent.SACDIS_Agent (built-in class)</a>
+</li>
+      <li>
+    xuanpolicy.torch.agent.policy_gradient.sacdis_agent.SACDIS_Agent._action()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/sac_dis.html#xuanpolicy.torch.agent.policy_gradient.sacdis_agent.SACDIS_Agent._action">built-in function</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li>
+    xuanpolicy.torch.agent.policy_gradient.sacdis_agent.SACDIS_Agent.test()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/sac_dis.html#xuanpolicy.torch.agent.policy_gradient.sacdis_agent.SACDIS_Agent.test">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.agent.policy_gradient.sacdis_agent.SACDIS_Agent.train()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/sac_dis.html#xuanpolicy.torch.agent.policy_gradient.sacdis_agent.SACDIS_Agent.train">built-in function</a>
+</li>
+      </ul></li>
+      <li><a href="documents/api/agents/drl/spdqn.html#xuanpolicy.torch.agent.policy_gradient.spdqn_agent.SPDQN_Agent">xuanpolicy.torch.agent.policy_gradient.spdqn_agent.SPDQN_Agent (built-in class)</a>
+</li>
+      <li>
+    xuanpolicy.torch.agent.policy_gradient.spdqn_agent.SPDQN_Agent._action()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/spdqn.html#xuanpolicy.torch.agent.policy_gradient.spdqn_agent.SPDQN_Agent._action">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.agent.policy_gradient.spdqn_agent.SPDQN_Agent.pad_action()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/spdqn.html#xuanpolicy.torch.agent.policy_gradient.spdqn_agent.SPDQN_Agent.pad_action">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.agent.policy_gradient.spdqn_agent.SPDQN_Agent.test()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/spdqn.html#xuanpolicy.torch.agent.policy_gradient.spdqn_agent.SPDQN_Agent.test">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.agent.policy_gradient.spdqn_agent.SPDQN_Agent.train()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/spdqn.html#xuanpolicy.torch.agent.policy_gradient.spdqn_agent.SPDQN_Agent.train">built-in function</a>
+</li>
+      </ul></li>
+      <li><a href="documents/api/agents/drl/td3.html#xuanpolicy.torch.agent.policy_gradient.td3_agent.TD3_Agent">xuanpolicy.torch.agent.policy_gradient.td3_agent.TD3_Agent (built-in class)</a>
+</li>
+      <li>
+    xuanpolicy.torch.agent.policy_gradient.td3_agent.TD3_Agent._action()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/td3.html#xuanpolicy.torch.agent.policy_gradient.td3_agent.TD3_Agent._action">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.agent.policy_gradient.td3_agent.TD3_Agent.test()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/td3.html#xuanpolicy.torch.agent.policy_gradient.td3_agent.TD3_Agent.test">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.agent.policy_gradient.td3_agent.TD3_Agent.train()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/td3.html#xuanpolicy.torch.agent.policy_gradient.td3_agent.TD3_Agent.train">built-in function</a>
+</li>
+      </ul></li>
+      <li><a href="documents/api/agents/drl/c51.html#xuanpolicy.torch.agent.qlearning_family.c51_agent.C51_Agent">xuanpolicy.torch.agent.qlearning_family.c51_agent.C51_Agent (built-in class)</a>
+</li>
+      <li>
+    xuanpolicy.torch.agent.qlearning_family.c51_agent.C51_Agent._action()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/c51.html#xuanpolicy.torch.agent.qlearning_family.c51_agent.C51_Agent._action">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.agent.qlearning_family.c51_agent.C51_Agent.test()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/c51.html#xuanpolicy.torch.agent.qlearning_family.c51_agent.C51_Agent.test">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.agent.qlearning_family.c51_agent.C51_Agent.train()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/c51.html#xuanpolicy.torch.agent.qlearning_family.c51_agent.C51_Agent.train">built-in function</a>
+</li>
+      </ul></li>
+      <li><a href="documents/api/agents/drl/ddqn.html#xuanpolicy.torch.agent.qlearning_family.ddqn_agent.DDQN_Agent">xuanpolicy.torch.agent.qlearning_family.ddqn_agent.DDQN_Agent (built-in class)</a>
+</li>
+      <li>
+    xuanpolicy.torch.agent.qlearning_family.ddqn_agent.DDQN_Agent._action()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/ddqn.html#xuanpolicy.torch.agent.qlearning_family.ddqn_agent.DDQN_Agent._action">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.agent.qlearning_family.ddqn_agent.DDQN_Agent.test()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/ddqn.html#xuanpolicy.torch.agent.qlearning_family.ddqn_agent.DDQN_Agent.test">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.agent.qlearning_family.ddqn_agent.DDQN_Agent.train()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/ddqn.html#xuanpolicy.torch.agent.qlearning_family.ddqn_agent.DDQN_Agent.train">built-in function</a>
+</li>
+      </ul></li>
+      <li><a href="documents/api/agents/drl/dqn.html#xuanpolicy.torch.agent.qlearning_family.dqn_agent.DQN_Agent">xuanpolicy.torch.agent.qlearning_family.dqn_agent.DQN_Agent (built-in class)</a>
+</li>
+      <li>
+    xuanpolicy.torch.agent.qlearning_family.dqn_agent.DQN_Agent._action()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/dqn.html#xuanpolicy.torch.agent.qlearning_family.dqn_agent.DQN_Agent._action">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.agent.qlearning_family.dqn_agent.DQN_Agent.test()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/dqn.html#xuanpolicy.torch.agent.qlearning_family.dqn_agent.DQN_Agent.test">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.agent.qlearning_family.dqn_agent.DQN_Agent.train()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/dqn.html#xuanpolicy.torch.agent.qlearning_family.dqn_agent.DQN_Agent.train">built-in function</a>
+</li>
+      </ul></li>
+      <li><a href="documents/api/agents/drl/dueldqn.html#xuanpolicy.torch.agent.qlearning_family.dueldqn_agent.DuelDQN_Agent">xuanpolicy.torch.agent.qlearning_family.dueldqn_agent.DuelDQN_Agent (built-in class)</a>
+</li>
+      <li>
+    xuanpolicy.torch.agent.qlearning_family.dueldqn_agent.DuelDQN_Agent._action()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/dueldqn.html#xuanpolicy.torch.agent.qlearning_family.dueldqn_agent.DuelDQN_Agent._action">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.agent.qlearning_family.dueldqn_agent.DuelDQN_Agent.test()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/dueldqn.html#xuanpolicy.torch.agent.qlearning_family.dueldqn_agent.DuelDQN_Agent.test">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.agent.qlearning_family.dueldqn_agent.DuelDQN_Agent.train()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/dueldqn.html#xuanpolicy.torch.agent.qlearning_family.dueldqn_agent.DuelDQN_Agent.train">built-in function</a>
+</li>
+      </ul></li>
+      <li><a href="documents/api/agents/drl/noisydqn.html#xuanpolicy.torch.agent.qlearning_family.noisydqn_agent.NoisyDQN_Agent">xuanpolicy.torch.agent.qlearning_family.noisydqn_agent.NoisyDQN_Agent (built-in class)</a>
+</li>
+      <li>
+    xuanpolicy.torch.agent.qlearning_family.noisydqn_agent.NoisyDQN_Agent._action()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/noisydqn.html#xuanpolicy.torch.agent.qlearning_family.noisydqn_agent.NoisyDQN_Agent._action">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.agent.qlearning_family.noisydqn_agent.NoisyDQN_Agent.test()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/noisydqn.html#xuanpolicy.torch.agent.qlearning_family.noisydqn_agent.NoisyDQN_Agent.test">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.agent.qlearning_family.noisydqn_agent.NoisyDQN_Agent.train()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/noisydqn.html#xuanpolicy.torch.agent.qlearning_family.noisydqn_agent.NoisyDQN_Agent.train">built-in function</a>
+</li>
+      </ul></li>
+      <li><a href="documents/api/agents/drl/perdqn.html#xuanpolicy.torch.agent.qlearning_family.perdqn_agent.PerDQN_Agent">xuanpolicy.torch.agent.qlearning_family.perdqn_agent.PerDQN_Agent (built-in class)</a>
+</li>
+      <li>
+    xuanpolicy.torch.agent.qlearning_family.perdqn_agent.PerDQN_Agent._action()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/perdqn.html#xuanpolicy.torch.agent.qlearning_family.perdqn_agent.PerDQN_Agent._action">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.agent.qlearning_family.perdqn_agent.PerDQN_Agent.test()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/perdqn.html#xuanpolicy.torch.agent.qlearning_family.perdqn_agent.PerDQN_Agent.test">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.agent.qlearning_family.perdqn_agent.PerDQN_Agent.train()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/perdqn.html#xuanpolicy.torch.agent.qlearning_family.perdqn_agent.PerDQN_Agent.train">built-in function</a>
+</li>
+      </ul></li>
+      <li><a href="documents/api/agents/drl/qrdqn.html#xuanpolicy.torch.agent.qlearning_family.qrdqn_agent.QRDQN_Agent">xuanpolicy.torch.agent.qlearning_family.qrdqn_agent.QRDQN_Agent (built-in class)</a>
+</li>
+      <li>
+    xuanpolicy.torch.agent.qlearning_family.qrdqn_agent.QRDQN_Agent._action()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/qrdqn.html#xuanpolicy.torch.agent.qlearning_family.qrdqn_agent.QRDQN_Agent._action">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.agent.qlearning_family.qrdqn_agent.QRDQN_Agent.test()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/qrdqn.html#xuanpolicy.torch.agent.qlearning_family.qrdqn_agent.QRDQN_Agent.test">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.agent.qlearning_family.qrdqn_agent.QRDQN_Agent.train()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/qrdqn.html#xuanpolicy.torch.agent.qlearning_family.qrdqn_agent.QRDQN_Agent.train">built-in function</a>
+</li>
+      </ul></li>
+      <li><a href="documents/api/agents/drl/basic_drl_class.html#xuanpolicy.torch.agents.agent.Agent">xuanpolicy.torch.agents.agent.Agent (built-in class)</a>
+</li>
+      <li>
+    xuanpolicy.torch.agents.agent.Agent._action()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/basic_drl_class.html#xuanpolicy.torch.agents.agent.Agent._action">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.agents.agent.Agent._process_observation()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/basic_drl_class.html#xuanpolicy.torch.agents.agent.Agent._process_observation">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.agents.agent.Agent._process_reward()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/basic_drl_class.html#xuanpolicy.torch.agents.agent.Agent._process_reward">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.agents.agent.Agent.finish()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/basic_drl_class.html#xuanpolicy.torch.agents.agent.Agent.finish">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.agents.agent.Agent.load_model()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/basic_drl_class.html#xuanpolicy.torch.agents.agent.Agent.load_model">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.agents.agent.Agent.log_infos()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/basic_drl_class.html#xuanpolicy.torch.agents.agent.Agent.log_infos">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.agents.agent.Agent.log_videos()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/basic_drl_class.html#xuanpolicy.torch.agents.agent.Agent.log_videos">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.agents.agent.Agent.save_model()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/basic_drl_class.html#xuanpolicy.torch.agents.agent.Agent.save_model">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.agents.agent.Agent.test()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/basic_drl_class.html#xuanpolicy.torch.agents.agent.Agent.test">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.agents.agent.Agent.train()
+
+      <ul>
+        <li><a href="documents/api/agents/drl/basic_drl_class.html#xuanpolicy.torch.agents.agent.Agent.train">built-in function</a>
+</li>
+      </ul></li>
+      <li><a href="documents/api/agents/marl/basic_marl_class.html#xuanpolicy.torch.agents.agents_marl.linear_decay_or_increase">xuanpolicy.torch.agents.agents_marl.linear_decay_or_increase (built-in class)</a>
+</li>
+      <li>
+    xuanpolicy.torch.agents.agents_marl.linear_decay_or_increase.update()
+
+      <ul>
+        <li><a href="documents/api/agents/marl/basic_marl_class.html#xuanpolicy.torch.agents.agents_marl.linear_decay_or_increase.update">built-in function</a>
+</li>
+      </ul></li>
+      <li><a href="documents/api/agents/marl/basic_marl_class.html#xuanpolicy.torch.agents.agents_marl.MARLAgent">xuanpolicy.torch.agents.agents_marl.MARLAgent (built-in class)</a>
+</li>
+      <li>
+    xuanpolicy.torch.agents.agents_marl.MARLAgent.act()
+
+      <ul>
+        <li><a href="documents/api/agents/marl/basic_marl_class.html#xuanpolicy.torch.agents.agents_marl.MARLAgent.act">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.agents.agents_marl.MARLAgent.load_model()
+
+      <ul>
+        <li><a href="documents/api/agents/marl/basic_marl_class.html#xuanpolicy.torch.agents.agents_marl.MARLAgent.load_model">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.agents.agents_marl.MARLAgent.save_model()
+
+      <ul>
+        <li><a href="documents/api/agents/marl/basic_marl_class.html#xuanpolicy.torch.agents.agents_marl.MARLAgent.save_model">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.agents.agents_marl.MARLAgent.train()
+
+      <ul>
+        <li><a href="documents/api/agents/marl/basic_marl_class.html#xuanpolicy.torch.agents.agents_marl.MARLAgent.train">built-in function</a>
+</li>
+      </ul></li>
+      <li><a href="documents/api/agents/marl/basic_marl_class.html#xuanpolicy.torch.agents.agents_marl.RandomAgents">xuanpolicy.torch.agents.agents_marl.RandomAgents (built-in class)</a>
+</li>
+      <li>
+    xuanpolicy.torch.agents.agents_marl.RandomAgents.act()
+
+      <ul>
+        <li><a href="documents/api/agents/marl/basic_marl_class.html#xuanpolicy.torch.agents.agents_marl.RandomAgents.act">built-in function</a>
+</li>
+      </ul></li>
+      <li><a href="documents/api/learners/learner.html#xuanpolicy.torch.learners.learner.Learner">xuanpolicy.torch.learners.learner.Learner (built-in class)</a>
+</li>
+      <li>
+    xuanpolicy.torch.learners.learner.Learner.load_model()
+
+      <ul>
+        <li><a href="documents/api/learners/learner.html#xuanpolicy.torch.learners.learner.Learner.load_model">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.learners.learner.Learner.save_model()
+
+      <ul>
+        <li><a href="documents/api/learners/learner.html#xuanpolicy.torch.learners.learner.Learner.save_model">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.learners.learner.Learner.update()
+
+      <ul>
+        <li><a href="documents/api/learners/learner.html#xuanpolicy.torch.learners.learner.Learner.update">built-in function</a>
+</li>
+      </ul></li>
+      <li><a href="documents/api/representations/cnn.html#xuanpolicy.torch.representations.cnn.AC_CNN_Atari">xuanpolicy.torch.representations.cnn.AC_CNN_Atari (built-in class)</a>
+</li>
+      <li>
+    xuanpolicy.torch.representations.cnn.AC_CNN_Atari._create_network()
+
+      <ul>
+        <li><a href="documents/api/representations/cnn.html#xuanpolicy.torch.representations.cnn.AC_CNN_Atari._create_network">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.representations.cnn.AC_CNN_Atari._init_layer()
+
+      <ul>
+        <li><a href="documents/api/representations/cnn.html#xuanpolicy.torch.representations.cnn.AC_CNN_Atari._init_layer">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.representations.cnn.AC_CNN_Atari.forward()
+
+      <ul>
+        <li><a href="documents/api/representations/cnn.html#xuanpolicy.torch.representations.cnn.AC_CNN_Atari.forward">built-in function</a>
+</li>
+      </ul></li>
+      <li><a href="documents/api/representations/cnn.html#xuanpolicy.torch.representations.cnn.Basic_CNN">xuanpolicy.torch.representations.cnn.Basic_CNN (built-in class)</a>
+</li>
+      <li>
+    xuanpolicy.torch.representations.cnn.Basic_CNN._create_network()
+
+      <ul>
+        <li><a href="documents/api/representations/cnn.html#xuanpolicy.torch.representations.cnn.Basic_CNN._create_network">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.representations.cnn.Basic_CNN.forward()
+
+      <ul>
+        <li><a href="documents/api/representations/cnn.html#xuanpolicy.torch.representations.cnn.Basic_CNN.forward">built-in function</a>
+</li>
+      </ul></li>
+      <li><a href="documents/api/representations/mlp.html#xuanpolicy.torch.representations.mlp.Basic_Identical">xuanpolicy.torch.representations.mlp.Basic_Identical (built-in class)</a>
+</li>
+      <li>
+    xuanpolicy.torch.representations.mlp.Basic_Identical.forward()
+
+      <ul>
+        <li><a href="documents/api/representations/mlp.html#xuanpolicy.torch.representations.mlp.Basic_Identical.forward">built-in function</a>
+</li>
+      </ul></li>
+      <li><a href="documents/api/representations/mlp.html#xuanpolicy.torch.representations.mlp.Basic_MLP">xuanpolicy.torch.representations.mlp.Basic_MLP (built-in class)</a>
+</li>
+      <li>
+    xuanpolicy.torch.representations.mlp.Basic_MLP._create_network()
+
+      <ul>
+        <li><a href="documents/api/representations/mlp.html#xuanpolicy.torch.representations.mlp.Basic_MLP._create_network">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.representations.mlp.Basic_MLP.forward()
+
+      <ul>
+        <li><a href="documents/api/representations/mlp.html#xuanpolicy.torch.representations.mlp.Basic_MLP.forward">built-in function</a>
+</li>
+      </ul></li>
+      <li><a href="documents/api/representations/rnn.html#xuanpolicy.torch.representations.rnn.Basic_RNN">xuanpolicy.torch.representations.rnn.Basic_RNN (built-in class)</a>
+</li>
+      <li>
+    xuanpolicy.torch.representations.rnn.Basic_RNN._create_network()
+
+      <ul>
+        <li><a href="documents/api/representations/rnn.html#xuanpolicy.torch.representations.rnn.Basic_RNN._create_network">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.representations.rnn.Basic_RNN.forward()
+
+      <ul>
+        <li><a href="documents/api/representations/rnn.html#xuanpolicy.torch.representations.rnn.Basic_RNN.forward">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.representations.rnn.Basic_RNN.get_hidden_item()
+
+      <ul>
+        <li><a href="documents/api/representations/rnn.html#xuanpolicy.torch.representations.rnn.Basic_RNN.get_hidden_item">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.representations.rnn.Basic_RNN.init_hidden()
+
+      <ul>
+        <li><a href="documents/api/representations/rnn.html#xuanpolicy.torch.representations.rnn.Basic_RNN.init_hidden">built-in function</a>
+</li>
+      </ul></li>
+      <li>
+    xuanpolicy.torch.representations.rnn.Basic_RNN.init_hidden_item()
+
+      <ul>
+        <li><a href="documents/api/representations/rnn.html#xuanpolicy.torch.representations.rnn.Basic_RNN.init_hidden_item">built-in function</a>
+</li>
+      </ul></li>
+  </ul></td>
+</tr></table>
+
 
 
            </div>
@@ -100,7 +1306,7 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2023, Wenzhang Liu, Wenzhe Cai, Kun Jiang, Yuanda Wang, Guangran Cheng, Jiawei Wang, Jingyu Cao, Lele Xu, Chaoxu Mu, and Changyin Sun.</p>
+    <p>&#169; Copyright 2023, XuanPolicy contributors.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

@@ -26,6 +26,15 @@ and hope it can really become a zoo full of DRL algorithms.
 .. _TensorFlow: https://www.tensorflow.org/
 .. _MindSpore: https://www.mindspore.cn/en
 
+Currently, THe XuanPolicy has been open-sourced on GitHub and OpenI:
+
+| **GitHub**： `https://github.com/agi-brain/xuanpolicy.git <https://github.com/agi-brain/xuanpolicy.git/>`_
+| **OpenI**： `https://github.com/agi-brain/xuanpolicy.git <https://github.com/agi-brain/xuanpolicy.git/>`_
+
+.. raw:: html
+
+   <br><hr>
+
 .. toctree::
    :maxdepth: 1
    :caption: How to use:
@@ -36,17 +45,17 @@ and hope it can really become a zoo full of DRL algorithms.
 
 .. toctree::
    :maxdepth: 1
-   :caption: APIs:
+   :caption: API:
 
-   documents/apis/common
-   documents/apis/environment
-   
-.. toctree::
-   :maxdepth: 1
-   :caption: Included algorithms:
-
-   documents/agents/index_drl
-   documents/agents/index_marl
+   documents/api/agents.rst
+   documents/api/representations
+   documents/api/policies
+   documents/api/learners
+   documents/api/runners
+   documents/api/utils
+   documents/api/configs
+   documents/api/common
+   documents/api/environments
 
 .. toctree::
    :maxdepth: 1
@@ -58,6 +67,16 @@ and hope it can really become a zoo full of DRL algorithms.
    documents/benchmark/mpe
    documents/benchmark/magent
 
+.. toctree::
+   :maxdepth: 1
+   :caption: Algorithms:
+
+   documents/algorithms/index_drl
+   documents/algorithms/index_marl
+
+.. raw:: html
+
+   <br><hr>
 
 Indices and tables
 ==================

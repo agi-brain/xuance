@@ -1,14 +1,16 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MuJoCo benchmarks &mdash; XuanPolicy v0.1.7 documentation</title>
+  <title>MuJoCo benchmarks &mdash; 玄策 v0.1.11 documentation</title>
       <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/fonts.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/copybutton.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/tabs.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
@@ -16,7 +18,11 @@
         <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
         <script src="../../_static/jquery.js"></script>
         <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+        <script src="../../_static/clipboard.min.js"></script>
+        <script src="../../_static/copybutton.js"></script>
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
@@ -29,12 +35,16 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-            <a href="../../index.html" class="icon icon-home"> XuanPolicy
-            <img src="../../_static/logo_2.png" class="logo" alt="Logo"/>
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            玄策
+              <img src="../../_static/logo_2.png" class="logo" alt="Logo"/>
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
@@ -46,15 +56,17 @@
 <li class="toctree-l1"><a class="reference internal" href="../usage/basic_usage.html">Quick Start</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../usage/professional_usage.html">Professional Usage</a></li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">APIs:</span></p>
+<p class="caption" role="heading"><span class="caption-text">API:</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../apis/common.html">common</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../apis/environment.html">environments</a></li>
-</ul>
-<p class="caption" role="heading"><span class="caption-text">Included algorithms:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../agents/index_drl.html">Deep Reinforcement Learning</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../agents/index_marl.html">Multi-Agent Reinforcement Learning</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/agents.html">Agents</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/representations.html">Representations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/policies.html">Policies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/learners.html">Learners</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/runners.html">Runners</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/utils.html">Utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/configs.html">Configs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/common.html">Common</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/environments.html">Environments</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Benchmarks</span></p>
 <ul class="current">
@@ -68,6 +80,11 @@
 <li class="toctree-l1"><a class="reference internal" href="mpe.html">MPE benchmarks</a></li>
 <li class="toctree-l1"><a class="reference internal" href="magent.html">Magent benchmarks</a></li>
 </ul>
+<p class="caption" role="heading"><span class="caption-text">Algorithms:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../algorithms/index_drl.html">Deep Reinforcement Learning</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../algorithms/index_marl.html">Multi-Agent Reinforcement Learning</a></li>
+</ul>
 
         </div>
       </div>
@@ -75,14 +92,14 @@
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../../index.html">XuanPolicy</a>
+          <a href="../../index.html">玄策</a>
       </nav>
 
       <div class="wy-nav-content">
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="../../index.html" class="icon icon-home"></a></li>
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
       <li class="breadcrumb-item active">MuJoCo benchmarks</li>
       <li class="wy-breadcrumbs-aside">
             <a href="../../_sources/documents/benchmark/mujoco.rst.txt" rel="nofollow"> View page source</a>
@@ -94,9 +111,9 @@
            <div itemprop="articleBody">
              
   <section id="mujoco-benchmarks">
-<h1>MuJoCo benchmarks<a class="headerlink" href="#mujoco-benchmarks" title="Permalink to this headline">¶</a></h1>
+<h1>MuJoCo benchmarks<a class="headerlink" href="#mujoco-benchmarks" title="Permalink to this heading">¶</a></h1>
 <section id="scenarios">
-<h2>Scenarios<a class="headerlink" href="#scenarios" title="Permalink to this headline">¶</a></h2>
+<h2>Scenarios<a class="headerlink" href="#scenarios" title="Permalink to this heading">¶</a></h2>
 <a class="reference internal image-reference" href="../../_images/ant.gif"><img alt="../../_images/ant.gif" src="../../_images/ant.gif" style="height: 150px;" /></a>
 <a class="reference internal image-reference" href="../../_images/half_cheetah.gif"><img alt="../../_images/half_cheetah.gif" src="../../_images/half_cheetah.gif" style="height: 150px;" /></a>
 <a class="reference internal image-reference" href="../../_images/hopper.gif"><img alt="../../_images/hopper.gif" src="../../_images/hopper.gif" style="height: 150px;" /></a>
@@ -104,21 +121,8 @@
 </section>
 <hr class="docutils" />
 <section id="results">
-<h2>Results<a class="headerlink" href="#results" title="Permalink to this headline">¶</a></h2>
+<h2>Results<a class="headerlink" href="#results" title="Permalink to this heading">¶</a></h2>
 <table class="docutils align-default">
-<colgroup>
-<col style="width: 6%" />
-<col style="width: 11%" />
-<col style="width: 7%" />
-<col style="width: 12%" />
-<col style="width: 7%" />
-<col style="width: 9%" />
-<col style="width: 8%" />
-<col style="width: 9%" />
-<col style="width: 8%" />
-<col style="width: 10%" />
-<col style="width: 11%" />
-</colgroup>
 <tbody>
 <tr class="row-odd"><td><p>Task</p></td>
 <td></td>
@@ -328,7 +332,7 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2023, Wenzhang Liu, Wenzhe Cai, Kun Jiang, Yuanda Wang, Guangran Cheng, Jiawei Wang, Jingyu Cao, Lele Xu, Chaoxu Mu, and Changyin Sun.</p>
+    <p>&#169; Copyright 2023, XuanPolicy contributors.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

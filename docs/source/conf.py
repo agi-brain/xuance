@@ -6,15 +6,19 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = 'XuanPolicy'
-copyright = '2023, Wenzhang Liu, Wenzhe Cai, Kun Jiang, Yuanda Wang, Guangran Cheng, Jiawei Wang, Jingyu Cao, Lele Xu, Chaoxu Mu, and Changyin Sun'
-author = 'Wenzhang Liu, Wenzhe Cai, Kun Jiang, Yuanda Wang, Guangran Cheng, Jiawei Wang, Jingyu Cao, Lele Xu, Chaoxu Mu, and Changyin Sun'
-release = 'v0.1.7'
+project = '玄策'
+copyright = '2023, XuanPolicy contributors'
+author = 'XuanPolicy contributors'
+release = 'v0.1.11'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
-extensions = ['renku_sphinx_theme']
+extensions = [
+    'renku_sphinx_theme',
+    'sphinx_copybutton',
+    'sphinx_tabs.tabs',
+]
 
 templates_path = ['_templates']
 exclude_patterns = []
