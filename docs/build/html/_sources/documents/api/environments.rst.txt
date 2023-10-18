@@ -14,9 +14,9 @@ Customized Environments
 If the simulation environment used by the user is not listed in Table 1, it can be wrapped and stored in the "./environment" directory.
 The specific steps for adding are as follows:
 
-步骤一：
+**Step 1**:
 
-
+To create a folder named "myenv" (you can choose the name), and navigate into the "myenv" folder, follow these steps:
 
 .. code-block:: python
 
@@ -43,15 +43,20 @@ The specific steps for adding are as follows:
         def close(self)
             self.env.close()
 
-步骤二：在./environment/__init__.py文件中导入自定义的环境类My_Env。
+**Step 2**:
+
+To import the custom environment class My_Env in the ./environment/__init__.py file, you can use the following code:
 
 .. code-block:: python
 
     from .myenv.my_env import My_Env
 
-向量化仿真环境
-----------------------
-为了提高采样效率，节省算法运行时间，本软件支持向量化仿真环境设置，即运行多个仿真环境同时采样。
-向量化环境基类VecEnv的定义位于./environment/vector_envs/vector_env.py文件中，
-在此基类上定义继承类DummyVecEnv及DummyVecEnv_MAS，分别用于实现单智能体和多智能体向量化仿真环境，
-代码位于./environment/vector_envs/dummy_vec_env.py文件中。
+
+Vectorize the Environment
+----------------------------------------
+
+To improve sampling efficiency and save algorithm running time, this software supports setting up a vectorized simulation environment, which involves running multiple simulation environments simultaneously for sampling.
+
+The definition of the base class for vectorized environments, `VecEnv`, can be found in the `./environment/vector_envs/vector_env.py` file.
+
+On top of this base class, there are two inherited classes: `DummyVecEnv` and `DummyVecEnv_MAS`. They are respectively used to implement vectorized simulation environments for single-agent and multi-agent scenarios. The code for these classes can be found in the `./environment/vector_envs/dummy_vec_env.py` file.

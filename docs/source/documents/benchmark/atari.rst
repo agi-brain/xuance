@@ -1,7 +1,7 @@
 Atari benchmarks
 ==========================
 
-环境介绍
+Environments
 --------------------------
 
 .. image:: ../../figures/atari/adventure.gif

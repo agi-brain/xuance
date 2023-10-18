@@ -8,6 +8,7 @@ Their definitions can be found in `./xuanpolicy/torch/utils/layers.py` , `./xuan
 To instantiate these classes, you need to specify the input dimension (`input_dim`), output dimension (`output_dim`), pruning method (`dropout`), and initialization method (`initialize`).
 
 Similarly, when implementing these classes in PyTorch, you also need to specify the device type (`device`) to determine whether the model runs on CPU or GPU.
+
 .. raw:: html
 
     <br><hr>

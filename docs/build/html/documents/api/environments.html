@@ -69,7 +69,7 @@
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Environments</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#included-environments">Included Environments</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#customized-environments">Customized Environments</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#id1">向量化仿真环境</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#vectorize-the-environment">Vectorize the Environment</a></li>
 </ul>
 </li>
 </ul>
@@ -123,7 +123,8 @@ Each simulation environment contains a rich variety of task scenarios, as shown 
 <h2>Customized Environments<a class="headerlink" href="#customized-environments" title="Permalink to this heading">¶</a></h2>
 <p>If the simulation environment used by the user is not listed in Table 1, it can be wrapped and stored in the “./environment” directory.
 The specific steps for adding are as follows:</p>
-<p>步骤一：</p>
+<p><strong>Step 1</strong>:</p>
+<p>To create a folder named “myenv” (you can choose the name), and navigate into the “myenv” folder, follow these steps:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">My_Env</span><span class="p">(</span><span class="n">gym</span><span class="o">.</span><span class="n">Env</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="n">env_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">env</span> <span class="o">=</span> <span class="n">make_env</span><span class="p">(</span><span class="n">env_id</span><span class="p">)</span>
@@ -148,17 +149,17 @@ The specific steps for adding are as follows:</p>
         <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 </pre></div>
 </div>
-<p>步骤二：在./environment/__init__.py文件中导入自定义的环境类My_Env。</p>
+<p><strong>Step 2</strong>:</p>
+<p>To import the custom environment class My_Env in the ./environment/__init__.py file, you can use the following code:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">.myenv.my_env</span> <span class="kn">import</span> <span class="n">My_Env</span>
 </pre></div>
 </div>
 </section>
-<section id="id1">
-<h2>向量化仿真环境<a class="headerlink" href="#id1" title="Permalink to this heading">¶</a></h2>
-<p>为了提高采样效率，节省算法运行时间，本软件支持向量化仿真环境设置，即运行多个仿真环境同时采样。
-向量化环境基类VecEnv的定义位于./environment/vector_envs/vector_env.py文件中，
-在此基类上定义继承类DummyVecEnv及DummyVecEnv_MAS，分别用于实现单智能体和多智能体向量化仿真环境，
-代码位于./environment/vector_envs/dummy_vec_env.py文件中。</p>
+<section id="vectorize-the-environment">
+<h2>Vectorize the Environment<a class="headerlink" href="#vectorize-the-environment" title="Permalink to this heading">¶</a></h2>
+<p>To improve sampling efficiency and save algorithm running time, this software supports setting up a vectorized simulation environment, which involves running multiple simulation environments simultaneously for sampling.</p>
+<p>The definition of the base class for vectorized environments, <cite>VecEnv</cite>, can be found in the <cite>./environment/vector_envs/vector_env.py</cite> file.</p>
+<p>On top of this base class, there are two inherited classes: <cite>DummyVecEnv</cite> and <cite>DummyVecEnv_MAS</cite>. They are respectively used to implement vectorized simulation environments for single-agent and multi-agent scenarios. The code for these classes can be found in the <cite>./environment/vector_envs/dummy_vec_env.py</cite> file.</p>
 </section>
 </section>
 

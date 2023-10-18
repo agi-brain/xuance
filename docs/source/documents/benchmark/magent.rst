@@ -1,7 +1,7 @@
 Magent benchmarks
 ==========================
 
-环境介绍
+Environments
 --------------------------
 
 .. image:: ../../figures/magent/battle.gif

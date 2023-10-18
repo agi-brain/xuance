@@ -1,7 +1,7 @@
 Toy benchmarks
 ==========================
 
-环境介绍
+Environments
 --------------------------
 
 .. image:: ../../figures/toy/cart_pole.gif
