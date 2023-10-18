@@ -12,9 +12,6 @@ Step 1: Create config file
 A config file should contains the necessary arguments of a DQN agent, and should be a YAML file.
 Here we show a config file named "dqn_cartpole.yaml" for CartPole-v0 environment of gym.
 
-::
-
-
 
 Step 2: Build environments
 --------------------------------

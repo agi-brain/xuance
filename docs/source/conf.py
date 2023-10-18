@@ -6,7 +6,7 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = '玄策'
+project = 'XuanPolicy'
 copyright = '2023, XuanPolicy contributors'
 author = 'XuanPolicy contributors'
 release = 'v0.1.11'

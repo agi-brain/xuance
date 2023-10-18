@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Environments &mdash; 玄策 v0.1.11 documentation</title>
+  <title>Environments &mdash; XuanPolicy v0.1.11 documentation</title>
       <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
@@ -39,7 +39,7 @@
           
           
           <a href="../../index.html" class="icon icon-home">
-            玄策
+            XuanPolicy
               <img src="../../_static/logo_2.png" class="logo" alt="Logo"/>
           </a>
 <div role="search">
@@ -67,9 +67,9 @@
 <li class="toctree-l1"><a class="reference internal" href="configs.html">Configs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="common.html">Common</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Environments</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#id1">算法库支持的仿真环境</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#id2">用户自定义环境</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#id3">向量化仿真环境</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#included-environments">Included Environments</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#customized-environments">Customized Environments</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id1">向量化仿真环境</a></li>
 </ul>
 </li>
 </ul>
@@ -93,7 +93,7 @@
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../../index.html">玄策</a>
+          <a href="../../index.html">XuanPolicy</a>
       </nav>
 
       <div class="wy-nav-content">
@@ -113,17 +113,17 @@
              
   <section id="environments">
 <h1>Environments<a class="headerlink" href="#environments" title="Permalink to this heading">¶</a></h1>
-<section id="id1">
-<h2>算法库支持的仿真环境<a class="headerlink" href="#id1" title="Permalink to this heading">¶</a></h2>
-<p>本软件包含的单智能体任务仿真环境有gym下的Atari，Mujoco，Classic Control，Box2D。
-包含的多智能体任务仿真环境有PettingZoo开源环境下的MPE和SISL，StarCraft2，MAgent2，Google Football环境等。
-每个仿真环境下包含丰富的任务场景，如下表所示。</p>
+<section id="included-environments">
+<h2>Included Environments<a class="headerlink" href="#included-environments" title="Permalink to this heading">¶</a></h2>
+<p>The software includes single agent task simulation environments such as Atari, Mujoco, Classic Control, and Box2D under gym.
+It also includes multi-agent task simulation environments such as MPE and SISL under the open-source environment PettingZoo, StarCraft2, MAgent2, Google Football, etc.
+Each simulation environment contains a rich variety of task scenarios, as shown in the table below.</p>
 </section>
-<section id="id2">
-<h2>用户自定义环境<a class="headerlink" href="#id2" title="Permalink to this heading">¶</a></h2>
-<p>若用户所使用的仿真环境不在表1中，可对环境进行二次封装并存放至./environment目录下。具体添加方法如下：</p>
+<section id="customized-environments">
+<h2>Customized Environments<a class="headerlink" href="#customized-environments" title="Permalink to this heading">¶</a></h2>
+<p>If the simulation environment used by the user is not listed in Table 1, it can be wrapped and stored in the “./environment” directory.
+The specific steps for adding are as follows:</p>
 <p>步骤一：</p>
-<p>在./environment目录下创建文件夹myenv（名称自拟），进入myenv文件件并创建my_env.py文件（文件名自拟），编写如下内容：</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">My_Env</span><span class="p">(</span><span class="n">gym</span><span class="o">.</span><span class="n">Env</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="n">env_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">env</span> <span class="o">=</span> <span class="n">make_env</span><span class="p">(</span><span class="n">env_id</span><span class="p">)</span>
@@ -153,8 +153,8 @@
 </pre></div>
 </div>
 </section>
-<section id="id3">
-<h2>向量化仿真环境<a class="headerlink" href="#id3" title="Permalink to this heading">¶</a></h2>
+<section id="id1">
+<h2>向量化仿真环境<a class="headerlink" href="#id1" title="Permalink to this heading">¶</a></h2>
 <p>为了提高采样效率，节省算法运行时间，本软件支持向量化仿真环境设置，即运行多个仿真环境同时采样。
 向量化环境基类VecEnv的定义位于./environment/vector_envs/vector_env.py文件中，
 在此基类上定义继承类DummyVecEnv及DummyVecEnv_MAS，分别用于实现单智能体和多智能体向量化仿真环境，

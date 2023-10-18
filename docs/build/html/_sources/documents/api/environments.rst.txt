@@ -1,20 +1,23 @@
 Environments
 ======================
 
-算法库支持的仿真环境
-----------------------
-本软件包含的单智能体任务仿真环境有gym下的Atari，Mujoco，Classic Control，Box2D。
-包含的多智能体任务仿真环境有PettingZoo开源环境下的MPE和SISL，StarCraft2，MAgent2，Google Football环境等。
-每个仿真环境下包含丰富的任务场景，如下表所示。
-
-用户自定义环境
+Included Environments
 ----------------------
 
-若用户所使用的仿真环境不在表1中，可对环境进行二次封装并存放至./environment目录下。具体添加方法如下：
+The software includes single agent task simulation environments such as Atari, Mujoco, Classic Control, and Box2D under gym.
+It also includes multi-agent task simulation environments such as MPE and SISL under the open-source environment PettingZoo, StarCraft2, MAgent2, Google Football, etc.
+Each simulation environment contains a rich variety of task scenarios, as shown in the table below.
+
+Customized Environments
+-------------------------
+
+If the simulation environment used by the user is not listed in Table 1, it can be wrapped and stored in the "./environment" directory.
+The specific steps for adding are as follows:
 
 步骤一：
 
-在./environment目录下创建文件夹myenv（名称自拟），进入myenv文件件并创建my_env.py文件（文件名自拟），编写如下内容：
+
+
 ::
 
     class My_Env(gym.Env):
