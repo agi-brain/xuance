@@ -93,11 +93,7 @@
 <li class="toctree-l2"><a class="reference internal" href="ippo.html">IPPO_Agents</a></li>
 <li class="toctree-l2"><a class="reference internal" href="mappo.html">MAPPO_Agents</a></li>
 <li class="toctree-l2"><a class="reference internal" href="matd3.html">MATD3_Agents</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">VDAC_Agents</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#id1">算法描述</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#id2">算法出处</a></li>
-</ul>
-</li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">VDAC_Agents</a></li>
 <li class="toctree-l2"><a class="reference internal" href="coma.html">COMA_Agents</a></li>
 <li class="toctree-l2"><a class="reference internal" href="mfq.html">MFQ_Agents</a></li>
 <li class="toctree-l2"><a class="reference internal" href="mfac.html">MFAC_Agents</a></li>
@@ -153,29 +149,6 @@
              
   <section id="vdac">
 <h1>VDAC<a class="headerlink" href="#vdac" title="Permalink to this heading">¶</a></h1>
-<section id="id1">
-<h2>算法描述<a class="headerlink" href="#id1" title="Permalink to this heading">¶</a></h2>
-<p>VDAC算法全称为Value Decomposition Actor-Critic，是一种基于Actor-Critic的多智能体强化学习算法。
-VDAC算法发扬了VDN算法和A2C算法的优势，将值函数分解思想引入Actor-Critic结构中，实现多智能体分布式策略的优化。</p>
-<p>在本算法库中，VDAC的结构和A2C相同，不同之处在于VDAC将各智能体独立的Q值经过VDN mixer得到整体Q值，进而实现端到端训练。</p>
-</section>
-<section id="id2">
-<h2>算法出处<a class="headerlink" href="#id2" title="Permalink to this heading">¶</a></h2>
-<p><strong>该算法的编写参考如下论文</strong>:
-<a class="reference external" href="https://ojs.aaai.org/index.php/AAAI/article/view/17353">Value-decomposition multi-agent actor-critics</a></p>
-<p><strong>论文引用信息</strong>:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@inproceedings</span><span class="p">{</span><span class="n">su2021value</span><span class="p">,</span>
-    <span class="n">title</span><span class="o">=</span><span class="p">{</span><span class="n">Value</span><span class="o">-</span><span class="n">decomposition</span> <span class="n">multi</span><span class="o">-</span><span class="n">agent</span> <span class="n">actor</span><span class="o">-</span><span class="n">critics</span><span class="p">},</span>
-    <span class="n">author</span><span class="o">=</span><span class="p">{</span><span class="n">Su</span><span class="p">,</span> <span class="n">Jianyu</span> <span class="ow">and</span> <span class="n">Adams</span><span class="p">,</span> <span class="n">Stephen</span> <span class="ow">and</span> <span class="n">Beling</span><span class="p">,</span> <span class="n">Peter</span><span class="p">},</span>
-    <span class="n">booktitle</span><span class="o">=</span><span class="p">{</span><span class="n">Proceedings</span> <span class="n">of</span> <span class="n">the</span> <span class="n">AAAI</span> <span class="n">conference</span> <span class="n">on</span> <span class="n">artificial</span> <span class="n">intelligence</span><span class="p">},</span>
-    <span class="n">volume</span><span class="o">=</span><span class="p">{</span><span class="mi">35</span><span class="p">},</span>
-    <span class="n">number</span><span class="o">=</span><span class="p">{</span><span class="mi">13</span><span class="p">},</span>
-    <span class="n">pages</span><span class="o">=</span><span class="p">{</span><span class="mi">11352</span><span class="o">--</span><span class="mi">11360</span><span class="p">},</span>
-    <span class="n">year</span><span class="o">=</span><span class="p">{</span><span class="mi">2021</span><span class="p">}</span>
-<span class="p">}</span>
-</pre></div>
-</div>
-</section>
 </section>
 
 

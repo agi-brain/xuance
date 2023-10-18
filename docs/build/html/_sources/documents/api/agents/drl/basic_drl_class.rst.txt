@@ -162,14 +162,14 @@ To create a new Agent, you should build a class inherit from ``xuanpolicy.torch.
 
    <br><hr>
 
-源码
+Source Code
 -----------------
 
 .. tabs::
 
    .. group-tab:: PyTorch
 
-      .. code-block:: python3
+      .. code-block:: python
          
          class Agent(ABC):
             def __init__(self,
@@ -309,7 +309,7 @@ To create a new Agent, you should build a class inherit from ``xuanpolicy.torch.
    
    .. group-tab:: TensorFlow
 
-      .. code-block:: python3
+      .. code-block:: python
 
          class Agent(ABC):
             def __init__(self,
@@ -437,7 +437,7 @@ To create a new Agent, you should build a class inherit from ``xuanpolicy.torch.
 
    .. group-tab:: MindSpore
 
-      .. code:: python3
+      .. code-block:: python
 
          class Agent(ABC):
             def __init__(self,

@@ -124,7 +124,7 @@ Each simulation environment contains a rich variety of task scenarios, as shown 
 <p>If the simulation environment used by the user is not listed in Table 1, it can be wrapped and stored in the “./environment” directory.
 The specific steps for adding are as follows:</p>
 <p>步骤一：</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">My_Env</span><span class="p">(</span><span class="n">gym</span><span class="o">.</span><span class="n">Env</span><span class="p">):</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">My_Env</span><span class="p">(</span><span class="n">gym</span><span class="o">.</span><span class="n">Env</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="n">env_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">env</span> <span class="o">=</span> <span class="n">make_env</span><span class="p">(</span><span class="n">env_id</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
@@ -149,7 +149,7 @@ The specific steps for adding are as follows:</p>
 </pre></div>
 </div>
 <p>步骤二：在./environment/__init__.py文件中导入自定义的环境类My_Env。</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">.myenv.my_env</span> <span class="kn">import</span> <span class="n">My_Env</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">.myenv.my_env</span> <span class="kn">import</span> <span class="n">My_Env</span>
 </pre></div>
 </div>
 </section>

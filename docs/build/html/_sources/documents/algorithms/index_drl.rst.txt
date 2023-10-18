@@ -3,7 +3,7 @@ Deep Reinforcement Learning
 
 .. toctree::
    :maxdepth: 1
-   :caption: Included Algorithms
+   :caption: DRL Algorithms
 
    drl/dqn
    drl/c51
@@ -21,5 +21,6 @@ Deep Reinforcement Learning
    drl/mpdqn
    drl/a2c
    drl/sac
-   drl/td3
+   drl/sac_dis
    drl/ddpg
+   drl/td3

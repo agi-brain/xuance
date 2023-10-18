@@ -209,7 +209,7 @@
 <h2>自定义参数配置<a class="headerlink" href="#id3" title="Permalink to this heading">¶</a></h2>
 <p>用户也可以选择不适用玄策提供的默认参数，或者玄策中不包含用户的任务时，可用同样的方式自定义.yaml参数配置文件。
 但是在获取runner的过程中，需指定参数文件的存放位置，示例如下：</p>
-<div class="highlight-python3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">xuanpolicy</span> <span class="k">as</span> <span class="nn">xp</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">xuanpolicy</span> <span class="k">as</span> <span class="nn">xp</span>
 <span class="n">runner</span> <span class="o">=</span> <span class="n">xp</span><span class="o">.</span><span class="n">get_runner</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s1">&#39;dqn&#39;</span><span class="p">,</span>
                        <span class="n">env</span><span class="o">=</span><span class="s1">&#39;classic_control&#39;</span><span class="p">,</span>
                        <span class="n">env_id</span><span class="o">=</span><span class="s1">&#39;CartPole-v1&#39;</span><span class="p">,</span>

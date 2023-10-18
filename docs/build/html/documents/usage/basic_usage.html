@@ -54,8 +54,8 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Quick Start</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#run-a-drl-agent">Run a DRL agent</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#run-an-marl-agent">Run an MARL agent</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#run-a-drl-example">Run a DRL example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#run-an-marl-example">Run an MARL example</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#test">Test</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#logger">Logger</a></li>
 </ul>
@@ -114,30 +114,39 @@
              
   <section id="quick-start">
 <h1>Quick Start<a class="headerlink" href="#quick-start" title="Permalink to this heading">¶</a></h1>
-<section id="run-a-drl-agent">
-<h2>Run a DRL agent<a class="headerlink" href="#run-a-drl-agent" title="Permalink to this heading">¶</a></h2>
+<br><hr><section id="run-a-drl-example">
+<h2>Run a DRL example<a class="headerlink" href="#run-a-drl-example" title="Permalink to this heading">¶</a></h2>
 <p>In XuanPolicy, it is easy to build a DRL agent. First you need to create a <em>runner</em>
 and specify the <code class="docutils literal notranslate"><span class="pre">agent_name</span></code>, <code class="docutils literal notranslate"><span class="pre">env_name</span></code>, then a runner that contains agent, policy, and envs, etc., will be built.
 Finally, execute <code class="docutils literal notranslate"><span class="pre">runner.run</span></code> and the agent’s model is training.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">xuanpolicy</span> <span class="k">as</span> <span class="nn">xp</span>
-<span class="n">runner</span> <span class="o">=</span> <span class="n">xp</span><span class="o">.</span><span class="n">get_runner</span><span class="p">(</span><span class="n">agent_name</span><span class="o">=</span><span class="s1">&#39;dqn&#39;</span><span class="p">,</span> <span class="n">env_name</span><span class="o">=</span><span class="s1">&#39;toy/CartPole-v0&#39;</span><span class="p">,</span> <span class="n">is_test</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">xuanpolicy</span> <span class="k">as</span> <span class="nn">xp</span>
+<span class="n">runner</span> <span class="o">=</span> <span class="n">xp</span><span class="o">.</span><span class="n">get_runner</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s1">&#39;dqn&#39;</span><span class="p">,</span>
+                       <span class="n">env</span><span class="o">=</span><span class="s1">&#39;classic_control&#39;</span><span class="p">,</span>
+                       <span class="n">env_id</span><span class="o">=</span><span class="s1">&#39;CartPole-v1&#39;</span><span class="p">,</span>
+                       <span class="n">is_test</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="n">runner</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
 </pre></div>
 </div>
 <p>After training the agent, you can test and view the model by the following codes:</p>
-</section>
-<section id="run-an-marl-agent">
-<h2>Run an MARL agent<a class="headerlink" href="#run-an-marl-agent" title="Permalink to this heading">¶</a></h2>
+<br><hr></section>
+<section id="run-an-marl-example">
+<h2>Run an MARL example<a class="headerlink" href="#run-an-marl-example" title="Permalink to this heading">¶</a></h2>
 <p>XuanPolicy support MARL algorithms with both cooperative and competitive tasks.
 Similaly, you can start by:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">xuanpolicy</span> <span class="k">as</span> <span class="nn">xp</span>
-<span class="n">runner</span> <span class="o">=</span> <span class="n">xp</span><span class="o">.</span><span class="n">get_runner</span><span class="p">(</span><span class="n">agent_name</span><span class="o">=</span><span class="s1">&#39;maddpg&#39;</span><span class="p">,</span> <span class="n">env_name</span><span class="o">=</span><span class="s1">&#39;mpe/simple_spread&#39;</span><span class="p">,</span> <span class="n">is_test</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">xuanpolicy</span> <span class="k">as</span> <span class="nn">xp</span>
+<span class="n">runner</span> <span class="o">=</span> <span class="n">xp</span><span class="o">.</span><span class="n">get_runner</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s1">&#39;maddpg&#39;</span><span class="p">,</span>
+                       <span class="n">env</span><span class="o">=</span><span class="s1">&#39;mpe&#39;</span><span class="p">,</span>
+                       <span class="n">env_id</span><span class="o">=</span><span class="s1">&#39;simple_spread_v3&#39;</span><span class="p">,</span>
+                       <span class="n">is_test</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="n">runner</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
 </pre></div>
 </div>
 <p>For competitve tasks in which agents can be divided to two or more sides, you can run a demo by:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">xuanpolicy</span> <span class="k">as</span> <span class="nn">xp</span>
-<span class="n">runner</span> <span class="o">=</span> <span class="n">xp</span><span class="o">.</span><span class="n">get_runner</span><span class="p">(</span><span class="n">agent_name</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;maddpg&quot;</span><span class="p">,</span> <span class="s2">&quot;iddpg&quot;</span><span class="p">],</span> <span class="n">env_name</span><span class="o">=</span><span class="s1">&#39;mpe/simple_push&#39;</span><span class="p">,</span> <span class="n">is_test</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">xuanpolicy</span> <span class="k">as</span> <span class="nn">xp</span>
+<span class="n">runner</span> <span class="o">=</span> <span class="n">xp</span><span class="o">.</span><span class="n">get_runner</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;maddpg&quot;</span><span class="p">,</span> <span class="s2">&quot;iddpg&quot;</span><span class="p">],</span>
+                       <span class="n">env</span><span class="o">=</span><span class="s1">&#39;mpe&#39;</span><span class="p">,</span>
+                       <span class="n">env_id</span><span class="o">=</span><span class="s1">&#39;simple_push_v3&#39;</span><span class="p">,</span>
+                       <span class="n">is_test</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="n">runner</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
 </pre></div>
 </div>
@@ -146,17 +155,42 @@ The “adversary”s are MADDPG agents, and the “agent”s are IDDPG agents.</
 </section>
 <section id="test">
 <h2>Test<a class="headerlink" href="#test" title="Permalink to this heading">¶</a></h2>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">xuanpolicy</span> <span class="k">as</span> <span class="nn">xp</span>
-<span class="n">runner_test</span> <span class="o">=</span> <span class="n">xp</span><span class="o">.</span><span class="n">get_runner</span><span class="p">(</span><span class="n">agent_name</span><span class="o">=</span><span class="s1">&#39;dqn&#39;</span><span class="p">,</span> <span class="n">env_name</span><span class="o">=</span><span class="s1">&#39;toy/CartPole-v0&#39;</span><span class="p">,</span> <span class="n">is_test</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="n">runner_test</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+<p>After completing the algorithm training, XuanPolicy will save the model files and training log information in the designated directory.
+Users can specify “is_test=True” to perform testing.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">xuanpolicy</span> <span class="k">as</span> <span class="nn">xp</span>
+<span class="n">runner</span> <span class="o">=</span> <span class="n">xp</span><span class="o">.</span><span class="n">get_runner</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s1">&#39;dqn&#39;</span><span class="p">,</span>
+                       <span class="n">env_name</span><span class="o">=</span><span class="s1">&#39;classic_control&#39;</span><span class="p">,</span>
+                       <span class="n">env_id</span><span class="o">=</span><span class="s1">&#39;CartPole-v1&#39;</span><span class="p">,</span>
+                       <span class="n">is_test</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">runner</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
 </pre></div>
 </div>
+<p>In the above code, “runner.benchmark()” can also be used instead of “runner.run()” to train benchmark models and obtain benchmark test results.</p>
 </section>
 <section id="logger">
 <h2>Logger<a class="headerlink" href="#logger" title="Permalink to this heading">¶</a></h2>
-<p>You can use tensorboard to visualize what happened in the training process. After training, the log file will be automatically generated in the directory “.results/” and you should be able to see some training data after running the command.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">tensorboard</span> <span class="o">--</span><span class="n">logdir</span> <span class="o">./</span><span class="n">logs</span><span class="o">/</span><span class="n">dqn</span><span class="o">/</span><span class="n">torch</span><span class="o">/</span><span class="n">CartPole</span><span class="o">-</span><span class="n">v0</span>
+<p>You can use the tensorboard or wandb to visualize the training process by specifying the “logger” parameter in the “xuanpolicy/configs/basic.yaml”.</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">logger</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tensorboard</span>
 </pre></div>
+</div>
+<p>or</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">logger</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">wandb</span>
+</pre></div>
+</div>
+<p><strong>1. Tensorboard</strong></p>
+<p>After completing the model training, the log files are stored in the “log” folder in the root directory.
+The specific path depends on the user’s actual configuration.
+Taking the path “./logs/dqn/torch/CartPole-v0” as an example, users can visualize the logs using the following command:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>tensorboard<span class="w"> </span>--logdir<span class="w"> </span>./logs/dqn/torch/CartPole-v1/
+</pre></div>
+</div>
+<p><strong>2. W&amp;B</strong></p>
+<p>If you choose to use the wandb tool for training visualization,
+you can create an account according to the official W&amp;B instructions and specify the username “wandb_user_name” in the “xuanpolicy/configs/basic.yaml” file.</p>
+<p>For information on using W&amp;B and its local deployment, you can refer to the following link:</p>
+<div class="line-block">
+<div class="line"><strong>wandb</strong>: <a class="reference external" href="https://github.com/wandb/wandb.git/">https://github.com/wandb/wandb.git</a></div>
+<div class="line"><strong>wandb server</strong>: <a class="reference external" href="https://github.com/wandb/server.git/">https://github.com/wandb/server.git</a></div>
 </div>
 </section>
 </section>

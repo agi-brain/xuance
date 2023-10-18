@@ -60,14 +60,14 @@ WQMIX_Agents
 
     <br><hr>
 
-源码
+Source Code
 -----------------
 
 .. tabs::
   
     .. group-tab:: PyTorch
     
-        .. code-block:: python3
+        .. code-block:: python
 
             from xuanpolicy.torch.agents import *
 

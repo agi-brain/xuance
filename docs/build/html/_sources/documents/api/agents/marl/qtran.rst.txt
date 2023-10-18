@@ -44,14 +44,14 @@ QTRAN_Agents
 
     <br><hr>
 
-源码
+Source Code
 -----------------
 
 .. tabs::
   
     .. group-tab:: PyTorch
     
-        .. code-block:: python3
+        .. code-block:: python
 
             from xuanpolicy.torch.agents import *
             from xuanpolicy.torch.agents.agents_marl import linear_decay_or_increase

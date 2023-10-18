@@ -34,23 +34,23 @@ IPPO_Agents
 
     <br><hr>
 
-源码
+Source Code
 -----------------
 
 .. tabs::
   
     .. group-tab:: PyTorch
     
-        .. code-block:: python3
+        .. code-block:: python
 
 
 
     .. group-tab:: TensorFlow
     
-        .. code-block:: python3
+        .. code-block:: python
 
 
 
     .. group-tab:: MindSpore
 
-        .. code-block:: python3
+        .. code-block:: python

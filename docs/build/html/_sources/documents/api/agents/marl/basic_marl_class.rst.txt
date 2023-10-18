@@ -148,14 +148,14 @@ To create new MARL agents, you should build a class inherit from ``xuanpolicy.to
 
    <br><hr>
 
-源码
+Source Code
 -----------------
 
 .. tabs::
 
    .. group-tab:: PyTorch
 
-      .. code-block:: python3
+      .. code-block:: python
          
          import os.path
          from xuanpolicy.torch.agents import *
@@ -245,7 +245,7 @@ To create new MARL agents, you should build a class inherit from ``xuanpolicy.to
    
    .. group-tab:: TensorFlow
 
-      .. code-block:: python3
+      .. code-block:: python
 
          from xuanpolicy.tensorflow.agents import *
 
@@ -350,7 +350,7 @@ To create new MARL agents, you should build a class inherit from ``xuanpolicy.to
 
    .. group-tab:: MindSpore
 
-      .. code:: python3
+      .. code-block:: python
 
          import mindspore as ms
          import mindspore.ops as ops

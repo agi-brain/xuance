@@ -1,11 +1,13 @@
 CNN-based
 =====================================
 
-卷积神经网络主要用于处理图像输入数据，提取出特征向量，一般输入类型为多通道图像矩阵，输出多维向量，
-名称为 cnn_block,其定义位于./xuance_torch/utils/layers.py和./xuance_ms/utils/layers.py中。
-实例化该类需要指定输入尺寸（input_shape），滤波方法（filter），核大小（kernel_size），步长（stride），
-归一化方法（normalize），激活函数（activation），初始化方法（initialize）。
-在pytorch下实现还需指定设备类型（device），以确定模型在CPU上运行还是GPU。
+Convolutional Neural Networks (CNNs) are mainly used for processing image input data to extract feature vectors.
+They usually take multi-channel image matrices as input and output multi-dimensional vectors.
+The CNN block is defined in `./xuanpolicy/torch/utils/layers.py`, `./xuanpolicy/tensorflow/utils/layers.py` and `./xuanpolicy/mindspore/utils/layers.py`.
+
+To instantiate this class, you need to specify the input size (`input_shape`), the filtering method (`filter`), the kernel size (`kernel_size`), the stride (`stride`), the normalization method (`normalize`), the activation function (`activation`), and the initialization method (`initialize`).
+
+When implementing this class in PyTorch, you also need to specify the device type (`device`) to determine whether the model runs on CPU or GPU.
 
 
 .. raw:: html
@@ -120,14 +122,14 @@ CNN-based
 
     <br><hr>
 
-源码
+Source Code
 -----------------
 
 .. tabs::
   
   .. group-tab:: PyTorch
     
-    .. code-block:: python3
+    .. code-block:: python
 
         from xuanpolicy.torch.representations import *
 
@@ -225,8 +227,8 @@ CNN-based
 
   .. group-tab:: TensorFlow
 
-    .. code-block:: python3
+    .. code-block:: python
 
   .. group-tab:: MindSpore
 
-    .. code-block:: python3
+    .. code-block:: python

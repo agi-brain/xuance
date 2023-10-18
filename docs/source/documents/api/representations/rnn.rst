@@ -1,13 +1,13 @@
 RNN-based
 =====================================
 
-循环神经网络主要用于处理时序信号信息，提取出当前时序信号的特征向量。
-根据使用场景差异，本软件提供两种循环神经网路模块：gru_block和lstm_block，
-其定义均位于./xuance_torch/utils/layers.py和./xuance_ms/utils/layers.py中。
-实例化该类需指定输入维度大小（input_dim），输出维度大小（output_dim），
-剪枝方法（droupout），初始化方法（initialize）。同样地，在pytorch下实现还需指定设备类型（device），
-以确定模型在CPU上运行还是GPU。
+Recurrent Neural Networks (RNNs) are mainly used for processing sequential signal information to extract feature vectors of the current sequence.
+Depending on the usage scenario, this software provides two types of RNN modules: `gru_block` and `lstm_block`.
+Their definitions can be found in `./xuanpolicy/torch/utils/layers.py` , `./xuanpolicy/tensorflow/utils/layers.py` and `./xuanpolicy/mindspore/utils/layers.py` respectively.
 
+To instantiate these classes, you need to specify the input dimension (`input_dim`), output dimension (`output_dim`), pruning method (`dropout`), and initialization method (`initialize`).
+
+Similarly, when implementing these classes in PyTorch, you also need to specify the device type (`device`) to determine whether the model runs on CPU or GPU.
 .. raw:: html
 
     <br><hr>
@@ -113,14 +113,14 @@ RNN-based
 
     <br><hr>
 
-源码
+Source Code
 -----------------
 
 .. tabs::
   
   .. group-tab:: PyTorch
     
-    .. code-block:: python3
+    .. code-block:: python
 
         from xuanpolicy.torch.representations import *
 
@@ -202,8 +202,8 @@ RNN-based
 
   .. group-tab:: TensorFlow
 
-    .. code-block:: python3
+    .. code-block:: python
 
   .. group-tab:: MindSpore
 
-    .. code-block:: python3
+    .. code-block:: python

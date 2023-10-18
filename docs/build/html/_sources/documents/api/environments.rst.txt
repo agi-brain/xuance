@@ -18,7 +18,7 @@ The specific steps for adding are as follows:
 
 
 
-::
+.. code-block:: python
 
     class My_Env(gym.Env):
         def __init__(env_id: str, seed: str)
@@ -44,7 +44,8 @@ The specific steps for adding are as follows:
             self.env.close()
 
 步骤二：在./environment/__init__.py文件中导入自定义的环境类My_Env。
-::
+
+.. code-block:: python
 
     from .myenv.my_env import My_Env
 

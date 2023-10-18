@@ -1,23 +1,24 @@
 Multi-Agent Reinforcement Learning
-==================================
+=========================================
 
 .. toctree::
    :maxdepth: 1
-   :caption: Included Algorithms
+   :caption: MARL Algorithms
 
    marl/iql
    marl/vdn
-   marl/qtran
    marl/qmix
    marl/wqmix
+   marl/qtran
    marl/dcg
-   marl/mfq
-   marl/mfac
-   marl/mappo
-   marl/coma
-   marl/isac
-   marl/masac
    marl/iddpg
    marl/maddpg
+   marl/isac
+   marl/masac
+   marl/ippo
+   marl/mappo
    marl/matd3
    marl/vdac
+   marl/coma
+   marl/mfq
+   marl/mfac

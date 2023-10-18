@@ -71,7 +71,7 @@
 <li class="toctree-l4"><a class="reference internal" href="#xuanpolicy.torch.representations.mlp.Basic_MLP.forward"><code class="docutils literal notranslate"><span class="pre">xuanpolicy.torch.representations.mlp.Basic_MLP.forward()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#id1">源码</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#source-code">Source Code</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="cnn.html">CNN-based</a></li>
@@ -127,12 +127,10 @@
              
   <section id="mlp-based">
 <h1>MLP-based<a class="headerlink" href="#mlp-based" title="Permalink to this heading">¶</a></h1>
-<p>多层感知器是一种最简单的深层神经网络模型，用于处理向量输入，
-用户可根据各自需要实例化多层感知器模块，
-其定义位于./xuance_torch/utils/layers.py和./xuance_ms/utils/layers.py文件中，类名称为mlp_block。
-实例化该类需指定输入维度大小（input_dim），输出维度大小（output_dim），归一化方法（normalize），
-激活函数选择（activation），初始化方法（initialize）。
-在pytorch下实现还需指定设备类型（device），以确定模型在CPU上运行还是GPU。</p>
+<p>The Multi-Layer Perceptron (MLP) is one of the simplest deep neural network models used for processing vector inputs.
+Users can instantiate the MLP module according to their own needs, which is defined in the <cite>./xuanpolicy/torch/utils/layers.py</cite>, <cite>./xuanpolicy/tensorflow/utils/layers.py</cite> and <cite>./xuanpolicy/mindspore/utils/layers.py</cite> files with the class name <cite>mlp_block</cite>.</p>
+<p>To instantiate this class, you need to specify the input dimension (<cite>input_dim</cite>), output dimension (<cite>output_dim</cite>), normalization method (<cite>normalize</cite>), activation function choice (<cite>activation</cite>), and initialization method (<cite>initialize</cite>).</p>
+<p>When implementing this class in PyTorch, you also need to specify the device type (<cite>device</cite>) to determine whether the model runs on CPU or GPU.</p>
 <br><hr><p><strong>PyTorch:</strong></p>
 <dl class="py class">
 <dt class="sig sig-object py" id="xuanpolicy.torch.representations.mlp.Basic_Identical">
@@ -210,10 +208,10 @@
 
 <br><hr><p><strong>TensorFlow:</strong></p>
 <br><hr><p><strong>MindSpore:</strong></p>
-<br><hr><section id="id1">
-<h2>源码<a class="headerlink" href="#id1" title="Permalink to this heading">¶</a></h2>
+<br><hr><section id="source-code">
+<h2>Source Code<a class="headerlink" href="#source-code" title="Permalink to this heading">¶</a></h2>
 <div class="sphinx-tabs docutils container">
-<div aria-label="Tabbed content" class="closeable" role="tablist"><button aria-controls="panel-0-UHlUb3JjaA==" aria-selected="true" class="sphinx-tabs-tab group-tab" id="tab-0-UHlUb3JjaA==" name="UHlUb3JjaA==" role="tab" tabindex="0">PyTorch</button><button aria-controls="panel-0-VGVuc29yRmxvdw==" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-0-VGVuc29yRmxvdw==" name="VGVuc29yRmxvdw==" role="tab" tabindex="-1">TensorFlow</button><button aria-controls="panel-0-TWluZFNwb3Jl" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-0-TWluZFNwb3Jl" name="TWluZFNwb3Jl" role="tab" tabindex="-1">MindSpore</button></div><div aria-labelledby="tab-0-UHlUb3JjaA==" class="sphinx-tabs-panel group-tab" id="panel-0-UHlUb3JjaA==" name="UHlUb3JjaA==" role="tabpanel" tabindex="0"><div class="highlight-python3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">xuanpolicy.torch.representations</span> <span class="kn">import</span> <span class="o">*</span>
+<div aria-label="Tabbed content" class="closeable" role="tablist"><button aria-controls="panel-0-UHlUb3JjaA==" aria-selected="true" class="sphinx-tabs-tab group-tab" id="tab-0-UHlUb3JjaA==" name="UHlUb3JjaA==" role="tab" tabindex="0">PyTorch</button><button aria-controls="panel-0-VGVuc29yRmxvdw==" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-0-VGVuc29yRmxvdw==" name="VGVuc29yRmxvdw==" role="tab" tabindex="-1">TensorFlow</button><button aria-controls="panel-0-TWluZFNwb3Jl" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-0-TWluZFNwb3Jl" name="TWluZFNwb3Jl" role="tab" tabindex="-1">MindSpore</button></div><div aria-labelledby="tab-0-UHlUb3JjaA==" class="sphinx-tabs-panel group-tab" id="panel-0-UHlUb3JjaA==" name="UHlUb3JjaA==" role="tabpanel" tabindex="0"><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">xuanpolicy.torch.representations</span> <span class="kn">import</span> <span class="o">*</span>
 
 <span class="c1"># directly returns the original observation</span>
 <span class="k">class</span> <span class="nc">Basic_Identical</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
@@ -265,10 +263,10 @@
         <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;state&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="n">tensor_observation</span><span class="p">)}</span>
 </pre></div>
 </div>
-</div><div aria-labelledby="tab-0-VGVuc29yRmxvdw==" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-0-VGVuc29yRmxvdw==" name="VGVuc29yRmxvdw==" role="tabpanel" tabindex="0"><div class="highlight-python3 notranslate"><div class="highlight"><pre><span></span>
+</div><div aria-labelledby="tab-0-VGVuc29yRmxvdw==" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-0-VGVuc29yRmxvdw==" name="VGVuc29yRmxvdw==" role="tabpanel" tabindex="0"><div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
 </pre></div>
 </div>
-</div><div aria-labelledby="tab-0-TWluZFNwb3Jl" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-0-TWluZFNwb3Jl" name="TWluZFNwb3Jl" role="tabpanel" tabindex="0"><div class="highlight-python3 notranslate"><div class="highlight"><pre><span></span>
+</div><div aria-labelledby="tab-0-TWluZFNwb3Jl" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-0-TWluZFNwb3Jl" name="TWluZFNwb3Jl" role="tabpanel" tabindex="0"><div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
 </pre></div>
 </div>
 </div></div>

@@ -59,7 +59,7 @@ To create new learner, you should build a class inherit from ``xuanpolicy.torch.
 
    <br><hr>
 
-源码
+Source Code
 -----------------
 
 .. tabs::

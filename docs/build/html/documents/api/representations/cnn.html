@@ -74,7 +74,7 @@
 <li class="toctree-l4"><a class="reference internal" href="#xuanpolicy.torch.representations.cnn.AC_CNN_Atari.forward"><code class="docutils literal notranslate"><span class="pre">xuanpolicy.torch.representations.cnn.AC_CNN_Atari.forward()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#id1">源码</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#source-code">Source Code</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="rnn.html">RNN-based</a></li>
@@ -129,11 +129,11 @@
              
   <section id="cnn-based">
 <h1>CNN-based<a class="headerlink" href="#cnn-based" title="Permalink to this heading">¶</a></h1>
-<p>卷积神经网络主要用于处理图像输入数据，提取出特征向量，一般输入类型为多通道图像矩阵，输出多维向量，
-名称为 cnn_block,其定义位于./xuance_torch/utils/layers.py和./xuance_ms/utils/layers.py中。
-实例化该类需要指定输入尺寸（input_shape），滤波方法（filter），核大小（kernel_size），步长（stride），
-归一化方法（normalize），激活函数（activation），初始化方法（initialize）。
-在pytorch下实现还需指定设备类型（device），以确定模型在CPU上运行还是GPU。</p>
+<p>Convolutional Neural Networks (CNNs) are mainly used for processing image input data to extract feature vectors.
+They usually take multi-channel image matrices as input and output multi-dimensional vectors.
+The CNN block is defined in <cite>./xuanpolicy/torch/utils/layers.py</cite>, <cite>./xuanpolicy/tensorflow/utils/layers.py</cite> and <cite>./xuanpolicy/mindspore/utils/layers.py</cite>.</p>
+<p>To instantiate this class, you need to specify the input size (<cite>input_shape</cite>), the filtering method (<cite>filter</cite>), the kernel size (<cite>kernel_size</cite>), the stride (<cite>stride</cite>), the normalization method (<cite>normalize</cite>), the activation function (<cite>activation</cite>), and the initialization method (<cite>initialize</cite>).</p>
+<p>When implementing this class in PyTorch, you also need to specify the device type (<cite>device</cite>) to determine whether the model runs on CPU or GPU.</p>
 <br><hr><p><strong>PyTorch:</strong></p>
 <dl class="py class">
 <dt class="sig sig-object py" id="xuanpolicy.torch.representations.cnn.Basic_CNN">
@@ -259,10 +259,10 @@
 
 <br><hr><p><strong>TensorFlow:</strong></p>
 <br><hr><p><strong>MindSpore:</strong></p>
-<br><hr><section id="id1">
-<h2>源码<a class="headerlink" href="#id1" title="Permalink to this heading">¶</a></h2>
+<br><hr><section id="source-code">
+<h2>Source Code<a class="headerlink" href="#source-code" title="Permalink to this heading">¶</a></h2>
 <div class="sphinx-tabs docutils container">
-<div aria-label="Tabbed content" class="closeable" role="tablist"><button aria-controls="panel-0-UHlUb3JjaA==" aria-selected="true" class="sphinx-tabs-tab group-tab" id="tab-0-UHlUb3JjaA==" name="UHlUb3JjaA==" role="tab" tabindex="0">PyTorch</button><button aria-controls="panel-0-VGVuc29yRmxvdw==" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-0-VGVuc29yRmxvdw==" name="VGVuc29yRmxvdw==" role="tab" tabindex="-1">TensorFlow</button><button aria-controls="panel-0-TWluZFNwb3Jl" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-0-TWluZFNwb3Jl" name="TWluZFNwb3Jl" role="tab" tabindex="-1">MindSpore</button></div><div aria-labelledby="tab-0-UHlUb3JjaA==" class="sphinx-tabs-panel group-tab" id="panel-0-UHlUb3JjaA==" name="UHlUb3JjaA==" role="tabpanel" tabindex="0"><div class="highlight-python3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">xuanpolicy.torch.representations</span> <span class="kn">import</span> <span class="o">*</span>
+<div aria-label="Tabbed content" class="closeable" role="tablist"><button aria-controls="panel-0-UHlUb3JjaA==" aria-selected="true" class="sphinx-tabs-tab group-tab" id="tab-0-UHlUb3JjaA==" name="UHlUb3JjaA==" role="tab" tabindex="0">PyTorch</button><button aria-controls="panel-0-VGVuc29yRmxvdw==" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-0-VGVuc29yRmxvdw==" name="VGVuc29yRmxvdw==" role="tab" tabindex="-1">TensorFlow</button><button aria-controls="panel-0-TWluZFNwb3Jl" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-0-TWluZFNwb3Jl" name="TWluZFNwb3Jl" role="tab" tabindex="-1">MindSpore</button></div><div aria-labelledby="tab-0-UHlUb3JjaA==" class="sphinx-tabs-panel group-tab" id="panel-0-UHlUb3JjaA==" name="UHlUb3JjaA==" role="tabpanel" tabindex="0"><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">xuanpolicy.torch.representations</span> <span class="kn">import</span> <span class="o">*</span>
 
 <span class="c1"># process the input observations with stacks of CNN layers</span>
 <span class="k">class</span> <span class="nc">Basic_CNN</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
@@ -356,10 +356,10 @@
         <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;state&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="n">tensor_observation</span><span class="p">)}</span>
 </pre></div>
 </div>
-</div><div aria-labelledby="tab-0-VGVuc29yRmxvdw==" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-0-VGVuc29yRmxvdw==" name="VGVuc29yRmxvdw==" role="tabpanel" tabindex="0"><div class="highlight-python3 notranslate"><div class="highlight"><pre><span></span>
+</div><div aria-labelledby="tab-0-VGVuc29yRmxvdw==" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-0-VGVuc29yRmxvdw==" name="VGVuc29yRmxvdw==" role="tabpanel" tabindex="0"><div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
 </pre></div>
 </div>
-</div><div aria-labelledby="tab-0-TWluZFNwb3Jl" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-0-TWluZFNwb3Jl" name="TWluZFNwb3Jl" role="tabpanel" tabindex="0"><div class="highlight-python3 notranslate"><div class="highlight"><pre><span></span>
+</div><div aria-labelledby="tab-0-TWluZFNwb3Jl" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-0-TWluZFNwb3Jl" name="TWluZFNwb3Jl" role="tabpanel" tabindex="0"><div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
 </pre></div>
 </div>
 </div></div>

@@ -72,7 +72,7 @@
 <li class="toctree-l4"><a class="reference internal" href="#xuanpolicy.torch.representations.rnn.Basic_RNN.get_hidden_item"><code class="docutils literal notranslate"><span class="pre">xuanpolicy.torch.representations.rnn.Basic_RNN.get_hidden_item()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#id1">源码</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#source-code">Source Code</a></li>
 </ul>
 </li>
 </ul>
@@ -126,13 +126,16 @@
              
   <section id="rnn-based">
 <h1>RNN-based<a class="headerlink" href="#rnn-based" title="Permalink to this heading">¶</a></h1>
-<p>循环神经网络主要用于处理时序信号信息，提取出当前时序信号的特征向量。
-根据使用场景差异，本软件提供两种循环神经网路模块：gru_block和lstm_block，
-其定义均位于./xuance_torch/utils/layers.py和./xuance_ms/utils/layers.py中。
-实例化该类需指定输入维度大小（input_dim），输出维度大小（output_dim），
-剪枝方法（droupout），初始化方法（initialize）。同样地，在pytorch下实现还需指定设备类型（device），
-以确定模型在CPU上运行还是GPU。</p>
-<br><hr><p><strong>PyTorch:</strong></p>
+<p>Recurrent Neural Networks (RNNs) are mainly used for processing sequential signal information to extract feature vectors of the current sequence.
+Depending on the usage scenario, this software provides two types of RNN modules: <cite>gru_block</cite> and <cite>lstm_block</cite>.
+Their definitions can be found in <cite>./xuanpolicy/torch/utils/layers.py</cite> , <cite>./xuanpolicy/tensorflow/utils/layers.py</cite> and <cite>./xuanpolicy/mindspore/utils/layers.py</cite> respectively.</p>
+<p>To instantiate these classes, you need to specify the input dimension (<cite>input_dim</cite>), output dimension (<cite>output_dim</cite>), pruning method (<cite>dropout</cite>), and initialization method (<cite>initialize</cite>).</p>
+<p>Similarly, when implementing these classes in PyTorch, you also need to specify the device type (<cite>device</cite>) to determine whether the model runs on CPU or GPU.
+.. raw:: html</p>
+<blockquote>
+<div><p>&lt;br&gt;&lt;hr&gt;</p>
+</div></blockquote>
+<p><strong>PyTorch:</strong></p>
 <dl class="py class">
 <dt class="sig sig-object py" id="xuanpolicy.torch.representations.rnn.Basic_RNN">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xuanpolicy.torch.representations.rnn.</span></span><span class="sig-name descname"><span class="pre">Basic_RNN</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hidden_sizes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalize=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initialize=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">activation=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xuanpolicy.torch.representations.rnn.Basic_RNN" title="Permalink to this definition">¶</a></dt>
@@ -247,10 +250,10 @@ The “recurrent_hidden_size” is the size of recurrent layer.</p>
 
 <br><hr><p><strong>TensorFlow:</strong></p>
 <br><hr><p><strong>MindSpore:</strong></p>
-<br><hr><section id="id1">
-<h2>源码<a class="headerlink" href="#id1" title="Permalink to this heading">¶</a></h2>
+<br><hr><section id="source-code">
+<h2>Source Code<a class="headerlink" href="#source-code" title="Permalink to this heading">¶</a></h2>
 <div class="sphinx-tabs docutils container">
-<div aria-label="Tabbed content" class="closeable" role="tablist"><button aria-controls="panel-0-UHlUb3JjaA==" aria-selected="true" class="sphinx-tabs-tab group-tab" id="tab-0-UHlUb3JjaA==" name="UHlUb3JjaA==" role="tab" tabindex="0">PyTorch</button><button aria-controls="panel-0-VGVuc29yRmxvdw==" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-0-VGVuc29yRmxvdw==" name="VGVuc29yRmxvdw==" role="tab" tabindex="-1">TensorFlow</button><button aria-controls="panel-0-TWluZFNwb3Jl" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-0-TWluZFNwb3Jl" name="TWluZFNwb3Jl" role="tab" tabindex="-1">MindSpore</button></div><div aria-labelledby="tab-0-UHlUb3JjaA==" class="sphinx-tabs-panel group-tab" id="panel-0-UHlUb3JjaA==" name="UHlUb3JjaA==" role="tabpanel" tabindex="0"><div class="highlight-python3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">xuanpolicy.torch.representations</span> <span class="kn">import</span> <span class="o">*</span>
+<div aria-label="Tabbed content" class="closeable" role="tablist"><button aria-controls="panel-0-UHlUb3JjaA==" aria-selected="true" class="sphinx-tabs-tab group-tab" id="tab-0-UHlUb3JjaA==" name="UHlUb3JjaA==" role="tab" tabindex="0">PyTorch</button><button aria-controls="panel-0-VGVuc29yRmxvdw==" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-0-VGVuc29yRmxvdw==" name="VGVuc29yRmxvdw==" role="tab" tabindex="-1">TensorFlow</button><button aria-controls="panel-0-TWluZFNwb3Jl" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-0-TWluZFNwb3Jl" name="TWluZFNwb3Jl" role="tab" tabindex="-1">MindSpore</button></div><div aria-labelledby="tab-0-UHlUb3JjaA==" class="sphinx-tabs-panel group-tab" id="panel-0-UHlUb3JjaA==" name="UHlUb3JjaA==" role="tabpanel" tabindex="0"><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">xuanpolicy.torch.representations</span> <span class="kn">import</span> <span class="o">*</span>
 
 <span class="k">class</span> <span class="nc">Basic_RNN</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
@@ -328,10 +331,10 @@ The “recurrent_hidden_size” is the size of recurrent layer.</p>
         <span class="k">return</span> <span class="p">(</span><span class="n">rnn_hidden</span><span class="p">[</span><span class="mi">0</span><span class="p">][:,</span> <span class="n">i</span><span class="p">],</span> <span class="n">rnn_hidden</span><span class="p">[</span><span class="mi">1</span><span class="p">][:,</span> <span class="n">i</span><span class="p">])</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">lstm</span> <span class="k">else</span> <span class="p">(</span><span class="n">rnn_hidden</span><span class="p">[</span><span class="mi">0</span><span class="p">][:,</span> <span class="n">i</span><span class="p">],</span> <span class="kc">None</span><span class="p">)</span>
 </pre></div>
 </div>
-</div><div aria-labelledby="tab-0-VGVuc29yRmxvdw==" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-0-VGVuc29yRmxvdw==" name="VGVuc29yRmxvdw==" role="tabpanel" tabindex="0"><div class="highlight-python3 notranslate"><div class="highlight"><pre><span></span>
+</div><div aria-labelledby="tab-0-VGVuc29yRmxvdw==" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-0-VGVuc29yRmxvdw==" name="VGVuc29yRmxvdw==" role="tabpanel" tabindex="0"><div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
 </pre></div>
 </div>
-</div><div aria-labelledby="tab-0-TWluZFNwb3Jl" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-0-TWluZFNwb3Jl" name="TWluZFNwb3Jl" role="tabpanel" tabindex="0"><div class="highlight-python3 notranslate"><div class="highlight"><pre><span></span>
+</div><div aria-labelledby="tab-0-TWluZFNwb3Jl" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-0-TWluZFNwb3Jl" name="TWluZFNwb3Jl" role="tabpanel" tabindex="0"><div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
 </pre></div>
 </div>
 </div></div>

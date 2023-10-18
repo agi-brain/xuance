@@ -60,14 +60,14 @@ DCG_Agents
 
     <br><hr>
 
-源码
+Source Code
 -----------------
 
 .. tabs::
   
     .. group-tab:: PyTorch
     
-        .. code-block:: python3
+        .. code-block:: python
 
             import torch.nn
             from xuanpolicy.torch.agents import *
