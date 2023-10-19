@@ -41,6 +41,7 @@ from .multi_agent_rl.iddpg_learner import IDDPG_Learner
 from .multi_agent_rl.maddpg_learner import MADDPG_Learner
 from .multi_agent_rl.mfq_learner import MFQ_Learner
 from .multi_agent_rl.mfac_learner import MFAC_Learner
+from .multi_agent_rl.ippo_learner import IPPO_Learner
 from .multi_agent_rl.mappo_learner import MAPPO_Clip_Learner
 from .multi_agent_rl.isac_learner import ISAC_Learner
 from .multi_agent_rl.masac_learner import MASAC_Learner

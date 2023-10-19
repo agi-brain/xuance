@@ -60,7 +60,7 @@ train_per_step: True
 training_frequency: 1
 
 test_steps: 10000
-eval_interval: 100000
+eval_interval: 5000
 test_episode: 5
 log_dir: "./logs/mappo/"
 model_dir: "./models/mappo/"

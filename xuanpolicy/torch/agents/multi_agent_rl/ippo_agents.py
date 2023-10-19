@@ -3,7 +3,7 @@ import torch
 from xuanpolicy.torch.agents import *
 
 
-class MAPPO_Agents(MARLAgents):
+class IPPO_Agents(MARLAgents):
     def __init__(self,
                  config: Namespace,
                  envs: DummyVecEnv_Pettingzoo,
@@ -27,7 +27,7 @@ class MAPPO_Agents(MARLAgents):
                       "rnn": config.rnn} if self.use_recurrent else {}
         representation = REGISTRY_Representation[config.representation](*input_representation, **kwargs_rnn)
         # create representation for critic
-        input_representation[0] = (config.dim_state,) if self.use_global_state else (config.dim_obs * config.n_agents,)
+        input_representation[0] = (config.dim_state,) if self.use_global_state else (config.dim_obs,)
         representation_critic = REGISTRY_Representation[config.representation](*input_representation, **kwargs_rnn)
         # create policy
         input_policy = get_policy_in_marl(config, (representation, representation_critic))
@@ -50,10 +50,9 @@ class MAPPO_Agents(MARLAgents):
         self.buffer_size = memory.buffer_size
         self.batch_size = self.buffer_size // self.n_minibatch
 
-        learner = MAPPO_Clip_Learner(config, policy, optimizer, None,
-                                     config.device, config.model_dir, config.gamma)
-        super(MAPPO_Agents, self).__init__(config, envs, policy, memory, learner, device,
-                                           config.log_dir, config.model_dir)
+        learner = IPPO_Learner(config, policy, optimizer, None, config.device, config.model_dir, config.gamma)
+        super(IPPO_Agents, self).__init__(config, envs, policy, memory, learner, device,
+                                          config.log_dir, config.model_dir)
         self.share_values = True if config.rew_shape[0] == 1 else False
         self.on_policy = True
 
@@ -84,8 +83,7 @@ class MAPPO_Agents(MARLAgents):
             state = torch.Tensor(state).unsqueeze(1).to(self.device)
             critic_in = state.expand(-1, self.n_agents, -1)
         else:
-            critic_in = torch.Tensor(obs_n).view([batch_size, 1, -1]).to(self.device)
-            critic_in = critic_in.expand(-1, self.n_agents, -1)
+            critic_in = torch.Tensor(obs_n).to(self.device)
         # get critic values
         if self.use_recurrent:
             hidden_state, values_n = self.policy.get_values(critic_in.unsqueeze(2),  # add a sequence length axis.

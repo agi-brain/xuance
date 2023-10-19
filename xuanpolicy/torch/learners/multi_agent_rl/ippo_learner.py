@@ -1,5 +1,5 @@
 """
-Multi-Agent Proximal Policy Optimization (MAPPO)
+Independent Proximal Policy Optimization (IPPO)
 Paper link:
 https://arxiv.org/pdf/2103.01955.pdf
 Implementation: Pytorch
@@ -9,7 +9,7 @@ from xuanpolicy.torch.utils.value_norm import ValueNorm
 from xuanpolicy.torch.utils.operations import update_linear_decay
 
 
-class MAPPO_Clip_Learner(LearnerMAS):
+class IPPO_Learner(LearnerMAS):
     def __init__(self,
                  config: Namespace,
                  policy: nn.Module,
@@ -17,8 +17,7 @@ class MAPPO_Clip_Learner(LearnerMAS):
                  scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
                  device: Optional[Union[int, str, torch.device]] = None,
                  model_dir: str = "./",
-                 gamma: float = 0.99,
-                 ):
+                 gamma: float = 0.99):
         self.gamma = gamma
         self.clip_range = config.clip_range
         self.use_linear_lr_decay = config.use_linear_lr_decay
@@ -30,7 +29,7 @@ class MAPPO_Clip_Learner(LearnerMAS):
         self.vf_coef, self.ent_coef = config.vf_coef, config.ent_coef
         self.mse_loss = nn.MSELoss()
         self.huber_loss = nn.HuberLoss(reduction="none", delta=self.huber_delta)
-        super(MAPPO_Clip_Learner, self).__init__(config, policy, optimizer, scheduler, device, model_dir)
+        super(IPPO_Learner, self).__init__(config, policy, optimizer, scheduler, device, model_dir)
         if self.use_value_norm:
             self.value_normalizer = ValueNorm(1).to(device)
         else:
@@ -70,9 +69,7 @@ class MAPPO_Clip_Learner(LearnerMAS):
         loss_e = entropy.mean()
 
         # critic loss
-        critic_in = torch.Tensor(obs).reshape([batch_size, 1, -1]).to(self.device)
-        critic_in = critic_in.expand(-1, self.n_agents, -1)
-        _, value_pred = self.policy.get_values(critic_in, IDs)
+        _, value_pred = self.policy.get_values(obs, IDs)
         value_pred = value_pred
         value_target = returns
         if self.use_value_clip:
@@ -158,9 +155,7 @@ class MAPPO_Clip_Learner(LearnerMAS):
         if self.use_global_state:
             _, value_pred = self.policy.get_values(state[:, :, :-1], IDs[:, :, :-1], *rnn_hidden_critic)
         else:
-            critic_in = obs[:, :, :-1].transpose(1, 2).reshape(batch_size, episode_length, -1)
-            critic_in = critic_in.unsqueeze(1).expand(-1, self.n_agents, -1, -1)
-            _, value_pred = self.policy.get_values(critic_in, IDs[:, :, :-1], *rnn_hidden_critic)
+            _, value_pred = self.policy.get_values(obs[:, :, :-1], IDs[:, :, :-1], *rnn_hidden_critic)
         value_target = returns.reshape(-1, 1)
         values = values.reshape(-1, 1)
         value_pred = value_pred.reshape(-1, 1)
