@@ -1,23 +1,23 @@
 Agent
 =======================
 
-To create a new Agent, you should build a class inherit from ``xuanpolicy.torch.agents.agent.Agent`` , ``xuanpolicy.tensorflow.agents.agent.Agent``, or ``xuanpolicy.mindspore.agents.agent.Agent``.
+To create a new Agent, you should build a class inherit from ``xuance.torch.agents.agent.Agent`` , ``xuance.tensorflow.agents.agent.Agent``, or ``xuance.mindspore.agents.agent.Agent``.
 
 **PyTorch:**
 
 .. py:class:: 
-   xuanpolicy.torch.agents.agent.Agent(config, envs, policy, memory, learner, device, log_dir, model_dir)
+   xuance.torch.agents.agent.Agent(config, envs, policy, memory, learner, device, log_dir, model_dir)
 
    :param config: Provides hyper parameters.
    :type config: Namespace
    :param envs: The vectorized environments.
-   :type envs: xuanpolicy.environments.vector_envs.vector_env.VecEnv
+   :type envs: xuance.environments.vector_envs.vector_env.VecEnv
    :param policy: The policy that provides actions and values.
    :type policy: nn.Module
    :param memory: Experice replay buffer.
-   :type memory: xuanpolicy.common.memory_tools.Buffer
+   :type memory: xuance.common.memory_tools.Buffer
    :param learner: The learner that updates parameters of policy.
-   :type learner: xuanpolicy.torch.learner.Learner
+   :type learner: xuance.torch.learner.Learner
    :param device: Choose CPU or GPU to train the model.
    :type device: str, int, torch.device
    :param log_dir: The directory of log file, default is "./logs/".
@@ -25,14 +25,14 @@ To create a new Agent, you should build a class inherit from ``xuanpolicy.torch.
    :param model_dir: The directory of model file, default is "./models/".
    :type model_dir: str
 
-.. py:function:: xuanpolicy.torch.agents.agent.Agent.save_model(model_name)
+.. py:function:: xuance.torch.agents.agent.Agent.save_model(model_name)
    
    Save the model.
 
    :param model_name: The model's name to be saved.
    :type model_name: str
 
-.. py:function:: xuanpolicy.torch.agents.agent.Agent.load_model(path, seed)
+.. py:function:: xuance.torch.agents.agent.Agent.load_model(path, seed)
 
    Load a model by specifying the ``path`` and ``seed`` .
 
@@ -41,7 +41,7 @@ To create a new Agent, you should build a class inherit from ``xuanpolicy.torch.
    :param seed: Select the seed that model was trained with if it exits.
    :type seed: int
 
-.. py:function:: xuanpolicy.torch.agents.agent.Agent.log_infos(info, x_index)
+.. py:function:: xuance.torch.agents.agent.Agent.log_infos(info, x_index)
 
    Visualize the training information via wandb or tensorboard.
 
@@ -50,7 +50,7 @@ To create a new Agent, you should build a class inherit from ``xuanpolicy.torch.
    :param x_index: Current step.
    :type x_index: int
 
-.. py:function:: xuanpolicy.torch.agents.agent.Agent.log_videos(info, fps x_index)
+.. py:function:: xuance.torch.agents.agent.Agent.log_videos(info, fps x_index)
 
    Visualize the interaction between agent and environment by uploading the videos with wandb or tensorboard.
 
@@ -61,7 +61,7 @@ To create a new Agent, you should build a class inherit from ``xuanpolicy.torch.
    :param x_index: Current step.
    :type x_index: int
 
-.. py:function:: xuanpolicy.torch.agents.agent.Agent._process_observation(observations)
+.. py:function:: xuance.torch.agents.agent.Agent._process_observation(observations)
 
    Normalize the original observations.
 
@@ -70,7 +70,7 @@ To create a new Agent, you should build a class inherit from ``xuanpolicy.torch.
    :return: The normalized observations.
    :rtype: numpy.ndarray
 
-.. py:function:: xuanpolicy.torch.agents.agent.Agent._process_reward(rewards)
+.. py:function:: xuance.torch.agents.agent.Agent._process_reward(rewards)
 
    Normalize the original rewards.
 
@@ -79,21 +79,21 @@ To create a new Agent, you should build a class inherit from ``xuanpolicy.torch.
    :return: The normalized observations rewards.
    :rtype: numpy.ndarray
 
-.. py:function:: xuanpolicy.torch.agents.agent.Agent._action(observations)
+.. py:function:: xuance.torch.agents.agent.Agent._action(observations)
    
    Get actions for executing according to the observations.
    
    :param observations: The original observations of agent.
    :type observations: numpy.ndarray
 
-.. py:function:: xuanpolicy.torch.agents.agent.Agent.train(steps)
+.. py:function:: xuance.torch.agents.agent.Agent.train(steps)
    
    Train the agents with ``steps`` steps.
 
    :param steps: The training steps.
    :type steps: int
 
-.. py:function:: xuanpolicy.torch.agents.agent.Agent.test(env_fn, steps)
+.. py:function:: xuance.torch.agents.agent.Agent.test(env_fn, steps)
    
    Test the agents.
 
@@ -101,7 +101,7 @@ To create a new Agent, you should build a class inherit from ``xuanpolicy.torch.
    :param steps: The training steps.
    :type steps: int
 
-.. py:function:: xuanpolicy.torch.agents.agent.Agent.finish()
+.. py:function:: xuance.torch.agents.agent.Agent.finish()
    
    Finish the wandb or tensorboard.
 
@@ -113,18 +113,18 @@ To create a new Agent, you should build a class inherit from ``xuanpolicy.torch.
 **TensorFlow:**
 
 .. py:class:: 
-   xuanpolicy.tensorflowtensorflow.agent.agent.Agent(config, envs, policy, memory, learner, device, log_dir, model_dir)
+   xuance.tensorflowtensorflow.agent.agent.Agent(config, envs, policy, memory, learner, device, log_dir, model_dir)
 
    :param config: Provides hyper parameters.
    :type config: Namespace
    :param envs: The vectorized environments.
-   :type envs: xuanpolicy.environments.vector_envs.vector_env.VecEnv
+   :type envs: xuance.environments.vector_envs.vector_env.VecEnv
    :param policy: The policy that provides actions and values.
    :type policy: nn.Module
    :param memory: Experice replay buffer.
-   :type memory: xuanpolicy.common.memory_tools.Buffer
+   :type memory: xuance.common.memory_tools.Buffer
    :param learner: The learner that updates parameters of policy.
-   :type learner: xuanpolicy.tensorflow.learner.Learner
+   :type learner: xuance.tensorflow.learner.Learner
    :param device: Choose CPU or GPU to train the model.
    :type device: str
    :param log_dir: The directory of log file, default is "./logs/".
@@ -140,16 +140,16 @@ To create a new Agent, you should build a class inherit from ``xuanpolicy.torch.
 **MindSpore:**
 
 .. py:class:: 
-   xuanpolicy.mindsporetensorflow.agent.agent.Agent(envs, policy, memory, learner, device, log_dir, model_dir)
+   xuance.mindsporetensorflow.agent.agent.Agent(envs, policy, memory, learner, device, log_dir, model_dir)
 
    :param envs: The vectorized environments.
-   :type envs: xuanpolicy.environments.vector_envs.vector_env.VecEnv
+   :type envs: xuance.environments.vector_envs.vector_env.VecEnv
    :param policy: The policy that provides actions and values.
    :type policy: nn.Module
    :param memory: Experice replay buffer.
-   :type memory: xuanpolicy.common.memory_tools.Buffer
+   :type memory: xuance.common.memory_tools.Buffer
    :param learner: The learner that updates parameters of policy.
-   :type learner: xuanpolicy.mindspore.learner.Learner
+   :type learner: xuance.mindspore.learner.Learner
    :param device: Choose CPU or GPU to train the model.
    :type device: str
    :param log_dir: The directory of log file, default is "./logs/".

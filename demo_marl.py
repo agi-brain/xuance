@@ -1,7 +1,7 @@
 import argparse
 
-import xuanpolicy.torch.agents
-from xuanpolicy import get_runner
+import xuance.torch.agents
+from xuance import get_runner
 
 
 def parse_args():

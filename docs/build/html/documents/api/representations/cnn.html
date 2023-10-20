@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CNN-based &mdash; XuanPolicy v0.1.11 documentation</title>
+  <title>CNN-based &mdash; XuanCe v0.1.11 documentation</title>
       <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
@@ -40,7 +40,7 @@
           
           
           <a href="../../../index.html" class="icon icon-home">
-            XuanPolicy
+            XuanCe
               <img src="../../../_static/logo_2.png" class="logo" alt="Logo"/>
           </a>
 <div role="search">
@@ -63,15 +63,15 @@
 <li class="toctree-l1 current"><a class="reference internal" href="../representations.html">Representations</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="mlp.html">MLP-based</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">CNN-based</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#xuanpolicy.torch.representations.cnn.Basic_CNN"><code class="docutils literal notranslate"><span class="pre">xuanpolicy.torch.representations.cnn.Basic_CNN</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#xuanpolicy.torch.representations.cnn.Basic_CNN._create_network"><code class="docutils literal notranslate"><span class="pre">xuanpolicy.torch.representations.cnn.Basic_CNN._create_network()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#xuanpolicy.torch.representations.cnn.Basic_CNN.forward"><code class="docutils literal notranslate"><span class="pre">xuanpolicy.torch.representations.cnn.Basic_CNN.forward()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#xuance.torch.representations.cnn.Basic_CNN"><code class="docutils literal notranslate"><span class="pre">xuance.torch.representations.cnn.Basic_CNN</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#xuance.torch.representations.cnn.Basic_CNN._create_network"><code class="docutils literal notranslate"><span class="pre">xuance.torch.representations.cnn.Basic_CNN._create_network()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#xuance.torch.representations.cnn.Basic_CNN.forward"><code class="docutils literal notranslate"><span class="pre">xuance.torch.representations.cnn.Basic_CNN.forward()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#xuanpolicy.torch.representations.cnn.AC_CNN_Atari"><code class="docutils literal notranslate"><span class="pre">xuanpolicy.torch.representations.cnn.AC_CNN_Atari</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#xuanpolicy.torch.representations.cnn.AC_CNN_Atari._init_layer"><code class="docutils literal notranslate"><span class="pre">xuanpolicy.torch.representations.cnn.AC_CNN_Atari._init_layer()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#xuanpolicy.torch.representations.cnn.AC_CNN_Atari._create_network"><code class="docutils literal notranslate"><span class="pre">xuanpolicy.torch.representations.cnn.AC_CNN_Atari._create_network()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#xuanpolicy.torch.representations.cnn.AC_CNN_Atari.forward"><code class="docutils literal notranslate"><span class="pre">xuanpolicy.torch.representations.cnn.AC_CNN_Atari.forward()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#xuance.torch.representations.cnn.AC_CNN_Atari"><code class="docutils literal notranslate"><span class="pre">xuance.torch.representations.cnn.AC_CNN_Atari</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#xuance.torch.representations.cnn.AC_CNN_Atari._init_layer"><code class="docutils literal notranslate"><span class="pre">xuance.torch.representations.cnn.AC_CNN_Atari._init_layer()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#xuance.torch.representations.cnn.AC_CNN_Atari._create_network"><code class="docutils literal notranslate"><span class="pre">xuance.torch.representations.cnn.AC_CNN_Atari._create_network()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#xuance.torch.representations.cnn.AC_CNN_Atari.forward"><code class="docutils literal notranslate"><span class="pre">xuance.torch.representations.cnn.AC_CNN_Atari.forward()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#source-code">Source Code</a></li>
@@ -108,7 +108,7 @@
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../../../index.html">XuanPolicy</a>
+          <a href="../../../index.html">XuanCe</a>
       </nav>
 
       <div class="wy-nav-content">
@@ -131,13 +131,13 @@
 <h1>CNN-based<a class="headerlink" href="#cnn-based" title="Permalink to this heading">¶</a></h1>
 <p>Convolutional Neural Networks (CNNs) are mainly used for processing image input data to extract feature vectors.
 They usually take multi-channel image matrices as input and output multi-dimensional vectors.
-The CNN block is defined in <cite>./xuanpolicy/torch/utils/layers.py</cite>, <cite>./xuanpolicy/tensorflow/utils/layers.py</cite> and <cite>./xuanpolicy/mindspore/utils/layers.py</cite>.</p>
+The CNN block is defined in <cite>./xuance/torch/utils/layers.py</cite>, <cite>./xuance/tensorflow/utils/layers.py</cite> and <cite>./xuance/mindspore/utils/layers.py</cite>.</p>
 <p>To instantiate this class, you need to specify the input size (<cite>input_shape</cite>), the filtering method (<cite>filter</cite>), the kernel size (<cite>kernel_size</cite>), the stride (<cite>stride</cite>), the normalization method (<cite>normalize</cite>), the activation function (<cite>activation</cite>), and the initialization method (<cite>initialize</cite>).</p>
 <p>When implementing this class in PyTorch, you also need to specify the device type (<cite>device</cite>) to determine whether the model runs on CPU or GPU.</p>
 <br><hr><p><strong>PyTorch:</strong></p>
 <dl class="py class">
-<dt class="sig sig-object py" id="xuanpolicy.torch.representations.cnn.Basic_CNN">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xuanpolicy.torch.representations.cnn.</span></span><span class="sig-name descname"><span class="pre">Basic_CNN</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kernels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strides</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filters</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initialize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">activation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xuanpolicy.torch.representations.cnn.Basic_CNN" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="xuance.torch.representations.cnn.Basic_CNN">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xuance.torch.representations.cnn.</span></span><span class="sig-name descname"><span class="pre">Basic_CNN</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kernels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strides</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filters</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initialize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">activation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xuance.torch.representations.cnn.Basic_CNN" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -155,8 +155,8 @@ The CNN block is defined in <cite>./xuanpolicy/torch/utils/layers.py</cite>, <ci
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="xuanpolicy.torch.representations.cnn.Basic_CNN._create_network">
-<span class="sig-prename descclassname"><span class="pre">xuanpolicy.torch.representations.cnn.Basic_CNN.</span></span><span class="sig-name descname"><span class="pre">_create_network</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#xuanpolicy.torch.representations.cnn.Basic_CNN._create_network" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="xuance.torch.representations.cnn.Basic_CNN._create_network">
+<span class="sig-prename descclassname"><span class="pre">xuance.torch.representations.cnn.Basic_CNN.</span></span><span class="sig-name descname"><span class="pre">_create_network</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#xuance.torch.representations.cnn.Basic_CNN._create_network" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create the convolutional neural netowrks.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -169,8 +169,8 @@ The CNN block is defined in <cite>./xuanpolicy/torch/utils/layers.py</cite>, <ci
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="xuanpolicy.torch.representations.cnn.Basic_CNN.forward">
-<span class="sig-prename descclassname"><span class="pre">xuanpolicy.torch.representations.cnn.Basic_CNN.</span></span><span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">observations</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xuanpolicy.torch.representations.cnn.Basic_CNN.forward" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="xuance.torch.representations.cnn.Basic_CNN.forward">
+<span class="sig-prename descclassname"><span class="pre">xuance.torch.representations.cnn.Basic_CNN.</span></span><span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">observations</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xuance.torch.representations.cnn.Basic_CNN.forward" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate feature representation of the input observations.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -186,8 +186,8 @@ The CNN block is defined in <cite>./xuanpolicy/torch/utils/layers.py</cite>, <ci
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="xuanpolicy.torch.representations.cnn.AC_CNN_Atari">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xuanpolicy.torch.representations.cnn.</span></span><span class="sig-name descname"><span class="pre">AC_CNN_Atari</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kernels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strides</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filters</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initialize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">activation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xuanpolicy.torch.representations.cnn.AC_CNN_Atari" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="xuance.torch.representations.cnn.AC_CNN_Atari">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xuance.torch.representations.cnn.</span></span><span class="sig-name descname"><span class="pre">AC_CNN_Atari</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kernels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strides</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filters</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initialize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">activation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xuance.torch.representations.cnn.AC_CNN_Atari" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -206,8 +206,8 @@ The CNN block is defined in <cite>./xuanpolicy/torch/utils/layers.py</cite>, <ci
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="xuanpolicy.torch.representations.cnn.AC_CNN_Atari._init_layer">
-<span class="sig-prename descclassname"><span class="pre">xuanpolicy.torch.representations.cnn.AC_CNN_Atari.</span></span><span class="sig-name descname"><span class="pre">_init_layer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gain</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">numpy.sqrt(2)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xuanpolicy.torch.representations.cnn.AC_CNN_Atari._init_layer" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="xuance.torch.representations.cnn.AC_CNN_Atari._init_layer">
+<span class="sig-prename descclassname"><span class="pre">xuance.torch.representations.cnn.AC_CNN_Atari.</span></span><span class="sig-name descname"><span class="pre">_init_layer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gain</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">numpy.sqrt(2)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xuance.torch.representations.cnn.AC_CNN_Atari._init_layer" title="Permalink to this definition">¶</a></dt>
 <dd><p>Initialize the weights and biases of the model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -227,8 +227,8 @@ The CNN block is defined in <cite>./xuanpolicy/torch/utils/layers.py</cite>, <ci
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="xuanpolicy.torch.representations.cnn.AC_CNN_Atari._create_network">
-<span class="sig-prename descclassname"><span class="pre">xuanpolicy.torch.representations.cnn.AC_CNN_Atari.</span></span><span class="sig-name descname"><span class="pre">_create_network</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#xuanpolicy.torch.representations.cnn.AC_CNN_Atari._create_network" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="xuance.torch.representations.cnn.AC_CNN_Atari._create_network">
+<span class="sig-prename descclassname"><span class="pre">xuance.torch.representations.cnn.AC_CNN_Atari.</span></span><span class="sig-name descname"><span class="pre">_create_network</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#xuance.torch.representations.cnn.AC_CNN_Atari._create_network" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create the convolutional neural netowrks for actor-critic based algorithms and Atari tasks.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -241,8 +241,8 @@ The CNN block is defined in <cite>./xuanpolicy/torch/utils/layers.py</cite>, <ci
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="xuanpolicy.torch.representations.cnn.AC_CNN_Atari.forward">
-<span class="sig-prename descclassname"><span class="pre">xuanpolicy.torch.representations.cnn.AC_CNN_Atari.</span></span><span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">observations</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xuanpolicy.torch.representations.cnn.AC_CNN_Atari.forward" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="xuance.torch.representations.cnn.AC_CNN_Atari.forward">
+<span class="sig-prename descclassname"><span class="pre">xuance.torch.representations.cnn.AC_CNN_Atari.</span></span><span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">observations</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xuance.torch.representations.cnn.AC_CNN_Atari.forward" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate feature representation of the input observations.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -262,7 +262,7 @@ The CNN block is defined in <cite>./xuanpolicy/torch/utils/layers.py</cite>, <ci
 <br><hr><section id="source-code">
 <h2>Source Code<a class="headerlink" href="#source-code" title="Permalink to this heading">¶</a></h2>
 <div class="sphinx-tabs docutils container">
-<div aria-label="Tabbed content" class="closeable" role="tablist"><button aria-controls="panel-0-UHlUb3JjaA==" aria-selected="true" class="sphinx-tabs-tab group-tab" id="tab-0-UHlUb3JjaA==" name="UHlUb3JjaA==" role="tab" tabindex="0">PyTorch</button><button aria-controls="panel-0-VGVuc29yRmxvdw==" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-0-VGVuc29yRmxvdw==" name="VGVuc29yRmxvdw==" role="tab" tabindex="-1">TensorFlow</button><button aria-controls="panel-0-TWluZFNwb3Jl" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-0-TWluZFNwb3Jl" name="TWluZFNwb3Jl" role="tab" tabindex="-1">MindSpore</button></div><div aria-labelledby="tab-0-UHlUb3JjaA==" class="sphinx-tabs-panel group-tab" id="panel-0-UHlUb3JjaA==" name="UHlUb3JjaA==" role="tabpanel" tabindex="0"><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">xuanpolicy.torch.representations</span> <span class="kn">import</span> <span class="o">*</span>
+<div aria-label="Tabbed content" class="closeable" role="tablist"><button aria-controls="panel-0-UHlUb3JjaA==" aria-selected="true" class="sphinx-tabs-tab group-tab" id="tab-0-UHlUb3JjaA==" name="UHlUb3JjaA==" role="tab" tabindex="0">PyTorch</button><button aria-controls="panel-0-VGVuc29yRmxvdw==" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-0-VGVuc29yRmxvdw==" name="VGVuc29yRmxvdw==" role="tab" tabindex="-1">TensorFlow</button><button aria-controls="panel-0-TWluZFNwb3Jl" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-0-TWluZFNwb3Jl" name="TWluZFNwb3Jl" role="tab" tabindex="-1">MindSpore</button></div><div aria-labelledby="tab-0-UHlUb3JjaA==" class="sphinx-tabs-panel group-tab" id="panel-0-UHlUb3JjaA==" name="UHlUb3JjaA==" role="tabpanel" tabindex="0"><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">xuance.torch.representations</span> <span class="kn">import</span> <span class="o">*</span>
 
 <span class="c1"># process the input observations with stacks of CNN layers</span>
 <span class="k">class</span> <span class="nc">Basic_CNN</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
@@ -377,7 +377,7 @@ The CNN block is defined in <cite>./xuanpolicy/torch/utils/layers.py</cite>, <ci
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2023, XuanPolicy contributors.</p>
+    <p>&#169; Copyright 2023, XuanCe contributors.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

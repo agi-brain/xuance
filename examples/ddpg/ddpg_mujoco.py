@@ -4,15 +4,15 @@ from copy import deepcopy
 import numpy as np
 import torch.optim
 
-from xuanpolicy import get_arguments
-from xuanpolicy.common import space2shape
-from xuanpolicy.environment import make_envs
-from xuanpolicy.torch.utils.operations import set_seed
-from xuanpolicy.torch.utils import ActivationFunctions
+from xuance import get_arguments
+from xuance.common import space2shape
+from xuance.environment import make_envs
+from xuance.torch.utils.operations import set_seed
+from xuance.torch.utils import ActivationFunctions
 
 
 def parse_args():
-    parser = argparse.ArgumentParser("Example of XuanPolicy.")
+    parser = argparse.ArgumentParser("Example of XuanCe.")
     parser.add_argument("--method", type=str, default="ddpg")
     parser.add_argument("--env", type=str, default="mujoco")
     parser.add_argument("--env-id", type=str, default="InvertedPendulum-v4")
@@ -39,12 +39,12 @@ def run(args):
     n_envs = envs.num_envs
 
     # prepare the Representation
-    from xuanpolicy.torch.representations import Basic_Identical
+    from xuance.torch.representations import Basic_Identical
     representation = Basic_Identical(input_shape=space2shape(args.observation_space),
                                      device=args.device)
 
     # prepare the Policy
-    from xuanpolicy.torch.policies import DDPGPolicy
+    from xuance.torch.policies import DDPGPolicy
     policy = DDPGPolicy(action_space=args.action_space,
                         representation=representation,
                         actor_hidden_size=args.actor_hidden_size,
@@ -54,7 +54,7 @@ def run(args):
                         device=args.device)
 
     # prepare the Agent
-    from xuanpolicy.torch.agents import DDPG_Agent, get_total_iters
+    from xuance.torch.agents import DDPG_Agent, get_total_iters
     actor_optimizer = torch.optim.Adam(policy.actor.parameters(), args.actor_learning_rate)
     critic_optimizer = torch.optim.Adam(policy.critic.parameters(), args.critic_learning_rate)
     actor_lr_scheduler = torch.optim.lr_scheduler.LinearLR(actor_optimizer, start_factor=1.0, end_factor=0.25,

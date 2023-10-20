@@ -8,17 +8,17 @@ MADDPG_Agents
 **PyTorch:**
 
 .. py:class:: 
-    xuanpolicy.torch.agent.mutli_agent_rl.maddpg_agents.MADDPG_Agents(config, envs, device)
+    xuance.torch.agent.mutli_agent_rl.maddpg_agents.MADDPG_Agents(config, envs, device)
 
     :param config: Provides hyper parameters.
     :type config: Namespace
     :param envs: The vectorized environments.
-    :type envs: xuanpolicy.environments.vector_envs.vector_env.VecEnv
+    :type envs: xuance.environments.vector_envs.vector_env.VecEnv
     :param device: Choose CPU or GPU to train the model.
     :type device: str, int, torch.device
 
 .. py:function:: 
-    xuanpolicy.torch.agent.mutli_agent_rl.maddpg_agents.MADDPG_Agents.act(obs_n, test_mode=False)
+    xuance.torch.agent.mutli_agent_rl.maddpg_agents.MADDPG_Agents.act(obs_n, test_mode=False)
 
     Calculate joint actions for N agents according to the joint observations.
 
@@ -30,7 +30,7 @@ MADDPG_Agents
     :rtype: np.ndarray
   
 .. py:function:: 
-    xuanpolicy.torch.agent.mutli_agent_rl.maddpg_agents.MADDPG_Agents.train(i_episode)
+    xuance.torch.agent.mutli_agent_rl.maddpg_agents.MADDPG_Agents.train(i_episode)
 
     Train the multi-agent reinforcement learning model.
 
@@ -65,7 +65,7 @@ Source Code
     
         .. code-block:: python
 
-            from xuanpolicy.torch.agents import *
+            from xuance.torch.agents import *
 
             class MADDPG_Agents(MARLAgents):
                 def __init__(self,

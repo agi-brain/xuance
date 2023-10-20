@@ -8,17 +8,17 @@ COMA_Agents
 **PyTorch:**
 
 .. py:class:: 
-    xuanpolicy.torch.agent.mutli_agent_rl.coma_agents.COMA_Agents(config, envs, device)
+    xuance.torch.agent.mutli_agent_rl.coma_agents.COMA_Agents(config, envs, device)
 
     :param config: Provides hyper parameters.
     :type config: Namespace
     :param envs: The vectorized environments.
-    :type envs: xuanpolicy.environments.vector_envs.vector_env.VecEnv
+    :type envs: xuance.environments.vector_envs.vector_env.VecEnv
     :param device: Choose CPU or GPU to train the model.
     :type device: str, int, torch.device
 
 .. py:function:: 
-    xuanpolicy.torch.agent.mutli_agent_rl.coma_agents.COMA_Agents.act(obs_n, *rnn_hidden, avail_actions=None, state=None, test_mode=False)
+    xuance.torch.agent.mutli_agent_rl.coma_agents.COMA_Agents.act(obs_n, *rnn_hidden, avail_actions=None, state=None, test_mode=False)
 
     Calculate joint actions for N agents according to the joint observations.
 
@@ -36,7 +36,7 @@ COMA_Agents
     :rtype: tuple(numpy.ndarray, numpy.ndarray), np.ndarray, np.ndarray
   
 .. py:function:: 
-    xuanpolicy.torch.agent.mutli_agent_rl.coma_agents.COMA_Agents.train(i_step)
+    xuance.torch.agent.mutli_agent_rl.coma_agents.COMA_Agents.train(i_step)
 
     Train the multi-agent reinforcement learning model.
 
@@ -72,8 +72,8 @@ Source Code
         .. code-block:: python
 
             import torch
-            from xuanpolicy.torch.agents import *
-            from xuanpolicy.torch.agents.agents_marl import linear_decay_or_increase
+            from xuance.torch.agents import *
+            from xuance.torch.agents.agents_marl import linear_decay_or_increase
 
             class COMA_Agents(MARLAgents):
                 def __init__(self,

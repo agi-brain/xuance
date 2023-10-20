@@ -8,12 +8,12 @@ IPPO_Agents
 **PyTorch:**
 
 .. py:class:: 
-    xuanpolicy.torch.agent.mutli_agent_rl.ippo_agents.IPPO_Agents(config, envs, device)
+    xuance.torch.agent.mutli_agent_rl.ippo_agents.IPPO_Agents(config, envs, device)
 
     :param config: Provides hyper parameters.
     :type config: Namespace
     :param envs: The vectorized environments.
-    :type envs: xuanpolicy.environments.vector_envs.vector_env.VecEnv
+    :type envs: xuance.environments.vector_envs.vector_env.VecEnv
     :param device: Choose CPU or GPU to train the model.
     :type device: str, int, torch.device
 

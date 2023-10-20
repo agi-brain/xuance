@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MARLAgent &mdash; XuanPolicy v0.1.11 documentation</title>
+  <title>MARLAgent &mdash; XuanCe v0.1.11 documentation</title>
       <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="../../../../_static/custom.css" type="text/css" />
@@ -40,7 +40,7 @@
           
           
           <a href="../../../../index.html" class="icon icon-home">
-            XuanPolicy
+            XuanCe
               <img src="../../../../_static/logo_2.png" class="logo" alt="Logo"/>
           </a>
 <div role="search">
@@ -62,23 +62,23 @@
 <li class="toctree-l1 current"><a class="reference internal" href="../../agents.html">Agents</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="../drl/basic_drl_class.html">Agent</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">MARLAgents</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#xuanpolicy.torch.agents.agents_marl.MARLAgent"><code class="docutils literal notranslate"><span class="pre">xuanpolicy.torch.agents.agents_marl.MARLAgent</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#xuanpolicy.torch.agents.agents_marl.MARLAgent.save_model"><code class="docutils literal notranslate"><span class="pre">xuanpolicy.torch.agents.agents_marl.MARLAgent.save_model()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#xuanpolicy.torch.agents.agents_marl.MARLAgent.load_model"><code class="docutils literal notranslate"><span class="pre">xuanpolicy.torch.agents.agents_marl.MARLAgent.load_model()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#xuanpolicy.torch.agents.agents_marl.MARLAgent.act"><code class="docutils literal notranslate"><span class="pre">xuanpolicy.torch.agents.agents_marl.MARLAgent.act()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#xuanpolicy.torch.agents.agents_marl.MARLAgent.train"><code class="docutils literal notranslate"><span class="pre">xuanpolicy.torch.agents.agents_marl.MARLAgent.train()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#xuance.torch.agents.agents_marl.MARLAgent"><code class="docutils literal notranslate"><span class="pre">xuance.torch.agents.agents_marl.MARLAgent</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#xuance.torch.agents.agents_marl.MARLAgent.save_model"><code class="docutils literal notranslate"><span class="pre">xuance.torch.agents.agents_marl.MARLAgent.save_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#xuance.torch.agents.agents_marl.MARLAgent.load_model"><code class="docutils literal notranslate"><span class="pre">xuance.torch.agents.agents_marl.MARLAgent.load_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#xuance.torch.agents.agents_marl.MARLAgent.act"><code class="docutils literal notranslate"><span class="pre">xuance.torch.agents.agents_marl.MARLAgent.act()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#xuance.torch.agents.agents_marl.MARLAgent.train"><code class="docutils literal notranslate"><span class="pre">xuance.torch.agents.agents_marl.MARLAgent.train()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#xuanpolicy.torch.agents.agents_marl.linear_decay_or_increase"><code class="docutils literal notranslate"><span class="pre">xuanpolicy.torch.agents.agents_marl.linear_decay_or_increase</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#xuanpolicy.torch.agents.agents_marl.linear_decay_or_increase.update"><code class="docutils literal notranslate"><span class="pre">xuanpolicy.torch.agents.agents_marl.linear_decay_or_increase.update()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#xuance.torch.agents.agents_marl.linear_decay_or_increase"><code class="docutils literal notranslate"><span class="pre">xuance.torch.agents.agents_marl.linear_decay_or_increase</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#xuance.torch.agents.agents_marl.linear_decay_or_increase.update"><code class="docutils literal notranslate"><span class="pre">xuance.torch.agents.agents_marl.linear_decay_or_increase.update()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#xuanpolicy.torch.agents.agents_marl.RandomAgents"><code class="docutils literal notranslate"><span class="pre">xuanpolicy.torch.agents.agents_marl.RandomAgents</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#xuanpolicy.torch.agents.agents_marl.RandomAgents.act"><code class="docutils literal notranslate"><span class="pre">xuanpolicy.torch.agents.agents_marl.RandomAgents.act()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#xuance.torch.agents.agents_marl.RandomAgents"><code class="docutils literal notranslate"><span class="pre">xuance.torch.agents.agents_marl.RandomAgents</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#xuance.torch.agents.agents_marl.RandomAgents.act"><code class="docutils literal notranslate"><span class="pre">xuance.torch.agents.agents_marl.RandomAgents.act()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#xuanpolicy.tensorflow.agents.agents_marl.MARLAgent"><code class="docutils literal notranslate"><span class="pre">xuanpolicy.tensorflow.agents.agents_marl.MARLAgent</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#xuanpolicy.mindspore.agents.agents_marl.MARLAgent"><code class="docutils literal notranslate"><span class="pre">xuanpolicy.mindspore.agents.agents_marl.MARLAgent</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#xuance.tensorflow.agents.agents_marl.MARLAgent"><code class="docutils literal notranslate"><span class="pre">xuance.tensorflow.agents.agents_marl.MARLAgent</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#xuance.mindspore.agents.agents_marl.MARLAgent"><code class="docutils literal notranslate"><span class="pre">xuance.mindspore.agents.agents_marl.MARLAgent</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#source-code">Source Code</a></li>
 </ul>
 </li>
@@ -149,7 +149,7 @@
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../../../../index.html">XuanPolicy</a>
+          <a href="../../../../index.html">XuanCe</a>
       </nav>
 
       <div class="wy-nav-content">
@@ -170,19 +170,19 @@
              
   <section id="marlagent">
 <h1>MARLAgent<a class="headerlink" href="#marlagent" title="Permalink to this heading">¶</a></h1>
-<p>To create new MARL agents, you should build a class inherit from <code class="docutils literal notranslate"><span class="pre">xuanpolicy.torch.agents.agents_marl.MARLAgent</span></code> , <code class="docutils literal notranslate"><span class="pre">xuanpolicy.tensorflow.agents.agents_marl.MARLAgent</span></code>, or <code class="docutils literal notranslate"><span class="pre">xuanpolicy.mindspore.agents.agents_marl.MARLAgent</span></code>.</p>
+<p>To create new MARL agents, you should build a class inherit from <code class="docutils literal notranslate"><span class="pre">xuance.torch.agents.agents_marl.MARLAgent</span></code> , <code class="docutils literal notranslate"><span class="pre">xuance.tensorflow.agents.agents_marl.MARLAgent</span></code>, or <code class="docutils literal notranslate"><span class="pre">xuance.mindspore.agents.agents_marl.MARLAgent</span></code>.</p>
 <p><strong>PyTorch:</strong></p>
 <dl class="py class">
-<dt class="sig sig-object py" id="xuanpolicy.torch.agents.agents_marl.MARLAgent">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xuanpolicy.torch.agents.agents_marl.</span></span><span class="sig-name descname"><span class="pre">MARLAgent</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">envs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">policy</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">memory</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">learner</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_dir</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xuanpolicy.torch.agents.agents_marl.MARLAgent" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="xuance.torch.agents.agents_marl.MARLAgent">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xuance.torch.agents.agents_marl.</span></span><span class="sig-name descname"><span class="pre">MARLAgent</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">envs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">policy</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">memory</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">learner</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_dir</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xuance.torch.agents.agents_marl.MARLAgent" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>config</strong> (<em>Namespace</em>) – Provides hyper parameters.</p></li>
-<li><p><strong>envs</strong> (<em>xuanpolicy.environments.vector_envs.vector_env.VecEnv</em>) – The vectorized environments.</p></li>
+<li><p><strong>envs</strong> (<em>xuance.environments.vector_envs.vector_env.VecEnv</em>) – The vectorized environments.</p></li>
 <li><p><strong>policy</strong> (<em>nn.Module</em>) – The policy that provides actions and values.</p></li>
-<li><p><strong>memory</strong> (<em>xuanpolicy.common.memory_tools.Buffer</em>) – Experice replay buffer.</p></li>
-<li><p><strong>learner</strong> (<em>xuanpolicy.torch.learner.LearnerMAS</em>) – The learner that updates parameters of policy.</p></li>
+<li><p><strong>memory</strong> (<em>xuance.common.memory_tools.Buffer</em>) – Experice replay buffer.</p></li>
+<li><p><strong>learner</strong> (<em>xuance.torch.learner.LearnerMAS</em>) – The learner that updates parameters of policy.</p></li>
 <li><p><strong>device</strong> (<em>str</em><em>, </em><em>int</em><em>, </em><em>torch.device</em>) – Choose CPU or GPU to train the model.</p></li>
 <li><p><strong>log_dir</strong> (<em>str</em>) – The directory of log file, default is “./logs/”.</p></li>
 <li><p><strong>model_dir</strong> (<em>str</em>) – The directory of model file, default is “./models/”.</p></li>
@@ -192,8 +192,8 @@
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="xuanpolicy.torch.agents.agents_marl.MARLAgent.save_model">
-<span class="sig-prename descclassname"><span class="pre">xuanpolicy.torch.agents.agents_marl.MARLAgent.</span></span><span class="sig-name descname"><span class="pre">save_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xuanpolicy.torch.agents.agents_marl.MARLAgent.save_model" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="xuance.torch.agents.agents_marl.MARLAgent.save_model">
+<span class="sig-prename descclassname"><span class="pre">xuance.torch.agents.agents_marl.MARLAgent.</span></span><span class="sig-name descname"><span class="pre">save_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xuance.torch.agents.agents_marl.MARLAgent.save_model" title="Permalink to this definition">¶</a></dt>
 <dd><p>Save the model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -203,8 +203,8 @@
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="xuanpolicy.torch.agents.agents_marl.MARLAgent.load_model">
-<span class="sig-prename descclassname"><span class="pre">xuanpolicy.torch.agents.agents_marl.MARLAgent.</span></span><span class="sig-name descname"><span class="pre">load_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xuanpolicy.torch.agents.agents_marl.MARLAgent.load_model" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="xuance.torch.agents.agents_marl.MARLAgent.load_model">
+<span class="sig-prename descclassname"><span class="pre">xuance.torch.agents.agents_marl.MARLAgent.</span></span><span class="sig-name descname"><span class="pre">load_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xuance.torch.agents.agents_marl.MARLAgent.load_model" title="Permalink to this definition">¶</a></dt>
 <dd><p>Load a model by specifying the <code class="docutils literal notranslate"><span class="pre">path</span></code> and <code class="docutils literal notranslate"><span class="pre">seed</span></code> .</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -217,8 +217,8 @@
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="xuanpolicy.torch.agents.agents_marl.MARLAgent.act">
-<span class="sig-prename descclassname"><span class="pre">xuanpolicy.torch.agents.agents_marl.MARLAgent.</span></span><span class="sig-name descname"><span class="pre">act</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xuanpolicy.torch.agents.agents_marl.MARLAgent.act" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="xuance.torch.agents.agents_marl.MARLAgent.act">
+<span class="sig-prename descclassname"><span class="pre">xuance.torch.agents.agents_marl.MARLAgent.</span></span><span class="sig-name descname"><span class="pre">act</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xuance.torch.agents.agents_marl.MARLAgent.act" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get actions for executing according to the joint observations, global states, available actions, etc.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -228,8 +228,8 @@
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="xuanpolicy.torch.agents.agents_marl.MARLAgent.train">
-<span class="sig-prename descclassname"><span class="pre">xuanpolicy.torch.agents.agents_marl.MARLAgent.</span></span><span class="sig-name descname"><span class="pre">train</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xuanpolicy.torch.agents.agents_marl.MARLAgent.train" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="xuance.torch.agents.agents_marl.MARLAgent.train">
+<span class="sig-prename descclassname"><span class="pre">xuance.torch.agents.agents_marl.MARLAgent.</span></span><span class="sig-name descname"><span class="pre">train</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xuance.torch.agents.agents_marl.MARLAgent.train" title="Permalink to this definition">¶</a></dt>
 <dd><p>Train the multi-agent reinforcement learning models.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -245,8 +245,8 @@
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="xuanpolicy.torch.agents.agents_marl.linear_decay_or_increase">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xuanpolicy.torch.agents.agents_marl.</span></span><span class="sig-name descname"><span class="pre">linear_decay_or_increase</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step_length</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xuanpolicy.torch.agents.agents_marl.linear_decay_or_increase" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="xuance.torch.agents.agents_marl.linear_decay_or_increase">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xuance.torch.agents.agents_marl.</span></span><span class="sig-name descname"><span class="pre">linear_decay_or_increase</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step_length</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xuance.torch.agents.agents_marl.linear_decay_or_increase" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -259,19 +259,19 @@
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="xuanpolicy.torch.agents.agents_marl.linear_decay_or_increase.update">
-<span class="sig-prename descclassname"><span class="pre">xuanpolicy.torch.agents.agents_marl.linear_decay_or_increase.</span></span><span class="sig-name descname"><span class="pre">update</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#xuanpolicy.torch.agents.agents_marl.linear_decay_or_increase.update" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="xuance.torch.agents.agents_marl.linear_decay_or_increase.update">
+<span class="sig-prename descclassname"><span class="pre">xuance.torch.agents.agents_marl.linear_decay_or_increase.</span></span><span class="sig-name descname"><span class="pre">update</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#xuance.torch.agents.agents_marl.linear_decay_or_increase.update" title="Permalink to this definition">¶</a></dt>
 <dd><p>Update the factor once.</p>
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="xuanpolicy.torch.agents.agents_marl.RandomAgents">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xuanpolicy.torch.agents.agents_marl.</span></span><span class="sig-name descname"><span class="pre">RandomAgents</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">envs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xuanpolicy.torch.agents.agents_marl.RandomAgents" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="xuance.torch.agents.agents_marl.RandomAgents">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xuance.torch.agents.agents_marl.</span></span><span class="sig-name descname"><span class="pre">RandomAgents</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">envs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xuance.torch.agents.agents_marl.RandomAgents" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>args</strong> (<em>Namespace</em>) – Provides hyper parameters.</p></li>
-<li><p><strong>envs</strong> (<em>xuanpolicy.environments.vector_envs.vector_env.VecEnv</em>) – The vectorized environments.</p></li>
+<li><p><strong>envs</strong> (<em>xuance.environments.vector_envs.vector_env.VecEnv</em>) – The vectorized environments.</p></li>
 <li><p><strong>device</strong> (<em>str</em><em>, </em><em>int</em><em>, </em><em>torch.device</em>) – Choose CPU or GPU to train the model.</p></li>
 </ul>
 </dd>
@@ -279,8 +279,8 @@
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="xuanpolicy.torch.agents.agents_marl.RandomAgents.act">
-<span class="sig-prename descclassname"><span class="pre">xuanpolicy.torch.agents.agents_marl.RandomAgents.</span></span><span class="sig-name descname"><span class="pre">act</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#xuanpolicy.torch.agents.agents_marl.RandomAgents.act" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="xuance.torch.agents.agents_marl.RandomAgents.act">
+<span class="sig-prename descclassname"><span class="pre">xuance.torch.agents.agents_marl.RandomAgents.</span></span><span class="sig-name descname"><span class="pre">act</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#xuance.torch.agents.agents_marl.RandomAgents.act" title="Permalink to this definition">¶</a></dt>
 <dd><p>Provide random actions for RandomAgents.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -294,16 +294,16 @@
 
 <br><hr><p><strong>TensorFlow:</strong></p>
 <dl class="py class">
-<dt class="sig sig-object py" id="xuanpolicy.tensorflow.agents.agents_marl.MARLAgent">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xuanpolicy.tensorflow.agents.agents_marl.</span></span><span class="sig-name descname"><span class="pre">MARLAgent</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">envs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">policy</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">memory</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">learner</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_dir</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xuanpolicy.tensorflow.agents.agents_marl.MARLAgent" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="xuance.tensorflow.agents.agents_marl.MARLAgent">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xuance.tensorflow.agents.agents_marl.</span></span><span class="sig-name descname"><span class="pre">MARLAgent</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">envs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">policy</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">memory</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">learner</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_dir</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xuance.tensorflow.agents.agents_marl.MARLAgent" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>config</strong> (<em>Namespace</em>) – Provides hyper parameters.</p></li>
-<li><p><strong>envs</strong> (<em>xuanpolicy.environments.vector_envs.vector_env.VecEnv</em>) – The vectorized environments.</p></li>
+<li><p><strong>envs</strong> (<em>xuance.environments.vector_envs.vector_env.VecEnv</em>) – The vectorized environments.</p></li>
 <li><p><strong>policy</strong> (<em>nn.Module</em>) – The policy that provides actions and values.</p></li>
-<li><p><strong>memory</strong> (<em>xuanpolicy.common.memory_tools.Buffer</em>) – Experice replay buffer.</p></li>
-<li><p><strong>learner</strong> (<em>xuanpolicy.tensorflow.learner.Learner</em>) – The learner that updates parameters of policy.</p></li>
+<li><p><strong>memory</strong> (<em>xuance.common.memory_tools.Buffer</em>) – Experice replay buffer.</p></li>
+<li><p><strong>learner</strong> (<em>xuance.tensorflow.learner.Learner</em>) – The learner that updates parameters of policy.</p></li>
 <li><p><strong>device</strong> (<em>str</em>) – Choose CPU or GPU to train the model.</p></li>
 <li><p><strong>log_dir</strong> (<em>str</em>) – The directory of log file, default is “./logs/”.</p></li>
 <li><p><strong>model_dir</strong> (<em>str</em>) – The directory of model file, default is “./models/”.</p></li>
@@ -314,15 +314,15 @@
 
 <br><hr><p><strong>MindSpore:</strong></p>
 <dl class="py class">
-<dt class="sig sig-object py" id="xuanpolicy.mindspore.agents.agents_marl.MARLAgent">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xuanpolicy.mindspore.agents.agents_marl.</span></span><span class="sig-name descname"><span class="pre">MARLAgent</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">envs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">policy</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">memory</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">learner</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_dir</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xuanpolicy.mindspore.agents.agents_marl.MARLAgent" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="xuance.mindspore.agents.agents_marl.MARLAgent">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xuance.mindspore.agents.agents_marl.</span></span><span class="sig-name descname"><span class="pre">MARLAgent</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">envs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">policy</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">memory</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">learner</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_dir</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xuance.mindspore.agents.agents_marl.MARLAgent" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>envs</strong> (<em>xuanpolicy.environments.vector_envs.vector_env.VecEnv</em>) – The vectorized environments.</p></li>
+<li><p><strong>envs</strong> (<em>xuance.environments.vector_envs.vector_env.VecEnv</em>) – The vectorized environments.</p></li>
 <li><p><strong>policy</strong> (<em>nn.Module</em>) – The policy that provides actions and values.</p></li>
-<li><p><strong>memory</strong> (<em>xuanpolicy.common.memory_tools.Buffer</em>) – Experice replay buffer.</p></li>
-<li><p><strong>learner</strong> (<em>xuanpolicy.mindspore.learner.Learner</em>) – The learner that updates parameters of policy.</p></li>
+<li><p><strong>memory</strong> (<em>xuance.common.memory_tools.Buffer</em>) – Experice replay buffer.</p></li>
+<li><p><strong>learner</strong> (<em>xuance.mindspore.learner.Learner</em>) – The learner that updates parameters of policy.</p></li>
 <li><p><strong>device</strong> (<em>str</em>) – Choose CPU or GPU to train the model.</p></li>
 <li><p><strong>log_dir</strong> (<em>str</em>) – The directory of log file, default is “./logs/”.</p></li>
 <li><p><strong>model_dir</strong> (<em>str</em>) – The directory of model file, default is “./models/”.</p></li>
@@ -335,7 +335,7 @@
 <h2>Source Code<a class="headerlink" href="#source-code" title="Permalink to this heading">¶</a></h2>
 <div class="sphinx-tabs docutils container">
 <div aria-label="Tabbed content" class="closeable" role="tablist"><button aria-controls="panel-0-UHlUb3JjaA==" aria-selected="true" class="sphinx-tabs-tab group-tab" id="tab-0-UHlUb3JjaA==" name="UHlUb3JjaA==" role="tab" tabindex="0">PyTorch</button><button aria-controls="panel-0-VGVuc29yRmxvdw==" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-0-VGVuc29yRmxvdw==" name="VGVuc29yRmxvdw==" role="tab" tabindex="-1">TensorFlow</button><button aria-controls="panel-0-TWluZFNwb3Jl" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-0-TWluZFNwb3Jl" name="TWluZFNwb3Jl" role="tab" tabindex="-1">MindSpore</button></div><div aria-labelledby="tab-0-UHlUb3JjaA==" class="sphinx-tabs-panel group-tab" id="panel-0-UHlUb3JjaA==" name="UHlUb3JjaA==" role="tabpanel" tabindex="0"><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os.path</span>
-<span class="kn">from</span> <span class="nn">xuanpolicy.torch.agents</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">xuance.torch.agents</span> <span class="kn">import</span> <span class="o">*</span>
 
 
 <span class="k">class</span> <span class="nc">MARLAgents</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
@@ -420,7 +420,7 @@
       <span class="k">return</span>
 </pre></div>
 </div>
-</div><div aria-labelledby="tab-0-VGVuc29yRmxvdw==" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-0-VGVuc29yRmxvdw==" name="VGVuc29yRmxvdw==" role="tabpanel" tabindex="0"><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">xuanpolicy.tensorflow.agents</span> <span class="kn">import</span> <span class="o">*</span>
+</div><div aria-labelledby="tab-0-VGVuc29yRmxvdw==" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-0-VGVuc29yRmxvdw==" name="VGVuc29yRmxvdw==" role="tabpanel" tabindex="0"><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">xuance.tensorflow.agents</span> <span class="kn">import</span> <span class="o">*</span>
 
 <span class="k">class</span> <span class="nc">MARLAgents</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
@@ -524,7 +524,7 @@
 </div><div aria-labelledby="tab-0-TWluZFNwb3Jl" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-0-TWluZFNwb3Jl" name="TWluZFNwb3Jl" role="tabpanel" tabindex="0"><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">mindspore</span> <span class="k">as</span> <span class="nn">ms</span>
 <span class="kn">import</span> <span class="nn">mindspore.ops</span> <span class="k">as</span> <span class="nn">ops</span>
 <span class="kn">from</span> <span class="nn">mindspore</span> <span class="kn">import</span> <span class="n">Tensor</span>
-<span class="kn">from</span> <span class="nn">xuanpolicy.mindspore.agents</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">xuance.mindspore.agents</span> <span class="kn">import</span> <span class="o">*</span>
 
 <span class="k">class</span> <span class="nc">MARLAgents</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
@@ -641,7 +641,7 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2023, XuanPolicy contributors.</p>
+    <p>&#169; Copyright 2023, XuanCe contributors.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

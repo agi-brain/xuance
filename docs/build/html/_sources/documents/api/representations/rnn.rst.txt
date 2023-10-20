@@ -3,7 +3,7 @@ RNN-based
 
 Recurrent Neural Networks (RNNs) are mainly used for processing sequential signal information to extract feature vectors of the current sequence.
 Depending on the usage scenario, this software provides two types of RNN modules: `gru_block` and `lstm_block`.
-Their definitions can be found in `./xuanpolicy/torch/utils/layers.py` , `./xuanpolicy/tensorflow/utils/layers.py` and `./xuanpolicy/mindspore/utils/layers.py` respectively.
+Their definitions can be found in `./xuance/torch/utils/layers.py` , `./xuance/tensorflow/utils/layers.py` and `./xuance/mindspore/utils/layers.py` respectively.
 
 To instantiate these classes, you need to specify the input dimension (`input_dim`), output dimension (`output_dim`), pruning method (`dropout`), and initialization method (`initialize`).
 
@@ -16,7 +16,7 @@ Similarly, when implementing these classes in PyTorch, you also need to specify 
 **PyTorch:**
 
 .. py:class:: 
-    xuanpolicy.torch.representations.rnn.Basic_RNN(input_shape, hidden_sizes, normalize=None, initialize=None, activation=None, device=None, kwargs)
+    xuance.torch.representations.rnn.Basic_RNN(input_shape, hidden_sizes, normalize=None, initialize=None, activation=None, device=None, kwargs)
 
     The ``hidden_sizes`` is a dict input, which contains "fc_hidden_sizes" and "fc_hidden_sizes".
     The "fc_hidden_sizes" is the sizes of the fully connected layers before rnn layers.
@@ -43,7 +43,7 @@ Similarly, when implementing these classes in PyTorch, you also need to specify 
     :type rnn: str
 
 .. py:function:: 
-    xuanpolicy.torch.representations.rnn.Basic_RNN._create_network()
+    xuance.torch.representations.rnn.Basic_RNN._create_network()
 
     Create the recurrent neural netowrks.
 
@@ -51,7 +51,7 @@ Similarly, when implementing these classes in PyTorch, you also need to specify 
     :rtype: nn.Module, nn.Module, int
 
 .. py:function:: 
-    xuanpolicy.torch.representations.rnn.Basic_RNN.forward(x, h, c=None)
+    xuance.torch.representations.rnn.Basic_RNN.forward(x, h, c=None)
 
     Calculate feature representation of the inputs.
 
@@ -65,7 +65,7 @@ Similarly, when implementing these classes in PyTorch, you also need to specify 
     :rtype: dict
 
 .. py:function:: 
-    xuanpolicy.torch.representations.rnn.Basic_RNN.init_hidden(batch)
+    xuance.torch.representations.rnn.Basic_RNN.init_hidden(batch)
 
     Initialize a batch of RNN hidden states.
 
@@ -75,7 +75,7 @@ Similarly, when implementing these classes in PyTorch, you also need to specify 
     :rtype: torch.Tensor
 
 .. py:function:: 
-    xuanpolicy.torch.representations.rnn.Basic_RNN.init_hidden_item(i, rnn_hidden)
+    xuance.torch.representations.rnn.Basic_RNN.init_hidden_item(i, rnn_hidden)
 
     Initialize a slice of hidden states from the given RNN hidden states.
 
@@ -87,7 +87,7 @@ Similarly, when implementing these classes in PyTorch, you also need to specify 
     :rtype: torch.Tensor
 
 .. py:function:: 
-    xuanpolicy.torch.representations.rnn.Basic_RNN.get_hidden_item(i, rnn_hidden)
+    xuance.torch.representations.rnn.Basic_RNN.get_hidden_item(i, rnn_hidden)
 
     Get a slice of hidden states from the given RNN hidden states.
 
@@ -123,7 +123,7 @@ Source Code
     
     .. code-block:: python
 
-        from xuanpolicy.torch.representations import *
+        from xuance.torch.representations import *
 
         class Basic_RNN(nn.Module):
             def __init__(self,

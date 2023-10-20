@@ -1,12 +1,12 @@
 Learner
 =======================
 
-To create new learner, you should build a class inherit from ``xuanpolicy.torch.learners.learner.Learner`` , ``xuanpolicy.tensorflow.learners.learner.Learner``, or ``xuanpolicy.mindspore.learners.learner.Learner``.
+To create new learner, you should build a class inherit from ``xuance.torch.learners.learner.Learner`` , ``xuance.tensorflow.learners.learner.Learner``, or ``xuance.mindspore.learners.learner.Learner``.
 
 **PyTorch:**
 
 .. py:class:: 
-    xuanpolicy.torch.learners.learner.Learner(policy, optimizer, scheduler=None, device=None, model_dir="./")
+    xuance.torch.learners.learner.Learner(policy, optimizer, scheduler=None, device=None, model_dir="./")
 
     The basic class of the learner.
 
@@ -21,14 +21,14 @@ To create new learner, you should build a class inherit from ``xuanpolicy.torch.
     :param model_dir: The directory of model file, default is "./".
     :type model_dir: str
 
-.. py:function:: xuanpolicy.torch.learners.learner.Learner.save_model(model_path)
+.. py:function:: xuance.torch.learners.learner.Learner.save_model(model_path)
     
     Save the model.
 
     :param model_path: The model's path.
     :type model_path: str
 
-.. py:function:: xuanpolicy.torch.learners.learner.Learner.load_model(path, seed=1)
+.. py:function:: xuance.torch.learners.learner.Learner.load_model(path, seed=1)
 
     Load a model by specifying the ``path`` and ``seed`` .
 
@@ -37,7 +37,7 @@ To create new learner, you should build a class inherit from ``xuanpolicy.torch.
     :param seed: Select the seed that model was trained with if it exits.
     :type seed: int
 
-.. py:function:: xuanpolicy.torch.learners.learner.Learner.update(*args)
+.. py:function:: xuance.torch.learners.learner.Learner.update(*args)
    
     Update the policies with self.optimizer.
 

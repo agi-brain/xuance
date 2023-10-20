@@ -8,12 +8,12 @@ PDQN_Agent
 **PyTorch:**
 
 .. py:class:: 
-    xuanpolicy.torch.agent.policy_gradient.pdqn_agent.PDQN_Agent(config, envs, policy, optimizer, scheduler, device)
+    xuance.torch.agent.policy_gradient.pdqn_agent.PDQN_Agent(config, envs, policy, optimizer, scheduler, device)
 
     :param config: Provides hyper parameters.
     :type config: Namespace
     :param envs: The vectorized environments.
-    :type envs: xuanpolicy.environments.vector_envs.vector_env.VecEnv
+    :type envs: xuance.environments.vector_envs.vector_env.VecEnv
     :param policy: The policy that provides actions and values.
     :type policy: nn.Module
     :param optimizer: The optimizer that updates the parameters.
@@ -24,7 +24,7 @@ PDQN_Agent
     :type device: str, int, torch.device
 
 .. py:function:: 
-    xuanpolicy.torch.agent.policy_gradient.pdqn_agent.PDQN_Agent._action(obs, egreedy)
+    xuance.torch.agent.policy_gradient.pdqn_agent.PDQN_Agent._action(obs, egreedy)
 
     Calculate actions according to the observations.
 
@@ -36,7 +36,7 @@ PDQN_Agent
     :rtype: np.ndarray, np.ndarray, np.ndarray
 
 .. py:function:: 
-    xuanpolicy.torch.agent.policy_gradient.pdqn_agent.PDQN_Agent.pad_action(disaction, conaction)
+    xuance.torch.agent.policy_gradient.pdqn_agent.PDQN_Agent.pad_action(disaction, conaction)
 
     :param disaction: The discrete actions.
     :type disaction: numpy.ndarray
@@ -46,7 +46,7 @@ PDQN_Agent
     :rtype: tuple(numpy.ndarray, numpy.ndarray)
   
 .. py:function:: 
-    xuanpolicy.torch.agent.policy_gradient.pdqn_agent.PDQN_Agent.train(train_steps)
+    xuance.torch.agent.policy_gradient.pdqn_agent.PDQN_Agent.train(train_steps)
 
     Train the PDQN agent.
 
@@ -54,7 +54,7 @@ PDQN_Agent
     :type train_steps: int
 
 .. py:function:: 
-    xuanpolicy.torch.agent.policy_gradient.pdqn_agent.PDQN_Agent.test(env_fn, test_episodes)
+    xuance.torch.agent.policy_gradient.pdqn_agent.PDQN_Agent.test(env_fn, test_episodes)
   
     Test the trained model.
 
@@ -92,7 +92,7 @@ Source Code
 
             import numpy as np
 
-            from xuanpolicy.torch.agents import *
+            from xuance.torch.agents import *
             import gym
             from gym import spaces
 

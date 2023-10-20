@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Learner &mdash; XuanPolicy v0.1.11 documentation</title>
+  <title>Learner &mdash; XuanCe v0.1.11 documentation</title>
       <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
@@ -40,7 +40,7 @@
           
           
           <a href="../../../index.html" class="icon icon-home">
-            XuanPolicy
+            XuanCe
               <img src="../../../_static/logo_2.png" class="logo" alt="Logo"/>
           </a>
 <div role="search">
@@ -64,10 +64,10 @@
 <li class="toctree-l1"><a class="reference internal" href="../policies.html">Policies</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="../learners.html">Learners</a><ul class="current">
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Learner</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#xuanpolicy.torch.learners.learner.Learner"><code class="docutils literal notranslate"><span class="pre">xuanpolicy.torch.learners.learner.Learner</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#xuanpolicy.torch.learners.learner.Learner.save_model"><code class="docutils literal notranslate"><span class="pre">xuanpolicy.torch.learners.learner.Learner.save_model()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#xuanpolicy.torch.learners.learner.Learner.load_model"><code class="docutils literal notranslate"><span class="pre">xuanpolicy.torch.learners.learner.Learner.load_model()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#xuanpolicy.torch.learners.learner.Learner.update"><code class="docutils literal notranslate"><span class="pre">xuanpolicy.torch.learners.learner.Learner.update()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#xuance.torch.learners.learner.Learner"><code class="docutils literal notranslate"><span class="pre">xuance.torch.learners.learner.Learner</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#xuance.torch.learners.learner.Learner.save_model"><code class="docutils literal notranslate"><span class="pre">xuance.torch.learners.learner.Learner.save_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#xuance.torch.learners.learner.Learner.load_model"><code class="docutils literal notranslate"><span class="pre">xuance.torch.learners.learner.Learner.load_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#xuance.torch.learners.learner.Learner.update"><code class="docutils literal notranslate"><span class="pre">xuance.torch.learners.learner.Learner.update()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#source-code">Source Code</a></li>
@@ -137,7 +137,7 @@
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../../../index.html">XuanPolicy</a>
+          <a href="../../../index.html">XuanCe</a>
       </nav>
 
       <div class="wy-nav-content">
@@ -158,11 +158,11 @@
              
   <section id="learner">
 <h1>Learner<a class="headerlink" href="#learner" title="Permalink to this heading">¶</a></h1>
-<p>To create new learner, you should build a class inherit from <code class="docutils literal notranslate"><span class="pre">xuanpolicy.torch.learners.learner.Learner</span></code> , <code class="docutils literal notranslate"><span class="pre">xuanpolicy.tensorflow.learners.learner.Learner</span></code>, or <code class="docutils literal notranslate"><span class="pre">xuanpolicy.mindspore.learners.learner.Learner</span></code>.</p>
+<p>To create new learner, you should build a class inherit from <code class="docutils literal notranslate"><span class="pre">xuance.torch.learners.learner.Learner</span></code> , <code class="docutils literal notranslate"><span class="pre">xuance.tensorflow.learners.learner.Learner</span></code>, or <code class="docutils literal notranslate"><span class="pre">xuance.mindspore.learners.learner.Learner</span></code>.</p>
 <p><strong>PyTorch:</strong></p>
 <dl class="py class">
-<dt class="sig sig-object py" id="xuanpolicy.torch.learners.learner.Learner">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xuanpolicy.torch.learners.learner.</span></span><span class="sig-name descname"><span class="pre">Learner</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">policy</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheduler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'./'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xuanpolicy.torch.learners.learner.Learner" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="xuance.torch.learners.learner.Learner">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xuance.torch.learners.learner.</span></span><span class="sig-name descname"><span class="pre">Learner</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">policy</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheduler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'./'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xuance.torch.learners.learner.Learner" title="Permalink to this definition">¶</a></dt>
 <dd><p>The basic class of the learner.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -178,8 +178,8 @@
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="xuanpolicy.torch.learners.learner.Learner.save_model">
-<span class="sig-prename descclassname"><span class="pre">xuanpolicy.torch.learners.learner.Learner.</span></span><span class="sig-name descname"><span class="pre">save_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xuanpolicy.torch.learners.learner.Learner.save_model" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="xuance.torch.learners.learner.Learner.save_model">
+<span class="sig-prename descclassname"><span class="pre">xuance.torch.learners.learner.Learner.</span></span><span class="sig-name descname"><span class="pre">save_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xuance.torch.learners.learner.Learner.save_model" title="Permalink to this definition">¶</a></dt>
 <dd><p>Save the model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -189,8 +189,8 @@
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="xuanpolicy.torch.learners.learner.Learner.load_model">
-<span class="sig-prename descclassname"><span class="pre">xuanpolicy.torch.learners.learner.Learner.</span></span><span class="sig-name descname"><span class="pre">load_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xuanpolicy.torch.learners.learner.Learner.load_model" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="xuance.torch.learners.learner.Learner.load_model">
+<span class="sig-prename descclassname"><span class="pre">xuance.torch.learners.learner.Learner.</span></span><span class="sig-name descname"><span class="pre">load_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xuance.torch.learners.learner.Learner.load_model" title="Permalink to this definition">¶</a></dt>
 <dd><p>Load a model by specifying the <code class="docutils literal notranslate"><span class="pre">path</span></code> and <code class="docutils literal notranslate"><span class="pre">seed</span></code> .</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -203,8 +203,8 @@
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="xuanpolicy.torch.learners.learner.Learner.update">
-<span class="sig-prename descclassname"><span class="pre">xuanpolicy.torch.learners.learner.Learner.</span></span><span class="sig-name descname"><span class="pre">update</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xuanpolicy.torch.learners.learner.Learner.update" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="xuance.torch.learners.learner.Learner.update">
+<span class="sig-prename descclassname"><span class="pre">xuance.torch.learners.learner.Learner.</span></span><span class="sig-name descname"><span class="pre">update</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xuance.torch.learners.learner.Learner.update" title="Permalink to this definition">¶</a></dt>
 <dd><p>Update the policies with self.optimizer.</p>
 </dd></dl>
 
@@ -360,7 +360,7 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2023, XuanPolicy contributors.</p>
+    <p>&#169; Copyright 2023, XuanCe contributors.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

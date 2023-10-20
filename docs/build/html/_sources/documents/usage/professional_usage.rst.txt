@@ -2,7 +2,7 @@ Professional Usage
 ================================
 
 The previous page demonstrated how to directly run an algorithm by calling the runner.
-In order to help users better understand the internal implementation process of "XuanPolicy",
+In order to help users better understand the internal implementation process of "XuanCe",
 and facilitate further algorithm development and implementation of their own reinforcement learning tasks,
 this section will take the PPO algorithm training on the MuJoCo environment task as an example,
 and provide a detailed introduction on how to call the API from the bottom level to implement reinforcement learning model training.
@@ -20,7 +20,7 @@ Here we show a config file named "mujoco.yaml" for MuJoCo environment in gym.
 .. code-block:: yaml
 
     dl_toolbox: "torch"  # The deep learning toolbox. Choices: "torch", "mindspore", "tensorlayer"
-    project_name: "XuanPolicy_Benchmark"
+    project_name: "XuanCe_Benchmark"
     logger: "tensorboard"  # Choices: tensorboard, wandb.
     wandb_user_name: "your_user_name"
     render: False
@@ -89,7 +89,7 @@ which uses the Python package `argparser` to read the command line instructions 
     import argparser
 
     def parse_args():
-        parser = argparse.ArgumentParser("Example of XuanPolicy.")
+        parser = argparse.ArgumentParser("Example of XuanCe.")
         parser.add_argument("--method", type=str, default="ppo")
         parser.add_argument("--env", type=str, default="mujoco")
         parser.add_argument("--env-id", type=str, default="InvertedPendulum-v4")
@@ -107,7 +107,7 @@ and then the configuration parameters from Step 1 are obtained.
 
 .. code-block:: python
 
-    from xuanpolicy import get_arguments
+    from xuance import get_arguments
 
     if __name__ == "__main__":
     parser = parse_args()
@@ -118,8 +118,8 @@ and then the configuration parameters from Step 1 are obtained.
                          parser_args=parser)
     run(args)
 
-In this step, the ``get_arguments()`` function from "XuanPolicy" is called.
-In this function, it first searches for readable parameters based on the combination of the ``env`` and ``env_id`` variables in the `xuanpolicy/configs/` directory.
+In this step, the ``get_arguments()`` function from "XuanCe" is called.
+In this function, it first searches for readable parameters based on the combination of the ``env`` and ``env_id`` variables in the `xuance/configs/` directory.
 If default parameters already exist, they are all read. Then, the function continues to index the configuration file from Step 1 using the ``config.path`` path and reads all the parameters from the .yaml file.
 Finally, it reads all the parameters from the ``parser``.
 
@@ -145,10 +145,10 @@ Here is an example definition of the run() function with comments:
     import numpy as np
     import torch.optim
 
-    from xuanpolicy.common import space2shape
-    from xuanpolicy.environment import make_envs
-    from xuanpolicy.torch.utils.operations import set_seed
-    from xuanpolicy.torch.utils import ActivationFunctions
+    from xuance.common import space2shape
+    from xuance.environment import make_envs
+    from xuance.torch.utils.operations import set_seed
+    from xuance.torch.utils import ActivationFunctions
 
     def run(args):
         agent_name = args.agent  # get the name of Agent.
@@ -165,7 +165,7 @@ Here is an example definition of the run() function with comments:
         n_envs = envs.num_envs  # get the number of vectorized environments.
 
         # prepare representation
-        from xuanpolicy.torch.representations import Basic_MLP
+        from xuance.torch.representations import Basic_MLP
         representation = Basic_MLP(input_shape=space2shape(args.observation_space),
                                 hidden_sizes=args.representation_hidden_size,
                                 normalize=None,
@@ -174,7 +174,7 @@ Here is an example definition of the run() function with comments:
                                 device=args.device)  # create representation
 
         # prepare policy
-        from xuanpolicy.torch.policies import Gaussian_AC_Policy
+        from xuance.torch.policies import Gaussian_AC_Policy
         policy = Gaussian_AC_Policy(action_space=args.action_space,
                                     representation=representation,
                                     actor_hidden_size=args.actor_hidden_size,
@@ -185,7 +185,7 @@ Here is an example definition of the run() function with comments:
                                     device=args.device)  # create Gaussian policy
 
         # prepare agent
-        from xuanpolicy.torch.agents import PPOCLIP_Agent, get_total_iters
+        from xuance.torch.agents import PPOCLIP_Agent, get_total_iters
         optimizer = torch.optim.Adam(policy.parameters(), args.learning_rate, eps=1e-5)  # create optimizer
         lr_scheduler = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=1.0, end_factor=0.0,
                                                         total_iters=get_total_iters(agent_name, args))  # for learning rate decay
@@ -256,6 +256,6 @@ After finishing the above three steps, you can run the `python_mujoco.py` file i
 
 The source code of this example can be visited at the following link:
 
-`https://github.com/agi-brain/xuanpolicy/examples/ppo/ppo_mujoco.py <https://github.com/agi-brain/xuanpolicy/examples/ppo/ppo_mujoco.py/>`_
+`https://github.com/agi-brain/xuance/examples/ppo/ppo_mujoco.py <https://github.com/agi-brain/xuance/examples/ppo/ppo_mujoco.py/>`_
 
 

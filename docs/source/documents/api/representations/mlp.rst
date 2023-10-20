@@ -2,7 +2,7 @@ MLP-based
 =====================================
 
 The Multi-Layer Perceptron (MLP) is one of the simplest deep neural network models used for processing vector inputs.
-Users can instantiate the MLP module according to their own needs, which is defined in the `./xuanpolicy/torch/utils/layers.py`, `./xuanpolicy/tensorflow/utils/layers.py` and `./xuanpolicy/mindspore/utils/layers.py` files with the class name `mlp_block`.
+Users can instantiate the MLP module according to their own needs, which is defined in the `./xuance/torch/utils/layers.py`, `./xuance/tensorflow/utils/layers.py` and `./xuance/mindspore/utils/layers.py` files with the class name `mlp_block`.
 
 To instantiate this class, you need to specify the input dimension (`input_dim`), output dimension (`output_dim`), normalization method (`normalize`), activation function choice (`activation`), and initialization method (`initialize`).
 
@@ -15,7 +15,7 @@ When implementing this class in PyTorch, you also need to specify the device typ
 **PyTorch:**
 
 .. py:class:: 
-    xuanpolicy.torch.representations.mlp.Basic_Identical(input_shape, device)
+    xuance.torch.representations.mlp.Basic_Identical(input_shape, device)
 
     :param input_shape: The shape of the inputs.
     :type input_shape: Sequence[int]
@@ -23,7 +23,7 @@ When implementing this class in PyTorch, you also need to specify the device typ
     :type device: str, int, torch.device
 
 .. py:function:: 
-    xuanpolicy.torch.representations.mlp.Basic_Identical.forward(observations)
+    xuance.torch.representations.mlp.Basic_Identical.forward(observations)
 
     Calculate feature representation of the input observations.
 
@@ -33,7 +33,7 @@ When implementing this class in PyTorch, you also need to specify the device typ
     :rtype: dict
 
 .. py:class:: 
-    xuanpolicy.torch.representations.mlp.Basic_MLP(input_shape, device)
+    xuance.torch.representations.mlp.Basic_MLP(input_shape, device)
 
     :param input_shape: The shape of the inputs.
     :type input_shape: Sequence[int]
@@ -41,7 +41,7 @@ When implementing this class in PyTorch, you also need to specify the device typ
     :type device: str, int, torch.device
 
 .. py:function:: 
-    xuanpolicy.torch.representations.mlp.Basic_MLP._create_network()
+    xuance.torch.representations.mlp.Basic_MLP._create_network()
 
     Create the multi-layer perceptron netowrks.
 
@@ -49,7 +49,7 @@ When implementing this class in PyTorch, you also need to specify the device typ
     :rtype: nn.Module
 
 .. py:function:: 
-    xuanpolicy.torch.representations.mlp.Basic_MLP.forward(observations)
+    xuance.torch.representations.mlp.Basic_MLP.forward(observations)
 
     Calculate feature representation of the input observations.
 
@@ -83,7 +83,7 @@ Source Code
     
     .. code-block:: python
 
-        from xuanpolicy.torch.representations import *
+        from xuance.torch.representations import *
 
         # directly returns the original observation
         class Basic_Identical(nn.Module):

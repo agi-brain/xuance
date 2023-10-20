@@ -1,12 +1,12 @@
-.. XuanPolicy documentation master file, created by
+.. XuanCe documentation master file, created by
    sphinx-quickstart on Wed May 31 20:18:19 2023.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to XuanPolicy's documentation!
+Welcome to XuanCe's documentation!
 ======================================
 
-**XuanPolicy** is an open-source ensemble of Deep Reinforcement Learning (DRL) algorithm implementations.
+**XuanCe** is an open-source ensemble of Deep Reinforcement Learning (DRL) algorithm implementations.
 
 We call it as **Xuan-Ce (玄策)** in Chinese.
 "**Xuan (玄)**" means incredible and magic box, "**Ce (策)**" means policy.
@@ -26,10 +26,10 @@ and hope it can really become a zoo full of DRL algorithms.
 .. _TensorFlow: https://www.tensorflow.org/
 .. _MindSpore: https://www.mindspore.cn/en
 
-Currently, THe XuanPolicy has been open-sourced on GitHub and OpenI:
+Currently, THe XuanCe has been open-sourced on GitHub and OpenI:
 
-| **GitHub**： `https://github.com/agi-brain/xuanpolicy.git <https://github.com/agi-brain/xuanpolicy.git/>`_
-| **OpenI**： `https://github.com/agi-brain/xuanpolicy.git <https://github.com/agi-brain/xuanpolicy.git/>`_
+| **GitHub**： `https://github.com/agi-brain/xuance.git <https://github.com/agi-brain/xuance.git/>`_
+| **OpenI**： `https://github.com/agi-brain/xuance.git <https://github.com/agi-brain/xuance.git/>`_
 
 .. raw:: html
 

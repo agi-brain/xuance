@@ -3,7 +3,7 @@ CNN-based
 
 Convolutional Neural Networks (CNNs) are mainly used for processing image input data to extract feature vectors.
 They usually take multi-channel image matrices as input and output multi-dimensional vectors.
-The CNN block is defined in `./xuanpolicy/torch/utils/layers.py`, `./xuanpolicy/tensorflow/utils/layers.py` and `./xuanpolicy/mindspore/utils/layers.py`.
+The CNN block is defined in `./xuance/torch/utils/layers.py`, `./xuance/tensorflow/utils/layers.py` and `./xuance/mindspore/utils/layers.py`.
 
 To instantiate this class, you need to specify the input size (`input_shape`), the filtering method (`filter`), the kernel size (`kernel_size`), the stride (`stride`), the normalization method (`normalize`), the activation function (`activation`), and the initialization method (`initialize`).
 
@@ -17,7 +17,7 @@ When implementing this class in PyTorch, you also need to specify the device typ
 **PyTorch:**
 
 .. py:class:: 
-    xuanpolicy.torch.representations.cnn.Basic_CNN(input_shape, kernels, strides, filters, normalize=None, initialize=None, activation=None, device=None)
+    xuance.torch.representations.cnn.Basic_CNN(input_shape, kernels, strides, filters, normalize=None, initialize=None, activation=None, device=None)
 
     :param input_shape: The shape of the inputs.
     :type input_shape: Sequence of int
@@ -36,7 +36,7 @@ When implementing this class in PyTorch, you also need to specify the device typ
     :type device: str, int, torch.device
 
 .. py:function:: 
-    xuanpolicy.torch.representations.cnn.Basic_CNN._create_network()
+    xuance.torch.representations.cnn.Basic_CNN._create_network()
 
     Create the convolutional neural netowrks.
 
@@ -44,7 +44,7 @@ When implementing this class in PyTorch, you also need to specify the device typ
     :rtype: nn.Module
 
 .. py:function:: 
-    xuanpolicy.torch.representations.cnn.Basic_CNN.forward(observations)
+    xuance.torch.representations.cnn.Basic_CNN.forward(observations)
 
     Calculate feature representation of the input observations.
 
@@ -54,7 +54,7 @@ When implementing this class in PyTorch, you also need to specify the device typ
     :rtype: dict
 
 .. py:class:: 
-    xuanpolicy.torch.representations.cnn.AC_CNN_Atari(input_shape, kernels, strides, filters, normalize=None, initialize=None, activation=None, device=None)
+    xuance.torch.representations.cnn.AC_CNN_Atari(input_shape, kernels, strides, filters, normalize=None, initialize=None, activation=None, device=None)
 
     :param input_shape: The shape of the inputs.
     :type input_shape: Sequence of int
@@ -75,7 +75,7 @@ When implementing this class in PyTorch, you also need to specify the device typ
     :type device: Sequence of int
 
 .. py:function:: 
-    xuanpolicy.torch.representations.cnn.AC_CNN_Atari._init_layer(layer, gain=numpy.sqrt(2), bias=0.0)
+    xuance.torch.representations.cnn.AC_CNN_Atari._init_layer(layer, gain=numpy.sqrt(2), bias=0.0)
 
     Initialize the weights and biases of the model.
 
@@ -89,7 +89,7 @@ When implementing this class in PyTorch, you also need to specify the device typ
     :rtype: nn.Module
 
 .. py:function:: 
-    xuanpolicy.torch.representations.cnn.AC_CNN_Atari._create_network()
+    xuance.torch.representations.cnn.AC_CNN_Atari._create_network()
 
     Create the convolutional neural netowrks for actor-critic based algorithms and Atari tasks.
 
@@ -97,7 +97,7 @@ When implementing this class in PyTorch, you also need to specify the device typ
     :rtype: nn.Module
 
 .. py:function:: 
-    xuanpolicy.torch.representations.cnn.AC_CNN_Atari.forward(observations)
+    xuance.torch.representations.cnn.AC_CNN_Atari.forward(observations)
 
     Calculate feature representation of the input observations.
 
@@ -131,7 +131,7 @@ Source Code
     
     .. code-block:: python
 
-        from xuanpolicy.torch.representations import *
+        from xuance.torch.representations import *
 
         # process the input observations with stacks of CNN layers
         class Basic_CNN(nn.Module):

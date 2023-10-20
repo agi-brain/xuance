@@ -1,5 +1,5 @@
 import argparse
-from xuanpolicy import get_runner
+from xuance import get_runner
 
 
 def parse_args():

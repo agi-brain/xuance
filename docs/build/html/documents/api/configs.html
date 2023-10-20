@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Configs &mdash; XuanPolicy v0.1.11 documentation</title>
+  <title>Configs &mdash; XuanCe v0.1.11 documentation</title>
       <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
@@ -39,7 +39,7 @@
           
           
           <a href="../../index.html" class="icon icon-home">
-            XuanPolicy
+            XuanCe
               <img src="../../_static/logo_2.png" class="logo" alt="Logo"/>
           </a>
 <div role="search">
@@ -93,7 +93,7 @@
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../../index.html">XuanPolicy</a>
+          <a href="../../index.html">XuanCe</a>
       </nav>
 
       <div class="wy-nav-content">
@@ -115,10 +115,10 @@
 <h1>Configs<a class="headerlink" href="#configs" title="Permalink to this heading">¶</a></h1>
 <br><hr><section id="id1">
 <h2>基础参数配置<a class="headerlink" href="#id1" title="Permalink to this heading">¶</a></h2>
-<p>基础参数配置存于xuanpolicy/config/basic.yaml文件中，示例如下：</p>
+<p>基础参数配置存于xuance/config/basic.yaml文件中，示例如下：</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">dl_toolbox</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;torch&quot;</span><span class="w">  </span><span class="c1"># Values: &quot;torch&quot;, &quot;mindspore&quot;, &quot;tensorlayer&quot;</span>
 
-<span class="nt">project_name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;XuanPolicy_Benchmark&quot;</span>
+<span class="nt">project_name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;XuanCe_Benchmark&quot;</span>
 <span class="nt">logger</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;tensorboard&quot;</span><span class="w">  </span><span class="c1"># Values: tensorboard, wandb.</span>
 <span class="nt">wandb_user_name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;papers_liu&quot;</span>
 
@@ -141,7 +141,7 @@
 <br><hr></section>
 <section id="id2">
 <h2>算法参数配置<a class="headerlink" href="#id2" title="Permalink to this heading">¶</a></h2>
-<p>以DQN算法在Atari环境中的参数配置为例，除了基础参数配置外，其算法参数配置存放于 xuanpolicy/configs/dqn/atari.yaml
+<p>以DQN算法在Atari环境中的参数配置为例，除了基础参数配置外，其算法参数配置存放于 xuance/configs/dqn/atari.yaml
 文件中，内容如下：</p>
 <center>
     <select id="env-mujoco" onchange="showMujocoEnv(this)"></select>
@@ -200,8 +200,8 @@
 前者的状态输入是96*96*3的RGB图像，后者则是一个8维向量。因此，针对这两个场景的DQN算法参数配置分别存于以下两个文件中：</p>
 <blockquote>
 <div><ul class="simple">
-<li><p>xuanpolicy/configs/dqn/box2d/CarRacing-v2.yaml</p></li>
-<li><p>xuanpolicy/configs/dqn/box2d/LunarLander-v2.yaml</p></li>
+<li><p>xuance/configs/dqn/box2d/CarRacing-v2.yaml</p></li>
+<li><p>xuance/configs/dqn/box2d/LunarLander-v2.yaml</p></li>
 </ul>
 </div></blockquote>
 <br><hr></section>
@@ -209,7 +209,7 @@
 <h2>自定义参数配置<a class="headerlink" href="#id3" title="Permalink to this heading">¶</a></h2>
 <p>用户也可以选择不适用玄策提供的默认参数，或者玄策中不包含用户的任务时，可用同样的方式自定义.yaml参数配置文件。
 但是在获取runner的过程中，需指定参数文件的存放位置，示例如下：</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">xuanpolicy</span> <span class="k">as</span> <span class="nn">xp</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">xuance</span> <span class="k">as</span> <span class="nn">xp</span>
 <span class="n">runner</span> <span class="o">=</span> <span class="n">xp</span><span class="o">.</span><span class="n">get_runner</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s1">&#39;dqn&#39;</span><span class="p">,</span>
                        <span class="n">env</span><span class="o">=</span><span class="s1">&#39;classic_control&#39;</span><span class="p">,</span>
                        <span class="n">env_id</span><span class="o">=</span><span class="s1">&#39;CartPole-v1&#39;</span><span class="p">,</span>
@@ -232,7 +232,7 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2023, XuanPolicy contributors.</p>
+    <p>&#169; Copyright 2023, XuanCe contributors.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

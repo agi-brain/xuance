@@ -3,10 +3,10 @@ Installation
 
 The library can be run at Linux, Windows, MacOS, and EulerOS, etc. It is easy to be installed.
 
-Before installing **XuanPolicy**, you should install Anaconda_ to prepare a python environment.
+Before installing **XuanCe**, you should install Anaconda_ to prepare a python environment.
 
-After that, open a terminal and install **XuanPolicy** by the following steps.
-You can choose two ways to install XuanPolicy.
+After that, open a terminal and install **XuanCe** by the following steps.
+You can choose two ways to install XuanCe.
 
 .. raw:: html
 
@@ -31,38 +31,38 @@ Install via PyPI
 
 .. code-block:: bash
     
-    pip install xuanpolicy
+    pip install xuance
 
 This command does not include the dependencies of deep learning toolboxes. 
 
-You can also install the **XuanPolicy** with PyTorch_, TensorFlow2_, MindSpore_, or all of them.
+You can also install the **XuanCe** with PyTorch_, TensorFlow2_, MindSpore_, or all of them.
 
 .. code-block:: bash
     
-    pip install xuanpolicy[torch]
+    pip install xuance[torch]
 
 or
 
 .. code-block:: bash
     
-    pip install xuanpolicy[tensorflow]
+    pip install xuance[tensorflow]
 
 or
 
 .. code-block:: bash
     
-    pip install xuanpolicy[mindspore]
+    pip install xuance[mindspore]
 
 or
 
 .. code-block:: bash
 
-    pip install xuanpolicy[all]
+    pip install xuance[all]
 
 Install from GitHub repository
 ---------------------------------------------
 
-Alternatively, you can install XuanPolicy from its GitHub repository.
+Alternatively, you can install XuanCe from its GitHub repository.
 
 .. note::
 
@@ -80,19 +80,19 @@ Alternatively, you can install XuanPolicy from its GitHub repository.
 
     conda activate xpolicy
 
-**Step 3**: Download the source code of XuanPolicy from GitHub.
+**Step 3**: Download the source code of XuanCe from GitHub.
 
 .. code-block:: bash
 
-    git clone https://github.com/agi-brain/xuanpolicy.git
+    git clone https://github.com/agi-brain/xuance.git
 
-**Step 4**: Change directory to the xuanpolicy.
+**Step 4**: Change directory to the xuance.
 
 .. code-block:: bash
 
-    cd xuanpolicy
+    cd xuance
 
-**Step 5**: Install xuanpolicy.
+**Step 5**: Install xuance.
 
 .. code-block:: bash
 
@@ -114,13 +114,13 @@ Alternatively, you can install XuanPolicy from its GitHub repository.
 Testing whether the installation was successful
 --------------------------------------------------------------------
 
-After installing XuanPolicy, you can enter the Python runtime environment by typing "python" in the terminal.
-Then, test the installation of xuanpolicy by typing:
+After installing XuanCe, you can enter the Python runtime environment by typing "python" in the terminal.
+Then, test the installation of xuance by typing:
 
 .. code-block:: python
 
-    import xuanpolicy
+    import xuance
 
-If no error or warning messages are displayed, it indicates that XuanPolicy has been successfully installed.
+If no error or warning messages are displayed, it indicates that XuanCe has been successfully installed.
 You can proceed to the next step and start using it.
 

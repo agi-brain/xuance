@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MLP-based &mdash; XuanPolicy v0.1.11 documentation</title>
+  <title>MLP-based &mdash; XuanCe v0.1.11 documentation</title>
       <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
@@ -40,7 +40,7 @@
           
           
           <a href="../../../index.html" class="icon icon-home">
-            XuanPolicy
+            XuanCe
               <img src="../../../_static/logo_2.png" class="logo" alt="Logo"/>
           </a>
 <div role="search">
@@ -62,13 +62,13 @@
 <li class="toctree-l1"><a class="reference internal" href="../agents.html">Agents</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="../representations.html">Representations</a><ul class="current">
 <li class="toctree-l2 current"><a class="current reference internal" href="#">MLP-based</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#xuanpolicy.torch.representations.mlp.Basic_Identical"><code class="docutils literal notranslate"><span class="pre">xuanpolicy.torch.representations.mlp.Basic_Identical</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#xuanpolicy.torch.representations.mlp.Basic_Identical.forward"><code class="docutils literal notranslate"><span class="pre">xuanpolicy.torch.representations.mlp.Basic_Identical.forward()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#xuance.torch.representations.mlp.Basic_Identical"><code class="docutils literal notranslate"><span class="pre">xuance.torch.representations.mlp.Basic_Identical</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#xuance.torch.representations.mlp.Basic_Identical.forward"><code class="docutils literal notranslate"><span class="pre">xuance.torch.representations.mlp.Basic_Identical.forward()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#xuanpolicy.torch.representations.mlp.Basic_MLP"><code class="docutils literal notranslate"><span class="pre">xuanpolicy.torch.representations.mlp.Basic_MLP</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#xuanpolicy.torch.representations.mlp.Basic_MLP._create_network"><code class="docutils literal notranslate"><span class="pre">xuanpolicy.torch.representations.mlp.Basic_MLP._create_network()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#xuanpolicy.torch.representations.mlp.Basic_MLP.forward"><code class="docutils literal notranslate"><span class="pre">xuanpolicy.torch.representations.mlp.Basic_MLP.forward()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#xuance.torch.representations.mlp.Basic_MLP"><code class="docutils literal notranslate"><span class="pre">xuance.torch.representations.mlp.Basic_MLP</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#xuance.torch.representations.mlp.Basic_MLP._create_network"><code class="docutils literal notranslate"><span class="pre">xuance.torch.representations.mlp.Basic_MLP._create_network()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#xuance.torch.representations.mlp.Basic_MLP.forward"><code class="docutils literal notranslate"><span class="pre">xuance.torch.representations.mlp.Basic_MLP.forward()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#source-code">Source Code</a></li>
@@ -106,7 +106,7 @@
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../../../index.html">XuanPolicy</a>
+          <a href="../../../index.html">XuanCe</a>
       </nav>
 
       <div class="wy-nav-content">
@@ -128,13 +128,13 @@
   <section id="mlp-based">
 <h1>MLP-based<a class="headerlink" href="#mlp-based" title="Permalink to this heading">¶</a></h1>
 <p>The Multi-Layer Perceptron (MLP) is one of the simplest deep neural network models used for processing vector inputs.
-Users can instantiate the MLP module according to their own needs, which is defined in the <cite>./xuanpolicy/torch/utils/layers.py</cite>, <cite>./xuanpolicy/tensorflow/utils/layers.py</cite> and <cite>./xuanpolicy/mindspore/utils/layers.py</cite> files with the class name <cite>mlp_block</cite>.</p>
+Users can instantiate the MLP module according to their own needs, which is defined in the <cite>./xuance/torch/utils/layers.py</cite>, <cite>./xuance/tensorflow/utils/layers.py</cite> and <cite>./xuance/mindspore/utils/layers.py</cite> files with the class name <cite>mlp_block</cite>.</p>
 <p>To instantiate this class, you need to specify the input dimension (<cite>input_dim</cite>), output dimension (<cite>output_dim</cite>), normalization method (<cite>normalize</cite>), activation function choice (<cite>activation</cite>), and initialization method (<cite>initialize</cite>).</p>
 <p>When implementing this class in PyTorch, you also need to specify the device type (<cite>device</cite>) to determine whether the model runs on CPU or GPU.</p>
 <br><hr><p><strong>PyTorch:</strong></p>
 <dl class="py class">
-<dt class="sig sig-object py" id="xuanpolicy.torch.representations.mlp.Basic_Identical">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xuanpolicy.torch.representations.mlp.</span></span><span class="sig-name descname"><span class="pre">Basic_Identical</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xuanpolicy.torch.representations.mlp.Basic_Identical" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="xuance.torch.representations.mlp.Basic_Identical">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xuance.torch.representations.mlp.</span></span><span class="sig-name descname"><span class="pre">Basic_Identical</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xuance.torch.representations.mlp.Basic_Identical" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -146,8 +146,8 @@ Users can instantiate the MLP module according to their own needs, which is defi
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="xuanpolicy.torch.representations.mlp.Basic_Identical.forward">
-<span class="sig-prename descclassname"><span class="pre">xuanpolicy.torch.representations.mlp.Basic_Identical.</span></span><span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">observations</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xuanpolicy.torch.representations.mlp.Basic_Identical.forward" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="xuance.torch.representations.mlp.Basic_Identical.forward">
+<span class="sig-prename descclassname"><span class="pre">xuance.torch.representations.mlp.Basic_Identical.</span></span><span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">observations</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xuance.torch.representations.mlp.Basic_Identical.forward" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate feature representation of the input observations.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -163,8 +163,8 @@ Users can instantiate the MLP module according to their own needs, which is defi
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="xuanpolicy.torch.representations.mlp.Basic_MLP">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xuanpolicy.torch.representations.mlp.</span></span><span class="sig-name descname"><span class="pre">Basic_MLP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xuanpolicy.torch.representations.mlp.Basic_MLP" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="xuance.torch.representations.mlp.Basic_MLP">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xuance.torch.representations.mlp.</span></span><span class="sig-name descname"><span class="pre">Basic_MLP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xuance.torch.representations.mlp.Basic_MLP" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -176,8 +176,8 @@ Users can instantiate the MLP module according to their own needs, which is defi
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="xuanpolicy.torch.representations.mlp.Basic_MLP._create_network">
-<span class="sig-prename descclassname"><span class="pre">xuanpolicy.torch.representations.mlp.Basic_MLP.</span></span><span class="sig-name descname"><span class="pre">_create_network</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#xuanpolicy.torch.representations.mlp.Basic_MLP._create_network" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="xuance.torch.representations.mlp.Basic_MLP._create_network">
+<span class="sig-prename descclassname"><span class="pre">xuance.torch.representations.mlp.Basic_MLP.</span></span><span class="sig-name descname"><span class="pre">_create_network</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#xuance.torch.representations.mlp.Basic_MLP._create_network" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create the multi-layer perceptron netowrks.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -190,8 +190,8 @@ Users can instantiate the MLP module according to their own needs, which is defi
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="xuanpolicy.torch.representations.mlp.Basic_MLP.forward">
-<span class="sig-prename descclassname"><span class="pre">xuanpolicy.torch.representations.mlp.Basic_MLP.</span></span><span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">observations</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xuanpolicy.torch.representations.mlp.Basic_MLP.forward" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="xuance.torch.representations.mlp.Basic_MLP.forward">
+<span class="sig-prename descclassname"><span class="pre">xuance.torch.representations.mlp.Basic_MLP.</span></span><span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">observations</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xuance.torch.representations.mlp.Basic_MLP.forward" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate feature representation of the input observations.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -211,7 +211,7 @@ Users can instantiate the MLP module according to their own needs, which is defi
 <br><hr><section id="source-code">
 <h2>Source Code<a class="headerlink" href="#source-code" title="Permalink to this heading">¶</a></h2>
 <div class="sphinx-tabs docutils container">
-<div aria-label="Tabbed content" class="closeable" role="tablist"><button aria-controls="panel-0-UHlUb3JjaA==" aria-selected="true" class="sphinx-tabs-tab group-tab" id="tab-0-UHlUb3JjaA==" name="UHlUb3JjaA==" role="tab" tabindex="0">PyTorch</button><button aria-controls="panel-0-VGVuc29yRmxvdw==" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-0-VGVuc29yRmxvdw==" name="VGVuc29yRmxvdw==" role="tab" tabindex="-1">TensorFlow</button><button aria-controls="panel-0-TWluZFNwb3Jl" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-0-TWluZFNwb3Jl" name="TWluZFNwb3Jl" role="tab" tabindex="-1">MindSpore</button></div><div aria-labelledby="tab-0-UHlUb3JjaA==" class="sphinx-tabs-panel group-tab" id="panel-0-UHlUb3JjaA==" name="UHlUb3JjaA==" role="tabpanel" tabindex="0"><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">xuanpolicy.torch.representations</span> <span class="kn">import</span> <span class="o">*</span>
+<div aria-label="Tabbed content" class="closeable" role="tablist"><button aria-controls="panel-0-UHlUb3JjaA==" aria-selected="true" class="sphinx-tabs-tab group-tab" id="tab-0-UHlUb3JjaA==" name="UHlUb3JjaA==" role="tab" tabindex="0">PyTorch</button><button aria-controls="panel-0-VGVuc29yRmxvdw==" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-0-VGVuc29yRmxvdw==" name="VGVuc29yRmxvdw==" role="tab" tabindex="-1">TensorFlow</button><button aria-controls="panel-0-TWluZFNwb3Jl" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-0-TWluZFNwb3Jl" name="TWluZFNwb3Jl" role="tab" tabindex="-1">MindSpore</button></div><div aria-labelledby="tab-0-UHlUb3JjaA==" class="sphinx-tabs-panel group-tab" id="panel-0-UHlUb3JjaA==" name="UHlUb3JjaA==" role="tabpanel" tabindex="0"><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">xuance.torch.representations</span> <span class="kn">import</span> <span class="o">*</span>
 
 <span class="c1"># directly returns the original observation</span>
 <span class="k">class</span> <span class="nc">Basic_Identical</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
@@ -284,7 +284,7 @@ Users can instantiate the MLP module according to their own needs, which is defi
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2023, XuanPolicy contributors.</p>
+    <p>&#169; Copyright 2023, XuanCe contributors.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

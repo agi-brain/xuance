@@ -1,0 +1,19 @@
+dl_toolbox: "torch"  # The deep learning toolbox. Choices: "torch", "mindspore", "tensorlayer"
+
+project_name: "XuanCe_Benchmark"
+logger: "tensorboard"  # Choices: tensorboard, wandb.
+wandb_user_name: "papers_liu"
+
+parallels: 10
+seed: 2910
+render: True
+render_mode: 'rgb_array' # Choices: 'human', 'rgb_array'.
+test_mode: False
+test_steps: 2000
+
+device: "cuda:0"
+
+# PyTorch: "cpu", "cuda:0";
+# TensorFlow: "cpu"/"CPU", "gpu"/"GPU";
+# MindSpore: "CPU", "GPU", "Ascend", "Davinci"
+

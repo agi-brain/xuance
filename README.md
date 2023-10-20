@@ -1,13 +1,13 @@
 ![logo](./docs/source/figures/logo_1.png)
 
-# XuanPolicy: A Comprehensive and Unified Deep Reinforcement Learning Library
+# XuanCe: A Comprehensive and Unified Deep Reinforcement Learning Library
 
-[![PyPI](https://img.shields.io/pypi/v/xuanpolicy)](https://pypi.org/project/xuanpolicy/)
-[![Documentation Status](https://readthedocs.org/projects/xuanpolicy/badge/?version=latest)](https://xuanpolicy.readthedocs.io/en/latest/?badge=latest)
-![GitHub](https://img.shields.io/github/license/agi-brain/xuanpolicy)
-![GitHub Repo stars](https://img.shields.io/github/stars/agi-brain/xuanpolicy?style=social)
-![GitHub forks](https://img.shields.io/github/forks/agi-brain/xuanpolicy?style=social)
-![GitHub watchers](https://img.shields.io/github/watchers/agi-brain/xuanpolicy?style=social)
+[![PyPI](https://img.shields.io/pypi/v/xuance)](https://pypi.org/project/xuance/)
+[![Documentation Status](https://readthedocs.org/projects/xuance/badge/?version=latest)](https://xuance.readthedocs.io/en/latest/?badge=latest)
+![GitHub](https://img.shields.io/github/license/agi-brain/xuance)
+![GitHub Repo stars](https://img.shields.io/github/stars/agi-brain/xuance?style=social)
+![GitHub forks](https://img.shields.io/github/forks/agi-brain/xuance?style=social)
+![GitHub watchers](https://img.shields.io/github/watchers/agi-brain/xuance?style=social)
 
 [![PyTorch](https://img.shields.io/badge/PyTorch-%3E%3D1.13.0-red)](https://pytorch.org/get-started/locally/)
 [![TensorFlow](https://img.shields.io/badge/TensorFlow-%3E%3D2.6.0-orange)](https://www.tensorflow.org/install)
@@ -18,7 +18,7 @@
 [![gymnasium](https://img.shields.io/badge/gymnasium-%3E%3D0.28.1-blue)](https://www.gymlibrary.dev/)
 [![pettingzoo](https://img.shields.io/badge/PettingZoo-%3E%3D1.23.0-blue)](https://pettingzoo.farama.org/)
 
-**XuanPolicy** is an open-source ensemble of Deep Reinforcement Learning (DRL) algorithm implementations.
+**XuanCe** is an open-source ensemble of Deep Reinforcement Learning (DRL) algorithm implementations.
 
 We call it as **Xuan-Ce (玄策)** in Chinese. 
 "**Xuan (玄)**" means incredible and magic box, "**Ce (策)**" means policy.
@@ -34,9 +34,9 @@ We expect it to be compatible with multiple deep learning toolboxes(
 **[MindSpore](https://www.mindspore.cn/en)**),
 and hope it can really become a zoo full of DRL algorithms.
 
-| **[Full Documentation](https://xuanpolicy.readthedocs.io/en/latest)** |
-  **[中文文档](https://xuanpolicy.readthedocs.io/zh/latest/)** |
-  **[OpenI (启智社区)](https://openi.pcl.ac.cn/OpenRelearnware/XuanPolicy)** |
+| **[Full Documentation](https://xuance.readthedocs.io/en/latest)** |
+  **[中文文档](https://xuance.readthedocs.io/zh/latest/)** |
+  **[OpenI (启智社区)](https://openi.pcl.ac.cn/OpenRelearnware/XuanCe)** |
   **[XuanCe (Mini version)](https://github.com/wzcai99/xuance)** |
 
 ## Currently Included Algorithms
@@ -242,10 +242,10 @@ StarCraft Multi-Agentt Challenge.
 
 The library can be run at Linux, Windows, MacOS, and EulerOS, etc.
 
-Before installing **XuanPolicy**, you should install [Anaconda](https://www.anaconda.com/download) to prepare a python environment.
+Before installing **XuanCe**, you should install [Anaconda](https://www.anaconda.com/download) to prepare a python environment.
 (Note: select a proper version of Anaconda from [**here**](https://repo.anaconda.com/archive/).)
 
-After that, open a terminal and install **XuanPolicy** by the following steps.
+After that, open a terminal and install **XuanCe** by the following steps.
 
 **Step 1**: Create a new conda environment (python>=3.7 is suggested):
 
@@ -262,14 +262,14 @@ conda activate xpolicy
 **Step 3**: Install the library:
 
 ```commandline
-pip install xuanpolicy
+pip install xuance
 ```
 
-This command does not include the dependencies of deep learning toolboxes. To install the **XuanPolicy** with 
-deep learning tools, you can type `pip install xuanpolicy[torch]` for [PyTorch](https://pytorch.org/get-started/locally/),
-`pip install xuanpolicy[tensorflow]` for [TensorFlow2](https://www.tensorflow.org/install),
-`pip install xuanpolicy[mindspore]` for [MindSpore](https://www.mindspore.cn/install/en),
-and `pip install xuanpolicy[all]` for all dependencies.
+This command does not include the dependencies of deep learning toolboxes. To install the **XuanCe** with 
+deep learning tools, you can type `pip install xuance[torch]` for [PyTorch](https://pytorch.org/get-started/locally/),
+`pip install xuance[tensorflow]` for [TensorFlow2](https://www.tensorflow.org/install),
+`pip install xuance[mindspore]` for [MindSpore](https://www.mindspore.cn/install/en),
+and `pip install xuance[all]` for all dependencies.
 
 Note: Some extra packages should be installed manually for further usage. 
 
@@ -280,7 +280,7 @@ Note: Some extra packages should be installed manually for further usage.
 #### Train a Model
 
 ```python
-import xuanpolicy as xp
+import xuance as xp
 
 runner = xp.get_runner(method='dqn', 
                        env='classic_control', 
@@ -292,7 +292,7 @@ runner.run()
 #### Test the Model
 
 ```python
-import xuanpolicy as xp
+import xuance as xp
 
 runner_test = xp.get_runner(method='dqn', 
                             env='classic_control', 
@@ -485,8 +485,8 @@ $ tensorboard --logdir ./logs/dqn/torch/CartPole-v0
 [//]: # (| micro_focus      |             |             |             |             |             |      |      |       |)
 
 ```
-@misc{XuanPolicy2023,
-    title={XuanPolicy: A Comprehensive and Unified Deep Reinforcement Learning Library},
+@misc{XuanCe2023,
+    title={XuanCe: A Comprehensive and Unified Deep Reinforcement Learning Library},
     author={Wenzhang Liu, Wenzhe Cai, Kun Jiang, Guangran Cheng, Yuanda Wang, 
     Jiawei Wang, Jingyu Cao, Lele Xu, Chaoxu Mu, Changyin Sun},
     publisher = {GitHub},

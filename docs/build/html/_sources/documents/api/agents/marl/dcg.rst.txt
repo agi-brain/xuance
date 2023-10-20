@@ -8,17 +8,17 @@ DCG_Agents
 **PyTorch:**
 
 .. py:class:: 
-    xuanpolicy.torch.agent.mutli_agent_rl.dcg_agents.DCG_Agents(config, envs, device)
+    xuance.torch.agent.mutli_agent_rl.dcg_agents.DCG_Agents(config, envs, device)
 
     :param config: Provides hyper parameters.
     :type config: Namespace
     :param envs: The vectorized environments.
-    :type envs: xuanpolicy.environments.vector_envs.vector_env.VecEnv
+    :type envs: xuance.environments.vector_envs.vector_env.VecEnv
     :param device: Choose CPU or GPU to train the model.
     :type device: str, int, torch.device
 
 .. py:function:: 
-    xuanpolicy.torch.agent.mutli_agent_rl.dcg_agents.DCG_Agents.act(obs_n, *rnn_hidden, avail_actions=None, test_mode=False)
+    xuance.torch.agent.mutli_agent_rl.dcg_agents.DCG_Agents.act(obs_n, *rnn_hidden, avail_actions=None, test_mode=False)
 
     Calculate joint actions for N agents according to the joint observations.
 
@@ -34,7 +34,7 @@ DCG_Agents
     :rtype: tuple(numpy.ndarray, numpy.ndarray), np.ndarray
   
 .. py:function:: 
-    xuanpolicy.torch.agent.mutli_agent_rl.dcg_agents.DCG_Agents.train(i_step)
+    xuance.torch.agent.mutli_agent_rl.dcg_agents.DCG_Agents.train(i_step)
 
     Train the multi-agent reinforcement learning model.
 
@@ -70,7 +70,7 @@ Source Code
         .. code-block:: python
 
             import torch.nn
-            from xuanpolicy.torch.agents import *
+            from xuance.torch.agents import *
 
             class DCG_Agents(MARLAgents):
                 def __init__(self,
@@ -92,7 +92,7 @@ Source Code
                     else:
                         representation = REGISTRY_Representation[config.representation](*input_representation)
                     repre_state_dim = representation.output_shapes['state'][0]
-                    from xuanpolicy.torch.policies.coordination_graph import DCG_utility, DCG_payoff, Coordination_Graph
+                    from xuance.torch.policies.coordination_graph import DCG_utility, DCG_payoff, Coordination_Graph
                     utility = DCG_utility(repre_state_dim, config.hidden_utility_dim, config.dim_act).to(device)
                     payoffs = DCG_payoff(repre_state_dim * 2, config.hidden_payoff_dim, config.dim_act, config).to(device)
                     dcgraph = Coordination_Graph(config.n_agents, config.graph_type)
@@ -133,7 +133,7 @@ Source Code
                                     config.done_shape, envs.num_envs, config.buffer_size, config.batch_size)
                     memory = buffer(*input_buffer, max_episode_length=envs.max_episode_length, dim_act=config.dim_act)
 
-                    from xuanpolicy.torch.learners.multi_agent_rl.dcg_learner import DCG_Learner
+                    from xuance.torch.learners.multi_agent_rl.dcg_learner import DCG_Learner
                     learner = DCG_Learner(config, policy, optimizer, scheduler,
                                         config.device, config.model_dir, config.gamma,
                                         config.sync_frequency)

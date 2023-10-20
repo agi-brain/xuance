@@ -8,12 +8,12 @@ TD3_Agent
 **PyTorch:**
 
 .. py:class:: 
-  xuanpolicy.torch.agent.policy_gradient.td3_agent.TD3_Agent(config, envs, policy, optimizer, scheduler, device)
+  xuance.torch.agent.policy_gradient.td3_agent.TD3_Agent(config, envs, policy, optimizer, scheduler, device)
 
   :param config: Provides hyper parameters.
   :type config: Namespace
   :param envs: The vectorized environments.
-  :type envs: xuanpolicy.environments.vector_envs.vector_env.VecEnv
+  :type envs: xuance.environments.vector_envs.vector_env.VecEnv
   :param policy: The policy that provides actions and values.
   :type policy: nn.Module
   :param optimizer: The optimizers of actor and critic that update the parameters.
@@ -24,7 +24,7 @@ TD3_Agent
   :type device: str, int, torch.device
 
 .. py:function:: 
-  xuanpolicy.torch.agent.policy_gradient.td3_agent.TD3_Agent._action(obs, noise_scale)
+  xuance.torch.agent.policy_gradient.td3_agent.TD3_Agent._action(obs, noise_scale)
   
   Calculate actions according to the observations.
 
@@ -36,7 +36,7 @@ TD3_Agent
   :rtype: np.ndarray
   
 .. py:function:: 
-  xuanpolicy.torch.agent.policy_gradient.td3_agent.TD3_Agent.train(train_steps)
+  xuance.torch.agent.policy_gradient.td3_agent.TD3_Agent.train(train_steps)
   
   Train the TD3 agent.
 
@@ -44,7 +44,7 @@ TD3_Agent
   :type train_steps: int
 
 .. py:function:: 
-  xuanpolicy.torch.agent.policy_gradient.td3_agent.TD3_Agent.test(env_fn, test_episodes)
+  xuance.torch.agent.policy_gradient.td3_agent.TD3_Agent.test(env_fn, test_episodes)
   
   Test the trained model.
 
@@ -79,7 +79,7 @@ Source Code
     
     .. code-block:: python
 
-        from xuanpolicy.torch.agents import *
+        from xuance.torch.agents import *
 
         class TD3_Agent(Agent):
             def __init__(self,

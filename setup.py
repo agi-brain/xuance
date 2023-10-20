@@ -1,10 +1,10 @@
 from setuptools import find_packages, setup
 
 setup(
-    name='xuanpolicy',
-    packages=find_packages(include=['xuanpolicy', 'xuanpolicy.*']),
+    name='xuance',
+    packages=find_packages(include=['xuance', 'xuance.*']),
     package_data={
-        "xuanpolicy":
+        "xuance":
             [
                 "configs/*.yaml",
                 "configs/*/*.yaml",
@@ -13,13 +13,13 @@ setup(
                 "environment/magent2/magent.dll"  # for magent2 environment
             ]
     },
-    version='0.1.11.3',
-    description='XuanPolicy: A Comprehensive and Unified Deep Reinforcement Learning Library.',
-    author='XuanPolicy contributors.',
+    version='1.0.0',
+    description='XuanCe: A Comprehensive and Unified Deep Reinforcement Learning Library.',
+    author='XuanCe contributors.',
     author_email='',
     license='MIT',
     url='',
-    download_url='https://github.com/agi-brain/xuanpolicy.git',
+    download_url='https://github.com/agi-brain/xuance.git',
     keywords=['deep reinforcement learning', 'software library', 'PyTorch', 'TensorFlow2', 'MindSpore'],
     classifiers=[
         'Development Status :: 4 - Beta',

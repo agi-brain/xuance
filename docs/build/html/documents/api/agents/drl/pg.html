@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PG_Agent &mdash; XuanPolicy v0.1.11 documentation</title>
+  <title>PG_Agent &mdash; XuanCe v0.1.11 documentation</title>
       <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="../../../../_static/custom.css" type="text/css" />
@@ -40,7 +40,7 @@
           
           
           <a href="../../../../index.html" class="icon icon-home">
-            XuanPolicy
+            XuanCe
               <img src="../../../../_static/logo_2.png" class="logo" alt="Logo"/>
           </a>
 <div role="search">
@@ -70,10 +70,10 @@
 <li class="toctree-l2"><a class="reference internal" href="perdqn.html">PerDQN_Agent</a></li>
 <li class="toctree-l2"><a class="reference internal" href="qrdqn.html">QRDQN_Agent</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">PG_Agent</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#xuanpolicy.torch.agent.policy_gradient.pg_agent.PG_Agent"><code class="docutils literal notranslate"><span class="pre">xuanpolicy.torch.agent.policy_gradient.pg_agent.PG_Agent</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#xuanpolicy.torch.agent.policy_gradient.pg_agent.PG_Agent._action"><code class="docutils literal notranslate"><span class="pre">xuanpolicy.torch.agent.policy_gradient.pg_agent.PG_Agent._action()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#xuanpolicy.torch.agent.policy_gradient.pg_agent.PG_Agent.train"><code class="docutils literal notranslate"><span class="pre">xuanpolicy.torch.agent.policy_gradient.pg_agent.PG_Agent.train()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#xuanpolicy.torch.agent.policy_gradient.pg_agent.PG_Agent.test"><code class="docutils literal notranslate"><span class="pre">xuanpolicy.torch.agent.policy_gradient.pg_agent.PG_Agent.test()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#xuance.torch.agent.policy_gradient.pg_agent.PG_Agent"><code class="docutils literal notranslate"><span class="pre">xuance.torch.agent.policy_gradient.pg_agent.PG_Agent</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#xuance.torch.agent.policy_gradient.pg_agent.PG_Agent._action"><code class="docutils literal notranslate"><span class="pre">xuance.torch.agent.policy_gradient.pg_agent.PG_Agent._action()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#xuance.torch.agent.policy_gradient.pg_agent.PG_Agent.train"><code class="docutils literal notranslate"><span class="pre">xuance.torch.agent.policy_gradient.pg_agent.PG_Agent.train()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#xuance.torch.agent.policy_gradient.pg_agent.PG_Agent.test"><code class="docutils literal notranslate"><span class="pre">xuance.torch.agent.policy_gradient.pg_agent.PG_Agent.test()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#source-code">Source Code</a></li>
@@ -138,7 +138,7 @@
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../../../../index.html">XuanPolicy</a>
+          <a href="../../../../index.html">XuanCe</a>
       </nav>
 
       <div class="wy-nav-content">
@@ -161,13 +161,13 @@
 <h1>PG_Agent<a class="headerlink" href="#pg-agent" title="Permalink to this heading">¶</a></h1>
 <br><hr><p><strong>PyTorch:</strong></p>
 <dl class="py class">
-<dt class="sig sig-object py" id="xuanpolicy.torch.agent.policy_gradient.pg_agent.PG_Agent">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xuanpolicy.torch.agent.policy_gradient.pg_agent.</span></span><span class="sig-name descname"><span class="pre">PG_Agent</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">envs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">policy</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheduler</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xuanpolicy.torch.agent.policy_gradient.pg_agent.PG_Agent" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="xuance.torch.agent.policy_gradient.pg_agent.PG_Agent">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xuance.torch.agent.policy_gradient.pg_agent.</span></span><span class="sig-name descname"><span class="pre">PG_Agent</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">envs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">policy</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheduler</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xuance.torch.agent.policy_gradient.pg_agent.PG_Agent" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>config</strong> (<em>Namespace</em>) – Provides hyper parameters.</p></li>
-<li><p><strong>envs</strong> (<em>xuanpolicy.environments.vector_envs.vector_env.VecEnv</em>) – The vectorized environments.</p></li>
+<li><p><strong>envs</strong> (<em>xuance.environments.vector_envs.vector_env.VecEnv</em>) – The vectorized environments.</p></li>
 <li><p><strong>policy</strong> (<em>nn.Module</em>) – The policy that provides actions and values.</p></li>
 <li><p><strong>optimizer</strong> (<em>torch.optim.Optimizer</em>) – The optimizer that updates the parameters.</p></li>
 <li><p><strong>scheduler</strong> (<em>torch.optim.lr_scheduler._LRScheduler</em>) – Implement the learning rate decay.</p></li>
@@ -178,8 +178,8 @@
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="xuanpolicy.torch.agent.policy_gradient.pg_agent.PG_Agent._action">
-<span class="sig-prename descclassname"><span class="pre">xuanpolicy.torch.agent.policy_gradient.pg_agent.PG_Agent.</span></span><span class="sig-name descname"><span class="pre">_action</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xuanpolicy.torch.agent.policy_gradient.pg_agent.PG_Agent._action" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="xuance.torch.agent.policy_gradient.pg_agent.PG_Agent._action">
+<span class="sig-prename descclassname"><span class="pre">xuance.torch.agent.policy_gradient.pg_agent.PG_Agent.</span></span><span class="sig-name descname"><span class="pre">_action</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xuance.torch.agent.policy_gradient.pg_agent.PG_Agent._action" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate actions according to the observations.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -195,8 +195,8 @@
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="xuanpolicy.torch.agent.policy_gradient.pg_agent.PG_Agent.train">
-<span class="sig-prename descclassname"><span class="pre">xuanpolicy.torch.agent.policy_gradient.pg_agent.PG_Agent.</span></span><span class="sig-name descname"><span class="pre">train</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_steps</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xuanpolicy.torch.agent.policy_gradient.pg_agent.PG_Agent.train" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="xuance.torch.agent.policy_gradient.pg_agent.PG_Agent.train">
+<span class="sig-prename descclassname"><span class="pre">xuance.torch.agent.policy_gradient.pg_agent.PG_Agent.</span></span><span class="sig-name descname"><span class="pre">train</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_steps</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xuance.torch.agent.policy_gradient.pg_agent.PG_Agent.train" title="Permalink to this definition">¶</a></dt>
 <dd><p>Train the PG agent.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -206,8 +206,8 @@
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="xuanpolicy.torch.agent.policy_gradient.pg_agent.PG_Agent.test">
-<span class="sig-prename descclassname"><span class="pre">xuanpolicy.torch.agent.policy_gradient.pg_agent.PG_Agent.</span></span><span class="sig-name descname"><span class="pre">test</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">env_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_episodes</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xuanpolicy.torch.agent.policy_gradient.pg_agent.PG_Agent.test" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="xuance.torch.agent.policy_gradient.pg_agent.PG_Agent.test">
+<span class="sig-prename descclassname"><span class="pre">xuance.torch.agent.policy_gradient.pg_agent.PG_Agent.</span></span><span class="sig-name descname"><span class="pre">test</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">env_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_episodes</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xuance.torch.agent.policy_gradient.pg_agent.PG_Agent.test" title="Permalink to this definition">¶</a></dt>
 <dd><p>Test the trained model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -230,7 +230,7 @@
 <br><hr><section id="source-code">
 <h2>Source Code<a class="headerlink" href="#source-code" title="Permalink to this heading">¶</a></h2>
 <div class="sphinx-tabs docutils container">
-<div aria-label="Tabbed content" class="closeable" role="tablist"><button aria-controls="panel-0-UHlUb3JjaA==" aria-selected="true" class="sphinx-tabs-tab group-tab" id="tab-0-UHlUb3JjaA==" name="UHlUb3JjaA==" role="tab" tabindex="0">PyTorch</button><button aria-controls="panel-0-VGVuc29yRmxvdw==" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-0-VGVuc29yRmxvdw==" name="VGVuc29yRmxvdw==" role="tab" tabindex="-1">TensorFlow</button><button aria-controls="panel-0-TWluZFNwb3Jl" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-0-TWluZFNwb3Jl" name="TWluZFNwb3Jl" role="tab" tabindex="-1">MindSpore</button></div><div aria-labelledby="tab-0-UHlUb3JjaA==" class="sphinx-tabs-panel group-tab" id="panel-0-UHlUb3JjaA==" name="UHlUb3JjaA==" role="tabpanel" tabindex="0"><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">xuanpolicy.torch.agents</span> <span class="kn">import</span> <span class="o">*</span>
+<div aria-label="Tabbed content" class="closeable" role="tablist"><button aria-controls="panel-0-UHlUb3JjaA==" aria-selected="true" class="sphinx-tabs-tab group-tab" id="tab-0-UHlUb3JjaA==" name="UHlUb3JjaA==" role="tab" tabindex="0">PyTorch</button><button aria-controls="panel-0-VGVuc29yRmxvdw==" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-0-VGVuc29yRmxvdw==" name="VGVuc29yRmxvdw==" role="tab" tabindex="-1">TensorFlow</button><button aria-controls="panel-0-TWluZFNwb3Jl" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-0-TWluZFNwb3Jl" name="TWluZFNwb3Jl" role="tab" tabindex="-1">MindSpore</button></div><div aria-labelledby="tab-0-UHlUb3JjaA==" class="sphinx-tabs-panel group-tab" id="panel-0-UHlUb3JjaA==" name="UHlUb3JjaA==" role="tabpanel" tabindex="0"><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">xuance.torch.agents</span> <span class="kn">import</span> <span class="o">*</span>
 
 <span class="k">class</span> <span class="nc">PG_Agent</span><span class="p">(</span><span class="n">Agent</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
@@ -401,7 +401,7 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2023, XuanPolicy contributors.</p>
+    <p>&#169; Copyright 2023, XuanCe contributors.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Professional Usage &mdash; XuanPolicy v0.1.11 documentation</title>
+  <title>Professional Usage &mdash; XuanCe v0.1.11 documentation</title>
       <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
@@ -39,7 +39,7 @@
           
           
           <a href="../../index.html" class="icon icon-home">
-            XuanPolicy
+            XuanCe
               <img src="../../_static/logo_2.png" class="logo" alt="Logo"/>
           </a>
 <div role="search">
@@ -93,7 +93,7 @@
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../../index.html">XuanPolicy</a>
+          <a href="../../index.html">XuanCe</a>
       </nav>
 
       <div class="wy-nav-content">
@@ -114,7 +114,7 @@
   <section id="professional-usage">
 <h1>Professional Usage<a class="headerlink" href="#professional-usage" title="Permalink to this heading">¶</a></h1>
 <p>The previous page demonstrated how to directly run an algorithm by calling the runner.
-In order to help users better understand the internal implementation process of “XuanPolicy”,
+In order to help users better understand the internal implementation process of “XuanCe”,
 and facilitate further algorithm development and implementation of their own reinforcement learning tasks,
 this section will take the PPO algorithm training on the MuJoCo environment task as an example,
 and provide a detailed introduction on how to call the API from the bottom level to implement reinforcement learning model training.</p>
@@ -123,7 +123,7 @@ and provide a detailed introduction on how to call the API from the bottom level
 <p>A config file should contains the necessary arguments of a PPO agent, and should be a YAML file.
 Here we show a config file named “mujoco.yaml” for MuJoCo environment in gym.</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">dl_toolbox</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;torch&quot;</span><span class="w">  </span><span class="c1"># The deep learning toolbox. Choices: &quot;torch&quot;, &quot;mindspore&quot;, &quot;tensorlayer&quot;</span>
-<span class="nt">project_name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;XuanPolicy_Benchmark&quot;</span>
+<span class="nt">project_name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;XuanCe_Benchmark&quot;</span>
 <span class="nt">logger</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;tensorboard&quot;</span><span class="w">  </span><span class="c1"># Choices: tensorboard, wandb.</span>
 <span class="nt">wandb_user_name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;your_user_name&quot;</span>
 <span class="nt">render</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">False</span>
@@ -184,7 +184,7 @@ which uses the Python package <cite>argparser</cite> to read the command line in
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">argparser</span>
 
 <span class="k">def</span> <span class="nf">parse_args</span><span class="p">():</span>
-    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="s2">&quot;Example of XuanPolicy.&quot;</span><span class="p">)</span>
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="s2">&quot;Example of XuanCe.&quot;</span><span class="p">)</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--method&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">&quot;ppo&quot;</span><span class="p">)</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--env&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">&quot;mujoco&quot;</span><span class="p">)</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--env-id&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">&quot;InvertedPendulum-v4&quot;</span><span class="p">)</span>
@@ -199,7 +199,7 @@ which uses the Python package <cite>argparser</cite> to read the command line in
 <p><strong>Step 2.2 Get all attributes of the example</strong></p>
 <p>First, the <code class="docutils literal notranslate"><span class="pre">parse_args()</span></code> function from Step 2.1 is called to read the command line instruction parameters,
 and then the configuration parameters from Step 1 are obtained.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">xuanpolicy</span> <span class="kn">import</span> <span class="n">get_arguments</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">xuance</span> <span class="kn">import</span> <span class="n">get_arguments</span>
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
 <span class="n">parser</span> <span class="o">=</span> <span class="n">parse_args</span><span class="p">()</span>
@@ -211,8 +211,8 @@ and then the configuration parameters from Step 1 are obtained.</p>
 <span class="n">run</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>In this step, the <code class="docutils literal notranslate"><span class="pre">get_arguments()</span></code> function from “XuanPolicy” is called.
-In this function, it first searches for readable parameters based on the combination of the <code class="docutils literal notranslate"><span class="pre">env</span></code> and <code class="docutils literal notranslate"><span class="pre">env_id</span></code> variables in the <cite>xuanpolicy/configs/</cite> directory.
+<p>In this step, the <code class="docutils literal notranslate"><span class="pre">get_arguments()</span></code> function from “XuanCe” is called.
+In this function, it first searches for readable parameters based on the combination of the <code class="docutils literal notranslate"><span class="pre">env</span></code> and <code class="docutils literal notranslate"><span class="pre">env_id</span></code> variables in the <cite>xuance/configs/</cite> directory.
 If default parameters already exist, they are all read. Then, the function continues to index the configuration file from Step 1 using the <code class="docutils literal notranslate"><span class="pre">config.path</span></code> path and reads all the parameters from the .yaml file.
 Finally, it reads all the parameters from the <code class="docutils literal notranslate"><span class="pre">parser</span></code>.</p>
 <p>During the three reading processes, if there are duplicate variable names, the latter parameters will overwrite the former ones.
@@ -228,10 +228,10 @@ In this function, environment creation is implemented, and modules such as repre
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">torch.optim</span>
 
-<span class="kn">from</span> <span class="nn">xuanpolicy.common</span> <span class="kn">import</span> <span class="n">space2shape</span>
-<span class="kn">from</span> <span class="nn">xuanpolicy.environment</span> <span class="kn">import</span> <span class="n">make_envs</span>
-<span class="kn">from</span> <span class="nn">xuanpolicy.torch.utils.operations</span> <span class="kn">import</span> <span class="n">set_seed</span>
-<span class="kn">from</span> <span class="nn">xuanpolicy.torch.utils</span> <span class="kn">import</span> <span class="n">ActivationFunctions</span>
+<span class="kn">from</span> <span class="nn">xuance.common</span> <span class="kn">import</span> <span class="n">space2shape</span>
+<span class="kn">from</span> <span class="nn">xuance.environment</span> <span class="kn">import</span> <span class="n">make_envs</span>
+<span class="kn">from</span> <span class="nn">xuance.torch.utils.operations</span> <span class="kn">import</span> <span class="n">set_seed</span>
+<span class="kn">from</span> <span class="nn">xuance.torch.utils</span> <span class="kn">import</span> <span class="n">ActivationFunctions</span>
 
 <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
     <span class="n">agent_name</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">agent</span>  <span class="c1"># get the name of Agent.</span>
@@ -248,7 +248,7 @@ In this function, environment creation is implemented, and modules such as repre
     <span class="n">n_envs</span> <span class="o">=</span> <span class="n">envs</span><span class="o">.</span><span class="n">num_envs</span>  <span class="c1"># get the number of vectorized environments.</span>
 
     <span class="c1"># prepare representation</span>
-    <span class="kn">from</span> <span class="nn">xuanpolicy.torch.representations</span> <span class="kn">import</span> <span class="n">Basic_MLP</span>
+    <span class="kn">from</span> <span class="nn">xuance.torch.representations</span> <span class="kn">import</span> <span class="n">Basic_MLP</span>
     <span class="n">representation</span> <span class="o">=</span> <span class="n">Basic_MLP</span><span class="p">(</span><span class="n">input_shape</span><span class="o">=</span><span class="n">space2shape</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">observation_space</span><span class="p">),</span>
                             <span class="n">hidden_sizes</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">representation_hidden_size</span><span class="p">,</span>
                             <span class="n">normalize</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -257,7 +257,7 @@ In this function, environment creation is implemented, and modules such as repre
                             <span class="n">device</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>  <span class="c1"># create representation</span>
 
     <span class="c1"># prepare policy</span>
-    <span class="kn">from</span> <span class="nn">xuanpolicy.torch.policies</span> <span class="kn">import</span> <span class="n">Gaussian_AC_Policy</span>
+    <span class="kn">from</span> <span class="nn">xuance.torch.policies</span> <span class="kn">import</span> <span class="n">Gaussian_AC_Policy</span>
     <span class="n">policy</span> <span class="o">=</span> <span class="n">Gaussian_AC_Policy</span><span class="p">(</span><span class="n">action_space</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">action_space</span><span class="p">,</span>
                                 <span class="n">representation</span><span class="o">=</span><span class="n">representation</span><span class="p">,</span>
                                 <span class="n">actor_hidden_size</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">actor_hidden_size</span><span class="p">,</span>
@@ -268,7 +268,7 @@ In this function, environment creation is implemented, and modules such as repre
                                 <span class="n">device</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>  <span class="c1"># create Gaussian policy</span>
 
     <span class="c1"># prepare agent</span>
-    <span class="kn">from</span> <span class="nn">xuanpolicy.torch.agents</span> <span class="kn">import</span> <span class="n">PPOCLIP_Agent</span><span class="p">,</span> <span class="n">get_total_iters</span>
+    <span class="kn">from</span> <span class="nn">xuance.torch.agents</span> <span class="kn">import</span> <span class="n">PPOCLIP_Agent</span><span class="p">,</span> <span class="n">get_total_iters</span>
     <span class="n">optimizer</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">(</span><span class="n">policy</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">args</span><span class="o">.</span><span class="n">learning_rate</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="mf">1e-5</span><span class="p">)</span>  <span class="c1"># create optimizer</span>
     <span class="n">lr_scheduler</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">lr_scheduler</span><span class="o">.</span><span class="n">LinearLR</span><span class="p">(</span><span class="n">optimizer</span><span class="p">,</span> <span class="n">start_factor</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">end_factor</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
                                                     <span class="n">total_iters</span><span class="o">=</span><span class="n">get_total_iters</span><span class="p">(</span><span class="n">agent_name</span><span class="p">,</span> <span class="n">args</span><span class="p">))</span>  <span class="c1"># for learning rate decay</span>
@@ -337,7 +337,7 @@ In this function, environment creation is implemented, and modules such as repre
 </pre></div>
 </div>
 <p>The source code of this example can be visited at the following link:</p>
-<p><a class="reference external" href="https://github.com/agi-brain/xuanpolicy/examples/ppo/ppo_mujoco.py/">https://github.com/agi-brain/xuanpolicy/examples/ppo/ppo_mujoco.py</a></p>
+<p><a class="reference external" href="https://github.com/agi-brain/xuance/examples/ppo/ppo_mujoco.py/">https://github.com/agi-brain/xuance/examples/ppo/ppo_mujoco.py</a></p>
 </section>
 </section>
 
@@ -352,7 +352,7 @@ In this function, environment creation is implemented, and modules such as repre
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2023, XuanPolicy contributors.</p>
+    <p>&#169; Copyright 2023, XuanCe contributors.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

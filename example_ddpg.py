@@ -5,15 +5,15 @@ import numpy as np
 import torch.optim
 import wandb
 
-from xuanpolicy import get_arguments
-from xuanpolicy.environment import make_envs
-from xuanpolicy.torch.utils.operations import set_seed
-from xuanpolicy.torch.utils.input_reformat import get_repre_in, get_policy_in
-from xuanpolicy.torch.agents import get_total_iters
+from xuance import get_arguments
+from xuance.environment import make_envs
+from xuance.torch.utils.operations import set_seed
+from xuance.torch.utils.input_reformat import get_repre_in, get_policy_in
+from xuance.torch.agents import get_total_iters
 
 
 def parse_args():
-    parser = argparse.ArgumentParser("Example of XuanPolicy.")
+    parser = argparse.ArgumentParser("Example of XuanCe.")
     parser.add_argument("--method", type=str, default="ddpg")
     parser.add_argument("--env", type=str, default="classic_control")
     parser.add_argument("--env-id", type=str, default="Pendulum-v1")
@@ -36,12 +36,12 @@ def run(args):
     n_envs = envs.num_envs
 
     # prepare representation
-    from xuanpolicy.torch.representations import REGISTRY as REGISTRY_Representation
+    from xuance.torch.representations import REGISTRY as REGISTRY_Representation
     input_representation = get_repre_in(args)
     representation = REGISTRY_Representation[args.representation](*input_representation)
 
     # prepare policy
-    from xuanpolicy.torch.policies import REGISTRY as REGISTRY_Policy
+    from xuance.torch.policies import REGISTRY as REGISTRY_Policy
     input_policy = get_policy_in(args, representation)
     policy = REGISTRY_Policy[args.policy](*input_policy)
 
@@ -52,7 +52,7 @@ def run(args):
                                                            total_iters=get_total_iters(agent_name, args))
     critic_lr_scheduler = torch.optim.lr_scheduler.LinearLR(critic_optimizer, start_factor=1.0, end_factor=0.25,
                                                             total_iters=get_total_iters(agent_name, args))
-    from xuanpolicy.torch.agents import REGISTRY as REGISTRY_Agent
+    from xuance.torch.agents import REGISTRY as REGISTRY_Agent
     agent = REGISTRY_Agent[agent_name](args, envs, policy,
                                        [actor_optimizer, critic_optimizer],
                                        [actor_lr_scheduler, critic_lr_scheduler],

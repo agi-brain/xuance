@@ -8,13 +8,13 @@ Quick Start
 Run a DRL example
 -----------------------
 
-In XuanPolicy, it is easy to build a DRL agent. First you need to create a *runner* 
+In XuanCe, it is easy to build a DRL agent. First you need to create a *runner*
 and specify the ``agent_name``, ``env_name``, then a runner that contains agent, policy, and envs, etc., will be built. 
 Finally, execute ``runner.run`` and the agent's model is training.
 
 .. code-block:: python
 
-    import xuanpolicy as xp
+    import xuance as xp
     runner = xp.get_runner(method='dqn',
                            env='classic_control',
                            env_id='CartPole-v1',
@@ -30,12 +30,12 @@ After training the agent, you can test and view the model by the following codes
 Run an MARL example
 -----------------------
 
-XuanPolicy support MARL algorithms with both cooperative and competitive tasks. 
+XuanCe support MARL algorithms with both cooperative and competitive tasks.
 Similaly, you can start by:
 
 .. code-block:: python
 
-    import xuanpolicy as xp
+    import xuance as xp
     runner = xp.get_runner(method='maddpg',
                            env='mpe',
                            env_id='simple_spread_v3',
@@ -46,7 +46,7 @@ For competitve tasks in which agents can be divided to two or more sides, you ca
 
 .. code-block:: python
 
-    import xuanpolicy as xp
+    import xuance as xp
     runner = xp.get_runner(method=["maddpg", "iddpg"],
                            env='mpe',
                            env_id='simple_push_v3',
@@ -59,12 +59,12 @@ The "adversary"s are MADDPG agents, and the "agent"s are IDDPG agents.
 Test
 -----------------------
 
-After completing the algorithm training, XuanPolicy will save the model files and training log information in the designated directory.
+After completing the algorithm training, XuanCe will save the model files and training log information in the designated directory.
 Users can specify "is_test=True" to perform testing.
 
 .. code-block:: python
 
-    import xuanpolicy as xp
+    import xuance as xp
     runner = xp.get_runner(method='dqn',
                            env_name='classic_control',
                            env_id='CartPole-v1',
@@ -76,7 +76,7 @@ In the above code, "runner.benchmark()" can also be used instead of "runner.run(
 Logger
 -----------------------
 
-You can use the tensorboard or wandb to visualize the training process by specifying the "logger" parameter in the "xuanpolicy/configs/basic.yaml".
+You can use the tensorboard or wandb to visualize the training process by specifying the "logger" parameter in the "xuance/configs/basic.yaml".
 
 .. code-block:: yaml
 
@@ -101,7 +101,7 @@ Taking the path "./logs/dqn/torch/CartPole-v0" as an example, users can visualiz
 **2. W&B**
 
 If you choose to use the wandb tool for training visualization,
-you can create an account according to the official W&B instructions and specify the username "wandb_user_name" in the "xuanpolicy/configs/basic.yaml" file.
+you can create an account according to the official W&B instructions and specify the username "wandb_user_name" in the "xuance/configs/basic.yaml" file.
 
 For information on using W&B and its local deployment, you can refer to the following link:
 

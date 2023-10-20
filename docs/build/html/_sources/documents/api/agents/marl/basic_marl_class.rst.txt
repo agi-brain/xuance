@@ -1,23 +1,23 @@
 MARLAgent
 =======================
 
-To create new MARL agents, you should build a class inherit from ``xuanpolicy.torch.agents.agents_marl.MARLAgent`` , ``xuanpolicy.tensorflow.agents.agents_marl.MARLAgent``, or ``xuanpolicy.mindspore.agents.agents_marl.MARLAgent``.
+To create new MARL agents, you should build a class inherit from ``xuance.torch.agents.agents_marl.MARLAgent`` , ``xuance.tensorflow.agents.agents_marl.MARLAgent``, or ``xuance.mindspore.agents.agents_marl.MARLAgent``.
 
 **PyTorch:**
 
 .. py:class:: 
-   xuanpolicy.torch.agents.agents_marl.MARLAgent(config, envs, policy, memory, learner, device, log_dir, model_dir)
+   xuance.torch.agents.agents_marl.MARLAgent(config, envs, policy, memory, learner, device, log_dir, model_dir)
 
    :param config: Provides hyper parameters.
    :type config: Namespace
    :param envs: The vectorized environments.
-   :type envs: xuanpolicy.environments.vector_envs.vector_env.VecEnv
+   :type envs: xuance.environments.vector_envs.vector_env.VecEnv
    :param policy: The policy that provides actions and values.
    :type policy: nn.Module
    :param memory: Experice replay buffer.
-   :type memory: xuanpolicy.common.memory_tools.Buffer
+   :type memory: xuance.common.memory_tools.Buffer
    :param learner: The learner that updates parameters of policy.
-   :type learner: xuanpolicy.torch.learner.LearnerMAS
+   :type learner: xuance.torch.learner.LearnerMAS
    :param device: Choose CPU or GPU to train the model.
    :type device: str, int, torch.device
    :param log_dir: The directory of log file, default is "./logs/".
@@ -25,14 +25,14 @@ To create new MARL agents, you should build a class inherit from ``xuanpolicy.to
    :param model_dir: The directory of model file, default is "./models/".
    :type model_dir: str
 
-.. py:function:: xuanpolicy.torch.agents.agents_marl.MARLAgent.save_model(model_name)
+.. py:function:: xuance.torch.agents.agents_marl.MARLAgent.save_model(model_name)
    
    Save the model.
 
    :param model_name: The model's name to be saved.
    :type model_name: str
 
-.. py:function:: xuanpolicy.torch.agents.agents_marl.MARLAgent.load_model(path, seed)
+.. py:function:: xuance.torch.agents.agents_marl.MARLAgent.load_model(path, seed)
 
    Load a model by specifying the ``path`` and ``seed`` .
 
@@ -41,14 +41,14 @@ To create new MARL agents, you should build a class inherit from ``xuanpolicy.to
    :param seed: Select the seed that model was trained with if it exits.
    :type seed: int
 
-.. py:function:: xuanpolicy.torch.agents.agents_marl.MARLAgent.act(**kwargs)
+.. py:function:: xuance.torch.agents.agents_marl.MARLAgent.act(**kwargs)
    
    Get actions for executing according to the joint observations, global states, available actions, etc.
    
    :param kwargs: Inputs informations.
    :type observations: Dict
 
-.. py:function:: xuanpolicy.torch.agents.agents_marl.MARLAgent.train(**kwargs)
+.. py:function:: xuance.torch.agents.agents_marl.MARLAgent.train(**kwargs)
    
    Train the multi-agent reinforcement learning models.
 
@@ -59,7 +59,7 @@ To create new MARL agents, you should build a class inherit from ``xuanpolicy.to
 
 
 .. py:class:: 
-   xuanpolicy.torch.agents.agents_marl.linear_decay_or_increase(start, end, step_length)
+   xuance.torch.agents.agents_marl.linear_decay_or_increase(start, end, step_length)
 
    :param start: Start factor.
    :type start: np.float
@@ -68,23 +68,23 @@ To create new MARL agents, you should build a class inherit from ``xuanpolicy.to
    :param step_length: The number of steps the factor decays or increases.
    :type step_length: int
 
-.. py:function:: xuanpolicy.torch.agents.agents_marl.linear_decay_or_increase.update()
+.. py:function:: xuance.torch.agents.agents_marl.linear_decay_or_increase.update()
    
    Update the factor once.
 
 
 .. py:class:: 
-   xuanpolicy.torch.agents.agents_marl.RandomAgents(args, envs, device=None)
+   xuance.torch.agents.agents_marl.RandomAgents(args, envs, device=None)
 
    :param args: Provides hyper parameters.
    :type args: Namespace
    :param envs: The vectorized environments.
-   :type envs: xuanpolicy.environments.vector_envs.vector_env.VecEnv
+   :type envs: xuance.environments.vector_envs.vector_env.VecEnv
    :param device: Choose CPU or GPU to train the model.
    :type device: str, int, torch.device
 
 .. py:function:: 
-   xuanpolicy.torch.agents.agents_marl.RandomAgents.act()
+   xuance.torch.agents.agents_marl.RandomAgents.act()
    
    Provide random actions for RandomAgents.
 
@@ -99,18 +99,18 @@ To create new MARL agents, you should build a class inherit from ``xuanpolicy.to
 **TensorFlow:**
 
 .. py:class:: 
-   xuanpolicy.tensorflow.agents.agents_marl.MARLAgent(config, envs, policy, memory, learner, device, log_dir, model_dir)
+   xuance.tensorflow.agents.agents_marl.MARLAgent(config, envs, policy, memory, learner, device, log_dir, model_dir)
 
    :param config: Provides hyper parameters.
    :type config: Namespace
    :param envs: The vectorized environments.
-   :type envs: xuanpolicy.environments.vector_envs.vector_env.VecEnv
+   :type envs: xuance.environments.vector_envs.vector_env.VecEnv
    :param policy: The policy that provides actions and values.
    :type policy: nn.Module
    :param memory: Experice replay buffer.
-   :type memory: xuanpolicy.common.memory_tools.Buffer
+   :type memory: xuance.common.memory_tools.Buffer
    :param learner: The learner that updates parameters of policy.
-   :type learner: xuanpolicy.tensorflow.learner.Learner
+   :type learner: xuance.tensorflow.learner.Learner
    :param device: Choose CPU or GPU to train the model.
    :type device: str
    :param log_dir: The directory of log file, default is "./logs/".
@@ -126,16 +126,16 @@ To create new MARL agents, you should build a class inherit from ``xuanpolicy.to
 **MindSpore:**
 
 .. py:class:: 
-   xuanpolicy.mindspore.agents.agents_marl.MARLAgent(envs, policy, memory, learner, device, log_dir, model_dir)
+   xuance.mindspore.agents.agents_marl.MARLAgent(envs, policy, memory, learner, device, log_dir, model_dir)
 
    :param envs: The vectorized environments.
-   :type envs: xuanpolicy.environments.vector_envs.vector_env.VecEnv
+   :type envs: xuance.environments.vector_envs.vector_env.VecEnv
    :param policy: The policy that provides actions and values.
    :type policy: nn.Module
    :param memory: Experice replay buffer.
-   :type memory: xuanpolicy.common.memory_tools.Buffer
+   :type memory: xuance.common.memory_tools.Buffer
    :param learner: The learner that updates parameters of policy.
-   :type learner: xuanpolicy.mindspore.learner.Learner
+   :type learner: xuance.mindspore.learner.Learner
    :param device: Choose CPU or GPU to train the model.
    :type device: str
    :param log_dir: The directory of log file, default is "./logs/".
@@ -158,7 +158,7 @@ Source Code
       .. code-block:: python
          
          import os.path
-         from xuanpolicy.torch.agents import *
+         from xuance.torch.agents import *
 
 
          class MARLAgents(object):
@@ -247,7 +247,7 @@ Source Code
 
       .. code-block:: python
 
-         from xuanpolicy.tensorflow.agents import *
+         from xuance.tensorflow.agents import *
 
          class MARLAgents(object):
             def __init__(self,
@@ -355,7 +355,7 @@ Source Code
          import mindspore as ms
          import mindspore.ops as ops
          from mindspore import Tensor
-         from xuanpolicy.mindspore.agents import *
+         from xuance.mindspore.agents import *
 
          class MARLAgents(object):
             def __init__(self,

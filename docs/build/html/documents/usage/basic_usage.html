@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Quick Start &mdash; XuanPolicy v0.1.11 documentation</title>
+  <title>Quick Start &mdash; XuanCe v0.1.11 documentation</title>
       <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
@@ -39,7 +39,7 @@
           
           
           <a href="../../index.html" class="icon icon-home">
-            XuanPolicy
+            XuanCe
               <img src="../../_static/logo_2.png" class="logo" alt="Logo"/>
           </a>
 <div role="search">
@@ -94,7 +94,7 @@
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../../index.html">XuanPolicy</a>
+          <a href="../../index.html">XuanCe</a>
       </nav>
 
       <div class="wy-nav-content">
@@ -116,10 +116,10 @@
 <h1>Quick Start<a class="headerlink" href="#quick-start" title="Permalink to this heading">¶</a></h1>
 <br><hr><section id="run-a-drl-example">
 <h2>Run a DRL example<a class="headerlink" href="#run-a-drl-example" title="Permalink to this heading">¶</a></h2>
-<p>In XuanPolicy, it is easy to build a DRL agent. First you need to create a <em>runner</em>
+<p>In XuanCe, it is easy to build a DRL agent. First you need to create a <em>runner</em>
 and specify the <code class="docutils literal notranslate"><span class="pre">agent_name</span></code>, <code class="docutils literal notranslate"><span class="pre">env_name</span></code>, then a runner that contains agent, policy, and envs, etc., will be built.
 Finally, execute <code class="docutils literal notranslate"><span class="pre">runner.run</span></code> and the agent’s model is training.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">xuanpolicy</span> <span class="k">as</span> <span class="nn">xp</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">xuance</span> <span class="k">as</span> <span class="nn">xp</span>
 <span class="n">runner</span> <span class="o">=</span> <span class="n">xp</span><span class="o">.</span><span class="n">get_runner</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s1">&#39;dqn&#39;</span><span class="p">,</span>
                        <span class="n">env</span><span class="o">=</span><span class="s1">&#39;classic_control&#39;</span><span class="p">,</span>
                        <span class="n">env_id</span><span class="o">=</span><span class="s1">&#39;CartPole-v1&#39;</span><span class="p">,</span>
@@ -131,9 +131,9 @@ Finally, execute <code class="docutils literal notranslate"><span class="pre">ru
 <br><hr></section>
 <section id="run-an-marl-example">
 <h2>Run an MARL example<a class="headerlink" href="#run-an-marl-example" title="Permalink to this heading">¶</a></h2>
-<p>XuanPolicy support MARL algorithms with both cooperative and competitive tasks.
+<p>XuanCe support MARL algorithms with both cooperative and competitive tasks.
 Similaly, you can start by:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">xuanpolicy</span> <span class="k">as</span> <span class="nn">xp</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">xuance</span> <span class="k">as</span> <span class="nn">xp</span>
 <span class="n">runner</span> <span class="o">=</span> <span class="n">xp</span><span class="o">.</span><span class="n">get_runner</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s1">&#39;maddpg&#39;</span><span class="p">,</span>
                        <span class="n">env</span><span class="o">=</span><span class="s1">&#39;mpe&#39;</span><span class="p">,</span>
                        <span class="n">env_id</span><span class="o">=</span><span class="s1">&#39;simple_spread_v3&#39;</span><span class="p">,</span>
@@ -142,7 +142,7 @@ Similaly, you can start by:</p>
 </pre></div>
 </div>
 <p>For competitve tasks in which agents can be divided to two or more sides, you can run a demo by:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">xuanpolicy</span> <span class="k">as</span> <span class="nn">xp</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">xuance</span> <span class="k">as</span> <span class="nn">xp</span>
 <span class="n">runner</span> <span class="o">=</span> <span class="n">xp</span><span class="o">.</span><span class="n">get_runner</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;maddpg&quot;</span><span class="p">,</span> <span class="s2">&quot;iddpg&quot;</span><span class="p">],</span>
                        <span class="n">env</span><span class="o">=</span><span class="s1">&#39;mpe&#39;</span><span class="p">,</span>
                        <span class="n">env_id</span><span class="o">=</span><span class="s1">&#39;simple_push_v3&#39;</span><span class="p">,</span>
@@ -155,9 +155,9 @@ The “adversary”s are MADDPG agents, and the “agent”s are IDDPG agents.</
 </section>
 <section id="test">
 <h2>Test<a class="headerlink" href="#test" title="Permalink to this heading">¶</a></h2>
-<p>After completing the algorithm training, XuanPolicy will save the model files and training log information in the designated directory.
+<p>After completing the algorithm training, XuanCe will save the model files and training log information in the designated directory.
 Users can specify “is_test=True” to perform testing.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">xuanpolicy</span> <span class="k">as</span> <span class="nn">xp</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">xuance</span> <span class="k">as</span> <span class="nn">xp</span>
 <span class="n">runner</span> <span class="o">=</span> <span class="n">xp</span><span class="o">.</span><span class="n">get_runner</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s1">&#39;dqn&#39;</span><span class="p">,</span>
                        <span class="n">env_name</span><span class="o">=</span><span class="s1">&#39;classic_control&#39;</span><span class="p">,</span>
                        <span class="n">env_id</span><span class="o">=</span><span class="s1">&#39;CartPole-v1&#39;</span><span class="p">,</span>
@@ -169,7 +169,7 @@ Users can specify “is_test=True” to perform testing.</p>
 </section>
 <section id="logger">
 <h2>Logger<a class="headerlink" href="#logger" title="Permalink to this heading">¶</a></h2>
-<p>You can use the tensorboard or wandb to visualize the training process by specifying the “logger” parameter in the “xuanpolicy/configs/basic.yaml”.</p>
+<p>You can use the tensorboard or wandb to visualize the training process by specifying the “logger” parameter in the “xuance/configs/basic.yaml”.</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">logger</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tensorboard</span>
 </pre></div>
 </div>
@@ -186,7 +186,7 @@ Taking the path “./logs/dqn/torch/CartPole-v0” as an example, users can visu
 </div>
 <p><strong>2. W&amp;B</strong></p>
 <p>If you choose to use the wandb tool for training visualization,
-you can create an account according to the official W&amp;B instructions and specify the username “wandb_user_name” in the “xuanpolicy/configs/basic.yaml” file.</p>
+you can create an account according to the official W&amp;B instructions and specify the username “wandb_user_name” in the “xuance/configs/basic.yaml” file.</p>
 <p>For information on using W&amp;B and its local deployment, you can refer to the following link:</p>
 <div class="line-block">
 <div class="line"><strong>wandb</strong>: <a class="reference external" href="https://github.com/wandb/wandb.git/">https://github.com/wandb/wandb.git</a></div>
@@ -206,7 +206,7 @@ you can create an account according to the official W&amp;B instructions and spe
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2023, XuanPolicy contributors.</p>
+    <p>&#169; Copyright 2023, XuanCe contributors.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

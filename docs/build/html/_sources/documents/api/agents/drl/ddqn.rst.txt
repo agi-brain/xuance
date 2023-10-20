@@ -10,12 +10,12 @@ DQN with double q-learning trick.
 **PyTorch:**
 
 .. py:class:: 
-    xuanpolicy.torch.agent.qlearning_family.ddqn_agent.DDQN_Agent(config, envs, policy, optimizer, scheduler, device)
+    xuance.torch.agent.qlearning_family.ddqn_agent.DDQN_Agent(config, envs, policy, optimizer, scheduler, device)
 
     :param config: Provides hyper parameters.
     :type config: Namespace
     :param envs: The vectorized environments.
-    :type envs: xuanpolicy.environments.vector_envs.vector_env.VecEnv
+    :type envs: xuance.environments.vector_envs.vector_env.VecEnv
     :param policy: The policy that provides actions and values.
     :type policy: nn.Module
     :param optimizer: The optimizer that updates the parameters.
@@ -26,7 +26,7 @@ DQN with double q-learning trick.
     :type device: str, int, torch.device
 
 .. py:function:: 
-    xuanpolicy.torch.agent.qlearning_family.ddqn_agent.DDQN_Agent._action(obs, egreedy)
+    xuance.torch.agent.qlearning_family.ddqn_agent.DDQN_Agent._action(obs, egreedy)
 
     Calculate actions according to the observations.
 
@@ -38,7 +38,7 @@ DQN with double q-learning trick.
     :rtype: np.ndarray
   
 .. py:function:: 
-    xuanpolicy.torch.agent.qlearning_family.ddqn_agent.DDQN_Agent.train(train_steps)
+    xuance.torch.agent.qlearning_family.ddqn_agent.DDQN_Agent.train(train_steps)
 
     Train the Double DQN agent.
 
@@ -46,7 +46,7 @@ DQN with double q-learning trick.
     :type train_steps: int
 
 .. py:function:: 
-    xuanpolicy.torch.agent.qlearning_family.ddqn_agent.DDQN_Agent.test(env_fn, test_episodes)
+    xuance.torch.agent.qlearning_family.ddqn_agent.DDQN_Agent.test(env_fn, test_episodes)
   
     Test the trained model.
 
@@ -82,7 +82,7 @@ Source Code
     
         .. code-block:: python
 
-            from xuanpolicy.torch.agents import *
+            from xuance.torch.agents import *
 
             class DDQN_Agent(Agent):
                 def __init__(self,

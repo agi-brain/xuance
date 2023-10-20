@@ -1,12 +1,12 @@
 '''
-Repo: XuanPolicy
+Repo: XuanCe
 
 Example for single agent DRL:
 $ python main.py --method dqn --env-name toy_env/CartPole-v0
 
 '''
 import argparse
-from xuanpolicy import get_runner
+from xuance import get_runner
 
 
 def parse_args():

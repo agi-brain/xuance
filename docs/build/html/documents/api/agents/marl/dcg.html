@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DCG_Agents &mdash; XuanPolicy v0.1.11 documentation</title>
+  <title>DCG_Agents &mdash; XuanCe v0.1.11 documentation</title>
       <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="../../../../_static/custom.css" type="text/css" />
@@ -40,7 +40,7 @@
           
           
           <a href="../../../../index.html" class="icon icon-home">
-            XuanPolicy
+            XuanCe
               <img src="../../../../_static/logo_2.png" class="logo" alt="Logo"/>
           </a>
 <div role="search">
@@ -87,9 +87,9 @@
 <li class="toctree-l2"><a class="reference internal" href="wqmix.html">WQMIX_Agents</a></li>
 <li class="toctree-l2"><a class="reference internal" href="qtran.html">QTRAN_Agents</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">DCG_Agents</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#xuanpolicy.torch.agent.mutli_agent_rl.dcg_agents.DCG_Agents"><code class="docutils literal notranslate"><span class="pre">xuanpolicy.torch.agent.mutli_agent_rl.dcg_agents.DCG_Agents</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#xuanpolicy.torch.agent.mutli_agent_rl.dcg_agents.DCG_Agents.act"><code class="docutils literal notranslate"><span class="pre">xuanpolicy.torch.agent.mutli_agent_rl.dcg_agents.DCG_Agents.act()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#xuanpolicy.torch.agent.mutli_agent_rl.dcg_agents.DCG_Agents.train"><code class="docutils literal notranslate"><span class="pre">xuanpolicy.torch.agent.mutli_agent_rl.dcg_agents.DCG_Agents.train()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#xuance.torch.agent.mutli_agent_rl.dcg_agents.DCG_Agents"><code class="docutils literal notranslate"><span class="pre">xuance.torch.agent.mutli_agent_rl.dcg_agents.DCG_Agents</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#xuance.torch.agent.mutli_agent_rl.dcg_agents.DCG_Agents.act"><code class="docutils literal notranslate"><span class="pre">xuance.torch.agent.mutli_agent_rl.dcg_agents.DCG_Agents.act()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#xuance.torch.agent.mutli_agent_rl.dcg_agents.DCG_Agents.train"><code class="docutils literal notranslate"><span class="pre">xuance.torch.agent.mutli_agent_rl.dcg_agents.DCG_Agents.train()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#source-code">Source Code</a></li>
@@ -137,7 +137,7 @@
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../../../../index.html">XuanPolicy</a>
+          <a href="../../../../index.html">XuanCe</a>
       </nav>
 
       <div class="wy-nav-content">
@@ -160,13 +160,13 @@
 <h1>DCG_Agents<a class="headerlink" href="#dcg-agents" title="Permalink to this heading">¶</a></h1>
 <br><hr><p><strong>PyTorch:</strong></p>
 <dl class="py class">
-<dt class="sig sig-object py" id="xuanpolicy.torch.agent.mutli_agent_rl.dcg_agents.DCG_Agents">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xuanpolicy.torch.agent.mutli_agent_rl.dcg_agents.</span></span><span class="sig-name descname"><span class="pre">DCG_Agents</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">envs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xuanpolicy.torch.agent.mutli_agent_rl.dcg_agents.DCG_Agents" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="xuance.torch.agent.mutli_agent_rl.dcg_agents.DCG_Agents">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xuance.torch.agent.mutli_agent_rl.dcg_agents.</span></span><span class="sig-name descname"><span class="pre">DCG_Agents</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">envs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xuance.torch.agent.mutli_agent_rl.dcg_agents.DCG_Agents" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>config</strong> (<em>Namespace</em>) – Provides hyper parameters.</p></li>
-<li><p><strong>envs</strong> (<em>xuanpolicy.environments.vector_envs.vector_env.VecEnv</em>) – The vectorized environments.</p></li>
+<li><p><strong>envs</strong> (<em>xuance.environments.vector_envs.vector_env.VecEnv</em>) – The vectorized environments.</p></li>
 <li><p><strong>device</strong> (<em>str</em><em>, </em><em>int</em><em>, </em><em>torch.device</em>) – Choose CPU or GPU to train the model.</p></li>
 </ul>
 </dd>
@@ -174,8 +174,8 @@
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="xuanpolicy.torch.agent.mutli_agent_rl.dcg_agents.DCG_Agents.act">
-<span class="sig-prename descclassname"><span class="pre">xuanpolicy.torch.agent.mutli_agent_rl.dcg_agents.DCG_Agents.</span></span><span class="sig-name descname"><span class="pre">act</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obs_n</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">rnn_hidden</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">avail_actions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xuanpolicy.torch.agent.mutli_agent_rl.dcg_agents.DCG_Agents.act" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="xuance.torch.agent.mutli_agent_rl.dcg_agents.DCG_Agents.act">
+<span class="sig-prename descclassname"><span class="pre">xuance.torch.agent.mutli_agent_rl.dcg_agents.DCG_Agents.</span></span><span class="sig-name descname"><span class="pre">act</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obs_n</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">rnn_hidden</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">avail_actions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xuance.torch.agent.mutli_agent_rl.dcg_agents.DCG_Agents.act" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate joint actions for N agents according to the joint observations.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -196,8 +196,8 @@
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="xuanpolicy.torch.agent.mutli_agent_rl.dcg_agents.DCG_Agents.train">
-<span class="sig-prename descclassname"><span class="pre">xuanpolicy.torch.agent.mutli_agent_rl.dcg_agents.DCG_Agents.</span></span><span class="sig-name descname"><span class="pre">train</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">i_step</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xuanpolicy.torch.agent.mutli_agent_rl.dcg_agents.DCG_Agents.train" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="xuance.torch.agent.mutli_agent_rl.dcg_agents.DCG_Agents.train">
+<span class="sig-prename descclassname"><span class="pre">xuance.torch.agent.mutli_agent_rl.dcg_agents.DCG_Agents.</span></span><span class="sig-name descname"><span class="pre">train</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">i_step</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xuance.torch.agent.mutli_agent_rl.dcg_agents.DCG_Agents.train" title="Permalink to this definition">¶</a></dt>
 <dd><p>Train the multi-agent reinforcement learning model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -218,7 +218,7 @@
 <h2>Source Code<a class="headerlink" href="#source-code" title="Permalink to this heading">¶</a></h2>
 <div class="sphinx-tabs docutils container">
 <div aria-label="Tabbed content" class="closeable" role="tablist"><button aria-controls="panel-0-UHlUb3JjaA==" aria-selected="true" class="sphinx-tabs-tab group-tab" id="tab-0-UHlUb3JjaA==" name="UHlUb3JjaA==" role="tab" tabindex="0">PyTorch</button><button aria-controls="panel-0-VGVuc29yRmxvdw==" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-0-VGVuc29yRmxvdw==" name="VGVuc29yRmxvdw==" role="tab" tabindex="-1">TensorFlow</button><button aria-controls="panel-0-TWluZFNwb3Jl" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-0-TWluZFNwb3Jl" name="TWluZFNwb3Jl" role="tab" tabindex="-1">MindSpore</button></div><div aria-labelledby="tab-0-UHlUb3JjaA==" class="sphinx-tabs-panel group-tab" id="panel-0-UHlUb3JjaA==" name="UHlUb3JjaA==" role="tabpanel" tabindex="0"><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">torch.nn</span>
-<span class="kn">from</span> <span class="nn">xuanpolicy.torch.agents</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">xuance.torch.agents</span> <span class="kn">import</span> <span class="o">*</span>
 
 <span class="k">class</span> <span class="nc">DCG_Agents</span><span class="p">(</span><span class="n">MARLAgents</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
@@ -240,7 +240,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="n">representation</span> <span class="o">=</span> <span class="n">REGISTRY_Representation</span><span class="p">[</span><span class="n">config</span><span class="o">.</span><span class="n">representation</span><span class="p">](</span><span class="o">*</span><span class="n">input_representation</span><span class="p">)</span>
         <span class="n">repre_state_dim</span> <span class="o">=</span> <span class="n">representation</span><span class="o">.</span><span class="n">output_shapes</span><span class="p">[</span><span class="s1">&#39;state&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
-        <span class="kn">from</span> <span class="nn">xuanpolicy.torch.policies.coordination_graph</span> <span class="kn">import</span> <span class="n">DCG_utility</span><span class="p">,</span> <span class="n">DCG_payoff</span><span class="p">,</span> <span class="n">Coordination_Graph</span>
+        <span class="kn">from</span> <span class="nn">xuance.torch.policies.coordination_graph</span> <span class="kn">import</span> <span class="n">DCG_utility</span><span class="p">,</span> <span class="n">DCG_payoff</span><span class="p">,</span> <span class="n">Coordination_Graph</span>
         <span class="n">utility</span> <span class="o">=</span> <span class="n">DCG_utility</span><span class="p">(</span><span class="n">repre_state_dim</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">hidden_utility_dim</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">dim_act</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
         <span class="n">payoffs</span> <span class="o">=</span> <span class="n">DCG_payoff</span><span class="p">(</span><span class="n">repre_state_dim</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">hidden_payoff_dim</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">dim_act</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
         <span class="n">dcgraph</span> <span class="o">=</span> <span class="n">Coordination_Graph</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">n_agents</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">graph_type</span><span class="p">)</span>
@@ -281,7 +281,7 @@
                         <span class="n">config</span><span class="o">.</span><span class="n">done_shape</span><span class="p">,</span> <span class="n">envs</span><span class="o">.</span><span class="n">num_envs</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">buffer_size</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">batch_size</span><span class="p">)</span>
         <span class="n">memory</span> <span class="o">=</span> <span class="n">buffer</span><span class="p">(</span><span class="o">*</span><span class="n">input_buffer</span><span class="p">,</span> <span class="n">max_episode_length</span><span class="o">=</span><span class="n">envs</span><span class="o">.</span><span class="n">max_episode_length</span><span class="p">,</span> <span class="n">dim_act</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">dim_act</span><span class="p">)</span>
 
-        <span class="kn">from</span> <span class="nn">xuanpolicy.torch.learners.multi_agent_rl.dcg_learner</span> <span class="kn">import</span> <span class="n">DCG_Learner</span>
+        <span class="kn">from</span> <span class="nn">xuance.torch.learners.multi_agent_rl.dcg_learner</span> <span class="kn">import</span> <span class="n">DCG_Learner</span>
         <span class="n">learner</span> <span class="o">=</span> <span class="n">DCG_Learner</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">policy</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">scheduler</span><span class="p">,</span>
                             <span class="n">config</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">model_dir</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">gamma</span><span class="p">,</span>
                             <span class="n">config</span><span class="o">.</span><span class="n">sync_frequency</span><span class="p">)</span>
@@ -348,7 +348,7 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2023, XuanPolicy contributors.</p>
+    <p>&#169; Copyright 2023, XuanCe contributors.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
