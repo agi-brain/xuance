@@ -12,7 +12,7 @@ class VDAC_Agents(MARLAgents):
         self.n_epoch = config.n_epoch
         self.n_minibatch = config.n_minibatch
         if config.state_space is not None:
-            config.dim_state, state_shape = config.state_space.shape[0], config.state_space.shape
+            config.dim_state, state_shape = config.state_space.shape, config.state_space.shape
         else:
             config.dim_state, state_shape = None, None
 
@@ -28,7 +28,14 @@ class VDAC_Agents(MARLAgents):
         input_representation[0] = (config.dim_state,) if self.use_global_state else (config.dim_obs * config.n_agents,)
         representation_critic = REGISTRY_Representation[config.representation](*input_representation, **kwargs_rnn)
         # create policy
-        input_policy = get_policy_in_marl(config, (representation, representation_critic))
+        if config.mixer == "VDN":
+            mixer = VDN_mixer()
+        elif config.mixer == "QMIX":
+            mixer = QMIX_mixer(config.dim_state[0], config.hidden_dim_mixing_net, config.hidden_dim_hyper_net,
+                               config.n_agents, device)
+        else:
+            raise "config has no attribute named mixer!"
+        input_policy = get_policy_in_marl(config, (representation, representation_critic), mixer=mixer)
         policy = REGISTRY_Policy[config.policy](*input_policy,
                                                 use_recurrent=config.use_recurrent,
                                                 rnn=config.rnn,
