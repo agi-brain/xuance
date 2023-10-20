@@ -487,7 +487,8 @@ $ tensorboard --logdir ./logs/dqn/torch/CartPole-v0
 ```
 @misc{XuanPolicy2023,
     title={XuanPolicy: A Comprehensive and Unified Deep Reinforcement Learning Library},
-    author={Wenzhang Liu, Wenzhe Cai, Kun Jiang, Guangran Cheng, Yuanda Wang, Chaoxu Mu, Changyin Sun},
+    author={Wenzhang Liu, Wenzhe Cai, Kun Jiang, Guangran Cheng, Yuanda Wang, 
+    Jiawei Wang, Jingyu Cao, Lele Xu, Chaoxu Mu, Changyin Sun},
     publisher = {GitHub},
     year={2023},
 }
