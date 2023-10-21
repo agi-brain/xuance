@@ -320,9 +320,9 @@ runner.run()
 import xuance
 
 runner_test = xuance.get_runner(method='dqn',
-                            env='classic_control',
-                            env_id='CartPole-v1',
-                            is_test=True)
+                                env='classic_control',
+                                env_id='CartPole-v1',
+                                is_test=True)
 runner_test.run()
 ```
 
