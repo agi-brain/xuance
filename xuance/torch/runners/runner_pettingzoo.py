@@ -161,15 +161,11 @@ class Pettingzoo_Runner(Runner_Base):
             elif self.marl_names[h] == "MFAC":
                 a, a_mean = mas_group.act(obs_n[h], test_mode, act_mean_last[h], agent_mask[h])
                 act_mean_current[h] = a_mean
-            elif self.marl_names[h] in ["MAPPO"]:
+            elif self.marl_names[h] in ["MAPPO", "IPPO", "VDAC"]:
                 _, a, log_pi = mas_group.act(obs_n[h], test_mode=test_mode, state=state)
                 _, values = mas_group.values(obs_n[h], state=state)
                 log_pi_n.append(log_pi)
                 values_n.append(values)
-            elif self.marl_names[h] in ["VDAC"]:
-                a, values = mas_group.act(obs_n[h], test_mode, state=state)
-                values_n.append(values)
-                log_pi_n.append(None)
             elif self.marl_names[h] in ["COMA"]:
                 _, a, a_onehot = mas_group.act(obs_n[h], test_mode)
                 _, values = mas_group.values(obs_n[h], state=state, actions_n=a, actions_onehot=a_onehot)

@@ -19,13 +19,13 @@ Install via PyPI
 
 .. code-block:: bash
 
-    conda create -n xpolicy python=3.7
+    conda create -n xuance_env python=3.7
 
 **Step 2**: Activate conda environment.
 
 .. code-block:: bash
     
-    conda activate xpolicy
+    conda activate xuance_env
 
 **Step 3**: Install the library.
 
@@ -72,13 +72,13 @@ Alternatively, you can install XuanCe from its GitHub repository.
 
 .. code-block:: bash
 
-    conda create -n xpolicy python=3.7
+    conda create -n xuance_env python=3.7
 
 **Step 2**: Activate conda environment.
 
 .. code-block:: bash
 
-    conda activate xpolicy
+    conda activate xuance_env
 
 **Step 3**: Download the source code of XuanCe from GitHub.
 

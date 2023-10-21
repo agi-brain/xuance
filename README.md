@@ -20,24 +20,24 @@
 
 **XuanCe** is an open-source ensemble of Deep Reinforcement Learning (DRL) algorithm implementations.
 
-We call it as **Xuan-Ce (玄策)** in Chinese. 
+We call it as **Xuan-Ce (玄策)** in Chinese.
 "**Xuan (玄)**" means incredible and magic box, "**Ce (策)**" means policy.
 
 DRL algorithms are sensitive to hyper-parameters tuning, varying in performance with different tricks,
-and suffering from unstable training processes, therefore, sometimes DRL algorithms seems elusive and "Xuan". 
-This project gives a thorough, high-quality and easy-to-understand implementation of DRL algorithms, 
+and suffering from unstable training processes, therefore, sometimes DRL algorithms seems elusive and "Xuan".
+This project gives a thorough, high-quality and easy-to-understand implementation of DRL algorithms,
 and hope this implementation can give a hint on the magics of reinforcement learning.
 
 We expect it to be compatible with multiple deep learning toolboxes(
-**[PyTorch](https://pytorch.org/)**, 
-**[TensorFlow](https://www.tensorflow.org/)**, and 
+**[PyTorch](https://pytorch.org/)**,
+**[TensorFlow](https://www.tensorflow.org/)**, and
 **[MindSpore](https://www.mindspore.cn/en)**),
 and hope it can really become a zoo full of DRL algorithms.
 
 | **[Full Documentation](https://xuance.readthedocs.io/en/latest/)** |
-  **[中文文档](https://xuance.readthedocs.io/zh/latest/)** |
-  **[OpenI (启智社区)](https://openi.pcl.ac.cn/OpenRelearnware/XuanCe)** |
-  **[XuanCe (Mini version)](https://github.com/wzcai99/xuance)** |
+**[中文文档](https://xuance.readthedocs.io/zh/latest/)** |
+**[OpenI (启智社区)](https://openi.pcl.ac.cn/OpenRelearnware/XuanCe)** |
+**[XuanCe (Mini version)](https://github.com/wzcai99/xuance)** |
 
 ## Currently Included Algorithms
 
@@ -54,37 +54,61 @@ and hope it can really become a zoo full of DRL algorithms.
 - Deep Recurrent Q-Netwrk - DRQN [[Paper](https://cdn.aaai.org/ocs/11673/11673-51288-1-PB.pdf)]
 - DQN with Quantile Regression - QRDQN [[Paper](https://ojs.aaai.org/index.php/AAAI/article/view/11791)]
 - Distributional Reinforcement Learning - C51 [[Paper](http://proceedings.mlr.press/v70/bellemare17a/bellemare17a.pdf)]
-- Vanilla Policy Gradient - PG [[Paper](https://proceedings.neurips.cc/paper/2001/file/4b86abe48d358ecf194c56c69108433e-Paper.pdf)]
-- Phasic Policy Gradient - PPG [[Paper](http://proceedings.mlr.press/v139/cobbe21a/cobbe21a.pdf)] [[Code](https://github.com/openai/phasic-policy-gradient)]
-- Advantage Actor Critic - A2C [[Paper](http://proceedings.mlr.press/v48/mniha16.pdf)] [[Code](https://github.com/openai/baselines/tree/master/baselines/a2c)]
-- Soft actor-critic based on maximum entropy - SAC [[Paper](http://proceedings.mlr.press/v80/haarnoja18b/haarnoja18b.pdf)] [[Code](http://github.com/haarnoja/sac)]
-- Soft actor-critic for discrete actions - SAC-Discrete [[Paper](https://arxiv.org/pdf/1910.07207.pdf)] [[Code](https://github.com/p-christ/Deep-Reinforcement-Learning-Algorithms-with-PyTorch)]
-- Proximal Policy Optimization with clipped objective - PPO-Clip [[Paper](https://arxiv.org/pdf/1707.06347.pdf)] [[Code]( https://github.com/berkeleydeeprlcourse/homework/tree/master/hw4)]
-- Proximal Policy Optimization with KL divergence - PPO-KL [[Paper](https://arxiv.org/pdf/1707.06347.pdf)] [[Code]( https://github.com/berkeleydeeprlcourse/homework/tree/master/hw4)]
-- Deep Deterministic Policy Gradient - DDPG [[Paper](https://arxiv.org/pdf/1509.02971.pdf)] [[Code](https://github.com/openai/baselines/tree/master/baselines/ddpg)]
-- Twin Delayed Deep Deterministic Policy Gradient - TD3 [[Paper](http://proceedings.mlr.press/v80/fujimoto18a/fujimoto18a.pdf)][[Code](https://github.com/sfujim/TD3)]
+- Vanilla Policy Gradient -
+  PG [[Paper](https://proceedings.neurips.cc/paper/2001/file/4b86abe48d358ecf194c56c69108433e-Paper.pdf)]
+- Phasic Policy Gradient -
+  PPG [[Paper](http://proceedings.mlr.press/v139/cobbe21a/cobbe21a.pdf)] [[Code](https://github.com/openai/phasic-policy-gradient)]
+- Advantage Actor Critic -
+  A2C [[Paper](http://proceedings.mlr.press/v48/mniha16.pdf)] [[Code](https://github.com/openai/baselines/tree/master/baselines/a2c)]
+- Soft actor-critic based on maximum entropy -
+  SAC [[Paper](http://proceedings.mlr.press/v80/haarnoja18b/haarnoja18b.pdf)] [[Code](http://github.com/haarnoja/sac)]
+- Soft actor-critic for discrete actions -
+  SAC-Discrete [[Paper](https://arxiv.org/pdf/1910.07207.pdf)] [[Code](https://github.com/p-christ/Deep-Reinforcement-Learning-Algorithms-with-PyTorch)]
+- Proximal Policy Optimization with clipped objective -
+  PPO-Clip [[Paper](https://arxiv.org/pdf/1707.06347.pdf)] [[Code]( https://github.com/berkeleydeeprlcourse/homework/tree/master/hw4)]
+- Proximal Policy Optimization with KL divergence -
+  PPO-KL [[Paper](https://arxiv.org/pdf/1707.06347.pdf)] [[Code]( https://github.com/berkeleydeeprlcourse/homework/tree/master/hw4)]
+- Deep Deterministic Policy Gradient -
+  DDPG [[Paper](https://arxiv.org/pdf/1509.02971.pdf)] [[Code](https://github.com/openai/baselines/tree/master/baselines/ddpg)]
+- Twin Delayed Deep Deterministic Policy Gradient -
+  TD3 [[Paper](http://proceedings.mlr.press/v80/fujimoto18a/fujimoto18a.pdf)][[Code](https://github.com/sfujim/TD3)]
 - Parameterised deep Q network - P-DQN [[Paper](https://arxiv.org/pdf/1810.06394.pdf)]
-- Multi-pass parameterised deep Q network - MP-DQN [[Paper](https://arxiv.org/pdf/1905.04388.pdf)] [[Code](https://github.com/cycraig/MP-DQN)]
+- Multi-pass parameterised deep Q network -
+  MP-DQN [[Paper](https://arxiv.org/pdf/1905.04388.pdf)] [[Code](https://github.com/cycraig/MP-DQN)]
 - Split parameterised deep Q network - SP-DQN [[Paper](https://arxiv.org/pdf/1810.06394.pdf)]
+
 </details>
 
 ### Multi-Agent Reinforcement Learning (MARL)
+
 <details open>
 <summary>(Click to hide)</summary>
 
-- Independent Q-learning - IQL [[Paper](https://hal.science/file/index/docid/720669/filename/Matignon2012independent.pdf)] [[Code](https://github.com/oxwhirl/pymarl)]
-- Value Decomposition Networks - VDN [[Paper](https://arxiv.org/pdf/1706.05296.pdf)] [[Code](https://github.com/oxwhirl/pymarl)]
-- Q-mixing networks - QMIX [[Paper](http://proceedings.mlr.press/v80/rashid18a/rashid18a.pdf)] [[Code](https://github.com/oxwhirl/pymarl)]
-- Weighted Q-mixing networks - WQMIX [[Paper](https://proceedings.neurips.cc/paper/2020/file/73a427badebe0e32caa2e1fc7530b7f3-Paper.pdf)] [[Code](https://github.com/oxwhirl/wqmix)]
-- Q-transformation - QTRAN [[Paper](http://proceedings.mlr.press/v97/son19a/son19a.pdf)] [[Code](https://github.com/Sonkyunghwan/QTRAN)]
-- Deep Coordination Graphs - DCG [[Paper](http://proceedings.mlr.press/v119/boehmer20a/boehmer20a.pdf)] [[Code](https://github.com/wendelinboehmer/dcg)]
-- Independent Deep Deterministic Policy Gradient - IDDPG [[Paper](https://proceedings.neurips.cc/paper/2017/file/68a9750337a418a86fe06c1991a1d64c-Paper.pdf)]
-- Multi-agent Deep Deterministic Policy Gradient - MADDPG [[Paper](https://proceedings.neurips.cc/paper/2017/file/68a9750337a418a86fe06c1991a1d64c-Paper.pdf)] [[Code](https://github.com/openai/maddpg)]
-- Counterfactual Multi-agent Policy Gradient - COMA [[Paper](https://ojs.aaai.org/index.php/AAAI/article/view/11794)] [[Code](https://github.com/oxwhirl/pymarl)]
-- Multi-agent Proximal Policy Optimization - MAPPO [[Paper](https://proceedings.neurips.cc/paper_files/paper/2022/file/9c1535a02f0ce079433344e14d910597-Paper-Datasets_and_Benchmarks.pdf)] [[Code](https://github.com/marlbenchmark/on-policy)]
-- Mean-Field Q-learning - MFQ [[Paper](http://proceedings.mlr.press/v80/yang18d/yang18d.pdf)] [[Code](https://github.com/mlii/mfrl)]
-- Mean-Field Actor-Critic - MFAC [[Paper](http://proceedings.mlr.press/v80/yang18d/yang18d.pdf)] [[Code](https://github.com/mlii/mfrl)]
-- Independent Soft Actor-Critic - ISAC 
+- Independent Q-learning -
+  IQL [[Paper](https://hal.science/file/index/docid/720669/filename/Matignon2012independent.pdf)] [[Code](https://github.com/oxwhirl/pymarl)]
+- Value Decomposition Networks -
+  VDN [[Paper](https://arxiv.org/pdf/1706.05296.pdf)] [[Code](https://github.com/oxwhirl/pymarl)]
+- Q-mixing networks -
+  QMIX [[Paper](http://proceedings.mlr.press/v80/rashid18a/rashid18a.pdf)] [[Code](https://github.com/oxwhirl/pymarl)]
+- Weighted Q-mixing networks -
+  WQMIX [[Paper](https://proceedings.neurips.cc/paper/2020/file/73a427badebe0e32caa2e1fc7530b7f3-Paper.pdf)] [[Code](https://github.com/oxwhirl/wqmix)]
+- Q-transformation -
+  QTRAN [[Paper](http://proceedings.mlr.press/v97/son19a/son19a.pdf)] [[Code](https://github.com/Sonkyunghwan/QTRAN)]
+- Deep Coordination Graphs -
+  DCG [[Paper](http://proceedings.mlr.press/v119/boehmer20a/boehmer20a.pdf)] [[Code](https://github.com/wendelinboehmer/dcg)]
+- Independent Deep Deterministic Policy Gradient -
+  IDDPG [[Paper](https://proceedings.neurips.cc/paper/2017/file/68a9750337a418a86fe06c1991a1d64c-Paper.pdf)]
+- Multi-agent Deep Deterministic Policy Gradient -
+  MADDPG [[Paper](https://proceedings.neurips.cc/paper/2017/file/68a9750337a418a86fe06c1991a1d64c-Paper.pdf)] [[Code](https://github.com/openai/maddpg)]
+- Counterfactual Multi-agent Policy Gradient -
+  COMA [[Paper](https://ojs.aaai.org/index.php/AAAI/article/view/11794)] [[Code](https://github.com/oxwhirl/pymarl)]
+- Multi-agent Proximal Policy Optimization -
+  MAPPO [[Paper](https://proceedings.neurips.cc/paper_files/paper/2022/file/9c1535a02f0ce079433344e14d910597-Paper-Datasets_and_Benchmarks.pdf)] [[Code](https://github.com/marlbenchmark/on-policy)]
+- Mean-Field Q-learning -
+  MFQ [[Paper](http://proceedings.mlr.press/v80/yang18d/yang18d.pdf)] [[Code](https://github.com/mlii/mfrl)]
+- Mean-Field Actor-Critic -
+  MFAC [[Paper](http://proceedings.mlr.press/v80/yang18d/yang18d.pdf)] [[Code](https://github.com/mlii/mfrl)]
+- Independent Soft Actor-Critic - ISAC
 - Multi-agent Soft Actor-Critic - MASAC [[Paper](https://arxiv.org/pdf/2104.06655.pdf)]
 - Multi-agent Twin Delayed Deep Deterministic Policy Gradient - MATD3 [[Paper](https://arxiv.org/pdf/1910.01465.pdf)]
 
@@ -242,7 +266,8 @@ StarCraft Multi-Agentt Challenge.
 
 The library can be run at Linux, Windows, MacOS, and EulerOS, etc.
 
-Before installing **XuanCe**, you should install [Anaconda](https://www.anaconda.com/download) to prepare a python environment.
+Before installing **XuanCe**, you should install [Anaconda](https://www.anaconda.com/download) to prepare a python
+environment.
 (Note: select a proper version of Anaconda from [**here**](https://repo.anaconda.com/archive/).)
 
 After that, open a terminal and install **XuanCe** by the following steps.
@@ -250,13 +275,13 @@ After that, open a terminal and install **XuanCe** by the following steps.
 **Step 1**: Create a new conda environment (python>=3.7 is suggested):
 
 ```commandline
-conda create -n xpolicy python=3.7
+conda create -n xuance_env python=3.7
 ```
 
 **Step 2**: Activate conda environment:
 
 ```commandline
-conda activate xpolicy
+conda activate xuance_env
 ```
 
 **Step 3**: Install the library:
@@ -265,13 +290,13 @@ conda activate xpolicy
 pip install xuance
 ```
 
-This command does not include the dependencies of deep learning toolboxes. To install the **XuanCe** with 
+This command does not include the dependencies of deep learning toolboxes. To install the **XuanCe** with
 deep learning tools, you can type `pip install xuance[torch]` for [PyTorch](https://pytorch.org/get-started/locally/),
 `pip install xuance[tensorflow]` for [TensorFlow2](https://www.tensorflow.org/install),
 `pip install xuance[mindspore]` for [MindSpore](https://www.mindspore.cn/install/en),
 and `pip install xuance[all]` for all dependencies.
 
-Note: Some extra packages should be installed manually for further usage. 
+Note: Some extra packages should be installed manually for further usage.
 
 ## Basic Usage
 
@@ -280,32 +305,37 @@ Note: Some extra packages should be installed manually for further usage.
 #### Train a Model
 
 ```python
-import xuance as xp
+import xuance
 
-runner = xp.get_runner(method='dqn', 
-                       env='classic_control', 
-                       env_id='CartPole-v1', 
-                       is_test=False)
+runner = xuance.get_runner(method='dqn',
+                           env='classic_control',
+                           env_id='CartPole-v1',
+                           is_test=False)
 runner.run()
 ```
 
 #### Test the Model
 
 ```python
-import xuance as xp
+import xuance
 
-runner_test = xp.get_runner(method='dqn', 
-                            env='classic_control', 
-                            env_id='CartPole-v1', 
+runner_test = xuance.get_runner(method='dqn',
+                            env='classic_control',
+                            env_id='CartPole-v1',
                             is_test=True)
 runner_test.run()
 ```
 
 ## Logger
-You can use tensorboard to visualize what happened in the training process. After training, the log file will be automatically generated in the directory ".results/" and you should be able to see some training data after running the command.
+
+You can use tensorboard to visualize what happened in the training process. After training, the log file will be
+automatically generated in the directory ".results/" and you should be able to see some training data after running the
+command.
+
 ``` 
 $ tensorboard --logdir ./logs/dqn/torch/CartPole-v0
 ```
+
 <!-- If everything going well, you should get a similar display like below. 
 
 ![Tensorboard](docs/source/figures/debug.png) -->
@@ -446,7 +476,6 @@ $ tensorboard --logdir ./logs/dqn/torch/CartPole-v0
 [//]: # (| ALE/Zaxxon-v5           |          |          |         |)
 
 
-
 [//]: # (### MPE Environment &#40;Ongoing&#41;)
 
 ### StarCraft2 Environment (Ongoing)
@@ -454,6 +483,7 @@ $ tensorboard --logdir ./logs/dqn/torch/CartPole-v0
 [//]: # (Test win rate &#40;%&#41;:)
 
 [//]: # ()
+
 [//]: # (| Map              | IQL         | VDN         | QMIX        | WQMIX       | DCG         | COMA | VDAC | MAPPO |)
 
 [//]: # (|------------------|-------------|-------------|-------------|-------------|-------------|------|------|-------|)

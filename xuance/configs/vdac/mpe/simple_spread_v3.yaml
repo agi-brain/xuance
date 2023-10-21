@@ -22,7 +22,7 @@ hidden_dim_mixing_net: 32  # hidden units of mixing network
 hidden_dim_hyper_net: 32  # hidden units of hyper network
 
 seed: 1
-parallels: 1  # 128
+parallels: 128
 n_size: 25
 n_epoch: 10
 n_minibatch: 1
