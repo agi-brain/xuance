@@ -11,7 +11,7 @@ render_mode: 'rgb_array' # Choices: 'human', 'rgb_array'.
 test_mode: False
 test_steps: 2000
 
-device: "cuda:0"
+device: "cpu"
 
 # PyTorch: "cpu", "cuda:0";
 # TensorFlow: "cpu"/"CPU", "gpu"/"GPU";
