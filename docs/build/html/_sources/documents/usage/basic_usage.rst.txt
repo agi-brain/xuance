@@ -14,11 +14,11 @@ Finally, execute ``runner.run`` and the agent's model is training.
 
 .. code-block:: python
 
-    import xuance as xp
-    runner = xp.get_runner(method='dqn',
-                           env='classic_control',
-                           env_id='CartPole-v1',
-                           is_test=False)
+    import xuance
+    runner = xuance.get_runner(method='dqn',
+                               env='classic_control',
+                               env_id='CartPole-v1',
+                               is_test=False)
     runner.run()
 
 After training the agent, you can test and view the model by the following codes:
@@ -35,22 +35,22 @@ Similaly, you can start by:
 
 .. code-block:: python
 
-    import xuance as xp
-    runner = xp.get_runner(method='maddpg',
-                           env='mpe',
-                           env_id='simple_spread_v3',
-                           is_test=False)
+    import xuance
+    runner = xuance.get_runner(method='maddpg',
+                               env='mpe',
+                               env_id='simple_spread_v3',
+                               is_test=False)
     runner.run()
 
 For competitve tasks in which agents can be divided to two or more sides, you can run a demo by:
 
 .. code-block:: python
 
-    import xuance as xp
-    runner = xp.get_runner(method=["maddpg", "iddpg"],
-                           env='mpe',
-                           env_id='simple_push_v3',
-                           is_test=False)
+    import xuance
+    runner = xuance.get_runner(method=["maddpg", "iddpg"],
+                               env='mpe',
+                               env_id='simple_push_v3',
+                               is_test=False)
     runner.run()
 
 In this demo, the agents in `mpe/simple_push <https://pettingzoo.farama.org/environments/mpe/simple_push/>`_ environment are divided into two sides, named "adversary_0" and "agent_0".
@@ -64,11 +64,11 @@ Users can specify "is_test=True" to perform testing.
 
 .. code-block:: python
 
-    import xuance as xp
-    runner = xp.get_runner(method='dqn',
-                           env_name='classic_control',
-                           env_id='CartPole-v1',
-                           is_test=True)
+    import xuance
+    runner = xuance.get_runner(method='dqn',
+                               env_name='classic_control',
+                               env_id='CartPole-v1',
+                               is_test=True)
     runner.run()
 
 In the above code, "runner.benchmark()" can also be used instead of "runner.run()" to train benchmark models and obtain benchmark test results.
