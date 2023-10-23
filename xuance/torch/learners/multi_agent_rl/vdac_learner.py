@@ -73,8 +73,9 @@ class VDAC_Learner(LearnerMAS):
         critic_in = torch.Tensor(obs).reshape([batch_size, 1, -1]).to(self.device)
         critic_in = critic_in.expand(-1, self.n_agents, -1)
         _, value_pred = self.policy.get_values(critic_in, IDs)
-        value_pred = value_pred
-        value_target = returns
+        value_pred = self.policy.value_tot(value_pred, global_state=state)
+        value_target = returns.mean(1)
+        values = values.mean(1)
         if self.use_value_clip:
             value_clipped = values + (value_pred - values).clamp(-self.value_clip_range, self.value_clip_range)
             if self.use_huber_loss:
@@ -83,14 +84,14 @@ class VDAC_Learner(LearnerMAS):
             else:
                 loss_v = (value_pred - value_target) ** 2
                 loss_v_clipped = (value_clipped - value_target) ** 2
-            loss_c = torch.max(loss_v, loss_v_clipped) * agent_mask
-            loss_c = loss_c.sum() / agent_mask.sum()
+            loss_c = torch.max(loss_v, loss_v_clipped)
+            loss_c = loss_c.sum()
         else:
             if self.use_huber_loss:
-                loss_v = self.huber_loss(value_pred, value_target) * agent_mask
+                loss_v = self.huber_loss(value_pred, value_target)
             else:
-                loss_v = ((value_pred - value_target) ** 2) * agent_mask
-            loss_c = loss_v.sum() / agent_mask.sum()
+                loss_v = (value_pred - value_target) ** 2
+            loss_c = loss_v.sum()
 
         loss = loss_a + self.vf_coef * loss_c - self.ent_coef * loss_e
         self.optimizer.zero_grad()
@@ -161,6 +162,7 @@ class VDAC_Learner(LearnerMAS):
             critic_in = obs[:, :, :-1].transpose(1, 2).reshape(batch_size, episode_length, -1)
             critic_in = critic_in.unsqueeze(1).expand(-1, self.n_agents, -1, -1)
             _, value_pred = self.policy.get_values(critic_in, IDs[:, :, :-1], *rnn_hidden_critic)
+        value_pred = self.policy.value_tot(value_pred, global_state=state)
         value_target = returns.reshape(-1, 1)
         values = values.reshape(-1, 1)
         value_pred = value_pred.reshape(-1, 1)

@@ -99,9 +99,9 @@ class VDAC_Agents(MARLAgents):
         else:
             hidden_state, values_n = self.policy.get_values(critic_in, agents_id)
 
-        values_tot = self.policy.value_tot(values_n, global_state=state)
+        values_tot = self.policy.value_tot(values_n, global_state=state).unsqueeze(1).expand(-1, self.n_agents, -1)
 
-        return hidden_state, values_n.detach().cpu().numpy()
+        return hidden_state, values_tot.detach().cpu().numpy()
 
     def train(self, i_step):
         if self.memory.full:
