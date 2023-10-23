@@ -36,7 +36,6 @@ and hope it can really become a zoo full of DRL algorithms.
 
 | **[Full Documentation](https://xuance.readthedocs.io/en/latest/)** |
 **[中文文档](https://xuance.readthedocs.io/zh/latest/)** |
-**[OpenI (启智社区)](https://openi.pcl.ac.cn/OpenRelearnware/XuanCe)** |
 **[XuanCe (Mini version)](https://github.com/wzcai99/xuance)** |
 
 ## Currently Included Algorithms
