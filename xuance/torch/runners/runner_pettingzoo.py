@@ -16,6 +16,24 @@ class Pettingzoo_Runner(Runner_Base):
     def __init__(self, args):
         self.args = args if type(args) == list else [args]
         self.fps = 20
+
+        time_string = time.asctime().replace(" ", "").replace(":", "_")
+        for arg in self.args:
+            seed = f"seed_{arg.seed}_"
+            arg.model_dir_load = arg.model_dir
+            arg.model_dir_save = os.path.join(os.getcwd(), arg.model_dir, seed + time_string)
+            if (not os.path.exists(arg.model_dir_save)) and (not arg.test_mode):
+                os.makedirs(arg.model_dir_save)
+
+            if arg.logger == "tensorboard":
+                log_dir = os.path.join(os.getcwd(), arg.log_dir, seed + time_string)
+                if not os.path.exists(log_dir):
+                    os.makedirs(log_dir)
+                self.writer = SummaryWriter(log_dir)
+                self.use_wandb = False
+            else:
+                self.use_wandb = True
+
         for arg in self.args:
             if arg.agent_name == "random":
                 continue
@@ -39,20 +57,7 @@ class Pettingzoo_Runner(Runner_Base):
                 self.marl_agents, self.marl_names = [], []
                 self.current_step, self.current_episode = 0, np.zeros((self.envs.num_envs,), np.int32)
 
-                time_string = time.asctime().replace(" ", "").replace(":", "_")
-                seed = f"seed_{arg.seed}_"
-                arg.model_dir_load = args.model_dir
-                arg.model_dir_save = os.path.join(os.getcwd(), args.model_dir, seed + time_string)
-                if (not os.path.exists(arg.model_dir_save)) and (not args.test_mode):
-                    os.makedirs(arg.model_dir_save)
-
-                if arg.logger == "tensorboard":
-                    log_dir = os.path.join(os.getcwd(), args.log_dir, seed + time_string)
-                    if not os.path.exists(log_dir):
-                        os.makedirs(log_dir)
-                    self.writer = SummaryWriter(log_dir)
-                    self.use_wandb = False
-                elif arg.logger == "wandb":
+                if self.use_wandb:
                     config_dict = vars(arg)
                     wandb_dir = Path(os.path.join(os.getcwd(), arg.log_dir))
                     if not wandb_dir.exists():
@@ -65,11 +70,7 @@ class Pettingzoo_Runner(Runner_Base):
                                group=arg.env_id,
                                job_type=arg.agent,
                                name=time.asctime(),
-                               reinit=True
-                               )
-                    self.use_wandb = True
-                else:
-                    raise "No logger is implemented."
+                               reinit=True)
 
                 self.current_step = 0
                 self.current_episode = np.zeros((self.envs.num_envs,), np.int32)
