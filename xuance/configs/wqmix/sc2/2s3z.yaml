@@ -1,6 +1,6 @@
 agent: "OWQMIX"  # choice: CWQMIX, OWQMIX
 env_name: "StarCraft2"
-env_id: "1c3s5z"
+env_id: "2s3z"
 fps: 15
 policy: "Weighted_Mixing_Q_network"
 representation: "Basic_RNN"

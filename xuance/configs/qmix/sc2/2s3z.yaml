@@ -1,7 +1,7 @@
 agent: "QMIX"  # the learning algorithms_marl
 global_state: True
 env_name: "StarCraft2"
-env_id: "1c3s5z"
+env_id: "2s3z"
 fps: 15
 policy: "Mixing_Q_network"
 representation: "Basic_RNN"

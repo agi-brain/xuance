@@ -1,8 +1,8 @@
-agent: "IQL"  # the learning algorithms_marl
+agent: "DCG"  # Options: DCG, DCG_S
 env_name: "StarCraft2"
-env_id: "2s3z"
+env_id: "1c3s5z"
 fps: 15
-policy: "Basic_Q_network_marl"
+policy: "DCG_policy"
 representation: "Basic_RNN"
 vectorize: "Dummy_StarCraft2"
 runner: "StarCraft2_Runner"
@@ -19,7 +19,17 @@ dropout: 0
 
 representation_hidden_size: [64, ]
 q_hidden_size: [64, ]  # the units for each hidden layer
+hidden_utility_dim: 64  # hidden units of the utility function
+hidden_payoff_dim: 64  # hidden units of the payoff function
+bias_net: "Basic_MLP"
+hidden_bias_dim: [64, ]  # hidden units of the bias network with global states as input
 activation: "ReLU"
+
+low_rank_payoff: False  # low-rank approximation of payoff function
+payoff_rank: 5  # the rank K in the paper
+graph_type: "FULL"  # specific type of the coordination graph
+n_msg_iterations: 8  # number of iterations for message passing during belief propagation
+msg_normalized: True  # Message normalization during greedy action selection (Kok and Vlassis, 2006)
 
 seed: 1
 parallels: 1
@@ -34,7 +44,7 @@ end_greedy: 0.05
 decay_step_greedy: 50000
 start_training: 1000  # start training after n episodes
 running_steps: 2000000  # 2M
-train_per_step: False  # True: train model per step; False: train model per episode.
+train_per_step: False  # True: train model per step; False: train model per episode.training_frequency: 1
 training_frequency: 1
 sync_frequency: 200
 
@@ -43,5 +53,5 @@ grad_clip_norm: 0.5
 
 eval_interval: 10000
 test_episode: 10
-log_dir: "./logs/iql/"
-model_dir: "./models/iql/"
+log_dir: "./logs/dcg/"
+model_dir: "./models/dcg/"
