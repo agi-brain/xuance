@@ -71,9 +71,6 @@ class Pettingzoo_Runner(Runner_Base):
                                job_type=arg.agent,
                                name=time.asctime(),
                                reinit=True)
-
-                self.current_step = 0
-                self.current_episode = np.zeros((self.envs.num_envs,), np.int32)
                 break
 
         self.episode_length = self.envs.max_episode_length

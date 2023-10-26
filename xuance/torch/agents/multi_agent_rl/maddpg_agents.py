@@ -15,9 +15,9 @@ class MADDPG_Agents(MARLAgents):
         optimizer = [torch.optim.Adam(policy.parameters_actor, config.lr_a, eps=1e-5),
                      torch.optim.Adam(policy.parameters_critic, config.lr_c, eps=1e-5)]
         scheduler = [torch.optim.lr_scheduler.LinearLR(optimizer[0], start_factor=1.0, end_factor=0.5,
-                                                       total_iters=get_total_iters(config.agent_name, config)),
+                                                       total_iters=config.running_steps),
                      torch.optim.lr_scheduler.LinearLR(optimizer[1], start_factor=1.0, end_factor=0.5,
-                                                       total_iters=get_total_iters(config.agent_name, config))]
+                                                       total_iters=config.running_steps)]
         self.observation_space = envs.observation_space
         self.action_space = envs.action_space
         self.actions_high, self.actions_low = [], []
