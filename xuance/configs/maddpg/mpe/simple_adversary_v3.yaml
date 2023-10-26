@@ -5,10 +5,10 @@ continuous_action: True
 policy: "MADDPG_Policy"
 representation: "Basic_Identical"
 vectorize: "Dummy_Pettingzoo"
-runner: "MPE_Runner"
+runner: "Pettingzoo_Runner"
 on_policy: False
 
-representation_hidden_size: [64, ]  # the units for each hidden layer
+representation_hidden_size: []  # the units for each hidden layer
 actor_hidden_size: [64, ]
 critic_hidden_size: [64, ]
 activation: 'LeakyReLU'
@@ -22,17 +22,18 @@ lr_a: 0.01  # learning rate for actor
 lr_c: 0.001  # learning rate for critic
 gamma: 0.95  # discount factor
 tau: 0.001  # soft update for target networks
-clip_grad: 0.5
 
 start_noise: 1.0
 end_noise: 0.01
 sigma: 0.1
 start_training: 1000  # start training after n episodes
-training_steps: 10000000
+running_steps: 10000000
+train_per_step: False  # True: train model per step; False: train model per episode.
 training_frequency: 1
 
-n_tests: 5
-test_episodes: 10
+use_grad_clip: True
+grad_clip_norm: 0.5
+
 eval_interval: 100000
 test_episode: 5
 log_dir: "./logs/maddpg/"
