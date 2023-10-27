@@ -69,6 +69,7 @@ class CategoricalDistribution(Distribution):
 class DiagGaussianDistribution(Distribution):
     def __init__(self, action_dim: int):
         super(DiagGaussianDistribution, self).__init__()
+        self.mu, self.std = None, None
         self.action_dim = action_dim
 
     def set_param(self, mu, std):

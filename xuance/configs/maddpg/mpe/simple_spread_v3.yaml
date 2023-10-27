@@ -22,8 +22,8 @@ lr_c: 0.001  # learning rate for critic
 gamma: 0.95  # discount factor
 tau: 0.001  # soft update for target networks
 
-start_noise: 1.0
-end_noise: 0.01
+#start_noise: 1.0
+#end_noise: 0.01
 sigma: 0.1
 start_training: 1000  # start training after n episodes
 running_steps: 10000000

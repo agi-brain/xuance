@@ -1,6 +1,6 @@
 agent: "MAPPO"
 env_name: "mpe"
-env_id: "simple_spread_v3"
+env_id: "simple_adversary_v3"
 continuous_action: True
 policy: "Gaussian_MAAC_Policy"
 representation: "Basic_MLP"
@@ -13,8 +13,8 @@ rnn:
 representation_hidden_size: [64, ]  # the units for each hidden layer
 gain: 0.01
 
-actor_hidden_size: [64, 64]
-critic_hidden_size: [64, 64]
+actor_hidden_size: [64, ]
+critic_hidden_size: [256, ]
 activation: "ReLU"
 
 seed: 1

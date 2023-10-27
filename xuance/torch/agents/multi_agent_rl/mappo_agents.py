@@ -38,6 +38,8 @@ class MAPPO_Agents(MARLAgents):
         optimizer = torch.optim.Adam(policy.parameters(),
                                      lr=config.learning_rate, eps=1e-5,
                                      weight_decay=config.weight_decay)
+        scheduler = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=1.0, end_factor=0.5,
+                                                      total_iters=config.running_steps)
         self.observation_space = envs.observation_space
         self.action_space = envs.action_space
         self.auxiliary_info_shape = {}
@@ -50,7 +52,7 @@ class MAPPO_Agents(MARLAgents):
         self.buffer_size = memory.buffer_size
         self.batch_size = self.buffer_size // self.n_minibatch
 
-        learner = MAPPO_Clip_Learner(config, policy, optimizer, None,
+        learner = MAPPO_Clip_Learner(config, policy, optimizer, scheduler,
                                      config.device, config.model_dir, config.gamma)
         super(MAPPO_Agents, self).__init__(config, envs, policy, memory, learner, device,
                                            config.log_dir, config.model_dir)

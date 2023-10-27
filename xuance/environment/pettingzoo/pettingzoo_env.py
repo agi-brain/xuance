@@ -53,6 +53,8 @@ class PettingZoo_Env(ParallelEnv):
         return observations, reset_info
 
     def step(self, actions):
+        for k, v in actions.items():
+            actions[k] = np.clip(v, self.action_spaces[k].low, self.action_spaces[k].high)
         observations, rewards, terminations, truncations, infos = self.env.step(actions)
         for k, v in rewards.items():
             self.individual_episode_reward[k] += v

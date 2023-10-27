@@ -81,20 +81,14 @@ class ActorNet(nn.Module):
         for h in hidden_sizes:
             mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initialize, device)
             layers.extend(mlp)
-        self.output = nn.Sequential(*layers)
-        self.out_mu = nn.Linear(hidden_sizes[0], action_dim, device=device)
-        # self.out_std = nn.Linear(hidden_sizes[0], action_dim, device=device)
-        self.out_std = nn.Parameter(-torch.ones((action_dim,), device=device))
+        layers.append(nn.Linear(hidden_sizes[0], action_dim, device=device))
+        # layers.append(nn.Sigmoid())
+        self.mu = nn.Sequential(*layers)
+        self.log_std = nn.Parameter(-torch.ones((action_dim,), device=device))
         self.dist = DiagGaussianDistribution(action_dim)
 
     def forward(self, x: torch.Tensor):
-        output = self.output(x)
-        mu = torch.sigmoid(self.out_mu(output))
-        # std = torch.tanh(self.out_std(output))
-        # std = torch.clamp(self.out_std(output), -20, 1)
-        # std = std.exp()
-        std = self.out_std.exp()
-        self.dist.set_param(mu, std)
+        self.dist.set_param(self.mu(x), self.log_std.exp())
         return self.dist
 
 
