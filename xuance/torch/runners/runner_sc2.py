@@ -92,7 +92,6 @@ class SC2_Runner(Runner_Base):
                 self.episode_buffer.update({
                     'actions_onehot': np.zeros((self.n_envs, self.num_agents, self.episode_length, self.dim_act),
                                                dtype=np.float32)})
-        self.env_ptr = range(self.n_envs)
 
         # initialize hidden units for RNN.
         self.rnn_hidden, self.rnn_hidden_critic = self.init_rnn_hidden()
@@ -189,10 +188,7 @@ class SC2_Runner(Runner_Base):
             available_actions = self.envs.get_avail_actions()
             actions_dict = self.get_actions(obs_n, available_actions, rnn_hidden, rnn_hidden_critic,
                                             state=state, test_mode=False)
-            try:
-                next_obs_n, next_state, rewards, terminated, truncated, info = self.envs.step(actions_dict['actions_n'])
-            except:
-                pass
+            next_obs_n, next_state, rewards, terminated, truncated, info = self.envs.step(actions_dict['actions_n'])
 
             # store step data
             self.store_data(self.env_step, obs_n, actions_dict, state, rewards, terminated, available_actions)

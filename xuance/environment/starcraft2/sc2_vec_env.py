@@ -234,6 +234,8 @@ class DummyVecEnv_StarCraft2(VecEnv):
                             self.battles_won[idx_env] += 1
                         self.dead_allies_count[idx_env] += infos['dead_allies']
                         self.dead_enemies_count[idx_env] += infos['dead_enemies']
+                else:
+                    self.buf_terminal[idx_env, 0], self.buf_truncation[idx_env, 0] = False, False
 
             if self.buf_done.all():
                 self.buf_done = np.zeros((self.num_envs,), dtype=np.bool)
@@ -261,7 +263,6 @@ class DummyVecEnv_StarCraft2(VecEnv):
     def get_avail_actions(self):
         self._assert_not_closed()
         avail_actions = [env.get_avail_actions() for env in self.envs]
-        avail_actions = flatten_list(avail_actions)
         return np.array(avail_actions)
 
     def _assert_not_closed(self):
