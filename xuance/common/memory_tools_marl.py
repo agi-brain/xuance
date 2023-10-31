@@ -124,11 +124,12 @@ class MARL_OffPolicyBuffer_RNN(MARL_OffPolicyBuffer):
                 (self.buffer_size, self.max_eps_len + 1) + self.state_space).astype(np.float32)})
         self.ptr, self.size = 0, 0
 
-    def store(self, episode_data, i_env=None):
-        for k in self.keys:
-            self.data[k][self.ptr] = episode_data[k][i_env]
-        self.ptr = (self.ptr + 1) % self.buffer_size
-        self.size = np.min([self.size + 1, self.buffer_size])
+    def store(self, episode_data):
+        for i_env in range(self.n_envs):
+            for k in self.keys:
+                self.data[k][self.ptr] = episode_data[k][i_env]
+            self.ptr = (self.ptr + 1) % self.buffer_size
+            self.size = np.min([self.size + 1, self.buffer_size])
 
     def sample(self):
         sample_choices = np.random.choice(self.size, self.batch_size)
@@ -338,8 +339,7 @@ class MARL_OnPolicyBuffer_RNN(MARL_OnPolicyBuffer):
 
         # calculate advantages and returns
         rewards = np.array(episode_data['rewards'][i_env, :, path_slice])
-        vs = np.append(np.array(episode_data['values'][i_env, :, path_slice]), [value.reshape(self.n_agents, 1)],
-                       axis=0)
+        vs = np.append(np.array(episode_data['values'][i_env, :, path_slice]), [value.reshape(self.n_agents, 1)], axis=0)
         dones = np.array(episode_data['terminals'][i_env, path_slice])[:, :, None]
         returns = np.zeros_like(rewards)
         last_gae_lam = 0

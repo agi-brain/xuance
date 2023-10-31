@@ -4,7 +4,7 @@ env_id: "3m"
 fps: 15
 policy: "Categorical_MAAC_Policy"
 representation: "Basic_RNN"
-vectorize: "Dummy_StarCraft2"
+vectorize: "Subproc_StarCraft2"
 runner: "StarCraft2_Runner"
 
 # recurrent settings for Basic_RNN representation
@@ -24,8 +24,8 @@ critic_hidden_size: []
 activation: "ReLU"
 
 seed: 1
-parallels: 1
-n_size: 128
+parallels: 8
+n_size: 16
 n_epoch: 15
 n_minibatch: 1
 learning_rate: 0.0007  # 7e-4
