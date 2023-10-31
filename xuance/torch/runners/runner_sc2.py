@@ -189,10 +189,17 @@ class SC2_Runner(Runner_Base):
             actions_dict = self.get_actions(obs_n, available_actions, rnn_hidden, rnn_hidden_critic,
                                             state=state, test_mode=False)
             next_obs_n, next_state, rewards, terminated, truncated, info = self.envs.step(actions_dict['actions_n'])
-
+            envs_done = self.envs.buf_done
+            self.filled[:, self.env_step] = np.ones([self.n_envs, 1])
             # store step data
             self.store_data(self.env_step, obs_n, actions_dict, state, rewards, terminated, available_actions)
+            rnn_hidden, rnn_hidden_critic = actions_dict['rnn_hidden'], actions_dict['rnn_hidden_critic']
+
             for i_env in range(self.n_envs):
+                if envs_done[i_env]:
+                    self.filled[i_env, self.env_step, 0] = 0
+                else:
+                    self.current_step += 1
                 if terminated[i_env] or truncated[i_env]:  # one env is terminal
                     available_actions = self.envs.get_avail_actions()
                     self.store_terminal_data(i_env, self.env_step+1, next_obs_n, next_state, available_actions, self.filled)
@@ -215,22 +222,19 @@ class SC2_Runner(Runner_Base):
                                                        episode_data=self.episode_buffer,
                                                        current_t=self.env_step,
                                                        value_normalizer=self.agents.learner.value_normalizer)
-                else:
-                    self.filled[i_env, self.env_step, 0] = 1
                     self.current_step += 1
 
-            rnn_hidden, rnn_hidden_critic = actions_dict['rnn_hidden'], actions_dict['rnn_hidden_critic']
             obs_n, state = deepcopy(next_obs_n), deepcopy(next_state)
             self.env_step += 1
 
-            if terminated.all() or truncated.all():  # all envs are terminated
+            if envs_done.all():  # all envs are terminated
                 if self.on_policy:
                     train_info = self.agents.train(self.current_step)
                     self.log_infos(train_info, self.current_step)
                 else:
                     self.agents.memory.store(self.episode_buffer)
 
-                # reset the envs
+                # reset the envs and settings
                 obs_n, state, info = self.envs.reset()
                 self.env_step = 0
                 self.filled = np.zeros([self.n_envs, self.episode_length, 1], np.int32)
@@ -388,6 +392,7 @@ class SC2_Runner(Runner_Base):
                 best_win_rate = test_win_rate
                 self.agents.save_model("best_model.pth")  # save best model
 
+            # Estimate the physic running time
             time_pass = int(time.time() - time_start)
             time_left = int((self.running_steps - self.current_step) / self.current_step * time_pass)
             if time_left < 0:

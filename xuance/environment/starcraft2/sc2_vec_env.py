@@ -123,9 +123,8 @@ class SubprocVecEnv_StarCraft2(VecEnv):
                             self.battles_won[idx_env] += 1
                         self.dead_allies_count[idx_env] += infos['dead_allies']
                         self.dead_enemies_count[idx_env] += infos['dead_enemies']
-
-            if self.buf_done.all():
-                self.buf_done = np.zeros((self.num_envs,), dtype=np.bool)
+                else:
+                    self.buf_terminal[idx_env, 0], self.buf_truncation[idx_env, 0] = False, False
 
         self.waiting = False
         return self.buf_obs.copy(), self.buf_state.copy(), self.buf_rew.copy(), self.buf_terminal.copy(), self.buf_truncation.copy(), self.buf_infos.copy()
@@ -138,6 +137,7 @@ class SubprocVecEnv_StarCraft2(VecEnv):
         result = flatten_list(result)
         obs, state, infos = zip(*result)
         self.buf_obs, self.buf_state, self.buf_infos = np.array(obs), np.array(state), list(infos)
+        self.buf_done = np.zeros((self.num_envs,), dtype=np.bool)
         return self.buf_obs.copy(), self.buf_state.copy(), self.buf_infos.copy()
 
     def close_extras(self):
@@ -237,9 +237,6 @@ class DummyVecEnv_StarCraft2(VecEnv):
                 else:
                     self.buf_terminal[idx_env, 0], self.buf_truncation[idx_env, 0] = False, False
 
-            if self.buf_done.all():
-                self.buf_done = np.zeros((self.num_envs,), dtype=np.bool)
-
         self.waiting = False
         return self.buf_obs.copy(), self.buf_state.copy(), self.buf_rew.copy(), self.buf_terminal.copy(), self.buf_truncation.copy(), self.buf_info.copy()
 
@@ -248,6 +245,7 @@ class DummyVecEnv_StarCraft2(VecEnv):
         for i_env, env in enumerate(self.envs):
             obs, state, infos = env.reset()
             self.buf_obs[i_env], self.buf_state[i_env], self.buf_info[i_env] = np.array(obs), np.array(state), list(infos)
+        self.buf_done = np.zeros((self.num_envs,), dtype=np.bool)
         return self.buf_obs.copy(), self.buf_state.copy(), self.buf_info.copy()
 
     def close_extras(self):
