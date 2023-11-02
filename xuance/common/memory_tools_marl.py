@@ -109,6 +109,24 @@ class MARL_OffPolicyBuffer_RNN(MARL_OffPolicyBuffer):
         super(MARL_OffPolicyBuffer_RNN, self).__init__(n_agents, state_space, obs_space, act_space, rew_space,
                                                        done_space, n_envs, buffer_size, batch_size)
 
+        self.episode_data = {}
+        self.clear_episodes()
+
+    def clear(self):
+        self.data = {
+            'obs': np.zeros((self.buffer_size, self.n_agents, self.max_eps_len + 1) + self.obs_space, np.float),
+            'actions': np.zeros((self.buffer_size, self.n_agents, self.max_eps_len) + self.act_space, np.float),
+            'rewards': np.zeros((self.buffer_size, self.n_agents, self.max_eps_len) + self.rew_space, np.float),
+            'terminals': np.zeros((self.buffer_size, self.max_eps_len) + self.done_space, np.bool),
+            'avail_actions': np.ones((self.buffer_size, self.n_agents, self.max_eps_len + 1, self.dim_act), np.bool),
+            'filled': np.zeros((self.buffer_size, self.max_eps_len, 1)).astype(np.bool)
+        }
+        if self.state_space is not None:
+            self.data.update({'state': np.zeros(
+                (self.buffer_size, self.max_eps_len + 1) + self.state_space).astype(np.float32)})
+        self.ptr, self.size = 0, 0
+
+    def clear_episodes(self):
         self.episode_data = {
             'obs': np.zeros((self.n_envs, self.n_agents, self.max_eps_len + 1) + self.obs_space, dtype=np.float32),
             'actions': np.zeros((self.n_envs, self.n_agents, self.max_eps_len) + self.act_space, dtype=np.float32),
@@ -125,20 +143,6 @@ class MARL_OffPolicyBuffer_RNN(MARL_OffPolicyBuffer):
             self.episode_data.update({
                 'state': np.zeros((self.n_envs, self.max_eps_len + 1) + self.state_space, dtype=np.float32),
             })
-
-    def clear(self):
-        self.data = {
-            'obs': np.zeros((self.buffer_size, self.n_agents, self.max_eps_len + 1) + self.obs_space, np.float),
-            'actions': np.zeros((self.buffer_size, self.n_agents, self.max_eps_len) + self.act_space, np.float),
-            'rewards': np.zeros((self.buffer_size, self.n_agents, self.max_eps_len) + self.rew_space, np.float),
-            'terminals': np.zeros((self.buffer_size, self.max_eps_len) + self.done_space, np.bool),
-            'avail_actions': np.ones((self.buffer_size, self.n_agents, self.max_eps_len + 1, self.dim_act), np.bool),
-            'filled': np.zeros((self.buffer_size, self.max_eps_len, 1)).astype(np.bool)
-        }
-        if self.state_space is not None:
-            self.data.update({'state': np.zeros(
-                (self.buffer_size, self.max_eps_len + 1) + self.state_space).astype(np.float32)})
-        self.ptr, self.size = 0, 0
 
     def store_transitions(self, t_envs, *transition_data):
         obs_n, actions_dict, state, rewards, terminated, avail_actions = transition_data
@@ -158,6 +162,7 @@ class MARL_OffPolicyBuffer_RNN(MARL_OffPolicyBuffer):
                 self.data[k][self.ptr] = self.episode_data[k][i_env]
             self.ptr = (self.ptr + 1) % self.buffer_size
             self.size = np.min([self.size + 1, self.buffer_size])
+        self.clear_episodes()
 
     def finish_path(self, i_env, next_t, *terminal_data):
         obs_next, state_next, available_actions, filled = terminal_data
@@ -335,26 +340,8 @@ class MARL_OnPolicyBuffer_RNN(MARL_OnPolicyBuffer):
                                                       done_space, n_envs, buffer_size,
                                                       use_gae, use_advnorm, gamma, gae_lam,
                                                       **kwargs)
-        self.episode_data = {
-            'obs': np.zeros((self.n_envs, self.n_agents, self.max_eps_len + 1) + self.obs_space, dtype=np.float32),
-            'actions': np.zeros((self.n_envs, self.n_agents, self.max_eps_len) + self.act_space, dtype=np.float32),
-            'rewards': np.zeros((self.n_envs, self.n_agents, self.max_eps_len) + self.rew_space, dtype=np.float32),
-            'returns': np.zeros((self.n_envs, self.n_agents, self.max_eps_len) + self.rew_space, np.float32),
-            'values': np.zeros((self.n_envs, self.n_agents, self.max_eps_len) + self.rew_space, np.float32),
-            'advantages': np.zeros((self.n_envs, self.n_agents, self.max_eps_len) + self.rew_space, np.float32),
-            'log_pi_old': np.zeros((self.n_envs, self.n_agents, self.max_eps_len,), np.float32),
-            'terminals': np.zeros((self.n_envs, self.max_eps_len) + self.done_space, dtype=np.bool),
-            'avail_actions': np.ones((self.n_envs, self.n_agents, self.max_eps_len + 1, self.dim_act), dtype=np.bool),
-            'filled': np.zeros((self.n_envs, self.max_eps_len, 1), dtype=np.bool),
-        }
-        if self.state_space is not None:
-            self.episode_data.update({
-                'state': np.zeros((self.n_envs, self.max_eps_len + 1) + self.state_space, dtype=np.float32),
-            })
-        # if self.args.agent == "COMA":
-        #     self.episode_data.update({
-        #         'actions_onehot': np.zeros((self.n_envs, self.n_agents, self.max_eps_len, self.dim_act),
-        #                                    dtype=np.float32)})
+        self.episode_data = {}
+        self.clear_episodes()
 
     @property
     def full(self):
@@ -379,6 +366,28 @@ class MARL_OnPolicyBuffer_RNN(MARL_OnPolicyBuffer):
             })
         self.ptr, self.size = 0, 0
 
+    def clear_episodes(self):
+        self.episode_data = {
+            'obs': np.zeros((self.n_envs, self.n_agents, self.max_eps_len + 1) + self.obs_space, dtype=np.float32),
+            'actions': np.zeros((self.n_envs, self.n_agents, self.max_eps_len) + self.act_space, dtype=np.float32),
+            'rewards': np.zeros((self.n_envs, self.n_agents, self.max_eps_len) + self.rew_space, dtype=np.float32),
+            'returns': np.zeros((self.n_envs, self.n_agents, self.max_eps_len) + self.rew_space, np.float32),
+            'values': np.zeros((self.n_envs, self.n_agents, self.max_eps_len) + self.rew_space, np.float32),
+            'advantages': np.zeros((self.n_envs, self.n_agents, self.max_eps_len) + self.rew_space, np.float32),
+            'log_pi_old': np.zeros((self.n_envs, self.n_agents, self.max_eps_len,), np.float32),
+            'terminals': np.zeros((self.n_envs, self.max_eps_len) + self.done_space, dtype=np.bool),
+            'avail_actions': np.ones((self.n_envs, self.n_agents, self.max_eps_len + 1, self.dim_act), dtype=np.bool),
+            'filled': np.zeros((self.n_envs, self.max_eps_len, 1), dtype=np.bool),
+        }
+        if self.state_space is not None:
+            self.episode_data.update({
+                'state': np.zeros((self.n_envs, self.max_eps_len + 1) + self.state_space, dtype=np.float32),
+            })
+        # if self.args.agent == "COMA":
+        #     self.episode_data.update({
+        #         'actions_onehot': np.zeros((self.n_envs, self.n_agents, self.max_eps_len, self.dim_act),
+        #                                    dtype=np.float32)})
+
     def store_transitions(self, t_envs, *transition_data):
         obs_n, actions_dict, state, rewards, terminated, avail_actions = transition_data
         self.episode_data['obs'][:, :, t_envs] = obs_n
@@ -399,6 +408,7 @@ class MARL_OnPolicyBuffer_RNN(MARL_OnPolicyBuffer):
                     self.data[k][self.ptr] = self.episode_data[k][i_env].copy()
             self.ptr = (self.ptr + 1) % self.buffer_size
             self.size = min(self.size + 1, self.buffer_size)
+        self.clear_episodes()
 
     def finish_path(self, i_env, next_t, *terminal_data, value_next=None, value_normalizer=None):
         obs_next, state_next, available_actions, filled = terminal_data

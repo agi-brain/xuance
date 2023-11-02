@@ -98,9 +98,9 @@ class MAPPO_Agents(MARLAgents):
 
         return hidden_state, values_n.detach().cpu().numpy()
 
-    def train(self, i_step):
+    def train(self, i_step, **kwargs):
+        info_train = {}
         if self.memory.full:
-            info_train = {}
             indexes = np.arange(self.buffer_size)
             for _ in range(self.n_epoch):
                 np.random.shuffle(indexes)
@@ -114,6 +114,4 @@ class MAPPO_Agents(MARLAgents):
                         info_train = self.learner.update(sample)
             self.learner.lr_decay(i_step)
             self.memory.clear()
-            return info_train
-        else:
-            return {}
+        return info_train

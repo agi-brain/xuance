@@ -43,6 +43,7 @@ class SubprocVecEnv_StarCraft2(VecEnv):
     VecEnv that runs multiple environments in parallel in subproceses and communicates with them via pipes.
     Recommended to use when num_envs > 1 and step() can be a bottleneck.
     """
+
     def __init__(self, env_fns, context='spawn'):
         """
         Arguments:
@@ -69,7 +70,7 @@ class SubprocVecEnv_StarCraft2(VecEnv):
         env_info, self.num_enemies = self.remotes[0].recv().x
         self.dim_obs = env_info["obs_shape"]
         self.dim_act = self.n_actions = env_info["n_actions"]
-        observation_space, action_space = (self.dim_obs, ), (self.dim_act, )
+        observation_space, action_space = (self.dim_obs,), (self.dim_act,)
         self.viewer = None
         VecEnv.__init__(self, num_envs, observation_space, action_space)
 
@@ -185,7 +186,7 @@ class DummyVecEnv_StarCraft2(VecEnv):
         env_info, self.num_enemies = env.env_info, env.n_enemies
         self.dim_obs = env_info["obs_shape"]
         self.dim_act = self.n_actions = env_info["n_actions"]
-        observation_space, action_space = (self.dim_obs, ), (self.dim_act, )
+        observation_space, action_space = (self.dim_obs,), (self.dim_act,)
         self.viewer = None
         VecEnv.__init__(self, num_envs, observation_space, action_space)
 

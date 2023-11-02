@@ -23,7 +23,7 @@ critic_hidden_size: [128, 128]
 activation: "ReLU"
 
 seed: 1
-parallels: 1
+parallels: 8
 n_size: 128
 n_epoch: 15
 n_minibatch: 1
@@ -52,6 +52,6 @@ training_frequency: 1
 
 test_steps: 10000
 eval_interval: 25000
-test_episode: 10
+test_episode: 16
 log_dir: "./logs/coma/"
 model_dir: "./models/coma/"

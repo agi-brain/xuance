@@ -58,11 +58,13 @@ class QTRAN_Agents(MARLAgents):
                                            config.log_dir, config.model_dir)
         self.on_policy = False
 
-    def train(self, i_episode):
-        self.epsilon_decay.update()
-        if self.memory.can_sample(self.args.batch_size):
-            sample = self.memory.sample()
-            info_train = self.learner.update(sample)
-            return info_train
-        else:
-            return {}
+    def train(self, i_step, n_epoch=1):
+        if self.egreedy >= self.end_greedy:
+            self.egreedy = self.start_greedy - self.delta_egreedy * i_step
+        info_train = {}
+        if i_step > self.start_training:
+            for i_epoch in range(n_epoch):
+                sample = self.memory.sample()
+                info_train = self.learner.update(sample)
+        info_train["epsilon-greedy"] = self.egreedy
+        return info_train

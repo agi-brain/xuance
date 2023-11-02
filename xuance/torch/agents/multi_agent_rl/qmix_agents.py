@@ -78,17 +78,16 @@ class QMIX_Agents(MARLAgents):
             else:
                 return hidden_state, greedy_actions
 
-    def train(self, i_step):
+    def train(self, i_step, n_epoch=1):
         if self.egreedy >= self.end_greedy:
             self.egreedy = self.start_greedy - self.delta_egreedy * i_step
-
+        info_train = {}
         if i_step > self.start_training:
-            sample = self.memory.sample()
-            if self.use_recurrent:
-                info_train = self.learner.update_recurrent(sample)
-            else:
-                info_train = self.learner.update(sample)
-            info_train["epsilon-greedy"] = self.egreedy
-            return info_train
-        else:
-            return {}
+            for i_epoch in range(n_epoch):
+                sample = self.memory.sample()
+                if self.use_recurrent:
+                    info_train = self.learner.update_recurrent(sample)
+                else:
+                    info_train = self.learner.update(sample)
+        info_train["epsilon-greedy"] = self.egreedy
+        return info_train

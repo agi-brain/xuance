@@ -5,7 +5,7 @@ env_id: "8m_vs_9m"
 fps: 15
 policy: "Mixing_Q_network"
 representation: "Basic_RNN"
-vectorize: "Dummy_StarCraft2"
+vectorize: "Subproc_StarCraft2
 runner: "StarCraft2_Runner"
 on_policy: False
 
@@ -26,7 +26,7 @@ hidden_dim_mixing_net: 32  # hidden units of mixing network
 hidden_dim_hyper_net: 32  # hidden units of hyper network
 
 seed: 1
-parallels: 1
+parallels: 8
 buffer_size: 5000
 batch_size: 32
 learning_rate: 0.0007
@@ -46,6 +46,6 @@ use_grad_clip: False
 grad_clip_norm: 0.5
 
 eval_interval: 100000
-test_episode: 10
+test_episode: 16
 log_dir: "./logs/qmix/"
 model_dir: "./models/qmix/"

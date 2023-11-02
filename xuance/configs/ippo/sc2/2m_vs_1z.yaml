@@ -25,7 +25,7 @@ critic_hidden_size: []
 activation: "ReLU"
 
 seed: 1
-parallels: 1
+parallels: 8
 n_size: 128
 n_epoch: 15
 n_minibatch: 1
@@ -61,6 +61,6 @@ training_frequency: 1
 
 test_steps: 10000
 eval_interval: 10000
-test_episode: 5
+test_episode: 16
 log_dir: "./logs/ippo/"
 model_dir: "./models/ippo/"

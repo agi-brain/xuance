@@ -114,11 +114,11 @@ class COMA_Agents(MARLAgents):
         target_values = values_n.gather(-1, actions_n.long())
         return hidden_state, target_values.detach().cpu().numpy()
 
-    def train(self, i_step):
+    def train(self, i_step, **kwargs):
         if self.egreedy >= self.end_greedy:
             self.egreedy = self.start_greedy - self.delta_egreedy * i_step
+        info_train = {}
         if self.memory.full:
-            info_train = {}
             indexes = np.arange(self.buffer_size)
             for _ in range(self.n_epoch):
                 np.random.shuffle(indexes)
@@ -131,7 +131,5 @@ class COMA_Agents(MARLAgents):
                     else:
                         info_train = self.learner.update(sample, self.egreedy)
             self.memory.clear()
-            info_train["epsilon-greedy"] = self.egreedy
-            return info_train
-        else:
-            return {"epsilon-greedy": self.egreedy}
+        info_train["epsilon-greedy"] = self.egreedy
+        return info_train

@@ -103,7 +103,7 @@ class VDAC_Agents(MARLAgents):
 
         return hidden_state, values_tot.detach().cpu().numpy()
 
-    def train(self, i_step):
+    def train(self, i_step, **kwargs):
         if self.memory.full:
             info_train = {}
             indexes = np.arange(self.buffer_size)

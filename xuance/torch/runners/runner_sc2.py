@@ -213,12 +213,12 @@ class SC2_Runner(Runner_Base):
                     self.env_step += 1
                 obs_n, state = deepcopy(next_obs_n), deepcopy(next_state)
 
-            # store episode data
-            self.agents.memory.store_episodes()
-            # train MARL agents
-            for _ in range(self.n_envs):
-                train_info = self.agents.train(self.current_step)
-            self.log_infos(train_info, self.current_step)
+            # train the model
+            if not test_mode:
+                self.agents.memory.store_episodes()  # store episode data
+                n_epoch = self.agents.n_epoch if self.on_policy else self.n_envs
+                train_info = self.agents.train(self.current_step, n_epoch=n_epoch)  # train
+                self.log_infos(train_info, self.current_step)
 
         # After running n_episodes
         episode_score = np.array(episode_score)
