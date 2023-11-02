@@ -25,7 +25,7 @@ critic_hidden_size: []
 activation: "ReLU"
 
 seed: 1
-parallels: 1
+parallels: 8
 n_size: 128
 n_epoch: 5
 n_minibatch: 2
