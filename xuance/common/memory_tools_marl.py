@@ -131,10 +131,6 @@ class MARL_OffPolicyBuffer_RNN(MARL_OffPolicyBuffer):
             'obs': np.zeros((self.n_envs, self.n_agents, self.max_eps_len + 1) + self.obs_space, dtype=np.float32),
             'actions': np.zeros((self.n_envs, self.n_agents, self.max_eps_len) + self.act_space, dtype=np.float32),
             'rewards': np.zeros((self.n_envs, self.n_agents, self.max_eps_len) + self.rew_space, dtype=np.float32),
-            'returns': np.zeros((self.n_envs, self.n_agents, self.max_eps_len) + self.rew_space, np.float32),
-            'values': np.zeros((self.n_envs, self.n_agents, self.max_eps_len) + self.rew_space, np.float32),
-            'advantages': np.zeros((self.n_envs, self.n_agents, self.max_eps_len) + self.rew_space, np.float32),
-            'log_pi_old': np.zeros((self.n_envs, self.n_agents, self.max_eps_len,), np.float32),
             'terminals': np.zeros((self.n_envs, self.max_eps_len) + self.done_space, dtype=np.bool),
             'avail_actions': np.ones((self.n_envs, self.n_agents, self.max_eps_len + 1, self.dim_act), dtype=np.bool),
             'filled': np.zeros((self.n_envs, self.max_eps_len, 1), dtype=np.bool),
@@ -149,8 +145,6 @@ class MARL_OffPolicyBuffer_RNN(MARL_OffPolicyBuffer):
         self.episode_data['obs'][:, :, t_envs] = obs_n
         self.episode_data['actions'][:, :, t_envs] = actions_dict['actions_n']
         self.episode_data['rewards'][:, :, t_envs] = rewards
-        self.episode_data['values'][:, :, t_envs] = actions_dict['values']
-        self.episode_data['log_pi_old'][:, :, t_envs] = actions_dict['log_pi']
         self.episode_data['terminals'][:, t_envs] = terminated
         self.episode_data['avail_actions'][:, :, t_envs] = avail_actions
         if self.state_space is not None:
@@ -159,7 +153,7 @@ class MARL_OffPolicyBuffer_RNN(MARL_OffPolicyBuffer):
     def store_episodes(self):
         for i_env in range(self.n_envs):
             for k in self.keys:
-                self.data[k][self.ptr] = self.episode_data[k][i_env]
+                self.data[k][self.ptr] = self.episode_data[k][i_env].copy()
             self.ptr = (self.ptr + 1) % self.buffer_size
             self.size = np.min([self.size + 1, self.buffer_size])
         self.clear_episodes()

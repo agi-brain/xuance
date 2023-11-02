@@ -6,12 +6,28 @@ from .pettingzoo import PETTINGZOO_ENVIRONMENTS
 from .vector_envs.vector_env import VecEnv
 from xuance.environment.gym.gym_vec_env import DummyVecEnv_Gym, SubprocVecEnv_Gym
 from xuance.environment.gym.gym_vec_env import DummyVecEnv_Atari, SubprocVecEnv_Atari
-from xuance.environment.pettingzoo.pettingzoo_vec_env import DummyVecEnv_Pettingzoo
+from xuance.environment.pettingzoo.pettingzoo_vec_env import DummyVecEnv_Pettingzoo, SubprocVecEnv_Pettingzoo
 from xuance.environment.magent2.magent_vec_env import DummyVecEnv_MAgent
 from xuance.environment.starcraft2.sc2_vec_env import DummyVecEnv_StarCraft2, SubprocVecEnv_StarCraft2
 from xuance.environment.football.gfootball_vec_env import DummyVecEnv_GFootball
 
 from .vector_envs.subproc_vec_env import SubprocVecEnv
+
+REGISTRY_VEC_ENV = {
+    "Dummy_Gym": DummyVecEnv_Gym,
+    "Dummy_Pettingzoo": DummyVecEnv_Pettingzoo,
+    "Dummy_MAgent": DummyVecEnv_MAgent,
+    "Dummy_StarCraft2": DummyVecEnv_StarCraft2,
+    "Dummy_Football": DummyVecEnv_GFootball,
+    "Dummy_Atari": DummyVecEnv_Atari,
+
+    # multiprocess #
+    "Subproc": SubprocVecEnv,
+    "Subproc_Gym": SubprocVecEnv_Gym,
+    "Subproc_Pettingzoo": SubprocVecEnv_Pettingzoo,
+    "Subproc_StarCraft2": SubprocVecEnv_StarCraft2,
+    "Subproc_Atari": SubprocVecEnv_Atari,
+}
 
 
 def make_envs(config: Namespace):
@@ -47,23 +63,9 @@ def make_envs(config: Namespace):
             env = Gym_Env(config.env_id, config.seed, config.render_mode)
         return env
 
-    if config.vectorize == "Subproc":
-        return SubprocVecEnv([_thunk for _ in range(config.parallels)])
-    elif config.vectorize == "Dummy_Gym":
-        return DummyVecEnv_Gym([_thunk for _ in range(config.parallels)])
-    elif config.vectorize == "Dummy_Pettingzoo":
-        return DummyVecEnv_Pettingzoo([_thunk for _ in range(config.parallels)])
-    elif config.vectorize == "Dummy_MAgent":
-        return DummyVecEnv_MAgent([_thunk for _ in range(config.parallels)])
-    elif config.vectorize == "Dummy_StarCraft2":
-        return DummyVecEnv_StarCraft2([_thunk for _ in range(config.parallels)])
-    elif config.vectorize == "Subproc_StarCraft2":
-        return SubprocVecEnv_StarCraft2([_thunk for _ in range(config.parallels)])
-    elif config.vectorize == "Dummy_Football":
-        return DummyVecEnv_GFootball([_thunk for _ in range(config.parallels)])
-    elif config.vectorize == "Dummy_Atari":
-        return DummyVecEnv_Atari([_thunk for _ in range(config.parallels)])
-    elif config.vectorize == "NOREQUIRED":
+    if config.vectorize in REGISTRY_VEC_ENV.keys():
+        return REGISTRY_VEC_ENV[config.vectorize]([_thunk for _ in range(config.parallels)])
+    elif config.vectorize != "NOREQUIRED":
         return _thunk()
     else:
         raise NotImplementedError

@@ -5,7 +5,7 @@ env_id: "3m"
 fps: 15
 policy: "Mixing_Q_network"
 representation: "Basic_RNN"
-vectorize: "Subproc_StarCraft2
+vectorize: "Subproc_StarCraft2"
 runner: "StarCraft2_Runner"
 on_policy: False
 

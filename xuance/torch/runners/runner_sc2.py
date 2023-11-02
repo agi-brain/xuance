@@ -214,11 +214,12 @@ class SC2_Runner(Runner_Base):
                 obs_n, state = deepcopy(next_obs_n), deepcopy(next_state)
 
             # train the model
-            if not test_mode:
-                self.agents.memory.store_episodes()  # store episode data
-                n_epoch = self.agents.n_epoch if self.on_policy else self.n_envs
-                train_info = self.agents.train(self.current_step, n_epoch=n_epoch)  # train
-                self.log_infos(train_info, self.current_step)
+            if test_mode:
+                continue
+            self.agents.memory.store_episodes()  # store episode data
+            n_epoch = self.agents.n_epoch if self.on_policy else self.n_envs
+            train_info = self.agents.train(self.current_step, n_epoch=n_epoch)  # train
+            self.log_infos(train_info, self.current_step)
 
         # After running n_episodes
         episode_score = np.array(episode_score)
