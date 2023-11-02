@@ -10,7 +10,6 @@ class MAPPO_Agents(MARLAgents):
                  device: Optional[Union[int, str, torch.device]] = None):
         self.gamma = config.gamma
         self.n_envs = envs.num_envs
-        self.n_size = config.n_size
         self.n_epoch = config.n_epoch
         self.n_minibatch = config.n_minibatch
         if config.state_space is not None:

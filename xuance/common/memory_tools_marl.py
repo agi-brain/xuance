@@ -1,6 +1,5 @@
 import numpy as np
 from abc import ABC, abstractmethod
-from xuance.common.common_tools import discount_cumsum
 
 
 class BaseBuffer(ABC):
@@ -9,7 +8,7 @@ class BaseBuffer(ABC):
     """
 
     def __init__(self, *args):
-        self.n_agents, self.state_space, self.obs_space, self.act_space, self.rew_space, self.done_space, self.n_envs, self.n_size = args
+        self.n_agents, self.state_space, self.obs_space, self.act_space, self.rew_space, self.done_space, self.n_envs, self.buffer_size = args
         self.ptr = 0  # last data pointer
         self.size = 0  # current buffer size
 
@@ -48,10 +47,10 @@ class MARL_OffPolicyBuffer(BaseBuffer):
     """
 
     def __init__(self, n_agents, state_space, obs_space, act_space, rew_space, done_space,
-                 n_envs, n_size, batch_size, **kwargs):
+                 n_envs, buffer_size, batch_size, **kwargs):
         super(MARL_OffPolicyBuffer, self).__init__(n_agents, state_space, obs_space, act_space, rew_space, done_space,
-                                                   n_envs, n_size)
-        self.buffer_size = n_size * n_envs
+                                                   n_envs, buffer_size)
+        self.n_size = buffer_size // n_envs
         self.batch_size = batch_size
         if self.state_space is not None:
             self.store_global_state = True
@@ -104,11 +103,28 @@ class MARL_OffPolicyBuffer_RNN(MARL_OffPolicyBuffer):
     """
 
     def __init__(self, n_agents, state_space, obs_space, act_space, rew_space, done_space,
-                 n_envs, n_size, batch_size, **kwargs):
+                 n_envs, buffer_size, batch_size, **kwargs):
         self.max_eps_len = kwargs['max_episode_length']
         self.dim_act = kwargs['dim_act']
         super(MARL_OffPolicyBuffer_RNN, self).__init__(n_agents, state_space, obs_space, act_space, rew_space,
-                                                       done_space, n_envs, n_size, batch_size)
+                                                       done_space, n_envs, buffer_size, batch_size)
+
+        self.episode_data = {
+            'obs': np.zeros((self.n_envs, self.n_agents, self.max_eps_len + 1) + self.obs_space, dtype=np.float32),
+            'actions': np.zeros((self.n_envs, self.n_agents, self.max_eps_len) + self.act_space, dtype=np.float32),
+            'rewards': np.zeros((self.n_envs, self.n_agents, self.max_eps_len) + self.rew_space, dtype=np.float32),
+            'returns': np.zeros((self.n_envs, self.n_agents, self.max_eps_len) + self.rew_space, np.float32),
+            'values': np.zeros((self.n_envs, self.n_agents, self.max_eps_len) + self.rew_space, np.float32),
+            'advantages': np.zeros((self.n_envs, self.n_agents, self.max_eps_len) + self.rew_space, np.float32),
+            'log_pi_old': np.zeros((self.n_envs, self.n_agents, self.max_eps_len,), np.float32),
+            'terminals': np.zeros((self.n_envs, self.max_eps_len) + self.done_space, dtype=np.bool),
+            'avail_actions': np.ones((self.n_envs, self.n_agents, self.max_eps_len + 1, self.dim_act), dtype=np.bool),
+            'filled': np.zeros((self.n_envs, self.max_eps_len, 1), dtype=np.bool),
+        }
+        if self.state_space is not None:
+            self.episode_data.update({
+                'state': np.zeros((self.n_envs, self.max_eps_len + 1) + self.state_space, dtype=np.float32),
+            })
 
     def clear(self):
         self.data = {
@@ -124,12 +140,31 @@ class MARL_OffPolicyBuffer_RNN(MARL_OffPolicyBuffer):
                 (self.buffer_size, self.max_eps_len + 1) + self.state_space).astype(np.float32)})
         self.ptr, self.size = 0, 0
 
-    def store(self, episode_data):
+    def store_transitions(self, t_envs, *transition_data):
+        obs_n, actions_dict, state, rewards, terminated, avail_actions = transition_data
+        self.episode_data['obs'][:, :, t_envs] = obs_n
+        self.episode_data['actions'][:, :, t_envs] = actions_dict['actions_n']
+        self.episode_data['rewards'][:, :, t_envs] = rewards
+        self.episode_data['values'][:, :, t_envs] = actions_dict['values']
+        self.episode_data['log_pi_old'][:, :, t_envs] = actions_dict['log_pi']
+        self.episode_data['terminals'][:, t_envs] = terminated
+        self.episode_data['avail_actions'][:, :, t_envs] = avail_actions
+        if self.state_space is not None:
+            self.episode_data['state'][:, t_envs] = state
+
+    def store_episodes(self):
         for i_env in range(self.n_envs):
             for k in self.keys:
-                self.data[k][self.ptr] = episode_data[k][i_env]
+                self.data[k][self.ptr] = self.episode_data[k][i_env]
             self.ptr = (self.ptr + 1) % self.buffer_size
             self.size = np.min([self.size + 1, self.buffer_size])
+
+    def finish_path(self, i_env, next_t, *terminal_data):
+        obs_next, state_next, available_actions, filled = terminal_data
+        self.episode_data['obs'][i_env, :, next_t] = obs_next[i_env]
+        self.episode_data['state'][i_env, next_t] = state_next[i_env]
+        self.episode_data['avail_actions'][i_env, :, next_t] = available_actions[i_env]
+        self.episode_data['filled'][i_env] = filled[i_env]
 
     def sample(self):
         sample_choices = np.random.choice(self.size, self.batch_size)
@@ -152,9 +187,9 @@ class MeanField_OffPolicyBuffer(MARL_OffPolicyBuffer):
     """
 
     def __init__(self, n_agents, state_space, obs_space, act_space, prob_shape, rew_space, done_space,
-                 n_envs, n_size, batch_size):
+                 n_envs, buffer_size, batch_size):
         super(MeanField_OffPolicyBuffer, self).__init__(n_agents, state_space, obs_space, act_space, rew_space,
-                                                        done_space, n_envs, n_size, batch_size)
+                                                        done_space, n_envs, buffer_size, batch_size)
         self.prob_shape = prob_shape
 
     def clear(self):
@@ -187,11 +222,11 @@ class MARL_OnPolicyBuffer(BaseBuffer):
         gae_lam: gae lambda.
     """
 
-    def __init__(self, n_agents, state_space, obs_space, act_space, rew_space, done_space, n_envs, n_size,
+    def __init__(self, n_agents, state_space, obs_space, act_space, rew_space, done_space, n_envs, buffer_size,
                  use_gae, use_advnorm, gamma, gae_lam, **kwargs):
         super(MARL_OnPolicyBuffer, self).__init__(n_agents, state_space, obs_space, act_space, rew_space, done_space,
-                                                  n_envs, n_size)
-        self.buffer_size = n_size * n_envs
+                                                  n_envs, buffer_size)
+        self.n_size = buffer_size // self.n_envs
         self.use_gae = use_gae
         self.use_advantage_norm = use_advnorm
         self.gamma, self.gae_lambda = gamma, gae_lam
@@ -292,13 +327,34 @@ class MARL_OnPolicyBuffer_RNN(MARL_OnPolicyBuffer):
         max_episode_length: maximum length of data for one episode trajectory.
     """
 
-    def __init__(self, n_agents, state_space, obs_space, act_space, rew_space, done_space, n_envs, n_size,
+    def __init__(self, n_agents, state_space, obs_space, act_space, rew_space, done_space, n_envs, buffer_size,
                  use_gae, use_advnorm, gamma, gae_lam, **kwargs):
         self.max_eps_len = kwargs['max_episode_length']
         self.dim_act = kwargs['dim_act']
         super(MARL_OnPolicyBuffer_RNN, self).__init__(n_agents, state_space, obs_space, act_space, rew_space,
-                                                      done_space, n_envs, n_size, use_gae, use_advnorm, gamma, gae_lam,
+                                                      done_space, n_envs, buffer_size,
+                                                      use_gae, use_advnorm, gamma, gae_lam,
                                                       **kwargs)
+        self.episode_data = {
+            'obs': np.zeros((self.n_envs, self.n_agents, self.max_eps_len + 1) + self.obs_space, dtype=np.float32),
+            'actions': np.zeros((self.n_envs, self.n_agents, self.max_eps_len) + self.act_space, dtype=np.float32),
+            'rewards': np.zeros((self.n_envs, self.n_agents, self.max_eps_len) + self.rew_space, dtype=np.float32),
+            'returns': np.zeros((self.n_envs, self.n_agents, self.max_eps_len) + self.rew_space, np.float32),
+            'values': np.zeros((self.n_envs, self.n_agents, self.max_eps_len) + self.rew_space, np.float32),
+            'advantages': np.zeros((self.n_envs, self.n_agents, self.max_eps_len) + self.rew_space, np.float32),
+            'log_pi_old': np.zeros((self.n_envs, self.n_agents, self.max_eps_len,), np.float32),
+            'terminals': np.zeros((self.n_envs, self.max_eps_len) + self.done_space, dtype=np.bool),
+            'avail_actions': np.ones((self.n_envs, self.n_agents, self.max_eps_len + 1, self.dim_act), dtype=np.bool),
+            'filled': np.zeros((self.n_envs, self.max_eps_len, 1), dtype=np.bool),
+        }
+        if self.state_space is not None:
+            self.episode_data.update({
+                'state': np.zeros((self.n_envs, self.max_eps_len + 1) + self.state_space, dtype=np.float32),
+            })
+        # if self.args.agent == "COMA":
+        #     self.episode_data.update({
+        #         'actions_onehot': np.zeros((self.n_envs, self.n_agents, self.max_eps_len, self.dim_act),
+        #                                    dtype=np.float32)})
 
     @property
     def full(self):
@@ -318,29 +374,51 @@ class MARL_OnPolicyBuffer_RNN(MARL_OnPolicyBuffer):
             'filled': np.zeros((self.buffer_size, self.max_eps_len, 1), np.bool)
         }
         if self.state_space is not None:
-            self.data.update({'state': np.zeros(
-                (self.buffer_size, self.max_eps_len + 1) + self.state_space, np.float32)})
+            self.data.update({
+                'state': np.zeros((self.buffer_size, self.max_eps_len + 1) + self.state_space, np.float32)
+            })
         self.ptr, self.size = 0, 0
 
-    def store(self, episode_data, i_env=None):
-        episode_data_keys = episode_data.keys()
-        for k in self.keys:
-            if k in episode_data_keys:
-                self.data[k][self.ptr] = episode_data[k][i_env]
-        self.ptr = (self.ptr + 1) % self.buffer_size
-        self.size = min(self.size + 1, self.buffer_size)
+    def store_transitions(self, t_envs, *transition_data):
+        obs_n, actions_dict, state, rewards, terminated, avail_actions = transition_data
+        self.episode_data['obs'][:, :, t_envs] = obs_n
+        self.episode_data['actions'][:, :, t_envs] = actions_dict['actions_n']
+        self.episode_data['rewards'][:, :, t_envs] = rewards
+        self.episode_data['values'][:, :, t_envs] = actions_dict['values']
+        self.episode_data['log_pi_old'][:, :, t_envs] = actions_dict['log_pi']
+        self.episode_data['terminals'][:, t_envs] = terminated
+        self.episode_data['avail_actions'][:, :, t_envs] = avail_actions
+        if self.state_space is not None:
+            self.episode_data['state'][:, t_envs] = state
 
-    def finish_path(self, value, i_env, episode_data=None, current_t=None, value_normalizer=None):
+    def store_episodes(self):
+        episode_data_keys = self.episode_data.keys()
+        for i_env in range(self.n_envs):
+            for k in self.keys:
+                if k in episode_data_keys:
+                    self.data[k][self.ptr] = self.episode_data[k][i_env].copy()
+            self.ptr = (self.ptr + 1) % self.buffer_size
+            self.size = min(self.size + 1, self.buffer_size)
+
+    def finish_path(self, i_env, next_t, *terminal_data, value_next=None, value_normalizer=None):
+        obs_next, state_next, available_actions, filled = terminal_data
+        self.episode_data['obs'][i_env, :, next_t] = obs_next[i_env]
+        self.episode_data['state'][i_env, next_t] = state_next[i_env]
+        self.episode_data['avail_actions'][i_env, :, next_t] = available_actions[i_env]
+        self.episode_data['filled'][i_env] = filled[i_env]
+
         """ when an episode is finished. """
-        if current_t > self.max_eps_len:
+        if next_t > self.max_eps_len:
             path_slice = np.arange(0, self.max_eps_len).astype(np.int32)
         else:
-            path_slice = np.arange(0, current_t).astype(np.int32)
+            path_slice = np.arange(0, next_t).astype(np.int32)
 
         # calculate advantages and returns
-        rewards = np.array(episode_data['rewards'][i_env, :, path_slice])
-        vs = np.append(np.array(episode_data['values'][i_env, :, path_slice]), [value.reshape(self.n_agents, 1)], axis=0)
-        dones = np.array(episode_data['terminals'][i_env, path_slice])[:, :, None]
+        rewards = np.array(self.episode_data['rewards'][i_env, :, path_slice])
+        vs = np.append(np.array(self.episode_data['values'][i_env, :, path_slice]),
+                       [value_next.reshape(self.n_agents, 1)],
+                       axis=0)
+        dones = np.array(self.episode_data['terminals'][i_env, path_slice])[:, :, None]
         returns = np.zeros_like(rewards)
         last_gae_lam = 0
         step_nums = len(path_slice)
@@ -357,15 +435,14 @@ class MARL_OnPolicyBuffer_RNN(MARL_OnPolicyBuffer):
                 returns[t] = last_gae_lam + vs_t
             advantages = returns - value_normalizer.denormalize(vs[:-1]) if use_value_norm else returns - vs[:-1]
         else:
-            returns = np.append(returns, [value.reshape(self.n_agents, 1)], axis=0)
+            returns = np.append(returns, [value_next.reshape(self.n_agents, 1)], axis=0)
             for t in reversed(range(step_nums)):
                 returns[t] = rewards[t] + (1 - dones[t]) * self.gamma * returns[t + 1]
             advantages = returns - value_normalizer.denormalize(vs) if use_value_norm else returns - vs
             advantages = advantages[:-1]
 
-        episode_data['returns'][i_env, :, path_slice] = returns
-        episode_data['advantages'][i_env, :, path_slice] = advantages
-        self.store(episode_data, i_env)
+        self.episode_data['returns'][i_env, :, path_slice] = returns
+        self.episode_data['advantages'][i_env, :, path_slice] = advantages
 
     def sample(self, indexes):
         assert self.full, "Not enough transitions for on-policy buffer to random sample"
@@ -549,7 +626,8 @@ class COMA_Buffer_RNN(MARL_OnPolicyBuffer_RNN):
         self.data = {
             'obs': np.zeros((self.buffer_size, self.n_agents, self.max_eps_len + 1) + self.obs_space, np.float32),
             'actions': np.zeros((self.buffer_size, self.n_agents, self.max_eps_len) + self.act_space, np.float32),
-            'actions_onehot': np.zeros((self.buffer_size, self.n_agents, self.max_eps_len, self.dim_act)).astype(np.float32),
+            'actions_onehot': np.zeros((self.buffer_size, self.n_agents, self.max_eps_len, self.dim_act)).astype(
+                np.float32),
             'rewards': np.zeros((self.buffer_size, self.n_agents, self.max_eps_len) + self.rew_space, np.float32),
             'returns': np.zeros((self.buffer_size, self.n_agents, self.max_eps_len) + self.rew_space, np.float32),
             'values': np.zeros((self.buffer_size, self.n_agents, self.max_eps_len) + self.rew_space, np.float32),

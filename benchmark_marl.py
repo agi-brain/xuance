@@ -4,7 +4,7 @@ from xuance import get_runner
 
 def parse_args():
     parser = argparse.ArgumentParser("Run an MARL demo.")
-    parser.add_argument("--method", type=str, default="qmix")
+    parser.add_argument("--method", type=str, default="mappo")
     parser.add_argument("--env", type=str, default="sc2")
     parser.add_argument("--env-id", type=str, default="3m")
     parser.add_argument("--seed", type=int, default=10)

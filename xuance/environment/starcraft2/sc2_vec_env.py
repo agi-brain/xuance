@@ -114,11 +114,11 @@ class SubprocVecEnv_StarCraft2(VecEnv):
                     obs, state, rew, terminal, truncated, infos = result
                     self.buf_obs[idx_env], self.buf_state[idx_env] = np.array(obs), np.array(state)
                     self.buf_rew[idx_env], self.buf_terminal[idx_env] = np.array(rew), np.array(terminal)
-                    self.buf_truncation[idx_env], self.buf_infos[idx_env] = np.array(truncated), infos
+                    self.buf_truncation[idx_env], self.buf_info[idx_env] = np.array(truncated), infos
 
                     if self.buf_terminal[idx_env].all() or self.buf_truncation[idx_env].all():
                         self.buf_done[idx_env] = True
-                        self.battles_game += 1
+                        self.battles_game[idx_env] += 1
                         if infos['battle_won']:
                             self.battles_won[idx_env] += 1
                         self.dead_allies_count[idx_env] += infos['dead_allies']
@@ -127,7 +127,7 @@ class SubprocVecEnv_StarCraft2(VecEnv):
                     self.buf_terminal[idx_env, 0], self.buf_truncation[idx_env, 0] = False, False
 
         self.waiting = False
-        return self.buf_obs.copy(), self.buf_state.copy(), self.buf_rew.copy(), self.buf_terminal.copy(), self.buf_truncation.copy(), self.buf_infos.copy()
+        return self.buf_obs.copy(), self.buf_state.copy(), self.buf_rew.copy(), self.buf_terminal.copy(), self.buf_truncation.copy(), self.buf_info.copy()
 
     def reset(self):
         self._assert_not_closed()
@@ -136,9 +136,9 @@ class SubprocVecEnv_StarCraft2(VecEnv):
         result = [remote.recv() for remote in self.remotes]
         result = flatten_list(result)
         obs, state, infos = zip(*result)
-        self.buf_obs, self.buf_state, self.buf_infos = np.array(obs), np.array(state), list(infos)
+        self.buf_obs, self.buf_state, self.buf_info = np.array(obs), np.array(state), list(infos)
         self.buf_done = np.zeros((self.num_envs,), dtype=np.bool)
-        return self.buf_obs.copy(), self.buf_state.copy(), self.buf_infos.copy()
+        return self.buf_obs.copy(), self.buf_state.copy(), self.buf_info.copy()
 
     def close_extras(self):
         self.closed = True
@@ -229,7 +229,7 @@ class DummyVecEnv_StarCraft2(VecEnv):
 
                     if self.buf_terminal[idx_env].all() or self.buf_truncation[idx_env].all():
                         self.buf_done[idx_env] = True
-                        self.battles_game += 1
+                        self.battles_game[idx_env] += 1
                         if infos['battle_won']:
                             self.battles_won[idx_env] += 1
                         self.dead_allies_count[idx_env] += infos['dead_allies']
