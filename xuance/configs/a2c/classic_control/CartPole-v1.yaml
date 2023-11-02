@@ -1,7 +1,7 @@
 agent: "A2C"
 env_name: "Classic Control"
 env_id: "CartPole-v1"
-vectorize: "Dummy_Gym"
+vectorize: "Subproc_Gym"
 policy: "Categorical_AC"
 representation: "Basic_MLP"
 runner: "DRL"

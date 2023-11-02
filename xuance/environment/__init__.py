@@ -22,7 +22,7 @@ REGISTRY_VEC_ENV = {
     "Dummy_Atari": DummyVecEnv_Atari,
 
     # multiprocess #
-    "Subproc": SubprocVecEnv,
+    # "Subproc": SubprocVecEnv,
     "Subproc_Gym": SubprocVecEnv_Gym,
     "Subproc_Pettingzoo": SubprocVecEnv_Pettingzoo,
     "Subproc_StarCraft2": SubprocVecEnv_StarCraft2,

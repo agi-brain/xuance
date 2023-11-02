@@ -292,7 +292,7 @@ class SC2_Runner(Runner_Base):
             "step": self.current_step
         }
 
-        agent_info = f"({self.args.agent}, seed={self.args.seed})"
+        agent_info = f"({self.args.agent}, {self.args.env_id}, seed={self.args.seed})"
         time_start = time.time()
         while self.current_step <= self.running_steps:
             print(agent_info, f"Steps: {self.current_step} / {self.running_steps}: ")
