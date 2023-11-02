@@ -4,7 +4,7 @@ env_id: "2m_vs_1z"
 fps: 15
 policy: "Categorical_MAAC_Policy"
 representation: "Basic_RNN"
-vectorize: "Dummy_StarCraft2"
+vectorize: "Subproc_StarCraft2"
 runner: "StarCraft2_Runner"
 
 # recurrent settings for Basic_RNN representation
@@ -63,7 +63,7 @@ train_per_step: True
 training_frequency: 1
 
 test_steps: 10000
-eval_interval: 5000
+eval_interval: 10000
 test_episode: 5
 log_dir: "./logs/vdac/"
 model_dir: "./models/vdac/"

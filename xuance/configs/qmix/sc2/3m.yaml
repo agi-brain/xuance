@@ -5,7 +5,7 @@ env_id: "3m"
 fps: 15
 policy: "Mixing_Q_network"
 representation: "Basic_RNN"
-vectorize: "Subproc_StarCraft2"
+vectorize: "Dummy_StarCraft2"
 runner: "StarCraft2_Runner"
 on_policy: False
 
@@ -26,7 +26,7 @@ hidden_dim_mixing_net: 32  # hidden units of mixing network
 hidden_dim_hyper_net: 32  # hidden units of hyper network
 
 seed: 1
-parallels: 8
+parallels: 1
 buffer_size: 5000
 batch_size: 32
 learning_rate: 0.0007

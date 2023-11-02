@@ -4,7 +4,7 @@ env_id: "2s3z"
 fps: 15
 policy: "Categorical_COMA_Policy"
 representation: "Basic_RNN"
-vectorize: "Dummy_StarCraft2"
+vectorize: "Subproc_StarCraft2"
 runner: "StarCraft2_Runner"
 
 use_recurrent: True

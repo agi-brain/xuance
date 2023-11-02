@@ -4,7 +4,7 @@ env_id: "8m_vs_9m"
 fps: 15
 policy: "Categorical_MAAC_Policy"
 representation: "Basic_RNN"
-vectorize: "Dummy_StarCraft2"
+vectorize: "Subproc_StarCraft2"
 runner: "StarCraft2_Runner"
 on_policy: True
 
@@ -62,7 +62,7 @@ start_training: 1
 running_steps: 10000000  # 10M
 training_frequency: 1
 
-eval_interval: 50000
+eval_interval: 100000
 test_episode: 10
 log_dir: "./logs/vdac/"
 model_dir: "./models/vdac/"

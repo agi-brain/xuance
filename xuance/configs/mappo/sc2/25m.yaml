@@ -58,7 +58,7 @@ start_training: 1
 running_steps: 5000000  # 5M
 training_frequency: 1
 
-eval_interval: 25000
+eval_interval: 50000
 test_episode: 10
 log_dir: "./logs/mappo/"
 model_dir: "./models/mappo/"
