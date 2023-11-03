@@ -1,3 +1,5 @@
+from abc import ABC
+
 from xuance.environment.vector_envs.vector_env import VecEnv, AlreadySteppingError, NotSteppingError
 from xuance.environment.vector_envs.env_utils import obs_n_space_info
 from xuance.environment.gym.gym_vec_env import DummyVecEnv_Gym
@@ -27,7 +29,7 @@ def worker(remote, parent_remote, env_fn_wrappers):
             elif cmd == 'reset':
                 remote.send([env.reset() for env in envs])
             elif cmd == 'render':
-                remote.send([env.render(data) for env in envs])
+                remote.send([env.render() for env in envs])
             elif cmd == 'close':
                 remote.close()
                 break
@@ -39,7 +41,8 @@ def worker(remote, parent_remote, env_fn_wrappers):
                     "action_spaces": envs[0].action_spaces,
                     "agent_ids": envs[0].agent_ids,
                     "n_agents": [envs[0].get_num(h) for h in envs[0].handles],
-                    "max_cycles": envs[0].max_cycles
+                    "max_cycles": envs[0].max_cycles,
+                    "side_names": envs[0].side_names
                 }
                 remote.send(CloudpickleWrapper(env_info))
             else:
@@ -88,6 +91,7 @@ class SubprocVecEnv_Pettingzoo(VecEnv):
         obs_n_space = env_info["observation_spaces"]
         self.agent_ids = env_info["agent_ids"]
         self.n_agents = env_info["n_agents"]
+        self.side_names = env_info["side_names"]
         VecEnv.__init__(self, num_envs, obs_n_space, env_info["action_spaces"])
 
         self.keys, self.shapes, self.dtypes = obs_n_space_info(obs_n_space)
@@ -134,8 +138,8 @@ class SubprocVecEnv_Pettingzoo(VecEnv):
         result = flatten_list(result)
         obs, info = zip(*result)
         for e in range(self.num_envs):
-            self.buf_obs_dict[e].update(obs)
-            self.buf_infos_dict[e].update(info["infos"])
+            self.buf_obs_dict[e].update(obs[e])
+            self.buf_infos_dict[e].update(info[e]["infos"])
             for h, agent_keys_h in enumerate(self.agent_keys):
                 self.buf_obs[h][e] = itemgetter(*agent_keys_h)(self.buf_obs_dict[e])
         return self.buf_obs.copy(), self.buf_infos_dict.copy()
@@ -155,6 +159,7 @@ class SubprocVecEnv_Pettingzoo(VecEnv):
             assert self.num_envs == 1, "actions {} is either not a list or has a wrong size - cannot match to {} environments".format(
                 actions, self.num_envs)
             self.actions = [actions]
+        self.actions = np.array_split(self.actions, self.n_remotes)
         for remote, action in zip(self.remotes, self.actions):
             remote.send(('step', action))
         self.waiting = True
@@ -163,12 +168,12 @@ class SubprocVecEnv_Pettingzoo(VecEnv):
         if not self.waiting:
             raise NotSteppingError
 
-        for e, remote in zip(range(self.num_envs, self.remotes)):
+        for e, remote in zip(range(self.num_envs), self.remotes):
             result = remote.recv()
             result = flatten_list(result)
             o, r, d, t, info = result
             remote.send(('state', None))
-            self.buf_state[e] = remote.recv()
+            self.buf_state[e] = flatten_list(remote.recv())
 
             if len(o.keys()) < self.n_agent_all:
                 self.empty_dict_buffers(e)
@@ -182,7 +187,7 @@ class SubprocVecEnv_Pettingzoo(VecEnv):
             # resort the data as group-wise
             episode_scores = []
             remote.send(('get_agent_mask', None))
-            mask = remote.recv()
+            mask = np.array(flatten_list(remote.recv()))
             for h, agent_keys_h in enumerate(self.agent_keys):
                 getter = itemgetter(*agent_keys_h)
                 self.buf_agent_mask[h][e] = mask[self.agent_ids[h]]
@@ -195,11 +200,11 @@ class SubprocVecEnv_Pettingzoo(VecEnv):
 
             if all(self.buf_dones_dict[e].values()) or all(self.buf_trunctions_dict[e].values()):
                 remote.send(('reset', None))
-                obs_reset, _ = remote.recv()
+                obs_reset, _ = flatten_list(remote.recv())
                 remote.send(('state', None))
-                state_reset = remote.recv()
+                state_reset = flatten_list(remote.recv())
                 remote.send(('get_agent_mask', None))
-                mask_reset = remote.recv()
+                mask_reset = np.array(flatten_list(remote.recv()))
                 obs_reset_handles, mask_reset_handles = [], []
                 for h, agent_keys_h in enumerate(self.agent_keys):
                     getter = itemgetter(*agent_keys_h)
@@ -213,9 +218,19 @@ class SubprocVecEnv_Pettingzoo(VecEnv):
         self.waiting = False
         return self.buf_obs.copy(), self.buf_rews.copy(), self.buf_dones.copy(), self.buf_trunctions.copy(), self.buf_infos_dict.copy()
 
+    def close_extras(self):
+        self.closed = True
+        if self.waiting:
+            for remote in self.remotes:
+                remote.recv()
+        for remote in self.remotes:
+            remote.send(('close', None))
+        for p in self.ps:
+            p.join()
+
     def render(self, mode=None):
         for pipe in self.remotes:
-            pipe.send(('render', mode))
+            pipe.send(('render', None))
         imgs = [pipe.recv() for pipe in self.remotes]
         imgs = flatten_list(imgs)
         return imgs
@@ -244,6 +259,7 @@ class DummyVecEnv_Pettingzoo(DummyVecEnv_Gym):
         obs_n_space = env.observation_spaces  # [Box(dim_o), Box(dim_o), ...] ----> dict
         self.agent_ids = env.agent_ids
         self.n_agents = [env.get_num(h) for h in self.handles]
+        self.side_names = env.side_names
 
         self.keys, self.shapes, self.dtypes = obs_n_space_info(obs_n_space)
         self.agent_keys = [[self.keys[k] for k in ids] for ids in self.agent_ids]

@@ -77,7 +77,7 @@ class Pettingzoo_Runner(Runner_Base):
 
         # environment details, representations, policies, optimizers, and agents.
         for h, arg in enumerate(self.args):
-            arg.handle_name = self.envs.envs[0].side_names[h]
+            arg.handle_name = self.envs.side_names[h]
             if self.n_handles > 1 and arg.agent != "RANDOM":
                 arg.model_dir += "{}/".format(arg.handle_name)
             arg.handle, arg.n_agents = h, self.envs.n_agents[h]

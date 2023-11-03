@@ -18,8 +18,8 @@ critic_hidden_size: [64, 64]
 activation: "ReLU"
 
 seed: 1
-parallels: 128
-n_size: 25
+parallels: 8  # 128
+n_size: 128
 n_epoch: 10
 n_minibatch: 1
 learning_rate: 0.0007
