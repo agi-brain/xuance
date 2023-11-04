@@ -1,12 +1,11 @@
 agent: "VDAC"
 env_name: "StarCraft2"
-env_id: "MMM2"
+env_id: "1c3s5z"
 fps: 15
 policy: "Categorical_MAAC_Policy_Share"
 representation: "Basic_RNN"
 vectorize: "Subproc_StarCraft2"
 runner: "StarCraft2_Runner"
-on_policy: True
 
 # recurrent settings for Basic_RNN representation
 use_recurrent: True
@@ -18,7 +17,7 @@ N_recurrent_layers: 1
 dropout: 0
 normalize: "LayerNorm"
 initialize: "orthogonal"
-gain: 1.0
+gain: 0.01
 
 actor_hidden_size: []
 critic_hidden_size: []
@@ -32,7 +31,7 @@ seed: 1
 parallels: 8
 n_size: 8
 n_epoch: 1
-n_minibatch: 2
+n_minibatch: 1
 learning_rate: 0.0007  # 7e-4
 weight_decay: 0
 
@@ -46,7 +45,6 @@ gamma: 0.99  # discount factor
 # tricks
 use_linear_lr_decay: False  # if use linear learning rate decay
 end_factor_lr_decay: 0.5
-use_global_state: False  # if use global state to replace joint observations
 use_grad_norm: True  # gradient normalization
 max_grad_norm: 10.0
 use_value_clip: True  # limit the value range
@@ -59,10 +57,12 @@ use_gae: True  # use GAE trick to calculate returns.
 gae_lambda: 0.95
 
 start_training: 1
-running_steps: 10000000  # 10M
+running_steps: 2000000
+train_per_step: True
 training_frequency: 1
 
-eval_interval: 50000
+test_steps: 10000
+eval_interval: 10000
 test_episode: 16
 log_dir: "./logs/vdac/"
 model_dir: "./models/vdac/"

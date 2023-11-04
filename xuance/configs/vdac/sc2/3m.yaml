@@ -55,7 +55,7 @@ start_training: 1
 running_steps: 1000000
 training_frequency: 1
 
-eval_interval: 10000
+eval_interval: 5000
 test_episode: 16
 log_dir: "./logs/vdac/"
 model_dir: "./models/vdac/"
