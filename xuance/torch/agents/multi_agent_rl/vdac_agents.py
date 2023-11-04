@@ -1,3 +1,6 @@
+import numpy as np
+import torch
+
 from xuance.torch.agents import *
 
 
@@ -23,18 +26,17 @@ class VDAC_Agents(MARLAgents):
                       "dropout": config.dropout,
                       "rnn": config.rnn} if self.use_recurrent else {}
         representation = REGISTRY_Representation[config.representation](*input_representation, **kwargs_rnn)
-        # create representation for critic
-        input_representation[0] = (config.dim_state,) if self.use_global_state else (config.dim_obs * config.n_agents,)
-        representation_critic = REGISTRY_Representation[config.representation](*input_representation, **kwargs_rnn)
         # create policy
         if config.mixer == "VDN":
             mixer = VDN_mixer()
         elif config.mixer == "QMIX":
             mixer = QMIX_mixer(config.dim_state[0], config.hidden_dim_mixing_net, config.hidden_dim_hyper_net,
                                config.n_agents, device)
+        elif config.mixer == "Independent":
+            mixer = None
         else:
-            raise "config has no attribute named mixer!"
-        input_policy = get_policy_in_marl(config, (representation, representation_critic), mixer=mixer)
+            raise f"Mixer named {config.mixer} is not defined!"
+        input_policy = get_policy_in_marl(config, representation, mixer=mixer)
         policy = REGISTRY_Policy[config.policy](*input_policy,
                                                 use_recurrent=config.use_recurrent,
                                                 rnn=config.rnn,
@@ -64,43 +66,23 @@ class VDAC_Agents(MARLAgents):
         batch_size = len(obs_n)
         agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(batch_size, -1, -1).to(self.device)
         obs_in = torch.Tensor(obs_n).view([batch_size, self.n_agents, -1]).to(self.device)
+        state = torch.Tensor(state).to(self.device)
         if self.use_recurrent:
             batch_agents = batch_size * self.n_agents
-            hidden_state, dists = self.policy(obs_in.view(batch_agents, 1, -1),
-                                              agents_id.view(batch_agents, 1, -1),
-                                              *rnn_hidden,
-                                              avail_actions=avail_actions.reshape(batch_agents, 1, -1))
+            hidden_state, dists, values_tot = self.policy(obs_in.view(batch_agents, 1, -1),
+                                                          agents_id.unsqueeze(2),
+                                                          *rnn_hidden,
+                                                          avail_actions=avail_actions[:, :, np.newaxis],
+                                                          state=state.unsqueeze(2))
             actions = dists.stochastic_sample()
-            log_pi_a = dists.log_prob(actions).reshape(batch_size, self.n_agents)
             actions = actions.reshape(batch_size, self.n_agents)
+            values_tot = values_tot.reshape([batch_size, self.n_agents, 1])
         else:
-            hidden_state, dists = self.policy(obs_in, agents_id, avail_actions=avail_actions)
+            hidden_state, dists, values_tot = self.policy(obs_in, agents_id,
+                                                          avail_actions=avail_actions,
+                                                          state=state)
             actions = dists.stochastic_sample()
-            log_pi_a = dists.log_prob(actions)
-        return hidden_state, actions.detach().cpu().numpy(), log_pi_a.detach().cpu().numpy()
-
-    def values(self, obs_n, *rnn_hidden, state=None):
-        batch_size = len(obs_n)
-        agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(batch_size, -1, -1).to(self.device)
-        # build critic input
-        if self.use_global_state:
-            state = torch.Tensor(state).unsqueeze(1).to(self.device)
-            critic_in = state.expand(-1, self.n_agents, -1)
-        else:
-            critic_in = torch.Tensor(obs_n).view([batch_size, 1, -1]).to(self.device)
-            critic_in = critic_in.expand(-1, self.n_agents, -1)
-        # get critic values
-        if self.use_recurrent:
-            hidden_state, values_n = self.policy.get_values(critic_in.unsqueeze(2),  # add a sequence length axis.
-                                                            agents_id.unsqueeze(2),
-                                                            *rnn_hidden)
-            values_n = values_n.squeeze(2)
-        else:
-            hidden_state, values_n = self.policy.get_values(critic_in, agents_id)
-
-        values_tot = self.policy.value_tot(values_n, global_state=state).unsqueeze(1).expand(-1, self.n_agents, -1)
-
-        return hidden_state, values_tot.detach().cpu().numpy()
+        return hidden_state, actions.detach().cpu().numpy(), values_tot.detach().cpu().numpy()
 
     def train(self, i_step, **kwargs):
         if self.memory.full:

@@ -134,7 +134,7 @@ class COMA_Learner(LearnerMAS):
             state = state[:, :-1].unsqueeze(1).repeat(1, self.n_agents, 1, 1)
             critic_in = torch.concat([state, obs[:, :, :-1], actions_in], dim=-1)
         else:
-            critic_in = torch.concat([obs[:, :-1], actions_in])
+            critic_in = torch.concat([obs[:, :, :-1], actions_in], dim=-1)
 
         # get critic value
         _, q_eval = self.policy.get_values(critic_in)

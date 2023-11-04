@@ -107,7 +107,7 @@ class COMA_Agents(MARLAgents):
             state = torch.Tensor(state).unsqueeze(1).to(self.device).repeat(1, self.n_agents, 1)
             critic_in = torch.concat([state, obs_n, actions_in], dim=-1)
         else:
-            critic_in = torch.concat([obs_n, actions_in])
+            critic_in = torch.concat([obs_n, actions_in], dim=-1)
         # get critic values
         hidden_state, values_n = self.policy.get_values(critic_in, target=True)
 

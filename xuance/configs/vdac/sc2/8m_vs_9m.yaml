@@ -2,7 +2,7 @@ agent: "VDAC"
 env_name: "StarCraft2"
 env_id: "8m_vs_9m"
 fps: 15
-policy: "Categorical_MAAC_Policy"
+policy: "Categorical_MAAC_Policy_Share"
 representation: "Basic_RNN"
 vectorize: "Subproc_StarCraft2"
 runner: "StarCraft2_Runner"
@@ -12,7 +12,7 @@ on_policy: True
 use_recurrent: True
 rnn: "GRU"
 recurrent_layer_N: 1
-fc_hidden_sizes: [64, 64, 64]
+fc_hidden_sizes: [64, ]
 recurrent_hidden_size: 64
 N_recurrent_layers: 1
 dropout: 0
@@ -26,12 +26,12 @@ activation: "ReLU"
 
 mixer: "QMIX"  # choices: VDN (sum), QMIX (monotonic)
 hidden_dim_mixing_net: 32  # hidden units of mixing network
-hidden_dim_hyper_net: 32  # hidden units of hyper network
+hidden_dim_hyper_net: 64  # hidden units of hyper network
 
 seed: 1
 parallels: 8
-n_size: 128
-n_epoch: 15
+n_size: 8
+n_epoch: 1
 n_minibatch: 1
 learning_rate: 0.0007  # 7e-4
 weight_decay: 0

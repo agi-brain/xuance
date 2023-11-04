@@ -64,7 +64,7 @@ class COMA_Critic(nn.Module):
                  device: Optional[Union[str, int, torch.device]] = None):
         super(COMA_Critic, self).__init__()
         layers = []
-        input_shape = (state_dim, )
+        input_shape = (state_dim,)
         for h in hidden_sizes:
             mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initialize, device)
             layers.extend(mlp)
@@ -143,6 +143,80 @@ class MAAC_Policy(nn.Module):
         critic_in = torch.concat([outputs['state'], agent_ids], dim=-1)
         v = self.critic(critic_in)
         return rnn_hidden, v
+
+    def value_tot(self, values_n: torch.Tensor, global_state=None):
+        if global_state is not None:
+            global_state = torch.as_tensor(global_state).to(self.device)
+        return values_n if self.mixer is None else self.mixer(values_n, global_state)
+
+
+class MAAC_Policy_Share(MAAC_Policy):
+    """
+    MAAC_Policy: Multi-Agent Actor-Critic Policy
+    """
+
+    def __init__(self,
+                 action_space: Discrete,
+                 n_agents: int,
+                 representation: nn.Module,
+                 mixer: Optional[VDN_mixer] = None,
+                 actor_hidden_size: Sequence[int] = None,
+                 critic_hidden_size: Sequence[int] = None,
+                 normalize: Optional[ModuleType] = None,
+                 initialize: Optional[Callable[..., torch.Tensor]] = None,
+                 activation: Optional[ModuleType] = None,
+                 device: Optional[Union[str, int, torch.device]] = None,
+                 **kwargs):
+        super(MAAC_Policy, self).__init__()
+        self.device = device
+        self.action_dim = action_space.n
+        self.n_agents = n_agents
+        self.lstm = True if kwargs["rnn"] == "LSTM" else False
+        self.use_rnn = True if kwargs["use_recurrent"] else False
+        self.representation = representation
+        self.representation_info_shape = self.representation.output_shapes
+        self.actor = ActorNet(self.representation.output_shapes['state'][0], self.action_dim, n_agents,
+                              actor_hidden_size, normalize, initialize, kwargs['gain'], activation, device)
+        self.critic = CriticNet(self.representation.output_shapes['state'][0], n_agents, critic_hidden_size,
+                                normalize, initialize, activation, device)
+        self.mixer = mixer
+        self.pi_dist = CategoricalDistribution(self.action_dim)
+
+    def forward(self, observation: torch.Tensor, agent_ids: torch.Tensor,
+                *rnn_hidden: torch.Tensor, avail_actions=None, state=None):
+        batch_size = len(avail_actions)
+        if self.use_rnn:
+            sequence_length = observation.shape[1]
+            outputs = self.representation(observation, *rnn_hidden)
+            rnn_hidden = (outputs['rnn_hidden'], outputs['rnn_cell'])
+            representated_state = outputs['state'].view(batch_size, self.n_agents, sequence_length, -1)
+            actor_critic_input = torch.concat([representated_state, agent_ids], dim=-1)
+        else:
+            outputs = self.representation(observation)
+            rnn_hidden = None
+            actor_critic_input = torch.concat([outputs['state'], agent_ids], dim=-1)
+        act_logits = self.actor(actor_critic_input)
+        if avail_actions is not None:
+            avail_actions = torch.Tensor(avail_actions)
+            act_logits[avail_actions == 0] = -1e10
+            self.pi_dist.set_param(logits=act_logits)
+        else:
+            self.pi_dist.set_param(logits=act_logits)
+
+        values_independent = self.critic(actor_critic_input)
+        if self.use_rnn:
+            if self.mixer is None:
+                values_tot = values_independent
+            else:
+                sequence_length = observation.shape[1]
+                values_independent = values_independent.transpose(1, 2).reshape(batch_size*sequence_length, self.n_agents)
+                values_tot = self.value_tot(values_independent, global_state=state)
+                values_tot = values_tot.reshape([batch_size, sequence_length, 1])
+                values_tot = values_tot.unsqueeze(1).expand(-1, self.n_agents, -1, -1)
+        else:
+            values_tot = values_independent if self.mixer is None else self.value_tot(values_independent, global_state=state)
+
+        return rnn_hidden, self.pi_dist, values_tot
 
     def value_tot(self, values_n: torch.Tensor, global_state=None):
         if global_state is not None:

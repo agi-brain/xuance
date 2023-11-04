@@ -24,6 +24,7 @@ from .deterministic_marl import MFQnetwork, MixingQnetwork, Weighted_MixingQnetw
     Basic_DDPG_policy, MADDPG_policy, MATD3_policy
 from .categorical_marl import MeanFieldActorCriticPolicy, COMAPolicy
 from .categorical_marl import MAAC_Policy as Categorical_MAAC_Policy
+from .categorical_marl import MAAC_Policy_Share as Categorical_MAAC_Policy_Share
 from .gaussian_marl import Basic_ISAC_policy as Gaussian_ISAC
 from .gaussian_marl import MASAC_policy as Gaussian_MASAC
 from .gaussian_marl import MAAC_Policy as Gaussain_MAAC
@@ -64,6 +65,7 @@ REGISTRY = {
     "Qtran_Mixing_Q_network": Qtran_MixingQnetwork,
     "DCG_policy": DCG_policy,
     "Categorical_MAAC_Policy": Categorical_MAAC_Policy,
+    "Categorical_MAAC_Policy_Share": Categorical_MAAC_Policy_Share,
     "Categorical_COMA_Policy": COMAPolicy,
     "Independent_DDPG_Policy": BasicDDPG_marl,
     "MADDPG_Policy": MADDPG_policy,
@@ -133,6 +135,8 @@ Policy_Inputs = {
     "Qtran_Mixing_Q_network": ["action_space", "n_agents", "representation", "mixer", "qtran_mixer", "hidden_sizes",
                                "normalize", "initialize", "activation", "device"],
     "Categorical_MAAC_Policy": ["action_space", "n_agents", "representation", "mixer", "actor_hidden_size",
+                                "critic_hidden_size", "normalize", "initialize", "activation", "device"],
+    "Categorical_MAAC_Policy_Share": ["action_space", "n_agents", "representation", "mixer", "actor_hidden_size",
                                 "critic_hidden_size", "normalize", "initialize", "activation", "device"],
     "Categorical_MFAC_Policy": ["action_space", "n_agents", "representation", "actor_hidden_size",
                                 "critic_hidden_size", "normalize", "initialize", "activation", "device"],

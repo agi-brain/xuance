@@ -70,7 +70,7 @@ class SC2_Runner(Runner_Base):
 
     def init_rnn_hidden(self):
         rnn_hidden = self.agents.policy.representation.init_hidden(self.n_envs * self.num_agents)
-        if self.on_policy and self.args.agent != "COMA":
+        if self.on_policy and self.args.agent in ["MAPPO"]:
             rnn_hidden_critic = self.agents.policy.representation_critic.init_hidden(self.n_envs * self.num_agents)
         else:
             rnn_hidden_critic = [None, None]
@@ -112,6 +112,11 @@ class SC2_Runner(Runner_Base):
                 rnn_hidden_next, actions_n, actions_n_onehot = self.agents.act(obs_n, *rnn_hidden_policy,
                                                                                avail_actions=avail_actions,
                                                                                test_mode=test_mode)
+            elif self.args.agent == "VDAC":
+                rnn_hidden_next, actions_n, values_n = self.agents.act(obs_n, *rnn_hidden_policy,
+                                                                       avail_actions=avail_actions,
+                                                                       state=state,
+                                                                       test_mode=test_mode)
             else:
                 rnn_hidden_next, actions_n, log_pi_n = self.agents.act(obs_n, *rnn_hidden_policy,
                                                                        avail_actions=avail_actions,
@@ -119,10 +124,13 @@ class SC2_Runner(Runner_Base):
             if test_mode:
                 rnn_hidden_critic_next, values_n = None, 0
             else:
-                kwargs = {"state": state}
-                if self.args.agent == "COMA":
-                    kwargs.update({"actions_n": actions_n, "actions_onehot": actions_n_onehot})
-                rnn_hidden_critic_next, values_n = self.agents.values(obs_n, *rnn_hidden_critic, **kwargs)
+                if self.args.agent == "VDAC":
+                    rnn_hidden_critic_next = [None, None]
+                else:
+                    kwargs = {"state": state}
+                    if self.args.agent == "COMA":
+                        kwargs.update({"actions_n": actions_n, "actions_onehot": actions_n_onehot})
+                    rnn_hidden_critic_next, values_n = self.agents.values(obs_n, *rnn_hidden_critic, **kwargs)
         else:
             rnn_hidden_next, actions_n = self.agents.act(obs_n, *rnn_hidden_policy,
                                                          avail_actions=avail_actions, test_mode=test_mode)
@@ -212,10 +220,22 @@ class SC2_Runner(Runner_Base):
                                 values_next = np.array([0.0 for _ in range(self.num_agents)])
                             else:
                                 batch_select = np.arange(i_env * self.num_agents, (i_env + 1) * self.num_agents)
-                                rnn_h_critic_i = self.agents.policy.representation_critic.get_hidden_item(batch_select,
-                                                                                                          *rnn_hidden_critic)
                                 kwargs = {"state": [next_state[i_env]]}
-                                _, values_next = self.agents.values(next_obs_n[i_env:i_env + 1], *rnn_h_critic_i, **kwargs)
+                                if self.args.agent == "VDAC":
+                                    rnn_h_ac_i = self.agents.policy.representation.get_hidden_item(batch_select,
+                                                                                                   *rnn_hidden)
+                                    kwargs.update({"avail_actions": available_actions[i_env:i_env+1],
+                                                   "test_mode": test_mode})
+                                    _, _, values_next = self.agents.act(next_obs_n[i_env:i_env+1],
+                                                                        *rnn_h_ac_i, **kwargs)
+                                else:
+                                    rnn_h_critic_i = self.agents.policy.representation_critic.get_hidden_item(batch_select,
+                                                                                                              *rnn_hidden_critic)
+                                    if self.args.agent == "COMA":
+                                        kwargs.update({"actions_n": actions_dict["actions_n"],
+                                                       "actions_onehot": actions_dict["act_n_onehot"]})
+                                    _, values_next = self.agents.values(next_obs_n[i_env:i_env + 1],
+                                                                        *rnn_h_critic_i, **kwargs)
                             self.agents.memory.finish_path(i_env, self.env_step+1, *terminal_data,
                                                            value_next=values_next,
                                                            value_normalizer=self.agents.learner.value_normalizer)
@@ -296,6 +316,7 @@ class SC2_Runner(Runner_Base):
 
         agent_info = f"Algo: {self.args.agent}, Map: {self.args.env_id}, seed: {self.args.seed}, "
         print(f"Steps: {self.current_step} / {self.running_steps}: ")
+        print(agent_info, "Win rate: %.3f, Mean score: %.2f. " % (test_win_rate, test_score_mean))
         last_battles_info = self.get_battles_info()
         time_start = time.time()
         while self.current_step <= self.running_steps:
@@ -305,8 +326,8 @@ class SC2_Runner(Runner_Base):
             if (self.current_step - last_test_T) / test_interval >= 1.0:
                 last_test_T += test_interval
                 # log train results before testing.
-                win_rate, allies_dead_ratio, enemies_dead_ratio = self.get_battles_result(last_battles_info)
-                results_info = {"Train-Results/Win-Rate": win_rate,
+                train_win_rate, allies_dead_ratio, enemies_dead_ratio = self.get_battles_result(last_battles_info)
+                results_info = {"Train-Results/Win-Rate": train_win_rate,
                                 "Train-Results/Allies-Dead-Ratio": allies_dead_ratio,
                                 "Train-Results/Enemies-Dead-Ratio": enemies_dead_ratio}
                 self.log_infos(results_info, last_test_T)
@@ -318,8 +339,8 @@ class SC2_Runner(Runner_Base):
                     best_score = {"mean": test_score_mean,
                                   "std": test_score_std,
                                   "step": self.current_step}
-                if best_win_rate < win_rate:
-                    best_win_rate = win_rate
+                if best_win_rate < test_win_rate:
+                    best_win_rate = test_win_rate
                     self.agents.save_model("best_model.pth")  # save best model
 
                 last_battles_info = self.get_battles_info()
@@ -327,7 +348,7 @@ class SC2_Runner(Runner_Base):
                 # Estimate the physic running time
                 time_pass, time_left = self.time_estimate(time_start)
                 print(f"Steps: {self.current_step} / {self.running_steps}: ")
-                print(agent_info, "Win rate: %.3f, Mean score: %.2f. " % (win_rate, test_score_mean), time_pass, time_left)
+                print(agent_info, "Win rate: %.3f, Mean score: %.2f. " % (test_win_rate, test_score_mean), time_pass, time_left)
 
         # end benchmarking
         print("Finish benchmarking.")
