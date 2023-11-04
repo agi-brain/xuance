@@ -15,7 +15,7 @@ activation_action: 'sigmoid'
 
 seed: 1
 parallels: 16
-buffer_size: 5000
+buffer_size: 100000
 batch_size: 256
 lr_a: 0.01  # learning rate for actor
 lr_c: 0.001  # learning rate for critic

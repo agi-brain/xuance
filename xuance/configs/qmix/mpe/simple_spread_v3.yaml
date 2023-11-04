@@ -19,7 +19,7 @@ hidden_dim_hyper_net: 64  # hidden units of hyper network
 
 seed: 1
 parallels: 16
-buffer_size: 5000
+buffer_size: 100000
 batch_size: 256
 learning_rate: 0.001
 gamma: 0.99  # discount factor

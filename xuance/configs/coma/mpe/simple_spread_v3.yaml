@@ -19,7 +19,7 @@ activation: "ReLU"
 
 seed: 1
 parallels: 10
-n_size: 25
+n_size: 250
 n_epoch: 10
 n_minibatch: 1
 learning_rate_actor: 0.0007
