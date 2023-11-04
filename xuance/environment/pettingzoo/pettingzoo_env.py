@@ -9,7 +9,8 @@ class PettingZoo_Env(ParallelEnv):
     def __init__(self, env_name: str, env_id: str, seed: int, **kwargs):
         super(PettingZoo_Env, self).__init__()
         scenario = importlib.import_module('pettingzoo.' + env_name + '.' + env_id)
-        self.env = scenario.parallel_env(continuous_actions=kwargs["continuous"],
+        self.continuous_actions = kwargs["continuous"]
+        self.env = scenario.parallel_env(continuous_actions=self.continuous_actions,
                                          render_mode=kwargs["render_mode"])
         self.scenario_name = env_name + "." + env_id
         self.n_handles = len(AGENT_NAME_DICT[self.scenario_name])
@@ -53,8 +54,9 @@ class PettingZoo_Env(ParallelEnv):
         return observations, reset_info
 
     def step(self, actions):
-        for k, v in actions.items():
-            actions[k] = np.clip(v, self.action_spaces[k].low, self.action_spaces[k].high)
+        if self.continuous_actions:
+            for k, v in actions.items():
+                actions[k] = np.clip(v, self.action_spaces[k].low, self.action_spaces[k].high)
         observations, rewards, terminations, truncations, infos = self.env.step(actions)
         for k, v in rewards.items():
             self.individual_episode_reward[k] += v
