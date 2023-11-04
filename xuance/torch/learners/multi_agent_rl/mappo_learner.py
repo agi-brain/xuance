@@ -156,7 +156,11 @@ class MAPPO_Clip_Learner(LearnerMAS):
         # critic loss
         rnn_hidden_critic = self.policy.representation_critic.init_hidden(batch_size * self.n_agents)
         if self.use_global_state:
-            _, value_pred = self.policy.get_values(state[:, :, :-1], IDs[:, :, :-1], *rnn_hidden_critic)
+            critic_in_obs = obs[:, :, :-1].transpose(1, 2).reshape(batch_size, episode_length, -1)
+            critic_in_obs = critic_in_obs.unsqueeze(1).expand(-1, self.n_agents, -1, -1)
+            critic_in_state = state[:, :, :-1]
+            critic_in = torch.concat([critic_in_obs, critic_in_state], dim=-1)
+            _, value_pred = self.policy.get_values(critic_in, IDs[:, :, :-1], *rnn_hidden_critic)
         else:
             critic_in = obs[:, :, :-1].transpose(1, 2).reshape(batch_size, episode_length, -1)
             critic_in = critic_in.unsqueeze(1).expand(-1, self.n_agents, -1, -1)

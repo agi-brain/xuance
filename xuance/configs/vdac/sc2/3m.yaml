@@ -23,7 +23,7 @@ actor_hidden_size: []
 critic_hidden_size: []
 activation: "ReLU"
 
-mixer: "QMIX"  # choices: VDN (sum), QMIX (monotonic)
+mixer: "Independent"  # choices: Independent, VDN (sum), QMIX (monotonic)
 hidden_dim_mixing_net: 32  # hidden units of mixing network
 hidden_dim_hyper_net: 32  # hidden units of hyper network
 
@@ -45,7 +45,6 @@ gamma: 0.99  # discount factor
 # tricks
 use_linear_lr_decay: False  # if use linear learning rate decay
 end_factor_lr_decay: 0.5
-use_global_state: False  # if use global state to replace joint observations
 use_grad_norm: True  # gradient normalization
 max_grad_norm: 10.0
 use_value_clip: True  # limit the value range

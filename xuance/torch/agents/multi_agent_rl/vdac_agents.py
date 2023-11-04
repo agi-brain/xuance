@@ -18,7 +18,6 @@ class VDAC_Agents(MARLAgents):
 
         input_representation = get_repre_in(config)
         self.use_recurrent = config.use_recurrent
-        self.use_global_state = config.use_global_state
         # create representation for actor
         kwargs_rnn = {"N_recurrent_layers": config.N_recurrent_layers,
                       "dropout": config.dropout,
