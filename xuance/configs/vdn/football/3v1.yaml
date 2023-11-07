@@ -31,7 +31,7 @@ q_hidden_size: [128, ]  # the units for each hidden layer
 activation: "ReLU"
 
 seed: 1
-parallels: 1
+parallels: 50
 buffer_size: 5000
 batch_size: 32
 learning_rate: 0.0007
@@ -51,7 +51,7 @@ use_grad_clip: False
 grad_clip_norm: 0.5
 
 eval_interval: 250000
-test_episode: 20
+test_episode: 50
 log_dir: "./logs/vdn/"
 model_dir: "./models/vdn/"
 videos_dir: "./videos/vdn/"

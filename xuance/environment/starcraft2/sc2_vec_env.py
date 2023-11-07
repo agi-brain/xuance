@@ -48,7 +48,6 @@ class SubprocVecEnv_StarCraft2(VecEnv):
         """
         Arguments:
         env_fns: iterable of callables -  functions that create environments to run in subprocesses. Need to be cloud-pickleable
-        in_series: number of environments to run in series in a single process
         (e.g. when len(env_fns) == 12 and in_series == 3, it will run 4 processes, each running 3 envs in series)
         """
         self.waiting = False
@@ -97,6 +96,17 @@ class SubprocVecEnv_StarCraft2(VecEnv):
         self.dead_enemies_count = np.zeros(self.num_envs, np.int32)
         self.max_episode_length = env_info["episode_limit"]
 
+    def reset(self):
+        self._assert_not_closed()
+        for remote in self.remotes:
+            remote.send(('reset', None))
+        result = [remote.recv() for remote in self.remotes]
+        result = flatten_list(result)
+        obs, state, infos = zip(*result)
+        self.buf_obs, self.buf_state, self.buf_info = np.array(obs), np.array(state), list(infos)
+        self.buf_done = np.zeros((self.num_envs,), dtype=np.bool)
+        return self.buf_obs.copy(), self.buf_state.copy(), self.buf_info.copy()
+
     def step_async(self, actions):
         self._assert_not_closed()
         actions = np.array_split(actions, self.n_remotes)
@@ -129,17 +139,6 @@ class SubprocVecEnv_StarCraft2(VecEnv):
 
         self.waiting = False
         return self.buf_obs.copy(), self.buf_state.copy(), self.buf_rew.copy(), self.buf_terminal.copy(), self.buf_truncation.copy(), self.buf_info.copy()
-
-    def reset(self):
-        self._assert_not_closed()
-        for remote in self.remotes:
-            remote.send(('reset', None))
-        result = [remote.recv() for remote in self.remotes]
-        result = flatten_list(result)
-        obs, state, infos = zip(*result)
-        self.buf_obs, self.buf_state, self.buf_info = np.array(obs), np.array(state), list(infos)
-        self.buf_done = np.zeros((self.num_envs,), dtype=np.bool)
-        return self.buf_obs.copy(), self.buf_state.copy(), self.buf_info.copy()
 
     def close_extras(self):
         self.closed = True
@@ -213,6 +212,14 @@ class DummyVecEnv_StarCraft2(VecEnv):
         self.dead_enemies_count = np.zeros(self.num_envs, np.int32)
         self.max_episode_length = env_info["episode_limit"]
 
+    def reset(self):
+        self._assert_not_closed()
+        for i_env, env in enumerate(self.envs):
+            obs, state, infos = env.reset()
+            self.buf_obs[i_env], self.buf_state[i_env], self.buf_info[i_env] = np.array(obs), np.array(state), list(infos)
+        self.buf_done = np.zeros((self.num_envs,), dtype=np.bool)
+        return self.buf_obs.copy(), self.buf_state.copy(), self.buf_info.copy()
+
     def step_async(self, actions):
         self._assert_not_closed()
         self.actions = actions
@@ -240,14 +247,6 @@ class DummyVecEnv_StarCraft2(VecEnv):
 
         self.waiting = False
         return self.buf_obs.copy(), self.buf_state.copy(), self.buf_rew.copy(), self.buf_terminal.copy(), self.buf_truncation.copy(), self.buf_info.copy()
-
-    def reset(self):
-        self._assert_not_closed()
-        for i_env, env in enumerate(self.envs):
-            obs, state, infos = env.reset()
-            self.buf_obs[i_env], self.buf_state[i_env], self.buf_info[i_env] = np.array(obs), np.array(state), list(infos)
-        self.buf_done = np.zeros((self.num_envs,), dtype=np.bool)
-        return self.buf_obs.copy(), self.buf_state.copy(), self.buf_info.copy()
 
     def close_extras(self):
         self.closed = True

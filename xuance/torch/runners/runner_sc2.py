@@ -204,6 +204,7 @@ class SC2_Runner(Runner_Base):
                     else:
                         self.current_step += 1
                     if terminated[i_env] or truncated[i_env]:  # one env is terminal
+                        episode_score.append(info[i_env]["episode_score"])
                         available_actions = self.envs.get_avail_actions()
                         # log
                         if self.use_wandb:
@@ -278,20 +279,36 @@ class SC2_Runner(Runner_Base):
             self.render = True
             n_test_episodes = self.args.test_episode
             self.agents.load_model(self.args.model_dir_load)
-            self.run_episodes(test_mode=True)
+            test_score_mean, test_score_std, test_win_rate = self.test_episodes(0, n_test_episodes)
+            agent_info = f"Algo: {self.args.agent}, Map: {self.args.env_id}, seed: {self.args.seed}, "
+            print(agent_info, "Win rate: %.3f, Mean score: %.2f. " % (test_win_rate, test_score_mean))
             print("Finish testing.")
         else:
-            n_train_episodes = self.args.running_steps // self.episode_length // self.n_envs
-            agent_info = f"({self.args.agent}, seed={self.args.seed})"
+            test_interval = self.args.eval_interval
+            last_test_T = 0
+            episode_scores = []
+            agent_info = f"Algo: {self.args.agent}, Map: {self.args.env_id}, seed: {self.args.seed}, "
+            print(f"Steps: {self.current_step} / {self.running_steps}: ")
+            print(agent_info, "Win rate: %-, Mean score: -.")
+            last_battles_info = self.get_battles_info()
             time_start = time.time()
             while self.current_step <= self.running_steps:
-                print(agent_info, f"Steps: {self.current_step} / {self.running_steps}: ")
-                episode_score, win_rate = self.run_episodes(test_mode=False)
-
-                # Estimate the physic running time
-                mean_scores = episode_score.mean()
-                time_pass, time_left = self.time_estimate(time_start)
-                print("Win rate: %.3f, Mean score: %.2f. " % (win_rate, mean_scores), time_pass, time_left)
+                score = self.run_episodes(test_mode=False)
+                episode_scores.append(score)
+                if (self.current_step - last_test_T) / test_interval >= 1.0:
+                    last_test_T += test_interval
+                    # log train results before testing.
+                    train_win_rate, allies_dead_ratio, enemies_dead_ratio = self.get_battles_result(last_battles_info)
+                    results_info = {"Train-Results/Win-Rate": train_win_rate,
+                                    "Train-Results/Allies-Dead-Ratio": allies_dead_ratio,
+                                    "Train-Results/Enemies-Dead-Ratio": enemies_dead_ratio}
+                    self.log_infos(results_info, last_test_T)
+                    last_battles_info = self.get_battles_info()
+                    time_pass, time_left = self.time_estimate(time_start)
+                    print(f"Steps: {self.current_step} / {self.running_steps}: ")
+                    print(agent_info, "Win rate: %.3f, Mean score: %.2f. " % (train_win_rate, np.mean(episode_scores)),
+                          time_pass, time_left)
+                    episode_scores = []
 
             print("Finish training.")
             self.agents.save_model("final_train_model.pth")

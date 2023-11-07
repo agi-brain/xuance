@@ -9,7 +9,7 @@ from xuance.environment.gym.gym_vec_env import DummyVecEnv_Atari, SubprocVecEnv_
 from xuance.environment.pettingzoo.pettingzoo_vec_env import DummyVecEnv_Pettingzoo, SubprocVecEnv_Pettingzoo
 from xuance.environment.magent2.magent_vec_env import DummyVecEnv_MAgent
 from xuance.environment.starcraft2.sc2_vec_env import DummyVecEnv_StarCraft2, SubprocVecEnv_StarCraft2
-from xuance.environment.football.gfootball_vec_env import DummyVecEnv_GFootball
+from xuance.environment.football.gfootball_vec_env import DummyVecEnv_GFootball, SubprocVecEnv_GFootball
 
 from .vector_envs.subproc_vec_env import SubprocVecEnv
 
@@ -26,6 +26,7 @@ REGISTRY_VEC_ENV = {
     "Subproc_Gym": SubprocVecEnv_Gym,
     "Subproc_Pettingzoo": SubprocVecEnv_Pettingzoo,
     "Subproc_StarCraft2": SubprocVecEnv_StarCraft2,
+    "Subproc_Football": SubprocVecEnv_GFootball,
     "Subproc_Atari": SubprocVecEnv_Atari,
 }
 
