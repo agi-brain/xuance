@@ -259,7 +259,7 @@ and hope it can really become a zoo full of DRL algorithms.
 
 ### [SMAC](https://github.com/oxwhirl/smac)
 
-StarCraft Multi-Agentt Challenge.
+StarCraft Multi-Agent Challenge.
 
 ## Installation
 
