@@ -37,7 +37,7 @@ class GFootball_Env:
         self.env.close()
 
     def render(self):
-        return self.env.render()
+        return self.env.get_frame()
 
     def reset(self):
         obs, info = self.env.reset()

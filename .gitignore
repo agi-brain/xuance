@@ -2,6 +2,7 @@
 .vscode
 .DS_Store
 logs/
+videos/
 dist/
 .eggs/
 xuance.egg-info/

@@ -8,7 +8,11 @@ import wandb
 class Football_Runner(SC2_Runner):
     def __init__(self, args):
         self.num_agents, self.num_adversaries = 0, 0
-        args.render = False
+        if args.test:
+            args.parallels = 1
+            args.render = True
+        else:
+            args.render = False
         super(Football_Runner, self).__init__(args)
 
     def get_agent_num(self):
@@ -41,7 +45,6 @@ class Football_Runner(SC2_Runner):
             actions_dict = self.get_actions(obs_n, available_actions, rnn_hidden, rnn_hidden_critic,
                                             state=state, test_mode=test_mode)
             next_obs_n, next_state, rewards, terminated, truncated, info = self.envs.step(actions_dict['actions_n'])
-            # self.envs.render(self.args.render_mode)
             envs_done = self.envs.buf_done
             rnn_hidden, rnn_hidden_critic = actions_dict['rnn_hidden'], actions_dict['rnn_hidden_critic']
 
