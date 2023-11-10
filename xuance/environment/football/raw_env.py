@@ -21,6 +21,7 @@ class football_raw_env(FootballEnv):
             write_full_episode_dumps = False
             self.render = False
             write_video = False
+        self.n_agents = args.num_agent
 
         self.env = football_env.create_environment(
             env_name=self.env_id,
@@ -71,7 +72,9 @@ class football_raw_env(FootballEnv):
     def step(self, action):
         obs, reward, terminated, info = self.env.step(action)
         truncated = False
-        return obs, reward, terminated, truncated, info
+        global_reward = np.sum(reward)
+        reward_n = np.array([global_reward] * self.n_agents)
+        return obs, reward_n, terminated, truncated, info
 
     def get_frame(self):
         original_obs = self.env._env._observation

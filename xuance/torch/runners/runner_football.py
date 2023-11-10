@@ -30,11 +30,10 @@ class Football_Runner(SC2_Runner):
         return win_rate
 
     def run_episodes(self, test_mode=False):
-        step_info, train_info = {}, {}
-        episode_score, best_score = [], -np.inf
+        episode_score, episode_step, best_score = [], [], -np.inf
+
         # reset the envs
         obs_n, state, infos = self.envs.reset()
-
         envs_done = self.envs.buf_done
         self.env_step = 0
         filled = np.zeros([self.n_envs, self.episode_length, 1], np.int32)
@@ -66,17 +65,8 @@ class Football_Runner(SC2_Runner):
                         self.current_step += 1
                     if terminated[i_env] or truncated[i_env]:  # one env is terminal
                         episode_score.append(info[i_env]["episode_score"])
+                        episode_step.append(info[i_env]["episode_step"])
                         available_actions = self.envs.get_avail_actions()
-                        # log
-                        if self.use_wandb:
-                            step_info["Episode-Steps/env-%d" % i_env] = info[i_env]["episode_step"]
-                            step_info["Train-Episode-Rewards/env-%d" % i_env] = info[i_env]["episode_score"]
-                        else:
-                            step_info["Train-Results/Episode-Steps"] = {"env-%d" % i_env: info[i_env]["episode_step"]}
-                            step_info["Train-Results/Episode-Rewards"] = {
-                                "env-%d" % i_env: info[i_env]["episode_score"]}
-                        self.log_infos(step_info, self.current_step)
-
                         terminal_data = (next_obs_n, next_state, available_actions, filled)
                         if self.on_policy:
                             if terminated[i_env]:
@@ -109,12 +99,12 @@ class Football_Runner(SC2_Runner):
                 self.env_step += 1
             obs_n, state = deepcopy(next_obs_n), deepcopy(next_state)
 
-        if test_mode:
-            pass
-        else:
+        if not test_mode:
             self.agents.memory.store_episodes()  # store episode data
             n_epoch = self.agents.n_epoch if self.on_policy else self.n_envs
             train_info = self.agents.train(self.current_step, n_epoch=n_epoch)  # train
+            train_info["Train-Results/Train-Episode-Rewards"] = np.mean(episode_score)
+            train_info["Train-Results/Episode-Steps"] = np.mean(episode_step)
             self.log_infos(train_info, self.current_step)
 
         mean_episode_score = np.mean(episode_score)
