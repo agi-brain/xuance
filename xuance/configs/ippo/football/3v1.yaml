@@ -1,4 +1,4 @@
-agent: "MAPPO"  # the learning algorithms_marl
+agent: "IPPO"  # the learning algorithms_marl
 global_state: True
 # environment settings
 env_name: "Football"
@@ -49,7 +49,7 @@ gamma: 0.99  # discount factor
 # tricks
 use_linear_lr_decay: False  # if use linear learning rate decay
 end_factor_lr_decay: 0.5
-use_global_state: True  # if use global state to calculate values
+use_global_state: False  # if use global state to calculate values
 use_grad_norm: True  # gradient normalization
 max_grad_norm: 10.0
 use_value_clip: True  # limit the value range
@@ -67,6 +67,6 @@ training_frequency: 1
 
 eval_interval: 200000
 test_episode: 50
-log_dir: "./logs/mappo/"
-model_dir: "./models/mappo/"
-videos_dir: "./videos/mappo/"
+log_dir: "./logs/ippo/"
+model_dir: "./models/ippo/"
+videos_dir: "./videos/ippo/"
