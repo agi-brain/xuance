@@ -17,12 +17,12 @@ def parse_args():
     parser = argparse.ArgumentParser("Example of XuanCe.")
     parser.add_argument("--method", type=str, default="qmix")
     parser.add_argument("--env", type=str, default="sc2")
-    parser.add_argument("--env-id", type=str, default="3m")
+    parser.add_argument("--env-id", type=str, default="2m_vs_1z")
     parser.add_argument("--seed", type=int, default=1)
     parser.add_argument("--test", type=int, default=0)
     parser.add_argument("--device", type=str, default="cuda:0")
     parser.add_argument("--benchmark", type=int, default=1)
-    parser.add_argument("--config", type=str, default="./qmix_sc2_3m.yaml")
+    parser.add_argument("--config", type=str, default=f"./qmix_sc2_configs/{parser.parse_args().env_id}.yaml")
 
     return parser.parse_args()
 

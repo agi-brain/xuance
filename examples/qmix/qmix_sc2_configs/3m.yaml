@@ -54,5 +54,5 @@ grad_clip_norm: 0.5
 
 eval_interval: 10000
 test_episode: 16
-log_dir: "./logs/qmix/"
-model_dir: "./models/qmix/"
+log_dir: "./logs/qmix/3m/"
+model_dir: "./models/qmix/3m/"
