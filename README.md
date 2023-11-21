@@ -1,4 +1,6 @@
-![logo](./docs/source/figures/logo_1.png)
+<div align="center">
+<img src="docs/source/figures/logo_1.png" width="480" height="auto" align=center />
+</div>
 
 # XuanCe: A Comprehensive and Unified Deep Reinforcement Learning Library
 
@@ -34,9 +36,9 @@ We expect it to be compatible with multiple deep learning toolboxes(
 **[MindSpore](https://www.mindspore.cn/en)**),
 and hope it can really become a zoo full of DRL algorithms.
 
-| **[Full Documentation](https://xuance.readthedocs.io/en/latest/)** |
-**[中文文档](https://xuance.readthedocs.io/zh/latest/)** |
-**[XuanCe (Mini version)](https://github.com/wzcai99/xuance)** |
+| **[Full Documentation](https://xuance.readthedocs.io/en/latest/)**
+| **[中文文档](https://xuance.readthedocs.io/zh/latest/)**
+| **[XuanCe (Mini version)](https://github.com/wzcai99/xuance)** |
 
 ## Currently Included Algorithms
 
@@ -512,6 +514,19 @@ $ tensorboard --logdir ./logs/dqn/torch/CartPole-v0
 [//]: # (| MMM2             |             |             |             |             |             |      |      |       |)
 
 [//]: # (| micro_focus      |             |             |             |             |             |      |      |       |)
+
+### Communication Group on QQ App.
+
+<details open>
+<summary>(Click to hide)</summary>
+
+<div align="center">
+<img src="docs/source/figures/QQ_group.jpeg" width="280" height="auto" align=center />
+</div>
+
+</details>
+
+### Citations
 
 ```
 @misc{XuanCe2023,
