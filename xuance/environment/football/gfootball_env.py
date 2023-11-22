@@ -41,6 +41,7 @@ class GFootball_Env:
 
     def reset(self):
         obs, info = self.env.reset()
+        obs = obs.reshape([self.n_agents, -1])
         state = self.get_state()
         self._episode_step = 0
         self._episode_score = 0.0
@@ -52,6 +53,7 @@ class GFootball_Env:
 
     def step(self, actions):
         obs, reward, terminated, truncated, info = self.env.step(actions)
+        obs = obs.reshape([self.n_agents, -1])
         state = self.get_state()
         self._episode_step += 1
         self._episode_score += reward.mean()
