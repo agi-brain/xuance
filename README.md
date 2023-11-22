@@ -115,7 +115,7 @@ and hope it can really become a zoo full of DRL algorithms.
 
 </details>
 
-## Supported Environments
+## Currently Supported Environments
 
 ### [Classic Control](https://www.gymlibrary.dev/environments/classic_control/)
 
@@ -261,7 +261,15 @@ and hope it can really become a zoo full of DRL algorithms.
 
 ### [SMAC](https://github.com/oxwhirl/smac)
 
-StarCraft Multi-Agent Challenge.
+<div align="center">
+<img src="docs/source/figures/smac/smac.png" width="715" height="auto" align=center />
+</div>
+
+### [Google Research Football](https://github.com/google-research/football)
+
+<div align="center">
+<img src="docs/source/figures/football/gfootball.png" width="720" height="auto" align=center />
+</div>
 
 ## Installation
 
