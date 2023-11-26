@@ -365,7 +365,7 @@ $ tensorboard --logdir ./logs/dqn/torch/CartPole-v0
 
 ### [Github Issue](https://github.com/agi-brain/xuance/issues)
 
-You can put your questions or the bugs you have found in the [Issues](https://github.com/agi-brain/xuance/issues). 
+You can put your questions, advices, or the bugs you have found in the [Issues](https://github.com/agi-brain/xuance/issues). 
 
 ### [Communication Group](https://github.com/agi-brain/xuance/blob/master/docs/source/figures/QQ_group.jpeg) on QQ App.
 
