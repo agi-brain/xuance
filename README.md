@@ -36,16 +36,28 @@ We expect it to be compatible with multiple deep learning toolboxes(
 **[MindSpore](https://www.mindspore.cn/en)**),
 and hope it can really become a zoo full of DRL algorithms.
 
-| **[Full Documentation](https://xuance.readthedocs.io/en/latest/)**
+:book: **[Full Documentation](https://xuance.readthedocs.io/en/latest/)**
 | **[中文文档](https://xuance.readthedocs.io/zh/latest/)**
-| **[XuanCe (Mini version)](https://github.com/wzcai99/xuance)** |
+
+## Why XuanCe?
+
+### Features of XuanCe
+
+- Highly modularized.
+- Easy to [learn](https://xuance.readthedocs.io/en/latest/), easy for [installation](https://xuance.readthedocs.io/en/latest/documents/usage/installation.html), and easy for [usage](https://xuance.readthedocs.io/en/latest/documents/usage/basic_usage.html).
+- Flexible for model combination.
+- Abundant [algorithms](https://xuance.readthedocs.io/en/latest/documents/api/agents.html) with various tasks.
+- Support both DRL and MARL tasks.
+- High compatibility for different users. (PyTorch, TensorFlow2, MindSpore, CPU, GPU, Linux, Windows, MacOS, etc.)
+- Fast training speed with parallel environments. 
+- Good visualization effect with [tensorboard](https://www.tensorflow.org/tensorboard) or [wandb](https://wandb.ai/site) tool.
 
 ## Currently Included Algorithms
 
 ### DRL
 
 <details open>
-<summary>(Click to hide)</summary>
+<summary>(Click to show supported DRL algorithms)</summary>
 
 - Deep Q Network - DQN [[Paper](https://www.nature.com/articles/nature14236)]
 - DQN with Double Q-learning - Double DQN [[Paper](https://ojs.aaai.org/index.php/AAAI/article/view/10295)]
@@ -83,7 +95,7 @@ and hope it can really become a zoo full of DRL algorithms.
 ### Multi-Agent Reinforcement Learning (MARL)
 
 <details open>
-<summary>(Click to hide)</summary>
+<summary>(Click to show supported MARL algorithms)</summary>
 
 - Independent Q-learning -
   IQL [[Paper](https://hal.science/file/index/docid/720669/filename/Matignon2012independent.pdf)] [[Code](https://github.com/oxwhirl/pymarl)]
@@ -349,12 +361,18 @@ $ tensorboard --logdir ./logs/dqn/torch/CartPole-v0
 
 ![Tensorboard](docs/source/figures/debug.png) -->
 
-### Communication Group on QQ App.
+## Community
+
+### [Github Issue](https://github.com/agi-brain/xuance/issues)
+
+You can put your questions or the bugs you have found in the [Issues](https://github.com/agi-brain/xuance/issues). 
+
+### [Communication Group](https://github.com/agi-brain/xuance/blob/master/docs/source/figures/QQ_group.jpeg) on [QQ App](https://im.qq.com/index/).
 
 Welcome to join the official communication group with QQ app. (Group number: 552432695)
 
 <details open>
-<summary>(Click to hide)</summary>
+<summary>(QR code for QQ group )</summary>
 
 <div align="center">
 <img src="docs/source/figures/QQ_group.jpeg" width="200" height="auto" align=center />
