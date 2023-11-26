@@ -43,18 +43,18 @@ and hope it can really become a zoo full of DRL algorithms.
 
 ### Features of XuanCe
 
-- :gift: Highly modularized.
+- :school_satchel: Highly modularized.
 - :thumbsup: Easy to [learn](https://xuance.readthedocs.io/en/latest/), easy for [installation](https://xuance.readthedocs.io/en/latest/documents/usage/installation.html), and easy for [usage](https://xuance.readthedocs.io/en/latest/documents/usage/basic_usage.html).
 - :twisted_rightwards_arrows: Flexible for model combination.
 - :tada: Abundant [algorithms](https://xuance.readthedocs.io/en/latest/documents/api/agents.html) with various tasks.
-- Support both DRL and MARL tasks.
-- High compatibility for different users. (PyTorch, TensorFlow2, MindSpore, CPU, GPU, Linux, Windows, MacOS, etc.)
+- :couple: Support both DRL and MARL tasks.
+- :key: High compatibility for different users. (PyTorch, TensorFlow2, MindSpore, CPU, GPU, Linux, Windows, MacOS, etc.)
 - :zap: Fast training speed with parallel environments. 
 - :chart_with_upwards_trend: Good visualization effect with [tensorboard](https://www.tensorflow.org/tensorboard) or [wandb](https://wandb.ai/site) tool.
 
 ## Currently Included Algorithms
 
-### :point_right:DRL
+### :point_right: DRL
 
 <details open>
 <summary>(Click to show supported DRL algorithms)</summary>
@@ -92,7 +92,7 @@ and hope it can really become a zoo full of DRL algorithms.
 
 </details>
 
-### :point_right:Multi-Agent Reinforcement Learning (MARL)
+### :point_right: Multi-Agent Reinforcement Learning (MARL)
 
 <details open>
 <summary>(Click to show supported MARL algorithms)</summary>
@@ -285,7 +285,7 @@ and hope it can really become a zoo full of DRL algorithms.
 
 ## Installation
 
-The library can be run at Linux, Windows, MacOS, and EulerOS, etc.
+:computer: The library can be run at Linux, Windows, MacOS, and EulerOS, etc.
 
 Before installing **XuanCe**, you should install [Anaconda](https://www.anaconda.com/download) to prepare a python
 environment.
