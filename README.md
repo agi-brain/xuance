@@ -47,7 +47,7 @@ and hope it can really become a zoo full of DRL algorithms.
 - :thumbsup: Easy to [learn](https://xuance.readthedocs.io/en/latest/), easy for [installation](https://xuance.readthedocs.io/en/latest/documents/usage/installation.html), and easy for [usage](https://xuance.readthedocs.io/en/latest/documents/usage/basic_usage.html).
 - :twisted_rightwards_arrows: Flexible for model combination.
 - :tada: Abundant [algorithms](https://xuance.readthedocs.io/en/latest/documents/api/agents.html) with various tasks.
-- :couple: Support both DRL and MARL tasks.
+- :couple: Supports both DRL and MARL tasks.
 - :key: High compatibility for different users. (PyTorch, TensorFlow2, MindSpore, CPU, GPU, Linux, Windows, MacOS, etc.)
 - :zap: Fast training speed with parallel environments. 
 - :chart_with_upwards_trend: Good visualization effect with [tensorboard](https://www.tensorflow.org/tensorboard) or [wandb](https://wandb.ai/site) tool.
