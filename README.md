@@ -37,24 +37,24 @@ We expect it to be compatible with multiple deep learning toolboxes(
 and hope it can really become a zoo full of DRL algorithms.
 
 :book: **[Full Documentation](https://xuance.readthedocs.io/en/latest/)**
-| **[中文文档](https://xuance.readthedocs.io/zh/latest/)**
+| **[中文文档](https://xuance.readthedocs.io/zh/latest/)** :book:
 
 ## Why XuanCe?
 
 ### Features of XuanCe
 
-- Highly modularized.
-- Easy to [learn](https://xuance.readthedocs.io/en/latest/), easy for [installation](https://xuance.readthedocs.io/en/latest/documents/usage/installation.html), and easy for [usage](https://xuance.readthedocs.io/en/latest/documents/usage/basic_usage.html).
-- Flexible for model combination.
-- Abundant [algorithms](https://xuance.readthedocs.io/en/latest/documents/api/agents.html) with various tasks.
+- :gift:Highly modularized.
+- :thumbsup:Easy to [learn](https://xuance.readthedocs.io/en/latest/), easy for [installation](https://xuance.readthedocs.io/en/latest/documents/usage/installation.html), and easy for [usage](https://xuance.readthedocs.io/en/latest/documents/usage/basic_usage.html).
+- :twisted_rightwards_arrows:Flexible for model combination.
+- :tada:Abundant [algorithms](https://xuance.readthedocs.io/en/latest/documents/api/agents.html) with various tasks.
 - Support both DRL and MARL tasks.
 - High compatibility for different users. (PyTorch, TensorFlow2, MindSpore, CPU, GPU, Linux, Windows, MacOS, etc.)
-- Fast training speed with parallel environments. 
-- Good visualization effect with [tensorboard](https://www.tensorflow.org/tensorboard) or [wandb](https://wandb.ai/site) tool.
+- :zap:Fast training speed with parallel environments. 
+- :chart_with_upwards_trend:Good visualization effect with [tensorboard](https://www.tensorflow.org/tensorboard) or [wandb](https://wandb.ai/site) tool.
 
 ## Currently Included Algorithms
 
-### DRL
+### :point_right:DRL
 
 <details open>
 <summary>(Click to show supported DRL algorithms)</summary>
@@ -92,7 +92,7 @@ and hope it can really become a zoo full of DRL algorithms.
 
 </details>
 
-### Multi-Agent Reinforcement Learning (MARL)
+### :point_right:Multi-Agent Reinforcement Learning (MARL)
 
 <details open>
 <summary>(Click to show supported MARL algorithms)</summary>
@@ -367,7 +367,7 @@ $ tensorboard --logdir ./logs/dqn/torch/CartPole-v0
 
 You can put your questions or the bugs you have found in the [Issues](https://github.com/agi-brain/xuance/issues). 
 
-### [Communication Group](https://github.com/agi-brain/xuance/blob/master/docs/source/figures/QQ_group.jpeg) on [QQ App](https://im.qq.com/index/).
+### [Communication Group](https://github.com/agi-brain/xuance/blob/master/docs/source/figures/QQ_group.jpeg) on QQ App.
 
 Welcome to join the official communication group with QQ app. (Group number: 552432695)
 
