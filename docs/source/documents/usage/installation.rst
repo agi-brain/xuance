@@ -97,9 +97,37 @@ Alternatively, you can install XuanCe from its GitHub repository.
 
 **Step 5**: Install xuance.
 
-.. code-block:: bash
+.. tabs::
 
-    pip install -e .
+    .. group-tab:: PyTorch
+
+        .. code-block:: bash
+
+            pip install -e .[torch]
+
+    .. group-tab:: TensorFlow
+
+        .. code-block:: bash
+
+            pip install -e .[tensorflow]
+
+    .. group-tab:: MindSpore
+
+        .. code-block:: bash
+
+            pip install -e .[mindspore]
+
+    .. group-tab:: All DL toolbox
+
+        .. code-block:: bash
+
+            pip install -e .[all]
+    
+    .. group-tab:: No DL toolbox
+
+        .. code-block:: bash
+
+            pip install -e .
 
 .. note::
 
