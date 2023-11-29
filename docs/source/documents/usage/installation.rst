@@ -29,14 +29,6 @@ Install via PyPI
 
 **Step 3**: Install the library.
 
-.. code-block:: bash
-    
-    pip install xuance
-
-This command does not include the dependencies of deep learning toolboxes. 
-
-You can also install the **XuanCe** with PyTorch_, TensorFlow2_, MindSpore_, or all of them.
-
 .. tabs::
 
     .. group-tab:: PyTorch
@@ -57,11 +49,17 @@ You can also install the **XuanCe** with PyTorch_, TensorFlow2_, MindSpore_, or 
 
             pip install xuance[mindspore]
 
-    .. group-tab:: all DL toolbox
+    .. group-tab:: All DL toolbox
 
         .. code-block:: bash
 
             pip install xuance[all]
+    
+    .. group-tab:: No DL toolbox
+
+        .. code-block:: bash
+
+            pip install xuance
 
 
 Install from GitHub repository
