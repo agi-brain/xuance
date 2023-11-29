@@ -5,8 +5,8 @@ The categorical policies are designed for environments with discrete actions spa
 They calculate action distributions according to the outputs of actor networks, 
 and generate actions by random sampling from these distributions. 
 
-In this module, we provide two basic categorical policies (`ActorPolicy` and `ActorCriticPolicy`)
-and numerous specially-made policies (e.g., `PPGActorCritic`, `SACDISPolicy`, etc.).
+In this module, we provide two basic categorical policies ( ``ActorPolicy`` and ``ActorCriticPolicy``)
+and numerous specially-made policies (e.g., ``PPGActorCritic``, ``SACDISPolicy``, etc.).
 You can also customize the other categorical policies for single agent DRL here.
 
 .. raw:: html
