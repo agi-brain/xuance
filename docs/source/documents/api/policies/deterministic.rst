@@ -393,6 +393,128 @@ xxxxxx.
   :return: xxxxxx.
   :rtype: xxxxxx
 
+.. py:class::
+  xuance.torch.policies.deterministic.ActorNet(state_dim, action_dim, hidden_sizes, initialize, activation, device)
+
+  :param state_dim: xxxxxx.
+  :type state_dim: xxxxxx
+  :param action_dim: xxxxxx.
+  :type action_dim: xxxxxx
+  :param hidden_sizes: xxxxxx.
+  :type hidden_sizes: xxxxxx
+  :param initialize: xxxxxx.
+  :type initialize: xxxxxx
+  :param activation: xxxxxx.
+  :type activation: xxxxxx
+  :param device: xxxxxx.
+  :type device: xxxxxx
+
+.. py:function::
+  xuance.torch.policies.deterministic.ActorNet.forward(x)
+
+  xxxxxx.
+
+  :param x: xxxxxx.
+  :type x: xxxxxx
+  :return: xxxxxx.
+  :rtype: xxxxxx
+
+.. py:class::
+  xuance.torch.policies.deterministic.CriticNet(state_dim, action_dim, hidden_sizes, initialize, activation, device)
+
+  :param state_dim: xxxxxx.
+  :type state_dim: xxxxxx
+  :param action_dim: xxxxxx.
+  :type action_dim: xxxxxx
+  :param hidden_sizes: xxxxxx.
+  :type hidden_sizes: xxxxxx
+  :param initialize: xxxxxx.
+  :type initialize: xxxxxx
+  :param activation: xxxxxx.
+  :type activation: xxxxxx
+  :param device: xxxxxx.
+  :type device: xxxxxx
+
+.. py:function::
+  xuance.torch.policies.deterministic.CriticNet.forward(x)
+
+  xxxxxx.
+
+  :param x: xxxxxx.
+  :type x: xxxxxx
+  :return: xxxxxx.
+  :rtype: xxxxxx
+
+.. py:class::
+  xuance.torch.policies.deterministic.DDPGPolicy(action_space, representation, actor_hidden_size, critic_hidden_size, initialize, activation, device)
+
+  :param action_space: xxxxxx.
+  :type action_space: xxxxxx
+  :param representation: xxxxxx.
+  :type representation: xxxxxx
+  :param actor_hidden_size: xxxxxx.
+  :type actor_hidden_size: xxxxxx
+  :param critic_hidden_size: xxxxxx.
+  :type critic_hidden_size: xxxxxx
+  :param initialize: xxxxxx.
+  :type initialize: xxxxxx
+  :param activation: xxxxxx.
+  :type activation: xxxxxx
+  :param device: xxxxxx.
+  :type device: xxxxxx
+
+.. py:function::
+  xuance.torch.policies.deterministic.DDPGPolicy.forward(x)
+
+  xxxxxx.
+
+  :param x: xxxxxx.
+  :type x: xxxxxx
+  :return: xxxxxx.
+  :rtype: xxxxxx
+
+.. py:function::
+  xuance.torch.policies.deterministic.DDPGPolicy.Qtarget(observation)
+
+  xxxxxx.
+
+  :param observation: xxxxxx.
+  :type observation: xxxxxx
+  :return: xxxxxx.
+  :rtype: xxxxxx
+
+.. py:function::
+  xuance.torch.policies.deterministic.DDPGPolicy.Qaction(observation, action)
+
+  xxxxxx.
+
+  :param observation: xxxxxx.
+  :type observation: xxxxxx
+  :param action: xxxxxx.
+  :type action: xxxxxx
+  :return: xxxxxx.
+  :rtype: xxxxxx
+
+.. py:function::
+  xuance.torch.policies.deterministic.DDPGPolicy.Qpolicy(observation)
+
+  xxxxxx.
+
+  :param observation: xxxxxx.
+  :type observation: xxxxxx
+  :return: xxxxxx.
+  :rtype: xxxxxx
+
+.. py:function::
+  xuance.torch.policies.deterministic.DDPGPolicy.soft_update(tau)
+
+  xxxxxx.
+
+  :param tau: xxxxxx.
+  :type tau: xxxxxx
+  :return: xxxxxx.
+  :rtype: xxxxxx
+
 .. raw:: html
 
     <br><hr>
