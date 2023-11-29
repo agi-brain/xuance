@@ -1,3 +1,0 @@
-VDN: Value Decomposition Networks
-=======================================
-
