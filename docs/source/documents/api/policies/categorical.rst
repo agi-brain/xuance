@@ -30,6 +30,8 @@ You can also customize the other categorical policies for single agent DRL here.
   :type initialize: xxxxxx
   :param activation: xxxxxx.
   :type activation: xxxxxx
+  :param device: xxxxxx.
+  :type device: xxxxxx
 
 .. py:function::
   xuance.torch.policies.categorical.ActorNet.forward(x)
@@ -42,12 +44,10 @@ You can also customize the other categorical policies for single agent DRL here.
   :rtype: xxxxxx
 
 .. py:class::
-  xuance.torch.policies.categorical.CriticNet(state_dim, action_dim, hidden_sizes, normalize, initialize, activation, device)
+  xuance.torch.policies.categorical.CriticNet(state_dim, hidden_sizes, normalize, initialize, activation, device)
 
   :param state_dim: xxxxxx.
   :type state_dim: xxxxxx
-  :param action_dim: xxxxxx.
-  :type action_dim: xxxxxx
   :param hidden_sizes: xxxxxx.
   :type hidden_sizes: xxxxxx
   :param normalize: xxxxxx.
@@ -56,6 +56,8 @@ You can also customize the other categorical policies for single agent DRL here.
   :type initialize: xxxxxx
   :param activation: xxxxxx.
   :type activation: xxxxxx
+  :param device: xxxxxx.
+  :type device: xxxxxx
 
 .. py:function::
   xuance.torch.policies.categorical.CriticNet.forward(x)
