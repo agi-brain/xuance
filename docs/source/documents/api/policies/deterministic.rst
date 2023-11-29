@@ -304,11 +304,11 @@ xxxxxx.
   :type vmin: xxxxxx
   :param vmax: xxxxxx.
   :type vmax: xxxxxx
- :param representation: xxxxxx.
+  :param representation: xxxxxx.
   :type representation: xxxxxx
- :param hidden_size: xxxxxx.
+  :param hidden_size: xxxxxx.
   :type hidden_size: xxxxxx
- :param normalize: xxxxxx.
+  :param normalize: xxxxxx.
   :type normalize: xxxxxx
   :param initialize: xxxxxx.
   :type initialize: xxxxxx
@@ -318,17 +318,7 @@ xxxxxx.
   :type device: xxxxxx
 
 .. py:function::
-  xuance.torch.policies.deterministic.NoisyQnetwork.update_noise(noisy_bound)
-
-  xxxxxx.
-
-  :param noisy_bound: xxxxxx.
-  :type noisy_bound: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
-
-.. py:function::
-  xuance.torch.policies.deterministic.NoisyQnetwork.forward(observation)
+  xuance.torch.policies.deterministic.C51Qnetwork.forward(observation)
 
   xxxxxx.
 
@@ -338,7 +328,7 @@ xxxxxx.
   :rtype: xxxxxx
 
 .. py:function::
-  xuance.torch.policies.deterministic.NoisyQnetwork.target(observation)
+  xuance.torch.policies.deterministic.C51Qnetwork.target(observation)
 
   xxxxxx.
 
@@ -348,7 +338,55 @@ xxxxxx.
   :rtype: xxxxxx
 
 .. py:function::
-  xuance.torch.policies.deterministic.NoisyQnetwork.copy_target()
+  xuance.torch.policies.deterministic.C51Qnetwork.copy_target()
+
+  xxxxxx.
+
+  :return: xxxxxx.
+  :rtype: xxxxxx
+
+.. py:class::
+  xuance.torch.policies.deterministic.QRDQN_Network(action_space, quantile_num, representation, hidden_size, normalize, initialize, activation, device)
+
+  :param action_space: xxxxxx.
+  :type action_space: xxxxxx
+  :param quantile_num: xxxxxx.
+  :type quantile_num: xxxxxx
+  :param representation: xxxxxx.
+  :type representation: xxxxxx
+  :param hidden_size: xxxxxx.
+  :type hidden_size: xxxxxx
+  :param normalize: xxxxxx.
+  :type normalize: xxxxxx
+  :param initialize: xxxxxx.
+  :type initialize: xxxxxx
+  :param activation: xxxxxx.
+  :type activation: xxxxxx
+  :param device: xxxxxx.
+  :type device: xxxxxx
+
+.. py:function::
+  xuance.torch.policies.deterministic.QRDQN_Network.forward(observation)
+
+  xxxxxx.
+
+  :param observation: xxxxxx.
+  :type observation: xxxxxx
+  :return: xxxxxx.
+  :rtype: xxxxxx
+
+.. py:function::
+  xuance.torch.policies.deterministic.QRDQN_Network.target(observation)
+
+  xxxxxx.
+
+  :param observation: xxxxxx.
+  :type observation: xxxxxx
+  :return: xxxxxx.
+  :rtype: xxxxxx
+
+.. py:function::
+  xuance.torch.policies.deterministic.QRDQN_Network.copy_target()
 
   xxxxxx.
 
