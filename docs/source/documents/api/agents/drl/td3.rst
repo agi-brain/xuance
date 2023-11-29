@@ -214,12 +214,10 @@ Source Code
                 return scores
 
 
-
-
   .. group-tab:: TensorFlow
 
-    .. code-block:: python3
+    .. code-block:: python
 
   .. group-tab:: MindSpore
 
-    .. code-block:: python3
+    .. code-block:: python
