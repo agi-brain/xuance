@@ -37,27 +37,32 @@ This command does not include the dependencies of deep learning toolboxes.
 
 You can also install the **XuanCe** with PyTorch_, TensorFlow2_, MindSpore_, or all of them.
 
-.. code-block:: bash
-    
-    pip install xuance[torch]
+.. tabs::
 
-or
+    .. group-tab:: PyTorch
 
-.. code-block:: bash
-    
-    pip install xuance[tensorflow]
+        .. code-block:: bash
 
-or
+            pip install xuance[torch]
 
-.. code-block:: bash
-    
-    pip install xuance[mindspore]
+    .. group-tab:: TensorFlow
 
-or
+        .. code-block:: bash
 
-.. code-block:: bash
+            pip install xuance[tensorflow]
 
-    pip install xuance[all]
+    .. group-tab:: MindSpore
+
+        .. code-block:: bash
+
+            pip install xuance[mindspore]
+
+    .. group-tab:: all DL toolbox
+
+        .. code-block:: bash
+
+            pip install xuance[all]
+
 
 Install from GitHub repository
 ---------------------------------------------
