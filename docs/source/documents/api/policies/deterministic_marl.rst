@@ -345,55 +345,252 @@ Deterministic-MARL
   :type device: xxxxxx
 
 .. py:function::
-  xuance.torch.policies.categorical_mal.MeanFieldActorCriticPolicy.forward(observation, agent_ids)
+  xuance.torch.policies.deterministic_marl.DCG_policy.forward(observation, agent_ids, *rnn_hidden, avail_actions)
 
   :param observation: xxxxxx.
   :type observation: xxxxxx
   :param agent_ids: xxxxxx.
   :type agent_ids: xxxxxx
+  :param *rnn_hidden: xxxxxx.
+  :type *rnn_hidden: xxxxxx
+  :param avail_actions: xxxxxx.
+  :type avail_actions: xxxxxx
   :return: xxxxxx.
   :rtype: xxxxxx
 
 .. py:function::
-  xuance.torch.policies.categorical_mal.MeanFieldActorCriticPolicy.target_actor(observation, agent_ids)
+  xuance.torch.policies.deterministic_marl.DCG_policy.copy_target()
 
- :param observation: xxxxxx.
-  :type observation: xxxxxx
-  :param agent_ids: xxxxxx.
-  :type agent_ids: xxxxxx
-  :return: xxxxxx.
+  :return: None.
   :rtype: xxxxxx
 
+.. py:class::
+ xuance.torch.policies.deterministic_marl.ActorNet(state_dim, n_agents, action_space, hidden_sizes, normalize, initialize, activation, device)
+
+  :param state_dim: xxxxxx.
+  :type state_dim: xxxxxx
+  :param n_agents: xxxxxx.
+  :type n_agents: xxxxxx
+  :param action_space: xxxxxx.
+  :type action_space: xxxxxx
+  :param hidden_sizes: xxxxxx.
+  :type hidden_sizes: xxxxxx
+  :param normalize: xxxxxx.
+  :type normalize: xxxxxx
+  :param initialize: xxxxxx.
+  :type initialize: xxxxxx
+  :param activation: xxxxxx.
+  :type activation: xxxxxx
+  :param device: xxxxxx.
+  :type device: xxxxxx
+
 .. py:function::
-  xuance.torch.policies.categorical_mal.MeanFieldActorCriticPolicy.critic(observation, actions_mean, agent_ids)
+  xuance.torch.policies.deterministic_marl.ActorNet.forward()
+
+  :return: None.
+  :rtype: xxxxxx
+
+.. py:class::
+ xuance.torch.policies.deterministic_marl.CriticNet(independent, state_dim, n_agents, action_dim, hidden_sizes, normalize, initialize, activation, device)
+
+  :param independent: xxxxxx.
+  :type independent: xxxxxx
+  :param state_dim: xxxxxx.
+  :type state_dim: xxxxxx
+  :param n_agents: xxxxxx.
+  :type n_agents: xxxxxx
+  :param action_dim: xxxxxx.
+  :type action_dim: xxxxxx
+  :param hidden_sizes: xxxxxx.
+  :type hidden_sizes: xxxxxx
+  :param normalize: xxxxxx.
+  :type normalize: xxxxxx
+  :param initialize: xxxxxx.
+  :type initialize: xxxxxx
+  :param activation: xxxxxx.
+  :type activation: xxxxxx
+  :param device: xxxxxx.
+  :type device: xxxxxx
+
+.. py:function::
+  xuance.torch.policies.deterministic_marl.ACriticNet.forward()
+
+  :return: None.
+  :rtype: xxxxxx
+
+
+.. py:class::
+ xuance.torch.policies.deterministic_marl.Basic_DDPG_policy(action_space, n_agents, representation, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device)
+
+  :param action_space: xxxxxx.
+  :type action_space: xxxxxx
+  :param n_agents: xxxxxx.
+  :type n_agents: xxxxxx
+  :param representation: xxxxxx.
+  :type representation: xxxxxx
+  :param actor_hidden_size: xxxxxx.
+  :type actor_hidden_size: xxxxxx
+  :param critic_hidden_size: xxxxxx.
+  :type critic_hidden_size: xxxxxx
+  :param normalize: xxxxxx.
+  :type normalize: xxxxxx
+  :param initialize: xxxxxx.
+  :type initialize: xxxxxx
+  :param activation: xxxxxx.
+  :type activation: xxxxxx
+  :param device: xxxxxx.
+  :type device: xxxxxx
+
+.. py:function::
+  xuance.torch.policies.deterministic_marl.Basic_DDPG_policy.forward(observation, agent_ids)
 
   :param observation: xxxxxx.
   :type observation: xxxxxx
-  :param actions_mean: xxxxxx.
-  :type actions_mean: xxxxxx
   :param agent_ids: xxxxxx.
   :type agent_ids: xxxxxx
-  :return: xxxxxx.
+  :return: None.
   :rtype: xxxxxx
 
 .. py:function::
-  xuance.torch.policies.categorical_mal.MeanFieldActorCriticPolicy.target_critic(observation, actions_mean, agent_ids)
+  xuance.torch.policies.deterministic_marl.Basic_DDPG_policy.critic(observation, actions, agent_ids)
 
   :param observation: xxxxxx.
   :type observation: xxxxxx
-  :param actions_mean: xxxxxx.
-  :type actions_mean: xxxxxx
+  :param actions: xxxxxx.
+  :type actions: xxxxxx
   :param agent_ids: xxxxxx.
   :type agent_ids: xxxxxx
   :return: xxxxxx.
   :rtype: xxxxxx
 
 .. py:function::
-  xuance.torch.policies.categorical_mal.MeanFieldActorCriticPolicy.soft_update(tau)
+  xuance.torch.policies.deterministic_marl.Basic_DDPG_policy.target_critic(observation, actions, agent_ids)
+
+  :param observation: xxxxxx.
+  :type observation: xxxxxx
+  :param actions: xxxxxx.
+  :type actions: xxxxxx
+  :param agent_ids: xxxxxx.
+  :type agent_ids: xxxxxx
+  :return: xxxxxx.
+  :rtype: xxxxxx
+
+.. py:function::
+  xuance.torch.policies.deterministic_marl.Basic_DDPG_policy.soft_update(tau)
 
   :param tau: xxxxxx.
   :type tau: xxxxxx
-  :return: NONE.
+  :return: xxxxxx.
+  :rtype: xxxxxx
+
+.. py:class::
+ xuance.torch.policies.deterministic_marl.MADDPG_policy(action_space, n_agents, representation, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device)
+
+  :param action_space: xxxxxx.
+  :type action_space: xxxxxx
+  :param n_agents: xxxxxx.
+  :type n_agents: xxxxxx
+  :param representation: xxxxxx.
+  :type representation: xxxxxx
+  :param actor_hidden_size: xxxxxx.
+  :type actor_hidden_size: xxxxxx
+  :param critic_hidden_size: xxxxxx.
+  :type critic_hidden_size: xxxxxx
+  :param normalize: xxxxxx.
+  :type normalize: xxxxxx
+  :param initialize: xxxxxx.
+  :type initialize: xxxxxx
+  :param activation: xxxxxx.
+  :type activation: xxxxxx
+  :param device: xxxxxx.
+  :type device: xxxxxx
+
+.. py:function::
+  xuance.torch.policies.deterministic_marl.MADDPG_policy.critic(observation, actions, agent_ids)
+
+  :param observation: xxxxxx.
+  :type observation: xxxxxx
+  :param actions: xxxxxx.
+  :type actions: xxxxxx
+  :param agent_ids: xxxxxx.
+  :type agent_ids: xxxxxx
+  :return: xxxxxx.
+  :rtype: xxxxxx
+
+.. py:function::
+  xuance.torch.policies.deterministic_marl.MADDPG_policy.target_critic(observation, actions, agent_ids)
+
+  :param observation: xxxxxx.
+  :type observation: xxxxxx
+  :param actions: xxxxxx.
+  :type actions: xxxxxx
+  :param agent_ids: xxxxxx.
+  :type agent_ids: xxxxxx
+  :return: xxxxxx.
+  :rtype: xxxxxx
+
+.. py:class::
+ xuance.torch.policies.deterministic_marl.MATD3_policy(action_space, n_agents, representation, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device)
+
+  :param action_space: xxxxxx.
+  :type action_space: xxxxxx
+  :param n_agents: xxxxxx.
+  :type n_agents: xxxxxx
+  :param representation: xxxxxx.
+  :type representation: xxxxxx
+  :param actor_hidden_size: xxxxxx.
+  :type actor_hidden_size: xxxxxx
+  :param critic_hidden_size: xxxxxx.
+  :type critic_hidden_size: xxxxxx
+  :param normalize: xxxxxx.
+  :type normalize: xxxxxx
+  :param initialize: xxxxxx.
+  :type initialize: xxxxxx
+  :param activation: xxxxxx.
+  :type activation: xxxxxx
+  :param device: xxxxxx.
+  :type device: xxxxxx
+
+.. py:function::
+  xuance.torch.policies.deterministic_marl.MATD3_policy.Qpolicy(observation, actions, agent_ids)
+
+  :param observation: xxxxxx.
+  :type observation: xxxxxx
+  :param actions: xxxxxx.
+  :type actions: xxxxxx
+  :param agent_ids: xxxxxx.
+  :type agent_ids: xxxxxx
+  :return: xxxxxx.
+  :rtype: xxxxxx
+
+.. py:function::
+  xuance.torch.policies.deterministic_marl.MATD3_policy.Qtarget(observation, actions, agent_ids)
+
+  :param observation: xxxxxx.
+  :type observation: xxxxxx
+  :param actions: xxxxxx.
+  :type actions: xxxxxx
+  :param agent_ids: xxxxxx.
+  :type agent_ids: xxxxxx
+  :return: xxxxxx.
+  :rtype: xxxxxx
+
+.. py:function::
+  xuance.torch.policies.deterministic_marl.MATD3_policy.Qaction(observation, actions, agent_ids)
+
+  :param observation: xxxxxx.
+  :type observation: xxxxxx
+  :param actions: xxxxxx.
+  :type actions: xxxxxx
+  :param agent_ids: xxxxxx.
+  :type agent_ids: xxxxxx
+  :return: xxxxxx.
+  :rtype: xxxxxx
+
+.. py:function::
+  xuance.torch.policies.deterministic_marl.MATD3_policy.soft_update()
+
+  :return: None.
   :rtype: xxxxxx
 
 .. raw:: html
