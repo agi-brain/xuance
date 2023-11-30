@@ -26,7 +26,7 @@ DuelDQN_Learner
   :type sync_frequency: xxxxxx
 
 .. py:function::
-  xuance.torch.learners.qlearning_family.ddqn_learner.DDQN_Learner.update(obs_batch, act_batch, rew_batch, next_batch, terminal_batch)
+  xuance.torch.learners.qlearning_family.dueldqn_learner.DuelDQN_Learner.update(obs_batch, act_batch, rew_batch, next_batch, terminal_batch)
 
   :param obs_batch: xxxxxx.
   :type obs_batch: xxxxxx
