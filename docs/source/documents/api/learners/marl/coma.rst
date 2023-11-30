@@ -10,7 +10,7 @@ xxxxxx.
 **PyTorch:**
 
 .. py:class::
-  xuance.torch.learners.deterministic.BasicQhead(state_dim, action_dim, hidden_sizes, normalize, initialize, activation, device)
+  xuance.torch.learners.multi_agent_rl.BasicQhead(state_dim, action_dim, hidden_sizes, normalize, initialize, activation, device)
 
   :param state_dim: xxxxxx.
   :type state_dim: xxxxxx
