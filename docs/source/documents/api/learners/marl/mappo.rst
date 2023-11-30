@@ -80,7 +80,7 @@ Source Code
 
   .. group-tab:: PyTorch
 
-    .. code-block:: python
+    .. code-block:: pythona
 
     """
     Multi-Agent Proximal Policy Optimization (MAPPO)
