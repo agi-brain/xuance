@@ -1,8 +1,8 @@
+# This is the main file for an advantage actor critic (A2C) algorithm.
+# The agent random sample a batch in the replay buffer, and optimize the policy gradient and value function loss.
+# This can be a first RL algorithm code for the starters.
 import numpy as np
-
 from xuance.torch.agents import *
-
-
 class A2C_Agent(Agent):
     def __init__(self,
                  config: Namespace,
