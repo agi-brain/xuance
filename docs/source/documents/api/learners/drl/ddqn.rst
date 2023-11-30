@@ -1,5 +1,7 @@
 DDQN_Learner
 =====================================
+C51_Learner
+======================
 
 .. raw:: html
 
@@ -7,6 +9,39 @@ DDQN_Learner
 
 **PyTorch:**
 
+.. py:class::
+  xuance.torch.learners.qlearning_family.c51_learner.C51_Learner(policy, optimizer, scheduler, device, model_dir, gamma, sync_frequency)
+
+  :param policy: xxxxxx.
+  :type policy: xxxxxx
+  :param optimizer: xxxxxx.
+  :type optimizer: xxxxxx
+  :param scheduler: xxxxxx.
+  :type scheduler: xxxxxx
+  :param device: xxxxxx.
+  :type device: xxxxxx
+  :param model_dir: xxxxxx.
+  :type model_dir: xxxxxx
+  :param gamma: xxxxxx.
+  :type gamma: xxxxxx
+  :param sync_frequency: xxxxxx.
+  :type sync_frequency: xxxxxx
+
+.. py:function::
+  xuance.torch.learners.qlearning_family.c51_learner.C51_Learner.update(obs_batch, act_batch, rew_batch, next_batch, terminal_batch)
+
+  :param obs_batch: xxxxxx.
+  :type obs_batch: xxxxxx
+  :param act_batch: xxxxxx.
+  :type act_batch: xxxxxx
+  :param rew_batch: xxxxxx.
+  :type rew_batch: xxxxxx
+  :param next_batch: xxxxxx.
+  :type next_batch: xxxxxx
+  :param terminal_batch: xxxxxx.
+  :type terminal_batch: xxxxxx
+  :return: xxxxxx.
+  :rtype: xxxxxx
 
 .. raw:: html
 
@@ -28,18 +63,72 @@ Source Code
 -----------------
 
 .. tabs::
-  
-    .. group-tab:: PyTorch
 
-        .. code-block:: python3
+  .. group-tab:: PyTorch
+
+    .. code-block:: python
+
+        from xuance.torch.learners import *
+
+
+        class C51_Learner(Learner):
+            def __init__(self,
+                         policy: nn.Module,
+                         optimizer: torch.optim.Optimizer,
+                         scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
+                         device: Optional[Union[int, str, torch.device]] = None,
+                         model_dir: str = "./",
+                         gamma: float = 0.99,
+                         sync_frequency: int = 100):
+                self.gamma = gamma
+                self.sync_frequency = sync_frequency
+                super(C51_Learner, self).__init__(policy, optimizer, scheduler, device, model_dir)
+
+            def update(self, obs_batch, act_batch, rew_batch, next_batch, terminal_batch):
+                self.iterations += 1
+                act_batch = torch.as_tensor(act_batch, device=self.device).long()
+                rew_batch = torch.as_tensor(rew_batch, device=self.device)
+                ter_batch = torch.as_tensor(terminal_batch, device=self.device)
+                _, _, evalZ = self.policy(obs_batch)
+                _, targetA, targetZ = self.policy.target(next_batch)
+
+                current_dist = (evalZ * F.one_hot(act_batch, evalZ.shape[1]).unsqueeze(-1)).sum(1)
+                target_dist = (targetZ * F.one_hot(targetA.detach(), evalZ.shape[1]).unsqueeze(-1)).sum(1).detach()
+
+                current_supports = self.policy.supports
+                next_supports = rew_batch.unsqueeze(1) + self.gamma * self.policy.supports * (1 - ter_batch.unsqueeze(1))
+                next_supports = next_supports.clamp(self.policy.vmin, self.policy.vmax)
+
+                projection = 1 - (next_supports.unsqueeze(-1) - current_supports.unsqueeze(0)).abs() / self.policy.deltaz
+                target_dist = torch.bmm(target_dist.unsqueeze(1), projection.clamp(0, 1)).squeeze(1)
+                loss = -(target_dist * torch.log(current_dist + 1e-8)).sum(1).mean()
+                self.optimizer.zero_grad()
+                loss.backward()
+                self.optimizer.step()
+                if self.scheduler is not None:
+                    self.scheduler.step()
+                # hard update for target network
+                if self.iterations % self.sync_frequency == 0:
+                    self.policy.copy_target()
+                lr = self.optimizer.state_dict()['param_groups'][0]['lr']
+
+                info = {
+                    "Qloss": loss.item(),
+                    "learning_rate": lr
+                }
+
+                return info
 
 
 
 
-    .. group-tab:: TensorFlow
 
-        .. code-block:: python3
 
-    .. group-tab:: MindSpore
+  .. group-tab:: TensorFlow
 
-        .. code-block:: python3
+    .. code-block:: python
+
+
+  .. group-tab:: MindSpore
+
+    .. code-block:: python
