@@ -19,15 +19,11 @@ xxxxxx.
   xuance.torch.runners.runner_drl.Runner_DRL.run()
 
   xxxxxx.
-  :return: xxxxxx.
-  :rtype: xxxxxx
 
 .. py:function::
   xuance.torch.runners.runner_drl.Runner_DRL.benchmark()
 
   xxxxxx.
-  :return: xxxxxx.
-  :rtype: xxxxxx
 
 .. raw:: html
 
