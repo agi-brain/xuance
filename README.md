@@ -7,7 +7,7 @@
 [![PyPI](https://img.shields.io/pypi/v/xuance)](https://pypi.org/project/xuance/)
 [![Documentation Status](https://readthedocs.org/projects/xuance/badge/?version=latest)](https://xuance.readthedocs.io/en/latest/?badge=latest)
 ![GitHub](https://img.shields.io/github/license/agi-brain/xuance)
-![PyPI - Downloads](https://img.shields.io/pypi/dw/xuance)
+![Pepy Total Downlods](https://img.shields.io/pepy/dt/xuance)
 ![GitHub Repo stars](https://img.shields.io/github/stars/agi-brain/xuance?style=social)
 ![GitHub forks](https://img.shields.io/github/forks/agi-brain/xuance?style=social)
 ![GitHub watchers](https://img.shields.io/github/watchers/agi-brain/xuance?style=social)
