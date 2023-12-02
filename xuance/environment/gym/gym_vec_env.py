@@ -28,7 +28,7 @@ def worker(remote, parent_remote, env_fn_wrappers):
             elif cmd == 'get_spaces':
                 remote.send(CloudpickleWrapper((envs[0].observation_space, envs[0].action_space)))
             elif cmd == 'get_max_cycles':
-                remote.send(CloudpickleWrapper((envs[0].env._max_episode_steps)))
+                remote.send(CloudpickleWrapper((envs[0].max_episode_steps)))
             else:
                 raise NotImplementedError
     except KeyboardInterrupt:
@@ -169,7 +169,7 @@ class DummyVecEnv_Gym(VecEnv):
         self.buf_rews = np.zeros((self.num_envs,), dtype=np.float32)
         self.buf_infos = [{} for _ in range(self.num_envs)]
         self.actions = None
-        self.max_episode_length = env.env._max_episode_steps
+        self.max_episode_length = env.max_episode_steps
 
     def reset(self):
         for e in range(self.num_envs):

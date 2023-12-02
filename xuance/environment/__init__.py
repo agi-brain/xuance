@@ -10,6 +10,7 @@ from xuance.environment.pettingzoo.pettingzoo_vec_env import DummyVecEnv_Petting
 from xuance.environment.magent2.magent_vec_env import DummyVecEnv_MAgent
 from xuance.environment.starcraft2.sc2_vec_env import DummyVecEnv_StarCraft2, SubprocVecEnv_StarCraft2
 from xuance.environment.football.gfootball_vec_env import DummyVecEnv_GFootball, SubprocVecEnv_GFootball
+from xuance.environment.new_env.new_vec_env import DummyVecEnv_New, SubprocVecEnv_New
 
 from .vector_envs.subproc_vec_env import SubprocVecEnv
 
@@ -20,14 +21,15 @@ REGISTRY_VEC_ENV = {
     "Dummy_StarCraft2": DummyVecEnv_StarCraft2,
     "Dummy_Football": DummyVecEnv_GFootball,
     "Dummy_Atari": DummyVecEnv_Atari,
+    "Dummy_NewEnv": DummyVecEnv_New,
 
     # multiprocess #
-    # "Subproc": SubprocVecEnv,
     "Subproc_Gym": SubprocVecEnv_Gym,
     "Subproc_Pettingzoo": SubprocVecEnv_Pettingzoo,
     "Subproc_StarCraft2": SubprocVecEnv_StarCraft2,
     "Subproc_Football": SubprocVecEnv_GFootball,
     "Subproc_Atari": SubprocVecEnv_Atari,
+    "Subproc_NewEnv": SubprocVecEnv_New,
 }
 
 
@@ -38,12 +40,15 @@ def make_envs(config: Namespace):
             env = PettingZoo_Env(config.env_name, config.env_id, config.seed,
                                  continuous=config.continuous_action,
                                  render_mode=config.render_mode)
+
         elif config.env_name == "StarCraft2":
             from xuance.environment.starcraft2.sc2_env import StarCraft2_Env
             env = StarCraft2_Env(map_name=config.env_id)
+
         elif config.env_name == "Football":
             from xuance.environment.football.gfootball_env import GFootball_Env
             env = GFootball_Env(config)
+
         elif config.env_name == "MAgent2":
             from xuance.environment.magent2.magent_env import MAgent_Env
             env = MAgent_Env(config.env_id, config.seed,
@@ -52,16 +57,25 @@ def make_envs(config: Namespace):
                              extra_features=config.extra_features,
                              map_size=config.map_size,
                              render_mode=config.render_mode)
+
         elif config.env_name == "Atari":
             from xuance.environment.gym.gym_env import Atari_Env
             env = Atari_Env(config.env_id, config.seed, config.render_mode,
                             config.obs_type, config.frame_skip, config.num_stack, config.img_size, config.noop_max)
+
         elif config.env_id.__contains__("MountainCar"):
             env = MountainCar(config.env_id, config.seed, config.render_mode)
+
         elif config.env_id.__contains__("CarRacing"):
             env = Gym_Env(config.env_id, config.seed, config.render_mode, continuous=False)
+
+        elif config.env_name == "NewEnv":
+            from xuance.environment.new_env.new_env import New_Env
+            env = New_Env(config.env_id, config.seed, continuous=False)
+
         else:
             env = Gym_Env(config.env_id, config.seed, config.render_mode)
+
         return env
 
     if config.vectorize in REGISTRY_VEC_ENV.keys():

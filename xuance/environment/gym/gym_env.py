@@ -23,6 +23,7 @@ class Gym_Env(gym.Wrapper):
         self.action_space = self.env.action_space
         self.metadata = self.env.metadata
         self.reward_range = self.env.reward_range
+        self.max_episode_steps = self.env._max_episode_steps
         self._episode_step = 0
         self._episode_score = 0.0
 
