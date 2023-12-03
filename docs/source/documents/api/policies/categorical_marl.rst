@@ -11,14 +11,14 @@ Categorical-MARL
 .. py:class::
   xuance.torch.policies.categorical_mal.ActorNet(state_dim, action_dim, n_agents, hidden_sizes, normalize, initialize, gain, activation, device)
 
-  :param state_dim: xxxxxx.
-  :type state_dim: xxxxxx
-  :param action_dim: xxxxxx.
-  :type action_dim: xxxxxx
-  :param n_agents: xxxxxx.
-  :type n_agents: xxxxxx
-  :param hidden_sizes: xxxxxx.
-  :type hidden_sizes: xxxxxx
+  :param state_dim: The dimention of the state varibale.
+  :type state_dim: int
+  :param action_dim: The dimentin of the actions.
+  :type action_dim: int
+  :param n_agents: The number of all agents.
+  :type n_agents: int
+  :param hidden_sizes: The number of hidden units for each hidden layers.
+  :type hidden_sizes: list
   :param normalize: xxxxxx.
   :type normalize: xxxxxx
   :param initialize: xxxxxx.
