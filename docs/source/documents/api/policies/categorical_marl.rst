@@ -17,7 +17,7 @@ Categorical-MARL
   :type action_dim: int
   :param n_agents: The number of all agents.
   :type n_agents: int
-  :param hidden_sizes: The number of hidden units for each hidden layers.
+  :param hidden_sizes: The number of hidden units for hidden layers.
   :type hidden_sizes: list
   :param normalize: xxxxxx.
   :type normalize: xxxxxx
@@ -41,12 +41,12 @@ Categorical-MARL
 .. py:class::
   xuance.torch.policies.categorical_mal.CriticNet(state_dim, n_agents, hidden_sizes,  normalize, initialize, activation, device)
 
-  :param state_dim: xxxxxx.
-  :type state_dim: xxxxxx
-  :param n_agents: xxxxxx.
-  :type n_agents: xxxxxx
-  :param hidden_sizes: xxxxxx.
-  :type hidden_sizes: xxxxxx
+  :param state_dim: The dimention of the state varibale.
+  :type state_dim: int
+  :param n_agents: number of agents.
+  :type n_agents: int
+  :param hidden_sizes: The number of hidden units for hidden layers.
+  :type hidden_sizes: list
   :param normalize: xxxxxx.
   :type normalize: xxxxxx
   :param initialize: xxxxxx.
@@ -59,20 +59,20 @@ Categorical-MARL
 .. py:function::
   xuance.torch.policies.categorical_mal.CriticNet.forward(x)
 
-  :param x: xxxxxx.
-  :type x: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :param x: input data.
+  :type x: torch.Tensor
+  :return: y.
+  :rtype: torch.Tensor
 
 .. py:class::
   xuance.torch.policies.categorical_mal.COMA_Critic(state_dim, act_dim, hidden_sizes,  normalize, initialize, activation, device)
 
-  :param state_dim: xxxxxx.
-  :type state_dim: xxxxxx
-  :param act_dim: xxxxxx.
-  :type act_dim: xxxxxx
-  :param hidden_sizes: xxxxxx.
-  :type hidden_sizes: xxxxxx
+  :param state_dim: The dimention of the state varibale.
+  :type state_dim: int
+  :param act_dim: The dimention of actions.
+  :type act_dim: int
+  :param hidden_sizes: The number of hidden units for hidden layers.
+  :type hidden_sizes: list
   :param normalize: xxxxxx.
   :type normalize: xxxxxx
   :param initialize: xxxxxx.
