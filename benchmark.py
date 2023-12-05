@@ -5,8 +5,8 @@ from xuance import get_runner
 def parse_args():
     parser = argparse.ArgumentParser("Run benchmark results.")
     parser.add_argument("--method", type=str, default="dqn")
-    parser.add_argument("--env", type=str, default="box2d")
-    parser.add_argument("--env-id", type=str, default="LunarLander-v2")
+    parser.add_argument("--env", type=str, default="classic_control")
+    parser.add_argument("--env-id", type=str, default="CartPole-v1")
     parser.add_argument("--seed", type=int, default=1069)
     parser.add_argument("--n-steps", type=int, default=16)
     parser.add_argument("--test", type=int, default=0)

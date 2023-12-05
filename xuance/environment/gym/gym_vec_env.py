@@ -169,7 +169,7 @@ class DummyVecEnv_Gym(VecEnv):
         self.buf_rews = np.zeros((self.num_envs,), dtype=np.float32)
         self.buf_infos = [{} for _ in range(self.num_envs)]
         self.actions = None
-        self.max_episode_length = env.max_episode_steps
+        self.max_episode_length = env.max_episode_length
 
     def reset(self):
         for e in range(self.num_envs):
