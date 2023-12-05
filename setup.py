@@ -40,7 +40,7 @@ setup(
         "all": [
             "torch==1.13.0",
             "tensorflow==2.6.0",
-            "mindspore==1.10.1"
+            # "mindspore==1.10.1"  # mindspore might be installed manually.
         ]
     },
     install_requires=[
@@ -50,7 +50,7 @@ setup(
         "gym==0.26.2",
         "gymnasium==0.28.1",
         "gym-notices==0.0.8",
-        "box2d-py==2.3.5",
+        # "box2d-py==2.3.5",  # for box2d
         "mpi4py==3.1.3",
         "tqdm==4.62.3",
         "pyglet==1.5.15",
