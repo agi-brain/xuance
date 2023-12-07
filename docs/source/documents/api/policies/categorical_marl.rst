@@ -93,18 +93,18 @@ Categorical-MARL
 .. py:class::
   xuance.torch.policies.categorical_mal.MAAC_Policy(action_space, n_agents, representation, mixer, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device)
 
-  :param action_space: xxxxxx.
+  :param action_space: The action space.
   :type action_space: xxxxxx
-  :param n_agents: xxxxxx.
-  :type n_agents: xxxxxx
+  :param n_agents: The number of agents.
+  :type n_agents: int
   :param representation: xxxxxx.
   :type representation: xxxxxx
   :param mixer: xxxxxx.
   :type mixer: xxxxxx
-  :param actor_hidden_size: xxxxxx.
-  :type actor_hidden_size: xxxxxx
-  :param critic_hidden_size: xxxxxx.
-  :type critic_hidden_size: xxxxxx
+  :param actor_hidden_size: The number of hidden units for actor's hidden layers.
+  :type actor_hidden_size: list
+  :param critic_hidden_size: The number of hidden units for critic's hidden layers.
+  :type critic_hidden_size: list
   :param normalize: xxxxxx.
   :type normalize: xxxxxx
   :param initialize: xxxxxx.
