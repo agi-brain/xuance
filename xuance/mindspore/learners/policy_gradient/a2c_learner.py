@@ -25,13 +25,12 @@ class A2C_Learner(Learner):
                  policy: nn.Cell,
                  optimizer: nn.Optimizer,
                  scheduler: Optional[nn.exponential_decay_lr] = None,
-                 summary_writer: Optional[SummaryWriter] = None,
-                 modeldir: str = "./",
+                 model_dir: str = "./",
                  vf_coef: float = 0.25,
                  ent_coef: float = 0.005,
                  clip_grad: Optional[float] = None,
                  clip_type: Optional[int] = None):
-        super(A2C_Learner, self).__init__(policy, optimizer, scheduler, summary_writer, modeldir)
+        super(A2C_Learner, self).__init__(policy, optimizer, scheduler, model_dir)
         self.vf_coef = vf_coef
         self.ent_coef = ent_coef
         self.clip_grad = clip_grad
@@ -53,9 +52,10 @@ class A2C_Learner(Learner):
 
         # Logger
         lr = self.scheduler(self.iterations).asnumpy()
-        # self.writer.add_scalar("actor-loss", loss_a.item(), self.iterations)
-        # self.writer.add_scalar("critic-loss", loss_c.item(), self.iterations)
-        # self.writer.add_scalar("entropy", loss_e.item(), self.iterations)
-        self.writer.add_scalar("total-loss", loss.asnumpy(), self.iterations)
-        self.writer.add_scalar("learning_rate", lr, self.iterations)
-        # self.writer.add_scalar("predict_value", v_pred.mean().item(), self.iterations)
+
+        info = {
+            "total-loss": loss.asnumpy(),
+            "learning_rate": lr
+        }
+
+        return info

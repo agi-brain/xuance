@@ -5,7 +5,7 @@ from gym import spaces
 class SPDQN_Agent(Agent):
     def __init__(self,
                  config: Namespace,
-                 envs: Toy_Env,
+                 envs: Gym_Env,
                  policy: nn.Cell,
                  optimizer: Sequence[nn.Optimizer],
                  scheduler):

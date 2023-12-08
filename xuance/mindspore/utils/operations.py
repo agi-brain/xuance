@@ -1,8 +1,23 @@
+import random
 import mindspore as ms
 import mindspore.nn as nn
 import numpy as np
 from mindspore.ops import ExpandDims
 from .distributions import CategoricalDistribution
+
+
+def update_linear_decay(optimizer, step, total_steps, initial_lr, end_factor):
+    lr = initial_lr * (1 - step / float(total_steps))
+    if lr < end_factor * initial_lr:
+        lr = end_factor * initial_lr
+    for param_group in optimizer.param_groups:
+        param_group['lr'] = lr
+
+
+def set_seed(seed):
+    ms.set_seed(seed)
+    np.random.seed(seed)
+    random.seed(seed)
 
 
 def get_flat_grad(y: ms.Tensor, model: nn.Cell) -> ms.Tensor:

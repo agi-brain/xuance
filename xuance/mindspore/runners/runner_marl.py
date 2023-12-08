@@ -7,7 +7,7 @@ from copy import deepcopy
 import time
 
 
-class Runner(Runner_Base_MARL):
+class Runner(Runner_Base):
     def __init__(self, args):
         self.args = args if type(args) == list else [args]
         super(Runner, self).__init__(self.args[0])

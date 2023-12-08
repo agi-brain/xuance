@@ -4,6 +4,7 @@ from argparse import Namespace
 from mpi4py import MPI
 from tqdm import tqdm
 from torch.utils.tensorboard import SummaryWriter
+import wandb
 import mindspore as ms
 import mindspore.nn as nn
 from mindspore import context
@@ -18,8 +19,8 @@ from xuance.mindspore.representations import REGISTRY as REGISTRY_Representation
 from mindspore.nn import Adam
 from mindspore.nn.learning_rate_schedule import ExponentialDecayLR as lr_decay_model
 
-from .agent import Agent
-from .agents_marl import MARLAgents, RandomAgents, get_total_iters
+from .agent import Agent, get_total_iters
+from .agents_marl import MARLAgents, RandomAgents
 
 '''
 Single-Agent DRL algorithms

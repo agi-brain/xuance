@@ -14,31 +14,33 @@ class Learner(ABC):
                  policy: nn.Cell,
                  optimizer: nn.Optimizer,
                  scheduler: Optional[nn.exponential_decay_lr] = None,
-                 summary_writer: Optional[SummaryWriter] = None,
-                 modeldir: str = "./"):
+                 model_dir: str = "./"):
         self.policy = policy
         self.optimizer = optimizer
         self.scheduler = scheduler
-        self.writer = summary_writer
-        self.modeldir = modeldir
+        self.model_dir = model_dir
         self.iterations = 0
 
-    def save_model(self):
-        time_string = time.asctime()
-        time_string = time_string.replace(" ", "")
-        model_path = self.modeldir + "model-%s-%s" % (time.asctime(), str(self.iterations))
-        if not os.path.exists(self.modeldir):
+    def save_model(self, model_path):
+        if not os.path.exists(model_path):
             try:
-                os.mkdir(self.modeldir)
+                os.mkdir(model_path)
             except:
-                os.makedirs(self.modeldir)
+                os.makedirs(model_path)
         ms.save_checkpoint(self.policy, model_path)
 
-    def load_model(self, path):
+    def load_model(self, path, seed=1):
+        file_names = os.listdir(path)
+        for f in file_names:
+            '''Change directory to the specified seed (if exists)'''
+            if f"seed_{seed}" in f:
+                path = os.path.join(path, f)
+                break
         model_names = os.listdir(path)
-        model_names.remove('obs_rms.npy')
+        if os.path.exists(path + "/obs_rms.npy"):
+            model_names.remove("obs_rms.npy")
         model_names.sort()
-        model_path = path + model_names[-1]
+        model_path = os.path.join(path, model_names[-1])
         ms.load_param_into_net(self.policy, ms.load_checkpoint(model_path))
 
     @abstractmethod
@@ -52,8 +54,7 @@ class LearnerMAS(ABC):
                  policy: nn.Cell,
                  optimizer: Union[nn.Optimizer, Sequence[nn.Optimizer]],
                  scheduler: Optional[nn.exponential_decay_lr] = None,
-                 summary_writer: Optional[SummaryWriter] = None,
-                 modeldir: str = "./"):
+                 model_dir: str = "./"):
         self.args = config
         self.handle = config.handle
         self.n_agents = config.n_agents
@@ -66,8 +67,7 @@ class LearnerMAS(ABC):
         self.policy = policy
         self.optimizer = optimizer
         self.scheduler = scheduler
-        self.writer = summary_writer
-        self.modeldir = modeldir
+        self.model_dir = model_dir
         self.iterations = 0
         self._one_hot = OneHot()
         self.eye = Eye()

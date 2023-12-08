@@ -5,7 +5,7 @@ from xuance.mindspore.agents.agents_marl import linear_decay_or_increase
 class VDN_Agents(MARLAgents):
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecEnv_MAS):
+                 envs: DummyVecEnv_Pettingzoo):
         self.comm = MPI.COMM_WORLD
 
         self.gamma = config.gamma
