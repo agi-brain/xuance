@@ -70,8 +70,8 @@ class Agent(ABC):
         self.current_episode = np.zeros((self.envs.num_envs,), np.int32)
 
     def save_model(self, model_name):
-        model_path = self.model_dir_save + "/" + model_name
-        self.learner.save_model(model_path)
+        model_path = self.model_dir_save
+        self.learner.save_model(model_path, model_name)
 
     def load_model(self, path, seed=1):
         self.learner.load_model(path, seed)

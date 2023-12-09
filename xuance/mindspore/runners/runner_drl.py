@@ -93,7 +93,7 @@ class Runner_DRL(Runner_Base):
             n_train_steps = self.args.running_steps // self.n_envs
             self.agent.train(n_train_steps)
             print("Finish training.")
-            self.agent.save_model("final_train_model.pth")
+            self.agent.save_model(model_name="final_train_model.ckpt")
 
         self.envs.close()
         if self.agent.use_wandb:
@@ -126,7 +126,7 @@ class Runner_DRL(Runner_Base):
                                     "std": np.std(test_scores),
                                     "step": self.agent.current_step}
                 # save best model
-                self.agent.save_model(model_name="best_model.pth")
+                self.agent.save_model(model_name="best_model.ckpt")
 
         # end benchmarking
         print("Best Model Score: %.2f, std=%.2f" % (best_scores_info["mean"], best_scores_info["std"]))

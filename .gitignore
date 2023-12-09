@@ -10,3 +10,4 @@ models/
 *.sh
 .VSCodeCounter/
 **/__pycache__
+rank_0/

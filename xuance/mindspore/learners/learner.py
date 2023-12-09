@@ -21,13 +21,14 @@ class Learner(ABC):
         self.model_dir = model_dir
         self.iterations = 0
 
-    def save_model(self, model_path):
+    def save_model(self, model_path, file_name):
         if not os.path.exists(model_path):
             try:
                 os.mkdir(model_path)
             except:
                 os.makedirs(model_path)
-        ms.save_checkpoint(self.policy, model_path)
+        ckpt_file_name = os.path.join(model_path, file_name)
+        ms.save_checkpoint(self.policy, ckpt_file_name)
 
     def load_model(self, path, seed=1):
         file_names = os.listdir(path)

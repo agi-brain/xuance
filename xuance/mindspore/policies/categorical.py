@@ -19,7 +19,7 @@ class ActorNet(nn.Cell):
             self._dist = Categorical(dtype=ms.float32)
 
         def construct(self, value, probs):
-            return self._dist.log_prob(value=value, probs=probs)
+            return self._dist._log_prob(value=value, probs=probs)
 
     class Entropy(nn.Cell):
         def __init__(self):
