@@ -63,7 +63,7 @@ REGISTRY = {
     "Mixing_Q_network": MixingQnetwork,
     "Weighted_Mixing_Q_network": Weighted_MixingQnetwork,
     "Qtran_Mixing_Q_network": Qtran_MixingQnetwork,
-    "DCG_policy": DCG_policy,
+    "DCG_Policy": DCG_policy,
     "Categorical_MAAC_Policy": Categorical_MAAC_Policy,
     "Categorical_MAAC_Policy_Share": Categorical_MAAC_Policy_Share,
     "Categorical_COMA_Policy": COMAPolicy,
