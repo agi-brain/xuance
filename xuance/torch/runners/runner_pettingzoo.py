@@ -253,9 +253,9 @@ class Pettingzoo_Runner(Runner_Base):
                             if mas_group.on_policy:
                                 if mas_group.args.agent == "COMA":
                                     _, value_next_e = mas_group.values(next_obs_n[h],
-                                                                       actions_dict['actions_n'][h],
-                                                                       actions_dict['act_n_onehot'][h],
-                                                                       state=next_state)
+                                                                       state=next_state,
+                                                                       actions_n=actions_dict['actions_n'][h],
+                                                                       actions_onehot=actions_dict['act_n_onehot'][h])
                                 else:
                                     _, value_next_e = mas_group.values(next_obs_n[h], state=next_state)
                                 mas_group.memory.finish_path(value_next_e[i_env], i_env)
