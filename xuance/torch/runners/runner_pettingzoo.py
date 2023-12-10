@@ -194,9 +194,9 @@ class Pettingzoo_Runner(Runner_Base):
                 if mas_group.memory.full:
                     if self.marl_names[h] == "COMA":
                         _, values_next = mas_group.values(next_obs_n[h],
-                                                          actions_dict['actions_n'][h],
-                                                          actions_dict['act_n_onehot'][h],
-                                                          state=next_state)
+                                                          state=next_state,
+                                                          actions_n=actions_dict['actions_n'][h],
+                                                          actions_onehot=actions_dict['act_n_onehot'][h])
                     else:
                         _, values_next = mas_group.values(next_obs_n[h], state=next_state)
                     for i_env in range(self.n_envs):
