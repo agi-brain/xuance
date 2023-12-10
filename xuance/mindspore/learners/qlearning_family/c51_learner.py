@@ -20,7 +20,7 @@ class C51_Learner(Learner):
             self.clamp_max_value = Tensor(1.0, ms.float32)
 
         def construct(self, x, a, projection, target_a, target_z):
-            _, _, evalZ, _ = self._backbone(x)
+            _, _, evalZ = self._backbone(x)
             
             current_dist = self._sum(evalZ * self._unsqueeze(self._onehot(a, evalZ.shape[1], self.on_value, self.off_value), -1), 1)
             target_dist = self._sum(target_z * self._unsqueeze(self._onehot(target_a, evalZ.shape[1], self.on_value, self.off_value), -1), 1)
@@ -34,13 +34,12 @@ class C51_Learner(Learner):
                  policy: nn.Cell,
                  optimizer: nn.Optimizer,
                  scheduler: Optional[nn.exponential_decay_lr] = None,
-                 summary_writer: Optional[SummaryWriter] = None,
-                 modeldir: str = "./",
+                 model_dir: str = "./",
                  gamma: float = 0.99,
                  sync_frequency: int = 100):
         self.gamma = gamma
         self.sync_frequency = sync_frequency
-        super(C51_Learner, self).__init__(policy, optimizer, scheduler, summary_writer, modeldir)
+        super(C51_Learner, self).__init__(policy, optimizer, scheduler, model_dir)
         # connect the feed forward network with loss function.
         self.loss_net = self.PolicyNetWithLossCell(policy)
         # define the training network
@@ -59,7 +58,7 @@ class C51_Learner(Learner):
         next_batch = Tensor(next_batch)
         ter_batch = Tensor(terminal_batch)
 
-        _, targetA, _, targetZ = self.policy(next_batch)
+        _, targetA, targetZ = self.policy(next_batch)
         
         current_supports = self.policy.supports
         next_supports = self._unsqueeze(rew_batch, 1) + self.gamma * self.policy.supports * (1-self._unsqueeze(ter_batch, -1))
@@ -73,5 +72,10 @@ class C51_Learner(Learner):
             self.policy.copy_target()
 
         lr = self.scheduler(self.iterations).asnumpy()
-        self.writer.add_scalar("Qloss", loss.asnumpy(), self.iterations)
-        self.writer.add_scalar("learning_rate", lr, self.iterations)
+
+        info = {
+            "Qloss": loss.asnumpy(),
+            "learning_rate": lr
+        }
+
+        return info

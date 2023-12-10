@@ -3,6 +3,7 @@ from xuance.mindspore.utils import *
 import copy
 from gym.spaces import Space, Box, Discrete, Dict
 
+
 class BasicQhead(nn.Cell):
     def __init__(self,
                  state_dim: int,
@@ -88,6 +89,7 @@ class C51Qhead(nn.Cell):
         dist_probs = self._softmax(dist_logits)
         return dist_probs
 
+
 class QRDQNhead(nn.Cell):
     def __init__(self,
                  state_dim: int,
@@ -111,6 +113,7 @@ class QRDQNhead(nn.Cell):
 
     def construct(self, x: ms.tensor):
         return self.model(x).view(-1, self.action_dim, self.atom_num)
+
 
 class BasicQnetwork(nn.Cell):
     def __init__(self,
@@ -175,6 +178,7 @@ class DuelQnetwork(nn.Cell):
         for ep, tp in zip(self.eval_Qhead.trainable_params(), self.target_Qhead.trainable_params()):
             tp.assign_value(ep)
 
+
 class NoisyQnetwork(nn.Cell):
     def __init__(self,
                  action_space: Discrete,
@@ -189,19 +193,19 @@ class NoisyQnetwork(nn.Cell):
         self.representation = representation
         self.representation_info_shape = self.representation.output_shapes
         self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, hidden_size,
-                                    normalize, initialize, activation)
+                                     normalize, initialize, activation)
         self.target_Qhead = copy.deepcopy(self.eval_Qhead)
 
         self._stdnormal = ms.ops.StandardNormal()
         self._assign = ms.ops.Assign()
 
-    def update_noise(self,noisy_bound:float=0.0):
+    def update_noise(self, noisy_bound: float = 0.0):
         self.eval_noise_parameter = []
         self.target_noise_parameter = []
         for parameter in self.eval_Qhead.trainable_params():
-            self.eval_noise_parameter.append(self._stdnormal(parameter.shape)*noisy_bound)
-            self.target_noise_parameter.append(self._stdnormal(parameter.shape)*noisy_bound)
-    
+            self.eval_noise_parameter.append(self._stdnormal(parameter.shape) * noisy_bound)
+            self.target_noise_parameter.append(self._stdnormal(parameter.shape) * noisy_bound)
+
     def construct(self, observation: ms.tensor):
         outputs = self.representation(observation)
         for parameter, noise_param in zip(self.eval_Qhead.trainable_params(), self.eval_noise_parameter):
@@ -220,6 +224,7 @@ class NoisyQnetwork(nn.Cell):
         for ep, tp in zip(self.eval_Qhead.trainable_params(), self.target_Qhead.trainable_params()):
             tp.assign_value(ep)
 
+
 class C51Qnetwork(nn.Cell):
     def __init__(self,
                  action_space: Discrete,
@@ -232,35 +237,45 @@ class C51Qnetwork(nn.Cell):
                  initialize: Optional[Callable[..., ms.Tensor]] = None,
                  activation: Optional[ModuleType] = None
                  ):
-        assert isinstance(action_space,Discrete)
-        super(C51Qnetwork,self).__init__()
+        assert isinstance(action_space, Discrete)
+        super(C51Qnetwork, self).__init__()
         self.action_dim = action_space.n
         self.atom_num = atom_num
         self.vmin = vmin
         self.vmax = vmax
         self.representation = representation
+        self.target_representation = copy.deepcopy(representation)
         self.representation_info_shape = self.representation.output_shapes
-        self.eval_Zhead = C51Qhead(self.representation.output_shapes['state'][0],self.action_dim,self.atom_num,hidden_size,
-                                   normalize,initialize,activation)
+        self.eval_Zhead = C51Qhead(self.representation.output_shapes['state'][0], self.action_dim, self.atom_num,
+                                   hidden_size, normalize, initialize, activation)
         self.target_Zhead = copy.deepcopy(self.eval_Zhead)
         self._LinSpace = ms.ops.LinSpace()
         self.supports = ms.Parameter(self._LinSpace(ms.Tensor(self.vmin, ms.float32),
                                                     ms.Tensor(self.vmax, ms.float32),
                                                     self.atom_num),
-                                    requires_grad=False)
+                                     requires_grad=False)
         self.deltaz = (vmax - vmin) / (atom_num - 1)
-    
-    def construct(self,observation: Union[np.ndarray, dict]):
+
+    def construct(self, observation: Union[np.ndarray, dict]):
         outputs = self.representation(observation)
         eval_Z = self.eval_Zhead(outputs['state'])
         eval_Q = (self.supports * eval_Z).sum(-1)
         argmax_action = eval_Q.argmax(axis=-1)
+        return outputs, argmax_action, eval_Z
+
+    def target(self, observation: Union[np.ndarray, dict]):
+        outputs = self.target_representation(observation)
         target_Z = self.target_Zhead(outputs['state'])
-        return outputs,argmax_action, eval_Z, target_Z
-    
+        target_Q = (self.supports * target_Z).sum(-1)
+        argmax_action = target_Q.argmax(dim=-1)
+        return outputs, argmax_action, target_Z
+
     def copy_target(self):
+        for ep, tp in zip(self.representation.trainable_params(), self.target_representation.trainable_params()):
+            tp.assign_value(ep)
         for ep, tp in zip(self.eval_Zhead.trainable_params(), self.target_Zhead.trainable_params()):
             tp.assign_value(ep)
+
 
 class QRDQN_Network(nn.Cell):
     def __init__(self,
@@ -272,14 +287,15 @@ class QRDQN_Network(nn.Cell):
                  initialize: Optional[Callable[..., ms.Tensor]] = None,
                  activation: Optional[ModuleType] = None
                  ):
-        assert isinstance(action_space,Discrete)
+        assert isinstance(action_space, Discrete)
         super(QRDQN_Network, self).__init__()
         self.action_dim = action_space.n
         self.quantile_num = quantile_num
         self.representation = representation
         self.representation_info_shape = self.representation.output_shapes
-        self.eval_Qhead = QRDQNhead(self.representation.output_shapes['state'][0], self.action_dim, self.quantile_num, hidden_size,
-                                     normalize, initialize, activation)
+        self.eval_Qhead = QRDQNhead(self.representation.output_shapes['state'][0], self.action_dim, self.quantile_num,
+                                    hidden_size,
+                                    normalize, initialize, activation)
         self.target_Qhead = copy.deepcopy(self.eval_Qhead)
 
         self._mean = ms.ops.ReduceMean()
@@ -392,9 +408,9 @@ class DDPGPolicy(nn.Cell):
 
     def soft_update(self, tau=0.005):
         for ep, tp in zip(self.actor.trainable_params(), self.target_actor.trainable_params()):
-            tp.assign_value((tau*ep.data+(1-tau)*tp.data))
+            tp.assign_value((tau * ep.data + (1 - tau) * tp.data))
         for ep, tp in zip(self.critic.trainable_params(), self.target_critic.trainable_params()):
-            tp.assign_value((tau*ep.data+(1-tau)*tp.data))
+            tp.assign_value((tau * ep.data + (1 - tau) * tp.data))
 
 
 class TD3Policy(nn.Cell):
@@ -464,11 +480,11 @@ class TD3Policy(nn.Cell):
 
     def soft_update(self, tau=0.005):
         for ep, tp in zip(self.actor.trainable_params(), self.target_actor.trainable_params()):
-            tp.assign_value((tau*ep.data+(1-tau)*tp.data))
+            tp.assign_value((tau * ep.data + (1 - tau) * tp.data))
         for ep, tp in zip(self.criticA.trainable_params(), self.target_criticA.trainable_params()):
-            tp.assign_value((tau*ep.data+(1-tau)*tp.data))
+            tp.assign_value((tau * ep.data + (1 - tau) * tp.data))
         for ep, tp in zip(self.criticB.trainable_params(), self.target_criticB.trainable_params()):
-            tp.assign_value((tau*ep.data+(1-tau)*tp.data))
+            tp.assign_value((tau * ep.data + (1 - tau) * tp.data))
 
 
 class CDQNPolicy(nn.Cell):
@@ -582,13 +598,14 @@ class PDQNPolicy(nn.Cell):
         self.observation_space = observation_space
         self.action_space = action_space
         self.num_disact = self.action_space.spaces[0].n
-        self.conact_sizes = np.array([self.action_space.spaces[i].shape[0] for i in range(1, self.num_disact+1)])
+        self.conact_sizes = np.array([self.action_space.spaces[i].shape[0] for i in range(1, self.num_disact + 1)])
         self.conact_size = int(self.conact_sizes.sum())
 
-        self.qnetwork = BasicQhead(self.observation_space.shape[0]+self.conact_size, self.num_disact, qnetwork_hidden_size, normalize,
-                                       initialize, nn.ReLU)
+        self.qnetwork = BasicQhead(self.observation_space.shape[0] + self.conact_size, self.num_disact,
+                                   qnetwork_hidden_size, normalize,
+                                   initialize, nn.ReLU)
         self.conactor = ActorNet(self.observation_space.shape[0], self.conact_size, conactor_hidden_size,
-                                  initialize, nn.ReLU)
+                                 initialize, nn.ReLU)
         self.target_conactor = copy.deepcopy(self.conactor)
         self.target_qnetwork = copy.deepcopy(self.qnetwork)
         self._concat = ms.ops.Concat(1)
@@ -624,9 +641,9 @@ class PDQNPolicy(nn.Cell):
 
     def soft_update(self, tau=0.005):
         for ep, tp in zip(self.conactor.trainable_params(), self.target_conactor.trainable_params()):
-            tp.assign_value((tau*ep.data+(1-tau)*tp.data))
+            tp.assign_value((tau * ep.data + (1 - tau) * tp.data))
         for ep, tp in zip(self.qnetwork.trainable_params(), self.target_qnetwork.trainable_params()):
-            tp.assign_value((tau*ep.data+(1-tau)*tp.data))
+            tp.assign_value((tau * ep.data + (1 - tau) * tp.data))
 
 
 class MPDQNPolicy(nn.Cell):
@@ -645,13 +662,14 @@ class MPDQNPolicy(nn.Cell):
         self.obs_size = self.observation_space.shape[0]
         self.action_space = action_space
         self.num_disact = self.action_space.spaces[0].n
-        self.conact_sizes = np.array([self.action_space.spaces[i].shape[0] for i in range(1, self.num_disact+1)])
+        self.conact_sizes = np.array([self.action_space.spaces[i].shape[0] for i in range(1, self.num_disact + 1)])
         self.conact_size = int(self.conact_sizes.sum())
 
-        self.qnetwork = BasicQhead(self.observation_space.shape[0]+self.conact_size, self.num_disact, qnetwork_hidden_size, normalize,
-                                       initialize, nn.ReLU)
+        self.qnetwork = BasicQhead(self.observation_space.shape[0] + self.conact_size, self.num_disact,
+                                   qnetwork_hidden_size, normalize,
+                                   initialize, nn.ReLU)
         self.conactor = ActorNet(self.observation_space.shape[0], self.conact_size, conactor_hidden_size,
-                                  initialize, nn.ReLU)
+                                 initialize, nn.ReLU)
         self.target_conactor = copy.deepcopy(self.conactor)
         self.target_qnetwork = copy.deepcopy(self.qnetwork)
 
@@ -681,7 +699,8 @@ class MPDQNPolicy(nn.Cell):
         input_q = input_q.asnumpy()
         action = action.asnumpy()
         for i in range(self.num_disact):
-            input_q[i * batch_size:(i + 1) * batch_size, self.obs_size + self.offsets[i]: self.obs_size + self.offsets[i + 1]] \
+            input_q[i * batch_size:(i + 1) * batch_size,
+            self.obs_size + self.offsets[i]: self.obs_size + self.offsets[i + 1]] \
                 = action[:, self.offsets[i]:self.offsets[i + 1]]
         input_q = ms.Tensor(input_q, dtype=ms.float32)
         eval_qall = self.target_qnetwork(input_q)
@@ -693,7 +712,7 @@ class MPDQNPolicy(nn.Cell):
         Q = self._concat(Q)
         return Q
 
-    def Qeval(self, state, action,input_q):
+    def Qeval(self, state, action, input_q):
         # state = state.astype(ms.float32)
         batch_size = state.shape[0]
         Q = []
@@ -708,14 +727,14 @@ class MPDQNPolicy(nn.Cell):
         # input_q = ms.Tensor(input_q, dtype=ms.float32)
         eval_qall = self.qnetwork(input_q)
         for i in range(self.num_disact):
-            eval_q = eval_qall[i * batch_size:(i+1) * batch_size, i]
+            eval_q = eval_qall[i * batch_size:(i + 1) * batch_size, i]
             if len(eval_q.shape) == 1:
                 eval_q = eval_q.expand_dims(1)
             Q.append(eval_q)
         Q = self._concat(Q)
         return Q
 
-    def Qpolicy(self, state,input_q):
+    def Qpolicy(self, state, input_q):
         # conact = self.conactor(state)
         batch_size = state.shape[0]
         Q = []
@@ -733,15 +752,15 @@ class MPDQNPolicy(nn.Cell):
             Q.append(eval_q)
         Q = self._concat(Q)
         return Q
-    
+
     def construct(self):
         return super().construct()
 
     def soft_update(self, tau=0.005):
         for ep, tp in zip(self.conactor.trainable_params(), self.target_conactor.trainable_params()):
-            tp.assign_value((tau*ep.data+(1-tau)*tp.data))
+            tp.assign_value((tau * ep.data + (1 - tau) * tp.data))
         for ep, tp in zip(self.qnetwork.trainable_params(), self.target_qnetwork.trainable_params()):
-            tp.assign_value((tau*ep.data+(1-tau)*tp.data))
+            tp.assign_value((tau * ep.data + (1 - tau) * tp.data))
 
 
 class SPDQNPolicy(nn.Cell):
