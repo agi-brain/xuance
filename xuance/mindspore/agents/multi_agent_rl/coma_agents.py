@@ -1,29 +1,40 @@
 from xuance.mindspore.agents import *
-from xuance.mindspore.agents.agents_marl import linear_decay_or_increase
 
 
 class COMA_Agents(MARLAgents):
     def __init__(self,
                  config: Namespace,
                  envs: DummyVecEnv_Pettingzoo):
-        self.comm = MPI.COMM_WORLD
-        config.batch_size = config.batch_size * envs.num_envs
-
         self.gamma = config.gamma
-        self.use_obsnorm = config.use_obsnorm
-        self.use_rewnorm = config.use_rewnorm
-        self.obsnorm_range = config.obsnorm_range
-        self.rewnorm_range = config.rewnorm_range
+        self.start_greedy, self.end_greedy = config.start_greedy, config.end_greedy
+        self.egreedy = self.start_greedy
+        self.delta_egreedy = (self.start_greedy - self.end_greedy) / config.decay_step_greedy
 
+        self.n_envs = envs.num_envs
+        self.n_size = config.n_size
+        self.n_epoch = config.n_epoch
+        self.n_minibatch = config.n_minibatch
         if config.state_space is not None:
-            config.dim_state, state_shape = config.state_space.shape, config.state_space.shape
+            config.dim_state, state_shape = config.state_space.shape[0], config.state_space.shape
         else:
             config.dim_state, state_shape = None, None
 
+        # create representation for COMA actor
         input_representation = get_repre_in(config)
-        representation = REGISTRY_Representation[config.representation](*input_representation)
-        input_policy = get_policy_in_marl(config, representation, config.agent_keys, None)
-        policy = REGISTRY_Policy[config.policy](*input_policy)
+        self.use_recurrent = config.use_recurrent
+        self.use_global_state = config.use_global_state
+        kwargs_rnn = {"N_recurrent_layers": config.N_recurrent_layers,
+                      "dropout": config.dropout,
+                      "rnn": config.rnn} if self.use_recurrent else {}
+        representation = REGISTRY_Representation[config.representation](*input_representation, **kwargs_rnn)
+        # create policy
+        input_policy = get_policy_in_marl(config, representation)
+        policy = REGISTRY_Policy[config.policy](*input_policy,
+                                                use_recurrent=config.use_recurrent,
+                                                rnn=config.rnn,
+                                                gain=config.gain,
+                                                use_global_state=self.use_global_state,
+                                                dim_state=config.dim_state)
         scheduler = [lr_decay_model(learning_rate=config.learning_rate_actor, decay_rate=0.5,
                                     decay_steps=get_total_iters(config.agent_name, config)),
                      lr_decay_model(learning_rate=config.learning_rate_critic, decay_rate=0.5,
@@ -35,69 +46,87 @@ class COMA_Agents(MARLAgents):
         self.representation_info_shape = policy.representation.output_shapes
         self.auxiliary_info_shape = {}
 
-        writer = SummaryWriter(config.logdir)
         if config.state_space is not None:
             config.dim_state, state_shape = config.state_space.shape, config.state_space.shape
         else:
             config.dim_state, state_shape = None, None
         config.act_onehot_shape = config.act_shape + tuple([config.dim_act])
-        config.max_cycles = envs.envs[0].max_cycles
-        memory = COMA_Buffer(state_shape, config.obs_shape, config.act_shape, config.act_onehot_shape,
-                             config.rew_shape, config.done_shape, envs.num_envs,
-                             config.buffer_size, config.batch_size, config.max_cycles)
-        learner = COMA_Learner(config, policy, optimizer, scheduler, writer,
-                               config.modeldir, config.gamma, config.sync_frequency)
 
-        self.obs_rms = RunningMeanStd(shape=space2shape(self.observation_space[config.agent_keys[0]]),
-                                      comm=self.comm, use_mpi=False)
-        self.ret_rms = RunningMeanStd(shape=(), comm=self.comm, use_mpi=False)
-        self.epsilon_decay = linear_decay_or_increase(config.start_greedy, config.end_greedy,
-                                                      config.greedy_update_steps)
-        super(COMA_Agents, self).__init__(config, envs, policy, memory, learner, writer, config.logdir, config.modeldir)
+        buffer = COMA_Buffer_RNN if self.use_recurrent else COMA_Buffer
+        input_buffer = (config.n_agents, config.state_space.shape, config.obs_shape, config.act_shape, config.rew_shape,
+                        config.done_shape, envs.num_envs, config.n_size,
+                        config.use_gae, config.use_advnorm, config.gamma, config.gae_lambda)
+        memory = buffer(*input_buffer, max_episode_length=envs.max_episode_length,
+                        dim_act=config.dim_act, td_lambda=config.td_lambda)
+        self.buffer_size = memory.buffer_size
+        self.batch_size = self.buffer_size // self.n_minibatch
 
-    def _process_observation(self, observations):
-        if self.use_obsnorm:
-            if isinstance(self.observation_space, Dict):
-                for key in self.observation_space.spaces.keys():
-                    observations[key] = np.clip(
-                        (observations[key] - self.obs_rms.mean[key]) / (self.obs_rms.std[key] + EPS),
-                        -self.obsnorm_range, self.obsnorm_range)
-            else:
-                observations = np.clip((observations - self.obs_rms.mean) / (self.obs_rms.std + EPS),
-                                       -self.obsnorm_range, self.obsnorm_range)
-            return observations
-        return observations
+        learner = COMA_Learner(config, policy, optimizer, scheduler,
+                               config.model_dir, config.gamma, config.sync_frequency)
 
-    def _process_reward(self, rewards):
-        if self.use_rewnorm:
-            std = np.clip(self.ret_rms.std, 0.1, 100)
-            return np.clip(rewards / std, -self.rewnorm_range, self.rewnorm_range)
-        return rewards
+        super(COMA_Agents, self).__init__(config, envs, policy, memory, learner, config.log_dir, config.model_dir)
+        self.on_policy = True
 
-    def act(self, obs_n, episode, test_mode, noise=False):
+    def act(self, obs_n, *rnn_hidden, avail_actions=None, test_mode=False):
         batch_size = len(obs_n)
         agents_id = ops.broadcast_to(self.expand_dims(self.eye(self.n_agents, self.n_agents, ms.float32), 0),
                                      (batch_size, -1, -1))
-        states, act_probs = self.policy(Tensor(obs_n), agents_id)
-        epsilon = 1.0 if test_mode else self.epsilon_decay.epsilon
-
-        greedy_actions = act_probs.argmax(axis=-1)
-        if noise:
-            random_variable = np.random.random(greedy_actions.shape)
-            action_pick = np.int32((random_variable < epsilon))
-            random_actions = np.array([[self.args.action_space[agent].sample() for agent in self.agent_keys]])
-            actions_select = action_pick * greedy_actions.asnumpy() + (1 - action_pick) * random_actions
-            actions_onehot = self.learner.onehot_action(Tensor(actions_select), self.dim_act)
-            return actions_select, actions_onehot.asnumpy()
+        obs_in = Tensor(obs_n).view(batch_size, self.n_agents, -1)
+        epsilon = 0.0 if test_mode else self.end_greedy
+        if self.use_recurrent:
+            batch_agents = batch_size * self.n_agents
+            hidden_state, action_probs = self.policy(obs_in.view(batch_agents, 1, -1),
+                                                     agents_id.view(batch_agents, 1, -1),
+                                                     *rnn_hidden,
+                                                     avail_actions=avail_actions.reshape(batch_agents, 1, -1),
+                                                     epsilon=epsilon)
+            action_probs = action_probs.view(batch_size, self.n_agents, self.dim_act)
         else:
-            actions_onehot = self.learner.onehot_action(greedy_actions, self.dim_act)
-            return greedy_actions.asnumpy(), actions_onehot.asnumpy()
+            hidden_state, action_probs = self.policy(obs_in, agents_id,
+                                                     avail_actions=avail_actions,
+                                                     epsilon=epsilon)
+        picked_actions = Categorical(action_probs).sample()
+        onehot_actions = self.learner.onehot_action(picked_actions, self.dim_act)
+        return hidden_state, picked_actions.asnumpy(), onehot_actions.asnumpy()
 
-    def train(self, i_episode):
-        self.epsilon_decay.update()
-        for i in range(self.nenvs):
-            self.writer.add_scalars("epsilon", {"env-%d" % i: self.epsilon_decay.epsilon}, i_episode)
+    def values(self, obs_n, *rnn_hidden, state=None, actions_n=None, actions_onehot=None):
+        batch_size = len(obs_n)
+        # build critic input
+        obs_n = Tensor(obs_n)
+        actions_n = self.expand_dims(Tensor(actions_n), -1)
+        actions_in = self.expand_dims(Tensor(actions_onehot), 1)
+        actions_in = ops.broadcast_to(actions_in.view(batch_size, 1, -1), (-1, self.n_agents, -1))
+        agent_mask = 1 - self.eye(self.n_agents, self.n_agents, ms.float32)
+        agent_mask = ops.broadcast_to(agent_mask.view(-1, 1), (-1, int(self.dim_act))).view(self.n_agents, -1)
+        actions_in = actions_in * self.expand_dims(agent_mask, 0)
+        if self.use_global_state:
+            state = ops.broadcast_to(self.expand_dims(Tensor(state), 1), (-1, self.n_agents, -1))
+            critic_in = self.policy._concat([state, obs_n, actions_in])
+        else:
+            critic_in = self.policy._concat([obs_n, actions_in])
+        # get critic values
+        hidden_state, values_n = self.policy.get_values(critic_in, target=True)
+
+        target_values = values_n.gather(actions_n, -1, -1)
+        return hidden_state, target_values.asnumpy()
+
+    def train(self, i_step, **kwargs):
+        if self.egreedy >= self.end_greedy:
+            self.egreedy = self.start_greedy - self.delta_egreedy * i_step
+        info_train = {}
         if self.memory.full:
-            sample = self.memory.sample()
-            self.learner.update(sample)
-        # self.memory.clear()
+            indexes = np.arange(self.buffer_size)
+            for _ in range(self.n_epoch):
+                np.random.shuffle(indexes)
+                for start in range(0, self.buffer_size, self.batch_size):
+                    end = start + self.batch_size
+                    sample_idx = indexes[start:end]
+                    sample = self.memory.sample(sample_idx)
+                    if self.use_recurrent:
+                        info_train = self.learner.update_recurrent(sample, self.egreedy)
+                    else:
+                        info_train = self.learner.update(sample, self.egreedy)
+            self.memory.clear()
+        info_train["epsilon-greedy"] = self.egreedy
+        return info_train
+

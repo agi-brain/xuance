@@ -12,7 +12,7 @@ def mlp_block(input_dim: int,
               initialize: Optional[Callable[[ms.Tensor], ms.Tensor]] = None
               ) -> Sequence[ModuleType]:
     block = []
-    linear = nn.Dense(input_dim, output_dim)
+    linear = nn.Dense(int(input_dim), int(output_dim))
     if initialize is not None:
         initialize(linear.weight)
     block.append(linear)

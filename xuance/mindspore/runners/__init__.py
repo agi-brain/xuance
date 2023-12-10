@@ -1,8 +1,8 @@
-from .runner_drl import Runner_DRL as DRL_runner
-from .runner_marl import Runner as MARL_runner
+from .runner_drl import Runner_DRL
+from .runner_pettingzoo import Pettingzoo_Runner
 
 REGISTRY = {
     "DL_toolbox": "MindSpore",
-    "DRL": DRL_runner,
-    "MARL": MARL_runner
+    "DRL": Runner_DRL,
+    "Pettingzoo_Runner": Pettingzoo_Runner,
 }

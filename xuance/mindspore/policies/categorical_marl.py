@@ -46,6 +46,7 @@ class ActorNet(nn.Cell):
                  hidden_sizes: Sequence[int],
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., ms.Tensor]] = None,
+                 gain: float = 1.0,
                  activation: Optional[ModuleType] = None):
         super(ActorNet, self).__init__()
         layers = []
@@ -53,7 +54,7 @@ class ActorNet(nn.Cell):
         for h in hidden_sizes:
             mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initialize)
             layers.extend(mlp)
-        layers.extend(mlp_block(input_shape[0], action_dim, None, nn.Softmax, None)[0])
+        layers.extend(mlp_block(input_shape[0], action_dim, None, None, initialize)[0])
         self.model = nn.SequentialCell(*layers)
         self.sample = self.Sample()
         self.log_prob = self.LogProb()
@@ -85,19 +86,17 @@ class CriticNet(nn.Cell):
         return self.model(x)[:, :, 0]
 
 
-class COMA_CriticNet(nn.Cell):
+class COMA_Critic(nn.Cell):
     def __init__(self,
                  state_dim: int,
-                 obs_dim: int,
                  act_dim: int,
-                 n_agents: int,
                  hidden_sizes: Sequence[int],
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., ms.Tensor]] = None,
                  activation: Optional[ModuleType] = None):
-        super(COMA_CriticNet, self).__init__()
+        super(COMA_Critic, self).__init__()
         layers = []
-        input_shape = (state_dim + obs_dim + act_dim * n_agents + n_agents,)
+        input_shape = (state_dim,)
         for h in hidden_sizes:
             mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initialize)
             layers.extend(mlp)
@@ -108,7 +107,7 @@ class COMA_CriticNet(nn.Cell):
         return self.model(x)
 
 
-class MultiAgentActorCriticPolicy(nn.Cell):
+class MAAC_Policy(nn.Cell):
     def __init__(self,
                  action_space: Discrete,
                  n_agents: int,
@@ -120,7 +119,7 @@ class MultiAgentActorCriticPolicy(nn.Cell):
                  initialize: Optional[Callable[..., ms.Tensor]] = None,
                  activation: Optional[ModuleType] = None):
         assert isinstance(action_space, Discrete)
-        super(MultiAgentActorCriticPolicy, self).__init__()
+        super(MAAC_Policy, self).__init__()
         self.action_dim = action_space.n
         self.representation = representation
         self.representation_info_shape = self.representation.output_shapes
@@ -145,7 +144,7 @@ class MultiAgentActorCriticPolicy(nn.Cell):
         return values_n if self.mixer is None else self.mixer(values_n, global_state)
 
 
-class MAPPO_ActorCriticPolicy(MultiAgentActorCriticPolicy):
+class MAPPO_ActorCriticPolicy(MAAC_Policy):
     def __init__(self,
                  dim_state: int,
                  action_space: Discrete,
@@ -239,7 +238,6 @@ class MeanFieldActorCriticPolicy(nn.Cell):
 
 class COMAPolicy(nn.Cell):
     def __init__(self,
-                 state_dim: int,
                  action_space: Discrete,
                  n_agents: int,
                  representation: Optional[Basic_Identical],
@@ -247,44 +245,49 @@ class COMAPolicy(nn.Cell):
                  critic_hidden_size: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., ms.Tensor]] = None,
-                 activation: Optional[ModuleType] = None):
-        assert isinstance(action_space, Discrete)
+                 activation: Optional[ModuleType] = None,
+                 **kwargs):
         super(COMAPolicy, self).__init__()
         self.action_dim = action_space.n
         self.n_agents = n_agents
         self.representation = representation
         self.representation_info_shape = self.representation.output_shapes
+        self.lstm = True if kwargs["rnn"] == "LSTM" else False
+        self.use_rnn = True if kwargs["use_recurrent"] else False
         self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim, n_agents,
-                              actor_hidden_size, normalize, initialize, activation)
-        self.critic = COMA_CriticNet(state_dim, representation.output_shapes['state'][0], self.action_dim, n_agents,
-                                     critic_hidden_size, normalize, initialize, activation)
+                              actor_hidden_size, normalize, initialize, kwargs['gain'], activation)
+        critic_input_dim = self.representation.input_shape[0] + self.action_dim * self.n_agents
+        if kwargs["use_global_state"]:
+            critic_input_dim += kwargs["dim_state"]
+        self.critic = COMA_Critic(critic_input_dim, self.action_dim, critic_hidden_size,
+                                  normalize, initialize, activation)
         self.target_critic = copy.deepcopy(self.critic)
         self.parameters_critic = self.critic.trainable_params()
         self.parameters_actor = self.representation.trainable_params() + self.actor.trainable_params()
         self.eye = ms.ops.Eye()
+        self._softmax = nn.Softmax(axis=-1)
         self._concat = ms.ops.Concat(axis=-1)
 
-    def build_critic_in(self, state, observations, actions_onehot, agent_ids, t=None):
-        bs, act_dim = state.shape[0], actions_onehot.shape[-1]
-        step_len = state.shape[1] if t is None else 1
-        ts = slice(None) if t is None else slice(t, t + 1)
-        obs_encode = self.representation(observations)[0]
-        inputs = [state[:, ts], obs_encode[:, ts]]
-        # counterfactual actions inputs
-        actions_joint = ms.ops.broadcast_to(actions_onehot[:, ts].view(bs, step_len, 1, -1),
-                                            (-1, -1, self.n_agents, -1))
-        agent_mask = ms.ops.broadcast_to((1 - self.eye(self.n_agents, self.n_agents, ms.float32)).view(-1, 1),
-                                         (-1, act_dim)).view(self.n_agents, -1)
-        agent_mask = ms.ops.expand_dims(ms.ops.expand_dims(agent_mask, 0), 0)
-        inputs.append(actions_joint * agent_mask)
-        inputs.append(agent_ids[:, ts])
-        return self._concat(inputs)
+    def construct(self, observation: ms.Tensor, agent_ids: ms.Tensor,
+                  *rnn_hidden: ms.Tensor, avail_actions=None, epsilon=0.0):
+        if self.use_rnn:
+            outputs = self.representation(observation, *rnn_hidden)
+            rnn_hidden = (outputs['rnn_hidden'], outputs['rnn_cell'])
+        else:
+            outputs = self.representation(observation)
+            rnn_hidden = None
+        actor_input = self._concat([outputs['state'], agent_ids])
+        act_logits = self.actor(actor_input)
+        act_probs = self._softmax(act_logits)
+        act_probs = (1 - epsilon) * act_probs + epsilon * 1 / self.action_dim
+        if avail_actions is not None:
+            act_probs[avail_actions == 0] = 0.0
+        return rnn_hidden, act_probs
 
-    def construct(self, observation: ms.Tensor, agent_ids: ms.Tensor):
-        outputs = self.representation(observation)
-        input_with_id = self._concat([outputs['state'], agent_ids])
-        act_dist = self.actor(input_with_id)
-        return outputs, act_dist
+    def get_values(self, critic_in: torch.Tensor, *rnn_hidden: torch.Tensor, target=False):
+        # get critic values
+        v = self.target_critic(critic_in) if target else self.critic(critic_in)
+        return [None, None], v
 
     def copy_target(self):
         for ep, tp in zip(self.critic.trainable_params(), self.target_critic.trainable_params()):
