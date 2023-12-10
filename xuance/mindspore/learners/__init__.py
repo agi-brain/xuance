@@ -38,7 +38,7 @@ from .multi_agent_rl.vdn_learner import VDN_Learner
 from .multi_agent_rl.qmix_learner import QMIX_Learner
 from .multi_agent_rl.wqmix_learner import WQMIX_Learner
 from .multi_agent_rl.qtran_learner import QTRAN_Learner
-from .multi_agent_rl.dcg_learner import DCG_Learner
+# from .multi_agent_rl.dcg_learner import DCG_Learner
 from .multi_agent_rl.vdac_learner import VDAC_Learner
 from .multi_agent_rl.coma_learner import COMA_Learner
 from .multi_agent_rl.iddpg_learner import IDDPG_Learner

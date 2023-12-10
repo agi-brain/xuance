@@ -154,9 +154,9 @@ class DCG_utility(nn.Cell):
         self.dim_input = dim_input
         self.dim_hidden = dim_hidden
         self.dim_output = dim_output
-        self.output = nn.SequentialCell(nn.Dense(self.dim_input, self.dim_hidden),
+        self.output = nn.SequentialCell(nn.Dense(int(self.dim_input), int(self.dim_hidden)),
                                         nn.ReLU(),
-                                        nn.Dense(self.dim_hidden, self.dim_output))
+                                        nn.Dense(int(self.dim_hidden), int(self.dim_output)))
         # self.output = nn.Sequential(nn.Linear(self.dim_input, self.dim_output))
 
     def construct(self, hidden_states_n):

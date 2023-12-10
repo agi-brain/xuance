@@ -2,7 +2,7 @@ agent: "DCG"  # Options: DCG, DCG_S
 env_name: "StarCraft2"
 env_id: "5m_vs_6m"
 fps: 15
-policy: "DCG_policy"
+policy: "DCG_Policy"
 representation: "Basic_RNN"
 vectorize: "Subproc_StarCraft2"
 runner: "StarCraft2_Runner"
