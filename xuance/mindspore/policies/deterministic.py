@@ -384,27 +384,23 @@ class DDPGPolicy(nn.Cell):
         self._standard_normal = ms.ops.StandardNormal()
         self._min_act, self._max_act = ms.Tensor(-1.0), ms.Tensor(1.0)
 
-    def action(self, observation: ms.tensor, noise_scale: ms.float32):
+    def construct(self, observation: ms.tensor):
         outputs = self.representation(observation)
-        act = self.actor(outputs[0])
-        noise = self._standard_normal(act.shape) * noise_scale
-        return outputs, ms.ops.clip_by_value(act + noise, self._min_act, self._max_act)
+        act = self.actor(outputs['state'])
+        return outputs, act
 
     def Qtarget(self, observation: ms.tensor):
         outputs = self.representation(observation)
-        act = self.target_actor(outputs[0])
-        return outputs, self.target_critic(outputs[0], act)
+        act = self.target_actor(outputs['state'])
+        return self.target_critic(outputs['state'], act)
 
     def Qaction(self, observation: ms.tensor, action: ms.tensor):
         outputs = self.representation(observation)
-        return outputs, self.critic(outputs['state'], action)
+        return self.critic(outputs['state'], action)
 
     def Qpolicy(self, observation: ms.tensor):
         outputs = self.representation(observation)
-        return outputs, self.critic(outputs['state'], self.actor(outputs['state']))
-
-    def construct(self):
-        return super().construct()
+        return self.critic(outputs['state'], self.actor(outputs['state']))
 
     def soft_update(self, tau=0.005):
         for ep, tp in zip(self.actor.trainable_params(), self.target_actor.trainable_params()):

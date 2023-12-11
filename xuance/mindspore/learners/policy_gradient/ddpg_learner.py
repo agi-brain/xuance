@@ -9,7 +9,7 @@ class DDPG_Learner(Learner):
             self._mean = ms.ops.ReduceMean()
 
         def construct(self, x):
-            _, policy_q = self._backbone.Qpolicy(x)
+            policy_q = self._backbone.Qpolicy(x)
             loss_a = -self._mean(policy_q)
             return loss_a
 
@@ -21,7 +21,7 @@ class DDPG_Learner(Learner):
             self._loss = nn.MSELoss()
 
         def construct(self, x, a, x_, q_target):
-            _, action_q = self._backbone.Qaction(x, a)
+            action_q = self._backbone.Qaction(x, a)
             loss_q = self._loss(logits=action_q, labels=q_target)
             return loss_q
 
@@ -29,13 +29,12 @@ class DDPG_Learner(Learner):
                  policy: nn.Cell,
                  optimizers: nn.Optimizer,
                  schedulers: Optional[nn.exponential_decay_lr] = None,
-                 summary_writer: Optional[SummaryWriter] = None,
-                 modeldir: str = "./",
+                 model_dir: str = "./",
                  gamma: float = 0.99,
                  tau: float = 0.01):
         self.tau = tau
         self.gamma = gamma
-        super(DDPG_Learner, self).__init__(policy, optimizers, schedulers, summary_writer, modeldir)
+        super(DDPG_Learner, self).__init__(policy, optimizers, schedulers, model_dir)
         # define mindspore trainers
         self.actor_loss_net = self.ActorNetWithLossCell(policy)
         self.actor_train = nn.TrainOneStepCell(self.actor_loss_net, optimizers['actor'])
@@ -52,8 +51,8 @@ class DDPG_Learner(Learner):
         next_batch = Tensor(next_batch)
         ter_batch = Tensor(terminal_batch)
 
-        _, target_q = self.policy.Qtarget(next_batch)
-        backup = rew_batch + self.gamma * target_q
+        target_q = self.policy.Qtarget(next_batch)
+        backup = rew_batch + (1 - ter_batch) * self.gamma * target_q
         q_loss = self.critic_train(obs_batch, act_batch, next_batch, backup)
         p_loss = self.actor_train(obs_batch)
 
@@ -61,8 +60,12 @@ class DDPG_Learner(Learner):
 
         actor_lr = self.scheduler['actor'](self.iterations).asnumpy()
         critic_lr = self.scheduler['critic'](self.iterations).asnumpy()
-        self.writer.add_scalar("Qloss", q_loss.asnumpy(), self.iterations)
-        self.writer.add_scalar("Ploss", p_loss.asnumpy(), self.iterations)
-        # self.writer.add_scalar("Qvalue", action_q.mean().asnumpy(), self.iterations)
-        self.writer.add_scalar("actor_lr", actor_lr, self.iterations)
-        self.writer.add_scalar("critic_lr", critic_lr, self.iterations)
+
+        info = {
+            "Qloss": q_loss.asnumpy(),
+            "Ploss": p_loss.asnumpy(),
+            "actor_lr": actor_lr,
+            "critic_lr": critic_lr
+        }
+
+        return info
