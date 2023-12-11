@@ -117,7 +117,7 @@ class QRDQNhead(nn.Cell):
 
 class BasicQnetwork(nn.Cell):
     def __init__(self,
-                 action_space: Space,
+                 action_space: Discrete,
                  representation: ModuleType,
                  hidden_size: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,
@@ -127,6 +127,7 @@ class BasicQnetwork(nn.Cell):
         super(BasicQnetwork, self).__init__()
         self.action_dim = action_space.n
         self.representation = representation
+        self.target_representation = copy.deepcopy(representation)
         self.representation_info_shape = self.representation.output_shapes
         self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, hidden_size,
                                      normalize, initialize, activation)
@@ -135,14 +136,21 @@ class BasicQnetwork(nn.Cell):
     def construct(self, observation: ms.tensor):
         outputs = self.representation(observation)
         evalQ = self.eval_Qhead(outputs['state'])
-        targetQ = self.target_Qhead(outputs['state'])
         argmax_action = evalQ.argmax(axis=-1)
-        return outputs, argmax_action, evalQ, targetQ
+        return outputs, argmax_action, evalQ
+
+    def target(self, observation: ms.tensor):
+        outputs_target = self.target_representation(observation)
+        targetQ = self.target_Qhead(outputs_target['state'])
+        argmax_action = targetQ.argmax(axis=-1)
+        return outputs_target, argmax_action, targetQ
 
     def trainable_params(self, recurse=True):
         return self.representation.trainable_params() + self.eval_Qhead.trainable_params()
 
     def copy_target(self):
+        for ep, tp in zip(self.representation.trainable_params(), self.target_representation.trainable_params()):
+            tp.assign_value(ep)
         for ep, tp in zip(self.eval_Qhead.trainable_params(), self.target_Qhead.trainable_params()):
             tp.assign_value(ep)
 

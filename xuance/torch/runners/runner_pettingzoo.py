@@ -351,7 +351,7 @@ class Pettingzoo_Runner(Runner_Base):
 
             self.render = True
             for h, mas_group in enumerate(self.marl_agents):
-                mas_group.load_model(mas_group.model_dir)
+                mas_group.load_model(mas_group.model_dir_load, mas_group.args.seed)
             self.test_episode(env_fn)
             print("Finish testing.")
         else:

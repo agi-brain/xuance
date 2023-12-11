@@ -11,7 +11,7 @@ class DDQN_Learner(Learner):
             self._onehot = OneHot()
 
         def construct(self, x, a, label):
-            _, _, _evalQ, _ = self._backbone(x)
+            _, _, _evalQ = self._backbone(x)
             _predict_Q = (_evalQ * self._onehot(a.astype(ms.int32), _evalQ.shape[1], Tensor(1.0), Tensor(0.0))).sum(
                 axis=-1)
             loss = self._loss_fn(_predict_Q, label)
@@ -21,14 +21,13 @@ class DDQN_Learner(Learner):
                  policy: nn.Cell,
                  optimizer: nn.Optimizer,
                  scheduler: Optional[nn.exponential_decay_lr] = None,
-                 summary_writer: Optional[SummaryWriter] = None,
-                 modeldir: str = "./",
+                 model_dir: str = "./",
                  gamma: float = 0.99,
                  sync_frequency: int = 100):
         self.gamma = gamma
         self.sync_frequency = sync_frequency
         self.one_hot = OneHot()
-        super(DDQN_Learner, self).__init__(policy, optimizer, scheduler, summary_writer, modeldir)
+        super(DDQN_Learner, self).__init__(policy, optimizer, scheduler, model_dir)
         # define mindspore trainer
         loss_fn = nn.MSELoss()
         self.loss_net = self.PolicyNetWithLossCell(self.policy, loss_fn)
@@ -43,7 +42,7 @@ class DDQN_Learner(Learner):
         next_batch = Tensor(next_batch)
         ter_batch = Tensor(terminal_batch)
 
-        _, targetA, _, targetQ = self.policy(next_batch)
+        _, targetA, targetQ = self.policy.target(next_batch)
 
         targetA = self.one_hot(targetA, targetQ.shape[1], Tensor(1.0), Tensor(0.0))
         targetQ = (targetQ * targetA).sum(axis=-1)
@@ -56,5 +55,10 @@ class DDQN_Learner(Learner):
             self.policy.copy_target()
 
         lr = self.scheduler(self.iterations).asnumpy()
-        self.writer.add_scalar("Qloss", loss.asnumpy(), self.iterations)
-        self.writer.add_scalar("learning_rate", lr, self.iterations)
+
+        info = {
+            "Qloss": loss.asnumpy(),
+            "learning_rate": lr
+        }
+
+        return info
