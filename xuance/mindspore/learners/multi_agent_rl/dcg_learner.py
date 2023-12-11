@@ -11,22 +11,40 @@ import copy
 
 class DCG_Learner(LearnerMAS):
     class PolicyNetWithLossCell(nn.Cell):
-        def __init__(self, backbone, backbone_get_hidden_states, backbone_q_dcg,
-                     n_msg_iterations, dim_act, agent):
+        def __init__(self, backbone, n_msg_iterations, dim_act, agent, use_recurrent):
             super(DCG_Learner.PolicyNetWithLossCell, self).__init__(auto_prefix=False)
             self._backbone = backbone
-            self._backbone_get_hidden_states = backbone_get_hidden_states
-            self._backbone_q_dcg = backbone_q_dcg
             self.n_msg_iterations = n_msg_iterations
             self.expand_dims = ops.ExpandDims()
             self.dim_act = dim_act
             self.agent = agent
+            self.use_recurrent = use_recurrent
 
-        def construct(self, s, o, a, label):
-            # the q_dcg network
-            # self.get_graph_values
-            _, hidden_states = self._backbone_get_hidden_states(o, use_target_net=False)
-            q_eval_a = self._backbone_q_dcg(hidden_states, a, states=s, use_target_net=False)
+        def construct(self, s, o, a, label, *rnn_hidden):
+            # get hidden states
+            if self.use_recurrent:
+                outputs = self._backbone.representation(o, *rnn_hidden)
+                hidden_states = outputs['state']
+            else:
+                hidden_states = self._backbone.representation(o)['state']
+
+            # get evaluate Q values
+            f_i = self._backbone.utility(hidden_states)
+            f_ij = self._backbone.payoffs(hidden_states, self._backbone.graph.edges_from, self._backbone.graph.edges_to)
+            f_i_mean = f_i.astype(ms.double) / self._backbone.graph.n_vertexes
+            f_ij_mean = f_ij.astype(ms.double) / self._backbone.graph.n_edges
+            utilities = GatherD()(f_i_mean, -1, self.expand_dims(a, -1).astype(ms.int32)).sum(axis=1)
+            if len(self._backbone.graph.edges) == 0 or self.n_msg_iterations == 0:
+                q_eval_a = utilities
+            else:
+                actions_ij = self.expand_dims(
+                    (a[:, self._backbone.graph.edges_from] * self.dim_act + a[:, self._backbone.graph.edges_to]), -1)
+                payoffs = GatherD()(f_ij_mean.view(tuple(list(f_ij_mean.shape[0:-2]) + [-1])), -1, actions_ij).sum(axis=1)
+                if self.agent == "DCG_S":
+                    state_value = self._backbone.bias(s)
+                    q_eval_a = utilities + payoffs + state_value
+                else:
+                    q_eval_a = utilities + payoffs
 
             td_error = q_eval_a - label
             loss = (td_error ** 2).mean()
@@ -50,8 +68,8 @@ class DCG_Learner(LearnerMAS):
         self.zeros = ms.ops.Zeros()
         self._mean = ops.ReduceMean(keep_dims=False)
         self.transpose = ops.Transpose()
-        self.loss_net = self.PolicyNetWithLossCell(policy, self.get_hidden_states, self.q_dcg,
-                                                   config.n_msg_iterations, self.dim_act, config.agent)
+        self.loss_net = self.PolicyNetWithLossCell(policy, config.n_msg_iterations,
+                                                   self.dim_act, config.agent, self.use_recurrent)
         self.policy_train = nn.TrainOneStepCell(self.loss_net, optimizer)
         self.policy_train.set_train()
 
