@@ -26,6 +26,39 @@ class BasicQhead(nn.Cell):
         return self.model(x)
 
 
+class BasicRecurrent(nn.Cell):
+    def __init__(self, **kwargs):
+        super(BasicRecurrent, self).__init__()
+        self.lstm = False
+        if kwargs["rnn"] == "GRU":
+            output, _ = gru_block(kwargs["input_dim"],
+                                  kwargs["recurrent_hidden_size"],
+                                  kwargs["recurrent_layer_N"],
+                                  kwargs["dropout"],
+                                  kwargs["initialize"])
+        elif kwargs["rnn"] == "LSTM":
+            self.lstm = True
+            output, _ = lstm_block(kwargs["input_dim"],
+                                   kwargs["recurrent_hidden_size"],
+                                   kwargs["recurrent_layer_N"],
+                                   kwargs["dropout"],
+                                   kwargs["initialize"])
+        else:
+            raise "Unknown recurrent module!"
+        self.rnn_layer = output
+        fc_layer = mlp_block(kwargs["recurrent_hidden_size"], kwargs["action_dim"], None, None, None)[0]
+        self.model = nn.SequentialCell(*fc_layer)
+
+    def construct(self, x: ms.tensor, h: ms.tensor, c: ms.tensor = None):
+        # self.rnn_layer.flatten_parameters()
+        if self.lstm:
+            output, (hn, cn) = self.rnn_layer(x, (h, c))
+            return hn, cn, self.model(output)
+        else:
+            output, hn = self.rnn_layer(x, h)
+            return hn, self.model(output)
+
+
 class DuelQhead(nn.Cell):
     def __init__(self,
                  state_dim: int,
@@ -491,102 +524,6 @@ class TD3Policy(nn.Cell):
             tp.assign_value((tau * ep.data + (1 - tau) * tp.data))
 
 
-class CDQNPolicy(nn.Cell):
-    def __init__(self,
-                 action_space: Space,
-                 representation: ModuleType,
-                 hidden_size: Sequence[int] = None,
-                 normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., ms.Tensor]] = None,
-                 activation: Optional[ModuleType] = None
-                 ):
-        super(CDQNPolicy, self).__init__()
-        self.action_dim = action_space.n
-        self.representation = representation
-        self.representation_info_shape = self.representation.output_shapes
-        self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, hidden_size,
-                                     normalize, initialize, activation)
-        self.target_Qhead = copy.deepcopy(self.eval_Qhead)
-
-    def construct(self, observation: ms.tensor):
-        outputs = self.representation(observation)
-        evalQ = self.eval_Qhead(outputs['state'])
-        targetQ = self.target_Qhead(outputs['state'])
-        argmax_action = evalQ.argmax(axis=-1)
-        return outputs, argmax_action, evalQ, targetQ
-
-    def trainable_params(self, recurse=True):
-        return self.representation.trainable_params() + self.eval_Qhead.trainable_params()
-
-    def copy_target(self):
-        for ep, tp in zip(self.eval_Qhead.trainable_params(), self.target_Qhead.trainable_params()):
-            tp.assign_value(ep)
-
-
-class LDQNPolicy(nn.Cell):
-    def __init__(self,
-                 action_space: Space,
-                 representation: ModuleType,
-                 hidden_size: Sequence[int] = None,
-                 normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., ms.Tensor]] = None,
-                 activation: Optional[ModuleType] = None
-                 ):
-        super(LDQNPolicy, self).__init__()
-        self.action_dim = action_space.n
-        self.representation = representation
-        self.representation_info_shape = self.representation.output_shapes
-        self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, hidden_size,
-                                     normalize, initialize, activation)
-        self.target_Qhead = copy.deepcopy(self.eval_Qhead)
-
-    def construct(self, observation: ms.tensor):
-        outputs = self.representation(observation)
-        evalQ = self.eval_Qhead(outputs['state'])
-        targetQ = self.target_Qhead(outputs['state'])
-        argmax_action = evalQ.argmax(axis=-1)
-        return outputs, argmax_action, evalQ, targetQ
-
-    def trainable_params(self, recurse=True):
-        return self.representation.trainable_params() + self.eval_Qhead.trainable_params()
-
-    def copy_target(self):
-        for ep, tp in zip(self.eval_Qhead.trainable_params(), self.target_Qhead.trainable_params()):
-            tp.assign_value(ep)
-
-
-class CLDQNPolicy(nn.Cell):
-    def __init__(self,
-                 action_space: Space,
-                 representation: ModuleType,
-                 hidden_size: Sequence[int] = None,
-                 normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., ms.Tensor]] = None,
-                 activation: Optional[ModuleType] = None
-                 ):
-        super(CLDQNPolicy, self).__init__()
-        self.action_dim = action_space.n
-        self.representation = representation
-        self.representation_info_shape = self.representation.output_shapes
-        self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, hidden_size,
-                                     normalize, initialize, activation)
-        self.target_Qhead = copy.deepcopy(self.eval_Qhead)
-
-    def construct(self, observation: ms.tensor):
-        outputs = self.representation(observation)
-        evalQ = self.eval_Qhead(outputs['state'])
-        targetQ = self.target_Qhead(outputs['state'])
-        argmax_action = evalQ.argmax(axis=-1)
-        return outputs, argmax_action, evalQ, targetQ
-
-    def trainable_params(self, recurse=True):
-        return self.representation.trainable_params() + self.eval_Qhead.trainable_params()
-
-    def copy_target(self):
-        for ep, tp in zip(self.eval_Qhead.trainable_params(), self.target_Qhead.trainable_params()):
-            tp.assign_value(ep)
-
-
 class PDQNPolicy(nn.Cell):
     def __init__(self,
                  observation_space,
@@ -864,3 +801,75 @@ class SPDQNPolicy(nn.Cell):
             tp.assign_value((tau * ep.data + (1 - tau) * tp.data))
         for ep, tp in zip(self.qnetwork.trainable_params(), self.target_qnetwork.trainable_params()):
             tp.assign_value((tau * ep.data + (1 - tau) * tp.data))
+
+
+class DRQNPolicy(nn.Cell):
+    def __init__(self,
+                 action_space: Discrete,
+                 representation: nn.Cell,
+                 **kwargs):
+        super(DRQNPolicy, self).__init__()
+        self.recurrent_layer_N = kwargs['recurrent_layer_N']
+        self.rnn_hidden_dim = kwargs['recurrent_hidden_size']
+        self.action_dim = action_space.n
+        self.representation = representation
+        self.target_representation = copy.deepcopy(representation)
+        self.representation_info_shape = self.representation.output_shapes
+        kwargs["input_dim"] = self.representation.output_shapes['state'][0]
+        kwargs["action_dim"] = self.action_dim
+        self.lstm = True if kwargs["rnn"] == "LSTM" else False
+        self.cnn = True if self.representation.cls_name == "Basic_CNN" else False
+        self.eval_Qhead = BasicRecurrent(**kwargs)
+        self.target_Qhead = copy.deepcopy(self.eval_Qhead)
+        self._zeroslike = ms.ops.ZerosLike()
+
+    def construct(self, observation: Union[np.ndarray, dict], *rnn_hidden: ms.tensor):
+        if self.cnn:
+            obs_shape = observation.shape
+            outputs = self.representation(observation.reshape((-1,) + obs_shape[-3:]))
+            outputs['state'] = outputs['state'].reshape(obs_shape[0:-3] + (-1,))
+        else:
+            outputs = self.representation(observation)
+        if self.lstm:
+            hidden_states, cell_states, evalQ = self.eval_Qhead(outputs['state'], rnn_hidden[0], rnn_hidden[1])
+        else:
+            hidden_states, evalQ = self.eval_Qhead(outputs['state'], rnn_hidden[0])
+            cell_states = None
+        argmax_action = evalQ[:, -1].argmax(axis=-1)
+        return outputs, argmax_action, evalQ, (hidden_states, cell_states)
+
+    def target(self, observation: Union[np.ndarray, dict], *rnn_hidden: ms.tensor):
+        if self.cnn:
+            obs_shape = observation.shape
+            outputs = self.representation(observation.reshape((-1,) + obs_shape[-3:]))
+            outputs['state'] = outputs['state'].reshape(obs_shape[0:-3] + (-1,))
+        else:
+            outputs = self.representation(observation)
+        if self.lstm:
+            hidden_states, cell_states, targetQ = self.target_Qhead(outputs['state'], rnn_hidden[0], rnn_hidden[1])
+        else:
+            hidden_states, targetQ = self.target_Qhead(outputs['state'], rnn_hidden[0])
+            cell_states = None
+        argmax_action = targetQ.argmax(axis=-1)
+        return outputs, argmax_action, targetQ, (hidden_states, cell_states)
+
+    def init_hidden(self, batch):
+        hidden_states = ms.ops.zeros(size=(self.recurrent_layer_N, batch, self.rnn_hidden_dim))
+        cell_states = self._zeroslike(hidden_states) if self.lstm else None
+        return hidden_states, cell_states
+
+    def init_hidden_item(self, rnn_hidden, i):
+        if self.lstm:
+            rnn_hidden[0][:, i] = ms.ops.zeros(size=(self.recurrent_layer_N, self.rnn_hidden_dim))
+            rnn_hidden[1][:, i] = ms.ops.zeros(size=(self.recurrent_layer_N, self.rnn_hidden_dim))
+            return rnn_hidden
+        else:
+            rnn_hidden[:, i] = ms.ops.zeros(size=(self.recurrent_layer_N, self.rnn_hidden_dim))
+            return rnn_hidden
+
+    def copy_target(self):
+        for ep, tp in zip(self.representation.trainable_params(), self.target_representation.trainable_params()):
+            tp.assign_value(ep)
+        for ep, tp in zip(self.eval_Qhead.trainable_params(), self.target_Qhead.trainable_params()):
+            tp.assign_value(ep)
+

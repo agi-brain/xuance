@@ -67,35 +67,43 @@ def pooling_block(input_shape: Sequence[int],
 
 def gru_block(input_dim: Sequence[int],
               output_dim: int,
+              num_layers: int = 1,
               dropout: float = 0,
               initialize: Optional[Callable[[ms.Tensor], ms.Tensor]] = None
               ) -> ModuleType:
     gru = nn.GRU(input_size=input_dim,
                  hidden_size=output_dim,
+                 num_layers=num_layers,
                  batch_first=True,
-                 dropout=dropout
+                 dropout=float(dropout)
                  )
     if initialize is not None:
         for weight_list in gru.all_weights:
             for weight in weight_list:
                 if len(weight.shape) > 1:
                     initialize(weight)
-    return gru
+    return gru, output_dim
 
 
 def lstm_block(input_dim: Sequence[int],
                output_dim: int,
+               num_layers: int = 1,
                dropout: float = 0,
                initialize: Optional[Callable[[ms.Tensor], ms.Tensor]] = None
                ) -> ModuleType:
     lstm = nn.LSTM(input_size=input_dim,
                    hidden_size=output_dim,
+                   num_layers=num_layers,
                    batch_first=True,
-                   dropout=dropout
+                   dropout=float(dropout)
                    )
     if initialize is not None:
-        for weight_list in lstm.all_weights:
+        for weight_list in lstm.w_hh_list:
             for weight in weight_list:
                 if len(weight.shape) > 1:
                     initialize(weight)
-    return lstm
+        for weight_list in lstm.w_ih_list:
+            for weight in weight_list:
+                if len(weight.shape) > 1:
+                    initialize(weight)
+    return lstm, output_dim

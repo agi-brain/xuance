@@ -52,6 +52,11 @@ def get_policy_in(args, representation):
         input_dict['observation_space'] = args.observation_space
         input_dict['conactor_hidden_size'] = args.conactor_hidden_size
         input_dict['qnetwork_hidden_size'] = args.qnetwork_hidden_size
+    elif policy_name in ['DRQN_Policy']:
+        input_dict["rnn"] = args.rnn
+        input_dict["recurrent_hidden_size"] = args.recurrent_hidden_size
+        input_dict["recurrent_layer_N"] = args.recurrent_layer_N
+        input_dict["dropout"] = args.dropout
     else:
         input_dict["actor_hidden_size"] = args.actor_hidden_size
         if policy_name in ["Categorical_AC", "Categorical_PPG", "Discrete_SAC", "Gaussian_SAC", "Gaussian_AC", "DDPG_Policy", "TD3_Policy"]:
@@ -61,6 +66,8 @@ def get_policy_in(args, representation):
     input_dict["activation"] = nn.ReLU
     if policy_name == "Gaussian_Actor":
         input_dict["fixed_std"] = None
+    if policy_name == "DRQN_Policy":
+        return input_dict
     input_list = itemgetter(*Policy_Inputs[policy_name])(input_dict)
     return list(input_list)
 

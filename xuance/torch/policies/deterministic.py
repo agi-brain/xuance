@@ -30,20 +30,20 @@ class BasicRecurrent(nn.Module):
         super(BasicRecurrent, self).__init__()
         self.lstm = False
         if kwargs["rnn"] == "GRU":
-            output = gru_block(kwargs["input_dim"],
-                               kwargs["recurrent_hidden_size"],
-                               kwargs["recurrent_layer_N"],
-                               kwargs["dropout"],
-                               kwargs["initialize"],
-                               kwargs["device"])
+            output, _ = gru_block(kwargs["input_dim"],
+                                  kwargs["recurrent_hidden_size"],
+                                  kwargs["recurrent_layer_N"],
+                                  kwargs["dropout"],
+                                  kwargs["initialize"],
+                                  kwargs["device"])
         elif kwargs["rnn"] == "LSTM":
             self.lstm = True
-            output = lstm_block(kwargs["input_dim"],
-                                kwargs["recurrent_hidden_size"],
-                                kwargs["recurrent_layer_N"],
-                                kwargs["dropout"],
-                                kwargs["initialize"],
-                                kwargs["device"])
+            output, _ = lstm_block(kwargs["input_dim"],
+                                   kwargs["recurrent_hidden_size"],
+                                   kwargs["recurrent_layer_N"],
+                                   kwargs["dropout"],
+                                   kwargs["initialize"],
+                                   kwargs["device"])
         else:
             raise "Unknown recurrent module!"
         self.rnn_layer = output

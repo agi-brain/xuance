@@ -328,6 +328,9 @@ class RecurrentOffPolicyBuffer(Buffer):
     def full(self):
         return self.size >= self.n_size
 
+    def can_sample(self):
+        return self.size >= self.batch_size
+
     def clear(self, *args):
         self.memory = deque(maxlen=self.n_size)
 

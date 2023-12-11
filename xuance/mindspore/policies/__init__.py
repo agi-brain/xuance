@@ -9,8 +9,8 @@ from .categorical import SACDISPolicy
 from .gaussian import ActorCriticPolicy as Gaussian_AC_Policy
 from .gaussian import ActorPolicy as Gaussian_Actor_Policy
 from .gaussian import SACPolicy as Gaussian_SAC_Policy
-from .deterministic import BasicQnetwork, DuelQnetwork, NoisyQnetwork, C51Qnetwork, QRDQN_Network, DDPGPolicy, TD3Policy, CDQNPolicy, LDQNPolicy, \
-     CLDQNPolicy, PDQNPolicy, MPDQNPolicy, SPDQNPolicy
+from .deterministic import BasicQnetwork, DuelQnetwork, NoisyQnetwork, C51Qnetwork, QRDQN_Network, DDPGPolicy, \
+    TD3Policy, DRQNPolicy, PDQNPolicy, MPDQNPolicy, SPDQNPolicy
 
 from .mixers import *
 from .deterministic_marl import BasicQnetwork as BasicQnetwork_marl
@@ -46,9 +46,7 @@ REGISTRY = {
     "Gaussian_SAC": Gaussian_SAC_Policy,
     "Discrete_SAC": SACDISPolicy,
     "TD3_Policy": TD3Policy,
-    "CDQN_Policy": CDQNPolicy,
-    "LDQN_Policy": LDQNPolicy,
-    "CLDQN_Policy": CLDQNPolicy,
+    "DRQN_Policy": DRQNPolicy,
     "PDQN_Policy": PDQNPolicy,
     "MPDQN_Policy": MPDQNPolicy,
     "SPDQN_Policy": SPDQNPolicy,
@@ -99,12 +97,6 @@ Policy_Inputs = {
                      "normalize", "initialize", "activation"],
     "TD3_Policy": ["action_space", "representation", "actor_hidden_size", "critic_hidden_size",
                    "normalize", "initialize", "activation"],
-    "CDQN_Policy": ["action_space", "representation", "hidden_sizes",
-                    "normalize", "initialize", "activation"],
-    "LDQN_Policy": ["action_space", "representation", "hidden_sizes",
-                    "normalize", "initialize", "activation"],
-    "CLDQN_Policy": ["action_space", "representation", "hidden_sizes",
-                    "normalize", "initialize", "activation"],
     "PDQN_Policy": ["observation_space", "action_space", "representation", "conactor_hidden_size",
                     "qnetwork_hidden_size", "normalize", "initialize", "activation"],
     "MPDQN_Policy": ['observation_space', 'action_space', 'representation', 'conactor_hidden_size',

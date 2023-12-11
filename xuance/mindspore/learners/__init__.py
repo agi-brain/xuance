@@ -29,9 +29,7 @@ from .qlearning_family.ddqn_learner import DDQN_Learner
 from .qlearning_family.c51_learner import C51_Learner
 from .qlearning_family.perdqn_learner import PerDQN_Learner
 from .qlearning_family.qrdqn_learner import QRDQN_Learner
-from .qlearning_family.cdqn_learner import CDQN_Learner
-from .qlearning_family.ldqn_learner import LDQN_Learner
-from .qlearning_family.cldqn_learner import CLDQN_Learner
+from .qlearning_family.drqn_learner import DRQN_Learner
 
 from .multi_agent_rl.iql_learner import IQL_Learner
 from .multi_agent_rl.vdn_learner import VDN_Learner

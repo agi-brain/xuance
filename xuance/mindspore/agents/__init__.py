@@ -42,6 +42,7 @@ from .qlearning_family.ddqn_agent import DDQN_Agent
 from .qlearning_family.C51_agent import C51_Agent
 from .qlearning_family.noisydqn_agent import NoisyDQN_Agent
 from .qlearning_family.perdqn_agent import PerDQN_Agent
+from .qlearning_family.drqn_agent import DRQN_Agent
 from .qlearning_family.qrdqn_agent import QRDQN_Agent
 from .policy_gradient.sac_agent import SAC_Agent
 from .policy_gradient.sacdis_agent import SACDIS_Agent
@@ -93,6 +94,7 @@ REGISTRY = {
     "PDQN": PDQN_Agent,
     "MPDQN": MPDQN_Agent,
     "SPDQN": SPDQN_Agent,
+    "DRQN": DRQN_Agent,
 
     "RANDOM": RandomAgents,
     "IQL": IQL_Agents,
