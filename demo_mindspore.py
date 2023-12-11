@@ -7,7 +7,7 @@ def parse_args():
     parser.add_argument("--method", type=str, default="dcg")
     parser.add_argument("--env", type=str, default="mpe")
     parser.add_argument("--env-id", type=str, default="simple_spread_v3")
-    parser.add_argument("--test", type=int, default=0)
+    parser.add_argument("--test", type=int, default=1)
     parser.add_argument("--device", type=str, default="GPU")
     parser.add_argument("--dl_toolbox", type=str, default="mindspore")
     return parser.parse_args()

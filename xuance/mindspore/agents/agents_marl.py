@@ -32,8 +32,8 @@ class MARLAgents(object):
         self.expand_dims = ms.ops.ExpandDims()
 
     def save_model(self, model_name):
-        model_path = os.path.join(self.model_dir_save, model_name)
-        self.learner.save_model(model_path)
+        model_path = self.model_dir_save
+        self.learner.save_model(model_path, model_name)
 
     def load_model(self, path, seed=1):
         self.learner.load_model(path, seed)
