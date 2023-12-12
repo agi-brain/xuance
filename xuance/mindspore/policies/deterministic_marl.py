@@ -431,7 +431,6 @@ class MADDPG_policy(nn.Cell):
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., ms.Tensor]] = None,
                  activation: Optional[ModuleType] = None):
-        assert isinstance(action_space, Box)
         super(MADDPG_policy, self).__init__()
         self.action_dim = action_space.shape[0]
         self.n_agents = n_agents
@@ -440,12 +439,13 @@ class MADDPG_policy(nn.Cell):
 
         self.actor_net = ActorNet(representation.output_shapes['state'][0], n_agents, self.action_dim,
                                   actor_hidden_size, normalize, initialize, activation)
-        self.target_actor_net = copy.deepcopy(self.actor_net)
         self.critic_net = CriticNet(False, representation.output_shapes['state'][0], n_agents, self.action_dim,
                                     critic_hidden_size, normalize, initialize, activation)
+        self.target_actor_net = copy.deepcopy(self.actor_net)
         self.target_critic_net = copy.deepcopy(self.critic_net)
         self.parameters_actor = self.representation.trainable_params() + self.actor_net.trainable_params()
         self.parameters_critic = self.critic_net.trainable_params()
+        self._concat = ms.ops.Concat(axis=-1)
         self._concat = ms.ops.Concat(axis=-1)
         self.broadcast_to = ms.ops.BroadcastTo((-1, self.n_agents, -1))
 
@@ -455,21 +455,23 @@ class MADDPG_policy(nn.Cell):
         act = self.actor_net(actor_in)
         return outputs, act
 
-    def critic(self, observation: ms.Tensor, actions_n: ms.Tensor, agent_ids: ms.Tensor):
+    def critic(self, observation: ms.Tensor, actions: ms.Tensor, agent_ids: ms.Tensor):
         bs = observation.shape[0]
         outputs_n = self.broadcast_to(self.representation(observation)['state'].view(bs, 1, -1))
+        actions_n = self.broadcast_to(actions.view(bs, 1, -1))
         critic_in = self._concat([outputs_n, actions_n, agent_ids])
         return self.critic_net(critic_in)
 
-    def target_critic(self, observation: ms.Tensor, actions_n: ms.Tensor, agent_ids: ms.Tensor):
+    def target_critic(self, observation: ms.Tensor, actions: ms.Tensor, agent_ids: ms.Tensor):
         bs = observation.shape[0]
-        outputs_n = self.broadcast_to(self.representation(observation)[0].view(bs, 1, -1))
+        outputs_n = self.broadcast_to(self.representation(observation)['state'].view(bs, 1, -1))
+        actions_n = self.broadcast_to(actions.view(bs, 1, -1))
         critic_in = self._concat([outputs_n, actions_n, agent_ids])
         return self.target_critic_net(critic_in)
 
     def target_actor(self, observation: ms.Tensor, agent_ids: ms.Tensor):
         outputs = self.representation(observation)
-        actor_in = self._concat([outputs[0], agent_ids])
+        actor_in = self._concat([outputs['state'], agent_ids])
         return self.target_actor_net(actor_in)
 
     def soft_update(self, tau=0.005):

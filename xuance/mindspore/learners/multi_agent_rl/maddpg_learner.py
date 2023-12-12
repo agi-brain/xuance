@@ -18,8 +18,7 @@ class MADDPG_Learner(LearnerMAS):
 
         def construct(self, bs, o, ids, agt_mask):
             _, actions_eval = self._backbone(o, ids)
-            actions_n_eval = ms.ops.broadcast_to(actions_eval.view(bs, 1, -1), (-1, self.n_agents, -1))
-            loss_a = -(self._backbone.critic(o, actions_n_eval, ids) * agt_mask).sum() / agt_mask.sum()
+            loss_a = -(self._backbone.critic(o, actions_eval, ids) * agt_mask).sum() / agt_mask.sum()
             return loss_a
 
     class CriticNetWithLossCell(nn.Cell):
@@ -39,8 +38,7 @@ class MADDPG_Learner(LearnerMAS):
                  policy: nn.Cell,
                  optimizer: Sequence[nn.Optimizer],
                  scheduler: Sequence[nn.exponential_decay_lr] = None,
-                 summary_writer: Optional[SummaryWriter] = None,
-                 modeldir: str = "./",
+                 model_dir: str = "./",
                  gamma: float = 0.99,
                  sync_frequency: int = 100
                  ):
@@ -48,7 +46,7 @@ class MADDPG_Learner(LearnerMAS):
         self.tau = config.tau
         self.sync_frequency = sync_frequency
         self.mse_loss = nn.MSELoss()
-        super(MADDPG_Learner, self).__init__(config, policy, optimizer, scheduler, summary_writer, modeldir)
+        super(MADDPG_Learner, self).__init__(config, policy, optimizer, scheduler, model_dir)
         self.optimizer = {
             'actor': optimizer[0],
             'critic': optimizer[1]
@@ -78,22 +76,22 @@ class MADDPG_Learner(LearnerMAS):
                                (batch_size, -1, -1))
         # calculate the loss and train
         actions_next = self.policy.target_actor(obs_next, IDs)
-        actions_n_next = ms.ops.broadcast_to(actions_next.view(batch_size, 1, -1), (-1, self.n_agents, -1))
-        q_next = self.policy.target_critic(obs_next, actions_n_next, IDs)
-        if self.args.consider_terminal_states:
-            q_target = rewards + (1 - terminals) * self.args.gamma * q_next
-        else:
-            q_target = rewards + self.args.gamma * q_next
+        q_next = self.policy.target_critic(obs_next, actions_next, IDs)
+        q_target = rewards + (1 - terminals) * self.args.gamma * q_next
 
         # calculate the loss and train
         loss_a = self.actor_train(batch_size, obs, IDs, agent_mask)
-        actions_n = ms.ops.broadcast_to(actions.view(batch_size, 1, -1), (-1, self.n_agents, -1))
-        loss_c = self.critic_train(obs, actions_n, IDs, agent_mask, q_target)
+        loss_c = self.critic_train(obs, actions, IDs, agent_mask, q_target)
         self.policy.soft_update(self.tau)
 
         lr_a = self.scheduler['actor'](self.iterations).asnumpy()
         lr_c = self.scheduler['critic'](self.iterations).asnumpy()
-        self.writer.add_scalar("learning_rate_actor", lr_a, self.iterations)
-        self.writer.add_scalar("learning_rate_critic", lr_c, self.iterations)
-        self.writer.add_scalar("loss_actor", loss_a.asnumpy(), self.iterations)
-        self.writer.add_scalar("loss_critic", loss_c.asnumpy(), self.iterations)
+
+        info = {
+            "learning_rate_actor": lr_a,
+            "learning_rate_critic": lr_c,
+            "loss_actor": loss_a.asnumpy(),
+            "loss_critic": loss_c.asnumpy()
+        }
+
+        return info
