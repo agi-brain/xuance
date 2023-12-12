@@ -131,10 +131,8 @@ class ActorNet(nn.Cell):
 
 class CriticNet(nn.Cell):
     def __init__(self,
-                 independent: bool,
                  state_dim: int,
                  n_agents: int,
-                 action_dim: int,
                  hidden_sizes: Sequence[int],
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., ms.Tensor]] = None,
@@ -142,17 +140,14 @@ class CriticNet(nn.Cell):
                  ):
         super(CriticNet, self).__init__()
         layers = []
-        if independent:
-            input_shape = (state_dim + action_dim + n_agents,)
-        else:
-            input_shape = (state_dim * n_agents + action_dim * n_agents + n_agents,)
+        input_shape = (state_dim + n_agents, )
         for h in hidden_sizes:
             mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initialize)
             layers.extend(mlp)
         layers.extend(mlp_block(input_shape[0], 1, None, None, initialize)[0])
         self.model = nn.SequentialCell(*layers)
 
-    def construct(self, x: torch.tensor):
+    def construct(self, x: ms.tensor):
         return self.model(x)
 
 
@@ -167,7 +162,6 @@ class Basic_ISAC_policy(nn.Cell):
                  initialize: Optional[Callable[..., ms.Tensor]] = None,
                  activation: Optional[ModuleType] = None
                  ):
-        assert isinstance(action_space, Box)
         super(Basic_ISAC_policy, self).__init__()
         self.action_dim = action_space.shape[0]
         self.n_agents = n_agents
@@ -176,12 +170,12 @@ class Basic_ISAC_policy(nn.Cell):
 
         self.actor_net = ActorNet(representation.output_shapes['state'][0], n_agents, self.action_dim,
                                   actor_hidden_size, normalize, initialize, activation)
-        self.critic_net = CriticNet(True, representation.output_shapes['state'][0], n_agents, self.action_dim,
-                                    critic_hidden_size, normalize, initialize, activation)
+        dim_input_critic = representation.output_shapes['state'][0] + self.action_dim
+        self.critic_net = CriticNet(dim_input_critic, n_agents, critic_hidden_size, normalize, initialize, activation)
         self.target_actor_net = ActorNet(representation.output_shapes['state'][0], n_agents, self.action_dim,
                                          actor_hidden_size, normalize, initialize, activation)
-        self.target_critic_net = CriticNet(True, representation.output_shapes['state'][0], n_agents, self.action_dim,
-                                           critic_hidden_size, normalize, initialize, activation)
+        self.target_critic_net = CriticNet(dim_input_critic, n_agents, critic_hidden_size,
+                                           normalize, initialize, activation)
         self.parameters_actor = list(self.representation.trainable_params()) + list(self.actor_net.trainable_params())
         self.parameters_critic = self.critic_net.trainable_params()
         self._concat = ms.ops.Concat(axis=-1)
@@ -195,7 +189,7 @@ class Basic_ISAC_policy(nn.Cell):
 
     def critic(self, observation: ms.tensor, actions: ms.tensor, agent_ids: ms.tensor):
         outputs = self.representation(observation)
-        critic_in = self._concat([outputs[0], actions, agent_ids])
+        critic_in = self._concat([outputs['state'], actions, agent_ids])
         return self.critic_net(critic_in)
 
     def critic_for_train(self, observation: ms.tensor, actions: ms.tensor, agent_ids: ms.tensor):
@@ -205,12 +199,12 @@ class Basic_ISAC_policy(nn.Cell):
 
     def target_critic(self, observation: ms.tensor, actions: ms.tensor, agent_ids: ms.tensor):
         outputs = self.representation(observation)
-        critic_in = self._concat([outputs[0], actions, agent_ids])
+        critic_in = self._concat([outputs['state'], actions, agent_ids])
         return self.target_critic_net(critic_in)
 
     def target_actor(self, observation: ms.tensor, agent_ids: ms.tensor):
         outputs = self.representation(observation)
-        actor_in = self._concat([outputs[0], agent_ids])
+        actor_in = self._concat([outputs['state'], agent_ids])
         mu, std = self.target_actor_net(actor_in)
         return mu, std
 

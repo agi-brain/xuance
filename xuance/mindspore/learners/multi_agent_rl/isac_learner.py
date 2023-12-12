@@ -38,8 +38,7 @@ class ISAC_Learner(LearnerMAS):
                  policy: nn.Cell,
                  optimizer: Sequence[nn.Optimizer],
                  scheduler: Sequence[nn.exponential_decay_lr] = None,
-                 summary_writer: Optional[SummaryWriter] = None,
-                 modeldir: str = "./",
+                 model_dir: str = "./",
                  gamma: float = 0.99,
                  sync_frequency: int = 100
                  ):
@@ -48,7 +47,7 @@ class ISAC_Learner(LearnerMAS):
         self.alpha = config.alpha
         self.sync_frequency = sync_frequency
         self.mse_loss = nn.MSELoss()
-        super(ISAC_Learner, self).__init__(config, policy, optimizer, scheduler, summary_writer, modeldir)
+        super(ISAC_Learner, self).__init__(config, policy, optimizer, scheduler, model_dir)
         self.optimizer = {
             'actor': optimizer[0],
             'critic': optimizer[1]
@@ -64,7 +63,6 @@ class ISAC_Learner(LearnerMAS):
         self.critic_loss_net = self.CriticNetWithLossCell(policy)
         self.critic_train = nn.TrainOneStepCell(self.critic_loss_net, self.optimizer['critic'])
         self.critic_train.set_train()
-
 
     def update(self, sample):
         self.iterations += 1
@@ -82,12 +80,8 @@ class ISAC_Learner(LearnerMAS):
         actions_next = self.policy.target_actor_net.sample(actions_next_dist_mu, actions_next_dist_std)
         log_pi_a_next = self.policy.target_actor_net.log_prob(actions_next, actions_next_dist_mu, actions_next_dist_std)
         q_next = self.policy.target_critic(obs_next, actions_next, IDs)
-        if self.args.consider_terminal_states:
-            log_pi_a_next = ms.ops.expand_dims(log_pi_a_next, axis=-1)
-            q_target = rewards + (1-terminals) * self.args.gamma * (q_next - self.alpha * log_pi_a_next)
-        else:
-            log_pi_a_next = ms.ops.expand_dims(log_pi_a_next, axis=-1)
-            q_target = rewards + self.args.gamma * (q_next - self.alpha * log_pi_a_next)
+        log_pi_a_next = ms.ops.expand_dims(log_pi_a_next, axis=-1)
+        q_target = rewards + (1-terminals) * self.args.gamma * (q_next - self.alpha * log_pi_a_next)
 
         # calculate the loss function
         loss_a = self.actor_train(batch_size, obs, IDs, agent_mask)
@@ -97,7 +91,12 @@ class ISAC_Learner(LearnerMAS):
 
         lr_a = self.scheduler['actor'](self.iterations).asnumpy()
         lr_c = self.scheduler['critic'](self.iterations).asnumpy()
-        self.writer.add_scalar("learning_rate_actor", lr_a, self.iterations)
-        self.writer.add_scalar("learning_rate_critic", lr_c, self.iterations)
-        self.writer.add_scalar("loss_actor", loss_a.asnumpy(), self.iterations)
-        self.writer.add_scalar("loss_critic", loss_c.asnumpy(), self.iterations)
+
+        info = {
+            "learning_rate_actor": lr_a,
+            "learning_rate_critic": lr_c,
+            "loss_actor": loss_a.asnumpy(),
+            "loss_critic": loss_c.asnumpy()
+        }
+
+        return info
