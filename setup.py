@@ -9,11 +9,12 @@ setup(
                 "configs/*.yaml",
                 "configs/*/*.yaml",
                 "configs/*/*/*.yaml",
-                "environment/magent2/libmagent.so",  # for magent2 environment
-                "environment/magent2/magent.dll"  # for magent2 environment
+                "environment/magent2/libmagent.so",  # for magent2 environment on linux
+                "environment/magent2/magent.dll",  # for magent2 environment on Windows
+                "environment/magent2/libmagent.dylib"  # for magent2 environment on MacOS
             ]
     },
-    version='1.0.3',
+    version='1.0.4',
     description='XuanCe: A Comprehensive and Unified Deep Reinforcement Learning Library.',
     author='XuanCe contributors.',
     author_email='',
