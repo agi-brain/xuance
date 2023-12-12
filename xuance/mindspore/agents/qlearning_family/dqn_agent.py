@@ -38,7 +38,7 @@ class DQN_Agent(Agent):
         super(DQN_Agent, self).__init__(config, envs, policy, memory, learner, config.log_dir, config.model_dir)
 
     def _action(self, obs, egreedy=0.0):
-        states, argmax_action, _ = self.policy(ms.Tensor(obs))
+        _, argmax_action, _ = self.policy(ms.Tensor(obs))
         random_action = np.random.choice(self.action_space.n, self.n_envs)
         if np.random.rand() < egreedy:
             action = random_action

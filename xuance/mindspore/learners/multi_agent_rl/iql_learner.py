@@ -23,14 +23,13 @@ class IQL_Learner(LearnerMAS):
                  policy: nn.Cell,
                  optimizer: nn.Optimizer,
                  scheduler: Optional[nn.exponential_decay_lr] = None,
-                 summary_writer: Optional[SummaryWriter] = None,
-                 modeldir: str = "./",
+                 model_dir: str = "./",
                  gamma: float = 0.99,
                  sync_frequency: int = 100
                  ):
         self.gamma = gamma
         self.sync_frequency = sync_frequency
-        super(IQL_Learner, self).__init__(config, policy, optimizer, scheduler, summary_writer, modeldir)
+        super(IQL_Learner, self).__init__(config, policy, optimizer, scheduler, model_dir)
         # build train net
         self.loss_net = self.PolicyNetWithLossCell(policy)
         self.policy_train = nn.TrainOneStepCell(self.loss_net, optimizer)
@@ -48,7 +47,7 @@ class IQL_Learner(LearnerMAS):
         IDs = ops.broadcast_to(self.expand_dims(self.eye(self.n_agents, self.n_agents, ms.float32), 0),
                                (batch_size, -1, -1))
         # calculate the target values
-        q_next = self.policy.target_Q(obs_next, IDs)
+        _, q_next = self.policy.target_Q(obs_next, IDs)
         if self.args.double_q:
             _, action_next_greedy, q_next_eval = self.policy(obs_next, IDs)
             action_next_greedy = self.expand_dims(action_next_greedy, -1).astype(ms.int32)
@@ -56,10 +55,7 @@ class IQL_Learner(LearnerMAS):
         else:
             q_next_a = q_next.max(axis=-1, keepdims=True).values
 
-        if self.args.consider_terminal_states:
-            q_target = rewards + (1-terminals) * self.args.gamma * q_next_a
-        else:
-            q_target = rewards + self.args.gamma * q_next_a
+        q_target = rewards + (1-terminals) * self.args.gamma * q_next_a
         # train the model
         loss = self.policy_train(obs, IDs, actions, q_target, agent_mask)
 
@@ -67,5 +63,10 @@ class IQL_Learner(LearnerMAS):
             self.policy.copy_target()
         # log
         lr = self.scheduler(self.iterations).asnumpy()
-        self.writer.add_scalar("learning_rate", lr, self.iterations)
-        self.writer.add_scalar("loss_Q", loss.asnumpy(), self.iterations)
+
+        info = {
+            "learning_rate": lr,
+            "loss_Q": loss.asnumpy()
+        }
+
+        return info

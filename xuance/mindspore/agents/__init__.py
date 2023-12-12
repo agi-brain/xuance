@@ -34,9 +34,6 @@ from .policy_gradient.ddpg_agent import DDPG_Agent
 from .policy_gradient.td3_agent import TD3_Agent
 
 from .qlearning_family.dqn_agent import DQN_Agent
-from .qlearning_family.cdqn_agent import CDQN_Agent
-from .qlearning_family.ldqn_agent import LDQN_Agent
-from .qlearning_family.cldqn_agent import CLDQN_Agent
 from .qlearning_family.dueldqn_agent import DuelDQN_Agent
 from .qlearning_family.ddqn_agent import DDQN_Agent
 from .qlearning_family.C51_agent import C51_Agent
@@ -88,9 +85,6 @@ REGISTRY = {
     "C51DQN": C51_Agent,
     "PerDQN": PerDQN_Agent,
     "QRDQN": QRDQN_Agent,
-    "CDQN": CDQN_Agent,
-    "LDQN": LDQN_Agent,
-    "CLDQN": CLDQN_Agent,
     "PDQN": PDQN_Agent,
     "MPDQN": MPDQN_Agent,
     "SPDQN": SPDQN_Agent,
