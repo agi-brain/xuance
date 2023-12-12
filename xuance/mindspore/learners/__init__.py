@@ -43,8 +43,8 @@ from .multi_agent_rl.iddpg_learner import IDDPG_Learner
 from .multi_agent_rl.maddpg_learner import MADDPG_Learner
 from .multi_agent_rl.mfq_learner import MFQ_Learner
 from .multi_agent_rl.mfac_learner import MFAC_Learner
-from .multi_agent_rl.mappoclip_learner import MAPPO_Clip_Learner
-from .multi_agent_rl.mappokl_learner import MAPPO_KL_Learner
+from .multi_agent_rl.ippo_learner import IPPO_Learner
+from .multi_agent_rl.mappo_learner import MAPPO_Learner
 from .multi_agent_rl.isac_learner import ISAC_Learner
 from .multi_agent_rl.masac_learner import MASAC_Learner
 from .multi_agent_rl.matd3_learner import MATD3_Learner

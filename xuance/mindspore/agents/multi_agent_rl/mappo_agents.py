@@ -1,7 +1,7 @@
 from xuance.mindspore.agents import *
 
 
-class MAPPO_Clip_Agents(MARLAgents):
+class MAPPO_Agents(MARLAgents):
     def __init__(self,
                  config: Namespace,
                  envs: DummyVecEnv_Pettingzoo):
@@ -44,7 +44,7 @@ class MAPPO_Clip_Agents(MARLAgents):
         self.obs_rms = RunningMeanStd(shape=space2shape(self.observation_space[config.agent_keys[0]]),
                                       comm=self.comm, use_mpi=False)
         self.ret_rms = RunningMeanStd(shape=(), comm=self.comm, use_mpi=False)
-        super(MAPPO_Clip_Agents, self).__init__(config, envs, policy, memory, learner, writer,
+        super(MAPPO_Agents, self).__init__(config, envs, policy, memory, learner, writer,
                                                 config.logdir, config.modeldir)
 
     def _process_observation(self, observations):

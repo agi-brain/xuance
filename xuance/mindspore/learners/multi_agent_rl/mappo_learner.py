@@ -7,10 +7,10 @@ Implementation: MindSpore
 from xuance.mindspore.learners import *
 
 
-class MAPPO_Clip_Learner(LearnerMAS):
+class MAPPO_Learner(LearnerMAS):
     class PolicyNetWithLossCell(nn.Cell):
         def __init__(self, backbone, n_agents, vf_coef, ent_coef, clip_range, use_value_clip, value_clip_range):
-            super(MAPPO_Clip_Learner.PolicyNetWithLossCell, self).__init__()
+            super(MAPPO_Learner.PolicyNetWithLossCell, self).__init__()
             self._backbone = backbone
             self.n_agents = n_agents
             self.vf_coef = vf_coef
@@ -57,15 +57,14 @@ class MAPPO_Clip_Learner(LearnerMAS):
                  policy: nn.Cell,
                  optimizer: nn.Optimizer,
                  scheduler: Optional[nn.exponential_decay_lr] = None,
-                 summary_writer: Optional[SummaryWriter] = None,
-                 modeldir: str = "./",
+                 model_dir: str = "./",
                  gamma: float = 0.99,
                  ):
         self.gamma = gamma
         self.clip_range = config.clip_range
         self.value_clip_range = config.value_clip_range
         self.mse_loss = nn.MSELoss()
-        super(MAPPO_Clip_Learner, self).__init__(config, policy, optimizer, scheduler, summary_writer, modeldir)
+        super(MAPPO_Learner, self).__init__(config, policy, optimizer, scheduler, model_dir)
         # define mindspore trainers
         self.loss_net = self.PolicyNetWithLossCell(policy, self.n_agents, config.vf_coef, config.ent_coef,
                                                    config.clip_range, config.use_value_clip, config.value_clip_range)
@@ -92,5 +91,10 @@ class MAPPO_Clip_Learner(LearnerMAS):
 
         # Logger
         lr = self.scheduler(self.iterations).asnumpy()
-        self.writer.add_scalar("learning_rate", lr, self.iterations)
-        self.writer.add_scalar("loss", loss.asnumpy(), self.iterations)
+
+        info = {
+            "learning_rate": lr,
+            "loss": loss.asnumpy()
+        }
+
+        return info

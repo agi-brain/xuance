@@ -69,6 +69,7 @@ class LearnerMAS(ABC):
         self.optimizer = optimizer
         self.scheduler = scheduler
         self.model_dir = model_dir
+        self.running_steps = config.running_steps
         self.iterations = 0
         self._one_hot = OneHot()
         self.eye = Eye()

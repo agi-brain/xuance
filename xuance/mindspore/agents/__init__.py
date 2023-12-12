@@ -65,8 +65,8 @@ from .multi_agent_rl.iddpg_agents import IDDPG_Agents
 from .multi_agent_rl.maddpg_agents import MADDPG_Agents
 from .multi_agent_rl.mfq_agents import MFQ_Agents
 from .multi_agent_rl.mfac_agents import MFAC_Agents
-from .multi_agent_rl.mappoclip_agents import MAPPO_Clip_Agents
-from .multi_agent_rl.mappokl_agents import MAPPO_KL_Agents
+from .multi_agent_rl.ippo_agents import IPPO_Agents
+from .multi_agent_rl.mappo_agents import MAPPO_Agents
 from .multi_agent_rl.isac_agents import ISAC_Agents
 from .multi_agent_rl.masac_agents import MASAC_Agents
 from .multi_agent_rl.matd3_agents import MATD3_Agents
@@ -112,8 +112,8 @@ REGISTRY = {
     "MADDPG": MADDPG_Agents,
     "MFQ": MFQ_Agents,
     "MFAC": MFAC_Agents,
-    "MAPPO_Clip": MAPPO_Clip_Agents,
-    "MAPPO_KL": MAPPO_KL_Agents,
+    "IPPO": IPPO_Agents,
+    "MAPPO": MAPPO_Agents,
     "ISAC": ISAC_Agents,
     "MASAC": MASAC_Agents,
     "MATD3": MATD3_Agents,
