@@ -6,7 +6,7 @@ import wandb
 from torch.utils.tensorboard import SummaryWriter
 from .runner_basic import *
 from xuance.mindspore.agents import REGISTRY as REGISTRY_Agent
-from gym.spaces import Box
+from gymnasium.spaces.box import Box
 from tqdm import tqdm
 import numpy as np
 from copy import deepcopy

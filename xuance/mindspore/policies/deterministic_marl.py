@@ -356,7 +356,6 @@ class Basic_DDPG_policy(nn.Cell):
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., ms.Tensor]] = None,
                  activation: Optional[ModuleType] = None):
-        assert isinstance(action_space, Box)
         super(Basic_DDPG_policy, self).__init__()
         self.action_dim = action_space.shape[0]
         self.n_agents = n_agents
@@ -386,12 +385,12 @@ class Basic_DDPG_policy(nn.Cell):
 
     def target_critic(self, observation: ms.Tensor, actions: ms.Tensor, agent_ids: ms.Tensor):
         outputs = self.representation(observation)
-        critic_in = self._concat([outputs[0], actions, agent_ids])
+        critic_in = self._concat([outputs['state'], actions, agent_ids])
         return self.target_critic_net(critic_in)
 
     def target_actor(self, observation: ms.Tensor, agent_ids: ms.Tensor):
         outputs = self.representation(observation)
-        actor_in = self._concat([outputs[0], agent_ids])
+        actor_in = self._concat([outputs['state'], agent_ids])
         return self.target_actor_net(actor_in)
 
     def soft_update(self, tau=0.005):

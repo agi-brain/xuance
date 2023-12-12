@@ -34,8 +34,7 @@ class IDDPG_Learner(LearnerMAS):
                  policy: nn.Cell,
                  optimizer: Sequence[nn.Optimizer],
                  scheduler: Sequence[nn.exponential_decay_lr] = None,
-                 summary_writer: Optional[SummaryWriter] = None,
-                 modeldir: str = "./",
+                 model_dir: str = "./",
                  gamma: float = 0.99,
                  sync_frequency: int = 100
                  ):
@@ -43,7 +42,7 @@ class IDDPG_Learner(LearnerMAS):
         self.tau = config.tau
         self.sync_frequency = sync_frequency
         self.mse_loss = nn.MSELoss()
-        super(IDDPG_Learner, self).__init__(config, policy, optimizer, scheduler, summary_writer, modeldir)
+        super(IDDPG_Learner, self).__init__(config, policy, optimizer, scheduler, model_dir)
         self.optimizer = {
             'actor': optimizer[0],
             'critic': optimizer[1]
@@ -74,10 +73,7 @@ class IDDPG_Learner(LearnerMAS):
                                (batch_size, -1, -1))
         # calculate target values
         q_next = self.policy.target_critic(obs_next, self.policy.target_actor(obs_next, IDs), IDs)
-        if self.args.consider_terminal_states:
-            q_target = rewards + (1-terminals) * self.args.gamma * q_next
-        else:
-            q_target = rewards + self.args.gamma * q_next
+        q_target = rewards + (1-terminals) * self.args.gamma * q_next
 
         # calculate the loss and train
         loss_a = self.actor_train(obs, IDs, agent_mask)
@@ -86,7 +82,12 @@ class IDDPG_Learner(LearnerMAS):
 
         lr_a = self.scheduler['actor'](self.iterations).asnumpy()
         lr_c = self.scheduler['critic'](self.iterations).asnumpy()
-        self.writer.add_scalar("learning_rate_actor", lr_a, self.iterations)
-        self.writer.add_scalar("learning_rate_critic", lr_c, self.iterations)
-        self.writer.add_scalar("loss_actor", loss_a.asnumpy(), self.iterations)
-        self.writer.add_scalar("loss_critic", loss_c.asnumpy(), self.iterations)
+
+        info = {
+            "learning_rate_actor": lr_a,
+            "learning_rate_critic": lr_c,
+            "loss_actor": loss_a.asnumpy(),
+            "loss_critic": loss_c.asnumpy()
+        }
+
+        return info
