@@ -304,8 +304,6 @@ class MeanFieldActorCriticPolicy(nn.Module):
                                   actor_hidden_size, normalize, initialize, kwargs['gain'], activation, device)
         self.critic_net = CriticNet(representation.output_shapes['state'][0] + self.action_dim, n_agents,
                                     critic_hidden_size, normalize, initialize, activation, device)
-        self.target_actor_net = copy.deepcopy(self.actor_net)
-        self.target_critic_net = copy.deepcopy(self.critic_net)
         self.parameters_actor = list(self.actor_net.parameters()) + list(self.representation.parameters())
         self.parameters_critic = self.critic_net.parameters()
         self.pi_dist = CategoricalDistribution(self.action_dim)

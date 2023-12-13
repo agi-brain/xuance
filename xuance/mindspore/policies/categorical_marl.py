@@ -352,19 +352,3 @@ class MeanFieldActorCriticPolicy(nn.Cell):
         critic_in = self._concat([outputs['state'], actions_mean, agent_ids])
         return self.critic_net(critic_in)
 
-    def target_critic(self, observation: ms.Tensor, actions_mean: ms.Tensor, agent_ids: ms.Tensor):
-        outputs = self.representation(observation)
-        critic_in = self._concat([outputs[0], actions_mean, agent_ids])
-        return self.target_critic_net(critic_in)
-
-    def target_critic_for_train(self, observation: ms.Tensor, actions_mean: ms.Tensor, agent_ids: ms.Tensor):
-        outputs = self.representation(observation)
-        critic_in = self._concat([outputs['state'], actions_mean, agent_ids])
-        return self.target_critic_net(critic_in)
-
-    def soft_update(self, tau=0.005):
-        for ep, tp in zip(self.actor_net.trainable_params(), self.target_actor_net.trainable_params()):
-            tp.assign_value((tau*ep.data+(1-tau)*tp.data))
-        for ep, tp in zip(self.critic_net.trainable_params(), self.target_critic_net.trainable_params()):
-            tp.assign_value((tau*ep.data+(1-tau)*tp.data))
-
