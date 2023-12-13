@@ -234,12 +234,14 @@ class MAAC_Policy_Share(MAAC_Policy):
                 values_tot = values_independent
             else:
                 sequence_length = observation.shape[1]
-                values_independent = values_independent.transpose(1, 2).reshape(batch_size*sequence_length, self.n_agents)
+                values_independent = values_independent.transpose(1, 2).reshape(batch_size * sequence_length,
+                                                                                self.n_agents)
                 values_tot = self.value_tot(values_independent, global_state=state)
                 values_tot = values_tot.reshape([batch_size, sequence_length, 1])
                 values_tot = values_tot.unsqueeze(1).expand(-1, self.n_agents, -1, -1)
         else:
-            values_tot = values_independent if self.mixer is None else self.value_tot(values_independent, global_state=state)
+            values_tot = values_independent if self.mixer is None else self.value_tot(values_independent,
+                                                                                      global_state=state)
 
         return rnn_hidden, act_probs, values_tot
 
@@ -322,33 +324,21 @@ class MeanFieldActorCriticPolicy(nn.Cell):
         self.action_dim = action_space.n
         self.representation = representation
         self.representation_info_shape = self.representation.output_shapes
-        self.actor_net = ActorNet(representation.output_shapes['state'][0], self.action_dim, n_agents,
-                                  actor_hidden_size, normalize, initialize, kwargs['gain'], activation)
-        self.critic_net = BasicQhead(representation.output_shapes['state'][0] + self.action_dim, self.action_dim,
-                                     n_agents, critic_hidden_size, normalize, initialize, activation)
-        self.target_actor_net = ActorNet(representation.output_shapes['state'][0], self.action_dim, n_agents,
-                                         actor_hidden_size, normalize, initialize, kwargs['gain'], activation)
-        for ep, tp in zip(self.actor_net.trainable_params(), self.target_actor_net.trainable_params()):
-            tp.assign_value(ep)
-        self.target_critic_net = copy.deepcopy(self.critic_net)
-        self.parameters_actor = self.actor_net.trainable_params() + self.representation.trainable_params()
-        self.parameters_critic = self.critic_net.trainable_params()
+        self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim, n_agents,
+                              actor_hidden_size, normalize, initialize, kwargs['gain'], activation)
+        self.critic = CriticNet(representation.output_shapes['state'][0] + self.action_dim, n_agents,
+                                critic_hidden_size, normalize, initialize, activation)
+        self.parameters_actor = self.actor.trainable_params() + self.representation.trainable_params()
+        self.parameters_critic = self.critic.trainable_params()
         self._concat = ms.ops.Concat(axis=-1)
 
     def construct(self, observation: ms.Tensor, agent_ids: ms.Tensor):
         outputs = self.representation(observation)
         input_actor = self._concat([outputs['state'], agent_ids])
-        act_dist = self.actor_net(input_actor)
+        act_dist = self.actor(input_actor)
         return outputs, act_dist
 
-    def target_actor(self, observation: ms.Tensor, agent_ids: ms.Tensor):
-        outputs = self.representation(observation)
-        input_actor = self._concat([outputs[0], agent_ids])
-        act_dist = self.target_actor_net(input_actor)
-        return act_dist
-
-    def critic(self, observation: ms.Tensor, actions_mean: ms.Tensor, agent_ids: ms.Tensor):
+    def get_values(self, observation: ms.Tensor, actions_mean: ms.Tensor, agent_ids: ms.Tensor):
         outputs = self.representation(observation)
         critic_in = self._concat([outputs['state'], actions_mean, agent_ids])
-        return self.critic_net(critic_in)
-
+        return self.critic(critic_in)

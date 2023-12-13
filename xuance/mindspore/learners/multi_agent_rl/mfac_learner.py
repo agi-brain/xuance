@@ -8,119 +8,78 @@ from xuance.mindspore.learners import *
 
 
 class MFAC_Learner(LearnerMAS):
-    class ActorNetWithLossCell(nn.Cell):
-        def __init__(self, backbone, n_agents, dim_act):
-            super(MFAC_Learner.ActorNetWithLossCell, self).__init__()
+    class NetWithLossCell(nn.Cell):
+        def __init__(self, backbone, vf_coef, ent_coef):
+            super(MFAC_Learner.NetWithLossCell, self).__init__()
             self._backbone = backbone
-            self.n_agents = n_agents
-            self.dim_act = dim_act
-            self.expand_dims = ops.ExpandDims()
-            self._one_hot = OneHot()
+            self.vf_coef = vf_coef
+            self.ent_coef = ent_coef
 
-        def construct(self, bs, o_next, agt_mask, ids):
-            _, act_prob_next = self._backbone(o_next, ids)
-            actions_next = act_prob_next.argmax(-1)
-            log_pi_prob = self.expand_dims(self._backbone.actor_net.log_prob(value=actions_next, probs=act_prob_next),
-                                           -1)
-            actions_next_onehot = self._one_hot(actions_next.astype(ms.int32), self.dim_act, ms.Tensor(1.0, ms.float32),
-                                                ms.Tensor(0.0, ms.float32)).astype(ms.float32)
-            act_mean_next = actions_next_onehot.mean(axis=-2)
-            act_mean_n_next = ops.broadcast_to(self.expand_dims(act_mean_next, 1), (-1, self.n_agents, -1))
-            advantages = self._backbone.target_critic_for_train(o_next, act_mean_n_next, ids)
-            actions_select = actions_next.view(bs, self.n_agents, 1)
-            advantages = ms.ops.stop_gradient(GatherD()(advantages, -1, actions_select.astype(ms.int32)))
+        def construct(self, obs, actions, returns, advantages, act_mean_n, agt_mask, ids):
+            # actor loss
+            _, act_probs = self._backbone(obs, ids)
+            log_pi = self._backbone.actor.log_prob(value=actions, probs=act_probs).unsqueeze(-1)
+            entropy = self._backbone.actor.entropy(act_probs).unsqueeze(-1)
 
-            advantages = log_pi_prob * advantages
-            loss_a = -(advantages.sum() / agt_mask.sum())
-            return loss_a
+            targets = returns
+            value_pred = self._backbone.get_values(obs, act_mean_n, ids)
+            td_error = value_pred - targets
 
-    class CriticNetWithLossCell(nn.Cell):
-        def __init__(self, backbone, n_agents):
-            super(MFAC_Learner.CriticNetWithLossCell, self).__init__()
-            self._backbone = backbone
-            self.n_agents = n_agents
-            self.expand_dims = ops.ExpandDims()
-            self.mse_loss = nn.MSELoss()
+            pg_loss = -((advantages * log_pi) * agt_mask).sum() / agt_mask.sum()
+            vf_loss = ((td_error ** 2) * agt_mask).sum() / agt_mask.sum()
+            entropy_loss = (entropy * agt_mask).sum() / agt_mask.sum()
+            loss = pg_loss + self.vf_coef * vf_loss - self.ent_coef * entropy_loss
 
-        def construct(self, bs, o, a, a_mean, agt_mask, ids, tar_q):
-            q_eval = self._backbone.critic(o, a_mean, ids)
-            q_eval_a = GatherD()(q_eval, -1, a.view(bs, self.n_agents, 1).astype(ms.int32))
-            td_error = (q_eval_a - tar_q) * agt_mask
-            loss_c = (td_error ** 2).mean()
-            return loss_c
+            return loss
 
     def __init__(self,
                  config: Namespace,
                  policy: nn.Cell,
                  optimizer: Sequence[nn.Optimizer],
                  scheduler: Optional[nn.exponential_decay_lr] = None,
-                 summary_writer: Optional[SummaryWriter] = None,
-                 modeldir: str = "./",
+                 model_dir: str = "./",
                  gamma: float = 0.99,
                  ):
         self.gamma = gamma
+        self.clip_range = config.clip_range
+        self.use_linear_lr_decay = config.use_linear_lr_decay
+        self.use_grad_norm, self.max_grad_norm = config.use_grad_norm, config.max_grad_norm
+        self.use_value_norm = config.use_value_norm
+        self.vf_coef, self.ent_coef = config.vf_coef, config.ent_coef
         self.tau = config.tau
         self.mse_loss = nn.MSELoss()
-        super(MFAC_Learner, self).__init__(config, policy, optimizer, scheduler, summary_writer, modeldir)
-        self.optimizer = {
-            'actor': optimizer[0],
-            'critic': optimizer[1]
-        }
-        self.scheduler = {
-            'actor': scheduler[0],
-            'critic': scheduler[1]
-        }
+        super(MFAC_Learner, self).__init__(config, policy, optimizer, scheduler, model_dir)
+        self.optimizer = optimizer
+        self.scheduler = scheduler
         self.bmm = ops.BatchMatMul()
-        self.actor_loss_net = self.ActorNetWithLossCell(policy, self.n_agents, self.dim_act)
-        self.actor_train = TrainOneStepCellWithGradClip(self.actor_loss_net, self.optimizer['actor'],
-                                                        clip_type=config.clip_type, clip_value=config.clip_grad)
-        self.actor_train.set_train()
-        self.critic_loss_net = self.CriticNetWithLossCell(policy, self.n_agents)
-        self.critic_train = nn.TrainOneStepCell(self.critic_loss_net, self.optimizer['critic'])
-        self.critic_train.set_train()
+        self.loss_net = self.NetWithLossCell(policy, self.vf_coef, self.ent_coef)
+        self.policy_train = TrainOneStepCellWithGradClip(self.loss_net, self.optimizer,
+                                                         clip_type=config.clip_type, clip_value=config.max_grad_norm)
+        self.policy_train.set_train()
 
     def update(self, sample):
         self.iterations += 1
         obs = Tensor(sample['obs'])
         actions = Tensor(sample['actions'])
-        obs_next = Tensor(sample['obs_next'])
         act_mean = Tensor(sample['act_mean'])
-        # act_mean_next = torch.Tensor(sample['act_mean_next']).to(self.device)
-        rewards = Tensor(sample['rewards'])
-        terminals = Tensor(sample['terminals']).view(-1, self.n_agents, 1)
-        agent_mask = Tensor(sample['agent_mask']).view(-1, self.n_agents, 1)
+        returns = Tensor(sample['returns'])
+        agent_mask = Tensor(sample['agent_mask']).astype(ms.float32).view(-1, self.n_agents, 1)
         batch_size = obs.shape[0]
         IDs = ops.broadcast_to(self.expand_dims(self.eye(self.n_agents, self.n_agents, ms.float32), 0),
                                (batch_size, -1, -1))
 
         act_mean_n = ops.broadcast_to(self.expand_dims(act_mean, 1), (-1, self.n_agents, -1))
 
-        # train critic network
-        target_pi_next = self.policy.target_actor(obs_next, IDs)
-        actions_next = target_pi_next.argmax(-1)
-        actions_next_onehot = self.onehot_action(actions_next, self.dim_act).astype(ms.float32)
-        act_mean_next = actions_next_onehot.mean(axis=-2)
-        act_mean_n_next = ops.broadcast_to(self.expand_dims(act_mean_next, 1), (-1, self.n_agents, -1))
+        targets = returns
+        value_pred = self.policy.get_values(obs, act_mean_n, IDs)
+        advantages = targets - value_pred
+        loss = self.policy_train(obs, actions, returns, advantages, act_mean_n, agent_mask, IDs)
 
-        q_eval_next = self.policy.target_critic(obs_next, act_mean_n_next, IDs)
-        shape = q_eval_next.shape
-        v_mf = self.bmm(q_eval_next.view(-1, 1, shape[-1]), target_pi_next.view(-1, shape[-1], 1))
-        v_mf = v_mf.view(tuple(list(shape[0:-1]) + [1]))
-        if self.args.consider_terminal_states:
-            q_target = rewards + (1 - terminals) * self.args.gamma * v_mf
-        else:
-            q_target = rewards + self.args.gamma * v_mf
-        q_target = ops.stop_gradient(q_target)
-        loss_c = self.critic_loss_net(batch_size, obs, actions, act_mean_n, agent_mask, IDs, q_target)
+        lr = self.scheduler(self.iterations)
 
-        # train actor network
-        loss_a = self.actor_train(batch_size, obs_next, agent_mask, IDs)
+        info = {
+            "learning_rate": lr.asnumpy(),
+            "loss": loss.asnumpy()
+        }
 
-        self.policy.soft_update(self.tau)
-        # Logger
-        lr_a = self.scheduler['actor'](self.iterations)
-        lr_c = self.scheduler['critic'](self.iterations)
-        self.writer.add_scalar("learning_rate_actor", lr_a.asnumpy(), self.iterations)
-        self.writer.add_scalar("learning_rate_critic", lr_c.asnumpy(), self.iterations)
-        self.writer.add_scalar("actor_loss", loss_a.asnumpy(), self.iterations)
-        self.writer.add_scalar("critic_loss", loss_c.asnumpy(), self.iterations)
+        return info

@@ -159,6 +159,8 @@ class Pettingzoo_Runner(Runner_Base):
             elif self.marl_names[h] == "MFAC":
                 a, a_mean = mas_group.act(obs_n[h], test_mode, act_mean_last[h], agent_mask[h])
                 act_mean_current[h] = a_mean
+                _, values = mas_group.values(obs_n[h], act_mean_current[h])
+                values_n.append(values)
             elif self.marl_names[h] in ["MAPPO", "IPPO", "VDAC"]:
                 _, a, log_pi = mas_group.act(obs_n[h], test_mode=test_mode, state=state)
                 _, values = mas_group.values(obs_n[h], state=state)
@@ -197,6 +199,8 @@ class Pettingzoo_Runner(Runner_Base):
                                                           state=next_state,
                                                           actions_n=actions_dict['actions_n'][h],
                                                           actions_onehot=actions_dict['act_n_onehot'][h])
+                    elif self.marl_names[h] == "MFAC":
+                        _, values_next = mas_group.values(next_obs_n[h], actions_dict['act_mean'][h])
                     else:
                         _, values_next = mas_group.values(next_obs_n[h], state=next_state)
                     for i_env in range(self.n_envs):
@@ -256,6 +260,8 @@ class Pettingzoo_Runner(Runner_Base):
                                                                        state=next_state,
                                                                        actions_n=actions_dict['actions_n'][h],
                                                                        actions_onehot=actions_dict['act_n_onehot'][h])
+                                elif mas_group.args.agent == "MFAC":
+                                    _, value_next_e = mas_group.values(next_obs_n[h], act_mean_last[h])
                                 else:
                                     _, value_next_e = mas_group.values(next_obs_n[h], state=next_state)
                                 mas_group.memory.finish_path(value_next_e[i_env], i_env)

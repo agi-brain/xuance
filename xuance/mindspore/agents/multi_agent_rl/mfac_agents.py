@@ -19,9 +19,9 @@ class MFAC_Agents(MARLAgents):
         representation = REGISTRY_Representation[config.representation](*input_representation)
         input_policy = get_policy_in_marl(config, representation, config.agent_keys)
         policy = REGISTRY_Policy[config.policy](*input_policy, gain=config.gain)
-        scheduler = lr_decay_model(learning_rate=config.lr_a, decay_rate=0.5,
+        scheduler = lr_decay_model(learning_rate=config.learning_rate, decay_rate=0.5,
                                    decay_steps=get_total_iters(config.agent_name, config))
-        optimizer = Adam(policy.trainable_params, scheduler[0], eps=1e-5)
+        optimizer = Adam(policy.trainable_params(), scheduler, eps=1e-5)
         self.observation_space = envs.observation_space
         self.action_space = envs.action_space
         self.representation_info_shape = policy.representation.output_shapes
@@ -48,31 +48,31 @@ class MFAC_Agents(MARLAgents):
         self._concat = ops.Concat(axis=-1)
         self.on_policy = True
 
-    def act(self, obs_n, episode, test_mode, act_mean=None, agent_mask=None, noise=False):
+    def act(self, obs_n, test_mode, act_mean=None, agent_mask=None):
         batch_size = len(obs_n)
         agents_id = ops.broadcast_to(self.expand_dims(self.eye(self.n_agents, self.n_agents, ms.float32), 0),
                                      (batch_size, -1, -1))
         obs_n = Tensor(obs_n)
 
         _, act_probs = self.policy(obs_n, agents_id)
-        acts = self.policy.actor_net.sample(act_probs)
+        acts = self.policy.actor.sample(act_probs)
 
-        n_alive = ops.broadcast_to(self.expand_dims(Tensor(agent_mask).sum(axis=-1), -1), (-1, self.dim_act))
-        action_n_mask = ops.broadcast_to(self.expand_dims(Tensor(agent_mask), -1), (-1, -1, self.dim_act))
+        n_alive = ops.broadcast_to(self.expand_dims(Tensor(agent_mask).sum(axis=-1), -1), (-1, int(self.dim_act)))
+        action_n_mask = ops.broadcast_to(self.expand_dims(Tensor(agent_mask), -1), (-1, -1, int(self.dim_act)))
         act_neighbor_onehot = self.learner.onehot_action(acts, self.dim_act) * action_n_mask
         act_mean_current = act_neighbor_onehot.sum(axis=1) / n_alive
         act_mean_current = act_mean_current.asnumpy()
 
         return acts.asnumpy(), act_mean_current
 
-    def value(self, obs, state):
-        batch_size = len(state)
-        agents_id = ops.broadcast_to(self.expand_dims(self.eye(self.n_agents, self.n_agents, ms.int32), 0), (batch_size, -1, -1))
-        repre_out = self.policy.representation(obs)
-        critic_input = self._concat([torch.Tensor(repre_out[0]), agents_id])
-        values_n = self.policy.critic(critic_input)
-        values = self.expand_dims(ops.broadcast_to(self.policy.value_tot(values_n, global_state=state).view(-1, 1), (-1, self.n_agents)), -1)
-        return values.asnumpy()
+    def values(self, obs, actions_mean):
+        batch_size = len(obs)
+        actions_mean = ops.broadcast_to(Tensor(actions_mean).unsqueeze(1), (-1, self.n_agents, -1))
+        agents_id = ops.broadcast_to(self.expand_dims(self.eye(self.n_agents, self.n_agents, ms.int32), 0),
+                                     (batch_size, -1, -1)).astype(ms.float32)
+        values_n = self.policy.get_values(Tensor(obs), actions_mean, agents_id)
+        hidden_states = None
+        return hidden_states, values_n.asnumpy()
 
     def train(self, i_step, **kwargs):
         if self.memory.full:
@@ -85,7 +85,6 @@ class MFAC_Agents(MARLAgents):
                     sample_idx = indexes[start:end]
                     sample = self.memory.sample(sample_idx)
                     info_train = self.learner.update(sample)
-            self.learner.lr_decay(i_step)
             self.memory.clear()
             return info_train
         else:
