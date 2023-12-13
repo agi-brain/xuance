@@ -288,7 +288,6 @@ class MASAC_policy(nn.Cell):
                  initialize: Optional[Callable[..., ms.Tensor]] = None,
                  activation: Optional[ModuleType] = None
                  ):
-        assert isinstance(action_space, Box)
         super(MASAC_policy, self).__init__()
         self.action_dim = action_space.shape[0]
         self.n_agents = n_agents
@@ -297,12 +296,12 @@ class MASAC_policy(nn.Cell):
 
         self.actor_net = ActorNet(representation.output_shapes['state'][0], n_agents, self.action_dim,
                                   actor_hidden_size, normalize, initialize, activation)
+        dim_input_critic = (representation.output_shapes['state'][0] + self.action_dim) * self.n_agents
+        self.critic_net = CriticNet(dim_input_critic, n_agents, critic_hidden_size, normalize, initialize, activation)
         self.target_actor_net = ActorNet(representation.output_shapes['state'][0], n_agents, self.action_dim,
                                          actor_hidden_size, normalize, initialize, activation)
-        self.critic_net = CriticNet(False, representation.output_shapes['state'][0], n_agents, self.action_dim,
-                                    critic_hidden_size, normalize, initialize, activation)
-        self.target_critic_net = CriticNet(False, representation.output_shapes['state'][0], n_agents, self.action_dim,
-                                           critic_hidden_size, normalize, initialize, activation)
+        self.target_critic_net = CriticNet(dim_input_critic, n_agents, critic_hidden_size,
+                                           normalize, initialize, activation)
         self.parameters_actor = list(self.representation.trainable_params()) + list(self.actor_net.trainable_params())
         self.parameters_critic = self.critic_net.trainable_params()
         self._concat = ms.ops.Concat(axis=-1)
@@ -313,8 +312,8 @@ class MASAC_policy(nn.Cell):
     def construct(self, observation: ms.tensor, agent_ids: ms.tensor):
         outputs = self.representation(observation)
         actor_in = self._concat([outputs['state'], agent_ids])
-        mu, log_std = self.actor_net(actor_in)
-        return outputs, mu, log_std
+        mu_a = self.actor_net(actor_in)
+        return outputs, mu_a
 
     def critic(self, observation: ms.tensor, actions: ms.tensor, agent_ids: ms.tensor):
         bs = observation.shape[0]
@@ -332,16 +331,16 @@ class MASAC_policy(nn.Cell):
 
     def target_critic(self, observation: ms.tensor, actions: ms.tensor, agent_ids: ms.tensor):
         bs = observation.shape[0]
-        outputs_n = self.broadcast_to(self.representation(observation)[0].view(bs, 1, -1))
+        outputs_n = self.broadcast_to(self.representation(observation)['state'].view(bs, 1, -1))
         actions_n = self.broadcast_to_act(actions.view(bs, 1, -1))
         critic_in = self._concat([outputs_n, actions_n, agent_ids])
         return self.target_critic_net(critic_in)
 
     def target_actor(self, observation: ms.tensor, agent_ids: ms.tensor):
         outputs = self.representation(observation)
-        actor_in = self._concat([outputs[0], agent_ids])
-        mu, std = self.target_actor_net(actor_in)
-        return mu, std
+        actor_in = self._concat([outputs['state'], agent_ids])
+        mu_a = self.target_actor_net(actor_in)
+        return mu_a
 
     def soft_update(self, tau=0.005):
         for ep, tp in zip(self.actor_net.trainable_params(), self.target_actor_net.trainable_params()):

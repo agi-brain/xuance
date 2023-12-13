@@ -15,9 +15,9 @@ class MASAC_Learner(LearnerMAS):
             self.alpha = alpha
 
         def construct(self, bs, o, ids, agt_mask):
-            _, actions_dist_mu, actions_dist_std = self._backbone(o, ids)
-            actions_eval = self._backbone.actor_net.sample(actions_dist_mu, actions_dist_std)
-            log_pi_a = self._backbone.actor_net.log_prob(actions_eval, actions_dist_mu, actions_dist_std)
+            _, actions_dist_mu = self._backbone(o, ids)
+            actions_eval = self._backbone.actor_net.sample(actions_dist_mu)
+            log_pi_a = self._backbone.actor_net.log_prob(actions_eval, actions_dist_mu)
             log_pi_a = ms.ops.expand_dims(log_pi_a, axis=-1)
             loss_a = -(self._backbone.critic_for_train(o, actions_eval, ids) - self.alpha * log_pi_a * agt_mask).sum() / agt_mask.sum()
             return loss_a
@@ -38,8 +38,7 @@ class MASAC_Learner(LearnerMAS):
                  policy: nn.Cell,
                  optimizer: Sequence[nn.Optimizer],
                  scheduler: Sequence[nn.exponential_decay_lr] = None,
-                 summary_writer: Optional[SummaryWriter] = None,
-                 modeldir: str = "./",
+                 model_dir: str = "./",
                  gamma: float = 0.99,
                  sync_frequency: int = 100
                  ):
@@ -48,7 +47,7 @@ class MASAC_Learner(LearnerMAS):
         self.alpha = config.alpha
         self.sync_frequency = sync_frequency
         self.mse_loss = nn.MSELoss()
-        super(MASAC_Learner, self).__init__(config, policy, optimizer, scheduler, summary_writer, modeldir)
+        super(MASAC_Learner, self).__init__(config, policy, optimizer, scheduler, model_dir)
         self.optimizer = {
             'actor': optimizer[0],
             'critic': optimizer[1]
@@ -77,16 +76,12 @@ class MASAC_Learner(LearnerMAS):
         IDs = ops.broadcast_to(self.expand_dims(self.eye(self.n_agents, self.n_agents, ms.float32), 0),
                                (batch_size, -1, -1))
 
-        actions_next_dist_mu, actions_next_dist_std = self.policy.target_actor(obs_next, IDs)
-        actions_next = self.policy.target_actor_net.sample(actions_next_dist_mu, actions_next_dist_std)
-        log_pi_a_next = self.policy.target_actor_net.log_prob(actions_next, actions_next_dist_mu, actions_next_dist_std)
+        actions_next_dist_mu = self.policy.target_actor(obs_next, IDs)
+        actions_next = self.policy.target_actor_net.sample(actions_next_dist_mu)
+        log_pi_a_next = self.policy.target_actor_net.log_prob(actions_next, actions_next_dist_mu)
         q_next = self.policy.target_critic(obs_next, actions_next, IDs)
-        if self.args.consider_terminal_states:
-            log_pi_a_next = ms.ops.expand_dims(log_pi_a_next, axis=-1)
-            q_target = rewards + (1-terminals) * self.args.gamma * (q_next - self.alpha * log_pi_a_next)
-        else:
-            log_pi_a_next = ms.ops.expand_dims(log_pi_a_next, axis=-1)
-            q_target = rewards + self.args.gamma * (q_next - self.alpha * log_pi_a_next)
+        log_pi_a_next = ms.ops.expand_dims(log_pi_a_next, axis=-1)
+        q_target = rewards + (1-terminals) * self.args.gamma * (q_next - self.alpha * log_pi_a_next)
 
         # calculate the loss function
         loss_a = self.actor_train(batch_size, obs, IDs, agent_mask)
@@ -96,7 +91,12 @@ class MASAC_Learner(LearnerMAS):
 
         lr_a = self.scheduler['actor'](self.iterations).asnumpy()
         lr_c = self.scheduler['critic'](self.iterations).asnumpy()
-        self.writer.add_scalar("learning_rate_actor", lr_a, self.iterations)
-        self.writer.add_scalar("learning_rate_critic", lr_c, self.iterations)
-        self.writer.add_scalar("loss_actor", loss_a.asnumpy(), self.iterations)
-        self.writer.add_scalar("loss_critic", loss_c.asnumpy(), self.iterations)
+
+        info = {
+            "learning_rate_actor": lr_a,
+            "loss_actor": loss_a.asnumpy(),
+            "learning_rate_critic": lr_c,
+            "loss_critic": loss_c.asnumpy()
+        }
+
+        return info
