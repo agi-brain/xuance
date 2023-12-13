@@ -546,16 +546,18 @@ class MeanField_OnPolicyBuffer(MARL_OnPolicyBuffer):
 
     def clear(self):
         self.data.update({
-            'obs': np.zeros((self.n_envs, self.n_size,) + self.obs_space).astype(np.float32),
-            'obs_next': np.zeros((self.n_envs, self.n_size,) + self.obs_space).astype(np.float32),
-            'state': np.zeros((self.n_envs, self.n_size,) + self.state_space).astype(np.float32),
-            'state_next': np.zeros((self.n_envs, self.n_size,) + self.state_space).astype(np.float32),
-            'actions': np.zeros((self.n_envs, self.n_size,) + self.act_space).astype(np.float32),
+            'obs': np.zeros((self.n_envs, self.n_size, self.n_agents) + self.obs_space).astype(np.float32),
+            'actions': np.zeros((self.n_envs, self.n_size, self.n_agents) + self.act_space).astype(np.float32),
             'act_mean': np.zeros((self.n_envs, self.n_size,) + self.prob_space).astype(np.float32),
             'rewards': np.zeros((self.n_envs, self.n_size,) + self.rew_space).astype(np.float32),
+            'returns': np.zeros((self.n_envs, self.n_size,) + self.rew_space).astype(np.float32),
+            'values': np.zeros((self.n_envs, self.n_size, self.n_agents, 1)).astype(np.float32),
+            'advantages': np.zeros((self.n_envs, self.n_size,) + self.rew_space).astype(np.float32),
             'terminals': np.zeros((self.n_envs, self.n_size,) + self.done_space).astype(np.bool),
             'agent_mask': np.ones((self.n_envs, self.n_size, self.n_agents)).astype(np.bool),
         })
+        if self.state_space is not None:
+            self.data.update({'state': np.zeros((self.n_envs, self.n_size,) + self.state_space).astype(np.float32)})
         self.ptr = 0  # current pointer
         self.size = 0  # current buffer size
         self.start_ids = np.zeros(self.n_envs)

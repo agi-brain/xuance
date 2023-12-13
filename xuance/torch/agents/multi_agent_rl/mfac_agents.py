@@ -7,6 +7,10 @@ class MFAC_Agents(MARLAgents):
                  envs: DummyVecEnv_Pettingzoo,
                  device: Optional[Union[int, str, torch.device]] = None):
         self.gamma = config.gamma
+        self.n_envs = envs.num_envs
+        self.n_size = config.buffer_size
+        self.n_epoch = config.n_epoch
+        self.n_minibatch = config.n_minibatch
         if config.state_space is not None:
             config.dim_state, state_shape = config.state_space.shape, config.state_space.shape
         else:
@@ -15,13 +19,10 @@ class MFAC_Agents(MARLAgents):
         input_representation = get_repre_in(config)
         representation = REGISTRY_Representation[config.representation](*input_representation)
         input_policy = get_policy_in_marl(config, representation, config.agent_keys)
-        policy = REGISTRY_Policy[config.policy](*input_policy)
-        optimizer = [torch.optim.Adam(policy.parameters_actor, config.lr_a, eps=1e-5),
-                     torch.optim.Adam(policy.parameters_critic, config.lr_c, eps=1e-5)]
-        scheduler = [torch.optim.lr_scheduler.LinearLR(optimizer[0], start_factor=1.0, end_factor=0.5,
-                                                       total_iters=get_total_iters(config.agent_name, config)),
-                     torch.optim.lr_scheduler.LinearLR(optimizer[1], start_factor=1.0, end_factor=0.5,
-                                                       total_iters=get_total_iters(config.agent_name, config))]
+        policy = REGISTRY_Policy[config.policy](*input_policy, gain=config.gain)
+        optimizer = torch.optim.Adam(policy.parameters(), config.learning_rate, eps=1e-5)
+        scheduler = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=1.0, end_factor=0.5,
+                                                      total_iters=get_total_iters(config.agent_name, config))
         self.observation_space = envs.observation_space
         self.action_space = envs.action_space
         self.representation_info_shape = policy.representation.output_shapes
@@ -31,23 +32,25 @@ class MFAC_Agents(MARLAgents):
             config.dim_state, state_shape = config.state_space.shape, config.state_space.shape
         else:
             config.dim_state, state_shape = None, None
-        memory = MeanField_OnPolicyBuffer(state_shape,
+        memory = MeanField_OnPolicyBuffer(config.n_agents,
+                                          state_shape,
                                           config.obs_shape,
                                           config.act_shape,
-                                          config.act_prob_shape,
                                           config.rew_shape,
                                           config.done_shape,
                                           envs.num_envs,
-                                          config.nsteps,
-                                          config.nminibatch,
-                                          config.use_gae, config.use_advnorm, config.gamma, config.lam)
+                                          config.buffer_size,
+                                          config.use_gae, config.use_advnorm, config.gamma, config.gae_lambda,
+                                          prob_space=config.act_prob_shape)
+        self.buffer_size = memory.buffer_size
+        self.batch_size = self.buffer_size // self.n_minibatch
         learner = MFAC_Learner(config, policy, optimizer, scheduler,
                                config.device, config.model_dir, config.gamma)
         super(MFAC_Agents, self).__init__(config, envs, policy, memory, learner, device,
                                           config.log_dir, config.model_dir)
         self.on_policy = True
 
-    def act(self, obs_n, episode, test_mode, act_mean=None, agent_mask=None, noise=False):
+    def act(self, obs_n, test_mode, act_mean=None, agent_mask=None):
         batch_size = len(obs_n)
         agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(batch_size, -1, -1).to(self.device)
         obs_n = torch.Tensor(obs_n).to(self.device)
@@ -63,21 +66,28 @@ class MFAC_Agents(MARLAgents):
 
         return acts.detach().cpu().numpy(), act_mean_current
 
-    def value(self, obs, state):
-        batch_size = len(state)
+    def values(self, obs, actions_mean):
+        batch_size = len(obs)
+        obs = torch.Tensor(obs).to(self.device)
+        actions_mean = torch.Tensor(actions_mean).to(self.device)
+        actions_mean = actions_mean.unsqueeze(1).expand(-1, self.n_agents, -1)
         agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(batch_size, -1, -1).to(self.device)
-        repre_out = self.policy.representation(obs)
-        critic_input = torch.concat([torch.Tensor(repre_out['state']), agents_id], dim=-1)
-        values_n = self.policy.critic(critic_input)
-        values = self.policy.value_tot(values_n, global_state=state).view(-1, 1).repeat(1, self.n_agents).unsqueeze(-1)
-        return values.detach().cpu().numpy()
+        values_n = self.policy.critic(obs, actions_mean, agents_id)
+        hidden_states = None
+        return hidden_states, values_n.detach().cpu().numpy()
 
-    def train(self, i_episode):
+    def train(self, i_step, **kwargs):
         if self.memory.full:
             info_train = {}
-            for _ in range(self.args.nminibatch * self.args.nepoch):
-                sample = self.memory.sample()
-                info_train = self.learner.update(sample)
+            indexes = np.arange(self.buffer_size)
+            for _ in range(self.n_epoch):
+                np.random.shuffle(indexes)
+                for start in range(0, self.buffer_size, self.batch_size):
+                    end = start + self.batch_size
+                    sample_idx = indexes[start:end]
+                    sample = self.memory.sample(sample_idx)
+                    info_train = self.learner.update(sample)
+            self.learner.lr_decay(i_step)
             self.memory.clear()
             return info_train
         else:

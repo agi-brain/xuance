@@ -4,8 +4,6 @@ Paper link:
 http://proceedings.mlr.press/v80/yang18d/yang18d.pdf
 Implementation: Pytorch
 """
-import torch
-
 from xuance.torch.learners import *
 
 
@@ -13,90 +11,72 @@ class MFAC_Learner(LearnerMAS):
     def __init__(self,
                  config: Namespace,
                  policy: nn.Module,
-                 optimizer: Sequence[torch.optim.Optimizer],
+                 optimizer: torch.optim.Optimizer,
                  scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
                  device: Optional[Union[int, str, torch.device]] = None,
                  model_dir: str = "./",
                  gamma: float = 0.99,
                  ):
         self.gamma = gamma
+        self.clip_range = config.clip_range
+        self.use_linear_lr_decay = config.use_linear_lr_decay
+        self.use_grad_norm, self.max_grad_norm = config.use_grad_norm, config.max_grad_norm
+        self.use_value_norm = config.use_value_norm
+        self.vf_coef, self.ent_coef = config.vf_coef, config.ent_coef
         self.tau = config.tau
         self.mse_loss = nn.MSELoss()
         super(MFAC_Learner, self).__init__(config, policy, optimizer, scheduler, device, model_dir)
-        self.optimizer = {
-            'actor': optimizer[0],
-            'critic': optimizer[1]
-        }
-        self.scheduler = {
-            'actor': scheduler[0],
-            'critic': scheduler[1]
-        }
+        self.optimizer = optimizer
+        self.scheduler = scheduler
 
     def update(self, sample):
+        info = {}
         self.iterations += 1
+        state = torch.Tensor(sample['state']).to(self.device)
         obs = torch.Tensor(sample['obs']).to(self.device)
         actions = torch.Tensor(sample['actions']).to(self.device)
-        obs_next = torch.Tensor(sample['obs_next']).to(self.device)
         act_mean = torch.Tensor(sample['act_mean']).to(self.device)
-        # act_mean_next = torch.Tensor(sample['act_mean_next']).to(self.device)
-        rewards = torch.Tensor(sample['rewards']).to(self.device)
-        terminals = torch.Tensor(sample['terminals']).float().reshape(-1, self.n_agents, 1).to(self.device)
+        returns = torch.Tensor(sample['returns']).to(self.device)
         agent_mask = torch.Tensor(sample['agent_mask']).float().reshape(-1, self.n_agents, 1).to(self.device)
         batch_size = obs.shape[0]
         IDs = torch.eye(self.n_agents).unsqueeze(0).expand(batch_size, -1, -1).to(self.device)
 
         act_mean_n = act_mean.unsqueeze(1).repeat([1, self.n_agents, 1])
 
-        # train critic network
-        target_pi_dist_next = self.policy.target_actor(obs_next, IDs)
-        target_pi_next = target_pi_dist_next.logits.softmax(dim=-1)
-        actions_next = target_pi_dist_next.stochastic_sample()
-        actions_next_onehot = self.onehot_action(actions_next, self.dim_act).type(torch.float)
-        act_mean_next = actions_next_onehot.mean(dim=-2, keepdim=False)
-        act_mean_n_next = act_mean_next.unsqueeze(1).repeat([1, self.n_agents, 1])
-
-        q_eval = self.policy.critic(obs, act_mean_n, IDs)
-        q_eval_a = q_eval.gather(-1, actions.long().reshape([batch_size, self.n_agents, 1]))
-
-        q_eval_next = self.policy.target_critic(obs_next, act_mean_n_next, IDs)
-        shape = q_eval_next.shape
-        v_mf = torch.bmm(q_eval_next.reshape(-1, 1, shape[-1]), target_pi_next.reshape(-1, shape[-1], 1))
-        v_mf = v_mf.reshape(*(list(shape[0:-1]) + [1]))
-        q_target = rewards + (1 - terminals) * self.args.gamma * v_mf
-        td_error = (q_eval_a - q_target.detach()) * agent_mask
-        loss_c = (td_error ** 2).sum() / agent_mask.sum()
-        self.optimizer["critic"].zero_grad()
-        loss_c.backward()
-        self.optimizer["critic"].step()
-        if self.scheduler['critic'] is not None:
-            self.scheduler['critic'].step()
-
-        # train actor network
+        # actor loss
         _, pi_dist = self.policy(obs, IDs)
-        actions_ = pi_dist.stochastic_sample()
-        advantages = self.policy.target_critic(obs, act_mean_n, IDs)
-        advantages = advantages.gather(-1, actions_.long().reshape([batch_size, self.n_agents, 1]))
-        log_pi_prob = pi_dist.log_prob(actions_).unsqueeze(-1)
-        advantages = log_pi_prob * advantages.detach()
-        loss_a = -(advantages.sum() / agent_mask.sum())
-        self.optimizer["actor"].zero_grad()
-        loss_a.backward()
-        grad_norm_actor = torch.nn.utils.clip_grad_norm_(self.policy.parameters_actor, self.args.clip_grad)
-        self.optimizer["actor"].step()
-        if self.scheduler['actor'] is not None:
-            self.scheduler['actor'].step()
+        log_pi = pi_dist.log_prob(actions).unsqueeze(-1)
+        entropy = pi_dist.entropy().unsqueeze(-1)
 
-        self.policy.soft_update(self.tau)
+        targets = returns
+        value_pred = self.policy.critic(obs, act_mean_n, IDs)
+        advantages = targets - value_pred
+        td_error = value_pred - targets.detach()
+
+        pg_loss = -((advantages.detach() * log_pi) * agent_mask).sum() / agent_mask.sum()
+        vf_loss = ((td_error ** 2) * agent_mask).sum() / agent_mask.sum()
+        entropy_loss = (entropy * agent_mask).sum() / agent_mask.sum()
+        loss = pg_loss + self.vf_coef * vf_loss - self.ent_coef * entropy_loss
+
+        self.optimizer.zero_grad()
+        loss.backward()
+        if self.use_grad_norm:
+            grad_norm = torch.nn.utils.clip_grad_norm_(self.policy.parameters(), self.max_grad_norm)
+            info["gradient_norm"] = grad_norm.item()
+        self.optimizer.step()
+        if self.scheduler is not None:
+            self.scheduler.step()
+
         # Logger
-        lr_a = self.optimizer['actor'].state_dict()['param_groups'][0]['lr']
-        lr_c = self.optimizer['critic'].state_dict()['param_groups'][0]['lr']
+        lr = self.optimizer.state_dict()['param_groups'][0]['lr']
 
         info = {
-            "learning_rate_actor": lr_a,
-            "learning_rate_critic": lr_c,
-            "actor_loss": loss_a.item(),
-            "critic_loss": loss_c.item(),
-            "actor_gradient_norm": grad_norm_actor.item()
+            "learning_rate": lr,
+            "pg_loss": pg_loss.item(),
+            "vf_loss": vf_loss.item(),
+            "entropy_loss": entropy_loss.item(),
+            "loss": loss.item(),
+            "predicted_value": value_pred.mean().item()
         }
 
         return info

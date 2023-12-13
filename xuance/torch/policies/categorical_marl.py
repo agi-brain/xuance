@@ -293,26 +293,29 @@ class MeanFieldActorCriticPolicy(nn.Module):
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., torch.Tensor]] = None,
                  activation: Optional[ModuleType] = None,
-                 device: Optional[Union[str, int, torch.device]] = None
+                 device: Optional[Union[str, int, torch.device]] = None,
+                 **kwargs
                  ):
         super(MeanFieldActorCriticPolicy, self).__init__()
         self.action_dim = action_space.n
         self.representation = representation
         self.representation_info_shape = self.representation.output_shapes
         self.actor_net = ActorNet(representation.output_shapes['state'][0], self.action_dim, n_agents,
-                                  actor_hidden_size, normalize, initialize, activation, device)
-        self.critic_net = BasicQhead(representation.output_shapes['state'][0] + self.action_dim, self.action_dim,
-                                     n_agents, critic_hidden_size, normalize, initialize, activation, device)
+                                  actor_hidden_size, normalize, initialize, kwargs['gain'], activation, device)
+        self.critic_net = CriticNet(representation.output_shapes['state'][0] + self.action_dim, n_agents,
+                                    critic_hidden_size, normalize, initialize, activation, device)
         self.target_actor_net = copy.deepcopy(self.actor_net)
         self.target_critic_net = copy.deepcopy(self.critic_net)
         self.parameters_actor = list(self.actor_net.parameters()) + list(self.representation.parameters())
         self.parameters_critic = self.critic_net.parameters()
+        self.pi_dist = CategoricalDistribution(self.action_dim)
 
     def forward(self, observation: torch.Tensor, agent_ids: torch.Tensor):
         outputs = self.representation(observation)
         input_actor = torch.concat([outputs['state'], agent_ids], dim=-1)
-        act_dist = self.actor_net(input_actor)
-        return outputs, act_dist
+        act_logits = self.actor_net(input_actor)
+        self.pi_dist.set_param(logits=act_logits)
+        return outputs, self.pi_dist
 
     def target_actor(self, observation: torch.Tensor, agent_ids: torch.Tensor):
         outputs = self.representation(observation)
