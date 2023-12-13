@@ -317,26 +317,7 @@ class MeanFieldActorCriticPolicy(nn.Module):
         self.pi_dist.set_param(logits=act_logits)
         return outputs, self.pi_dist
 
-    def target_actor(self, observation: torch.Tensor, agent_ids: torch.Tensor):
-        outputs = self.representation(observation)
-        input_actor = torch.concat([outputs['state'], agent_ids], dim=-1)
-        act_dist = self.target_actor_net(input_actor)
-        return act_dist
-
     def critic(self, observation: torch.Tensor, actions_mean: torch.Tensor, agent_ids: torch.Tensor):
         outputs = self.representation(observation)
         critic_in = torch.concat([outputs['state'], actions_mean, agent_ids], dim=-1)
         return self.critic_net(critic_in)
-
-    def target_critic(self, observation: torch.Tensor, actions_mean: torch.Tensor, agent_ids: torch.Tensor):
-        outputs = self.representation(observation)
-        critic_in = torch.concat([outputs['state'], actions_mean, agent_ids], dim=-1)
-        return self.target_critic_net(critic_in)
-
-    def soft_update(self, tau=0.005):
-        for ep, tp in zip(self.actor_net.parameters(), self.target_actor_net.parameters()):
-            tp.data.mul_(1 - tau)
-            tp.data.add_(tau * ep.data)
-        for ep, tp in zip(self.critic_net.parameters(), self.target_critic_net.parameters()):
-            tp.data.mul_(1 - tau)
-            tp.data.add_(tau * ep.data)
