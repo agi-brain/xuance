@@ -246,8 +246,8 @@ class Basic_ISAC_policy(nn.Cell):
     def construct(self, observation: ms.tensor, agent_ids: ms.tensor):
         outputs = self.representation(observation)
         actor_in = self._concat([outputs['state'], agent_ids])
-        mu, log_std = self.actor_net(actor_in)
-        return outputs, mu, log_std
+        mu_a = self.actor_net(actor_in)
+        return outputs, mu_a
 
     def critic(self, observation: ms.tensor, actions: ms.tensor, agent_ids: ms.tensor):
         outputs = self.representation(observation)
@@ -267,8 +267,8 @@ class Basic_ISAC_policy(nn.Cell):
     def target_actor(self, observation: ms.tensor, agent_ids: ms.tensor):
         outputs = self.representation(observation)
         actor_in = self._concat([outputs['state'], agent_ids])
-        mu, std = self.target_actor_net(actor_in)
-        return mu, std
+        mu_a = self.target_actor_net(actor_in)
+        return mu_a
 
     def soft_update(self, tau=0.005):
         for ep, tp in zip(self.actor_net.trainable_params(), self.target_actor_net.trainable_params()):

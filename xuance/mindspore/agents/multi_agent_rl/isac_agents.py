@@ -43,8 +43,8 @@ class ISAC_Agents(MARLAgents):
         batch_size = len(obs_n)
         agents_id = ops.broadcast_to(self.expand_dims(self.eye(self.n_agents, self.n_agents, ms.float32), 0),
                                      (batch_size, -1, -1))
-        _, act_mu, act_std = self.policy(Tensor(obs_n), agents_id)
-        acts = self.policy.actor_net.sample(act_mu, act_std)
+        _, act_probs = self.policy(Tensor(obs_n), agents_id)
+        acts = self.policy.actor_net.sample(act_probs)
         actions = acts.asnumpy()
         return None, actions
 

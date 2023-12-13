@@ -15,9 +15,9 @@ class ISAC_Learner(LearnerMAS):
             self.alpha = alpha
 
         def construct(self, bs, o, ids, agt_mask):
-            _, actions_dist_mu, actions_dist_std = self._backbone(o, ids)
-            actions_eval = self._backbone.actor_net.sample(actions_dist_mu, actions_dist_std)
-            log_pi_a = self._backbone.actor_net.log_prob(actions_eval, actions_dist_mu, actions_dist_std)
+            _, actions_dist_mu = self._backbone(o, ids)
+            actions_eval = self._backbone.actor_net.sample(actions_dist_mu)
+            log_pi_a = self._backbone.actor_net.log_prob(actions_eval, actions_dist_mu)
             log_pi_a = ms.ops.expand_dims(log_pi_a, axis=-1)
             loss_a = -(self._backbone.critic_for_train(o, actions_eval, ids) - self.alpha * log_pi_a * agt_mask).sum() / agt_mask.sum()
             return loss_a
@@ -76,9 +76,9 @@ class ISAC_Learner(LearnerMAS):
         IDs = ops.broadcast_to(self.expand_dims(self.eye(self.n_agents, self.n_agents, ms.float32), 0),
                                (batch_size, -1, -1))
 
-        actions_next_dist_mu, actions_next_dist_std = self.policy.target_actor(obs_next, IDs)
-        actions_next = self.policy.target_actor_net.sample(actions_next_dist_mu, actions_next_dist_std)
-        log_pi_a_next = self.policy.target_actor_net.log_prob(actions_next, actions_next_dist_mu, actions_next_dist_std)
+        actions_next_dist_mu = self.policy.target_actor(obs_next, IDs)
+        actions_next = self.policy.target_actor_net.sample(actions_next_dist_mu)
+        log_pi_a_next = self.policy.target_actor_net.log_prob(actions_next, actions_next_dist_mu)
         q_next = self.policy.target_critic(obs_next, actions_next, IDs)
         log_pi_a_next = ms.ops.expand_dims(log_pi_a_next, axis=-1)
         q_target = rewards + (1-terminals) * self.args.gamma * (q_next - self.alpha * log_pi_a_next)
