@@ -63,36 +63,39 @@ class BasicQnetwork(nn.Cell):
             tp.assign_value(ep)
 
 
-class Sample(nn.Cell):
-    def __init__(self):
-        super(Sample, self).__init__()
-        self._dist = Normal(dtype=ms.float32)
-
-    def construct(self, mean: ms.tensor, std: ms.tensor):
-        return self._dist.sample(mean=mean, sd=std)
-
-
-class LogProb(nn.Cell):
-    def __init__(self):
-        super(LogProb, self).__init__()
-        self._dist = Normal(dtype=ms.float32)
-        self._sum = ms.ops.ReduceSum(keep_dims=False)
-
-    def construct(self, value: ms.tensor, mean: ms.tensor, std: ms.tensor):
-        return self._sum(self._dist.log_prob(value, mean, std), -1)
-
-
-class Entropy(nn.Cell):
-    def __init__(self):
-        super(Entropy, self).__init__()
-        self._dist = Normal(dtype=ms.float32)
-        self._sum = ms.ops.ReduceSum(keep_dims=False)
-
-    def construct(self, probs: ms.tensor, std: ms.tensor):
-        return self._sum(self._dist.entropy(probs, std), -1)
-
-
 class ActorNet(nn.Cell):
+    class Sample(nn.Cell):
+        def __init__(self, log_std):
+            super(ActorNet.Sample, self).__init__()
+            self._dist = Normal(dtype=ms.float32)
+            self.logstd = log_std
+            self._exp = ms.ops.Exp()
+
+        def construct(self, mean: ms.tensor):
+            return self._dist.sample(mean=mean, sd=self._exp(self.logstd))
+
+    class LogProb(nn.Cell):
+        def __init__(self, log_std):
+            super(ActorNet.LogProb, self).__init__()
+            self._dist = Normal(dtype=ms.float32)
+            self.logstd = log_std
+            self._exp = ms.ops.Exp()
+            self._sum = ms.ops.ReduceSum(keep_dims=False)
+
+        def construct(self, value: ms.tensor, probs: ms.tensor):
+            return self._sum(self._dist.log_prob(value, probs, self._exp(self.logstd)), -1)
+
+    class Entropy(nn.Cell):
+        def __init__(self, log_std):
+            super(ActorNet.Entropy, self).__init__()
+            self._dist = Normal(dtype=ms.float32)
+            self.logstd = log_std
+            self._exp = ms.ops.Exp()
+            self._sum = ms.ops.ReduceSum(keep_dims=False)
+
+        def construct(self, probs: ms.tensor):
+            return self._sum(self._dist.entropy(probs, self._exp(self.logstd)), -1)
+
     def __init__(self,
                  state_dim: int,
                  n_agents: int,
@@ -107,26 +110,17 @@ class ActorNet(nn.Cell):
         for h in hidden_sizes:
             mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initialize)
             layers.extend(mlp)
-        # layers.extend(mlp_block(input_shape[0], action_dim, None, nn.ReLU, initialize, device)[0])
-        # self.mu = nn.Sequential(*layers)
-        # self.logstd = nn.Sequential(*layers)
-        self.output = nn.SequentialCell(*layers)
-        self.out_mu = nn.Dense(hidden_sizes[0], action_dim)
-        self.out_std = nn.Dense(hidden_sizes[0], action_dim)
-        self._sigmoid = nn.Sigmoid()
-        self._exp = ms.ops.Exp()
+        layers.extend(mlp_block(input_shape[0], action_dim, None, None, initialize)[0])
+        self.mu = nn.SequentialCell(*layers)
+        self._ones = ms.ops.Ones()
+        self.logstd = ms.Parameter(-self._ones((action_dim,), ms.float32))
         # define the distribution methods
-        self.sample = Sample()
-        self.log_prob = LogProb()
-        self.entropy = Entropy()
+        self.sample = self.Sample(self.logstd)
+        self.log_prob = self.LogProb(self.logstd)
+        self.entropy = self.Entropy(self.logstd)
 
     def construct(self, x: ms.tensor):
-        output = self.output(x)
-        mu = self._sigmoid(self.out_mu(output))
-        # std = torch.tanh(self.out_std(output))
-        std = self.out_std(output).clip(-20, 1)
-        std = self._exp(std)
-        return mu, std
+        return self.mu(x)
 
 
 class CriticNet(nn.Cell):
@@ -149,6 +143,74 @@ class CriticNet(nn.Cell):
 
     def construct(self, x: ms.tensor):
         return self.model(x)
+
+
+class MAAC_Policy(nn.Cell):
+    """
+    MAAC_Policy: Multi-Agent Actor-Critic Policy with Gaussian policies
+    """
+
+    def __init__(self,
+                 action_space: Discrete,
+                 n_agents: int,
+                 representation: nn.Cell,
+                 mixer: Optional[VDN_mixer] = None,
+                 actor_hidden_size: Sequence[int] = None,
+                 critic_hidden_size: Sequence[int] = None,
+                 normalize: Optional[ModuleType] = None,
+                 initialize: Optional[Callable[..., torch.Tensor]] = None,
+                 activation: Optional[ModuleType] = None,
+                 **kwargs):
+        super(MAAC_Policy, self).__init__()
+        self.action_dim = action_space.shape[0]
+        self.n_agents = n_agents
+        self.representation = representation[0]
+        self.representation_critic = representation[1]
+        self.representation_info_shape = self.representation.output_shapes
+        self.lstm = True if kwargs["rnn"] == "LSTM" else False
+        self.use_rnn = True if kwargs["use_recurrent"] else False
+        self.actor = ActorNet(self.representation.output_shapes['state'][0], n_agents, self.action_dim,
+                              actor_hidden_size, normalize, initialize, activation)
+        dim_input_critic = self.representation_critic.output_shapes['state'][0]
+        self.critic = CriticNet(dim_input_critic, n_agents, critic_hidden_size,
+                                normalize, initialize, activation)
+        self.mixer = mixer
+        self._concat = ms.ops.Concat(axis=-1)
+
+    def construct(self, observation: ms.tensor, agent_ids: ms.tensor,
+                  *rnn_hidden: ms.tensor, **kwargs):
+        if self.use_rnn:
+            outputs = self.representation(observation, *rnn_hidden)
+            rnn_hidden = (outputs['rnn_hidden'], outputs['rnn_cell'])
+        else:
+            outputs = self.representation(observation)
+            rnn_hidden = None
+        actor_input = self._concat([outputs['state'], agent_ids])
+        mu_a = self.actor(actor_input)
+        return rnn_hidden, mu_a
+
+    def get_values(self, critic_in: ms.tensor, agent_ids: ms.tensor, *rnn_hidden: ms.tensor, **kwargs):
+        shape_obs = critic_in.shape
+        # get representation features
+        if self.use_rnn:
+            batch_size, n_agent, episode_length, dim_obs = tuple(shape_obs)
+            outputs = self.representation_critic(critic_in.reshape(-1, episode_length, dim_obs), *rnn_hidden)
+            outputs['state'] = outputs['state'].view(batch_size, n_agent, episode_length, -1)
+            rnn_hidden = (outputs['rnn_hidden'], outputs['rnn_cell'])
+        else:
+            batch_size, n_agent, dim_obs = tuple(shape_obs)
+            outputs = self.representation_critic(critic_in.reshape(-1, dim_obs))
+            outputs['state'] = outputs['state'].view(batch_size, n_agent, -1)
+            rnn_hidden = None
+        # get critic values
+        critic_in = self._concat([outputs['state'], agent_ids])
+        v = self.critic(critic_in)
+        return rnn_hidden, v
+
+    def value_tot(self, values_n: ms.tensor, global_state=None):
+        if global_state is not None:
+            global_state = torch.as_tensor(global_state).to(self.device)
+        return values_n if self.mixer is None else self.mixer(values_n, global_state)
 
 
 class Basic_ISAC_policy(nn.Cell):

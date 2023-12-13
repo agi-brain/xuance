@@ -5,92 +5,113 @@ class MAPPO_Agents(MARLAgents):
     def __init__(self,
                  config: Namespace,
                  envs: DummyVecEnv_Pettingzoo):
-        self.comm = MPI.COMM_WORLD
-
         self.gamma = config.gamma
-        self.use_obsnorm = config.use_obsnorm
-        self.use_rewnorm = config.use_rewnorm
-        self.obsnorm_range = config.obsnorm_range
-        self.rewnorm_range = config.rewnorm_range
-
+        self.n_envs = envs.num_envs
+        self.n_epoch = config.n_epoch
+        self.n_minibatch = config.n_minibatch
         if config.state_space is not None:
-            config.dim_state, state_shape = config.state_space.shape, config.state_space.shape
+            config.dim_state, state_shape = config.state_space.shape[0], config.state_space.shape
         else:
             config.dim_state, state_shape = None, None
 
         input_representation = get_repre_in(config)
-        representation = REGISTRY_Representation[config.representation](*input_representation)
-
-        input_policy = get_policy_in_marl(config, representation, config.agent_keys)
-        policy = REGISTRY_Policy[config.policy](*input_policy)
+        self.use_recurrent = config.use_recurrent
+        self.use_global_state = config.use_global_state
+        # create representation for actor
+        kwargs_rnn = {"N_recurrent_layers": config.N_recurrent_layers,
+                      "dropout": config.dropout,
+                      "rnn": config.rnn} if self.use_recurrent else {}
+        representation = REGISTRY_Representation[config.representation](*input_representation, **kwargs_rnn)
+        # create representation for critic
+        if self.use_global_state:
+            input_representation[0] = (config.dim_state + config.dim_obs * config.n_agents,)
+        else:
+            input_representation[0] = (config.dim_obs * config.n_agents,)
+        representation_critic = REGISTRY_Representation[config.representation](*input_representation, **kwargs_rnn)
+        # create policy
+        input_policy = get_policy_in_marl(config, (representation, representation_critic))
+        policy = REGISTRY_Policy[config.policy](*input_policy,
+                                                use_recurrent=config.use_recurrent,
+                                                rnn=config.rnn,
+                                                gain=config.gain)
         scheduler = lr_decay_model(learning_rate=config.learning_rate, decay_rate=0.5,
                                    decay_steps=get_total_iters(config.agent_name, config))
         optimizer = Adam(policy.trainable_params(), config.learning_rate, eps=1e-5)
         self.observation_space = envs.observation_space
         self.action_space = envs.action_space
-        self.representation_info_shape = policy.representation.output_shapes
         self.auxiliary_info_shape = {}
 
-        writer = SummaryWriter(config.logdir)
-        if config.state_space is not None:
-            config.dim_state, state_shape = config.state_space.shape, config.state_space.shape
-        else:
-            config.dim_state, state_shape = None, None
-        memory = MARL_OnPolicyBuffer(state_shape, config.obs_shape, config.act_shape, config.rew_shape,
-                                     config.done_shape, envs.num_envs, config.nsteps, config.nminibatch,
-                                     config.use_gae, config.use_advnorm, config.gamma, config.lam)
-        learner = MAPPO_Clip_Learner(config, policy, optimizer, scheduler, writer, config.modeldir, config.gamma)
+        buffer = MARL_OnPolicyBuffer_RNN if self.use_recurrent else MARL_OnPolicyBuffer
+        input_buffer = (config.n_agents, config.state_space.shape, config.obs_shape, config.act_shape, config.rew_shape,
+                        config.done_shape, envs.num_envs, config.n_size,
+                        config.use_gae, config.use_advnorm, config.gamma, config.gae_lambda)
+        memory = buffer(*input_buffer, max_episode_length=envs.max_episode_length, dim_act=config.dim_act)
+        self.buffer_size = memory.buffer_size
+        self.batch_size = self.buffer_size // self.n_minibatch
 
-        self.obs_rms = RunningMeanStd(shape=space2shape(self.observation_space[config.agent_keys[0]]),
-                                      comm=self.comm, use_mpi=False)
-        self.ret_rms = RunningMeanStd(shape=(), comm=self.comm, use_mpi=False)
-        super(MAPPO_Agents, self).__init__(config, envs, policy, memory, learner, writer,
-                                                config.logdir, config.modeldir)
+        learner = MAPPO_Learner(config, policy, optimizer, scheduler, config.model_dir, config.gamma)
+        super(MAPPO_Agents, self).__init__(config, envs, policy, memory, learner, config.log_dir, config.model_dir)
+        self.on_policy = True
+        self._concat = ms.ops.Concat(axis=-1)
 
-    def _process_observation(self, observations):
-        if self.use_obsnorm:
-            if isinstance(self.observation_space, Dict):
-                for key in self.observation_space.spaces.keys():
-                    observations[key] = np.clip(
-                        (observations[key] - self.obs_rms.mean[key]) / (self.obs_rms.std[key] + EPS),
-                        -self.obsnorm_range, self.obsnorm_range)
-            else:
-                observations = np.clip((observations - self.obs_rms.mean) / (self.obs_rms.std + EPS),
-                                       -self.obsnorm_range, self.obsnorm_range)
-            return observations
-        return observations
-
-    def _process_reward(self, rewards):
-        if self.use_rewnorm:
-            std = np.clip(self.ret_rms.std, 0.1, 100)
-            return np.clip(rewards / std, -self.rewnorm_range, self.rewnorm_range)
-        return rewards
-
-    def act(self, obs_n, episode, test_mode, state=None, noise=False):
+    def act(self, obs_n, *rnn_hidden, avail_actions=None, state=None, test_mode=False):
         batch_size = len(obs_n)
         agents_id = ops.broadcast_to(self.expand_dims(self.eye(self.n_agents, self.n_agents, ms.float32), 0),
                                      (batch_size, -1, -1))
-        obs_n = Tensor(obs_n)
-        _, act_probs = self.policy(obs_n, agents_id)
-        acts = self.policy.actor.sample(act_probs)
-        log_pi_a = self.policy.actor.log_prob(value=acts, probs=act_probs)
-        state_expand = ops.broadcast_to(self.expand_dims(Tensor(state), -2), (-1, self.n_agents, -1))
-        vs = self.policy.values(state_expand, agents_id)
-        return acts.asnumpy(), log_pi_a.asnumpy(), vs.asnumpy()
+        obs_in = Tensor(obs_n).view(batch_size, self.n_agents, -1)
+        if self.use_recurrent:
+            batch_agents = batch_size * self.n_agents
+            hidden_state, act_probs = self.policy(obs_in.view(batch_agents, 1, -1),
+                                                  agents_id.view(batch_agents, 1, -1),
+                                                  *rnn_hidden,
+                                                  avail_actions=avail_actions.reshape(batch_agents, 1, -1))
+            actions = self.policy.actor.sample(act_probs)
+            log_pi_a = self.policy.actor.log_prob(value=actions, probs=act_probs)
+            actions = actions.reshape(batch_size, self.n_agents)
+        else:
+            hidden_state, act_probs = self.policy(obs_in, agents_id, avail_actions=avail_actions)
+            actions = self.policy.actor.sample(act_probs)
+            log_pi_a = self.policy.actor.log_prob(value=actions, probs=act_probs)
+        return hidden_state, actions.asnumpy(), log_pi_a.asnumpy()
 
-    def value(self, obs, state):
-        batch_size = len(state)
+    def values(self, obs_n, *rnn_hidden, state=None):
+        batch_size = len(obs_n)
         agents_id = ops.broadcast_to(self.expand_dims(self.eye(self.n_agents, self.n_agents, ms.float32), 0),
                                      (batch_size, -1, -1))
-        repre_out = self.policy.representation(obs)
-        critic_input = ops.concat([torch.Tensor(repre_out[0]), agents_id], axis=-1)
-        values_n = self.policy.critic(critic_input)
-        values = self.expand_dims(ops.broadcast_to(self.policy.value_tot(values_n, global_state=state).view(-1, 1), (-1, self.n_agents)), -1)
-        return values.asnumpy()
+        # build critic input
+        if self.use_global_state:
+            state = Tensor(state).unsqueeze(1)
+            obs_n = Tensor(obs_n).view(batch_size, 1, -1)
+            critic_in = self._concat([ops.broadcast_to(obs_n, (-1, self.n_agents, -1)),
+                                      ops.broadcast_to(state, (-1, self.n_agents, -1))])
+        else:
+            critic_in = Tensor(obs_n).view(batch_size, 1, -1)
+            critic_in = ops.broadcast_to(critic_in, (-1, self.n_agents, -1))
+        # get critic values
+        if self.use_recurrent:
+            hidden_state, values_n = self.policy.get_values(critic_in.unsqueeze(2),  # add a sequence length axis.
+                                                            agents_id.unsqueeze(2),
+                                                            *rnn_hidden)
+            values_n = values_n.squeeze(2)
+        else:
+            hidden_state, values_n = self.policy.get_values(critic_in, agents_id)
 
-    def train(self, i_episode):
+        return hidden_state, values_n.asnumpy()
+
+    def train(self, i_step, **kwargs):
+        info_train = {}
         if self.memory.full:
-            for _ in range(self.args.nminibatch * self.args.nepoch):
-                sample = self.memory.sample()
-                self.learner.update(sample)
+            indexes = np.arange(self.buffer_size)
+            for _ in range(self.n_epoch):
+                np.random.shuffle(indexes)
+                for start in range(0, self.buffer_size, self.batch_size):
+                    end = start + self.batch_size
+                    sample_idx = indexes[start:end]
+                    sample = self.memory.sample(sample_idx)
+                    if self.use_recurrent:
+                        info_train = self.learner.update_recurrent(sample)
+                    else:
+                        info_train = self.learner.update(sample)
+            self.learner.lr_decay(i_step)
             self.memory.clear()
+        return info_train

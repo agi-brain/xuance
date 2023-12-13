@@ -22,6 +22,7 @@ from .categorical_marl import MAAC_Policy as Categorical_MAAC_Policy
 from .categorical_marl import MAAC_Policy_Share as Categorical_MAAC_Policy_Share
 from .gaussian_marl import Basic_ISAC_policy as Gaussian_ISAC
 from .gaussian_marl import MASAC_policy as Gaussian_MASAC
+from .gaussian_marl import MAAC_Policy as Gaussain_MAAC
 
 Mixer = {
     "VDN": VDN_mixer,
@@ -64,6 +65,7 @@ REGISTRY = {
     "MADDPG_Policy": MADDPG_policy,
     "MF_Q_network": MFQnetwork,
     "Categorical_MFAC_Policy": MeanFieldActorCriticPolicy,
+    "Gaussian_MAAC_Policy": Gaussain_MAAC,
     "Gaussian_ISAC_Policy": Gaussian_ISAC,
     "Gaussian_MASAC_Policy": Gaussian_MASAC,
     "MATD3_Policy": MATD3_policy
@@ -127,6 +129,8 @@ Policy_Inputs = {
                       "normalize", "initialize", "activation"],
     "MF_Q_network": ["action_space", "n_agents", "representation", "hidden_sizes",
                      "normalize", "initialize", "activation"],
+    "Gaussian_MAAC_Policy": ["action_space", "n_agents", "representation", "mixer", "actor_hidden_size",
+                             "critic_hidden_size", "normalize", "initialize", "activation"],
     "Gaussian_ISAC_Policy": ["action_space", "n_agents", "representation", "actor_hidden_size",
                              "critic_hidden_size", "normalize", "initialize", "activation"],
     "Gaussian_MASAC_Policy": ["action_space", "n_agents", "representation", "actor_hidden_size", "critic_hidden_size",
