@@ -48,9 +48,8 @@ class MATD3_Learner(LearnerMAS):
                  config: Namespace,
                  policy: nn.Cell,
                  optimizer: Sequence[nn.Optimizer],
-                 scheduler: Sequence[nn.exponential_decay_lr] = None,
-                 summary_writer: Optional[SummaryWriter] = None,
-                 modeldir: str = "./",
+                 scheduler: Sequence[nn .exponential_decay_lr] = None,
+                 model_dir: str = "./",
                  gamma: float = 0.99,
                  sync_frequency: int = 100,
                  delay: int = 3
@@ -60,7 +59,7 @@ class MATD3_Learner(LearnerMAS):
         self.delay = delay
         self.sync_frequency = sync_frequency
         self.mse_loss = nn.MSELoss()
-        super(MATD3_Learner, self).__init__(config, policy, optimizer, scheduler, summary_writer, modeldir)
+        super(MATD3_Learner, self).__init__(config, policy, optimizer, scheduler, model_dir)
         self.optimizer = {
             'actor': optimizer[0],
             'critic_A': optimizer[1],
@@ -98,10 +97,8 @@ class MATD3_Learner(LearnerMAS):
         actions_next = self.policy.target_actor(obs_next, IDs)
         actions_next_n = ms.ops.broadcast_to(actions_next.view(batch_size, 1, -1), (-1, self.n_agents, -1))
         _, target_q = self.policy.Qtarget(obs_next, actions_next_n, IDs)
-        if self.args.consider_terminal_states:
-            q_target = rewards + (1 - terminals) * self.args.gamma * target_q
-        else:
-            q_target = rewards + self.args.gamma * target_q
+        q_target = rewards + (1 - terminals) * self.args.gamma * target_q
+
         actions_n = ms.ops.broadcast_to(actions.view(batch_size, 1, -1), (-1, self.n_agents, -1))
         loss_c_A = self.critic_train_A(obs, actions_n, IDs, agent_mask, q_target)
         loss_c_B = self.critic_train_B(obs, actions_n, IDs, agent_mask, q_target)
@@ -114,10 +111,16 @@ class MATD3_Learner(LearnerMAS):
         lr_a = self.scheduler['actor'](self.iterations).asnumpy()
         lr_c_A = self.scheduler['critic_A'](self.iterations).asnumpy()
         lr_c_B = self.scheduler['critic_B'](self.iterations).asnumpy()
-        self.writer.add_scalar("learning_rate_actor", lr_a, self.iterations)
-        self.writer.add_scalar("learning_rate_critic_A", lr_c_A, self.iterations)
-        self.writer.add_scalar("learning_rate_critic_B", lr_c_B, self.iterations)
+
+        info = {
+            "learning_rate_actor": lr_a,
+            "learning_rate_critic_A": lr_c_A,
+            "learning_rate_critic_B": lr_c_B,
+            "loss_critic_A": loss_c_A.asnumpy(),
+            "loss_critic_B": loss_c_B.asnumpy()
+        }
+
         if self.iterations % self.delay == 0:
-            self.writer.add_scalar("loss_actor", p_loss.asnumpy(), self.iterations)
-        self.writer.add_scalar("loss_critic_A", loss_c_A.asnumpy(), self.iterations)
-        self.writer.add_scalar("loss_critic_B", loss_c_B.asnumpy(), self.iterations)
+            info["loss_actor"] = p_loss.asnumpy()
+
+        return info

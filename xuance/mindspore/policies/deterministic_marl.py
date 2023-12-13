@@ -492,10 +492,9 @@ class MATD3_policy(Basic_DDPG_policy):
                  initialize: Optional[Callable[..., torch.Tensor]] = None,
                  activation: Optional[ModuleType] = None
                  ):
-        assert isinstance(action_space, Box)
         super(MATD3_policy, self).__init__(action_space, n_agents, representation,
-                                            actor_hidden_size, critic_hidden_size,
-                                            normalize, initialize, activation)
+                                           actor_hidden_size, critic_hidden_size,
+                                           normalize, initialize, activation)
         self.critic_net_A = CriticNet(False, representation.output_shapes['state'][0], n_agents, self.action_dim,
                                     critic_hidden_size, normalize, initialize, activation)
         self.critic_net_B = CriticNet(False, representation.output_shapes['state'][0], n_agents, self.action_dim,
@@ -518,10 +517,7 @@ class MATD3_policy(Basic_DDPG_policy):
 
     def Qtarget(self, observation: ms.Tensor, actions: ms.Tensor, agent_ids: ms.Tensor):
         bs = observation.shape[0]
-        outputs_n = self.broadcast_to(self.representation(observation)[0].view(bs, 1, -1))
-        # noise = torch.randn_like(actions).clamp(-1, 1) * 0.1
-        # noise = noise.view(bs, 1, -1).expand(-1, self.n_agents, -1)
-        # actions_n = (actions_n + noise).clamp(-1, 1)
+        outputs_n = self.broadcast_to(self.representation(observation)['state'].view(bs, 1, -1))
         critic_in = self._concat([outputs_n, actions, agent_ids])
         qa = self.target_critic_net_A(critic_in)
         qb = self.target_critic_net_B(critic_in)
