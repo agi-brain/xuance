@@ -207,10 +207,13 @@ class MAAC_Policy_Share(MAAC_Policy):
         self.critic = CriticNet(self.representation.output_shapes['state'][0], n_agents, critic_hidden_size,
                                 normalize, initialize, activation)
         self.mixer = mixer
+        self._concat = ms.ops.Concat(axis=-1)
+        self.expand_dims = ms.ops.ExpandDims()
+        self._softmax = nn.Softmax(axis=-1)
 
     def construct(self, observation: ms.Tensor, agent_ids: ms.Tensor,
                   *rnn_hidden: torch.Tensor, avail_actions=None, state=None):
-        batch_size = len(avail_actions)
+        batch_size = len(observation)
         if self.use_rnn:
             sequence_length = observation.shape[1]
             outputs = self.representation(observation, *rnn_hidden)
@@ -242,6 +245,7 @@ class MAAC_Policy_Share(MAAC_Policy):
         else:
             values_tot = values_independent if self.mixer is None else self.value_tot(values_independent,
                                                                                       global_state=state)
+            values_tot = ms.ops.broadcast_to(values_tot.unsqueeze(1), (-1, self.n_agents, -1))
 
         return rnn_hidden, act_probs, values_tot
 

@@ -62,21 +62,22 @@ class VDAC_Agents(MARLAgents):
         agents_id = ops.broadcast_to(self.expand_dims(self.eye(self.n_agents, self.n_agents, ms.float32), 0),
                                      (batch_size, -1, -1))
         obs_in = Tensor(obs_n).view(batch_size, self.n_agents, -1)
-        state = Tensor(state)
+        if state is not None:
+            state = Tensor(state)
         if self.use_recurrent:
             batch_agents = batch_size * self.n_agents
             hidden_state, act_probs, values_tot = self.policy(obs_in.view(batch_agents, 1, -1),
-                                                          agents_id.unsqueeze(2),
-                                                          *rnn_hidden,
-                                                          avail_actions=avail_actions[:, :, np.newaxis],
-                                                          state=state.unsqueeze(2))
+                                                              agents_id.unsqueeze(2),
+                                                              *rnn_hidden,
+                                                              avail_actions=avail_actions[:, :, np.newaxis],
+                                                              state=state.unsqueeze(2))
             actions = self.policy.actor.sample(act_probs)
             actions = actions.reshape(batch_size, self.n_agents)
             values_tot = values_tot.reshape([batch_size, self.n_agents, 1])
         else:
             hidden_state, act_probs, values_tot = self.policy(obs_in, agents_id,
-                                                          avail_actions=avail_actions,
-                                                          state=state)
+                                                              avail_actions=avail_actions,
+                                                              state=state)
             actions = self.policy.actor.sample(act_probs)
         return hidden_state, actions.asnumpy(), values_tot.asnumpy()
 
