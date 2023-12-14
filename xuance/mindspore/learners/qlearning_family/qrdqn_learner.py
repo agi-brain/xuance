@@ -15,8 +15,8 @@ class QRDQN_Learner(Learner):
             self._sum = ReduceSum()
 
         def construct(self, x, a, target_quantile):
-            _,_,evalZ,_ = self._backbone(x)
-            current_quantile = self._sum(evalZ *  self._unsqueeze(self._onehot(a, evalZ.shape[1], self.on_value, self.off_value), -1), 1)
+            _,_,evalZ = self._backbone(x)
+            current_quantile = self._sum(evalZ * self._unsqueeze(self._onehot(a, evalZ.shape[1], self.on_value, self.off_value), -1), 1)
             loss = self._loss_fn(target_quantile, current_quantile)
             return loss
 
@@ -24,13 +24,12 @@ class QRDQN_Learner(Learner):
                  policy: nn.Cell,
                  optimizer: nn.Optimizer,
                  scheduler: Optional[nn.exponential_decay_lr] = None,
-                 summary_writer: Optional[SummaryWriter] = None,
-                 modeldir: str = "./",
+                 model_dir: str = "./",
                  gamma: float = 0.99,
                  sync_frequency: int = 100):
         self.gamma = gamma
         self.sync_frequency = sync_frequency
-        super(QRDQN_Learner, self).__init__(policy, optimizer, scheduler, summary_writer, modeldir)
+        super(QRDQN_Learner, self).__init__(policy, optimizer, scheduler, model_dir)
         # define loss function
         loss_fn = nn.MSELoss()
         # connect the feed forward network with loss function.
@@ -54,8 +53,8 @@ class QRDQN_Learner(Learner):
         next_batch = Tensor(next_batch)
         ter_batch = Tensor(terminal_batch)
 
-        _,targetA,evalZ,targetZ = self.policy(next_batch)
-        target_quantile = self._sum(targetZ * self._unsqueeze(self._onehot(targetA, evalZ.shape[1], self.on_value, self.off_value), -1), 1)
+        _, targetA, targetZ = self.policy(next_batch)
+        target_quantile = self._sum(targetZ * self._unsqueeze(self._onehot(targetA, targetZ.shape[1], self.on_value, self.off_value), -1), 1)
         target_quantile = self._unsqueeze(rew_batch, 1) + self.gamma * target_quantile * (1-self._unsqueeze(ter_batch, 1))
 
         loss = self.policy_train(obs_batch, act_batch, target_quantile)
@@ -65,5 +64,10 @@ class QRDQN_Learner(Learner):
             self.policy.copy_target()
 
         lr = self.scheduler(self.iterations).asnumpy()
-        self.writer.add_scalar("Qloss", loss.asnumpy(), self.iterations)
-        self.writer.add_scalar("learning_rate", lr, self.iterations)
+
+        info = {
+            "Qloss": loss.asnumpy(),
+            "learning_rate": lr
+        }
+
+        return info

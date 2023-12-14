@@ -350,32 +350,40 @@ class QRDQN_Network(nn.Cell):
                  initialize: Optional[Callable[..., ms.Tensor]] = None,
                  activation: Optional[ModuleType] = None
                  ):
-        assert isinstance(action_space, Discrete)
         super(QRDQN_Network, self).__init__()
         self.action_dim = action_space.n
         self.quantile_num = quantile_num
         self.representation = representation
+        self.target_representation = copy.deepcopy(representation)
         self.representation_info_shape = self.representation.output_shapes
-        self.eval_Qhead = QRDQNhead(self.representation.output_shapes['state'][0], self.action_dim, self.quantile_num,
+        self.eval_Zhead = QRDQNhead(self.representation.output_shapes['state'][0], self.action_dim, self.quantile_num,
                                     hidden_size,
                                     normalize, initialize, activation)
-        self.target_Qhead = copy.deepcopy(self.eval_Qhead)
+        self.target_Zhead = copy.deepcopy(self.eval_Zhead)
 
         self._mean = ms.ops.ReduceMean()
 
     def construct(self, observation: ms.tensor):
         outputs = self.representation(observation)
-        evalZ = self.eval_Qhead(outputs['state'])
+        evalZ = self.eval_Zhead(outputs['state'])
         evalQ = self._mean(evalZ, -1)
-        targetQ = self.target_Qhead(outputs['state'])
         argmax_action = evalQ.argmax(axis=-1)
-        return outputs, argmax_action, evalZ, targetQ
+        return outputs, argmax_action, evalZ
+
+    def target(self, observation: ms.tensor):
+        outputs = self.target_representation(observation)
+        target_Z = self.target_Zhead(outputs['state'])
+        target_Q = self._mean(target_Z, -1)
+        argmax_action = target_Q.argmax(axis=-1)
+        return outputs, argmax_action, target_Z
 
     def trainable_params(self, recurse=True):
-        return self.representation.trainable_params() + self.eval_Qhead.trainable_params()
+        return self.representation.trainable_params() + self.eval_Zhead.trainable_params()
 
     def copy_target(self):
-        for ep, tp in zip(self.eval_Qhead.trainable_params(), self.target_Qhead.trainable_params()):
+        for ep, tp in zip(self.representation.trainable_params(), self.target_representation.trainable_params()):
+            tp.assign_value(ep)
+        for ep, tp in zip(self.eval_Zhead.trainable_params(), self.target_Zhead.trainable_params()):
             tp.assign_value(ep)
 
 
