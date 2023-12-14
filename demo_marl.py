@@ -8,7 +8,6 @@ def parse_args():
     parser.add_argument("--env", type=str, default="mpe")
     parser.add_argument("--env-id", type=str, default="simple_spread_v3")
     parser.add_argument("--test", type=int, default=1)
-    parser.add_argument("--seed", type=int, default=2)
     parser.add_argument("--device", type=str, default="cuda:0")
     # parser.add_argument("--running-steps", type=int, default=25000)
     return parser.parse_args()
