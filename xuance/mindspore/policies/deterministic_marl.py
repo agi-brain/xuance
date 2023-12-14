@@ -121,7 +121,7 @@ class MFQnetwork(nn.Cell):
 
     def target_Q(self, observation: ms.Tensor, actions_mean: ms.Tensor, agent_ids: ms.Tensor):
         outputs = self.representation(observation)
-        q_inputs = self._concat([outputs[0], actions_mean, agent_ids])
+        q_inputs = self._concat([outputs['state'], actions_mean, agent_ids])
         return self.target_Qhead(q_inputs)
 
     def copy_target(self):

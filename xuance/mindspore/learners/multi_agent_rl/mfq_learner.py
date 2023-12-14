@@ -27,7 +27,7 @@ class MFQ_Learner(LearnerMAS):
                  optimizer: nn.Optimizer,
                  scheduler: Optional[nn.exponential_decay_lr] = None,
                  summary_writer: Optional[SummaryWriter] = None,
-                 modeldir: str = "./",
+                 model_dir: str = "./",
                  gamma: float = 0.99,
                  sync_frequency: int = 100
                  ):
@@ -36,7 +36,7 @@ class MFQ_Learner(LearnerMAS):
         self.sync_frequency = sync_frequency
         self.mse_loss = nn.MSELoss()
         self.softmax = nn.Softmax(axis=-1)
-        super(MFQ_Learner, self).__init__(config, policy, optimizer, scheduler, summary_writer, modeldir)
+        super(MFQ_Learner, self).__init__(config, policy, optimizer, scheduler, model_dir)
         self.bmm = ops.BatchMatMul()
         self.loss_net = self.PolicyNetWithLossCell(policy, self.n_agents)
         self.poliy_train = nn.TrainOneStepCell(self.loss_net, optimizer)
@@ -66,10 +66,7 @@ class MFQ_Learner(LearnerMAS):
         pi = self.get_boltzmann_policy(q_next)
         v_mf = self.bmm(q_next.view(-1, 1, shape[-1]), self.expand_dims(pi, -1).view(-1, shape[-1], 1))
         v_mf = v_mf.view(tuple(list(shape[0:-1]) + [1]))
-        if self.args.consider_terminal_states:
-            q_target = rewards + (1 - terminals) * self.args.gamma * v_mf
-        else:
-            q_target = rewards + self.args.gamma * v_mf
+        q_target = rewards + (1 - terminals) * self.args.gamma * v_mf
 
         # calculate the loss function
         loss = self.poliy_train(batch_size, obs, actions, act_mean, agent_mask, IDs, q_target)
@@ -77,5 +74,10 @@ class MFQ_Learner(LearnerMAS):
             self.policy.copy_target()
 
         lr = self.scheduler(self.iterations).asnumpy()
-        self.writer.add_scalar("learning_rate", lr, self.iterations)
-        self.writer.add_scalar("loss_Q", loss.asnumpy(), self.iterations)
+
+        info = {
+            "learning_rate": lr,
+            "loss_Q": loss.asnumpy()
+        }
+
+        return info

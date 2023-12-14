@@ -154,7 +154,7 @@ class Pettingzoo_Runner(Runner_Base):
         act_mean_current = act_mean_last
         for h, mas_group in enumerate(self.marl_agents):
             if self.marl_names[h] == "MFQ":
-                a, a_mean = mas_group.act(obs_n[h], test_mode, act_mean_last[h], agent_mask[h])
+                _, a, a_mean = mas_group.act(obs_n[h], test_mode=test_mode, act_mean=act_mean_last[h], agent_mask=agent_mask[h])
                 act_mean_current[h] = a_mean
             elif self.marl_names[h] == "MFAC":
                 a, a_mean = mas_group.act(obs_n[h], test_mode, act_mean_last[h], agent_mask[h])
