@@ -31,13 +31,12 @@ class MPDQN_Learner(Learner):
                  policy: nn.Cell,
                  optimizer: Sequence[nn.Optimizer],
                  scheduler: Optional[Sequence[nn.exponential_decay_lr]] = None,
-                 summary_writer: Optional[SummaryWriter] = None,
-                 modeldir: str = "./",
+                 model_dir: str = "./",
                  gamma: float = 0.99,
                  tau: float = 0.01):
         self.gamma = gamma
         self.tau = tau
-        super(MPDQN_Learner, self).__init__(policy, optimizer, scheduler, summary_writer, modeldir)
+        super(MPDQN_Learner, self).__init__(policy, optimizer, scheduler, model_dir)
         # define loss function
         loss_fn = nn.MSELoss()
         # connect the feed forward network with loss function.

@@ -52,13 +52,13 @@ class MPDQN_Agent(Agent):
                                       self.n_envs,
                                       config.n_size,
                                       config.batch_size)
-        learner = PDQN_Learner(policy,
-                               optimizer,
-                               scheduler,
-                               config.device,
-                               config.model_dir,
-                               config.gamma,
-                               config.tau)
+        learner = MPDQN_Learner(policy,
+                                optimizer,
+                                scheduler,
+                                config.device,
+                                config.model_dir,
+                                config.gamma,
+                                config.tau)
 
         self.num_disact = self.action_space.spaces[0].n
         self.conact_sizes = np.array([self.action_space.spaces[i].shape[0] for i in range(1, self.num_disact+1)])
@@ -113,9 +113,7 @@ class MPDQN_Agent(Agent):
             if terminal == True:
                 step_info["returns-episode"] = scores
                 scores = 0
-                returns = 0
                 episodes += 1
-                self.end_episode(episodes)
                 obs, _ = self.envs.reset()
                 self.log_infos(step_info, self.current_step)
 
@@ -140,13 +138,6 @@ class MPDQN_Agent(Agent):
             if terminal == True:
                 scores, returns = 0, 0
                 obs, _ = self.envs.reset()
-
-    def end_episode(self, episode):
-        if episode < self.epsilon_steps:
-            self.epsilon = self.epsilon_initial - (self.epsilon_initial - self.epsilon_final) * (
-                    episode / self.epsilon_steps)
-        else:
-            self.epsilon = self.epsilon_final
 
     def evaluate(self):
         pass

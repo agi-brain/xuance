@@ -9,16 +9,16 @@ class MPDQN_Agent(Agent):
                  policy: nn.Cell,
                  optimizer: Sequence[nn.Optimizer],
                  scheduler):
-        self.config = config
         self.envs = envs
         self.render = config.render
-        self.comm = MPI.COMM_WORLD
+        self.n_envs = envs.num_envs
 
         self.gamma = config.gamma
-        self.use_obsnorm = config.use_obsnorm
-        self.use_rewnorm = config.use_rewnorm
-        self.obsnorm_range = config.obsnorm_range
-        self.rewnorm_range = config.rewnorm_range
+        self.train_frequency = config.training_frequency
+        self.start_training = config.start_training
+        self.start_greedy = config.start_greedy
+        self.end_greedy = config.end_greedy
+        self.egreedy = config.start_greedy
 
         self.train_frequency = config.training_frequency
         self.start_training = config.start_training
@@ -30,10 +30,13 @@ class MPDQN_Agent(Agent):
         old_as = envs.action_space
         num_disact = old_as.spaces[0].n
         self.action_space = gym.spaces.Tuple((old_as.spaces[0], *(gym.spaces.Box(old_as.spaces[1].spaces[i].low,
-                                        old_as.spaces[1].spaces[i].high, dtype=np.float32) for i in range(0, num_disact))))
+                                                                                 old_as.spaces[1].spaces[i].high,
+                                                                                 dtype=np.float32) for i in
+                                                                  range(0, num_disact))))
         self.action_high = [self.action_space.spaces[i].high for i in range(1, num_disact + 1)]
         self.action_low = [self.action_space.spaces[i].low for i in range(1, num_disact + 1)]
-        self.action_range = [self.action_space.spaces[i].high - self.action_space.spaces[i].low for i in range(1, num_disact + 1)]
+        self.action_range = [self.action_space.spaces[i].high - self.action_space.spaces[i].low for i in
+                             range(1, num_disact + 1)]
         self.representation_info_shape = {'state': (envs.observation_space.spaces[0].shape)}
         self.auxiliary_info_shape = {}
         self.nenvs = 1
@@ -43,48 +46,24 @@ class MPDQN_Agent(Agent):
         self.epsilon_final = 0.1
         self.buffer_action_space = spaces.Box(np.zeros(4), np.ones(4), dtype=np.float64)
 
-        writer = SummaryWriter(config.logdir)
         memory = DummyOffPolicyBuffer(self.observation_space,
                                       self.buffer_action_space,
-                                      self.representation_info_shape,
                                       self.auxiliary_info_shape,
-                                      self.nenvs,
-                                      config.nsize,
-                                      config.batchsize)
+                                      self.n_envs,
+                                      config.n_size,
+                                      config.batch_size)
         learner = MPDQN_Learner(policy,
-                               optimizer,
-                               scheduler,
-                               writer,
-                               config.modeldir,
-                               config.gamma,
-                               config.tau)
+                                optimizer,
+                                scheduler,
+                                config.model_dir,
+                                config.gamma,
+                                config.tau)
 
         self.num_disact = self.action_space.spaces[0].n
         self.conact_sizes = np.array([self.action_space.spaces[i].shape[0] for i in range(1, self.num_disact+1)])
         self.conact_size = int(self.conact_sizes.sum())
 
-        self.obs_rms = RunningMeanStd(shape=space2shape(self.observation_space), comm=self.comm, use_mpi=False)
-        self.ret_rms = RunningMeanStd(shape=(), comm=self.comm, use_mpi=False)
-        super(MPDQN_Agent, self).__init__(envs, policy, memory, learner, writer, config.logdir, config.modeldir)
-
-    def _process_observation(self, observations):
-        if self.use_obsnorm:
-            if isinstance(self.observation_space, gym.spaces.Dict):
-                for key in self.observation_space.spaces.keys():
-                    observations[key] = np.clip(
-                        (observations[key] - self.obs_rms.mean[key]) / (self.obs_rms.std[key] + EPS),
-                        -self.obsnorm_range, self.obsnorm_range)
-            else:
-                observations = np.clip((observations - self.obs_rms.mean) / (self.obs_rms.std + EPS),
-                                       -self.obsnorm_range, self.obsnorm_range)
-            return observations
-        return observations
-
-    def _process_reward(self, rewards):
-        if self.use_rewnorm:
-            std = np.clip(self.ret_rms.std, 0.1, 100)
-            return np.clip(rewards / std, -self.rewnorm_range, self.rewnorm_range)
-        return rewards
+        super(MPDQN_Agent, self).__init__(config, envs, policy, memory, learner, config.log_dir, config.model_dir)
 
     def _action(self, obs):
         obs = ms.Tensor(obs)
@@ -133,7 +112,7 @@ class MPDQN_Agent(Agent):
             if self.render: self.envs.render("human")
             acts = np.concatenate(([disaction], con_actions), axis=0).ravel()
             state = {'state': obs}
-            self.memory.store(obs, acts, rewards, terminal, next_obs, state, {})
+            self.memory.store(obs, acts, rewards, terminal, next_obs)
             if step > self.start_training and step % self.train_frequency == 0:
                 # training
                 obs_batch, act_batch, rew_batch, terminal_batch, next_batch, _, _ = self.memory.sample()
