@@ -44,12 +44,11 @@ class PPG_Learner(Learner):
                  policy: nn.Cell,
                  optimizer: nn.Optimizer,
                  scheduler: Optional[nn.exponential_decay_lr] = None,
-                 summary_writer: Optional[SummaryWriter] = None,
-                 modeldir: str = "./",
+                 model_dir: str = "./",
                  ent_coef: float = 0.005,
                  clip_range: float = 0.25,
                  kl_beta: float = 1.0):
-        super(PPG_Learner, self).__init__(policy, optimizer, scheduler, summary_writer, modeldir)
+        super(PPG_Learner, self).__init__(policy, optimizer, scheduler, model_dir)
         self.ent_coef = ent_coef
         self.clip_range = clip_range
         self.kl_beta = kl_beta
@@ -63,6 +62,7 @@ class PPG_Learner(Learner):
 
     def update(self, obs_batch, act_batch, ret_batch, adv_batch, old_dists, update_type):
         self.iterations += 1
+        info = {}
         obs_batch = Tensor(obs_batch)
         act_batch = Tensor(act_batch)
         ret_batch = Tensor(ret_batch)
@@ -78,17 +78,19 @@ class PPG_Learner(Learner):
             lr = self.scheduler(self.iterations).asnumpy()
             # self.writer.add_scalar("actor-loss", self.loss_net.loss_a.asnumpy(), self.iterations)
             # self.writer.add_scalar("entropy", self.loss_net.loss_e.asnumpy(), self.iterations)
-            self.writer.add_scalar("total-loss", loss.asnumpy(), self.iterations)
-            self.writer.add_scalar("learning_rate", lr, self.iterations)
+            info["total-loss"] = loss.asnumpy()
+            info["learning_rate"] = lr
             self.policy_iterations += 1
         
         elif update_type == 1:
             loss = self.policy_train(obs_batch, act_batch, ret_batch, adv_batch, old_logp_batch, old_dist.logits, v, update_type)
 
-            self.writer.add_scalar("critic-loss", loss.asnumpy(), self.value_iterations)
+            info["critic-loss"] = loss.asnumpy()
             self.value_iterations += 1
         
         elif update_type == 2:
             loss = self.policy_train(obs_batch, act_batch, ret_batch, adv_batch, old_logp_batch, old_dist.logits, v, update_type)
 
-            self.writer.add_scalar("kl-loss", loss.asnumpy(), self.value_iterations)
+            info["kl-loss"] = loss.asnumpy()
+
+        return info
