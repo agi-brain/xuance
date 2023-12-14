@@ -45,7 +45,7 @@ def get_arguments(method, env, env_id, config_path=None, parser_args=None):
     config_basic = get_config(os.path.join(config_path_default, "basic.yaml"))
 
     ''' get the arguments from xuance/config/agent/env/scenario.yaml '''
-    if env in ["atari", "mujoco"]:
+    if env in ["atari", "mujoco", "Platform"]:
         file_name = env + ".yaml"
     else:
         file_name = env + "/" + env_id + ".yaml"
@@ -78,7 +78,7 @@ def get_arguments(method, env, env_id, config_path=None, parser_args=None):
     else:
         raise "Unsupported agent_name or env_name!"
 
-    if env in ["atari", "mujoco"]:
+    if env in ["atari", "mujoco", "Platform"]:
         args.env_id = env_id
     return args
 

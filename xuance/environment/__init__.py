@@ -69,6 +69,10 @@ def make_envs(config: Namespace):
         elif config.env_id.__contains__("CarRacing"):
             env = Gym_Env(config.env_id, config.seed, config.render_mode, continuous=False)
 
+        elif config.env_id.__contains__("Platform"):
+            from xuance.environment.gym_platform.envs.platform_env import PlatformEnv
+            env = PlatformEnv()
+
         elif config.env_name == "NewEnv":
             from xuance.environment.new_env.new_env import New_Env
             env = New_Env(config.env_id, config.seed, continuous=False)
@@ -80,7 +84,7 @@ def make_envs(config: Namespace):
 
     if config.vectorize in REGISTRY_VEC_ENV.keys():
         return REGISTRY_VEC_ENV[config.vectorize]([_thunk for _ in range(config.parallels)])
-    elif config.vectorize != "NOREQUIRED":
+    elif config.vectorize == "NOREQUIRED":
         return _thunk()
     else:
         raise NotImplementedError

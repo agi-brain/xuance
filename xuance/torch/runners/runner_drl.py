@@ -5,7 +5,6 @@ from xuance.torch.representations import REGISTRY as REGISTRY_Representation
 from xuance.torch.agents import REGISTRY as REGISTRY_Agent
 from xuance.torch.policies import REGISTRY as REGISTRY_Policy
 from xuance.torch.utils.input_reformat import get_repre_in, get_policy_in
-from xuance.torch.utils.operations import set_seed
 import itertools
 import torch
 import gym.spaces
