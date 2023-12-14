@@ -31,7 +31,8 @@ class MFQ_Agents(MARLAgents):
             config.dim_state, state_shape = config.state_space.shape, config.state_space.shape
         else:
             config.dim_state, state_shape = None, None
-        memory = MeanField_OffPolicyBuffer(state_shape,
+        memory = MeanField_OffPolicyBuffer(config.n_agents,
+                                           state_shape,
                                            config.obs_shape,
                                            config.act_shape,
                                            config.act_prob_shape,
@@ -47,14 +48,19 @@ class MFQ_Agents(MARLAgents):
                                          config.log_dir, config.model_dir)
         self.on_policy = False
 
-    def act(self, obs_n, *rnn_hidden, act_mean=None, agent_mask=None, test_mode=False):
+    def act(self, obs_n, *rnn_hidden, test_mode=False, act_mean=None, agent_mask=None, avail_actions=None):
         batch_size = obs_n.shape[0]
         agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(batch_size, -1, -1).to(self.device)
         obs_in = torch.Tensor(obs_n).to(self.device)
         act_mean = torch.Tensor(act_mean).unsqueeze(dim=-2).repeat(1, self.n_agents, 1).to(self.device)
 
-        if self.use_recurrent:
-            hidden_state, greedy_actions, q_output = self.policy(obs_in, act_mean, agents_id, *rnn_hidden)
+        if self.use_recurrent:  # awaiting to be tested
+            batch_agents = batch_size * self.n_agents
+            hidden_state, greedy_actions, q_output = self.policy(obs_in.view(batch_agents, 1, -1),
+                                                                 act_mean.view(batch_agents, 1, -1),
+                                                                 agents_id.view(batch_agents, 1, -1),
+                                                                 *rnn_hidden,
+                                                                 avail_actions=avail_actions)
         else:
             hidden_state, greedy_actions, q_output = self.policy(obs_in, act_mean, agents_id)
         n_alive = torch.Tensor(agent_mask).sum(dim=-1).unsqueeze(-1).repeat(1, self.dim_act).to(self.device)
@@ -67,7 +73,7 @@ class MFQ_Agents(MARLAgents):
         if test_mode:
             return hidden_state, greedy_actions, act_mean_current
         else:
-            random_actions = np.array([[self.args.action_space[agent].sample() for agent in self.agent_keys]])
+            random_actions = np.random.choice(self.dim_act, [self.nenvs, self.n_agents])
             if np.random.rand() < self.egreedy:
                 return hidden_state, random_actions, act_mean_current
             else:

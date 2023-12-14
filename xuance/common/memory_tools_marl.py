@@ -187,9 +187,9 @@ class MeanField_OffPolicyBuffer(MARL_OffPolicyBuffer):
 
     def __init__(self, n_agents, state_space, obs_space, act_space, prob_shape, rew_space, done_space,
                  n_envs, buffer_size, batch_size):
+        self.prob_shape = prob_shape
         super(MeanField_OffPolicyBuffer, self).__init__(n_agents, state_space, obs_space, act_space, rew_space,
                                                         done_space, n_envs, buffer_size, batch_size)
-        self.prob_shape = prob_shape
 
     def clear(self):
         super(MeanField_OffPolicyBuffer, self).clear()

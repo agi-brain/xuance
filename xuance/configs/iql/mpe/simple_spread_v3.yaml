@@ -6,7 +6,6 @@ policy: "Basic_Q_network_marl"
 representation: "Basic_MLP"
 vectorize: "Dummy_Pettingzoo"
 runner: "Pettingzoo_Runner"
-on_policy: False
 
 use_recurrent: False
 rnn:
