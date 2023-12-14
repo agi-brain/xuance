@@ -99,54 +99,42 @@ class MPDQN_Agent(Agent):
         con_actions[disaction][:] = conaction
         return (disaction, con_actions)
     
-    def train(self, train_steps=10000):
+    def train(self, train_steps):
         episodes = np.zeros((self.nenvs,), np.int32)
         scores = np.zeros((self.nenvs,), np.float32)
-        returns = np.zeros((self.nenvs,), np.float32)
         obs, _ = self.envs.reset()
-        for step in tqdm(range(train_steps)):
+        for _ in tqdm(range(train_steps)):
+            step_info = {}
             disaction, conaction, con_actions = self._action(obs)
             action = self.pad_action(disaction, conaction)
             action[1][disaction] = self.action_range[disaction] * (action[1][disaction] + 1) / 2. + self.action_low[disaction]
             (next_obs, steps), rewards, terminal, _ = self.envs.step(action)
             if self.render: self.envs.render("human")
             acts = np.concatenate(([disaction], con_actions), axis=0).ravel()
-            state = {'state': obs}
             self.memory.store(obs, acts, rewards, terminal, next_obs)
-            if step > self.start_training and step % self.train_frequency == 0:
-                # training
-                obs_batch, act_batch, rew_batch, terminal_batch, next_batch, _, _ = self.memory.sample()
-                self.learner.update(obs_batch, act_batch, rew_batch, next_batch, terminal_batch)
+            if self.current_step > self.start_training and self.current_step % self.train_frequency == 0:
+                obs_batch, act_batch, rew_batch, terminal_batch, next_batch = self.memory.sample()
+                step_info = self.learner.update(obs_batch, act_batch, rew_batch, next_batch, terminal_batch)
 
             scores += rewards
-            returns = self.gamma * returns + rewards
             obs = next_obs
             self.noise_scale = self.start_noise - (self.start_noise - self.end_noise) / train_steps
             if terminal == True:
-                self.writer.add_scalar("returns-episode", scores, episodes)
+                step_info["returns-episode"] = scores
                 scores = 0
-                returns = 0
                 episodes += 1
-                self.end_episode(episodes)
                 obs, _ = self.envs.reset()
+                self.log_infos(step_info, self.current_step)
 
-            if step % 50000 == 0 or step == train_steps - 1:
-                self.save_model()
-                np.save(self.modeldir + "/obs_rms.npy",
-                        {'mean': self.obs_rms.mean, 'std': self.obs_rms.std, 'count': self.obs_rms.count})
+            self.current_step += self.n_envs
+            if self.egreedy >= self.end_greedy:
+                self.egreedy = self.egreedy - (self.start_greedy - self.end_greedy) / self.config.decay_step_greedy
 
-    def end_episode(self, episode):
-        if episode < self.epsilon_steps:
-            self.epsilon = self.epsilon_initial - (self.epsilon_initial - self.epsilon_final) * (
-                    episode / self.epsilon_steps)
-        else:
-            self.epsilon = self.epsilon_final
-    
-    def test(self, test_steps=10000):
-        self.load_model(self.modeldir)
+    def test(self, test_steps=10000, load_model=None):
+        self.load_model(self.model_dir)
         scores = np.zeros((self.nenvs,), np.float32)
         returns = np.zeros((self.nenvs,), np.float32)
-        obs = self.envs.reset()
+        obs, _ = self.envs.reset()
         for _ in tqdm(range(test_steps)):
             disaction, conaction, con_actions = self._action(obs)
             action = self.pad_action(disaction, conaction)
@@ -159,5 +147,3 @@ class MPDQN_Agent(Agent):
             if terminal == True:
                 scores, returns = 0, 0
                 obs, _ = self.envs.reset()
-    def evaluate(self):
-        pass
