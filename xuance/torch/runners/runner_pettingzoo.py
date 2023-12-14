@@ -161,7 +161,10 @@ class Pettingzoo_Runner(Runner_Base):
                 act_mean_current[h] = a_mean
                 _, values = mas_group.values(obs_n[h], act_mean_current[h])
                 values_n.append(values)
-            elif self.marl_names[h] in ["MAPPO", "IPPO", "VDAC"]:
+            elif self.marl_names[h] == "VDAC":
+                _, a, values = mas_group.act(obs_n[h], state=state, test_mode=test_mode)
+                values_n.append(values)
+            elif self.marl_names[h] in ["MAPPO", "IPPO"]:
                 _, a, log_pi = mas_group.act(obs_n[h], test_mode=test_mode, state=state)
                 _, values = mas_group.values(obs_n[h], state=state)
                 log_pi_n.append(log_pi)
@@ -201,6 +204,8 @@ class Pettingzoo_Runner(Runner_Base):
                                                           actions_onehot=actions_dict['act_n_onehot'][h])
                     elif self.marl_names[h] == "MFAC":
                         _, values_next = mas_group.values(next_obs_n[h], actions_dict['act_mean'][h])
+                    elif self.marl_names[h] == "VDAC":
+                        _, _, values_next = mas_group.act(next_obs_n[h])
                     else:
                         _, values_next = mas_group.values(next_obs_n[h], state=next_state)
                     for i_env in range(self.n_envs):
@@ -262,6 +267,8 @@ class Pettingzoo_Runner(Runner_Base):
                                                                        actions_onehot=actions_dict['act_n_onehot'][h])
                                 elif mas_group.args.agent == "MFAC":
                                     _, value_next_e = mas_group.values(next_obs_n[h], act_mean_last[h])
+                                elif mas_group.args.agent == "VDAC":
+                                    _, _, value_next_e = mas_group.act(next_obs_n[h])
                                 else:
                                     _, value_next_e = mas_group.values(next_obs_n[h], state=next_state)
                                 mas_group.memory.finish_path(value_next_e[i_env], i_env)

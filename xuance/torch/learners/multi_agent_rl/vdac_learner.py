@@ -43,52 +43,25 @@ class VDAC_Learner(LearnerMAS):
         state = torch.Tensor(sample['state']).to(self.device)
         obs = torch.Tensor(sample['obs']).to(self.device)
         actions = torch.Tensor(sample['actions']).to(self.device)
-        values = torch.Tensor(sample['values']).to(self.device)
         returns = torch.Tensor(sample['returns']).to(self.device)
-        advantages = torch.Tensor(sample['advantages']).to(self.device)
-        log_pi_old = torch.Tensor(sample['log_pi_old']).to(self.device)
         agent_mask = torch.Tensor(sample['agent_mask']).float().reshape(-1, self.n_agents, 1).to(self.device)
         batch_size = obs.shape[0]
         IDs = torch.eye(self.n_agents).unsqueeze(0).expand(batch_size, -1, -1).to(self.device)
 
         # actor loss
-        _, pi_dist = self.policy(obs, IDs)
-        log_pi = pi_dist.log_prob(actions)
-        ratio = torch.exp(log_pi - log_pi_old).reshape(batch_size, self.n_agents, 1)
-        advantages_mask = advantages.detach() * agent_mask
-        surrogate1 = ratio * advantages_mask
-        surrogate2 = torch.clip(ratio, 1 - self.clip_range, 1 + self.clip_range) * advantages_mask
-        loss_a = -torch.sum(torch.min(surrogate1, surrogate2), dim=-2, keepdim=True).mean()
-
-        # entropy loss
+        _, pi_dist, value_pred = self.policy(obs, IDs)
+        log_pi = pi_dist.log_prob(actions).unsqueeze(-1)
         entropy = pi_dist.entropy().reshape(agent_mask.shape) * agent_mask
-        loss_e = entropy.mean()
 
-        # critic loss
-        critic_in = torch.Tensor(obs).reshape([batch_size, 1, -1]).to(self.device)
-        critic_in = critic_in.expand(-1, self.n_agents, -1)
-        _, value_pred = self.policy.get_values(critic_in, IDs)
-        value_pred = self.policy.value_tot(value_pred, global_state=state)
-        value_target = returns.mean(1)
-        values = values.mean(1)
-        if self.use_value_clip:
-            value_clipped = values + (value_pred - values).clamp(-self.value_clip_range, self.value_clip_range)
-            if self.use_huber_loss:
-                loss_v = self.huber_loss(value_pred, value_target)
-                loss_v_clipped = self.huber_loss(value_clipped, value_target)
-            else:
-                loss_v = (value_pred - value_target) ** 2
-                loss_v_clipped = (value_clipped - value_target) ** 2
-            loss_c = torch.max(loss_v, loss_v_clipped)
-            loss_c = loss_c.sum()
-        else:
-            if self.use_huber_loss:
-                loss_v = self.huber_loss(value_pred, value_target)
-            else:
-                loss_v = (value_pred - value_target) ** 2
-            loss_c = loss_v.sum()
+        targets = returns
+        advantages = targets - value_pred
+        td_error = value_pred - targets.detach()
 
-        loss = loss_a + self.vf_coef * loss_c - self.ent_coef * loss_e
+        pg_loss = -((advantages.detach() * log_pi) * agent_mask).sum() / agent_mask.sum()
+        vf_loss = ((td_error ** 2) * agent_mask).sum() / agent_mask.sum()
+        entropy_loss = (entropy * agent_mask).sum() / agent_mask.sum()
+        loss = pg_loss + self.vf_coef * vf_loss - self.ent_coef * entropy_loss
+
         self.optimizer.zero_grad()
         loss.backward()
         if self.use_grad_norm:
@@ -103,9 +76,9 @@ class VDAC_Learner(LearnerMAS):
 
         info.update({
             "learning_rate": lr,
-            "actor_loss": loss_a.item(),
-            "critic_loss": loss_c.item(),
-            "entropy": loss_e.item(),
+            "pg_loss": pg_loss.item(),
+            "vf_loss": vf_loss.item(),
+            "entropy_loss": entropy_loss.item(),
             "loss": loss.item(),
             "predict_value": value_pred.mean().item()
         })

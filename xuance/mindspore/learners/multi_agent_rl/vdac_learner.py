@@ -4,6 +4,7 @@ Paper link: https://ojs.aaai.org/index.php/AAAI/article/view/17353
 Implementation: MindSpore
 """
 from xuance.mindspore.learners import *
+from xuance.torch.utils.operations import update_linear_decay
 
 
 class VDAC_Learner(LearnerMAS):
@@ -33,13 +34,12 @@ class VDAC_Learner(LearnerMAS):
                  policy: nn.Cell,
                  optimizer: nn.Optimizer,
                  scheduler: Optional[nn.exponential_decay_lr] = None,
-                 summary_writer: Optional[SummaryWriter] = None,
-                 modeldir: str = "./",
+                 model_dir: str = "./",
                  gamma: float = 0.99,
                  ):
         self.gamma = gamma
         self.mse_loss = nn.MSELoss()
-        super(VDAC_Learner, self).__init__(config, policy, optimizer, scheduler, summary_writer, modeldir)
+        super(VDAC_Learner, self).__init__(config, policy, optimizer, scheduler, model_dir)
         self.loss_net = self.PolicyNetWithLossCell(policy, config.vf_coef, config.ent_coef)
         self.policy_train = TrainOneStepCellWithGradClip(self.loss_net, optimizer,
                                                          clip_type=config.clip_type, clip_value=config.clip_grad)
@@ -61,5 +61,10 @@ class VDAC_Learner(LearnerMAS):
 
         # Logger
         lr = self.scheduler(self.iterations).asnumpy()
-        self.writer.add_scalar("learning_rate", lr, self.iterations)
-        self.writer.add_scalar("loss", loss.asnumpy(), self.iterations)
+
+        info = {
+            "learning_rate": lr,
+            "loss": loss.asnumpy()
+        }
+
+        return info

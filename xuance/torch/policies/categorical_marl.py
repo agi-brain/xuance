@@ -184,7 +184,7 @@ class MAAC_Policy_Share(MAAC_Policy):
 
     def forward(self, observation: torch.Tensor, agent_ids: torch.Tensor,
                 *rnn_hidden: torch.Tensor, avail_actions=None, state=None):
-        batch_size = len(avail_actions)
+        batch_size = len(observation)
         if self.use_rnn:
             sequence_length = observation.shape[1]
             outputs = self.representation(observation, *rnn_hidden)
@@ -215,6 +215,7 @@ class MAAC_Policy_Share(MAAC_Policy):
                 values_tot = values_tot.unsqueeze(1).expand(-1, self.n_agents, -1, -1)
         else:
             values_tot = values_independent if self.mixer is None else self.value_tot(values_independent, global_state=state)
+            values_tot = values_tot.unsqueeze(1).expand(-1, self.n_agents, -1)
 
         return rnn_hidden, self.pi_dist, values_tot
 

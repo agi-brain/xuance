@@ -66,7 +66,8 @@ class VDAC_Agents(MARLAgents):
         batch_size = len(obs_n)
         agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(batch_size, -1, -1).to(self.device)
         obs_in = torch.Tensor(obs_n).view([batch_size, self.n_agents, -1]).to(self.device)
-        state = torch.Tensor(state).to(self.device)
+        if state is not None:
+            state = torch.Tensor(state).to(self.device)
         if self.use_recurrent:
             batch_agents = batch_size * self.n_agents
             hidden_state, dists, values_tot = self.policy(obs_in.view(batch_agents, 1, -1),
@@ -82,6 +83,7 @@ class VDAC_Agents(MARLAgents):
                                                           avail_actions=avail_actions,
                                                           state=state)
             actions = dists.stochastic_sample()
+            values_tot = values_tot.reshape([batch_size, self.n_agents, 1])
         return hidden_state, actions.detach().cpu().numpy(), values_tot.detach().cpu().numpy()
 
     def train(self, i_step, **kwargs):
