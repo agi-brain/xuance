@@ -21,12 +21,11 @@ class PG_Learner(Learner):
                  policy: nn.Cell,
                  optimizer: nn.Optimizer,
                  scheduler: Optional[nn.exponential_decay_lr] = None,
-                 summary_writer: Optional[SummaryWriter] = None,
-                 modeldir: str = "./",
+                 model_dir: str = "./",
                  ent_coef: float = 0.005,
                  clip_grad: Optional[float] = None,
                  clip_type: Optional[int] = None):
-        super(PG_Learner, self).__init__(policy, optimizer, scheduler, summary_writer, modeldir)
+        super(PG_Learner, self).__init__(policy, optimizer, scheduler, model_dir)
         self.ent_coef = ent_coef
         self.clip_grad = clip_grad
         # define mindspore trainer
@@ -45,7 +44,10 @@ class PG_Learner(Learner):
         loss = self.policy_train(obs_batch, act_batch, ret_batch)
 
         lr = self.scheduler(self.iterations).asnumpy()
-        # self.writer.add_scalar("actor-loss", self.loss_net.loss_a.asnumpy(), self.iterations)
-        # self.writer.add_scalar("entropy", self.loss_net.loss_e.asnumpy(), self.iterations)
-        self.writer.add_scalar("total-loss", loss.asnumpy(), self.iterations)
-        self.writer.add_scalar("learning_rate", lr, self.iterations)
+
+        info = {
+            "total-loss": loss.asnumpy(),
+            "learning_rate": lr
+        }
+
+        return info
