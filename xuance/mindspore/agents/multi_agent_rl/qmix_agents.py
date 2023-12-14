@@ -52,8 +52,9 @@ class QMIX_Agents(MARLAgents):
 
     def act(self, obs_n, *rnn_hidden, avail_actions=None, test_mode=False):
         batch_size = obs_n.shape[0]
-        agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(batch_size, -1, -1)
-        obs_in = torch.Tensor(obs_n).view([batch_size, self.n_agents, -1])
+        agents_id = ops.broadcast_to(self.expand_dims(self.eye(self.n_agents, self.n_agents, ms.float32), 0),
+                                     (batch_size, -1, -1))
+        obs_in = Tensor(obs_n).view(batch_size, self.n_agents, -1)
         if self.use_recurrent:
             batch_agents = batch_size * self.n_agents
             hidden_state, greedy_actions, _ = self.policy(obs_in.view(batch_agents, 1, -1),
@@ -63,7 +64,7 @@ class QMIX_Agents(MARLAgents):
             greedy_actions = greedy_actions.view(batch_size, self.n_agents)
         else:
             hidden_state, greedy_actions, _ = self.policy(obs_in, agents_id, avail_actions=avail_actions)
-        greedy_actions = greedy_actions.cpu().detach().numpy()
+        greedy_actions = greedy_actions.asnumpy()
 
         if test_mode:
             return hidden_state, greedy_actions

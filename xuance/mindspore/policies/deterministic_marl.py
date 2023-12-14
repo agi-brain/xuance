@@ -138,11 +138,15 @@ class MixingQnetwork(nn.Cell):
                  hidden_size: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., ms.Tensor]] = None,
-                 activation: Optional[ModuleType] = None):
+                 activation: Optional[ModuleType] = None,
+                 **kwargs):
         super(MixingQnetwork, self).__init__()
         self.action_dim = action_space.n
         self.representation = representation
+        self.target_representation = copy.deepcopy(self.representation)
         self.representation_info_shape = self.representation.output_shapes
+        self.lstm = True if kwargs["rnn"] == "LSTM" else False
+        self.use_rnn = True if kwargs["use_recurrent"] else False
         self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, n_agents,
                                      hidden_size, normalize, initialize, activation)
         self.target_Qhead = copy.deepcopy(self.eval_Qhead)
@@ -150,17 +154,33 @@ class MixingQnetwork(nn.Cell):
         self.target_Qtot = copy.deepcopy(self.eval_Qtot)
         self._concat = ms.ops.Concat(axis=-1)
 
-    def construct(self, observation: ms.Tensor, agent_ids: ms.Tensor):
-        outputs = self.representation(observation)
+    def construct(self, observation: ms.Tensor, agent_ids: ms.Tensor,
+                  *rnn_hidden: torch.Tensor, avail_actions=None):
+        if self.use_rnn:
+            outputs = self.representation(observation, *rnn_hidden)
+            rnn_hidden = (outputs['rnn_hidden'], outputs['rnn_cell'])
+        else:
+            outputs = self.representation(observation)
+            rnn_hidden = None
         q_inputs = self._concat([outputs['state'], agent_ids])
         evalQ = self.eval_Qhead(q_inputs)
-        argmax_action = evalQ.argmax(axis=-1)
-        return outputs, argmax_action, evalQ
+        if avail_actions is not None:
+            evalQ_detach = copy.deepcopy(evalQ)
+            evalQ_detach[avail_actions == 0] = -9999999
+            argmax_action = evalQ_detach.argmax(axis=-1)
+        else:
+            argmax_action = evalQ.argmax(axis=-1)
+        return rnn_hidden, argmax_action, evalQ
 
-    def target_Q(self, observation: ms.Tensor, agent_ids: ms.Tensor):
-        outputs = self.representation(observation)
-        q_inputs = self._concat([outputs[0], agent_ids])
-        return self.target_Qhead(q_inputs)
+    def target_Q(self, observation: ms.Tensor, agent_ids: ms.Tensor, *rnn_hidden: torch.Tensor):
+        if self.use_rnn:
+            outputs = self.target_representation(observation, *rnn_hidden)
+            rnn_hidden = (outputs['rnn_hidden'], outputs['rnn_cell'])
+        else:
+            outputs = self.target_representation(observation)
+            rnn_hidden = None
+        q_inputs = self._concat([outputs['state'], agent_ids])
+        return rnn_hidden, self.target_Qhead(q_inputs)
 
     def Q_tot(self, q, states=None):
         return self.eval_Qtot(q, states)
@@ -168,7 +188,12 @@ class MixingQnetwork(nn.Cell):
     def target_Q_tot(self, q, states=None):
         return self.target_Qtot(q, states)
 
+    def trainable_params(self, recurse=True):
+        return self.representation.trainable_params() + self.eval_Qhead.trainable_params()
+
     def copy_target(self):
+        for ep, tp in zip(self.representation.trainable_params(), self.target_representation.trainable_params()):
+            tp.assign_value(ep)
         for ep, tp in zip(self.eval_Qhead.trainable_params(), self.target_Qhead.trainable_params()):
             tp.assign_value(ep)
         for ep, tp in zip(self.eval_Qtot.trainable_params(), self.target_Qtot.trainable_params()):
