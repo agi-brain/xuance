@@ -139,5 +139,3 @@ class MPDQN_Agent(Agent):
                 scores, returns = 0, 0
                 obs, _ = self.envs.reset()
 
-    def evaluate(self):
-        pass
