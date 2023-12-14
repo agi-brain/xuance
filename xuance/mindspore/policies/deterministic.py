@@ -490,7 +490,6 @@ class TD3Policy(nn.Cell):
                  initialize: Optional[Callable[..., ms.Tensor]] = None,
                  activation: Optional[ModuleType] = None
                  ):
-        assert isinstance(action_space, Box)
         super(TD3Policy, self).__init__()
         self.action_dim = action_space.shape[0]
         self.representation = representation
@@ -516,11 +515,10 @@ class TD3Policy(nn.Cell):
         self._concat = ms.ops.Concat(axis=-1)
         self._expand_dims = ms.ops.ExpandDims()
 
-    def action(self, observation: ms.tensor, noise_scale: float):
+    def action(self, observation: ms.tensor):
         outputs = self.representation(observation)
-        act = self.actor(outputs[0])
-        noise = self._standard_normal(act.shape) * noise_scale
-        return outputs, ms.ops.clip_by_value(act + noise, self._min_act, self._max_act)
+        act = self.actor(outputs['state'])
+        return outputs, act
 
     def Qtarget(self, observation: ms.tensor):
         outputs = self.representation(observation)

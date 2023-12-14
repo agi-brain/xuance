@@ -35,15 +35,14 @@ class TD3_Learner(Learner):
                  policy: nn.Cell,
                  optimizers: nn.Optimizer,
                  schedulers: Optional[nn.exponential_decay_lr] = None,
-                 summary_writer: Optional[SummaryWriter] = None,
-                 modeldir: str = "./",
+                 model_dir: str = "./",
                  gamma: float = 0.99,
                  tau: float = 0.01,
                  delay: int = 3):
         self.tau = tau
         self.gamma = gamma
         self.delay = delay
-        super(TD3_Learner, self).__init__(policy, optimizers, schedulers, summary_writer, modeldir)
+        super(TD3_Learner, self).__init__(policy, optimizers, schedulers, model_dir)
         self._expand_dims = ms.ops.ExpandDims()
         # define mindspore trainers
         self.actor_loss_net = self.ActorNetWithLossCell(policy)
@@ -55,6 +54,7 @@ class TD3_Learner(Learner):
 
     def update(self, obs_batch, act_batch, rew_batch, next_batch, terminal_batch):
         self.iterations += 1
+        info = {}
         obs_batch = Tensor(obs_batch)
         act_batch = Tensor(act_batch)
         rew_batch = self._expand_dims(Tensor(rew_batch), 1)
@@ -67,11 +67,15 @@ class TD3_Learner(Learner):
         if self.iterations % self.delay == 0:
             p_loss = self.actor_train(obs_batch)
             self.policy.soft_update(self.tau)
-            self.writer.add_scalar("Ploss", p_loss.asnumpy(), self.iterations)
+            info["Ploss"] = p_loss.asnumpy()
 
         actor_lr = self.scheduler['actor'](self.iterations).asnumpy()
         critic_lr = self.scheduler['critic'](self.iterations).asnumpy()
-        self.writer.add_scalar("Qloss", q_loss.asnumpy(), self.iterations)
-        # self.writer.add_scalar("Qvalue", action_q.mean().asnumpy(), self.iterations)
-        self.writer.add_scalar("actor_lr", actor_lr, self.iterations)
-        self.writer.add_scalar("critic_lr", critic_lr, self.iterations)
+
+        info.update({
+            "Qloss": q_loss.asnumpy(),
+            "actor_lr": actor_lr,
+            "critic_lr": critic_lr
+        })
+
+        return info
