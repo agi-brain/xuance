@@ -1,7 +1,8 @@
 agent: "PDQN"
 env_name: "Platform"
 env_id: "Platform-v0"
-vectorize: "Dummy_Gym"
+vectorize: "NOREQUIRED"
+render: False
 policy: "PDQN_Policy"
 representation: "Basic_MLP"
 runner: "DRL"
@@ -9,17 +10,21 @@ runner: "DRL"
 representation_hidden_size: [128,]
 conactor_hidden_size: [128,]
 qnetwork_hidden_size: [128, ]
+activation: "ReLU"
 
-nsize: 20000
-batchsize: 128
+n_size: 20000
+batch_size: 128
 learning_rate: 0.001
 gamma: 0.99
 tau: 0.005
 
+start_greedy: 0.5
+end_greedy: 0.05
+decay_step_greedy: 1000000  # 1M
 start_noise: 0.1
 end_noise: 0.1
 training_frequency: 1
-training_steps: 30000
+running_steps: 30000
 start_training: 1000
 
 use_obsnorm: False
