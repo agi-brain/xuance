@@ -240,6 +240,7 @@ class NoisyQnetwork(nn.Cell):
         super(NoisyQnetwork, self).__init__()
         self.action_dim = action_space.n
         self.representation = representation
+        self.target_representation = copy.deepcopy(representation)
         self.representation_info_shape = self.representation.output_shapes
         self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, hidden_size,
                                      normalize, initialize, activation)
@@ -255,21 +256,34 @@ class NoisyQnetwork(nn.Cell):
             self.eval_noise_parameter.append(self._stdnormal(parameter.shape) * noisy_bound)
             self.target_noise_parameter.append(self._stdnormal(parameter.shape) * noisy_bound)
 
+    def noisy_parameters(self, is_target=False):
+        self.update_noise(self.noise_scale)
+        if is_target:
+            for parameter, noise_param in zip(self.eval_Qhead.trainable_params(), self.eval_noise_parameter):
+                _ = self._assign(parameter, parameter + noise_param)
+        else:
+            for parameter, noise_param in zip(self.target_Qhead.trainable_params(), self.target_noise_parameter):
+                _ = self._assign(parameter, parameter + noise_param)
+
     def construct(self, observation: ms.tensor):
         outputs = self.representation(observation)
-        for parameter, noise_param in zip(self.eval_Qhead.trainable_params(), self.eval_noise_parameter):
-            _ = self._assign(parameter, parameter + noise_param)
-        for parameter, noise_param in zip(self.target_Qhead.trainable_params(), self.target_noise_parameter):
-            _ = self._assign(parameter, parameter + noise_param)
         evalQ = self.eval_Qhead(outputs['state'])
-        targetQ = self.target_Qhead(outputs['state'])
         argmax_action = evalQ.argmax(axis=-1)
-        return outputs, argmax_action, evalQ, targetQ
+        return outputs, argmax_action, evalQ
+
+    def target(self, observation: ms.tensor):
+        outputs = self.target_representation(observation)
+        self.noisy_parameters(is_target=True)
+        targetQ = self.target_Qhead(outputs['state'])
+        argmax_action = targetQ.argmax(axis=-1)
+        return outputs, argmax_action, targetQ
 
     def trainable_params(self, recurse=True):
         return self.representation.trainable_params() + self.eval_Qhead.trainable_params()
 
     def copy_target(self):
+        for ep, tp in zip(self.representation.trainable_params(), self.target_representation.trainable_params()):
+            tp.assign_value(ep)
         for ep, tp in zip(self.eval_Qhead.trainable_params(), self.target_Qhead.trainable_params()):
             tp.assign_value(ep)
 

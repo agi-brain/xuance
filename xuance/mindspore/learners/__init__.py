@@ -24,6 +24,7 @@ from .policy_gradient.mpdqn_learner import MPDQN_Learner
 from .policy_gradient.spdqn_learner import SPDQN_Learner
 
 from .qlearning_family.dqn_learner import DQN_Learner
+from .qlearning_family.noisydqn_learner import NoisyDQN_Learner
 from .qlearning_family.dueldqn_learner import DuelDQN_Learner
 from .qlearning_family.ddqn_learner import DDQN_Learner
 from .qlearning_family.c51_learner import C51_Learner

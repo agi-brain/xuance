@@ -8,17 +8,10 @@ class NoisyDQN_Agent(Agent):
                  policy: nn.Cell,
                  optimizer: nn.Optimizer,
                  scheduler):
-        self.config = config
         self.render = config.render
-        self.comm = MPI.COMM_WORLD
-        self.nenvs = envs.num_envs
+        self.n_envs = envs.num_envs
 
         self.gamma = config.gamma
-        self.use_obsnorm = config.use_obsnorm
-        self.use_rewnorm = config.use_rewnorm
-        self.obsnorm_range = config.obsnorm_range
-        self.rewnorm_range = config.rewnorm_range
-
         self.train_frequency = config.training_frequency
         self.start_training = config.start_training
         self.start_noise = config.start_noise
@@ -27,119 +20,122 @@ class NoisyDQN_Agent(Agent):
 
         self.observation_space = envs.observation_space
         self.action_space = envs.action_space
-        self.representation_info_shape = policy.representation.output_shapes
         self.auxiliary_info_shape = {}
 
-        writer = SummaryWriter(config.logdir)
-        memory = DummyOffPolicyBuffer(self.observation_space,
-                                      self.action_space,
-                                      self.representation_info_shape,
-                                      self.auxiliary_info_shape,
-                                      self.nenvs,
-                                      config.nsize,
-                                      config.batchsize)
-        learner = DQN_Learner(policy,
+        self.atari = True if config.env_name == "Atari" else False
+        Buffer = DummyOffPolicyBuffer_Atari if self.atari else DummyOffPolicyBuffer
+        memory = Buffer(self.observation_space,
+                        self.action_space,
+                        self.auxiliary_info_shape,
+                        self.n_envs,
+                        config.n_size,
+                        config.batch_size)
+        learner = NoisyDQN_Learner(policy,
                               optimizer,
                               scheduler,
-                              writer,
-                              config.modeldir,
+                              config.model_dir,
                               config.gamma,
                               config.sync_frequency)
-
-        self.obs_rms = RunningMeanStd(shape=space2shape(self.observation_space), comm=self.comm, use_mpi=False)
-        self.ret_rms = RunningMeanStd(shape=(), comm=self.comm, use_mpi=False)
-        super(NoisyDQN_Agent, self).__init__(envs, policy, memory, learner, writer, config.logdir, config.modeldir)
-
-    def _process_observation(self, observations):
-        if self.use_obsnorm:
-            if isinstance(self.observation_space, Dict):
-                for key in self.observation_space.spaces.keys():
-                    observations[key] = np.clip(
-                        (observations[key] - self.obs_rms.mean[key]) / (self.obs_rms.std[key] + EPS),
-                        -self.obsnorm_range, self.obsnorm_range)
-            else:
-                observations = np.clip((observations - self.obs_rms.mean) / (self.obs_rms.std + EPS),
-                                       -self.obsnorm_range, self.obsnorm_range)
-            return observations
-        return observations
-
-    def _process_reward(self, rewards):
-        if self.use_rewnorm:
-            std = np.clip(self.ret_rms.std, 0.1, 100)
-            return np.clip(rewards / std, -self.rewnorm_range, self.rewnorm_range)
-        return rewards
+        super(NoisyDQN_Agent, self).__init__(config, envs, policy, memory, learner, config.log_dir, config.model_dir)
 
     def _action(self, obs):
-        states, argmax_action, _, _ = self.policy(ms.Tensor(obs))
+        self.policy.noise_scale = self.noise_scale
+        self.policy.noisy_parameters(is_target=False)
+        _, argmax_action, _ = self.policy(ms.Tensor(obs))
         action = argmax_action.asnumpy()
-        if context._get_mode()==0:
-            return {"state": states[0].asnumpy()}, action
-        else:
-            for key in states.keys():
-                states[key] = states[key].asnumpy()
-            return states, action
+        return action
 
-    def train(self, train_steps=10000):
-        episodes = np.zeros((self.nenvs,), np.int32)
-        scores = np.zeros((self.nenvs,), np.float32)
-        returns = np.zeros((self.nenvs,), np.float32)
-        obs = self.envs.reset()
-        self.policy.update_noise(self.noise_scale)
-        
-        for step in tqdm(range(train_steps)):
+    def train(self, train_steps):
+        obs = self.envs.buf_obs
+        for _ in tqdm(range(train_steps)):
+            step_info = {}
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
-            states, acts = self._action(obs)
-            next_obs, rewards, dones, infos = self.envs.step(acts)
-            if self.render: self.envs.render()
+            acts = self._action(obs)
+            next_obs, rewards, terminals, trunctions, infos = self.envs.step(acts)
 
-            self.memory.store(obs, acts, self._process_reward(rewards), dones, self._process_observation(next_obs),
-                              states, {})
-            if step > self.start_training and step % self.train_frequency == 0:
+            self.memory.store(obs, acts, self._process_reward(rewards), terminals, self._process_observation(next_obs))
+            if self.current_step > self.start_training and self.current_step % self.train_frequency == 0:
                 # training
-                obs_batch, act_batch, rew_batch, terminal_batch, next_batch, _, _ = self.memory.sample()
-                self.learner.update(obs_batch, act_batch, rew_batch, next_batch, terminal_batch)
+                obs_batch, act_batch, rew_batch, terminal_batch, next_batch = self.memory.sample()
+                self.policy.noise_scale = self.noise_scale
+                step_info = self.learner.update(obs_batch, act_batch, rew_batch, next_batch, terminal_batch)
+                self.log_infos(step_info, self.current_step)
 
-            scores += rewards
-            returns = self.gamma * returns + rewards
             obs = next_obs
-            self.noise_scale = self.noise_scale - (self.start_noise - self.end_noise) / train_steps
+            for i in range(self.n_envs):
+                if terminals[i] or trunctions[i]:
+                    if self.atari and (~trunctions[i]):
+                        pass
+                    else:
+                        obs[i] = infos[i]["reset_obs"]
+                        self.current_episode[i] += 1
+                        if self.use_wandb:
+                            step_info["Episode-Steps/env-%d" % i] = infos[i]["episode_step"]
+                            step_info["Train-Episode-Rewards/env-%d" % i] = infos[i]["episode_score"]
+                        else:
+                            step_info["Episode-Steps"] = {"env-%d" % i: infos[i]["episode_step"]}
+                            step_info["Train-Episode-Rewards"] = {"env-%d" % i: infos[i]["episode_score"]}
+                        self.log_infos(step_info, self.current_step)
 
-            for i in range(self.nenvs):
-                if dones[i] == True:
-                    self.ret_rms.update(returns[i:i + 1])
-                    self.writer.add_scalars("returns-episode", {"env-%d" % i: scores[i]}, episodes[i])
-                    self.writer.add_scalars("returns-step", {"env-%d" % i: scores[i]}, step)
-                    scores[i] = 0
-                    returns[i] = 0
-                    episodes[i] += 1
-                if dones[0] == True:
-                    self.policy.update_noise(self.noise_scale)
-                
-            if step % 50000 == 0 or step == train_steps - 1:
-                self.save_model()
-                np.save(self.modeldir + "/obs_rms.npy",
-                        {'mean': self.obs_rms.mean, 'std': self.obs_rms.std, 'count': self.obs_rms.count})
+            self.current_step += self.n_envs
+            if self.noise_scale > self.end_noise:
+                self.noise_scale = self.noise_scale - (self.start_noise - self.end_noise) / self.config.decay_step_noise
+            if terminals[0]:
+                self.policy.update_noise(self.noise_scale)
 
-    def test(self, test_steps=10000):
-        self.load_model(self.modeldir)
-        scores = np.zeros((self.nenvs,), np.float32)
-        returns = np.zeros((self.nenvs,), np.float32)
-        obs = self.envs.reset()
-        for _ in tqdm(range(test_steps)):
+    def test(self, env_fn, test_episodes):
+        test_envs = env_fn()
+        num_envs = test_envs.num_envs
+        videos, episode_videos = [[] for _ in range(num_envs)], []
+        current_episode, scores, best_score = 0, [], -np.inf
+        obs, infos = test_envs.reset()
+        if self.config.render_mode == "rgb_array" and self.render:
+            images = test_envs.render(self.config.render_mode)
+            for idx, img in enumerate(images):
+                videos[idx].append(img)
+
+        self.policy.noise_scale = 0.0
+        while current_episode < test_episodes:
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
-            states, acts = self._action(obs)
-            next_obs, rewards, dones, infos = self.envs.step(acts)
-            self.envs.render()
+            acts = self._action(obs)
+            next_obs, rewards, terminals, trunctions, infos = test_envs.step(acts)
+            if self.config.render_mode == "rgb_array" and self.render:
+                images = test_envs.render(self.config.render_mode)
+                for idx, img in enumerate(images):
+                    videos[idx].append(img)
 
-            scores += rewards
-            returns = self.gamma * returns + rewards
             obs = next_obs
+            for i in range(num_envs):
+                if terminals[i] or trunctions[i]:
+                    if self.atari and (~trunctions[i]):
+                        pass
+                    else:
+                        obs[i] = infos[i]["reset_obs"]
+                        scores.append(infos[i]["episode_score"])
+                        current_episode += 1
+                        if best_score < infos[i]["episode_score"]:
+                            best_score = infos[i]["episode_score"]
+                            episode_videos = videos[i].copy()
+                        if self.config.test_mode:
+                            print("Episode: %d, Score: %.2f" % (current_episode, infos[i]["episode_score"]))
 
-            for i in range(self.nenvs):
-                if dones[i] == True:
-                    scores[i], returns[i] = 0, 0
+        if self.config.render_mode == "rgb_array" and self.render:
+            # time, height, width, channel -> time, channel, height, width
+            videos_info = {"Videos_Test": np.array([episode_videos], dtype=np.uint8).transpose((0, 1, 4, 2, 3))}
+            self.log_videos(info=videos_info, fps=50, x_index=self.current_step)
 
-    def evaluate(self):
-        pass
+        if self.config.test_mode:
+            print("Best Score: %.2f" % (best_score))
+
+        test_info = {
+            "Test-Episode-Rewards/Mean-Score": np.mean(scores),
+            "Test-Episode-Rewards/Std-Score": np.std(scores)
+        }
+        self.log_infos(test_info, self.current_step)
+
+        test_envs.close()
+
+        return scores
+

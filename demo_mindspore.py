@@ -4,9 +4,9 @@ from xuance import get_runner
 
 def parse_args():
     parser = argparse.ArgumentParser("Run a demo.")
-    parser.add_argument("--method", type=str, default="mpdqn")
-    parser.add_argument("--env", type=str, default="Platform")
-    parser.add_argument("--env-id", type=str, default="Platform-v0")
+    parser.add_argument("--method", type=str, default="noisydqn")
+    parser.add_argument("--env", type=str, default="classic_control")
+    parser.add_argument("--env-id", type=str, default="CartPole-v1")
     parser.add_argument("--test", type=int, default=0)
     parser.add_argument("--device", type=str, default="GPU")
     parser.add_argument("--dl_toolbox", type=str, default="mindspore")
