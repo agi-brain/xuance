@@ -30,12 +30,11 @@ class PPOCLIP_Learner(Learner):
                  policy: nn.Cell,
                  optimizer: nn.Optimizer,
                  scheduler: Optional[nn.exponential_decay_lr] = None,
-                 summary_writer: Optional[SummaryWriter] = None,
-                 modeldir: str = "./",
+                 model_dir: str = "./",
                  vf_coef: float = 0.25,
                  ent_coef: float = 0.005,
                  clip_range: float = 0.25):
-        super(PPOCLIP_Learner, self).__init__(policy, optimizer, scheduler, summary_writer, modeldir)
+        super(PPOCLIP_Learner, self).__init__(policy, optimizer, scheduler, model_dir)
         self.vf_coef = vf_coef
         self.ent_coef = ent_coef
         self.clip_range = clip_range
@@ -44,22 +43,21 @@ class PPOCLIP_Learner(Learner):
         self.policy_train = nn.TrainOneStepCell(self.loss_net, optimizer)
         self.policy_train.set_train()
 
-    def update(self, obs_batch, act_batch, ret_batch, adv_batch, old_logp):
+    def update(self, obs_batch, act_batch, ret_batch, value_batch, adv_batch, old_logp):
         self.iterations += 1
         obs_batch = Tensor(obs_batch)
         act_batch = Tensor(act_batch)
         ret_batch = Tensor(ret_batch)
+        value_batch = Tensor(value_batch)
         adv_batch = Tensor(adv_batch)
         old_logp_batch = Tensor(old_logp)
 
         loss = self.policy_train(obs_batch, act_batch, old_logp_batch, adv_batch, ret_batch)
         # Logger
         lr = self.scheduler(self.iterations).asnumpy()
-        # cr = ((ratio < 1 - self.clip_range).sum() + (ratio > 1 + self.clip_range).sum()) / ratio.shape[0]
-        # self.writer.add_scalar("actor-loss", a_loss.asnumpy(), self.iterations)
-        # self.writer.add_scalar("critic-loss", c_loss.asnumpy(), self.iterations)
-        # self.writer.add_scalar("entropy", e_loss.asnumpy(), self.iterations)
-        self.writer.add_scalar("tot-loss", loss.asnumpy(), self.iterations)
-        self.writer.add_scalar("learning_rate", lr, self.iterations)
-        # self.writer.add_scalar("predict_value", v_pred.mean().asnumpy(), self.iterations)
-        # self.writer.add_scalar("clip_ratio", cr, self.iterations)
+
+        info = {
+            "tot-loss": loss.asnumpy(),
+            "learning_rate": lr
+        }
+        return info
