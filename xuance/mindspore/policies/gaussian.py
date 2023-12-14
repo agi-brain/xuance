@@ -211,7 +211,7 @@ class SACPolicy(nn.Cell):
     def action(self, observation: ms.tensor):
         outputs = self.representation(observation)
         # act_dist = self.actor(outputs[0])
-        mu, std = self.actor(outputs[0])
+        mu, std = self.actor(outputs['state'])
         act_dist = Normal(mu, std)
 
         return outputs, act_dist
@@ -219,14 +219,14 @@ class SACPolicy(nn.Cell):
     def Qtarget(self, observation: ms.tensor):
         outputs = self.representation(observation)
         # act_dist = self.target_actor(outputs[0])
-        mu, std = self.target_actor(outputs[0])
+        mu, std = self.target_actor(outputs['state'])
         # act_dist = Normal(mu, std)
 
         # act = act_dist.sample()
         # act_log = act_dist.log_prob(act)
         act = self.nor.sample(mean=mu, sd=std)
         act_log = self.nor.log_prob(act, mu, std)
-        return outputs, act_log, self.target_critic(outputs[0], act)
+        return outputs, act_log, self.target_critic(outputs['state'], act)
 
     def Qaction(self, observation: ms.tensor, action: ms.Tensor):
         outputs = self.representation(observation)
