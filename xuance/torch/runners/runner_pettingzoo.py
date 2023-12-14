@@ -101,7 +101,7 @@ class Pettingzoo_Runner(Runner_Base):
             self.marl_agents.append(REGISTRY_Agent[arg.agent](arg, self.envs, arg.device))
             self.marl_names.append(arg.agent)
             if arg.test_mode:
-                self.marl_agents[h].load_model(arg.model_dir)
+                self.marl_agents[h].load_model(arg.model_dir, arg.seed)
 
         self.print_infos(self.args)
 
@@ -389,6 +389,8 @@ class Pettingzoo_Runner(Runner_Base):
             "std": np.std(test_scores, axis=1).reshape([self.n_handles]),
             "step": self.current_step
         } for _ in range(self.n_handles)]
+        for h in range(self.n_handles):
+            self.marl_agents[h].save_model("best_model.pth")
 
         for i_epoch in range(num_epoch):
             print("Epoch: %d/%d:" % (i_epoch, num_epoch))
