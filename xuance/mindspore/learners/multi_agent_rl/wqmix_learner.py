@@ -53,8 +53,7 @@ class WQMIX_Learner(LearnerMAS):
                  policy: nn.Cell,
                  optimizer: nn.Optimizer,
                  scheduler: Optional[nn.exponential_decay_lr] = None,
-                 summary_writer: Optional[SummaryWriter] = None,
-                 modeldir: str = "./",
+                 model_dir: str = "./",
                  gamma: float = 0.99,
                  sync_frequency: int = 100
                  ):
@@ -62,7 +61,7 @@ class WQMIX_Learner(LearnerMAS):
         self.gamma = gamma
         self.sync_frequency = sync_frequency
         self.mse_loss = nn.MSELoss()
-        super(WQMIX_Learner, self).__init__(config, policy, optimizer, scheduler, summary_writer, modeldir)
+        super(WQMIX_Learner, self).__init__(config, policy, optimizer, scheduler, model_dir)
         # build train net
         self._mean = ops.ReduceMean(keep_dims=False)
         self.loss_net = self.PolicyNetWithLossCell(policy, self.n_agents, self.args.agent, self.alpha)
@@ -77,7 +76,7 @@ class WQMIX_Learner(LearnerMAS):
         state_next = Tensor(sample['state_next'])
         obs_next = Tensor(sample['obs_next'])
         rewards = self._mean(Tensor(sample['rewards']), 1)
-        terminals = Tensor(sample['terminals']).view(-1, self.n_agents, 1)
+        terminals = Tensor(sample['terminals']).view(-1, self.n_agents, 1).all(axis=1, keep_dims=True)
         agent_mask = Tensor(sample['agent_mask']).view(-1, self.n_agents, 1)
         batch_size = obs.shape[0]
         IDs = ops.broadcast_to(self.expand_dims(self.eye(self.n_agents, self.n_agents, ms.float32), 0),
@@ -92,10 +91,7 @@ class WQMIX_Learner(LearnerMAS):
         q_eval_next_centralized = GatherD()(self.policy.target_q_centralized(obs_next, IDs), -1, action_next_greedy)
         q_tot_next_centralized = self.policy.target_q_feedforward(q_eval_next_centralized*agent_mask, state_next)
 
-        if self.args.consider_terminal_states:
-            target_value = rewards + (1 - terminals) * self.args.gamma * q_tot_next_centralized
-        else:
-            target_value = rewards + self.args.gamma * q_tot_next_centralized
+        target_value = rewards + (1 - terminals) * self.args.gamma * q_tot_next_centralized
 
         # calculate losses and train
         loss = self.policy_train(state, obs, IDs, actions, target_value, agent_mask)
@@ -103,5 +99,10 @@ class WQMIX_Learner(LearnerMAS):
             self.policy.copy_target()
 
         lr = self.scheduler(self.iterations).asnumpy()
-        self.writer.add_scalar("learning_rate", lr, self.iterations)
-        self.writer.add_scalar("loss", loss.asnumpy(), self.iterations)
+
+        info = {
+            "learning_rate": lr,
+            "loss": loss.asnumpy()
+        }
+
+        return info

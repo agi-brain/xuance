@@ -210,23 +210,30 @@ class Weighted_MixingQnetwork(MixingQnetwork):
                  hidden_size: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., ms.Tensor]] = None,
-                 activation: Optional[ModuleType] = None):
+                 activation: Optional[ModuleType] = None,
+                 **kwargs):
         super(Weighted_MixingQnetwork, self).__init__(action_space, n_agents, representation, mixer, hidden_size,
-                                                      normalize, initialize, activation)
+                                                      normalize, initialize, activation, **kwargs)
         self.eval_Qhead_centralized = copy.deepcopy(self.eval_Qhead)
         self.target_Qhead_centralized = copy.deepcopy(self.eval_Qhead_centralized)
         self.q_feedforward = ff_mixer
         self.target_q_feedforward = copy.deepcopy(self.q_feedforward)
         self._concat = ms.ops.Concat(axis=-1)
 
-    def q_centralized(self, observation: ms.Tensor, agent_ids: ms.Tensor):
-        outputs = self.representation(observation)
+    def q_centralized(self, observation: ms.Tensor, agent_ids: ms.Tensor, *rnn_hidden: torch.Tensor):
+        if self.use_rnn:
+            outputs = self.representation(observation, *rnn_hidden)
+        else:
+            outputs = self.representation(observation)
         q_inputs = self._concat([outputs['state'], agent_ids])
         return self.eval_Qhead_centralized(q_inputs)
 
-    def target_q_centralized(self, observation: ms.Tensor, agent_ids: ms.Tensor):
-        outputs = self.representation(observation)
-        q_inputs = self._concat([outputs[0], agent_ids])
+    def target_q_centralized(self, observation: ms.Tensor, agent_ids: ms.Tensor, *rnn_hidden: torch.Tensor):
+        if self.use_rnn:
+            outputs = self.target_representation(observation, *rnn_hidden)
+        else:
+            outputs = self.target_representation(observation)
+        q_inputs = self._concat([outputs['state'], agent_ids])
         return self.target_Qhead_centralized(q_inputs)
 
     def copy_target(self):
