@@ -8,7 +8,7 @@ class SACDIS_Learner(Learner):
             self._backbone = backbone
 
         def construct(self, x):
-            _, action_prob, log_pi, policy_q = self._backbone.Qpolicy(x)
+            action_prob, log_pi, policy_q = self._backbone.Qpolicy(x)
             inside_term = 0.01 * log_pi - policy_q
             p_loss = (action_prob * inside_term).sum(axis=1).mean()
             return p_loss
@@ -30,13 +30,12 @@ class SACDIS_Learner(Learner):
                  policy: nn.Cell,
                  optimizers: nn.Optimizer,
                  schedulers: Optional[nn.exponential_decay_lr] = None,
-                 summary_writer: Optional[SummaryWriter] = None,
-                 modeldir: str = "./",
+                 model_dir: str = "./",
                  gamma: float = 0.99,
                  tau: float = 0.01):
         self.tau = tau
         self.gamma = gamma
-        super(SACDIS_Learner, self).__init__(policy, optimizers, schedulers, summary_writer, modeldir)
+        super(SACDIS_Learner, self).__init__(policy, optimizers, schedulers, model_dir)
         # define mindspore trainers
         self.actor_loss_net = self.ActorNetWithLossCell(policy)
         self.actor_train = nn.TrainOneStepCell(self.actor_loss_net, optimizers['actor'])
@@ -55,7 +54,7 @@ class SACDIS_Learner(Learner):
         ter_batch = Tensor(terminal_batch).view(-1, 1)
         act_batch = self._unsqueeze(act_batch, -1)
 
-        _, action_prob_next, log_pi_next, target_q = self.policy.Qtarget(next_batch)
+        action_prob_next, log_pi_next, target_q = self.policy.Qtarget(next_batch)
         target_q = action_prob_next * (target_q - 0.01 * log_pi_next)
         target_q = self._unsqueeze(target_q.sum(axis=1), -1)
         rew = self._unsqueeze(rew_batch, -1)
@@ -68,7 +67,12 @@ class SACDIS_Learner(Learner):
 
         actor_lr = self.scheduler['actor'](self.iterations).asnumpy()
         critic_lr = self.scheduler['critic'](self.iterations).asnumpy()
-        self.writer.add_scalar("Qloss", q_loss.asnumpy(), self.iterations)
-        self.writer.add_scalar("Ploss", p_loss.asnumpy(), self.iterations)
-        self.writer.add_scalar("actor_lr", actor_lr, self.iterations)
-        self.writer.add_scalar("critic_lr", critic_lr, self.iterations)
+
+        info = {
+            "Qloss": q_loss.asnumpy(),
+            "Ploss": p_loss.asnumpy(),
+            "actor_lr": actor_lr,
+            "critic_lr": critic_lr
+        }
+
+        return info

@@ -257,6 +257,7 @@ class SACDISPolicy(nn.Cell):
         super(SACDISPolicy, self).__init__()
         self.action_dim = action_space.n
         self.representation = representation
+        self.representation_critic = copy.deepcopy(representation)
         self.representation_info_shape = self.representation.output_shapes
         try:
             self.representation_params = self.representation.trainable_params()
@@ -267,6 +268,7 @@ class SACDISPolicy(nn.Cell):
                               normalize, initialize, activation)
         self.critic = CriticNet_SACDIS(representation.output_shapes['state'][0], self.action_dim, critic_hidden_size,
                                        initialize, activation)
+        self.target_representation_critic = copy.deepcopy(self.representation_critic)
         self.target_critic = copy.deepcopy(self.critic)
         self.actor_params = self.representation_params + self.actor.trainable_params()
         self._log = ms.ops.Log()
@@ -283,20 +285,24 @@ class SACDISPolicy(nn.Cell):
 
     def Qtarget(self, observation: ms.tensor):
         outputs = self.representation(observation)
-        act_prob = self.actor(outputs[0])
+        outputs_critic = self.target_representation_critic(observation)
+        act_prob = self.actor(outputs['state'])
         log_action_prob = self._log(act_prob + 1e-10)
-        return outputs, act_prob, log_action_prob, self.target_critic(outputs[0])
+        return act_prob, log_action_prob, self.target_critic(outputs_critic['state'])
 
     def Qaction(self, observation: ms.tensor):
-        outputs = self.representation(observation)
+        outputs = self.representation_critic(observation)
         return outputs, self.critic(outputs['state'])
 
     def Qpolicy(self, observation: ms.tensor):
         outputs = self.representation(observation)
+        outputs_critic = self.representation_critic(observation)
         act_prob = self.actor(outputs['state'])
         log_action_prob = self._log(act_prob + 1e-10)
-        return outputs, act_prob, log_action_prob, self.critic(outputs['state'])
+        return act_prob, log_action_prob, self.critic(outputs_critic['state'])
 
     def soft_update(self, tau=0.005):
+        for ep, tp in zip(self.representation_critic.trainable_params(), self.target_representation_critic.trainable_params()):
+            tp.assign_value((tau * ep.data + (1 - tau) * tp.data))
         for ep, tp in zip(self.critic.trainable_params(), self.target_critic.trainable_params()):
             tp.assign_value((tau * ep.data + (1 - tau) * tp.data))
