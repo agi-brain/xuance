@@ -85,7 +85,7 @@ class PDQN_Agent(Agent):
         con_actions = [np.zeros((1,), dtype=np.float32), np.zeros((1,), dtype=np.float32), np.zeros((1,), dtype=np.float32)]
         con_actions[disaction][:] = conaction
         return (disaction, con_actions)
-    
+
     def train(self, train_steps=10000):
         episodes = np.zeros((self.nenvs,), np.int32)
         scores = np.zeros((self.nenvs,), np.float32)
@@ -94,7 +94,8 @@ class PDQN_Agent(Agent):
             step_info = {}
             disaction, conaction, con_actions = self._action(obs)
             action = self.pad_action(disaction, conaction)
-            action[1][disaction] = self.action_range[disaction] * (action[1][disaction] + 1) / 2. + self.action_low[disaction]
+            action[1][disaction] = self.action_range[disaction] * (action[1][disaction] + 1) / 2. + self.action_low[
+                disaction]
             (next_obs, steps), rewards, terminal, _ = self.envs.step(action)
             if self.render: self.envs.render("human")
             acts = np.concatenate(([disaction], con_actions), axis=0).ravel()
@@ -119,23 +120,43 @@ class PDQN_Agent(Agent):
             if self.egreedy >= self.end_greedy:
                 self.egreedy = self.egreedy - (self.start_greedy - self.end_greedy) / self.config.decay_step_greedy
 
-    def test(self, test_steps=10000, load_model=None):
-        self.load_model(self.model_dir)
-        scores = np.zeros((self.nenvs,), np.float32)
-        returns = np.zeros((self.nenvs,), np.float32)
+    def test(self, env_fn, test_episodes):
+        test_envs = env_fn()
+        episode_score = 0
+        current_episode, scores, best_score = 0, [], -np.inf
         obs, _ = self.envs.reset()
-        for _ in tqdm(range(test_steps)):
+
+        while current_episode < test_episodes:
             disaction, conaction, con_actions = self._action(obs)
             action = self.pad_action(disaction, conaction)
-            action[1][disaction] = self.action_range[disaction] * (action[1][disaction] + 1) / 2. + self.action_low[disaction]
+            action[1][disaction] = self.action_range[disaction] * (action[1][disaction] + 1) / 2. + self.action_low[
+                disaction]
             (next_obs, steps), rewards, terminal, _ = self.envs.step(action)
             self.envs.render("human")
-            scores += rewards
-            returns = self.gamma * returns + rewards
+            episode_score += rewards
             obs = next_obs
             if terminal == True:
-                scores, returns = 0, 0
+                scores.append(episode_score)
                 obs, _ = self.envs.reset()
+                current_episode += 1
+                if best_score < episode_score:
+                    best_score = episode_score
+                episode_score = 0
+                if self.config.test_mode:
+                    print("Episode: %d, Score: %.2f" % (current_episode, episode_score))
+
+        if self.config.test_mode:
+            print("Best Score: %.2f" % (best_score))
+
+        test_info = {
+            "Test-Episode-Rewards/Mean-Score": np.mean(scores),
+            "Test-Episode-Rewards/Std-Score": np.std(scores)
+        }
+        self.log_infos(test_info, self.current_step)
+
+        test_envs.close()
+
+        return scores
 
     def end_episode(self, episode):
         if episode < self.epsilon_steps:
