@@ -122,7 +122,9 @@ class MPDQN_Agent(Agent):
             if terminal == True:
                 step_info["returns-episode"] = scores
                 scores = 0
+                returns = 0
                 episodes += 1
+                self.end_episode(episodes)
                 obs, _ = self.envs.reset()
                 self.log_infos(step_info, self.current_step)
 
@@ -147,3 +149,11 @@ class MPDQN_Agent(Agent):
             if terminal == True:
                 scores, returns = 0, 0
                 obs, _ = self.envs.reset()
+
+    def end_episode(self, episode):
+        if episode < self.epsilon_steps:
+            self.epsilon = self.epsilon_initial - (self.epsilon_initial - self.epsilon_final) * (
+                    episode / self.epsilon_steps)
+        else:
+            self.epsilon = self.epsilon_final
+
