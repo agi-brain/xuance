@@ -264,12 +264,15 @@ class Qtran_MixingQnetwork(nn.Module):
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., torch.Tensor]] = None,
                  activation: Optional[ModuleType] = None,
-                 device: Optional[Union[str, int, torch.device]] = None):
+                 device: Optional[Union[str, int, torch.device]] = None,
+                 **kwargs):
         super(Qtran_MixingQnetwork, self).__init__()
         self.action_dim = action_space.n
         self.representation = representation
         self.target_representation = copy.deepcopy(self.representation)
         self.representation_info_shape = self.representation.output_shapes
+        self.lstm = True if kwargs["rnn"] == "LSTM" else False
+        self.use_rnn = True if kwargs["use_recurrent"] else False
         self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, n_agents,
                                      hidden_size, normalize, initialize, activation, device)
         self.target_Qhead = copy.deepcopy(self.eval_Qhead)
@@ -277,17 +280,34 @@ class Qtran_MixingQnetwork(nn.Module):
         self.target_qtran_net = copy.deepcopy(qtran_mixer)
         self.q_tot = mixer
 
-    def forward(self, observation: torch.Tensor, agent_ids: torch.Tensor):
-        outputs = self.representation(observation)
+    def forward(self, observation: torch.Tensor, agent_ids: torch.Tensor,
+                *rnn_hidden: torch.Tensor, avail_actions=None):
+        if self.use_rnn:
+            outputs = self.representation(observation, *rnn_hidden)
+            rnn_hidden = (outputs['rnn_hidden'], outputs['rnn_cell'])
+        else:
+            outputs = self.representation(observation)
+            rnn_hidden = None
         q_inputs = torch.concat([outputs['state'], agent_ids], dim=-1)
         evalQ = self.eval_Qhead(q_inputs)
-        argmax_action = evalQ.argmax(dim=-1, keepdim=False)
-        return outputs, argmax_action, evalQ
+        if avail_actions is not None:
+            avail_actions = torch.Tensor(avail_actions)
+            evalQ_detach = evalQ.clone().detach()
+            evalQ_detach[avail_actions == 0] = -9999999
+            argmax_action = evalQ_detach.argmax(dim=-1, keepdim=False)
+        else:
+            argmax_action = evalQ.argmax(dim=-1, keepdim=False)
+        return rnn_hidden, outputs['state'], argmax_action, evalQ
 
-    def target_Q(self, observation: torch.Tensor, agent_ids: torch.Tensor):
-        outputs = self.target_representation(observation)
+    def target_Q(self, observation: torch.Tensor, agent_ids: torch.Tensor, *rnn_hidden: torch.Tensor):
+        if self.use_rnn:
+            outputs = self.target_representation(observation, *rnn_hidden)
+            rnn_hidden = (outputs['rnn_hidden'], outputs['rnn_cell'])
+        else:
+            outputs = self.target_representation(observation)
+            rnn_hidden = None
         q_inputs = torch.concat([outputs['state'], agent_ids], dim=-1)
-        return outputs, self.target_Qhead(q_inputs)
+        return rnn_hidden, outputs['state'], self.target_Qhead(q_inputs)
 
     def copy_target(self):
         for ep, tp in zip(self.representation.parameters(), self.target_representation.parameters()):

@@ -30,22 +30,22 @@ class QTRAN_Learner(LearnerMAS):
         actions_onehot = self.onehot_action(actions, self.dim_act)
         obs_next = torch.Tensor(sample['obs_next']).to(self.device)
         rewards = torch.Tensor(sample['rewards']).mean(dim=1).to(self.device)
-        terminals = torch.Tensor(sample['terminals']).float().reshape(-1, self.n_agents, 1).to(self.device)
+        terminals = torch.Tensor(sample['terminals']).all(dim=1, keepdims=True).float().to(self.device)
         agent_mask = torch.Tensor(sample['agent_mask']).float().reshape(-1, self.n_agents, 1).to(self.device)
         IDs = torch.eye(self.n_agents).unsqueeze(0).expand(self.args.batch_size, -1, -1).to(self.device)
 
-        hidden_n, _, q_eval = self.policy(obs, IDs)
+        _, hidden_state, _, q_eval = self.policy(obs, IDs)
         # get mask input
         actions_mask = agent_mask.repeat(1, 1, self.dim_act)
-        hidden_mask = agent_mask.repeat(1, 1, hidden_n['state'].shape[-1])
-        q_joint, v_joint = self.policy.qtran_net(hidden_n['state'] * hidden_mask,
+        hidden_mask = agent_mask.repeat(1, 1, hidden_state.shape[-1])
+        q_joint, v_joint = self.policy.qtran_net(hidden_state * hidden_mask,
                                                  actions_onehot * actions_mask)
-        hidden_n_next, q_next_eval = self.policy.target_Q(obs_next.reshape([self.args.batch_size, self.n_agents, -1]), IDs)
+        _, hidden_state_next, q_next_eval = self.policy.target_Q(obs_next.reshape([self.args.batch_size, self.n_agents, -1]), IDs)
         if self.args.double_q:
-            _, actions_next_greedy, _ = self.policy(obs_next, IDs)
+            _, _, actions_next_greedy, _ = self.policy(obs_next, IDs)
         else:
             actions_next_greedy = q_next_eval.argmax(dim=-1, keepdim=False)
-        q_joint_next, _ = self.policy.target_qtran_net(hidden_n_next['state'] * hidden_mask,
+        q_joint_next, _ = self.policy.target_qtran_net(hidden_state_next * hidden_mask,
                                                        self.onehot_action(actions_next_greedy,
                                                                           self.dim_act) * actions_mask)
         y_dqn = rewards + (1 - terminals) * self.args.gamma * q_joint_next
@@ -54,7 +54,7 @@ class QTRAN_Learner(LearnerMAS):
         action_greedy = q_eval.argmax(dim=-1, keepdim=False)  # \bar{u}
         q_eval_greedy_a = q_eval.gather(-1, action_greedy.long().reshape([self.args.batch_size, self.n_agents, 1]))
         q_tot_greedy = self.policy.q_tot(q_eval_greedy_a * agent_mask)
-        q_joint_greedy_hat, _ = self.policy.qtran_net(hidden_n['state'] * hidden_mask,
+        q_joint_greedy_hat, _ = self.policy.qtran_net(hidden_state * hidden_mask,
                                                       self.onehot_action(action_greedy, self.dim_act) * actions_mask)
         error_opt = q_tot_greedy - q_joint_greedy_hat.detach() + v_joint
         loss_opt = torch.mean(error_opt ** 2)
@@ -62,14 +62,14 @@ class QTRAN_Learner(LearnerMAS):
         q_eval_a = q_eval.gather(-1, actions.long().reshape([self.args.batch_size, self.n_agents, 1]))
         if self.args.agent == "QTRAN_base":
             q_tot = self.policy.q_tot(q_eval_a * agent_mask)
-            q_joint_hat, _ = self.policy.qtran_net(hidden_n['state'] * hidden_mask,
+            q_joint_hat, _ = self.policy.qtran_net(hidden_state * hidden_mask,
                                                    actions_onehot * actions_mask)
             error_nopt = q_tot - q_joint_hat.detach() + v_joint
             error_nopt = error_nopt.clamp(max=0)
             loss_nopt = torch.mean(error_nopt ** 2)
         elif self.args.agent == "QTRAN_alt":
             q_tot_counterfactual = self.policy.qtran_net.counterfactual_values(q_eval, q_eval_a) * actions_mask
-            q_joint_hat_counterfactual = self.policy.qtran_net.counterfactual_values_hat(hidden_n['state'] * hidden_mask,
+            q_joint_hat_counterfactual = self.policy.qtran_net.counterfactual_values_hat(hidden_state * hidden_mask,
                                                                                          actions_onehot * actions_mask)
             error_nopt = q_tot_counterfactual - q_joint_hat_counterfactual.detach() + v_joint.unsqueeze(dim=-1).repeat(
                 1, self.n_agents, self.dim_act)
