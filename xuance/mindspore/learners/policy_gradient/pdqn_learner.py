@@ -31,13 +31,12 @@ class PDQN_Learner(Learner):
                  policy: nn.Cell,
                  optimizer: Sequence[nn.Optimizer],
                  scheduler: Optional[Sequence[nn.exponential_decay_lr]] = None,
-                 summary_writer: Optional[SummaryWriter] = None,
-                 modeldir: str = "./",
+                 model_dir: str = "./",
                  gamma: float = 0.99,
                  tau: float = 0.01):
         self.gamma = gamma
         self.tau = tau
-        super(PDQN_Learner, self).__init__(policy, optimizer, scheduler, summary_writer, modeldir)
+        super(PDQN_Learner, self).__init__(policy, optimizer, scheduler, model_dir)
         # define loss function
         loss_fn = nn.MSELoss()
         # connect the feed forward network with loss function.
@@ -72,7 +71,12 @@ class PDQN_Learner(Learner):
 
         con_actor_lr = self.scheduler[0](self.iterations).asnumpy()
         qnet_lr = self.scheduler[1](self.iterations).asnumpy()
-        self.writer.add_scalar("P_loss", p_loss.asnumpy(), self.iterations)
-        self.writer.add_scalar("Q_loss", q_loss.asnumpy(), self.iterations)
-        self.writer.add_scalar("con_actor_lr", con_actor_lr, self.iterations)
-        self.writer.add_scalar("qnet_lr", qnet_lr, self.iterations)
+
+        info = {
+            "P_loss": p_loss.asnumpy(),
+            "Q_loss": q_loss.asnumpy(),
+            "con_actor_lr": con_actor_lr,
+            "qnet_lr": qnet_lr
+        }
+
+        return info
