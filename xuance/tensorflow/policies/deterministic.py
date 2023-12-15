@@ -441,15 +441,19 @@ class DDPGPolicy(tk.Model):
     def Qtarget(self, observation: Union[np.ndarray, dict]):
         outputs = self.representation(observation)
         act = self.target_actor(outputs['state'])
-        return self.target_critic(outputs['state'], act)
+        inputs_critic = {'x': outputs['state'], 'a': act}
+        return self.target_critic(inputs_critic)
 
     def Qaction(self, observation: Union[np.ndarray, dict], action: tf.Tensor):
         outputs = self.representation(observation)
-        return self.critic(outputs['state'], action)
+        inputs_critic = {'x': outputs['state'], 'a': action}
+        return self.critic(inputs_critic)
 
     def Qpolicy(self, observation: Union[np.ndarray, dict]):
         outputs = self.representation(observation)
-        return self.critic(outputs['state'], self.actor(outputs['state']))
+        action = self.actor(outputs['state'])
+        inputs_critic = {'x': outputs['state'], 'a': action}
+        return self.critic(inputs_critic)
 
     def soft_update(self, tau=0.005):
         for ep, tp in zip(self.actor.variables, self.target_actor.variables):

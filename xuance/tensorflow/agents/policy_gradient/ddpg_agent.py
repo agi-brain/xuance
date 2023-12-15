@@ -38,7 +38,7 @@ class DDPG_Agent(Agent):
         super(DDPG_Agent, self).__init__(config, envs, policy, memory, learner, device, config.log_dir, config.model_dir)
 
     def _action(self, obs, noise_scale=0.0):
-        _, action = self.policy.action(obs, noise_scale)
+        _, action = self.policy(obs)
         action = action.numpy()
         action = action + np.random.normal(size=action.shape) * noise_scale
         return np.clip(action, -1, 1)

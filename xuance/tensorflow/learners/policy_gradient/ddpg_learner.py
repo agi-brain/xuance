@@ -36,8 +36,8 @@ class DDPG_Learner(Learner):
 
             # critic update
             with tf.GradientTape() as tape:
-                _, action_q = self.policy.Qaction(obs_batch, act_batch)
-                _, target_q = self.policy.Qtarget(next_batch)
+                action_q = self.policy.Qaction(obs_batch, act_batch)
+                target_q = self.policy.Qtarget(next_batch)
                 backup = rew_batch + (1 - ter_batch) * self.gamma * target_q
                 y_true = tf.reshape(tf.stop_gradient(backup), [-1])
                 y_pred = tf.reshape(action_q, [-1])
@@ -51,7 +51,7 @@ class DDPG_Learner(Learner):
 
             # actor update
             with tf.GradientTape() as tape:
-                _, policy_q = self.policy.Qpolicy(obs_batch)
+                policy_q = self.policy.Qpolicy(obs_batch)
                 p_loss = -tf.reduce_mean(policy_q)
                 gradients = tape.gradient(p_loss, self.policy.actor.trainable_variables)
                 self.optimizer[0].apply_gradients([
