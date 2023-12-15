@@ -58,7 +58,7 @@ class IDDPG_Learner(LearnerMAS):
                 loss_a = -tf.reduce_sum(self.policy.critic(obs, actions_eval, IDs) * agent_mask) / tf.reduce_sum(agent_mask)
                 gradients = tape.gradient(loss_a, self.policy.parameters_actor)
                 self.optimizer['actor'].apply_gradients([
-                    (tf.clip_by_norm(grad, self.args.clip_grad), var)
+                    (tf.clip_by_norm(grad, self.args.grad_clip_norm), var)
                     for (grad, var) in zip(gradients, self.policy.parameters_actor)
                     if grad is not None
                 ])
@@ -74,7 +74,7 @@ class IDDPG_Learner(LearnerMAS):
                 loss_c = tk.losses.mean_squared_error(y_true, y_pred)
                 gradients = tape.gradient(loss_c, self.policy.parameters_critic)
                 self.optimizer['critic'].apply_gradients([
-                    (tf.clip_by_norm(grad, self.args.clip_grad), var)
+                    (tf.clip_by_norm(grad, self.args.grad_clip_norm), var)
                     for (grad, var) in zip(gradients, self.policy.parameters_critic)
                     if grad is not None
                 ])

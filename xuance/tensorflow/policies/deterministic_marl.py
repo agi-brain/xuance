@@ -412,7 +412,6 @@ class Basic_DDPG_policy(tk.Model):
                  activation: Optional[tk.layers.Layer] = None,
                  device: str = "cpu:0"
                  ):
-        assert isinstance(action_space, Box)
         super(Basic_DDPG_policy, self).__init__()
         self.action_dim = action_space.shape[0]
         self.n_agents = n_agents

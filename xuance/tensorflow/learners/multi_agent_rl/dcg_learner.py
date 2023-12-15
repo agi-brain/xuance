@@ -23,9 +23,7 @@ class DCG_Learner(LearnerMAS):
         self.sync_frequency = sync_frequency
         super(DCG_Learner, self).__init__(config, policy, optimizer, device, model_dir)
 
-    def save_model(self):
-        pass
-        model_path = self.model_dir + "model-%s-%s" % (time.asctime(), str(self.iterations))
+    def save_model(self, model_path):
         self.policy.representation.save(model_path + "/representations")
         self.policy.utility.save(model_path + "/utility")
         self.policy.target_utility.save(model_path + "/target_utility")
@@ -35,7 +33,7 @@ class DCG_Learner(LearnerMAS):
             self.policy.bias.save(model_path + "/bias")
             self.policy.target_bias.save(model_path + "/target_bias")
 
-    def load_model(self, path):
+    def load_model(self, path, seed=1):
         model_names = os.listdir(path)
         # try:
         model_names.sort()
