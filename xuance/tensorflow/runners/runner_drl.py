@@ -32,7 +32,10 @@ class Runner_DRL(Runner_Base):
         representation = REGISTRY_Representation[self.args.representation](*input_representation)
 
         input_policy = get_policy_in(self.args, representation)
-        policy = REGISTRY_Policy[self.args.policy](*input_policy)
+        if self.agent_name == "DRQN":
+            policy = REGISTRY_Policy[self.args.policy](**input_policy)
+        else:
+            policy = REGISTRY_Policy[self.args.policy](*input_policy)
 
         if self.agent_name in ["DDPG", "TD3", "SAC", "SACDIS"]:
             # actor_lr_scheduler = MyLinearLR(self.args.actor_learning_rate, start_factor=1.0, end_factor=0.25,

@@ -46,7 +46,7 @@ class DRQN_Agent(Agent):
         if np.random.rand() < egreedy:
             action = random_action
         else:
-            action = argmax_action.detach().cpu().numpy()
+            action = argmax_action.numpy()
         return action, rnn_hidden_next
 
     def train(self, train_steps):

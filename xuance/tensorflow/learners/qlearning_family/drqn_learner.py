@@ -28,12 +28,14 @@ class DRQN_Learner(Learner):
                 _, targetA, targetQ, _ = self.policy.target(obs_batch[:, 1:], *target_rnn_hidden)
                 # targetQ = targetQ.max(dim=-1).values
 
-                targetA = F.one_hot(targetA, targetQ.shape[-1])
-                targetQ = (targetQ * targetA).sum(dim=-1)
+                targetA = tf.one_hot(targetA, targetQ.shape[-1])
+                targetQ = tf.reduce_mean(targetQ * targetA, axis=-1)
 
                 targetQ = rew_batch + self.gamma * (1 - ter_batch) * targetQ
-                predictQ = (evalQ * F.one_hot(act_batch.long(), evalQ.shape[-1])).sum(dim=-1)
+                predictQ = tf.reduce_mean(evalQ * tf.one_hot(act_batch, evalQ.shape[-1]), axis=-1)
 
+                targetQ = tf.reshape(targetQ, [-1])
+                predictQ = tf.reshape(predictQ, [-1])
                 loss = tk.losses.mean_squared_error(targetQ, predictQ)
                 gradients = tape.gradient(loss, self.policy.trainable_variables)
                 self.optimizer.apply_gradients([
@@ -45,11 +47,11 @@ class DRQN_Learner(Learner):
             # hard update for target network
             if self.iterations % self.sync_frequency == 0:
                 self.policy.copy_target()
-            lr = self.optimizer.state_dict()['param_groups'][0]['lr']
+            lr = self.optimizer._decayed_lr(tf.float32)
 
             info = {
                 "Qloss": loss.numpy(),
-                "predictQ": predictQ.mean().item(),
+                "predictQ": tf.math.reduce_mean(predictQ).numpy(),
                 "lr": lr.numpy()
             }
 

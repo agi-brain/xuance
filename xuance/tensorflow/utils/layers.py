@@ -89,18 +89,11 @@ def gru_block(input_dim: Sequence[int],
               dropout: float = 0,
               initialize: Optional[Callable[[tf.Tensor], tf.Tensor]] = None,
               device: str = "cpu") -> ModelType:
-    gru = tk.layers.GRU(input_size=input_dim,
-                        hidden_size=output_dim,
-                        num_layers=num_layers,
-                        batch_first=True,
+    gru = tk.layers.GRU(units=output_dim,
                         dropout=dropout,
-                        device=device)
-    if initialize is not None:
-        for weight_list in gru.all_weights:
-            for weight in weight_list:
-                if len(weight.shape) > 1:
-                    initialize(weight)
-    return gru
+                        return_sequences=True,
+                        return_state=True)
+    return gru, output_dim
 
 
 def lstm_block(input_dim: Sequence[int],
@@ -109,15 +102,8 @@ def lstm_block(input_dim: Sequence[int],
                dropout: float = 0,
                initialize: Optional[Callable[[tf.Tensor], tf.Tensor]] = None,
                device: str = "cpu") -> ModelType:
-    lstm = tk.layers.LSTM(input_size=input_dim,
-                          hidden_size=output_dim,
-                          num_layers=num_layers,
-                          batch_first=True,
+    lstm = tk.layers.LSTM(units=output_dim,
                           dropout=dropout,
-                          device=device)
-    if initialize is not None:
-        for weight_list in lstm.all_weights:
-            for weight in weight_list:
-                if len(weight.shape) > 1:
-                    initialize(weight)
-    return lstm
+                          return_sequences=True,
+                          return_state=True)
+    return lstm, output_dim

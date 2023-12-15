@@ -1,3 +1,5 @@
+import numpy as np
+
 from xuance.tensorflow.policies import *
 from xuance.tensorflow.utils import *
 from xuance.tensorflow.representations import Basic_Identical
@@ -50,16 +52,12 @@ class BasicRecurrent(tk.Model):
         fc_layer = mlp_block(kwargs["recurrent_hidden_size"], kwargs["action_dim"], None, None, None, kwargs["device"])[0]
         self.model = tk.Sequential(*fc_layer)
 
-    def call(self, inputs: Dict, **kwargs):
-        x = inputs['x']
-        h = inputs['h']
-        c = inputs['c']
-        self.rnn_layer.flatten_parameters()
+    def call(self, x: tf.Tensor, **kwargs):
         if self.lstm:
-            output, (hn, cn) = self.rnn_layer(x, (h, c))
+            output, hn, cn = self.rnn_layer(x)
             return hn, cn, self.model(output)
         else:
-            output, hn = self.rnn_layer(x, h)
+            output, hn = self.rnn_layer(x)
             return hn, self.model(output)
 
 
@@ -803,10 +801,10 @@ class DRQNPolicy(tk.Model):
         kwargs["input_dim"] = self.representation.output_shapes['state'][0]
         kwargs["action_dim"] = self.action_dim
         self.lstm = True if kwargs["rnn"] == "LSTM" else False
-        self.cnn = True if self.representation._get_name() == "Basic_CNN" else False
+        self.cnn = True if self.representation.name == "basic_cnn" else False
         self.eval_Qhead = BasicRecurrent(**kwargs)
         self.target_Qhead = BasicRecurrent(**kwargs)
-        self.copy_target()
+        self.target_Qhead.set_weights(self.eval_Qhead.get_weights())
 
     def call(self, observation: Union[np.ndarray, dict], *rnn_hidden: tf.Tensor, **kwargs):
         if self.cnn:
@@ -816,9 +814,9 @@ class DRQNPolicy(tk.Model):
         else:
             outputs = self.representation(observation)
         if self.lstm:
-            hidden_states, cell_states, evalQ = self.eval_Qhead(outputs['state'], rnn_hidden[0], rnn_hidden[1])
+            hidden_states, cell_states, evalQ = self.eval_Qhead(outputs['state'])
         else:
-            hidden_states, evalQ = self.eval_Qhead(outputs['state'], rnn_hidden[0])
+            hidden_states, evalQ = self.eval_Qhead(outputs['state'])
             cell_states = None
         argmax_action = tf.math.argmax(evalQ[:, -1], axis=-1)
         return outputs, argmax_action, evalQ, (hidden_states, cell_states)
@@ -826,33 +824,35 @@ class DRQNPolicy(tk.Model):
     def target(self, observation: Union[np.ndarray, dict], *rnn_hidden: tf.Tensor):
         if self.cnn:
             obs_shape = observation.shape
-            outputs = self.representation(observation.reshape((-1,) + obs_shape[-3:]))
+            outputs = self.target_representation(observation.reshape((-1,) + obs_shape[-3:]))
             outputs['state'] = outputs['state'].reshape(obs_shape[0:-3] + (-1,))
         else:
-            outputs = self.representation(observation)
+            outputs = self.target_representation(observation)
         if self.lstm:
-            hidden_states, cell_states, targetQ = self.target_Qhead(outputs['state'], rnn_hidden[0], rnn_hidden[1])
+            hidden_states, cell_states, targetQ = self.target_Qhead(outputs['state'])
         else:
-            hidden_states, targetQ = self.target_Qhead(outputs['state'], rnn_hidden[0])
+            hidden_states, targetQ = self.target_Qhead(outputs['state'])
             cell_states = None
         argmax_action = tf.math.argmax(targetQ, axis=-1)
         return outputs, argmax_action, targetQ, (hidden_states, cell_states)
 
     def init_hidden(self, batch):
-        with tf.device as self.device:
-            hidden_states = tf.zeros(size=(self.recurrent_layer_N, batch, self.rnn_hidden_dim))
+        with tf.device(self.device):
+            hidden_states = tf.zeros(shape=(self.recurrent_layer_N, batch, self.rnn_hidden_dim))
             cell_states = tf.zeros_like(hidden_states) if self.lstm else None
             return hidden_states, cell_states
 
     def init_hidden_item(self, rnn_hidden, i):
-        with tf.device as self.device:
+        with tf.device(self.device):
             if self.lstm:
-                rnn_hidden[0][:, i] = tf.zeros(size=(self.recurrent_layer_N, self.rnn_hidden_dim))
-                rnn_hidden[1][:, i] = tf.zeros(size=(self.recurrent_layer_N, self.rnn_hidden_dim))
-                return rnn_hidden
+                rnn_hidden_0, rnn_hidden_1 = rnn_hidden[0].numpy(), rnn_hidden[1].numpy()
+                rnn_hidden_0[i:i+1] = np.zeros((self.recurrent_layer_N, self.rnn_hidden_dim))
+                rnn_hidden_1[i:i+1] = np.zeros((self.recurrent_layer_N, self.rnn_hidden_dim))
+                return (tf.convert_to_tensor(rnn_hidden_0), tf.convert_to_tensor(rnn_hidden_1))
             else:
-                rnn_hidden[:, i] = tf.zeros(size=(self.recurrent_layer_N, self.rnn_hidden_dim))
-                return rnn_hidden
+                rnn_hidden_np = rnn_hidden.numpy()
+                rnn_hidden_np[i:i+1] = np.zeros((self.recurrent_layer_N, self.rnn_hidden_dim))
+                return tf.convert_to_tensor(rnn_hidden_np)
 
     def copy_target(self):
         self.target_representation.set_weights(self.representation.get_weights())

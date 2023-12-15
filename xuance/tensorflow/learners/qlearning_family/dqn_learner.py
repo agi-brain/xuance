@@ -26,7 +26,9 @@ class DQN_Learner(Learner):
                 targetQ = tf.math.reduce_max(targetQ, axis=-1)
                 targetQ = rew_batch + self.gamma * (1 - ter_batch) * targetQ
                 targetQ = tf.stop_gradient(targetQ)
+
                 predictQ = tf.math.reduce_sum(evalQ * tf.one_hot(act_batch, evalQ.shape[1]), axis=-1)
+
                 loss = tk.losses.mean_squared_error(targetQ, predictQ)
                 gradients = tape.gradient(loss, self.policy.trainable_variables)
                 self.optimizer.apply_gradients([

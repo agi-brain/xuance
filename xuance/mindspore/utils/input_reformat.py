@@ -40,7 +40,7 @@ def get_policy_in(args, representation):
     input_dict = deepcopy(Policy_Inputs_All)
     input_dict["action_space"] = args.action_space
     input_dict["representation"] = representation
-    if policy_name in ["Basic_Q_network", "Duel_Q_network", "Noisy_Q_network", "C51_Q_network", "QR_Q_network", "CDQN_Policy", "LDQN_Policy", "CLDQN_Policy"]:
+    if policy_name in ["Basic_Q_network", "Duel_Q_network", "Noisy_Q_network", "C51_Q_network", "QR_Q_network"]:
         input_dict["hidden_sizes"] = args.q_hidden_size
         if policy_name == "C51_Q_network":
             input_dict['vmin'] = args.vmin

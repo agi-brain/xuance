@@ -89,6 +89,7 @@ REGISTRY = {
     "PerDQN": PerDQN_Agent,
     "C51DQN": C51_Agent,
     "QRDQN": QRDQN_Agent,
+    "DRQN": DRQN_Agent,
 
     "RANDOM": RandomAgents,
     "IQL": IQL_Agents,

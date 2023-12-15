@@ -13,7 +13,7 @@ from .gaussian import ActorCriticPolicy as Gaussian_AC_Policy
 from .gaussian import ActorPolicy as Gaussian_Actor_Policy
 from .gaussian import PPGActorCritic as Gaussian_PPG_Policy
 from .deterministic import BasicQnetwork, C51Qnetwork, DuelQnetwork, DDPGPolicy, NoisyQnetwork, QRDQN_Network, \
-    TD3Policy, PDQNPolicy, MPDQNPolicy, SPDQNPolicy
+    TD3Policy, PDQNPolicy, MPDQNPolicy, SPDQNPolicy, DRQNPolicy
 from .gaussian import SACPolicy as Gaussian_SAC_Policy
 
 from .mixers import *
@@ -56,6 +56,7 @@ REGISTRY = {
     "PDQN_Policy": PDQNPolicy,
     "MPDQN_Policy": MPDQNPolicy,
     "SPDQN_Policy": SPDQNPolicy,
+    "DRQN_Policy": DRQNPolicy,
     # ↓ Multi-Agent DRL ↓ #
     "Basic_Q_network_marl": BasicQnetwork_marl,
     "Mixing_Q_network": MixingQnetwork,

@@ -119,12 +119,6 @@ Policy_Inputs = {
     "SPDQN_Policy": ['observation_space', 'action_space', 'representation', 'conactor_hidden_size',
                      'qnetwork_hidden_size',
                      'normalize', 'initialize', 'activation', 'device'],
-    "CDQN_Policy": ["action_space", "representation", "hidden_sizes",
-                    "normalize", "initialize", "activation", "device"],
-    "LDQN_Policy": ["action_space", "representation", "hidden_sizes",
-                    "normalize", "initialize", "activation", "device"],
-    "CLDQN_Policy": ["action_space", "representation", "hidden_sizes",
-                     "normalize", "initialize", "activation", "device"],
     #  MARL policies  #
     "Basic_Q_network_marl": ["action_space", "n_agents", "representation", "hidden_sizes",
                              "normalize", "initialize", "activation", "device"],
