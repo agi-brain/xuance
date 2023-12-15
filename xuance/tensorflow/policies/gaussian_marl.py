@@ -144,7 +144,6 @@ class Basic_ISAC_policy(tk.Model):
                  activation: Optional[tk.layers.Layer] = None,
                  device: str = "cpu:0"
                  ):
-        assert isinstance(action_space, Box)
         super(Basic_ISAC_policy, self).__init__()
         self.action_dim = action_space.shape[0]
         self.n_agents = n_agents
@@ -218,7 +217,6 @@ class MASAC_policy(Basic_ISAC_policy):
                  activation: Optional[tk.layers.Layer] = None,
                  device: str = "cpu:0"
                  ):
-        assert isinstance(action_space, Box)
         super(MASAC_policy, self).__init__(action_space, n_agents, representation,
                                            actor_hidden_size, critic_hidden_size,
                                            normalize, initializer, activation, device)
