@@ -10,28 +10,30 @@ class PPOKL_Agent(Agent):
                  device: str = 'cpu'):
         self.render = config.render
         self.n_envs = envs.num_envs
-        self.nsteps = config.nsteps
-        self.nminibatch = config.nminibatch
-        self.nepoch = config.nepoch
+        self.n_steps = config.n_steps
+        self.n_minibatch = config.n_minibatch
+        self.n_epoch = config.n_epoch
 
         self.gamma = config.gamma
-        self.lam = config.lam
+        self.gae_lam = config.gae_lambda
         self.observation_space = envs.observation_space
         self.action_space = envs.action_space
-        self.representation_info_shape = policy.representation.output_shapes
+        self.representation_info_shape = policy.representation_actor.output_shapes
         self.auxiliary_info_shape = {"old_dist": None}
 
         self.atari = True if config.env_name == "Atari" else False
         Buffer = DummyOnPolicyBuffer_Atari if self.atari else DummyOnPolicyBuffer_Atari
+        self.buffer_size = self.n_envs * self.n_steps
+        self.batch_size = self.buffer_size // self.n_minibatch
         memory = Buffer(self.observation_space,
                         self.action_space,
-                        self.representation_info_shape,
                         self.auxiliary_info_shape,
                         self.n_envs,
-                        self.nsteps,
-                        self.nminibatch,
+                        self.n_steps,
+                        config.use_gae,
+                        config.use_advnorm,
                         self.gamma,
-                        self.lam)
+                        self.gae_lam)
         learner = PPOKL_Learner(policy,
                                 optimizer,
                                 config.device,
@@ -55,28 +57,45 @@ class PPOKL_Agent(Agent):
             step_info = {}
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
-            acts, rets, dists = self._action(obs)
+            acts, values, dists = self._action(obs)
             next_obs, rewards, terminals, trunctions, infos = self.envs.step(acts)
 
-            self.memory.store(obs, acts, self._process_reward(rewards), rets, terminals, {"old_dist": dists})
+            self.memory.store(obs, acts, self._process_reward(rewards), values, terminals, {"old_dist": dists})
             if self.memory.full:
                 _, vals, _ = self._action(self._process_observation(next_obs))
                 for i in range(self.n_envs):
-                    self.memory.finish_path(vals[i], i)
-                for _ in range(self.nminibatch * self.nepoch):
-                    obs_batch, act_batch, ret_batch, adv_batch, aux_batch = self.memory.sample()
-                    step_info = self.learner.update(obs_batch, act_batch, ret_batch, adv_batch, aux_batch['old_dist'])
-                self.memory.clear()
+                    if terminals[i]:
+                        self.memory.finish_path(0.0, i)
+                    else:
+                        self.memory.finish_path(vals[i], i)
+                indexes = np.arange(self.buffer_size)
+                for _ in range(self.n_epoch):
+                    np.random.shuffle(indexes)
+                    for start in range(0, self.buffer_size, self.batch_size):
+                        end = start + self.batch_size
+                        sample_idx = indexes[start:end]
+                        obs_batch, act_batch, ret_batch, value_batch, adv_batch, aux_batch = self.memory.sample(
+                            sample_idx)
+                        step_info = self.learner.update(obs_batch, act_batch, ret_batch, value_batch, adv_batch,
+                                                        aux_batch['old_logp'])
                 self.log_infos(step_info, self.current_step)
+                self.memory.clear()
 
+            self.returns = (1 - terminals) * self.gamma * self.returns + rewards
             obs = next_obs
             for i in range(self.n_envs):
                 if terminals[i] or trunctions[i]:
+                    self.ret_rms.update(self.returns[i:i + 1])
+                    self.returns[i] = 0.0
                     if self.atari and (~trunctions[i]):
                         pass
                     else:
+                        if terminals[i]:
+                            self.memory.finish_path(0.0, i)
+                        else:
+                            _, vals, _ = self._action(self._process_observation(next_obs))
+                            self.memory.finish_path(vals[i], i)
                         obs[i] = infos[i]["reset_obs"]
-                        self.memory.finish_path(0, i)
                         self.current_episode[i] += 1
                         if self.use_wandb:
                             step_info["Episode-Steps/env-%d" % i] = infos[i]["episode_step"]
@@ -86,7 +105,7 @@ class PPOKL_Agent(Agent):
                             step_info["Train-Episode-Rewards"] = {"env-%d" % i: infos[i]["episode_score"]}
                         self.log_infos(step_info, self.current_step)
 
-            self.current_step += 1
+            self.current_step += self.n_envs
 
     def test(self, env_fn, test_episode):
         test_envs = env_fn()
@@ -132,7 +151,10 @@ class PPOKL_Agent(Agent):
         if self.config.test_mode:
             print("Best Score: %.2f" % (best_score))
 
-        test_info = {"Test-Episode-Rewards/Mean-Score": np.mean(scores)}
+        test_info = {
+            "Test-Episode-Rewards/Mean-Score": np.mean(scores),
+            "Test-Episode-Rewards/Std-Score": np.std(scores)
+        }
         self.log_infos(test_info, self.current_step)
 
         test_envs.close()

@@ -71,6 +71,30 @@ class COMA_Agents(MARLAgents):
 
     def act(self, obs_n, *rnn_hidden, avail_actions=None, test_mode=False):
         batch_size = len(obs_n)
+        with tf.device(self.device):
+            # build critic input
+            agents_id = tf.tile(tf.expand_dims(tf.eye(self.n_agents), axis=0), multiples=(batch_size, 1, 1))
+            inputs_policy = {"obs": tf.convert_to_tensor(obs_n), "ids": agents_id}
+
+
+            # actions_n = torch.Tensor(actions_n).unsqueeze(-1).to(self.device)
+            # actions_in = torch.Tensor(actions_onehot).unsqueeze(1).to(self.device)
+            # actions_in = actions_in.view(batch_size, 1, -1).repeat(1, self.n_agents, 1)
+            # agent_mask = 1 - torch.eye(self.n_agents, device=self.device)
+            # agent_mask = agent_mask.view(-1, 1).repeat(1, self.dim_act).view(self.n_agents, -1)
+            # actions_in = actions_in * agent_mask.unsqueeze(0)
+            # if self.use_global_state:
+            #     state = torch.Tensor(state).unsqueeze(1).to(self.device).repeat(1, self.n_agents, 1)
+            #     critic_in = torch.concat([state, obs_n, actions_in], dim=-1)
+            # else:
+            #     critic_in = torch.concat([obs_n, actions_in], dim=-1)
+            # # get critic values
+            # hidden_state, values_n = self.policy.get_values(critic_in, target=True)
+            #
+            # target_values = values_n.gather(-1, actions_n.long())
+            # return hidden_state, target_values.detach().cpu().numpy()
+
+
         agents_id = tf.tile(tf.expand_dims(tf.eye(self.n_agents), axis=0), multiples=(batch_size, 1, 1))
         with tf.device(self.device):
             agents_id = tf.tile(tf.expand_dims(tf.eye(self.n_agents), axis=0), multiples=(batch_size, 1, 1))
@@ -90,11 +114,22 @@ class COMA_Agents(MARLAgents):
             actions_onehot = self.learner.onehot_action(greedy_actions, self.dim_act)
             return greedy_actions.numpy(), actions_onehot.numpy()
 
-    def train(self, i_episode):
-        self.epsilon_decay.update()
-        for i in range(self.n_envs):
-            self.writer.add_scalars("epsilon", {"env-%d" % i: self.epsilon_decay.epsilon}, i_episode)
+    def train(self, i_step, **kwargs):
+        if self.egreedy >= self.end_greedy:
+            self.egreedy = self.start_greedy - self.delta_egreedy * i_step
+        info_train = {}
         if self.memory.full:
-            sample = self.memory.sample()
-            self.learner.update(sample)
-        # self.memory.clear()
+            indexes = np.arange(self.buffer_size)
+            for _ in range(self.n_epoch):
+                np.random.shuffle(indexes)
+                for start in range(0, self.buffer_size, self.batch_size):
+                    end = start + self.batch_size
+                    sample_idx = indexes[start:end]
+                    sample = self.memory.sample(sample_idx)
+                    if self.use_recurrent:
+                        info_train = self.learner.update_recurrent(sample, self.egreedy)
+                    else:
+                        info_train = self.learner.update(sample, self.egreedy)
+            self.memory.clear()
+        info_train["epsilon-greedy"] = self.egreedy
+        return info_train

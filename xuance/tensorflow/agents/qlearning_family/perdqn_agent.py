@@ -20,7 +20,6 @@ class PerDQN_Agent(Agent):
 
         self.observation_space = envs.observation_space
         self.action_space = envs.action_space
-        self.representation_info_shape = policy.representation.output_shapes
         self.auxiliary_info_shape = {}
 
         self.PER_beta0 = config.PER_beta0
@@ -29,11 +28,10 @@ class PerDQN_Agent(Agent):
         self.atari = True if config.env_name == "Atari" else False
         memory = PerOffPolicyBuffer(self.observation_space,
                                     self.action_space,
-                                    self.representation_info_shape,
                                     self.auxiliary_info_shape,
                                     self.n_envs,
-                                    config.nsize,
-                                    config.batchsize,
+                                    config.n_size,
+                                    config.batch_size,
                                     config.PER_alpha)
         learner = PerDQN_Learner(policy,
                                  optimizer,
@@ -69,6 +67,7 @@ class PerDQN_Agent(Agent):
                 td_error, step_info = self.learner.update(obs_batch, act_batch, rew_batch, next_batch, terminal_batch)
                 self.memory.update_priorities(idxes, td_error)
                 step_info["epsilon-greedy"] = self.egreedy
+                self.log_infos(step_info, self.current_step)
             self.PER_beta += (1 - self.PER_beta0) / train_steps
 
             obs = next_obs
@@ -136,7 +135,10 @@ class PerDQN_Agent(Agent):
         if self.config.test_mode:
             print("Best Score: %.2f" % (best_score))
 
-        test_info = {"Test-Episode-Rewards/Mean-Score": np.mean(scores)}
+        test_info = {
+            "Test-Episode-Rewards/Mean-Score": np.mean(scores),
+            "Test-Episode-Rewards/Std-Score": np.std(scores)
+        }
         self.log_infos(test_info, self.current_step)
 
         test_envs.close()

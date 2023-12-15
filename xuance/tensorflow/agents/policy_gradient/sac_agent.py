@@ -20,16 +20,14 @@ class SAC_Agent(Agent):
 
         self.observation_space = envs.observation_space
         self.action_space = envs.action_space
-        self.representation_info_shape = policy.representation.output_shapes
         self.auxiliary_info_shape = {}
 
         memory = DummyOffPolicyBuffer(self.observation_space,
                                       self.action_space,
-                                      self.representation_info_shape,
                                       self.auxiliary_info_shape,
                                       self.n_envs,
-                                      config.nsize,
-                                      config.batchsize)
+                                      config.n_size,
+                                      config.batch_size)
         learner = SAC_Learner(policy,
                               optimizer,
                               config.device,
@@ -59,6 +57,7 @@ class SAC_Agent(Agent):
             if (self.current_step > self.start_training) and (self.current_step % self.train_frequency == 0):
                 obs_batch, act_batch, rew_batch, terminal_batch, next_batch = self.memory.sample()
                 step_info = self.learner.update(obs_batch, act_batch, rew_batch, next_batch, terminal_batch)
+                self.log_infos(step_info, self.current_step)
 
             self.returns = self.gamma * self.returns + rewards
             obs = next_obs
@@ -76,7 +75,7 @@ class SAC_Agent(Agent):
                         step_info["Train-Episode-Rewards"] = {"env-%d" % i: infos[i]["episode_score"]}
                     self.log_infos(step_info, self.current_step)
 
-            self.current_step += 1
+            self.current_step += self.n_envs
 
     def test(self, env_fn, test_episodes):
         test_envs = env_fn()
@@ -119,7 +118,10 @@ class SAC_Agent(Agent):
         if self.config.test_mode:
             print("Best Score: %.2f" % (best_score))
 
-        test_info = {"Test-Episode-Rewards/Mean-Score": np.mean(scores)}
+        test_info = {
+            "Test-Episode-Rewards/Mean-Score": np.mean(scores),
+            "Test-Episode-Rewards/Std-Score": np.std(scores)
+        }
         self.log_infos(test_info, self.current_step)
 
         test_envs.close()

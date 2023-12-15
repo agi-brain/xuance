@@ -20,18 +20,16 @@ class NoisyDQN_Agent(Agent):
 
         self.observation_space = envs.observation_space
         self.action_space = envs.action_space
-        self.representation_info_shape = policy.representation.output_shapes
         self.auxiliary_info_shape = {}
 
         self.atari = True if config.env_name == "Atari" else False
         Buffer = DummyOffPolicyBuffer_Atari if self.atari else DummyOffPolicyBuffer
         memory = Buffer(self.observation_space,
                         self.action_space,
-                        self.representation_info_shape,
                         self.auxiliary_info_shape,
                         self.n_envs,
-                        config.nsize,
-                        config.batchsize)
+                        config.n_size,
+                        config.batch_size)
         learner = DQN_Learner(policy,
                               optimizer,
                               config.device,
@@ -41,6 +39,7 @@ class NoisyDQN_Agent(Agent):
         super(NoisyDQN_Agent, self).__init__(config, envs, policy, memory, learner, device, config.log_dir, config.model_dir)
 
     def _action(self, obs):
+        self.policy.noise_scale = self.noise_scale
         _, argmax_action, _ = self.policy(obs)
         action = argmax_action.numpy()
         return action
@@ -60,6 +59,7 @@ class NoisyDQN_Agent(Agent):
                 obs_batch, act_batch, rew_batch, terminal_batch, next_batch = self.memory.sample()
                 self.policy.noise_scale = self.noise_scale
                 step_info = self.learner.update(obs_batch, act_batch, rew_batch, next_batch, terminal_batch)
+                self.log_infos(step_info, self.current_step)
 
             obs = next_obs
             for i in range(self.n_envs):
@@ -128,7 +128,10 @@ class NoisyDQN_Agent(Agent):
         if self.config.test_mode:
             print("Best Score: %.2f" % (best_score))
 
-        test_info = {"Test-Episode-Rewards/Mean-Score": np.mean(scores)}
+        test_info = {
+            "Test-Episode-Rewards/Mean-Score": np.mean(scores),
+            "Test-Episode-Rewards/Std-Score": np.std(scores)
+        }
         self.log_infos(test_info, self.current_step)
 
         test_envs.close()

@@ -8,8 +8,8 @@ class DDPG_Agent(Agent):
                  policy: tk.Model,
                  optimizer: Sequence[tk.optimizers.Optimizer],
                  device: str = 'cpu'):
-        self.n_envs = envs.num_envs
         self.render = config.render
+        self.n_envs = envs.num_envs
 
         self.gamma = config.gamma
         self.train_frequency = config.training_frequency
@@ -17,19 +17,18 @@ class DDPG_Agent(Agent):
         self.start_noise = config.start_noise
         self.end_noise = config.end_noise
         self.noise_scale = config.start_noise
+        self.delta_noise = (self.start_noise - self.end_noise) / (config.running_steps / self.n_envs)
 
         self.observation_space = envs.observation_space
         self.action_space = envs.action_space
-        self.representation_info_shape = policy.representation.output_shapes
         self.auxiliary_info_shape = {}
 
         memory = DummyOffPolicyBuffer(self.observation_space,
                                       self.action_space,
-                                      self.representation_info_shape,
                                       self.auxiliary_info_shape,
                                       self.n_envs,
-                                      config.nsize,
-                                      config.batchsize)
+                                      config.n_size,
+                                      config.batch_size)
         learner = DDPG_Learner(policy,
                                optimizer,
                                config.device,
@@ -76,9 +75,9 @@ class DDPG_Agent(Agent):
                         step_info["Train-Episode-Rewards"] = {"env-%d" % i: infos[i]["episode_score"]}
                     self.log_infos(step_info, self.current_step)
 
-            self.current_step += 1
+            self.current_step += self.n_envs
             if self.noise_scale >= self.end_noise:
-                self.noise_scale = self.noise_scale - (self.start_noise - self.end_noise) / self.config.training_steps
+                self.noise_scale = self.noise_scale - self.delta_noise
 
     def test(self, env_fn, test_episodes):
         test_envs = env_fn()
@@ -121,7 +120,10 @@ class DDPG_Agent(Agent):
         if self.config.test_mode:
             print("Best Score: %.2f" % (best_score))
 
-        test_info = {"Test-Episode-Rewards/Mean-Score": np.mean(scores)}
+        test_info = {
+            "Test-Episode-Rewards/Mean-Score": np.mean(scores),
+            "Test-Episode-Rewards/Std-Score": np.std(scores)
+        }
         self.log_infos(test_info, self.current_step)
 
         test_envs.close()

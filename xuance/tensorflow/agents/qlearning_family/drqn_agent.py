@@ -20,16 +20,15 @@ class DRQN_Agent(Agent):
 
         self.observation_space = envs.observation_space
         self.action_space = envs.action_space
-        self.representation_info_shape = policy.representation.output_shapes
         self.auxiliary_info_shape = {}
+
         self.atari = True if config.env_name == "Atari" else False
         memory = RecurrentOffPolicyBuffer(self.observation_space,
                                           self.action_space,
-                                          self.representation_info_shape,
                                           self.auxiliary_info_shape,
                                           self.n_envs,
-                                          config.nsize,
-                                          config.batchsize,
+                                          config.n_size,
+                                          config.batch_size,
                                           episode_length=envs.max_episode_length,
                                           lookup_length=config.lookup_length)
         learner = DRQN_Learner(policy,
@@ -69,6 +68,7 @@ class DRQN_Agent(Agent):
                 obs_batch, act_batch, rew_batch, terminal_batch = self.memory.sample()
                 step_info = self.learner.update(obs_batch, act_batch, rew_batch, terminal_batch)
                 step_info["epsilon-greedy"] = self.egreedy
+                self.log_infos(step_info, self.current_step)
 
             obs = next_obs
             for i in range(self.n_envs):
@@ -142,7 +142,10 @@ class DRQN_Agent(Agent):
         if self.config.test_mode:
             print("Best Score: %.2f" % (best_score))
 
-        test_info = {"Test-Episode-Rewards/Mean-Score": np.mean(scores)}
+        test_info = {
+            "Test-Episode-Rewards/Mean-Score": np.mean(scores),
+            "Test-Episode-Rewards/Std-Score": np.std(scores)
+        }
         self.log_infos(test_info, self.current_step)
 
         test_envs.close()

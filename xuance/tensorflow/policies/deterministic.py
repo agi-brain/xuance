@@ -166,7 +166,7 @@ class BasicQnetwork(tk.Model):
                                      normalize, initializer, activation, device)
         self.target_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, hidden_size,
                                        normalize, initializer, activation, device)
-        self.copy_target()
+        self.target_Qhead.set_weights(self.eval_Qhead.get_weights())
 
     def call(self, observation: tf.Tensor, **kwargs):
         outputs = self.representation(observation)
@@ -299,6 +299,7 @@ class C51Qnetwork(tk.Model):
                                    hidden_size, normalize, initialize, activation, device)
         self.target_Zhead = C51Qhead(self.representation.output_shapes['state'][0], self.action_dim, self.atom_num,
                                      hidden_size, normalize, initialize, activation, device)
+        self.target_Zhead.set_weights(self.eval_Zhead.get_weights())
         self.supports = tf.cast(tf.linspace(self.vmin, self.vmax, self.atom_num), dtype=tf.float32)
         self.deltaz = (vmax - vmin) / (atom_num - 1)
 

@@ -17,21 +17,18 @@ class SACDIS_Agent(Agent):
         self.start_noise = config.start_noise
         self.end_noise = config.end_noise
         self.noise_scale = config.start_noise
-        # assert self.action_type == "DISCRETE"
 
         self.observation_space = envs.observation_space
         self.action_space = envs.action_space
-        self.representation_info_shape = policy.representation.output_shapes
         self.auxiliary_info_shape = {}
         self.atari = True if config.env_name == "Atari" else False
         Buffer = DummyOffPolicyBuffer_Atari if self.atari else DummyOffPolicyBuffer
         memory = Buffer(self.observation_space,
                         self.action_space,
-                        self.representation_info_shape,
                         self.auxiliary_info_shape,
                         self.n_envs,
-                        config.nsize,
-                        config.batchsize)
+                        config.n_size,
+                        config.batch_size)
         learner = SACDIS_Learner(policy,
                                  optimizer,
                                  config.device,
@@ -59,8 +56,9 @@ class SACDIS_Agent(Agent):
             if self.current_step > self.start_training and self.current_step % self.train_frequency == 0:
                 obs_batch, act_batch, rew_batch, terminal_batch, next_batch = self.memory.sample()
                 step_info = self.learner.update(obs_batch, act_batch, rew_batch, next_batch, terminal_batch)
+                self.log_infos(step_info, self.current_step)
 
-            returns = self.gamma * self.returns + rewards
+            self.returns = self.gamma * self.returns + rewards
             obs = next_obs
             for i in range(self.n_envs):
                 if terminals[i] or trunctions[i]:
@@ -78,7 +76,7 @@ class SACDIS_Agent(Agent):
                             step_info["Episode-Steps"] = {"env-%d" % i: infos[i]["episode_step"]}
                             step_info["Train-Episode-Rewards"] = {"env-%d" % i: infos[i]["episode_score"]}
                         self.log_infos(step_info, self.current_step)
-            self.current_step += 1
+            self.current_step += self.n_envs
 
     def test(self, env_fn, test_episodes):
         test_envs = env_fn()
@@ -124,7 +122,10 @@ class SACDIS_Agent(Agent):
         if self.config.test_mode:
             print("Best Score: %.2f" % (best_score))
 
-        test_info = {"Test-Episode-Rewards/Mean-Score": np.mean(scores)}
+        test_info = {
+            "Test-Episode-Rewards/Mean-Score": np.mean(scores),
+            "Test-Episode-Rewards/Std-Score": np.std(scores)
+        }
         self.log_infos(test_info, self.current_step)
 
         test_envs.close()

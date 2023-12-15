@@ -5,14 +5,13 @@ class DDQN_Learner(Learner):
     def __init__(self,
                  policy: tk.Model,
                  optimizer: tk.optimizers.Optimizer,
-                 summary_writer: Optional[SummaryWriter] = None,
                  device: str = "cpu:0",
                  model_dir: str = "./",
                  gamma: float = 0.99,
                  sync_frequency: int = 100):
         self.gamma = gamma
         self.sync_frequency = sync_frequency
-        super(DDQN_Learner, self).__init__(policy, optimizer, summary_writer, device, model_dir)
+        super(DDQN_Learner, self).__init__(policy, optimizer, device, model_dir)
 
     def update(self, obs_batch, act_batch, rew_batch, next_batch, terminal_batch):
         self.iterations += 1
@@ -44,6 +43,11 @@ class DDQN_Learner(Learner):
                 self.policy.copy_target()
 
             lr = self.optimizer._decayed_lr(tf.float32)
-            self.writer.add_scalar("Qloss", loss.numpy(), self.iterations)
-            self.writer.add_scalar("predictQ", tf.math.reduce_mean(predictQ).numpy(), self.iterations)
-            self.writer.add_scalar("lr", lr.numpy(), self.iterations)
+
+            info = {
+                "Qloss": loss.numpy(),
+                "predictQ": tf.math.reduce_mean(predictQ).numpy(),
+                "lr": lr.numpy()
+            }
+
+            return info
