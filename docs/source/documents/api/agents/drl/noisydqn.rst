@@ -104,6 +104,7 @@ NoisyDQN_Agent
     :type test_episodes: xxxxxx
     :return: xxxxxx.
     :rtype: xxxxxx
+
 .. raw:: html
 
     <br><hr>
