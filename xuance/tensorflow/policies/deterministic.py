@@ -201,7 +201,7 @@ class DuelQnetwork(tk.Model):
                                     normalize, initialize, activation, device)
         self.target_Qhead = DuelQhead(self.representation.output_shapes['state'][0], self.action_dim, hidden_size,
                                       normalize, initialize, activation, device)
-        self.copy_target()
+        self.target_Qhead.set_weights(self.eval_Qhead.get_weights())
 
     def call(self, observation: Union[np.ndarray, dict], **kwargs):
         outputs = self.representation(observation)
