@@ -92,13 +92,13 @@ PerDQN_Agent
     :rtype: xxxxxx
 
 .. py:function::
-    xuance.mindspore.agents.qlearning_family.noisydqn_agent.NoisyDQN_Agent.train(train_steps)
+    xuance.mindspore.agents.qlearning_family.perdqn_agent.PerDQN_Agent.train(train_steps)
 
     :param train_steps: xxxxxx.
     :type train_steps: xxxxxx
 
 .. py:function::
-    xuance.mindspore.agents.qlearning_family.noisydqn_agent.NoisyDQN_Agent.test(env_fn,test_episodes)
+    xuance.mindspore.agents.qlearning_family.perdqn_agent.PerDQN_Agent.test(env_fn,test_episodes)
 
     :param env_fn: xxxxxx.
     :type env_fn: xxxxxx
