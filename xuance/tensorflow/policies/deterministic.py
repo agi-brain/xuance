@@ -238,7 +238,7 @@ class NoisyQnetwork(tk.Model):
                                      normalize, initialize, activation, device)
         self.target_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, hidden_size,
                                        normalize, initialize, activation, device)
-        self.copy_target()
+        self.target_Qhead.set_weights(self.eval_Qhead.get_weights())
         self.noise_scale = 0.0
 
     def update_noise(self, noisy_bound: float = 0.0):
@@ -252,6 +252,7 @@ class NoisyQnetwork(tk.Model):
 
     def call(self, observation: Union[np.ndarray, dict], **kwargs):
         outputs = self.representation(observation)
+        self.update_noise(self.noise_scale)
         for parameter, noise_param in zip(self.eval_Qhead.variables, self.eval_noise_parameter):
             parameter.assign_add(noise_param)
         evalQ = self.eval_Qhead(outputs['state'])
