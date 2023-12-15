@@ -87,9 +87,16 @@ class PPG_Agent(Agent):
                                                                     aux_batch['old_dist']))
 
                 # update old_prob
-                buffer_obs = self.memory.observations
+                buffer_obs_shape = self.memory.observations.shape
+                buffer_obs = self.memory.observations.reshape([-1, buffer_obs_shape[-1]])
                 buffer_act = self.memory.actions
-                _, new_dist, _, _ = self.policy(buffer_obs)
+                _, new_logits, _, _ = self.policy(buffer_obs)
+                try:
+                    self.policy.actor.dist.set_param(tf.reshape(new_logits, buffer_obs_shape[0:-1] + (-1,)))
+                except:
+                    new_std = tf.math.exp(self.policy.actor.logstd)
+                    self.policy.actor.dist.set_param(tf.reshape(new_logits, buffer_obs_shape[0:-1] + (-1,)), new_std)
+                new_dist = self.policy.actor.dist
                 self.memory.auxiliary_infos['old_dist'] = split_distributions(new_dist)
                 for _ in range(self.aux_nepoch):
                     np.random.shuffle(indexes)

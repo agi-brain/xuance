@@ -78,7 +78,7 @@ class ActorCriticPolicy(tk.Model):
         return outputs, a, v
 
 
-class ActorPolicy(tf.Module):
+class ActorPolicy(tk.Model):
     def __init__(self,
                  action_space: Space,
                  representation: tk.Model,
@@ -88,7 +88,6 @@ class ActorPolicy(tf.Module):
                  activation: Optional[tk.layers.Layer] = None,
                  device: str = "cpu:0",
                  fixed_std: bool = True):
-        assert isinstance(action_space, Box)
         super(ActorPolicy, self).__init__()
         self.action_dim = action_space.shape[0]
         self.representation = representation
@@ -112,12 +111,11 @@ class PPGActorCritic(tk.Model):
                  initializer: Optional[tk.initializers.Initializer] = None,
                  activation: Optional[tk.layers.Layer] = None,
                  device: str = "cpu:0"):
-        assert isinstance(action_space, Box)
         super(PPGActorCritic, self).__init__()
         self.action_dim = action_space.shape[0]
-        self.policy_representation = representation
+        self.actor_representation = representation
         self.critic_representation = copy.deepcopy(representation)
-        self.representation_info_shape = self.policy_representation.output_shapes
+        self.representation_info_shape = self.actor_representation.output_shapes
         self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size,
                               normalize, initializer, activation, device)
         self.critic = CriticNet(representation.output_shapes['state'][0], critic_hidden_size,
@@ -126,7 +124,7 @@ class PPGActorCritic(tk.Model):
                                     normalize, initializer, activation, device)
 
     def call(self, observation: Union[np.ndarray, dict], **kwargs):
-        policy_outputs = self.policy_representation(observation)
+        policy_outputs = self.actor_representation(observation)
         critic_outputs = self.critic_representation(observation)
         a = self.actor(policy_outputs['state'])
         v = self.critic(critic_outputs['state'])

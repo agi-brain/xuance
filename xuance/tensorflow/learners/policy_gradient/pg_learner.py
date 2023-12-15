@@ -16,7 +16,7 @@ class PG_Learner(Learner):
     def update(self, obs_batch, act_batch, ret_batch):
         self.iterations += 1
         with tf.device(self.device):
-            act_batch = tf.convert_to_tensor(act_batch, dtype=tf.int32)
+            act_batch = tf.convert_to_tensor(act_batch, dtype=tf.float32)
             ret_batch = tf.convert_to_tensor(ret_batch)
 
             with tf.GradientTape() as tape:

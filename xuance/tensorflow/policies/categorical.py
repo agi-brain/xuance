@@ -111,7 +111,7 @@ class PPGActorCritic(tk.Model):
         self.actor_representation = representation
         self.critic_representation = copy.deepcopy(representation)
         self.aux_critic_representation = copy.deepcopy(representation)
-        self.representation_info_shape = self.policy_representation.output_shapes
+        self.representation_info_shape = self.actor_representation.output_shapes
 
         self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size,
                               normalize, initializer, activation, device)

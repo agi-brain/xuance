@@ -72,7 +72,7 @@ class PPG_Learner(Learner):
                 ])
             lr_critic = self.optimizer._decayed_lr(tf.float32)
             info = {
-                "critic-loss": loss.item(),
+                "critic-loss": loss.numpy(),
                 "lr_critic": lr_critic.numpy()
             }
             self.value_iterations += 1
