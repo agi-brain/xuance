@@ -586,8 +586,8 @@ class PDQNPolicy(tk.Model):
         return policy_q
 
     def soft_update(self, tau=0.005):
-        for ep, tp in zip(self.representation.variables, self.target_representation.variables):
-            tp.assign((1 - tau) * tp + tau * ep)
+        # for ep, tp in zip(self.representation.variables, self.target_representation.variables):
+        #     tp.assign((1 - tau) * tp + tau * ep)
         for ep, tp in zip(self.conactor.variables, self.target_conactor.variables):
             tp.assign((1 - tau) * tp + tau * ep)
         for ep, tp in zip(self.qnetwork.variables, self.target_qnetwork.variables):

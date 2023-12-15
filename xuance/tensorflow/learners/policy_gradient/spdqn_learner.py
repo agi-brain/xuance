@@ -4,14 +4,13 @@ class SPDQN_Learner(Learner):
     def __init__(self,
                  policy: tk.Model,
                  optimizers: Sequence[tk.optimizers.Optimizer],
-                 summary_writer: Optional[SummaryWriter] = None,
                  device: str = "cpu:0",
                  model_dir: str = "./",
                  gamma: float = 0.99,
                  tau: float = 0.01):
         self.tau = tau
         self.gamma = gamma
-        super(SPDQN_Learner, self).__init__(policy, optimizers, summary_writer, device, model_dir)
+        super(SPDQN_Learner, self).__init__(policy, optimizers, device, model_dir)
 
     def save_model(self):
         model_path = self.model_dir + "model-%s-%s" % (time.asctime(), str(self.iterations))
@@ -80,6 +79,10 @@ class SPDQN_Learner(Learner):
 
             self.policy.soft_update(self.tau)
 
-            self.writer.add_scalar("Q_loss", q_loss.numpy(), self.iterations)
-            self.writer.add_scalar("P_loss", q_loss.numpy(), self.iterations)
-            self.writer.add_scalar('Qvalue', tf.math.reduce_mean(eval_q).numpy(), self.iterations)
+            info = {
+                "Q_loss": q_loss.numpy(),
+                "P_loss": q_loss.numpy(),
+                'Qvalue': tf.math.reduce_mean(eval_q).numpy()
+            }
+
+            return info

@@ -75,6 +75,10 @@ class PDQN_Learner(Learner):
 
             self.policy.soft_update(self.tau)
 
-            self.writer.add_scalar("Q_loss", q_loss.numpy(), self.iterations)
-            self.writer.add_scalar("P_loss", q_loss.numpy(), self.iterations)
-            self.writer.add_scalar('Qvalue', tf.math.reduce_mean(eval_q).numpy(), self.iterations)
+            info = {
+                "Q_loss": q_loss.numpy(),
+                "P_loss": q_loss.numpy(),
+                'Qvalue': tf.math.reduce_mean(eval_q).numpy()
+            }
+
+            return info

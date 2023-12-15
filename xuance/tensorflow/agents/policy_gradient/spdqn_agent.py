@@ -17,6 +17,12 @@ class SPDQN_Agent(Agent):
         self.gamma = config.gamma
         self.train_frequency = config.training_frequency
         self.start_training = config.start_training
+        self.start_greedy = config.start_greedy
+        self.end_greedy = config.end_greedy
+        self.egreedy = config.start_greedy
+
+        self.train_frequency = config.training_frequency
+        self.start_training = config.start_training
         self.start_noise = config.start_noise
         self.end_noise = config.end_noise
         self.noise_scale = config.start_noise
@@ -58,8 +64,6 @@ class SPDQN_Agent(Agent):
         self.conact_sizes = np.array([self.action_space.spaces[i].shape[0] for i in range(1, self.num_disact + 1)])
         self.conact_size = int(self.conact_sizes.sum())
 
-        self.obs_rms = RunningMeanStd(shape=space2shape(self.observation_space), comm=self.comm, use_mpi=False)
-        self.ret_rms = RunningMeanStd(shape=(), comm=self.comm, use_mpi=False)
         super(SPDQN_Agent, self).__init__(config, envs, policy, memory, learner, device,
                                           config.log_dir, config.model_dir)
 
@@ -106,7 +110,7 @@ class SPDQN_Agent(Agent):
             self.memory.store(obs, acts, rewards, terminal, next_obs)
             if self.current_step > self.start_training and self.current_step % self.train_frequency == 0:
                 obs_batch, act_batch, rew_batch, terminal_batch, next_batch = self.memory.sample()
-                step_info = self.learner.update(obs_batch, act_batch, rew_batch, next_batch, terminal_batch)
+                step_info.update(self.learner.update(obs_batch, act_batch, rew_batch, next_batch, terminal_batch))
 
             scores += rewards
             obs = next_obs

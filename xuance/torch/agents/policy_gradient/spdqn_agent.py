@@ -98,7 +98,7 @@ class SPDQN_Agent(Agent):
             self.memory.store(obs, acts, rewards, terminal, next_obs)
             if self.current_step > self.start_training and self.current_step % self.train_frequency == 0:
                 obs_batch, act_batch, rew_batch, terminal_batch, next_batch = self.memory.sample()
-                step_info = self.learner.update(obs_batch, act_batch, rew_batch, next_batch, terminal_batch)
+                step_info.update(self.learner.update(obs_batch, act_batch, rew_batch, next_batch, terminal_batch))
 
             scores += rewards
             obs = next_obs
