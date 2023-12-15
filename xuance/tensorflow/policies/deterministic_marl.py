@@ -220,16 +220,20 @@ class Weighted_MixingQnetwork(MixingQnetwork):
                  normalize: Optional[tk.layers.Layer] = None,
                  initializer: Optional[tk.initializers.Initializer] = None,
                  activation: Optional[tk.layers.Layer] = None,
-                 device: str = "cpu:0"):
+                 device: str = "cpu:0",
+                 **kwargs):
         super(Weighted_MixingQnetwork, self).__init__(action_space, n_agents, representation, mixer, hidden_size,
-                                                      normalize, initializer, activation, device)
+                                                      normalize, initializer, activation, device, **kwargs)
         self.eval_Qhead_centralized = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim,
                                                  n_agents, hidden_size, normalize, initializer, activation, device)
         self.target_Qhead_centralized = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim,
                                                    n_agents, hidden_size, normalize, initializer, activation, device)
         self.q_feedforward = ff_mixer
         self.target_q_feedforward = ff_mixer
-        self.copy_target()
+        self.target_Qhead.set_weights(self.eval_Qhead.get_weights())
+        self.target_Qtot.set_weights(self.eval_Qtot.get_weights())
+        self.target_Qhead_centralized.set_weights(self.eval_Qhead_centralized.get_weights())
+        self.target_q_feedforward.set_weights(self.q_feedforward.get_weights())
 
     def q_centralized(self, inputs: Union[np.ndarray, dict]):
         observations = tf.reshape(inputs['obs'], [-1, self.obs_dim])
@@ -241,11 +245,12 @@ class Weighted_MixingQnetwork(MixingQnetwork):
     def target_q_centralized(self, inputs: Union[np.ndarray, dict]):
         observations = tf.reshape(inputs['obs'], [-1, self.obs_dim])
         IDs = tf.reshape(inputs['ids'], [-1, self.n_agents])
-        outputs = self.representation(observations)
+        outputs = self.target_representation(observations)
         q_inputs = tf.concat([outputs['state'], IDs], axis=-1)
         return tf.reshape(self.target_Qhead_centralized(q_inputs), [-1, self.n_agents, self.action_dim])
 
     def copy_target(self):
+        self.target_representation.set_weights(self.representation.get_weights())
         self.target_Qhead.set_weights(self.eval_Qhead.get_weights())
         self.target_Qtot.set_weights(self.eval_Qtot.get_weights())
         self.target_Qhead_centralized.set_weights(self.eval_Qhead_centralized.get_weights())
