@@ -5,14 +5,13 @@ class PerDQN_Learner(Learner):
     def __init__(self,
                  policy: tk.Model,
                  optimizer: tk.optimizers.Optimizer,
-                 summary_writer: Optional[SummaryWriter] = None,
                  device: str = "cpu:0",
                  model_dir: str = "./",
                  gamma: float = 0.99,
                  sync_frequency: int = 100):
         self.gamma = gamma
         self.sync_frequency = sync_frequency
-        super(PerDQN_Learner, self).__init__(policy, optimizer, summary_writer, device, model_dir)
+        super(PerDQN_Learner, self).__init__(policy, optimizer, device, model_dir)
 
     def update(self, obs_batch, act_batch, rew_batch, next_batch, terminal_batch):
         self.iterations += 1
@@ -22,8 +21,8 @@ class PerDQN_Learner(Learner):
             ter_batch = tf.convert_to_tensor(terminal_batch)
 
             with tf.GradientTape() as tape:
-                _, _, evalQ, _ = self.policy(obs_batch)
-                _, _, _, targetQ = self.policy(next_batch)
+                _, _, evalQ = self.policy(obs_batch)
+                _, _, targetQ = self.policy.target(next_batch)
                 targetQ = tf.math.reduce_max(targetQ, axis=-1)
                 targetQ = rew_batch + self.gamma * (1 - ter_batch) * targetQ
                 targetQ = tf.stop_gradient(targetQ)
@@ -43,8 +42,11 @@ class PerDQN_Learner(Learner):
                 self.policy.copy_target()
 
             lr = self.optimizer._decayed_lr(tf.float32)
-            self.writer.add_scalar("Qloss", loss.numpy(), self.iterations)
-            self.writer.add_scalar("predictQ", tf.math.reduce_mean(predictQ).numpy(), self.iterations)
-            self.writer.add_scalar("lr", lr.numpy(), self.iterations)
 
-            return np.abs(td_error.numpy())
+            info = {
+                "Qloss": loss.numpy(),
+                "predictQ": tf.math.reduce_mean(predictQ).numpy(),
+                "lr": lr.numpy()
+            }
+
+            return np.abs(td_error.numpy()), info
