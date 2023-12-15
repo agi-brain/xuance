@@ -287,7 +287,6 @@ Source Code
                 return scores
 
 
-
   .. group-tab:: TensorFlow
 
     .. code-block:: python3
@@ -468,3 +467,4 @@ Source Code
                     test_envs.close()
 
                     return scores
+
