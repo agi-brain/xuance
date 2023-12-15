@@ -15,7 +15,7 @@ class PPOCLIP_Learner(Learner):
         self.ent_coef = ent_coef
         self.clip_range = clip_range
 
-    def update(self, obs_batch, act_batch, ret_batch, adv_batch, old_logp):
+    def update(self, obs_batch, act_batch, ret_batch, value_batch, adv_batch, old_logp):
         self.iterations += 1
         with tf.device(self.device):
             act_batch = tf.convert_to_tensor(act_batch)

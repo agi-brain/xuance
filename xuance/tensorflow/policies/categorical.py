@@ -199,7 +199,7 @@ class SACDISPolicy(tk.Model):
         self.target_representation_critic = copy.deepcopy(self.representation_critic)
         self.target_critic = CriticNet_SACDIS(representation.output_shapes['state'][0], self.action_dim,
                                               critic_hidden_size, initializer, activation, device)
-        self.soft_update(tau=1.0)
+        self.target_critic.set_weights(self.critic.get_weights())
 
     def call(self, observation: Union[np.ndarray, dict], **kwargs):
         outputs = self.representation(observation)

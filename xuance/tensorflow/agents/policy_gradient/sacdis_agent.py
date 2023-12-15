@@ -39,7 +39,7 @@ class SACDIS_Agent(Agent):
                                            config.model_dir)
 
     def _action(self, obs):
-        _, act_prob, act_distribution = self.policy.action(obs)
+        _, act_prob, act_distribution = self.policy(obs)
         action = act_distribution.sample()
         action = action.numpy()
         return action
