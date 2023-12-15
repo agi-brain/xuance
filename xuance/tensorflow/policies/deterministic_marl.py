@@ -485,7 +485,6 @@ class MADDPG_policy(Basic_DDPG_policy):
                  activation: Optional[tk.layers.Layer] = None,
                  device: str = "cpu:0"
                  ):
-        assert isinstance(action_space, Box)
         super(MADDPG_policy, self).__init__(action_space, n_agents, representation,
                                             actor_hidden_size, critic_hidden_size,
                                             normalize, initializer, activation, device)
