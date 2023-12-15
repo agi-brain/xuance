@@ -17,12 +17,6 @@ class SPDQN_Agent(Agent):
         self.gamma = config.gamma
         self.train_frequency = config.training_frequency
         self.start_training = config.start_training
-        self.start_greedy = config.start_greedy
-        self.end_greedy = config.end_greedy
-        self.egreedy = config.start_greedy
-
-        self.train_frequency = config.training_frequency
-        self.start_training = config.start_training
         self.start_noise = config.start_noise
         self.end_noise = config.end_noise
         self.noise_scale = config.start_noise
