@@ -14,8 +14,9 @@ class VDN_mixer(tk.Model):
 
 
 class QMIX_mixer(tk.Model):
-    def __init__(self, dim_state, dim_hidden, dim_hypernet_hidden, n_agents):
+    def __init__(self, dim_state, dim_hidden, dim_hypernet_hidden, n_agents, device):
         super(QMIX_mixer, self).__init__()
+        self.device = device
         self.dim_state = dim_state
         self.dim_hidden = dim_hidden
         self.dim_hypernet_hidden = dim_hypernet_hidden
