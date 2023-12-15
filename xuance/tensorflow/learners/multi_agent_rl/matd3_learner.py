@@ -64,7 +64,7 @@ class MATD3_Learner(LearnerMAS):
                 loss_c = tk.losses.mean_squared_error(y_true, y_pred)
                 gradients = tape.gradient(loss_c, self.policy.critic_parameters)
                 self.optimizer['critic'].apply_gradients([
-                    (tf.clip_by_norm(grad, self.args.clip_grad), var)
+                    (tf.clip_by_norm(grad, self.args.grad_clip_norm), var)
                     for (grad, var) in zip(gradients, self.policy.critic_parameters)
                     if grad is not None
                 ])
@@ -78,7 +78,7 @@ class MATD3_Learner(LearnerMAS):
                     p_loss = -tf.reduce_mean(policy_q)
                     gradients = tape.gradient(p_loss, self.policy.actor_net.trainable_variables)
                     self.optimizer['actor'].apply_gradients([
-                        (tf.clip_by_norm(grad, self.args.clip_grad), var)
+                        (tf.clip_by_norm(grad, self.args.grad_clip_norm), var)
                         for (grad, var) in zip(gradients, self.policy.actor_net.trainable_variables)
                         if grad is not None
                     ])
