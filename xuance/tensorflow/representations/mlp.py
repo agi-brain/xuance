@@ -46,10 +46,6 @@ class Basic_MLP(tk.Model):
 
     def call(self, observations: np.ndarray, **kwargs):
         with tf.device(self.device):
-            shape = observations.shape
-            observations_in = tf.reshape(observations, [-1, shape[-1]])
-            tensor_observation = tf.convert_to_tensor(observations_in, dtype=tf.float32)
-            output = self.model(tensor_observation)
-            output_state = tf.reshape(output, shape[:-1] + self.output_shapes['state'])
-            return {'state': output_state}
+            tensor_observation = tf.convert_to_tensor(observations, dtype=tf.float32)
+            return {'state': self.model(tensor_observation)}
 

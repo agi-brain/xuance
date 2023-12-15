@@ -810,13 +810,16 @@ class DRQNPolicy(tk.Model):
         if self.cnn:
             obs_shape = observation.shape
             outputs = self.representation(observation.reshape((-1,) + obs_shape[-3:]))
-            outputs['state'] = outputs['state'].reshape(obs_shape[0:-3] + (-1,))
+            output_states = outputs['state'].reshape(obs_shape[0:-3] + (-1,))
         else:
-            outputs = self.representation(observation)
+            obs_shape = observation.shape
+            observations_in = tf.reshape(observation, [-1, obs_shape[-1]])
+            outputs = self.representation(observations_in)
+            output_states = tf.reshape(outputs['state'], obs_shape[:-1] + self.representation.output_shapes['state'])
         if self.lstm:
-            hidden_states, cell_states, evalQ = self.eval_Qhead(outputs['state'])
+            hidden_states, cell_states, evalQ = self.eval_Qhead(output_states)
         else:
-            hidden_states, evalQ = self.eval_Qhead(outputs['state'])
+            hidden_states, evalQ = self.eval_Qhead(output_states)
             cell_states = None
         argmax_action = tf.math.argmax(evalQ[:, -1], axis=-1)
         return outputs, argmax_action, evalQ, (hidden_states, cell_states)
@@ -825,13 +828,16 @@ class DRQNPolicy(tk.Model):
         if self.cnn:
             obs_shape = observation.shape
             outputs = self.target_representation(observation.reshape((-1,) + obs_shape[-3:]))
-            outputs['state'] = outputs['state'].reshape(obs_shape[0:-3] + (-1,))
+            output_states = outputs['state'].reshape(obs_shape[0:-3] + (-1,))
         else:
-            outputs = self.target_representation(observation)
+            obs_shape = observation.shape
+            observations_in = tf.reshape(observation, [-1, obs_shape[-1]])
+            outputs = self.target_representation(observations_in)
+            output_states = tf.reshape(outputs['state'], obs_shape[:-1] + self.representation.output_shapes['state'])
         if self.lstm:
-            hidden_states, cell_states, targetQ = self.target_Qhead(outputs['state'])
+            hidden_states, cell_states, targetQ = self.target_Qhead(output_states)
         else:
-            hidden_states, targetQ = self.target_Qhead(outputs['state'])
+            hidden_states, targetQ = self.target_Qhead(output_states)
             cell_states = None
         argmax_action = tf.math.argmax(targetQ, axis=-1)
         return outputs, argmax_action, targetQ, (hidden_states, cell_states)
