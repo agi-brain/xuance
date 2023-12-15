@@ -277,7 +277,6 @@ Source Code
 
                 return scores
 
-
   .. group-tab:: TensorFlow
 
     .. code-block:: python3
