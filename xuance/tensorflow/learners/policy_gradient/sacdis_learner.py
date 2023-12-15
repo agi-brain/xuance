@@ -46,7 +46,7 @@ class SACDIS_Learner(Learner):
                 _, action_q = self.policy.Qaction(obs_batch)
                 action_q = tf.gather(params=action_q, indices=act_batch, axis=-1, batch_dims=-1)
                 # with torch.no_grad():
-                _, action_prob_next, log_pi_next, target_q = self.policy.Qtarget(next_batch)
+                action_prob_next, log_pi_next, target_q = self.policy.Qtarget(next_batch)
                 target_q = action_prob_next * (target_q - 0.01 * log_pi_next)
                 target_q = tf.expand_dims(tf.reduce_sum(target_q, axis=1), axis=-1)
                 rew = tf.expand_dims(rew_batch, axis=-1)
@@ -63,7 +63,7 @@ class SACDIS_Learner(Learner):
 
             # actor update
             with tf.GradientTape() as tape:
-                _, action_prob, log_pi, policy_q = self.policy.Qpolicy(obs_batch)
+                action_prob, log_pi, policy_q = self.policy.Qpolicy(obs_batch)
                 inside_term = 0.01 * log_pi - policy_q
                 p_loss = tf.reduce_mean(tf.reduce_sum(action_prob * inside_term, axis=-1))
                 gradients = tape.gradient(p_loss, self.policy.actor.trainable_variables)

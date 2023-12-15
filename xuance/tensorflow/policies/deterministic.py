@@ -488,7 +488,8 @@ class TD3Policy(tk.Model):
                                         initialize, activation, device)
         self.target_criticB = CriticNet(representation.output_shapes['state'][0], self.action_dim, critic_hidden_size,
                                         initialize, activation, device)
-        self.soft_update(tau=1.0)
+        self.target_criticA.set_weights(self.criticA.get_weights())
+        self.target_criticB.set_weights(self.criticB.get_weights())
 
     def call(self, observation: Union[np.ndarray, dict], **kwargs):
         outputs = self.representation(observation)
@@ -500,22 +501,25 @@ class TD3Policy(tk.Model):
         act = self.target_actor(outputs['state'])
         noise = tf.random.uniform(act.shape, -1, 1) * 0.1
         act = tf.clip_by_value(act + noise, -1, 1)
-        qa = tf.expand_dims(self.target_criticA(outputs['state'], act), axis=1)
-        qb = tf.expand_dims(self.target_criticB(outputs['state'], act), axis=1)
+        inputs_critic = {'x': outputs['state'], 'a': act}
+        qa = tf.expand_dims(self.target_criticA(inputs_critic), axis=1)
+        qb = tf.expand_dims(self.target_criticB(inputs_critic), axis=1)
         mim_q = tf.minimum(qa, qb)
         return outputs, mim_q
 
     def Qaction(self, observation: Union[np.ndarray, dict], action: tf.Tensor):
         outputs = self.representation(observation)
-        qa = tf.expand_dims(self.criticA(outputs['state'], action), axis=1)
-        qb = tf.expand_dims(self.criticB(outputs['state'], action), axis=1)
+        inputs_critic = {'x': outputs['state'], 'a': action}
+        qa = tf.expand_dims(self.criticA(inputs_critic), axis=1)
+        qb = tf.expand_dims(self.criticB(inputs_critic), axis=1)
         return outputs, tf.concat((qa, qb), axis=-1)
 
     def Qpolicy(self, observation: Union[np.ndarray, dict]):
         outputs = self.representation(observation)
         act = self.actor(outputs['state'])
-        qa = tf.expand_dims(self.criticA(outputs['state'], act), axis=1)
-        qb = tf.expand_dims(self.criticB(outputs['state'], act), axis=1)
+        inputs_critic = {'x': outputs['state'], 'a': act}
+        qa = tf.expand_dims(self.criticA(inputs_critic), axis=1)
+        qb = tf.expand_dims(self.criticB(inputs_critic), axis=1)
         return outputs, (qa + qb) / 2.0
 
     def soft_update(self, tau=0.005):
