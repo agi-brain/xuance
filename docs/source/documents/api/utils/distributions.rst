@@ -198,7 +198,7 @@ xxxxxx.
   :param other: xxxxxx.
   :type other: xxxxxx
   :return: xxxxxx.
-  :rtype: xxxxxxs
+  :rtype: xxxxxx
 
 .. raw:: html
 
@@ -211,6 +211,85 @@ xxxxxx.
     <br><hr>
 
 **MindSpore:**
+
+.. py:class::
+  xuance.mindspore.utils.distributions.Distribution()
+
+.. py:function::
+  xuance.mindspore.utils.distributions.Distribution.set_param(args)
+
+  :param args: xxxxxx.
+  :type args: xxxxxx
+
+.. py:function::
+  xuance.mindspore.utils.distributions.Distribution.get_param()
+
+.. py:function::
+  xuance.mindspore.utils.distributions.Distribution.log_prob(x)
+
+  :param x: xxxxxx.
+  :type x: xxxxxx
+
+.. py:function::
+  xuance.mindspore.utils.distributions.Distribution.entropy()
+
+.. py:function::
+  xuance.mindspore.utils.distributions.Distribution.stochastic_sample()
+
+.. py:function::
+  xuance.mindspore.utils.distributions.Distribution.deterministic_sample()
+
+.. py:class::
+  xuance.mindspore.utils.distributions.CategoricalDistribution(action_dim)
+
+  :param action_dim: xxxxxx.
+  :type action_dim: xxxxxx
+
+.. py:function::
+  xuance.mindspore.utils.distributions.CategoricalDistribution.set_param(logits)
+
+  :param logits: xxxxxx.
+  :type logits: xxxxxx
+
+.. py:function::
+  xuance.mindspore.utils.distributions.CategoricalDistribution.get_param()
+
+  :return: xxxxxx.
+  :rtype: xxxxxx
+
+.. py:function::
+  xuance.mindspore.utils.distributions.CategoricalDistribution.log_prob(x)
+
+  :param x: xxxxxx.
+  :type x: xxxxxx
+  :return: xxxxxx.
+  :rtype: xxxxxx
+
+.. py:function::
+  xuance.mindspore.utils.distributions.CategoricalDistribution.entropy()
+
+  :return: xxxxxx.
+  :rtype: xxxxxx
+
+.. py:function::
+  xuance.mindspore.utils.distributions.CategoricalDistribution.stochastic_sample()
+
+  :return: xxxxxx.
+  :rtype: xxxxxx
+
+.. py:function::
+  xuance.mindspore.utils.distributions.CategoricalDistribution.deterministic_sample()
+
+  :return: xxxxxx.
+  :rtype: xxxxxx
+
+.. py:function::
+  xuance.mindspore.utils.distributions.CategoricalDistribution.kl_divergence(other)
+
+  :param other: xxxxxx.
+  :type other: xxxxxx
+  :return: xxxxxx.
+  :rtype: xxxxxx
 
 .. raw:: html
 
@@ -335,4 +414,69 @@ Source Code
   .. group-tab:: MindSpore
 
     .. code-block:: python
+
+        import mindspore as ms
+        from mindspore.nn.probability.distribution import Categorical
+        from abc import ABC, abstractmethod
+
+
+        class Distribution(ABC):
+            def __init__(self):
+                super(Distribution, self).__init__()
+                self.distribution = None
+
+            @abstractmethod
+            def set_param(self, *args):
+                raise NotImplementedError
+
+            @abstractmethod
+            def get_param(self):
+                raise NotImplementedError
+
+            @abstractmethod
+            def log_prob(self, x: ms.Tensor):
+                raise NotImplementedError
+
+            @abstractmethod
+            def entropy(self):
+                raise NotImplementedError
+
+            @abstractmethod
+            def stochastic_sample(self):
+                raise NotImplementedError
+
+            @abstractmethod
+            def deterministic_sample(self):
+                raise NotImplementedError
+
+
+        class CategoricalDistribution(Distribution):
+            def __init__(self, action_dim: int):
+                super(CategoricalDistribution, self).__init__()
+                self.action_dim = action_dim
+
+            def set_param(self, logits):
+                self.logits = logits
+                self.distribution = Categorical(probs=logits)
+
+            def get_param(self):
+                return self.logits
+
+            def log_prob(self, x):
+                return self.distribution.log_prob(x)
+
+            def entropy(self):
+                return self.distribution.entropy()
+
+            def stochastic_sample(self):
+                return self.distribution.sample()
+
+            def deterministic_sample(self):
+                return torch.argmax(self.distribution.probs, dim=1)
+
+            def kl_divergence(self, other: Distribution):
+                assert isinstance(other,
+                                  CategoricalDistribution), "KL Divergence should be measured by two same distribution with the same type"
+                return self.distribution.kl_loss(self.distribution, other.distribution)
+
 
