@@ -12,22 +12,22 @@ from .rnn import Basic_RNN
 REGISTRY = {
     "Basic_Identical": Basic_Identical,
     "Basic_MLP": Basic_MLP,
+
     "Basic_CNN": Basic_CNN,
     "AC_CNN_Atari": AC_CNN_Atari,
-    "Basic_RNN": Basic_RNN
 
+    "Basic_RNN": Basic_RNN
 }
 
 Representation_Inputs = {
     "Basic_MLP": ["input_shape", "hidden_sizes", "normalize", "initialize", "activation", "device"],
-    "Basic_RNN": ["input_shape", "hidden_sizes", "normalize", "initialize", "activation", "device"],
     "Basic_Identical": ["input_shape", "device"],
+
     "Basic_CNN": ["input_shape", "kernels", "strides", "filters", "normalize", "initialize", "activation", "device"],
     "AC_CNN_Atari": ["input_shape", "kernels", "strides", "filters", "normalize", "initialize", "activation", "device",
                      "fc_hidden_sizes"],
-    "CoG_MLP": ["input_shape", "hidden_sizes", "normalize", "initialize", "activation", "device"],
-    "CoG_RNN": ["input_shape", "normalize", "initialize", "activation", "device"],
-    "CoG_CNN": ["input_shape", "kernels", "strides", "filters", "normalize", "initialize", "activation", "device"],
+
+    "Basic_RNN": ["input_shape", "hidden_sizes", "normalize", "initialize", "activation", "device"],
 }
 
 Representation_Inputs_All = {
