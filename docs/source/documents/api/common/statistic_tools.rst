@@ -264,7 +264,6 @@ Source Code
                 self.state = x + dx
                 return self.state
 
-
   .. group-tab:: TensorFlow
 
     .. code-block:: python

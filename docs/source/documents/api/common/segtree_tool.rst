@@ -226,8 +226,6 @@ Source Code
 
                 return super(MinSegmentTree, self).reduce(start, end)
 
-
-
   .. group-tab:: TensorFlow
 
     .. code-block:: python
