@@ -342,7 +342,7 @@ class QRDQN_Network(tk.Model):
         self.target_Zhead = QRDQNhead(self.representation.output_shapes['state'][0], self.action_dim, self.quantile_num,
                                       hidden_size,
                                       normalize, initialize, activation, device)
-        self.copy_target()
+        self.target_Zhead.set_weights(self.eval_Zhead.get_weights())
 
     def call(self, observation: Union[np.ndarray, dict], **kwargs):
         outputs = self.representation(observation)

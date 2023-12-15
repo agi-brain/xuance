@@ -4,7 +4,7 @@ from xuance import get_runner
 
 def parse_args():
     parser = argparse.ArgumentParser("Run a demo.")
-    parser.add_argument("--method", type=str, default="perdqn")
+    parser.add_argument("--method", type=str, default="qrdqn")
     parser.add_argument("--env", type=str, default="classic_control")
     parser.add_argument("--env-id", type=str, default="CartPole-v1")
     parser.add_argument("--test", type=int, default=0)

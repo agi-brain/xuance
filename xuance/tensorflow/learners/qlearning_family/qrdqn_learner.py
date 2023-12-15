@@ -5,14 +5,13 @@ class QRDQN_Learner(Learner):
     def __init__(self,
                  policy: tk.Model,
                  optimizer: tk.optimizers.Optimizer,
-                 summary_writer: Optional[SummaryWriter] = None,
                  device: str = "cpu:0",
                  model_dir: str = "./",
                  gamma: float = 0.99,
                  sync_frequency: int = 100):
         self.gamma = gamma
         self.sync_frequency = sync_frequency
-        super(QRDQN_Learner, self).__init__(policy, optimizer, summary_writer, device, model_dir)
+        super(QRDQN_Learner, self).__init__(policy, optimizer, device, model_dir)
 
     def update(self, obs_batch, act_batch, rew_batch, next_batch, terminal_batch):
         self.iterations += 1
@@ -22,8 +21,8 @@ class QRDQN_Learner(Learner):
             ter_batch = tf.convert_to_tensor(terminal_batch)
 
             with tf.GradientTape() as tape:
-                _, _, evalZ, _ = self.policy(obs_batch)
-                _, targetA, _, targetZ = self.policy(next_batch)
+                _, _, evalZ = self.policy(obs_batch)
+                _, targetA, targetZ = self.policy.target(next_batch)
                 current_quantile = tf.math.reduce_sum(evalZ * tf.expand_dims(tf.one_hot(act_batch, evalZ.shape[1]), axis=-1), axis=1)
                 target_quantile = tf.math.reduce_sum(targetZ * tf.expand_dims(tf.one_hot(targetA, evalZ.shape[1]), axis=-1), axis=1)
                 target_quantile = tf.expand_dims(rew_batch, 1) + self.gamma * target_quantile * (1 - tf.expand_dims(ter_batch, 1))
@@ -41,6 +40,11 @@ class QRDQN_Learner(Learner):
                 self.policy.copy_target()
 
             lr = self.optimizer._decayed_lr(tf.float32)
-            self.writer.add_scalar("Qloss", loss.numpy(), self.iterations)
-            self.writer.add_scalar("predictQ", tf.math.reduce_mean(current_quantile).numpy(), self.iterations)
-            self.writer.add_scalar("lr", lr.numpy(), self.iterations)
+
+            info = {
+                "Qloss": loss.numpy(),
+                "predictQ": tf.math.reduce_mean(current_quantile).numpy(),
+                "lr": lr.numpy()
+            }
+
+            return info
