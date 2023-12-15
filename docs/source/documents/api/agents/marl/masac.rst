@@ -52,6 +52,42 @@ MASAC_Agents
 
 **MindSpore:**
 
+.. py:class::
+    xuance.mindspore.agent.mutli_agent_rl.masac_agents.MASAC_Agents(config, envs)
+
+    :param config: Provides hyper parameters.
+    :type config: Namespace
+    :param envs: The vectorized environments.
+    :type envs: xuance.environments.vector_envs.vector_env.VecEnv
+
+.. py:function::
+    xuance.mindspore.agent.mutli_agent_rl.masac_agents.MASAC_Agents.act(obs_n, *rnn_hidden, avail_actions=None, state=None, test_mode=False)
+
+    Calculate joint actions for N agents according to the joint observations.
+
+    :param obs_n: The joint observations of N agents.
+    :type obs_n: numpy.ndarray
+    :param rnn_hidden: The hidden states of RNN.
+    :type rnn_hidden: tuple(numpy.ndarray, numpy.ndarray)
+    :param avail_actions: The actions mask for available actions in the environment.
+    :type avail_actions: numpy.ndarray
+    :param state: The global state of the environments.
+    :type state: numpy.ndarray
+    :param test_mode: is True for selecting greedy actions, is False for selecting epsilon-greedy actions.
+    :type test_mode: bool
+    :return: **hidden_state**, **actions_n** - The next hidden states of RNN and the joint actions.
+    :rtype: tuple(numpy.ndarray, numpy.ndarray), np.ndarray
+
+.. py:function::
+    xuance.mindspore.agent.mutli_agent_rl.masac_agents.MASAC_Agents.train(i_episode)
+
+    Train the multi-agent reinforcement learning model.
+
+    :param i_episode: The i-th episode during training.
+    :type i_episode: int
+    :return: **info_train** - the information of the training process.
+    :rtype: dict
+
 .. raw:: html
 
     <br><hr>
@@ -130,11 +166,67 @@ Source Code
 
     .. group-tab:: TensorFlow
     
-        .. code-block:: python3
+        .. code-block:: python
 
 
 
     .. group-tab:: MindSpore
 
-        .. code-block:: python3
+        .. code-block:: python
+
+            from xuance.mindspore.agents import *
+
+
+            class MASAC_Agents(MARLAgents):
+                def __init__(self,
+                             config: Namespace,
+                             envs: DummyVecEnv_Pettingzoo):
+                    self.gamma = config.gamma
+
+                    input_representation = get_repre_in(config)
+                    representation = REGISTRY_Representation[config.representation](*input_representation)
+                    input_policy = get_policy_in_marl(config, representation, config.agent_keys)
+                    policy = REGISTRY_Policy[config.policy](*input_policy)
+                    scheduler = [lr_decay_model(learning_rate=config.lr_a, decay_rate=0.5,
+                                                decay_steps=get_total_iters(config.agent_name, config)),
+                                 lr_decay_model(learning_rate=config.lr_c, decay_rate=0.5,
+                                                decay_steps=get_total_iters(config.agent_name, config))]
+                    optimizer = [Adam(policy.parameters_actor, scheduler[0], eps=1e-5),
+                                 Adam(policy.parameters_critic, scheduler[1], eps=1e-5)]
+                    self.observation_space = envs.observation_space
+                    self.action_space = envs.action_space
+                    self.representation_info_shape = policy.representation.output_shapes
+                    self.auxiliary_info_shape = {}
+
+                    if config.state_space is not None:
+                        config.dim_state, state_shape = config.state_space.shape, config.state_space.shape
+                    else:
+                        config.dim_state, state_shape = None, None
+                    memory = MARL_OffPolicyBuffer(config.n_agents,
+                                                  state_shape,
+                                                  config.obs_shape,
+                                                  config.act_shape,
+                                                  config.rew_shape,
+                                                  config.done_shape,
+                                                  envs.num_envs,
+                                                  config.buffer_size,
+                                                  config.batch_size)
+                    learner = MASAC_Learner(config, policy, optimizer, scheduler, config.model_dir, config.gamma)
+                    super(MASAC_Agents, self).__init__(config, envs, policy, memory, learner, config.log_dir, config.model_dir)
+                    self.on_policy = False
+
+                def act(self, obs_n, *rnn_hidden, avail_actions=None, state=None, test_mode=False):
+                    batch_size = len(obs_n)
+                    agents_id = ops.broadcast_to(self.expand_dims(self.eye(self.n_agents, self.n_agents, ms.float32), 0),
+                                                 (batch_size, -1, -1))
+                    _, act_mu = self.policy(Tensor(obs_n), agents_id)
+                    acts = self.policy.actor_net.sample(act_mu)
+                    actions = acts.asnumpy()
+                    return None, actions
+
+                def train(self, i_episode):
+                    sample = self.memory.sample()
+                    info_train = self.learner.update(sample)
+                    return info_train
+
             
