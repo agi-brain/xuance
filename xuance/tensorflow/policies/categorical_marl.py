@@ -124,7 +124,7 @@ class MAAC_Policy(tk.Model):
         actor_input = tf.concat([outputs['state'], agent_ids], axis=-1)
         act_logits = self.actor(actor_input)
         if ('avail_actions' in kwargs.keys()) and (kwargs['avail_actions'] is not None):
-            avail_actions = tf.Tensor(kwargs['avail_actions'])
+            avail_actions = tf.convert_to_tensor(kwargs['avail_actions'])
             act_logits[avail_actions == 0] = -1e10
             self.pi_dist.set_param(logits=act_logits)
         else:

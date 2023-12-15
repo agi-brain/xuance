@@ -37,27 +37,42 @@ class BasicQnetwork(tk.Model):
                  normalize: Optional[tk.layers.Layer] = None,
                  initializer: Optional[tk.initializers.Initializer] = None,
                  activation: Optional[tk.layers.Layer] = None,
-                 device: str = "cpu:0"):
+                 device: str = "cpu:0",
+                 **kwargs):
         super(BasicQnetwork, self).__init__()
         self.action_dim = action_space.n
         self.representation = representation
+        self.target_representation = copy.deepcopy(self.representation)
         self.representation_info_shape = self.representation.output_shapes
         self.obs_dim = self.representation.input_shapes[0]
         self.n_agents = n_agents
+        self.lstm = True if kwargs["rnn"] == "LSTM" else False
+        self.use_rnn = True if kwargs["use_recurrent"] else False
         self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, n_agents,
                                      hidden_size, normalize, initializer, activation, device)
         self.target_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, n_agents,
                                        hidden_size, normalize, initializer, activation, device)
-        self.copy_target()
+        self.target_Qhead.set_weights(self.eval_Qhead.get_weights())
 
-    def call(self, inputs: Union[np.ndarray, dict], **kwargs):
+    def call(self, inputs: Union[np.ndarray, dict], *rnn_hidden, **kwargs):
         observations = tf.reshape(inputs['obs'], [-1, self.obs_dim])
         IDs = tf.reshape(inputs['ids'], [-1, self.n_agents])
-        outputs = self.representation(observations)
+        if self.use_rnn:
+            outputs = self.representation(observations, *rnn_hidden)
+            rnn_hidden = (outputs['rnn_hidden'], outputs['rnn_cell'])
+        else:
+            outputs = self.representation(observations)
+            rnn_hidden = None
         q_inputs = tf.concat([outputs['state'], IDs], axis=-1)
         evalQ = tf.reshape(self.eval_Qhead(q_inputs), [-1, self.n_agents, self.action_dim])
-        argmax_action = tf.argmax(evalQ, axis=-1)
-        return outputs, argmax_action, evalQ
+        if ('avail_actions' in kwargs.keys()) and (kwargs['avail_actions'] is not None):
+            evalQ_detach = evalQ.clone().detach()
+            avail_actions = kwargs['avail_actions']
+            evalQ_detach[avail_actions == 0] = -9999999
+            argmax_action = evalQ_detach.argmax(dim=-1, keepdim=False)
+        else:
+            argmax_action = tf.argmax(evalQ, axis=-1)
+        return rnn_hidden, argmax_action, evalQ
 
     def target_Q(self, inputs: Union[np.ndarray, dict]):
         shape_obs = inputs["obs"].shape
@@ -68,7 +83,11 @@ class BasicQnetwork(tk.Model):
         q_inputs = tf.concat([outputs['state'], IDs], axis=-1)
         return tf.reshape(self.target_Qhead(q_inputs), shape_obs[0:-1] + (self.action_dim,))
 
+    def trainable_param(self):
+        return self.representation.trainable_variables + self.eval_Qhead.trainable_variables
+
     def copy_target(self):
+        self.target_representation.set_weights(self.representation.get_weights())
         self.target_Qhead.set_weights(self.eval_Qhead.get_weights())
 
 

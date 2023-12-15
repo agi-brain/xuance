@@ -53,10 +53,10 @@ class IQL_Learner(LearnerMAS):
                 q_target = tf.stop_gradient(tf.reshape(q_target, [-1]))
                 q_eval_a = tf.reshape(q_eval_a, [-1])
                 loss = tk.losses.mean_squared_error(q_target, q_eval_a)
-                gradients = tape.gradient(loss, self.policy.trainable_variables)
+                gradients = tape.gradient(loss, self.policy.trainable_param())
                 self.optimizer.apply_gradients([
                     (grad, var)
-                    for (grad, var) in zip(gradients, self.policy.trainable_variables)
+                    for (grad, var) in zip(gradients, self.policy.trainable_param())
                     if grad is not None
                 ])
 
