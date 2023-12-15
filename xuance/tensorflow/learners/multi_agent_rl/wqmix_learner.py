@@ -13,14 +13,14 @@ class WQMIX_Learner(LearnerMAS):
                  policy: tk.Model,
                  optimizer: tk.optimizers.Optimizer,
                  device: str = "cpu:0",
-                 modeldir: str = "./",
+                 model_dir: str = "./",
                  gamma: float = 0.99,
                  sync_frequency: int = 100
                  ):
         self.alpha = config.alpha
         self.gamma = gamma
         self.sync_frequency = sync_frequency
-        super(WQMIX_Learner, self).__init__(config, policy, optimizer, device, modeldir)
+        super(WQMIX_Learner, self).__init__(config, policy, optimizer, device, model_dir)
 
     def update(self, sample):
         self.iterations += 1

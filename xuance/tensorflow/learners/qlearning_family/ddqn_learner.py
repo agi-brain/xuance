@@ -7,12 +7,12 @@ class DDQN_Learner(Learner):
                  optimizer: tk.optimizers.Optimizer,
                  summary_writer: Optional[SummaryWriter] = None,
                  device: str = "cpu:0",
-                 modeldir: str = "./",
+                 model_dir: str = "./",
                  gamma: float = 0.99,
                  sync_frequency: int = 100):
         self.gamma = gamma
         self.sync_frequency = sync_frequency
-        super(DDQN_Learner, self).__init__(policy, optimizer, summary_writer, device, modeldir)
+        super(DDQN_Learner, self).__init__(policy, optimizer, summary_writer, device, model_dir)
 
     def update(self, obs_batch, act_batch, rew_batch, next_batch, terminal_batch):
         self.iterations += 1

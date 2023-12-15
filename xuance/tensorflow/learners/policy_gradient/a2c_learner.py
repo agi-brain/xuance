@@ -6,11 +6,11 @@ class A2C_Learner(Learner):
                  policy: tk.Model,
                  optimizer: tk.optimizers.Optimizer,
                  device: str = "cpu:0",
-                 modeldir: str = "./",
+                 model_dir: str = "./",
                  vf_coef: float = 0.25,
                  ent_coef: float = 0.005,
                  clip_grad: Optional[float] = None):
-        super(A2C_Learner, self).__init__(policy, optimizer, device, modeldir)
+        super(A2C_Learner, self).__init__(policy, optimizer, device, model_dir)
         self.vf_coef = vf_coef
         self.ent_coef = ent_coef
         self.clip_grad = clip_grad

@@ -8,11 +8,11 @@ class PPOKL_Learner(Learner):
                  policy: tk.Model,
                  optimizer: tk.optimizers.Optimizer,
                  device: str = "cpu:0",
-                 modeldir: str = "./",
+                 model_dir: str = "./",
                  vf_coef: float = 0.25,
                  ent_coef: float = 0.005,
                  target_kl: float = 0.25):
-        super(PPOKL_Learner, self).__init__(policy, optimizer, device, modeldir)
+        super(PPOKL_Learner, self).__init__(policy, optimizer, device, model_dir)
         self.vf_coef = vf_coef
         self.ent_coef = ent_coef
         self.target_kl = target_kl

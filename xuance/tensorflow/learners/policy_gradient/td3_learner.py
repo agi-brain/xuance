@@ -10,17 +10,17 @@ class TD3_Learner(Learner):
                  policy: tk.Model,
                  optimizers: Sequence[tk.optimizers.Optimizer],
                  device: str = "cpu:0",
-                 modeldir: str = "./",
+                 model_dir: str = "./",
                  gamma: float = 0.99,
                  tau: float = 0.01,
                  delay: int = 3):
         self.tau = tau
         self.gamma = gamma
         self.delay = delay
-        super(TD3_Learner, self).__init__(policy, optimizers, device, modeldir)
+        super(TD3_Learner, self).__init__(policy, optimizers, device, model_dir)
 
     def save_model(self):
-        model_path = self.modeldir + "model-%s-%s" % (time.asctime(), str(self.iterations))
+        model_path = self.model_dir + "model-%s-%s" % (time.asctime(), str(self.iterations))
         self.policy.actor.save(model_path)
         self.policy.target_actor.save(model_path)
         self.policy.criticA.save(model_path)

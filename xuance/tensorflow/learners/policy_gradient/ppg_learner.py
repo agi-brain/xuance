@@ -9,11 +9,11 @@ class PPG_Learner(Learner):
                  policy: tk.Model,
                  optimizer: tk.optimizers.Optimizer,
                  device: str = "cpu:0",
-                 modeldir: str = "./",
+                 model_dir: str = "./",
                  ent_coef: float = 0.005,
                  clip_range: float = 0.25,
                  kl_beta: float = 1.0):
-        super(PPG_Learner, self).__init__(policy, optimizer, device, modeldir)
+        super(PPG_Learner, self).__init__(policy, optimizer, device, model_dir)
         self.ent_coef = ent_coef
         self.clip_range = clip_range
         self.kl_beta = kl_beta

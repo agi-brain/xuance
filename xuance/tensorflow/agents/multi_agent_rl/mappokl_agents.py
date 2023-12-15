@@ -4,7 +4,7 @@ from xuance.tensorflow.agents import *
 class MAPPO_KL_Agents(MARLAgents):
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecEnv_MAS,
+                 envs: DummyVecEnv_Pettingzoo,
                  device: str = "cpu:0"):
         self.comm = MPI.COMM_WORLD
 
@@ -32,7 +32,7 @@ class MAPPO_KL_Agents(MARLAgents):
         self.representation_info_shape = policy.representation.output_shapes
         self.auxiliary_info_shape = {}
 
-        writer = SummaryWriter(config.logdir)
+        writer = SummaryWriter(config.log_dir)
         if config.state_space is not None:
             config.dim_state, state_shape = config.state_space.shape, config.state_space.shape
         else:
@@ -41,13 +41,13 @@ class MAPPO_KL_Agents(MARLAgents):
                                      config.done_shape, envs.num_envs, config.nsteps, config.nminibatch,
                                      config.use_gae, config.use_advnorm, config.gamma, config.lam)
         learner = MAPPO_KL_Learner(config, policy, optimizer, writer,
-                                   config.device, config.modeldir, config.gamma)
+                                   config.device, config.model_dir, config.gamma)
 
         self.obs_rms = RunningMeanStd(shape=space2shape(self.observation_space[config.agent_keys[0]]),
                                       comm=self.comm, use_mpi=False)
         self.ret_rms = RunningMeanStd(shape=(), comm=self.comm, use_mpi=False)
         super(MAPPO_KL_Agents, self).__init__(config, envs, policy, memory, learner, writer, device,
-                                              config.logdir, config.modeldir)
+                                              config.log_dir, config.model_dir)
 
     def _process_observation(self, observations):
         if self.use_obsnorm:

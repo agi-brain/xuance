@@ -9,7 +9,7 @@ class VDN_mixer(tk.Model):
     def __init__(self):
         super(VDN_mixer, self).__init__()
 
-    def call(self, values_n, states=None, training=None, masks=None):
+    def call(self, values_n, states=None, **kwargs):
         return tf.reduce_sum(values_n, axis=1)
 
 
@@ -39,7 +39,7 @@ class QMIX_mixer(tk.Model):
                                                         input_shape=(self.dim_state,)),
                                         tk.layers.Dense(units=1, input_shape=(self.dim_hypernet_hidden,))])
 
-    def call(self, values_n, states=None, training=None, masks=None):
+    def call(self, values_n, states=None, **kwargs):
         states = tf.reshape(states, [-1, self.dim_state])
         agent_qs = tf.reshape(values_n, [-1, 1, self.n_agents])
         # First layer
@@ -81,7 +81,7 @@ class QMIX_FF_mixer(tk.Model):
                               tk.layers.Dense(input_shape=(self.dim_hidden,), units=1)]
         self.ff_net_bias = tk.Sequential(layers_ff_net_bias)
 
-    def call(self, values_n, states=None, training=None, masks=None):
+    def call(self, values_n, states=None, **kwargs):
         states = tf.reshape(states, [-1, self.dim_state])
         agent_qs = tf.reshape(values_n, [-1, self.n_agents])
         inputs = tf.concat([agent_qs, states], axis=-1)
@@ -115,7 +115,7 @@ class QTRAN_base(tk.Model):
                        tk.layers.Dense(input_shape=(self.dim_hidden,), units=1)]
         self.V_jt = tk.Sequential(linear_V_jt)
 
-    def call(self, hidden_states_n, actions_n=None, training=None, masks=None):
+    def call(self, hidden_states_n, actions_n=None, **kwargs):
         input_q = tf.reshape(tf.concat([hidden_states_n, actions_n], axis=-1), [-1, self.dim_q_input])
         input_v = tf.reshape(hidden_states_n, [-1, self.dim_v_input])
         q_jt = self.Q_jt(input_q)
@@ -165,7 +165,7 @@ class DCG_utility(tk.Model):
         self.model = tk.Sequential(linears_layers)
         # self.output = tk.Sequential(nn.Linear(self.dim_input, self.dim_output))
 
-    def call(self, hidden_states_n, training=None, masks=None):
+    def call(self, hidden_states_n, **kwargs):
         return self.model(hidden_states_n)
 
 
@@ -178,7 +178,7 @@ class DCG_payoff(DCG_utility):
         super(DCG_payoff, self).__init__(dim_input, dim_hidden, dim_payoff_out)
         self.input_payoff_shape = None
 
-    def call(self, hidden_from_to, hidden_to_from=None, training=None, masks=None):
+    def call(self, hidden_from_to, hidden_to_from=None, **kwargs):
         # input_payoff = tf.stack([tf.convert_to_tensor(hidden_from_to), tf.convert_to_tensor(hidden_to_from)], axis=0)
         input_payoff = tf.stack([hidden_from_to, hidden_to_from], axis=0)
 

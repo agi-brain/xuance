@@ -6,7 +6,7 @@ from gym import spaces
 class MPDQN_Agent(Agent):
     def __init__(self,
                  config: Namespace,
-                 envs: Toy_Env,
+                 envs: Gym_Env,
                  policy: tk.Model,
                  optimizer: Sequence[tk.optimizers.Optimizer],
                  device: str = 'cpu'):
@@ -38,26 +38,26 @@ class MPDQN_Agent(Agent):
                              range(1, num_disact + 1)]
         self.representation_info_shape = {'state': (envs.observation_space.spaces[0].shape)}
         self.auxiliary_info_shape = {}
-        self.nenvs = 1
+        self.n_envs = 1
         self.epsilon = 1.0
         self.epsilon_steps = 1000
         self.epsilon_initial = 1.0
         self.epsilon_final = 0.1
         self.buffer_action_space = spaces.Box(np.zeros(4), np.ones(4), dtype=np.float64)
 
-        writer = SummaryWriter(config.logdir)
+        writer = SummaryWriter(config.log_dir)
         memory = DummyOffPolicyBuffer(self.observation_space,
                                       self.buffer_action_space,
                                       self.representation_info_shape,
                                       self.auxiliary_info_shape,
-                                      self.nenvs,
+                                      self.n_envs,
                                       config.nsize,
                                       config.batchsize)
         learner = PDQN_Learner(policy,
                                optimizer,
                                writer,
                                config.device,
-                               config.modeldir,
+                               config.model_dir,
                                config.gamma,
                                config.tau)
 
@@ -67,7 +67,7 @@ class MPDQN_Agent(Agent):
 
         self.obs_rms = RunningMeanStd(shape=space2shape(self.observation_space), comm=self.comm, use_mpi=False)
         self.ret_rms = RunningMeanStd(shape=(), comm=self.comm, use_mpi=False)
-        super(MPDQN_Agent, self).__init__(envs, policy, memory, learner, writer, device, config.logdir, config.modeldir)
+        super(MPDQN_Agent, self).__init__(envs, policy, memory, learner, writer, device, config.log_dir, config.model_dir)
 
     def _process_observation(self, observations):
         if self.use_obsnorm:
@@ -117,9 +117,9 @@ class MPDQN_Agent(Agent):
         return (disaction, con_actions)
 
     def train(self, train_steps=10000):
-        episodes = np.zeros((self.nenvs,), np.int32)
-        scores = np.zeros((self.nenvs,), np.float32)
-        returns = np.zeros((self.nenvs,), np.float32)
+        episodes = np.zeros((self.n_envs,), np.int32)
+        scores = np.zeros((self.n_envs,), np.float32)
+        returns = np.zeros((self.n_envs,), np.float32)
         obs, _ = self.envs.reset()
         for step in tqdm(range(train_steps)):
             disaction, conaction, con_actions = self._action(obs)
@@ -147,13 +147,13 @@ class MPDQN_Agent(Agent):
                 obs, _ = self.envs.reset()
             if step % 50000 == 0 or step == train_steps - 1:
                 self.save_model()
-                np.save(self.modeldir + "/obs_rms.npy",
+                np.save(self.model_dir + "/obs_rms.npy",
                         {'mean': self.obs_rms.mean, 'std': self.obs_rms.std, 'count': self.obs_rms.count})
 
     def test(self, test_steps=10000, load_model=None):
-        self.load_model(self.modeldir)
-        scores = np.zeros((self.nenvs,), np.float32)
-        returns = np.zeros((self.nenvs,), np.float32)
+        self.load_model(self.model_dir)
+        scores = np.zeros((self.n_envs,), np.float32)
+        returns = np.zeros((self.n_envs,), np.float32)
         obs, _ = self.envs.reset()
         for _ in tqdm(range(test_steps)):
             disaction, conaction, con_actions = self._action(obs)

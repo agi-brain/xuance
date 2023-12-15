@@ -6,12 +6,12 @@ class DRQN_Learner(Learner):
                  policy: tk.Model,
                  optimizer: tk.optimizers.Optimizer,
                  device: str = "cpu:0",
-                 modeldir: str = "./",
+                 model_dir: str = "./",
                  gamma: float = 0.99,
                  sync_frequency: int = 100):
         self.gamma = gamma
         self.sync_frequency = sync_frequency
-        super(DRQN_Learner, self).__init__(policy, optimizer, device, modeldir)
+        super(DRQN_Learner, self).__init__(policy, optimizer, device, model_dir)
 
     def update(self, obs_batch, act_batch, rew_batch, terminal_batch):
         self.iterations += 1

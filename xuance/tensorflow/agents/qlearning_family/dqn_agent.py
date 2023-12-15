@@ -4,12 +4,12 @@ from xuance.tensorflow.agents import *
 class DQN_Agent(Agent):
     def __init__(self,
                  config: Namespace,
-                 envs: VecEnv,
+                 envs: DummyVecEnv_Gym,
                  policy: tk.Model,
                  optimizer: tk.optimizers.Optimizer,
                  device: str = 'cpu'):
         self.render = config.render
-        self.nenvs = envs.num_envs
+        self.n_envs = envs.num_envs
 
         self.gamma = config.gamma
         self.train_frequency = config.training_frequency
@@ -28,20 +28,20 @@ class DQN_Agent(Agent):
                         self.action_space,
                         self.representation_info_shape,
                         self.auxiliary_info_shape,
-                        self.nenvs,
+                        self.n_envs,
                         config.nsize,
                         config.batchsize)
         learner = DQN_Learner(policy,
                               optimizer,
                               config.device,
-                              config.modeldir,
+                              config.model_dir,
                               config.gamma,
                               config.sync_frequency)
-        super(DQN_Agent, self).__init__(config, envs, policy, memory, learner, device, config.logdir, config.modeldir)
+        super(DQN_Agent, self).__init__(config, envs, policy, memory, learner, device, config.log_dir, config.model_dir)
 
     def _action(self, obs, egreedy=0.0):
         _, argmax_action, _, _ = self.policy(obs)
-        random_action = np.random.choice(self.action_space.n, self.nenvs)
+        random_action = np.random.choice(self.action_space.n, self.n_envs)
         if np.random.rand() < egreedy:
             action = random_action
         else:
@@ -65,7 +65,7 @@ class DQN_Agent(Agent):
                 step_info["epsilon-greedy"] = self.egreedy
 
             obs = next_obs
-            for i in range(self.nenvs):
+            for i in range(self.n_envs):
                 if terminals[i] or trunctions[i]:
                     if self.atari and (~trunctions[i]):
                         pass

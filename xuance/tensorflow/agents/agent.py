@@ -12,8 +12,8 @@ class Agent(ABC):
                  memory: Buffer,
                  learner: Learner,
                  device: str = "cpu",
-                 logdir: str = "./logs/",
-                 modeldir: str = "./models/"):
+                 log_dir: str = "./logs/",
+                 model_dir: str = "./models/"):
         self.config = config
         self.envs = envs
         self.policy = policy
@@ -31,16 +31,22 @@ class Agent(ABC):
         self.returns = np.zeros((self.envs.num_envs,), np.float32)
 
         # logger
+        time_string = time.asctime().replace(" ", "").replace(":", "_")
+        seed = f"seed_{self.config.seed}_"
+        model_dir_save = os.path.join(os.getcwd(), model_dir, seed + time_string)
+        if (not os.path.exists(model_dir_save)) and (not config.test_mode):
+            os.makedirs(model_dir_save)
+
+        # logger
         if config.logger == "tensorboard":
-            time_string = time.asctime().replace(" ", "").replace(":", "_")
-            log_dir = os.path.join(os.getcwd(), config.logdir) + "/" + time_string
+            log_dir = os.path.join(os.getcwd(), config.log_dir, seed + time_string)
             if not os.path.exists(log_dir):
                 os.makedirs(log_dir)
             self.writer = SummaryWriter(log_dir)
             self.use_wandb = False
         elif config.logger == "wandb":
             config_dict = vars(config)
-            wandb_dir = Path(os.path.join(os.getcwd(), config.logdir))
+            wandb_dir = Path(os.path.join(os.getcwd(), config.log_dir))
             if not wandb_dir.exists():
                 os.makedirs(str(wandb_dir))
             wandb.init(config=config_dict,
@@ -59,18 +65,19 @@ class Agent(ABC):
             raise "No logger is implemented."
 
         self.device = device
-        self.logdir = logdir
-        self.modeldir = modeldir
-        create_directory(logdir)
-        create_directory(modeldir)
+        self.log_dir = log_dir
+        self.model_dir_save = model_dir_save
+        self.model_dir_load = model_dir
+        create_directory(log_dir)
         self.current_step = 0
         self.current_episode = np.zeros((self.envs.num_envs,), np.int32)
     
-    def save_model(self):
-        self.learner.save_model()
+    def save_model(self, model_name):
+        model_path = self.model_dir_save + "/" + model_name
+        self.learner.save_model(model_path)
 
-    def load_model(self, path):
-        self.learner.load_model(path)
+    def load_model(self, path, seed=1):
+        self.learner.load_model(path, seed)
 
     def log_infos(self, info: dict, x_index: int):
         """

@@ -4,12 +4,12 @@ from xuance.tensorflow.agents import *
 class PPOCLIP_Agent(Agent):
     def __init__(self,
                  config: Namespace,
-                 envs: VecEnv,
+                 envs: DummyVecEnv_Gym,
                  policy: tk.Model,
                  optimizer: tk.optimizers.Optimizer,
                  device: str = 'cpu'):
         self.render = config.render
-        self.nenvs = envs.num_envs
+        self.n_envs = envs.num_envs
         self.nsteps = config.nsteps
         self.nminibatch = config.nminibatch
         self.nepoch = config.nepoch
@@ -27,7 +27,7 @@ class PPOCLIP_Agent(Agent):
                         self.action_space,
                         self.representation_info_shape,
                         self.auxiliary_info_shape,
-                        self.nenvs,
+                        self.n_envs,
                         self.nsteps,
                         self.nminibatch,
                         self.gamma,
@@ -35,12 +35,12 @@ class PPOCLIP_Agent(Agent):
         learner = PPOCLIP_Learner(policy,
                                   optimizer,
                                   config.device,
-                                  config.modeldir,
+                                  config.model_dir,
                                   config.vf_coef,
                                   config.ent_coef,
                                   config.clip_range)
-        super(PPOCLIP_Agent, self).__init__(config, envs, policy, memory, learner, device, config.logdir,
-                                            config.modeldir)
+        super(PPOCLIP_Agent, self).__init__(config, envs, policy, memory, learner, device, config.log_dir,
+                                            config.model_dir)
 
     def _action(self, obs):
         _, _, vs = self.policy(obs)
@@ -64,7 +64,7 @@ class PPOCLIP_Agent(Agent):
             self.memory.store(obs, acts, self._process_reward(rewards), rets, terminals, {"old_logp": logps})
             if self.memory.full:
                 _, vals, _ = self._action(self._process_observation(next_obs))
-                for i in range(self.nenvs):
+                for i in range(self.n_envs):
                     self.memory.finish_path(vals[i], i)
                 for _ in range(self.nminibatch * self.nepoch):
                     obs_batch, act_batch, ret_batch, adv_batch, aux_batch = self.memory.sample()
@@ -73,7 +73,7 @@ class PPOCLIP_Agent(Agent):
 
             self.returns = self.gamma * self.returns + rewards
             obs = next_obs
-            for i in range(self.nenvs):
+            for i in range(self.n_envs):
                 if terminals[i] or trunctions[i]:
                     if self.atari and (~trunctions[i]):
                         pass
@@ -91,7 +91,7 @@ class PPOCLIP_Agent(Agent):
                             step_info["Train-Episode-Rewards"] = {"env-%d" % i: infos[i]["episode_score"]}
                         self.log_infos(step_info, self.current_step)
 
-            self.current_step += self.nenvs
+            self.current_step += self.n_envs
 
     def test(self, env_fn, test_episode):
         test_envs = env_fn()

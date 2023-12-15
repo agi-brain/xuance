@@ -19,7 +19,7 @@ from xuance.tensorflow.utils.input_reformat import get_repre_in, get_policy_in_m
 from xuance.tensorflow.representations import REGISTRY as REGISTRY_Representation
 from xuance.tensorflow.runners.runner_basic import MyLinearLR
 
-from .agent import Agent
+from .agent import Agent, get_total_iters
 from .agents_marl import MARLAgents, RandomAgents, get_total_iters
 from .agent import get_total_iters
 
@@ -67,8 +67,6 @@ from .multi_agent_rl.mappoclip_agents import MAPPO_Clip_Agents
 from .multi_agent_rl.mappokl_agents import MAPPO_KL_Agents
 from .multi_agent_rl.isac_agents import ISAC_Agents
 from .multi_agent_rl.masac_agents import MASAC_Agents
-# from .multi_agent_rl.madqn_agents import MADQN_Agents
-# from .multi_agent_rl.maac_agents import MAAC_Agents
 from .multi_agent_rl.matd3_agents import MATD3_Agents
 
 REGISTRY = {
@@ -91,9 +89,6 @@ REGISTRY = {
     "PerDQN": PerDQN_Agent,
     "C51DQN": C51_Agent,
     "QRDQN": QRDQN_Agent,
-    "CDQN": CDQN_Agent,
-    "LDQN": LDQN_Agent,
-    "CLDQN": CLDQN_Agent,
 
     "RANDOM": RandomAgents,
     "IQL": IQL_Agents,

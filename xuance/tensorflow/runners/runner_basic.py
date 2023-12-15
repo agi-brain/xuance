@@ -52,14 +52,14 @@ class Runner_Base_MARL(Runner_Base):
 
         if args.logger == "tensorboard":
             time_string = time.asctime().replace(" ", "").replace(":", "_")
-            log_dir = os.path.join(os.getcwd(), args.logdir) + "/" + time_string
+            log_dir = os.path.join(os.getcwd(), args.log_dir) + "/" + time_string
             if not os.path.exists(log_dir):
                 os.makedirs(log_dir)
             self.writer = SummaryWriter(log_dir)
             self.use_wandb = False
         elif args.logger == "wandb":
             config_dict = vars(args)
-            wandb_dir = Path(os.path.join(os.getcwd(), args.logdir))
+            wandb_dir = Path(os.path.join(os.getcwd(), args.log_dir))
             if not wandb_dir.exists():
                 os.makedirs(str(wandb_dir))
             wandb.init(config=config_dict,

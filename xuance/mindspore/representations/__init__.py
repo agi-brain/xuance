@@ -1,29 +1,26 @@
-from .networks import Basic_MLP
-from .networks import Basic_Identical
-from .networks import Basic_CNN
-from .networks import CoG_MLP, CoG_RNN, CoG_CNN, C_DQN, L_DQN, CL_DQN
+import mindspore as ms
+import mindspore.nn as nn
+from typing import Sequence, Optional, Union, Callable
+import numpy as np
+from xuance.mindspore.utils.layers import *
+
+from .mlp import Basic_Identical, Basic_MLP
+from .cnn import Basic_CNN, AC_CNN_Atari
+from .rnn import Basic_RNN
 
 REGISTRY = {
-    "Basic_MLP": Basic_MLP,
     "Basic_Identical": Basic_Identical,
+    "Basic_MLP": Basic_MLP,
     "Basic_CNN": Basic_CNN,
-    "CoG_MLP": CoG_MLP,
-    "CoG_RNN": CoG_RNN,
-    "CoG_CNN": CoG_CNN,
-    "C_DQN": C_DQN,
-    "L_DQN": L_DQN
+    "AC_CNN_Atari": AC_CNN_Atari,
+    "Basic_RNN": Basic_RNN
+
 }
 
 Representation_Inputs = {
     "Basic_MLP": ["input_shape", "hidden_sizes", "normalize", "initialize", "activation"],
     "Basic_Identical": ["input_shape"],
     "Basic_CNN": ["input_shape", "kernels", "strides", "filters", "normalize", "initialize", "activation"],
-    "CoG_MLP": ["input_shape", "hidden_sizes", "normalize", "initialize", "activation"],
-    "CoG_RNN": ["input_shape", "normalize", "initialize", "activation"],
-    "CoG_CNN": ["input_shape", "kernels", "strides", "filters", "normalize", "initialize", "activation"],
-    "C_DQN": ["input_shape", "kernels", "strides", "filters", "normalize", "initialize", "activation"],
-    "L_DQN": ["input_shape", "normalize", "initialize", "activation"],
-    "CL_DQN": ["input_shape", "kernels", "strides", "filters", "normalize", "initialize", "activation"],
 }
 
 Representation_Inputs_All = {

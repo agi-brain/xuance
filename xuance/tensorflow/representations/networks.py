@@ -11,7 +11,7 @@ class Basic_Identical(tk.Model):
         self.device = device
         self.model = tk.Sequential([tk.layers.Flatten()])
 
-    def call(self, observations: np.ndarray, training=None, masks=None):
+    def call(self, observations: np.ndarray, **kwargs):
         with tf.device(self.device):
             state = tf.convert_to_tensor(observations, dtype=tf.float32)
             return {'state': state}
@@ -44,7 +44,7 @@ class Basic_MLP(tk.Model):
             layers.extend(mlp)
         return tk.Sequential(layers)
 
-    def call(self, observations: np.ndarray, training=None, masks=None):
+    def call(self, observations: np.ndarray, **kwargs):
         with tf.device(self.device):
             tensor_observation = tf.convert_to_tensor(observations, dtype=tf.float32)
             return {'state': self.model(tensor_observation)}
@@ -83,7 +83,7 @@ class Basic_CNN(tk.Model):
         layers.append(tk.layers.Flatten())
         return tk.Sequential(*layers)
 
-    def call(self, observations: np.ndarray, training=None, masks=None):
+    def call(self, observations: np.ndarray, **kwargs):
         with tf.device(self.device):
             tensor_observation = tf.convert_to_tensor(np.transpose(observations, (0, 3, 1, 2)), dtype=tf.float32)
             return {'state': self.model(tensor_observation)}
@@ -122,7 +122,7 @@ class CoG_CNN(tk.Model):
         layers.append(tk.layers.Flatten())
         return tk.Sequential(*layers)
 
-    def call(self, observations: np.ndarray, training=None, masks=None):
+    def call(self, observations: np.ndarray, **kwargs):
         with tf.device(self.device):
             tensor_observation = tf.convert_to_tensor(np.transpose(observations['image'], (0, 3, 1, 2)), dtype=tf.float32)
             return {'state': self.model(tensor_observation)}
@@ -166,7 +166,7 @@ class CoG_MLP(tk.Model):
         angle_layers = angle_mlp1 + angle_mlp2
         return tk.Sequential(*laser_layers), tk.Sequential(*pose_layers), tk.Sequential(*angle_layers)
 
-    def call(self, observations: np.ndarray, training=None, masks=None):
+    def call(self, observations: np.ndarray, **kwargs):
         with tf.device(self.device):
             tensor_laser = tf.convert_to_tensor(observations['laser'], dtype=tf.float32, device=self.device)
             tensor_pose = tf.convert_to_tensor(observations['pose'], dtype=tf.float32, device=self.device)
@@ -211,7 +211,7 @@ class CoG_RNN(tk.Model):
         aux_mlp2 = mlp_block(256, 2, None, self.activation, self.initialize, self.device)
         return laser_gru, tk.Sequential(*goal_layers), pose_gru, tk.Sequential(*fusion_mlp)
 
-    def call(self, observations: tf.Tensor, training=None, masks=None):
+    def call(self, observations: tf.Tensor, **kwargs):
         with tf.device(self.device):
             tensor_laser = tf.convert_to_tensor(observations['laser'], dtype=tf.float32)
             tensor_pose = tf.convert_to_tensor(observations['pose'], dtype=tf.float32)
@@ -261,7 +261,7 @@ class C_DQN(tk.Model):
         layers.append(tk.layers.Flatten())
         return tk.Sequential(*layers)
 
-    def call(self, observations: np.ndarray, training=None, masks=None):
+    def call(self, observations: np.ndarray, **kwargs):
         with tf.device(self.device):
             tensor_observation = tf.convert_to_tensor(np.transpose(observations, (0, 3, 1, 2)), dtype=tf.float32)
             return {'state': self.model(tensor_observation)}
@@ -288,7 +288,7 @@ class L_DQN(tk.Model):
         lstm = lstm_block(input_shape, self.output_shape, self.dropout, self.initialize, self.device)
         return lstm
 
-    def call(self, observations: np.ndarray, training=None, masks=None):
+    def call(self, observations: np.ndarray, **kwargs):
         with tf.device(self.device):
             state = tf.convert_to_tensor(observations, dtype=tf.float32)
             return {'state': state}
@@ -328,7 +328,7 @@ class CL_DQN(tk.Model):
         lstm = lstm_block(input_shape, self.output_shape, self.dropout, self.initialize, self.device)
         return lstm
 
-    def call(self, observations: np.ndarray, training=None, masks=None):
+    def call(self, observations: np.ndarray, **kwargs):
         with tf.device(self.device):
             state = tf.convert_to_tensor(observations, dtype=tf.float32)
             return {'state': state}

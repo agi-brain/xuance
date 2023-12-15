@@ -4,12 +4,12 @@ from xuance.tensorflow.agents import *
 class TD3_Agent(Agent):
     def __init__(self,
                  config: Namespace,
-                 envs: VecEnv,
+                 envs: DummyVecEnv_Gym,
                  policy: tk.Model,
                  optimizer: Sequence[tk.optimizers.Optimizer],
                  device: str = 'cpu'):
         self.render = config.render
-        self.nenvs = envs.num_envs
+        self.n_envs = envs.num_envs
 
         self.gamma = config.gamma
         self.train_frequency = config.training_frequency
@@ -27,17 +27,17 @@ class TD3_Agent(Agent):
                                       self.action_space,
                                       self.representation_info_shape,
                                       self.auxiliary_info_shape,
-                                      self.nenvs,
+                                      self.n_envs,
                                       config.nsize,
                                       config.batchsize)
         learner = TD3_Learner(policy,
                               optimizer,
                               config.device,
-                              config.modeldir,
+                              config.model_dir,
                               config.gamma,
                               config.tau,
                               config.actor_delay)
-        super(TD3_Agent, self).__init__(config, envs, policy, memory, learner, device, config.logdir, config.modeldir)
+        super(TD3_Agent, self).__init__(config, envs, policy, memory, learner, device, config.log_dir, config.model_dir)
 
     def _action(self, obs, noise_scale=0.0):
         _, action = self.policy.action(obs)
@@ -53,7 +53,7 @@ class TD3_Agent(Agent):
             obs = self._process_observation(obs)
             acts = self._action(obs, self.noise_scale)
             if self.current_step < self.start_training:
-                acts = [self.action_space.sample() for _ in range(self.nenvs)]
+                acts = [self.action_space.sample() for _ in range(self.n_envs)]
             next_obs, rewards, terminals, trunctions, infos = self.envs.step(acts)
             self.memory.store(obs, acts, self._process_reward(rewards), terminals, self._process_observation(next_obs))
             if self.current_step > self.start_training and self.current_step % self.train_frequency == 0:
@@ -63,7 +63,7 @@ class TD3_Agent(Agent):
 
             self.returns = self.gamma * self.returns + rewards
             obs = next_obs
-            for i in range(self.nenvs):
+            for i in range(self.n_envs):
                 if terminals[i] or trunctions[i]:
                     obs[i] = infos[i]["reset_obs"]
                     self.ret_rms.update(self.returns[i:i + 1])

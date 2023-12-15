@@ -1,5 +1,4 @@
 from .runner_basic import *
-from xuance.tensorflow.agents import get_total_iters
 from xuance.tensorflow.representations import REGISTRY as REGISTRY_Representation
 from xuance.tensorflow.agents import REGISTRY as REGISTRY_Agent
 from xuance.tensorflow.policies import REGISTRY as REGISTRY_Policy
@@ -72,16 +71,16 @@ class Runner_DRL(Runner_Base):
                 args_test = deepcopy(self.args)
                 args_test.parallels = 1
                 return make_envs(args_test)
-
             self.agent.render = True
-            self.agent.load_model(self.agent.modeldir)
-            self.agent.test(env_fn, self.args.test_episode)
+            self.agent.load_model(self.agent.model_dir_load, self.args.seed)
+            scores = self.agent.test(env_fn, self.args.test_episode)
+            print(f"Mean Score: {np.mean(scores)}, Std: {np.std(scores)}")
             print("Finish testing.")
         else:
-            n_train_steps = self.args.training_steps
+            n_train_steps = self.args.running_steps // self.n_envs
             self.agent.train(n_train_steps)
             print("Finish training.")
-            self.agent.save_model("final_train_model.path")
+            self.agent.save_model("final_train_model")
 
         self.envs.close()
         if self.agent.use_wandb:
@@ -95,9 +94,8 @@ class Runner_DRL(Runner_Base):
             args_test = deepcopy(self.args)
             args_test.parallels = args_test.test_episode
             return make_envs(args_test)
-
-        train_steps = self.args.training_steps // self.n_envs
-        eval_interval = self.args.eval_interval
+        train_steps = self.args.running_steps // self.n_envs
+        eval_interval = self.args.eval_interval // self.n_envs
         test_episode = self.args.test_episode
         num_epoch = int(train_steps / eval_interval)
 
@@ -115,7 +113,7 @@ class Runner_DRL(Runner_Base):
                                     "std": np.std(test_scores),
                                     "step": self.agent.current_step}
                 # save best model
-                self.agent.save_model(model_name="best_model.pth")
+                self.agent.save_model(model_name="best_model")
 
         # end benchmarking
         print("Best Model Score: %.2f, std=%.2f" % (best_scores_info["mean"], best_scores_info["std"]))

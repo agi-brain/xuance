@@ -31,11 +31,11 @@ class PPOCLIP_Learner(Learner):
                  optimizer: nn.Optimizer,
                  scheduler: Optional[nn.exponential_decay_lr] = None,
                  summary_writer: Optional[SummaryWriter] = None,
-                 modeldir: str = "./",
+                 model_dir: str = "./",
                  vf_coef: float = 0.25,
                  ent_coef: float = 0.005,
                  clip_range: float = 0.25):
-        super(PPOCLIP_Learner, self).__init__(policy, optimizer, scheduler, summary_writer, modeldir)
+        super(PPOCLIP_Learner, self).__init__(policy, optimizer, scheduler, summary_writer, model_dir)
         self.vf_coef = vf_coef
         self.ent_coef = ent_coef
         self.clip_range = clip_range

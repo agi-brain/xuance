@@ -21,7 +21,7 @@ class ActorNet(tk.Model):
         self.model = tk.Sequential(layers)
         self.dist = CategoricalDistribution(action_dim)
 
-    def call(self, x: tf.Tensor, training=None, masks=None):
+    def call(self, x: tf.Tensor, **kwargs):
         self.dist.set_param(self.model(x))
         return self.model(x)
 
@@ -43,7 +43,7 @@ class CriticNet(tk.Model):
         layers.extend(mlp_block(input_shapes[0], 1, device=device)[0])
         self.model = tk.Sequential(layers)
 
-    def call(self, x: tf.Tensor, training=None, masks=None):
+    def call(self, x: tf.Tensor, **kwargs):
         return self.model(x)[:, 0]
 
 
@@ -66,7 +66,7 @@ class ActorCriticPolicy(tk.Model):
         self.critic = CriticNet(representation.output_shapes['state'][0], critic_hidden_size,
                                 normalize, initializer, activation, device)
 
-    def call(self, observations: Union[np.ndarray, dict], training=None, masks=None):
+    def call(self, observations: Union[np.ndarray, dict], **kwargs):
         outputs = self.representation(observations)
         a = self.actor(outputs['state'])
         v = self.critic(outputs['state'])
@@ -82,7 +82,6 @@ class ActorPolicy(tk.Model):
                  initializer: Optional[tk.initializers.Initializer] = None,
                  activation: Optional[tk.layers.Layer] = None,
                  device: str = "cpu:0"):
-        assert isinstance(action_space, Discrete)
         super(ActorPolicy, self).__init__()
         self.action_dim = action_space.n
         self.representation = representation
@@ -90,7 +89,7 @@ class ActorPolicy(tk.Model):
         self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size,
                               normalize, initializer, activation, device)
 
-    def call(self, observation: Union[np.ndarray, dict], training=None, masks=None):
+    def call(self, observation: Union[np.ndarray, dict], **kwargs):
         outputs = self.representation(observation)
         a = self.actor(outputs['state'])
         return outputs, a
@@ -109,9 +108,9 @@ class PPGActorCritic(tk.Model):
         assert isinstance(action_space, Discrete)
         super(PPGActorCritic, self).__init__()
         self.action_dim = action_space.n
-        self.representation = representation
-        self.policy_representation = representation
+        self.actor_representation = representation
         self.critic_representation = copy.deepcopy(representation)
+        self.aux_critic_representation = copy.deepcopy(representation)
         self.representation_info_shape = self.policy_representation.output_shapes
 
         self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size,
@@ -121,12 +120,13 @@ class PPGActorCritic(tk.Model):
         self.aux_critic = CriticNet(representation.output_shapes['state'][0], critic_hidden_size,
                                     normalize, initializer, activation, device)
 
-    def call(self, observation: Union[np.ndarray, dict], training=None, masks=None):
-        policy_outputs = self.policy_representation(observation)
+    def call(self, observation: Union[np.ndarray, dict], **kwargs):
+        policy_outputs = self.actor_representation(observation)
         critic_outputs = self.critic_representation(observation)
+        aux_critic_outputs = self.aux_critic_representation(observation)
         a = self.actor(policy_outputs['state'])
         v = self.critic(critic_outputs['state'])
-        aux_v = self.aux_critic(policy_outputs['state'])
+        aux_v = self.aux_critic(aux_critic_outputs['state'])
         return policy_outputs, a, v, aux_v
 
 
@@ -147,7 +147,7 @@ class CriticNet_SACDIS(tk.Model):
         layers.extend(mlp_block(input_shape[0], action_dim, None, None, initializer, device)[0])
         self.model = tk.Sequential(layers)
 
-    def call(self, x: tf.Tensor, training=None, masks=None):
+    def call(self, x: tf.Tensor, **kwargs):
         return self.model(x)
 
 
@@ -170,7 +170,7 @@ class ActorNet_SACDIS(tk.Model):
         self.outputs = tk.Sequential(layers)
         self.model = tk.layers.Softmax(axis=-1)
 
-    def call(self, x: tf.Tensor, training=None, masks=None):
+    def call(self, x: tf.Tensor, **kwargs):
         action_prob = self.model(self.outputs(x))
         dist = tfd.Categorical(probs=action_prob)
         return action_prob, dist
@@ -186,43 +186,49 @@ class SACDISPolicy(tk.Model):
                  initializer: Optional[tk.initializers.Initializer] = None,
                  activation: Optional[tk.layers.Layer] = None,
                  device: str = "cpu:0"):
-        # assert isinstance(action_space, Box)
         super(SACDISPolicy, self).__init__()
         self.action_dim = action_space.n
         self.representation = representation
+        self.representation_critic = copy.deepcopy(representation)
         self.representation_info_shape = self.representation.output_shapes
 
         self.actor = ActorNet_SACDIS(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size,
                                      normalize, initializer, activation, device)
         self.critic = CriticNet_SACDIS(representation.output_shapes['state'][0], self.action_dim, critic_hidden_size,
                                        initializer, activation, device)
+        self.target_representation_critic = copy.deepcopy(self.representation_critic)
         self.target_critic = CriticNet_SACDIS(representation.output_shapes['state'][0], self.action_dim,
                                               critic_hidden_size, initializer, activation, device)
         self.soft_update(tau=1.0)
 
-    def action(self, observation: Union[np.ndarray, dict]):
+    def call(self, observation: Union[np.ndarray, dict], **kwargs):
         outputs = self.representation(observation)
         act_prob, act_distribution = self.actor(outputs['state'])
         return outputs, act_prob, act_distribution
 
     def Qtarget(self, observation: Union[np.ndarray, dict]):
-        outputs = self.representation(observation)
-        act_prob, act_distribution = self.actor(outputs['state'])
+        outputs_actor = self.representation(observation)
+        outputs_critic = self.target_representation_critic(observation)
+        act_prob, act_distribution = self.actor(outputs_actor['state'])
+        value = self.target_critic(outputs_critic['state'])
         log_action_prob = tf.math.log(act_prob + 1e-5)
-        return outputs, act_prob, log_action_prob, self.target_critic(outputs['state'])
+        return act_prob, log_action_prob, value
 
     def Qaction(self, observation: Union[np.ndarray, dict]):
-        outputs = self.representation(observation)
-        return outputs, self.critic(outputs['state'])
+        outputs_critic = self.representation_critic(observation)
+        return outputs_critic, self.critic(outputs_critic['state'])
 
     def Qpolicy(self, observation: Union[np.ndarray, dict]):
-        outputs = self.representation(observation)
-        act_prob, act_distribution = self.actor(outputs['state'])
+        outputs_actor = self.representation(observation)
+        outputs_critic = self.representation_critic(observation)
+        act_prob, act_distribution = self.actor(outputs_actor['state'])
         # z = act_prob == 0.0
         # z = z.float() * 1e-8
         log_action_prob = tf.math.log(act_prob + 1e-5)
-        return outputs, act_prob, log_action_prob, self.critic(outputs['state'])
+        return act_prob, log_action_prob, self.critic(outputs_critic['state'])
 
     def soft_update(self, tau=0.005):
+        for ep, tp in zip(self.representation_critic.variables, self.target_representation_critic.variables):
+            tp.assign((1 - tau) * tp + tau * ep)
         for ep, tp in zip(self.critic.variables, self.target_critic.variables):
             tp.assign((1 - tau) * tp + tau * ep)

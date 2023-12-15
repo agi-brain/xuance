@@ -85,11 +85,13 @@ def pooling_block(input_shape: Sequence[int],
 
 def gru_block(input_dim: Sequence[int],
               output_dim: int,
+              num_layers: int = 1,
               dropout: float = 0,
               initialize: Optional[Callable[[tf.Tensor], tf.Tensor]] = None,
               device: str = "cpu") -> ModelType:
     gru = tk.layers.GRU(input_size=input_dim,
                         hidden_size=output_dim,
+                        num_layers=num_layers,
                         batch_first=True,
                         dropout=dropout,
                         device=device)
@@ -103,11 +105,13 @@ def gru_block(input_dim: Sequence[int],
 
 def lstm_block(input_dim: Sequence[int],
                output_dim: int,
+               num_layers: int = 1,
                dropout: float = 0,
                initialize: Optional[Callable[[tf.Tensor], tf.Tensor]] = None,
                device: str = "cpu") -> ModelType:
     lstm = tk.layers.LSTM(input_size=input_dim,
                           hidden_size=output_dim,
+                          num_layers=num_layers,
                           batch_first=True,
                           dropout=dropout,
                           device=device)

@@ -61,7 +61,7 @@ def pooling_block(input_shape: Sequence[int],
     assert len(input_shape) == 3  # CxHxW
     block = []
     C, H, W = input_shape
-    block.append(pooling(output_size=(H // scale, W // scale), device=device))
+    block.append(pooling(output_size=(H // scale, W // scale)))
     return block
 
 

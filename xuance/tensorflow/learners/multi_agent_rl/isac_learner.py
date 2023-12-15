@@ -11,7 +11,7 @@ class ISAC_Learner(LearnerMAS):
                  policy: tk.Model,
                  optimizer: Sequence[tk.optimizers.Optimizer],
                  device: str = "cpu:0",
-                 modeldir: str = "./",
+                 model_dir: str = "./",
                  gamma: float = 0.99,
                  sync_frequency: int = 100
                  ):
@@ -19,14 +19,14 @@ class ISAC_Learner(LearnerMAS):
         self.tau = config.tau
         self.alpha = config.alpha
         self.sync_frequency = sync_frequency
-        super(ISAC_Learner, self).__init__(config, policy, optimizer, device, modeldir)
+        super(ISAC_Learner, self).__init__(config, policy, optimizer, device, model_dir)
         self.optimizer = {
             'actor': optimizer[0],
             'critic': optimizer[1]
         }
 
     def save_model(self):
-        model_path = self.modeldir + "model-%s-%s" % (time.asctime(), str(self.iterations))
+        model_path = self.model_dir + "model-%s-%s" % (time.asctime(), str(self.iterations))
         self.policy.actor_net.save(model_path)
 
     def load_model(self, path):

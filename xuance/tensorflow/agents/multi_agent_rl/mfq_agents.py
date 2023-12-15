@@ -5,7 +5,7 @@ from xuance.tensorflow.agents.agents_marl import linear_decay_or_increase
 class MFQ_Agents(MARLAgents):
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecEnv_MAS,
+                 envs: DummyVecEnv_Pettingzoo,
                  device: str = "cpu:0"):
         self.comm = MPI.COMM_WORLD
 
@@ -31,7 +31,7 @@ class MFQ_Agents(MARLAgents):
         self.representation_info_shape = policy.representation.output_shapes
         self.auxiliary_info_shape = {}
 
-        writer = SummaryWriter(config.logdir)
+        writer = SummaryWriter(config.log_dir)
         if config.state_space is not None:
             config.dim_state, state_shape = config.state_space.shape, config.state_space.shape
         else:
@@ -46,7 +46,7 @@ class MFQ_Agents(MARLAgents):
                                            config.buffer_size,
                                            config.batch_size)
         learner = MFQ_Learner(config, policy, optimizer, writer,
-                              config.device, config.modeldir, config.gamma, config.sync_frequency)
+                              config.device, config.model_dir, config.gamma, config.sync_frequency)
 
         self.obs_rms = RunningMeanStd(shape=space2shape(self.observation_space[config.agent_keys[0]]),
                                       comm=self.comm, use_mpi=False)
@@ -54,7 +54,7 @@ class MFQ_Agents(MARLAgents):
         self.epsilon_decay = linear_decay_or_increase(config.start_greedy, config.end_greedy,
                                                       config.greedy_update_steps)
         super(MFQ_Agents, self).__init__(config, envs, policy, memory, learner, writer, device,
-                                         config.logdir, config.modeldir)
+                                         config.log_dir, config.model_dir)
 
     def _process_observation(self, observations):
         if self.use_obsnorm:
@@ -102,7 +102,7 @@ class MFQ_Agents(MARLAgents):
 
     def train(self, i_episode):
         self.epsilon_decay.update()
-        for i in range(self.nenvs):
+        for i in range(self.n_envs):
             self.writer.add_scalars("epsilon", {"env-%d" % i: self.epsilon_decay.epsilon}, i_episode)
         if self.memory.can_sample(self.args.batch_size):
             sample = self.memory.sample()

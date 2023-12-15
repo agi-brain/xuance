@@ -4,12 +4,12 @@ from xuance.tensorflow.agents import *
 class SAC_Agent(Agent):
     def __init__(self,
                  config: Namespace,
-                 envs: VecEnv,
+                 envs: DummyVecEnv_Gym,
                  policy: tk.Model,
                  optimizer: Sequence[tk.optimizers.Optimizer],
                  device: str = 'cpu'):
         self.render = config.render
-        self.nenvs = envs.num_envs
+        self.n_envs = envs.num_envs
 
         self.gamma = config.gamma
         self.train_frequency = config.training_frequency
@@ -27,16 +27,16 @@ class SAC_Agent(Agent):
                                       self.action_space,
                                       self.representation_info_shape,
                                       self.auxiliary_info_shape,
-                                      self.nenvs,
+                                      self.n_envs,
                                       config.nsize,
                                       config.batchsize)
         learner = SAC_Learner(policy,
                               optimizer,
                               config.device,
-                              config.modeldir,
+                              config.model_dir,
                               config.gamma,
                               config.tau)
-        super(SAC_Agent, self).__init__(config, envs, policy, memory, learner, device, config.logdir, config.modeldir)
+        super(SAC_Agent, self).__init__(config, envs, policy, memory, learner, device, config.log_dir, config.model_dir)
 
     def _action(self, obs):
         _, act_dist = self.policy.action(obs)
@@ -52,7 +52,7 @@ class SAC_Agent(Agent):
             obs = self._process_observation(obs)
             acts = self._action(obs)
             if self.current_step < self.start_training:
-                acts = [self.action_space.sample() for _ in range(self.nenvs)]
+                acts = [self.action_space.sample() for _ in range(self.n_envs)]
 
             next_obs, rewards, terminals, trunctions, infos = self.envs.step(acts)
             self.memory.store(obs, acts, self._process_reward(rewards), terminals, self._process_observation(next_obs))
@@ -62,7 +62,7 @@ class SAC_Agent(Agent):
 
             self.returns = self.gamma * self.returns + rewards
             obs = next_obs
-            for i in range(self.nenvs):
+            for i in range(self.n_envs):
                 if terminals[i] or trunctions[i]:
                     obs[i] = infos[i]["reset_obs"]
                     self.ret_rms.update(self.returns[i:i + 1])

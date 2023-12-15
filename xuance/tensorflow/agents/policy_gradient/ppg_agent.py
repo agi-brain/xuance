@@ -4,12 +4,12 @@ from xuance.tensorflow.agents import *
 class PPG_Agent(Agent):
     def __init__(self,
                  config: Namespace,
-                 envs: VecEnv,
+                 envs: DummyVecEnv_Gym,
                  policy: tk.Model,
                  optimizer: tk.optimizers.Optimizer,
                  device: str = 'cpu'):
         self.render = config.render
-        self.nenvs = envs.num_envs
+        self.n_envs = envs.num_envs
         self.nsteps = config.nsteps
         self.nminibatch = config.nminibatch
         self.policy_nepoch = config.policy_nepoch
@@ -27,7 +27,7 @@ class PPG_Agent(Agent):
                                      self.action_space,
                                      self.representation_info_shape,
                                      self.auxiliary_info_shape,
-                                     self.nenvs,
+                                     self.n_envs,
                                      self.nsteps,
                                      self.nminibatch,
                                      self.gamma,
@@ -35,11 +35,11 @@ class PPG_Agent(Agent):
         learner = PPG_Learner(policy,
                               optimizer,
                               config.device,
-                              config.modeldir,
+                              config.model_dir,
                               config.ent_coef,
                               config.clip_range,
                               config.kl_beta)
-        super(PPG_Agent, self).__init__(config, envs, policy, memory, learner, device, config.logdir, config.modeldir)
+        super(PPG_Agent, self).__init__(config, envs, policy, memory, learner, device, config.log_dir, config.model_dir)
 
     def _action(self, obs):
         _, _, vs, _ = self.policy(obs)
@@ -61,7 +61,7 @@ class PPG_Agent(Agent):
             self.memory.store(obs, acts, self._process_reward(rewards), rets, terminals, {"old_dist": dists})
             if self.memory.full:
                 _, vals, _ = self._action(self._process_observation(next_obs))
-                for i in range(self.nenvs):
+                for i in range(self.n_envs):
                     self.memory.finish_path(vals[i], i)
                 # policy update
                 for _ in range(self.nminibatch * self.policy_nepoch):
@@ -86,7 +86,7 @@ class PPG_Agent(Agent):
                 self.memory.clear()
 
             obs = next_obs
-            for i in range(self.nenvs):
+            for i in range(self.n_envs):
                 if terminals[i] or trunctions[i]:
                     obs[i] = infos[i]["reset_obs"]
                     self.memory.finish_path(0, i)

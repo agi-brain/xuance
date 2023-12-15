@@ -13,7 +13,7 @@ from .gaussian import ActorCriticPolicy as Gaussian_AC_Policy
 from .gaussian import ActorPolicy as Gaussian_Actor_Policy
 from .gaussian import PPGActorCritic as Gaussian_PPG_Policy
 from .deterministic import BasicQnetwork, C51Qnetwork, DuelQnetwork, DDPGPolicy, NoisyQnetwork, QRDQN_Network, \
-    TD3Policy, PDQNPolicy, MPDQNPolicy, SPDQNPolicy, CDQNPolicy, LDQNPolicy, CLDQNPolicy
+    TD3Policy, PDQNPolicy, MPDQNPolicy, SPDQNPolicy
 from .gaussian import SACPolicy as Gaussian_SAC_Policy
 
 from .mixers import *
@@ -22,8 +22,9 @@ from .deterministic_marl import Basic_DDPG_policy as BasicDDPG_marl
 from .deterministic_marl import MFQnetwork, MixingQnetwork, Weighted_MixingQnetwork, Qtran_MixingQnetwork, DCG_policy, \
     Basic_DDPG_policy, MADDPG_policy, MAAC_policy, MATD3_policy
 
-from .categorical_marl import MultiAgentActorCriticPolicy, MeanFieldActorCriticPolicy, COMAPolicy
-from .categorical_marl import MAPPO_ActorCriticPolicy as Categotical_MAPPO
+from .categorical_marl import MeanFieldActorCriticPolicy, COMAPolicy
+from .categorical_marl import MAAC_Policy as Categotical_MAAC_MAPPO
+from .categorical_marl import MAAC_Policy_Share as Categorical_MAAC_Policy_Share
 from .gaussian_marl import Basic_ISAC_policy as Gaussian_ISAC
 from .gaussian_marl import MASAC_policy as Gaussian_MASAC
 
@@ -55,26 +56,23 @@ REGISTRY = {
     "PDQN_Policy": PDQNPolicy,
     "MPDQN_Policy": MPDQNPolicy,
     "SPDQN_Policy": SPDQNPolicy,
-    "CDQN_Policy": CDQNPolicy,
-    "LDQN_Policy": LDQNPolicy,
-    "CLDQN_Policy": CLDQNPolicy,
     # ↓ Multi-Agent DRL ↓ #
     "Basic_Q_network_marl": BasicQnetwork_marl,
     "Mixing_Q_network": MixingQnetwork,
     "Weighted_Mixing_Q_network": Weighted_MixingQnetwork,
     "Qtran_Mixing_Q_network": Qtran_MixingQnetwork,
-    "DCG_policy": DCG_policy,
-    "Categorical_MAAC_policy": MultiAgentActorCriticPolicy,
-    "Categorical_COMA_policy": COMAPolicy,
-    "Independent_DDPG_policy": BasicDDPG_marl,
-    "MADDPG_policy": MADDPG_policy,
+    "DCG_Policy": DCG_policy,
+    # "Categorical_MAAC_Policy": Categorical_MAAC_Policy,
+    "Categorical_MAAC_Policy_Share": Categorical_MAAC_Policy_Share,
+    "Categorical_COMA_Policy": COMAPolicy,
+    "Independent_DDPG_Policy": BasicDDPG_marl,
+    "MADDPG_Policy": MADDPG_policy,
     "MF_Q_network": MFQnetwork,
-    "Categorical_MFAC_policy": MeanFieldActorCriticPolicy,
-    "Categorical_MAPPO_policy": Categotical_MAPPO,
-    "Gaussian_ISAC_policy": Gaussian_ISAC,
-    "Gaussian_MASAC_policy": Gaussian_MASAC,
-    "MAAC_policy": MAAC_policy,
-    "MATD3_policy": MATD3_policy
+    "Categorical_MFAC_Policy": MeanFieldActorCriticPolicy,
+    # "Gaussian_MAAC_Policy": Gaussain_MAAC,
+    "Gaussian_ISAC_Policy": Gaussian_ISAC,
+    "Gaussian_MASAC_Policy": Gaussian_MASAC,
+    "MATD3_Policy": MATD3_policy
 }
 
 Policy_Inputs = {
@@ -119,12 +117,6 @@ Policy_Inputs = {
     "SPDQN_Policy": ['observation_space', 'action_space', 'representation', 'conactor_hidden_size',
                      'qnetwork_hidden_size',
                      'normalize', 'initialize', 'activation', 'device'],
-    "CDQN_Policy": ["action_space", "representation", "hidden_sizes",
-                    "normalize", "initialize", "activation", "device"],
-    "LDQN_Policy": ["action_space", "representation", "hidden_sizes",
-                    "normalize", "initialize", "activation", "device"],
-    "CLDQN_Policy": ["action_space", "representation", "hidden_sizes",
-                     "normalize", "initialize", "activation", "device"],
     #  MARL policies  #
     "Basic_Q_network_marl": ["action_space", "n_agents", "representation", "hidden_sizes",
                              "normalize", "initialize", "activation", "device"],

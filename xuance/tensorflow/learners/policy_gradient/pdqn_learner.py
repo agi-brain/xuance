@@ -6,15 +6,15 @@ class PDQN_Learner(Learner):
                  optimizers: Sequence[tk.optimizers.Optimizer],
                  summary_writer: Optional[SummaryWriter] = None,
                  device: str = "cpu:0",
-                 modeldir: str = "./",
+                 model_dir: str = "./",
                  gamma: float = 0.99,
                  tau: float = 0.01):
         self.tau = tau
         self.gamma = gamma
-        super(PDQN_Learner, self).__init__(policy, optimizers, summary_writer, device, modeldir)
+        super(PDQN_Learner, self).__init__(policy, optimizers, summary_writer, device, model_dir)
 
     def save_model(self):
-        model_path = self.modeldir + "model-%s-%s" % (time.asctime(), str(self.iterations))
+        model_path = self.model_dir + "model-%s-%s" % (time.asctime(), str(self.iterations))
         model_path_qnet = model_path + "/qnet"
         model_path_actor = model_path + "/conactor"
         self.policy.qnetwork.save(model_path_qnet)

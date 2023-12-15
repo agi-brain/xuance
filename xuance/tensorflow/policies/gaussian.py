@@ -26,7 +26,7 @@ class ActorNet(tk.Model):
         self.logstd = tf.Variable(tf.zeros((action_dim,)) - 1, trainable=True)
         self.dist = DiagGaussianDistribution(action_dim)
 
-    def call(self, x: tf.Tensor, training=None, masks=None):
+    def call(self, x: tf.Tensor, **kwargs):
         self.dist.set_param(self.mu_model(x), tf.math.exp(self.logstd))
         return self.mu_model(x)
 
@@ -48,7 +48,7 @@ class CriticNet(tk.Model):
         layers.extend(mlp_block(input_shapes[0], 1, device=device)[0])
         self.model = tk.Sequential(layers)
 
-    def call(self, x: tf.Tensor, training=None, masks=None):
+    def call(self, x: tf.Tensor, **kwargs):
         return self.model(x)[:, 0]
 
 
@@ -71,7 +71,7 @@ class ActorCriticPolicy(tk.Model):
         self.critic = CriticNet(representation.output_shapes['state'][0], critic_hidden_size,
                                 normalize, initializer, activation, device)
 
-    def call(self, observations: Union[np.ndarray, dict], training=None, masks=None):
+    def call(self, observations: Union[np.ndarray, dict], **kwargs):
         outputs = self.representation(observations)
         a = self.actor(outputs['state'])
         v = self.critic(outputs['state'])
@@ -96,7 +96,7 @@ class ActorPolicy(tf.Module):
         self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size,
                               normalize, initializer, activation, device)
 
-    def call(self, observation: Union[np.ndarray, dict], training=None, masks=None):
+    def call(self, observation: Union[np.ndarray, dict], **kwargs):
         outputs = self.representation(observation)
         a = self.actor(outputs['state'])
         return outputs, a
@@ -125,7 +125,7 @@ class PPGActorCritic(tk.Model):
         self.aux_critic = CriticNet(representation.output_shapes['state'][0], critic_hidden_size,
                                     normalize, initializer, activation, device)
 
-    def call(self, observation: Union[np.ndarray, dict], training=None, masks=None):
+    def call(self, observation: Union[np.ndarray, dict], **kwargs):
         policy_outputs = self.policy_representation(observation)
         critic_outputs = self.critic_representation(observation)
         a = self.actor(policy_outputs['state'])
@@ -155,7 +155,7 @@ class ActorNet_SAC(tk.Model):
         self.out_std = tk.layers.Dense(units=action_dim,
                                        input_shape=(hidden_sizes[0],))
 
-    def call(self, x: tf.Tensor, training=None, masks=None):
+    def call(self, x: tf.Tensor, **kwargs):
         output = self.outputs(x)
         mu = tf.tanh(self.out_mu(output))
         std = tf.clip_by_value(self.out_std(output), -20, 2)
@@ -182,7 +182,7 @@ class CriticNet_SAC(tk.Model):
         layers.extend(mlp_block(input_shape[0], 1, None, None, initializer, device)[0])
         self.model = tk.Sequential(layers)
 
-    def call(self, inputs: Union[np.ndarray, dict], training=None, masks=None):
+    def call(self, inputs: Union[np.ndarray, dict], **kwargs):
         obs = inputs['obs']
         act = inputs['act']
         return self.model(tf.concat((obs, act), axis=-1))

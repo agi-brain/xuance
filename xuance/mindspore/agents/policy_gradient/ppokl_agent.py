@@ -28,7 +28,7 @@ class PPOKL_Agent(Agent):
         self.representation_info_shape = policy.representation.output_shapes
         self.auxiliary_info_shape = {"old_logp": ()}
 
-        writer = SummaryWriter(config.logdir)
+        writer = SummaryWriter(config.log_dir)
         memory = DummyOnPolicyBuffer(self.observation_space,
                                      self.action_space,
                                      self.representation_info_shape,
@@ -42,15 +42,15 @@ class PPOKL_Agent(Agent):
                                   optimizer,
                                   scheduler,
                                   writer,
-                                  config.modeldir,
+                                  config.model_dir,
                                   config.vf_coef,
                                   config.ent_coef,
                                   0.2)
 
         self.obs_rms = RunningMeanStd(shape=space2shape(self.observation_space), comm=self.comm, use_mpi=False)
         self.ret_rms = RunningMeanStd(shape=(), comm=self.comm, use_mpi=False)
-        super(PPOKL_Agent, self).__init__(envs, policy, memory, learner, writer, config.logdir,
-                                          config.modeldir)
+        super(PPOKL_Agent, self).__init__(envs, policy, memory, learner, writer, config.log_dir,
+                                          config.model_dir)
 
     def _process_observation(self, observations):
         if self.use_obsnorm:
@@ -118,11 +118,11 @@ class PPOKL_Agent(Agent):
 
             if step % 50000 == 0 or step == train_steps - 1:
                 self.save_model()
-                np.save(self.modeldir + "/obs_rms.npy",
+                np.save(self.model_dir + "/obs_rms.npy",
                         {'mean': self.obs_rms.mean, 'std': self.obs_rms.std, 'count': self.obs_rms.count})
 
     def test(self, test_episodes=100000, load_model=None):
-        self.load_model(self.modeldir)
+        self.load_model(self.model_dir)
         scores = np.zeros((self.nenvs,), np.float32)
         returns = np.zeros((self.nenvs,), np.float32)
 
