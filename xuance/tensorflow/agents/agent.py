@@ -73,7 +73,7 @@ class Agent(ABC):
         self.current_episode = np.zeros((self.envs.num_envs,), np.int32)
     
     def save_model(self, model_name):
-        model_path = self.model_dir_save + "/" + model_name
+        model_path = os.path.join(self.model_dir_save, model_name)
         self.learner.save_model(model_path)
 
     def load_model(self, path, seed=1):
@@ -135,9 +135,12 @@ class Agent(ABC):
     def test(self, env, episodes):
         raise NotImplementedError
 
+    def finish(self):
+        if self.use_wandb:
+            wandb.finish()
+        else:
+            self.writer.close()
+
 
 def get_total_iters(agent_name, args):
-    if agent_name in ["A2C", "PG", "PPO_Clip","PPO_KL","PPG","VDAC", "COMA", "MFAC", "MAPPO_Clip", "MAPPO_KL"]:
-        return int(args.training_steps * args.nepoch * args.nminibatch / args.nsteps)
-    else:
-        return int(args.training_steps / args.training_frequency)
+    return args.running_steps

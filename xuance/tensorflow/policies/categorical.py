@@ -22,8 +22,9 @@ class ActorNet(tk.Model):
         self.dist = CategoricalDistribution(action_dim)
 
     def call(self, x: tf.Tensor, **kwargs):
-        self.dist.set_param(self.model(x))
-        return self.model(x)
+        logits = self.model(x)
+        self.dist.set_param(logits)
+        return logits
 
 
 class CriticNet(tk.Model):

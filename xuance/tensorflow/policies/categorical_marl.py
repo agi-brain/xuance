@@ -14,17 +14,19 @@ class ActorNet(tk.Model):
                  initializer: Optional[tk.initializers.Initializer] = None,
                  gain: float = 1.0,
                  activation: Optional[tk.layers.Layer] = None,
-                 device: Optional[Union[str, int, torch.device]] = None):
+                 device: str = "cpu:0"):
         super(ActorNet, self).__init__()
         layers = []
         input_shape = (state_dim + n_agents,)
         for h in hidden_sizes:
             mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initializer, device)
             layers.extend(mlp)
-        layers.extend(mlp_block(input_shape[0], action_dim, None, None, initializer, device)[0])
+        layers.extend(mlp_block(input_shape[0], action_dim, None, None, initializer, device=device)[0])
         self.pi_logits = tk.Sequential(layers)
+        self.dist = CategoricalDistribution(action_dim)
 
     def call(self, x: tf.Tensor, **kwargs):
+        self.dist.set_param(self.pi_logits(x))
         return self.pi_logits(x)
 
 
@@ -257,30 +259,29 @@ class COMAPolicy(tk.Model):
         self.use_rnn = True if kwargs["use_recurrent"] else False
         self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim, n_agents,
                               actor_hidden_size, normalize, initializer, kwargs['gain'], activation, device)
-        critic_input_dim = self.representation.input_shape[0] + self.action_dim * self.n_agents
+        critic_input_dim = kwargs['dim_obs'] + self.action_dim * self.n_agents
         if kwargs["use_global_state"]:
             critic_input_dim += kwargs["dim_state"]
         self.critic = COMA_CriticNet(critic_input_dim, self.action_dim, critic_hidden_size,
                                      normalize, initializer, activation, device)
         self.target_critic = COMA_CriticNet(critic_input_dim, self.action_dim, critic_hidden_size,
                                             normalize, initializer, activation, device)
-        if isinstance(self.representation, Basic_Identical):
-            self.parameters_actor = self.actor.trainable_variables
-        else:
-            self.parameters_actor = self.representation.trainable_variables + self.actor.trainable_variables
         self.parameters_critic = self.critic.trainable_variables
         self.pi_dist = CategoricalDistribution(self.action_dim)
 
     def call(self, inputs: Union[np.ndarray, dict], *rnn_hidden, **kwargs):
         observation = inputs['obs']
         agent_ids = inputs['ids']
+        obs_shape = observation.shape
         if self.use_rnn:
             outputs = self.representation(observation, *rnn_hidden)
             rnn_hidden = (outputs['rnn_hidden'], outputs['rnn_cell'])
         else:
-            outputs = self.representation(observation)
+            observation_reshape = tf.reshape(observation, [-1, obs_shape[-1]])
+            outputs = self.representation(observation_reshape)
+            outputs_state = tf.reshape(outputs['state'], obs_shape[:-1] + self.representation_info_shape['state'])
             rnn_hidden = None
-        actor_input = torch.concat([outputs['state'], agent_ids], dim=-1)
+        actor_input = tf.concat([outputs_state, agent_ids], axis=-1)
         act_logits = self.actor(actor_input)
         act_probs = tf.nn.softmax(act_logits, axis=-1)
         act_probs = (1 - kwargs['epsilon']) * act_probs + kwargs['epsilon'] * 1 / self.action_dim
@@ -293,6 +294,12 @@ class COMAPolicy(tk.Model):
         # get critic values
         v = self.target_critic(critic_in) if target else self.critic(critic_in)
         return [None, None], v
+
+    def param_actor(self):
+        if isinstance(self.representation, Basic_Identical):
+            return self.actor.trainable_variables
+        else:
+            return self.representation.trainable_variables + self.actor.trainable_variables
 
     def copy_target(self):
         self.target_critic.set_weights(self.critic.get_weights())

@@ -12,56 +12,38 @@ class MARLAgents(object):
                  log_dir: str = "./logs/",
                  model_dir: str = "./models/"):
         self.args = config
-        self.handle = config.handle
         self.n_agents = config.n_agents
-        self.agent_keys = config.agent_keys
-        self.agent_index = config.agent_ids
         self.dim_obs = self.args.dim_obs
         self.dim_act = self.args.dim_act
         self.dim_id = self.n_agents
         self.device = device
 
         self.envs = envs
+        self.start_training = config.start_training
+
         self.render = config.render
-        self.n_envs = envs.num_envs
+        self.nenvs = envs.num_envs
         self.policy = policy
         self.memory = memory
         self.learner = learner
         self.device = device
         self.log_dir = log_dir
-        self.model_dir = model_dir
+        self.model_dir_save, self.model_dir_load = config.model_dir_save, config.model_dir_load
         create_directory(log_dir)
         create_directory(model_dir)
 
-    def save_model(self):
-        self.learner.save_model()
+    def save_model(self, model_name):
+        model_path = os.path.join(self.model_dir_save, model_name)
+        self.learner.save_model(model_path)
 
-    def load_model(self, path):
-        self.learner.load_model(path)
+    def load_model(self, path, seed=1):
+        self.learner.load_model(path, seed)
 
-    def act(self, obs_n, episode, test_mode, noise=False):
-        if not test_mode:
-            epsilon = self.epsilon_decay.epsilon
-        else:
-            epsilon = 1.0
-        batch_size = obs_n.shape[0]
-        # agents_id = np.tile(np.expand_dims(np.eye(self.n_agents), 0), (batch_size, 1, 1)).reshape([-1, self.n_agents])
-        # obs_in = obs_n.reshape([batch_size * self.n_agents, -1])
-        inputs = {"obs": obs_n,
-                  "ids": np.tile(np.expand_dims(np.eye(self.n_agents), 0), (batch_size, 1, 1))}
-        _, greedy_actions, _ = self.policy(inputs)
+    def act(self, **kwargs):
+        raise NotImplementedError
 
-        greedy_actions = greedy_actions.numpy()
-        if noise:
-            random_variable = np.random.random(greedy_actions.shape)
-            action_pick = np.int32((random_variable < epsilon))
-            random_actions = np.array([[self.args.action_space[agent].sample() for agent in self.agent_keys]])
-            return action_pick * greedy_actions + (1 - action_pick) * random_actions
-        else:
-            return greedy_actions
-
-    def train(self, i_episode):
-        return
+    def train(self, **kwargs):
+        raise NotImplementedError
 
 
 class linear_decay_or_increase(object):
@@ -84,17 +66,18 @@ class linear_decay_or_increase(object):
             self.epsilon = min(self.epsilon + self.delta, self.end)
 
 
-def get_total_iters(agent_name, args):
-    if agent_name in ["A2C", "PG", "PPO_Clip", "PPO_KL", "PPG", "VDAC", "COMA", "MFAC", "MAPPO_Clip", "MAPPO_KL"]:
-        return int(args.training_steps * args.nepoch * args.nminibatch / args.nsteps)
-    else:
-        return int(args.training_steps / args.training_frequency)
-
-
-class RandomAgents(MARLAgents):
-    def __init__(self, args):
-        super(RandomAgents, self).__init__(args)
+class RandomAgents(object):
+    def __init__(self, args, envs, device=None):
+        self.args = args
+        self.n_agents = self.args.n_agents
+        self.agent_keys = args.agent_keys
+        self.action_space = self.args.action_space
+        self.nenvs = envs.num_envs
 
     def act(self, obs_n, episode, test_mode, noise=False):
-        random_actions = np.array([[self.args.action_space[agent].sample() for agent in self.agent_keys]])
+        rand_a = [[self.action_space[agent].sample() for agent in self.agent_keys] for e in range(self.nenvs)]
+        random_actions = np.array(rand_a)
         return random_actions
+
+    def load_model(self, model_dir):
+        return

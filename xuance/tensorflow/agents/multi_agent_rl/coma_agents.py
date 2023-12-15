@@ -36,6 +36,7 @@ class COMA_Agents(MARLAgents):
                                                 rnn=config.rnn,
                                                 gain=config.gain,
                                                 use_global_state=self.use_global_state,
+                                                dim_obs=config.dim_obs,
                                                 dim_state=config.dim_state)
         lr_scheduler = [MyLinearLR(config.learning_rate_actor, start_factor=1.0, end_factor=0.5,
                                    total_iters=get_total_iters(config.agent_name, config)),
@@ -75,44 +76,42 @@ class COMA_Agents(MARLAgents):
             # build critic input
             agents_id = tf.tile(tf.expand_dims(tf.eye(self.n_agents), axis=0), multiples=(batch_size, 1, 1))
             inputs_policy = {"obs": tf.convert_to_tensor(obs_n), "ids": agents_id}
+            epsilon = 0.0 if test_mode else self.egreedy
+            if self.use_recurrent:
+                batch_agents = batch_size * self.n_agents
+                hidden_state, _ = self.policy(inputs_policy,
+                                              *rnn_hidden,
+                                              avail_actions=avail_actions.reshape(batch_agents, 1, -1),
+                                              epsilon=epsilon)
+            else:
+                hidden_state, _ = self.policy(inputs_policy,
+                                              avail_actions=avail_actions,
+                                              epsilon=epsilon)
+        dists = self.policy.actor.dist
+        picked_actions = dists.stochastic_sample()
+        onehot_actions = self.learner.onehot_action(picked_actions, self.dim_act)
+        return hidden_state, picked_actions.numpy(), onehot_actions.numpy()
 
-
-            # actions_n = torch.Tensor(actions_n).unsqueeze(-1).to(self.device)
-            # actions_in = torch.Tensor(actions_onehot).unsqueeze(1).to(self.device)
-            # actions_in = actions_in.view(batch_size, 1, -1).repeat(1, self.n_agents, 1)
-            # agent_mask = 1 - torch.eye(self.n_agents, device=self.device)
-            # agent_mask = agent_mask.view(-1, 1).repeat(1, self.dim_act).view(self.n_agents, -1)
-            # actions_in = actions_in * agent_mask.unsqueeze(0)
-            # if self.use_global_state:
-            #     state = torch.Tensor(state).unsqueeze(1).to(self.device).repeat(1, self.n_agents, 1)
-            #     critic_in = torch.concat([state, obs_n, actions_in], dim=-1)
-            # else:
-            #     critic_in = torch.concat([obs_n, actions_in], dim=-1)
-            # # get critic values
-            # hidden_state, values_n = self.policy.get_values(critic_in, target=True)
-            #
-            # target_values = values_n.gather(-1, actions_n.long())
-            # return hidden_state, target_values.detach().cpu().numpy()
-
-
-        agents_id = tf.tile(tf.expand_dims(tf.eye(self.n_agents), axis=0), multiples=(batch_size, 1, 1))
-        with tf.device(self.device):
-            agents_id = tf.tile(tf.expand_dims(tf.eye(self.n_agents), axis=0), multiples=(batch_size, 1, 1))
-            inputs_policy = {"obs": tf.convert_to_tensor(obs_n), "ids": agents_id}
-            states, dists = self.policy(inputs_policy)
-            # acts = dists.stochastic_sample()  # stochastic policy
-            epsilon = 1.0 if test_mode else self.epsilon_decay.epsilon
-            greedy_actions = tf.argmax(dists.logits, axis=-1)
-        if noise:
-            random_variable = np.random.random(greedy_actions.shape)
-            action_pick = np.int32((random_variable < epsilon))
-            random_actions = np.array([[self.args.action_space[agent].sample() for agent in self.agent_keys]])
-            actions_select = action_pick * greedy_actions.numpy() + (1 - action_pick) * random_actions
-            actions_onehot = self.learner.onehot_action(actions_select, self.dim_act)
-            return actions_select, actions_onehot.numpy()
+    def values(self, obs_n, *rnn_hidden, state=None, actions_n=None, actions_onehot=None):
+        batch_size = len(obs_n)
+        # build critic input
+        obs_n = tf.convert_to_tensor(obs_n)
+        actions_n = tf.expand_dims(tf.convert_to_tensor(actions_n), axis=-1)
+        actions_in = tf.expand_dims(tf.convert_to_tensor(actions_onehot), 1)
+        actions_in = tf.repeat(tf.reshape(actions_in, [batch_size, 1, -1]), self.n_agents, axis=1)
+        agent_mask = 1 - tf.eye(self.n_agents)
+        agent_mask = tf.reshape(tf.repeat(tf.reshape(agent_mask, [-1, 1]), self.dim_act, axis=1), [self.n_agents, -1])
+        actions_in = actions_in * tf.expand_dims(agent_mask, 0)
+        if self.use_global_state:
+            state = tf.repeat(tf.expand_dims(tf.convert_to_tensor(state), 1), self.n_agents, axis=1)
+            critic_in = tf.concat([state, obs_n, actions_in], axis=-1)
         else:
-            actions_onehot = self.learner.onehot_action(greedy_actions, self.dim_act)
-            return greedy_actions.numpy(), actions_onehot.numpy()
+            critic_in = tf.concat([obs_n, actions_in], axis=-1)
+        # get critic values
+        hidden_state, values_n = self.policy.get_values(critic_in, target=True)
+
+        target_values = tf.gather(values_n, actions_n, axis=-1, batch_dims=-1)
+        return hidden_state, target_values.numpy()
 
     def train(self, i_step, **kwargs):
         if self.egreedy >= self.end_greedy:

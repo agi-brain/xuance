@@ -1,5 +1,6 @@
 from xuance.common import space2shape
 from copy import deepcopy
+from xuance.torch.utils import ActivationFunctions, NormalizeFunctions, InitializeFunctions
 from xuance.tensorflow.policies import Policy_Inputs, Policy_Inputs_All
 from xuance.tensorflow.representations import Representation_Inputs, Representation_Inputs_All
 from operator import itemgetter
@@ -70,12 +71,17 @@ def get_policy_in(args, representation):
     return list(input_list)
 
 
-def get_policy_in_marl(args, representation, agent_keys, mixer=None, ff_mixer=None, qtran_mixer=None):
+def get_policy_in_marl(args, representation, mixer=None, ff_mixer=None, qtran_mixer=None):
     policy_name = args.policy
     input_dict = deepcopy(Policy_Inputs_All)
     try: input_dict["state_dim"] = args.dim_state[0]
     except: input_dict["state_dim"] = None
-    input_dict["action_space"] = args.action_space[agent_keys[0]]
+
+    if args.env_name in ["StarCraft2", "Football"]:
+        input_dict["action_space"] = args.action_space
+    else:
+        input_dict["action_space"] = args.action_space[args.agent_keys[0]]
+
     try: input_dict["n_agents"] = args.n_agents
     except: input_dict["n_agents"] = 1
     input_dict["representation"] = representation
@@ -89,6 +95,11 @@ def get_policy_in_marl(args, representation, agent_keys, mixer=None, ff_mixer=No
         input_dict["actor_hidden_size"] = args.actor_hidden_size
         try: input_dict["critic_hidden_size"] = args.critic_hidden_size
         except: input_dict["critic_hidden_size"] = None
+
+    # input_dict["initialize"] = InitializeFunctions[args.initialize] if hasattr(args, "initialize") else None
+    # input_dict["normalize"] = NormalizeFunctions[args.normalize] if hasattr(args, "normalize") else None
+    # input_dict["activation"] = ActivationFunctions[args.activation]
+
     input_dict["normalize"] = None
     input_dict["initialize"] = None
     input_dict["activation"] = tk.layers.Activation('relu')
