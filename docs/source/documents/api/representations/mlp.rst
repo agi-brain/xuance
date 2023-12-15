@@ -70,6 +70,54 @@ When implementing this class in PyTorch, you also need to specify the device typ
 
 **MindSpore:**
 
+.. py:class::
+  xuance.mindspore.representations.mlp.Basic_Identical(input_shape)
+
+  :param input_shape: xxxxxx.
+  :type input_shape: xxxxxx
+
+.. py:function::
+  xuance.mindspore.representations.mlp.Basic_Identical.construct(observations)
+
+  xxxxxx.
+
+  :param observations: xxxxxx.
+  :type observations: xxxxxx
+  :return: xxxxxx.
+  :rtype: xxxxxx
+
+.. py:class::
+  xuance.mindspore.representations.mlp.Basic_MLP(input_shape, hidden_sizes, normalize, initialize, activation)
+
+  :param input_shape: xxxxxx.
+  :type input_shape: xxxxxx
+  :param hidden_sizes: xxxxxx.
+  :type hidden_sizes: xxxxxx
+  :param normalize: xxxxxx.
+  :type normalize: xxxxxx
+  :param initialize: xxxxxx.
+  :type initialize: xxxxxx
+  :param activation: xxxxxx.
+  :type activation: xxxxxx
+
+.. py:function::
+  xuance.mindspore.representations.mlp.Basic_MLP._create_network()
+
+  xxxxxx.
+
+  :return: xxxxxx.
+  :rtype: xxxxxx
+
+.. py:function::
+  xuance.mindspore.representations.mlp.Basic_MLP.construct(observations)
+
+  xxxxxx.
+
+  :param observations: xxxxxx.
+  :type observations: xxxxxx
+  :return: xxxxxx.
+  :rtype: xxxxxx
+
 .. raw:: html
 
     <br><hr>
@@ -142,3 +190,48 @@ Source Code
   .. group-tab:: MindSpore
 
     .. code-block:: python
+
+        from xuance.mindspore.representations import *
+
+
+        # directly returns the original observation
+        class Basic_Identical(nn.Cell):
+            def __init__(self,
+                         input_shape: Sequence[int]):
+                super(Basic_Identical, self).__init__()
+                assert len(input_shape) == 1
+                self.output_shapes = {'state': (input_shape[0],)}
+
+            def construct(self, observations: ms.tensor):
+                return {'state': observations}
+
+
+        # process the input observations with stacks of MLP layers
+        class Basic_MLP(nn.Cell):
+            def __init__(self,
+                         input_shape: Sequence[int],
+                         hidden_sizes: Sequence[int],
+                         normalize: Optional[ModuleType] = None,
+                         initialize: Optional[Callable[..., ms.Tensor]] = None,
+                         activation: Optional[ModuleType] = None
+                         ):
+                super(Basic_MLP, self).__init__()
+                self.input_shape = input_shape
+                self.hidden_sizes = hidden_sizes
+                self.normalize = normalize
+                self.initialize = initialize
+                self.activation = activation
+                self.output_shapes = {'state': (hidden_sizes[-1],)}
+                self.model = self._create_network()
+
+            def _create_network(self):
+                layers = []
+                input_shape = self.input_shape
+                for h in self.hidden_sizes:
+                    mlp, input_shape = mlp_block(input_shape[0], h, self.normalize, self.activation, self.initialize)
+                    layers.extend(mlp)
+                return nn.SequentialCell(*layers)
+
+            def construct(self, observations):
+                return {'state': self.model(observations)}
+
