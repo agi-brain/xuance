@@ -21,8 +21,8 @@ class DDQN_Learner(Learner):
             ter_batch = tf.convert_to_tensor(terminal_batch)
 
             with tf.GradientTape() as tape:
-                _, _, evalQ, _ = self.policy(obs_batch)
-                _, targetA, _, targetQ = self.policy(next_batch)
+                _, _, evalQ = self.policy(obs_batch)
+                _, targetA, targetQ = self.policy.target(next_batch)
 
                 targetA = tf.one_hot(targetA, targetQ.shape[1])
                 targetQ = tf.reduce_sum(targetQ * targetA, axis=-1)
