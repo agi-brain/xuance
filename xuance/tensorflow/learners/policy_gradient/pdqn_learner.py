@@ -4,14 +4,13 @@ class PDQN_Learner(Learner):
     def __init__(self,
                  policy: tk.Model,
                  optimizers: Sequence[tk.optimizers.Optimizer],
-                 summary_writer: Optional[SummaryWriter] = None,
                  device: str = "cpu:0",
                  model_dir: str = "./",
                  gamma: float = 0.99,
                  tau: float = 0.01):
         self.tau = tau
         self.gamma = gamma
-        super(PDQN_Learner, self).__init__(policy, optimizers, summary_writer, device, model_dir)
+        super(PDQN_Learner, self).__init__(policy, optimizers, device, model_dir)
 
     def save_model(self):
         model_path = self.model_dir + "model-%s-%s" % (time.asctime(), str(self.iterations))

@@ -558,7 +558,8 @@ class PDQNPolicy(tk.Model):
                                           qnetwork_hidden_size, normalize, initialize, activation, device)
         self.target_conactor = ActorNet(self.observation_space.shape[0], self.conact_size, conactor_hidden_size,
                                         initialize, activation, device)
-        self.soft_update(tau=1.0)
+        self.target_conactor.set_weights(self.conactor.get_weights())
+        self.target_qnetwork.set_weights(self.qnetwork.get_weights())
 
     def Atarget(self, state):
         target_conact = self.target_conactor(state)
