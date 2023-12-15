@@ -21,8 +21,8 @@ class DQN_Learner(Learner):
             ter_batch = tf.convert_to_tensor(terminal_batch, dtype=tf.float32)
 
             with tf.GradientTape() as tape:
-                _, _, evalQ, _ = self.policy(obs_batch)
-                _, _, _, targetQ = self.policy(next_batch)
+                _, _, evalQ = self.policy(obs_batch)
+                _, _, targetQ = self.policy.target(next_batch)
                 targetQ = tf.math.reduce_max(targetQ, axis=-1)
                 targetQ = rew_batch + self.gamma * (1 - ter_batch) * targetQ
                 targetQ = tf.stop_gradient(targetQ)
