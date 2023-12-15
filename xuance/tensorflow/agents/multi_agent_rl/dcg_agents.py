@@ -23,8 +23,8 @@ class DCG_Agents(MARLAgents):
             representation = REGISTRY_Representation[config.representation](*input_representation)
         repre_state_dim = representation.output_shapes['state'][0]
         from xuance.torch.policies.coordination_graph import DCG_utility, DCG_payoff, Coordination_Graph
-        utility = DCG_utility(repre_state_dim, config.hidden_utility_dim, config.dim_act).to(device)
-        payoffs = DCG_payoff(repre_state_dim * 2, config.hidden_payoff_dim, config.dim_act, config).to(device)
+        utility = DCG_utility(repre_state_dim, config.hidden_utility_dim, config.dim_act)
+        payoffs = DCG_payoff(repre_state_dim * 2, config.hidden_payoff_dim, config.dim_act, config)
         dcgraph = Coordination_Graph(config.n_agents, config.graph_type)
         dcgraph.set_coordination_graph(device)
         if config.env_name == "StarCraft2":
