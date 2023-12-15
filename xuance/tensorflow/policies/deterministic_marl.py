@@ -268,14 +268,18 @@ class Qtran_MixingQnetwork(tk.Model):
                  normalize: Optional[tk.layers.Layer] = None,
                  initializer: Optional[tk.initializers.Initializer] = None,
                  activation: Optional[tk.layers.Layer] = None,
-                 device: str = "cpu:0"):
+                 device: str = "cpu:0",
+                 **kwargs):
         super(Qtran_MixingQnetwork, self).__init__()
         self.action_dim = action_space.n
         self.representation = representation
+        self.target_representation = copy.deepcopy(self.representation)
         self.representation_info_shape = self.representation.output_shapes
         self.obs_dim = self.representation.input_shapes[0]
         self.hidden_state_dim = self.representation.output_shapes['state'][0]
         self.n_agents = n_agents
+        self.lstm = True if kwargs["rnn"] == "LSTM" else False
+        self.use_rnn = True if kwargs["use_recurrent"] else False
         self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, n_agents,
                                      hidden_size, normalize, initializer, activation, device)
         self.target_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, n_agents,
@@ -283,9 +287,10 @@ class Qtran_MixingQnetwork(tk.Model):
         self.qtran_net = qtran_mixer
         self.target_qtran_net = qtran_mixer
         self.q_tot = mixer
-        self.copy_target()
+        self.target_Qhead.set_weights(self.eval_Qhead.get_weights())
+        self.target_qtran_net.set_weights(self.qtran_net.get_weights())
 
-    def call(self, inputs: Union[np.ndarray, dict], **kwargs):
+    def call(self, inputs: Union[np.ndarray, dict], *rnn_hidden, **kwargs):
         observations = tf.reshape(inputs['obs'], [-1, self.obs_dim])
         IDs = tf.reshape(inputs['ids'], [-1, self.n_agents])
         outputs = self.representation(observations)
@@ -297,11 +302,12 @@ class Qtran_MixingQnetwork(tk.Model):
     def target_Q(self, inputs: Union[np.ndarray, dict]):
         observations = tf.reshape(inputs['obs'], [-1, self.obs_dim])
         IDs = tf.reshape(inputs['ids'], [-1, self.n_agents])
-        outputs = self.representation(observations)
+        outputs = self.target_representation(observations)
         q_inputs = tf.concat([outputs['state'], IDs], axis=-1)
         return tf.reshape(outputs['state'], [-1, self.n_agents, self.hidden_state_dim]), self.target_Qhead(q_inputs)
 
     def copy_target(self):
+        self.target_representation.set_weights(self.representation.get_weights())
         self.target_Qhead.set_weights(self.eval_Qhead.get_weights())
         self.target_qtran_net.set_weights(self.qtran_net.get_weights())
 

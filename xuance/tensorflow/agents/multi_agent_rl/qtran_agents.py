@@ -29,10 +29,10 @@ class QTRAN_Agents(MARLAgents):
         mixer = VDN_mixer()
         if config.agent == "QTRAN_base":
             qtran_net = QTRAN_base(config.dim_state[0], config.dim_act, config.qtran_net_hidden_dim,
-                                   config.n_agents, config.q_hidden_size[0]).to(device)
+                                   config.n_agents, config.q_hidden_size[0])
         elif config.agent == "QTRAN_alt":
             qtran_net = QTRAN_alt(config.dim_state[0], config.dim_act, config.qtran_net_hidden_dim,
-                                  config.n_agents, config.q_hidden_size[0]).to(device)
+                                  config.n_agents, config.q_hidden_size[0])
         else:
             raise ValueError("Mixer {} not recognised.".format(config.agent))
         input_policy = get_policy_in_marl(config, representation, mixer, qtran_mixer=qtran_net)
