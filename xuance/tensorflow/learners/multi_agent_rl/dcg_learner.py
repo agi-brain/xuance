@@ -26,34 +26,6 @@ class DCG_Learner(LearnerMAS):
         self.sync_frequency = sync_frequency
         super(DCG_Learner, self).__init__(config, policy, optimizer, device, model_dir)
 
-    # def save_model(self, model_path):
-    #     self.policy.representation.save(model_path + "/representations")
-    #     self.policy.utility.save(model_path + "/utility")
-    #     self.policy.target_utility.save(model_path + "/target_utility")
-    #     self.policy.payoffs.save(model_path + "/payoffs")
-    #     self.policy.target_payoffs.save(model_path + "/target_payoffs")
-    #     if self.policy.dcg_s:
-    #         self.policy.bias.save(model_path + "/bias")
-    #         self.policy.target_bias.save(model_path + "/target_bias")
-    #
-    # def load_model(self, path, seed=1):
-    #     model_names = os.listdir(path)
-    #     # try:
-    #     model_names.sort()
-    #     model_path = path + model_names[-1]
-    #     print(model_path)
-    #     # self.policy = tk.models.load_model(model_path, compile=False)
-    #     self.policy.representation.load_weights(model_path + "/representations")
-    #     self.policy.utility.load_weights(model_path + "/utility")
-    #     self.policy.target_utility.load_weights(model_path + "/target_utility")
-    #     self.policy.payoffs.load_weights(model_path + "/payoffs")
-    #     self.policy.target_payoffs.load_weights(model_path + "/target_payoffs")
-    #     if self.policy.dcg_s:
-    #         self.policy.bias.load_weights(model_path + "/bias")
-    #         self.policy.target_bias.load_weights(model_path + "/target_bias")
-        # except:
-        #     raise "Failed to load model! Please train and save the model first."
-
     def get_hidden_states(self, obs_n, *rnn_hidden, use_target_net=False):
         if self.use_recurrent:
             if use_target_net:
