@@ -13,26 +13,6 @@ class SAC_Learner(Learner):
         self.gamma = gamma
         super(SAC_Learner, self).__init__(policy, optimizers, device, model_dir)
 
-    def save_model(self, model_path):
-        self.policy.actor.save(model_path)
-
-    def load_model(self, path, seed=1):
-        file_names = os.listdir(path)
-        for f in file_names:
-            '''Change directory to the specified seed (if exists)'''
-            if f"seed_{seed}" in f:
-                path = os.path.join(path, f)
-                break
-        model_names = os.listdir(path)
-        try:
-            if os.path.exists(path + "/obs_rms.npy"):
-                model_names.remove("obs_rms.npy")
-            model_names.sort()
-            model_path = os.path.join(path, model_names[-1])
-            self.policy.actor = tk.models.load_model(model_path, compile=False)
-        except:
-            raise "Failed to load model! Please train and save the model first."
-
     def update(self, obs_batch, act_batch, rew_batch, next_batch, terminal_batch):
         self.iterations += 1
         with tf.device(self.device):

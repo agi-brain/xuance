@@ -22,21 +22,6 @@ class MFQ_Learner(LearnerMAS):
         self.sync_frequency = sync_frequency
         super(MFQ_Learner, self).__init__(config, policy, optimizer, device, model_dir)
 
-    def save_model(self):
-        model_path = self.model_dir + "model-%s-%s" % (time.asctime(), str(self.iterations))
-        self.policy.eval_Qhead.save(model_path)
-
-    def load_model(self, path):
-        model_names = os.listdir(path)
-        try:
-            model_names.sort()
-            model_path = path + model_names[-1]
-            print(model_path)
-            # self.policy = tk.models.load_model(model_path, compile=False)
-            self.policy.eval_Qhead.load_weights(model_path)
-        except:
-            raise "Failed to load model! Please train and save the model first."
-
     def get_boltzmann_policy(self, q):
         return tf.math.softmax(q / self.temperature, axis=-1)
 

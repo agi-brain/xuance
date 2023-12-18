@@ -128,7 +128,7 @@ class MFQnetwork(tk.Model):
         return dist.sample()
 
     def target_Q(self, observation: tf.Tensor, actions_mean: tf.Tensor, agent_ids: tf.Tensor):
-        outputs = self.representation(observation)
+        outputs = self.target_representation(observation)
         q_inputs = tf.concat([outputs['state'], actions_mean, agent_ids], axis=-1)
         return self.target_Qhead(q_inputs)
 

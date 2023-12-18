@@ -175,7 +175,7 @@ class Basic_ISAC_policy(tk.Model):
         mu = tf.reshape(mu, [-1, self.n_agents, self.action_dim])
         std = tf.reshape(std, [-1, self.n_agents, self.action_dim])
         cov_mat = tf.linalg.diag(std)
-        dist = tfd.MultivariateNormalFullCovariance(mu, cov_mat)
+        dist = tfd.MultivariateNormalTriL(loc=mu, scale_tril=cov_mat)
         return outputs, dist
 
     def critic(self, observation: tf.Tensor, actions: tf.Tensor, agent_ids: tf.Tensor):
@@ -195,7 +195,7 @@ class Basic_ISAC_policy(tk.Model):
         mu = tf.reshape(mu, [-1, self.n_agents, self.action_dim])
         std = tf.reshape(std, [-1, self.n_agents, self.action_dim])
         cov_mat = tf.linalg.diag(std)
-        dist = tfd.MultivariateNormalFullCovariance(mu, cov_mat)
+        dist = tfd.MultivariateNormalTriL(loc=mu, scale_tril=cov_mat)
         return dist
 
     def soft_update(self, tau=0.005):

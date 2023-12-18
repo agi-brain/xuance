@@ -61,12 +61,13 @@ class MFQ_Agents(MARLAgents):
         act_mean_current = np.sum(act_neighbor_onehot, axis=1) / n_alive
         greedy_actions = greedy_actions.numpy()
         if test_mode:
-            return greedy_actions, act_mean_current
+            return None, greedy_actions, act_mean_current
         else:
-            random_variable = np.random.rand(batch_size, self.n_agents).reshape(greedy_actions.shape)
-            action_pick = np.int32((random_variable < self.egreedy))
-            random_actions = np.array([[self.args.action_space[agent].sample() for agent in self.agent_keys]])
-            return action_pick * greedy_actions + (1 - action_pick) * random_actions, act_mean_current
+            random_actions = np.random.choice(self.dim_act, [self.nenvs, self.n_agents])
+            if np.random.rand() < self.egreedy:
+                return None, random_actions, act_mean_current
+            else:
+                return None, greedy_actions, act_mean_current
 
     def train(self, i_step, n_epoch=1):
         if self.egreedy >= self.end_greedy:

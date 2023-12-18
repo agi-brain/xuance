@@ -15,23 +15,20 @@ class Learner(ABC):
         self.iterations = 0
 
     def save_model(self, model_path):
-        self.policy.save(model_path)
+        self.policy.save_weights(model_path)
 
     def load_model(self, path, seed=1):
-        file_names = os.listdir(path)
+        try: file_names = os.listdir(path)
+        except: raise "Failed to load model! Please train and save the model first."
+
         for f in file_names:
             '''Change directory to the specified seed (if exists)'''
             if f"seed_{seed}" in f:
                 path = os.path.join(path, f)
                 break
-        model_names = os.listdir(path)
+        latest = tf.train.latest_checkpoint(path)
         try:
-            if os.path.exists(path + "/obs_rms.npy"):
-                model_names.remove("obs_rms.npy")
-            model_names.sort()
-            model_path = os.path.join(path, model_names[-1])
-            self.policy = tk.models.load_model(model_path, compile=False)
-            # self.policy.load_weights(model_path)
+            self.policy.load_weights(latest)
         except:
             raise "Failed to load model! Please train and save the model first."
 
@@ -67,22 +64,20 @@ class LearnerMAS(ABC):
         return tf.one_hot(indices=actions_int, depth=num_actions, axis=-1, dtype=tf.float32)
 
     def save_model(self, model_path):
-        self.policy.save(model_path)
+        self.policy.save_weights(model_path)
 
     def load_model(self, path, seed=1):
-        file_names = os.listdir(path)
+        try: file_names = os.listdir(path)
+        except: raise "Failed to load model! Please train and save the model first."
+
         for f in file_names:
             '''Change directory to the specified seed (if exists)'''
             if f"seed_{seed}" in f:
                 path = os.path.join(path, f)
                 break
-        model_names = os.listdir(path)
+        latest = tf.train.latest_checkpoint(path)
         try:
-            model_names.sort()
-            model_path = os.path.join(path, model_names[-1])
-            print(model_path)
-            # self.policy = tk.models.load_model(model_path, compile=False)
-            self.policy.load_weights(model_path)
+            self.policy.load_weights(latest)
         except:
             raise "Failed to load model! Please train and save the model first."
 

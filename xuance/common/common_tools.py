@@ -7,6 +7,7 @@ from gym.spaces import Space, Dict
 from typing import Sequence
 from types import SimpleNamespace as SN
 from copy import deepcopy
+from xuance.configs import method_list
 EPS = 1e-8
 
 
@@ -137,8 +138,21 @@ def get_runner(method,
                 agents_name_string.append(args[i_alg].agent)
             args[i_alg].agent_name = method[i_alg]
             notation = args[i_alg].dl_toolbox + '/'
-            args[i_alg].model_dir = os.path.join(os.getcwd(), args[i_alg].model_dir + notation + args[i_alg].env_id + '/')
-            args[i_alg].log_dir = args[i_alg].log_dir + notation + args[i_alg].env_id + '/'
+
+            if ('model_dir' in args.__dict__) and ('log_dir' in args[i_alg].__dict__):
+                args[i_alg].model_dir = os.path.join(os.getcwd(), args[i_alg].model_dir + notation + args[i_alg].env_id + '/')
+                args[i_alg].log_dir = args[i_alg].log_dir + notation + args[i_alg].env_id + '/'
+            else:
+                if config_path is not None:
+                    raise RuntimeError(f"'model_dir' or 'log_dir' is not defined in {config_path} files.")
+                elif method[i_alg] not in method_list.keys():
+                    raise RuntimeError(f"The method named '{method[i_alg]}' is currently not supported in XuanCe.")
+                elif args[i_alg].env not in method_list[method[i_alg]]:
+                    raise RuntimeError(
+                        f"The environment named '{args[i_alg].env}' is currently not supported for {method_list[method[i_alg]]}.")
+                else:
+                    print("Failed to load arguments for the implementation!")
+
             if is_test:
                 args[i_alg].test_mode = int(is_test)
                 args[i_alg].parallels = 1
@@ -155,8 +169,19 @@ def get_runner(method,
     else:
         args.agent_name = method
         notation = args.dl_toolbox + '/'
-        args.model_dir = os.path.join(os.getcwd(), args.model_dir, args.dl_toolbox, args.env_id)
-        args.log_dir = os.path.join(args.log_dir, notation, args.env_id)
+        if ('model_dir' in args.__dict__) and ('log_dir' in args.__dict__):
+            args.model_dir = os.path.join(os.getcwd(), args.model_dir, args.dl_toolbox, args.env_id)
+            args.log_dir = os.path.join(args.log_dir, notation, args.env_id)
+        else:
+            if config_path is not None:
+                raise RuntimeError(f"'model_dir' or 'log_dir' is not defined in {config_path} file.")
+            elif args.method not in method_list.keys():
+                raise RuntimeError(f"The method named '{args.method}' is currently not supported in XuanCe.")
+            elif args.env not in method_list[args.method]:
+                raise RuntimeError(f"The environment named '{args.env}' is currently not supported for {args.method}.")
+            else:
+                print("Failed to load arguments for the implementation!")
+
         if is_test:
             args.test_mode = int(is_test)
             args.parallels = 1

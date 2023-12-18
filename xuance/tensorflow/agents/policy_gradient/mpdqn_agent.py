@@ -53,12 +53,12 @@ class MPDQN_Agent(Agent):
                                       self.n_envs,
                                       config.n_size,
                                       config.batch_size)
-        learner = PDQN_Learner(policy,
-                               optimizer,
-                               config.device,
-                               config.model_dir,
-                               config.gamma,
-                               config.tau)
+        learner = MPDQN_Learner(policy,
+                                optimizer,
+                                config.device,
+                                config.model_dir,
+                                config.gamma,
+                                config.tau)
 
         self.num_disact = self.action_space.spaces[0].n
         self.conact_sizes = np.array([self.action_space.spaces[i].shape[0] for i in range(1, self.num_disact+1)])

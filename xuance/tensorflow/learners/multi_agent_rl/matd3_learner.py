@@ -26,19 +26,6 @@ class MATD3_Learner(LearnerMAS):
             'critic': optimizer[1]
         }
 
-    def save_model(self):
-        model_path = self.model_dir + "model-%s-%s" % (time.asctime(), str(self.iterations))
-        self.policy.actor_net.save(model_path)
-
-    def load_model(self, path):
-        model_names = os.listdir(path)
-        try:
-            model_names.sort()
-            model_path = path + model_names[-1]
-            self.policy.actor_net = tk.models.load_model(model_path, compile=False)
-        except:
-            raise "Failed to load model! Please train and save the model first."
-
     def update(self, sample):
         self.iterations += 1
         with tf.device(self.device):

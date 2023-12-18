@@ -1,5 +1,6 @@
 from xuance.tensorflow.learners import *
 
+
 class SPDQN_Learner(Learner):
     def __init__(self,
                  policy: tk.Model,
@@ -11,35 +12,6 @@ class SPDQN_Learner(Learner):
         self.tau = tau
         self.gamma = gamma
         super(SPDQN_Learner, self).__init__(policy, optimizers, device, model_dir)
-
-    def save_model(self, model_path):
-        num_disact = len(self.policy.qnetwork)
-        for k in range(num_disact):
-            model_path_qnet = model_path + "/qnet" + "_%d" % (k)
-            self.policy.qnetwork[k].save(model_path_qnet)
-        model_path_actor = model_path + "/conactor"
-        self.policy.conactor.save(model_path_actor)
-
-    def load_model(self, path, seed=1):
-        file_names = os.listdir(path)
-        for f in file_names:
-            '''Change directory to the specified seed (if exists)'''
-            if f"seed_{seed}" in f:
-                path = os.path.join(path, f)
-                break
-        model_names = os.listdir(path)
-        try:
-            if os.path.exists(path + "/obs_rms.npy"):
-                model_names.remove("obs_rms.npy")
-            model_names.sort()
-            num_disact = len(self.policy.qnetwork)
-            for k in range(num_disact):
-                model_path_qnet = os.path.join(path, model_names[-1], f"qnet_{k}")
-                self.policy.qnetwork = tk.models.load_model(model_path_qnet, compile=False)
-            model_path_actor = os.path.join(path, model_names[-1], "conactor")
-            self.policy.conactor = tk.models.load_model(model_path_actor, compile=False)
-        except:
-            raise "Failed to load model! Please train and save the model first."
 
     def update(self, obs_batch, act_batch, rew_batch, next_batch, terminal_batch):
         self.iterations += 1

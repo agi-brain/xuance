@@ -372,7 +372,7 @@ class Pettingzoo_Runner(Runner_Base):
             self.train_episode(n_train_episodes)
             print("Finish training.")
             for h, mas_group in enumerate(self.marl_agents):
-                mas_group.save_model("final_train_model")
+                mas_group.save_model("final_train_model.ckpt")
 
         self.envs.close()
         if self.use_wandb:
@@ -413,7 +413,7 @@ class Pettingzoo_Runner(Runner_Base):
                         "step": self.current_step
                     }
                     # save best model
-                    self.marl_agents[h].save_model("best_model.pth")
+                    self.marl_agents[h].save_model("best_model.ckpt")
 
         # end benchmarking
         print("Finish benchmarking.")

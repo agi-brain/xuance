@@ -1,5 +1,3 @@
-from argparse import Action
-
 from xuance.tensorflow.learners import *
 from xuance.tensorflow.utils.operations import merge_distributions
 
