@@ -324,11 +324,14 @@ class DCG_policy(tk.Model):
                  normalize: Optional[tk.layers.Layer] = None,
                  initializer: Optional[tk.initializers.Initializer] = None,
                  activation: Optional[tk.layers.Layer] = None,
-                 device: str = "cpu:0"
-                 ):
+                 device: str = "cpu:0",
+                 **kwargs):
         super(DCG_policy, self).__init__()
         self.action_dim = action_space.n
         self.representation = representation
+        self.target_representation = representation
+        self.lstm = True if kwargs["rnn"] == "LSTM" else False
+        self.use_rnn = True if kwargs["use_recurrent"] else False
         self.utility = utility
         self.target_utility = utility
         self.payoffs = payoffs
@@ -341,9 +344,8 @@ class DCG_policy(tk.Model):
                                    normalize, initializer, activation, device)
             self.target_bias = BasicQhead(global_state_dim, 1, 0, hidden_size_bias,
                                           normalize, initializer, activation, device)
-        self.copy_target()
 
-    def call(self, inputs: Union[np.ndarray, dict], **kwargs):
+    def call(self, inputs: Union[np.ndarray, dict], *rnn_hidden: torch.Tensor, **kwargs):
         observations = tf.reshape(inputs['obs'], [-1, self.obs_dim])
         IDs = tf.reshape(inputs['ids'], [-1, self.n_agents])
         outputs = self.representation(observations)
@@ -354,6 +356,7 @@ class DCG_policy(tk.Model):
         return outputs, argmax_action, evalQ
 
     def copy_target(self):
+        self.target_representation.set_weights(self.representation.get_weights())
         self.target_utility.set_weights(self.utility.get_weights())
         self.target_payoffs.set_weights(self.payoffs.get_weights())
         if self.dcg_s:

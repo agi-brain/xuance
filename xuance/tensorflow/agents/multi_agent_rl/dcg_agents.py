@@ -22,11 +22,11 @@ class DCG_Agents(MARLAgents):
         else:
             representation = REGISTRY_Representation[config.representation](*input_representation)
         repre_state_dim = representation.output_shapes['state'][0]
-        from xuance.torch.policies.coordination_graph import DCG_utility, DCG_payoff, Coordination_Graph
+        from xuance.tensorflow.policies.coordination_graph import DCG_utility, DCG_payoff, Coordination_Graph
         utility = DCG_utility(repre_state_dim, config.hidden_utility_dim, config.dim_act)
         payoffs = DCG_payoff(repre_state_dim * 2, config.hidden_payoff_dim, config.dim_act, config)
         dcgraph = Coordination_Graph(config.n_agents, config.graph_type)
-        dcgraph.set_coordination_graph(device)
+        dcgraph.set_coordination_graph()
         if config.env_name == "StarCraft2":
             action_space = config.action_space
         else:
@@ -69,13 +69,14 @@ class DCG_Agents(MARLAgents):
 
         super(DCG_Agents, self).__init__(config, envs, policy, memory, learner, device,
                                          config.log_dir, config.model_dir)
+        self.on_policy = False
 
     def act(self, obs_n, *rnn_hidden, avail_actions=None, test_mode=False):
         batch_size = obs_n.shape[0]
         obs_n = tf.convert_to_tensor(obs_n)
-        obs_in = obs_n.view(batch_size * self.n_agents, 1, -1)
+        obs_in = tf.reshape(obs_n, [batch_size * self.n_agents, 1, -1])
         rnn_hidden_next, hidden_states = self.learner.get_hidden_states(obs_in, *rnn_hidden)
-        greedy_actions = self.learner.act(hidden_states.view(batch_size, self.n_agents, -1),
+        greedy_actions = self.learner.act(tf.reshape(hidden_states, [batch_size, self.n_agents, -1]),
                                           avail_actions=avail_actions)
         greedy_actions = greedy_actions.numpy()
 
