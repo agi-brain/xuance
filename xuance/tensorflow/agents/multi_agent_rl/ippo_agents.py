@@ -51,6 +51,8 @@ class IPPO_Agents(MARLAgents):
         learner = IPPO_Learner(config, policy, optimizer, config.device, config.model_dir, config.gamma)
         super(IPPO_Agents, self).__init__(config, envs, policy, memory, learner, device,
                                           config.log_dir, config.model_dir)
+        self.share_values = True if config.rew_shape[0] == 1 else False
+        self.on_policy = True
 
     def act(self, obs_n, *rnn_hidden, avail_actions=None, state=None, test_mode=False):
         batch_size = len(obs_n)
@@ -59,20 +61,15 @@ class IPPO_Agents(MARLAgents):
             inputs_policy = {"obs": tf.convert_to_tensor(obs_n), "ids": agents_id}
             _, dists = self.policy(inputs_policy)
             acts = dists.stochastic_sample()
-            state = tf.convert_to_tensor(state)
-            state_expand = tf.tile(tf.expand_dims(state, axis=-2), (1, self.n_agents, 1))
-            vs = self.policy.values(state_expand, agents_id)
-        return acts.numpy(), split_distributions(dists), vs.numpy()
+            log_pi_a = dists.log_prob(acts)
+        return rnn_hidden, acts.numpy(), log_pi_a.numpy()
 
     def values(self, obs_n, *rnn_hidden, state=None):
         batch_size = len(state)
         agents_id = tf.tile(tf.expand_dims(tf.eye(self.n_agents), axis=0), multiples=(batch_size, 1, 1))
-        repre_out = self.policy.representation(obs)
-        critic_input = tf.concat([torch.Tensor(repre_out['state']), agents_id], axis=-1)
-        values_n = self.policy.critic(critic_input)
-        values = self.policy.value_tot(values_n, global_state=state)
-        values = tf.expand_dims(tf.tile(tf.reshape(values, (-1, 1)), (1, self.n_agents)), axis=-1)
-        return values.numpy()
+        rnn_hidden, values_n = self.policy.get_values(obs_n, agents_id, rnn_hidden)
+        values_n = tf.expand_dims(values_n, -1)
+        return rnn_hidden, values_n.numpy()
 
     def train(self, i_step, **kwargs):
         if self.memory.full:

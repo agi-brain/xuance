@@ -106,10 +106,8 @@ class ActorNet(tk.Model):
 
 class CriticNet(tk.Model):
     def __init__(self,
-                 independent: bool,
                  state_dim: int,
                  n_agents: int,
-                 action_dim: int,
                  hidden_sizes: Sequence[int],
                  normalize: Optional[tk.layers.Layer] = None,
                  initializer: Optional[tk.initializers.Initializer] = None,
@@ -118,10 +116,7 @@ class CriticNet(tk.Model):
                  ):
         super(CriticNet, self).__init__()
         layers = []
-        if independent:
-            input_shape = (state_dim + action_dim + n_agents,)
-        else:
-            input_shape = (state_dim * n_agents + action_dim * n_agents + n_agents,)
+        input_shape = (state_dim + n_agents,)
         for h in hidden_sizes:
             mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initializer, device)
             layers.extend(mlp)
@@ -130,6 +125,95 @@ class CriticNet(tk.Model):
 
     def call(self, x: tf.Tensor, **kwargs):
         return self.model(x)
+
+
+class MAAC_Policy(tk.Model):
+    """
+    MAAC_Policy: Multi-Agent Actor-Critic Policy with Gaussian policies
+    """
+
+    def __init__(self,
+                 action_space: Discrete,
+                 n_agents: int,
+                 representation: tk.Model,
+                 mixer: Optional[VDN_mixer] = None,
+                 actor_hidden_size: Sequence[int] = None,
+                 critic_hidden_size: Sequence[int] = None,
+                 normalize: Optional[tk.layers.Layer] = None,
+                 initialize: Optional[tk.initializers.Initializer] = None,
+                 activation: Optional[tk.layers.Layer] = None,
+                 device: Optional[Union[str, int, torch.device]] = None,
+                 **kwargs):
+        super(MAAC_Policy, self).__init__()
+        self.device = device
+        self.action_dim = action_space.shape[0]
+        self.n_agents = n_agents
+        self.representation = representation[0]
+        self.representation_critic = representation[1]
+        self.representation_info_shape = self.representation.output_shapes
+        self.lstm = True if kwargs["rnn"] == "LSTM" else False
+        self.use_rnn = True if kwargs["use_recurrent"] else False
+        self.actor = ActorNet(self.representation.output_shapes['state'][0], n_agents, self.action_dim,
+                              actor_hidden_size, normalize, initialize, activation, device)
+        dim_input_critic = self.representation_critic.output_shapes['state'][0]
+        self.critic = CriticNet(dim_input_critic, n_agents,  critic_hidden_size,
+                                normalize, initialize, activation, device)
+        self.mixer = mixer
+        self.identical_rep = True if isinstance(self.representation, Basic_Identical) else False
+        self.pi_dist = None
+
+    def call(self, inputs: Union[np.ndarray, dict], *rnn_hidden, **kwargs):
+        observation = inputs['obs']
+        agent_ids = inputs['ids']
+        obs_shape = observation.shape
+        if self.use_rnn:
+            outputs = self.representation(observation, *rnn_hidden)
+            outputs_state = outputs['state']  # need to be improved
+            rnn_hidden = (outputs['rnn_hidden'], outputs['rnn_cell'])
+        else:
+            observation_reshape = tf.reshape(observation, [-1, obs_shape[-1]])
+            outputs = self.representation(observation_reshape)
+            outputs_state = tf.reshape(outputs['state'], obs_shape[:-1] + self.representation_info_shape['state'])
+            rnn_hidden = None
+        actor_input = tf.concat([outputs_state, agent_ids], axis=-1)
+        mu, std = self.actor(actor_input)
+        mu = tf.reshape(mu, [-1, self.n_agents, self.action_dim])
+        std = tf.reshape(std, [-1, self.n_agents, self.action_dim])
+        cov_mat = tf.linalg.diag(std)
+        dist = tfd.MultivariateNormalTriL(loc=mu, scale_tril=cov_mat)
+        return rnn_hidden, dist
+
+    def get_values(self, critic_in: tf.Tensor, agent_ids: tf.Tensor, *rnn_hidden: tf.Tensor, **kwargs):
+        shape_obs = critic_in.shape
+        # get representation features
+        if self.use_rnn:
+            batch_size, n_agent, episode_length, dim_obs = tuple(shape_obs)
+            outputs = self.representation_critic(critic_in.reshape(-1, episode_length, dim_obs), *rnn_hidden)
+            outputs['state'] = outputs['state'].view(batch_size, n_agent, episode_length, -1)
+            rnn_hidden = (outputs['rnn_hidden'], outputs['rnn_cell'])
+        else:
+            batch_size, n_agent, dim_obs = tuple(shape_obs)
+            outputs = self.representation_critic(tf.reshape(critic_in, [-1, dim_obs]))
+            outputs['state'] = tf.reshape(outputs['state'], [batch_size, n_agent, -1])
+            rnn_hidden = None
+        # get critic values
+        critic_in = tf.concat([outputs['state'], agent_ids], axis=-1)
+        v = self.critic(critic_in)
+        return rnn_hidden, v
+
+    def value_tot(self, values_n: tf.Tensor, global_state=None):
+        if global_state is not None:
+            global_state = torch.as_tensor(global_state).to(self.device)
+        return values_n if self.mixer is None else self.mixer(values_n, global_state)
+
+    def trainable_param(self):
+        params = self.actor.trainable_variables + self.critic.trainable_variables
+        if self.mixer is not None:
+            params += self.mixer.trainable_variables
+        if self.identical_rep:
+            return params
+        else:
+            return params + self.representation.trainable_variables
 
 
 class Basic_ISAC_policy(tk.Model):
@@ -153,12 +237,13 @@ class Basic_ISAC_policy(tk.Model):
 
         self.actor_net = ActorNet(representation.output_shapes['state'][0], n_agents, self.action_dim,
                                   actor_hidden_size, normalize, initializer, activation, device)
-        self.critic_net = CriticNet(True, representation.output_shapes['state'][0], n_agents, self.action_dim,
-                                    critic_hidden_size, normalize, initializer, activation, device)
+        dim_input_critic = representation.output_shapes['state'][0] + self.action_dim
+        self.critic_net = CriticNet(dim_input_critic, n_agents, critic_hidden_size,
+                                    normalize, initializer, activation, device)
         self.target_actor_net = ActorNet(representation.output_shapes['state'][0], n_agents, self.action_dim,
                                          actor_hidden_size, normalize, initializer, activation, device)
-        self.target_critic_net = CriticNet(True, representation.output_shapes['state'][0], n_agents, self.action_dim,
-                                           critic_hidden_size, normalize, initializer, activation, device)
+        self.target_critic_net = CriticNet(dim_input_critic, n_agents, critic_hidden_size,
+                                           normalize, initializer, activation, device)
         if isinstance(self.representation, Basic_Identical):
             self.parameters_actor = self.actor_net.trainable_variables
         else:
@@ -220,10 +305,11 @@ class MASAC_policy(Basic_ISAC_policy):
         super(MASAC_policy, self).__init__(action_space, n_agents, representation,
                                            actor_hidden_size, critic_hidden_size,
                                            normalize, initializer, activation, device)
-        self.critic_net = CriticNet(False, representation.output_shapes['state'][0], n_agents, self.action_dim,
-                                    critic_hidden_size, normalize, initializer, activation, device)
-        self.target_critic_net = CriticNet(False, representation.output_shapes['state'][0], n_agents, self.action_dim,
-                                           critic_hidden_size, normalize, initializer, activation, device)
+        dim_input_critic = (representation.output_shapes['state'][0] + self.action_dim) * self.n_agents
+        self.critic_net = CriticNet(dim_input_critic, n_agents, critic_hidden_size,
+                                    normalize, initializer, activation, device)
+        self.target_critic_net = CriticNet(dim_input_critic, n_agents, critic_hidden_size,
+                                           normalize, initializer, activation, device)
         self.parameters_critic = self.critic_net.trainable_variables
         self.soft_update(tau=1.0)
 

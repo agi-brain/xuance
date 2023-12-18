@@ -99,29 +99,28 @@ class MAAC_Policy(tk.Model):
         self.representation_info_shape = self.representation.output_shapes
         self.lstm = True if kwargs["rnn"] == "LSTM" else False
         self.use_rnn = True if kwargs["use_recurrent"] else False
-        self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim, n_agents,
+        self.actor = ActorNet(self.representation.output_shapes['state'][0], self.action_dim, n_agents,
                               actor_hidden_size, normalize, initializer, kwargs['gain'], activation, device)
-        self.critic = CriticNet(representation.output_shapes['state'][0], n_agents, critic_hidden_size,
+        self.critic = CriticNet(self.representation.output_shapes['state'][0], n_agents, critic_hidden_size,
                                 normalize, initializer, activation, device)
         self.mixer = mixer
-        if mixer is None:
-            self.parameters_train = self.actor.trainable_variables + self.critic.trainable_variables
-        else:
-            self.parameters_train = self.actor.trainable_variables + self.critic.trainable_variables + self.mixer.trainable_variables
-        if not isinstance(self.representation, Basic_Identical):
-            self.parameters_train += self.representation.trainable_variables
-        self.dist = CategoricalDistribution(self.action_dim)
+        self.identical_rep = True if isinstance(self.representation, Basic_Identical) else False
+        self.pi_dist = CategoricalDistribution(self.action_dim)
 
     def call(self, inputs: Union[np.ndarray, dict], *rnn_hidden, **kwargs):
         observation = inputs['obs']
         agent_ids = inputs['ids']
+        obs_shape = observation.shape
         if self.use_rnn:
             outputs = self.representation(observation, *rnn_hidden)
+            outputs_state = outputs['state']  # need to be improved
             rnn_hidden = (outputs['rnn_hidden'], outputs['rnn_cell'])
         else:
-            outputs = self.representation(observation)
-            rnn_hidden = (outputs['rnn_hidden'], outputs['rnn_cell'])
-        actor_input = tf.concat([outputs['state'], agent_ids], axis=-1)
+            observation_reshape = tf.reshape(observation, [-1, obs_shape[-1]])
+            outputs = self.representation(observation_reshape)
+            outputs_state = tf.reshape(outputs['state'], obs_shape[:-1] + self.representation_info_shape['state'])
+            rnn_hidden = None
+        actor_input = tf.concat([outputs_state, agent_ids], axis=-1)
         act_logits = self.actor(actor_input)
         if ('avail_actions' in kwargs.keys()) and (kwargs['avail_actions'] is not None):
             avail_actions = tf.convert_to_tensor(kwargs['avail_actions'])
@@ -141,8 +140,8 @@ class MAAC_Policy(tk.Model):
             rnn_hidden = (outputs['rnn_hidden'], outputs['rnn_cell'])
         else:
             batch_size, n_agent, dim_obs = tuple(shape_obs)
-            outputs = self.representation_critic(critic_in.reshape(-1, dim_obs))
-            outputs['state'] = outputs['state'].view(batch_size, n_agent, -1)
+            outputs = self.representation_critic(tf.reshape(critic_in, [-1, dim_obs]))
+            outputs['state'] = tf.reshape(outputs['state'], [batch_size, n_agent, -1])
             rnn_hidden = None
         # get critic values
         critic_in = tf.concat([outputs['state'], agent_ids], axis=-1)
@@ -154,6 +153,15 @@ class MAAC_Policy(tk.Model):
             with tf.device(self.device):
                 global_state = tf.convert_to_tensor(global_state)
         return values_n if self.mixer is None else self.mixer(values_n, global_state)
+
+    def trainable_param(self):
+        params = self.actor.trainable_variables + self.critic.trainable_variables
+        if self.mixer is not None:
+            params += self.mixer.trainable_variables
+        if self.identical_rep:
+            return params
+        else:
+            return params + self.representation.trainable_variables
 
 
 class MAAC_Policy_Share(MAAC_Policy):
@@ -275,6 +283,7 @@ class COMAPolicy(tk.Model):
         obs_shape = observation.shape
         if self.use_rnn:
             outputs = self.representation(observation, *rnn_hidden)
+            outputs_state = outputs['state']  # need to be improved
             rnn_hidden = (outputs['rnn_hidden'], outputs['rnn_cell'])
         else:
             observation_reshape = tf.reshape(observation, [-1, obs_shape[-1]])
@@ -326,8 +335,7 @@ class MeanFieldActorCriticPolicy(tk.Model):
         self.critic_net = CriticNet(representation.output_shapes['state'][0] + self.action_dim, n_agents,
                                     critic_hidden_size, normalize, initializer, activation, device)
         self.trainable_param = self.actor_net.trainable_variables + self.critic_net.trainable_variables
-        if not isinstance(self.representation, Basic_Identical):
-            self.trainable_param += self.representation.trainable_variables
+        self.identical_rep = True if isinstance(self.representation, Basic_Identical) else False
         self.pi_dist = CategoricalDistribution(self.action_dim)
 
     def call(self, inputs: Union[np.ndarray, dict], **kwargs):
@@ -338,6 +346,13 @@ class MeanFieldActorCriticPolicy(tk.Model):
         act_logits = self.actor_net(input_actor)
         self.pi_dist.set_param(logits=act_logits)
         return outputs, self.pi_dist
+
+    def trainable_param(self):
+        params = self.actor_net.trainable_variables + self.critic_net.trainable_variables
+        if self.identical_rep:
+            return params
+        else:
+            return params + self.representation.trainable_variables
 
     def critic(self, observation: tf.Tensor, actions_mean: tf.Tensor, agent_ids: tf.Tensor):
         outputs = self.representation(observation)

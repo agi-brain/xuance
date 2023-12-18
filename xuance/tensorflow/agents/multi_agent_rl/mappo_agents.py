@@ -1,7 +1,7 @@
 from xuance.tensorflow.agents import *
 
 
-class MAPPO_Clip_Agents(MARLAgents):
+class MAPPO_Agents(MARLAgents):
     def __init__(self,
                  config: Namespace,
                  envs: DummyVecEnv_Pettingzoo,
@@ -50,9 +50,9 @@ class MAPPO_Clip_Agents(MARLAgents):
         self.buffer_size = memory.buffer_size
         self.batch_size = self.buffer_size // self.n_minibatch
 
-        learner = MAPPO_Clip_Learner(config, policy, optimizer,
+        learner = MAPPO_Learner(config, policy, optimizer,
                                      config.device, config.model_dir, config.gamma)
-        super(MAPPO_Clip_Agents, self).__init__(config, envs, policy, memory, learner, device,
+        super(MAPPO_Agents, self).__init__(config, envs, policy, memory, learner, device,
                                                 config.log_dir, config.model_dir)
         self.share_values = True if config.rew_shape[0] == 1 else False
         self.on_policy = True
@@ -62,23 +62,27 @@ class MAPPO_Clip_Agents(MARLAgents):
         with tf.device(self.device):
             agents_id = tf.tile(tf.expand_dims(tf.eye(self.n_agents), axis=0), multiples=(batch_size, 1, 1))
             inputs_policy = {"obs": tf.convert_to_tensor(obs_n), "ids": agents_id}
-            _, dists = self.policy(inputs_policy)
-            acts = dists.stochastic_sample()
+            hidden_state, dists = self.policy(inputs_policy)
+            acts = dists.sample()
             log_pi_a = dists.log_prob(acts)
-            state = tf.convert_to_tensor(state)
-            state_expand = tf.tile(tf.expand_dims(state, axis=-2), (1, self.n_agents, 1))
-            vs = self.policy.values(state_expand, agents_id)
-        return acts.numpy(), log_pi_a.numpy(), vs.numpy()
+        return hidden_state, acts.numpy(), log_pi_a.numpy()
 
-    def value(self, obs, state):
+    def values(self, obs_n, *rnn_hidden, state=None):
         batch_size = len(state)
         agents_id = tf.tile(tf.expand_dims(tf.eye(self.n_agents), axis=0), multiples=(batch_size, 1, 1))
-        repre_out = self.policy.representation(obs)
-        critic_input = tf.concat([torch.Tensor(repre_out['state']), agents_id], axis=-1)
-        values_n = self.policy.critic(critic_input)
-        values = self.policy.value_tot(values_n, global_state=state)
-        values = tf.expand_dims(tf.tile(tf.reshape(values, (-1, 1)), (1, self.n_agents)), axis=-1)
-        return values.numpy()
+        # build critic input
+        critic_in = tf.reshape(tf.convert_to_tensor(obs_n, dtype=tf.float32), [batch_size, 1, -1])
+        critic_in = tf.repeat(critic_in, repeats=self.n_agents, axis=1)
+        # get critic values
+        if self.use_recurrent:
+            hidden_state, values_n = self.policy.get_values(tf.expand_dims(critic_in, 2),  # add a sequence length axis.
+                                                            tf.expand_dims(agents_id, 2),
+                                                            *rnn_hidden)
+            values_n = tf.squeeze(values_n, axis=2)
+        else:
+            hidden_state, values_n = self.policy.get_values(critic_in, agents_id)
+
+        return hidden_state, values_n.numpy()
 
     def train(self, i_step, **kwargs):
         info_train = {}

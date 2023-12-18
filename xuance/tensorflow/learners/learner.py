@@ -58,6 +58,7 @@ class LearnerMAS(ABC):
         self.optimizer = optimizer
         self.device = device
         self.model_dir = model_dir
+        self.running_steps = config.running_steps
         self.iterations = 0
 
     def onehot_action(self, actions_int, num_actions):
