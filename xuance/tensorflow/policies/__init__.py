@@ -130,6 +130,8 @@ Policy_Inputs = {
                                "normalize", "initialize", "activation", "device"],
     "Categorical_MAAC_Policy": ["action_space", "n_agents", "representation", "mixer", "actor_hidden_size",
                                 "critic_hidden_size", "normalize", "initialize", "activation", "device"],
+    "Categorical_MAAC_Policy_Share": ["action_space", "n_agents", "representation", "mixer", "actor_hidden_size",
+                                      "critic_hidden_size", "normalize", "initialize", "activation", "device"],
     "Categorical_MAPPO_Policy": ["state_dim", "action_space", "n_agents", "representation", "actor_hidden_size",
                                  "critic_hidden_size", "normalize", "initialize", "activation", "device"],
     "Categorical_MFAC_Policy": ["action_space", "n_agents", "representation", "actor_hidden_size",

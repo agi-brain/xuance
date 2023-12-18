@@ -161,7 +161,7 @@ class MAAC_Policy(tk.Model):
         if self.identical_rep:
             return params
         else:
-            return params + self.representation.trainable_variables
+            return params + self.representation.trainable_variables + self.representation_critic.trainable_variables
 
 
 class MAAC_Policy_Share(MAAC_Policy):
@@ -190,32 +190,26 @@ class MAAC_Policy_Share(MAAC_Policy):
         self.critic = CriticNet(self.representation.output_shapes['state'][0], n_agents, critic_hidden_size,
                                 normalize, initialize, activation, device)
         self.mixer = mixer
-        if mixer is None:
-            self.parameters_train = self.actor.trainable_variables + self.critic.trainable_variables
-        else:
-            self.parameters_train = self.actor.trainable_variables + self.critic.trainable_variables + self.mixer.trainable_variables
-        if not isinstance(self.representation, Basic_Identical):
-            self.parameters_train += self.representation.trainable_variables
-        self.dist = CategoricalDistribution(self.action_dim)
+        self.identical_rep = True if isinstance(self.representation, Basic_Identical) else False
         self.pi_dist = CategoricalDistribution(self.action_dim)
 
     def call(self, inputs: Union[np.ndarray, dict], *rnn_hidden, **kwargs):
         observation = inputs['obs']
         agent_ids = inputs['ids']
-        batch_size = len(observation)
+        obs_shape = observation.shape
         if self.use_rnn:
-            sequence_length = observation.shape[1]
             outputs = self.representation(observation, *rnn_hidden)
+            outputs_state = outputs['state']  # need to be improved
             rnn_hidden = (outputs['rnn_hidden'], outputs['rnn_cell'])
-            representated_state = outputs['state'].view(batch_size, self.n_agents, sequence_length, -1)
-            actor_critic_input = torch.concat([representated_state, agent_ids], dim=-1)
         else:
-            outputs = self.representation(observation)
+            observation_reshape = tf.reshape(observation, [-1, obs_shape[-1]])
+            outputs = self.representation(observation_reshape)
+            outputs_state = tf.reshape(outputs['state'], obs_shape[:-1] + self.representation_info_shape['state'])
             rnn_hidden = None
-            actor_critic_input = torch.concat([outputs['state'], agent_ids], dim=-1)
+        actor_critic_input = tf.concat([outputs_state, agent_ids], axis=-1)
         act_logits = self.actor(actor_critic_input)
         if ('avail_actions' in kwargs.keys()) and (kwargs['avail_actions'] is not None):
-            avail_actions = torch.Tensor(kwargs['avail_actions'])
+            avail_actions = tf.convert_to_tensor(kwargs['avail_actions'])
             act_logits[avail_actions == 0] = -1e10
             self.pi_dist.set_param(logits=act_logits)
         else:
@@ -223,26 +217,28 @@ class MAAC_Policy_Share(MAAC_Policy):
 
         values_independent = self.critic(actor_critic_input)
         if self.use_rnn:
-            if self.mixer is None:
-                values_tot = values_independent
-            else:
-                sequence_length = observation.shape[1]
-                values_independent = values_independent.transpose(1, 2).reshape(batch_size * sequence_length,
-                                                                                self.n_agents)
-                values_tot = self.value_tot(values_independent, global_state=kwargs['state'])
-                values_tot = values_tot.reshape([batch_size, sequence_length, 1])
-                values_tot = values_tot.unsqueeze(1).expand(-1, self.n_agents, -1, -1)
+            pass  # to do
         else:
             values_tot = values_independent if self.mixer is None else self.value_tot(values_independent,
                                                                                       global_state=kwargs['state'])
-            values_tot = values_tot.unsqueeze(1).expand(-1, self.n_agents, -1)
+            values_tot = tf.repeat(tf.expand_dims(values_tot, 1), repeats=self.n_agents, axis=1)
 
         return rnn_hidden, self.pi_dist, values_tot
 
-    def values(self, values_n: tf.Tensor, global_state=None):
+    def value_tot(self, values_n: tf.Tensor, global_state=None):
         if global_state is not None:
-            global_state = torch.as_tensor(global_state).to(self.device)
+            with tf.device(self.device):
+                global_state = tf.convert_to_tensor(global_state)
         return values_n if self.mixer is None else self.mixer(values_n, global_state)
+
+    def trainable_param(self):
+        params = self.actor.trainable_variables + self.critic.trainable_variables
+        if self.mixer is not None:
+            params += self.mixer.trainable_variables
+        if self.identical_rep:
+            return params
+        else:
+            return params + self.representation.trainable_variables
 
 
 class COMAPolicy(tk.Model):

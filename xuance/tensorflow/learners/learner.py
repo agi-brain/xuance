@@ -70,17 +70,23 @@ class LearnerMAS(ABC):
     def load_model(self, path, seed=1):
         try: file_names = os.listdir(path)
         except: raise "Failed to load model! Please train and save the model first."
+        model_path = ''
 
         for f in file_names:
             '''Change directory to the specified seed (if exists)'''
             if f"seed_{seed}" in f:
-                path = os.path.join(path, f)
-                break
-        latest = tf.train.latest_checkpoint(path)
+                model_path = os.path.join(path, f)
+                if os.listdir(model_path).__len__() == 0:
+                    continue
+                else:
+                    break
+        if model_path == '':
+            raise RuntimeError("Failed to load model! Please train and save the model first.")
+        latest = tf.train.latest_checkpoint(model_path)
         try:
             self.policy.load_weights(latest)
         except:
-            raise "Failed to load model! Please train and save the model first."
+            raise RuntimeError("Failed to load model! Please train and save the model first.")
 
     @abstractmethod
     def update(self, *args):

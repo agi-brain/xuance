@@ -59,29 +59,30 @@ class VDAC_Agents(MARLAgents):
         self.share_values = True if config.rew_shape[0] == 1 else False
         self.on_policy = True
 
-    def act(self, obs_n, episode, test_mode, state=None, noise=False):
+    def act(self, obs_n, *rnn_hidden, avail_actions=None, state=None, test_mode=False):
         batch_size = len(obs_n)
-        with tf.device(self.device):
-            agents_id = tf.tile(tf.expand_dims(tf.eye(self.n_agents), axis=0), multiples=(batch_size, 1, 1))
-            inputs_policy = {"obs": tf.convert_to_tensor(obs_n), "ids": agents_id}
-            states, dists, vs = self.policy(inputs_policy)
-            if self.args.mixer == "VDN":
-                vs_tot = tf.expand_dims(tf.tile(self.policy.value_tot(vs), (1, self.n_agents)), axis=-1)
-            else:
-                vs_tot = tf.expand_dims(tf.tile(self.policy.value_tot(vs, state), (1, self.n_agents)), axis=-1)
-            acts = dists.stochastic_sample()
-        return acts.numpy(), vs_tot.numpy()
-
-    def value(self, obs, state):
-        batch_size = len(state)
-        with tf.device(self.device):
-            agents_id = tf.tile(tf.expand_dims(tf.eye(self.n_agents), axis=0), multiples=(batch_size, 1, 1))
-            repre_out = self.policy.representation(obs)
-            critic_input = tf.concat([tf.convert_to_tensor(repre_out['state']), agents_id], axis=-1)
-            values_n = self.policy.critic(critic_input)
-            values = self.policy.value_tot(values_n, global_state=state)
-            values = tf.expand_dims(tf.tile(tf.reshape(values, [-1, 1]), (1, self.n_agents)), axis=-1)
-        return values.numpy()
+        agents_id = tf.tile(tf.expand_dims(tf.eye(self.n_agents), axis=0), multiples=(batch_size, 1, 1))
+        obs_in = tf.reshape(tf.convert_to_tensor(obs_n), [batch_size, self.n_agents, -1])
+        if state is not None:
+            state = tf.convert_to_tensor(state)
+        if self.use_recurrent:
+            batch_agents = batch_size * self.n_agents
+            hidden_state, dists, values_tot = self.policy(obs_in.view(batch_agents, 1, -1),
+                                                          agents_id.unsqueeze(2),
+                                                          *rnn_hidden,
+                                                          avail_actions=avail_actions[:, :, np.newaxis],
+                                                          state=state.unsqueeze(2))
+            actions = dists.stochastic_sample()
+            actions = actions.reshape(batch_size, self.n_agents)
+            values_tot = values_tot.reshape([batch_size, self.n_agents, 1])
+        else:
+            inputs = {'obs': obs_in, 'ids': agents_id}
+            hidden_state, dists, values_tot = self.policy(inputs,
+                                                          avail_actions=avail_actions,
+                                                          state=state)
+            actions = dists.stochastic_sample()
+            values_tot = tf.reshape(values_tot, [batch_size, self.n_agents, 1])
+        return hidden_state, actions.numpy(), values_tot.numpy()
 
     def train(self, i_step, **kwargs):
         if self.memory.full:
