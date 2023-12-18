@@ -84,3 +84,16 @@ class LearnerMAS(ABC):
     @abstractmethod
     def update(self, *args):
         raise NotImplementedError
+
+    def update_recurrent(self, *args):
+        pass
+
+    def act(self, *args, **kwargs):
+        pass
+
+    def get_hidden_states(self, *args):
+        pass
+
+    def lr_decay(self, *args):
+        pass
+

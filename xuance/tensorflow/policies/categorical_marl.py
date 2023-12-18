@@ -325,15 +325,9 @@ class MeanFieldActorCriticPolicy(tk.Model):
                                   actor_hidden_size, normalize, initializer, kwargs['gain'], activation, device)
         self.critic_net = CriticNet(representation.output_shapes['state'][0] + self.action_dim, n_agents,
                                     critic_hidden_size, normalize, initializer, activation, device)
-        self.target_actor_net = ActorNet(representation.output_shapes['state'][0], self.action_dim, n_agents,
-                                         actor_hidden_size, normalize, initializer, kwargs['gain'], activation, device)
-        self.target_critic_net = CriticNet(representation.output_shapes['state'][0] + self.action_dim, n_agents,
-                                           critic_hidden_size, normalize, initializer, activation, device)
-        if isinstance(self.representation, Basic_Identical):
-            self.parameters_actor = self.actor_net.trainable_variables
-        else:
-            self.parameters_actor = self.actor_net.trainable_variables + self.representation.trainable_variables
-        self.parameters_critic = self.critic_net.trainable_variables
+        self.trainable_param = self.actor_net.trainable_variables + self.critic_net.trainable_variables
+        if not isinstance(self.representation, Basic_Identical):
+            self.trainable_param += self.representation.trainable_variables
         self.pi_dist = CategoricalDistribution(self.action_dim)
 
     def call(self, inputs: Union[np.ndarray, dict], **kwargs):
@@ -348,4 +342,5 @@ class MeanFieldActorCriticPolicy(tk.Model):
     def critic(self, observation: tf.Tensor, actions_mean: tf.Tensor, agent_ids: tf.Tensor):
         outputs = self.representation(observation)
         critic_in = tf.concat([outputs['state'], actions_mean, agent_ids], axis=-1)
-        return self.critic_net(critic_in)
+        critic_out = tf.expand_dims(self.critic_net(critic_in), -1)
+        return critic_out

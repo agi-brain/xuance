@@ -20,14 +20,18 @@ class MFAC_Agents(MARLAgents):
         representation = REGISTRY_Representation[config.representation](*input_representation)
         input_policy = get_policy_in_marl(config, representation, config.agent_keys)
         policy = REGISTRY_Policy[config.policy](*input_policy, gain=config.gain)
-        lr_scheduler = [MyLinearLR(config.lr_a, start_factor=1.0, end_factor=0.5, total_iters=get_total_iters(config.agent_name, config)),
-                        MyLinearLR(config.lr_c, start_factor=1.0, end_factor=0.5, total_iters=get_total_iters(config.agent_name, config))]
-        optimizer = [tk.optimizers.Adam(lr_scheduler[0]), tk.optimizers.Adam(lr_scheduler[1])]
+        lr_scheduler = MyLinearLR(config.learning_rate, start_factor=1.0, end_factor=0.5,
+                                  total_iters=get_total_iters(config.agent_name, config))
+        optimizer = tk.optimizers.Adam(lr_scheduler)
         self.observation_space = envs.observation_space
         self.action_space = envs.action_space
         self.representation_info_shape = policy.representation.output_shapes
         self.auxiliary_info_shape = {}
 
+        if config.state_space is not None:
+            config.dim_state, state_shape = config.state_space.shape, config.state_space.shape
+        else:
+            config.dim_state, state_shape = None, None
         if config.state_space is not None:
             config.dim_state, state_shape = config.state_space.shape, config.state_space.shape
         else:
@@ -63,15 +67,15 @@ class MFAC_Agents(MARLAgents):
 
         return acts.numpy(), act_mean_current
 
-    def value(self, obs, state):
-        batch_size = len(state)
+    def values(self, obs, actions_mean):
+        batch_size = len(obs)
         agents_id = np.tile(np.expand_dims(np.eye(self.n_agents), 0), (batch_size, 1, 1))
-        repre_out = self.policy.representation(obs)
-        critic_input = tf.concat([repre_out['state'], agents_id], axis=-1)
-        values_n = self.policy.critic(critic_input)
-
-        values = tf.expand_dims(tf.tile(tf.reshape(self.policy.value_tot(values_n, global_state=state), [-1, 1]), (1, self.n_agents)), axis=-1)
-        return values.numpy()
+        agents_id = tf.convert_to_tensor(agents_id, dtype=tf.float32)
+        actions_mean = tf.repeat(tf.expand_dims(tf.convert_to_tensor(actions_mean, dtype=tf.float32), 1),
+                                 repeats=self.n_agents, axis=1)
+        values_n = self.policy.critic(obs, actions_mean, agents_id)
+        hidden_states = None
+        return hidden_states, values_n.numpy()
 
     def train(self, i_step, **kwargs):
         if self.memory.full:
