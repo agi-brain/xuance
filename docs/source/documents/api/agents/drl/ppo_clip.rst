@@ -136,12 +136,12 @@ PPOCLIP_Agent
     :type train_steps: xxxxxx
 
 .. py:function::
-    xuance.mindspore.agents.policy_gradient.ppoclip_agent.PPOCLIP_Agent.test(env_fn,test_episodes)
+    xuance.mindspore.agents.policy_gradient.ppoclip_agent.PPOCLIP_Agent.test(env_fn,test_episode)
 
     :param env_fn: xxxxxx.
     :type env_fn: xxxxxx
-    :param test_episodes: xxxxxx.
-    :type test_episodes: xxxxxx
+    :param test_episode: xxxxxx.
+    :type test_episode: xxxxxx
     :return: xxxxxx.
     :rtype: xxxxxx
 .. raw:: html
