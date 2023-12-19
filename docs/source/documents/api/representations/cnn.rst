@@ -158,8 +158,8 @@ When implementing this class in PyTorch, you also need to specify the device typ
 .. py:class::
   xuance.mindspore.representations.cnn.Basic_CNN(input_shape, kernels, strides, filters, normalize, initialize, activation)
 
-  :param input_shape: xxxxxx.
-  :type input_shape: xxxxxx
+  :param input_shape: The shape of the input data.
+  :type input_shape: Sequence[int]
   :param kernels: xxxxxx.
   :type kernels: xxxxxx
   :param strides: xxxxxx.
@@ -194,8 +194,8 @@ When implementing this class in PyTorch, you also need to specify the device typ
 .. py:class::
   xuance.mindspore.representations.cnn.AC_CNN_Atari(input_shape, kernels, strides, filters, normalize, initialize, activation, fc_hidden_sizes)
 
-  :param input_shape: xxxxxx.
-  :type input_shape: xxxxxx
+  :param input_shape: The shape of the input data.
+  :type input_shape: Sequence[int]
   :param kernels: xxxxxx.
   :type kernels: xxxxxx
   :param strides: xxxxxx.

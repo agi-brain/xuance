@@ -12,8 +12,8 @@ xxxxxx.
 .. py:class::
   xuance.torch.utils.value_norm.ValueNorm(input_shape, norm_axes, beta, per_element_update, epsilon)
 
-  :param input_shape: xxxxxx.
-  :type input_shape: xxxxxx
+  :param input_shape: The shape of the input data.
+  :type input_shape: Sequence[int]
   :param norm_axes: xxxxxx.
   :type norm_axes: xxxxxx
   :param beta: xxxxxx.
