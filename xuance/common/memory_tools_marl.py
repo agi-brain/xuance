@@ -35,6 +35,8 @@ class BaseBuffer(ABC):
 class MARL_OffPolicyBuffer(BaseBuffer):
     """
     Replay buffer for off-policy MARL algorithms.
+
+    Args:
         n_agents: number of agents.
         state_space: global state space, type: Discrete, Box.
         obs_space: observation space for one agent (suppose same obs space for group agents).
@@ -90,6 +92,8 @@ class MARL_OffPolicyBuffer(BaseBuffer):
 class MARL_OffPolicyBuffer_RNN(MARL_OffPolicyBuffer):
     """
     Replay buffer for off-policy MARL algorithms with DRQN trick.
+
+    Args:
         n_agents: number of agents.
         state_space: global state space, type: Discrete, Box.
         obs_space: observation space for one agent (suppose same obs space for group agents).
@@ -174,6 +178,8 @@ class MARL_OffPolicyBuffer_RNN(MARL_OffPolicyBuffer):
 class MeanField_OffPolicyBuffer(MARL_OffPolicyBuffer):
     """
     Replay buffer for off-policy Mean-Field MARL algorithms (Mean-Field Q-Learning).
+
+    Args:
         n_agents: number of agents.
         state_space: global state space, type: Discrete, Box.
         obs_space: observation space for one agent (suppose same obs space for group agents).
@@ -207,6 +213,8 @@ class MeanField_OffPolicyBuffer(MARL_OffPolicyBuffer):
 class MARL_OnPolicyBuffer(BaseBuffer):
     """
     Replay buffer for on-policy MARL algorithms.
+
+    Args:
         n_agents: number of agents.
         state_space: global state space, type: Discrete, Box.
         obs_space: observation space for one agent (suppose same obs space for group agents).
@@ -311,6 +319,8 @@ class MARL_OnPolicyBuffer(BaseBuffer):
 class MARL_OnPolicyBuffer_RNN(MARL_OnPolicyBuffer):
     """
     Replay buffer for on-policy MARL algorithms with DRQN trick.
+
+    Args:
         n_agents: number of agents.
         state_space: global state space, type: Discrete, Box.
         obs_space: observation space for one agent (suppose same obs space for group agents).
@@ -465,63 +475,11 @@ class MARL_OnPolicyBuffer_RNN(MARL_OnPolicyBuffer):
         return samples
 
 
-class MARL_OnPolicyBuffer_MindSpore(MARL_OnPolicyBuffer):
-    """
-    Replay buffer for on-policy MARL algorithms implemented by MindSpore.
-        n_agents: number of agents.
-        state_space: global state space, type: Discrete, Box.
-        obs_space: observation space for one agent (suppose same obs space for group agents).
-        act_space: action space for one agent (suppose same actions space for group agents).
-        rew_space: reward space.
-        done_space: terminal variable space.
-        n_envs: number of parallel environments.
-        n_size: buffer size of trajectory data for one environment.
-        use_gae: whether to use GAE trick.
-        use_advnorm: whether to use Advantage normalization trick.
-        gamma: discount factor.
-        gae_lam: gae lambda.
-        n_actions: number of discrete actions.
-    """
-
-    def __init__(self, n_agents, state_space, obs_space, act_space, rew_space, done_space, n_envs,
-                 n_size, use_gae, use_advnorm, gamma, gae_lam, n_actions=None):
-        self.n_actions = n_actions
-        super(MARL_OnPolicyBuffer_MindSpore, self).__init__(n_agents, state_space, obs_space, act_space, rew_space,
-                                                            done_space, n_envs, n_size,
-                                                            use_gae, use_advnorm, gamma, gae_lam)
-        self.keys = self.data.keys()
-        self.data_shapes = {k: self.data[k].shape for k in self.keys}
-
-    def clear(self):
-        self.data.update({
-            'obs': np.zeros((self.n_envs, self.n_size,) + self.obs_space).astype(np.float32),
-            'state': np.zeros((self.n_envs, self.n_size,) + self.state_space).astype(np.float32),
-            'actions': np.zeros((self.n_envs, self.n_size,) + self.act_space).astype(np.float32),
-            'rewards': np.zeros((self.n_envs, self.n_size,) + self.rew_space).astype(np.float32),
-            'values': np.zeros((self.n_envs, self.n_size,) + self.rew_space).astype(np.float32),
-            'log_pi_old': np.zeros((self.n_envs, self.n_size, self.n_agents,)).astype(np.float32),
-            'act_prob_old': np.zeros((self.n_envs, self.n_size, self.n_agents, self.n_actions)).astype(np.float32),
-            'advantages': np.zeros((self.n_envs, self.n_size,) + self.rew_space).astype(np.float32),
-            'terminals': np.zeros((self.n_envs, self.n_size,) + self.done_space).astype(np.bool),
-            'agent_mask': np.ones((self.n_envs, self.n_size, self.n_agents)).astype(np.bool),
-        })
-
-        self.ptr = 0  # current pointer
-        self.size = 0  # current buffer size
-        self.start_ids = np.zeros(self.n_envs)
-
-    def store(self, step_data):
-        for k in self.keys:
-            if k == "advantages": continue
-            if k in step_data.keys():
-                self.data[k][:, self.ptr] = step_data[k]
-        self.ptr = (self.ptr + 1) % self.n_size
-        self.size = np.min([self.size + 1, self.n_size])
-
-
 class MeanField_OnPolicyBuffer(MARL_OnPolicyBuffer):
     """
     Replay buffer for on-policy Mean-Field MARL algorithms (Mean-Field Actor-Critic).
+
+    Args:
         n_agents: number of agents.
         state_space: global state space, type: Discrete, Box.
         obs_space: observation space for one agent (suppose same obs space for group agents).
@@ -618,6 +576,24 @@ class COMA_Buffer(MARL_OnPolicyBuffer):
 
 
 class COMA_Buffer_RNN(MARL_OnPolicyBuffer_RNN):
+    """
+    Replay buffer for on-policy MARL algorithms.
+
+    Args:
+        n_agents: number of agents.
+        state_space: global state space, type: Discrete, Box.
+        obs_space: observation space for one agent (suppose same obs space for group agents).
+        act_space: action space for one agent (suppose same actions space for group agents).
+        rew_space: reward space.
+        done_space: terminal variable space.
+        n_envs: number of parallel environments.
+        buffer_size: buffer size of transition data for one environment.
+        use_gae: whether to use GAE trick.
+        use_advnorm: whether to use Advantage normalization trick.
+        gamma: discount factor.
+        gae_lam: gae lambda.
+        **kwargs: other args.
+    """
     def __init__(self, n_agents, state_space, obs_space, act_space, rew_space, done_space, n_envs, buffer_size,
                  use_gae, use_advnorm, gamma, gae_lam, **kwargs):
         self.td_lambda = kwargs['td_lambda']

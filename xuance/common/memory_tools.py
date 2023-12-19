@@ -15,10 +15,15 @@ def create_memory(shape: Optional[Union[tuple, dict]],
                   dtype: type = np.float32):
     """
     Create a numpy array for memory data.
+
+    Args:
         shape: data shape.
         n_envs: number of parallel environments.
         n_size: length of data sequence for each environment.
         dtype: numpy data type.
+
+    Returns:
+        An empty memory space to store data. (initial: numpy.zeros())
     """
     if shape is None:
         return None
@@ -41,6 +46,8 @@ def store_element(data: Optional[Union[np.ndarray, dict, float]],
                   ptr: int):
     """
     Insert a step of data into current memory.
+
+    Args:
         data: target data that to be stored.
         memory: the memory where data will be stored.
         ptr: pointer to the location for the data.
@@ -58,8 +65,13 @@ def sample_batch(memory: Optional[Union[np.ndarray, dict]],
                  index: Optional[Union[np.ndarray, tuple]]):
     """
     Sample a batch of data from the selected memory.
+
+    Args:
         memory: memory that contains experience data.
         index: pointer to the location for the selected data.
+
+    Returns:
+        A batch of data.
     """
     if memory is None:
         return None
@@ -75,6 +87,11 @@ def sample_batch(memory: Optional[Union[np.ndarray, dict]],
 class Buffer(ABC):
     """
     Basic buffer single-agent DRL algorithms.
+
+    Args:
+        observation_space: the space for observation data.
+        action_space: the space for action data.
+        auxiliary_info_shape: the shape for auxiliary data if needed.
     """
     def __init__(self,
                  observation_space: Space,
@@ -143,6 +160,8 @@ class EpisodeBuffer:
 class DummyOnPolicyBuffer(Buffer):
     """
     Replay buffer for on-policy DRL algorithms.
+
+    Args:
         observation_space: the observation space of the environment.
         action_space: the action space of the environment.
         auxiliary_shape: data shape of auxiliary information (if exists).
@@ -248,6 +267,8 @@ class DummyOnPolicyBuffer(Buffer):
 class DummyOffPolicyBuffer(Buffer):
     """
     Replay buffer for off-policy DRL algorithms.
+
+    Args:
         observation_space: the observation space of the environment.
         action_space: the action space of the environment.
         auxiliary_shape: data shape of auxiliary information (if exists).
@@ -301,6 +322,8 @@ class DummyOffPolicyBuffer(Buffer):
 class RecurrentOffPolicyBuffer(Buffer):
     """
     Replay buffer for DRQN-based algorithms.
+
+    Args:
         observation_space: the observation space of the environment.
         action_space: the action space of the environment.
         auxiliary_shape: data shape of auxiliary information (if exists).
@@ -369,6 +392,8 @@ class RecurrentOffPolicyBuffer(Buffer):
 class PerOffPolicyBuffer(Buffer):
     """
     Prioritized Replay Buffer.
+
+    Args:
         observation_space: the observation space of the environment.
         action_space: the action space of the environment.
         auxiliary_shape: data shape of auxiliary information (if exists).
@@ -495,6 +520,8 @@ class PerOffPolicyBuffer(Buffer):
 class DummyOffPolicyBuffer_Atari(DummyOffPolicyBuffer):
     """
     Replay buffer for off-policy DRL algorithms and Atari tasks.
+
+    Args:
         observation_space: the observation space of the environment.
         action_space: the action space of the environment.
         auxiliary_shape: data shape of auxiliary information (if exists).
@@ -526,6 +553,8 @@ class DummyOffPolicyBuffer_Atari(DummyOffPolicyBuffer):
 class DummyOnPolicyBuffer_Atari(DummyOnPolicyBuffer):
     """
     Replay buffer for on-policy DRL algorithms and Atari tasks.
+
+    Args:
         observation_space: the observation space of the environment.
         action_space: the action space of the environment.
         auxiliary_shape: data shape of auxiliary information (if exists).
