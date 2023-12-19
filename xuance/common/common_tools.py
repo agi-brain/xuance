@@ -1,17 +1,31 @@
 import os
+import yaml
 import numpy as np
 import scipy.signal
-import yaml
-import itertools
-from gym.spaces import Space, Dict
-from typing import Sequence
-from types import SimpleNamespace as SN
 from copy import deepcopy
+from gym.spaces import Space, Dict
+from types import SimpleNamespace as SN
 from xuance.configs import method_list
+
 EPS = 1e-8
 
 
 def recursive_dict_update(basic_dict, target_dict):
+    """Update the dict values.
+    Args:
+        basic_dict: the original dict variable that to be updated.
+        target_dict: the target dict variable with new values.
+
+    Returns:
+        A dict mapping keys of basic_dict to the values of the same keys in target_dict.
+        For example:
+
+        basic_dict = {'a': 1, 'b': 2}
+        target_dict = {'a': 3, 'c': 4}
+        out_dict = recursive_dict_update(basic_dict, target_dict)
+
+        output_dict = {'a': 3, 'b': 2}
+    """
     out_dict = deepcopy(basic_dict)
     for key, value in target_dict.items():
         if isinstance(value, dict):
@@ -21,22 +35,32 @@ def recursive_dict_update(basic_dict, target_dict):
     return out_dict
 
 
-def get_config(file_name):
-    with open(file_name, "r") as f:
+def get_config(file_dir):
+    """Get dict variable from a YAML file.
+    Args:
+        file_dir: the directory of the YAML file.
+
+    Returns:
+        config_dict: the keys and corresponding values in the YAML file.
+    """
+    with open(file_dir, "r") as f:
         try:
             config_dict = yaml.load(f, Loader=yaml.FullLoader)
         except yaml.YAMLError as exc:
-            assert False, file_name + " error: {}".format(exc)
+            assert False, file_dir + " error: {}".format(exc)
     return config_dict
 
 
 def get_arguments(method, env, env_id, config_path=None, parser_args=None):
-    """
-    Get arguments from .yaml files
-    method: the algorithm name that will be implemented,
-    env: env/scenario, e.g., classic/CartPole-v0,
-    config_path: default is None, if None, the default configs (xuance/configs/.../*.yaml) will be loaded.
-    parser_args: arguments that specified by parser tools.
+    """Get arguments from .yaml files
+    Args:
+        method: the algorithm name that will be implemented,
+        env: env/scenario, e.g., classic/CartPole-v0,
+        config_path: default is None, if None, the default configs (xuance/configs/.../*.yaml) will be loaded.
+        parser_args: arguments that specified by parser tools.
+
+    Returns:
+        args: the SimpleNamespace variables that contains attributes for DRL implementations.
     """
     main_path = os.getcwd()
     main_path_package = os.path.dirname(os.path.dirname(__file__))
@@ -45,13 +69,9 @@ def get_arguments(method, env, env_id, config_path=None, parser_args=None):
     ''' get the arguments from xuance/config/basic.yaml '''
     config_basic = get_config(os.path.join(config_path_default, "basic.yaml"))
 
-    ''' get the arguments from xuance/config/agent/env/scenario.yaml '''
-    if env in ["atari", "mujoco", "Platform"]:
-        file_name = env + ".yaml"
-    else:
+    ''' get the arguments from, e.g., xuance/config/dqn/box2d/CarRacing-v2.yaml '''
+    if type(method) == list:  # for different groups of MARL algorithms.
         file_name = env + "/" + env_id + ".yaml"
-
-    if type(method) == list:
         config_algo_default = [get_config(os.path.join(config_path_default, agent, file_name)) for agent in method]
         configs = [recursive_dict_update(config_basic, config_i) for config_i in config_algo_default]
         if config_path is not None:
@@ -61,26 +81,34 @@ def get_arguments(method, env, env_id, config_path=None, parser_args=None):
             configs = [recursive_dict_update(config_i, parser_args.__dict__) for config_i in configs]
         args = [SN(**config_i) for config_i in configs]
     elif type(method) == str:
-        # load method-wise config if exists.
-        method_config = os.path.join(config_path_default, method, file_name)
-        if os.path.exists(method_config):
-            config_algo_default = get_config(method_config)
-            configs = recursive_dict_update(config_basic, config_algo_default)
+        if config_path is None:
+            file_name_env_id = env + "/" + env_id + ".yaml"
+            file_name_env = env + ".yaml"
+            config_path_env_id = os.path.join(config_path_default, method, file_name_env_id)
+            config_path_env = os.path.join(config_path_default, method, file_name_env)
+            if os.path.exists(config_path_env_id):
+                config_path = config_path_env_id
+            elif os.path.exists(config_path_env):
+                config_path = config_path_env
+            else:
+                error_path_env_id = os.path.join('./xuance/configs', method, file_name_env_id)
+                error_path_env = os.path.join('./xuance/configs', method, file_name_env)
+                raise RuntimeError(
+                    f"The file of '{error_path_env_id}' or '{error_path_env}' does not exist in this library. "
+                    f"You can also customize the configuration file by specifying the `config_path` parameter "
+                    f"in the `get_runner()` function.")
         else:
-            configs = config_basic
-        # load self defined config if exists.
-        if config_path is not None:
-            config_algo = get_config(os.path.join(main_path, config_path))
-            configs = recursive_dict_update(configs, config_algo)
+            config_path = os.path.join(main_path, config_path)
+        config_algo_default = get_config(config_path)
+        configs = recursive_dict_update(config_basic, config_algo_default)
         # load parser_args and rewrite the parameters if their names are same.
         if parser_args is not None:
             configs = recursive_dict_update(configs, parser_args.__dict__)
+        if not ('env_id' in configs.keys()):
+            configs['env_id'] = env_id
         args = SN(**configs)
     else:
-        raise "Unsupported agent_name or env_name!"
-
-    if env in ["atari", "mujoco", "Platform"]:
-        args.env_id = env_id
+        raise RuntimeError("Unsupported agent_name or env_name!")
     return args
 
 
@@ -91,12 +119,16 @@ def get_runner(method,
                parser_args=None,
                is_test=False):
     """
-    This method returns a runner that specified by the users according to the inputs:
-    method: the algorithm name that will be implemented,
-    env: env/scenario, e.g., classic/CartPole-v0,
-    config_path: default is None, if None, the default configs (xuance/configs/.../*.yaml) will be loaded.
-    parser_args: arguments that specified by parser tools.
-    is_test: default is False, if True, it will load the models and run the environment with rendering.
+    This method returns a runner that specified by the users according to the inputs.
+    Args:
+        method: the algorithm name that will be implemented,
+        env: env/scenario, e.g., classic/CartPole-v0,
+        config_path: default is None, if None, the default configs (xuance/configs/.../*.yaml) will be loaded.
+        parser_args: arguments that specified by parser tools.
+        is_test: default is False, if True, it will load the models and run the environment with rendering.
+
+    Returns:
+        An implementation of a runner that enables to run the DRL algorithms.
     """
     args = get_arguments(method, env, env_id, config_path, parser_args)
 
@@ -140,7 +172,8 @@ def get_runner(method,
             notation = args[i_alg].dl_toolbox + '/'
 
             if ('model_dir' in args.__dict__) and ('log_dir' in args[i_alg].__dict__):
-                args[i_alg].model_dir = os.path.join(os.getcwd(), args[i_alg].model_dir + notation + args[i_alg].env_id + '/')
+                args[i_alg].model_dir = os.path.join(os.getcwd(),
+                                                     args[i_alg].model_dir + notation + args[i_alg].env_id + '/')
                 args[i_alg].log_dir = args[i_alg].log_dir + notation + args[i_alg].env_id + '/'
             else:
                 if config_path is not None:
@@ -193,6 +226,10 @@ def get_runner(method,
 
 
 def create_directory(path):
+    """Create an empty directory.
+    Args:
+        path: the path of the directory
+    """
     dir_split = path.split("/")
     current_dir = dir_split[0] + "/"
     for i in range(1, len(dir_split)):
@@ -202,28 +239,60 @@ def create_directory(path):
 
 
 def combined_shape(length, shape=None):
+    """Expand the original shape.
+    Args:
+        length: the length of first dimension to expand.
+        shape: the target shape to be expanded.
+
+    Returns:
+        A new shape that is expanded from shape.
+
+    Examples
+    --------
+    >>> length = 2
+    >>> shape_1 = None
+    >>> shape_2 = 3
+    >>> shape_3 = [4, 5]
+    >>> combined(length, shape_1)
+    (2, )
+    >>> combined(length, shape_2)
+    (2, 3)
+    >>> combined(length, shape_3)
+    (2, 4, 5)
+    """
     if shape is None:
         return (length,)
     return (length, shape) if np.isscalar(shape) else (length, *shape)
 
 
 def space2shape(observation_space: Space):
+    """Convert gym.space variable to shape
+    Args:
+        observation_space: the space variable with type of gym.Space
+
+    Returns:
+        The shape of the observation_space.
+    """
     if isinstance(observation_space, Dict):
         return {key: observation_space[key].shape for key in observation_space.keys()}
     else:
         return observation_space.shape
 
 
-def dict_reshape(keys, dict_list: Sequence[dict]):
-    results = {}
-    for key in keys():
-        results[key] = np.array([element[key] for element in dict_list], np.float32)
-    return results
-
-
 def discount_cumsum(x, discount=0.99):
+    """Get a discounted cumulated summation.
+    Args:
+        x: The original sequence. In DRL, x can be reward sequence.
+        discount: the discount factor (gamma), default is 0.99.
+
+    Returns:
+        The discounted cumulative returns for each step.
+
+    Examples
+    --------
+    >>> x = [0, 1, 2, 2]
+    >>> y = discount_cumsum(x, discount=0.99)
+    [4.890798, 4.9402, 3.98, 2.0]
+    """
     return scipy.signal.lfilter([1], [1, float(-discount)], x[::-1], axis=0)[::-1]
 
-
-def merge_iterators(self, *iters):
-    itertools.chain(*iters)
