@@ -113,8 +113,8 @@ Similarly, when implementing these classes in PyTorch, you also need to specify 
 .. py:class::
   xuance.mindspore.representations.rnn.Basic_RNN(input_shape, hidden_sizes, normalize, initialize, activation, kwargs)
 
-  :param input_shape: xxxxxx.
-  :type input_shape: xxxxxx
+  :param input_shape: The shape of the input data.
+  :type input_shape: Sequence[int]
   :param hidden_sizes: xxxxxx.
   :type hidden_sizes: xxxxxx
   :param normalize: xxxxxx.

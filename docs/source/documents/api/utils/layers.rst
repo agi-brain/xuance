@@ -35,8 +35,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param input_shape: xxxxxx.
-  :type input_shape: xxxxxx
+  :param input_shape: The shape of the input data.
+  :type input_shape: Sequence[int]
   :param filter: xxxxxx.
   :type filter: xxxxxx
   :param kernel_size: xxxxxx.
@@ -59,8 +59,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param input_shape: xxxxxx.
-  :type input_shape: xxxxxx
+  :param input_shape: The shape of the input data.
+  :type input_shape: Sequence[int]
   :param scale: xxxxxx.
   :type scale: xxxxxx
   :param pooling: xxxxxx.
@@ -139,8 +139,8 @@ xxxxxx.
 .. py:function::
   xuance.mindspore.utils.layers.cnn_block(input_shape, filter, kernel_size, stride, normalize, activation, initialize)
 
-  :param input_shape: xxxxxx.
-  :type input_shape: xxxxxx
+  :param input_shape: The shape of the input data.
+  :type input_shape: Sequence[int]
   :param filter: xxxxxx.
   :type filter: xxxxxx
   :param kernel_size: xxxxxx.
@@ -159,8 +159,8 @@ xxxxxx.
 .. py:function::
   xuance.mindspore.utils.layers.pooling_block(input_shape, scale, pooling)
 
-  :param input_shape: xxxxxx.
-  :type input_shape: xxxxxx
+  :param input_shape: The shape of the input data.
+  :type input_shape: Sequence[int]
   :param scale: xxxxxx.
   :type scale: xxxxxx
   :param pooling: xxxxxx.
@@ -171,8 +171,8 @@ xxxxxx.
 .. py:function::
   xuance.mindspore.utils.layers.gru_block(input_shape, output_dim, num_layers, dropout, initialize)
 
-  :param input_shape: xxxxxx.
-  :type input_shape: xxxxxx
+  :param input_shape: The shape of the input data.
+  :type input_shape: Sequence[int]
   :param output_dim: xxxxxx.
   :type output_dim: xxxxxx
   :param num_layers: xxxxxx.
@@ -187,8 +187,8 @@ xxxxxx.
 .. py:function::
   xuance.mindspore.utils.layers.lstm_block(input_shape, output_dim, num_layers, dropout, initialize)
 
-  :param input_shape: xxxxxx.
-  :type input_shape: xxxxxx
+  :param input_shape: The shape of the input data.
+  :type input_shape: Sequence[int]
   :param output_dim: xxxxxx.
   :type output_dim: xxxxxx
   :param num_layers: xxxxxx.

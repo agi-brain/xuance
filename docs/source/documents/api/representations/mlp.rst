@@ -67,8 +67,8 @@ When implementing this class in PyTorch, you also need to specify the device typ
 .. py:class::
   xuance.tensorflow.representations.mlp.Basic_Identical(input_shape, device)
 
-  :param input_shape: xxxxxx.
-  :type input_shape: xxxxxx
+  :param input_shape: The shape of the input data.
+  :type input_shape: Sequence[int]
   :param device: xxxxxx.
   :type device: xxxxxx
 
@@ -85,8 +85,8 @@ When implementing this class in PyTorch, you also need to specify the device typ
 .. py:class::
   xuance.tensorflow.representations.mlp.Basic_MLP(input_shape, hidden_sizes, normalize, initialize, activation, device)
 
-  :param input_shape: xxxxxx.
-  :type input_shape: xxxxxx
+  :param input_shape: The shape of the input data.
+  :type input_shape: Sequence[int]
   :param hidden_sizes: xxxxxx.
   :type hidden_sizes: xxxxxx
   :param normalize: xxxxxx.
@@ -125,8 +125,8 @@ When implementing this class in PyTorch, you also need to specify the device typ
 .. py:class::
   xuance.mindspore.representations.mlp.Basic_Identical(input_shape)
 
-  :param input_shape: xxxxxx.
-  :type input_shape: xxxxxx
+  :param input_shape: The shape of the input data.
+  :type input_shape: Sequence[int]
 
 .. py:function::
   xuance.mindspore.representations.mlp.Basic_Identical.construct(observations)
@@ -141,8 +141,8 @@ When implementing this class in PyTorch, you also need to specify the device typ
 .. py:class::
   xuance.mindspore.representations.mlp.Basic_MLP(input_shape, hidden_sizes, normalize, initialize, activation)
 
-  :param input_shape: xxxxxx.
-  :type input_shape: xxxxxx
+  :param input_shape: The shape of the input data.
+  :type input_shape: Sequence[int]
   :param hidden_sizes: xxxxxx.
   :type hidden_sizes: xxxxxx
   :param normalize: xxxxxx.
