@@ -114,6 +114,104 @@ xxxxxx.
 
 **TensorFlow:**
 
+.. py:function::
+  xuance.tensorflow.utils.layers.mlp_block(input_dim, output_dim, normalize, activation, initialize, device)
+
+  xxxxxx.
+
+  :param input_dim: xxxxxx.
+  :type input_dim: xxxxxx
+  :param output_dim: xxxxxx.
+  :type output_dim: xxxxxx
+  :param normalize: xxxxxx.
+  :type normalize: xxxxxx
+  :param activation: xxxxxx.
+  :type activation: xxxxxx
+  :param initialize: xxxxxx.
+  :type initialize: xxxxxx
+  :param device: xxxxxx.
+  :type device: xxxxxx
+  :return: xxxxxx.
+  :rtype: xxxxxx
+
+.. py:function::
+  xuance.tensorflow.utils.layers.cnn_block(input_shape, filter, kernel_size, stride, normalize, activation, initialize, device)
+
+  xxxxxx.
+
+  :param input_shape: The shape of the input data.
+  :type input_shape: Sequence[int]
+  :param filter: xxxxxx.
+  :type filter: xxxxxx
+  :param kernel_size: xxxxxx.
+  :type kernel_size: xxxxxx
+  :param stride: xxxxxx.
+  :type stride: xxxxxx
+  :param normalize: xxxxxx.
+  :type normalize: xxxxxx
+  :param activation: xxxxxx.
+  :type activation: xxxxxx
+  :param initialize: xxxxxx.
+  :type initialize: xxxxxx
+  :param device: xxxxxx.
+  :type device: xxxxxx
+  :return: xxxxxx.
+  :rtype: xxxxxx
+
+.. py:function::
+  xuance.tensorflow.utils.layers.pooling_block(input_shape, scale, pooling, device)
+
+  xxxxxx.
+
+  :param input_shape: The shape of the input data.
+  :type input_shape: Sequence[int]
+  :param scale: xxxxxx.
+  :type scale: xxxxxx
+  :param pooling: xxxxxx.
+  :type pooling: xxxxxx
+  :param device: xxxxxx.
+  :type device: xxxxxx
+  :return: xxxxxx.
+  :rtype: xxxxxx
+
+.. py:function::
+  xuance.tensorflow.utils.layers.gru_block(input_dim, output_dim, num_layers, dropout, initialize)
+
+  xxxxxx.
+
+  :param input_dim: xxxxxx.
+  :type input_dim: xxxxxx
+  :param output_dim: xxxxxx.
+  :type output_dim: xxxxxx
+  :param num_layers: xxxxxx.
+  :type num_layers: xxxxxx
+  :param dropout: xxxxxx.
+  :type dropout: xxxxxx
+  :param initialize: xxxxxx.
+  :type initialize: xxxxxx
+  :return: xxxxxx.
+  :rtype: xxxxxx
+
+.. py:function::
+  xuance.tensorflow.utils.layers.lstm_block(input_dim, output_dim, num_layers, dropout, initialize, device)
+
+  xxxxxx.
+
+  :param input_dim: xxxxxx.
+  :type input_dim: xxxxxx
+  :param output_dim: xxxxxx.
+  :type output_dim: xxxxxx
+  :param num_layers: xxxxxx.
+  :type num_layers: xxxxxx
+  :param dropout: xxxxxx.
+  :type dropout: xxxxxx
+  :param initialize: xxxxxx.
+  :type initialize: xxxxxx
+  :param device: xxxxxx.
+  :type device: xxxxxx
+  :return: xxxxxx.
+  :rtype: xxxxxx
+
 .. raw:: html
 
     <br><hr>
@@ -329,6 +427,116 @@ Source Code
   .. group-tab:: TensorFlow
 
     .. code-block:: python
+
+        from optparse import Option
+        import tensorflow as tf
+        import tensorflow.keras as tk
+        import tensorflow_addons as tfa
+        from typing import Any, Dict, Optional, Sequence, Tuple, Type, Union, Callable
+
+        ModelType = Type[tk.Model]
+
+
+        def mlp_block(input_dim: int,
+                      output_dim: int,
+                      normalize: Optional[tk.layers.Layer] = None,
+                      activation: Optional[tk.layers.Layer] = None,
+                      initializer: Optional[tk.initializers.Initializer] = None,
+                      device: str = "cpu:0"):
+            with tf.device(device):
+                block = []
+                if initializer is not None:
+                    linear = tk.layers.Dense(units=output_dim,
+                                             activation=activation,
+                                             kernel_initializer=initializer,
+                                             input_shape=(input_dim,))
+                else:
+                    linear = tk.layers.Dense(units=output_dim,
+                                             activation=activation,
+                                             input_shape=(input_dim,))
+                block.append(linear)
+                if normalize is not None:
+                    block.append(normalize())
+                return block, (output_dim,)
+
+
+        def cnn_block(input_shape: Sequence[int],
+                      filters: int,
+                      kernel_size: int,
+                      stride: int,
+                      normalize: Optional[tk.layers.Layer] = None,
+                      activation: Optional[tk.layers.Layer] = None,
+                      initializer: Optional[tk.initializers.Initializer] = None,
+                      device: str = "cpu:0"):
+            assert len(input_shape) == 3
+            H, W, C = input_shape
+            with tf.device(device):
+                block = []
+                if initializer is not None:
+                    cnn = tk.layers.Conv2D(filters=filters,
+                                           kernel_size=kernel_size,
+                                           padding='same',
+                                           strides=(stride, stride),
+                                           activation=activation,
+                                           kernel_initializer=initializer,
+                                           input_shape=input_shape)
+                else:
+                    cnn = tk.layers.Conv2D(filters=filters,
+                                           kernel_size=kernel_size,
+                                           padding='same',
+                                           strides=(stride, stride),
+                                           activation=activation,
+                                           input_shape=input_shape)
+                block.append(cnn)
+                if normalize is not None:
+                    block.append(normalize())
+
+                if H % stride == 0:
+                    H = H // stride
+                else:
+                    H = (H + stride) // stride
+                if W % stride == 0:
+                    W = W // stride
+                else:
+                    W = (W + stride) // stride
+                return block, (H, W, filters)
+
+
+        def pooling_block(input_shape: Sequence[int],
+                          scale: int,
+                          pooling: Optional[tk.layers.Layer] = None,
+                          device: str = "cpu") -> Sequence[ModelType]:
+            assert len(input_shape) == 3  # CxHxW
+            block = []
+            C, H, W = input_shape
+            block.append(pooling(output_size=(H // scale, W // scale), device=device))
+            return block
+
+
+        def gru_block(input_dim: Sequence[int],
+                      output_dim: int,
+                      num_layers: int = 1,
+                      dropout: float = 0,
+                      initialize: Optional[Callable[[tf.Tensor], tf.Tensor]] = None,
+                      device: str = "cpu") -> ModelType:
+            gru = tk.layers.GRU(units=output_dim,
+                                dropout=dropout,
+                                return_sequences=True,
+                                return_state=True)
+            return gru, output_dim
+
+
+        def lstm_block(input_dim: Sequence[int],
+                       output_dim: int,
+                       num_layers: int = 1,
+                       dropout: float = 0,
+                       initialize: Optional[Callable[[tf.Tensor], tf.Tensor]] = None,
+                       device: str = "cpu") -> ModelType:
+            lstm = tk.layers.LSTM(units=output_dim,
+                                  dropout=dropout,
+                                  return_sequences=True,
+                                  return_state=True)
+            return lstm, output_dim
 
 
   .. group-tab:: MindSpore
