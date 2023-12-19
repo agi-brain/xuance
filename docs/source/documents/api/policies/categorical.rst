@@ -22,8 +22,8 @@ You can also customize the other categorical policies for single agent DRL here.
   :type state_dim: xxxxxx
   :param action_dim: xxxxxx.
   :type action_dim: xxxxxx
-  :param hidden_sizes: xxxxxx.
-  :type hidden_sizes: xxxxxx
+  :param hidden_sizes: The sizes of the hidden layers.
+  :type hidden_sizes: Sequence[int]
   :param normalize: xxxxxx.
   :type normalize: xxxxxx
   :param initialize: xxxxxx.
@@ -48,8 +48,8 @@ You can also customize the other categorical policies for single agent DRL here.
 
   :param state_dim: xxxxxx.
   :type state_dim: xxxxxx
-  :param hidden_sizes: xxxxxx.
-  :type hidden_sizes: xxxxxx
+  :param hidden_sizes: The sizes of the hidden layers.
+  :type hidden_sizes: Sequence[int]
   :param normalize: xxxxxx.
   :type normalize: xxxxxx
   :param initialize: xxxxxx.
@@ -164,8 +164,8 @@ You can also customize the other categorical policies for single agent DRL here.
   :type state_dim: xxxxxx
   :param action_dim: xxxxxx.
   :type action_dim: xxxxxx
-  :param hidden_sizes: xxxxxx.
-  :type hidden_sizes: xxxxxx
+  :param hidden_sizes: The sizes of the hidden layers.
+  :type hidden_sizes: Sequence[int]
   :param initialize: xxxxxx.
   :type initialize: xxxxxx
   :param activation: xxxxxx.
@@ -190,8 +190,8 @@ You can also customize the other categorical policies for single agent DRL here.
   :type state_dim: xxxxxx
   :param action_dim: xxxxxx.
   :type action_dim: xxxxxx
-  :param hidden_sizes: xxxxxx.
-  :type hidden_sizes: xxxxxx
+  :param hidden_sizes: The sizes of the hidden layers.
+  :type hidden_sizes: Sequence[int]
   :param normalize: xxxxxx.
   :type normalize: xxxxxx
   :param initialize: xxxxxx.
@@ -294,8 +294,8 @@ You can also customize the other categorical policies for single agent DRL here.
   :type state_dim: xxxxxx
   :param action_dim: xxxxxx.
   :type action_dim: xxxxxx
-  :param hidden_sizes: xxxxxx.
-  :type hidden_sizes: xxxxxx
+  :param hidden_sizes: The sizes of the hidden layers.
+  :type hidden_sizes: Sequence[int]
   :param normalize: xxxxxx.
   :type normalize: xxxxxx
   :param initialize: xxxxxx.
@@ -320,8 +320,8 @@ You can also customize the other categorical policies for single agent DRL here.
 
   :param state_dim: xxxxxx.
   :type state_dim: xxxxxx
-  :param hidden_sizes: xxxxxx.
-  :type hidden_sizes: xxxxxx
+  :param hidden_sizes: The sizes of the hidden layers.
+  :type hidden_sizes: Sequence[int]
   :param normalize: xxxxxx.
   :type normalize: xxxxxx
   :param initialize: xxxxxx.
@@ -436,8 +436,8 @@ You can also customize the other categorical policies for single agent DRL here.
   :type state_dim: xxxxxx
   :param action_dim: xxxxxx.
   :type action_dim: xxxxxx
-  :param hidden_sizes: xxxxxx.
-  :type hidden_sizes: xxxxxx
+  :param hidden_sizes: The sizes of the hidden layers.
+  :type hidden_sizes: Sequence[int]
   :param initialize: xxxxxx.
   :type initialize: xxxxxx
   :param activation: xxxxxx.
@@ -462,8 +462,8 @@ You can also customize the other categorical policies for single agent DRL here.
   :type state_dim: xxxxxx
   :param action_dim: xxxxxx.
   :type action_dim: xxxxxx
-  :param hidden_sizes: xxxxxx.
-  :type hidden_sizes: xxxxxx
+  :param hidden_sizes: The sizes of the hidden layers.
+  :type hidden_sizes: Sequence[int]
   :param normalize: xxxxxx.
   :type normalize: xxxxxx
   :param initialize: xxxxxx.
@@ -566,8 +566,8 @@ You can also customize the other categorical policies for single agent DRL here.
   :type state_dim: xxxxxx
   :param action_dim: xxxxxx.
   :type action_dim: xxxxxx
-  :param hidden_sizes: xxxxxx.
-  :type hidden_sizes: xxxxxx
+  :param hidden_sizes: The sizes of the hidden layers.
+  :type hidden_sizes: Sequence[int]
   :param normalize: xxxxxx.
   :type normalize: xxxxxx
   :param initialize: xxxxxx.
@@ -590,8 +590,8 @@ You can also customize the other categorical policies for single agent DRL here.
 
   :param state_dim: xxxxxx.
   :type state_dim: xxxxxx
-  :param hidden_sizes: xxxxxx.
-  :type hidden_sizes: xxxxxx
+  :param hidden_sizes: The sizes of the hidden layers.
+  :type hidden_sizes: Sequence[int]
   :param normalize: xxxxxx.
   :type normalize: xxxxxx
   :param initialize: xxxxxx.
@@ -698,8 +698,8 @@ You can also customize the other categorical policies for single agent DRL here.
   :type state_dim: xxxxxx
   :param action_dim: xxxxxx.
   :type action_dim: xxxxxx
-  :param hidden_sizes: xxxxxx.
-  :type hidden_sizes: xxxxxx
+  :param hidden_sizes: The sizes of the hidden layers.
+  :type hidden_sizes: Sequence[int]
   :param initialize: xxxxxx.
   :type initialize: xxxxxx
   :param activation: xxxxxx.

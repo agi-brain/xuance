@@ -16,8 +16,8 @@ Deterministic-MARL
   :type action_dim: xxxxxx
   :param n_agents: xxxxxx.
   :type n_agents: xxxxxx
-  :param hidden_sizes: xxxxxx.
-  :type hidden_sizes: xxxxxx
+  :param hidden_sizes: The sizes of the hidden layers.
+  :type hidden_sizes: Sequence[int]
   :param normalize: xxxxxx.
   :type normalize: xxxxxx
   :param initialize: xxxxxx.
@@ -45,8 +45,8 @@ Deterministic-MARL
   :type n_agents: xxxxxx
   :param representation: xxxxxx.
   :type representation: xxxxxx
-  :param hidden_sizes: xxxxxx.
-  :type hidden_sizes: xxxxxx
+  :param hidden_sizes: The sizes of the hidden layers.
+  :type hidden_sizes: Sequence[int]
   :param normalize: xxxxxx.
   :type normalize: xxxxxx
   :param initialize: xxxxxx.
@@ -93,8 +93,8 @@ Deterministic-MARL
   :type n_agents: xxxxxx
   :param representation: xxxxxx.
   :type representation: xxxxxx
-  :param hidden_sizes: xxxxxx.
-  :type hidden_sizes: xxxxxx
+  :param hidden_sizes: The sizes of the hidden layers.
+  :type hidden_sizes: Sequence[int]
   :param normalize: xxxxxx.
   :type normalize: xxxxxx
   :param initialize: xxxxxx.
@@ -373,8 +373,8 @@ Deterministic-MARL
   :type n_agents: xxxxxx
   :param action_space: xxxxxx.
   :type action_space: xxxxxx
-  :param hidden_sizes: xxxxxx.
-  :type hidden_sizes: xxxxxx
+  :param hidden_sizes: The sizes of the hidden layers.
+  :type hidden_sizes: Sequence[int]
   :param normalize: xxxxxx.
   :type normalize: xxxxxx
   :param initialize: xxxxxx.
@@ -401,8 +401,8 @@ Deterministic-MARL
   :type n_agents: xxxxxx
   :param action_dim: xxxxxx.
   :type action_dim: xxxxxx
-  :param hidden_sizes: xxxxxx.
-  :type hidden_sizes: xxxxxx
+  :param hidden_sizes: The sizes of the hidden layers.
+  :type hidden_sizes: Sequence[int]
   :param normalize: xxxxxx.
   :type normalize: xxxxxx
   :param initialize: xxxxxx.
@@ -608,8 +608,8 @@ Deterministic-MARL
   :type action_dim: xxxxxx
   :param n_agents: xxxxxx.
   :type n_agents: xxxxxx
-  :param hidden_sizes: xxxxxx.
-  :type hidden_sizes: xxxxxx
+  :param hidden_sizes: The sizes of the hidden layers.
+  :type hidden_sizes: Sequence[int]
   :param normalize: xxxxxx.
   :type normalize: xxxxxx
   :param initialize: xxxxxx.
@@ -637,8 +637,8 @@ Deterministic-MARL
   :type n_agents: xxxxxx
   :param representation: xxxxxx.
   :type representation: xxxxxx
-  :param hidden_sizes: xxxxxx.
-  :type hidden_sizes: xxxxxx
+  :param hidden_sizes: The sizes of the hidden layers.
+  :type hidden_sizes: Sequence[int]
   :param normalize: xxxxxx.
   :type normalize: xxxxxx
   :param initialize: xxxxxx.
@@ -684,8 +684,8 @@ Deterministic-MARL
   :type n_agents: xxxxxx
   :param representation: xxxxxx.
   :type representation: xxxxxx
-  :param hidden_sizes: xxxxxx.
-  :type hidden_sizes: xxxxxx
+  :param hidden_sizes: The sizes of the hidden layers.
+  :type hidden_sizes: Sequence[int]
   :param normalize: xxxxxx.
   :type normalize: xxxxxx
   :param initialize: xxxxxx.
@@ -919,8 +919,8 @@ Deterministic-MARL
   :type n_agents: xxxxxx
   :param action_space: xxxxxx.
   :type action_space: xxxxxx
-  :param hidden_sizes: xxxxxx.
-  :type hidden_sizes: xxxxxx
+  :param hidden_sizes: The sizes of the hidden layers.
+  :type hidden_sizes: Sequence[int]
   :param normalize: xxxxxx.
   :type normalize: xxxxxx
   :param initialize: xxxxxx.
@@ -949,8 +949,8 @@ Deterministic-MARL
   :type n_agents: xxxxxx
   :param action_dim: xxxxxx.
   :type action_dim: xxxxxx
-  :param hidden_sizes: xxxxxx.
-  :type hidden_sizes: xxxxxx
+  :param hidden_sizes: The sizes of the hidden layers.
+  :type hidden_sizes: Sequence[int]
   :param normalize: xxxxxx.
   :type normalize: xxxxxx
   :param initialize: xxxxxx.
@@ -1096,8 +1096,8 @@ Deterministic-MARL
   :type n_agents: xxxxxx
   :param action_dim: xxxxxx.
   :type action_dim: xxxxxx
-  :param hidden_sizes: xxxxxx.
-  :type hidden_sizes: xxxxxx
+  :param hidden_sizes: The sizes of the hidden layers.
+  :type hidden_sizes: Sequence[int]
   :param normalize: xxxxxx.
   :type normalize: xxxxxx
   :param initialize: xxxxxx.
@@ -1126,8 +1126,8 @@ Deterministic-MARL
   :type n_agents: xxxxxx
   :param action_dim: xxxxxx.
   :type action_dim: xxxxxx
-  :param hidden_sizes: xxxxxx.
-  :type hidden_sizes: xxxxxx
+  :param hidden_sizes: The sizes of the hidden layers.
+  :type hidden_sizes: Sequence[int]
   :param norm_in: xxxxxx.
   :type norm_in: xxxxxx
   :param attend_heads: xxxxxx.
@@ -1304,8 +1304,8 @@ Deterministic-MARL
   :type action_dim: xxxxxx
   :param n_agents: xxxxxx.
   :type n_agents: xxxxxx
-  :param hidden_sizes: xxxxxx.
-  :type hidden_sizes: xxxxxx
+  :param hidden_sizes: The sizes of the hidden layers.
+  :type hidden_sizes: Sequence[int]
   :param normalize: xxxxxx.
   :type normalize: xxxxxx
   :param initialize: xxxxxx.
@@ -1710,8 +1710,8 @@ Deterministic-MARL
   :type n_agents: xxxxxx
   :param action_dim: xxxxxx.
   :type action_dim: xxxxxx
-  :param hidden_sizes: xxxxxx.
-  :type hidden_sizes: xxxxxx
+  :param hidden_sizes: The sizes of the hidden layers.
+  :type hidden_sizes: Sequence[int]
   :param normalize: xxxxxx.
   :type normalize: xxxxxx
   :param initialize: xxxxxx.
@@ -1740,8 +1740,8 @@ Deterministic-MARL
   :type n_agents: xxxxxx
   :param action_dim: xxxxxx.
   :type action_dim: xxxxxx
-  :param hidden_sizes: xxxxxx.
-  :type hidden_sizes: xxxxxx
+  :param hidden_sizes: The sizes of the hidden layers.
+  :type hidden_sizes: Sequence[int]
   :param normalize: xxxxxx.
   :type normalize: xxxxxx
   :param initialize: xxxxxx.

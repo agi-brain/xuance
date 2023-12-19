@@ -16,8 +16,8 @@ xxxxxx.
   :type state_dim: xxxxxx
   :param action_dim: xxxxxx.
   :type action_dim: xxxxxx
-  :param hidden_sizes: xxxxxx.
-  :type hidden_sizes: xxxxxx
+  :param hidden_sizes: The sizes of the hidden layers.
+  :type hidden_sizes: Sequence[int]
   :param normalize: xxxxxx.
   :type normalize: xxxxxx
   :param initialize: xxxxxx.
@@ -42,8 +42,8 @@ xxxxxx.
 
   :param state_dim: xxxxxx.
   :type state_dim: xxxxxx
-  :param hidden_sizes: xxxxxx.
-  :type hidden_sizes: xxxxxx
+  :param hidden_sizes: The sizes of the hidden layers.
+  :type hidden_sizes: Sequence[int]
   :param normalize: xxxxxx.
   :type normalize: xxxxxx
   :param initialize: xxxxxx.
@@ -160,8 +160,8 @@ xxxxxx.
   :type state_dim: xxxxxx
   :param action_dim: xxxxxx.
   :type action_dim: xxxxxx
-  :param hidden_sizes: xxxxxx.
-  :type hidden_sizes: xxxxxx
+  :param hidden_sizes: The sizes of the hidden layers.
+  :type hidden_sizes: Sequence[int]
   :param normalize: xxxxxx.
   :type normalize: xxxxxx
   :param initialize: xxxxxx.
@@ -188,8 +188,8 @@ xxxxxx.
   :type state_dim: xxxxxx
   :param action_dim: xxxxxx.
   :type action_dim: xxxxxx
-  :param hidden_sizes: xxxxxx.
-  :type hidden_sizes: xxxxxx
+  :param hidden_sizes: The sizes of the hidden layers.
+  :type hidden_sizes: Sequence[int]
   :param normalize: xxxxxx.
   :type normalize: xxxxxx
   :param initialize: xxxxxx.
@@ -296,8 +296,8 @@ xxxxxx.
   :type state_dim: xxxxxx
   :param action_dim: xxxxxx.
   :type action_dim: xxxxxx
-  :param hidden_sizes: xxxxxx.
-  :type hidden_sizes: xxxxxx
+  :param hidden_sizes: The sizes of the hidden layers.
+  :type hidden_sizes: Sequence[int]
   :param normalize: xxxxxx.
   :type normalize: xxxxxx
   :param initialize: xxxxxx.
@@ -322,8 +322,8 @@ xxxxxx.
 
   :param state_dim: xxxxxx.
   :type state_dim: xxxxxx
-  :param hidden_sizes: xxxxxx.
-  :type hidden_sizes: xxxxxx
+  :param hidden_sizes: The sizes of the hidden layers.
+  :type hidden_sizes: Sequence[int]
   :param normalize: xxxxxx.
   :type normalize: xxxxxx
   :param initialize: xxxxxx.
@@ -440,8 +440,8 @@ xxxxxx.
   :type state_dim: xxxxxx
   :param action_dim: xxxxxx.
   :type action_dim: xxxxxx
-  :param hidden_sizes: xxxxxx.
-  :type hidden_sizes: xxxxxx
+  :param hidden_sizes: The sizes of the hidden layers.
+  :type hidden_sizes: Sequence[int]
   :param normalize: xxxxxx.
   :type normalize: xxxxxx
   :param initialize: xxxxxx.
@@ -468,8 +468,8 @@ xxxxxx.
   :type state_dim: xxxxxx
   :param action_dim: xxxxxx.
   :type action_dim: xxxxxx
-  :param hidden_sizes: xxxxxx.
-  :type hidden_sizes: xxxxxx
+  :param hidden_sizes: The sizes of the hidden layers.
+  :type hidden_sizes: Sequence[int]
   :param normalize: xxxxxx.
   :type normalize: xxxxxx
   :param initialize: xxxxxx.
@@ -574,8 +574,8 @@ xxxxxx.
   :type state_dim: xxxxxx
   :param action_dim: xxxxxx.
   :type action_dim: xxxxxx
-  :param hidden_sizes: xxxxxx.
-  :type hidden_sizes: xxxxxx
+  :param hidden_sizes: The sizes of the hidden layers.
+  :type hidden_sizes: Sequence[int]
   :param normalize: xxxxxx.
   :type normalize: xxxxxx
   :param initialize: xxxxxx.
@@ -598,8 +598,8 @@ xxxxxx.
 
   :param state_dim: xxxxxx.
   :type state_dim: xxxxxx
-  :param hidden_sizes: xxxxxx.
-  :type hidden_sizes: xxxxxx
+  :param hidden_sizes: The sizes of the hidden layers.
+  :type hidden_sizes: Sequence[int]
   :param normalize: xxxxxx.
   :type normalize: xxxxxx
   :param initialize: xxxxxx.
@@ -678,8 +678,8 @@ xxxxxx.
   :type state_dim: xxxxxx
   :param action_dim: xxxxxx.
   :type action_dim: xxxxxx
-  :param hidden_sizes: xxxxxx.
-  :type hidden_sizes: xxxxxx
+  :param hidden_sizes: The sizes of the hidden layers.
+  :type hidden_sizes: Sequence[int]
   :param initialize: xxxxxx.
   :type initialize: xxxxxx
   :param activation: xxxxxx.
@@ -702,8 +702,8 @@ xxxxxx.
   :type state_dim: xxxxxx
   :param action_dim: xxxxxx.
   :type action_dim: xxxxxx
-  :param hidden_sizes: xxxxxx.
-  :type hidden_sizes: xxxxxx
+  :param hidden_sizes: The sizes of the hidden layers.
+  :type hidden_sizes: Sequence[int]
   :param initialize: xxxxxx.
   :type initialize: xxxxxx
   :param activation: xxxxxx.

@@ -87,8 +87,8 @@ When implementing this class in PyTorch, you also need to specify the device typ
 
   :param input_shape: The shape of the input data.
   :type input_shape: Sequence[int]
-  :param hidden_sizes: xxxxxx.
-  :type hidden_sizes: xxxxxx
+  :param hidden_sizes: The sizes of the hidden layers.
+  :type hidden_sizes: Sequence[int]
   :param normalize: xxxxxx.
   :type normalize: xxxxxx
   :param initialize: xxxxxx.
@@ -143,8 +143,8 @@ When implementing this class in PyTorch, you also need to specify the device typ
 
   :param input_shape: The shape of the input data.
   :type input_shape: Sequence[int]
-  :param hidden_sizes: xxxxxx.
-  :type hidden_sizes: xxxxxx
+  :param hidden_sizes: The sizes of the hidden layers.
+  :type hidden_sizes: Sequence[int]
   :param normalize: xxxxxx.
   :type normalize: xxxxxx
   :param initialize: xxxxxx.
