@@ -64,6 +64,58 @@ When implementing this class in PyTorch, you also need to specify the device typ
 
 **TensorFlow:**
 
+.. py:class::
+  xuance.tensorflow.representations.mlp.Basic_Identical(input_shape, device)
+
+  :param input_shape: xxxxxx.
+  :type input_shape: xxxxxx
+  :param device: xxxxxx.
+  :type device: xxxxxx
+
+.. py:function::
+  xuance.tensorflow.representations.mlp.Basic_Identical.call(observations)
+
+  xxxxxx.
+
+  :param observations: xxxxxx.
+  :type observations: xxxxxx
+  :return: xxxxxx.
+  :rtype: xxxxxx
+
+.. py:class::
+  xuance.tensorflow.representations.mlp.Basic_MLP(input_shape, hidden_sizes, normalize, initialize, activation, device)
+
+  :param input_shape: xxxxxx.
+  :type input_shape: xxxxxx
+  :param hidden_sizes: xxxxxx.
+  :type hidden_sizes: xxxxxx
+  :param normalize: xxxxxx.
+  :type normalize: xxxxxx
+  :param initialize: xxxxxx.
+  :type initialize: xxxxxx
+  :param activation: xxxxxx.
+  :type activation: xxxxxx
+  :param device: xxxxxx.
+  :type device: xxxxxx
+
+.. py:function::
+  xuance.tensorflow.representations.mlp.Basic_MLP._create_network()
+
+  xxxxxx.
+
+  :return: xxxxxx.
+  :rtype: xxxxxx
+
+.. py:function::
+  xuance.tensorflow.representations.mlp.Basic_MLP.call(observations)
+
+  xxxxxx.
+
+  :param observations: xxxxxx.
+  :type observations: xxxxxx
+  :return: xxxxxx.
+  :rtype: xxxxxx
+
 .. raw:: html
 
     <br><hr>
@@ -185,6 +237,58 @@ Source Code
   .. group-tab:: TensorFlow
 
     .. code-block:: python
+
+        from xuance.tensorflow.representations import *
+
+
+        class Basic_Identical(tk.Model):
+            def __init__(self,
+                         input_shape: Sequence[int],
+                         device: str = "cpu"):
+                super(Basic_Identical, self).__init__()
+                self.input_shapes = input_shape
+                self.output_shapes = {'state': (np.prod(input_shape),)}
+                self.device = device
+                self.model = tk.Sequential([tk.layers.Flatten()])
+
+            def call(self, observations: np.ndarray, **kwargs):
+                with tf.device(self.device):
+                    state = tf.convert_to_tensor(observations, dtype=tf.float32)
+                    return {'state': state}
+
+
+        class Basic_MLP(tk.Model):
+            def __init__(self,
+                         input_shapes: Sequence[int],
+                         hidden_sizes: Sequence[int],
+                         normalize: Optional[tk.layers.Layer] = None,
+                         initializer: Optional[tk.initializers.Initializer] = None,
+                         activation: Optional[tk.layers.Layer] = None,
+                         device: str = "cpu"):
+                super(Basic_MLP, self).__init__()
+                self.input_shapes = input_shapes
+                self.hidden_sizes = hidden_sizes
+                self.normalize = normalize
+                self.initializer = initializer
+                self.activation = activation
+                self.device = device
+                self.output_shapes = {'state': (hidden_sizes[-1],)}
+                self.model = self._create_network()
+
+            def _create_network(self):
+                layers = [tk.layers.Flatten()]
+                input_shapes = (np.prod(self.input_shapes),)
+                for h in self.hidden_sizes:
+                    mlp, input_shapes = mlp_block(input_shapes[0], h, self.normalize, self.activation, self.initializer,
+                                                  self.device)
+                    layers.extend(mlp)
+                return tk.Sequential(layers)
+
+            def call(self, observations: np.ndarray, **kwargs):
+                with tf.device(self.device):
+                    tensor_observation = tf.convert_to_tensor(observations, dtype=tf.float32)
+                    return {'state': self.model(tensor_observation)}
+
 
 
   .. group-tab:: MindSpore
