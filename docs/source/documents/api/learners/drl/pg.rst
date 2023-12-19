@@ -43,6 +43,34 @@ PG_Learner
 
 **TensorFlow:**
 
+.. py:class::
+  xuance.tensorflow.learners.policy_gradient.pg_learner.PG_Learner(policy, optimizer, device, model_dir, ent_coef, clip_grad)
+
+  :param policy: xxxxxx.
+  :type policy: xxxxxx
+  :param optimizer: xxxxxx.
+  :type optimizer: xxxxxx
+  :param device: xxxxxx.
+  :type device: xxxxxx
+  :param model_dir: xxxxxx.
+  :type model_dir: xxxxxx
+  :param ent_coef: xxxxxx.
+  :type ent_coef: xxxxxx
+  :param clip_grad: xxxxxx.
+  :type clip_grad: xxxxxx
+
+.. py:function::
+  xuance.tensorflow.learners.policy_gradient.pg_learner.PG_Learner.update(obs_batch, act_batch, ret_batch)
+
+  :param obs_batch: xxxxxx.
+  :type obs_batch: xxxxxx
+  :param act_batch: xxxxxx.
+  :type act_batch: xxxxxx
+  :param ret_batch: xxxxxx.
+  :type ret_batch: xxxxxx
+  :return: xxxxxx.
+  :rtype: xxxxxx
+
 .. raw:: html
 
     <br><hr>
@@ -141,6 +169,54 @@ Source Code
   .. group-tab:: TensorFlow
 
     .. code-block:: python
+
+        from xuance.tensorflow.learners import *
+
+
+        class PG_Learner(Learner):
+            def __init__(self,
+                         policy: tk.Model,
+                         optimizer: tk.optimizers.Optimizer,
+                         device: str = "cpu:0",
+                         model_dir: str = "./",
+                         ent_coef: float = 0.005,
+                         clip_grad: Optional[float] = None):
+                super(PG_Learner, self).__init__(policy, optimizer, device, model_dir)
+                self.ent_coef = ent_coef
+                self.clip_grad = clip_grad
+
+            def update(self, obs_batch, act_batch, ret_batch):
+                self.iterations += 1
+                with tf.device(self.device):
+                    act_batch = tf.convert_to_tensor(act_batch, dtype=tf.float32)
+                    ret_batch = tf.convert_to_tensor(ret_batch)
+
+                    with tf.GradientTape() as tape:
+                        outputs, _ = self.policy(obs_batch)
+                        a_dist = self.policy.actor.dist
+                        log_prob = a_dist.log_prob(act_batch)
+
+                        a_loss = -tf.reduce_mean(ret_batch * log_prob)
+                        e_loss = tf.reduce_mean(a_dist.entropy())
+
+                        loss = a_loss - self.ent_coef * e_loss
+                        gradients = tape.gradient(loss, self.policy.trainable_variables)
+
+                        self.optimizer.apply_gradients([
+                            (tf.clip_by_norm(grad, self.clip_grad), var)
+                            for (grad, var) in zip(gradients, self.policy.trainable_variables)
+                            if grad is not None
+                        ])
+
+                    lr = self.optimizer._decayed_lr(tf.float32)
+
+                    info = {
+                        "actor-loss": a_loss.numpy(),
+                        "entropy": e_loss.numpy(),
+                        "learning_rate": lr.numpy()
+                    }
+
+                    return info
 
 
   .. group-tab:: MindSpore
