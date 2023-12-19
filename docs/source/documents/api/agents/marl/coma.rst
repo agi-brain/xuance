@@ -51,7 +51,45 @@ COMA_Agents
 
 **TensorFlow:**
 
+.. py:class::
+    xuance.tensorflow.agent.mutli_agent_rl.coma_agents.COMA_Agents(config, envs, device)
 
+    :param config: Provides hyper parameters.
+    :type config: Namespace
+    :param envs: The vectorized environments.
+    :type envs: xuance.environments.vector_envs.vector_env.VecEnv
+    :param device: Choose CPU or GPU to train the model.
+    :type device: str, int, torch.device
+
+.. py:function::
+    xuance.tensorflow.agent.mutli_agent_rl.coma_agents.COMA_Agents.act(obs_n, *rnn_hidden, avail_actions=None, state=None, test_mode=False)
+
+    Calculate joint actions for N agents according to the joint observations.
+
+    :param obs_n: The joint observations of N agents.
+    :type obs_n: numpy.ndarray
+    :param rnn_hidden: The hidden states of RNN.
+    :type rnn_hidden: tuple(numpy.ndarray, numpy.ndarray)
+    :param avail_actions: The actions mask for available actions in the environment.
+    :type avail_actions: numpy.ndarray
+    :param state: The global state of the environments.
+    :type state: numpy.ndarray
+    :param test_mode: is True for selecting greedy actions, is False for selecting epsilon-greedy actions.
+    :type test_mode: bool
+    :return: **hidden_state**, **actions_n**, **onehot_actions** - The next hidden states of RNN, the joint actions, and the onehot actions.
+    :rtype: tuple(numpy.ndarray, numpy.ndarray), np.ndarray, np.ndarray
+
+.. py:function::
+    xuance.tensorflow.agent.mutli_agent_rl.coma_agents.COMA_Agents.train(i_step, **kwargs)
+
+    Train the multi-agent reinforcement learning model.
+
+    :param i_step: The i-th step during training.
+    :type i_step: int
+    :param kwargs: xxxxxx.
+    :type kwargs: xxxxxx
+    :return: **info_train** - the information of the training process.
+    :rtype: dict
 .. raw:: html
 
     <br><hr>
