@@ -11,3 +11,4 @@ models/
 .VSCodeCounter/
 **/__pycache__
 rank_0/
+docs/build
