@@ -110,18 +110,3 @@ class RunningMeanStd(object):
             self.mean = new_mean
             self.var = new_var
             self.count = new_count
-
-
-class OUNoise(object):
-    def __init__(self, action_space, mu=0, theta=0.15, sigma=0.2):
-        self.action_space = action_space
-        self.mu = mu
-        self.theta = theta
-        self.sigma = sigma
-        self.state = np.ones(self.action_space.shape) * self.mu
-
-    def __call__(self):
-        x = self.state
-        dx = self.theta * (self.mu - x) + self.sigma * np.random.randn(len(x))
-        self.state = x + dx
-        return self.state

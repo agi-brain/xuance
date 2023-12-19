@@ -5,6 +5,11 @@ import numpy as np
 
 
 class GFootball_Env:
+    """The wrapper of original football environment.
+
+    Args:
+        args: the SimpleNamespace variable that contains attributes to create an original env.
+    """
     def __init__(self, args):
         env = football_raw_env(args)
         self.env = _apply_output_wrappers(env=env,
@@ -34,12 +39,15 @@ class GFootball_Env:
         self.dim_reward = self.n_agents
 
     def close(self):
+        """Close the environment."""
         self.env.close()
 
     def render(self):
+        """Get one-step frame."""
         return self.env.get_frame()
 
     def reset(self):
+        """Reset the environment."""
         obs, info = self.env.reset()
         obs = obs.reshape([self.n_agents, -1])
         state = self.get_state()
@@ -52,6 +60,11 @@ class GFootball_Env:
         return obs, state, info
 
     def step(self, actions):
+        """One-step transition of the environment.
+
+        Args:
+            actions: the actions for all agents.
+        """
         obs, reward, terminated, truncated, info = self.env.step(actions)
         obs = obs.reshape([self.n_agents, -1])
         state = self.get_state()
@@ -71,5 +84,6 @@ class GFootball_Env:
         return info
 
     def get_state(self):
+        """Get global state."""
         return np.array(self.env.env.state())
 
