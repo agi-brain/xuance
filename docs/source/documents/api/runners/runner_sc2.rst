@@ -7,6 +7,7 @@ xxxxxx.
 
     <br><hr>
 
+
 **PyTorch:**
 
 .. py:class::
@@ -135,17 +136,6 @@ xxxxxx.
 
     <br><hr>
 
-**TensorFlow:**
-
-.. raw:: html
-
-    <br><hr>
-
-**MindSpore:**
-
-.. raw:: html
-
-    <br><hr>
 
 Source Code
 -----------------
@@ -195,14 +185,14 @@ Source Code
                     if not wandb_dir.exists():
                         os.makedirs(str(wandb_dir))
                     wandb.init(config=config_dict,
-                               project=args.project_name,
-                               entity=args.wandb_user_name,
-                               notes=socket.gethostname(),
-                               dir=wandb_dir,
-                               group=args.env_id,
-                               job_type=args.agent,
-                               name=args.seed,
-                               reinit=True)
+                            project=args.project_name,
+                            entity=args.wandb_user_name,
+                            notes=socket.gethostname(),
+                            dir=wandb_dir,
+                            group=args.env_id,
+                            job_type=args.agent,
+                            name=args.seed,
+                            reinit=True)
                     self.use_wandb = True
                 else:
                     raise "No logger is implemented."
@@ -268,17 +258,17 @@ Source Code
                 if self.on_policy:
                     if self.args.agent == "COMA":
                         rnn_hidden_next, actions_n, actions_n_onehot = self.agents.act(obs_n, *rnn_hidden_policy,
-                                                                                       avail_actions=avail_actions,
-                                                                                       test_mode=test_mode)
+                                                                                    avail_actions=avail_actions,
+                                                                                    test_mode=test_mode)
                     elif self.args.agent == "VDAC":
                         rnn_hidden_next, actions_n, values_n = self.agents.act(obs_n, *rnn_hidden_policy,
-                                                                               avail_actions=avail_actions,
-                                                                               state=state,
-                                                                               test_mode=test_mode)
+                                                                            avail_actions=avail_actions,
+                                                                            state=state,
+                                                                            test_mode=test_mode)
                     else:
                         rnn_hidden_next, actions_n, log_pi_n = self.agents.act(obs_n, *rnn_hidden_policy,
-                                                                               avail_actions=avail_actions,
-                                                                               test_mode=test_mode)
+                                                                            avail_actions=avail_actions,
+                                                                            test_mode=test_mode)
                     if test_mode:
                         rnn_hidden_critic_next, values_n = None, 0
                     else:
@@ -291,7 +281,7 @@ Source Code
                             rnn_hidden_critic_next, values_n = self.agents.values(obs_n, *rnn_hidden_critic, **kwargs)
                 else:
                     rnn_hidden_next, actions_n = self.agents.act(obs_n, *rnn_hidden_policy,
-                                                                 avail_actions=avail_actions, test_mode=test_mode)
+                                                                avail_actions=avail_actions, test_mode=test_mode)
                     rnn_hidden_critic_next = None
                 return {'actions_n': actions_n, 'log_pi': log_pi_n,
                         'rnn_hidden': rnn_hidden_next, 'rnn_hidden_critic': rnn_hidden_critic_next,
@@ -382,22 +372,22 @@ Source Code
                                         kwargs = {"state": [next_state[i_env]]}
                                         if self.args.agent == "VDAC":
                                             rnn_h_ac_i = self.agents.policy.representation.get_hidden_item(batch_select,
-                                                                                                           *rnn_hidden)
+                                                                                                        *rnn_hidden)
                                             kwargs.update({"avail_actions": available_actions[i_env:i_env+1],
-                                                           "test_mode": test_mode})
+                                                        "test_mode": test_mode})
                                             _, _, values_next = self.agents.act(next_obs_n[i_env:i_env+1],
                                                                                 *rnn_h_ac_i, **kwargs)
                                         else:
                                             rnn_h_critic_i = self.agents.policy.representation_critic.get_hidden_item(batch_select,
-                                                                                                                      *rnn_hidden_critic)
+                                                                                                                    *rnn_hidden_critic)
                                             if self.args.agent == "COMA":
                                                 kwargs.update({"actions_n": actions_dict["actions_n"],
-                                                               "actions_onehot": actions_dict["act_n_onehot"]})
+                                                            "actions_onehot": actions_dict["act_n_onehot"]})
                                             _, values_next = self.agents.values(next_obs_n[i_env:i_env + 1],
                                                                                 *rnn_h_critic_i, **kwargs)
                                     self.agents.memory.finish_path(i_env, self.env_step+1, *terminal_data,
-                                                                   value_next=values_next,
-                                                                   value_normalizer=self.agents.learner.value_normalizer)
+                                                                value_next=values_next,
+                                                                value_normalizer=self.agents.learner.value_normalizer)
                                 else:
                                     self.agents.memory.finish_path(i_env, self.env_step + 1, *terminal_data)
                                 self.current_step += 1
@@ -465,7 +455,7 @@ Source Code
                             time_pass, time_left = self.time_estimate(time_start)
                             print(f"Steps: {self.current_step} / {self.running_steps}: ")
                             print(agent_info, "Win rate: %.3f, Mean score: %.2f. " % (train_win_rate, np.mean(episode_scores)),
-                                  time_pass, time_left)
+                                time_pass, time_left)
                             episode_scores = []
 
                     print("Finish training.")
@@ -485,8 +475,8 @@ Source Code
                 # test the mode at step 0
                 test_score_mean, test_score_std, test_win_rate = self.test_episodes(last_test_T, n_test_runs)
                 best_score = {"mean": test_score_mean,
-                              "std": test_score_std,
-                              "step": self.current_step}
+                            "std": test_score_std,
+                            "step": self.current_step}
                 best_win_rate = test_win_rate
 
                 agent_info = f"Algo: {self.args.agent}, Map: {self.args.env_id}, seed: {self.args.seed}, "
@@ -512,8 +502,8 @@ Source Code
 
                         if best_score["mean"] < test_score_mean:
                             best_score = {"mean": test_score_mean,
-                                          "std": test_score_std,
-                                          "step": self.current_step}
+                                        "std": test_score_std,
+                                        "step": self.current_step}
                         if best_win_rate < test_win_rate:
                             best_win_rate = test_win_rate
                             self.agents.save_model("best_model.pth")  # save best model
@@ -547,12 +537,3 @@ Source Code
                 INFO_time_pass = f"Time pass: {hours_pass}h{min_pass}m{sec_pass}s,"
                 INFO_time_left = f"Time left: {hours_left}h{min_left}m{sec_left}s"
                 return INFO_time_pass, INFO_time_left
-
-  .. group-tab:: TensorFlow
-
-    .. code-block:: python
-
-
-  .. group-tab:: MindSpore
-
-    .. code-block:: python

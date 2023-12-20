@@ -19,17 +19,6 @@ xxxxxx.
 
     <br><hr>
 
-**TensorFlow:**
-
-.. raw:: html
-
-    <br><hr>
-
-**MindSpore:**
-
-.. raw:: html
-
-    <br><hr>
 
 Source Code
 -----------------
@@ -48,11 +37,3 @@ Source Code
                 super(MAgent_Runner, self).__init__(args)
                 self.fps = 50
 
-  .. group-tab:: TensorFlow
-
-    .. code-block:: python
-
-
-  .. group-tab:: MindSpore
-
-    .. code-block:: python

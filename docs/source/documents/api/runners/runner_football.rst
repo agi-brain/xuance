@@ -72,17 +72,6 @@ xxxxxx.
 
     <br><hr>
 
-**TensorFlow:**
-
-.. raw:: html
-
-    <br><hr>
-
-**MindSpore:**
-
-.. raw:: html
-
-    <br><hr>
 
 Source Code
 -----------------
@@ -171,9 +160,9 @@ Source Code
                                         kwargs = {"state": [next_state[i_env]]}
                                         if self.args.agent == "VDAC":
                                             rnn_h_ac_i = self.agents.policy.representation.get_hidden_item(batch_select,
-                                                                                                           *rnn_hidden)
+                                                                                                        *rnn_hidden)
                                             kwargs.update({"avail_actions": available_actions[i_env:i_env + 1],
-                                                           "test_mode": test_mode})
+                                                        "test_mode": test_mode})
                                             _, _, values_next = self.agents.act(next_obs_n[i_env:i_env + 1],
                                                                                 *rnn_h_ac_i, **kwargs)
                                         else:
@@ -182,12 +171,12 @@ Source Code
                                                 *rnn_hidden_critic)
                                             if self.args.agent == "COMA":
                                                 kwargs.update({"actions_n": actions_dict["actions_n"],
-                                                               "actions_onehot": actions_dict["act_n_onehot"]})
+                                                            "actions_onehot": actions_dict["act_n_onehot"]})
                                             _, values_next = self.agents.values(next_obs_n[i_env:i_env + 1],
                                                                                 *rnn_h_critic_i, **kwargs)
                                     self.agents.memory.finish_path(i_env, self.env_step + 1, *terminal_data,
-                                                                   value_next=values_next,
-                                                                   value_normalizer=self.agents.learner.value_normalizer)
+                                                                value_next=values_next,
+                                                                value_normalizer=self.agents.learner.value_normalizer)
                                 else:
                                     self.agents.memory.finish_path(i_env, self.env_step + 1, *terminal_data)
                                 self.current_step += 1
@@ -225,8 +214,8 @@ Source Code
                 # test the mode at step 0
                 test_score_mean, test_score_std, test_win_rate = self.test_episodes(last_test_T, n_test_runs)
                 best_score = {"mean": test_score_mean,
-                              "std": test_score_std,
-                              "step": self.current_step}
+                            "std": test_score_std,
+                            "step": self.current_step}
                 best_win_rate = test_win_rate
 
                 agent_info = f"Algo: {self.args.agent}, Map: {self.args.env_id}, seed: {self.args.seed}, "
@@ -250,8 +239,8 @@ Source Code
 
                         if best_score["mean"] < test_score_mean:
                             best_score = {"mean": test_score_mean,
-                                          "std": test_score_std,
-                                          "step": self.current_step}
+                                        "std": test_score_std,
+                                        "step": self.current_step}
                         if best_win_rate < test_win_rate:
                             best_win_rate = test_win_rate
                             self.agents.save_model("best_model.pth")  # save best model
@@ -274,11 +263,4 @@ Source Code
                 else:
                     self.writer.close()
 
-  .. group-tab:: TensorFlow
 
-    .. code-block:: python
-
-
-  .. group-tab:: MindSpore
-
-    .. code-block:: python
