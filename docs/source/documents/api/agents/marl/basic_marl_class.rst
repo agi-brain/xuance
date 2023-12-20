@@ -6,7 +6,7 @@ To create new MARL agents, you should build a class inherit from ``xuance.torch.
 **PyTorch:**
 
 .. py:class:: 
-   xuance.torch.agents.agents_marl.MARLAgent(config, envs, policy, memory, learner, device, log_dir, model_dir)
+   xuance.torch.agents.agents_marl.MARLAgents(config, envs, policy, memory, learner, device, log_dir, model_dir)
 
    :param config: Provides hyper parameters.
    :type config: Namespace
@@ -25,14 +25,14 @@ To create new MARL agents, you should build a class inherit from ``xuance.torch.
    :param model_dir: The directory of model file, default is "./models/".
    :type model_dir: str
 
-.. py:function:: xuance.torch.agents.agents_marl.MARLAgent.save_model(model_name)
+.. py:function:: xuance.torch.agents.agents_marl.MARLAgents.save_model(model_name)
    
    Save the model.
 
    :param model_name: The model's name to be saved.
    :type model_name: str
 
-.. py:function:: xuance.torch.agents.agents_marl.MARLAgent.load_model(path, seed)
+.. py:function:: xuance.torch.agents.agents_marl.MARLAgents.load_model(path, seed)
 
    Load a model by specifying the ``path`` and ``seed`` .
 
@@ -41,14 +41,14 @@ To create new MARL agents, you should build a class inherit from ``xuance.torch.
    :param seed: Select the seed that model was trained with if it exits.
    :type seed: int
 
-.. py:function:: xuance.torch.agents.agents_marl.MARLAgent.act(**kwargs)
+.. py:function:: xuance.torch.agents.agents_marl.MARLAgents.act(**kwargs)
    
    Get actions for executing according to the joint observations, global states, available actions, etc.
    
    :param kwargs: Inputs informations.
    :type observations: Dict
 
-.. py:function:: xuance.torch.agents.agents_marl.MARLAgent.train(**kwargs)
+.. py:function:: xuance.torch.agents.agents_marl.MARLAgents.train(**kwargs)
    
    Train the multi-agent reinforcement learning models.
 
@@ -99,24 +99,90 @@ To create new MARL agents, you should build a class inherit from ``xuance.torch.
 **TensorFlow:**
 
 .. py:class:: 
-   xuance.tensorflow.agents.agents_marl.MARLAgent(config, envs, policy, memory, learner, device, log_dir, model_dir)
+   xuance.tensorflow.agents.agents_marl.MARLAgents(config, envs, policy, memory, learner, device, log_dir, model_dir)
 
    :param config: Provides hyper parameters.
    :type config: Namespace
    :param envs: The vectorized environments.
    :type envs: xuance.environments.vector_envs.vector_env.VecEnv
    :param policy: The policy that provides actions and values.
-   :type policy: nn.Module
+   :type policy: tk.Model
    :param memory: Experice replay buffer.
    :type memory: xuance.common.memory_tools.Buffer
    :param learner: The learner that updates parameters of policy.
-   :type learner: xuance.tensorflow.learner.Learner
+   :type learner: xuance.tensorflow.learner.LearnerMAS
    :param device: Choose CPU or GPU to train the model.
    :type device: str
    :param log_dir: The directory of log file, default is "./logs/".
    :type log_dir: str
    :param model_dir: The directory of model file, default is "./models/".
    :type model_dir: str
+
+.. py:function:: xuance.tensorflow.agents.agents_marl.MARLAgents.save_model(model_name)
+   
+   Save the model.
+
+   :param model_name: The model's name to be saved.
+   :type model_name: str
+
+.. py:function:: xuance.tensorflow.agents.agents_marl.MARLAgents.load_model(path, seed)
+
+   Load a model by specifying the ``path`` and ``seed`` .
+
+   :param path: The model's path where to load.
+   :type path: str
+   :param seed: Select the seed that model was trained with if it exits.
+   :type seed: int
+
+.. py:function:: xuance.tensorflow.agents.agents_marl.MARLAgents.act(**kwargs)
+   
+   Get actions for executing according to the joint observations, global states, available actions, etc.
+   
+   :param kwargs: Inputs informations.
+   :type observations: Dict
+
+.. py:function:: xuance.tensorflow.agents.agents_marl.MARLAgents.train(**kwargs)
+   
+   Train the multi-agent reinforcement learning models.
+
+   :param kwargs: Informations for multi-agent training.
+   :type observations: Dict
+   :return: **info_train** - Informations of the training.
+   :rtype: Dict
+
+
+.. py:class:: 
+   xuance.tensorflow.agents.agents_marl.linear_decay_or_increase(start, end, step_length)
+
+   :param start: Start factor.
+   :type start: np.float
+   :param end: End factor.
+   :type end: np.float
+   :param step_length: The number of steps the factor decays or increases.
+   :type step_length: int
+
+.. py:function:: xuance.tensorflow.agents.agents_marl.linear_decay_or_increase.update()
+   
+   Update the factor once.
+
+
+.. py:class:: 
+   xuance.tensorflow.agents.agents_marl.RandomAgents(args, envs, device=None)
+
+   :param args: Provides hyper parameters.
+   :type args: Namespace
+   :param envs: The vectorized environments.
+   :type envs: xuance.environments.vector_envs.vector_env.VecEnv
+   :param device: Choose CPU or GPU to train the model.
+   :type device: str
+
+.. py:function:: 
+   xuance.tensorflow.agents.agents_marl.RandomAgents.act()
+   
+   Provide random actions for RandomAgents.
+
+   :return: **random_actions** - Output random actions.
+   :rtype: np.ndarray
 
 
 .. raw:: html
@@ -142,6 +208,72 @@ To create new MARL agents, you should build a class inherit from ``xuance.torch.
    :type log_dir: str
    :param model_dir: The directory of model file, default is "./models/".
    :type model_dir: str
+
+.. py:function:: xuance.mindspore.agents.agents_marl.MARLAgents.save_model(model_name)
+   
+   Save the model.
+
+   :param model_name: The model's name to be saved.
+   :type model_name: str
+
+.. py:function:: xuance.mindspore.agents.agents_marl.MARLAgents.load_model(path, seed)
+
+   Load a model by specifying the ``path`` and ``seed`` .
+
+   :param path: The model's path where to load.
+   :type path: str
+   :param seed: Select the seed that model was trained with if it exits.
+   :type seed: int
+
+.. py:function:: xuance.mindspore.agents.agents_marl.MARLAgents.act(**kwargs)
+   
+   Get actions for executing according to the joint observations, global states, available actions, etc.
+   
+   :param kwargs: Inputs informations.
+   :type observations: Dict
+
+.. py:function:: xuance.mindspore.agents.agents_marl.MARLAgents.train(**kwargs)
+   
+   Train the multi-agent reinforcement learning models.
+
+   :param kwargs: Informations for multi-agent training.
+   :type observations: Dict
+   :return: **info_train** - Informations of the training.
+   :rtype: Dict
+
+
+.. py:class:: 
+   xuance.mindspore.agents.agents_marl.linear_decay_or_increase(start, end, step_length)
+
+   :param start: Start factor.
+   :type start: np.float
+   :param end: End factor.
+   :type end: np.float
+   :param step_length: The number of steps the factor decays or increases.
+   :type step_length: int
+
+.. py:function:: xuance.mindspore.agents.agents_marl.linear_decay_or_increase.update()
+   
+   Update the factor once.
+
+
+.. py:class:: 
+   xuance.mindspore.agents.agents_marl.RandomAgents(args, envs, device=None)
+
+   :param args: Provides hyper parameters.
+   :type args: Namespace
+   :param envs: The vectorized environments.
+   :type envs: xuance.environments.vector_envs.vector_env.VecEnv
+   :param device: Choose CPU or GPU to train the model.
+   :type device: str
+
+.. py:function:: 
+   xuance.mindspore.agents.agents_marl.RandomAgents.act()
+   
+   Provide random actions for RandomAgents.
+
+   :return: **random_actions** - Output random actions.
+   :rtype: np.ndarray
 
 
 .. raw:: html
