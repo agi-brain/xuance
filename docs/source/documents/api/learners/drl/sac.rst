@@ -10,7 +10,7 @@ SAC_Learner
 .. py:class::
   xuance.torch.learners.policy_gradient.sac_learner.SAC_Learner(policy, optimizer, scheduler, device, model_dir, gamma, tau)
 
-  :param policy: xxxxxx.
+  :param policy: The policy that provides actions and values.
   :type policy: xxxxxx
   :param optimizer: xxxxxx.
   :type optimizer: xxxxxx
@@ -50,7 +50,7 @@ SAC_Learner
 .. py:class::
   xuance.tensorflow.learners.policy_gradient.sac_learner.SAC_Learner(policy, optimizer, device, model_dir, gamma, tau)
 
-  :param policy: xxxxxx.
+  :param policy: The policy that provides actions and values.
   :type policy: xxxxxx
   :param optimizer: xxxxxx.
   :type optimizer: xxxxxx
@@ -88,7 +88,7 @@ SAC_Learner
 .. py:class::
   xuance.mindspore.learners.policy_gradient.sac_learner.SAC_Learner(policy, optimizers, schedulers, model_dir, gamma, tau)
 
-  :param policy: xxxxxx.
+  :param policy: The policy that provides actions and values.
   :type policy: xxxxxx
   :param optimizers: xxxxxx.
   :type optimizers: xxxxxx

@@ -96,10 +96,10 @@ IQL_Agents
 .. py:class::
     xuance.mindspore.agents.mutli_agent_rl.iql_agents.IQL_Agents(config, envs)
 
-    :param config: xxxxxx.
-    :type config: xxxxxx
-    :param envs: xxxxxx.
-    :type envs: xxxxxx
+    :param config: Provides hyper parameters.
+    :type config: Namespace
+    :param envs: The vectorized environments.
+    :type envs: xuance.environments.vector_envs.vector_env.VecEnv
 
 .. py:function::
      xuance.mindspore.agents.mutli_agent_rl.iql_agents.IQL_Agents.act(obs_n, *rnn_hidden, avail_actions=None, test_mode=False)

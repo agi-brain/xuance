@@ -140,13 +140,13 @@ DQN with double q-learning trick.
 .. py:function::
     xuance.mindspore.agents.qlearning_family.ddqn_agent.DDQN_Agent.train(train_steps)
 
-    :param train_steps: xxxxxx.
-    :type train_steps: xxxxxx
+    :param train_steps: The number of steps for training.
+    :type train_steps: int
 
 .. py:function::
     xuance.mindspore.agents.qlearning_family.ddqn_agent.DDQN_Agent.test(env_fn,test_steps)
 
-    :param env_fn: xxxxxx.
+    :param env_fn: The function of making environments.
     :type env_fn: xxxxxx
     :param test_steps: xxxxxx.
     :type test_steps: xxxxxx

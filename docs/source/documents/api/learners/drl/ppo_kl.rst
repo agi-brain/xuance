@@ -10,7 +10,7 @@ PPOKL_Learner
 .. py:class::
   xuance.torch.learners.policy_gradient.ppokl_learner.PPOKL_Learner(policy, optimizer, scheduler, device, model_dir, vf_coef, ent_coef, target_kl)
 
-  :param policy: xxxxxx.
+  :param policy: The policy that provides actions and values.
   :type policy: xxxxxx
   :param optimizer: xxxxxx.
   :type optimizer: xxxxxx
@@ -52,7 +52,7 @@ PPOKL_Learner
 .. py:class::
   xuance.tensorflow.learners.policy_gradient.ppokl_learner.PPOKL_Learner(policy, optimizer, device, model_dir, vf_coef, ent_coef, target_kl)
 
-  :param policy: xxxxxx.
+  :param policy: The policy that provides actions and values.
   :type policy: xxxxxx
   :param optimizer: xxxxxx.
   :type optimizer: xxxxxx
@@ -94,7 +94,7 @@ PPOKL_Learner
 .. py:class::
   xuance.mindspore.learners.policy_gradient.ppokl_learner.PPOKL_Learner(policy, optimizer, scheduler, summary_writer, model_dir, vf_coef, ent_coef, clip_range)
 
-  :param policy: xxxxxx.
+  :param policy: The policy that provides actions and values.
   :type policy: xxxxxx
   :param optimizer: xxxxxx.
   :type optimizer: xxxxxx

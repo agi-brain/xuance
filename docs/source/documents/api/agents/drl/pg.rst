@@ -66,7 +66,7 @@ PG_Agent
   :param envs: The vectorized environments.
   :type envs: xuance.environments.vector_envs.vector_env.VecEnv
   :param policy: The policy that provides actions and values.
-  :type policy: nn.Module
+  :type policy: tk.Model
   :param optimizer: The optimizer that updates the parameters.
   :type optimizer: torch.optim.Optimizer
   :param device: Choose CPU or GPU to train the model.
@@ -132,16 +132,16 @@ PG_Agent
 .. py:function::
     xuance.mindspore.agents.policy_gradient.pg_agent.PG_Agent.train(train_steps)
 
-    :param train_steps: xxxxxx.
-    :type train_steps: xxxxxx
+    :param train_steps: The number of steps for training.
+    :type train_steps: int
 
 .. py:function::
     xuance.mindspore.agents.policy_gradient.pg_agent.PG_Agent.test(env_fn,test_episodes)
 
-    :param env_fn: xxxxxx.
+    :param env_fn: The function of making environments.
     :type env_fn: xxxxxx
-    :param test_episodes: xxxxxx.
-    :type test_episodes: xxxxxx
+    :param test_episodes: The number of testing episodes.
+    :type test_episodes: int
     :return: xxxxxx.
     :rtype: xxxxxx
 

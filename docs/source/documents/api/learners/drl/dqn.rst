@@ -10,7 +10,7 @@ DQN_Learner
 .. py:class::
   xuance.torch.learners.qlearning_family.dqn_learner.DQN_Learner(policy, optimizer, scheduler, device, model_dir, gamma, sync_frequency)
 
-  :param policy: xxxxxx.
+  :param policy: The policy that provides actions and values.
   :type policy: xxxxxx
   :param optimizer: xxxxxx.
   :type optimizer: xxxxxx
@@ -50,7 +50,7 @@ DQN_Learner
 .. py:class::
   xuance.tensorflow.learners.qlearning_family.dqn_learner.DQN_Learner(policy, optimizer, device, model_dir, gamma, sync_frequency)
 
-  :param policy: xxxxxx.
+  :param policy: The policy that provides actions and values.
   :type policy: xxxxxx
   :param optimizer: xxxxxx.
   :type optimizer: xxxxxx
@@ -88,7 +88,7 @@ DQN_Learner
 .. py:class::
   xuance.mindspore.learners.qlearning_family.dqn_learner.DQN_Learner(policy, optimizer, scheduler, model_dir, gamma, sync_frequency)
 
-  :param policy: xxxxxx.
+  :param policy: The policy that provides actions and values.
   :type policy: xxxxxx
   :param optimizer: xxxxxx.
   :type optimizer: xxxxxx

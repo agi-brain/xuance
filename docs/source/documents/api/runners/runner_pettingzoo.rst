@@ -108,7 +108,7 @@ xxxxxx.
 
   xxxxxx.
 
-  :param env_fn: xxxxxx.
+  :param env_fn: The function of making environments.
   :type env_fn: xxxxxx
   :return: xxxxxx.
   :rtype: xxxxxx
@@ -228,7 +228,7 @@ xxxxxx.
 
   xxxxxx.
 
-  :param env_fn: xxxxxx.
+  :param env_fn: The function of making environments.
   :type env_fn: xxxxxx
   :return: xxxxxx.
   :rtype: xxxxxx
@@ -328,7 +328,7 @@ xxxxxx.
 .. py:function::
   xuance.mindspore.runners.runner_pettingzoo.Pettingzoo_Runner.test_episode(env_fn)
 
-  :param env_fn: xxxxxx.
+  :param env_fn: The function of making environments.
   :type env_fn: xxxxxx
   :return: xxxxxx.
   :rtype: xxxxxx

@@ -149,14 +149,14 @@ PPOKL_Agent
 .. py:function::
     xuance.mindspore.agents.policy_gradient.ppokl_agent.PPOKL_Agent.train(train_steps)
 
-    :param train_steps: xxxxxx.
-    :type train_steps: xxxxxx
+    :param train_steps: The number of steps for training.
+    :type train_steps: int
 
 .. py:function::
     xuance.mindspore.agents.policy_gradient.ppokl_agent.PPOKL_Agent.test(test_episodes,load_model)
 
-    :param test_episodes: xxxxxx.
-    :type test_episodes: xxxxxx
+    :param test_episodes: The number of testing episodes.
+    :type test_episodes: int
     :param load_model: xxxxxx.
     :type load_model: xxxxxx
 

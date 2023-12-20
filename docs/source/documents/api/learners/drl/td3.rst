@@ -10,7 +10,7 @@ TD3_Learner
 .. py:class::
   xuance.torch.learners.policy_gradient.td3_learner.TD3_Learner(policy, optimizer, scheduler, device, model_dir, gamma, tau, delay)
 
-  :param policy: xxxxxx.
+  :param policy: The policy that provides actions and values.
   :type policy: xxxxxx
   :param optimizer: xxxxxx.
   :type optimizer: xxxxxx
@@ -52,7 +52,7 @@ TD3_Learner
 .. py:class::
   xuance.tensorflow.learners.policy_gradient.td3_learner.TD3_Learner(policy, optimizer, device, model_dir, gamma, tau, delay)
 
-  :param policy: xxxxxx.
+  :param policy: The policy that provides actions and values.
   :type policy: xxxxxx
   :param optimizer: xxxxxx.
   :type optimizer: xxxxxx
@@ -92,7 +92,7 @@ TD3_Learner
 .. py:class::
   xuance.mindspore.learners.policy_gradient.td3_learner.TD3_Learner(policy, optimizer, scheduler, model_dir, gamma, tau, delay)
 
-  :param policy: xxxxxx.
+  :param policy: The policy that provides actions and values.
   :type policy: xxxxxx
   :param optimizer: xxxxxx.
   :type optimizer: xxxxxx

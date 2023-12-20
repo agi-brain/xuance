@@ -154,8 +154,8 @@ DQN_Agent
 .. py:function::
     xuance.mindspore.agents.qlearning_family.dqn_agent.DQN_Agent.train(train_steps)
 
-    :param train_steps: xxxxxx.
-    :type train_steps: xxxxxx
+    :param train_steps: The number of steps for training.
+    :type train_steps: int
 
 .. py:function::
     xuance.mindspore.agents.qlearning_family.dqn_agent.DQN_Agent.test(test_steps)

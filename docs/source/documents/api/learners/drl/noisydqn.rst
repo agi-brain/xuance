@@ -10,7 +10,7 @@ NoisyDQN_Learner
 .. py:class::
   xuance.torch.learners.qlearning_family.noisydqn_learner.NoisyDQN_Learner(policy, optimizer, scheduler, device, model_dir, gamma, sync_frequency)
 
-  :param policy: xxxxxx.
+  :param policy: The policy that provides actions and values.
   :type policy: xxxxxx
   :param optimizer: xxxxxx.
   :type optimizer: xxxxxx
@@ -56,7 +56,7 @@ NoisyDQN_Learner
 .. py:class::
   xuance.mindspore.learners.qlearning_family.noisydqn_learner.NoisyDQN_Learner(policy, optimizer, scheduler, model_dir, gamma, sync_frequency)
 
-  :param policy: xxxxxx.
+  :param policy: The policy that provides actions and values.
   :type policy: xxxxxx
   :param optimizer: xxxxxx.
   :type optimizer: xxxxxx

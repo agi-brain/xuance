@@ -12,9 +12,9 @@ xxxxxx.
 .. py:class::
   xuance.torch.learners.multi_agent_rl.ippo_learner.IPPO_Learner(config, policy, optimizer, scheduler, device, model_dir, gamma)
 
-  :param config: xxxxxx.
-  :type config: xxxxxx
-  :param policy: xxxxxx.
+  :param config: Provides hyper parameters.
+  :type config: Namespace
+  :param policy: The policy that provides actions and values.
   :type policy: xxxxxx
   :param optimizer: xxxxxx.
   :type optimizer: xxxxxx
@@ -66,9 +66,9 @@ xxxxxx.
 .. py:class::
   xuance.tensorflow.learners.multi_agent_rl.ippo_learner.IPPO_Learner(config, policy, optimizer, device, model_dir, gamma)
 
-  :param config: xxxxxx.
-  :type config: xxxxxx
-  :param policy: xxxxxx.
+  :param config: Provides hyper parameters.
+  :type config: Namespace
+  :param policy: The policy that provides actions and values.
   :type policy: xxxxxx
   :param optimizer: xxxxxx.
   :type optimizer: xxxxxx
@@ -108,9 +108,9 @@ xxxxxx.
 .. py:class::
   xuance.mindspore.learners.multi_agent_rl.ippo_learner.IPPO_Learner(config, policy, optimizer, scheduler, model_dir, gamma)
 
-  :param config: xxxxxx.
-  :type config: xxxxxx
-  :param policy: xxxxxx.
+  :param config: Provides hyper parameters.
+  :type config: Namespace
+  :param policy: The policy that provides actions and values.
   :type policy: xxxxxx
   :param optimizer: xxxxxx.
   :type optimizer: xxxxxx

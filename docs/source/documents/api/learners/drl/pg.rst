@@ -10,7 +10,7 @@ PG_Learner
 .. py:class::
   xuance.torch.learners.policy_gradient.pg_learner.PG_Learner(policy, optimizer, scheduler, device, model_dir, ent_coef, clip_grad)
 
-  :param policy: xxxxxx.
+  :param policy: The policy that provides actions and values.
   :type policy: xxxxxx
   :param optimizer: xxxxxx.
   :type optimizer: xxxxxx
@@ -46,7 +46,7 @@ PG_Learner
 .. py:class::
   xuance.tensorflow.learners.policy_gradient.pg_learner.PG_Learner(policy, optimizer, device, model_dir, ent_coef, clip_grad)
 
-  :param policy: xxxxxx.
+  :param policy: The policy that provides actions and values.
   :type policy: xxxxxx
   :param optimizer: xxxxxx.
   :type optimizer: xxxxxx
@@ -80,7 +80,7 @@ PG_Learner
 .. py:class::
   xuance.mindspore.learners.policy_gradient.pg_learner.PG_Learner(policy, optimizer, scheduler, model_dir, ent_coef, clip_grad, clip_type)
 
-  :param policy: xxxxxx.
+  :param policy: The policy that provides actions and values.
   :type policy: xxxxxx
   :param optimizer: xxxxxx.
   :type optimizer: xxxxxx

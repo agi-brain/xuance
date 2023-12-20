@@ -10,7 +10,7 @@ PPOCLIP_Learner
 .. py:class::
   xuance.torch.learners.policy_gradient.ppoclip_learner.PPOCLIP_Learner(policy, optimizer, scheduler, device, model_dir, vf_coef, ent_coef, clip_range, clip_grad_norm, use_grad_clip)
 
-  :param policy: xxxxxx.
+  :param policy: The policy that provides actions and values.
   :type policy: xxxxxx
   :param optimizer: xxxxxx.
   :type optimizer: xxxxxx
@@ -58,7 +58,7 @@ PPOCLIP_Learner
 .. py:class::
   xuance.tensorflow.learners.policy_gradient.ppoclip_learner.PPOCLIP_Learner(policy, optimizer, device, model_dir, vf_coef, ent_coef, clip_range)
 
-  :param policy: xxxxxx.
+  :param policy: The policy that provides actions and values.
   :type policy: xxxxxx
   :param optimizer: xxxxxx.
   :type optimizer: xxxxxx
@@ -100,7 +100,7 @@ PPOCLIP_Learner
 .. py:class::
   xuance.mindspore.learners.policy_gradient.ppoclip_learner.PPOCLIP_Learner(policy, optimizer, scheduler, model_dir, vf_coef, ent_coef, clip_range)
 
-  :param policy: xxxxxx.
+  :param policy: The policy that provides actions and values.
   :type policy: xxxxxx
   :param optimizer: xxxxxx.
   :type optimizer: xxxxxx
