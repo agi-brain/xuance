@@ -4,13 +4,13 @@ from xuance import get_runner
 
 def parse_args():
     parser = argparse.ArgumentParser("Run a demo.")
-    parser.add_argument("--method", type=str, default="a2c")
+    parser.add_argument("--method", type=str, default="dqn")
     parser.add_argument("--env", type=str, default="classic_control")
     parser.add_argument("--env-id", type=str, default="CartPole-v1")
     parser.add_argument("--test", type=int, default=0)
     parser.add_argument("--device", type=str, default="cuda:0")
-    # parser.add_argument("--logger", type=str, default="wandb")
-    # parser.add_argument("--wandb-user-name", type=str, default="papers_liu")
+    parser.add_argument("--logger", type=str, default="wandb")
+    parser.add_argument("--wandb-user-name", type=str, default="wzliu")
     return parser.parse_args()
 
 
