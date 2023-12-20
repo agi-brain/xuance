@@ -128,7 +128,15 @@ Source Code
 
             from xuance.torch.agents import *
 
+
             class MATD3_Agents(MARLAgents):
+                """The implementation of MATD3 agents.
+
+                Args:
+                    config: the Namespace variable that provides hyper-parameters and other settings.
+                    envs: the vectorized environments.
+                    device: the calculating device of the model, such as CPU or GPU.
+                """
                 def __init__(self,
                             config: Namespace,
                             envs: DummyVecEnv_Pettingzoo,
@@ -150,11 +158,6 @@ Source Code
                                                                 total_iters=get_total_iters(config.agent_name, config))]
                     self.observation_space = envs.observation_space
                     self.action_space = envs.action_space
-                    self.actions_high, self.actions_low = [], []
-                    for k in config.agent_keys:
-                        self.actions_high.append(self.action_space[k].high)
-                        self.actions_low.append(self.action_space[k].low)
-                    self.actions_high, self.actions_low = np.array(self.actions_high), np.array(self.actions_low)
                     self.representation_info_shape = policy.representation.output_shapes
                     self.auxiliary_info_shape = {}
 
@@ -186,7 +189,6 @@ Source Code
                         return None, actions
                     else:
                         actions += np.random.normal(0, self.args.sigma, size=actions.shape)
-                        actions = np.clip(actions, self.actions_low, self.actions_high)
                         return None, actions
 
                 def train(self, i_episode):

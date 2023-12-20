@@ -158,12 +158,24 @@ Source Code
     
     .. code-block:: python
 
+        # This is the main file for an advantage actor critic (A2C) algorithm.
+        # The agent random sample a batch in the replay buffer, and optimize the policy gradient and value function loss.
+        # This can be a first RL algorithm code for the starters.
         import numpy as np
-
         from xuance.torch.agents import *
 
 
         class A2C_Agent(Agent):
+            """The implementation of A2C agent.
+
+            Args:
+                config: the Namespace variable that provides hyper-parameters and other settings.
+                envs: the vectorized environments.
+                policy: the neural network modules of the agent.
+                optimizer: the method of optimizing.
+                scheduler: the learning rate decay scheduler.
+                device: the calculating device of the model, such as CPU or GPU.
+            """
             def __init__(self,
                         config: Namespace,
                         envs: DummyVecEnv_Gym,
@@ -319,6 +331,7 @@ Source Code
                 test_envs.close()
 
                 return scores
+
 
   .. group-tab:: TensorFlow
 

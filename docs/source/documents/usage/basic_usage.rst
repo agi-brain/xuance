@@ -107,6 +107,8 @@ Then, we can see the training curves at http://localhost:6006/.
 If you choose to use the wandb tool for training visualization,
 you can create an account according to the official W&B instructions and specify the username "wandb_user_name" in the "xuance/configs/basic.yaml" file.
 
+.. image:: ../../figures/log/wandb.png
+
 For information on using W&B and its local deployment, you can refer to the following link:
 
 | **wandb**: `https://github.com/wandb/wandb.git <https://github.com/wandb/wandb.git/>`_

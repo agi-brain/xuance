@@ -193,16 +193,21 @@ Source Code
     
         .. code-block:: python
 
-            import torch
-
             from xuance.torch.agents import *
 
 
             class IPPO_Agents(MARLAgents):
+                """The implementation of Independent PPO agents.
+
+                Args:
+                    config: the Namespace variable that provides hyper-parameters and other settings.
+                    envs: the vectorized environments.
+                    device: the calculating device of the model, such as CPU or GPU.
+                """
                 def __init__(self,
-                             config: Namespace,
-                             envs: DummyVecEnv_Pettingzoo,
-                             device: Optional[Union[int, str, torch.device]] = None):
+                            config: Namespace,
+                            envs: DummyVecEnv_Pettingzoo,
+                            device: Optional[Union[int, str, torch.device]] = None):
                     self.gamma = config.gamma
                     self.n_envs = envs.num_envs
                     self.n_size = config.n_size
@@ -218,8 +223,8 @@ Source Code
                     self.use_global_state = config.use_global_state
                     # create representation for actor
                     kwargs_rnn = {"N_recurrent_layers": config.N_recurrent_layers,
-                                  "dropout": config.dropout,
-                                  "rnn": config.rnn} if self.use_recurrent else {}
+                                "dropout": config.dropout,
+                                "rnn": config.rnn} if self.use_recurrent else {}
                     representation = REGISTRY_Representation[config.representation](*input_representation, **kwargs_rnn)
                     # create representation for critic
                     input_representation[0] = (config.dim_state,) if self.use_global_state else (config.dim_obs,)
@@ -231,8 +236,8 @@ Source Code
                                                             rnn=config.rnn,
                                                             gain=config.gain)
                     optimizer = torch.optim.Adam(policy.parameters(),
-                                                 lr=config.learning_rate, eps=1e-5,
-                                                 weight_decay=config.weight_decay)
+                                                lr=config.learning_rate, eps=1e-5,
+                                                weight_decay=config.weight_decay)
                     self.observation_space = envs.observation_space
                     self.action_space = envs.action_space
                     self.auxiliary_info_shape = {}
@@ -247,7 +252,7 @@ Source Code
 
                     learner = IPPO_Learner(config, policy, optimizer, None, config.device, config.model_dir, config.gamma)
                     super(IPPO_Agents, self).__init__(config, envs, policy, memory, learner, device,
-                                                      config.log_dir, config.model_dir)
+                                                    config.log_dir, config.model_dir)
                     self.share_values = True if config.rew_shape[0] == 1 else False
                     self.on_policy = True
 
@@ -258,9 +263,9 @@ Source Code
                     if self.use_recurrent:
                         batch_agents = batch_size * self.n_agents
                         hidden_state, dists = self.policy(obs_in.view(batch_agents, 1, -1),
-                                                          agents_id.view(batch_agents, 1, -1),
-                                                          *rnn_hidden,
-                                                          avail_actions=avail_actions.reshape(batch_agents, 1, -1))
+                                                        agents_id.view(batch_agents, 1, -1),
+                                                        *rnn_hidden,
+                                                        avail_actions=avail_actions.reshape(batch_agents, 1, -1))
                         actions = dists.stochastic_sample()
                         log_pi_a = dists.log_prob(actions).reshape(batch_size, self.n_agents)
                         actions = actions.reshape(batch_size, self.n_agents)
@@ -309,6 +314,7 @@ Source Code
                         return info_train
                     else:
                         return {}
+
 
 
 

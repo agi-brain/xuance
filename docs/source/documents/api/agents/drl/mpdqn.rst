@@ -200,7 +200,18 @@ Source Code
             import gym
             from gym import spaces
 
+
             class MPDQN_Agent(Agent):
+                """The implementation of MPDQN agent.
+
+                Args:
+                    config: the Namespace variable that provides hyper-parameters and other settings.
+                    envs: the vectorized environments.
+                    policy: the neural network modules of the agent.
+                    optimizer: the method of optimizing.
+                    scheduler: the learning rate decay scheduler.
+                    device: the calculating device of the model, such as CPU or GPU.
+                """
                 def __init__(self,
                             config: Namespace,
                             envs: Gym_Env,
@@ -209,14 +220,15 @@ Source Code
                             scheduler: Optional[Sequence[torch.optim.lr_scheduler._LRScheduler]] = None,
                             device: Optional[Union[int, str, torch.device]] = None):
                     self.envs = envs
-                    self.comm = MPI.COMM_WORLD
                     self.render = config.render
+                    self.n_envs = envs.num_envs
 
                     self.gamma = config.gamma
-                    self.use_obsnorm = config.use_obsnorm
-                    self.use_rewnorm = config.use_rewnorm
-                    self.obsnorm_range = config.obsnorm_range
-                    self.rewnorm_range = config.rewnorm_range
+                    self.train_frequency = config.training_frequency
+                    self.start_training = config.start_training
+                    self.start_greedy = config.start_greedy
+                    self.end_greedy = config.end_greedy
+                    self.egreedy = config.start_greedy
 
                     self.train_frequency = config.training_frequency
                     self.start_training = config.start_training
@@ -244,46 +256,24 @@ Source Code
 
                     memory = DummyOffPolicyBuffer(self.observation_space,
                                                 self.buffer_action_space,
-                                                self.representation_info_shape,
                                                 self.auxiliary_info_shape,
-                                                self.nenvs,
-                                                config.nsize,
-                                                config.batchsize)
-                    learner = PDQN_Learner(policy,
-                                        optimizer,
-                                        scheduler,
-                                        config.device,
-                                        config.model_dir,
-                                        config.gamma,
-                                        config.tau)
+                                                self.n_envs,
+                                                config.n_size,
+                                                config.batch_size)
+                    learner = MPDQN_Learner(policy,
+                                            optimizer,
+                                            scheduler,
+                                            config.device,
+                                            config.model_dir,
+                                            config.gamma,
+                                            config.tau)
 
                     self.num_disact = self.action_space.spaces[0].n
                     self.conact_sizes = np.array([self.action_space.spaces[i].shape[0] for i in range(1, self.num_disact+1)])
                     self.conact_size = int(self.conact_sizes.sum())
 
-                    self.obs_rms = RunningMeanStd(shape=space2shape(self.observation_space), comm=self.comm, use_mpi=False)
-                    self.ret_rms = RunningMeanStd(shape=(), comm=self.comm, use_mpi=False)
                     super(MPDQN_Agent, self).__init__(config, envs, policy, memory, learner, device,
                                                     config.log_dir, config.model_dir)
-
-                def _process_observation(self, observations):
-                    if self.use_obsnorm:
-                        if isinstance(self.observation_space, gym.spaces.Dict):
-                            for key in self.observation_space.spaces.keys():
-                                observations[key] = np.clip(
-                                    (observations[key] - self.obs_rms.mean[key]) / (self.obs_rms.std[key] + EPS),
-                                    -self.obsnorm_range, self.obsnorm_range)
-                        else:
-                            observations = np.clip((observations - self.obs_rms.mean) / (self.obs_rms.std + EPS),
-                                                -self.obsnorm_range, self.obsnorm_range)
-                        return observations
-                    return observations
-
-                def _process_reward(self, rewards):
-                    if self.use_rewnorm:
-                        std = np.clip(self.ret_rms.std, 0.1, 100)
-                        return np.clip(rewards / std, -self.rewnorm_range, self.rewnorm_range)
-                    return rewards
 
                 def _action(self, obs):
                     with torch.no_grad():
@@ -308,60 +298,75 @@ Source Code
                     con_actions[disaction][:] = conaction
                     return (disaction, con_actions)
 
-                def train(self, train_steps=10000):
+                def train(self, train_steps):
                     episodes = np.zeros((self.nenvs,), np.int32)
                     scores = np.zeros((self.nenvs,), np.float32)
-                    returns = np.zeros((self.nenvs,), np.float32)
                     obs, _ = self.envs.reset()
-                    for step in tqdm(range(train_steps)):
-                        step_info, episode_info = {}, {}
+                    for _ in tqdm(range(train_steps)):
+                        step_info = {}
                         disaction, conaction, con_actions = self._action(obs)
                         action = self.pad_action(disaction, conaction)
                         action[1][disaction] = self.action_range[disaction] * (action[1][disaction] + 1) / 2. + self.action_low[disaction]
                         (next_obs, steps), rewards, terminal, _ = self.envs.step(action)
                         if self.render: self.envs.render("human")
                         acts = np.concatenate(([disaction], con_actions), axis=0).ravel()
-                        state = {'state': obs}
-                        self.memory.store(obs, acts, rewards, terminal, next_obs, state, {})
-                        if step > self.start_training and step % self.train_frequency == 0:
-                            obs_batch, act_batch, rew_batch, terminal_batch, next_batch, _, _ = self.memory.sample()
-                            step_info = self.learner.update(obs_batch, act_batch, rew_batch, next_batch, terminal_batch)
+                        self.memory.store(obs, acts, rewards, terminal, next_obs)
+                        if self.current_step > self.start_training and self.current_step % self.train_frequency == 0:
+                            obs_batch, act_batch, rew_batch, terminal_batch, next_batch = self.memory.sample()
+                            step_info.update(self.learner.update(obs_batch, act_batch, rew_batch, next_batch, terminal_batch))
+
                         scores += rewards
-                        returns = self.gamma * returns + rewards
                         obs = next_obs
                         self.noise_scale = self.start_noise - (self.start_noise - self.end_noise) / train_steps
                         if terminal == True:
                             step_info["returns-episode"] = scores
-                            episode_info["returns-episode"] = scores
                             scores = 0
                             returns = 0
                             episodes += 1
                             self.end_episode(episodes)
                             obs, _ = self.envs.reset()
-                            self.log_infos(step_info, step)
-                            self.log_infos(episode_info, episodes)
-                        if step % 50000 == 0 or step == train_steps - 1:
-                            self.save_model()
-                            np.save(self.model_dir + "/obs_rms.npy",
-                                    {'mean': self.obs_rms.mean, 'std': self.obs_rms.std, 'count': self.obs_rms.count})
+                            self.log_infos(step_info, self.current_step)
 
-                def test(self, test_steps=10000, load_model=None):
-                    self.load_model(self.model_dir)
-                    scores = np.zeros((self.nenvs,), np.float32)
-                    returns = np.zeros((self.nenvs,), np.float32)
+                        self.current_step += self.n_envs
+                        if self.egreedy >= self.end_greedy:
+                            self.egreedy = self.egreedy - (self.start_greedy - self.end_greedy) / self.config.decay_step_greedy
+
+                def test(self, env_fn, test_episodes):
+                    test_envs = env_fn()
+                    episode_score = 0
+                    current_episode, scores, best_score = 0, [], -np.inf
                     obs, _ = self.envs.reset()
-                    for _ in tqdm(range(test_steps)):
+
+                    while current_episode < test_episodes:
                         disaction, conaction, con_actions = self._action(obs)
                         action = self.pad_action(disaction, conaction)
                         action[1][disaction] = self.action_range[disaction] * (action[1][disaction] + 1) / 2. + self.action_low[disaction]
                         (next_obs, steps), rewards, terminal, _ = self.envs.step(action)
                         self.envs.render("human")
-                        scores += rewards
-                        returns = self.gamma * returns + rewards
+                        episode_score += rewards
                         obs = next_obs
                         if terminal == True:
-                            scores, returns = 0, 0
+                            scores.append(episode_score)
                             obs, _ = self.envs.reset()
+                            current_episode += 1
+                            if best_score < episode_score:
+                                best_score = episode_score
+                            episode_score = 0
+                            if self.config.test_mode:
+                                print("Episode: %d, Score: %.2f" % (current_episode, episode_score))
+
+                    if self.config.test_mode:
+                        print("Best Score: %.2f" % (best_score))
+
+                    test_info = {
+                        "Test-Episode-Rewards/Mean-Score": np.mean(scores),
+                        "Test-Episode-Rewards/Std-Score": np.std(scores)
+                    }
+                    self.log_infos(test_info, self.current_step)
+
+                    test_envs.close()
+
+                    return scores
 
                 def end_episode(self, episode):
                     if episode < self.epsilon_steps:
@@ -370,8 +375,7 @@ Source Code
                     else:
                         self.epsilon = self.epsilon_final
 
-                def evaluate(self):
-                    pass
+
 
 
     .. group-tab:: TensorFlow

@@ -184,10 +184,17 @@ Source Code
 
 
             class MFAC_Agents(MARLAgents):
+                """The implementation of Mean-Field AC agents.
+
+                Args:
+                    config: the Namespace variable that provides hyper-parameters and other settings.
+                    envs: the vectorized environments.
+                    device: the calculating device of the model, such as CPU or GPU.
+                """
                 def __init__(self,
-                             config: Namespace,
-                             envs: DummyVecEnv_Pettingzoo,
-                             device: Optional[Union[int, str, torch.device]] = None):
+                            config: Namespace,
+                            envs: DummyVecEnv_Pettingzoo,
+                            device: Optional[Union[int, str, torch.device]] = None):
                     self.gamma = config.gamma
                     self.n_envs = envs.num_envs
                     self.n_size = config.buffer_size
@@ -204,7 +211,7 @@ Source Code
                     policy = REGISTRY_Policy[config.policy](*input_policy, gain=config.gain)
                     optimizer = torch.optim.Adam(policy.parameters(), config.learning_rate, eps=1e-5)
                     scheduler = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=1.0, end_factor=0.5,
-                                                                  total_iters=get_total_iters(config.agent_name, config))
+                                                                total_iters=get_total_iters(config.agent_name, config))
                     self.observation_space = envs.observation_space
                     self.action_space = envs.action_space
                     self.representation_info_shape = policy.representation.output_shapes
@@ -215,21 +222,21 @@ Source Code
                     else:
                         config.dim_state, state_shape = None, None
                     memory = MeanField_OnPolicyBuffer(config.n_agents,
-                                                      state_shape,
-                                                      config.obs_shape,
-                                                      config.act_shape,
-                                                      config.rew_shape,
-                                                      config.done_shape,
-                                                      envs.num_envs,
-                                                      config.buffer_size,
-                                                      config.use_gae, config.use_advnorm, config.gamma, config.gae_lambda,
-                                                      prob_space=config.act_prob_shape)
+                                                    state_shape,
+                                                    config.obs_shape,
+                                                    config.act_shape,
+                                                    config.rew_shape,
+                                                    config.done_shape,
+                                                    envs.num_envs,
+                                                    config.buffer_size,
+                                                    config.use_gae, config.use_advnorm, config.gamma, config.gae_lambda,
+                                                    prob_space=config.act_prob_shape)
                     self.buffer_size = memory.buffer_size
                     self.batch_size = self.buffer_size // self.n_minibatch
                     learner = MFAC_Learner(config, policy, optimizer, scheduler,
-                                           config.device, config.model_dir, config.gamma)
+                                        config.device, config.model_dir, config.gamma)
                     super(MFAC_Agents, self).__init__(config, envs, policy, memory, learner, device,
-                                                      config.log_dir, config.model_dir)
+                                                    config.log_dir, config.model_dir)
                     self.on_policy = True
 
                 def act(self, obs_n, test_mode, act_mean=None, agent_mask=None):
@@ -274,6 +281,7 @@ Source Code
                         return info_train
                     else:
                         return {}
+
 
     .. group-tab:: TensorFlow
 

@@ -124,7 +124,15 @@ Source Code
 
             from xuance.torch.agents import *
 
+
             class MADDPG_Agents(MARLAgents):
+                """The implementation of MADDPG agents.
+
+                Args:
+                    config: the Namespace variable that provides hyper-parameters and other settings.
+                    envs: the vectorized environments.
+                    device: the calculating device of the model, such as CPU or GPU.
+                """
                 def __init__(self,
                             config: Namespace,
                             envs: DummyVecEnv_Pettingzoo,
@@ -138,16 +146,11 @@ Source Code
                     optimizer = [torch.optim.Adam(policy.parameters_actor, config.lr_a, eps=1e-5),
                                 torch.optim.Adam(policy.parameters_critic, config.lr_c, eps=1e-5)]
                     scheduler = [torch.optim.lr_scheduler.LinearLR(optimizer[0], start_factor=1.0, end_factor=0.5,
-                                                                total_iters=get_total_iters(config.agent_name, config)),
+                                                                total_iters=config.running_steps),
                                 torch.optim.lr_scheduler.LinearLR(optimizer[1], start_factor=1.0, end_factor=0.5,
-                                                                total_iters=get_total_iters(config.agent_name, config))]
+                                                                total_iters=config.running_steps)]
                     self.observation_space = envs.observation_space
                     self.action_space = envs.action_space
-                    self.actions_high, self.actions_low = [], []
-                    for k in config.agent_keys:
-                        self.actions_high.append(self.action_space[k].high)
-                        self.actions_low.append(self.action_space[k].low)
-                    self.actions_high, self.actions_low = np.array(self.actions_high), np.array(self.actions_low)
                     self.representation_info_shape = policy.representation.output_shapes
                     self.auxiliary_info_shape = {}
 
@@ -179,13 +182,13 @@ Source Code
                         return None, actions
                     else:
                         actions += np.random.normal(0, self.args.sigma, size=actions.shape)
-                        actions = np.clip(actions, self.actions_low, self.actions_high)
                         return None, actions
 
                 def train(self, i_episode):
                     sample = self.memory.sample()
                     info_train = self.learner.update(sample)
                     return info_train
+
 
 
 

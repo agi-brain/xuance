@@ -181,7 +181,18 @@ Source Code
 
             from xuance.torch.agents import *
 
+
             class DQN_Agent(Agent):
+                """The implementation of DQN agent.
+
+                Args:
+                    config: the Namespace variable that provides hyper-parameters and other settings.
+                    envs: the vectorized environments.
+                    policy: the neural network modules of the agent.
+                    optimizer: the method of optimizing.
+                    scheduler: the learning rate decay scheduler.
+                    device: the calculating device of the model, such as CPU or GPU.
+                """
                 def __init__(self,
                             config: Namespace,
                             envs: DummyVecEnv_Gym,
@@ -211,12 +222,12 @@ Source Code
                                     config.n_size,
                                     config.batch_size)
                     learner = DQN_Learner(policy,
-                                            optimizer,
-                                            scheduler,
-                                            config.device,
-                                            config.model_dir,
-                                            config.gamma,
-                                            config.sync_frequency)
+                                        optimizer,
+                                        scheduler,
+                                        config.device,
+                                        config.model_dir,
+                                        config.gamma,
+                                        config.sync_frequency)
                     super(DQN_Agent, self).__init__(config, envs, policy, memory, learner, device, config.log_dir, config.model_dir)
 
                 def _action(self, obs, egreedy=0.0):
@@ -318,6 +329,7 @@ Source Code
                     test_envs.close()
 
                     return scores
+
 
     .. group-tab:: TensorFlow
     

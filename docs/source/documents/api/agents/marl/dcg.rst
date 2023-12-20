@@ -140,7 +140,15 @@ Source Code
             import torch.nn
             from xuance.torch.agents import *
 
+
             class DCG_Agents(MARLAgents):
+                """The implementation of DCG agents.
+
+                Args:
+                    config: the Namespace variable that provides hyper-parameters and other settings.
+                    envs: the vectorized environments.
+                    device: the calculating device of the model, such as CPU or GPU.
+                """
                 def __init__(self,
                             config: Namespace,
                             envs: DummyVecEnv_Pettingzoo,
@@ -231,20 +239,20 @@ Source Code
                         else:
                             return rnn_hidden_next, greedy_actions
 
-                def train(self, i_step):
+                def train(self, i_step, n_epoch=1):
                     if self.egreedy >= self.end_greedy:
                         self.egreedy = self.start_greedy - self.delta_egreedy * i_step
-
+                    info_train = {}
                     if i_step > self.start_training:
-                        sample = self.memory.sample()
-                        if self.use_recurrent:
-                            info_train = self.learner.update_recurrent(sample)
-                        else:
-                            info_train = self.learner.update(sample)
-                        info_train["epsilon-greedy"] = self.egreedy
-                        return info_train
-                    else:
-                        return {}
+                        for i_epoch in range(n_epoch):
+                            sample = self.memory.sample()
+                            if self.use_recurrent:
+                                info_train = self.learner.update_recurrent(sample)
+                            else:
+                                info_train = self.learner.update(sample)
+                    info_train["epsilon-greedy"] = self.egreedy
+                    return info_train
+
 
 
 

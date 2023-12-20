@@ -163,11 +163,17 @@ Source Code
     
         .. code-block:: python
 
-            import torch
             from xuance.torch.agents import *
-            from xuance.torch.agents.agents_marl import linear_decay_or_increase
+
 
             class COMA_Agents(MARLAgents):
+                """The implementation of COMA agents.
+
+                Args:
+                    config: the Namespace variable that provides hyper-parameters and other settings.
+                    envs: the vectorized environments.
+                    device: the calculating device of the model, such as CPU or GPU.
+                """
                 def __init__(self,
                             config: Namespace,
                             envs: DummyVecEnv_Pettingzoo,
@@ -270,18 +276,18 @@ Source Code
                         state = torch.Tensor(state).unsqueeze(1).to(self.device).repeat(1, self.n_agents, 1)
                         critic_in = torch.concat([state, obs_n, actions_in], dim=-1)
                     else:
-                        critic_in = torch.concat([obs_n, actions_in])
+                        critic_in = torch.concat([obs_n, actions_in], dim=-1)
                     # get critic values
                     hidden_state, values_n = self.policy.get_values(critic_in, target=True)
 
                     target_values = values_n.gather(-1, actions_n.long())
                     return hidden_state, target_values.detach().cpu().numpy()
 
-                def train(self, i_step):
+                def train(self, i_step, **kwargs):
                     if self.egreedy >= self.end_greedy:
                         self.egreedy = self.start_greedy - self.delta_egreedy * i_step
+                    info_train = {}
                     if self.memory.full:
-                        info_train = {}
                         indexes = np.arange(self.buffer_size)
                         for _ in range(self.n_epoch):
                             np.random.shuffle(indexes)
@@ -294,12 +300,8 @@ Source Code
                                 else:
                                     info_train = self.learner.update(sample, self.egreedy)
                         self.memory.clear()
-                        info_train["epsilon-greedy"] = self.egreedy
-                        return info_train
-                    else:
-                        return {"epsilon-greedy": self.egreedy}
-
-
+                    info_train["epsilon-greedy"] = self.egreedy
+                    return info_train
 
 
     .. group-tab:: TensorFlow
