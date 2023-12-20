@@ -31,6 +31,12 @@ Install via PyPI
 
 .. tabs::
 
+    .. group-tab:: No DL toolbox
+
+        .. code-block:: bash
+
+            pip install xuance
+
     .. group-tab:: PyTorch
 
         .. code-block:: bash
@@ -54,12 +60,6 @@ Install via PyPI
         .. code-block:: bash
 
             pip install xuance[all]
-    
-    .. group-tab:: No DL toolbox
-
-        .. code-block:: bash
-
-            pip install xuance
 
 
 Install from GitHub repository
@@ -99,6 +99,12 @@ Alternatively, you can install XuanCe from its GitHub repository.
 
 .. tabs::
 
+    .. group-tab:: No DL toolbox
+
+        .. code-block:: bash
+
+            pip install -e .
+
     .. group-tab:: PyTorch
 
         .. code-block:: bash
@@ -122,12 +128,6 @@ Alternatively, you can install XuanCe from its GitHub repository.
         .. code-block:: bash
 
             pip install -e .[all]
-    
-    .. group-tab:: No DL toolbox
-
-        .. code-block:: bash
-
-            pip install -e .
 
 .. note::
 

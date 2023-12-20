@@ -96,7 +96,11 @@ Taking the path "./logs/dqn/torch/CartPole-v0" as an example, users can visualiz
 
 .. code-block:: bash
 
-    tensorboard --logdir ./logs/dqn/torch/CartPole-v1/
+    tensorboard --logdir ./logs/dqn/torch/CartPole-v1/ --port 6006
+
+Then, we can see the training curves at http://localhost:6006/.
+
+.. image:: ../../figures/log/tensorboard.png
 
 **2. W&B**
 
