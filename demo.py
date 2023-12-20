@@ -9,6 +9,8 @@ def parse_args():
     parser.add_argument("--env-id", type=str, default="CartPole-v1")
     parser.add_argument("--test", type=int, default=0)
     parser.add_argument("--device", type=str, default="cuda:0")
+    # parser.add_argument("--logger", type=str, default="wandb")
+    # parser.add_argument("--wandb-user-name", type=str, default="papers_liu")
     return parser.parse_args()
 
 
