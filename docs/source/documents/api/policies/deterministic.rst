@@ -892,7 +892,7 @@ xxxxxx.
 
   xxxxxx.
 
-  :param rnn_hidden: xxxxxx.
+  :param rnn_hidden: The final hidden state of the sequence.
   :type rnn_hidden: xxxxxx
   :param i: xxxxxx.
   :type i: xxxxxx
@@ -1792,7 +1792,7 @@ xxxxxx.
 
   xxxxxx.
 
-  :param rnn_hidden: xxxxxx.
+  :param rnn_hidden: The final hidden state of the sequence.
   :type rnn_hidden: xxxxxx
   :param i: xxxxxx.
   :type i: xxxxxx
@@ -2685,7 +2685,7 @@ xxxxxx.
 
   :param observation: xxxxxx.
   :type observation: xxxxxx
-  :param rnn_hidden: xxxxxx.
+  :param rnn_hidden: The final hidden state of the sequence.
   :type rnn_hidden: xxxxxx
   :return: xxxxxx.
   :rtype: xxxxxx
@@ -2697,7 +2697,7 @@ xxxxxx.
 
   :param observation: xxxxxx.
   :type observation: xxxxxx
-  :param rnn_hidden: xxxxxx.
+  :param rnn_hidden: The final hidden state of the sequence.
   :type rnn_hidden: xxxxxx
   :return: xxxxxx.
   :rtype: xxxxxx
@@ -2717,7 +2717,7 @@ xxxxxx.
 
   xxxxxx.
 
-  :param rnn_hidden: xxxxxx.
+  :param rnn_hidden: The final hidden state of the sequence.
   :type rnn_hidden: xxxxxx
   :param i: xxxxxx.
   :type i: xxxxxx

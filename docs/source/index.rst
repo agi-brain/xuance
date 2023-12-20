@@ -29,7 +29,6 @@ and hope it can really become a zoo full of DRL algorithms.
 Currently, THe XuanCe has been open-sourced on GitHub and OpenI:
 
 | **GitHub**： `https://github.com/agi-brain/xuance.git <https://github.com/agi-brain/xuance.git/>`_
-| **OpenI**： `https://github.com/agi-brain/xuance.git <https://github.com/agi-brain/xuance.git/>`_
 
 .. raw:: html
 

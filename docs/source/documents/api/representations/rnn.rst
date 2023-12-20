@@ -165,7 +165,7 @@ Similarly, when implementing these classes in PyTorch, you also need to specify 
 
   :param i: xxxxxx.
   :type i: xxxxxx
-  :param rnn_hidden: xxxxxx.
+  :param rnn_hidden: The final hidden state of the sequence.
   :type rnn_hidden: xxxxxx
   :return: xxxxxx.
   :rtype: xxxxxx
@@ -177,7 +177,7 @@ Similarly, when implementing these classes in PyTorch, you also need to specify 
 
   :param i: xxxxxx.
   :type i: xxxxxx
-  :param rnn_hidden: xxxxxx.
+  :param rnn_hidden: The final hidden state of the sequence.
   :type rnn_hidden: xxxxxx
   :return: xxxxxx.
   :rtype: xxxxxx

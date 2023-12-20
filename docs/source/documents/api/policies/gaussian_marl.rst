@@ -788,7 +788,7 @@ Gaussian-MARL
   :type observation: xxxxxx
   :param agent_ids: xxxxxx.
   :type agent_ids: xxxxxx
-  :param rnn_hidden: xxxxxx.
+  :param rnn_hidden: The final hidden state of the sequence.
   :type rnn_hidden: xxxxxx
   :param kwargs: xxxxxx.
   :type kwargs: xxxxxx
@@ -804,7 +804,7 @@ Gaussian-MARL
   :type observation: xxxxxx
   :param agent_ids: xxxxxx.
   :type agent_ids: xxxxxx
-  :param rnn_hidden: xxxxxx.
+  :param rnn_hidden: The final hidden state of the sequence.
   :type rnn_hidden: xxxxxx
   :param kwargs: xxxxxx.
   :type kwargs: xxxxxx

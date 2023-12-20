@@ -127,7 +127,7 @@ COMA_Agents
 
     :param obs_n: xxxxxx.
     :type obs_n: xxxxxx
-    :param rnn_hidden: xxxxxx.
+    :param rnn_hidden: The final hidden state of the sequence.
     :type rnn_hidden: xxxxxx
     :param state: xxxxxx.
     :type state: xxxxxx

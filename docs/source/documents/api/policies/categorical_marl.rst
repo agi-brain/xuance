@@ -756,7 +756,7 @@ Categorical-MARL
   :type observation: xxxxxx
   :param agent_ids: xxxxxx.
   :type agent_ids: xxxxxx
-  :param rnn_hidden: xxxxxx.
+  :param rnn_hidden: The final hidden state of the sequence.
   :type rnn_hidden: xxxxxx
   :param avail_actions: xxxxxx.
   :type avail_actions: xxxxxx
@@ -772,7 +772,7 @@ Categorical-MARL
   :type critic_in: xxxxxx
   :param agent_ids: xxxxxx.
   :type agent_ids: xxxxxx
-  :param rnn_hidden: xxxxxx.
+  :param rnn_hidden: The final hidden state of the sequence.
   :type rnn_hidden: xxxxxx
   :return: xxxxxx.
   :rtype: xxxxxx
@@ -822,7 +822,7 @@ Categorical-MARL
   :type observation: xxxxxx
   :param agent_ids: xxxxxx.
   :type agent_ids: xxxxxx
-  :param rnn_hidden: xxxxxx.
+  :param rnn_hidden: The final hidden state of the sequence.
   :type rnn_hidden: xxxxxx
   :param avail_actions: xxxxxx.
   :type avail_actions: xxxxxx
@@ -870,7 +870,7 @@ Categorical-MARL
   :type observation: xxxxxx
   :param agent_ids: xxxxxx.
   :type agent_ids: xxxxxx
-  :param rnn_hidden: xxxxxx.
+  :param rnn_hidden: The final hidden state of the sequence.
   :type rnn_hidden: xxxxxx
   :param avail_actions: xxxxxx.
   :type avail_actions: xxxxxx
@@ -886,7 +886,7 @@ Categorical-MARL
 
   :param critic_in: xxxxxx.
   :type critic_in: xxxxxx
-  :param rnn_hidden: xxxxxx.
+  :param rnn_hidden: The final hidden state of the sequence.
   :type rnn_hidden: xxxxxx
   :param target: xxxxxx.
   :type target: xxxxxx
