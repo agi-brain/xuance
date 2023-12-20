@@ -1,5 +1,3 @@
-import torch
-
 from xuance.torch.agents import *
 
 
