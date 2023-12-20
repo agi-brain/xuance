@@ -18,14 +18,14 @@ PDQN_Learner
   :type scheduler: xxxxxx
   :param summary_writer: xxxxxx.
   :type summary_writer: xxxxxx
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param device: The calculating device.
+  :type device: str
   :param model_dir: xxxxxx.
   :type model_dir: xxxxxx
   :param gamma: xxxxxx.
   :type gamma: xxxxxx
-  :param tau: xxxxxx.
-  :type tau: xxxxxx
+  :param tau: The soft update factor for the update of target networks.
+  :type tau: float
 
 .. py:function::
   xuance.torch.learners.policy_gradient.pdqn_learner.PDQN_Learner.update(obs_batch, act_batch, rew_batch, next_batch, terminal_batch)
@@ -56,14 +56,14 @@ PDQN_Learner
   :type policy: xxxxxx
   :param optimizer: xxxxxx.
   :type optimizer: xxxxxx
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param device: The calculating device.
+  :type device: str
   :param model_dir: xxxxxx.
   :type model_dir: xxxxxx
   :param gamma: xxxxxx.
   :type gamma: xxxxxx
-  :param tau: xxxxxx.
-  :type tau: xxxxxx
+  :param tau: The soft update factor for the update of target networks.
+  :type tau: float
 
 .. py:function::
   xuance.tensorflow.learners.policy_gradient.pdqn_learner.PDQN_Learner.update(obs_batch, act_batch, rew_batch, next_batch, terminal_batch)
@@ -100,8 +100,8 @@ PDQN_Learner
   :type model_dir: xxxxxx
   :param gamma: xxxxxx.
   :type gamma: xxxxxx
-  :param tau: xxxxxx.
-  :type tau: xxxxxx
+  :param tau: The soft update factor for the update of target networks.
+  :type tau: float
 
 .. py:function::
   xuance.mindspore.learners.policy_gradient.pdqn_learner.PDQN_Learner.update(obs_batch, act_batch, rew_batch, next_batch, terminal_batch)

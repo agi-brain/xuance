@@ -50,8 +50,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param actions: xxxxxx.
-  :type actions: xxxxxx
+  :param actions: The actions input.
+  :type actions: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -60,8 +60,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param obs_n: xxxxxx.
-  :type obs_n: xxxxxx
+  :param obs_n: The joint observations of n agents.
+  :type obs_n: np.ndarray
   :param test_mode: xxxxxx.
   :type test_mode: xxxxxx
   :param act_mean_last: xxxxxx.
@@ -78,8 +78,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param obs_n: xxxxxx.
-  :type obs_n: xxxxxx
+  :param obs_n: The joint observations of n agents.
+  :type obs_n: np.ndarray
   :param next_obs_n: xxxxxx.
   :type next_obs_n: xxxxxx
   :param actions_dict: xxxxxx.
@@ -170,8 +170,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param actions: xxxxxx.
-  :type actions: xxxxxx
+  :param actions: The actions input.
+  :type actions: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -180,8 +180,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param obs_n: xxxxxx.
-  :type obs_n: xxxxxx
+  :param obs_n: The joint observations of n agents.
+  :type obs_n: np.ndarray
   :param test_mode: xxxxxx.
   :type test_mode: xxxxxx
   :param act_mean_last: xxxxxx.
@@ -198,8 +198,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param obs_n: xxxxxx.
-  :type obs_n: xxxxxx
+  :param obs_n: The joint observations of n agents.
+  :type obs_n: np.ndarray
   :param next_obs_n: xxxxxx.
   :type next_obs_n: xxxxxx
   :param actions_dict: xxxxxx.
@@ -282,14 +282,14 @@ xxxxxx.
 .. py:function::
   xuance.mindspore.runners.runner_pettingzoo.Pettingzoo_Runner.combine_env_actions(actions)
 
-  :param actions: xxxxxx.
-  :type actions: xxxxxx
+  :param actions: The actions input.
+  :type actions: Tensor
 
 .. py:function::
   xuance.mindspore.runners.runner_pettingzoo.Pettingzoo_Runner.get_actions(obs_n, test_mode, act_mean_last, agent_mask, state)
 
-  :param obs_n: xxxxxx.
-  :type obs_n: xxxxxx
+  :param obs_n: The joint observations of n agents.
+  :type obs_n: np.ndarray
   :param test_mode: xxxxxx.
   :type test_mode: xxxxxx
   :param act_mean_last: xxxxxx.
@@ -302,8 +302,8 @@ xxxxxx.
 .. py:function::
   xuance.mindspore.runners.runner_pettingzoo.Pettingzoo_Runner.store_data(obs_n, next_obs_n, actions_dict, state, next_state, agent_mask, rew_n, done_n)
 
-  :param obs_n: xxxxxx.
-  :type obs_n: xxxxxx
+  :param obs_n: The joint observations of n agents.
+  :type obs_n: np.ndarray
   :param next_obs_n: xxxxxx.
   :type next_obs_n: xxxxxx
   :param actions_dict: xxxxxx.

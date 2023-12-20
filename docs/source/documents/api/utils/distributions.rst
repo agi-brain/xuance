@@ -30,8 +30,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param x: xxxxxx.
-  :type x: xxxxxx
+  :param x: The input tensor.
+  :type x: torch.Tensor
 
 .. py:function::
   xuance.torch.utils.distributions.Distribution.entropy()
@@ -56,16 +56,16 @@ xxxxxx.
 
   xxxxxx.
 
-  :param action_dim: xxxxxx.
-  :type action_dim: xxxxxx
+  :param action_dim: The dimension of the action input.
+  :type action_dim: int
 
 .. py:function::
   xuance.torch.utils.distributions.CategoricalDistribution.set_param(logits)
 
   xxxxxx.
 
-  :param logits: xxxxxx.
-  :type logits: xxxxxx
+  :param logits: The logits for categorical distributions.
+  :type logits: Tensor
 
 .. py:function::
   xuance.torch.utils.distributions.CategoricalDistribution.get_param()
@@ -80,8 +80,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param x: xxxxxx.
-  :type x: xxxxxx
+  :param x: The input tensor.
+  :type x: torch.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -127,16 +127,16 @@ xxxxxx.
 
   xxxxxx.
 
-  :param action_dim: xxxxxx.
-  :type action_dim: xxxxxx
+  :param action_dim: The dimension of the action input.
+  :type action_dim: int
 
 .. py:function::
   xuance.torch.utils.distributions.DiagGaussianDistribution.set_param(mu, std)
 
   xxxxxx.
 
-  :param mu: xxxxxx.
-  :type mu: xxxxxx
+  :param mu: Mean value.
+  :type mu: np.ndarray
   :param std: xxxxxx.
   :type std: xxxxxx
 
@@ -153,8 +153,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param x: xxxxxx.
-  :type x: xxxxxx
+  :param x: The input tensor.
+  :type x: torch.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -227,8 +227,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param x: xxxxxx.
-  :type x: xxxxxx
+  :param x: The input tensor.
+  :type x: torch.Tensor
 
 .. py:function::
   xuance.tensorflow.utils.distributions.Distribution.entropy()
@@ -253,16 +253,16 @@ xxxxxx.
 
   xxxxxx.
 
-  :param action_dim: xxxxxx.
-  :type action_dim: xxxxxx
+  :param action_dim: The dimension of the action input.
+  :type action_dim: int
 
 .. py:function::
   xuance.tensorflow.utils.distributions.CategoricalDistribution.set_param(logits)
 
   xxxxxx.
 
-  :param logits: xxxxxx.
-  :type logits: xxxxxx
+  :param logits: The logits for categorical distributions.
+  :type logits: Tensor
 
 .. py:function::
   xuance.tensorflow.utils.distributions.CategoricalDistribution.get_param()
@@ -277,8 +277,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param x: xxxxxx.
-  :type x: xxxxxx
+  :param x: The input tensor.
+  :type x: torch.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -324,16 +324,16 @@ xxxxxx.
 
   xxxxxx.
 
-  :param action_dim: xxxxxx.
-  :type action_dim: xxxxxx
+  :param action_dim: The dimension of the action input.
+  :type action_dim: int
 
 .. py:function::
   xuance.tensorflow.utils.distributions.DiagGaussianDistribution.set_param(mu, std)
 
   xxxxxx.
 
-  :param mu: xxxxxx.
-  :type mu: xxxxxx
+  :param mu: Mean value.
+  :type mu: np.ndarray
   :param std: xxxxxx.
   :type std: xxxxxx
 
@@ -350,8 +350,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param x: xxxxxx.
-  :type x: xxxxxx
+  :param x: The input tensor.
+  :type x: torch.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -418,8 +418,8 @@ xxxxxx.
 .. py:function::
   xuance.mindspore.utils.distributions.Distribution.log_prob(x)
 
-  :param x: xxxxxx.
-  :type x: xxxxxx
+  :param x: The input tensor.
+  :type x: torch.Tensor
 
 .. py:function::
   xuance.mindspore.utils.distributions.Distribution.entropy()
@@ -433,14 +433,14 @@ xxxxxx.
 .. py:class::
   xuance.mindspore.utils.distributions.CategoricalDistribution(action_dim)
 
-  :param action_dim: xxxxxx.
-  :type action_dim: xxxxxx
+  :param action_dim: The dimension of the action input.
+  :type action_dim: int
 
 .. py:function::
   xuance.mindspore.utils.distributions.CategoricalDistribution.set_param(logits)
 
-  :param logits: xxxxxx.
-  :type logits: xxxxxx
+  :param logits: The logits for categorical distributions.
+  :type logits: Tensor
 
 .. py:function::
   xuance.mindspore.utils.distributions.CategoricalDistribution.get_param()
@@ -451,8 +451,8 @@ xxxxxx.
 .. py:function::
   xuance.mindspore.utils.distributions.CategoricalDistribution.log_prob(x)
 
-  :param x: xxxxxx.
-  :type x: xxxxxx
+  :param x: The input tensor.
+  :type x: torch.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 

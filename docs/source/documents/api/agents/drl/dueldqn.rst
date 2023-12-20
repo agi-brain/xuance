@@ -29,7 +29,7 @@ DuelDQN_Agent
     Calculate actions according to the observations.
 
     :param obs: The observation of current step.
-    :type obs: numpy.ndarray
+    :type obs: np.ndarray
     :param egreedy: The epsilong greedy factor.
     :type egreedy: np.float
     :return: **action** - The actions to be executed.
@@ -80,7 +80,7 @@ DuelDQN_Agent
     Calculate actions according to the observations.
 
     :param obs: The observation of current step.
-    :type obs: numpy.ndarray
+    :type obs: np.ndarray
     :param egreedy: The epsilong greedy factor.
     :type egreedy: np.float
     :return: **action** - The actions to be executed.
@@ -128,10 +128,10 @@ DuelDQN_Agent
 .. py:function::
     xuance.mindspore.agents.qlearning_family.dueldqn_agent.DuelDQN_Agent._action(obs, egreedy)
 
-    :param obs: xxxxxx.
-    :type obs: xxxxxx
-    :param egreedy: xxxxxx.
-    :type egreedy: xxxxxx
+    :param obs: The observation variables.
+    :type obs: np.ndarray
+    :param egreedy: The epsilon greedy factor.
+    :type egreedy: float
     :return: xxxxxx.
     :rtype: xxxxxx
 

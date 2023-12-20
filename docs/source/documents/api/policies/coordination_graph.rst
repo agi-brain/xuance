@@ -68,8 +68,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param device: The calculating device.
+  :type device: str
   :return: xxxxxx.
   :rtype: xxxxxx
 

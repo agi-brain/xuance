@@ -29,7 +29,7 @@ PPOKL_Agent
   Calculate actions according to the observations.
 
   :param obs: The observation of current step.
-  :type obs: numpy.ndarray
+  :type obs: np.ndarray
   :return: **action**, **vs**, **dist** - The actions to be executed. The values calculated by critic network. The distributions of the stochastic policy.
   :rtype: np.ndarray, np.ndarray
   
@@ -78,7 +78,7 @@ PPOKL_Agent
   Calculate actions according to the observations.
 
   :param obs: The observation of current step.
-  :type obs: numpy.ndarray
+  :type obs: np.ndarray
   :return: **action**, **vs**, **dist** - The actions to be executed. The values calculated by critic network. The distributions of the stochastic policy.
   :rtype: np.ndarray, np.ndarray
 
@@ -125,8 +125,8 @@ PPOKL_Agent
 .. py:function::
     xuance.mindspore.agents.policy_gradient.ppokl_agent.PPOKL_Agent._process_observation(observations)
 
-    :param observations: xxxxxx.
-    :type observations: xxxxxx
+    :param observations: The original observation variables.
+    :type observations: Tensor
     :return: xxxxxx.
     :rtype: xxxxxx
 
@@ -141,8 +141,8 @@ PPOKL_Agent
 .. py:function::
     xuance.mindspore.agents.policy_gradient.ppokl_agent.PPOKL_Agent._action(obs)
 
-    :param obs: xxxxxx.
-    :type obs: xxxxxx
+    :param obs: The observation variables.
+    :type obs: np.ndarray
     :return: xxxxxx.
     :rtype: xxxxxx
 

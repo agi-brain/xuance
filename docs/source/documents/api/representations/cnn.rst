@@ -49,7 +49,7 @@ When implementing this class in PyTorch, you also need to specify the device typ
     Calculate feature representation of the input observations.
 
     :param observations: The observation of current step.
-    :type observations: numpy.ndarray
+    :type observations: np.ndarray
     :return: The features output by the representation model.
     :rtype: dict
 
@@ -102,7 +102,7 @@ When implementing this class in PyTorch, you also need to specify the device typ
     Calculate feature representation of the input observations.
 
     :param observations: The observation of current step.
-    :type observations: numpy.ndarray
+    :type observations: np.ndarray
     :return: The features output by the representation model.
     :rtype: dict
 
@@ -145,7 +145,7 @@ When implementing this class in PyTorch, you also need to specify the device typ
     Calculate feature representation of the input observations.
 
     :param observations: The observation of current step.
-    :type observations: numpy.ndarray
+    :type observations: np.ndarray
     :return: The features output by the representation model.
     :rtype: dict
 
@@ -166,12 +166,12 @@ When implementing this class in PyTorch, you also need to specify the device typ
   :type strides: xxxxxx
   :param filters: xxxxxx.
   :type filters: xxxxxx
-  :param normalize: xxxxxx.
-  :type normalize: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
+  :param normalize: The method of normalization.
+  :type normalize: nn.Module
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
 
 .. py:function::
   xuance.mindspore.representations.cnn.Basic_CNN._create_network()
@@ -186,8 +186,8 @@ When implementing this class in PyTorch, you also need to specify the device typ
 
   xxxxxx.
 
-  :param observations: xxxxxx.
-  :type observations: xxxxxx
+  :param observations: The original observation variables.
+  :type observations: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -202,12 +202,12 @@ When implementing this class in PyTorch, you also need to specify the device typ
   :type strides: xxxxxx
   :param filters: xxxxxx.
   :type filters: xxxxxx
-  :param normalize: xxxxxx.
-  :type normalize: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
+  :param normalize: The method of normalization.
+  :type normalize: nn.Module
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
   :param fc_hidden_sizes: xxxxxx.
   :type fc_hidden_sizes: xxxxxx
 
@@ -218,8 +218,8 @@ When implementing this class in PyTorch, you also need to specify the device typ
 
   :param layer: xxxxxx.
   :type layer: xxxxxx
-  :param gain: xxxxxx.
-  :type gain: xxxxxx
+  :param gain: optional scaling factor.
+  :type gain: float
   :param bias: xxxxxx.
   :type bias: xxxxxx
   :return: xxxxxx.
@@ -238,8 +238,8 @@ When implementing this class in PyTorch, you also need to specify the device typ
 
   xxxxxx.
 
-  :param observations: xxxxxx.
-  :type observations: xxxxxx
+  :param observations: The original observation variables.
+  :type observations: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 

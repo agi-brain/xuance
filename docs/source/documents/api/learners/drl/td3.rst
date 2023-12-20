@@ -16,14 +16,14 @@ TD3_Learner
   :type optimizer: xxxxxx
   :param scheduler: xxxxxx.
   :type scheduler: xxxxxx
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param device: The calculating device.
+  :type device: str
   :param model_dir: xxxxxx.
   :type model_dir: xxxxxx
   :param gamma: xxxxxx.
   :type gamma: xxxxxx
-  :param tau: xxxxxx.
-  :type tau: xxxxxx
+  :param tau: The soft update factor for the update of target networks.
+  :type tau: float
   :param delay: xxxxxx.
   :type delay: xxxxxx
 
@@ -56,14 +56,14 @@ TD3_Learner
   :type policy: xxxxxx
   :param optimizer: xxxxxx.
   :type optimizer: xxxxxx
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param device: The calculating device.
+  :type device: str
   :param model_dir: xxxxxx.
   :type model_dir: xxxxxx
   :param gamma: xxxxxx.
   :type gamma: xxxxxx
-  :param tau: xxxxxx.
-  :type tau: xxxxxx
+  :param tau: The soft update factor for the update of target networks.
+  :type tau: float
   :param delay: xxxxxx.
   :type delay: xxxxxx
 
@@ -102,8 +102,8 @@ TD3_Learner
   :type model_dir: xxxxxx
   :param gamma: xxxxxx.
   :type gamma: xxxxxx
-  :param tau: xxxxxx.
-  :type tau: xxxxxx
+  :param tau: The soft update factor for the update of target networks.
+  :type tau: float
   :param delay: xxxxxx.
   :type delay: xxxxxx
 

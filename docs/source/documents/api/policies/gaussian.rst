@@ -12,104 +12,104 @@ xxxxxx.
 .. py:class::
   xuance.torch.policies.gaussian.ActorNet(state_dim, action_dim, hidden_sizes, normalize, initialize, activation, device)
 
-  :param state_dim: xxxxxx.
-  :type state_dim: xxxxxx
-  :param action_dim: xxxxxx.
-  :type action_dim: xxxxxx
+  :param state_dim: The dimension of the input state.
+  :type state_dim: int
+  :param action_dim: The dimension of the action input.
+  :type action_dim: int
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
-  :param normalize: xxxxxx.
-  :type normalize: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param normalize: The method of normalization.
+  :type normalize: nn.Module
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
+  :param device: The calculating device.
+  :type device: str
 
 .. py:function::
   xuance.torch.policies.gaussian.ActorNet.forward(x)
 
   xxxxxx.
 
-  :param x: xxxxxx.
-  :type x: xxxxxx
+  :param x: The input tensor.
+  :type x: torch.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
 .. py:class::
   xuance.torch.policies.gaussian.CriticNet(state_dim, hidden_sizes, normalize, initialize, activation, device)
 
-  :param state_dim: xxxxxx.
-  :type state_dim: xxxxxx
+  :param state_dim: The dimension of the input state.
+  :type state_dim: int
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
-  :param normalize: xxxxxx.
-  :type normalize: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param normalize: The method of normalization.
+  :type normalize: nn.Module
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
+  :param device: The calculating device.
+  :type device: str
 
 .. py:function::
   xuance.torch.policies.gaussian.CriticNet.forward(x)
 
   xxxxxx.
 
-  :param x: xxxxxx.
-  :type x: xxxxxx
+  :param x: The input tensor.
+  :type x: torch.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
 .. py:class::
   xuance.torch.policies.gaussian.ActorCriticPolicy(action_space, representation, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device)
 
-  :param action_space: xxxxxx.
-  :type action_space: xxxxxx
-  :param representation: xxxxxx.
-  :type representation: xxxxxx
-  :param actor_hidden_size: xxxxxx.
-  :type actor_hidden_size: xxxxxx
-  :param critic_hidden_size: xxxxxx.
-  :type critic_hidden_size: xxxxxx
-  :param normalize: xxxxxx.
-  :type normalize: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param action_space: The action space of the environment.
+  :type action_space: Box, Discrete, etc
+  :param representation: The representation module.
+  :type representation: nn.Module
+  :param actor_hidden_size: The sizes of the hidden layers in actor network.
+  :type actor_hidden_size: list
+  :param critic_hidden_size: The sizes of the hidden layers in critic networks.
+  :type critic_hidden_size: list
+  :param normalize: The method of normalization.
+  :type normalize: nn.Module
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
+  :param device: The calculating device.
+  :type device: str
 
 .. py:function::
   xuance.torch.policies.gaussian.ActorCriticPolicy.forward(observation)
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
 .. py:class::
   xuance.torch.policies.gaussian.ActorPolicy(action_space, representation, actor_hidden_size, normalize, initialize, activation, device, fixed_std)
 
-  :param action_space: xxxxxx.
-  :type action_space: xxxxxx
-  :param representation: xxxxxx.
-  :type representation: xxxxxx
-  :param actor_hidden_size: xxxxxx.
-  :type actor_hidden_size: xxxxxx
-  :param normalize: xxxxxx.
-  :type normalize: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param action_space: The action space of the environment.
+  :type action_space: Box, Discrete, etc
+  :param representation: The representation module.
+  :type representation: nn.Module
+  :param actor_hidden_size: The sizes of the hidden layers in actor network.
+  :type actor_hidden_size: list
+  :param normalize: The method of normalization.
+  :type normalize: nn.Module
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
+  :param device: The calculating device.
+  :type device: str
   :param fixed_std: xxxxxx.
   :type fixed_std: xxxxxx
 
@@ -118,94 +118,94 @@ xxxxxx.
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
 .. py:class::
   xuance.torch.policies.gaussian.PPGActorCritic(action_space, representation, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device)
 
-  :param action_space: xxxxxx.
-  :type action_space: xxxxxx
-  :param representation: xxxxxx.
-  :type representation: xxxxxx
-  :param actor_hidden_size: xxxxxx.
-  :type actor_hidden_size: xxxxxx
-  :param critic_hidden_size: xxxxxx.
-  :type critic_hidden_size: xxxxxx
-  :param normalize: xxxxxx.
-  :type normalize: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param action_space: The action space of the environment.
+  :type action_space: Box, Discrete, etc
+  :param representation: The representation module.
+  :type representation: nn.Module
+  :param actor_hidden_size: The sizes of the hidden layers in actor network.
+  :type actor_hidden_size: list
+  :param critic_hidden_size: The sizes of the hidden layers in critic networks.
+  :type critic_hidden_size: list
+  :param normalize: The method of normalization.
+  :type normalize: nn.Module
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
+  :param device: The calculating device.
+  :type device: str
 
 .. py:function::
   xuance.torch.policies.gaussian.PPGActorCritic.forward(observation)
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
 .. py:class::
   xuance.torch.policies.gaussian.ActorNet_SAC(state_dim, action_dim, hidden_sizes, normalize, initialize, activation, device)
 
-  :param state_dim: xxxxxx.
-  :type state_dim: xxxxxx
-  :param action_dim: xxxxxx.
-  :type action_dim: xxxxxx
+  :param state_dim: The dimension of the input state.
+  :type state_dim: int
+  :param action_dim: The dimension of the action input.
+  :type action_dim: int
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
-  :param normalize: xxxxxx.
-  :type normalize: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param normalize: The method of normalization.
+  :type normalize: nn.Module
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
+  :param device: The calculating device.
+  :type device: str
 
 .. py:function::
   xuance.torch.policies.gaussian.ActorNet_SAC.forward(x)
 
   xxxxxx.
 
-  :param x: xxxxxx.
-  :type x: xxxxxx
+  :param x: The input tensor.
+  :type x: torch.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
 .. py:class::
   xuance.torch.policies.gaussian.CriticNet_SAC(state_dim, action_dim, hidden_sizes, normalize, initialize, activation, device)
 
-  :param state_dim: xxxxxx.
-  :type state_dim: xxxxxx
-  :param action_dim: xxxxxx.
-  :type action_dim: xxxxxx
+  :param state_dim: The dimension of the input state.
+  :type state_dim: int
+  :param action_dim: The dimension of the action input.
+  :type action_dim: int
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
-  :param normalize: xxxxxx.
-  :type normalize: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param normalize: The method of normalization.
+  :type normalize: nn.Module
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
+  :param device: The calculating device.
+  :type device: str
 
 .. py:function::
   xuance.torch.policies.gaussian.CriticNet_SAC.forward(x, a)
 
   xxxxxx.
 
-  :param x: xxxxxx.
-  :type x: xxxxxx
+  :param x: The input tensor.
+  :type x: torch.Tensor
   :param a: xxxxxx.
   :type a: xxxxxx
   :return: xxxxxx.
@@ -214,30 +214,30 @@ xxxxxx.
 .. py:class::
   xuance.torch.policies.gaussian.SACPolicy(action_space, representation, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device)
 
-  :param action_space: xxxxxx.
-  :type action_space: xxxxxx
-  :param representation: xxxxxx.
-  :type representation: xxxxxx
-  :param actor_hidden_size: xxxxxx.
-  :type actor_hidden_size: xxxxxx
-  :param critic_hidden_size: xxxxxx.
-  :type critic_hidden_size: xxxxxx
-  :param normalize: xxxxxx.
-  :type normalize: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param action_space: The action space of the environment.
+  :type action_space: Box, Discrete, etc
+  :param representation: The representation module.
+  :type representation: nn.Module
+  :param actor_hidden_size: The sizes of the hidden layers in actor network.
+  :type actor_hidden_size: list
+  :param critic_hidden_size: The sizes of the hidden layers in critic networks.
+  :type critic_hidden_size: list
+  :param normalize: The method of normalization.
+  :type normalize: nn.Module
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
+  :param device: The calculating device.
+  :type device: str
 
 .. py:function::
   xuance.torch.policies.gaussian.SACPolicy.forward(observation)
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -246,8 +246,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -256,8 +256,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :param action: xxxxxx.
   :type action: xxxxxx
   :return: xxxxxx.
@@ -268,8 +268,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -278,8 +278,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param tau: xxxxxx.
-  :type tau: xxxxxx
+  :param tau: The soft update factor for the update of target networks.
+  :type tau: float
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -292,104 +292,104 @@ xxxxxx.
 .. py:class::
   xuance.tensorflow.policies.gaussian.ActorNet(state_dim, action_dim, hidden_sizes, normalize, initialize, activation, device)
 
-  :param state_dim: xxxxxx.
-  :type state_dim: xxxxxx
-  :param action_dim: xxxxxx.
-  :type action_dim: xxxxxx
+  :param state_dim: The dimension of the input state.
+  :type state_dim: int
+  :param action_dim: The dimension of the action input.
+  :type action_dim: int
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
-  :param normalize: xxxxxx.
-  :type normalize: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param normalize: The method of normalization.
+  :type normalize: nn.Module
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
+  :param device: The calculating device.
+  :type device: str
 
 .. py:function::
   xuance.tensorflow.policies.gaussian.ActorNet.call(x)
 
   xxxxxx.
 
-  :param x: xxxxxx.
-  :type x: xxxxxx
+  :param x: The input tensor.
+  :type x: torch.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
 .. py:class::
   xuance.tensorflow.policies.gaussian.CriticNet(state_dim, hidden_sizes, normalize, initialize, activation, device)
 
-  :param state_dim: xxxxxx.
-  :type state_dim: xxxxxx
+  :param state_dim: The dimension of the input state.
+  :type state_dim: int
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
-  :param normalize: xxxxxx.
-  :type normalize: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param normalize: The method of normalization.
+  :type normalize: nn.Module
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
+  :param device: The calculating device.
+  :type device: str
 
 .. py:function::
   xuance.tensorflow.policies.gaussian.CriticNet.call(x)
 
   xxxxxx.
 
-  :param x: xxxxxx.
-  :type x: xxxxxx
+  :param x: The input tensor.
+  :type x: torch.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
 .. py:class::
   xuance.tensorflow.policies.gaussian.ActorCriticPolicy(action_space, representation, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device)
 
-  :param action_space: xxxxxx.
-  :type action_space: xxxxxx
-  :param representation: xxxxxx.
-  :type representation: xxxxxx
-  :param actor_hidden_size: xxxxxx.
-  :type actor_hidden_size: xxxxxx
-  :param critic_hidden_size: xxxxxx.
-  :type critic_hidden_size: xxxxxx
-  :param normalize: xxxxxx.
-  :type normalize: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param action_space: The action space of the environment.
+  :type action_space: Box, Discrete, etc
+  :param representation: The representation module.
+  :type representation: nn.Module
+  :param actor_hidden_size: The sizes of the hidden layers in actor network.
+  :type actor_hidden_size: list
+  :param critic_hidden_size: The sizes of the hidden layers in critic networks.
+  :type critic_hidden_size: list
+  :param normalize: The method of normalization.
+  :type normalize: nn.Module
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
+  :param device: The calculating device.
+  :type device: str
 
 .. py:function::
   xuance.tensorflow.policies.gaussian.ActorCriticPolicy.call(observation)
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
 .. py:class::
   xuance.tensorflow.policies.gaussian.ActorPolicy(action_space, representation, actor_hidden_size, normalize, initialize, activation, device, fixed_std)
 
-  :param action_space: xxxxxx.
-  :type action_space: xxxxxx
-  :param representation: xxxxxx.
-  :type representation: xxxxxx
-  :param actor_hidden_size: xxxxxx.
-  :type actor_hidden_size: xxxxxx
-  :param normalize: xxxxxx.
-  :type normalize: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param action_space: The action space of the environment.
+  :type action_space: Box, Discrete, etc
+  :param representation: The representation module.
+  :type representation: nn.Module
+  :param actor_hidden_size: The sizes of the hidden layers in actor network.
+  :type actor_hidden_size: list
+  :param normalize: The method of normalization.
+  :type normalize: nn.Module
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
+  :param device: The calculating device.
+  :type device: str
   :param fixed_std: xxxxxx.
   :type fixed_std: xxxxxx
 
@@ -398,124 +398,124 @@ xxxxxx.
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
 .. py:class::
   xuance.tensorflow.policies.gaussian.PPGActorCritic(action_space, representation, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device)
 
-  :param action_space: xxxxxx.
-  :type action_space: xxxxxx
-  :param representation: xxxxxx.
-  :type representation: xxxxxx
-  :param actor_hidden_size: xxxxxx.
-  :type actor_hidden_size: xxxxxx
-  :param critic_hidden_size: xxxxxx.
-  :type critic_hidden_size: xxxxxx
-  :param normalize: xxxxxx.
-  :type normalize: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param action_space: The action space of the environment.
+  :type action_space: Box, Discrete, etc
+  :param representation: The representation module.
+  :type representation: nn.Module
+  :param actor_hidden_size: The sizes of the hidden layers in actor network.
+  :type actor_hidden_size: list
+  :param critic_hidden_size: The sizes of the hidden layers in critic networks.
+  :type critic_hidden_size: list
+  :param normalize: The method of normalization.
+  :type normalize: nn.Module
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
+  :param device: The calculating device.
+  :type device: str
 
 .. py:function::
   xuance.tensorflow.policies.gaussian.PPGActorCritic.call(observation)
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
 .. py:class::
   xuance.tensorflow.policies.gaussian.ActorNet_SAC(state_dim, action_dim, hidden_sizes, normalize, initialize, activation, device)
 
-  :param state_dim: xxxxxx.
-  :type state_dim: xxxxxx
-  :param action_dim: xxxxxx.
-  :type action_dim: xxxxxx
+  :param state_dim: The dimension of the input state.
+  :type state_dim: int
+  :param action_dim: The dimension of the action input.
+  :type action_dim: int
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
-  :param normalize: xxxxxx.
-  :type normalize: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param normalize: The method of normalization.
+  :type normalize: nn.Module
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
+  :param device: The calculating device.
+  :type device: str
 
 .. py:function::
   xuance.tensorflow.policies.gaussian.ActorNet_SAC.call(x)
 
   xxxxxx.
 
-  :param x: xxxxxx.
-  :type x: xxxxxx
+  :param x: The input tensor.
+  :type x: torch.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
 .. py:class::
   xuance.tensorflow.policies.gaussian.CriticNet_SAC(state_dim, action_dim, hidden_sizes, normalize, initialize, activation, device)
 
-  :param state_dim: xxxxxx.
-  :type state_dim: xxxxxx
-  :param action_dim: xxxxxx.
-  :type action_dim: xxxxxx
+  :param state_dim: The dimension of the input state.
+  :type state_dim: int
+  :param action_dim: The dimension of the action input.
+  :type action_dim: int
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
-  :param normalize: xxxxxx.
-  :type normalize: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param normalize: The method of normalization.
+  :type normalize: nn.Module
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
+  :param device: The calculating device.
+  :type device: str
 
 .. py:function::
   xuance.tensorflow.policies.gaussian.CriticNet_SAC.call(inputs)
 
   xxxxxx.
 
-  :param inputs: xxxxxx.
-  :type inputs: xxxxxx
+  :param inputs: The inputs of the neural neworks.
+  :type inputs: Dict(tf.Tensor)
   :return: xxxxxx.
   :rtype: xxxxxx
 
 .. py:class::
   xuance.tensorflow.policies.gaussian.SACPolicy(action_space, representation, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device)
 
-  :param action_space: xxxxxx.
-  :type action_space: xxxxxx
-  :param representation: xxxxxx.
-  :type representation: xxxxxx
-  :param actor_hidden_size: xxxxxx.
-  :type actor_hidden_size: xxxxxx
-  :param critic_hidden_size: xxxxxx.
-  :type critic_hidden_size: xxxxxx
-  :param normalize: xxxxxx.
-  :type normalize: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param action_space: The action space of the environment.
+  :type action_space: Box, Discrete, etc
+  :param representation: The representation module.
+  :type representation: nn.Module
+  :param actor_hidden_size: The sizes of the hidden layers in actor network.
+  :type actor_hidden_size: list
+  :param critic_hidden_size: The sizes of the hidden layers in critic networks.
+  :type critic_hidden_size: list
+  :param normalize: The method of normalization.
+  :type normalize: nn.Module
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
+  :param device: The calculating device.
+  :type device: str
 
 .. py:function::
   xuance.tensorflow.policies.gaussian.SACPolicy.call(observation)
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -524,8 +524,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -534,8 +534,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :param action: xxxxxx.
   :type action: xxxxxx
   :return: xxxxxx.
@@ -546,8 +546,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -556,8 +556,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param tau: xxxxxx.
-  :type tau: xxxxxx
+  :param tau: The soft update factor for the update of target networks.
+  :type tau: float
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -570,152 +570,152 @@ xxxxxx.
 .. py:class::
   xuance.mindspore.policies.gaussian.ActorNet(state_dim, action_dim, hidden_sizes, normalize, initialize, activation)
 
-  :param state_dim: xxxxxx.
-  :type state_dim: xxxxxx
-  :param action_dim: xxxxxx.
-  :type action_dim: xxxxxx
+  :param state_dim: The dimension of the input state.
+  :type state_dim: int
+  :param action_dim: The dimension of the action input.
+  :type action_dim: int
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
-  :param normalize: xxxxxx.
-  :type normalize: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
+  :param normalize: The method of normalization.
+  :type normalize: nn.Module
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
 
 .. py:function::
   xuance.mindspore.policies.gaussian.ActorNet.construct(x)
 
   xxxxxx.
 
-  :param x: xxxxxx.
-  :type x: xxxxxx
+  :param x: The input tensor.
+  :type x: torch.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
 .. py:class::
   xuance.mindspore.policies.gaussian.CriticNet(state_dim, hidden_sizes, normalize, initialize, activation)
 
-  :param state_dim: xxxxxx.
-  :type state_dim: xxxxxx
+  :param state_dim: The dimension of the input state.
+  :type state_dim: int
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
-  :param normalize: xxxxxx.
-  :type normalize: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
+  :param normalize: The method of normalization.
+  :type normalize: nn.Module
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
 
 .. py:function::
   xuance.mindspore.policies.gaussian.CriticNet.construct(x)
 
   xxxxxx.
 
-  :param x: xxxxxx.
-  :type x: xxxxxx
+  :param x: The input tensor.
+  :type x: torch.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
 .. py:class::
   xuance.mindspore.policies.gaussian.ActorCriticPolicy(action_space, representation, actor_hidden_size, critic_hidden_size, normalize, initialize, activation)
 
-  :param action_space: xxxxxx.
-  :type action_space: xxxxxx
-  :param representation: xxxxxx.
-  :type representation: xxxxxx
-  :param actor_hidden_size: xxxxxx.
-  :type actor_hidden_size: xxxxxx
-  :param critic_hidden_size: xxxxxx.
-  :type critic_hidden_size: xxxxxx
-  :param normalize: xxxxxx.
-  :type normalize: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
+  :param action_space: The action space of the environment.
+  :type action_space: Box, Discrete, etc
+  :param representation: The representation module.
+  :type representation: nn.Module
+  :param actor_hidden_size: The sizes of the hidden layers in actor network.
+  :type actor_hidden_size: list
+  :param critic_hidden_size: The sizes of the hidden layers in critic networks.
+  :type critic_hidden_size: list
+  :param normalize: The method of normalization.
+  :type normalize: nn.Module
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
 
 .. py:function::
   xuance.mindspore.policies.gaussian.ActorCriticPolicy.construct(observation)
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
 .. py:class::
   xuance.mindspore.policies.gaussian.ActorPolicy(action_space, representation, actor_hidden_size, normalize, initialize, activation)
 
-  :param action_space: xxxxxx.
-  :type action_space: xxxxxx
-  :param representation: xxxxxx.
-  :type representation: xxxxxx
-  :param actor_hidden_size: xxxxxx.
-  :type actor_hidden_size: xxxxxx
-  :param normalize: xxxxxx.
-  :type normalize: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
+  :param action_space: The action space of the environment.
+  :type action_space: Box, Discrete, etc
+  :param representation: The representation module.
+  :type representation: nn.Module
+  :param actor_hidden_size: The sizes of the hidden layers in actor network.
+  :type actor_hidden_size: list
+  :param normalize: The method of normalization.
+  :type normalize: nn.Module
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
 
 .. py:function::
   xuance.mindspore.policies.gaussian.ActorPolicy.construct(observation)
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
 .. py:class::
   xuance.mindspore.policies.gaussian.ActorNet_SAC(state_dim, action_dim, hidden_sizes, initialize, activation)
 
-  :param state_dim: xxxxxx.
-  :type state_dim: xxxxxx
-  :param action_dim: xxxxxx.
-  :type action_dim: xxxxxx
+  :param state_dim: The dimension of the input state.
+  :type state_dim: int
+  :param action_dim: The dimension of the action input.
+  :type action_dim: int
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
 
 .. py:function::
   xuance.mindspore.policies.gaussian.ActorNet_SAC.construct(x)
 
   xxxxxx.
 
-  :param x: xxxxxx.
-  :type x: xxxxxx
+  :param x: The input tensor.
+  :type x: torch.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
 .. py:class::
   xuance.mindspore.policies.gaussian.CriticNet_SAC(state_dim, action_dim, hidden_sizes, initialize, activation)
 
-  :param state_dim: xxxxxx.
-  :type state_dim: xxxxxx
-  :param action_dim: xxxxxx.
-  :type action_dim: xxxxxx
+  :param state_dim: The dimension of the input state.
+  :type state_dim: int
+  :param action_dim: The dimension of the action input.
+  :type action_dim: int
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
 
 .. py:function::
   xuance.mindspore.policies.gaussian.CriticNet_SAC.construct(x, a)
 
   xxxxxx.
 
-  :param x: xxxxxx.
-  :type x: xxxxxx
+  :param x: The input tensor.
+  :type x: torch.Tensor
   :param a: xxxxxx.
   :type a: xxxxxx
   :return: xxxxxx.
@@ -724,24 +724,24 @@ xxxxxx.
 .. py:class::
   xuance.mindspore.policies.gaussian.SACPolicy(action_space, representation, actor_hidden_size, initialize, activation)
 
-  :param action_space: xxxxxx.
-  :type action_space: xxxxxx
-  :param representation: xxxxxx.
-  :type representation: xxxxxx
-  :param actor_hidden_size: xxxxxx.
-  :type actor_hidden_size: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
+  :param action_space: The action space of the environment.
+  :type action_space: Box, Discrete, etc
+  :param representation: The representation module.
+  :type representation: nn.Module
+  :param actor_hidden_size: The sizes of the hidden layers in actor network.
+  :type actor_hidden_size: list
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
 
 .. py:function::
   xuance.mindspore.policies.gaussian.SACPolicy.action(observation)
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -750,8 +750,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -760,8 +760,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -770,8 +770,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -788,8 +788,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param tau: xxxxxx.
-  :type tau: xxxxxx
+  :param tau: The soft update factor for the update of target networks.
+  :type tau: float
 
 .. raw:: html
 

@@ -19,14 +19,14 @@ xxxxxx.
   :type input_dim: xxxxxx
   :param output_dim: xxxxxx.
   :type output_dim: xxxxxx
-  :param normalize: xxxxxx.
-  :type normalize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param normalize: The method of normalization.
+  :type normalize: nn.Module
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param device: The calculating device.
+  :type device: str
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -43,14 +43,14 @@ xxxxxx.
   :type kernel_size: xxxxxx
   :param stride: xxxxxx.
   :type stride: xxxxxx
-  :param normalize: xxxxxx.
-  :type normalize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param normalize: The method of normalization.
+  :type normalize: nn.Module
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param device: The calculating device.
+  :type device: str
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -65,8 +65,8 @@ xxxxxx.
   :type scale: xxxxxx
   :param pooling: xxxxxx.
   :type pooling: xxxxxx
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param device: The calculating device.
+  :type device: str
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -83,8 +83,8 @@ xxxxxx.
   :type num_layers: xxxxxx
   :param dropout: xxxxxx.
   :type dropout: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -101,10 +101,10 @@ xxxxxx.
   :type num_layers: xxxxxx
   :param dropout: xxxxxx.
   :type dropout: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param device: The calculating device.
+  :type device: str
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -123,14 +123,14 @@ xxxxxx.
   :type input_dim: xxxxxx
   :param output_dim: xxxxxx.
   :type output_dim: xxxxxx
-  :param normalize: xxxxxx.
-  :type normalize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param normalize: The method of normalization.
+  :type normalize: nn.Module
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param device: The calculating device.
+  :type device: str
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -147,14 +147,14 @@ xxxxxx.
   :type kernel_size: xxxxxx
   :param stride: xxxxxx.
   :type stride: xxxxxx
-  :param normalize: xxxxxx.
-  :type normalize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param normalize: The method of normalization.
+  :type normalize: nn.Module
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param device: The calculating device.
+  :type device: str
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -169,8 +169,8 @@ xxxxxx.
   :type scale: xxxxxx
   :param pooling: xxxxxx.
   :type pooling: xxxxxx
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param device: The calculating device.
+  :type device: str
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -187,8 +187,8 @@ xxxxxx.
   :type num_layers: xxxxxx
   :param dropout: xxxxxx.
   :type dropout: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -205,10 +205,10 @@ xxxxxx.
   :type num_layers: xxxxxx
   :param dropout: xxxxxx.
   :type dropout: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param device: The calculating device.
+  :type device: str
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -225,12 +225,12 @@ xxxxxx.
   :type input_dim: xxxxxx
   :param output_dim: xxxxxx.
   :type output_dim: xxxxxx
-  :param normalize: xxxxxx.
-  :type normalize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
+  :param normalize: The method of normalization.
+  :type normalize: nn.Module
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -245,12 +245,12 @@ xxxxxx.
   :type kernel_size: xxxxxx
   :param stride: xxxxxx.
   :type stride: xxxxxx
-  :param normalize: xxxxxx.
-  :type normalize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
+  :param normalize: The method of normalization.
+  :type normalize: nn.Module
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -277,8 +277,8 @@ xxxxxx.
   :type num_layers: xxxxxx
   :param dropout: xxxxxx.
   :type dropout: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -293,8 +293,8 @@ xxxxxx.
   :type num_layers: xxxxxx
   :param dropout: xxxxxx.
   :type dropout: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 

@@ -23,15 +23,15 @@ IQL_Agents
     Calculate joint actions for N agents according to the joint observations.
 
     :param obs_n: The joint observations of N agents.
-    :type obs_n: numpy.ndarray
+    :type obs_n: np.ndarray
     :param rnn_hidden: The hidden states of RNN.
-    :type rnn_hidden: tuple(numpy.ndarray, numpy.ndarray)
+    :type rnn_hidden: tuple(np.ndarray, np.ndarray)
     :param avail_actions: The actions mask for available actions in the environment.
-    :type avail_actions: numpy.ndarray
+    :type avail_actions: np.ndarray
     :param test_mode: is True for selecting greedy actions, is False for selecting epsilon-greedy actions.
     :type test_mode: bool
     :return: **hidden_state**, **actions_n** - The next hidden states of RNN and the joint actions.
-    :rtype: tuple(numpy.ndarray, numpy.ndarray), np.ndarray
+    :rtype: tuple(np.ndarray, np.ndarray), np.ndarray
   
 .. py:function:: 
     xuance.torch.agent.mutli_agent_rl.iql_agents.IQL_Agents.train(i_step)
@@ -65,15 +65,15 @@ IQL_Agents
     Calculate joint actions for N agents according to the joint observations.
 
     :param obs_n: The joint observations of N agents.
-    :type obs_n: numpy.ndarray
+    :type obs_n: np.ndarray
     :param rnn_hidden: The hidden states of RNN.
-    :type rnn_hidden: tuple(numpy.ndarray, numpy.ndarray)
+    :type rnn_hidden: tuple(np.ndarray, np.ndarray)
     :param avail_actions: The actions mask for available actions in the environment.
-    :type avail_actions: numpy.ndarray
+    :type avail_actions: np.ndarray
     :param test_mode: is True for selecting greedy actions, is False for selecting epsilon-greedy actions.
     :type test_mode: bool
     :return: **hidden_state**, **actions_n** - The next hidden states of RNN and the joint actions.
-    :rtype: tuple(numpy.ndarray, numpy.ndarray), np.ndarray
+    :rtype: tuple(np.ndarray, np.ndarray), np.ndarray
 
 .. py:function::
     xuance.tensorflow.agent.mutli_agent_rl.iql_agents.IQL_Agents.train(i_step, n_epoch)
@@ -105,15 +105,15 @@ IQL_Agents
      xuance.mindspore.agents.mutli_agent_rl.iql_agents.IQL_Agents.act(obs_n, *rnn_hidden, avail_actions=None, test_mode=False)
 
     :param obs_n: The joint observations of N agents.
-    :type obs_n: numpy.ndarray
+    :type obs_n: np.ndarray
     :param rnn_hidden: The hidden states of RNN.
-    :type rnn_hidden: tuple(numpy.ndarray, numpy.ndarray)
+    :type rnn_hidden: tuple(np.ndarray, np.ndarray)
     :param avail_actions: The actions mask for available actions in the environment.
-    :type avail_actions: numpy.ndarray
+    :type avail_actions: np.ndarray
     :param test_mode: is True for selecting greedy actions, is False for selecting epsilon-greedy actions.
     :type test_mode: bool
     :return: **hidden_state**, **actions_n** - The next hidden states of RNN and the joint actions.
-    :rtype: tuple(numpy.ndarray, numpy.ndarray), np.ndarray
+    :rtype: tuple(np.ndarray, np.ndarray), np.ndarray
 
 .. py:function::
      xuance.mindspore.agents.mutli_agent_rl.iql_agents.IQL_Agents.train(i_step, n_epoch)

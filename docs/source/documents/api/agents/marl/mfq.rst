@@ -23,17 +23,17 @@ MFQ_Agents
     Calculate joint actions for N agents according to the joint observations.
 
     :param obs_n: The joint observations of N agents.
-    :type obs_n: numpy.ndarray
+    :type obs_n: np.ndarray
     :param rnn_hidden: The hidden states of RNN.
-    :type rnn_hidden: tuple(numpy.ndarray, numpy.ndarray)
+    :type rnn_hidden: tuple(np.ndarray, np.ndarray)
     :param act_mean: The current mean actions.
-    :type act_mean: numpy.ndarray
+    :type act_mean: np.ndarray
     :param agent_mask: The agent mask variables of the environments.
-    :type agent_mask: numpy.ndarray
+    :type agent_mask: np.ndarray
     :param test_mode: is True for selecting greedy actions, is False for selecting epsilon-greedy actions.
     :type test_mode: bool
     :return: **hidden_state**, **actions_n**, **act_mean_current** - The next hidden states of RNN, the joint actions, and the current mean actions.
-    :rtype: tuple(numpy.ndarray, numpy.ndarray), np.ndarray, np.ndarray
+    :rtype: tuple(np.ndarray, np.ndarray), np.ndarray, np.ndarray
   
 .. py:function:: 
     xuance.torch.agent.mutli_agent_rl.mfq_agents.MFQ_Agents.train(i_step)
@@ -67,17 +67,17 @@ MFQ_Agents
     Calculate joint actions for N agents according to the joint observations.
 
     :param obs_n: The joint observations of N agents.
-    :type obs_n: numpy.ndarray
+    :type obs_n: np.ndarray
     :param rnn_hidden: The hidden states of RNN.
-    :type rnn_hidden: tuple(numpy.ndarray, numpy.ndarray)
+    :type rnn_hidden: tuple(np.ndarray, np.ndarray)
     :param act_mean: The current mean actions.
-    :type act_mean: numpy.ndarray
+    :type act_mean: np.ndarray
     :param agent_mask: The agent mask variables of the environments.
-    :type agent_mask: numpy.ndarray
+    :type agent_mask: np.ndarray
     :param test_mode: is True for selecting greedy actions, is False for selecting epsilon-greedy actions.
     :type test_mode: bool
     :return: **hidden_state**, **actions_n**, **act_mean_current** - The next hidden states of RNN, the joint actions, and the current mean actions.
-    :rtype: tuple(numpy.ndarray, numpy.ndarray), np.ndarray, np.ndarray
+    :rtype: tuple(np.ndarray, np.ndarray), np.ndarray, np.ndarray
 
 .. py:function::
     xuance.tensorflow.agent.mutli_agent_rl.mfq_agents.MFQ_Agents.train(i_step, n_epoch)
@@ -111,17 +111,17 @@ MFQ_Agents
     Calculate joint actions for N agents according to the joint observations.
 
     :param obs_n: The joint observations of N agents.
-    :type obs_n: numpy.ndarray
+    :type obs_n: np.ndarray
     :param rnn_hidden: The hidden states of RNN.
-    :type rnn_hidden: tuple(numpy.ndarray, numpy.ndarray)
+    :type rnn_hidden: tuple(np.ndarray, np.ndarray)
     :param test_mode: is True for selecting greedy actions, is False for selecting epsilon-greedy actions.
     :type test_mode: bool
     :param act_mean: The current mean actions.
-    :type act_mean: numpy.ndarray
+    :type act_mean: np.ndarray
     :param agent_mask: The agent mask variables of the environments.
-    :type agent_mask: numpy.ndarray
+    :type agent_mask: np.ndarray
     :return: **hidden_state**, **actions_n**, **act_mean_current** - The next hidden states of RNN, the joint actions, and the current mean actions.
-    :rtype: tuple(numpy.ndarray, numpy.ndarray), np.ndarray, np.ndarray
+    :rtype: tuple(np.ndarray, np.ndarray), np.ndarray, np.ndarray
 
 .. py:function::
     xuance.mindspore.agent.mutli_agent_rl.mfq_agents.MFQ_Agents.train(i_step, n_epoch)

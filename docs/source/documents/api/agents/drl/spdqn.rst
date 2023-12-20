@@ -29,7 +29,7 @@ SPDQN_Agent
     Calculate actions according to the observations.
 
     :param obs: The observation of current step.
-    :type obs: numpy.ndarray
+    :type obs: np.ndarray
     :param egreedy: The epsilong greedy factor.
     :type egreedy: np.float
     :return: **disaction**, **conaction**, **con_actions** - Discrete actions, continuous actions, continuous actions.
@@ -39,11 +39,11 @@ SPDQN_Agent
     xuance.torch.agent.policy_gradient.spdqn_agent.SPDQN_Agent.pad_action(disaction, conaction)
 
     :param disaction: The discrete actions.
-    :type disaction: numpy.ndarray
+    :type disaction: np.ndarray
     :param conaction: The continuous actions.
-    :type conaction: numpy.ndarray
+    :type conaction: np.ndarray
     :return: **(disaction, con_actions)**
-    :rtype: tuple(numpy.ndarray, numpy.ndarray)
+    :rtype: tuple(np.ndarray, np.ndarray)
   
 .. py:function:: 
     xuance.torch.agent.policy_gradient.spdqn_agent.SPDQN_Agent.train(train_steps)
@@ -90,7 +90,7 @@ SPDQN_Agent
     Calculate actions according to the observations.
 
     :param obs: The observation of current step.
-    :type obs: numpy.ndarray
+    :type obs: np.ndarray
     :return: **disaction**, **conaction**, **con_actions** - Discrete actions, continuous actions, continuous actions.
     :rtype: np.ndarray, np.ndarray, np.ndarray
 
@@ -98,11 +98,11 @@ SPDQN_Agent
     xuance.tensorflow.agent.policy_gradient.spdqn_agent.SPDQN_Agent.pad_action(disaction, conaction)
 
     :param disaction: The discrete actions.
-    :type disaction: numpy.ndarray
+    :type disaction: np.ndarray
     :param conaction: The continuous actions.
-    :type conaction: numpy.ndarray
+    :type conaction: np.ndarray
     :return: **(disaction, con_actions)**
-    :rtype: tuple(numpy.ndarray, numpy.ndarray)
+    :rtype: tuple(np.ndarray, np.ndarray)
 
 .. py:function::
     xuance.tensorflow.agent.policy_gradient.spdqn_agent.SPDQN_Agent.train(train_steps)
@@ -146,8 +146,8 @@ SPDQN_Agent
 .. py:function::
     xuance.mindspore.agents.policy_gradient.spdqn_agent.SPDQN_Agent._action(obs)
 
-    :param obs: xxxxxx.
-    :type obs: xxxxxx
+    :param obs: The observation variables.
+    :type obs: np.ndarray
     :return: xxxxxx.
     :rtype: xxxxxx
 

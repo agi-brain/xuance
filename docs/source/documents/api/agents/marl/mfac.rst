@@ -23,25 +23,25 @@ MFAC
     Calculate joint actions for N agents according to the joint observations.
 
     :param obs_n: The joint observations of N agents.
-    :type obs_n: numpy.ndarray
+    :type obs_n: np.ndarray
     :param test_mode: is True for selecting greedy actions, is False for selecting epsilon-greedy actions.
     :type test_mode: bool
     :param act_mean: The current mean actions.
-    :type act_mean: numpy.ndarray
+    :type act_mean: np.ndarray
     :param agent_mask: The agent mask variables of the environments.
-    :type agent_mask: numpy.ndarray
+    :type agent_mask: np.ndarray
     :return: **hidden_state**, **actions_n**, **act_mean_current** - The next hidden states of RNN, the joint actions, and the current mean actions.
-    :rtype: tuple(numpy.ndarray, numpy.ndarray), np.ndarray, np.ndarray
+    :rtype: tuple(np.ndarray, np.ndarray), np.ndarray, np.ndarray
 
 .. py:function::
     xuance.torch.agent.mutli_agent_rl.mfac_agents.MFAC_Agents.values(obs, actions_mean)
 
     Train the multi-agent reinforcement learning model.
 
-    :param obs: xxxxxx.
-    :type obs: xxxxxx
-    :param actions_mean: xxxxxx.
-    :type actions_mean: xxxxxx
+    :param obs: The observation variables.
+    :type obs: np.ndarray
+    :param actions_mean: The mean values of actions.
+    :type actions_mean: Tensor
     :return: xxxxxx.
     :rtype: xxxxxx
 
@@ -79,25 +79,25 @@ MFAC
     Calculate joint actions for N agents according to the joint observations.
 
     :param obs_n: The joint observations of N agents.
-    :type obs_n: numpy.ndarray
+    :type obs_n: np.ndarray
     :param test_mode: is True for selecting greedy actions, is False for selecting epsilon-greedy actions.
     :type test_mode: bool
     :param act_mean: The current mean actions.
-    :type act_mean: numpy.ndarray
+    :type act_mean: np.ndarray
     :param agent_mask: The agent mask variables of the environments.
-    :type agent_mask: numpy.ndarray
+    :type agent_mask: np.ndarray
     :return: **hidden_state**, **actions_n**, **act_mean_current** - The next hidden states of RNN, the joint actions, and the current mean actions.
-    :rtype: tuple(numpy.ndarray, numpy.ndarray), np.ndarray, np.ndarray
+    :rtype: tuple(np.ndarray, np.ndarray), np.ndarray, np.ndarray
 
 .. py:function::
     xuance.tensorflow.agent.mutli_agent_rl.mfac_agents.MFAC_Agents.values(obs, actions_mean)
 
     Train the multi-agent reinforcement learning model.
 
-    :param obs: xxxxxx.
-    :type obs: xxxxxx
-    :param actions_mean: xxxxxx.
-    :type actions_mean: xxxxxx
+    :param obs: The observation variables.
+    :type obs: np.ndarray
+    :param actions_mean: The mean values of actions.
+    :type actions_mean: Tensor
     :return: xxxxxx.
     :rtype: xxxxxx
 
@@ -133,25 +133,25 @@ MFAC
     Calculate joint actions for N agents according to the joint observations.
 
     :param obs_n: The joint observations of N agents.
-    :type obs_n: numpy.ndarray
+    :type obs_n: np.ndarray
     :param test_mode: is True for selecting greedy actions, is False for selecting epsilon-greedy actions.
     :type test_mode: bool
     :param act_mean: The current mean actions.
-    :type act_mean: numpy.ndarray
+    :type act_mean: np.ndarray
     :param agent_mask: The agent mask variables of the environments.
-    :type agent_mask: numpy.ndarray
+    :type agent_mask: np.ndarray
     :return: **hidden_state**, **actions_n**, **act_mean_current** - The next hidden states of RNN, the joint actions, and the current mean actions.
-    :rtype: tuple(numpy.ndarray, numpy.ndarray), np.ndarray, np.ndarray
+    :rtype: tuple(np.ndarray, np.ndarray), np.ndarray, np.ndarray
 
 .. py:function::
     xuance.mindspore.agent.mutli_agent_rl.mfac_agents.MFAC_Agents.values(obs, actions_mean)
 
     Train the multi-agent reinforcement learning model.
 
-    :param obs: xxxxxx.
-    :type obs: xxxxxx
-    :param actions_mean: xxxxxx.
-    :type actions_mean: xxxxxx
+    :param obs: The observation variables.
+    :type obs: np.ndarray
+    :param actions_mean: The mean values of actions.
+    :type actions_mean: Tensor
     :return: xxxxxx.
     :rtype: xxxxxx
 

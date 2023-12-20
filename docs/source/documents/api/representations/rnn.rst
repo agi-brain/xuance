@@ -117,12 +117,12 @@ Similarly, when implementing these classes in PyTorch, you also need to specify 
   :type input_shape: Sequence[int]
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
-  :param normalize: xxxxxx.
-  :type normalize: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
+  :param normalize: The method of normalization.
+  :type normalize: nn.Module
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
   :param kwargs: xxxxxx.
   :type kwargs: xxxxxx
 
@@ -139,8 +139,8 @@ Similarly, when implementing these classes in PyTorch, you also need to specify 
 
   xxxxxx.
 
-  :param x: xxxxxx.
-  :type x: xxxxxx
+  :param x: The input tensor.
+  :type x: torch.Tensor
   :param h: xxxxxx.
   :type h: xxxxxx
   :param c: xxxxxx.

@@ -56,8 +56,8 @@ xxxxxx.
 
   :param observation_space: xxxxxx.
   :type observation_space: xxxxxx
-  :param action_space: xxxxxx.
-  :type action_space: xxxxxx
+  :param action_space: The action space of the environment.
+  :type action_space: Box, Discrete, etc
   :param auxiliary_info_shape: xxxxxx.
   :type auxiliary_info_shape: xxxxxx
 
@@ -101,8 +101,8 @@ xxxxxx.
 .. py:class::
   xuance.common.memory_tools.EpisodeBuffer(obs, action, reward, done)
 
-  :param obs: xxxxxx.
-  :type obs: xxxxxx
+  :param obs: The observation variables.
+  :type obs: np.ndarray
   :param action: xxxxxx.
   :type action: xxxxxx
   :param reward: xxxxxx.
@@ -143,8 +143,8 @@ xxxxxx.
 
   :param observation_space: xxxxxx.
   :type observation_space: xxxxxx
-  :param action_space: xxxxxx.
-  :type action_space: xxxxxx
+  :param action_space: The action space of the environment.
+  :type action_space: Box, Discrete, etc
   :param auxiliary_shape: xxxxxx.
   :type auxiliary_shape: xxxxxx
   :param n_envs: xxxxxx.
@@ -175,8 +175,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param obs: xxxxxx.
-  :type obs: xxxxxx
+  :param obs: The observation variables.
+  :type obs: np.ndarray
   :param acts: xxxxxx.
   :type acts: xxxxxx
   :param rews: xxxxxx.
@@ -211,8 +211,8 @@ xxxxxx.
 
   :param observation_space: xxxxxx.
   :type observation_space: xxxxxx
-  :param action_space: xxxxxx.
-  :type action_space: xxxxxx
+  :param action_space: The action space of the environment.
+  :type action_space: Box, Discrete, etc
   :param auxiliary_shape: xxxxxx.
   :type auxiliary_shape: xxxxxx
   :param n_envs: xxxxxx.
@@ -232,8 +232,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param obs: xxxxxx.
-  :type obs: xxxxxx
+  :param obs: The observation variables.
+  :type obs: np.ndarray
   :param acts: xxxxxx.
   :type acts: xxxxxx
   :param rews: xxxxxx.
@@ -256,8 +256,8 @@ xxxxxx.
 
   :param observation_space: xxxxxx.
   :type observation_space: xxxxxx
-  :param action_space: xxxxxx.
-  :type action_space: xxxxxx
+  :param action_space: The action space of the environment.
+  :type action_space: Box, Discrete, etc
   :param auxiliary_shape: xxxxxx.
   :type auxiliary_shape: xxxxxx
   :param n_envs: xxxxxx.
@@ -304,8 +304,8 @@ xxxxxx.
 
   :param observation_space: xxxxxx.
   :type observation_space: xxxxxx
-  :param action_space: xxxxxx.
-  :type action_space: xxxxxx
+  :param action_space: The action space of the environment.
+  :type action_space: Box, Discrete, etc
   :param auxiliary_shape: xxxxxx.
   :type auxiliary_shape: xxxxxx
   :param n_envs: xxxxxx.
@@ -339,8 +339,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param obs: xxxxxx.
-  :type obs: xxxxxx
+  :param obs: The observation variables.
+  :type obs: np.ndarray
   :param acts: xxxxxx.
   :type acts: xxxxxx
   :param rews: xxxxxx.
@@ -375,8 +375,8 @@ xxxxxx.
 
   :param observation_space: xxxxxx.
   :type observation_space: xxxxxx
-  :param action_space: xxxxxx.
-  :type action_space: xxxxxx
+  :param action_space: The action space of the environment.
+  :type action_space: Box, Discrete, etc
   :param auxiliary_shape: xxxxxx.
   :type auxiliary_shape: xxxxxx
   :param n_envs: xxxxxx.
@@ -396,8 +396,8 @@ xxxxxx.
 
   :param observation_space: xxxxxx.
   :type observation_space: xxxxxx
-  :param action_space: xxxxxx.
-  :type action_space: xxxxxx
+  :param action_space: The action space of the environment.
+  :type action_space: Box, Discrete, etc
   :param auxiliary_shape: xxxxxx.
   :type auxiliary_shape: xxxxxx
   :param n_envs: xxxxxx.

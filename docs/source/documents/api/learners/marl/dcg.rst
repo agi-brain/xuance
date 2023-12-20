@@ -20,8 +20,8 @@ xxxxxx.
   :type optimizer: xxxxxx
   :param scheduler: xxxxxx.
   :type scheduler: xxxxxx
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param device: The calculating device.
+  :type device: str
   :param model_dir: xxxxxx.
   :type model_dir: xxxxxx
   :param gamma: xxxxxx.
@@ -34,10 +34,10 @@ xxxxxx.
 
   xxxxxx.
 
-  :param obs_n: xxxxxx.
-  :type obs_n: xxxxxx
-  :param *rnn_hidden: xxxxxx.
-  :type *rnn_hidden: xxxxxx
+  :param obs_n: The joint observations of n agents.
+  :type obs_n: np.ndarray
+  :param rnn_hidden: The last final hidden states of the sequence.
+  :type *rnn_hidden: Tensor
   :param use_target_net: xxxxxx.
   :type use_target_net: xxxxxx
   :return: xxxxxx.
@@ -62,8 +62,8 @@ xxxxxx.
 
   :param hidden_states: xxxxxx.
   :type hidden_states: xxxxxx
-  :param avail_actions: xxxxxx.
-  :type avail_actions: xxxxxx
+  :param avail_actions: The mask varibales for availabel actions.
+  :type avail_actions: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -74,8 +74,8 @@ xxxxxx.
 
   :param hidden_states: xxxxxx.
   :type hidden_states: xxxxxx
-  :param actions: xxxxxx.
-  :type actions: xxxxxx
+  :param actions: The actions input.
+  :type actions: Tensor
   :param states: xxxxxx.
   :type states: xxxxxx
   :param use_target_net: xxxxxx.
@@ -118,8 +118,8 @@ xxxxxx.
   :type policy: xxxxxx
   :param optimizer: xxxxxx.
   :type optimizer: xxxxxx
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param device: The calculating device.
+  :type device: str
   :param model_dir: xxxxxx.
   :type model_dir: xxxxxx
   :param gamma: xxxxxx.
@@ -132,10 +132,10 @@ xxxxxx.
 
   xxxxxx.
 
-  :param obs_n: xxxxxx.
-  :type obs_n: xxxxxx
-  :param *rnn_hidden: xxxxxx.
-  :type *rnn_hidden: xxxxxx
+  :param obs_n: The joint observations of n agents.
+  :type obs_n: np.ndarray
+  :param rnn_hidden: The last final hidden states of the sequence.
+  :type *rnn_hidden: Tensor
   :param use_target_net: xxxxxx.
   :type use_target_net: xxxxxx
   :return: xxxxxx.
@@ -160,8 +160,8 @@ xxxxxx.
 
   :param hidden_states: xxxxxx.
   :type hidden_states: xxxxxx
-  :param avail_actions: xxxxxx.
-  :type avail_actions: xxxxxx
+  :param avail_actions: The mask varibales for availabel actions.
+  :type avail_actions: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -172,8 +172,8 @@ xxxxxx.
 
   :param hidden_states: xxxxxx.
   :type hidden_states: xxxxxx
-  :param actions: xxxxxx.
-  :type actions: xxxxxx
+  :param actions: The actions input.
+  :type actions: Tensor
   :param states: xxxxxx.
   :type states: xxxxxx
   :param use_target_net: xxxxxx.
@@ -220,10 +220,10 @@ xxxxxx.
 
   xxxxxx.
 
-  :param obs_n: xxxxxx.
-  :type obs_n: xxxxxx
-  :param *rnn_hidden: xxxxxx.
-  :type *rnn_hidden: xxxxxx
+  :param obs_n: The joint observations of n agents.
+  :type obs_n: np.ndarray
+  :param rnn_hidden: The last final hidden states of the sequence.
+  :type *rnn_hidden: Tensor
   :param use_target_net: xxxxxx.
   :type use_target_net: xxxxxx
   :return: xxxxxx.
@@ -248,8 +248,8 @@ xxxxxx.
 
   :param hidden_states: xxxxxx.
   :type hidden_states: xxxxxx
-  :param avail_actions: xxxxxx.
-  :type avail_actions: xxxxxx
+  :param avail_actions: The mask varibales for availabel actions.
+  :type avail_actions: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -260,8 +260,8 @@ xxxxxx.
 
   :param hidden_states: xxxxxx.
   :type hidden_states: xxxxxx
-  :param actions: xxxxxx.
-  :type actions: xxxxxx
+  :param actions: The actions input.
+  :type actions: Tensor
   :param states: xxxxxx.
   :type states: xxxxxx
   :param use_target_net: xxxxxx.

@@ -66,25 +66,25 @@ To create a new Agent, you should build a class inherit from ``xuance.torch.agen
    Normalize the original observations.
 
    :param observations: The original observations of agent.
-   :type observations: numpy.ndarray
+   :type observations: np.ndarray
    :return: The normalized observations.
-   :rtype: numpy.ndarray
+   :rtype: np.ndarray
 
 .. py:function:: xuance.torch.agents.agent.Agent._process_reward(rewards)
 
    Normalize the original rewards.
 
    :param rewards: The original rewards of agent.
-   :type rewards: numpy.ndarray
+   :type rewards: np.ndarray
    :return: The normalized observations rewards.
-   :rtype: numpy.ndarray
+   :rtype: np.ndarray
 
 .. py:function:: xuance.torch.agents.agent.Agent._action(observations)
    
    Get actions for executing according to the observations.
    
    :param observations: The original observations of agent.
-   :type observations: numpy.ndarray
+   :type observations: np.ndarray
 
 .. py:function:: xuance.torch.agents.agent.Agent.train(steps)
    

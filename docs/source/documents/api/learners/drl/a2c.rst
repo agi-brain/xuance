@@ -16,8 +16,8 @@ A2C_Learner
   :type optimizer: xxxxxx
   :param scheduler: xxxxxx.
   :type scheduler: xxxxxx
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param device: The calculating device.
+  :type device: str
   :param model_dir: xxxxxx.
   :type model_dir: xxxxxx
   :param vf_coef: xxxxxx.
@@ -54,8 +54,8 @@ A2C_Learner
   :type policy: xxxxxx
   :param optimizer: xxxxxx.
   :type optimizer: xxxxxx
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param device: The calculating device.
+  :type device: str
   :param model_dir: xxxxxx.
   :type model_dir: xxxxxx
   :param vf_coef: xxxxxx.

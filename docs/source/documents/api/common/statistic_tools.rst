@@ -14,8 +14,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param x: xxxxxx.
-  :type x: xxxxxx
+  :param x: The input tensor.
+  :type x: torch.Tensor
   :param axis: xxxxxx.
   :type axis: xxxxxx
   :param comm: xxxxxx.
@@ -30,8 +30,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param x: xxxxxx.
-  :type x: xxxxxx
+  :param x: The input tensor.
+  :type x: torch.Tensor
   :param axis: xxxxxx.
   :type axis: xxxxxx
   :param comm: xxxxxx.
@@ -61,8 +61,6 @@ xxxxxx.
 .. py:function::
   xuance.common.statistic_tools.RunningMeanStd.std()
 
-  xxxxxx.
-
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -71,20 +69,18 @@ xxxxxx.
 
   xxxxxx.
 
-  :param x: xxxxxx.
-  :type x: xxxxxx
+  :param x: The input tensor.
+  :type x: torch.Tensor
 
 .. py:function::
   xuance.common.statistic_tools.RunningMeanStd.update_from_moments(batch_mean, batch_var, batch_count)
 
-  xxxxxx.
-
-  :param batch_mean: xxxxxx.
-  :type batch_mean: xxxxxx
-  :param batch_var: xxxxxx.
-  :type batch_var: xxxxxx
-  :param batch_count: xxxxxx.
-  :type batch_count: xxxxxx
+  :param batch_mean: The mean values of the batch data.
+  :type batch_mean: np.ndarray
+  :param batch_var: The variance of the batch data.
+  :type batch_var: np.ndarray
+  :param batch_count: The number of batch data.
+  :type batch_count: int
 
 .. py:class::
   xuance.common.statistic_tools.OUNoise()
@@ -94,10 +90,10 @@ xxxxxx.
 
   xxxxxx.
 
-  :param action_space: xxxxxx.
-  :type action_space: xxxxxx
-  :param mu: xxxxxx.
-  :type mu: xxxxxx
+  :param action_space: The action space of the environment.
+  :type action_space: Box, Discrete, etc
+  :param mu: Mean value.
+  :type mu: np.ndarray
   :param theta: xxxxxx.
   :type theta: xxxxxx
   :param sigma: xxxxxx.

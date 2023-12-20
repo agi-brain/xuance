@@ -28,7 +28,7 @@ When implementing this class in PyTorch, you also need to specify the device typ
     Calculate feature representation of the input observations.
 
     :param observations: The observation of current step.
-    :type observations: numpy.ndarray
+    :type observations: np.ndarray
     :return: The features output by the representation model.
     :rtype: dict
 
@@ -54,7 +54,7 @@ When implementing this class in PyTorch, you also need to specify the device typ
     Calculate feature representation of the input observations.
 
     :param observations: The observation of current step.
-    :type observations: numpy.ndarray
+    :type observations: np.ndarray
     :return: The features output by the representation model.
     :rtype: dict
 
@@ -69,16 +69,16 @@ When implementing this class in PyTorch, you also need to specify the device typ
 
   :param input_shape: The shape of the input data.
   :type input_shape: Sequence[int]
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param device: The calculating device.
+  :type device: str
 
 .. py:function::
   xuance.tensorflow.representations.mlp.Basic_Identical.call(observations)
 
   xxxxxx.
 
-  :param observations: xxxxxx.
-  :type observations: xxxxxx
+  :param observations: The original observation variables.
+  :type observations: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -89,14 +89,14 @@ When implementing this class in PyTorch, you also need to specify the device typ
   :type input_shape: Sequence[int]
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
-  :param normalize: xxxxxx.
-  :type normalize: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param normalize: The method of normalization.
+  :type normalize: nn.Module
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
+  :param device: The calculating device.
+  :type device: str
 
 .. py:function::
   xuance.tensorflow.representations.mlp.Basic_MLP._create_network()
@@ -111,8 +111,8 @@ When implementing this class in PyTorch, you also need to specify the device typ
 
   xxxxxx.
 
-  :param observations: xxxxxx.
-  :type observations: xxxxxx
+  :param observations: The original observation variables.
+  :type observations: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -133,8 +133,8 @@ When implementing this class in PyTorch, you also need to specify the device typ
 
   xxxxxx.
 
-  :param observations: xxxxxx.
-  :type observations: xxxxxx
+  :param observations: The original observation variables.
+  :type observations: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -145,12 +145,12 @@ When implementing this class in PyTorch, you also need to specify the device typ
   :type input_shape: Sequence[int]
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
-  :param normalize: xxxxxx.
-  :type normalize: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
+  :param normalize: The method of normalization.
+  :type normalize: nn.Module
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
 
 .. py:function::
   xuance.mindspore.representations.mlp.Basic_MLP._create_network()
@@ -165,8 +165,8 @@ When implementing this class in PyTorch, you also need to specify the device typ
 
   xxxxxx.
 
-  :param observations: xxxxxx.
-  :type observations: xxxxxx
+  :param observations: The original observation variables.
+  :type observations: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 

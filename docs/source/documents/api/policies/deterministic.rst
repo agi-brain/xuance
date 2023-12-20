@@ -12,28 +12,28 @@ xxxxxx.
 .. py:class::
   xuance.torch.policies.deterministic.BasicQhead(state_dim, action_dim, hidden_sizes, normalize, initialize, activation, device)
 
-  :param state_dim: xxxxxx.
-  :type state_dim: xxxxxx
-  :param action_dim: xxxxxx.
-  :type action_dim: xxxxxx
+  :param state_dim: The dimension of the input state.
+  :type state_dim: int
+  :param action_dim: The dimension of the action input.
+  :type action_dim: int
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
-  :param normalize: xxxxxx.
-  :type normalize: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param normalize: The method of normalization.
+  :type normalize: nn.Module
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
+  :param device: The calculating device.
+  :type device: str
 
 .. py:function::
   xuance.torch.policies.deterministic.BasicQhead.forward(x)
 
   xxxxxx.
 
-  :param x: xxxxxx.
-  :type x: xxxxxx
+  :param x: The input tensor.
+  :type x: torch.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -48,8 +48,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param x: xxxxxx.
-  :type x: xxxxxx
+  :param x: The input tensor.
+  :type x: torch.Tensor
   :param h: xxxxxx.
   :type h: xxxxxx
   :param c: xxxxxx.
@@ -60,116 +60,116 @@ xxxxxx.
 .. py:class::
   xuance.torch.policies.deterministic.DuelQhead(state_dim, action_dim, hidden_sizes, normalize, initialize, activation, device)
 
-  :param state_dim: xxxxxx.
-  :type state_dim: xxxxxx
-  :param action_dim: xxxxxx.
-  :type action_dim: xxxxxx
+  :param state_dim: The dimension of the input state.
+  :type state_dim: int
+  :param action_dim: The dimension of the action input.
+  :type action_dim: int
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
-  :param normalize: xxxxxx.
-  :type normalize: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param normalize: The method of normalization.
+  :type normalize: nn.Module
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
+  :param device: The calculating device.
+  :type device: str
 
 .. py:function::
   xuance.torch.policies.deterministic.DuelQhead.forward(x)
 
   xxxxxx.
 
-  :param x: xxxxxx.
-  :type x: xxxxxx
+  :param x: The input tensor.
+  :type x: torch.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
 .. py:class::
   xuance.torch.policies.deterministic.C51Qhead(state_dim, action_dim, atom_num, hidden_sizes, normalize, initialize, activation, device)
 
-  :param state_dim: xxxxxx.
-  :type state_dim: xxxxxx
-  :param action_dim: xxxxxx.
-  :type action_dim: xxxxxx
+  :param state_dim: The dimension of the input state.
+  :type state_dim: int
+  :param action_dim: The dimension of the action input.
+  :type action_dim: int
   :param atom_num: xxxxxx.
   :type atom_num: xxxxxx
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
-  :param normalize: xxxxxx.
-  :type normalize: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param normalize: The method of normalization.
+  :type normalize: nn.Module
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
+  :param device: The calculating device.
+  :type device: str
 
 .. py:function::
   xuance.torch.policies.deterministic.C51Qhead.forward(x)
 
   xxxxxx.
 
-  :param x: xxxxxx.
-  :type x: xxxxxx
+  :param x: The input tensor.
+  :type x: torch.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
 .. py:class::
   xuance.torch.policies.deterministic.QRDQNhead(state_dim, action_dim, atom_num, hidden_sizes, normalize, initialize, activation, device)
 
-  :param state_dim: xxxxxx.
-  :type state_dim: xxxxxx
-  :param action_dim: xxxxxx.
-  :type action_dim: xxxxxx
+  :param state_dim: The dimension of the input state.
+  :type state_dim: int
+  :param action_dim: The dimension of the action input.
+  :type action_dim: int
   :param atom_num: xxxxxx.
   :type atom_num: xxxxxx
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
-  :param normalize: xxxxxx.
-  :type normalize: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param normalize: The method of normalization.
+  :type normalize: nn.Module
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
+  :param device: The calculating device.
+  :type device: str
 
 .. py:function::
   xuance.torch.policies.deterministic.QRDQNhead.forward(x)
 
   xxxxxx.
 
-  :param x: xxxxxx.
-  :type x: xxxxxx
+  :param x: The input tensor.
+  :type x: torch.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
 .. py:class::
   xuance.torch.policies.deterministic.BasicQnetwork(action_space, representation, hidden_size, normalize, initialize, activation, device)
 
-  :param action_space: xxxxxx.
-  :type action_space: xxxxxx
-  :param representation: xxxxxx.
-  :type representation: xxxxxx
+  :param action_space: The action space of the environment.
+  :type action_space: Box, Discrete, etc
+  :param representation: The representation module.
+  :type representation: nn.Module
   :param hidden_size: xxxxxx.
   :type hidden_size: xxxxxx
-  :param normalize: xxxxxx.
-  :type normalize: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param normalize: The method of normalization.
+  :type normalize: nn.Module
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
+  :param device: The calculating device.
+  :type device: str
 
 .. py:function::
   xuance.torch.policies.deterministic.BasicQnetwork.forward(observation)
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -178,8 +178,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -194,28 +194,28 @@ xxxxxx.
 .. py:class::
   xuance.torch.policies.deterministic.DuelQnetwork(action_space, representation, hidden_size, normalize, initialize, activation, device)
 
-  :param action_space: xxxxxx.
-  :type action_space: xxxxxx
-  :param representation: xxxxxx.
-  :type representation: xxxxxx
+  :param action_space: The action space of the environment.
+  :type action_space: Box, Discrete, etc
+  :param representation: The representation module.
+  :type representation: nn.Module
   :param hidden_size: xxxxxx.
   :type hidden_size: xxxxxx
-  :param normalize: xxxxxx.
-  :type normalize: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param normalize: The method of normalization.
+  :type normalize: nn.Module
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
+  :param device: The calculating device.
+  :type device: str
 
 .. py:function::
   xuance.torch.policies.deterministic.DuelQnetwork.forward(observation)
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -224,8 +224,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -240,20 +240,20 @@ xxxxxx.
 .. py:class::
   xuance.torch.policies.deterministic.NoisyQnetwork(action_space, representation, hidden_size, normalize, initialize, activation, device)
 
-  :param action_space: xxxxxx.
-  :type action_space: xxxxxx
-  :param representation: xxxxxx.
-  :type representation: xxxxxx
+  :param action_space: The action space of the environment.
+  :type action_space: Box, Discrete, etc
+  :param representation: The representation module.
+  :type representation: nn.Module
   :param hidden_size: xxxxxx.
   :type hidden_size: xxxxxx
-  :param normalize: xxxxxx.
-  :type normalize: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param normalize: The method of normalization.
+  :type normalize: nn.Module
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
+  :param device: The calculating device.
+  :type device: str
 
 .. py:function::
   xuance.torch.policies.deterministic.NoisyQnetwork.update_noise(noisy_bound)
@@ -270,8 +270,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -280,8 +280,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -296,34 +296,34 @@ xxxxxx.
 .. py:class::
   xuance.torch.policies.deterministic.C51Qnetwork(action_space, atom_num, vmin, vmax, representation, hidden_size, normalize, initialize, activation, device)
 
-  :param action_space: xxxxxx.
-  :type action_space: xxxxxx
+  :param action_space: The action space of the environment.
+  :type action_space: Box, Discrete, etc
   :param atom_num: xxxxxx.
   :type atom_num: xxxxxx
   :param vmin: xxxxxx.
   :type vmin: xxxxxx
   :param vmax: xxxxxx.
   :type vmax: xxxxxx
-  :param representation: xxxxxx.
-  :type representation: xxxxxx
+  :param representation: The representation module.
+  :type representation: nn.Module
   :param hidden_size: xxxxxx.
   :type hidden_size: xxxxxx
-  :param normalize: xxxxxx.
-  :type normalize: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param normalize: The method of normalization.
+  :type normalize: nn.Module
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
+  :param device: The calculating device.
+  :type device: str
 
 .. py:function::
   xuance.torch.policies.deterministic.C51Qnetwork.forward(observation)
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -332,8 +332,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -348,30 +348,30 @@ xxxxxx.
 .. py:class::
   xuance.torch.policies.deterministic.QRDQN_Network(action_space, quantile_num, representation, hidden_size, normalize, initialize, activation, device)
 
-  :param action_space: xxxxxx.
-  :type action_space: xxxxxx
+  :param action_space: The action space of the environment.
+  :type action_space: Box, Discrete, etc
   :param quantile_num: xxxxxx.
   :type quantile_num: xxxxxx
-  :param representation: xxxxxx.
-  :type representation: xxxxxx
+  :param representation: The representation module.
+  :type representation: nn.Module
   :param hidden_size: xxxxxx.
   :type hidden_size: xxxxxx
-  :param normalize: xxxxxx.
-  :type normalize: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param normalize: The method of normalization.
+  :type normalize: nn.Module
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
+  :param device: The calculating device.
+  :type device: str
 
 .. py:function::
   xuance.torch.policies.deterministic.QRDQN_Network.forward(observation)
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -380,8 +380,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -396,80 +396,80 @@ xxxxxx.
 .. py:class::
   xuance.torch.policies.deterministic.ActorNet(state_dim, action_dim, hidden_sizes, initialize, activation, device)
 
-  :param state_dim: xxxxxx.
-  :type state_dim: xxxxxx
-  :param action_dim: xxxxxx.
-  :type action_dim: xxxxxx
+  :param state_dim: The dimension of the input state.
+  :type state_dim: int
+  :param action_dim: The dimension of the action input.
+  :type action_dim: int
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
+  :param device: The calculating device.
+  :type device: str
 
 .. py:function::
   xuance.torch.policies.deterministic.ActorNet.forward(x)
 
   xxxxxx.
 
-  :param x: xxxxxx.
-  :type x: xxxxxx
+  :param x: The input tensor.
+  :type x: torch.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
 .. py:class::
   xuance.torch.policies.deterministic.CriticNet(state_dim, action_dim, hidden_sizes, initialize, activation, device)
 
-  :param state_dim: xxxxxx.
-  :type state_dim: xxxxxx
-  :param action_dim: xxxxxx.
-  :type action_dim: xxxxxx
+  :param state_dim: The dimension of the input state.
+  :type state_dim: int
+  :param action_dim: The dimension of the action input.
+  :type action_dim: int
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
+  :param device: The calculating device.
+  :type device: str
 
 .. py:function::
   xuance.torch.policies.deterministic.CriticNet.forward(x)
 
   xxxxxx.
 
-  :param x: xxxxxx.
-  :type x: xxxxxx
+  :param x: The input tensor.
+  :type x: torch.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
 .. py:class::
   xuance.torch.policies.deterministic.DDPGPolicy(action_space, representation, actor_hidden_size, critic_hidden_size, initialize, activation, device)
 
-  :param action_space: xxxxxx.
-  :type action_space: xxxxxx
-  :param representation: xxxxxx.
-  :type representation: xxxxxx
-  :param actor_hidden_size: xxxxxx.
-  :type actor_hidden_size: xxxxxx
-  :param critic_hidden_size: xxxxxx.
-  :type critic_hidden_size: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param action_space: The action space of the environment.
+  :type action_space: Box, Discrete, etc
+  :param representation: The representation module.
+  :type representation: nn.Module
+  :param actor_hidden_size: The sizes of the hidden layers in actor network.
+  :type actor_hidden_size: list
+  :param critic_hidden_size: The sizes of the hidden layers in critic networks.
+  :type critic_hidden_size: list
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
+  :param device: The calculating device.
+  :type device: str
 
 .. py:function::
   xuance.torch.policies.deterministic.DDPGPolicy.forward(x)
 
   xxxxxx.
 
-  :param x: xxxxxx.
-  :type x: xxxxxx
+  :param x: The input tensor.
+  :type x: torch.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -478,8 +478,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -488,8 +488,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :param action: xxxxxx.
   :type action: xxxxxx
   :return: xxxxxx.
@@ -500,8 +500,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -510,36 +510,36 @@ xxxxxx.
 
   xxxxxx.
 
-  :param tau: xxxxxx.
-  :type tau: xxxxxx
+  :param tau: The soft update factor for the update of target networks.
+  :type tau: float
   :return: xxxxxx.
   :rtype: xxxxxx
 
 .. py:class::
   xuance.torch.policies.deterministic.TD3Policy(action_space, representation, actor_hidden_size, critic_hidden_size, initialize, activation, device)
 
-  :param action_space: xxxxxx.
-  :type action_space: xxxxxx
-  :param representation: xxxxxx.
-  :type representation: xxxxxx
-  :param actor_hidden_size: xxxxxx.
-  :type actor_hidden_size: xxxxxx
-  :param critic_hidden_size: xxxxxx.
-  :type critic_hidden_size: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param action_space: The action space of the environment.
+  :type action_space: Box, Discrete, etc
+  :param representation: The representation module.
+  :type representation: nn.Module
+  :param actor_hidden_size: The sizes of the hidden layers in actor network.
+  :type actor_hidden_size: list
+  :param critic_hidden_size: The sizes of the hidden layers in critic networks.
+  :type critic_hidden_size: list
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
+  :param device: The calculating device.
+  :type device: str
 
 .. py:function::
   xuance.torch.policies.deterministic.TD3Policy.action(observation)
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -548,8 +548,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -558,8 +558,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :param action: xxxxxx.
   :type action: xxxxxx
   :return: xxxxxx.
@@ -570,8 +570,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -580,8 +580,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param tau: xxxxxx.
-  :type tau: xxxxxx
+  :param tau: The soft update factor for the update of target networks.
+  :type tau: float
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -590,22 +590,22 @@ xxxxxx.
 
   :param observation_space: xxxxxx.
   :type observation_space: xxxxxx
-  :param action_space: xxxxxx.
-  :type action_space: xxxxxx
-  :param representation: xxxxxx.
-  :type representation: xxxxxx
+  :param action_space: The action space of the environment.
+  :type action_space: Box, Discrete, etc
+  :param representation: The representation module.
+  :type representation: nn.Module
   :param conactor_hidden_size: xxxxxx.
   :type conactor_hidden_size: xxxxxx
   :param qnetwork_hidden_size: xxxxxx.
   :type qnetwork_hidden_size: xxxxxx
-  :param normalize: xxxxxx.
-  :type normalize: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param normalize: The method of normalization.
+  :type normalize: nn.Module
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
+  :param device: The calculating device.
+  :type device: str
 
 .. py:function::
   xuance.torch.policies.deterministic.PDQNPolicy.Atarget(state)
@@ -666,8 +666,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param tau: xxxxxx.
-  :type tau: xxxxxx
+  :param tau: The soft update factor for the update of target networks.
+  :type tau: float
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -676,22 +676,22 @@ xxxxxx.
 
   :param observation_space: xxxxxx.
   :type observation_space: xxxxxx
-  :param action_space: xxxxxx.
-  :type action_space: xxxxxx
-  :param representation: xxxxxx.
-  :type representation: xxxxxx
+  :param action_space: The action space of the environment.
+  :type action_space: Box, Discrete, etc
+  :param representation: The representation module.
+  :type representation: nn.Module
   :param conactor_hidden_size: xxxxxx.
   :type conactor_hidden_size: xxxxxx
   :param qnetwork_hidden_size: xxxxxx.
   :type qnetwork_hidden_size: xxxxxx
-  :param normalize: xxxxxx.
-  :type normalize: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param normalize: The method of normalization.
+  :type normalize: nn.Module
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
+  :param device: The calculating device.
+  :type device: str
 
 .. py:function::
   xuance.torch.policies.deterministic.MPDQNPolicy.Atarget(state)
@@ -752,8 +752,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param tau: xxxxxx.
-  :type tau: xxxxxx
+  :param tau: The soft update factor for the update of target networks.
+  :type tau: float
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -762,22 +762,22 @@ xxxxxx.
 
   :param observation_space: xxxxxx.
   :type observation_space: xxxxxx
-  :param action_space: xxxxxx.
-  :type action_space: xxxxxx
-  :param representation: xxxxxx.
-  :type representation: xxxxxx
+  :param action_space: The action space of the environment.
+  :type action_space: Box, Discrete, etc
+  :param representation: The representation module.
+  :type representation: nn.Module
   :param conactor_hidden_size: xxxxxx.
   :type conactor_hidden_size: xxxxxx
   :param qnetwork_hidden_size: xxxxxx.
   :type qnetwork_hidden_size: xxxxxx
-  :param normalize: xxxxxx.
-  :type normalize: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param normalize: The method of normalization.
+  :type normalize: nn.Module
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
+  :param device: The calculating device.
+  :type device: str
 
 .. py:function::
   xuance.torch.policies.deterministic.SPDQNPolicy.Atarget(state)
@@ -838,18 +838,18 @@ xxxxxx.
 
   xxxxxx.
 
-  :param tau: xxxxxx.
-  :type tau: xxxxxx
+  :param tau: The soft update factor for the update of target networks.
+  :type tau: float
   :return: xxxxxx.
   :rtype: xxxxxx
 
 .. py:class::
   xuance.torch.policies.deterministic.DRQNPolicy(action_space, representation, **kwargs)
 
-  :param action_space: xxxxxx.
-  :type action_space: xxxxxx
-  :param representation: xxxxxx.
-  :type representation: xxxxxx
+  :param action_space: The action space of the environment.
+  :type action_space: Box, Discrete, etc
+  :param representation: The representation module.
+  :type representation: nn.Module
   :param **kwargs: xxxxxx.
   :type **kwargs: xxxxxx
 
@@ -858,10 +858,10 @@ xxxxxx.
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
-  :param *rnn_hidden: xxxxxx.
-  :type *rnn_hidden: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
+  :param rnn_hidden: The last final hidden states of the sequence.
+  :type *rnn_hidden: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -870,10 +870,10 @@ xxxxxx.
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
-  :param *rnn_hidden: xxxxxx.
-  :type *rnn_hidden: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
+  :param rnn_hidden: The last final hidden states of the sequence.
+  :type *rnn_hidden: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -916,28 +916,28 @@ xxxxxx.
 .. py:class::
   xuance.tensorflow.policies.deterministic.BasicQhead(state_dim, action_dim, hidden_sizes, normalize, initialize, activation, device)
 
-  :param state_dim: xxxxxx.
-  :type state_dim: xxxxxx
-  :param action_dim: xxxxxx.
-  :type action_dim: xxxxxx
+  :param state_dim: The dimension of the input state.
+  :type state_dim: int
+  :param action_dim: The dimension of the action input.
+  :type action_dim: int
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
-  :param normalize: xxxxxx.
-  :type normalize: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param normalize: The method of normalization.
+  :type normalize: nn.Module
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
+  :param device: The calculating device.
+  :type device: str
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.BasicQhead.call(inputs)
 
   xxxxxx.
 
-  :param inputs: xxxxxx.
-  :type inputs: xxxxxx
+  :param inputs: The inputs of the neural neworks.
+  :type inputs: Dict(tf.Tensor)
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -952,124 +952,124 @@ xxxxxx.
 
   xxxxxx.
 
-  :param x: xxxxxx.
-  :type x: xxxxxx
+  :param x: The input tensor.
+  :type x: torch.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
 .. py:class::
   xuance.tensorflow.policies.deterministic.DuelQhead(state_dim, action_dim, hidden_sizes, normalize, initialize, activation, device)
 
-  :param state_dim: xxxxxx.
-  :type state_dim: xxxxxx
-  :param action_dim: xxxxxx.
-  :type action_dim: xxxxxx
+  :param state_dim: The dimension of the input state.
+  :type state_dim: int
+  :param action_dim: The dimension of the action input.
+  :type action_dim: int
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
-  :param normalize: xxxxxx.
-  :type normalize: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param normalize: The method of normalization.
+  :type normalize: nn.Module
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
+  :param device: The calculating device.
+  :type device: str
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.DuelQhead.call(x)
 
   xxxxxx.
 
-  :param x: xxxxxx.
-  :type x: xxxxxx
+  :param x: The input tensor.
+  :type x: torch.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
 .. py:class::
   xuance.tensorflow.policies.deterministic.C51Qhead(state_dim, action_dim, atom_num, hidden_sizes, normalize, initialize, activation, device)
 
-  :param state_dim: xxxxxx.
-  :type state_dim: xxxxxx
-  :param action_dim: xxxxxx.
-  :type action_dim: xxxxxx
+  :param state_dim: The dimension of the input state.
+  :type state_dim: int
+  :param action_dim: The dimension of the action input.
+  :type action_dim: int
   :param atom_num: xxxxxx.
   :type atom_num: xxxxxx
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
-  :param normalize: xxxxxx.
-  :type normalize: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param normalize: The method of normalization.
+  :type normalize: nn.Module
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
+  :param device: The calculating device.
+  :type device: str
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.C51Qhead.call(x)
 
   xxxxxx.
 
-  :param x: xxxxxx.
-  :type x: xxxxxx
+  :param x: The input tensor.
+  :type x: torch.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
 .. py:class::
   xuance.tensorflow.policies.deterministic.QRDQNhead(state_dim, action_dim, atom_num, hidden_sizes, normalize, initialize, activation, device)
 
-  :param state_dim: xxxxxx.
-  :type state_dim: xxxxxx
-  :param action_dim: xxxxxx.
-  :type action_dim: xxxxxx
+  :param state_dim: The dimension of the input state.
+  :type state_dim: int
+  :param action_dim: The dimension of the action input.
+  :type action_dim: int
   :param atom_num: xxxxxx.
   :type atom_num: xxxxxx
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
-  :param normalize: xxxxxx.
-  :type normalize: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param normalize: The method of normalization.
+  :type normalize: nn.Module
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
+  :param device: The calculating device.
+  :type device: str
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.QRDQNhead.call(x)
 
   xxxxxx.
 
-  :param x: xxxxxx.
-  :type x: xxxxxx
+  :param x: The input tensor.
+  :type x: torch.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
 .. py:class::
   xuance.tensorflow.policies.deterministic.BasicQnetwork(action_space, representation, hidden_size, normalize, initialize, activation, device)
 
-  :param action_space: xxxxxx.
-  :type action_space: xxxxxx
-  :param representation: xxxxxx.
-  :type representation: xxxxxx
+  :param action_space: The action space of the environment.
+  :type action_space: Box, Discrete, etc
+  :param representation: The representation module.
+  :type representation: nn.Module
   :param hidden_size: xxxxxx.
   :type hidden_size: xxxxxx
-  :param normalize: xxxxxx.
-  :type normalize: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param normalize: The method of normalization.
+  :type normalize: nn.Module
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
+  :param device: The calculating device.
+  :type device: str
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.BasicQnetwork.call(observation)
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -1078,8 +1078,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -1094,28 +1094,28 @@ xxxxxx.
 .. py:class::
   xuance.tensorflow.policies.deterministic.DuelQnetwork(action_space, representation, hidden_size, normalize, initialize, activation, device)
 
-  :param action_space: xxxxxx.
-  :type action_space: xxxxxx
-  :param representation: xxxxxx.
-  :type representation: xxxxxx
+  :param action_space: The action space of the environment.
+  :type action_space: Box, Discrete, etc
+  :param representation: The representation module.
+  :type representation: nn.Module
   :param hidden_size: xxxxxx.
   :type hidden_size: xxxxxx
-  :param normalize: xxxxxx.
-  :type normalize: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param normalize: The method of normalization.
+  :type normalize: nn.Module
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
+  :param device: The calculating device.
+  :type device: str
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.DuelQnetwork.call(observation)
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -1124,8 +1124,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -1140,20 +1140,20 @@ xxxxxx.
 .. py:class::
   xuance.tensorflow.policies.deterministic.NoisyQnetwork(action_space, representation, hidden_size, normalize, initialize, activation, device)
 
-  :param action_space: xxxxxx.
-  :type action_space: xxxxxx
-  :param representation: xxxxxx.
-  :type representation: xxxxxx
+  :param action_space: The action space of the environment.
+  :type action_space: Box, Discrete, etc
+  :param representation: The representation module.
+  :type representation: nn.Module
   :param hidden_size: xxxxxx.
   :type hidden_size: xxxxxx
-  :param normalize: xxxxxx.
-  :type normalize: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param normalize: The method of normalization.
+  :type normalize: nn.Module
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
+  :param device: The calculating device.
+  :type device: str
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.NoisyQnetwork.update_noise(noisy_bound)
@@ -1170,8 +1170,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -1180,8 +1180,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -1196,34 +1196,34 @@ xxxxxx.
 .. py:class::
   xuance.tensorflow.policies.deterministic.C51Qnetwork(action_space, atom_num, vmin, vmax, representation, hidden_size, normalize, initialize, activation, device)
 
-  :param action_space: xxxxxx.
-  :type action_space: xxxxxx
+  :param action_space: The action space of the environment.
+  :type action_space: Box, Discrete, etc
   :param atom_num: xxxxxx.
   :type atom_num: xxxxxx
   :param vmin: xxxxxx.
   :type vmin: xxxxxx
   :param vmax: xxxxxx.
   :type vmax: xxxxxx
-  :param representation: xxxxxx.
-  :type representation: xxxxxx
+  :param representation: The representation module.
+  :type representation: nn.Module
   :param hidden_size: xxxxxx.
   :type hidden_size: xxxxxx
-  :param normalize: xxxxxx.
-  :type normalize: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param normalize: The method of normalization.
+  :type normalize: nn.Module
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
+  :param device: The calculating device.
+  :type device: str
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.C51Qnetwork.call(observation)
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -1232,8 +1232,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -1248,30 +1248,30 @@ xxxxxx.
 .. py:class::
   xuance.tensorflow.policies.deterministic.QRDQN_Network(action_space, quantile_num, representation, hidden_size, normalize, initialize, activation, device)
 
-  :param action_space: xxxxxx.
-  :type action_space: xxxxxx
+  :param action_space: The action space of the environment.
+  :type action_space: Box, Discrete, etc
   :param quantile_num: xxxxxx.
   :type quantile_num: xxxxxx
-  :param representation: xxxxxx.
-  :type representation: xxxxxx
+  :param representation: The representation module.
+  :type representation: nn.Module
   :param hidden_size: xxxxxx.
   :type hidden_size: xxxxxx
-  :param normalize: xxxxxx.
-  :type normalize: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param normalize: The method of normalization.
+  :type normalize: nn.Module
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
+  :param device: The calculating device.
+  :type device: str
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.QRDQN_Network.call(observation)
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -1280,8 +1280,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -1296,80 +1296,80 @@ xxxxxx.
 .. py:class::
   xuance.tensorflow.policies.deterministic.ActorNet(state_dim, action_dim, hidden_sizes, initialize, activation, device)
 
-  :param state_dim: xxxxxx.
-  :type state_dim: xxxxxx
-  :param action_dim: xxxxxx.
-  :type action_dim: xxxxxx
+  :param state_dim: The dimension of the input state.
+  :type state_dim: int
+  :param action_dim: The dimension of the action input.
+  :type action_dim: int
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
+  :param device: The calculating device.
+  :type device: str
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.ActorNet.call(x)
 
   xxxxxx.
 
-  :param x: xxxxxx.
-  :type x: xxxxxx
+  :param x: The input tensor.
+  :type x: torch.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
 .. py:class::
   xuance.tensorflow.policies.deterministic.CriticNet(state_dim, action_dim, hidden_sizes, initialize, activation, device)
 
-  :param state_dim: xxxxxx.
-  :type state_dim: xxxxxx
-  :param action_dim: xxxxxx.
-  :type action_dim: xxxxxx
+  :param state_dim: The dimension of the input state.
+  :type state_dim: int
+  :param action_dim: The dimension of the action input.
+  :type action_dim: int
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
+  :param device: The calculating device.
+  :type device: str
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.CriticNet.call(x)
 
   xxxxxx.
 
-  :param x: xxxxxx.
-  :type x: xxxxxx
+  :param x: The input tensor.
+  :type x: torch.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
 .. py:class::
   xuance.tensorflow.policies.deterministic.DDPGPolicy(action_space, representation, actor_hidden_size, critic_hidden_size, initialize, activation, device)
 
-  :param action_space: xxxxxx.
-  :type action_space: xxxxxx
-  :param representation: xxxxxx.
-  :type representation: xxxxxx
-  :param actor_hidden_size: xxxxxx.
-  :type actor_hidden_size: xxxxxx
-  :param critic_hidden_size: xxxxxx.
-  :type critic_hidden_size: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param action_space: The action space of the environment.
+  :type action_space: Box, Discrete, etc
+  :param representation: The representation module.
+  :type representation: nn.Module
+  :param actor_hidden_size: The sizes of the hidden layers in actor network.
+  :type actor_hidden_size: list
+  :param critic_hidden_size: The sizes of the hidden layers in critic networks.
+  :type critic_hidden_size: list
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
+  :param device: The calculating device.
+  :type device: str
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.DDPGPolicy.call(observation)
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -1378,8 +1378,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -1388,8 +1388,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :param action: xxxxxx.
   :type action: xxxxxx
   :return: xxxxxx.
@@ -1400,8 +1400,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -1410,36 +1410,36 @@ xxxxxx.
 
   xxxxxx.
 
-  :param tau: xxxxxx.
-  :type tau: xxxxxx
+  :param tau: The soft update factor for the update of target networks.
+  :type tau: float
   :return: xxxxxx.
   :rtype: xxxxxx
 
 .. py:class::
   xuance.tensorflow.policies.deterministic.TD3Policy(action_space, representation, actor_hidden_size, critic_hidden_size, initialize, activation, device)
 
-  :param action_space: xxxxxx.
-  :type action_space: xxxxxx
-  :param representation: xxxxxx.
-  :type representation: xxxxxx
-  :param actor_hidden_size: xxxxxx.
-  :type actor_hidden_size: xxxxxx
-  :param critic_hidden_size: xxxxxx.
-  :type critic_hidden_size: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param action_space: The action space of the environment.
+  :type action_space: Box, Discrete, etc
+  :param representation: The representation module.
+  :type representation: nn.Module
+  :param actor_hidden_size: The sizes of the hidden layers in actor network.
+  :type actor_hidden_size: list
+  :param critic_hidden_size: The sizes of the hidden layers in critic networks.
+  :type critic_hidden_size: list
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
+  :param device: The calculating device.
+  :type device: str
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.TD3Policy.action(observation)
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -1448,8 +1448,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -1458,8 +1458,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :param action: xxxxxx.
   :type action: xxxxxx
   :return: xxxxxx.
@@ -1470,8 +1470,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -1480,8 +1480,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param tau: xxxxxx.
-  :type tau: xxxxxx
+  :param tau: The soft update factor for the update of target networks.
+  :type tau: float
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -1490,22 +1490,22 @@ xxxxxx.
 
   :param observation_space: xxxxxx.
   :type observation_space: xxxxxx
-  :param action_space: xxxxxx.
-  :type action_space: xxxxxx
-  :param representation: xxxxxx.
-  :type representation: xxxxxx
+  :param action_space: The action space of the environment.
+  :type action_space: Box, Discrete, etc
+  :param representation: The representation module.
+  :type representation: nn.Module
   :param conactor_hidden_size: xxxxxx.
   :type conactor_hidden_size: xxxxxx
   :param qnetwork_hidden_size: xxxxxx.
   :type qnetwork_hidden_size: xxxxxx
-  :param normalize: xxxxxx.
-  :type normalize: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param normalize: The method of normalization.
+  :type normalize: nn.Module
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
+  :param device: The calculating device.
+  :type device: str
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.PDQNPolicy.Atarget(state)
@@ -1566,8 +1566,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param tau: xxxxxx.
-  :type tau: xxxxxx
+  :param tau: The soft update factor for the update of target networks.
+  :type tau: float
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -1576,22 +1576,22 @@ xxxxxx.
 
   :param observation_space: xxxxxx.
   :type observation_space: xxxxxx
-  :param action_space: xxxxxx.
-  :type action_space: xxxxxx
-  :param representation: xxxxxx.
-  :type representation: xxxxxx
+  :param action_space: The action space of the environment.
+  :type action_space: Box, Discrete, etc
+  :param representation: The representation module.
+  :type representation: nn.Module
   :param conactor_hidden_size: xxxxxx.
   :type conactor_hidden_size: xxxxxx
   :param qnetwork_hidden_size: xxxxxx.
   :type qnetwork_hidden_size: xxxxxx
-  :param normalize: xxxxxx.
-  :type normalize: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param normalize: The method of normalization.
+  :type normalize: nn.Module
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
+  :param device: The calculating device.
+  :type device: str
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.MPDQNPolicy.Atarget(state)
@@ -1652,8 +1652,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param tau: xxxxxx.
-  :type tau: xxxxxx
+  :param tau: The soft update factor for the update of target networks.
+  :type tau: float
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -1662,22 +1662,22 @@ xxxxxx.
 
   :param observation_space: xxxxxx.
   :type observation_space: xxxxxx
-  :param action_space: xxxxxx.
-  :type action_space: xxxxxx
-  :param representation: xxxxxx.
-  :type representation: xxxxxx
+  :param action_space: The action space of the environment.
+  :type action_space: Box, Discrete, etc
+  :param representation: The representation module.
+  :type representation: nn.Module
   :param conactor_hidden_size: xxxxxx.
   :type conactor_hidden_size: xxxxxx
   :param qnetwork_hidden_size: xxxxxx.
   :type qnetwork_hidden_size: xxxxxx
-  :param normalize: xxxxxx.
-  :type normalize: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param normalize: The method of normalization.
+  :type normalize: nn.Module
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
+  :param device: The calculating device.
+  :type device: str
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.SPDQNPolicy.Atarget(state)
@@ -1738,18 +1738,18 @@ xxxxxx.
 
   xxxxxx.
 
-  :param tau: xxxxxx.
-  :type tau: xxxxxx
+  :param tau: The soft update factor for the update of target networks.
+  :type tau: float
   :return: xxxxxx.
   :rtype: xxxxxx
 
 .. py:class::
   xuance.tensorflow.policies.deterministic.DRQNPolicy(action_space, representation, **kwargs)
 
-  :param action_space: xxxxxx.
-  :type action_space: xxxxxx
-  :param representation: xxxxxx.
-  :type representation: xxxxxx
+  :param action_space: The action space of the environment.
+  :type action_space: Box, Discrete, etc
+  :param representation: The representation module.
+  :type representation: nn.Module
   :param **kwargs: xxxxxx.
   :type **kwargs: xxxxxx
 
@@ -1758,10 +1758,10 @@ xxxxxx.
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
-  :param *rnn_hidden: xxxxxx.
-  :type *rnn_hidden: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
+  :param rnn_hidden: The last final hidden states of the sequence.
+  :type *rnn_hidden: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -1770,10 +1770,10 @@ xxxxxx.
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
-  :param *rnn_hidden: xxxxxx.
-  :type *rnn_hidden: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
+  :param rnn_hidden: The last final hidden states of the sequence.
+  :type *rnn_hidden: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -1816,26 +1816,26 @@ xxxxxx.
 .. py:class::
   xuance.mindspore.policies.deterministic.BasicQhead(state_dim, action_dim, hidden_sizes, normalize, initialize, activation)
 
-  :param state_dim: xxxxxx.
-  :type state_dim: xxxxxx
-  :param action_dim: xxxxxx.
-  :type action_dim: xxxxxx
+  :param state_dim: The dimension of the input state.
+  :type state_dim: int
+  :param action_dim: The dimension of the action input.
+  :type action_dim: int
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
-  :param normalize: xxxxxx.
-  :type normalize: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
+  :param normalize: The method of normalization.
+  :type normalize: nn.Module
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
 
 .. py:function::
   xuance.mindspore.policies.deterministic.BasicQhead.construct(x)
 
   xxxxxx.
 
-  :param x: xxxxxx.
-  :type x: xxxxxx
+  :param x: The input tensor.
+  :type x: torch.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -1850,8 +1850,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param x: xxxxxx.
-  :type x: xxxxxx
+  :param x: The input tensor.
+  :type x: torch.Tensor
   :param h: xxxxxx.
   :type h: xxxxxx
   :param c: xxxxxx.
@@ -1862,108 +1862,108 @@ xxxxxx.
 .. py:class::
   xuance.mindspore.policies.deterministic.DuelQhead(state_dim, action_dim, hidden_sizes, normalize, initialize, activation)
 
-  :param state_dim: xxxxxx.
-  :type state_dim: xxxxxx
-  :param action_dim: xxxxxx.
-  :type action_dim: xxxxxx
+  :param state_dim: The dimension of the input state.
+  :type state_dim: int
+  :param action_dim: The dimension of the action input.
+  :type action_dim: int
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
-  :param normalize: xxxxxx.
-  :type normalize: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
+  :param normalize: The method of normalization.
+  :type normalize: nn.Module
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
 
 .. py:function::
   xuance.mindspore.policies.deterministic.DuelQhead.construct(x)
 
   xxxxxx.
 
-  :param x: xxxxxx.
-  :type x: xxxxxx
+  :param x: The input tensor.
+  :type x: torch.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
 .. py:class::
   xuance.mindspore.policies.deterministic.C51Qhead(state_dim, action_dim, atom_num, hidden_sizes, normalize, initialize, activation)
 
-  :param state_dim: xxxxxx.
-  :type state_dim: xxxxxx
-  :param action_dim: xxxxxx.
-  :type action_dim: xxxxxx
+  :param state_dim: The dimension of the input state.
+  :type state_dim: int
+  :param action_dim: The dimension of the action input.
+  :type action_dim: int
   :param atom_num: xxxxxx.
   :type atom_num: xxxxxx
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
-  :param normalize: xxxxxx.
-  :type normalize: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
+  :param normalize: The method of normalization.
+  :type normalize: nn.Module
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
 
 .. py:function::
   xuance.mindspore.policies.deterministic.C51Qhead.construct(x)
 
   xxxxxx.
 
-  :param x: xxxxxx.
-  :type x: xxxxxx
+  :param x: The input tensor.
+  :type x: torch.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
 .. py:class::
   xuance.mindspore.policies.deterministic.QRDQNhead(state_dim, action_dim, atom_num, hidden_sizes, normalize, initialize, activation)
 
-  :param state_dim: xxxxxx.
-  :type state_dim: xxxxxx
-  :param action_dim: xxxxxx.
-  :type action_dim: xxxxxx
+  :param state_dim: The dimension of the input state.
+  :type state_dim: int
+  :param action_dim: The dimension of the action input.
+  :type action_dim: int
   :param atom_num: xxxxxx.
   :type atom_num: xxxxxx
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
-  :param normalize: xxxxxx.
-  :type normalize: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
+  :param normalize: The method of normalization.
+  :type normalize: nn.Module
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
 
 .. py:function::
   xuance.mindspore.policies.deterministic.QRDQNhead.construct(x)
 
   xxxxxx.
 
-  :param x: xxxxxx.
-  :type x: xxxxxx
+  :param x: The input tensor.
+  :type x: torch.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
 .. py:class::
   xuance.mindspore.policies.deterministic.BasicQnetwork(action_space, representation, hidden_sizes, normalize, initialize, activation)
 
-  :param action_space: xxxxxx.
-  :type action_space: xxxxxx
-  :param representation: xxxxxx.
-  :type representation: xxxxxx
+  :param action_space: The action space of the environment.
+  :type action_space: Box, Discrete, etc
+  :param representation: The representation module.
+  :type representation: nn.Module
   :param hidden_size: xxxxxx.
   :type hidden_size: xxxxxx
-  :param normalize: xxxxxx.
-  :type normalize: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
+  :param normalize: The method of normalization.
+  :type normalize: nn.Module
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
 
 .. py:function::
   xuance.mindspore.policies.deterministic.BasicQnetwork.construct(observation)
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -1972,8 +1972,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -1995,26 +1995,26 @@ xxxxxx.
 .. py:class::
   xuance.mindspore.policies.deterministic.DuelQnetwork(action_space, representation, hidden_sizes, normalize, initialize, activation)
 
-  :param action_space: xxxxxx.
-  :type action_space: xxxxxx
-  :param representation: xxxxxx.
-  :type representation: xxxxxx
+  :param action_space: The action space of the environment.
+  :type action_space: Box, Discrete, etc
+  :param representation: The representation module.
+  :type representation: nn.Module
   :param hidden_size: xxxxxx.
   :type hidden_size: xxxxxx
-  :param normalize: xxxxxx.
-  :type normalize: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
+  :param normalize: The method of normalization.
+  :type normalize: nn.Module
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
 
 .. py:function::
   xuance.mindspore.policies.deterministic.DuelQnetwork.construct(observation)
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -2023,8 +2023,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -2046,18 +2046,18 @@ xxxxxx.
 .. py:class::
   xuance.mindspore.policies.deterministic.NoisyQnetwork(action_space, representation, hidden_sizes, normalize, initialize, activation)
 
-  :param action_space: xxxxxx.
-  :type action_space: xxxxxx
-  :param representation: xxxxxx.
-  :type representation: xxxxxx
+  :param action_space: The action space of the environment.
+  :type action_space: Box, Discrete, etc
+  :param representation: The representation module.
+  :type representation: nn.Module
   :param hidden_size: xxxxxx.
   :type hidden_size: xxxxxx
-  :param normalize: xxxxxx.
-  :type normalize: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
+  :param normalize: The method of normalization.
+  :type normalize: nn.Module
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
 
 .. py:function::
   xuance.mindspore.policies.deterministic.NoisyQnetwork.update_noise(noisy_bound)
@@ -2080,8 +2080,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -2090,8 +2090,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -2113,32 +2113,32 @@ xxxxxx.
 .. py:class::
   xuance.mindspore.policies.deterministic.C51Qnetwork(action_space, atom_num, vmin, vmax, representation, hidden_sizes, normalize, initialize, activation)
 
-  :param action_space: xxxxxx.
-  :type action_space: xxxxxx
+  :param action_space: The action space of the environment.
+  :type action_space: Box, Discrete, etc
   :param atom_num: xxxxxx.
   :type atom_num: xxxxxx
   :param vmin: xxxxxx.
   :type vmin: xxxxxx
   :param vmax: xxxxxx.
   :type vmax: xxxxxx
-  :param representation: xxxxxx.
-  :type representation: xxxxxx
+  :param representation: The representation module.
+  :type representation: nn.Module
   :param hidden_size: xxxxxx.
   :type hidden_size: xxxxxx
-  :param normalize: xxxxxx.
-  :type normalize: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
+  :param normalize: The method of normalization.
+  :type normalize: nn.Module
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
 
 .. py:function::
   xuance.mindspore.policies.deterministic.C51Qnetwork.construct(observation)
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -2147,8 +2147,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -2160,28 +2160,28 @@ xxxxxx.
 .. py:class::
   xuance.mindspore.policies.deterministic.QRDQN_Network(action_space, quantile_num, representation, hidden_sizes, normalize, initialize, activation)
 
-  :param action_space: xxxxxx.
-  :type action_space: xxxxxx
+  :param action_space: The action space of the environment.
+  :type action_space: Box, Discrete, etc
   :param quantile_num: xxxxxx.
   :type quantile_num: xxxxxx
-  :param representation: xxxxxx.
-  :type representation: xxxxxx
+  :param representation: The representation module.
+  :type representation: nn.Module
   :param hidden_size: xxxxxx.
   :type hidden_size: xxxxxx
-  :param normalize: xxxxxx.
-  :type normalize: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
+  :param normalize: The method of normalization.
+  :type normalize: nn.Module
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
 
 .. py:function::
   xuance.mindspore.policies.deterministic.QRDQN_Network.construct(observation)
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -2190,8 +2190,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -2213,74 +2213,74 @@ xxxxxx.
 .. py:class::
   xuance.mindspore.policies.deterministic.ActorNet(state_dim, action_dim, hidden_sizes, initialize, activation)
 
-  :param state_dim: xxxxxx.
-  :type state_dim: xxxxxx
-  :param action_dim: xxxxxx.
-  :type action_dim: xxxxxx
+  :param state_dim: The dimension of the input state.
+  :type state_dim: int
+  :param action_dim: The dimension of the action input.
+  :type action_dim: int
   :param hidden_size: xxxxxx.
   :type hidden_size: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
 
 .. py:function::
   xuance.mindspore.policies.deterministic.ActorNet.construct(x)
 
   xxxxxx.
 
-  :param x: xxxxxx.
-  :type x: xxxxxx
+  :param x: The input tensor.
+  :type x: torch.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
 .. py:class::
   xuance.mindspore.policies.deterministic.CriticNet(state_dim, action_dim, hidden_sizes, initialize, activation)
 
-  :param state_dim: xxxxxx.
-  :type state_dim: xxxxxx
-  :param action_dim: xxxxxx.
-  :type action_dim: xxxxxx
+  :param state_dim: The dimension of the input state.
+  :type state_dim: int
+  :param action_dim: The dimension of the action input.
+  :type action_dim: int
   :param hidden_size: xxxxxx.
   :type hidden_size: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
 
 .. py:function::
   xuance.mindspore.policies.deterministic.CriticNet.construct(x)
 
   xxxxxx.
 
-  :param x: xxxxxx.
-  :type x: xxxxxx
+  :param x: The input tensor.
+  :type x: torch.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
 .. py:class::
   xuance.mindspore.policies.deterministic.DDPGPolicy(action_space, representation, actor_hidden_size, critic_hidden_size, initialize, activation)
 
-  :param action_space: xxxxxx.
-  :type action_space: xxxxxx
-  :param representation: xxxxxx.
-  :type representation: xxxxxx
-  :param actor_hidden_size: xxxxxx.
-  :type actor_hidden_size: xxxxxx
-  :param critic_hidden_size: xxxxxx.
-  :type critic_hidden_size: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
+  :param action_space: The action space of the environment.
+  :type action_space: Box, Discrete, etc
+  :param representation: The representation module.
+  :type representation: nn.Module
+  :param actor_hidden_size: The sizes of the hidden layers in actor network.
+  :type actor_hidden_size: list
+  :param critic_hidden_size: The sizes of the hidden layers in critic networks.
+  :type critic_hidden_size: list
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
 
 .. py:function::
   xuance.mindspore.policies.deterministic.DDPGPolicy.construct(observation)
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -2289,8 +2289,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -2299,8 +2299,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :param action: xxxxxx.
   :type action: xxxxxx
   :return: xxxxxx.
@@ -2311,8 +2311,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -2321,32 +2321,32 @@ xxxxxx.
 
   xxxxxx.
 
-  :param tau: xxxxxx.
-  :type tau: xxxxxx
+  :param tau: The soft update factor for the update of target networks.
+  :type tau: float
 
 .. py:class::
   xuance.mindspore.policies.deterministic.TD3Policy(action_space, representation, actor_hidden_size, critic_hidden_size, initialize, activation)
 
-  :param action_space: xxxxxx.
-  :type action_space: xxxxxx
-  :param representation: xxxxxx.
-  :type representation: xxxxxx
-  :param actor_hidden_size: xxxxxx.
-  :type actor_hidden_size: xxxxxx
-  :param critic_hidden_size: xxxxxx.
-  :type critic_hidden_size: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
+  :param action_space: The action space of the environment.
+  :type action_space: Box, Discrete, etc
+  :param representation: The representation module.
+  :type representation: nn.Module
+  :param actor_hidden_size: The sizes of the hidden layers in actor network.
+  :type actor_hidden_size: list
+  :param critic_hidden_size: The sizes of the hidden layers in critic networks.
+  :type critic_hidden_size: list
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
 
 .. py:function::
   xuance.mindspore.policies.deterministic.TD3Policy.action(observation)
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -2355,8 +2355,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -2365,8 +2365,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :param action: xxxxxx.
   :type action: xxxxxx
   :return: xxxxxx.
@@ -2377,8 +2377,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -2387,28 +2387,28 @@ xxxxxx.
 
   xxxxxx.
 
-  :param tau: xxxxxx.
-  :type tau: xxxxxx
+  :param tau: The soft update factor for the update of target networks.
+  :type tau: float
 
 .. py:class::
   xuance.mindspore.policies.deterministic.PDQNPolicy(observation_space, action_space, representation, conactor_hidden_size, qnetwork_hidden_size, normalize, initialize, activation)
 
   :param observation_space: xxxxxx.
   :type observation_space: xxxxxx
-  :param action_space: xxxxxx.
-  :type action_space: xxxxxx
-  :param representation: xxxxxx.
-  :type representation: xxxxxx
+  :param action_space: The action space of the environment.
+  :type action_space: Box, Discrete, etc
+  :param representation: The representation module.
+  :type representation: nn.Module
   :param conactor_hidden_size: xxxxxx.
   :type conactor_hidden_size: xxxxxx
   :param qnetwork_hidden_size: xxxxxx.
   :type qnetwork_hidden_size: xxxxxx
-  :param normalize: xxxxxx.
-  :type normalize: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
+  :param normalize: The method of normalization.
+  :type normalize: nn.Module
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
 
 .. py:function::
   xuance.mindspore.policies.deterministic.PDQNPolicy.Atarget(state)
@@ -2477,28 +2477,28 @@ xxxxxx.
 
   xxxxxx.
 
-  :param tau: xxxxxx.
-  :type tau: xxxxxx
+  :param tau: The soft update factor for the update of target networks.
+  :type tau: float
 
 .. py:class::
   xuance.mindspore.policies.deterministic.MPDQNPolicy(observation_space, action_space, representation, conactor_hidden_size, qnetwork_hidden_size, normalize, initialize, activation)
 
   :param observation_space: xxxxxx.
   :type observation_space: xxxxxx
-  :param action_space: xxxxxx.
-  :type action_space: xxxxxx
-  :param representation: xxxxxx.
-  :type representation: xxxxxx
+  :param action_space: The action space of the environment.
+  :type action_space: Box, Discrete, etc
+  :param representation: The representation module.
+  :type representation: nn.Module
   :param conactor_hidden_size: xxxxxx.
   :type conactor_hidden_size: xxxxxx
   :param qnetwork_hidden_size: xxxxxx.
   :type qnetwork_hidden_size: xxxxxx
-  :param normalize: xxxxxx.
-  :type normalize: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
+  :param normalize: The method of normalization.
+  :type normalize: nn.Module
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
 
 .. py:function::
   xuance.mindspore.policies.deterministic.MPDQNPolicy.Atarget(state)
@@ -2571,28 +2571,28 @@ xxxxxx.
 
   xxxxxx.
 
-  :param tau: xxxxxx.
-  :type tau: xxxxxx
+  :param tau: The soft update factor for the update of target networks.
+  :type tau: float
 
 .. py:class::
   xuance.mindspore.policies.deterministic.SPDQNPolicy(observation_space, action_space, representation, conactor_hidden_size, qnetwork_hidden_size, normalize, initialize, activation)
 
   :param observation_space: xxxxxx.
   :type observation_space: xxxxxx
-  :param action_space: xxxxxx.
-  :type action_space: xxxxxx
-  :param representation: xxxxxx.
-  :type representation: xxxxxx
+  :param action_space: The action space of the environment.
+  :type action_space: Box, Discrete, etc
+  :param representation: The representation module.
+  :type representation: nn.Module
   :param conactor_hidden_size: xxxxxx.
   :type conactor_hidden_size: xxxxxx
   :param qnetwork_hidden_size: xxxxxx.
   :type qnetwork_hidden_size: xxxxxx
-  :param normalize: xxxxxx.
-  :type normalize: xxxxxx
-  :param initialize: xxxxxx.
-  :type initialize: xxxxxx
-  :param activation: xxxxxx.
-  :type activation: xxxxxx
+  :param normalize: The method of normalization.
+  :type normalize: nn.Module
+  :param initialize: The initialization for the parameters of the networks.
+  :type initialize: Tensor
+  :param activation: The choose of activation functions for hidden layers.
+  :type activation: nn.Module
 
 .. py:function::
   xuance.mindspore.policies.deterministic.SPDQNPolicy.Atarget(state)
@@ -2665,16 +2665,16 @@ xxxxxx.
 
   xxxxxx.
 
-  :param tau: xxxxxx.
-  :type tau: xxxxxx
+  :param tau: The soft update factor for the update of target networks.
+  :type tau: float
 
 .. py:class::
   xuance.mindspore.policies.deterministic.DRQNPolicy(action_space, representation, kwargs)
 
-  :param action_space: xxxxxx.
-  :type action_space: xxxxxx
-  :param representation: xxxxxx.
-  :type representation: xxxxxx
+  :param action_space: The action space of the environment.
+  :type action_space: Box, Discrete, etc
+  :param representation: The representation module.
+  :type representation: nn.Module
   :param kwargs: xxxxxx.
   :type kwargs: xxxxxx
 
@@ -2683,8 +2683,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :param rnn_hidden: The final hidden state of the sequence.
   :type rnn_hidden: xxxxxx
   :return: xxxxxx.
@@ -2695,8 +2695,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param observation: xxxxxx.
-  :type observation: xxxxxx
+  :param observation: The original observation variables.
+  :type observation: Tensor
   :param rnn_hidden: The final hidden state of the sequence.
   :type rnn_hidden: xxxxxx
   :return: xxxxxx.

@@ -29,7 +29,7 @@ DQN_Agent
     Calculate actions according to the observations.
 
     :param obs: The observation of current step.
-    :type obs: numpy.ndarray
+    :type obs: np.ndarray
     :param egreedy: The epsilong greedy factor.
     :type egreedy: np.float
     :return: **action** - The actions to be executed.
@@ -80,7 +80,7 @@ DQN_Agent
     Calculate actions according to the observations.
 
     :param obs: The observation of current step.
-    :type obs: numpy.ndarray
+    :type obs: np.ndarray
     :param egreedy: The epsilong greedy factor.
     :type egreedy: np.float
     :return: **action** - The actions to be executed.
@@ -128,8 +128,8 @@ DQN_Agent
 .. py:function::
     xuance.mindspore.agents.qlearning_family.dqn_agent.DQN_Agent._process_observation(observations)
 
-    :param observations: xxxxxx.
-    :type observations: xxxxxx
+    :param observations: The original observation variables.
+    :type observations: Tensor
     :return: xxxxxx.
     :rtype: xxxxxx
 
@@ -144,10 +144,10 @@ DQN_Agent
 .. py:function::
     xuance.mindspore.agents.qlearning_family.dqn_agent.DQN_Agent._action(obs,egreedy)
 
-    :param obs: xxxxxx.
-    :type obs: xxxxxx
-    :param egreedy: xxxxxx.
-    :type egreedy: xxxxxx
+    :param obs: The observation variables.
+    :type obs: np.ndarray
+    :param egreedy: The epsilon greedy factor.
+    :type egreedy: float
     :return: xxxxxx.
     :rtype: xxxxxx
 

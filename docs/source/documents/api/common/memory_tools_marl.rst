@@ -63,8 +63,8 @@ xxxxxx.
   xuance.common.memory_tools_marl.MARL_OffPolicyBuffer(n_agents, state_space, obs_space, act_space, rew_space, done_space,
                  n_envs, buffer_size, batch_size, **kwargs)
 
-  :param n_agents: xxxxxx.
-  :type n_agents: xxxxxx
+  :param n_agents: The number of agents.
+  :type n_agents: int
   :param state_space: xxxxxx.
   :type state_space: xxxxxx
   :param obs_space: xxxxxx.
@@ -109,8 +109,8 @@ xxxxxx.
   xuance.common.memory_tools_marl.MARL_OffPolicyBuffer_RNN(n_agents, state_space, obs_space, act_space, rew_space, done_space,
                  n_envs, buffer_size, batch_size, **kwargs)
 
-  :param n_agents: xxxxxx.
-  :type n_agents: xxxxxx
+  :param n_agents: The number of agents.
+  :type n_agents: int
   :param state_space: xxxxxx.
   :type state_space: xxxxxx
   :param obs_space: xxxxxx.
@@ -167,8 +167,8 @@ xxxxxx.
   xuance.common.memory_tools_marl.MeanField_OffPolicyBuffer(n_agents, state_space, obs_space, act_space, prob_shape, rew_space, done_space,
                  n_envs, buffer_size, batch_size)
 
-  :param n_agents: xxxxxx.
-  :type n_agents: xxxxxx
+  :param n_agents: The number of agents.
+  :type n_agents: int
   :param state_space: xxxxxx.
   :type state_space: xxxxxx
   :param obs_space: xxxxxx.
@@ -205,8 +205,8 @@ xxxxxx.
   xuance.common.memory_tools_marl.MeanField_OffPolicyBuffer(n_agents, state_space, obs_space, act_space, rew_space, done_space, n_envs, buffer_size,
                  use_gae, use_advnorm, gamma, gae_lam, **kwargs)
 
-  :param n_agents: xxxxxx.
-  :type n_agents: xxxxxx
+  :param n_agents: The number of agents.
+  :type n_agents: int
   :param state_space: xxxxxx.
   :type state_space: xxxxxx
   :param obs_space: xxxxxx.
@@ -271,8 +271,8 @@ xxxxxx.
   xuance.common.memory_tools_marl.MARL_OnPolicyBuffer_RNN(n_agents, state_space, obs_space, act_space, rew_space, done_space, n_envs, buffer_size,
                  use_gae, use_advnorm, gamma, gae_lam, **kwargs)
 
-  :param n_agents: xxxxxx.
-  :type n_agents: xxxxxx
+  :param n_agents: The number of agents.
+  :type n_agents: int
   :param state_space: xxxxxx.
   :type state_space: xxxxxx
   :param obs_space: xxxxxx.
@@ -356,8 +356,8 @@ xxxxxx.
   xuance.common.memory_tools_marl.MARL_OnPolicyBuffer_MindSpore(n_agents, state_space, obs_space, act_space, rew_space, done_space, n_envs,
                  n_size, use_gae, use_advnorm, gamma, gae_lam, n_actions)
 
-  :param n_agents: xxxxxx.
-  :type n_agents: xxxxxx
+  :param n_agents: The number of agents.
+  :type n_agents: int
   :param state_space: xxxxxx.
   :type state_space: xxxxxx
   :param obs_space: xxxxxx.
@@ -397,8 +397,8 @@ xxxxxx.
   xuance.common.memory_tools_marl.MeanField_OnPolicyBuffer(n_agents, state_space, obs_space, act_space, rew_space, done_space, n_envs,
                  n_size, use_gae, use_advnorm, gamma, gae_lam, **kwargs)
 
-  :param n_agents: xxxxxx.
-  :type n_agents: xxxxxx
+  :param n_agents: The number of agents.
+  :type n_agents: int
   :param state_space: xxxxxx.
   :type state_space: xxxxxx
   :param obs_space: xxxxxx.
@@ -445,8 +445,8 @@ xxxxxx.
   xuance.common.memory_tools_marl.COMA_Buffer(n_agents, state_space, obs_space, act_space, rew_space, done_space, n_envs,
                  buffer_size, use_gae, use_advnorm, gamma, gae_lam, **kwargs)
 
-  :param n_agents: xxxxxx.
-  :type n_agents: xxxxxx
+  :param n_agents: The number of agents.
+  :type n_agents: int
   :param state_space: xxxxxx.
   :type state_space: xxxxxx
   :param obs_space: xxxxxx.
@@ -493,8 +493,8 @@ xxxxxx.
   xuance.common.memory_tools_marl.COMA_Buffer_RNN(n_agents, state_space, obs_space, act_space, rew_space, done_space, n_envs,
                  buffer_size, use_gae, use_advnorm, gamma, gae_lam, **kwargs)
 
-  :param n_agents: xxxxxx.
-  :type n_agents: xxxxxx
+  :param n_agents: The number of agents.
+  :type n_agents: int
   :param state_space: xxxxxx.
   :type state_space: xxxxxx
   :param obs_space: xxxxxx.

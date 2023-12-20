@@ -29,7 +29,7 @@ PPG_Agent
   Calculate actions according to the observations.
 
   :param obs: The observation of current step.
-  :type obs: numpy.ndarray
+  :type obs: np.ndarray
   :return: **action**, **vs**, **dist** - The actions to be executed. The values calculated by critic network. The distributions of the stochastic policy.
   :rtype: np.ndarray, np.ndarray, torch.distributions
   
@@ -78,7 +78,7 @@ PPG_Agent
   Calculate actions according to the observations.
 
   :param obs: The observation of current step.
-  :type obs: numpy.ndarray
+  :type obs: np.ndarray
   :return: **action**, **vs**, **dist** - The actions to be executed. The values calculated by critic network. The distributions of the stochastic policy.
   :rtype: np.ndarray, np.ndarray, torch.distributions
 
@@ -124,8 +124,8 @@ PPG_Agent
 .. py:function::
     xuance.mindspore.agents.policy_gradient.ppg_agent.PPG_Agent._action(obs)
 
-    :param obs: xxxxxx.
-    :type obs: xxxxxx
+    :param obs: The observation variables.
+    :type obs: np.ndarray
     :return: xxxxxx.
     :rtype: xxxxxx
 

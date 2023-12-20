@@ -29,7 +29,7 @@ SAC_Agent
   Calculate actions according to the observations.
 
   :param obs: The observation of current step.
-  :type obs: numpy.ndarray
+  :type obs: np.ndarray
   :return: **action** - The actions to be executed.
   :rtype: np.ndarray
   
@@ -78,7 +78,7 @@ SAC_Agent
   Calculate actions according to the observations.
 
   :param obs: The observation of current step.
-  :type obs: numpy.ndarray
+  :type obs: np.ndarray
   :return: **action** - The actions to be executed.
   :rtype: np.ndarray
 
@@ -124,8 +124,8 @@ SAC_Agent
 .. py:function::
     xuance.mindspore.agents.policy_gradient.sac_agent.SAC_Agent._action(obs)
 
-    :param obs: xxxxxx.
-    :type obs: xxxxxx
+    :param obs: The observation variables.
+    :type obs: np.ndarray
     :return: xxxxxx.
     :rtype: xxxxxx
 

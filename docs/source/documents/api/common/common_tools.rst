@@ -118,8 +118,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param x: xxxxxx.
-  :type x: xxxxxx
+  :param x: The input tensor.
+  :type x: torch.Tensor
   :param discount: xxxxxx.
   :type discount: xxxxxx
   :return: xxxxxx.

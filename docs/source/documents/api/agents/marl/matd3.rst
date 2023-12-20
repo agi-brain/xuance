@@ -23,7 +23,7 @@ MATD3_Agents
     Calculate joint actions for N agents according to the joint observations.
 
     :param obs_n: The joint observations of N agents.
-    :type obs_n: numpy.ndarray
+    :type obs_n: np.ndarray
     :param test_mode: Choose if add noises on the output actions. If True, output actions directly, else output actions with noises.
     :type test_mode: bool
     :return: **actions** - The joint actions of N agents.
@@ -61,7 +61,7 @@ MATD3_Agents
     Calculate joint actions for N agents according to the joint observations.
 
     :param obs_n: The joint observations of N agents.
-    :type obs_n: numpy.ndarray
+    :type obs_n: np.ndarray
     :param test_mode: Choose if add noises on the output actions. If True, output actions directly, else output actions with noises.
     :type test_mode: bool
     :return: **actions** - The joint actions of N agents.
@@ -97,7 +97,7 @@ MATD3_Agents
     Calculate joint actions for N agents according to the joint observations.
 
     :param obs_n: The joint observations of N agents.
-    :type obs_n: numpy.ndarray
+    :type obs_n: np.ndarray
     :param test_mode: Choose if add noises on the output actions. If True, output actions directly, else output actions with noises.
     :type test_mode: bool
     :return: **actions** - The joint actions of N agents.

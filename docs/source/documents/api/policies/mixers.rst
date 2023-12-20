@@ -17,8 +17,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param values_n: xxxxxx.
-  :type values_n: xxxxxx
+  :param values_n: The joint values of n agents.
+  :type values_n: Tensor
   :param states: xxxxxx.
   :type states: xxxxxx
   :return: xxxxxx.
@@ -33,18 +33,18 @@ xxxxxx.
   :type dim_hidden: xxxxxx
   :param dim_hypernet_hidden: xxxxxx.
   :type dim_hypernet_hidden: xxxxxx
-  :param n_agents: xxxxxx.
-  :type n_agents: xxxxxx
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param n_agents: The number of agents.
+  :type n_agents: int
+  :param device: The calculating device.
+  :type device: str
 
 .. py:function::
   xuance.torch.policies.mixers.QMIX_mixer.forward(values_n, states)
 
   xxxxxx.
 
-  :param values_n: xxxxxx.
-  :type values_n: xxxxxx
+  :param values_n: The joint values of n agents.
+  :type values_n: Tensor
   :param states: xxxxxx.
   :type states: xxxxxx
   :return: xxxxxx.
@@ -57,18 +57,18 @@ xxxxxx.
   :type dim_state: xxxxxx
   :param dim_hidden: xxxxxx.
   :type dim_hidden: xxxxxx
-  :param n_agents: xxxxxx.
-  :type n_agents: xxxxxx
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param n_agents: The number of agents.
+  :type n_agents: int
+  :param device: The calculating device.
+  :type device: str
 
 .. py:function::
   xuance.torch.policies.mixers.QMIX_FF_mixer.forward(values_n, states)
 
   xxxxxx.
 
-  :param values_n: xxxxxx.
-  :type values_n: xxxxxx
+  :param values_n: The joint values of n agents.
+  :type values_n: Tensor
   :param states: xxxxxx.
   :type states: xxxxxx
   :return: xxxxxx.
@@ -83,8 +83,8 @@ xxxxxx.
   :type dim_action: xxxxxx
   :param dim_hidden: xxxxxx.
   :type dim_hidden: xxxxxx
-  :param n_agents: xxxxxx.
-  :type n_agents: xxxxxx
+  :param n_agents: The number of agents.
+  :type n_agents: int
   :param dim_utility_hidden: xxxxxx.
   :type dim_utility_hidden: xxxxxx
 
@@ -109,8 +109,8 @@ xxxxxx.
   :type dim_action: xxxxxx
   :param dim_hidden: xxxxxx.
   :type dim_hidden: xxxxxx
-  :param n_agents: xxxxxx.
-  :type n_agents: xxxxxx
+  :param n_agents: The number of agents.
+  :type n_agents: int
   :param dim_utility_hidden: xxxxxx.
   :type dim_utility_hidden: xxxxxx
 
@@ -152,8 +152,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param values_n: xxxxxx.
-  :type values_n: xxxxxx
+  :param values_n: The joint values of n agents.
+  :type values_n: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -166,18 +166,18 @@ xxxxxx.
   :type dim_hidden: xxxxxx
   :param dim_hypernet_hidden: xxxxxx.
   :type dim_hypernet_hidden: xxxxxx
-  :param n_agents: xxxxxx.
-  :type n_agents: xxxxxx
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param n_agents: The number of agents.
+  :type n_agents: int
+  :param device: The calculating device.
+  :type device: str
 
 .. py:function::
   xuance.tensorflow.policies.mixers.QMIX_mixer.call(values_n, states)
 
   xxxxxx.
 
-  :param values_n: xxxxxx.
-  :type values_n: xxxxxx
+  :param values_n: The joint values of n agents.
+  :type values_n: Tensor
   :param states: xxxxxx.
   :type states: xxxxxx
   :return: xxxxxx.
@@ -190,18 +190,18 @@ xxxxxx.
   :type dim_state: xxxxxx
   :param dim_hidden: xxxxxx.
   :type dim_hidden: xxxxxx
-  :param n_agents: xxxxxx.
-  :type n_agents: xxxxxx
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param n_agents: The number of agents.
+  :type n_agents: int
+  :param device: The calculating device.
+  :type device: str
 
 .. py:function::
   xuance.tensorflow.policies.mixers.QMIX_FF_mixer.call(values_n, states)
 
   xxxxxx.
 
-  :param values_n: xxxxxx.
-  :type values_n: xxxxxx
+  :param values_n: The joint values of n agents.
+  :type values_n: Tensor
   :param states: xxxxxx.
   :type states: xxxxxx
   :return: xxxxxx.
@@ -216,8 +216,8 @@ xxxxxx.
   :type dim_action: xxxxxx
   :param dim_hidden: xxxxxx.
   :type dim_hidden: xxxxxx
-  :param n_agents: xxxxxx.
-  :type n_agents: xxxxxx
+  :param n_agents: The number of agents.
+  :type n_agents: int
   :param dim_utility_hidden: xxxxxx.
   :type dim_utility_hidden: xxxxxx
 
@@ -242,8 +242,8 @@ xxxxxx.
   :type dim_action: xxxxxx
   :param dim_hidden: xxxxxx.
   :type dim_hidden: xxxxxx
-  :param n_agents: xxxxxx.
-  :type n_agents: xxxxxx
+  :param n_agents: The number of agents.
+  :type n_agents: int
   :param dim_utility_hidden: xxxxxx.
   :type dim_utility_hidden: xxxxxx
 
@@ -342,8 +342,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param device: xxxxxx.
-  :type device: xxxxxx
+  :param device: The calculating device.
+  :type device: str
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -361,8 +361,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param values_n: xxxxxx.
-  :type values_n: xxxxxx
+  :param values_n: The joint values of n agents.
+  :type values_n: Tensor
   :param states: xxxxxx.
   :type states: xxxxxx
   :return: xxxxxx.
@@ -377,16 +377,16 @@ xxxxxx.
   :type dim_hidden: xxxxxx
   :param dim_hypernet_hidden: xxxxxx.
   :type dim_hypernet_hidden: xxxxxx
-  :param n_agents: xxxxxx.
-  :type n_agents: xxxxxx
+  :param n_agents: The number of agents.
+  :type n_agents: int
 
 .. py:function::
   xuance.mindspore.policies.mixers.QMIX_mixer.construct(values_n, states)
 
   xxxxxx.
 
-  :param values_n: xxxxxx.
-  :type values_n: xxxxxx
+  :param values_n: The joint values of n agents.
+  :type values_n: Tensor
   :param states: xxxxxx.
   :type states: xxxxxx
   :return: xxxxxx.
@@ -399,16 +399,16 @@ xxxxxx.
   :type dim_state: xxxxxx
   :param dim_hidden: xxxxxx.
   :type dim_hidden: xxxxxx
-  :param n_agents: xxxxxx.
-  :type n_agents: xxxxxx
+  :param n_agents: The number of agents.
+  :type n_agents: int
 
 .. py:function::
   xuance.mindspore.policies.mixers.QMIX_FF_mixer.construct(values_n, states)
 
   xxxxxx.
 
-  :param values_n: xxxxxx.
-  :type values_n: xxxxxx
+  :param values_n: The joint values of n agents.
+  :type values_n: Tensor
   :param states: xxxxxx.
   :type states: xxxxxx
   :return: xxxxxx.
@@ -423,8 +423,8 @@ xxxxxx.
   :type dim_action: xxxxxx
   :param dim_hidden: xxxxxx.
   :type dim_hidden: xxxxxx
-  :param n_agents: xxxxxx.
-  :type n_agents: xxxxxx
+  :param n_agents: The number of agents.
+  :type n_agents: int
   :param dim_utility_hidden: xxxxxx.
   :type dim_utility_hidden: xxxxxx
 
@@ -449,8 +449,8 @@ xxxxxx.
   :type dim_action: xxxxxx
   :param dim_hidden: xxxxxx.
   :type dim_hidden: xxxxxx
-  :param n_agents: xxxxxx.
-  :type n_agents: xxxxxx
+  :param n_agents: The number of agents.
+  :type n_agents: int
   :param dim_utility_hidden: xxxxxx.
   :type dim_utility_hidden: xxxxxx
 

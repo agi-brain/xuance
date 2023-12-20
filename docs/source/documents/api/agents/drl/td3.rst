@@ -29,7 +29,7 @@ TD3_Agent
   Calculate actions according to the observations.
 
   :param obs: The observation of current step.
-  :type obs: numpy.ndarray
+  :type obs: np.ndarray
   :param noise_scale: The variance of Gaussian noises.
   :type noise_scale: float
   :return: **action** - The actions to be executed.
@@ -82,7 +82,7 @@ TD3_Agent
   Calculate actions according to the observations.
 
   :param obs: The observation of current step.
-  :type obs: numpy.ndarray
+  :type obs: np.ndarray
   :param noise_scale: The variance of Gaussian noises.
   :type noise_scale: float
   :return: **action** - The actions to be executed.
@@ -130,10 +130,10 @@ TD3_Agent
 .. py:function::
     xuance.mindspore.agents.policy_gradient.td3_agent.TD3_Agent._action(obs,noise_scale)
 
-    :param obs: xxxxxx.
-    :type obs: xxxxxx
-    :param noise_scale: xxxxxx.
-    :type noise_scale: xxxxxx
+    :param obs: The observation variables.
+    :type obs: np.ndarray
+    :param noise_scale: The scale value of the Gaussian noise.
+    :type noise_scale: float
     :return: xxxxxx.
     :rtype: xxxxxx
 

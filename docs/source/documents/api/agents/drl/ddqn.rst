@@ -31,7 +31,7 @@ DQN with double q-learning trick.
     Calculate actions according to the observations.
 
     :param obs: The observation of current step.
-    :type obs: numpy.ndarray
+    :type obs: np.ndarray
     :param egreedy: The epsilong greedy factor.
     :type egreedy: np.float
     :return: **action** - The actions to be executed.
@@ -82,7 +82,7 @@ DQN with double q-learning trick.
     Calculate actions according to the observations.
 
     :param obs: The observation of current step.
-    :type obs: numpy.ndarray
+    :type obs: np.ndarray
     :param egreedy: The epsilong greedy factor.
     :type egreedy: np.float
     :return: **action** - The actions to be executed.
@@ -130,10 +130,10 @@ DQN with double q-learning trick.
 .. py:function::
     xuance.mindspore.agents.qlearning_family.ddqn_agent.DDQN_Agent._action(obs, egreedy)
 
-    :param obs: xxxxxx.
-    :type obs: xxxxxx
-    :param egreedy: xxxxxx.
-    :type egreedy: xxxxxx
+    :param obs: The observation variables.
+    :type obs: np.ndarray
+    :param egreedy: The epsilon greedy factor.
+    :type egreedy: float
     :return: xxxxxx.
     :rtype: xxxxxx
 

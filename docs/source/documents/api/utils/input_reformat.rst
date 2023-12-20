@@ -29,8 +29,8 @@ xxxxxx.
 
   :param args: xxxxxx.
   :type args: xxxxxx
-  :param representation: xxxxxx.
-  :type representation: xxxxxx
+  :param representation: The representation module.
+  :type representation: nn.Module
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -41,10 +41,10 @@ xxxxxx.
 
   :param args: xxxxxx.
   :type args: xxxxxx
-  :param representation: xxxxxx.
-  :type representation: xxxxxx
-  :param mixer: xxxxxx.
-  :type mixer: xxxxxx
+  :param representation: The representation module.
+  :type representation: nn.Module
+  :param mixer: The mixer for independent values.
+  :type mixer: nn.Module
   :param ff_mixer: xxxxxx.
   :type ff_mixer: xxxxxx
   :param qtran_mixer: xxxxxx.
@@ -75,8 +75,8 @@ xxxxxx.
 
   :param args: xxxxxx.
   :type args: xxxxxx
-  :param representation: xxxxxx.
-  :type representation: xxxxxx
+  :param representation: The representation module.
+  :type representation: nn.Module
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -87,10 +87,10 @@ xxxxxx.
 
   :param args: xxxxxx.
   :type args: xxxxxx
-  :param representation: xxxxxx.
-  :type representation: xxxxxx
-  :param mixer: xxxxxx.
-  :type mixer: xxxxxx
+  :param representation: The representation module.
+  :type representation: nn.Module
+  :param mixer: The mixer for independent values.
+  :type mixer: nn.Module
   :param ff_mixer: xxxxxx.
   :type ff_mixer: xxxxxx
   :param qtran_mixer: xxxxxx.
@@ -117,8 +117,8 @@ xxxxxx.
 
   :param args: xxxxxx.
   :type args: xxxxxx
-  :param representation: xxxxxx.
-  :type representation: xxxxxx
+  :param representation: The representation module.
+  :type representation: nn.Module
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -127,10 +127,10 @@ xxxxxx.
 
   :param args: xxxxxx.
   :type args: xxxxxx
-  :param representation: xxxxxx.
-  :type representation: xxxxxx
-  :param mixer: xxxxxx.
-  :type mixer: xxxxxx
+  :param representation: The representation module.
+  :type representation: nn.Module
+  :param mixer: The mixer for independent values.
+  :type mixer: nn.Module
   :param ff_mixer: xxxxxx.
   :type ff_mixer: xxxxxx
   :param qtran_mixer: xxxxxx.
