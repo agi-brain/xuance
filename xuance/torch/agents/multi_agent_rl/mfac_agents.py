@@ -2,6 +2,13 @@ from xuance.torch.agents import *
 
 
 class MFAC_Agents(MARLAgents):
+    """The implementation of Mean-Field AC agents.
+
+    Args:
+        config: the Namespace variable that provides hyper-parameters and other settings.
+        envs: the vectorized environments.
+        device: the calculating device of the model, such as CPU or GPU.
+    """
     def __init__(self,
                  config: Namespace,
                  envs: DummyVecEnv_Pettingzoo,

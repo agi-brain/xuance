@@ -3,6 +3,18 @@ from xuance.torch.agents import *
 
 
 class MARLAgents(object):
+    """The class of basic agents.
+
+    Args:
+        config: the Namespace variable that provides hyper-parameters and other settings.
+        envs: the vectorized environments.
+        policy: the neural network modules of the agent.
+        memory: the experience replay buffer.
+        learner: the learner for the corresponding agent.
+        device: the calculating device of the model, such as CPU or GPU.
+        log_dir: the directory of the log file.
+        model_dir: the directory for models saving.
+    """
     def __init__(self,
                  config: Namespace,
                  envs: DummyVecEnv_Pettingzoo,

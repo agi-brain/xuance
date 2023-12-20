@@ -3,6 +3,13 @@ from xuance.torch.agents.agents_marl import linear_decay_or_increase
 
 
 class QTRAN_Agents(MARLAgents):
+    """The implementation of QTRAN agents.
+
+    Args:
+        config: the Namespace variable that provides hyper-parameters and other settings.
+        envs: the vectorized environments.
+        device: the calculating device of the model, such as CPU or GPU.
+    """
     def __init__(self,
                  config: Namespace,
                  envs: DummyVecEnv_Pettingzoo,

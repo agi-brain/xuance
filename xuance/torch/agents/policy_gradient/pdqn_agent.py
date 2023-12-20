@@ -6,6 +6,16 @@ from gym import spaces
 
 
 class PDQN_Agent(Agent):
+    """The implementation of PDQN agent.
+
+    Args:
+        config: the Namespace variable that provides hyper-parameters and other settings.
+        envs: the environments.
+        policy: the neural network modules of the agent.
+        optimizer: the method of optimizing.
+        scheduler: the learning rate decay scheduler.
+        device: the calculating device of the model, such as CPU or GPU.
+    """
     def __init__(self,
                  config: Namespace,
                  envs: Gym_Env,
