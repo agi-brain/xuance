@@ -1,11 +1,14 @@
 Memory
 ==============================================
 
+This module defines different type of class used to implement the experience replay buffer for DRL with single agent.
+
 .. raw:: html
 
     <br><hr>
 
-This module defines different type of class used to implement the experience replay buffer for DRL with single agent.
+Basic Memory Tools
+-----------------------------------
 
 .. py:function::
   xuance.common.memory_tools.create_memory(shape, n_envs, n_size, dtype)
@@ -26,395 +29,423 @@ This module defines different type of class used to implement the experience rep
 .. py:function::
   xuance.common.memory_tools.store_element(data, memory, ptr)
 
-  xxxxxx.
+  Insert a step of data into current memory.
 
-  :param data: xxxxxx.
-  :type data: xxxxxx
-  :param memory: xxxxxx.
-  :type memory: xxxxxx
-  :param ptr: xxxxxx.
-  :type ptr: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :param data: target data that to be stored.
+  :type data: np.ndarray, dict, float
+  :param memory: the memory where data will be stored.
+  :type memory: dict, np.ndarray
+  :param ptr: pointer to the location for the data.
+  :type ptr: int
 
 .. py:function::
   xuance.common.memory_tools.sample_batch(memory, index)
 
-  xxxxxx.
+  Sample a batch of data from the selected memory.
 
-  :param memory: xxxxxx.
-  :type memory: xxxxxx
-  :param index: xxxxxx.
-  :type index: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :param memory: memory that contains experience data.
+  :type memory: np.ndarray, dict
+  :param index: pointer to the location for the selected data.
+  :type index: np.ndarray, tuple
+  :return: A batch of data.
+  :rtype: np.ndarray, dict
 
 .. py:class::
   xuance.common.memory_tools.Buffer(observation_space, action_space, auxiliary_info_shape)
 
-  :param observation_space: xxxxxx.
-  :type observation_space: xxxxxx
-  :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
-  :param auxiliary_info_shape: xxxxxx.
-  :type auxiliary_info_shape: xxxxxx
+  Basic buffer single-agent DRL algorithms
+
+  :param observation_space: the space for observation data.
+  :type observation_space: Space
+  :param action_space: the space for action data.
+  :type action_space: Space
+  :param auxiliary_info_shape: the shape for auxiliary data if needed.
+  :type auxiliary_info_shape: dict
 
 .. py:function::
   xuance.common.memory_tools.Buffer.full()
 
-  xxxxxx.
+  Determine whether the current experience replay buffer is full.
+
+  :return: A bool value, True means the buffer is full, False means the buffer is not full yet.
+  :rtype: bool
 
 .. py:function::
   xuance.common.memory_tools.Buffer.store(*args)
-
-  xxxxxx.
-
-  :param *args: xxxxxx.
-  :type *args: xxxxxx
+  
+  Store new experience data to the buffer.
 
 .. py:function::
   xuance.common.memory_tools.Buffer.clear(*args)
 
-  xxxxxx.
-
-  :param *args: xxxxxx.
-  :type *args: xxxxxx
+  Clear the whole buffer.
 
 .. py:function::
   xuance.common.memory_tools.Buffer.sample(*args)
 
-  xxxxxx.
-
-  :param *args: xxxxxx.
-  :type *args: xxxxxx
+  Sample a batch of experience data from the buffer.
 
 .. py:function::
   xuance.common.memory_tools.Buffer.finish_path(*args)
 
-  xxxxxx.
-
-  :param *args: xxxxxx.
-  :type *args: xxxxxx
+  When an episode is finished, calculate the returns, advantages, and others.
 
 .. py:class::
   xuance.common.memory_tools.EpisodeBuffer(obs, action, reward, done)
 
+  Episode buffer for DRQN agent.
+
   :param obs: The observation variables.
   :type obs: np.ndarray
-  :param action: xxxxxx.
-  :type action: xxxxxx
-  :param reward: xxxxxx.
-  :type reward: xxxxxx
-  :param done: xxxxxx.
-  :type done: xxxxxx
+  :param action: The action variables.
+  :type action: np.ndarray
+  :param reward: The reward variables.
+  :type reward: np.ndarray
+  :param done: The terminal variables.
+  :type done: np.ndarray
 
 .. py:function::
   xuance.common.memory_tools.EpisodeBuffer.put(transition)
 
-  xxxxxx.
+  Put a transition data to the buffer.
 
-  :param transition: xxxxxx.
-  :type transition: xxxxxx
+  :param transition: One step transition data.
+  :type transition: list
 
 .. py:function::
   xuance.common.memory_tools.EpisodeBuffer.sample(lookup_step, idx)
 
-  xxxxxx.
+  Sample a bach of sequences.
 
-  :param lookup_step: xxxxxx.
-  :type lookup_step: xxxxxx
-  :param idx: xxxxxx.
-  :type idx: xxxxxx
-  :return: xxxxxx.
+  :param lookup_step: The length of the history steps.
+  :type lookup_step: int
+  :param idx: The start index of the data.
+  :type idx: int
+  :return: A batch of sampled experience data.
   :rtype: Dict[str, np.ndarray]
 
 .. py:function::
   xuance.common.memory_tools.EpisodeBuffer.__len__(lookup_step, idx)
 
-  xxxxxx.
+  Get the current length of the replay buffer.
 
-  :return: xxxxxx.
+  :return: The current length of the replay buffer.
   :rtype: int
+
+.. raw:: html
+
+    <br><hr>
+
+Memory Tools for On-policy Algorithms
+---------------------------------------------------------
 
 .. py:class::
   xuance.common.memory_tools.DummyOnPolicyBuffer(observation_space, action_space, auxiliary_shape, n_envs, n_size, use_gae, use_advnorm, gamma, gae_lam)
+  
+  Replay buffer for on-policy DRL algorithms.
 
-  :param observation_space: xxxxxx.
-  :type observation_space: xxxxxx
-  :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
-  :param auxiliary_shape: xxxxxx.
-  :type auxiliary_shape: xxxxxx
-  :param n_envs: xxxxxx.
-  :type n_envs: xxxxxx
-  :param n_size: xxxxxx.
-  :type n_size: xxxxxx
-  :param use_gae: xxxxxx.
-  :type use_gae: xxxxxx
-  :param use_advnorm: xxxxxx.
-  :type use_advnorm: xxxxxx
-  :param gamma: xxxxxx.
-  :type gamma: xxxxxx
-  :param gae_lam: xxxxxx.
-  :type gae_lam: xxxxxx
+  :param observation_space: the observation space of the environment.
+  :type observation_space: Space
+  :param action_space: the action space of the environment.
+  :type action_space: Space
+  :param auxiliary_shape: data shape of auxiliary information (if exists).
+  :type auxiliary_shape: dict
+  :param n_envs: number of parallel environments.
+  :type n_envs: int
+  :param n_size: max length of steps to store for one environment.
+  :type n_size: int
+  :param use_gae: if use GAE trick.
+  :type use_gae: bool
+  :param use_advnorm: if use Advantage normalization trick.
+  :type use_advnorm: bool
+  :param gamma: discount factor.
+  :type gamma: float
+  :param gae_lam: gae lambda.
+  :type gae_lam: float
 
 .. py:function::
   xuance.common.memory_tools.DummyOnPolicyBuffer.full()
 
-  xxxxxx.
+  Determine whether the current experience replay buffer is full.
+
+  :return: A bool value, True means the buffer is full, False means the buffer is not full yet.
+  :rtype: bool
 
 .. py:function::
   xuance.common.memory_tools.DummyOnPolicyBuffer.clear()
 
-  xxxxxx.
+  Clear the whole buffer.
 
 .. py:function::
   xuance.common.memory_tools.DummyOnPolicyBuffer.store(obs, acts, rews, value, terminals, aux_info)
 
-  xxxxxx.
+  Store one-step transition data, including observations, actions, rewars, values, terminal variables, and auxiliary informations, into the buffer.
 
-  :param obs: The observation variables.
+  :param obs: The one-step observation variables.
   :type obs: np.ndarray
-  :param acts: xxxxxx.
-  :type acts: xxxxxx
-  :param rews: xxxxxx.
-  :type rews: xxxxxx
-  :param value: xxxxxx.
-  :type value: xxxxxx
-  :param terminals: xxxxxx.
-  :type terminals: xxxxxx
-  :param aux_info: xxxxxx.
-  :type aux_info: xxxxxx
+  :param acts: The one-step actions variables.
+  :type acts: np.ndarray
+  :param rews: The rewards that is achieved after executing the acts according to obs.
+  :type rews: np.ndarray
+  :param value: The values that is calculated by the current model.
+  :type value: np.ndarray
+  :param terminals: The bool variables, True means the episode if terminated, False means the episode is not terminated.
+  :type terminals: bool
+  :param aux_info: Some auxiliary information for some specific algorithms.
+  :type aux_info: dict
 
 .. py:function::
   xuance.common.memory_tools.DummyOnPolicyBuffer.finish_path(val, i)
 
-  xxxxxx.
+  When an episode is finished, calculate the returns, advantages, and others.
 
-  :param val: xxxxxx.
-  :type val: xxxxxx
-  :param i: xxxxxx.
-  :type i: xxxxxx
+  :param val: The values for the final state.
+  :type val: np.ndarray
+  :param i: The index of the environment that is terminated.
+  :type i: int
 
 .. py:function::
   xuance.common.memory_tools.DummyOnPolicyBuffer.sample(indexes)
 
-  xxxxxx.
+  Sample a batch of experience data from the buffer.
 
-  :param indexes: xxxxxx.
-  :type indexes: xxxxxx
+  :param indexes: The indexes of the data in the buffer.
+  :type indexes: np.ndarray
+
+.. py:class::
+  xuance.common.memory_tools.DummyOnPolicyBuffer_Atari(observation_space, action_space, auxiliary_shape, n_envs, n_size, use_gae, use_advnorm, gamma, gae_lam)
+  
+  Replay buffer for on-policy DRL algorithms and Atari tasks
+
+  :param observation_space: the observation space of the environment.
+  :type observation_space: Space
+  :param action_space: the action space of the environment.
+  :type action_space: Space
+  :param auxiliary_shape: data shape of auxiliary information (if exists).
+  :type auxiliary_shape: dict
+  :param n_envs: number of parallel environments.
+  :type n_envs: int
+  :param n_size: max length of steps to store for one environment.
+  :type n_size: int
+  :param use_gae: determin whether to use GAE trick.
+  :type use_gae: bool
+  :param use_advnorm: determin whether to use Advantage normalization trick.
+  :type use_advnorm: bool
+  :param gamma: discount factor.
+  :type gamma: float
+  :param gae_lam: gae lambda.
+  :type gae_lam: float
+
+.. py:function::
+  xuance.common.memory_tools.DummyOnPolicyBuffer_Atari.clear()
+
+  Clear the whole buffer.
+
+
+.. raw:: html
+
+    <br><hr>
+
+Memory Tools for Off-policy Algorithms
+---------------------------------------------------------
 
 .. py:class::
   xuance.common.memory_tools.DummyOffPolicyBuffer(observation_space, action_space, auxiliary_shape, n_envs, n_size, batch_size)
 
-  :param observation_space: xxxxxx.
-  :type observation_space: xxxxxx
-  :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
-  :param auxiliary_shape: xxxxxx.
-  :type auxiliary_shape: xxxxxx
-  :param n_envs: xxxxxx.
-  :type n_envs: xxxxxx
-  :param n_size: xxxxxx.
-  :type n_size: xxxxxx
-  :param batch_size: xxxxxx.
-  :type batch_size: xxxxxx
+  Replay buffer for off-policy DRL algorithms
+
+  :param observation_space: the observation space of the environment.
+  :type observation_space: Space
+  :param action_space: the action space of the environment.
+  :type action_space: Space
+  :param auxiliary_shape: data shape of auxiliary information (if exists).
+  :type auxiliary_shape: dict
+  :param n_envs: number of parallel environments.
+  :type n_envs: int
+  :param n_size: max length of steps to store for one environment.
+  :type n_size: int
+  :param batch_size: batch size of transition data for a sample.
+  :type batch_size: int
 
 .. py:function::
   xuance.common.memory_tools.DummyOffPolicyBuffer.clear()
 
-  xxxxxx.
+  Clear the whole buffer.
 
 .. py:function::
   xuance.common.memory_tools.DummyOffPolicyBuffer.store(obs, acts, rews, terminals, next_obs)
 
-  xxxxxx.
+  Store one-step transition data, including observations, actions, rewars, terminal variables, and next step observations, into the buffer.
 
   :param obs: The observation variables.
   :type obs: np.ndarray
-  :param acts: xxxxxx.
-  :type acts: xxxxxx
-  :param rews: xxxxxx.
-  :type rews: xxxxxx
-  :param terminals: xxxxxx.
-  :type terminals: xxxxxx
-  :param next_obs: xxxxxx.
-  :type next_obs: xxxxxx
+  :param acts: The one-step actions variables.
+  :type acts: np.ndarray
+  :param rews: The rewards that is achieved after executing the acts according to obs.
+  :type rews: np.ndarray
+  :param terminals: The bool variables, True means the episode if terminated, False means the episode is not terminated.
+  :type terminals: np.ndarray
+  :param next_obs: The next step observations.
+  :type next_obs: np.ndarray
 
 .. py:function::
   xuance.common.memory_tools.DummyOffPolicyBuffer.sample(indexes)
 
-  xxxxxx.
+  Sample a batch of experience data from the buffer.
 
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The indexes of the data in the buffer.
+  :rtype: np.ndarray
 
 .. py:class::
   xuance.common.memory_tools.RecurrentOffPolicyBuffer(observation_space, action_space, auxiliary_shape, n_envs, n_size, batch_size, episode_length, lookup_length)
 
-  :param observation_space: xxxxxx.
-  :type observation_space: xxxxxx
-  :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
-  :param auxiliary_shape: xxxxxx.
-  :type auxiliary_shape: xxxxxx
-  :param n_envs: xxxxxx.
-  :type n_envs: xxxxxx
-  :param n_size: xxxxxx.
-  :type n_size: xxxxxx
-  :param batch_size: xxxxxx.
-  :type batch_size: xxxxxx
-  :param episode_length: xxxxxx.
-  :type episode_length: xxxxxx
-  :param lookup_length: xxxxxx.
-  :type lookup_length: xxxxxx
+  Replay buffer for DRQN-based algorithms
+
+  :param observation_space: the observation space of the environment.
+  :type observation_space: Space
+  :param action_space: the action space of the environment.
+  :type action_space: Space
+  :param auxiliary_shape: data shape of auxiliary information (if exists).
+  :type auxiliary_shape: dict
+  :param n_envs: number of parallel environments.
+  :type n_envs: int
+  :param n_size: max length of steps to store for one environment.
+  :type n_size: int
+  :param batch_size: batch size of transition data for a sample.
+  :type batch_size: int
+  :param episode_length: data length for an episode.
+  :type episode_length: int
+  :param lookup_length: the length of history data.
+  :type lookup_length: int
 
 .. py:function::
   xuance.common.memory_tools.RecurrentOffPolicyBuffer.full()
 
-  xxxxxx.
+  Determine whether the current experience replay buffer is full.
+
+  :return: A bool value, True means the buffer is full, False means the buffer is not full yet.
+  :type return: bool
 
 .. py:function::
-  xuance.common.memory_tools.RecurrentOffPolicyBuffer.clear(*args)
+  xuance.common.memory_tools.RecurrentOffPolicyBuffer.clear()
 
-  xxxxxx.
-  :param *args: xxxxxx.
-  :type *args: xxxxxx
+  Clear the whole buffer.
 
 .. py:function::
   xuance.common.memory_tools.RecurrentOffPolicyBuffer.store(episode)
 
-  xxxxxx.
+  Store a sequence of data for an episode.
 
-  :param episode: xxxxxx.
-  :type episode: xxxxxx
+  :param episode: The sequence data of an episode to be stored.
+  :type episode: dict
 
 .. py:function::
   xuance.common.memory_tools.RecurrentOffPolicyBuffer.sample()
 
-  xxxxxx.
+  Sample a batch of experience data for different episodes from the buffer.
 
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: A batch of episodes data.
+  :rtype: dict
 
 .. py:class::
   xuance.common.memory_tools.PerOffPolicyBuffer(observation_space, action_space, auxiliary_shape, n_envs, n_size, batch_size, alpha)
 
-  :param observation_space: xxxxxx.
-  :type observation_space: xxxxxx
-  :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
-  :param auxiliary_shape: xxxxxx.
-  :type auxiliary_shape: xxxxxx
-  :param n_envs: xxxxxx.
-  :type n_envs: xxxxxx
-  :param n_size: xxxxxx.
-  :type n_size: xxxxxx
-  :param batch_size: xxxxxx.
-  :type batch_size: xxxxxx
-  :param alpha: xxxxxx.
-  :type alpha: xxxxxx
+  A Prioritized Replay Buffer for reinforcement learning. 
+  This buffer is designed for storing and sampling experiences with priorities based on their TD errors.
+
+  :param observation_space: the observation space of the environment.
+  :type observation_space: Space
+  :param action_space: the action space of the environment.
+  :type action_space: Space
+  :param auxiliary_shape: data shape of auxiliary information (if exists).
+  :type auxiliary_shape: dict
+  :param n_envs: number of parallel environments.
+  :type n_envs: int
+  :param n_size: max length of steps to store for one environment.
+  :type n_size: int
+  :param batch_size: batch size of transition data for a sample.
+  :type batch_size: int
+  :param alpha: prioritized factor, default is 0.6.
+  :type alpha: float
 
 .. py:function::
   xuance.common.memory_tools.PerOffPolicyBuffer._sample_proportional(env_idx, batch_size)
 
-  xxxxxx.
+  This method performs proportional sampling based on priorities for a given environment and batch size.
 
-  :param env_idx: xxxxxx.
-  :type env_idx: xxxxxx
-  :param batch_size: xxxxxx.
-  :type batch_size: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :param env_idx: The index of the environment.
+  :type env_idx: int
+  :param batch_size: The sample size of the batch data.
+  :type batch_size: int
+  :return: A batch of sampled experience data from the buffer.
+  :rtype: np.ndarray
 
 .. py:function::
   xuance.common.memory_tools.PerOffPolicyBuffer.clear()
 
-  xxxxxx.
+  Resets all memory buffers and segment trees.
 
 .. py:function::
   xuance.common.memory_tools.PerOffPolicyBuffer.store(obs, acts, rews, terminals, next_obs)
 
-  xxxxxx.
+  Stores a transition (observation, action, reward, terminal, next observation) in the memory buffers.
+  Updates priorities based on TD errors.
 
-  :param obs: The observation variables.
+  :param obs: The one-step observation variables.
   :type obs: np.ndarray
-  :param acts: xxxxxx.
-  :type acts: xxxxxx
-  :param rews: xxxxxx.
-  :type rews: xxxxxx
-  :param terminals: xxxxxx.
-  :type terminals: xxxxxx
-  :param next_obs: xxxxxx.
-  :type next_obs: xxxxxx
+  :param acts: The one-step action variables.
+  :type acts: np.ndarray
+  :param rews: The reward variables.
+  :type rews: np.ndarray
+  :param terminals: The bool variables, True means the episode if terminated, False means the episode is not terminated.
+  :type terminals: np.ndarray
+  :param next_obs: The next-step observation variables.
+  :type next_obs: np.ndarray
 
 .. py:function::
   xuance.common.memory_tools.PerOffPolicyBuffer.sample(beta)
 
-  xxxxxx.
+  Samples a batch of transitions from the buffer based on priorities.
+  Uses proportional sampling and calculates importance weights for prioritized replay..
 
-  :param beta: xxxxxx.
-  :type beta: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :param beta: The hyperparameter that influences the balance between prioritized sampling and uniform random sampling.
+  :type beta: float
+  :return: A tuple of batch samples, including a batch of observations, actions, rewards, terminals, next observations, weights, and step choices.
+  :rtype: tuple
 
 .. py:function::
   xuance.common.memory_tools.PerOffPolicyBuffer.update_priorities(idxes, priorities)
 
-  xxxxxx.
+  Updates priorities in the buffer based on given indices and priorities.
 
-  :param idxes: xxxxxx.
-  :type idxes: xxxxxx
-  :param priorities: xxxxxx.
-  :type priorities: xxxxxx
+  :param idxes: the indices of experiences in the replay buffer for which priorities are being updated.
+  :type idxes: np.ndarray, list
+  :param priorities: the new priority values associated with specific experiences or transitions in the replay buffer.
+  :type priorities: np.ndarray
 
 .. py:class::
   xuance.common.memory_tools.DummyOffPolicyBuffer_Atari(observation_space, action_space, auxiliary_shape, n_envs, n_size, batch_size)
 
-  :param observation_space: xxxxxx.
-  :type observation_space: xxxxxx
-  :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
-  :param auxiliary_shape: xxxxxx.
-  :type auxiliary_shape: xxxxxx
-  :param n_envs: xxxxxx.
-  :type n_envs: xxxxxx
-  :param n_size: xxxxxx.
-  :type n_size: xxxxxx
-  :param batch_size: xxxxxx.
-  :type batch_size: xxxxxx
+  Replay buffer for off-policy DRL algorithms and Atari tasks
+
+  :param observation_space: the observation space of the environment.
+  :type observation_space: Space
+  :param action_space: the action space of the environment.
+  :type action_space: Space
+  :param auxiliary_shape: data shape of auxiliary information (if exists).
+  :type auxiliary_shape: dict
+  :param n_envs: number of parallel environments.
+  :type n_envs: int
+  :param n_size: max length of steps to store for one environment.
+  :type n_size: int
+  :param batch_size: batch size of transition data for a sample.
+  :type batch_size: int
 
 .. py:function::
   xuance.common.memory_tools.DummyOffPolicyBuffer_Atari.clear()
 
-  xxxxxx.
+  Clear the whole buffer.
 
-.. py:class::
-  xuance.common.memory_tools.DummyOffPolicyBuffer_Atari(observation_space, action_space, auxiliary_shape, n_envs, n_size, use_gae, use_advnorm, gamma, gae_lam)
-
-  :param observation_space: xxxxxx.
-  :type observation_space: xxxxxx
-  :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
-  :param auxiliary_shape: xxxxxx.
-  :type auxiliary_shape: xxxxxx
-  :param n_envs: xxxxxx.
-  :type n_envs: xxxxxx
-  :param n_size: xxxxxx.
-  :type n_size: xxxxxx
-  :param use_gae: xxxxxx.
-  :type use_gae: xxxxxx
-  :param use_advnorm: xxxxxx.
-  :type use_advnorm: xxxxxx
-  :param gamma: xxxxxx.
-  :type gamma: xxxxxx
-  :param gae_lam: xxxxxx.
-  :type gae_lam: xxxxxx
-
-.. py:function::
-  xuance.common.memory_tools.DummyOffPolicyBuffer_Atari.clear()
-
-  xxxxxx.
 
 .. raw:: html
 
@@ -689,6 +720,45 @@ Source Code
           aux_batch = sample_batch(self.auxiliary_infos, tuple([env_choices, step_choices]))
 
           return obs_batch, act_batch, ret_batch, val_batch, adv_batch, aux_batch
+
+
+  class DummyOnPolicyBuffer_Atari(DummyOnPolicyBuffer):
+      """
+      Replay buffer for on-policy DRL algorithms and Atari tasks.
+
+      Args:
+          observation_space: the observation space of the environment.
+          action_space: the action space of the environment.
+          auxiliary_shape: data shape of auxiliary information (if exists).
+          n_envs: number of parallel environments.
+          n_size: max length of steps to store for one environment.
+          use_gae: if use GAE trick.
+          use_advnorm: if use Advantage normalization trick.
+          gamma: discount factor.
+          gae_lam: gae lambda.
+      """
+      def __init__(self,
+                  observation_space: Space,
+                  action_space: Space,
+                  auxiliary_shape: Optional[dict],
+                  n_envs: int,
+                  n_size: int,
+                  use_gae: bool = True,
+                  use_advnorm: bool = True,
+                  gamma: float = 0.99,
+                  gae_lam: float = 0.95):
+          super(DummyOnPolicyBuffer_Atari, self).__init__(observation_space, action_space, auxiliary_shape,
+                                                          n_envs, n_size, use_gae, use_advnorm, gamma, gae_lam)
+          self.observations = create_memory(space2shape(self.observation_space), self.n_envs, self.n_size, np.uint8)
+
+      def clear(self):
+          self.ptr, self.size = 0, 0
+          self.observations = create_memory(space2shape(self.observation_space), self.n_envs, self.n_size, np.uint8)
+          self.actions = create_memory(space2shape(self.action_space), self.n_envs, self.n_size)
+          self.auxiliary_infos = create_memory(self.auxiliary_shape, self.n_envs, self.n_size)
+          self.rewards = create_memory((), self.n_envs, self.n_size)
+          self.returns = create_memory((), self.n_envs, self.n_size)
+          self.advantages = create_memory((), self.n_envs, self.n_size)
 
 
   class DummyOffPolicyBuffer(Buffer):
@@ -977,40 +1047,3 @@ Source Code
           self.terminals = create_memory((), self.n_envs, self.n_size)
 
 
-  class DummyOnPolicyBuffer_Atari(DummyOnPolicyBuffer):
-      """
-      Replay buffer for on-policy DRL algorithms and Atari tasks.
-
-      Args:
-          observation_space: the observation space of the environment.
-          action_space: the action space of the environment.
-          auxiliary_shape: data shape of auxiliary information (if exists).
-          n_envs: number of parallel environments.
-          n_size: max length of steps to store for one environment.
-          use_gae: if use GAE trick.
-          use_advnorm: if use Advantage normalization trick.
-          gamma: discount factor.
-          gae_lam: gae lambda.
-      """
-      def __init__(self,
-                  observation_space: Space,
-                  action_space: Space,
-                  auxiliary_shape: Optional[dict],
-                  n_envs: int,
-                  n_size: int,
-                  use_gae: bool = True,
-                  use_advnorm: bool = True,
-                  gamma: float = 0.99,
-                  gae_lam: float = 0.95):
-          super(DummyOnPolicyBuffer_Atari, self).__init__(observation_space, action_space, auxiliary_shape,
-                                                          n_envs, n_size, use_gae, use_advnorm, gamma, gae_lam)
-          self.observations = create_memory(space2shape(self.observation_space), self.n_envs, self.n_size, np.uint8)
-
-      def clear(self):
-          self.ptr, self.size = 0, 0
-          self.observations = create_memory(space2shape(self.observation_space), self.n_envs, self.n_size, np.uint8)
-          self.actions = create_memory(space2shape(self.action_space), self.n_envs, self.n_size)
-          self.auxiliary_infos = create_memory(self.auxiliary_shape, self.n_envs, self.n_size)
-          self.rewards = create_memory((), self.n_envs, self.n_size)
-          self.returns = create_memory((), self.n_envs, self.n_size)
-          self.advantages = create_memory((), self.n_envs, self.n_size)

@@ -40,7 +40,7 @@ Gaussian-MARL
   xuance.torch.policies.gaussian_marl.BasicQnetwork(action_space, n_agents, representation, hidden_size, normalize, initialize, activation, device)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param n_agents: The number of agents.
   :type n_agents: int
   :param representation: The representation module.
@@ -140,7 +140,7 @@ Gaussian-MARL
   xuance.torch.policies.gaussian_marl.MAAC_Policy(action_space, n_agents, representation, mixer, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param n_agents: The number of agents.
   :type n_agents: int
   :param representation: The representation module.
@@ -198,7 +198,7 @@ Gaussian-MARL
   xuance.torch.policies.gaussian_marl.Basic_ISAC_policy(action_space, n_agents, representation, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param n_agents: The number of agents.
   :type n_agents: int
   :param representation: The representation module.
@@ -272,7 +272,7 @@ Gaussian-MARL
   xuance.torch.policies.gaussian_marl.MASAC_policy(action_space, n_agents, representation, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param n_agents: The number of agents.
   :type n_agents: int
   :param representation: The representation module.
@@ -353,7 +353,7 @@ Gaussian-MARL
   xuance.tensorflow.policies.gaussian_marl.BasicQnetwork(action_space, n_agents, representation, hidden_size, normalize, initialize, activation, device)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param n_agents: The number of agents.
   :type n_agents: int
   :param representation: The representation module.
@@ -446,7 +446,7 @@ Gaussian-MARL
   xuance.tensorflow.policies.gaussian_marl.MAAC_Policy(action_space, n_agents, representation, mixer, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param n_agents: The number of agents.
   :type n_agents: int
   :param representation: The representation module.
@@ -508,7 +508,7 @@ Gaussian-MARL
   xuance.tensorflow.policies.gaussian_marl.Basic_ISAC_policy(action_space, n_agents, representation, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param n_agents: The number of agents.
   :type n_agents: int
   :param representation: The representation module.
@@ -578,7 +578,7 @@ Gaussian-MARL
   xuance.tensorflow.policies.gaussian_marl.MASAC_policy(action_space, n_agents, representation, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param n_agents: The number of agents.
   :type n_agents: int
   :param representation: The representation module.
@@ -658,7 +658,7 @@ Gaussian-MARL
   xuance.mindspore.policies.gaussian_marl.BasicQnetwork(action_space, n_agents, representation, hidden_sizes, normalize, initialize, activation)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param n_agents: The number of agents.
   :type n_agents: int
   :param representation: The representation module.
@@ -759,7 +759,7 @@ Gaussian-MARL
   xuance.mindspore.policies.gaussian_marl.MAAC_Policy(action_space, n_agents, representation, mixer, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, kwargs)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param n_agents: The number of agents.
   :type n_agents: int
   :param representation: The representation module.
@@ -827,7 +827,7 @@ Gaussian-MARL
   xuance.mindspore.policies.gaussian_marl.Basic_ISAC_policy(action_space, n_agents, representation, actor_hidden_size, critic_hidden_size, normalize, initialize, activation)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param n_agents: The number of agents.
   :type n_agents: int
   :param representation: The representation module.
@@ -921,7 +921,7 @@ Gaussian-MARL
   xuance.mindspore.policies.gaussian_marl.MASAC_policy(action_space, n_agents, representation, actor_hidden_size, critic_hidden_size, normalize, initialize, activation)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param n_agents: The number of agents.
   :type n_agents: int
   :param representation: The representation module.

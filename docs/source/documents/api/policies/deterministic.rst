@@ -149,7 +149,7 @@ xxxxxx.
   xuance.torch.policies.deterministic.BasicQnetwork(action_space, representation, hidden_size, normalize, initialize, activation, device)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param representation: The representation module.
   :type representation: nn.Module
   :param hidden_size: xxxxxx.
@@ -195,7 +195,7 @@ xxxxxx.
   xuance.torch.policies.deterministic.DuelQnetwork(action_space, representation, hidden_size, normalize, initialize, activation, device)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param representation: The representation module.
   :type representation: nn.Module
   :param hidden_size: xxxxxx.
@@ -241,7 +241,7 @@ xxxxxx.
   xuance.torch.policies.deterministic.NoisyQnetwork(action_space, representation, hidden_size, normalize, initialize, activation, device)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param representation: The representation module.
   :type representation: nn.Module
   :param hidden_size: xxxxxx.
@@ -297,7 +297,7 @@ xxxxxx.
   xuance.torch.policies.deterministic.C51Qnetwork(action_space, atom_num, vmin, vmax, representation, hidden_size, normalize, initialize, activation, device)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param atom_num: xxxxxx.
   :type atom_num: xxxxxx
   :param vmin: xxxxxx.
@@ -349,7 +349,7 @@ xxxxxx.
   xuance.torch.policies.deterministic.QRDQN_Network(action_space, quantile_num, representation, hidden_size, normalize, initialize, activation, device)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param quantile_num: xxxxxx.
   :type quantile_num: xxxxxx
   :param representation: The representation module.
@@ -449,7 +449,7 @@ xxxxxx.
   xuance.torch.policies.deterministic.DDPGPolicy(action_space, representation, actor_hidden_size, critic_hidden_size, initialize, activation, device)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param representation: The representation module.
   :type representation: nn.Module
   :param actor_hidden_size: The sizes of the hidden layers in actor network.
@@ -519,7 +519,7 @@ xxxxxx.
   xuance.torch.policies.deterministic.TD3Policy(action_space, representation, actor_hidden_size, critic_hidden_size, initialize, activation, device)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param representation: The representation module.
   :type representation: nn.Module
   :param actor_hidden_size: The sizes of the hidden layers in actor network.
@@ -589,9 +589,9 @@ xxxxxx.
   xuance.torch.policies.deterministic.PDQNPolicy(observation_space, action_space, representation, conactor_hidden_size, qnetwork_hidden_size, normalize, initialize, activation, device)
 
   :param observation_space: xxxxxx.
-  :type observation_space: xxxxxx
+  :type observation_space: Space
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param representation: The representation module.
   :type representation: nn.Module
   :param conactor_hidden_size: xxxxxx.
@@ -675,9 +675,9 @@ xxxxxx.
   xuance.torch.policies.deterministic.MPDQNPolicy(observation_space, action_space, representation, conactor_hidden_size, qnetwork_hidden_size, normalize, initialize, activation, device)
 
   :param observation_space: xxxxxx.
-  :type observation_space: xxxxxx
+  :type observation_space: Space
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param representation: The representation module.
   :type representation: nn.Module
   :param conactor_hidden_size: xxxxxx.
@@ -761,9 +761,9 @@ xxxxxx.
   xuance.torch.policies.deterministic.SPDQNPolicy(observation_space, action_space, representation, conactor_hidden_size, qnetwork_hidden_size, normalize, initialize, activation, device)
 
   :param observation_space: xxxxxx.
-  :type observation_space: xxxxxx
+  :type observation_space: Space
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param representation: The representation module.
   :type representation: nn.Module
   :param conactor_hidden_size: xxxxxx.
@@ -847,7 +847,7 @@ xxxxxx.
   xuance.torch.policies.deterministic.DRQNPolicy(action_space, representation, **kwargs)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param representation: The representation module.
   :type representation: nn.Module
   :param **kwargs: xxxxxx.
@@ -1049,7 +1049,7 @@ xxxxxx.
   xuance.tensorflow.policies.deterministic.BasicQnetwork(action_space, representation, hidden_size, normalize, initialize, activation, device)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param representation: The representation module.
   :type representation: nn.Module
   :param hidden_size: xxxxxx.
@@ -1095,7 +1095,7 @@ xxxxxx.
   xuance.tensorflow.policies.deterministic.DuelQnetwork(action_space, representation, hidden_size, normalize, initialize, activation, device)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param representation: The representation module.
   :type representation: nn.Module
   :param hidden_size: xxxxxx.
@@ -1141,7 +1141,7 @@ xxxxxx.
   xuance.tensorflow.policies.deterministic.NoisyQnetwork(action_space, representation, hidden_size, normalize, initialize, activation, device)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param representation: The representation module.
   :type representation: nn.Module
   :param hidden_size: xxxxxx.
@@ -1197,7 +1197,7 @@ xxxxxx.
   xuance.tensorflow.policies.deterministic.C51Qnetwork(action_space, atom_num, vmin, vmax, representation, hidden_size, normalize, initialize, activation, device)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param atom_num: xxxxxx.
   :type atom_num: xxxxxx
   :param vmin: xxxxxx.
@@ -1249,7 +1249,7 @@ xxxxxx.
   xuance.tensorflow.policies.deterministic.QRDQN_Network(action_space, quantile_num, representation, hidden_size, normalize, initialize, activation, device)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param quantile_num: xxxxxx.
   :type quantile_num: xxxxxx
   :param representation: The representation module.
@@ -1349,7 +1349,7 @@ xxxxxx.
   xuance.tensorflow.policies.deterministic.DDPGPolicy(action_space, representation, actor_hidden_size, critic_hidden_size, initialize, activation, device)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param representation: The representation module.
   :type representation: nn.Module
   :param actor_hidden_size: The sizes of the hidden layers in actor network.
@@ -1419,7 +1419,7 @@ xxxxxx.
   xuance.tensorflow.policies.deterministic.TD3Policy(action_space, representation, actor_hidden_size, critic_hidden_size, initialize, activation, device)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param representation: The representation module.
   :type representation: nn.Module
   :param actor_hidden_size: The sizes of the hidden layers in actor network.
@@ -1489,9 +1489,9 @@ xxxxxx.
   xuance.tensorflow.policies.deterministic.PDQNPolicy(observation_space, action_space, representation, conactor_hidden_size, qnetwork_hidden_size, normalize, initialize, activation, device)
 
   :param observation_space: xxxxxx.
-  :type observation_space: xxxxxx
+  :type observation_space: Space
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param representation: The representation module.
   :type representation: nn.Module
   :param conactor_hidden_size: xxxxxx.
@@ -1575,9 +1575,9 @@ xxxxxx.
   xuance.tensorflow.policies.deterministic.MPDQNPolicy(observation_space, action_space, representation, conactor_hidden_size, qnetwork_hidden_size, normalize, initialize, activation, device)
 
   :param observation_space: xxxxxx.
-  :type observation_space: xxxxxx
+  :type observation_space: Space
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param representation: The representation module.
   :type representation: nn.Module
   :param conactor_hidden_size: xxxxxx.
@@ -1661,9 +1661,9 @@ xxxxxx.
   xuance.tensorflow.policies.deterministic.SPDQNPolicy(observation_space, action_space, representation, conactor_hidden_size, qnetwork_hidden_size, normalize, initialize, activation, device)
 
   :param observation_space: xxxxxx.
-  :type observation_space: xxxxxx
+  :type observation_space: Space
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param representation: The representation module.
   :type representation: nn.Module
   :param conactor_hidden_size: xxxxxx.
@@ -1747,7 +1747,7 @@ xxxxxx.
   xuance.tensorflow.policies.deterministic.DRQNPolicy(action_space, representation, **kwargs)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param representation: The representation module.
   :type representation: nn.Module
   :param **kwargs: xxxxxx.
@@ -1945,7 +1945,7 @@ xxxxxx.
   xuance.mindspore.policies.deterministic.BasicQnetwork(action_space, representation, hidden_sizes, normalize, initialize, activation)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param representation: The representation module.
   :type representation: nn.Module
   :param hidden_size: xxxxxx.
@@ -1996,7 +1996,7 @@ xxxxxx.
   xuance.mindspore.policies.deterministic.DuelQnetwork(action_space, representation, hidden_sizes, normalize, initialize, activation)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param representation: The representation module.
   :type representation: nn.Module
   :param hidden_size: xxxxxx.
@@ -2047,7 +2047,7 @@ xxxxxx.
   xuance.mindspore.policies.deterministic.NoisyQnetwork(action_space, representation, hidden_sizes, normalize, initialize, activation)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param representation: The representation module.
   :type representation: nn.Module
   :param hidden_size: xxxxxx.
@@ -2114,7 +2114,7 @@ xxxxxx.
   xuance.mindspore.policies.deterministic.C51Qnetwork(action_space, atom_num, vmin, vmax, representation, hidden_sizes, normalize, initialize, activation)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param atom_num: xxxxxx.
   :type atom_num: xxxxxx
   :param vmin: xxxxxx.
@@ -2161,7 +2161,7 @@ xxxxxx.
   xuance.mindspore.policies.deterministic.QRDQN_Network(action_space, quantile_num, representation, hidden_sizes, normalize, initialize, activation)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param quantile_num: xxxxxx.
   :type quantile_num: xxxxxx
   :param representation: The representation module.
@@ -2262,7 +2262,7 @@ xxxxxx.
   xuance.mindspore.policies.deterministic.DDPGPolicy(action_space, representation, actor_hidden_size, critic_hidden_size, initialize, activation)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param representation: The representation module.
   :type representation: nn.Module
   :param actor_hidden_size: The sizes of the hidden layers in actor network.
@@ -2328,7 +2328,7 @@ xxxxxx.
   xuance.mindspore.policies.deterministic.TD3Policy(action_space, representation, actor_hidden_size, critic_hidden_size, initialize, activation)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param representation: The representation module.
   :type representation: nn.Module
   :param actor_hidden_size: The sizes of the hidden layers in actor network.
@@ -2394,9 +2394,9 @@ xxxxxx.
   xuance.mindspore.policies.deterministic.PDQNPolicy(observation_space, action_space, representation, conactor_hidden_size, qnetwork_hidden_size, normalize, initialize, activation)
 
   :param observation_space: xxxxxx.
-  :type observation_space: xxxxxx
+  :type observation_space: Space
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param representation: The representation module.
   :type representation: nn.Module
   :param conactor_hidden_size: xxxxxx.
@@ -2484,9 +2484,9 @@ xxxxxx.
   xuance.mindspore.policies.deterministic.MPDQNPolicy(observation_space, action_space, representation, conactor_hidden_size, qnetwork_hidden_size, normalize, initialize, activation)
 
   :param observation_space: xxxxxx.
-  :type observation_space: xxxxxx
+  :type observation_space: Space
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param representation: The representation module.
   :type representation: nn.Module
   :param conactor_hidden_size: xxxxxx.
@@ -2578,9 +2578,9 @@ xxxxxx.
   xuance.mindspore.policies.deterministic.SPDQNPolicy(observation_space, action_space, representation, conactor_hidden_size, qnetwork_hidden_size, normalize, initialize, activation)
 
   :param observation_space: xxxxxx.
-  :type observation_space: xxxxxx
+  :type observation_space: Space
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param representation: The representation module.
   :type representation: nn.Module
   :param conactor_hidden_size: xxxxxx.
@@ -2672,7 +2672,7 @@ xxxxxx.
   xuance.mindspore.policies.deterministic.DRQNPolicy(action_space, representation, kwargs)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param representation: The representation module.
   :type representation: nn.Module
   :param kwargs: xxxxxx.

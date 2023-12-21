@@ -67,7 +67,7 @@ xxxxxx.
   xuance.torch.policies.gaussian.ActorCriticPolicy(action_space, representation, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param representation: The representation module.
   :type representation: nn.Module
   :param actor_hidden_size: The sizes of the hidden layers in actor network.
@@ -97,7 +97,7 @@ xxxxxx.
   xuance.torch.policies.gaussian.ActorPolicy(action_space, representation, actor_hidden_size, normalize, initialize, activation, device, fixed_std)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param representation: The representation module.
   :type representation: nn.Module
   :param actor_hidden_size: The sizes of the hidden layers in actor network.
@@ -127,7 +127,7 @@ xxxxxx.
   xuance.torch.policies.gaussian.PPGActorCritic(action_space, representation, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param representation: The representation module.
   :type representation: nn.Module
   :param actor_hidden_size: The sizes of the hidden layers in actor network.
@@ -215,7 +215,7 @@ xxxxxx.
   xuance.torch.policies.gaussian.SACPolicy(action_space, representation, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param representation: The representation module.
   :type representation: nn.Module
   :param actor_hidden_size: The sizes of the hidden layers in actor network.
@@ -347,7 +347,7 @@ xxxxxx.
   xuance.tensorflow.policies.gaussian.ActorCriticPolicy(action_space, representation, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param representation: The representation module.
   :type representation: nn.Module
   :param actor_hidden_size: The sizes of the hidden layers in actor network.
@@ -377,7 +377,7 @@ xxxxxx.
   xuance.tensorflow.policies.gaussian.ActorPolicy(action_space, representation, actor_hidden_size, normalize, initialize, activation, device, fixed_std)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param representation: The representation module.
   :type representation: nn.Module
   :param actor_hidden_size: The sizes of the hidden layers in actor network.
@@ -407,7 +407,7 @@ xxxxxx.
   xuance.tensorflow.policies.gaussian.PPGActorCritic(action_space, representation, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param representation: The representation module.
   :type representation: nn.Module
   :param actor_hidden_size: The sizes of the hidden layers in actor network.
@@ -493,7 +493,7 @@ xxxxxx.
   xuance.tensorflow.policies.gaussian.SACPolicy(action_space, representation, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param representation: The representation module.
   :type representation: nn.Module
   :param actor_hidden_size: The sizes of the hidden layers in actor network.
@@ -621,7 +621,7 @@ xxxxxx.
   xuance.mindspore.policies.gaussian.ActorCriticPolicy(action_space, representation, actor_hidden_size, critic_hidden_size, normalize, initialize, activation)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param representation: The representation module.
   :type representation: nn.Module
   :param actor_hidden_size: The sizes of the hidden layers in actor network.
@@ -649,7 +649,7 @@ xxxxxx.
   xuance.mindspore.policies.gaussian.ActorPolicy(action_space, representation, actor_hidden_size, normalize, initialize, activation)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param representation: The representation module.
   :type representation: nn.Module
   :param actor_hidden_size: The sizes of the hidden layers in actor network.
@@ -725,7 +725,7 @@ xxxxxx.
   xuance.mindspore.policies.gaussian.SACPolicy(action_space, representation, actor_hidden_size, initialize, activation)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param representation: The representation module.
   :type representation: nn.Module
   :param actor_hidden_size: The sizes of the hidden layers in actor network.

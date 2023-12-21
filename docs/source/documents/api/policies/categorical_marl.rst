@@ -94,7 +94,7 @@ Categorical-MARL
   xuance.torch.policies.categorical_mal.MAAC_Policy(action_space, n_agents, representation, mixer, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device)
 
   :param action_space: The action space.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param n_agents: The number of agents.
   :type n_agents: int
   :param representation: The representation module.
@@ -154,7 +154,7 @@ Categorical-MARL
   xuance.torch.policies.categorical_mal.MAAC_Policy_Share(action_space, n_agents, representation, mixer, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param n_agents: The number of agents.
   :type n_agents: int
   :param representation: The representation module.
@@ -202,7 +202,7 @@ Categorical-MARL
   xuance.torch.policies.categorical_mal.COMAPolicy(action_space, n_agents, representation, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param n_agents: The number of agents.
   :type n_agents: int
   :param representation: The representation module.
@@ -256,7 +256,7 @@ Categorical-MARL
   xuance.torch.policies.categorical_mal.MeanFieldActorCriticPolicy(action_space, n_agents, representation, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param n_agents: The number of agents.
   :type n_agents: int
   :param representation: The representation module.
@@ -418,7 +418,7 @@ Categorical-MARL
   xuance.tensorflow.policies.categorical_mal.MAAC_Policy(action_space, n_agents, representation, mixer, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device)
 
   :param action_space: The action space.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param n_agents: The number of agents.
   :type n_agents: int
   :param representation: The representation module.
@@ -484,7 +484,7 @@ Categorical-MARL
   xuance.tensorflow.policies.categorical_mal.MAAC_Policy_Share(action_space, n_agents, representation, mixer, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param n_agents: The number of agents.
   :type n_agents: int
   :param representation: The representation module.
@@ -538,7 +538,7 @@ Categorical-MARL
   xuance.tensorflow.policies.categorical_mal.COMAPolicy(action_space, n_agents, representation, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param n_agents: The number of agents.
   :type n_agents: int
   :param representation: The representation module.
@@ -595,7 +595,7 @@ Categorical-MARL
   xuance.tensorflow.policies.categorical_mal.MeanFieldActorCriticPolicy(action_space, n_agents, representation, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param n_agents: The number of agents.
   :type n_agents: int
   :param representation: The representation module.
@@ -729,7 +729,7 @@ Categorical-MARL
   xuance.mindspore.policies.categorical_marl.MAAC_Policy(action_space, n_agents, representation, mixer, actor_hidden_size, critic_hidden_size, normalize, initialize, activation)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param n_agents: The number of agents.
   :type n_agents: int
   :param representation: The representation module.
@@ -793,7 +793,7 @@ Categorical-MARL
   xuance.mindspore.policies.categorical_marl.MAAC_Policy_Share(action_space, n_agents, representation, mixer, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param n_agents: The number of agents.
   :type n_agents: int
   :param representation: The representation module.
@@ -845,7 +845,7 @@ Categorical-MARL
   xuance.mindspore.policies.categorical_marl.COMAPolicy(action_space, n_agents, representation, actor_hidden_size, critic_hidden_size, normalize, initialize, activation)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param n_agents: The number of agents.
   :type n_agents: int
   :param representation: The representation module.
@@ -902,7 +902,7 @@ Categorical-MARL
   xuance.mindspore.policies.categorical_marl.MeanFieldActorCriticPolicy(action_space, n_agents, representation, actor_hidden_size, critic_hidden_size, normalize, initialize, activation)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param n_agents: The number of agents.
   :type n_agents: int
   :param representation: The representation module.

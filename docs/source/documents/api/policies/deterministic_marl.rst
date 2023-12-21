@@ -40,7 +40,7 @@ Deterministic-MARL
   xuance.torch.policies.deterministic_marl.BasicQnetwork(action_space, n_agents, representation, hidden_size, normalize, initialize, activation, device)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param n_agents: The number of agents.
   :type n_agents: int
   :param representation: The representation module.
@@ -88,7 +88,7 @@ Deterministic-MARL
   xuance.torch.policies.deterministic_marl.MFQnetwork(action_space, n_agents, representation, hidden_sizes, normalize, initialize, activation, device)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param n_agents: The number of agents.
   :type n_agents: int
   :param representation: The representation module.
@@ -146,7 +146,7 @@ Deterministic-MARL
   xuance.torch.policies.deterministic_marl.MixingQnetwork(action_space, n_agents, representation, mixer, hidden_size, normalize, initialize, activation, device)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param n_agents: The number of agents.
   :type n_agents: int
   :param representation: The representation module.
@@ -220,7 +220,7 @@ Deterministic-MARL
   xuance.torch.policies.deterministic_marl.Weighted_MixingQnetwork(action_space, n_agents, representation, mixer, ff_mixer, hidden_size, normalize, initialize, activation, device)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param n_agents: The number of agents.
   :type n_agents: int
   :param representation: The representation module.
@@ -274,7 +274,7 @@ Deterministic-MARL
   xuance.torch.policies.deterministic_marl.Qtran_MixingQnetwork(action_space, n_agents, representation, mixer, qtran_mixer, hidden_size, normalize, initialize, activation, device)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param n_agents: The number of agents.
   :type n_agents: int
   :param representation: The representation module.
@@ -324,7 +324,7 @@ Deterministic-MARL
   xuance.torch.policies.deterministic_marl.DCG_policy(action_space, global_state_dim, representation, utility, payoffs, dcgraph, hidden_size_bias, normalize, initialize, activation, device)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param global_state_dim: xxxxxx.
   :type global_state_dim: xxxxxx
   :param representation: The representation module.
@@ -372,7 +372,7 @@ Deterministic-MARL
   :param n_agents: The number of agents.
   :type n_agents: int
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
   :param normalize: The method of normalization.
@@ -423,7 +423,7 @@ Deterministic-MARL
   xuance.torch.policies.deterministic_marl.Basic_DDPG_policy(action_space, n_agents, representation, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param n_agents: The number of agents.
   :type n_agents: int
   :param representation: The representation module.
@@ -487,7 +487,7 @@ Deterministic-MARL
   xuance.torch.policies.deterministic_marl.MADDPG_policy(action_space, n_agents, representation, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param n_agents: The number of agents.
   :type n_agents: int
   :param representation: The representation module.
@@ -533,7 +533,7 @@ Deterministic-MARL
   xuance.torch.policies.deterministic_marl.MATD3_policy(action_space, n_agents, representation, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param n_agents: The number of agents.
   :type n_agents: int
   :param representation: The representation module.
@@ -632,7 +632,7 @@ Deterministic-MARL
   xuance.tensorflow.policies.deterministic_marl.BasicQnetwork(action_space, n_agents, representation, hidden_size, normalize, initialize, activation, device)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param n_agents: The number of agents.
   :type n_agents: int
   :param representation: The representation module.
@@ -679,7 +679,7 @@ Deterministic-MARL
   xuance.tensorflow.policies.deterministic_marl.MFQnetwork(action_space, n_agents, representation, hidden_sizes, normalize, initialize, activation, device)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param n_agents: The number of agents.
   :type n_agents: int
   :param representation: The representation module.
@@ -730,7 +730,7 @@ Deterministic-MARL
   xuance.tensorflow.policies.deterministic_marl.MixingQnetwork(action_space, n_agents, representation, mixer, hidden_size, normalize, initialize, activation, device)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param n_agents: The number of agents.
   :type n_agents: int
   :param representation: The representation module.
@@ -793,7 +793,7 @@ Deterministic-MARL
   xuance.tensorflow.policies.deterministic_marl.Weighted_MixingQnetwork(action_space, n_agents, representation, mixer, ff_mixer, hidden_size, normalize, initialize, activation, device)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param n_agents: The number of agents.
   :type n_agents: int
   :param representation: The representation module.
@@ -836,7 +836,7 @@ Deterministic-MARL
   xuance.tensorflow.policies.deterministic_marl.Qtran_MixingQnetwork(action_space, n_agents, representation, mixer, qtran_mixer, hidden_size, normalize, initialize, activation, device)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param n_agents: The number of agents.
   :type n_agents: int
   :param representation: The representation module.
@@ -879,7 +879,7 @@ Deterministic-MARL
   xuance.tensorflow.policies.deterministic_marl.DCG_policy(action_space, global_state_dim, representation, utility, payoffs, dcgraph, hidden_size_bias, normalize, initialize, activation, device)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param global_state_dim: xxxxxx.
   :type global_state_dim: xxxxxx
   :param representation: The representation module.
@@ -918,7 +918,7 @@ Deterministic-MARL
   :param n_agents: The number of agents.
   :type n_agents: int
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
   :param normalize: The method of normalization.
@@ -973,7 +973,7 @@ Deterministic-MARL
   xuance.tensorflow.policies.deterministic_marl.Basic_DDPG_policy(action_space, n_agents, representation, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param n_agents: The number of agents.
   :type n_agents: int
   :param representation: The representation module.
@@ -1043,7 +1043,7 @@ Deterministic-MARL
   xuance.tensorflow.policies.deterministic_marl.MADDPG_policy(action_space, n_agents, representation, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param n_agents: The number of agents.
   :type n_agents: int
   :param representation: The representation module.
@@ -1167,7 +1167,7 @@ Deterministic-MARL
   xuance.tensorflow.policies.deterministic_marl.MAAC_policy(action_space, n_agents, representation, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param n_agents: The number of agents.
   :type n_agents: int
   :param representation: The representation module.
@@ -1213,7 +1213,7 @@ Deterministic-MARL
   xuance.tensorflow.policies.deterministic_marl.MATD3_policy(action_space, n_agents, representation, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param n_agents: The number of agents.
   :type n_agents: int
   :param representation: The representation module.
@@ -1327,7 +1327,7 @@ Deterministic-MARL
   xuance.mindspore.policies.deterministic_marl.BasicQnetwork(action_space, n_agents, representation, hidden_size, normalize, initialize, activation, kwargs)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param n_agents: The number of agents.
   :type n_agents: int
   :param representation: The representation module.
@@ -1392,9 +1392,9 @@ Deterministic-MARL
   xuance.mindspore.policies.deterministic_marl.MFQnetwork(action_space, n_agents, representation, hidden_size, normalize, initialize, activation)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param representation: The representation module.
   :type representation: nn.Module
   :param hidden_size: xxxxxx.
@@ -1453,7 +1453,7 @@ Deterministic-MARL
   xuance.mindspore.policies.deterministic_marl.MixingQnetwork(action_space, n_agents, representation, mixer, hidden_size, normalize, initialize, activation, kwargs)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param n_agents: The number of agents.
   :type n_agents: int
   :param representation: The representation module.
@@ -1542,7 +1542,7 @@ Deterministic-MARL
   xuance.mindspore.policies.deterministic_marl.Weighted_MixingQnetwork(action_space, n_agents, representation, mixer, ff_mixer, hidden_size, normalize, initialize, activation, kwargs)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param n_agents: The number of agents.
   :type n_agents: int
   :param representation: The representation module.
@@ -1599,7 +1599,7 @@ Deterministic-MARL
   xuance.mindspore.policies.deterministic_marl.Qtran_MixingQnetwork(action_space, n_agents, representation, mixer, qtran_mixer, hidden_size, normalize, initialize, activation, kwargs)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param n_agents: The number of agents.
   :type n_agents: int
   :param representation: The representation module.
@@ -1659,7 +1659,7 @@ Deterministic-MARL
   xuance.mindspore.policies.deterministic_marl.DCG_policy(action_space, global_state_dim, representation, utility, payoffs, dcgraph, hidden_size_bias, normalize, initialize, activation, kwargs)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param global_state_dim: xxxxxx.
   :type global_state_dim: xxxxxx
   :param representation: The representation module.
@@ -1764,7 +1764,7 @@ Deterministic-MARL
   xuance.mindspore.policies.deterministic_marl.Basic_DDPG_policy(action_space, n_agents, representation, actor_hidden_size, critic_hidden_size, normalize, initialize, activation)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param n_agents: The number of agents.
   :type n_agents: int
   :param representation: The representation module.
@@ -1844,7 +1844,7 @@ Deterministic-MARL
   xuance.mindspore.policies.deterministic_marl.MADDPG_policy(action_space, n_agents, representation, actor_hidden_size, critic_hidden_size, normalize, initialize, activation)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param n_agents: The number of agents.
   :type n_agents: int
   :param representation: The representation module.
@@ -1924,7 +1924,7 @@ Deterministic-MARL
   xuance.mindspore.policies.deterministic_marl.MATD3_policy(action_space, n_agents, representation, actor_hidden_size, critic_hidden_size, normalize, initialize, activation)
 
   :param action_space: The action space of the environment.
-  :type action_space: Box, Discrete, etc
+  :type action_space: Space
   :param n_agents: The number of agents.
   :type n_agents: int
   :param representation: The representation module.
