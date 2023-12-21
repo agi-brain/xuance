@@ -100,7 +100,8 @@ QTRAN_Agents
     :rtype: tuple(np.ndarray, np.ndarray), np.ndarray
 
 .. py:function::
-     xuance.mindspore.agents.mutli_agent_rl.qtran_agents.QTRAN_Agents.train(i_step, n_epoch)
+    xuance.mindspore.agents.mutli_agent_rl.qtran_agents.QTRAN_Agents.train(i_step, n_epoch)
+    
     :param i_step: xxxxxx.
     :type i_step: xxxxxx
     :param n_epoch: xxxxxx.
