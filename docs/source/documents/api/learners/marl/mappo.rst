@@ -34,8 +34,8 @@ xxxxxx.
 
   :param i_step: xxxxxx.
   :type i_step: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: Current learning rate.
+  :rtype: float
 
 .. py:function::
   xuance.torch.learners.multi_agent_rl.mappo_learner.MAPPO_Clip_Learner.update(sample)
@@ -44,8 +44,8 @@ xxxxxx.
 
   :param sample: xxxxxx.
   :type sample: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The infomation of the training.
+  :rtype: dict
 
 .. py:function::
   xuance.torch.learners.multi_agent_rl.mappo_learner.MAPPO_Clip_Learner.update_recurrent(sample)
@@ -54,8 +54,8 @@ xxxxxx.
 
   :param sample: xxxxxx.
   :type sample: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The infomation of the training.
+  :rtype: dict
 
 .. raw:: html
 
@@ -86,8 +86,8 @@ xxxxxx.
 
   :param i_step: xxxxxx.
   :type i_step: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: Current learning rate.
+  :rtype: float
 
 .. py:function::
   xuance.tensorflow.learners.multi_agent_rl.mappo_learner.MAPPO_Clip_Learner.update(sample)
@@ -96,8 +96,8 @@ xxxxxx.
 
   :param sample: xxxxxx.
   :type sample: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The infomation of the training.
+  :rtype: dict
 
 .. raw:: html
 
@@ -128,8 +128,8 @@ xxxxxx.
 
   :param i_step: xxxxxx.
   :type i_step: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: Current learning rate.
+  :rtype: float
 
 .. py:function::
   xuance.torch.learners.multi_agent_rl.mappo_learner.MAPPO_Clip_Learner.update(sample)
@@ -138,8 +138,8 @@ xxxxxx.
 
   :param sample: xxxxxx.
   :type sample: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The infomation of the training.
+  :rtype: dict
 
 .. raw:: html
 

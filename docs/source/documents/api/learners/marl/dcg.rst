@@ -40,8 +40,8 @@ xxxxxx.
   :type *rnn_hidden: Tensor
   :param use_target_net: xxxxxx.
   :type use_target_net: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: hidden states.
+  :rtype: Tensor
 
 .. py:function::
   xuance.torch.learners.multi_agent_rl.dcg_learner.DCG_Learner.get_graph_values(hidden_states, use_target_net)
@@ -52,8 +52,8 @@ xxxxxx.
   :type hidden_states: xxxxxx
   :param use_target_net: xxxxxx.
   :type use_target_net: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The graph values.
+  :rtype: np.ndarray, Tensor
 
 .. py:function::
   xuance.torch.learners.multi_agent_rl.dcg_learner.DCG_Learner.act(hidden_states, avail_actions)
@@ -64,8 +64,8 @@ xxxxxx.
   :type hidden_states: xxxxxx
   :param avail_actions: The mask varibales for availabel actions.
   :type avail_actions: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: Joint actions.
+  :rtype: np.ndarray, Tensor
 
 .. py:function::
   xuance.torch.learners.multi_agent_rl.dcg_learner.DCG_Learner.q_dcg(hidden_states, actions, states, use_target_net)
@@ -80,8 +80,8 @@ xxxxxx.
   :type states: xxxxxx
   :param use_target_net: xxxxxx.
   :type use_target_net: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: xxxxx.
+  :rtype: xxxxx
 
 .. py:function::
   xuance.torch.learners.multi_agent_rl.dcg_learner.DCG_Learner.update(sample)
@@ -90,8 +90,8 @@ xxxxxx.
 
   :param sample: xxxxxx.
   :type sample: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The infomation of the training.
+  :rtype: dict
 
 .. py:function::
   xuance.torch.learners.multi_agent_rl.dcg_learner.DCG_Learner.update_recurrent(sample)
@@ -100,8 +100,8 @@ xxxxxx.
 
   :param sample: xxxxxx.
   :type sample: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The infomation of the training.
+  :rtype: dict
 
 .. raw:: html
 
@@ -138,8 +138,8 @@ xxxxxx.
   :type *rnn_hidden: Tensor
   :param use_target_net: xxxxxx.
   :type use_target_net: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The hidden states.
+  :rtype: np.ndarray, tf.Tensor
 
 .. py:function::
   xuance.tensorflow.learners.multi_agent_rl.dcg_learner.DCG_Learner.get_graph_values(hidden_states, use_target_net)
@@ -150,8 +150,8 @@ xxxxxx.
   :type hidden_states: xxxxxx
   :param use_target_net: xxxxxx.
   :type use_target_net: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The graph values.
+  :rtype: np.ndarray, tf.Tensor
 
 .. py:function::
   xuance.tensorflow.learners.multi_agent_rl.dcg_learner.DCG_Learner.act(hidden_states, avail_actions)
@@ -162,8 +162,8 @@ xxxxxx.
   :type hidden_states: xxxxxx
   :param avail_actions: The mask varibales for availabel actions.
   :type avail_actions: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The joint actions.
+  :rtype: np.ndarray, tf.Tensor
 
 .. py:function::
   xuance.tensorflow.learners.multi_agent_rl.dcg_learner.DCG_Learner.q_dcg(hidden_states, actions, states, use_target_net)
@@ -178,8 +178,8 @@ xxxxxx.
   :type states: xxxxxx
   :param use_target_net: xxxxxx.
   :type use_target_net: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The Q values of the graph.
+  :rtype: np.ndarray, tf.Tensor
 
 .. py:function::
   xuance.tensorflow.learners.multi_agent_rl.dcg_learner.DCG_Learner.update(sample)
@@ -188,8 +188,8 @@ xxxxxx.
 
   :param sample: xxxxxx.
   :type sample: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The infomation of the training.
+  :rtype: dict
 
 .. raw:: html
 
@@ -226,8 +226,8 @@ xxxxxx.
   :type *rnn_hidden: Tensor
   :param use_target_net: xxxxxx.
   :type use_target_net: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The hidden states.
+  :rtype: np.ndarray, ms.Tensor
 
 .. py:function::
   xuance.mindspore.learners.multi_agent_rl.dcg_learner.DCG_Learner.get_graph_values(hidden_states, use_target_net)
@@ -238,8 +238,8 @@ xxxxxx.
   :type hidden_states: xxxxxx
   :param use_target_net: xxxxxx.
   :type use_target_net: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The graph values.
+  :rtype: np.ndarray, ms.Tensor
 
 .. py:function::
   xuance.mindspore.learners.multi_agent_rl.dcg_learner.DCG_Learner.act(hidden_states, avail_actions)
@@ -250,8 +250,8 @@ xxxxxx.
   :type hidden_states: xxxxxx
   :param avail_actions: The mask varibales for availabel actions.
   :type avail_actions: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The joint actions.
+  :rtype: np.ndarray, ms.Tensor
 
 .. py:function::
   xuance.mindspore.learners.multi_agent_rl.dcg_learner.DCG_Learner.q_dcg(hidden_states, actions, states, use_target_net)
@@ -266,8 +266,8 @@ xxxxxx.
   :type states: xxxxxx
   :param use_target_net: xxxxxx.
   :type use_target_net: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The Q values of the graph.
+  :rtype: np.ndarray, ms.Tensor
 
 .. py:function::
   xuance.mindspore.learners.multi_agent_rl.dcg_learner.DCG_Learner.update(sample)
@@ -276,8 +276,8 @@ xxxxxx.
 
   :param sample: xxxxxx.
   :type sample: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The infomation of the training.
+  :rtype: dict
 
 .. raw:: html
 

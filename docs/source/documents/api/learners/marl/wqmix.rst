@@ -36,8 +36,8 @@ xxxxxx.
 
   :param sample: xxxxxx.
   :type sample: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The infomation of the training.
+  :rtype: dict
 
 .. py:function::
   xuance.torch.learners.multi_agent_rl.wqmix_learner.WQMIX_Learner.update_recurrent(sample)
@@ -46,8 +46,8 @@ xxxxxx.
 
   :param sample: xxxxxx.
   :type sample: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The infomation of the training.
+  :rtype: dict
 
 .. raw:: html
 
@@ -80,8 +80,8 @@ xxxxxx.
 
   :param sample: xxxxxx.
   :type sample: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The infomation of the training.
+  :rtype: dict
 
 .. raw:: html
 
@@ -116,8 +116,8 @@ xxxxxx.
 
   :param sample: xxxxxx.
   :type sample: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The infomation of the training.
+  :rtype: dict
 
 .. raw:: html
 

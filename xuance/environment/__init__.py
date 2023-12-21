@@ -21,7 +21,7 @@ REGISTRY_VEC_ENV = {
     "Dummy_StarCraft2": DummyVecEnv_StarCraft2,
     "Dummy_Football": DummyVecEnv_GFootball,
     "Dummy_Atari": DummyVecEnv_Atari,
-    "Dummy_NewEnv": DummyVecEnv_New,
+    "Dummy_NewEnv": DummyVecEnv_New,  # Add the newly defined vectorized environment
 
     # multiprocess #
     "Subproc_Gym": SubprocVecEnv_Gym,
@@ -29,7 +29,7 @@ REGISTRY_VEC_ENV = {
     "Subproc_StarCraft2": SubprocVecEnv_StarCraft2,
     "Subproc_Football": SubprocVecEnv_GFootball,
     "Subproc_Atari": SubprocVecEnv_Atari,
-    "Subproc_NewEnv": SubprocVecEnv_New,
+    "Subproc_NewEnv": SubprocVecEnv_New,  # Add the newly defined vectorized environment
 }
 
 
@@ -73,7 +73,7 @@ def make_envs(config: Namespace):
             from xuance.environment.gym_platform.envs.platform_env import PlatformEnv
             env = PlatformEnv()
 
-        elif config.env_name == "NewEnv":
+        elif config.env_name == "NewEnv":  # Add the newly defined vectorized environment
             from xuance.environment.new_env.new_env import New_Env
             env = New_Env(config.env_id, config.seed, continuous=False)
 

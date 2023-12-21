@@ -32,184 +32,6 @@ class BaseBuffer(ABC):
         return
 
 
-class MARL_OffPolicyBuffer(BaseBuffer):
-    """
-    Replay buffer for off-policy MARL algorithms.
-
-    Args:
-        n_agents: number of agents.
-        state_space: global state space, type: Discrete, Box.
-        obs_space: observation space for one agent (suppose same obs space for group agents).
-        act_space: action space for one agent (suppose same actions space for group agents).
-        rew_space: reward space.
-        done_space: terminal variable space.
-        n_envs: number of parallel environments.
-        n_size: buffer size for one environment.
-        batch_size: batch size of transition data for a sample.
-    """
-
-    def __init__(self, n_agents, state_space, obs_space, act_space, rew_space, done_space,
-                 n_envs, buffer_size, batch_size, **kwargs):
-        super(MARL_OffPolicyBuffer, self).__init__(n_agents, state_space, obs_space, act_space, rew_space, done_space,
-                                                   n_envs, buffer_size)
-        self.n_size = buffer_size // n_envs
-        self.batch_size = batch_size
-        if self.state_space is not None:
-            self.store_global_state = True
-        else:
-            self.store_global_state = False
-        self.data = {}
-        self.clear()
-        self.keys = self.data.keys()
-
-    def clear(self):
-        self.data = {
-            'obs': np.zeros((self.n_envs, self.n_size, self.n_agents) + self.obs_space).astype(np.float32),
-            'actions': np.zeros((self.n_envs, self.n_size, self.n_agents) + self.act_space).astype(np.float32),
-            'obs_next': np.zeros((self.n_envs, self.n_size, self.n_agents) + self.obs_space).astype(np.float32),
-            'rewards': np.zeros((self.n_envs, self.n_size) + self.rew_space).astype(np.float32),
-            'terminals': np.zeros((self.n_envs, self.n_size) + self.done_space).astype(np.bool),
-            'agent_mask': np.ones((self.n_envs, self.n_size, self.n_agents)).astype(np.bool)
-        }
-        if self.state_space is not None:
-            self.data.update({'state': np.zeros((self.n_envs, self.n_size) + self.state_space).astype(np.float32),
-                              'state_next': np.zeros((self.n_envs, self.n_size) + self.state_space).astype(np.float32)})
-        self.ptr, self.size = 0, 0
-
-    def store(self, step_data):
-        for k in self.keys:
-            self.data[k][:, self.ptr] = step_data[k]
-        self.ptr = (self.ptr + 1) % self.n_size
-        self.size = np.min([self.size + 1, self.n_size])
-
-    def sample(self):
-        env_choices = np.random.choice(self.n_envs, self.batch_size)
-        step_choices = np.random.choice(self.size, self.batch_size)
-        samples = {k: self.data[k][env_choices, step_choices] for k in self.keys}
-        return samples
-
-
-class MARL_OffPolicyBuffer_RNN(MARL_OffPolicyBuffer):
-    """
-    Replay buffer for off-policy MARL algorithms with DRQN trick.
-
-    Args:
-        n_agents: number of agents.
-        state_space: global state space, type: Discrete, Box.
-        obs_space: observation space for one agent (suppose same obs space for group agents).
-        act_space: action space for one agent (suppose same actions space for group agents).
-        rew_space: reward space.
-        done_space: terminal variable space.
-        n_envs: number of parallel environments.
-        n_size: buffer size for one environment.
-        batch_size: batch size of episodes for a sample.
-        max_episode_length: maximum length of data for one episode trajectory.
-    """
-
-    def __init__(self, n_agents, state_space, obs_space, act_space, rew_space, done_space,
-                 n_envs, buffer_size, batch_size, **kwargs):
-        self.max_eps_len = kwargs['max_episode_length']
-        self.dim_act = kwargs['dim_act']
-        super(MARL_OffPolicyBuffer_RNN, self).__init__(n_agents, state_space, obs_space, act_space, rew_space,
-                                                       done_space, n_envs, buffer_size, batch_size)
-
-        self.episode_data = {}
-        self.clear_episodes()
-
-    def clear(self):
-        self.data = {
-            'obs': np.zeros((self.buffer_size, self.n_agents, self.max_eps_len + 1) + self.obs_space, np.float),
-            'actions': np.zeros((self.buffer_size, self.n_agents, self.max_eps_len) + self.act_space, np.float),
-            'rewards': np.zeros((self.buffer_size, self.n_agents, self.max_eps_len) + self.rew_space, np.float),
-            'terminals': np.zeros((self.buffer_size, self.max_eps_len) + self.done_space, np.bool),
-            'avail_actions': np.ones((self.buffer_size, self.n_agents, self.max_eps_len + 1, self.dim_act), np.bool),
-            'filled': np.zeros((self.buffer_size, self.max_eps_len, 1)).astype(np.bool)
-        }
-        if self.state_space is not None:
-            self.data.update({'state': np.zeros(
-                (self.buffer_size, self.max_eps_len + 1) + self.state_space).astype(np.float32)})
-        self.ptr, self.size = 0, 0
-
-    def clear_episodes(self):
-        self.episode_data = {
-            'obs': np.zeros((self.n_envs, self.n_agents, self.max_eps_len + 1) + self.obs_space, dtype=np.float32),
-            'actions': np.zeros((self.n_envs, self.n_agents, self.max_eps_len) + self.act_space, dtype=np.float32),
-            'rewards': np.zeros((self.n_envs, self.n_agents, self.max_eps_len) + self.rew_space, dtype=np.float32),
-            'terminals': np.zeros((self.n_envs, self.max_eps_len) + self.done_space, dtype=np.bool),
-            'avail_actions': np.ones((self.n_envs, self.n_agents, self.max_eps_len + 1, self.dim_act), dtype=np.bool),
-            'filled': np.zeros((self.n_envs, self.max_eps_len, 1), dtype=np.bool),
-        }
-        if self.state_space is not None:
-            self.episode_data.update({
-                'state': np.zeros((self.n_envs, self.max_eps_len + 1) + self.state_space, dtype=np.float32),
-            })
-
-    def store_transitions(self, t_envs, *transition_data):
-        obs_n, actions_dict, state, rewards, terminated, avail_actions = transition_data
-        self.episode_data['obs'][:, :, t_envs] = obs_n
-        self.episode_data['actions'][:, :, t_envs] = actions_dict['actions_n']
-        self.episode_data['rewards'][:, :, t_envs] = rewards
-        self.episode_data['terminals'][:, t_envs] = terminated
-        self.episode_data['avail_actions'][:, :, t_envs] = avail_actions
-        if self.state_space is not None:
-            self.episode_data['state'][:, t_envs] = state
-
-    def store_episodes(self):
-        for i_env in range(self.n_envs):
-            for k in self.keys:
-                self.data[k][self.ptr] = self.episode_data[k][i_env].copy()
-            self.ptr = (self.ptr + 1) % self.buffer_size
-            self.size = np.min([self.size + 1, self.buffer_size])
-        self.clear_episodes()
-
-    def finish_path(self, i_env, next_t, *terminal_data):
-        obs_next, state_next, available_actions, filled = terminal_data
-        self.episode_data['obs'][i_env, :, next_t] = obs_next[i_env]
-        self.episode_data['state'][i_env, next_t] = state_next[i_env]
-        self.episode_data['avail_actions'][i_env, :, next_t] = available_actions[i_env]
-        self.episode_data['filled'][i_env] = filled[i_env]
-
-    def sample(self):
-        sample_choices = np.random.choice(self.size, self.batch_size)
-        samples = {k: self.data[k][sample_choices] for k in self.keys}
-        return samples
-
-
-class MeanField_OffPolicyBuffer(MARL_OffPolicyBuffer):
-    """
-    Replay buffer for off-policy Mean-Field MARL algorithms (Mean-Field Q-Learning).
-
-    Args:
-        n_agents: number of agents.
-        state_space: global state space, type: Discrete, Box.
-        obs_space: observation space for one agent (suppose same obs space for group agents).
-        act_space: action space for one agent (suppose same actions space for group agents).
-        rew_space: reward space.
-        done_space: terminal variable space.
-        n_envs: number of parallel environments.
-        n_size: buffer size for one environment.
-        batch_size: batch size of transition data for a sample.
-    """
-
-    def __init__(self, n_agents, state_space, obs_space, act_space, prob_shape, rew_space, done_space,
-                 n_envs, buffer_size, batch_size):
-        self.prob_shape = prob_shape
-        super(MeanField_OffPolicyBuffer, self).__init__(n_agents, state_space, obs_space, act_space, rew_space,
-                                                        done_space, n_envs, buffer_size, batch_size)
-
-    def clear(self):
-        super(MeanField_OffPolicyBuffer, self).clear()
-        self.data.update({"act_mean": np.zeros((self.n_envs, self.n_size,) + self.prob_shape).astype(np.float32)})
-
-    def sample(self):
-        env_choices = np.random.choice(self.n_envs, self.batch_size)
-        step_choices = np.random.choice(self.size, self.batch_size)
-        samples = {k: self.data[k][env_choices, step_choices] for k in self.keys}
-        next_index = (step_choices + 1) % self.n_size
-        samples.update({'act_mean_next': self.data['act_mean'][env_choices, next_index]})
-        return samples
-
-
 class MARL_OnPolicyBuffer(BaseBuffer):
     """
     Replay buffer for on-policy MARL algorithms.
@@ -222,7 +44,7 @@ class MARL_OnPolicyBuffer(BaseBuffer):
         rew_space: reward space.
         done_space: terminal variable space.
         n_envs: number of parallel environments.
-        n_size: buffer size of transition data for one environment.
+        buffer_size: buffer size of transition data for one environment.
         use_gae: whether to use GAE trick.
         use_advnorm: whether to use Advantage normalization trick.
         gamma: discount factor.
@@ -328,7 +150,7 @@ class MARL_OnPolicyBuffer_RNN(MARL_OnPolicyBuffer):
         rew_space: reward space.
         done_space: terminal variable space.
         n_envs: number of parallel environments.
-        n_size: buffer size of trajectory data for one environment.
+        buffer_size: buffer size of trajectory data for one environment.
         use_gae: whether to use GAE trick.
         use_advnorm: whether to use Advantage normalization trick.
         gamma: discount factor.
@@ -492,7 +314,7 @@ class MeanField_OnPolicyBuffer(MARL_OnPolicyBuffer):
         use_advnorm: whether to use Advantage normalization trick.
         gamma: discount factor.
         gae_lam: gae lambda.
-        prob_space: action probabilistic space.
+        kwargs: the other arguments.
     """
 
     def __init__(self, n_agents, state_space, obs_space, act_space, rew_space, done_space, n_envs,
@@ -679,3 +501,186 @@ class COMA_Buffer_RNN(MARL_OnPolicyBuffer_RNN):
                          rewards[t] + (1 - self.td_lambda) * self.gamma * vs[t + 1] * (1 - dones[t])
 
         self.episode_data['returns'][i_env, :, path_slice] = returns[:-1]
+
+
+class MARL_OffPolicyBuffer(BaseBuffer):
+    """
+    Replay buffer for off-policy MARL algorithms.
+
+    Args:
+        n_agents: number of agents.
+        state_space: global state space, type: Discrete, Box.
+        obs_space: observation space for one agent (suppose same obs space for group agents).
+        act_space: action space for one agent (suppose same actions space for group agents).
+        rew_space: reward space.
+        done_space: terminal variable space.
+        n_envs: number of parallel environments.
+        buffer_size: buffer size for one environment.
+        batch_size: batch size of transition data for a sample.
+        **kwargs: other arguments.
+    """
+
+    def __init__(self, n_agents, state_space, obs_space, act_space, rew_space, done_space,
+                 n_envs, buffer_size, batch_size, **kwargs):
+        super(MARL_OffPolicyBuffer, self).__init__(n_agents, state_space, obs_space, act_space, rew_space, done_space,
+                                                   n_envs, buffer_size)
+        self.n_size = buffer_size // n_envs
+        self.batch_size = batch_size
+        if self.state_space is not None:
+            self.store_global_state = True
+        else:
+            self.store_global_state = False
+        self.data = {}
+        self.clear()
+        self.keys = self.data.keys()
+
+    def clear(self):
+        self.data = {
+            'obs': np.zeros((self.n_envs, self.n_size, self.n_agents) + self.obs_space).astype(np.float32),
+            'actions': np.zeros((self.n_envs, self.n_size, self.n_agents) + self.act_space).astype(np.float32),
+            'obs_next': np.zeros((self.n_envs, self.n_size, self.n_agents) + self.obs_space).astype(np.float32),
+            'rewards': np.zeros((self.n_envs, self.n_size) + self.rew_space).astype(np.float32),
+            'terminals': np.zeros((self.n_envs, self.n_size) + self.done_space).astype(np.bool),
+            'agent_mask': np.ones((self.n_envs, self.n_size, self.n_agents)).astype(np.bool)
+        }
+        if self.state_space is not None:
+            self.data.update({'state': np.zeros((self.n_envs, self.n_size) + self.state_space).astype(np.float32),
+                              'state_next': np.zeros((self.n_envs, self.n_size) + self.state_space).astype(np.float32)})
+        self.ptr, self.size = 0, 0
+
+    def store(self, step_data):
+        for k in self.keys:
+            self.data[k][:, self.ptr] = step_data[k]
+        self.ptr = (self.ptr + 1) % self.n_size
+        self.size = np.min([self.size + 1, self.n_size])
+
+    def sample(self):
+        env_choices = np.random.choice(self.n_envs, self.batch_size)
+        step_choices = np.random.choice(self.size, self.batch_size)
+        samples = {k: self.data[k][env_choices, step_choices] for k in self.keys}
+        return samples
+
+
+class MARL_OffPolicyBuffer_RNN(MARL_OffPolicyBuffer):
+    """
+    Replay buffer for off-policy MARL algorithms with DRQN trick.
+
+    Args:
+        n_agents: number of agents.
+        state_space: global state space, type: Discrete, Box.
+        obs_space: observation space for one agent (suppose same obs space for group agents).
+        act_space: action space for one agent (suppose same actions space for group agents).
+        rew_space: reward space.
+        done_space: terminal variable space.
+        n_envs: number of parallel environments.
+        buffer_size: buffer size for one environment.
+        batch_size: batch size of episodes for a sample.
+        kwargs: other arguments.
+    """
+
+    def __init__(self, n_agents, state_space, obs_space, act_space, rew_space, done_space,
+                 n_envs, buffer_size, batch_size, **kwargs):
+        self.max_eps_len = kwargs['max_episode_length']
+        self.dim_act = kwargs['dim_act']
+        super(MARL_OffPolicyBuffer_RNN, self).__init__(n_agents, state_space, obs_space, act_space, rew_space,
+                                                       done_space, n_envs, buffer_size, batch_size)
+
+        self.episode_data = {}
+        self.clear_episodes()
+
+    def clear(self):
+        self.data = {
+            'obs': np.zeros((self.buffer_size, self.n_agents, self.max_eps_len + 1) + self.obs_space, np.float),
+            'actions': np.zeros((self.buffer_size, self.n_agents, self.max_eps_len) + self.act_space, np.float),
+            'rewards': np.zeros((self.buffer_size, self.n_agents, self.max_eps_len) + self.rew_space, np.float),
+            'terminals': np.zeros((self.buffer_size, self.max_eps_len) + self.done_space, np.bool),
+            'avail_actions': np.ones((self.buffer_size, self.n_agents, self.max_eps_len + 1, self.dim_act), np.bool),
+            'filled': np.zeros((self.buffer_size, self.max_eps_len, 1)).astype(np.bool)
+        }
+        if self.state_space is not None:
+            self.data.update({'state': np.zeros(
+                (self.buffer_size, self.max_eps_len + 1) + self.state_space).astype(np.float32)})
+        self.ptr, self.size = 0, 0
+
+    def clear_episodes(self):
+        self.episode_data = {
+            'obs': np.zeros((self.n_envs, self.n_agents, self.max_eps_len + 1) + self.obs_space, dtype=np.float32),
+            'actions': np.zeros((self.n_envs, self.n_agents, self.max_eps_len) + self.act_space, dtype=np.float32),
+            'rewards': np.zeros((self.n_envs, self.n_agents, self.max_eps_len) + self.rew_space, dtype=np.float32),
+            'terminals': np.zeros((self.n_envs, self.max_eps_len) + self.done_space, dtype=np.bool),
+            'avail_actions': np.ones((self.n_envs, self.n_agents, self.max_eps_len + 1, self.dim_act), dtype=np.bool),
+            'filled': np.zeros((self.n_envs, self.max_eps_len, 1), dtype=np.bool),
+        }
+        if self.state_space is not None:
+            self.episode_data.update({
+                'state': np.zeros((self.n_envs, self.max_eps_len + 1) + self.state_space, dtype=np.float32),
+            })
+
+    def store_transitions(self, t_envs, *transition_data):
+        obs_n, actions_dict, state, rewards, terminated, avail_actions = transition_data
+        self.episode_data['obs'][:, :, t_envs] = obs_n
+        self.episode_data['actions'][:, :, t_envs] = actions_dict['actions_n']
+        self.episode_data['rewards'][:, :, t_envs] = rewards
+        self.episode_data['terminals'][:, t_envs] = terminated
+        self.episode_data['avail_actions'][:, :, t_envs] = avail_actions
+        if self.state_space is not None:
+            self.episode_data['state'][:, t_envs] = state
+
+    def store_episodes(self):
+        for i_env in range(self.n_envs):
+            for k in self.keys:
+                self.data[k][self.ptr] = self.episode_data[k][i_env].copy()
+            self.ptr = (self.ptr + 1) % self.buffer_size
+            self.size = np.min([self.size + 1, self.buffer_size])
+        self.clear_episodes()
+
+    def finish_path(self, i_env, next_t, *terminal_data):
+        obs_next, state_next, available_actions, filled = terminal_data
+        self.episode_data['obs'][i_env, :, next_t] = obs_next[i_env]
+        self.episode_data['state'][i_env, next_t] = state_next[i_env]
+        self.episode_data['avail_actions'][i_env, :, next_t] = available_actions[i_env]
+        self.episode_data['filled'][i_env] = filled[i_env]
+
+    def sample(self):
+        sample_choices = np.random.choice(self.size, self.batch_size)
+        samples = {k: self.data[k][sample_choices] for k in self.keys}
+        return samples
+
+
+class MeanField_OffPolicyBuffer(MARL_OffPolicyBuffer):
+    """
+    Replay buffer for off-policy Mean-Field MARL algorithms (Mean-Field Q-Learning).
+
+    Args:
+        n_agents: number of agents.
+        state_space: global state space, type: Discrete, Box.
+        obs_space: observation space for one agent (suppose same obs space for group agents).
+        act_space: action space for one agent (suppose same actions space for group agents).
+        prob_shape: the data shape of the action probabilities.
+        rew_space: reward space.
+        done_space: terminal variable space.
+        n_envs: number of parallel environments.
+        buffer_size: buffer size for one environment.
+        batch_size: batch size of transition data for a sample.
+    """
+
+    def __init__(self, n_agents, state_space, obs_space, act_space, prob_shape, rew_space, done_space,
+                 n_envs, buffer_size, batch_size):
+        self.prob_shape = prob_shape
+        super(MeanField_OffPolicyBuffer, self).__init__(n_agents, state_space, obs_space, act_space, rew_space,
+                                                        done_space, n_envs, buffer_size, batch_size)
+
+    def clear(self):
+        super(MeanField_OffPolicyBuffer, self).clear()
+        self.data.update({"act_mean": np.zeros((self.n_envs, self.n_size,) + self.prob_shape).astype(np.float32)})
+
+    def sample(self):
+        env_choices = np.random.choice(self.n_envs, self.batch_size)
+        step_choices = np.random.choice(self.size, self.batch_size)
+        samples = {k: self.data[k][env_choices, step_choices] for k in self.keys}
+        next_index = (step_choices + 1) % self.n_size
+        samples.update({'act_mean_next': self.data['act_mean'][env_choices, next_index]})
+        return samples
+
+
+

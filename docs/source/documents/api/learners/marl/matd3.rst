@@ -38,8 +38,8 @@ xxxxxx.
 
   :param sample: xxxxxx.
   :type sample: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The infomation of the training.
+  :rtype: dict
 
 .. raw:: html
 
@@ -74,8 +74,8 @@ xxxxxx.
 
   :param sample: xxxxxx.
   :type sample: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The infomation of the training.
+  :rtype: dict
 
 .. raw:: html
 
@@ -110,8 +110,8 @@ xxxxxx.
 
   :param sample: xxxxxx.
   :type sample: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The infomation of the training.
+  :rtype: dict
 
 .. raw:: html
 

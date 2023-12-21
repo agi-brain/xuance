@@ -38,8 +38,8 @@ xxxxxx.
   :type sample: xxxxxx
   :param epsilon: xxxxxx.
   :type epsilon: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The infomation of the training.
+  :rtype: dict
 
 .. py:function::
   xuance.torch.learners.multi_agent_rl.coma_learner.COMA_Learner.update_recurrent(sample, epsilon)
@@ -50,8 +50,8 @@ xxxxxx.
   :type sample: xxxxxx
   :param epsilon: xxxxxx.
   :type epsilon: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The infomation of the training.
+  :rtype: dict
 
 .. raw:: html
 
@@ -86,8 +86,8 @@ xxxxxx.
   :type sample: xxxxxx
   :param epsilon: xxxxxx.
   :type epsilon: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The infomation of the training.
+  :rtype: dict
 
 .. raw:: html
 
@@ -122,8 +122,8 @@ xxxxxx.
   :type sample: xxxxxx
   :param epsilon: xxxxxx.
   :type epsilon: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The infomation of the training.
+  :rtype: dict
 
 .. raw:: html
 

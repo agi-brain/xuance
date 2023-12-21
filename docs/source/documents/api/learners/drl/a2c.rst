@@ -38,8 +38,8 @@ A2C_Learner
   :type ret_batch: np.ndarray
   :param adv_batch: A batch of advantages sampled from experience replay buffer.
   :type adv_batch: np.ndarray
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The infomation of the training.
+  :rtype: dict
 
 .. raw:: html
 
@@ -115,8 +115,8 @@ A2C_Learner
   :type ret_batch: np.ndarray
   :param adv_batch: A batch of advantages sampled from experience replay buffer.
   :type adv_batch: np.ndarray
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The infomation of the training.
+  :rtype: dict
 
 .. raw:: html
 

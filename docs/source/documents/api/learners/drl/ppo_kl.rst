@@ -40,8 +40,8 @@ PPOKL_Learner
   :type adv_batch: np.ndarray
   :param old_dists: xxxxxx.
   :type old_dists: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The infomation of the training.
+  :rtype: dict
 
 .. raw:: html
 
@@ -82,8 +82,8 @@ PPOKL_Learner
   :type adv_batch: np.ndarray
   :param old_dists: xxxxxx.
   :type old_dists: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The infomation of the training.
+  :rtype: dict
 
 .. raw:: html
 
@@ -124,8 +124,8 @@ PPOKL_Learner
   :type adv_batch: np.ndarray
   :param old_logp: xxxxxx.
   :type old_logp: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The infomation of the training.
+  :rtype: dict
 
 .. raw:: html
 

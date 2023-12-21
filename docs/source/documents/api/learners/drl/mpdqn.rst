@@ -39,7 +39,7 @@ MPDQN_Learner
   :param terminal_batch: A batch of terminal data sampled from experience replay buffer.
   :type terminal_batch: np.ndarray
   :return: None.
-  :rtype: xxxxxx
+  :rtype: dict
 
 .. raw:: html
 
@@ -77,7 +77,7 @@ MPDQN_Learner
   :param terminal_batch: A batch of terminal data sampled from experience replay buffer.
   :type terminal_batch: np.ndarray
   :return: None.
-  :rtype: xxxxxx
+  :rtype: dict
 
 .. raw:: html
 
@@ -115,7 +115,7 @@ MPDQN_Learner
   :param terminal_batch: A batch of terminal data sampled from experience replay buffer.
   :type terminal_batch: np.ndarray
   :return: None.
-  :rtype: xxxxxx
+  :rtype: dict
 
 .. raw:: html
 

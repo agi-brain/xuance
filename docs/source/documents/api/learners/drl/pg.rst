@@ -34,8 +34,8 @@ PG_Learner
   :type act_batch: np.ndarray
   :param ret_batch: A batch of returns sampled from experience replay buffer.
   :type ret_batch: np.ndarray
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The infomation of the training.
+  :rtype: dict
 
 .. raw:: html
 
@@ -68,8 +68,8 @@ PG_Learner
   :type act_batch: np.ndarray
   :param ret_batch: A batch of returns sampled from experience replay buffer.
   :type ret_batch: np.ndarray
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The infomation of the training.
+  :rtype: dict
 
 .. raw:: html
 
@@ -103,8 +103,8 @@ PG_Learner
   :type act_batch: np.ndarray
   :param ret_batch: A batch of returns sampled from experience replay buffer.
   :type ret_batch: np.ndarray
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The infomation of the training.
+  :rtype: dict
 
 .. raw:: html
 

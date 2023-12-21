@@ -38,8 +38,8 @@ NoisyDQN_Learner
   :type next_batch: np.ndarray
   :param terminal_batch: A batch of terminal data sampled from experience replay buffer.
   :type terminal_batch: np.ndarray
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The infomation of the training.
+  :rtype: dict
 
 .. raw:: html
 
@@ -82,8 +82,8 @@ NoisyDQN_Learner
   :type next_batch: np.ndarray
   :param terminal_batch: A batch of terminal data sampled from experience replay buffer.
   :type terminal_batch: np.ndarray
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The infomation of the training.
+  :rtype: dict
 
 .. raw:: html
 

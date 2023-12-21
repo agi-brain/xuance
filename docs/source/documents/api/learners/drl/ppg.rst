@@ -40,8 +40,8 @@ PPG_Learner
   :type adv_batch: np.ndarray
   :param old_dists: xxxxxx.
   :type old_dists: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The infomation of the training.
+  :rtype: dict
 
 .. py:function::
   xuance.torch.learners.policy_gradient.ppg_learner.PPG_Learner.update_critic(obs_batch, act_batch, ret_batch, adv_batch, old_dists)
@@ -56,8 +56,8 @@ PPG_Learner
   :type adv_batch: np.ndarray
   :param old_dists: xxxxxx.
   :type old_dists: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The infomation of the training.
+  :rtype: dict
 
 .. py:function::
   xuance.torch.learners.policy_gradient.ppg_learner.PPG_Learner.update_auxiliary(obs_batch, act_batch, ret_batch, adv_batch, old_dists)
@@ -72,8 +72,8 @@ PPG_Learner
   :type adv_batch: np.ndarray
   :param old_dists: xxxxxx.
   :type old_dists: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The infomation of the training.
+  :rtype: dict
 
 .. raw:: html
 
@@ -112,8 +112,8 @@ PPG_Learner
   :type adv_batch: np.ndarray
   :param old_dists: xxxxxx.
   :type old_dists: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The infomation of the training.
+  :rtype: dict
 
 .. py:function::
   xuance.tensorflow.learners.policy_gradient.ppg_learner.PPG_Learner.update_critic(obs_batch, act_batch, ret_batch, adv_batch, old_dists)
@@ -128,8 +128,8 @@ PPG_Learner
   :type adv_batch: np.ndarray
   :param old_dists: xxxxxx.
   :type old_dists: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The infomation of the training.
+  :rtype: dict
 
 .. py:function::
   xuance.tensorflow.learners.policy_gradient.ppg_learner.PPG_Learner.update_auxiliary(obs_batch, act_batch, ret_batch, adv_batch, old_dists)
@@ -144,8 +144,8 @@ PPG_Learner
   :type adv_batch: np.ndarray
   :param old_dists: xxxxxx.
   :type old_dists: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The infomation of the training.
+  :rtype: dict
 
 .. raw:: html
 
@@ -186,8 +186,8 @@ PPG_Learner
   :type old_dists: xxxxxx
   :param update_type: xxxxxx.
   :type update_type: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The infomation of the training.
+  :rtype: dict
 
 .. raw:: html
 

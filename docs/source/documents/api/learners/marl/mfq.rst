@@ -36,8 +36,7 @@ xxxxxx.
 
   :param q: xxxxxx.
   :type q: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The Bolzmann policy.
 
 .. py:function::
   xuance.torch.learners.multi_agent_rl.mfq_learner.MFQ_Learner.update(sample)
@@ -46,8 +45,8 @@ xxxxxx.
 
   :param sample: xxxxxx.
   :type sample: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The infomation of the training.
+  :rtype: dict
 
 .. raw:: html
 
@@ -80,8 +79,8 @@ xxxxxx.
 
   :param q: xxxxxx.
   :type q: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The infomation of the training.
+  :rtype: dict
 
 .. py:function::
   xuance.tensorflow.learners.multi_agent_rl.mfq_learner.MFQ_Learner.update(sample)
@@ -90,8 +89,8 @@ xxxxxx.
 
   :param sample: xxxxxx.
   :type sample: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The infomation of the training.
+  :rtype: dict
 
 .. raw:: html
 
@@ -124,8 +123,8 @@ xxxxxx.
 
   :param q: xxxxxx.
   :type q: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The infomation of the training.
+  :rtype: dict
 
 .. py:function::
   xuance.mindspore.learners.multi_agent_rl.mfq_learner.MFQ_Learner.update(sample)
@@ -134,8 +133,8 @@ xxxxxx.
 
   :param sample: xxxxxx.
   :type sample: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The infomation of the training.
+  :rtype: dict
 
 .. raw:: html
 
