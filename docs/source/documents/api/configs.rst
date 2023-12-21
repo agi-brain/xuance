@@ -1159,17 +1159,192 @@ Within the following content, we provid the preset arguments for each implementa
 
                         .. code-block:: yaml
 
+                            agent: "PPG"
+                            env_name: "Classic Control"
+                            env_id: "CartPole-v1"
+                            vectorize: "Dummy_Gym"
+                            representation: "Basic_MLP"
+                            policy: "Categorical_PPG"
+                            runner: "DRL"
+
+                            representation_hidden_size: [128,]
+                            actor_hidden_size: [128,]
+                            critic_hidden_size: [128,]
+                            activation: "ReLU"
+
+                            seed: 1
+                            parallels: 10
+                            running_steps: 300000
+                            n_steps: 256
+                            n_epoch: 1
+                            policy_nepoch: 4
+                            value_nepoch: 8
+                            aux_nepoch: 8
+                            n_minibatch: 1
+                            learning_rate: 0.0004
+
+                            ent_coef: 0.01
+                            clip_range: 0.2
+                            kl_beta: 1.0
+                            gamma: 0.98
+                            use_gae: True
+                            gae_lambda: 0.95
+                            use_advnorm: True
+
+                            use_obsnorm: True
+                            use_rewnorm: True
+                            obsnorm_range: 5
+                            rewnorm_range: 5
+
+                            test_steps: 10000
+                            eval_interval: 50000
+                            test_episode: 1
+                            log_dir: "./logs/ppg/"
+                            model_dir: "./models/ppg/"
+
                     .. group-tab:: Acrobot-v1
 
                         .. code-block:: yaml
+
+                            agent: "PPG"
+                            env_name: "Classic Control"
+                            env_id: "Acrobot-v1"
+                            vectorize: "Dummy_Gym"
+                            representation: "Basic_MLP"
+                            policy: "Categorical_PPG"
+                            runner: "DRL"
+
+                            representation_hidden_size: [128,]
+                            actor_hidden_size: [128,]
+                            critic_hidden_size: [128,]
+                            activation: "LeakyReLU"
+
+                            seed: 1
+                            parallels: 10
+                            running_steps: 300000
+                            n_steps: 256
+                            n_epoch: 1
+                            policy_nepoch: 4
+                            value_nepoch: 8
+                            aux_nepoch: 8
+                            n_minibatch: 1
+                            learning_rate: 0.001
+
+                            ent_coef: 0.01
+                            clip_range: 0.2
+                            kl_beta: 1.0
+                            gamma: 0.98
+                            use_gae: True
+                            gae_lambda: 0.95
+                            use_advnorm: True
+
+                            use_obsnorm: True
+                            use_rewnorm: True
+                            obsnorm_range: 5
+                            rewnorm_range: 5
+
+                            test_steps: 10000
+                            eval_interval: 50000
+                            test_episode: 1
+                            log_dir: "./logs/ppg/"
+                            model_dir: "./models/ppg/"
+
 
                     .. group-tab:: Pendulum-v1
 
                         .. code-block:: yaml
 
+                            agent: "PPG"
+                            env_name: "Classic Control"
+                            env_id: "Pendulum-v1"
+                            vectorize: "Dummy_Gym"
+                            representation: "Basic_MLP"
+                            policy: "Gaussian_PPG"
+                            runner: "DRL"
+
+                            representation_hidden_size: [128,]
+                            actor_hidden_size: [128,]
+                            critic_hidden_size: [128,]
+                            activation: "LeakyReLU"
+
+                            seed: 1
+                            parallels: 10
+                            running_steps: 300000
+                            n_steps: 256
+                            n_epoch: 1
+                            policy_nepoch: 4
+                            value_nepoch: 8
+                            aux_nepoch: 8
+                            n_minibatch: 1
+                            learning_rate: 0.001
+
+                            ent_coef: 0.01
+                            clip_range: 0.2
+                            kl_beta: 1.0
+                            gamma: 0.98
+                            use_gae: True
+                            gae_lambda: 0.95
+                            use_advnorm: True
+
+                            use_obsnorm: True
+                            use_rewnorm: True
+                            obsnorm_range: 5
+                            rewnorm_range: 5
+
+                            test_steps: 10000
+                            eval_interval: 50000
+                            test_episode: 1
+                            log_dir: "./logs/ppg/"
+                            model_dir: "./models/ppg/"
+
+
                     .. group-tab:: MountainCar-v0
 
                         .. code-block:: yaml
+
+                            agent: "PPG"
+                            env_name: "Classic Control"
+                            env_id: "MountainCar-v0"
+                            vectorize: "Dummy_Gym"
+                            representation: "Basic_MLP"
+                            policy: "Categorical_PPG"
+                            runner: "DRL"
+
+                            representation_hidden_size: [128,]
+                            actor_hidden_size: [128,]
+                            critic_hidden_size: [128,]
+                            activation: "LeakyReLU"
+
+                            seed: 1
+                            parallels: 10
+                            running_steps: 300000
+                            n_steps: 256
+                            n_epoch: 1
+                            policy_nepoch: 4
+                            value_nepoch: 8
+                            aux_nepoch: 8
+                            n_minibatch: 1
+                            learning_rate: 0.001
+
+                            ent_coef: 0.01
+                            clip_range: 0.2
+                            kl_beta: 1.0
+                            gamma: 0.98
+                            use_gae: True
+                            gae_lambda: 0.95
+                            use_advnorm: True
+
+                            use_obsnorm: True
+                            use_rewnorm: True
+                            obsnorm_range: 5
+                            rewnorm_range: 5
+
+                            test_steps: 10000
+                            eval_interval: 50000
+                            test_episode: 1
+                            log_dir: "./logs/ppg/"
+                            model_dir: "./models/ppg/"
+
 
             .. group-tab:: Box2D
 
@@ -1179,13 +1354,145 @@ Within the following content, we provid the preset arguments for each implementa
 
                         .. code-block:: yaml
 
+                            agent: "PPG"
+                            env_name: "Box2D"
+                            env_id: "BipedalWalker-v3"
+                            vectorize: "Dummy_Gym"
+                            representation: "Basic_MLP"
+                            policy: "Gaussian_PPG"
+                            runner: "DRL"
+
+                            representation_hidden_size: [128,]
+                            actor_hidden_size: [128,]
+                            critic_hidden_size: [128,]
+                            activation: "LeakyReLU"
+
+                            seed: 1
+                            parallels: 10
+                            running_steps: 300000
+                            n_steps: 256
+                            n_epoch: 1
+                            policy_nepoch: 4
+                            value_nepoch: 8
+                            aux_nepoch: 8
+                            n_minibatch: 1
+                            learning_rate: 0.001
+
+                            ent_coef: 0.01
+                            clip_range: 0.2
+                            kl_beta: 1.0
+                            gamma: 0.98
+                            use_gae: True
+                            gae_lambda: 0.95
+                            use_advnorm: True
+
+                            use_obsnorm: True
+                            use_rewnorm: True
+                            obsnorm_range: 5
+                            rewnorm_range: 5
+
+                            test_steps: 10000
+                            eval_interval: 50000
+                            test_episode: 1
+                            log_dir: "./logs/ppg/"
+                            model_dir: "./models/ppg/"
+
+
                     .. group-tab:: LunarLander-v2
 
                         .. code-block:: yaml
 
+                            agent: "PPG"
+                            env_name: "Box2D"
+                            env_id: "LunarLander-v2"
+                            vectorize: "Dummy_Gym"
+                            representation: "Basic_MLP"
+                            policy: "Categorical_PPG"
+                            runner: "DRL"
+
+                            representation_hidden_size: [128,]
+                            actor_hidden_size: [128,]
+                            critic_hidden_size: [128,]
+                            activation: "ReLU"
+
+                            seed: 1
+                            parallels: 10
+                            running_steps: 300000
+                            n_steps: 256
+                            n_epoch: 1
+                            policy_nepoch: 4
+                            value_nepoch: 8
+                            aux_nepoch: 8
+                            n_minibatch: 1
+                            learning_rate: 0.0004
+
+                            ent_coef: 0.01
+                            clip_range: 0.2
+                            kl_beta: 1.0
+                            gamma: 0.98
+                            use_gae: True
+                            gae_lambda: 0.95
+                            use_advnorm: True
+
+                            use_obsnorm: True
+                            use_rewnorm: True
+                            obsnorm_range: 5
+                            rewnorm_range: 5
+
+                            test_steps: 10000
+                            eval_interval: 50000
+                            test_episode: 1
+                            log_dir: "./logs/ppg/"
+                            model_dir: "./models/ppg/"
+
             .. group-tab:: MuJoCo
 
                 .. code-block:: yaml
+
+                    agent: "PPG"
+                    env_name: "MuJoCo"
+                    env_id: "InvertedPendulum-v2"
+                    vectorize: "Dummy_Gym"
+                    representation: "Basic_MLP"
+                    policy: "Gaussian_PPG"
+                    runner: "DRL"
+
+                    representation_hidden_size: [256,]
+                    actor_hidden_size: [256,]
+                    critic_hidden_size: [256,]
+                    activation: "LeakyReLU"
+
+                    seed: 1
+                    parallels: 16
+                    running_steps: 1000000  # 1M
+                    n_steps: 256
+                    n_minibatch: 4
+                    n_epoch: 1
+                    policy_nepoch: 2
+                    value_nepoch: 4
+                    aux_nepoch: 8
+
+                    learning_rate: 0.0007
+
+                    ent_coef: 0.0
+                    clip_range: 0.25
+                    kl_beta: 2.0
+                    gamma: 0.98
+                    use_gae: True
+                    gae_lambda: 0.95
+                    use_advnorm: True
+
+                    use_obsnorm: True
+                    use_rewnorm: True
+                    obsnorm_range: 5
+                    rewnorm_range: 5
+
+                    test_steps: 10000
+                    eval_interval: 10000
+                    test_episode: 5
+                    log_dir: "./logs/ppg/"
+                    model_dir: "./models/ppg/"
+
 
 
     .. group-tab:: PPO
