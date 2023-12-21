@@ -5479,6 +5479,71 @@ Within the following content, we provid the preset arguments for each implementa
 
                         .. code-block:: yaml
 
+                            agent: "VDAC"
+                            env_name: "mpe"
+                            env_id: "simple_spread_v3"
+                            continuous_action: False
+                            policy: "Categorical_MAAC_Policy_Share"
+                            representation: "Basic_MLP"
+                            vectorize: "Dummy_Pettingzoo"
+                            runner: "Pettingzoo_Runner"
+
+                            # recurrent settings for Basic_RNN representation
+                            use_recurrent: False
+                            rnn:
+                            representation_hidden_size: [64, ]  # the units for each hidden layer
+                            gain: 0.01
+
+                            actor_hidden_size: [64, ]
+                            critic_hidden_size: [64, ]
+                            activation: "ReLU"
+
+                            mixer: "VDN"  # choices: VDN (sum), QMIX (monotonic)
+                            hidden_dim_mixing_net: 32  # hidden units of mixing network
+                            hidden_dim_hyper_net: 32  # hidden units of hyper network
+
+                            seed: 1
+                            parallels: 128
+                            n_size: 3200
+                            n_epoch: 10
+                            n_minibatch: 1
+                            learning_rate: 0.0007
+                            weight_decay: 0
+
+                            vf_coef: 0.5
+                            ent_coef: 0.01
+                            target_kl: 0.25  # for MAPPO_KL learner
+                            clip_range: 0.2  # ratio clip range, for MAPPO_Clip learner
+                            clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+                            gamma: 0.95  # discount factor
+
+                            # tricks
+                            use_linear_lr_decay: False  # if use linear learning rate decay
+                            end_factor_lr_decay: 0.5
+                            use_global_state: False  # if use global state to replace merged observations
+                            use_grad_norm: True  # gradient normalization
+                            max_grad_norm: 10.0
+                            use_value_clip: True  # limit the value range
+                            value_clip_range: 0.2
+                            use_value_norm: True  # use running mean and std to normalize rewards.
+                            use_huber_loss: True  # True: use huber loss; False: use MSE loss.
+                            huber_delta: 10.0
+                            use_advnorm: True
+                            use_gae: True
+                            gae_lambda: 0.95
+
+                            start_training: 1
+                            running_steps: 10000000
+                            train_per_step: True
+                            training_frequency: 1
+
+                            test_steps: 10000
+                            eval_interval: 100000
+                            test_episode: 5
+                            log_dir: "./logs/vdac/"
+                            model_dir: "./models/vdac/"
+
+
             .. group-tab:: SC2
 
                 .. tabs::
@@ -5487,41 +5552,734 @@ Within the following content, we provid the preset arguments for each implementa
 
                         .. code-block:: yaml
 
+                            agent: "VDAC"
+                            env_name: "StarCraft2"
+                            env_id: "1c3s5z"
+                            fps: 15
+                            policy: "Categorical_MAAC_Policy_Share"
+                            representation: "Basic_RNN"
+                            vectorize: "Subproc_StarCraft2"
+                            runner: "StarCraft2_Runner"
+
+                            # recurrent settings for Basic_RNN representation
+                            use_recurrent: True
+                            rnn: "GRU"
+                            recurrent_layer_N: 1
+                            fc_hidden_sizes: [64, ]
+                            recurrent_hidden_size: 64
+                            N_recurrent_layers: 1
+                            dropout: 0
+                            normalize: "LayerNorm"
+                            initialize: "orthogonal"
+                            gain: 0.01
+
+                            actor_hidden_size: []
+                            critic_hidden_size: []
+                            activation: "ReLU"
+
+                            mixer: "QMIX"  # choices: VDN (sum), QMIX (monotonic)
+                            hidden_dim_mixing_net: 32  # hidden units of mixing network
+                            hidden_dim_hyper_net: 64  # hidden units of hyper network
+
+                            seed: 1
+                            parallels: 8
+                            n_size: 8
+                            n_epoch: 1
+                            n_minibatch: 1
+                            learning_rate: 0.0007  # 7e-4
+                            weight_decay: 0
+
+                            vf_coef: 1.0
+                            ent_coef: 0.01
+                            target_kl: 0.25
+                            clip_range: 0.2
+                            clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+                            gamma: 0.99  # discount factor
+
+                            # tricks
+                            use_linear_lr_decay: False  # if use linear learning rate decay
+                            end_factor_lr_decay: 0.5
+                            use_grad_norm: True  # gradient normalization
+                            max_grad_norm: 10.0
+                            use_value_clip: True  # limit the value range
+                            value_clip_range: 0.2
+                            use_value_norm: True  # use running mean and std to normalize rewards.
+                            use_huber_loss: True  # True: use huber loss; False: use MSE loss.
+                            huber_delta: 10.0
+                            use_advnorm: True  # use advantage normalization.
+                            use_gae: True  # use GAE trick to calculate returns.
+                            gae_lambda: 0.95
+
+                            start_training: 1
+                            running_steps: 2000000
+                            train_per_step: True
+                            training_frequency: 1
+
+                            test_steps: 10000
+                            eval_interval: 10000
+                            test_episode: 16
+                            log_dir: "./logs/vdac/"
+                            model_dir: "./models/vdac/"
+
+
                     .. group-tab:: 2m_vs_1z
 
                         .. code-block:: yaml
+
+                            agent: "VDAC"
+                            env_name: "StarCraft2"
+                            env_id: "2m_vs_1z"
+                            fps: 15
+                            policy: "Categorical_MAAC_Policy_Share"
+                            representation: "Basic_RNN"
+                            vectorize: "Subproc_StarCraft2"
+                            runner: "StarCraft2_Runner"
+
+                            # recurrent settings for Basic_RNN representation
+                            use_recurrent: True
+                            rnn: "GRU"
+                            recurrent_layer_N: 1
+                            fc_hidden_sizes: [64, ]
+                            recurrent_hidden_size: 64
+                            N_recurrent_layers: 1
+                            dropout: 0
+                            normalize: "LayerNorm"
+                            initialize: "orthogonal"
+                            gain: 0.01
+
+                            actor_hidden_size: []
+                            critic_hidden_size: []
+                            activation: "ReLU"
+
+                            mixer: "QMIX"  # choices: VDN (sum), QMIX (monotonic)
+                            hidden_dim_mixing_net: 32  # hidden units of mixing network
+                            hidden_dim_hyper_net: 64  # hidden units of hyper network
+
+                            seed: 1
+                            parallels: 8
+                            n_size: 8
+                            n_epoch: 1
+                            n_minibatch: 1
+                            learning_rate: 0.0007  # 7e-4
+                            weight_decay: 0
+
+                            vf_coef: 1.0
+                            ent_coef: 0.01
+                            target_kl: 0.25
+                            clip_range: 0.2
+                            clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+                            gamma: 0.99  # discount factor
+
+                            # tricks
+                            use_linear_lr_decay: False  # if use linear learning rate decay
+                            end_factor_lr_decay: 0.5
+                            use_grad_norm: True  # gradient normalization
+                            max_grad_norm: 10.0
+                            use_value_clip: True  # limit the value range
+                            value_clip_range: 0.2
+                            use_value_norm: True  # use running mean and std to normalize rewards.
+                            use_huber_loss: True  # True: use huber loss; False: use MSE loss.
+                            huber_delta: 10.0
+                            use_advnorm: True  # use advantage normalization.
+                            use_gae: True  # use GAE trick to calculate returns.
+                            gae_lambda: 0.95
+
+                            start_training: 1
+                            running_steps: 1000000
+                            train_per_step: True
+                            training_frequency: 1
+
+                            test_steps: 10000
+                            eval_interval: 5000
+                            test_episode: 16
+                            log_dir: "./logs/vdac/"
+                            model_dir: "./models/vdac/"
+
 
                     .. group-tab:: 2s3z
 
                         .. code-block:: yaml
 
+                            agent: "VDAC"
+                            env_name: "StarCraft2"
+                            env_id: "2s3z"
+                            fps: 15
+                            policy: "Categorical_MAAC_Policy_Share"
+                            representation: "Basic_RNN"
+                            vectorize: "Subproc_StarCraft2"
+                            runner: "StarCraft2_Runner"
+
+                            # recurrent settings for Basic_RNN representation
+                            use_recurrent: True
+                            rnn: "GRU"
+                            recurrent_layer_N: 1
+                            fc_hidden_sizes: [64, ]
+                            recurrent_hidden_size: 64
+                            N_recurrent_layers: 1
+                            dropout: 0
+                            normalize: "LayerNorm"
+                            initialize: "orthogonal"
+                            gain: 0.01
+
+                            actor_hidden_size: []
+                            critic_hidden_size: []
+                            activation: "ReLU"
+
+                            mixer: "QMIX"  # choices: VDN (sum), QMIX (monotonic)
+                            hidden_dim_mixing_net: 32  # hidden units of mixing network
+                            hidden_dim_hyper_net: 64  # hidden units of hyper network
+
+                            seed: 1
+                            parallels: 8
+                            n_size: 8
+                            n_epoch: 1
+                            n_minibatch: 1
+                            learning_rate: 0.0007  # 7e-4
+                            weight_decay: 0
+
+                            vf_coef: 1.0
+                            ent_coef: 0.01
+                            target_kl: 0.25
+                            clip_range: 0.2
+                            clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+                            gamma: 0.99  # discount factor
+
+                            # tricks
+                            use_linear_lr_decay: False  # if use linear learning rate decay
+                            end_factor_lr_decay: 0.5
+                            use_grad_norm: True  # gradient normalization
+                            max_grad_norm: 10.0
+                            use_value_clip: True  # limit the value range
+                            value_clip_range: 0.2
+                            use_value_norm: True  # use running mean and std to normalize rewards.
+                            use_huber_loss: True  # True: use huber loss; False: use MSE loss.
+                            huber_delta: 10.0
+                            use_advnorm: True  # use advantage normalization.
+                            use_gae: True  # use GAE trick to calculate returns.
+                            gae_lambda: 0.95
+
+                            start_training: 1
+                            running_steps: 2000000
+                            train_per_step: True
+                            training_frequency: 1
+
+                            test_steps: 10000
+                            eval_interval: 10000
+                            test_episode: 16
+                            log_dir: "./logs/vdac/"
+                            model_dir: "./models/vdac/"
+
+
                     .. group-tab:: 3m
 
                         .. code-block:: yaml
+
+                            agent: "VDAC"
+                            env_name: "StarCraft2"
+                            env_id: "3m"
+                            fps: 15
+                            policy: "Categorical_MAAC_Policy_Share"
+                            representation: "Basic_RNN"
+                            vectorize: "Subproc_StarCraft2"
+                            runner: "StarCraft2_Runner"
+
+                            # recurrent settings for Basic_RNN representation
+                            use_recurrent: True
+                            rnn: "GRU"
+                            recurrent_layer_N: 1
+                            fc_hidden_sizes: [64,]
+                            recurrent_hidden_size: 64
+                            N_recurrent_layers: 1
+                            dropout: 0
+                            normalize: "LayerNorm"
+                            initialize: "orthogonal"
+                            gain: 0.01
+
+                            actor_hidden_size: []
+                            critic_hidden_size: []
+                            activation: "ReLU"
+
+                            mixer: "QMIX"  # choices: Independent, VDN (sum), QMIX (monotonic)
+                            hidden_dim_mixing_net: 32  # hidden units of mixing network
+                            hidden_dim_hyper_net: 64  # hidden units of hyper network
+
+                            seed: 1
+                            parallels: 8
+                            n_size: 8
+                            n_epoch: 1
+                            n_minibatch: 1
+                            learning_rate: 0.0007  # 7e-4
+                            weight_decay: 0
+
+                            vf_coef: 1.0
+                            ent_coef: 0.0
+                            clip_range: 0.2
+                            clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+                            gamma: 0.99  # discount factor
+
+                            # tricks
+                            use_linear_lr_decay: False  # if use linear learning rate decay
+                            end_factor_lr_decay: 0.5
+                            use_grad_norm: True  # gradient normalization
+                            max_grad_norm: 10.0
+                            use_value_norm: False  # use running mean and std to normalize rewards.
+                            use_advnorm: False  # use advantage normalization.
+                            use_gae: True  # use GAE trick to calculate returns.
+                            gae_lambda: 0.95
+
+                            start_training: 1
+                            running_steps: 1000000
+                            training_frequency: 1
+
+                            eval_interval: 5000
+                            test_episode: 16
+                            log_dir: "./logs/vdac/"
+                            model_dir: "./models/vdac/"
+
 
                     .. group-tab:: 5m_vs_6m
 
                         .. code-block:: yaml
 
+                            agent: "VDAC"
+                            env_name: "StarCraft2"
+                            env_id: "5m_vs_6m"
+                            fps: 15
+                            policy: "Categorical_MAAC_Policy_Share"
+                            representation: "Basic_RNN"
+                            vectorize: "Subproc_StarCraft2"
+                            runner: "StarCraft2_Runner"
+                            on_policy: True
+
+                            # recurrent settings for Basic_RNN representation
+                            use_recurrent: True
+                            rnn: "GRU"
+                            recurrent_layer_N: 1
+                            fc_hidden_sizes: [64, ]
+                            recurrent_hidden_size: 64
+                            N_recurrent_layers: 1
+                            dropout: 0
+                            normalize: "LayerNorm"
+                            initialize: "orthogonal"
+                            gain: 0.01
+
+                            actor_hidden_size: []
+                            critic_hidden_size: []
+                            activation: "ReLU"
+
+                            mixer: "QMIX"  # choices: VDN (sum), QMIX (monotonic)
+                            hidden_dim_mixing_net: 32  # hidden units of mixing network
+                            hidden_dim_hyper_net: 64  # hidden units of hyper network
+
+                            seed: 1
+                            parallels: 8
+                            n_size: 8
+                            n_epoch: 1
+                            n_minibatch: 1
+                            learning_rate: 0.0007  # 7e-4
+                            weight_decay: 0
+
+                            vf_coef: 1.0
+                            ent_coef: 0.01
+                            target_kl: 0.25
+                            clip_range: 0.05
+                            clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+                            gamma: 0.99  # discount factor
+
+                            # tricks
+                            use_linear_lr_decay: False  # if use linear learning rate decay
+                            end_factor_lr_decay: 0.5
+                            use_global_state: False  # if use global state to replace joint observations
+                            use_grad_norm: True  # gradient normalization
+                            max_grad_norm: 10.0
+                            use_value_clip: True  # limit the value range
+                            value_clip_range: 0.05
+                            use_value_norm: True  # use running mean and std to normalize rewards.
+                            use_huber_loss: True  # True: use huber loss; False: use MSE loss.
+                            huber_delta: 10.0
+                            use_advnorm: True  # use advantage normalization.
+                            use_gae: True  # use GAE trick to calculate returns.
+                            gae_lambda: 0.95
+
+                            start_training: 1
+                            running_steps: 10000000  # 10M
+                            training_frequency: 1
+
+                            eval_interval: 50000
+                            test_episode: 16
+                            log_dir: "./logs/vdac/"
+                            model_dir: "./models/vdac/"
+
+
                     .. group-tab:: 8m
 
                         .. code-block:: yaml
+
+                            agent: "VDAC"
+                            env_name: "StarCraft2"
+                            env_id: "8m"
+                            fps: 15
+                            policy: "Categorical_MAAC_Policy_Share"
+                            representation: "Basic_RNN"
+                            vectorize: "Subproc_StarCraft2"
+                            runner: "StarCraft2_Runner"
+                            on_policy: True
+
+                            # recurrent settings for Basic_RNN representation
+                            use_recurrent: True
+                            rnn: "GRU"
+                            recurrent_layer_N: 1
+                            fc_hidden_sizes: [64, ]
+                            recurrent_hidden_size: 64
+                            N_recurrent_layers: 1
+                            dropout: 0
+                            normalize: "LayerNorm"
+                            initialize: "orthogonal"
+                            gain: 0.01
+
+                            actor_hidden_size: []
+                            critic_hidden_size: []
+                            activation: "ReLU"
+
+                            mixer: "QMIX"  # choices: VDN (sum), QMIX (monotonic)
+                            hidden_dim_mixing_net: 32  # hidden units of mixing network
+                            hidden_dim_hyper_net: 64  # hidden units of hyper network
+
+                            seed: 1
+                            parallels: 8
+                            n_size: 8
+                            n_epoch: 1
+                            n_minibatch: 1
+                            learning_rate: 0.0007  # 7e-4
+                            weight_decay: 0
+
+                            vf_coef: 1.0
+                            ent_coef: 0.01
+                            target_kl: 0.25
+                            clip_range: 0.2
+                            clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+                            gamma: 0.99  # discount factor
+
+                            # tricks
+                            use_linear_lr_decay: False  # if use linear learning rate decay
+                            end_factor_lr_decay: 0.5
+                            use_global_state: False  # if use global state to replace joint observations
+                            use_grad_norm: True  # gradient normalization
+                            max_grad_norm: 10.0
+                            use_value_clip: True  # limit the value range
+                            value_clip_range: 0.2
+                            use_value_norm: True  # use running mean and std to normalize rewards.
+                            use_huber_loss: True  # True: use huber loss; False: use MSE loss.
+                            huber_delta: 10.0
+                            use_advnorm: True  # use advantage normalization.
+                            use_gae: True  # use GAE trick to calculate returns.
+                            gae_lambda: 0.95
+
+                            start_training: 1
+                            running_steps: 1000000  # 1M
+                            training_frequency: 1
+
+                            eval_interval: 5000
+                            test_episode: 16
+                            log_dir: "./logs/vdac/"
+                            model_dir: "./models/vdac/"
+
 
                     .. group-tab:: 8m_vd_9m
 
                         .. code-block:: yaml
 
+                            agent: "VDAC"
+                            env_name: "StarCraft2"
+                            env_id: "8m_vs_9m"
+                            fps: 15
+                            policy: "Categorical_MAAC_Policy_Share"
+                            representation: "Basic_RNN"
+                            vectorize: "Subproc_StarCraft2"
+                            runner: "StarCraft2_Runner"
+                            on_policy: True
+
+                            # recurrent settings for Basic_RNN representation
+                            use_recurrent: True
+                            rnn: "GRU"
+                            recurrent_layer_N: 1
+                            fc_hidden_sizes: [64, ]
+                            recurrent_hidden_size: 64
+                            N_recurrent_layers: 1
+                            dropout: 0
+                            normalize: "LayerNorm"
+                            initialize: "orthogonal"
+                            gain: 0.01
+
+                            actor_hidden_size: []
+                            critic_hidden_size: []
+                            activation: "ReLU"
+
+                            mixer: "QMIX"  # choices: VDN (sum), QMIX (monotonic)
+                            hidden_dim_mixing_net: 32  # hidden units of mixing network
+                            hidden_dim_hyper_net: 64  # hidden units of hyper network
+
+                            seed: 1
+                            parallels: 8
+                            n_size: 8
+                            n_epoch: 1
+                            n_minibatch: 1
+                            learning_rate: 0.0007  # 7e-4
+                            weight_decay: 0
+
+                            vf_coef: 1.0
+                            ent_coef: 0.01
+                            target_kl: 0.25
+                            clip_range: 0.05
+                            clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+                            gamma: 0.99  # discount factor
+
+                            # tricks
+                            use_linear_lr_decay: False  # if use linear learning rate decay
+                            end_factor_lr_decay: 0.5
+                            use_global_state: False  # if use global state to replace joint observations
+                            use_grad_norm: True  # gradient normalization
+                            max_grad_norm: 10.0
+                            use_value_clip: True  # limit the value range
+                            value_clip_range: 0.05
+                            use_value_norm: True  # use running mean and std to normalize rewards.
+                            use_huber_loss: True  # True: use huber loss; False: use MSE loss.
+                            huber_delta: 10.0
+                            use_advnorm: True  # use advantage normalization.
+                            use_gae: True  # use GAE trick to calculate returns.
+                            gae_lambda: 0.95
+
+                            start_training: 1
+                            running_steps: 10000000  # 10M
+                            training_frequency: 1
+
+                            eval_interval: 50000
+                            test_episode: 16
+                            log_dir: "./logs/vdac/"
+                            model_dir: "./models/vdac/"
+
+
                     .. group-tab:: 25m
 
                         .. code-block:: yaml
 
+                            agent: "VDAC"
+                            env_name: "StarCraft2"
+                            env_id: "25m"
+                            fps: 15
+                            policy: "Categorical_MAAC_Policy_Share"
+                            representation: "Basic_RNN"
+                            vectorize: "Subproc_StarCraft2"
+                            runner: "StarCraft2_Runner"
+                            on_policy: True
+
+                            # recurrent settings for Basic_RNN representation
+                            use_recurrent: True
+                            rnn: "GRU"
+                            recurrent_layer_N: 1
+                            fc_hidden_sizes: [64, ]
+                            recurrent_hidden_size: 64
+                            N_recurrent_layers: 1
+                            dropout: 0
+                            normalize: "LayerNorm"
+                            initialize: "orthogonal"
+                            gain: 0.01
+
+                            actor_hidden_size: []
+                            critic_hidden_size: []
+                            activation: "ReLU"
+
+                            mixer: "QMIX"  # choices: VDN (sum), QMIX (monotonic)
+                            hidden_dim_mixing_net: 32  # hidden units of mixing network
+                            hidden_dim_hyper_net: 64  # hidden units of hyper network
+
+                            seed: 1
+                            parallels: 8
+                            n_size: 8
+                            n_epoch: 1
+                            n_minibatch: 1
+                            learning_rate: 0.0007  # 7e-4
+                            weight_decay: 0
+
+                            vf_coef: 1.0
+                            ent_coef: 0.01
+                            target_kl: 0.25
+                            clip_range: 0.2
+                            clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+                            gamma: 0.99  # discount factor
+
+                            # tricks
+                            use_linear_lr_decay: False  # if use linear learning rate decay
+                            end_factor_lr_decay: 0.5
+                            use_global_state: False  # if use global state to replace joint observations
+                            use_grad_norm: True  # gradient normalization
+                            max_grad_norm: 10.0
+                            use_value_clip: True  # limit the value range
+                            value_clip_range: 0.2
+                            use_value_norm: True  # use running mean and std to normalize rewards.
+                            use_huber_loss: True  # True: use huber loss; False: use MSE loss.
+                            huber_delta: 10.0
+                            use_advnorm: True  # use advantage normalization.
+                            use_gae: True  # use GAE trick to calculate returns.
+                            gae_lambda: 0.95
+
+                            start_training: 1
+                            running_steps: 5000000  # 5M
+                            training_frequency: 1
+
+                            eval_interval: 25000
+                            test_episode: 16
+                            log_dir: "./logs/vdac/"
+                            model_dir: "./models/vdac/"
+
+
                     .. group-tab:: corridor
 
                         .. code-block:: yaml
+
+                            agent: "VDAC"
+                            env_name: "StarCraft2"
+                            env_id: "corridor"
+                            fps: 15
+                            policy: "Categorical_MAAC_Policy_Share"
+                            representation: "Basic_RNN"
+                            vectorize: "Subproc_StarCraft2"
+                            runner: "StarCraft2_Runner"
+                            on_policy: True
+
+                            # recurrent settings for Basic_RNN representation
+                            use_recurrent: True
+                            rnn: "GRU"
+                            recurrent_layer_N: 1
+                            fc_hidden_sizes: [64, ]
+                            recurrent_hidden_size: 64
+                            N_recurrent_layers: 1
+                            dropout: 0
+                            normalize: "LayerNorm"
+                            initialize: "orthogonal"
+                            gain: 0.01
+
+                            actor_hidden_size: []
+                            critic_hidden_size: []
+                            activation: "ReLU"
+
+                            mixer: "QMIX"  # choices: VDN (sum), QMIX (monotonic)
+                            hidden_dim_mixing_net: 32  # hidden units of mixing network
+                            hidden_dim_hyper_net: 64  # hidden units of hyper network
+
+                            seed: 1
+                            parallels: 8
+                            n_size: 8
+                            n_epoch: 1
+                            n_minibatch: 1
+                            learning_rate: 0.0007  # 7e-4
+                            weight_decay: 0
+
+                            vf_coef: 1.0
+                            ent_coef: 0.01
+                            target_kl: 0.25
+                            clip_range: 0.2
+                            clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+                            gamma: 0.99  # discount factor
+
+                            # tricks
+                            use_linear_lr_decay: False  # if use linear learning rate decay
+                            end_factor_lr_decay: 0.5
+                            use_global_state: False  # if use global state to replace joint observations
+                            use_grad_norm: True  # gradient normalization
+                            max_grad_norm: 10.0
+                            use_value_clip: True  # limit the value range
+                            value_clip_range: 0.2
+                            use_value_norm: True  # use running mean and std to normalize rewards.
+                            use_huber_loss: True  # True: use huber loss; False: use MSE loss.
+                            huber_delta: 10.0
+                            use_advnorm: True  # use advantage normalization.
+                            use_gae: True  # use GAE trick to calculate returns.
+                            gae_lambda: 0.95
+
+                            start_training: 1
+                            running_steps: 10000000  # 10M
+                            training_frequency: 1
+
+                            eval_interval: 50000
+                            test_episode: 16
+                            log_dir: "./logs/vdac/"
+                            model_dir: "./models/vdac/"
+
                     
                     .. group-tab:: MMM2
 
                         .. code-block:: yaml
+
+                            agent: "VDAC"
+                            env_name: "StarCraft2"
+                            env_id: "MMM2"
+                            fps: 15
+                            policy: "Categorical_MAAC_Policy_Share"
+                            representation: "Basic_RNN"
+                            vectorize: "Subproc_StarCraft2"
+                            runner: "StarCraft2_Runner"
+                            on_policy: True
+
+                            # recurrent settings for Basic_RNN representation
+                            use_recurrent: True
+                            rnn: "GRU"
+                            recurrent_layer_N: 1
+                            fc_hidden_sizes: [64, ]
+                            recurrent_hidden_size: 64
+                            N_recurrent_layers: 1
+                            dropout: 0
+                            normalize: "LayerNorm"
+                            initialize: "orthogonal"
+                            gain: 1.0
+
+                            actor_hidden_size: []
+                            critic_hidden_size: []
+                            activation: "ReLU"
+
+                            mixer: "QMIX"  # choices: VDN (sum), QMIX (monotonic)
+                            hidden_dim_mixing_net: 32  # hidden units of mixing network
+                            hidden_dim_hyper_net: 64  # hidden units of hyper network
+
+                            seed: 1
+                            parallels: 8
+                            n_size: 8
+                            n_epoch: 1
+                            n_minibatch: 2
+                            learning_rate: 0.0007  # 7e-4
+                            weight_decay: 0
+
+                            vf_coef: 1.0
+                            ent_coef: 0.01
+                            target_kl: 0.25
+                            clip_range: 0.2
+                            clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+                            gamma: 0.99  # discount factor
+
+                            # tricks
+                            use_linear_lr_decay: False  # if use linear learning rate decay
+                            end_factor_lr_decay: 0.5
+                            use_global_state: False  # if use global state to replace joint observations
+                            use_grad_norm: True  # gradient normalization
+                            max_grad_norm: 10.0
+                            use_value_clip: True  # limit the value range
+                            value_clip_range: 0.2
+                            use_value_norm: True  # use running mean and std to normalize rewards.
+                            use_huber_loss: True  # True: use huber loss; False: use MSE loss.
+                            huber_delta: 10.0
+                            use_advnorm: True  # use advantage normalization.
+                            use_gae: True  # use GAE trick to calculate returns.
+                            gae_lambda: 0.95
+
+                            start_training: 1
+                            running_steps: 10000000  # 10M
+                            training_frequency: 1
+
+                            eval_interval: 50000
+                            test_episode: 16
+                            log_dir: "./logs/vdac/"
+                            model_dir: "./models/vdac/"
+
 
 
     .. group-tab:: COMA
