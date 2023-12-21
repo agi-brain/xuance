@@ -3607,17 +3607,180 @@ Within the following content, we provid the preset arguments for each implementa
 
                         .. code-block:: yaml
 
+                            agent: "SACDIS"
+                            env_name: "Classic Control"
+                            env_id: "CartPole-v1"
+                            vectorize: "Dummy_Gym"
+                            policy: "Discrete_SAC"
+                            representation: "Basic_MLP"
+                            runner: "DRL"
+
+                            representation_hidden_size: [256,]
+                            actor_hidden_size: [128,128,]
+                            critic_hidden_size: [128,128,]
+                            activation: "ReLU"
+
+                            seed: 1
+                            parallels: 16
+                            n_size: 20000
+                            batch_size: 256
+                            actor_learning_rate: 0.001
+                            critic_learning_rate: 0.01
+                            gamma: 0.98
+                            tau: 0.005
+
+                            start_noise: 0.25
+                            end_noise: 0.05
+                            training_frequency: 2
+                            running_steps: 500000
+                            start_training: 2000
+                            action_type: "DISCRETE"
+
+                            use_obsnorm: False
+                            use_rewnorm: False
+                            obsnorm_range: 5
+                            rewnorm_range: 5
+
+                            test_steps: 10000
+                            eval_interval: 50000
+                            test_episode: 1
+                            log_dir: "./logs/sac/"
+                            model_dir: "./models/sac/"
+
+
                     .. group-tab:: Acrobot-v1
 
                         .. code-block:: yaml
+
+                            agent: "SACDIS"
+                            env_name: "Classic Control"
+                            env_id: "Acrobot-v1"
+                            vectorize: "Dummy_Gym"
+                            policy: "Discrete_SAC"
+                            representation: "Basic_MLP"
+                            runner: "DRL"
+
+                            representation_hidden_size: [256,]
+                            actor_hidden_size: [128,128,]
+                            critic_hidden_size: [128,128,]
+                            activation: "ReLU"
+
+                            seed: 1
+                            parallels: 16
+                            n_size: 20000
+                            batch_size: 256
+                            actor_learning_rate: 0.001
+                            critic_learning_rate: 0.01
+                            gamma: 0.98
+                            tau: 0.005
+
+                            start_noise: 0.25
+                            end_noise: 0.05
+                            training_frequency: 2
+                            running_steps: 500000
+                            start_training: 2000
+                            action_type: "DISCRETE"
+
+                            use_obsnorm: False
+                            use_rewnorm: False
+                            obsnorm_range: 5
+                            rewnorm_range: 5
+
+                            test_steps: 10000
+                            eval_interval: 50000
+                            test_episode: 1
+                            log_dir: "./logs/sac/"
+                            model_dir: "./models/sac/"
+
 
                     .. group-tab:: Pendulum-v1
 
                         .. code-block:: yaml
 
+                            agent: "SAC"
+                            env_name: "Classic Control"
+                            env_id: "Pendulum-v1"
+                            vectorize: "Dummy_Gym"
+                            policy: "Gaussian_SAC"
+                            representation: "Basic_MLP"
+                            runner: "DRL"
+
+                            representation_hidden_size: [256,]
+                            actor_hidden_size: [256,]
+                            critic_hidden_size: [256,]
+                            activation: "ReLU"
+
+                            seed: 1
+                            parallels: 16
+                            n_size: 20000
+                            batch_size: 256
+                            actor_learning_rate: 0.001
+                            critic_learning_rate: 0.001
+                            gamma: 0.98
+                            tau: 0.005
+
+                            start_noise: 0.25
+                            end_noise: 0.05
+                            training_frequency: 2
+                            running_steps: 500000
+                            start_training: 2000
+
+                            use_obsnorm: False
+                            use_rewnorm: False
+                            obsnorm_range: 5
+                            rewnorm_range: 5
+
+                            test_steps: 10000
+                            eval_interval: 50000
+                            test_episode: 1
+                            log_dir: "./logs/sac/"
+                            model_dir: "./models/sac/"
+
+
                     .. group-tab:: MountainCar-v0
 
                         .. code-block:: yaml
+
+                            agent: "SACDIS"
+                            env_name: "Classic Control"
+                            env_id: "MountainCar-v0"
+                            vectorize: "Dummy_Gym"
+                            policy: "Discrete_SAC"
+                            representation: "Basic_MLP"
+                            runner: "DRL"
+
+                            representation_hidden_size: [256,]
+                            actor_hidden_size: [128,128,]
+                            critic_hidden_size: [128,128,]
+                            activation: "ReLU"
+
+                            seed: 1
+                            parallels: 16
+                            n_size: 20000
+                            batch_size: 256
+                            actor_learning_rate: 0.001
+                            critic_learning_rate: 0.01
+                            gamma: 0.98
+                            tau: 0.005
+
+                            start_noise: 0.25
+                            end_noise: 0.05
+                            training_frequency: 2
+                            running_steps: 500000
+                            start_training: 2000
+                            action_type: "DISCRETE"
+
+                            use_obsnorm: False
+                            use_rewnorm: False
+                            obsnorm_range: 5
+                            rewnorm_range: 5
+
+                            test_steps: 10000
+                            eval_interval: 50000
+                            test_episode: 1
+                            log_dir: "./logs/sac/"
+                            model_dir: "./models/sac/"
+
 
             .. group-tab:: Box2D
 
@@ -3627,21 +3790,189 @@ Within the following content, we provid the preset arguments for each implementa
 
                         .. code-block:: yaml
 
-                    .. group-tab:: CarRacing-v2
+                            agent: "SAC"
+                            env_name: "Box2D"
+                            env_id: "BipedalWalker-v3"
+                            vectorize: "Dummy_Gym"
+                            policy: "Gaussian_SAC"
+                            representation: "Basic_MLP"
+                            runner: "DRL"
 
-                        .. code-block:: yaml
+                            representation_hidden_size: [256,]
+                            actor_hidden_size: [256,]
+                            critic_hidden_size: [256,]
+                            activation: "ReLU"
+
+                            seed: 1
+                            parallels: 16
+                            n_size: 20000
+                            batch_size: 256
+                            actor_learning_rate: 0.001
+                            critic_learning_rate: 0.001
+                            gamma: 0.98
+                            tau: 0.005
+
+                            start_noise: 0.25
+                            end_noise: 0.05
+                            training_frequency: 2
+                            running_steps: 500000
+                            start_training: 2000
+
+                            use_obsnorm: False
+                            use_rewnorm: False
+                            obsnorm_range: 5
+                            rewnorm_range: 5
+
+                            test_steps: 10000
+                            eval_interval: 50000
+                            test_episode: 1
+                            log_dir: "./logs/sac/"
+                            model_dir: "./models/sac/"
+
 
                     .. group-tab:: LunarLander-v2
 
                         .. code-block:: yaml
 
+                            agent: "SACDIS"
+                            env_name: "Box2D"
+                            env_id: "LunarLander-v2"
+                            vectorize: "Dummy_Gym"
+                            policy: "Discrete_SAC"
+                            representation: "Basic_MLP"
+                            runner: "DRL"
+
+                            representation_hidden_size: [256,]
+                            actor_hidden_size: [128,128,]
+                            critic_hidden_size: [128,128,]
+                            activation: "ReLU"
+
+                            seed: 1
+                            parallels: 16
+                            n_size: 20000
+                            batch_size: 256
+                            actor_learning_rate: 0.001
+                            critic_learning_rate: 0.01
+                            gamma: 0.98
+                            tau: 0.005
+
+                            start_noise: 0.25
+                            end_noise: 0.05
+                            training_frequency: 2
+                            running_steps: 500000
+                            start_training: 2000
+                            action_type: "DISCRETE"
+
+                            use_obsnorm: False
+                            use_rewnorm: False
+                            obsnorm_range: 5
+                            rewnorm_range: 5
+
+                            test_steps: 10000
+                            eval_interval: 50000
+                            test_episode: 1
+                            log_dir: "./logs/sac/"
+                            model_dir: "./models/sac/"
+
+
             .. group-tab:: Atari
 
                 .. code-block:: yaml
 
+                    agent: "SACDIS"
+                    vectorize: "Dummy_Atari"
+                    env_name: "Atari"
+                    env_id: "ALE/Breakout-v5"
+                    obs_type: "grayscale"  # choice for Atari env: ram, rgb, grayscale
+                    img_size: [84, 84]  # default is 210 x 160 in gym[Atari]
+                    num_stack: 4  # frame stack trick
+                    frame_skip: 4  # frame skip trick
+                    noop_max: 30  # Do no-op action for a number of steps in [1, noop_max].
+                    representation: "Basic_CNN"
+                    policy: "Discrete_SAC"
+                    runner: "DRL"
+
+                    filters: [32, 32, 64, 64]
+                    kernels: [8, 4, 4, 4]
+                    strides: [4, 2, 2, 2]
+                    actor_hidden_size: [128, 128]
+                    critic_hidden_size: [128, 128]
+                    activation: "LeakyReLU"
+
+                    seed: 1069
+                    parallels: 5
+                    n_size: 100000
+                    batch_size: 32  # 64
+                    actor_learning_rate: 0.001
+                    critic_learning_rate: 0.001
+                    gamma: 0.99
+                    alpha: 0.01
+                    tau: 0.005
+                    learning_rate: 0.0007
+
+                    start_noise: 0.25
+                    end_noise: 0.05
+                    training_frequency: 1
+                    running_steps: 50000000  # 50M
+                    start_training: 10000
+
+                    use_obsnorm: False
+                    use_rewnorm: False
+                    obsnorm_range: 5
+                    rewnorm_range: 5
+
+                    test_steps: 10000
+                    eval_interval: 500000
+                    test_episode: 1
+                    log_dir: "./logs/sac/"
+                    model_dir: "./models/sac/"
+
+
             .. group-tab:: MuJoCo
 
                 .. code-block:: yaml
+
+                    agent: "SAC"
+                    env_name: "MuJoCo"
+                    env_id: "Ant-v4"
+                    vectorize: "Dummy_Gym"
+                    policy: "Gaussian_SAC"
+                    representation: "Basic_Identical"
+                    runner: "DRL"
+
+                    representation_hidden_size:
+                    actor_hidden_size: [256, 256]
+                    critic_hidden_size: [256, 256]
+                    activation: "LeakyReLU"
+
+                    seed: 1
+                    parallels: 4
+                    n_size: 250000
+                    batch_size: 256
+                    actor_learning_rate: 0.001
+                    critic_learning_rate: 0.001
+                    gamma: 0.99
+                    alpha: 0.2
+                    tau: 0.005
+                    learning_rate: 0.0003
+
+                    start_noise: 0.25
+                    end_noise: 0.01
+                    training_frequency: 1
+                    running_steps: 1000000
+                    start_training: 10000
+
+                    use_obsnorm: False
+                    use_rewnorm: False
+                    obsnorm_range: 5
+                    rewnorm_range: 5
+
+                    test_steps: 10000
+                    eval_interval: 5000
+                    test_episode: 5
+                    log_dir: "./logs/sac/"
+                    model_dir: "./models/sac/"
+
 
 
     .. group-tab:: DDPG
@@ -3656,6 +3987,45 @@ Within the following content, we provid the preset arguments for each implementa
 
                         .. code-block:: yaml
 
+                            agent: "DDPG"
+                            env_name: "Classic Control"
+                            env_id: "Pendulum-v1"
+                            vectorize: "Dummy_Gym"
+                            policy: "DDPG_Policy"
+                            representation: "Basic_Identical"
+                            runner: "DRL"
+
+                            actor_hidden_size: [256,]
+                            critic_hidden_size: [256,]
+                            activation: "ReLU"
+
+                            seed: 1
+                            parallels: 10
+                            n_size: 200000
+                            batch_size: 256
+                            actor_learning_rate: 0.001
+                            critic_learning_rate: 0.001
+                            gamma: 0.98
+                            tau: 0.005
+                            learning_rate: 0.0007
+
+                            start_noise: 0.1
+                            end_noise: 0.1
+                            training_frequency: 1
+                            running_steps: 500000
+                            start_training: 1000
+
+                            use_obsnorm: False
+                            use_rewnorm: False
+                            obsnorm_range: 5
+                            rewnorm_range: 5
+
+                            test_steps: 10000
+                            eval_interval: 50000
+                            test_episode: 3
+                            log_dir: "./logs/ddpg/"
+                            model_dir: "./models/ddpg/"
+
             .. group-tab:: Box2D
 
                 .. tabs::
@@ -3664,9 +4034,88 @@ Within the following content, we provid the preset arguments for each implementa
 
                         .. code-block:: yaml
 
+                            agent: "DDPG"
+                            env_name: "Box2D"
+                            env_id: "BipedalWalker-v3"
+                            vectorize: "Dummy_Gym"
+                            policy: "DDPG_Policy"
+                            representation: "Basic_Identical"
+                            runner: "DRL"
+
+                            actor_hidden_size: [256,]
+                            critic_hidden_size: [256,]
+                            activation: "ReLU"
+
+                            seed: 1
+                            parallels: 10
+                            n_size: 200000
+                            batch_size: 256
+                            actor_learning_rate: 0.001
+                            critic_learning_rate: 0.001
+                            gamma: 0.98
+                            tau: 0.005
+                            learning_rate: 0.0007
+
+                            start_noise: 0.1
+                            end_noise: 0.1
+                            training_frequency: 1
+                            running_steps: 500000
+                            start_training: 1000
+
+                            use_obsnorm: False
+                            use_rewnorm: False
+                            obsnorm_range: 5
+                            rewnorm_range: 5
+
+                            test_steps: 10000
+                            eval_interval: 50000
+                            test_episode: 1
+                            log_dir: "./logs/ddpg/"
+                            model_dir: "./models/ddpg/"
+
             .. group-tab:: MuJoCo
 
                 .. code-block:: yaml
+
+                    agent: "DDPG"
+                    env_name: "MuJoCo"
+                    env_id: "Ant-v4"
+                    vectorize: "Dummy_Gym"
+                    policy: "DDPG_Policy"
+                    representation: "Basic_Identical"
+                    runner: "DRL"
+
+                    representation_hidden_size:  # If you choose Basic_Identical representation, then ignore this value
+                    actor_hidden_size: [400, 300]
+                    critic_hidden_size: [400, 300]
+                    activation: "LeakyReLU"
+
+                    seed: 19089
+                    parallels: 4  # number of environments
+                    n_size: 50000  # replay buffer size
+                    batch_size: 100
+                    actor_learning_rate: 0.001
+                    critic_learning_rate: 0.001
+                    gamma: 0.99
+                    tau: 0.005
+
+                    start_noise: 0.5
+                    end_noise: 0.1
+                    training_frequency: 1
+                    running_steps: 1000000  # 1M
+                    start_training: 10000
+
+                    use_obsnorm: False
+                    use_rewnorm: False
+                    obsnorm_range: 5
+                    rewnorm_range: 5
+
+                    test_steps: 10000
+                    eval_interval: 5000
+                    test_episode: 5
+                    log_dir: "./logs/ddpg/"
+                    model_dir: "./models/ddpg/"
+
 
 
     .. group-tab:: TD3
@@ -3681,6 +4130,45 @@ Within the following content, we provid the preset arguments for each implementa
 
                         .. code-block:: yaml
 
+                            agent: "TD3"
+                            env_name: "Classic Control"
+                            env_id: "Pendulum-v1"
+                            vectorize: "Dummy_Gym"
+                            representation: "Basic_Identical"
+                            policy: "TD3_Policy"
+                            runner: "DRL"
+
+                            actor_hidden_size: [256, ]
+                            critic_hidden_size: [256, ]
+                            activation: "LeakyReLU"
+
+                            seed: 1
+                            parallels: 10
+                            n_size: 20000
+                            batch_size: 256
+                            actor_learning_rate: 0.0005
+                            critic_learning_rate: 0.001
+                            gamma: 0.98
+                            tau: 0.005
+                            actor_update_delay: 3
+
+                            start_noise: 0.25
+                            end_noise: 0.05
+                            training_frequency: 2
+                            running_steps: 500000
+                            start_training: 2000
+
+                            use_obsnorm: False
+                            use_rewnorm: False
+                            obsnorm_range: 5
+                            rewnorm_range: 5
+
+                            test_steps: 10000
+                            eval_interval: 50000
+                            test_episode: 1
+                            log_dir: "./logs/td3/"
+                            model_dir: "./models/td3/"
+
             .. group-tab:: Box2D
 
                 .. tabs::
@@ -3689,9 +4177,89 @@ Within the following content, we provid the preset arguments for each implementa
 
                         .. code-block:: yaml
 
+                            agent: "TD3"
+                            env_name: "Box2D"
+                            env_id: "BipedalWalker-v3"
+                            vectorize: "Dummy_Gym"
+                            representation: "Basic_Identical"
+                            policy: "TD3_Policy"
+                            runner: "DRL"
+
+                            actor_hidden_size: [256, ]
+                            critic_hidden_size: [256, ]
+                            activation: "LeakyReLU"
+
+                            seed: 1
+                            parallels: 10
+                            n_size: 20000
+                            batch_size: 256
+                            actor_learning_rate: 0.0005
+                            critic_learning_rate: 0.001
+                            gamma: 0.98
+                            tau: 0.005
+                            actor_update_delay: 3
+
+                            start_noise: 0.25
+                            end_noise: 0.05
+                            training_frequency: 2
+                            running_steps: 500000
+                            start_training: 2000
+
+                            use_obsnorm: False
+                            use_rewnorm: False
+                            obsnorm_range: 5
+                            rewnorm_range: 5
+
+                            test_steps: 10000
+                            eval_interval: 50000
+                            test_episode: 1
+                            log_dir: "./logs/td3/"
+                            model_dir: "./models/td3/"
+
             .. group-tab:: MuJoCo
 
                 .. code-block:: yaml
+
+                    agent: "TD3"
+                    env_name: "MuJoCo"
+                    env_id: "Ant-v4"
+                    vectorize: "Dummy_Gym"
+                    policy: "TD3_Policy"
+                    representation: "Basic_Identical"
+                    runner: "DRL"
+
+                    representation_hidden_size:  # If you choose Basic_Identical representation, then ignore this value
+                    actor_hidden_size: [400, 300]
+                    critic_hidden_size: [400, 300]
+                    activation: "LeakyReLU"
+
+                    seed: 6782
+                    parallels: 4  # number of environments
+                    n_size: 50000
+                    batch_size: 100
+                    actor_learning_rate: 0.001
+                    actor_update_delay: 2
+                    critic_learning_rate: 0.001
+                    gamma: 0.99
+                    tau: 0.005
+
+                    start_noise: 0.5
+                    end_noise: 0.1
+                    training_frequency: 1
+                    running_steps: 1000000
+                    start_training: 10000
+
+                    use_obsnorm: False
+                    use_rewnorm: False
+                    obsnorm_range: 5
+                    rewnorm_range: 5
+
+                    test_steps: 10000
+                    eval_interval: 5000
+                    test_episode: 5
+                    log_dir: "./logs/td3/"
+                    model_dir: "./models/td3/"
+
 
 .. raw:: html
 
