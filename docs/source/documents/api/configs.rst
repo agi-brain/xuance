@@ -3713,6 +3713,47 @@ Within the following content, we provid the preset arguments for each implementa
 
                         .. code-block:: yaml
 
+                            agent: "IQL"  # the learning algorithms_marl
+                            env_name: "mpe"
+                            env_id: "simple_spread_v3"
+                            continuous_action: False
+                            policy: "Basic_Q_network_marl"
+                            representation: "Basic_MLP"
+                            vectorize: "Dummy_Pettingzoo"
+                            runner: "Pettingzoo_Runner"
+
+                            use_recurrent: False
+                            rnn:
+                            representation_hidden_size: [64, ]
+                            q_hidden_size: [64, ]  # the units for each hidden layer
+                            activation: "ReLU"
+
+                            seed: 1
+                            parallels: 16
+                            buffer_size: 100000
+                            batch_size: 256
+                            learning_rate: 0.001
+                            gamma: 0.99  # discount factor
+                            double_q: True  # use double q learning
+
+                            start_greedy: 1.0
+                            end_greedy: 0.05
+                            decay_step_greedy: 2500000
+                            start_training: 1000  # start training after n episodes
+                            running_steps: 10000000  # 10M
+                            train_per_step: False  # True: train model per step; False: train model per episode.
+                            training_frequency: 1
+                            sync_frequency: 100
+
+                            use_grad_clip: False
+                            grad_clip_norm: 0.5
+
+                            eval_interval: 100000
+                            test_episode: 5
+                            log_dir: "./logs/iql/"
+                            model_dir: "./models/iql/"
+
+
             .. group-tab:: Magent2
 
                 .. tabs::
@@ -3720,6 +3761,52 @@ Within the following content, we provid the preset arguments for each implementa
                     .. group-tab:: adversarial_pursuit_v4
 
                         .. code-block:: yaml
+
+                            agent: "IQL"  # the learning algorithms_marl
+                            env_name: "MAgent2"
+                            env_id: "adversarial_pursuit_v4"
+                            minimap_mode: False
+                            max_cycles: 500
+                            extra_features: False
+                            map_size: 45
+                            render_mode: "rgb_array"
+                            policy: "Basic_Q_network_marl"
+                            representation: "Basic_MLP"
+                            vectorize: "Dummy_MAgent"
+                            runner: "MAgent_Runner"
+                            on_policy: False
+
+                            # recurrent settings for Basic_RNN representation
+                            use_recurrent: False
+                            rnn:
+                            representation_hidden_size: [64, ]
+                            q_hidden_size: [64, ]  # the units for each hidden layer
+                            activation: "ReLU"
+
+                            seed: 1
+                            parallels: 10
+                            buffer_size: 20000
+                            batch_size: 256
+                            learning_rate: 0.001
+                            gamma: 0.95  # discount factor
+                            double_q: True  # use double q learning
+
+                            start_greedy: 1.0
+                            end_greedy: 0.05
+                            decay_step_greedy: 2500000
+                            start_training: 1000  # start training after n episodes
+                            running_steps: 10000000  # 10M
+                            train_per_step: False  # True: train model per step; False: train model per episode.
+                            training_frequency: 1
+                            sync_frequency: 100
+
+                            use_grad_clip: False
+                            grad_clip_norm: 0.5
+
+                            eval_interval: 100000
+                            test_episode: 5
+                            log_dir: "./logs/iql/"
+                            model_dir: "./models/iql/"
 
             .. group-tab:: SC2
 
@@ -3729,41 +3816,530 @@ Within the following content, we provid the preset arguments for each implementa
 
                         .. code-block:: yaml
 
+                            agent: "IQL"  # the learning algorithms_marl
+                            env_name: "StarCraft2"
+                            env_id: "1c3s5z"
+                            fps: 15
+                            policy: "Basic_Q_network_marl"
+                            representation: "Basic_RNN"
+                            vectorize: "Subproc_StarCraft2"
+                            runner: "StarCraft2_Runner"
+                            on_policy: False
+
+                            # recurrent settings for Basic_RNN representation
+                            use_recurrent: True
+                            rnn: "GRU"
+                            recurrent_layer_N: 1
+                            fc_hidden_sizes: [64, ]
+                            recurrent_hidden_size: 64
+                            N_recurrent_layers: 1
+                            dropout: 0
+
+                            representation_hidden_size: [64, ]
+                            q_hidden_size: [64, ]  # the units for each hidden layer
+                            activation: "ReLU"
+
+                            seed: 1
+                            parallels: 8
+                            buffer_size: 5000
+                            batch_size: 32
+                            learning_rate: 0.0007
+                            gamma: 0.99  # discount factor
+                            double_q: True  # use double q learning
+
+                            start_greedy: 1.0
+                            end_greedy: 0.05
+                            decay_step_greedy: 50000
+                            start_training: 1000  # start training after n episodes
+                            running_steps: 2000000  # 2M
+                            train_per_step: False  # True: train model per step; False: train model per episode.
+                            training_frequency: 1
+                            sync_frequency: 200
+
+                            use_grad_clip: False
+                            grad_clip_norm: 0.5
+
+                            eval_interval: 20000
+                            test_episode: 16
+                            log_dir: "./logs/iql/"
+                            model_dir: "./models/iql/"
+
                     .. group-tab:: 2m_vs_1z
 
                         .. code-block:: yaml
+
+                            agent: "IQL"  # the learning algorithms_marl
+                            global_state: False
+                            env_name: "StarCraft2"
+                            env_id: "2m_vs_1z"
+                            fps: 15
+                            policy: "Basic_Q_network_marl"
+                            representation: "Basic_RNN"
+                            vectorize: "Subproc_StarCraft2"
+                            runner: "StarCraft2_Runner"
+                            on_policy: False
+
+                            # recurrent settings for Basic_RNN representation
+                            use_recurrent: True
+                            rnn: "GRU"
+                            recurrent_layer_N: 1
+                            fc_hidden_sizes: [64, ]
+                            recurrent_hidden_size: 64
+                            N_recurrent_layers: 1
+                            dropout: 0
+
+                            representation_hidden_size: [64, ]
+                            q_hidden_size: [64, ]  # the units for each hidden layer
+                            activation: "ReLU"
+
+                            seed: 1
+                            parallels: 8
+                            buffer_size: 5000
+                            batch_size: 32
+                            learning_rate: 0.0007
+                            gamma: 0.99  # discount factor
+                            double_q: True  # use double q learning
+
+                            start_greedy: 1.0
+                            end_greedy: 0.05
+                            decay_step_greedy: 50000
+                            start_training: 1000  # start training after n episodes
+                            running_steps: 1000000  # 1M
+                            train_per_step: False  # True: train model per step; False: train model per episode.
+                            training_frequency: 1
+                            sync_frequency: 200
+
+                            use_grad_clip: False
+                            grad_clip_norm: 0.5
+
+                            eval_interval: 10000
+                            test_episode: 16
+                            log_dir: "./logs/iql/"
+                            model_dir: "./models/iql/"
+
 
                     .. group-tab:: 2s3z
 
                         .. code-block:: yaml
 
+                            agent: "IQL"  # the learning algorithms_marl
+                            env_name: "StarCraft2"
+                            env_id: "2s3z"
+                            fps: 15
+                            policy: "Basic_Q_network_marl"
+                            representation: "Basic_RNN"
+                            vectorize: "Subproc_StarCraft2"
+                            runner: "StarCraft2_Runner"
+                            on_policy: False
+
+                            # recurrent settings for Basic_RNN representation
+                            use_recurrent: True
+                            rnn: "GRU"
+                            recurrent_layer_N: 1
+                            fc_hidden_sizes: [64, ]
+                            recurrent_hidden_size: 64
+                            N_recurrent_layers: 1
+                            dropout: 0
+
+                            representation_hidden_size: [64, ]
+                            q_hidden_size: [64, ]  # the units for each hidden layer
+                            activation: "ReLU"
+
+                            seed: 1
+                            parallels: 8
+                            buffer_size: 5000
+                            batch_size: 32
+                            learning_rate: 0.0007
+                            gamma: 0.99  # discount factor
+                            double_q: True  # use double q learning
+
+                            start_greedy: 1.0
+                            end_greedy: 0.05
+                            decay_step_greedy: 50000
+                            start_training: 1000  # start training after n episodes
+                            running_steps: 2000000  # 2M
+                            train_per_step: False  # True: train model per step; False: train model per episode.
+                            training_frequency: 1
+                            sync_frequency: 200
+
+                            use_grad_clip: False
+                            grad_clip_norm: 0.5
+
+                            eval_interval: 20000
+                            test_episode: 16
+                            log_dir: "./logs/iql/"
+                            model_dir: "./models/iql/"
+
                     .. group-tab:: 3m
 
                         .. code-block:: yaml
+
+                            agent: "IQL"  # the learning algorithms_marl
+                            env_name: "StarCraft2"
+                            env_id: "3m"
+                            fps: 15
+                            policy: "Basic_Q_network_marl"
+                            representation: "Basic_RNN"
+                            vectorize: "Subproc_StarCraft2"
+                            runner: "StarCraft2_Runner"
+                            on_policy: False
+
+                            # recurrent settings for Basic_RNN representation
+                            use_recurrent: True
+                            rnn: "GRU"
+                            recurrent_layer_N: 1
+                            fc_hidden_sizes: [64, ]
+                            recurrent_hidden_size: 64
+                            N_recurrent_layers: 1
+                            dropout: 0
+
+                            representation_hidden_size: [64, ]
+                            q_hidden_size: [64, ]  # the units for each hidden layer
+                            activation: "ReLU"
+
+                            seed: 1
+                            parallels: 8
+                            buffer_size: 5000
+                            batch_size: 32
+                            learning_rate: 0.0007
+                            gamma: 0.99  # discount factor
+                            double_q: True  # use double q learning
+
+                            start_greedy: 1.0
+                            end_greedy: 0.05
+                            decay_step_greedy: 50000
+                            start_training: 1000  # start training after n episodes
+                            running_steps: 1000000  # 1M
+                            train_per_step: False  # True: train model per step; False: train model per episode.
+                            training_frequency: 1
+                            sync_frequency: 200
+
+                            use_grad_clip: False
+                            grad_clip_norm: 0.5
+
+                            eval_interval: 10000
+                            test_episode: 16
+                            log_dir: "./logs/iql/"
+                            model_dir: "./models/iql/"
+
 
                     .. group-tab:: 5m_vs_6m
 
                         .. code-block:: yaml
 
+                            agent: "IQL"  # the learning algorithms_marl
+                            env_name: "StarCraft2"
+                            env_id: "5m_vs_6m"
+                            fps: 15
+                            policy: "Basic_Q_network_marl"
+                            representation: "Basic_RNN"
+                            vectorize: "Subproc_StarCraft2"
+                            runner: "StarCraft2_Runner"
+                            on_policy: False
+
+                            # recurrent settings for Basic_RNN representation
+                            use_recurrent: True
+                            rnn: "GRU"
+                            recurrent_layer_N: 1
+                            fc_hidden_sizes: [64, ]
+                            recurrent_hidden_size: 64
+                            N_recurrent_layers: 1
+                            dropout: 0
+
+                            representation_hidden_size: [64, ]
+                            q_hidden_size: [64, ]  # the units for each hidden layer
+                            activation: "ReLU"
+
+                            seed: 1
+                            parallels: 8
+                            buffer_size: 5000
+                            batch_size: 32
+                            learning_rate: 0.0007
+                            gamma: 0.99  # discount factor
+                            double_q: True  # use double q learning
+
+                            start_greedy: 1.0
+                            end_greedy: 0.05
+                            decay_step_greedy: 50000
+                            start_training: 1000  # start training after n episodes
+                            running_steps: 10000000  # 10M
+                            train_per_step: False  # True: train model per step; False: train model per episode.
+                            training_frequency: 1
+                            sync_frequency: 200
+
+                            use_grad_clip: False
+                            grad_clip_norm: 0.5
+
+                            eval_interval: 100000
+                            test_episode: 16
+                            log_dir: "./logs/iql/"
+                            model_dir: "./models/iql/"
+
+
                     .. group-tab:: 8m
 
                         .. code-block:: yaml
+
+                            agent: "IQL"  # the learning algorithms_marl
+                            env_name: "StarCraft2"
+                            env_id: "8m"
+                            fps: 15
+                            policy: "Basic_Q_network_marl"
+                            representation: "Basic_RNN"
+                            vectorize: "Subproc_StarCraft2"
+                            runner: "StarCraft2_Runner"
+                            on_policy: False
+
+                            # recurrent settings for Basic_RNN representation
+                            use_recurrent: True
+                            rnn: "GRU"
+                            recurrent_layer_N: 1
+                            fc_hidden_sizes: [64, ]
+                            recurrent_hidden_size: 64
+                            N_recurrent_layers: 1
+                            dropout: 0
+
+                            representation_hidden_size: [64, ]
+                            q_hidden_size: [64, ]  # the units for each hidden layer
+                            activation: "ReLU"
+
+                            seed: 1
+                            parallels: 8
+                            buffer_size: 5000
+                            batch_size: 32
+                            learning_rate: 0.0007
+                            gamma: 0.99  # discount factor
+                            double_q: True  # use double q learning
+
+                            start_greedy: 1.0
+                            end_greedy: 0.05
+                            decay_step_greedy: 50000
+                            start_training: 1000  # start training after n episodes
+                            running_steps: 1000000  # 1M
+                            train_per_step: False  # True: train model per step; False: train model per episode.
+                            training_frequency: 1
+                            sync_frequency: 200
+
+                            use_grad_clip: False
+                            grad_clip_norm: 0.5
+
+                            eval_interval: 10000
+                            test_episode: 16
+                            log_dir: "./logs/iql/"
+                            model_dir: "./models/iql/"
+
 
                     .. group-tab:: 8m_vd_9m
 
                         .. code-block:: yaml
 
+                            agent: "IQL"  # the learning algorithms_marl
+                            env_name: "StarCraft2"
+                            env_id: "8m_vs_9m"
+                            fps: 15
+                            policy: "Basic_Q_network_marl"
+                            representation: "Basic_RNN"
+                            vectorize: "Subproc_StarCraft2"
+                            runner: "StarCraft2_Runner"
+                            on_policy: False
+
+                            # recurrent settings for Basic_RNN representation
+                            use_recurrent: True
+                            rnn: "GRU"
+                            recurrent_layer_N: 1
+                            fc_hidden_sizes: [64, ]
+                            recurrent_hidden_size: 64
+                            N_recurrent_layers: 1
+                            dropout: 0
+
+                            representation_hidden_size: [64, ]
+                            q_hidden_size: [64, ]  # the units for each hidden layer
+                            activation: "ReLU"
+
+                            seed: 1
+                            parallels: 8
+                            buffer_size: 5000
+                            batch_size: 32
+                            learning_rate: 0.0007
+                            gamma: 0.99  # discount factor
+                            double_q: True  # use double q learning
+
+                            start_greedy: 1.0
+                            end_greedy: 0.05
+                            decay_step_greedy: 50000
+                            start_training: 1000  # start training after n episodes
+                            running_steps: 10000000  # 10M
+                            train_per_step: False  # True: train model per step; False: train model per episode.
+                            training_frequency: 1
+                            sync_frequency: 200
+
+                            use_grad_clip: False
+                            grad_clip_norm: 0.5
+
+                            eval_interval: 100000
+                            test_episode: 16
+                            log_dir: "./logs/iql/"
+                            model_dir: "./models/iql/"
+
+
                     .. group-tab:: 25m
 
                         .. code-block:: yaml
 
+                            agent: "IQL"  # the learning algorithms_marl
+                            env_name: "StarCraft2"
+                            env_id: "25m"
+                            fps: 15
+                            policy: "Basic_Q_network_marl"
+                            representation: "Basic_RNN"
+                            vectorize: "Subproc_StarCraft2"
+                            runner: "StarCraft2_Runner"
+                            on_policy: False
+
+                            # recurrent settings for Basic_RNN representation
+                            use_recurrent: True
+                            rnn: "GRU"
+                            recurrent_layer_N: 1
+                            fc_hidden_sizes: [64, ]
+                            recurrent_hidden_size: 64
+                            N_recurrent_layers: 1
+                            dropout: 0
+
+                            representation_hidden_size: [64, ]
+                            q_hidden_size: [64, ]  # the units for each hidden layer
+                            activation: "ReLU"
+
+                            seed: 1
+                            parallels: 8
+                            buffer_size: 5000
+                            batch_size: 32
+                            learning_rate: 0.0007
+                            gamma: 0.99  # discount factor
+                            double_q: True  # use double q learning
+
+                            start_greedy: 1.0
+                            end_greedy: 0.05
+                            decay_step_greedy: 50000
+                            start_training: 1000  # start training after n episodes
+                            running_steps: 5000000  # 5M
+                            train_per_step: False  # True: train model per step; False: train model per episode.
+                            training_frequency: 1
+                            sync_frequency: 200
+
+                            use_grad_clip: False
+                            grad_clip_norm: 0.5
+
+                            eval_interval: 50000
+                            test_episode: 16
+                            log_dir: "./logs/iql/"
+                            model_dir: "./models/iql/"
+
+
                     .. group-tab:: corridor
 
                         .. code-block:: yaml
+
+                            agent: "IQL"  # the learning algorithms_marl
+                            env_name: "StarCraft2"
+                            env_id: "corridor"
+                            fps: 15
+                            policy: "Basic_Q_network_marl"
+                            representation: "Basic_RNN"
+                            vectorize: "Subproc_StarCraft2"
+                            runner: "StarCraft2_Runner"
+                            on_policy: False
+
+                            # recurrent settings for Basic_RNN representation
+                            use_recurrent: True
+                            rnn: "GRU"
+                            recurrent_layer_N: 1
+                            fc_hidden_sizes: [64, ]
+                            recurrent_hidden_size: 64
+                            N_recurrent_layers: 1
+                            dropout: 0
+
+                            representation_hidden_size: [64, ]
+                            q_hidden_size: [64, ]  # the units for each hidden layer
+                            activation: "ReLU"
+
+                            seed: 1
+                            parallels: 8
+                            buffer_size: 5000
+                            batch_size: 32
+                            learning_rate: 0.0007
+                            gamma: 0.99  # discount factor
+                            double_q: True  # use double q learning
+
+                            start_greedy: 1.0
+                            end_greedy: 0.05
+                            decay_step_greedy: 50000
+                            start_training: 1000  # start training after n episodes
+                            running_steps: 10000000  # 10M
+                            train_per_step: False  # True: train model per step; False: train model per episode.
+                            training_frequency: 1
+                            sync_frequency: 200
+
+                            use_grad_clip: False
+                            grad_clip_norm: 0.5
+
+                            eval_interval: 100000
+                            test_episode: 16
+                            log_dir: "./logs/iql/"
+                            model_dir: "./models/iql/"
+
                     
                     .. group-tab:: MMM2
 
                         .. code-block:: yaml
+
+                            agent: "IQL"  # the learning algorithms_marl
+                            env_name: "StarCraft2"
+                            env_id: "MMM2"
+                            fps: 15
+                            policy: "Basic_Q_network_marl"
+                            representation: "Basic_RNN"
+                            vectorize: "Subproc_StarCraft2"
+                            runner: "StarCraft2_Runner"
+                            on_policy: False
+
+                            # recurrent settings for Basic_RNN representation
+                            use_recurrent: True
+                            rnn: "GRU"
+                            recurrent_layer_N: 1
+                            fc_hidden_sizes: [64, ]
+                            recurrent_hidden_size: 64
+                            N_recurrent_layers: 1
+                            dropout: 0
+
+                            representation_hidden_size: [64, ]
+                            q_hidden_size: [64, ]  # the units for each hidden layer
+                            activation: "ReLU"
+
+                            seed: 1
+                            parallels: 8
+                            buffer_size: 5000
+                            batch_size: 32
+                            learning_rate: 0.0007
+                            gamma: 0.99  # discount factor
+                            double_q: True  # use double q learning
+
+                            start_greedy: 1.0
+                            end_greedy: 0.05
+                            decay_step_greedy: 50000
+                            start_training: 1000  # start training after n episodes
+                            running_steps: 10000000  # 10M
+                            train_per_step: False  # True: train model per step; False: train model per episode.
+                            training_frequency: 1
+                            sync_frequency: 200
+
+                            use_grad_clip: False
+                            grad_clip_norm: 0.5
+
+                            eval_interval: 100000
+                            test_episode: 16
+                            log_dir: "./logs/iql/"
+                            model_dir: "./models/iql/"
+
 
             .. group-tab:: Football
 
@@ -3772,6 +4348,64 @@ Within the following content, we provid the preset arguments for each implementa
                     .. group-tab:: 3v1
 
                         .. code-block:: yaml
+
+                            agent: "IQL"  # the learning algorithms_marl
+                            global_state: False
+                            # environment settings
+                            env_name: "Football"
+                            scenario: "academy_3_vs_1_with_keeper"
+                            use_stacked_frames: False  # Whether to use stacked_frames
+                            num_agent: 3
+                            num_adversary: 0
+                            obs_type: "simple115v2"  # representation used to build the observation, choices: ["simple115v2", "extracted", "pixels_gray", "pixels"]
+                            rewards_type: "scoring,checkpoints"  # comma separated list of rewards to be added
+                            smm_width: 96  # width of super minimap
+                            smm_height: 72  # height of super minimap
+                            fps: 15
+                            policy: "Basic_Q_network_marl"
+                            representation: "Basic_RNN"
+                            vectorize: "Subproc_Football"
+                            runner: "Football_Runner"
+
+                            # recurrent settings for Basic_RNN representation
+                            use_recurrent: True
+                            rnn: "GRU"
+                            recurrent_layer_N: 1
+                            fc_hidden_sizes: [128, ]
+                            recurrent_hidden_size: 128
+                            N_recurrent_layers: 1
+                            dropout: 0
+
+                            representation_hidden_size: [128, ]
+                            q_hidden_size: [128, ]  # the units for each hidden layer
+                            activation: "ReLU"
+
+                            seed: 1
+                            parallels: 50
+                            buffer_size: 5000
+                            batch_size: 32
+                            learning_rate: 0.0007
+                            gamma: 0.99  # discount factor
+                            double_q: True  # use double q learning
+
+                            start_greedy: 1.0
+                            end_greedy: 0.05
+                            decay_step_greedy: 1000000
+                            start_training: 1000  # start training after n episodes
+                            running_steps: 25000000  # 25M
+                            train_per_step: False  # True: train model per step; False: train model per episode.
+                            training_frequency: 1
+                            sync_frequency: 200
+
+                            use_grad_clip: False
+                            grad_clip_norm: 0.5
+
+                            eval_interval: 250000
+                            test_episode: 50
+                            log_dir: "./logs/iql/"
+                            model_dir: "./models/iql/"
+                            videos_dir: "./videos/iql/"
+
     
     .. group-tab:: VDN
 
