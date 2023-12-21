@@ -3987,6 +3987,45 @@ Within the following content, we provid the preset arguments for each implementa
 
                         .. code-block:: yaml
 
+                            agent: "DDPG"
+                            env_name: "Classic Control"
+                            env_id: "Pendulum-v1"
+                            vectorize: "Dummy_Gym"
+                            policy: "DDPG_Policy"
+                            representation: "Basic_Identical"
+                            runner: "DRL"
+
+                            actor_hidden_size: [256,]
+                            critic_hidden_size: [256,]
+                            activation: "ReLU"
+
+                            seed: 1
+                            parallels: 10
+                            n_size: 200000
+                            batch_size: 256
+                            actor_learning_rate: 0.001
+                            critic_learning_rate: 0.001
+                            gamma: 0.98
+                            tau: 0.005
+                            learning_rate: 0.0007
+
+                            start_noise: 0.1
+                            end_noise: 0.1
+                            training_frequency: 1
+                            running_steps: 500000
+                            start_training: 1000
+
+                            use_obsnorm: False
+                            use_rewnorm: False
+                            obsnorm_range: 5
+                            rewnorm_range: 5
+
+                            test_steps: 10000
+                            eval_interval: 50000
+                            test_episode: 3
+                            log_dir: "./logs/ddpg/"
+                            model_dir: "./models/ddpg/"
+
             .. group-tab:: Box2D
 
                 .. tabs::
@@ -3995,9 +4034,88 @@ Within the following content, we provid the preset arguments for each implementa
 
                         .. code-block:: yaml
 
+                        agent: "DDPG"
+                        env_name: "Box2D"
+                        env_id: "BipedalWalker-v3"
+                        vectorize: "Dummy_Gym"
+                        policy: "DDPG_Policy"
+                        representation: "Basic_Identical"
+                        runner: "DRL"
+
+                        actor_hidden_size: [256,]
+                        critic_hidden_size: [256,]
+                        activation: "ReLU"
+
+                        seed: 1
+                        parallels: 10
+                        n_size: 200000
+                        batch_size: 256
+                        actor_learning_rate: 0.001
+                        critic_learning_rate: 0.001
+                        gamma: 0.98
+                        tau: 0.005
+                        learning_rate: 0.0007
+
+                        start_noise: 0.1
+                        end_noise: 0.1
+                        training_frequency: 1
+                        running_steps: 500000
+                        start_training: 1000
+
+                        use_obsnorm: False
+                        use_rewnorm: False
+                        obsnorm_range: 5
+                        rewnorm_range: 5
+
+                        test_steps: 10000
+                        eval_interval: 50000
+                        test_episode: 1
+                        log_dir: "./logs/ddpg/"
+                        model_dir: "./models/ddpg/"
+
             .. group-tab:: MuJoCo
 
                 .. code-block:: yaml
+
+                    agent: "DDPG"
+                    env_name: "MuJoCo"
+                    env_id: "Ant-v4"
+                    vectorize: "Dummy_Gym"
+                    policy: "DDPG_Policy"
+                    representation: "Basic_Identical"
+                    runner: "DRL"
+
+                    representation_hidden_size:  # If you choose Basic_Identical representation, then ignore this value
+                    actor_hidden_size: [400, 300]
+                    critic_hidden_size: [400, 300]
+                    activation: "LeakyReLU"
+
+                    seed: 19089
+                    parallels: 4  # number of environments
+                    n_size: 50000  # replay buffer size
+                    batch_size: 100
+                    actor_learning_rate: 0.001
+                    critic_learning_rate: 0.001
+                    gamma: 0.99
+                    tau: 0.005
+
+                    start_noise: 0.5
+                    end_noise: 0.1
+                    training_frequency: 1
+                    running_steps: 1000000  # 1M
+                    start_training: 10000
+
+                    use_obsnorm: False
+                    use_rewnorm: False
+                    obsnorm_range: 5
+                    rewnorm_range: 5
+
+                    test_steps: 10000
+                    eval_interval: 5000
+                    test_episode: 5
+                    log_dir: "./logs/ddpg/"
+                    model_dir: "./models/ddpg/"
+
 
 
     .. group-tab:: TD3
