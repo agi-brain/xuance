@@ -1,7 +1,7 @@
 Memory
 ==============================================
 
-This module defines different type of class used to implement the experience replay buffer for DRL with single agent.
+This module defines different type of classes used to implement the experience replay buffer for DRL with single agent.
 
 .. raw:: html
 
@@ -136,7 +136,7 @@ Basic Memory Tools
 
     <br><hr>
 
-Memory Tools for On-policy Algorithms
+On-Policy Buffer for DRL
 ---------------------------------------------------------
 
 .. py:class::
@@ -211,6 +211,8 @@ Memory Tools for On-policy Algorithms
 
   :param indexes: The indexes of the data in the buffer.
   :type indexes: np.ndarray
+  :return: A tuple that contains a batch of observations, actions, returns, values, advantages, and auxiliary data.
+  :rtype: tuple
 
 .. py:class::
   xuance.common.memory_tools.DummyOnPolicyBuffer_Atari(observation_space, action_space, auxiliary_shape, n_envs, n_size, use_gae, use_advnorm, gamma, gae_lam)
@@ -246,7 +248,7 @@ Memory Tools for On-policy Algorithms
 
     <br><hr>
 
-Memory Tools for Off-policy Algorithms
+Off-Policy Buffer for DRL
 ---------------------------------------------------------
 
 .. py:class::
