@@ -55,7 +55,8 @@ def get_arguments(method, env, env_id, config_path=None, parser_args=None):
     """Get arguments from .yaml files
     Args:
         method: the algorithm name that will be implemented,
-        env: env/scenario, e.g., classic/CartPole-v0,
+        env: The name of the environment,
+        env_id: The name of the scenario in the environment.
         config_path: default is None, if None, the default configs (xuance/configs/.../*.yaml) will be loaded.
         parser_args: arguments that specified by parser tools.
 
@@ -122,7 +123,8 @@ def get_runner(method,
     This method returns a runner that specified by the users according to the inputs.
     Args:
         method: the algorithm name that will be implemented,
-        env: env/scenario, e.g., classic/CartPole-v0,
+        env: The name of the environment,
+        env_id: The name of the scenario in the environment.
         config_path: default is None, if None, the default configs (xuance/configs/.../*.yaml) will be loaded.
         parser_args: arguments that specified by parser tools.
         is_test: default is False, if True, it will load the models and run the environment with rendering.
@@ -268,7 +270,7 @@ def combined_shape(length, shape=None):
 def space2shape(observation_space: Space):
     """Convert gym.space variable to shape
     Args:
-        observation_space: the space variable with type of gym.Space
+        observation_space: the space variable with type of gym.Space.
 
     Returns:
         The shape of the observation_space.

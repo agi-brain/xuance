@@ -357,6 +357,15 @@ command.
 ``` 
 $ tensorboard --logdir ./logs/dqn/torch/CartPole-v0
 ```
+<div align="center">
+<img src="docs/source/figures/log/tensorboard.png" width="700" height="auto" align=center />
+</div>
+
+XuanCe also supports Weights & Biases (wandb) tools for users to visualize the results of the running implementation.
+
+<div align="center">
+<img src="docs/source/figures/log/wandb.png" width="700" height="auto" align=center />
+</div>
 
 <!-- If everything going well, you should get a similar display like below. 
 
