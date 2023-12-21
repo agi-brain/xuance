@@ -1,0 +1,8 @@
+agent: "RANDOM"
+env_name: "mpe"
+env_id: "simple_push_v3"
+learner: "RANDOM"
+runner: "MARL"
+
+model_dir: ""
+log_dir: ""

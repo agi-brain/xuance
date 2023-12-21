@@ -1,0 +1,51 @@
+agent: "PPO_Clip"
+vectorize: "Dummy_Atari"
+env_name: "Atari"
+env_id: "ALE/Breakout-v5"
+obs_type: "grayscale"  # choice for Atari env: ram, rgb, grayscale
+img_size: [84, 84]  # default is 210 x 160 in gym[Atari]
+num_stack: 4  # frame stack trick
+frame_skip: 4  # frame skip trick
+noop_max: 30  # Do no-op action for a number of steps in [1, noop_max].
+representation: "AC_CNN_Atari"  # CNN and FC layers
+policy: "Categorical_AC"
+runner: "DRL"
+
+# Good HyperParameters for Atari Games, Do not change them.
+filters: [32, 64, 64]
+kernels: [8, 4, 3]
+strides: [4, 2, 1]
+fc_hidden_sizes: [512, ]  # fully connected layer hidden sizes.
+actor_hidden_size: []
+critic_hidden_size: []
+activation: "ReLU"
+
+seed: 1
+parallels: 8
+running_steps: 10000000  # 10M
+n_steps: 128
+n_epoch: 4
+n_minibatch: 4
+learning_rate: 0.00025
+
+use_grad_clip: True
+
+vf_coef: 0.25
+ent_coef: 0.01
+clip_range: 0.2
+clip_grad_norm: 0.5
+gamma: 0.99
+use_gae: True
+gae_lambda: 0.95  # gae_lambda: Lambda parameter for calculating N-step advantage
+use_advnorm: True
+
+use_obsnorm: False
+use_rewnorm: False
+obsnorm_range: 5
+rewnorm_range: 5
+
+test_steps: 10000
+eval_interval: 100000
+test_episode: 3
+log_dir: "./logs/ppo/"
+model_dir: "./models/ppo/"

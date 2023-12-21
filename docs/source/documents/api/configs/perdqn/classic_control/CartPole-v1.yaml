@@ -1,0 +1,40 @@
+agent: "PerDQN"
+env_name: "Classic Control"
+env_id: "CartPole-v1"
+vectorize: "Dummy_Gym"
+policy: "Basic_Q_network"
+representation: "Basic_MLP"
+runner: "DRL"
+
+representation_hidden_size: [128,]
+q_hidden_size: [128,]
+activation: 'ReLU'
+
+seed: 1
+parallels: 10
+n_size: 20000
+batch_size: 128
+learning_rate: 0.001
+gamma: 0.99
+
+start_greedy: 0.5
+end_greedy: 0.1
+decay_step_greedy: 20000
+sync_frequency: 100
+training_frequency: 4
+running_steps: 500000
+start_training: 1000
+
+use_obsnorm: False
+use_rewnorm: False
+obsnorm_range: 5
+rewnorm_range: 5
+
+PER_alpha: 0.5
+PER_beta0: 0.4
+
+test_steps: 10000
+eval_interval: 50000
+test_episode: 1
+log_dir: "./logs/perdqn/"
+model_dir: "./models/perdqn/"

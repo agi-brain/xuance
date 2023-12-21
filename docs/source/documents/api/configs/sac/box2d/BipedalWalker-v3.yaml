@@ -1,0 +1,38 @@
+agent: "SAC"
+env_name: "Box2D"
+env_id: "BipedalWalker-v3"
+vectorize: "Dummy_Gym"
+policy: "Gaussian_SAC"
+representation: "Basic_MLP"
+runner: "DRL"
+
+representation_hidden_size: [256,]
+actor_hidden_size: [256,]
+critic_hidden_size: [256,]
+activation: "ReLU"
+
+seed: 1
+parallels: 16
+n_size: 20000
+batch_size: 256
+actor_learning_rate: 0.001
+critic_learning_rate: 0.001
+gamma: 0.98
+tau: 0.005
+
+start_noise: 0.25
+end_noise: 0.05
+training_frequency: 2
+running_steps: 500000
+start_training: 2000
+
+use_obsnorm: False
+use_rewnorm: False
+obsnorm_range: 5
+rewnorm_range: 5
+
+test_steps: 10000
+eval_interval: 50000
+test_episode: 1
+log_dir: "./logs/sac/"
+model_dir: "./models/sac/"

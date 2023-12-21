@@ -1,11 +1,6 @@
 Segment Tree 
 ========================================
 
-.. raw:: html
-
-    <br><hr>
-
-
 In this module, we define two classes: SegmentTree and its subclasses SumSegmentTree, and MinSegmentTree. 
 These classes are used for efficiently computing range queries (such as sum and minimum) over a dynamic array. 
 They are often employed in algorithms that involve prioritized replay in DRL, where efficient computation of cumulative sums or minimum values is crucial.

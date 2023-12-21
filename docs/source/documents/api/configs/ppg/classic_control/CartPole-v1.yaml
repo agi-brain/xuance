@@ -1,0 +1,42 @@
+agent: "PPG"
+env_name: "Classic Control"
+env_id: "CartPole-v1"
+vectorize: "Dummy_Gym"
+representation: "Basic_MLP"
+policy: "Categorical_PPG"
+runner: "DRL"
+
+representation_hidden_size: [128,]
+actor_hidden_size: [128,]
+critic_hidden_size: [128,]
+activation: "ReLU"
+
+seed: 1
+parallels: 10
+running_steps: 300000
+n_steps: 256
+n_epoch: 1
+policy_nepoch: 4
+value_nepoch: 8 
+aux_nepoch: 8
+n_minibatch: 1
+learning_rate: 0.0004
+
+ent_coef: 0.01
+clip_range: 0.2
+kl_beta: 1.0
+gamma: 0.98
+use_gae: True
+gae_lambda: 0.95
+use_advnorm: True
+
+use_obsnorm: True
+use_rewnorm: True
+obsnorm_range: 5
+rewnorm_range: 5
+
+test_steps: 10000
+eval_interval: 50000
+test_episode: 1
+log_dir: "./logs/ppg/"
+model_dir: "./models/ppg/"

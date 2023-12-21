@@ -5,10 +5,6 @@ The common tools serve to prepare the DRL model before training,
 such as loading hyper parameters from YAML files, obtaining terminal commands,
 and creating a predefined runner for DRL implementations.
 
-.. raw:: html
-
-    <br><hr>
-
 
 .. py:function::
     xuance.common.common_tools.recursive_dict_update(basic_dict, target_dict)

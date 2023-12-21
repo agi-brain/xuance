@@ -1,0 +1,43 @@
+agent: "PPG"
+env_name: "MuJoCo"
+env_id: "InvertedPendulum-v2"
+vectorize: "Dummy_Gym"
+representation: "Basic_MLP"
+policy: "Gaussian_PPG"
+runner: "DRL"
+
+representation_hidden_size: [256,]
+actor_hidden_size: [256,]
+critic_hidden_size: [256,]
+activation: "LeakyReLU"
+
+seed: 1
+parallels: 16
+running_steps: 1000000  # 1M
+n_steps: 256
+n_minibatch: 4
+n_epoch: 1
+policy_nepoch: 2
+value_nepoch: 4
+aux_nepoch: 8
+
+learning_rate: 0.0007
+
+ent_coef: 0.0
+clip_range: 0.25
+kl_beta: 2.0
+gamma: 0.98
+use_gae: True
+gae_lambda: 0.95
+use_advnorm: True
+
+use_obsnorm: True
+use_rewnorm: True
+obsnorm_range: 5
+rewnorm_range: 5
+
+test_steps: 10000
+eval_interval: 10000
+test_episode: 5
+log_dir: "./logs/ppg/"
+model_dir: "./models/ppg/"

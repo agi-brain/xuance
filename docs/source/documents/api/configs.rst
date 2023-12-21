@@ -1,7 +1,8 @@
 Configs
 ======================
 
-
+XuanCe provides a structured way to manage configurations for various DRL scenarios, 
+making it easy to experiment with different setups
 
 .. raw:: html
 
@@ -14,20 +15,20 @@ The basic parameter configuration is stored in the "xuance/config/basic.yaml" fi
 
 .. code-block:: yaml
 
-    dl_toolbox: "torch"  # Values: "torch", "mindspore", "tensorlayer"
+    dl_toolbox: "torch"  # The deep learning toolbox. Choices: "torch", "mindspore", "tensorflow"
 
     project_name: "XuanCe_Benchmark"
-    logger: "tensorboard"  # Values: tensorboard, wandb.
-    wandb_user_name: "papers_liu"
+    logger: "tensorboard"  # Choices: "tensorboard", "wandb".
+    wandb_user_name: "your_user_name"
 
     parallels: 10
     seed: 2910
     render: True
-    render_mode: 'rgb_array' # Values: 'human', 'rgb_array'.
+    render_mode: 'rgb_array' # Choices: 'human', 'rgb_array'.
     test_mode: False
     test_steps: 2000
 
-    device: "cuda:0"
+    device: "cpu"
 
 
 It should be noted that the value of the `device` variable in the `basic.yaml` file varies depending on the specific deep learning framework, as outlined below:
@@ -40,20 +41,82 @@ It should be noted that the value of the `device` variable in the `basic.yaml` f
 
    <br><hr>
    
-Algorithm Configurations
---------------------------
+Algorithm Configurations for Different Tasks
+------------------------------------------------------
 
 As an example, taking the parameter configuration for the DQN algorithm in the Atari environment, 
 in addition to the basic parameter configuration, the algorithm-specific parameters are stored in the "xuance/configs/dqn/atari.yaml" file, with the following content:
 
+
 .. raw:: html
 
-    <center>
-        <select id="env-mujoco" onchange="showMujocoEnv(this)"></select>
-        <br>
-        <div id="vis-mujoco"></div>
-        <br>
-    </center>
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.0.0/js-yaml.min.js"></script>
+    <script>
+        function loadContent(option1, option2, option3) {
+            var yamlFilePath = 'configs/' + option1 + '/' + option2 + '/' + option3 + '.yaml';
+            $.ajax({
+                url: yamlFilePath,
+                dataType: 'text',
+                success: function(data) {
+                    $("#display-content").html(data);
+                }
+            });
+        }
+
+        $(document).ready(function() {
+            $(".configs").change(function() {
+                var selectedOption1 = $("#method").val();
+                var selectedOption2 = $("#env").val();
+                var selectedOption3 = $("#env-id").val();
+                loadContent(selectedOption1, selectedOption2, selectedOption3);
+            });
+        });
+    </script>
+
+.. raw:: html
+
+    <div style="display: flex; justify-content: center;">
+        <div style="margin-right: 20px;">
+            <select id="method" class="configs">
+                <option value="dqn">DQN</option>
+                <option value="c51">C51DQN</option>
+                <option value="DoubelDQN">DoubelDQN Agent</option>
+            </select>
+            <br>
+            <div id="vis-method"></div>
+        </div>
+        <div style="margin-right: 20px;">
+            <select id="env" class="configs">
+                <option value="classic_control">Classic Control</option>
+                <option value="box2d">Box2D</option>
+                <option value="atari">Atari</option>
+            </select>
+            <br>
+            <div id="vis-env"></div>
+        </div>
+        <div>
+            <select id="env-id" class="configs">
+                <option value="CartPole-v1">CartPole-v1</option>
+                <option value="Pendulum-v1">Pendulum-v1</option>
+                <option value="CarRacing-v2">CarRacing-v2</option>
+            </select>
+            <br>
+            <div id="vis-env-id"></div>
+        </div>
+    </div>
+
+    <br>
+
+    <div>
+        <h3>Display Content</h3>
+        <div id="display-content"></div>
+    </div>
+
+
+
+
+
 
 .. code-block:: yaml
 

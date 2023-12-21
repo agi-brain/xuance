@@ -1,10 +1,6 @@
 Statistic Tools
 ===============================================
 
-.. raw:: html
-
-    <br><hr>
-
 This module defines two functions and a class related to computing mean and standard deviation with support for distributed computing using MPI (Message Passing Interface).
 
 .. py:function::
