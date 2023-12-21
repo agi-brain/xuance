@@ -264,6 +264,45 @@ class DummyOnPolicyBuffer(Buffer):
         return obs_batch, act_batch, ret_batch, val_batch, adv_batch, aux_batch
 
 
+class DummyOnPolicyBuffer_Atari(DummyOnPolicyBuffer):
+    """
+    Replay buffer for on-policy DRL algorithms and Atari tasks.
+
+    Args:
+        observation_space: the observation space of the environment.
+        action_space: the action space of the environment.
+        auxiliary_shape: data shape of auxiliary information (if exists).
+        n_envs: number of parallel environments.
+        n_size: max length of steps to store for one environment.
+        use_gae: if use GAE trick.
+        use_advnorm: if use Advantage normalization trick.
+        gamma: discount factor.
+        gae_lam: gae lambda.
+    """
+    def __init__(self,
+                 observation_space: Space,
+                 action_space: Space,
+                 auxiliary_shape: Optional[dict],
+                 n_envs: int,
+                 n_size: int,
+                 use_gae: bool = True,
+                 use_advnorm: bool = True,
+                 gamma: float = 0.99,
+                 gae_lam: float = 0.95):
+        super(DummyOnPolicyBuffer_Atari, self).__init__(observation_space, action_space, auxiliary_shape,
+                                                        n_envs, n_size, use_gae, use_advnorm, gamma, gae_lam)
+        self.observations = create_memory(space2shape(self.observation_space), self.n_envs, self.n_size, np.uint8)
+
+    def clear(self):
+        self.ptr, self.size = 0, 0
+        self.observations = create_memory(space2shape(self.observation_space), self.n_envs, self.n_size, np.uint8)
+        self.actions = create_memory(space2shape(self.action_space), self.n_envs, self.n_size)
+        self.auxiliary_infos = create_memory(self.auxiliary_shape, self.n_envs, self.n_size)
+        self.rewards = create_memory((), self.n_envs, self.n_size)
+        self.returns = create_memory((), self.n_envs, self.n_size)
+        self.advantages = create_memory((), self.n_envs, self.n_size)
+
+
 class DummyOffPolicyBuffer(Buffer):
     """
     Replay buffer for off-policy DRL algorithms.
@@ -549,41 +588,3 @@ class DummyOffPolicyBuffer_Atari(DummyOffPolicyBuffer):
         self.rewards = create_memory((), self.n_envs, self.n_size)
         self.terminals = create_memory((), self.n_envs, self.n_size)
 
-
-class DummyOnPolicyBuffer_Atari(DummyOnPolicyBuffer):
-    """
-    Replay buffer for on-policy DRL algorithms and Atari tasks.
-
-    Args:
-        observation_space: the observation space of the environment.
-        action_space: the action space of the environment.
-        auxiliary_shape: data shape of auxiliary information (if exists).
-        n_envs: number of parallel environments.
-        n_size: max length of steps to store for one environment.
-        use_gae: if use GAE trick.
-        use_advnorm: if use Advantage normalization trick.
-        gamma: discount factor.
-        gae_lam: gae lambda.
-    """
-    def __init__(self,
-                 observation_space: Space,
-                 action_space: Space,
-                 auxiliary_shape: Optional[dict],
-                 n_envs: int,
-                 n_size: int,
-                 use_gae: bool = True,
-                 use_advnorm: bool = True,
-                 gamma: float = 0.99,
-                 gae_lam: float = 0.95):
-        super(DummyOnPolicyBuffer_Atari, self).__init__(observation_space, action_space, auxiliary_shape,
-                                                        n_envs, n_size, use_gae, use_advnorm, gamma, gae_lam)
-        self.observations = create_memory(space2shape(self.observation_space), self.n_envs, self.n_size, np.uint8)
-
-    def clear(self):
-        self.ptr, self.size = 0, 0
-        self.observations = create_memory(space2shape(self.observation_space), self.n_envs, self.n_size, np.uint8)
-        self.actions = create_memory(space2shape(self.action_space), self.n_envs, self.n_size)
-        self.auxiliary_infos = create_memory(self.auxiliary_shape, self.n_envs, self.n_size)
-        self.rewards = create_memory((), self.n_envs, self.n_size)
-        self.returns = create_memory((), self.n_envs, self.n_size)
-        self.advantages = create_memory((), self.n_envs, self.n_size)
