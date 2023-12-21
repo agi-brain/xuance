@@ -57,25 +57,24 @@ Currently, XuanCe has been open-sourced on GitHub:
    :maxdepth: 1
    :caption: APIs:
 
-   documents/api/agents.rst
+   
+   documents/api/common
+   documents/api/configs
+   documents/api/environments
+   documents/api/utils
    documents/api/representations
    documents/api/policies
    documents/api/learners
+   documents/api/agents.rst
    documents/api/runners
-   documents/api/utils
-   documents/api/configs
-   documents/api/common
-   documents/api/environments
 
 .. toctree::
    :maxdepth: 1
    :caption: Benchmarks
 
-   documents/benchmark/toy
    documents/benchmark/mujoco
    documents/benchmark/atari
-   documents/benchmark/mpe
-   documents/benchmark/magent
+   documents/benchmark/smac
 
 .. toctree::
    :maxdepth: 1
