@@ -938,13 +938,130 @@ Within the following content, we provid the preset arguments for each implementa
 
                         .. code-block:: yaml
 
+                            agent: "Duel_DQN"
+                            env_name: "Classic Control"
+                            env_id: "CartPole-v1"
+                            vectorize: "Dummy_Gym"
+                            policy: "Duel_Q_network"
+                            representation: "Basic_MLP"
+                            runner: "DRL"
+
+                            representation_hidden_size: [128, ]
+                            q_hidden_size: [128, ]
+                            activation: 'ReLU'
+
+                            seed: 1
+                            parallels: 10
+                            n_size: 10000
+                            batch_size: 256
+                            learning_rate: 0.001
+                            gamma: 0.99
+
+                            start_greedy: 0.5
+                            end_greedy: 0.01
+                            decay_step_greedy: 20000
+                            sync_frequency: 50
+                            training_frequency: 1
+                            running_steps: 500000
+                            start_training: 1000
+
+                            use_obsnorm: False
+                            use_rewnorm: False
+                            obsnorm_range: 5
+                            rewnorm_range: 5
+
+                            test_steps: 10000
+                            eval_interval: 50000
+                            test_episode: 1
+                            log_dir: "./logs/dueldqn/"
+                            model_dir: "./models/dueldqn/"
+
+
                     .. group-tab:: Acrobot-v1
 
                         .. code-block:: yaml
 
+                            agent: "Duel_DQN"
+                            env_name: "Classic Control"
+                            env_id: "Acrobot-v1"
+                            vectorize: "Dummy_Gym"
+                            policy: "Duel_Q_network"
+                            representation: "Basic_MLP"
+                            runner: "DRL"
+
+                            representation_hidden_size: [128, ]
+                            q_hidden_size: [128, ]
+                            activation: 'ReLU'
+
+                            seed: 1
+                            parallels: 10
+                            n_size: 10000
+                            batch_size: 256
+                            learning_rate: 0.001
+                            gamma: 0.99
+
+                            start_greedy: 0.5
+                            end_greedy: 0.01
+                            decay_step_greedy: 20000
+                            sync_frequency: 50
+                            training_frequency: 1
+                            running_steps: 500000
+                            start_training: 1000
+
+                            use_obsnorm: False
+                            use_rewnorm: False
+                            obsnorm_range: 5
+                            rewnorm_range: 5
+
+                            test_steps: 10000
+                            eval_interval: 50000
+                            test_episode: 1
+                            log_dir: "./logs/dueldqn/"
+                            model_dir: "./models/dueldqn/"
+
+
                     .. group-tab:: MountainCar-v0
 
                         .. code-block:: yaml
+
+                            agent: "Duel_DQN"
+                            env_name: "Classic Control"
+                            env_id: "MountainCar-v0"
+                            vectorize: "Dummy_Gym"
+                            policy: "Duel_Q_network"
+                            representation: "Basic_MLP"
+                            runner: "DRL"
+
+                            representation_hidden_size: [128, ]
+                            q_hidden_size: [128, ]
+                            activation: 'ReLU'
+
+                            seed: 1
+                            parallels: 10
+                            n_size: 10000
+                            batch_size: 256
+                            learning_rate: 0.0001
+                            gamma: 0.99
+
+                            start_greedy: 0.5
+                            end_greedy: 0.01
+                            decay_step_greedy: 20000
+                            sync_frequency: 50
+                            training_frequency: 1
+                            running_steps: 300000
+                            start_training: 1000
+
+                            use_obsnorm: False
+                            use_rewnorm: False
+                            obsnorm_range: 5
+                            rewnorm_range: 5
+
+                            test_steps: 10000
+                            eval_interval: 50000
+                            test_episode: 1
+                            log_dir: "./logs/dueldqn/"
+                            model_dir: "./models/dueldqn/"
+
             
             .. group-tab:: Box2D
 
@@ -954,13 +1071,143 @@ Within the following content, we provid the preset arguments for each implementa
 
                         .. code-block:: yaml
 
+                            agent: "Duel_DQN"
+                            env_name: "Box2D"
+                            env_id: "CarRacing-v2"
+                            vectorize: "Dummy_Gym"
+                            policy: "Duel_Q_network"
+                            representation: "Basic_CNN"
+                            runner: "DRL"
+
+                            # the following three arguments are for "Basic_CNN" representation.
+                            filters: [16, 16, 32]  #  [16, 16, 32, 32]
+                            kernels: [8, 4, 3]  # [8, 6, 4, 4]
+                            strides: [4, 2, 1]  # [2, 2, 2, 2]
+
+                            q_hidden_size: [512,]
+                            activation: 'ReLU'
+
+                            seed: 1
+                            parallels: 2
+                            n_size: 10000
+                            batch_size: 32
+                            learning_rate: 0.0001
+                            gamma: 0.99
+
+                            start_greedy: 0.5
+                            end_greedy: 0.01
+                            decay_step_greedy: 50000
+                            sync_frequency: 500
+                            training_frequency: 1
+                            running_steps: 2000000
+                            start_training: 1000
+
+                            use_obsnorm: False
+                            use_rewnorm: False
+                            obsnorm_range: 5
+                            rewnorm_range: 5
+
+                            test_steps: 10000
+                            eval_interval: 100000
+                            test_episode: 1
+                            log_dir: "./logs/dueldqn/"
+                            model_dir: "./models/dueldqn/"
+
+
                     .. group-tab:: LunarLander-v2
 
                         .. code-block:: yaml
+
+                            agent: "Duel_DQN"
+                            env_name: "Box2D"
+                            env_id: "LunarLander-v2"
+                            vectorize: "Dummy_Gym"
+                            policy: "Duel_Q_network"
+                            representation: "Basic_MLP"
+                            runner: "DRL"
+
+                            representation_hidden_size: [128, ]
+                            q_hidden_size: [128, ]
+                            activation: 'ReLU'
+
+                            seed: 1
+                            parallels: 10
+                            n_size: 10000
+                            batch_size: 256
+                            learning_rate: 0.001
+                            gamma: 0.99
+
+                            start_greedy: 0.5
+                            end_greedy: 0.01
+                            decay_step_greedy: 20000
+                            sync_frequency: 50
+                            training_frequency: 1
+                            running_steps: 500000
+                            start_training: 1000
+
+                            use_obsnorm: False
+                            use_rewnorm: False
+                            obsnorm_range: 5
+                            rewnorm_range: 5
+
+                            test_steps: 10000
+                            eval_interval: 50000
+                            test_episode: 1
+                            log_dir: "./logs/dueldqn/"
+                            model_dir: "./models/dueldqn/"
+
             
             .. group-tab:: Atari
 
                 .. code-block:: yaml
+
+                    agent: "Duel_DQN"
+                    vectorize: "Dummy_Atari"
+                    env_name: "Atari"
+                    env_id: "ALE/Breakout-v5"
+                    obs_type: "grayscale"  # choice for Atari env: ram, rgb, grayscale
+                    img_size: [84, 84]  # default is 210 x 160 in gym[Atari]
+                    num_stack: 4  # frame stack trick
+                    frame_skip: 4  # frame skip trick
+                    noop_max: 30  # Do no-op action for a number of steps in [1, noop_max].
+                    policy: "Duel_Q_network"
+                    representation: "Basic_CNN"
+                    runner: "DRL"
+
+                    # the following three arguments are for "Basic_CNN" representation.
+                    filters: [32, 64, 64]  #  [16, 16, 32, 32]
+                    kernels: [8, 4, 3]  # [8, 6, 4, 4]
+                    strides: [4, 2, 1]  # [2, 2, 2, 2]
+
+                    q_hidden_size: [512, ]
+                    activation: "ReLU"
+
+                    seed: 1069
+                    parallels: 5
+                    n_size: 100000
+                    batch_size: 32  # 64
+                    learning_rate: 0.0001
+                    gamma: 0.99
+
+                    start_greedy: 0.5
+                    end_greedy: 0.05
+                    decay_step_greedy: 1000000  # 1M
+                    sync_frequency: 500
+                    training_frequency: 1
+                    running_steps: 50000000  # 50M
+                    start_training: 10000
+
+                    use_obsnorm: False
+                    use_rewnorm: False
+                    obsnorm_range: 5
+                    rewnorm_range: 5
+
+                    test_steps: 10000
+                    save_model_frequency: 500000
+                    test_episode: 1
+                    log_dir: "./logs/dueldqn/"
+                    model_dir: "./models/dueldqn/"
+
 
     .. group-tab:: NoisyDQN
 
@@ -974,13 +1221,130 @@ Within the following content, we provid the preset arguments for each implementa
 
                         .. code-block:: yaml
 
+                            agent: "NoisyDQN"
+                            env_name: "Classic Control"
+                            env_id: "CartPole-v1"
+                            vectorize: "Dummy_Gym"
+                            policy: "Noisy_Q_network"
+                            representation: "Basic_MLP"
+                            runner: "DRL"
+
+                            representation_hidden_size: [128,]
+                            q_hidden_size: [128,]
+                            activation: 'ReLU'
+
+                            seed: 1
+                            parallels: 10
+                            n_size: 20000
+                            batch_size: 128
+                            learning_rate: 0.001
+                            gamma: 0.99
+
+                            start_noise: 0.05
+                            end_noise: 0.0
+                            decay_step_noise: 50000
+                            sync_frequency: 100
+                            training_frequency: 2
+                            running_steps: 500000
+                            start_training: 1000
+
+                            use_obsnorm: False
+                            use_rewnorm: False
+                            obsnorm_range: 5
+                            rewnorm_range: 5
+
+                            test_steps: 10000
+                            eval_interval: 50000
+                            test_episode: 1
+                            log_dir: "./logs/noisy_dqn/"
+                            model_dir: "./models/noisy_dqn/"
+
+
                     .. group-tab:: Acrobot-v1
 
                         .. code-block:: yaml
 
+                            agent: "NoisyDQN"
+                            env_name: "Classic Control"
+                            env_id: "Acrobot-v1"
+                            vectorize: "Dummy_Gym"
+                            policy: "Noisy_Q_network"
+                            representation: "Basic_MLP"
+                            runner: "DRL"
+
+                            representation_hidden_size: [128,]
+                            q_hidden_size: [128,]
+                            activation: 'ReLU'
+
+                            seed: 1
+                            parallels: 10
+                            n_size: 20000
+                            batch_size: 128
+                            learning_rate: 0.001
+                            gamma: 0.99
+
+                            start_noise: 0.05
+                            end_noise: 0.0
+                            decay_step_noise: 50000
+                            sync_frequency: 100
+                            training_frequency: 2
+                            running_steps: 500000
+                            start_training: 1000
+
+                            use_obsnorm: False
+                            use_rewnorm: False
+                            obsnorm_range: 5
+                            rewnorm_range: 5
+
+                            test_steps: 10000
+                            eval_interval: 50000
+                            test_episode: 1
+                            log_dir: "./logs/noisy_dqn/"
+                            model_dir: "./models/noisy_dqn/"
+
+
                     .. group-tab:: MountainCar-v0
 
                         .. code-block:: yaml
+
+                            agent: "NoisyDQN"
+                            env_name: "Classic Control"
+                            env_id: "MountainCar-v0"
+                            vectorize: "Dummy_Gym"
+                            policy: "Noisy_Q_network"
+                            representation: "Basic_MLP"
+                            runner: "DRL"
+
+                            representation_hidden_size: [128,]
+                            q_hidden_size: [128,]
+                            activation: 'ReLU'
+
+                            seed: 1
+                            parallels: 10
+                            n_size: 20000
+                            batch_size: 128
+                            learning_rate: 0.001
+                            gamma: 0.99
+
+                            start_noise: 0.05
+                            end_noise: 0.0
+                            decay_step_noise: 50000
+                            sync_frequency: 100
+                            training_frequency: 2
+                            running_steps: 500000
+                            start_training: 1000
+
+                            use_obsnorm: False
+                            use_rewnorm: False
+                            obsnorm_range: 5
+                            rewnorm_range: 5
+
+                            test_steps: 10000
+                            eval_interval: 50000
+                            test_episode: 1
+                            log_dir: "./logs/noisy_dqn/"
+                            model_dir: "./models/noisy_dqn/"
+
             
             .. group-tab:: Box2D
 
@@ -990,13 +1354,142 @@ Within the following content, we provid the preset arguments for each implementa
 
                         .. code-block:: yaml
 
+                            agent: "NoisyDQN"
+                            env_name: "Box2D"
+                            env_id: "CarRacing-v2"
+                            vectorize: "Dummy_Gym"
+                            policy: "Noisy_Q_network"
+                            representation: "Basic_CNN"
+                            runner: "DRL"
+
+                            # the following three arguments are for "Basic_CNN" representation.
+                            filters: [16, 16, 32]  #  [16, 16, 32, 32]
+                            kernels: [8, 4, 3]  # [8, 6, 4, 4]
+                            strides: [4, 2, 1]  # [2, 2, 2, 2]
+
+                            q_hidden_size: [512,]
+                            activation: 'ReLU'
+
+                            seed: 1
+                            parallels: 2
+                            n_size: 10000
+                            batch_size: 32
+                            learning_rate: 0.0001
+                            gamma: 0.99
+
+                            start_noise: 0.05
+                            end_noise: 0.0
+                            decay_step_noise: 200000
+                            sync_frequency: 500
+                            training_frequency: 1
+                            running_steps: 2000000
+                            start_training: 1000
+
+                            use_obsnorm: False
+                            use_rewnorm: False
+                            obsnorm_range: 5
+                            rewnorm_range: 5
+
+                            test_steps: 10000
+                            eval_interval: 100000
+                            test_episode: 1
+                            log_dir: "./logs/noisy_dqn/"
+                            model_dir: "./models/noisy_dqn/"
+
                     .. group-tab:: LunarLander-v2
 
                         .. code-block:: yaml
+
+                            agent: "NoisyDQN"
+                            env_name: "Box2D"
+                            env_id: "LunarLander-v2"
+                            vectorize: "Dummy_Gym"
+                            policy: "Noisy_Q_network"
+                            representation: "Basic_MLP"
+                            runner: "DRL"
+
+                            representation_hidden_size: [128,]
+                            q_hidden_size: [128,]
+                            activation: 'ReLU'
+
+                            seed: 1
+                            parallels: 10
+                            n_size: 20000
+                            batch_size: 128
+                            learning_rate: 0.001
+                            gamma: 0.99
+
+                            start_noise: 0.05
+                            end_noise: 0.0
+                            decay_step_noise: 50000
+                            sync_frequency: 100
+                            training_frequency: 2
+                            running_steps: 500000
+                            start_training: 1000
+
+                            use_obsnorm: False
+                            use_rewnorm: False
+                            obsnorm_range: 5
+                            rewnorm_range: 5
+
+                            test_steps: 10000
+                            eval_interval: 50000
+                            test_episode: 1
+                            log_dir: "./logs/noisy_dqn/"
+                            model_dir: "./models/noisy_dqn/"
+
             
             .. group-tab:: Atari
 
                 .. code-block:: yaml
+
+                    agent: "NoisyDQN"
+                    vectorize: "Dummy_Atari"
+                    env_name: "Atari"
+                    env_id: "ALE/Breakout-v5"
+                    obs_type: "grayscale"  # choice for Atari env: ram, rgb, grayscale
+                    img_size: [84, 84]  # default is 210 x 160 in gym[Atari]
+                    num_stack: 4  # frame stack trick
+                    frame_skip: 4  # frame skip trick
+                    noop_max: 30  # Do no-op action for a number of steps in [1, noop_max].
+                    policy: "Noisy_Q_network"
+                    representation: "Basic_CNN"
+                    runner: "DRL"
+
+                    # the following three arguments are for "Basic_CNN" representation.
+                    filters: [32, 64, 64]  #  [16, 16, 32, 32]
+                    kernels: [8, 4, 3]  # [8, 6, 4, 4]
+                    strides: [4, 2, 1]  # [2, 2, 2, 2]
+
+                    q_hidden_size: [512, ]
+                    activation: "ReLU"
+
+                    seed: 1069
+                    parallels: 5
+                    n_size: 100000
+                    batch_size: 32  # 64
+                    learning_rate: 0.0001
+                    gamma: 0.99
+
+                    start_noise: 0.05
+                    end_noise: 0.0
+                    decay_step_greedy: 1000000  # 1M
+                    sync_frequency: 500
+                    training_frequency: 1
+                    running_steps: 50000000  # 50M
+                    start_training: 10000
+
+                    use_obsnorm: False
+                    use_rewnorm: False
+                    obsnorm_range: 5
+                    rewnorm_range: 5
+
+                    test_steps: 10000
+                    eval_interval: 500000
+                    test_episode: 1
+                    log_dir: "./logs/noisy_dqn/"
+                    model_dir: "./models/noisy_dqn/"
+
 
     .. group-tab:: PerDQN
 
@@ -1010,13 +1503,137 @@ Within the following content, we provid the preset arguments for each implementa
 
                         .. code-block:: yaml
 
+                            agent: "PerDQN"
+                            env_name: "Classic Control"
+                            env_id: "CartPole-v1"
+                            vectorize: "Dummy_Gym"
+                            policy: "Basic_Q_network"
+                            representation: "Basic_MLP"
+                            runner: "DRL"
+
+                            representation_hidden_size: [128,]
+                            q_hidden_size: [128,]
+                            activation: 'ReLU'
+
+                            seed: 1
+                            parallels: 10
+                            n_size: 20000
+                            batch_size: 128
+                            learning_rate: 0.001
+                            gamma: 0.99
+
+                            start_greedy: 0.5
+                            end_greedy: 0.1
+                            decay_step_greedy: 20000
+                            sync_frequency: 100
+                            training_frequency: 4
+                            running_steps: 500000
+                            start_training: 1000
+
+                            use_obsnorm: False
+                            use_rewnorm: False
+                            obsnorm_range: 5
+                            rewnorm_range: 5
+
+                            PER_alpha: 0.5
+                            PER_beta0: 0.4
+
+                            test_steps: 10000
+                            eval_interval: 50000
+                            test_episode: 1
+                            log_dir: "./logs/perdqn/"
+                            model_dir: "./models/perdqn/"
+
                     .. group-tab:: Acrobot-v1
 
                         .. code-block:: yaml
 
+                            agent: "PerDQN"
+                            env_name: "Classic Control"
+                            env_id: "Acrobot-v1"
+                            vectorize: "Dummy_Gym"
+                            policy: "Basic_Q_network"
+                            representation: "Basic_MLP"
+                            runner: "DRL"
+
+                            representation_hidden_size: [128,]
+                            q_hidden_size: [128,]
+                            activation: 'ReLU'
+
+                            seed: 1
+                            parallels: 10
+                            n_size: 20000
+                            batch_size: 128
+                            learning_rate: 0.001
+                            gamma: 0.99
+
+                            start_greedy: 0.5
+                            end_greedy: 0.1
+                            decay_step_greedy: 20000
+                            sync_frequency: 100
+                            training_frequency: 4
+                            running_steps: 500000
+                            start_training: 1000
+
+                            use_obsnorm: False
+                            use_rewnorm: False
+                            obsnorm_range: 5
+                            rewnorm_range: 5
+
+                            PER_alpha: 0.5
+                            PER_beta0: 0.4
+
+                            test_steps: 10000
+                            eval_interval: 50000
+                            test_episode: 1
+                            log_dir: "./logs/perdqn/"
+                            model_dir: "./models/perdqn/"
+
                     .. group-tab:: MountainCar-v0
 
                         .. code-block:: yaml
+
+                            agent: "PerDQN"
+                            env_name: "Classic Control"
+                            env_id: "MountainCar-v0"
+                            vectorize: "Dummy_Gym"
+                            policy: "Basic_Q_network"
+                            representation: "Basic_MLP"
+                            runner: "DRL"
+
+                            representation_hidden_size: [128,]
+                            q_hidden_size: [128,]
+                            activation: 'ReLU'
+
+                            seed: 1
+                            parallels: 10
+                            n_size: 20000
+                            batch_size: 128
+                            learning_rate: 0.001
+                            gamma: 0.99
+
+                            start_greedy: 0.5
+                            end_greedy: 0.1
+                            decay_step_greedy: 20000
+                            sync_frequency: 100
+                            training_frequency: 4
+                            running_steps: 500000
+                            start_training: 1000
+
+                            use_obsnorm: False
+                            use_rewnorm: False
+                            obsnorm_range: 5
+                            rewnorm_range: 5
+
+                            PER_alpha: 0.5
+                            PER_beta0: 0.4
+
+                            test_steps: 10000
+                            eval_interval: 50000
+                            test_episode: 1
+                            log_dir: "./logs/perdqn/"
+                            model_dir: "./models/perdqn/"
+
             
             .. group-tab:: Box2D
 
@@ -1026,13 +1643,151 @@ Within the following content, we provid the preset arguments for each implementa
 
                         .. code-block:: yaml
 
+                            agent: "PerDQN"
+                            env_name: "Box2D"
+                            env_id: "CarRacing-v2"
+                            vectorize: "Dummy_Gym"
+                            policy: "Basic_Q_network"
+                            representation: "Basic_CNN"
+                            runner: "DRL"
+
+                            # the following three arguments are for "Basic_CNN" representation.
+                            filters: [16, 16, 32]  #  [16, 16, 32, 32]
+                            kernels: [8, 4, 3]  # [8, 6, 4, 4]
+                            strides: [4, 2, 1]  # [2, 2, 2, 2]
+
+                            q_hidden_size: [512,]
+                            activation: 'ReLU'
+
+                            seed: 1
+                            parallels: 2
+                            n_size: 10000
+                            batch_size: 32
+                            learning_rate: 0.0001
+                            gamma: 0.99
+
+                            start_greedy: 0.5
+                            end_greedy: 0.01
+                            decay_step_greedy: 50000
+                            sync_frequency: 500
+                            training_frequency: 1
+                            running_steps: 2000000
+                            start_training: 1000
+
+                            use_obsnorm: False
+                            use_rewnorm: False
+                            obsnorm_range: 5
+                            rewnorm_range: 5
+
+                            PER_alpha: 0.5
+                            PER_beta0: 0.4
+
+                            test_steps: 10000
+                            eval_interval: 100000
+                            test_episode: 1
+                            log_dir: "./logs/perdqn/"
+                            model_dir: "./models/perdqn/"
+
+
                     .. group-tab:: LunarLander-v2
 
                         .. code-block:: yaml
-            
+
+                            agent: "PerDQN"
+                            env_name: "Classic Control"
+                            env_id: "LunarLander-v2"
+                            vectorize: "Dummy_Gym"
+                            policy: "Basic_Q_network"
+                            representation: "Basic_MLP"
+                            runner: "DRL"
+
+                            representation_hidden_size: [128,]
+                            q_hidden_size: [128,]
+                            activation: 'ReLU'
+
+                            seed: 1
+                            parallels: 10
+                            n_size: 20000
+                            batch_size: 128
+                            learning_rate: 0.001
+                            gamma: 0.99
+
+                            start_greedy: 0.5
+                            end_greedy: 0.1
+                            decay_step_greedy: 20000
+                            sync_frequency: 100
+                            training_frequency: 4
+                            running_steps: 500000
+                            start_training: 1000
+
+                            use_obsnorm: False
+                            use_rewnorm: False
+                            obsnorm_range: 5
+                            rewnorm_range: 5
+
+                            PER_alpha: 0.5
+                            PER_beta0: 0.4
+
+                            test_steps: 10000
+                            eval_interval: 50000
+                            test_episode: 1
+                            log_dir: "./logs/perdqn/"
+                            model_dir: "./models/perdqn/"
+
             .. group-tab:: Atari
 
                 .. code-block:: yaml
+
+                    agent: "PerDQN"
+                    vectorize: "Dummy_Atari"
+                    env_name: "Atari"
+                    env_id: "ALE/Breakout-v5"
+                    obs_type: "grayscale"  # choice for Atari env: ram, rgb, grayscale
+                    img_size: [84, 84]  # default is 210 x 160 in gym[Atari]
+                    num_stack: 4  # frame stack trick
+                    frame_skip: 4  # frame skip trick
+                    noop_max: 30  # Do no-op action for a number of steps in [1, noop_max].
+                    policy: "Basic_Q_network"
+                    representation: "Basic_CNN"
+                    runner: "DRL"
+
+                    # the following three arguments are for "Basic_CNN" representation.
+                    filters: [32, 64, 64]  #  [16, 16, 32, 32]
+                    kernels: [8, 4, 3]  # [8, 6, 4, 4]
+                    strides: [4, 2, 1]  # [2, 2, 2, 2]
+
+                    q_hidden_size: [512, ]
+                    activation: "ReLU"
+
+                    seed: 1069
+                    parallels: 5
+                    n_size: 100000
+                    batch_size: 32  # 64
+                    learning_rate: 0.0001
+                    gamma: 0.99
+
+                    start_greedy: 0.5
+                    end_greedy: 0.05
+                    decay_step_greedy: 1000000  # 1M
+                    sync_frequency: 500
+                    training_frequency: 1
+                    running_steps: 50000000  # 50M
+                    start_training: 10000
+
+                    use_obsnorm: False
+                    use_rewnorm: False
+                    obsnorm_range: 5
+                    rewnorm_range: 5
+
+                    PER_alpha: 0.5
+                    PER_beta0: 0.4
+
+                    test_steps: 10000
+                    eval_interval: 500000
+                    test_episode: 1
+                    log_dir: "./logs/perdqn/"
+                    model_dir: "./models/perdqn/"
+
 
     .. group-tab:: QRDQN
 
@@ -1046,14 +1801,132 @@ Within the following content, we provid the preset arguments for each implementa
 
                         .. code-block:: yaml
 
+                            agent: "QRDQN"
+                            env_name: "Classic Control"
+                            env_id: "CartPole-v1"
+                            vectorize: "Dummy_Gym"
+                            policy: "QR_Q_network"
+                            representation: "Basic_MLP"
+                            runner: "DRL"
+
+                            representation_hidden_size: [128,]
+                            q_hidden_size: [128,]
+                            activation: 'ReLU'
+
+                            seed: 1
+                            parallels: 10
+                            n_size: 20000
+                            batch_size: 256
+                            learning_rate: 0.001
+                            gamma: 0.99
+                            quantile_num: 20
+
+                            start_greedy: 0.25
+                            end_greedy: 0.01
+                            decay_step_greedy: 30000
+                            sync_frequency: 100
+                            training_frequency: 1
+                            running_steps: 300000
+                            start_training: 1000
+
+                            use_obsnorm: False
+                            use_rewnorm: False
+                            obsnorm_range: 5
+                            rewnorm_range: 5
+
+                            test_steps: 10000
+                            eval_interval: 50000
+                            test_episode: 1
+                            log_dir: "./logs/qrdqn/"
+                            model_dir: "./models/qrdqn/"
+
+
                     .. group-tab:: Acrobot-v1
 
                         .. code-block:: yaml
 
+                            agent: "QRDQN"
+                            env_name: "Classic Control"
+                            env_id: "Acrobot-v1"
+                            vectorize: "Dummy_Gym"
+                            policy: "QR_Q_network"
+                            representation: "Basic_MLP"
+                            runner: "DRL"
+
+                            representation_hidden_size: [128,]
+                            q_hidden_size: [128,]
+                            activation: 'ReLU'
+
+                            seed: 1
+                            parallels: 10
+                            n_size: 20000
+                            batch_size: 256
+                            learning_rate: 0.001
+                            gamma: 0.99
+                            quantile_num: 20
+
+                            start_greedy: 0.25
+                            end_greedy: 0.01
+                            decay_step_greedy: 30000
+                            sync_frequency: 100
+                            training_frequency: 1
+                            running_steps: 300000
+                            start_training: 1000
+
+                            use_obsnorm: False
+                            use_rewnorm: False
+                            obsnorm_range: 5
+                            rewnorm_range: 5
+
+                            test_steps: 10000
+                            eval_interval: 50000
+                            test_episode: 1
+                            log_dir: "./logs/qrdqn/"
+                            model_dir: "./models/qrdqn/"
+
                     .. group-tab:: MountainCar-v0
 
                         .. code-block:: yaml
-            
+
+                            agent: "QRDQN"
+                            env_name: "Classic Control"
+                            env_id: "MountainCar-v0"
+                            vectorize: "Dummy_Gym"
+                            policy: "QR_Q_network"
+                            representation: "Basic_MLP"
+                            runner: "DRL"
+
+                            representation_hidden_size: [128,]
+                            q_hidden_size: [128,]
+                            activation: 'ReLU'
+
+                            seed: 1
+                            parallels: 10
+                            n_size: 20000
+                            batch_size: 256
+                            learning_rate: 0.001
+                            gamma: 0.99
+                            quantile_num: 20
+
+                            start_greedy: 0.25
+                            end_greedy: 0.01
+                            decay_step_greedy: 30000
+                            sync_frequency: 100
+                            training_frequency: 1
+                            running_steps: 300000
+                            start_training: 1000
+
+                            use_obsnorm: False
+                            use_rewnorm: False
+                            obsnorm_range: 5
+                            rewnorm_range: 5
+
+                            test_steps: 10000
+                            eval_interval: 50000
+                            test_episode: 1
+                            log_dir: "./logs/qrdqn/"
+                            model_dir: "./models/qrdqn/"
+
             .. group-tab:: Box2D
 
                 .. tabs::
@@ -1062,13 +1935,146 @@ Within the following content, we provid the preset arguments for each implementa
 
                         .. code-block:: yaml
 
+                            agent: "QRDQN"
+                            env_name: "Box2D"
+                            env_id: "CarRacing-v2"
+                            vectorize: "Dummy_Gym"
+                            policy: "QR_Q_network"
+                            representation: "Basic_CNN"
+                            runner: "DRL"
+
+                            # the following three arguments are for "Basic_CNN" representation.
+                            filters: [16, 16, 32]  #  [16, 16, 32, 32]
+                            kernels: [8, 4, 3]  # [8, 6, 4, 4]
+                            strides: [4, 2, 1]  # [2, 2, 2, 2]
+
+                            q_hidden_size: [512,]
+                            activation: 'ReLU'
+
+                            seed: 1
+                            parallels: 2
+                            n_size: 10000
+                            batch_size: 32
+                            learning_rate: 0.0001
+                            gamma: 0.99
+                            quantile_num: 20
+
+                            start_greedy: 0.5
+                            end_greedy: 0.01
+                            decay_step_greedy: 50000
+                            sync_frequency: 500
+                            training_frequency: 1
+                            running_steps: 2000000
+                            start_training: 1000
+
+                            use_obsnorm: False
+                            use_rewnorm: False
+                            obsnorm_range: 5
+                            rewnorm_range: 5
+
+                            test_steps: 10000
+                            eval_interval: 100000
+                            test_episode: 1
+                            log_dir: "./logs/qrdqn/"
+                            model_dir: "./models/qrdqn/"
+
+
                     .. group-tab:: LunarLander-v2
 
                         .. code-block:: yaml
+
+                            agent: "QRDQN"
+                            env_name: "Box2D"
+                            env_id: "LunarLander-v2"
+                            vectorize: "Dummy_Gym"
+                            policy: "QR_Q_network"
+                            representation: "Basic_MLP"
+                            runner: "DRL"
+
+                            representation_hidden_size: [128,]
+                            q_hidden_size: [128,]
+                            activation: 'ReLU'
+
+                            seed: 1
+                            parallels: 10
+                            n_size: 10000
+                            batch_size: 256
+                            learning_rate: 0.001
+                            gamma: 0.99
+                            quantile_num: 20
+
+                            start_greedy: 0.5
+                            end_greedy: 0.01
+                            decay_step_greedy: 10000
+                            sync_frequency: 50
+                            training_frequency: 1
+                            running_steps: 200000
+                            start_training: 1000
+
+                            use_obsnorm: False
+                            use_rewnorm: False
+                            obsnorm_range: 5
+                            rewnorm_range: 5
+
+                            test_steps: 10000
+                            eval_interval: 50000
+                            test_episode: 1
+                            log_dir: "./logs/qrdqn/"
+                            model_dir: "./models/qrdqn/"
+
             
             .. group-tab:: Atari
 
                 .. code-block:: yaml
+
+                    agent: "QRDQN"
+                    vectorize: "Dummy_Atari"
+                    env_name: "Atari"
+                    env_id: "ALE/Breakout-v5"
+                    obs_type: "grayscale"  # choice for Atari env: ram, rgb, grayscale
+                    img_size: [84, 84]  # default is 210 x 160 in gym[Atari]
+                    num_stack: 4  # frame stack trick
+                    frame_skip: 4  # frame skip trick
+                    noop_max: 30  # Do no-op action for a number of steps in [1, noop_max].
+                    policy: "QR_Q_network"
+                    representation: "Basic_CNN"
+                    runner: "DRL"
+
+                    # the following three arguments are for "Basic_CNN" representation.
+                    filters: [32, 64, 64]  #  [16, 16, 32, 32]
+                    kernels: [8, 4, 3]  # [8, 6, 4, 4]
+                    strides: [4, 2, 1]  # [2, 2, 2, 2]
+
+                    q_hidden_size: [512, ]
+                    activation: "ReLU"
+
+                    seed: 1069
+                    parallels: 5
+                    n_size: 100000
+                    batch_size: 32  # 64
+                    learning_rate: 0.0001
+                    gamma: 0.99
+                    quantile_num: 20
+
+                    start_greedy: 0.5
+                    end_greedy: 0.05
+                    decay_step_greedy: 1000000  # 1M
+                    sync_frequency: 500
+                    training_frequency: 1
+                    running_steps: 50000000  # 50M
+                    start_training: 10000
+
+                    use_obsnorm: False
+                    use_rewnorm: False
+                    obsnorm_range: 5
+                    rewnorm_range: 5
+
+                    test_steps: 10000
+                    eval_interval: 500000
+                    test_episode: 1
+                    log_dir: "./logs/qrdqn/"
+                    model_dir: "./models/qrdqn/"
+
 
 .. raw:: html
 
