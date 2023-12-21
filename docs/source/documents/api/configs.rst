@@ -2410,17 +2410,192 @@ Within the following content, we provid the preset arguments for each implementa
 
                         .. code-block:: yaml
 
+                            agent: "PPG"
+                            env_name: "Classic Control"
+                            env_id: "CartPole-v1"
+                            vectorize: "Dummy_Gym"
+                            representation: "Basic_MLP"
+                            policy: "Categorical_PPG"
+                            runner: "DRL"
+
+                            representation_hidden_size: [128,]
+                            actor_hidden_size: [128,]
+                            critic_hidden_size: [128,]
+                            activation: "ReLU"
+
+                            seed: 1
+                            parallels: 10
+                            running_steps: 300000
+                            n_steps: 256
+                            n_epoch: 1
+                            policy_nepoch: 4
+                            value_nepoch: 8
+                            aux_nepoch: 8
+                            n_minibatch: 1
+                            learning_rate: 0.0004
+
+                            ent_coef: 0.01
+                            clip_range: 0.2
+                            kl_beta: 1.0
+                            gamma: 0.98
+                            use_gae: True
+                            gae_lambda: 0.95
+                            use_advnorm: True
+
+                            use_obsnorm: True
+                            use_rewnorm: True
+                            obsnorm_range: 5
+                            rewnorm_range: 5
+
+                            test_steps: 10000
+                            eval_interval: 50000
+                            test_episode: 1
+                            log_dir: "./logs/ppg/"
+                            model_dir: "./models/ppg/"
+
                     .. group-tab:: Acrobot-v1
 
                         .. code-block:: yaml
+
+                            agent: "PPG"
+                            env_name: "Classic Control"
+                            env_id: "Acrobot-v1"
+                            vectorize: "Dummy_Gym"
+                            representation: "Basic_MLP"
+                            policy: "Categorical_PPG"
+                            runner: "DRL"
+
+                            representation_hidden_size: [128,]
+                            actor_hidden_size: [128,]
+                            critic_hidden_size: [128,]
+                            activation: "LeakyReLU"
+
+                            seed: 1
+                            parallels: 10
+                            running_steps: 300000
+                            n_steps: 256
+                            n_epoch: 1
+                            policy_nepoch: 4
+                            value_nepoch: 8
+                            aux_nepoch: 8
+                            n_minibatch: 1
+                            learning_rate: 0.001
+
+                            ent_coef: 0.01
+                            clip_range: 0.2
+                            kl_beta: 1.0
+                            gamma: 0.98
+                            use_gae: True
+                            gae_lambda: 0.95
+                            use_advnorm: True
+
+                            use_obsnorm: True
+                            use_rewnorm: True
+                            obsnorm_range: 5
+                            rewnorm_range: 5
+
+                            test_steps: 10000
+                            eval_interval: 50000
+                            test_episode: 1
+                            log_dir: "./logs/ppg/"
+                            model_dir: "./models/ppg/"
+
 
                     .. group-tab:: Pendulum-v1
 
                         .. code-block:: yaml
 
+                            agent: "PPG"
+                            env_name: "Classic Control"
+                            env_id: "Pendulum-v1"
+                            vectorize: "Dummy_Gym"
+                            representation: "Basic_MLP"
+                            policy: "Gaussian_PPG"
+                            runner: "DRL"
+
+                            representation_hidden_size: [128,]
+                            actor_hidden_size: [128,]
+                            critic_hidden_size: [128,]
+                            activation: "LeakyReLU"
+
+                            seed: 1
+                            parallels: 10
+                            running_steps: 300000
+                            n_steps: 256
+                            n_epoch: 1
+                            policy_nepoch: 4
+                            value_nepoch: 8
+                            aux_nepoch: 8
+                            n_minibatch: 1
+                            learning_rate: 0.001
+
+                            ent_coef: 0.01
+                            clip_range: 0.2
+                            kl_beta: 1.0
+                            gamma: 0.98
+                            use_gae: True
+                            gae_lambda: 0.95
+                            use_advnorm: True
+
+                            use_obsnorm: True
+                            use_rewnorm: True
+                            obsnorm_range: 5
+                            rewnorm_range: 5
+
+                            test_steps: 10000
+                            eval_interval: 50000
+                            test_episode: 1
+                            log_dir: "./logs/ppg/"
+                            model_dir: "./models/ppg/"
+
+
                     .. group-tab:: MountainCar-v0
 
                         .. code-block:: yaml
+
+                            agent: "PPG"
+                            env_name: "Classic Control"
+                            env_id: "MountainCar-v0"
+                            vectorize: "Dummy_Gym"
+                            representation: "Basic_MLP"
+                            policy: "Categorical_PPG"
+                            runner: "DRL"
+
+                            representation_hidden_size: [128,]
+                            actor_hidden_size: [128,]
+                            critic_hidden_size: [128,]
+                            activation: "LeakyReLU"
+
+                            seed: 1
+                            parallels: 10
+                            running_steps: 300000
+                            n_steps: 256
+                            n_epoch: 1
+                            policy_nepoch: 4
+                            value_nepoch: 8
+                            aux_nepoch: 8
+                            n_minibatch: 1
+                            learning_rate: 0.001
+
+                            ent_coef: 0.01
+                            clip_range: 0.2
+                            kl_beta: 1.0
+                            gamma: 0.98
+                            use_gae: True
+                            gae_lambda: 0.95
+                            use_advnorm: True
+
+                            use_obsnorm: True
+                            use_rewnorm: True
+                            obsnorm_range: 5
+                            rewnorm_range: 5
+
+                            test_steps: 10000
+                            eval_interval: 50000
+                            test_episode: 1
+                            log_dir: "./logs/ppg/"
+                            model_dir: "./models/ppg/"
+
 
             .. group-tab:: Box2D
 
@@ -2430,13 +2605,145 @@ Within the following content, we provid the preset arguments for each implementa
 
                         .. code-block:: yaml
 
+                            agent: "PPG"
+                            env_name: "Box2D"
+                            env_id: "BipedalWalker-v3"
+                            vectorize: "Dummy_Gym"
+                            representation: "Basic_MLP"
+                            policy: "Gaussian_PPG"
+                            runner: "DRL"
+
+                            representation_hidden_size: [128,]
+                            actor_hidden_size: [128,]
+                            critic_hidden_size: [128,]
+                            activation: "LeakyReLU"
+
+                            seed: 1
+                            parallels: 10
+                            running_steps: 300000
+                            n_steps: 256
+                            n_epoch: 1
+                            policy_nepoch: 4
+                            value_nepoch: 8
+                            aux_nepoch: 8
+                            n_minibatch: 1
+                            learning_rate: 0.001
+
+                            ent_coef: 0.01
+                            clip_range: 0.2
+                            kl_beta: 1.0
+                            gamma: 0.98
+                            use_gae: True
+                            gae_lambda: 0.95
+                            use_advnorm: True
+
+                            use_obsnorm: True
+                            use_rewnorm: True
+                            obsnorm_range: 5
+                            rewnorm_range: 5
+
+                            test_steps: 10000
+                            eval_interval: 50000
+                            test_episode: 1
+                            log_dir: "./logs/ppg/"
+                            model_dir: "./models/ppg/"
+
+
                     .. group-tab:: LunarLander-v2
 
                         .. code-block:: yaml
 
+                            agent: "PPG"
+                            env_name: "Box2D"
+                            env_id: "LunarLander-v2"
+                            vectorize: "Dummy_Gym"
+                            representation: "Basic_MLP"
+                            policy: "Categorical_PPG"
+                            runner: "DRL"
+
+                            representation_hidden_size: [128,]
+                            actor_hidden_size: [128,]
+                            critic_hidden_size: [128,]
+                            activation: "ReLU"
+
+                            seed: 1
+                            parallels: 10
+                            running_steps: 300000
+                            n_steps: 256
+                            n_epoch: 1
+                            policy_nepoch: 4
+                            value_nepoch: 8
+                            aux_nepoch: 8
+                            n_minibatch: 1
+                            learning_rate: 0.0004
+
+                            ent_coef: 0.01
+                            clip_range: 0.2
+                            kl_beta: 1.0
+                            gamma: 0.98
+                            use_gae: True
+                            gae_lambda: 0.95
+                            use_advnorm: True
+
+                            use_obsnorm: True
+                            use_rewnorm: True
+                            obsnorm_range: 5
+                            rewnorm_range: 5
+
+                            test_steps: 10000
+                            eval_interval: 50000
+                            test_episode: 1
+                            log_dir: "./logs/ppg/"
+                            model_dir: "./models/ppg/"
+
             .. group-tab:: MuJoCo
 
                 .. code-block:: yaml
+
+                    agent: "PPG"
+                    env_name: "MuJoCo"
+                    env_id: "InvertedPendulum-v2"
+                    vectorize: "Dummy_Gym"
+                    representation: "Basic_MLP"
+                    policy: "Gaussian_PPG"
+                    runner: "DRL"
+
+                    representation_hidden_size: [256,]
+                    actor_hidden_size: [256,]
+                    critic_hidden_size: [256,]
+                    activation: "LeakyReLU"
+
+                    seed: 1
+                    parallels: 16
+                    running_steps: 1000000  # 1M
+                    n_steps: 256
+                    n_minibatch: 4
+                    n_epoch: 1
+                    policy_nepoch: 2
+                    value_nepoch: 4
+                    aux_nepoch: 8
+
+                    learning_rate: 0.0007
+
+                    ent_coef: 0.0
+                    clip_range: 0.25
+                    kl_beta: 2.0
+                    gamma: 0.98
+                    use_gae: True
+                    gae_lambda: 0.95
+                    use_advnorm: True
+
+                    use_obsnorm: True
+                    use_rewnorm: True
+                    obsnorm_range: 5
+                    rewnorm_range: 5
+
+                    test_steps: 10000
+                    eval_interval: 10000
+                    test_episode: 5
+                    log_dir: "./logs/ppg/"
+                    model_dir: "./models/ppg/"
+
 
 
     .. group-tab:: PPO
@@ -2451,17 +2758,197 @@ Within the following content, we provid the preset arguments for each implementa
 
                         .. code-block:: yaml
 
+                            agent: "PPO_Clip"  # Choice: PPO_Clip, PPO_KL
+                            env_name: "Classic Control"
+                            env_id: "CartPole-v1"
+                            vectorize: "Dummy_Gym"
+                            representation: "Basic_MLP"
+                            policy: "Categorical_AC"
+                            runner: "DRL"
+
+                            representation_hidden_size: [128,]
+                            actor_hidden_size: [128,]
+                            critic_hidden_size: [128,]
+                            activation: 'LeakyReLU'
+
+                            seed: 1
+                            parallels: 10
+                            running_steps: 300000
+                            n_steps: 256
+                            n_epoch: 8
+                            n_minibatch: 8
+                            learning_rate: 0.0004
+
+                            use_grad_clip: True
+
+                            vf_coef: 0.25
+                            ent_coef: 0.01
+                            target_kl: 0.001  # for PPO_KL agent
+                            clip_range: 0.2  # for PPO_Clip agent
+                            clip_grad_norm: 0.5
+                            gamma: 0.98
+                            use_gae: True
+                            gae_lambda: 0.95
+                            use_advnorm: True
+
+                            use_obsnorm: True
+                            use_rewnorm: True
+                            obsnorm_range: 5
+                            rewnorm_range: 5
+
+                            test_steps: 10000
+                            eval_interval: 50000
+                            test_episode: 3
+                            log_dir: "./logs/ppo/"
+                            model_dir: "./models/ppo/"
+
+
                     .. group-tab:: Acrobot-v1
 
                         .. code-block:: yaml
+
+                            agent: "PPO_Clip"  # Choice: PPO_Clip, PPO_KL
+                            env_name: "Classic Control"
+                            env_id: "Acrobot-v1"
+                            vectorize: "Dummy_Gym"
+                            representation: "Basic_MLP"
+                            policy: "Categorical_AC"
+                            runner: "DRL"
+
+                            representation_hidden_size: [128,]
+                            actor_hidden_size: [128,]
+                            critic_hidden_size: [128,]
+                            activation: 'LeakyReLU'
+
+                            seed: 1
+                            parallels: 10
+                            running_steps: 300000
+                            n_steps: 256
+                            n_epoch: 8
+                            n_minibatch: 8
+                            learning_rate: 0.0004
+
+                            use_grad_clip: True
+
+                            vf_coef: 0.25
+                            ent_coef: 0.01
+                            target_kl: 0.001  # for PPO_KL agent
+                            clip_range: 0.2  # for PPO_Clip agent
+                            clip_grad_norm: 0.5
+                            gamma: 0.98
+                            use_gae: True
+                            gae_lambda: 0.95
+                            use_advnorm: True
+
+                            use_obsnorm: True
+                            use_rewnorm: True
+                            obsnorm_range: 5
+                            rewnorm_range: 5
+
+                            test_steps: 10000
+                            eval_interval: 50000
+                            test_episode: 3
+                            log_dir: "./logs/ppo/"
+                            model_dir: "./models/ppo/"
+
 
                     .. group-tab:: Pendulum-v1
 
                         .. code-block:: yaml
 
+                            agent: "PPO_Clip"  # Choice: PPO_Clip, PPO_KL
+                            env_name: "Classic Control"
+                            env_id: "Pendulum-v1"
+                            vectorize: "Dummy_Gym"
+                            representation: "Basic_MLP"
+                            policy: "Gaussian_AC"
+                            runner: "DRL"
+
+                            representation_hidden_size: [128,]
+                            actor_hidden_size: [128,]
+                            critic_hidden_size: [128,]
+                            activation: 'LeakyReLU'
+
+                            seed: 1
+                            parallels: 10
+                            running_steps: 300000
+                            n_steps: 256
+                            n_epoch: 8
+                            n_minibatch: 8
+                            learning_rate: 0.0004
+
+                            use_grad_clip: True
+
+                            vf_coef: 0.25
+                            ent_coef: 0.01
+                            target_kl: 0.001  # for PPO_KL agent
+                            clip_range: 0.2  # for PPO_Clip agent
+                            clip_grad_norm: 0.5
+                            gamma: 0.98
+                            use_gae: True
+                            gae_lambda: 0.95
+                            use_advnorm: True
+
+                            use_obsnorm: True
+                            use_rewnorm: True
+                            obsnorm_range: 5
+                            rewnorm_range: 5
+
+                            test_steps: 10000
+                            eval_interval: 50000
+                            test_episode: 3
+                            log_dir: "./logs/ppo/"
+                            model_dir: "./models/ppo/"
+
+
                     .. group-tab:: MountainCar-v0
 
                         .. code-block:: yaml
+
+                            agent: "PPO_Clip"  # Choice: PPO_Clip, PPO_KL
+                            env_name: "Classic Control"
+                            env_id: "MountainCar-v0"
+                            vectorize: "Dummy_Gym"
+                            representation: "Basic_MLP"
+                            policy: "Categorical_AC"
+                            runner: "DRL"
+
+                            representation_hidden_size: [128,]
+                            actor_hidden_size: [128,]
+                            critic_hidden_size: [128,]
+                            activation: 'LeakyReLU'
+
+                            seed: 1
+                            parallels: 10
+                            running_steps: 300000
+                            n_steps: 256
+                            n_epoch: 8
+                            n_minibatch: 8
+                            learning_rate: 0.0004
+
+                            use_grad_clip: True
+
+                            vf_coef: 0.25
+                            ent_coef: 0.01
+                            target_kl: 0.001  # for PPO_KL agent
+                            clip_range: 0.2  # for PPO_Clip agent
+                            clip_grad_norm: 0.5
+                            gamma: 0.98
+                            use_gae: True
+                            gae_lambda: 0.95
+                            use_advnorm: True
+
+                            use_obsnorm: True
+                            use_rewnorm: True
+                            obsnorm_range: 5
+                            rewnorm_range: 5
+
+                            test_steps: 10000
+                            eval_interval: 50000
+                            test_episode: 3
+                            log_dir: "./logs/ppo/"
+                            model_dir: "./models/ppo/"
+
 
             .. group-tab:: Box2D
 
@@ -2471,21 +2958,254 @@ Within the following content, we provid the preset arguments for each implementa
 
                         .. code-block:: yaml
 
+                            agent: "PPO_Clip"  # Choice: PPO_Clip, PPO_KL
+                            env_name: "Box2D"
+                            env_id: "BipedalWalker-v3"
+                            vectorize: "Dummy_Gym"
+                            representation: "Basic_MLP"
+                            policy: "Gaussian_AC"
+                            runner: "DRL"
+
+                            representation_hidden_size: [128,]
+                            actor_hidden_size: [128,]
+                            critic_hidden_size: [128,]
+                            activation: 'LeakyReLU'
+
+                            seed: 1
+                            parallels: 10
+                            running_steps: 300000
+                            n_steps: 256
+                            n_epoch: 8
+                            n_minibatch: 8
+                            learning_rate: 0.0004
+
+                            use_grad_clip: True
+
+                            vf_coef: 0.25
+                            ent_coef: 0.01
+                            target_kl: 0.001  # for PPO_KL agent
+                            clip_range: 0.2  # for PPO_Clip agent
+                            clip_grad_norm: 0.5
+                            gamma: 0.98
+                            use_gae: True
+                            gae_lambda: 0.95
+                            use_advnorm: True
+
+                            use_obsnorm: True
+                            use_rewnorm: True
+                            obsnorm_range: 5
+                            rewnorm_range: 5
+
+                            test_steps: 10000
+                            eval_interval: 50000
+                            test_episode: 3
+                            log_dir: "./logs/ppo/"
+                            model_dir: "./models/ppo/"
+
                     .. group-tab:: CarRacing-v2
 
                         .. code-block:: yaml
+
+                            agent: "PPO_Clip"  # Choice: PPO_Clip, PPO_KL
+                            env_name: "Box2D"
+                            env_id: "CarRacing-v2"
+                            vectorize: "Dummy_Gym"
+                            representation: "Basic_CNN"
+                            policy: "Categorical_AC"
+                            runner: "DRL"
+
+                            # the following three arguments are for "Basic_CNN" representation.
+                            filters: [16, 16, 32]  #  [16, 16, 32, 32]
+                            kernels: [8, 4, 3]  # [8, 6, 4, 4]
+                            strides: [4, 2, 1]  # [2, 2, 2, 2]
+                            fc_hidden_sizes: [512, ]  # fully connected layer hidden sizes.
+                            actor_hidden_size: []
+                            critic_hidden_size: []
+                            activation: "ReLU"
+
+                            seed: 1
+                            parallels: 2
+                            running_steps: 300000
+                            n_steps: 256
+                            n_epoch: 8
+                            n_minibatch: 8
+                            learning_rate: 0.0004
+
+                            use_grad_clip: True
+
+                            vf_coef: 0.25
+                            ent_coef: 0.01
+                            clip_range: 0.2
+                            clip_grad_norm: 0.5
+                            gamma: 0.99
+                            use_gae: True
+                            gae_lambda: 0.95  # gae_lambda: Lambda parameter for calculating N-step advantage
+                            use_advnorm: True
+
+                            use_obsnorm: False
+                            use_rewnorm: False
+                            obsnorm_range: 5
+                            rewnorm_range: 5
+
+                            test_steps: 10000
+                            eval_interval: 50000
+                            test_episode: 3
+                            log_dir: "./logs/ppo/"
+                            model_dir: "./models/ppo/"
 
                     .. group-tab:: LunarLander-v2
 
                         .. code-block:: yaml
 
+                            agent: "PPO_Clip"  # Choice: PPO_Clip, PPO_KL
+                            env_name: "Box2D"
+                            env_id: "LunarLander-v2"
+                            vectorize: "Dummy_Gym"
+                            representation: "Basic_MLP"
+                            policy: "Categorical_AC"
+                            runner: "DRL"
+
+                            representation_hidden_size: [128,]
+                            actor_hidden_size: [128,]
+                            critic_hidden_size: [128,]
+                            activation: 'LeakyReLU'
+
+                            seed: 1
+                            parallels: 10
+                            running_steps: 300000
+                            n_steps: 256
+                            n_epoch: 8
+                            n_minibatch: 8
+                            learning_rate: 0.0004
+
+                            use_grad_clip: True
+
+                            vf_coef: 0.25
+                            ent_coef: 0.01
+                            target_kl: 0.001  # for PPO_KL agent
+                            clip_range: 0.2  # for PPO_Clip agent
+                            clip_grad_norm: 0.5
+                            gamma: 0.98
+                            use_gae: True
+                            gae_lambda: 0.95
+                            use_advnorm: True
+
+                            use_obsnorm: True
+                            use_rewnorm: True
+                            obsnorm_range: 5
+                            rewnorm_range: 5
+
+                            test_steps: 10000
+                            eval_interval: 50000
+                            test_episode: 3
+                            log_dir: "./logs/ppo/"
+                            model_dir: "./models/ppo/"
+
             .. group-tab:: Atari
 
                 .. code-block:: yaml
 
+                    agent: "PPO_Clip"
+                    vectorize: "Dummy_Atari"
+                    env_name: "Atari"
+                    env_id: "ALE/Breakout-v5"
+                    obs_type: "grayscale"  # choice for Atari env: ram, rgb, grayscale
+                    img_size: [84, 84]  # default is 210 x 160 in gym[Atari]
+                    num_stack: 4  # frame stack trick
+                    frame_skip: 4  # frame skip trick
+                    noop_max: 30  # Do no-op action for a number of steps in [1, noop_max].
+                    representation: "AC_CNN_Atari"  # CNN and FC layers
+                    policy: "Categorical_AC"
+                    runner: "DRL"
+
+                    # Good HyperParameters for Atari Games, Do not change them.
+                    filters: [32, 64, 64]
+                    kernels: [8, 4, 3]
+                    strides: [4, 2, 1]
+                    fc_hidden_sizes: [512, ]  # fully connected layer hidden sizes.
+                    actor_hidden_size: []
+                    critic_hidden_size: []
+                    activation: "ReLU"
+
+                    seed: 1
+                    parallels: 8
+                    running_steps: 10000000  # 10M
+                    n_steps: 128
+                    n_epoch: 4
+                    n_minibatch: 4
+                    learning_rate: 0.00025
+
+                    use_grad_clip: True
+
+                    vf_coef: 0.25
+                    ent_coef: 0.01
+                    clip_range: 0.2
+                    clip_grad_norm: 0.5
+                    gamma: 0.99
+                    use_gae: True
+                    gae_lambda: 0.95  # gae_lambda: Lambda parameter for calculating N-step advantage
+                    use_advnorm: True
+
+                    use_obsnorm: False
+                    use_rewnorm: False
+                    obsnorm_range: 5
+                    rewnorm_range: 5
+
+                    test_steps: 10000
+                    eval_interval: 100000
+                    test_episode: 3
+                    log_dir: "./logs/ppo/"
+                    model_dir: "./models/ppo/"
+
+
             .. group-tab:: MuJoCo
 
                 .. code-block:: yaml
+
+                    agent: "PPO_Clip"  # choice: PPO_Clip, PPO_KL
+                    env_name: "MuJoCo"
+                    env_id: "Ant-v4"
+                    vectorize: "Dummy_Gym"
+                    policy: "Gaussian_AC"  # choice: Gaussian_AC for continuous actions, Categorical_AC for discrete actions.
+                    representation: "Basic_MLP"
+                    runner: "DRL"
+
+                    representation_hidden_size: [256,]
+                    actor_hidden_size: [256,]
+                    critic_hidden_size: [256,]
+                    activation: "LeakyReLU"
+
+                    seed: 79811
+                    parallels: 16
+                    running_steps: 1000000
+                    n_steps: 256
+                    n_epoch: 16
+                    n_minibatch: 8
+                    learning_rate: 0.0004
+
+                    use_grad_clip: True
+
+                    vf_coef: 0.25
+                    ent_coef: 0.0
+                    target_kl: 0.001  # for PPO_KL agent
+                    clip_range: 0.2  # for PPO_Clip agent
+                    clip_grad_norm: 0.5
+                    gamma: 0.99
+                    use_gae: True
+                    gae_lambda: 0.95
+                    use_advnorm: True
+
+                    use_obsnorm: True
+                    use_rewnorm: True
+                    obsnorm_range: 5
+                    rewnorm_range: 5
+
+                    test_steps: 10000
+                    eval_interval: 5000
+                    test_episode: 5
+                    log_dir: "./logs/ppo/"
+                    model_dir: "./models/ppo/"
+
 
 
     .. group-tab:: A2C
@@ -2500,17 +3220,185 @@ Within the following content, we provid the preset arguments for each implementa
 
                         .. code-block:: yaml
 
+                            agent: "A2C"
+                            env_name: "Classic Control"
+                            env_id: "CartPole-v1"
+                            vectorize: "Subproc_Gym"
+                            policy: "Categorical_AC"
+                            representation: "Basic_MLP"
+                            runner: "DRL"
+
+                            representation_hidden_size: [256,]
+                            actor_hidden_size: [256,]
+                            critic_hidden_size: [256,]
+                            activation: 'LeakyReLU'
+
+                            seed: 1
+                            parallels: 10
+                            running_steps: 300000
+                            n_steps: 128
+                            n_epoch: 1
+                            n_minibatch: 1
+                            learning_rate: 0.0004
+
+                            vf_coef: 0.25
+                            ent_coef: 0.01
+                            clip_grad: 0.5
+                            clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+                            gamma: 0.98
+                            use_gae: True
+                            gae_lambda: 0.95
+                            use_advnorm: True
+
+                            use_obsnorm: True
+                            use_rewnorm: True
+                            obsnorm_range: 5
+                            rewnorm_range: 5
+
+                            test_steps: 10000
+                            eval_interval: 50000
+                            test_episode: 3
+                            log_dir: "./logs/a2c/"
+                            model_dir: "./models/a2c/"
+
+
                     .. group-tab:: Acrobot-v1
 
                         .. code-block:: yaml
+
+                            agent: "A2C"
+                            env_name: "Classic Control"
+                            env_id: "Acrobot-v1"
+                            vectorize: "Dummy_Gym"
+                            policy: "Categorical_AC"
+                            representation: "Basic_MLP"
+                            runner: "DRL"
+
+                            representation_hidden_size: [256,]
+                            actor_hidden_size: [256,]
+                            critic_hidden_size: [256,]
+                            activation: 'LeakyReLU'
+
+                            seed: 1
+                            parallels: 10
+                            running_steps: 300000
+                            n_steps: 128
+                            n_epoch: 1
+                            n_minibatch: 1
+                            learning_rate: 0.0004
+
+                            vf_coef: 0.25
+                            ent_coef: 0.01
+                            clip_grad: 0.5
+                            clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+                            gamma: 0.98
+                            use_gae: True
+                            gae_lambda: 0.95
+                            use_advnorm: True
+
+                            use_obsnorm: True
+                            use_rewnorm: True
+                            obsnorm_range: 5
+                            rewnorm_range: 5
+
+                            test_steps: 10000
+                            eval_interval: 50000
+                            test_episode: 3
+                            log_dir: "./logs/a2c/"
+                            model_dir: "./models/a2c/"
+
 
                     .. group-tab:: Pendulum-v1
 
                         .. code-block:: yaml
 
+                            agent: "A2C"
+                            env_name: "Classic Control"
+                            env_id: "Pendulum-v1"
+                            vectorize: "Dummy_Gym"
+                            policy: "Gaussian_AC"
+                            representation: "Basic_MLP"
+                            runner: "DRL"
+
+                            representation_hidden_size: [256,]
+                            actor_hidden_size: [256,]
+                            critic_hidden_size: [256,]
+                            activation: 'LeakyReLU'
+
+                            seed: 1
+                            parallels: 10
+                            running_steps: 300000
+                            n_steps: 64
+                            n_epoch: 1
+                            n_minibatch: 1
+                            learning_rate: 0.0004
+
+                            vf_coef: 0.25
+                            ent_coef: 0.01
+                            clip_grad: 0.5
+                            clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+                            gamma: 0.98
+                            use_gae: True
+                            gae_lambda: 0.95
+                            use_advnorm: True
+
+                            use_obsnorm: True
+                            use_rewnorm: True
+                            obsnorm_range: 5
+                            rewnorm_range: 5
+
+                            test_steps: 10000
+                            eval_interval: 50000
+                            test_episode: 3
+                            log_dir: "./logs/a2c/"
+                            model_dir: "./models/a2c/"
+
+
                     .. group-tab:: MountainCar-v0
 
                         .. code-block:: yaml
+
+                            agent: "A2C"
+                            env_name: "Classic Control"
+                            env_id: "MountainCar-v0"
+                            vectorize: "Dummy_Gym"
+                            policy: "Categorical_AC"
+                            representation: "Basic_MLP"
+                            runner: "DRL"
+
+                            representation_hidden_size: [256,]
+                            actor_hidden_size: [256,]
+                            critic_hidden_size: [256,]
+                            activation: 'LeakyReLU'
+
+                            seed: 1
+                            parallels: 10
+                            running_steps: 300000
+                            n_steps: 128
+                            n_epoch: 1
+                            n_minibatch: 1
+                            learning_rate: 0.0004
+
+                            vf_coef: 0.25
+                            ent_coef: 0.01
+                            clip_grad: 0.5
+                            clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+                            gamma: 0.98
+                            use_gae: True
+                            gae_lambda: 0.95
+                            use_advnorm: True
+
+                            use_obsnorm: True
+                            use_rewnorm: True
+                            obsnorm_range: 5
+                            rewnorm_range: 5
+
+                            test_steps: 10000
+                            eval_interval: 50000
+                            test_episode: 3
+                            log_dir: "./logs/a2c/"
+                            model_dir: "./models/a2c/"
+
 
             .. group-tab:: Box2D
 
@@ -2520,21 +3408,191 @@ Within the following content, we provid the preset arguments for each implementa
 
                         .. code-block:: yaml
 
-                    .. group-tab:: CarRacing-v2
+                            agent: "A2C"
+                            env_name: "Box2D"
+                            env_id: "BipedalWalker-v3"
+                            vectorize: "Dummy_Gym"
+                            policy: "Gaussian_AC"
+                            representation: "Basic_MLP"
+                            runner: "DRL"
 
-                        .. code-block:: yaml
+                            representation_hidden_size: [64,]
+                            actor_hidden_size: [64,]
+                            critic_hidden_size: [64,]
+                            activation: 'LeakyReLU'
+
+                            seed: 1
+                            parallels: 10
+                            running_steps: 1000000
+                            n_steps: 128
+                            n_epoch: 5
+                            learning_rate: 0.0004
+
+                            vf_coef: 0.25
+                            ent_coef: 0.01
+                            clip_grad: 0.5
+                            clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+                            gamma: 0.98
+                            use_gae: True
+                            gae_lambda: 0.95
+                            use_advnorm: True
+
+                            use_obsnorm: True
+                            use_rewnorm: True
+                            obsnorm_range: 5
+                            rewnorm_range: 5
+
+                            test_steps: 10000
+                            eval_interval: 50000
+                            test_episode: 5
+                            log_dir: "./logs/a2c/"
+                            model_dir: "./models/a2c/"
+
 
                     .. group-tab:: LunarLander-v2
 
                         .. code-block:: yaml
 
+                            agent: "A2C"
+                            env_name: "Box2D"
+                            env_id: "LunarLander-v2"
+                            vectorize: "Dummy_Gym"
+                            policy: "Categorical_AC"
+                            representation: "Basic_MLP"
+                            runner: "DRL"
+
+                            representation_hidden_size: [256,]
+                            actor_hidden_size: [256,]
+                            critic_hidden_size: [256,]
+                            activation: 'LeakyReLU'
+
+                            seed: 1
+                            parallels: 10
+                            running_steps: 300000
+                            n_steps: 128
+                            n_epoch: 1
+                            learning_rate: 0.0004
+
+                            vf_coef: 0.25
+                            ent_coef: 0.01
+                            clip_grad: 0.5
+                            clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+                            gamma: 0.98
+                            use_gae: True
+                            gae_lambda: 0.95
+                            use_advnorm: True
+
+                            use_obsnorm: True
+                            use_rewnorm: True
+                            obsnorm_range: 5
+                            rewnorm_range: 5
+
+                            test_steps: 10000
+                            eval_interval: 50000
+                            test_episode: 3
+                            log_dir: "./logs/a2c/"
+                            model_dir: "./models/a2c/"
+
+
             .. group-tab:: Atari
 
                 .. code-block:: yaml
 
+                    agent: "A2C"
+                    vectorize: "Dummy_Atari"
+                    env_name: "Atari"
+                    env_id: "ALE/Breakout-v5"
+                    obs_type: "grayscale"  # choice for Atari env: ram, rgb, grayscale
+                    img_size: [84, 84]  # default is 210 x 160 in gym[Atari]
+                    num_stack: 4  # frame stack trick
+                    frame_skip: 4  # frame skip trick
+                    noop_max: 30  # Do no-op action for a number of steps in [1, noop_max].
+                    policy: "Categorical_AC"
+                    representation: "Basic_CNN"
+                    runner: "DRL"
+
+                    # the following three arguments are for "Basic_CNN" representation.
+                    filters: [32, 32, 64, 64]
+                    kernels: [8, 4, 4, 4]
+                    strides: [4, 2, 2, 2]
+                    actor_hidden_size: [128, 128]
+                    critic_hidden_size: [128, 128]
+                    activation: "LeakyReLU"
+
+                    seed: 1
+                    parallels: 5
+                    running_steps: 10000000  # 10M
+                    n_steps: 256  #
+                    n_epoch: 4
+                    n_minibatch: 8
+                    learning_rate: 0.0007
+
+                    vf_coef: 0.25
+                    ent_coef: 0.01
+                    clip_grad: 0.2
+                    clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+                    gamma: 0.99
+                    use_gae: True
+                    gae_lambda: 0.95
+                    use_advnorm: True
+
+                    use_obsnorm: False
+                    use_rewnorm: False
+                    obsnorm_range: 5
+                    rewnorm_range: 5
+
+                    test_steps: 10000
+                    eval_interval: 100000
+                    test_episode: 3
+                    log_dir: "./logs/a2c/"
+                    model_dir: "./models/a2c/"
+
+
             .. group-tab:: MuJoCo
 
                 .. code-block:: yaml
+
+                    agent: "A2C"
+                    env_name: "MuJoCo"
+                    env_id: "Ant-v4"
+                    vectorize: "Dummy_Gym"
+                    policy: "Gaussian_AC"
+                    representation: "Basic_MLP"
+                    runner: "DRL"
+
+                    representation_hidden_size: [256,]
+                    actor_hidden_size: [256,]
+                    critic_hidden_size: [256,]
+                    activation: "LeakyReLU"
+
+                    seed: 6782
+                    parallels: 16
+                    running_steps: 1000000  # 1M
+                    n_steps: 16
+                    n_epoch: 1
+                    n_minibatch: 1
+                    learning_rate: 0.0007
+
+                    vf_coef: 0.25
+                    ent_coef: 0.0
+                    clip_grad: 0.5
+                    clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+                    gamma: 0.99
+                    use_gae: True
+                    gae_lambda: 0.95
+                    use_advnorm: True
+
+                    use_obsnorm: True
+                    use_rewnorm: True
+                    obsnorm_range: 5
+                    rewnorm_range: 5
+
+                    test_steps: 10000
+                    eval_interval: 5000
+                    test_episode: 5
+                    log_dir: "./logs/a2c/"
+                    model_dir: "./models/a2c/"
+
 
 
     .. group-tab:: SAC
