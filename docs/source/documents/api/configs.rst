@@ -6989,6 +6989,53 @@ Within the following content, we provid the preset arguments for each implementa
 
                         .. code-block:: yaml
 
+                            agent: "QTRAN_base"  # Options: QTRAN_base, QTRAN_alt
+                            env_name: "mpe"
+                            env_id: "simple_spread_v3"
+                            continuous_action: False
+                            policy: "Qtran_Mixing_Q_network"
+                            representation: "Basic_MLP"
+                            vectorize: "Dummy_Pettingzoo"
+                            runner: "Pettingzoo_Runner"
+
+                            use_recurrent: False
+                            rnn:
+                            representation_hidden_size: [256, ]
+                            q_hidden_size: [256, ]  # the units for each hidden layer
+                            activation: "ReLU"
+
+                            hidden_dim_mixing_net: 64  # hidden units of mixing network
+                            hidden_dim_hyper_net: 64  # hidden units of hyper network
+                            qtran_net_hidden_dim: 64
+                            lambda_opt: 1.0
+                            lambda_nopt: 1.0
+
+                            seed: 1
+                            parallels: 16
+                            buffer_size: 100000
+                            batch_size: 256
+                            learning_rate: 0.001
+                            gamma: 0.99  # discount factor
+                            double_q: True  # use double q learning
+
+                            start_greedy: 1.0
+                            end_greedy: 0.05
+                            decay_step_greedy: 2500000
+                            start_training: 1000  # start training after n episodes
+                            running_steps: 10000000  # 10M
+                            train_per_step: False  # True: train model per step; False: train model per episode.
+                            training_frequency: 1
+                            sync_frequency: 200
+
+                            use_grad_clip: False
+                            grad_clip_norm: 0.5
+
+                            eval_interval: 100000
+                            test_episode: 5
+                            log_dir: "./logs/qtran/"
+                            model_dir: "./models/qtran/"
+
+
     .. group-tab:: DCG
 
         .. tabs::
@@ -7001,6 +7048,57 @@ Within the following content, we provid the preset arguments for each implementa
 
                         .. code-block:: yaml
 
+                            agent: "DCG"  # Options: DCG, DCG_S
+                            env_name: "mpe"
+                            env_id: "simple_spread_v3"
+                            continuous_action: False
+                            policy: "DCG_Policy"
+                            representation: "Basic_MLP"
+                            vectorize: "Dummy_Pettingzoo"
+                            runner: "Pettingzoo_Runner"
+                            on_policy: False
+
+                            use_recurrent: False
+                            rnn:
+                            representation_hidden_size: [32, ]
+                            q_hidden_size: [128, ]  # the units for each hidden layer
+                            hidden_utility_dim: 256  # hidden units of the utility function
+                            hidden_payoff_dim: 256  # hidden units of the payoff function
+                            bias_net: "Basic_MLP"
+                            hidden_bias_dim: [256, ]  # hidden units of the bias network with global states as input
+                            activation: "ReLU"
+
+                            low_rank_payoff: False  # low-rank approximation of payoff function
+                            payoff_rank: 5  # the rank K in the paper
+                            graph_type: "FULL"  # specific type of the coordination graph
+                            n_msg_iterations: 1  # number of iterations for message passing during belief propagation
+                            msg_normalized: True  # Message normalization during greedy action selection (Kok and Vlassis, 2006)
+
+                            seed: 1
+                            parallels: 16
+                            buffer_size: 100000
+                            batch_size: 256
+                            learning_rate: 0.001
+                            gamma: 0.95  # discount factor
+                            double_q: True  # use double q learning
+
+                            start_greedy: 1.0
+                            end_greedy: 0.05
+                            decay_step_greedy: 2500000
+                            start_training: 1000  # start training after n episodes
+                            running_steps: 10000000  # 10M
+                            train_per_step: False  # True: train model per step; False: train model per episode.training_frequency: 1
+                            training_frequency: 1
+                            sync_frequency: 200
+
+                            use_grad_clip: False
+                            grad_clip_norm: 0.5
+
+                            eval_interval: 100000
+                            test_episode: 5
+                            log_dir: "./logs/dcg/"
+                            model_dir: "./models/dcg/"
+
             .. group-tab:: SC2
 
                 .. tabs::
@@ -7009,41 +7107,621 @@ Within the following content, we provid the preset arguments for each implementa
 
                         .. code-block:: yaml
 
+                            agent: "DCG"  # Options: DCG, DCG_S
+                            env_name: "StarCraft2"
+                            env_id: "1c3s5z"
+                            fps: 15
+                            policy: "DCG_Policy"
+                            representation: "Basic_RNN"
+                            vectorize: "Subproc_StarCraft2"
+                            runner: "StarCraft2_Runner"
+                            on_policy: False
+
+                            # recurrent settings for Basic_RNN representation
+                            use_recurrent: True
+                            rnn: "GRU"
+                            recurrent_layer_N: 1
+                            fc_hidden_sizes: [64, ]
+                            recurrent_hidden_size: 64
+                            N_recurrent_layers: 1
+                            dropout: 0
+
+                            representation_hidden_size: [64, ]
+                            q_hidden_size: [64, ]  # the units for each hidden layer
+                            hidden_utility_dim: 64  # hidden units of the utility function
+                            hidden_payoff_dim: 64  # hidden units of the payoff function
+                            bias_net: "Basic_MLP"
+                            hidden_bias_dim: [64, ]  # hidden units of the bias network with global states as input
+                            activation: "ReLU"
+
+                            low_rank_payoff: False  # low-rank approximation of payoff function
+                            payoff_rank: 5  # the rank K in the paper
+                            graph_type: "FULL"  # specific type of the coordination graph
+                            n_msg_iterations: 8  # number of iterations for message passing during belief propagation
+                            msg_normalized: True  # Message normalization during greedy action selection (Kok and Vlassis, 2006)
+
+                            seed: 1
+                            parallels: 8
+                            buffer_size: 5000
+                            batch_size: 32
+                            learning_rate: 0.0007
+                            gamma: 0.99  # discount factor
+                            double_q: True  # use double q learning
+
+                            start_greedy: 1.0
+                            end_greedy: 0.05
+                            decay_step_greedy: 50000
+                            start_training: 1000  # start training after n episodes
+                            running_steps: 2000000  # 2M
+                            train_per_step: False  # True: train model per step; False: train model per episode.training_frequency: 1
+                            training_frequency: 1
+                            sync_frequency: 200
+
+                            use_grad_clip: False
+                            grad_clip_norm: 0.5
+
+                            eval_interval: 20000
+                            test_episode: 16
+                            log_dir: "./logs/dcg/"
+                            model_dir: "./models/dcg/"
+
                     .. group-tab:: 2m_vs_1z
 
                         .. code-block:: yaml
+
+                            agent: "DCG"  # Options: DCG, DCG_S
+                            env_name: "StarCraft2"
+                            env_id: "2m_vs_1z"
+                            fps: 15
+                            policy: "DCG_Policy"
+                            representation: "Basic_RNN"
+                            vectorize: "Subproc_StarCraft2"
+                            runner: "StarCraft2_Runner"
+                            on_policy: False
+
+                            # recurrent settings for Basic_RNN representation
+                            use_recurrent: True
+                            rnn: "GRU"
+                            recurrent_layer_N: 1
+                            fc_hidden_sizes: [64, ]
+                            recurrent_hidden_size: 64
+                            N_recurrent_layers: 1
+                            dropout: 0
+
+                            representation_hidden_size: [64, ]
+                            q_hidden_size: [64, ]  # the units for each hidden layer
+                            hidden_utility_dim: 64  # hidden units of the utility function
+                            hidden_payoff_dim: 64  # hidden units of the payoff function
+                            bias_net: "Basic_MLP"
+                            hidden_bias_dim: [64, ]  # hidden units of the bias network with global states as input
+                            activation: "ReLU"
+
+                            low_rank_payoff: False  # low-rank approximation of payoff function
+                            payoff_rank: 5  # the rank K in the paper
+                            graph_type: "FULL"  # specific type of the coordination graph
+                            n_msg_iterations: 8  # number of iterations for message passing during belief propagation
+                            msg_normalized: True  # Message normalization during greedy action selection (Kok and Vlassis, 2006)
+
+                            seed: 1
+                            parallels: 8
+                            buffer_size: 5000
+                            batch_size: 32
+                            learning_rate: 0.0007
+                            gamma: 0.99  # discount factor
+                            double_q: True  # use double q learning
+
+                            start_greedy: 1.0
+                            end_greedy: 0.05
+                            decay_step_greedy: 50000
+                            start_training: 1000  # start training after n episodes
+                            running_steps: 1000000  # 1M
+                            train_per_step: False  # True: train model per step; False: train model per episode.training_frequency: 1
+                            training_frequency: 1
+                            sync_frequency: 200
+
+                            use_grad_clip: False
+                            grad_clip_norm: 0.5
+
+                            eval_interval: 10000
+                            test_episode: 16
+                            log_dir: "./logs/dcg/"
+                            model_dir: "./models/dcg/"
 
                     .. group-tab:: 2s3z
 
                         .. code-block:: yaml
 
+                            agent: "DCG"  # Options: DCG, DCG_S
+                            env_name: "StarCraft2"
+                            env_id: "2s3z"
+                            fps: 15
+                            policy: "DCG_Policy"
+                            representation: "Basic_RNN"
+                            vectorize: "Subproc_StarCraft2"
+                            runner: "StarCraft2_Runner"
+                            on_policy: False
+
+                            # recurrent settings for Basic_RNN representation
+                            use_recurrent: True
+                            rnn: "GRU"
+                            recurrent_layer_N: 1
+                            fc_hidden_sizes: [64, ]
+                            recurrent_hidden_size: 64
+                            N_recurrent_layers: 1
+                            dropout: 0
+
+                            representation_hidden_size: [64, ]
+                            q_hidden_size: [64, ]  # the units for each hidden layer
+                            hidden_utility_dim: 64  # hidden units of the utility function
+                            hidden_payoff_dim: 64  # hidden units of the payoff function
+                            bias_net: "Basic_MLP"
+                            hidden_bias_dim: [64, ]  # hidden units of the bias network with global states as input
+                            activation: "ReLU"
+
+                            low_rank_payoff: False  # low-rank approximation of payoff function
+                            payoff_rank: 5  # the rank K in the paper
+                            graph_type: "FULL"  # specific type of the coordination graph
+                            n_msg_iterations: 8  # number of iterations for message passing during belief propagation
+                            msg_normalized: True  # Message normalization during greedy action selection (Kok and Vlassis, 2006)
+
+                            seed: 1
+                            parallels: 8
+                            buffer_size: 5000
+                            batch_size: 32
+                            learning_rate: 0.0007
+                            gamma: 0.99  # discount factor
+                            double_q: True  # use double q learning
+
+                            start_greedy: 1.0
+                            end_greedy: 0.05
+                            decay_step_greedy: 50000
+                            start_training: 1000  # start training after n episodes
+                            running_steps: 2000000  # 2M
+                            train_per_step: False  # True: train model per step; False: train model per episode.training_frequency: 1
+                            training_frequency: 1
+                            sync_frequency: 200
+
+                            use_grad_clip: False
+                            grad_clip_norm: 0.5
+
+                            eval_interval: 20000
+                            test_episode: 16
+                            log_dir: "./logs/dcg/"
+                            model_dir: "./models/dcg/"
+
                     .. group-tab:: 3m
 
                         .. code-block:: yaml
+
+                            agent: "DCG"  # Options: DCG, DCG_S
+                            env_name: "StarCraft2"
+                            env_id: "3m"
+                            fps: 15
+                            policy: "DCG_Policy"
+                            representation: "Basic_RNN"
+                            vectorize: "Subproc_StarCraft2"
+                            runner: "StarCraft2_Runner"
+                            on_policy: False
+
+                            # recurrent settings for Basic_RNN representation
+                            use_recurrent: True
+                            rnn: "GRU"
+                            recurrent_layer_N: 1
+                            fc_hidden_sizes: [64, ]
+                            recurrent_hidden_size: 64
+                            N_recurrent_layers: 1
+                            dropout: 0
+
+                            representation_hidden_size: [64, ]
+                            q_hidden_size: [64, ]  # the units for each hidden layer
+                            hidden_utility_dim: 64  # hidden units of the utility function
+                            hidden_payoff_dim: 64  # hidden units of the payoff function
+                            bias_net: "Basic_MLP"
+                            hidden_bias_dim: [64, ]  # hidden units of the bias network with global states as input
+                            activation: "ReLU"
+
+                            low_rank_payoff: False  # low-rank approximation of payoff function
+                            payoff_rank: 5  # the rank K in the paper
+                            graph_type: "FULL"  # specific type of the coordination graph
+                            n_msg_iterations: 8  # number of iterations for message passing during belief propagation
+                            msg_normalized: True  # Message normalization during greedy action selection (Kok and Vlassis, 2006)
+
+                            seed: 1
+                            parallels: 8
+                            buffer_size: 5000
+                            batch_size: 32
+                            learning_rate: 0.0007
+                            gamma: 0.99  # discount factor
+                            double_q: True  # use double q learning
+
+                            start_greedy: 1.0
+                            end_greedy: 0.05
+                            decay_step_greedy: 50000
+                            start_training: 1000  # start training after n episodes
+                            running_steps: 1000000  # 1M
+                            train_per_step: False  # True: train model per step; False: train model per episode.training_frequency: 1
+                            training_frequency: 1
+                            sync_frequency: 200
+
+                            use_grad_clip: False
+                            grad_clip_norm: 0.5
+
+                            eval_interval: 10000
+                            test_episode: 16
+                            log_dir: "./logs/dcg/"
+                            model_dir: "./models/dcg/"
 
                     .. group-tab:: 5m_vs_6m
 
                         .. code-block:: yaml
 
+                            agent: "DCG"  # Options: DCG, DCG_S
+                            env_name: "StarCraft2"
+                            env_id: "5m_vs_6m"
+                            fps: 15
+                            policy: "DCG_Policy"
+                            representation: "Basic_RNN"
+                            vectorize: "Subproc_StarCraft2"
+                            runner: "StarCraft2_Runner"
+                            on_policy: False
+
+                            # recurrent settings for Basic_RNN representation
+                            use_recurrent: True
+                            rnn: "GRU"
+                            recurrent_layer_N: 1
+                            fc_hidden_sizes: [64, ]
+                            recurrent_hidden_size: 64
+                            N_recurrent_layers: 1
+                            dropout: 0
+
+                            representation_hidden_size: [64, ]
+                            q_hidden_size: [64, ]  # the units for each hidden layer
+                            hidden_utility_dim: 64  # hidden units of the utility function
+                            hidden_payoff_dim: 64  # hidden units of the payoff function
+                            bias_net: "Basic_MLP"
+                            hidden_bias_dim: [64, ]  # hidden units of the bias network with global states as input
+                            activation: "ReLU"
+
+                            low_rank_payoff: False  # low-rank approximation of payoff function
+                            payoff_rank: 5  # the rank K in the paper
+                            graph_type: "FULL"  # specific type of the coordination graph
+                            n_msg_iterations: 8  # number of iterations for message passing during belief propagation
+                            msg_normalized: True  # Message normalization during greedy action selection (Kok and Vlassis, 2006)
+
+                            seed: 1
+                            parallels: 8
+                            buffer_size: 5000
+                            batch_size: 32
+                            learning_rate: 0.0007
+                            gamma: 0.99  # discount factor
+                            double_q: True  # use double q learning
+
+                            start_greedy: 1.0
+                            end_greedy: 0.05
+                            decay_step_greedy: 50000
+                            start_training: 1000  # start training after n episodes
+                            running_steps: 10000000  # 10M
+                            train_per_step: False  # True: train model per step; False: train model per episode.training_frequency: 1
+                            training_frequency: 1
+                            sync_frequency: 200
+
+                            use_grad_clip: False
+                            grad_clip_norm: 0.5
+
+                            eval_interval: 100000
+                            test_episode: 16
+                            log_dir: "./logs/dcg/"
+                            model_dir: "./models/dcg/"
+
                     .. group-tab:: 8m
 
                         .. code-block:: yaml
+
+                            agent: "DCG"  # Options: DCG, DCG_S
+                            env_name: "StarCraft2"
+                            env_id: "8m"
+                            fps: 15
+                            policy: "DCG_Policy"
+                            representation: "Basic_RNN"
+                            vectorize: "Subproc_StarCraft2"
+                            runner: "StarCraft2_Runner"
+                            on_policy: False
+
+                            # recurrent settings for Basic_RNN representation
+                            use_recurrent: True
+                            rnn: "GRU"
+                            recurrent_layer_N: 1
+                            fc_hidden_sizes: [64, ]
+                            recurrent_hidden_size: 64
+                            N_recurrent_layers: 1
+                            dropout: 0
+
+                            representation_hidden_size: [64, ]
+                            q_hidden_size: [64, ]  # the units for each hidden layer
+                            hidden_utility_dim: 64  # hidden units of the utility function
+                            hidden_payoff_dim: 64  # hidden units of the payoff function
+                            bias_net: "Basic_MLP"
+                            hidden_bias_dim: [64, ]  # hidden units of the bias network with global states as input
+                            activation: "ReLU"
+
+                            low_rank_payoff: False  # low-rank approximation of payoff function
+                            payoff_rank: 5  # the rank K in the paper
+                            graph_type: "FULL"  # specific type of the coordination graph
+                            n_msg_iterations: 8  # number of iterations for message passing during belief propagation
+                            msg_normalized: True  # Message normalization during greedy action selection (Kok and Vlassis, 2006)
+
+                            seed: 1
+                            parallels: 8
+                            buffer_size: 5000
+                            batch_size: 32
+                            learning_rate: 0.0007
+                            gamma: 0.99  # discount factor
+                            double_q: True  # use double q learning
+
+                            start_greedy: 1.0
+                            end_greedy: 0.05
+                            decay_step_greedy: 50000
+                            start_training: 1000  # start training after n episodes
+                            running_steps: 1000000  # 1M
+                            train_per_step: False  # True: train model per step; False: train model per episode.training_frequency: 1
+                            training_frequency: 1
+                            sync_frequency: 200
+
+                            use_grad_clip: False
+                            grad_clip_norm: 0.5
+
+                            eval_interval: 10000
+                            test_episode: 16
+                            log_dir: "./logs/dcg/"
+                            model_dir: "./models/dcg/"
 
                     .. group-tab:: 8m_vd_9m
 
                         .. code-block:: yaml
 
+                            agent: "DCG"  # Options: DCG, DCG_S
+                            env_name: "StarCraft2"
+                            env_id: "8m_vs_9m"
+                            fps: 15
+                            policy: "DCG_Policy"
+                            representation: "Basic_RNN"
+                            vectorize: "Subproc_StarCraft2"
+                            runner: "StarCraft2_Runner"
+                            on_policy: False
+
+                            # recurrent settings for Basic_RNN representation
+                            use_recurrent: True
+                            rnn: "GRU"
+                            recurrent_layer_N: 1
+                            fc_hidden_sizes: [64, ]
+                            recurrent_hidden_size: 64
+                            N_recurrent_layers: 1
+                            dropout: 0
+
+                            representation_hidden_size: [64, ]
+                            q_hidden_size: [64, ]  # the units for each hidden layer
+                            hidden_utility_dim: 64  # hidden units of the utility function
+                            hidden_payoff_dim: 64  # hidden units of the payoff function
+                            bias_net: "Basic_MLP"
+                            hidden_bias_dim: [64, ]  # hidden units of the bias network with global states as input
+                            activation: "ReLU"
+
+                            low_rank_payoff: False  # low-rank approximation of payoff function
+                            payoff_rank: 5  # the rank K in the paper
+                            graph_type: "FULL"  # specific type of the coordination graph
+                            n_msg_iterations: 8  # number of iterations for message passing during belief propagation
+                            msg_normalized: True  # Message normalization during greedy action selection (Kok and Vlassis, 2006)
+
+                            seed: 1
+                            parallels: 8
+                            buffer_size: 5000
+                            batch_size: 32
+                            learning_rate: 0.0007
+                            gamma: 0.99  # discount factor
+                            double_q: True  # use double q learning
+
+                            start_greedy: 1.0
+                            end_greedy: 0.05
+                            decay_step_greedy: 50000
+                            start_training: 1000  # start training after n episodes
+                            running_steps: 10000000  # 10M
+                            train_per_step: False  # True: train model per step; False: train model per episode.training_frequency: 1
+                            training_frequency: 1
+                            sync_frequency: 200
+
+                            use_grad_clip: False
+                            grad_clip_norm: 0.5
+
+                            eval_interval: 100000
+                            test_episode: 16
+                            log_dir: "./logs/dcg/"
+                            model_dir: "./models/dcg/"
+
                     .. group-tab:: 25m
 
                         .. code-block:: yaml
 
+                            agent: "DCG"  # Options: DCG, DCG_S
+                            env_name: "StarCraft2"
+                            env_id: "25m"
+                            fps: 15
+                            policy: "DCG_Policy"
+                            representation: "Basic_RNN"
+                            vectorize: "Subproc_StarCraft2"
+                            runner: "StarCraft2_Runner"
+                            on_policy: False
+
+                            # recurrent settings for Basic_RNN representation
+                            use_recurrent: True
+                            rnn: "GRU"
+                            recurrent_layer_N: 1
+                            fc_hidden_sizes: [64, ]
+                            recurrent_hidden_size: 64
+                            N_recurrent_layers: 1
+                            dropout: 0
+
+                            representation_hidden_size: [64, ]
+                            q_hidden_size: [64, ]  # the units for each hidden layer
+                            hidden_utility_dim: 64  # hidden units of the utility function
+                            hidden_payoff_dim: 64  # hidden units of the payoff function
+                            bias_net: "Basic_MLP"
+                            hidden_bias_dim: [64, ]  # hidden units of the bias network with global states as input
+                            activation: "ReLU"
+
+                            low_rank_payoff: False  # low-rank approximation of payoff function
+                            payoff_rank: 5  # the rank K in the paper
+                            graph_type: "FULL"  # specific type of the coordination graph
+                            n_msg_iterations: 8  # number of iterations for message passing during belief propagation
+                            msg_normalized: True  # Message normalization during greedy action selection (Kok and Vlassis, 2006)
+
+                            seed: 1
+                            parallels: 8
+                            buffer_size: 5000
+                            batch_size: 32
+                            learning_rate: 0.0007
+                            gamma: 0.99  # discount factor
+                            double_q: True  # use double q learning
+
+                            start_greedy: 1.0
+                            end_greedy: 0.05
+                            decay_step_greedy: 50000
+                            start_training: 1000  # start training after n episodes
+                            running_steps: 5000000  # 5M
+                            train_per_step: False  # True: train model per step; False: train model per episode.training_frequency: 1
+                            training_frequency: 1
+                            sync_frequency: 200
+
+                            use_grad_clip: False
+                            grad_clip_norm: 0.5
+
+                            eval_interval: 50000
+                            test_episode: 16
+                            log_dir: "./logs/dcg/"
+                            model_dir: "./models/dcg/"
+
                     .. group-tab:: corridor
 
                         .. code-block:: yaml
-                    
+
+                            agent: "DCG"  # Options: DCG, DCG_S
+                            env_name: "StarCraft2"
+                            env_id: "corridor"
+                            fps: 15
+                            policy: "DCG_Policy"
+                            representation: "Basic_RNN"
+                            vectorize: "Subproc_StarCraft2"
+                            runner: "StarCraft2_Runner"
+                            on_policy: False
+
+                            # recurrent settings for Basic_RNN representation
+                            use_recurrent: True
+                            rnn: "GRU"
+                            recurrent_layer_N: 1
+                            fc_hidden_sizes: [64, ]
+                            recurrent_hidden_size: 64
+                            N_recurrent_layers: 1
+                            dropout: 0
+
+                            representation_hidden_size: [64, ]
+                            q_hidden_size: [64, ]  # the units for each hidden layer
+                            hidden_utility_dim: 64  # hidden units of the utility function
+                            hidden_payoff_dim: 64  # hidden units of the payoff function
+                            bias_net: "Basic_MLP"
+                            hidden_bias_dim: [64, ]  # hidden units of the bias network with global states as input
+                            activation: "ReLU"
+
+                            low_rank_payoff: False  # low-rank approximation of payoff function
+                            payoff_rank: 5  # the rank K in the paper
+                            graph_type: "FULL"  # specific type of the coordination graph
+                            n_msg_iterations: 8  # number of iterations for message passing during belief propagation
+                            msg_normalized: True  # Message normalization during greedy action selection (Kok and Vlassis, 2006)
+
+                            seed: 1
+                            parallels: 8
+                            buffer_size: 5000
+                            batch_size: 32
+                            learning_rate: 0.0007
+                            gamma: 0.99  # discount factor
+                            double_q: True  # use double q learning
+
+                            start_greedy: 1.0
+                            end_greedy: 0.05
+                            decay_step_greedy: 50000
+                            start_training: 1000  # start training after n episodes
+                            running_steps: 10000000  # 10M
+                            train_per_step: False  # True: train model per step; False: train model per episode.training_frequency: 1
+                            training_frequency: 1
+                            sync_frequency: 200
+
+                            use_grad_clip: False
+                            grad_clip_norm: 0.5
+
+                            eval_interval: 100000
+                            test_episode: 16
+                            log_dir: "./logs/dcg/"
+                            model_dir: "./models/dcg/"
+
                     .. group-tab:: MMM2
 
                         .. code-block:: yaml
+
+                            agent: "DCG"  # Options: DCG, DCG_S
+                            env_name: "StarCraft2"
+                            env_id: "MMM2"
+                            fps: 15
+                            policy: "DCG_Policy"
+                            representation: "Basic_RNN"
+                            vectorize: "Subproc_StarCraft2"
+                            runner: "StarCraft2_Runner"
+                            on_policy: False
+
+                            # recurrent settings for Basic_RNN representation
+                            use_recurrent: True
+                            rnn: "GRU"
+                            recurrent_layer_N: 1
+                            fc_hidden_sizes: [64, ]
+                            recurrent_hidden_size: 64
+                            N_recurrent_layers: 1
+                            dropout: 0
+
+                            representation_hidden_size: [64, ]
+                            q_hidden_size: [64, ]  # the units for each hidden layer
+                            hidden_utility_dim: 64  # hidden units of the utility function
+                            hidden_payoff_dim: 64  # hidden units of the payoff function
+                            bias_net: "Basic_MLP"
+                            hidden_bias_dim: [64, ]  # hidden units of the bias network with global states as input
+                            activation: "ReLU"
+
+                            low_rank_payoff: False  # low-rank approximation of payoff function
+                            payoff_rank: 5  # the rank K in the paper
+                            graph_type: "FULL"  # specific type of the coordination graph
+                            n_msg_iterations: 8  # number of iterations for message passing during belief propagation
+                            msg_normalized: True  # Message normalization during greedy action selection (Kok and Vlassis, 2006)
+
+                            seed: 1
+                            parallels: 8
+                            buffer_size: 5000
+                            batch_size: 32
+                            learning_rate: 0.0007
+                            gamma: 0.99  # discount factor
+                            double_q: True  # use double q learning
+
+                            start_greedy: 1.0
+                            end_greedy: 0.05
+                            decay_step_greedy: 50000
+                            start_training: 1000  # start training after n episodes
+                            running_steps: 10000000  # 10M
+                            train_per_step: False  # True: train model per step; False: train model per episode.training_frequency: 1
+                            training_frequency: 1
+                            sync_frequency: 200
+
+                            use_grad_clip: False
+                            grad_clip_norm: 0.5
+
+                            eval_interval: 100000
+                            test_episode: 16
+                            log_dir: "./logs/dcg/"
+                            model_dir: "./models/dcg/"
 
     .. group-tab:: IDDPG
 
@@ -7057,13 +7735,133 @@ Within the following content, we provid the preset arguments for each implementa
 
                         .. code-block:: yaml
 
+                            agent: "IDDPG"  # the learning algorithms_marl
+                            env_name: "mpe"
+                            env_id: "simple_adversary_v3"
+                            continuous_action: True
+                            policy: "Independent_DDPG_Policy"
+                            representation: "Basic_Identical"
+                            vectorize: "Dummy_Pettingzoo"
+                            runner: "Pettingzoo_Runner"
+
+                            representation_hidden_size: [64, ]  # the units for each hidden layer
+                            actor_hidden_size: [64, 64]
+                            critic_hidden_size: [64, 64]
+                            activation: 'LeakyReLU'
+                            activation_action: 'sigmoid'
+
+                            seed: 1
+                            parallels: 16
+                            buffer_size: 100000
+                            batch_size: 256
+                            lr_a: 0.01  # learning rate for actor
+                            lr_c: 0.001  # learning rate for critic
+                            gamma: 0.95  # discount factor
+                            tau: 0.001  # soft update for target networks
+
+                            start_noise: 1.0
+                            end_noise: 0.01
+                            sigma: 0.1  # random noise for continuous actions
+                            start_training: 1000  # start training after n episodes
+                            running_steps: 10000000
+                            train_per_step: False  # True: train model per step; False: train model per episode.
+                            training_frequency: 1
+
+                            use_grad_clip: True
+                            grad_clip_norm: 0.5
+
+                            eval_interval: 100000
+                            test_episode: 5
+                            log_dir: "./logs/iddpg/"
+                            model_dir: "./models/iddpg/"
+
                     .. group-tab:: simple_push_v3
 
                         .. code-block:: yaml
 
+                            agent: "IDDPG"  # the learning algorithms_marl
+                            env_name: "mpe"
+                            env_id: "simple_push_v3"
+                            continuous_action: True
+                            policy: "Independent_DDPG_Policy"
+                            representation: "Basic_Identical"
+                            vectorize: "Dummy_Pettingzoo"
+                            runner: "Pettingzoo_Runner"
+
+                            representation_hidden_size: [64, ]  # the units for each hidden layer
+                            actor_hidden_size: [64, 64]
+                            critic_hidden_size: [64, 64]
+                            activation: 'LeakyReLU'
+                            activation_action: 'sigmoid'
+
+                            seed: 1
+                            parallels: 16
+                            buffer_size: 100000
+                            batch_size: 256
+                            lr_a: 0.01  # learning rate for actor
+                            lr_c: 0.001  # learning rate for critic
+                            gamma: 0.95  # discount factor
+                            tau: 0.001  # soft update for target networks
+
+                            start_noise: 1.0
+                            end_noise: 0.01
+                            sigma: 0.1  # random noise for continuous actions
+                            start_training: 1000  # start training after n episodes
+                            running_steps: 10000000
+                            train_per_step: False  # True: train model per step; False: train model per episode.
+                            training_frequency: 1
+
+                            use_grad_clip: True
+                            grad_clip_norm: 0.5
+
+                            eval_interval: 100000
+                            test_episode: 5
+                            log_dir: "./logs/iddpg/"
+                            model_dir: "./models/iddpg/"
+
                     .. group-tab:: simple_spread_v3
 
                         .. code-block:: yaml
+
+                            agent: "IDDPG"  # the learning algorithms_marl
+                            env_name: "mpe"
+                            env_id: "simple_spread_v3"
+                            continuous_action: True
+                            policy: "Independent_DDPG_Policy"
+                            representation: "Basic_Identical"
+                            vectorize: "Dummy_Pettingzoo"
+                            runner: "Pettingzoo_Runner"
+
+                            representation_hidden_size: []  # the units for each hidden layer
+                            actor_hidden_size: [64, 64]
+                            critic_hidden_size: [64, 64]
+                            activation: 'LeakyReLU'
+                            activation_action: 'sigmoid'
+
+                            seed: 1
+                            parallels: 16
+                            buffer_size: 100000
+                            batch_size: 256
+                            lr_a: 0.01  # learning rate for actor
+                            lr_c: 0.001  # learning rate for critic
+                            gamma: 0.95  # discount factor
+                            tau: 0.001  # soft update for target networks
+
+                            start_noise: 1.0
+                            end_noise: 0.01
+                            sigma: 0.1  # random noise for continuous actions
+                            start_training: 1000  # start training after n episodes
+                            running_steps: 10000000
+                            train_per_step: False  # True: train model per step; False: train model per episode.
+                            training_frequency: 1
+
+                            use_grad_clip: True
+                            grad_clip_norm: 0.5
+
+                            eval_interval: 100000
+                            test_episode: 5
+                            log_dir: "./logs/iddpg/"
+                            model_dir: "./models/iddpg/"
 
     .. group-tab:: MADDPG
 
@@ -7077,13 +7875,135 @@ Within the following content, we provid the preset arguments for each implementa
 
                         .. code-block:: yaml
 
+                            agent: "MADDPG"  # the learning algorithms_marl
+                            env_name: "mpe"
+                            env_id: "simple_adversary_v3"
+                            continuous_action: True
+                            policy: "MADDPG_Policy"
+                            representation: "Basic_Identical"
+                            vectorize: "Dummy_Pettingzoo"
+                            runner: "Pettingzoo_Runner"
+                            on_policy: False
+
+                            representation_hidden_size: []  # the units for each hidden layer
+                            actor_hidden_size: [64, ]
+                            critic_hidden_size: [64, ]
+                            activation: 'LeakyReLU'
+                            activation_action: 'sigmoid'
+
+                            seed: 1
+                            parallels: 16
+                            buffer_size: 100000
+                            batch_size: 256
+                            lr_a: 0.01  # learning rate for actor
+                            lr_c: 0.001  # learning rate for critic
+                            gamma: 0.95  # discount factor
+                            tau: 0.001  # soft update for target networks
+
+                            start_noise: 1.0
+                            end_noise: 0.01
+                            sigma: 0.1
+                            start_training: 1000  # start training after n episodes
+                            running_steps: 10000000
+                            train_per_step: False  # True: train model per step; False: train model per episode.
+                            training_frequency: 1
+
+                            use_grad_clip: True
+                            grad_clip_norm: 0.5
+
+                            eval_interval: 100000
+                            test_episode: 5
+                            log_dir: "./logs/maddpg/"
+                            model_dir: "./models/maddpg/"
+
                     .. group-tab:: simple_push_v3
 
                         .. code-block:: yaml
 
+                            agent: "MADDPG"  # the learning algorithms_marl
+                            env_name: "mpe"
+                            env_id: "simple_push_v3"
+                            continuous_action: True
+                            policy: "MADDPG_Policy"
+                            representation: "Basic_Identical"
+                            vectorize: "Dummy_Pettingzoo"
+                            runner: "Pettingzoo_Runner"
+
+                            representation_hidden_size: []  # the units for each hidden layer
+                            actor_hidden_size: [64, 64]
+                            critic_hidden_size: [64, 64]
+                            activation: 'LeakyReLU'
+                            activation_action: 'sigmoid'
+
+                            seed: 1
+                            parallels: 16
+                            buffer_size: 100000
+                            batch_size: 256
+                            lr_a: 0.01  # learning rate for actor
+                            lr_c: 0.001  # learning rate for critic
+                            gamma: 0.95  # discount factor
+                            tau: 0.001  # soft update for target networks
+
+                            start_noise: 1.0
+                            end_noise: 0.01
+                            sigma: 0.1  # random noise for continuous actions
+                            start_training: 1000  # start training after n episodes
+                            running_steps: 10000000
+                            train_per_step: False  # True: train model per step; False: train model per episode.
+                            training_frequency: 1
+
+                            use_grad_clip: True
+                            grad_clip_norm: 0.5
+
+                            eval_interval: 100000
+                            test_episode: 5
+                            log_dir: "./logs/maddpg/"
+                            model_dir: "./models/maddpg/"
+
                     .. group-tab:: simple_spread_v3
 
                         .. code-block:: yaml
+
+                            agent: "MADDPG"  # the learning algorithms_marl
+                            env_name: "mpe"
+                            env_id: "simple_spread_v3"
+                            continuous_action: True
+                            policy: "MADDPG_Policy"
+                            representation: "Basic_Identical"
+                            vectorize: "Dummy_Pettingzoo"
+                            runner: "Pettingzoo_Runner"
+
+                            representation_hidden_size: []  # the units for each hidden layer
+                            actor_hidden_size: [64, 64]
+                            critic_hidden_size: [64, 64]
+                            activation: 'LeakyReLU'
+                            activation_action: 'sigmoid'
+
+                            seed: 1
+                            parallels: 16
+                            buffer_size: 100000
+                            batch_size: 256
+                            lr_a: 0.01  # learning rate for actor
+                            lr_c: 0.001  # learning rate for critic
+                            gamma: 0.95  # discount factor
+                            tau: 0.001  # soft update for target networks
+
+                            #start_noise: 1.0
+                            #end_noise: 0.01
+                            sigma: 0.1
+                            start_training: 1000  # start training after n episodes
+                            running_steps: 10000000
+                            train_per_step: False  # True: train model per step; False: train model per episode.
+                            training_frequency: 1
+
+                            use_grad_clip: True
+                            grad_clip_norm: 0.5
+
+                            eval_interval: 100000
+                            test_episode: 5
+                            log_dir: "./logs/maddpg/"
+                            model_dir: "./models/maddpg/"
+
 
     .. group-tab:: ISAC
 
@@ -7097,13 +8017,136 @@ Within the following content, we provid the preset arguments for each implementa
 
                         .. code-block:: yaml
 
+                            agent: "ISAC"  # the learning algorithms_marl
+                            env_name: "mpe"
+                            env_id: "simple_adversary_v3"
+                            continuous_action: True
+                            policy: "Gaussian_ISAC_Policy"
+                            representation: "Basic_Identical"
+                            vectorize: "Dummy_Pettingzoo"
+                            runner: "Pettingzoo_Runner"
+
+                            representation_hidden_size: [64, ]  # the units for each hidden layer
+                            actor_hidden_size: [64, 64]
+                            critic_hidden_size: [64, 64]
+                            activation: 'LeakyReLU'
+                            activation_action: 'sigmoid'
+
+                            seed: 1
+                            parallels: 16
+                            buffer_size: 100000
+                            batch_size: 256
+                            lr_a: 0.01  # learning rate for actor
+                            lr_c: 0.001  # learning rate for critic
+                            gamma: 0.95  # discount factor
+                            tau: 0.001  # soft update for target networks
+                            alpha: 0.01
+
+                            start_noise: 1.0
+                            end_noise: 0.01
+                            sigma: 0.1  # random noise for continuous actions
+                            start_training: 1000  # start training after n episodes
+                            running_steps: 10000000
+                            train_per_step: False  # True: train model per step; False: train model per episode.
+                            training_frequency: 1
+
+                            use_grad_clip: True
+                            grad_clip_norm: 0.5
+
+                            eval_interval: 100000
+                            test_episode: 5
+                            log_dir: "./logs/isac/"
+                            model_dir: "./models/isac/"
+
                     .. group-tab:: simple_push_v3
 
                         .. code-block:: yaml
 
+                            agent: "ISAC"  # the learning algorithms_marl
+                            env_name: "mpe"
+                            env_id: "simple_push_v3"
+                            continuous_action: True
+                            policy: "Gaussian_ISAC_Policy"
+                            representation: "Basic_Identical"
+                            vectorize: "Dummy_Pettingzoo"
+                            runner: "Pettingzoo_Runner"
+
+                            representation_hidden_size: [64, ]  # the units for each hidden layer
+                            actor_hidden_size: [64, 64]
+                            critic_hidden_size: [64, 64]
+                            activation: 'LeakyReLU'
+                            activation_action: 'sigmoid'
+
+                            seed: 1
+                            parallels: 16
+                            buffer_size: 100000
+                            batch_size: 256
+                            lr_a: 0.01  # learning rate for actor
+                            lr_c: 0.001  # learning rate for critic
+                            gamma: 0.95  # discount factor
+                            tau: 0.001  # soft update for target networks
+                            alpha: 0.01
+
+                            start_noise: 1.0
+                            end_noise: 0.01
+                            sigma: 0.1  # random noise for continuous actions
+                            start_training: 1000  # start training after n episodes
+                            running_steps: 10000000
+                            train_per_step: False  # True: train model per step; False: train model per episode.
+                            training_frequency: 1
+
+                            use_grad_clip: True
+                            grad_clip_norm: 0.5
+
+                            eval_interval: 100000
+                            test_episode: 5
+                            log_dir: "./logs/isac/"
+                            model_dir: "./models/isac/"
+
                     .. group-tab:: simple_spread_v3
 
                         .. code-block:: yaml
+
+                            agent: "ISAC"  # the learning algorithms_marl
+                            env_name: "mpe"
+                            env_id: "simple_spread_v3"
+                            continuous_action: True
+                            policy: "Gaussian_ISAC_Policy"
+                            representation: "Basic_Identical"
+                            vectorize: "Dummy_Pettingzoo"
+                            runner: "Pettingzoo_Runner"
+
+                            representation_hidden_size: [64, ]  # the units for each hidden layer
+                            actor_hidden_size: [64, 64]
+                            critic_hidden_size: [64, 64]
+                            activation: 'LeakyReLU'
+                            activation_action: 'sigmoid'
+
+                            seed: 1
+                            parallels: 16
+                            buffer_size: 100000
+                            batch_size: 256
+                            lr_a: 0.01  # learning rate for actor
+                            lr_c: 0.001  # learning rate for critic
+                            gamma: 0.95  # discount factor
+                            tau: 0.001  # soft update for target networks
+                            alpha: 0.01
+
+                            start_noise: 1.0
+                            end_noise: 0.01
+                            sigma: 0.1  # random noise for continuous actions
+                            start_training: 1000  # start training after n episodes
+                            running_steps: 10000000
+                            train_per_step: False  # True: train model per step; False: train model per episode.
+                            training_frequency: 1
+
+                            use_grad_clip: True
+                            grad_clip_norm: 0.5
+
+                            eval_interval: 100000
+                            test_episode: 5
+                            log_dir: "./logs/isac/"
+                            model_dir: "./models/isac/"
 
     .. group-tab:: MASAC
 
