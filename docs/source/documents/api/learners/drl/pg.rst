@@ -11,29 +11,29 @@ PG_Learner
   xuance.torch.learners.policy_gradient.pg_learner.PG_Learner(policy, optimizer, scheduler, device, model_dir, ent_coef, clip_grad)
 
   :param policy: The policy that provides actions and values.
-  :type policy: xxxxxx
-  :param optimizer: xxxxxx.
-  :type optimizer: xxxxxx
-  :param scheduler: xxxxxx.
-  :type scheduler: xxxxxx
+  :type policy: nn.Module
+  :param optimizer: The optimizer that update the paramters of the model.
+  :type optimizer: Optimizer
+  :param scheduler: The tool for learning rate decay.
+  :type scheduler: lr_scheduler
   :param device: The calculating device.
   :type device: str
-  :param model_dir: xxxxxx.
-  :type model_dir: xxxxxx
+  :param model_dir: The directory for saving or loading the model parameters.
+  :type model_dir: str
   :param ent_coef: xxxxxx.
-  :type ent_coef: xxxxxx
+  :type ent_coef: float
   :param clip_grad: xxxxxx.
-  :type clip_grad: xxxxxx
+  :type clip_grad: float
 
 .. py:function::
   xuance.torch.learners.policy_gradient.pg_learner.PG_Learner.update(obs_batch, act_batch, ret_batch)
 
-  :param obs_batch: xxxxxx.
-  :type obs_batch: xxxxxx
-  :param act_batch: xxxxxx.
-  :type act_batch: xxxxxx
-  :param ret_batch: xxxxxx.
-  :type ret_batch: xxxxxx
+  :param obs_batch: A batch of observations sampled from experience replay buffer.
+  :type obs_batch: np.ndarray
+  :param act_batch: A batch of actions sampled from experience replay buffer.
+  :type act_batch: np.ndarray
+  :param ret_batch: A batch of returns sampled from experience replay buffer.
+  :type ret_batch: np.ndarray
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -47,27 +47,27 @@ PG_Learner
   xuance.tensorflow.learners.policy_gradient.pg_learner.PG_Learner(policy, optimizer, device, model_dir, ent_coef, clip_grad)
 
   :param policy: The policy that provides actions and values.
-  :type policy: xxxxxx
-  :param optimizer: xxxxxx.
-  :type optimizer: xxxxxx
+  :type policy: nn.Module
+  :param optimizer: The optimizer that update the paramters of the model.
+  :type optimizer: Optimizer
   :param device: The calculating device.
   :type device: str
-  :param model_dir: xxxxxx.
-  :type model_dir: xxxxxx
+  :param model_dir: The directory for saving or loading the model parameters.
+  :type model_dir: str
   :param ent_coef: xxxxxx.
-  :type ent_coef: xxxxxx
+  :type ent_coef: float
   :param clip_grad: xxxxxx.
-  :type clip_grad: xxxxxx
+  :type clip_grad: float
 
 .. py:function::
   xuance.tensorflow.learners.policy_gradient.pg_learner.PG_Learner.update(obs_batch, act_batch, ret_batch)
 
-  :param obs_batch: xxxxxx.
-  :type obs_batch: xxxxxx
-  :param act_batch: xxxxxx.
-  :type act_batch: xxxxxx
-  :param ret_batch: xxxxxx.
-  :type ret_batch: xxxxxx
+  :param obs_batch: A batch of observations sampled from experience replay buffer.
+  :type obs_batch: np.ndarray
+  :param act_batch: A batch of actions sampled from experience replay buffer.
+  :type act_batch: np.ndarray
+  :param ret_batch: A batch of returns sampled from experience replay buffer.
+  :type ret_batch: np.ndarray
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -81,29 +81,28 @@ PG_Learner
   xuance.mindspore.learners.policy_gradient.pg_learner.PG_Learner(policy, optimizer, scheduler, model_dir, ent_coef, clip_grad, clip_type)
 
   :param policy: The policy that provides actions and values.
-  :type policy: xxxxxx
-  :param optimizer: xxxxxx.
-  :type optimizer: xxxxxx
-  :param scheduler: xxxxxx.
-  :type scheduler: xxxxxx
-  :param model_dir: xxxxxx.
-  :type model_dir: xxxxxx
+  :type policy: nn.Module
+  :param optimizer: The optimizer that update the paramters of the model.
+  :type optimizer: Optimizer
+  :param scheduler: The tool for learning rate decay.
+  :type scheduler: lr_scheduler
+  :param model_dir: The directory for saving or loading the model parameters.
+  :type model_dir: str
   :param ent_coef: xxxxxx.
-  :type ent_coef: xxxxxx
+  :type ent_coef: float
   :param clip_grad: xxxxxx.
-  :type clip_grad: xxxxxx
+  :type clip_grad: float
   :param clip_type: xxxxxx.
-  :type clip_type: xxxxxx
 
 .. py:function::
   xuance.mindspore.learners.policy_gradient.pg_learner.PG_Learner.update(obs_batch, act_batch, ret_batch)
 
-  :param obs_batch: xxxxxx.
-  :type obs_batch: xxxxxx
-  :param act_batch: xxxxxx.
-  :type act_batch: xxxxxx
-  :param ret_batch: xxxxxx.
-  :type ret_batch: xxxxxx
+  :param obs_batch: A batch of observations sampled from experience replay buffer.
+  :type obs_batch: np.ndarray
+  :param act_batch: A batch of actions sampled from experience replay buffer.
+  :type act_batch: np.ndarray
+  :param ret_batch: A batch of returns sampled from experience replay buffer.
+  :type ret_batch: np.ndarray
   :return: xxxxxx.
   :rtype: xxxxxx
 

@@ -8160,13 +8160,140 @@ Within the following content, we provid the preset arguments for each implementa
 
                         .. code-block:: yaml
 
+                            agent: "MASAC"  # the learning algorithms_marl
+                            env_name: "mpe"
+                            env_id: "simple_adversary_v3"
+                            continuous_action: True
+                            policy: "Gaussian_MASAC_Policy"
+                            representation: "Basic_Identical"
+                            vectorize: "Dummy_Pettingzoo"
+                            runner: "Pettingzoo_Runner"
+
+                            representation_hidden_size: [64, ]  # the units for each hidden layer
+                            actor_hidden_size: [64, 64]
+                            critic_hidden_size: [64, 64]
+                            activation: 'LeakyReLU'
+                            activation_action: 'sigmoid'
+
+                            seed: 1
+                            parallels: 16
+                            buffer_size: 100000
+                            batch_size: 256
+                            lr_a: 0.01  # learning rate for actor
+                            lr_c: 0.001  # learning rate for critic
+                            gamma: 0.95  # discount factor
+                            tau: 0.001  # soft update for target networks
+                            alpha: 0.01
+
+                            start_noise: 1.0
+                            end_noise: 0.01
+                            sigma: 0.1  # random noise for continuous actions
+                            start_training: 1000  # start training after n episodes
+                            running_steps: 10000000
+                            train_per_step: False  # True: train model per step; False: train model per episode.
+                            training_frequency: 1
+
+                            use_grad_clip: True
+                            grad_clip_norm: 0.5
+
+                            eval_interval: 100000
+                            test_episode: 5
+                            log_dir: "./logs/masac/"
+                            model_dir: "./models/masac/"
+
+
                     .. group-tab:: simple_push_v3
 
                         .. code-block:: yaml
 
+                            agent: "MASAC"  # the learning algorithms_marl
+                            env_name: "mpe"
+                            env_id: "simple_push_v3"
+                            continuous_action: True
+                            policy: "Gaussian_MASAC_Policy"
+                            representation: "Basic_Identical"
+                            vectorize: "Dummy_Pettingzoo"
+                            runner: "Pettingzoo_Runner"
+
+                            representation_hidden_size: [64, ]  # the units for each hidden layer
+                            actor_hidden_size: [64, 64]
+                            critic_hidden_size: [64, 64]
+                            activation: 'LeakyReLU'
+                            activation_action: 'sigmoid'
+
+                            seed: 1
+                            parallels: 16
+                            buffer_size: 100000
+                            batch_size: 256
+                            lr_a: 0.01  # learning rate for actor
+                            lr_c: 0.001  # learning rate for critic
+                            gamma: 0.95  # discount factor
+                            tau: 0.001  # soft update for target networks
+                            alpha: 0.01
+
+                            start_noise: 1.0
+                            end_noise: 0.01
+                            sigma: 0.1  # random noise for continuous actions
+                            start_training: 1000  # start training after n episodes
+                            running_steps: 10000000
+                            train_per_step: False  # True: train model per step; False: train model per episode.
+                            training_frequency: 1
+
+                            use_grad_clip: True
+                            grad_clip_norm: 0.5
+
+                            eval_interval: 100000
+                            test_episode: 5
+                            log_dir: "./logs/masac/"
+                            model_dir: "./models/masac/"
+
+
                     .. group-tab:: simple_spread_v3
 
                         .. code-block:: yaml
+
+                        agent: "MASAC"  # the learning algorithms_marl
+                        env_name: "mpe"
+                        env_id: "simple_spread_v3"
+                        continuous_action: True
+                        policy: "Gaussian_MASAC_Policy"
+                        representation: "Basic_Identical"
+                        vectorize: "Dummy_Pettingzoo"
+                        runner: "Pettingzoo_Runner"
+
+                        representation_hidden_size: [64, ]  # the units for each hidden layer
+                        actor_hidden_size: [64, 64]
+                        critic_hidden_size: [64, 64]
+                        activation: 'LeakyReLU'
+                        activation_action: 'sigmoid'
+
+                        seed: 1
+                        parallels: 16
+                        buffer_size: 100000
+                        batch_size: 256
+                        lr_a: 0.01  # learning rate for actor
+                        lr_c: 0.001  # learning rate for critic
+                        gamma: 0.95  # discount factor
+                        tau: 0.001  # soft update for target networks
+                        alpha: 0.01
+
+                        start_noise: 1.0
+                        end_noise: 0.01
+                        sigma: 0.1  # random noise for continuous actions
+                        start_training: 1000  # start training after n episodes
+                        running_steps: 10000000
+                        train_per_step: False  # True: train model per step; False: train model per episode.
+                        training_frequency: 1
+
+                        use_grad_clip: True
+                        grad_clip_norm: 0.5
+
+                        eval_interval: 100000
+                        test_episode: 5
+                        log_dir: "./logs/masac/"
+                        model_dir: "./models/masac/"
+
+
 
     .. group-tab:: IPPO
 
@@ -8180,6 +8307,66 @@ Within the following content, we provid the preset arguments for each implementa
 
                         .. code-block:: yaml
 
+                            agent: "IPPO"
+                            env_name: "mpe"
+                            env_id: "simple_spread_v3"
+                            continuous_action: False
+                            policy: "Categorical_MAAC_Policy"
+                            representation: "Basic_MLP"
+                            vectorize: "Dummy_Pettingzoo"
+                            runner: "Pettingzoo_Runner"
+
+                            use_recurrent: False
+                            rnn:
+                            representation_hidden_size: [64, ]  # the units for each hidden layer
+                            gain: 0.01
+
+                            actor_hidden_size: [64, ]
+                            critic_hidden_size: [256, ]
+                            activation: "ReLU"
+
+                            seed: 1
+                            parallels: 128
+                            n_size: 3200
+                            n_epoch: 10
+                            n_minibatch: 1
+                            learning_rate: 0.0007
+                            weight_decay: 0
+
+                            vf_coef: 0.5
+                            ent_coef: 0.01
+                            target_kl: 0.25  # for MAPPO_KL learner
+                            clip_range: 0.2  # ratio clip range, for MAPPO_Clip learner
+                            clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+                            gamma: 0.95  # discount factor
+
+                            # tricks
+                            use_linear_lr_decay: False  # if use linear learning rate decay
+                            end_factor_lr_decay: 0.5
+                            use_global_state: False  # if use global state to replace merged observations
+                            use_grad_norm: True  # gradient normalization
+                            max_grad_norm: 10.0
+                            use_value_clip: True  # limit the value range
+                            value_clip_range: 0.2
+                            use_value_norm: True  # use running mean and std to normalize rewards.
+                            use_huber_loss: True  # True: use huber loss; False: use MSE loss.
+                            huber_delta: 10.0
+                            use_advnorm: True
+                            use_gae: True
+                            gae_lambda: 0.95
+
+                            start_training: 1
+                            running_steps: 10000000
+                            train_per_step: True
+                            training_frequency: 1
+
+                            test_steps: 10000
+                            eval_interval: 100000
+                            test_episode: 5
+                            log_dir: "./logs/ippo/"
+                            model_dir: "./models/ippo/"
+
+
             .. group-tab:: SC2
 
                 .. tabs::
@@ -8188,41 +8375,700 @@ Within the following content, we provid the preset arguments for each implementa
 
                         .. code-block:: yaml
 
+                            agent: "IPPO"
+                            env_name: "StarCraft2"
+                            env_id: "1c3s5z"
+                            fps: 15
+                            policy: "Categorical_MAAC_Policy"
+                            representation: "Basic_RNN"
+                            vectorize: "Subproc_StarCraft2"
+                            runner: "StarCraft2_Runner"
+
+                            # recurrent settings for Basic_RNN representation
+                            use_recurrent: True
+                            rnn: "GRU"
+                            recurrent_layer_N: 1
+                            fc_hidden_sizes: [64, 64, 64]
+                            recurrent_hidden_size: 64
+                            N_recurrent_layers: 1
+                            dropout: 0
+                            normalize: "LayerNorm"
+                            initialize: "orthogonal"
+                            gain: 0.01
+
+                            actor_hidden_size: []
+                            critic_hidden_size: []
+                            activation: "ReLU"
+
+                            seed: 1
+                            parallels: 8
+                            n_size: 128
+                            n_epoch: 15
+                            n_minibatch: 1
+                            learning_rate: 0.0007  # 7e-4
+                            weight_decay: 0
+
+                            vf_coef: 1.0
+                            ent_coef: 0.01
+                            target_kl: 0.25
+                            clip_range: 0.2
+                            clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+                            gamma: 0.99  # discount factor
+
+                            # tricks
+                            use_linear_lr_decay: False  # if use linear learning rate decay
+                            end_factor_lr_decay: 0.5
+                            use_global_state: False  # if use global state to replace joint observations
+                            use_grad_norm: True  # gradient normalization
+                            max_grad_norm: 10.0
+                            use_value_clip: True  # limit the value range
+                            value_clip_range: 0.2
+                            use_value_norm: True  # use running mean and std to normalize rewards.
+                            use_huber_loss: True  # True: use huber loss; False: use MSE loss.
+                            huber_delta: 10.0
+                            use_advnorm: True  # use advantage normalization.
+                            use_gae: True  # use GAE trick to calculate returns.
+                            gae_lambda: 0.95
+
+                            start_training: 1
+                            running_steps: 2000000
+                            training_frequency: 1
+
+                            eval_interval: 20000
+                            test_episode: 16
+                            log_dir: "./logs/ippo/"
+                            model_dir: "./models/ippo/"
+
+
                     .. group-tab:: 2m_vs_1z
 
                         .. code-block:: yaml
+
+                            agent: "IPPO"
+                            env_name: "StarCraft2"
+                            env_id: "2m_vs_1z"
+                            fps: 15
+                            policy: "Categorical_MAAC_Policy"
+                            representation: "Basic_RNN"
+                            vectorize: "Subproc_StarCraft2"
+                            runner: "StarCraft2_Runner"
+                            on_policy: True
+
+                            # recurrent settings for Basic_RNN representation
+                            use_recurrent: True
+                            rnn: "GRU"
+                            recurrent_layer_N: 1
+                            fc_hidden_sizes: [64, 64, 64]
+                            recurrent_hidden_size: 64
+                            N_recurrent_layers: 1
+                            dropout: 0
+                            normalize: "LayerNorm"
+                            initialize: "orthogonal"
+                            gain: 0.01
+
+                            actor_hidden_size: []
+                            critic_hidden_size: []
+                            activation: "ReLU"
+
+                            seed: 1
+                            parallels: 8
+                            n_size: 128
+                            n_epoch: 15
+                            n_minibatch: 1
+                            learning_rate: 0.0007  # 7e-4
+                            weight_decay: 0
+
+                            vf_coef: 1.0
+                            ent_coef: 0.01
+                            target_kl: 0.25
+                            clip_range: 0.2
+                            clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+                            gamma: 0.99  # discount factor
+
+                            # tricks
+                            use_linear_lr_decay: False  # if use linear learning rate decay
+                            end_factor_lr_decay: 0.5
+                            use_global_state: False  # if use global state to replace merged observations
+                            use_grad_norm: True  # gradient normalization
+                            max_grad_norm: 10.0
+                            use_value_clip: True  # limit the value range
+                            value_clip_range: 0.2
+                            use_value_norm: True  # use running mean and std to normalize rewards.
+                            use_huber_loss: True  # True: use huber loss; False: use MSE loss.
+                            huber_delta: 10.0
+                            use_advnorm: True  # use advantage normalization.
+                            use_gae: True  # use GAE trick to calculate returns.
+                            gae_lambda: 0.95
+
+                            start_training: 1
+                            running_steps: 1000000
+                            train_per_step: True
+                            training_frequency: 1
+
+                            test_steps: 10000
+                            eval_interval: 10000
+                            test_episode: 16
+                            log_dir: "./logs/ippo/"
+                            model_dir: "./models/ippo/"
+
 
                     .. group-tab:: 2s3z
 
                         .. code-block:: yaml
 
+                            agent: "IPPO"
+                            env_name: "StarCraft2"
+                            env_id: "2s3z"
+                            fps: 15
+                            policy: "Categorical_MAAC_Policy"
+                            representation: "Basic_RNN"
+                            vectorize: "Subproc_StarCraft2"
+                            runner: "StarCraft2_Runner"
+
+                            # recurrent settings for Basic_RNN representation
+                            use_recurrent: True
+                            rnn: "GRU"
+                            recurrent_layer_N: 1
+                            fc_hidden_sizes: [64, 64, 64]
+                            recurrent_hidden_size: 64
+                            N_recurrent_layers: 1
+                            dropout: 0
+                            normalize: "LayerNorm"
+                            initialize: "orthogonal"
+                            gain: 0.01
+
+                            actor_hidden_size: []
+                            critic_hidden_size: []
+                            activation: "ReLU"
+
+                            seed: 1
+                            parallels: 8
+                            n_size: 128
+                            n_epoch: 15
+                            n_minibatch: 1
+                            learning_rate: 0.0007  # 7e-4
+                            weight_decay: 0
+
+                            vf_coef: 1.0
+                            ent_coef: 0.01
+                            target_kl: 0.25
+                            clip_range: 0.2
+                            clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+                            gamma: 0.99  # discount factor
+
+                            # tricks
+                            use_linear_lr_decay: False  # if use linear learning rate decay
+                            end_factor_lr_decay: 0.5
+                            use_global_state: False  # if use global state to replace joint observations
+                            use_grad_norm: True  # gradient normalization
+                            max_grad_norm: 10.0
+                            use_value_clip: True  # limit the value range
+                            value_clip_range: 0.2
+                            use_value_norm: True  # use running mean and std to normalize rewards.
+                            use_huber_loss: True  # True: use huber loss; False: use MSE loss.
+                            huber_delta: 10.0
+                            use_advnorm: True  # use advantage normalization.
+                            use_gae: True  # use GAE trick to calculate returns.
+                            gae_lambda: 0.95
+
+                            start_training: 1
+                            running_steps: 2000000
+                            training_frequency: 1
+
+                            eval_interval: 20000
+                            test_episode: 16
+                            log_dir: "./logs/ippo/"
+                            model_dir: "./models/ippo/"
+
+
                     .. group-tab:: 3m
 
                         .. code-block:: yaml
+
+                            agent: "IPPO"
+                            env_name: "StarCraft2"
+                            env_id: "3m"
+                            fps: 15
+                            policy: "Categorical_MAAC_Policy"
+                            representation: "Basic_RNN"
+                            vectorize: "Subproc_StarCraft2"
+                            runner: "StarCraft2_Runner"
+
+                            # recurrent settings for Basic_RNN representation
+                            use_recurrent: True
+                            rnn: "GRU"
+                            recurrent_layer_N: 1
+                            fc_hidden_sizes: [64, 64, 64]
+                            recurrent_hidden_size: 64
+                            N_recurrent_layers: 1
+                            dropout: 0
+                            normalize: "LayerNorm"
+                            initialize: "orthogonal"
+                            gain: 0.01
+
+                            actor_hidden_size: []
+                            critic_hidden_size: []
+                            activation: "ReLU"
+
+                            seed: 1
+                            parallels: 8
+                            n_size: 128
+                            n_epoch: 15
+                            n_minibatch: 1
+                            learning_rate: 0.0007  # 7e-4
+                            weight_decay: 0
+
+                            vf_coef: 1.0
+                            ent_coef: 0.01
+                            target_kl: 0.25
+                            clip_range: 0.2
+                            clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+                            gamma: 0.99  # discount factor
+
+                            # tricks
+                            use_linear_lr_decay: False  # if use linear learning rate decay
+                            end_factor_lr_decay: 0.5
+                            use_global_state: False  # if use global state to replace joint observations
+                            use_grad_norm: True  # gradient normalization
+                            max_grad_norm: 10.0
+                            use_value_clip: True  # limit the value range
+                            value_clip_range: 0.2
+                            use_value_norm: True  # use running mean and std to normalize rewards.
+                            use_huber_loss: True  # True: use huber loss; False: use MSE loss.
+                            huber_delta: 10.0
+                            use_advnorm: True  # use advantage normalization.
+                            use_gae: True  # use GAE trick to calculate returns.
+                            gae_lambda: 0.95
+
+                            start_training: 1
+                            running_steps: 1000000
+                            training_frequency: 1
+
+                            eval_interval: 10000
+                            test_episode: 16
+                            log_dir: "./logs/ippo/"
+                            model_dir: "./models/ippo/"
+
 
                     .. group-tab:: 5m_vs_6m
 
                         .. code-block:: yaml
 
+                            agent: "IPPO"
+                            env_name: "StarCraft2"
+                            env_id: "5m_vs_6m"
+                            fps: 15
+                            policy: "Categorical_MAAC_Policy"
+                            representation: "Basic_RNN"
+                            vectorize: "Subproc_StarCraft2"
+                            runner: "StarCraft2_Runner"
+                            on_policy: True
+
+                            # recurrent settings for Basic_RNN representation
+                            use_recurrent: True
+                            rnn: "GRU"
+                            recurrent_layer_N: 1
+                            fc_hidden_sizes: [64, 64, 64]
+                            recurrent_hidden_size: 64
+                            N_recurrent_layers: 1
+                            dropout: 0
+                            normalize: "LayerNorm"
+                            initialize: "orthogonal"
+                            gain: 0.01
+
+                            actor_hidden_size: []
+                            critic_hidden_size: []
+                            activation: "ReLU"
+
+                            seed: 1
+                            parallels: 8
+                            n_size: 128
+                            n_epoch: 10
+                            n_minibatch: 1
+                            learning_rate: 0.0007  # 7e-4
+                            weight_decay: 0
+
+                            vf_coef: 1.0
+                            ent_coef: 0.01
+                            target_kl: 0.25
+                            clip_range: 0.05
+                            clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+                            gamma: 0.99  # discount factor
+
+                            # tricks
+                            use_linear_lr_decay: False  # if use linear learning rate decay
+                            end_factor_lr_decay: 0.5
+                            use_global_state: False  # if use global state to replace joint observations
+                            use_grad_norm: True  # gradient normalization
+                            max_grad_norm: 10.0
+                            use_value_clip: True  # limit the value range
+                            value_clip_range: 0.05
+                            use_value_norm: True  # use running mean and std to normalize rewards.
+                            use_huber_loss: True  # True: use huber loss; False: use MSE loss.
+                            huber_delta: 10.0
+                            use_advnorm: True  # use advantage normalization.
+                            use_gae: True  # use GAE trick to calculate returns.
+                            gae_lambda: 0.95
+
+                            start_training: 1
+                            running_steps: 10000000  # 10M
+                            training_frequency: 1
+
+                            eval_interval: 100000
+                            test_episode: 16
+                            log_dir: "./logs/ippo/"
+                            model_dir: "./models/ippo/"
+
+
                     .. group-tab:: 8m
 
                         .. code-block:: yaml
+
+                            agent: "IPPO"
+                            env_name: "StarCraft2"
+                            env_id: "8m"
+                            fps: 15
+                            policy: "Categorical_MAAC_Policy"
+                            representation: "Basic_RNN"
+                            vectorize: "Subproc_StarCraft2"
+                            runner: "StarCraft2_Runner"
+                            on_policy: True
+
+                            # recurrent settings for Basic_RNN representation
+                            use_recurrent: True
+                            rnn: "GRU"
+                            recurrent_layer_N: 1
+                            fc_hidden_sizes: [64, 64, 64]
+                            recurrent_hidden_size: 64
+                            N_recurrent_layers: 1
+                            dropout: 0
+                            normalize: "LayerNorm"
+                            initialize: "orthogonal"
+                            gain: 0.01
+
+                            actor_hidden_size: []
+                            critic_hidden_size: []
+                            activation: "ReLU"
+
+                            seed: 1
+                            parallels: 8
+                            n_size: 128
+                            n_epoch: 15
+                            n_minibatch: 1
+                            learning_rate: 0.0007  # 7e-4
+                            weight_decay: 0
+
+                            vf_coef: 1.0
+                            ent_coef: 0.01
+                            target_kl: 0.25
+                            clip_range: 0.2
+                            clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+                            gamma: 0.99  # discount factor
+
+                            # tricks
+                            use_linear_lr_decay: False  # if use linear learning rate decay
+                            end_factor_lr_decay: 0.5
+                            use_global_state: False  # if use global state to replace joint observations
+                            use_grad_norm: True  # gradient normalization
+                            max_grad_norm: 10.0
+                            use_value_clip: True  # limit the value range
+                            value_clip_range: 0.2
+                            use_value_norm: True  # use running mean and std to normalize rewards.
+                            use_huber_loss: True  # True: use huber loss; False: use MSE loss.
+                            huber_delta: 10.0
+                            use_advnorm: True  # use advantage normalization.
+                            use_gae: True  # use GAE trick to calculate returns.
+                            gae_lambda: 0.95
+
+                            start_training: 1
+                            running_steps: 1000000  # 1M
+                            training_frequency: 1
+
+                            eval_interval: 10000
+                            test_episode: 16
+                            log_dir: "./logs/ippo/"
+                            model_dir: "./models/ippo/"
+
 
                     .. group-tab:: 8m_vd_9m
 
                         .. code-block:: yaml
 
+                            agent: "IPPO"
+                            env_name: "StarCraft2"
+                            env_id: "8m_vs_9m"
+                            fps: 15
+                            policy: "Categorical_MAAC_Policy"
+                            representation: "Basic_RNN"
+                            vectorize: "Subproc_StarCraft2"
+                            runner: "StarCraft2_Runner"
+                            on_policy: True
+
+                            # recurrent settings for Basic_RNN representation
+                            use_recurrent: True
+                            rnn: "GRU"
+                            recurrent_layer_N: 1
+                            fc_hidden_sizes: [64, 64, 64]
+                            recurrent_hidden_size: 64
+                            N_recurrent_layers: 1
+                            dropout: 0
+                            normalize: "LayerNorm"
+                            initialize: "orthogonal"
+                            gain: 0.01
+
+                            actor_hidden_size: []
+                            critic_hidden_size: []
+                            activation: "ReLU"
+
+                            seed: 1
+                            parallels: 8
+                            n_size: 128
+                            n_epoch: 15
+                            n_minibatch: 1
+                            learning_rate: 0.0007  # 7e-4
+                            weight_decay: 0
+
+                            vf_coef: 1.0
+                            ent_coef: 0.01
+                            target_kl: 0.25
+                            clip_range: 0.05
+                            clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+                            gamma: 0.99  # discount factor
+
+                            # tricks
+                            use_linear_lr_decay: False  # if use linear learning rate decay
+                            end_factor_lr_decay: 0.5
+                            use_global_state: False  # if use global state to replace joint observations
+                            use_grad_norm: True  # gradient normalization
+                            max_grad_norm: 10.0
+                            use_value_clip: True  # limit the value range
+                            value_clip_range: 0.05
+                            use_value_norm: True  # use running mean and std to normalize rewards.
+                            use_huber_loss: True  # True: use huber loss; False: use MSE loss.
+                            huber_delta: 10.0
+                            use_advnorm: True  # use advantage normalization.
+                            use_gae: True  # use GAE trick to calculate returns.
+                            gae_lambda: 0.95
+
+                            start_training: 1
+                            running_steps: 10000000  # 10M
+                            training_frequency: 1
+
+                            eval_interval: 100000
+                            test_episode: 16
+                            log_dir: "./logs/ippo/"
+                            model_dir: "./models/ippo/"
+
+
                     .. group-tab:: 25m
 
                         .. code-block:: yaml
 
+                            agent: "IPPO"
+                            env_name: "StarCraft2"
+                            env_id: "25m"
+                            fps: 15
+                            policy: "Categorical_MAAC_Policy"
+                            representation: "Basic_RNN"
+                            vectorize: "Subproc_StarCraft2"
+                            runner: "StarCraft2_Runner"
+                            on_policy: True
+
+                            # recurrent settings for Basic_RNN representation
+                            use_recurrent: True
+                            rnn: "GRU"
+                            recurrent_layer_N: 1
+                            fc_hidden_sizes: [64, 64, 64]
+                            recurrent_hidden_size: 64
+                            N_recurrent_layers: 1
+                            dropout: 0
+                            normalize: "LayerNorm"
+                            initialize: "orthogonal"
+                            gain: 0.01
+
+                            actor_hidden_size: []
+                            critic_hidden_size: []
+                            activation: "ReLU"
+
+                            seed: 1
+                            parallels: 8
+                            n_size: 128
+                            n_epoch: 10
+                            n_minibatch: 1
+                            learning_rate: 0.0007  # 7e-4
+                            weight_decay: 0
+
+                            vf_coef: 1.0
+                            ent_coef: 0.01
+                            target_kl: 0.25
+                            clip_range: 0.2
+                            clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+                            gamma: 0.99  # discount factor
+
+                            # tricks
+                            use_linear_lr_decay: False  # if use linear learning rate decay
+                            end_factor_lr_decay: 0.5
+                            use_global_state: False  # if use global state to replace joint observations
+                            use_grad_norm: True  # gradient normalization
+                            max_grad_norm: 10.0
+                            use_value_clip: True  # limit the value range
+                            value_clip_range: 0.2
+                            use_value_norm: True  # use running mean and std to normalize rewards.
+                            use_huber_loss: True  # True: use huber loss; False: use MSE loss.
+                            huber_delta: 10.0
+                            use_advnorm: True  # use advantage normalization.
+                            use_gae: True  # use GAE trick to calculate returns.
+                            gae_lambda: 0.95
+
+                            start_training: 1
+                            running_steps: 5000000  # 5M
+                            training_frequency: 1
+
+                            eval_interval: 50000
+                            test_episode: 16
+                            log_dir: "./logs/ippo/"
+                            model_dir: "./models/ippo/"
+
+
                     .. group-tab:: corridor
 
                         .. code-block:: yaml
+
+                            agent: "IPPO"
+                            env_name: "StarCraft2"
+                            env_id: "corridor"
+                            fps: 15
+                            policy: "Categorical_MAAC_Policy"
+                            representation: "Basic_RNN"
+                            vectorize: "Subproc_StarCraft2"
+                            runner: "StarCraft2_Runner"
+                            on_policy: True
+
+                            # recurrent settings for Basic_RNN representation
+                            use_recurrent: True
+                            rnn: "GRU"
+                            recurrent_layer_N: 1
+                            fc_hidden_sizes: [64, 64, 64]
+                            recurrent_hidden_size: 64
+                            N_recurrent_layers: 1
+                            dropout: 0
+                            normalize: "LayerNorm"
+                            initialize: "orthogonal"
+                            gain: 0.01
+
+                            actor_hidden_size: []
+                            critic_hidden_size: []
+                            activation: "ReLU"
+
+                            seed: 1
+                            parallels: 8
+                            n_size: 128
+                            n_epoch: 5
+                            n_minibatch: 1
+                            learning_rate: 0.0007  # 7e-4
+                            weight_decay: 0
+
+                            vf_coef: 1.0
+                            ent_coef: 0.01
+                            target_kl: 0.25
+                            clip_range: 0.2
+                            clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+                            gamma: 0.99  # discount factor
+
+                            # tricks
+                            use_linear_lr_decay: False  # if use linear learning rate decay
+                            end_factor_lr_decay: 0.5
+                            use_global_state: False  # if use global state to replace joint observations
+                            use_grad_norm: True  # gradient normalization
+                            max_grad_norm: 10.0
+                            use_value_clip: True  # limit the value range
+                            value_clip_range: 0.2
+                            use_value_norm: True  # use running mean and std to normalize rewards.
+                            use_huber_loss: True  # True: use huber loss; False: use MSE loss.
+                            huber_delta: 10.0
+                            use_advnorm: True  # use advantage normalization.
+                            use_gae: True  # use GAE trick to calculate returns.
+                            gae_lambda: 0.95
+
+                            start_training: 1
+                            running_steps: 10000000  # 10M
+                            training_frequency: 1
+
+                            eval_interval: 100000
+                            test_episode: 16
+                            log_dir: "./logs/ippo/"
+                            model_dir: "./models/ippo/"
+
                     
                     .. group-tab:: MMM2
 
                         .. code-block:: yaml
+
+                            agent: "IPPO"
+                            env_name: "StarCraft2"
+                            env_id: "MMM2"
+                            fps: 15
+                            policy: "Categorical_MAAC_Policy"
+                            representation: "Basic_RNN"
+                            vectorize: "Subproc_StarCraft2"
+                            runner: "StarCraft2_Runner"
+                            on_policy: True
+
+                            # recurrent settings for Basic_RNN representation
+                            use_recurrent: True
+                            rnn: "GRU"
+                            recurrent_layer_N: 1
+                            fc_hidden_sizes: [64, 64, 64]
+                            recurrent_hidden_size: 64
+                            N_recurrent_layers: 1
+                            dropout: 0
+                            normalize: "LayerNorm"
+                            initialize: "orthogonal"
+                            gain: 1.0
+
+                            actor_hidden_size: []
+                            critic_hidden_size: []
+                            activation: "ReLU"
+
+                            seed: 1
+                            parallels: 8
+                            n_size: 128
+                            n_epoch: 5
+                            n_minibatch: 2
+                            learning_rate: 0.0007  # 7e-4
+                            weight_decay: 0
+
+                            vf_coef: 1.0
+                            ent_coef: 0.01
+                            target_kl: 0.25
+                            clip_range: 0.2
+                            clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+                            gamma: 0.99  # discount factor
+
+                            # tricks
+                            use_linear_lr_decay: False  # if use linear learning rate decay
+                            end_factor_lr_decay: 0.5
+                            use_global_state: False  # if use global state to replace joint observations
+                            use_grad_norm: True  # gradient normalization
+                            max_grad_norm: 10.0
+                            use_value_clip: True  # limit the value range
+                            value_clip_range: 0.2
+                            use_value_norm: True  # use running mean and std to normalize rewards.
+                            use_huber_loss: True  # True: use huber loss; False: use MSE loss.
+                            huber_delta: 10.0
+                            use_advnorm: True  # use advantage normalization.
+                            use_gae: True  # use GAE trick to calculate returns.
+                            gae_lambda: 0.95
+
+                            start_training: 1
+                            running_steps: 10000000  # 10M
+                            training_frequency: 1
+
+                            eval_interval: 100000
+                            test_episode: 16
+                            log_dir: "./logs/ippo/"
+                            model_dir: "./models/ippo/"
+
 
             .. group-tab:: Football
 
@@ -8231,6 +9077,80 @@ Within the following content, we provid the preset arguments for each implementa
                     .. group-tab:: 3v1
 
                         .. code-block:: yaml
+
+                            agent: "IPPO"  # the learning algorithms_marl
+                            global_state: True
+                            # environment settings
+                            env_name: "Football"
+                            scenario: "academy_3_vs_1_with_keeper"
+                            use_stacked_frames: False  # Whether to use stacked_frames
+                            num_agent: 3
+                            num_adversary: 0
+                            obs_type: "simple115v2"  # representation used to build the observation, choices: ["simple115v2", "extracted", "pixels_gray", "pixels"]
+                            rewards_type: "scoring,checkpoints"  # comma separated list of rewards to be added
+                            smm_width: 96  # width of super minimap
+                            smm_height: 72  # height of super minimap
+                            fps: 15
+                            policy: "Categorical_MAAC_Policy"
+                            representation: "Basic_RNN"
+                            vectorize: "Subproc_Football"
+                            runner: "Football_Runner"
+
+                            # recurrent settings for Basic_RNN representation
+                            use_recurrent: True
+                            rnn: "GRU"
+                            recurrent_layer_N: 1
+                            fc_hidden_sizes: [64]
+                            recurrent_hidden_size: 64
+                            N_recurrent_layers: 1
+                            dropout: 0
+                            normalize: "LayerNorm"
+                            initialize: "orthogonal"
+                            gain: 0.01
+
+                            actor_hidden_size: [64, 64]
+                            critic_hidden_size: [64, 64]
+                            activation: "ReLU"
+
+                            seed: 1
+                            parallels: 50
+                            n_size: 400
+                            n_epoch: 15
+                            n_minibatch: 2
+                            learning_rate: 5.0e-4
+                            weight_decay: 0
+
+                            vf_coef: 1.0
+                            ent_coef: 0.01
+                            clip_range: 0.2
+                            clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+                            gamma: 0.99  # discount factor
+
+                            # tricks
+                            use_linear_lr_decay: False  # if use linear learning rate decay
+                            end_factor_lr_decay: 0.5
+                            use_global_state: False  # if use global state to calculate values
+                            use_grad_norm: True  # gradient normalization
+                            max_grad_norm: 10.0
+                            use_value_clip: True  # limit the value range
+                            value_clip_range: 0.2
+                            use_value_norm: True  # use running mean and std to normalize rewards.
+                            use_huber_loss: True  # True: use huber loss; False: use MSE loss.
+                            huber_delta: 10.0
+                            use_advnorm: True  # use advantage normalization.
+                            use_gae: True  # use GAE trick to calculate returns.
+                            gae_lambda: 0.95
+
+                            start_training: 1
+                            running_steps: 25000000
+                            training_frequency: 1
+
+                            eval_interval: 200000
+                            test_episode: 50
+                            log_dir: "./logs/ippo/"
+                            model_dir: "./models/ippo/"
+                            videos_dir: "./videos/ippo/"
+
 
     .. group-tab:: MAPPO
 
@@ -8244,13 +9164,196 @@ Within the following content, we provid the preset arguments for each implementa
 
                         .. code-block:: yaml
 
+                            agent: "MAPPO"
+                            env_name: "mpe"
+                            env_id: "simple_adversary_v3"
+                            continuous_action: True
+                            policy: "Gaussian_MAAC_Policy"
+                            representation: "Basic_MLP"
+                            vectorize: "Dummy_Pettingzoo"
+                            runner: "Pettingzoo_Runner"
+
+                            # recurrent settings for Basic_RNN representation
+                            use_recurrent: False
+                            rnn:
+                            representation_hidden_size: [64, ]  # the units for each hidden layer
+                            gain: 0.01
+
+                            actor_hidden_size: [64, ]
+                            critic_hidden_size: [256, ]
+                            activation: "ReLU"
+
+                            seed: 1
+                            parallels: 128
+                            n_size: 3200
+                            n_epoch: 10
+                            n_minibatch: 1
+                            learning_rate: 0.0007
+                            weight_decay: 0
+
+                            vf_coef: 0.5
+                            ent_coef: 0.01
+                            target_kl: 0.25  # for MAPPO_KL learner
+                            clip_range: 0.2  # ratio clip range, for MAPPO_Clip learner
+                            clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+                            gamma: 0.95  # discount factor
+
+                            # tricks
+                            use_linear_lr_decay: False  # if use linear learning rate decay
+                            end_factor_lr_decay: 0.5
+                            use_global_state: False  # if use global state to replace merged observations
+                            use_grad_norm: True  # gradient normalization
+                            max_grad_norm: 10.0
+                            use_value_clip: True  # limit the value range
+                            value_clip_range: 0.2
+                            use_value_norm: True  # use running mean and std to normalize rewards.
+                            use_huber_loss: True  # True: use huber loss; False: use MSE loss.
+                            huber_delta: 10.0
+                            use_advnorm: True
+                            use_gae: True
+                            gae_lambda: 0.95
+
+                            start_training: 1
+                            running_steps: 10000000
+                            train_per_step: True
+                            training_frequency: 1
+
+                            test_steps: 10000
+                            eval_interval: 100000
+                            test_episode: 5
+                            log_dir: "./logs/mappo/"
+                            model_dir: "./models/mappo/"
+
+
                     .. group-tab:: simple_push_v3
 
                         .. code-block:: yaml
 
+                            agent: "MAPPO"
+                            env_name: "mpe"
+                            env_id: "simple_push_v3"
+                            continuous_action: True
+                            policy: "Gaussian_MAAC_Policy"
+                            representation: "Basic_MLP"
+                            vectorize: "Dummy_Pettingzoo"
+                            runner: "Pettingzoo_Runner"
+
+                            # recurrent settings for Basic_RNN representation
+                            use_recurrent: False
+                            rnn:
+                            representation_hidden_size: [64, ]  # the units for each hidden layer
+                            gain: 0.01
+
+                            actor_hidden_size: [64, ]
+                            critic_hidden_size: [256, ]
+                            activation: "ReLU"
+
+                            seed: 1
+                            parallels: 128
+                            n_size: 3200
+                            n_epoch: 10
+                            n_minibatch: 1
+                            learning_rate: 0.0007
+                            weight_decay: 0
+
+                            vf_coef: 0.5
+                            ent_coef: 0.01
+                            target_kl: 0.25  # for MAPPO_KL learner
+                            clip_range: 0.2  # ratio clip range, for MAPPO_Clip learner
+                            clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+                            gamma: 0.95  # discount factor
+
+                            # tricks
+                            use_linear_lr_decay: False  # if use linear learning rate decay
+                            end_factor_lr_decay: 0.5
+                            use_global_state: False  # if use global state to replace merged observations
+                            use_grad_norm: True  # gradient normalization
+                            max_grad_norm: 10.0
+                            use_value_clip: True  # limit the value range
+                            value_clip_range: 0.2
+                            use_value_norm: True  # use running mean and std to normalize rewards.
+                            use_huber_loss: True  # True: use huber loss; False: use MSE loss.
+                            huber_delta: 10.0
+                            use_advnorm: True
+                            use_gae: True
+                            gae_lambda: 0.95
+
+                            start_training: 1
+                            running_steps: 10000000
+                            train_per_step: True
+                            training_frequency: 1
+
+                            test_steps: 10000
+                            eval_interval: 100000
+                            test_episode: 5
+                            log_dir: "./logs/mappo/"
+                            model_dir: "./models/mappo/"
+
+
                     .. group-tab:: simple_spread_v3
 
                         .. code-block:: yaml
+
+                            agent: "MAPPO"
+                            env_name: "mpe"
+                            env_id: "simple_spread_v3"
+                            continuous_action: True
+                            policy: "Gaussian_MAAC_Policy"
+                            representation: "Basic_MLP"
+                            vectorize: "Dummy_Pettingzoo"
+                            runner: "Pettingzoo_Runner"
+
+                            # recurrent settings for Basic_RNN representation
+                            use_recurrent: False
+                            rnn:
+                            representation_hidden_size: [64, ]  # the units for each hidden layer
+                            gain: 0.01
+
+                            actor_hidden_size: [64, 64]
+                            critic_hidden_size: [64, 64]
+                            activation: "ReLU"
+
+                            seed: 1
+                            parallels: 8  # 128
+                            n_size: 3200
+                            n_epoch: 10
+                            n_minibatch: 1
+                            learning_rate: 0.0007
+                            weight_decay: 0
+
+                            vf_coef: 0.5
+                            ent_coef: 0.01
+                            target_kl: 0.25  # for MAPPO_KL learner
+                            clip_range: 0.2  # ratio clip range, for MAPPO_Clip learner
+                            clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+                            gamma: 0.95  # discount factor
+
+                            # tricks
+                            use_linear_lr_decay: False  # if use linear learning rate decay
+                            end_factor_lr_decay: 0.5
+                            use_global_state: False  # if use global state to replace merged observations
+                            use_grad_norm: True  # gradient normalization
+                            max_grad_norm: 10.0
+                            use_value_clip: True  # limit the value range
+                            value_clip_range: 0.2
+                            use_value_norm: True  # use running mean and std to normalize rewards.
+                            use_huber_loss: True  # True: use huber loss; False: use MSE loss.
+                            huber_delta: 10.0
+                            use_advnorm: True
+                            use_gae: True
+                            gae_lambda: 0.95
+
+                            start_training: 1
+                            running_steps: 10000000
+                            train_per_step: True
+                            training_frequency: 1
+
+                            test_steps: 10000
+                            eval_interval: 100000
+                            test_episode: 5
+                            log_dir: "./logs/mappo/"
+                            model_dir: "./models/mappo/"
+
 
             .. group-tab:: SC2
 
@@ -8260,41 +9363,700 @@ Within the following content, we provid the preset arguments for each implementa
 
                         .. code-block:: yaml
 
+                            agent: "MAPPO"
+                            env_name: "StarCraft2"
+                            env_id: "1c3s5z"
+                            fps: 15
+                            policy: "Categorical_MAAC_Policy"
+                            representation: "Basic_RNN"
+                            vectorize: "Subproc_StarCraft2"
+                            runner: "StarCraft2_Runner"
+
+                            # recurrent settings for Basic_RNN representation
+                            use_recurrent: True
+                            rnn: "GRU"
+                            recurrent_layer_N: 1
+                            fc_hidden_sizes: [64, 64, 64]
+                            recurrent_hidden_size: 64
+                            N_recurrent_layers: 1
+                            dropout: 0
+                            normalize: "LayerNorm"
+                            initialize: "orthogonal"
+                            gain: 0.01
+
+                            actor_hidden_size: []
+                            critic_hidden_size: []
+                            activation: "ReLU"
+
+                            seed: 1
+                            parallels: 8
+                            n_size: 128
+                            n_epoch: 15
+                            n_minibatch: 1
+                            learning_rate: 0.0007  # 7e-4
+                            weight_decay: 0
+
+                            vf_coef: 1.0
+                            ent_coef: 0.01
+                            target_kl: 0.25
+                            clip_range: 0.2
+                            clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+                            gamma: 0.99  # discount factor
+
+                            # tricks
+                            use_linear_lr_decay: False  # if use linear learning rate decay
+                            end_factor_lr_decay: 0.5
+                            use_global_state: True  # if use global state to calculate values
+                            use_grad_norm: True  # gradient normalization
+                            max_grad_norm: 10.0
+                            use_value_clip: True  # limit the value range
+                            value_clip_range: 0.2
+                            use_value_norm: True  # use running mean and std to normalize rewards.
+                            use_huber_loss: True  # True: use huber loss; False: use MSE loss.
+                            huber_delta: 10.0
+                            use_advnorm: True  # use advantage normalization.
+                            use_gae: True  # use GAE trick to calculate returns.
+                            gae_lambda: 0.95
+
+                            start_training: 1
+                            running_steps: 2000000
+                            training_frequency: 1
+
+                            eval_interval: 20000
+                            test_episode: 16
+                            log_dir: "./logs/mappo/"
+                            model_dir: "./models/mappo/"
+
+
                     .. group-tab:: 2m_vs_1z
 
                         .. code-block:: yaml
+
+                            agent: "MAPPO"
+                            env_name: "StarCraft2"
+                            env_id: "2m_vs_1z"
+                            fps: 15
+                            policy: "Categorical_MAAC_Policy"
+                            representation: "Basic_RNN"
+                            vectorize: "Subproc_StarCraft2"
+                            runner: "StarCraft2_Runner"
+                            on_policy: True
+
+                            # recurrent settings for Basic_RNN representation
+                            use_recurrent: True
+                            rnn: "GRU"
+                            recurrent_layer_N: 1
+                            fc_hidden_sizes: [64, 64, 64]
+                            recurrent_hidden_size: 64
+                            N_recurrent_layers: 1
+                            dropout: 0
+                            normalize: "LayerNorm"
+                            initialize: "orthogonal"
+                            gain: 0.01
+
+                            actor_hidden_size: []
+                            critic_hidden_size: []
+                            activation: "ReLU"
+
+                            seed: 1
+                            parallels: 8
+                            n_size: 128
+                            n_epoch: 15
+                            n_minibatch: 1
+                            learning_rate: 0.0007  # 7e-4
+                            weight_decay: 0
+
+                            vf_coef: 1.0
+                            ent_coef: 0.01
+                            target_kl: 0.25
+                            clip_range: 0.2
+                            clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+                            gamma: 0.99  # discount factor
+
+                            # tricks
+                            use_linear_lr_decay: False  # if use linear learning rate decay
+                            end_factor_lr_decay: 0.5
+                            use_global_state: True  # if use global state to replace merged observations
+                            use_grad_norm: True  # gradient normalization
+                            max_grad_norm: 10.0
+                            use_value_clip: True  # limit the value range
+                            value_clip_range: 0.2
+                            use_value_norm: True  # use running mean and std to normalize rewards.
+                            use_huber_loss: True  # True: use huber loss; False: use MSE loss.
+                            huber_delta: 10.0
+                            use_advnorm: True  # use advantage normalization.
+                            use_gae: True  # use GAE trick to calculate returns.
+                            gae_lambda: 0.95
+
+                            start_training: 1
+                            running_steps: 1000000
+                            train_per_step: True
+                            training_frequency: 1
+
+                            test_steps: 10000
+                            eval_interval: 10000
+                            test_episode: 16
+                            log_dir: "./logs/mappo/"
+                            model_dir: "./models/mappo/"
+
 
                     .. group-tab:: 2s3z
 
                         .. code-block:: yaml
 
+                            agent: "MAPPO"
+                            env_name: "StarCraft2"
+                            env_id: "2s3z"
+                            fps: 15
+                            policy: "Categorical_MAAC_Policy"
+                            representation: "Basic_RNN"
+                            vectorize: "Subproc_StarCraft2"
+                            runner: "StarCraft2_Runner"
+
+                            # recurrent settings for Basic_RNN representation
+                            use_recurrent: True
+                            rnn: "GRU"
+                            recurrent_layer_N: 1
+                            fc_hidden_sizes: [64, 64, 64]
+                            recurrent_hidden_size: 64
+                            N_recurrent_layers: 1
+                            dropout: 0
+                            normalize: "LayerNorm"
+                            initialize: "orthogonal"
+                            gain: 0.01
+
+                            actor_hidden_size: []
+                            critic_hidden_size: []
+                            activation: "ReLU"
+
+                            seed: 1
+                            parallels: 8
+                            n_size: 128
+                            n_epoch: 15
+                            n_minibatch: 1
+                            learning_rate: 0.0007  # 7e-4
+                            weight_decay: 0
+
+                            vf_coef: 1.0
+                            ent_coef: 0.01
+                            target_kl: 0.25
+                            clip_range: 0.2
+                            clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+                            gamma: 0.99  # discount factor
+
+                            # tricks
+                            use_linear_lr_decay: False  # if use linear learning rate decay
+                            end_factor_lr_decay: 0.5
+                            use_global_state: True  # if use global state to calculate values
+                            use_grad_norm: True  # gradient normalization
+                            max_grad_norm: 10.0
+                            use_value_clip: True  # limit the value range
+                            value_clip_range: 0.2
+                            use_value_norm: True  # use running mean and std to normalize rewards.
+                            use_huber_loss: True  # True: use huber loss; False: use MSE loss.
+                            huber_delta: 10.0
+                            use_advnorm: True  # use advantage normalization.
+                            use_gae: True  # use GAE trick to calculate returns.
+                            gae_lambda: 0.95
+
+                            start_training: 1
+                            running_steps: 2000000
+                            training_frequency: 1
+
+                            eval_interval: 20000
+                            test_episode: 16
+                            log_dir: "./logs/mappo/"
+                            model_dir: "./models/mappo/"
+
+
                     .. group-tab:: 3m
 
                         .. code-block:: yaml
+
+                            agent: "MAPPO"
+                            env_name: "StarCraft2"
+                            env_id: "3m"
+                            fps: 15
+                            policy: "Categorical_MAAC_Policy"
+                            representation: "Basic_RNN"
+                            vectorize: "Subproc_StarCraft2"
+                            runner: "StarCraft2_Runner"
+
+                            # recurrent settings for Basic_RNN representation
+                            use_recurrent: True
+                            rnn: "GRU"
+                            recurrent_layer_N: 1
+                            fc_hidden_sizes: [64, 64, 64]
+                            recurrent_hidden_size: 64
+                            N_recurrent_layers: 1
+                            dropout: 0
+                            normalize: "LayerNorm"
+                            initialize: "orthogonal"
+                            gain: 0.01
+
+                            actor_hidden_size: []
+                            critic_hidden_size: []
+                            activation: "ReLU"
+
+                            seed: 1
+                            parallels: 8
+                            n_size: 128
+                            n_epoch: 15
+                            n_minibatch: 1
+                            learning_rate: 0.0007  # 7e-4
+                            weight_decay: 0
+
+                            vf_coef: 1.0
+                            ent_coef: 0.01
+                            target_kl: 0.25
+                            clip_range: 0.2
+                            clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+                            gamma: 0.99  # discount factor
+
+                            # tricks
+                            use_linear_lr_decay: False  # if use linear learning rate decay
+                            end_factor_lr_decay: 0.5
+                            use_global_state: True  # if use global state to calculate values
+                            use_grad_norm: True  # gradient normalization
+                            max_grad_norm: 10.0
+                            use_value_clip: True  # limit the value range
+                            value_clip_range: 0.2
+                            use_value_norm: True  # use running mean and std to normalize rewards.
+                            use_huber_loss: True  # True: use huber loss; False: use MSE loss.
+                            huber_delta: 10.0
+                            use_advnorm: True  # use advantage normalization.
+                            use_gae: True  # use GAE trick to calculate returns.
+                            gae_lambda: 0.95
+
+                            start_training: 1
+                            running_steps: 1000000
+                            training_frequency: 1
+
+                            eval_interval: 10000
+                            test_episode: 16
+                            log_dir: "./logs/mappo/"
+                            model_dir: "./models/mappo/"
+
 
                     .. group-tab:: 5m_vs_6m
 
                         .. code-block:: yaml
 
+                            agent: "MAPPO"
+                            env_name: "StarCraft2"
+                            env_id: "5m_vs_6m"
+                            fps: 15
+                            policy: "Categorical_MAAC_Policy"
+                            representation: "Basic_RNN"
+                            vectorize: "Subproc_StarCraft2"
+                            runner: "StarCraft2_Runner"
+                            on_policy: True
+
+                            # recurrent settings for Basic_RNN representation
+                            use_recurrent: True
+                            rnn: "GRU"
+                            recurrent_layer_N: 1
+                            fc_hidden_sizes: [64]
+                            recurrent_hidden_size: 64
+                            N_recurrent_layers: 1
+                            dropout: 0
+                            normalize: "LayerNorm"
+                            initialize: "orthogonal"
+                            gain: 0.01
+
+                            actor_hidden_size: [64, 64]
+                            critic_hidden_size: [64, 64]
+                            activation: "ReLU"
+
+                            seed: 1
+                            parallels: 8
+                            n_size: 128
+                            n_epoch: 10
+                            n_minibatch: 1
+                            learning_rate: 0.0007  # 7e-4
+                            weight_decay: 0
+
+                            vf_coef: 1.0
+                            ent_coef: 0.01
+                            target_kl: 0.25
+                            clip_range: 0.05
+                            clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+                            gamma: 0.99  # discount factor
+
+                            # tricks
+                            use_linear_lr_decay: False  # if use linear learning rate decay
+                            end_factor_lr_decay: 0.5
+                            use_global_state: True  # if use global state to calculate values
+                            use_grad_norm: True  # gradient normalization
+                            max_grad_norm: 10.0
+                            use_value_clip: True  # limit the value range
+                            value_clip_range: 0.05
+                            use_value_norm: True  # use running mean and std to normalize rewards.
+                            use_huber_loss: True  # True: use huber loss; False: use MSE loss.
+                            huber_delta: 10.0
+                            use_advnorm: True  # use advantage normalization.
+                            use_gae: True  # use GAE trick to calculate returns.
+                            gae_lambda: 0.95
+
+                            start_training: 1
+                            running_steps: 10000000  # 10M
+                            training_frequency: 1
+
+                            eval_interval: 100000
+                            test_episode: 16
+                            log_dir: "./logs/mappo/"
+                            model_dir: "./models/mappo/"
+
+
                     .. group-tab:: 8m
 
                         .. code-block:: yaml
+
+                            agent: "MAPPO"
+                            env_name: "StarCraft2"
+                            env_id: "8m"
+                            fps: 15
+                            policy: "Categorical_MAAC_Policy"
+                            representation: "Basic_RNN"
+                            vectorize: "Subproc_StarCraft2"
+                            runner: "StarCraft2_Runner"
+                            on_policy: True
+
+                            # recurrent settings for Basic_RNN representation
+                            use_recurrent: True
+                            rnn: "GRU"
+                            recurrent_layer_N: 1
+                            fc_hidden_sizes: [64, 64, 64]
+                            recurrent_hidden_size: 64
+                            N_recurrent_layers: 1
+                            dropout: 0
+                            normalize: "LayerNorm"
+                            initialize: "orthogonal"
+                            gain: 0.01
+
+                            actor_hidden_size: []
+                            critic_hidden_size: []
+                            activation: "ReLU"
+
+                            seed: 1
+                            parallels: 8
+                            n_size: 128
+                            n_epoch: 15
+                            n_minibatch: 1
+                            learning_rate: 0.0007  # 7e-4
+                            weight_decay: 0
+
+                            vf_coef: 1.0
+                            ent_coef: 0.01
+                            target_kl: 0.25
+                            clip_range: 0.2
+                            clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+                            gamma: 0.99  # discount factor
+
+                            # tricks
+                            use_linear_lr_decay: False  # if use linear learning rate decay
+                            end_factor_lr_decay: 0.5
+                            use_global_state: True  # if use global state to calculate values
+                            use_grad_norm: True  # gradient normalization
+                            max_grad_norm: 10.0
+                            use_value_clip: True  # limit the value range
+                            value_clip_range: 0.2
+                            use_value_norm: True  # use running mean and std to normalize rewards.
+                            use_huber_loss: True  # True: use huber loss; False: use MSE loss.
+                            huber_delta: 10.0
+                            use_advnorm: True  # use advantage normalization.
+                            use_gae: True  # use GAE trick to calculate returns.
+                            gae_lambda: 0.95
+
+                            start_training: 1
+                            running_steps: 1000000  # 1M
+                            training_frequency: 1
+
+                            eval_interval: 10000
+                            test_episode: 16
+                            log_dir: "./logs/mappo/"
+                            model_dir: "./models/mappo/"
+
 
                     .. group-tab:: 8m_vd_9m
 
                         .. code-block:: yaml
 
+                            agent: "MAPPO"
+                            env_name: "StarCraft2"
+                            env_id: "8m_vs_9m"
+                            fps: 15
+                            policy: "Categorical_MAAC_Policy"
+                            representation: "Basic_RNN"
+                            vectorize: "Subproc_StarCraft2"
+                            runner: "StarCraft2_Runner"
+                            on_policy: True
+
+                            # recurrent settings for Basic_RNN representation
+                            use_recurrent: True
+                            rnn: "GRU"
+                            recurrent_layer_N: 1
+                            fc_hidden_sizes: [64,]
+                            recurrent_hidden_size: 64
+                            N_recurrent_layers: 1
+                            dropout: 0
+                            normalize: "LayerNorm"
+                            initialize: "orthogonal"
+                            gain: 0.01
+
+                            actor_hidden_size: [64, 64]
+                            critic_hidden_size: [64, 64]
+                            activation: "ReLU"
+
+                            seed: 1
+                            parallels: 8
+                            n_size: 128
+                            n_epoch: 15
+                            n_minibatch: 1
+                            learning_rate: 0.0007  # 7e-4
+                            weight_decay: 0
+
+                            vf_coef: 1.0
+                            ent_coef: 0.01
+                            target_kl: 0.25
+                            clip_range: 0.05
+                            clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+                            gamma: 0.99  # discount factor
+
+                            # tricks
+                            use_linear_lr_decay: False  # if use linear learning rate decay
+                            end_factor_lr_decay: 0.5
+                            use_global_state: True  # if use global state to calculate values
+                            use_grad_norm: True  # gradient normalization
+                            max_grad_norm: 10.0
+                            use_value_clip: True  # limit the value range
+                            value_clip_range: 0.05
+                            use_value_norm: True  # use running mean and std to normalize rewards.
+                            use_huber_loss: True  # True: use huber loss; False: use MSE loss.
+                            huber_delta: 10.0
+                            use_advnorm: True  # use advantage normalization.
+                            use_gae: True  # use GAE trick to calculate returns.
+                            gae_lambda: 0.95
+
+                            start_training: 1
+                            running_steps: 10000000  # 10M
+                            training_frequency: 1
+
+                            eval_interval: 100000
+                            test_episode: 16
+                            log_dir: "./logs/mappo/"
+                            model_dir: "./models/mappo/"
+
+
                     .. group-tab:: 25m
 
                         .. code-block:: yaml
 
+                            agent: "MAPPO"
+                            env_name: "StarCraft2"
+                            env_id: "25m"
+                            fps: 15
+                            policy: "Categorical_MAAC_Policy"
+                            representation: "Basic_RNN"
+                            vectorize: "Subproc_StarCraft2"
+                            runner: "StarCraft2_Runner"
+                            on_policy: True
+
+                            # recurrent settings for Basic_RNN representation
+                            use_recurrent: True
+                            rnn: "GRU"
+                            recurrent_layer_N: 1
+                            fc_hidden_sizes: [64, 64, 64]
+                            recurrent_hidden_size: 64
+                            N_recurrent_layers: 1
+                            dropout: 0
+                            normalize: "LayerNorm"
+                            initialize: "orthogonal"
+                            gain: 0.01
+
+                            actor_hidden_size: []
+                            critic_hidden_size: []
+                            activation: "ReLU"
+
+                            seed: 1
+                            parallels: 8
+                            n_size: 128
+                            n_epoch: 10
+                            n_minibatch: 1
+                            learning_rate: 0.0007  # 7e-4
+                            weight_decay: 0
+
+                            vf_coef: 1.0
+                            ent_coef: 0.01
+                            target_kl: 0.25
+                            clip_range: 0.2
+                            clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+                            gamma: 0.99  # discount factor
+
+                            # tricks
+                            use_linear_lr_decay: False  # if use linear learning rate decay
+                            end_factor_lr_decay: 0.5
+                            use_global_state: True  # if use global state to calculate values
+                            use_grad_norm: True  # gradient normalization
+                            max_grad_norm: 10.0
+                            use_value_clip: True  # limit the value range
+                            value_clip_range: 0.2
+                            use_value_norm: True  # use running mean and std to normalize rewards.
+                            use_huber_loss: True  # True: use huber loss; False: use MSE loss.
+                            huber_delta: 10.0
+                            use_advnorm: True  # use advantage normalization.
+                            use_gae: True  # use GAE trick to calculate returns.
+                            gae_lambda: 0.95
+
+                            start_training: 1
+                            running_steps: 5000000  # 5M
+                            training_frequency: 1
+
+                            eval_interval: 50000
+                            test_episode: 16
+                            log_dir: "./logs/mappo/"
+                            model_dir: "./models/mappo/"
+
+
                     .. group-tab:: corridor
 
                         .. code-block:: yaml
+
+                            agent: "MAPPO"
+                            env_name: "StarCraft2"
+                            env_id: "corridor"
+                            fps: 15
+                            policy: "Categorical_MAAC_Policy"
+                            representation: "Basic_RNN"
+                            vectorize: "Subproc_StarCraft2"
+                            runner: "StarCraft2_Runner"
+                            on_policy: True
+
+                            # recurrent settings for Basic_RNN representation
+                            use_recurrent: True
+                            rnn: "GRU"
+                            recurrent_layer_N: 1
+                            fc_hidden_sizes: [64, 64, 64]
+                            recurrent_hidden_size: 64
+                            N_recurrent_layers: 1
+                            dropout: 0
+                            normalize: "LayerNorm"
+                            initialize: "orthogonal"
+                            gain: 0.01
+
+                            actor_hidden_size: []
+                            critic_hidden_size: []
+                            activation: "ReLU"
+
+                            seed: 1
+                            parallels: 8
+                            n_size: 128
+                            n_epoch: 5
+                            n_minibatch: 1
+                            learning_rate: 0.0007  # 7e-4
+                            weight_decay: 0
+
+                            vf_coef: 1.0
+                            ent_coef: 0.01
+                            target_kl: 0.25
+                            clip_range: 0.2
+                            clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+                            gamma: 0.99  # discount factor
+
+                            # tricks
+                            use_linear_lr_decay: False  # if use linear learning rate decay
+                            end_factor_lr_decay: 0.5
+                            use_global_state: True  # if use global state to calculate values
+                            use_grad_norm: True  # gradient normalization
+                            max_grad_norm: 10.0
+                            use_value_clip: True  # limit the value range
+                            value_clip_range: 0.2
+                            use_value_norm: True  # use running mean and std to normalize rewards.
+                            use_huber_loss: True  # True: use huber loss; False: use MSE loss.
+                            huber_delta: 10.0
+                            use_advnorm: True  # use advantage normalization.
+                            use_gae: True  # use GAE trick to calculate returns.
+                            gae_lambda: 0.95
+
+                            start_training: 1
+                            running_steps: 10000000  # 10M
+                            training_frequency: 1
+
+                            eval_interval: 100000
+                            test_episode: 16
+                            log_dir: "./logs/mappo/"
+                            model_dir: "./models/mappo/"
+
                     
                     .. group-tab:: MMM2
 
                         .. code-block:: yaml
+
+                            agent: "MAPPO"
+                            env_name: "StarCraft2"
+                            env_id: "MMM2"
+                            fps: 15
+                            policy: "Categorical_MAAC_Policy"
+                            representation: "Basic_RNN"
+                            vectorize: "Subproc_StarCraft2"
+                            runner: "StarCraft2_Runner"
+                            on_policy: True
+
+                            # recurrent settings for Basic_RNN representation
+                            use_recurrent: True
+                            rnn: "GRU"
+                            recurrent_layer_N: 1
+                            fc_hidden_sizes: [64, 64, 64]
+                            recurrent_hidden_size: 64
+                            N_recurrent_layers: 1
+                            dropout: 0
+                            normalize: "LayerNorm"
+                            initialize: "orthogonal"
+                            gain: 1.0
+
+                            actor_hidden_size: []
+                            critic_hidden_size: []
+                            activation: "ReLU"
+
+                            seed: 1
+                            parallels: 8
+                            n_size: 128
+                            n_epoch: 5
+                            n_minibatch: 2
+                            learning_rate: 0.0007  # 7e-4
+                            weight_decay: 0
+
+                            vf_coef: 1.0
+                            ent_coef: 0.01
+                            target_kl: 0.25
+                            clip_range: 0.2
+                            clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+                            gamma: 0.99  # discount factor
+
+                            # tricks
+                            use_linear_lr_decay: False  # if use linear learning rate decay
+                            end_factor_lr_decay: 0.5
+                            use_global_state: True  # if use global state to calculate values
+                            use_grad_norm: True  # gradient normalization
+                            max_grad_norm: 10.0
+                            use_value_clip: True  # limit the value range
+                            value_clip_range: 0.2
+                            use_value_norm: True  # use running mean and std to normalize rewards.
+                            use_huber_loss: True  # True: use huber loss; False: use MSE loss.
+                            huber_delta: 10.0
+                            use_advnorm: True  # use advantage normalization.
+                            use_gae: True  # use GAE trick to calculate returns.
+                            gae_lambda: 0.95
+
+                            start_training: 1
+                            running_steps: 10000000  # 10M
+                            training_frequency: 1
+
+                            eval_interval: 100000
+                            test_episode: 16
+                            log_dir: "./logs/mappo/"
+                            model_dir: "./models/mappo/"
+
 
             .. group-tab:: Football
 
@@ -8303,10 +10065,158 @@ Within the following content, we provid the preset arguments for each implementa
                     .. group-tab:: 1v1
 
                         .. code-block:: yaml
+
+                            agent: "MAPPO"  # the learning algorithms_marl
+                            global_state: True
+                            # environment settings
+                            env_name: "Football"
+                            scenario: "1_vs_1_easy"
+                            use_stacked_frames: False  # Whether to use stacked_frames
+                            num_agent: 1
+                            num_adversary: 0
+                            obs_type: "simple115v2"  # representation used to build the observation, choices: ["simple115v2", "extracted", "pixels_gray", "pixels"]
+                            rewards_type: "scoring,checkpoints"  # comma separated list of rewards to be added
+                            smm_width: 96  # width of super minimap
+                            smm_height: 72  # height of super minimap
+                            fps: 15
+                            policy: "Categorical_MAAC_Policy"
+                            representation: "Basic_RNN"
+                            vectorize: "Subproc_Football"
+                            runner: "Football_Runner"
+
+                            # recurrent settings for Basic_RNN representation
+                            use_recurrent: True
+                            rnn: "GRU"
+                            recurrent_layer_N: 1
+                            fc_hidden_sizes: [64]
+                            recurrent_hidden_size: 64
+                            N_recurrent_layers: 1
+                            dropout: 0
+                            normalize: "LayerNorm"
+                            initialize: "orthogonal"
+                            gain: 0.01
+
+                            actor_hidden_size: [64, 64]
+                            critic_hidden_size: [64, 64]
+                            activation: "ReLU"
+
+                            seed: 1
+                            parallels: 50
+                            n_size: 100
+                            n_epoch: 10
+                            n_minibatch: 1
+                            learning_rate: 5.0e-4
+                            weight_decay: 0
+
+                            vf_coef: 1.0
+                            ent_coef: 0.01
+                            clip_range: 0.2
+                            clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+                            gamma: 0.99  # discount factor
+
+                            # tricks
+                            use_linear_lr_decay: False  # if use linear learning rate decay
+                            end_factor_lr_decay: 0.5
+                            use_global_state: True  # if use global state to calculate values
+                            use_grad_norm: True  # gradient normalization
+                            max_grad_norm: 10.0
+                            use_value_clip: True  # limit the value range
+                            value_clip_range: 0.2
+                            use_value_norm: True  # use running mean and std to normalize rewards.
+                            use_huber_loss: True  # True: use huber loss; False: use MSE loss.
+                            huber_delta: 10.0
+                            use_advnorm: True  # use advantage normalization.
+                            use_gae: True  # use GAE trick to calculate returns.
+                            gae_lambda: 0.95
+
+                            start_training: 1
+                            running_steps: 25000000
+                            training_frequency: 1
+
+                            eval_interval: 200000
+                            test_episode: 50
+                            log_dir: "./logs/mappo/"
+                            model_dir: "./models/mappo/"
+                            videos_dir: "./videos/mappo/"
+
                     
                     .. group-tab:: 3v1
 
                         .. code-block:: yaml
+
+                            agent: "MAPPO"  # the learning algorithms_marl
+                            global_state: True
+                            # environment settings
+                            env_name: "Football"
+                            scenario: "academy_3_vs_1_with_keeper"
+                            use_stacked_frames: False  # Whether to use stacked_frames
+                            num_agent: 3
+                            num_adversary: 0
+                            obs_type: "simple115v2"  # representation used to build the observation, choices: ["simple115v2", "extracted", "pixels_gray", "pixels"]
+                            rewards_type: "scoring,checkpoints"  # comma separated list of rewards to be added
+                            smm_width: 96  # width of super minimap
+                            smm_height: 72  # height of super minimap
+                            fps: 15
+                            policy: "Categorical_MAAC_Policy"
+                            representation: "Basic_RNN"
+                            vectorize: "Subproc_Football"
+                            runner: "Football_Runner"
+
+                            # recurrent settings for Basic_RNN representation
+                            use_recurrent: True
+                            rnn: "GRU"
+                            recurrent_layer_N: 1
+                            fc_hidden_sizes: [64]
+                            recurrent_hidden_size: 64
+                            N_recurrent_layers: 1
+                            dropout: 0
+                            normalize: "LayerNorm"
+                            initialize: "orthogonal"
+                            gain: 0.01
+
+                            actor_hidden_size: [64, 64]
+                            critic_hidden_size: [64, 64]
+                            activation: "ReLU"
+
+                            seed: 1
+                            parallels: 50
+                            n_size: 400
+                            n_epoch: 15
+                            n_minibatch: 2
+                            learning_rate: 5.0e-4
+                            weight_decay: 0
+
+                            vf_coef: 1.0
+                            ent_coef: 0.01
+                            clip_range: 0.2
+                            clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+                            gamma: 0.99  # discount factor
+
+                            # tricks
+                            use_linear_lr_decay: False  # if use linear learning rate decay
+                            end_factor_lr_decay: 0.5
+                            use_global_state: True  # if use global state to calculate values
+                            use_grad_norm: True  # gradient normalization
+                            max_grad_norm: 10.0
+                            use_value_clip: True  # limit the value range
+                            value_clip_range: 0.2
+                            use_value_norm: True  # use running mean and std to normalize rewards.
+                            use_huber_loss: True  # True: use huber loss; False: use MSE loss.
+                            huber_delta: 10.0
+                            use_advnorm: True  # use advantage normalization.
+                            use_gae: True  # use GAE trick to calculate returns.
+                            gae_lambda: 0.95
+
+                            start_training: 1
+                            running_steps: 25000000
+                            training_frequency: 1
+
+                            eval_interval: 200000
+                            test_episode: 50
+                            log_dir: "./logs/mappo/"
+                            model_dir: "./models/mappo/"
+                            videos_dir: "./videos/mappo/"
+
 
     .. group-tab:: MATD3
 

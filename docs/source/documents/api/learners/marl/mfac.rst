@@ -15,17 +15,17 @@ xxxxxx.
   :param config: Provides hyper parameters.
   :type config: Namespace
   :param policy: The policy that provides actions and values.
-  :type policy: xxxxxx
-  :param optimizer: xxxxxx.
-  :type optimizer: xxxxxx
-  :param scheduler: xxxxxx.
-  :type scheduler: xxxxxx
+  :type policy: nn.Module
+  :param optimizer: The optimizer that update the paramters of the model.
+  :type optimizer: Optimizer
+  :param scheduler: The tool for learning rate decay.
+  :type scheduler: lr_scheduler
   :param device: The calculating device.
   :type device: str
-  :param model_dir: xxxxxx.
-  :type model_dir: xxxxxx
-  :param gamma: xxxxxx.
-  :type gamma: xxxxxx
+  :param model_dir: The directory for saving or loading the model parameters.
+  :type model_dir: str
+  :param gamma: The discount factor.
+  :type gamma: float
 
 .. py:function::
   xuance.torch.learners.multi_agent_rl.mfac_learner.MFAC_Learner.update(sample)
@@ -49,15 +49,15 @@ xxxxxx.
   :param config: Provides hyper parameters.
   :type config: Namespace
   :param policy: The policy that provides actions and values.
-  :type policy: xxxxxx
-  :param optimizer: xxxxxx.
-  :type optimizer: xxxxxx
+  :type policy: nn.Module
+  :param optimizer: The optimizer that update the paramters of the model.
+  :type optimizer: Optimizer
   :param device: The calculating device.
   :type device: str
-  :param model_dir: xxxxxx.
-  :type model_dir: xxxxxx
-  :param gamma: xxxxxx.
-  :type gamma: xxxxxx
+  :param model_dir: The directory for saving or loading the model parameters.
+  :type model_dir: str
+  :param gamma: The discount factor.
+  :type gamma: float
 
 .. py:function::
   xuance.tensorflow.learners.multi_agent_rl.mfac_learner.MFAC_Learner.update(sample)
@@ -81,15 +81,15 @@ xxxxxx.
   :param config: Provides hyper parameters.
   :type config: Namespace
   :param policy: The policy that provides actions and values.
-  :type policy: xxxxxx
-  :param optimizer: xxxxxx.
-  :type optimizer: xxxxxx
-  :param scheduler: xxxxxx.
-  :type scheduler: xxxxxx
-  :param model_dir: xxxxxx.
-  :type model_dir: xxxxxx
-  :param gamma: xxxxxx.
-  :type gamma: xxxxxx
+  :type policy: nn.Module
+  :param optimizer: The optimizer that update the paramters of the model.
+  :type optimizer: Optimizer
+  :param scheduler: The tool for learning rate decay.
+  :type scheduler: lr_scheduler
+  :param model_dir: The directory for saving or loading the model parameters.
+  :type model_dir: str
+  :param gamma: The discount factor.
+  :type gamma: float
 
 .. py:function::
   xuance.mindspore.learners.multi_agent_rl.mfac_learner.MFAC_Learner.update(sample)
