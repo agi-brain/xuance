@@ -38,8 +38,8 @@ xxxxxx.
   :type dim_hidden: xxxxxx
   :param dim_act: xxxxxx.
   :type dim_act: xxxxxx
-  :param args: xxxxxx.
-  :type args: xxxxxx
+  :param args: the arguments.
+  :type args: Namespace
 
 .. py:function::
   xuance.torch.policies.coordination_graph.DCG_payoff.forward(hidden_states_n, edges_from, edges_to)
@@ -108,8 +108,8 @@ xxxxxx.
   :type dim_hidden: xxxxxx
   :param dim_act: xxxxxx.
   :type dim_act: xxxxxx
-  :param args: xxxxxx.
-  :type args: xxxxxx
+  :param args: the arguments.
+  :type args: Namespace
 
 .. py:function::
   xuance.tensorflow.policies.coordination_graph.DCG_payoff.call(hidden_states_n, edges_from, edges_to)

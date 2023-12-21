@@ -75,12 +75,12 @@ When implementing this class in PyTorch, you also need to specify the device typ
 .. py:function::
   xuance.tensorflow.representations.mlp.Basic_Identical.call(observations)
 
-  xxxxxx.
+  Calculate feature representation of the input observations.
 
   :param observations: The original observation variables.
-  :type observations: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type observations: tf.Tensor
+  :return: The features output by the representation model.
+  :rtype: dict
 
 .. py:class::
   xuance.tensorflow.representations.mlp.Basic_MLP(input_shape, hidden_sizes, normalize, initialize, activation, device)
@@ -90,31 +90,31 @@ When implementing this class in PyTorch, you also need to specify the device typ
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: tk.Model
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: tf.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: tk.Model
   :param device: The calculating device.
   :type device: str
 
 .. py:function::
   xuance.tensorflow.representations.mlp.Basic_MLP._create_network()
 
-  xxxxxx.
+  Create the multi-layer perceptron netowrks.
 
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The neural network module.
+  :rtype: tk.Model
 
 .. py:function::
   xuance.tensorflow.representations.mlp.Basic_MLP.call(observations)
 
-  xxxxxx.
+  Calculate feature representation of the input observations.
 
   :param observations: The original observation variables.
-  :type observations: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type observations: tf.Tensor
+  :return: The features output by the representation model.
+  :rtype: dict
 
 .. raw:: html
 
@@ -131,12 +131,12 @@ When implementing this class in PyTorch, you also need to specify the device typ
 .. py:function::
   xuance.mindspore.representations.mlp.Basic_Identical.construct(observations)
 
-  xxxxxx.
+  Calculate feature representation of the input observations.
 
   :param observations: The original observation variables.
-  :type observations: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type observations: ms.Tensor
+  :return: The features output by the representation model.
+  :rtype: dict
 
 .. py:class::
   xuance.mindspore.representations.mlp.Basic_MLP(input_shape, hidden_sizes, normalize, initialize, activation)
@@ -146,29 +146,29 @@ When implementing this class in PyTorch, you also need to specify the device typ
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: nn.Cell
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: ms.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: nn.Cell
 
 .. py:function::
   xuance.mindspore.representations.mlp.Basic_MLP._create_network()
 
-  xxxxxx.
+  Create the multi-layer perceptron netowrks.
 
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The neural network module.
+  :rtype: nn.Cell
 
 .. py:function::
   xuance.mindspore.representations.mlp.Basic_MLP.construct(observations)
 
-  xxxxxx.
+  Calculate feature representation of the input observations.
 
   :param observations: The original observation variables.
-  :type observations: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type observations: ms.Tensor
+  :return: The features output by the representation model.
+  :rtype: dict
 
 .. raw:: html
 

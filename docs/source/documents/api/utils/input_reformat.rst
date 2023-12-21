@@ -1,7 +1,8 @@
 Input Reformation
 =================================
 
-xxxxxx.
+
+This module defines functions related to configuring and obtaining input specifications for reinforcement learning policies and representations.
 
 .. raw:: html
 
@@ -9,48 +10,48 @@ xxxxxx.
 
 **PyTorch:**
 
-
 .. py:function::
   xuance.torch.utils.input_reformat.get_repre_in(args, name)
 
-  xxxxxx.
+  This function obtains input specifications for representations.
 
-  :param args: xxxxxx.
-  :type args: xxxxxx
-  :param name: xxxxxx.
-  :type name: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :param args: arguments.
+  :type args: Namespace
+  :param name: the name of the representations.
+  :type name: str
+  :return: a list of the input variables for representation module.
+  :rtype: list
 
 .. py:function::
   xuance.torch.utils.input_reformat.get_policy_in(args, representation)
 
-  xxxxxx.
+  This function obtains input specifications for policies.
 
-  :param args: xxxxxx.
-  :type args: xxxxxx
+  :param args: the arguments.
+  :type args: Namespace
   :param representation: The representation module.
   :type representation: nn.Module
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: a list of input specifications.
+  :rtype: list
 
 .. py:function::
   xuance.torch.utils.input_reformat.get_policy_in_marl(args, representation, mixer, ff_mixer, qtran_mixer)
 
-  xxxxxx.
+  This function is similar to get_policy_in, but it is designed for multi-agent reinforcement learning (MARL) scenarios.
+  It takes additional mixer-related parameters.
 
-  :param args: xxxxxx.
-  :type args: xxxxxx
+  :param args: the arguments.
+  :type args: Namespace
   :param representation: The representation module.
   :type representation: nn.Module
   :param mixer: The mixer for independent values.
   :type mixer: nn.Module
-  :param ff_mixer: xxxxxx.
-  :type ff_mixer: xxxxxx
-  :param qtran_mixer: xxxxxx.
-  :type qtran_mixer: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :param ff_mixer: the feed forward mixer, default is None.
+  :type ff_mixer: nn.Module
+  :param qtran_mixer: the QTRAN mixer, default is None.
+  :type qtran_mixer: nn.Module
+  :return: a list of input specifications.
+  :rtype: list
 
 .. raw:: html
 
@@ -61,42 +62,43 @@ xxxxxx.
 .. py:function::
   xuance.tensorflow.utils.input_reformat.get_repre_in(args)
 
-  xxxxxx.
+  This function obtains input specifications for representations.
 
-  :param args: xxxxxx.
-  :type args: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :param args: the arguments.
+  :type args: Namespace
+  :return: a list of the input variables for representation module.
+  :rtype: list
 
 .. py:function::
   xuance.tensorflow.utils.input_reformat.get_policy_in(args, representation)
 
-  xxxxxx.
+  This function obtains input specifications for policies.
 
-  :param args: xxxxxx.
-  :type args: xxxxxx
+  :param args: the arguments.
+  :type args: Namespace
   :param representation: The representation module.
-  :type representation: nn.Module
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type representation: tk.Model
+  :return: a list of input specifications.
+  :rtype: list
 
 .. py:function::
   xuance.tensorflow.utils.input_reformat.get_policy_in_marl(args, representation, mixer, ff_mixer, qtran_mixer)
 
-  xxxxxx.
+  This function is similar to get_policy_in, but it is designed for multi-agent reinforcement learning (MARL) scenarios. 
+  It takes additional mixer-related parameters.
 
-  :param args: xxxxxx.
-  :type args: xxxxxx
+  :param args: the arguments.
+  :type args: Namespace
   :param representation: The representation module.
-  :type representation: nn.Module
+  :type representation: tk.Model
   :param mixer: The mixer for independent values.
-  :type mixer: nn.Module
-  :param ff_mixer: xxxxxx.
-  :type ff_mixer: xxxxxx
-  :param qtran_mixer: xxxxxx.
-  :type qtran_mixer: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type mixer: tk.Model
+  :param ff_mixer: the feed forward mixer, default is None.
+  :type ff_mixer: tk.Model
+  :param qtran_mixer: the QTRAN mixer, default is None.
+  :type qtran_mixer: tk.Model
+  :return: a list of input specifications.
+  :rtype: list
 
 .. raw:: html
 
@@ -107,36 +109,41 @@ xxxxxx.
 .. py:function::
   xuance.mindspore.utils.input_reformat.get_repre_in(args)
 
-  :param args: xxxxxx.
-  :type args: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  This function obtains input specifications for representations.
+
+  :param args: the arguments.
+  :type args: Namespace
+  :return: a list of the input variables for representation module.
+  :rtype: list
 
 .. py:function::
-  xuance.mindspore.utils.input_reformat.get_repre_in(args, representation)
+  xuance.mindspore.utils.input_reformat.get_policy_in(args, representation)
 
-  :param args: xxxxxx.
-  :type args: xxxxxx
+  :param args: the arguments.
+  :type args: Namespace
   :param representation: The representation module.
-  :type representation: nn.Module
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type representation: nn.Cell
+  :return: a list of the input variables for representation module.
+  :rtype: list
 
 .. py:function::
   xuance.mindspore.utils.input_reformat.get_policy_in_marl(args, representation, mixer, ff_mixer, qtran_mixer)
 
-  :param args: xxxxxx.
-  :type args: xxxxxx
+  This function is similar to get_policy_in, but it is designed for multi-agent reinforcement learning (MARL) scenarios. 
+  It takes additional mixer-related parameters.
+
+  :param args: the arguments.
+  :type args: Namespace
   :param representation: The representation module.
-  :type representation: nn.Module
+  :type representation: nn.Cell
   :param mixer: The mixer for independent values.
-  :type mixer: nn.Module
-  :param ff_mixer: xxxxxx.
-  :type ff_mixer: xxxxxx
-  :param qtran_mixer: xxxxxx.
-  :type qtran_mixer: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type mixer: nn.Cell
+  :param ff_mixer: the feed forward mixer, default is None.
+  :type ff_mixer: nn.Cell
+  :param qtran_mixer: the QTRAN mixer, default is None.
+  :type qtran_mixer: nn.Cell
+  :return: a list of input specifications.
+  :rtype: list
 
 .. raw:: html
 

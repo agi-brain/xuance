@@ -12,8 +12,8 @@ xxxxxx.
 .. py:class::
   xuance.torch.runners.runner_magent.MAgent_Runner(args)
 
-  :param args: xxxxxx.
-  :type args: xxxxxx
+  :param args: the arguments.
+  :type args: Namespace
 
 .. raw:: html
 

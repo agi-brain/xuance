@@ -1,7 +1,7 @@
 Operations
 ===========================================
 
-xxxxxx.
+This module provides utility functions related to DRL.
 
 .. raw:: html
 
@@ -12,92 +12,85 @@ xxxxxx.
 .. py:function::
   xuance.torch.utils.operations.update_linear_decay(optimizer, step, total_steps, initial_lr, end_factor)
 
-  xxxxxx.
+  This function updates the learning rate of an optimizer with linear decay.
 
   :param optimizer: The optimizer that update the paramters of the model.
   :type optimizer: Optimizer
-  :param step: xxxxxx.
-  :type step: xxxxxx
-  :param total_steps: xxxxxx.
-  :type total_steps: xxxxxx
-  :param initial_lr: xxxxxx.
-  :type initial_lr: xxxxxx
-  :param end_factor: xxxxxx.
-  :type end_factor: xxxxxx
+  :param step: Current step.
+  :type step: int
+  :param total_steps: Total number of steps.
+  :type total_steps: int
+  :param initial_lr: Initial learning rate.
+  :type initial_lr: float
+  :param end_factor: Factor for the minimum learning rate.
+  :type end_factor: float
 
 .. py:function::
   xuance.torch.utils.operations.set_seed(seed)
 
-  xxxxxx.
+  This function sets random seeds for reproducibility.
 
-  :param seed: xxxxxx.
-  :type seed: xxxxxx
+  :param seed: Random seed.
+  :type seed: int
 
 .. py:function::
   xuance.torch.utils.operations.get_flat_grad(y, model)
 
-  xxxxxx.
+  This function returns the flattened gradients of a tensor y with respect to the parameters of a PyTorch model.
 
-  :param y: xxxxxx.
-  :type y: xxxxxx
-  :param model: xxxxxx.
-  :type model: xxxxxx
-  :return: xxxxxx.
-  :rtype: Tensor
+  :param y: Input tensor.
+  :type y: torch.Tensor
+  :param model: PyTorch model
+  :type model: nn.Module
+  :return: the flattened gradients.
+  :rtype: torch.Tensor
 
 .. py:function::
   xuance.torch.utils.operations.get_flat_params(model)
 
-  xxxxxx.
+  This function returns the flattened parameters of a PyTorch model.
 
-  :param model: xxxxxx.
-  :type model: xxxxxx
-  :return: xxxxxx.
-  :rtype: Tensor
+  :param model: PyTorch model.
+  :type model: nn.Module
+  :return: the flattened parameters of a PyTorch model.
+  :rtype: torch.Tensor
 
 .. py:function::
   xuance.torch.utils.operations.assign_from_flat_grads(flat_grads, model)
 
-  xxxxxx.
+  This function assigns flattened gradients to the parameters of a PyTorch model.
 
-  :param flat_grads: xxxxxx.
-  :type flat_grads: xxxxxx
-  :param model: xxxxxx.
-  :type model: xxxxxx
-  :return: xxxxxx.
-  :rtype: Module
+  :param flat_grads: Flattened gradients.
+  :type flat_grads: torch.Tensor
+  :param model: PyTorch model.
+  :type model: torch.Module
 
 .. py:function::
   xuance.torch.utils.operations.assign_from_flat_params(flat_grads, model)
 
-  xxxxxx.
+  This function assigns flattened parameters to the parameters of a PyTorch model.
 
-  :param flat_grads: xxxxxx.
-  :type flat_grads: xxxxxx
-  :param model: xxxxxx.
-  :type model: xxxxxx
-  :return: xxxxxx.
-  :rtype: Module
+  :param flat_grads: Flattened parameters.
+  :type flat_grads: torch.Tensor
+  :param model: PyTorch model.
+  :type model: torch.Module
 
 .. py:function::
   xuance.torch.utils.operations.split_distributions(distribution)
 
-  xxxxxx.
+  This function splits a distribution into a list of distributions.
 
-  :param distribution: xxxxxx.
-  :type distribution: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :param distribution: Input distribution.
+  :return: The splited distributions.
 
 .. py:function::
   xuance.torch.utils.operations.merge_distributions(distribution_list)
 
-  xxxxxx.
+  This function merges a list of distributions into a single distribution.
 
-  :param distribution_list: xxxxxx.
-  :type distribution_list: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :param distribution_list: Input distribution list.
+  :type distribution_list: list
+  :return: A merged distribution.
 
 .. raw:: html
 
@@ -108,80 +101,73 @@ xxxxxx.
 .. py:function::
   xuance.tensorflow.utils.operations.update_linear_decay(optimizer, step, total_steps, initial_lr, end_factor)
 
-  xxxxxx.
+  This function updates the learning rate of an optimizer with linear decay.
 
   :param optimizer: The optimizer that update the paramters of the model.
   :type optimizer: Optimizer
-  :param step: xxxxxx.
-  :type step: xxxxxx
-  :param total_steps: xxxxxx.
-  :type total_steps: xxxxxx
-  :param initial_lr: xxxxxx.
-  :type initial_lr: xxxxxx
-  :param end_factor: xxxxxx.
-  :type end_factor: xxxxxx
+  :param step: Current step.
+  :type step: int
+  :param total_steps: Total number of steps.
+  :type total_steps: int
+  :param initial_lr: Initial learning rate.
+  :type initial_lr: float
+  :param end_factor: Factor for the minimum learning rate.
+  :type end_factor: float
 
 .. py:function::
   xuance.tensorflow.utils.operations.set_seed(seed)
 
-  xxxxxx.
+  This function sets random seeds for reproducibility.
 
-  :param seed: xxxxxx.
-  :type seed: xxxxxx
+  :param seed: Random seed.
+  :type seed: int
 
 .. py:function::
   xuance.tensorflow.utils.operations.get_flat_params(model)
 
-  xxxxxx.
+  This function returns the flattened gradients of a tensor y with respect to the parameters of a PyTorch model.
 
-  :param model: xxxxxx.
-  :type model: xxxxxx
-  :return: xxxxxx.
-  :rtype: Tensor
+  :param model: Tensorflow keras model.
+  :type model: tk.Model
+  :return: the flattened parameters of a PyTorch model.
+  :rtype: tf.Tensor
 
 .. py:function::
   xuance.tensorflow.utils.operations.assign_from_flat_grads(flat_grads, model)
 
-  xxxxxx.
+  This function assigns flattened gradients to the parameters of a model.
 
-  :param flat_grads: xxxxxx.
-  :type flat_grads: xxxxxx
-  :param model: xxxxxx.
-  :type model: xxxxxx
-  :return: xxxxxx.
-  :rtype: Module
+  :param flat_grads: Flattened gradients.
+  :type flat_grads: tf.Tensor
+  :param model: Tensorflow keras model.
+  :type model: tk.Model
 
 .. py:function::
   xuance.tensorflow.utils.operations.assign_from_flat_params(flat_grads, model)
 
-  xxxxxx.
+  This function assigns flattened parameters to the parameters of a model.
 
-  :param flat_grads: xxxxxx.
-  :type flat_grads: xxxxxx
-  :param model: xxxxxx.
-  :type model: xxxxxx
-  :return: xxxxxx.
-  :rtype: Module
+  :param flat_grads: Flattened parameters.
+  :type flat_grads: tf.Tensor
+  :param model: Tensorflow keras model.
+  :type model: tk.Model
 
 .. py:function::
   xuance.tensorflow.utils.operations.split_distributions(distribution)
 
-  xxxxxx.
+  This function splits a distribution into a list of distributions.
 
-  :param distribution: xxxxxx.
-  :type distribution: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :param distribution: Input distribution.
+  :return: The splited distributions.
 
 .. py:function::
   xuance.tensorflow.utils.operations.merge_distributions(distribution_list)
 
-  xxxxxx.
+  This function merges a list of distributions into a single distribution.
 
-  :param distribution_list: xxxxxx.
-  :type distribution_list: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :param distribution_list: Input distribution list.
+  :type distribution_list: list
+  :return: A merged distribution.
 
 .. raw:: html
 
@@ -192,92 +178,85 @@ xxxxxx.
 .. py:function::
   xuance.mindspore.utils.operations.update_linear_decay(optimizer, step, total_steps, initial_lr, end_factor)
 
-  xxxxxx.
+  This function updates the learning rate of an optimizer with linear decay.
 
   :param optimizer: The optimizer that update the paramters of the model.
   :type optimizer: Optimizer
-  :param step: xxxxxx.
-  :type step: xxxxxx
-  :param total_steps: xxxxxx.
-  :type total_steps: xxxxxx
-  :param initial_lr: xxxxxx.
-  :type initial_lr: xxxxxx
-  :param end_factor: xxxxxx.
-  :type end_factor: xxxxxx
+  :param step: Current step.
+  :type step: int
+  :param total_steps: Total number of steps.
+  :type total_steps: int
+  :param initial_lr: Initial learning rate.
+  :type initial_lr: float
+  :param end_factor: Factor for the minimum learning rate.
+  :type end_factor: float
 
 .. py:function::
   xuance.mindspore.utils.operations.set_seed(seed)
 
-  xxxxxx.
+  This function sets random seeds for reproducibility.
 
-  :param seed: xxxxxx.
-  :type seed: xxxxxx
+  :param seed: Random seed.
+  :type seed: int
 
 .. py:function::
   xuance.mindspore.utils.operations.get_flat_grad(y, model)
 
-  xxxxxx.
+  This function returns the flattened gradients of a tensor y with respect to the parameters of a PyTorch model.
 
-  :param y: xxxxxx.
-  :type y: xxxxxx
-  :param model: xxxxxx.
-  :type model: xxxxxx
-  :return: xxxxxx.
-  :rtype: Tensor
+  :param y: Input tensor.
+  :type y: tf.Tensor
+  :param model: Mindspore model.
+  :type model: ms.Cell
+  :return: the flattened gradients.
+  :rtype: ms.Tensor
 
 .. py:function::
   xuance.mindspore.utils.operations.get_flat_params(model)
 
-  xxxxxx.
+  This function returns the flattened parameters of a mindspore model.
 
-  :param model: xxxxxx.
-  :type model: xxxxxx
-  :return: xxxxxx.
-  :rtype: Tensor
+  :param model: Mindspore model.
+  :type model: ms.Cell
+  :return: the flattened parameters of a mindspore model.
+  :rtype: ms.Tensor
 
 .. py:function::
   xuance.mindspore.utils.operations.assign_from_flat_grads(flat_grads, model)
 
-  xxxxxx.
+  This function assigns flattened parameters to the parameters of a mindspore model.
 
-  :param flat_grads: xxxxxx.
-  :type flat_grads: xxxxxx
-  :param model: xxxxxx.
-  :type model: xxxxxx
-  :return: xxxxxx.
-  :rtype: Module
+  :param flat_grads: Flattened parameters.
+  :type flat_grads: ms.Tensor
+  :param model: Mindspore model.
+  :type model: ms.Cell
 
 .. py:function::
   xuance.mindspore.utils.operations.assign_from_flat_params(flat_grads, model)
 
-  xxxxxx.
+  This function assigns flattened parameters to the parameters of a mindspore model.
 
-  :param flat_grads: xxxxxx.
-  :type flat_grads: xxxxxx
-  :param model: xxxxxx.
-  :type model: xxxxxx
-  :return: xxxxxx.
-  :rtype: Module
+  :param flat_grads: Flattened parameters.
+  :type flat_grads: ms.Tensor
+  :param model: Mindspore model.
+  :type model: ms.Cell
 
 .. py:function::
   xuance.mindspore.utils.operations.split_distributions(distribution)
 
-  xxxxxx.
+  This function splits a distribution into a list of distributions.
 
-  :param distribution: xxxxxx.
-  :type distribution: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :param distribution: Input distribution.
+  :return: The splited distributions.
 
 .. py:function::
   xuance.mindspore.utils.operations.merge_distributions(distribution_list)
 
-  xxxxxx.
+  This function merges a list of distributions into a single distribution.
 
-  :param distribution_list: xxxxxx.
-  :type distribution_list: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :param distribution_list: Input distribution list.
+  :type distribution_list: list
+  :return: A merged distribution.
 
 .. raw:: html
 

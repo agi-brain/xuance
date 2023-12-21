@@ -12,8 +12,8 @@ xxxxxx.
 .. py:class::
   xuance.torch.runners.runner_drl.Runner_DRL(args)
 
-  :param args: xxxxxx.
-  :type args: xxxxxx
+  :param args: the arguments.
+  :type args: Namespace
 
 .. py:function::
   xuance.torch.runners.runner_drl.Runner_DRL.run()
@@ -34,8 +34,8 @@ xxxxxx.
 .. py:class::
   xuance.tensorflow.runners.runner_drl.Runner_DRL(args)
 
-  :param args: xxxxxx.
-  :type args: xxxxxx
+  :param args: the arguments.
+  :type args: Namespace
 
 .. py:function::
   xuance.tensorflow.runners.runner_drl.Runner_DRL.run()
@@ -56,8 +56,8 @@ xxxxxx.
 .. py:class::
   xuance.mindspore.runners.runner_drl.Runner_DRL(args)
 
-  :param args: xxxxxx.
-  :type args: xxxxxx
+  :param args: the arguments.
+  :type args: Namespace
 
 .. py:function::
   xuance.mindspore.runners.runner_drl.Runner_DRL.run()

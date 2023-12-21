@@ -302,8 +302,8 @@ xxxxxx.
   :type dim_hidden: xxxxxx
   :param dim_act: xxxxxx.
   :type dim_act: xxxxxx
-  :param args: xxxxxx.
-  :type args: xxxxxx
+  :param args: the arguments.
+  :type args: Namespace
 
 .. py:function::
   xuance.tensorflow.policies.mixers.DCG_payoff.call(hidden_from_to, hidden_to_from=None, **kwargs)
@@ -507,8 +507,8 @@ xxxxxx.
   :type dim_hidden: xxxxxx
   :param dim_act: xxxxxx.
   :type dim_act: xxxxxx
-  :param args: xxxxxx.
-  :type args: xxxxxx
+  :param args: the arguments.
+  :type args: Namespace
 
 .. py:function::
   xuance.mindspore.policies.mixers.DCG_payoff.construct(hidden_states_n, edges_from, edges_to)

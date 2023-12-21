@@ -12,8 +12,8 @@ xxxxxx.
 .. py:class::
   xuance.torch.runners.runner_pettingzoo.Pettingzoo_Runner(args)
 
-  :param args: xxxxxx.
-  :type args: xxxxxx
+  :param args: the arguments.
+  :type args: Namespace
 
 .. py:function::
   xuance.torch.runners.runner_pettingzoo.Pettingzoo_Runner.log_infos(info, x_index)
@@ -42,8 +42,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param args: xxxxxx.
-  :type args: xxxxxx
+  :param args: the arguments.
+  :type args: Namespace
 
 .. py:function::
   xuance.torch.runners.runner_pettingzoo.Pettingzoo_Runner.combine_env_actions(actions)
@@ -132,8 +132,8 @@ xxxxxx.
 .. py:class::
   xuance.tensorflow.runners.runner_pettingzoo.Pettingzoo_Runner(args)
 
-  :param args: xxxxxx.
-  :type args: xxxxxx
+  :param args: the arguments.
+  :type args: Namespace
 
 .. py:function::
   xuance.tensorflow.runners.runner_pettingzoo.Pettingzoo_Runner.log_infos(info, x_index)
@@ -162,8 +162,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param args: xxxxxx.
-  :type args: xxxxxx
+  :param args: the arguments.
+  :type args: Namespace
 
 .. py:function::
   xuance.tensorflow.runners.runner_pettingzoo.Pettingzoo_Runner.combine_env_actions(actions)
@@ -252,8 +252,8 @@ xxxxxx.
 .. py:class::
   xuance.mindspore.runners.runner_pettingzoo.Pettingzoo_Runner(args)
 
-  :param args: xxxxxx.
-  :type args: xxxxxx
+  :param args: the arguments.
+  :type args: Namespace
 
 .. py:function::
   xuance.mindspore.runners.runner_pettingzoo.Pettingzoo_Runner.log_infos(info, x_index)
@@ -276,8 +276,8 @@ xxxxxx.
 .. py:function::
   xuance.mindspore.runners.runner_pettingzoo.Pettingzoo_Runner.print_infos(args)
 
-  :param args: xxxxxx.
-  :type args: xxxxxx
+  :param args: the arguments.
+  :type args: Namespace
 
 .. py:function::
   xuance.mindspore.runners.runner_pettingzoo.Pettingzoo_Runner.combine_env_actions(actions)

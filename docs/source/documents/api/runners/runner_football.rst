@@ -12,8 +12,8 @@ xxxxxx.
 .. py:class::
   xuance.torch.runners.runner_football.Football_Runner(args)
 
-  :param args: xxxxxx.
-  :type args: xxxxxx
+  :param args: the arguments.
+  :type args: Namespace
 
 .. py:function::
   xuance.torch.runners.runner_football.Football_Runner.get_agent_num()

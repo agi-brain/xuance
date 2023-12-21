@@ -72,7 +72,7 @@ When implementing this class in PyTorch, you also need to specify the device typ
     :param device: Choose CPU or GPU to train the model.
     :type device: str, int, torch.device
     :param fc_hidden_sizes: The sizes of the final fully connected hidden layers.
-    :type device: Sequence of int
+    :type fc_hidden_sizes: Sequence of int
 
 .. py:function:: 
     xuance.torch.representations.cnn.AC_CNN_Atari._init_layer(layer, gain=numpy.sqrt(2), bias=0.0)
@@ -124,10 +124,10 @@ When implementing this class in PyTorch, you also need to specify the device typ
     :param filters: Number of channels produced by the convolution
     :type filters: Sequence of int
     :param normalize: The normalizer for the hidden variables of the representation.
-    :type normalize: nn.Module
+    :type normalize: tk.Model
     :param initialize: The initializer of the parameters of the representation.
     :param activation: The activation function of each hidden layer.
-    :type activation: nn.Module
+    :type activation: tk.Model
     :param device: Choose CPU or GPU to train the model.
     :type device: str, int, torch.device
 
@@ -137,7 +137,7 @@ When implementing this class in PyTorch, you also need to specify the device typ
     Create the convolutional neural netowrks.
 
     :return: The neural network module.
-    :rtype: nn.Module
+    :rtype: tk.Model
 
 .. py:function::
     xuance.tensorflow.representations.cnn.Basic_CNN.call(observations)
@@ -160,88 +160,88 @@ When implementing this class in PyTorch, you also need to specify the device typ
 
   :param input_shape: The shape of the input data.
   :type input_shape: Sequence[int]
-  :param kernels: xxxxxx.
-  :type kernels: xxxxxx
-  :param strides: xxxxxx.
-  :type strides: xxxxxx
-  :param filters: xxxxxx.
-  :type filters: xxxxxx
+  :param kernels: Size of the convolving kernel.
+  :type kernels: Sequence of int
+  :param strides: Stride of the convolution.
+  :type strides: a single number or a tuple of two ints
+  :param filters: Number of channels produced by the convolution.
+  :type filters: Sequence of int
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: nn.Cell
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: ms.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: nn.Cell
 
 .. py:function::
   xuance.mindspore.representations.cnn.Basic_CNN._create_network()
 
-  xxxxxx.
+  Create the convolutional neural netowrks.
 
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The neural network module.
+  :rtype: nn.Cell
 
 .. py:function::
   xuance.mindspore.representations.cnn.Basic_CNN.construct(observations)
 
-  xxxxxx.
+  Calculate feature representation of the input observations.
 
   :param observations: The original observation variables.
-  :type observations: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type observations: ms.Tensor
+  :return: The features output by the representation model.
+  :rtype: dict
 
 .. py:class::
   xuance.mindspore.representations.cnn.AC_CNN_Atari(input_shape, kernels, strides, filters, normalize, initialize, activation, fc_hidden_sizes)
 
   :param input_shape: The shape of the input data.
   :type input_shape: Sequence[int]
-  :param kernels: xxxxxx.
-  :type kernels: xxxxxx
-  :param strides: xxxxxx.
-  :type strides: xxxxxx
-  :param filters: xxxxxx.
-  :type filters: xxxxxx
+  :param kernels: Size of the convolving kernel.
+  :type kernels: Sequence of int
+  :param strides: Stride of the convolution.
+  :type strides: a single number or a tuple of two ints
+  :param filters: Number of channels produced by the convolution.
+  :type filters: Sequence of int
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: nn.Cell
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: ms.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
-  :param fc_hidden_sizes: xxxxxx.
-  :type fc_hidden_sizes: xxxxxx
+  :type activation: nn.Cell
+  :param fc_hidden_sizes: The sizes of the final fully connected hidden layers.
+  :type fc_hidden_sizes: list
 
 .. py:function::
   xuance.mindspore.representations.cnn.AC_CNN_Atari._init_layer(layer, gain, bias)
 
-  xxxxxx.
+  Initialize the weights and biases of the model.
 
-  :param layer: xxxxxx.
-  :type layer: xxxxxx
-  :param gain: optional scaling factor.
+  :param layer: A singe layer of the networks.
+  :type layer: nn.Cell
+  :param gain: The gain of the weights with orthogonal initilizer, defualt is sqrt of 2.
   :type gain: float
-  :param bias: xxxxxx.
-  :type bias: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :param bias: The initial bias of the layer, defualt is sqrt of 0.
+  :type bias: float.
+  :return: The initilized layer.
+  :rtype: nn.Cell
 
 .. py:function::
   xuance.mindspore.representations.cnn.AC_CNN_Atari._create_network()
 
-  xxxxxx.
+  Create the convolutional neural netowrks for actor-critic based algorithms and Atari tasks.
 
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The neural network module.
+  :rtype: nn.Cell
 
 .. py:function::
   xuance.mindspore.representations.cnn.AC_CNN_Atari.construct(observations)
 
-  xxxxxx.
+  Calculate feature representation of the input observations.
 
   :param observations: The original observation variables.
-  :type observations: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type observations: ms.Tensor
+  :return: The features output by the representation model.
+  :rtype: dict
 
 .. raw:: html
 

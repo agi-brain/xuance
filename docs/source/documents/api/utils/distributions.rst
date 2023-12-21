@@ -1,7 +1,7 @@
 Distributions
 =================================
 
-xxxxxx.
+This module defines implementations of probability distributions for use in DRL algorithms.
 
 .. raw:: html
 
@@ -12,49 +12,49 @@ xxxxxx.
 .. py:class::
   xuance.torch.utils.distributions.Distribution()
 
+  An abstract base class (ABC) that defines the interface for probability distributions used in RL algorithms.
+
 .. py:function::
   xuance.torch.utils.distributions.Distribution.set_param(*args)
 
-  xxxxxx.
+  A method that sets the parameters of a probability distribution.
 
-  :param *args: xxxxxx.
-  :type *args: xxxxxx
+  :param args: arguments for setting the distribution.
+  :type args: tuple
 
 .. py:function::
   xuance.torch.utils.distributions.Distribution.get_param()
 
-  xxxxxx.
+  A method that gets the parameters of a probability distribution.
 
 .. py:function::
   xuance.torch.utils.distributions.Distribution.log_prob(x)
 
-  xxxxxx.
+  A method that calculate the log probability of input probabilities.
 
-  :param x: The input tensor.
+  :param x: The input probabilities.
   :type x: torch.Tensor
 
 .. py:function::
   xuance.torch.utils.distributions.Distribution.entropy()
 
-  xxxxxx.
+  A method that calculate the self entropy of the probability distribution.
 
 .. py:function::
   xuance.torch.utils.distributions.Distribution.stochastic_sample()
 
-  xxxxxx.
+  A method that randomly sample data from the distribution.
 
 .. py:function::
   xuance.torch.utils.distributions.Distribution.deterministic_sample()
 
-  xxxxxx.
+  A method that sample deterministic data from the distribution.
+
 
 .. py:class::
-  xuance.torch.utils.distributions.CategoricalDistribution()
+  xuance.torch.utils.distributions.CategoricalDistribution(action_dim)
 
-.. py:function::
-  xuance.torch.utils.distributions.CategoricalDistribution.__init__(action_dim)
-
-  xxxxxx.
+  Inherits from the Distribution base class and implements methods specific to categorical distributions.
 
   :param action_dim: The dimension of the action input.
   :type action_dim: int
@@ -62,7 +62,7 @@ xxxxxx.
 .. py:function::
   xuance.torch.utils.distributions.CategoricalDistribution.set_param(logits)
 
-  xxxxxx.
+  Set probability parameters.
 
   :param logits: The logits for categorical distributions.
   :type logits: Tensor
@@ -70,62 +70,59 @@ xxxxxx.
 .. py:function::
   xuance.torch.utils.distributions.CategoricalDistribution.get_param()
 
-  xxxxxx.
+  Set probability parameters.
 
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: probability parameters.
+  :rtype: torch.Tensor
 
 .. py:function::
   xuance.torch.utils.distributions.CategoricalDistribution.log_prob(x)
 
-  xxxxxx.
+  A method that calculate the log probability of input probabilities.
 
-  :param x: The input tensor.
+  :param x: The input probabilities.
   :type x: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The log probability of input probabilities.
+  :rtype: torch.Tensor
 
 .. py:function::
   xuance.torch.utils.distributions.CategoricalDistribution.entropy()
 
-  xxxxxx.
+  A method that calculate the self entropy of the probability distribution.
 
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: the self entropy of the probability distribution.
+  :rtype: torch.Tensor
 
 .. py:function::
   xuance.torch.utils.distributions.CategoricalDistribution.stochastic_sample()
 
-  xxxxxx.
+  A method that randomly sample data from the distribution.
 
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: sampled data.
+  :rtype: torch.Tensor
 
 .. py:function::
   xuance.torch.utils.distributions.CategoricalDistribution.deterministic_sample()
 
-  xxxxxx.
+  A method that sample deterministic data from the distribution.
 
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: deterministic sampled data from the distribution.
+  :rtype: torch.Tensor
 
 .. py:function::
   xuance.torch.utils.distributions.CategoricalDistribution.kl_divergence(other)
 
-  xxxxxx.
+  A method that calculate the KL divergence between the two probability distribution.
 
-  :param other: xxxxxx.
-  :type other: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :param other: the other distribution.
+  :return: the KL divergence between the two probability distribution.
+  :rtype: torch.Tensor
 
 .. py:class::
-  xuance.torch.utils.distributions.DiagGaussianDistribution()
+  xuance.torch.utils.distributions.DiagGaussianDistribution(action_dim)
 
-.. py:function::
-  xuance.torch.utils.distributions.DiagGaussianDistribution.__init__(action_dim)
-
-  xxxxxx.
+  A diagonal Gaussian (normal) distribution. 
+  This type of distribution is commonly used in DRL for continuous action spaces.
 
   :param action_dim: The dimension of the action input.
   :type action_dim: int
@@ -133,72 +130,72 @@ xxxxxx.
 .. py:function::
   xuance.torch.utils.distributions.DiagGaussianDistribution.set_param(mu, std)
 
-  xxxxxx.
+  Initializes the distribution using a PyTorch Normal distribution.
 
   :param mu: Mean value.
-  :type mu: np.ndarray
-  :param std: xxxxxx.
-  :type std: xxxxxx
+  :type mu: np.ndarray, torch.Tensor
+  :param std: standard deviation.
+  :type std: np.ndarray, torch.Tensor
 
 .. py:function::
   xuance.torch.utils.distributions.DiagGaussianDistribution.get_param()
 
-  xxxxxx.
+  Returns the mean and standard deviation.
 
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: the mean and standard deviation.
+  :rtype: tuple
 
 .. py:function::
   xuance.torch.utils.distributions.DiagGaussianDistribution.log_prob(x)
 
-  xxxxxx.
+  Computes the log probability of a given tensor x. It sums the result along the last dimension.
 
   :param x: The input tensor.
   :type x: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: the log probability of the given tensor x.
+  :rtype: torch.Tensor
 
 .. py:function::
   xuance.torch.utils.distributions.DiagGaussianDistribution.entropy()
 
-  xxxxxx.
+  Calculates the entropy of the distribution and sums the result along the last dimension.
 
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: the entropy of the distribution and sums the result along the last dimension.
+  :rtype: torch.Tensor
 
 .. py:function::
   xuance.torch.utils.distributions.DiagGaussianDistribution.stochastic_sample()
 
-  xxxxxx.
+  Generates a sample from the distribution using the sample method of the PyTorch Normal distribution.
 
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: a sample from the distribution.
+  :rtype: torch.Tensor
 
 .. py:function::
   xuance.torch.utils.distributions.DiagGaussianDistribution.rsample()
 
-  xxxxxx.
+  Uses the reparameterization trick to generate a sample from the distribution.
 
-  :return: xxxxxx.
-  :rtype: xxxxxxs
+  :return: a sample from the distribution.
+  :rtype: torch.Tensor
 
 .. py:function::
   xuance.torch.utils.distributions.DiagGaussianDistribution.deterministic_sample()
 
-  xxxxxx.
+  This method returns the mean of the distribution.
 
-  :return: xxxxxx.
-  :rtype: xxxxxxs
+  :return: the mean of the distribution.
+  :rtype: torch.Tensor
 
 .. py:function::
   xuance.torch.utils.distributions.DiagGaussianDistribution.kl_divergences(other)
 
-  xxxxxx.
+  This method computes the KL divergence between two distributions of the same type. 
+  It asserts that the input distribution is of the correct type (DiagGaussianDistribution).
 
-  :param other: xxxxxx.
-  :type other: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :param other: the other distribution.
+  :return: the KL divergence between two distributions.
+  :rtype: torch.Tensor
 
 .. raw:: html
 
@@ -209,49 +206,48 @@ xxxxxx.
 .. py:class::
   xuance.tensorflow.utils.distributions.Distribution()
 
+  An abstract base class (ABC) that defines the interface for probability distributions used in RL algorithms.
+
 .. py:function::
   xuance.tensorflow.utils.distributions.Distribution.set_param(*args)
 
-  xxxxxx.
+  A method that sets the parameters of a probability distribution.
 
-  :param *args: xxxxxx.
-  :type *args: xxxxxx
+  :param args: arguments for setting the distribution.
+  :type args: tuple
 
 .. py:function::
   xuance.tensorflow.utils.distributions.Distribution.get_param()
 
-  xxxxxx.
+  A method that gets the parameters of a probability distribution.
 
 .. py:function::
   xuance.tensorflow.utils.distributions.Distribution.log_prob(x)
 
-  xxxxxx.
+  A method that calculate the log probability of input probabilities.
 
-  :param x: The input tensor.
-  :type x: torch.Tensor
+  :param x: The input probabilities.
+  :type x: tf.Tensor
 
 .. py:function::
   xuance.tensorflow.utils.distributions.Distribution.entropy()
 
-  xxxxxx.
+  A method that calculate the self entropy of the probability distribution.
 
 .. py:function::
   xuance.tensorflow.utils.distributions.Distribution.stochastic_sample()
 
-  xxxxxx.
+  A method that randomly sample data from the distribution.
 
 .. py:function::
   xuance.tensorflow.utils.distributions.Distribution.deterministic_sample()
 
-  xxxxxx.
+  A method that sample deterministic data from the distribution.
 
 .. py:class::
-  xuance.tensorflow.utils.distributions.CategoricalDistribution()
+  xuance.tensorflow.utils.distributions.CategoricalDistribution(action_dim)
 
-.. py:function::
-  xuance.tensorflow.utils.distributions.CategoricalDistribution.__init__(action_dim)
-
-  xxxxxx.
+  Inherits from the Distribution base class and implements methods specific to categorical distributions.
 
   :param action_dim: The dimension of the action input.
   :type action_dim: int
@@ -259,70 +255,66 @@ xxxxxx.
 .. py:function::
   xuance.tensorflow.utils.distributions.CategoricalDistribution.set_param(logits)
 
-  xxxxxx.
+  Get probability parameters.
 
   :param logits: The logits for categorical distributions.
-  :type logits: Tensor
+  :type logits: tf.Tensor
 
 .. py:function::
   xuance.tensorflow.utils.distributions.CategoricalDistribution.get_param()
 
-  xxxxxx.
+  Set probability parameters.
 
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: probability parameters.
+  :rtype: tf.Tensor
 
 .. py:function::
   xuance.tensorflow.utils.distributions.CategoricalDistribution.log_prob(x)
 
-  xxxxxx.
+  A method that calculate the log probability of input probabilities.
 
   :param x: The input tensor.
-  :type x: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type x: tf.Tensor
+  :return: The log probability of input probabilities.
+  :rtype: tf.Tensor
 
 .. py:function::
   xuance.tensorflow.utils.distributions.CategoricalDistribution.entropy()
 
-  xxxxxx.
+  A method that calculate the self entropy of the probability distribution.
 
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: the self entropy of the probability distribution.
+  :rtype: tf.Tensor
 
 .. py:function::
   xuance.tensorflow.utils.distributions.CategoricalDistribution.stochastic_sample()
 
-  xxxxxx.
+  A method that randomly sample data from the distribution.
 
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: sampled data.
+  :rtype: tf.Tensor
 
 .. py:function::
   xuance.tensorflow.utils.distributions.CategoricalDistribution.deterministic_sample()
 
-  xxxxxx.
+  A method that sample deterministic data from the distribution.
 
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: deterministic sampled data from the distribution.
+  :rtype: tf.Tensor
 
 .. py:function::
   xuance.tensorflow.utils.distributions.CategoricalDistribution.kl_divergence(other)
 
-  xxxxxx.
+  A method that calculate the KL divergence between the two probability distribution.
 
-  :param other: xxxxxx.
-  :type other: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :param other: the other distribution.
+  :return: the KL divergence between the two probability distribution.
+  :rtype: tf.Tensor
 
 .. py:class::
-  xuance.tensorflow.utils.distributions.DiagGaussianDistribution()
+  xuance.tensorflow.utils.distributions.DiagGaussianDistribution(action_dim)
 
-.. py:function::
-  xuance.tensorflow.utils.distributions.DiagGaussianDistribution.__init__(action_dim)
-
-  xxxxxx.
+  A diagonal Gaussian (normal) distribution. This type of distribution is commonly used in DRL for continuous action spaces.
 
   :param action_dim: The dimension of the action input.
   :type action_dim: int
@@ -330,72 +322,72 @@ xxxxxx.
 .. py:function::
   xuance.tensorflow.utils.distributions.DiagGaussianDistribution.set_param(mu, std)
 
-  xxxxxx.
+  Initializes the distribution using a Normal distribution.
 
   :param mu: Mean value.
-  :type mu: np.ndarray
-  :param std: xxxxxx.
-  :type std: xxxxxx
+  :type mu: tf.Tensor
+  :param std: standard deviation.
+  :type std: tf.Tensor
 
 .. py:function::
   xuance.tensorflow.utils.distributions.DiagGaussianDistribution.get_param()
 
-  xxxxxx.
+  Returns the mean and standard deviation.
 
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: the mean and standard deviation.
+  :rtype: tuple
 
 .. py:function::
   xuance.tensorflow.utils.distributions.DiagGaussianDistribution.log_prob(x)
 
-  xxxxxx.
+  Computes the log probability of a given tensor x. It sums the result along the last dimension.
 
   :param x: The input tensor.
-  :type x: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type x: tf.Tensor
+  :return: the log probability of the given tensor x.
+  :rtype: tf.Tensor
 
 .. py:function::
   xuance.tensorflow.utils.distributions.DiagGaussianDistribution.entropy()
 
-  xxxxxx.
+  Calculates the entropy of the distribution and sums the result along the last dimension.
 
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: the entropy of the distribution and sums the result along the last dimension.
+  :rtype: tf.Tensor
 
 .. py:function::
   xuance.tensorflow.utils.distributions.DiagGaussianDistribution.stochastic_sample()
 
-  xxxxxx.
+  Generates a sample from the distribution using the sample method of the PyTorch Normal distribution.
 
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: a sample from the distribution.
+  :rtype: tf.Tensor
 
 .. py:function::
   xuance.tensorflow.utils.distributions.DiagGaussianDistribution.rsample()
 
-  xxxxxx.
+  Uses the reparameterization trick to generate a sample from the distribution.
 
-  :return: xxxxxx.
-  :rtype: xxxxxxs
+  :return: a sample from the distribution.
+  :rtype: tf.Tensor
 
 .. py:function::
   xuance.tensorflow.utils.distributions.DiagGaussianDistribution.deterministic_sample()
 
-  xxxxxx.
+  This method returns the mean of the distribution.
 
-  :return: xxxxxx.
-  :rtype: xxxxxxs
+  :return: the mean of the distribution.
+  :rtype: tf.Tensor
 
 .. py:function::
   xuance.tensorflow.utils.distributions.DiagGaussianDistribution.kl_divergences(other)
 
-  xxxxxx.
+  This method computes the KL divergence between two distributions of the same type. 
+  It asserts that the input distribution is of the correct type (DiagGaussianDistribution).
 
-  :param other: xxxxxx.
-  :type other: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :param other: the other distribution.
+  :return: the KL divergence between two distributions.
+  :rtype: tf.Tensor
 
 .. raw:: html
 
@@ -406,32 +398,48 @@ xxxxxx.
 .. py:class::
   xuance.mindspore.utils.distributions.Distribution()
 
+  An abstract base class (ABC) that defines the interface for probability distributions used in RL algorithms.
+
 .. py:function::
   xuance.mindspore.utils.distributions.Distribution.set_param(args)
 
-  :param args: xxxxxx.
-  :type args: xxxxxx
+  A method that sets the parameters of a probability distribution
+
+  :param args: arguments for setting the distribution.
+  :type args: tuple
 
 .. py:function::
   xuance.mindspore.utils.distributions.Distribution.get_param()
 
+  A method that gets the parameters of a probability distribution.
+
 .. py:function::
   xuance.mindspore.utils.distributions.Distribution.log_prob(x)
 
+  A method that calculate the log probability of input probabilities.
+
   :param x: The input tensor.
-  :type x: torch.Tensor
+  :type x: ms.Tensor
 
 .. py:function::
   xuance.mindspore.utils.distributions.Distribution.entropy()
 
+  A method that calculate the self entropy of the probability distribution.
+
 .. py:function::
   xuance.mindspore.utils.distributions.Distribution.stochastic_sample()
+
+  A method that randomly sample data from the distribution.
 
 .. py:function::
   xuance.mindspore.utils.distributions.Distribution.deterministic_sample()
 
+  A method that sample deterministic data from the distribution.
+
 .. py:class::
   xuance.mindspore.utils.distributions.CategoricalDistribution(action_dim)
+
+  Inherits from the Distribution base class and implements methods specific to categorical distributions
 
   :param action_dim: The dimension of the action input.
   :type action_dim: int
@@ -439,48 +447,61 @@ xxxxxx.
 .. py:function::
   xuance.mindspore.utils.distributions.CategoricalDistribution.set_param(logits)
 
+  Set probability parameters.
+
   :param logits: The logits for categorical distributions.
-  :type logits: Tensor
+  :type logits: ms.Tensor
 
 .. py:function::
   xuance.mindspore.utils.distributions.CategoricalDistribution.get_param()
 
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  Get probability parameters
+
+  :return: probability parameters.
+  :rtype: ms.Tensor
 
 .. py:function::
   xuance.mindspore.utils.distributions.CategoricalDistribution.log_prob(x)
 
+  A method that calculate the log probability of input probabilities.
+
   :param x: The input tensor.
-  :type x: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type x: ms.Tensor
+  :return: The log probability of input probabilities.
+  :rtype: ms.Tensor
 
 .. py:function::
   xuance.mindspore.utils.distributions.CategoricalDistribution.entropy()
 
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  A method that calculate the self entropy of the probability distribution.
+
+  :return: the self entropy of the probability distribution.
+  :rtype: ms.Tensor
 
 .. py:function::
   xuance.mindspore.utils.distributions.CategoricalDistribution.stochastic_sample()
 
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  A method that randomly sample data from the distribution.
+
+  :return: sampled data.
+  :rtype: ms.Tensor
 
 .. py:function::
   xuance.mindspore.utils.distributions.CategoricalDistribution.deterministic_sample()
 
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  A method that sample deterministic data from the distribution.
+
+  :return: deterministic sampled data from the distribution.
+  :rtype: ms.Tensor
 
 .. py:function::
   xuance.mindspore.utils.distributions.CategoricalDistribution.kl_divergence(other)
 
-  :param other: xxxxxx.
-  :type other: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  A method that calculate the KL divergence between the two probability distribution.
+
+  :param other: the other distribution.
+  :return: the KL divergence between the two probability distribution.
+  :rtype: ms.Tensor
 
 .. raw:: html
 

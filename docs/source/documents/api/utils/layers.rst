@@ -1,7 +1,7 @@
 Neural Network Layers
 =======================================
 
-xxxxxx.
+This module defines utility functions to create blocks commonly used in neural network architectures.
 
 .. raw:: html
 
@@ -13,12 +13,12 @@ xxxxxx.
 .. py:function::
   xuance.torch.utils.layers.mlp_block(input_dim, output_dim, normalize, activation, initialize, device)
 
-  xxxxxx.
+  This function creates a block for a multi-layer perceptron (MLP) or fully connected layer.
 
-  :param input_dim: xxxxxx.
-  :type input_dim: xxxxxx
-  :param output_dim: xxxxxx.
-  :type output_dim: xxxxxx
+  :param input_dim: the dimension of the input data.
+  :type input_dim: int
+  :param output_dim: the dimension of the output data.
+  :type output_dim: int
   :param normalize: The method of normalization.
   :type normalize: nn.Module
   :param activation: The choose of activation functions for hidden layers.
@@ -27,22 +27,22 @@ xxxxxx.
   :type initialize: Tensor
   :param device: The calculating device.
   :type device: str
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: A tuple containing a sequence of modules representing the MLP block and the output dimension.
+  :rtype: tuple
 
 .. py:function::
   xuance.torch.utils.layers.cnn_block(input_shape, filter, kernel_size, stride, normalize, activation, initialize, device)
 
-  xxxxxx.
+  This function creates a block for a convolutional neural network (CNN) layer.
 
   :param input_shape: The shape of the input data.
   :type input_shape: Sequence[int]
-  :param filter: xxxxxx.
-  :type filter: xxxxxx
-  :param kernel_size: xxxxxx.
-  :type kernel_size: xxxxxx
-  :param stride: xxxxxx.
-  :type stride: xxxxxx
+  :param filter: Number of filters.
+  :type filter: int
+  :param kernel_size: Size of the convolutional kernel.
+  :type kernel_size: int
+  :param stride: Stride of the convolution.
+  :type stride: int
   :param normalize: The method of normalization.
   :type normalize: nn.Module
   :param activation: The choose of activation functions for hidden layers.
@@ -51,62 +51,62 @@ xxxxxx.
   :type initialize: Tensor
   :param device: The calculating device.
   :type device: str
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: A tuple containing a sequence of modules representing the CNN block and the updated output shape (C, H, W).
+  :rtype: tuple
 
 .. py:function::
   xuance.torch.utils.layers.pooling_block(input_shape, scale, pooling, device)
 
-  xxxxxx.
+  This function creates a block for pooling (either AdaptiveMaxPool2d or AdaptiveAvgPool2d).
 
   :param input_shape: The shape of the input data.
   :type input_shape: Sequence[int]
-  :param scale: xxxxxx.
-  :type scale: xxxxxx
-  :param pooling: xxxxxx.
-  :type pooling: xxxxxx
+  :param scale: Scaling factor for pooling.
+  :type scale: float
+  :param pooling: Pooling layer (either AdaptiveMaxPool2d or AdaptiveAvgPool2d).
+  :type pooling: int
   :param device: The calculating device.
   :type device: str
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: A sequence of modules representing the pooling block.
+  :rtype: list
 
 .. py:function::
   xuance.torch.utils.layers.gru_block(input_dim, output_dim, num_layers, dropout, initialize)
 
-  xxxxxx.
+  This function creates a block for a Gated Recurrent Unit (GRU) layer.
 
-  :param input_dim: xxxxxx.
-  :type input_dim: xxxxxx
-  :param output_dim: xxxxxx.
-  :type output_dim: xxxxxx
-  :param num_layers: xxxxxx.
-  :type num_layers: xxxxxx
-  :param dropout: xxxxxx.
-  :type dropout: xxxxxx
+  :param input_dim: the dimension of the input data.
+  :type input_dim: int
+  :param output_dim: the dimension of the output data.
+  :type output_dim: int
+  :param num_layers: Number of GRU layers.
+  :type num_layers: int
+  :param dropout: Dropout probability.
+  :type dropout: float
   :param initialize: The initialization for the parameters of the networks.
   :type initialize: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: A tuple containing the GRU module and the output dimension.
+  :rtype: tuple
 
 .. py:function::
   xuance.torch.utils.layers.lstm_block(input_dim, output_dim, num_layers, dropout, initialize, device)
 
-  xxxxxx.
+  This function creates a block for a Long Short-Term Memory (LSTM) layer.
 
-  :param input_dim: xxxxxx.
-  :type input_dim: xxxxxx
-  :param output_dim: xxxxxx.
-  :type output_dim: xxxxxx
-  :param num_layers: xxxxxx.
-  :type num_layers: xxxxxx
-  :param dropout: xxxxxx.
-  :type dropout: xxxxxx
+  :param input_dim: the dimension of the input data.
+  :type input_dim: int
+  :param output_dim: the dimension of the output data.
+  :type output_dim: int
+  :param num_layers: Number of LSTM layers.
+  :type num_layers: int
+  :param dropout: Dropout probability.
+  :type dropout: float
   :param initialize: The initialization for the parameters of the networks.
   :type initialize: Tensor
   :param device: The calculating device.
   :type device: str
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: A tuple containing the LSTM module and the output dimension.
+  :rtype: tuple
 
 .. raw:: html
 
@@ -117,100 +117,100 @@ xxxxxx.
 .. py:function::
   xuance.tensorflow.utils.layers.mlp_block(input_dim, output_dim, normalize, activation, initialize, device)
 
-  xxxxxx.
+  This function creates a block for a multi-layer perceptron (MLP) or fully connected layer.
 
-  :param input_dim: xxxxxx.
-  :type input_dim: xxxxxx
-  :param output_dim: xxxxxx.
-  :type output_dim: xxxxxx
+  :param input_dim: the dimension of the input data.
+  :type input_dim: int
+  :param output_dim: the dimension of the output data.
+  :type output_dim: int
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: tk.Model
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: tk.Model
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: tf.Tensor
   :param device: The calculating device.
   :type device: str
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: A tuple containing a sequence of modules representing the MLP block and the output dimension.
+  :rtype: tuple
 
 .. py:function::
   xuance.tensorflow.utils.layers.cnn_block(input_shape, filter, kernel_size, stride, normalize, activation, initialize, device)
 
-  xxxxxx.
+  This function creates a block for a convolutional neural network (CNN) layer.
 
   :param input_shape: The shape of the input data.
   :type input_shape: Sequence[int]
-  :param filter: xxxxxx.
-  :type filter: xxxxxx
-  :param kernel_size: xxxxxx.
-  :type kernel_size: xxxxxx
-  :param stride: xxxxxx.
-  :type stride: xxxxxx
+  :param filter: Number of filters.
+  :type filter: int
+  :param kernel_size: Size of the convolutional kernel.
+  :type kernel_size: int
+  :param stride: Stride of the convolution.
+  :type stride: int
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: tk.Model
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: tk.Model
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: tf.Tensor
   :param device: The calculating device.
   :type device: str
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: A tuple containing a sequence of modules representing the CNN block and the updated output shape (C, H, W).
+  :rtype: tuple
 
 .. py:function::
   xuance.tensorflow.utils.layers.pooling_block(input_shape, scale, pooling, device)
 
-  xxxxxx.
+  This function creates a block for pooling (either AdaptiveMaxPool2d or AdaptiveAvgPool2d).
 
   :param input_shape: The shape of the input data.
   :type input_shape: Sequence[int]
-  :param scale: xxxxxx.
-  :type scale: xxxxxx
-  :param pooling: xxxxxx.
-  :type pooling: xxxxxx
+  :param scale: Scaling factor for pooling.
+  :type scale: float
+  :param pooling: Pooling layer (either AdaptiveMaxPool2d or AdaptiveAvgPool2d).
+  :type pooling: int
   :param device: The calculating device.
   :type device: str
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: A sequence of modules representing the pooling block.
+  :rtype: list
 
 .. py:function::
   xuance.tensorflow.utils.layers.gru_block(input_dim, output_dim, num_layers, dropout, initialize)
 
-  xxxxxx.
+  This function creates a block for a Gated Recurrent Unit (GRU) layer.
 
-  :param input_dim: xxxxxx.
-  :type input_dim: xxxxxx
-  :param output_dim: xxxxxx.
-  :type output_dim: xxxxxx
-  :param num_layers: xxxxxx.
-  :type num_layers: xxxxxx
-  :param dropout: xxxxxx.
-  :type dropout: xxxxxx
+  :param input_dim: the dimension of the input data.
+  :type input_dim: int
+  :param output_dim: the dimension of the output data.
+  :type output_dim: int
+  :param num_layers: Number of GRU layers.
+  :type num_layers: int
+  :param dropout: Dropout probability.
+  :type dropout: float
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type initialize: tf.Tensor
+  :return: A tuple containing the GRU module and the output dimension.
+  :rtype: tuple
 
 .. py:function::
   xuance.tensorflow.utils.layers.lstm_block(input_dim, output_dim, num_layers, dropout, initialize, device)
 
-  xxxxxx.
+  This function creates a block for a Long Short-Term Memory (LSTM) layer.
 
-  :param input_dim: xxxxxx.
-  :type input_dim: xxxxxx
-  :param output_dim: xxxxxx.
-  :type output_dim: xxxxxx
-  :param num_layers: xxxxxx.
-  :type num_layers: xxxxxx
-  :param dropout: xxxxxx.
-  :type dropout: xxxxxx
+  :param input_dim: the dimension of the input data.
+  :type input_dim: int
+  :param output_dim: the dimension of the output data.
+  :type output_dim: int
+  :param num_layers: Number of LSTM layers.
+  :type num_layers: int
+  :param dropout: Dropout probability.
+  :type dropout: float
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: tf.Tensor
   :param device: The calculating device.
   :type device: str
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: A tuple containing the LSTM module and the output dimension.
+  :rtype: tuple
 
 .. raw:: html
 
@@ -221,82 +221,88 @@ xxxxxx.
 .. py:function::
   xuance.mindspore.utils.layers.mlp_block(input_dim, output_dim, normalize, activation, initialize)
 
-  :param input_dim: xxxxxx.
-  :type input_dim: xxxxxx
-  :param output_dim: xxxxxx.
-  :type output_dim: xxxxxx
+  This function creates a block for a multi-layer perceptron (MLP) or fully connected layer.
+
+  :param input_dim: the dimension of the input data.
+  :type input_dim: int
+  :param output_dim: the dimension of the output data.
+  :type output_dim: int
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: nn.Cell
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: nn.Cell
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type initialize: ms.Tensor
+  :return: A tuple containing a sequence of modules representing the MLP block and the output dimension.
+  :rtype: tuple
 
 .. py:function::
   xuance.mindspore.utils.layers.cnn_block(input_shape, filter, kernel_size, stride, normalize, activation, initialize)
 
+  This function creates a block for a convolutional neural network (CNN) layer.
+
   :param input_shape: The shape of the input data.
   :type input_shape: Sequence[int]
-  :param filter: xxxxxx.
-  :type filter: xxxxxx
-  :param kernel_size: xxxxxx.
-  :type kernel_size: xxxxxx
-  :param stride: xxxxxx.
-  :type stride: xxxxxx
+  :param filter: Number of filters.
+  :type filter: int
+  :param kernel_size: Size of the convolutional kernel.
+  :type kernel_size: int
+  :param stride: Stride of the convolution.
+  :type stride: int
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: nn.Cell
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: nn.Cell
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type initialize: ms.Tensor
+  :return: A tuple containing a sequence of modules representing the CNN block and the updated output shape (C, H, W).
+  :rtype: tuple
 
 .. py:function::
   xuance.mindspore.utils.layers.pooling_block(input_shape, scale, pooling)
 
   :param input_shape: The shape of the input data.
   :type input_shape: Sequence[int]
-  :param scale: xxxxxx.
-  :type scale: xxxxxx
-  :param pooling: xxxxxx.
-  :type pooling: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :param scale: Scaling factor for pooling.
+  :type scale: float
+  :param pooling: Pooling layer (either AdaptiveMaxPool2d or AdaptiveAvgPool2d).
+  :type pooling: int
+  :return: A sequence of modules representing the pooling block.
+  :rtype: list
 
 .. py:function::
   xuance.mindspore.utils.layers.gru_block(input_shape, output_dim, num_layers, dropout, initialize)
 
+  This function creates a block for a Gated Recurrent Unit (GRU) layer.
+
   :param input_shape: The shape of the input data.
   :type input_shape: Sequence[int]
-  :param output_dim: xxxxxx.
-  :type output_dim: xxxxxx
-  :param num_layers: xxxxxx.
-  :type num_layers: xxxxxx
-  :param dropout: xxxxxx.
-  :type dropout: xxxxxx
+  :param output_dim: the dimension of the output data.
+  :type output_dim: int
+  :param num_layers: Number of LSTM layers.
+  :type num_layers: int
+  :param dropout: Dropout probability.
+  :type dropout: float
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type initialize: ms.Tensor
+  :return: A tuple containing the LSTM module and the output dimension.
+  :rtype: tuple
 
 .. py:function::
   xuance.mindspore.utils.layers.lstm_block(input_shape, output_dim, num_layers, dropout, initialize)
 
   :param input_shape: The shape of the input data.
   :type input_shape: Sequence[int]
-  :param output_dim: xxxxxx.
-  :type output_dim: xxxxxx
-  :param num_layers: xxxxxx.
-  :type num_layers: xxxxxx
-  :param dropout: xxxxxx.
-  :type dropout: xxxxxx
+  :param output_dim: the dimension of the output data.
+  :type output_dim: int
+  :param num_layers: Number of LSTM layers.
+  :type num_layers: int
+  :param dropout: Dropout probability.
+  :type dropout: float
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type initialize: ms.Tensor
+  :return: A tuple containing the LSTM module and the output dimension.
+  :rtype: tuple
 
 .. raw:: html
 

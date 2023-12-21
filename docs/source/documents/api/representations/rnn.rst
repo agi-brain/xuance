@@ -48,7 +48,7 @@ Similarly, when implementing these classes in PyTorch, you also need to specify 
     Create the recurrent neural netowrks.
 
     :return: The RNN neural network with fully connected layers, the RNN layer, and the shape of the RNN hidden states.
-    :rtype: nn.Module, nn.Module, int
+    :rtype: tuple(nn.Module, nn.Module, int)
 
 .. py:function:: 
     xuance.torch.representations.rnn.Basic_RNN.forward(x, h, c=None)
@@ -102,85 +102,82 @@ Similarly, when implementing these classes in PyTorch, you also need to specify 
 
     <br><hr>
 
-**TensorFlow:**
-
-.. raw:: html
-
-    <br><hr>
 
 **MindSpore:**
 
 .. py:class::
   xuance.mindspore.representations.rnn.Basic_RNN(input_shape, hidden_sizes, normalize, initialize, activation, kwargs)
 
+  The hidden_sizes is a dict input, which contains “fc_hidden_sizes” and “fc_hidden_sizes”. 
+  The “fc_hidden_sizes” is the sizes of the fully connected layers before rnn layers. 
+  The “recurrent_hidden_size” is the size of recurrent layer.
+
   :param input_shape: The shape of the input data.
   :type input_shape: Sequence[int]
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: nn.Cell
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: ms.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
-  :param kwargs: xxxxxx.
-  :type kwargs: xxxxxx
+  :type activation: nn.Cell
+  :param kwargs: The other arguments.
+  :type kwargs: dict
 
 .. py:function::
   xuance.mindspore.representations.mlp.Basic_RNN._create_network()
 
-  xxxxxx.
+  Create the recurrent neural netowrks.
 
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The RNN neural network with fully connected layers, the RNN layer, and the shape of the RNN hidden states.
+  :rtype: tuple(nn.Module, nn.Module, int)
 
 .. py:function::
   xuance.mindspore.representations.mlp.Basic_RNN.forward(x, h, c)
 
-  xxxxxx.
+  Calculate feature representation of the inputs.
 
   :param x: The input tensor.
-  :type x: torch.Tensor
-  :param h: xxxxxx.
-  :type h: xxxxxx
-  :param c: xxxxxx.
-  :type c: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type x: ms.Tensor
+  :param h: The hidden states of the recurrent layers at last step.
+  :type h: ms.Tensor
+  :param c: The cell states of the LSTM layers at last step.
+  :type c: ms.Tensor
+  :return: The features output by the representation model, new hidden states, and new cell states.
+  :rtype: dict
 
 .. py:function::
   xuance.mindspore.representations.mlp.Basic_RNN.init_hidden(batch)
 
-  xxxxxx.
+  Initialize a batch of RNN hidden states.
 
-  :param batch: xxxxxx.
-  :type batch: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :param batch: The size of the batch.
+  :type batch: int
+  :return: The initialized hidden states.
+  :rtype: ms.Tensor
 
 .. py:function::
   xuance.mindspore.representations.mlp.Basic_RNN.init_hidden_item(i, rnn_hidden)
 
-  xxxxxx.
+  Initialize a slice of hidden states from the given RNN hidden states.
 
-  :param i: xxxxxx.
-  :type i: xxxxxx
-  :param rnn_hidden: The final hidden state of the sequence.
-  :type rnn_hidden: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :param i: The index of the slice.
+  :type i: ms.Tensor
+  :param rnn_hidden: The RNN hidden states.
+  :return: The initialized hidden states.
+  :rtype: ms.Tensor
 
 .. py:function::
   xuance.mindspore.representations.mlp.Basic_RNN.get_hidden_item(i, rnn_hidden)
 
-  xxxxxx.
+  Get a slice of hidden states from the given RNN hidden states.
 
-  :param i: xxxxxx.
-  :type i: xxxxxx
-  :param rnn_hidden: The final hidden state of the sequence.
-  :type rnn_hidden: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :param i: The index of the slice.
+  :type i: ms.Tensor
+  :param rnn_hidden: The RNN hidden states.
+  :return: The selected hidden states.
+  :rtype: ms.Tensor
 
 .. raw:: html
 
@@ -272,10 +269,6 @@ Source Code
             def get_hidden_item(self, i, *rnn_hidden):
                 return (rnn_hidden[0][:, i], rnn_hidden[1][:, i]) if self.lstm else (rnn_hidden[0][:, i], None)
 
-
-  .. group-tab:: TensorFlow
-
-    .. code-block:: python
 
   .. group-tab:: MindSpore
 

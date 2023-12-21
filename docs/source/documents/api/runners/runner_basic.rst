@@ -12,8 +12,8 @@ xxxxxx.
 .. py:class::
   xuance.torch.runners.runner_basic.Runner_Base(args)
 
-  :param args: xxxxxx.
-  :type args: xxxxxx
+  :param args: the arguments.
+  :type args: Namespace
 
 .. py:function::
   xuance.torch.runners.runner_basic.Runner_Base.run()
@@ -29,8 +29,8 @@ xxxxxx.
 .. py:class::
   xuance.tensorflow.runners.runner_basic.Runner_Base(args)
 
-  :param args: xxxxxx.
-  :type args: xxxxxx
+  :param args: the arguments.
+  :type args: Namespace
 
 .. py:function::
   xuance.torch.runners.runner_basic.Runner_Base.run()
@@ -42,8 +42,8 @@ xxxxxx.
   :type initial_learning_rate: xxxxxx
   :param start_factor: xxxxxx.
   :type start_factor: xxxxxx
-  :param end_factor: xxxxxx.
-  :type end_factor: xxxxxx
+  :param end_factor: Factor for the minimum learning rate.
+  :type end_factor: float
   :param total_iters: xxxxxx.
   :type total_iters: xxxxxx
 
@@ -56,8 +56,8 @@ xxxxxx.
 .. py:class::
   xuance.mindspore.runners.runner_basic.Runner_Base(args)
 
-  :param args: xxxxxx.
-  :type args: xxxxxx
+  :param args: the arguments.
+  :type args: Namespace
 
 .. py:function::
   xuance.mindspore.runners.runner_basic.Runner_Base.run()
