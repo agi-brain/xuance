@@ -14,8 +14,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param optimizer: xxxxxx.
-  :type optimizer: xxxxxx
+  :param optimizer: The optimizer that update the paramters of the model.
+  :type optimizer: Optimizer
   :param step: xxxxxx.
   :type step: xxxxxx
   :param total_steps: xxxxxx.
@@ -110,8 +110,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param optimizer: xxxxxx.
-  :type optimizer: xxxxxx
+  :param optimizer: The optimizer that update the paramters of the model.
+  :type optimizer: Optimizer
   :param step: xxxxxx.
   :type step: xxxxxx
   :param total_steps: xxxxxx.
@@ -194,8 +194,8 @@ xxxxxx.
 
   xxxxxx.
 
-  :param optimizer: xxxxxx.
-  :type optimizer: xxxxxx
+  :param optimizer: The optimizer that update the paramters of the model.
+  :type optimizer: Optimizer
   :param step: xxxxxx.
   :type step: xxxxxx
   :param total_steps: xxxxxx.

@@ -16,7 +16,7 @@ To create new learner, you should build a class inherit from ``xuance.torch.lear
     :type optimizer: torch.optim.Optimizer
     :param scheduler: The tool for learning rate decay.
     :type scheduler: torch.optim.lr_scheduler
-    :param device: Choose CPU or GPU to train the model.
+    :param device: The choice of the calculating device.
     :type device: str, int, torch.device
     :param model_dir: The directory of model file, default is "./".
     :type model_dir: str

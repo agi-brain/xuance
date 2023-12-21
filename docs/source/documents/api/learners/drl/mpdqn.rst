@@ -11,33 +11,33 @@ MPDQN_Learner
   xuance.torch.learners.policy_gradient.mpdqn_learner.MPDQN_Learner(policy, optimizer, scheduler, device, model_dir, gamma, tau)
 
   :param policy: The policy that provides actions and values.
-  :type policy: xxxxxx
-  :param optimizer: xxxxxx.
-  :type optimizer: xxxxxx
-  :param scheduler: xxxxxx.
-  :type scheduler: xxxxxx
+  :type policy: nn.Module
+  :param optimizer: The optimizer that update the paramters of the model.
+  :type optimizer: Optimizer
+  :param scheduler: The tool for learning rate decay.
+  :type scheduler: lr_scheduler
   :param device: The calculating device.
   :type device: str
-  :param model_dir: xxxxxx.
-  :type model_dir: xxxxxx
-  :param gamma: xxxxxx.
-  :type gamma: xxxxxx
+  :param model_dir: The directory for saving or loading the model parameters.
+  :type model_dir: str
+  :param gamma: The discount factor.
+  :type gamma: float
   :param tau: The soft update factor for the update of target networks.
   :type tau: float
 
 .. py:function::
   xuance.torch.learners.policy_gradient.mpdqn_learner.MPDQN_Learner.update(obs_batch, act_batch, rew_batch, next_batch, terminal_batch)
 
-  :param obs_batch: xxxxxx.
-  :type obs_batch: xxxxxx
-  :param act_batch: xxxxxx.
-  :type act_batch: xxxxxx
-  :param rew_batch: xxxxxx.
-  :type rew_batch: xxxxxx
-  :param next_batch: xxxxxx.
-  :type next_batch: xxxxxx
-  :param terminal_batch: xxxxxx.
-  :type terminal_batch: xxxxxx
+  :param obs_batch: A batch of observations sampled from experience replay buffer.
+  :type obs_batch: np.ndarray
+  :param act_batch: A batch of actions sampled from experience replay buffer.
+  :type act_batch: np.ndarray
+  :param rew_batch: A batch of rewards sampled from experience replay buffer.
+  :type rew_batch: np.ndarray
+  :param next_batch: A batch of next observations sampled from experience replay buffer.
+  :type next_batch: np.ndarray
+  :param terminal_batch: A batch of terminal data sampled from experience replay buffer.
+  :type terminal_batch: np.ndarray
   :return: None.
   :rtype: xxxxxx
 
@@ -51,31 +51,31 @@ MPDQN_Learner
   xuance.tensorflow.learners.policy_gradient.mpdqn_learner.MPDQN_Learner(policy, optimizer, device, model_dir, gamma, tau)
 
   :param policy: The policy that provides actions and values.
-  :type policy: xxxxxx
-  :param optimizer: xxxxxx.
-  :type optimizer: xxxxxx
+  :type policy: nn.Module
+  :param optimizer: The optimizer that update the paramters of the model.
+  :type optimizer: Optimizer
   :param device: The calculating device.
   :type device: str
-  :param model_dir: xxxxxx.
-  :type model_dir: xxxxxx
-  :param gamma: xxxxxx.
-  :type gamma: xxxxxx
+  :param model_dir: The directory for saving or loading the model parameters.
+  :type model_dir: str
+  :param gamma: The discount factor.
+  :type gamma: float
   :param tau: The soft update factor for the update of target networks.
   :type tau: float
 
 .. py:function::
   xuance.tensorflow.learners.policy_gradient.mpdqn_learner.MPDQN_Learner.update(obs_batch, act_batch, rew_batch, next_batch, terminal_batch)
 
-  :param obs_batch: xxxxxx.
-  :type obs_batch: xxxxxx
-  :param act_batch: xxxxxx.
-  :type act_batch: xxxxxx
-  :param rew_batch: xxxxxx.
-  :type rew_batch: xxxxxx
-  :param next_batch: xxxxxx.
-  :type next_batch: xxxxxx
-  :param terminal_batch: xxxxxx.
-  :type terminal_batch: xxxxxx
+  :param obs_batch: A batch of observations sampled from experience replay buffer.
+  :type obs_batch: np.ndarray
+  :param act_batch: A batch of actions sampled from experience replay buffer.
+  :type act_batch: np.ndarray
+  :param rew_batch: A batch of rewards sampled from experience replay buffer.
+  :type rew_batch: np.ndarray
+  :param next_batch: A batch of next observations sampled from experience replay buffer.
+  :type next_batch: np.ndarray
+  :param terminal_batch: A batch of terminal data sampled from experience replay buffer.
+  :type terminal_batch: np.ndarray
   :return: None.
   :rtype: xxxxxx
 
@@ -89,31 +89,31 @@ MPDQN_Learner
   xuance.mindspore.learners.policy_gradient.mpdqn_learner.MPDQN_Learner(policy, optimizer, scheduler, model_dir, gamma, tau)
 
   :param policy: The policy that provides actions and values.
-  :type policy: xxxxxx
-  :param optimizer: xxxxxx.
-  :type optimizer: xxxxxx
-  :param scheduler: xxxxxx.
-  :type scheduler: xxxxxx
-  :param model_dir: xxxxxx.
-  :type model_dir: xxxxxx
-  :param gamma: xxxxxx.
-  :type gamma: xxxxxx
+  :type policy: nn.Module
+  :param optimizer: The optimizer that update the paramters of the model.
+  :type optimizer: Optimizer
+  :param scheduler: The tool for learning rate decay.
+  :type scheduler: lr_scheduler
+  :param model_dir: The directory for saving or loading the model parameters.
+  :type model_dir: str
+  :param gamma: The discount factor.
+  :type gamma: float
   :param tau: The soft update factor for the update of target networks.
   :type tau: float
 
 .. py:function::
   xuance.mindspore.learners.policy_gradient.mpdqn_learner.MPDQN_Learner.update(obs_batch, act_batch, rew_batch, next_batch, terminal_batch)
 
-  :param obs_batch: xxxxxx.
-  :type obs_batch: xxxxxx
-  :param act_batch: xxxxxx.
-  :type act_batch: xxxxxx
-  :param rew_batch: xxxxxx.
-  :type rew_batch: xxxxxx
-  :param next_batch: xxxxxx.
-  :type next_batch: xxxxxx
-  :param terminal_batch: xxxxxx.
-  :type terminal_batch: xxxxxx
+  :param obs_batch: A batch of observations sampled from experience replay buffer.
+  :type obs_batch: np.ndarray
+  :param act_batch: A batch of actions sampled from experience replay buffer.
+  :type act_batch: np.ndarray
+  :param rew_batch: A batch of rewards sampled from experience replay buffer.
+  :type rew_batch: np.ndarray
+  :param next_batch: A batch of next observations sampled from experience replay buffer.
+  :type next_batch: np.ndarray
+  :param terminal_batch: A batch of terminal data sampled from experience replay buffer.
+  :type terminal_batch: np.ndarray
   :return: None.
   :rtype: xxxxxx
 

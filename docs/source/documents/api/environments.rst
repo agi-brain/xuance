@@ -16,9 +16,10 @@ The specific steps for adding are as follows:
 
 **Step 1**:
 
-Make a directory named, e.g., "new_env", and change the directory to the folder. 
-Then, create a new pyhton file named new_env.py, in which a class named New_Env is defined. 
-The New_Env is the original environment or a wrapper of the original environment, which has 
+Make a directory named, e.g., ``new_env``, and change the directory to the folder. 
+Then, create a new pyhton file named new_env.py, in which a class named ``New_Env`` is defined. 
+The ``New_Env`` is the original environment or a wrapper of the original environment,
+which contains some necessary attributes, such as env_id, _episode
 
 .. code-block:: python
 
