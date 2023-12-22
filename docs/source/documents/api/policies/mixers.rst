@@ -7,7 +7,8 @@ xxxxxx.
 
     <br><hr>
 
-**PyTorch:**
+PyTorch
+------------------------------------------
 
 .. py:class::
   xuance.torch.policies.mixers.VDN_mixer()
@@ -142,7 +143,8 @@ xxxxxx.
 
     <br><hr>
 
-**TensorFlow:**
+TensorFlow
+------------------------------------------
 
 .. py:class::
   xuance.tensorflow.policies.mixers.VDN_mixer()
@@ -351,7 +353,8 @@ xxxxxx.
 
     <br><hr>
 
-**MindSpore:**
+MindSpore
+------------------------------------------
 
 .. py:class::
   xuance.mindspore.policies.mixers.VDN_mixer()

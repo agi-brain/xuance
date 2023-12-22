@@ -13,7 +13,8 @@ Similarly, when implementing these classes in PyTorch, you also need to specify 
 
     <br><hr>
 
-**PyTorch:**
+PyTorch
+------------------------------------------
 
 .. py:class:: 
     xuance.torch.representations.rnn.Basic_RNN(input_shape, hidden_sizes, normalize=None, initialize=None, activation=None, device=None, kwargs)
@@ -103,7 +104,8 @@ Similarly, when implementing these classes in PyTorch, you also need to specify 
     <br><hr>
 
 
-**MindSpore:**
+MindSpore
+------------------------------------------
 
 .. py:class::
   xuance.mindspore.representations.rnn.Basic_RNN(input_shape, hidden_sizes, normalize, initialize, activation, kwargs)

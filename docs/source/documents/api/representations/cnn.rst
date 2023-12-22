@@ -14,7 +14,8 @@ When implementing this class in PyTorch, you also need to specify the device typ
 
     <br><hr>
 
-**PyTorch:**
+PyTorch
+------------------------------------------
 
 .. py:class:: 
     xuance.torch.representations.cnn.Basic_CNN(input_shape, kernels, strides, filters, normalize=None, initialize=None, activation=None, device)
@@ -110,7 +111,8 @@ When implementing this class in PyTorch, you also need to specify the device typ
 
     <br><hr>
 
-**TensorFlow:**
+TensorFlow
+------------------------------------------
 
 .. py:class::
     xuance.tensorflow.representations.cnn.Basic_CNN(input_shape, kernels, strides, filters, normalize=None, initialize=None, activation=None, device=None)
@@ -153,7 +155,8 @@ When implementing this class in PyTorch, you also need to specify the device typ
 
     <br><hr>
 
-**MindSpore:**
+MindSpore
+------------------------------------------
 
 .. py:class::
   xuance.mindspore.representations.cnn.Basic_CNN(input_shape, kernels, strides, filters, normalize, initialize, activation)

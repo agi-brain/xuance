@@ -12,7 +12,8 @@ When implementing this class in PyTorch, you also need to specify the device typ
 
     <br><hr>
 
-**PyTorch:**
+PyTorch
+------------------------------------------
 
 .. py:class:: 
     xuance.torch.representations.mlp.Basic_Identical(input_shape, device)
@@ -62,7 +63,8 @@ When implementing this class in PyTorch, you also need to specify the device typ
 
     <br><hr>
 
-**TensorFlow:**
+TensorFlow
+------------------------------------------
 
 .. py:class::
   xuance.tensorflow.representations.mlp.Basic_Identical(input_shape, device)
@@ -120,7 +122,8 @@ When implementing this class in PyTorch, you also need to specify the device typ
 
     <br><hr>
 
-**MindSpore:**
+MindSpore
+------------------------------------------
 
 .. py:class::
   xuance.mindspore.representations.mlp.Basic_Identical(input_shape)

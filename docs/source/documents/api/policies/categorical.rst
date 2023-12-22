@@ -13,7 +13,8 @@ You can also customize the other categorical policies for single agent DRL here.
 
     <br><hr>
 
-**PyTorch:**
+PyTorch
+------------------------------------------
 
 .. py:class::
   xuance.torch.policies.categorical.ActorNet(state_dim, action_dim, hidden_sizes, normalize, initialize, activation, device)
@@ -285,7 +286,8 @@ You can also customize the other categorical policies for single agent DRL here.
 
     <br><hr>
 
-**TensorFlow:**
+TensorFlow
+------------------------------------------
 
 .. py:class::
   xuance.tensorflow.policies.categorical.ActorNet(state_dim, action_dim, hidden_sizes, normalize, initialize, activation, device)
@@ -557,7 +559,8 @@ You can also customize the other categorical policies for single agent DRL here.
 
     <br><hr>
 
-**MindSpore:**
+MindSpore
+------------------------------------------
 
 .. py:class::
   xuance.mindspore.policies.categorical.ActorNet(state_dim, action_dim, hidden_sizes, normalize, initialize, activation)

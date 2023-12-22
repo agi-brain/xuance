@@ -7,7 +7,8 @@ xxxxxx.
 
     <br><hr>
 
-**PyTorch:**
+PyTorch
+------------------------------------------
 
 .. py:class::
   xuance.torch.policies.coordination_graph.DCG_utility(dim_input, dim_hidden, dim_output)
@@ -77,7 +78,8 @@ xxxxxx.
 
     <br><hr>
 
-**TensorFlow:**
+TensorFlow
+------------------------------------------
 
 .. py:class::
   xuance.tensorflow.policies.coordination_graph.DCG_utility(dim_input, dim_hidden, dim_output)
@@ -140,12 +142,6 @@ xxxxxx.
 
   :return: xxxxxx.
   :rtype: xxxxxx
-
-.. raw:: html
-
-    <br><hr>
-
-**MindSpore:**
 
 .. raw:: html
 
@@ -330,8 +326,3 @@ Source Code
                                                               index=self.edges_from, dim=0, dim_size=self.n_vertexes)
                 self.edges_n_in = self.edges_n_in.float()
                 return
-
-
-  .. group-tab:: MindSpore
-
-    .. code-block:: python
