@@ -180,7 +180,7 @@ pettingzoo_vec_env.py
 
     Sends a render command to each subprocess with the specified rendering mode.
 
-    :param mode:  determine the rendering mode for the visualization
+    :param mode:  determine the rendering mode for the visualization.
     :type mode: str
     :return: the rendered images from subprocesses.
     :rtype: np.ndarray
@@ -247,11 +247,6 @@ pettingzoo_vec_env.py
 
     :return: the observations, states, rewards, terminal flags, truncation flags, and information.
     :rtype: tuple
-
-
-
-
-
 
 .. py:function::
     xuance.environment.pettingzoo.pettingzoo_vec_env.DummyVecEnv_Pettingzoo.render(mode)
