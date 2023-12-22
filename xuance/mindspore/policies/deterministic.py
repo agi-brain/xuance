@@ -1,4 +1,3 @@
-from xuance.mindspore.policies import *
 from xuance.mindspore.utils import *
 import copy
 from gym.spaces import Space, Box, Discrete, Dict

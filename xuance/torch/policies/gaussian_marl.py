@@ -1,5 +1,4 @@
 import torch.distributions
-from torch.distributions.multivariate_normal import MultivariateNormal
 
 from xuance.torch.policies import *
 from xuance.torch.utils import *

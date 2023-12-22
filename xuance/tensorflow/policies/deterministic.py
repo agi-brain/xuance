@@ -1,5 +1,3 @@
-import numpy as np
-
 from xuance.tensorflow.policies import *
 from xuance.tensorflow.utils import *
 from xuance.tensorflow.representations import Basic_Identical
