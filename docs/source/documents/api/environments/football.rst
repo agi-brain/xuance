@@ -31,7 +31,7 @@ raw_env.py
 
     :param action: the executable action for the environment.
     :type action: np.ndarray
-    :return: the next step data, including observations, rewards, terminaled variables, truncated variables, and the other information.
+    :return: the next step data, including observations, rewards, terminated variables, truncated variables, and the other information.
     :rtype: tuple
 
 .. py:function::
@@ -63,27 +63,27 @@ gfootball_env.py
    :type args: Namespace
 
 .. py:function::
-   xuance.environment.football.gfootball_env.GFootball_Env.close()
+    xuance.environment.football.gfootball_env.GFootball_Env.close()
 
-   Close the environment.
-
-.. py:function::
-   xuance.environment.football.gfootball_env.GFootball_Env.render()
-
-   Get the rendered images of the environment.
+    Close the environment.
 
 .. py:function::
-   xuance.environment.football.gfootball_env.GFootball_Env.reset()
+    xuance.environment.football.gfootball_env.GFootball_Env.render()
 
-   :return: the reset local observations, global states, and information.
-   :rtype: tuple
+    Get the rendered images of the environment.
+
+.. py:function::
+    xuance.environment.football.gfootball_env.GFootball_Env.reset()
+
+    :return: the reset local observations, global states, and information.
+    :rtype: tuple
 
 .. py:function::
     xuance.environment.football.gfootball_env.GFootball_Env.step(actions)
 
     :param actions: the executable actions for the environment.
     :type actions: np.ndarray
-    :return: the next step data, including local observations, global state, rewards, terminaled variables, truncated variables, and the other information.
+    :return: the next step data, including local observations, global state, rewards, terminated variables, truncated variables, and the other information.
     :rtype: tuple
 
 .. py:function::
@@ -134,7 +134,7 @@ gfootball_vec_env.py
 
     Reset the vectorized environments.
 
-    :return: the reset obvervations, global states, and the informations.
+    :return: the reset observations, global states, and the information.
     :rtype: tuple
 
 .. py:function::
@@ -150,7 +150,7 @@ gfootball_vec_env.py
 
     Waits for the completion of asynchronous step operations and updates internal buffers with the received results.
 
-    :return: the observations, states, rewards, terminal flags, truncation flags, and infos.
+    :return: the observations, states, rewards, terminal flags, truncation flags, and information.
     :rtype: tuple
 
 .. py:function::
@@ -163,6 +163,8 @@ gfootball_vec_env.py
 
     Sends a 'render' command to each subprocess with the specified rendering mode.
 
+    :param mode:  determine the rendering mode for the visualization
+    :type mode: str
     :return: the rendered images from subprocesses.
     :rtype: np.ndarray
 
@@ -196,7 +198,7 @@ gfootball_vec_env.py
 
     Reset the vectorized environments.
 
-    :return: the reset obvervations, global states, and the informations.
+    :return: the reset observations, global states, and the information.
     :rtype: tuple
 
 .. py:function::
@@ -224,7 +226,8 @@ gfootball_vec_env.py
     xuance.environment.football.gfootball_vec_env.DummyVecEnv_GFootball.render(mode)
 
     Sends a 'render' command to each subprocess with the specified rendering mode.
-
+    :param mode: determine the rendering mode for the visualization
+    :type mode: str
     :return: the rendered images from subprocesses.
     :rtype: np.ndarray
 
