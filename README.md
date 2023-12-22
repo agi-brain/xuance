@@ -284,7 +284,7 @@ and hope it can really become a zoo full of DRL algorithms.
 <img src="docs/source/figures/football/gfootball.png" width="720" height="auto" align=center />
 </div>
 
-## Installation
+## :point_right: Installation
 
 :computer: The library can be run at Linux, Windows, MacOS, and EulerOS, etc.
 
@@ -320,7 +320,7 @@ and `pip install xuance[all]` for all dependencies.
 
 Note: Some extra packages should be installed manually for further usage.
 
-## Quickly Start
+## :point_right: Quickly Start
 
 ### Train a Model
 
@@ -364,6 +364,10 @@ $ tensorboard --logdir ./logs/dqn/torch/CartPole-v0
 #### Weights & Biases (wandb)
 
 XuanCe also supports Weights & Biases (wandb) tools for users to visualize the results of the running implementation.
+
+How to use wandb online? :arrow_right: [https://github.com/wandb/wandb.git/](https://github.com/wandb/wandb.git/) 
+
+How to use wandb offline? :arrow_right: [https://github.com/wandb/server.git/](https://github.com/wandb/server.git/)
 
 <div align="center">
 <img src="docs/source/figures/log/wandb.png" width="700" height="auto" align=center />
