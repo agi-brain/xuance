@@ -76,7 +76,7 @@ gym_env.py
 
     Reset the vectorized environments.
 
-    :return: the reset observations and the information.
+    :return: the reset observations, global states, and the information.
     :rtype: tuple
 
 .. py:function::
@@ -296,7 +296,7 @@ gym_vec_env.py
 
     Reset the vectorized environments.
 
-    :return: the reset observations and the information.
+    :return: the reset observations, global states, and the information.
     :rtype: tuple
 
 .. py:function::
@@ -338,7 +338,7 @@ gym_vec_env.py
 
     Reset the vectorized environments.
 
-    :return: the reset observations and the information.
+    :return: the reset observations, global states, and the information.
     :rtype: tuple
 
 .. py:function::
