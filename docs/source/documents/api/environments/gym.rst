@@ -278,7 +278,7 @@ gym_vec_env.py
 .. py:function::
     xuance.environment.gym.gym_vec_env.SubprocVecEnv_Gym.step_async(actions)
 
-    Sends asynchronous 'step' commands to each subprocess with the specified actions.
+    Sends asynchronous step commands to each subprocess with the specified actions.
 
     :param actions: the executable actions for n parallel environments.
     :type actions: np.ndarray
@@ -307,7 +307,7 @@ gym_vec_env.py
 .. py:function::
     xuance.environment.gym.gym_vec_env.SubprocVecEnv_Gym.render(mode)
 
-    Sends a 'render' command to each subprocess with the specified rendering mode.
+    Sends a render command to each subprocess with the specified rendering mode.
 
     :param mode: determine the rendering mode for the visualization.
     :type mode: str
@@ -344,7 +344,7 @@ gym_vec_env.py
 .. py:function::
     xuance.environment.gym.gym_vec_env.DummyVecEnv_Gym.step_async(actions)
 
-    Sends asynchronous 'step' commands to each subprocess with the specified actions.
+    Sends asynchronous step commands to each subprocess with the specified actions.
 
     :param actions: the executable actions for n parallel environments.
     :type actions: np.ndarray
@@ -365,7 +365,7 @@ gym_vec_env.py
 .. py:function::
     xuance.environment.gym.gym_vec_env.DummyVecEnv_Gym.render(mode)
 
-    Sends a 'render' command to each subprocess with the specified rendering mode.
+    Sends a render command to each subprocess with the specified rendering mode.
 
     :param mode: determine the rendering mode for the visualization.
     :type mode: str
