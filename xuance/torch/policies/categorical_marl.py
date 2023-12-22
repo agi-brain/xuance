@@ -1,9 +1,5 @@
-import torch
-
 from xuance.torch.policies import *
 from xuance.torch.utils import *
-from xuance.torch.representations import Basic_Identical
-from .deterministic_marl import BasicQhead
 
 
 class ActorNet(nn.Module):
