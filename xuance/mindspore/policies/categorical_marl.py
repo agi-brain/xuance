@@ -1,7 +1,6 @@
 from xuance.mindspore.policies import *
 from xuance.mindspore.utils import *
 from xuance.mindspore.representations import Basic_Identical
-from .deterministic_marl import BasicQhead
 from mindspore.nn.probability.distribution import Categorical
 import copy
 

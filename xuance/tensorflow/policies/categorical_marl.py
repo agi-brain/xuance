@@ -1,7 +1,6 @@
 from xuance.tensorflow.policies import *
 from xuance.tensorflow.utils import *
 from xuance.tensorflow.representations import Basic_Identical
-from .deterministic_marl import BasicQhead
 
 
 class ActorNet(tk.Model):
