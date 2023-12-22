@@ -253,7 +253,7 @@ pettingzoo_vec_env.py
 
     Sends a render command to each subprocess with the specified rendering mode.
 
-    :param mode:  determine the rendering mode for the visualization
+    :param mode: determine the rendering mode for the visualization.
     :type mode: str
     :return: the rendered images from subprocesses.
     :rtype: np.ndarray
