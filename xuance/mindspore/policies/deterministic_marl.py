@@ -1,5 +1,3 @@
-import markdown.extensions.smarty
-
 from xuance.mindspore.policies import *
 from xuance.mindspore.utils import *
 import copy

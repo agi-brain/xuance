@@ -1,10 +1,6 @@
-import copy
-
 import torch.distributions
-
 from xuance.torch.policies import *
 from xuance.torch.utils import *
-from xuance.torch.representations import Basic_Identical
 
 
 def _init_layer(layer, gain=np.sqrt(2), bias=0.0):

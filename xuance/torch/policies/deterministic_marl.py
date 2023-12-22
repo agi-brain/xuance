@@ -1,12 +1,5 @@
-import copy
-
-import numpy as np
-import torch
-
 from xuance.torch.policies import *
 from xuance.torch.utils import *
-from xuance.torch.representations import Basic_Identical
-from gymnasium.spaces.box import Box as Box_pettingzoo
 from gymnasium import spaces as spaces_pettingzoo
 
 
