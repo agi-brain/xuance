@@ -68,8 +68,8 @@ xxxxxx.
   :type act_mean_last: xxxxxx
   :param agent_mask: xxxxxx.
   :type agent_mask: xxxxxx
-  :param state: xxxxxx.
-  :type state: xxxxxx
+  :param state: The state input.
+  :type state: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -84,8 +84,8 @@ xxxxxx.
   :type next_obs_n: xxxxxx
   :param actions_dict: xxxxxx.
   :type actions_dict: xxxxxx
-  :param state: xxxxxx.
-  :type state: xxxxxx
+  :param state: The state input.
+  :type state: Tensor
   :param next_state: xxxxxx.
   :type next_state: xxxxxx
   :param agent_mask: xxxxxx.
@@ -188,8 +188,8 @@ xxxxxx.
   :type act_mean_last: xxxxxx
   :param agent_mask: xxxxxx.
   :type agent_mask: xxxxxx
-  :param state: xxxxxx.
-  :type state: xxxxxx
+  :param state: The state input.
+  :type state: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -204,8 +204,8 @@ xxxxxx.
   :type next_obs_n: xxxxxx
   :param actions_dict: xxxxxx.
   :type actions_dict: xxxxxx
-  :param state: xxxxxx.
-  :type state: xxxxxx
+  :param state: The state input.
+  :type state: Tensor
   :param next_state: xxxxxx.
   :type next_state: xxxxxx
   :param agent_mask: xxxxxx.
@@ -296,8 +296,8 @@ xxxxxx.
   :type act_mean_last: xxxxxx
   :param agent_mask: xxxxxx.
   :type agent_mask: xxxxxx
-  :param state: xxxxxx.
-  :type state: xxxxxx
+  :param state: The state input.
+  :type state: Tensor
 
 .. py:function::
   xuance.mindspore.runners.runner_pettingzoo.Pettingzoo_Runner.store_data(obs_n, next_obs_n, actions_dict, state, next_state, agent_mask, rew_n, done_n)
@@ -308,8 +308,8 @@ xxxxxx.
   :type next_obs_n: xxxxxx
   :param actions_dict: xxxxxx.
   :type actions_dict: xxxxxx
-  :param state: xxxxxx.
-  :type state: xxxxxx
+  :param state: The state input.
+  :type state: Tensor
   :param next_state: xxxxxx.
   :type next_state: xxxxxx
   :param agent_mask: xxxxxx.

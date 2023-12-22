@@ -779,8 +779,8 @@ MindSpore
   :type initialize: Tensor
   :param activation: The choose of activation functions for hidden layers.
   :type activation: nn.Module
-  :param kwargs: xxxxxx.
-  :type kwargs: xxxxxx
+  :param kwargs: The other arguments.
+  :type kwargs: dict
 
 .. py:function::
   xuance.mindspore.policies.gaussian_marl.MAAC_Policy.construct(observation, agent_ids, rnn_hidden, kwargs)
@@ -793,8 +793,8 @@ MindSpore
   :type agent_ids: Tensor
   :param rnn_hidden: The final hidden state of the sequence.
   :type rnn_hidden: xxxxxx
-  :param kwargs: xxxxxx.
-  :type kwargs: xxxxxx
+  :param kwargs: The other arguments.
+  :type kwargs: dict
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -809,8 +809,8 @@ MindSpore
   :type agent_ids: Tensor
   :param rnn_hidden: The final hidden state of the sequence.
   :type rnn_hidden: xxxxxx
-  :param kwargs: xxxxxx.
-  :type kwargs: xxxxxx
+  :param kwargs: The other arguments.
+  :type kwargs: dict
   :return: xxxxxx.
   :rtype: xxxxxx
 

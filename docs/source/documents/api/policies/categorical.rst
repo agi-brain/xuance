@@ -174,7 +174,7 @@ PyTorch
 
   :param observation: The original observation variables.
   :type observation: torch.Tensor
-  :return: A tupel that includes the outputs of these representation networks, actor, critic, and auxiliary critic networks.
+  :return: A tuple that includes the outputs of these representation networks, actor, critic, and auxiliary critic networks.
   :rtype: tuple
 
 .. py:class::
@@ -199,7 +199,7 @@ PyTorch
   xuance.torch.policies.categorical.CriticNet_SACDIS.forward(x)
 
   A feed forward method that defines the forward pass through the critic network, 
-  taking the input tensor x and passing it through the critc model.
+  taking the input tensor x and passing it through the critic model.
 
   :param x: The input tensor.
   :type x: torch.Tensor
@@ -267,7 +267,7 @@ PyTorch
 
   :param observation: The original observation variables.
   :type observation: torch.Tensor
-  :return: A tupel that includes the outputs of the representation, action probabilities, and the action distribution.
+  :return: A tuple that includes the outputs of the representation, action probabilities, and the action distribution.
   :rtype: tuple
 
 .. py:function::
@@ -472,8 +472,8 @@ TensorFlow
 
   :param observation: The original observation variables.
   :type observation: tf.Tensor
-  :return: A tupel that includes the outputs of these representation networks, actor, critic, and auxiliary critic networks.
-  :rtype: tupel
+  :return: A tuple that includes the outputs of these representation networks, actor, critic, and auxiliary critic networks.
+  :rtype: tuple
 
 .. py:class::
   xuance.tensorflow.policies.categorical.CriticNet_SACDIS(state_dim, action_dim, hidden_sizes, initialize, activation, device)
@@ -497,7 +497,7 @@ TensorFlow
   xuance.tensorflow.policies.categorical.CriticNet_SACDIS.call(x)
 
   A feed forward method that defines the forward pass through the critic network, 
-  taking the input tensor x and passing it through the critc model.
+  taking the input tensor x and passing it through the critic model.
 
   :param x: The input tensor.
   :type x: tf.Tensor
@@ -566,7 +566,7 @@ TensorFlow
 
   :param observation: The original observation variables.
   :type observation: tf.Tensor
-  :return: A tupel that includes the outputs of the representation, action probabilities, and the action distribution.
+  :return: A tuple that includes the outputs of the representation, action probabilities, and the action distribution.
   :rtype: tuple
 
 .. py:function::
@@ -762,8 +762,8 @@ MindSpore
 
   :param observation: The original observation variables.
   :type observation: ms.Tensor
-  :return: A tupel that includes the outputs of these representation networks, actor, critic, and auxiliary critic networks.
-  :rtype: tupel
+  :return: A tuple that includes the outputs of these representation networks, actor, critic, and auxiliary critic networks.
+  :rtype: tuple
 
 .. py:class::
   xuance.mindspore.policies.categorical.CriticNet_SACDIS(state_dim, action_dim, hidden_sizes, initialize, activation)
@@ -784,7 +784,7 @@ MindSpore
 .. py:function::
   xuance.mindspore.policies.categorical.CriticNet_SACDIS.construct(x)
 
-  A feed forward method that defines the forward pass through the critic network, taking the input tensor x and passing it through the critc model.
+  A feed forward method that defines the forward pass through the critic network, taking the input tensor x and passing it through the critic model.
 
   :param x: The input tensor.
   :type x: ms.Tensor
@@ -820,8 +820,8 @@ MindSpore
 
   :param observation: The original observation variables.
   :type observation: ms.Tensor
-  :return: A tupel that includes the outputs of the representation, action probabilities, and the action distribution.
-  :rtype: tupel
+  :return: A tuple that includes the outputs of the representation, action probabilities, and the action distribution.
+  :rtype: tuple
 
 .. py:function::
   xuance.mindspore.policies.categorical.SACDISPolicy.action(observation)

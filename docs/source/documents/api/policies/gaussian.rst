@@ -259,8 +259,8 @@ PyTorch
 
   :param observation: The original observation variables.
   :type observation: Tensor
-  :param action: xxxxxx.
-  :type action: xxxxxx
+  :param action: The action input.
+  :type action: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -538,8 +538,8 @@ TensorFlow
 
   :param observation: The original observation variables.
   :type observation: Tensor
-  :param action: xxxxxx.
-  :type action: xxxxxx
+  :param action: The action input.
+  :type action: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 

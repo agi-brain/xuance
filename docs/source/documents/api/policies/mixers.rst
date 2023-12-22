@@ -290,8 +290,8 @@ TensorFlow
 
   :param hidden_states_n: The dimension of the hidden states of n agents.
   :type hidden_states_n: int
-  :param kwargs: xxxxxx.
-  :type kwargs: xxxxxx
+  :param kwargs: The other arguments.
+  :type kwargs: dict
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -316,8 +316,8 @@ TensorFlow
   :type hidden_from_to: xxxxxx
   :param hidden_to_from: xxxxxx.
   :type hidden_to_from: xxxxxx
-  :param kwargs: xxxxxx.
-  :type kwargs: xxxxxx
+  :param kwargs: The other arguments.
+  :type kwargs: dict
   :return: xxxxxx.
   :rtype: xxxxxx
 

@@ -65,8 +65,8 @@ xxxxxx.
   :type avail_actions: Tensor
   :param rnn_hidden: The last final hidden states of the sequence.
   :type *rnn_hidden: Tensor
-  :param state: xxxxxx.
-  :type state: xxxxxx
+  :param state: The state input.
+  :type state: Tensor
   :param test_mode: xxxxxx.
   :type test_mode: xxxxxx
   :return: xxxxxx.

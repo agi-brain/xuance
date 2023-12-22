@@ -86,8 +86,8 @@ MAPPO_Agents
 
     :param i_step: The i-th step during training.
     :type i_step: int
-    :param kwargs: xxxxxx.
-    :type kwargs: xxxxxx
+    :param kwargs: The other arguments.
+    :type kwargs: dict
     :return: **info_train** - the information of the training process.
     :rtype: dict
 
@@ -132,8 +132,8 @@ MAPPO_Agents
     :type obs_n: np.ndarray
     :param rnn_hidden: The final hidden state of the sequence.
     :type rnn_hidden: xxxxxx
-    :param state: xxxxxx.
-    :type state: xxxxxx
+    :param state: The state input.
+    :type state: Tensor
     :return: xxxxxx.
     :rtype: xxxxxx
 
@@ -144,8 +144,8 @@ MAPPO_Agents
 
     :param i_step: The i-th step during training.
     :type i_step: int
-    :param kwargs: xxxxxx.
-    :type kwargs: xxxxxx
+    :param kwargs: The other arguments.
+    :type kwargs: dict
     :return: **info_train** - the information of the training process.
     :rtype: dict
 
