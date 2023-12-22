@@ -19,6 +19,9 @@ PyTorch
 .. py:class::
   xuance.torch.policies.categorical.ActorNet(state_dim, action_dim, hidden_sizes, normalize, initialize, activation, device)
 
+  A neural network module for an actor in DRL, used as an important part of a policy. 
+  This actor network outputs categorical actions distributions based on the given state.
+
   :param state_dim: The dimension of the input state.
   :type state_dim: int
   :param action_dim: The dimension of the action input.
@@ -28,7 +31,7 @@ PyTorch
   :param normalize: The method of normalization.
   :type normalize: nn.Module
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: torch.Tensor
   :param activation: The choose of activation functions for hidden layers.
   :type activation: nn.Module
   :param device: The calculating device.
@@ -37,15 +40,18 @@ PyTorch
 .. py:function::
   xuance.torch.policies.categorical.ActorNet.forward(x)
 
-  xxxxxx.
+  A feed forward method that is used to calculate the model's output based on the input state x,
+  and set the parameters of the categorical distribution based on the output of the actor model.
+  Finally, this method returns a distribution.
 
   :param x: The input tensor.
   :type x: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: A categorical distribution that can be used to sample actions.
 
 .. py:class::
   xuance.torch.policies.categorical.CriticNet(state_dim, hidden_sizes, normalize, initialize, activation, device)
+  
+  This is a neural network module, CriticNet, typically used for approximating the value function of a state. 
 
   :param state_dim: The dimension of the input state.
   :type state_dim: int
@@ -54,7 +60,7 @@ PyTorch
   :param normalize: The method of normalization.
   :type normalize: nn.Module
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: torch.Tensor
   :param activation: The choose of activation functions for hidden layers.
   :type activation: nn.Module
   :param device: The calculating device.
@@ -63,15 +69,20 @@ PyTorch
 .. py:function::
   xuance.torch.policies.categorical.CriticNet.forward(x)
 
-  xxxxxx.
+  A feed forward method that takes a tensor x as input and passes it through the critic network, 
+  returning the output (value estimate).
 
   :param x: The input tensor.
   :type x: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The evaluated values of the input x.
+  :rtype: torch.Tensor
 
 .. py:class::
   xuance.torch.policies.categorical.ActorCriticPolicy(action_space, representation, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device)
+
+  A module for an actor-critic policy in DRL. 
+  This type of policy is commonly used in actor-critic DRL algorithms, 
+  where the actor is responsible for selecting actions, and the critic evaluates the value of the current state.
 
   :param action_space: The action space of the environment.
   :type action_space: Space
@@ -84,7 +95,7 @@ PyTorch
   :param normalize: The method of normalization.
   :type normalize: nn.Module
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: torch.Tensor
   :param activation: The choose of activation functions for hidden layers.
   :type activation: nn.Module
   :param device: The calculating device.
@@ -93,15 +104,19 @@ PyTorch
 .. py:function::
   xuance.torch.policies.categorical.ActorCriticPolicy.forward(observation)
 
-  xxxxxx.
+  A feed forward method that takes an observation (input state) and performs a forward pass through the representation, actor, and critic networks. 
+  It returns the outputs of the representation (hidden states), actor (action distributions), and critic (evaluated values).
 
   :param observation: The original observation variables.
-  :type observation: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type observation: torch.Tensor
+  :return: A tuple that includes the outputs of the representation (hidden states), actor (action distributions), and critic (evaluated values).
+  :rtype: tuple
 
 .. py:class::
   xuance.torch.policies.categorical.ActorPolicy(action_space, representation, actor_hidden_size, normalize, initialize, activation, device)
+
+  This type of policy is commonly used in actor-only reinforcement learning algorithms, 
+  where the actor is responsible for selecting actions based on the current state.
 
   :param action_space: The action space of the environment.
   :type action_space: Space
@@ -112,7 +127,7 @@ PyTorch
   :param normalize: The method of normalization.
   :type normalize: nn.Module
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: torch.Tensor
   :param activation: The choose of activation functions for hidden layers.
   :type activation: nn.Module
   :param device: The calculating device.
@@ -121,15 +136,18 @@ PyTorch
 .. py:function::
   xuance.torch.policies.categorical.ActorPolicy.forward(observation)
 
-  xxxxxx.
+  A feed forward method that takes an observation (input state) and performs a forward pass through the representation and actor networks. 
+  It returns the outputs of the representation (hidden states) and actor (categorical action distributions).
 
   :param observation: The original observation variables.
-  :type observation: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type observation: torch.Tensor
+  :return: A tuple that includes the outputs of the representation (hidden states) and actor (categorical action distributions).
+  :rtype: tuple
 
 .. py:class::
   xuance.torch.policies.categorical.PPGActorCritic(action_space, representation, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device)
+
+  An implementation of an actor-critic model for phasic policy gradient methods in reinforcement learning.
 
   :param action_space: The action space of the environment.
   :type action_space: Space
@@ -142,7 +160,7 @@ PyTorch
   :param normalize: The method of normalization.
   :type normalize: nn.Module
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: torch.Tensor
   :param activation: The choose of activation functions for hidden layers.
   :type activation: nn.Module
   :param device: The calculating device.
@@ -151,15 +169,18 @@ PyTorch
 .. py:function::
   xuance.torch.policies.categorical.PPGActorCritic.forward(observation)
 
-  xxxxxx.
+  A feed forward method that takes an observation (input state) and performs a forward pass through the representation networks, actor, critic, and auxiliary critic networks. 
+  It returns the outputs of these components.
 
   :param observation: The original observation variables.
-  :type observation: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type observation: torch.Tensor
+  :return: A tupel that includes the outputs of these representation networks, actor, critic, and auxiliary critic networks.
+  :rtype: tuple
 
 .. py:class::
   xuance.torch.policies.categorical.CriticNet_SACDIS(state_dim, action_dim, hidden_sizes, initialize, activation, device)
+
+  An implementation of a critic network for the Soft Actor-Critic (SAC) with discrete action spaces.
 
   :param state_dim: The dimension of the input state.
   :type state_dim: int
@@ -168,7 +189,7 @@ PyTorch
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: torch.Tensor
   :param activation: The choose of activation functions for hidden layers.
   :type activation: nn.Module
   :param device: The calculating device.
@@ -177,15 +198,19 @@ PyTorch
 .. py:function::
   xuance.torch.policies.categorical.CriticNet_SACDIS.forward(x)
 
-  xxxxxx.
+  A feed forward method that defines the forward pass through the critic network, 
+  taking the input tensor x and passing it through the critc model.
 
   :param x: The input tensor.
   :type x: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The evaluated critic values of input x.
+  :rtype: torch.Tensor
 
 .. py:class::
   xuance.torch.policies.categorical.ActorNet_SACDIS(state_dim, action_dim, hidden_sizes, normalize, initialize, activation, device)
+
+  An implementation of a actor network for the Soft Actor-Critic (SAC) with discrete action spaces. 
+  It takes the state as input and outputs a probability distribution over discrete actions using a softmax activation.
 
   :param state_dim: The dimension of the input state.
   :type state_dim: int
@@ -196,7 +221,7 @@ PyTorch
   :param normalize: The method of normalization.
   :type normalize: nn.Module
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: torch.Tensor
   :param activation: The choose of activation functions for hidden layers.
   :type activation: nn.Module
   :param device: The calculating device.
@@ -205,15 +230,17 @@ PyTorch
 .. py:function::
   xuance.torch.policies.categorical.ActorNet_SACDIS.forward(x)
 
-  xxxxxx.
+  A feed forward method that takes the tensor x as input and passes it through the actor model.
+  It returns a categorical distribution over discrete actions.
 
   :param x: The input tensor.
   :type x: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: A probability distribution over discrete actions using a softmax activation.
 
 .. py:class::
   xuance.torch.policies.categorical.SACDISPolicy(action_space, representation, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device)
+
+  This class defines a policy for the soft actor-critic with discrete action spaces.
 
   :param action_space: The action space of the environment.
   :type action_space: Space
@@ -226,7 +253,7 @@ PyTorch
   :param normalize: The method of normalization.
   :type normalize: nn.Module
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: torch.Tensor
   :param activation: The choose of activation functions for hidden layers.
   :type activation: nn.Module
   :param device: The calculating device.
@@ -235,52 +262,51 @@ PyTorch
 .. py:function::
   xuance.torch.policies.categorical.SACDISPolicy.forward(observation)
 
-  xxxxxx.
+  A feed forward method that computes the forward pass of the policy network given an observation. 
+  It returns the representation of the observation, action probabilities, and the action distribution.
 
   :param observation: The original observation variables.
-  :type observation: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type observation: torch.Tensor
+  :return: A tupel that includes the outputs of the representation, action probabilities, and the action distribution.
+  :rtype: tuple
 
 .. py:function::
   xuance.torch.policies.categorical.SACDISPolicy.Qtarget(observation)
 
-  xxxxxx.
+  Calculate the Q-value with the target Q network.
 
   :param observation: The original observation variables.
-  :type observation: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type observation: torch.Tensor
+  :return: The target Q values.
+  :rtype: torch.Tensor
 
 .. py:function::
   xuance.torch.policies.categorical.SACDISPolicy.Qaction(observation)
 
-  xxxxxx.
+  Calculate the Q value for the original Q network.
 
   :param observation: The original observation variables.
-  :type observation: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type observation: torch.Tensor
+  :return: The evaluate Q values.
+  :rtype: torch.Tensor
 
 .. py:function::
   xuance.torch.policies.categorical.SACDISPolicy.Qpolicy(observation)
 
-  xxxxxx.
+  Calculate the action probabilities, log of action probabilities, and the Q-values of the policy network.
 
   :param observation: The original observation variables.
-  :type observation: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type observation: torch.Tensor
+  :return: A tuple that includes the action probabilities, log of action probabilities, and the Q-values of the policy network.
+  :rtype: tuple
 
 .. py:function::
   xuance.torch.policies.categorical.SACDISPolicy.soft_update(tau)
 
-  xxxxxx.
+  Performs a soft update of the target networks using a specified interpolation parameter (tau).
 
   :param tau: The soft update factor for the update of target networks.
   :type tau: float
-  :return: xxxxxx.
-  :rtype: xxxxxx
 
 .. raw:: html
 
@@ -292,6 +318,9 @@ TensorFlow
 .. py:class::
   xuance.tensorflow.policies.categorical.ActorNet(state_dim, action_dim, hidden_sizes, normalize, initialize, activation, device)
 
+  A neural network module for an actor in DRL, used as an important part of a policy. 
+  This actor network outputs the logits of the categorical actions distributions based on the given state.
+
   :param state_dim: The dimension of the input state.
   :type state_dim: int
   :param action_dim: The dimension of the action input.
@@ -299,140 +328,157 @@ TensorFlow
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: tk.Model
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: tf.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: tk.Model
   :param device: The calculating device.
   :type device: str
 
 .. py:function::
   xuance.tensorflow.policies.categorical.ActorNet.call(x)
 
-  xxxxxx.
+  A feed forward method that is used to calculate the model's output based on the input state x, 
+  and set the parameters of the categorical distribution based on the output of the actor model. 
+  Finally, this method returns the logits of the distribution.
 
   :param x: The input tensor.
-  :type x: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type x: tf.Tensor
+  :return: The logits of the distribution.
+  :rtype: tf.Tensor
 
 .. py:class::
   xuance.tensorflow.policies.categorical.CriticNet(state_dim, hidden_sizes, normalize, initialize, activation, device)
+
+  This is a neural network module, CriticNet, typically used for approximating the value function of a state.
 
   :param state_dim: The dimension of the input state.
   :type state_dim: int
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: tk.Model
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: tf.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: tk.Model
   :param device: The calculating device.
   :type device: str
 
 .. py:function::
   xuance.tensorflow.policies.categorical.CriticNet.call(x)
 
-  xxxxxx.
+  A feed forward method that takes a tensor x as input and passes it through the critic network, returning the output (value estimate).
 
   :param x: The input tensor.
-  :type x: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type x: tf.Tensor
+  :return: The evaluated values of the input x.
+  :rtype: tf.Tensor
 
 .. py:class::
   xuance.tensorflow.policies.categorical.ActorCriticPolicy(action_space, representation, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device)
 
+  A module for an actor-critic policy in DRL. 
+  This type of policy is commonly used in actor-critic DRL algorithms, 
+  where the actor is responsible for selecting actions, and the critic evaluates the value of the current state.
+
   :param action_space: The action space of the environment.
   :type action_space: Space
   :param representation: The representation module.
-  :type representation: nn.Module
+  :type representation: tk.Model
   :param actor_hidden_size: The sizes of the hidden layers in actor network.
   :type actor_hidden_size: list
   :param critic_hidden_size: The sizes of the hidden layers in critic networks.
   :type critic_hidden_size: list
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: tk.Model
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: tf.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: tk.Model
   :param device: The calculating device.
   :type device: str
 
 .. py:function::
   xuance.tensorflow.policies.categorical.ActorCriticPolicy.call(observation)
 
-  xxxxxx.
+  A feed forward method that takes an observation (input state) and performs a forward pass through the representation, actor, and critic networks. 
+  It returns the outputs of the representation (hidden states), actor (logits of the action distributions), and critic (evaluated values).
 
   :param observation: The original observation variables.
-  :type observation: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type observation: tf.Tensor
+  :return: A tuple that includes the outputs of the representation (hidden states), actor (logits of the action distributions), and critic (evaluated values).
+  :rtype: tuple
 
 .. py:class::
   xuance.tensorflow.policies.categorical.ActorPolicy(action_space, representation, actor_hidden_size, normalize, initialize, activation, device)
 
+  This type of policy is commonly used in actor-only reinforcement learning algorithms, where the actor is responsible for selecting actions based on the current state.
+
   :param action_space: The action space of the environment.
   :type action_space: Space
   :param representation: The representation module.
-  :type representation: nn.Module
+  :type representation: tk.Model
   :param actor_hidden_size: The sizes of the hidden layers in actor network.
   :type actor_hidden_size: list
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: tk.Model
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: tf.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: tk.Model
   :param device: The calculating device.
   :type device: str
 
 .. py:function::
   xuance.tensorflow.policies.categorical.ActorPolicy.call(observation)
 
-  xxxxxx.
+  A feed forward method that takes an observation (input state) and performs a forward pass through the representation and actor networks. 
+  It returns the outputs of the representation (hidden states) and actor (logits of the categorical action distributions).
 
   :param observation: The original observation variables.
-  :type observation: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type observation: tf.Tensor
+  :return: A tuple that includes the outputs of the representation (hidden states) and actor (logits of the categorical action distributions).
+  :rtype: tuple
 
 .. py:class::
   xuance.tensorflow.policies.categorical.PPGActorCritic(action_space, representation, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device)
 
+  An implementation of an actor-critic model for phasic policy gradient methods in reinforcement learning.
+
   :param action_space: The action space of the environment.
   :type action_space: Space
   :param representation: The representation module.
-  :type representation: nn.Module
+  :type representation: tk.Model
   :param actor_hidden_size: The sizes of the hidden layers in actor network.
   :type actor_hidden_size: list
   :param critic_hidden_size: The sizes of the hidden layers in critic networks.
   :type critic_hidden_size: list
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: tk.Model
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: tf.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: tk.Model
   :param device: The calculating device.
   :type device: str
 
 .. py:function::
   xuance.tensorflow.policies.categorical.PPGActorCritic.call(observation)
 
-  xxxxxx.
+  A feed forward method that takes an observation (input state) and performs a forward pass through the representation networks, actor, critic, and auxiliary critic networks. 
+  It returns the outputs of these components.
 
   :param observation: The original observation variables.
-  :type observation: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type observation: tf.Tensor
+  :return: A tupel that includes the outputs of these representation networks, actor, critic, and auxiliary critic networks.
+  :rtype: tupel
 
 .. py:class::
   xuance.tensorflow.policies.categorical.CriticNet_SACDIS(state_dim, action_dim, hidden_sizes, initialize, activation, device)
+
+  An implementation of a critic network for the Soft Actor-Critic (SAC) with discrete action spaces.
 
   :param state_dim: The dimension of the input state.
   :type state_dim: int
@@ -441,24 +487,28 @@ TensorFlow
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: tf.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: tk.Model
   :param device: The calculating device.
   :type device: str
 
 .. py:function::
   xuance.tensorflow.policies.categorical.CriticNet_SACDIS.call(x)
 
-  xxxxxx.
+  A feed forward method that defines the forward pass through the critic network, 
+  taking the input tensor x and passing it through the critc model.
 
   :param x: The input tensor.
-  :type x: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type x: tf.Tensor
+  :return: The evaluated critic values of input x.
+  :rtype: tf.Tensor
 
 .. py:class::
   xuance.tensorflow.policies.categorical.ActorNet_SACDIS(state_dim, action_dim, hidden_sizes, normalize, initialize, activation, device)
+
+  An implementation of a actor network for the Soft Actor-Critic (SAC) with discrete action spaces. 
+  It takes the state as input and outputs a probability distribution over discrete actions using a softmax activation.
 
   :param state_dim: The dimension of the input state.
   :type state_dim: int
@@ -467,93 +517,95 @@ TensorFlow
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: tk.Model
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: tf.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: tk.Model
   :param device: The calculating device.
   :type device: str
 
 .. py:function::
   xuance.tensorflow.policies.categorical.ActorNet_SACDIS.call(x)
 
-  xxxxxx.
+  A feed forward method that takes the tensor x as input and passes it through the actor model. 
+  It returns a categorical distribution over discrete actions.
 
   :param x: The input tensor.
-  :type x: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type x: tf.Tensor
+  :return: A tuple that includes the action probabilities and the categorical distribution over discrete actions using a softmax activation.
+  :rtype: tuple
 
 .. py:class::
   xuance.tensorflow.policies.categorical.SACDISPolicy(action_space, representation, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device)
 
+  This class defines a policy for the soft actor-critic with discrete action spaces.
+
   :param action_space: The action space of the environment.
   :type action_space: Space
   :param representation: The representation module.
-  :type representation: nn.Module
+  :type representation: tk.Model
   :param actor_hidden_size: The sizes of the hidden layers in actor network.
   :type actor_hidden_size: list
   :param critic_hidden_size: The sizes of the hidden layers in critic networks.
   :type critic_hidden_size: list
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: tk.Model
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: tf.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: tk.Model
   :param device: The calculating device.
   :type device: str
 
 .. py:function::
   xuance.tensorflow.policies.categorical.SACDISPolicy.call(observation)
 
-  xxxxxx.
+  A feed forward method that computes the forward pass of the policy network given an observation. 
+  It returns the representation of the observation, action probabilities, and the action distribution.
 
   :param observation: The original observation variables.
-  :type observation: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type observation: tf.Tensor
+  :return: A tupel that includes the outputs of the representation, action probabilities, and the action distribution.
+  :rtype: tuple
 
 .. py:function::
   xuance.tensorflow.policies.categorical.SACDISPolicy.Qtarget(observation)
 
-  xxxxxx.
+  Calculate the Q-value with the target Q network.
 
   :param observation: The original observation variables.
-  :type observation: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type observation: tf.Tensor
+  :return: The target Q values.
+  :rtype: tf.Tensor
 
 .. py:function::
   xuance.tensorflow.policies.categorical.SACDISPolicy.Qaction(observation)
 
-  xxxxxx.
+  Calculate the Q value for the original Q network.
 
   :param observation: The original observation variables.
-  :type observation: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type observation: tf.Tensor
+  :return: The evaluate Q values.
+  :rtype: tf.Tensor
 
 .. py:function::
   xuance.tensorflow.policies.categorical.SACDISPolicy.Qpolicy(observation)
 
-  xxxxxx.
+  Calculate the action probabilities, log of action probabilities, and the Q-values of the policy network.
 
   :param observation: The original observation variables.
-  :type observation: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type observation: tf.Tensor
+  :return: A tuple that includes the action probabilities, log of action probabilities, and the Q-values of the policy network.
+  :rtype: tuple
 
 .. py:function::
   xuance.tensorflow.policies.categorical.SACDISPolicy.soft_update(tau)
 
-  xxxxxx.
+  Performs a soft update of the target networks using a specified interpolation parameter (tau).
 
   :param tau: The soft update factor for the update of target networks.
   :type tau: float
-  :return: xxxxxx.
-  :rtype: xxxxxx
 
 .. raw:: html
 
@@ -565,6 +617,9 @@ MindSpore
 .. py:class::
   xuance.mindspore.policies.categorical.ActorNet(state_dim, action_dim, hidden_sizes, normalize, initialize, activation)
 
+  A neural network module for an actor in DRL, used as an important part of a policy. 
+  This actor network outputs the logits for categorical actions distributions based on the given state.
+
   :param state_dim: The dimension of the input state.
   :type state_dim: int
   :param action_dim: The dimension of the action input.
@@ -572,130 +627,148 @@ MindSpore
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: nn.Cell
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: ms.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: nn.Cell
 
 .. py:function::
   xuance.mindspore.policies.categorical.ActorNet.construct(x)
 
-  xxxxxx.
+  A feed forward method that is used to calculate the model's output based on the input state x, 
+  and set the parameters of the categorical distribution based on the output of the actor model. 
+  Finally, this method returns the logits of categorical distribution.
 
   :param x: The input tensor.
-  :type x: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type x: ms.Tensor
+  :return: The logits of categorical distribution.
+  :rtype: ms.Tensor
 
 .. py:class::
   xuance.mindspore.policies.categorical.CriticNet(state_dim, hidden_sizes, normalize, initialize, activation)
+
+  This is a neural network module, CriticNet, typically used for approximating the value function of a state.
 
   :param state_dim: The dimension of the input state.
   :type state_dim: int
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: nn.Cell
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: ms.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: nn.Cell
 
 .. py:function::
   xuance.mindspore.policies.categorical.CriticNet.construct(x)
 
-  xxxxxx.
+  A feed forward method that takes a tensor x as input and passes it through the critic network, returning the output (value estimate).
 
   :param x: The input tensor.
-  :type x: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type x: ms.Tensor
+  :return: The evaluated values of the input x.
+  :rtype: ms.Tensor
 
 .. py:class::
   xuance.mindspore.policies.categorical.ActorCriticPolicy(action_space, representation, actor_hidden_size, critic_hidden_size, normalize, initialize, activation)
 
+  A module for an actor-critic policy in DRL. 
+  This type of policy is commonly used in actor-critic DRL algorithms, 
+  where the actor is responsible for selecting actions, and the critic evaluates the value of the current state.
+
   :param action_space: The action space of the environment.
   :type action_space: Space
   :param representation: The representation module.
-  :type representation: nn.Module
+  :type representation: nn.Cell
   :param actor_hidden_size: The sizes of the hidden layers in actor network.
   :type actor_hidden_size: list
   :param critic_hidden_size: The sizes of the hidden layers in critic networks.
   :type critic_hidden_size: list
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: nn.Cell
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: ms.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: nn.Cell
 
 .. py:function::
   xuance.mindspore.policies.categorical.ActorCriticPolicy.construct(observation)
 
-  xxxxxx.
+  A feed forward method that takes an observation (input state) and performs a forward pass through the representation, actor, and critic networks. 
+  It returns the outputs of the representation (hidden states), actor (logits of the action distributions), and critic (evaluated values).
 
   :param observation: The original observation variables.
-  :type observation: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type observation: ms.Tensor
+  :return: A tuple that includes the outputs of the representation (hidden states), actor (logits of the action distributions), and critic (evaluated values).
+  :rtype: tuple
 
 .. py:class::
   xuance.mindspore.policies.categorical.ActorPolicy(action_space, representation, actor_hidden_size, normalize, initialize, activation)
 
+  This type of policy is commonly used in actor-only reinforcement learning algorithms, 
+  where the actor is responsible for selecting actions based on the current state.
+
   :param action_space: The action space of the environment.
   :type action_space: Space
   :param representation: The representation module.
-  :type representation: nn.Module
+  :type representation: nn.Cell
   :param actor_hidden_size: The sizes of the hidden layers in actor network.
   :type actor_hidden_size: list
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: nn.Cell
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: ms.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: nn.Cell
 
 .. py:function::
   xuance.mindspore.policies.categorical.ActorPolicy.construct(observation)
 
-  xxxxxx.
+  A feed forward method that takes an observation (input state) and performs a forward pass through the representation and actor networks. 
+  It returns the outputs of the representation (hidden states) and actor (logits of the categorical action distributions).
 
   :param observation: The original observation variables.
-  :type observation: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type observation: ms.Tensor
+  :return: A tuple that includes the outputs of the representation (hidden states) and actor (logits of the categorical action distributions).
+  :rtype: tuple
 
 .. py:class::
   xuance.mindspore.policies.categorical.PPGActorCritic(action_space, representation, actor_hidden_size, critic_hidden_size, normalize, initialize, activation)
 
+  An implementation of an actor-critic model for phasic policy gradient methods in reinforcement learning.
+
   :param action_space: The action space of the environment.
   :type action_space: Space
   :param representation: The representation module.
-  :type representation: nn.Module
+  :type representation: nn.Cell
   :param actor_hidden_size: The sizes of the hidden layers in actor network.
   :type actor_hidden_size: list
   :param critic_hidden_size: The sizes of the hidden layers in critic networks.
   :type critic_hidden_size: list
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: nn.Cell
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: ms.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: nn.Cell
 
 .. py:function::
   xuance.mindspore.policies.categorical.PPGActorCritic.construct(observation)
 
-  xxxxxx.
+  A feed forward method that takes an observation (input state) and performs a forward pass through the representation networks, actor, critic, and auxiliary critic networks. 
+  It returns the outputs of these components.
 
   :param observation: The original observation variables.
-  :type observation: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type observation: ms.Tensor
+  :return: A tupel that includes the outputs of these representation networks, actor, critic, and auxiliary critic networks.
+  :rtype: tupel
 
 .. py:class::
   xuance.mindspore.policies.categorical.CriticNet_SACDIS(state_dim, action_dim, hidden_sizes, initialize, activation)
+
+  An implementation of a critic network for the Soft Actor-Critic (SAC) with discrete action spaces.
 
   :param state_dim: The dimension of the input state.
   :type state_dim: int
@@ -704,92 +777,96 @@ MindSpore
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: ms.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: nn.Cell
 
 .. py:function::
   xuance.mindspore.policies.categorical.CriticNet_SACDIS.construct(x)
 
-  xxxxxx.
+  A feed forward method that defines the forward pass through the critic network, taking the input tensor x and passing it through the critc model.
 
   :param x: The input tensor.
-  :type x: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type x: ms.Tensor
+  :return: The evaluated critic values of input x.
+  :rtype: ms.Tensor
 
 .. py:class::
   xuance.mindspore.policies.categorical.SACDISPolicy(action_space, representation, actor_hidden_size, critic_hidden_size, normalize, initialize, activation)
 
+  A feed forward method that computes the forward pass of the policy network given an observation. 
+  It returns the representation of the observation, action probabilities, and the action distribution.
+
   :param action_space: The action space of the environment.
   :type action_space: Space
   :param representation: The representation module.
-  :type representation: nn.Module
+  :type representation: nn.Cell
   :param actor_hidden_size: The sizes of the hidden layers in actor network.
   :type actor_hidden_size: list
   :param critic_hidden_size: The sizes of the hidden layers in critic networks.
   :type critic_hidden_size: list
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: nn.Cell
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: ms.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: nn.Cell
 
 .. py:function::
   xuance.mindspore.policies.categorical.SACDISPolicy.construct(observation)
 
-  xxxxxx.
+  A feed forward method that computes the forward pass of the policy network given an observation. 
+  It returns the representation of the observation, action probabilities, and the action distribution.
 
   :param observation: The original observation variables.
-  :type observation: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type observation: ms.Tensor
+  :return: A tupel that includes the outputs of the representation, action probabilities, and the action distribution.
+  :rtype: tupel
 
 .. py:function::
   xuance.mindspore.policies.categorical.SACDISPolicy.action(observation)
 
-  xxxxxx.
+  Get actions according to the observations.
 
   :param observation: The original observation variables.
-  :type observation: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type observation: ms.Tensor
+  :return: A tuple that includes the ouputs of the representation (hidden states) and the actor network (action probabilities).
+  :rtype: tuple
 
 .. py:function::
   xuance.mindspore.policies.categorical.SACDISPolicy.Qtarget(observation)
 
-  xxxxxx.
+  Calculate the Q-value with the target Q network.
 
   :param observation: The original observation variables.
-  :type observation: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type observation: ms.Tensor
+  :return: The target Q values.
+  :rtype: ms.Tensor
 
 .. py:function::
   xuance.mindspore.policies.categorical.SACDISPolicy.Qaction(observation)
 
-  xxxxxx.
+  Calculate the Q value for the original Q network.
 
   :param observation: The original observation variables.
-  :type observation: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type observation: ms.Tensor
+  :return: The evaluate Q values.
+  :rtype: ms.Tensor
 
 .. py:function::
   xuance.mindspore.policies.categorical.SACDISPolicy.Qpolicy(observation)
 
-  xxxxxx.
+  Calculate the action probabilities, log of action probabilities, and the Q-values of the policy network.
 
   :param observation: The original observation variables.
-  :type observation: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type observation: ms.Tensor
+  :return: A tuple that includes the action probabilities, log of action probabilities, and the Q-values of the policy network.
+  :rtype: tuple
 
 .. py:function::
   xuance.mindspore.policies.categorical.SACDISPolicy.soft_update(tau)
 
-  xxxxxx.
+  Performs a soft update of the target networks using a specified interpolation parameter (tau).
 
   :param tau: The soft update factor for the update of target networks.
   :type tau: float

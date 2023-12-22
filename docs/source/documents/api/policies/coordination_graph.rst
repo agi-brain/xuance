@@ -1,7 +1,8 @@
 Coordination-Graph
 ==============================================
 
-xxxxxx.
+A key part for deep coordination graph-based algorithms, 
+where utility functions and payoffs are computed based on the interactions between different agents.
 
 .. raw:: html
 
@@ -13,66 +14,70 @@ PyTorch
 .. py:class::
   xuance.torch.policies.coordination_graph.DCG_utility(dim_input, dim_hidden, dim_output)
 
-  :param dim_input: xxxxxx.
-  :type dim_input: xxxxxx
-  :param dim_hidden: xxxxxx.
-  :type dim_hidden: xxxxxx
-  :param dim_output: xxxxxx.
-  :type dim_output: xxxxxx
+  Defines a sequential neural network (output) with linear layers and ReLU activation.
+  It represents the utility function.
+
+  :param dim_input: The dimension of the input.
+  :type dim_input: int
+  :param dim_hidden: The dimension of the hidden layers.
+  :type dim_hidden: int
+  :param dim_output: The dimension of the output.
+  :type dim_output: int
 
 .. py:function::
   xuance.torch.policies.coordination_graph.DCG_utility.forward(hidden_states_n)
 
-  xxxxxx.
-
-  :param hidden_states_n: xxxxxx.
-  :type hidden_states_n: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :param hidden_states_n: The dimension of the hidden states of n agents.
+  :type hidden_states_n: int
+  :return: The utility values for agents.
+  :rtype: Tensor
 
 .. py:class::
   xuance.torch.policies.coordination_graph.DCG_payoff(dim_input, dim_hidden, dim_act, args)
 
-  :param dim_input: xxxxxx.
-  :type dim_input: xxxxxx
-  :param dim_hidden: xxxxxx.
-  :type dim_hidden: xxxxxx
-  :param dim_act: xxxxxx.
-  :type dim_act: xxxxxx
+  This class defines the payoff function between agents, which is inherits from DCG_utility.
+
+  :param dim_input: The dimension of the input.
+  :type dim_input: int
+  :param dim_hidden: The dimension of the hidden layers.
+  :type dim_hidden: int
+  :param dim_act: The dimension of the actions.
+  :type dim_act: int
   :param args: the arguments.
   :type args: Namespace
 
 .. py:function::
   xuance.torch.policies.coordination_graph.DCG_payoff.forward(hidden_states_n, edges_from, edges_to)
 
-  xxxxxx.
+  Computes payoffs based on the provided hidden states and edge information.
+  Supports both low-rank and full-rank payoff computation.
 
-  :param hidden_states_n: xxxxxx.
-  :type hidden_states_n: xxxxxx
-  :param edges_from: xxxxxx.
-  :type edges_from: xxxxxx
-  :param edges_to: xxxxxx.
-  :type edges_to: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :param hidden_states_n: The dimension of the hidden states of n agents.
+  :type hidden_states_n: int
+  :param edges_from: The edges from others to self agent.
+  :type edges_from: Tensor
+  :param edges_to: The edges from  self agent to others.
+  :type edges_to: Tensor
+  :return: The provided hidden states and edge information.
+  :rtype: Tensor
 
 .. py:class::
   xuance.torch.policies.coordination_graph.Coordination_Graph(n_vertexes, graph_type)
 
-  :param n_vertexes: xxxxxx.
-  :type n_vertexes: xxxxxx
-  :param graph_type: xxxxxx.
-  :type graph_type: xxxxxx
+  Represents a coordination graph with a specified number of vertices and type.
+
+  :param n_vertexes: The number of vertexes between agents.
+  :type n_vertexes: int
+  :param graph_type: The type of the topology graph for n agents.
+  :type graph_type: str
 
 .. py:function::
   xuance.torch.policies.coordination_graph.Coordination_Graph.set_coordination_graph(device)
 
-  xxxxxx.
+  Sets up the coordination graph, including the assignment of edges and related tensors.
 
   :param device: The calculating device.
   :type device: str
-  :return: xxxxxx.
-  :rtype: xxxxxx
 
 .. raw:: html
 
@@ -84,64 +89,67 @@ TensorFlow
 .. py:class::
   xuance.tensorflow.policies.coordination_graph.DCG_utility(dim_input, dim_hidden, dim_output)
 
-  :param dim_input: xxxxxx.
-  :type dim_input: xxxxxx
-  :param dim_hidden: xxxxxx.
-  :type dim_hidden: xxxxxx
-  :param dim_output: xxxxxx.
-  :type dim_output: xxxxxx
+  Defines a sequential neural network (output) with linear layers and ReLU activation. 
+  It represents the utility function.
+
+  :param dim_input: The dimension of the input.
+  :type dim_input: int
+  :param dim_hidden: The dimension of the hidden layers.
+  :type dim_hidden: int
+  :param dim_output: The dimension of the output.
+  :type dim_output: int
 
 .. py:function::
   xuance.tensorflow.policies.coordination_graph.DCG_utility.call(hidden_states_n)
 
-  xxxxxx.
-
-  :param hidden_states_n: xxxxxx.
-  :type hidden_states_n: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :param hidden_states_n: The dimension of the hidden states of n agents.
+  :type hidden_states_n: int
+  :return: The utility values for agents.
+  :rtype: Tensor
 
 .. py:class::
   xuance.tensorflow.policies.coordination_graph.DCG_payoff(dim_input, dim_hidden, dim_act, args)
 
-  :param dim_input: xxxxxx.
-  :type dim_input: xxxxxx
-  :param dim_hidden: xxxxxx.
-  :type dim_hidden: xxxxxx
-  :param dim_act: xxxxxx.
-  :type dim_act: xxxxxx
+  This class defines the payoff function between agents, which is inherits from DCG_utility.
+
+  :param dim_input: The dimension of the input.
+  :type dim_input: int
+  :param dim_hidden: The dimension of the hidden layers.
+  :type dim_hidden: int
+  :param dim_act: The dimension of the actions.
+  :type dim_act: int
   :param args: the arguments.
   :type args: Namespace
 
 .. py:function::
   xuance.tensorflow.policies.coordination_graph.DCG_payoff.call(hidden_states_n, edges_from, edges_to)
 
-  xxxxxx.
+  Computes payoffs based on the provided hidden states and edge information. 
+  Supports both low-rank and full-rank payoff computation.
 
-  :param hidden_states_n: xxxxxx.
-  :type hidden_states_n: xxxxxx
-  :param edges_from: xxxxxx.
-  :type edges_from: xxxxxx
-  :param edges_to: xxxxxx.
-  :type edges_to: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :param hidden_states_n: The dimension of the hidden states of n agents.
+  :type hidden_states_n: int
+  :param edges_from: The edges from others to self agent.
+  :type edges_from: Tensor
+  :param edges_to: The edges from  self agent to others.
+  :type edges_to: Tensor
+  :return: The provided hidden states and edge information.
+  :rtype: Tensor
 
 .. py:class::
   xuance.tensorflow.policies.coordination_graph.Coordination_Graph(n_vertexes, graph_type)
 
-  :param n_vertexes: xxxxxx.
-  :type n_vertexes: xxxxxx
-  :param graph_type: xxxxxx.
-  :type graph_type: xxxxxx
+  Represents a coordination graph with a specified number of vertices and type.
+
+  :param n_vertexes: The number of vertexes between agents.
+  :type n_vertexes: int
+  :param graph_type: The type of the topology graph for n agents.
+  :type graph_type: str
 
 .. py:function::
   xuance.tensorflow.policies.coordination_graph.Coordination_Graph.set_coordination_graph()
 
-  xxxxxx.
-
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  Sets up the coordination graph, including the assignment of edges and related tensors.
 
 .. raw:: html
 

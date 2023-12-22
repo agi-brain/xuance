@@ -30,8 +30,8 @@ PyTorch
 
   :param dim_state: xxxxxx.
   :type dim_state: xxxxxx
-  :param dim_hidden: xxxxxx.
-  :type dim_hidden: xxxxxx
+  :param dim_hidden: The dimension of the hidden layers.
+  :type dim_hidden: int
   :param dim_hypernet_hidden: xxxxxx.
   :type dim_hypernet_hidden: xxxxxx
   :param n_agents: The number of agents.
@@ -56,8 +56,8 @@ PyTorch
 
   :param dim_state: xxxxxx.
   :type dim_state: xxxxxx
-  :param dim_hidden: xxxxxx.
-  :type dim_hidden: xxxxxx
+  :param dim_hidden: The dimension of the hidden layers.
+  :type dim_hidden: int
   :param n_agents: The number of agents.
   :type n_agents: int
   :param device: The calculating device.
@@ -82,8 +82,8 @@ PyTorch
   :type dim_state: xxxxxx
   :param dim_action: xxxxxx.
   :type dim_action: xxxxxx
-  :param dim_hidden: xxxxxx.
-  :type dim_hidden: xxxxxx
+  :param dim_hidden: The dimension of the hidden layers.
+  :type dim_hidden: int
   :param n_agents: The number of agents.
   :type n_agents: int
   :param dim_utility_hidden: xxxxxx.
@@ -94,8 +94,8 @@ PyTorch
 
   xxxxxx.
 
-  :param hidden_states_n: xxxxxx.
-  :type hidden_states_n: xxxxxx
+  :param hidden_states_n: The dimension of the hidden states of n agents.
+  :type hidden_states_n: int
   :param actions_n: xxxxxx.
   :type actions_n: xxxxxx
   :return: xxxxxx.
@@ -108,8 +108,8 @@ PyTorch
   :type dim_state: xxxxxx
   :param dim_action: xxxxxx.
   :type dim_action: xxxxxx
-  :param dim_hidden: xxxxxx.
-  :type dim_hidden: xxxxxx
+  :param dim_hidden: The dimension of the hidden layers.
+  :type dim_hidden: int
   :param n_agents: The number of agents.
   :type n_agents: int
   :param dim_utility_hidden: xxxxxx.
@@ -132,8 +132,8 @@ PyTorch
 
   xxxxxx.
 
-  :param hidden_states_n: xxxxxx.
-  :type hidden_states_n: xxxxxx
+  :param hidden_states_n: The dimension of the hidden states of n agents.
+  :type hidden_states_n: int
   :param actions_n: xxxxxx.
   :type actions_n: xxxxxx
   :return: xxxxxx.
@@ -164,8 +164,8 @@ TensorFlow
 
   :param dim_state: xxxxxx.
   :type dim_state: xxxxxx
-  :param dim_hidden: xxxxxx.
-  :type dim_hidden: xxxxxx
+  :param dim_hidden: The dimension of the hidden layers.
+  :type dim_hidden: int
   :param dim_hypernet_hidden: xxxxxx.
   :type dim_hypernet_hidden: xxxxxx
   :param n_agents: The number of agents.
@@ -190,8 +190,8 @@ TensorFlow
 
   :param dim_state: xxxxxx.
   :type dim_state: xxxxxx
-  :param dim_hidden: xxxxxx.
-  :type dim_hidden: xxxxxx
+  :param dim_hidden: The dimension of the hidden layers.
+  :type dim_hidden: int
   :param n_agents: The number of agents.
   :type n_agents: int
   :param device: The calculating device.
@@ -216,8 +216,8 @@ TensorFlow
   :type dim_state: xxxxxx
   :param dim_action: xxxxxx.
   :type dim_action: xxxxxx
-  :param dim_hidden: xxxxxx.
-  :type dim_hidden: xxxxxx
+  :param dim_hidden: The dimension of the hidden layers.
+  :type dim_hidden: int
   :param n_agents: The number of agents.
   :type n_agents: int
   :param dim_utility_hidden: xxxxxx.
@@ -228,8 +228,8 @@ TensorFlow
 
   xxxxxx.
 
-  :param hidden_states_n: xxxxxx.
-  :type hidden_states_n: xxxxxx
+  :param hidden_states_n: The dimension of the hidden states of n agents.
+  :type hidden_states_n: int
   :param actions_n: xxxxxx.
   :type actions_n: xxxxxx
   :return: xxxxxx.
@@ -242,8 +242,8 @@ TensorFlow
   :type dim_state: xxxxxx
   :param dim_action: xxxxxx.
   :type dim_action: xxxxxx
-  :param dim_hidden: xxxxxx.
-  :type dim_hidden: xxxxxx
+  :param dim_hidden: The dimension of the hidden layers.
+  :type dim_hidden: int
   :param n_agents: The number of agents.
   :type n_agents: int
   :param dim_utility_hidden: xxxxxx.
@@ -266,8 +266,8 @@ TensorFlow
 
   xxxxxx.
 
-  :param hidden_states_n: xxxxxx.
-  :type hidden_states_n: xxxxxx
+  :param hidden_states_n: The dimension of the hidden states of n agents.
+  :type hidden_states_n: int
   :param actions_n: xxxxxx.
   :type actions_n: xxxxxx
   :return: xxxxxx.
@@ -276,20 +276,20 @@ TensorFlow
 .. py:class::
   xuance.tensorflow.policies.mixers.DCG_utility(dim_input, dim_hidden, dim_output)
 
-  :param dim_input: xxxxxx.
-  :type dim_input: xxxxxx
-  :param dim_hidden: xxxxxx.
-  :type dim_hidden: xxxxxx
-  :param dim_output: xxxxxx.
-  :type dim_output: xxxxxx
+  :param dim_input: The dimension of the input.
+  :type dim_input: int
+  :param dim_hidden: The dimension of the hidden layers.
+  :type dim_hidden: int
+  :param dim_output: The dimension of the output.
+  :type dim_output: int
 
 .. py:function::
   xuance.tensorflow.policies.mixers.DCG_utility.call(hidden_states_n, **kwargs)
 
   xxxxxx.
 
-  :param hidden_states_n: xxxxxx.
-  :type hidden_states_n: xxxxxx
+  :param hidden_states_n: The dimension of the hidden states of n agents.
+  :type hidden_states_n: int
   :param kwargs: xxxxxx.
   :type kwargs: xxxxxx
   :return: xxxxxx.
@@ -298,12 +298,12 @@ TensorFlow
 .. py:class::
   xuance.tensorflow.policies.mixers.DCG_payoff(dim_input, dim_hidden, dim_act, args)
 
-  :param dim_input: xxxxxx.
-  :type dim_input: xxxxxx
-  :param dim_hidden: xxxxxx.
-  :type dim_hidden: xxxxxx
-  :param dim_act: xxxxxx.
-  :type dim_act: xxxxxx
+  :param dim_input: The dimension of the input.
+  :type dim_input: int
+  :param dim_hidden: The dimension of the hidden layers.
+  :type dim_hidden: int
+  :param dim_act: The dimension of the actions.
+  :type dim_act: int
   :param args: the arguments.
   :type args: Namespace
 
@@ -334,10 +334,10 @@ TensorFlow
 .. py:class::
   xuance.tensorflow.policies.mixers.Coordination_Graph(n_vertexes, graph_type)
 
-  :param n_vertexes: xxxxxx.
-  :type n_vertexes: xxxxxx
-  :param graph_type: xxxxxx.
-  :type graph_type: xxxxxx
+  :param n_vertexes: The number of vertexes between agents.
+  :type n_vertexes: int
+  :param graph_type: The type of the topology graph for n agents.
+  :type graph_type: str
 
 .. py:function::
   xuance.tensorflow.policies.mixers.Coordination_Graph.set_coordination_graph(device)
@@ -376,8 +376,8 @@ MindSpore
 
   :param dim_state: xxxxxx.
   :type dim_state: xxxxxx
-  :param dim_hidden: xxxxxx.
-  :type dim_hidden: xxxxxx
+  :param dim_hidden: The dimension of the hidden layers.
+  :type dim_hidden: int
   :param dim_hypernet_hidden: xxxxxx.
   :type dim_hypernet_hidden: xxxxxx
   :param n_agents: The number of agents.
@@ -400,8 +400,8 @@ MindSpore
 
   :param dim_state: xxxxxx.
   :type dim_state: xxxxxx
-  :param dim_hidden: xxxxxx.
-  :type dim_hidden: xxxxxx
+  :param dim_hidden: The dimension of the hidden layers.
+  :type dim_hidden: int
   :param n_agents: The number of agents.
   :type n_agents: int
 
@@ -424,8 +424,8 @@ MindSpore
   :type dim_state: xxxxxx
   :param dim_action: xxxxxx.
   :type dim_action: xxxxxx
-  :param dim_hidden: xxxxxx.
-  :type dim_hidden: xxxxxx
+  :param dim_hidden: The dimension of the hidden layers.
+  :type dim_hidden: int
   :param n_agents: The number of agents.
   :type n_agents: int
   :param dim_utility_hidden: xxxxxx.
@@ -436,8 +436,8 @@ MindSpore
 
   xxxxxx.
 
-  :param hidden_states_n: xxxxxx.
-  :type hidden_states_n: xxxxxx
+  :param hidden_states_n: The dimension of the hidden states of n agents.
+  :type hidden_states_n: int
   :param actions_n: xxxxxx.
   :type actions_n: xxxxxx
   :return: xxxxxx.
@@ -450,8 +450,8 @@ MindSpore
   :type dim_state: xxxxxx
   :param dim_action: xxxxxx.
   :type dim_action: xxxxxx
-  :param dim_hidden: xxxxxx.
-  :type dim_hidden: xxxxxx
+  :param dim_hidden: The dimension of the hidden layers.
+  :type dim_hidden: int
   :param n_agents: The number of agents.
   :type n_agents: int
   :param dim_utility_hidden: xxxxxx.
@@ -474,8 +474,8 @@ MindSpore
 
   xxxxxx.
 
-  :param hidden_states_n: xxxxxx.
-  :type hidden_states_n: xxxxxx
+  :param hidden_states_n: The dimension of the hidden states of n agents.
+  :type hidden_states_n: int
   :param actions_n: xxxxxx.
   :type actions_n: xxxxxx
   :return: xxxxxx.
@@ -484,32 +484,32 @@ MindSpore
 .. py:class::
   xuance.mindspore.policies.mixers.DCG_utility(dim_input, dim_hidden, dim_output)
 
-  :param dim_input: xxxxxx.
-  :type dim_input: xxxxxx
-  :param dim_hidden: xxxxxx.
-  :type dim_hidden: xxxxxx
-  :param dim_output: xxxxxx.
-  :type dim_output: xxxxxx
+  :param dim_input: The dimension of the input.
+  :type dim_input: int
+  :param dim_hidden: The dimension of the hidden layers.
+  :type dim_hidden: int
+  :param dim_output: The dimension of the output.
+  :type dim_output: int
 
 .. py:function::
   xuance.mindspore.policies.mixers.DCG_utility.construct(hidden_states_n)
 
   xxxxxx.
 
-  :param hidden_states_n: xxxxxx.
-  :type hidden_states_n: xxxxxx
+  :param hidden_states_n: The dimension of the hidden states of n agents.
+  :type hidden_states_n: int
   :return: xxxxxx.
   :rtype: xxxxxx
 
 .. py:class::
   xuance.mindspore.policies.mixers.DCG_payoff(dim_input, dim_hidden, dim_act, args)
 
-  :param dim_input: xxxxxx.
-  :type dim_input: xxxxxx
-  :param dim_hidden: xxxxxx.
-  :type dim_hidden: xxxxxx
-  :param dim_act: xxxxxx.
-  :type dim_act: xxxxxx
+  :param dim_input: The dimension of the input.
+  :type dim_input: int
+  :param dim_hidden: The dimension of the hidden layers.
+  :type dim_hidden: int
+  :param dim_act: The dimension of the actions.
+  :type dim_act: int
   :param args: the arguments.
   :type args: Namespace
 
@@ -518,22 +518,22 @@ MindSpore
 
   xxxxxx.
 
-  :param hidden_states_n: xxxxxx.
-  :type hidden_states_n: xxxxxx
-  :param edges_from: xxxxxx.
-  :type edges_from: xxxxxx
-  :param edges_to: xxxxxx.
-  :type edges_to: xxxxxx
+  :param hidden_states_n: The dimension of the hidden states of n agents.
+  :type hidden_states_n: int
+  :param edges_from: The edges from others to self agent.
+  :type edges_from: Tensor
+  :param edges_to: The edges from  self agent to others.
+  :type edges_to: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
 .. py:class::
   xuance.mindspore.policies.mixers.Coordination_Graph(n_vertexes, graph_type)
 
-  :param n_vertexes: xxxxxx.
-  :type n_vertexes: xxxxxx
-  :param graph_type: xxxxxx.
-  :type graph_type: xxxxxx
+  :param n_vertexes: The number of vertexes between agents.
+  :type n_vertexes: int
+  :param graph_type: The type of the topology graph for n agents.
+  :type graph_type: str
 
 .. py:function::
   xuance.mindspore.policies.mixers.Coordination_Graph.set_coordination_graph()
