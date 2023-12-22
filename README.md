@@ -320,11 +320,9 @@ and `pip install xuance[all]` for all dependencies.
 
 Note: Some extra packages should be installed manually for further usage.
 
-## Basic Usage
+## Quickly Start
 
-### Quickly Start
-
-#### Train a Model
+### Train a Model
 
 ```python
 import xuance
@@ -336,7 +334,7 @@ runner = xuance.get_runner(method='dqn',
 runner.run()
 ```
 
-#### Test the Model
+### Test the Model
 
 ```python
 import xuance
@@ -348,7 +346,9 @@ runner_test = xuance.get_runner(method='dqn',
 runner_test.run()
 ```
 
-## Logger
+### Visualize the results
+
+#### Tensorboard
 
 You can use tensorboard to visualize what happened in the training process. After training, the log file will be
 automatically generated in the directory ".results/" and you should be able to see some training data after running the
@@ -360,6 +360,8 @@ $ tensorboard --logdir ./logs/dqn/torch/CartPole-v0
 <div align="center">
 <img src="docs/source/figures/log/tensorboard.png" width="700" height="auto" align=center />
 </div>
+
+#### Weights & Biases (wandb)
 
 XuanCe also supports Weights & Biases (wandb) tools for users to visualize the results of the running implementation.
 
