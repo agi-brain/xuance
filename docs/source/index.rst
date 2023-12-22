@@ -80,8 +80,8 @@ Currently, XuanCe has been open-sourced on GitHub:
    :maxdepth: 1
    :caption: Algorithms:
 
-   documents/algorithms/index_drl
-   documents/algorithms/index_marl
+   .. documents/algorithms/index_drl
+   .. documents/algorithms/index_marl
 
 .. raw:: html
 

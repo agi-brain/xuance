@@ -8,7 +8,8 @@ This module defines functions related to configuring and obtaining input specifi
 
     <br><hr>
 
-**PyTorch:**
+PyTorch
+--------------------------------------------------
 
 .. py:function::
   xuance.torch.utils.input_reformat.get_repre_in(args, name)
@@ -57,7 +58,8 @@ This module defines functions related to configuring and obtaining input specifi
 
     <br><hr>
 
-**TensorFlow:**
+TensorFlow
+-------------------------------------------------
 
 .. py:function::
   xuance.tensorflow.utils.input_reformat.get_repre_in(args)
@@ -104,7 +106,8 @@ This module defines functions related to configuring and obtaining input specifi
 
     <br><hr>
 
-**MindSpore:**
+MindSpore
+---------------------------------------------------
 
 .. py:function::
   xuance.mindspore.utils.input_reformat.get_repre_in(args)

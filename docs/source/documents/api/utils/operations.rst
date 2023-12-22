@@ -7,7 +7,8 @@ This module provides utility functions related to DRL.
 
     <br><hr>
 
-**PyTorch:**
+PyTorch
+----------------------------------
 
 .. py:function::
   xuance.torch.utils.operations.update_linear_decay(optimizer, step, total_steps, initial_lr, end_factor)
@@ -96,7 +97,8 @@ This module provides utility functions related to DRL.
 
     <br><hr>
 
-**TensorFlow:**
+TensorFlow
+------------------------------------------
 
 .. py:function::
   xuance.tensorflow.utils.operations.update_linear_decay(optimizer, step, total_steps, initial_lr, end_factor)
@@ -173,7 +175,8 @@ This module provides utility functions related to DRL.
 
     <br><hr>
 
-**MindSpore:**
+MindSpore
+----------------------------------------------
 
 .. py:function::
   xuance.mindspore.utils.operations.update_linear_decay(optimizer, step, total_steps, initial_lr, end_factor)

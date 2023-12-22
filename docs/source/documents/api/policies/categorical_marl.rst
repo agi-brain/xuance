@@ -1,15 +1,19 @@
 Categorical-MARL
 ======================================
 
+Here, we provide several neural network modules for multi-agent reinforcement learning policies
 
 .. raw:: html
 
     <br><hr>
 
-**PyTorch:**
+PyTorch
+------------------------------------------
 
 .. py:class::
   xuance.torch.policies.categorical_mal.ActorNet(state_dim, action_dim, n_agents, hidden_sizes, normalize, initialize, gain, activation, device)
+  
+  The actor network for DRL.
 
   :param state_dim: The dimension of the state varibale.
   :type state_dim: int
@@ -27,7 +31,7 @@ Categorical-MARL
   :type gain: float.
   :param activation: The choose of activation functions for hidden layers.
   :type activation: nn.Module
-  :param device: The calculating device.
+  :param device: The logits for action probabilities.
   :type device: str
 
 .. py:function::
@@ -35,11 +39,13 @@ Categorical-MARL
 
   :param x: The input tensor.
   :type x: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The logits for the policy.
+  :rtype: torch.Tensor
 
 .. py:class::
   xuance.torch.policies.categorical_mal.CriticNet(state_dim, n_agents, hidden_sizes,  normalize, initialize, activation, device)
+
+  The critic network.
 
   :param state_dim: The dimension of the state varibale.
   :type state_dim: int
@@ -59,13 +65,15 @@ Categorical-MARL
 .. py:function::
   xuance.torch.policies.categorical_mal.CriticNet.forward(x)
 
-  :param x: input data.
+  :param x: The input data.
   :type x: torch.Tensor
-  :return: y.
+  :return: The evaluate critic value.
   :rtype: torch.Tensor
 
 .. py:class::
   xuance.torch.policies.categorical_mal.COMA_Critic(state_dim, act_dim, hidden_sizes,  normalize, initialize, activation, device)
+
+  The critic network for the Counterfactual Multi-Agent (COMA) algorithm.
 
   :param state_dim: The dimension of the state varibale.
   :type state_dim: int
@@ -87,11 +95,13 @@ Categorical-MARL
 
   :param x: The input tensor.
   :type x: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The evaluate critic value.
+  :rtype: torch.Tensor
 
 .. py:class::
   xuance.torch.policies.categorical_mal.MAAC_Policy(action_space, n_agents, representation, mixer, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device)
+
+  Multi-Agent Actor-Critic (MAAC) policy.
 
   :param action_space: The action space.
   :type action_space: Space
@@ -125,11 +135,13 @@ Categorical-MARL
   :type *rnn_hidden: Tensor
   :param avail_actions: The mask varibales for availabel actions.
   :type avail_actions: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: A tuple that includes the final rnn hidden state, and the stochastic policies.
+  :rtype: tuple
 
 .. py:function::
   xuance.torch.policies.categorical_mal.MAAC_Policy.get_values(critic_in, agent_ids, *rnn_hidden)
+
+  Get the critic values of the agents.
 
   :param critic_in: The input variables of critic networks.
   :type critic_in: Tensor
@@ -152,6 +164,8 @@ Categorical-MARL
 
 .. py:class::
   xuance.torch.policies.categorical_mal.MAAC_Policy_Share(action_space, n_agents, representation, mixer, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device)
+
+  Similar to MAAC_Policy but shares representations between agents.
 
   :param action_space: The action space of the environment.
   :type action_space: Space
@@ -201,6 +215,8 @@ Categorical-MARL
 .. py:class::
   xuance.torch.policies.categorical_mal.COMAPolicy(action_space, n_agents, representation, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device)
 
+  A policy for the Counterfactual Multi-Agent Policy (COMA) algorithm.
+
   :param action_space: The action space of the environment.
   :type action_space: Space
   :param n_agents: The number of agents.
@@ -249,11 +265,10 @@ Categorical-MARL
 .. py:function::
   xuance.torch.policies.categorical_mal.COMAPolicy.copy_target()
 
-  :return: None.
-  :rtype: xxxxxx
-
 .. py:class::
   xuance.torch.policies.categorical_mal.MeanFieldActorCriticPolicy(action_space, n_agents, representation, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device)
+  
+  Mean Field Actor-Critic policy.
 
   :param action_space: The action space of the environment.
   :type action_space: Space
@@ -330,7 +345,8 @@ Categorical-MARL
 
     <br><hr>
 
-**TensorFlow:**
+TensorFlow
+------------------------------------------
 
 .. py:class::
   xuance.tensorflow.policies.categorical_mal.ActorNet(state_dim, action_dim, n_agents, hidden_sizes, normalize, initialize, gain, activation, device)
@@ -643,7 +659,8 @@ Categorical-MARL
 
     <br><hr>
 
-**MindSpore:**
+MindSpore
+------------------------------------------
 
 .. py:class::
   xuance.mindspore.policies.categorical_marl.ActorNet(state_dim, action_dim, n_agents, hidden_sizes, normalize, initialize, activation)

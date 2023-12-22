@@ -7,7 +7,8 @@ This module defines implementations of probability distributions for use in DRL 
 
     <br><hr>
 
-**PyTorch:**
+PyTorch
+---------------------------------------
 
 .. py:class::
   xuance.torch.utils.distributions.Distribution()
@@ -201,7 +202,8 @@ This module defines implementations of probability distributions for use in DRL 
 
     <br><hr>
 
-**TensorFlow:**
+TensorFlow
+-------------------------------------------------------------
 
 .. py:class::
   xuance.tensorflow.utils.distributions.Distribution()
@@ -393,7 +395,8 @@ This module defines implementations of probability distributions for use in DRL 
 
     <br><hr>
 
-**MindSpore:**
+MindSpore
+------------------------------------------------------------
 
 .. py:class::
   xuance.mindspore.utils.distributions.Distribution()

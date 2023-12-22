@@ -7,7 +7,8 @@ This module defines utility functions to create blocks commonly used in neural n
 
     <br><hr>
 
-**PyTorch:**
+PyTorch
+---------------------------------------------------
 
 
 .. py:function::
@@ -112,7 +113,8 @@ This module defines utility functions to create blocks commonly used in neural n
 
     <br><hr>
 
-**TensorFlow:**
+TensorFlow
+--------------------------------
 
 .. py:function::
   xuance.tensorflow.utils.layers.mlp_block(input_dim, output_dim, normalize, activation, initialize, device)
@@ -216,7 +218,8 @@ This module defines utility functions to create blocks commonly used in neural n
 
     <br><hr>
 
-**MindSpore:**
+MindSpore
+------------------------------------
 
 .. py:function::
   xuance.mindspore.utils.layers.mlp_block(input_dim, output_dim, normalize, activation, initialize)

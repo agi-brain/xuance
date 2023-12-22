@@ -5,7 +5,8 @@ Gaussian-MARL
 
     <br><hr>
 
-**PyTorch:**
+PyTorch
+------------------------------------------
 
 .. py:class::
   xuance.torch.policies.gaussian_marl.BasicQhead(state_dim, action_dim, n_agents, hidden_sizes, normalize, initialize, activation, device)
@@ -318,7 +319,8 @@ Gaussian-MARL
 
     <br><hr>
 
-**TensorFlow:**
+TensorFlow
+------------------------------------------
 
 .. py:class::
   xuance.tensorflow.policies.gaussian_marl.BasicQhead(state_dim, action_dim, n_agents, hidden_sizes, normalize, initialize, activation, device)
@@ -624,7 +626,8 @@ Gaussian-MARL
 
     <br><hr>
 
-**MindSpore:**
+MindSpore
+------------------------------------------
 
 .. py:class::
   xuance.mindspore.policies.gaussian_marl.BasicQhead(state_dim, action_dim, n_agents, hidden_sizes, normalize, initialize, activation)
