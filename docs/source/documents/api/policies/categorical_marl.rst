@@ -1,7 +1,8 @@
 Categorical-MARL
 ======================================
 
-Here, we provide several neural network modules for multi-agent reinforcement learning policies
+Here, we provide several neural network modules for categorical MARL policies with discrete action space.
+Each policy can generate actions from a categorical distribution, or generate a categorical distribution directly.
 
 .. raw:: html
 
@@ -13,7 +14,7 @@ PyTorch
 .. py:class::
   xuance.torch.policies.categorical_mal.ActorNet(state_dim, action_dim, n_agents, hidden_sizes, normalize, initialize, gain, activation, device)
   
-  The actor network for DRL.
+  The actor network that is used to calculate the logits of categorical distributions.
 
   :param state_dim: The dimension of the state varibale.
   :type state_dim: int
@@ -26,12 +27,12 @@ PyTorch
   :param normalize: The method of normalization.
   :type normalize: nn.Module
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: torch.Tensor
   :param gain: optional scaling factor.
-  :type gain: float.
+  :type gain: float
   :param activation: The choose of activation functions for hidden layers.
   :type activation: nn.Module
-  :param device: The logits for action probabilities.
+  :param device: The logits for categorical distributions.
   :type device: str
 
 .. py:function::
@@ -45,7 +46,7 @@ PyTorch
 .. py:class::
   xuance.torch.policies.categorical_mal.CriticNet(state_dim, n_agents, hidden_sizes,  normalize, initialize, activation, device)
 
-  The critic network.
+  The critic network that is used to evaluate the states or state-action pairs.
 
   :param state_dim: The dimension of the state varibale.
   :type state_dim: int
@@ -56,7 +57,7 @@ PyTorch
   :param normalize: The method of normalization.
   :type normalize: nn.Module
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: torch.Tensor
   :param activation: The choose of activation functions for hidden layers.
   :type activation: nn.Module
   :param device: The calculating device.
@@ -67,13 +68,14 @@ PyTorch
 
   :param x: The input data.
   :type x: torch.Tensor
-  :return: The evaluate critic value.
+  :return: The evaluated critic value.
   :rtype: torch.Tensor
 
 .. py:class::
   xuance.torch.policies.categorical_mal.COMA_Critic(state_dim, act_dim, hidden_sizes,  normalize, initialize, activation, device)
 
-  The critic network for the Counterfactual Multi-Agent (COMA) algorithm.
+  The critic network for the Counterfactual Multi-Agent (COMA) algorithm, 
+  which is used to evaluate the global state of the multi-agent systems.
 
   :param state_dim: The dimension of the state varibale.
   :type state_dim: int
@@ -84,7 +86,7 @@ PyTorch
   :param normalize: The method of normalization.
   :type normalize: nn.Module
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: torch.Tensor
   :param activation: The choose of activation functions for hidden layers.
   :type activation: nn.Module
   :param device: The calculating device.
@@ -95,13 +97,14 @@ PyTorch
 
   :param x: The input tensor.
   :type x: torch.Tensor
-  :return: The evaluate critic value.
+  :return: The evaluated critic value.
   :rtype: torch.Tensor
 
 .. py:class::
   xuance.torch.policies.categorical_mal.MAAC_Policy(action_space, n_agents, representation, mixer, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device)
 
-  Multi-Agent Actor-Critic (MAAC) policy.
+  Multi-Agent Actor-Critic (MAAC) policy for discrete action space. 
+  It is used to generate categorical distributions and the tutorial values of the multi-agent team.
 
   :param action_space: The action space.
   :type action_space: Space
@@ -118,23 +121,22 @@ PyTorch
   :param normalize: The method of normalization.
   :type normalize: nn.Module
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: torch.Tensor
   :param activation: The choose of activation functions for hidden layers.
   :type activation: nn.Module
   :param device: The calculating device.
   :type device: str
 
 .. py:function::
-  xuance.torch.policies.categorical_mal.MAAC_Policy.forward(observation, agent_ids, *rnn_hidden, avail_actions)
+  xuance.torch.policies.categorical_mal.MAAC_Policy.forward(observation, agent_ids, *rnn_hidden, avail_actions=None)
 
   :param observation: The original observation variables.
-  :type observation: Tensor
+  :type observation: torch.Tensor
   :param agent_ids: The IDs variables for agents.
-  :type agent_ids: Tensor
+  :type agent_ids: torch.Tensor
   :param rnn_hidden: The last final hidden states of the sequence.
-  :type *rnn_hidden: Tensor
   :param avail_actions: The mask varibales for availabel actions.
-  :type avail_actions: Tensor
+  :type avail_actions: torch.Tensor
   :return: A tuple that includes the final rnn hidden state, and the stochastic policies.
   :rtype: tuple
 
@@ -144,23 +146,24 @@ PyTorch
   Get the critic values of the agents.
 
   :param critic_in: The input variables of critic networks.
-  :type critic_in: Tensor
+  :type critic_in: torch.Tensor
   :param agent_ids: The IDs variables for agents.
-  :type agent_ids: Tensor
+  :type agent_ids: torch.Tensor
   :param rnn_hidden: The last final hidden states of the sequence.
-  :type *rnn_hidden: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: A tuple that includes the final rnn hidden state, and the tutorial values of the team.
+  :rtype: torch.Tensor
 
 .. py:function::
   xuance.torch.policies.categorical_mal.MAAC_Policy.value_tot(values_n, global_state)
 
+  Calculate the tutorial values of the team via the value decomposition modules (self.mixer).
+
   :param values_n: The joint values of n agents.
-  :type values_n: Tensor
+  :type values_n: torch.Tensor
   :param global_state: The global states of the environments.
-  :type global_state: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type global_state: torch.Tensor
+  :return: The final rnn hidden state, and the tutorial values of the team.
+  :rtype: torch.Tensor
 
 .. py:class::
   xuance.torch.policies.categorical_mal.MAAC_Policy_Share(action_space, n_agents, representation, mixer, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device)
@@ -182,35 +185,36 @@ PyTorch
   :param normalize: The method of normalization.
   :type normalize: nn.Module
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: torch.Tensor
   :param activation: The choose of activation functions for hidden layers.
   :type activation: nn.Module
   :param device: The calculating device.
   :type device: str
 
 .. py:function::
-  xuance.torch.policies.categorical_mal.MAAC_Policy_Share.forward(observation, agent_ids, *rnn_hidden, avail_actions)
+  xuance.torch.policies.categorical_mal.MAAC_Policy_Share.forward(observation, agent_ids, *rnn_hidden, avail_actions=None)
 
   :param observation: The original observation variables.
   :type observation: Tensor
   :param agent_ids: The IDs variables for agents.
   :type agent_ids: Tensor
   :param rnn_hidden: The last final hidden states of the sequence.
-  :type *rnn_hidden: Tensor
   :param avail_actions: The mask varibales for availabel actions.
-  :type avail_actions: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type avail_actions: torch.Tensor
+  :return: A tuple that includes the final rnn hidden state, the stochastic policies, and the tutorial values of the team.
+  :rtype: tuple
 
 .. py:function::
   xuance.torch.policies.categorical_mal.MAAC_Policy_Share.value_tot(values_n, global_state)
+
+  Calculate the tutorial values of the team via the value decomposition modules (self.mixer).
 
   :param values_n: The joint values of n agents.
   :type values_n: Tensor
   :param global_state: The global states of the environments.
   :type global_state: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: A tuple that includes the final rnn hidden state, and the tutorial values of the team.
+  :rtype: tuple
 
 .. py:class::
   xuance.torch.policies.categorical_mal.COMAPolicy(action_space, n_agents, representation, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device)
@@ -230,43 +234,43 @@ PyTorch
   :param normalize: The method of normalization.
   :type normalize: nn.Module
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: torch.Tensor
   :param activation: The choose of activation functions for hidden layers.
   :type activation: nn.Module
   :param device: The calculating device.
   :type device: str
 
 .. py:function::
-  xuance.torch.policies.categorical_mal.COMAPolicy.forward(observation, agent_ids, *rnn_hidden, avail_actions)
+  xuance.torch.policies.categorical_mal.COMAPolicy.forward(observation, agent_ids, *rnn_hidden, avail_actions=None)
 
   :param observation: The original observation variables.
-  :type observation: Tensor
+  :type observation: torch.Tensor
   :param agent_ids: The IDs variables for agents.
-  :type agent_ids: Tensor
+  :type agent_ids: torch.Tensor
   :param rnn_hidden: The last final hidden states of the sequence.
-  :type *rnn_hidden: Tensor
   :param avail_actions: The mask varibales for availabel actions.
-  :type avail_actions: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type avail_actions: torch.Tensor
+  :return: A tuple that includes the final rnn hidden state, and the action probabilities.
+  :rtype: tuple
 
 .. py:function::
-  xuance.torch.policies.categorical_mal.COMAPolicy.get_values(critic_in, *rnn_hidden, target)
+  xuance.torch.policies.categorical_mal.COMAPolicy.get_values(critic_in, *rnn_hidden, target=False)
 
   :param critic_in: The input variables of critic networks.
-  :type critic_in: Tensor
+  :type critic_in: torch.Tensor
   :param rnn_hidden: The last final hidden states of the sequence.
-  :type *rnn_hidden: Tensor
-  :param target: xxxxxx.
-  :type target: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :param target: Determine whether to use target networks to calculate the values.
+  :type target: bool
+  :return: The team values.
+  :rtype: torch.Tensor
 
 .. py:function::
   xuance.torch.policies.categorical_mal.COMAPolicy.copy_target()
 
+  Synchronize the target networks.
+
 .. py:class::
-  xuance.torch.policies.categorical_mal.MeanFieldActorCriticPolicy(action_space, n_agents, representation, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device)
+  xuance.torch.policies.categorical_mal.MeanFieldActorCriticPolicy(action_space, n_agents, representation, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device, **kwargs)
   
   Mean Field Actor-Critic policy.
 
@@ -283,63 +287,35 @@ PyTorch
   :param normalize: The method of normalization.
   :type normalize: nn.Module
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: torch.Tensor
   :param activation: The choose of activation functions for hidden layers.
   :type activation: nn.Module
   :param device: The calculating device.
   :type device: str
+  :param kwargs: The other arguments.
+  :type kwargs: dict
 
 .. py:function::
   xuance.torch.policies.categorical_mal.MeanFieldActorCriticPolicy.forward(observation, agent_ids)
 
   :param observation: The original observation variables.
-  :type observation: Tensor
+  :type observation: torch.Tensor
   :param agent_ids: The IDs variables for agents.
-  :type agent_ids: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
-
-.. py:function::
-  xuance.torch.policies.categorical_mal.MeanFieldActorCriticPolicy.target_actor(observation, agent_ids)
-
- :param observation: The original observation variables.
-  :type observation: Tensor
-  :param agent_ids: The IDs variables for agents.
-  :type agent_ids: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type agent_ids: torch.Tensor
+  :return: A tuple of tensors that includes the outputs hidden states and the categorical distributions.
+  :rtype: tuple
 
 .. py:function::
   xuance.torch.policies.categorical_mal.MeanFieldActorCriticPolicy.critic(observation, actions_mean, agent_ids)
 
   :param observation: The original observation variables.
-  :type observation: Tensor
+  :type observation: torch.Tensor
   :param actions_mean: The mean values of actions.
-  :type actions_mean: Tensor
+  :type actions_mean: torch.Tensor
   :param agent_ids: The IDs variables for agents.
-  :type agent_ids: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
-
-.. py:function::
-  xuance.torch.policies.categorical_mal.MeanFieldActorCriticPolicy.target_critic(observation, actions_mean, agent_ids)
-
-  :param observation: The original observation variables.
-  :type observation: Tensor
-  :param actions_mean: The mean values of actions.
-  :type actions_mean: Tensor
-  :param agent_ids: The IDs variables for agents.
-  :type agent_ids: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
-
-.. py:function::
-  xuance.torch.policies.categorical_mal.MeanFieldActorCriticPolicy.soft_update(tau)
-
-  :param tau: The soft update factor for the update of target networks.
-  :type tau: float
-  :return: NONE.
-  :rtype: xxxxxx
+  :type agent_ids: torch.Tensor
+  :return: The evaluated values of the observations and mean-actions pairs.
+  :rtype: torch.Tensor
 
 .. raw:: html
 
@@ -350,6 +326,8 @@ TensorFlow
 
 .. py:class::
   xuance.tensorflow.policies.categorical_mal.ActorNet(state_dim, action_dim, n_agents, hidden_sizes, normalize, initialize, gain, activation, device)
+  
+  The actor network that is used to calculate the logits of categorical distributions
 
   :param state_dim: The dimension of the state varibale.
   :type state_dim: int
@@ -360,13 +338,13 @@ TensorFlow
   :param hidden_sizes: The number of hidden units for hidden layers.
   :type hidden_sizes: list
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: tk.Model
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: tf.Tensor
   :param gain: optional scaling factor.
-  :type gain: float.
+  :type gain: float
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: tk.Model
   :param device: The calculating device.
   :type device: str
 
@@ -374,12 +352,14 @@ TensorFlow
   xuance.tensorflow.policies.categorical_mal.ActorNet.call(x)
 
   :param x: The input tensor.
-  :type x: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type x: tf.Tensor
+  :return: The logits for the policy.
+  :rtype: tf.Tensor
 
 .. py:class::
   xuance.tensorflow.policies.categorical_mal.CriticNet(state_dim, n_agents, hidden_sizes,  normalize, initialize, activation, device)
+
+  The critic network that is used to evaluate the states or state-action pairs.
 
   :param state_dim: The dimension of the state varibale.
   :type state_dim: int
@@ -388,11 +368,11 @@ TensorFlow
   :param hidden_sizes: The number of hidden units for hidden layers.
   :type hidden_sizes: list
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: tk.Model
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: tf.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: tk.Model
   :param device: The calculating device.
   :type device: str
 
@@ -400,12 +380,15 @@ TensorFlow
   xuance.tensorflow.policies.categorical_mal.CriticNet.call(x)
 
   :param x: input data.
-  :type x: torch.Tensor
-  :return: y.
-  :rtype: torch.Tensor
+  :type x: tf.Tensor
+  :return: The evaluated critic value.
+  :rtype: tf.Tensor
 
 .. py:class::
   xuance.tensorflow.policies.categorical_mal.COMA_Critic(state_dim, act_dim, hidden_sizes,  normalize, initialize, activation, device)
+
+  The critic network for the Counterfactual Multi-Agent (COMA) algorithm, 
+  which is used to evaluate the global state of the multi-agent systems.
 
   :param state_dim: The dimension of the state varibale.
   :type state_dim: int
@@ -414,11 +397,11 @@ TensorFlow
   :param hidden_sizes: The number of hidden units for hidden layers.
   :type hidden_sizes: list
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: tk.Model
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: tf.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: tk.Model
   :param device: The calculating device.
   :type device: str
 
@@ -426,75 +409,79 @@ TensorFlow
   xuance.tensorflow.policies.categorical_mal.COMA_Critic.call(x)
 
   :param x: The input tensor.
-  :type x: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type x: tf.Tensor
+  :return: The evaluated critic value.
+  :rtype: tf.Tensor
 
 .. py:class::
   xuance.tensorflow.policies.categorical_mal.MAAC_Policy(action_space, n_agents, representation, mixer, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device)
+
+  Multi-Agent Actor-Critic (MAAC) policy for discrete action space. It is used to generate categorical distributions and the tutorial values of the multi-agent team.
 
   :param action_space: The action space.
   :type action_space: Space
   :param n_agents: The number of agents.
   :type n_agents: int
   :param representation: The representation module.
-  :type representation: nn.Module
+  :type representation: tk.Model
   :param mixer: The mixer for independent values.
-  :type mixer: nn.Module
+  :type mixer: tk.Model
   :param actor_hidden_size: The number of hidden units for actor's hidden layers.
   :type actor_hidden_size: list
   :param critic_hidden_size: The number of hidden units for critic's hidden layers.
   :type critic_hidden_size: list
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: tk.Model
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: tf.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: tk.Model
   :param device: The calculating device.
   :type device: str
 
 .. py:function::
-  xuance.tensorflow.policies.categorical_mal.MAAC_Policy.call(observation, agent_ids, *rnn_hidden, avail_actions)
+  xuance.tensorflow.policies.categorical_mal.MAAC_Policy.call(observation, agent_ids, *rnn_hidden, avail_actions=None)
 
   :param observation: The original observation variables.
-  :type observation: Tensor
+  :type observation: tf.Tensor
   :param agent_ids: The IDs variables for agents.
-  :type agent_ids: Tensor
+  :type agent_ids: tf.Tensor
   :param rnn_hidden: The last final hidden states of the sequence.
-  :type *rnn_hidden: Tensor
   :param avail_actions: The mask varibales for availabel actions.
-  :type avail_actions: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type avail_actions: tf.Tensor
+  :return: A tuple that includes the final rnn hidden state, and the stochastic policies.
+  :rtype: tuple
 
 .. py:function::
   xuance.tensorflow.policies.categorical_mal.MAAC_Policy.get_values(critic_in, agent_ids, *rnn_hidden)
 
   :param critic_in: The input variables of critic networks.
-  :type critic_in: Tensor
+  :type critic_in: tf.Tensor
   :param agent_ids: The IDs variables for agents.
-  :type agent_ids: Tensor
+  :type agent_ids: tf.Tensor
   :param rnn_hidden: The last final hidden states of the sequence.
-  :type *rnn_hidden: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: A tuple that includes the final rnn hidden state, and the tutorial values of the team.
+  :rtype: tuple
 
 .. py:function::
   xuance.tensorflow.policies.categorical_mal.MAAC_Policy.value_tot(values_n, global_state)
 
+  Calculate the tutorial values of the team via the value decomposition modules (self.mixer).
+
   :param values_n: The joint values of n agents.
-  :type values_n: Tensor
+  :type values_n: tf.Tensor
   :param global_state: The global states of the environments.
-  :type global_state: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type global_state: tf.Tensor
+  :return: The final rnn hidden state, and the tutorial values of the team.
+  :rtype: tf.Tensor
 
 .. py:function::
   xuance.tensorflow.policies.categorical_mal.MAAC_Policy.trainable_param()
 
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  Get the trainable parameters of the policy.
+
+  :return: Trainable parameters.
+  :rtype: tf.Tensor
 
 .. py:class::
   xuance.tensorflow.policies.categorical_mal.MAAC_Policy_Share(action_space, n_agents, representation, mixer, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device)
@@ -504,156 +491,165 @@ TensorFlow
   :param n_agents: The number of agents.
   :type n_agents: int
   :param representation: The representation module.
-  :type representation: nn.Module
+  :type representation: tk.Model
   :param mixer: The mixer for independent values.
-  :type mixer: nn.Module
+  :type mixer: tk.Model
   :param actor_hidden_size: The sizes of the hidden layers in actor network.
   :type actor_hidden_size: list
   :param critic_hidden_size: The sizes of the hidden layers in critic networks.
   :type critic_hidden_size: list
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: tk.Model
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: tf.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: tk.Model
   :param device: The calculating device.
   :type device: str
 
 .. py:function::
-  xuance.tensorflow.policies.categorical_mal.MAAC_Policy_Share.call(observation, agent_ids, *rnn_hidden, avail_actions)
+  xuance.tensorflow.policies.categorical_mal.MAAC_Policy_Share.call(observation, agent_ids, *rnn_hidden, avail_actions=None)
 
   :param observation: The original observation variables.
-  :type observation: Tensor
+  :type observation: tf.Tensor
   :param agent_ids: The IDs variables for agents.
-  :type agent_ids: Tensor
+  :type agent_ids: tf.Tensor
   :param rnn_hidden: The last final hidden states of the sequence.
-  :type *rnn_hidden: Tensor
   :param avail_actions: The mask varibales for availabel actions.
-  :type avail_actions: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type avail_actions: tf.Tensor
+  :return: A tuple that includes the final rnn hidden state, the stochastic policies, and the tutorial values of the team.
+  :rtype: tuple
 
 .. py:function::
   xuance.tensorflow.policies.categorical_mal.MAAC_Policy_Share.value_tot(values_n, global_state)
 
   :param values_n: The joint values of n agents.
-  :type values_n: Tensor
+  :type values_n: tf.Tensor
   :param global_state: The global states of the environments.
-  :type global_state: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type global_state: tf.Tensor
+  :return: A tuple that includes the final rnn hidden state, and the tutorial values of the team.
+  :rtype: tuple
 
 .. py:function::
   xuance.tensorflow.policies.categorical_mal.MAAC_Policy_Share.trainable_param()
 
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  Get the trainable parameters of the policy.
+
+  :return: Trainable parameters.
+  :rtype: tf.Tensor
 
 .. py:class::
   xuance.tensorflow.policies.categorical_mal.COMAPolicy(action_space, n_agents, representation, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device)
 
+  A policy for the Counterfactual Multi-Agent Policy (COMA) algorithm.
+
   :param action_space: The action space of the environment.
   :type action_space: Space
   :param n_agents: The number of agents.
   :type n_agents: int
   :param representation: The representation module.
-  :type representation: nn.Module
+  :type representation: tk.Model
   :param actor_hidden_size: The sizes of the hidden layers in actor network.
   :type actor_hidden_size: list
   :param critic_hidden_size: The sizes of the hidden layers in critic networks.
   :type critic_hidden_size: list
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: tk.Model
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: tf.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: tk.Model
   :param device: The calculating device.
   :type device: str
 
 .. py:function::
-  xuance.tensorflow.policies.categorical_mal.COMAPolicy.call(observation, agent_ids, *rnn_hidden, avail_actions)
+  xuance.tensorflow.policies.categorical_mal.COMAPolicy.call(observation, agent_ids, *rnn_hidden, avail_actions=None)
 
   :param observation: The original observation variables.
-  :type observation: Tensor
+  :type observation: tf.Tensor
   :param agent_ids: The IDs variables for agents.
-  :type agent_ids: Tensor
+  :type agent_ids: tf.Tensor
   :param rnn_hidden: The last final hidden states of the sequence.
-  :type *rnn_hidden: Tensor
   :param avail_actions: The mask varibales for availabel actions.
-  :type avail_actions: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type avail_actions: tf.Tensor
+  :return: A tuple that includes the final rnn hidden state, and the action probabilities.
+  :rtype: tuple
 
 .. py:function::
-  xuance.tensorflow.policies.categorical_mal.COMAPolicy.get_values(critic_in, *rnn_hidden, target)
+  xuance.tensorflow.policies.categorical_mal.COMAPolicy.get_values(critic_in, *rnn_hidden, target=False)
 
   :param critic_in: The input variables of critic networks.
-  :type critic_in: Tensor
+  :type critic_in: tf.Tensor
   :param rnn_hidden: The last final hidden states of the sequence.
-  :type *rnn_hidden: Tensor
-  :param target: xxxxxx.
-  :type target: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :param target: Determine whether to use target networks to calculate the values.
+  :param target: bool
+  :return: The team values.
+  :rtype: tf.Tensor
 
 .. py:function::
   xuance.tensorflow.policies.categorical_mal.COMAPolicy.param_actor()
 
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  Get the parameters of the actor netwroks and the corresponding representation networks (if exists).
+
+  :return: Trainable parameters of the actor netwroks and the corresponding representation networks.
+  :rtype: tf.Tensor
 
 .. py:function::
   xuance.tensorflow.policies.categorical_mal.COMAPolicy.copy_target()
 
+  Synchronize the target networks.
+
 .. py:class::
-  xuance.tensorflow.policies.categorical_mal.MeanFieldActorCriticPolicy(action_space, n_agents, representation, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device)
+  xuance.tensorflow.policies.categorical_mal.MeanFieldActorCriticPolicy(action_space, n_agents, representation, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device, **kwargs)
+
+  Mean Field Actor-Critic policy.
 
   :param action_space: The action space of the environment.
   :type action_space: Space
   :param n_agents: The number of agents.
   :type n_agents: int
   :param representation: The representation module.
-  :type representation: nn.Module
+  :type representation: tk.Model
   :param actor_hidden_size: The sizes of the hidden layers in actor network.
   :type actor_hidden_size: list
   :param critic_hidden_size: The sizes of the hidden layers in critic networks.
   :type critic_hidden_size: list
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: tk.Model
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: tf.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: tk.Model
   :param device: The calculating device.
   :type device: str
+  :param kwargs: The other arguments.
+  :type kwargs: dict
 
 .. py:function::
   xuance.tensorflow.policies.categorical_mal.MeanFieldActorCriticPolicy.call(inputs)
 
   :param inputs: The inputs of the neural neworks.
   :type inputs: Dict(tf.Tensor)
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: A tuple of tensors that includes the outputs hidden states and the categorical distributions.
+  :rtype: tuple
 
 .. py:function::
   xuance.tensorflow.policies.categorical_mal.MeanFieldActorCriticPolicy.trainable_param()
 
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: Trainable parameters.
+  :rtype: tf.Tensor
 
 .. py:function::
   xuance.tensorflow.policies.categorical_mal.MeanFieldActorCriticPolicy.critic(observation, actions_mean, agent_ids)
 
   :param observation: The original observation variables.
-  :type observation: Tensor
+  :type observation: tf.Tensor
   :param actions_mean: The mean values of actions.
-  :type actions_mean: Tensor
+  :type actions_mean: tf.Tensor
   :param agent_ids: The IDs variables for agents.
-  :type agent_ids: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type agent_ids: tf.Tensor
+  :return: The evaluated values of the observations and mean-actions pairs.
+  :rtype: tf.Tensor
 
 .. raw:: html
 
@@ -674,24 +670,26 @@ MindSpore
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: nn.Cell
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: ms.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: nn.Cell
 
 .. py:function::
   xuance.mindspore.policies.categorical_marl.ActorNet.construct(x)
 
-  xxxxxx.
+  The actor network that is used to calculate the logits of categorical distributions.
 
   :param x: The input tensor.
-  :type x: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type x: ms.Tensor
+  :return: The logits for the policy.
+  :rtype: ms.Tensor
 
 .. py:class::
   xuance.mindspore.policies.categorical_marl.CriticNet(state_dim, n_agents, hidden_sizes, normalize, initialize, activation)
+
+  The critic network that is used to evaluate the states or state-action pairs.
 
   :param state_dim: The dimension of the input state.
   :type state_dim: int
@@ -700,266 +698,254 @@ MindSpore
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: nn.Cell
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: ms.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: nn.Cell
 
 .. py:function::
   xuance.mindspore.policies.categorical_marl.CriticNet.construct(x)
 
-  xxxxxx.
-
   :param x: The input tensor.
-  :type x: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type x: ms.Tensor
+  :return: The evaluated critic value.
+  :rtype: ms.Tensor
 
 .. py:class::
   xuance.mindspore.policies.categorical_marl.COMA_Critic(state_dim, act_dim, hidden_sizes, normalize, initialize, activation)
 
   :param state_dim: The dimension of the input state.
   :type state_dim: int
-  :param act_dim: xxxxxx.
-  :type act_dim: xxxxxx
+  :param act_dim: The dimension of actions.
+  :type act_dim: int
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: nn.Cell
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: ms.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: nn.Cell
 
 .. py:function::
   xuance.mindspore.policies.categorical_marl.COMA_Critic.construct(x)
 
-  xxxxxx.
-
   :param x: The input tensor.
-  :type x: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type x: ms.Tensor
+  :return: The evaluated critic value.
+  :rtype: ms.Tensor
 
 .. py:class::
   xuance.mindspore.policies.categorical_marl.MAAC_Policy(action_space, n_agents, representation, mixer, actor_hidden_size, critic_hidden_size, normalize, initialize, activation)
 
+  Multi-Agent Actor-Critic (MAAC) policy for discrete action space. 
+  It is used to generate categorical distributions and the tutorial values of the multi-agent team.
+
   :param action_space: The action space of the environment.
   :type action_space: Space
   :param n_agents: The number of agents.
   :type n_agents: int
   :param representation: The representation module.
-  :type representation: nn.Module
+  :type representation: nn.Cell
   :param mixer: The mixer for independent values.
-  :type mixer: nn.Module
+  :type mixer: nn.Cell
   :param actor_hidden_size: The sizes of the hidden layers in actor network.
   :type actor_hidden_size: list
   :param critic_hidden_size: The sizes of the hidden layers in critic networks.
   :type critic_hidden_size: list
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: nn.Cell
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: ms.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: nn.Cell
 
 .. py:function::
   xuance.mindspore.policies.categorical_marl.MAAC_Policy.construct(observation, agent_ids, rnn_hidden, avail_actions)
 
-  xxxxxx.
-
   :param observation: The original observation variables.
-  :type observation: Tensor
+  :type observation: ms.Tensor
   :param agent_ids: The IDs variables for agents.
-  :type agent_ids: Tensor
+  :type agent_ids: ms.Tensor
   :param rnn_hidden: The final hidden state of the sequence.
-  :type rnn_hidden: xxxxxx
   :param avail_actions: The mask varibales for availabel actions.
-  :type avail_actions: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type avail_actions: ms.Tensor
+  :return: A tuple that includes the final rnn hidden state, and the stochastic policies.
+  :rtype: tuple
 
 .. py:function::
   xuance.mindspore.policies.categorical_marl.MAAC_Policy.get_values(critic_in, agent_ids, rnn_hidden)
 
-  xxxxxx.
+  Get the critic values of the agents.
 
   :param critic_in: The input variables of critic networks.
-  :type critic_in: Tensor
+  :type critic_in: ms.Tensor
   :param agent_ids: The IDs variables for agents.
-  :type agent_ids: Tensor
+  :type agent_ids: ms.Tensor
   :param rnn_hidden: The final hidden state of the sequence.
-  :type rnn_hidden: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: A tuple that includes the final rnn hidden state, and the tutorial values of the team.
+  :rtype: tuple
 
 .. py:function::
   xuance.mindspore.policies.categorical_marl.MAAC_Policy.value_tot(values_n, global_state)
 
-  xxxxxx.
+  Calculate the tutorial values of the team via the value decomposition modules (self.mixer).
 
   :param values_n: The joint values of n agents.
-  :type values_n: Tensor
+  :type values_n: ms.Tensor
   :param global_state: The global states of the environments.
-  :type global_state: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type global_state: ms.Tensor
+  :return: The final rnn hidden state, and the tutorial values of the team.
+  :rtype: ms.Tensor
 
 .. py:class::
   xuance.mindspore.policies.categorical_marl.MAAC_Policy_Share(action_space, n_agents, representation, mixer, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device)
+  
+  Similar to MAAC_Policy but shares representations between agents.
 
   :param action_space: The action space of the environment.
   :type action_space: Space
   :param n_agents: The number of agents.
   :type n_agents: int
   :param representation: The representation module.
-  :type representation: nn.Module
+  :type representation: nn.Cell
   :param mixer: The mixer for independent values.
-  :type mixer: nn.Module
+  :type mixer: nn.Cell
   :param actor_hidden_size: The sizes of the hidden layers in actor network.
   :type actor_hidden_size: list
   :param critic_hidden_size: The sizes of the hidden layers in critic networks.
   :type critic_hidden_size: list
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: nn.Cell
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: ms.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: nn.Cell
   :param device: The calculating device.
   :type device: str
 
 .. py:function::
   xuance.mindspore.policies.categorical_marl.MAAC_Policy_Share.construct(observation, agent_ids, rnn_hidden, avail_actions)
 
-  xxxxxx.
-
   :param observation: The original observation variables.
-  :type observation: Tensor
+  :type observation: ms.Tensor
   :param agent_ids: The IDs variables for agents.
-  :type agent_ids: Tensor
+  :type agent_ids: ms.Tensor
   :param rnn_hidden: The final hidden state of the sequence.
-  :type rnn_hidden: xxxxxx
   :param avail_actions: The mask varibales for availabel actions.
-  :type avail_actions: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type avail_actions: ms.Tensor
+  :return: A tuple that includes the final rnn hidden state, the stochastic policies, and the tutorial values of the team.
+  :rtype: tuple
 
 .. py:function::
   xuance.mindspore.policies.categorical_marl.MAAC_Policy_Share.value_tot(values_n, global_state)
 
-  xxxxxx.
+  Calculate the tutorial values of the team via the value decomposition modules (self.mixer).
 
   :param values_n: The joint values of n agents.
-  :type values_n: Tensor
+  :type values_n: ms.Tensor
   :param global_state: The global states of the environments.
-  :type global_state: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type global_state: ms.Tensor
+  :return: A tuple that includes the final rnn hidden state, and the tutorial values of the team.
+  :rtype: tuple
 
 .. py:class::
   xuance.mindspore.policies.categorical_marl.COMAPolicy(action_space, n_agents, representation, actor_hidden_size, critic_hidden_size, normalize, initialize, activation)
 
+  A policy for the Counterfactual Multi-Agent Policy (COMA) algorithm.
+
   :param action_space: The action space of the environment.
   :type action_space: Space
   :param n_agents: The number of agents.
   :type n_agents: int
   :param representation: The representation module.
-  :type representation: nn.Module
+  :type representation: nn.Cell
   :param actor_hidden_size: The sizes of the hidden layers in actor network.
   :type actor_hidden_size: list
   :param critic_hidden_size: The sizes of the hidden layers in critic networks.
   :type critic_hidden_size: list
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: nn.Cell
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: ms.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: nn.Cell
 
 .. py:function::
   xuance.mindspore.policies.categorical_marl.COMAPolicy.construct(observation, agent_ids, rnn_hidden, avail_actions, epsilon)
 
-  xxxxxx.
-
   :param observation: The original observation variables.
-  :type observation: Tensor
+  :type observation: ms.Tensor
   :param agent_ids: The IDs variables for agents.
-  :type agent_ids: Tensor
+  :type agent_ids: ms.Tensor
   :param rnn_hidden: The final hidden state of the sequence.
-  :type rnn_hidden: xxxxxx
   :param avail_actions: The mask varibales for availabel actions.
-  :type avail_actions: Tensor
-  :param epsilon: xxxxxx.
-  :type epsilon: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type avail_actions: ms.Tensor
+  :param epsilon: Greedy factor to select actions.
+  :type epsilon: float
+  :return: A tuple that includes the final rnn hidden state, and the action probabilities.
+  :rtype: tuple
 
 .. py:function::
   xuance.mindspore.policies.categorical_marl.COMAPolicy.get_values(critic_in, rnn_hidden, target)
 
-  xxxxxx.
-
   :param critic_in: The input variables of critic networks.
-  :type critic_in: Tensor
+  :type critic_in: ms.Tensor
   :param rnn_hidden: The final hidden state of the sequence.
-  :type rnn_hidden: xxxxxx
-  :param target: xxxxxx.
-  :type target: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :param target: Determine whether to use target networks to calculate the values.
+  :param target: bool
+  :return: The team values.
+  :rtype: ms.Tensor
 
 .. py:function::
   xuance.mindspore.policies.categorical_marl.COMAPolicy.copy_target()
 
-  xxxxxx.
+  Synchronize the target networks.
 
 .. py:class::
   xuance.mindspore.policies.categorical_marl.MeanFieldActorCriticPolicy(action_space, n_agents, representation, actor_hidden_size, critic_hidden_size, normalize, initialize, activation)
+
+  Mean Field Actor-Critic policy.
 
   :param action_space: The action space of the environment.
   :type action_space: Space
   :param n_agents: The number of agents.
   :type n_agents: int
   :param representation: The representation module.
-  :type representation: nn.Module
+  :type representation: nn.Cell
   :param actor_hidden_size: The sizes of the hidden layers in actor network.
   :type actor_hidden_size: list
   :param critic_hidden_size: The sizes of the hidden layers in critic networks.
   :type critic_hidden_size: list
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: nn.Cell
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: ms.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: nn.Cell
 
 .. py:function::
   xuance.mindspore.policies.categorical_marl.MeanFieldActorCriticPolicy.construct(observation, agent_ids)
 
-  xxxxxx.
-
   :param observation: The original observation variables.
-  :type observation: Tensor
+  :type observation: ms.Tensor
   :param agent_ids: The IDs variables for agents.
-  :type agent_ids: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type agent_ids: ms.Tensor
+  :return: A tuple of tensors that includes the outputs hidden states and the categorical distributions.
+  :rtype: tuple
 
 .. py:function::
   xuance.mindspore.policies.categorical_marl.MeanFieldActorCriticPolicy.get_values(observation, actions_mean, agent_ids)
 
-  xxxxxx.
-
   :param observation: The original observation variables.
-  :type observation: Tensor
+  :type observation: ms.Tensor
   :param actions_mean: The mean values of actions.
-  :type actions_mean: Tensor
+  :type actions_mean: ms.Tensor
   :param agent_ids: The IDs variables for agents.
-  :type agent_ids: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type agent_ids: ms.Tensor
+  :return: The evaluated values of the observations and mean-actions pairs.
+  :rtype: ms.Tensor
 
 .. raw:: html
 

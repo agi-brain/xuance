@@ -224,7 +224,7 @@ MindSpore
   :param gain: The gain of the weights with orthogonal initilizer, defualt is sqrt of 2.
   :type gain: float
   :param bias: The initial bias of the layer, defualt is sqrt of 0.
-  :type bias: float.
+  :type bias: float
   :return: The initilized layer.
   :rtype: nn.Cell
 
