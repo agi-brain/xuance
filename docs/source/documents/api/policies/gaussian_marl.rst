@@ -33,8 +33,8 @@ PyTorch
 
   :param x: The input tensor.
   :type x: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The estimated Q-values.
+  :rtype: torch.Tensor
 
 
 .. py:class::
@@ -64,7 +64,7 @@ PyTorch
   :type observation: Tensor
   :param agent_ids: The IDs variables for agents.
   :type agent_ids: Tensor
-  :return: xxxxxx.
+  :return: .
   :rtype: xxxxxx
 
 .. py:function::
@@ -74,8 +74,8 @@ PyTorch
   :type observation: Tensor
   :param agent_ids: The IDs variables for agents.
   :type agent_ids: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The target Q-values.
+  :rtype: torch.Tensor
 
 .. py:function::
   xuance.torch.policies.gaussian_marl.BasicQnetwork.copy_target()
@@ -169,7 +169,7 @@ PyTorch
   :param agent_ids: The IDs variables for agents.
   :type agent_ids: Tensor
   :param rnn_hidden: The last final hidden states of the sequence.
-  :type *rnn_hidden: Tensor
+  :type rnn_hidden: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -181,7 +181,7 @@ PyTorch
   :param agent_ids: The IDs variables for agents.
   :type agent_ids: Tensor
   :param rnn_hidden: The last final hidden states of the sequence.
-  :type *rnn_hidden: Tensor
+  :type rnn_hidden: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -474,7 +474,7 @@ TensorFlow
   :param inputs: The inputs of the neural neworks.
   :type inputs: Dict(tf.Tensor)
   :param rnn_hidden: The last final hidden states of the sequence.
-  :type *rnn_hidden: Tensor
+  :type rnn_hidden: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -486,7 +486,7 @@ TensorFlow
   :param agent_ids: The IDs variables for agents.
   :type agent_ids: Tensor
   :param rnn_hidden: The last final hidden states of the sequence.
-  :type *rnn_hidden: Tensor
+  :type rnn_hidden: Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 

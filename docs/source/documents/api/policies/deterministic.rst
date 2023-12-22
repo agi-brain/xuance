@@ -13,7 +13,8 @@ PyTorch
 .. py:class::
   xuance.torch.policies.deterministic.BasicQhead(state_dim, action_dim, hidden_sizes, normalize, initialize, activation, device)
 
-  This class defines the Q-value head with a neural network. It uses a multi-layer perceptron with a specified architecture defined by hidden_sizes.
+  This class defines the Q-value head with a neural network. 
+  It uses a multi-layer perceptron with a specified architecture defined by hidden_sizes.
 
   :param state_dim: The dimension of the input state.
   :type state_dim: int
@@ -164,7 +165,7 @@ PyTorch
   xuance.torch.policies.deterministic.QRDQNhead.forward(x)
 
   The forward method takes an input tensor x and passes it through the model. 
-  The output is reshaped to have dimensions -1, action_dim, atom_num, representing the quantiles for each action..
+  The output is reshaped to have dimensions -1, action_dim, atom_num, representing the quantiles for each action.
 
   :param x: The input tensor.
   :type x: torch.Tensor
@@ -971,6 +972,9 @@ TensorFlow
 .. py:class::
   xuance.tensorflow.policies.deterministic.BasicQhead(state_dim, action_dim, hidden_sizes, normalize, initialize, activation, device)
 
+  This class defines the Q-value head with a neural network. 
+  It uses a multi-layer perceptron with a specified architecture defined by hidden_sizes.
+
   :param state_dim: The dimension of the input state.
   :type state_dim: int
   :param action_dim: The dimension of the action input.
@@ -978,42 +982,45 @@ TensorFlow
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: tk.Model
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: torch.Tensor
+  :type initialize: tf.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: tk.Model
   :param device: The calculating device.
   :type device: str
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.BasicQhead.call(inputs)
 
-  xxxxxx.
-
   :param inputs: The inputs of the neural neworks.
   :type inputs: Dict(tf.Tensor)
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The Q values of the input x.
+  :rtype: tf.Tensor
 
 .. py:class::
   xuance.tensorflow.policies.deterministic.BasicRecurrent(**kwargs)
 
-  :param **kwargs: xxxxxx.
-  :type **kwargs: xxxxxx
+  :param kwargs: The customized arguments.
+  :type kwargs: dict
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.BasicRecurrent.call(x)
 
-  xxxxxx.
+  The feed forward method that calculates the recurrent hidden states, and the output of the model.
 
   :param x: The input tensor.
-  :type x: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type x: tf.Tensor
+  :return: A tuple that includes the recurrent hidden states, and the output of the model.
+  :rtype: tuple
 
 .. py:class::
   xuance.tensorflow.policies.deterministic.DuelQhead(state_dim, action_dim, hidden_sizes, normalize, initialize, activation, device)
+
+  A dueling Q-network head, commonly used in reinforcement learning for estimating action values. 
+  The dueling architecture separates the Q-value into two components: 
+  one representing the value of being in a certain state (v), 
+  and the other representing the advantage of taking each action (a).
 
   :param state_dim: The dimension of the input state.
   :type state_dim: int
@@ -1022,26 +1029,38 @@ TensorFlow
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: tk.Model
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: torch.Tensor
+  :type initialize: tf.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: tk.Model
   :param device: The calculating device.
   :type device: str
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.DuelQhead.call(x)
 
-  xxxxxx.
+  The `forward` method computes the Q-values by combining the value and advantage streams. 
+  
+  It calculates the Q-values using the dueling formula: 
+  
+  .. math::
+    Q(s, a) = V(s) + A(s, a) - \text{mean}(A(s)),
+
+  where V(s) is the value of the state, A(s, a) is the advantage of taking action (a) in state (s), 
+  and \text{mean}(A(s)) is the mean advantage over all actions in state (s)..
 
   :param x: The input tensor.
-  :type x: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type x: tf.Tensor
+  :return: The Q-values by combining the value and advantage streams.
+  :rtype: tf.Tensor
 
 .. py:class::
   xuance.tensorflow.policies.deterministic.C51Qhead(state_dim, action_dim, atom_num, hidden_sizes, normalize, initialize, activation, device)
+
+  This class appears to define a Categorical Distributional Q-network head, 
+  commonly used in reinforcement learning for handling distributional aspects of Q-values. 
+  The C51 algorithm represents the Q-distribution as a set of atoms.
 
   :param state_dim: The dimension of the input state.
   :type state_dim: int
@@ -1052,26 +1071,31 @@ TensorFlow
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: tk.Model
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: torch.Tensor
+  :type initialize: tf.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: tk.Model
   :param device: The calculating device.
   :type device: str
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.C51Qhead.call(x)
 
-  xxxxxx.
+  The forward method takes an input tensor x and passes it through the model. 
+  The output is reshaped to have dimensions -1, action_dim, atom_num, representing the logits for each atom for each action. 
+  Then, softmax is applied along the last dimension to obtain the probability distribution over the atoms for each action.
 
   :param x: The input tensor.
-  :type x: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type x: tf.Tensor
+  :return: The probability distribution over the atoms for each action.
+  :rtype: tf.Tensor
 
 .. py:class::
   xuance.tensorflow.policies.deterministic.QRDQNhead(state_dim, action_dim, atom_num, hidden_sizes, normalize, initialize, activation, device)
+
+  This class appears to define a Quantile Regression DQN (QR-DQN) head, 
+  which is used in reinforcement learning for distributional reinforcement learning with quantile regression.
 
   :param state_dim: The dimension of the input state.
   :type state_dim: int
@@ -1082,174 +1106,187 @@ TensorFlow
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: tk.Model
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: torch.Tensor
+  :type initialize: tf.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: tk.Model
   :param device: The calculating device.
   :type device: str
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.QRDQNhead.call(x)
 
-  xxxxxx.
+  The forward method takes an input tensor x and passes it through the model. 
+  The output is reshaped to have dimensions -1, action_dim, atom_num, representing the quantiles for each action.
 
   :param x: The input tensor.
-  :type x: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type x: tf.Tensor
+  :return: The quantiles for each action.
+  :rtype: tf.Tensor
 
 .. py:class::
   xuance.tensorflow.policies.deterministic.BasicQnetwork(action_space, representation, hidden_size, normalize, initialize, activation, device)
 
+  An implemention of a basic Q-network with separate evaluation and target networks, 
+  which is a common approach in deep reinforcement learning algorithms like DQN (Deep Q-Network). 
+  It follows the general structure of a DQN architecture with separate Q-networks for stability during training.
+
   :param action_space: The action space of the environment.
   :type action_space: Space
   :param representation: The representation module.
-  :type representation: nn.Module
+  :type representation: tk.Model
   :param hidden_size: The sizes of the hidden layers.
   :type hidden_size: list
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: tk.Model
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: torch.Tensor
+  :type initialize: tf.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: tk.Model
   :param device: The calculating device.
   :type device: str
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.BasicQnetwork.call(observation)
 
-  xxxxxx.
+  Takes an observation (state) as input, passes it through the representation network, and then through the evaluation Q-head. 
+  Returns the representation outputs, the argmax action, and the Q-values.
 
   :param observation: The original observation variables.
-  :type observation: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type observation: tf.Tensor
+  :return: A tuple that includes the representation outputs, the argmax action, and the Q-values.
+  :rtype: tuple
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.BasicQnetwork.target(observation)
 
-  xxxxxx.
+  Similar to forward but uses the target representation and target Q-head for stability during training.
 
   :param observation: The original observation variables.
-  :type observation: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type observation: tf.Tensor
+  :return: A tuple that includes the target representation outputs, the argmax action, and the target Q-values.
+  :rtype: tuple
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.BasicQnetwork.copy_target()
 
-  xxxxxx.
+  Copies the parameters from the evaluation Q-network to the target Q-network.
 
-  :return: xxxxxx.
-  :rtype: xxxxxx
 
 .. py:class::
   xuance.tensorflow.policies.deterministic.DuelQnetwork(action_space, representation, hidden_size, normalize, initialize, activation, device)
 
+  An implementation of a Dueling Q-network, which is a variant of the standard deep Q-network (DQN). 
+  Dueling networks separate the estimation of the state value function and the advantages of each action, providing better learning stability.
+
   :param action_space: The action space of the environment.
   :type action_space: Space
   :param representation: The representation module.
-  :type representation: nn.Module
+  :type representation: tk.Model
   :param hidden_size: The sizes of the hidden layers.
   :type hidden_size: list
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: tk.Model
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: torch.Tensor
+  :type initialize: tf.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: tk.Model
   :param device: The calculating device.
   :type device: str
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.DuelQnetwork.call(observation)
 
-  xxxxxx.
+  Takes an observation (state) as input, passes it through the representation network, 
+  and then through the evaluation Q-head. 
+  Returns the representation outputs, the argmax action, and the Q-values.
 
   :param observation: The original observation variables.
-  :type observation: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type observation: tf.Tensor
+  :return: A tuple that includes the representation outputs, the argmax action, and the Q-values.
+  :rtype: tuple
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.DuelQnetwork.target(observation)
 
-  xxxxxx.
+  Similar to forward but uses the target representation and target Q-head for stability during training.
 
   :param observation: The original observation variables.
-  :type observation: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type observation: tf.Tensor
+  :return: A tuple that includes the target representation outputs, the argmax action, and the target Q-values.
+  :rtype: tuple
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.DuelQnetwork.copy_target()
 
-  xxxxxx.
+  Copies the parameters from the evaluation representation, target representation, evaluation Q-head, and target Q-head.
 
-  :return: xxxxxx.
-  :rtype: xxxxxx
 
 .. py:class::
   xuance.tensorflow.policies.deterministic.NoisyQnetwork(action_space, representation, hidden_size, normalize, initialize, activation, device)
 
+  An implementation of a Noisy Q-network, which is a variant of the standard deep Q-network (DQN) that introduces noise to the parameters of the Q-network to encourage exploration during training.
+
   :param action_space: The action space of the environment.
   :type action_space: Space
   :param representation: The representation module.
-  :type representation: nn.Module
+  :type representation: tk.Model
   :param hidden_size: The sizes of the hidden layers.
   :type hidden_size: list
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: tk.Model
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: torch.Tensor
+  :type initialize: tf.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: tk.Model
   :param device: The calculating device.
   :type device: str
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.NoisyQnetwork.update_noise(noisy_bound)
 
-  xxxxxx.
+  Generates and updates noisy parameters for both the evaluation and target Q-heads.
 
-  :param noisy_bound: xxxxxx.
-  :type noisy_bound: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :param noisy_bound: The bound of the noises.
+  :type noisy_bound: float
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.NoisyQnetwork.call(observation)
 
-  xxxxxx.
+  Takes an observation (state) as input, passes it through the representation network, 
+  updates the noisy parameters, and then through the evaluation Q-head. 
+  Returns the representation outputs, the argmax action, and the Q-values.
 
   :param observation: The original observation variables.
-  :type observation: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type observation: tf.Tensor
+  :return: A tuple that includes the representation outputs, the argmax action, and the Q-values.
+  :rtype: tuple
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.NoisyQnetwork.target(observation)
 
-  xxxxxx.
+  Similar to forward but uses the target representation and target Q-head for stability during training. 
+  The noisy parameters are also updated.
 
   :param observation: The original observation variables.
-  :type observation: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type observation: tf.Tensor
+  :return: A tuple that includes the target representation outputs, the argmax action, and the target Q-values.
+  :rtype: tuple
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.NoisyQnetwork.copy_target()
 
-  xxxxxx.
+  Copies the parameters from the evaluation representation, target representation, evaluation Q-head, and target Q-head.
 
-  :return: xxxxxx.
-  :rtype: xxxxxx
 
 .. py:class::
   xuance.tensorflow.policies.deterministic.C51Qnetwork(action_space, atom_num, vmin, vmax, representation, hidden_size, normalize, initialize, activation, device)
+
+  An implementation of a C51 Q-network, 
+  which is an extension of the standard deep Q-network (DQN) that represents Q-values as probability distributions over discrete support. 
+  The network outputs probabilities for each atom in the support, 
+  and the Q-value is obtained by summing the products of probabilities and support values.
 
   :param action_space: The action space of the environment.
   :type action_space: Space
@@ -1260,96 +1297,99 @@ TensorFlow
   :param vmax: Maximum value for the support of the Q-distribution.
   :type vmax: float
   :param representation: The representation module.
-  :type representation: nn.Module
+  :type representation: tk.Model
   :param hidden_size: The sizes of the hidden layers.
   :type hidden_size: list
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: tk.Model
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: torch.Tensor
+  :type initialize: tf.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: tk.Model
   :param device: The calculating device.
   :type device: str
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.C51Qnetwork.call(observation)
 
-  xxxxxx.
+  Takes an observation (state) as input, passes it through the representation network, and then through the evaluation Q-head. 
+  Returns the representation outputs, the argmax action, and the C51 Q-values.
 
   :param observation: The original observation variables.
-  :type observation: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type observation: tf.Tensor
+  :return: A tuple that includes the representation outputs, the argmax action, and the C51 Q-values.
+  :rtype: tuple
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.C51Qnetwork.target(observation)
 
-  xxxxxx.
+  Similar to forward but uses the target representation and target Q-head for stability during training.
 
   :param observation: The original observation variables.
-  :type observation: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type observation: tf.Tensor
+  :return: A tuple that includes the target representation outputs, the argmax action, and the target C51 Q-values.
+  :rtype: tuple
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.C51Qnetwork.copy_target()
 
-  xxxxxx.
+  Copies the parameters from the evaluation representation, target representation, evaluation Q-head, and target Q-head.
 
-  :return: xxxxxx.
-  :rtype: xxxxxx
 
 .. py:class::
   xuance.tensorflow.policies.deterministic.QRDQN_Network(action_space, quantile_num, representation, hidden_size, normalize, initialize, activation, device)
+
+  An implementation of a QR-DQN network, which is an extension of the standard deep Q-network (DQN) that introduces quantile regression for estimating the distributional aspects of the Q-function.
 
   :param action_space: The action space of the environment.
   :type action_space: Space
   :param quantile_num: Number of quantile levels.
   :type quantile_num: int
   :param representation: The representation module.
-  :type representation: nn.Module
+  :type representation: tk.Model
   :param hidden_size: The sizes of the hidden layers.
   :type hidden_size: list
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: tk.Model
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: torch.Tensor
+  :type initialize: tf.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: tk.Model
   :param device: The calculating device.
   :type device: str
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.QRDQN_Network.call(observation)
 
-  xxxxxx.
+  Takes an observation (state) as input, passes it through the representation network, and then through the evaluation Q-head. 
+  Returns the representation outputs, the argmax action, and the QR-DQN Q-values.
 
   :param observation: The original observation variables.
-  :type observation: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type observation: tf.Tensor
+  :return: A tuple that includes the representation outputs, the argmax action, and the QR-DQN Q-values.
+  :rtype: tuple
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.QRDQN_Network.target(observation)
 
-  xxxxxx.
+  Similar to forward but uses the target representation and target Q-head for stability during training.
 
   :param observation: The original observation variables.
-  :type observation: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type observation: tf.Tensor
+  :return: A tuple that includes the target representation outputs, the argmax action, and the target QR-DQN Q-values.
+  :rtype: tuple
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.QRDQN_Network.copy_target()
 
-  xxxxxx.
+  Copies the parameters from the evaluation representation, target representation, evaluation Q-head, and target Q-head.
 
-  :return: xxxxxx.
-  :rtype: xxxxxx
 
 .. py:class::
   xuance.tensorflow.policies.deterministic.ActorNet(state_dim, action_dim, hidden_sizes, initialize, activation, device)
+
+  An actor neural network used in reinforcement learning. 
+  The actor network typically outputs the actions given the state and is used in policy-based methods such as actor-critic algorithms.
 
   :param state_dim: The dimension of the input state.
   :type state_dim: int
@@ -1358,24 +1398,28 @@ TensorFlow
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: torch.Tensor
+  :type initialize: tf.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: tk.Model
   :param device: The calculating device.
   :type device: str
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.ActorNet.call(x)
 
-  xxxxxx.
+  Takes an input tensor x (representing the state) and passes it through the model to produce the output, 
+  which represents the actor's action in the given state.
 
   :param x: The input tensor.
-  :type x: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type x: tf.Tensor
+  :return: The actor's action in the given state.
+  :rtype: tf.Tensor
 
 .. py:class::
   xuance.tensorflow.policies.deterministic.CriticNet(state_dim, action_dim, hidden_sizes, initialize, activation, device)
+
+  A critic neural network used in reinforcement learning. 
+  The critic network typically outputs the values given the state and/or actions and is used in policy-based methods such as actor-critic algorithms.
 
   :param state_dim: The dimension of the input state.
   :type state_dim: int
@@ -1384,161 +1428,168 @@ TensorFlow
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: torch.Tensor
+  :type initialize: tf.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: tk.Model
   :param device: The calculating device.
   :type device: str
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.CriticNet.call(x)
 
-  xxxxxx.
+  A feed forward method that calculate the critic values of the input state x.
 
   :param x: The input tensor.
-  :type x: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type x: tf.Tensor
+  :return: The evaluated critic values of the input state x.
+  :rtype: tf.Tensor
 
 .. py:class::
   xuance.tensorflow.policies.deterministic.DDPGPolicy(action_space, representation, actor_hidden_size, critic_hidden_size, initialize, activation, device)
 
+  The DDPGPolicy class defines the policy networks and critic networks used in the Deep Deterministic Policy Gradients (DDPG) algorithm.
+
   :param action_space: The action space of the environment.
   :type action_space: Space
   :param representation: The representation module.
-  :type representation: nn.Module
+  :type representation: tk.Model
   :param actor_hidden_size: The sizes of the hidden layers in actor network.
   :type actor_hidden_size: list
   :param critic_hidden_size: The sizes of the hidden layers in critic networks.
   :type critic_hidden_size: list
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: torch.Tensor
+  :type initialize: tf.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: tk.Model
   :param device: The calculating device.
   :type device: str
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.DDPGPolicy.call(observation)
 
-  xxxxxx.
+  Takes an observation (state) as input, passes it through the representation network, and then through the actor network to produce the action.
 
   :param observation: The original observation variables.
-  :type observation: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type observation: tf.Tensor
+  :return: A tuple that includes the representation outputs and the deterministic actions.
+  :rtype: tuple
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.DDPGPolicy.Qtarget(observation)
 
-  xxxxxx.
+  Computes the Q-value using the target actor and target critic networks. 
+  This is used for updating the actor network in the DDPG algorithm.
 
   :param observation: The original observation variables.
-  :type observation: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type observation: tf.Tensor
+  :return: The target values of the state-action pairs.
+  :rtype: tf.Tensor
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.DDPGPolicy.Qaction(observation, action)
 
-  xxxxxx.
+  Computes the Q-value using the critic network for a given observation and action pair.
 
   :param observation: The original observation variables.
-  :type observation: torch.Tensor
+  :type observation: tf.Tensor
   :param action: The action input.
-  :type action: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type action: tf.Tensor
+  :return: The Q-value using the critic network for a given observation and action pair.
+  :rtype: tf.Tensor
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.DDPGPolicy.Qpolicy(observation)
 
-  xxxxxx.
+  Computes the Q-value using the critic network for the current policy action (output of the actor network) given an observation.
 
   :param observation: The original observation variables.
-  :type observation: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type observation: tf.Tensor
+  :return: A tuple that includes the evaulated Q-values and the actions.
+  :rtype: tuple
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.DDPGPolicy.soft_update(tau)
 
-  xxxxxx.
+  Performs soft updates to the target actor and target critic networks based on the current actor and critic networks. 
+  This is a mechanism for slowly updating the target networks towards the current networks.
 
   :param tau: The soft update factor for the update of target networks.
   :type tau: float
-  :return: xxxxxx.
-  :rtype: xxxxxx
+
 
 .. py:class::
   xuance.tensorflow.policies.deterministic.TD3Policy(action_space, representation, actor_hidden_size, critic_hidden_size, initialize, activation, device)
 
+  The TD3Policy class represents the policy network used in the Twin Delayed DDPG (TD3) algorithm. 
+  TD3 is an extension of the DDPG algorithm with some modifications to improve stability and robustness.
+
   :param action_space: The action space of the environment.
   :type action_space: Space
   :param representation: The representation module.
-  :type representation: nn.Module
+  :type representation: tk.Model
   :param actor_hidden_size: The sizes of the hidden layers in actor network.
   :type actor_hidden_size: list
   :param critic_hidden_size: The sizes of the hidden layers in critic networks.
   :type critic_hidden_size: list
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: torch.Tensor
+  :type initialize: tf.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: tk.Model
   :param device: The calculating device.
   :type device: str
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.TD3Policy.action(observation)
 
-  xxxxxx.
+  Takes an observation (state) as input, passes it through the representation network, and then through the actor network to produce the action.
 
   :param observation: The original observation variables.
-  :type observation: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type observation: tf.Tensor
+  :return: A tuple that includes the representation outputs and the actions.
+  :rtype: tuple
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.TD3Policy.Qtarget(observation)
 
-  xxxxxx.
+  Computes the Q-value using the target actor and target critic networks.
+  Adds clipped noise to the target actor's output to improve exploration.
 
   :param observation: The original observation variables.
-  :type observation: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type observation: tf.Tensor
+  :return: A tuple that lists the target representation outputs, and the minimum of the values calculated by target critic-A and target critic-B.
+  :rtype: tuple
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.TD3Policy.Qaction(observation, action)
 
-  xxxxxx.
+  Computes the Q-values using the critic networks for a given observation and action pair.
 
   :param observation: The original observation variables.
-  :type observation: torch.Tensor
+  :type observation: tf.Tensor
   :param action: The action input.
-  :type action: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type action: tf.Tensor
+  :return: A tuple that includes the representation output, and the concatenates of the values calculated by critic-A and critic-B.
+  :rtype: tuple
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.TD3Policy.Qpolicy(observation)
 
-  xxxxxx.
+  Computes the Q-value using the critic networks for the current policy action (output of the actor network) given an observation.
 
   :param observation: The original observation variables.
-  :type observation: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type observation: tf.Tensor
+  :return: A tuple that includes the representation outputs and the mean of the two values calculated by critic-A and critic-B.
+  :rtype: tuple
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.TD3Policy.soft_update(tau)
 
-  xxxxxx.
+  Performs soft updates to the target actor and target critic networks based on the current actor and critic networks. 
+  This is a mechanism for slowly updating the target networks towards the current networks.
 
   :param tau: The soft update factor for the update of target networks.
   :type tau: float
-  :return: xxxxxx.
-  :rtype: xxxxxx
+
 
 .. py:class::
   xuance.tensorflow.policies.deterministic.PDQNPolicy(observation_space, action_space, representation, conactor_hidden_size, qnetwork_hidden_size, normalize, initialize, activation, device)
@@ -1548,83 +1599,83 @@ TensorFlow
   :param action_space: The action space of the environment.
   :type action_space: Space
   :param representation: The representation module.
-  :type representation: nn.Module
+  :type representation: tk.Model
   :param conactor_hidden_size: A sequence of integers specifying the sizes of hidden layers in the conactor network.
   :type conactor_hidden_size: list
   :param qnetwork_hidden_size: A sequence of integers specifying the sizes of hidden layers in the Q-network.
   :type qnetwork_hidden_size: list
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: tk.Model
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: torch.Tensor
+  :type initialize: tf.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: tk.Model
   :param device: The calculating device.
   :type device: str
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.PDQNPolicy.Atarget(state)
 
-  xxxxxx.
+  Computes the target action distribution using the target conactor network.
 
   :param state: The state input.
-  :type state: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type state: tf.Tensor
+  :return: The target action distribution.
+  :rtype: tf.Tensor
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.PDQNPolicy.con_action(state)
 
-  xxxxxx.
+  Computes the continuous action distribution using the conactor network.
 
   :param state: The state input.
-  :type state: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type state: tf.Tensor
+  :return: The continuous action distribution.
+  :rtype: tf.Tensor
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.PDQNPolicy.Qtarget(state, action)
 
-  xxxxxx.
+  Computes the target Q-values using the target Q-network for a given state-action pair.
 
   :param state: The state input.
-  :type state: Tensor
+  :type state: tf.Tensor
   :param action: The action input.
-  :type action: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type action: tf.Tensor
+  :return: The target Q-values.
+  :rtype: tf.Tensor
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.PDQNPolicy.Qeval(state, action)
 
-  xxxxxx.
+  Computes the Q-values using the Q-network for a given state-action pair.
 
   :param state: The state input.
-  :type state: Tensor
+  :type state: tf.Tensor
   :param action: The action input.
-  :type action: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type action: tf.Tensor
+  :return: The Q-values.
+  :rtype: tf.Tensor
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.PDQNPolicy.Qpolicy(state)
 
-  xxxxxx.
+  Computes the Q-value for the current policy action (output of the conactor) given a state.
 
   :param state: The state input.
-  :type state: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type state: tf.Tensor
+  :return: The Q-values.
+  :rtype: tf.Tensor
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.PDQNPolicy.soft_update(tau)
 
-  xxxxxx.
+  Performs soft updates to the target networks (representation, conactor, and Q-network) based on the current networks. 
+  This is a mechanism for slowly updating the target networks towards the current networks.
 
   :param tau: The soft update factor for the update of target networks.
   :type tau: float
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  
 
 .. py:class::
   xuance.tensorflow.policies.deterministic.MPDQNPolicy(observation_space, action_space, representation, conactor_hidden_size, qnetwork_hidden_size, normalize, initialize, activation, device)
@@ -1634,83 +1685,83 @@ TensorFlow
   :param action_space: The action space of the environment.
   :type action_space: Space
   :param representation: The representation module.
-  :type representation: nn.Module
+  :type representation: tk.Model
   :param conactor_hidden_size: A sequence of integers specifying the sizes of hidden layers in the conactor network.
   :type conactor_hidden_size: list
   :param qnetwork_hidden_size: A sequence of integers specifying the sizes of hidden layers in the Q-network.
   :type qnetwork_hidden_size: list
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: tk.Model
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: torch.Tensor
+  :type initialize: tf.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: tk.Model
   :param device: The calculating device.
   :type device: str
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.MPDQNPolicy.Atarget(state)
 
-  xxxxxx.
+  Computes the target action distribution using the target conactor network.
 
   :param state: The state input.
-  :type state: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type state: tf.Tensor
+  :return: The target action distribution.
+  :rtype: tf.Tensor
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.MPDQNPolicy.con_action(state)
 
-  xxxxxx.
+  Computes the continuous action distribution using the conactor network.
 
   :param state: The state input.
-  :type state: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type state: tf.Tensor
+  :return: The continuous action distribution.
+  :rtype: tf.Tensor
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.MPDQNPolicy.Qtarget(state, action)
 
-  xxxxxx.
+  Computes the target Q-values using the target Q-network for a given state-action pair.
 
   :param state: The state input.
-  :type state: Tensor
+  :type state: tf.Tensor
   :param action: The action input.
-  :type action: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type action: tf.Tensor
+  :return: The target Q-values.
+  :rtype: tf.Tensor
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.MPDQNPolicy.Qeval(state, action)
 
-  xxxxxx.
+  Computes the Q-values using the Q-network for a given state-action pair.
 
   :param state: The state input.
-  :type state: Tensor
+  :type state: tf.Tensor
   :param action: The action input.
-  :type action: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type action: tf.Tensor
+  :return: The Q-values.
+  :rtype: tf.Tensor
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.MPDQNPolicy.Qpolicy(state)
 
-  xxxxxx.
+  Computes the Q-value for the current policy action (output of the conactor) given a state.
 
   :param state: The state input.
-  :type state: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type state: tf.Tensor
+  :return: The Q-values.
+  :rtype: tf.Tensor
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.MPDQNPolicy.soft_update(tau)
 
-  xxxxxx.
+  Performs soft updates to the target networks (representation, conactor, and Q-network) based on the current networks. 
+  This is a mechanism for slowly updating the target networks towards the current networks.
 
   :param tau: The soft update factor for the update of target networks.
   :type tau: float
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  
 
 .. py:class::
   xuance.tensorflow.policies.deterministic.SPDQNPolicy(observation_space, action_space, representation, conactor_hidden_size, qnetwork_hidden_size, normalize, initialize, activation, device)
@@ -1720,147 +1771,150 @@ TensorFlow
   :param action_space: The action space of the environment.
   :type action_space: Space
   :param representation: The representation module.
-  :type representation: nn.Module
+  :type representation: tk.Model
   :param conactor_hidden_size: A sequence of integers specifying the sizes of hidden layers in the conactor network.
   :type conactor_hidden_size: list
   :param qnetwork_hidden_size: A sequence of integers specifying the sizes of hidden layers in the Q-network.
   :type qnetwork_hidden_size: list
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: tk.Model
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: torch.Tensor
+  :type initialize: tf.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: tk.Model
   :param device: The calculating device.
   :type device: str
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.SPDQNPolicy.Atarget(state)
 
-  xxxxxx.
+  Computes the target action distribution using the target conactor network.
 
   :param state: The state input.
-  :type state: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type state: tf.Tensor
+  :return: The target action distribution.
+  :rtype: tf.Tensor
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.SPDQNPolicy.con_action(state)
 
-  xxxxxx.
+  Computes the continuous action distribution using the conactor network.
 
   :param state: The state input.
-  :type state: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type state: tf.Tensor
+  :return: The continuous action distribution.
+  :rtype: tf.Tensor
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.SPDQNPolicy.Qtarget(state, action)
 
-  xxxxxx.
+  Computes the target Q-values using the target Q-network for a given state-action pair.
 
   :param state: The state input.
-  :type state: Tensor
+  :type state: tf.Tensor
   :param action: The action input.
-  :type action: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type action: tf.Tensor
+  :return: The target Q-values.
+  :rtype: tf.Tensor
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.SPDQNPolicy.Qeval(state, action)
 
-  xxxxxx.
+  Computes the Q-values using the Q-network for a given state-action pair.
 
   :param state: The state input.
-  :type state: Tensor
+  :type state: tf.Tensor
   :param action: The action input.
-  :type action: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type action: tf.Tensor
+  :return: The Q-values.
+  :rtype: tf.Tensor
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.SPDQNPolicy.Qpolicy(state)
 
-  xxxxxx.
+  Computes the Q-value for the current policy action (output of the conactor) given a state.
 
   :param state: The state input.
-  :type state: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type state: tf.Tensor
+  :return: The Q-values.
+  :rtype: tf.Tensor
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.SPDQNPolicy.soft_update(tau)
 
-  xxxxxx.
+  Performs soft updates to the target networks (representation, conactor, and Q-network) based on the current networks. 
+  This is a mechanism for slowly updating the target networks towards the current networks.
 
   :param tau: The soft update factor for the update of target networks.
   :type tau: float
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  
 
 .. py:class::
   xuance.tensorflow.policies.deterministic.DRQNPolicy(action_space, representation, **kwargs)
 
+  An implementation of a policy network for a Deep Recurrent Q-Network (DRQN). This type of architecture is often used in reinforcement learning when dealing with sequential decision-making tasks, and it incorporates recurrent neural networks (RNNs) to handle temporal dependencies in the observations.
+
   :param action_space: The action space of the environment.
   :type action_space: Space
   :param representation: The representation module.
-  :type representation: nn.Module
-  :param **kwargs: xxxxxx.
-  :type **kwargs: xxxxxx
+  :type representation: tk.Model
+  :param kwargs: The necessary arguments.
+  :type kwargs: dict
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.DRQNPolicy.call(observation, *rnn_hidden)
 
-  xxxxxx.
+  Computes the forward pass of the DRQN policy. 
+  Takes an observation, passes it through the representation network, and then through the recurrent Q-head to produce the Q-values. 
+  The hidden states from the RNN are returned for potential use in future steps.
 
   :param observation: The original observation variables.
-  :type observation: torch.Tensor
+  :type observation: tf.Tensor
   :param rnn_hidden: The last final hidden states of the sequence.
-  :type *rnn_hidden: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type rnn_hidden: tf.Tensor
+  :return: A tuple that includes the representation outputs, argmax_action, evaluated Q-values, and the new recurrent hidden states.
+  :rtype: tuple
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.DRQNPolicy.target(observation, *rnn_hidden)
 
-  xxxxxx.
+  Similar to forward but uses the target representation and target Q-head for stability during training. 
+  The hidden states from the target RNN are also returned.
 
   :param observation: The original observation variables.
-  :type observation: torch.Tensor
+  :type observation: tf.Tensor
   :param rnn_hidden: The last final hidden states of the sequence.
-  :type *rnn_hidden: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: A tuple that includes the target representation outputs, argmax_action, target Q-values, and the new recurrent hidden states.
+  :rtype: tuple
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.DRQNPolicy.init_hidden(batch)
 
-  xxxxxx.
+  Initializes the hidden states for the RNN.
 
-  :param batch: xxxxxx.
-  :type batch: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :param batch: The size of the batch data.
+  :type batch: int
+  :return: The initialized hidden states for the RNN.
+  :rtype: tf.Tensor
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.DRQNPolicy.init_hidden_item(rnn_hidden, i)
 
-  xxxxxx.
+  Initializes the hidden states for a specific item in the batch.
 
   :param rnn_hidden: The final hidden state of the sequence.
-  :type rnn_hidden: xxxxxx
-  :param i: xxxxxx.
-  :type i: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type rnn_hidden: tf.Tensor
+  :param i: The index of the item.
+  :type i: int
+  :return: The hidden states with a specific item initialized in the batch.
+  :rtype: tf.Tensor
 
 .. py:function::
   xuance.tensorflow.policies.deterministic.DRQNPolicy.copy_target()
 
-  xxxxxx.
+  Copies the parameters of the evaluation Q-head and representation to the target Q-head and representation. 
+  This is a mechanism for slowly updating the target networks towards the current networks.
 
-  :return: xxxxxx.
-  :rtype: xxxxxx
 
 .. raw:: html
 
@@ -1872,6 +1926,8 @@ MindSpore
 .. py:class::
   xuance.mindspore.policies.deterministic.BasicQhead(state_dim, action_dim, hidden_sizes, normalize, initialize, activation)
 
+  This class defines the Q-value head with a neural network. It uses a multi-layer perceptron with a specified architecture defined by hidden_sizes.
+
   :param state_dim: The dimension of the input state.
   :type state_dim: int
   :param action_dim: The dimension of the action input.
@@ -1879,45 +1935,50 @@ MindSpore
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: nn.Cell
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: torch.Tensor
+  :type initialize: ms.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: nn.Cell
 
 .. py:function::
   xuance.mindspore.policies.deterministic.BasicQhead.construct(x)
 
-  xxxxxx.
-
   :param x: The input tensor.
-  :type x: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type x: ms.Tensor
+  :return: The Q values of the input x.
+  :rtype: ms.Tensor
 
 .. py:class::
   xuance.mindspore.policies.deterministic.BasicRecurrent(kwargs)
 
-  :param kwargs: The other arguments.
+  The basic recurrent neural networks for DRQN based algorithms.
+
+  :param kwargs: The customized arguments.
   :type kwargs: dict
 
 .. py:function::
   xuance.mindspore.policies.deterministic.BasicRecurrent.construct(x, h, c)
-
-  xxxxxx.
+  
+  The feed forward method that calculates the recurrent hidden states, and the output of the model.
 
   :param x: The input tensor.
-  :type x: torch.Tensor
-  :param h: xxxxxx.
-  :type h: xxxxxx
-  :param c: xxxxxx.
-  :type c: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type x: ms.Tensor
+  :param h: Recurrent hidden states.
+  :type h: ms.Tensor
+  :param c: The hidden cells for LSTM.
+  :type c: ms.Tensor
+  :return: A tuple that includes the recurrent hidden states, and the output of the model.
+  :rtype: tuple
 
 .. py:class::
   xuance.mindspore.policies.deterministic.DuelQhead(state_dim, action_dim, hidden_sizes, normalize, initialize, activation)
 
+  A dueling Q-network head, commonly used in reinforcement learning for estimating action values. 
+  The dueling architecture separates the Q-value into two components: 
+  one representing the value of being in a certain state (v), 
+  and the other representing the advantage of taking each action (a).
+
   :param state_dim: The dimension of the input state.
   :type state_dim: int
   :param action_dim: The dimension of the action input.
@@ -1925,25 +1986,37 @@ MindSpore
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: nn.Cell
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: torch.Tensor
+  :type initialize: ms.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: nn.Cell
 
 .. py:function::
   xuance.mindspore.policies.deterministic.DuelQhead.construct(x)
 
-  xxxxxx.
+  The `forward` method computes the Q-values by combining the value and advantage streams. 
+  
+  It calculates the Q-values using the dueling formula: 
+  
+  .. math::
+    Q(s, a) = V(s) + A(s, a) - \text{mean}(A(s)),
+
+  where V(s) is the value of the state, A(s, a) is the advantage of taking action (a) in state (s), 
+  and \text{mean}(A(s)) is the mean advantage over all actions in state (s).
 
   :param x: The input tensor.
-  :type x: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type x: ms.Tensor
+  :return: The Q-values by combining the value and advantage streams.
+  :rtype: ms.Tensor
 
 .. py:class::
   xuance.mindspore.policies.deterministic.C51Qhead(state_dim, action_dim, atom_num, hidden_sizes, normalize, initialize, activation)
 
+  This class appears to define a Categorical Distributional Q-network head, 
+  commonly used in reinforcement learning for handling distributional aspects of Q-values. 
+  The C51 algorithm represents the Q-distribution as a set of atoms.
+
   :param state_dim: The dimension of the input state.
   :type state_dim: int
   :param action_dim: The dimension of the action input.
@@ -1953,24 +2026,30 @@ MindSpore
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: nn.Cell
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: torch.Tensor
+  :type initialize: ms.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: nn.Cell
 
 .. py:function::
   xuance.mindspore.policies.deterministic.C51Qhead.construct(x)
 
-  xxxxxx.
+  The forward method takes an input tensor x and passes it through the model. 
+  The output is reshaped to have dimensions -1, action_dim, atom_num, representing the logits for each atom for each action. 
+  Then, softmax is applied along the last dimension to obtain the probability distribution over the atoms for each action.
 
   :param x: The input tensor.
-  :type x: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type x: ms.Tensor
+  :return: The probability distribution over the atoms for each action.
+  :rtype: ms.Tensor
+
 
 .. py:class::
   xuance.mindspore.policies.deterministic.QRDQNhead(state_dim, action_dim, atom_num, hidden_sizes, normalize, initialize, activation)
+
+  This class appears to define a Quantile Regression DQN (QR-DQN) head, 
+  which is used in reinforcement learning for distributional reinforcement learning with quantile regression.
 
   :param state_dim: The dimension of the input state.
   :type state_dim: int
@@ -1981,180 +2060,184 @@ MindSpore
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: nn.Cell
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: torch.Tensor
+  :type initialize: ms.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: nn.Cell
 
 .. py:function::
   xuance.mindspore.policies.deterministic.QRDQNhead.construct(x)
 
-  xxxxxx.
+  The forward method takes an input tensor x and passes it through the model. 
+  The output is reshaped to have dimensions -1, action_dim, atom_num, representing the quantiles for each action..
 
   :param x: The input tensor.
-  :type x: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type x: ms.Tensor
+  :return: The quantiles for each action.
+  :rtype: ms.Tensor
 
 .. py:class::
   xuance.mindspore.policies.deterministic.BasicQnetwork(action_space, representation, hidden_sizes, normalize, initialize, activation)
 
+  An implemention of a basic Q-network with separate evaluation and target networks, 
+  which is a common approach in deep reinforcement learning algorithms like DQN (Deep Q-Network). 
+  It follows the general structure of a DQN architecture with separate Q-networks for stability during training.
+
   :param action_space: The action space of the environment.
   :type action_space: Space
   :param representation: The representation module.
-  :type representation: nn.Module
+  :type representation: nn.Cell
   :param hidden_size: The sizes of the hidden layers.
   :type hidden_size: list
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: nn.Cell
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: torch.Tensor
+  :type initialize: ms.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: nn.Cell
 
 .. py:function::
   xuance.mindspore.policies.deterministic.BasicQnetwork.construct(observation)
 
-  xxxxxx.
+  Takes an observation (state) as input, passes it through the representation network, and then through the evaluation Q-head. 
+  Returns the representation outputs, the argmax action, and the Q-values.
 
   :param observation: The original observation variables.
-  :type observation: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type observation: ms.Tensor
+  :return: A tuple that includes the representation outputs, the argmax action, and the Q-values.
+  :rtype: tuple
 
 .. py:function::
   xuance.mindspore.policies.deterministic.BasicQnetwork.target(observation)
 
-  xxxxxx.
+  Similar to forward but uses the target representation and target Q-head for stability during training.
 
   :param observation: The original observation variables.
-  :type observation: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type observation: ms.Tensor
+  :return: A tuple that includes the target representation outputs, the argmax action, and the target Q-values.
+  :rtype: tuple
 
 .. py:function::
   xuance.mindspore.policies.deterministic.BasicQnetwork.trainable_params(recurse)
 
-  xxxxxx.
-
-  :param recurse: xxxxxx.
-  :type recurse: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  Get trainable parameters.
 
 .. py:function::
   xuance.mindspore.policies.deterministic.BasicQnetwork.copy_target(observation)
 
-  xxxxxx.
+  Copies the parameters from the evaluation Q-network to the target Q-network.
 
 .. py:class::
   xuance.mindspore.policies.deterministic.DuelQnetwork(action_space, representation, hidden_sizes, normalize, initialize, activation)
 
+  An implementation of a Dueling Q-network, which is a variant of the standard deep Q-network (DQN). 
+  Dueling networks separate the estimation of the state value function and the advantages of each action, providing better learning stability.
+
   :param action_space: The action space of the environment.
   :type action_space: Space
   :param representation: The representation module.
-  :type representation: nn.Module
+  :type representation: nn.Cell
   :param hidden_size: The sizes of the hidden layers.
   :type hidden_size: list
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: nn.Cell
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: torch.Tensor
+  :type initialize: ms.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: nn.Cell
 
 .. py:function::
   xuance.mindspore.policies.deterministic.DuelQnetwork.construct(observation)
 
-  xxxxxx.
+  Takes an observation (state) as input, passes it through the representation network, 
+  and then through the evaluation Q-head. 
+  Returns the representation outputs, the argmax action, and the Q-values.
 
   :param observation: The original observation variables.
-  :type observation: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type observation: ms.Tensor
+  :return: A tuple that includes the representation outputs, the argmax action, and the Q-values.
+  :rtype: tuple
 
 .. py:function::
   xuance.mindspore.policies.deterministic.DuelQnetwork.target(observation)
 
-  xxxxxx.
+  Similar to forward but uses the target representation and target Q-head for stability during training.
 
   :param observation: The original observation variables.
-  :type observation: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type observation: ms.Tensor
+  :return: A tuple that includes the target representation outputs, the argmax action, and the target Q-values.
+  :rtype: tuple
 
 .. py:function::
   xuance.mindspore.policies.deterministic.DuelQnetwork.trainable_params(recurse)
 
-  xxxxxx.
-
-  :param recurse: xxxxxx.
-  :type recurse: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  Get trainbale parameters.
 
 .. py:function::
   xuance.mindspore.policies.deterministic.DuelQnetwork.copy_target(observation)
 
-  xxxxxx.
+  Copies the parameters from the evaluation representation, target representation, evaluation Q-head, and target Q-head.
+
 
 .. py:class::
   xuance.mindspore.policies.deterministic.NoisyQnetwork(action_space, representation, hidden_sizes, normalize, initialize, activation)
 
+  An implementation of a Noisy Q-network, which is a variant of the standard deep Q-network (DQN) that introduces noise to the parameters of the Q-network to encourage exploration during training.
+
   :param action_space: The action space of the environment.
   :type action_space: Space
   :param representation: The representation module.
-  :type representation: nn.Module
+  :type representation: nn.Cell
   :param hidden_size: The sizes of the hidden layers.
   :type hidden_size: list
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: nn.Cell
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: torch.Tensor
+  :type initialize: ms.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: nn.Cell
 
 .. py:function::
   xuance.mindspore.policies.deterministic.NoisyQnetwork.update_noise(noisy_bound)
 
-  xxxxxx.
+  Generates and updates noisy parameters for both the evaluation and target Q-heads.
 
-  :param noisy_bound: xxxxxx.
-  :type noisy_bound: xxxxxx
+  :param noisy_bound: The bound of the noises.
+  :type noisy_bound: float
 
 .. py:function::
   xuance.mindspore.policies.deterministic.NoisyQnetwork.noisy_parameters(is_target)
 
-  xxxxxx.
-
-  :param is_target: xxxxxx.
-  :type is_target: xxxxxx
+  Get parameters for noisy networks.
 
 .. py:function::
   xuance.mindspore.policies.deterministic.NoisyQnetwork.construct(observation)
 
-  xxxxxx.
+  Takes an observation (state) as input, passes it through the representation network, 
+  updates the noisy parameters, and then through the evaluation Q-head. 
+  Returns the representation outputs, the argmax action, and the Q-values.
 
   :param observation: The original observation variables.
-  :type observation: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type observation: ms.Tensor
+  :return: A tuple that includes the representation outputs, the argmax action, and the Q-values.
+  :rtype: tuple
 
 .. py:function::
   xuance.mindspore.policies.deterministic.NoisyQnetwork.target(observation)
 
-  xxxxxx.
+  Similar to forward but uses the target representation and target Q-head for stability during training. 
+  The noisy parameters are also updated.
 
   :param observation: The original observation variables.
-  :type observation: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type observation: ms.Tensor
+  :return: A tuple that includes the target representation outputs, the argmax action, and the target Q-values.
+  :rtype: tuple
 
 .. py:function::
   xuance.mindspore.policies.deterministic.NoisyQnetwork.trainable_params(recurse)
 
-  xxxxxx.
+  Get trainable parameters.
 
   :param recurse: xxxxxx.
   :type recurse: xxxxxx
@@ -2164,10 +2247,16 @@ MindSpore
 .. py:function::
   xuance.mindspore.policies.deterministic.NoisyQnetwork.copy_target(observation)
 
-  xxxxxx.
+  Copies the parameters from the evaluation representation, target representation, evaluation Q-head, and target Q-head.
+
 
 .. py:class::
   xuance.mindspore.policies.deterministic.C51Qnetwork(action_space, atom_num, vmin, vmax, representation, hidden_sizes, normalize, initialize, activation)
+
+  An implementation of a C51 Q-network, 
+  which is an extension of the standard deep Q-network (DQN) that represents Q-values as probability distributions over discrete support. 
+  The network outputs probabilities for each atom in the support, 
+  and the Q-value is obtained by summing the products of probabilities and support values.
 
   :param action_space: The action space of the environment.
   :type action_space: Space
@@ -2178,97 +2267,101 @@ MindSpore
   :param vmax: Maximum value for the support of the Q-distribution.
   :type vmax: float
   :param representation: The representation module.
-  :type representation: nn.Module
+  :type representation: nn.Cell
   :param hidden_size: The sizes of the hidden layers.
   :type hidden_size: list
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: nn.Cell
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: torch.Tensor
+  :type initialize: ms.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: nn.Cell
 
 .. py:function::
   xuance.mindspore.policies.deterministic.C51Qnetwork.construct(observation)
 
-  xxxxxx.
+  Takes an observation (state) as input, passes it through the representation network, and then through the evaluation Q-head. 
+  Returns the representation outputs, the argmax action, and the C51 Q-values.
 
   :param observation: The original observation variables.
-  :type observation: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type observation: ms.Tensor
+  :return: A tuple that includes the representation outputs, the argmax action, and the C51 Q-values.
+  :rtype: tuple
 
 .. py:function::
   xuance.mindspore.policies.deterministic.C51Qnetwork.target(observation)
 
-  xxxxxx.
+  Similar to forward but uses the target representation and target Q-head for stability during training.
 
   :param observation: The original observation variables.
-  :type observation: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type observation: ms.Tensor
+  :return: A tuple that includes the target representation outputs, the argmax action, and the target C51 Q-values.
+  :rtype: tuple
 
 .. py:function::
   xuance.mindspore.policies.deterministic.C51Qnetwork.copy_target(observation)
 
-  xxxxxx.
+  Copies the parameters from the evaluation representation, target representation, evaluation Q-head, and target Q-head.
+
 
 .. py:class::
   xuance.mindspore.policies.deterministic.QRDQN_Network(action_space, quantile_num, representation, hidden_sizes, normalize, initialize, activation)
+
+  An implementation of a QR-DQN network, which is an extension of the standard deep Q-network (DQN) that introduces quantile regression for estimating the distributional aspects of the Q-function.
 
   :param action_space: The action space of the environment.
   :type action_space: Space
   :param quantile_num: Number of quantile levels.
   :type quantile_num: int
   :param representation: The representation module.
-  :type representation: nn.Module
+  :type representation: nn.Cell
   :param hidden_size: The sizes of the hidden layers.
   :type hidden_size: list
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: nn.Cell
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: torch.Tensor
+  :type initialize: ms.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: nn.Cell
 
 .. py:function::
   xuance.mindspore.policies.deterministic.QRDQN_Network.construct(observation)
-
-  xxxxxx.
+  
+  Takes an observation (state) as input, passes it through the representation network, and then through the evaluation Q-head. 
+  Returns the representation outputs, the argmax action, and the QR-DQN Q-values.
 
   :param observation: The original observation variables.
-  :type observation: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type observation: ms.Tensor
+  :return: A tuple that includes the representation outputs, the argmax action, and the QR-DQN Q-values.
+  :rtype: tuple
 
 .. py:function::
   xuance.mindspore.policies.deterministic.QRDQN_Network.target(observation)
 
-  xxxxxx.
+  Similar to forward but uses the target representation and target Q-head for stability during training.
 
   :param observation: The original observation variables.
-  :type observation: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type observation: ms.Tensor
+  :return: A tuple that includes the target representation outputs, the argmax action, and the target QR-DQN Q-values.
+  :rtype: tuple
 
 .. py:function::
   xuance.mindspore.policies.deterministic.QRDQN_Network.trainable_params(recurse)
 
-  xxxxxx.
-
-  :param recurse: xxxxxx.
-  :type recurse: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  Get trainable parameters.
 
 .. py:function::
   xuance.mindspore.policies.deterministic.DuelQnetwork.copy_target(observation)
 
-  xxxxxx.
+  Copies the parameters from the evaluation representation, target representation, evaluation Q-head, and target Q-head.
+
 
 .. py:class::
   xuance.mindspore.policies.deterministic.ActorNet(state_dim, action_dim, hidden_sizes, initialize, activation)
 
+  An actor neural network used in reinforcement learning. 
+  The actor network typically outputs the actions given the state and is used in policy-based methods such as actor-critic algorithms.
+
   :param state_dim: The dimension of the input state.
   :type state_dim: int
   :param action_dim: The dimension of the action input.
@@ -2276,22 +2369,26 @@ MindSpore
   :param hidden_size: The sizes of the hidden layers.
   :type hidden_size: list
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: torch.Tensor
+  :type initialize: ms.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: nn.Cell
 
 .. py:function::
   xuance.mindspore.policies.deterministic.ActorNet.construct(x)
 
-  xxxxxx.
+  Takes an input tensor x (representing the state) and passes it through the model to produce the output, 
+  which represents the actor's action in the given state.
 
   :param x: The input tensor.
-  :type x: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type x: ms.Tensor
+  :return: The actor's action in the given state.
+  :rtype: ms.Tensor
 
 .. py:class::
   xuance.mindspore.policies.deterministic.CriticNet(state_dim, action_dim, hidden_sizes, initialize, activation)
+
+  A critic neural network used in reinforcement learning. 
+  The critic network typically outputs the values given the state and/or actions and is used in policy-based methods such as actor-critic algorithms.
 
   :param state_dim: The dimension of the input state.
   :type state_dim: int
@@ -2300,148 +2397,158 @@ MindSpore
   :param hidden_size: The sizes of the hidden layers.
   :type hidden_size: list
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: torch.Tensor
+  :type initialize: ms.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: nn.Cell
 
 .. py:function::
   xuance.mindspore.policies.deterministic.CriticNet.construct(x)
 
-  xxxxxx.
+  A feed forward method that calculate the critic values of the input state x.
 
   :param x: The input tensor.
-  :type x: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type x: ms.Tensor
+  :return: The evaluated critic values of the input state x.
+  :rtype: ms.Tensor
 
 .. py:class::
   xuance.mindspore.policies.deterministic.DDPGPolicy(action_space, representation, actor_hidden_size, critic_hidden_size, initialize, activation)
 
+  The DDPGPolicy class defines the policy networks and critic networks used in the Deep Deterministic Policy Gradients (DDPG) algorithm.
+
   :param action_space: The action space of the environment.
   :type action_space: Space
   :param representation: The representation module.
-  :type representation: nn.Module
+  :type representation: nn.Cell
   :param actor_hidden_size: The sizes of the hidden layers in actor network.
   :type actor_hidden_size: list
   :param critic_hidden_size: The sizes of the hidden layers in critic networks.
   :type critic_hidden_size: list
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: torch.Tensor
+  :type initialize: ms.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: nn.Cell
 
 .. py:function::
   xuance.mindspore.policies.deterministic.DDPGPolicy.construct(observation)
 
-  xxxxxx.
+  Takes an observation (state) as input, passes it through the representation network, and then through the actor network to produce the action.
 
-  :param observation: The original observation variables.
-  :type observation: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :param x: The input tensor.
+  :type x: ms.Tensor
+  :return: A tuple that includes the representation outputs and the deterministic actions.
+  :rtype: tuple
 
 .. py:function::
   xuance.mindspore.policies.deterministic.DDPGPolicy.Qtarget(observation)
 
-  xxxxxx.
+  Computes the Q-value using the target actor and target critic networks. 
+  This is used for updating the actor network in the DDPG algorithm.
 
   :param observation: The original observation variables.
-  :type observation: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type observation: ms.Tensor
+  :return: The target values of the state-action pairs.
+  :rtype: ms.Tensor
 
 .. py:function::
   xuance.mindspore.policies.deterministic.DDPGPolicy.Qaction(observation, action)
 
-  xxxxxx.
+  Computes the Q-value using the critic network for a given observation and action pair.
 
   :param observation: The original observation variables.
-  :type observation: torch.Tensor
-  :param action: The action input.
-  :type action: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type observation: ms.Tensor
+  :param action: The action.
+  :type action: ms.Tensor
+  :return: The Q-value using the critic network for a given observation and action pair.
+  :rtype: ms.Tensor
 
 .. py:function::
   xuance.mindspore.policies.deterministic.DDPGPolicy.Qpolicy(observation)
 
-  xxxxxx.
+  Computes the Q-value using the critic network for the current policy action (output of the actor network) given an observation.
 
   :param observation: The original observation variables.
-  :type observation: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type observation: ms.Tensor
+  :return: A tuple that includes the evaulated Q-values and the actions.
+  :rtype: tuple
 
 .. py:function::
   xuance.mindspore.policies.deterministic.DDPGPolicy.soft_update(tau)
 
-  xxxxxx.
+  Performs soft updates to the target actor and target critic networks based on the current actor and critic networks. 
+  This is a mechanism for slowly updating the target networks towards the current networks.
 
   :param tau: The soft update factor for the update of target networks.
   :type tau: float
 
+
 .. py:class::
   xuance.mindspore.policies.deterministic.TD3Policy(action_space, representation, actor_hidden_size, critic_hidden_size, initialize, activation)
+
+  The TD3Policy class represents the policy network used in the Twin Delayed DDPG (TD3) algorithm. 
+  TD3 is an extension of the DDPG algorithm with some modifications to improve stability and robustness.
 
   :param action_space: The action space of the environment.
   :type action_space: Space
   :param representation: The representation module.
-  :type representation: nn.Module
+  :type representation: nn.Cell
   :param actor_hidden_size: The sizes of the hidden layers in actor network.
   :type actor_hidden_size: list
   :param critic_hidden_size: The sizes of the hidden layers in critic networks.
   :type critic_hidden_size: list
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: torch.Tensor
+  :type initialize: ms.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: nn.Cell
 
 .. py:function::
   xuance.mindspore.policies.deterministic.TD3Policy.action(observation)
 
-  xxxxxx.
+  Takes an observation (state) as input, passes it through the representation network, and then through the actor network to produce the action.
 
   :param observation: The original observation variables.
-  :type observation: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
-
+  :type observation: ms.Tensor
+  :return: A tuple that includes the representation outputs and the actions.
+  :rtype: tuple
+  
 .. py:function::
   xuance.mindspore.policies.deterministic.TD3Policy.Qtarget(observation)
 
-  xxxxxx.
+  Computes the Q-value using the target actor and target critic networks.
+  Adds clipped noise to the target actor's output to improve exploration.
 
   :param observation: The original observation variables.
-  :type observation: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type observation: ms.Tensor
+  :return: A tuple that lists the target representation outputs, and the minimum of the values calculated by target critic-A and target critic-B.
+  :rtype: tuple
 
 .. py:function::
   xuance.mindspore.policies.deterministic.TD3Policy.Qaction(observation, action)
 
-  xxxxxx.
+  Computes the Q-values using the critic networks for a given observation and action pair.
 
   :param observation: The original observation variables.
-  :type observation: torch.Tensor
-  :param action: The action input.
-  :type action: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type observation: ms.Tensor
+  :param action: The action inputs.
+  :type action: ms.Tensor
+  :return: A tuple that includes the representation output, and the concatenates of the values calculated by critic-A and critic-B.
+  :rtype: tuple
 
 .. py:function::
   xuance.mindspore.policies.deterministic.TD3Policy.Qpolicy(observation)
 
-  xxxxxx.
+  Computes the Q-value using the critic networks for the current policy action (output of the actor network) given an observation.
 
   :param observation: The original observation variables.
-  :type observation: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type observation: ms.Tensor
+  :return: A tuple that includes the representation outputs and the mean of the two values calculated by critic-A and critic-B.
+  :rtype: tuple
 
 .. py:function::
   xuance.mindspore.policies.deterministic.TD3Policy.soft_update(tau)
 
-  xxxxxx.
+  Performs soft updates to the target actor and target critic networks based on the current actor and critic networks. 
+  This is a mechanism for slowly updating the target networks towards the current networks.
 
   :param tau: The soft update factor for the update of target networks.
   :type tau: float
@@ -2454,87 +2561,84 @@ MindSpore
   :param action_space: The action space of the environment.
   :type action_space: Space
   :param representation: The representation module.
-  :type representation: nn.Module
+  :type representation: nn.Cell
   :param conactor_hidden_size: A sequence of integers specifying the sizes of hidden layers in the conactor network.
   :type conactor_hidden_size: list
   :param qnetwork_hidden_size: A sequence of integers specifying the sizes of hidden layers in the Q-network.
   :type qnetwork_hidden_size: list
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: nn.Cell
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: torch.Tensor
+  :type initialize: ms.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: nn.Cell
 
 .. py:function::
   xuance.mindspore.policies.deterministic.PDQNPolicy.Atarget(state)
 
-  xxxxxx.
+  Computes the target action distribution using the target conactor network.
 
   :param state: The state input.
-  :type state: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type state: ms.Tensor
+  :return: The target action distribution.
+  :rtype: ms.Tensor
 
 .. py:function::
   xuance.mindspore.policies.deterministic.PDQNPolicy.con_action(state)
 
-  xxxxxx.
+  Computes the continuous action distribution using the conactor network.
 
   :param state: The state input.
-  :type state: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type state: ms.Tensor
+  :return: The continuous action distribution.
+  :rtype: ms.Tensor
 
 .. py:function::
   xuance.mindspore.policies.deterministic.PDQNPolicy.Qtarget(state, action)
 
-  xxxxxx.
+  Computes the target Q-values using the target Q-network for a given state-action pair.
 
   :param state: The state input.
-  :type state: Tensor
+  :type state: ms.Tensor
   :param action: The action input.
-  :type action: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type action: ms.Tensor
+  :return: The target Q-values.
+  :rtype: ms.Tensor
 
 .. py:function::
   xuance.mindspore.policies.deterministic.PDQNPolicy.Qeval(state, action)
 
-  xxxxxx.
+  Computes the Q-values using the Q-network for a given state-action pair.
 
   :param state: The state input.
-  :type state: Tensor
+  :type state: ms.Tensor
   :param action: The action input.
-  :type action: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type action: ms.Tensor
+  :return: The Q-values.
+  :rtype: ms.Tensor
 
 .. py:function::
   xuance.mindspore.policies.deterministic.PDQNPolicy.Qpolicy(state)
 
-  xxxxxx.
+  Computes the Q-value for the current policy action (output of the conactor) given a state.
 
   :param state: The state input.
-  :type state: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type state: ms.Tensor
+  :return: The Q-values.
+  :rtype: ms.Tensor
 
 .. py:function::
   xuance.mindspore.policies.deterministic.PDQNPolicy.construct()
 
-  xxxxxx.
-
-  :return: xxxxxx.
-  :rtype: xxxxxx
-
 .. py:function::
   xuance.mindspore.policies.deterministic.PDQNPolicy.soft_update(tau)
-
-  xxxxxx.
+  
+  Performs soft updates to the target networks (representation, conactor, and Q-network) based on the current networks. 
+  This is a mechanism for slowly updating the target networks towards the current networks.
 
   :param tau: The soft update factor for the update of target networks.
   :type tau: float
+
 
 .. py:class::
   xuance.mindspore.policies.deterministic.MPDQNPolicy(observation_space, action_space, representation, conactor_hidden_size, qnetwork_hidden_size, normalize, initialize, activation)
@@ -2544,91 +2648,84 @@ MindSpore
   :param action_space: The action space of the environment.
   :type action_space: Space
   :param representation: The representation module.
-  :type representation: nn.Module
+  :type representation: nn.Cell
   :param conactor_hidden_size: A sequence of integers specifying the sizes of hidden layers in the conactor network.
   :type conactor_hidden_size: list
   :param qnetwork_hidden_size: A sequence of integers specifying the sizes of hidden layers in the Q-network.
   :type qnetwork_hidden_size: list
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: nn.Cell
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: torch.Tensor
+  :type initialize: ms.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: nn.Cell
 
 .. py:function::
   xuance.mindspore.policies.deterministic.MPDQNPolicy.Atarget(state)
-
-  xxxxxx.
+ 
+  Computes the target action distribution using the target conactor network.
 
   :param state: The state input.
-  :type state: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type state: ms.Tensor
+  :return: The target action distribution.
+  :rtype: ms.Tensor
 
 .. py:function::
   xuance.mindspore.policies.deterministic.MPDQNPolicy.con_action(state)
 
-  xxxxxx.
+  Computes the continuous action distribution using the conactor network.
 
   :param state: The state input.
-  :type state: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type state: ms.Tensor
+  :return: The continuous action distribution.
+  :rtype: ms.Tensor
 
 .. py:function::
   xuance.mindspore.policies.deterministic.MPDQNPolicy.Qtarget(state, action)
 
-  xxxxxx.
+  Computes the target Q-values using the target Q-network for a given state-action pair.
 
   :param state: The state input.
-  :type state: Tensor
+  :type state: ms.Tensor
   :param action: The action input.
-  :type action: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type action: ms.Tensor
+  :return: The target Q-values.
+  :rtype: ms.Tensor
 
 .. py:function::
   xuance.mindspore.policies.deterministic.MPDQNPolicy.Qeval(state, action, input_q)
 
-  xxxxxx.
+  Computes the Q-values using the Q-network for a given state-action pair.
 
   :param state: The state input.
-  :type state: Tensor
+  :type state: ms.Tensor
   :param action: The action input.
-  :type action: Tensor
-  :param input_q: xxxxxx.
-  :type input_q: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type action: ms.Tensor
+  :return: The Q-values.
+  :rtype: ms.Tensor
 
 .. py:function::
   xuance.mindspore.policies.deterministic.MPDQNPolicy.Qpolicy(state, input_q)
 
-  xxxxxx.
+  Computes the Q-value for the current policy action (output of the conactor) given a state.
 
   :param state: The state input.
-  :type state: Tensor
-  :param input_q: xxxxxx.
-  :type input_q: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type state: ms.Tensor
+  :return: The Q-values.
+  :rtype: ms.Tensor
 
 .. py:function::
   xuance.mindspore.policies.deterministic.MPDQNPolicy.construct()
 
-  xxxxxx.
-
-  :return: xxxxxx.
-  :rtype: xxxxxx
-
 .. py:function::
   xuance.mindspore.policies.deterministic.MPDQNPolicy.soft_update(tau)
 
-  xxxxxx.
+  Performs soft updates to the target networks (representation, conactor, and Q-network) based on the current networks. 
+  This is a mechanism for slowly updating the target networks towards the current networks.
 
   :param tau: The soft update factor for the update of target networks.
   :type tau: float
+
 
 .. py:class::
   xuance.mindspore.policies.deterministic.SPDQNPolicy(observation_space, action_space, representation, conactor_hidden_size, qnetwork_hidden_size, normalize, initialize, activation)
@@ -2638,152 +2735,150 @@ MindSpore
   :param action_space: The action space of the environment.
   :type action_space: Space
   :param representation: The representation module.
-  :type representation: nn.Module
+  :type representation: nn.Cell
   :param conactor_hidden_size: A sequence of integers specifying the sizes of hidden layers in the conactor network.
   :type conactor_hidden_size: list
   :param qnetwork_hidden_size: A sequence of integers specifying the sizes of hidden layers in the Q-network.
   :type qnetwork_hidden_size: list
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: nn.Cell
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: torch.Tensor
+  :type initialize: ms.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: nn.Cell
 
 .. py:function::
   xuance.mindspore.policies.deterministic.SPDQNPolicy.Atarget(state)
 
-  xxxxxx.
+  Computes the target action distribution using the target conactor network.
 
   :param state: The state input.
-  :type state: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type state: ms.Tensor
+  :return: The target action distribution.
+  :rtype: ms.Tensor
 
 .. py:function::
   xuance.mindspore.policies.deterministic.SPDQNPolicy.con_action(state)
 
-  xxxxxx.
+  Computes the continuous action distribution using the conactor network.
 
   :param state: The state input.
-  :type state: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type state: ms.Tensor
+  :return: The continuous action distribution.
+  :rtype: ms.Tensor
 
 .. py:function::
   xuance.mindspore.policies.deterministic.SPDQNPolicy.Qtarget(state, action)
-
-  xxxxxx.
+  
+  Computes the target Q-values using the target Q-network for a given state-action pair.
 
   :param state: The state input.
-  :type state: Tensor
+  :type state: ms.Tensor
   :param action: The action input.
-  :type action: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type action: ms.Tensor
+  :return: The target Q-values.
+  :rtype: ms.Tensor
 
 .. py:function::
   xuance.mindspore.policies.deterministic.SPDQNPolicy.Qeval(state, action, input_q)
 
-  xxxxxx.
+  Computes the Q-values using the Q-network for a given state-action pair.
 
   :param state: The state input.
-  :type state: Tensor
+  :type state: ms.Tensor
   :param action: The action input.
-  :type action: Tensor
-  :param input_q: xxxxxx.
-  :type input_q: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type action: ms.Tensor
+  :return: The Q-values.
+  :rtype: ms.Tensor
 
 .. py:function::
   xuance.mindspore.policies.deterministic.SPDQNPolicy.Qpolicy(state, input_q)
 
-  xxxxxx.
+  Computes the Q-value for the current policy action (output of the conactor) given a state.
 
   :param state: The state input.
-  :type state: Tensor
-  :param input_q: xxxxxx.
-  :type input_q: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type state: ms.Tensor
+  :return: The Q-values.
+  :rtype: ms.Tensor
 
 .. py:function::
   xuance.mindspore.policies.deterministic.SPDQNPolicy.construct()
 
-  xxxxxx.
-
-  :return: xxxxxx.
-  :rtype: xxxxxx
-
 .. py:function::
   xuance.mindspore.policies.deterministic.SPDQNPolicy.soft_update(tau)
-
-  xxxxxx.
+  
+  Performs soft updates to the target networks (representation, conactor, and Q-network) based on the current networks. 
+  This is a mechanism for slowly updating the target networks towards the current networks.
 
   :param tau: The soft update factor for the update of target networks.
   :type tau: float
 
+
 .. py:class::
   xuance.mindspore.policies.deterministic.DRQNPolicy(action_space, representation, kwargs)
+
+  An implementation of a policy network for a Deep Recurrent Q-Network (DRQN). This type of architecture is often used in reinforcement learning when dealing with sequential decision-making tasks, and it incorporates recurrent neural networks (RNNs) to handle temporal dependencies in the observations.
 
   :param action_space: The action space of the environment.
   :type action_space: Space
   :param representation: The representation module.
-  :type representation: nn.Module
+  :type representation: nn.Cell
   :param kwargs: The other arguments.
   :type kwargs: dict
 
 .. py:function::
-  xuance.mindspore.policies.deterministic.DRQNPolicy.construct(observation, rnn_hidden)
+  xuance.mindspore.policies.deterministic.DRQNPolicy.construct(observation, *rnn_hidden)
 
-  xxxxxx.
+  Computes the forward pass of the DRQN policy. 
+  Takes an observation, passes it through the representation network, and then through the recurrent Q-head to produce the Q-values. 
+  The hidden states from the RNN are returned for potential use in future steps.
 
   :param observation: The original observation variables.
-  :type observation: torch.Tensor
-  :param rnn_hidden: The final hidden state of the sequence.
-  :type rnn_hidden: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type observation: ms.Tensor
+  :param rnn_hidden: The last final hidden states of the sequence.
+  :return: A tuple that includes the representation outputs, argmax_action, evaluated Q-values, and the new recurrent hidden states.
+  :rtype: tuple
 
 .. py:function::
   xuance.mindspore.policies.deterministic.DRQNPolicy.target(observation, rnn_hidden)
 
-  xxxxxx.
+  Similar to forward but uses the target representation and target Q-head for stability during training. 
+  The hidden states from the target RNN are also returned.
 
   :param observation: The original observation variables.
-  :type observation: torch.Tensor
-  :param rnn_hidden: The final hidden state of the sequence.
-  :type rnn_hidden: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type observation: ms.Tensor
+  :param rnn_hidden: The last final hidden states of the sequence.
+  :return: A tuple that includes the target representation outputs, argmax_action, target Q-values, and the new recurrent hidden states.
+  :rtype: tuple
 
 .. py:function::
   xuance.mindspore.policies.deterministic.DRQNPolicy.init_hidden(batch)
 
-  xxxxxx.
+  Initializes the hidden states for the RNN.
 
-  :param batch: xxxxxx.
-  :type batch: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :param batch: The size of the batch data.
+  :type batch: int
+  :return: The initialized hidden states for the RNN.
+  :rtype: ms.Tensor
 
 .. py:function::
   xuance.mindspore.policies.deterministic.DRQNPolicy.init_hidden_item(rnn_hidden, i)
 
-  xxxxxx.
+  Initializes the hidden states for a specific item in the batch.
 
   :param rnn_hidden: The final hidden state of the sequence.
-  :type rnn_hidden: xxxxxx
-  :param i: xxxxxx.
-  :type i: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type rnn_hidden: ms.Tensor
+  :param i: The index of the item.
+  :type i: int
+  :return: The hidden states with a specific item initialized in the batch.
+  :rtype: ms.Tensor
 
 .. py:function::
   xuance.mindspore.policies.deterministic.DRQNPolicy.copy_target()
 
-  xxxxxx.
+  Copies the parameters of the evaluation Q-head and representation to the target Q-head and representation. 
+  This is a mechanism for slowly updating the target networks towards the current networks.
+  
 
 .. raw:: html
 

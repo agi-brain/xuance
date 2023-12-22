@@ -64,7 +64,7 @@ xxxxxx.
   :param avail_actions: The mask varibales for availabel actions.
   :type avail_actions: Tensor
   :param rnn_hidden: The last final hidden states of the sequence.
-  :type *rnn_hidden: Tensor
+  :type rnn_hidden: Tensor
   :param state: The state input.
   :type state: Tensor
   :param test_mode: xxxxxx.

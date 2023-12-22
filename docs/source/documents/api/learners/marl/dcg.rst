@@ -37,7 +37,7 @@ xxxxxx.
   :param obs_n: The joint observations of n agents.
   :type obs_n: np.ndarray
   :param rnn_hidden: The last final hidden states of the sequence.
-  :type *rnn_hidden: Tensor
+  :type rnn_hidden: Tensor
   :param use_target_net: xxxxxx.
   :type use_target_net: xxxxxx
   :return: hidden states.
@@ -135,7 +135,7 @@ xxxxxx.
   :param obs_n: The joint observations of n agents.
   :type obs_n: np.ndarray
   :param rnn_hidden: The last final hidden states of the sequence.
-  :type *rnn_hidden: Tensor
+  :type rnn_hidden: Tensor
   :param use_target_net: xxxxxx.
   :type use_target_net: xxxxxx
   :return: The hidden states.
@@ -223,7 +223,7 @@ xxxxxx.
   :param obs_n: The joint observations of n agents.
   :type obs_n: np.ndarray
   :param rnn_hidden: The last final hidden states of the sequence.
-  :type *rnn_hidden: Tensor
+  :type rnn_hidden: Tensor
   :param use_target_net: xxxxxx.
   :type use_target_net: xxxxxx
   :return: The hidden states.
