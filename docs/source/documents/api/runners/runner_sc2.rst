@@ -1,7 +1,7 @@
 Runner_SC2
 ==============================================
 
-xxxxxx.
+This part constructs a reinforcement learning framework for training and testing agents in a StarCraft II environment.
 
 .. raw:: html
 
@@ -11,126 +11,131 @@ xxxxxx.
 **PyTorch:**
 
 .. py:class::
-  xuance.torch.runners.runner_sc2.SC2_Runner(args)
+    xuance.torch.runners.runner_sc2.SC2_Runner(args)
 
-  :param args: the arguments.
-  :type args: Namespace
-
-.. py:function::
-  xuance.torch.runners.runner_sc2.SC2_Runner.init_rnn_hidden()
-
-  xxxxxx.
-
-  :return: xxxxxx.
-  :rtype: xxxxxx
+    :param args: the arguments.
+    :type args: Namespace
 
 .. py:function::
-  xuance.torch.runners.runner_sc2.SC2_Runner.get_agent_num()
+    xuance.torch.runners.runner_sc2.SC2_Runner.init_rnn_hidden()
 
-  xxxxxx.
+    Initialize the hidden states of recurrent neural networks used in the agent's policy and critic.
 
-  :return: xxxxxx.
-  :rtype: xxxxxx
-
-.. py:function::
-  xuance.torch.runners.runner_sc2.SC2_Runner.log_infos(info, x_index)
-
-  xxxxxx.
-
-  :param info: xxxxxx.
-  :type info: xxxxxx
-  :param x_index: xxxxxx.
-  :type x_index: xxxxxx
+    :return: the initialized hidden states for the policy and critic.
+    :rtype: tuple
 
 .. py:function::
-  xuance.torch.runners.runner_sc2.SC2_Runner.log_videos(info, fps, x_index)
+    xuance.torch.runners.runner_sc2.SC2_Runner.get_agent_num()
 
-  xxxxxx.
+    Retrieve the number of agents and enemies in the environment.
 
-  :param info: xxxxxx.
-  :type info: xxxxxx
-  :param fps: xxxxxx.
-  :type fps: xxxxxx
-  :param x_index: xxxxxx.
-  :type x_index: xxxxxx
+    :return: the number of agents and enemies.
+    :rtype: tuple
 
 .. py:function::
-  xuance.torch.runners.runner_sc2.SC2_Runner.get_actions(obs_n, avail_actions, *rnn_hidden, state, test_mode)
+    xuance.torch.runners.runner_sc2.SC2_Runner.log_infos(info, x_index)
 
-  xxxxxx.
+    Log information during training or testing.
 
-  :param obs_n: The joint observations of n agents.
-  :type obs_n: np.ndarray
-  :param avail_actions: The mask varibales for availabel actions.
-  :type avail_actions: Tensor
-  :param rnn_hidden: The last final hidden states of the sequence.
-  :type rnn_hidden: Tensor
-  :param state: The state input.
-  :type state: Tensor
-  :param test_mode: xxxxxx.
-  :type test_mode: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+    :param info: recorded information.
+    :type info: dict
+    :param x_index: the current step or index at which the information is being logged.
+    :type x_index: int
 
 .. py:function::
-  xuance.torch.runners.runner_sc2.SC2_Runner.get_battles_info()
+    xuance.torch.runners.runner_sc2.SC2_Runner.log_videos(info, fps, x_index)
 
-  xxxxxx.
+    Log video data during training or testing.
 
-  :return: xxxxxx.
-  :rtype: xxxxxx
-
-.. py:function::
-  xuance.torch.runners.runner_sc2.SC2_Runner.get_battles_result(last_battles_info)
-
-  xxxxxx.
-
-  :param last_battles_info: xxxxxx.
-  :type last_battles_info: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+    :param info: contain video data to be logged.
+    :type info: dict
+    :param fps: specifies the number of frames displayed per second in the logged video.
+    :type fps: int
+    :param x_index: the current step or index at which the information is being logged..
+    :type x_index: int
 
 .. py:function::
-  xuance.torch.runners.runner_sc2.SC2_Runner.run_episodes(test_mode)
+    xuance.torch.runners.runner_sc2.SC2_Runner.get_actions(obs_n, avail_actions, *rnn_hidden, state, test_mode)
 
-  xxxxxx.
+    Obtain actions from the agents based on their observations and hidden states.
 
-  :param test_mode: xxxxxx.
-  :type test_mode: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
-
-.. py:function::
-  xuance.torch.runners.runner_sc2.SC2_Runner.test_episodes(test_T, n_test_runs)
-
-  xxxxxx.
-
-  :param test_T: xxxxxx.
-  :type test_T: xxxxxx
-  :param n_test_runs: xxxxxx.
-  :type n_test_runs: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
-
-.. py:function::
-  xuance.torch.runners.runner_sc2.SC2_Runner.run()
-
-  xxxxxx.
+    :param obs_n: The joint observations of n agents.
+    :type obs_n: np.ndarray
+    :param avail_actions: The mask varibales for availabel actions.
+    :type avail_actions: Tensor
+    :param rnn_hidden: The last final hidden states of the sequence.
+    :type rnn_hidden: Tensor
+    :param state: The state input.
+    :type state: Tensor
+    :param test_mode: whether the method is being called in a test mode.
+    :type test_mode: bool
+    :return: the chosen actions by the agent, Log probability of the chosen actions,
+             the updated hidden state for the policy's recurrent neural network,
+             the updated hidden state for the critic's RNN, One-hot representation of the chosen actions and
+             estimated values associated with the chosen actions.
+    :rtype: dict
 
 .. py:function::
-  xuance.torch.runners.runner_sc2.SC2_Runner.benchmark()
+    xuance.torch.runners.runner_sc2.SC2_Runner.get_battles_info()
 
-  xxxxxx.
+    Aggregate information about battles in the environment.
+
+    :return: Total number of battles in the environment, total number of battles won, total number of Allies killed,
+            total number of enemies killed.
+    :rtype: tuple
 
 .. py:function::
-  xuance.torch.runners.runner_sc2.SC2_Runner.time_estimate(start)
+    xuance.torch.runners.runner_sc2.SC2_Runner.get_battles_result(last_battles_info)
 
-  xxxxxx.
+    Calculate and return various statistics related to battles based on the provided information.
 
-  :param start: xxxxxx.
-  :type start: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+    :param last_battles_info: the information about battles(total battles, battles won, dead allies, dead enemies).
+    :type last_battles_info: tuple
+    :return: the ratio of battles won to battles played, the ratio of dead allies to the estimated total count
+            of allies in battles, the ratio of dead enemies to the estimated total count of enemies in battles.
+    :rtype: tuple
+
+.. py:function::
+    xuance.torch.runners.runner_sc2.SC2_Runner.run_episodes(test_mode)
+
+    Execute a series of episodes in the environment, either for training or testing purposes.
+
+    :param test_mode: control the mode in which episodes are executed.
+    :type test_mode: bool
+    :return: the average episode score achieved during the training or testing process.
+    :rtype: float
+
+.. py:function::
+    xuance.torch.runners.runner_sc2.SC2_Runner.test_episodes(test_T, n_test_runs)
+
+    Run multiple testing cycles in a testing mode and calculate statistics such as test scores and win rates.
+
+    :param test_T: the time step for recording test results.
+    :type test_T: int
+    :param n_test_runs: the number of testing cycles to execute.
+    :type n_test_runs: int
+    :return: the average test score, the standard deviation of test scores and the win rate.
+    :rtype: tuple
+
+.. py:function::
+    xuance.torch.runners.runner_sc2.SC2_Runner.run()
+
+    Orchestrate the entire training or testing process.
+
+.. py:function::
+    xuance.torch.runners.runner_sc2.SC2_Runner.benchmark()
+
+    Perform a benchmarking process, which involves training and evaluating the models over multiple epochs.
+
+.. py:function::
+    xuance.torch.runners.runner_sc2.SC2_Runner.time_estimate(start)
+
+    Estimate the time passed and the remaining time based on the elapsed time since a specified start time.
+
+    :param start: the total time passed since the provided start time.
+    :type start: int
+    :return: the time passed, the estimated time left.
+    :rtype: tuple
 
 .. raw:: html
 
