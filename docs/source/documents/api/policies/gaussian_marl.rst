@@ -1,6 +1,9 @@
 Gaussian-MARL
 =======================================
 
+In this module, we define several classes related to the components of the MARL policies,
+such as the Q-networks, actor networks, critic policies, and the policies.
+
 .. raw:: html
 
     <br><hr>
@@ -10,6 +13,9 @@ PyTorch
 
 .. py:class::
   xuance.torch.policies.gaussian_marl.BasicQhead(state_dim, action_dim, n_agents, hidden_sizes, normalize, initialize, activation, device)
+
+  A basic module representing the Q-value head, commonly used in Q-networks. 
+  It takes state, action, and agent information as input and produces Q-values as output.
 
   :param state_dim: The dimension of the input state.
   :type state_dim: int
@@ -22,7 +28,7 @@ PyTorch
   :param normalize: The method of normalization.
   :type normalize: nn.Module
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: torch.Tensor
   :param activation: The choose of activation functions for hidden layers.
   :type activation: nn.Module
   :param device: The calculating device.
@@ -30,6 +36,8 @@ PyTorch
 
 .. py:function::
   xuance.torch.policies.gaussian_marl.BasicQhead.forward(x)
+
+  Passes the input tensor x through the sequential model (self.model) and returns the output.
 
   :param x: The input tensor.
   :type x: torch.Tensor
@@ -39,6 +47,8 @@ PyTorch
 
 .. py:class::
   xuance.torch.policies.gaussian_marl.BasicQnetwork(action_space, n_agents, representation, hidden_size, normalize, initialize, activation, device)
+
+  A basic Q-network that utilizes the BasicQhead for both evaluation and target networks.
 
   :param action_space: The action space of the environment.
   :type action_space: Space
@@ -51,7 +61,7 @@ PyTorch
   :param normalize: The method of normalization.
   :type normalize: nn.Module
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: torch.Tensor
   :param activation: The choose of activation functions for hidden layers.
   :type activation: nn.Module
   :param device: The calculating device.
@@ -60,31 +70,40 @@ PyTorch
 .. py:function::
   xuance.torch.policies.gaussian_marl.BasicQnetwork.forward(observation, agent_ids)
 
+  The forward method computes the evaluation Q-values for a given observation and agent identifiers, 
+  along with other relevant information from the representation module.
+
   :param observation: The original observation variables.
-  :type observation: Tensor
+  :type observation: torch.Tensor
   :param agent_ids: The IDs variables for agents.
-  :type agent_ids: Tensor
-  :return: .
-  :rtype: xxxxxx
+  :type agent_ids: torch.Tensor
+  :return: A tuple that includes the representation (outputs), argmax action (argmax_action), and evaluation Q-values (evalQ). These values can be useful for further processing during reinforcement learning training or evaluation.
+  :rtype: tuple
 
 .. py:function::
   xuance.torch.policies.gaussian_marl.BasicQnetwork.target_Q(observation, agent_ids)
 
+  The target_Q method computes the target Q-values for a given observation and agent identifiers using the target Q-head. 
+  This method is typically used during the training process for updating the Q-network parameters based on the temporal difference error between the evaluation Q-values and the target Q-values.
+
   :param observation: The original observation variables.
-  :type observation: Tensor
+  :type observation: torch.Tensor
   :param agent_ids: The IDs variables for agents.
-  :type agent_ids: Tensor
+  :type agent_ids: torch.Tensor
   :return: The target Q-values.
   :rtype: torch.Tensor
 
 .. py:function::
   xuance.torch.policies.gaussian_marl.BasicQnetwork.copy_target()
 
-  :return: None.
-  :rtype: xxxxxx
+  Copies the parameters from the evaluation representation, target representation, evaluation Q-head, and target Q-head.
+
 
 .. py:class::
   xuance.torch.policies.gaussian_marl.ActorNet(state_dim, n_agents, action_dim, hidden_sizes, normalize, initialize, activation, device)
+
+  Represents the actor network, responsible for generating actions based on the given state and agent information. 
+  It uses a Diagonal Gaussian distribution for the actions.
 
   :param state_dim: The dimension of the input state.
   :type state_dim: int
@@ -97,7 +116,7 @@ PyTorch
   :param normalize: The method of normalization.
   :type normalize: nn.Module
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: torch.Tensor
   :param activation: The choose of activation functions for hidden layers.
   :type activation: nn.Module
   :param device: The calculating device.
@@ -106,13 +125,18 @@ PyTorch
 .. py:function::
   xuance.torch.policies.gaussian_marl.ActorNet.forward(x)
 
+  Passes the input tensor x through the sequential model (self.mu) to obtain the mean of the Gaussian distribution.
+  Sets the parameters of the diagonal Gaussian distribution (self.dist) using the mean and the exponential of the log standard deviation.
+  Returns the distribution object self.dist.
+
   :param x: The input tensor.
   :type x: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The distribution object self.dist..
 
 .. py:class::
   xuance.torch.policies.gaussian_marl.CriticNet(state_dim, n_agents, hidden_sizes, normalize, initialize, activation, device)
+
+  Represents the critic network, which evaluates the state-action pairs.
 
   :param state_dim: The dimension of the input state.
   :type state_dim: int
@@ -123,7 +147,7 @@ PyTorch
   :param normalize: The method of normalization.
   :type normalize: nn.Module
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: torch.Tensor
   :param activation: The choose of activation functions for hidden layers.
   :type activation: nn.Module
   :param device: The calculating device.
@@ -132,13 +156,20 @@ PyTorch
 .. py:function::
   xuance.torch.policies.gaussian_marl.CriticNet.forward(x)
 
+  Passes the input tensor x through the sequential model (self.model) to obtain the output, 
+  which represents the Q-values for the given state-action pairs.
+  Returns the Q-values
+
   :param x: The input tensor.
   :type x: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The Q-values.
+  :rtype: torch.Tensor
 
 .. py:class::
   xuance.torch.policies.gaussian_marl.MAAC_Policy(action_space, n_agents, representation, mixer, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device)
+
+  A multi-agent actor-critic policy with Gaussian policies. 
+  It combines an actor network and a critic network and optionally uses a mixer to calculate the total team values.
 
   :param action_space: The action space of the environment.
   :type action_space: Space
@@ -155,7 +186,7 @@ PyTorch
   :param normalize: The method of normalization.
   :type normalize: nn.Module
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: torch.Tensor
   :param activation: The choose of activation functions for hidden layers.
   :type activation: nn.Module
   :param device: The calculating device.
@@ -164,39 +195,49 @@ PyTorch
 .. py:function::
   xuance.torch.policies.gaussian_marl.MAAC_Policy.forward(observation, agent_ids, *rnn_hidden)
 
+  Depending on whether the policy uses RNN, the observation is passed through the representation network, and the hidden states are updated.
+  The actor network is then applied to the concatenated input of agent states and IDs to obtain the probability distribution over actions (self.pi_dist).
+  Returns the updated hidden states (if RNN is used) and the probability distribution.
+
   :param observation: The original observation variables.
-  :type observation: Tensor
+  :type observation: torch.Tensor
   :param agent_ids: The IDs variables for agents.
-  :type agent_ids: Tensor
+  :type agent_ids: torch.Tensor
   :param rnn_hidden: The last final hidden states of the sequence.
-  :type rnn_hidden: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: A tuple that includes the updated hidden states (if RNN is used) and the probability distribution.
+  :rtype: tuple
 
 .. py:function::
   xuance.torch.policies.gaussian_marl.MAAC_Policy.get_values(critic_in, agent_ids, *rnn_hidden)
 
+  Computes the critic values based on the input states, agent IDs, and optional RNN hidden states.
+
   :param critic_in: The input variables of critic networks.
-  :type critic_in: Tensor
+  :type critic_in: torch.Tensor
   :param agent_ids: The IDs variables for agents.
-  :type agent_ids: Tensor
+  :type agent_ids: torch.Tensor
   :param rnn_hidden: The last final hidden states of the sequence.
-  :type rnn_hidden: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The critic values.
+  :rtype: torch.Tensor
 
 .. py:function::
   xuance.torch.policies.gaussian_marl.MAAC_Policy.value_tot(values_n, global_state)
 
+  Computes the total team value, incorporating a mixer if provided.
+
   :param values_n: The joint values of n agents.
-  :type values_n: Tensor
+  :type values_n: torch.Tensor
   :param global_state: The global states of the environments.
-  :type global_state: Tensor
-  :return: None.
-  :rtype: xxxxxx
+  :type global_state: torch.Tensor
+  :return: The total team value.
+  :rtype: torch.Tensor
 
 .. py:class::
   xuance.torch.policies.gaussian_marl.Basic_ISAC_policy(action_space, n_agents, representation, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device)
+
+  A basic policy architecture for the Independent Soft Actor-Critic (ISAC) algorithm, with independent actors and centralized critics. 
+  It includes actor and critic networks, as well as target networks for stability during training. 
+  The soft_update method is used to update the target networks gradually.
 
   :param action_space: The action space of the environment.
   :type action_space: Space
@@ -211,7 +252,7 @@ PyTorch
   :param normalize: The method of normalization.
   :type normalize: nn.Module
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: torch.Tensor
   :param activation: The choose of activation functions for hidden layers.
   :type activation: nn.Module
   :param device: The calculating device.
@@ -220,57 +261,73 @@ PyTorch
 .. py:function::
   xuance.torch.policies.gaussian_marl.Basic_ISAC_policy.forward(observation, agent_ids)
 
+  Passes the observation through the agent representation network to obtain relevant features (outputs).
+  Concatenates the state features with agent identifiers and passes them through the actor network to obtain actions (act).
+  Returns the representation outputs and actions.
+
   :param observation: The original observation variables.
-  :type observation: Tensor
+  :type observation: torch.Tensor
   :param agent_ids: The IDs variables for agents.
-  :type agent_ids: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type agent_ids: torch.Tensor
+  :return: A tuple that includes the representation outputs and actions.
+  :rtype: tuple
 
 .. py:function::
   xuance.torch.policies.gaussian_marl.Basic_ISAC_policy.critic(observation, actions, agent_ids)
 
+  Computes critic values for given observations, actions, and agent identifiers.
+
   :param observation: The original observation variables.
-  :type observation: Tensor
+  :type observation: torch.Tensor
   :param actions: The actions input.
-  :type actions: Tensor
+  :type actions: torch.Tensor
   :param agent_ids: The IDs variables for agents.
-  :type agent_ids: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type agent_ids: torch.Tensor
+  :return: The evaluated critic values.
+  :rtype: torch.Tensor
 
 .. py:function::
   xuance.torch.policies.gaussian_marl.Basic_ISAC_policy.target_critic(observation, actions, agent_ids)
 
+  Computes critic values for target critic network given observations, actions, and agent identifiers.
+
   :param observation: The original observation variables.
-  :type observation: Tensor
+  :type observation: torch.Tensor
   :param actions: The actions input.
-  :type actions: Tensor
+  :type actions: torch.Tensor
   :param agent_ids: The IDs variables for agents.
-  :type agent_ids: Tensor
-  :return: None.
-  :rtype: xxxxxx
+  :type agent_ids: torch.Tensor
+  :return: The target critic values.
+  :rtype: torch.Tensor
 
 .. py:function::
   xuance.torch.policies.gaussian_marl.Basic_ISAC_policy.target_actor(observation, agent_ids)
 
+  Obtains the output of the target actor network.
+
   :param observation: The original observation variables.
-  :type observation: Tensor
+  :type observation: torch.Tensor
   :param agent_ids: The IDs variables for agents.
-  :type agent_ids: Tensor
-  :return: None.
-  :rtype: xxxxxx
+  :type agent_ids: torch.Tensor
+  :return: The output of the target actor network.
+  :rtype: torch.Tensor
 
 .. py:function::
   xuance.torch.policies.gaussian_marl.Basic_ISAC_policy.soft_update(tau)
 
+  Performs a soft update of the target networks using a parameter tau.
+  Updates the target actor and target critic networks by blending their parameters with the corresponding parameters of the online networks.
+
   :param tau: The soft update factor for the update of target networks.
   :type tau: float
-  :return: None.
-  :rtype: xxxxxx
+  
 
 .. py:class::
   xuance.torch.policies.gaussian_marl.MASAC_policy(action_space, n_agents, representation, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device)
+
+  An extension of Basic_ISAC_policy for multi-agent environments. 
+  It is an implementation of Multi-Agent Soft Actor-Critic (MASAC) algorithm.
+  It includes modifications to the critic network to handle multiple agents.
 
   :param action_space: The action space of the environment.
   :type action_space: Space
@@ -285,7 +342,7 @@ PyTorch
   :param normalize: The method of normalization.
   :type normalize: nn.Module
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: torch.Tensor
   :param activation: The choose of activation functions for hidden layers.
   :type activation: nn.Module
   :param device: The calculating device.
@@ -294,30 +351,37 @@ PyTorch
 .. py:function::
   xuance.torch.policies.gaussian_marl.MASAC_policy.critic(observation, actions, agent_ids)
 
+  Computes critic values for given observations, actions, and agent identifiers. 
+  Reshapes the state and actions for multiple agents.
+
   :param observation: The original observation variables.
-  :type observation: Tensor
+  :type observation: torch.Tensor
   :param actions: The actions input.
-  :type actions: Tensor
+  :type actions: torch.Tensor
   :param agent_ids: The IDs variables for agents.
-  :type agent_ids: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type agent_ids: torch.Tensor
+  :return: The evaluated critic values.
+  :rtype: torch.Tensor
 
 .. py:function::
   xuance.torch.policies.gaussian_marl.MASAC_policy.target_critic(observation, actions, agent_ids)
 
+  Computes critic values for the target critic network given observations, actions, and agent identifiers. 
+  Reshapes the state and actions for multiple agents.
+
   :param observation: The original observation variables.
-  :type observation: Tensor
+  :type observation: torch.Tensor
   :param actions: The actions input.
-  :type actions: Tensor
+  :type actions: torch.Tensor
   :param agent_ids: The IDs variables for agents.
-  :type agent_ids: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type agent_ids: torch.Tensor
+  :return: The target critic values.
+  :rtype: torch.Tensor
 
 .. raw:: html
 
     <br><hr>
+
 
 TensorFlow
 ------------------------------------------
@@ -334,11 +398,11 @@ TensorFlow
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: tk.Model
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: tf.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: tk.Model
   :param device: The calculating device.
   :type device: str
 
@@ -346,7 +410,7 @@ TensorFlow
   xuance.tensorflow.policies.gaussian_marl.BasicQhead.call(x)
 
   :param x: The input tensor.
-  :type x: torch.Tensor
+  :type x: tf.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -359,15 +423,15 @@ TensorFlow
   :param n_agents: The number of agents.
   :type n_agents: int
   :param representation: The representation module.
-  :type representation: nn.Module
+  :type representation: tk.Model
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: tk.Model
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: tf.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: tk.Model
   :param device: The calculating device.
   :type device: str
 
@@ -402,11 +466,11 @@ TensorFlow
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: tk.Model
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: tf.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: tk.Model
   :param device: The calculating device.
   :type device: str
 
@@ -414,7 +478,7 @@ TensorFlow
   xuance.tensorflow.policies.gaussian_marl.ActorNet.call(x)
 
   :param x: The input tensor.
-  :type x: torch.Tensor
+  :type x: tf.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -428,11 +492,11 @@ TensorFlow
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: tk.Model
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: tf.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: tk.Model
   :param device: The calculating device.
   :type device: str
 
@@ -440,7 +504,7 @@ TensorFlow
   xuance.tensorflow.policies.gaussian_marl.CriticNet.call(x)
 
   :param x: The input tensor.
-  :type x: torch.Tensor
+  :type x: tf.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -452,19 +516,19 @@ TensorFlow
   :param n_agents: The number of agents.
   :type n_agents: int
   :param representation: The representation module.
-  :type representation: nn.Module
+  :type representation: tk.Model
   :param mixer: The mixer for independent values.
-  :type mixer: nn.Module
+  :type mixer: tk.Model
   :param actor_hidden_size: The sizes of the hidden layers in actor network.
   :type actor_hidden_size: list
   :param critic_hidden_size: The sizes of the hidden layers in critic networks.
   :type critic_hidden_size: list
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: tk.Model
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: tf.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: tk.Model
   :param device: The calculating device.
   :type device: str
 
@@ -474,7 +538,7 @@ TensorFlow
   :param inputs: The inputs of the neural neworks.
   :type inputs: Dict(tf.Tensor)
   :param rnn_hidden: The last final hidden states of the sequence.
-  :type rnn_hidden: Tensor
+  :type rnn_hidden: tf.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -482,11 +546,11 @@ TensorFlow
   xuance.tensorflow.policies.gaussian_marl.MAAC_Policy.get_values(critic_in, agent_ids, *rnn_hidden)
 
   :param critic_in: The input variables of critic networks.
-  :type critic_in: Tensor
+  :type critic_in: tf.Tensor
   :param agent_ids: The IDs variables for agents.
-  :type agent_ids: Tensor
+  :type agent_ids: tf.Tensor
   :param rnn_hidden: The last final hidden states of the sequence.
-  :type rnn_hidden: Tensor
+  :type rnn_hidden: tf.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -494,9 +558,9 @@ TensorFlow
   xuance.tensorflow.policies.gaussian_marl.MAAC_Policy.value_tot(values_n, global_state)
 
   :param values_n: The joint values of n agents.
-  :type values_n: Tensor
+  :type values_n: tf.Tensor
   :param global_state: The global states of the environments.
-  :type global_state: Tensor
+  :type global_state: tf.Tensor
   :return: None.
   :rtype: xxxxxx
 
@@ -514,17 +578,17 @@ TensorFlow
   :param n_agents: The number of agents.
   :type n_agents: int
   :param representation: The representation module.
-  :type representation: nn.Module
+  :type representation: tk.Model
   :param actor_hidden_size: The sizes of the hidden layers in actor network.
   :type actor_hidden_size: list
   :param critic_hidden_size: The sizes of the hidden layers in critic networks.
   :type critic_hidden_size: list
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: tk.Model
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: tf.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: tk.Model
   :param device: The calculating device.
   :type device: str
 
@@ -540,11 +604,11 @@ TensorFlow
   xuance.tensorflow.policies.gaussian_marl.Basic_ISAC_policy.critic(observation, actions, agent_ids)
 
   :param observation: The original observation variables.
-  :type observation: Tensor
+  :type observation: tf.Tensor
   :param actions: The actions input.
-  :type actions: Tensor
+  :type actions: tf.Tensor
   :param agent_ids: The IDs variables for agents.
-  :type agent_ids: Tensor
+  :type agent_ids: tf.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -552,11 +616,11 @@ TensorFlow
   xuance.tensorflow.policies.gaussian_marl.Basic_ISAC_policy.target_critic(observation, actions, agent_ids)
 
   :param observation: The original observation variables.
-  :type observation: Tensor
+  :type observation: tf.Tensor
   :param actions: The actions input.
-  :type actions: Tensor
+  :type actions: tf.Tensor
   :param agent_ids: The IDs variables for agents.
-  :type agent_ids: Tensor
+  :type agent_ids: tf.Tensor
   :return: None.
   :rtype: xxxxxx
 
@@ -564,9 +628,9 @@ TensorFlow
   xuance.tensorflow.policies.gaussian_marl.Basic_ISAC_policy.target_actor(observation, agent_ids)
 
   :param observation: The original observation variables.
-  :type observation: Tensor
+  :type observation: tf.Tensor
   :param agent_ids: The IDs variables for agents.
-  :type agent_ids: Tensor
+  :type agent_ids: tf.Tensor
   :return: None.
   :rtype: xxxxxx
 
@@ -584,17 +648,17 @@ TensorFlow
   :param n_agents: The number of agents.
   :type n_agents: int
   :param representation: The representation module.
-  :type representation: nn.Module
+  :type representation: tk.Model
   :param actor_hidden_size: The sizes of the hidden layers in actor network.
   :type actor_hidden_size: list
   :param critic_hidden_size: The sizes of the hidden layers in critic networks.
   :type critic_hidden_size: list
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: tk.Model
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: tf.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: tk.Model
   :param device: The calculating device.
   :type device: str
 
@@ -602,11 +666,11 @@ TensorFlow
   xuance.tensorflow.policies.gaussian_marl.MASAC_policy.critic(observation, actions, agent_ids)
 
   :param observation: The original observation variables.
-  :type observation: Tensor
+  :type observation: tf.Tensor
   :param actions: The actions input.
-  :type actions: Tensor
+  :type actions: tf.Tensor
   :param agent_ids: The IDs variables for agents.
-  :type agent_ids: Tensor
+  :type agent_ids: tf.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -614,17 +678,18 @@ TensorFlow
   xuance.tensorflow.policies.gaussian_marl.MASAC_policy.target_critic(observation, actions, agent_ids)
 
   :param observation: The original observation variables.
-  :type observation: Tensor
+  :type observation: tf.Tensor
   :param actions: The actions input.
-  :type actions: Tensor
+  :type actions: tf.Tensor
   :param agent_ids: The IDs variables for agents.
-  :type agent_ids: Tensor
+  :type agent_ids: tf.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
 .. raw:: html
 
     <br><hr>
+    
 
 MindSpore
 ------------------------------------------
@@ -643,7 +708,7 @@ MindSpore
   :param normalize: The method of normalization.
   :type normalize: nn.Module
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: torch.Tensor
   :param activation: The choose of activation functions for hidden layers.
   :type activation: nn.Module
 
@@ -671,7 +736,7 @@ MindSpore
   :param normalize: The method of normalization.
   :type normalize: nn.Module
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: torch.Tensor
   :param activation: The choose of activation functions for hidden layers.
   :type activation: nn.Module
 
@@ -681,9 +746,9 @@ MindSpore
   xxxxxx.
 
   :param observation: The original observation variables.
-  :type observation: Tensor
+  :type observation: torch.Tensor
   :param agent_ids: The IDs variables for agents.
-  :type agent_ids: Tensor
+  :type agent_ids: torch.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -693,9 +758,9 @@ MindSpore
   xxxxxx.
 
   :param observation: The original observation variables.
-  :type observation: Tensor
+  :type observation: torch.Tensor
   :param agent_ids: The IDs variables for agents.
-  :type agent_ids: Tensor
+  :type agent_ids: torch.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -718,7 +783,7 @@ MindSpore
   :param normalize: The method of normalization.
   :type normalize: nn.Module
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: torch.Tensor
   :param activation: The choose of activation functions for hidden layers.
   :type activation: nn.Module
 
@@ -744,7 +809,7 @@ MindSpore
   :param normalize: The method of normalization.
   :type normalize: nn.Module
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: torch.Tensor
   :param activation: The choose of activation functions for hidden layers.
   :type activation: nn.Module
 
@@ -776,7 +841,7 @@ MindSpore
   :param normalize: The method of normalization.
   :type normalize: nn.Module
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: torch.Tensor
   :param activation: The choose of activation functions for hidden layers.
   :type activation: nn.Module
   :param kwargs: The other arguments.
@@ -788,9 +853,9 @@ MindSpore
   xxxxxx.
 
   :param observation: The original observation variables.
-  :type observation: Tensor
+  :type observation: torch.Tensor
   :param agent_ids: The IDs variables for agents.
-  :type agent_ids: Tensor
+  :type agent_ids: torch.Tensor
   :param rnn_hidden: The final hidden state of the sequence.
   :type rnn_hidden: xxxxxx
   :param kwargs: The other arguments.
@@ -804,9 +869,9 @@ MindSpore
   xxxxxx.
 
   :param observation: The original observation variables.
-  :type observation: Tensor
+  :type observation: torch.Tensor
   :param agent_ids: The IDs variables for agents.
-  :type agent_ids: Tensor
+  :type agent_ids: torch.Tensor
   :param rnn_hidden: The final hidden state of the sequence.
   :type rnn_hidden: xxxxxx
   :param kwargs: The other arguments.
@@ -820,9 +885,9 @@ MindSpore
   xxxxxx.
 
   :param values_n: The joint values of n agents.
-  :type values_n: Tensor
+  :type values_n: torch.Tensor
   :param global_state: The global states of the environments.
-  :type global_state: Tensor
+  :type global_state: torch.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -842,7 +907,7 @@ MindSpore
   :param normalize: The method of normalization.
   :type normalize: nn.Module
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: torch.Tensor
   :param activation: The choose of activation functions for hidden layers.
   :type activation: nn.Module
 
@@ -852,9 +917,9 @@ MindSpore
   xxxxxx.
 
   :param observation: The original observation variables.
-  :type observation: Tensor
+  :type observation: torch.Tensor
   :param agent_ids: The IDs variables for agents.
-  :type agent_ids: Tensor
+  :type agent_ids: torch.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -864,11 +929,11 @@ MindSpore
   xxxxxx.
 
   :param observation: The original observation variables.
-  :type observation: Tensor
+  :type observation: torch.Tensor
   :param actions: The actions input.
-  :type actions: Tensor
+  :type actions: torch.Tensor
   :param agent_ids: The IDs variables for agents.
-  :type agent_ids: Tensor
+  :type agent_ids: torch.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -878,11 +943,11 @@ MindSpore
   xxxxxx.
 
   :param observation: The original observation variables.
-  :type observation: Tensor
+  :type observation: torch.Tensor
   :param actions: The actions input.
-  :type actions: Tensor
+  :type actions: torch.Tensor
   :param agent_ids: The IDs variables for agents.
-  :type agent_ids: Tensor
+  :type agent_ids: torch.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -892,11 +957,11 @@ MindSpore
   xxxxxx.
 
   :param observation: The original observation variables.
-  :type observation: Tensor
+  :type observation: torch.Tensor
   :param actions: The actions input.
-  :type actions: Tensor
+  :type actions: torch.Tensor
   :param agent_ids: The IDs variables for agents.
-  :type agent_ids: Tensor
+  :type agent_ids: torch.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -906,9 +971,9 @@ MindSpore
   xxxxxx.
 
   :param observation: The original observation variables.
-  :type observation: Tensor
+  :type observation: torch.Tensor
   :param agent_ids: The IDs variables for agents.
-  :type agent_ids: Tensor
+  :type agent_ids: torch.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -936,7 +1001,7 @@ MindSpore
   :param normalize: The method of normalization.
   :type normalize: nn.Module
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: torch.Tensor
   :param activation: The choose of activation functions for hidden layers.
   :type activation: nn.Module
 
@@ -946,9 +1011,9 @@ MindSpore
   xxxxxx.
 
   :param observation: The original observation variables.
-  :type observation: Tensor
+  :type observation: torch.Tensor
   :param agent_ids: The IDs variables for agents.
-  :type agent_ids: Tensor
+  :type agent_ids: torch.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -958,11 +1023,11 @@ MindSpore
   xxxxxx.
 
   :param observation: The original observation variables.
-  :type observation: Tensor
+  :type observation: torch.Tensor
   :param actions: The actions input.
-  :type actions: Tensor
+  :type actions: torch.Tensor
   :param agent_ids: The IDs variables for agents.
-  :type agent_ids: Tensor
+  :type agent_ids: torch.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -972,11 +1037,11 @@ MindSpore
   xxxxxx.
 
   :param observation: The original observation variables.
-  :type observation: Tensor
+  :type observation: torch.Tensor
   :param actions: The actions input.
-  :type actions: Tensor
+  :type actions: torch.Tensor
   :param agent_ids: The IDs variables for agents.
-  :type agent_ids: Tensor
+  :type agent_ids: torch.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -986,11 +1051,11 @@ MindSpore
   xxxxxx.
 
   :param observation: The original observation variables.
-  :type observation: Tensor
+  :type observation: torch.Tensor
   :param actions: The actions input.
-  :type actions: Tensor
+  :type actions: torch.Tensor
   :param agent_ids: The IDs variables for agents.
-  :type agent_ids: Tensor
+  :type agent_ids: torch.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -1000,9 +1065,9 @@ MindSpore
   xxxxxx.
 
   :param observation: The original observation variables.
-  :type observation: Tensor
+  :type observation: torch.Tensor
   :param agent_ids: The IDs variables for agents.
-  :type agent_ids: Tensor
+  :type agent_ids: torch.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 

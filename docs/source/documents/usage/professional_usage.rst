@@ -204,7 +204,7 @@ Here is an example definition of the run() function with comments:
                 args_test.parallels = args_test.test_episode  # set number of testing environments.
                 return make_envs(args_test)  # make testing environments.
 
-            train_steps = args.running_steps // n_envs  # calculate the tutorial running steps.
+            train_steps = args.running_steps // n_envs  # calculate the total running steps.
             eval_interval = args.eval_interval // n_envs  # calculate the number of training steps per epoch.
             test_episode = args.test_episode  # calculate the number of testing episodes.
             num_epoch = int(train_steps / eval_interval)  # calculate the number of epochs.
@@ -228,7 +228,7 @@ Here is an example definition of the run() function with comments:
             print("Best Model Score: %.2f, std=%.2f" % (best_scores_info["mean"], best_scores_info["std"]))
         else:
             if not args.test:  # train the model without testing
-                n_train_steps = args.running_steps // n_envs  # calculate the tutorial steps of training
+                n_train_steps = args.running_steps // n_envs  # calculate the total steps of training
                 agent.train(n_train_steps)  # train the model directly.
                 agent.save_model("final_train_model.pth")  # save the final model file.
                 print("Finish training!")

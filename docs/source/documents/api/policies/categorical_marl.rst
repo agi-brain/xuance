@@ -104,7 +104,7 @@ PyTorch
   xuance.torch.policies.categorical_mal.MAAC_Policy(action_space, n_agents, representation, mixer, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device)
 
   Multi-Agent Actor-Critic (MAAC) policy for discrete action space. 
-  It is used to generate categorical distributions and the tutorial values of the multi-agent team.
+  It is used to generate categorical distributions and the total values of the multi-agent team.
 
   :param action_space: The action space.
   :type action_space: Space
@@ -150,19 +150,19 @@ PyTorch
   :param agent_ids: The IDs variables for agents.
   :type agent_ids: torch.Tensor
   :param rnn_hidden: The last final hidden states of the sequence.
-  :return: A tuple that includes the final rnn hidden state, and the tutorial values of the team.
+  :return: A tuple that includes the final rnn hidden state, and the total values of the team.
   :rtype: torch.Tensor
 
 .. py:function::
   xuance.torch.policies.categorical_mal.MAAC_Policy.value_tot(values_n, global_state)
 
-  Calculate the tutorial values of the team via the value decomposition modules (self.mixer).
+  Calculate the total values of the team via the value decomposition modules (self.mixer).
 
   :param values_n: The joint values of n agents.
   :type values_n: torch.Tensor
   :param global_state: The global states of the environments.
   :type global_state: torch.Tensor
-  :return: The final rnn hidden state, and the tutorial values of the team.
+  :return: The final rnn hidden state, and the total values of the team.
   :rtype: torch.Tensor
 
 .. py:class::
@@ -201,19 +201,19 @@ PyTorch
   :param rnn_hidden: The last final hidden states of the sequence.
   :param avail_actions: The mask varibales for availabel actions.
   :type avail_actions: torch.Tensor
-  :return: A tuple that includes the final rnn hidden state, the stochastic policies, and the tutorial values of the team.
+  :return: A tuple that includes the final rnn hidden state, the stochastic policies, and the total values of the team.
   :rtype: tuple
 
 .. py:function::
   xuance.torch.policies.categorical_mal.MAAC_Policy_Share.value_tot(values_n, global_state)
 
-  Calculate the tutorial values of the team via the value decomposition modules (self.mixer).
+  Calculate the total values of the team via the value decomposition modules (self.mixer).
 
   :param values_n: The joint values of n agents.
   :type values_n: Tensor
   :param global_state: The global states of the environments.
   :type global_state: Tensor
-  :return: A tuple that includes the final rnn hidden state, and the tutorial values of the team.
+  :return: A tuple that includes the final rnn hidden state, and the total values of the team.
   :rtype: tuple
 
 .. py:class::
@@ -416,7 +416,7 @@ TensorFlow
 .. py:class::
   xuance.tensorflow.policies.categorical_mal.MAAC_Policy(action_space, n_agents, representation, mixer, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device)
 
-  Multi-Agent Actor-Critic (MAAC) policy for discrete action space. It is used to generate categorical distributions and the tutorial values of the multi-agent team.
+  Multi-Agent Actor-Critic (MAAC) policy for discrete action space. It is used to generate categorical distributions and the total values of the multi-agent team.
 
   :param action_space: The action space.
   :type action_space: Space
@@ -460,19 +460,19 @@ TensorFlow
   :param agent_ids: The IDs variables for agents.
   :type agent_ids: tf.Tensor
   :param rnn_hidden: The last final hidden states of the sequence.
-  :return: A tuple that includes the final rnn hidden state, and the tutorial values of the team.
+  :return: A tuple that includes the final rnn hidden state, and the total values of the team.
   :rtype: tuple
 
 .. py:function::
   xuance.tensorflow.policies.categorical_mal.MAAC_Policy.value_tot(values_n, global_state)
 
-  Calculate the tutorial values of the team via the value decomposition modules (self.mixer).
+  Calculate the total values of the team via the value decomposition modules (self.mixer).
 
   :param values_n: The joint values of n agents.
   :type values_n: tf.Tensor
   :param global_state: The global states of the environments.
   :type global_state: tf.Tensor
-  :return: The final rnn hidden state, and the tutorial values of the team.
+  :return: The final rnn hidden state, and the total values of the team.
   :rtype: tf.Tensor
 
 .. py:function::
@@ -517,7 +517,7 @@ TensorFlow
   :param rnn_hidden: The last final hidden states of the sequence.
   :param avail_actions: The mask varibales for availabel actions.
   :type avail_actions: tf.Tensor
-  :return: A tuple that includes the final rnn hidden state, the stochastic policies, and the tutorial values of the team.
+  :return: A tuple that includes the final rnn hidden state, the stochastic policies, and the total values of the team.
   :rtype: tuple
 
 .. py:function::
@@ -527,7 +527,7 @@ TensorFlow
   :type values_n: tf.Tensor
   :param global_state: The global states of the environments.
   :type global_state: tf.Tensor
-  :return: A tuple that includes the final rnn hidden state, and the tutorial values of the team.
+  :return: A tuple that includes the final rnn hidden state, and the total values of the team.
   :rtype: tuple
 
 .. py:function::
@@ -740,7 +740,7 @@ MindSpore
   xuance.mindspore.policies.categorical_marl.MAAC_Policy(action_space, n_agents, representation, mixer, actor_hidden_size, critic_hidden_size, normalize, initialize, activation)
 
   Multi-Agent Actor-Critic (MAAC) policy for discrete action space. 
-  It is used to generate categorical distributions and the tutorial values of the multi-agent team.
+  It is used to generate categorical distributions and the total values of the multi-agent team.
 
   :param action_space: The action space of the environment.
   :type action_space: Space
@@ -784,19 +784,19 @@ MindSpore
   :param agent_ids: The IDs variables for agents.
   :type agent_ids: ms.Tensor
   :param rnn_hidden: The final hidden state of the sequence.
-  :return: A tuple that includes the final rnn hidden state, and the tutorial values of the team.
+  :return: A tuple that includes the final rnn hidden state, and the total values of the team.
   :rtype: tuple
 
 .. py:function::
   xuance.mindspore.policies.categorical_marl.MAAC_Policy.value_tot(values_n, global_state)
 
-  Calculate the tutorial values of the team via the value decomposition modules (self.mixer).
+  Calculate the total values of the team via the value decomposition modules (self.mixer).
 
   :param values_n: The joint values of n agents.
   :type values_n: ms.Tensor
   :param global_state: The global states of the environments.
   :type global_state: ms.Tensor
-  :return: The final rnn hidden state, and the tutorial values of the team.
+  :return: The final rnn hidden state, and the total values of the team.
   :rtype: ms.Tensor
 
 .. py:class::
@@ -835,19 +835,19 @@ MindSpore
   :param rnn_hidden: The final hidden state of the sequence.
   :param avail_actions: The mask varibales for availabel actions.
   :type avail_actions: ms.Tensor
-  :return: A tuple that includes the final rnn hidden state, the stochastic policies, and the tutorial values of the team.
+  :return: A tuple that includes the final rnn hidden state, the stochastic policies, and the total values of the team.
   :rtype: tuple
 
 .. py:function::
   xuance.mindspore.policies.categorical_marl.MAAC_Policy_Share.value_tot(values_n, global_state)
 
-  Calculate the tutorial values of the team via the value decomposition modules (self.mixer).
+  Calculate the total values of the team via the value decomposition modules (self.mixer).
 
   :param values_n: The joint values of n agents.
   :type values_n: ms.Tensor
   :param global_state: The global states of the environments.
   :type global_state: ms.Tensor
-  :return: A tuple that includes the final rnn hidden state, and the tutorial values of the team.
+  :return: A tuple that includes the final rnn hidden state, and the total values of the team.
   :rtype: tuple
 
 .. py:class::

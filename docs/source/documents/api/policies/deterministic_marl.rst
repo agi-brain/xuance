@@ -234,7 +234,7 @@ PyTorch
   :type q: torch.Tensor
   :param states: The global states.
   :type states: torch.Tensor
-  :return: The tutorial Q-values for the multi-agent team.
+  :return: The total Q-values for the multi-agent team.
   :rtype: torch.Tensor
 
 .. py:function::
@@ -246,7 +246,7 @@ PyTorch
   :type q: torch.Tensor
   :param states: The global states.
   :type states: torch.Tensor
-  :return: The tutorial Q-values for the multi-agent team.
+  :return: The total Q-values for the multi-agent team.
   :rtype: torch.Tensor
 
 .. py:function::
@@ -907,7 +907,7 @@ TensorFlow
   :type q: tf.Tensor
   :param states: The global states.
   :type states: tf.Tensor
-  :return: The tutorial Q-values for the multi-agent team.
+  :return: The total Q-values for the multi-agent team.
   :rtype: tf.Tensor
 
 .. py:function::
@@ -919,7 +919,7 @@ TensorFlow
   :type q: tf.Tensor
   :param states: The global states.
   :type states: tf.Tensor
-  :return: The tutorial Q-values for the multi-agent team.
+  :return: The total Q-values for the multi-agent team.
   :rtype: tf.Tensor
 
 .. py:function::
@@ -1601,7 +1601,7 @@ MindSpore
   :type q: ms.Tensor
   :param state: The global states.
   :type state: ms.Tensor
-  :return: The tutorial Q-values for the multi-agent team.
+  :return: The total Q-values for the multi-agent team.
   :rtype: ms.Tensor
 
 .. py:function::
@@ -1613,7 +1613,7 @@ MindSpore
   :type q: ms.Tensor
   :param state: The global states.
   :type state: ms.Tensor
-  :return: The tutorial Q-values for the multi-agent team.
+  :return: The total Q-values for the multi-agent team.
   :rtype: ms.Tensor
 
 .. py:function::
