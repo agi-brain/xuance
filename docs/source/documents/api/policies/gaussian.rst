@@ -119,7 +119,8 @@ PyTorch
 .. py:class::
   xuance.torch.policies.gaussian.ActorPolicy(action_space, representation, actor_hidden_size, normalize, initialize, activation, device, fixed_std)
 
-  
+  This class represents a standalone actor policy, typically used in actor-only algorithms or as part of a larger policy in more complex architectures. 
+  The actor is responsible for selecting actions based on the current state, and the policy can be used for generating actions during both training and inference.
 
   :param action_space: The action space of the environment.
   :type action_space: Space
@@ -135,21 +136,26 @@ PyTorch
   :type activation: nn.Module
   :param device: The calculating device.
   :type device: str
-  :param fixed_std: xxxxxx.
-  :type fixed_std: xxxxxx
+  :param fixed_std: A boolean indicating whether the standard deviation of the actor's output distribution is fixed.
+  :type fixed_std: bool
 
 .. py:function::
   xuance.torch.policies.gaussian.ActorPolicy.forward(observation)
 
-  xxxxxx.
+  - The forward method takes an observation (either a NumPy array or a dictionary) as input.
+  - It passes the observation through the representation neural network to obtain the state representation.
+  - The state representation is then used as input for the actor network.
+  - The output consists of the representation output and the actor's output (policy distribution over actions).
 
   :param observation: The original observation variables.
   :type observation: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: A tuple that includes the representation output and the actor's output.
+  :rtype: tuple
 
 .. py:class::
   xuance.torch.policies.gaussian.PPGActorCritic(action_space, representation, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device)
+
+  An implementation of an actor-critic model for phasic policy gradient methods in reinforcement learning.
 
   :param action_space: The action space of the environment.
   :type action_space: Space
@@ -171,15 +177,19 @@ PyTorch
 .. py:function::
   xuance.torch.policies.gaussian.PPGActorCritic.forward(observation)
 
-  xxxxxx.
+  - A feed forward method that takes an observation (input state) and performs a forward pass through the representation networks, actor, critic, and auxiliary critic networks. 
+  - It returns the outputs of these components.
 
   :param observation: The original observation variables.
   :type observation: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: A tuple that includes the outputs of the actor_representation, the actor network, the critic network, and the auxiliary network.
+  :rtype: tuple
 
 .. py:class::
   xuance.torch.policies.gaussian.ActorNet_SAC(state_dim, action_dim, hidden_sizes, normalize, initialize, activation, device)
+
+  An implementation of a actor network for the Soft Actor-Critic (SAC) with continuous action spaces. 
+  It takes the state as input and outputs a Gaussian distribution over continuous actions using a softmax activation.
 
   :param state_dim: The dimension of the input state.
   :type state_dim: int
@@ -199,15 +209,17 @@ PyTorch
 .. py:function::
   xuance.torch.policies.gaussian.ActorNet_SAC.forward(x)
 
-  xxxxxx.
+  A feed forward method that takes the tensor x as input and passes it through the actor model.
+  It returns a Gaussian distribution over continuous actions.
 
   :param x: The input tensor.
   :type x: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: A Gaussian distribution over continuous actions using a softmax activation.
 
 .. py:class::
   xuance.torch.policies.gaussian.CriticNet_SAC(state_dim, action_dim, hidden_sizes, normalize, initialize, activation, device)
+  
+  An implementation of a critic network for the Soft Actor-Critic (SAC) with continuous action spaces.
 
   :param state_dim: The dimension of the input state.
   :type state_dim: int
@@ -227,17 +239,20 @@ PyTorch
 .. py:function::
   xuance.torch.policies.gaussian.CriticNet_SAC.forward(x, a)
 
-  xxxxxx.
+  A feed forward method that defines the forward pass through the critic network, 
+  taking the input tensors x and a, and passing it through the critic model.
 
-  :param x: The input tensor.
+  :param x: The input observation data.
   :type x: torch.Tensor
-  :param a: xxxxxx.
-  :type a: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :param a: The input action data.
+  :type a: torch.Tensor
+  :return: The evaluated critic values of input x.
+  :rtype: torch.Tensor
 
 .. py:class::
   xuance.torch.policies.gaussian.SACPolicy(action_space, representation, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device)
+
+  This class defines a policy for the soft actor-critic (SAC) with continuous action spaces.
 
   :param action_space: The action space of the environment.
   :type action_space: Space
@@ -259,54 +274,54 @@ PyTorch
 .. py:function::
   xuance.torch.policies.gaussian.SACPolicy.forward(observation)
 
-  xxxxxx.
+  A feed forward method that computes the forward pass of the policy network given an observation. 
+  It returns the representation of the representation_actor, and the action distribution.
 
   :param observation: The original observation variables.
   :type observation: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: A tuple that includes the outputs of the representation_actor, and the action distribution.
+  :rtype: tuple
 
 .. py:function::
   xuance.torch.policies.gaussian.SACPolicy.Qtarget(observation)
 
-  xxxxxx.
+  Calculate the Q-value with the target Q network.
 
   :param observation: The original observation variables.
   :type observation: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The target Q values.
+  :rtype: torch.Tensor
 
 .. py:function::
   xuance.torch.policies.gaussian.SACPolicy.Qaction(observation, action)
 
-  xxxxxx.
+  Calculate the Q value for the original Q network.
 
   :param observation: The original observation variables.
   :type observation: torch.Tensor
   :param action: The action input.
   :type action: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The evaluate Q values.
+  :rtype: torch.Tensor
 
 .. py:function::
   xuance.torch.policies.gaussian.SACPolicy.Qpolicy(observation)
 
-  xxxxxx.
+  Calculat the log of action probabilities, and the Q-values of the policy network.
 
   :param observation: The original observation variables.
   :type observation: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: A tuple that includes the log of action probabilities, and the Q-values of the policy network.
+  :rtype: tuple
 
 .. py:function::
   xuance.torch.policies.gaussian.SACPolicy.soft_update(tau)
-
-  xxxxxx.
+  
+  Performs a soft update of the target networks using a specified interpolation parameter (tau).
 
   :param tau: The soft update factor for the update of target networks.
   :type tau: float
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  
 
 .. raw:: html
 
