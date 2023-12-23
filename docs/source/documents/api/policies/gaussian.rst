@@ -1,7 +1,9 @@
 Gaussian
 =======================================
 
-xxxxxx.
+In this module, we define several classes related to the components of the DRL policies with Guassian distributions,
+such as the Q-networks, actor networks, critic policies, and the policies.
+These policies are used to generate actions from continuous aciton spaces, and calculate the values.
 
 .. raw:: html
 
@@ -13,6 +15,9 @@ PyTorch
 .. py:class::
   xuance.torch.policies.gaussian.ActorNet(state_dim, action_dim, hidden_sizes, normalize, initialize, activation, device)
 
+  The ActorNet is designed for policies that model continuous action spaces using a Gaussian distribution. 
+  The mean and standard deviation are learned from the input state, and the resulting distribution is used to sample actions during training.
+
   :param state_dim: The dimension of the input state.
   :type state_dim: int
   :param action_dim: The dimension of the action input.
@@ -22,7 +27,7 @@ PyTorch
   :param normalize: The method of normalization.
   :type normalize: nn.Module
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: torch.Tensor
   :param activation: The choose of activation functions for hidden layers.
   :type activation: nn.Module
   :param device: The calculating device.
@@ -31,15 +36,21 @@ PyTorch
 .. py:function::
   xuance.torch.policies.gaussian.ActorNet.forward(x)
 
-  xxxxxx.
-
+  The forward method takes a tensor x as input (representing the state). 
+  It computes the mean and log standard deviation using the MLP (self.mu) and the trainable parameter (self.logstd).
+  It sets the parameters of a diagonal Gaussian distribution using the computed mean and log standard deviation.
+  The distribution is returned.
+  
   :param x: The input tensor.
   :type x: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: A diagonal Gaussian distribution.
+
 
 .. py:class::
   xuance.torch.policies.gaussian.CriticNet(state_dim, hidden_sizes, normalize, initialize, activation, device)
+
+  The CriticNet is designed to estimate the Q-values for a given state in the context of reinforcement learning.
+  The architecture is similar to an MLP, and it produces a single output representing the estimated Q-value.
 
   :param state_dim: The dimension of the input state.
   :type state_dim: int
@@ -48,7 +59,7 @@ PyTorch
   :param normalize: The method of normalization.
   :type normalize: nn.Module
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: torch.Tensor
   :param activation: The choose of activation functions for hidden layers.
   :type activation: nn.Module
   :param device: The calculating device.
@@ -57,15 +68,22 @@ PyTorch
 .. py:function::
   xuance.torch.policies.gaussian.CriticNet.forward(x)
 
-  xxxxxx.
+  The forward method takes a tensor x as input (representing the state).
+  It passes the input through the entire neural network (self.model).
+  The output represents the Q-value for the given state.
 
   :param x: The input tensor.
   :type x: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The Q-value for the given state.
+  :rtype: torch.Tensor
+
 
 .. py:class::
   xuance.torch.policies.gaussian.ActorCriticPolicy(action_space, representation, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device)
+
+  This architecture follows the actor-critic paradigm, 
+  where the actor is responsible for selecting actions based on the current state, 
+  and the critic evaluates the value of the state.
 
   :param action_space: The action space of the environment.
   :type action_space: Space
@@ -78,7 +96,7 @@ PyTorch
   :param normalize: The method of normalization.
   :type normalize: nn.Module
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: torch.Tensor
   :param activation: The choose of activation functions for hidden layers.
   :type activation: nn.Module
   :param device: The calculating device.
@@ -87,15 +105,21 @@ PyTorch
 .. py:function::
   xuance.torch.policies.gaussian.ActorCriticPolicy.forward(observation)
 
-  xxxxxx.
+  - The forward method takes an observation (either a NumPy array or a dictionary) as input.
+  - It passes the observation through the representation neural network to obtain the state representation.
+  - The state representation is then used as input for both the actor and critic networks.
+  - The output consists of the representation's output, the actor's output (policy distribution over actions), and the critic's output (value function).
 
   :param observation: The original observation variables.
-  :type observation: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type observation: torch.Tensor
+  :return: A tuple that includes the outputs of the representation, the actor network, and the critic network.
+  :rtype: tuple
+
 
 .. py:class::
   xuance.torch.policies.gaussian.ActorPolicy(action_space, representation, actor_hidden_size, normalize, initialize, activation, device, fixed_std)
+
+  
 
   :param action_space: The action space of the environment.
   :type action_space: Space
@@ -106,7 +130,7 @@ PyTorch
   :param normalize: The method of normalization.
   :type normalize: nn.Module
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: torch.Tensor
   :param activation: The choose of activation functions for hidden layers.
   :type activation: nn.Module
   :param device: The calculating device.
@@ -120,7 +144,7 @@ PyTorch
   xxxxxx.
 
   :param observation: The original observation variables.
-  :type observation: Tensor
+  :type observation: torch.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -138,7 +162,7 @@ PyTorch
   :param normalize: The method of normalization.
   :type normalize: nn.Module
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: torch.Tensor
   :param activation: The choose of activation functions for hidden layers.
   :type activation: nn.Module
   :param device: The calculating device.
@@ -150,7 +174,7 @@ PyTorch
   xxxxxx.
 
   :param observation: The original observation variables.
-  :type observation: Tensor
+  :type observation: torch.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -166,7 +190,7 @@ PyTorch
   :param normalize: The method of normalization.
   :type normalize: nn.Module
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: torch.Tensor
   :param activation: The choose of activation functions for hidden layers.
   :type activation: nn.Module
   :param device: The calculating device.
@@ -194,7 +218,7 @@ PyTorch
   :param normalize: The method of normalization.
   :type normalize: nn.Module
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: torch.Tensor
   :param activation: The choose of activation functions for hidden layers.
   :type activation: nn.Module
   :param device: The calculating device.
@@ -226,7 +250,7 @@ PyTorch
   :param normalize: The method of normalization.
   :type normalize: nn.Module
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: torch.Tensor
   :param activation: The choose of activation functions for hidden layers.
   :type activation: nn.Module
   :param device: The calculating device.
@@ -238,7 +262,7 @@ PyTorch
   xxxxxx.
 
   :param observation: The original observation variables.
-  :type observation: Tensor
+  :type observation: torch.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -248,7 +272,7 @@ PyTorch
   xxxxxx.
 
   :param observation: The original observation variables.
-  :type observation: Tensor
+  :type observation: torch.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -258,9 +282,9 @@ PyTorch
   xxxxxx.
 
   :param observation: The original observation variables.
-  :type observation: Tensor
+  :type observation: torch.Tensor
   :param action: The action input.
-  :type action: Tensor
+  :type action: torch.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -270,7 +294,7 @@ PyTorch
   xxxxxx.
 
   :param observation: The original observation variables.
-  :type observation: Tensor
+  :type observation: torch.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -303,7 +327,7 @@ TensorFlow
   :param normalize: The method of normalization.
   :type normalize: nn.Module
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: torch.Tensor
   :param activation: The choose of activation functions for hidden layers.
   :type activation: nn.Module
   :param device: The calculating device.
@@ -329,7 +353,7 @@ TensorFlow
   :param normalize: The method of normalization.
   :type normalize: nn.Module
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: torch.Tensor
   :param activation: The choose of activation functions for hidden layers.
   :type activation: nn.Module
   :param device: The calculating device.
@@ -359,7 +383,7 @@ TensorFlow
   :param normalize: The method of normalization.
   :type normalize: nn.Module
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: torch.Tensor
   :param activation: The choose of activation functions for hidden layers.
   :type activation: nn.Module
   :param device: The calculating device.
@@ -371,7 +395,7 @@ TensorFlow
   xxxxxx.
 
   :param observation: The original observation variables.
-  :type observation: Tensor
+  :type observation: torch.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -387,7 +411,7 @@ TensorFlow
   :param normalize: The method of normalization.
   :type normalize: nn.Module
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: torch.Tensor
   :param activation: The choose of activation functions for hidden layers.
   :type activation: nn.Module
   :param device: The calculating device.
@@ -401,7 +425,7 @@ TensorFlow
   xxxxxx.
 
   :param observation: The original observation variables.
-  :type observation: Tensor
+  :type observation: torch.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -419,7 +443,7 @@ TensorFlow
   :param normalize: The method of normalization.
   :type normalize: nn.Module
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: torch.Tensor
   :param activation: The choose of activation functions for hidden layers.
   :type activation: nn.Module
   :param device: The calculating device.
@@ -431,7 +455,7 @@ TensorFlow
   xxxxxx.
 
   :param observation: The original observation variables.
-  :type observation: Tensor
+  :type observation: torch.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -447,7 +471,7 @@ TensorFlow
   :param normalize: The method of normalization.
   :type normalize: nn.Module
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: torch.Tensor
   :param activation: The choose of activation functions for hidden layers.
   :type activation: nn.Module
   :param device: The calculating device.
@@ -475,7 +499,7 @@ TensorFlow
   :param normalize: The method of normalization.
   :type normalize: nn.Module
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: torch.Tensor
   :param activation: The choose of activation functions for hidden layers.
   :type activation: nn.Module
   :param device: The calculating device.
@@ -505,7 +529,7 @@ TensorFlow
   :param normalize: The method of normalization.
   :type normalize: nn.Module
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: torch.Tensor
   :param activation: The choose of activation functions for hidden layers.
   :type activation: nn.Module
   :param device: The calculating device.
@@ -517,7 +541,7 @@ TensorFlow
   xxxxxx.
 
   :param observation: The original observation variables.
-  :type observation: Tensor
+  :type observation: torch.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -527,7 +551,7 @@ TensorFlow
   xxxxxx.
 
   :param observation: The original observation variables.
-  :type observation: Tensor
+  :type observation: torch.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -537,9 +561,9 @@ TensorFlow
   xxxxxx.
 
   :param observation: The original observation variables.
-  :type observation: Tensor
+  :type observation: torch.Tensor
   :param action: The action input.
-  :type action: Tensor
+  :type action: torch.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -549,7 +573,7 @@ TensorFlow
   xxxxxx.
 
   :param observation: The original observation variables.
-  :type observation: Tensor
+  :type observation: torch.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -582,7 +606,7 @@ MindSpore
   :param normalize: The method of normalization.
   :type normalize: nn.Module
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: torch.Tensor
   :param activation: The choose of activation functions for hidden layers.
   :type activation: nn.Module
 
@@ -606,7 +630,7 @@ MindSpore
   :param normalize: The method of normalization.
   :type normalize: nn.Module
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: torch.Tensor
   :param activation: The choose of activation functions for hidden layers.
   :type activation: nn.Module
 
@@ -634,7 +658,7 @@ MindSpore
   :param normalize: The method of normalization.
   :type normalize: nn.Module
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: torch.Tensor
   :param activation: The choose of activation functions for hidden layers.
   :type activation: nn.Module
 
@@ -644,7 +668,7 @@ MindSpore
   xxxxxx.
 
   :param observation: The original observation variables.
-  :type observation: Tensor
+  :type observation: torch.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -660,7 +684,7 @@ MindSpore
   :param normalize: The method of normalization.
   :type normalize: nn.Module
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: torch.Tensor
   :param activation: The choose of activation functions for hidden layers.
   :type activation: nn.Module
 
@@ -670,7 +694,7 @@ MindSpore
   xxxxxx.
 
   :param observation: The original observation variables.
-  :type observation: Tensor
+  :type observation: torch.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -684,7 +708,7 @@ MindSpore
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: torch.Tensor
   :param activation: The choose of activation functions for hidden layers.
   :type activation: nn.Module
 
@@ -708,7 +732,7 @@ MindSpore
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: torch.Tensor
   :param activation: The choose of activation functions for hidden layers.
   :type activation: nn.Module
 
@@ -734,7 +758,7 @@ MindSpore
   :param actor_hidden_size: The sizes of the hidden layers in actor network.
   :type actor_hidden_size: list
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: Tensor
+  :type initialize: torch.Tensor
   :param activation: The choose of activation functions for hidden layers.
   :type activation: nn.Module
 
@@ -744,7 +768,7 @@ MindSpore
   xxxxxx.
 
   :param observation: The original observation variables.
-  :type observation: Tensor
+  :type observation: torch.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -754,7 +778,7 @@ MindSpore
   xxxxxx.
 
   :param observation: The original observation variables.
-  :type observation: Tensor
+  :type observation: torch.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -764,7 +788,7 @@ MindSpore
   xxxxxx.
 
   :param observation: The original observation variables.
-  :type observation: Tensor
+  :type observation: torch.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 
@@ -774,7 +798,7 @@ MindSpore
   xxxxxx.
 
   :param observation: The original observation variables.
-  :type observation: Tensor
+  :type observation: torch.Tensor
   :return: xxxxxx.
   :rtype: xxxxxx
 

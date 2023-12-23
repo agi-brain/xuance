@@ -1,8 +1,9 @@
 Gaussian-MARL
 =======================================
 
-In this module, we define several classes related to the components of the MARL policies,
+In this module, we define several classes related to the components of the MARL policies with Gaussian distributions,
 such as the Q-networks, actor networks, critic policies, and the policies.
+These policies are used to generate actions from continuous aciton spaces, and calculate the values.
 
 .. raw:: html
 
