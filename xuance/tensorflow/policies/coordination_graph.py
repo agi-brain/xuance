@@ -1,9 +1,8 @@
-import copy
 import numpy as np
-import torch
-import torch_scatter
 import tensorflow.keras as tk
 import tensorflow as tf
+import torch
+import torch_scatter
 
 
 class DCG_utility(tk.Model):
