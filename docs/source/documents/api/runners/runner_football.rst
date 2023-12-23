@@ -10,63 +10,64 @@ A generic framework for training and testing reinforcement learning in the Footb
 **PyTorch:**
 
 .. py:class::
-  xuance.torch.runners.runner_football.Football_Runner(args)
+    xuance.torch.runners.runner_football.Football_Runner(args)
 
-  :param args: the arguments.
-  :type args: Namespace
-
-.. py:function::
-  xuance.torch.runners.runner_football.Football_Runner.get_agent_num()
-
-  Return the number of agents and adversaries in the environment.
-
-  :return: the number of agents and adversaries.
-  :rtype: tuple
+    :param args: the arguments.
+    :type args: Namespace
 
 .. py:function::
-  xuance.torch.runners.runner_football.Football_Runner.get_battles_info()
+    xuance.torch.runners.runner_football.Football_Runner.get_agent_num()
 
-  Calculate and return information about the total number of battles in the environment and the number of battles won.
+    Return the number of agents and adversaries in the environment.
 
-  :return: the formation about the total number of battles in the environment and the number of battles won.
-  :rtype: tuple
-
-.. py:function::
-  xuance.torch.runners.runner_football.Football_Runner.get_battles_result(last_battles_info)
-
-  Provide the win rate based on changes in the total number of battles and battles won between the last recorded point in time and the current state of the environment.
-
-  :param last_battles_info: contain information about the battles at the last recorded point in time.
-  :type last_battles_info: tuple
-  :return: the win rate in the environment.
-  :rtype: float
+    :return: the number of agents and adversaries.
+    :rtype: tuple
 
 .. py:function::
-  xuance.torch.runners.runner_football.Football_Runner.run_episodes(test_mode)
+    xuance.torch.runners.runner_football.Football_Runner.get_battles_info()
 
-  Execute a series of episodes in the environment, either for training or testing purposes.
+    Calculate and return information about the total number of battles in the environment and the number of battles won.
 
-  :param test_mode: control the mode in which episodes are executed.
-  :type test_mode: bool
-  :return: the average episode score achieved during the training or testing process.
-  :rtype: float
+    :return: the formation about the total number of battles in the environment and the number of battles won.
+    :rtype: tuple
 
 .. py:function::
-  xuance.torch.runners.runner_football.Football_Runner.test_episodes(test_T, n_test_runs)
+    xuance.torch.runners.runner_football.Football_Runner.get_battles_result(last_battles_info)
 
-  xxxxxx.
+    Provide the win rate based on changes in the total number of battles and battles won between the last recorded point in time and the current state of the environment.
 
-  :param test_T: xxxxxx.
-  :type test_T: xxxxxx
-  :param n_test_runs: xxxxxx.
-  :type n_test_runs: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+    :param last_battles_info: contain information about the battles at the last recorded point in time.
+    :type last_battles_info: tuple
+    :return: the win rate in the environment.
+    :rtype: float
 
 .. py:function::
-  xuance.torch.runners.runner_football.Football_Runner.benchmark()
+    xuance.torch.runners.runner_football.Football_Runner.run_episodes(test_mode)
 
-  xxxxxx.
+    Execute a series of episodes in the environment, either for training or testing purposes.
+
+    :param test_mode: control the mode in which episodes are executed.
+    :type test_mode: bool
+    :return: the average episode score achieved during the training or testing process.
+    :rtype: float
+
+.. py:function::
+    xuance.torch.runners.runner_football.Football_Runner.test_episodes(test_T, n_test_runs)
+
+    Run multiple testing cycles in a testing mode and calculate statistics such as test scores and win rates.
+
+    :param test_T: the time step for recording test results.
+    :type test_T: int
+    :param n_test_runs: the number of testing cycles to execute.
+    :type n_test_runs: int
+    :return: the average test score, the standard deviation of test scores and the win rate.
+    :rtype: tuple
+
+.. py:function::
+    xuance.torch.runners.runner_football.Football_Runner.benchmark()
+
+    This method conducts a thorough performance evaluation throughout the training and testing processes,
+    providing comprehensive assessment results and statistics..
 
 .. raw:: html
 
