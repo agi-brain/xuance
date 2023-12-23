@@ -321,7 +321,7 @@ PyTorch
 
   :param tau: The soft update factor for the update of target networks.
   :type tau: float
-  
+
 
 .. raw:: html
 
@@ -332,6 +332,9 @@ TensorFlow
 
 .. py:class::
   xuance.tensorflow.policies.gaussian.ActorNet(state_dim, action_dim, hidden_sizes, normalize, initialize, activation, device)
+
+  The ActorNet is designed for policies that model continuous action spaces using a Gaussian distribution. 
+  The mean and standard deviation are learned from the input state, and the resulting distribution is used to sample actions during training.
 
   :param state_dim: The dimension of the input state.
   :type state_dim: int
