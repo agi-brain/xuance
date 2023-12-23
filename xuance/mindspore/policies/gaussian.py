@@ -3,6 +3,7 @@ from xuance.mindspore.utils import *
 from mindspore.nn.probability.distribution import Normal
 import copy
 
+
 class ActorNet(nn.Cell):
     class Sample(nn.Cell):
         def __init__(self, log_std):
