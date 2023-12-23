@@ -1,7 +1,8 @@
 Runner_Pettingzoo
 ==============================================
 
-xxxxxx.
+A python script for a reinforcement learning framework using PettingZoo.
+This script define a training and testing pipeline for multi-agent reinforcement learning using various algorithms..
 
 .. raw:: html
 
@@ -10,118 +11,119 @@ xxxxxx.
 **PyTorch:**
 
 .. py:class::
-  xuance.torch.runners.runner_pettingzoo.Pettingzoo_Runner(args)
+    xuance.torch.runners.runner_pettingzoo.Pettingzoo_Runner(args)
 
-  :param args: the arguments.
-  :type args: Namespace
-
-.. py:function::
-  xuance.torch.runners.runner_pettingzoo.Pettingzoo_Runner.log_infos(info, x_index)
-
-  xxxxxx.
-
-  :param info: xxxxxx.
-  :type info: xxxxxx
-  :param x_index: xxxxxx.
-  :type x_index: xxxxxx
+    :param args: the arguments.
+    :type args: Namespace
 
 .. py:function::
-  xuance.torch.runners.runner_pettingzoo.Pettingzoo_Runner.log_videos(info, fps, x_index)
+    xuance.torch.runners.runner_pettingzoo.Pettingzoo_Runner.log_infos(info, x_index)
 
-  xxxxxx.
+    Log information during training or testing.
 
-  :param info: xxxxxx.
-  :type info: xxxxxx
-  :param fps: xxxxxx.
-  :type fps: xxxxxx
-  :param x_index: xxxxxx.
-  :type x_index: xxxxxx
+    :param info: recorded information.
+    :type info: dict
+    :param x_index: the current step or index at which the information is being logged.
+    :type x_index: int
 
 .. py:function::
-  xuance.torch.runners.runner_pettingzoo.Pettingzoo_Runner.print_infos(args)
+    xuance.torch.runners.runner_pettingzoo.Pettingzoo_Runner.log_videos(info, fps, x_index)
 
-  xxxxxx.
+    Log video data during training or testing.
 
-  :param args: the arguments.
-  :type args: Namespace
-
-.. py:function::
-  xuance.torch.runners.runner_pettingzoo.Pettingzoo_Runner.combine_env_actions(actions)
-
-  xxxxxx.
-
-  :param actions: The actions input.
-  :type actions: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+    :param info: contain video data to be logged.
+    :type info: dict
+    :param fps: specifies the number of frames displayed per second in the logged video.
+    :type fps: int
+    :param x_index: the current step or index at which the information is being logged..
+    :type x_index: int
 
 .. py:function::
-  xuance.torch.runners.runner_pettingzoo.Pettingzoo_Runner.get_actions(obs_n, test_mode, act_mean_last, agent_mask, state)
+    xuance.torch.runners.runner_pettingzoo.Pettingzoo_Runner.print_infos(args)
 
-  xxxxxx.
+    Print information about each agent based on the provided arguments.
 
-  :param obs_n: The joint observations of n agents.
-  :type obs_n: np.ndarray
-  :param test_mode: xxxxxx.
-  :type test_mode: xxxxxx
-  :param act_mean_last: xxxxxx.
-  :type act_mean_last: xxxxxx
-  :param agent_mask: xxxxxx.
-  :type agent_mask: xxxxxx
-  :param state: The state input.
-  :type state: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+    :param args: the arguments.
+    :type args: Namespace
 
 .. py:function::
-  xuance.torch.runners.runner_pettingzoo.Pettingzoo_Runner.store_data(obs_n, next_obs_n, actions_dict, state, next_state, agent_mask, rew_n, done_n)
+    xuance.torch.runners.runner_pettingzoo.Pettingzoo_Runner.combine_env_actions(actions)
 
-  xxxxxx.
+    Combine actions from multiple agents in different environments into a list of dictionaries.
 
-  :param obs_n: The joint observations of n agents.
-  :type obs_n: np.ndarray
-  :param next_obs_n: xxxxxx.
-  :type next_obs_n: xxxxxx
-  :param actions_dict: xxxxxx.
-  :type actions_dict: xxxxxx
-  :param state: The state input.
-  :type state: Tensor
-  :param next_state: xxxxxx.
-  :type next_state: xxxxxx
-  :param agent_mask: xxxxxx.
-  :type agent_mask: xxxxxx
-  :param rew_n: xxxxxx.
-  :type rew_n: xxxxxx
-  :param done_n: xxxxxx.
-  :type done_n: xxxxxx
+    :param actions: The actions input.
+    :type actions: Tensor
+    :return: the combined actions for a particular environment.
+    :rtype: list
 
 .. py:function::
-  xuance.torch.runners.runner_pettingzoo.Pettingzoo_Runner.train_episode(n_episodes)
+    xuance.torch.runners.runner_pettingzoo.Pettingzoo_Runner.get_actions(obs_n, test_mode, act_mean_last, agent_mask, state)
 
-  xxxxxx.
+    obtain actions, log probabilities, mean actions,
+    one-hot representations of actions, and values from a set of multi-agent reinforcement learning agents.
 
-  :param n_episodes: xxxxxx.
-  :type n_episodes: xxxxxx
-
-.. py:function::
-  xuance.torch.runners.runner_pettingzoo.Pettingzoo_Runner.test_episode(env_fn)
-
-  xxxxxx.
-
-  :param env_fn: The function of making environments.
-  :type env_fn: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
-
-.. py:function::
-  xuance.torch.runners.runner_pettingzoo.Pettingzoo_Runner.run()
-
-  xxxxxx.
+    :param obs_n: The joint observations of n agents.
+    :type obs_n: np.ndarray
+    :param test_mode: whether the method is being called in a test mode.
+    :type test_mode: bool
+    :param act_mean_last: the mean actions from the previous step for each agent.
+    :type act_mean_last: list
+    :param agent_mask: agent masks.
+    :type agent_mask: list
+    :param state: The state input.
+    :type state: Tensor
+    :return: Key for a list of actions, log probabilities, mean actions, one-hot representations of actions and values.
+    :rtype: dict
 
 .. py:function::
-  xuance.torch.runners.runner_pettingzoo.Pettingzoo_Runner.benchmark()
+    xuance.torch.runners.runner_pettingzoo.Pettingzoo_Runner.store_data(obs_n, next_obs_n, actions_dict, state, next_state, agent_mask, rew_n, done_n)
 
-  xxxxxx.
+    Store data related to the observed environment states,
+    actions taken by agents, rewards received, and other relevant information in the memory of agent.
+
+    :param obs_n: The joint observations of n agents.
+    :type obs_n: np.ndarray
+    :param next_obs_n: the observed states for each MARL agent in the next time step.
+    :type next_obs_n: np.ndarray
+    :param actions_dict: various information about the actions taken by each MARL agent.
+    :type actions_dict: dict
+    :param state: the state input.
+    :type state: Tensor
+    :param next_state: the global state representation at the next time ste.
+    :type next_state: np.ndarray
+    :param agent_mask: the presence of agents in the environment.
+    :type agent_mask: np.ndarray
+    :param rew_n: the rewards received by each MARL agent in the current time step.
+    :type rew_n: np.ndarray
+    :param done_n: whether each MARL agent has terminated (True or False) in the current time step.
+    :type done_n: np.ndarray
+
+.. py:function::
+    xuance.torch.runners.runner_pettingzoo.Pettingzoo_Runner.train_episode(n_episodes)
+
+    Train the model.
+
+    :param n_episodes: the number of episodes to train the model.
+    :type n_episodes: int
+
+.. py:function::
+    xuance.torch.runners.runner_pettingzoo.Pettingzoo_Runner.test_episode(env_fn)
+
+    Evaluate the performance of the trained model on a testing environment.
+
+    :param env_fn: The function of making environments.
+    :return: an environment object for testing.
+    :rtype: np.ndarray
+
+.. py:function::
+    xuance.torch.runners.runner_pettingzoo.Pettingzoo_Runner.run()
+
+    Orchestrate the entire training or testing process.
+
+.. py:function::
+    xuance.torch.runners.runner_pettingzoo.Pettingzoo_Runner.benchmark()
+
+    Perform a benchmarking process, which involves training and evaluating the models over multiple epochs.
 
 .. raw:: html
 
@@ -130,118 +132,119 @@ xxxxxx.
 **TensorFlow:**
 
 .. py:class::
-  xuance.tensorflow.runners.runner_pettingzoo.Pettingzoo_Runner(args)
+    xuance.tensorflow.runners.runner_pettingzoo.Pettingzoo_Runner(args)
 
-  :param args: the arguments.
-  :type args: Namespace
-
-.. py:function::
-  xuance.tensorflow.runners.runner_pettingzoo.Pettingzoo_Runner.log_infos(info, x_index)
-
-  xxxxxx.
-
-  :param info: xxxxxx.
-  :type info: xxxxxx
-  :param x_index: xxxxxx.
-  :type x_index: xxxxxx
+    :param args: the arguments.
+    :type args: Namespace
 
 .. py:function::
-  xuance.tensorflow.runners.runner_pettingzoo.Pettingzoo_Runner.log_videos(info, fps, x_index)
+    xuance.tensorflow.runners.runner_pettingzoo.Pettingzoo_Runner.log_infos(info, x_index)
 
-  xxxxxx.
+    Log information during training or testing.
 
-  :param info: xxxxxx.
-  :type info: xxxxxx
-  :param fps: xxxxxx.
-  :type fps: xxxxxx
-  :param x_index: xxxxxx.
-  :type x_index: xxxxxx
+    :param info: recorded information.
+    :type info: dict
+    :param x_index: the current step or index at which the information is being logged.
+    :type x_index: int
 
 .. py:function::
-  xuance.tensorflow.runners.runner_pettingzoo.Pettingzoo_Runner.print_infos(args)
+    xuance.tensorflow.runners.runner_pettingzoo.Pettingzoo_Runner.log_videos(info, fps, x_index)
 
-  xxxxxx.
+    Log video data during training or testing.
 
-  :param args: the arguments.
-  :type args: Namespace
-
-.. py:function::
-  xuance.tensorflow.runners.runner_pettingzoo.Pettingzoo_Runner.combine_env_actions(actions)
-
-  xxxxxx.
-
-  :param actions: The actions input.
-  :type actions: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+    :param info: contain video data to be logged.
+    :type info: dict
+    :param fps: specifies the number of frames displayed per second in the logged video.
+    :type fps: int
+    :param x_index: the current step or index at which the information is being logged..
+    :type x_index: int
 
 .. py:function::
-  xuance.tensorflow.runners.runner_pettingzoo.Pettingzoo_Runner.get_actions(obs_n, test_mode, act_mean_last, agent_mask, state)
+    xuance.tensorflow.runners.runner_pettingzoo.Pettingzoo_Runner.print_infos(args)
 
-  xxxxxx.
+    Print information about each agent based on the provided arguments.
 
-  :param obs_n: The joint observations of n agents.
-  :type obs_n: np.ndarray
-  :param test_mode: xxxxxx.
-  :type test_mode: xxxxxx
-  :param act_mean_last: xxxxxx.
-  :type act_mean_last: xxxxxx
-  :param agent_mask: xxxxxx.
-  :type agent_mask: xxxxxx
-  :param state: The state input.
-  :type state: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+    :param args: the arguments.
+    :type args: Namespace
 
 .. py:function::
-  xuance.tensorflow.runners.runner_pettingzoo.Pettingzoo_Runner.store_data(obs_n, next_obs_n, actions_dict, state, next_state, agent_mask, rew_n, done_n)
+    xuance.tensorflow.runners.runner_pettingzoo.Pettingzoo_Runner.combine_env_actions(actions)
 
-  xxxxxx.
+    Combine actions from multiple agents in different environments into a list of dictionaries.
 
-  :param obs_n: The joint observations of n agents.
-  :type obs_n: np.ndarray
-  :param next_obs_n: xxxxxx.
-  :type next_obs_n: xxxxxx
-  :param actions_dict: xxxxxx.
-  :type actions_dict: xxxxxx
-  :param state: The state input.
-  :type state: Tensor
-  :param next_state: xxxxxx.
-  :type next_state: xxxxxx
-  :param agent_mask: xxxxxx.
-  :type agent_mask: xxxxxx
-  :param rew_n: xxxxxx.
-  :type rew_n: xxxxxx
-  :param done_n: xxxxxx.
-  :type done_n: xxxxxx
+    :param actions: The actions input.
+    :type actions: Tensor
+    :return: the combined actions for a particular environment.
+    :rtype: list
 
 .. py:function::
-  xuance.tensorflow.runners.runner_pettingzoo.Pettingzoo_Runner.train_episode(n_episodes)
+    xuance.tensorflow.runners.runner_pettingzoo.Pettingzoo_Runner.get_actions(obs_n, test_mode, act_mean_last, agent_mask, state)
 
-  xxxxxx.
+    obtain actions, log probabilities, mean actions,
+    one-hot representations of actions, and values from a set of multi-agent reinforcement learning agents.
 
-  :param n_episodes: xxxxxx.
-  :type n_episodes: xxxxxx
-
-.. py:function::
-  xuance.tensorflow.runners.runner_pettingzoo.Pettingzoo_Runner.test_episode(env_fn)
-
-  xxxxxx.
-
-  :param env_fn: The function of making environments.
-  :type env_fn: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
-
-.. py:function::
-  xuance.tensorflow.runners.runner_pettingzoo.Pettingzoo_Runner.run()
-
-  xxxxxx.
+    :param obs_n: The joint observations of n agents.
+    :type obs_n: np.ndarray
+    :param test_mode: whether the method is being called in a test mode.
+    :type test_mode: bool
+    :param act_mean_last: the mean actions from the previous step for each agent.
+    :type act_mean_last: list
+    :param agent_mask: agent masks.
+    :type agent_mask: list
+    :param state: The state input.
+    :type state: Tensor
+    :return: Key for a list of actions, log probabilities, mean actions, one-hot representations of actions and values.
+    :rtype: dict
 
 .. py:function::
-  xuance.tensorflow.runners.runner_pettingzoo.Pettingzoo_Runner.benchmark()
+    xuance.tensorflow.runners.runner_pettingzoo.Pettingzoo_Runner.store_data(obs_n, next_obs_n, actions_dict, state, next_state, agent_mask, rew_n, done_n)
 
-  xxxxxx.
+    Store data related to the observed environment states,
+    actions taken by agents, rewards received, and other relevant information in the memory of agent.
+
+    :param obs_n: The joint observations of n agents.
+    :type obs_n: np.ndarray
+    :param next_obs_n: the observed states for each MARL agent in the next time step.
+    :type next_obs_n: np.ndarray
+    :param actions_dict: various information about the actions taken by each MARL agent.
+    :type actions_dict: dict
+    :param state: the state input.
+    :type state: Tensor
+    :param next_state: the global state representation at the next time ste.
+    :type next_state: np.ndarray
+    :param agent_mask: the presence of agents in the environment.
+    :type agent_mask: np.ndarray
+    :param rew_n: the rewards received by each MARL agent in the current time step.
+    :type rew_n: np.ndarray
+    :param done_n: whether each MARL agent has terminated (True or False) in the current time step.
+    :type done_n: np.ndarray
+
+.. py:function::
+    xuance.tensorflow.runners.runner_pettingzoo.Pettingzoo_Runner.train_episode(n_episodes)
+
+    Train the model.
+
+    :param n_episodes: the number of episodes to train the model.
+    :type n_episodes: int
+
+.. py:function::
+    xuance.tensorflow.runners.runner_pettingzoo.Pettingzoo_Runner.test_episode(env_fn)
+
+    Evaluate the performance of the trained model on a testing environment.
+
+    :param env_fn: The function of making environments.
+    :return: an environment object for testing.
+    :rtype: np.ndarray
+
+.. py:function::
+    xuance.tensorflow.runners.runner_pettingzoo.Pettingzoo_Runner.run()
+
+    Orchestrate the entire training or testing process.
+
+.. py:function::
+    xuance.tensorflow.runners.runner_pettingzoo.Pettingzoo_Runner.benchmark()
+
+    Perform a benchmarking process, which involves training and evaluating the models over multiple epochs.
 
 .. raw:: html
 
@@ -250,96 +253,117 @@ xxxxxx.
 **MindSpore:**
 
 .. py:class::
-  xuance.mindspore.runners.runner_pettingzoo.Pettingzoo_Runner(args)
+    xuance.mindspore.runners.runner_pettingzoo.Pettingzoo_Runner(args)
 
-  :param args: the arguments.
-  :type args: Namespace
-
-.. py:function::
-  xuance.mindspore.runners.runner_pettingzoo.Pettingzoo_Runner.log_infos(info, x_index)
-
-  :param info: xxxxxx.
-  :type info: xxxxxx
-  :param x_index: xxxxxx.
-  :type x_index: xxxxxx
+    :param args: the arguments.
+    :type args: Namespace
 
 .. py:function::
-  xuance.mindspore.runners.runner_pettingzoo.Pettingzoo_Runner.log_videos(info, fps, x_index)
+    xuance.mindspore.runners.runner_pettingzoo.Pettingzoo_Runner.log_infos(info, x_index)
 
-  :param info: xxxxxx.
-  :type info: xxxxxx
-  :param fps: xxxxxx.
-  :type fps: xxxxxx
-  :param x_index: xxxxxx.
-  :type x_index: xxxxxx
+    Log information during training or testing.
 
-.. py:function::
-  xuance.mindspore.runners.runner_pettingzoo.Pettingzoo_Runner.print_infos(args)
-
-  :param args: the arguments.
-  :type args: Namespace
+    :param info: recorded information.
+    :type info: dict
+    :param x_index: the current step or index at which the information is being logged.
+    :type x_index: int
 
 .. py:function::
-  xuance.mindspore.runners.runner_pettingzoo.Pettingzoo_Runner.combine_env_actions(actions)
+    xuance.mindspore.runners.runner_pettingzoo.Pettingzoo_Runner.log_videos(info, fps, x_index)
 
-  :param actions: The actions input.
-  :type actions: Tensor
+    Log video data during training or testing.
 
-.. py:function::
-  xuance.mindspore.runners.runner_pettingzoo.Pettingzoo_Runner.get_actions(obs_n, test_mode, act_mean_last, agent_mask, state)
-
-  :param obs_n: The joint observations of n agents.
-  :type obs_n: np.ndarray
-  :param test_mode: xxxxxx.
-  :type test_mode: xxxxxx
-  :param act_mean_last: xxxxxx.
-  :type act_mean_last: xxxxxx
-  :param agent_mask: xxxxxx.
-  :type agent_mask: xxxxxx
-  :param state: The state input.
-  :type state: Tensor
+    :param info: contain video data to be logged.
+    :type info: dict
+    :param fps: specifies the number of frames displayed per second in the logged video.
+    :type fps: int
+    :param x_index: the current step or index at which the information is being logged..
+    :type x_index: int
 
 .. py:function::
-  xuance.mindspore.runners.runner_pettingzoo.Pettingzoo_Runner.store_data(obs_n, next_obs_n, actions_dict, state, next_state, agent_mask, rew_n, done_n)
+    xuance.mindspore.runners.runner_pettingzoo.Pettingzoo_Runner.print_infos(args)
 
-  :param obs_n: The joint observations of n agents.
-  :type obs_n: np.ndarray
-  :param next_obs_n: xxxxxx.
-  :type next_obs_n: xxxxxx
-  :param actions_dict: xxxxxx.
-  :type actions_dict: xxxxxx
-  :param state: The state input.
-  :type state: Tensor
-  :param next_state: xxxxxx.
-  :type next_state: xxxxxx
-  :param agent_mask: xxxxxx.
-  :type agent_mask: xxxxxx
-  :param rew_n: xxxxxx.
-  :type rew_n: xxxxxx
-  :param done_n: xxxxxx.
-  :type done_n: xxxxxx
+    Print information about each agent based on the provided arguments.
+
+    :param args: the arguments.
+    :type args: Namespace
 
 .. py:function::
-  xuance.mindspore.runners.runner_pettingzoo.Pettingzoo_Runner.train_episode(n_episodes)
+    xuance.mindspore.runners.runner_pettingzoo.Pettingzoo_Runner.combine_env_actions(actions)
 
-  :param n_episodes: xxxxxx.
-  :type n_episodes: xxxxxx
+    Combine actions from multiple agents in different environments into a list of dictionaries.
 
-.. py:function::
-  xuance.mindspore.runners.runner_pettingzoo.Pettingzoo_Runner.test_episode(env_fn)
-
-  :param env_fn: The function of making environments.
-  :type env_fn: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+    :param actions: The actions input.
+    :type actions: Tensor
 
 .. py:function::
-  xuance.mindspore.runners.runner_pettingzoo.Pettingzoo_Runner.run()
+    xuance.mindspore.runners.runner_pettingzoo.Pettingzoo_Runner.get_actions(obs_n, test_mode, act_mean_last, agent_mask, state)
+
+    obtain actions, log probabilities, mean actions,
+    one-hot representations of actions, and values from a set of multi-agent reinforcement learning agents.
+
+    :param obs_n: The joint observations of n agents.
+    :type obs_n: np.ndarray
+    :param test_mode: whether the method is being called in a test mode.
+    :type test_mode: bool
+    :param act_mean_last: the mean actions from the previous step for each agent.
+    :type act_mean_last: list
+    :param agent_mask: agent masks.
+    :type agent_mask: list
+    :param state: The state input.
+    :type state: Tensor
+    :return: Key for a list of actions, log probabilities, mean actions, one-hot representations of actions and values.
+    :rtype: dict
 
 .. py:function::
-  xuance.mindspore.runners.runner_pettingzoo.Pettingzoo_Runner.benchmark()
+    xuance.mindspore.runners.runner_pettingzoo.Pettingzoo_Runner.store_data(obs_n, next_obs_n, actions_dict, state, next_state, agent_mask, rew_n, done_n)
 
-  xxxxxx.
+    Store data related to the observed environment states,
+    actions taken by agents, rewards received, and other relevant information in the memory of agent.
+
+    :param obs_n: The joint observations of n agents.
+    :type obs_n: np.ndarray
+    :param next_obs_n: the observed states for each MARL agent in the next time step.
+    :type next_obs_n: np.ndarray
+    :param actions_dict: various information about the actions taken by each MARL agent.
+    :type actions_dict: dict
+    :param state: the state input.
+    :type state: Tensor
+    :param next_state: the global state representation at the next time ste.
+    :type next_state: np.ndarray
+    :param agent_mask: the presence of agents in the environment.
+    :type agent_mask: np.ndarray
+    :param rew_n: the rewards received by each MARL agent in the current time step.
+    :type rew_n: np.ndarray
+    :param done_n: whether each MARL agent has terminated (True or False) in the current time step.
+    :type done_n: np.ndarray
+
+.. py:function::
+    xuance.mindspore.runners.runner_pettingzoo.Pettingzoo_Runner.train_episode(n_episodes)
+
+    Train the model.
+
+    :param n_episodes: the number of episodes to train the model.
+    :type n_episodes: int
+
+.. py:function::
+    xuance.mindspore.runners.runner_pettingzoo.Pettingzoo_Runner.test_episode(env_fn)
+
+    Evaluate the performance of the trained model on a testing environment.
+
+    :param env_fn: The function of making environments.
+    :return: an environment object for testing.
+    :rtype: np.ndarray
+
+.. py:function::
+    xuance.mindspore.runners.runner_pettingzoo.Pettingzoo_Runner.run()
+
+    Orchestrate the entire training or testing process.
+
+.. py:function::
+    xuance.mindspore.runners.runner_pettingzoo.Pettingzoo_Runner.benchmark()
+
+    Perform a benchmarking process, which involves training and evaluating the models over multiple epochs.
 
 .. raw:: html
 
