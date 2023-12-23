@@ -64,7 +64,8 @@ Within the following content, we provid the preset arguments for each implementa
 
    <br><hr>
 
-**DQN-based Algorithms:**
+DQN-based Implementations
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. tabs::
 
@@ -2080,7 +2081,8 @@ Within the following content, we provid the preset arguments for each implementa
 
    <br><hr>
 
-**Policy Gradient-based Algorithms:**
+Policy Gradient-based Implementations
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. tabs::
 
@@ -4265,7 +4267,8 @@ Within the following content, we provid the preset arguments for each implementa
 
    <br><hr>
 
-**MARL-based Algorithms:**
+MARL Implementations
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. tabs::
 
