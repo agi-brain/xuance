@@ -1,8 +1,5 @@
-import copy
-
 from xuance.torch.policies import *
 from xuance.torch.utils import *
-from xuance.torch.representations import Basic_Identical
 
 
 class ActorNet(nn.Module):
