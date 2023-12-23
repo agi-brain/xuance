@@ -157,7 +157,7 @@ PyTorch
   :type hidden_states_n: int
   :param actions_n: The independent actions of n agents.
   :type actions_n: torch.Tensor
-  :return: the evaluated counterfactual Q values.
+  :return: The evaluated counterfactual Q values.
   :rtype: torch.Tensor
 
 .. raw:: html
