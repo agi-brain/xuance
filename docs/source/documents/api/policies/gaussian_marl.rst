@@ -131,7 +131,7 @@ PyTorch
 
   :param x: The input tensor.
   :type x: torch.Tensor
-  :return: The distribution object self.dist..
+  :return: The distribution object self.dist.
 
 .. py:class::
   xuance.torch.policies.gaussian_marl.CriticNet(state_dim, n_agents, hidden_sizes, normalize, initialize, activation, device)
