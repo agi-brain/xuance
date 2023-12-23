@@ -1,7 +1,9 @@
 Runner_Base
 ======================================
 
-xxxxxx.
+The basic class named Runner_Base, which is designed to handle running environments using the Xuance library. 
+The class has an __init__ method to initialize some attributes, including setting random seeds and building environments. 
+Additionally, there's a run method that can be customzied by users.
 
 .. raw:: html
 
@@ -18,11 +20,11 @@ xxxxxx.
 .. py:function::
   xuance.torch.runners.runner_basic.Runner_Base.run()
 
-  xxxxxx.
 
 .. raw:: html
 
     <br><hr>
+
 
 **TensorFlow:**
 
@@ -33,19 +35,22 @@ xxxxxx.
   :type args: Namespace
 
 .. py:function::
-  xuance.torch.runners.runner_basic.Runner_Base.run()
+  xuance.tensorflow.runners.runner_basic.Runner_Base.run()
+
 
 .. py:class::
   xuance.tensorflow.runners.runner_basic.MyLinearLR(initial_learning_rate, start_factor, end_factor, total_iters)
 
-  :param initial_learning_rate: xxxxxx.
-  :type initial_learning_rate: xxxxxx
-  :param start_factor: xxxxxx.
-  :type start_factor: xxxxxx
+  An implementation for learning rate decay.
+
+  :param initial_learning_rate: The initialized learning rate.
+  :type initial_learning_rate: float
+  :param start_factor: The start factor of learning rate.
+  :type start_factor: float
   :param end_factor: Factor for the minimum learning rate.
   :type end_factor: float
-  :param total_iters: xxxxxx.
-  :type total_iters: xxxxxx
+  :param total_iters: The number of iterations for decaying learning rate.
+  :type total_iters: int
 
 .. raw:: html
 
@@ -61,8 +66,6 @@ xxxxxx.
 
 .. py:function::
   xuance.mindspore.runners.runner_basic.Runner_Base.run()
-
-  xxxxxx.
 
 .. raw:: html
 
