@@ -1,7 +1,7 @@
 Utils
 ======================
 
-In this part, we provide some 
+In this part, we provide some mathematical basic tools for DRL algorithms.
 
 .. toctree::
     :hidden:
