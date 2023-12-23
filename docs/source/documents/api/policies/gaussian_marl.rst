@@ -766,6 +766,9 @@ MindSpore
 .. py:class::
   xuance.mindspore.policies.gaussian_marl.BasicQhead(state_dim, action_dim, n_agents, hidden_sizes, normalize, initialize, activation)
 
+  A basic module representing the Q-value head, commonly used in Q-networks. 
+  It takes state, action, and agent information as input and produces Q-values as output.
+
   :param state_dim: The dimension of the input state.
   :type state_dim: int
   :param action_dim: The dimension of the action input.
@@ -775,71 +778,79 @@ MindSpore
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: nn.Cell
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: torch.Tensor
+  :type initialize: ms.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: nn.Cell
 
 .. py:function::
   xuance.mindspore.policies.gaussian_marl.BasicQhead.construct(x)
 
-  xxxxxx.
+  Passes the input tensor x through the sequential model (self.model) and returns the output.
 
   :param x: The input tensor.
-  :type x: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type x: ms.Tensor
+  :return: The estimated Q-values.
+  :rtype: tf.Tensor
 
 .. py:class::
   xuance.mindspore.policies.gaussian_marl.BasicQnetwork(action_space, n_agents, representation, hidden_sizes, normalize, initialize, activation)
+
+  A basic Q-network that utilizes the BasicQhead for both evaluation and target networks.
 
   :param action_space: The action space of the environment.
   :type action_space: Space
   :param n_agents: The number of agents.
   :type n_agents: int
   :param representation: The representation module.
-  :type representation: nn.Module
+  :type representation: nn.Cell
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: nn.Cell
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: torch.Tensor
+  :type initialize: ms.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: nn.Cell
 
 .. py:function::
   xuance.mindspore.policies.gaussian_marl.BasicQnetwork.construct(observation, agent_ids)
 
-  xxxxxx.
+  The forward method computes the evaluation Q-values for a given observation and agent identifiers, 
+  along with other relevant information from the representation module.
 
   :param observation: The original observation variables.
-  :type observation: torch.Tensor
+  :type observation: ms.Tensor
   :param agent_ids: The IDs variables for agents.
-  :type agent_ids: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type agent_ids: ms.Tensor
+  :return: A tuple that includes the representation (outputs), argmax action (argmax_action), and evaluation Q-values (evalQ). These values can be useful for further processing during reinforcement learning training or evaluation.
+  :rtype: tuple
 
 .. py:function::
   xuance.mindspore.policies.gaussian_marl.BasicQnetwork.target_Q(observation, agent_ids)
 
-  xxxxxx.
+  The target_Q method computes the target Q-values for a given observation and agent identifiers using the target Q-head. 
+  This method is typically used during the training process for updating the Q-network parameters based on the temporal difference error between the evaluation Q-values and the target Q-values.
 
   :param observation: The original observation variables.
-  :type observation: torch.Tensor
+  :type observation: ms.Tensor
   :param agent_ids: The IDs variables for agents.
-  :type agent_ids: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type agent_ids: ms.Tensor
+  :return: The target Q-values.
+  :rtype: ms.Tensor
 
 .. py:function::
   xuance.mindspore.policies.gaussian_marl.BasicQnetwork.copy_target()
 
-  xxxxxx.
+  Copies the parameters from the evaluation representation, target representation, evaluation Q-head, and target Q-head.
+
 
 .. py:class::
   xuance.mindspore.policies.gaussian_marl.ActorNet(state_dim, action_dim, n_agents, hidden_sizes, normalize, initialize, activation)
+
+  Represents the actor network, responsible for generating actions based on the given state and agent information. 
+  It uses a Diagonal Gaussian distribution for the actions.
 
   :param state_dim: The dimension of the input state.
   :type state_dim: int
@@ -850,24 +861,28 @@ MindSpore
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: nn.Cell
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: torch.Tensor
+  :type initialize: ms.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: nn.Cell
 
 .. py:function::
   xuance.mindspore.policies.gaussian_marl.ActorNet.construct(x)
 
-  xxxxxx.
+  Passes the input tensor x through the sequential model (self.mu) to obtain the mean of the Gaussian distribution.
+  Sets the parameters of the diagonal Gaussian distribution (self.dist) using the mean and the exponential of the log standard deviation.
+  Returns the mean values of the Gaussian distribution.
 
   :param x: The input tensor.
-  :type x: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type x: ms.Tensor
+  :return: the mean values of the Gaussian distribution.
+  :rtype: ms.Tensor
 
 .. py:class::
   xuance.mindspore.policies.gaussian_marl.CriticNet(state_dim, n_agents, hidden_sizes, normalize, initialize, activation)
+
+  Represents the critic network, which evaluates the state-action pairs.
 
   :param state_dim: The dimension of the input state.
   :type state_dim: int
@@ -876,274 +891,295 @@ MindSpore
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: nn.Cell
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: torch.Tensor
+  :type initialize: ms.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: nn.Cell
 
 .. py:function::
   xuance.mindspore.policies.gaussian_marl.CriticNet.construct(x)
 
-  xxxxxx.
+  Passes the input tensor x through the sequential model (self.model) to obtain the output, 
+  which represents the Q-values for the given state-action pairs.
+  Returns the Q-values
 
   :param x: The input tensor.
-  :type x: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type x: ms.Tensor
+  :return: The Q-values.
+  :rtype: ms.Tensor
 
 .. py:class::
   xuance.mindspore.policies.gaussian_marl.MAAC_Policy(action_space, n_agents, representation, mixer, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, kwargs)
 
+  A multi-agent actor-critic policy with Gaussian policies. 
+  It combines an actor network and a critic network and optionally uses a mixer to calculate the total team values.
+
   :param action_space: The action space of the environment.
   :type action_space: Space
   :param n_agents: The number of agents.
   :type n_agents: int
   :param representation: The representation module.
-  :type representation: nn.Module
+  :type representation: nn.Cell
   :param mixer: The mixer for independent values.
-  :type mixer: nn.Module
+  :type mixer: nn.Cell
   :param actor_hidden_size: The sizes of the hidden layers in actor network.
   :type actor_hidden_size: list
   :param critic_hidden_size: The sizes of the hidden layers in critic networks.
   :type critic_hidden_size: list
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: nn.Cell
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: torch.Tensor
+  :type initialize: ms.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: nn.Cell
   :param kwargs: The other arguments.
   :type kwargs: dict
 
 .. py:function::
-  xuance.mindspore.policies.gaussian_marl.MAAC_Policy.construct(observation, agent_ids, rnn_hidden, kwargs)
+  xuance.mindspore.policies.gaussian_marl.MAAC_Policy.construct(observation, agent_ids, *rnn_hidden, **kwargs)
 
-  xxxxxx.
+  Depending on whether the policy uses RNN, the observation is passed through the representation network, and the hidden states are updated.
+  The actor network is then applied to the concatenated input of agent states and IDs to obtain the probability distribution over actions (self.pi_dist).
+  Returns the updated hidden states (if RNN is used) and the probability distribution.
 
   :param observation: The original observation variables.
-  :type observation: torch.Tensor
+  :type observation: ms.Tensor
   :param agent_ids: The IDs variables for agents.
-  :type agent_ids: torch.Tensor
+  :type agent_ids: ms.Tensor
   :param rnn_hidden: The final hidden state of the sequence.
-  :type rnn_hidden: xxxxxx
   :param kwargs: The other arguments.
-  :type kwargs: dict
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: A tuple that includes the updated hidden states (if RNN is used) and the probability distribution.
+  :rtype: tuple
 
 .. py:function::
-  xuance.mindspore.policies.gaussian_marl.MAAC_Policy.get_values(observation, agent_ids, rnn_hidden, kwargs)
+  xuance.mindspore.policies.gaussian_marl.MAAC_Policy.get_values(observation, agent_ids, *rnn_hidden, **kwargs)
 
-  xxxxxx.
+  Computes the critic values based on the input states, agent IDs, and optional RNN hidden states.
 
   :param observation: The original observation variables.
-  :type observation: torch.Tensor
+  :type observation: ms.Tensor
   :param agent_ids: The IDs variables for agents.
-  :type agent_ids: torch.Tensor
+  :type agent_ids: ms.Tensor
   :param rnn_hidden: The final hidden state of the sequence.
-  :type rnn_hidden: xxxxxx
   :param kwargs: The other arguments.
   :type kwargs: dict
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The critic values.
+  :rtype: ms.Tensor
 
 .. py:function::
   xuance.mindspore.policies.gaussian_marl.MAAC_Policy.value_tot(values_n, global_state)
 
-  xxxxxx.
+  Computes the total team value, incorporating a mixer if provided.
 
   :param values_n: The joint values of n agents.
-  :type values_n: torch.Tensor
+  :type values_n: ms.Tensor
   :param global_state: The global states of the environments.
-  :type global_state: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type global_state: ms.Tensor
+  :return: The total team value.
+  :rtype: ms.Tensor
 
 .. py:class::
   xuance.mindspore.policies.gaussian_marl.Basic_ISAC_policy(action_space, n_agents, representation, actor_hidden_size, critic_hidden_size, normalize, initialize, activation)
 
+  A basic policy architecture for the Independent Soft Actor-Critic (ISAC) algorithm, with independent actors and centralized critics. 
+  It includes actor and critic networks, as well as target networks for stability during training. 
+  The soft_update method is used to update the target networks gradually.
+
   :param action_space: The action space of the environment.
   :type action_space: Space
   :param n_agents: The number of agents.
   :type n_agents: int
   :param representation: The representation module.
-  :type representation: nn.Module
+  :type representation: nn.Cell
   :param actor_hidden_size: The sizes of the hidden layers in actor network.
   :type actor_hidden_size: list
   :param critic_hidden_size: The sizes of the hidden layers in critic networks.
   :type critic_hidden_size: list
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: nn.Cell
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: torch.Tensor
+  :type initialize: ms.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: nn.Cell
 
 .. py:function::
   xuance.mindspore.policies.gaussian_marl.Basic_ISAC_policy.construct(observation, agent_ids)
 
-  xxxxxx.
+  Passes the observation through the agent representation network to obtain relevant features (outputs).
+  Concatenates the state features with agent identifiers and passes them through the actor network to obtain actions (act).
+  Returns the representation outputs and actions.
 
   :param observation: The original observation variables.
-  :type observation: torch.Tensor
+  :type observation: ms.Tensor
   :param agent_ids: The IDs variables for agents.
-  :type agent_ids: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type agent_ids: ms.Tensor
+  :return: A tuple that includes the representation outputs and actions.
+  :rtype: tuple
 
 .. py:function::
   xuance.mindspore.policies.gaussian_marl.Basic_ISAC_policy.critic(observation, actions, agent_ids)
 
-  xxxxxx.
+  Computes critic values for given observations, actions, and agent identifiers.
 
   :param observation: The original observation variables.
-  :type observation: torch.Tensor
+  :type observation: ms.Tensor
   :param actions: The actions input.
-  :type actions: torch.Tensor
+  :type actions: ms.Tensor
   :param agent_ids: The IDs variables for agents.
-  :type agent_ids: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type agent_ids: ms.Tensor
+  :return: The evaluated critic values.
+  :rtype: ms.Tensor
 
 .. py:function::
   xuance.mindspore.policies.gaussian_marl.Basic_ISAC_policy.critic_for_train(observation, actions, agent_ids)
 
-  xxxxxx.
+  Computes critic values for given observations, actions, and agent identifiers.
 
   :param observation: The original observation variables.
-  :type observation: torch.Tensor
+  :type observation: ms.Tensor
   :param actions: The actions input.
-  :type actions: torch.Tensor
+  :type actions: ms.Tensor
   :param agent_ids: The IDs variables for agents.
-  :type agent_ids: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type agent_ids: ms.Tensor
+  :return: The evaluated critic values.
+  :rtype: ms.Tensor
 
 .. py:function::
   xuance.mindspore.policies.gaussian_marl.Basic_ISAC_policy.target_critic(observation, actions, agent_ids)
 
-  xxxxxx.
+  Computes critic values for target critic network given observations, actions, and agent identifiers.
 
   :param observation: The original observation variables.
-  :type observation: torch.Tensor
+  :type observation: ms.Tensor
   :param actions: The actions input.
-  :type actions: torch.Tensor
+  :type actions: ms.Tensor
   :param agent_ids: The IDs variables for agents.
-  :type agent_ids: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type agent_ids: ms.Tensor
+  :return: The target critic values.
+  :rtype: ms.Tensor
 
 .. py:function::
   xuance.mindspore.policies.gaussian_marl.Basic_ISAC_policy.target_actor(observation, agent_ids)
 
-  xxxxxx.
+  Obtains the output of the target actor network.
 
   :param observation: The original observation variables.
-  :type observation: torch.Tensor
+  :type observation: ms.Tensor
   :param agent_ids: The IDs variables for agents.
-  :type agent_ids: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type agent_ids: ms.Tensor
+  :return: The output of the target actor network.
+  :rtype: ms.Tensor
 
 .. py:function::
   xuance.mindspore.policies.gaussian_marl.Basic_ISAC_policy.soft_update(tau)
 
-  xxxxxx.
+  Performs a soft update of the target networks using a parameter tau.
+  Updates the target actor and target critic networks by blending their parameters with the corresponding parameters of the online networks.
 
   :param tau: The soft update factor for the update of target networks.
   :type tau: float
 
+
 .. py:class::
   xuance.mindspore.policies.gaussian_marl.MASAC_policy(action_space, n_agents, representation, actor_hidden_size, critic_hidden_size, normalize, initialize, activation)
+
+  An extension of Basic_ISAC_policy for multi-agent environments. 
+  It is an implementation of Multi-Agent Soft Actor-Critic (MASAC) algorithm.
+  It includes modifications to the critic network to handle multiple agents.
 
   :param action_space: The action space of the environment.
   :type action_space: Space
   :param n_agents: The number of agents.
   :type n_agents: int
   :param representation: The representation module.
-  :type representation: nn.Module
+  :type representation: nn.Cell
   :param actor_hidden_size: The sizes of the hidden layers in actor network.
   :type actor_hidden_size: list
   :param critic_hidden_size: The sizes of the hidden layers in critic networks.
   :type critic_hidden_size: list
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: nn.Cell
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: torch.Tensor
+  :type initialize: ms.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: nn.Cell
 
 .. py:function::
   xuance.mindspore.policies.gaussian_marl.MASAC_policy.construct(observation, agent_ids)
 
-  xxxxxx.
+  Computes critic values for given observations, actions, and agent identifiers. 
+  Reshapes the state and actions for multiple agents.
 
   :param observation: The original observation variables.
-  :type observation: torch.Tensor
+  :type observation: ms.Tensor
   :param agent_ids: The IDs variables for agents.
-  :type agent_ids: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type agent_ids: ms.Tensor
+  :return: The evaluated critic values.
+  :rtype: ms.Tensor
 
 .. py:function::
   xuance.mindspore.policies.gaussian_marl.MASAC_policy.critic(observation, actions, agent_ids)
 
-  xxxxxx.
+  Computes critic values for given observations, actions, and agent identifiers. 
+  Reshapes the state and actions for multiple agents.
 
   :param observation: The original observation variables.
-  :type observation: torch.Tensor
+  :type observation: ms.Tensor
   :param actions: The actions input.
-  :type actions: torch.Tensor
+  :type actions: ms.Tensor
   :param agent_ids: The IDs variables for agents.
-  :type agent_ids: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type agent_ids: ms.Tensor
+  :return: The evaluated critic values.
+  :rtype: ms.Tensor
 
 .. py:function::
   xuance.mindspore.policies.gaussian_marl.MASAC_policy.critic_for_train(observation, actions, agent_ids)
 
-  xxxxxx.
+  Computes critic values for given observations, actions, and agent identifiers. 
+  Reshapes the state and actions for multiple agents.
 
   :param observation: The original observation variables.
-  :type observation: torch.Tensor
+  :type observation: ms.Tensor
   :param actions: The actions input.
-  :type actions: torch.Tensor
+  :type actions: ms.Tensor
   :param agent_ids: The IDs variables for agents.
-  :type agent_ids: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type agent_ids: ms.Tensor
+  :return: The evaluated critic values.
+  :rtype: ms.Tensor
 
 .. py:function::
   xuance.mindspore.policies.gaussian_marl.MASAC_policy.target_critic(observation, actions, agent_ids)
 
-  xxxxxx.
+  Computes critic values for the target critic network given observations, actions, and agent identifiers. 
+  Reshapes the state and actions for multiple agents.
 
   :param observation: The original observation variables.
-  :type observation: torch.Tensor
+  :type observation: ms.Tensor
   :param actions: The actions input.
-  :type actions: torch.Tensor
+  :type actions: ms.Tensor
   :param agent_ids: The IDs variables for agents.
-  :type agent_ids: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type agent_ids: ms.Tensor
+  :return: The target critic values.
+  :rtype: ms.Tensor
 
 .. py:function::
   xuance.mindspore.policies.gaussian_marl.MASAC_policy.target_actor(observation, agent_ids)
 
-  xxxxxx.
+  Obtains the output of the target actor network.
 
   :param observation: The original observation variables.
-  :type observation: torch.Tensor
+  :type observation: ms.Tensor
   :param agent_ids: The IDs variables for agents.
-  :type agent_ids: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type agent_ids: ms.Tensor
+  :return: The output of the target actor network.
+  :rtype: ms.Tensor
 
 .. py:function::
   xuance.mindspore.policies.gaussian_marl.MASAC_policy.soft_update(tau)
 
-  xxxxxx.
+  Performs a soft update of the target networks using a parameter tau.
+  Updates the target actor and target critic networks by blending their parameters with the corresponding parameters of the online networks.
 
   :param tau: The soft update factor for the update of target networks.
   :type tau: float
