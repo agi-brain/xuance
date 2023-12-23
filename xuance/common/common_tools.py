@@ -173,7 +173,7 @@ def get_runner(method,
             args[i_alg].agent_name = method[i_alg]
             notation = args[i_alg].dl_toolbox + '/'
 
-            if ('model_dir' in args.__dict__) and ('log_dir' in args[i_alg].__dict__):
+            if ('model_dir' in args[i_alg].__dict__) and ('log_dir' in args[i_alg].__dict__):
                 args[i_alg].model_dir = os.path.join(os.getcwd(),
                                                      args[i_alg].model_dir + notation + args[i_alg].env_id + '/')
                 args[i_alg].log_dir = args[i_alg].log_dir + notation + args[i_alg].env_id + '/'
