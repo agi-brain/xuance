@@ -170,25 +170,34 @@ TensorFlow
 .. py:class::
   xuance.tensorflow.policies.mixers.VDN_mixer()
 
+  This class implements the Value Decomposition Network (VDN) mixer, 
+  a simple mixer that aggregates the values of all agents by summing them up.
+
 .. py:function::
   xuance.tensorflow.policies.mixers.VDN_mixer.call(values_n)
 
-  xxxxxx.
+  The forward method takes values_n as input, which represents the independent values for each agent,
+  and it returns the sum of these values along the specified dimension.
 
-  :param values_n: The joint values of n agents.
-  :type values_n: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :param values_n: The independent values of n agents.
+  :type values_n: tf.Tensor
+  :param states: The global states.
+  :type states: tf.Tensor
+  :return: The sum of these values along the agent dimension.
+  :rtype: tf.Tensor
 
 .. py:class::
   xuance.tensorflow.policies.mixers.QMIX_mixer(dim_state, dim_hidden, dim_hypernet_hidden, n_agents, device)
 
-  :param dim_state: The dimension of the global state.
+  - This class implements the QMIX mixer, which is a more sophisticated mixer for cooperative MARL. 
+  - It uses hypernetworks to generate per-agent mixing weights, allowing the global value to be a non-linear combination of individual agent values.
+
+  :param dim_state: The dimension of the global states.
   :type dim_state: int
   :param dim_hidden: The dimension of the hidden layers.
   :type dim_hidden: int
-  :param dim_hypernet_hidden: xxxxxx.
-  :type dim_hypernet_hidden: xxxxxx
+  :param dim_hypernet_hidden: The dimension of the hidden layer of the hypyer network.
+  :type dim_hypernet_hidden: int
   :param n_agents: The number of agents.
   :type n_agents: int
   :param device: The calculating device.
@@ -197,17 +206,19 @@ TensorFlow
 .. py:function::
   xuance.tensorflow.policies.mixers.QMIX_mixer.call(values_n, states)
 
-  xxxxxx.
+  The feed forward method that calculates the total team values via mixing networks.
 
-  :param values_n: The joint values of n agents.
-  :type values_n: Tensor
-  :param states: xxxxxx.
-  :type states: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :param values_n: The independent values of n agents.
+  :type values_n: tf.Tensor
+  :param states: The global states.
+  :type states: tf.Tensor
+  :return: The total team values via mixing networks.
+  :rtype: tf.Tensor
 
 .. py:class::
   xuance.tensorflow.policies.mixers.QMIX_FF_mixer(dim_state, dim_hidden, n_agents, device)
+
+  This class is another implementation of the QMIX mixer, but it uses a feedforward neural network for mixing instead of hypernetworks.
 
   :param dim_state: The dimension of the global state.
   :type dim_state: int
@@ -221,17 +232,21 @@ TensorFlow
 .. py:function::
   xuance.tensorflow.policies.mixers.QMIX_FF_mixer.call(values_n, states)
 
-  xxxxxx.
+  Calculates the total values via a feed forward mixer (QMIX_FF_mixer).
 
-  :param values_n: The joint values of n agents.
-  :type values_n: Tensor
-  :param states: xxxxxx.
-  :type states: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :param values_n: The independent values of n agents.
+  :type values_n: tf.Tensor
+  :param states: The global states.
+  :type states: tf.Tensor
+  :return: The total values.
+  :rtype: tf.Tensor
 
 .. py:class::
   xuance.tensorflow.policies.mixers.QTRAN_base(dim_state, dim_action, dim_hidden, n_agents, dim_utility_hidden)
+
+  This is a base class for QTRAN (Quantal Response Transform) mixer. 
+  It includes a common structure shared between QTRAN and its alternative version, such as the architecture for computing 
+  :math:`Q_{jt}` (joint action-observation value) and :math:`V_{jt}` (joint observation value).
 
   :param dim_state: The dimension of the global state.
   :type dim_state: int
@@ -247,17 +262,20 @@ TensorFlow
 .. py:function::
   xuance.tensorflow.policies.mixers.QTRAN_base.call(hidden_states_n, actions_n)
 
-  xxxxxx.
+  Calculates the total values with the QTRAN mixer.
 
-  :param hidden_states_n: The dimension of the hidden states of n agents.
+  :param hidden_states_n: The independent hidden states of n agents.
   :type hidden_states_n: int
   :param actions_n: The independent actions of n agents.
-  :type actions_n: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type actions_n: tf.Tensor
+  :return: The evaluated total values of the agents team.
+  :rtype: tf.Tensor
 
 .. py:class::
   xuance.tensorflow.policies.mixers.QTRAN_alt(dim_state, dim_action, dim_hidden, n_agents, dim_utility_hidden)
+
+  This class represents an alternative version of QTRAN. 
+  It extends the QTRAN_base class and includes methods for computing counterfactual values for self-play scenarios.
 
   :param dim_state: The dimension of the global state.
   :type dim_state: int
@@ -273,106 +291,31 @@ TensorFlow
 .. py:function::
   xuance.tensorflow.policies.mixers.QTRAN_alt.counterfactual_values(q_self_values, q_selected_values)
 
-  xxxxxx.
+  Calculate the counterfactual Q values given self Q-values and the selected Q-values.
 
   :param q_self_values: The Q-values of self agents.
-  :type q_self_values: torch.Tensor
+  :type q_self_values: tf.Tensor
   :param q_selected_values: The Q-values of selected agents.
-  :type q_selected_values: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type q_selected_values: tf.Tensor
+  :return: the counterfactual Q values.
+  :rtype: tf.Tensor
 
 .. py:function::
   xuance.tensorflow.policies.mixers.QTRAN_alt.counterfactual_values_hat(hidden_states_n, actions_n)
 
-  xxxxxx.
+  Calculate the evaluated counterfactual Q values given self Q-values and the selected Q-values.
 
   :param hidden_states_n: The dimension of the hidden states of n agents.
   :type hidden_states_n: int
   :param actions_n: The independent actions of n agents.
-  :type actions_n: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
-
-.. py:class::
-  xuance.tensorflow.policies.mixers.DCG_utility(dim_input, dim_hidden, dim_output)
-
-  :param dim_input: The dimension of the input.
-  :type dim_input: int
-  :param dim_hidden: The dimension of the hidden layers.
-  :type dim_hidden: int
-  :param dim_output: The dimension of the output.
-  :type dim_output: int
-
-.. py:function::
-  xuance.tensorflow.policies.mixers.DCG_utility.call(hidden_states_n, **kwargs)
-
-  xxxxxx.
-
-  :param hidden_states_n: The dimension of the hidden states of n agents.
-  :type hidden_states_n: int
-  :param kwargs: The other arguments.
-  :type kwargs: dict
-  :return: xxxxxx.
-  :rtype: xxxxxx
-
-.. py:class::
-  xuance.tensorflow.policies.mixers.DCG_payoff(dim_input, dim_hidden, dim_act, args)
-
-  :param dim_input: The dimension of the input.
-  :type dim_input: int
-  :param dim_hidden: The dimension of the hidden layers.
-  :type dim_hidden: int
-  :param dim_act: The dimension of the actions.
-  :type dim_act: int
-  :param args: the arguments.
-  :type args: Namespace
-
-.. py:function::
-  xuance.tensorflow.policies.mixers.DCG_payoff.call(hidden_from_to, hidden_to_from=None, **kwargs)
-
-  xxxxxx.
-
-  :param hidden_from_to: xxxxxx.
-  :type hidden_from_to: xxxxxx
-  :param hidden_to_from: xxxxxx.
-  :type hidden_to_from: xxxxxx
-  :param kwargs: The other arguments.
-  :type kwargs: dict
-  :return: xxxxxx.
-  :rtype: xxxxxx
-
-.. py:function::
-  xuance.tensorflow.policies.mixers.DCG_payoff.mean_payoffs(payoffs)
-
-  xxxxxx.
-
-  :param payoffs: xxxxxx.
-  :type payoffs: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
-
-.. py:class::
-  xuance.tensorflow.policies.mixers.Coordination_Graph(n_vertexes, graph_type)
-
-  :param n_vertexes: The number of vertexes between agents.
-  :type n_vertexes: int
-  :param graph_type: The type of the topology graph for n agents.
-  :type graph_type: str
-
-.. py:function::
-  xuance.tensorflow.policies.mixers.Coordination_Graph.set_coordination_graph(device)
-
-  xxxxxx.
-
-  :param device: The calculating device.
-  :type device: str
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type actions_n: tf.Tensor
+  :return: The evaluated counterfactual Q values.
+  :rtype: tf.Tensor
 
 .. raw:: html
 
     <br><hr>
+
 
 MindSpore
 ------------------------------------------
@@ -380,20 +323,27 @@ MindSpore
 .. py:class::
   xuance.mindspore.policies.mixers.VDN_mixer()
 
+  This class implements the Value Decomposition Network (VDN) mixer, 
+  a simple mixer that aggregates the values of all agents by summing them up.
+
 .. py:function::
   xuance.mindspore.policies.mixers.VDN_mixer.construct(values_n, states)
 
-  xxxxxx.
+  The forward method takes values_n as input, which represents the independent values for each agent,
+  and it returns the sum of these values along the specified dimension.
 
-  :param values_n: The joint values of n agents.
-  :type values_n: Tensor
-  :param states: xxxxxx.
-  :type states: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :param values_n: The independent values of n agents.
+  :type values_n: torch.Tensor
+  :param states: The global states.
+  :type states: torch.Tensor
+  :return: The sum of these values along the agent dimension.
+  :rtype: torch.Tensor
 
 .. py:class::
   xuance.mindspore.policies.mixers.QMIX_mixer(dim_state, dim_hidden, dim_hypernet_hidden, n_agents)
+
+  - This class implements the QMIX mixer, which is a more sophisticated mixer for cooperative MARL. 
+  - It uses hypernetworks to generate per-agent mixing weights, allowing the global value to be a non-linear combination of individual agent values.
 
   :param dim_state: The dimension of the global state.
   :type dim_state: int
@@ -407,17 +357,19 @@ MindSpore
 .. py:function::
   xuance.mindspore.policies.mixers.QMIX_mixer.construct(values_n, states)
 
-  xxxxxx.
+  The feed forward method that calculates the total team values via mixing networks.
 
-  :param values_n: The joint values of n agents.
-  :type values_n: Tensor
-  :param states: xxxxxx.
-  :type states: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :param values_n: The independent values of n agents.
+  :type values_n: torch.Tensor
+  :param states: The global states.
+  :type states: torch.Tensor
+  :return: The total team values via mixing networks.
+  :rtype: torch.Tensor
 
 .. py:class::
   xuance.mindspore.policies.mixers.QMIX_FF_mixer(dim_state, dim_hidden, n_agents)
+
+  This class is another implementation of the QMIX mixer, but it uses a feedforward neural network for mixing instead of hypernetworks.
 
   :param dim_state: The dimension of the global state.
   :type dim_state: int
@@ -429,17 +381,21 @@ MindSpore
 .. py:function::
   xuance.mindspore.policies.mixers.QMIX_FF_mixer.construct(values_n, states)
 
-  xxxxxx.
+  Calculates the total values via a feed forward mixer (QMIX_FF_mixer).
 
-  :param values_n: The joint values of n agents.
-  :type values_n: Tensor
-  :param states: xxxxxx.
-  :type states: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :param values_n: The independent values of n agents.
+  :type values_n: torch.Tensor
+  :param states: The global states.
+  :type states: torch.Tensor
+  :return: The total values.
+  :rtype: torch.Tensor
 
 .. py:class::
   xuance.mindspore.policies.mixers.QTRAN_base(dim_state, dim_action, dim_hidden, n_agents, dim_utility_hidden)
+
+  This is a base class for QTRAN (Quantal Response Transform) mixer. 
+  It includes a common structure shared between QTRAN and its alternative version, such as the architecture for computing 
+  :math:`Q_{jt}` (joint action-observation value) and :math:`V_{jt}` (joint observation value).
 
   :param dim_state: The dimension of the global state.
   :type dim_state: int
@@ -455,17 +411,20 @@ MindSpore
 .. py:function::
   xuance.mindspore.policies.mixers.QTRAN_base.construct(hidden_states_n, actions_n)
 
-  xxxxxx.
+  Calculates the total values with the QTRAN mixer.
 
-  :param hidden_states_n: The dimension of the hidden states of n agents.
+  :param hidden_states_n: The independent hidden states of n agents.
   :type hidden_states_n: int
   :param actions_n: The independent actions of n agents.
   :type actions_n: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The evaluated total values of the agents team.
+  :rtype: torch.Tensor
 
 .. py:class::
   xuance.mindspore.policies.mixers.QTRAN_alt(dim_state, dim_action, dim_hidden, n_agents, dim_utility_hidden)
+
+  This class represents an alternative version of QTRAN. 
+  It extends the QTRAN_base class and includes methods for computing counterfactual values for self-play scenarios.
 
   :param dim_state: The dimension of the global state.
   :type dim_state: int
@@ -481,92 +440,31 @@ MindSpore
 .. py:function::
   xuance.mindspore.policies.mixers.QTRAN_alt.counterfactual_values(q_self_values, q_selected_values)
 
-  xxxxxx.
+  Calculate the counterfactual Q values given self Q-values and the selected Q-values.
 
   :param q_self_values: The Q-values of self agents.
   :type q_self_values: torch.Tensor
   :param q_selected_values: The Q-values of selected agents.
   :type q_selected_values: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
-
+  :return: the counterfactual Q values.
+  :rtype: torch.Tensor
 .. py:function::
   xuance.mindspore.policies.mixers.QTRAN_alt.counterfactual_values_hat(hidden_states_n, actions_n)
 
-  xxxxxx.
+  Calculate the evaluated counterfactual Q values given self Q-values and the selected Q-values.
 
   :param hidden_states_n: The dimension of the hidden states of n agents.
   :type hidden_states_n: int
   :param actions_n: The independent actions of n agents.
   :type actions_n: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
-
-.. py:class::
-  xuance.mindspore.policies.mixers.DCG_utility(dim_input, dim_hidden, dim_output)
-
-  :param dim_input: The dimension of the input.
-  :type dim_input: int
-  :param dim_hidden: The dimension of the hidden layers.
-  :type dim_hidden: int
-  :param dim_output: The dimension of the output.
-  :type dim_output: int
-
-.. py:function::
-  xuance.mindspore.policies.mixers.DCG_utility.construct(hidden_states_n)
-
-  xxxxxx.
-
-  :param hidden_states_n: The dimension of the hidden states of n agents.
-  :type hidden_states_n: int
-  :return: xxxxxx.
-  :rtype: xxxxxx
-
-.. py:class::
-  xuance.mindspore.policies.mixers.DCG_payoff(dim_input, dim_hidden, dim_act, args)
-
-  :param dim_input: The dimension of the input.
-  :type dim_input: int
-  :param dim_hidden: The dimension of the hidden layers.
-  :type dim_hidden: int
-  :param dim_act: The dimension of the actions.
-  :type dim_act: int
-  :param args: the arguments.
-  :type args: Namespace
-
-.. py:function::
-  xuance.mindspore.policies.mixers.DCG_payoff.construct(hidden_states_n, edges_from, edges_to)
-
-  xxxxxx.
-
-  :param hidden_states_n: The dimension of the hidden states of n agents.
-  :type hidden_states_n: int
-  :param edges_from: The edges from others to self agent.
-  :type edges_from: Tensor
-  :param edges_to: The edges from  self agent to others.
-  :type edges_to: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
-
-.. py:class::
-  xuance.mindspore.policies.mixers.Coordination_Graph(n_vertexes, graph_type)
-
-  :param n_vertexes: The number of vertexes between agents.
-  :type n_vertexes: int
-  :param graph_type: The type of the topology graph for n agents.
-  :type graph_type: str
-
-.. py:function::
-  xuance.mindspore.policies.mixers.Coordination_Graph.set_coordination_graph()
-
-  xxxxxx.
-
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The evaluated counterfactual Q values.
+  :rtype: torch.Tensor
 
 .. raw:: html
 
     <br><hr>
+
+
 
 Source Code
 -----------------
@@ -720,17 +618,12 @@ Source Code
                 return torch.cat(q_n, dim=1)
 
 
-
-
   .. group-tab:: TensorFlow
 
     .. code-block:: python
 
         import tensorflow as tf
         import tensorflow.keras as tk
-        import numpy as np
-        import torch
-        import torch_scatter
 
 
         class VDN_mixer(tk.Model):
@@ -798,12 +691,12 @@ Source Code
                 self.dim_input = self.n_agents + self.dim_state
                 tk.layers.Dense(input_shape=(self.dim_input,), units=self.dim_hidden, activation=tk.layers.Activation('relu'))
                 layers_ff_net = [tk.layers.Dense(input_shape=(self.dim_input,), units=self.dim_hidden,
-                                                 activation=tk.layers.Activation('relu')),
-                                 tk.layers.Dense(input_shape=(self.dim_hidden,), units=self.dim_hidden,
-                                                 activation=tk.layers.Activation('relu')),
-                                 tk.layers.Dense(input_shape=(self.dim_hidden,), units=self.dim_hidden,
-                                                 activation=tk.layers.Activation('relu')),
-                                 tk.layers.Dense(input_shape=(self.dim_hidden,), units=1)]
+                                                activation=tk.layers.Activation('relu')),
+                                tk.layers.Dense(input_shape=(self.dim_hidden,), units=self.dim_hidden,
+                                                activation=tk.layers.Activation('relu')),
+                                tk.layers.Dense(input_shape=(self.dim_hidden,), units=self.dim_hidden,
+                                                activation=tk.layers.Activation('relu')),
+                                tk.layers.Dense(input_shape=(self.dim_hidden,), units=1)]
                 self.ff_net = tk.Sequential(layers_ff_net)
                 layers_ff_net_bias = [tk.layers.Dense(input_shape=(self.dim_state,), units=self.dim_hidden,
                                                       activation=tk.layers.Activation('relu')),
@@ -832,16 +725,16 @@ Source Code
                 self.dim_v_input = dim_utility_hidden * self.n_agents
 
                 linear_Q_jt = [tk.layers.Dense(input_shape=(self.dim_q_input,), units=self.dim_hidden,
-                                               activation=tk.layers.Activation('relu')),
-                               tk.layers.Dense(input_shape=(self.dim_hidden,), units=self.dim_hidden,
-                                               activation=tk.layers.Activation('relu')),
-                               tk.layers.Dense(input_shape=(self.dim_hidden,), units=1)]
+                                              activation=tk.layers.Activation('relu')),
+                              tk.layers.Dense(input_shape=(self.dim_hidden,), units=self.dim_hidden,
+                                              activation=tk.layers.Activation('relu')),
+                              tk.layers.Dense(input_shape=(self.dim_hidden,), units=1)]
                 self.Q_jt = tk.Sequential(linear_Q_jt)
                 linear_V_jt = [tk.layers.Dense(input_shape=(self.dim_v_input,), units=self.dim_hidden,
-                                               activation=tk.layers.Activation('relu')),
-                               tk.layers.Dense(input_shape=(self.dim_hidden,), units=self.dim_hidden,
-                                               activation=tk.layers.Activation('relu')),
-                               tk.layers.Dense(input_shape=(self.dim_hidden,), units=1)]
+                                              activation=tk.layers.Activation('relu')),
+                              tk.layers.Dense(input_shape=(self.dim_hidden,), units=self.dim_hidden,
+                                              activation=tk.layers.Activation('relu')),
+                              tk.layers.Dense(input_shape=(self.dim_hidden,), units=1)]
                 self.V_jt = tk.Sequential(linear_V_jt)
 
             def call(self, hidden_states_n, actions_n=None, **kwargs):
@@ -881,96 +774,6 @@ Source Code
                 return tf.concat(q_n, axis=1)
 
 
-        class DCG_utility(tk.Model):
-            def __init__(self, dim_input, dim_hidden, dim_output):
-                super(DCG_utility, self).__init__()
-                self.dim_input = dim_input
-                self.dim_hidden = dim_hidden
-                self.dim_output = dim_output
-                linears_layers = [tk.layers.Dense(input_shape=(self.dim_input,), units=self.dim_hidden,
-                                                  activation=tk.layers.Activation('relu')),
-                                  tk.layers.Dense(input_shape=(self.dim_input,), units=self.dim_output)]
-
-                self.model = tk.Sequential(linears_layers)
-                # self.output = tk.Sequential(nn.Linear(self.dim_input, self.dim_output))
-
-            def call(self, hidden_states_n, **kwargs):
-                return self.model(hidden_states_n)
-
-
-        class DCG_payoff(DCG_utility):
-            def __init__(self, dim_input, dim_hidden, dim_act, args):
-                self.dim_act = dim_act
-                self.low_rank_payoff = args.low_rank_payoff
-                self.payoff_rank = args.payoff_rank
-                dim_payoff_out = 2 * self.payoff_rank * self.dim_act if self.low_rank_payoff else self.dim_act ** 2
-                super(DCG_payoff, self).__init__(dim_input, dim_hidden, dim_payoff_out)
-                self.input_payoff_shape = None
-
-            def call(self, hidden_from_to, hidden_to_from=None, **kwargs):
-                # input_payoff = tf.stack([tf.convert_to_tensor(hidden_from_to), tf.convert_to_tensor(hidden_to_from)], axis=0)
-                input_payoff = tf.stack([hidden_from_to, hidden_to_from], axis=0)
-
-                self.input_payoff_shape = input_payoff.shape
-                return self.model(tf.reshape(input_payoff, [-1, self.input_payoff_shape[-1]]))
-
-            def mean_payoffs(self, payoffs):
-                payoffs = tf.reshape(payoffs, self.input_payoff_shape[0:-1] + (self.dim_output,))
-                dim = payoffs.shape[0:-1]
-                if self.low_rank_payoff:
-                    payoffs = tf.reshape(payoffs, [np.prod(dim) * self.payoff_rank, 2, self.dim_act])
-                    payoffs_0 = tf.convert_to_tensor(payoffs.numpy()[:, 0, :])
-                    payoffs_1 = tf.convert_to_tensor(payoffs.numpy()[:, 1, :])
-                    payoffs = tf.matmul(tf.expand_dims(payoffs_0, axis=-1), tf.expand_dims(payoffs_1,
-                                                                                           axis=-2))  # (dim_act * 1) * (1 * dim_act) -> (dim_act * dim_act)
-                    payoffs = tf.reshape(payoffs, list(dim) + [self.payoff_rank, self.dim_act, self.dim_act])
-                    payoffs = tf.reduce_sum(payoffs, axis=-3)
-                else:
-                    payoffs = tf.reshape(payoffs, list(dim) + [self.dim_act, self.dim_act])
-
-                payoffs = payoffs.numpy()
-                dim_num = len(payoffs.shape) - 1
-                dim_trans = list(np.arange(dim_num - 2)) + [dim_num - 1, dim_num - 2]
-                payoffs[1] = np.transpose(payoffs[1], dim_trans).copy()
-                return payoffs.mean(axis=0)  # f^E_{ij} = (f_ij(a_i, a_j) + f_ji(a_j, a_i)) / 2
-
-
-        class Coordination_Graph(object):
-            def __init__(self, n_vertexes, graph_type):
-                self.n_vertexes = n_vertexes
-                self.edges = []
-                if graph_type == "CYCLE":
-                    self.edges = [(i, i + 1) for i in range(self.n_vertexes - 1)] + [(self.n_vertexes - 1, 0)]
-                elif graph_type == "LINE":
-                    self.edges = [(i, i + 1) for i in range(self.n_vertexes - 1)]
-                elif graph_type == "STAR":
-                    self.edges = [(0, i + 1) for i in range(self.n_vertexes - 1)]
-                elif graph_type == "VDN":
-                    pass
-                elif graph_type == "FULL":
-                    self.edges = [[(j, i + j + 1) for i in range(self.n_vertexes - j - 1)] for j in range(self.n_vertexes - 1)]
-                    self.edges = [e for l in self.edges for e in l]
-                else:
-                    raise AttributeError("There is no graph type named {}!".format(graph_type))
-                self.n_edges = len(self.edges)
-                self.edges_from = None
-                self.edges_to = None
-
-            def set_coordination_graph(self, device):
-                self.edges_from = torch.zeros(self.n_edges).long()
-                self.edges_to = torch.zeros(self.n_edges).long()
-                for i, edge in enumerate(self.edges):
-                    self.edges_from[i] = edge[0]
-                    self.edges_to[i] = edge[1]
-                self.edges_n_in = torch_scatter.scatter_add(src=self.edges_to.new_ones(len(self.edges_to)),
-                                                            index=self.edges_to, dim=0, dim_size=self.n_vertexes) \
-                                  + torch_scatter.scatter_add(src=self.edges_to.new_ones(len(self.edges_to)),
-                                                              index=self.edges_from, dim=0, dim_size=self.n_vertexes)
-                self.edges_n_in = self.edges_n_in.float().numpy()
-                self.edges_from = self.edges_from.numpy()
-                self.edges_to = self.edges_to.numpy()
-                return
-
 
   .. group-tab:: MindSpore
 
@@ -978,9 +781,6 @@ Source Code
 
         import mindspore as ms
         import mindspore.nn as nn
-        import torch_scatter
-        import torch
-        import numpy as np
 
 
         class VDN_mixer(nn.Cell):
@@ -1002,16 +802,16 @@ Source Code
                 # self.hyper_w_1 = nn.Linear(self.dim_state, self.dim_hidden * self.n_agents)
                 # self.hyper_w_2 = nn.Linear(self.dim_state, self.dim_hidden)
                 self.hyper_w_1 = nn.SequentialCell(nn.Dense(self.dim_state, self.dim_hypernet_hidden),
-                                                   nn.ReLU(),
-                                                   nn.Dense(self.dim_hypernet_hidden, self.dim_hidden * self.n_agents))
+                                                  nn.ReLU(),
+                                                  nn.Dense(self.dim_hypernet_hidden, self.dim_hidden * self.n_agents))
                 self.hyper_w_2 = nn.SequentialCell(nn.Dense(self.dim_state, self.dim_hypernet_hidden),
-                                                   nn.ReLU(),
-                                                   nn.Dense(self.dim_hypernet_hidden, self.dim_hidden))
+                                                  nn.ReLU(),
+                                                  nn.Dense(self.dim_hypernet_hidden, self.dim_hidden))
 
                 self.hyper_b_1 = nn.Dense(self.dim_state, self.dim_hidden)
                 self.hyper_b_2 = nn.SequentialCell(nn.Dense(self.dim_state, self.dim_hypernet_hidden),
-                                                   nn.ReLU(),
-                                                   nn.Dense(self.dim_hypernet_hidden, 1))
+                                                  nn.ReLU(),
+                                                  nn.Dense(self.dim_hypernet_hidden, 1))
                 self._abs = ms.ops.Abs()
                 self._elu = ms.ops.Elu()
 
@@ -1051,8 +851,8 @@ Source Code
                                                 nn.ReLU(),
                                                 nn.Dense(self.dim_hidden, 1))
                 self.ff_net_bias = nn.SequentialCell(nn.Dense(self.dim_state, self.dim_hidden),
-                                                     nn.ReLU(),
-                                                     nn.Dense(self.dim_hidden, 1))
+                                                    nn.ReLU(),
+                                                    nn.Dense(self.dim_hidden, 1))
                 self._concat = ms.ops.Concat(axis=-1)
 
             def construct(self, values_n, states):
@@ -1102,7 +902,7 @@ Source Code
 
             def counterfactual_values(self, q_self_values, q_selected_values):
                 q_repeat = ms.ops.broadcast_to(ms.ops.expand_dims(q_selected_values, axis=1),
-                                               (-1, self.n_agents, -1, self.dim_action))
+                                              (-1, self.n_agents, -1, self.dim_action))
                 counterfactual_values_n = q_repeat
                 for agent in range(self.n_agents):
                     counterfactual_values_n[:, agent, agent] = q_self_values[:, agent, :]
@@ -1125,85 +925,3 @@ Source Code
                     q_n.append(ms.ops.expand_dims(self._concat(q_actions), axis=1))
                 return ms.ops.concat(q_n, axis=1)
 
-
-        class DCG_utility(nn.Cell):
-            def __init__(self, dim_input, dim_hidden, dim_output):
-                super(DCG_utility, self).__init__()
-                self.dim_input = dim_input
-                self.dim_hidden = dim_hidden
-                self.dim_output = dim_output
-                self.output = nn.SequentialCell(nn.Dense(int(self.dim_input), int(self.dim_hidden)),
-                                                nn.ReLU(),
-                                                nn.Dense(int(self.dim_hidden), int(self.dim_output)))
-                # self.output = nn.Sequential(nn.Linear(self.dim_input, self.dim_output))
-
-            def construct(self, hidden_states_n):
-                return self.output(hidden_states_n)
-
-
-        class DCG_payoff(DCG_utility):
-            def __init__(self, dim_input, dim_hidden, dim_act, args):
-                self.dim_act = dim_act
-                self.low_rank_payoff = args.low_rank_payoff
-                self.payoff_rank = args.payoff_rank
-                dim_payoff_out = 2 * self.payoff_rank * self.dim_act if self.low_rank_payoff else self.dim_act ** 2
-                super(DCG_payoff, self).__init__(dim_input, dim_hidden, dim_payoff_out)
-                self._concat = ms.ops.Concat(axis=-1)
-                self.stack = ms.ops.Stack(axis=0)
-                self.expand_dims = ms.ops.ExpandDims()
-                self.transpose = ms.ops.Transpose()
-
-            def construct(self, hidden_states_n, edges_from=None, edges_to=None):
-                input_payoff = self.stack([self._concat([hidden_states_n[:, edges_from], hidden_states_n[:, edges_to]]),
-                                           self._concat([hidden_states_n[:, edges_to], hidden_states_n[:, edges_from]])])
-                payoffs = self.output(input_payoff)
-                dim = payoffs.shape[0:-1]
-                if self.low_rank_payoff:
-                    payoffs = payoffs.view(np.prod(dim) * self.payoff_rank, 2, self.dim_act)
-                    self.expand_dim(payoffs[:, 1, :], -2)
-                    payoffs = ms.ops.matmul(self.expand_dim(payoffs[:, 0, :], -1), self.expand_dim(payoffs[:, 1, :], -2))  # (dim_act * 1) * (1 * dim_act) -> (dim_act * dim_act)
-                    payoffs = payoffs.view(tuple(list(dim) + [self.payoff_rank, self.dim_act, self.dim_act])).sum(axis=-3)
-                else:
-                    payoffs = payoffs.view(tuple(list(dim) + [self.dim_act, self.dim_act]))
-                payoffs[1] = self.transpose(payoffs[1], (0, 1, 3, 2))  # f_ij(a_i, a_j) <-> f_ji(a_j, a_i)
-                return payoffs.mean(axis=0)  # f^E_{ij} = (f_ij(a_i, a_j) + f_ji(a_j, a_i)) / 2
-
-
-        class Coordination_Graph(nn.Cell):
-            def __init__(self, n_vertexes, graph_type):
-                super(Coordination_Graph, self).__init__()
-                self.n_vertexes = n_vertexes
-                self.edges = []
-                if graph_type == "CYCLE":
-                    self.edges = [(i, i + 1) for i in range(self.n_vertexes - 1)] + [(self.n_vertexes - 1, 0)]
-                elif graph_type == "LINE":
-                    self.edges = [(i, i + 1) for i in range(self.n_vertexes - 1)]
-                elif graph_type == "STAR":
-                    self.edges = [(0, i + 1) for i in range(self.n_vertexes - 1)]
-                elif graph_type == "VDN":
-                    pass
-                elif graph_type == "FULL":
-                    self.edges = [[(j, i + j + 1) for i in range(self.n_vertexes - j - 1)] for j in range(self.n_vertexes - 1)]
-                    self.edges = [e for l in self.edges for e in l]
-                else:
-                    raise AttributeError("There is no graph type named {}!".format(graph_type))
-                self.n_edges = len(self.edges)
-                self.edges_from = None
-                self.edges_to = None
-
-            def set_coordination_graph(self):
-                self.edges_from = torch.zeros(self.n_edges).long()
-                self.edges_to = torch.zeros(self.n_edges).long()
-                for i, edge in enumerate(self.edges):
-                    self.edges_from[i] = edge[0]
-                    self.edges_to[i] = edge[1]
-                self.edges_n_in = torch_scatter.scatter_add(src=self.edges_to.new_ones(len(self.edges_to)),
-                                                            index=self.edges_to, dim=0, dim_size=self.n_vertexes) \
-                                  + torch_scatter.scatter_add(src=self.edges_to.new_ones(len(self.edges_to)),
-                                                              index=self.edges_from, dim=0, dim_size=self.n_vertexes)
-                self.edges_n_in = self.edges_n_in.float()
-                # convert to mindspore tensor
-                self.edges_from = ms.Tensor(self.edges_from.numpy())
-                self.edges_to = ms.Tensor(self.edges_to.numpy())
-                self.edges_n_in = ms.Tensor(self.edges_n_in.numpy())
-                return
