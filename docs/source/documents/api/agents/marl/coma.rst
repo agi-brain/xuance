@@ -131,8 +131,8 @@ COMA_Agents
     :type rnn_hidden: xxxxxx
     :param state: The state input.
     :type state: Tensor
-    :param actions_n: xxxxxx.
-    :type actions_n: xxxxxx
+    :param actions_n: The independent actions of n agents.
+    :type actions_n: torch.Tensor
     :param actions_onehot: xxxxxx.
     :type actions_onehot: xxxxxx
     :return: xxxxxx.
