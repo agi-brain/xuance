@@ -180,11 +180,11 @@ TensorFlow
   and it returns the sum of these values along the specified dimension.
 
   :param values_n: The independent values of n agents.
-  :type values_n: torch.Tensor
+  :type values_n: tf.Tensor
   :param states: The global states.
-  :type states: torch.Tensor
+  :type states: tf.Tensor
   :return: The sum of these values along the agent dimension.
-  :rtype: torch.Tensor
+  :rtype: tf.Tensor
 
 .. py:class::
   xuance.tensorflow.policies.mixers.QMIX_mixer(dim_state, dim_hidden, dim_hypernet_hidden, n_agents, device)
@@ -209,11 +209,11 @@ TensorFlow
   The feed forward method that calculates the total team values via mixing networks.
 
   :param values_n: The independent values of n agents.
-  :type values_n: torch.Tensor
+  :type values_n: tf.Tensor
   :param states: The global states.
-  :type states: torch.Tensor
+  :type states: tf.Tensor
   :return: The total team values via mixing networks.
-  :rtype: torch.Tensor
+  :rtype: tf.Tensor
 
 .. py:class::
   xuance.tensorflow.policies.mixers.QMIX_FF_mixer(dim_state, dim_hidden, n_agents, device)
@@ -235,11 +235,11 @@ TensorFlow
   Calculates the total values via a feed forward mixer (QMIX_FF_mixer).
 
   :param values_n: The independent values of n agents.
-  :type values_n: torch.Tensor
+  :type values_n: tf.Tensor
   :param states: The global states.
-  :type states: torch.Tensor
+  :type states: tf.Tensor
   :return: The total values.
-  :rtype: torch.Tensor
+  :rtype: tf.Tensor
 
 .. py:class::
   xuance.tensorflow.policies.mixers.QTRAN_base(dim_state, dim_action, dim_hidden, n_agents, dim_utility_hidden)
@@ -267,9 +267,9 @@ TensorFlow
   :param hidden_states_n: The independent hidden states of n agents.
   :type hidden_states_n: int
   :param actions_n: The independent actions of n agents.
-  :type actions_n: torch.Tensor
+  :type actions_n: tf.Tensor
   :return: The evaluated total values of the agents team.
-  :rtype: torch.Tensor
+  :rtype: tf.Tensor
 
 .. py:class::
   xuance.tensorflow.policies.mixers.QTRAN_alt(dim_state, dim_action, dim_hidden, n_agents, dim_utility_hidden)
@@ -294,11 +294,11 @@ TensorFlow
   Calculate the counterfactual Q values given self Q-values and the selected Q-values.
 
   :param q_self_values: The Q-values of self agents.
-  :type q_self_values: torch.Tensor
+  :type q_self_values: tf.Tensor
   :param q_selected_values: The Q-values of selected agents.
-  :type q_selected_values: torch.Tensor
+  :type q_selected_values: tf.Tensor
   :return: the counterfactual Q values.
-  :rtype: torch.Tensor
+  :rtype: tf.Tensor
 
 .. py:function::
   xuance.tensorflow.policies.mixers.QTRAN_alt.counterfactual_values_hat(hidden_states_n, actions_n)
@@ -308,89 +308,14 @@ TensorFlow
   :param hidden_states_n: The dimension of the hidden states of n agents.
   :type hidden_states_n: int
   :param actions_n: The independent actions of n agents.
-  :type actions_n: torch.Tensor
+  :type actions_n: tf.Tensor
   :return: The evaluated counterfactual Q values.
-  :rtype: torch.Tensor
-
-.. py:class::
-  xuance.tensorflow.policies.mixers.DCG_utility(dim_input, dim_hidden, dim_output)
-
-  :param dim_input: The dimension of the input.
-  :type dim_input: int
-  :param dim_hidden: The dimension of the hidden layers.
-  :type dim_hidden: int
-  :param dim_output: The dimension of the output.
-  :type dim_output: int
-
-.. py:function::
-  xuance.tensorflow.policies.mixers.DCG_utility.call(hidden_states_n, **kwargs)
-
-  xxxxxx.
-
-  :param hidden_states_n: The dimension of the hidden states of n agents.
-  :type hidden_states_n: int
-  :param kwargs: The other arguments.
-  :type kwargs: dict
-  :return: xxxxxx.
-  :rtype: xxxxxx
-
-.. py:class::
-  xuance.tensorflow.policies.mixers.DCG_payoff(dim_input, dim_hidden, dim_act, args)
-
-  :param dim_input: The dimension of the input.
-  :type dim_input: int
-  :param dim_hidden: The dimension of the hidden layers.
-  :type dim_hidden: int
-  :param dim_act: The dimension of the actions.
-  :type dim_act: int
-  :param args: the arguments.
-  :type args: Namespace
-
-.. py:function::
-  xuance.tensorflow.policies.mixers.DCG_payoff.call(hidden_from_to, hidden_to_from=None, **kwargs)
-
-  xxxxxx.
-
-  :param hidden_from_to: xxxxxx.
-  :type hidden_from_to: xxxxxx
-  :param hidden_to_from: xxxxxx.
-  :type hidden_to_from: xxxxxx
-  :param kwargs: The other arguments.
-  :type kwargs: dict
-  :return: xxxxxx.
-  :rtype: xxxxxx
-
-.. py:function::
-  xuance.tensorflow.policies.mixers.DCG_payoff.mean_payoffs(payoffs)
-
-  xxxxxx.
-
-  :param payoffs: xxxxxx.
-  :type payoffs: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
-
-.. py:class::
-  xuance.tensorflow.policies.mixers.Coordination_Graph(n_vertexes, graph_type)
-
-  :param n_vertexes: The number of vertexes between agents.
-  :type n_vertexes: int
-  :param graph_type: The type of the topology graph for n agents.
-  :type graph_type: str
-
-.. py:function::
-  xuance.tensorflow.policies.mixers.Coordination_Graph.set_coordination_graph(device)
-
-  xxxxxx.
-
-  :param device: The calculating device.
-  :type device: str
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :rtype: tf.Tensor
 
 .. raw:: html
 
     <br><hr>
+
 
 MindSpore
 ------------------------------------------
@@ -398,20 +323,27 @@ MindSpore
 .. py:class::
   xuance.mindspore.policies.mixers.VDN_mixer()
 
+  This class implements the Value Decomposition Network (VDN) mixer, 
+  a simple mixer that aggregates the values of all agents by summing them up.
+
 .. py:function::
   xuance.mindspore.policies.mixers.VDN_mixer.construct(values_n, states)
 
-  xxxxxx.
+  The forward method takes values_n as input, which represents the independent values for each agent,
+  and it returns the sum of these values along the specified dimension.
 
-  :param values_n: The joint values of n agents.
-  :type values_n: Tensor
-  :param states: xxxxxx.
-  :type states: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :param values_n: The independent values of n agents.
+  :type values_n: torch.Tensor
+  :param states: The global states.
+  :type states: torch.Tensor
+  :return: The sum of these values along the agent dimension.
+  :rtype: torch.Tensor
 
 .. py:class::
   xuance.mindspore.policies.mixers.QMIX_mixer(dim_state, dim_hidden, dim_hypernet_hidden, n_agents)
+
+  - This class implements the QMIX mixer, which is a more sophisticated mixer for cooperative MARL. 
+  - It uses hypernetworks to generate per-agent mixing weights, allowing the global value to be a non-linear combination of individual agent values.
 
   :param dim_state: The dimension of the global state.
   :type dim_state: int
@@ -425,17 +357,19 @@ MindSpore
 .. py:function::
   xuance.mindspore.policies.mixers.QMIX_mixer.construct(values_n, states)
 
-  xxxxxx.
+  The feed forward method that calculates the total team values via mixing networks.
 
-  :param values_n: The joint values of n agents.
-  :type values_n: Tensor
-  :param states: xxxxxx.
-  :type states: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :param values_n: The independent values of n agents.
+  :type values_n: torch.Tensor
+  :param states: The global states.
+  :type states: torch.Tensor
+  :return: The total team values via mixing networks.
+  :rtype: torch.Tensor
 
 .. py:class::
   xuance.mindspore.policies.mixers.QMIX_FF_mixer(dim_state, dim_hidden, n_agents)
+
+  This class is another implementation of the QMIX mixer, but it uses a feedforward neural network for mixing instead of hypernetworks.
 
   :param dim_state: The dimension of the global state.
   :type dim_state: int
@@ -447,17 +381,21 @@ MindSpore
 .. py:function::
   xuance.mindspore.policies.mixers.QMIX_FF_mixer.construct(values_n, states)
 
-  xxxxxx.
+  Calculates the total values via a feed forward mixer (QMIX_FF_mixer).
 
-  :param values_n: The joint values of n agents.
-  :type values_n: Tensor
-  :param states: xxxxxx.
-  :type states: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :param values_n: The independent values of n agents.
+  :type values_n: torch.Tensor
+  :param states: The global states.
+  :type states: torch.Tensor
+  :return: The total values.
+  :rtype: torch.Tensor
 
 .. py:class::
   xuance.mindspore.policies.mixers.QTRAN_base(dim_state, dim_action, dim_hidden, n_agents, dim_utility_hidden)
+
+  This is a base class for QTRAN (Quantal Response Transform) mixer. 
+  It includes a common structure shared between QTRAN and its alternative version, such as the architecture for computing 
+  :math:`Q_{jt}` (joint action-observation value) and :math:`V_{jt}` (joint observation value).
 
   :param dim_state: The dimension of the global state.
   :type dim_state: int
@@ -473,17 +411,20 @@ MindSpore
 .. py:function::
   xuance.mindspore.policies.mixers.QTRAN_base.construct(hidden_states_n, actions_n)
 
-  xxxxxx.
+  Calculates the total values with the QTRAN mixer.
 
-  :param hidden_states_n: The dimension of the hidden states of n agents.
+  :param hidden_states_n: The independent hidden states of n agents.
   :type hidden_states_n: int
   :param actions_n: The independent actions of n agents.
   :type actions_n: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The evaluated total values of the agents team.
+  :rtype: torch.Tensor
 
 .. py:class::
   xuance.mindspore.policies.mixers.QTRAN_alt(dim_state, dim_action, dim_hidden, n_agents, dim_utility_hidden)
+
+  This class represents an alternative version of QTRAN. 
+  It extends the QTRAN_base class and includes methods for computing counterfactual values for self-play scenarios.
 
   :param dim_state: The dimension of the global state.
   :type dim_state: int
@@ -499,92 +440,31 @@ MindSpore
 .. py:function::
   xuance.mindspore.policies.mixers.QTRAN_alt.counterfactual_values(q_self_values, q_selected_values)
 
-  xxxxxx.
+  Calculate the counterfactual Q values given self Q-values and the selected Q-values.
 
   :param q_self_values: The Q-values of self agents.
   :type q_self_values: torch.Tensor
   :param q_selected_values: The Q-values of selected agents.
   :type q_selected_values: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
-
+  :return: the counterfactual Q values.
+  :rtype: torch.Tensor
 .. py:function::
   xuance.mindspore.policies.mixers.QTRAN_alt.counterfactual_values_hat(hidden_states_n, actions_n)
 
-  xxxxxx.
+  Calculate the evaluated counterfactual Q values given self Q-values and the selected Q-values.
 
   :param hidden_states_n: The dimension of the hidden states of n agents.
   :type hidden_states_n: int
   :param actions_n: The independent actions of n agents.
   :type actions_n: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
-
-.. py:class::
-  xuance.mindspore.policies.mixers.DCG_utility(dim_input, dim_hidden, dim_output)
-
-  :param dim_input: The dimension of the input.
-  :type dim_input: int
-  :param dim_hidden: The dimension of the hidden layers.
-  :type dim_hidden: int
-  :param dim_output: The dimension of the output.
-  :type dim_output: int
-
-.. py:function::
-  xuance.mindspore.policies.mixers.DCG_utility.construct(hidden_states_n)
-
-  xxxxxx.
-
-  :param hidden_states_n: The dimension of the hidden states of n agents.
-  :type hidden_states_n: int
-  :return: xxxxxx.
-  :rtype: xxxxxx
-
-.. py:class::
-  xuance.mindspore.policies.mixers.DCG_payoff(dim_input, dim_hidden, dim_act, args)
-
-  :param dim_input: The dimension of the input.
-  :type dim_input: int
-  :param dim_hidden: The dimension of the hidden layers.
-  :type dim_hidden: int
-  :param dim_act: The dimension of the actions.
-  :type dim_act: int
-  :param args: the arguments.
-  :type args: Namespace
-
-.. py:function::
-  xuance.mindspore.policies.mixers.DCG_payoff.construct(hidden_states_n, edges_from, edges_to)
-
-  xxxxxx.
-
-  :param hidden_states_n: The dimension of the hidden states of n agents.
-  :type hidden_states_n: int
-  :param edges_from: The edges from others to self agent.
-  :type edges_from: Tensor
-  :param edges_to: The edges from  self agent to others.
-  :type edges_to: Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
-
-.. py:class::
-  xuance.mindspore.policies.mixers.Coordination_Graph(n_vertexes, graph_type)
-
-  :param n_vertexes: The number of vertexes between agents.
-  :type n_vertexes: int
-  :param graph_type: The type of the topology graph for n agents.
-  :type graph_type: str
-
-.. py:function::
-  xuance.mindspore.policies.mixers.Coordination_Graph.set_coordination_graph()
-
-  xxxxxx.
-
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The evaluated counterfactual Q values.
+  :rtype: torch.Tensor
 
 .. raw:: html
 
     <br><hr>
+
+
 
 Source Code
 -----------------
