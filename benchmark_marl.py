@@ -10,7 +10,6 @@ def parse_args():
     parser.add_argument("--test", type=int, default=0)
     parser.add_argument("--device", type=str, default="cuda:0")
 
-    # parser.add_argument("--mixer", type=str, default="VDN")
     return parser.parse_args()
 
 
