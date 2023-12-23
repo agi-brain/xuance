@@ -15,8 +15,8 @@ PyTorch
 .. py:class::
   xuance.torch.policies.gaussian.ActorNet(state_dim, action_dim, hidden_sizes, normalize, initialize, activation, device)
 
-  The ActorNet is designed for policies that model continuous action spaces using a Gaussian distribution. 
-  The mean and standard deviation are learned from the input state, and the resulting distribution is used to sample actions during training.
+  - The ActorNet is designed for policies that model continuous action spaces using a Gaussian distribution. 
+  - The mean and standard deviation are learned from the input state, and the resulting distribution is used to sample actions during training.
 
   :param state_dim: The dimension of the input state.
   :type state_dim: int
@@ -327,14 +327,16 @@ PyTorch
 
     <br><hr>
 
+
+
 TensorFlow
 ------------------------------------------
 
 .. py:class::
   xuance.tensorflow.policies.gaussian.ActorNet(state_dim, action_dim, hidden_sizes, normalize, initialize, activation, device)
 
-  The ActorNet is designed for policies that model continuous action spaces using a Gaussian distribution. 
-  The mean and standard deviation are learned from the input state, and the resulting distribution is used to sample actions during training.
+  - The ActorNet is designed for policies that model continuous action spaces using a Gaussian distribution. 
+  - The mean and standard deviation are learned from the input state, and the resulting distribution is used to sample actions during training.
 
   :param state_dim: The dimension of the input state.
   :type state_dim: int
@@ -649,7 +651,8 @@ MindSpore
 .. py:class::
   xuance.mindspore.policies.gaussian.ActorNet(state_dim, action_dim, hidden_sizes, normalize, initialize, activation)
 
-  
+  - The ActorNet is designed for policies that model continuous action spaces using a Gaussian distribution. 
+  - The mean and standard deviation are learned from the input state, and the resulting distribution is used to sample actions during training.
 
   :param state_dim: The dimension of the input state.
   :type state_dim: int
@@ -658,103 +661,128 @@ MindSpore
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: nn.Cell
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: torch.Tensor
+  :type initialize: ms.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: nn.Cell
 
 .. py:function::
   xuance.mindspore.policies.gaussian.ActorNet.construct(x)
 
-  xxxxxx.
+  - The forward method takes a tensor x as input (representing the state).
+  - It computes the mean and log standard deviation using the MLP (self.mu) and the trainable parameter (self.logstd).
+  - It sets the parameters of a diagonal Gaussian distribution using the computed mean and log standard deviation.
+  - The distribution is returned.
 
   :param x: The input tensor.
-  :type x: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type x: ms.Tensor
+  :return: The mean values of the Gaussian distributions.
+  :rtype: ms.Tensor
 
 .. py:class::
   xuance.mindspore.policies.gaussian.CriticNet(state_dim, hidden_sizes, normalize, initialize, activation)
+
+  - The CriticNet is designed to estimate the Q-values for a given state in the context of reinforcement learning.
+  - The architecture is similar to an MLP, and it produces a single output representing the estimated Q-value.
 
   :param state_dim: The dimension of the input state.
   :type state_dim: int
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: nn.Cell
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: torch.Tensor
+  :type initialize: ms.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: nn.Cell
 
 .. py:function::
   xuance.mindspore.policies.gaussian.CriticNet.construct(x)
 
-  xxxxxx.
+  - The forward method takes a tensor x as input (representing the state).
+  - It passes the input through the entire neural network (self.model).
+  - The output represents the Q-value for the given state.
 
   :param x: The input tensor.
-  :type x: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type x: ms.Tensor
+  :return: The Q-value for the given state.
+  :rtype: ms.Tensor
 
 .. py:class::
   xuance.mindspore.policies.gaussian.ActorCriticPolicy(action_space, representation, actor_hidden_size, critic_hidden_size, normalize, initialize, activation)
 
+  - This architecture follows the actor-critic paradigm,
+  - where the actor is responsible for selecting actions based on the current state,
+  - and the critic evaluates the value of the state.
+
   :param action_space: The action space of the environment.
   :type action_space: Space
   :param representation: The representation module.
-  :type representation: nn.Module
+  :type representation: nn.Cell
   :param actor_hidden_size: The sizes of the hidden layers in actor network.
   :type actor_hidden_size: list
   :param critic_hidden_size: The sizes of the hidden layers in critic networks.
   :type critic_hidden_size: list
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: nn.Cell
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: torch.Tensor
+  :type initialize: ms.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: nn.Cell
 
 .. py:function::
   xuance.mindspore.policies.gaussian.ActorCriticPolicy.construct(observation)
 
-  xxxxxx.
+  - The forward method takes an observation (either a NumPy array or a dictionary) as input.
+  - It passes the observation through the representation neural network to obtain the state representation.
+  - The state representation is then used as input for both the actor and critic networks.
+  - The output consists of the representation's output, the actor's output (policy distribution over actions), and the critic's output (value function).
 
   :param observation: The original observation variables.
-  :type observation: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type observation: ms.Tensor
+  :return: A tuple that includes the outputs of the representation, the actor network, and the critic network.
+  :rtype: tuple
 
 .. py:class::
   xuance.mindspore.policies.gaussian.ActorPolicy(action_space, representation, actor_hidden_size, normalize, initialize, activation)
 
+  - This class represents a standalone actor policy, typically used in actor-only algorithms or as part of a larger policy in more complex architectures.
+  - The actor is responsible for selecting actions based on the current state, and the policy can be used for generating actions during both training and inference.
+
   :param action_space: The action space of the environment.
   :type action_space: Space
   :param representation: The representation module.
-  :type representation: nn.Module
+  :type representation: nn.Cell
   :param actor_hidden_size: The sizes of the hidden layers in actor network.
   :type actor_hidden_size: list
   :param normalize: The method of normalization.
-  :type normalize: nn.Module
+  :type normalize: nn.Cell
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: torch.Tensor
+  :type initialize: ms.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: nn.Cell
 
 .. py:function::
   xuance.mindspore.policies.gaussian.ActorPolicy.construct(observation)
 
-  xxxxxx.
+  - The forward method takes an observation (either a NumPy array or a dictionary) as input.
+  - It passes the observation through the representation neural network to obtain the state representation.
+  - The state representation is then used as input for the actor network.
+  - The output consists of the representation output and the actor's output (policy distribution over actions).
 
   :param observation: The original observation variables.
-  :type observation: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type observation: ms.Tensor
+  :return: A tuple that includes the representation output and the actor's output.
+  :rtype: tuple
 
 .. py:class::
   xuance.mindspore.policies.gaussian.ActorNet_SAC(state_dim, action_dim, hidden_sizes, initialize, activation)
 
+  - An implementation of a actor network for the Soft Actor-Critic (SAC) with continuous action spaces.
+  - It takes the state as input and outputs a Gaussian distribution over continuous actions using a softmax activation.
+
+
   :param state_dim: The dimension of the input state.
   :type state_dim: int
   :param action_dim: The dimension of the action input.
@@ -762,22 +790,24 @@ MindSpore
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: torch.Tensor
+  :type initialize: ms.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: nn.Cell
 
 .. py:function::
   xuance.mindspore.policies.gaussian.ActorNet_SAC.construct(x)
 
-  xxxxxx.
+  - A feed forward method that takes the tensor x as input and passes it through the actor model.
+  - It returns the mean and standard deviation of a Gaussian distribution over continuous actions.
 
   :param x: The input tensor.
-  :type x: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type x: ms.Tensor
+  :return: A tuple that includes the mean and standard deviation of a Gaussian distribution over continuous actions using a softmax activation.
 
 .. py:class::
   xuance.mindspore.policies.gaussian.CriticNet_SAC(state_dim, action_dim, hidden_sizes, initialize, activation)
+
+  An implementation of a critic network for the Soft Actor-Critic (SAC) with continuous action spaces.
 
   :param state_dim: The dimension of the input state.
   :type state_dim: int
@@ -786,88 +816,89 @@ MindSpore
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: torch.Tensor
+  :type initialize: ms.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: nn.Cell
 
 .. py:function::
   xuance.mindspore.policies.gaussian.CriticNet_SAC.construct(x, a)
 
-  xxxxxx.
+  A feed forward method that defines the forward pass through the critic network,
+  taking the input tensors x and a, and passing it through the critic model.
 
   :param x: The input tensor.
-  :type x: torch.Tensor
-  :param a: xxxxxx.
-  :type a: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type x: ms.Tensor
+  :param a: The input action data.
+  :type a: ms.Tensor
+  :return: The evaluated critic values of input x.
+  :rtype: ms.Tensor
 
 .. py:class::
   xuance.mindspore.policies.gaussian.SACPolicy(action_space, representation, actor_hidden_size, initialize, activation)
 
+  This class defines a policy for the soft actor-critic (SAC) with continuous action spaces.
+
   :param action_space: The action space of the environment.
   :type action_space: Space
   :param representation: The representation module.
-  :type representation: nn.Module
+  :type representation: nn.Cell
   :param actor_hidden_size: The sizes of the hidden layers in actor network.
   :type actor_hidden_size: list
   :param initialize: The initialization for the parameters of the networks.
-  :type initialize: torch.Tensor
+  :type initialize: ms.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: nn.Module
+  :type activation: nn.Cell
 
 .. py:function::
   xuance.mindspore.policies.gaussian.SACPolicy.action(observation)
 
-  xxxxxx.
+  - A feed forward method that computes the forward pass of the policy network given an observation.
+  - It returns the representation of the representation_actor, and the action distribution.
 
   :param observation: The original observation variables.
-  :type observation: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type observation: ms.Tensor
+  :return: A tuple that includes the outputs of the representation_actor, and the action distribution.
+  :rtype: tuple
 
 .. py:function::
   xuance.mindspore.policies.gaussian.SACPolicy.Qtarget(observation)
 
-  xxxxxx.
+  Calculate the Q-value with the target Q network.
 
   :param observation: The original observation variables.
-  :type observation: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type observation: ms.Tensor
+  :return: The target Q values.
+  :rtype: ms.Tensor
 
 .. py:function::
   xuance.mindspore.policies.gaussian.SACPolicy.Qaction(observation)
 
-  xxxxxx.
+  Calculate the Q value for the original Q network.
 
   :param observation: The original observation variables.
-  :type observation: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type observation: ms.Tensor
+  :param action: The action input.
+  :type action: ms.Tensor
+  :return: The evaluate Q values.
+  :rtype: ms.Tensor
 
 .. py:function::
   xuance.mindspore.policies.gaussian.SACPolicy.Qpolicy(observation)
 
-  xxxxxx.
+  Calculat the log of action probabilities, and the Q-values of the policy network.
 
   :param observation: The original observation variables.
-  :type observation: torch.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :type observation: ms.Tensor
+  :return: A tuple that includes the log of action probabilities, and the Q-values of the policy network.
+  :rtype: tuple
 
 .. py:function::
   xuance.mindspore.policies.gaussian.SACPolicy.construct()
 
-  xxxxxx.
-
-  :return: xxxxxx.
-  :rtype: xxxxxx
-
 .. py:function::
   xuance.mindspore.policies.gaussian.SACPolicy.soft_update(tau)
 
-  xxxxxx.
+  Performs a soft update of the target networks using a specified interpolation parameter (tau).
 
   :param tau: The soft update factor for the update of target networks.
   :type tau: float
@@ -875,6 +906,7 @@ MindSpore
 .. raw:: html
 
     <br><hr>
+
 
 Source Code
 -----------------

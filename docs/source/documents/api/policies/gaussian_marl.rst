@@ -793,7 +793,7 @@ MindSpore
   :param x: The input tensor.
   :type x: ms.Tensor
   :return: The estimated Q-values.
-  :rtype: tf.Tensor
+  :rtype: ms.Tensor
 
 .. py:class::
   xuance.mindspore.policies.gaussian_marl.BasicQnetwork(action_space, n_agents, representation, hidden_sizes, normalize, initialize, activation)
