@@ -1,7 +1,8 @@
 Runner_MAgent
 ==============================================
 
-xxxxxx.
+Run a multi-agent environment, leveraging functionalities from the Pettingzoo_Runner parent class.
+MAgent_Runner makes some extensions to it.
 
 .. raw:: html
 
