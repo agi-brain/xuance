@@ -10,20 +10,22 @@ xxxxxx.
 **PyTorch:**
 
 .. py:class::
-  xuance.torch.runners.runner_drl.Runner_DRL(args)
+    xuance.torch.runners.runner_drl.Runner_DRL(args)
 
-  :param args: the arguments.
-  :type args: Namespace
+    Facilitate the training and evaluation of various algorithms in different environments.
 
-.. py:function::
-  xuance.torch.runners.runner_drl.Runner_DRL.run()
-
-  xxxxxx.
+    :param args: the arguments.
+    :type args: Namespace
 
 .. py:function::
-  xuance.torch.runners.runner_drl.Runner_DRL.benchmark()
+    xuance.torch.runners.runner_drl.Runner_DRL.run()
 
-  xxxxxx.
+    Orchestrate the execution of the task, handling either training or testing based on the specified mode in the configuration.
+
+.. py:function::
+    xuance.torch.runners.runner_drl.Runner_DRL.benchmark()
+
+    Conduct benchmarking by training the agent for multiple epochs, evaluating its performance, and saving the best-performing model.
 
 .. raw:: html
 
@@ -32,20 +34,23 @@ xxxxxx.
 **TensorFlow:**
 
 .. py:class::
-  xuance.tensorflow.runners.runner_drl.Runner_DRL(args)
+    xuance.tensorflow.runners.runner_drl.Runner_DRL(args)
 
-  :param args: the arguments.
-  :type args: Namespace
+    This class provides a structured framework for training, testing, and benchmarking TensorFlow-based reinforcement learning agents in different environments
 
-.. py:function::
-  xuance.tensorflow.runners.runner_drl.Runner_DRL.run()
-
-  xxxxxx.
+    :param args: the arguments.
+    :type args: Namespace
 
 .. py:function::
-  xuance.tensorflow.runners.runner_drl.Runner_DRL.benchmark()
+    xuance.tensorflow.runners.runner_drl.Runner_DRL.run()
 
-  xxxxxx.
+    Test and train modes.
+
+.. py:function::
+    xuance.tensorflow.runners.runner_drl.Runner_DRL.benchmark()
+
+    Assess the performance of the reinforcement learning agent over multiple training epochs,
+    identify the best-performing model, and save it for potential future use.
 
 .. raw:: html
 
@@ -54,18 +59,24 @@ xxxxxx.
 **MindSpore:**
 
 .. py:class::
-  xuance.mindspore.runners.runner_drl.Runner_DRL(args)
+    xuance.mindspore.runners.runner_drl.Runner_DRL(args)
 
-  :param args: the arguments.
-  :type args: Namespace
+    A general-purpose framework for configuring, training, and evaluating agents across different tasks.
+
+    :param args: the arguments.
+    :type args: Namespace
 
 .. py:function::
-  xuance.mindspore.runners.runner_drl.Runner_DRL.run()
+    xuance.mindspore.runners.runner_drl.Runner_DRL.run()
+
+    Encapsulate the logic for both testing and training modes,
+    providing a execution flow, including model loading, testing, training, and cleanup
 
 .. py:function::
-  xuance.mindspore.runners.runner_drl.Runner_DRL.benchmark()
+    xuance.mindspore.runners.runner_drl.Runner_DRL.benchmark()
 
-  xxxxxx.
+    A approach to benchmarking the agent over multiple training epochs,
+    identifying the best-performing model, and saving it for further use.
 
 .. raw:: html
 

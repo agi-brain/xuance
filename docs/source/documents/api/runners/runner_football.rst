@@ -1,7 +1,7 @@
 Runner_Football
 ==============================================
 
-xxxxxx.
+A generic framework for training and testing reinforcement learning in the Football environment.
 
 .. raw:: html
 
@@ -18,38 +18,38 @@ xxxxxx.
 .. py:function::
   xuance.torch.runners.runner_football.Football_Runner.get_agent_num()
 
-  xxxxxx.
+  Return the number of agents and adversaries in the environment.
 
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: the number of agents and adversaries.
+  :rtype: tuple
 
 .. py:function::
   xuance.torch.runners.runner_football.Football_Runner.get_battles_info()
 
-  xxxxxx.
+  Calculate and return information about the total number of battles in the environment and the number of battles won.
 
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: the formation about the total number of battles in the environment and the number of battles won.
+  :rtype: tuple
 
 .. py:function::
   xuance.torch.runners.runner_football.Football_Runner.get_battles_result(last_battles_info)
 
-  xxxxxx.
+  Provide the win rate based on changes in the total number of battles and battles won between the last recorded point in time and the current state of the environment.
 
-  :param last_battles_info: xxxxxx.
-  :type last_battles_info: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :param last_battles_info: contain information about the battles at the last recorded point in time.
+  :type last_battles_info: tuple
+  :return: the win rate in the environment.
+  :rtype: float
 
 .. py:function::
   xuance.torch.runners.runner_football.Football_Runner.run_episodes(test_mode)
 
-  xxxxxx.
+  Execute a series of episodes in the environment, either for training or testing purposes.
 
-  :param test_mode: xxxxxx.
-  :type test_mode: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :param test_mode: control the mode in which episodes are executed.
+  :type test_mode: bool
+  :return: the average episode score achieved during the training or testing process.
+  :rtype: float
 
 .. py:function::
   xuance.torch.runners.runner_football.Football_Runner.test_episodes(test_T, n_test_runs)
