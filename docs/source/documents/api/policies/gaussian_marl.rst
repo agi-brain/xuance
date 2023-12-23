@@ -389,6 +389,9 @@ TensorFlow
 .. py:class::
   xuance.tensorflow.policies.gaussian_marl.BasicQhead(state_dim, action_dim, n_agents, hidden_sizes, normalize, initialize, activation, device)
 
+  A basic module representing the Q-value head, commonly used in Q-networks. 
+  It takes state, action, and agent information as input and produces Q-values as output.
+
   :param state_dim: The dimension of the input state.
   :type state_dim: int
   :param action_dim: The dimension of the action input.
@@ -409,14 +412,18 @@ TensorFlow
 .. py:function::
   xuance.tensorflow.policies.gaussian_marl.BasicQhead.call(x)
 
+  Passes the input tensor x through the sequential model (self.model) and returns the output.
+
   :param x: The input tensor.
   :type x: tf.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The estimated Q-values.
+  :rtype: tf.Tensor
 
 
 .. py:class::
   xuance.tensorflow.policies.gaussian_marl.BasicQnetwork(action_space, n_agents, representation, hidden_size, normalize, initialize, activation, device)
+
+  A basic Q-network that utilizes the BasicQhead for both evaluation and target networks.
 
   :param action_space: The action space of the environment.
   :type action_space: Space
@@ -438,24 +445,36 @@ TensorFlow
 .. py:function::
   xuance.tensorflow.policies.gaussian_marl.BasicQnetwork.call(inputs)
 
+  The forward method computes the evaluation Q-values for a given observation and agent identifiers, 
+  along with other relevant information from the representation module.
+
   :param inputs: The inputs of the neural neworks.
   :type inputs: Dict(tf.Tensor)
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: A tuple that includes the representation (outputs), argmax action (argmax_action), and evaluation Q-values (evalQ). These values can be useful for further processing during reinforcement learning training or evaluation.
+  :rtype: tuple
 
 .. py:function::
   xuance.tensorflow.policies.gaussian_marl.BasicQnetwork.target_Q(inputs)
 
+  The target_Q method computes the target Q-values for a given observation and agent identifiers using the target Q-head. 
+  This method is typically used during the training process for updating the Q-network parameters based on the temporal difference error between the evaluation Q-values and the target Q-values.
+
   :param inputs: The inputs of the neural neworks.
   :type inputs: Dict(tf.Tensor)
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The target Q-values.
+  :rtype: torch.Tensor
 
 .. py:function::
   xuance.tensorflow.policies.gaussian_marl.BasicQnetwork.copy_target()
 
+  Copies the parameters from the evaluation representation, target representation, evaluation Q-head, and target Q-head.
+
+
 .. py:class::
   xuance.tensorflow.policies.gaussian_marl.ActorNet(state_dim, n_agents, action_dim, hidden_sizes, normalize, initialize, activation, device)
+
+  Represents the actor network, responsible for generating actions based on the given state and agent information. 
+  It uses a Diagonal Gaussian distribution for the actions.
 
   :param state_dim: The dimension of the input state.
   :type state_dim: int
@@ -477,13 +496,19 @@ TensorFlow
 .. py:function::
   xuance.tensorflow.policies.gaussian_marl.ActorNet.call(x)
 
+  Passes the input tensor x through the sequential model (self.mu) to obtain the mean of the Gaussian distribution.
+  Sets the parameters of the diagonal Gaussian distribution (self.dist) using the mean and the exponential of the log standard deviation.
+  Returns the mean and standard deviation of the Gaussian distribution.
+
+
   :param x: The input tensor.
   :type x: tf.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The mean and standard deviation of the Gaussian distribution.
 
 .. py:class::
   xuance.tensorflow.policies.gaussian_marl.CriticNet(state_dim, n_agents, hidden_sizes, normalize, initialize, activation, device)
+
+  Represents the critic network, which evaluates the state-action pairs.
 
   :param state_dim: The dimension of the input state.
   :type state_dim: int
@@ -503,13 +528,20 @@ TensorFlow
 .. py:function::
   xuance.tensorflow.policies.gaussian_marl.CriticNet.call(x)
 
+  Passes the input tensor x through the sequential model (self.model) to obtain the output, 
+  which represents the Q-values for the given state-action pairs.
+  Returns the Q-values
+
   :param x: The input tensor.
   :type x: tf.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The Q-values.
+  :rtype: tf.Tensor
 
 .. py:class::
   xuance.tensorflow.policies.gaussian_marl.MAAC_Policy(action_space, n_agents, representation, mixer, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device)
+
+  A multi-agent actor-critic policy with Gaussian policies. 
+  It combines an actor network and a critic network and optionally uses a mixer to calculate the total team values.
 
   :param action_space: The action space of the environment.
   :type action_space: Space
@@ -535,15 +567,21 @@ TensorFlow
 .. py:function::
   xuance.tensorflow.policies.gaussian_marl.MAAC_Policy.call(inputs, *rnn_hidden)
 
+  Depending on whether the policy uses RNN, the observation is passed through the representation network, and the hidden states are updated.
+  The actor network is then applied to the concatenated input of agent states and IDs to obtain the probability distribution over actions (self.pi_dist).
+  Returns the updated hidden states (if RNN is used) and the probability distribution.
+
   :param inputs: The inputs of the neural neworks.
   :type inputs: Dict(tf.Tensor)
   :param rnn_hidden: The last final hidden states of the sequence.
   :type rnn_hidden: tf.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: A tuple that includes the updated hidden states (if RNN is used) and the probability distribution.
+  :rtype: tuple
 
 .. py:function::
   xuance.tensorflow.policies.gaussian_marl.MAAC_Policy.get_values(critic_in, agent_ids, *rnn_hidden)
+
+  Computes the critic values based on the input states, agent IDs, and optional RNN hidden states.
 
   :param critic_in: The input variables of critic networks.
   :type critic_in: tf.Tensor
@@ -551,27 +589,33 @@ TensorFlow
   :type agent_ids: tf.Tensor
   :param rnn_hidden: The last final hidden states of the sequence.
   :type rnn_hidden: tf.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The critic values.
+  :rtype: tf.Tensor
 
 .. py:function::
   xuance.tensorflow.policies.gaussian_marl.MAAC_Policy.value_tot(values_n, global_state)
+
+  Computes the total team value, incorporating a mixer if provided.
 
   :param values_n: The joint values of n agents.
   :type values_n: tf.Tensor
   :param global_state: The global states of the environments.
   :type global_state: tf.Tensor
-  :return: None.
-  :rtype: xxxxxx
+  :return: The total team value.
+  :rtype: tf.Tensor
 
 .. py:function::
   xuance.tensorflow.policies.gaussian_marl.MAAC_Policy.trainable_param()
 
-  :return: None.
-  :rtype: xxxxxx
+  Get trainbale parameters of the model.
+
 
 .. py:class::
   xuance.tensorflow.policies.gaussian_marl.Basic_ISAC_policy(action_space, n_agents, representation, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device)
+
+  A basic policy architecture for the Independent Soft Actor-Critic (ISAC) algorithm, with independent actors and centralized critics. 
+  It includes actor and critic networks, as well as target networks for stability during training. 
+  The soft_update method is used to update the target networks gradually.
 
   :param action_space: The action space of the environment.
   :type action_space: Space
@@ -595,53 +639,72 @@ TensorFlow
 .. py:function::
   xuance.tensorflow.policies.gaussian_marl.Basic_ISAC_policy.call(inputs)
 
+  Passes the observation through the agent representation network to obtain relevant features (outputs).
+  Concatenates the state features with agent identifiers and passes them through the actor network to obtain actions (act).
+  Returns the representation outputs and actions.
+
+
   :param inputs: The inputs of the neural neworks.
   :type inputs: Dict(tf.Tensor)
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: A tuple that includes the representation outputs and actions.
+  :rtype: tuple
 
 .. py:function::
   xuance.tensorflow.policies.gaussian_marl.Basic_ISAC_policy.critic(observation, actions, agent_ids)
 
+  Computes critic values for given observations, actions, and agent identifiers.
+
   :param observation: The original observation variables.
   :type observation: tf.Tensor
   :param actions: The actions input.
   :type actions: tf.Tensor
   :param agent_ids: The IDs variables for agents.
   :type agent_ids: tf.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The evaluated critic values.
+  :rtype: tf.Tensor
 
 .. py:function::
   xuance.tensorflow.policies.gaussian_marl.Basic_ISAC_policy.target_critic(observation, actions, agent_ids)
 
+  Computes critic values for target critic network given observations, actions, and agent identifiers.
+
   :param observation: The original observation variables.
   :type observation: tf.Tensor
   :param actions: The actions input.
   :type actions: tf.Tensor
   :param agent_ids: The IDs variables for agents.
   :type agent_ids: tf.Tensor
-  :return: None.
-  :rtype: xxxxxx
+  :return: The target critic values.
+  :rtype: tf.Tensor
 
 .. py:function::
   xuance.tensorflow.policies.gaussian_marl.Basic_ISAC_policy.target_actor(observation, agent_ids)
+
+  Obtains the output of the target actor network.
 
   :param observation: The original observation variables.
   :type observation: tf.Tensor
   :param agent_ids: The IDs variables for agents.
   :type agent_ids: tf.Tensor
-  :return: None.
-  :rtype: xxxxxx
+  :return: The output of the target actor network.
+  :rtype: tf.Tensor
 
 .. py:function::
   xuance.tensorflow.policies.gaussian_marl.Basic_ISAC_policy.soft_update(tau)
 
+  Performs a soft update of the target networks using a parameter tau.
+  Updates the target actor and target critic networks by blending their parameters with the corresponding parameters of the online networks.
+
   :param tau: The soft update factor for the update of target networks.
   :type tau: float
 
+
 .. py:class::
   xuance.tensorflow.policies.gaussian_marl.MASAC_policy(action_space, n_agents, representation, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device)
+
+  An extension of Basic_ISAC_policy for multi-agent environments. 
+  It is an implementation of Multi-Agent Soft Actor-Critic (MASAC) algorithm.
+  It includes modifications to the critic network to handle multiple agents.
 
   :param action_space: The action space of the environment.
   :type action_space: Space
@@ -665,31 +728,37 @@ TensorFlow
 .. py:function::
   xuance.tensorflow.policies.gaussian_marl.MASAC_policy.critic(observation, actions, agent_ids)
 
+  Computes critic values for given observations, actions, and agent identifiers. 
+  Reshapes the state and actions for multiple agents.
+
   :param observation: The original observation variables.
   :type observation: tf.Tensor
   :param actions: The actions input.
   :type actions: tf.Tensor
   :param agent_ids: The IDs variables for agents.
   :type agent_ids: tf.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The evaluated critic values.
+  :rtype: tf.Tensor
 
 .. py:function::
   xuance.tensorflow.policies.gaussian_marl.MASAC_policy.target_critic(observation, actions, agent_ids)
 
+  Computes critic values for the target critic network given observations, actions, and agent identifiers. 
+  Reshapes the state and actions for multiple agents.
+
   :param observation: The original observation variables.
   :type observation: tf.Tensor
   :param actions: The actions input.
   :type actions: tf.Tensor
   :param agent_ids: The IDs variables for agents.
   :type agent_ids: tf.Tensor
-  :return: xxxxxx.
-  :rtype: xxxxxx
+  :return: The target critic values.
+  :rtype: tf.Tensor
 
 .. raw:: html
 
     <br><hr>
-    
+
 
 MindSpore
 ------------------------------------------
