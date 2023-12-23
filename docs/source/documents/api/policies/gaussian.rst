@@ -36,10 +36,10 @@ PyTorch
 .. py:function::
   xuance.torch.policies.gaussian.ActorNet.forward(x)
 
-  The forward method takes a tensor x as input (representing the state). 
-  It computes the mean and log standard deviation using the MLP (self.mu) and the trainable parameter (self.logstd).
-  It sets the parameters of a diagonal Gaussian distribution using the computed mean and log standard deviation.
-  The distribution is returned.
+  - The forward method takes a tensor x as input (representing the state).
+  - It computes the mean and log standard deviation using the MLP (self.mu) and the trainable parameter (self.logstd).
+  - It sets the parameters of a diagonal Gaussian distribution using the computed mean and log standard deviation.
+  - The distribution is returned.
   
   :param x: The input tensor.
   :type x: torch.Tensor
@@ -49,8 +49,8 @@ PyTorch
 .. py:class::
   xuance.torch.policies.gaussian.CriticNet(state_dim, hidden_sizes, normalize, initialize, activation, device)
 
-  The CriticNet is designed to estimate the Q-values for a given state in the context of reinforcement learning.
-  The architecture is similar to an MLP, and it produces a single output representing the estimated Q-value.
+  - The CriticNet is designed to estimate the Q-values for a given state in the context of reinforcement learning.
+  - The architecture is similar to an MLP, and it produces a single output representing the estimated Q-value.
 
   :param state_dim: The dimension of the input state.
   :type state_dim: int
@@ -68,9 +68,9 @@ PyTorch
 .. py:function::
   xuance.torch.policies.gaussian.CriticNet.forward(x)
 
-  The forward method takes a tensor x as input (representing the state).
-  It passes the input through the entire neural network (self.model).
-  The output represents the Q-value for the given state.
+  - The forward method takes a tensor x as input (representing the state).
+  - It passes the input through the entire neural network (self.model).
+  - The output represents the Q-value for the given state.
 
   :param x: The input tensor.
   :type x: torch.Tensor
@@ -81,9 +81,9 @@ PyTorch
 .. py:class::
   xuance.torch.policies.gaussian.ActorCriticPolicy(action_space, representation, actor_hidden_size, critic_hidden_size, normalize, initialize, activation, device)
 
-  This architecture follows the actor-critic paradigm, 
-  where the actor is responsible for selecting actions based on the current state, 
-  and the critic evaluates the value of the state.
+  - This architecture follows the actor-critic paradigm,
+  - where the actor is responsible for selecting actions based on the current state,
+  - and the critic evaluates the value of the state.
 
   :param action_space: The action space of the environment.
   :type action_space: Space
@@ -119,8 +119,8 @@ PyTorch
 .. py:class::
   xuance.torch.policies.gaussian.ActorPolicy(action_space, representation, actor_hidden_size, normalize, initialize, activation, device, fixed_std)
 
-  This class represents a standalone actor policy, typically used in actor-only algorithms or as part of a larger policy in more complex architectures. 
-  The actor is responsible for selecting actions based on the current state, and the policy can be used for generating actions during both training and inference.
+  - This class represents a standalone actor policy, typically used in actor-only algorithms or as part of a larger policy in more complex architectures.
+  - The actor is responsible for selecting actions based on the current state, and the policy can be used for generating actions during both training and inference.
 
   :param action_space: The action space of the environment.
   :type action_space: Space
@@ -188,8 +188,8 @@ PyTorch
 .. py:class::
   xuance.torch.policies.gaussian.ActorNet_SAC(state_dim, action_dim, hidden_sizes, normalize, initialize, activation, device)
 
-  An implementation of a actor network for the Soft Actor-Critic (SAC) with continuous action spaces. 
-  It takes the state as input and outputs a Gaussian distribution over continuous actions using a softmax activation.
+  - An implementation of a actor network for the Soft Actor-Critic (SAC) with continuous action spaces.
+  - It takes the state as input and outputs a Gaussian distribution over continuous actions using a softmax activation.
 
   :param state_dim: The dimension of the input state.
   :type state_dim: int
@@ -209,8 +209,8 @@ PyTorch
 .. py:function::
   xuance.torch.policies.gaussian.ActorNet_SAC.forward(x)
 
-  A feed forward method that takes the tensor x as input and passes it through the actor model.
-  It returns a Gaussian distribution over continuous actions.
+  - A feed forward method that takes the tensor x as input and passes it through the actor model.
+  - It returns a Gaussian distribution over continuous actions.
 
   :param x: The input tensor.
   :type x: torch.Tensor
@@ -239,7 +239,7 @@ PyTorch
 .. py:function::
   xuance.torch.policies.gaussian.CriticNet_SAC.forward(x, a)
 
-  A feed forward method that defines the forward pass through the critic network, 
+  A feed forward method that defines the forward pass through the critic network,
   taking the input tensors x and a, and passing it through the critic model.
 
   :param x: The input observation data.
@@ -274,8 +274,8 @@ PyTorch
 .. py:function::
   xuance.torch.policies.gaussian.SACPolicy.forward(observation)
 
-  A feed forward method that computes the forward pass of the policy network given an observation. 
-  It returns the representation of the representation_actor, and the action distribution.
+  - A feed forward method that computes the forward pass of the policy network given an observation.
+  - It returns the representation of the representation_actor, and the action distribution.
 
   :param observation: The original observation variables.
   :type observation: torch.Tensor
