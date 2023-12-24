@@ -148,18 +148,18 @@ SPDQN_Agent
 
     :param obs: The observation variables.
     :type obs: np.ndarray
-    :return: xxxxxx.
-    :rtype: xxxxxx
+    :return: discrete action, continuous action, and raw continuous actions.
+    :rtype: Tuple
 
 .. py:function::
     xuance.mindspore.agents.policy_gradient.spdqn_agent.SPDQN_Agent.pad_action(disaction, conaction)
 
-    :param disaction: xxxxxx.
-    :type disaction: xxxxxx
-    :param conaction: xxxxxx.
-    :type conaction: xxxxxx
-    :return: xxxxxx.
-    :rtype: xxxxxx
+    :param disaction: The discrete action index.
+    :type disaction: int
+    :param conaction: The continuous action.
+    :type conaction: np.ndarray
+    :return: discrete action and padded continuous actions.
+    :rtype: tuple
 
 .. py:function::
     xuance.mindspore.agents.policy_gradient.spdqn_agent.SPDQN_Agent.train(train_steps)
@@ -171,17 +171,16 @@ SPDQN_Agent
     xuance.mindspore.agents.policy_gradient.spdqn_agent.SPDQN_Agent.test(env_fn,test_episodes)
 
     :param env_fn: The function of making environments.
-    :type env_fn: xxxxxx
     :param test_episodes: The number of testing episodes.
     :type test_episodes: int
-    :return: xxxxxx.
-    :rtype: xxxxxx
+    :return: **scores** - The accumulated scores of these episodes.
+    :rtype: list
 
 .. py:function::
     xuance.mindspore.agents.policy_gradient.spdqn_agent.SPDQN_Agent.end_episode(episode)
 
-    :param episode: xxxxxx.
-    :type episode: xxxxxx
+    :param episode: The current episode number.
+    :type episode: int
 .. raw:: html
 
     <br><hr>

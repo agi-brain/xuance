@@ -134,8 +134,8 @@ TD3_Agent
     :type obs: np.ndarray
     :param noise_scale: The scale value of the Gaussian noise.
     :type noise_scale: float
-    :return: xxxxxx.
-    :rtype: xxxxxx
+    :return: The selected action, clipped to the valid action space range [-1, 1].
+    :rtype: np.ndarray
 
 .. py:function::
     xuance.mindspore.agents.policy_gradient.td3_agent.TD3_Agent.train(train_steps)
@@ -147,11 +147,10 @@ TD3_Agent
     xuance.mindspore.agents.policy_gradient.td3_agent.TD3_Agent.test(env_fn,test_episodes)
 
     :param env_fn: The function of making environments.
-    :type env_fn: xxxxxx
     :param test_episodes: The number of testing episodes.
     :type test_episodes: int
-    :return: xxxxxx.
-    :rtype: xxxxxx
+    :return: **scores** - The accumulated scores of these episodes.
+    :rtype: list
 
 .. raw:: html
 
