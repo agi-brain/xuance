@@ -126,30 +126,14 @@ DQN_Agent
     :type scheduler: torch.optim.lr_scheduler._LRScheduler
 
 .. py:function::
-    xuance.mindspore.agents.qlearning_family.dqn_agent.DQN_Agent._process_observation(observations)
-
-    :param observations: The original observation variables.
-    :type observations: Tensor
-    :return: xxxxxx.
-    :rtype: xxxxxx
-
-.. py:function::
-    xuance.mindspore.agents.qlearning_family.dqn_agent.DQN_Agent._process_reward(rewards)
-
-    :param rewards: xxxxxx.
-    :type rewards: xxxxxx
-    :return: xxxxxx.
-    :rtype: xxxxxx
-
-.. py:function::
     xuance.mindspore.agents.qlearning_family.dqn_agent.DQN_Agent._action(obs,egreedy)
 
     :param obs: The observation variables.
     :type obs: np.ndarray
     :param egreedy: The epsilon greedy factor.
     :type egreedy: float
-    :return: xxxxxx.
-    :rtype: xxxxxx
+    :return: **action** - The actions to be executed.
+    :rtype: np.ndarray
 
 .. py:function::
     xuance.mindspore.agents.qlearning_family.dqn_agent.DQN_Agent.train(train_steps)
@@ -158,10 +142,14 @@ DQN_Agent
     :type train_steps: int
 
 .. py:function::
-    xuance.mindspore.agents.qlearning_family.dqn_agent.DQN_Agent.test(test_steps)
+    xuance.mindspore.agents.qlearning_family.dqn_agent.DQN_Agent.test(env_fn，test_episodes)
 
-    :param test_steps: xxxxxx.
-    :type test_steps: xxxxxx
+    :param env_fn: The function of making environments.
+    :param test_episodes: The number of testing episodes.
+    :type test_episodes: int
+    :return: The accumulated scores of these episodes.
+    :rtype: list
+
 
 .. py:function::
     xuance.mindspore.agents.qlearning_family.dqn_agent.DQN_Agent.evaluate()
