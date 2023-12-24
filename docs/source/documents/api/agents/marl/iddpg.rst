@@ -98,16 +98,16 @@ IDDPG_Agents
     :type obs_n: np.ndarray
     :param test_mode: is True for selecting greedy actions, is False for selecting epsilon-greedy actions.
     :type test_mode: bool
-    :return: xxxxxx.
-    :rtype: xxxxxx
+    :return: additional information and the selected actions.
+    :rtype: tuple
 
 .. py:function::
      xuance.mindspore.agents.mutli_agent_rl.iddpg_agents.IDDPG_Agents.train(i_episode)
 
-    :param i_episode: xxxxxx.
-    :type i_episode: xxxxxx
-    :return: xxxxxx.
-    :rtype: xxxxxx
+    :param i_episode: The index of the current episode.
+    :type i_episode: int
+    :return: Information about the training process.
+    :rtype: dict
 
 .. raw:: html
 
