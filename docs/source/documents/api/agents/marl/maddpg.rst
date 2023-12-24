@@ -98,16 +98,16 @@ MADDPG_Agents
     :type obs_n: np.ndarray
     :param test_mode: is True for selecting greedy actions, is False for selecting epsilon-greedy actions.
     :type test_mode: bool
-    :return: xxxxxx.
-    :rtype: xxxxxx
+    :return: Hidden state and selected actions.
+    :rtype: tuple
 
 .. py:function::
      xuance.mindspore.agents.mutli_agent_rl.maddpg_agents.MADDPG_Agents.train(i_episode)
 
-    :param i_episode: xxxxxx.
-    :type i_episode: xxxxxx
-    :return: xxxxxx.
-    :rtype: xxxxxx
+    :param i_episode: Current episode index.
+    :type i_episode: int
+    :return: Training information.
+    :rtype: dict
 
 .. raw:: html
 

@@ -126,16 +126,16 @@ MAPPO_Agents
 .. py:function::
     xuance.mindspore.agent.mutli_agent_rl.mappo_agents.MAPPO_Agents.values(obs_n, *rnn_hidden, state=None)
 
-    xxxxxx.
+    Get critic values for MAPPO agent.
 
     :param obs_n: The joint observations of n agents.
     :type obs_n: np.ndarray
     :param rnn_hidden: The final hidden state of the sequence.
-    :type rnn_hidden: xxxxxx
+    :type rnn_hidden: tuple
     :param state: The state input.
     :type state: Tensor
-    :return: xxxxxx.
-    :rtype: xxxxxx
+    :return: the hidden state and critic values.
+    :rtype: tuple
 
 .. py:function::
     xuance.mindspore.agent.mutli_agent_rl.mappo_agents.MAPPO_Agents.train(i_step, **kwargs)
