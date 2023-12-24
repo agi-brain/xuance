@@ -8,7 +8,7 @@ PDQN_Learner
 **PyTorch:**
 
 .. py:class::
-  xuance.torch.learners.policy_gradient.pdqn_learner.PDQN_Learner(policy, optimizer, scheduler, summary_writer, device, model_dir, gamma, tau)
+  xuance.torch.learners.policy_gradient.pdqn_learner.PDQN_Learner(policy, optimizer, scheduler, device, model_dir, gamma, tau)
 
   :param policy: The policy that provides actions and values.
   :type policy: nn.Module
@@ -16,8 +16,6 @@ PDQN_Learner
   :type optimizer: Optimizer
   :param scheduler: The tool for learning rate decay.
   :type scheduler: lr_scheduler
-  :param summary_writer: xxxxxx.
-  :type summary_writer: xxxxxx
   :param device: The calculating device.
   :type device: str
   :param model_dir: The directory for saving or loading the model parameters.
