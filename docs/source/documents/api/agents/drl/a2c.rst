@@ -126,8 +126,8 @@ A2C_Agent
 
     :param obs: The observation variables.
     :type obs: np.ndarray
-    :return: xxxxxx.
-    :rtype: xxxxxx
+    :return: the actions obtained and the value function estimates obtained.
+    :rtype: np.ndarray
 
 .. py:function::
     xuance.mindspore.agents.policy_gradient.a2c_agent.A2C_Agent.train(train_steps)
@@ -139,11 +139,10 @@ A2C_Agent
     xuance.mindspore.agents.policy_gradient.a2c_agent.A2C_Agent.test(env_fn,test_episodes)
 
     :param env_fn: The function of making environments.
-    :type env_fn: xxxxxx
     :param test_episodes: The number of testing episodes.
     :type test_episodes: int
-    :return: xxxxxx.
-    :rtype: xxxxxx
+    :return: The accumulated scores of these episodes.
+    :rtype: list
 
 .. raw:: html
 
