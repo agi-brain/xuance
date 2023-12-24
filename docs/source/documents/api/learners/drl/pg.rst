@@ -20,9 +20,9 @@ PG_Learner
   :type device: str
   :param model_dir: The directory for saving or loading the model parameters.
   :type model_dir: str
-  :param ent_coef: xxxxxx.
+  :param ent_coef: Entropy coefficient.
   :type ent_coef: float
-  :param clip_grad: xxxxxx.
+  :param clip_grad: Gradient clipping threshold.
   :type clip_grad: float
 
 .. py:function::
@@ -54,9 +54,9 @@ PG_Learner
   :type device: str
   :param model_dir: The directory for saving or loading the model parameters.
   :type model_dir: str
-  :param ent_coef: xxxxxx.
+  :param ent_coef: Entropy coefficient.
   :type ent_coef: float
-  :param clip_grad: xxxxxx.
+  :param clip_grad: Gradient clipping threshold.
   :type clip_grad: float
 
 .. py:function::
@@ -88,11 +88,11 @@ PG_Learner
   :type scheduler: lr_scheduler
   :param model_dir: The directory for saving or loading the model parameters.
   :type model_dir: str
-  :param ent_coef: xxxxxx.
+  :param ent_coef: Entropy coefficient.
   :type ent_coef: float
-  :param clip_grad: xxxxxx.
+  :param clip_grad: Gradient clipping threshold.
   :type clip_grad: float
-  :param clip_type: xxxxxx.
+  :param clip_type: Type of gradient clipping.
 
 .. py:function::
   xuance.mindspore.learners.policy_gradient.pg_learner.PG_Learner.update(obs_batch, act_batch, ret_batch)
