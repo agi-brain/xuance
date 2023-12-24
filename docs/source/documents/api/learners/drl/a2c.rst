@@ -20,11 +20,11 @@ A2C_Learner
   :type device: str
   :param model_dir: The directory for saving or loading the model parameters.
   :type model_dir: str
-  :param vf_coef: xxxxxx.
+  :param vf_coef: Value function coefficient.
   :type vf_coef: float
-  :param ent_coef: xxxxxx.
+  :param ent_coef: Entropy coefficient.
   :type ent_coef: float
-  :param clip_grad: xxxxxx.
+  :param clip_grad: Gradient clipping threshold.
   :type clip_grad: float
 
 .. py:function::
@@ -58,11 +58,11 @@ A2C_Learner
   :type device: str
   :param model_dir: The directory for saving or loading the model parameters.
   :type model_dir: str
-  :param vf_coef: xxxxxx.
+  :param vf_coef: Value function coefficient.
   :type vf_coef: float
-  :param ent_coef: xxxxxx.
+  :param ent_coef: Entropy coefficient.
   :type ent_coef: float
-  :param clip_grad: xxxxxx.
+  :param clip_grad: Gradient clipping threshold.
   :type clip_grad: float
 
 .. py:function::
@@ -96,13 +96,14 @@ A2C_Learner
   :type scheduler: lr_scheduler
   :param model_dir: The directory for saving or loading the model parameters.
   :type model_dir: str
-  :param vf_coef: xxxxxx.
+  :param vf_coef: Value function coefficient.
   :type vf_coef: float
-  :param ent_coef: xxxxxx.
+  :param ent_coef: Entropy coefficient.
   :type ent_coef: float
-  :param clip_grad: xxxxxx.
+  :param clip_grad: Gradient clipping threshold.
   :type clip_grad: float
-  :param clip_type: xxxxxx.
+  :param clip_type: Type of gradient clipping.
+  :type clip_type: int
 
 .. py:function::
   xuance.mindspore.learners.policy_gradient.a2c_learner.A2C_Learner.update(obs_batch, act_batch, ret_batch, adv_batch)
