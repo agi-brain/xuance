@@ -20,12 +20,12 @@ PPG_Learner
   :type device: str
   :param model_dir: The directory for saving or loading the model parameters.
   :type model_dir: str
-  :param ent_coef: xxxxxx.
+  :param ent_coef: Entropy coefficient.
   :type ent_coef: float
-  :param clip_range: xxxxxx.
-  :type clip_range: xxxxxx
-  :param kl_beta: xxxxxx.
-  :type kl_beta: xxxxxx
+  :param clip_range: PPO clip range.
+  :type clip_range: float
+  :param kl_beta: KL divergence coefficient.
+  :type kl_beta: float
 
 .. py:function::
   xuance.torch.learners.policy_gradient.ppg_learner.PPG_Learner.update_policy(obs_batch, act_batch, ret_batch, adv_batch, old_dists)
@@ -38,8 +38,8 @@ PPG_Learner
   :type ret_batch: np.ndarray
   :param adv_batch: A batch of advantages sampled from experience replay buffer.
   :type adv_batch: np.ndarray
-  :param old_dists: xxxxxx.
-  :type old_dists: xxxxxx
+  :param old_dists: Batch of old distributions.
+  :type old_dists: list
   :return: The infomation of the training.
   :rtype: dict
 
@@ -54,8 +54,8 @@ PPG_Learner
   :type ret_batch: np.ndarray
   :param adv_batch: A batch of advantages sampled from experience replay buffer.
   :type adv_batch: np.ndarray
-  :param old_dists: xxxxxx.
-  :type old_dists: xxxxxx
+  :param old_dists: Batch of old distributions.
+  :type old_dists: list
   :return: The infomation of the training.
   :rtype: dict
 
@@ -70,8 +70,8 @@ PPG_Learner
   :type ret_batch: np.ndarray
   :param adv_batch: A batch of advantages sampled from experience replay buffer.
   :type adv_batch: np.ndarray
-  :param old_dists: xxxxxx.
-  :type old_dists: xxxxxx
+  :param old_dists: Batch of old distributions.
+  :type old_dists: list
   :return: The infomation of the training.
   :rtype: dict
 
@@ -92,12 +92,12 @@ PPG_Learner
   :type device: str
   :param model_dir: The directory for saving or loading the model parameters.
   :type model_dir: str
-  :param ent_coef: xxxxxx.
+  :param ent_coef: Entropy coefficient.
   :type ent_coef: float
-  :param clip_range: xxxxxx.
-  :type clip_range: xxxxxx
-  :param kl_beta: xxxxxx.
-  :type kl_beta: xxxxxx
+  :param clip_range: PPO clip range.
+  :type clip_range: float
+  :param kl_beta: KL divergence coefficient.
+  :type kl_beta: float
 
 .. py:function::
   xuance.tensorflow.learners.policy_gradient.ppg_learner.PPG_Learner.update_policy(obs_batch, act_batch, ret_batch, adv_batch, old_dists)
@@ -110,8 +110,8 @@ PPG_Learner
   :type ret_batch: np.ndarray
   :param adv_batch: A batch of advantages sampled from experience replay buffer.
   :type adv_batch: np.ndarray
-  :param old_dists: xxxxxx.
-  :type old_dists: xxxxxx
+  :param old_dists: Batch of old distributions.
+  :type old_dists: list
   :return: The infomation of the training.
   :rtype: dict
 
@@ -126,8 +126,8 @@ PPG_Learner
   :type ret_batch: np.ndarray
   :param adv_batch: A batch of advantages sampled from experience replay buffer.
   :type adv_batch: np.ndarray
-  :param old_dists: xxxxxx.
-  :type old_dists: xxxxxx
+  :param old_dists: Batch of old distributions.
+  :type old_dists: list
   :return: The infomation of the training.
   :rtype: dict
 
@@ -142,8 +142,8 @@ PPG_Learner
   :type ret_batch: np.ndarray
   :param adv_batch: A batch of advantages sampled from experience replay buffer.
   :type adv_batch: np.ndarray
-  :param old_dists: xxxxxx.
-  :type old_dists: xxxxxx
+  :param old_dists: Batch of old distributions.
+  :type old_dists: list
   :return: The infomation of the training.
   :rtype: dict
 
@@ -164,12 +164,12 @@ PPG_Learner
   :type scheduler: lr_scheduler
   :param model_dir: The directory for saving or loading the model parameters.
   :type model_dir: str
-  :param ent_coef: xxxxxx.
+  :param ent_coef: Entropy coefficient.
   :type ent_coef: float
-  :param clip_range: xxxxxx.
-  :type clip_range: xxxxxx
-  :param kl_beta: xxxxxx.
-  :type kl_beta: xxxxxx
+  :param clip_range: PPO clip range.
+  :type clip_range: float
+  :param kl_beta: KL divergence coefficient.
+  :type kl_beta: float
 
 .. py:function::
   xuance.mindspore.learners.policy_gradient.ppg_learner.PPG_Learner.update(obs_batch, act_batch, ret_batch, adv_batch, old_dists, update_type)
@@ -182,10 +182,10 @@ PPG_Learner
   :type ret_batch: np.ndarray
   :param adv_batch: A batch of advantages sampled from experience replay buffer.
   :type adv_batch: np.ndarray
-  :param old_dists: xxxxxx.
-  :type old_dists: xxxxxx
-  :param update_type: xxxxxx.
-  :type update_type: xxxxxx
+  :param old_dists: old distributions.
+  :type old_dists: list
+  :param update_type: int.
+  :type update_type: the type of update (0 for actor, 1 for critic, 2 for auxiliary)
   :return: The infomation of the training.
   :rtype: dict
 
