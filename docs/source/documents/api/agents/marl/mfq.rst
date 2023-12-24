@@ -86,8 +86,8 @@ MFQ_Agents
 
     :param i_step: The i-th step during training.
     :type i_step: int
-    :param n_epoch: xxxxxx.
-    :type n_epoch: xxxxxx
+    :param n_epoch: Number of training epochs.
+    :type n_epoch: int
     :return: **info_train** - the information of the training process.
     :rtype: dict
 
@@ -130,8 +130,8 @@ MFQ_Agents
 
     :param i_step: The i-th step during training.
     :type i_step: int
-    :param n_epoch: xxxxxx.
-    :type n_epoch: xxxxxx
+    :param n_epoch: Number of training epochs.
+    :type n_epoch: int
     :return: **info_train** - the information of the training process.
     :rtype: dict
 

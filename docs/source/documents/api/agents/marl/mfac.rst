@@ -42,8 +42,8 @@ MFAC
     :type obs: np.ndarray
     :param actions_mean: The mean values of actions.
     :type actions_mean: Tensor
-    :return: xxxxxx.
-    :rtype: xxxxxx
+    :return: hidden states and critic values.
+    :rtype: tuple
 
 .. py:function::
     xuance.torch.agent.mutli_agent_rl.mfac_agents.MFAC_Agents.train(i_step, kwargs)
@@ -98,8 +98,8 @@ MFAC
     :type obs: np.ndarray
     :param actions_mean: The mean values of actions.
     :type actions_mean: Tensor
-    :return: xxxxxx.
-    :rtype: xxxxxx
+    :return: hidden states and critic values.
+    :rtype: tuple
 
 .. py:function::
     xuance.tensorflow.agent.mutli_agent_rl.mfac_agents.MFAC_Agents.train(i_step, kwargs)
@@ -152,8 +152,8 @@ MFAC
     :type obs: np.ndarray
     :param actions_mean: The mean values of actions.
     :type actions_mean: Tensor
-    :return: xxxxxx.
-    :rtype: xxxxxx
+    :return: hidden states and critic values.
+    :rtype: tuple
 
 .. py:function::
     xuance.mindspore.agent.mutli_agent_rl.mfac_agents.MFAC_Agents.train(i_step, kwargs)
