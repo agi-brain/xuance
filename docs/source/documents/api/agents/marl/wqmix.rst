@@ -82,8 +82,8 @@ WQMIX_Agents
 
     :param i_step: The i-th step during training.
     :type i_step: int
-    :param n_epoch: xxxxxx.
-    :type n_epoch: xxxxxx
+    :param n_epoch: Number of training epochs.
+    :type n_epoch: int
     :return: **info_train** - the information of the training process.
     :rtype: dict
 
@@ -118,12 +118,12 @@ WQMIX_Agents
 .. py:function::
     xuance.mindspore.agents.mutli_agent_rl.wqmix_agents.WQMIX_Agents.train(i_step, n_epoch)
     
-    :param i_step: xxxxxx.
-    :type i_step: xxxxxx
-    :param n_epoch: xxxxxx.
-    :type n_epoch: xxxxxx
-    :return: xxxxxx.
-    :rtype: xxxxxx
+    :param i_step: The i-th step during training.
+    :type i_step: int
+    :param n_epoch: Number of training epochs.
+    :type n_epoch: int
+    :return: **info_train** - the information of the training process.
+    :rtype: dict
 
 .. raw:: html
 
