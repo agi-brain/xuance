@@ -128,15 +128,15 @@ COMA_Agents
     :param obs_n: The joint observations of n agents.
     :type obs_n: np.ndarray
     :param rnn_hidden: The final hidden state of the sequence.
-    :type rnn_hidden: xxxxxx
+    :type rnn_hidden: tensor
     :param state: The state input.
     :type state: Tensor
     :param actions_n: The independent actions of n agents.
     :type actions_n: torch.Tensor
-    :param actions_onehot: xxxxxx.
-    :type actions_onehot: xxxxxx
-    :return: xxxxxx.
-    :rtype: xxxxxx
+    :param actions_onehot: The one-hot encoded representation of actions.
+    :type actions_onehot: np.ndarray
+    :return: The hidden state of the neural network, estimated values of actions for each agent.
+    :rtype: tuple
 
 .. py:function::
     xuance.mindspore.agent.mutli_agent_rl.coma_agents.COMA_Agents.train(i_step, kwargs)
