@@ -126,12 +126,14 @@ QRDQN_Agent
     :type scheduler: torch.optim.lr_scheduler._LRScheduler
 
 .. py:function::
-    xuance.mindspore.agents.qlearning_family.qrdqn_agent.QRDQN_Agent._action(obs)
+    xuance.mindspore.agents.qlearning_family.qrdqn_agent.QRDQN_Agent._action(obs, egreedy)
 
     :param obs: The observation variables.
     :type obs: np.ndarray
-    :return: xxxxxx.
-    :rtype: xxxxxx
+    :param egreedy: The epsilon greedy factor.
+    :type egreedy: float
+    :return: **action** - The actions to be executed.
+    :rtype: np.ndarray
 
 .. py:function::
     xuance.mindspore.agents.qlearning_family.qrdqn_agent.QRDQN_Agent.train(train_steps)
@@ -143,11 +145,11 @@ QRDQN_Agent
     xuance.mindspore.agents.qlearning_family.qrdqn_agent.QRDQN_Agent.test(env_fn,test_episodes)
 
     :param env_fn: The function of making environments.
-    :type env_fn: xxxxxx
     :param test_episodes: The number of testing episodes.
     :type test_episodes: int
-    :return: xxxxxx.
-    :rtype: xxxxxx
+    :return: **scores** - The accumulated scores of these episodes.
+    :rtype: list
+
 .. raw:: html
 
     <br><hr>
