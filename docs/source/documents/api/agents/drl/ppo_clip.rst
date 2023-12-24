@@ -126,8 +126,8 @@ PPOCLIP_Agent
 
     :param obs: The observation variables.
     :type obs: np.ndarray
-    :return: xxxxxx.
-    :rtype: xxxxxx
+    :return: selected actions, value estimates, and log probabilities.
+    :rtype: tuple
 
 .. py:function::
     xuance.mindspore.agents.policy_gradient.ppoclip_agent.PPOCLIP_Agent.train(train_steps)
@@ -139,11 +139,11 @@ PPOCLIP_Agent
     xuance.mindspore.agents.policy_gradient.ppoclip_agent.PPOCLIP_Agent.test(env_fn,test_episode)
 
     :param env_fn: The function of making environments.
-    :type env_fn: xxxxxx
-    :param test_episode: xxxxxx.
-    :type test_episode: xxxxxx
-    :return: xxxxxx.
-    :rtype: xxxxxx
+    :param test_episodes: The number of testing episodes.
+    :type test_episodes: int
+    :return: **scores** - The accumulated scores of these episodes.
+    :rtype: list
+
 .. raw:: html
 
     <br><hr>

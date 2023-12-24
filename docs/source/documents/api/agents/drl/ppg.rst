@@ -126,8 +126,8 @@ PPG_Agent
 
     :param obs: The observation variables.
     :type obs: np.ndarray
-    :return: xxxxxx.
-    :rtype: xxxxxx
+    :return: selected actions, value estimates, and probability distributions.
+    :rtype: tuple
 
 .. py:function::
     xuance.mindspore.agents.policy_gradient.ppg_agent.PPG_Agent.train(train_steps)
@@ -139,11 +139,11 @@ PPG_Agent
     xuance.mindspore.agents.policy_gradient.pg_agent.PG_Agent.test(env_fn,test_episodes)
 
     :param env_fn: The function of making environments.
-    :type env_fn: xxxxxx
     :param test_episodes: The number of testing episodes.
     :type test_episodes: int
-    :return: xxxxxx.
-    :rtype: xxxxxx
+    :return: **scores** - The accumulated scores of these episodes.
+    :rtype: list
+
 
 .. raw:: html
 
