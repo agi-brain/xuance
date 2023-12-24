@@ -20,16 +20,16 @@ PPOCLIP_Learner
   :type device: str
   :param model_dir: The directory for saving or loading the model parameters.
   :type model_dir: str
-  :param vf_coef: xxxxxx.
+  :param vf_coef: Value function coefficient.
   :type vf_coef: float
-  :param ent_coef: xxxxxx.
+  :param ent_coef: Entropy coefficient.
   :type ent_coef: float
-  :param clip_range: xxxxxx.
-  :type clip_range: xxxxxx
-  :param clip_grad_norm: xxxxxx.
-  :type clip_grad_norm: xxxxxx
-  :param use_grad_clip: xxxxxx.
-  :type use_grad_clip: xxxxxx
+  :param clip_range: The clipping range for the PPO loss function.
+  :type clip_range: float
+  :param clip_grad_norm: the maximum norm of the gradients used for gradient clipping.
+  :type clip_grad_norm: float
+  :param use_grad_clip: gradient clipping should be applied during backpropagation.
+  :type use_grad_clip: bool
 
 .. py:function::
   xuance.torch.learners.policy_gradient.ppoclip_learner.PPOCLIP_Learner.update(obs_batch, act_batch, ret_batch, value_batch, adv_batch,old_logp)
@@ -40,13 +40,13 @@ PPOCLIP_Learner
   :type act_batch: np.ndarray
   :param ret_batch: A batch of returns sampled from experience replay buffer.
   :type ret_batch: np.ndarray
-  :param value_batch: xxxxxx.
-  :type value_batch: xxxxxx
+  :param value_batch: A batch of predicted values by the value function.
+  :type value_batch: np.ndarray
   :param adv_batch: A batch of advantages sampled from experience replay buffer.
   :type adv_batch: np.ndarray
-  :param old_logp: xxxxxx.
-  :type old_logp: xxxxxx
-  :return: The infomation of the training.
+  :param old_logp: A batch of old log probabilities of actions.
+  :type old_logp: tensor
+  :return: The information of the training.
   :rtype: dict
 
 .. raw:: html
@@ -66,12 +66,12 @@ PPOCLIP_Learner
   :type device: str
   :param model_dir: The directory for saving or loading the model parameters.
   :type model_dir: str
-  :param vf_coef: xxxxxx.
+  :param vf_coef: Value function coefficient.
   :type vf_coef: float
-  :param ent_coef: xxxxxx.
+  :param ent_coef: Entropy coefficient.
   :type ent_coef: float
-  :param clip_range: xxxxxx.
-  :type clip_range: xxxxxx
+  :param clip_range: The clipping range for the PPO loss function.
+  :type clip_range: floata
 
 .. py:function::
   xuance.tensorflow.learners.policy_gradient.ppoclip_learner.PPOCLIP_Learner.update(obs_batch, act_batch, ret_batch, value_batch, adv_batch,old_logp)
@@ -82,12 +82,12 @@ PPOCLIP_Learner
   :type act_batch: np.ndarray
   :param ret_batch: A batch of returns sampled from experience replay buffer.
   :type ret_batch: np.ndarray
-  :param value_batch: xxxxxx.
-  :type value_batch: xxxxxx
+  :param value_batch: A batch of predicted values by the value function.
+  :type value_batch: np.ndarray
   :param adv_batch: A batch of advantages sampled from experience replay buffer.
   :type adv_batch: np.ndarray
-  :param old_logp: xxxxxx.
-  :type old_logp: xxxxxx
+  :param old_logp: A batch of old log probabilities of actions.
+  :type old_logp: tensor
   :return: The infomation of the training.
   :rtype: dict
 
@@ -108,12 +108,12 @@ PPOCLIP_Learner
   :type scheduler: lr_scheduler
   :param model_dir: The directory for saving or loading the model parameters.
   :type model_dir: str
-  :param vf_coef: xxxxxx.
+  :param vf_coef: Value function coefficient.
   :type vf_coef: float
-  :param ent_coef: xxxxxx.
+  :param ent_coef: Entropy coefficient.
   :type ent_coef: float
-  :param clip_range: xxxxxx.
-  :type clip_range: xxxxxx
+  :param clip_range: The clipping range for the PPO loss function.
+  :type clip_range: floata
 
 .. py:function::
   xuance.mindspore.learners.policy_gradient.ppoclip_learner.PPOCLIP_Learner.update(obs_batch, act_batch, ret_batch, value_batch, adv_batch,old_logp)
@@ -124,12 +124,12 @@ PPOCLIP_Learner
   :type act_batch: np.ndarray
   :param ret_batch: A batch of returns sampled from experience replay buffer.
   :type ret_batch: np.ndarray
-  :param value_batch: xxxxxx.
-  :type value_batch: xxxxxx
+  :param value_batch: A batch of predicted values by the value function.
+  :type value_batch: np.ndarray
   :param adv_batch: A batch of advantages sampled from experience replay buffer.
   :type adv_batch: np.ndarray
-  :param old_logp: xxxxxx.
-  :type old_logp: xxxxxx
+  :param old_logp: A batch of old log probabilities of actions.
+  :type old_logp: tensor
   :return: The infomation of the training.
   :rtype: dict
 
