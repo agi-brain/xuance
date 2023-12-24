@@ -134,8 +134,8 @@ DQN with double q-learning trick.
     :type obs: np.ndarray
     :param egreedy: The epsilon greedy factor.
     :type egreedy: float
-    :return: xxxxxx.
-    :rtype: xxxxxx
+    :return: **action** - The actions to be executed.
+    :rtype: np.ndarray
 
 .. py:function::
     xuance.mindspore.agents.qlearning_family.ddqn_agent.DDQN_Agent.train(train_steps)
@@ -147,11 +147,10 @@ DQN with double q-learning trick.
     xuance.mindspore.agents.qlearning_family.ddqn_agent.DDQN_Agent.test(env_fn,test_steps)
 
     :param env_fn: The function of making environments.
-    :type env_fn: xxxxxx
-    :param test_steps: xxxxxx.
-    :type test_steps: xxxxxx
-    :return: xxxxxx.
-    :rtype: xxxxxx
+    :param test_episodes: The number of testing episodes.
+    :type test_episodes: int
+    :return: The accumulated scores of these episodes.
+    :rtype: list
 
 .. raw:: html
 

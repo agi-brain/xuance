@@ -143,7 +143,7 @@ C51_Agent
     :type train_steps: int
 
 .. py:function::
-    xuance.mindspore.agents.qlearning_family.c51_agent.C51_Agent.test(env_fn,test_steps)
+    xuance.mindspore.agents.qlearning_family.c51_agent.C51_Agent.test(env_fn,test_episodes)
 
     :param env_fn: The function of making environments.
     :param test_episodes: The number of testing episodes.
