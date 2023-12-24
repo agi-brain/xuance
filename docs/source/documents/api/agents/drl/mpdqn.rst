@@ -148,7 +148,7 @@ MPDQN_Agent
 
     :param obs: The observation variables.
     :type obs: np.ndarray
-    :return:  the discrete action, continuous action, an array containing all continuous actions.
+    :return: the discrete action, continuous action, an array containing all continuous actions.
     :rtype: np.ndarray
 
 .. py:function::

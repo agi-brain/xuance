@@ -126,8 +126,8 @@ NoisyDQN_Agent
 
     :param obs: The observation variables.
     :type obs: np.ndarray
-    :return: xxxxxx.
-    :rtype: xxxxxx
+    :return: the discrete action, continuous action, an array containing all continuous actions.
+    :rtype: np.ndarray
 
 .. py:function::
     xuance.mindspore.agents.qlearning_family.noisydqn_agent.NoisyDQN_Agent.train(train_steps)
@@ -139,11 +139,10 @@ NoisyDQN_Agent
     xuance.mindspore.agents.qlearning_family.noisydqn_agent.NoisyDQN_Agent.test(env_fn,test_episodes)
 
     :param env_fn: The function of making environments.
-    :type env_fn: xxxxxx
     :param test_episodes: The number of testing episodes.
     :type test_episodes: int
-    :return: xxxxxx.
-    :rtype: xxxxxx
+    :return: **scores** - The accumulated scores of these episodes.
+    :rtype: list
 
 .. raw:: html
 
