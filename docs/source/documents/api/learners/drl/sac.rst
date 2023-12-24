@@ -90,10 +90,10 @@ SAC_Learner
 
   :param policy: The policy that provides actions and values.
   :type policy: nn.Module
-  :param optimizers: xxxxxx.
-  :type optimizers: xxxxxx
-  :param schedulers: xxxxxx.
-  :type schedulers: xxxxxx
+  :param optimizer: The optimizer that update the paramters of the model.
+  :type optimizer: Optimizer
+  :param scheduler: The tool for learning rate decay.
+  :type scheduler: lr_scheduler
   :param model_dir: The directory for saving or loading the model parameters.
   :type model_dir: str
   :param gamma: The discount factor.

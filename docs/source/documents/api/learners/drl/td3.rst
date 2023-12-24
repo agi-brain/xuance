@@ -24,8 +24,8 @@ TD3_Learner
   :type gamma: float
   :param tau: The soft update factor for the update of target networks.
   :type tau: float
-  :param delay: xxxxxx.
-  :type delay: xxxxxx
+  :param delay: Delay factor for actor updates.
+  :type delay: int
 
 .. py:function::
   xuance.torch.learners.policy_gradient.td3_learner.TD3_Learner.update(obs_batch, act_batch, rew_batch, next_batch, terminal_batch)
@@ -64,8 +64,8 @@ TD3_Learner
   :type gamma: float
   :param tau: The soft update factor for the update of target networks.
   :type tau: float
-  :param delay: xxxxxx.
-  :type delay: xxxxxx
+  :param delay: Delay factor for actor updates.
+  :type delay: int
 
 .. py:function::
   xuance.tensorflow.learners.policy_gradient.td3_learner.TD3_Learner.update(obs_batch, act_batch, rew_batch, next_batch, terminal_batch)
@@ -80,7 +80,7 @@ TD3_Learner
   :type next_batch: np.ndarray
   :param terminal_batch: A batch of terminal data sampled from experience replay buffer.
   :type terminal_batch: np.ndarray
-  :return: The infomation of the training.
+  :return: The information of the training.
   :rtype: dict
 
 .. raw:: html
@@ -104,8 +104,8 @@ TD3_Learner
   :type gamma: float
   :param tau: The soft update factor for the update of target networks.
   :type tau: float
-  :param delay: xxxxxx.
-  :type delay: xxxxxx
+  :param delay: Delay factor for actor updates.
+  :type delay: int
 
 .. py:function::
   xuance.mindspore.learners.policy_gradient.td3_learner.TD3_Learner.update(obs_batch, act_batch, rew_batch, next_batch, terminal_batch)
