@@ -132,8 +132,8 @@ PerDQN_Agent
     :type obs: np.ndarray
     :param egreedy: The epsilon greedy factor.
     :type egreedy: float
-    :return: xxxxxx.
-    :rtype: xxxxxx
+    :return: **action** - The actions to be executed.
+    :rtype: np.ndarray
 
 .. py:function::
     xuance.mindspore.agents.qlearning_family.perdqn_agent.PerDQN_Agent.train(train_steps)
@@ -145,11 +145,10 @@ PerDQN_Agent
     xuance.mindspore.agents.qlearning_family.perdqn_agent.PerDQN_Agent.test(env_fn,test_episodes)
 
     :param env_fn: The function of making environments.
-    :type env_fn: xxxxxx
     :param test_episodes: The number of testing episodes.
     :type test_episodes: int
-    :return: xxxxxx.
-    :rtype: xxxxxx
+    :return: **scores** - The accumulated scores of these episodes.
+    :rtype: list
 .. raw:: html
 
     <br><hr>
