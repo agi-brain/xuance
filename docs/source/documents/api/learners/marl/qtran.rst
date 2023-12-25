@@ -1,7 +1,8 @@
 QTRAN_Learner
 =====================================
 
-xxxxxx.
+An implementation of the QTRAN (Learning to Factorize with Transformation
+for Cooperative Multi-Agent Reinforcement Learning) algorithm.
 
 .. raw:: html
 
@@ -33,7 +34,7 @@ PyTorch
 .. py:function::
   xuance.torch.learners.multi_agent_rl.qtran_learner.QTRAN_Learner.update(sample)
 
-  xxxxxx.
+  Update the parameters of the QTRAN learner.
 
   :param sample: A dictionary contianing necessary experience data that is sampled from experience replay buffer.
   :type sample: dict
@@ -68,7 +69,7 @@ TensorFlow
 .. py:function::
   xuance.tensorflow.learners.multi_agent_rl.qtran_learner.QTRAN_Learner.update(sample)
 
-  xxxxxx.
+  Update the parameters of the QTRAN learner.
 
   :param sample: A dictionary contianing necessary experience data that is sampled from experience replay buffer.
   :type sample: dict
@@ -103,7 +104,7 @@ MindSpore
 .. py:function::
   xuance.mindspore.learners.multi_agent_rl.qtran_learner.QTRAN_Learner.update(sample)
 
-  xxxxxx.
+  Update the parameters of the QTRAN learner.
 
   :param sample: A dictionary contianing necessary experience data that is sampled from experience replay buffer.
   :type sample: dict
