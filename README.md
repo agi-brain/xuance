@@ -6,12 +6,11 @@
 
 [![PyPI](https://img.shields.io/pypi/v/xuance)](https://pypi.org/project/xuance/)
 [![Documentation Status](https://readthedocs.org/projects/xuance/badge/?version=latest)](https://xuance.readthedocs.io/en/latest/?badge=latest)
-[//]: # (![GitHub]&#40;https://img.shields.io/github/license/agi-brain/xuance&#41;)
-![GitHub License](https://img.shields.io/github/license/agi-brain/xuance?link=https%3A%2F%2Fgithub.com%2Fagi-brain%2Fxuance%2Fblob%2Fmaster%2FLICENSE.txt)
-![Pepy Total Downlods](https://img.shields.io/pepy/dt/xuance)
-![GitHub Repo stars](https://img.shields.io/github/stars/agi-brain/xuance?style=social)
-![GitHub forks](https://img.shields.io/github/forks/agi-brain/xuance?style=social)
-![GitHub watchers](https://img.shields.io/github/watchers/agi-brain/xuance?style=social)
+[![GitHub](https://img.shields.io/github/license/agi-brain/xuance)](https://github.com/agi-brain/xuance/blob/master/LICENSE.txt)
+[![Pepy Total Downlods](https://img.shields.io/pepy/dt/xuance)](https://www.pepy.tech/projects/xuance)
+[![GitHub Repo stars](https://img.shields.io/github/stars/agi-brain/xuance?style=social)](https://github.com/agi-brain/xuance/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/agi-brain/xuance?style=social)](https://github.com/agi-brain/xuance/forks)
+[![GitHub watchers](https://img.shields.io/github/watchers/agi-brain/xuance?style=social)](https://github.com/agi-brain/xuance/watchers)
 
 [![PyTorch](https://img.shields.io/badge/PyTorch-%3E%3D1.13.0-red)](https://pytorch.org/get-started/locally/)
 [![TensorFlow](https://img.shields.io/badge/TensorFlow-%3E%3D2.6.0-orange)](https://www.tensorflow.org/install)
