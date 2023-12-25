@@ -119,8 +119,8 @@ MindSpore
   xuance.mindspore.learners.multi_agent_rl.iql_learner.IQL_Learner.update(sample)
 
   Update the Q-values of the independent agents based on the provided sample.
-
-:param sample: A dictionary containing current observations, actions taken in the current state,
+  
+  :param sample: A dictionary containing current observations, actions taken in the current state,
                     observations of the next state, rewards, whether the episode terminated for each agents,
                     masking inactive agents.
   :type sample: dict
