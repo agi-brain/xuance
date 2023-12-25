@@ -1,7 +1,7 @@
 DCG_Learner
 =====================================
 
-xxxxxx.
+a DCG (Deep Coordination Graphs) learner for multi-agent reinforcement learning.
 
 .. raw:: html
 
@@ -33,36 +33,36 @@ PyTorch
 .. py:function::
   xuance.torch.learners.multi_agent_rl.dcg_learner.DCG_Learner.get_hidden_states(obs_n, *rnn_hidden, use_target_net)
 
-  xxxxxx.
+  Retrieves hidden states from the policy network.
 
   :param obs_n: The joint observations of n agents.
   :type obs_n: np.ndarray
   :param rnn_hidden: The last final hidden states of the sequence.
   :type rnn_hidden: Tensor
-  :param use_target_net: xxxxxx.
-  :type use_target_net: xxxxxx
+  :param use_target_net: Flag indicating whether to use the target network.
+  :type use_target_net: bool
   :return: hidden states.
   :rtype: Tensor
 
 .. py:function::
   xuance.torch.learners.multi_agent_rl.dcg_learner.DCG_Learner.get_graph_values(hidden_states, use_target_net)
 
-  xxxxxx.
+  Retrieves graph values from the policy network.
 
-  :param hidden_states: xxxxxx.
-  :type hidden_states: xxxxxx
-  :param use_target_net: xxxxxx.
-  :type use_target_net: xxxxxx
+  :param hidden_states: Hidden states obtained from the policy network.
+  :type hidden_states: Tensor
+  :param use_target_net: Flag indicating whether to use the target network.
+  :type use_target_net: bool
   :return: The graph values.
   :rtype: np.ndarray, Tensor
 
 .. py:function::
   xuance.torch.learners.multi_agent_rl.dcg_learner.DCG_Learner.act(hidden_states, avail_actions)
 
-  xxxxxx.
+  Selects joint actions based on the provided hidden states and optional availability mask.
 
-  :param hidden_states: xxxxxx.
-  :type hidden_states: xxxxxx
+  :param hidden_states: Hidden states obtained from the policy network.
+  :type hidden_states: Tensor
   :param avail_actions: The mask varibales for availabel actions.
   :type avail_actions: Tensor
   :return: Joint actions.
@@ -71,37 +71,38 @@ PyTorch
 .. py:function::
   xuance.torch.learners.multi_agent_rl.dcg_learner.DCG_Learner.q_dcg(hidden_states, actions, states, use_target_net)
 
-  xxxxxx.
+  Calculates the Q-values based on the provided hidden states and actions.
 
-  :param hidden_states: xxxxxx.
-  :type hidden_states: xxxxxx
+  :param hidden_states: Hidden states obtained from the policy network.
+  :type hidden_states: tensor
   :param actions: The actions input.
   :type actions: Tensor
-  :param states: xxxxxx.
-  :type states: xxxxxx
-  :param use_target_net: xxxxxx.
-  :type use_target_net: xxxxxx
-  :return: xxxxx.
-  :rtype: xxxxx
+  :param states: Optional states input.
+  :type states: Tensor
+  :param use_target_net: Indicates whether to use the target network for calculation.
+  :type use_target_net: bool
+  :return: Q-values.
+  :rtype: tensor
 
 .. py:function::
   xuance.torch.learners.multi_agent_rl.dcg_learner.DCG_Learner.update(sample)
 
-  xxxxxx.
+  Update the DCG learner using the provided sample.
 
-  :param sample: xxxxxx.
-  :type sample: xxxxxx
-  :return: The infomation of the training.
+  :param sample: A dictionary containing the states, observations, actions, next states, next observations, rewards,
+                    terminal flags indicating the end of episodes, binary agent mask.
+  :type sample: dict
+  :return: The information of the training.
   :rtype: dict
 
 .. py:function::
   xuance.torch.learners.multi_agent_rl.dcg_learner.DCG_Learner.update_recurrent(sample)
 
-  xxxxxx.
+  Updates the DCG learner using recurrent data.
 
-  :param sample: xxxxxx.
-  :type sample: xxxxxx
-  :return: The infomation of the training.
+  :param sample: recurrent training data.
+  :type sample: dict
+  :return: The information of the training.
   :rtype: dict
 
 .. raw:: html
@@ -132,36 +133,36 @@ TensorFlow
 .. py:function::
   xuance.tensorflow.learners.multi_agent_rl.dcg_learner.DCG_Learner.get_hidden_states(obs_n, *rnn_hidden, use_target_net)
 
-  xxxxxx.
+  Retrieves hidden states from the policy network.
 
   :param obs_n: The joint observations of n agents.
   :type obs_n: np.ndarray
   :param rnn_hidden: The last final hidden states of the sequence.
   :type rnn_hidden: Tensor
-  :param use_target_net: xxxxxx.
-  :type use_target_net: xxxxxx
+  :param use_target_net: Indicates whether to use the target network for calculation.
+  :type use_target_net: bool
   :return: The hidden states.
   :rtype: np.ndarray, tf.Tensor
 
 .. py:function::
   xuance.tensorflow.learners.multi_agent_rl.dcg_learner.DCG_Learner.get_graph_values(hidden_states, use_target_net)
 
-  xxxxxx.
+  Retrieves graph values from the policy network.
 
-  :param hidden_states: xxxxxx.
-  :type hidden_states: xxxxxx
-  :param use_target_net: xxxxxx.
-  :type use_target_net: xxxxxx
+  :param hidden_states: Hidden states obtained from the policy network.
+  :type hidden_states: Tensor
+  :param use_target_net: Flag indicating whether to use the target network.
+  :type use_target_net: bool
   :return: The graph values.
   :rtype: np.ndarray, tf.Tensor
 
 .. py:function::
   xuance.tensorflow.learners.multi_agent_rl.dcg_learner.DCG_Learner.act(hidden_states, avail_actions)
 
-  xxxxxx.
+  Selects joint actions based on the provided hidden states and optional availability mask.
 
-  :param hidden_states: xxxxxx.
-  :type hidden_states: xxxxxx
+  :param hidden_states: Hidden states obtained from the policy network.
+  :type hidden_states: Tensor
   :param avail_actions: The mask varibales for availabel actions.
   :type avail_actions: Tensor
   :return: The joint actions.
@@ -170,27 +171,27 @@ TensorFlow
 .. py:function::
   xuance.tensorflow.learners.multi_agent_rl.dcg_learner.DCG_Learner.q_dcg(hidden_states, actions, states, use_target_net)
 
-  xxxxxx.
+  Compute Q-values for the DCG (Deep Coordination Graphs) learner.
 
-  :param hidden_states: xxxxxx.
-  :type hidden_states: xxxxxx
+  :param hidden_states: Hidden states of the agents.
+  :type hidden_states: np.ndarray, tf.Tensor
   :param actions: The actions input.
   :type actions: Tensor
-  :param states: xxxxxx.
-  :type states: xxxxxx
-  :param use_target_net: xxxxxx.
-  :type use_target_net: xxxxxx
+  :param states: States information (optional).
+  :type states: Tensor
+  :param use_target_net: Flag indicating whether to use the target network.
+  :type use_target_net: bool
   :return: The Q values of the graph.
   :rtype: np.ndarray, tf.Tensor
 
 .. py:function::
   xuance.tensorflow.learners.multi_agent_rl.dcg_learner.DCG_Learner.update(sample)
 
-  xxxxxx.
+  Update the learner based on a training sample.
 
-  :param sample: xxxxxx.
-  :type sample: xxxxxx
-  :return: The infomation of the training.
+  :param sample: Training sample.
+  :type sample: dict
+  :return: The information of the training.
   :rtype: dict
 
 .. raw:: html
@@ -221,36 +222,36 @@ MindSpore
 .. py:function::
   xuance.mindspore.learners.multi_agent_rl.dcg_learner.DCG_Learner.get_hidden_states(obs_n, *rnn_hidden, use_target_net)
 
-  xxxxxx.
+  Retrieves hidden states from the policy network.
 
   :param obs_n: The joint observations of n agents.
   :type obs_n: np.ndarray
   :param rnn_hidden: The last final hidden states of the sequence.
   :type rnn_hidden: Tensor
-  :param use_target_net: xxxxxx.
-  :type use_target_net: xxxxxx
+  :param use_target_net: Flag indicating whether to use the target network.
+  :type use_target_net: bool
   :return: The hidden states.
   :rtype: np.ndarray, ms.Tensor
 
 .. py:function::
   xuance.mindspore.learners.multi_agent_rl.dcg_learner.DCG_Learner.get_graph_values(hidden_states, use_target_net)
 
-  xxxxxx.
+  Retrieves graph values from the policy network.
 
-  :param hidden_states: xxxxxx.
-  :type hidden_states: xxxxxx
-  :param use_target_net: xxxxxx.
-  :type use_target_net: xxxxxx
+  :param hidden_states: Hidden states obtained from the policy network.
+  :type hidden_states: Tensor
+  :param use_target_net: Flag indicating whether to use the target network.
+  :type use_target_net: bool
   :return: The graph values.
   :rtype: np.ndarray, ms.Tensor
 
 .. py:function::
   xuance.mindspore.learners.multi_agent_rl.dcg_learner.DCG_Learner.act(hidden_states, avail_actions)
 
-  xxxxxx.
+  Selects joint actions based on the provided hidden states and optional availability mask.
 
-  :param hidden_states: xxxxxx.
-  :type hidden_states: xxxxxx
+  :param hidden_states: Hidden states obtained from the policy network.
+  :type hidden_states: Tensor
   :param avail_actions: The mask varibales for availabel actions.
   :type avail_actions: Tensor
   :return: The joint actions.
@@ -259,27 +260,27 @@ MindSpore
 .. py:function::
   xuance.mindspore.learners.multi_agent_rl.dcg_learner.DCG_Learner.q_dcg(hidden_states, actions, states, use_target_net)
 
-  xxxxxx.
+  Calculate the Q values for the Deep Coordination Graph (DCG) learner.
 
-  :param hidden_states: xxxxxx.
-  :type hidden_states: xxxxxx
+  :param hidden_states: The hidden states of the learner.
+  :type hidden_states: Tensor
   :param actions: The actions input.
   :type actions: Tensor
-  :param states: xxxxxx.
-  :type states: xxxxxx
-  :param use_target_net: xxxxxx.
-  :type use_target_net: xxxxxx
+  :param states: The states.
+  :type states: Tensor
+  :param use_target_net: A flag indicating whether to use the target network.
+  :type use_target_net: bool
   :return: The Q values of the graph.
   :rtype: np.ndarray, ms.Tensor
 
 .. py:function::
   xuance.mindspore.learners.multi_agent_rl.dcg_learner.DCG_Learner.update(sample)
 
-  xxxxxx.
+  Update the DCG learner based on the given sample.
 
-  :param sample: xxxxxx.
-  :type sample: xxxxxx
-  :return: The infomation of the training.
+  :param sample: The training sample.
+  :type sample: dict
+  :return: The information of the training.
   :rtype: dict
 
 .. raw:: html
