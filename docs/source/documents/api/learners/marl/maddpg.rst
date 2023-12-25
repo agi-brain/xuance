@@ -71,11 +71,12 @@ TensorFlow
 .. py:function::
   xuance.tensorflow.learners.multi_agent_rl.maddpg_learner.MADDPG_Learner.update(sample)
 
-  xxxxxx.
+  Updates the MADDPG learner with a given sample.
 
-  :param sample: xxxxxx.
-  :type sample: xxxxxx
-  :return: The infomation of the training.
+  :param sample: A dictionary containing sample data with observations, actions, rewards, terminals, agent masks,
+                    and agent ids.
+  :type sample: dict
+  :return: The information of the training.
   :rtype: dict
 
 .. raw:: html
@@ -106,11 +107,12 @@ MindSpore
 .. py:function::
   xuance.mindspore.learners.multi_agent_rl.maddpg_learner.MADDPG_Learner.update(sample)
 
-  xxxxxx.
+  Updates the MADDPG learner with a given sample.
 
-  :param sample: xxxxxx.
-  :type sample: xxxxxx
-  :return: The infomation of the training.
+  :param sample: A dictionary containing sample data with observations, actions, rewards, terminals, agent masks,
+                    and agent ids.
+  :type sample: dict
+  :return: The information of the training.
   :rtype: dict
 
 .. raw:: html
