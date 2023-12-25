@@ -43,7 +43,7 @@ PyTorch
 
   This method performs a single update step for the IPPO learner based on the given experience sample.
 
-  :param sample: A dictionary contianing necessary experience data that is sampled from experience replay buffer.
+  :param sample: A dictionary containing necessary experience data that is sampled from experience replay buffer.
   :type sample: dict
   :return: The information of the training.
   :rtype: dict
@@ -54,7 +54,7 @@ PyTorch
   This method performs a single update step for the IPPO learner with recurrent policies based on the given
     experience sample.
 
-  :param sample: A dictionary contianing necessary experience data that is sampled from experience replay buffer.
+  :param sample: A dictionary containing necessary experience data that is sampled from experience replay buffer.
   :type sample: dict
   :return: The information of the training.
   :rtype: dict
@@ -140,7 +140,7 @@ MindSpore
 
   This method performs a single update step for the IPPO learner based on the given experience sample.
 
-  :param sample: A dictionary contianing necessary experience data that is sampled from experience replay buffer.
+  :param sample: A dictionary containing necessary experience data that is sampled from experience replay buffer.
   :type sample: dict
   :return: The information of the training.
   :rtype: dict

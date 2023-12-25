@@ -44,7 +44,7 @@ PyTorch
 
   This method processes an experience sample and performs a single update step for the MFQ learner.
 
-  :param sample: A dictionary contianing necessary experience data that is sampled from experience replay buffer.
+  :param sample: A dictionary containing necessary experience data that is sampled from experience replay buffer.
   :type sample: dict
   :return: The information of the training.
   :rtype: dict
@@ -89,7 +89,7 @@ TensorFlow
 
   This method processes an experience sample and performs a single update step for the MFQ learner.
 
-  :param sample: A dictionary contianing necessary experience data that is sampled from experience replay buffer.
+  :param sample: A dictionary containing necessary experience data that is sampled from experience replay buffer.
   :type sample: dict
   :return: The information of the training.
   :rtype: dict
@@ -134,7 +134,7 @@ MindSpore
 
   This method processes an experience sample and performs a single update step for the MFQ learner.
 
-  :param sample: A dictionary contianing necessary experience data that is sampled from experience replay buffer.
+  :param sample: A dictionary containing necessary experience data that is sampled from experience replay buffer.
   :type sample: dict
   :return: The information of the training.
   :rtype: dict

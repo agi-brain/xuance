@@ -36,7 +36,7 @@ PyTorch
 
   Update the parameters of the QTRAN learner.
 
-  :param sample: A dictionary contianing necessary experience data that is sampled from experience replay buffer.
+  :param sample: A dictionary containing necessary experience data that is sampled from experience replay buffer.
   :type sample: dict
   :return: The information of the training.
   :rtype: dict
@@ -71,7 +71,7 @@ TensorFlow
 
   Update the parameters of the QTRAN learner.
 
-  :param sample: A dictionary contianing necessary experience data that is sampled from experience replay buffer.
+  :param sample: A dictionary containing necessary experience data that is sampled from experience replay buffer.
   :type sample: dict
   :return: The information of the training.
   :rtype: dict
@@ -106,7 +106,7 @@ MindSpore
 
   Update the parameters of the QTRAN learner.
 
-  :param sample: A dictionary contianing necessary experience data that is sampled from experience replay buffer.
+  :param sample: A dictionary containing necessary experience data that is sampled from experience replay buffer.
   :type sample: dict
   :return: The information of the training.
   :rtype: dict

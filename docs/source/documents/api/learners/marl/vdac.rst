@@ -43,7 +43,7 @@ PyTorch
 
   Update the VDAC learner based on the sampled experience from the experience replay buffer.
 
-  :param sample: A dictionary contianing necessary experience data that is sampled from experience replay buffer.
+  :param sample: A dictionary containing necessary experience data that is sampled from experience replay buffer.
   :type sample: dict
   :return: The information of the training.
   :rtype: dict
@@ -53,7 +53,7 @@ PyTorch
 
   Update the VDAC learner for recurrent architectures based on the sampled experience from the experience replay buffer.
 
-  :param sample: A dictionary contianing necessary experience data that is sampled from experience replay buffer.
+  :param sample: A dictionary containing necessary experience data that is sampled from experience replay buffer.
   :type sample: dict
   :return: The information of the training.
   :rtype: dict
@@ -96,7 +96,7 @@ TensorFlow
 
   Update the VDAC learner based on the sampled experience from the experience replay buffer.
 
-  :param sample: A dictionary contianing necessary experience data that is sampled from experience replay buffer.
+  :param sample: A dictionary containing necessary experience data that is sampled from experience replay buffer.
   :type sample: dict
   :return: The information of the training.
   :rtype: dict
@@ -139,7 +139,7 @@ MindSpore
 
   Update the VDAC learner for recurrent architectures based on the sampled experience from the experience replay buffer.
 
-  :param sample: A dictionary contianing necessary experience data that is sampled from experience replay buffer.
+  :param sample: A dictionary containing necessary experience data that is sampled from experience replay buffer.
   :type sample: dict
   :return: The information of the training.
   :rtype: dict
