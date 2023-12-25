@@ -32,9 +32,9 @@ vector_env.py
     :param num_envs: the number of environments in the vectorized environment.
     :type num_envs: int
     :param observation_space: the observation space of the environments.
-    :type observation_space: xxxxxx
+    :type observation_space: Space
     :param action_space: the action space of the environments.
-    :type action_space: xxxxxx
+    :type action_space: Space
 
 .. py:function::
     xuance.environment.vector_envs.vector_env.VecEnv.reset()

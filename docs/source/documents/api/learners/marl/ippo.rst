@@ -17,7 +17,7 @@ PyTorch
   :type config: Namespace
   :param policy: The policy that provides actions and values.
   :type policy: nn.Module
-  :param optimizer: The optimizer that update the paramters of the model.
+  :param optimizer: The optimizer that update the parameters of the model.
   :type optimizer: Optimizer
   :param scheduler: The tool for learning rate decay.
   :type scheduler: lr_scheduler
@@ -33,8 +33,8 @@ PyTorch
 
   xxxxxx.
 
-  :param i_step: xxxxxx.
-  :type i_step: xxxxxx
+  :param i_step: The current step.
+  :type i_step: int
   :return: Current learning rate.
   :rtype: float
 
@@ -43,9 +43,9 @@ PyTorch
 
   xxxxxx.
 
-  :param sample: xxxxxx.
-  :type sample: xxxxxx
-  :return: The infomation of the training.
+  :param sample: A dictionary contianing necessary experience data that is sampled from experience replay buffer.
+  :type sample: dict
+  :return: The information of the training.
   :rtype: dict
 
 .. py:function::
@@ -53,9 +53,9 @@ PyTorch
 
   xxxxxx.
 
-  :param sample: xxxxxx.
-  :type sample: xxxxxx
-  :return: The infomation of the training.
+  :param sample: A dictionary contianing necessary experience data that is sampled from experience replay buffer.
+  :type sample: dict
+  :return: The information of the training.
   :rtype: dict
 
 .. raw:: html
@@ -72,7 +72,7 @@ TensorFlow
   :type config: Namespace
   :param policy: The policy that provides actions and values.
   :type policy: nn.Module
-  :param optimizer: The optimizer that update the paramters of the model.
+  :param optimizer: The optimizer that update the parameters of the model.
   :type optimizer: Optimizer
   :param device: The calculating device.
   :type device: str
@@ -86,8 +86,8 @@ TensorFlow
 
   xxxxxx.
 
-  :param i_step: xxxxxx.
-  :type i_step: xxxxxx
+  :param i_step: The current step.
+  :type i_step: int
   :return: Current learning rate.
   :rtype: float
 
@@ -96,9 +96,9 @@ TensorFlow
 
   xxxxxx.
 
-  :param sample: xxxxxx.
-  :type sample: xxxxxx
-  :return: The infomation of the training.
+  :param sample: A dictionary contianing necessary experience data that is sampled from experience replay buffer.
+  :type sample: dict
+  :return: The information of the training.
   :rtype: dict
 
 .. raw:: html
@@ -115,7 +115,7 @@ MindSpore
   :type config: Namespace
   :param policy: The policy that provides actions and values.
   :type policy: nn.Module
-  :param optimizer: The optimizer that update the paramters of the model.
+  :param optimizer: The optimizer that update the parameters of the model.
   :type optimizer: Optimizer
   :param scheduler: The tool for learning rate decay.
   :type scheduler: lr_scheduler
@@ -129,8 +129,8 @@ MindSpore
 
   xxxxxx.
 
-  :param i_step: xxxxxx.
-  :type i_step: xxxxxx
+  :param i_step: The current step.
+  :type i_step: int
   :return: Current learning rate.
   :rtype: float
 
@@ -139,9 +139,9 @@ MindSpore
 
   xxxxxx.
 
-  :param sample: xxxxxx.
-  :type sample: xxxxxx
-  :return: The infomation of the training.
+  :param sample: A dictionary contianing necessary experience data that is sampled from experience replay buffer.
+  :type sample: dict
+  :return: The information of the training.
   :rtype: dict
 
 .. raw:: html

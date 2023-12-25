@@ -15,7 +15,7 @@ PyTorch
 
   This function updates the learning rate of an optimizer with linear decay.
 
-  :param optimizer: The optimizer that update the paramters of the model.
+  :param optimizer: The optimizer that update the parameters of the model.
   :type optimizer: Optimizer
   :param step: Current step.
   :type step: int
@@ -105,7 +105,7 @@ TensorFlow
 
   This function updates the learning rate of an optimizer with linear decay.
 
-  :param optimizer: The optimizer that update the paramters of the model.
+  :param optimizer: The optimizer that update the parameters of the model.
   :type optimizer: Optimizer
   :param step: Current step.
   :type step: int
@@ -183,7 +183,7 @@ MindSpore
 
   This function updates the learning rate of an optimizer with linear decay.
 
-  :param optimizer: The optimizer that update the paramters of the model.
+  :param optimizer: The optimizer that update the parameters of the model.
   :type optimizer: Optimizer
   :param step: Current step.
   :type step: int

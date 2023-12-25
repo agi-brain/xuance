@@ -17,7 +17,7 @@ PyTorch
   :type config: Namespace
   :param policy: The policy that provides actions and values.
   :type policy: nn.Module
-  :param optimizer: The optimizer that update the paramters of the model.
+  :param optimizer: The optimizer that update the parameters of the model.
   :type optimizer: Optimizer
   :param scheduler: The tool for learning rate decay.
   :type scheduler: lr_scheduler
@@ -29,17 +29,17 @@ PyTorch
   :type gamma: float
   :param sync_frequency: The frequency to synchronize the target networks.
   :type sync_frequency: int
-  :param delay: xxxxxx.
-  :type delay: xxxxxx
+  :param delay: Delay factor for actor updates.
+  :type delay: int
 
 .. py:function::
   xuance.torch.learners.multi_agent_rl.matd3_learner.MATD3_Learner.update(sample)
 
   xxxxxx.
 
-  :param sample: xxxxxx.
-  :type sample: xxxxxx
-  :return: The infomation of the training.
+  :param sample: A dictionary contianing necessary experience data that is sampled from experience replay buffer.
+  :type sample: dict
+  :return: The information of the training.
   :rtype: dict
 
 .. raw:: html
@@ -56,7 +56,7 @@ TensorFlow
   :type config: Namespace
   :param policy: The policy that provides actions and values.
   :type policy: nn.Module
-  :param optimizer: The optimizer that update the paramters of the model.
+  :param optimizer: The optimizer that update the parameters of the model.
   :type optimizer: Optimizer
   :param device: The calculating device.
   :type device: str
@@ -66,17 +66,17 @@ TensorFlow
   :type gamma: float
   :param sync_frequency: The frequency to synchronize the target networks.
   :type sync_frequency: int
-  :param delay: xxxxxx.
-  :type delay: xxxxxx
+  :param delay: Delay factor for actor updates.
+  :type delay: int
 
 .. py:function::
   xuance.tensorflow.learners.multi_agent_rl.matd3_learner.MATD3_Learner.update(sample)
 
   xxxxxx.
 
-  :param sample: xxxxxx.
-  :type sample: xxxxxx
-  :return: The infomation of the training.
+  :param sample: A dictionary contianing necessary experience data that is sampled from experience replay buffer.
+  :type sample: dict
+  :return: The information of the training.
   :rtype: dict
 
 .. raw:: html
@@ -93,7 +93,7 @@ MindSpore
   :type config: Namespace
   :param policy: The policy that provides actions and values.
   :type policy: nn.Module
-  :param optimizer: The optimizer that update the paramters of the model.
+  :param optimizer: The optimizer that update the parameters of the model.
   :type optimizer: Optimizer
   :param scheduler: The tool for learning rate decay.
   :type scheduler: lr_scheduler
@@ -103,17 +103,17 @@ MindSpore
   :type gamma: float
   :param sync_frequency: The frequency to synchronize the target networks.
   :type sync_frequency: int
-  :param delay: xxxxxx.
-  :type delay: xxxxxx
+  :param delay: Delay factor for actor updates.
+  :type delay: int
 
 .. py:function::
   xuance.mindspore.learners.multi_agent_rl.matd3_learner.MATD3_Learner.update(sample)
 
   xxxxxx.
 
-  :param sample: xxxxxx.
-  :type sample: xxxxxx
-  :return: The infomation of the training.
+  :param sample: A dictionary contianing necessary experience data that is sampled from experience replay buffer.
+  :type sample: dict
+  :return: The information of the training.
   :rtype: dict
 
 .. raw:: html

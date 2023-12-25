@@ -17,7 +17,7 @@ PyTorch
   :type config: Namespace
   :param policy: The policy that provides actions and values.
   :type policy: nn.Module
-  :param optimizer: The optimizer that update the paramters of the model.
+  :param optimizer: The optimizer that update the parameters of the model.
   :type optimizer: Optimizer
   :param scheduler: The tool for learning rate decay.
   :type scheduler: lr_scheduler
@@ -35,8 +35,8 @@ PyTorch
 
   xxxxxx.
 
-  :param q: xxxxxx.
-  :type q: xxxxxx
+  :param q: The Q-value of each action.
+  :type q: torch.Tensor
   :return: The Bolzmann policy.
 
 .. py:function::
@@ -44,9 +44,9 @@ PyTorch
 
   xxxxxx.
 
-  :param sample: xxxxxx.
-  :type sample: xxxxxx
-  :return: The infomation of the training.
+  :param sample: A dictionary contianing necessary experience data that is sampled from experience replay buffer.
+  :type sample: dict
+  :return: The information of the training.
   :rtype: dict
 
 .. raw:: html
@@ -63,7 +63,7 @@ TensorFlow
   :type config: Namespace
   :param policy: The policy that provides actions and values.
   :type policy: nn.Module
-  :param optimizer: The optimizer that update the paramters of the model.
+  :param optimizer: The optimizer that update the parameters of the model.
   :type optimizer: Optimizer
   :param device: The calculating device.
   :type device: str
@@ -79,9 +79,9 @@ TensorFlow
 
   xxxxxx.
 
-  :param q: xxxxxx.
-  :type q: xxxxxx
-  :return: The infomation of the training.
+  :param q: The Q values of each action.
+  :type q: tf.Tensor
+  :return: The information of the training.
   :rtype: dict
 
 .. py:function::
@@ -89,9 +89,9 @@ TensorFlow
 
   xxxxxx.
 
-  :param sample: xxxxxx.
-  :type sample: xxxxxx
-  :return: The infomation of the training.
+  :param sample: A dictionary contianing necessary experience data that is sampled from experience replay buffer.
+  :type sample: dict
+  :return: The information of the training.
   :rtype: dict
 
 .. raw:: html
@@ -108,7 +108,7 @@ MindSpore
   :type config: Namespace
   :param policy: The policy that provides actions and values.
   :type policy: nn.Module
-  :param optimizer: The optimizer that update the paramters of the model.
+  :param optimizer: The optimizer that update the parameters of the model.
   :type optimizer: Optimizer
   :param scheduler: The tool for learning rate decay.
   :type scheduler: lr_scheduler
@@ -124,9 +124,9 @@ MindSpore
 
   xxxxxx.
 
-  :param q: xxxxxx.
-  :type q: xxxxxx
-  :return: The infomation of the training.
+  :param q: The inputs Q values for each action.
+  :type q: ms.Tensor
+  :return: The information of the training.
   :rtype: dict
 
 .. py:function::
@@ -134,9 +134,9 @@ MindSpore
 
   xxxxxx.
 
-  :param sample: xxxxxx.
-  :type sample: xxxxxx
-  :return: The infomation of the training.
+  :param sample: A dictionary contianing necessary experience data that is sampled from experience replay buffer.
+  :type sample: dict
+  :return: The information of the training.
   :rtype: dict
 
 .. raw:: html

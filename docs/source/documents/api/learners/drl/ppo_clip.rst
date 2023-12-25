@@ -13,7 +13,7 @@ PyTorch
 
   :param policy: The policy that provides actions and values.
   :type policy: nn.Module
-  :param optimizer: The optimizer that update the paramters of the model.
+  :param optimizer: The optimizer that update the parameters of the model.
   :type optimizer: Optimizer
   :param scheduler: The tool for learning rate decay.
   :type scheduler: lr_scheduler
@@ -25,7 +25,7 @@ PyTorch
   :type vf_coef: float
   :param ent_coef: Entropy coefficient.
   :type ent_coef: float
-  :param clip_range: The clipping range for the PPO loss function.
+  :param clip_range: PPO clip range.
   :type clip_range: float
   :param clip_grad_norm: the maximum norm of the gradients used for gradient clipping.
   :type clip_grad_norm: float
@@ -62,7 +62,7 @@ TensorFlow
 
   :param policy: The policy that provides actions and values.
   :type policy: nn.Module
-  :param optimizer: The optimizer that update the paramters of the model.
+  :param optimizer: The optimizer that update the parameters of the model.
   :type optimizer: Optimizer
   :param device: The calculating device.
   :type device: str
@@ -72,8 +72,8 @@ TensorFlow
   :type vf_coef: float
   :param ent_coef: Entropy coefficient.
   :type ent_coef: float
-  :param clip_range: The clipping range for the PPO loss function.
-  :type clip_range: floata
+  :param clip_range: PPO clip range.
+  :type clip_range: float
 
 .. py:function::
   xuance.tensorflow.learners.policy_gradient.ppoclip_learner.PPOCLIP_Learner.update(obs_batch, act_batch, ret_batch, value_batch, adv_batch,old_logp)
@@ -90,7 +90,7 @@ TensorFlow
   :type adv_batch: np.ndarray
   :param old_logp: A batch of old log probabilities of actions.
   :type old_logp: tensor
-  :return: The infomation of the training.
+  :return: The information of the training.
   :rtype: dict
 
 .. raw:: html
@@ -105,7 +105,7 @@ MindSpore
 
   :param policy: The policy that provides actions and values.
   :type policy: nn.Module
-  :param optimizer: The optimizer that update the paramters of the model.
+  :param optimizer: The optimizer that update the parameters of the model.
   :type optimizer: Optimizer
   :param scheduler: The tool for learning rate decay.
   :type scheduler: lr_scheduler
@@ -115,8 +115,8 @@ MindSpore
   :type vf_coef: float
   :param ent_coef: Entropy coefficient.
   :type ent_coef: float
-  :param clip_range: The clipping range for the PPO loss function.
-  :type clip_range: floata
+  :param clip_range: PPO clip range.
+  :type clip_range: float
 
 .. py:function::
   xuance.mindspore.learners.policy_gradient.ppoclip_learner.PPOCLIP_Learner.update(obs_batch, act_batch, ret_batch, value_batch, adv_batch,old_logp)
@@ -133,7 +133,7 @@ MindSpore
   :type adv_batch: np.ndarray
   :param old_logp: A batch of old log probabilities of actions.
   :type old_logp: tensor
-  :return: The infomation of the training.
+  :return: The information of the training.
   :rtype: dict
 
 .. raw:: html

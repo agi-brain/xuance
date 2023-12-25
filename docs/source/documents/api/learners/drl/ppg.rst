@@ -13,7 +13,7 @@ PyTorch
 
   :param policy: The policy that provides actions and values.
   :type policy: nn.Module
-  :param optimizer: The optimizer that update the paramters of the model.
+  :param optimizer: The optimizer that update the parameters of the model.
   :type optimizer: Optimizer
   :param scheduler: The tool for learning rate decay.
   :type scheduler: lr_scheduler
@@ -41,7 +41,7 @@ PyTorch
   :type adv_batch: np.ndarray
   :param old_dists: Batch of old distributions.
   :type old_dists: list
-  :return: The infomation of the training.
+  :return: The information of the training.
   :rtype: dict
 
 .. py:function::
@@ -57,7 +57,7 @@ PyTorch
   :type adv_batch: np.ndarray
   :param old_dists: Batch of old distributions.
   :type old_dists: list
-  :return: The infomation of the training.
+  :return: The information of the training.
   :rtype: dict
 
 .. py:function::
@@ -73,7 +73,7 @@ PyTorch
   :type adv_batch: np.ndarray
   :param old_dists: Batch of old distributions.
   :type old_dists: list
-  :return: The infomation of the training.
+  :return: The information of the training.
   :rtype: dict
 
 .. raw:: html
@@ -88,7 +88,7 @@ TensorFlow
 
   :param policy: The policy that provides actions and values.
   :type policy: nn.Module
-  :param optimizer: The optimizer that update the paramters of the model.
+  :param optimizer: The optimizer that update the parameters of the model.
   :type optimizer: Optimizer
   :param device: The calculating device.
   :type device: str
@@ -114,7 +114,7 @@ TensorFlow
   :type adv_batch: np.ndarray
   :param old_dists: Batch of old distributions.
   :type old_dists: list
-  :return: The infomation of the training.
+  :return: The information of the training.
   :rtype: dict
 
 .. py:function::
@@ -130,7 +130,7 @@ TensorFlow
   :type adv_batch: np.ndarray
   :param old_dists: Batch of old distributions.
   :type old_dists: list
-  :return: The infomation of the training.
+  :return: The information of the training.
   :rtype: dict
 
 .. py:function::
@@ -146,7 +146,7 @@ TensorFlow
   :type adv_batch: np.ndarray
   :param old_dists: Batch of old distributions.
   :type old_dists: list
-  :return: The infomation of the training.
+  :return: The information of the training.
   :rtype: dict
 
 .. raw:: html
@@ -161,7 +161,7 @@ MindSpore
 
   :param policy: The policy that provides actions and values.
   :type policy: nn.Module
-  :param optimizer: The optimizer that update the paramters of the model.
+  :param optimizer: The optimizer that update the parameters of the model.
   :type optimizer: Optimizer
   :param scheduler: The tool for learning rate decay.
   :type scheduler: lr_scheduler
@@ -189,7 +189,7 @@ MindSpore
   :type old_dists: list
   :param update_type: int.
   :type update_type: the type of update (0 for actor, 1 for critic, 2 for auxiliary)
-  :return: The infomation of the training.
+  :return: The information of the training.
   :rtype: dict
 
 .. raw:: html

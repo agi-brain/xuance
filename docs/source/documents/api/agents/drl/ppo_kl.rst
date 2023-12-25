@@ -98,7 +98,6 @@ TensorFlow
   Test the trained model.
 
   :param env_fn: The function of making environments.
-  :type env_fn: xxxxxx
   :param test_episode: The number of testing episodes.
   :type test_episode: int
   :return: **scores** - The accumulated scores of these episodes.
@@ -126,28 +125,12 @@ MindSpore
     :type scheduler: torch.optim.lr_scheduler._LRScheduler
 
 .. py:function::
-    xuance.mindspore.agents.policy_gradient.ppokl_agent.PPOKL_Agent._process_observation(observations)
-
-    :param observations: The original observation variables.
-    :type observations: Tensor
-    :return: xxxxxx.
-    :rtype: xxxxxx
-
-.. py:function::
-    xuance.mindspore.agents.policy_gradient.ppokl_agent.PPOKL_Agent._process_reward(rewards)
-
-    :param rewards: xxxxxx.
-    :type rewards: xxxxxx
-    :return: xxxxxx.
-    :rtype: xxxxxx
-
-.. py:function::
     xuance.mindspore.agents.policy_gradient.ppokl_agent.PPOKL_Agent._action(obs)
 
     :param obs: The observation variables.
     :type obs: np.ndarray
-    :return: xxxxxx.
-    :rtype: xxxxxx
+    :return: A tuple that includes the hidden states, executable actions, values, and log of actions.
+    :rtype: tuple
 
 .. py:function::
     xuance.mindspore.agents.policy_gradient.ppokl_agent.PPOKL_Agent.train(train_steps)
@@ -156,12 +139,10 @@ MindSpore
     :type train_steps: int
 
 .. py:function::
-    xuance.mindspore.agents.policy_gradient.ppokl_agent.PPOKL_Agent.test(test_episodes,load_model)
+    xuance.mindspore.agents.policy_gradient.ppokl_agent.PPOKL_Agent.test(test_episodes)
 
     :param test_episodes: The number of testing episodes.
     :type test_episodes: int
-    :param load_model: xxxxxx.
-    :type load_model: xxxxxx
 
 .. py:function::
     xuance.mindspore.agents.policy_gradient.ppokl_agent.PPOKL_Agent.evaluate()

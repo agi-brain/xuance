@@ -2239,11 +2239,6 @@ MindSpore
 
   Get trainable parameters.
 
-  :param recurse: xxxxxx.
-  :type recurse: xxxxxx
-  :return: xxxxxx.
-  :rtype: xxxxxx
-
 .. py:function::
   xuance.mindspore.policies.deterministic.NoisyQnetwork.copy_target(observation)
 

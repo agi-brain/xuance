@@ -121,7 +121,7 @@ class PPOKL_Agent(Agent):
                 np.save(self.model_dir + "/obs_rms.npy",
                         {'mean': self.obs_rms.mean, 'std': self.obs_rms.std, 'count': self.obs_rms.count})
 
-    def test(self, test_episodes=100000, load_model=None):
+    def test(self, test_episodes=100000):
         self.load_model(self.model_dir)
         scores = np.zeros((self.nenvs,), np.float32)
         returns = np.zeros((self.nenvs,), np.float32)

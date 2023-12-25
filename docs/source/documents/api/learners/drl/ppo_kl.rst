@@ -13,7 +13,7 @@ PyTorch
 
   :param policy: The policy that provides actions and values.
   :type policy: nn.Module
-  :param optimizer: The optimizer that update the paramters of the model.
+  :param optimizer: The optimizer that update the parameters of the model.
   :type optimizer: Optimizer
   :param scheduler: The tool for learning rate decay.
   :type scheduler: lr_scheduler
@@ -41,7 +41,7 @@ PyTorch
   :type adv_batch: np.ndarray
   :param old_dists: Batch of old action distributions.
   :type old_dists: list
-  :return: The infomation of the training.
+  :return: The information of the training.
   :rtype: dict
 
 .. raw:: html
@@ -56,7 +56,7 @@ TensorFlow
 
   :param policy: The policy that provides actions and values.
   :type policy: nn.Module
-  :param optimizer: The optimizer that update the paramters of the model.
+  :param optimizer: The optimizer that update the parameters of the model.
   :type optimizer: Optimizer
   :param scheduler: The tool for learning rate decay.
   :type scheduler: lr_scheduler
@@ -84,7 +84,7 @@ TensorFlow
   :type adv_batch: np.ndarray
   :param old_dists: Batch of old action distributions.
   :type old_dists: list
-  :return: The infomation of the training.
+  :return: The information of the training.
   :rtype: dict
 
 .. raw:: html
@@ -99,20 +99,19 @@ MindSpore
 
   :param policy: The policy that provides actions and values.
   :type policy: nn.Module
-  :param optimizer: The optimizer that update the paramters of the model.
+  :param optimizer: The optimizer that update the parameters of the model.
   :type optimizer: Optimizer
   :param scheduler: The tool for learning rate decay.
   :type scheduler: lr_scheduler
-  :param summary_writer: xxxxxx.
-  :type summary_writer: xxxxxx
+  :param summary_writer: The summary writer.
   :param model_dir: The directory for saving or loading the model parameters.
   :type model_dir: str
   :param vf_coef: Value function coefficient.
   :type vf_coef: float
   :param ent_coef: Entropy coefficient.
   :type ent_coef: float
-  :param clip_range: xxxxxx.
-  :type clip_range: xxxxxx
+  :param clip_range: PPO clip range.
+  :type clip_range: float
 
 .. py:function::
   xuance.mindspore.learners.policy_gradient.ppokl_learner.PPOKL_Learner.update(obs_batch, act_batch, ret_batch, adv_batch, old_logp)
@@ -125,9 +124,9 @@ MindSpore
   :type ret_batch: np.ndarray
   :param adv_batch: A batch of advantages sampled from experience replay buffer.
   :type adv_batch: np.ndarray
-  :param old_logp: xxxxxx.
-  :type old_logp: xxxxxx
-  :return: The infomation of the training.
+  :param old_logp: The previous log of actions.
+  :type old_logp: np.ndarray
+  :return: The information of the training.
   :rtype: dict
 
 .. raw:: html

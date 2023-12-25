@@ -117,7 +117,7 @@ gym_env.py
     :param actions: the executable actions for the environment.
     :type actions: np.ndarray
     :return: represent a stack of frames used as the initial observation for the environment, including rewards, terminated variables, truncated variables, and the other information.
-    :rtype: xxxxxx
+    :rtype: tuple
 
 .. py:class::
     xuance.environment.gym.gym_env.Atari_Env(env_id, seed, render_mode, obs_type, frame_skip, num_stack, image_size, noop_max)

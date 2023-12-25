@@ -13,7 +13,7 @@ PyTorch
 
   :param policy: The policy that provides actions and values.
   :type policy: nn.Module
-  :param optimizer: The optimizer that update the paramters of the model.
+  :param optimizer: The optimizer that update the parameters of the model.
   :type optimizer: Optimizer
   :param scheduler: The tool for learning rate decay.
   :type scheduler: lr_scheduler
@@ -39,7 +39,7 @@ PyTorch
   :type ret_batch: np.ndarray
   :param adv_batch: A batch of advantages sampled from experience replay buffer.
   :type adv_batch: np.ndarray
-  :return: The infomation of the training.
+  :return: The information of the training.
   :rtype: dict
 
 .. raw:: html
@@ -54,7 +54,7 @@ TensorFlow
 
   :param policy: The policy that provides actions and values.
   :type policy: nn.Module
-  :param optimizer: The optimizer that update the paramters of the model.
+  :param optimizer: The optimizer that update the parameters of the model.
   :type optimizer: Optimizer
   :param device: The calculating device.
   :type device: str
@@ -93,7 +93,7 @@ MindSpore
 
   :param policy: The policy that provides actions and values.
   :type policy: nn.Module
-  :param optimizer: The optimizer that update the paramters of the model.
+  :param optimizer: The optimizer that update the parameters of the model.
   :type optimizer: Optimizer
   :param scheduler: The tool for learning rate decay.
   :type scheduler: lr_scheduler
@@ -119,7 +119,7 @@ MindSpore
   :type ret_batch: np.ndarray
   :param adv_batch: A batch of advantages sampled from experience replay buffer.
   :type adv_batch: np.ndarray
-  :return: The infomation of the training.
+  :return: The information of the training.
   :rtype: dict
 
 .. raw:: html

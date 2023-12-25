@@ -349,8 +349,8 @@ MindSpore
   :type dim_state: int
   :param dim_hidden: The dimension of the hidden layers.
   :type dim_hidden: int
-  :param dim_hypernet_hidden: xxxxxx.
-  :type dim_hypernet_hidden: xxxxxx
+  :param dim_hypernet_hidden: The dimension of hidden states for hyper network.
+  :type dim_hypernet_hidden: int
   :param n_agents: The number of agents.
   :type n_agents: int
 

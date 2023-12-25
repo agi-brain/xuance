@@ -13,7 +13,7 @@ PyTorch
 
     :param policy: The policy that provides actions and values.
     :type policy: nn.Module
-    :param optimizer: The optimizer that update the paramters of the model.
+    :param optimizer: The optimizer that update the parameters of the model.
     :type optimizer: torch.optim.Optimizer
     :param scheduler: The tool for learning rate decay.
     :type scheduler: torch.optim.lr_scheduler
@@ -56,7 +56,7 @@ TensorFlow
 
     :param policy: The policy that provides actions and values.
     :type policy: tk.Model
-    :param optimizer: The optimizer that update the paramters of the model.
+    :param optimizer: The optimizer that update the parameters of the model.
     :type optimizer: tk.optimizers.Optimizer
     :param device: Choose CPU or GPU to train the model.
     :type device: str, int, torch.device
@@ -97,7 +97,7 @@ MindSpore
 
     :param policy: The policy that provides actions and values.
     :type policy: nn.Cell
-    :param optimizer: The optimizer that update the paramters of the model.
+    :param optimizer: The optimizer that update the parameters of the model.
     :type optimizer: nn.Optimizer
     :param scheduler: The tool for learning rate decay.
     :type scheduler: nn.Cell
