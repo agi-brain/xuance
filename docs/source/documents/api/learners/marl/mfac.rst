@@ -1,7 +1,7 @@
 MFAC_Learner
 ======================
 
-xxxxxx.
+The implementation of the MFAC (Mean Field Actor-Critic) algorithm.
 
 .. raw:: html
 
@@ -31,7 +31,7 @@ PyTorch
 .. py:function::
   xuance.torch.learners.multi_agent_rl.mfac_learner.MFAC_Learner.update(sample)
 
-  xxxxxx.
+  This method processes an experience sample and performs a single update step for the MFAC learner.
 
   :param sample: A dictionary contianing necessary experience data that is sampled from experience replay buffer.
   :type sample: dict
@@ -64,7 +64,7 @@ TensorFlow
 .. py:function::
   xuance.tensorflow.learners.multi_agent_rl.mfac_learner.MFAC_Learner.update(sample)
 
-  xxxxxx.
+  This method processes an experience sample and performs a single update step for the MFAC learner.
 
   :param sample: A dictionary contianing necessary experience data that is sampled from experience replay buffer.
   :type sample: dict
@@ -97,7 +97,7 @@ MindSpore
 .. py:function::
   xuance.mindspore.learners.multi_agent_rl.mfac_learner.MFAC_Learner.update(sample)
 
-  xxxxxx.
+  This method processes an experience sample and performs a single update step for the MFAC learner.
 
   :param sample: A dictionary contianing necessary experience data that is sampled from experience replay buffer.
   :type sample: dict
