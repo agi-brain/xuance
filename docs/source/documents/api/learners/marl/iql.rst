@@ -1,7 +1,7 @@
 IQL_Learner
 =====================================
 
-xxxxxx.
+The implementation of an Independent Q-learning (IQL) algorithm.
 
 .. raw:: html
 
@@ -33,21 +33,24 @@ PyTorch
 .. py:function::
   xuance.torch.learners.multi_agent_rl.iql_learner.IQL_Learner.update(sample)
 
-  xxxxxx.
+  Update the Q-values of the independent agents based on the provided sample.
 
-  :param sample: xxxxxx.
-  :type sample: xxxxxx
-  :return: The infomation of the training.
+  :param sample: A dictionary containing current observations, actions taken in the current state,
+                    observations of the next state, rewards, whether the episode terminated for each agents,
+                    masking inactive agents.
+  :type sample: dict
+  :return: The information of the training.
   :rtype: dict
 
 .. py:function::
   xuance.torch.learners.multi_agent_rl.iql_learner.IQL_Learner.update_recurrent(sample)
 
-  xxxxxx.
+  Update the Q-values of the independent agents in a recurrent setting based on the provided sample.
 
-  :param sample: xxxxxx.
-  :type sample: xxxxxx
-  :return: The infomation of the training.
+  :param sample: A dictionary containing recurrent observations, the selected actions for each agent, rewards,
+                    whether the episode terminated, the availability of actions, whether the entries in the sequence are filled.
+  :type sample: dict
+  :return: The information of the training.
   :rtype: dict
 
 .. raw:: html
@@ -78,11 +81,13 @@ TensorFlow
 .. py:function::
   xuance.tensorflow.learners.multi_agent_rl.iql_learner.IQL_Learner.update(sample)
 
-  xxxxxx.
+  Update the Q-values of the independent agents based on the provided sample.
 
-  :param sample: xxxxxx.
-  :type sample: xxxxxx
-  :return: The infomation of the training.
+  :param sample: A dictionary containing current observations, actions taken in the current state,
+                    observations of the next state, rewards, whether the episode terminated for each agents,
+                    masking inactive agents.
+  :type sample: dict
+  :return: The information of the training.
   :rtype: dict
 
 .. raw:: html
@@ -113,10 +118,12 @@ MindSpore
 .. py:function::
   xuance.mindspore.learners.multi_agent_rl.iql_learner.IQL_Learner.update(sample)
 
-  xxxxxx.
+  Update the Q-values of the independent agents based on the provided sample.
 
-  :param sample: xxxxxx.
-  :type sample: xxxxxx
+:param sample: A dictionary containing current observations, actions taken in the current state,
+                    observations of the next state, rewards, whether the episode terminated for each agents,
+                    masking inactive agents.
+  :type sample: dict
   :return: The infomation of the training.
   :rtype: dict
 
