@@ -45,6 +45,45 @@ Currently, XuanCe has been open-sourced on GitHub:
 
    <br><hr>
 
+Why XuanCe?
+-----------------------------------------
+
+XuanCe is designed to simplify the implementation and design process of deep reinforcement learning algorithms.
+It could help researchers interested in deep reinforcement learning to quickly understand and grasp the fundamental principles. 
+This, in turn, facilitates developers in algorithm development and design. It has the following key features. 
+
+- Highly modularized.
+- Easy to learn, and easy to install.
+- Felxible for model combination.
+- Abundant algorithms with various tasks.
+- supports bith DRL and MARL tasks.
+- High compatible for different users. (PyTorch, TensorFlow, MindSpore, CPU, GPU, Linux, Windows, MacOS, etc.)
+- Fast running speed with vector envrionments.
+- Good visualization effect with tensorboard or wandb toolbox.
+
+.. raw:: html
+
+   <br><hr>
+
+The Framework of XuanCe
+------------------------------------------
+
+The overall framework of XuanCe is shown as below. 
+
+.. image:: figures/xuance_framework.png
+
+
+XuanCe contains four main parts:
+
+- Part I: Configs
+- Part II: Common toolboxes
+- Part III: Envrionments
+- Part IV: Algorithms
+
+.. raw:: html
+
+   <br><hr>
+   
 .. toctree::
    :maxdepth: 1
    :caption: How to use:
@@ -58,15 +97,10 @@ Currently, XuanCe has been open-sourced on GitHub:
    :caption: APIs:
 
    
-   documents/api/common
    documents/api/configs
+   documents/api/common
    documents/api/environments
-   documents/api/utils
-   documents/api/representations
-   documents/api/policies
-   documents/api/learners
-   documents/api/agents.rst
-   documents/api/runners
+   documents/api/algorithms
 
 .. toctree::
    :maxdepth: 1

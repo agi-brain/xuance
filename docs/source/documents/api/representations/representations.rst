@@ -7,13 +7,13 @@ including multi perceptron layers (MLP), convolutional neural networks (CNN), an
 .. toctree::
     :hidden:
 
-    MLP-based <representations/mlp>
-    CNN-based <representations/cnn>
-    RNN-based <representations/rnn>
+    MLP-based <mlp>
+    CNN-based <cnn>
+    RNN-based <rnn>
 
-* :doc:`MLP <representations/mlp>`: Multi-layer perceptron.
+* :doc:`MLP <mlp>`: Multi-layer perceptron.
 
-* :doc:`CNN <representations/cnn>`: Convolutional neural networks.
+* :doc:`CNN <cnn>`: Convolutional neural networks.
 
-* :doc:`RNN <representations/rnn>`: Recurrent neural networks.
+* :doc:`RNN <rnn>`: Recurrent neural networks.
 

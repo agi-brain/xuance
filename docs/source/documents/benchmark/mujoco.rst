@@ -15,9 +15,33 @@ Scenarios
 
 ==========================
 
-    
+
+
 Results
 --------------------------
+
+.. image:: mujoco/fig_0_Ant.png
+    :height: 130px
+.. image:: mujoco/fig_1_HalfCheetah.png
+    :height: 130px
+.. image:: mujoco/fig_2_Hopper.png
+    :height: 130px
+.. image:: mujoco/fig_3_HumanoidStandup.png
+    :height: 130px
+.. image:: mujoco/fig_4_Humanoid.png
+    :height: 130px
+.. image:: mujoco/fig_5_InvertedDoublePendulum.png
+    :height: 130px
+.. image:: mujoco/fig_6_InvertedPendulum.png
+    :height: 130px
+.. image:: mujoco/fig_7_Reacher.png
+    :height: 130px
+.. image:: mujoco/fig_8_Swimmer.png
+    :height: 130px
+.. image:: mujoco/fig_9_Walker2d.png
+    :height: 130px
+
+
 
 +------+------------+--------+-------------+--------+----------+---------+----------+---------+-----------+------------+
 | Task |            | Ant    | HalfCheetah | Hopper | Walker2d | Swimmer | Humanoid | Reacher | Ipendulum | IDPendulum |

@@ -9,5 +9,5 @@ The class of agents are listed as follows.
 .. toctree:: 
   :maxdepth: 1
 
-  agents/drl_agents
-  agents/marl_agents
+  drl_agents.rst
+  marl_agents.rst
