@@ -154,7 +154,6 @@ gym_env.py
     :param render_mode: rendering mode for visualization.
     :type render_mode: str
     :return: a visual representation of the environment in the specified rendering mode.
-    :rtype: xxxxxx
 
 .. py:function::
     xuance.environment.gym.gym_env.Atari_Env.reset()
@@ -180,7 +179,6 @@ gym_env.py
     Retrieve the current observation by stacking the last frames.
 
     :return: the returned observation is used as input.
-    :rtype: xxxxxx
 
 .. py:function::
     xuance.environment.gym.gym_env.Atari_Env.observation(frame)
@@ -224,7 +222,7 @@ gym_env.py
     Allow an object to be converted to a numPy array.
 
     :param dtype: specifies the desired data type for the NumPy array.
-    :type dtype: xxxxxx
+    :type dtype: np.dtype
     :return: the numPy array containing the frames.
     :rtype: np.ndarray
 

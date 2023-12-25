@@ -109,7 +109,6 @@ pettingzoo_env.py
     Retrieve the handles associated with the agents.
 
     :return: the handles associated with the agents.
-    :rtype: xxxxxx
 
 .. raw:: html
 
