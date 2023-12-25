@@ -109,9 +109,9 @@ subproc_vec_env.py
     Flatten a list or tuple of observations.
 
     :param obs: a list or tuple containing observations.
-    :type obs: xxxxxx
-    :return: xxxxxx.
-    :rtype: xxxxxx
+    :type obs: list, tuple
+    :return: The flat data.
+    :rtype: np.ndarray
 
 .. py:class::
     xuance.environment.vector_envs.subproc_vec_env.CloudpickleWrapper(x)
@@ -119,7 +119,6 @@ subproc_vec_env.py
     A workaround with the default pickle serialization in multiprocessing scenarios.
 
     :param x: the object that you want to wrap and handle serialization.
-    :type x: xxxxxx
 
 .. py:function::
     xuance.environment.vector_envs.subproc_vec_env.CloudpickleWrapper.__getstate__()
@@ -128,7 +127,6 @@ subproc_vec_env.py
     ensuring that the object can be correctly transmitted between processes in a multiprocessing context.
 
     :return: the serialized state of the object.
-    :rtype: xxxxxx
 
 .. py:function::
     xuance.environment.vector_envs.subproc_vec_env.CloudpickleWrapper.__setstate__(ob)
@@ -136,7 +134,6 @@ subproc_vec_env.py
     deserialize the object's state, reconstructing the original object, and assigning it to the instance variable self.x
 
     :param ob: the serialized state of the object as a byte stream.
-    :type ob: xxxxxx
 
 .. py:function::
     xuance.environment.vector_envs.subproc_vec_env.worker(remote, parent_remote, env_fn_wrappers)
@@ -248,7 +245,7 @@ env_utils.py
     Extract information about the structure of observation spaces.
 
     :param obs_space: an observation space.
-    :type obs_space: xxxxxx
+    :type obs_space: Space
     :return: a tuple containing information about the subspaces: keys, shapes, and data types.
     :rtype: tuple
 
@@ -258,7 +255,7 @@ env_utils.py
     Handle a collection of observation spaces, where each element in the collection is treated as a separate observation space
 
     :param obs_n_space: an object representing nested observation spaces.
-    :type obs_n_space: xxxxxx
+    :type obs_n_space: Space
     :return: a tuple containing information about the subspaces: keys, shapes, and data types.
     :rtype: tuple
 
@@ -283,9 +280,9 @@ env_utils.py
     Flatten a list or tuple of observations.
 
     :param obs: a list or tuple containing observations.
-    :type obs: xxxxxx
-    :return: xxxxxx.
-    :rtype: xxxxxx
+    :type obs: list, tuple
+    :return: The flat data.
+    :rtype: np.ndarray
 
 .. py:class::
     xuance.environment.vector_envs.env_utils.CloudpickleWrapper(x)
@@ -293,7 +290,6 @@ env_utils.py
     Use cloudpickle to serialize contents.
 
     :param x: the content that needs to be serialized using cloudpickle.
-    :type x: xxxxxx
 
 .. py:function::
     xuance.environment.vector_envs.env_utils.CloudpickleWrapper.__getstate__()
@@ -302,7 +298,6 @@ env_utils.py
     ensuring that the object can be correctly transmitted between processes in a multiprocessing context.
 
     :return: the serialized state of the object.
-    :rtype: xxxxxx
 
 .. py:function::
     xuance.environment.vector_envs.env_utils.CloudpickleWrapper.__setstate__(ob)
@@ -310,7 +305,6 @@ env_utils.py
     deserialize the object's state, reconstructing the original object, and assigning it to the instance variable self.x
 
     :param ob: the serialized state of the object as a byte stream.
-    :type ob: xxxxxx
 
 .. raw:: html
 
