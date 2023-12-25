@@ -1,7 +1,7 @@
 DCG_Learner
 =====================================
 
-a DCG (Deep Coordination Graphs) learner for multi-agent reinforcement learning.
+A DCG (Deep Coordination Graphs) learner for multi-agent reinforcement learning.
 
 .. raw:: html
 

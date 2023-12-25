@@ -1,7 +1,7 @@
 MFQ_Learner
 =====================================
 
-xxxxxx.
+The implementation of the MFQ (Mean Field Q-Learning) algorithm.
 
 .. raw:: html
 
@@ -33,7 +33,7 @@ PyTorch
 .. py:function::
   xuance.torch.learners.multi_agent_rl.mfq_learner.MFQ_Learner.get_boltzmann_policy(q)
 
-  xxxxxx.
+  This method takes Q-values as input and calculates the Boltzmann policy by applying the softmax function.
 
   :param q: The Q-value of each action.
   :type q: torch.Tensor
@@ -42,7 +42,7 @@ PyTorch
 .. py:function::
   xuance.torch.learners.multi_agent_rl.mfq_learner.MFQ_Learner.update(sample)
 
-  xxxxxx.
+  This method processes an experience sample and performs a single update step for the MFQ learner.
 
   :param sample: A dictionary contianing necessary experience data that is sampled from experience replay buffer.
   :type sample: dict
@@ -77,7 +77,7 @@ TensorFlow
 .. py:function::
   xuance.tensorflow.learners.multi_agent_rl.mfq_learner.MFQ_Learner.get_boltzmann_policy(q)
 
-  xxxxxx.
+  This method takes Q-values as input and calculates the Boltzmann policy by applying the softmax function.
 
   :param q: The Q values of each action.
   :type q: tf.Tensor
@@ -87,7 +87,7 @@ TensorFlow
 .. py:function::
   xuance.tensorflow.learners.multi_agent_rl.mfq_learner.MFQ_Learner.update(sample)
 
-  xxxxxx.
+  This method processes an experience sample and performs a single update step for the MFQ learner.
 
   :param sample: A dictionary contianing necessary experience data that is sampled from experience replay buffer.
   :type sample: dict
@@ -122,7 +122,7 @@ MindSpore
 .. py:function::
   xuance.mindspore.learners.multi_agent_rl.mfq_learner.MFQ_Learner.get_boltzmann_policy(q)
 
-  xxxxxx.
+  This method takes Q-values as input and calculates the Boltzmann policy by applying the softmax function.
 
   :param q: The inputs Q values for each action.
   :type q: ms.Tensor
@@ -132,7 +132,7 @@ MindSpore
 .. py:function::
   xuance.mindspore.learners.multi_agent_rl.mfq_learner.MFQ_Learner.update(sample)
 
-  xxxxxx.
+  This method processes an experience sample and performs a single update step for the MFQ learner.
 
   :param sample: A dictionary contianing necessary experience data that is sampled from experience replay buffer.
   :type sample: dict
