@@ -1,7 +1,7 @@
 MASAC_Learner
 =====================================
 
-xxxxxx.
+An implementation of the Multi-Agent Soft Actor-Critic (MASAC) algorithm .
 
 .. raw:: html
 
@@ -33,11 +33,12 @@ PyTorch
 .. py:function::
   xuance.torch.learners.multi_agent_rl.masac_learner.MASAC_Learner.update(sample)
 
-  xxxxxx.
+  Update the MASAC agent with a batch of training samples.
 
-  :param sample: xxxxxx.
-  :type sample: xxxxxx
-  :return: The infomation of the training.
+  :param sample: A dictionary containing training samples, including observations, actions, next observations, rewards,
+                    terminals, agent masks, and agent IDs.
+  :type sample: dict
+  :return: The information of the training.
   :rtype: dict
 
 .. raw:: html
@@ -68,11 +69,12 @@ TensorFlow
 .. py:function::
   xuance.tensorflow.learners.multi_agent_rl.masac_learner.MASAC_Learner.update(sample)
 
-  xxxxxx.
+  Update the MASAC agent with a batch of training samples.
 
-  :param sample: xxxxxx.
-  :type sample: xxxxxx
-  :return: The infomation of the training.
+  :param sample: A dictionary containing training samples, including observations, actions, next observations, rewards,
+                    terminals, agent masks, and agent IDs.
+  :type sample: dict
+  :return: The information of the training.
   :rtype: dict
 
 .. raw:: html
@@ -103,11 +105,12 @@ MindSpore
 .. py:function::
   xuance.mindspore.learners.multi_agent_rl.masac_learner.MASAC_Learner.update(sample)
 
-  xxxxxx.
+  Update the MASAC agent with a batch of training samples.
 
-  :param sample: xxxxxx.
-  :type sample: xxxxxx
-  :return: The infomation of the training.
+  :param sample: A dictionary containing training samples, including observations, actions, next observations, rewards,
+                    terminals, agent masks, and agent IDs.
+  :type sample: dict
+  :return: The information of the training.
   :rtype: dict
 
 .. raw:: html
