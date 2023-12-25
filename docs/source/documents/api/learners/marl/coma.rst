@@ -1,7 +1,8 @@
 COMA_Learner
 =====================================
 
-xxxxxx.
+The implementation of a COMA (Counterfactual Multi-Agent Policy Gradients) learner.
+This algorithm is used for training cooperative multi-agent systems..
 
 .. raw:: html
 
@@ -33,25 +34,28 @@ PyTorch
 .. py:function::
   xuance.torch.learners.multi_agent_rl.coma_learner.COMA_Learner.update(sample, epsilon)
 
-  xxxxxx.
+  Update the COMA learner based on the provided sample.
 
-  :param sample: xxxxxx.
-  :type sample: xxxxxx
-  :param epsilon: xxxxxx.
-  :type epsilon: xxxxxx
-  :return: The infomation of the training.
+  :param sample: A dictionary containing the states, observations, actions, One-hot encoded actions,
+                    returns obtained from the environment, Binary mask indicating active agents.
+  :type sample: dict
+  :param epsilon: Exploration parameter for the policy.
+  :type epsilon: float
+  :return: The information of the training.
   :rtype: dict
 
 .. py:function::
   xuance.torch.learners.multi_agent_rl.coma_learner.COMA_Learner.update_recurrent(sample, epsilon)
 
-  xxxxxx.
+  Update the COMA learner using a recurrent version of the algorithm.
 
-  :param sample: xxxxxx.
-  :type sample: xxxxxx
-  :param epsilon: xxxxxx.
-  :type epsilon: xxxxxx
-  :return: The infomation of the training.
+  :param sample: A dictionary containing the states, observations, actions, One-hot encoded actions,
+                    returns obtained from the environment, available actions for each agent,
+                    binary mask indicating filled time steps.
+  :type sample: dict
+  :param epsilon: Exploration parameter for the policy.
+  :type epsilon: float
+  :return: The information of the training.
   :rtype: dict
 
 .. raw:: html
@@ -82,13 +86,14 @@ TensorFlow
 .. py:function::
   xuance.tensorflow.learners.multi_agent_rl.coma_learner.COMA_Learner.update(sample, epsilon)
 
-  xxxxxx.
+  Update the COMA learner using the provided sample.
 
-  :param sample: xxxxxx.
-  :type sample: xxxxxx
-  :param epsilon: xxxxxx.
-  :type epsilon: xxxxxx
-  :return: The infomation of the training.
+  :param sample: A dictionary containing the states, observations, actions, One-hot encoded actions,
+                    returns obtained from the environment, binary mask indicating filled time steps.
+  :type sample: dict
+  :param epsilon: Exploration parameter for the policy.
+  :type epsilon: float
+  :return: The information of the training.
   :rtype: dict
 
 .. raw:: html
@@ -119,13 +124,14 @@ MindSpore
 .. py:function::
   xuance.mindspore.learners.multi_agent_rl.coma_learner.COMA_Learner.update(sample, epsilon)
 
-  xxxxxx.
+  Update the COMA learner using the provided sample..
 
-  :param sample: xxxxxx.
-  :type sample: xxxxxx
-  :param epsilon: xxxxxx.
-  :type epsilon: xxxxxx
-  :return: The infomation of the training.
+  :param sample: A dictionary containing the states, observations, actions, One-hot encoded actions,
+                    returns obtained from the environment, binary mask indicating filled time steps.
+  :type sample: dict
+  :param epsilon: Exploration parameter for the policy.
+  :type epsilon: float
+  :return: The information of the training.
   :rtype: dict
 
 .. raw:: html
