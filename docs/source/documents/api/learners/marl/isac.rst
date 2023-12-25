@@ -1,7 +1,7 @@
 ISAC_Learner
 =====================================
 
-xxxxxx.
+An implementation of the Independent Soft Actor-Critic (ISAC) algorithm.
 
 .. raw:: html
 
@@ -33,11 +33,13 @@ PyTorch
 .. py:function::
   xuance.torch.learners.multi_agent_rl.isac_learner.ISAC_Learner.update(sample)
 
-  xxxxxx.
+  Update the actor and critic networks based on the provided sample.
 
-  :param sample: xxxxxx.
-  :type sample: xxxxxx
-  :return: The infomation of the training.
+  :param sample: A dictionary containing current observations, actions taken in the current state,
+                    observations of the next state, rewards, whether the episode terminated for each agents,
+                    masking inactive agents.
+  :type sample: dict
+  :return: The information of the training.
   :rtype: dict
 
 .. raw:: html
@@ -68,10 +70,12 @@ TensorFlow
 .. py:function::
   xuance.tensorflow.learners.multi_agent_rl.isac_learner.ISAC_Learner.update(sample)
 
-  xxxxxx.
+  Update the actor and critic networks based on the provided sample.
 
-  :param sample: xxxxxx.
-  :type sample: xxxxxx
+  :param sample: A dictionary containing current observations, actions taken in the current state,
+                    observations of the next state, rewards, whether the episode terminated for each agents,
+                    masking inactive agents.
+  :type sample: dict
   :return: The infomation of the training.
   :rtype: dict
 
@@ -103,11 +107,13 @@ MindSpore
 .. py:function::
   xuance.mindspore.learners.multi_agent_rl.isac_learner.ISAC_Learner.update(sample)
 
-  xxxxxx.
+  Update the actor and critic networks based on the provided sample.
 
-  :param sample: xxxxxx.
-  :type sample: xxxxxx
-  :return: The infomation of the training.
+  :param sample: A dictionary containing current observations, actions taken in the current state,
+                    observations of the next state, rewards, whether the episode terminated for each agents,
+                    masking inactive agents.
+  :type sample: dict
+  :return: The information of the training.
   :rtype: dict
 
 .. raw:: html
