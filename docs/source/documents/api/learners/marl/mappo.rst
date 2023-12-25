@@ -1,7 +1,7 @@
 MAPPO_Learner
 =====================================
 
-xxxxxx.
+A learner class for the Multi-Agent Proximal Policy Optimization (MAPPO) algorithm implemented.
 
 .. raw:: html
 
@@ -31,7 +31,7 @@ PyTorch
 .. py:function::
   xuance.torch.learners.multi_agent_rl.mappo_learner.MAPPO_Clip_Learner.lr_decay(i_step)
 
-  xxxxxx.
+  Linearly decay the learning rate based on the current training step.
 
   :param i_step: The current step.
   :type i_step: int
@@ -41,7 +41,7 @@ PyTorch
 .. py:function::
   xuance.torch.learners.multi_agent_rl.mappo_learner.MAPPO_Clip_Learner.update(sample)
 
-  xxxxxx.
+  Update the parameters of the model.
 
   :param sample: A dictionary contianing necessary experience data that is sampled from experience replay buffer.
   :type sample: dict
@@ -51,7 +51,7 @@ PyTorch
 .. py:function::
   xuance.torch.learners.multi_agent_rl.mappo_learner.MAPPO_Clip_Learner.update_recurrent(sample)
 
-  xxxxxx.
+  Update the parameters of the model with recurrent neural networks.
 
   :param sample: A dictionary contianing necessary experience data that is sampled from experience replay buffer.
   :type sample: dict
@@ -84,7 +84,7 @@ TensorFlow
 .. py:function::
   xuance.tensorflow.learners.multi_agent_rl.mappo_learner.MAPPO_Clip_Learner.lr_decay(i_step)
 
-  xxxxxx.
+  Linearly decay the learning rate based on the current training step.
 
   :param i_step: The current step.
   :type i_step: int
@@ -94,7 +94,7 @@ TensorFlow
 .. py:function::
   xuance.tensorflow.learners.multi_agent_rl.mappo_learner.MAPPO_Clip_Learner.update(sample)
 
-  xxxxxx.
+  Update the parameters of the model.
 
   :param sample: A dictionary contianing necessary experience data that is sampled from experience replay buffer.
   :type sample: dict
