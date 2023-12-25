@@ -1,7 +1,7 @@
 MATD3_Learner
 =====================================
 
-xxxxxx.
+The implementation of the Multi-Agent Twin Delayed DDPG (MATD3) algorithm.
 
 .. raw:: html
 
@@ -35,7 +35,7 @@ PyTorch
 .. py:function::
   xuance.torch.learners.multi_agent_rl.matd3_learner.MATD3_Learner.update(sample)
 
-  xxxxxx.
+  This method performs a single update step for the MATD3 learner based on the given experience sample.
 
   :param sample: A dictionary contianing necessary experience data that is sampled from experience replay buffer.
   :type sample: dict
@@ -72,7 +72,7 @@ TensorFlow
 .. py:function::
   xuance.tensorflow.learners.multi_agent_rl.matd3_learner.MATD3_Learner.update(sample)
 
-  xxxxxx.
+  This method performs a single update step for the MATD3 learner based on the given experience sample.
 
   :param sample: A dictionary contianing necessary experience data that is sampled from experience replay buffer.
   :type sample: dict
@@ -109,7 +109,7 @@ MindSpore
 .. py:function::
   xuance.mindspore.learners.multi_agent_rl.matd3_learner.MATD3_Learner.update(sample)
 
-  xxxxxx.
+  This method performs a single update step for the MATD3 learner based on the given experience sample.
 
   :param sample: A dictionary contianing necessary experience data that is sampled from experience replay buffer.
   :type sample: dict

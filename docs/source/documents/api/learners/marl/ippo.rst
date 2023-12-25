@@ -1,7 +1,7 @@
 IPPO_Learner
 =====================================
 
-xxxxxx.
+The implementation of the Independent Proximal Policy Optimization (IPPO) algorithm.
 
 .. raw:: html
 
@@ -31,7 +31,7 @@ PyTorch
 .. py:function::
   xuance.torch.learners.multi_agent_rl.ippo_learner.IPPO_Learner.lr_decay(i_step)
 
-  xxxxxx.
+  This method updates the learning rate of the optimizer based on linear decay.
 
   :param i_step: The current step.
   :type i_step: int
@@ -41,7 +41,7 @@ PyTorch
 .. py:function::
   xuance.torch.learners.multi_agent_rl.ippo_learner.IPPO_Learner.update(sample)
 
-  xxxxxx.
+  This method performs a single update step for the IPPO learner based on the given experience sample.
 
   :param sample: A dictionary contianing necessary experience data that is sampled from experience replay buffer.
   :type sample: dict
@@ -51,7 +51,8 @@ PyTorch
 .. py:function::
   xuance.torch.learners.multi_agent_rl.ippo_learner.IPPO_Learner.update_recurrent(sample)
 
-  xxxxxx.
+  This method performs a single update step for the IPPO learner with recurrent policies based on the given
+    experience sample.
 
   :param sample: A dictionary contianing necessary experience data that is sampled from experience replay buffer.
   :type sample: dict
@@ -84,7 +85,7 @@ TensorFlow
 .. py:function::
   xuance.tensorflow.learners.multi_agent_rl.ippo_learner.IPPO_Learner.lr_decay(i_step)
 
-  xxxxxx.
+  This method updates the learning rate of the optimizer based on linear decay.
 
   :param i_step: The current step.
   :type i_step: int
@@ -94,9 +95,9 @@ TensorFlow
 .. py:function::
   xuance.tensorflow.learners.multi_agent_rl.ippo_learner.IPPO_Learner.update(sample)
 
-  xxxxxx.
+  This method performs a single update step for the IPPO learner based on the given experience sample.
 
-  :param sample: A dictionary contianing necessary experience data that is sampled from experience replay buffer.
+  :param sample: A dictionary containing necessary experience data that is sampled from experience replay buffer.
   :type sample: dict
   :return: The information of the training.
   :rtype: dict
@@ -127,7 +128,7 @@ MindSpore
 .. py:function::
   xuance.mindspore.learners.multi_agent_rl.ippo_learner.IPPO_Learner.lr_decay(i_step)
 
-  xxxxxx.
+    This method updates the learning rate of the optimizer based on linear decay.
 
   :param i_step: The current step.
   :type i_step: int
@@ -137,7 +138,7 @@ MindSpore
 .. py:function::
   xuance.mindspore.learners.multi_agent_rl.ippo_learner.IPPO_Learner.update(sample)
 
-  xxxxxx.
+  This method performs a single update step for the IPPO learner based on the given experience sample.
 
   :param sample: A dictionary contianing necessary experience data that is sampled from experience replay buffer.
   :type sample: dict
