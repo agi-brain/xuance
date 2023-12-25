@@ -1,7 +1,7 @@
 QMIX_Learner
 =====================================
 
-xxxxxx.
+An implementation of the QMIX (Monotonic value function factorisation for deep multi-agent reinforcement learning) algorithm.
 
 .. raw:: html
 
@@ -33,7 +33,7 @@ PyTorch
 .. py:function::
   xuance.torch.learners.multi_agent_rl.qmix_learner.QMIX_Learner.update(sample)
 
-  xxxxxx.
+  Update the QMIX learner based on the sampled experience from the experience replay buffer.
 
   :param sample: A dictionary contianing necessary experience data that is sampled from experience replay buffer.
   :type sample: dict
@@ -43,7 +43,7 @@ PyTorch
 .. py:function::
   xuance.torch.learners.multi_agent_rl.qmix_learner.QMIX_Learner.update_recurrent(sample)
 
-  xxxxxx.
+  Update the QMIX learner for recurrent architectures based on the sampled experience from the experience replay buffer.
 
   :param sample: A dictionary contianing necessary experience data that is sampled from experience replay buffer.
   :type sample: dict
@@ -78,7 +78,7 @@ TensorFlow
 .. py:function::
   xuance.tensorflow.learners.multi_agent_rl.qmix_learner.QMIX_Learner.update(sample)
 
-  xxxxxx.
+  Update the QMIX learner based on the sampled experience from the experience replay buffer.
 
   :param sample: A dictionary contianing necessary experience data that is sampled from experience replay buffer.
   :type sample: dict
@@ -113,7 +113,7 @@ MindSpore
 .. py:function::
   xuance.mindspore.learners.multi_agent_rl.qmix_learner.QMIX_Learner.update(sample)
 
-  xxxxxx.
+  Update the QMIX learner based on the sampled experience from the experience replay buffer.
 
   :param sample: A dictionary contianing necessary experience data that is sampled from experience replay buffer.
   :type sample: dict
