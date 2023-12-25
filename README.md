@@ -50,7 +50,7 @@ and hope it can really become a zoo full of DRL algorithms.
 - :tada: Abundant [algorithms](https://xuance.readthedocs.io/en/latest/documents/api/agents.html) with various tasks.
 - :couple: Supports both DRL and MARL tasks.
 - :key: High compatibility for different users. (PyTorch, TensorFlow2, MindSpore, CPU, GPU, Linux, Windows, MacOS, etc.)
-- :zap: Fast training speed with parallel environments. 
+- :zap: Fast running speed with parallel environments. 
 - :chart_with_upwards_trend: Good visualization effect with [tensorboard](https://www.tensorflow.org/tensorboard) or [wandb](https://wandb.ai/site) tool.
 
 ## Currently Included Algorithms
