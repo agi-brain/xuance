@@ -1,7 +1,7 @@
 IDDPG_Learner
 =====================================
 
-xxxxxx.
+An Independent Deep Deterministic Policy Gradient (IDDPG) learner.
 
 .. raw:: html
 
@@ -33,10 +33,12 @@ PyTorch
 .. py:function::
   xuance.torch.learners.multi_agent_rl.iddpg_learner.IDDPG_Learner.update(sample)
 
-  xxxxxx.
+  Update the IDDPG learner with a batch of samples.
 
-  :param sample: xxxxxx.
-  :type sample: xxxxxx
+  :param sample: A dictionary containing current observations, actions taken in the current state,
+                    observations of the next state, rewards, binary indicators of episode terminations,
+                    binary mask indicating which agents are active.
+  :type sample: dict
   :return: The infomation of the training.
   :rtype: dict
 
@@ -70,11 +72,13 @@ TensorFlow
 .. py:function::
   xuance.tensorflow.learners.multi_agent_rl.iddpg_learner.IDDPG_Learner.update(sample)
 
-  xxxxxx.
+  Update the IDDPG learner with a batch of samples.
 
-  :param sample: xxxxxx.
-  :type sample: xxxxxx
-  :return: The infomation of the training.
+  :param sample: A dictionary containing current observations, actions taken in the current state,
+                    observations of the next state, rewards, binary indicators of episode terminations,
+                    binary mask indicating which agents are active.
+  :type sample: dict
+  :return: The information of the training.
   :rtype: dict
 
 .. raw:: html
@@ -105,11 +109,13 @@ MindSpore
 .. py:function::
   xuance.mindspore.learners.multi_agent_rl.iddpg_learner.IDDPG_Learner.update(sample)
 
-  xxxxxx.
+  Update the IDDPG learner with a batch of samples.
 
-  :param sample: xxxxxx.
-  :type sample: xxxxxx
-  :return: The infomation of the training.
+  :param sample: A dictionary containing current observations, actions taken in the current state,
+                    observations of the next state, rewards, binary indicators of episode terminations,
+                    binary mask indicating which agents are active.
+  :type sample: dict
+  :return: The information of the training.
   :rtype: dict
 
 .. raw:: html
