@@ -5,7 +5,8 @@ PG_Agent
 
     <br><hr>
 
-**PyTorch:**
+PyTorch
+------------------------------------------
 
 .. py:class:: 
   xuance.torch.agent.policy_gradient.pg_agent.PG_Agent(config, envs, policy, optimizer, scheduler, device)
@@ -56,7 +57,8 @@ PG_Agent
 
     <br><hr>
 
-**TensorFlow:**
+TensorFlow
+------------------------------------------
 
 .. py:class::
   xuance.tensorflow.agent.policy_gradient.pg_agent.PG_Agent(config, envs, policy, optimizer, device)
@@ -105,7 +107,8 @@ PG_Agent
 
     <br><hr>
 
-**MindSpore:**
+MindSpore
+------------------------------------------
 
 .. py:class::
     xuance.mindspore.agents.policy_gradient.pg_agent.PG_Agent(config, envs, policy, optimizer, scheduler)
@@ -141,7 +144,7 @@ PG_Agent
     :param env_fn: The function of making environments.
     :param test_episodes: The number of testing episodes.
     :type test_episodes: int
-    :return: **scores** - The accumulated scores of these episodes.
+    :return: The accumulated scores of these episodes.
     :rtype: list
 
 .. raw:: html

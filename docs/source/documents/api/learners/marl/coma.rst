@@ -7,7 +7,8 @@ xxxxxx.
 
     <br><hr>
 
-**PyTorch:**
+PyTorch
+------------------------------------------
 
 .. py:class::
   xuance.torch.learners.multi_agent_rl.coma_learner.COMA_Learner(config, policy, optimizer, scheduler, device, model_dir, gamma, sync_frequency)
@@ -57,7 +58,8 @@ xxxxxx.
 
     <br><hr>
 
-**TensorFlow:**
+TensorFlow
+------------------------------------------
 
 .. py:class::
   xuance.tensorflow.learners.multi_agent_rl.coma_learner.COMA_Learner(config, policy, optimizer, device, model_dir, gamma, sync_frequency)
@@ -93,7 +95,8 @@ xxxxxx.
 
     <br><hr>
 
-**MindSpore:**
+MindSpore
+------------------------------------------
 
 .. py:class::
   xuance.mindspore.learners.multi_agent_rl.coma_learner.COMA_Learner(config, policy, optimizer, scheduler, model_dir, gamma, sync_frequency)

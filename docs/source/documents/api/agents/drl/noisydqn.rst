@@ -5,7 +5,8 @@ NoisyDQN_Agent
 
     <br><hr>
 
-**PyTorch:**
+PyTorch
+------------------------------------------
 
 .. py:class:: 
     xuance.torch.agent.qlearning_family.noisydqn_agent.NoisyDQN_Agent(config, envs, policy, optimizer, scheduler, device)
@@ -56,7 +57,8 @@ NoisyDQN_Agent
 
     <br><hr>
 
-**TensorFlow:**
+TensorFlow
+------------------------------------------
 
 .. py:class::
     xuance.tensorflow.agent.qlearning_family.noisydqn_agent.NoisyDQN_Agent(config, envs, policy, optimizer, device)
@@ -105,7 +107,8 @@ NoisyDQN_Agent
 
     <br><hr>
 
-**MindSpore:**
+MindSpore
+------------------------------------------
 
 .. py:class::
     xuance.mindspore.agents.qlearning_family.noisydqn_agent.NoisyDQN_Agent(config, envs, policy, optimizer, scheduler)

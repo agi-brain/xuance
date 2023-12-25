@@ -5,7 +5,8 @@ PPOKL_Learner
 
     <br><hr>
 
-**PyTorch:**
+PyTorch
+------------------------------------------
 
 .. py:class::
   xuance.torch.learners.policy_gradient.ppokl_learner.PPOKL_Learner(policy, optimizer, scheduler, device, model_dir, vf_coef, ent_coef, target_kl)
@@ -47,7 +48,8 @@ PPOKL_Learner
 
     <br><hr>
 
-**TensorFlow:**
+TensorFlow
+------------------------------------------
 
 .. py:class::
   xuance.tensorflow.learners.policy_gradient.ppokl_learner.PPOKL_Learner(policy, optimizer, device, model_dir, vf_coef, ent_coef, target_kl)
@@ -89,7 +91,8 @@ PPOKL_Learner
 
     <br><hr>
 
-**MindSpore:**
+MindSpore
+------------------------------------------
 
 .. py:class::
   xuance.mindspore.learners.policy_gradient.ppokl_learner.PPOKL_Learner(policy, optimizer, scheduler, summary_writer, model_dir, vf_coef, ent_coef, clip_range)

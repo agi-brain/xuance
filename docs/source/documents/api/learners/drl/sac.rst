@@ -5,7 +5,8 @@ SAC_Learner
 
     <br><hr>
 
-**PyTorch:**
+PyTorch
+------------------------------------------
 
 .. py:class::
   xuance.torch.learners.policy_gradient.sac_learner.SAC_Learner(policy, optimizer, scheduler, device, model_dir, gamma, tau)
@@ -45,7 +46,8 @@ SAC_Learner
 
     <br><hr>
 
-**TensorFlow:**
+TensorFlow
+------------------------------------------
 
 .. py:class::
   xuance.tensorflow.learners.policy_gradient.sac_learner.SAC_Learner(policy, optimizer, device, model_dir, gamma, tau)
@@ -64,7 +66,7 @@ SAC_Learner
   :type tau: float
 
 .. py:function::
- xuance.torch.learners.policy_gradient.sac_learner.SAC_Learner.update(obs_batch, act_batch, rew_batch, next_batch, terminal_batch)
+ xuance.tensorflow.learners.policy_gradient.sac_learner.SAC_Learner.update(obs_batch, act_batch, rew_batch, next_batch, terminal_batch)
 
   :param obs_batch: A batch of observations sampled from experience replay buffer.
   :type obs_batch: np.ndarray
@@ -83,7 +85,8 @@ SAC_Learner
 
     <br><hr>
 
-**MindSpore:**
+MindSpore
+------------------------------------------
 
 .. py:class::
   xuance.mindspore.learners.policy_gradient.sac_learner.SAC_Learner(policy, optimizers, schedulers, model_dir, gamma, tau)

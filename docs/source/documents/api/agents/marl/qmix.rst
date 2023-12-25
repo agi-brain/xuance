@@ -5,7 +5,8 @@ QMIX_Agents
 
     <br><hr>
 
-**PyTorch:**
+PyTorch
+------------------------------------------
 
 .. py:class:: 
     xuance.torch.agent.mutli_agent_rl.qmix_agents.QMIX_Agents(config, envs, device)
@@ -47,7 +48,8 @@ QMIX_Agents
 
     <br><hr>
 
-**TensorFlow:**
+TensorFlow
+------------------------------------------
 
 .. py:class::
     xuance.tensorflow.agent.mutli_agent_rl.qmix_agents.QMIX_Agents(config, envs, device)
@@ -91,7 +93,8 @@ QMIX_Agents
 
     <br><hr>
 
-**MindSpore:**
+MindSpore
+------------------------------------------
 
 .. py:class::
     xuance.mindspore.agents.mutli_agent_rl.qmix_agents.QMIX_Agents(config, envs)

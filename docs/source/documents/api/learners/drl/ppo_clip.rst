@@ -5,7 +5,8 @@ PPOCLIP_Learner
 
     <br><hr>
 
-**PyTorch:**
+PyTorch
+------------------------------------------
 
 .. py:class::
   xuance.torch.learners.policy_gradient.ppoclip_learner.PPOCLIP_Learner(policy, optimizer, scheduler, device, model_dir, vf_coef, ent_coef, clip_range, clip_grad_norm, use_grad_clip)
@@ -53,7 +54,8 @@ PPOCLIP_Learner
 
     <br><hr>
 
-**TensorFlow:**
+TensorFlow
+------------------------------------------
 
 .. py:class::
   xuance.tensorflow.learners.policy_gradient.ppoclip_learner.PPOCLIP_Learner(policy, optimizer, device, model_dir, vf_coef, ent_coef, clip_range)
@@ -95,7 +97,8 @@ PPOCLIP_Learner
 
     <br><hr>
 
-**MindSpore:**
+MindSpore
+------------------------------------------
 
 .. py:class::
   xuance.mindspore.learners.policy_gradient.ppoclip_learner.PPOCLIP_Learner(policy, optimizer, scheduler, model_dir, vf_coef, ent_coef, clip_range)

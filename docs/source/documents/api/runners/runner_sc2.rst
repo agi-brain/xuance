@@ -8,7 +8,8 @@ This part constructs a reinforcement learning framework for training and testing
     <br><hr>
 
 
-**PyTorch:**
+PyTorch
+------------------------------------------
 
 .. py:class::
     xuance.torch.runners.runner_sc2.SC2_Runner(args)

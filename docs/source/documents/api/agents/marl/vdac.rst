@@ -5,7 +5,8 @@ VDAC
 
     <br><hr>
 
-**PyTorch:**
+PyTorch
+------------------------------------------
 
 .. py:class::
     xuance.torch.agent.mutli_agent_rl.vdac_agents.VDAC_Agents(config, envs)
@@ -49,7 +50,8 @@ VDAC
 
     <br><hr>
 
-**TensorFlow:**
+TensorFlow
+------------------------------------------
 
 .. py:class::
     xuance.tensorflow.agent.mutli_agent_rl.vdac_agents.VDAC_Agents(config, envs)
@@ -93,20 +95,21 @@ VDAC
 
     <br><hr>
 
-**MindSpore:**
+MindSpore
+------------------------------------------
 
 .. py:class::
-    xuance.torch.agent.mutli_agent_rl.vdac_agents.VDAC_Agents(config, envs, device)
+    xuance.mindspore.agent.mutli_agent_rl.vdac_agents.VDAC_Agents(config, envs, device)
 
     :param config: Provides hyper parameters.
     :type config: Namespace
     :param envs: The vectorized environments.
     :type envs: xuance.environments.vector_envs.vector_env.VecEnv
     :param device: Choose CPU or GPU to train the model.
-    :type device: str, int, torch.device
+    :type device: str
 
 .. py:function::
-    xuance.torch.agent.mutli_agent_rl.vdac_agents.VDAC_Agents.act(obs_n, *rnn_hidden, avail_actions=None, state=None, test_mode=False)
+    xuance.mindspore.agent.mutli_agent_rl.vdac_agents.VDAC_Agents.act(obs_n, *rnn_hidden, avail_actions=None, state=None, test_mode=False)
 
     Calculate joint actions for N agents according to the joint observations.
 
@@ -120,11 +123,11 @@ VDAC
     :type state: np.ndarray
     :param test_mode: is True for selecting greedy actions, is False for selecting epsilon-greedy actions.
     :type test_mode: bool
-    :return: **hidden_state**, **actions_n**, **onehot_actions** - The next hidden states of RNN, the joint actions, and the onehot actions.
-    :rtype: tuple(np.ndarray, np.ndarray), np.ndarray, np.ndarray
+    :return: A tuple that includes the next hidden states of RNN, the joint actions, and the onehot actions.
+    :rtype: tuple
 
 .. py:function::
-    xuance.torch.agent.mutli_agent_rl.vdac_agents.VDAC_Agents.train(i_step, kwargs)
+    xuance.mindspore.agent.mutli_agent_rl.vdac_agents.VDAC_Agents.train(i_step, kwargs)
 
     Train the multi-agent reinforcement learning model.
 
@@ -132,7 +135,7 @@ VDAC
     :type i_step: int
     :param kwargs: The other arguments.
     :type kwargs: dict
-    :return: **info_train** - the information of the training process.
+    :return: The information of the training process.
     :rtype: dict
 
 .. raw:: html

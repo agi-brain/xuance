@@ -8,7 +8,8 @@ MAgent_Runner makes some extensions to it.
 
     <br><hr>
 
-**PyTorch:**
+PyTorch
+------------------------------------------
 
 .. py:class::
   xuance.torch.runners.runner_magent.MAgent_Runner(args)

@@ -5,7 +5,8 @@ VDN_Agents
 
     <br><hr>
 
-**PyTorch:**
+PyTorch
+------------------------------------------
 
 .. py:class:: 
     xuance.torch.agent.mutli_agent_rl.vdn_agents.VDN_Agents(config, envs, device)
@@ -47,7 +48,8 @@ VDN_Agents
 
     <br><hr>
 
-**TensorFlow:**
+TensorFlow
+------------------------------------------
 
 .. py:class::
     xuance.tensorflow.agent.mutli_agent_rl.vdn_agents.VDN_Agents(config, envs, device)
@@ -76,7 +78,7 @@ VDN_Agents
     :rtype: tuple(np.ndarray, np.ndarray), np.ndarray
 
 .. py:function::
-    xuance.torch.agent.mutli_agent_rl.vdn_agents.VDN_Agents.train(i_step, n_epoch)
+    xuance.tensorflow.agent.mutli_agent_rl.vdn_agents.VDN_Agents.train(i_step, n_epoch)
 
     Train the multi-agent reinforcement learning model.
 
@@ -84,14 +86,15 @@ VDN_Agents
     :type i_step: int
     :param n_epoch: Number of training epochs.
     :type n_epoch: int
-    :return: **info_train** - the information of the training process.
+    :return: The information of the training process.
     :rtype: dict
 
 .. raw:: html
 
     <br><hr>
 
-**MindSpore:**
+MindSpore
+------------------------------------------
 
 .. py:class::
     xuance.mindspore.agents.mutli_agent_rl.vdn_agents.VDN_Agents(config, envs)

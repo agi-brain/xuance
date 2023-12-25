@@ -7,7 +7,8 @@ xxxxxx.
 
     <br><hr>
 
-**PyTorch:**
+PyTorch
+------------------------------------------
 
 .. py:class::
     xuance.torch.runners.runner_drl.Runner_DRL(args)
@@ -31,7 +32,8 @@ xxxxxx.
 
     <br><hr>
 
-**TensorFlow:**
+TensorFlow
+------------------------------------------
 
 .. py:class::
     xuance.tensorflow.runners.runner_drl.Runner_DRL(args)
@@ -56,7 +58,8 @@ xxxxxx.
 
     <br><hr>
 
-**MindSpore:**
+MindSpore
+------------------------------------------
 
 .. py:class::
     xuance.mindspore.runners.runner_drl.Runner_DRL(args)

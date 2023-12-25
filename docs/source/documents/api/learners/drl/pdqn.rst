@@ -5,7 +5,8 @@ PDQN_Learner
 
     <br><hr>
 
-**PyTorch:**
+PyTorch
+------------------------------------------
 
 .. py:class::
   xuance.torch.learners.policy_gradient.pdqn_learner.PDQN_Learner(policy, optimizer, scheduler, device, model_dir, gamma, tau)
@@ -45,7 +46,8 @@ PDQN_Learner
 
     <br><hr>
 
-**TensorFlow:**
+TensorFlow
+------------------------------------------
 
 .. py:class::
   xuance.tensorflow.learners.policy_gradient.pdqn_learner.PDQN_Learner(policy, optimizer, device, model_dir, gamma, tau)
@@ -83,7 +85,8 @@ PDQN_Learner
 
     <br><hr>
 
-**MindSpore:**
+MindSpore
+------------------------------------------
 
 .. py:class::
   xuance.mindspore.learners.policy_gradient.pdqn_learner.PDQN_Learner(policy, optimizer, scheduler, model_dir, gamma, tau)

@@ -9,7 +9,8 @@ Additionally, there's a run method that can be customzied by users.
 
     <br><hr>
 
-**PyTorch:**
+PyTorch
+------------------------------------------
 
 .. py:class::
   xuance.torch.runners.runner_basic.Runner_Base(args)
@@ -26,7 +27,8 @@ Additionally, there's a run method that can be customzied by users.
     <br><hr>
 
 
-**TensorFlow:**
+TensorFlow
+------------------------------------------
 
 .. py:class::
   xuance.tensorflow.runners.runner_basic.Runner_Base(args)
@@ -56,7 +58,8 @@ Additionally, there's a run method that can be customzied by users.
 
     <br><hr>
 
-**MindSpore:**
+MindSpore
+------------------------------------------
 
 .. py:class::
   xuance.mindspore.runners.runner_basic.Runner_Base(args)

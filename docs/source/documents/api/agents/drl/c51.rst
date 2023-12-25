@@ -5,7 +5,8 @@ C51_Agent
 
     <br><hr>
 
-**PyTorch:**
+PyTorch
+------------------------------------------
 
 .. py:class:: 
     xuance.torch.agent.qlearning_family.c51_agent.C51_Agent(config, envs, policy, optimizer, scheduler, device)
@@ -59,7 +60,8 @@ C51_Agent
 
     <br><hr>
 
-**TensorFlow:**
+TensorFlow
+------------------------------------------
 
 .. py:class::
     xuance.tensorflow.agent.qlearning_family.c51_agent.C51_Agent(config, envs, policy, optimizer, device)
@@ -110,7 +112,8 @@ C51_Agent
 
     <br><hr>
 
-**MindSpore:**
+MindSpore
+------------------------------------------
 
 .. py:class::
     xuance.mindspore.agents.qlearning_family.c51_agent.C51_Agent(config, envs, policy, optimizer, scheduler)

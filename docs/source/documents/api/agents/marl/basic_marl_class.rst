@@ -3,7 +3,8 @@ MARLAgent
 
 To create new MARL agents, you should build a class inherit from ``xuance.torch.agents.agents_marl.MARLAgent`` , ``xuance.tensorflow.agents.agents_marl.MARLAgent``, or ``xuance.mindspore.agents.agents_marl.MARLAgent``.
 
-**PyTorch:**
+PyTorch
+------------------------------------------
 
 .. py:class:: 
    xuance.torch.agents.agents_marl.MARLAgents(config, envs, policy, memory, learner, device, log_dir, model_dir)
@@ -96,7 +97,8 @@ To create new MARL agents, you should build a class inherit from ``xuance.torch.
 
    <br><hr>
 
-**TensorFlow:**
+TensorFlow
+------------------------------------------
 
 .. py:class:: 
    xuance.tensorflow.agents.agents_marl.MARLAgents(config, envs, policy, memory, learner, device, log_dir, model_dir)
@@ -189,7 +191,8 @@ To create new MARL agents, you should build a class inherit from ``xuance.torch.
 
    <br><hr>
 
-**MindSpore:**
+MindSpore
+------------------------------------------
 
 .. py:class:: 
    xuance.mindspore.agents.agents_marl.MARLAgent(envs, policy, memory, learner, device, log_dir, model_dir)

@@ -5,7 +5,8 @@ PDQN_Agent
 
     <br><hr>
 
-**PyTorch:**
+PyTorch
+------------------------------------------
 
 .. py:class:: 
     xuance.torch.agent.policy_gradient.pdqn_agent.PDQN_Agent(config, envs, policy, optimizer, scheduler, device)
@@ -68,7 +69,8 @@ PDQN_Agent
 
     <br><hr>
 
-**TensorFlow:**
+TensorFlow
+------------------------------------------
 
 .. py:class::
     xuance.tensorflow.agent.policy_gradient.pdqn_agent.PDQN_Agent(config, envs, policy, optimizer, device)
@@ -129,7 +131,8 @@ PDQN_Agent
 
     <br><hr>
 
-**MindSpore:**
+MindSpore
+------------------------------------------
 
 .. py:class::
     xuance.mindspore.agents.policy_gradient.pdqn_agent.PDQN_Agent(config, envs, policy, optimizer, scheduler)

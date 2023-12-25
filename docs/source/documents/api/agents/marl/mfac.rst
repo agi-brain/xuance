@@ -5,7 +5,8 @@ MFAC
 
     <br><hr>
 
-**PyTorch:**
+PyTorch
+------------------------------------------
 
 .. py:class::
     xuance.torch.agent.mutli_agent_rl.mfac_agents.MFAC_Agents(config, envs, device)
@@ -61,7 +62,8 @@ MFAC
 
     <br><hr>
 
-**TensorFlow:**
+TensorFlow
+------------------------------------------
 
 .. py:class::
     xuance.tensorflow.agent.mutli_agent_rl.mfac_agents.MFAC_Agents(config, envs, device)
@@ -117,7 +119,8 @@ MFAC
 
     <br><hr>
 
-**MindSpore:**
+MindSpore
+------------------------------------------
 
 .. py:class::
     xuance.mindspore.agent.mutli_agent_rl.mfac_agents.MFAC_Agents(config, envs)

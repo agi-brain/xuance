@@ -7,7 +7,8 @@ xxxxxx.
 
     <br><hr>
 
-**PyTorch:**
+PyTorch
+------------------------------------------
 
 .. py:class::
   xuance.torch.learners.multi_agent_rl.mappo_learner.MAPPO_Clip_Learner(config, policy, optimizer, scheduler, device, model_dir, gamma)
@@ -61,7 +62,8 @@ xxxxxx.
 
     <br><hr>
 
-**TensorFlow:**
+TensorFlow
+------------------------------------------
 
 .. py:class::
   xuance.tensorflow.learners.multi_agent_rl.mappo_learner.MAPPO_Clip_Learner(config, policy, optimizer, device, model_dir, gamma)
@@ -103,7 +105,8 @@ xxxxxx.
 
     <br><hr>
 
-**MindSpore:**
+MindSpore
+------------------------------------------
 
 .. py:class::
   xuance.mindspore.learners.multi_agent_rl.mappo_learner.MAPPO_Clip_Learner(config, policy, optimizer, scheduler, model_dir, gamma)
@@ -124,20 +127,20 @@ xxxxxx.
 .. py:function::
   xuance.mindspore.learners.multi_agent_rl.mappo_learner.MAPPO_Clip_Learner.lr_decay(i_step)
 
-  xxxxxx.
+  Update the parameters of the model via backpropagation.
 
-  :param i_step: xxxxxx.
-  :type i_step: xxxxxx
+  :param i_step: The current training step.
+  :type i_step: int
   :return: Current learning rate.
   :rtype: float
 
 .. py:function::
-  xuance.torch.learners.multi_agent_rl.mappo_learner.MAPPO_Clip_Learner.update(sample)
+  xuance.mindspore.learners.multi_agent_rl.mappo_learner.MAPPO_Clip_Learner.update(sample)
 
-  xxxxxx.
+  Update the paramters of the model via backpropagation.
 
-  :param sample: xxxxxx.
-  :type sample: xxxxxx
+  :param sample: The sampled data.
+  :type sample: dict
   :return: The infomation of the training.
   :rtype: dict
 

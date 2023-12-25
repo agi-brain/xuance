@@ -5,7 +5,8 @@ SACDIS_Agent
 
     <br><hr>
 
-**PyTorch:**
+PyTorch
+------------------------------------------
 
 .. py:class:: 
   xuance.torch.agent.policy_gradient.sacdis_agent.SACDIS_Agent(config, envs, policy, optimizer, scheduler, device)
@@ -56,7 +57,8 @@ SACDIS_Agent
 
     <br><hr>
 
-**TensorFlow:**
+TensorFlow
+------------------------------------------
 
 .. py:class::
   xuance.tensorflow.agent.policy_gradient.sacdis_agent.SACDIS_Agent(config, envs, policy, optimizer, device)
@@ -105,7 +107,8 @@ SACDIS_Agent
 
     <br><hr>
 
-**MindSpore:**
+MindSpore
+------------------------------------------
 
 .. py:class::
     xuance.mindspore.agents.policy_gradient.sacdis_agent.SACDIS_Agent(config, envs, policy, optimizer, scheduler)
@@ -122,7 +125,7 @@ SACDIS_Agent
     :type scheduler: torch.optim.lr_scheduler._LRScheduler
 
 .. py:function::
-    xuance.mindspore.agents.policy_gradient.sacdis_agent.SACDIS_Agent(obs)
+    xuance.mindspore.agents.policy_gradient.sacdis_agent.SACDIS_Agent._action(obs)
 
     :param obs: The observation variables.
     :type obs: np.ndarray
@@ -130,13 +133,13 @@ SACDIS_Agent
     :rtype: np.ndarray
 
 .. py:function::
-    xuance.mindspore.agents.policy_gradient.sacdis_agent.SACDIS_Agent(train_steps)
+    xuance.mindspore.agents.policy_gradient.sacdis_agent.SACDIS_Agent.train(train_steps)
 
     :param train_steps: The number of steps for training.
     :type train_steps: int
 
 .. py:function::
-    xuance.mindspore.agents.policy_gradient.sacdis_agent.SACDIS_Agent(env_fn,test_episodes)
+    xuance.mindspore.agents.policy_gradient.sacdis_agent.SACDIS_Agent.test(env_fn,test_episodes)
 
     :param env_fn: The function of making environments.
     :param test_episodes: The number of testing episodes.

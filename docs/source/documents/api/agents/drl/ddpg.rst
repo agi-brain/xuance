@@ -5,7 +5,8 @@ DDPG_Agent
 
     <br><hr>
 
-**PyTorch:**
+PyTorch
+------------------------------------------
 
 .. py:class:: 
   xuance.torch.agent.policy_gradient.ddpg_agent.DDPG_Agent(config, envs, policy, optimizer, scheduler, device)
@@ -58,7 +59,8 @@ DDPG_Agent
 
     <br><hr>
 
-**TensorFlow:**
+TensorFlow
+------------------------------------------
 
 .. py:class::
   xuance.tensorflow.agent.policy_gradient.ddpg_agent.DDPG_Agent(config, envs, policy, optimizer, device)
@@ -109,7 +111,8 @@ DDPG_Agent
 
     <br><hr>
 
-**MindSpore:**
+MindSpore
+------------------------------------------
 
 .. py:class::
     xuance.mindspore.agents.policy_gradient.ddpg_agent.DDPG_Agent(config, envs, policy, optimizer, scheduler)

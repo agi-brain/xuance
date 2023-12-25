@@ -5,7 +5,8 @@ IPPO_Agents
 
     <br><hr>
 
-**PyTorch:**
+PyTorch
+------------------------------------------
 
 .. py:class:: 
     xuance.torch.agent.mutli_agent_rl.ippo_agents.IPPO_Agents(config, envs, device)
@@ -65,7 +66,8 @@ IPPO_Agents
 
     <br><hr>
 
-**TensorFlow:**
+TensorFlow
+------------------------------------------
 
 .. py:class::
     xuance.tensorflow.agent.mutli_agent_rl.ippo_agents.IPPO_Agents(config, envs, device)
@@ -126,7 +128,8 @@ IPPO_Agents
 
     <br><hr>
 
-**MindSpore:**
+MindSpore
+------------------------------------------
 
 .. py:class::
     xuance.mindspore.agent.mutli_agent_rl.ippo_agents.IPPO_Agents(config, envs)

@@ -7,7 +7,8 @@ A generic framework for training and testing reinforcement learning in the Footb
 
     <br><hr>
 
-**PyTorch:**
+PyTorch
+------------------------------------------
 
 .. py:class::
     xuance.torch.runners.runner_football.Football_Runner(args)

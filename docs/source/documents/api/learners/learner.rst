@@ -1,9 +1,10 @@
-Learner
+Basic Learner
 =======================
 
 To create new learner, you should build a class inherit from ``xuance.torch.learners.learner.Learner`` , ``xuance.tensorflow.learners.learner.Learner``, or ``xuance.mindspore.learners.learner.Learner``.
 
-**PyTorch:**
+PyTorch
+------------------------------------------
 
 .. py:class:: 
     xuance.torch.learners.learner.Learner(policy, optimizer, scheduler=None, device=None, model_dir="./")
@@ -45,7 +46,8 @@ To create new learner, you should build a class inherit from ``xuance.torch.lear
 
    <br><hr>
 
-**TensorFlow:**
+TensorFlow
+------------------------------------------
 
 .. py:class:: 
     xuance.tensorflow.learners.learner.Learner(policy, optimizer, device=None, model_dir="./")
@@ -85,7 +87,8 @@ To create new learner, you should build a class inherit from ``xuance.torch.lear
 
    <br><hr>
 
-**MindSpore:**
+MindSpore
+------------------------------------------
 
 .. py:class:: 
     xuance.mindspore.learners.learner.Learner(policy, optimizer, scheduler=None, model_dir="./")

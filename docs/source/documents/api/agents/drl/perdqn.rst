@@ -5,7 +5,8 @@ PerDQN_Agent
 
     <br><hr>
 
-**PyTorch:**
+PyTorch
+------------------------------------------
 
 .. py:class:: 
     xuance.torch.agent.qlearning_family.perdqn_agent.PerDQN_Agent(config, envs, policy, optimizer, scheduler, device)
@@ -58,7 +59,8 @@ PerDQN_Agent
 
     <br><hr>
 
-**TensorFlow:**
+TensorFlow
+------------------------------------------
 
 .. py:class::
     xuance.tensorflow.agent.qlearning_family.perdqn_agent.PerDQN_Agent(config, envs, policy, optimizer, device)
@@ -109,7 +111,8 @@ PerDQN_Agent
 
     <br><hr>
 
-**MindSpore:**
+MindSpore
+------------------------------------------
 
 .. py:class::
     xuance.mindspore.agents.qlearning_family.perdqn_agent.PerDQN_Agent(config, envs, policy, optimizer, scheduler)

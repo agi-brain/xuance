@@ -5,7 +5,8 @@ A2C_Learner
 
     <br><hr>
 
-**PyTorch:**
+PyTorch
+------------------------------------------
 
 .. py:class::
   xuance.torch.learners.policy_gradient.a2c_learner.A2C_Learner(policy, optimizer, scheduler, device, model_dir, vf_coef, ent_coef, clip_grad)
@@ -45,7 +46,8 @@ A2C_Learner
 
     <br><hr>
 
-**TensorFlow:**
+TensorFlow
+------------------------------------------
 
 .. py:class::
   xuance.tensorflow.learners.policy_gradient.a2c_learner.A2C_Learner(policy, optimizer, device, model_dir, vf_coef, ent_coef, clip_grad)
@@ -83,7 +85,8 @@ A2C_Learner
 
     <br><hr>
 
-**MindSpore:**
+MindSpore
+------------------------------------------
 
 .. py:class::
   xuance.mindspore.learners.policy_gradient.a2c_learner.A2C_Learner(policy, optimizer, scheduler, model_dir, vf_coef, ent_coef, clip_grad, clip_type)

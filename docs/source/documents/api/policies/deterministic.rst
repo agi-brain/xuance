@@ -2351,7 +2351,7 @@ MindSpore
   Get trainable parameters.
 
 .. py:function::
-  xuance.mindspore.policies.deterministic.DuelQnetwork.copy_target(observation)
+  xuance.mindspore.policies.deterministic.QRDQN_Network.copy_target(observation)
 
   Copies the parameters from the evaluation representation, target representation, evaluation Q-head, and target Q-head.
 

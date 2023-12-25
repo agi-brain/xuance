@@ -5,7 +5,8 @@ PPG_Learner
 
     <br><hr>
 
-**PyTorch:**
+PyTorch
+------------------------------------------
 
 .. py:class::
   xuance.torch.learners.policy_gradient.ppg_learner.PPG_Learner(policy, optimizer, scheduler, device, model_dir, ent_coef, clip_range, kl_beta)
@@ -79,7 +80,8 @@ PPG_Learner
 
     <br><hr>
 
-**TensorFlow:**
+TensorFlow
+------------------------------------------
 
 .. py:class::
   xuance.tensorflow.learners.policy_gradient.ppg_learner.PPG_Learner(policy, optimizer, device, model_dir, ent_coef, clip_range, kl_beta)
@@ -151,7 +153,8 @@ PPG_Learner
 
     <br><hr>
 
-**MindSpore:**
+MindSpore
+------------------------------------------
 
 .. py:class::
   xuance.mindspore.learners.policy_gradient.ppg_learner.PPG_Learner(policy, optimizer, scheduler, model_dir, ent_coef, clip_range, kl_beta)

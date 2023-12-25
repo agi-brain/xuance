@@ -8,7 +8,8 @@ This script define a training and testing pipeline for multi-agent reinforcement
 
     <br><hr>
 
-**PyTorch:**
+PyTorch
+------------------------------------------
 
 .. py:class::
     xuance.torch.runners.runner_pettingzoo.Pettingzoo_Runner(args)
@@ -129,7 +130,8 @@ This script define a training and testing pipeline for multi-agent reinforcement
 
     <br><hr>
 
-**TensorFlow:**
+TensorFlow
+------------------------------------------
 
 .. py:class::
     xuance.tensorflow.runners.runner_pettingzoo.Pettingzoo_Runner(args)
@@ -250,7 +252,8 @@ This script define a training and testing pipeline for multi-agent reinforcement
 
     <br><hr>
 
-**MindSpore:**
+MindSpore
+------------------------------------------
 
 .. py:class::
     xuance.mindspore.runners.runner_pettingzoo.Pettingzoo_Runner(args)

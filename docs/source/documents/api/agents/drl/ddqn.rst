@@ -7,7 +7,8 @@ DQN with double q-learning trick.
 
     <br><hr>
 
-**PyTorch:**
+PyTorch
+------------------------------------------
 
 .. py:class:: 
     xuance.torch.agent.qlearning_family.ddqn_agent.DDQN_Agent(config, envs, policy, optimizer, scheduler, device)
@@ -60,7 +61,8 @@ DQN with double q-learning trick.
 
     <br><hr>
 
-**TensorFlow:**
+TensorFlow
+------------------------------------------
 
 .. py:class::
     xuance.tensorflow.agent.qlearning_family.ddqn_agent.DDQN_Agent(config, envs, policy, optimizer, device)
@@ -111,7 +113,8 @@ DQN with double q-learning trick.
 
     <br><hr>
 
-**MindSpore:**
+MindSpore
+------------------------------------------
 
 .. py:class::
     xuance.mindspore.agents.qlearning_family.ddqn_agent.DDQN_Agent(config, envs, policy, optimizer, scheduler)

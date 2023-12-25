@@ -3,7 +3,8 @@ Agent
 
 To create a new Agent, you should build a class inherit from ``xuance.torch.agents.agent.Agent`` , ``xuance.tensorflow.agents.agent.Agent``, or ``xuance.mindspore.agents.agent.Agent``.
 
-**PyTorch:**
+PyTorch
+------------------------------------------
 
 .. py:class:: 
    xuance.torch.agents.agent.Agent(config, envs, policy, memory, learner, device, log_dir, model_dir)
@@ -110,7 +111,8 @@ To create a new Agent, you should build a class inherit from ``xuance.torch.agen
 
    <br><hr>
 
-**TensorFlow:**
+TensorFlow
+------------------------------------------
 
 .. py:class:: 
    xuance.tensorflowtensorflow.agent.agent.Agent(config, envs, policy, memory, learner, device, log_dir, model_dir)
@@ -137,7 +139,8 @@ To create a new Agent, you should build a class inherit from ``xuance.torch.agen
 
    <br><hr>
 
-**MindSpore:**
+MindSpore
+------------------------------------------
 
 .. py:class:: 
    xuance.mindsporetensorflow.agent.agent.Agent(envs, policy, memory, learner, device, log_dir, model_dir)

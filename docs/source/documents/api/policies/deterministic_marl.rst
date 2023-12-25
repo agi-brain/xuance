@@ -1746,7 +1746,7 @@ MindSpore
   :rtype: tuple
 
 .. py:function::
-  xuance.mindspore.policies.deterministic_marl.Weighted_MixingQnetwork.copy_target()
+  xuance.mindspore.policies.deterministic_marl.Qtran_MixingQnetwork.copy_target()
 
   Synchronize the target networks.
   

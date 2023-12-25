@@ -5,7 +5,8 @@ PerDQN_Learner
 
     <br><hr>
 
-**PyTorch:**
+PyTorch
+------------------------------------------
 
 .. py:class::
   xuance.torch.learners.qlearning_family.perdqn_learner.PerDQN_Learner(policy, optimizer, scheduler, device, model_dir, gamma, sync_frequency)
@@ -45,7 +46,8 @@ PerDQN_Learner
 
     <br><hr>
 
-**TensorFlow:**
+TensorFlow
+------------------------------------------
 
 .. py:class::
   xuance.tensorflow.learners.qlearning_family.perdqn_learner.PerDQN_Learner(policy, optimizer, device, model_dir, gamma, sync_frequency)
@@ -83,7 +85,8 @@ PerDQN_Learner
 
     <br><hr>
 
-**MindSpore:**
+MindSpore
+------------------------------------------
 
 .. py:class::
   xuance.mindspore.learners.qlearning_family.perdqn_learner.PerDQN_Learner(policy, optimizer, scheduler, model_dir, gamma, sync_frequency)

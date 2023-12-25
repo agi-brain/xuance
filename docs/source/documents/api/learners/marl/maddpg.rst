@@ -1,13 +1,17 @@
 MADDPG_Learner
 =====================================
 
-xxxxxx.
+Multi-Agent Deep Deterministic Policy Gradient
+
+Paper link:
+https://proceedings.neurips.cc/paper/2017/file/68a9750337a418a86fe06c1991a1d64c-Paper.pdf
 
 .. raw:: html
 
     <br><hr>
 
-**PyTorch:**
+PyTorch
+------------------------------------------
 
 .. py:class::
   xuance.torch.learners.multi_agent_rl.maddpg_learner.MADDPG_Learner(config, policy, optimizer, scheduler, device, model_dir, gamma, sync_frequency)
@@ -30,12 +34,12 @@ xxxxxx.
   :type sync_frequency: int
 
 .. py:function::
-  xuance.torch.learners.multi_agent_rl.isac_learner.ISAC_Learner.update(sample)
+  xuance.torch.learners.multi_agent_rl.maddpg_learner.MADDPG_Learner.update(sample)
 
-  xxxxxx.
+  Updates the policy parameters via backpropagation.
 
-  :param sample: xxxxxx.
-  :type sample: xxxxxx
+  :param sample: The sampled data.
+  :type sample: dict
   :return: The infomation of the training.
   :rtype: dict
 
@@ -43,7 +47,8 @@ xxxxxx.
 
     <br><hr>
 
-**TensorFlow:**
+TensorFlow
+------------------------------------------
 
 .. py:class::
   xuance.tensorflow.learners.multi_agent_rl.maddpg_learner.MADDPG_Learner(config, policy, optimizer, device, model_dir, gamma, sync_frequency)
@@ -64,7 +69,7 @@ xxxxxx.
   :type sync_frequency: int
 
 .. py:function::
-  xuance.tensorflow.learners.multi_agent_rl.isac_learner.ISAC_Learner.update(sample)
+  xuance.tensorflow.learners.multi_agent_rl.maddpg_learner.MADDPG_Learner.update(sample)
 
   xxxxxx.
 
@@ -77,7 +82,8 @@ xxxxxx.
 
     <br><hr>
 
-**MindSpore:**
+MindSpore
+------------------------------------------
 
 .. py:class::
   xuance.mindspore.learners.multi_agent_rl.maddpg_learner.MADDPG_Learner(config, policy, optimizer, scheduler, model_dir, gamma, sync_frequency)
@@ -98,7 +104,7 @@ xxxxxx.
   :type sync_frequency: int
 
 .. py:function::
-  xuance.mindspore.learners.multi_agent_rl.isac_learner.ISAC_Learner.update(sample)
+  xuance.mindspore.learners.multi_agent_rl.maddpg_learner.MADDPG_Learner.update(sample)
 
   xxxxxx.
 

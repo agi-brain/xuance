@@ -5,7 +5,8 @@ NoisyDQN_Learner
 
     <br><hr>
 
-**PyTorch:**
+PyTorch
+------------------------------------------
 
 .. py:class::
   xuance.torch.learners.qlearning_family.noisydqn_learner.NoisyDQN_Learner(policy, optimizer, scheduler, device, model_dir, gamma, sync_frequency)
@@ -45,13 +46,15 @@ NoisyDQN_Learner
 
     <br><hr>
 
-**TensorFlow:**
+TensorFlow
+------------------------------------------
 
 .. raw:: html
 
     <br><hr>
 
-**MindSpore:**
+MindSpore
+------------------------------------------
 
 .. py:class::
   xuance.mindspore.learners.qlearning_family.noisydqn_learner.NoisyDQN_Learner(policy, optimizer, scheduler, model_dir, gamma, sync_frequency)

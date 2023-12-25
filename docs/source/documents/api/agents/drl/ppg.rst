@@ -5,7 +5,8 @@ PPG_Agent
 
     <br><hr>
 
-**PyTorch:**
+PyTorch
+------------------------------------------
 
 .. py:class:: 
   xuance.torch.agent.policy_gradient.ppg_agent.PPG_Agent(config, envs, policy, optimizer, scheduler, device)
@@ -56,7 +57,8 @@ PPG_Agent
 
     <br><hr>
 
-**TensorFlow:**
+TensorFlow
+------------------------------------------
 
 .. py:class::
   xuance.tensorflow.agent.policy_gradient.ppg_agent.PPG_Agent(config, envs, policy, optimizer, device)
@@ -105,7 +107,8 @@ PPG_Agent
 
     <br><hr>
 
-**MindSpore:**
+MindSpore
+------------------------------------------
 
 .. py:class::
     xuance.mindspore.agents.policy_gradient.ppg_agent.PPG_Agent(config, envs, policy, optimizer, scheduler)
@@ -136,12 +139,12 @@ PPG_Agent
     :type train_steps: int
 
 .. py:function::
-    xuance.mindspore.agents.policy_gradient.pg_agent.PG_Agent.test(env_fn,test_episodes)
+    xuance.mindspore.agents.policy_gradient.ppg_agent.PPG_Agent.test(env_fn,test_episodes)
 
     :param env_fn: The function of making environments.
     :param test_episodes: The number of testing episodes.
     :type test_episodes: int
-    :return: **scores** - The accumulated scores of these episodes.
+    :return scores: - The accumulated scores of these episodes.
     :rtype: list
 
 
