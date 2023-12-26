@@ -19,7 +19,7 @@ class DummyVecEnv_MAgent(DummyVecEnv_Pettingzoo):
         obs_n_space = env.observation_spaces  # [Box(dim_o), Box(dim_o), ...] ----> dict
         self.agent_ids = env.agent_ids
         self.n_agents = [env.get_num(h) for h in self.handles]
-        # self.agent_keys = [env.get_agent_key(h) for h in self.handles]
+        self.agent_keys = [env.get_agent_key(h) for h in self.handles]
 
         self.keys, self.shapes, self.dtypes = obs_n_space_info(obs_n_space)
         self.agent_keys = [[self.keys[k] for k in ids] for ids in self.agent_ids]
