@@ -226,6 +226,31 @@ and hope it can really become a zoo full of DRL algorithms.
 
 </details>
 
+### [Minigrid Environments](https://minigrid.farama.org/environments/minigrid/)
+
+<details open>
+<summary>(Click to hide)</summary>
+
+<table rules="none" align="center"><tr>
+<td> <center>
+<img src="./docs/source/figures/minigrid/crossing.gif" height=100" /><br/><font color="AAAAAA">Crossing</font>
+</center></td>
+<td> <center>
+<img src="./docs/source/figures/minigrid/memory.gif" height=100" /> <br/> <font color="AAAAAA">Memory</font>
+</center> </td>
+<td> <center>
+<img src="./docs/source/figures/minigrid/lockedroom.gif" height=100" /> <br/> <font color="AAAAAA">Locked Room</font>
+</center> </td>
+<td> <center>
+<img src="./docs/source/figures/minigrid/playground.gif" height=100" /> <br/> <font color="AAAAAA">Playground</font>
+</center> </td>
+<td> <center>
+<br/> <font color="AAAAAA">...</font>
+</center> </td>
+</tr>
+</table>
+</details>
+
 ### [MPE Environments](https://pettingzoo.farama.org/environments/mpe/)
 
 <details open>
