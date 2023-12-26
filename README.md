@@ -226,7 +226,7 @@ and hope it can really become a zoo full of DRL algorithms.
 
 </details>
 
-### [Minigrid Environments](https://minigrid.farama.org/environments/minigrid/)
+### [Minigrid Environments](https://minigrid.farama.org/)
 
 <details open>
 <summary>(Click to hide)</summary>
