@@ -73,7 +73,7 @@ REGISTRY = {
     "PPG": PPG_Agent,
     "DDPG": DDPG_Agent,
     "SAC": SAC_Agent,
-    "SACDIS":SACDIS_Agent,
+    "SACDIS": SACDIS_Agent,
     "TD3": TD3_Agent,
     "DQN": DQN_Agent,
     "Duel_DQN": DuelDQN_Agent,

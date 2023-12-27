@@ -378,13 +378,12 @@ Source Code
         .. code-block:: python
 
             from xuance.mindspore.agents import *
-            from xuance.mindspore.agents.agents_marl import linear_decay_or_increase
 
 
             class DCG_Agents(MARLAgents):
                 def __init__(self,
-                             config: Namespace,
-                             envs: DummyVecEnv_Pettingzoo):
+                            config: Namespace,
+                            envs: DummyVecEnv_Pettingzoo):
                     self.gamma = config.gamma
                     self.start_greedy, self.end_greedy = config.start_greedy, config.end_greedy
                     self.egreedy = self.start_greedy
@@ -394,12 +393,13 @@ Source Code
                     self.use_recurrent = config.use_recurrent
                     if self.use_recurrent:
                         kwargs_rnn = {"N_recurrent_layers": config.N_recurrent_layers,
-                                      "dropout": config.dropout,
-                                      "rnn": config.rnn}
+                                    "dropout": config.dropout,
+                                    "rnn": config.rnn}
                         representation = REGISTRY_Representation[config.representation](*input_representation, **kwargs_rnn)
                     else:
                         representation = REGISTRY_Representation[config.representation](*input_representation)
                     repre_state_dim = representation.output_shapes['state'][0]
+                    from xuance.mindspore.policies.coordination_graph import DCG_utility, DCG_payoff, Coordination_Graph
                     utility = DCG_utility(repre_state_dim, config.hidden_utility_dim, config.dim_act)
                     payoffs = DCG_payoff(repre_state_dim * 2, config.hidden_payoff_dim, config.dim_act, config)
                     dcgraph = Coordination_Graph(config.n_agents, config.graph_type)
@@ -423,7 +423,7 @@ Source Code
                                                                 use_recurrent=config.use_recurrent,
                                                                 rnn=config.rnn)
                     scheduler = lr_decay_model(learning_rate=config.learning_rate, decay_rate=0.5,
-                                               decay_steps=get_total_iters(config.agent_name, config))
+                                            decay_steps=get_total_iters(config.agent_name, config))
                     optimizer = Adam(policy.trainable_params(), scheduler, eps=1e-5)
                     self.observation_space = envs.observation_space
                     self.action_space = envs.action_space
@@ -441,7 +441,7 @@ Source Code
 
                     from xuance.mindspore.learners.multi_agent_rl.dcg_learner import DCG_Learner
                     learner = DCG_Learner(config, policy, optimizer, scheduler,
-                                          config.model_dir, config.gamma, config.sync_frequency)
+                                        config.model_dir, config.gamma, config.sync_frequency)
                     super(DCG_Agents, self).__init__(config, envs, policy, memory, learner, config.log_dir, config.model_dir)
                     self.on_policy = False
 
@@ -451,7 +451,7 @@ Source Code
                     obs_in = obs_n.view(batch_size * self.n_agents, 1, -1)
                     rnn_hidden_next, hidden_states = self.learner.get_hidden_states(obs_in, *rnn_hidden)
                     greedy_actions = self.learner.act(hidden_states.view(batch_size, self.n_agents, -1),
-                                                      avail_actions=avail_actions)
+                                                    avail_actions=avail_actions)
                     greedy_actions = greedy_actions.asnumpy()
 
                     if test_mode:
@@ -479,3 +479,4 @@ Source Code
                                 info_train = self.learner.update(sample)
                     info_train["epsilon-greedy"] = self.egreedy
                     return info_train
+

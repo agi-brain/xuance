@@ -73,7 +73,7 @@ class WQMIX_Agents(MARLAgents):
             if avail_actions is None:
                 random_actions = np.random.choice(self.dim_act, [self.nenvs, self.n_agents])
             else:
-                random_actions = Categorical(torch.Tensor(avail_actions)).sample().numpy()
+                random_actions = Categorical(avail_actions).sample().asnumpy()
             if np.random.rand() < self.egreedy:
                 return hidden_state, random_actions
             else:

@@ -158,7 +158,7 @@ class MAAC_Policy(nn.Cell):
                  actor_hidden_size: Sequence[int] = None,
                  critic_hidden_size: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., torch.Tensor]] = None,
+                 initialize: Optional[Callable[..., ms.Tensor]] = None,
                  activation: Optional[ModuleType] = None,
                  **kwargs):
         super(MAAC_Policy, self).__init__()

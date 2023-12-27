@@ -136,7 +136,7 @@ class MAAC_Policy(nn.Cell):
         self._softmax = nn.Softmax(axis=-1)
 
     def construct(self, observation: ms.Tensor, agent_ids: ms.Tensor,
-                  *rnn_hidden: torch.Tensor, avail_actions=None):
+                  *rnn_hidden: ms.Tensor, avail_actions=None):
         if self.use_rnn:
             outputs = self.representation(observation, *rnn_hidden)
             rnn_hidden = (outputs['rnn_hidden'], outputs['rnn_cell'])
@@ -189,9 +189,9 @@ class MAAC_Policy_Share(MAAC_Policy):
                  actor_hidden_size: Sequence[int] = None,
                  critic_hidden_size: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., torch.Tensor]] = None,
+                 initialize: Optional[Callable[..., ms.Tensor]] = None,
                  activation: Optional[ModuleType] = None,
-                 device: Optional[Union[str, int, torch.device]] = None,
+                 device: Optional[Union[str, int]] = None,
                  **kwargs):
         super(MAAC_Policy, self).__init__()
         self.device = device
@@ -211,7 +211,7 @@ class MAAC_Policy_Share(MAAC_Policy):
         self._softmax = nn.Softmax(axis=-1)
 
     def construct(self, observation: ms.Tensor, agent_ids: ms.Tensor,
-                  *rnn_hidden: torch.Tensor, avail_actions=None, state=None):
+                  *rnn_hidden: ms.Tensor, avail_actions=None, state=None):
         batch_size = len(observation)
         if self.use_rnn:
             sequence_length = observation.shape[1]
@@ -302,7 +302,7 @@ class COMAPolicy(nn.Cell):
             act_probs[avail_actions == 0] = 0.0
         return rnn_hidden, act_probs
 
-    def get_values(self, critic_in: torch.Tensor, *rnn_hidden: torch.Tensor, target=False):
+    def get_values(self, critic_in: ms.Tensor, *rnn_hidden: ms.Tensor, target=False):
         # get critic values
         v = self.target_critic(critic_in) if target else self.critic(critic_in)
         return [None, None], v

@@ -1671,7 +1671,6 @@ Source Code
         from xuance.mindspore.policies import *
         from xuance.mindspore.utils import *
         from xuance.mindspore.representations import Basic_Identical
-        from .deterministic_marl import BasicQhead
         from mindspore.nn.probability.distribution import Categorical
         import copy
 
@@ -1710,14 +1709,14 @@ Source Code
                     return self._dist.kl_loss('Categorical', probs_p, probs_q)
 
             def __init__(self,
-                         state_dim: int,
-                         action_dim: int,
-                         n_agents: int,
-                         hidden_sizes: Sequence[int],
-                         normalize: Optional[ModuleType] = None,
-                         initialize: Optional[Callable[..., ms.Tensor]] = None,
-                         gain: float = 1.0,
-                         activation: Optional[ModuleType] = None):
+                        state_dim: int,
+                        action_dim: int,
+                        n_agents: int,
+                        hidden_sizes: Sequence[int],
+                        normalize: Optional[ModuleType] = None,
+                        initialize: Optional[Callable[..., ms.Tensor]] = None,
+                        gain: float = 1.0,
+                        activation: Optional[ModuleType] = None):
                 super(ActorNet, self).__init__()
                 layers = []
                 input_shape = (state_dim + n_agents,)
@@ -1737,12 +1736,12 @@ Source Code
 
         class CriticNet(nn.Cell):
             def __init__(self,
-                         state_dim: int,
-                         n_agents: int,
-                         hidden_sizes: Sequence[int],
-                         normalize: Optional[ModuleType] = None,
-                         initialize: Optional[Callable[..., ms.Tensor]] = None,
-                         activation: Optional[ModuleType] = None):
+                        state_dim: int,
+                        n_agents: int,
+                        hidden_sizes: Sequence[int],
+                        normalize: Optional[ModuleType] = None,
+                        initialize: Optional[Callable[..., ms.Tensor]] = None,
+                        activation: Optional[ModuleType] = None):
                 super(CriticNet, self).__init__()
                 layers = []
                 input_shape = (state_dim + n_agents,)
@@ -1758,12 +1757,12 @@ Source Code
 
         class COMA_Critic(nn.Cell):
             def __init__(self,
-                         state_dim: int,
-                         act_dim: int,
-                         hidden_sizes: Sequence[int],
-                         normalize: Optional[ModuleType] = None,
-                         initialize: Optional[Callable[..., ms.Tensor]] = None,
-                         activation: Optional[ModuleType] = None):
+                        state_dim: int,
+                        act_dim: int,
+                        hidden_sizes: Sequence[int],
+                        normalize: Optional[ModuleType] = None,
+                        initialize: Optional[Callable[..., ms.Tensor]] = None,
+                        activation: Optional[ModuleType] = None):
                 super(COMA_Critic, self).__init__()
                 layers = []
                 input_shape = (state_dim,)
@@ -1779,16 +1778,16 @@ Source Code
 
         class MAAC_Policy(nn.Cell):
             def __init__(self,
-                         action_space: Discrete,
-                         n_agents: int,
-                         representation: Optional[Basic_Identical],
-                         mixer: Optional[VDN_mixer] = None,
-                         actor_hidden_size: Sequence[int] = None,
-                         critic_hidden_size: Sequence[int] = None,
-                         normalize: Optional[ModuleType] = None,
-                         initialize: Optional[Callable[..., ms.Tensor]] = None,
-                         activation: Optional[ModuleType] = None,
-                         **kwargs):
+                        action_space: Discrete,
+                        n_agents: int,
+                        representation: Optional[Basic_Identical],
+                        mixer: Optional[VDN_mixer] = None,
+                        actor_hidden_size: Sequence[int] = None,
+                        critic_hidden_size: Sequence[int] = None,
+                        normalize: Optional[ModuleType] = None,
+                        initialize: Optional[Callable[..., ms.Tensor]] = None,
+                        activation: Optional[ModuleType] = None,
+                        **kwargs):
                 super(MAAC_Policy, self).__init__()
                 self.action_dim = action_space.n
                 self.n_agents = n_agents
@@ -1798,7 +1797,7 @@ Source Code
                 self.lstm = True if kwargs["rnn"] == "LSTM" else False
                 self.use_rnn = True if kwargs["use_recurrent"] else False
                 self.actor = ActorNet(self.representation.output_shapes['state'][0], self.action_dim, n_agents,
-                                      actor_hidden_size, normalize, initialize, kwargs['gain'], activation)
+                                    actor_hidden_size, normalize, initialize, kwargs['gain'], activation)
                 self.critic = CriticNet(self.representation.output_shapes['state'][0], n_agents, critic_hidden_size,
                                         normalize, initialize, activation)
                 self.mixer = mixer
@@ -1807,7 +1806,7 @@ Source Code
                 self._softmax = nn.Softmax(axis=-1)
 
             def construct(self, observation: ms.Tensor, agent_ids: ms.Tensor,
-                          *rnn_hidden: torch.Tensor, avail_actions=None):
+                        *rnn_hidden: ms.Tensor, avail_actions=None):
                 if self.use_rnn:
                     outputs = self.representation(observation, *rnn_hidden)
                     rnn_hidden = (outputs['rnn_hidden'], outputs['rnn_cell'])
@@ -1853,17 +1852,17 @@ Source Code
             """
 
             def __init__(self,
-                         action_space: Discrete,
-                         n_agents: int,
-                         representation: nn.Cell,
-                         mixer: Optional[VDN_mixer] = None,
-                         actor_hidden_size: Sequence[int] = None,
-                         critic_hidden_size: Sequence[int] = None,
-                         normalize: Optional[ModuleType] = None,
-                         initialize: Optional[Callable[..., torch.Tensor]] = None,
-                         activation: Optional[ModuleType] = None,
-                         device: Optional[Union[str, int, torch.device]] = None,
-                         **kwargs):
+                        action_space: Discrete,
+                        n_agents: int,
+                        representation: nn.Cell,
+                        mixer: Optional[VDN_mixer] = None,
+                        actor_hidden_size: Sequence[int] = None,
+                        critic_hidden_size: Sequence[int] = None,
+                        normalize: Optional[ModuleType] = None,
+                        initialize: Optional[Callable[..., ms.Tensor]] = None,
+                        activation: Optional[ModuleType] = None,
+                        device: Optional[Union[str, int]] = None,
+                        **kwargs):
                 super(MAAC_Policy, self).__init__()
                 self.device = device
                 self.action_dim = action_space.n
@@ -1873,7 +1872,7 @@ Source Code
                 self.representation = representation
                 self.representation_info_shape = self.representation.output_shapes
                 self.actor = ActorNet(self.representation.output_shapes['state'][0], self.action_dim, n_agents,
-                                      actor_hidden_size, normalize, initialize, kwargs['gain'], activation)
+                                    actor_hidden_size, normalize, initialize, kwargs['gain'], activation)
                 self.critic = CriticNet(self.representation.output_shapes['state'][0], n_agents, critic_hidden_size,
                                         normalize, initialize, activation)
                 self.mixer = mixer
@@ -1882,7 +1881,7 @@ Source Code
                 self._softmax = nn.Softmax(axis=-1)
 
             def construct(self, observation: ms.Tensor, agent_ids: ms.Tensor,
-                          *rnn_hidden: torch.Tensor, avail_actions=None, state=None):
+                        *rnn_hidden: ms.Tensor, avail_actions=None, state=None):
                 batch_size = len(observation)
                 if self.use_rnn:
                     sequence_length = observation.shape[1]
@@ -1914,7 +1913,7 @@ Source Code
                         values_tot = values_tot.unsqueeze(1).expand(-1, self.n_agents, -1, -1)
                 else:
                     values_tot = values_independent if self.mixer is None else self.value_tot(values_independent,
-                                                                                              global_state=state)
+                                                                                            global_state=state)
                     values_tot = ms.ops.broadcast_to(values_tot.unsqueeze(1), (-1, self.n_agents, -1))
 
                 return rnn_hidden, act_probs, values_tot
@@ -1927,15 +1926,15 @@ Source Code
 
         class COMAPolicy(nn.Cell):
             def __init__(self,
-                         action_space: Discrete,
-                         n_agents: int,
-                         representation: Optional[Basic_Identical],
-                         actor_hidden_size: Sequence[int] = None,
-                         critic_hidden_size: Sequence[int] = None,
-                         normalize: Optional[ModuleType] = None,
-                         initialize: Optional[Callable[..., ms.Tensor]] = None,
-                         activation: Optional[ModuleType] = None,
-                         **kwargs):
+                        action_space: Discrete,
+                        n_agents: int,
+                        representation: Optional[Basic_Identical],
+                        actor_hidden_size: Sequence[int] = None,
+                        critic_hidden_size: Sequence[int] = None,
+                        normalize: Optional[ModuleType] = None,
+                        initialize: Optional[Callable[..., ms.Tensor]] = None,
+                        activation: Optional[ModuleType] = None,
+                        **kwargs):
                 super(COMAPolicy, self).__init__()
                 self.action_dim = action_space.n
                 self.n_agents = n_agents
@@ -1944,12 +1943,12 @@ Source Code
                 self.lstm = True if kwargs["rnn"] == "LSTM" else False
                 self.use_rnn = True if kwargs["use_recurrent"] else False
                 self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim, n_agents,
-                                      actor_hidden_size, normalize, initialize, kwargs['gain'], activation)
+                                    actor_hidden_size, normalize, initialize, kwargs['gain'], activation)
                 critic_input_dim = self.representation.input_shape[0] + self.action_dim * self.n_agents
                 if kwargs["use_global_state"]:
                     critic_input_dim += kwargs["dim_state"]
                 self.critic = COMA_Critic(critic_input_dim, self.action_dim, critic_hidden_size,
-                                          normalize, initialize, activation)
+                                        normalize, initialize, activation)
                 self.target_critic = copy.deepcopy(self.critic)
                 self.parameters_critic = self.critic.trainable_params()
                 self.parameters_actor = self.representation.trainable_params() + self.actor.trainable_params()
@@ -1958,7 +1957,7 @@ Source Code
                 self._concat = ms.ops.Concat(axis=-1)
 
             def construct(self, observation: ms.Tensor, agent_ids: ms.Tensor,
-                          *rnn_hidden: ms.Tensor, avail_actions=None, epsilon=0.0):
+                        *rnn_hidden: ms.Tensor, avail_actions=None, epsilon=0.0):
                 if self.use_rnn:
                     outputs = self.representation(observation, *rnn_hidden)
                     rnn_hidden = (outputs['rnn_hidden'], outputs['rnn_cell'])
@@ -1973,7 +1972,7 @@ Source Code
                     act_probs[avail_actions == 0] = 0.0
                 return rnn_hidden, act_probs
 
-            def get_values(self, critic_in: torch.Tensor, *rnn_hidden: torch.Tensor, target=False):
+            def get_values(self, critic_in: ms.Tensor, *rnn_hidden: ms.Tensor, target=False):
                 # get critic values
                 v = self.target_critic(critic_in) if target else self.critic(critic_in)
                 return [None, None], v
@@ -1985,21 +1984,21 @@ Source Code
 
         class MeanFieldActorCriticPolicy(nn.Cell):
             def __init__(self,
-                         action_space: Discrete,
-                         n_agents: int,
-                         representation: Optional[Basic_Identical],
-                         actor_hidden_size: Sequence[int] = None,
-                         critic_hidden_size: Sequence[int] = None,
-                         normalize: Optional[ModuleType] = None,
-                         initialize: Optional[Callable[..., ms.Tensor]] = None,
-                         activation: Optional[ModuleType] = None,
-                         **kwargs):
+                        action_space: Discrete,
+                        n_agents: int,
+                        representation: Optional[Basic_Identical],
+                        actor_hidden_size: Sequence[int] = None,
+                        critic_hidden_size: Sequence[int] = None,
+                        normalize: Optional[ModuleType] = None,
+                        initialize: Optional[Callable[..., ms.Tensor]] = None,
+                        activation: Optional[ModuleType] = None,
+                        **kwargs):
                 super(MeanFieldActorCriticPolicy, self).__init__()
                 self.action_dim = action_space.n
                 self.representation = representation
                 self.representation_info_shape = self.representation.output_shapes
                 self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim, n_agents,
-                                      actor_hidden_size, normalize, initialize, kwargs['gain'], activation)
+                                    actor_hidden_size, normalize, initialize, kwargs['gain'], activation)
                 self.critic = CriticNet(representation.output_shapes['state'][0] + self.action_dim, n_agents,
                                         critic_hidden_size, normalize, initialize, activation)
                 self.parameters_actor = self.actor.trainable_params() + self.representation.trainable_params()
@@ -2016,3 +2015,4 @@ Source Code
                 outputs = self.representation(observation)
                 critic_in = self._concat([outputs['state'], actions_mean, agent_ids])
                 return self.critic(critic_in)
+

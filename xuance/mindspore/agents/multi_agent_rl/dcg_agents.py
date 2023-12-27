@@ -1,5 +1,4 @@
 from xuance.mindspore.agents import *
-from xuance.mindspore.agents.agents_marl import linear_decay_or_increase
 
 
 class DCG_Agents(MARLAgents):
@@ -21,6 +20,7 @@ class DCG_Agents(MARLAgents):
         else:
             representation = REGISTRY_Representation[config.representation](*input_representation)
         repre_state_dim = representation.output_shapes['state'][0]
+        from xuance.mindspore.policies.coordination_graph import DCG_utility, DCG_payoff, Coordination_Graph
         utility = DCG_utility(repre_state_dim, config.hidden_utility_dim, config.dim_act)
         payoffs = DCG_payoff(repre_state_dim * 2, config.hidden_payoff_dim, config.dim_act, config)
         dcgraph = Coordination_Graph(config.n_agents, config.graph_type)

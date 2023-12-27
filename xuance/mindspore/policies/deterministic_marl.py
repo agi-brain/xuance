@@ -50,7 +50,7 @@ class BasicQnetwork(nn.Cell):
         self._concat = ms.ops.Concat(axis=-1)
 
     def construct(self, observation: ms.Tensor, agent_ids: ms.Tensor,
-                  *rnn_hidden: torch.Tensor, avail_actions=None):
+                  *rnn_hidden: ms.Tensor, avail_actions=None):
         if self.use_rnn:
             outputs = self.representation(observation, *rnn_hidden)
             rnn_hidden = (outputs['rnn_hidden'], outputs['rnn_cell'])
@@ -67,7 +67,7 @@ class BasicQnetwork(nn.Cell):
             argmax_action = evalQ.argmax(axis=-1)
         return rnn_hidden, argmax_action, evalQ
 
-    def target_Q(self, observation: ms.Tensor, agent_ids: ms.Tensor, *rnn_hidden: torch.Tensor):
+    def target_Q(self, observation: ms.Tensor, agent_ids: ms.Tensor, *rnn_hidden: ms.Tensor):
         if self.use_rnn:
             outputs = self.target_representation(observation, *rnn_hidden)
             rnn_hidden = (outputs['rnn_hidden'], outputs['rnn_cell'])
@@ -153,7 +153,7 @@ class MixingQnetwork(nn.Cell):
         self._concat = ms.ops.Concat(axis=-1)
 
     def construct(self, observation: ms.Tensor, agent_ids: ms.Tensor,
-                  *rnn_hidden: torch.Tensor, avail_actions=None):
+                  *rnn_hidden: ms.Tensor, avail_actions=None):
         if self.use_rnn:
             outputs = self.representation(observation, *rnn_hidden)
             rnn_hidden = (outputs['rnn_hidden'], outputs['rnn_cell'])
@@ -170,7 +170,7 @@ class MixingQnetwork(nn.Cell):
             argmax_action = evalQ.argmax(axis=-1)
         return rnn_hidden, argmax_action, evalQ
 
-    def target_Q(self, observation: ms.Tensor, agent_ids: ms.Tensor, *rnn_hidden: torch.Tensor):
+    def target_Q(self, observation: ms.Tensor, agent_ids: ms.Tensor, *rnn_hidden: ms.Tensor):
         if self.use_rnn:
             outputs = self.target_representation(observation, *rnn_hidden)
             rnn_hidden = (outputs['rnn_hidden'], outputs['rnn_cell'])
@@ -218,7 +218,7 @@ class Weighted_MixingQnetwork(MixingQnetwork):
         self.target_q_feedforward = copy.deepcopy(self.q_feedforward)
         self._concat = ms.ops.Concat(axis=-1)
 
-    def q_centralized(self, observation: ms.Tensor, agent_ids: ms.Tensor, *rnn_hidden: torch.Tensor):
+    def q_centralized(self, observation: ms.Tensor, agent_ids: ms.Tensor, *rnn_hidden: ms.Tensor):
         if self.use_rnn:
             outputs = self.representation(observation, *rnn_hidden)
         else:
@@ -226,7 +226,7 @@ class Weighted_MixingQnetwork(MixingQnetwork):
         q_inputs = self._concat([outputs['state'], agent_ids])
         return self.eval_Qhead_centralized(q_inputs)
 
-    def target_q_centralized(self, observation: ms.Tensor, agent_ids: ms.Tensor, *rnn_hidden: torch.Tensor):
+    def target_q_centralized(self, observation: ms.Tensor, agent_ids: ms.Tensor, *rnn_hidden: ms.Tensor):
         if self.use_rnn:
             outputs = self.target_representation(observation, *rnn_hidden)
         else:
@@ -273,7 +273,7 @@ class Qtran_MixingQnetwork(nn.Cell):
         self._concat = ms.ops.Concat(axis=-1)
 
     def construct(self, observation: ms.Tensor, agent_ids: ms.Tensor,
-                  *rnn_hidden: torch.Tensor, avail_actions=None):
+                  *rnn_hidden: ms.Tensor, avail_actions=None):
         if self.use_rnn:
             outputs = self.representation(observation, *rnn_hidden)
             rnn_hidden = (outputs['rnn_hidden'], outputs['rnn_cell'])
@@ -290,7 +290,7 @@ class Qtran_MixingQnetwork(nn.Cell):
             argmax_action = evalQ.argmax(dim=-1, keepdim=False)
         return rnn_hidden, outputs['state'], argmax_action, evalQ
 
-    def target_Q(self, observation: ms.Tensor, agent_ids: ms.Tensor, *rnn_hidden: torch.Tensor):
+    def target_Q(self, observation: ms.Tensor, agent_ids: ms.Tensor, *rnn_hidden: ms.Tensor):
         if self.use_rnn:
             outputs = self.target_representation(observation, *rnn_hidden)
             rnn_hidden = (outputs['rnn_hidden'], outputs['rnn_cell'])
@@ -314,9 +314,9 @@ class DCG_policy(nn.Cell):
                  action_space: Discrete,
                  global_state_dim: int,
                  representation: Optional[Basic_Identical],
-                 utility: Optional[DCG_utility] = None,
-                 payoffs: Optional[DCG_payoff] = None,
-                 dcgraph: Optional[Coordination_Graph] = None,
+                 utility: Optional[nn.Cell] = None,
+                 payoffs: Optional[nn.Cell] = None,
+                 dcgraph: Optional[nn.Cell] = None,
                  hidden_size_bias: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., ms.Tensor]] = None,
@@ -342,7 +342,7 @@ class DCG_policy(nn.Cell):
         self._concat = ms.ops.Concat(axis=-1)
 
     def construct(self, observation: ms.Tensor, agent_ids: ms.Tensor,
-                  *rnn_hidden: torch.Tensor, avail_actions=None):
+                  *rnn_hidden: ms.Tensor, avail_actions=None):
         if self.use_rnn:
             outputs = self.representation(observation, *rnn_hidden)
             rnn_hidden = (outputs['rnn_hidden'], outputs['rnn_cell'])
@@ -541,7 +541,7 @@ class MATD3_policy(Basic_DDPG_policy):
                  actor_hidden_size: Sequence[int],
                  critic_hidden_size: Sequence[int],
                  normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., torch.Tensor]] = None,
+                 initialize: Optional[Callable[..., ms.Tensor]] = None,
                  activation: Optional[ModuleType] = None
                  ):
         super(MATD3_policy, self).__init__(action_space, n_agents, representation,

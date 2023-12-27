@@ -1831,13 +1831,13 @@ Source Code
 
         class BasicQhead(nn.Cell):
             def __init__(self,
-                         state_dim: int,
-                         action_dim: int,
-                         n_agents: int,
-                         hidden_sizes: Sequence[int],
-                         normalize: Optional[ModuleType] = None,
-                         initialize: Optional[Callable[..., ms.Tensor]] = None,
-                         activation: Optional[ModuleType] = None):
+                        state_dim: int,
+                        action_dim: int,
+                        n_agents: int,
+                        hidden_sizes: Sequence[int],
+                        normalize: Optional[ModuleType] = None,
+                        initialize: Optional[Callable[..., ms.Tensor]] = None,
+                        activation: Optional[ModuleType] = None):
                 super(BasicQhead, self).__init__()
                 layers_ = []
                 input_shape = (state_dim + n_agents,)
@@ -1853,20 +1853,20 @@ Source Code
 
         class BasicQnetwork(nn.Cell):
             def __init__(self,
-                         action_space: Discrete,
-                         n_agents: int,
-                         representation: Optional[Basic_Identical],
-                         hidden_size: Sequence[int] = None,
-                         normalize: Optional[ModuleType] = None,
-                         initialize: Optional[Callable[..., ms.Tensor]] = None,
-                         activation: Optional[ModuleType] = None):
+                        action_space: Discrete,
+                        n_agents: int,
+                        representation: Optional[Basic_Identical],
+                        hidden_size: Sequence[int] = None,
+                        normalize: Optional[ModuleType] = None,
+                        initialize: Optional[Callable[..., ms.Tensor]] = None,
+                        activation: Optional[ModuleType] = None):
                 super(BasicQnetwork, self).__init__()
                 self.action_dim = action_space.n
                 self.representation = representation
                 self.representation_info_shape = self.representation.output_shapes
 
                 self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, n_agents,
-                                             hidden_size, normalize, initialize, activation)
+                                            hidden_size, normalize, initialize, activation)
                 self.target_Qhead = copy.deepcopy(self.eval_Qhead)
                 self._concat = ms.ops.Concat(axis=-1)
 
@@ -1921,13 +1921,13 @@ Source Code
                     return self._sum(self._dist.entropy(probs, self._exp(self.logstd)), -1)
 
             def __init__(self,
-                         state_dim: int,
-                         n_agents: int,
-                         action_dim: int,
-                         hidden_sizes: Sequence[int],
-                         normalize: Optional[ModuleType] = None,
-                         initialize: Optional[Callable[..., ms.Tensor]] = None,
-                         activation: Optional[ModuleType] = None):
+                        state_dim: int,
+                        n_agents: int,
+                        action_dim: int,
+                        hidden_sizes: Sequence[int],
+                        normalize: Optional[ModuleType] = None,
+                        initialize: Optional[Callable[..., ms.Tensor]] = None,
+                        activation: Optional[ModuleType] = None):
                 super(ActorNet, self).__init__()
                 layers = []
                 input_shape = (state_dim + n_agents,)
@@ -1949,13 +1949,13 @@ Source Code
 
         class CriticNet(nn.Cell):
             def __init__(self,
-                         state_dim: int,
-                         n_agents: int,
-                         hidden_sizes: Sequence[int],
-                         normalize: Optional[ModuleType] = None,
-                         initialize: Optional[Callable[..., ms.Tensor]] = None,
-                         activation: Optional[ModuleType] = None
-                         ):
+                        state_dim: int,
+                        n_agents: int,
+                        hidden_sizes: Sequence[int],
+                        normalize: Optional[ModuleType] = None,
+                        initialize: Optional[Callable[..., ms.Tensor]] = None,
+                        activation: Optional[ModuleType] = None
+                        ):
                 super(CriticNet, self).__init__()
                 layers = []
                 input_shape = (state_dim + n_agents, )
@@ -1975,16 +1975,16 @@ Source Code
             """
 
             def __init__(self,
-                         action_space: Discrete,
-                         n_agents: int,
-                         representation: nn.Cell,
-                         mixer: Optional[VDN_mixer] = None,
-                         actor_hidden_size: Sequence[int] = None,
-                         critic_hidden_size: Sequence[int] = None,
-                         normalize: Optional[ModuleType] = None,
-                         initialize: Optional[Callable[..., torch.Tensor]] = None,
-                         activation: Optional[ModuleType] = None,
-                         **kwargs):
+                        action_space: Discrete,
+                        n_agents: int,
+                        representation: nn.Cell,
+                        mixer: Optional[VDN_mixer] = None,
+                        actor_hidden_size: Sequence[int] = None,
+                        critic_hidden_size: Sequence[int] = None,
+                        normalize: Optional[ModuleType] = None,
+                        initialize: Optional[Callable[..., ms.Tensor]] = None,
+                        activation: Optional[ModuleType] = None,
+                        **kwargs):
                 super(MAAC_Policy, self).__init__()
                 self.action_dim = action_space.shape[0]
                 self.n_agents = n_agents
@@ -2039,15 +2039,15 @@ Source Code
 
         class Basic_ISAC_policy(nn.Cell):
             def __init__(self,
-                         action_space: Space,
-                         n_agents: int,
-                         representation: Optional[Basic_Identical],
-                         actor_hidden_size: Sequence[int],
-                         critic_hidden_size: Sequence[int],
-                         normalize: Optional[ModuleType] = None,
-                         initialize: Optional[Callable[..., ms.Tensor]] = None,
-                         activation: Optional[ModuleType] = None
-                         ):
+                        action_space: Space,
+                        n_agents: int,
+                        representation: Optional[Basic_Identical],
+                        actor_hidden_size: Sequence[int],
+                        critic_hidden_size: Sequence[int],
+                        normalize: Optional[ModuleType] = None,
+                        initialize: Optional[Callable[..., ms.Tensor]] = None,
+                        activation: Optional[ModuleType] = None
+                        ):
                 super(Basic_ISAC_policy, self).__init__()
                 self.action_dim = action_space.shape[0]
                 self.n_agents = n_agents
@@ -2059,9 +2059,9 @@ Source Code
                 dim_input_critic = representation.output_shapes['state'][0] + self.action_dim
                 self.critic_net = CriticNet(dim_input_critic, n_agents, critic_hidden_size, normalize, initialize, activation)
                 self.target_actor_net = ActorNet(representation.output_shapes['state'][0], n_agents, self.action_dim,
-                                                 actor_hidden_size, normalize, initialize, activation)
+                                                actor_hidden_size, normalize, initialize, activation)
                 self.target_critic_net = CriticNet(dim_input_critic, n_agents, critic_hidden_size,
-                                                   normalize, initialize, activation)
+                                                  normalize, initialize, activation)
                 self.parameters_actor = list(self.representation.trainable_params()) + list(self.actor_net.trainable_params())
                 self.parameters_critic = self.critic_net.trainable_params()
                 self._concat = ms.ops.Concat(axis=-1)
@@ -2103,15 +2103,15 @@ Source Code
 
         class MASAC_policy(nn.Cell):
             def __init__(self,
-                         action_space: Space,
-                         n_agents: int,
-                         representation: Optional[Basic_Identical],
-                         actor_hidden_size: Sequence[int],
-                         critic_hidden_size: Sequence[int],
-                         normalize: Optional[ModuleType] = None,
-                         initialize: Optional[Callable[..., ms.Tensor]] = None,
-                         activation: Optional[ModuleType] = None
-                         ):
+                        action_space: Space,
+                        n_agents: int,
+                        representation: Optional[Basic_Identical],
+                        actor_hidden_size: Sequence[int],
+                        critic_hidden_size: Sequence[int],
+                        normalize: Optional[ModuleType] = None,
+                        initialize: Optional[Callable[..., ms.Tensor]] = None,
+                        activation: Optional[ModuleType] = None
+                        ):
                 super(MASAC_policy, self).__init__()
                 self.action_dim = action_space.shape[0]
                 self.n_agents = n_agents
@@ -2123,9 +2123,9 @@ Source Code
                 dim_input_critic = (representation.output_shapes['state'][0] + self.action_dim) * self.n_agents
                 self.critic_net = CriticNet(dim_input_critic, n_agents, critic_hidden_size, normalize, initialize, activation)
                 self.target_actor_net = ActorNet(representation.output_shapes['state'][0], n_agents, self.action_dim,
-                                                 actor_hidden_size, normalize, initialize, activation)
+                                                actor_hidden_size, normalize, initialize, activation)
                 self.target_critic_net = CriticNet(dim_input_critic, n_agents, critic_hidden_size,
-                                                   normalize, initialize, activation)
+                                                  normalize, initialize, activation)
                 self.parameters_actor = list(self.representation.trainable_params()) + list(self.actor_net.trainable_params())
                 self.parameters_critic = self.critic_net.trainable_params()
                 self._concat = ms.ops.Concat(axis=-1)
@@ -2171,4 +2171,5 @@ Source Code
                     tp.assign_value((tau * ep.data + (1 - tau) * tp.data))
                 for ep, tp in zip(self.critic_net.trainable_params(), self.target_critic_net.trainable_params()):
                     tp.assign_value((tau * ep.data + (1 - tau) * tp.data))
+
 

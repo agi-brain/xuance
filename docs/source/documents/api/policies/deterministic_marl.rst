@@ -3541,8 +3541,6 @@ Source Code
 
     .. code-block:: python
 
-        import markdown.extensions.smarty
-
         from xuance.mindspore.policies import *
         from xuance.mindspore.utils import *
         import copy
@@ -3552,13 +3550,13 @@ Source Code
 
         class BasicQhead(nn.Cell):
             def __init__(self,
-                         state_dim: int,
-                         action_dim: int,
-                         n_agents: int,
-                         hidden_sizes: Sequence[int],
-                         normalize: Optional[ModuleType] = None,
-                         initialize: Optional[Callable[..., ms.Tensor]] = None,
-                         activation: Optional[ModuleType] = None):
+                        state_dim: int,
+                        action_dim: int,
+                        n_agents: int,
+                        hidden_sizes: Sequence[int],
+                        normalize: Optional[ModuleType] = None,
+                        initialize: Optional[Callable[..., ms.Tensor]] = None,
+                        activation: Optional[ModuleType] = None):
                 super(BasicQhead, self).__init__()
                 layers_ = []
                 input_shape = (state_dim + n_agents,)
@@ -3574,14 +3572,14 @@ Source Code
 
         class BasicQnetwork(nn.Cell):
             def __init__(self,
-                         action_space: Discrete,
-                         n_agents: int,
-                         representation: Optional[Basic_Identical],
-                         hidden_size: Sequence[int] = None,
-                         normalize: Optional[ModuleType] = None,
-                         initialize: Optional[Callable[..., ms.Tensor]] = None,
-                         activation: Optional[ModuleType] = None,
-                         **kwargs):
+                        action_space: Discrete,
+                        n_agents: int,
+                        representation: Optional[Basic_Identical],
+                        hidden_size: Sequence[int] = None,
+                        normalize: Optional[ModuleType] = None,
+                        initialize: Optional[Callable[..., ms.Tensor]] = None,
+                        activation: Optional[ModuleType] = None,
+                        **kwargs):
                 super(BasicQnetwork, self).__init__()
                 self.action_dim = action_space.n
                 self.representation = representation
@@ -3590,12 +3588,12 @@ Source Code
                 self.lstm = True if kwargs["rnn"] == "LSTM" else False
                 self.use_rnn = True if kwargs["use_recurrent"] else False
                 self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, n_agents,
-                                             hidden_size, normalize, initialize, activation)
+                                            hidden_size, normalize, initialize, activation)
                 self.target_Qhead = copy.deepcopy(self.eval_Qhead)
                 self._concat = ms.ops.Concat(axis=-1)
 
             def construct(self, observation: ms.Tensor, agent_ids: ms.Tensor,
-                          *rnn_hidden: torch.Tensor, avail_actions=None):
+                          *rnn_hidden: ms.Tensor, avail_actions=None):
                 if self.use_rnn:
                     outputs = self.representation(observation, *rnn_hidden)
                     rnn_hidden = (outputs['rnn_hidden'], outputs['rnn_cell'])
@@ -3612,7 +3610,7 @@ Source Code
                     argmax_action = evalQ.argmax(axis=-1)
                 return rnn_hidden, argmax_action, evalQ
 
-            def target_Q(self, observation: ms.Tensor, agent_ids: ms.Tensor, *rnn_hidden: torch.Tensor):
+            def target_Q(self, observation: ms.Tensor, agent_ids: ms.Tensor, *rnn_hidden: ms.Tensor):
                 if self.use_rnn:
                     outputs = self.target_representation(observation, *rnn_hidden)
                     rnn_hidden = (outputs['rnn_hidden'], outputs['rnn_cell'])
@@ -3634,20 +3632,20 @@ Source Code
 
         class MFQnetwork(nn.Cell):
             def __init__(self,
-                         action_space: Discrete,
-                         n_agents: int,
-                         representation: Optional[Basic_Identical],
-                         hidden_size: Sequence[int] = None,
-                         normalize: Optional[ModuleType] = None,
-                         initialize: Optional[Callable[..., ms.Tensor]] = None,
-                         activation: Optional[ModuleType] = None):
+                        action_space: Discrete,
+                        n_agents: int,
+                        representation: Optional[Basic_Identical],
+                        hidden_size: Sequence[int] = None,
+                        normalize: Optional[ModuleType] = None,
+                        initialize: Optional[Callable[..., ms.Tensor]] = None,
+                        activation: Optional[ModuleType] = None):
                 super(MFQnetwork, self).__init__()
                 self.action_dim = action_space.n
                 self.representation = representation
                 self.representation_info_shape = self.representation.output_shapes
 
                 self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0] + self.action_dim, self.action_dim,
-                                             n_agents, hidden_size, normalize, initialize, activation)
+                                            n_agents, hidden_size, normalize, initialize, activation)
                 self.target_Qhead = copy.deepcopy(self.eval_Qhead)
                 self._concat = ms.ops.Concat(axis=-1)
                 self._dist = Categorical(dtype=ms.float32)
@@ -3674,15 +3672,15 @@ Source Code
 
         class MixingQnetwork(nn.Cell):
             def __init__(self,
-                         action_space: Discrete,
-                         n_agents: int,
-                         representation: Optional[Basic_Identical],
-                         mixer: Optional[VDN_mixer] = None,
-                         hidden_size: Sequence[int] = None,
-                         normalize: Optional[ModuleType] = None,
-                         initialize: Optional[Callable[..., ms.Tensor]] = None,
-                         activation: Optional[ModuleType] = None,
-                         **kwargs):
+                        action_space: Discrete,
+                        n_agents: int,
+                        representation: Optional[Basic_Identical],
+                        mixer: Optional[VDN_mixer] = None,
+                        hidden_size: Sequence[int] = None,
+                        normalize: Optional[ModuleType] = None,
+                        initialize: Optional[Callable[..., ms.Tensor]] = None,
+                        activation: Optional[ModuleType] = None,
+                        **kwargs):
                 super(MixingQnetwork, self).__init__()
                 self.action_dim = action_space.n
                 self.representation = representation
@@ -3691,14 +3689,14 @@ Source Code
                 self.lstm = True if kwargs["rnn"] == "LSTM" else False
                 self.use_rnn = True if kwargs["use_recurrent"] else False
                 self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, n_agents,
-                                             hidden_size, normalize, initialize, activation)
+                                            hidden_size, normalize, initialize, activation)
                 self.target_Qhead = copy.deepcopy(self.eval_Qhead)
                 self.eval_Qtot = mixer
                 self.target_Qtot = copy.deepcopy(self.eval_Qtot)
                 self._concat = ms.ops.Concat(axis=-1)
 
             def construct(self, observation: ms.Tensor, agent_ids: ms.Tensor,
-                          *rnn_hidden: torch.Tensor, avail_actions=None):
+                          *rnn_hidden: ms.Tensor, avail_actions=None):
                 if self.use_rnn:
                     outputs = self.representation(observation, *rnn_hidden)
                     rnn_hidden = (outputs['rnn_hidden'], outputs['rnn_cell'])
@@ -3715,7 +3713,7 @@ Source Code
                     argmax_action = evalQ.argmax(axis=-1)
                 return rnn_hidden, argmax_action, evalQ
 
-            def target_Q(self, observation: ms.Tensor, agent_ids: ms.Tensor, *rnn_hidden: torch.Tensor):
+            def target_Q(self, observation: ms.Tensor, agent_ids: ms.Tensor, *rnn_hidden: ms.Tensor):
                 if self.use_rnn:
                     outputs = self.target_representation(observation, *rnn_hidden)
                     rnn_hidden = (outputs['rnn_hidden'], outputs['rnn_cell'])
@@ -3745,16 +3743,16 @@ Source Code
 
         class Weighted_MixingQnetwork(MixingQnetwork):
             def __init__(self,
-                         action_space: Discrete,
-                         n_agents: int,
-                         representation: Optional[Basic_Identical],
-                         mixer: Optional[VDN_mixer] = None,
-                         ff_mixer: Optional[QMIX_FF_mixer] = None,
-                         hidden_size: Sequence[int] = None,
-                         normalize: Optional[ModuleType] = None,
-                         initialize: Optional[Callable[..., ms.Tensor]] = None,
-                         activation: Optional[ModuleType] = None,
-                         **kwargs):
+                        action_space: Discrete,
+                        n_agents: int,
+                        representation: Optional[Basic_Identical],
+                        mixer: Optional[VDN_mixer] = None,
+                        ff_mixer: Optional[QMIX_FF_mixer] = None,
+                        hidden_size: Sequence[int] = None,
+                        normalize: Optional[ModuleType] = None,
+                        initialize: Optional[Callable[..., ms.Tensor]] = None,
+                        activation: Optional[ModuleType] = None,
+                        **kwargs):
                 super(Weighted_MixingQnetwork, self).__init__(action_space, n_agents, representation, mixer, hidden_size,
                                                               normalize, initialize, activation, **kwargs)
                 self.eval_Qhead_centralized = copy.deepcopy(self.eval_Qhead)
@@ -3763,7 +3761,7 @@ Source Code
                 self.target_q_feedforward = copy.deepcopy(self.q_feedforward)
                 self._concat = ms.ops.Concat(axis=-1)
 
-            def q_centralized(self, observation: ms.Tensor, agent_ids: ms.Tensor, *rnn_hidden: torch.Tensor):
+            def q_centralized(self, observation: ms.Tensor, agent_ids: ms.Tensor, *rnn_hidden: ms.Tensor):
                 if self.use_rnn:
                     outputs = self.representation(observation, *rnn_hidden)
                 else:
@@ -3771,7 +3769,7 @@ Source Code
                 q_inputs = self._concat([outputs['state'], agent_ids])
                 return self.eval_Qhead_centralized(q_inputs)
 
-            def target_q_centralized(self, observation: ms.Tensor, agent_ids: ms.Tensor, *rnn_hidden: torch.Tensor):
+            def target_q_centralized(self, observation: ms.Tensor, agent_ids: ms.Tensor, *rnn_hidden: ms.Tensor):
                 if self.use_rnn:
                     outputs = self.target_representation(observation, *rnn_hidden)
                 else:
@@ -3792,16 +3790,16 @@ Source Code
 
         class Qtran_MixingQnetwork(nn.Cell):
             def __init__(self,
-                         action_space: Discrete,
-                         n_agents: int,
-                         representation: Optional[Basic_Identical],
-                         mixer: Optional[VDN_mixer] = None,
-                         qtran_mixer: Optional[QTRAN_base] = None,
-                         hidden_size: Sequence[int] = None,
-                         normalize: Optional[ModuleType] = None,
-                         initialize: Optional[Callable[..., ms.Tensor]] = None,
-                         activation: Optional[ModuleType] = None,
-                         **kwargs):
+                        action_space: Discrete,
+                        n_agents: int,
+                        representation: Optional[Basic_Identical],
+                        mixer: Optional[VDN_mixer] = None,
+                        qtran_mixer: Optional[QTRAN_base] = None,
+                        hidden_size: Sequence[int] = None,
+                        normalize: Optional[ModuleType] = None,
+                        initialize: Optional[Callable[..., ms.Tensor]] = None,
+                        activation: Optional[ModuleType] = None,
+                        **kwargs):
                 super(Qtran_MixingQnetwork, self).__init__()
                 self.action_dim = action_space.n
                 self.representation = representation
@@ -3810,7 +3808,7 @@ Source Code
                 self.lstm = True if kwargs["rnn"] == "LSTM" else False
                 self.use_rnn = True if kwargs["use_recurrent"] else False
                 self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, n_agents,
-                                             hidden_size, normalize, initialize, activation)
+                                            hidden_size, normalize, initialize, activation)
                 self.target_Qhead = copy.deepcopy(self.eval_Qhead)
                 self.qtran_net = qtran_mixer
                 self.target_qtran_net = copy.deepcopy(qtran_mixer)
@@ -3818,7 +3816,7 @@ Source Code
                 self._concat = ms.ops.Concat(axis=-1)
 
             def construct(self, observation: ms.Tensor, agent_ids: ms.Tensor,
-                          *rnn_hidden: torch.Tensor, avail_actions=None):
+                          *rnn_hidden: ms.Tensor, avail_actions=None):
                 if self.use_rnn:
                     outputs = self.representation(observation, *rnn_hidden)
                     rnn_hidden = (outputs['rnn_hidden'], outputs['rnn_cell'])
@@ -3835,7 +3833,7 @@ Source Code
                     argmax_action = evalQ.argmax(dim=-1, keepdim=False)
                 return rnn_hidden, outputs['state'], argmax_action, evalQ
 
-            def target_Q(self, observation: ms.Tensor, agent_ids: ms.Tensor, *rnn_hidden: torch.Tensor):
+            def target_Q(self, observation: ms.Tensor, agent_ids: ms.Tensor, *rnn_hidden: ms.Tensor):
                 if self.use_rnn:
                     outputs = self.target_representation(observation, *rnn_hidden)
                     rnn_hidden = (outputs['rnn_hidden'], outputs['rnn_cell'])
@@ -3856,17 +3854,17 @@ Source Code
 
         class DCG_policy(nn.Cell):
             def __init__(self,
-                         action_space: Discrete,
-                         global_state_dim: int,
-                         representation: Optional[Basic_Identical],
-                         utility: Optional[DCG_utility] = None,
-                         payoffs: Optional[DCG_payoff] = None,
-                         dcgraph: Optional[Coordination_Graph] = None,
-                         hidden_size_bias: Sequence[int] = None,
-                         normalize: Optional[ModuleType] = None,
-                         initialize: Optional[Callable[..., ms.Tensor]] = None,
-                         activation: Optional[ModuleType] = None,
-                         **kwargs):
+                        action_space: Discrete,
+                        global_state_dim: int,
+                        representation: Optional[Basic_Identical],
+                        utility: Optional[nn.Cell] = None,
+                        payoffs: Optional[nn.Cell] = None,
+                        dcgraph: Optional[nn.Cell] = None,
+                        hidden_size_bias: Sequence[int] = None,
+                        normalize: Optional[ModuleType] = None,
+                        initialize: Optional[Callable[..., ms.Tensor]] = None,
+                        activation: Optional[ModuleType] = None,
+                        **kwargs):
                 super(DCG_policy, self).__init__()
                 self.action_dim = action_space.n
                 self.representation = representation
@@ -3882,12 +3880,12 @@ Source Code
                 if hidden_size_bias is not None:
                     self.dcg_s = True
                     self.bias = BasicQhead(global_state_dim, 1, 0, hidden_size_bias,
-                                           normalize, initialize, activation)
+                                          normalize, initialize, activation)
                     self.target_bias = copy.deepcopy(self.bias)
                 self._concat = ms.ops.Concat(axis=-1)
 
             def construct(self, observation: ms.Tensor, agent_ids: ms.Tensor,
-                          *rnn_hidden: torch.Tensor, avail_actions=None):
+                          *rnn_hidden: ms.Tensor, avail_actions=None):
                 if self.use_rnn:
                     outputs = self.representation(observation, *rnn_hidden)
                     rnn_hidden = (outputs['rnn_hidden'], outputs['rnn_cell'])
@@ -3918,13 +3916,13 @@ Source Code
 
         class ActorNet(nn.Cell):
             def __init__(self,
-                         state_dim: int,
-                         n_agents: int,
-                         action_dim: int,
-                         hidden_sizes: Sequence[int],
-                         normalize: Optional[ModuleType] = None,
-                         initialize: Optional[Callable[..., ms.Tensor]] = None,
-                         activation: Optional[ModuleType] = None):
+                        state_dim: int,
+                        n_agents: int,
+                        action_dim: int,
+                        hidden_sizes: Sequence[int],
+                        normalize: Optional[ModuleType] = None,
+                        initialize: Optional[Callable[..., ms.Tensor]] = None,
+                        activation: Optional[ModuleType] = None):
                 super(ActorNet, self).__init__()
                 layers = []
                 input_shape = (state_dim + n_agents,)
@@ -3940,14 +3938,14 @@ Source Code
 
         class CriticNet(nn.Cell):
             def __init__(self,
-                         independent: bool,
-                         state_dim: int,
-                         n_agents: int,
-                         action_dim: int,
-                         hidden_sizes: Sequence[int],
-                         normalize: Optional[ModuleType] = None,
-                         initialize: Optional[Callable[..., ms.Tensor]] = None,
-                         activation: Optional[ModuleType] = None):
+                        independent: bool,
+                        state_dim: int,
+                        n_agents: int,
+                        action_dim: int,
+                        hidden_sizes: Sequence[int],
+                        normalize: Optional[ModuleType] = None,
+                        initialize: Optional[Callable[..., ms.Tensor]] = None,
+                        activation: Optional[ModuleType] = None):
                 super(CriticNet, self).__init__()
                 layers = []
                 if independent:
@@ -3966,14 +3964,14 @@ Source Code
 
         class Basic_DDPG_policy(nn.Cell):
             def __init__(self,
-                         action_space: Space,
-                         n_agents: int,
-                         representation: Optional[Basic_Identical],
-                         actor_hidden_size: Sequence[int],
-                         critic_hidden_size: Sequence[int],
-                         normalize: Optional[ModuleType] = None,
-                         initialize: Optional[Callable[..., ms.Tensor]] = None,
-                         activation: Optional[ModuleType] = None):
+                        action_space: Space,
+                        n_agents: int,
+                        representation: Optional[Basic_Identical],
+                        actor_hidden_size: Sequence[int],
+                        critic_hidden_size: Sequence[int],
+                        normalize: Optional[ModuleType] = None,
+                        initialize: Optional[Callable[..., ms.Tensor]] = None,
+                        activation: Optional[ModuleType] = None):
                 super(Basic_DDPG_policy, self).__init__()
                 self.action_dim = action_space.shape[0]
                 self.n_agents = n_agents
@@ -4020,14 +4018,14 @@ Source Code
 
         class MADDPG_policy(nn.Cell):
             def __init__(self,
-                         action_space: Space,
-                         n_agents: int,
-                         representation: Optional[Basic_Identical],
-                         actor_hidden_size: Sequence[int],
-                         critic_hidden_size: Sequence[int],
-                         normalize: Optional[ModuleType] = None,
-                         initialize: Optional[Callable[..., ms.Tensor]] = None,
-                         activation: Optional[ModuleType] = None):
+                        action_space: Space,
+                        n_agents: int,
+                        representation: Optional[Basic_Identical],
+                        actor_hidden_size: Sequence[int],
+                        critic_hidden_size: Sequence[int],
+                        normalize: Optional[ModuleType] = None,
+                        initialize: Optional[Callable[..., ms.Tensor]] = None,
+                        activation: Optional[ModuleType] = None):
                 super(MADDPG_policy, self).__init__()
                 self.action_dim = action_space.shape[0]
                 self.n_agents = n_agents
@@ -4080,18 +4078,18 @@ Source Code
 
         class MATD3_policy(Basic_DDPG_policy):
             def __init__(self,
-                         action_space: Space,
-                         n_agents: int,
-                         representation: Optional[Basic_Identical],
-                         actor_hidden_size: Sequence[int],
-                         critic_hidden_size: Sequence[int],
-                         normalize: Optional[ModuleType] = None,
-                         initialize: Optional[Callable[..., torch.Tensor]] = None,
-                         activation: Optional[ModuleType] = None
-                         ):
+                        action_space: Space,
+                        n_agents: int,
+                        representation: Optional[Basic_Identical],
+                        actor_hidden_size: Sequence[int],
+                        critic_hidden_size: Sequence[int],
+                        normalize: Optional[ModuleType] = None,
+                        initialize: Optional[Callable[..., ms.Tensor]] = None,
+                        activation: Optional[ModuleType] = None
+                        ):
                 super(MATD3_policy, self).__init__(action_space, n_agents, representation,
-                                                   actor_hidden_size, critic_hidden_size,
-                                                   normalize, initialize, activation)
+                                                  actor_hidden_size, critic_hidden_size,
+                                                  normalize, initialize, activation)
                 self.critic_net_A = CriticNet(False, representation.output_shapes['state'][0], n_agents, self.action_dim,
                                             critic_hidden_size, normalize, initialize, activation)
                 self.critic_net_B = CriticNet(False, representation.output_shapes['state'][0], n_agents, self.action_dim,
@@ -4142,3 +4140,4 @@ Source Code
                     tp.assign_value((tau*ep.data+(1-tau)*tp.data))
                 for ep, tp in zip(self.critic_net_B.trainable_params(), self.target_critic_net_B.trainable_params()):
                     tp.assign_value((tau*ep.data+(1-tau)*tp.data))
+
