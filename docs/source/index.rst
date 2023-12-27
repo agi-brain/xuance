@@ -75,10 +75,10 @@ The overall framework of XuanCe is shown as below.
 
 XuanCe contains four main parts:
 
-- Part I: Configs
-- Part II: Common toolboxes
-- Part III: Envrionments
-- Part IV: Algorithms
+- Part I: Configs. The configurations of hyper-parameters, environments, models, etc.
+- Part II: Common toolboxes. Reusable tools that are independent of the choice of DL toolbox.
+- Part III: Envrionments. The supported simulated environments.
+- Part IV: Algorithms. The key part to build DRL algorithms.
 
 .. raw:: html
 

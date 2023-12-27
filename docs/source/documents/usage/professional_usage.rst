@@ -167,11 +167,11 @@ Here is an example definition of the run() function with comments:
         # prepare representation
         from xuance.torch.representations import Basic_MLP
         representation = Basic_MLP(input_shape=space2shape(args.observation_space),
-                                hidden_sizes=args.representation_hidden_size,
-                                normalize=None,
-                                initialize=torch.nn.init.orthogonal_,
-                                activation=ActivationFunctions[args.activation],
-                                device=args.device)  # create representation
+                                   hidden_sizes=args.representation_hidden_size,
+                                   normalize=None,
+                                   initialize=torch.nn.init.orthogonal_,
+                                   activation=ActivationFunctions[args.activation],
+                                   device=args.device)  # create representation
 
         # prepare policy
         from xuance.torch.policies import Gaussian_AC_Policy
