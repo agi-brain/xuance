@@ -13,6 +13,7 @@ Each simulation environment contains a rich variety of task scenarios, as shown 
     Vectorized Environments <environments/vector_envs>
     Gym <environments/gym>
     Gym Platform <environments/gym_platform>
+    Minigrid <environments/minigrid>
     PettingZoo <environments/pettingzoo>
     StarCraft2 Multi-Agent Challenge <environments/starcraft2>
     MAgent2 <environments/magent2>
@@ -24,6 +25,7 @@ Each simulation environment contains a rich variety of task scenarios, as shown 
 * :doc:`Vectorized Environments <environments/vector_envs>`.
 * :doc:`Gym <environments/gym>`.
 * :doc:`Gym Platform <environments/gym_platform>`.
+* :doc:`Minigrid <environments/minigrid>`.
 * :doc:`PettingZoo <environments/pettingzoo>`.
 * :doc:`StarCraft2 Multi-Agent Challenge <environments/starcraft2>`.
 * :doc:`MAgent2 <environments/magent2>`.
