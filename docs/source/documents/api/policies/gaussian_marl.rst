@@ -1496,14 +1496,14 @@ Source Code
 
         class BasicQhead(tk.Model):
             def __init__(self,
-                         state_dim: int,
-                         action_dim: int,
-                         n_agents: int,
-                         hidden_sizes: Sequence[int],
-                         normalize: Optional[tk.layers.Layer] = None,
-                         initializer: Optional[tk.initializers.Initializer] = None,
-                         activation: Optional[tk.layers.Layer] = None,
-                         device: str = "cpu:0"):
+                        state_dim: int,
+                        action_dim: int,
+                        n_agents: int,
+                        hidden_sizes: Sequence[int],
+                        normalize: Optional[tk.layers.Layer] = None,
+                        initializer: Optional[tk.initializers.Initializer] = None,
+                        activation: Optional[tk.layers.Layer] = None,
+                        device: str = "cpu:0"):
                 super(BasicQhead, self).__init__()
                 layers_ = []
                 input_shape = (state_dim + n_agents,)
@@ -1519,23 +1519,23 @@ Source Code
 
         class BasicQnetwork(tk.Model):
             def __init__(self,
-                         action_space: Discrete,
-                         n_agents: int,
-                         representation: Optional[Basic_Identical],
-                         hidden_size: Sequence[int] = None,
-                         normalize: Optional[tk.layers.Layer] = None,
-                         initializer: Optional[tk.initializers.Initializer] = None,
-                         activation: Optional[tk.layers.Layer] = None,
-                         device: str = "cpu:0"):
+                        action_space: Discrete,
+                        n_agents: int,
+                        representation: Optional[Basic_Identical],
+                        hidden_size: Sequence[int] = None,
+                        normalize: Optional[tk.layers.Layer] = None,
+                        initializer: Optional[tk.initializers.Initializer] = None,
+                        activation: Optional[tk.layers.Layer] = None,
+                        device: str = "cpu:0"):
                 super(BasicQnetwork, self).__init__()
                 self.action_dim = action_space.n
                 self.representation = representation
                 self.representation_info_shape = self.representation.output_shapes
 
                 self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, n_agents,
-                                             hidden_size, normalize, initializer, activation, device)
+                                            hidden_size, normalize, initializer, activation, device)
                 self.target_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, n_agents,
-                                               hidden_size, normalize, initializer, activation, device)
+                                              hidden_size, normalize, initializer, activation, device)
                 self.copy_target()
 
             def call(self, inputs: Union[np.ndarray, dict], **kwargs):
@@ -1562,14 +1562,14 @@ Source Code
 
         class ActorNet(tk.Model):
             def __init__(self,
-                         state_dim: int,
-                         n_agents: int,
-                         action_dim: int,
-                         hidden_sizes: Sequence[int],
-                         normalize: Optional[tk.layers.Layer] = None,
-                         initializer: Optional[tk.initializers.Initializer] = None,
-                         activation: Optional[tk.layers.Layer] = None,
-                         device: str = "cpu:0"):
+                        state_dim: int,
+                        n_agents: int,
+                        action_dim: int,
+                        hidden_sizes: Sequence[int],
+                        normalize: Optional[tk.layers.Layer] = None,
+                        initializer: Optional[tk.initializers.Initializer] = None,
+                        activation: Optional[tk.layers.Layer] = None,
+                        device: str = "cpu:0"):
                 super(ActorNet, self).__init__()
                 self.device = device
                 layers = []
@@ -1594,14 +1594,14 @@ Source Code
 
         class CriticNet(tk.Model):
             def __init__(self,
-                         state_dim: int,
-                         n_agents: int,
-                         hidden_sizes: Sequence[int],
-                         normalize: Optional[tk.layers.Layer] = None,
-                         initializer: Optional[tk.initializers.Initializer] = None,
-                         activation: Optional[tk.layers.Layer] = None,
-                         device: str = "cpu:0"
-                         ):
+                        state_dim: int,
+                        n_agents: int,
+                        hidden_sizes: Sequence[int],
+                        normalize: Optional[tk.layers.Layer] = None,
+                        initializer: Optional[tk.initializers.Initializer] = None,
+                        activation: Optional[tk.layers.Layer] = None,
+                        device: str = "cpu:0"
+                        ):
                 super(CriticNet, self).__init__()
                 layers = []
                 input_shape = (state_dim + n_agents,)
@@ -1621,17 +1621,17 @@ Source Code
             """
 
             def __init__(self,
-                         action_space: Discrete,
-                         n_agents: int,
-                         representation: tk.Model,
-                         mixer: Optional[VDN_mixer] = None,
-                         actor_hidden_size: Sequence[int] = None,
-                         critic_hidden_size: Sequence[int] = None,
-                         normalize: Optional[tk.layers.Layer] = None,
-                         initialize: Optional[tk.initializers.Initializer] = None,
-                         activation: Optional[tk.layers.Layer] = None,
-                         device: Optional[Union[str, int, torch.device]] = None,
-                         **kwargs):
+                        action_space: Discrete,
+                        n_agents: int,
+                        representation: tk.Model,
+                        mixer: Optional[VDN_mixer] = None,
+                        actor_hidden_size: Sequence[int] = None,
+                        critic_hidden_size: Sequence[int] = None,
+                        normalize: Optional[tk.layers.Layer] = None,
+                        initialize: Optional[tk.initializers.Initializer] = None,
+                        activation: Optional[tk.layers.Layer] = None,
+                        device: Optional[Union[str, int]] = None,
+                        **kwargs):
                 super(MAAC_Policy, self).__init__()
                 self.device = device
                 self.action_dim = action_space.shape[0]
@@ -1706,16 +1706,16 @@ Source Code
 
         class Basic_ISAC_policy(tk.Model):
             def __init__(self,
-                         action_space: Space,
-                         n_agents: int,
-                         representation: Optional[Basic_Identical],
-                         actor_hidden_size: Sequence[int],
-                         critic_hidden_size: Sequence[int],
-                         normalize: Optional[tk.layers.Layer] = None,
-                         initializer: Optional[tk.initializers.Initializer] = None,
-                         activation: Optional[tk.layers.Layer] = None,
-                         device: str = "cpu:0"
-                         ):
+                        action_space: Space,
+                        n_agents: int,
+                        representation: Optional[Basic_Identical],
+                        actor_hidden_size: Sequence[int],
+                        critic_hidden_size: Sequence[int],
+                        normalize: Optional[tk.layers.Layer] = None,
+                        initializer: Optional[tk.initializers.Initializer] = None,
+                        activation: Optional[tk.layers.Layer] = None,
+                        device: str = "cpu:0"
+                        ):
                 super(Basic_ISAC_policy, self).__init__()
                 self.action_dim = action_space.shape[0]
                 self.n_agents = n_agents
@@ -1729,9 +1729,9 @@ Source Code
                 self.critic_net = CriticNet(dim_input_critic, n_agents, critic_hidden_size,
                                             normalize, initializer, activation, device)
                 self.target_actor_net = ActorNet(representation.output_shapes['state'][0], n_agents, self.action_dim,
-                                                 actor_hidden_size, normalize, initializer, activation, device)
+                                                actor_hidden_size, normalize, initializer, activation, device)
                 self.target_critic_net = CriticNet(dim_input_critic, n_agents, critic_hidden_size,
-                                                   normalize, initializer, activation, device)
+                                                  normalize, initializer, activation, device)
                 if isinstance(self.representation, Basic_Identical):
                     self.parameters_actor = self.actor_net.trainable_variables
                 else:
@@ -1780,24 +1780,24 @@ Source Code
 
         class MASAC_policy(Basic_ISAC_policy):
             def __init__(self,
-                         action_space: Space,
-                         n_agents: int,
-                         representation: Optional[Basic_Identical],
-                         actor_hidden_size: Sequence[int],
-                         critic_hidden_size: Sequence[int],
-                         normalize: Optional[tk.layers.Layer] = None,
-                         initializer: Optional[tk.initializers.Initializer] = None,
-                         activation: Optional[tk.layers.Layer] = None,
-                         device: str = "cpu:0"
-                         ):
+                        action_space: Space,
+                        n_agents: int,
+                        representation: Optional[Basic_Identical],
+                        actor_hidden_size: Sequence[int],
+                        critic_hidden_size: Sequence[int],
+                        normalize: Optional[tk.layers.Layer] = None,
+                        initializer: Optional[tk.initializers.Initializer] = None,
+                        activation: Optional[tk.layers.Layer] = None,
+                        device: str = "cpu:0"
+                        ):
                 super(MASAC_policy, self).__init__(action_space, n_agents, representation,
-                                                   actor_hidden_size, critic_hidden_size,
-                                                   normalize, initializer, activation, device)
+                                                  actor_hidden_size, critic_hidden_size,
+                                                  normalize, initializer, activation, device)
                 dim_input_critic = (representation.output_shapes['state'][0] + self.action_dim) * self.n_agents
                 self.critic_net = CriticNet(dim_input_critic, n_agents, critic_hidden_size,
                                             normalize, initializer, activation, device)
                 self.target_critic_net = CriticNet(dim_input_critic, n_agents, critic_hidden_size,
-                                                   normalize, initializer, activation, device)
+                                                  normalize, initializer, activation, device)
                 self.parameters_critic = self.critic_net.trainable_variables
                 self.soft_update(tau=1.0)
 
@@ -1816,6 +1816,7 @@ Source Code
                 actions_n = tf.tile(tf.reshape(actions, [bs, 1, -1]), (1, self.n_agents, 1))
                 critic_in = tf.concat([outputs_n, actions_n, agent_ids], axis=-1)
                 return self.target_critic_net(critic_in)
+
 
 
   .. group-tab:: MindSpore

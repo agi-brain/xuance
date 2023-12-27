@@ -142,7 +142,7 @@ class MAAC_Policy(tk.Model):
                  normalize: Optional[tk.layers.Layer] = None,
                  initialize: Optional[tk.initializers.Initializer] = None,
                  activation: Optional[tk.layers.Layer] = None,
-                 device: Optional[Union[str, int, torch.device]] = None,
+                 device: Optional[Union[str, int]] = None,
                  **kwargs):
         super(MAAC_Policy, self).__init__()
         self.device = device

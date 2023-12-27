@@ -1,5 +1,4 @@
 from xuance.tensorflow.agents import *
-from xuance.tensorflow.agents.agents_marl import linear_decay_or_increase
 
 
 class DCG_Agents(MARLAgents):
@@ -35,14 +34,14 @@ class DCG_Agents(MARLAgents):
             policy = REGISTRY_Policy[config.policy](action_space,
                                                     config.state_space.shape[0], representation,
                                                     utility, payoffs, dcgraph, config.hidden_bias_dim,
-                                                    None, None, torch.nn.ReLU, device,
+                                                    None, None, tk.layers.Activation('relu'), device,
                                                     use_recurrent=config.use_recurrent,
                                                     rnn=config.rnn)
         else:
             policy = REGISTRY_Policy[config.policy](action_space,
                                                     config.state_space.shape[0], representation,
                                                     utility, payoffs, dcgraph, None,
-                                                    None, None, torch.nn.ReLU, device,
+                                                    None, None, tk.layers.Activation('relu'), device,
                                                     use_recurrent=config.use_recurrent,
                                                     rnn=config.rnn)
         lr_scheduler = MyLinearLR(config.learning_rate, start_factor=1.0, end_factor=0.5,

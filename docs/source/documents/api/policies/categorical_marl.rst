@@ -1308,20 +1308,19 @@ Source Code
         from xuance.tensorflow.policies import *
         from xuance.tensorflow.utils import *
         from xuance.tensorflow.representations import Basic_Identical
-        from .deterministic_marl import BasicQhead
 
 
         class ActorNet(tk.Model):
             def __init__(self,
-                         state_dim: int,
-                         action_dim: int,
-                         n_agents: int,
-                         hidden_sizes: Sequence[int],
-                         normalize: Optional[tk.layers.Layer] = None,
-                         initializer: Optional[tk.initializers.Initializer] = None,
-                         gain: float = 1.0,
-                         activation: Optional[tk.layers.Layer] = None,
-                         device: str = "cpu:0"):
+                        state_dim: int,
+                        action_dim: int,
+                        n_agents: int,
+                        hidden_sizes: Sequence[int],
+                        normalize: Optional[tk.layers.Layer] = None,
+                        initializer: Optional[tk.initializers.Initializer] = None,
+                        gain: float = 1.0,
+                        activation: Optional[tk.layers.Layer] = None,
+                        device: str = "cpu:0"):
                 super(ActorNet, self).__init__()
                 layers = []
                 input_shape = (state_dim + n_agents,)
@@ -1339,13 +1338,13 @@ Source Code
 
         class CriticNet(tk.Model):
             def __init__(self,
-                         state_dim: int,
-                         n_agents: int,
-                         hidden_sizes: Sequence[int],
-                         normalize: Optional[tk.layers.Layer] = None,
-                         initializer: Optional[tk.initializers.Initializer] = None,
-                         activation: Optional[tk.layers.Layer] = None,
-                         device: Optional[Union[str, int, torch.device]] = None):
+                        state_dim: int,
+                        n_agents: int,
+                        hidden_sizes: Sequence[int],
+                        normalize: Optional[tk.layers.Layer] = None,
+                        initializer: Optional[tk.initializers.Initializer] = None,
+                        activation: Optional[tk.layers.Layer] = None,
+                        device: Optional[Union[str, int]] = None):
                 super(CriticNet, self).__init__()
                 layers = []
                 input_shape = (state_dim + n_agents,)
@@ -1361,13 +1360,13 @@ Source Code
 
         class COMA_CriticNet(tk.Model):
             def __init__(self,
-                         state_dim: int,
-                         act_dim: int,
-                         hidden_sizes: Sequence[int],
-                         normalize: Optional[tk.layers.Layer] = None,
-                         initializer: Optional[tk.initializers.Initializer] = None,
-                         activation: Optional[tk.layers.Layer] = None,
-                         device: Optional[Union[str, int, torch.device]] = None):
+                        state_dim: int,
+                        act_dim: int,
+                        hidden_sizes: Sequence[int],
+                        normalize: Optional[tk.layers.Layer] = None,
+                        initializer: Optional[tk.initializers.Initializer] = None,
+                        activation: Optional[tk.layers.Layer] = None,
+                        device: Optional[Union[str, int]] = None):
                 super(COMA_CriticNet, self).__init__()
                 layers = []
                 input_shape = (state_dim,)
@@ -1386,17 +1385,17 @@ Source Code
             MAAC_Policy: Multi-Agent Actor-Critic Policy
             """
             def __init__(self,
-                         action_space: Discrete,
-                         n_agents: int,
-                         representation: Optional[Basic_Identical],
-                         mixer: Optional[VDN_mixer] = None,
-                         actor_hidden_size: Sequence[int] = None,
-                         critic_hidden_size: Sequence[int] = None,
-                         normalize: Optional[tk.layers.Layer] = None,
-                         initializer: Optional[tk.initializers.Initializer] = None,
-                         activation: Optional[tk.layers.Layer] = None,
-                         device: Optional[Union[str, int, torch.device]] = None,
-                         **kwargs):
+                        action_space: Discrete,
+                        n_agents: int,
+                        representation: Optional[Basic_Identical],
+                        mixer: Optional[VDN_mixer] = None,
+                        actor_hidden_size: Sequence[int] = None,
+                        critic_hidden_size: Sequence[int] = None,
+                        normalize: Optional[tk.layers.Layer] = None,
+                        initializer: Optional[tk.initializers.Initializer] = None,
+                        activation: Optional[tk.layers.Layer] = None,
+                        device: Optional[Union[str, int]] = None,
+                        **kwargs):
                 super(MAAC_Policy, self).__init__()
                 self.device = device
                 self.action_dim = action_space.n
@@ -1407,7 +1406,7 @@ Source Code
                 self.lstm = True if kwargs["rnn"] == "LSTM" else False
                 self.use_rnn = True if kwargs["use_recurrent"] else False
                 self.actor = ActorNet(self.representation.output_shapes['state'][0], self.action_dim, n_agents,
-                                      actor_hidden_size, normalize, initializer, kwargs['gain'], activation, device)
+                                    actor_hidden_size, normalize, initializer, kwargs['gain'], activation, device)
                 self.critic = CriticNet(self.representation.output_shapes['state'][0], n_agents, critic_hidden_size,
                                         normalize, initializer, activation, device)
                 self.mixer = mixer
@@ -1473,17 +1472,17 @@ Source Code
 
         class MAAC_Policy_Share(MAAC_Policy):
             def __init__(self,
-                         action_space: Discrete,
-                         n_agents: int,
-                         representation: tk.Model,
-                         mixer: Optional[VDN_mixer] = None,
-                         actor_hidden_size: Sequence[int] = None,
-                         critic_hidden_size: Sequence[int] = None,
-                         normalize: Optional[tk.layers.Layer] = None,
-                         initialize: Optional[tk.initializers.Initializer] = None,
-                         activation: Optional[tk.layers.Layer] = None,
-                         device: Optional[Union[str, int, torch.device]] = None,
-                         **kwargs):
+                        action_space: Discrete,
+                        n_agents: int,
+                        representation: tk.Model,
+                        mixer: Optional[VDN_mixer] = None,
+                        actor_hidden_size: Sequence[int] = None,
+                        critic_hidden_size: Sequence[int] = None,
+                        normalize: Optional[tk.layers.Layer] = None,
+                        initialize: Optional[tk.initializers.Initializer] = None,
+                        activation: Optional[tk.layers.Layer] = None,
+                        device: Optional[Union[str, int]] = None,
+                        **kwargs):
                 super(MAAC_Policy, self).__init__()
                 self.device = device
                 self.action_dim = action_space.n
@@ -1493,7 +1492,7 @@ Source Code
                 self.representation = representation
                 self.representation_info_shape = self.representation.output_shapes
                 self.actor = ActorNet(self.representation.output_shapes['state'][0], self.action_dim, n_agents,
-                                      actor_hidden_size, normalize, initialize, kwargs['gain'], activation, device)
+                                    actor_hidden_size, normalize, initialize, kwargs['gain'], activation, device)
                 self.critic = CriticNet(self.representation.output_shapes['state'][0], n_agents, critic_hidden_size,
                                         normalize, initialize, activation, device)
                 self.mixer = mixer
@@ -1527,7 +1526,7 @@ Source Code
                     pass  # to do
                 else:
                     values_tot = values_independent if self.mixer is None else self.value_tot(values_independent,
-                                                                                              global_state=kwargs['state'])
+                                                                                            global_state=kwargs['state'])
                     values_tot = tf.repeat(tf.expand_dims(values_tot, 1), repeats=self.n_agents, axis=1)
 
                 return rnn_hidden, self.pi_dist, values_tot
@@ -1550,16 +1549,16 @@ Source Code
 
         class COMAPolicy(tk.Model):
             def __init__(self,
-                         action_space: Discrete,
-                         n_agents: int,
-                         representation: Optional[Basic_Identical],
-                         actor_hidden_size: Sequence[int] = None,
-                         critic_hidden_size: Sequence[int] = None,
-                         normalize: Optional[tk.layers.Layer] = None,
-                         initializer: Optional[tk.initializers.Initializer] = None,
-                         activation: Optional[tk.layers.Layer] = None,
-                         device: Optional[Union[str, int, torch.device]] = None,
-                         **kwargs):
+                        action_space: Discrete,
+                        n_agents: int,
+                        representation: Optional[Basic_Identical],
+                        actor_hidden_size: Sequence[int] = None,
+                        critic_hidden_size: Sequence[int] = None,
+                        normalize: Optional[tk.layers.Layer] = None,
+                        initializer: Optional[tk.initializers.Initializer] = None,
+                        activation: Optional[tk.layers.Layer] = None,
+                        device: Optional[Union[str, int]] = None,
+                        **kwargs):
                 super(COMAPolicy, self).__init__()
                 self.device = device
                 self.action_dim = action_space.n
@@ -1569,12 +1568,12 @@ Source Code
                 self.lstm = True if kwargs["rnn"] == "LSTM" else False
                 self.use_rnn = True if kwargs["use_recurrent"] else False
                 self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim, n_agents,
-                                      actor_hidden_size, normalize, initializer, kwargs['gain'], activation, device)
+                                    actor_hidden_size, normalize, initializer, kwargs['gain'], activation, device)
                 critic_input_dim = kwargs['dim_obs'] + self.action_dim * self.n_agents
                 if kwargs["use_global_state"]:
                     critic_input_dim += kwargs["dim_state"]
                 self.critic = COMA_CriticNet(critic_input_dim, self.action_dim, critic_hidden_size,
-                                             normalize, initializer, activation, device)
+                                            normalize, initializer, activation, device)
                 self.target_critic = COMA_CriticNet(critic_input_dim, self.action_dim, critic_hidden_size,
                                                     normalize, initializer, activation, device)
                 self.parameters_critic = self.critic.trainable_variables
@@ -1619,22 +1618,22 @@ Source Code
 
         class MeanFieldActorCriticPolicy(tk.Model):
             def __init__(self,
-                         action_space: Discrete,
-                         n_agents: int,
-                         representation: tk.Model,
-                         actor_hidden_size: Sequence[int] = None,
-                         critic_hidden_size: Sequence[int] = None,
-                         normalize: Optional[tk.layers.Layer] = None,
-                         initializer: Optional[tk.initializers.Initializer] = None,
-                         activation: Optional[tk.layers.Layer] = None,
-                         device: Optional[Union[str, int, torch.device]] = None,
-                         **kwargs):
+                        action_space: Discrete,
+                        n_agents: int,
+                        representation: tk.Model,
+                        actor_hidden_size: Sequence[int] = None,
+                        critic_hidden_size: Sequence[int] = None,
+                        normalize: Optional[tk.layers.Layer] = None,
+                        initializer: Optional[tk.initializers.Initializer] = None,
+                        activation: Optional[tk.layers.Layer] = None,
+                        device: Optional[Union[str, int]] = None,
+                        **kwargs):
                 super(MeanFieldActorCriticPolicy, self).__init__()
                 self.action_dim = action_space.n
                 self.representation = representation
                 self.representation_info_shape = self.representation.output_shapes
                 self.actor_net = ActorNet(representation.output_shapes['state'][0], self.action_dim, n_agents,
-                                          actor_hidden_size, normalize, initializer, kwargs['gain'], activation, device)
+                                        actor_hidden_size, normalize, initializer, kwargs['gain'], activation, device)
                 self.critic_net = CriticNet(representation.output_shapes['state'][0] + self.action_dim, n_agents,
                                             critic_hidden_size, normalize, initializer, activation, device)
                 self.trainable_param = self.actor_net.trainable_variables + self.critic_net.trainable_variables
@@ -1662,6 +1661,7 @@ Source Code
                 critic_in = tf.concat([outputs['state'], actions_mean, agent_ids], axis=-1)
                 critic_out = tf.expand_dims(self.critic_net(critic_in), -1)
                 return critic_out
+
 
 
   .. group-tab:: MindSpore

@@ -265,14 +265,13 @@ Source Code
         .. code-block:: python
 
             from xuance.tensorflow.agents import *
-            from xuance.tensorflow.agents.agents_marl import linear_decay_or_increase
 
 
             class DCG_Agents(MARLAgents):
                 def __init__(self,
-                             config: Namespace,
-                             envs: DummyVecEnv_Pettingzoo,
-                             device: str = "cpu:0"):
+                            config: Namespace,
+                            envs: DummyVecEnv_Pettingzoo,
+                            device: str = "cpu:0"):
                     self.gamma = config.gamma
                     self.start_greedy, self.end_greedy = config.start_greedy, config.end_greedy
                     self.egreedy = self.start_greedy
@@ -282,8 +281,8 @@ Source Code
                     self.use_recurrent = config.use_recurrent
                     if self.use_recurrent:
                         kwargs_rnn = {"N_recurrent_layers": config.N_recurrent_layers,
-                                      "dropout": config.dropout,
-                                      "rnn": config.rnn}
+                                    "dropout": config.dropout,
+                                    "rnn": config.rnn}
                         representation = REGISTRY_Representation[config.representation](*input_representation, **kwargs_rnn)
                     else:
                         representation = REGISTRY_Representation[config.representation](*input_representation)
@@ -301,18 +300,18 @@ Source Code
                         policy = REGISTRY_Policy[config.policy](action_space,
                                                                 config.state_space.shape[0], representation,
                                                                 utility, payoffs, dcgraph, config.hidden_bias_dim,
-                                                                None, None, torch.nn.ReLU, device,
+                                                                None, None, tk.layers.Activation('relu'), device,
                                                                 use_recurrent=config.use_recurrent,
                                                                 rnn=config.rnn)
                     else:
                         policy = REGISTRY_Policy[config.policy](action_space,
                                                                 config.state_space.shape[0], representation,
                                                                 utility, payoffs, dcgraph, None,
-                                                                None, None, torch.nn.ReLU, device,
+                                                                None, None, tk.layers.Activation('relu'), device,
                                                                 use_recurrent=config.use_recurrent,
                                                                 rnn=config.rnn)
                     lr_scheduler = MyLinearLR(config.learning_rate, start_factor=1.0, end_factor=0.5,
-                                              total_iters=get_total_iters(config.agent_name, config))
+                                            total_iters=get_total_iters(config.agent_name, config))
                     optimizer = tk.optimizers.Adam(lr_scheduler)
                     self.observation_space = envs.observation_space
                     self.action_space = envs.action_space
@@ -331,10 +330,10 @@ Source Code
 
                     from xuance.tensorflow.learners.multi_agent_rl.dcg_learner import DCG_Learner
                     learner = DCG_Learner(config, policy, optimizer,
-                                          config.device, config.model_dir, config.gamma, config.sync_frequency)
+                                        config.device, config.model_dir, config.gamma, config.sync_frequency)
 
                     super(DCG_Agents, self).__init__(config, envs, policy, memory, learner, device,
-                                                     config.log_dir, config.model_dir)
+                                                    config.log_dir, config.model_dir)
                     self.on_policy = False
 
                 def act(self, obs_n, *rnn_hidden, avail_actions=None, test_mode=False):
@@ -343,7 +342,7 @@ Source Code
                     obs_in = tf.reshape(obs_n, [batch_size * self.n_agents, 1, -1])
                     rnn_hidden_next, hidden_states = self.learner.get_hidden_states(obs_in, *rnn_hidden)
                     greedy_actions = self.learner.act(tf.reshape(hidden_states, [batch_size, self.n_agents, -1]),
-                                                      avail_actions=avail_actions)
+                                                    avail_actions=avail_actions)
                     greedy_actions = greedy_actions.numpy()
 
                     if test_mode:
@@ -371,6 +370,7 @@ Source Code
                                 info_train = self.learner.update(sample)
                     info_train["epsilon-greedy"] = self.egreedy
                     return info_train
+
 
 
     .. group-tab:: MindSpore

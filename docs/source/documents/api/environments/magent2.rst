@@ -197,16 +197,17 @@ Source Code
 
                     self.env = scenario.env(**kwargs).unwrapped
                     self.scenario_name = 'magent2.' + env_id
-                    self.handles = self.env.handles
-                    self.n_handles = len(self.handles)
+                    self.n_handles = len(self.env.handles)
                     self.side_names = AGENT_NAME_DICT[env_id]
                     self.env.reset(seed)
 
                     self.state_space = self.env.state_space
+                    self.action_spaces = {k: self.env.action_spaces[k] for k in self.env.agents}
+                    self.observation_spaces = {k: self.env.observation_spaces[k] for k in self.env.agents}
                     self.agents = self.env.agents
                     self.n_agents_all = len(self.agents)
-                    self.action_spaces = {k: self.env.action_spaces[k] for k in self.agents}
-                    self.observation_spaces = {k: self.env.observation_spaces[k] for k in self.agents}
+
+                    self.handles = self.env.handles
 
                     self.agent_ids = [self.env.env.get_agent_id(h) for h in self.handles]
                     self.n_agents = [self.env.env.get_num(h) for h in self.handles]
@@ -232,8 +233,9 @@ Source Code
                         self.individual_episode_reward[k] += v
                         observations[k] = observations[k].reshape([-1])
                     step_info = {"infos": infos,
-                                 "individual_episode_rewards": self.individual_episode_reward}
+                                "individual_episode_rewards": self.individual_episode_reward}
                     return observations, rewards, terminations, truncations, step_info
+
 
 
     .. group-tab:: magent_vec_env.py
@@ -258,10 +260,12 @@ Source Code
                     self.handles = env.handles
                     VecEnv.__init__(self, len(env_fns), env.observation_spaces, env.action_spaces)
                     self.state_space = env.state_space
+                    self.state_shape = self.state_space.shape
+                    self.state_dtype = self.state_space.dtype
                     obs_n_space = env.observation_spaces  # [Box(dim_o), Box(dim_o), ...] ----> dict
                     self.agent_ids = env.agent_ids
                     self.n_agents = [env.get_num(h) for h in self.handles]
-                    # self.agent_keys = [env.get_agent_key(h) for h in self.handles]
+                    self.side_names = env.side_names
 
                     self.keys, self.shapes, self.dtypes = obs_n_space_info(obs_n_space)
                     self.agent_keys = [[self.keys[k] for k in ids] for ids in self.agent_ids]
@@ -272,12 +276,14 @@ Source Code
 
                     # buffer of dict data
                     self.buf_obs_dict = [{k: np.zeros(tuple(self.shapes[k]), dtype=self.dtypes[k]) for k in self.keys} for _ in
-                                         range(self.num_envs)]
+                                        range(self.num_envs)]
                     self.buf_rews_dict = [{k: 0.0 for k in self.keys} for _ in range(self.num_envs)]
                     self.buf_dones_dict = [{k: False for k in self.keys} for _ in range(self.num_envs)]
                     self.buf_trunctions_dict = [{k: False for k in self.keys} for _ in range(self.num_envs)]
                     self.buf_infos_dict = [{} for _ in range(self.num_envs)]
                     # buffer of numpy data
+                    self.buf_state = np.zeros((self.num_envs,) + self.state_shape, dtype=self.state_dtype)
+                    self.buf_agent_mask = [np.ones([self.num_envs, n], dtype=np.bool) for n in self.n_agents]
                     self.buf_obs = [np.zeros((self.num_envs, n, np.prod(self.obs_shapes[h])), dtype=self.obs_dtype) for h, n in
                                     enumerate(self.n_agents)]
                     self.buf_rews = [np.zeros((self.num_envs, n, 1), dtype=np.float32) for n in self.n_agents]
@@ -356,8 +362,10 @@ Source Code
 
                         # resort the data as group-wise
                         episode_scores = []
+                        mask = self.envs[e].get_agent_mask()
                         for h, agent_keys_h in enumerate(self.agent_keys):
                             getter = itemgetter(*agent_keys_h)
+                            self.buf_agent_mask[h][e] = mask[self.agent_ids[h]]
                             self.buf_obs[h][e] = getter(self.buf_obs_dict[e])
                             self.buf_rews[h][e, :, 0] = getter(self.buf_rews_dict[e])
                             self.buf_dones[h][e] = getter(self.buf_dones_dict[e])
@@ -367,12 +375,18 @@ Source Code
 
                         if all(self.buf_dones_dict[e].values()) or all(self.buf_trunctions_dict[e].values()):
                             obs_reset, _ = self.envs[e].reset()
-                            obs_reset_handles = []
+                            state_reset = self.envs[e].state()
+                            mask_reset = self.envs[e].get_agent_mask()
+                            obs_reset_handles, mask_reset_handles = [], []
                             for h, agent_keys_h in enumerate(self.agent_keys):
                                 getter = itemgetter(*agent_keys_h)
                                 obs_reset_handles.append(np.array(getter(obs_reset)))
+                                mask_reset_handles.append(mask_reset[self.agent_ids[h]])
 
                             self.buf_infos_dict[e]["reset_obs"] = obs_reset_handles
+                            self.buf_infos_dict[e]["reset_agent_mask"] = mask_reset_handles
+                            self.buf_infos_dict[e]["reset_state"] = state_reset
+
                     self.waiting = False
                     return self.buf_obs.copy(), self.buf_rews.copy(), self.buf_dones.copy(), self.buf_trunctions.copy(), self.buf_infos_dict.copy()
 
@@ -393,5 +407,6 @@ Source Code
                             agent_mask[h][e] = mask[ids]
 
                     return agent_mask
+
 
 

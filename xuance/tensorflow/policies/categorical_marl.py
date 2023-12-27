@@ -37,7 +37,7 @@ class CriticNet(tk.Model):
                  normalize: Optional[tk.layers.Layer] = None,
                  initializer: Optional[tk.initializers.Initializer] = None,
                  activation: Optional[tk.layers.Layer] = None,
-                 device: Optional[Union[str, int, torch.device]] = None):
+                 device: Optional[Union[str, int]] = None):
         super(CriticNet, self).__init__()
         layers = []
         input_shape = (state_dim + n_agents,)
@@ -59,7 +59,7 @@ class COMA_CriticNet(tk.Model):
                  normalize: Optional[tk.layers.Layer] = None,
                  initializer: Optional[tk.initializers.Initializer] = None,
                  activation: Optional[tk.layers.Layer] = None,
-                 device: Optional[Union[str, int, torch.device]] = None):
+                 device: Optional[Union[str, int]] = None):
         super(COMA_CriticNet, self).__init__()
         layers = []
         input_shape = (state_dim,)
@@ -87,7 +87,7 @@ class MAAC_Policy(tk.Model):
                  normalize: Optional[tk.layers.Layer] = None,
                  initializer: Optional[tk.initializers.Initializer] = None,
                  activation: Optional[tk.layers.Layer] = None,
-                 device: Optional[Union[str, int, torch.device]] = None,
+                 device: Optional[Union[str, int]] = None,
                  **kwargs):
         super(MAAC_Policy, self).__init__()
         self.device = device
@@ -174,7 +174,7 @@ class MAAC_Policy_Share(MAAC_Policy):
                  normalize: Optional[tk.layers.Layer] = None,
                  initialize: Optional[tk.initializers.Initializer] = None,
                  activation: Optional[tk.layers.Layer] = None,
-                 device: Optional[Union[str, int, torch.device]] = None,
+                 device: Optional[Union[str, int]] = None,
                  **kwargs):
         super(MAAC_Policy, self).__init__()
         self.device = device
@@ -250,7 +250,7 @@ class COMAPolicy(tk.Model):
                  normalize: Optional[tk.layers.Layer] = None,
                  initializer: Optional[tk.initializers.Initializer] = None,
                  activation: Optional[tk.layers.Layer] = None,
-                 device: Optional[Union[str, int, torch.device]] = None,
+                 device: Optional[Union[str, int]] = None,
                  **kwargs):
         super(COMAPolicy, self).__init__()
         self.device = device
@@ -319,7 +319,7 @@ class MeanFieldActorCriticPolicy(tk.Model):
                  normalize: Optional[tk.layers.Layer] = None,
                  initializer: Optional[tk.initializers.Initializer] = None,
                  activation: Optional[tk.layers.Layer] = None,
-                 device: Optional[Union[str, int, torch.device]] = None,
+                 device: Optional[Union[str, int]] = None,
                  **kwargs):
         super(MeanFieldActorCriticPolicy, self).__init__()
         self.action_dim = action_space.n

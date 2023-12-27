@@ -20,7 +20,7 @@ from .mixers import *
 from .deterministic_marl import BasicQnetwork as BasicQnetwork_marl
 from .deterministic_marl import Basic_DDPG_policy as BasicDDPG_marl
 from .deterministic_marl import MFQnetwork, MixingQnetwork, Weighted_MixingQnetwork, Qtran_MixingQnetwork, DCG_policy, \
-    Basic_DDPG_policy, MADDPG_policy, MAAC_policy, MATD3_policy
+    Basic_DDPG_policy, MADDPG_policy, MATD3_policy
 
 from .categorical_marl import MeanFieldActorCriticPolicy, COMAPolicy
 from .categorical_marl import MAAC_Policy as Categorical_MAAC_Policy

@@ -28,16 +28,17 @@ class MAgent_Env(PettingZoo_Env, ParallelEnv):
 
         self.env = scenario.env(**kwargs).unwrapped
         self.scenario_name = 'magent2.' + env_id
-        self.handles = self.env.handles
-        self.n_handles = len(self.handles)
+        self.n_handles = len(self.env.handles)
         self.side_names = AGENT_NAME_DICT[env_id]
         self.env.reset(seed)
 
         self.state_space = self.env.state_space
+        self.action_spaces = {k: self.env.action_spaces[k] for k in self.env.agents}
+        self.observation_spaces = {k: self.env.observation_spaces[k] for k in self.env.agents}
         self.agents = self.env.agents
         self.n_agents_all = len(self.agents)
-        self.action_spaces = {k: self.env.action_spaces[k] for k in self.agents}
-        self.observation_spaces = {k: self.env.observation_spaces[k] for k in self.agents}
+
+        self.handles = self.env.handles
 
         self.agent_ids = [self.env.env.get_agent_id(h) for h in self.handles]
         self.n_agents = [self.env.env.get_num(h) for h in self.handles]

@@ -1,7 +1,6 @@
 from xuance.tensorflow.policies import *
 from xuance.tensorflow.utils import *
 from xuance.tensorflow.representations import Basic_Identical
-from itertools import chain
 
 
 class BasicQhead(tk.Model):
@@ -316,9 +315,9 @@ class DCG_policy(tk.Model):
                  action_space: Discrete,
                  global_state_dim: int,
                  representation: Optional[Basic_Identical],
-                 utility: Optional[DCG_utility] = None,
-                 payoffs: Optional[DCG_payoff] = None,
-                 dcgraph: Optional[Coordination_Graph] = None,
+                 utility: Optional[tk.Model] = None,
+                 payoffs: Optional[tk.Model] = None,
+                 dcgraph: Optional[tk.Model] = None,
                  hidden_size_bias: Sequence[int] = None,
                  normalize: Optional[tk.layers.Layer] = None,
                  initializer: Optional[tk.initializers.Initializer] = None,
@@ -344,7 +343,7 @@ class DCG_policy(tk.Model):
             self.target_bias = BasicQhead(global_state_dim, 1, 0, hidden_size_bias,
                                           normalize, initializer, activation, device)
 
-    def call(self, inputs: Union[np.ndarray, dict], *rnn_hidden: torch.Tensor, **kwargs):
+    def call(self, inputs: Union[np.ndarray, dict], *rnn_hidden: tf.Tensor, **kwargs):
         observations = tf.reshape(inputs['obs'], [-1, self.obs_dim])
         IDs = tf.reshape(inputs['ids'], [-1, self.n_agents])
         outputs = self.representation(observations)
