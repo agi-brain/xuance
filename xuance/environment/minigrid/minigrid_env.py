@@ -9,11 +9,11 @@ class MiniGridEnv():
     The wrapper of minigrid environment.
 
     Args:
-        env_id:
-        seed:
-        render_mode:
-        rgb_img_partial_wrapper:
-        img_obs_wrapper:
+        env_id: The environment id of minigrid.
+        seed: random seed.
+        render_mode: "rgb_array", "human".
+        rgb_img_partial_wrapper: whether to apply the RGB image's partial observation wrapper.
+        img_obs_wrapper:  whether to apply the image observation wrapper.
     """
     def __init__(self, env_id: str, seed: int, render_mode: str,
                  rgb_img_partial_obs_wrapper=False,
@@ -35,12 +35,15 @@ class MiniGridEnv():
         self.max_episode_steps = self.env.env.env.max_steps
 
     def close(self):
+        """Close the environment."""
         self.env.close()
 
     def render(self, *args):
+        """Return the rendering result"""
         return self.env.render()
 
     def reset(self):
+        """Reset the environment."""
         obs_raw, info = self.env.reset()
         obs = self.flatten_obs(obs_raw)
         self._episode_step = 0
@@ -49,7 +52,7 @@ class MiniGridEnv():
         return obs, info
 
     def step(self, actions):
-        # Execute the actions and get next observations, rewards, and other information.
+        """Execute the actions and get next observations, rewards, and other information."""
         obs_raw, reward, terminated, truncated, info = self.env.step(actions)
         observation = self.flatten_obs(obs_raw)
 
