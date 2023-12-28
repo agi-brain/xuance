@@ -11,6 +11,7 @@ from xuance.environment.magent2.magent_vec_env import DummyVecEnv_MAgent
 from xuance.environment.starcraft2.sc2_vec_env import DummyVecEnv_StarCraft2, SubprocVecEnv_StarCraft2
 from xuance.environment.football.gfootball_vec_env import DummyVecEnv_GFootball, SubprocVecEnv_GFootball
 from xuance.environment.minigrid.minigrid_vec_env import DummyVecEnv_MiniGrid, SubprocVecEnv_MiniGrid
+from xuance.environment.drones.drones_vec_env import DummyVecEnv_Drones, SubprocVecEnv_Drones
 from xuance.environment.new_env.new_vec_env import DummyVecEnv_New, SubprocVecEnv_New
 
 from .vector_envs.subproc_vec_env import SubprocVecEnv
@@ -23,6 +24,7 @@ REGISTRY_VEC_ENV = {
     "Dummy_Football": DummyVecEnv_GFootball,
     "Dummy_Atari": DummyVecEnv_Atari,
     "DummyVecEnv_MiniGrid": DummyVecEnv_MiniGrid,
+    "DummyVecEnv_Drone": DummyVecEnv_Drones,
     "Dummy_NewEnv": DummyVecEnv_New,  # Add the newly defined vectorized environment
 
 
@@ -33,6 +35,7 @@ REGISTRY_VEC_ENV = {
     "Subproc_Football": SubprocVecEnv_GFootball,
     "Subproc_Atari": SubprocVecEnv_Atari,
     "SubprocVecEnv_MiniGrid": SubprocVecEnv_MiniGrid,
+    "SubprocVecEnv_Drone": SubprocVecEnv_Drones,
     "Subproc_NewEnv": SubprocVecEnv_New,  # Add the newly defined vectorized environment
 }
 
@@ -82,6 +85,10 @@ def make_envs(config: Namespace):
             env = MiniGridEnv(config.env_id, config.seed, config.render_mode,
                               rgb_img_partial_obs_wrapper=config.RGBImgPartialObsWrapper,
                               img_obs_wrapper=config.ImgObsWrapper)
+
+        elif config.env_name == "Drones":
+            from xuance.environment.drones.drones_env import Drones_Env
+            env = Drones_Env(config)
 
         elif config.env_name == "NewEnv":  # Add the newly defined vectorized environment
             from xuance.environment.new_env.new_env import New_Env
