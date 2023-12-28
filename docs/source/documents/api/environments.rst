@@ -14,6 +14,7 @@ Each simulation environment contains a rich variety of task scenarios, as shown 
     Gym <environments/gym>
     Gym Platform <environments/gym_platform>
     Minigrid <environments/minigrid>
+    Drones <environments/drones>
     PettingZoo <environments/pettingzoo>
     StarCraft2 Multi-Agent Challenge <environments/starcraft2>
     MAgent2 <environments/magent2>
@@ -26,6 +27,7 @@ Each simulation environment contains a rich variety of task scenarios, as shown 
 * :doc:`Gym <environments/gym>`.
 * :doc:`Gym Platform <environments/gym_platform>`.
 * :doc:`Minigrid <environments/minigrid>`.
+* :doc:`Drones <environments/drones>`.
 * :doc:`PettingZoo <environments/pettingzoo>`.
 * :doc:`StarCraft2 Multi-Agent Challenge <environments/starcraft2>`.
 * :doc:`MAgent2 <environments/magent2>`.
