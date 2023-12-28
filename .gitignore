@@ -12,5 +12,4 @@ models/
 **/__pycache__
 rank_0/
 docs/build
-setup.py
 wandb/

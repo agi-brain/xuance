@@ -1,4 +1,3 @@
-from xuance import __version__
 from setuptools import find_packages, setup
 
 setup(
@@ -15,7 +14,7 @@ setup(
                 "environment/magent2/libmagent.dylib"  # for magent2 environment on MacOS
             ]
     },
-    version=__version__,
+    version="1.0.7",
     description='XuanCe: A Comprehensive and Unified Deep Reinforcement Learning Library.',
     author='XuanCe contributors.',
     author_email='',
