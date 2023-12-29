@@ -1,5 +1,12 @@
-Minigrid
+Drones
 ==============================================
+
+.. image:: ../../../figures/drones/helix.gif
+    :height: 150px
+.. image:: ../../../figures/drones/rl.gif
+    :height: 150px
+.. image:: ../../../figures/drones/marl.gif
+    :height: 150px
 
 .. raw:: html
 
