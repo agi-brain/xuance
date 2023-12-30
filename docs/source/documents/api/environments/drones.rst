@@ -83,6 +83,23 @@ drones_env.py
 drones_vec__env.py
 -------------------------------------------------
 
+.. py:class::
+    xuance.environment.drones.drones_vec_env.SubprocVecEnv_Drones(env_fns, context='spawn', in_series=1)
+
+    Extend the functionality of a subprocess-based vectorized environment.
+
+    :param env_fns: environment function.
+    :param context:  the method used for creating and managing processes in a multiprocessing environment.
+    :param in_series: specifies the number of environments to run in series.
+    :type in_series: int
+
+.. py:class::
+    xuance.environment.drones.drones_vec_env.DummyVecEnv_Drones(env_fns)
+
+    Extends the functionality of a dummy vectorized environment
+
+    :param env_fns: environment function.
+
 .. raw:: html
 
     <br><hr>
