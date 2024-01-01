@@ -37,6 +37,8 @@ We expect it to be compatible with multiple deep learning toolboxes(
 **[MindSpore](https://www.mindspore.cn/en)**),
 and hope it can really become a zoo full of DRL algorithms.
 
+Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16248.pdf)
+
 :book: **[Full Documentation](https://xuance.readthedocs.io/en/latest/)**
 | **[中文文档](https://xuance.readthedocs.io/zh/latest/)** :book:
 
