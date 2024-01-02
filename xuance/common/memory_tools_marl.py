@@ -28,7 +28,13 @@ class BaseBuffer(ABC):
     def sample(self, *args):
         raise NotImplementedError
 
-    def finish_path(self, *args):
+    def store_transitions(self, *args, **kwargs):
+        return
+
+    def store_episodes(self, *args, **kwargs):
+        return
+
+    def finish_path(self, *args, **kwargs):
         return
 
 

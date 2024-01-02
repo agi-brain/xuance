@@ -1,61 +1,85 @@
 import os
 import socket
-from pathlib import Path
-from .runner_basic import Runner_Base
-from xuance.torch.agents import REGISTRY as REGISTRY_Agent
-import wandb
-from torch.utils.tensorboard import SummaryWriter
 import time
-import numpy as np
+from pathlib import Path
+import wandb
+import argparse
 from copy import deepcopy
+import numpy as np
+from torch.utils.tensorboard import SummaryWriter
+
+from xuance import get_arguments
+from xuance.environment import make_envs
+from xuance.torch.utils.operations import set_seed
 
 
-class SC2_Runner(Runner_Base):
+def parse_args():
+    parser = argparse.ArgumentParser("Example: MAPPO of XuanCe for SMAC environments.")
+    parser.add_argument("--method", type=str, default="mappo")
+    parser.add_argument("--env", type=str, default="smac")
+    parser.add_argument("--env-id", type=str, default="3m")
+    parser.add_argument("--seed", type=int, default=1)
+    parser.add_argument("--test", type=int, default=0)
+    parser.add_argument("--device", type=str, default="cuda:0")
+    parser.add_argument("--config", type=str, default="./mappo_3m.yaml")
+
+    return parser.parse_args()
+
+
+class Runner():
     def __init__(self, args):
-        super(SC2_Runner, self).__init__(args)
-        self.fps = args.fps
-        self.args = args
-        self.render = args.render
-        self.test_envs = None
+        # Set random seeds
+        set_seed(args.seed)
 
-        time_string = time.asctime().replace(" ", "").replace(":", "_")
-        seed = f"seed_{self.args.seed}_"
-        self.args.model_dir_load = args.model_dir
-        self.args.model_dir_save = os.path.join(os.getcwd(), args.model_dir, seed + time_string)
-        if (not os.path.exists(self.args.model_dir_save)) and (not args.test_mode):
+        # Prepare directories
+        self.args = args
+        self.args.agent_name = args.agent
+        folder_name = f"seed_{args.seed}_" + time.asctime().replace(" ", "").replace(":", "_")
+        self.args.model_dir_load = self.args.model_dir
+        self.args.model_dir_save = os.path.join(os.getcwd(), self.args.model_dir, folder_name)
+        if (not os.path.exists(self.args.model_dir_save)) and (not self.args.test_mode):
             os.makedirs(self.args.model_dir_save)
 
-        if args.logger == "tensorboard":
-            log_dir = os.path.join(os.getcwd(), args.log_dir, seed + time_string)
+        # Logger
+        if self.args.logger == "tensorboard":
+            log_dir = os.path.join(os.getcwd(), self.args.log_dir, folder_name)
             if not os.path.exists(log_dir):
                 os.makedirs(log_dir)
             self.writer = SummaryWriter(log_dir)
             self.use_wandb = False
-        elif args.logger == "wandb":
-            config_dict = vars(args)
-            wandb_dir = Path(os.path.join(os.getcwd(), args.log_dir))
+        else:
+            config_dict = vars(self.args)
+            wandb_dir = Path(os.path.join(os.getcwd(), self.args.log_dir))
             if not wandb_dir.exists():
                 os.makedirs(str(wandb_dir))
             wandb.init(config=config_dict,
-                       project=args.project_name,
-                       entity=args.wandb_user_name,
+                       project=self.args.project_name,
+                       entity=self.args.wandb_user_name,
                        notes=socket.gethostname(),
                        dir=wandb_dir,
-                       group=args.env_id,
-                       job_type=args.agent,
-                       name=args.seed,
+                       group=self.args.env_id,
+                       job_type=self.args.agent,
+                       name=time.asctime(),
                        reinit=True)
             self.use_wandb = True
-        else:
-            raise RuntimeError(f"The logger named {args.logger} is implemented!")
 
+        # Build environments
+        self.envs = make_envs(args)
+        self.envs.reset()
+        self.n_envs = self.envs.num_envs
+        self.fps = 20
+        self.episode_length = self.envs.max_episode_length
+        self.render = self.args.render
+
+        # Running details
         self.running_steps = args.running_steps
         self.training_frequency = args.training_frequency
         self.current_step = 0
         self.env_step = 0
         self.current_episode = np.zeros((self.envs.num_envs,), np.int32)
-        self.episode_length = self.envs.max_episode_length
-        self.num_agents, self.num_enemies = self.get_agent_num()
+
+        # Environment details.
+        self.num_agents, self.num_enemies = self.envs.num_agents, self.envs.num_enemies
         args.n_agents = self.num_agents
         self.dim_obs, self.dim_act, self.dim_state = self.envs.dim_obs, self.envs.dim_act, self.envs.dim_state
         args.dim_obs, args.dim_act = self.dim_obs, self.dim_act
@@ -64,26 +88,11 @@ class SC2_Runner(Runner_Base):
         args.action_space = self.envs.action_space
         args.state_space = self.envs.state_space
 
-        # Create MARL agents.
-        self.agents = REGISTRY_Agent[args.agent](args, self.envs, args.device)
-        self.on_policy = self.agents.on_policy
-
-    def init_rnn_hidden(self):
-        rnn_hidden = self.agents.policy.representation.init_hidden(self.n_envs * self.num_agents)
-        if self.on_policy and self.args.agent in ["MAPPO"]:
-            rnn_hidden_critic = self.agents.policy.representation_critic.init_hidden(self.n_envs * self.num_agents)
-        else:
-            rnn_hidden_critic = [None, None]
-        return rnn_hidden, rnn_hidden_critic
-
-    def get_agent_num(self):
-        return self.envs.num_agents, self.envs.num_enemies
+        # Create MAPPO agents
+        from xuance.torch.agents import MAPPO_Agents
+        self.agents = MAPPO_Agents(args, self.envs, args.device)
 
     def log_infos(self, info: dict, x_index: int):
-        """
-        info: (dict) information to be visualized
-        n_steps: current step
-        """
         if x_index <= self.running_steps:
             if self.use_wandb:
                 for k, v in info.items():
@@ -105,39 +114,15 @@ class SC2_Runner(Runner_Base):
                     self.writer.add_video(k, v, fps=fps, global_step=x_index)
 
     def get_actions(self, obs_n, avail_actions, *rnn_hidden, state=None, test_mode=False):
-        log_pi_n, values_n, actions_n_onehot = None, None, None
         rnn_hidden_policy, rnn_hidden_critic = rnn_hidden[0], rnn_hidden[1]
-        if self.on_policy:
-            if self.args.agent == "COMA":
-                rnn_hidden_next, actions_n, actions_n_onehot = self.agents.act(obs_n, *rnn_hidden_policy,
-                                                                               avail_actions=avail_actions,
-                                                                               test_mode=test_mode)
-            elif self.args.agent == "VDAC":
-                rnn_hidden_next, actions_n, values_n = self.agents.act(obs_n, *rnn_hidden_policy,
-                                                                       avail_actions=avail_actions,
-                                                                       state=state,
-                                                                       test_mode=test_mode)
-            else:
-                rnn_hidden_next, actions_n, log_pi_n = self.agents.act(obs_n, *rnn_hidden_policy,
-                                                                       avail_actions=avail_actions,
-                                                                       test_mode=test_mode)
-            if test_mode:
-                rnn_hidden_critic_next, values_n = None, 0
-            else:
-                if self.args.agent == "VDAC":
-                    rnn_hidden_critic_next = [None, None]
-                else:
-                    kwargs = {"state": state}
-                    if self.args.agent == "COMA":
-                        kwargs.update({"actions_n": actions_n, "actions_onehot": actions_n_onehot})
-                    rnn_hidden_critic_next, values_n = self.agents.values(obs_n, *rnn_hidden_critic, **kwargs)
+        rnn_hidden_next, actions_n, log_pi_n = self.agents.act(obs_n, *rnn_hidden_policy, avail_actions=avail_actions,
+                                                               test_mode=test_mode)
+        if test_mode:
+            rnn_hidden_critic_next, values_n = None, 0
         else:
-            rnn_hidden_next, actions_n = self.agents.act(obs_n, *rnn_hidden_policy,
-                                                         avail_actions=avail_actions, test_mode=test_mode)
-            rnn_hidden_critic_next = None
-        return {'actions_n': actions_n, 'log_pi': log_pi_n,
-                'rnn_hidden': rnn_hidden_next, 'rnn_hidden_critic': rnn_hidden_critic_next,
-                'act_n_onehot': actions_n_onehot, 'values': values_n}
+            rnn_hidden_critic_next, values_n = self.agents.values(obs_n, *rnn_hidden_critic, state=state)
+        return {'actions_n': actions_n, 'log_pi': log_pi_n, 'values': values_n,
+                'rnn_hidden': rnn_hidden_next, 'rnn_hidden_critic': rnn_hidden_critic_next}
 
     def get_battles_info(self):
         battles_game, battles_won = self.envs.battles_game.sum(), self.envs.battles_won.sum()
@@ -165,7 +150,8 @@ class SC2_Runner(Runner_Base):
         envs_done = self.envs.buf_done
         self.env_step = 0
         filled = np.zeros([self.n_envs, self.episode_length, 1], np.int32)
-        rnn_hidden, rnn_hidden_critic = self.init_rnn_hidden()
+        rnn_hidden = self.agents.policy.representation.init_hidden(self.n_envs * self.num_agents)
+        rnn_hidden_critic = self.agents.policy.representation_critic.init_hidden(self.n_envs * self.num_agents)
 
         if test_mode and self.render:
             images = self.envs.render(self.args.render_mode)
@@ -216,32 +202,21 @@ class SC2_Runner(Runner_Base):
                         self.log_infos(step_info, self.current_step)
 
                         terminal_data = (next_obs_n, next_state, available_actions, filled)
-                        if self.on_policy:
-                            if terminated[i_env]:
-                                values_next = np.array([0.0 for _ in range(self.num_agents)])
-                            else:
-                                batch_select = np.arange(i_env * self.num_agents, (i_env + 1) * self.num_agents)
-                                kwargs = {"state": [next_state[i_env]]}
-                                if self.args.agent == "VDAC":
-                                    rnn_h_ac_i = self.agents.policy.representation.get_hidden_item(batch_select,
-                                                                                                   *rnn_hidden)
-                                    kwargs.update({"avail_actions": available_actions[i_env:i_env+1],
-                                                   "test_mode": test_mode})
-                                    _, _, values_next = self.agents.act(next_obs_n[i_env:i_env+1],
-                                                                        *rnn_h_ac_i, **kwargs)
-                                else:
-                                    rnn_h_critic_i = self.agents.policy.representation_critic.get_hidden_item(batch_select,
-                                                                                                              *rnn_hidden_critic)
-                                    if self.args.agent == "COMA":
-                                        kwargs.update({"actions_n": actions_dict["actions_n"],
-                                                       "actions_onehot": actions_dict["act_n_onehot"]})
-                                    _, values_next = self.agents.values(next_obs_n[i_env:i_env + 1],
-                                                                        *rnn_h_critic_i, **kwargs)
-                            self.agents.memory.finish_path(i_env, self.env_step+1, *terminal_data,
-                                                           value_next=values_next,
-                                                           value_normalizer=self.agents.learner.value_normalizer)
+                        if terminated[i_env]:
+                            values_next = np.array([0.0 for _ in range(self.num_agents)])
                         else:
-                            self.agents.memory.finish_path(i_env, self.env_step + 1, *terminal_data)
+                            batch_select = np.arange(i_env * self.num_agents, (i_env + 1) * self.num_agents)
+                            kwargs = {"state": [next_state[i_env]]}
+                            rnn_h_critic_i = self.agents.policy.representation_critic.get_hidden_item(batch_select,
+                                                                                                      *rnn_hidden_critic)
+                            if self.args.agent == "COMA":
+                                kwargs.update({"actions_n": actions_dict["actions_n"],
+                                               "actions_onehot": actions_dict["act_n_onehot"]})
+                            _, values_next = self.agents.values(next_obs_n[i_env:i_env + 1],
+                                                                *rnn_h_critic_i, **kwargs)
+                        self.agents.memory.finish_path(i_env, self.env_step + 1, *terminal_data,
+                                                       value_next=values_next,
+                                                       value_normalizer=self.agents.learner.value_normalizer)
                         self.current_step += 1
                 self.env_step += 1
             obs_n, state = deepcopy(next_obs_n), deepcopy(next_state)
@@ -253,7 +228,7 @@ class SC2_Runner(Runner_Base):
                 self.log_videos(info=videos_info, fps=self.fps, x_index=self.current_step)
         else:
             self.agents.memory.store_episodes()  # store episode data
-            n_epoch = self.agents.n_epoch if self.on_policy else self.n_envs
+            n_epoch = self.agents.n_epoch
             train_info = self.agents.train(self.current_step, n_epoch=n_epoch)  # train
             self.log_infos(train_info, self.current_step)
 
@@ -273,51 +248,6 @@ class SC2_Runner(Runner_Base):
                         "Test-Results/Enemies-Dead-Ratio": enemies_dead_ratio}
         self.log_infos(results_info, test_T)
         return mean_test_score, test_scores.std(), win_rate
-
-    def run(self):
-        if self.args.test_mode:
-            self.render = True
-            n_test_episodes = self.args.test_episode
-            self.agents.load_model(self.args.model_dir_load)
-            test_score_mean, test_score_std, test_win_rate = self.test_episodes(0, n_test_episodes)
-            agent_info = f"Algo: {self.args.agent}, Map: {self.args.env_id}, seed: {self.args.seed}, "
-            print(agent_info, "Win rate: %.3f, Mean score: %.2f. " % (test_win_rate, test_score_mean))
-            print("Finish testing.")
-        else:
-            test_interval = self.args.eval_interval
-            last_test_T = 0
-            episode_scores = []
-            agent_info = f"Algo: {self.args.agent}, Map: {self.args.env_id}, seed: {self.args.seed}, "
-            print(f"Steps: {self.current_step} / {self.running_steps}: ")
-            print(agent_info, "Win rate: %-, Mean score: -.")
-            last_battles_info = self.get_battles_info()
-            time_start = time.time()
-            while self.current_step <= self.running_steps:
-                score = self.run_episodes(test_mode=False)
-                episode_scores.append(score)
-                if (self.current_step - last_test_T) / test_interval >= 1.0:
-                    last_test_T += test_interval
-                    # log train results before testing.
-                    train_win_rate, allies_dead_ratio, enemies_dead_ratio = self.get_battles_result(last_battles_info)
-                    results_info = {"Train-Results/Win-Rate": train_win_rate,
-                                    "Train-Results/Allies-Dead-Ratio": allies_dead_ratio,
-                                    "Train-Results/Enemies-Dead-Ratio": enemies_dead_ratio}
-                    self.log_infos(results_info, last_test_T)
-                    last_battles_info = self.get_battles_info()
-                    time_pass, time_left = self.time_estimate(time_start)
-                    print(f"Steps: {self.current_step} / {self.running_steps}: ")
-                    print(agent_info, "Win rate: %.3f, Mean score: %.2f. " % (train_win_rate, np.mean(episode_scores)),
-                          time_pass, time_left)
-                    episode_scores = []
-
-            print("Finish training.")
-            self.agents.save_model("final_train_model.pth")
-
-        self.envs.close()
-        if self.use_wandb:
-            wandb.finish()
-        else:
-            self.writer.close()
 
     def benchmark(self):
         test_interval = self.args.eval_interval
@@ -389,3 +319,14 @@ class SC2_Runner(Runner_Base):
         INFO_time_pass = f"Time pass: {hours_pass}h{min_pass}m{sec_pass}s,"
         INFO_time_left = f"Time left: {hours_left}h{min_left}m{sec_left}s"
         return INFO_time_pass, INFO_time_left
+
+
+if __name__ == "__main__":
+    parser = parse_args()
+    args = get_arguments(method=parser.method,
+                         env=parser.env,
+                         env_id=parser.env_id,
+                         config_path=parser.config,
+                         parser_args=parser)
+    runner = Runner(args)
+    runner.benchmark()
