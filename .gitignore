@@ -13,3 +13,4 @@ models/
 rank_0/
 docs/build
 wandb/
+.pypirc
