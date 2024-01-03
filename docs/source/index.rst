@@ -112,7 +112,7 @@ XuanCe contains four main parts:
 
 .. toctree::
    :maxdepth: 1
-   :caption: Updating Logs
+   :caption: Update
 
    documents/updating_logs
 

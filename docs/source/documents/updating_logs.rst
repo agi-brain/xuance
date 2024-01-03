@@ -1,11 +1,8 @@
-Updating Logs
+Version: 1.0.8
 ==============================================
-
 
 Date: 3 Jan, 2024
 -----------------------------------------------
-
-Version: 1.0.8
 
 - Added MiniGrid environment with PPO implementations;
 - Added gym-pybullet-drones UAV environment with PPO implementation;
