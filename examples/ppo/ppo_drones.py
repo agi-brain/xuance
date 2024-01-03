@@ -19,7 +19,7 @@ def parse_args():
     parser.add_argument("--test", type=int, default=0)
     parser.add_argument("--device", type=str, default="cuda:0")
     parser.add_argument("--benchmark", type=int, default=0)
-    parser.add_argument("--config", type=str, default="./ppo_drones_config.yaml")
+    parser.add_argument("--config", type=str, default="./ppo_configs/ppo_drones_config.yaml")
 
     return parser.parse_args()
 

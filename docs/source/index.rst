@@ -110,12 +110,13 @@ XuanCe contains four main parts:
    documents/benchmark/atari
    documents/benchmark/smac
 
-.. toctree::
-   :maxdepth: 1
-   :caption: Algorithms:
 
-   documents/algorithms/index_drl
-   documents/algorithms/index_marl
+.. .. toctree::
+..   :maxdepth: 1
+..   :caption: Algorithms:
+
+..   documents/algorithms/index_drl
+..   documents/algorithms/index_marl
 
 .. raw:: html
 

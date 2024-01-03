@@ -14,12 +14,12 @@ from xuance.torch.utils import ActivationFunctions
 def parse_args():
     parser = argparse.ArgumentParser("Example of XuanCe.")
     parser.add_argument("--method", type=str, default="ppo")
-    parser.add_argument("--env", type=str, default="mujoco")
-    parser.add_argument("--env-id", type=str, default="InvertedPendulum-v4")
+    parser.add_argument("--env", type=str, default="minigrid")
+    parser.add_argument("--env-id", type=str, default="MiniGrid-Empty-5x5-v0")
     parser.add_argument("--test", type=int, default=0)
     parser.add_argument("--device", type=str, default="cuda:0")
     parser.add_argument("--benchmark", type=int, default=1)
-    parser.add_argument("--config", type=str, default="./ppo_configs/ppo_mujoco_config.yaml")
+    parser.add_argument("--config", type=str, default="./ppo_configs/ppo_minigrid_config.yaml")
 
     return parser.parse_args()
 
@@ -48,15 +48,15 @@ def run(args):
                                device=args.device)
 
     # prepare policy
-    from xuance.torch.policies import Gaussian_AC_Policy
-    policy = Gaussian_AC_Policy(action_space=args.action_space,
-                                representation=representation,
-                                actor_hidden_size=args.actor_hidden_size,
-                                critic_hidden_size=args.critic_hidden_size,
-                                normalize=None,
-                                initialize=torch.nn.init.orthogonal_,
-                                activation=ActivationFunctions[args.activation],
-                                device=args.device)
+    from xuance.torch.policies import Categorical_AC_Policy
+    policy = Categorical_AC_Policy(action_space=args.action_space,
+                                   representation=representation,
+                                   actor_hidden_size=args.actor_hidden_size,
+                                   critic_hidden_size=args.critic_hidden_size,
+                                   normalize=None,
+                                   initialize=torch.nn.init.orthogonal_,
+                                   activation=ActivationFunctions[args.activation],
+                                   device=args.device)
 
     # prepare agent
     from xuance.torch.agents import PPOCLIP_Agent, get_total_iters
