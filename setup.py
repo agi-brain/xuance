@@ -45,14 +45,14 @@ setup(
         ]
     },
     install_requires=[
-        "numpy==1.21.6",
+        "numpy>=1.21.6",
         "scipy==1.7.3",
-        "PyYAML==6.0",
+        "PyYAML",  # default version is 6.0
         "gym==0.26.2",
         "gymnasium==0.28.1",
         "gym-notices==0.0.8",
         # "box2d-py==2.3.5",  # for box2d
-        "mpi4py==3.1.3",
+        "mpi4py",  # default version is 3.1.3
         "tqdm==4.62.3",
         "pyglet==1.5.15",
         "opencv-python==4.5.4.58",  # for Atari
@@ -63,7 +63,7 @@ setup(
         "tensorboard==2.11.2",  # logger
         "wandb==0.15.3",
         "moviepy==1.0.3",
-        "imageio==2.9.0"
+        "imageio"  # default version is 2.9.0
     ],
     setup_requires=['pytest-runner'],
     tests_requires=['pytest'],
