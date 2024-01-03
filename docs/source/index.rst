@@ -110,6 +110,12 @@ XuanCe contains four main parts:
    documents/benchmark/atari
    documents/benchmark/smac
 
+.. toctree::
+   :maxdepth: 1
+   :caption: Updating Logs
+
+
+
 
 .. .. toctree::
 ..   :maxdepth: 1
