@@ -80,7 +80,7 @@ class Runner(object):
         self.current_step = 0
         self.env_step = 0
         self.current_episode = np.zeros((self.envs.num_envs,), np.int32)
-        self.num_agents, self.num_enemies = self.get_agent_num()
+        self.num_agents, self.num_enemies = self.envs.num_agents, self.envs.num_enemies
         args.n_agents = self.num_agents
         self.dim_obs, self.dim_act, self.dim_state = self.envs.dim_obs, self.envs.dim_act, self.envs.dim_state
         args.dim_obs, args.dim_act = self.dim_obs, self.dim_act
@@ -92,21 +92,6 @@ class Runner(object):
         # build QMIX agents.
         from xuance.torch.agents import QMIX_Agents
         self.agents = QMIX_Agents(args, self.envs, args.device)
-        self.on_policy = self.agents.on_policy
-
-    def init_rnn_hidden(self):
-        """
-        Note: rnn_hidden_critic is not used in QMIX, we set it as None.
-        """
-        rnn_hidden = self.agents.policy.representation.init_hidden(self.n_envs * self.num_agents)
-        if self.on_policy and self.args.agent in ["MAPPO"]:
-            rnn_hidden_critic = self.agents.policy.representation_critic.init_hidden(self.n_envs * self.num_agents)
-        else:
-            rnn_hidden_critic = [None, None]
-        return rnn_hidden, rnn_hidden_critic
-
-    def get_agent_num(self):
-        return self.envs.num_agents, self.envs.num_enemies
 
     def log_infos(self, info: dict, x_index: int):
         """
@@ -133,12 +118,11 @@ class Runner(object):
                 for k, v in info.items():
                     self.writer.add_video(k, v, fps=fps, global_step=x_index)
 
-    def get_actions(self, obs_n, avail_actions, *rnn_hidden, state=None, test_mode=False):
-        rnn_hidden_policy, rnn_hidden_critic = rnn_hidden[0], rnn_hidden[1]
+    def get_actions(self, obs_n, avail_actions, *rnn_hidden, test_mode=False):
+        rnn_hidden_policy = rnn_hidden
         rnn_hidden_next, actions_n = self.agents.act(obs_n, *rnn_hidden_policy,
                                                      avail_actions=avail_actions, test_mode=test_mode)
-        rnn_hidden_critic_next = None
-        return {'actions_n': actions_n, 'rnn_hidden': rnn_hidden_next, 'rnn_hidden_critic': rnn_hidden_critic_next}
+        return {'actions_n': actions_n, 'rnn_hidden': rnn_hidden_next}
 
     def get_battles_info(self):
         battles_game, battles_won = self.envs.battles_game.sum(), self.envs.battles_won.sum()
@@ -166,7 +150,7 @@ class Runner(object):
         envs_done = self.envs.buf_done
         self.env_step = 0
         filled = np.zeros([self.n_envs, self.episode_length, 1], np.int32)
-        rnn_hidden, rnn_hidden_critic = self.init_rnn_hidden()
+        rnn_hidden = self.agents.policy.representation.init_hidden(self.n_envs * self.num_agents)
 
         if test_mode and self.render:
             images = self.envs.render(self.args.render_mode)
@@ -176,11 +160,10 @@ class Runner(object):
 
         while not envs_done.all():  # start episodes
             available_actions = self.envs.get_avail_actions()
-            actions_dict = self.get_actions(obs_n, available_actions, rnn_hidden, rnn_hidden_critic,
-                                            state=state, test_mode=test_mode)
+            actions_dict = self.get_actions(obs_n, available_actions, *rnn_hidden, test_mode=test_mode)
             next_obs_n, next_state, rewards, terminated, truncated, info = self.envs.step(actions_dict['actions_n'])
             envs_done = self.envs.buf_done
-            rnn_hidden, rnn_hidden_critic = actions_dict['rnn_hidden'], actions_dict['rnn_hidden_critic']
+            rnn_hidden = actions_dict['rnn_hidden']
 
             if test_mode:
                 if self.render:
@@ -229,7 +212,7 @@ class Runner(object):
                 self.log_videos(info=videos_info, fps=self.fps, x_index=self.current_step)
         else:
             self.agents.memory.store_episodes()  # store episode data
-            n_epoch = self.agents.n_epoch if self.on_policy else self.n_envs
+            n_epoch = self.n_envs
             train_info = self.agents.train(self.current_step, n_epoch=n_epoch)  # train
             self.log_infos(train_info, self.current_step)
 
@@ -289,12 +272,6 @@ class Runner(object):
             print("Finish training.")
             self.agents.save_model("final_train_model.pth")
 
-        self.envs.close()
-        if self.use_wandb:
-            wandb.finish()
-        else:
-            self.writer.close()
-
     def benchmark(self):
         test_interval = self.args.eval_interval
         n_test_runs = self.args.test_episode // self.n_envs
@@ -348,12 +325,6 @@ class Runner(object):
         print("Best Score: %.4f, Std: %.4f" % (best_score["mean"], best_score["std"]))
         print("Best Win Rate: {}%".format(best_win_rate * 100))
 
-        self.envs.close()
-        if self.use_wandb:
-            wandb.finish()
-        else:
-            self.writer.close()
-
     def time_estimate(self, start):
         time_pass = int(time.time() - start)
         time_left = int((self.running_steps - self.current_step) / self.current_step * time_pass)
@@ -365,6 +336,13 @@ class Runner(object):
         INFO_time_pass = f"Time pass: {hours_pass}h{min_pass}m{sec_pass}s,"
         INFO_time_left = f"Time left: {hours_left}h{min_left}m{sec_left}s"
         return INFO_time_pass, INFO_time_left
+
+    def finish(self):
+        self.envs.close()
+        if self.use_wandb:
+            wandb.finish()
+        else:
+            self.writer.close()
 
 
 if __name__ == "__main__":
@@ -380,3 +358,4 @@ if __name__ == "__main__":
         runner.benchmark()
     else:
         runner.run()
+    runner.finish()

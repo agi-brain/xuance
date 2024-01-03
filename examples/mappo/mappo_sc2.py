@@ -21,7 +21,7 @@ def parse_args():
     parser.add_argument("--seed", type=int, default=1)
     parser.add_argument("--test", type=int, default=0)
     parser.add_argument("--device", type=str, default="cuda:0")
-    parser.add_argument("--config", type=str, default="./mappo_3m.yaml")
+    parser.add_argument("--config", type=str, default=f"./mappo_sc2_configs/{parser.parse_args().env_id}.yaml")
 
     return parser.parse_args()
 
@@ -66,10 +66,6 @@ class Runner():
         # Build environments
         self.envs = make_envs(args)
         self.envs.reset()
-        self.n_envs = self.envs.num_envs
-        self.fps = 20
-        self.episode_length = self.envs.max_episode_length
-        self.render = self.args.render
 
         # Running details
         self.running_steps = args.running_steps
@@ -79,8 +75,12 @@ class Runner():
         self.current_episode = np.zeros((self.envs.num_envs,), np.int32)
 
         # Environment details.
-        self.num_agents, self.num_enemies = self.envs.num_agents, self.envs.num_enemies
-        args.n_agents = self.num_agents
+        self.n_envs = self.envs.num_envs
+        self.fps = 20
+        self.episode_length = self.envs.max_episode_length
+        self.render = self.args.render
+        args.n_agents = self.num_agents = self.envs.num_agents
+        self.num_enemies = self.envs.num_enemies
         self.dim_obs, self.dim_act, self.dim_state = self.envs.dim_obs, self.envs.dim_act, self.envs.dim_state
         args.dim_obs, args.dim_act = self.dim_obs, self.dim_act
         args.obs_shape, args.act_shape = (self.dim_obs,), ()
@@ -249,6 +249,45 @@ class Runner():
         self.log_infos(results_info, test_T)
         return mean_test_score, test_scores.std(), win_rate
 
+    def run(self):
+        if self.args.test_mode:
+            self.render = True
+            n_test_episodes = self.args.test_episode
+            self.agents.load_model(self.args.model_dir_load)
+            test_score_mean, test_score_std, test_win_rate = self.test_episodes(0, n_test_episodes)
+            agent_info = f"Algo: {self.args.agent}, Map: {self.args.env_id}, seed: {self.args.seed}, "
+            print(agent_info, "Win rate: %.3f, Mean score: %.2f. " % (test_win_rate, test_score_mean))
+            print("Finish testing.")
+        else:
+            test_interval = self.args.eval_interval
+            last_test_T = 0
+            episode_scores = []
+            agent_info = f"Algo: {self.args.agent}, Map: {self.args.env_id}, seed: {self.args.seed}, "
+            print(f"Steps: {self.current_step} / {self.running_steps}: ")
+            print(agent_info, "Win rate: %-, Mean score: -.")
+            last_battles_info = self.get_battles_info()
+            time_start = time.time()
+            while self.current_step <= self.running_steps:
+                score = self.run_episodes(test_mode=False)
+                episode_scores.append(score)
+                if (self.current_step - last_test_T) / test_interval >= 1.0:
+                    last_test_T += test_interval
+                    # log train results before testing.
+                    train_win_rate, allies_dead_ratio, enemies_dead_ratio = self.get_battles_result(last_battles_info)
+                    results_info = {"Train-Results/Win-Rate": train_win_rate,
+                                    "Train-Results/Allies-Dead-Ratio": allies_dead_ratio,
+                                    "Train-Results/Enemies-Dead-Ratio": enemies_dead_ratio}
+                    self.log_infos(results_info, last_test_T)
+                    last_battles_info = self.get_battles_info()
+                    time_pass, time_left = self.time_estimate(time_start)
+                    print(f"Steps: {self.current_step} / {self.running_steps}: ")
+                    print(agent_info, "Win rate: %.3f, Mean score: %.2f. " % (train_win_rate, np.mean(episode_scores)),
+                          time_pass, time_left)
+                    episode_scores = []
+
+            print("Finish training.")
+            self.agents.save_model("final_train_model.pth")
+
     def benchmark(self):
         test_interval = self.args.eval_interval
         n_test_runs = self.args.test_episode // self.n_envs
@@ -302,12 +341,6 @@ class Runner():
         print("Best Score: %.4f, Std: %.4f" % (best_score["mean"], best_score["std"]))
         print("Best Win Rate: {}%".format(best_win_rate * 100))
 
-        self.envs.close()
-        if self.use_wandb:
-            wandb.finish()
-        else:
-            self.writer.close()
-
     def time_estimate(self, start):
         time_pass = int(time.time() - start)
         time_left = int((self.running_steps - self.current_step) / self.current_step * time_pass)
@@ -320,6 +353,13 @@ class Runner():
         INFO_time_left = f"Time left: {hours_left}h{min_left}m{sec_left}s"
         return INFO_time_pass, INFO_time_left
 
+    def finish(self):
+        self.envs.close()
+        if self.use_wandb:
+            wandb.finish()
+        else:
+            self.writer.close()
+
 
 if __name__ == "__main__":
     parser = parse_args()
@@ -330,3 +370,4 @@ if __name__ == "__main__":
                          parser_args=parser)
     runner = Runner(args)
     runner.benchmark()
+    runner.finish()
