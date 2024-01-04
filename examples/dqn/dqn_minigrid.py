@@ -14,13 +14,12 @@ from xuance.torch.utils import ActivationFunctions
 def parse_args():
     parser = argparse.ArgumentParser("Example of XuanCe.")
     parser.add_argument("--method", type=str, default="dqn")
-    parser.add_argument("--env", type=str, default="atari")
-    parser.add_argument("--env-id", type=str, default="ALE/Breakout-v5")
+    parser.add_argument("--env", type=str, default="minigrid")
+    parser.add_argument("--env-id", type=str, default="MiniGrid-Empty-5x5-v0")
     parser.add_argument("--test", type=int, default=0)
-    parser.add_argument("--device", type=str, default="cuda:0")
+    parser.add_argument("--device", type=str, default="cpu")
     parser.add_argument("--benchmark", type=int, default=1)
-    parser.add_argument("--render", type=bool, default=True)
-    parser.add_argument("--config-path", type=str, default="./dqn_configs/dqn_atari_config.yaml")
+    parser.add_argument("--config-path", type=str, default="./dqn_configs/dqn_minigrid_config.yaml")
 
     return parser.parse_args()
 
@@ -40,11 +39,9 @@ def run(args):
     n_envs = envs.num_envs
 
     # prepare representation
-    from xuance.torch.representations import Basic_CNN
-    representation = Basic_CNN(input_shape=space2shape(args.observation_space),
-                               kernels=args.kernels,
-                               strides=args.strides,
-                               filters=args.filters,
+    from xuance.torch.representations import Basic_MLP
+    representation = Basic_MLP(input_shape=space2shape(args.observation_space),
+                               hidden_sizes=args.representation_hidden_size,
                                normalize=None,
                                initialize=torch.nn.init.orthogonal_,
                                activation=ActivationFunctions[args.activation],
