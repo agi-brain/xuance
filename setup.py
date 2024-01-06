@@ -14,7 +14,7 @@ setup(
                 "environment/magent2/libmagent.dylib"  # for magent2 environment on MacOS
             ]
     },
-    version="1.0.8",
+    version="1.0.9",
     description='XuanCe: A Comprehensive and Unified Deep Reinforcement Learning Library.',
     author='XuanCe contributors.',
     author_email='',
