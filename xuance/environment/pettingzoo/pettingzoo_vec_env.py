@@ -1,3 +1,5 @@
+from abc import ABC
+
 from xuance.environment.vector_envs.vector_env import VecEnv, AlreadySteppingError, NotSteppingError
 from xuance.environment.vector_envs.env_utils import obs_n_space_info
 from xuance.environment.gym.gym_vec_env import DummyVecEnv_Gym
