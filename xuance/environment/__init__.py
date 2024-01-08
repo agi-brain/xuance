@@ -7,7 +7,7 @@ from .vector_envs.vector_env import VecEnv
 from xuance.environment.gym.gym_vec_env import DummyVecEnv_Gym, SubprocVecEnv_Gym
 from xuance.environment.gym.gym_vec_env import DummyVecEnv_Atari, SubprocVecEnv_Atari
 from xuance.environment.pettingzoo.pettingzoo_vec_env import DummyVecEnv_Pettingzoo, SubprocVecEnv_Pettingzoo
-from xuance.environment.magent2.magent_vec_env import DummyVecEnv_MAgent
+from xuance.environment.magent2.magent_vec_env import DummyVecEnv_MAgent, SubprocVecEnv_Magent
 from xuance.environment.starcraft2.sc2_vec_env import DummyVecEnv_StarCraft2, SubprocVecEnv_StarCraft2
 from xuance.environment.football.gfootball_vec_env import DummyVecEnv_GFootball, SubprocVecEnv_GFootball
 from xuance.environment.minigrid.minigrid_vec_env import DummyVecEnv_MiniGrid, SubprocVecEnv_MiniGrid
@@ -23,19 +23,20 @@ REGISTRY_VEC_ENV = {
     "Dummy_StarCraft2": DummyVecEnv_StarCraft2,
     "Dummy_Football": DummyVecEnv_GFootball,
     "Dummy_Atari": DummyVecEnv_Atari,
-    "DummyVecEnv_MiniGrid": DummyVecEnv_MiniGrid,
-    "DummyVecEnv_Drone": DummyVecEnv_Drones,
+    "Dummy_MiniGrid": DummyVecEnv_MiniGrid,
+    "Dummy_Drone": DummyVecEnv_Drones,
     "Dummy_NewEnv": DummyVecEnv_New,  # Add the newly defined vectorized environment
 
 
     # multiprocess #
     "Subproc_Gym": SubprocVecEnv_Gym,
     "Subproc_Pettingzoo": SubprocVecEnv_Pettingzoo,
+    "Subproc_MAgent": SubprocVecEnv_Magent,
     "Subproc_StarCraft2": SubprocVecEnv_StarCraft2,
     "Subproc_Football": SubprocVecEnv_GFootball,
     "Subproc_Atari": SubprocVecEnv_Atari,
-    "SubprocVecEnv_MiniGrid": SubprocVecEnv_MiniGrid,
-    "SubprocVecEnv_Drone": SubprocVecEnv_Drones,
+    "Subproc_MiniGrid": SubprocVecEnv_MiniGrid,
+    "Subproc_Drone": SubprocVecEnv_Drones,
     "Subproc_NewEnv": SubprocVecEnv_New,  # Add the newly defined vectorized environment
 }
 
