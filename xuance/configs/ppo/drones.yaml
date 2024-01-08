@@ -7,7 +7,7 @@ record: False
 render: True
 obstacles: True
 max_episode_steps: 200
-vectorize: "DummyVecEnv_Drone"
+vectorize: "Dummy_Drone"
 policy: "Gaussian_AC"  # choice: Gaussian_AC for continuous actions, Categorical_AC for discrete actions.
 representation: "Basic_MLP"
 runner: "DRL"
