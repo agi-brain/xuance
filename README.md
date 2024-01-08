@@ -253,6 +253,28 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
 </table>
 </details>
 
+### [Drones Environments](https://github.com/utiasDSL/gym-pybullet-drones)
+
+<details open>
+<summary>(Click to hide)</summary>
+
+<table rules="none" align="center"><tr>
+<td> <center>
+<img src="./docs/source/figures/drones/helix.gif" height=100" /><br/><font color="AAAAAA">Helix</font>
+</center></td>
+<td> <center>
+<img src="./docs/source/figures/drones/rl.gif" height=100" /> <br/> <font color="AAAAAA">Single-Agent Hover</font>
+</center> </td>
+<td> <center>
+<img src="./docs/source/figures/drones/marl.gif" height=100" /> <br/> <font color="AAAAAA">Multi-Agent Hover</font>
+</center> </td>
+<td> <center>
+<br/> <font color="AAAAAA">...</font>
+</center> </td>
+</tr>
+</table>
+</details>
+
 ### [MPE Environments](https://pettingzoo.farama.org/environments/mpe/)
 
 <details open>
