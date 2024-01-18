@@ -128,7 +128,7 @@ class TD3_Agent(Agent):
         if self.config.render_mode == "rgb_array" and self.render:
             # time, height, width, channel -> time, channel, height, width
             videos_info = {"Videos_Test": np.array([episode_videos], dtype=np.uint8).transpose((0, 1, 4, 2, 3))}
-            self.log_videos(info=videos_info, fps=50, x_index=self.current_step)
+            self.log_videos(info=videos_info, fps=self.fps, x_index=self.current_step)
 
         if self.config.test_mode:
             print("Best Score: %.2f" % (best_score))

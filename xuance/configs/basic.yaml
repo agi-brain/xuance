@@ -8,6 +8,7 @@ parallels: 10
 seed: 2910
 render: True
 render_mode: 'rgb_array' # Choices: 'human', 'rgb_array'.
+fps: 50
 test_mode: False
 test_steps: 2000
 

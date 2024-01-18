@@ -15,7 +15,7 @@ from copy import deepcopy
 class Pettingzoo_Runner(Runner_Base):
     def __init__(self, args):
         self.args = args if type(args) == list else [args]
-        self.fps = 20
+        self.fps = args[0].fps if type(args) == list else args.fps
 
         time_string = time.asctime().replace(" ", "").replace(":", "_")
         for arg in self.args:

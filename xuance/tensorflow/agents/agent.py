@@ -18,6 +18,7 @@ class Agent(ABC):
         self.policy = policy
         self.memory = memory
         self.learner = learner
+        self.fps = config.fps
 
         self.observation_space = envs.observation_space
         self.comm = MPI.COMM_WORLD

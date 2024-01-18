@@ -15,7 +15,6 @@ Step 1: Customized Representation
 
 
 
-
 Step 2: Customized Policy
 ------------------------------------
 
