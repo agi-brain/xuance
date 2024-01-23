@@ -1,3 +1,4 @@
+import numpy as np
 from gym.spaces import Box
 
 
@@ -41,8 +42,8 @@ class Drones_Env():
     def close(self):
         self.env.close()
 
-    def render(self):
-        return self.env.render()
+    def render(self, *args, **kwargs):
+        return np.zeros([2, 2, 2])
 
     def reset(self):
         obs, info = self.env.reset()

@@ -4,7 +4,7 @@ env_id: "CtrlAviary"  # choices: ['CtrlAviary', 'HoverAviary', 'VelocityAviary']
 continuous: True
 num_drones: 1
 record: False
-render: True
+render: False
 obstacles: True
 max_episode_steps: 200
 vectorize: "Dummy_Drone"
