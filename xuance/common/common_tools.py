@@ -72,12 +72,27 @@ def get_arguments(method, env, env_id, config_path=None, parser_args=None):
 
     ''' get the arguments from, e.g., xuance/config/dqn/box2d/CarRacing-v2.yaml '''
     if type(method) == list:  # for different groups of MARL algorithms.
-        file_name = env + "/" + env_id + ".yaml"
-        config_algo_default = [get_config(os.path.join(config_path_default, agent, file_name)) for agent in method]
+        if config_path is None:
+            config_path = []
+            file_name_env_id = env + "/" + env_id + ".yaml"
+            file_name_env = env + "/" + env_id + ".yaml"
+            config_path_env_id = [os.path.join(config_path_default, agent, file_name_env_id) for agent in method]
+            config_path_env = [os.path.join(config_path_default, agent, file_name_env) for agent in method]
+            for i_agent, agent in enumerate(method):
+                if os.path.exists(config_path_env_id[i_agent]):
+                    config_path.append(config_path_env_id[i_agent])
+                elif os.path.exists(config_path_env[i_agent]):
+                    config_path.append(config_path_env[i_agent])
+                else:
+                    raise RuntimeError(
+                        f"Cannot find file named '{config_path_env_id[i_agent]}' or '{config_path_env[i_agent]}'."
+                        f"You can also customize the configuration file by specifying the `config_path` parameter "
+                        f"in the `get_runner()` function.")
+        else:
+            config_path = [os.path.join(main_path, _path) for _path in config_path]
+        config_algo_default = [get_config(_path) for _path in config_path]
         configs = [recursive_dict_update(config_basic, config_i) for config_i in config_algo_default]
-        if config_path is not None:
-            config_algo = [get_config(os.path.join(main_path, _path)) for _path in config_path]
-            configs = [recursive_dict_update(config_i, config_algo[i]) for i, config_i in enumerate(configs)]
+        # load parser_args and rewrite the parameters if their names are same.
         if parser_args is not None:
             configs = [recursive_dict_update(config_i, parser_args.__dict__) for config_i in configs]
         args = [SN(**config_i) for config_i in configs]

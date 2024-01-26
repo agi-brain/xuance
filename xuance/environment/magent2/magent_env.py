@@ -1,13 +1,15 @@
+import numpy as np
 from pettingzoo.utils.env import ParallelEnv
 from xuance.environment.pettingzoo.pettingzoo_env import PettingZoo_Env
 from xuance.environment.magent2 import AGENT_NAME_DICT
 import importlib
+from gymnasium.spaces.box import Box
 
 
 class MAgent_Env(PettingZoo_Env, ParallelEnv):
     metadata = {"render_modes": ["human"], "name": "rps_v2"}
     def __init__(self, env_id: str, seed: int, **kwargs):
-        scenario = importlib.import_module('xuance.environment.magent2.environments.' + env_id)
+        scenario = importlib.import_module('magent2.environments.' + env_id)
 
         if env_id in ["adversarial_pursuit_v4"]:
             kwargs['minimap_mode'] = False
@@ -15,7 +17,7 @@ class MAgent_Env(PettingZoo_Env, ParallelEnv):
         if env_id in ["battle_v4", "battlefield_v4", "combined_arms_v6"]:
             kwargs['step_reward'] = -0.005
             kwargs['dead_penalty'] = -0.1
-            kwargs['attack_peanlty'] = -0.1
+            kwargs['attack_penalty'] = -0.1
             kwargs['attack_opponent_reward'] = 0.2
         if env_id in ["gather_v4"]:
             kwargs['step_reward'] = -0.01
@@ -33,8 +35,13 @@ class MAgent_Env(PettingZoo_Env, ParallelEnv):
         self.env.reset(seed)
 
         self.state_space = self.env.state_space
+        self.observation_spaces = {}
+        for k in self.env.agents:
+            obs_space = self.env.observation_spaces[k]
+            self.observation_spaces.update({
+                k: Box(np.min(obs_space.low), np.max(obs_space.high), [np.prod(obs_space.shape)], obs_space.dtype, seed)
+            })
         self.action_spaces = {k: self.env.action_spaces[k] for k in self.env.agents}
-        self.observation_spaces = {k: self.env.observation_spaces[k] for k in self.env.agents}
         self.agents = self.env.agents
         self.n_agents_all = len(self.agents)
 
