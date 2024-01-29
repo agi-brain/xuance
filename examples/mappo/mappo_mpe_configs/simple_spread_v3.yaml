@@ -27,18 +27,17 @@ activation: "ReLU"
 
 seed: 1
 parallels: 128
-n_size: 6400
+n_size: 3200
 n_epoch: 10
 n_minibatch: 1
 learning_rate: 0.001
 weight_decay: 0
 
-vf_coef: 0.5
+vf_coef: 1.0
 ent_coef: 0.01
 target_kl: 0.25  # for MAPPO_KL learner
 clip_range: 0.2  # ratio clip range, for MAPPO_Clip learner
-clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
-gamma: 0.95  # discount factor
+gamma: 0.99  # discount factor
 
 # tricks
 use_linear_lr_decay: False  # if use linear learning rate decay
