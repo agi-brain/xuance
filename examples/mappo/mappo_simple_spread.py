@@ -157,9 +157,6 @@ class Runner(object):
                 next_state, agent_mask = self.envs.global_state(), self.envs.agent_mask()
                 self.store_data(obs_n, next_obs_n, actions_dict, state, next_state, agent_mask, rew_n, terminated_n)
 
-                # train the model
-                train_info = self.agents.train(self.current_step)
-
                 obs_n, state = deepcopy(next_obs_n), deepcopy(next_state)
                 episode_score += np.mean(rew_n[0] * agent_mask[0][:, :, np.newaxis], axis=1)
                 terminal_handle = terminated_n[0].all(axis=-1)
@@ -175,6 +172,8 @@ class Runner(object):
                         agent_mask[0][i_env] = infos[i_env]["reset_agent_mask"][0]
                         episode_score[i_env] = np.mean(infos[i_env]["individual_episode_rewards"][0])
                         state[i_env] = infos[i_env]["reset_state"]
+                # train the model
+                train_info = self.agents.train(self.current_step)
                 self.current_step += self.n_envs
 
             episode_info = {"Train_Episode_Score": episode_score[0].mean()}
