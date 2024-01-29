@@ -125,8 +125,8 @@ class Runner(object):
         actions_envs = [{k: actions[e][i] for i, k in enumerate(self.agent_keys)} for e in range(num_envs)]
         return actions_envs
 
-    def get_actions(self, obs_n, test_mode, state):
-        _, actions_n, log_pi_n = self.agents.act(obs_n, test_mode=test_mode, state=state)
+    def get_actions(self, obs_n, state):
+        _, actions_n, log_pi_n = self.agents.act(obs_n, state=state)
         _, values_n = self.agents.values(obs_n, state=state)
         return {'actions_n': actions_n, 'log_pi': log_pi_n, 'values': values_n}
 
@@ -140,10 +140,9 @@ class Runner(object):
             _, values_next = self.agents.values(next_obs_n[0], state=next_state[0])
             for i_env in range(self.n_envs):
                 if done_n[0][i_env].all():
-                    self.agents.memory.finish_path(0.0, i_env, value_normalizer=self.agents.learner.value_normalizer)
-                else:
-                    self.agents.memory.finish_path(values_next[i_env], i_env,
-                                                   value_normalizer=self.agents.learner.value_normalizer)
+                    values_next[i_env] = 0.0
+                self.agents.memory.finish_path(values_next[i_env], i_env,
+                                               value_normalizer=self.agents.learner.value_normalizer)
 
     def train_episode(self, n_episodes):
         episode_score = np.zeros([self.n_envs, 1], dtype=np.float32)
@@ -151,7 +150,7 @@ class Runner(object):
         for _ in tqdm(range(n_episodes)):
             obs_n, state = self.envs.buf_obs, self.envs.global_state()
             for step in range(self.episode_length):
-                actions_dict = self.get_actions(obs_n[0], False, state[0])
+                actions_dict = self.get_actions(obs_n[0], state[0])
                 actions_execute = self.combine_env_actions(actions_dict['actions_n'])
                 next_obs_n, rew_n, terminated_n, truncated_n, infos = self.envs.step(actions_execute)
                 next_state, agent_mask = self.envs.global_state(), self.envs.agent_mask()
@@ -193,7 +192,7 @@ class Runner(object):
         episode_score = np.zeros([num_envs, 1], dtype=np.float32)
 
         for step in range(self.episode_length):
-            actions_dict = self.get_actions(obs_n[0], True, state)
+            actions_dict = self.get_actions(obs_n[0], state)
             actions_execute = self.combine_env_actions(actions_dict['actions_n'])
             next_obs_n, rew_n, terminated_n, truncated_n, infos = test_envs.step(actions_execute)
             if self.args.render_mode == "rgb_array" and self.render:

@@ -48,7 +48,7 @@ use_grad_norm: True  # gradient normalization
 max_grad_norm: 10.0
 use_value_clip: True  # limit the value range
 value_clip_range: 0.2
-use_value_norm: False  # use running mean and std to normalize rewards.
+use_value_norm: True  # use running mean and std to normalize rewards.
 use_huber_loss: True  # True: use huber loss; False: use MSE loss.
 huber_delta: 10.0
 use_advnorm: True
