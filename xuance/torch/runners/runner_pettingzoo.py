@@ -139,6 +139,13 @@ class Pettingzoo_Runner(Runner_Base):
         print(infos)
         time.sleep(0.01)
 
+    def finish(self):
+        self.envs.close()
+        if self.use_wandb:
+            wandb.finish()
+        else:
+            self.writer.close()
+
     def combine_env_actions(self, actions):
         actions_envs = []
         num_env = actions[0].shape[0]
@@ -374,11 +381,7 @@ class Pettingzoo_Runner(Runner_Base):
             for h, mas_group in enumerate(self.marl_agents):
                 mas_group.save_model("final_train_model.pth")
 
-        self.envs.close()
-        if self.use_wandb:
-            wandb.finish()
-        else:
-            self.writer.close()
+        self.finish()
 
     def benchmark(self):
         def env_fn():
@@ -421,8 +424,4 @@ class Pettingzoo_Runner(Runner_Base):
             print("Best Score for {}: ".format(self.envs.envs[0].side_names[h]))
             print("Mean: ", best_scores[h]["mean"], "Std: ", best_scores[h]["std"])
 
-        self.envs.close()
-        if self.use_wandb:
-            wandb.finish()
-        else:
-            self.writer.close()
+        self.finish()

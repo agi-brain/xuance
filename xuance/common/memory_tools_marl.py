@@ -112,18 +112,25 @@ class MARL_OnPolicyBuffer(BaseBuffer):
         returns = np.zeros_like(rewards)
         last_gae_lam = 0
         step_nums = len(path_slice)
+        use_value_norm = False if (value_normalizer is None) else True
 
         if self.use_gae:
             for t in reversed(range(step_nums)):
-                delta = rewards[t] + (1 - dones[t]) * self.gamma * vs[t + 1] - vs[t]
+                if use_value_norm:
+                    vs_t, vs_next = value_normalizer.denormalize(vs[t]), value_normalizer.denormalize(vs[t + 1])
+                else:
+                    vs_t, vs_next = vs[t], vs[t + 1]
+                delta = rewards[t] + (1 - dones[t]) * self.gamma * vs_next - vs_t
                 last_gae_lam = delta + (1 - dones[t]) * self.gamma * self.gae_lambda * last_gae_lam
-                returns[t] = last_gae_lam + vs[t]
+                returns[t] = last_gae_lam + vs_t
+            advantages = returns - value_normalizer.denormalize(vs[:-1]) if use_value_norm else returns - vs[:-1]
         else:
             returns = np.append(returns, [value], axis=0)
             for t in reversed(range(step_nums)):
                 returns[t] = rewards[t] + (1 - dones[t]) * self.gamma * returns[t + 1]
+            advantages = returns - value_normalizer.denormalize(vs) if use_value_norm else returns - vs
+            advantages = advantages[:-1]
 
-        advantages = returns - vs[:-1]
         self.data['returns'][i_env, path_slice] = returns
         self.data['advantages'][i_env, path_slice] = advantages
         self.start_ids[i_env] = self.ptr
