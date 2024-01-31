@@ -106,6 +106,8 @@ class MAAC_Policy(nn.Module):
 
     def forward(self, observation: torch.Tensor, agent_ids: torch.Tensor,
                 *rnn_hidden: torch.Tensor, avail_actions=None):
+        if avail_actions is not None:
+            observation = torch.concat([observation, avail_actions], dim=-1)
         if self.use_rnn:
             outputs = self.representation(observation, *rnn_hidden)
             rnn_hidden = (outputs['rnn_hidden'], outputs['rnn_cell'])
