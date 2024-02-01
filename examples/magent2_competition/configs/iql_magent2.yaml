@@ -28,7 +28,7 @@ q_hidden_size: [64, ]  # the units for each hidden layer
 activation: "ReLU"
 
 seed: 1
-parallels: 10
+parallels: 1
 buffer_size: 20000
 batch_size: 256
 learning_rate: 0.001
@@ -48,6 +48,6 @@ use_grad_clip: False
 grad_clip_norm: 0.5
 
 eval_interval: 100000
-test_episode: 5
+test_episode: 1
 log_dir: "./logs/iql/"
 model_dir: "./models/iql/"
