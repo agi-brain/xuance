@@ -8,24 +8,19 @@ class Drones_Env():
         from gym_pybullet_drones.envs.CtrlAviary import CtrlAviary
         from gym_pybullet_drones.envs.HoverAviary import HoverAviary
         from gym_pybullet_drones.envs.VelocityAviary import VelocityAviary
+        from gym_pybullet_drones.utils.enums import ObservationType, ActionType
         REGISTRY = {
             "CtrlAviary": CtrlAviary,
             "HoverAviary": HoverAviary,
             "VelocityAviary": VelocityAviary
         }
-        continuous = args.continuous
         self.env_id = args.env_id
 
         from gym_pybullet_drones.utils.enums import DroneModel, Physics
         self.env = REGISTRY[args.env_id](
-            drone_model=DroneModel.CF2X,
-            initial_xyzs=None,
-            initial_rpys=None,
-            physics=Physics.PYB,
-            pyb_freq=240,
-            ctrl_freq=240,
             gui=args.render,
-            record=args.record
+            obs=ObservationType(args.obs_type),
+            act=ActionType(args.act_type),
         )
         self._episode_step = 0
         self._episode_score = 0.0
