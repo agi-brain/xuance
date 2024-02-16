@@ -1,3 +1,5 @@
+import torch
+
 from xuance.torch.agents import *
 
 
@@ -26,9 +28,13 @@ class MAPPO_Agents(MARLAgents):
         self.use_recurrent = config.use_recurrent
         self.use_global_state = config.use_global_state
         # create representation for actor
-        kwargs_rnn = {"N_recurrent_layers": config.N_recurrent_layers,
-                      "dropout": config.dropout,
-                      "rnn": config.rnn} if self.use_recurrent else {}
+        if self.use_recurrent:
+            input_representation[0] = (config.dim_obs + config.dim_act, )
+            kwargs_rnn = {"N_recurrent_layers": config.N_recurrent_layers,
+                          "dropout": config.dropout,
+                          "rnn": config.rnn}
+        else:
+            kwargs_rnn = {}
         representation = REGISTRY_Representation[config.representation](*input_representation, **kwargs_rnn)
         # create representation for critic
         if self.use_global_state:
@@ -67,6 +73,8 @@ class MAPPO_Agents(MARLAgents):
         batch_size = len(obs_n)
         agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(batch_size, -1, -1).to(self.device)
         obs_in = torch.Tensor(obs_n).view([batch_size, self.n_agents, -1]).to(self.device)
+        if avail_actions is not None:
+            avail_actions = torch.Tensor(avail_actions).to(self.device)
         if self.use_recurrent:
             batch_agents = batch_size * self.n_agents
             hidden_state, dists = self.policy(obs_in.view(batch_agents, 1, -1),
