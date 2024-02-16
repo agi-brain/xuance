@@ -246,10 +246,8 @@ class Runner():
                 if (self.current_step - last_test_T) / test_interval >= 1.0:
                     last_test_T += test_interval
                     # log train results before testing.
-                    train_win_rate, allies_dead_ratio, enemies_dead_ratio = self.get_battles_result(last_battles_info)
-                    results_info = {"Train-Results/Win-Rate": train_win_rate,
-                                    "Train-Results/Allies-Dead-Ratio": allies_dead_ratio,
-                                    "Train-Results/Enemies-Dead-Ratio": enemies_dead_ratio}
+                    train_win_rate = self.get_battles_result(last_battles_info)
+                    results_info = {"Train-Results/Win-Rate": train_win_rate}
                     self.log_infos(results_info, last_test_T)
                     last_battles_info = self.get_battles_info()
                     time_pass, time_left = self.time_estimate(time_start)
@@ -285,10 +283,8 @@ class Runner():
             if (self.current_step - last_test_T) / test_interval >= 1.0:
                 last_test_T += test_interval
                 # log train results before testing.
-                train_win_rate, allies_dead_ratio, enemies_dead_ratio = self.get_battles_result(last_battles_info)
-                results_info = {"Train-Results/Win-Rate": train_win_rate,
-                                "Train-Results/Allies-Dead-Ratio": allies_dead_ratio,
-                                "Train-Results/Enemies-Dead-Ratio": enemies_dead_ratio}
+                train_win_rate = self.get_battles_result(last_battles_info)
+                results_info = {"Train-Results/Win-Rate": train_win_rate}
                 self.log_infos(results_info, last_test_T)
 
                 # test the model
