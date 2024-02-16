@@ -40,6 +40,12 @@ class Runner():
         if (not os.path.exists(self.args.model_dir_save)) and (not self.args.test_mode):
             os.makedirs(self.args.model_dir_save)
 
+        if args.test:
+            args.parallels = 1
+            args.render = True
+        else:
+            args.render = False
+
         # Logger
         if self.args.logger == "tensorboard":
             log_dir = os.path.join(os.getcwd(), self.args.log_dir, folder_name)
