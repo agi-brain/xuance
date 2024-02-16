@@ -40,6 +40,12 @@ class Runner():
         if (not os.path.exists(self.args.model_dir_save)) and (not self.args.test_mode):
             os.makedirs(self.args.model_dir_save)
 
+        if args.test:
+            args.parallels = 1
+            self.render = args.render = True
+        else:
+            self.render = args.render = False
+
         # Logger
         if self.args.logger == "tensorboard":
             log_dir = os.path.join(os.getcwd(), self.args.log_dir, folder_name)
@@ -78,7 +84,6 @@ class Runner():
         self.n_envs = self.envs.num_envs
         self.fps = 20
         self.episode_length = self.envs.max_episode_length
-        self.render = self.args.render
         args.n_agents = self.num_agents = self.envs.num_agents
         self.num_adversaries = self.envs.num_adversaries
         self.dim_obs, self.dim_act, self.dim_state = self.envs.dim_obs, self.envs.dim_act, self.envs.dim_state
@@ -198,7 +203,6 @@ class Runner():
 
     def run(self):
         if self.args.test_mode:
-            self.render = True
             n_test_episodes = self.args.test_episode
             self.agents.load_model(self.args.model_dir_load)
             test_score_mean, test_score_std, test_win_rate = self.test_episodes(0, n_test_episodes)
