@@ -80,7 +80,7 @@ class Runner():
         self.episode_length = self.envs.max_episode_length
         self.render = self.args.render
         args.n_agents = self.num_agents = self.envs.num_agents
-        self.num_enemies = self.envs.num_enemies
+        self.num_adversaries = self.envs.num_adversaries
         self.dim_obs, self.dim_act, self.dim_state = self.envs.dim_obs, self.envs.dim_act, self.envs.dim_state
         args.dim_obs, args.dim_act = self.dim_obs, self.dim_act
         args.obs_shape, args.act_shape = (self.dim_obs,), ()
@@ -126,20 +126,14 @@ class Runner():
 
     def get_battles_info(self):
         battles_game, battles_won = self.envs.battles_game.sum(), self.envs.battles_won.sum()
-        dead_allies, dead_enemies = self.envs.dead_allies_count.sum(), self.envs.dead_enemies_count.sum()
-        return battles_game, battles_won, dead_allies, dead_enemies
+        return battles_game, battles_won
 
     def get_battles_result(self, last_battles_info):
-        battles_game, battles_won, dead_allies, dead_enemies = list(last_battles_info)
+        battles_game, battles_won = list(last_battles_info)
         incre_battles_game = float(self.envs.battles_game.sum() - battles_game)
         incre_battles_won = float(self.envs.battles_won.sum() - battles_won)
         win_rate = incre_battles_won / incre_battles_game if incre_battles_game > 0 else 0.0
-        allies_count, enemies_count = incre_battles_game * self.num_agents, incre_battles_game * self.num_enemies
-        incre_allies = float(self.envs.dead_allies_count.sum() - dead_allies)
-        incre_enemies = float(self.envs.dead_enemies_count.sum() - dead_enemies)
-        allies_dead_ratio = incre_allies / allies_count if allies_count > 0 else 0.0
-        enemies_dead_ratio = incre_enemies / enemies_count if enemies_count > 0 else 0.0
-        return win_rate, allies_dead_ratio, enemies_dead_ratio
+        return win_rate
 
     def run_episodes(self, test_mode=False):
         step_info, train_info = {}, {}
@@ -209,9 +203,6 @@ class Runner():
                             kwargs = {"state": [next_state[i_env]]}
                             rnn_h_critic_i = self.agents.policy.representation_critic.get_hidden_item(batch_select,
                                                                                                       *rnn_hidden_critic)
-                            if self.args.agent == "COMA":
-                                kwargs.update({"actions_n": actions_dict["actions_n"],
-                                               "actions_onehot": actions_dict["act_n_onehot"]})
                             _, values_next = self.agents.values(next_obs_n[i_env:i_env + 1],
                                                                 *rnn_h_critic_i, **kwargs)
                         self.agents.memory.finish_path(i_env, self.env_step + 1, *terminal_data,
@@ -240,12 +231,10 @@ class Runner():
         last_battles_info = self.get_battles_info()
         for i_test in range(n_test_runs):
             test_scores[i_test] = self.run_episodes(test_mode=True)
-        win_rate, allies_dead_ratio, enemies_dead_ratio = self.get_battles_result(last_battles_info)
+        win_rate = self.get_battles_result(last_battles_info)
         mean_test_score = test_scores.mean()
         results_info = {"Test-Results/Mean-Episode-Rewards": mean_test_score,
-                        "Test-Results/Win-Rate": win_rate,
-                        "Test-Results/Allies-Dead-Ratio": allies_dead_ratio,
-                        "Test-Results/Enemies-Dead-Ratio": enemies_dead_ratio}
+                        "Test-Results/Win-Rate": win_rate}
         self.log_infos(results_info, test_T)
         return mean_test_score, test_scores.std(), win_rate
 

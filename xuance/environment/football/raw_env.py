@@ -33,7 +33,7 @@ class football_raw_env(FootballEnv):
             render=self.render,
             write_video=write_video,
             dump_frequency=dump_frequency,
-            log_dir=args.videos_dir,
+            logdir=args.videos_dir,
             extra_players=extra_players,
             number_of_left_players_agent_controls=args.num_agent,
             number_of_right_players_agent_controls=args.num_adversary,
