@@ -147,12 +147,6 @@ class Runner():
         rnn_hidden = self.agents.policy.representation.init_hidden(self.n_envs * self.num_agents)
         rnn_hidden_critic = self.agents.policy.representation_critic.init_hidden(self.n_envs * self.num_agents)
 
-        if test_mode and self.render:
-            images = self.envs.render(self.args.render_mode)
-            if self.args.render_mode == "rgb_array":
-                for idx, img in enumerate(images):
-                    videos[idx].append(img)
-
         while not envs_done.all():  # start episodes
             available_actions = self.envs.get_avail_actions()
             actions_dict = self.get_actions(obs_n, available_actions, rnn_hidden, rnn_hidden_critic,
@@ -162,11 +156,6 @@ class Runner():
             rnn_hidden, rnn_hidden_critic = actions_dict['rnn_hidden'], actions_dict['rnn_hidden_critic']
 
             if test_mode:
-                if self.render:
-                    images = self.envs.render(self.args.render_mode)
-                    if self.args.render_mode == "rgb_array":
-                        for idx, img in enumerate(images):
-                            videos[idx].append(img)
                 for i_env in range(self.n_envs):
                     if terminated[i_env] or truncated[i_env]:  # one env is terminal
                         episode_score.append(info[i_env]["episode_score"])
@@ -212,12 +201,7 @@ class Runner():
                 self.env_step += 1
             obs_n, state = deepcopy(next_obs_n), deepcopy(next_state)
 
-        if test_mode:
-            if self.render and self.args.render_mode == "rgb_array":
-                # time, height, width, channel -> time, channel, height, width
-                videos_info = {"Videos_Test": np.array([best_videos], dtype=np.uint8).transpose((0, 1, 4, 2, 3))}
-                self.log_videos(info=videos_info, fps=self.fps, x_index=self.current_step)
-        else:
+        if not test_mode:
             self.agents.memory.store_episodes()  # store episode data
             n_epoch = self.agents.n_epoch
             train_info = self.agents.train(self.current_step, n_epoch=n_epoch)  # train
@@ -227,7 +211,7 @@ class Runner():
         return mean_episode_score
 
     def test_episodes(self, test_T, n_test_runs):
-        test_scores = np.zeros(n_test_runs, np.float)
+        test_scores = np.zeros(n_test_runs)
         last_battles_info = self.get_battles_info()
         for i_test in range(n_test_runs):
             test_scores[i_test] = self.run_episodes(test_mode=True)
