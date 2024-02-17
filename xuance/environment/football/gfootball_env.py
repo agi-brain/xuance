@@ -42,7 +42,7 @@ class GFootball_Env:
         """Close the environment."""
         self.env.close()
 
-    def render(self):
+    def render(self, *args, **kwargs):
         """Get one-step frame."""
         return self.env.get_frame()
 
