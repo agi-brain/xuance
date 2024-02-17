@@ -238,7 +238,7 @@ class DummyVecEnv_GFootball(VecEnv):
             env.close()
 
     def render(self, mode):
-        return [env.render() for env in self.envs]
+        return [env.render(mode) for env in self.envs]
 
     def get_avail_actions(self):
         return np.ones([self.num_envs, self.num_agents, self.dim_act], dtype=np.bool)
