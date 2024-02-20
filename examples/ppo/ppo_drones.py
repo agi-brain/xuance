@@ -12,7 +12,7 @@ from xuance.torch.utils import ActivationFunctions
 
 
 def parse_args():
-    parser = argparse.ArgumentParser("Example of XuanCe.")
+    parser = argparse.ArgumentParser("Example of XuanCe: PPO for Drones.")
     parser.add_argument("--method", type=str, default="ppo")
     parser.add_argument("--env", type=str, default="drones")
     parser.add_argument("--env-id", type=str, default="CtrlAviary")

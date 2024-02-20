@@ -14,7 +14,7 @@ from xuance.torch.utils.operations import set_seed
 
 
 def parse_args():
-    parser = argparse.ArgumentParser("Example: MAPPO of XuanCe for SMAC environments.")
+    parser = argparse.ArgumentParser("Example: VDN of XuanCe for Google Football Research environments.")
     parser.add_argument("--method", type=str, default="vdn")
     parser.add_argument("--env", type=str, default="football")
     parser.add_argument("--env-id", type=str, default="3v1")

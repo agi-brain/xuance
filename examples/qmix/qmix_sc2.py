@@ -14,7 +14,7 @@ from xuance.torch.utils.operations import set_seed
 
 
 def parse_args():
-    parser = argparse.ArgumentParser("Example of XuanCe.")
+    parser = argparse.ArgumentParser("Example: QMIX of XuanCe for SMAC environments.")
     parser.add_argument("--method", type=str, default="qmix")
     parser.add_argument("--env", type=str, default="sc2")
     parser.add_argument("--env-id", type=str, default="2m_vs_1z")

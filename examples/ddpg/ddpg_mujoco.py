@@ -12,7 +12,7 @@ from xuance.torch.utils import ActivationFunctions
 
 
 def parse_args():
-    parser = argparse.ArgumentParser("Example of XuanCe.")
+    parser = argparse.ArgumentParser("Example of XuanCe: DDPG.")
     parser.add_argument("--method", type=str, default="ddpg")
     parser.add_argument("--env", type=str, default="mujoco")
     parser.add_argument("--env-id", type=str, default="InvertedPendulum-v4")
