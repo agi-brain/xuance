@@ -8,6 +8,7 @@ from gymnasium.spaces.box import Box
 
 class MAgent_Env(PettingZoo_Env, ParallelEnv):
     metadata = {"render_modes": ["human"], "name": "rps_v2"}
+
     def __init__(self, env_id: str, seed: int, **kwargs):
         scenario = importlib.import_module('xuance.environment.magent2.environments.' + env_id)
 
@@ -73,5 +74,3 @@ class MAgent_Env(PettingZoo_Env, ParallelEnv):
         step_info = {"infos": infos,
                      "individual_episode_rewards": self.individual_episode_reward}
         return observations, rewards, terminations, truncations, step_info
-
-
