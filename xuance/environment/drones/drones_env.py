@@ -2,7 +2,7 @@ import numpy as np
 from gym.spaces import Box
 
 
-class Drones_Env():
+class Drones_Env:
     def __init__(self, args):
         # import scenarios of gym-pybullet-drones
         from gym_pybullet_drones.envs.CtrlAviary import CtrlAviary
