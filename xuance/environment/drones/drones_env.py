@@ -5,28 +5,30 @@ from gym.spaces import Box
 class Drones_Env:
     def __init__(self, args):
         # import scenarios of gym-pybullet-drones
+        self.env_id = args.env_id
         from gym_pybullet_drones.envs.CtrlAviary import CtrlAviary
         from gym_pybullet_drones.envs.HoverAviary import HoverAviary
         from gym_pybullet_drones.envs.VelocityAviary import VelocityAviary
+        from gym_pybullet_drones.envs.MultiHoverAviary import MultiHoverAviary
         from gym_pybullet_drones.utils.enums import ObservationType, ActionType
         REGISTRY = {
             "CtrlAviary": CtrlAviary,
             "HoverAviary": HoverAviary,
-            "VelocityAviary": VelocityAviary
+            "VelocityAviary": VelocityAviary,
+            "MultiHoverAviary": MultiHoverAviary,
         }
         self.env_id = args.env_id
 
-        from gym_pybullet_drones.utils.enums import DroneModel, Physics
-        self.env = REGISTRY[args.env_id](
-            gui=args.render,
-            obs=ObservationType(args.obs_type),
-            act=ActionType(args.act_type),
-        )
+        kwargs_env = {'gui': args.render}
+        if self.env_id in ["HoverAviary", "MultiHoverAviary"]:
+            kwargs_env.update({'obs': ObservationType(args.obs_type),
+                               'act': ActionType(args.act_type)})
+        self.env = REGISTRY[args.env_id](**kwargs_env)
         self._episode_step = 0
         self._episode_score = 0.0
         self.observation_space = self.space_reshape(self.env.observation_space)
         self.action_space = self.space_reshape(self.env.action_space)
-        self.max_episode_steps = args.max_episode_steps
+        self.max_episode_steps = self.max_cycles = args.max_episode_steps
 
     def space_reshape(self, gym_space):
         low = gym_space.low.reshape(-1)

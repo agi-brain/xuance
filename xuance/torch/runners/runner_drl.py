@@ -79,6 +79,7 @@ class Runner_DRL(Runner_Base):
             def env_fn():
                 args_test = deepcopy(self.args)
                 args_test.parallels = 1
+                args_test.render = True
                 return make_envs(args_test)
             self.agent.render = True
             self.agent.load_model(self.agent.model_dir_load, self.args.seed)
