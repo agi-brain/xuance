@@ -111,12 +111,12 @@ class SubprocVecEnv_Pettingzoo(VecEnv):
         self.buf_infos_dict = [{} for _ in range(self.num_envs)]
         # buffer of numpy data
         self.buf_state = np.zeros((self.num_envs,) + self.state_shape, dtype=self.state_dtype)
-        self.buf_agent_mask = [np.ones([self.num_envs, n], dtype=np.bool) for n in self.n_agents]
+        self.buf_agent_mask = [np.ones([self.num_envs, n], dtype=np.bool_) for n in self.n_agents]
         self.buf_obs = [np.zeros((self.num_envs, n) + tuple(self.obs_shapes[h]), dtype=self.obs_dtype) for h, n in
                         enumerate(self.n_agents)]
         self.buf_rews = [np.zeros((self.num_envs, n, 1), dtype=np.float32) for n in self.n_agents]
-        self.buf_dones = [np.ones((self.num_envs, n), dtype=np.bool) for n in self.n_agents]
-        self.buf_trunctions = [np.ones((self.num_envs, n), dtype=np.bool) for n in self.n_agents]
+        self.buf_dones = [np.ones((self.num_envs, n), dtype=np.bool_) for n in self.n_agents]
+        self.buf_trunctions = [np.ones((self.num_envs, n), dtype=np.bool_) for n in self.n_agents]
 
         self.max_episode_length = env_info["max_cycles"]
         self.actions = None
@@ -240,7 +240,7 @@ class SubprocVecEnv_Pettingzoo(VecEnv):
         return self.buf_agent_mask
 
     def available_actions(self):
-        act_mask = [np.ones([self.num_envs, n, self.act_dim[h]], dtype=np.bool) for h, n in enumerate(self.n_agents)]
+        act_mask = [np.ones([self.num_envs, n, self.act_dim[h]], dtype=np.bool_) for h, n in enumerate(self.n_agents)]
         return np.array(act_mask)
 
 
@@ -278,12 +278,12 @@ class DummyVecEnv_Pettingzoo(DummyVecEnv_Gym):
         self.buf_infos_dict = [{} for _ in range(self.num_envs)]
         # buffer of numpy data
         self.buf_state = np.zeros((self.num_envs, ) + self.state_shape, dtype=self.state_dtype)
-        self.buf_agent_mask = [np.ones([self.num_envs, n], dtype=np.bool) for n in self.n_agents]
+        self.buf_agent_mask = [np.ones([self.num_envs, n], dtype=np.bool_) for n in self.n_agents]
         self.buf_obs = [np.zeros((self.num_envs, n) + tuple(self.obs_shapes[h]), dtype=self.obs_dtype) for h, n in
                         enumerate(self.n_agents)]
         self.buf_rews = [np.zeros((self.num_envs, n, 1), dtype=np.float32) for n in self.n_agents]
-        self.buf_dones = [np.ones((self.num_envs, n), dtype=np.bool) for n in self.n_agents]
-        self.buf_trunctions = [np.ones((self.num_envs, n), dtype=np.bool) for n in self.n_agents]
+        self.buf_dones = [np.ones((self.num_envs, n), dtype=np.bool_) for n in self.n_agents]
+        self.buf_trunctions = [np.ones((self.num_envs, n), dtype=np.bool_) for n in self.n_agents]
 
         self.max_episode_length = env.max_cycles
         self.actions = None
@@ -379,5 +379,5 @@ class DummyVecEnv_Pettingzoo(DummyVecEnv_Gym):
         return self.buf_agent_mask
 
     def available_actions(self):
-        act_mask = [np.ones([self.num_envs, n, self.act_dim[h]], dtype=np.bool) for h, n in enumerate(self.n_agents)]
+        act_mask = [np.ones([self.num_envs, n, self.act_dim[h]], dtype=np.bool_) for h, n in enumerate(self.n_agents)]
         return np.array(act_mask)

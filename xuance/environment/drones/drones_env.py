@@ -23,12 +23,31 @@ class Drones_Env:
         if self.env_id in ["HoverAviary", "MultiHoverAviary"]:
             kwargs_env.update({'obs': ObservationType(args.obs_type),
                                'act': ActionType(args.act_type)})
+        if self.env_id != "HoverAviary":
+            kwargs_env.update({'num_drones': args.num_drones})
         self.env = REGISTRY[args.env_id](**kwargs_env)
+
         self._episode_step = 0
         self._episode_score = 0.0
-        self.observation_space = self.space_reshape(self.env.observation_space)
-        self.action_space = self.space_reshape(self.env.action_space)
+        if self.env_id == "MultiHoverAviary":
+            self.observation_space = self.env.observation_space
+            self.observation_shape = self.env.observation_space.shape
+            self.action_space = self.env.action_space
+            self.action_shape = self.env.action_space.shape
+        else:
+            self.observation_space = self.space_reshape(self.env.observation_space)
+            self.action_space = self.space_reshape(self.env.action_space)
         self.max_episode_steps = self.max_cycles = args.max_episode_steps
+
+        self.n_agents = args.num_drones
+        self.env_info = {
+            "n_agents": self.n_agents,
+            "obs_shape": self.env.observation_space.shape,
+            "act_space": self.action_space,
+            "state_shape": 20,
+            "n_actions": self.env.action_space.shape[-1],
+            "episode_limit": self.max_episode_steps,
+        }
 
     def space_reshape(self, gym_space):
         low = gym_space.low.reshape(-1)
@@ -47,10 +66,11 @@ class Drones_Env:
         self._episode_step = 0
         self._episode_score = 0.0
         info["episode_step"] = self._episode_step
-        return obs.reshape(-1), info
+        obs_return = obs if self.n_agents > 1 else obs.reshape(-1)
+        return obs_return, info
 
     def step(self, actions):
-        observation, reward, terminated, truncated, info = self.env.step(actions.reshape([1, -1]))
+        obs, reward, terminated, truncated, info = self.env.step(actions.reshape([1, -1]))
 
         self._episode_step += 1
         self._episode_score += reward
@@ -59,6 +79,7 @@ class Drones_Env:
 
         truncated = True if (self._episode_step >= self.max_episode_steps) else False
 
-        return observation.reshape(-1), reward, terminated, truncated, info
+        obs_return = obs if self.n_agents > 1 else obs.reshape(-1)
+        return obs_return, reward, terminated, truncated, info
 
 

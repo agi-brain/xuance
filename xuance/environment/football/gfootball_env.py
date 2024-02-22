@@ -32,7 +32,7 @@ class GFootball_Env:
         self.max_cycles = self.env.unwrapped.observation()[0]['steps_left']
         self._episode_step = 0
         self._episode_score = 0.0
-        self.filled = np.zeros([self.max_cycles, 1], np.bool)
+        self.filled = np.zeros([self.max_cycles, 1], np.bool_)
         self.env.reset()
         state = self.get_state()
         self.dim_state = state.shape[0]

@@ -10,7 +10,7 @@ import torch
 def get_repre_in(args, name=None):
     representation_name = args.representation if name is None else name
     input_dict = deepcopy(Representation_Inputs_All)
-    if args.env_name in ["StarCraft2", "Football", "MAgent2"]:
+    if args.env_name in ["StarCraft2", "Football", "MAgent2", "Drones"]:
         input_dict["input_shape"] = (args.dim_obs, )
     elif isinstance(args.observation_space, dict):
         input_dict["input_shape"] = space2shape(args.observation_space[args.agent_keys[0]])
@@ -86,7 +86,7 @@ def get_policy_in_marl(args, representation, mixer=None, ff_mixer=None, qtran_mi
     try: input_dict["state_dim"] = args.dim_state[0]
     except: input_dict["state_dim"] = None
 
-    if args.env_name in ["StarCraft2", "Football"]:
+    if args.env_name in ["StarCraft2", "Football", "Drones"]:
         input_dict["action_space"] = args.action_space
     else:
         input_dict["action_space"] = args.action_space[args.agent_keys[0]]

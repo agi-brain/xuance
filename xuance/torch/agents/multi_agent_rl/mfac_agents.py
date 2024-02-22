@@ -25,7 +25,7 @@ class MFAC_Agents(MARLAgents):
 
         input_representation = get_repre_in(config)
         representation = REGISTRY_Representation[config.representation](*input_representation)
-        input_policy = get_policy_in_marl(config, representation, config.agent_keys)
+        input_policy = get_policy_in_marl(config, representation)
         policy = REGISTRY_Policy[config.policy](*input_policy, gain=config.gain)
         optimizer = torch.optim.Adam(policy.parameters(), config.learning_rate, eps=1e-5)
         scheduler = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=1.0, end_factor=0.5,

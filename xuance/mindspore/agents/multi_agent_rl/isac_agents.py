@@ -9,7 +9,7 @@ class ISAC_Agents(MARLAgents):
 
         input_representation = get_repre_in(config)
         representation = REGISTRY_Representation[config.representation](*input_representation)
-        input_policy = get_policy_in_marl(config, representation, config.agent_keys)
+        input_policy = get_policy_in_marl(config, representation)
         policy = REGISTRY_Policy[config.policy](*input_policy)
         scheduler = [lr_decay_model(learning_rate=config.lr_a, decay_rate=0.5,
                                     decay_steps=get_total_iters(config.agent_name, config)),

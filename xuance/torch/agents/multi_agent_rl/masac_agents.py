@@ -17,7 +17,7 @@ class MASAC_Agents(MARLAgents):
 
         input_representation = get_repre_in(config)
         representation = REGISTRY_Representation[config.representation](*input_representation)
-        input_policy = get_policy_in_marl(config, representation, config.agent_keys)
+        input_policy = get_policy_in_marl(config, representation)
         policy = REGISTRY_Policy[config.policy](*input_policy)
         optimizer = [torch.optim.Adam(policy.parameters_actor, config.lr_a, eps=1e-5),
                      torch.optim.Adam(policy.parameters_critic, config.lr_c, eps=1e-5)]

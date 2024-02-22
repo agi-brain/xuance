@@ -91,9 +91,9 @@ class PettingZoo_Env(ParallelEnv):
 
     def get_agent_mask(self):
         if self.handles is None:
-            return np.ones(self.n_agents_all, dtype=np.bool)  # all alive
+            return np.ones(self.n_agents_all, dtype=np.bool_)  # all alive
         else:
-            mask = np.zeros(self.n_agents_all, dtype=np.bool)  # all dead
+            mask = np.zeros(self.n_agents_all, dtype=np.bool_)  # all dead
             for handle in self.handles:
                 try:
                     alive_ids = self.get_ids(handle)

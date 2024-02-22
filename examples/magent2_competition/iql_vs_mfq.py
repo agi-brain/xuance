@@ -249,8 +249,8 @@ class Runner():
 
     def train_episode(self, n_episodes):
         act_mean_last = [np.zeros([self.n_envs, arg.dim_act]) for arg in self.args]
-        terminal_handle = np.zeros([self.n_handles, self.n_envs], dtype=np.bool)
-        truncate_handle = np.zeros([self.n_handles, self.n_envs], dtype=np.bool)
+        terminal_handle = np.zeros([self.n_handles, self.n_envs], dtype=np.bool_)
+        truncate_handle = np.zeros([self.n_handles, self.n_envs], dtype=np.bool_)
         episode_score = np.zeros([self.n_handles, self.n_envs, 1], dtype=np.float32)
         episode_info, train_info = {}, {}
         for _ in tqdm(range(n_episodes)):
