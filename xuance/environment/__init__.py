@@ -66,6 +66,10 @@ def make_envs(config: Namespace):
                              map_size=config.map_size,
                              render_mode=config.render_mode)
 
+        elif config.env_name == "Robotic_WareHouse":
+            from xuance.environment.robotic_warehouse.robotic_warehouse_env import RoboticWarehouseEnv
+            env = RoboticWarehouseEnv()
+
         elif config.env_name == "Atari":
             from xuance.environment.gym.gym_env import Atari_Env
             env = Atari_Env(config.env_id, config.seed, config.render_mode,
