@@ -266,10 +266,11 @@ class Runner_MARL(Runner_Base):
         if self.args.test_mode:
             def env_fn():
                 args_test = deepcopy(self.args)
-                args_test.parallels = args_test.test_episode
+                args_test.parallels = 1  # args_test.test_episode
+                args_test.render = True
                 return make_envs(args_test)
 
-            self.render = True
+            # self.render = True
             self.agents.load_model(self.agents.model_dir_load, self.args.seed)
             self.test_episode(env_fn)
             print("Finish testing.")
@@ -293,8 +294,8 @@ class Runner_MARL(Runner_Base):
 
         test_scores = self.test_episode(env_fn)
         best_scores = {
-            "mean": np.mean(test_scores, axis=1),
-            "std": np.std(test_scores, axis=1),
+            "mean": np.mean(test_scores),
+            "std": np.std(test_scores),
             "step": self.current_step
         }
         self.agents.save_model("best_model.pth")
@@ -304,11 +305,11 @@ class Runner_MARL(Runner_Base):
             self.train_episode(n_episodes=n_eval_interval)
             test_scores = self.test_episode(env_fn)
 
-            mean_test_scores = np.mean(test_scores, axis=1)
+            mean_test_scores = np.mean(test_scores)
             if mean_test_scores > best_scores["mean"]:
                 best_scores = {
                     "mean": mean_test_scores,
-                    "std": np.std(test_scores, axis=1),
+                    "std": np.std(test_scores),
                     "step": self.current_step
                 }
                 # save best model
