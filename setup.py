@@ -59,7 +59,7 @@ setup(
         "atari-py==0.2.9",
         "ale-py==0.7.5",
         "pettingzoo>=1.23.0",  # for MARL
-        "magent2",  # 0.3.2 is suggested
+        # "magent2",  # 0.3.2 is suggested
         "tensorboard==2.11.2",  # logger
         "wandb==0.15.3",
         "moviepy==1.0.3",

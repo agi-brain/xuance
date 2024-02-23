@@ -238,19 +238,16 @@ class DummyVecEnv_Drones_MAS(VecEnv):
         self.waiting = False
         return self.buf_obs.copy(), self.buf_rew.copy(), self.buf_terminal.copy(), self.buf_truncation.copy(), self.buf_info.copy()
 
-    def close_extras(self):
-        self.closed = True
-        for env in self.envs:
-            env.close()
-
     def render(self, mode):
-        self._assert_not_closed()
         imgs = [env.render(mode) for env in self.envs]
         return imgs
 
-    def _assert_not_closed(self):
-        assert not self.closed, "Trying to operate on a SubprocVecEnv after calling close()"
+    def global_state(self):
+        return self.buf_state
 
-    def __del__(self):
-        if not self.closed:
-            self.close()
+    def agent_mask(self):
+        return self.buf_agent_mask
+
+    def available_actions(self):
+        act_mask = [np.ones([self.num_envs, n, self.act_dim[h]], dtype=np.bool_) for h, n in enumerate(self.n_agents)]
+        return np.array(act_mask)
