@@ -87,9 +87,9 @@ def get_policy_in_marl(args, representation, mixer=None, ff_mixer=None, qtran_mi
     except: input_dict["state_dim"] = None
 
     if args.env_name in ["StarCraft2", "Football", "Drones"]:
-        input_dict["action_space"] = args.action_space
+        input_dict["action_dim"] = args.dim_act
     else:
-        input_dict["action_space"] = args.action_space[args.agent_keys[0]]
+        input_dict["action_dim"] = args.action_space[args.agent_keys[0]]
 
     try: input_dict["n_agents"] = args.n_agents
     except: input_dict["n_agents"] = 1

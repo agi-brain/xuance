@@ -19,6 +19,7 @@ class Runner_MARL(Runner_Base):
     def __init__(self, args):
         super(Runner_MARL, self).__init__(args)
         self.args = args
+        self.render = args.render
         self.fps = args[0].fps if type(args) == list else args.fps
 
         time_string = time.asctime().replace(" ", "").replace(":", "_")
@@ -63,8 +64,9 @@ class Runner_MARL(Runner_Base):
         args.n_agents = self.num_agents
         self.dim_obs, self.dim_act, self.dim_state = self.envs.dim_obs, self.envs.dim_act, self.envs.dim_state
         args.dim_obs, args.dim_act = self.dim_obs, self.dim_act
-        args.obs_shape, args.act_shape = (self.dim_obs,), ()
-        args.rew_shape = args.done_shape = (1,)
+        args.obs_shape, args.act_shape = (self.dim_obs,), (self.dim_act, )
+        args.rew_shape = (self.num_agents, 1)
+        args.done_shape = (self.num_agents, )
         args.action_space = self.envs.action_space
         args.state_space = self.envs.state_space
 
@@ -105,7 +107,7 @@ class Runner_MARL(Runner_Base):
             self.writer.close()
 
     def get_actions(self, obs_n, test_mode, act_mean_last, agent_mask, state):
-        actions_n, log_pi_n, values_n, actions_n_onehot = [], [], [], []
+        log_pi, a_onehot, values = None, None, None
         act_mean_current = act_mean_last
         if self.args.agent == "MFQ":
             _, a, a_mean = self.agents.act(obs_n, test_mode=test_mode, act_mean=act_mean_last, agent_mask=agent_mask)
@@ -114,25 +116,18 @@ class Runner_MARL(Runner_Base):
             a, a_mean = self.agents.act(obs_n, test_mode, act_mean_last, agent_mask)
             act_mean_current = a_mean
             _, values = self.agents.values(obs_n, act_mean_current)
-            values_n.append(values)
         elif self.args.agent == "VDAC":
             _, a, values = self.agents.act(obs_n, state=state, test_mode=test_mode)
-            values_n.append(values)
         elif self.args.agent in ["MAPPO", "IPPO"]:
             _, a, log_pi = self.agents.act(obs_n, test_mode=test_mode, state=state)
             _, values = self.agents.values(obs_n, state=state)
-            log_pi_n.append(log_pi)
-            values_n.append(values)
         elif self.args.agent in ["COMA"]:
             _, a, a_onehot = self.agents.act(obs_n, test_mode)
             _, values = self.agents.values(obs_n, state=state, actions_n=a, actions_onehot=a_onehot)
-            actions_n_onehot.append(a_onehot)
-            values_n.append(values)
         else:
             _, a = self.agents.act(obs_n, test_mode=test_mode)
-        actions_n.append(a)
-        return {'actions_n': actions_n, 'log_pi': log_pi_n, 'act_mean': act_mean_current,
-                'act_n_onehot': actions_n_onehot, 'values': values_n}
+        return {'actions_n': a, 'log_pi': log_pi, 'act_mean': act_mean_current,
+                'act_n_onehot': a_onehot, 'values': values}
 
     def store_data(self, obs_n, next_obs_n, actions_dict, state, next_state, agent_mask, rew_n, done_n):
         data_step = {'obs': obs_n, 'obs_next': next_obs_n, 'actions': actions_dict['actions_n'],
@@ -186,13 +181,10 @@ class Runner_MARL(Runner_Base):
                         train_info = self.agents.train(self.current_step)
 
                 obs_n, state, act_mean_last = deepcopy(next_obs_n), deepcopy(next_state), deepcopy(actions_dict['act_mean'])
-
                 episode_score += np.mean(rew_n * agent_mask[:, :, np.newaxis], axis=1)
-                terminal_handle = terminated_n.all(axis=-1)
-                truncate_handle = truncated_n.all(axis=-1)
 
                 for i_env in range(self.n_envs):
-                    if terminal_handle.all(axis=0)[i_env] or truncate_handle.all(axis=0)[i_env]:
+                    if terminated_n.all(axis=-1)[i_env] or truncated_n.all(axis=-1)[i_env]:
                         self.current_episode[i_env] += 1
                         if self.on_policy:
                             if self.args.agent == "COMA":
@@ -234,8 +226,6 @@ class Runner_MARL(Runner_Base):
             for idx, img in enumerate(images):
                 videos[idx].append(img)
         act_mean_last = np.zeros([num_envs, self.args.dim_act])
-        terminal_handle = np.zeros([num_envs], dtype=np.bool_)
-        truncate_handle = np.zeros([num_envs], dtype=np.bool_)
         episode_score = np.zeros([num_envs, 1], dtype=np.float32)
 
         for step in range(self.episode_length):
@@ -247,20 +237,16 @@ class Runner_MARL(Runner_Base):
                     videos[idx].append(img)
 
             next_state, agent_mask = test_envs.global_state(), test_envs.agent_mask()
-
             obs_n, state, act_mean_last = deepcopy(next_obs_n), deepcopy(next_state), deepcopy(actions_dict['act_mean'])
-
             episode_score += np.mean(rew_n * agent_mask[:, :, np.newaxis], axis=1)
-            terminal_handle = terminated_n.all(axis=-1)
-            truncate_handle = truncated_n.all(axis=-1)
 
             for i in range(num_envs):
-                if terminal_handle.all(axis=0)[i] or truncate_handle.all(axis=0)[i]:
+                if terminated_n.all(axis=-1)[i] or truncated_n.all(axis=-1)[i]:
                     obs_n[i] = infos[i]["reset_obs"]
                     agent_mask[i] = infos[i]["reset_agent_mask"]
                     act_mean_last[i] = np.zeros([self.args.dim_act])
                     state = infos[i]["reset_state"]
-        scores = episode_score.mean(axis=1)
+        scores = episode_score.mean()
         if self.args.test_mode:
             print("Mean score: ", scores)
 

@@ -7,9 +7,9 @@ class Drones_Env:
         # import scenarios of gym-pybullet-drones
         self.env_id = args.env_id
         from gym_pybullet_drones.envs.CtrlAviary import CtrlAviary
-        from gym_pybullet_drones.envs.HoverAviary import HoverAviary
+        from xuance.environment.drones.customized.HoverAviary import HoverAviary
         from gym_pybullet_drones.envs.VelocityAviary import VelocityAviary
-        from gym_pybullet_drones.envs.MultiHoverAviary import MultiHoverAviary
+        from xuance.environment.drones.customized.MultiHoverAviary import MultiHoverAviary
         from gym_pybullet_drones.utils.enums import ObservationType, ActionType
         REGISTRY = {
             "CtrlAviary": CtrlAviary,
@@ -70,16 +70,28 @@ class Drones_Env:
         return obs_return, info
 
     def step(self, actions):
-        obs, reward, terminated, truncated, info = self.env.step(actions.reshape([1, -1]))
+        if self.n_agents > 1:
+            obs, reward_origin, terminated, truncated, info = self.env.step(actions)
+            obs_return = obs
+            reward = np.ones([self.n_agents, 1]) * reward_origin
+            terminated = [terminated for _ in range(self.n_agents)]
+        else:
+            obs, reward, terminated, truncated, info = self.env.step(actions.reshape([1, -1]))
+            obs_return = obs.reshape(-1)
 
         self._episode_step += 1
         self._episode_score += reward
+        if self.n_agents > 1:
+            truncated = [True for _ in range(self.n_agents)] if (self._episode_step >= self.max_episode_steps) else [False for _ in range(self.n_agents)]
+        else:
+            truncated = True if (self._episode_step >= self.max_episode_steps) else False
         info["episode_step"] = self._episode_step  # current episode step
         info["episode_score"] = self._episode_score  # the accumulated rewards
 
-        truncated = True if (self._episode_step >= self.max_episode_steps) else False
-
-        obs_return = obs if self.n_agents > 1 else obs.reshape(-1)
         return obs_return, reward, terminated, truncated, info
 
+    def get_agent_mask(self):
+        return np.ones(self.n_agents, dtype=np.bool_)  # all alive
 
+    def state(self):
+        return np.zeros([20])
