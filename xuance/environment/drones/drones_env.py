@@ -1,5 +1,6 @@
 import numpy as np
 from gym.spaces import Box
+import time
 
 
 class Drones_Env:
@@ -17,9 +18,11 @@ class Drones_Env:
             "VelocityAviary": VelocityAviary,
             "MultiHoverAviary": MultiHoverAviary,
         }
+        self.gui = args.render
+        self.sleep = args.sleep
         self.env_id = args.env_id
 
-        kwargs_env = {'gui': args.render}
+        kwargs_env = {'gui': self.gui}
         if self.env_id in ["HoverAviary", "MultiHoverAviary"]:
             kwargs_env.update({'obs': ObservationType(args.obs_type),
                                'act': ActionType(args.act_type)})
@@ -63,17 +66,21 @@ class Drones_Env:
 
     def reset(self):
         obs, info = self.env.reset()
-        self._episode_step = 0
-        self._episode_score = 0.0
         info["episode_step"] = self._episode_step
-        obs_return = obs if self.n_agents > 1 else obs.reshape(-1)
+
+        self._episode_step = 0
+        if self.n_agents > 1:
+            self._episode_score = np.zeros([self.n_agents, 1])
+            obs_return = obs
+        else:
+            self._episode_score = 0.0
+            obs_return = obs.reshape(-1)
         return obs_return, info
 
     def step(self, actions):
         if self.n_agents > 1:
-            obs, reward_origin, terminated, truncated, info = self.env.step(actions)
+            obs, reward, terminated, truncated, info = self.env.step(actions)
             obs_return = obs
-            reward = np.ones([self.n_agents, 1]) * reward_origin
             terminated = [terminated for _ in range(self.n_agents)]
         else:
             obs, reward, terminated, truncated, info = self.env.step(actions.reshape([1, -1]))
@@ -87,6 +94,9 @@ class Drones_Env:
             truncated = True if (self._episode_step >= self.max_episode_steps) else False
         info["episode_step"] = self._episode_step  # current episode step
         info["episode_score"] = self._episode_score  # the accumulated rewards
+
+        if self.gui:
+            time.sleep(self.sleep)
 
         return obs_return, reward, terminated, truncated, info
 

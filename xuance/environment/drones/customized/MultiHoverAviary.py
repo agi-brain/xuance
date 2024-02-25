@@ -69,6 +69,13 @@ class MultiHoverAviary(MultiHoverAviary_Official):
                          act=act
                          )
         self.TARGET_POS = self.INIT_XYZS + np.array([[0, 0, 1 / (i + 1)] for i in range(num_drones)])
+        self.TARGET_POS = np.array([[0, 0, 1],
+                                    [0, 0, 1],
+                                    [0, 0, 1]])
+        self.space_range_x = [-2.0, 2.0]
+        self.space_range_y = [-2.0, 2.0]
+        self.space_range_z = [0.05, 5.0]
+        self.pose_limit = np.pi - 0.2
 
         ################################################################################
 
@@ -82,10 +89,10 @@ class MultiHoverAviary(MultiHoverAviary_Official):
 
         """
         states = np.array([self._getDroneStateVector(i) for i in range(self.NUM_DRONES)])
-        ret = 0
+        rewards = np.zeros([self.NUM_DRONES, 1])
         for i in range(self.NUM_DRONES):
-            ret += max(0, 2 - np.linalg.norm(self.TARGET_POS[i, :] - states[i][0:3]) ** 4)
-        return ret
+            rewards[i, 0] = max(0, (1 - np.linalg.norm(self.TARGET_POS[i, 2] - states[i][2])) * 20)
+        return rewards
 
         ################################################################################
 
@@ -99,33 +106,19 @@ class MultiHoverAviary(MultiHoverAviary_Official):
 
         """
         states = np.array([self._getDroneStateVector(i) for i in range(self.NUM_DRONES)])
-        dist = 0
         for i in range(self.NUM_DRONES):
-            dist += np.linalg.norm(self.TARGET_POS[i, :] - states[i][0:3])
-        if dist < .0001:
-            return True
-        else:
-            return False
+            x, y, z = states[i][0], states[i][1], states[i][2]
+            if (x < self.space_range_x[0]) or (x > self.space_range_x[1]):
+                return True
+            if (y < self.space_range_y[0]) or (y > self.space_range_y[1]):
+                return True
+            if (z < self.space_range_z[0]) or (z > self.space_range_z[1]):  # Out of height
+                return True
+            if (max(abs(states[i][7]), abs(states[i][8])) > self.pose_limit) and (z < self.space_range_z[0] + 0.1):
+                # The drone is too tilted
+                return True
+            if np.linalg.norm(self.TARGET_POS[i] - states[i][0:3]) < .0001:
+                return True
+        return False
 
         ################################################################################
-
-    def _computeTruncated(self):
-        """Computes the current truncated value.
-
-        Returns
-        -------
-        bool
-            Whether the current episode timed out.
-
-        """
-        states = np.array([self._getDroneStateVector(i) for i in range(self.NUM_DRONES)])
-        for i in range(self.NUM_DRONES):
-            if (abs(states[i][0]) > 2.0 or abs(states[i][1]) > 2.0 or states[i][
-                2] > 2.0  # Truncate when a drones is too far away
-                    or abs(states[i][7]) > .4 or abs(states[i][8]) > .4  # Truncate when a drone is too tilted
-            ):
-                return True
-        if self.step_counter / self.PYB_FREQ > self.EPISODE_LEN_SEC:
-            return True
-        else:
-            return False

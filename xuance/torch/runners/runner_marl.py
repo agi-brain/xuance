@@ -212,10 +212,10 @@ class Runner_MARL(Runner_Base):
                     self.current_episode[i_env] += 1
                     if self.use_wandb:
                         step_info["Episode-Steps/env-%d" % i_env] = infos[i_env]["episode_step"]
-                        step_info["Train-Episode-Rewards/env-%d" % i_env] = infos[i_env]["episode_score"]
+                        step_info["Train-Episode-Rewards/env-%d" % i_env] = np.mean(infos[i_env]["episode_score"])
                     else:
                         step_info["Episode-Steps"] = {"env-%d" % i_env: infos[i_env]["episode_step"]}
-                        step_info["Train-Episode-Rewards"] = {"env-%d" % i_env: infos[i_env]["episode_score"]}
+                        step_info["Train-Episode-Rewards"] = {"env-%d" % i_env: np.mean(infos[i_env]["episode_score"])}
                     self.log_infos(step_info, self.current_step)
 
             self.current_step += self.n_envs
@@ -225,11 +225,12 @@ class Runner_MARL(Runner_Base):
                 train_info = self.agents.train(self.current_step)
             self.log_infos(train_info, self.current_step)
 
-    def test_episode(self, env_fn):
+    def test_episodes(self, env_fn, test_episodes):
         test_envs = env_fn()
         test_info = {}
         num_envs = test_envs.num_envs
         videos, episode_videos = [[] for _ in range(num_envs)], []
+        current_episode, scores = 0, []
         obs_n, infos = test_envs.reset()
         state, agent_mask = test_envs.global_state(), test_envs.agent_mask()
         if self.args.render_mode == "rgb_array" and self.render:
@@ -239,7 +240,7 @@ class Runner_MARL(Runner_Base):
         act_mean_last = np.zeros([num_envs, self.args.dim_act])
         episode_score = np.zeros([num_envs, 1], dtype=np.float32)
 
-        for step in range(self.episode_length):
+        while current_episode < test_episodes:
             actions_dict = self.get_actions(obs_n, True, act_mean_last, agent_mask, state)
             next_obs_n, rew_n, terminated_n, truncated_n, infos = test_envs.step(actions_dict['actions_n'])
             if self.args.render_mode == "rgb_array" and self.render:
@@ -249,24 +250,24 @@ class Runner_MARL(Runner_Base):
 
             next_state, agent_mask = test_envs.global_state(), test_envs.agent_mask()
             obs_n, state, act_mean_last = deepcopy(next_obs_n), deepcopy(next_state), deepcopy(actions_dict['act_mean'])
-            episode_score += np.mean(rew_n * agent_mask[:, :, np.newaxis], axis=1)
 
-            for i in range(num_envs):
-                if terminated_n.all(axis=-1)[i] or truncated_n.all(axis=-1)[i]:
-                    obs_n[i] = infos[i]["reset_obs"]
-                    agent_mask[i] = infos[i]["reset_agent_mask"]
-                    act_mean_last[i] = np.zeros([self.args.dim_act])
-                    state = infos[i]["reset_state"]
-        scores = episode_score.mean()
-        if self.args.test_mode:
-            print("Mean score: ", scores)
+            for i_env in range(num_envs):
+                if terminated_n.all(axis=-1)[i_env] or truncated_n.all(axis=-1)[i_env]:
+                    obs_n[i_env] = infos[i_env]["reset_obs"]
+                    agent_mask[i_env] = infos[i_env]["reset_agent_mask"]
+                    act_mean_last[i_env] = np.zeros([self.args.dim_act])
+                    episode_score[i_env] = np.mean(infos[i_env]["individual_episode_rewards"])
+                    state[i_env] = infos[i_env]["reset_state"]
+                    current_episode += 1
+                    if self.args.test_mode:
+                        print("Episode: %d, Score: %.2f" % (current_episode, episode_score[i_env]))
 
         if self.args.render_mode == "rgb_array" and self.render:
             # time, height, width, channel -> time, channel, height, width
             videos_info = {"Videos_Test": np.array(videos, dtype=np.uint8).transpose((0, 1, 4, 2, 3))}
             self.log_videos(info=videos_info, fps=self.fps, x_index=self.current_step)
 
-        test_info["Test-Episode-Rewards"] = scores
+        test_info["Test-Episode-Rewards"] = np.mean(episode_score)
         self.log_infos(test_info, self.current_step)
 
         test_envs.close()
@@ -283,11 +284,11 @@ class Runner_MARL(Runner_Base):
 
             # self.render = True
             self.agents.load_model(self.agents.model_dir_load, self.args.seed)
-            self.test_episode(env_fn)
+            self.test_episodes(env_fn, self.args.test_episode)
             print("Finish testing.")
         else:
-            n_train_episodes = self.args.running_steps // self.episode_length // self.n_envs
-            self.train_episode(n_train_episodes)
+            n_train_steps = self.args.running_steps // self.n_envs
+            self.train_steps(n_train_steps)
             print("Finish training.")
             self.agents.save_model("final_train_model.pth")
 
@@ -299,11 +300,12 @@ class Runner_MARL(Runner_Base):
             args_test.parallels = args_test.test_episode
             return make_envs(args_test)
 
-        n_train_episodes = self.args.running_steps // self.episode_length // self.n_envs
-        n_eval_interval = self.args.eval_interval // self.episode_length // self.n_envs
-        num_epoch = int(n_train_episodes / n_eval_interval)
+        train_steps = self.args.running_steps // self.n_envs
+        eval_interval = self.args.eval_interval // self.n_envs
+        test_episode = self.args.test_episode
+        num_epoch = int(train_steps / eval_interval)
 
-        test_scores = self.test_episode(env_fn)
+        test_scores = self.test_episodes(env_fn, test_episode)
         best_scores = {
             "mean": np.mean(test_scores),
             "std": np.std(test_scores),
@@ -313,8 +315,8 @@ class Runner_MARL(Runner_Base):
 
         for i_epoch in range(num_epoch):
             print("Epoch: %d/%d:" % (i_epoch, num_epoch))
-            self.train_steps(n_steps=n_eval_interval)
-            test_scores = self.test_episode(env_fn)
+            self.train_steps(n_steps=eval_interval)
+            test_scores = self.test_episodes(env_fn, test_episode)
 
             mean_test_scores = np.mean(test_scores)
             if mean_test_scores > best_scores["mean"]:
