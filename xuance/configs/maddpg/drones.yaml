@@ -14,7 +14,6 @@ vectorize: "Dummy_Drone_MAS"
 runner: "MARL"
 on_policy: False
 
-representation_hidden_size: []  # the units for each hidden layer
 actor_hidden_size: [64, 64]
 critic_hidden_size: [64, 64]
 activation: 'LeakyReLU'

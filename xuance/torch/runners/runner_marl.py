@@ -70,6 +70,8 @@ class Runner_MARL(Runner_Base):
         args.action_space = self.envs.action_space
         args.state_space = self.envs.state_space
 
+        self.action_space = self.envs.action_space  # the joint action space of n agents
+
         # Create MARL agents.
         self.agents = REGISTRY_Agent[args.agent](args, self.envs, args.device)
         self.on_policy = self.agents.on_policy
@@ -161,58 +163,67 @@ class Runner_MARL(Runner_Base):
             data_step['act_mean'] = actions_dict['act_mean']
         self.agents.memory.store(data_step)
 
-    def train_episode(self, n_episodes):
+    def train_steps(self, n_steps):
         act_mean_last = np.zeros([self.n_envs, self.args.dim_act])
         episode_score = np.zeros([self.n_envs, 1], dtype=np.float32)
         episode_info, train_info = {}, {}
-        for _ in tqdm(range(n_episodes)):
-            obs_n = self.envs.buf_obs
-            state, agent_mask = self.envs.global_state(), self.envs.agent_mask()
-            for step in range(self.episode_length):
-                actions_dict = self.get_actions(obs_n, False, act_mean_last, agent_mask, state)
-                next_obs_n, rew_n, terminated_n, truncated_n, infos = self.envs.step(actions_dict['actions_n'])
-                next_state, agent_mask = self.envs.global_state(), self.envs.agent_mask()
 
-                self.store_data(obs_n, next_obs_n, actions_dict, state, next_state, agent_mask, rew_n, terminated_n)
+        obs_n = self.envs.buf_obs
+        state, agent_mask = self.envs.global_state(), self.envs.agent_mask()
+        for _ in tqdm(range(n_steps)):
+            step_info = {}
+            actions_dict = self.get_actions(obs_n, False, act_mean_last, agent_mask, state)
+            if self.current_step < self.args.start_training:
+                acts_execute = [self.action_space.sample() for _ in range(self.n_envs)]
+            else:
+                acts_execute = actions_dict['actions_n']
+            next_obs_n, rew_n, terminated_n, truncated_n, infos = self.envs.step(acts_execute)
+            next_state, agent_mask = self.envs.global_state(), self.envs.agent_mask()
+            self.store_data(obs_n, next_obs_n, actions_dict, state, next_state, agent_mask, rew_n, terminated_n)
 
-                # train the model for each step
-                if self.train_per_step:
-                    if self.current_step % self.training_frequency == 0:
-                        train_info = self.agents.train(self.current_step)
+            # train the model for each step
+            if self.train_per_step:
+                if self.current_step % self.training_frequency == 0:
+                    step_info.update(self.agents.train(self.current_step))
 
-                obs_n, state, act_mean_last = deepcopy(next_obs_n), deepcopy(next_state), deepcopy(actions_dict['act_mean'])
-                episode_score += np.mean(rew_n * agent_mask[:, :, np.newaxis], axis=1)
+            obs_n, state, act_mean_last = deepcopy(next_obs_n), deepcopy(next_state), deepcopy(actions_dict['act_mean'])
+            episode_score += np.mean(rew_n * agent_mask[:, :, np.newaxis], axis=1)
 
-                for i_env in range(self.n_envs):
-                    if terminated_n.all(axis=-1)[i_env] or truncated_n.all(axis=-1)[i_env]:
-                        self.current_episode[i_env] += 1
-                        if self.on_policy:
-                            if self.args.agent == "COMA":
-                                _, value_next_e = self.agents.values(next_obs_n,
-                                                                     state=next_state,
-                                                                     actions_n=actions_dict['actions_n'],
-                                                                     actions_onehot=actions_dict['act_n_onehot'])
-                            elif self.args.agent == "MFAC":
-                                _, value_next_e = self.agents.values(next_obs_n, act_mean_last)
-                            elif self.args.agent == "VDAC":
-                                _, _, value_next_e = self.agents.act(next_obs_n)
-                            else:
-                                _, value_next_e = self.agents.values(next_obs_n, state=next_state)
-                            self.agents.memory.finish_path(value_next_e[i_env], i_env)
-                        obs_n[i_env] = infos[i_env]["reset_obs"]
-                        agent_mask[i_env] = infos[i_env]["reset_agent_mask"]
-                        act_mean_last[i_env] = np.zeros([self.args.dim_act])
-                        episode_score[i_env] = np.mean(infos[i_env]["individual_episode_rewards"])
-                        state[i_env] = infos[i_env]["reset_state"]
-                self.current_step += self.n_envs
+            for i_env in range(self.n_envs):
+                if terminated_n.all(axis=-1)[i_env] or truncated_n.all(axis=-1)[i_env]:
+                    if self.on_policy:
+                        if self.args.agent == "COMA":
+                            _, value_next_e = self.agents.values(next_obs_n,
+                                                                 state=next_state,
+                                                                 actions_n=actions_dict['actions_n'],
+                                                                 actions_onehot=actions_dict['act_n_onehot'])
+                        elif self.args.agent == "MFAC":
+                            _, value_next_e = self.agents.values(next_obs_n, act_mean_last)
+                        elif self.args.agent == "VDAC":
+                            _, _, value_next_e = self.agents.act(next_obs_n)
+                        else:
+                            _, value_next_e = self.agents.values(next_obs_n, state=next_state)
+                        self.agents.memory.finish_path(value_next_e[i_env], i_env)
+                    obs_n[i_env] = infos[i_env]["reset_obs"]
+                    agent_mask[i_env] = infos[i_env]["reset_agent_mask"]
+                    act_mean_last[i_env] = np.zeros([self.args.dim_act])
+                    episode_score[i_env] = np.mean(infos[i_env]["individual_episode_rewards"])
+                    state[i_env] = infos[i_env]["reset_state"]
+                    self.current_episode[i_env] += 1
+                    if self.use_wandb:
+                        step_info["Episode-Steps/env-%d" % i_env] = infos[i_env]["episode_step"]
+                        step_info["Train-Episode-Rewards/env-%d" % i_env] = infos[i_env]["episode_score"]
+                    else:
+                        step_info["Episode-Steps"] = {"env-%d" % i_env: infos[i_env]["episode_step"]}
+                        step_info["Train-Episode-Rewards"] = {"env-%d" % i_env: infos[i_env]["episode_score"]}
+                    self.log_infos(step_info, self.current_step)
 
-            episode_info["Train_Episode_Score"] = episode_score.mean()
+            self.current_step += self.n_envs
 
             # train the model for each episode
             if not self.train_per_step:
                 train_info = self.agents.train(self.current_step)
             self.log_infos(train_info, self.current_step)
-            self.log_infos(episode_info, self.current_step)
 
     def test_episode(self, env_fn):
         test_envs = env_fn()
@@ -302,7 +313,7 @@ class Runner_MARL(Runner_Base):
 
         for i_epoch in range(num_epoch):
             print("Epoch: %d/%d:" % (i_epoch, num_epoch))
-            self.train_episode(n_episodes=n_eval_interval)
+            self.train_steps(n_steps=n_eval_interval)
             test_scores = self.test_episode(env_fn)
 
             mean_test_scores = np.mean(test_scores)
