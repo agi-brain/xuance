@@ -68,7 +68,7 @@ class MultiHoverAviary(MultiHoverAviary_Official):
                          obs=obs,
                          act=act
                          )
-        self.TARGET_POS = self.INIT_XYZS + np.array([[0, 0, 1 / (i + 1)] for i in range(num_drones)])
+        # self.TARGET_POS = self.INIT_XYZS + np.array([[0, 0, 1 / (i + 1)] for i in range(num_drones)])
         self.TARGET_POS = np.array([[0, 0, 1],
                                     [0, 0, 1],
                                     [0, 0, 1]])
@@ -91,7 +91,7 @@ class MultiHoverAviary(MultiHoverAviary_Official):
         states = np.array([self._getDroneStateVector(i) for i in range(self.NUM_DRONES)])
         rewards = np.zeros([self.NUM_DRONES, 1])
         for i in range(self.NUM_DRONES):
-            rewards[i, 0] = max(0, (1 - np.linalg.norm(self.TARGET_POS[i, 2] - states[i][2])) * 20)
+            rewards[i, 0] = max(0, (1 - np.linalg.norm(self.TARGET_POS[i] - states[i][0:3])) * 20)
         return rewards
 
         ################################################################################
@@ -114,7 +114,7 @@ class MultiHoverAviary(MultiHoverAviary_Official):
                 return True
             if (z < self.space_range_z[0]) or (z > self.space_range_z[1]):  # Out of height
                 return True
-            if (max(abs(states[i][7]), abs(states[i][8])) > self.pose_limit) and (z < self.space_range_z[0] + 0.1):
+            if (max(abs(states[i][7]), abs(states[i][8])) > self.pose_limit) and (z < self.space_range_z[0] + 0.05):
                 # The drone is too tilted
                 return True
             if np.linalg.norm(self.TARGET_POS[i] - states[i][0:3]) < .0001:
