@@ -11,7 +11,7 @@ render: False
 sleep: 0.01
 policy: "Independent_DDPG_Policy"
 representation: "Basic_Identical"
-vectorize: "Dummy_Drone_MAS"
+vectorize: "Subproc_Drone_MAS"
 runner: "MARL"
 on_policy: False
 

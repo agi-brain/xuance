@@ -1,6 +1,6 @@
 from xuance.environment.vector_envs.vector_env import VecEnv, AlreadySteppingError, NotSteppingError
 from xuance.environment.vector_envs.env_utils import obs_n_space_info
-from xuance.environment.gym.gym_vec_env import DummyVecEnv_Gym
+from xuance.environment.gym.gym_vec_env import DummyVecEnv_Gym, SubprocVecEnv_Gym
 from xuance.common import combined_shape
 from gymnasium.spaces import Discrete, Box
 import numpy as np
@@ -29,7 +29,7 @@ def worker(remote, parent_remote, env_fn_wrappers):
                 remote.close()
                 break
             elif cmd == 'get_env_info':
-                remote.send(CloudpickleWrapper((envs[0].env_info, envs[0].n_enemies)))
+                remote.send(envs[0].env_info)
             else:
                 raise NotImplementedError
     except KeyboardInterrupt:
@@ -39,13 +39,13 @@ def worker(remote, parent_remote, env_fn_wrappers):
             env.close()
 
 
-class SubprocVecEnv_Drones_MAS(VecEnv):
+class SubprocVecEnv_Drones_MAS(SubprocVecEnv_Gym):
     """
     VecEnv that runs multiple environments in parallel in subproceses and communicates with them via pipes.
     Recommended to use when num_envs > 1 and step() can be a bottleneck.
     """
 
-    def __init__(self, env_fns, context='spawn'):
+    def __init__(self, env_fns, context='spawn', in_series=1):
         """
         Arguments:
         env_fns: iterable of callables -  functions that create environments to run in subprocesses. Need to be cloud-pickleable
@@ -68,34 +68,31 @@ class SubprocVecEnv_Drones_MAS(VecEnv):
 
         self.remotes[0].send(('get_env_info', None))
         env_info, self.num_enemies = self.remotes[0].recv().x
-        self.dim_obs = env_info["obs_shape"]
+        self.dim_obs = env_info["obs_shape"][-1]
         self.dim_act = self.n_actions = env_info["n_actions"]
+        self.dim_state = env_info["state_shape"]
         observation_space, action_space = (self.dim_obs,), (self.dim_act,)
         self.viewer = None
         VecEnv.__init__(self, num_envs, observation_space, action_space)
 
         self.num_agents = env_info["n_agents"]
-        self.obs_shape = (self.num_agents, self.dim_obs)
+        self.obs_shape = env_info["obs_shape"]
         self.act_shape = (self.num_agents, self.dim_act)
         self.rew_shape = (self.num_agents, 1)
-        self.dim_obs, self.dim_state, self.dim_act = self.dim_obs, env_info["state_shape"], self.dim_act
         self.dim_reward = self.num_agents
-        self.action_space = Discrete(n=self.dim_act)
+        self.action_space = env_info["act_space"]
         self.state_space = Box(low=-np.inf, high=np.inf, shape=[self.dim_state, ])
 
         self.buf_obs = np.zeros(combined_shape(self.num_envs, self.obs_shape), dtype=np.float32)
         self.buf_state = np.zeros(combined_shape(self.num_envs, self.dim_state), dtype=np.float32)
-        self.buf_terminal = np.zeros((self.num_envs, 1), dtype=np.bool_)
-        self.buf_truncation = np.zeros((self.num_envs, 1), dtype=np.bool_)
-        self.buf_done = np.zeros((self.num_envs,), dtype=np.bool_)
-        self.buf_rew = np.zeros((self.num_envs,) + self.rew_shape, dtype=np.float32)
+        self.buf_agent_mask = np.ones([self.num_envs, self.num_agents], dtype=np.bool_)
+        self.buf_terminals = np.zeros((self.num_envs, self.num_agents), dtype=np.bool_)
+        self.buf_truncations = np.zeros((self.num_envs, self.num_agents), dtype=np.bool_)
+        self.buf_rews = np.zeros((self.num_envs,) + self.rew_shape, dtype=np.float32)
         self.buf_info = [{} for _ in range(self.num_envs)]
-        self.actions = None
-        self.battles_game = np.zeros(self.num_envs, np.int32)
-        self.battles_won = np.zeros(self.num_envs, np.int32)
-        self.dead_allies_count = np.zeros(self.num_envs, np.int32)
-        self.dead_enemies_count = np.zeros(self.num_envs, np.int32)
+
         self.max_episode_length = env_info["episode_limit"]
+        self.actions = None
 
     def reset(self):
         self._assert_not_closed()
@@ -103,10 +100,10 @@ class SubprocVecEnv_Drones_MAS(VecEnv):
             remote.send(('reset', None))
         result = [remote.recv() for remote in self.remotes]
         result = flatten_list(result)
-        obs, state, infos = zip(*result)
-        self.buf_obs, self.buf_state, self.buf_info = np.array(obs), np.array(state), list(infos)
+        obs, infos = zip(*result)
+        self.buf_obs, self.buf_info = np.array(obs), list(infos)
         self.buf_done = np.zeros((self.num_envs,), dtype=np.bool_)
-        return self.buf_obs.copy(), self.buf_state.copy(), self.buf_info.copy()
+        return self.buf_obs.copy(), self.buf_info.copy()
 
     def step_async(self, actions):
         self._assert_not_closed()
@@ -118,28 +115,31 @@ class SubprocVecEnv_Drones_MAS(VecEnv):
 
     def step_wait(self):
         self._assert_not_closed()
-        if self.waiting:
-            for idx_env, env_done, remote in zip(range(self.num_envs), self.buf_done, self.remotes):
-                if not env_done:
-                    result = remote.recv()
-                    result = flatten_list(result)
-                    obs, state, rew, terminal, truncated, infos = result
-                    self.buf_obs[idx_env], self.buf_state[idx_env] = np.array(obs), np.array(state)
-                    self.buf_rew[idx_env], self.buf_terminal[idx_env] = np.array(rew), np.array(terminal)
-                    self.buf_truncation[idx_env], self.buf_info[idx_env] = np.array(truncated), infos
-
-                    if self.buf_terminal[idx_env].all() or self.buf_truncation[idx_env].all():
-                        self.buf_done[idx_env] = True
-                        self.battles_game[idx_env] += 1
-                        if infos['battle_won']:
-                            self.battles_won[idx_env] += 1
-                        self.dead_allies_count[idx_env] += infos['dead_allies']
-                        self.dead_enemies_count[idx_env] += infos['dead_enemies']
-                else:
-                    self.buf_terminal[idx_env, 0], self.buf_truncation[idx_env, 0] = False, False
-
+        if not self.waiting:
+            raise NotSteppingError
+        for idx_env, env_done, remote in zip(range(self.num_envs), self.buf_done, self.remotes):
+            result = remote.recv()
+            result = flatten_list(result)
+            obs, rew, done, truncated, infos = result
+            self.buf_obs[idx_env] = obs
+            self.buf_rews[idx_env] = rew
+            self.buf_terminals[idx_env] = env_done
+            self.buf_truncations[idx_env] = truncated
+            self.buf_info[idx_env] = infos
+            self.buf_info[idx_env]["individual_episode_rewards"] = infos["episode_score"]
+            if done.all() or truncated.all():
+                remote.send(('reset', None))
+                result = remote.recv()
+                obs_reset, _ = zip(*result)
+                self.buf_info[idx_env]["reset_obs"] = obs_reset
+                remote.send(('get_agent_mask', None))
+                result = remote.recv()
+                self.buf_info[idx_env]["reset_agent_mask"] = zip(*result)
+                remote.send(('state', None))
+                result = remote.recv()
+                self.buf_info[idx_env]["reset_state"] = zip(*result)
         self.waiting = False
-        return self.buf_obs.copy(), self.buf_state.copy(), self.buf_rew.copy(), self.buf_terminal.copy(), self.buf_truncation.copy(), self.buf_info.copy()
+        return self.buf_obs.copy(), self.buf_rews.copy(), self.buf_terminals.copy(), self.buf_truncations.copy(), self.buf_info.copy()
 
     def close_extras(self):
         self.closed = True
@@ -159,6 +159,12 @@ class SubprocVecEnv_Drones_MAS(VecEnv):
         imgs = flatten_list(imgs)
         return imgs
 
+    def global_state(self):
+        return self.buf_state
+
+    def agent_mask(self):
+        return self.buf_agent_mask
+
     def _assert_not_closed(self):
         assert not self.closed, "Trying to operate on a SubprocVecEnv after calling close()"
 
@@ -175,6 +181,7 @@ class DummyVecEnv_Drones_MAS(DummyVecEnv_Gym):
         env_info = env.env_info
         self.dim_obs = env_info["obs_shape"][-1]
         self.dim_act = self.n_actions = env_info["n_actions"]
+        self.dim_state = env_info["state_shape"]
         observation_space, action_space = (self.dim_obs,), (self.dim_act,)
         self.viewer = None
         VecEnv.__init__(self, len(env_fns), observation_space, action_space)
@@ -183,7 +190,6 @@ class DummyVecEnv_Drones_MAS(DummyVecEnv_Gym):
         self.obs_shape = env_info["obs_shape"]
         self.act_shape = (self.num_agents, self.dim_act)
         self.rew_shape = (self.num_agents, 1)
-        self.dim_obs, self.dim_state, self.dim_act = self.dim_obs, env_info["state_shape"], self.dim_act
         self.dim_reward = self.num_agents
         self.action_space = env_info["act_space"]
         self.state_space = Box(low=-np.inf, high=np.inf, shape=[self.dim_state, ])
@@ -216,17 +222,17 @@ class DummyVecEnv_Drones_MAS(DummyVecEnv_Gym):
         for e in range(self.num_envs):
             action = self.actions[e]
             obs, rew, done, truncated, infos = self.envs[e].step(action)
+            self.buf_obs[e] = obs
             self.buf_rews[e] = rew
             self.buf_terminals[e] = done
             self.buf_truncations[e] = truncated
             self.buf_info[e] = infos
             self.buf_info[e]["individual_episode_rewards"] = infos["episode_score"]
-            if self.buf_terminals[e].all() or self.buf_truncations[e].all():
+            if all(done) or all(truncated):
                 obs_reset, _ = self.envs[e].reset()
                 self.buf_info[e]["reset_obs"] = obs_reset
                 self.buf_info[e]["reset_agent_mask"] = self.envs[e].get_agent_mask()
                 self.buf_info[e]["reset_state"] = self.envs[e].state()
-            self._save_obs(e, obs)
         self.waiting = False
         return self.buf_obs.copy(), self.buf_rews.copy(), self.buf_terminals.copy(), self.buf_truncations.copy(), self.buf_info.copy()
 
@@ -235,11 +241,12 @@ class DummyVecEnv_Drones_MAS(DummyVecEnv_Gym):
         return imgs
 
     def global_state(self):
+        for e in range(self.num_envs):
+            self.buf_state[e] = self.envs[e].state()
         return self.buf_state
 
     def agent_mask(self):
+        for e in range(self.num_envs):
+            self.buf_agent_mask[e] = self.envs[e].get_agent_mask()
         return self.buf_agent_mask
 
-    def available_actions(self):
-        act_mask = np.ones([self.num_envs, self.num_agents, self.dim_act], dtype=np.bool_)
-        return np.array(act_mask)
