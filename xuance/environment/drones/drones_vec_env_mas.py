@@ -1,8 +1,7 @@
-from xuance.environment.vector_envs.vector_env import VecEnv, AlreadySteppingError, NotSteppingError
-from xuance.environment.vector_envs.env_utils import obs_n_space_info
+from xuance.environment.vector_envs.vector_env import NotSteppingError
 from xuance.environment.gym.gym_vec_env import DummyVecEnv_Gym, SubprocVecEnv_Gym
 from xuance.common import combined_shape
-from gymnasium.spaces import Discrete, Box
+from gymnasium.spaces import Box
 import numpy as np
 import multiprocessing as mp
 from xuance.environment.vector_envs.subproc_vec_env import clear_mpi_env_vars, flatten_list, CloudpickleWrapper
@@ -11,8 +10,8 @@ from xuance.environment.vector_envs.vector_env import VecEnv
 
 def worker(remote, parent_remote, env_fn_wrappers):
     def step_env(env, action):
-        obs, state, reward_n, terminated, truncated, info = env.step(action)
-        return obs, state, reward_n, terminated, truncated, info
+        obs, reward_n, terminated, truncated, info = env.step(action)
+        return obs, reward_n, terminated, truncated, info
 
     parent_remote.close()
     envs = [env_fn_wrapper() for env_fn_wrapper in env_fn_wrappers.x]
@@ -25,11 +24,16 @@ def worker(remote, parent_remote, env_fn_wrappers):
                 remote.send([env.reset() for env in envs])
             elif cmd == 'render':
                 remote.send([env.render(data) for env in envs])
+            elif cmd == 'state':
+                remote.send([env.state() for env in envs])
+            elif cmd == 'get_agent_mask':
+                remote.send([env.get_agent_mask() for env in envs])
             elif cmd == 'close':
                 remote.close()
                 break
             elif cmd == 'get_env_info':
-                remote.send(envs[0].env_info)
+                env_info = envs[0].env_info
+                remote.send(CloudpickleWrapper(env_info))
             else:
                 raise NotImplementedError
     except KeyboardInterrupt:
@@ -67,7 +71,7 @@ class SubprocVecEnv_Drones_MAS(SubprocVecEnv_Gym):
             remote.close()
 
         self.remotes[0].send(('get_env_info', None))
-        env_info, self.num_enemies = self.remotes[0].recv().x
+        env_info = self.remotes[0].recv().x
         self.dim_obs = env_info["obs_shape"][-1]
         self.dim_act = self.n_actions = env_info["n_actions"]
         self.dim_state = env_info["state_shape"]
@@ -127,7 +131,7 @@ class SubprocVecEnv_Drones_MAS(SubprocVecEnv_Gym):
             self.buf_truncations[idx_env] = truncated
             self.buf_info[idx_env] = infos
             self.buf_info[idx_env]["individual_episode_rewards"] = infos["episode_score"]
-            if done.all() or truncated.all():
+            if all(done) or all(truncated):
                 remote.send(('reset', None))
                 result = remote.recv()
                 obs_reset, _ = zip(*result)
@@ -160,9 +164,21 @@ class SubprocVecEnv_Drones_MAS(SubprocVecEnv_Gym):
         return imgs
 
     def global_state(self):
+        self._assert_not_closed()
+        for pipe in self.remotes:
+            pipe.send(('state', None))
+        states = [pipe.recv() for pipe in self.remotes]
+        states = flatten_list(states)
+        self.buf_state = states
         return self.buf_state
 
     def agent_mask(self):
+        self._assert_not_closed()
+        for pipe in self.remotes:
+            pipe.send(('get_agent_mask', None))
+        masks = [pipe.recv() for pipe in self.remotes]
+        masks = flatten_list(masks)
+        self.buf_agent_mask = masks
         return self.buf_agent_mask
 
     def _assert_not_closed(self):
