@@ -12,6 +12,7 @@ class New_Env_MAS:
         self.state_space = Box(low=0, high=1, shape=[10, ], dtype=np.float32, seed=seed)
         self.observation_spaces = Box(low=0, high=1, shape=[self.n_agents, 10], dtype=np.float32, seed=seed)
         self.action_spaces = Box(low=0, high=1, shape=[2, ], dtype=np.float32, seed=seed)
+        self.dim_state = 20
 
         self._episode_step = 0
         self._episode_score = 0.0
@@ -21,7 +22,7 @@ class New_Env_MAS:
             "n_agents": self.n_agents,
             "obs_shape": self.observation_spaces.shape,
             "act_space": self.action_spaces,
-            "state_shape": 20,
+            "state_shape": self.dim_state,
             "n_actions": self.action_spaces.shape[-1],
             "episode_limit": self.max_episode_steps,
         }
@@ -48,3 +49,9 @@ class New_Env_MAS:
         info["episode_step"] = self._episode_step  # current episode step
         info["episode_score"] = self._episode_score  # the accumulated rewards
         return observation, reward, terminated, truncated, info
+
+    def get_agent_mask(self):
+        return np.ones(self.n_agents, dtype=np.bool_)
+
+    def state(self):
+        return np.zeros([self.dim_state])
