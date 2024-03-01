@@ -20,6 +20,7 @@ Each simulation environment contains a rich variety of task scenarios, as shown 
     MAgent2 <environments/magent2>
     Google Research Football <environments/football>
     Customized Environments <environments/new_env>
+    Customized Multi-Agent Environments <environments/new_env_mas>
     
 
 * :doc:`Make Environments <environments/__init__>`.
