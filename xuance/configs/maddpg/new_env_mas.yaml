@@ -1,10 +1,10 @@
-agent: "IDDPG"  # the learning algorithms_marl
+agent: "MADDPG"  # the learning algorithms_marl
 env_name: "NewEnv_MAS"
 env_id: "MultiHoverAviary"
 max_episode_steps: 200
 render: False
 sleep: 0.01
-policy: "Independent_DDPG_Policy"
+policy: "MADDPG_Policy"
 representation: "Basic_Identical"
 vectorize: "Dummy_NewEnv_MAS"
 runner: "MARL"
@@ -37,5 +37,5 @@ grad_clip_norm: 0.5
 
 eval_interval: 10000
 test_episode: 5
-log_dir: "./logs/iddpg/"
-model_dir: "./models/iddpg/"
+log_dir: "./logs/maddpg/"
+model_dir: "./models/maddpg/"

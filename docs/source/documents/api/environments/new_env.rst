@@ -1,7 +1,7 @@
 Customized Environments
 =====================================================
 
-If the simulation environment used by the user is not listed in Table 1, it can be wrapped and stored in the "./xuance/environment" directory.
+If the simulation environment used by the user is not included in XuanCe, it can be wrapped and stored in the "./xuance/environment" directory.
 The specific steps for adding are as follows:
 
 **Step 1: Create an Original Environment**
