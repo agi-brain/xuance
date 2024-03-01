@@ -85,7 +85,7 @@ class SubprocVecEnv_Drones_MAS(SubprocVecEnv_Gym):
         self.rew_shape = (self.num_agents, 1)
         self.dim_reward = self.num_agents
         self.action_space = env_info["act_space"]
-        self.state_space = Box(low=-np.inf, high=np.inf, shape=[self.dim_state, ])
+        self.state_space = Box(low=-np.inf, high=np.inf, shape=[self.dim_state, ], dtype=np.float32)
 
         self.buf_obs = np.zeros(combined_shape(self.num_envs, self.obs_shape), dtype=np.float32)
         self.buf_state = np.zeros(combined_shape(self.num_envs, self.dim_state), dtype=np.float32)
@@ -93,75 +93,34 @@ class SubprocVecEnv_Drones_MAS(SubprocVecEnv_Gym):
         self.buf_terminals = np.zeros((self.num_envs, self.num_agents), dtype=np.bool_)
         self.buf_truncations = np.zeros((self.num_envs, self.num_agents), dtype=np.bool_)
         self.buf_rews = np.zeros((self.num_envs,) + self.rew_shape, dtype=np.float32)
-        self.buf_info = [{} for _ in range(self.num_envs)]
+        self.buf_infos = [{} for _ in range(self.num_envs)]
 
         self.max_episode_length = env_info["episode_limit"]
         self.actions = None
-
-    def reset(self):
-        self._assert_not_closed()
-        for remote in self.remotes:
-            remote.send(('reset', None))
-        result = [remote.recv() for remote in self.remotes]
-        result = flatten_list(result)
-        obs, infos = zip(*result)
-        self.buf_obs, self.buf_info = np.array(obs), list(infos)
-        self.buf_done = np.zeros((self.num_envs,), dtype=np.bool_)
-        return self.buf_obs.copy(), self.buf_info.copy()
-
-    def step_async(self, actions):
-        self._assert_not_closed()
-        actions = np.array_split(actions, self.n_remotes)
-        for env_done, remote, action in zip(self.buf_done, self.remotes, actions):
-            if not env_done:
-                remote.send(('step', action))
-        self.waiting = True
 
     def step_wait(self):
         self._assert_not_closed()
         if not self.waiting:
             raise NotSteppingError
-        for idx_env, env_done, remote in zip(range(self.num_envs), self.buf_done, self.remotes):
-            result = remote.recv()
-            result = flatten_list(result)
-            obs, rew, done, truncated, infos = result
-            self.buf_obs[idx_env] = obs
-            self.buf_rews[idx_env] = rew
-            self.buf_terminals[idx_env] = env_done
-            self.buf_truncations[idx_env] = truncated
-            self.buf_info[idx_env] = infos
-            self.buf_info[idx_env]["individual_episode_rewards"] = infos["episode_score"]
-            if all(done) or all(truncated):
-                remote.send(('reset', None))
-                result = remote.recv()
-                obs_reset, _ = zip(*result)
-                self.buf_info[idx_env]["reset_obs"] = obs_reset
-                remote.send(('get_agent_mask', None))
-                result = remote.recv()
-                self.buf_info[idx_env]["reset_agent_mask"] = zip(*result)
-                remote.send(('state', None))
-                result = remote.recv()
-                self.buf_info[idx_env]["reset_state"] = zip(*result)
+        results = [remote.recv() for remote in self.remotes]
+        results = flatten_list(results)
+        obs, rews, dones, truncated, infos = zip(*results)
+        self.buf_obs, self.buf_rews = np.array(obs), np.array(rews)
+        self.buf_terminals, self.buf_truncations, self.buf_infos = np.array(dones), np.array(truncated), list(infos)
+        for e in range(self.num_envs):
+            if all(dones[e]) or all(truncated[e]):
+                self.remotes[e].send(('reset', None))
+                result = self.remotes[e].recv()
+                obs_reset, _ = flatten_list(result)
+                self.buf_infos[e]["reset_obs"] = obs_reset
+                self.remotes[e].send(('get_agent_mask', None))
+                result = self.remotes[e].recv()
+                self.buf_infos[e]["reset_agent_mask"] = flatten_list(result)
+                self.remotes[e].send(('state', None))
+                result = self.remotes[e].recv()
+                self.buf_infos[e]["reset_state"] = flatten_list(result)
         self.waiting = False
-        return self.buf_obs.copy(), self.buf_rews.copy(), self.buf_terminals.copy(), self.buf_truncations.copy(), self.buf_info.copy()
-
-    def close_extras(self):
-        self.closed = True
-        if self.waiting:
-            for remote in self.remotes:
-                remote.recv()
-        for remote in self.remotes:
-            remote.send(('close', None))
-        for p in self.ps:
-            p.join()
-
-    def render(self, mode):
-        self._assert_not_closed()
-        for pipe in self.remotes:
-            pipe.send(('render', mode))
-        imgs = [pipe.recv() for pipe in self.remotes]
-        imgs = flatten_list(imgs)
-        return imgs
+        return self.buf_obs.copy(), self.buf_rews.copy(), self.buf_terminals.copy(), self.buf_truncations.copy(), self.buf_infos.copy()
 
     def global_state(self):
         self._assert_not_closed()
@@ -169,7 +128,7 @@ class SubprocVecEnv_Drones_MAS(SubprocVecEnv_Gym):
             pipe.send(('state', None))
         states = [pipe.recv() for pipe in self.remotes]
         states = flatten_list(states)
-        self.buf_state = states
+        self.buf_state = np.array(states)
         return self.buf_state
 
     def agent_mask(self):
@@ -178,15 +137,8 @@ class SubprocVecEnv_Drones_MAS(SubprocVecEnv_Gym):
             pipe.send(('get_agent_mask', None))
         masks = [pipe.recv() for pipe in self.remotes]
         masks = flatten_list(masks)
-        self.buf_agent_mask = masks
+        self.buf_agent_mask = np.array(masks)
         return self.buf_agent_mask
-
-    def _assert_not_closed(self):
-        assert not self.closed, "Trying to operate on a SubprocVecEnv after calling close()"
-
-    def __del__(self):
-        if not self.closed:
-            self.close()
 
 
 class DummyVecEnv_Drones_MAS(DummyVecEnv_Gym):
@@ -228,10 +180,6 @@ class DummyVecEnv_Drones_MAS(DummyVecEnv_Gym):
         self.buf_done = np.zeros((self.num_envs,), dtype=np.bool_)
         return self.buf_obs.copy(), self.buf_info.copy()
 
-    def step_async(self, actions):
-        self.actions = actions
-        self.waiting = True
-
     def step_wait(self):
         if not self.waiting:
             raise NotSteppingError
@@ -251,10 +199,6 @@ class DummyVecEnv_Drones_MAS(DummyVecEnv_Gym):
                 self.buf_info[e]["reset_state"] = self.envs[e].state()
         self.waiting = False
         return self.buf_obs.copy(), self.buf_rews.copy(), self.buf_terminals.copy(), self.buf_truncations.copy(), self.buf_info.copy()
-
-    def render(self, mode):
-        imgs = [env.render(mode) for env in self.envs]
-        return imgs
 
     def global_state(self):
         for e in range(self.num_envs):

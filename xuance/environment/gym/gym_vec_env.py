@@ -117,6 +117,7 @@ class SubprocVecEnv_Gym(VecEnv):
         result = flatten_list(result)
         obs, infos = zip(*result)
         self.buf_obs, self.buf_infos = np.array(obs), list(infos)
+        self.buf_dones = np.zeros((self.num_envs,), dtype=np.bool_)
         return self.buf_obs.copy(), self.buf_infos.copy()
 
     def close_extras(self):

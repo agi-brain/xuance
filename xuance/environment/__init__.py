@@ -14,6 +14,7 @@ from xuance.environment.minigrid.minigrid_vec_env import DummyVecEnv_MiniGrid, S
 from xuance.environment.drones.drones_vec_env import DummyVecEnv_Drones, SubprocVecEnv_Drones
 from xuance.environment.drones.drones_vec_env_mas import DummyVecEnv_Drones_MAS, SubprocVecEnv_Drones_MAS
 from xuance.environment.new_env.new_vec_env import DummyVecEnv_New, SubprocVecEnv_New
+from xuance.environment.new_env_mas.new_vec_env_mas import DummyVecEnv_New_MAS, SubprocVecEnv_New_MAS
 
 from .vector_envs.subproc_vec_env import SubprocVecEnv
 
@@ -28,6 +29,7 @@ REGISTRY_VEC_ENV = {
     "Dummy_Drone": DummyVecEnv_Drones,
     "Dummy_Drone_MAS": DummyVecEnv_Drones_MAS,
     "Dummy_NewEnv": DummyVecEnv_New,  # Add the newly defined vectorized environment
+    "Dummy_NewEnv_MAS": DummyVecEnv_New_MAS,  # Add the newly defined vectorized environment for multi-agent systems
 
     # multiprocess #
     "Subproc_Gym": SubprocVecEnv_Gym,
@@ -40,6 +42,7 @@ REGISTRY_VEC_ENV = {
     "Subproc_Drone": SubprocVecEnv_Drones,
     "Subproc_Drone_MAS": SubprocVecEnv_Drones_MAS,
     "Subproc_NewEnv": SubprocVecEnv_New,  # Add the newly defined vectorized environment
+    "Subproc_NewEnv_MAS": SubprocVecEnv_New_MAS,  # Add the newly defined vectorized environment for multi-agent systems
 }
 
 
@@ -100,6 +103,10 @@ def make_envs(config: Namespace):
         elif config.env_name == "NewEnv":  # Add the newly defined vectorized environment
             from xuance.environment.new_env.new_env import New_Env
             env = New_Env(config.env_id, config.seed, continuous=False)
+
+        elif config.env_name == "NewEnv_MAS":  # Add the newly defined vectorized environment
+            from xuance.environment.new_env_mas.new_env_mas import New_Env_MAS
+            env = New_Env_MAS(config.env_id, config.seed)
 
         else:
             env = Gym_Env(config.env_id, config.seed, config.render_mode)

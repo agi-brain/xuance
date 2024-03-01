@@ -7,21 +7,44 @@ import numpy as np
 
 
 class New_Env_MAS:
-    def __init__(self, env_name: str, env_id: str, seed: int, **kwargs):
-        self.handles = [0]
-        self.n_handles = len(self.handles)
-        self.side_names = ['agent']
-        self.state_space = Box(low=0, high=1, shape=[10, ], dtype=np.float, seed=seed)
-        self.observation_spaces = {Box(low=0, high=1, shape=[10, ], dtype=np.float, seed=seed)}
+    def __init__(self, env_id: str, seed: int, **kwargs):
+        self.n_agents = 2
+        self.state_space = Box(low=0, high=1, shape=[10, ], dtype=np.float32, seed=seed)
+        self.observation_spaces = Box(low=0, high=1, shape=[self.n_agents, 10], dtype=np.float32, seed=seed)
+        self.action_spaces = Box(low=0, high=1, shape=[2, ], dtype=np.float32, seed=seed)
+
+        self._episode_step = 0
+        self._episode_score = 0.0
+
+        self.max_episode_steps = 100
+        self.env_info = {
+            "n_agents": self.n_agents,
+            "obs_shape": self.observation_spaces.shape,
+            "act_space": self.action_spaces,
+            "state_shape": 20,
+            "n_actions": self.action_spaces.shape[-1],
+            "episode_limit": self.max_episode_steps,
+        }
 
     def close(self):
         pass
 
     def render(self):
-        pass
+        return np.zeros([2, 2, 2])
 
     def reset(self):
-        return
+        obs, info = self.observation_spaces.sample(), {}  # reset the environment and get observations and info here.
+        self._episode_step = 0
+        self._episode_score = 0.0
+        info["episode_step"] = self._episode_step
+        return obs, info
 
     def step(self, actions):
-        return
+        # Execute the actions and get next observations, rewards, and other information.
+        observation, reward, terminated, truncated, info = self.observation_spaces.sample(), 0, False, False, {}
+
+        self._episode_step += 1
+        self._episode_score += reward
+        info["episode_step"] = self._episode_step  # current episode step
+        info["episode_score"] = self._episode_score  # the accumulated rewards
+        return observation, reward, terminated, truncated, info

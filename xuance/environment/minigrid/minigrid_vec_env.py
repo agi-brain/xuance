@@ -1,4 +1,4 @@
-from xuance.environment.gym.gym_vec_env import SubprocVecEnv_Gym, DummyVecEnv_Gym, worker
+from xuance.environment.gym.gym_vec_env import SubprocVecEnv_Gym, DummyVecEnv_Gym
 
 
 class SubprocVecEnv_MiniGrid(SubprocVecEnv_Gym):

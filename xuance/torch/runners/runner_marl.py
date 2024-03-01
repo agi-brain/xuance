@@ -9,7 +9,6 @@ import wandb
 from torch.utils.tensorboard import SummaryWriter
 from .runner_basic import Runner_Base, make_envs
 from xuance.torch.agents import REGISTRY as REGISTRY_Agent
-from gymnasium.spaces.box import Box
 from tqdm import tqdm
 import numpy as np
 from copy import deepcopy
@@ -207,7 +206,7 @@ class Runner_MARL(Runner_Base):
                     obs_n[i_env] = infos[i_env]["reset_obs"]
                     agent_mask[i_env] = infos[i_env]["reset_agent_mask"]
                     act_mean_last[i_env] = np.zeros([self.args.dim_act])
-                    episode_score[i_env] = np.mean(infos[i_env]["individual_episode_rewards"])
+                    episode_score[i_env] = np.mean(infos[i_env]["episode_score"])
                     state[i_env] = infos[i_env]["reset_state"]
                     self.current_episode[i_env] += 1
                     if self.use_wandb:
@@ -256,7 +255,7 @@ class Runner_MARL(Runner_Base):
                     obs_n[i_env] = infos[i_env]["reset_obs"]
                     agent_mask[i_env] = infos[i_env]["reset_agent_mask"]
                     act_mean_last[i_env] = np.zeros([self.args.dim_act])
-                    episode_score[i_env] = np.mean(infos[i_env]["individual_episode_rewards"])
+                    episode_score[i_env] = np.mean(infos[i_env]["episode_score"])
                     state[i_env] = infos[i_env]["reset_state"]
                     current_episode += 1
                     if self.args.test_mode:
@@ -314,7 +313,7 @@ class Runner_MARL(Runner_Base):
         self.agents.save_model("best_model.pth")
 
         for i_epoch in range(num_epoch):
-            print("Epoch: %d/%d:" % (i_epoch, num_epoch))
+            print(f"({self.args.agent}, {self.args.env_name}/{self.args.env_id}) Epoch: {i_epoch}/{num_epoch}:")
             self.train_steps(n_steps=eval_interval)
             test_scores = self.test_episodes(env_fn, test_episode)
 
