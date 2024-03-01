@@ -292,6 +292,8 @@ def space2shape(observation_space: Space):
     """
     if isinstance(observation_space, Dict):
         return {key: observation_space[key].shape for key in observation_space.keys()}
+    elif isinstance(observation_space, tuple):
+        return observation_space
     else:
         return observation_space.shape
 

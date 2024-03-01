@@ -42,7 +42,9 @@ class New_Env_MAS:
 
     def step(self, actions):
         # Execute the actions and get next observations, rewards, and other information.
-        observation, reward, terminated, truncated, info = self.observation_spaces.sample(), 0, False, False, {}
+        observation, reward, info = self.observation_spaces.sample(), 0, {}
+        terminated = [False for _ in range(self.n_agents)]
+        truncated = [True for _ in range(self.n_agents)] if (self._episode_step >= self.max_episode_steps) else [False for _ in range(self.n_agents)]
 
         self._episode_step += 1
         self._episode_score += reward

@@ -33,7 +33,8 @@ class New_Env:
 
     def step(self, actions):
         # Execute the actions and get next observations, rewards, and other information.
-        observation, reward, terminated, truncated, info = self.observation_space.sample(), 0, False, False, {}
+        observation, reward, terminated, info = self.observation_space.sample(), 0, False, {}
+        truncated = True if (self._episode_step >= self.max_episode_steps) else False
 
         self._episode_step += 1
         self._episode_score += reward

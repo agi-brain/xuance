@@ -66,6 +66,7 @@ class Runner_MARL(Runner_Base):
         args.obs_shape, args.act_shape = (self.dim_obs,), (self.dim_act, )
         args.rew_shape = (self.num_agents, 1)
         args.done_shape = (self.num_agents, )
+        args.observation_space = self.envs.observation_space
         args.action_space = self.envs.action_space
         args.state_space = self.envs.state_space
 
