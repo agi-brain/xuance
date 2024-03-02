@@ -155,9 +155,31 @@ Then, add a condition after the "if ... elif ... else ..." statement to create t
 **Step 4: Make the Environment**
 ----------------------------------------------------------------------
 
-Finally, you can make the environment by the following command:
+Let's take DQN for example, you need to prepare a config file named "xuance/configs/dqn/new_env.yaml".
+Finally, you can run the method with new environment by the following command:
 
 .. code-block:: python
 
-    from xuance.environment import make_envs
-    envs = make_envs(env_id, seed, False)
+    import argparse
+    from xuance import get_runner
+
+
+    def parse_args():
+        parser = argparse.ArgumentParser("Run a demo.")
+        parser.add_argument("--method", type=str, default="dqn")
+        parser.add_argument("--env", type=str, default="new_env")
+        parser.add_argument("--env-id", type=str, default="new_id")
+        parser.add_argument("--test", type=int, default=0)
+        parser.add_argument("--device", type=str, default="cpu")
+
+        return parser.parse_args()
+
+
+    if __name__ == '__main__':
+        parser = parse_args()
+        runner = get_runner(method=parser.method,
+                            env=parser.env,
+                            env_id=parser.env_id,
+                            parser_args=parser,
+                            is_test=parser.test)
+        runner.benchmark()

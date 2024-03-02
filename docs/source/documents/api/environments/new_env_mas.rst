@@ -359,18 +359,8 @@ Then, add a condition after the "if ... elif ... else ..." statement to create t
 **Step 4: Make the Environment**
 ----------------------------------------------------------------------
 
-Prepare a config file located in "xuance/configs/maddpg/new_env_mas.yaml".
-Finally, you can make the environment by the following command:
-
-.. code-block:: python
-
-    from xuance import get_arguments
-    args = get_arguments(method='maddpg',  # the name of the method
-                         env='new_env_mas',  # the name of the new environment
-                         env_id='new_id')  # the senario id in the new environment
-    envs = make_envs(args)
-
-You can also run the algorithm with new environments by:
+Let's take MADDPG for example, you need to prepare a config file named as "xuance/configs/maddpg/new_env_mas.yaml".
+Finally, you can run the method with new environment by the following command:
 
 .. code-block:: python
 
