@@ -11,6 +11,7 @@ from .runner_basic import Runner_Base, make_envs
 from xuance.torch.agents import REGISTRY as REGISTRY_Agent
 from tqdm import tqdm
 import numpy as np
+from gymnasium.spaces import Box, Discrete
 from copy import deepcopy
 
 
@@ -61,17 +62,22 @@ class Runner_MARL(Runner_Base):
         self.episode_length = self.envs.max_episode_length
         self.num_agents = self.envs.num_agents
         args.n_agents = self.num_agents
-        # self.dim_obs, self.dim_act, self.dim_state = self.envs.dim_obs, self.envs.dim_act, self.envs.dim_state
-        args.dim_obs, args.dim_act = self.envs.obs_shape[-1], self.envs.act_shape[-1]
-        # args.obs_shape, args.act_shape = (self.dim_obs,), (self.dim_act, )
-        args.obs_shape, args.act_shape = self.envs.obs_shape, self.envs.act_shape
+        self.dim_obs = args.dim_obs = self.envs.obs_shape[-1]
+        self.dim_state = self.envs.dim_state
+
         args.rew_shape = (self.num_agents, 1)
         args.done_shape = (self.num_agents, )
         args.observation_space = self.envs.observation_space
         args.action_space = self.envs.action_space
         args.state_space = self.envs.state_space
 
-        self.action_space = self.envs.action_space
+        args.obs_shape = (self.dim_obs,)
+        if isinstance(args.action_space, Box):
+            self.dim_act = args.dim_act = args.action_space.shape[-1]
+            args.act_shape = (args.dim_act, )
+        else:
+            self.dim_act = args.dim_act = args.action_space.n
+            args.act_shape = ()
 
         # Create MARL agents.
         self.agents = REGISTRY_Agent[args.agent](args, self.envs, args.device)
@@ -174,10 +180,7 @@ class Runner_MARL(Runner_Base):
         for _ in tqdm(range(n_steps)):
             step_info = {}
             actions_dict = self.get_actions(obs_n, False, act_mean_last, agent_mask, state)
-            if self.current_step < self.args.start_training:
-                acts_execute = [self.action_space.sample() for _ in range(self.n_envs)]
-            else:
-                acts_execute = actions_dict['actions_n']
+            acts_execute = actions_dict['actions_n']
             next_obs_n, rew_n, terminated_n, truncated_n, infos = self.envs.step(acts_execute)
             next_state, agent_mask = self.envs.global_state(), self.envs.agent_mask()
             self.store_data(obs_n, next_obs_n, actions_dict, state, next_state, agent_mask, rew_n, terminated_n)

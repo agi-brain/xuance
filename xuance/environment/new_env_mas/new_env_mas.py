@@ -2,7 +2,7 @@
 This is an example of creating a new environment in XuanCe for multi-agent system.
 This example
 """
-from gym.spaces import Box, Discrete
+from gymnasium.spaces import Box, Discrete
 import numpy as np
 
 
@@ -49,7 +49,7 @@ class New_Env_MAS:
     def step(self, actions):
         # Execute the actions and get next observations, rewards, and other information.
         observation = np.array([self.observation_space.sample() for _ in range(self.n_agents)])
-        reward, info = 0, {}
+        reward, info = np.zeros([self.n_agents, 1]), {}
         terminated = [False for _ in range(self.n_agents)]
         truncated = [True for _ in range(self.n_agents)] if (self._episode_step >= self.max_episode_steps) else [False for _ in range(self.n_agents)]
 

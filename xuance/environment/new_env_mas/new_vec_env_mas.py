@@ -1,7 +1,7 @@
 from xuance.environment.vector_envs.vector_env import NotSteppingError
 from xuance.environment.gym.gym_vec_env import DummyVecEnv_Gym, SubprocVecEnv_Gym
 from xuance.common import combined_shape
-from gymnasium.spaces import Box
+from gymnasium.spaces import Box, Discrete
 import numpy as np
 import multiprocessing as mp
 from xuance.environment.vector_envs.subproc_vec_env import clear_mpi_env_vars, flatten_list, CloudpickleWrapper
@@ -72,20 +72,18 @@ class SubprocVecEnv_New_MAS(SubprocVecEnv_Gym):
 
         self.remotes[0].send(('get_env_info', None))
         env_info = self.remotes[0].recv().x
-        self.dim_obs = env_info["obs_shape"][-1]
-        self.dim_act = self.n_actions = env_info["n_actions"]
-        self.dim_state = env_info["state_shape"]
-        observation_space, action_space = (self.dim_obs,), (self.dim_act,)
         self.viewer = None
-        VecEnv.__init__(self, num_envs, observation_space, action_space)
+        VecEnv.__init__(self, num_envs, env_info["observation_space"], env_info["action_space"])
 
+        self.state_space = env_info["state_space"]
+        self.dim_state = self.state_space.shape[-1]
         self.num_agents = env_info["n_agents"]
-        self.obs_shape = env_info["obs_shape"]
-        self.act_shape = (self.num_agents, self.dim_act)
+        self.obs_shape = (self.num_agents, self.observation_space.shape[-1])
+        if isinstance(self.action_space, Box):
+            self.act_shape = (self.num_agents, self.action_space.shape[-1])
+        elif isinstance(self.action_space, Discrete):
+            self.act_shape = (self.num_agents,)
         self.rew_shape = (self.num_agents, 1)
-        self.dim_reward = self.num_agents
-        self.action_space = env_info["act_space"]
-        self.state_space = Box(low=-np.inf, high=np.inf, shape=[self.dim_state, ], dtype=np.float32)
 
         self.buf_obs = np.zeros(combined_shape(self.num_envs, self.obs_shape), dtype=np.float32)
         self.buf_state = np.zeros(combined_shape(self.num_envs, self.dim_state), dtype=np.float32)
@@ -93,7 +91,7 @@ class SubprocVecEnv_New_MAS(SubprocVecEnv_Gym):
         self.buf_terminals = np.zeros((self.num_envs, self.num_agents), dtype=np.bool_)
         self.buf_truncations = np.zeros((self.num_envs, self.num_agents), dtype=np.bool_)
         self.buf_rews = np.zeros((self.num_envs,) + self.rew_shape, dtype=np.float32)
-        self.buf_infos = [{} for _ in range(self.num_envs)]
+        self.buf_info = [{} for _ in range(self.num_envs)]
 
         self.max_episode_length = env_info["episode_limit"]
         self.actions = None
@@ -154,11 +152,9 @@ class DummyVecEnv_New_MAS(DummyVecEnv_Gym):
         self.dim_state = self.state_space.shape[-1]
         self.num_agents = env_info["n_agents"]
         self.obs_shape = (self.num_agents, self.observation_space.shape[-1])
-        try:
-            dim_act = self.action_space.shape[-1]
-            self.act_shape = (self.num_agents, dim_act)
-        except:
-            n_actions = self.action_space.n
+        if isinstance(self.action_space, Box):
+            self.act_shape = (self.num_agents, self.action_space.shape[-1])
+        elif isinstance(self.action_space, Discrete):
             self.act_shape = (self.num_agents, )
         self.rew_shape = (self.num_agents, 1)
 
