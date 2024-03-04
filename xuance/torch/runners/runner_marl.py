@@ -61,16 +61,17 @@ class Runner_MARL(Runner_Base):
         self.episode_length = self.envs.max_episode_length
         self.num_agents = self.envs.num_agents
         args.n_agents = self.num_agents
-        self.dim_obs, self.dim_act, self.dim_state = self.envs.dim_obs, self.envs.dim_act, self.envs.dim_state
-        args.dim_obs, args.dim_act = self.dim_obs, self.dim_act
-        args.obs_shape, args.act_shape = (self.dim_obs,), (self.dim_act, )
+        # self.dim_obs, self.dim_act, self.dim_state = self.envs.dim_obs, self.envs.dim_act, self.envs.dim_state
+        args.dim_obs, args.dim_act = self.envs.obs_shape[-1], self.envs.act_shape[-1]
+        # args.obs_shape, args.act_shape = (self.dim_obs,), (self.dim_act, )
+        args.obs_shape, args.act_shape = self.envs.obs_shape, self.envs.act_shape
         args.rew_shape = (self.num_agents, 1)
         args.done_shape = (self.num_agents, )
         args.observation_space = self.envs.observation_space
         args.action_space = self.envs.action_space
         args.state_space = self.envs.state_space
 
-        self.action_space = self.envs.action_space  # the joint action space of n agents
+        self.action_space = self.envs.action_space
 
         # Create MARL agents.
         self.agents = REGISTRY_Agent[args.agent](args, self.envs, args.device)

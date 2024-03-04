@@ -106,7 +106,7 @@ def make_envs(config: Namespace):
 
         elif config.env_name == "NewEnv_MAS":  # Add the newly defined vectorized environment
             from xuance.environment.new_env_mas.new_env_mas import New_Env_MAS
-            env = New_Env_MAS(config.env_id, config.seed)
+            env = New_Env_MAS(config.env_id, config.seed, continuous=config.continuous_action)
 
         else:
             env = Gym_Env(config.env_id, config.seed, config.render_mode)

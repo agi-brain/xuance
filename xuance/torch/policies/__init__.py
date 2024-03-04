@@ -136,9 +136,9 @@ Policy_Inputs = {
                                 "critic_hidden_size", "normalize", "initialize", "activation", "device"],
     "Categorical_COMA_Policy": ["action_space", "n_agents", "representation", "actor_hidden_size",
                                 "critic_hidden_size", "normalize", "initialize", "activation", "device"],
-    "Independent_DDPG_Policy": ["action_dim", "n_agents", "representation", "actor_hidden_size",
+    "Independent_DDPG_Policy": ["action_space", "n_agents", "representation", "actor_hidden_size",
                                 "critic_hidden_size", "normalize", "initialize", "activation", "device"],
-    "MADDPG_Policy": ["action_dim", "n_agents", "representation", "actor_hidden_size", "critic_hidden_size",
+    "MADDPG_Policy": ["action_space", "n_agents", "representation", "actor_hidden_size", "critic_hidden_size",
                       "normalize", "initialize", "activation", "device"],
     "MF_Q_network": ["action_space", "n_agents", "representation", "hidden_sizes",
                      "normalize", "initialize", "activation", "device"],
@@ -148,7 +148,7 @@ Policy_Inputs = {
                              "critic_hidden_size", "normalize", "initialize", "activation", "device"],
     "Gaussian_MASAC_Policy": ["action_space", "n_agents", "representation", "actor_hidden_size", "critic_hidden_size",
                               "normalize", "initialize", "activation", "device"],
-    "MATD3_Policy": ["action_dim", "n_agents", "representation", "actor_hidden_size", "critic_hidden_size",
+    "MATD3_Policy": ["action_space", "n_agents", "representation", "actor_hidden_size", "critic_hidden_size",
                      "normalize", "initialize", "activation", "device"],
 }
 

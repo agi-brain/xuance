@@ -147,20 +147,20 @@ class DummyVecEnv_New_MAS(DummyVecEnv_Gym):
         self.envs = [fn() for fn in env_fns]
         env = self.envs[0]
         env_info = env.env_info
-        self.dim_obs = env_info["obs_shape"][-1]
-        self.dim_act = self.n_actions = env_info["n_actions"]
-        self.dim_state = env_info["state_shape"]
-        observation_space, action_space = (self.dim_obs,), (self.dim_act,)
         self.viewer = None
-        VecEnv.__init__(self, len(env_fns), observation_space, action_space)
+        VecEnv.__init__(self, len(env_fns), env_info["observation_space"], env_info["action_space"])
 
+        self.state_space = env_info["state_space"]
+        self.dim_state = self.state_space.shape[-1]
         self.num_agents = env_info["n_agents"]
-        self.obs_shape = env_info["obs_shape"]
-        self.act_shape = (self.num_agents, self.dim_act)
+        self.obs_shape = (self.num_agents, self.observation_space.shape[-1])
+        try:
+            dim_act = self.action_space.shape[-1]
+            self.act_shape = (self.num_agents, dim_act)
+        except:
+            n_actions = self.action_space.n
+            self.act_shape = (self.num_agents, )
         self.rew_shape = (self.num_agents, 1)
-        self.dim_reward = self.num_agents
-        self.action_space = env_info["act_space"]
-        self.state_space = Box(low=-np.inf, high=np.inf, shape=[self.dim_state, ])
 
         self.buf_obs = np.zeros(combined_shape(self.num_envs, self.obs_shape), dtype=np.float32)
         self.buf_state = np.zeros(combined_shape(self.num_envs, self.dim_state), dtype=np.float32)

@@ -6,7 +6,7 @@ from gymnasium import spaces as spaces_pettingzoo
 class BasicQhead(nn.Module):
     def __init__(self,
                  state_dim: int,
-                 action_dim: int,
+                 n_actions: int,
                  n_agents: int,
                  hidden_sizes: Sequence[int],
                  normalize: Optional[ModuleType] = None,
@@ -19,7 +19,7 @@ class BasicQhead(nn.Module):
         for h in hidden_sizes:
             mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initialize, device)
             layers_.extend(mlp)
-        layers_.extend(mlp_block(input_shape[0], action_dim, None, None, None, device)[0])
+        layers_.extend(mlp_block(input_shape[0], n_actions, None, None, None, device)[0])
         self.model = nn.Sequential(*layers_)
 
     def forward(self, x: torch.Tensor):
@@ -38,13 +38,13 @@ class BasicQnetwork(nn.Module):
                  device: Optional[Union[str, int, torch.device]] = None,
                  **kwargs):
         super(BasicQnetwork, self).__init__()
-        self.action_dim = action_space.n
+        self.n_actions = action_space.n
         self.representation = representation
         self.target_representation = copy.deepcopy(self.representation)
         self.representation_info_shape = self.representation.output_shapes
         self.lstm = True if kwargs["rnn"] == "LSTM" else False
         self.use_rnn = True if kwargs["use_recurrent"] else False
-        self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, n_agents,
+        self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.n_actions, n_agents,
                                      hidden_size, normalize, initialize, activation, device)
         self.target_Qhead = copy.deepcopy(self.eval_Qhead)
 
@@ -95,12 +95,12 @@ class MFQnetwork(nn.Module):
                  activation: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None):
         super(MFQnetwork, self).__init__()
-        self.action_dim = action_space.n
+        self.n_actions = action_space.n
         self.representation = representation
         self.target_representation = copy.deepcopy(self.representation)
         self.representation_info_shape = self.representation.output_shapes
 
-        self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0] + self.action_dim, self.action_dim,
+        self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0] + self.n_actions, self.n_actions,
                                      n_agents, hidden_size, normalize, initialize, activation, device)
         self.target_Qhead = copy.deepcopy(self.eval_Qhead)
 
@@ -140,13 +140,13 @@ class MixingQnetwork(nn.Module):
                  device: Optional[Union[str, int, torch.device]] = None,
                  **kwargs):
         super(MixingQnetwork, self).__init__()
-        self.action_dim = action_space.n
+        self.n_actions = action_space.n
         self.representation = representation
         self.target_representation = copy.deepcopy(self.representation)
         self.representation_info_shape = self.representation.output_shapes
         self.lstm = True if kwargs["rnn"] == "LSTM" else False
         self.use_rnn = True if kwargs["use_recurrent"] else False
-        self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, n_agents,
+        self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.n_actions, n_agents,
                                      hidden_size, normalize, initialize, activation, device)
         self.target_Qhead = copy.deepcopy(self.eval_Qhead)
         self.eval_Qtot = mixer
@@ -260,13 +260,13 @@ class Qtran_MixingQnetwork(nn.Module):
                  device: Optional[Union[str, int, torch.device]] = None,
                  **kwargs):
         super(Qtran_MixingQnetwork, self).__init__()
-        self.action_dim = action_space.n
+        self.n_actions = action_space.n
         self.representation = representation
         self.target_representation = copy.deepcopy(self.representation)
         self.representation_info_shape = self.representation.output_shapes
         self.lstm = True if kwargs["rnn"] == "LSTM" else False
         self.use_rnn = True if kwargs["use_recurrent"] else False
-        self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, n_agents,
+        self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.n_actions, n_agents,
                                      hidden_size, normalize, initialize, activation, device)
         self.target_Qhead = copy.deepcopy(self.eval_Qhead)
         self.qtran_net = qtran_mixer
@@ -326,7 +326,7 @@ class DCG_policy(nn.Module):
                  device: Optional[Union[str, int, torch.device]] = None,
                  **kwargs):
         super(DCG_policy, self).__init__()
-        self.action_dim = action_space.n
+        self.n_actions = action_space.n
         self.representation = representation
         self.target_representation = copy.deepcopy(self.representation)
         self.lstm = True if kwargs["rnn"] == "LSTM" else False
@@ -427,7 +427,7 @@ class CriticNet(nn.Module):
 
 class Basic_DDPG_policy(nn.Module):
     def __init__(self,
-                 action_dim: int,
+                 action_space: Space,
                  n_agents: int,
                  representation: nn.Module,
                  actor_hidden_size: Sequence[int],
@@ -438,12 +438,12 @@ class Basic_DDPG_policy(nn.Module):
                  device: Optional[Union[str, int, torch.device]] = None
                  ):
         super(Basic_DDPG_policy, self).__init__()
-        self.action_dim = action_dim
+        self.action_dim = action_space.shape[-1]
         self.n_agents = n_agents
         self.representation = representation
         self.representation_info_shape = self.representation.output_shapes
 
-        self.actor_net = ActorNet(representation.output_shapes['state'][0], n_agents, action_dim,
+        self.actor_net = ActorNet(representation.output_shapes['state'][0], n_agents, self.action_dim,
                                   actor_hidden_size, normalize, initialize, activation, device)
         self.critic_net = CriticNet(True, representation.output_shapes['state'][0], n_agents, self.action_dim,
                                     critic_hidden_size, normalize, initialize, activation, device)
@@ -484,7 +484,7 @@ class Basic_DDPG_policy(nn.Module):
 
 class MADDPG_policy(Basic_DDPG_policy):
     def __init__(self,
-                 action_dim: int,
+                 action_space: Space,
                  n_agents: int,
                  representation: nn.Module,
                  actor_hidden_size: Sequence[int],
@@ -494,7 +494,7 @@ class MADDPG_policy(Basic_DDPG_policy):
                  activation: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None
                  ):
-        super(MADDPG_policy, self).__init__(action_dim, n_agents, representation,
+        super(MADDPG_policy, self).__init__(action_space, n_agents, representation,
                                             actor_hidden_size, critic_hidden_size,
                                             normalize, initialize, activation, device)
         self.critic_net = CriticNet(False, representation.output_shapes['state'][0], n_agents, self.action_dim,
