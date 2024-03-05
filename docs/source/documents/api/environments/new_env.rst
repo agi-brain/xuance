@@ -156,7 +156,7 @@ Then, add a condition after the "if ... elif ... else ..." statement to create t
 ----------------------------------------------------------------------
 
 Let's take DQN for example, you need to prepare a config file named "xuance/configs/dqn/new_env.yaml".
-Finally, you can run the method with new environment by the following command:
+Finally, you can run the method with new environment by the following commands:
 
 .. code-block:: python
 

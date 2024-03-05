@@ -364,7 +364,7 @@ Then, add a condition after the "if ... elif ... else ..." statement to create t
 ----------------------------------------------------------------------
 
 Let's take MADDPG for example, you need to prepare a config file, such as "xuance/configs/maddpg/new_env_mas.yaml".
-Finally, you can run the method with new environment by the following command:
+Finally, you can run the method with new environment by the following commands:
 
 .. code-block:: python
 
