@@ -7,23 +7,28 @@ import numpy as np
 
 
 class New_Env_MAS:
-    def __init__(self, env_id: str, seed: int, **kwargs):
+    def __init__(self, args, **kwargs):
         self.n_agents = 3
         self.dim_obs = 10  # dimension of one agent's observation
         self.dim_state = 12  # dimension of global state
         self.dim_action = 2  # dimension of actions (continuous)
         self.n_actions = 5  # number of discrete actions (discrete)
-        self.state_space = Box(low=0, high=1, shape=[self.dim_state, ], dtype=np.float32, seed=seed)
-        self.observation_space = Box(low=0, high=1, shape=[self.dim_obs, ], dtype=np.float32, seed=seed)
+        self.seed = args.seed
+        self.state_space = Box(low=0, high=1, shape=[self.dim_state, ], dtype=np.float32, seed=self.seed)
+        self.observation_space = Box(low=0, high=1, shape=[self.dim_obs, ], dtype=np.float32, seed=self.seed)
         if kwargs['continuous']:
-            self.action_space = Box(low=0, high=1, shape=[self.dim_action, ], dtype=np.float32, seed=seed)
+            self.action_space = Box(low=0, high=1, shape=[self.dim_action, ], dtype=np.float32, seed=self.seed)
         else:
-            self.action_space = Discrete(n=self.n_actions, seed=seed)
+            self.action_space = Discrete(n=self.n_actions, seed=self.seed)
 
         self._episode_step = 0
         self._episode_score = 0.0
 
-        self.max_episode_steps = 100
+        # set the max steps for each episode
+        try:
+            self.max_episode_steps = args.max_episode_steps
+        except:
+            self.max_episode_steps = 100
         self.env_info = {
             "n_agents": self.n_agents,
             "observation_space": self.observation_space,
