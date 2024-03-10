@@ -24,7 +24,7 @@ class New_Env_MAS:
         self._episode_step = 0
         self._episode_score = 0.0
 
-        # set the max steps for each episode
+        # Set the max steps for each episode. Truncated value will be True if the environments runs these steps.
         try:
             self.max_episode_steps = args.max_episode_steps
         except:
