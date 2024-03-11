@@ -8,12 +8,12 @@ import numpy as np
 
 class New_Env_MAS:
     def __init__(self, args, **kwargs):
-        self.n_agents = 3
+        self.n_agents = 3  # the number of agents
         self.dim_obs = 10  # dimension of one agent's observation
         self.dim_state = 12  # dimension of global state
         self.dim_action = 2  # dimension of actions (continuous)
         self.n_actions = 5  # number of discrete actions (discrete)
-        self.seed = args.seed
+        self.seed = args.seed  # random seed
         self.state_space = Box(low=0, high=1, shape=[self.dim_state, ], dtype=np.float32, seed=self.seed)
         self.observation_space = Box(low=0, high=1, shape=[self.dim_obs, ], dtype=np.float32, seed=self.seed)
         if kwargs['continuous']:
@@ -21,8 +21,8 @@ class New_Env_MAS:
         else:
             self.action_space = Discrete(n=self.n_actions, seed=self.seed)
 
-        self._episode_step = 0
-        self._episode_score = 0.0
+        self._episode_step = 0  # initialize the current step
+        self._episode_score = 0.0  # initialize the episode score
 
         # Set the max steps for each episode. Truncated value will be True if the environments runs these steps.
         try:
@@ -37,7 +37,7 @@ class New_Env_MAS:
             "episode_limit": self.max_episode_steps,
         }
 
-    def close(self):
+    def close(self):  # close the environment
         pass
 
     def render(self):
