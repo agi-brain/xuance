@@ -17,6 +17,7 @@ class Drones_Env:
             "HoverAviary": HoverAviary,
             "VelocityAviary": VelocityAviary,
             "MultiHoverAviary": MultiHoverAviary,
+            # you can add your customized scenarios here.
         }
         self.gui = args.render
         self.sleep = args.sleep
