@@ -3,8 +3,8 @@ project_name: "XuanCe_Benchmark"
 logger: "tensorboard"  # Choices: tensorboard, wandb.
 wandb_user_name: "your_user_name"
 render: True
-render_mode: 'rgb_array' # Choices: 'human', 'rgb_array'.
-test_mode: False
+render_mode: 'human' # Choices: 'human', 'rgb_array'.
+test_mode: True
 device: "cuda:0"
 
 agent: "MAPPO"

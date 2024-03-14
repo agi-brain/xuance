@@ -15,10 +15,12 @@ from xuance.environment.drones.drones_vec_env import DummyVecEnv_Drones, Subproc
 from xuance.environment.drones.drones_vec_env_mas import DummyVecEnv_Drones_MAS, SubprocVecEnv_Drones_MAS
 from xuance.environment.new_env.new_vec_env import DummyVecEnv_New, SubprocVecEnv_New
 from xuance.environment.new_env_mas.new_vec_env_mas import DummyVecEnv_New_MAS, SubprocVecEnv_New_MAS
-
+from xuance.environment.snake_test.snake_env_vec import DummyVecSnake_Env, SubprocVecSnake_Env
 from .vector_envs.subproc_vec_env import SubprocVecEnv
 
 REGISTRY_VEC_ENV = {
+    "Dummy_SnakeEnv": DummyVecSnake_Env,
+    "Subproc_SnakeEnv": SubprocVecSnake_Env,
     "Dummy_Gym": DummyVecEnv_Gym,
     "Dummy_Pettingzoo": DummyVecEnv_Pettingzoo,
     "Dummy_MAgent": DummyVecEnv_MAgent,
@@ -107,7 +109,9 @@ def make_envs(config: Namespace):
         elif config.env_name == "NewEnv_MAS":  # Add the newly defined vectorized environment
             from xuance.environment.new_env_mas.new_env_mas import New_Env_MAS
             env = New_Env_MAS(config, continuous=config.continuous_action)
-
+        elif config.env_name == "SnakeEnv":  # Add the newly defined vectorized environment
+            from xuance.environment.snake_test.snake_env import snake_env
+            env = snake_env(config.env_id, config.seed)
         else:
             env = Gym_Env(config.env_id, config.seed, config.render_mode)
 
