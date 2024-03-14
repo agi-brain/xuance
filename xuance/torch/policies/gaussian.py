@@ -60,6 +60,7 @@ class ActorCriticPolicy(nn.Module):
                  device: Optional[Union[str, int, torch.device]] = None):
         super(ActorCriticPolicy, self).__init__()
         self.action_dim = action_space.shape[0]
+        # self.action_dim = action_space.n if isinstance(action_space, Discrete) else action_space.shape[0]
         self.representation = representation
         self.representation_info_shape = representation.output_shapes
         self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size,

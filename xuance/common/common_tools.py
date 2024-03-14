@@ -67,8 +67,8 @@ def get_arguments(method, env, env_id, config_path=None, parser_args=None):
     main_path_package = os.path.dirname(os.path.dirname(__file__))
     config_path_default = os.path.join(main_path_package, "configs")
 
-    ''' get the arguments from xuance/config/basic.yaml '''
-    config_basic = get_config(os.path.join(config_path_default, "basic.yaml"))
+    ''' get the arguments from xuance/config/best_Lunar_C51.yaml '''
+    config_basic = get_config(os.path.join(config_path_default, "best_Lunar_C51.yaml"))
 
     ''' get the arguments from, e.g., xuance/config/dqn/box2d/CarRacing-v2.yaml '''
     if type(method) == list:  # for different groups of MARL algorithms.

@@ -8,7 +8,7 @@ def parse_args():
     parser.add_argument("--test", type=int, default=1)
     parser.add_argument("--device", type=str, default="cuda:0")
     parser.add_argument("--benchmark", type=int, default=0)
-    parser.add_argument("--config", type=str, default="./configs/basic.yaml")
+    parser.add_argument("--config", type=str, default="./configs/best_Lunar_C51.yaml")
 
     return parser.parse_known_args()[0]
 import os
