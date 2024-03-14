@@ -19,7 +19,7 @@ class Drones_Env:
             "MultiHoverAviary": MultiHoverAviary,
             # you can add your customized scenarios here.
         }
-        self.gui = args.render
+        self.gui = args.render  # Note: You cannot render multiple environments in parallel.
         self.sleep = args.sleep
         self.env_id = args.env_id
 
