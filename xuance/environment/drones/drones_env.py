@@ -102,7 +102,7 @@ class Drones_Env:
         return obs_return, reward, terminated, truncated, info
 
     def get_agent_mask(self):
-        return np.ones(self.n_agents, dtype=np.bool_)  # all alive
+        return np.ones(self.n_agents, dtype=np.bool_)  # 1 means available
 
     def state(self):
         return np.zeros([20])
