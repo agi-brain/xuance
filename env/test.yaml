@@ -1,5 +1,5 @@
 dl_toolbox: "torch"
-device: "cuda:0"
+device: "cpu"
 render: False
 render_mode: 'human'
 agent: "DQN"

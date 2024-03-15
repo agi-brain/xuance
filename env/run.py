@@ -9,7 +9,7 @@ def parse_args():
     parser.add_argument("--env", type=str, default="snake_env")
     parser.add_argument("--env-id", type=str, default="snake_env-v0")
     parser.add_argument("--test", type=int, default=0)
-    parser.add_argument("--device", type=str, default="cuda:0")
+    parser.add_argument("--device", type=str, default="cpu")
     parser.add_argument("--config", type=str, default="./test.yaml")
 
     return parser.parse_args()
