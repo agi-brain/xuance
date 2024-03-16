@@ -1,8 +1,8 @@
 import xuance
-runner = xuance.get_runner(method='MPE',
-                           env='mpe',
-                           env_id='simple_adversary_v3',
+runner = xuance.get_runner(method='dqn',
+                           env='Box2D',
+                           env_id='LunarLander-v2',
                            is_test=False,
-                           config_path="./configs/mpe_test.yaml")
-print(type(runner))
+                           config_path="./configs/best_Lunar_C51.yaml")
+
 runner.run()

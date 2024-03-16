@@ -44,14 +44,14 @@ class Agent(ABC):
         self.returns = np.zeros((self.envs.num_envs,), np.float32)
 
         time_string = time.asctime().replace(" ", "").replace(":", "_")
-        seed = f"seed_{self.config.seed}_"
-        model_dir_save = os.path.join(os.getcwd(), model_dir, seed + time_string)
+        # seed = f"seed_{self.config.seed}_"
+        model_dir_save = os.path.join(os.getcwd(), model_dir,time_string)
         if (not os.path.exists(model_dir_save)) and (not config.test_mode):
             os.makedirs(model_dir_save)
 
         # logger
         if config.logger == "tensorboard":
-            log_dir = os.path.join(os.getcwd(), config.log_dir, seed + time_string)
+            log_dir = os.path.join(os.getcwd(), config.log_dir, time_string)
             if not os.path.exists(log_dir):
                 os.makedirs(log_dir)
             self.writer = SummaryWriter(log_dir)

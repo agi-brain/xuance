@@ -68,7 +68,9 @@ def get_arguments(method, env, env_id, config_path=None, parser_args=None):
     config_path_default = os.path.join(main_path_package, "configs")
 
     ''' get the arguments from xuance/config/best_Lunar_C51.yaml '''
-    config_basic = get_config(os.path.join(config_path_default, "best_Lunar_C51.yaml"))
+    # 首先在xuance/configs/下找到basic.yaml文件，让其对该算法的参数进行初始化
+    config_basic = get_config(os.path.join(config_path_default, "basic.yaml"))
+    # config_basic = get_config(os.path.join(config_path_default, "best_Lunar_C51.yaml"))
 
     ''' get the arguments from, e.g., xuance/config/dqn/box2d/CarRacing-v2.yaml '''
     if type(method) == list:  # for different groups of MARL algorithms.
@@ -115,6 +117,7 @@ def get_arguments(method, env, env_id, config_path=None, parser_args=None):
                     f"in the `get_runner()` function.")
         else:
             config_path = os.path.join(main_path, config_path)
+        # 然后再用该算法的自定义参数对basic.yaml文件的参数进行更新
         config_algo_default = get_config(config_path)
         configs = recursive_dict_update(config_basic, config_algo_default)
         # load parser_args and rewrite the parameters if their names are same.
@@ -314,4 +317,3 @@ def discount_cumsum(x, discount=0.99):
     [4.890798, 4.9402, 3.98, 2.0]
     """
     return scipy.signal.lfilter([1], [1, float(-discount)], x[::-1], axis=0)[::-1]
-
