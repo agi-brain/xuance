@@ -24,14 +24,15 @@ class Learner(ABC):
     def save_model(self, model_path):
         torch.save(self.policy.state_dict(), model_path)
 
-    def load_model(self, path, seed=1):
+    def load_model(self, path):
+        # 查看路径下的文件
         file_names = os.listdir(path)
-        for f in file_names:
-            '''Change directory to the specified seed (if exists)'''
-            if f"seed_{seed}" in f:
-                path = os.path.join(path, f)
-                break
-        model_names = os.listdir(path)
+        # 查看该路径下最新的模型的文件夹
+        # print(f"file_names: {file_names}")
+        model_names = os.listdir(os.path.join(path,file_names[-1]))
+        # print(f"model_names: {model_names}")
+        # 加上包的路径
+        path = os.path.join(path,file_names[-1])
         if os.path.exists(path + "/obs_rms.npy"):
             model_names.remove("obs_rms.npy")
         model_names.sort()

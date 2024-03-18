@@ -46,7 +46,7 @@ class Agent(ABC):
         time_string = time.asctime().replace(" ", "").replace(":", "_")
         # seed = f"seed_{self.config.seed}_"
         model_dir_save = os.path.join(os.getcwd(), model_dir,time_string)
-        if (not os.path.exists(model_dir_save)) and (not config.test_mode):
+        if (not os.path.exists(model_dir_save)) and (not config.test_mode) :
             os.makedirs(model_dir_save)
 
         # logger
@@ -89,8 +89,8 @@ class Agent(ABC):
         model_path = os.path.join(self.model_dir_save, model_name)
         self.learner.save_model(model_path)
 
-    def load_model(self, path, seed=1):
-        self.learner.load_model(path, seed)
+    def load_model(self, path):
+        self.learner.load_model(path)
 
     def log_infos(self, info: dict, x_index: int):
         """

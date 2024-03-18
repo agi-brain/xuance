@@ -1,35 +1,30 @@
-dl_toolbox: "torch"  # The deep learning toolbox. Choices: "torch", "mindspore", "tensorflow"
-
+dl_toolbox: "torch"  # The deep learning toolbox. Choices: "torch", "mindspore", "tensorlayer"
 project_name: "XuanCe_Benchmark"
-logger: "wandb"  # Choices: "tensorboard", "wandb".
+logger: "tensorboard"  # Choices: tensorboard, wandb.
 wandb_user_name: "1256405274"
-
 render: False
-render_mode: 'rgb_array' # Choices: 'human', 'rgb_array'.
-test_mode: False
-
-device: "cuda"  # Choices: "cpu", "cuda", "auto".
-
+render_mode: 'human' # Choices: 'human', 'rgb_array'.
+test_mode: True
+device: "cuda:0"
 
 agent: "MADDPG"  # the learning algorithms_marl
 env_name: "mpe"
-env_id: "simple_adversary_v3"
+env_id: "simple_spread_v3"
 continuous_action: True
 policy: "MADDPG_Policy"
 representation: "Basic_Identical"
 vectorize: "Dummy_Pettingzoo"
 runner: "Pettingzoo_Runner"
-on_policy: False
 
-representation_hidden_size: []  # the units for each hidden layer
-actor_hidden_size: [64, ]
-critic_hidden_size: [64, ]
+representation_hidden_size: [64, ]  # the units for each hidden layer
+actor_hidden_size: [64, 64]
+critic_hidden_size: [64, 64]
 activation: 'LeakyReLU'
 activation_action: 'sigmoid'
 
 seed: 1
 parallels: 16
-buffer_size: 100000
+buffer_size: 5000
 batch_size: 256
 lr_a: 0.01  # learning rate for actor
 lr_c: 0.001  # learning rate for critic
@@ -48,6 +43,6 @@ use_grad_clip: True
 grad_clip_norm: 0.5
 
 eval_interval: 100000
-test_episode: 5
+test_episode: 1
 log_dir: "./logs/maddpg/"
 model_dir: "./models/maddpg/"

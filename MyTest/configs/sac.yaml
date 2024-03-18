@@ -3,8 +3,8 @@ project_name: "XuanCe_Benchmark"
 logger: "tensorboard"  # Choices: tensorboard, wandb.
 wandb_user_name: "1256405274"
 render: False
-render_mode: 'human' # Choices: 'human', 'rgb_array'.
-test_mode: False
+render_mode: 'rgb_array' # Choices: 'human', 'rgb_array'.
+test_mode: True
 device: "cuda:0"
 
 agent: "SACDIS"
@@ -32,7 +32,7 @@ tau: 0.005
 start_noise: 0.25
 end_noise: 0.05
 training_frequency: 2
-running_steps: 500000
+running_steps: 3000000
 start_training: 2000
 action_type: "DISCRETE"
 
@@ -43,6 +43,6 @@ rewnorm_range: 5
 
 test_steps: 10000
 eval_interval: 50000
-test_episode: 1
+test_episode: 10
 log_dir: "./logs/sac/"
 model_dir: "./models/sac/"

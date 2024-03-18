@@ -64,3 +64,6 @@ class MADDPG_Agents(MARLAgents):
         sample = self.memory.sample()
         info_train = self.learner.update(sample)
         return info_train
+
+    def finish(self):
+        pass

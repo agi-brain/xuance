@@ -1,14 +1,15 @@
 import argparse
 
+import os
 
 def parse_args():
     parser = argparse.ArgumentParser("Example of XuanCe.")
-    parser.add_argument("--method", type=str, default="c51")
+    parser.add_argument("--method", type=str, default="sac")
     parser.add_argument("--env", type=str, default="Box2D")
     parser.add_argument("--env-id", type=str, default="LunarLander-v2")
-    parser.add_argument("--test", type=int, default=0)
+    parser.add_argument("--test", type=int, default=1)
     parser.add_argument("--device", type=str, default="cuda:0")
-    parser.add_argument("--benchmark", type=int, default=1)
+    parser.add_argument("--benchmark", type=int, default=0)
     parser.add_argument("--config", type=str, default="./configs/sac.yaml")
 
     return parser.parse_known_args()[0]
@@ -72,7 +73,9 @@ def run(args):
     critic_lr_scheduler = torch.optim.lr_scheduler.LinearLR(critic_optimizer, start_factor=1.0, end_factor=0.25,
                                                      total_iters=get_total_iters(agent_name,
                                                                                  args))  # for learning rate decay
+
     agent = SACDIS_Agent(
+
         config=args,
         envs=envs,
         policy=policy,
@@ -97,12 +100,12 @@ def run(args):
         best_scores_info = {"mean": np.mean(test_scores),  # average episode scores.
                             "std": np.std(test_scores),  # the standard deviation of the episode scores.
                             "step": agent.current_step}  # current step
-        print(f"first test: {best_scores_info['mean']:.2f}, std={best_scores_info['std']:.2f}")
+        # print(f"mean: {best_scores_info['mean']:.2f}, std={best_scores_info['std']:.2f}")
         for i_epoch in range(num_epoch):  # begin benchmarking
             print(f"Epoch: {i_epoch+1}/{num_epoch}:")
             agent.train(eval_interval)  # train the model for some steps
             test_scores = agent.test(env_fn, test_episode)  # test the model for some episodes
-
+            print(f"mean: {best_scores_info['mean']:.2f}, std={best_scores_info['std']:.2f}")
             if np.mean(test_scores) > best_scores_info["mean"]:  # if current score is better than history
                 best_scores_info = {"mean": np.mean(test_scores),
                                     "std": np.std(test_scores),
@@ -112,27 +115,28 @@ def run(args):
         # end benchmarking
         print("Best Model Score: %.2f, std=%.2f" % (best_scores_info["mean"], best_scores_info["std"]))
     else:
-        if not args.test:  # train the model without testing
-            n_train_steps = args.running_steps // n_envs  # calculate the total steps of training
-            agent.train(n_train_steps)  # train the model directly.
-            # agent.save_model("final_train_model.pth")  # save the final model file.
-            print("Finish training!")
-        else:  # test a trained model
+        # 如果test>0，测试模型
+        if args.test:  # train the model without testing
             def env_fn():  # for creating testing environments
-
                 args_test = deepcopy(args)
                 args_test.parallels = 1
-                args_test.seed = np.random.randint(1000)
                 return make_envs(args_test)
 
             agent.render = True
-            agent.load_model(agent.model_dir_load, args.seed)  # load the model file
-            for i in range(args.test):
-                scores = agent.test(env_fn, args.test_episode)  # test the model
-                print(f"Mean Score: {np.mean(scores)}, Std: {np.std(scores)}")
-                print("Finish testing.")
-
+            print(agent.model_dir_load)
+            # print("files:",os.listdir(agent.model_dir_load))
+            agent.load_model(agent.model_dir_load)  # load the model file
+            scores = agent.test(env_fn, args.test_episode)  # test the model
+            print(f"Mean Score: {np.mean(scores)}, Std: {np.std(scores)}")
+            print("Finish testing.")
+        else:  # test a trained model
+            # n_train_steps = args.running_steps // n_envs  # calculate the total steps of training
+            # agent.train(n_train_steps)  # train the model directly.
+            # agent.save_model("final_train_model.pth")  # save the final model file.
+            # print("Finish training!")
+            pass
     # the end.
+
     envs.close()  # close the environment
     agent.finish()  # finish the example
 
