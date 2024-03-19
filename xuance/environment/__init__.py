@@ -54,7 +54,8 @@ def make_envs(config: Namespace):
             from xuance.environment.pettingzoo.pettingzoo_env import PettingZoo_Env
             env = PettingZoo_Env(config.env_name, config.env_id, config.seed,
                                  continuous=config.continuous_action,
-                                 render_mode=config.render_mode)
+                                 render_mode=config.render_mode,
+                                 num_agents=config.num_agents)
 
         elif config.env_name == "StarCraft2":
             from xuance.environment.starcraft2.sc2_env import StarCraft2_Env

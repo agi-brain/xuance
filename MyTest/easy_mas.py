@@ -75,6 +75,7 @@ class Runner(object):
 
         # environment details, representations, policies, optimizers, and agents.\
         self.args.n_agents = self.envs.n_agents[0]
+        # self.args.n_agents = 10
         self.args.observation_space = self.envs.observation_space
         self.args.obs_shape = self.envs.observation_space[self.agent_keys[0]].shape
         self.args.dim_obs = self.args.obs_shape[0]

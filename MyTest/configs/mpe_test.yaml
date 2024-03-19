@@ -15,7 +15,7 @@ policy: "MADDPG_Policy"
 representation: "Basic_Identical"
 vectorize: "Dummy_Pettingzoo"
 runner: "Pettingzoo_Runner"
-
+num_agents: 10
 representation_hidden_size: [64, ]  # the units for each hidden layer
 actor_hidden_size: [64, 64]
 critic_hidden_size: [64, 64]
