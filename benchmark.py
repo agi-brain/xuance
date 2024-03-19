@@ -15,12 +15,12 @@ def parse_args():
 
 if __name__ == '__main__':
     parser = parse_args()
-    ###
+    ########################################################################
     # You can also modify the arguments not listed above here. For example:
     # parser.parallels = 1
     # parser.running_steps = 1000000
     # ...
-    ###
+    ########################################################################
     runner = get_runner(method=parser.method,
                         env=parser.env,
                         env_id=parser.env_id,
