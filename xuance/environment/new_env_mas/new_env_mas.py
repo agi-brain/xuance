@@ -37,13 +37,17 @@ class New_Env_MAS:
             "episode_limit": self.max_episode_steps,
         }
 
-    def close(self):  # close the environment
+    def close(self):
+        """Close your environment here"""
         pass
 
-    def render(self):
-        return np.zeros([2, 2, 2])
+    def render(self, **kwargs):
+        """Render the environment, and return the images"""
+        images = np.zeros([2, 2, 2])
+        return images
 
     def reset(self):
+        """Reset your environment, and return initialized observations and other information."""
         obs = np.array([self.observation_space.sample() for _ in range(self.n_agents)])
         info = {}
         self._episode_step = 0
@@ -52,7 +56,7 @@ class New_Env_MAS:
         return obs, info
 
     def step(self, actions):
-        # Execute the actions and get next observations, rewards, and other information.
+        """Execute the actions and get next observations, rewards, and other information."""
         observation = np.array([self.observation_space.sample() for _ in range(self.n_agents)])
         reward, info = np.zeros([self.n_agents, 1]), {}
         terminated = [False for _ in range(self.n_agents)]
@@ -65,7 +69,9 @@ class New_Env_MAS:
         return observation, reward, terminated, truncated, info
 
     def get_agent_mask(self):
+        """Get mask variables of agents, 1 means the agent is activated."""
         return np.ones(self.n_agents, dtype=np.bool_)
 
     def state(self):
+        """Get the global state of the environment in current step."""
         return np.zeros([self.dim_state])
