@@ -3,7 +3,7 @@ from xuance import get_runner
 
 
 def parse_args():
-    parser = argparse.ArgumentParser("Run an MARL demo.")
+    parser = argparse.ArgumentParser("Run benchmark results for MARL.")
     parser.add_argument("--method", type=str, default="maddpg")
     parser.add_argument("--env", type=str, default="mpe")
     parser.add_argument("--env-id", type=str, default="simple_spread_v3")
