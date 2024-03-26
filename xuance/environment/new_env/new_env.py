@@ -19,12 +19,15 @@ class New_Env:
         self.max_episode_steps = 100
 
     def close(self):
+        """Close your environment here"""
         pass
 
     def render(self):
+        """Render the environment, and return the images"""
         pass
 
     def reset(self):
+        """Reset your environment, and return initialized observations and other information."""
         obs, info = self.observation_space.sample(), {}  # reset the environment and get observations and info here.
         self._episode_step = 0
         self._episode_score = 0.0
@@ -32,7 +35,7 @@ class New_Env:
         return obs, info
 
     def step(self, actions):
-        # Execute the actions and get next observations, rewards, and other information.
+        """Execute the actions and get next observations, rewards, and other information."""
         observation, reward, terminated, info = self.observation_space.sample(), 0, False, {}
         truncated = True if (self._episode_step >= self.max_episode_steps) else False
 
