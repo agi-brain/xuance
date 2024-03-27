@@ -13,8 +13,10 @@ class New_Env:
         self._episode_score = 0.0
         self.observation_space = Box(low=0, high=1, shape=[8, ], dtype=np.float, seed=seed)
         if continuous:
+            """For environment with continuous action space."""
             self.action_space = Box(low=0, high=1, shape=[2, ], dtype=np.float, seed=seed)
         else:
+            """For environment with discrete action space."""
             self.action_space = Discrete(n=2, seed=seed)
         self.max_episode_steps = 100
 
