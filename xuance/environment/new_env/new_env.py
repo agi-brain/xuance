@@ -8,9 +8,9 @@ import numpy as np
 class New_Env:
     def __init__(self, env_id: str, seed: int, *args, **kwargs):
         continuous = kwargs['continuous']
-        self.env_id = env_id
-        self._episode_step = 0
-        self._episode_score = 0.0
+        self.env_id = env_id  # The name of the map or scenario that to be specified.
+        self._episode_step = 0  # The count of steps for current episode.
+        self._episode_score = 0.0  # The cumulated rewards for current episode.
         self.observation_space = Box(low=0, high=1, shape=[8, ], dtype=np.float, seed=seed)
         if continuous:
             """For environment with continuous action space."""
@@ -18,7 +18,7 @@ class New_Env:
         else:
             """For environment with discrete action space."""
             self.action_space = Discrete(n=2, seed=seed)
-        self.max_episode_steps = 100
+        self.max_episode_steps = 100  # The max steps for each episode.
 
     def close(self):
         """Close your environment here"""
