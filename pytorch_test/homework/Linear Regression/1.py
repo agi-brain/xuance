@@ -6,22 +6,18 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 # 定义一个简单的线性回归模型，用于分类任务
 class LinearRegressionClassifier(nn.Module):
-    def __init__(self, input_size, hidden_size, num_classes):
+    def __init__(self, input_size, num_classes):
         super(LinearRegressionClassifier, self).__init__()
-        self.linear1 = nn.Linear(input_size, hidden_size)
-        self.relu = nn.ReLU()  # 定义 ReLU 激活函数
-        self.linear2 = nn.Linear(hidden_size, num_classes)  # 注意这里的输出层直接映射到类别数
+        self.linear1 = nn.Linear(input_size, num_classes)
+
         self.softmax = nn.Softmax(dim=1)  # Softmax 用于多类别分类
 
     def forward(self, x):
         x = self.linear1(x)  # 通过第一个线性层
-        x = self.relu(x)  # 应用 ReLU 激活函数
-        x = self.linear2(x)  # 通过第二个线性层
         x = self.softmax(x)  # 应用 Softmax 函数
         return x
 # 超参数设置
 input_size = 28*28  # 例如，28x28 的手写数字图像展平后的尺寸
-hidden_size= 256
 num_classes = 10  # MNIST 数据集的类别数
 num_epochs = 10
 batch_size = 64
@@ -40,7 +36,7 @@ train_loader = torch.utils.data.DataLoader(dataset=train_dataset, batch_size=bat
 test_loader = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=batch_size, shuffle=False)
 
 # 实例化模型
-model = LinearRegressionClassifier(input_size,hidden_size, num_classes,)
+model = LinearRegressionClassifier(input_size, num_classes,)
 
 # 定义损失函数和优化器
 criterion = nn.CrossEntropyLoss()
