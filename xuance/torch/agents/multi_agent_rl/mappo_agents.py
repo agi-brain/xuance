@@ -75,7 +75,7 @@ class MAPPO_Agents(MARLAgents):
         obs_in = torch.Tensor(obs_n).reshape([batch_size, self.n_agents, -1]).to(self.device)
         if avail_actions is not None:
             avail_actions = torch.Tensor(avail_actions).to(self.device)
-        if self.use_recurrent:
+        if self.use_recurrent:  # use recurrent networks
             batch_agents = batch_size * self.n_agents
             hidden_state, dists = self.policy(obs_in.reshape(batch_agents, 1, -1),
                                               agents_id.reshape(batch_agents, 1, -1),
