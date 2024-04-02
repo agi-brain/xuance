@@ -71,7 +71,14 @@ class MultiHoverAviary(MultiHoverAviary_Official):
         # self.TARGET_POS = self.INIT_XYZS + np.array([[0, 0, 1 / (i + 1)] for i in range(num_drones)])
         self.TARGET_POS = np.array([[0, 0, 1],
                                     [0, 1, 1],
-                                    [1, 0, 1]])
+                                    [1, 0, 1],
+                                    [0, 0, 2],
+                                    [0, 1, 2],
+                                    [1, 0, 2],
+                                    [2, 0, 1],
+                                    [0, 2, 1],
+                                    [2, 0, 2],
+                                    [0, 2, 2],])
         self.space_range_x = [-20.0, 20.0]
         self.space_range_y = [-20.0, 20.0]
         self.space_range_z = [0.05, 5.0]
