@@ -159,12 +159,11 @@ class Runner(object):
     def test_episode(self, env_fn):
         test_envs = env_fn()
         num_envs = test_envs.num_envs
-        videos, episode_videos = [[] for _ in range(num_envs)], []
+        episode_videos = []
         obs_n, infos = test_envs.reset()
         if self.args.render_mode == "rgb_array" and self.render:
             images = test_envs.render(self.args.render_mode)
-            for idx, img in enumerate(images):
-                videos[idx].append(img)
+            episode_videos.append(images[0])
         episode_score = np.zeros([num_envs, 1], dtype=np.float32)
 
         for step in range(self.episode_length):
@@ -173,8 +172,7 @@ class Runner(object):
             next_obs_n, rew_n, terminated_n, truncated_n, infos = test_envs.step(actions_execute)
             if self.args.render_mode == "rgb_array" and self.render:
                 images = test_envs.render(self.args.render_mode)
-                for idx, img in enumerate(images):
-                    videos[idx].append(img)
+                episode_videos.append(images[0])
 
             agent_mask = test_envs.agent_mask()
             obs_n = deepcopy(next_obs_n)
@@ -193,7 +191,7 @@ class Runner(object):
 
         if self.args.render_mode == "rgb_array" and self.render:
             # time, height, width, channel -> time, channel, height, width
-            videos_info = {"Videos_Test": np.array(videos, dtype=np.uint8).transpose((0, 1, 4, 2, 3))}
+            videos_info = {"Videos_Test": np.array([episode_videos], dtype=np.uint8).transpose((0, 1, 4, 2, 3))}
             self.log_videos(info=videos_info, fps=self.fps, x_index=self.current_step)
 
         test_info = {"Test-Episode-Rewards": scores[0]}
