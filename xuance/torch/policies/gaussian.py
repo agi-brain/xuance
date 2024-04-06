@@ -238,10 +238,10 @@ class SACPolicy(nn.Module):
         return act_log, self.critic(outputs_critic['state'], act)
 
     def soft_update(self, tau=0.005):
-        for ep, tp in zip(self.representation_actor.parameters(), self.target_representation_actor.parameters()):
+        for ep, tp in zip(self.actor_representation.parameters(), self.target_actor_representation.parameters()):
             tp.data.mul_(1 - tau)
             tp.data.add_(tau * ep.data)
-        for ep, tp in zip(self.representation_critic.parameters(), self.target_representation_critic.parameters()):
+        for ep, tp in zip(self.critic_representation.parameters(), self.target_critic_representation.parameters()):
             tp.data.mul_(1 - tau)
             tp.data.add_(tau * ep.data)
         for ep, tp in zip(self.actor.parameters(), self.target_actor.parameters()):
