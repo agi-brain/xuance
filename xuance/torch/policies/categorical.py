@@ -208,8 +208,11 @@ class SACDISPolicy(nn.Module):
         self.target_representation_critic = copy.deepcopy(self.representation_critic)
         self.target_critic = copy.deepcopy(self.critic)
 
+        self.actor_parameters = list(self.actor_representation.parameters()) + list(self.actor.parameters())
+        self.critic_parameters = list(self.critic_representation.parameters()) + list(self.critic.parameters())
+
     def forward(self, observation: Union[np.ndarray, dict]):
-        outputs = self.representation(observation)
+        outputs = self.actor_representation(observation)
         act_prob, act_distribution = self.actor(outputs['state'])
         return outputs, act_prob, act_distribution
 

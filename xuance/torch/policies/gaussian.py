@@ -194,38 +194,44 @@ class SACPolicy(nn.Module):
         super(SACPolicy, self).__init__()
         self.action_dim = action_space.shape[0]
         self.representation_info_shape = representation.output_shapes
-        self.representation_actor = representation
-        self.representation_critic = copy.deepcopy(representation)
+        
+        # representations
+        self.actor_representation = representation
+        self.critic_representation = copy.deepcopy(representation)
+        self.target_actor_representation = copy.deepcopy(representation)
+        self.target_critic_representation = copy.deepcopy(representation)
+
         self.actor = ActorNet_SAC(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size,
                                   normalize, initialize, activation, device)
         self.critic = CriticNet_SAC(representation.output_shapes['state'][0], self.action_dim, critic_hidden_size,
                                     normalize, initialize, activation, device)
 
-        self.target_representation_actor = copy.deepcopy(self.representation_actor)
         self.target_actor = copy.deepcopy(self.actor)
-        self.target_representation_critic = copy.deepcopy(self.representation_critic)
         self.target_critic = copy.deepcopy(self.critic)
 
+        self.actor_parameters = list(self.actor_representation.parameters()) + list(self.actor.parameters())
+        self.critic_parameters = list(self.critic_representation.parameters()) + list(self.critic.parameters())
+
     def forward(self, observation: Union[np.ndarray, dict]):
-        outputs_actor = self.representation_actor(observation)
+        outputs_actor = self.actor_representation(observation)
         act_dist = self.actor(outputs_actor['state'])
         return outputs_actor, act_dist
 
     def Qtarget(self, observation: Union[np.ndarray, dict]):
-        outputs_actor = self.target_representation_actor(observation)
-        outputs_critic = self.target_representation_critic(observation)
+        outputs_actor = self.target_actor_representation(observation)
+        outputs_critic = self.target_critic_representation(observation)
         act_dist = self.target_actor(outputs_actor['state'])
         act = act_dist.rsample()
         act_log = act_dist.log_prob(act).sum(-1)
         return act_log, self.target_critic(outputs_critic['state'], act)
 
     def Qaction(self, observation: Union[np.ndarray, dict], action: torch.Tensor):
-        outputs_critic = self.representation_critic(observation)
+        outputs_critic = self.critic_representation(observation)
         return self.critic(outputs_critic['state'], action)
 
     def Qpolicy(self, observation: Union[np.ndarray, dict]):
-        outputs_actor = self.representation_actor(observation)
-        outputs_critic = self.representation_critic(observation)
+        outputs_actor = self.actor_representation(observation)
+        outputs_critic = self.critic_representation(observation)
         act_dist = self.actor(outputs_actor['state'])
         act = act_dist.rsample()
         act_log = act_dist.log_prob(act).sum(-1)
