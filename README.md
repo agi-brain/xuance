@@ -444,7 +444,7 @@ Welcome to join the official communication group with QQ app (Group number: 5524
 <img src="docs/source/figures/QQ_group.jpeg" width="200" height="auto" /><br/><font color="AAAAAA">QQ group</font>
 </center></td>
 <td> <center>
-<img src="./docs/source/figures/magent/Official_Account.jpg" width="200" height="auto" /> <br/> <font color="AAAAAA">Official account</font>
+<img src="docs/source/figures/Official_Account.jpg" width="200" height="auto" /> <br/> <font color="AAAAAA">Official account</font>
 </center> </td>
 </tr>
 </table>
