@@ -198,27 +198,29 @@ class SACDISPolicy(nn.Module):
                  device: Optional[Union[str, int, torch.device]] = None):
         super(SACDISPolicy, self).__init__()
         self.action_dim = action_space.n
-        self.representation = representation
-        self.representation_critic = copy.deepcopy(representation)
-        self.representation_info_shape = self.representation.output_shapes
+        self.representation_info_shape = representation.output_shapes
+
+        self.actor_representation = representation
+        self.critic_representation = copy.deepcopy(representation)
+        self.target_critic_representation = copy.deepcopy(representation)
+
         self.actor = ActorNet_SACDIS(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size,
                                      normalize, initialize, activation, device)
         self.critic = CriticNet_SACDIS(representation.output_shapes['state'][0], self.action_dim, critic_hidden_size,
                                        initialize, activation, device)
-        self.target_representation_critic = copy.deepcopy(self.representation_critic)
         self.target_critic = copy.deepcopy(self.critic)
 
-        self.actor_parameters = list(self.representation.parameters()) + list(self.actor.parameters())
-        self.critic_parameters = list(self.representation_critic.parameters()) + list(self.critic.parameters())
+        self.actor_parameters = list(self.actor_representation.parameters()) + list(self.actor.parameters())
+        self.critic_parameters = list(self.critic_representation.parameters()) + list(self.critic.parameters())
 
     def forward(self, observation: Union[np.ndarray, dict]):
-        outputs = self.representation(observation)
+        outputs = self.actor_representation(observation)
         act_prob, act_distribution = self.actor(outputs['state'])
         return outputs, act_prob, act_distribution
 
     def Qtarget(self, observation: Union[np.ndarray, dict]):
-        outputs_actor = self.representation(observation)
-        outputs_critic = self.target_representation_critic(observation)
+        outputs_actor = self.actor_representation(observation)
+        outputs_critic = self.target_critic_representation(observation)
         act_prob, act_distribution = self.actor(outputs_actor['state'])
         # z = act_prob == 0.0
         # z = z.float() * 1e-8
@@ -226,12 +228,12 @@ class SACDISPolicy(nn.Module):
         return act_prob, log_action_prob, self.target_critic(outputs_critic['state'])
 
     def Qaction(self, observation: Union[np.ndarray, dict]):
-        outputs_critic = self.representation_critic(observation)
+        outputs_critic = self.critic_representation(observation)
         return outputs_critic, self.critic(outputs_critic['state'])
 
     def Qpolicy(self, observation: Union[np.ndarray, dict]):
-        outputs_actor = self.representation(observation)
-        outputs_critic = self.representation(observation)
+        outputs_actor = self.actor_representation(observation)
+        outputs_critic = self.critic_representation(observation)
         act_prob, act_distribution = self.actor(outputs_actor['state'])
         # z = act_prob == 0.0
         # z = z.float() * 1e-8
@@ -239,7 +241,7 @@ class SACDISPolicy(nn.Module):
         return act_prob, log_action_prob, self.critic(outputs_critic['state'])
 
     def soft_update(self, tau=0.005):
-        for ep, tp in zip(self.representation_critic.parameters(), self.target_representation_critic.parameters()):
+        for ep, tp in zip(self.critic_representation.parameters(), self.target_critic_representation.parameters()):
             tp.data.mul_(1 - tau)
             tp.data.add_(tau * ep.data)
         for ep, tp in zip(self.critic.parameters(), self.target_critic.parameters()):

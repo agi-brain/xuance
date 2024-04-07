@@ -6,13 +6,13 @@ policy: "Discrete_SAC"
 representation: "Basic_MLP"
 runner: "DRL"
 
-representation_hidden_size: [256,]
-actor_hidden_size: [128,128,]
-critic_hidden_size: [128,128,]
+representation_hidden_size: [128,]
+actor_hidden_size: [128,]
+critic_hidden_size: [128,]
 activation: "ReLU"
 
 seed: 1
-parallels: 16
+parallels: 10
 n_size: 20000
 batch_size: 256
 actor_learning_rate: 0.001
