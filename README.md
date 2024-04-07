@@ -432,16 +432,22 @@ How to use wandb offline? :arrow_right: [https://github.com/wandb/server.git/](h
 
 You can put your questions, advices, or the bugs you have found in the [Issues](https://github.com/agi-brain/xuance/issues). 
 
-### [Communication Group](https://github.com/agi-brain/xuance/blob/master/docs/source/figures/QQ_group.jpeg) on QQ App.
+### Social Accounts.
 
-Welcome to join the official communication group with QQ app. (Group number: 552432695)
+Welcome to join the official communication group with QQ app (Group number: 552432695), and the official account ("玄策 RLlib") on WeChat.
 
 <details open>
-<summary>(QR code for QQ group )</summary>
+<summary>(QR code for QQ group and official account)</summary>
 
-<div align="center">
-<img src="docs/source/figures/QQ_group.jpeg" width="200" height="auto" align=center />
-</div>
+<table rules="none" align="center"><tr>
+<td> <center>
+<img src="docs/source/figures/QQ_group.jpeg" width="200" height="auto" /><br/><font color="AAAAAA">QQ group</font>
+</center></td>
+<td> <center>
+<img src="./docs/source/figures/magent/Official_Account.jpg" width="200" height="auto" /> <br/> <font color="AAAAAA">Official account</font>
+</center> </td>
+</tr>
+</table>
 
 </details>
 
