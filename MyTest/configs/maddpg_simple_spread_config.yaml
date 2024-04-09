@@ -2,9 +2,9 @@ dl_toolbox: "torch"  # The deep learning toolbox. Choices: "torch", "mindspore",
 project_name: "XuanCe_Benchmark"
 logger: "tensorboard"  # Choices: tensorboard, wandb.
 wandb_user_name: "1256405274"
-render: False
-render_mode: 'rgb_array' # Choices: 'human', 'rgb_array'.
-test_mode: False
+render: True
+render_mode: 'human' # Choices: 'human', 'rgb_array'.
+test_mode: True
 device: "cuda:0"
 
 agent: "MADDPG"  # the learning algorithms_marl
@@ -35,7 +35,7 @@ start_noise: 1.0
 end_noise: 0.01
 sigma: 0.1
 start_training: 1000  # start training after n episodes
-running_steps: 10000000
+running_steps: 100000000  # total running steps
 train_per_step: False  # True: train model per step; False: train model per episode.
 training_frequency: 1
 
@@ -43,6 +43,6 @@ use_grad_clip: True
 grad_clip_norm: 0.5
 
 eval_interval: 100000
-test_episode: 5
+test_episode: 1
 log_dir: "./logs/maddpg/"
 model_dir: "./models/maddpg/"

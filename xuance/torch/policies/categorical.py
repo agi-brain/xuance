@@ -69,8 +69,13 @@ class ActorCriticPolicy(nn.Module):
         self.action_dim = action_space.n
         self.representation = representation
         self.representation_info_shape = representation.output_shapes
-        self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size,
-                              normalize, initialize, activation, device)
+        self.actor = ActorNet(representation.output_shapes['state'][0],
+                              self.action_dim,
+                              actor_hidden_size,
+                              normalize,
+                              initialize,
+                              activation,
+                              device)
         self.critic = CriticNet(representation.output_shapes['state'][0], critic_hidden_size,
                                 normalize, initialize, activation, device)
 

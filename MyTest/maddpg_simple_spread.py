@@ -20,10 +20,10 @@ def parse_args():
     parser.add_argument("--env", type=str, default="mpe")
     parser.add_argument("--env-id", type=str, default="simple_spread_v3")
     parser.add_argument("--seed", type=int, default=1)
-    parser.add_argument("--test", type=int, default=0)
+    parser.add_argument("--test", type=int, default=1)
     parser.add_argument("--device", type=str, default="cuda:0")
-    parser.add_argument("--benchmark", type=int, default=1)
-    parser.add_argument("--config", type=str, default="./maddpg_simple_spread_config.yaml")
+    parser.add_argument("--benchmark", type=int, default=0)
+    parser.add_argument("--config", type=str, default="./configs/maddpg_simple_spread_config.yaml")
 
     return parser.parse_args()
 
