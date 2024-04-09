@@ -72,13 +72,13 @@ class MAPPO_Agents(MARLAgents):
     def act(self, obs_n, *rnn_hidden, avail_actions=None, state=None, test_mode=False):
         batch_size = len(obs_n)
         agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(batch_size, -1, -1).to(self.device)
-        obs_in = torch.Tensor(obs_n).view([batch_size, self.n_agents, -1]).to(self.device)
+        obs_in = torch.Tensor(obs_n).reshape([batch_size, self.n_agents, -1]).to(self.device)
         if avail_actions is not None:
             avail_actions = torch.Tensor(avail_actions).to(self.device)
-        if self.use_recurrent:
+        if self.use_recurrent:  # use recurrent networks
             batch_agents = batch_size * self.n_agents
-            hidden_state, dists = self.policy(obs_in.view(batch_agents, 1, -1),
-                                              agents_id.view(batch_agents, 1, -1),
+            hidden_state, dists = self.policy(obs_in.reshape(batch_agents, 1, -1),
+                                              agents_id.reshape(batch_agents, 1, -1),
                                               *rnn_hidden,
                                               avail_actions=avail_actions.reshape(batch_agents, 1, -1))
             actions = dists.stochastic_sample()
@@ -96,11 +96,11 @@ class MAPPO_Agents(MARLAgents):
         # build critic input
         if self.use_global_state:
             state = torch.Tensor(state).unsqueeze(1).to(self.device)
-            obs_n = torch.Tensor(obs_n).view([batch_size, 1, -1]).to(self.device)
+            obs_n = torch.Tensor(obs_n).reshape([batch_size, 1, -1]).to(self.device)
             critic_in = torch.concat([obs_n.expand(-1, self.n_agents, -1),
                                       state.expand(-1, self.n_agents, -1)], dim=-1)
         else:
-            critic_in = torch.Tensor(obs_n).view([batch_size, 1, -1]).to(self.device)
+            critic_in = torch.Tensor(obs_n).reshape([batch_size, 1, -1]).to(self.device)
             critic_in = critic_in.expand(-1, self.n_agents, -1)
         # get critic values
         if self.use_recurrent:

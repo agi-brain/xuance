@@ -121,6 +121,7 @@ class SubprocVecEnv_New_MAS(SubprocVecEnv_Gym):
         return self.buf_obs.copy(), self.buf_rews.copy(), self.buf_terminals.copy(), self.buf_truncations.copy(), self.buf_infos.copy()
 
     def global_state(self):
+        """Get the global state of parallel environments in current step."""
         self._assert_not_closed()
         for pipe in self.remotes:
             pipe.send(('state', None))
@@ -130,6 +131,7 @@ class SubprocVecEnv_New_MAS(SubprocVecEnv_Gym):
         return self.buf_state
 
     def agent_mask(self):
+        """Get mask variables of agents, 1 means the agent is activated."""
         self._assert_not_closed()
         for pipe in self.remotes:
             pipe.send(('get_agent_mask', None))
@@ -197,11 +199,13 @@ class DummyVecEnv_New_MAS(DummyVecEnv_Gym):
         return self.buf_obs.copy(), self.buf_rews.copy(), self.buf_terminals.copy(), self.buf_truncations.copy(), self.buf_info.copy()
 
     def global_state(self):
+        """Get the global state of parallel environments in current step."""
         for e in range(self.num_envs):
             self.buf_state[e] = self.envs[e].state()
         return self.buf_state
 
     def agent_mask(self):
+        """Get mask variables of agents, 1 means the agent is activated."""
         for e in range(self.num_envs):
             self.buf_agent_mask[e] = self.envs[e].get_agent_mask()
         return self.buf_agent_mask

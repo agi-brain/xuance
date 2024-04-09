@@ -7,7 +7,7 @@
 [![PyPI](https://img.shields.io/pypi/v/xuance)](https://pypi.org/project/xuance/)
 [![Documentation Status](https://readthedocs.org/projects/xuance/badge/?version=latest)](https://xuance.readthedocs.io)
 [![GitHub](https://img.shields.io/github/license/agi-brain/xuance)](https://github.com/agi-brain/xuance/blob/master/LICENSE.txt)
-[![Pepy Total Downlods](https://img.shields.io/pepy/dt/xuance)](https://www.pepy.tech/projects/xuance)
+[![Downloads](https://static.pepy.tech/badge/xuance)](https://pepy.tech/project/xuance)
 [![GitHub Repo stars](https://img.shields.io/github/stars/agi-brain/xuance?style=social)](https://github.com/agi-brain/xuance/stargazers)
 [![GitHub forks](https://img.shields.io/github/forks/agi-brain/xuance?style=social)](https://github.com/agi-brain/xuance/forks)
 [![GitHub watchers](https://img.shields.io/github/watchers/agi-brain/xuance?style=social)](https://github.com/agi-brain/xuance/watchers)
@@ -432,16 +432,22 @@ How to use wandb offline? :arrow_right: [https://github.com/wandb/server.git/](h
 
 You can put your questions, advices, or the bugs you have found in the [Issues](https://github.com/agi-brain/xuance/issues). 
 
-### [Communication Group](https://github.com/agi-brain/xuance/blob/master/docs/source/figures/QQ_group.jpeg) on QQ App.
+### Social Accounts.
 
-Welcome to join the official communication group with QQ app. (Group number: 552432695)
+Welcome to join the official communication group with QQ app (Group number: 552432695), and the official account ("玄策 RLlib") on WeChat.
 
 <details open>
-<summary>(QR code for QQ group )</summary>
+<summary>(QR code for QQ group and official account)</summary>
 
-<div align="center">
-<img src="docs/source/figures/QQ_group.jpeg" width="200" height="auto" align=center />
-</div>
+<table rules="none" align="center"><tr>
+<td> <center>
+<img src="docs/source/figures/QQ_group.jpeg" width="200" height="auto" /><br/><font color="AAAAAA">QQ group</font>
+</center></td>
+<td> <center>
+<img src="docs/source/figures/Official_Account.jpg" width="200" height="auto" /> <br/> <font color="AAAAAA">Official account</font>
+</center> </td>
+</tr>
+</table>
 
 </details>
 

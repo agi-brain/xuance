@@ -3,9 +3,10 @@ env_name: "Classic Control"
 env_id: "Pendulum-v1"
 vectorize: "Dummy_Gym"
 policy: "DDPG_Policy"
-representation: "Basic_Identical"
+representation: "Basic_MLP"
 runner: "DRL"
 
+representation_hidden_size: [64]
 actor_hidden_size: [256,]
 critic_hidden_size: [256,]
 activation: "ReLU"

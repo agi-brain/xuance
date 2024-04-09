@@ -41,13 +41,8 @@ class Runner_DRL(Runner_Base):
             policy = REGISTRY_Policy[self.args.policy](*input_policy)
 
         if self.agent_name in ["DDPG", "TD3", "SAC", "SACDIS"]:
-            actor_optimizer = torch.optim.Adam(policy.actor.parameters(), self.args.actor_learning_rate)
-            if self.agent_name == "TD3":
-                critic_optimizer = torch.optim.Adam(
-                    itertools.chain(policy.criticA.parameters(), policy.criticB.parameters()),
-                    self.args.critic_learning_rate)
-            else:
-                critic_optimizer = torch.optim.Adam(policy.critic.parameters(), self.args.critic_learning_rate)
+            actor_optimizer = torch.optim.Adam(policy.actor_parameters, self.args.actor_learning_rate)
+            critic_optimizer = torch.optim.Adam(policy.critic_parameters, self.args.critic_learning_rate)
             actor_lr_scheduler = torch.optim.lr_scheduler.LinearLR(actor_optimizer, start_factor=1.0, end_factor=0.25,
                                                                    total_iters=get_total_iters(self.agent_name,
                                                                                                self.args))

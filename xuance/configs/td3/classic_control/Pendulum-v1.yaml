@@ -6,6 +6,7 @@ representation: "Basic_Identical"
 policy: "TD3_Policy"
 runner: "DRL"
 
+representation_hidden_size: [64]
 actor_hidden_size: [256, ]
 critic_hidden_size: [256, ]
 activation: "LeakyReLU"

@@ -80,6 +80,9 @@ class Pettingzoo_Runner(Runner_Base):
             arg.handle_name = self.envs.side_names[h]
             if self.n_handles > 1 and arg.agent != "RANDOM":
                 arg.model_dir += "{}/".format(arg.handle_name)
+            if len(self.args) != self.n_handles:
+                n_methods = len(self.args)
+                raise AttributeError(f"{self.n_handles} methods should be specified in this environment, while get {n_methods}!")
             arg.handle, arg.n_agents = h, self.envs.n_agents[h]
             arg.agent_keys, arg.agent_ids = self.agent_keys[h], self.agent_ids[h]
             arg.state_space = self.envs.state_space

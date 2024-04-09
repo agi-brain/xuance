@@ -24,7 +24,7 @@ def recursive_dict_update(basic_dict, target_dict):
         target_dict = {'a': 3, 'c': 4}
         out_dict = recursive_dict_update(basic_dict, target_dict)
 
-        output_dict = {'a': 3, 'b': 2}
+        output_dict = {'a': 3, 'b': 2, 'c': 4}
     """
     out_dict = deepcopy(basic_dict)
     for key, value in target_dict.items():
