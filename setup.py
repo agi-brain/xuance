@@ -57,7 +57,6 @@ setup(
         "gymnasium==0.28.1",
         "gym-notices==0.0.8",
         "pygame==2.1.0",
-        "mpi4py",  # default version is 3.1.3
         "tqdm==4.62.3",
         "pyglet==1.5.15",
         "pettingzoo>=1.23.0",  # for MARL
@@ -66,6 +65,7 @@ setup(
         "moviepy==1.0.3",
         "imageio",  # default version is 2.9.0
         "opencv-python==4.5.4.58",
+        "mpi4py",  # default version is 3.1.3
     ],
     setup_requires=['pytest-runner'],
     tests_requires=['pytest'],
