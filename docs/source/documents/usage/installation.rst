@@ -31,7 +31,7 @@ Install via PyPI
 
 .. tabs::
 
-    .. group-tab:: No DL toolbox
+    .. group-tab:: Default (PyTorch)
 
         .. code-block:: bash
 
