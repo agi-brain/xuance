@@ -11,7 +11,7 @@ setup(
                 "configs/*/*/*.yaml",
                 "environment/magent2/libmagent.so",  # for magent2 environment on linux
                 "environment/magent2/magent.dll",  # for magent2 environment on Windows
-                "environment/magent2/libmagent.dylib"  # for magent2 environment on MacOS
+                "environment/magent2/libmagent.dylib"  # for magent2 environment on MacOS (for Intel CPU)
             ]
     },
     version="1.0.11",
@@ -29,7 +29,7 @@ setup(
         'Intended Audience :: Developers',  # Define that your audience are developers
         'Topic :: Software Development :: Build Tools',
         'License :: OSI Approved :: MIT License',  # Again, pick a license
-        'Programming Language :: Python :: 3.6',  # Specify which pyhton versions that you want to support
+        'Programming Language :: Python :: 3.6',  # Specify which python versions that you want to support
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
