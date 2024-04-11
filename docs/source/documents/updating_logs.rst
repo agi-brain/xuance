@@ -1,3 +1,16 @@
+Version: 1.0.11
+==============================================
+
+Date: 11 April, 2024
+-----------------------------------------------
+
+- Support and finish test for gym-pybullet-drones environments;
+- Fix some issues for installation of xuance. Now it is more easy to install and use;
+- Improve the compatibility for MacOS with Apple's M chips;
+- Fix some other bugs.
+
+View at `https://pypi.org/project/xuance/1.0.11/ <https://pypi.org/project/xuance/1.0.11/>`_.
+
 Version: 1.0.8
 ==============================================
 
