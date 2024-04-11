@@ -7,7 +7,6 @@ from .vector_envs.vector_env import VecEnv
 from xuance.environment.gym.gym_vec_env import DummyVecEnv_Gym, SubprocVecEnv_Gym
 from xuance.environment.gym.gym_vec_env import DummyVecEnv_Atari, SubprocVecEnv_Atari
 from xuance.environment.pettingzoo.pettingzoo_vec_env import DummyVecEnv_Pettingzoo, SubprocVecEnv_Pettingzoo
-from xuance.environment.magent2.magent_vec_env import DummyVecEnv_MAgent, SubprocVecEnv_Magent
 from xuance.environment.starcraft2.sc2_vec_env import DummyVecEnv_StarCraft2, SubprocVecEnv_StarCraft2
 from xuance.environment.football.gfootball_vec_env import DummyVecEnv_GFootball, SubprocVecEnv_GFootball
 from xuance.environment.minigrid.minigrid_vec_env import DummyVecEnv_MiniGrid, SubprocVecEnv_MiniGrid
@@ -21,7 +20,6 @@ from .vector_envs.subproc_vec_env import SubprocVecEnv
 REGISTRY_VEC_ENV = {
     "Dummy_Gym": DummyVecEnv_Gym,
     "Dummy_Pettingzoo": DummyVecEnv_Pettingzoo,
-    "Dummy_MAgent": DummyVecEnv_MAgent,
     "Dummy_StarCraft2": DummyVecEnv_StarCraft2,
     "Dummy_Football": DummyVecEnv_GFootball,
     "Dummy_Atari": DummyVecEnv_Atari,
@@ -34,7 +32,6 @@ REGISTRY_VEC_ENV = {
     # multiprocess #
     "Subproc_Gym": SubprocVecEnv_Gym,
     "Subproc_Pettingzoo": SubprocVecEnv_Pettingzoo,
-    "Subproc_MAgent": SubprocVecEnv_Magent,
     "Subproc_StarCraft2": SubprocVecEnv_StarCraft2,
     "Subproc_Football": SubprocVecEnv_GFootball,
     "Subproc_Atari": SubprocVecEnv_Atari,
@@ -113,6 +110,12 @@ def make_envs(config: Namespace):
 
         return env
 
+    if config.vectorize in ["Dummy_MAgent", "Subproc_MAgent"]:  # for the support of magent2 environment
+        from xuance.environment.magent2.magent_vec_env import DummyVecEnv_MAgent, SubprocVecEnv_Magent
+        REGISTRY_VEC_ENV.update({
+            "Dummy_MAgent": DummyVecEnv_MAgent,
+            "Subproc_MAgent": SubprocVecEnv_Magent
+        })
     if config.vectorize in REGISTRY_VEC_ENV.keys():
         return REGISTRY_VEC_ENV[config.vectorize]([_thunk for _ in range(config.parallels)])
     elif config.vectorize == "NOREQUIRED":
