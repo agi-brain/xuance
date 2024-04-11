@@ -8,7 +8,9 @@ def parse_args():
     parser.add_argument("--env", type=str, default="atari")
     parser.add_argument("--env-id", type=str, default="ALE/Pong-v5")
     parser.add_argument("--test", type=int, default=0)
-    parser.add_argument("--device", type=str, default="cpu")
+    parser.add_argument("--parallels", type=int, default=1)
+    parser.add_argument("--running_steps", type=int, default=1000000)
+    parser.add_argument("--device", type=str, default="cuda:0")
 
     return parser.parse_args()
 
