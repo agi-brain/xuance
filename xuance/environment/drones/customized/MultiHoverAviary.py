@@ -79,7 +79,6 @@ class MultiHoverAviary(MultiHoverAviary_Official):
                                     [0, 2, 1],
                                     [2, 0, 2],
                                     [0, 2, 2],])
-        self.permutation = np.random.permutation(num_drones)
         self.space_range_x = [-20.0, 20.0]
         self.space_range_y = [-20.0, 20.0]
         self.space_range_z = [0.05, 5.0]

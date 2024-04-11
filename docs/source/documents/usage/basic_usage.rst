@@ -8,11 +8,12 @@ Quick Start
 Run a DRL example
 -----------------------
 
-In XuanCe, it is easy to build a DRL agent. First you need to create a *runner*
-and specify the ``agent_name``, ``env_name``, then a runner that contains agent, policy, and envs, etc., will be built. 
-Finally, execute ``runner.run`` and the agent's model is training.
+| In XuanCe, it is easy to build a DRL agent.
+| First you need to create a *runner* and specify the ``agent_name``, ``env_name``,
+| then a runner that contains agent, policy, and envs, etc., will be built.
+| Finally, execute ``runner.run()`` and the agent's model is training.
 
-.. code-block:: python
+.. code-block:: python3
 
     import xuance
     runner = xuance.get_runner(method='dqn',
@@ -21,7 +22,41 @@ Finally, execute ``runner.run`` and the agent's model is training.
                                is_test=False)
     runner.run()
 
-After training the agent, you can test and view the model by the following codes:
+.. tip::
+
+    If you want to modify the hyper-parameters of the above example,
+    you can create a python file named, e.g., "example.py".
+    In example.py, define and create a parser arguments before creating runner.
+
+    .. code-block:: python3
+
+        import xuance argparse
+
+        def parse_args():
+            parser = argparse.ArgumentParser("Run a demo.")
+            parser.add_argument("--method", type=str, default="dqn")
+            parser.add_argument("--env", type=str, default="classic_control")
+            parser.add_argument("--env-id", type=str, default="CartPole-v1")
+            parser.add_argument("--test", type=int, default=0)
+            parser.add_argument("--device", type=str, default="cuda:0")
+
+            return parser.parse_args()
+
+        if __name__ == '__main__':
+            parser = parse_args()
+            runner = xuance.get_runner(method=parser.method,
+                                       env=parser.env,
+                                       env_id=parser.env_id,
+                                       parser_args=parser,
+                                       is_test=parser.test)
+            runner.run()
+
+    Then, run the python file in terminal:
+
+    .. code-block:: bash
+
+        python example.py  # or python example.py --device 'cpu'
+
 
 .. raw:: html
 

@@ -1,12 +1,16 @@
 Installation
 ===========================
 
-The library can be run at Linux, Windows, MacOS, and EulerOS, etc. It is easy to be installed.
+The library can be run at Linux, Windows, MacOS, and EulerOS, etc. It is easy to install XuanCe.
 
-Before installing **XuanCe**, you should install Anaconda_ to prepare a python environment.
+Before installing **XuanCe**, you should install Anaconda_ to prepare a python environment (recommend).
 
 After that, open a terminal and install **XuanCe** by the following steps.
 You can choose two ways to install XuanCe.
+
+.. attention::
+
+    XuanCe can be installed on MacOS and be compatible with both Intel and Apple's M CPUs.
 
 .. raw:: html
 
@@ -31,7 +35,7 @@ Install via PyPI
 
 .. tabs::
 
-    .. group-tab:: Default (PyTorch)
+    .. group-tab:: PyTorch
 
         .. code-block:: bash
 
@@ -105,17 +109,11 @@ Alternatively, you can install XuanCe from its GitHub repository.
 
 .. tabs::
 
-    .. group-tab:: No DL toolbox
-
-        .. code-block:: bash
-
-            pip install -e .
-
     .. group-tab:: PyTorch
 
         .. code-block:: bash
 
-            pip install -e .[torch]
+            pip install -e .
 
     .. group-tab:: TensorFlow
 
@@ -135,9 +133,61 @@ Alternatively, you can install XuanCe from its GitHub repository.
 
             pip install -e .[all]
 
+    .. group-tab:: Atari
+
+        .. code-block:: bash
+
+            pip install -e .[atari]
+
+    .. group-tab:: Box2D
+
+        .. code-block:: bash
+
+            pip install -e .[box2d]
+
 .. note::
 
     Note: Some extra packages should be installed manually for further usage.
+
+.. tip::
+
+    If your IP address is in Chinese mainland, you can install it with a mirror image to speed up the installation,
+    for example, you can choose one of the following commands to finish installation.
+
+    .. code-block:: bash
+
+        pip install xuance -i https://pypi.tuna.tsinghua.edu.cn/simple
+        pip install xuance -i https://pypi.mirrors.ustc.edu.cn/simple
+        pip install xuance -i http://mirrors.aliyun.com/pypi/simple/
+        pip install xuance -i http://pypi.douban.com/simple/
+
+.. tip::
+
+    During the installation of XuanCe, you might encount the following error:
+
+    .. code-block:: bash
+
+        Error: Failed to building wheel for mpi4py
+        Failed to build mpi4py
+        ERROR: Could not build wheels for mpi4py, which is required to install pyproject.toml-based projects
+
+    **Solution 1**: You can solve that issue by install mpi4py manually via
+
+    .. code-block:: bash
+
+        conda install mpi4py
+
+    **Solution 2**: If that doesn't work, you can type and install ``gcc_linux-64`` via:
+
+    .. code-block:: bash
+
+        conda install gcc_linux-64
+
+    And then, retype the installation command for mpi4py via pip:
+
+    .. code-block:: bash
+
+        pip install mpi4py
 
 .. _Anaconda: https://www.anaconda.com/download
 .. _PyTorch: https://pytorch.org/get-started/locally/
