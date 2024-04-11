@@ -1,10 +1,10 @@
-# from . import gridworld
+from . import gridworld
 from . import utility
 from .render import Renderer
 
 
 # some alias
-# GridWorld = gridworld.GridWorld
+GridWorld = gridworld.GridWorld
 
 __version__ = "0.3.2"
 
