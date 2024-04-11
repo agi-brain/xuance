@@ -37,12 +37,6 @@ Install via PyPI
 
             pip install xuance
 
-    .. group-tab:: PyTorch
-
-        .. code-block:: bash
-
-            pip install xuance[torch]
-
     .. group-tab:: TensorFlow
 
         .. code-block:: bash
@@ -60,6 +54,18 @@ Install via PyPI
         .. code-block:: bash
 
             pip install xuance[all]
+
+    .. group-tab:: Atari
+
+        .. code-block:: bash
+
+            pip install xuance[atari]
+
+    .. group-tab:: Box2D
+
+        .. code-block:: bash
+
+            pip install xuance[box2d]
 
 
 Install from GitHub repository
