@@ -12,14 +12,14 @@ from xuance.torch.utils import ActivationFunctions
 
 
 def parse_args():
-    parser = argparse.ArgumentParser("Example of XuanCe: DDPG.")
-    parser.add_argument("--method", type=str, default="ddpg")
+    parser = argparse.ArgumentParser("Example of XuanCe: TD3.")
+    parser.add_argument("--method", type=str, default="td3")
     parser.add_argument("--env", type=str, default="mujoco")
     parser.add_argument("--env-id", type=str, default="InvertedPendulum-v4")
     parser.add_argument("--test", type=int, default=0)
     parser.add_argument("--device", type=str, default="cuda:0")
     parser.add_argument("--benchmark", type=int, default=0)
-    parser.add_argument("--config", type=str, default="./ddpg_mujoco_config.yaml")
+    parser.add_argument("--config", type=str, default="./td3_mujoco_config.yaml")
 
     return parser.parse_args()
 
@@ -44,29 +44,29 @@ def run(args):
                                      device=args.device)
 
     # prepare the Policy
-    from xuance.torch.policies import DDPGPolicy
-    policy = DDPGPolicy(action_space=args.action_space,
-                        representation=representation,
-                        actor_hidden_size=args.actor_hidden_size,
-                        critic_hidden_size=args.critic_hidden_size,
-                        initialize=None,
-                        activation=ActivationFunctions[args.activation],
-                        device=args.device)
+    from xuance.torch.policies import TD3Policy
+    policy = TD3Policy(action_space=args.action_space,
+                       representation=representation,
+                       actor_hidden_size=args.actor_hidden_size,
+                       critic_hidden_size=args.critic_hidden_size,
+                       initialize=None,
+                       activation=ActivationFunctions[args.activation],
+                       device=args.device)
 
     # prepare the Agent
-    from xuance.torch.agents import DDPG_Agent, get_total_iters
+    from xuance.torch.agents import TD3_Agent, get_total_iters
     actor_optimizer = torch.optim.Adam(policy.actor_parameters, args.actor_learning_rate)
     critic_optimizer = torch.optim.Adam(policy.critic_parameters, args.critic_learning_rate)
     actor_lr_scheduler = torch.optim.lr_scheduler.LinearLR(actor_optimizer, start_factor=1.0, end_factor=0.25,
                                                            total_iters=get_total_iters(agent_name, args))
     critic_lr_scheduler = torch.optim.lr_scheduler.LinearLR(critic_optimizer, start_factor=1.0, end_factor=0.25,
                                                             total_iters=get_total_iters(agent_name, args))
-    agent = DDPG_Agent(config=args,
-                       envs=envs,
-                       policy=policy,
-                       optimizer=[actor_optimizer, critic_optimizer],
-                       scheduler=[actor_lr_scheduler, critic_lr_scheduler],
-                       device=args.device)
+    agent = TD3_Agent(config=args,
+                      envs=envs,
+                      policy=policy,
+                      optimizer=[actor_optimizer, critic_optimizer],
+                      scheduler=[actor_lr_scheduler, critic_lr_scheduler],
+                      device=args.device)
 
     # start running
     envs.reset()
