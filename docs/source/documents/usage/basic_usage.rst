@@ -28,7 +28,7 @@ Run a DRL example
     you can create a python file named, e.g., "example.py".
     In example.py, define and create a parser arguments before creating runner.
 
-    .. code-block:: python3
+    .. code-block:: python
 
         import xuance argparse
 
