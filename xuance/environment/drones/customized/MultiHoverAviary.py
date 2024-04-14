@@ -79,8 +79,8 @@ class MultiHoverAviary(MultiHoverAviary_Official):
                                     [2, 0, 2],
                                     [0, 2, 2],])
         self.NUM_TARGETS = self.NUM_DRONES
-        self.space_range_x = [-20.0, 20.0]
-        self.space_range_y = [-20.0, 20.0]
+        self.space_range_x = [-10.0, 10.0]
+        self.space_range_y = [-10.0, 10.0]
         self.space_range_z = [0.05, 5.0]
         self.pose_limit = np.pi - 0.2
 
