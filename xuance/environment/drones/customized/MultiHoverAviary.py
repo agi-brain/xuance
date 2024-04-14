@@ -68,7 +68,6 @@ class MultiHoverAviary(MultiHoverAviary_Official):
                          obs=obs,
                          act=act
                          )
-        # self.TARGET_POS = self.INIT_XYZS + np.array([[0, 0, 1 / (i + 1)] for i in range(num_drones)])
         self.TARGET_POS = np.array([[0, 0, 1],
                                     [0, 1, 1],
                                     [1, 0, 1],
@@ -98,14 +97,13 @@ class MultiHoverAviary(MultiHoverAviary_Official):
         """
         states = np.array([self._getDroneStateVector(i) for i in range(self.NUM_DRONES)])
 
-        distance_matrix = np.zeros([self.NUM_TARGETS, self.NUM_DRONES])
-        for i in range(self.NUM_TARGETS):
-            for j in range(self.NUM_DRONES):
-                distance_matrix[i, j] = max(0, (1 - np.linalg.norm(self.TARGET_POS[i] - states[j][0:3])) * 20)
-        rewards = distance_matrix.min(axis=-1, keepdims=True)
-        # rewards = np.zeros([self.NUM_DRONES, 1])
-        # for i in range(self.NUM_DRONES):
-        #     rewards[i, 0] = max(0, (1 - np.linalg.norm(self.TARGET_POS[i] - states[i][0:3])) * 20)
+        target_pos = self.TARGET_POS[:self.NUM_TARGETS].reshape(self.NUM_TARGETS, 1, 3)
+        current_pos = states[:, :3].reshape(1, self.NUM_DRONES, 3)
+        relative_pos = target_pos - current_pos
+        distance_matrix = (1 - np.linalg.norm(relative_pos, axis=-1)) * 20
+        distance_matrix = np.maximum(np.zeros_like(distance_matrix), distance_matrix)
+        reward_team = distance_matrix.min(axis=-1, keepdims=True).sum()
+        rewards = np.ones([self.NUM_DRONES, 1]) * reward_team
         return rewards
 
         ################################################################################
