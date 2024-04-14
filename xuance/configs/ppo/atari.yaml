@@ -1,4 +1,4 @@
-agent: "PPO_Clip"
+agent: "PPO_Clip"  # Choice: PPO_Clip, PPO_KL
 vectorize: "Dummy_Atari"
 env_name: "Atari"
 env_id: "ALE/Breakout-v5"
@@ -32,7 +32,8 @@ use_grad_clip: True
 
 vf_coef: 0.25
 ent_coef: 0.01
-clip_range: 0.2
+target_kl: 0.25  # for PPO_KL agent
+clip_range: 0.2  # for PPO_Clip agent
 clip_grad_norm: 0.5
 gamma: 0.99
 use_gae: True
