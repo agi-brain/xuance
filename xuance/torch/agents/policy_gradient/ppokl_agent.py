@@ -29,7 +29,6 @@ class PPOKL_Agent(Agent):
         self.gae_lam = config.gae_lambda
         self.observation_space = envs.observation_space
         self.action_space = envs.action_space
-        self.representation_info_shape = policy.representation_actor.output_shapes
         self.auxiliary_info_shape = {"old_dist": None}
 
         self.atari = True if config.env_name == "Atari" else False
@@ -88,8 +87,7 @@ class PPOKL_Agent(Agent):
                         sample_idx = indexes[start:end]
                         obs_batch, act_batch, ret_batch, value_batch, adv_batch, aux_batch = self.memory.sample(
                             sample_idx)
-                        step_info = self.learner.update(obs_batch, act_batch, ret_batch, value_batch, adv_batch,
-                                                        aux_batch['old_logp'])
+                        step_info = self.learner.update(obs_batch, act_batch, ret_batch, adv_batch, aux_batch['old_dist'])
                 self.log_infos(step_info, self.current_step)
                 self.memory.clear()
 

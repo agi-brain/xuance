@@ -100,8 +100,9 @@ class MultiHoverAviary(MultiHoverAviary_Official):
         target_pos = self.TARGET_POS[:self.NUM_TARGETS].reshape(self.NUM_TARGETS, 1, 3)
         current_pos = states[:, :3].reshape(1, self.NUM_DRONES, 3)
         relative_pos = target_pos - current_pos
-        distance_matrix = (1 - np.linalg.norm(relative_pos, axis=-1)) * 20
-        distance_matrix = np.maximum(np.zeros_like(distance_matrix), distance_matrix)
+        # distance_matrix = (1 - np.linalg.norm(relative_pos, axis=-1)) * 20
+        # distance_matrix = np.maximum(np.zeros_like(distance_matrix), distance_matrix)
+        distance_matrix = np.linalg.norm(relative_pos, axis=-1)
         reward_team = distance_matrix.min(axis=-1, keepdims=True).sum()
         rewards = np.ones([self.NUM_DRONES, 1]) * reward_team
         return rewards
