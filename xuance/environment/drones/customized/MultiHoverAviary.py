@@ -79,6 +79,7 @@ class MultiHoverAviary(MultiHoverAviary_Official):
                                     [0, 2, 1],
                                     [2, 0, 2],
                                     [0, 2, 2],])
+        self.NUM_TARGETS = self.NUM_DRONES
         self.space_range_x = [-20.0, 20.0]
         self.space_range_y = [-20.0, 20.0]
         self.space_range_z = [0.05, 5.0]
@@ -96,9 +97,15 @@ class MultiHoverAviary(MultiHoverAviary_Official):
 
         """
         states = np.array([self._getDroneStateVector(i) for i in range(self.NUM_DRONES)])
-        rewards = np.zeros([self.NUM_DRONES, 1])
-        for i in range(self.NUM_DRONES):
-            rewards[i, 0] = max(0, (1 - np.linalg.norm(self.TARGET_POS[i] - states[i][0:3])) * 20)
+
+        distance_matrix = np.zeros([self.NUM_TARGETS, self.NUM_DRONES])
+        for i in range(self.NUM_TARGETS):
+            for j in range(self.NUM_DRONES):
+                distance_matrix[i, j] = max(0, (1 - np.linalg.norm(self.TARGET_POS[i] - states[j][0:3])) * 20)
+        rewards = distance_matrix.min(axis=-1, keepdims=True)
+        # rewards = np.zeros([self.NUM_DRONES, 1])
+        # for i in range(self.NUM_DRONES):
+        #     rewards[i, 0] = max(0, (1 - np.linalg.norm(self.TARGET_POS[i] - states[i][0:3])) * 20)
         return rewards
 
         ################################################################################
