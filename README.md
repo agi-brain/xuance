@@ -255,6 +255,8 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
 
 ### [Drones Environments](https://github.com/utiasDSL/gym-pybullet-drones)
 
+[XuanCe's documentation for the installation and usage of gym-pybullet-drones](https://xuance.readthedocs.io/en/latest/documents/api/environments/drones.html).
+
 <details open>
 <summary>(Click to hide)</summary>
 
