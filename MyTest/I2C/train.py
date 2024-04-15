@@ -59,6 +59,7 @@ def m_model(input, num_outputs, num_other, scope, num_layers=2, reuse=False, num
         out = layers.fully_connected(out, num_outputs=num_outputs, activation_fn=None)
         return out
 
+
 # prior network or action policy or Q function
 def mlp_model(input, num_outputs, scope, type='fit', num_layer=3, reuse=False, num_units=128, rnn_cell=None):
     with tf.variable_scope(scope, reuse=reuse):
