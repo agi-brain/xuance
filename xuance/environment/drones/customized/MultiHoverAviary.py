@@ -77,11 +77,11 @@ class MultiHoverAviary(MultiHoverAviary_Official):
                                     [2, 0, 1],
                                     [0, 2, 1],
                                     [2, 0, 2],
-                                    [0, 2, 2],])
+                                    [0, 2, 2], ])
         self.NUM_TARGETS = self.NUM_DRONES
         self.space_range_x = [-10.0, 10.0]
         self.space_range_y = [-10.0, 10.0]
-        self.space_range_z = [0.05, 5.0]
+        self.space_range_z = [0.01, 10.0]
         self.pose_limit = np.pi - 0.2
 
         ################################################################################
@@ -103,8 +103,19 @@ class MultiHoverAviary(MultiHoverAviary_Official):
         # distance_matrix = (1 - np.linalg.norm(relative_pos, axis=-1)) * 20
         # distance_matrix = np.maximum(np.zeros_like(distance_matrix), distance_matrix)
         distance_matrix = np.linalg.norm(relative_pos, axis=-1)
-        reward_team = distance_matrix.min(axis=-1, keepdims=True).sum()
+        reward_team = -distance_matrix.min(axis=-1, keepdims=True).sum()
         rewards = np.ones([self.NUM_DRONES, 1]) * reward_team
+
+        for i in range(self.NUM_DRONES):
+            x, y, z = states[i][0], states[i][1], states[i][2]
+            if (x < self.space_range_x[0]) or (x > self.space_range_x[1]) or (y < self.space_range_y[0]) or (
+                    y > self.space_range_y[1]) or (z < self.space_range_z[0]) or (z > self.space_range_z[1]):
+                rewards[i] -= 10
+            if (max(abs(states[i][7]), abs(states[i][8])) > self.pose_limit) and (z < self.space_range_z[0] + 0.05):
+                rewards[i] -= 10
+            if np.linalg.norm(self.TARGET_POS[i] - states[i][0:3]) < .0001:
+                rewards[i] -= 10
+
         return rewards
 
         ################################################################################
@@ -135,3 +146,17 @@ class MultiHoverAviary(MultiHoverAviary_Official):
         return False
 
         ################################################################################
+
+    def _computeTruncated(self):
+        """Computes the current truncated value.
+
+        Returns
+        -------
+        bool
+            Whether the current episode timed out.
+
+        """
+        if self.step_counter / self.PYB_FREQ > self.EPISODE_LEN_SEC:
+            return True
+        else:
+            return False
