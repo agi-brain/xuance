@@ -82,11 +82,11 @@ First, create a `ppo_mujoco.py` file. The code writing process can be divided in
 **Step 2.1 Get the hyper-parameters of command in console**
 
 Define the following function ``parse_args()``,
-which uses the Python package `argparser` to read the command line instructions and obtain the instruction parameters.
+which uses the Python package `argparse` to read the command line instructions and obtain the instruction parameters.
 
 .. code-block:: python
 
-    import argparser
+    import argparse
 
     def parse_args():
         parser = argparse.ArgumentParser("Example of XuanCe.")
