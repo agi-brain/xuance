@@ -81,7 +81,7 @@ class MultiHoverAviary(MultiHoverAviary_Official):
         self.NUM_TARGETS = self.NUM_DRONES
         self.space_range_x = [-10.0, 10.0]
         self.space_range_y = [-10.0, 10.0]
-        self.space_range_z = [0.01, 10.0]
+        self.space_range_z = [0.02, 10.0]
         self.pose_limit = np.pi - 0.2
 
         ################################################################################
@@ -106,10 +106,8 @@ class MultiHoverAviary(MultiHoverAviary_Official):
 
         for i in range(self.NUM_DRONES):
             x, y, z = states[i][0], states[i][1], states[i][2]
-            if (x < self.space_range_x[0]) or (x > self.space_range_x[1]) or (y < self.space_range_y[0]) or (
-                    y > self.space_range_y[1]) or (z < self.space_range_z[0]) or (z > self.space_range_z[1]):  # out of range
-                rewards[i] -= 10
-            if (max(abs(states[i][7]), abs(states[i][8])) > self.pose_limit) and (z < self.space_range_z[0] + 0.05):  # the drone fulls down
+            if (max(abs(states[i][7]), abs(states[i][8])) > self.pose_limit) and (
+                    z < self.space_range_z[0] + 0.05):  # the drone fulls down
                 rewards[i] -= 10
             for j in range(self.NUM_DRONES):  # penalize collision with each other
                 if i == j: continue
@@ -133,15 +131,10 @@ class MultiHoverAviary(MultiHoverAviary_Official):
         states = np.array([self._getDroneStateVector(i) for i in range(self.NUM_DRONES)])
         for i in range(self.NUM_DRONES):
             x, y, z = states[i][0], states[i][1], states[i][2]
-            if (x < self.space_range_x[0]) or (x > self.space_range_x[1]):
-                return True
-            if (y < self.space_range_y[0]) or (y > self.space_range_y[1]):
-                return True
-            if (z < self.space_range_z[0]) or (z > self.space_range_z[1]):  # Out of height
-                return True
             if (max(abs(states[i][7]), abs(states[i][8])) > self.pose_limit) and (z < self.space_range_z[0] + 0.05):
                 # The drone is too tilted
                 return True
+
         return False
 
         ################################################################################
@@ -155,6 +148,14 @@ class MultiHoverAviary(MultiHoverAviary_Official):
             Whether the current episode timed out.
 
         """
+        states = np.array([self._getDroneStateVector(i) for i in range(self.NUM_DRONES)])
+        for i in range(self.NUM_DRONES):
+            x, y, z = states[i][0], states[i][1], states[i][2]
+            if (x < self.space_range_x[0]) or (x > self.space_range_x[1]) or (y < self.space_range_y[0]) or (
+                    y > self.space_range_y[1]) or (z < self.space_range_z[0]) or (
+                    z > self.space_range_z[1]):  # out of range
+                return True
+
         if self.step_counter / self.PYB_FREQ > self.EPISODE_LEN_SEC:
             return True
         else:
