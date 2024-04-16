@@ -100,8 +100,6 @@ class MultiHoverAviary(MultiHoverAviary_Official):
         target_pos = self.TARGET_POS[:self.NUM_TARGETS].reshape(self.NUM_TARGETS, 1, 3)
         current_pos = states[:, :3].reshape(1, self.NUM_DRONES, 3)
         relative_pos = target_pos - current_pos
-        # distance_matrix = (1 - np.linalg.norm(relative_pos, axis=-1)) * 20
-        # distance_matrix = np.maximum(np.zeros_like(distance_matrix), distance_matrix)
         distance_matrix = np.linalg.norm(relative_pos, axis=-1)
         reward_team = -distance_matrix.min(axis=-1, keepdims=True).sum()
         rewards = np.ones([self.NUM_DRONES, 1]) * reward_team
@@ -109,12 +107,15 @@ class MultiHoverAviary(MultiHoverAviary_Official):
         for i in range(self.NUM_DRONES):
             x, y, z = states[i][0], states[i][1], states[i][2]
             if (x < self.space_range_x[0]) or (x > self.space_range_x[1]) or (y < self.space_range_y[0]) or (
-                    y > self.space_range_y[1]) or (z < self.space_range_z[0]) or (z > self.space_range_z[1]):
+                    y > self.space_range_y[1]) or (z < self.space_range_z[0]) or (z > self.space_range_z[1]):  # out of range
                 rewards[i] -= 10
-            if (max(abs(states[i][7]), abs(states[i][8])) > self.pose_limit) and (z < self.space_range_z[0] + 0.05):
+            if (max(abs(states[i][7]), abs(states[i][8])) > self.pose_limit) and (z < self.space_range_z[0] + 0.05):  # the drone fulls down
                 rewards[i] -= 10
-            if np.linalg.norm(self.TARGET_POS[i] - states[i][0:3]) < .0001:
-                rewards[i] -= 10
+            for j in range(self.NUM_DRONES):  # penaltize collision with each other
+                if i == j: continue
+                distance_ij = np.linalg.norm(states[i, :3] - states[j, :3])
+                if distance_ij < 0.1:
+                    rewards[i] -= 10
 
         return rewards
 
@@ -140,8 +141,6 @@ class MultiHoverAviary(MultiHoverAviary_Official):
                 return True
             if (max(abs(states[i][7]), abs(states[i][8])) > self.pose_limit) and (z < self.space_range_z[0] + 0.05):
                 # The drone is too tilted
-                return True
-            if np.linalg.norm(self.TARGET_POS[i] - states[i][0:3]) < .0001:
                 return True
         return False
 
