@@ -111,7 +111,7 @@ class MultiHoverAviary(MultiHoverAviary_Official):
                 rewards[i] -= 10
             if (max(abs(states[i][7]), abs(states[i][8])) > self.pose_limit) and (z < self.space_range_z[0] + 0.05):  # the drone fulls down
                 rewards[i] -= 10
-            for j in range(self.NUM_DRONES):  # penaltize collision with each other
+            for j in range(self.NUM_DRONES):  # penalize collision with each other
                 if i == j: continue
                 distance_ij = np.linalg.norm(states[i, :3] - states[j, :3])
                 if distance_ij < 0.1:
