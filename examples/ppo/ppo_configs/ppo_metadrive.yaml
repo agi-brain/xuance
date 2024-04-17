@@ -10,7 +10,7 @@ agent: "PPO_Clip"  # choice: PPO_Clip, PPO_KL
 env_name: "MetaDrive"
 env_id: "metadrive"
 render: False
-vectorize: "Dummy_MetaDrive"
+vectorize: "Subproc_MetaDrive"
 policy: "Gaussian_AC"  # choice: Gaussian_AC for continuous actions, Categorical_AC for discrete actions.
 representation: "Basic_MLP"
 runner: "DRL"
@@ -21,9 +21,9 @@ critic_hidden_size: [512,]
 activation: "LeakyReLU"
 
 seed: 1
-parallels: 1
-running_steps: 1000000
-n_steps: 128
+parallels: 10
+running_steps: 10000000
+n_steps: 256
 n_epoch: 16
 n_minibatch: 8
 learning_rate: 0.0004
@@ -46,7 +46,7 @@ obsnorm_range: 5
 rewnorm_range: 5
 
 test_steps: 10000
-eval_interval: 5000
+eval_interval: 50000
 test_episode: 5
 log_dir: "./logs/ppo/"
 model_dir: "./models/ppo/"
