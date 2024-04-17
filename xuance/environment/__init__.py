@@ -12,6 +12,7 @@ from xuance.environment.football.gfootball_vec_env import DummyVecEnv_GFootball,
 from xuance.environment.minigrid.minigrid_vec_env import DummyVecEnv_MiniGrid, SubprocVecEnv_MiniGrid
 from xuance.environment.drones.drones_vec_env import DummyVecEnv_Drones, SubprocVecEnv_Drones
 from xuance.environment.drones.drones_vec_env_mas import DummyVecEnv_Drones_MAS, SubprocVecEnv_Drones_MAS
+from xuance.environment.metadrive import DummyVecEnv_MetaDrive, SubprocVecEnv_MetaDrive
 from xuance.environment.new_env.new_vec_env import DummyVecEnv_New, SubprocVecEnv_New
 from xuance.environment.new_env_mas.new_vec_env_mas import DummyVecEnv_New_MAS, SubprocVecEnv_New_MAS
 
@@ -26,6 +27,7 @@ REGISTRY_VEC_ENV = {
     "Dummy_MiniGrid": DummyVecEnv_MiniGrid,
     "Dummy_Drone": DummyVecEnv_Drones,
     "Dummy_Drone_MAS": DummyVecEnv_Drones_MAS,
+    "Dummy_MetaDrive": DummyVecEnv_MetaDrive,
     "Dummy_NewEnv": DummyVecEnv_New,  # Add the newly defined vectorized environment
     "Dummy_NewEnv_MAS": DummyVecEnv_New_MAS,  # Add the newly defined vectorized environment for multi-agent systems
 
@@ -38,6 +40,7 @@ REGISTRY_VEC_ENV = {
     "Subproc_MiniGrid": SubprocVecEnv_MiniGrid,
     "Subproc_Drone": SubprocVecEnv_Drones,
     "Subproc_Drone_MAS": SubprocVecEnv_Drones_MAS,
+    "Subproc_MetaDrive": SubprocVecEnv_MetaDrive,
     "Subproc_NewEnv": SubprocVecEnv_New,  # Add the newly defined vectorized environment
     "Subproc_NewEnv_MAS": SubprocVecEnv_New_MAS,  # Add the newly defined vectorized environment for multi-agent systems
 }
@@ -96,6 +99,10 @@ def make_envs(config: Namespace):
         elif config.env_name == "Drones":
             from xuance.environment.drones.drones_env import Drones_Env
             env = Drones_Env(config)
+
+        elif config.env_name == "MetaDrive":
+            from xuance.environment.metadrive import MetaDrive_Env
+            env = MetaDrive_Env(config)
 
         elif config.env_name == "NewEnv":  # Add the newly defined vectorized environment
             from xuance.environment.new_env.new_env import New_Env
