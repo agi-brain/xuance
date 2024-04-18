@@ -28,6 +28,10 @@ You also have permission to customize the scenarios and tasks in this environmen
 | **Official link**: `https://github.com/utiasDSL/gym-pybullet-drones.git <https://github.com/utiasDSL/gym-pybullet-drones.git>`_
 | **Paper link**: `https://arxiv.org/pdf/2103.02142.pdf <https://arxiv.org/pdf/2103.02142.pdf>`_
 
+.. raw:: html
+
+    <br><hr>
+
 Installation
 -------------------------------------------------
 
@@ -61,6 +65,10 @@ During the installation of gym-pybullet-drones, you might encounter the errors l
 
     pip install numpy==1.24.0
     pip install scipy==1.12.0
+
+.. raw:: html
+
+    <br><hr>
 
 Try an Example
 -------------------------------------------------

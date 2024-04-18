@@ -15,13 +15,3 @@ class SubprocVecEnv_MetaDrive(SubprocVecEnv_Gym):
         """
         super(SubprocVecEnv_MetaDrive, self).__init__(env_fns, context, in_series)
 
-
-class DummyVecEnv_MetaDrive(DummyVecEnv_Gym):
-    """
-    VecEnv that does runs multiple environments sequentially, that is,
-    the step and reset commands are send to one environment at a time.
-    Useful when debugging and when num_env == 1 (in the latter case,
-    avoids communication overhead)
-    """
-    def __init__(self, env_fns):
-        super(DummyVecEnv_MetaDrive, self).__init__(env_fns)

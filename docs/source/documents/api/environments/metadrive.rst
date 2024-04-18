@@ -6,6 +6,43 @@ MetaDrive is an autonomous driving simulator that supports generating infinite s
 | **Official link**: `https://metadriverse.github.io/metadrive/ <https://metadriverse.github.io/metadrive/>`_
 | **Paper link**: `https://arxiv.org/pdf/2109.12674.pdf <https://arxiv.org/pdf/2109.12674.pdf>`_
 
+.. raw:: html
+
+    <br><hr>
+
+Installation
+-----------------------------------------------
+
+Open the terminal and create your conda environment.
+Then, you can choose one of the listed methods to finish the installation of MetaDrive.
+
+**Method 1**: From PyPI.
+
+.. code-block:: bash
+
+    pip install metadrive
+
+**Method 2**: From GitHub.
+
+.. code-block:: bash
+
+    git clone https://github.com/metadriverse/metadrive.git
+    cd metadrive
+    pip install -e .
+
+.. raw:: html
+
+    <br><hr>
+
+Try an Example
+-----------------------------------------------
+
+
+
+.. raw:: html
+
+    <br><hr>
+
 metadrive_env.py
 -----------------------------------------------
 
