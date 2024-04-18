@@ -37,7 +37,7 @@ Then, you can choose one of the listed methods to finish the installation of Met
 Try an Example
 -----------------------------------------------
 
-.. note::
+.. attention::
 
     Please note that each process should only have one single MetaDrive instance due to the limit of the underlying simulation engine.
     Thus the parallelization of training environment should be in process-level instead of thread-level.
@@ -87,6 +87,13 @@ Open the terminal the type the python command:
 .. code-block:: bash
 
     python demo_metadrive.py --benchmark 0 --test 1
+
+.. tip::
+
+    When you successfully trained a model and visualize the MetaDrive simulator,
+    you might find that the fps is too low to watch the effectiveness.
+
+    **Solution**: You can hold on the F key to accelerate the simulation.
 
 .. raw:: html
 
