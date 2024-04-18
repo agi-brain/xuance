@@ -124,7 +124,7 @@ drones_env.py
     This is a wrapper class for a Drones_Env environment.
 
     :param args: An argument object that contains various settings and parameters for initializing the environment.
-    :type args: object
+    :type args: SimpleNamespace
     :param args.continuous: Determines whether the drone operates in a continuous control mode.
     :type args.continuous: bool
     :param args.env_id: Specifies the type of PyBullet Drones environment to instantiate.
