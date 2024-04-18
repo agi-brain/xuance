@@ -24,8 +24,8 @@ seed: 1
 parallels: 10
 running_steps: 10000000
 n_steps: 256
-n_epoch: 16
-n_minibatch: 8
+n_epoch: 2
+n_minibatch: 1
 learning_rate: 0.0004
 
 use_grad_clip: True
@@ -46,7 +46,7 @@ obsnorm_range: 5
 rewnorm_range: 5
 
 test_steps: 10000
-eval_interval: 50000
+eval_interval: 100000
 test_episode: 5
 log_dir: "./logs/ppo/"
 model_dir: "./models/ppo/"
