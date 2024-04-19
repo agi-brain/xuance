@@ -51,7 +51,7 @@ def get_config(file_dir):
     return config_dict
 
 
-def get_arguments(method, env, env_id, config_path=None, parser_args=None):
+def get_arguments(method, env, env_id, config_path=None, parser_args=None, is_test=False):
     """Get arguments from .yaml files
     Args:
         method: the algorithm name that will be implemented,
@@ -96,6 +96,10 @@ def get_arguments(method, env, env_id, config_path=None, parser_args=None):
         if parser_args is not None:
             configs = [recursive_dict_update(config_i, parser_args.__dict__) for config_i in configs]
         args = [SN(**config_i) for config_i in configs]
+        if is_test:  # for test mode
+            for i_args in range(len(args)):
+                args[i_args].test_mode = int(is_test)
+                args[i_args].parallels = 1
     elif type(method) == str:
         if config_path is None:
             file_name_env_id = env + "/" + env_id + ".yaml"
@@ -123,6 +127,9 @@ def get_arguments(method, env, env_id, config_path=None, parser_args=None):
         if not ('env_id' in configs.keys()):
             configs['env_id'] = env_id
         args = SN(**configs)
+        if is_test:
+            args.test_mode = int(is_test)
+            args.parallels = 1
     else:
         raise RuntimeError("Unsupported agent_name or env_name!")
     return args
@@ -147,7 +154,7 @@ def get_runner(method,
     Returns:
         An implementation of a runner that enables to run the DRL algorithms.
     """
-    args = get_arguments(method, env, env_id, config_path, parser_args)
+    args = get_arguments(method, env, env_id, config_path, parser_args, is_test)
 
     device = args[0].device if type(args) == list else args.device
     dl_toolbox = args[0].dl_toolbox if type(args) == list else args.dl_toolbox
@@ -203,10 +210,6 @@ def get_runner(method,
                 else:
                     print("Failed to load arguments for the implementation!")
 
-            if is_test:
-                args[i_alg].test_mode = int(is_test)
-                args[i_alg].parallels = 1
-
         # print("Algorithm:", *[arg.agent for arg in args])
         print("Algorithm:", *agents_name_string)
         print("Environment:", args[0].env_name)
@@ -232,9 +235,6 @@ def get_runner(method,
             else:
                 print("Failed to load arguments for the implementation!")
 
-        if is_test:
-            args.test_mode = int(is_test)
-            args.parallels = 1
         print("Algorithm:", args.agent)
         print("Environment:", args.env_name)
         print("Scenario:", args.env_id)
