@@ -24,5 +24,6 @@ if __name__ == '__main__':
     runner = get_runner(method=parser.method,
                         env=parser.env,
                         env_id=parser.env_id,
-                        parser_args=parser)
+                        parser_args=parser,
+                        is_test=parser.test)
     runner.benchmark()

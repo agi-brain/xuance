@@ -367,7 +367,8 @@ if __name__ == "__main__":
                          env=parser.env,
                          env_id=parser.env_id,
                          config_path=parser.config,
-                         parser_args=parser)
+                         parser_args=parser,
+                         is_test=parser.test)
     runner = Runner(args)
     runner.benchmark()
     runner.finish()
