@@ -5,7 +5,8 @@ class MetaDrive_Env:
     def __init__(self, args):
         self.env_id = args.env_id
         from metadrive.envs.metadrive_env import MetaDriveEnv
-        self.env = MetaDriveEnv(config={"use_render": args.render})
+        args.env_config['use_render'] = args.render
+        self.env = MetaDriveEnv(config=args.env_config)
 
         self._episode_step = 0  # The count of steps for current episode.
         self._episode_score = 0.0  # The cumulated rewards for current episode.

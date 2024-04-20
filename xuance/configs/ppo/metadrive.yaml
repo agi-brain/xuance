@@ -1,7 +1,9 @@
 agent: "PPO_Clip"  # choice: PPO_Clip, PPO_KL
 env_name: "MetaDrive"
 env_id: "metadrive"
-render: False
+env_config:  # the configs for MetaDrive environment
+  map: "C"  # see https://metadrive-simulator.readthedocs.io/en/latest/rl_environments.html#generalization-environment for choices
+render: True
 vectorize: "Subproc_MetaDrive"
 policy: "Gaussian_AC"  # choice: Gaussian_AC for continuous actions, Categorical_AC for discrete actions.
 representation: "Basic_MLP"
