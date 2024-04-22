@@ -1,3 +1,6 @@
+from xuance.environment.pettingzoo.pettingzoo_env import PettingZoo_Env
+from xuance.environment.pettingzoo.pettingzoo_vec_env import DummyVecEnv_Pettingzoo, SubprocVecEnv_Pettingzoo
+
 AGENT_NAME_DICT = {
     "mpe.simple_adversary_v3": ['adversary', 'agent'],
     "mpe.simple_crypto_v3": ['eve', 'alice', 'bob'],

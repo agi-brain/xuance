@@ -2,6 +2,9 @@ from . import gridworld
 from . import utility
 from .render import Renderer
 
+from xuance.environment.magent2.magent_env import MAgent_Env
+from xuance.environment.magent2.magent_vec_env import DummyVecEnv_MAgent, SubprocVecEnv_Magent
+
 
 # some alias
 GridWorld = gridworld.GridWorld

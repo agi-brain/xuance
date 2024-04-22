@@ -1,20 +1,20 @@
 from argparse import Namespace
 
-from xuance.environment.gym.gym_env import Gym_Env, MountainCar
+from xuance.environment.gym import Gym_Env, MountainCar
 from .pettingzoo import PETTINGZOO_ENVIRONMENTS
 
 from .vector_envs.vector_env import VecEnv
-from xuance.environment.gym.gym_vec_env import DummyVecEnv_Gym, SubprocVecEnv_Gym
-from xuance.environment.gym.gym_vec_env import DummyVecEnv_Atari, SubprocVecEnv_Atari
-from xuance.environment.pettingzoo.pettingzoo_vec_env import DummyVecEnv_Pettingzoo, SubprocVecEnv_Pettingzoo
-from xuance.environment.starcraft2.sc2_vec_env import DummyVecEnv_StarCraft2, SubprocVecEnv_StarCraft2
-from xuance.environment.football.gfootball_vec_env import DummyVecEnv_GFootball, SubprocVecEnv_GFootball
-from xuance.environment.minigrid.minigrid_vec_env import DummyVecEnv_MiniGrid, SubprocVecEnv_MiniGrid
-from xuance.environment.drones.drones_vec_env import DummyVecEnv_Drones, SubprocVecEnv_Drones
-from xuance.environment.drones.drones_vec_env_mas import DummyVecEnv_Drones_MAS, SubprocVecEnv_Drones_MAS
+from xuance.environment.gym import DummyVecEnv_Gym, SubprocVecEnv_Gym
+from xuance.environment.gym import DummyVecEnv_Atari, SubprocVecEnv_Atari
+from xuance.environment.pettingzoo import DummyVecEnv_Pettingzoo, SubprocVecEnv_Pettingzoo
+from xuance.environment.starcraft2 import DummyVecEnv_StarCraft2, SubprocVecEnv_StarCraft2
+from xuance.environment.football import DummyVecEnv_GFootball, SubprocVecEnv_GFootball
+from xuance.environment.minigrid import DummyVecEnv_MiniGrid, SubprocVecEnv_MiniGrid
+from xuance.environment.drones import DummyVecEnv_Drones, SubprocVecEnv_Drones
+from xuance.environment.drones import DummyVecEnv_Drones_MAS, SubprocVecEnv_Drones_MAS
 from xuance.environment.metadrive import SubprocVecEnv_MetaDrive
-from xuance.environment.new_env.new_vec_env import DummyVecEnv_New, SubprocVecEnv_New
-from xuance.environment.new_env_mas.new_vec_env_mas import DummyVecEnv_New_MAS, SubprocVecEnv_New_MAS
+from xuance.environment.new_env import DummyVecEnv_New, SubprocVecEnv_New
+from xuance.environment.new_env_mas import DummyVecEnv_New_MAS, SubprocVecEnv_New_MAS
 
 from .vector_envs.subproc_vec_env import SubprocVecEnv
 
