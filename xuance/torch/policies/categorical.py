@@ -1,6 +1,7 @@
 import torch.distributions
 from xuance.torch.policies import *
 from xuance.torch.utils import *
+import numpy as np
 
 
 def _init_layer(layer, gain=np.sqrt(2), bias=0.0):

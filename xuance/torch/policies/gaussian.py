@@ -1,5 +1,6 @@
 from xuance.torch.policies import *
 from xuance.torch.utils import *
+import numpy as np
 
 
 class ActorNet(nn.Module):
