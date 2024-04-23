@@ -18,5 +18,4 @@ Football Academy - with a total of 11 scenarios
     - academy_single_goal_versus_lazy: Full 11 versus 11 games, where the opponents cannot move but they can only intercept the ball if it is close enough to them. Our center back defender has the ball at first.
 """
 
-from xuance.environment.football.gfootball_env import GFootball_Env
 from xuance.environment.football.gfootball_vec_env import SubprocVecEnv_GFootball, DummyVecEnv_GFootball
