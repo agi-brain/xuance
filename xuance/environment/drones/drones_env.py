@@ -1,17 +1,18 @@
 import numpy as np
 from gym.spaces import Box
 import time
+from gym_pybullet_drones.envs.CtrlAviary import CtrlAviary
+from xuance.environment.drones.customized.HoverAviary import HoverAviary
+from gym_pybullet_drones.envs.VelocityAviary import VelocityAviary
+from xuance.environment.drones.customized.MultiHoverAviary import MultiHoverAviary
+from gym_pybullet_drones.utils.enums import ObservationType, ActionType
 
 
 class Drones_Env:
     def __init__(self, args):
         # import scenarios of gym-pybullet-drones
         self.env_id = args.env_id
-        from gym_pybullet_drones.envs.CtrlAviary import CtrlAviary
-        from xuance.environment.drones.customized.HoverAviary import HoverAviary
-        from gym_pybullet_drones.envs.VelocityAviary import VelocityAviary
-        from xuance.environment.drones.customized.MultiHoverAviary import MultiHoverAviary
-        from gym_pybullet_drones.utils.enums import ObservationType, ActionType
+
         REGISTRY = {
             "CtrlAviary": CtrlAviary,
             "HoverAviary": HoverAviary,

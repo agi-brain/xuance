@@ -1,10 +1,10 @@
+from metadrive.envs.metadrive_env import MetaDriveEnv
 import numpy as np
 
 
 class MetaDrive_Env:
     def __init__(self, args):
         self.env_id = args.env_id
-        from metadrive.envs.metadrive_env import MetaDriveEnv
         args.env_config['use_render'] = args.render
         self.env = MetaDriveEnv(config=args.env_config)
 
