@@ -146,8 +146,7 @@ class ActorNet_SAC(nn.Module):
             layers.extend(mlp)
         self.device = device
         self.output = nn.Sequential(*layers)
-        # self.out_mu = nn.Sequential(nn.Linear(hidden_sizes[-1], action_dim, device=device), nn.Tanh())
-        self.out_mu = nn.Linear(hidden_sizes[-1], action_dim, device=device)
+        self.out_mu = nn.Sequential(nn.Linear(hidden_sizes[-1], action_dim, device=device), nn.Tanh())
         self.out_std = nn.Linear(hidden_sizes[-1], action_dim, device=device)
 
     def forward(self, x: torch.tensor):
