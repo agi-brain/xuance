@@ -100,7 +100,7 @@ def make_envs(config: Namespace):
             env = Drones_Env(config)
 
         elif config.env_name == "MetaDrive":
-            from xuance.environment.metadrive import MetaDrive_Env
+            from xuance.environment.metadrive.metadrive_env import MetaDrive_Env
             env = MetaDrive_Env(config)
 
         elif config.env_name == "NewEnv":  # Add the newly defined vectorized environment

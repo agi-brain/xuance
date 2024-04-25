@@ -12,14 +12,14 @@ from xuance.torch.utils import ActivationFunctions
 
 
 def parse_args():
-    parser = argparse.ArgumentParser("Example of XuanCe: PPO for Drones.")
-    parser.add_argument("--method", type=str, default="ppo")
-    parser.add_argument("--env", type=str, default="metadrive")
-    parser.add_argument("--env-id", type=str, default="metadrive")
+    parser = argparse.ArgumentParser("Example of XuanCe: PPO for MuJoCo.")
+    parser.add_argument("--method", type=str, default="sac")
+    parser.add_argument("--env", type=str, default="mujoco")
+    parser.add_argument("--env-id", type=str, default="InvertedPendulum-v4")
     parser.add_argument("--test", type=int, default=0)
     parser.add_argument("--device", type=str, default="cuda:0")
     parser.add_argument("--benchmark", type=int, default=1)
-    parser.add_argument("--config", type=str, default="./ppo_configs/ppo_metadrive.yaml")
+    parser.add_argument("--config", type=str, default="./sac_configs/sac_mujoco.yaml")
 
     return parser.parse_args()
 
@@ -39,36 +39,35 @@ def run(args):
     n_envs = envs.num_envs
 
     # prepare representation
-    from xuance.torch.representations import Basic_MLP
-    representation = Basic_MLP(input_shape=space2shape(args.observation_space),
-                               hidden_sizes=args.representation_hidden_size,
-                               normalize=None,
-                               initialize=torch.nn.init.orthogonal_,
-                               activation=ActivationFunctions[args.activation],
-                               device=args.device)
+    from xuance.torch.representations import Basic_Identical
+    representation = Basic_Identical(input_shape=space2shape(args.observation_space),
+                                     device=args.device)
 
     # prepare policy
-    from xuance.torch.policies import Gaussian_AC_Policy
-    policy = Gaussian_AC_Policy(action_space=args.action_space,
-                                representation=representation,
-                                actor_hidden_size=args.actor_hidden_size,
-                                critic_hidden_size=args.critic_hidden_size,
-                                normalize=None,
-                                initialize=torch.nn.init.orthogonal_,
-                                activation=ActivationFunctions[args.activation],
-                                device=args.device)
+    from xuance.torch.policies import Gaussian_SAC_Policy
+    policy = Gaussian_SAC_Policy(action_space=args.action_space,
+                                 representation=representation,
+                                 actor_hidden_size=args.actor_hidden_size,
+                                 critic_hidden_size=args.critic_hidden_size,
+                                 normalize=None,
+                                 initialize=torch.nn.init.orthogonal_,
+                                 activation=ActivationFunctions[args.activation],
+                                 device=args.device)
 
     # prepare agent
-    from xuance.torch.agents import PPOCLIP_Agent, get_total_iters
-    optimizer = torch.optim.Adam(policy.parameters(), args.learning_rate, eps=1e-5)
-    lr_scheduler = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=1.0, end_factor=0.0,
-                                                     total_iters=get_total_iters(agent_name, args))
-    agent = PPOCLIP_Agent(config=args,
-                          envs=envs,
-                          policy=policy,
-                          optimizer=optimizer,
-                          scheduler=lr_scheduler,
-                          device=args.device)
+    from xuance.torch.agents import SAC_Agent, get_total_iters
+    actor_optimizer = torch.optim.Adam(policy.actor_parameters, args.actor_learning_rate)
+    critic_optimizer = torch.optim.Adam(policy.critic_parameters, args.critic_learning_rate)
+    actor_lr_scheduler = torch.optim.lr_scheduler.LinearLR(actor_optimizer, start_factor=1.0, end_factor=0.25,
+                                                           total_iters=get_total_iters(agent_name, args))
+    critic_lr_scheduler = torch.optim.lr_scheduler.LinearLR(critic_optimizer, start_factor=1.0, end_factor=0.25,
+                                                            total_iters=get_total_iters(agent_name, args))
+    agent = SAC_Agent(config=args,
+                      envs=envs,
+                      policy=policy,
+                      optimizer=[actor_optimizer, critic_optimizer],
+                      scheduler=[actor_lr_scheduler, critic_lr_scheduler],
+                      device=args.device)
 
     # start running
     envs.reset()
@@ -101,8 +100,6 @@ def run(args):
         # end benchmarking
         print("Best Model Score: %.2f, std=%.2f" % (best_scores_info["mean"], best_scores_info["std"]))
     else:
-        envs.close()
-        agent.render = False
         if not args.test:  # train the model without testing
             n_train_steps = args.running_steps // n_envs
             agent.train(n_train_steps)
@@ -112,10 +109,9 @@ def run(args):
             def env_fn():
                 args_test = deepcopy(args)
                 args_test.parallels = 1
-                args_test.render = True
                 return make_envs(args_test)
 
-            agent.config.test_mode = True
+            agent.render = True
             agent.load_model(agent.model_dir_load, args.seed)
             scores = agent.test(env_fn, args.test_episode)
             print(f"Mean Score: {np.mean(scores)}, Std: {np.std(scores)}")

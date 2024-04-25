@@ -1,0 +1,49 @@
+dl_toolbox: "torch"  # The deep learning toolbox. Choices: "torch", "mindspore", "tensorlayer"
+project_name: "XuanCe_Benchmark"
+logger: "tensorboard"  # Choices: tensorboard, wandb.
+wandb_user_name: "your_user_name"
+render_mode: 'rgb_array' # Choices: 'human', 'rgb_array'.
+test_mode: False
+device: "cuda:0"
+
+agent: "SAC"
+env_name: "MetaDrive"
+env_id: "metadrive"
+env_config:  # the configs for MetaDrive environment
+  map: "C"  # see https://metadrive-simulator.readthedocs.io/en/latest/rl_environments.html#generalization-environment for choices
+render: False
+vectorize: "Subproc_MetaDrive"
+runner: "DRL"
+
+representation_hidden_size: [512]
+actor_hidden_size: [512, 512]
+critic_hidden_size: [512, 512]
+activation: "ReLU"
+
+seed: 1
+parallels: 10
+n_size: 1000000
+batch_size: 256
+actor_learning_rate: 0.0003
+critic_learning_rate: 0.0003
+gamma: 0.99
+alpha: 0.2
+tau: 0.005
+learning_rate: 0.0003
+
+start_noise: 0.25
+end_noise: 0.01
+training_frequency: 1
+running_steps: 1000000
+start_training: 10000
+
+use_obsnorm: False
+use_rewnorm: False
+obsnorm_range: 5
+rewnorm_range: 5
+
+test_steps: 10000
+eval_interval: 10000
+test_episode: 5
+log_dir: "./logs/sac/"
+model_dir: "./models/sac/"
