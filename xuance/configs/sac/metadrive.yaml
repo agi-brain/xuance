@@ -6,13 +6,13 @@ env_config:  # the configs for MetaDrive environment
 render: False
 vectorize: "Subproc_MetaDrive"
 policy: "Gaussian_SAC"
-representation: "Basic_MLP"
+representation: "Basic_Identical"
 runner: "DRL"
 
-representation_hidden_size: [512,]
+representation_hidden_size:
 actor_hidden_size: [512, 512]
 critic_hidden_size: [512, 512]
-activation: "LeakyReLU"
+activation: "ReLU"
 
 seed: 1
 parallels: 10
@@ -29,7 +29,7 @@ start_noise: 0.25
 end_noise: 0.01
 training_frequency: 1
 running_steps: 1000000
-start_training: 10000
+start_training: 1000
 
 use_obsnorm: False
 use_rewnorm: False

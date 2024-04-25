@@ -50,7 +50,7 @@ class SAC_Agent(Agent):
 
     def _action(self, obs):
         _, act_dist = self.policy(obs)
-        action = act_dist.sample()
+        action = act_dist.rsample()
         action = action.detach().cpu().numpy()
         return action
 

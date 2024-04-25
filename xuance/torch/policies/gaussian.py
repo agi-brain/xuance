@@ -1,5 +1,6 @@
 from xuance.torch.policies import *
 from xuance.torch.utils import *
+from torch.distributions import Normal
 import numpy as np
 
 
@@ -152,12 +153,10 @@ class ActorNet_SAC(nn.Module):
     def forward(self, x: torch.tensor):
         output = self.output(x)
         mu = self.out_mu(output)
-        # std = torch.tanh(self.out_std(output))
         std = torch.clamp(self.out_std(output), -20, 2)
         std = std.exp()
-        # dia_std = torch.diag_embed(std)
-        self.dist = torch.distributions.Normal(mu, std)
-        return self.dist
+        dist = Normal(mu, std)
+        return dist
 
 
 class CriticNet_SAC(nn.Module):
@@ -199,15 +198,12 @@ class SACPolicy(nn.Module):
         # representations
         self.actor_representation = representation
         self.critic_representation = copy.deepcopy(representation)
-        self.target_actor_representation = copy.deepcopy(representation)
         self.target_critic_representation = copy.deepcopy(representation)
 
         self.actor = ActorNet_SAC(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size,
                                   normalize, initialize, activation, device)
         self.critic = CriticNet_SAC(representation.output_shapes['state'][0], self.action_dim, critic_hidden_size,
                                     normalize, initialize, activation, device)
-
-        self.target_actor = copy.deepcopy(self.actor)
         self.target_critic = copy.deepcopy(self.critic)
 
         self.actor_parameters = list(self.actor_representation.parameters()) + list(self.actor.parameters())
@@ -219,9 +215,9 @@ class SACPolicy(nn.Module):
         return outputs_actor, act_dist
 
     def Qtarget(self, observation: Union[np.ndarray, dict]):
-        outputs_actor = self.target_actor_representation(observation)
+        outputs_actor = self.actor_representation(observation)
         outputs_critic = self.target_critic_representation(observation)
-        act_dist = self.target_actor(outputs_actor['state'])
+        act_dist = self.actor(outputs_actor['state'])
         act = act_dist.rsample()
         act_log = act_dist.log_prob(act).sum(-1)
         return act_log, self.target_critic(outputs_critic['state'], act)
@@ -239,13 +235,7 @@ class SACPolicy(nn.Module):
         return act_log, self.critic(outputs_critic['state'], act)
 
     def soft_update(self, tau=0.005):
-        for ep, tp in zip(self.actor_representation.parameters(), self.target_actor_representation.parameters()):
-            tp.data.mul_(1 - tau)
-            tp.data.add_(tau * ep.data)
         for ep, tp in zip(self.critic_representation.parameters(), self.target_critic_representation.parameters()):
-            tp.data.mul_(1 - tau)
-            tp.data.add_(tau * ep.data)
-        for ep, tp in zip(self.actor.parameters(), self.target_actor.parameters()):
             tp.data.mul_(1 - tau)
             tp.data.add_(tau * ep.data)
         for ep, tp in zip(self.critic.parameters(), self.target_critic.parameters()):
