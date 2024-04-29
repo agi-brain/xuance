@@ -1,5 +1,6 @@
 from xuance.torch.policies import *
 from xuance.torch.utils import *
+from torch.distributions import Categorical
 from gymnasium import spaces as spaces_pettingzoo
 
 
