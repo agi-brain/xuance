@@ -12,6 +12,7 @@ class ActorNet(nn.Module):
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., torch.Tensor]] = None,
                  activation: Optional[ModuleType] = None,
+                 activation_action: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None):
         super(ActorNet, self).__init__()
         layers = []
@@ -19,7 +20,7 @@ class ActorNet(nn.Module):
         for h in hidden_sizes:
             mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initialize, device)
             layers.extend(mlp)
-        layers.extend(mlp_block(input_shape[0], action_dim, None, None, initialize, device)[0])
+        layers.extend(mlp_block(input_shape[0], action_dim, None, activation_action, initialize, device)[0])
         self.mu = nn.Sequential(*layers)
         self.logstd = nn.Parameter(-torch.ones((action_dim,), device=device))
         self.dist = DiagGaussianDistribution(action_dim)
@@ -59,13 +60,14 @@ class ActorCriticPolicy(nn.Module):
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., torch.Tensor]] = None,
                  activation: Optional[ModuleType] = None,
+                 activation_action: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None):
         super(ActorCriticPolicy, self).__init__()
         self.action_dim = action_space.shape[0]
         self.representation = representation
         self.representation_info_shape = representation.output_shapes
         self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size,
-                              normalize, initialize, activation, device)
+                              normalize, initialize, activation, activation_action, device)
         self.critic = CriticNet(representation.output_shapes['state'][0], critic_hidden_size,
                                 normalize, initialize, activation, device)
 
@@ -84,6 +86,7 @@ class ActorPolicy(nn.Module):
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., torch.Tensor]] = None,
                  activation: Optional[ModuleType] = None,
+                 activation_action: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None,
                  fixed_std: bool = True):
         super(ActorPolicy, self).__init__()
@@ -91,7 +94,7 @@ class ActorPolicy(nn.Module):
         self.representation = representation
         self.representation_info_shape = self.representation.output_shapes
         self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size,
-                              normalize, initialize, activation, device)
+                              normalize, initialize, activation, activation_action, device)
 
     def forward(self, observation: Union[np.ndarray, dict]):
         outputs = self.representation(observation)
@@ -108,6 +111,7 @@ class PPGActorCritic(nn.Module):
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., torch.Tensor]] = None,
                  activation: Optional[ModuleType] = None,
+                 activation_action: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None):
         super(PPGActorCritic, self).__init__()
         self.action_dim = action_space.shape[0]
@@ -115,7 +119,7 @@ class PPGActorCritic(nn.Module):
         self.critic_representation = copy.deepcopy(representation)
         self.representation_info_shape = self.actor_representation.output_shapes
         self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size,
-                              normalize, initialize, activation, device)
+                              normalize, initialize, activation, activation_action, device)
         self.critic = CriticNet(representation.output_shapes['state'][0], critic_hidden_size,
                                 normalize, initialize, activation, device)
         self.aux_critic = CriticNet(representation.output_shapes['state'][0], critic_hidden_size,
@@ -138,6 +142,7 @@ class ActorNet_SAC(nn.Module):
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., torch.Tensor]] = None,
                  activation: Optional[ModuleType] = None,
+                 activation_action: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None):
         super(ActorNet_SAC, self).__init__()
         layers = []
@@ -147,7 +152,7 @@ class ActorNet_SAC(nn.Module):
             layers.extend(mlp)
         self.device = device
         self.output = nn.Sequential(*layers)
-        self.out_mu = nn.Sequential(nn.Linear(hidden_sizes[-1], action_dim, device=device), nn.Tanh())
+        self.out_mu = nn.Sequential(*mlp_block(hidden_sizes[-1], action_dim, normalize, activation_action, initialize, device)[0])
         self.out_std = nn.Linear(hidden_sizes[-1], action_dim, device=device)
 
     def forward(self, x: torch.tensor):
@@ -190,6 +195,7 @@ class SACPolicy(nn.Module):
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., torch.Tensor]] = None,
                  activation: Optional[ModuleType] = None,
+                 activation_action: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None):
         super(SACPolicy, self).__init__()
         self.action_dim = action_space.shape[0]
@@ -201,7 +207,7 @@ class SACPolicy(nn.Module):
         self.target_critic_representation = copy.deepcopy(representation)
 
         self.actor = ActorNet_SAC(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size,
-                                  normalize, initialize, activation, device)
+                                  normalize, initialize, activation, activation_action, device)
         self.critic = CriticNet_SAC(representation.output_shapes['state'][0], self.action_dim, critic_hidden_size,
                                     normalize, initialize, activation, device)
         self.target_critic = copy.deepcopy(self.critic)

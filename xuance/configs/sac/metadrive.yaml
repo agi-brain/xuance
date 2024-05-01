@@ -13,6 +13,7 @@ representation_hidden_size:
 actor_hidden_size: [512, 512]
 critic_hidden_size: [512, 512]
 activation: "relu"
+activation_action: 'tanh'
 
 seed: 1
 parallels: 10

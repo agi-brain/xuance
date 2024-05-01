@@ -10,10 +10,11 @@ representation_hidden_size: [256,]
 actor_hidden_size: [256,]
 critic_hidden_size: [256,]
 activation: 'leaky_relu'
+activation_action: 'tanh'
 
 seed: 1
 parallels: 10
-running_steps: 300000
+running_steps: 500000
 n_steps: 64
 n_epoch: 1
 n_minibatch: 1

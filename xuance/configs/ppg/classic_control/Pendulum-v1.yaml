@@ -10,6 +10,7 @@ representation_hidden_size: [128,]
 actor_hidden_size: [128,]
 critic_hidden_size: [128,]
 activation: "leaky_relu"
+activation_action: 'tanh'
 
 seed: 1
 parallels: 10

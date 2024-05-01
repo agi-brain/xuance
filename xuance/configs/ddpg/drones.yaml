@@ -17,6 +17,7 @@ runner: "DRL"
 actor_hidden_size: [64, 64]
 critic_hidden_size: [64, 64]
 activation: "leaky_relu"
+activation_action: 'tanh'
 
 seed: 1
 parallels: 10

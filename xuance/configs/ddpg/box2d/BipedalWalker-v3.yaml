@@ -9,6 +9,7 @@ runner: "DRL"
 actor_hidden_size: [256,]
 critic_hidden_size: [256,]
 activation: "relu"
+activation_action: 'tanh'
 
 seed: 1
 parallels: 10

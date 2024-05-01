@@ -368,6 +368,7 @@ class ActorNet(nn.Module):
                  hidden_sizes: Sequence[int],
                  initialize: Optional[Callable[..., torch.Tensor]] = None,
                  activation: Optional[ModuleType] = None,
+                 activation_action: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None):
         super(ActorNet, self).__init__()
         layers = []
@@ -375,7 +376,7 @@ class ActorNet(nn.Module):
         for h in hidden_sizes:
             mlp, input_shape = mlp_block(input_shape[0], h, None, activation, initialize, device)
             layers.extend(mlp)
-        layers.extend(mlp_block(input_shape[0], action_dim, None, nn.Tanh, initialize, device)[0])
+        layers.extend(mlp_block(input_shape[0], action_dim, None, activation_action, initialize, device)[0])
         self.model = nn.Sequential(*layers)
 
     def forward(self, x: torch.tensor):
@@ -411,6 +412,7 @@ class DDPGPolicy(nn.Module):
                  critic_hidden_size: Sequence[int],
                  initialize: Optional[Callable[..., torch.Tensor]] = None,
                  activation: Optional[ModuleType] = None,
+                 activation_action: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None):
         super(DDPGPolicy, self).__init__()
         self.action_dim = action_space.shape[0]
@@ -420,7 +422,7 @@ class DDPGPolicy(nn.Module):
         self.target_actor_representation = copy.deepcopy(representation)
         self.target_critic_representation = copy.deepcopy(representation)
         self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size, initialize,
-                              activation, device)
+                              activation, activation_action, device)
         self.critic = CriticNet(representation.output_shapes['state'][0], self.action_dim, critic_hidden_size,
                                 initialize, activation, device)
         self.target_actor = copy.deepcopy(self.actor)
@@ -476,6 +478,7 @@ class TD3Policy(nn.Module):
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., torch.Tensor]] = None,
                  activation: Optional[ModuleType] = None,
+                 activation_action: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None):
         super(TD3Policy, self).__init__()
         self.action_dim = action_space.shape[0]
@@ -490,7 +493,7 @@ class TD3Policy(nn.Module):
         self.target_criticB_representation = copy.deepcopy(representation)
 
         self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size,
-                              initialize, activation, device)
+                              initialize, activation, activation_action, device)
         self.criticA = CriticNet(representation.output_shapes['state'][0], self.action_dim, critic_hidden_size,
                                  initialize, activation, device)
         self.criticB = CriticNet(representation.output_shapes['state'][0], self.action_dim, critic_hidden_size,
@@ -568,6 +571,7 @@ class PDQNPolicy(nn.Module):
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., torch.Tensor]] = None,
                  activation: Optional[ModuleType] = None,
+                 activation_action: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None):
         super(PDQNPolicy, self).__init__()
         self.representation = representation
@@ -579,10 +583,9 @@ class PDQNPolicy(nn.Module):
         self.conact_size = int(self.conact_sizes.sum())
 
         self.qnetwork = BasicQhead(self.observation_space.shape[0] + self.conact_size, self.num_disact,
-                                   qnetwork_hidden_size, normalize,
-                                   initialize, torch.nn.modules.activation.ReLU, device)
+                                   qnetwork_hidden_size, normalize, initialize, activation, device)
         self.conactor = ActorNet(self.observation_space.shape[0], self.conact_size, conactor_hidden_size,
-                                 initialize, torch.nn.modules.activation.ReLU, device)
+                                 initialize, activation, activation_action, device)
         self.target_conactor = copy.deepcopy(self.conactor)
         self.target_qnetwork = copy.deepcopy(self.qnetwork)
 
@@ -632,6 +635,7 @@ class MPDQNPolicy(nn.Module):
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., torch.Tensor]] = None,
                  activation: Optional[ModuleType] = None,
+                 activation_action: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None):
         super(MPDQNPolicy, self).__init__()
         self.representation = representation
@@ -645,9 +649,9 @@ class MPDQNPolicy(nn.Module):
 
         self.qnetwork = BasicQhead(self.observation_space.shape[0] + self.conact_size, self.num_disact,
                                    qnetwork_hidden_size, normalize,
-                                   initialize, torch.nn.modules.activation.ReLU, device)
+                                   initialize, activation, device)
         self.conactor = ActorNet(self.observation_space.shape[0], self.conact_size, conactor_hidden_size,
-                                 initialize, torch.nn.modules.activation.ReLU, device)
+                                 initialize, activation, activation_action, device)
         self.target_conactor = copy.deepcopy(self.conactor)
         self.target_qnetwork = copy.deepcopy(self.qnetwork)
 
@@ -739,6 +743,7 @@ class SPDQNPolicy(nn.Module):
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., torch.Tensor]] = None,
                  activation: Optional[ModuleType] = None,
+                 activation_action: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None):
         super(SPDQNPolicy, self).__init__()
         self.representation = representation
@@ -752,9 +757,9 @@ class SPDQNPolicy(nn.Module):
         for k in range(self.num_disact):
             self.qnetwork.append(
                 BasicQhead(self.observation_space.shape[0] + self.conact_sizes[k], 1, qnetwork_hidden_size, normalize,
-                           initialize, torch.nn.modules.activation.ReLU, device))
+                           initialize, activation, device))
         self.conactor = ActorNet(self.observation_space.shape[0], self.conact_size, conactor_hidden_size,
-                                 initialize, torch.nn.modules.activation.ReLU, device)
+                                 initialize, activation, activation_action, device)
         self.target_conactor = copy.deepcopy(self.conactor)
         self.target_qnetwork = copy.deepcopy(self.qnetwork)
 
