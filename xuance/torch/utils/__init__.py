@@ -13,13 +13,13 @@ from .operations import (update_linear_decay, set_seed, get_flat_grad, get_flat_
 from .value_norm import ValueNorm
 
 ActivationFunctions = {
-    "ReLU": nn.ReLU,
-    "LeakyReLU": nn.LeakyReLU,
-    "Tanh": nn.Tanh,
-    "Sigmoid": nn.Sigmoid,
-    "Softmax": nn.Softmax,
-    "Softmax2d": nn.Softmax2d,
-    "Elu": nn.ELU,
+    "relu": nn.ReLU,
+    "leaky_relu": nn.LeakyReLU,
+    "tanh": nn.Tanh,
+    "sigmoid": nn.Sigmoid,
+    "softmax": nn.Softmax,
+    "softmax2d": nn.Softmax2d,
+    "elu": nn.ELU,
 }
 
 NormalizeFunctions = {

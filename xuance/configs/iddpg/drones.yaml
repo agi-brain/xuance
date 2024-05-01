@@ -17,7 +17,7 @@ on_policy: False
 
 actor_hidden_size: [64, 64]
 critic_hidden_size: [64, 64]
-activation: 'LeakyReLU'
+activation: 'leaky_relu'
 activation_action: 'tanh'
 
 seed: 1

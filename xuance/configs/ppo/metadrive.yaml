@@ -12,7 +12,7 @@ runner: "DRL"
 representation_hidden_size: [512,]
 actor_hidden_size: [512, 512]
 critic_hidden_size: [512, 512]
-activation: "LeakyReLU"
+activation: "leaky_relu"
 
 seed: 1
 parallels: 10

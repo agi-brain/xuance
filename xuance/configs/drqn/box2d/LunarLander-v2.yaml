@@ -11,7 +11,7 @@ representation_hidden_size: [128,]
 recurrent_hidden_size: 128
 recurrent_layer_N: 1
 dropout: 0
-activation: 'ReLU'
+activation: 'relu'
 
 seed: 1
 parallels: 10

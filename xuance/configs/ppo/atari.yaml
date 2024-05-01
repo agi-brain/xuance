@@ -18,7 +18,7 @@ strides: [4, 2, 1]
 fc_hidden_sizes: [512, ]  # fully connected layer hidden sizes.
 actor_hidden_size: []
 critic_hidden_size: []
-activation: "ReLU"
+activation: "relu"
 
 seed: 1
 parallels: 8

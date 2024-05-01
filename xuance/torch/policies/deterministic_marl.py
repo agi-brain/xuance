@@ -384,6 +384,7 @@ class ActorNet(nn.Module):
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., torch.Tensor]] = None,
                  activation: Optional[ModuleType] = None,
+                 activation_action: Optional[ModuleType] = nn.Tanh,
                  device: Optional[Union[str, int, torch.device]] = None):
         super(ActorNet, self).__init__()
         layers = []
@@ -391,7 +392,7 @@ class ActorNet(nn.Module):
         for h in hidden_sizes:
             mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initialize, device)
             layers.extend(mlp)
-        layers.extend(mlp_block(input_shape[0], action_dim, None, nn.Tanh, initialize, device)[0])
+        layers.extend(mlp_block(input_shape[0], action_dim, None, activation_action, initialize, device)[0])
         self.model = nn.Sequential(*layers)
 
     def forward(self, x: torch.tensor):
@@ -436,7 +437,8 @@ class Basic_DDPG_policy(nn.Module):
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., torch.Tensor]] = None,
                  activation: Optional[ModuleType] = None,
-                 device: Optional[Union[str, int, torch.device]] = None
+                 activation_action: Optional[ModuleType] = None,
+                 device: Optional[Union[str, int, torch.device]] = None,
                  ):
         super(Basic_DDPG_policy, self).__init__()
         self.action_dim = action_space.shape[-1]
@@ -445,7 +447,7 @@ class Basic_DDPG_policy(nn.Module):
         self.representation_info_shape = self.representation.output_shapes
 
         self.actor_net = ActorNet(representation.output_shapes['state'][0], n_agents, self.action_dim,
-                                  actor_hidden_size, normalize, initialize, activation, device)
+                                  actor_hidden_size, normalize, initialize, activation, activation_action, device)
         self.critic_net = CriticNet(True, representation.output_shapes['state'][0], n_agents, self.action_dim,
                                     critic_hidden_size, normalize, initialize, activation, device)
         self.target_actor_net = copy.deepcopy(self.actor_net)
@@ -493,11 +495,12 @@ class MADDPG_policy(Basic_DDPG_policy):
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., torch.Tensor]] = None,
                  activation: Optional[ModuleType] = None,
+                 activation_action: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None
                  ):
         super(MADDPG_policy, self).__init__(action_space, n_agents, representation,
                                             actor_hidden_size, critic_hidden_size,
-                                            normalize, initialize, activation, device)
+                                            normalize, initialize, activation, activation_action, device)
         self.critic_net = CriticNet(False, representation.output_shapes['state'][0], n_agents, self.action_dim,
                                     critic_hidden_size, normalize, initialize, activation, device)
         self.target_critic_net = copy.deepcopy(self.critic_net)
@@ -528,11 +531,12 @@ class MATD3_policy(Basic_DDPG_policy):
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., torch.Tensor]] = None,
                  activation: Optional[ModuleType] = None,
+                 activation_action: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None
                  ):
         super(MATD3_policy, self).__init__(action_space, n_agents, representation,
                                            actor_hidden_size, critic_hidden_size,
-                                           normalize, initialize, activation, device)
+                                           normalize, initialize, activation, activation_action, device)
         self.critic_net_A = CriticNet(False, representation.output_shapes['state'][0], n_agents, self.action_dim,
                                       critic_hidden_size, normalize, initialize, activation, device)
         self.critic_net_B = CriticNet(False, representation.output_shapes['state'][0], n_agents, self.action_dim,

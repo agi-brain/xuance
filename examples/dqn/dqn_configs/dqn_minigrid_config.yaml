@@ -19,7 +19,7 @@ runner: "DRL"
 
 representation_hidden_size: [128,]
 q_hidden_size: [128,]
-activation: 'ReLU'
+activation: 'relu'
 
 seed: 1
 parallels: 10

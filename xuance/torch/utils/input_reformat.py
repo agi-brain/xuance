@@ -109,6 +109,8 @@ def get_policy_in_marl(args, representation, mixer=None, ff_mixer=None, qtran_mi
     input_dict["initialize"] = InitializeFunctions[args.initialize] if hasattr(args, "initialize") else None
     input_dict["normalize"] = NormalizeFunctions[args.normalize] if hasattr(args, "normalize") else None
     input_dict["activation"] = ActivationFunctions[args.activation]
+    try: input_dict["activation_action"] = ActivationFunctions[args.activation_action]
+    except: pass
 
     input_dict["device"] = args.device
     if policy_name == "Gaussian_Actor":

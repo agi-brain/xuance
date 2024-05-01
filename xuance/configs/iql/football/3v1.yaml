@@ -27,7 +27,7 @@ dropout: 0
 
 representation_hidden_size: [128, ]
 q_hidden_size: [128, ]  # the units for each hidden layer
-activation: "ReLU"
+activation: "relu"
 
 seed: 1
 parallels: 50

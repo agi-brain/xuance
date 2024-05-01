@@ -14,7 +14,7 @@ gain: 0.01
 
 actor_hidden_size: [64, ]
 critic_hidden_size: [256, ]
-activation: "ReLU"
+activation: "relu"
 
 seed: 1
 parallels: 128

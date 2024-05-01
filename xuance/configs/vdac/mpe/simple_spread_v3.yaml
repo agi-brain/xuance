@@ -15,7 +15,7 @@ gain: 0.01
 
 actor_hidden_size: [64, ]
 critic_hidden_size: [64, ]
-activation: "ReLU"
+activation: "relu"
 
 mixer: "VDN"  # choices: VDN (sum), QMIX (monotonic)
 hidden_dim_mixing_net: 32  # hidden units of mixing network

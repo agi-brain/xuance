@@ -8,7 +8,7 @@ runner: "DRL"
 
 actor_hidden_size: [256,]
 critic_hidden_size: [256,]
-activation: "ReLU"
+activation: "relu"
 
 seed: 1
 parallels: 10

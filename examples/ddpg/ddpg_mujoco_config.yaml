@@ -15,7 +15,7 @@ runner: "DRL"
 representation_hidden_size:  # If you choose Basic_Identical representation, then ignore this value
 actor_hidden_size: [400, 300]
 critic_hidden_size: [400, 300]
-activation: "LeakyReLU"
+activation: "leaky_relu"
 
 seed: 19089
 parallels: 4  # number of environments

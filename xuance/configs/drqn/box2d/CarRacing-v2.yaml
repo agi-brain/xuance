@@ -15,7 +15,7 @@ strides: [4, 2, 1]  # [2, 2, 2, 2]
 recurrent_hidden_size: 512
 recurrent_layer_N: 1
 dropout: 0
-activation: 'ReLU'
+activation: 'relu'
 
 seed: 1
 parallels: 2

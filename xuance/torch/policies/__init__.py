@@ -131,15 +131,16 @@ Policy_Inputs = {
     "Categorical_MAAC_Policy": ["action_space", "n_agents", "representation", "mixer", "actor_hidden_size",
                                 "critic_hidden_size", "normalize", "initialize", "activation", "device"],
     "Categorical_MAAC_Policy_Share": ["action_space", "n_agents", "representation", "mixer", "actor_hidden_size",
-                                "critic_hidden_size", "normalize", "initialize", "activation", "device"],
+                                      "critic_hidden_size", "normalize", "initialize", "activation", "device"],
     "Categorical_MFAC_Policy": ["action_space", "n_agents", "representation", "actor_hidden_size",
                                 "critic_hidden_size", "normalize", "initialize", "activation", "device"],
     "Categorical_COMA_Policy": ["action_space", "n_agents", "representation", "actor_hidden_size",
                                 "critic_hidden_size", "normalize", "initialize", "activation", "device"],
     "Independent_DDPG_Policy": ["action_space", "n_agents", "representation", "actor_hidden_size",
-                                "critic_hidden_size", "normalize", "initialize", "activation", "device"],
+                                "critic_hidden_size", "normalize", "initialize", "activation", "activation_action",
+                                "device"],
     "MADDPG_Policy": ["action_space", "n_agents", "representation", "actor_hidden_size", "critic_hidden_size",
-                      "normalize", "initialize", "activation", "device"],
+                      "normalize", "initialize", "activation", "activation_action", "device"],
     "MF_Q_network": ["action_space", "n_agents", "representation", "hidden_sizes",
                      "normalize", "initialize", "activation", "device"],
     "Gaussian_MAAC_Policy": ["action_space", "n_agents", "representation", "mixer", "actor_hidden_size",
@@ -149,7 +150,7 @@ Policy_Inputs = {
     "Gaussian_MASAC_Policy": ["action_space", "n_agents", "representation", "actor_hidden_size", "critic_hidden_size",
                               "normalize", "initialize", "activation", "device"],
     "MATD3_Policy": ["action_space", "n_agents", "representation", "actor_hidden_size", "critic_hidden_size",
-                     "normalize", "initialize", "activation", "device"],
+                     "normalize", "initialize", "activation", "activation_action", "device"],
 }
 
 Policy_Inputs_All = {

@@ -10,7 +10,7 @@ runner: "DRL"
 representation_hidden_size: [128,]
 conactor_hidden_size: [128,]
 qnetwork_hidden_size: [128, ]
-activation: "ReLU"
+activation: "relu"
 
 n_size: 20000
 batch_size: 128

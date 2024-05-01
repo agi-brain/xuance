@@ -16,7 +16,7 @@ kernels: [8, 4, 4, 4]
 strides: [4, 2, 2, 2]
 actor_hidden_size: [128, 128]
 critic_hidden_size: [128, 128]
-activation: "LeakyReLU"
+activation: "leaky_relu"
 
 seed: 1069
 parallels: 5
