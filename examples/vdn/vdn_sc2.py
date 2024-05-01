@@ -60,7 +60,7 @@ class Runner(object):
                        dir=wandb_dir,
                        group=args.env_id,
                        job_type=args.agent,
-                       name=args.seed,
+                       name=time_string,
                        reinit=True)
             self.use_wandb = True
         else:

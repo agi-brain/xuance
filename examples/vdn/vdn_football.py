@@ -65,7 +65,7 @@ class Runner():
                        dir=wandb_dir,
                        group=self.args.env_id,
                        job_type=self.args.agent,
-                       name=time.asctime(),
+                       name=time_string,
                        reinit=True)
             self.use_wandb = True
 

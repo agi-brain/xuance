@@ -11,6 +11,7 @@ from torch.utils.tensorboard import SummaryWriter
 from xuance import get_arguments
 from xuance.environment import make_envs
 from xuance.torch.utils.operations import set_seed
+from xuance.common import get_time_string
 
 
 def parse_args():
@@ -65,7 +66,7 @@ class Runner():
                        dir=wandb_dir,
                        group=self.args.env_id,
                        job_type=self.args.agent,
-                       name=time.asctime(),
+                       name=time_string,
                        reinit=True)
             self.use_wandb = True
 

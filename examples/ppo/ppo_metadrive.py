@@ -87,6 +87,7 @@ def run(args):
         best_scores_info = {"mean": np.mean(test_scores),
                             "std": np.std(test_scores),
                             "step": agent.current_step}
+        agent.save_model(model_name="best_model.pth")
         for i_epoch in range(num_epoch):
             print("Epoch: %d/%d:" % (i_epoch, num_epoch))
             agent.train(eval_interval)
@@ -116,7 +117,7 @@ def run(args):
                 return make_envs(args_test)
 
             agent.config.test_mode = True
-            agent.load_model(agent.model_dir_load, args.seed)
+            agent.load_model(path=agent.model_dir_load)
             scores = agent.test(env_fn, args.test_episode)
             print(f"Mean Score: {np.mean(scores)}, Std: {np.std(scores)}")
             print("Finish testing.")

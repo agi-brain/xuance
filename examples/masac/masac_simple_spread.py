@@ -12,6 +12,7 @@ from torch.utils.tensorboard import SummaryWriter
 from xuance import get_arguments
 from xuance.environment import make_envs
 from xuance.torch.utils.operations import set_seed
+from xuance.common import get_time_string
 
 
 def parse_args():
@@ -36,11 +37,10 @@ class Runner(object):
         # prepare directories
         self.args = args
         self.args.agent_name = args.agent
-        folder_name = f"seed_{args.seed}_" + time.asctime().replace(" ", "").replace(":", "_")
+        time_string = get_time_string()
+        folder_name = f"seed_{args.seed}_" + time_string
         self.args.model_dir_load = self.args.model_dir
         self.args.model_dir_save = os.path.join(os.getcwd(), self.args.model_dir, folder_name)
-        if (not os.path.exists(self.args.model_dir_save)) and (not self.args.test_mode):
-            os.makedirs(self.args.model_dir_save)
 
         # Logger
         if self.args.logger == "tensorboard":
@@ -61,7 +61,7 @@ class Runner(object):
                        dir=wandb_dir,
                        group=self.args.env_id,
                        job_type=self.args.agent,
-                       name=time.asctime(),
+                       name=time_string,
                        reinit=True)
             self.use_wandb = True
 
@@ -85,8 +85,6 @@ class Runner(object):
         self.args.rew_shape, self.args.done_shape = (self.args.n_agents, 1), (self.args.n_agents,)
         from xuance.torch.agents import MASAC_Agents
         self.agents = MASAC_Agents(self.args, self.envs, self.args.device)
-        if self.args.test_mode:
-            self.agents.load_model(self.args.model_dir)
         self.current_step, self.current_episode = 0, np.zeros((self.envs.num_envs,), np.int32)
 
     def log_infos(self, info: dict, x_index: int):
@@ -209,7 +207,7 @@ class Runner(object):
                 return make_envs(args_test)
 
             self.render = True
-            self.agents.load_model(self.args.model_dir)
+            self.agents.load_model(self.args.model_dir_load)
             self.test_episode(env_fn)
             print("Finish testing.")
         else:
@@ -234,6 +232,7 @@ class Runner(object):
             "std": np.std(test_scores),
             "step": self.current_step
         }
+        self.agents.save_model("best_model.pth")
 
         for i_epoch in range(num_epoch):
             print("Epoch: %d/%d:" % (i_epoch, num_epoch))
