@@ -1,7 +1,7 @@
 import socket
-import time
 from pathlib import Path
 from xuance.torch.agents import *
+from xuance.common import get_time_string
 
 
 class Agent(ABC):
@@ -17,6 +17,7 @@ class Agent(ABC):
         log_dir: the directory of the log file.
         model_dir: the directory for models saving.
     """
+
     def __init__(self,
                  config: Namespace,
                  envs: DummyVecEnv_Gym,
@@ -43,11 +44,10 @@ class Agent(ABC):
         self.rewnorm_range = config.rewnorm_range
         self.returns = np.zeros((self.envs.num_envs,), np.float32)
 
-        time_string = time.asctime().replace(" ", "").replace(":", "_")
+        time_string = get_time_string()
         seed = f"seed_{self.config.seed}_"
-        model_dir_save = os.path.join(os.getcwd(), model_dir, seed + time_string)
-        if (not os.path.exists(model_dir_save)) and (not config.test_mode):
-            os.makedirs(model_dir_save)
+        self.model_dir_save = os.path.join(os.getcwd(), model_dir, seed + time_string)
+        self.model_dir_load = model_dir
 
         # logger
         if config.logger == "tensorboard":
@@ -68,7 +68,7 @@ class Agent(ABC):
                        dir=wandb_dir,
                        group=config.env_id,
                        job_type=config.agent,
-                       name=time.asctime(),
+                       name=time_string,
                        reinit=True,
                        settings=wandb.Settings(start_method="fork")
                        )
@@ -79,18 +79,18 @@ class Agent(ABC):
 
         self.device = device
         self.log_dir = log_dir
-        self.model_dir_save = model_dir_save
-        self.model_dir_load = model_dir
         create_directory(log_dir)
         self.current_step = 0
         self.current_episode = np.zeros((self.envs.num_envs,), np.int32)
 
     def save_model(self, model_name):
+        if not os.path.exists(self.model_dir_save):
+            os.makedirs(self.model_dir_save)
         model_path = os.path.join(self.model_dir_save, model_name)
         self.learner.save_model(model_path)
 
-    def load_model(self, path, seed=1):
-        self.learner.load_model(path, seed)
+    def load_model(self, path, model=None):
+        self.learner.load_model(path, model)
 
     def log_infos(self, info: dict, x_index: int):
         """
@@ -107,7 +107,7 @@ class Agent(ABC):
                 except:
                     self.writer.add_scalars(k, v, x_index)
 
-    def log_videos(self, info: dict, fps: int, x_index: int=0):
+    def log_videos(self, info: dict, fps: int, x_index: int = 0):
         if self.use_wandb:
             for k, v in info.items():
                 wandb.log({k: wandb.Video(v, fps=fps, format='gif')}, step=x_index)

@@ -3,6 +3,7 @@ import socket
 from pathlib import Path
 from .runner_basic import Runner_Base
 from xuance.torch.agents import REGISTRY as REGISTRY_Agent
+from xuance.common import get_time_string
 import wandb
 from torch.utils.tensorboard import SummaryWriter
 import time
@@ -18,12 +19,10 @@ class SC2_Runner(Runner_Base):
         self.render = args.render
         self.test_envs = None
 
-        time_string = time.asctime().replace(" ", "").replace(":", "_")
+        time_string = get_time_string()
         seed = f"seed_{self.args.seed}_"
         self.args.model_dir_load = args.model_dir
         self.args.model_dir_save = os.path.join(os.getcwd(), args.model_dir, seed + time_string)
-        if (not os.path.exists(self.args.model_dir_save)) and (not args.test_mode):
-            os.makedirs(self.args.model_dir_save)
 
         if args.logger == "tensorboard":
             log_dir = os.path.join(os.getcwd(), args.log_dir, seed + time_string)
@@ -43,7 +42,7 @@ class SC2_Runner(Runner_Base):
                        dir=wandb_dir,
                        group=args.env_id,
                        job_type=args.agent,
-                       name=args.seed,
+                       name=time_string,
                        reinit=True)
             self.use_wandb = True
         else:

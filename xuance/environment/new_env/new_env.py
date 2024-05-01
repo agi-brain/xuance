@@ -24,9 +24,9 @@ class New_Env:
         """Close your environment here"""
         pass
 
-    def render(self):
+    def render(self, *args, **kwargs):
         """Render the environment, and return the images"""
-        pass
+        return np.zeros([2, 2, 2])
 
     def reset(self):
         """Reset your environment, and return initialized observations and other information."""

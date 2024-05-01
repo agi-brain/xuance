@@ -3,12 +3,12 @@ This is demo of runner for cooperative multi-agent reinforcement learning.
 """
 import os
 import socket
-import time
 from pathlib import Path
 import wandb
 from torch.utils.tensorboard import SummaryWriter
 from .runner_basic import Runner_Base, make_envs
 from xuance.torch.agents import REGISTRY as REGISTRY_Agent
+from xuance.common import get_time_string
 from tqdm import tqdm
 import numpy as np
 from gymnasium.spaces import Box, Discrete
@@ -22,12 +22,10 @@ class Runner_MARL(Runner_Base):
         self.render = args.render
         self.fps = args[0].fps if type(args) == list else args.fps
 
-        time_string = time.asctime().replace(" ", "").replace(":", "_")
+        time_string = get_time_string()
         seed = f"seed_{self.args.seed}_"
         self.args.model_dir_load = args.model_dir
         self.args.model_dir_save = os.path.join(os.getcwd(), args.model_dir, seed + time_string)
-        if (not os.path.exists(self.args.model_dir_save)) and (not args.test_mode):
-            os.makedirs(self.args.model_dir_save)
 
         if args.logger == "tensorboard":
             log_dir = os.path.join(os.getcwd(), args.log_dir, seed + time_string)
@@ -47,7 +45,7 @@ class Runner_MARL(Runner_Base):
                        dir=wandb_dir,
                        group=args.env_id,
                        job_type=args.agent,
-                       name=args.seed,
+                       name=time_string,
                        reinit=True)
             self.use_wandb = True
         else:
@@ -287,7 +285,7 @@ class Runner_MARL(Runner_Base):
                 return make_envs(args_test)
 
             # self.render = True
-            self.agents.load_model(self.agents.model_dir_load, self.args.seed)
+            self.agents.load_model(self.agents.model_dir_load)
             self.test_episodes(env_fn, self.args.test_episode)
             print("Finish testing.")
         else:

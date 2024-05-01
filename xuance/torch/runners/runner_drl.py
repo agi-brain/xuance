@@ -77,7 +77,7 @@ class Runner_DRL(Runner_Base):
                 args_test.render = True
                 return make_envs(args_test)
             self.agent.render = True
-            self.agent.load_model(self.agent.model_dir_load, self.args.seed)
+            self.agent.load_model(self.agent.model_dir_load, model='seed_1_2024_0501_173444')
             scores = self.agent.test(env_fn, self.args.test_episode)
             print(f"Mean Score: {np.mean(scores)}, Std: {np.std(scores)}")
             print("Finish testing.")

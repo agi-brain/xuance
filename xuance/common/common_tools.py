@@ -1,5 +1,6 @@
 import os
 import yaml
+import time
 import numpy as np
 import scipy.signal
 from copy import deepcopy
@@ -314,4 +315,16 @@ def discount_cumsum(x, discount=0.99):
     [4.890798, 4.9402, 3.98, 2.0]
     """
     return scipy.signal.lfilter([1], [1, float(-discount)], x[::-1], axis=0)[::-1]
+
+
+def get_time_string():
+    t_now = time.localtime(time.time())
+    t_year = str(t_now.tm_year).zfill(4)
+    t_month = str(t_now.tm_mon).zfill(2)
+    t_day = str(t_now.tm_mday).zfill(2)
+    t_hour = str(t_now.tm_hour).zfill(2)
+    t_min = str(t_now.tm_min).zfill(2)
+    t_sec = str(t_now.tm_sec).zfill(2)
+    time_string = f"{t_year}_{t_month}{t_day}_{t_hour}{t_min}{t_sec}"
+    return time_string
 
