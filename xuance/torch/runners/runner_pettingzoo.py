@@ -23,8 +23,6 @@ class Pettingzoo_Runner(Runner_Base):
             seed = f"seed_{arg.seed}_"
             arg.model_dir_load = arg.model_dir
             arg.model_dir_save = os.path.join(os.getcwd(), arg.model_dir, seed + time_string)
-            if (not os.path.exists(arg.model_dir_save)) and (not arg.test_mode):
-                os.makedirs(arg.model_dir_save)
 
             if arg.logger == "tensorboard":
                 log_dir = os.path.join(os.getcwd(), arg.log_dir, seed + time_string)

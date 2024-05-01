@@ -20,13 +20,10 @@ class MATD3_Agents(MARLAgents):
         input_policy = get_policy_in_marl(config, representation)
         policy = REGISTRY_Policy[config.policy](*input_policy)
         optimizer = [torch.optim.Adam(policy.parameters_actor, config.lr_a, eps=1e-5),
-                     torch.optim.Adam(policy.critic_net_A.parameters(), config.lr_c, eps=1e-5),
-                     torch.optim.Adam(policy.critic_net_B.parameters(), config.lr_c, eps=1e-5)]
+                     torch.optim.Adam(policy.parameters_critic, config.lr_c, eps=1e-5)]
         scheduler = [torch.optim.lr_scheduler.LinearLR(optimizer[0], start_factor=1.0, end_factor=0.5,
                                                        total_iters=get_total_iters(config.agent_name, config)),
                      torch.optim.lr_scheduler.LinearLR(optimizer[1], start_factor=1.0, end_factor=0.5,
-                                                       total_iters=get_total_iters(config.agent_name, config)),
-                     torch.optim.lr_scheduler.LinearLR(optimizer[2], start_factor=1.0, end_factor=0.5,
                                                        total_iters=get_total_iters(config.agent_name, config))]
         self.observation_space = envs.observation_space
         self.action_space = envs.action_space

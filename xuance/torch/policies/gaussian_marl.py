@@ -72,6 +72,7 @@ class ActorNet(nn.Module):
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., torch.Tensor]] = None,
                  activation: Optional[ModuleType] = None,
+                 activation_action: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None):
         super(ActorNet, self).__init__()
         self.device = device
@@ -80,8 +81,7 @@ class ActorNet(nn.Module):
         for h in hidden_sizes:
             mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initialize, device)
             layers.extend(mlp)
-        layers.append(nn.Linear(hidden_sizes[0], action_dim, device=device))
-        # layers.append(nn.Sigmoid())
+        layers.extend(mlp_block(input_shape[0], action_dim, activation=activation_action, device=device)[0])
         self.mu = nn.Sequential(*layers)
         self.log_std = nn.Parameter(-torch.ones((action_dim,), device=device))
         self.dist = DiagGaussianDistribution(action_dim)
@@ -129,6 +129,7 @@ class MAAC_Policy(nn.Module):
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., torch.Tensor]] = None,
                  activation: Optional[ModuleType] = None,
+                 activation_action: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None,
                  **kwargs):
         super(MAAC_Policy, self).__init__()
@@ -141,7 +142,7 @@ class MAAC_Policy(nn.Module):
         self.lstm = True if kwargs["rnn"] == "LSTM" else False
         self.use_rnn = True if kwargs["use_recurrent"] else False
         self.actor = ActorNet(self.representation.output_shapes['state'][0], n_agents, self.action_dim,
-                              actor_hidden_size, normalize, initialize, activation, device)
+                              actor_hidden_size, normalize, initialize, activation, activation_action, device)
         dim_input_critic = self.representation_critic.output_shapes['state'][0]
         self.critic = CriticNet(dim_input_critic, n_agents, critic_hidden_size,
                                 normalize, initialize, activation, device)
@@ -195,6 +196,7 @@ class Basic_ISAC_policy(nn.Module):
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., torch.Tensor]] = None,
                  activation: Optional[ModuleType] = None,
+                 activation_action: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None
                  ):
         super(Basic_ISAC_policy, self).__init__()
@@ -204,7 +206,7 @@ class Basic_ISAC_policy(nn.Module):
         self.representation_info_shape = self.representation.output_shapes
 
         self.actor_net = ActorNet(representation.output_shapes['state'][0], n_agents, self.action_dim,
-                                  actor_hidden_size, normalize, initialize, activation, device)
+                                  actor_hidden_size, normalize, initialize, activation, activation_action, device)
         dim_input_critic = representation.output_shapes['state'][0] + self.action_dim
         self.critic_net = CriticNet(dim_input_critic, n_agents, critic_hidden_size,
                                     normalize, initialize, activation, device)
@@ -253,11 +255,12 @@ class MASAC_policy(Basic_ISAC_policy):
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., torch.Tensor]] = None,
                  activation: Optional[ModuleType] = None,
+                 activation_action: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None
                  ):
         super(MASAC_policy, self).__init__(action_space, n_agents, representation,
                                            actor_hidden_size, critic_hidden_size,
-                                           normalize, initialize, activation, device)
+                                           normalize, initialize, activation, activation_action, device)
         dim_input_critic = (representation.output_shapes['state'][0] + self.action_dim) * self.n_agents
         self.critic_net = CriticNet(dim_input_critic, n_agents, critic_hidden_size,
                                     normalize, initialize, activation, device)

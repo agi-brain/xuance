@@ -521,7 +521,7 @@ class MADDPG_policy(Basic_DDPG_policy):
         return self.target_critic_net(critic_in)
 
 
-class MATD3_policy(Basic_DDPG_policy):
+class MATD3_policy(Basic_DDPG_policy, nn.Module):
     def __init__(self,
                  action_space: Space,
                  n_agents: int,
@@ -534,16 +534,25 @@ class MATD3_policy(Basic_DDPG_policy):
                  activation_action: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None
                  ):
-        super(MATD3_policy, self).__init__(action_space, n_agents, representation,
-                                           actor_hidden_size, critic_hidden_size,
-                                           normalize, initialize, activation, activation_action, device)
+        nn.Module.__init__(self)
+        self.action_dim = action_space.shape[-1]
+        self.n_agents = n_agents
+        self.representation = representation
+        self.representation_info_shape = self.representation.output_shapes
+
+        self.actor_net = ActorNet(representation.output_shapes['state'][0], n_agents, self.action_dim,
+                                  actor_hidden_size, normalize, initialize, activation, activation_action, device)
+        self.target_actor_net = copy.deepcopy(self.actor_net)
+
         self.critic_net_A = CriticNet(False, representation.output_shapes['state'][0], n_agents, self.action_dim,
                                       critic_hidden_size, normalize, initialize, activation, device)
         self.critic_net_B = CriticNet(False, representation.output_shapes['state'][0], n_agents, self.action_dim,
                                       critic_hidden_size, normalize, initialize, activation, device)
         self.target_critic_net_A = copy.deepcopy(self.critic_net_A)
         self.target_critic_net_B = copy.deepcopy(self.critic_net_B)
-        # self.parameters_critic = self.critic_net.parameters()
+
+        self.parameters_actor = list(self.representation.parameters()) + list(self.actor_net.parameters())
+        self.parameters_critic = list(self.critic_net_A.parameters()) + list(self.critic_net_B.parameters())
 
     def Qpolicy(self, observation: torch.Tensor, actions: torch.Tensor, agent_ids: torch.Tensor):
         bs = observation.shape[0]

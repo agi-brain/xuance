@@ -1,8 +1,8 @@
 agent: "IPPO"
 env_name: "mpe"
 env_id: "simple_spread_v3"
-continuous_action: False
-policy: "Categorical_MAAC_Policy"
+continuous_action: True
+policy: "Gaussian_MAAC_Policy"
 representation: "Basic_MLP"
 vectorize: "Dummy_Pettingzoo"
 runner: "Pettingzoo_Runner"
@@ -15,6 +15,7 @@ gain: 0.01
 actor_hidden_size: [64, ]
 critic_hidden_size: [256, ]
 activation: "relu"
+activation_action: "sigmoid"
 
 seed: 1
 parallels: 128
