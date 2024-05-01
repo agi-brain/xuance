@@ -1,10 +1,16 @@
 To be released
 ==============================================
 
-Date: Soon
+Date: 01 May, 2024
+----------------------------------------------
 
 - Support MetaDrive environment, and provide examples;
--
+- Refine the configuration settings for the gym-pybullet-drones environment;
+- Fix some issues about models saving;
+- Revise the model loading method;
+- Implement a configuration option for selecting different activation function of the output layer of actors for continuous control;
+- Update the corresponding examples to adapt the above changes;
+- Fix some other bugs.
 
 Version: 1.0.11
 ==============================================
