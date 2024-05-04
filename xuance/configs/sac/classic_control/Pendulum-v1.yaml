@@ -13,8 +13,8 @@ activation: "relu"
 activation_action: 'tanh'
 
 seed: 1
-parallels: 16
-n_size: 20000
+parallels: 10
+n_size: 200000
 batch_size: 256
 actor_learning_rate: 0.001
 critic_learning_rate: 0.001
@@ -23,9 +23,9 @@ tau: 0.005
 
 start_noise: 0.25
 end_noise: 0.05
-training_frequency: 2
+training_frequency: 1
 running_steps: 500000
-start_training: 2000
+start_training: 1000
 
 use_obsnorm: False
 use_rewnorm: False
@@ -34,6 +34,6 @@ rewnorm_range: 5
 
 test_steps: 10000
 eval_interval: 50000
-test_episode: 1
+test_episode: 3
 log_dir: "./logs/sac/"
 model_dir: "./models/sac/"
