@@ -25,9 +25,9 @@ class SAC_Agent(Agent):
         self.gamma = config.gamma
         self.train_frequency = config.training_frequency
         self.start_training = config.start_training
-        self.start_noise = config.start_noise
-        self.end_noise = config.end_noise
-        self.noise_scale = config.start_noise
+        # self.start_noise = config.start_noise
+        # self.end_noise = config.end_noise
+        # self.noise_scale = config.start_noise
 
         self.observation_space = envs.observation_space
         self.action_space = envs.action_space
