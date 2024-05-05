@@ -6,7 +6,8 @@ from .layers import (
 from .distributions import (
     Distribution,
     CategoricalDistribution,
-    DiagGaussianDistribution
+    DiagGaussianDistribution,
+    ActivatedDiagGaussianDistribution
 )
 from .operations import (update_linear_decay, set_seed, get_flat_grad, get_flat_params, assign_from_flat_grads,
                          assign_from_flat_params, split_distributions, merge_distributions)

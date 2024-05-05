@@ -44,13 +44,16 @@ class SAC_Agent(Agent):
                               scheduler,
                               config.device,
                               config.model_dir,
-                              config.gamma,
-                              config.tau)
+                              gamma=config.gamma,
+                              tau=config.tau,
+                              alpha=config.alpha,
+                              use_automatic_entropy_tuning=config.use_automatic_entropy_tuning,
+                              target_entropy=-np.prod(self.action_space.shape).item(),
+                              lr_policy=config.actor_learning_rate)
         super(SAC_Agent, self).__init__(config, envs, policy, memory, learner, device, config.log_dir, config.model_dir)
 
     def _action(self, obs):
-        _, act_dist = self.policy(obs)
-        action = act_dist.rsample()
+        _, action = self.policy(obs)
         action = action.detach().cpu().numpy()
         return action
 

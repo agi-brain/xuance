@@ -19,6 +19,8 @@ batch_size: 256
 actor_learning_rate: 0.001
 critic_learning_rate: 0.001
 gamma: 0.98
+alpha: 0.2
+use_automatic_entropy_tuning: True
 tau: 0.005
 
 start_noise: 0.25

@@ -26,6 +26,7 @@ actor_learning_rate: 0.001
 critic_learning_rate: 0.001
 gamma: 0.99
 alpha: 0.01
+use_automatic_entropy_tuning: False
 tau: 0.005
 learning_rate: 0.0007
 
