@@ -28,10 +28,7 @@ gamma: 0.99
 alpha: 0.01
 use_automatic_entropy_tuning: False
 tau: 0.005
-learning_rate: 0.0007
 
-start_noise: 0.25
-end_noise: 0.05
 training_frequency: 1
 running_steps: 50000000  # 50M
 start_training: 10000

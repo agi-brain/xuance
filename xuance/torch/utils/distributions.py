@@ -42,10 +42,12 @@ class CategoricalDistribution(Distribution):
     def __init__(self, action_dim: int):
         super(CategoricalDistribution, self).__init__()
         self.action_dim = action_dim
+        self.probs, self.logits = None, None
 
-    def set_param(self, logits):
+    def set_param(self, probs=None, logits=None):
+        self.probs = probs
         self.logits = logits
-        self.distribution = Categorical(logits=logits)
+        self.distribution = Categorical(probs=probs, logits=logits)
 
     def get_param(self):
         return self.logits

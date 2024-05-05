@@ -17,17 +17,14 @@ n_size: 20000
 batch_size: 256
 actor_learning_rate: 0.001
 critic_learning_rate: 0.01
-gamma: 0.98
+gamma: 0.99
 alpha: 0.2
 use_automatic_entropy_tuning: True
 tau: 0.005
 
-start_noise: 0.25
-end_noise: 0.05
-training_frequency: 2
+training_frequency: 1
 running_steps: 500000
 start_training: 2000
-action_type: "DISCRETE"
 
 use_obsnorm: False
 use_rewnorm: False
