@@ -23,8 +23,6 @@ alpha: 0.2
 use_automatic_entropy_tuning: True
 tau: 0.005
 
-start_noise: 0.25
-end_noise: 0.05
 training_frequency: 1
 running_steps: 500000
 start_training: 1000
@@ -36,6 +34,6 @@ rewnorm_range: 5
 
 test_steps: 10000
 eval_interval: 50000
-test_episode: 3
+test_episode: 5
 log_dir: "./logs/sac/"
 model_dir: "./models/sac/"
