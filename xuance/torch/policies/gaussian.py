@@ -203,7 +203,6 @@ class SACPolicy(nn.Module):
         self.activation_action = activation_action()
         self.representation_info_shape = representation.output_shapes
 
-        # representations
         self.actor_representation = representation
         self.actor = ActorNet_SAC(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size,
                                   normalize, initialize, activation, activation_action, device)
@@ -227,8 +226,8 @@ class SACPolicy(nn.Module):
     def forward(self, observation: Union[np.ndarray, dict]):
         outputs_actor = self.actor_representation(observation)
         act_dist = self.actor(outputs_actor['state'])
-        act_output = act_dist.activated_rsample()
-        return outputs_actor, act_output
+        act_sample = act_dist.activated_rsample()
+        return outputs_actor, act_sample
 
     def Qpolicy(self, observation: Union[np.ndarray, dict]):
         outputs_actor = self.actor_representation(observation)
@@ -236,13 +235,10 @@ class SACPolicy(nn.Module):
         outputs_critic_2 = self.critic_2_representation(observation)
 
         act_dist = self.actor(outputs_actor['state'])
-        # act_sample = act_dist.rsample()
-        # act_output = self.activation_action(act_sample)
-        # act_log = act_dist.log_prob(act_sample).sum(-1)
-        act_output, act_log = act_dist.activated_rsample_and_logprob()
+        act_sample, act_log = act_dist.activated_rsample_and_logprob()
 
-        q_1 = self.critic_1(outputs_critic_1['state'], act_output)
-        q_2 = self.critic_2(outputs_critic_2['state'], act_output)
+        q_1 = self.critic_1(outputs_critic_1['state'], act_sample)
+        q_2 = self.critic_2(outputs_critic_2['state'], act_sample)
         return act_log, q_1, q_2
 
     def Qtarget(self, observation: Union[np.ndarray, dict]):
@@ -251,13 +247,10 @@ class SACPolicy(nn.Module):
         outputs_critic_2 = self.target_critic_2_representation(observation)
 
         new_act_dist = self.actor(outputs_actor['state'])
-        # new_act_sample = new_act_dist.rsample()
-        # new_act_output = self.activation_action(new_act_sample)
-        # new_act_log = new_act_dist.log_prob(new_act_sample).sum(-1)
-        new_act_output, new_act_log = new_act_dist.activated_rsample_and_logprob()
+        new_act_sample, new_act_log = new_act_dist.activated_rsample_and_logprob()
 
-        target_q_1 = self.target_critic_1(outputs_critic_1['state'], new_act_output)
-        target_q_2 = self.target_critic_2(outputs_critic_2['state'], new_act_output)
+        target_q_1 = self.target_critic_1(outputs_critic_1['state'], new_act_sample)
+        target_q_2 = self.target_critic_2(outputs_critic_2['state'], new_act_sample)
         target_q = torch.min(target_q_1, target_q_2)
         return new_act_log, target_q
 

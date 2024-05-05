@@ -25,9 +25,6 @@ class SAC_Agent(Agent):
         self.gamma = config.gamma
         self.train_frequency = config.training_frequency
         self.start_training = config.start_training
-        # self.start_noise = config.start_noise
-        # self.end_noise = config.end_noise
-        # self.noise_scale = config.start_noise
 
         self.observation_space = envs.observation_space
         self.action_space = envs.action_space
@@ -39,11 +36,7 @@ class SAC_Agent(Agent):
                                       self.n_envs,
                                       config.n_size,
                                       config.batch_size)
-        learner = SAC_Learner(policy,
-                              optimizer,
-                              scheduler,
-                              config.device,
-                              config.model_dir,
+        learner = SAC_Learner(policy, optimizer, scheduler, config.device, config.model_dir,
                               gamma=config.gamma,
                               tau=config.tau,
                               alpha=config.alpha,
@@ -54,8 +47,7 @@ class SAC_Agent(Agent):
 
     def _action(self, obs):
         _, action = self.policy(obs)
-        action = action.detach().cpu().numpy()
-        return action
+        return action.detach().cpu().numpy()
 
     def train(self, train_steps):
         obs = self.envs.buf_obs
