@@ -1,5 +1,9 @@
+import os
 import socket
 from pathlib import Path
+
+import numpy as np
+
 from xuance.torch.agents import *
 from xuance.common import get_time_string
 
@@ -84,13 +88,32 @@ class Agent(ABC):
         self.current_episode = np.zeros((self.envs.num_envs,), np.int32)
 
     def save_model(self, model_name):
+        # save the neural networks
         if not os.path.exists(self.model_dir_save):
             os.makedirs(self.model_dir_save)
         model_path = os.path.join(self.model_dir_save, model_name)
         self.learner.save_model(model_path)
+        # save the observation status
+        if self.use_obsnorm:
+            obs_norm_path = os.path.join(self.model_dir_save, "obs_rms.npy")
+            observation_stat = {'count': self.obs_rms.count,
+                                'mean': self.obs_rms.mean,
+                                'var': self.obs_rms.var}
+            np.save(obs_norm_path, observation_stat)
 
     def load_model(self, path, model=None):
-        self.learner.load_model(path, model)
+        # load neural networks
+        path_loaded = self.learner.load_model(path, model)
+        # recover observation status
+        if self.use_obsnorm:
+            obs_norm_path = os.path.join(path_loaded, "obs_rms.npy")
+            if os.path.exists(obs_norm_path):
+                observation_stat = np.load(obs_norm_path, allow_pickle=True).item()
+                self.obs_rms.count = observation_stat['count']
+                self.obs_rms.mean = observation_stat['mean']
+                self.obs_rms.var = observation_stat['var']
+            else:
+                raise RuntimeError(f"Failed to load observation status file 'obs_rms.npy' from {obs_norm_path}!")
 
     def log_infos(self, info: dict, x_index: int):
         """

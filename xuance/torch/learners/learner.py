@@ -55,6 +55,7 @@ class Learner(ABC):
             "cuda:7": self.device
         }))
         print(f"Successfully load model from '{path}'.")
+        return path
 
     @abstractmethod
     def update(self, *args):
