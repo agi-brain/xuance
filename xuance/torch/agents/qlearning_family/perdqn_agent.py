@@ -41,7 +41,7 @@ class PerDQN_Agent(Agent):
                                     self.action_space,
                                     self.auxiliary_info_shape,
                                     self.n_envs,
-                                    config.n_size,
+                                    config.buffer_size,
                                     config.batch_size,
                                     config.PER_alpha)
         learner = PerDQN_Learner(policy,
