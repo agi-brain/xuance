@@ -14,7 +14,7 @@ activation_action: 'tanh'
 seed: 1
 parallels: 10
 running_steps: 100000
-n_steps: 1024
+horizon_size: 1024
 n_epoch: 3
 n_minibatch: 1
 learning_rate: 0.0004

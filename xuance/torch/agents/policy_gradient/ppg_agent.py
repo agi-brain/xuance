@@ -21,7 +21,7 @@ class PPG_Agent(Agent):
                  device: Optional[Union[int, str, torch.device]] = None):
         self.render = config.render
         self.n_envs = envs.num_envs
-        self.n_steps = config.n_steps
+        self.horizon_size = config.horizon_size
         self.n_minibatch = config.n_minibatch
         self.n_epoch = config.n_epoch
         self.policy_nepoch = config.policy_nepoch
@@ -35,13 +35,13 @@ class PPG_Agent(Agent):
         self.representation_info_shape = policy.actor_representation.output_shapes
         self.auxiliary_info_shape = {"old_dist": None}
 
-        self.buffer_size = self.n_envs * self.n_steps
+        self.buffer_size = self.n_envs * self.horizon_size
         self.batch_size = self.buffer_size // self.n_epoch
         memory = DummyOnPolicyBuffer(self.observation_space,
                                      self.action_space,
                                      self.auxiliary_info_shape,
                                      self.n_envs,
-                                     self.n_steps,
+                                     self.horizon_size,
                                      config.use_gae,
                                      config.use_advnorm,
                                      self.gamma,

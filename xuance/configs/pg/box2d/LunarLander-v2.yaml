@@ -13,9 +13,9 @@ activation: 'relu'
 seed: 1
 parallels: 10
 running_steps: 300000
-nsteps: 128
-nepoch: 3
-nminibatch: 1
+horizon_size: 128
+n_epoch: 3
+n_minibatch: 1
 learning_rate: 0.0004
 
 ent_coef: 0.01

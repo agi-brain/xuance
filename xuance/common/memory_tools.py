@@ -166,7 +166,7 @@ class DummyOnPolicyBuffer(Buffer):
         action_space: the action space of the environment.
         auxiliary_shape: data shape of auxiliary information (if exists).
         n_envs: number of parallel environments.
-        n_size: max length of steps to store for one environment.
+        horizon_size: max length of steps to store for one environment.
         use_gae: if use GAE trick.
         use_advnorm: if use Advantage normalization trick.
         gamma: discount factor.
@@ -177,13 +177,14 @@ class DummyOnPolicyBuffer(Buffer):
                  action_space: Space,
                  auxiliary_shape: Optional[dict],
                  n_envs: int,
-                 n_size: int,
+                 horizon_size: int,
                  use_gae: bool = True,
                  use_advnorm: bool = True,
                  gamma: float = 0.99,
                  gae_lam: float = 0.95):
         super(DummyOnPolicyBuffer, self).__init__(observation_space, action_space, auxiliary_shape)
-        self.n_envs, self.n_size = n_envs, n_size
+        self.n_envs, self.horizon_size = n_envs, horizon_size
+        self.n_size = self.horizon_size
         self.buffer_size = self.n_size * self.n_envs
         self.use_gae, self.use_advnorm = use_gae, use_advnorm
         self.gamma, self.gae_lam = gamma, gae_lam
@@ -273,7 +274,7 @@ class DummyOnPolicyBuffer_Atari(DummyOnPolicyBuffer):
         action_space: the action space of the environment.
         auxiliary_shape: data shape of auxiliary information (if exists).
         n_envs: number of parallel environments.
-        n_size: max length of steps to store for one environment.
+        horizon_size: max length of steps to store for one environment.
         use_gae: if use GAE trick.
         use_advnorm: if use Advantage normalization trick.
         gamma: discount factor.
@@ -284,13 +285,13 @@ class DummyOnPolicyBuffer_Atari(DummyOnPolicyBuffer):
                  action_space: Space,
                  auxiliary_shape: Optional[dict],
                  n_envs: int,
-                 n_size: int,
+                 horizon_size: int,
                  use_gae: bool = True,
                  use_advnorm: bool = True,
                  gamma: float = 0.99,
                  gae_lam: float = 0.95):
         super(DummyOnPolicyBuffer_Atari, self).__init__(observation_space, action_space, auxiliary_shape,
-                                                        n_envs, n_size, use_gae, use_advnorm, gamma, gae_lam)
+                                                        n_envs, horizon_size, use_gae, use_advnorm, gamma, gae_lam)
         self.observations = create_memory(space2shape(self.observation_space), self.n_envs, self.n_size, np.uint8)
 
     def clear(self):
@@ -368,7 +369,7 @@ class RecurrentOffPolicyBuffer(Buffer):
         action_space: the action space of the environment.
         auxiliary_shape: data shape of auxiliary information (if exists).
         n_envs: number of parallel environments.
-        n_size: max length of steps to store for one environment.
+        buffer_size: the size of replay buffer that stores episodes of data.
         batch_size: batch size of transition data for a sample.
         episode_length: data length for an episode.
         lookup_length: the length of history data.
@@ -378,12 +379,13 @@ class RecurrentOffPolicyBuffer(Buffer):
                  action_space: Space,
                  auxiliary_shape: Optional[dict],
                  n_envs: int,
-                 n_size: int,
+                 buffer_size: int,
                  batch_size: int,
                  episode_length: int,
                  lookup_length: int):
         super(RecurrentOffPolicyBuffer, self).__init__(observation_space, action_space, auxiliary_shape)
-        self.n_envs, self.n_size, self.episode_length, self.batch_size = n_envs, n_size, episode_length, batch_size
+        self.n_envs, self.buffer_size, self.episode_length, self.batch_size = n_envs, buffer_size, episode_length, batch_size
+        self.n_size = self.buffer_size // self.n_envs
         self.lookup_length = lookup_length
         self.memory = deque(maxlen=self.n_size)
 

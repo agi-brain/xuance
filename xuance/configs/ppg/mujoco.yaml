@@ -15,7 +15,7 @@ activation_action: 'tanh'
 seed: 1
 parallels: 16
 running_steps: 1000000  # 1M
-n_steps: 256
+horizon_size: 256
 n_minibatch: 4
 n_epoch: 1
 policy_nepoch: 2
