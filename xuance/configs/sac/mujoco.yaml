@@ -14,7 +14,7 @@ activation_action: 'tanh'
 
 seed: 1
 parallels: 4  # number of environments
-n_size: 250000
+buffer_size: 1000000
 batch_size: 256
 actor_learning_rate: 0.001
 critic_learning_rate: 0.001

@@ -20,7 +20,7 @@ activation: "leaky_relu"
 
 seed: 1069
 parallels: 5
-n_size: 100000
+buffer_size: 500000
 batch_size: 32  # 64
 actor_learning_rate: 0.001
 critic_learning_rate: 0.001

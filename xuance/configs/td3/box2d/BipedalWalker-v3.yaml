@@ -13,7 +13,7 @@ activation_action: 'tanh'
 
 seed: 1
 parallels: 10
-n_size: 20000
+buffer_size: 200000
 batch_size: 256
 actor_learning_rate: 0.0005
 critic_learning_rate: 0.001

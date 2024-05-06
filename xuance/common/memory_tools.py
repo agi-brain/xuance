@@ -312,18 +312,19 @@ class DummyOffPolicyBuffer(Buffer):
         action_space: the action space of the environment.
         auxiliary_shape: data shape of auxiliary information (if exists).
         n_envs: number of parallel environments.
-        n_size: max length of steps to store for one environment.
-        batch_size: batch size of transition data for a sample.
+        buffer_size: the total size of the replay buffer.
+        batch_size: size of transition data for a batch of sample.
     """
     def __init__(self,
                  observation_space: Space,
                  action_space: Space,
                  auxiliary_shape: Optional[dict],
                  n_envs: int,
-                 n_size: int,
+                 buffer_size: int,
                  batch_size: int):
         super(DummyOffPolicyBuffer, self).__init__(observation_space, action_space, auxiliary_shape)
-        self.n_envs, self.n_size, self.batch_size = n_envs, n_size, batch_size
+        self.n_envs, self.batch_size = n_envs, batch_size
+        self.n_size = buffer_size // self.n_envs
         self.observations = create_memory(space2shape(self.observation_space), self.n_envs, self.n_size)
         self.next_observations = create_memory(space2shape(self.observation_space), self.n_envs, self.n_size)
         self.actions = create_memory(space2shape(self.action_space), self.n_envs, self.n_size)
@@ -437,7 +438,7 @@ class PerOffPolicyBuffer(Buffer):
         action_space: the action space of the environment.
         auxiliary_shape: data shape of auxiliary information (if exists).
         n_envs: number of parallel environments.
-        n_size: max length of steps to store for one environment.
+        buffer_size: the total size of the replay buffer.
         batch_size: batch size of transition data for a sample.
         alpha: prioritized factor.
     """
@@ -446,11 +447,12 @@ class PerOffPolicyBuffer(Buffer):
                  action_space: Space,
                  auxiliary_shape: Optional[dict],
                  n_envs: int,
-                 n_size: int,
+                 buffer_size: int,
                  batch_size: int,
                  alpha: float = 0.6):
         super(PerOffPolicyBuffer, self).__init__(observation_space, action_space, auxiliary_shape)
-        self.n_envs, self.n_size, self.batch_size = n_envs, n_size, batch_size
+        self.n_envs, self.batch_size = n_envs, batch_size
+        self.n_size = buffer_size // self.n_envs
         self.observations = create_memory(space2shape(self.observation_space), self.n_envs, self.n_size)
         self.next_observations = create_memory(space2shape(self.observation_space), self.n_envs, self.n_size)
         self.actions = create_memory(space2shape(self.action_space), self.n_envs, self.n_size)
@@ -565,7 +567,7 @@ class DummyOffPolicyBuffer_Atari(DummyOffPolicyBuffer):
         action_space: the action space of the environment.
         auxiliary_shape: data shape of auxiliary information (if exists).
         n_envs: number of parallel environments.
-        n_size: max length of steps to store for one environment.
+        buffer_size: the total size of the replay buffer.
         batch_size: batch size of transition data for a sample.
     """
     def __init__(self,
@@ -573,10 +575,10 @@ class DummyOffPolicyBuffer_Atari(DummyOffPolicyBuffer):
                  action_space: Space,
                  auxiliary_shape: Optional[dict],
                  n_envs: int,
-                 n_size: int,
+                 buffer_size: int,
                  batch_size: int):
         super(DummyOffPolicyBuffer_Atari, self).__init__(observation_space, action_space, auxiliary_shape,
-                                                         n_envs, n_size, batch_size)
+                                                         n_envs, buffer_size, batch_size)
         self.observations = create_memory(space2shape(self.observation_space), self.n_envs, self.n_size, np.uint8)
         self.next_observations = create_memory(space2shape(self.observation_space), self.n_envs, self.n_size, np.uint8)
 

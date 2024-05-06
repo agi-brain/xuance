@@ -16,7 +16,7 @@ activation: 'relu'
 
 seed: 1
 parallels: 2
-n_size: 10000
+buffer_size: 20000
 batch_size: 32
 learning_rate: 0.0001
 gamma: 0.99

@@ -13,8 +13,8 @@ activation: "leaky_relu"
 activation_action: 'tanh'
 
 seed: 1
-parallels: 16  # number of environments
-n_size: 20000
+parallels: 10  # number of environments
+buffer_size: 200000
 batch_size: 256
 actor_learning_rate: 0.001
 critic_learning_rate: 0.001

@@ -13,7 +13,7 @@ qnetwork_hidden_size: [128, ]
 activation: "relu"
 activation_action: 'tanh'
 
-n_size: 20000
+buffer_size: 20000
 batch_size: 128
 learning_rate: 0.001
 gamma: 0.99

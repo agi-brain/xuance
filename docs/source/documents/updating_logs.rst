@@ -5,6 +5,7 @@ Date: Very Soon
 ----------------------------------------------
 
 - Solve the issue about `avail_actions`;
+- n_size -> buffer_size;
 
 Version: 1.1.0
 ==============================================
