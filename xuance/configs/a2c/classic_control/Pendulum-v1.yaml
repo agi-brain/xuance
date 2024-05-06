@@ -6,9 +6,9 @@ policy: "Gaussian_AC"
 representation: "Basic_MLP"
 runner: "DRL"
 
-representation_hidden_size: [256,]
-actor_hidden_size: [256,]
-critic_hidden_size: [256,]
+representation_hidden_size: [128,]
+actor_hidden_size: [128,]
+critic_hidden_size: [128,]
 activation: 'leaky_relu'
 activation_action: 'tanh'
 
