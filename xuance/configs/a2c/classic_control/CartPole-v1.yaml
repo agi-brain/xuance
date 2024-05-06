@@ -6,17 +6,17 @@ policy: "Categorical_AC"
 representation: "Basic_MLP"
 runner: "DRL"
 
-representation_hidden_size: [256,]
-actor_hidden_size: [256,]
-critic_hidden_size: [256,]
+representation_hidden_size: [128,]
+actor_hidden_size: [128,]
+critic_hidden_size: [128,]
 activation: 'leaky_relu'
 
 seed: 1
 parallels: 10
 running_steps: 300000
-horizon_size: 128
+horizon_size: 256
 n_epoch: 1
-n_minibatch: 1
+n_minibatch: 8
 learning_rate: 0.0004
 
 vf_coef: 0.25
