@@ -114,11 +114,11 @@ Policy_Inputs = {
                    "normalize", "initialize", "activation", "activation_action", "device"],
     # DRL (hybrid action spaces) #
     "PDQN_Policy": ['observation_space', 'action_space', 'representation', 'conactor_hidden_size',
-                    'qnetwork_hidden_size', 'normalize', 'initialize', 'activation', 'device'],
+                    'qnetwork_hidden_size', 'normalize', 'initialize', 'activation', 'activation_action', 'device'],
     "MPDQN_Policy": ['observation_space', 'action_space', 'representation', 'conactor_hidden_size',
-                     'qnetwork_hidden_size', 'normalize', 'initialize', 'activation', 'device'],
+                     'qnetwork_hidden_size', 'normalize', 'initialize', 'activation', 'activation_action', 'device'],
     "SPDQN_Policy": ['observation_space', 'action_space', 'representation', 'conactor_hidden_size',
-                     'qnetwork_hidden_size', 'normalize', 'initialize', 'activation', 'device'],
+                     'qnetwork_hidden_size', 'normalize', 'initialize', 'activation', 'activation_action', 'device'],
     #  MARL policies (discrete action spaces) #
     "Basic_Q_network_marl": ["action_space", "n_agents", "representation", "hidden_sizes",
                              "normalize", "initialize", "activation", "device"],
