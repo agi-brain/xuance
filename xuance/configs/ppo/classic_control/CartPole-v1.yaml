@@ -13,7 +13,7 @@ activation: 'leaky_relu'
 
 seed: 1
 parallels: 10
-running_steps: 300000
+running_steps: 120000
 horizon_size: 256
 n_epoch: 8
 n_minibatch: 8

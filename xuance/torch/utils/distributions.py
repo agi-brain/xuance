@@ -45,9 +45,14 @@ class CategoricalDistribution(Distribution):
         self.probs, self.logits = None, None
 
     def set_param(self, probs=None, logits=None):
-        self.probs = probs
-        self.logits = logits
-        self.distribution = Categorical(probs=probs, logits=logits)
+        if probs is not None:
+            self.distribution = Categorical(probs=probs, logits=logits)
+        elif logits is not None:
+            self.distribution = Categorical(probs=probs, logits=logits)
+        else:
+            raise RuntimeError("Failed to setup distributions without given probs or logits.")
+        self.probs = self.distribution.probs
+        self.logits = self.distribution.logits
 
     def get_param(self):
         return self.logits
