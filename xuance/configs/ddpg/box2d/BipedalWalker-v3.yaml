@@ -2,8 +2,8 @@ agent: "DDPG"
 env_name: "Box2D"
 env_id: "BipedalWalker-v3"
 vectorize: "Dummy_Gym"
-policy: "DDPG_Policy"
 representation: "Basic_Identical"
+policy: "DDPG_Policy"
 runner: "DRL"
 
 representation_hidden_size:
@@ -20,12 +20,11 @@ actor_learning_rate: 0.001
 critic_learning_rate: 0.001
 gamma: 0.99
 tau: 0.005
-learning_rate: 0.0007
 
 start_noise: 0.5
 end_noise: 0.1
 training_frequency: 1
-running_steps: 5000000
+running_steps: 2000000
 start_training: 1000
 
 use_obsnorm: False
@@ -35,6 +34,6 @@ rewnorm_range: 5
 
 test_steps: 10000
 eval_interval: 50000
-test_episode: 1
+test_episode: 5
 log_dir: "./logs/ddpg/"
 model_dir: "./models/ddpg/"

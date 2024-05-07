@@ -2,8 +2,8 @@ agent: "TD3"
 env_name: "MuJoCo"
 env_id: "Ant-v4"
 vectorize: "Dummy_Gym"
-policy: "TD3_Policy"
 representation: "Basic_Identical"
+policy: "TD3_Policy"
 runner: "DRL"
 
 representation_hidden_size:  # If you choose Basic_Identical representation, then ignore this value
