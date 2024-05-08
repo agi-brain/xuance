@@ -1,66 +1,5 @@
-import torch.distributions
-
 from xuance.torch.policies import *
 from xuance.torch.utils import *
-
-
-class BasicQhead(nn.Module):
-    def __init__(self,
-                 state_dim: int,
-                 action_dim: int,
-                 n_agents: int,
-                 hidden_sizes: Sequence[int],
-                 normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., torch.Tensor]] = None,
-                 activation: Optional[ModuleType] = None,
-                 device: Optional[Union[str, int, torch.device]] = None):
-        super(BasicQhead, self).__init__()
-        layers_ = []
-        input_shape = (state_dim + n_agents,)
-        for h in hidden_sizes:
-            mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initialize, device)
-            layers_.extend(mlp)
-        layers_.extend(mlp_block(input_shape[0], action_dim, None, None, None, device)[0])
-        self.model = nn.Sequential(*layers_)
-
-    def forward(self, x: torch.Tensor):
-        return self.model(x)
-
-
-class BasicQnetwork(nn.Module):
-    def __init__(self,
-                 action_space: Discrete,
-                 n_agents: int,
-                 representation: nn.Module,
-                 hidden_size: Sequence[int] = None,
-                 normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., torch.Tensor]] = None,
-                 activation: Optional[ModuleType] = None,
-                 device: Optional[Union[str, int, torch.device]] = None):
-        super(BasicQnetwork, self).__init__()
-        self.action_dim = action_space.n
-        self.representation = representation
-        self.representation_info_shape = self.representation.output_shapes
-
-        self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, n_agents,
-                                     hidden_size, normalize, initialize, activation, device)
-        self.target_Qhead = copy.deepcopy(self.eval_Qhead)
-
-    def forward(self, observation: torch.Tensor, agent_ids: torch.Tensor):
-        outputs = self.representation(observation)
-        q_inputs = torch.concat([outputs['state'], agent_ids], dim=-1)
-        evalQ = self.eval_Qhead(q_inputs)
-        argmax_action = evalQ.argmax(dim=-1, keepdim=False)
-        return outputs, argmax_action, evalQ
-
-    def target_Q(self, observation: torch.Tensor, agent_ids: torch.Tensor):
-        outputs = self.representation(observation)
-        q_inputs = torch.concat([outputs['state'], agent_ids], dim=-1)
-        return self.target_Qhead(q_inputs)
-
-    def copy_target(self):
-        for ep, tp in zip(self.eval_Qhead.parameters(), self.target_Qhead.parameters()):
-            tp.data.copy_(ep)
 
 
 class ActorNet(nn.Module):
@@ -88,6 +27,38 @@ class ActorNet(nn.Module):
 
     def forward(self, x: torch.Tensor):
         self.dist.set_param(self.mu(x), self.log_std.exp())
+        return self.dist
+
+
+class ActorNet_SAC(nn.Module):
+    def __init__(self,
+                 state_dim: int,
+                 n_agents: int,
+                 action_dim: int,
+                 hidden_sizes: Sequence[int],
+                 normalize: Optional[ModuleType] = None,
+                 initialize: Optional[Callable[..., torch.Tensor]] = None,
+                 activation: Optional[ModuleType] = None,
+                 activation_action: Optional[ModuleType] = None,
+                 device: Optional[Union[str, int, torch.device]] = None):
+        super(ActorNet_SAC, self).__init__()
+        self.device = device
+        layers = []
+        input_shape = (state_dim + n_agents,)
+        for h in hidden_sizes:
+            mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initialize, device)
+            layers.extend(mlp)
+        self.output = nn.Sequential(*layers)
+        self.mu = nn.Linear(input_shape[0], action_dim, device=device)
+        self.log_std = nn.Linear(input_shape[0], action_dim, device=device)
+        self.dist = ActivatedDiagGaussianDistribution(action_dim, activation_action, device)
+
+    def forward(self, x: torch.Tensor):
+        output = self.output(x)
+        mu = self.mu(output)
+        log_std = torch.clamp(self.log_std(output), -20, 2)
+        std = log_std.exp()
+        self.dist.set_param(mu, std)
         return self.dist
 
 
@@ -205,8 +176,8 @@ class Basic_ISAC_policy(nn.Module):
         self.representation = representation
         self.representation_info_shape = self.representation.output_shapes
 
-        self.actor_net = ActorNet(representation.output_shapes['state'][0], n_agents, self.action_dim,
-                                  actor_hidden_size, normalize, initialize, activation, activation_action, device)
+        self.actor_net = ActorNet_SAC(representation.output_shapes['state'][0], n_agents, self.action_dim,
+                                      actor_hidden_size, normalize, initialize, activation, activation_action, device)
         dim_input_critic = representation.output_shapes['state'][0] + self.action_dim
         self.critic_net = CriticNet(dim_input_critic, n_agents, critic_hidden_size,
                                     normalize, initialize, activation, device)

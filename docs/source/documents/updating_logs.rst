@@ -6,6 +6,7 @@ Date: Very Soon
 
 - Solve the issue about `avail_actions`;
 - n_size -> buffer_size;
+- The saving and loading of observation status;
 
 Version: 1.1.0
 ==============================================
