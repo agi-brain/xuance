@@ -27,7 +27,7 @@ class MASAC_Agents(MARLAgents):
                                                        total_iters=get_total_iters(config.agent_name, config))]
         self.observation_space = envs.observation_space
         self.action_space = envs.action_space
-        self.representation_info_shape = policy.representation.output_shapes
+        self.representation_info_shape = policy.representation_info_shape
         self.auxiliary_info_shape = {}
 
         if config.state_space is not None:
@@ -43,8 +43,10 @@ class MASAC_Agents(MARLAgents):
                                       envs.num_envs,
                                       config.buffer_size,
                                       config.batch_size)
-        learner = MASAC_Learner(config, policy, optimizer, scheduler,
-                                config.device, config.model_dir, config.gamma)
+        learner = MASAC_Learner(config, policy, optimizer, scheduler, config.device, config.model_dir,
+                                use_automatic_entropy_tuning=config.use_automatic_entropy_tuning,
+                                target_entropy=-policy.action_dim,
+                                lr_policy=config.lr_a)
         super(MASAC_Agents, self).__init__(config, envs, policy, memory, learner, device,
                                            config.log_dir, config.model_dir)
         self.on_policy = False
@@ -52,10 +54,8 @@ class MASAC_Agents(MARLAgents):
     def act(self, obs_n, test_mode):
         batch_size = len(obs_n)
         agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(batch_size, -1, -1).to(self.device)
-        _, dists = self.policy(obs_n, agents_id)
-        acts = dists.rsample()
-        actions = acts.cpu().detach().numpy()
-        return None, actions
+        _, actions = self.policy(obs_n, agents_id)
+        return None, actions.cpu().detach().numpy()
 
     def train(self, i_episode):
         sample = self.memory.sample()
