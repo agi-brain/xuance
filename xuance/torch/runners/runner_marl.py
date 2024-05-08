@@ -20,7 +20,7 @@ class Runner_MARL(Runner_Base):
         super(Runner_MARL, self).__init__(args)
         self.args = args
         self.render = args.render
-        self.fps = args[0].fps if type(args) == list else args.fps
+        self.fps = args.fps
 
         time_string = get_time_string()
         seed = f"seed_{self.args.seed}_"

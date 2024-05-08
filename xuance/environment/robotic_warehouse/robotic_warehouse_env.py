@@ -1,11 +1,12 @@
 import gym
 from gym.spaces import Box
 import numpy as np
+from xuance.environment.robotic_warehouse import ENV_IDs
 
 
 class RoboticWarehouseEnv:
     def __init__(self, args, **kwargs):
-        self.env = gym.make(args.env_id)
+        self.env = gym.make(ENV_IDs[args.env_id])
         self.n_agents = self.env.n_agents  # the number of agents
         self.seed = args.seed  # random seed
         self.env.seed(self.seed)
@@ -37,9 +38,9 @@ class RoboticWarehouseEnv:
         """Close your environment here"""
         self.env.close()
 
-    def render(self, **kwargs):
+    def render(self, render_mode):
         """Render the environment, and return the images"""
-        images = np.zeros([2, 2, 2])
+        images = self.env.render(render_mode)
         return images
 
     def reset(self):

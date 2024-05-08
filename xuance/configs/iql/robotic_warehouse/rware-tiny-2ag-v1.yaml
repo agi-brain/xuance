@@ -1,6 +1,6 @@
 agent: "IQL"  # the learning algorithms_marl
 env_name: "RoboticWarehouse"
-env_id: "rware:rware-tiny-2ag-v1"
+env_id: "rware-tiny-2ag-v1"
 max_episode_steps: 100
 policy: "Basic_Q_network_marl"
 representation: "Basic_MLP"
@@ -23,9 +23,9 @@ double_q: True  # use double q learning
 
 start_greedy: 1.0
 end_greedy: 0.05
-decay_step_greedy: 2500000
+decay_step_greedy: 1000000
 start_training: 1000  # start training after n episodes
-running_steps: 10000000  # 10M
+running_steps: 5000000  # 5M
 train_per_step: False  # True: train model per step; False: train model per episode.
 training_frequency: 1
 sync_frequency: 100

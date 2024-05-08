@@ -239,7 +239,7 @@ def get_runner(method,
         print("Algorithm:", args.agent)
         print("Environment:", args.env_name)
         print("Scenario:", args.env_id)
-        runner = run_REGISTRY[args[0].runner](args) if type(args) == list else run_REGISTRY[args.runner](args)
+        runner = run_REGISTRY[args.runner](args)
         return runner
 
 
