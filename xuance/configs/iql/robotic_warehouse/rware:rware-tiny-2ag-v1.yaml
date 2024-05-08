@@ -1,11 +1,11 @@
 agent: "IQL"  # the learning algorithms_marl
-env_name: "robotic_warehouse"
+env_name: "RoboticWarehouse"
 env_id: "rware:rware-tiny-2ag-v1"
 max_episode_steps: 100
 policy: "Basic_Q_network_marl"
 representation: "Basic_MLP"
-vectorize: "Dummy_Pettingzoo"
-runner: "Pettingzoo_Runner"
+vectorize: "Dummy_RoboticWarehouse"
+runner: "MARL"
 
 use_recurrent: False
 rnn:
