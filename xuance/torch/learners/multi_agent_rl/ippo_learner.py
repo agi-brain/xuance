@@ -70,23 +70,33 @@ class IPPO_Learner(LearnerMAS):
 
         # critic loss
         _, value_pred = self.policy.get_values(obs, IDs)
-        value_pred = value_pred
-        value_target = returns
+        value_pred = value_pred.reshape(-1, 1)
+        value_target = returns.reshape(-1, 1)
+        values = values.reshape(-1, 1)
+        agent_mask_flatten = agent_mask.reshape(-1, 1)
+        # value_pred = value_pred
+        # value_target = returns
         if self.use_value_clip:
             value_clipped = values + (value_pred - values).clamp(-self.value_clip_range, self.value_clip_range)
+            if self.use_value_norm:
+                self.value_normalizer.update(value_target)
+                value_target = self.value_normalizer.normalize(value_target)
             if self.use_huber_loss:
                 loss_v = self.huber_loss(value_pred, value_target)
                 loss_v_clipped = self.huber_loss(value_clipped, value_target)
             else:
                 loss_v = (value_pred - value_target) ** 2
                 loss_v_clipped = (value_clipped - value_target) ** 2
-            loss_c = torch.max(loss_v, loss_v_clipped) * agent_mask
-            loss_c = loss_c.sum() / agent_mask.sum()
+            loss_c = torch.max(loss_v, loss_v_clipped) * agent_mask_flatten
+            loss_c = loss_c.sum() / agent_mask_flatten.sum()
         else:
+            if self.use_value_norm:
+                self.value_normalizer.update(value_target)
+                value_target = self.value_normalizer.normalize(value_target)
             if self.use_huber_loss:
-                loss_v = self.huber_loss(value_pred, value_target) * agent_mask
+                loss_v = self.huber_loss(value_pred, value_target) * agent_mask_flatten
             else:
-                loss_v = ((value_pred - value_target) ** 2) * agent_mask
+                loss_v = ((value_pred - value_target) ** 2) * agent_mask_flatten
             loss_c = loss_v.sum() / agent_mask.sum()
 
         loss = loss_a + self.vf_coef * loss_c - self.ent_coef * loss_e
@@ -176,7 +186,7 @@ class IPPO_Learner(LearnerMAS):
         else:
             if self.use_value_norm:
                 self.value_normalizer.update(value_target)
-                value_pred = self.value_normalizer.normalize(value_pred)
+                value_target = self.value_normalizer.normalize(value_target)
             if self.use_huber_loss:
                 loss_v = self.huber_loss(value_pred, value_target)
             else:
