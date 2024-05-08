@@ -13,6 +13,7 @@ from xuance.environment.minigrid import DummyVecEnv_MiniGrid, SubprocVecEnv_Mini
 from xuance.environment.drones import DummyVecEnv_Drones, SubprocVecEnv_Drones
 from xuance.environment.drones import DummyVecEnv_Drones_MAS, SubprocVecEnv_Drones_MAS
 from xuance.environment.metadrive import SubprocVecEnv_MetaDrive
+from xuance.environment.robotic_warehouse import DummyVecEnv_RoboticWarehouse, SubprocVecEnv_RoboticWarehouse
 from xuance.environment.new_env import DummyVecEnv_New, SubprocVecEnv_New
 from xuance.environment.new_env_mas import DummyVecEnv_New_MAS, SubprocVecEnv_New_MAS
 
@@ -27,6 +28,7 @@ REGISTRY_VEC_ENV = {
     "Dummy_MiniGrid": DummyVecEnv_MiniGrid,
     "Dummy_Drone": DummyVecEnv_Drones,
     "Dummy_Drone_MAS": DummyVecEnv_Drones_MAS,
+    "Dummy_RoboticWarehouse": DummyVecEnv_RoboticWarehouse,
     "Dummy_NewEnv": DummyVecEnv_New,  # Add the newly defined vectorized environment
     "Dummy_NewEnv_MAS": DummyVecEnv_New_MAS,  # Add the newly defined vectorized environment for multi-agent systems
 
@@ -40,6 +42,7 @@ REGISTRY_VEC_ENV = {
     "Subproc_Drone": SubprocVecEnv_Drones,
     "Subproc_Drone_MAS": SubprocVecEnv_Drones_MAS,
     "Subproc_MetaDrive": SubprocVecEnv_MetaDrive,
+    "Subproc_RoboticWarehouse": SubprocVecEnv_RoboticWarehouse,
     "Subproc_NewEnv": SubprocVecEnv_New,  # Add the newly defined vectorized environment
     "Subproc_NewEnv_MAS": SubprocVecEnv_New_MAS,  # Add the newly defined vectorized environment for multi-agent systems
 }
@@ -70,9 +73,9 @@ def make_envs(config: Namespace):
                              map_size=config.map_size,
                              render_mode=config.render_mode)
 
-        elif config.env_name == "Robotic_WareHouse":
+        elif config.env_name == "RoboticWarehouse":
             from xuance.environment.robotic_warehouse.robotic_warehouse_env import RoboticWarehouseEnv
-            env = RoboticWarehouseEnv()
+            env = RoboticWarehouseEnv(config, render_mode=config.render_mode)
 
         elif config.env_name == "Atari":
             from xuance.environment.gym.gym_env import Atari_Env
