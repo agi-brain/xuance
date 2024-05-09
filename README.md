@@ -439,14 +439,14 @@ You can put your questions, advices, or the bugs you have found in the [Issues](
 Welcome to join the official communication group with QQ app (Group number: 552432695), and the official account ("玄策 RLlib") on WeChat.
 
 <details open>
-<summary>(QR code for QQ group and official account)</summary>
+<summary>(QR code for QQ group and WeChat official account)</summary>
 
 <table rules="none" align="center"><tr>
 <td> <center>
 <img src="docs/source/figures/QQ_group.jpeg" width="200" height="auto" /><br/><font color="AAAAAA">QQ group</font>
 </center></td>
 <td> <center>
-<img src="docs/source/figures/Official_Account.jpg" width="200" height="auto" /> <br/> <font color="AAAAAA">Official account</font>
+<img src="docs/source/figures/Official_Account.jpg" width="200" height="auto" /> <br/> <font color="AAAAAA">Official account (WeChat)</font>
 </center> </td>
 </tr>
 </table>

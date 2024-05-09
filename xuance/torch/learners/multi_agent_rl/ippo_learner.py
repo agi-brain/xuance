@@ -74,8 +74,6 @@ class IPPO_Learner(LearnerMAS):
         value_target = returns.reshape(-1, 1)
         values = values.reshape(-1, 1)
         agent_mask_flatten = agent_mask.reshape(-1, 1)
-        # value_pred = value_pred
-        # value_target = returns
         if self.use_value_clip:
             value_clipped = values + (value_pred - values).clamp(-self.value_clip_range, self.value_clip_range)
             if self.use_value_norm:

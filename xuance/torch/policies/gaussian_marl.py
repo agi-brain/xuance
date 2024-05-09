@@ -136,17 +136,17 @@ class MAAC_Policy(nn.Module):
 
     def get_values(self, critic_in: torch.Tensor, agent_ids: torch.Tensor,
                    *rnn_hidden: torch.Tensor, **kwargs):
-        shape_obs = critic_in.shape
+        shape_input = critic_in.shape
         # get representation features
         if self.use_rnn:
-            batch_size, n_agent, episode_length, dim_obs = tuple(shape_obs)
-            outputs = self.representation_critic(critic_in.reshape(-1, episode_length, dim_obs), *rnn_hidden)
-            outputs['state'] = outputs['state'].view(batch_size, n_agent, episode_length, -1)
+            batch_size, n_agent, episode_length, dim_input = tuple(shape_input)
+            outputs = self.representation_critic(critic_in.reshape(-1, episode_length, dim_input), *rnn_hidden)
+            outputs['state'] = outputs['state'].reshape(batch_size, n_agent, episode_length, -1)
             rnn_hidden = (outputs['rnn_hidden'], outputs['rnn_cell'])
         else:
-            batch_size, n_agent, dim_obs = tuple(shape_obs)
-            outputs = self.representation_critic(critic_in.reshape(-1, dim_obs))
-            outputs['state'] = outputs['state'].view(batch_size, n_agent, -1)
+            batch_size, n_agent, dim_input = tuple(shape_input)
+            outputs = self.representation_critic(critic_in.reshape(-1, dim_input))
+            outputs['state'] = outputs['state'].reshape(batch_size, n_agent, -1)
             rnn_hidden = None
         # get critic values
         critic_in = torch.concat([outputs['state'], agent_ids], dim=-1)
