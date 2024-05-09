@@ -57,7 +57,7 @@ class MAPPO_Agents(MARLAgents):
 
         buffer = MARL_OnPolicyBuffer_RNN if self.use_recurrent else MARL_OnPolicyBuffer
         input_buffer = (config.n_agents, config.state_space.shape, config.obs_shape, config.act_shape, config.rew_shape,
-                        config.done_shape, envs.num_envs, config.n_size,
+                        config.done_shape, envs.num_envs, config.buffer_size,
                         config.use_gae, config.use_advnorm, config.gamma, config.gae_lambda)
         memory = buffer(*input_buffer, max_episode_length=envs.max_episode_length, dim_act=config.dim_act)
         self.buffer_size = memory.buffer_size

@@ -19,7 +19,6 @@ class COMA_Agents(MARLAgents):
         self.delta_egreedy = (self.start_greedy - self.end_greedy) / config.decay_step_greedy
 
         self.n_envs = envs.num_envs
-        self.n_size = config.n_size
         self.n_epoch = config.n_epoch
         self.n_minibatch = config.n_minibatch
         if config.state_space is not None:
@@ -62,7 +61,7 @@ class COMA_Agents(MARLAgents):
 
         buffer = COMA_Buffer_RNN if self.use_recurrent else COMA_Buffer
         input_buffer = (config.n_agents, config.state_space.shape, config.obs_shape, config.act_shape, config.rew_shape,
-                        config.done_shape, envs.num_envs, config.n_size,
+                        config.done_shape, envs.num_envs, config.buffer_size,
                         config.use_gae, config.use_advnorm, config.gamma, config.gae_lambda)
         memory = buffer(*input_buffer, max_episode_length=envs.max_episode_length,
                         dim_act=config.dim_act, td_lambda=config.td_lambda)
