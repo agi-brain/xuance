@@ -562,61 +562,87 @@ class MATD3_policy(Basic_DDPG_policy, nn.Module):
         nn.Module.__init__(self)
         self.action_dim = action_space.shape[-1]
         self.n_agents = n_agents
-        self.representation = representation
-        self.representation_info_shape = self.representation.output_shapes
+        self.representation_info_shape = representation.output_shapes
+        dim_input_actor = representation.output_shapes['state'][0]
+        dim_input_critic = (representation.output_shapes['state'][0] + self.action_dim) * self.n_agents
 
-        self.actor_net = ActorNet(representation.output_shapes['state'][0], n_agents, self.action_dim,
-                                  actor_hidden_size, normalize, initialize, activation, activation_action, device)
-        self.target_actor_net = copy.deepcopy(self.actor_net)
+        self.actor_representation = representation
+        self.actor = ActorNet(dim_input_actor, n_agents, self.action_dim, actor_hidden_size,
+                              normalize, initialize, activation, activation_action, device)
+        self.critic_A_representation = copy.deepcopy(representation)
+        self.critic_A = CriticNet(dim_input_critic, n_agents, critic_hidden_size,
+                                  normalize, initialize, activation, device)
+        self.critic_B_representation = copy.deepcopy(representation)
+        self.critic_B = CriticNet(dim_input_critic, n_agents, critic_hidden_size,
+                                  normalize, initialize, activation, device)
+        self.target_actor_representation = copy.deepcopy(self.actor_representation)
+        self.target_actor = copy.deepcopy(self.actor)
+        self.target_critic_A_representation = copy.deepcopy(self.critic_A_representation)
+        self.target_critic_A = copy.deepcopy(self.critic_A)
+        self.target_critic_B_representation = copy.deepcopy(self.critic_B_representation)
+        self.target_critic_B = copy.deepcopy(self.critic_B)
 
-        self.critic_net_A = CriticNet(False, representation.output_shapes['state'][0], n_agents, self.action_dim,
-                                      critic_hidden_size, normalize, initialize, activation, device)
-        self.critic_net_B = CriticNet(False, representation.output_shapes['state'][0], n_agents, self.action_dim,
-                                      critic_hidden_size, normalize, initialize, activation, device)
-        self.target_critic_net_A = copy.deepcopy(self.critic_net_A)
-        self.target_critic_net_B = copy.deepcopy(self.critic_net_B)
-
-        self.parameters_actor = list(self.representation.parameters()) + list(self.actor_net.parameters())
-        self.parameters_critic = list(self.critic_net_A.parameters()) + list(self.critic_net_B.parameters())
+        self.parameters_actor = list(self.actor_representation.parameters()) + list(self.actor.parameters())
+        self.parameters_critic = list(self.critic_A_representation.parameters()) + list(
+            self.critic_A.parameters()) + list(self.critic_B_representation.parameters()) + list(
+            self.critic_B.parameters())
 
     def Qpolicy(self, observation: torch.Tensor, actions: torch.Tensor, agent_ids: torch.Tensor):
         bs = observation.shape[0]
-        outputs_n = self.representation(observation)['state'].view(bs, 1, -1).expand(-1, self.n_agents, -1)
-        actions_n = actions.view(bs, 1, -1).expand(-1, self.n_agents, -1)
-        critic_in = torch.concat([outputs_n, actions_n, agent_ids], dim=-1)
-        qa = self.critic_net_A(critic_in)
-        qb = self.critic_net_B(critic_in)
-        return outputs_n, (qa + qb) / 2.0
+        outputs_critic_A = self.critic_A_representation(observation)
+        outputs_critic_B = self.critic_B_representation(observation)
+        critic_A_in = torch.concat([outputs_critic_A['state'].reshape(bs, 1, -1).expand(-1, self.n_agents, -1),
+                                    actions.reshape(bs, 1, -1).expand(-1, self.n_agents, -1),
+                                    agent_ids], dim=-1)
+        critic_B_in = torch.concat([outputs_critic_B['state'].reshape(bs, 1, -1).expand(-1, self.n_agents, -1),
+                                    actions.reshape(bs, 1, -1).expand(-1, self.n_agents, -1),
+                                    agent_ids], dim=-1)
+        qa, qb = self.critic_A(critic_A_in), self.critic_B(critic_B_in)
+        return (qa + qb) / 2.0
 
     def Qtarget(self, observation: torch.Tensor, actions: torch.Tensor, agent_ids: torch.Tensor):
         bs = observation.shape[0]
-        outputs_n = self.representation(observation)['state'].view(bs, 1, -1).expand(-1, self.n_agents, -1)
-        # noise = torch.randn_like(actions).clamp(-1, 1) * 0.1
-        actions_n = actions.view(bs, 1, -1).expand(-1, self.n_agents, -1)
-        # noise = noise.view(bs, 1, -1).expand(-1, self.n_agents, -1)
-        # actions_n = (actions_n + noise).clamp(-1, 1)
-        critic_in = torch.concat([outputs_n, actions_n, agent_ids], dim=-1)
-        qa = self.target_critic_net_A(critic_in)
-        qb = self.target_critic_net_B(critic_in)
+        outputs_critic_A = self.target_critic_A_representation(observation)
+        outputs_critic_B = self.target_critic_B_representation(observation)
+        critic_A_in = torch.concat([outputs_critic_A['state'].reshape(bs, 1, -1).expand(-1, self.n_agents, -1),
+                                    actions.reshape(bs, 1, -1).expand(-1, self.n_agents, -1),
+                                    agent_ids], dim=-1)
+        critic_B_in = torch.concat([outputs_critic_B['state'].reshape(bs, 1, -1).expand(-1, self.n_agents, -1),
+                                    actions.reshape(bs, 1, -1).expand(-1, self.n_agents, -1),
+                                    agent_ids], dim=-1)
+        qa, qb = self.target_critic_A(critic_A_in), self.target_critic_B(critic_B_in)
         min_q = torch.minimum(qa, qb)
-        return outputs_n, min_q
+        return min_q
 
     def Qaction(self, observation: torch.Tensor, actions: torch.Tensor, agent_ids: torch.Tensor):
         bs = observation.shape[0]
-        outputs_n = self.representation(observation)['state'].view(bs, 1, -1).expand(-1, self.n_agents, -1)
-        actions_n = actions.view(bs, 1, -1).expand(-1, self.n_agents, -1)
-        critic_in = torch.concat([outputs_n, actions_n, agent_ids], dim=-1)
-        qa = self.critic_net_A(critic_in)
-        qb = self.critic_net_B(critic_in)
-        return outputs_n, torch.cat((qa, qb), dim=-1)
+        outputs_critic_A = self.critic_A_representation(observation)
+        outputs_critic_B = self.critic_B_representation(observation)
+        critic_A_in = torch.concat([outputs_critic_A['state'].reshape(bs, 1, -1).expand(-1, self.n_agents, -1),
+                                    actions.reshape(bs, 1, -1).expand(-1, self.n_agents, -1),
+                                    agent_ids], dim=-1)
+        critic_B_in = torch.concat([outputs_critic_B['state'].reshape(bs, 1, -1).expand(-1, self.n_agents, -1),
+                                    actions.reshape(bs, 1, -1).expand(-1, self.n_agents, -1),
+                                    agent_ids], dim=-1)
+        qa, qb = self.critic_A(critic_A_in), self.critic_B(critic_B_in)
+        return torch.cat((qa, qb), dim=-1)
 
     def soft_update(self, tau=0.005):
-        for ep, tp in zip(self.actor_net.parameters(), self.target_actor_net.parameters()):
+        for ep, tp in zip(self.actor_representation.parameters(), self.target_actor_representation.parameters()):
             tp.data.mul_(1 - tau)
             tp.data.add_(tau * ep.data)
-        for ep, tp in zip(self.critic_net_A.parameters(), self.target_critic_net_A.parameters()):
+        for ep, tp in zip(self.actor.parameters(), self.target_actor.parameters()):
             tp.data.mul_(1 - tau)
             tp.data.add_(tau * ep.data)
-        for ep, tp in zip(self.critic_net_B.parameters(), self.target_critic_net_B.parameters()):
+        for ep, tp in zip(self.critic_A_representation.parameters(), self.target_critic_A_representation.parameters()):
+            tp.data.mul_(1 - tau)
+            tp.data.add_(tau * ep.data)
+        for ep, tp in zip(self.critic_A.parameters(), self.target_critic_A.parameters()):
+            tp.data.mul_(1 - tau)
+            tp.data.add_(tau * ep.data)
+        for ep, tp in zip(self.critic_B_representation.parameters(), self.target_critic_B_representation.parameters()):
+            tp.data.mul_(1 - tau)
+            tp.data.add_(tau * ep.data)
+        for ep, tp in zip(self.critic_B.parameters(), self.target_critic_B.parameters()):
             tp.data.mul_(1 - tau)
             tp.data.add_(tau * ep.data)

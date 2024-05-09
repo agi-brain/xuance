@@ -41,11 +41,23 @@ class MATD3_Learner(LearnerMAS):
         agent_mask = torch.Tensor(sample['agent_mask']).float().reshape(-1, self.n_agents, 1).to(self.device)
         IDs = torch.eye(self.n_agents).unsqueeze(0).expand(self.args.batch_size, -1, -1).to(self.device)
 
+        # actor update
+        if self.iterations % self.delay == 0:
+            _, actions_eval = self.policy(obs, IDs)
+            policy_q = self.policy.Qpolicy(obs, actions_eval, IDs) * agent_mask
+            p_loss = -policy_q.sum() / agent_mask.sum()
+            self.optimizer['actor'].zero_grad()
+            p_loss.backward()
+            self.optimizer['actor'].step()
+            if self.scheduler['actor'] is not None:
+                self.scheduler['actor'].step()
+            self.policy.soft_update(self.tau)
+
         # train critic
-        _, action_q = self.policy.Qaction(obs, actions, IDs)
-        actions_next = self.policy.target_actor(obs_next, IDs)
-        _, target_q = self.policy.Qtarget(obs_next, actions_next, IDs)
-        q_target = rewards + (1 - terminals) * self.args.gamma * target_q
+        action_q = self.policy.Qaction(obs, actions, IDs)
+        actions_next = self.policy.Atarget(obs_next, IDs)
+        q_next = self.policy.Qtarget(obs_next, actions_next, IDs)
+        q_target = rewards + (1 - terminals) * self.args.gamma * q_next
         td_error = (action_q - q_target.detach()) * agent_mask
         loss_c = (td_error ** 2).sum() / agent_mask.sum()
         # loss_c = F.mse_loss(torch.tile(q_target.detach(), (1, 2)), action_q)
@@ -55,18 +67,6 @@ class MATD3_Learner(LearnerMAS):
         self.optimizer['critic'].step()
         if self.scheduler['critic'] is not None:
             self.scheduler['critic'].step()
-
-        # actor update
-        if self.iterations % self.delay == 0:
-            _, actions_eval = self.policy(obs, IDs)
-            _, policy_q = self.policy.Qpolicy(obs, actions_eval, IDs)
-            p_loss = -policy_q.mean()
-            self.optimizer['actor'].zero_grad()
-            p_loss.backward()
-            self.optimizer['actor'].step()
-            if self.scheduler['actor'] is not None:
-                self.scheduler['actor'].step()
-            self.policy.soft_update(self.tau)
 
         lr_a = self.optimizer['actor'].state_dict()['param_groups'][0]['lr']
         lr_c = self.optimizer['critic'].state_dict()['param_groups'][0]['lr']

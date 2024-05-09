@@ -7,6 +7,7 @@ Date: Very Soon
 - Solve the issue about `avail_actions`;
 - n_size -> buffer_size;
 - The saving and loading of observation status;
+- Unify the names of attributes for both single-agent and multi-agent DRL;
 
 Version: 1.1.0
 ==============================================

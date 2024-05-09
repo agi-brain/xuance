@@ -441,8 +441,6 @@ class DDPGPolicy(nn.Module):
         outputs_actor = self.target_actor_representation(observation)
         outputs_critic = self.target_critic_representation(observation) 
         act = self.target_actor(outputs_actor['state'])
-        # noise = torch.randn_like(act).clamp(-1, 1) * 0.1
-        # act = (act + noise).clamp(-1, 1)
         return self.target_critic(outputs_critic['state'], act)
 
     def Qaction(self, observation: Union[np.ndarray, dict], action: torch.Tensor):
