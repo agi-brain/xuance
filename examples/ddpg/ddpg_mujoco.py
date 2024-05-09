@@ -51,6 +51,7 @@ def run(args):
                         critic_hidden_size=args.critic_hidden_size,
                         initialize=None,
                         activation=ActivationFunctions[args.activation],
+                        activation_action=ActivationFunctions[args.activation_action],
                         device=args.device)
 
     # prepare the Agent

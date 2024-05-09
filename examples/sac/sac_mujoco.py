@@ -52,6 +52,7 @@ def run(args):
                                  normalize=None,
                                  initialize=torch.nn.init.orthogonal_,
                                  activation=ActivationFunctions[args.activation],
+                                 activation_action=ActivationFunctions[args.activation_action],
                                  device=args.device)
 
     # prepare agent
