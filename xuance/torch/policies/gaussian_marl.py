@@ -177,11 +177,12 @@ class Basic_ISAC_policy(nn.Module):
         self.activation_action = activation_action
         self.n_agents = n_agents
         self.representation_info_shape = representation.output_shapes
+        dim_input_actor = representation.output_shapes['state'][0]
         dim_input_critic = representation.output_shapes['state'][0] + self.action_dim
 
         self.actor_representation = representation
-        self.actor = ActorNet_SAC(representation.output_shapes['state'][0], n_agents, self.action_dim,
-                                  actor_hidden_size, normalize, initialize, activation, activation_action, device)
+        self.actor = ActorNet_SAC(dim_input_actor, n_agents, self.action_dim, actor_hidden_size,
+                                  normalize, initialize, activation, activation_action, device)
 
         self.critic_1_representation = copy.deepcopy(representation)
         self.critic_1 = CriticNet(dim_input_critic, n_agents, critic_hidden_size,
@@ -276,11 +277,12 @@ class MASAC_policy(Basic_ISAC_policy, nn.Module):
         self.activation_action = activation_action
         self.n_agents = n_agents
         self.representation_info_shape = representation.output_shapes
+        dim_input_actor = representation.output_shapes['state'][0]
         dim_input_critic = (representation.output_shapes['state'][0] + self.action_dim) * self.n_agents
 
         self.actor_representation = representation
-        self.actor = ActorNet_SAC(representation.output_shapes['state'][0], n_agents, self.action_dim,
-                                  actor_hidden_size, normalize, initialize, activation, activation_action, device)
+        self.actor = ActorNet_SAC(dim_input_actor, n_agents, self.action_dim, actor_hidden_size,
+                                  normalize, initialize, activation, activation_action, device)
 
         self.critic_1_representation = copy.deepcopy(representation)
         self.critic_1 = CriticNet(dim_input_critic, n_agents, critic_hidden_size,

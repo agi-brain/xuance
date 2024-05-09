@@ -1,7 +1,8 @@
+import copy
+
 from xuance.torch.policies import *
 from xuance.torch.utils import *
 from torch.distributions import Categorical
-from gymnasium import spaces as spaces_pettingzoo
 
 
 class BasicQhead(nn.Module):
@@ -401,10 +402,8 @@ class ActorNet(nn.Module):
 
 class CriticNet(nn.Module):
     def __init__(self,
-                 independent: bool,
                  state_dim: int,
                  n_agents: int,
-                 action_dim: int,
                  hidden_sizes: Sequence[int],
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., torch.Tensor]] = None,
@@ -413,10 +412,7 @@ class CriticNet(nn.Module):
                  ):
         super(CriticNet, self).__init__()
         layers = []
-        if independent:
-            input_shape = (state_dim + action_dim + n_agents,)
-        else:
-            input_shape = (state_dim * n_agents + action_dim * n_agents + n_agents,)
+        input_shape = (state_dim + n_agents,)
         for h in hidden_sizes:
             mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initialize, device)
             layers.extend(mlp)
@@ -443,49 +439,62 @@ class Basic_DDPG_policy(nn.Module):
         super(Basic_DDPG_policy, self).__init__()
         self.action_dim = action_space.shape[-1]
         self.n_agents = n_agents
-        self.representation = representation
-        self.representation_info_shape = self.representation.output_shapes
+        self.representation_info_shape = representation.output_shapes
+        dim_input_actor = representation.output_shapes['state'][0]
+        dim_input_critic = representation.output_shapes['state'][0] + self.action_dim
 
-        self.actor_net = ActorNet(representation.output_shapes['state'][0], n_agents, self.action_dim,
-                                  actor_hidden_size, normalize, initialize, activation, activation_action, device)
-        self.critic_net = CriticNet(True, representation.output_shapes['state'][0], n_agents, self.action_dim,
-                                    critic_hidden_size, normalize, initialize, activation, device)
-        self.target_actor_net = copy.deepcopy(self.actor_net)
-        self.target_critic_net = copy.deepcopy(self.critic_net)
-        self.parameters_actor = list(self.representation.parameters()) + list(self.actor_net.parameters())
-        self.parameters_critic = self.critic_net.parameters()
+        self.actor_representation = representation
+        self.actor = ActorNet(dim_input_actor, n_agents, self.action_dim, actor_hidden_size,
+                              normalize, initialize, activation, activation_action, device)
+        self.critic_representation = copy.deepcopy(representation)
+        self.critic = CriticNet(dim_input_critic, n_agents, critic_hidden_size,
+                                normalize, initialize, activation, device)
+
+        self.target_actor_representation = copy.deepcopy(self.actor_representation)
+        self.target_actor = copy.deepcopy(self.actor)
+        self.target_critic_representation = copy.deepcopy(self.critic_representation)
+        self.target_critic = copy.deepcopy(self.critic)
+
+        self.parameters_actor = list(self.actor_representation.parameters()) + list(self.actor.parameters())
+        self.parameters_critic = list(self.critic_representation.parameters()) + list(self.critic.parameters())
 
     def forward(self, observation: torch.Tensor, agent_ids: torch.Tensor):
-        outputs = self.representation(observation)
+        outputs = self.actor_representation(observation)
         actor_in = torch.concat([outputs['state'], agent_ids], dim=-1)
-        act = self.actor_net(actor_in)
+        act = self.actor(actor_in)
         return outputs, act
 
-    def critic(self, observation: torch.Tensor, actions: torch.Tensor, agent_ids: torch.Tensor):
-        outputs = self.representation(observation)
+    def Qpolicy(self, observation: torch.Tensor, actions: torch.Tensor, agent_ids: torch.Tensor):
+        outputs = self.critic_representation(observation)
         critic_in = torch.concat([outputs['state'], actions, agent_ids], dim=-1)
-        return self.critic_net(critic_in)
+        return self.critic(critic_in)
 
-    def target_critic(self, observation: torch.Tensor, actions: torch.Tensor, agent_ids: torch.Tensor):
-        outputs = self.representation(observation)
+    def Qtarget(self, observation: torch.Tensor, actions: torch.Tensor, agent_ids: torch.Tensor):
+        outputs = self.target_critic_representation(observation)
         critic_in = torch.concat([outputs['state'], actions, agent_ids], dim=-1)
-        return self.target_critic_net(critic_in)
+        return self.target_critic(critic_in)
 
-    def target_actor(self, observation: torch.Tensor, agent_ids: torch.Tensor):
-        outputs = self.representation(observation)
+    def Atarget(self, observation: torch.Tensor, agent_ids: torch.Tensor):
+        outputs = self.target_actor_representation(observation)
         actor_in = torch.concat([outputs['state'], agent_ids], dim=-1)
-        return self.target_actor_net(actor_in)
+        return self.target_actor(actor_in)
 
     def soft_update(self, tau=0.005):
-        for ep, tp in zip(self.actor_net.parameters(), self.target_actor_net.parameters()):
+        for ep, tp in zip(self.actor_representation.parameters(), self.target_actor_representation.parameters()):
             tp.data.mul_(1 - tau)
             tp.data.add_(tau * ep.data)
-        for ep, tp in zip(self.critic_net.parameters(), self.target_critic_net.parameters()):
+        for ep, tp in zip(self.actor.parameters(), self.target_actor.parameters()):
+            tp.data.mul_(1 - tau)
+            tp.data.add_(tau * ep.data)
+        for ep, tp in zip(self.critic_representation.parameters(), self.target_critic_representation.parameters()):
+            tp.data.mul_(1 - tau)
+            tp.data.add_(tau * ep.data)
+        for ep, tp in zip(self.critic.parameters(), self.target_critic.parameters()):
             tp.data.mul_(1 - tau)
             tp.data.add_(tau * ep.data)
 
 
-class MADDPG_policy(Basic_DDPG_policy):
+class MADDPG_policy(Basic_DDPG_policy, nn.Module):
     def __init__(self,
                  action_space: Space,
                  n_agents: int,
@@ -498,27 +507,43 @@ class MADDPG_policy(Basic_DDPG_policy):
                  activation_action: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None
                  ):
-        super(MADDPG_policy, self).__init__(action_space, n_agents, representation,
-                                            actor_hidden_size, critic_hidden_size,
-                                            normalize, initialize, activation, activation_action, device)
-        self.critic_net = CriticNet(False, representation.output_shapes['state'][0], n_agents, self.action_dim,
-                                    critic_hidden_size, normalize, initialize, activation, device)
-        self.target_critic_net = copy.deepcopy(self.critic_net)
-        self.parameters_critic = self.critic_net.parameters()
+        nn.Module.__init__(self)
+        self.action_dim = action_space.shape[-1]
+        self.n_agents = n_agents
+        self.representation_info_shape = representation.output_shapes
+        dim_input_actor = representation.output_shapes['state'][0]
+        dim_input_critic = (representation.output_shapes['state'][0] + self.action_dim) * self.n_agents
 
-    def critic(self, observation: torch.Tensor, actions: torch.Tensor, agent_ids: torch.Tensor):
-        bs = observation.shape[0]
-        outputs_n = self.representation(observation)['state'].view(bs, 1, -1).expand(-1, self.n_agents, -1)
-        actions_n = actions.view(bs, 1, -1).expand(-1, self.n_agents, -1)
-        critic_in = torch.concat([outputs_n, actions_n, agent_ids], dim=-1)
-        return self.critic_net(critic_in)
+        self.actor_representation = representation
+        self.actor = ActorNet(dim_input_actor, n_agents, self.action_dim, actor_hidden_size,
+                              normalize, initialize, activation, activation_action, device)
+        self.critic_representation = copy.deepcopy(representation)
+        self.critic = CriticNet(dim_input_critic, n_agents, critic_hidden_size,
+                                normalize, initialize, activation, device)
 
-    def target_critic(self, observation: torch.Tensor, actions: torch.Tensor, agent_ids: torch.Tensor):
+        self.target_actor_representation = copy.deepcopy(self.actor_representation)
+        self.target_actor = copy.deepcopy(self.actor)
+        self.target_critic_representation = copy.deepcopy(self.critic_representation)
+        self.target_critic = copy.deepcopy(self.critic)
+
+        self.parameters_actor = list(self.actor_representation.parameters()) + list(self.actor.parameters())
+        self.parameters_critic = list(self.critic_representation.parameters()) + list(self.critic.parameters())
+
+    def Qpolicy(self, observation: torch.Tensor, actions: torch.Tensor, agent_ids: torch.Tensor):
         bs = observation.shape[0]
-        outputs_n = self.representation(observation)['state'].view(bs, 1, -1).expand(-1, self.n_agents, -1)
-        actions_n = actions.view(bs, 1, -1).expand(-1, self.n_agents, -1)
-        critic_in = torch.concat([outputs_n, actions_n, agent_ids], dim=-1)
-        return self.target_critic_net(critic_in)
+        outputs = self.critic_representation(observation)
+        critic_in = torch.concat([outputs['state'].reshape(bs, 1, -1).expand(-1, self.n_agents, -1),
+                                  actions.reshape(bs, 1, -1).expand(-1, self.n_agents, -1),
+                                  agent_ids], dim=-1)
+        return self.critic(critic_in)
+
+    def Qtarget(self, observation: torch.Tensor, actions: torch.Tensor, agent_ids: torch.Tensor):
+        bs = observation.shape[0]
+        outputs = self.target_critic_representation(observation)
+        critic_in = torch.concat([outputs['state'].reshape(bs, 1, -1).expand(-1, self.n_agents, -1),
+                                  actions.reshape(bs, 1, -1).expand(-1, self.n_agents, -1),
+                                  agent_ids], dim=-1)
+        return self.target_critic(critic_in)
 
 
 class MATD3_policy(Basic_DDPG_policy, nn.Module):

@@ -27,7 +27,7 @@ class MADDPG_Agents(MARLAgents):
                                                        total_iters=config.running_steps)]
         self.observation_space = envs.observation_space
         self.action_space = envs.action_space
-        self.representation_info_shape = policy.representation.output_shapes
+        self.representation_info_shape = policy.representation_info_shape
         self.auxiliary_info_shape = {}
 
         if config.state_space is not None:
