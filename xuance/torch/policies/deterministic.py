@@ -1,3 +1,5 @@
+import torch
+
 from xuance.torch.policies import *
 from xuance.torch.utils import *
 import numpy as np
@@ -401,7 +403,7 @@ class CriticNet(nn.Module):
         self.model = nn.Sequential(*layers)
 
     def forward(self, x: torch.tensor, a: torch.tensor):
-        return self.model(torch.concat((x, a), dim=-1))[:, 0]
+        return self.model(torch.concat((x, a), dim=-1))
 
 
 class DDPGPolicy(nn.Module):
@@ -417,15 +419,17 @@ class DDPGPolicy(nn.Module):
         super(DDPGPolicy, self).__init__()
         self.action_dim = action_space.shape[0]
         self.representation_info_shape = representation.output_shapes
+        # create networks
         self.actor_representation = representation
+        self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size,
+                              initialize, activation, activation_action, device)
         self.critic_representation = copy.deepcopy(representation)
-        self.target_actor_representation = copy.deepcopy(representation)
-        self.target_critic_representation = copy.deepcopy(representation)
-        self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size, initialize,
-                              activation, activation_action, device)
         self.critic = CriticNet(representation.output_shapes['state'][0], self.action_dim, critic_hidden_size,
                                 initialize, activation, device)
+        # create target networks
+        self.target_actor_representation = copy.deepcopy(self.actor_representation)
         self.target_actor = copy.deepcopy(self.actor)
+        self.target_critic_representation = copy.deepcopy(self.critic_representation)
         self.target_critic = copy.deepcopy(self.critic)
         
         # parameters
@@ -439,7 +443,7 @@ class DDPGPolicy(nn.Module):
 
     def Qtarget(self, observation: Union[np.ndarray, dict]):
         outputs_actor = self.target_actor_representation(observation)
-        outputs_critic = self.target_critic_representation(observation) 
+        outputs_critic = self.target_critic_representation(observation)
         act = self.target_actor(outputs_actor['state'])
         return self.target_critic(outputs_critic['state'], act)
 
@@ -449,8 +453,10 @@ class DDPGPolicy(nn.Module):
 
     def Qpolicy(self, observation: Union[np.ndarray, dict]):
         outputs_actor = self.actor_representation(observation)
+        act = self.actor(outputs_actor['state'])
         outputs_critic = self.critic_representation(observation)
-        return self.critic(outputs_critic['state'], self.actor(outputs_actor['state']))
+        q_eval = self.critic(outputs_critic['state'], act)
+        return q_eval
 
     def soft_update(self, tau=0.005):
         for ep, tp in zip(self.actor_representation.parameters(), self.target_actor_representation.parameters()):

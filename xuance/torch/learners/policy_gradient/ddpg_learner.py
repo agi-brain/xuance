@@ -19,12 +19,12 @@ class DDPG_Learner(Learner):
         act_batch = torch.as_tensor(act_batch, device=self.device)
         rew_batch = torch.as_tensor(rew_batch, device=self.device)
         ter_batch = torch.as_tensor(terminal_batch, device=self.device)
+
         # critic update
-        action_q = self.policy.Qaction(obs_batch, act_batch)
-        # with torch.no_grad():
-        target_q = self.policy.Qtarget(next_batch)
-        backup = rew_batch + (1 - ter_batch) * self.gamma * target_q
-        q_loss = F.mse_loss(action_q, backup.detach())
+        action_q = self.policy.Qaction(obs_batch, act_batch).reshape([-1])
+        next_q = self.policy.Qtarget(next_batch).reshape([-1])
+        target_q = rew_batch + (1 - ter_batch) * self.gamma * next_q
+        q_loss = F.mse_loss(action_q, target_q.detach())
         self.optimizer[1].zero_grad()
         q_loss.backward()
         self.optimizer[1].step()
