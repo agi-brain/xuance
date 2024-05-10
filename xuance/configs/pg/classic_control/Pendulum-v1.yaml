@@ -14,7 +14,7 @@ activation_action: 'tanh'
 seed: 1
 parallels: 10
 running_steps: 300000
-horizon_size: 128
+horizon_size: 128  # the horizon size for an environment, buffer_size = horizon_size * parallels.
 n_epoch: 1
 n_minibatch: 1
 learning_rate: 0.0004
