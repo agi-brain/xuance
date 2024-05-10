@@ -1,0 +1,42 @@
+agent: "QMIX"  # the learning algorithms_marl
+env_name: "RoboticWarehouse"
+env_id: "rware-tiny-2ag-v1"
+max_episode_steps: 100
+policy: "Mixing_Q_network"
+representation: "Basic_MLP"
+vectorize: "Dummy_RoboticWarehouse"
+runner: "MARL"
+
+use_recurrent: False
+rnn:
+representation_hidden_size: [64, ]
+q_hidden_size: [128, ]  # the units for each hidden layer
+activation: "relu"
+
+hidden_dim_mixing_net: 64  # hidden units of mixing network
+hidden_dim_hyper_net: 64  # hidden units of hyper network
+
+seed: 1
+parallels: 16
+buffer_size: 100000
+batch_size: 256
+learning_rate: 0.001
+gamma: 0.99  # discount factor
+double_q: True  # use double q learning
+
+start_greedy: 1.0
+end_greedy: 0.05
+decay_step_greedy: 2500000
+start_training: 1000  # start training after n episodes
+running_steps: 10000000  # 10M
+train_per_step: False  # True: train model per step; False: train model per episode.
+training_frequency: 1
+sync_frequency: 100
+
+use_grad_clip: False
+grad_clip_norm: 0.5
+
+eval_interval: 100000
+test_episode: 5
+log_dir: "./logs/qmix/"
+model_dir: "./models/qmix/"

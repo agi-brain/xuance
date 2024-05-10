@@ -38,8 +38,6 @@ class Runner():
         folder_name = f"seed_{args.seed}_" + time.asctime().replace(" ", "").replace(":", "_")
         self.args.model_dir_load = self.args.model_dir
         self.args.model_dir_save = os.path.join(os.getcwd(), self.args.model_dir, folder_name)
-        if (not os.path.exists(self.args.model_dir_save)) and (not self.args.test_mode):
-            os.makedirs(self.args.model_dir_save)
 
         if args.test:
             args.parallels = 1
