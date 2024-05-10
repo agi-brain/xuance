@@ -184,15 +184,12 @@ class MAAC_Policy_Share(MAAC_Policy):
                 *rnn_hidden: torch.Tensor, avail_actions=None, state=None):
         batch_size = len(observation)
         if self.use_rnn:
-            sequence_length = observation.shape[1]
             outputs = self.representation(observation, *rnn_hidden)
             rnn_hidden = (outputs['rnn_hidden'], outputs['rnn_cell'])
-            representated_state = outputs['state'].view(batch_size, self.n_agents, sequence_length, -1)
-            actor_critic_input = torch.concat([representated_state, agent_ids], dim=-1)
         else:
             outputs = self.representation(observation)
             rnn_hidden = None
-            actor_critic_input = torch.concat([outputs['state'], agent_ids], dim=-1)
+        actor_critic_input = torch.concat([outputs['state'], agent_ids], dim=-1)
         act_logits = self.actor(actor_critic_input)
         if avail_actions is not None:
             avail_actions = torch.Tensor(avail_actions)
@@ -207,9 +204,9 @@ class MAAC_Policy_Share(MAAC_Policy):
                 values_tot = values_independent
             else:
                 sequence_length = observation.shape[1]
-                values_independent = values_independent.transpose(1, 2).reshape(batch_size*sequence_length, self.n_agents)
+                values_independent = values_independent.transpose(1, 2).reshape(-1, self.n_agents)
                 values_tot = self.value_tot(values_independent, global_state=state)
-                values_tot = values_tot.reshape([batch_size, sequence_length, 1])
+                values_tot = values_tot.reshape([-1, sequence_length, 1])
                 values_tot = values_tot.unsqueeze(1).expand(-1, self.n_agents, -1, -1)
         else:
             values_tot = values_independent if self.mixer is None else self.value_tot(values_independent, global_state=state)

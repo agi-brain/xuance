@@ -68,15 +68,17 @@ class VDAC_Agents(MARLAgents):
     def act(self, obs_n, *rnn_hidden, avail_actions=None, state=None, test_mode=False):
         batch_size = len(obs_n)
         agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(batch_size, -1, -1).to(self.device)
-        obs_in = torch.Tensor(obs_n).view([batch_size, self.n_agents, -1]).to(self.device)
+        obs_in = torch.Tensor(obs_n).reshape([batch_size, self.n_agents, -1]).to(self.device)
         if state is not None:
             state = torch.Tensor(state).to(self.device)
+        if avail_actions is not None:
+            avail_actions = torch.Tensor(avail_actions).to(self.device)
         if self.use_recurrent:
             batch_agents = batch_size * self.n_agents
-            hidden_state, dists, values_tot = self.policy(obs_in.view(batch_agents, 1, -1),
-                                                          agents_id.unsqueeze(2),
+            hidden_state, dists, values_tot = self.policy(obs_in.reshape(batch_agents, 1, -1),
+                                                          agents_id.reshape(batch_agents, 1, -1),
                                                           *rnn_hidden,
-                                                          avail_actions=avail_actions[:, :, np.newaxis],
+                                                          avail_actions=avail_actions.reshape(batch_agents, 1, -1),
                                                           state=state.unsqueeze(2))
             actions = dists.stochastic_sample()
             actions = actions.reshape(batch_size, self.n_agents)
