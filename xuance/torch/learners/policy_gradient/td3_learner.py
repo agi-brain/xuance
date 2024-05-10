@@ -23,14 +23,16 @@ class TD3_Learner(Learner):
     def update(self, obs_batch, act_batch, rew_batch, next_batch, terminal_batch):
         self.iterations += 1
         act_batch = torch.as_tensor(act_batch, device=self.device)
-        rew_batch = torch.as_tensor(rew_batch, device=self.device).unsqueeze(dim=1)
-        ter_batch = torch.as_tensor(terminal_batch, device=self.device).unsqueeze(dim=1)
+        rew_batch = torch.as_tensor(rew_batch, device=self.device)
+        ter_batch = torch.as_tensor(terminal_batch, device=self.device)
 
         # critic update
-        _, action_q = self.policy.Qaction(obs_batch, act_batch)
-        _, target_q = self.policy.Qtarget(next_batch)
-        backup = rew_batch + self.gamma * (1 - ter_batch) * target_q
-        q_loss = F.mse_loss(torch.tile(backup.detach(), (1, 2)), action_q)
+        action_q_A, action_q_B = self.policy.Qaction(obs_batch, act_batch)
+        action_q_A = action_q_A.reshape([-1])
+        action_q_B = action_q_B.reshape([-1])
+        next_q = self.policy.Qtarget(next_batch).reshape([-1])
+        target_q = rew_batch + self.gamma * (1 - ter_batch) * next_q
+        q_loss = F.mse_loss(action_q_A, target_q.detach()) + F.mse_loss(action_q_B, target_q.detach())
         self.optimizer[1].zero_grad()
         q_loss.backward()
         self.optimizer[1].step()
@@ -39,7 +41,7 @@ class TD3_Learner(Learner):
 
         # actor update
         if self.iterations % self.delay == 0:
-            _, policy_q = self.policy.Qpolicy(obs_batch)
+            policy_q = self.policy.Qpolicy(obs_batch)
             p_loss = -policy_q.mean()
             self.optimizer[0].zero_grad()
             p_loss.backward()
@@ -53,7 +55,8 @@ class TD3_Learner(Learner):
 
         info = {
             "Qloss": q_loss.item(),
-            "Qvalue": action_q.mean().item(),
+            "QvalueA": action_q_A.mean().item(),
+            "QvalueB": action_q_B.mean().item(),
             "actor_lr": actor_lr,
             "critic_lr": critic_lr
         }
