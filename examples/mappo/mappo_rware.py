@@ -10,10 +10,12 @@ from tqdm import tqdm
 from torch.utils.tensorboard import SummaryWriter
 
 from xuance import get_arguments
-from xuance.environment import make_envs
 from xuance.torch.utils.operations import set_seed
 from xuance.common import get_time_string
-from gymnasium.spaces import Box, Discrete
+from gymnasium.spaces import Box
+
+# from xuance.environment import make_envs  # import make_envs() from xuance
+from robotic_warehouse import make_envs  # import make_envs() from local project
 
 
 def parse_args():
