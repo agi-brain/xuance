@@ -36,7 +36,7 @@ setup(
         'Programming Language :: Python :: 3.10',
     ],
     extras_require={
-        "torch": ["torch==1.13.0"],  # default
+        "torch": ["torch==1.13.0"],
         "tensorflow": ["tensorflow==2.6.0"],
         "mindspore": ["mindspore==2.2.0"],
         "all": [
@@ -49,7 +49,6 @@ setup(
         "box2d": ["box2d-py==2.3.5"],  # for box2d
     },
     install_requires=[
-        "torch==1.13.0",
         "numpy>=1.21.6",
         "scipy==1.7.3",
         "PyYAML",  # default version is 6.0

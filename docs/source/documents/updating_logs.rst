@@ -4,10 +4,20 @@ To be released
 Date: Very Soon
 ----------------------------------------------
 
+...
+
+Version: 1.1.1
+==============================================
+
+Date: 12 May, 2024
+----------------------------------------------
+
+- Improve some algorithms, such as SAC, MASAC, DDPG, and TD3, etc.
+- Add multi-robot warehouse (RWARE) environment.
 - Solve the issue about `avail_actions`;
 - n_size -> buffer_size;
 - The saving and loading of observation status;
-- Unify the names of attributes for both single-agent and multi-agent DRL;
+- Unify the names of attributes for both single-agent and multi-agent DRL.
 
 Version: 1.1.0
 ==============================================
