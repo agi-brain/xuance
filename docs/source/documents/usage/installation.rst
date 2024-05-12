@@ -35,11 +35,17 @@ Install via PyPI
 
 .. tabs::
 
-    .. group-tab:: PyTorch
+    .. group-tab:: No DL toolbox
 
         .. code-block:: bash
 
             pip install xuance
+
+    .. group-tab:: PyTorch
+
+        .. code-block:: bash
+
+            pip install xuance[torch]
 
     .. group-tab:: TensorFlow
 
@@ -109,11 +115,17 @@ Alternatively, you can install XuanCe from its GitHub repository.
 
 .. tabs::
 
-    .. group-tab:: PyTorch
+    .. group-tab:: No DL toolbox
 
         .. code-block:: bash
 
             pip install -e .
+
+    .. group-tab:: PyTorch
+
+        .. code-block:: bash
+
+            pip install -e .[torch]
 
     .. group-tab:: TensorFlow
 
