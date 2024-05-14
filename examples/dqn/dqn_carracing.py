@@ -12,15 +12,15 @@ from xuance.torch.utils import ActivationFunctions
 
 
 def parse_args():
-    parser = argparse.ArgumentParser("Example of XuanCe: PPO for MuJoCo.")
-    parser.add_argument("--method", type=str, default="sac")
-    parser.add_argument("--env", type=str, default="metadrive")
-    parser.add_argument("--env-id", type=str, default="metadrive")
+    parser = argparse.ArgumentParser("Example of XuanCe: DQN for atari.")
+    parser.add_argument("--method", type=str, default="dqn")
+    parser.add_argument("--env", type=str, default="box2d")
+    parser.add_argument("--env-id", type=str, default="CarRacing-v2")
     parser.add_argument("--test", type=int, default=0)
     parser.add_argument("--device", type=str, default="cuda:0")
     parser.add_argument("--benchmark", type=int, default=1)
-    parser.add_argument("--render", type=bool, default=False)
-    parser.add_argument("--config", type=str, default="./sac_configs/sac_metadrive.yaml")
+    parser.add_argument("--render", type=bool, default=True)
+    parser.add_argument("--config-path", type=str, default="./dqn_configs/dqn_carracing_config.yaml")
 
     return parser.parse_args()
 
@@ -40,35 +40,36 @@ def run(args):
     n_envs = envs.num_envs
 
     # prepare representation
-    from xuance.torch.representations import Basic_Identical
-    representation = Basic_Identical(input_shape=space2shape(args.observation_space),
-                                     device=args.device)
+    from xuance.torch.representations import Basic_CNN
+    representation = Basic_CNN(input_shape=space2shape(args.observation_space),
+                               kernels=args.kernels,
+                               strides=args.strides,
+                               filters=args.filters,
+                               normalize=None,
+                               initialize=torch.nn.init.orthogonal_,
+                               activation=ActivationFunctions[args.activation],
+                               device=args.device)
 
     # prepare policy
-    from xuance.torch.policies import Gaussian_SAC_Policy
-    policy = Gaussian_SAC_Policy(action_space=args.action_space,
-                                 representation=representation,
-                                 actor_hidden_size=args.actor_hidden_size,
-                                 critic_hidden_size=args.critic_hidden_size,
-                                 normalize=None,
-                                 initialize=torch.nn.init.orthogonal_,
-                                 activation=ActivationFunctions[args.activation],
-                                 activation_action=ActivationFunctions[args.activation_action],
-                                 device=args.device)
+    from xuance.torch.policies import BasicQnetwork
+    policy = BasicQnetwork(action_space=args.action_space,
+                           representation=representation,
+                           hidden_size=args.q_hidden_size,
+                           normalize=None,
+                           initialize=torch.nn.init.orthogonal_,
+                           activation=ActivationFunctions[args.activation],
+                           device=args.device)
 
     # prepare agent
-    from xuance.torch.agents import SAC_Agent, get_total_iters
-    actor_optimizer = torch.optim.Adam(policy.actor_parameters, args.actor_learning_rate)
-    critic_optimizer = torch.optim.Adam(policy.critic_parameters, args.critic_learning_rate)
-    actor_lr_scheduler = torch.optim.lr_scheduler.LinearLR(actor_optimizer, start_factor=1.0, end_factor=0.25,
-                                                           total_iters=get_total_iters(agent_name, args))
-    critic_lr_scheduler = torch.optim.lr_scheduler.LinearLR(critic_optimizer, start_factor=1.0, end_factor=0.25,
-                                                            total_iters=get_total_iters(agent_name, args))
-    agent = SAC_Agent(config=args,
+    from xuance.torch.agents import DQN_Agent, get_total_iters
+    optimizer = torch.optim.Adam(policy.parameters(), args.learning_rate, eps=1e-5)
+    lr_scheduler = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=1.0, end_factor=0.0,
+                                                     total_iters=get_total_iters(agent_name, args))
+    agent = DQN_Agent(config=args,
                       envs=envs,
                       policy=policy,
-                      optimizer=[actor_optimizer, critic_optimizer],
-                      scheduler=[actor_lr_scheduler, critic_lr_scheduler],
+                      optimizer=optimizer,
+                      scheduler=lr_scheduler,
                       device=args.device)
 
     # start running
@@ -129,7 +130,7 @@ if __name__ == "__main__":
     args = get_arguments(method=parser.method,
                          env=parser.env,
                          env_id=parser.env_id,
-                         config_path=parser.config,
+                         config_path=parser.config_path,
                          parser_args=parser,
                          is_test=parser.test)
     run(args)

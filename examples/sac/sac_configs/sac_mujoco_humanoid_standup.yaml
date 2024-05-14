@@ -2,38 +2,37 @@ dl_toolbox: "torch"  # The deep learning toolbox. Choices: "torch", "mindspore",
 project_name: "XuanCe_Benchmark"
 logger: "tensorboard"  # Choices: tensorboard, wandb.
 wandb_user_name: "your_user_name"
+render: True
 render_mode: 'rgb_array' # Choices: 'human', 'rgb_array'.
 test_mode: False
 device: "cuda:0"
 
 agent: "SAC"
-env_name: "MetaDrive"
-env_id: "metadrive"
-env_config:  # the configs for MetaDrive environment
-  map: "C"  # see https://metadrive-simulator.readthedocs.io/en/latest/rl_environments.html#generalization-environment for choices
-render: False
-vectorize: "Subproc_MetaDrive"
+env_name: "MuJoCo"
+vectorize: "Dummy_Gym"
 runner: "DRL"
 
-representation_hidden_size: []
-actor_hidden_size: [512, 512]
-critic_hidden_size: [512, 512]
-activation: "relu"
+representation_hidden_size:
+actor_hidden_size: [512, 512, 512]
+critic_hidden_size: [512, 512, 512]
+activation: "leaky_relu"
 activation_action: "tanh"
 
 seed: 1
-parallels: 4
-buffer_size: 10000000
+parallels: 20
+buffer_size: 2000000
 batch_size: 256
-actor_learning_rate: 0.0003
-critic_learning_rate: 0.0003
+actor_learning_rate: 0.001
+critic_learning_rate: 0.001
 gamma: 0.99
 alpha: 0.2
 use_automatic_entropy_tuning: True
 tau: 0.005
 
+start_noise: 0.25
+end_noise: 0.01
 training_frequency: 1
-running_steps: 5000000
+running_steps: 200000000
 start_training: 10000
 
 use_obsnorm: False
@@ -42,7 +41,7 @@ obsnorm_range: 5
 rewnorm_range: 5
 
 test_steps: 10000
-eval_interval: 50000
+eval_interval: 2000000
 test_episode: 5
 log_dir: "./logs/sac/"
 model_dir: "./models/sac/"
