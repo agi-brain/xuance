@@ -35,6 +35,8 @@ class PettingZoo_Env(ParallelEnv):
         self.continuous_actions = kwargs["continuous"]
         self.env = scenario.parallel_env(continuous_actions=self.continuous_actions,
                                          render_mode=kwargs["render_mode"])
+        # self.env = scenario.env(continuous_actions=self.continuous_actions,
+        #                                  render_mode=kwargs["render_mode"])
         self.scenario_name = env_name + "." + env_id
         self.n_handles = len(AGENT_NAME_DICT[self.scenario_name])
         self.side_names = AGENT_NAME_DICT[self.scenario_name]
@@ -43,23 +45,18 @@ class PettingZoo_Env(ParallelEnv):
             self.state_space = self.env.state_space
         except:
             self.state_space = None
-
         self.action_spaces = {k: self.env.action_space(k) for k in self.env.agents}
         self.observation_spaces = {k: self.env.observation_space(k) for k in self.env.agents}
         self.agents = self.env.agents
         self.n_agents_all = len(self.agents)
-
         self.handles = self.get_handles()
-
         self.agent_ids = [self.get_ids(h) for h in self.handles]
         self.n_agents = [self.get_num(h) for h in self.handles]
-
-        # self.reward_range = env.reward_range
         self.metadata = self.env.metadata
-        # self._warn_double_wrap()
-        # assert self.spec.id in ENVIRONMENTS
-
-        self.max_cycles = self.env.aec_env.env.env.max_cycles
+        try:
+            self.max_cycles = self.env.unwrapped.max_cycles
+        except:
+            self.max_cycles = self.env.aec_env.env.env.max_cycles
         self.individual_episode_reward = {k: 0.0 for k in self.agents}
 
     def close(self):
