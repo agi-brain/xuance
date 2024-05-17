@@ -9,6 +9,15 @@ import multiprocessing as mp
 
 
 def worker(remote, parent_remote, env_fn_wrappers):
+    """
+    A worker function that is designed to run in a separate process, communicating with
+    its parent process through inter-process communication (IPC).
+    Parameters:
+        remote (int) – a connection to the child process.
+        parent_remote (int) – a connection to the parent process.
+        env_fn_wrappers – a set of environment function wrappers.
+    """
+
     def step_env(env, action):
         obs_n, reward_n, terminated, truncated, info = env.step(action)
         return obs_n, reward_n, terminated, truncated, info
@@ -54,8 +63,11 @@ def worker(remote, parent_remote, env_fn_wrappers):
 
 class SubprocVecEnv_Pettingzoo(VecEnv):
     """
-    VecEnv that runs multiple environments in parallel in subproceses and communicates with them via pipes.
+    VecEnv that runs multiple environments in parallel in thread-level and communicates with them via pipes.
     Recommended to use when num_envs > 1 and step() can be a bottleneck.
+    Parameters:
+        env_fns – environment function.
+        context – the method used for creating and managing processes in a multiprocessing environment.
     """
 
     def __init__(self, env_fns, context="spawn"):
@@ -122,7 +134,7 @@ class SubprocVecEnv_Pettingzoo(VecEnv):
         self.actions = None
 
     def empty_dict_buffers(self, i_env):
-        # buffer of dict data
+        """Reset the buffers for dictionary data."""
         self.buf_obs_dict[i_env] = {k: np.zeros(tuple(self.shapes[k]), dtype=self.dtypes[k]) for k in self.keys}
         self.buf_rews_dict[i_env] = {k: 0.0 for k in self.keys}
         self.buf_dones_dict[i_env] = {k: False for k in self.keys}
@@ -130,6 +142,7 @@ class SubprocVecEnv_Pettingzoo(VecEnv):
         self.buf_infos_dict[i_env] = {k: {} for k in self.keys}
 
     def reset(self):
+        """Reset the vectorized environments."""
         for remote in self.remotes:
             remote.send(('reset', None))
         result = [remote.recv() for remote in self.remotes]
@@ -143,6 +156,7 @@ class SubprocVecEnv_Pettingzoo(VecEnv):
         return self.buf_obs.copy(), self.buf_infos_dict.copy()
 
     def step_async(self, actions):
+        """Sends asynchronous step commands to each subprocess with the specified actions."""
         if self.waiting:
             raise AlreadySteppingError
         listify = True
@@ -163,6 +177,9 @@ class SubprocVecEnv_Pettingzoo(VecEnv):
         self.waiting = True
 
     def step_wait(self):
+        """
+        Waits for the completion of asynchronous step operations and updates internal buffers with the received results.
+        """
         if not self.waiting:
             raise NotSteppingError
 
@@ -217,6 +234,7 @@ class SubprocVecEnv_Pettingzoo(VecEnv):
         return self.buf_obs.copy(), self.buf_rews.copy(), self.buf_dones.copy(), self.buf_trunctions.copy(), self.buf_infos_dict.copy()
 
     def close_extras(self):
+        """Closes the communication with subprocesses and joins the subprocesses."""
         self.closed = True
         if self.waiting:
             for remote in self.remotes:
@@ -227,6 +245,7 @@ class SubprocVecEnv_Pettingzoo(VecEnv):
             p.join()
 
     def render(self, mode=None):
+        """Sends a render command to each subprocess with the specified rendering mode."""
         for pipe in self.remotes:
             pipe.send(('render', None))
         imgs = [pipe.recv() for pipe in self.remotes]
@@ -234,41 +253,52 @@ class SubprocVecEnv_Pettingzoo(VecEnv):
         return imgs
 
     def global_state(self):
+        """Return the global state of the parallel environments."""
         return self.buf_state
 
     def agent_mask(self):
+        """Return the agent mask."""
         return self.buf_agent_mask
 
     def available_actions(self):
+        """Return an array representing available actions for each agent."""
         act_mask = [np.ones([self.num_envs, n, self.act_dim[h]], dtype=np.bool_) for h, n in enumerate(self.n_agents)]
         return np.array(act_mask)
 
 
 class DummyVecEnv_Pettingzoo(DummyVecEnv_Gym):
+    """
+    Work with multiple environments in parallel in process level.
+    Parameters:
+        env_fns – environment function.
+    """
+
     def __init__(self, env_fns):
         self.waiting = False
         self.envs = [fn() for fn in env_fns]
         env = self.envs[0]
-        self.handles = env.handles
+        self.handles = env.handles  # list of handles, e.g., [c_int(0), c_int(1)]. Handle means a group of agents.
         VecEnv.__init__(self, len(env_fns), env.observation_spaces, env.action_spaces)
-        self.state_space = env.state_space
-        self.state_shape = self.state_space.shape
-        self.state_dtype = self.state_space.dtype
+        self.state_space = env.state_space  # Type: Box
+        self.state_shape = self.state_space.shape  # Type: Tuple
+        self.state_dtype = self.state_space.dtype  # Type: numpy.dtype
         obs_n_space = env.observation_spaces  # [Box(dim_o), Box(dim_o), ...] ----> dict
-        self.agent_ids = env.agent_ids
-        self.n_agents = [env.get_num(h) for h in self.handles]
-        self.side_names = env.side_names
+        self.agent_ids = env.agent_ids  # list of agent ids, e.g., [[0, 1, 2], [0, 1]]
+        self.n_agents = [env.get_num(h) for h in self.handles]  # number of agents for each handle, e.g., [3, 2]
+        self.side_names = env.side_names  # the name of each side, e.g., ['red', 'blue']
 
-        self.keys, self.shapes, self.dtypes = obs_n_space_info(obs_n_space)
-        self.agent_keys = [[self.keys[k] for k in ids] for ids in self.agent_ids]
+        self.keys, self.shapes, self.dtypes = obs_n_space_info(obs_n_space)  # self.keys: the keys for all agents.
+        self.agent_keys = [[self.keys[k] for k in ids] for ids in self.agent_ids]  # the keys for each handle of agents.
         if isinstance(env.action_spaces[self.agent_keys[0][0]], Box):
             self.act_dim = [env.action_spaces[keys[0]].shape[0] for keys in self.agent_keys]
         else:
             self.act_dim = [env.action_spaces[keys[0]].n for keys in self.agent_keys]
-        self.n_agent_all = len(self.keys)
-        self.obs_shapes = [self.shapes[self.agent_keys[h.value][0]] for h in self.handles]
+        self.n_agent_all = len(self.keys)  # total number of agents
+        self.obs_shapes = [self.shapes[self.agent_keys[h.value][0]] for h in
+                           self.handles]  # suppose agents in one handle share a same observation space.
         self.obs_dtype = self.dtypes[self.keys[0]]
 
+        # store data for current time step.
         # buffer of dict data
         self.buf_obs_dict = [{k: np.zeros(tuple(self.shapes[k]), dtype=self.dtypes[k]) for k in self.keys} for _ in
                              range(self.num_envs)]
@@ -277,7 +307,7 @@ class DummyVecEnv_Pettingzoo(DummyVecEnv_Gym):
         self.buf_trunctions_dict = [{k: False for k in self.keys} for _ in range(self.num_envs)]
         self.buf_infos_dict = [{} for _ in range(self.num_envs)]
         # buffer of numpy data
-        self.buf_state = np.zeros((self.num_envs, ) + self.state_shape, dtype=self.state_dtype)
+        self.buf_state = np.zeros((self.num_envs,) + self.state_shape, dtype=self.state_dtype)
         self.buf_agent_mask = [np.ones([self.num_envs, n], dtype=np.bool_) for n in self.n_agents]
         self.buf_obs = [np.zeros((self.num_envs, n) + tuple(self.obs_shapes[h]), dtype=self.obs_dtype) for h, n in
                         enumerate(self.n_agents)]
@@ -285,11 +315,11 @@ class DummyVecEnv_Pettingzoo(DummyVecEnv_Gym):
         self.buf_dones = [np.ones((self.num_envs, n), dtype=np.bool_) for n in self.n_agents]
         self.buf_trunctions = [np.ones((self.num_envs, n), dtype=np.bool_) for n in self.n_agents]
 
-        self.max_episode_length = env.max_cycles
-        self.actions = None
+        self.max_episode_length = env.max_cycles  # the max length of one episode.
+        self.actions = None  # the actions to be executed.
 
     def empty_dict_buffers(self, i_env):
-        # buffer of dict data
+        """Reset the buffers for dictionary data."""
         self.buf_obs_dict[i_env] = {k: np.zeros(tuple(self.shapes[k]), dtype=self.dtypes[k]) for k in self.keys}
         self.buf_rews_dict[i_env] = {k: 0.0 for k in self.keys}
         self.buf_dones_dict[i_env] = {k: False for k in self.keys}
@@ -297,6 +327,7 @@ class DummyVecEnv_Pettingzoo(DummyVecEnv_Gym):
         self.buf_infos_dict[i_env] = {k: {} for k in self.keys}
 
     def reset(self):
+        """Reset the vectorized environments."""
         for e in range(self.num_envs):
             obs, info = self.envs[e].reset()
             self.buf_obs_dict[e].update(obs)
@@ -306,6 +337,7 @@ class DummyVecEnv_Pettingzoo(DummyVecEnv_Gym):
         return self.buf_obs.copy(), self.buf_infos_dict.copy()
 
     def step_async(self, actions):
+        """Sends asynchronous step commands to each subprocess with the specified actions."""
         if self.waiting:
             raise AlreadySteppingError
         listify = True
@@ -323,6 +355,9 @@ class DummyVecEnv_Pettingzoo(DummyVecEnv_Gym):
         self.waiting = True
 
     def step_wait(self):
+        """
+        Waits for the completion of asynchronous step operations and updates internal buffers with the received results.
+        """
         if not self.waiting:
             raise NotSteppingError
 
@@ -370,14 +405,25 @@ class DummyVecEnv_Pettingzoo(DummyVecEnv_Gym):
         return self.buf_obs.copy(), self.buf_rews.copy(), self.buf_dones.copy(), self.buf_trunctions.copy(), self.buf_infos_dict.copy()
 
     def render(self, mode=None):
+        """Sends a render command to each subprocess with the specified rendering mode."""
         return [env.render() for env in self.envs]
 
     def global_state(self):
+        """Return the global state of the parallel environments."""
         return self.buf_state
 
     def agent_mask(self):
+        """Return the agent mask."""
         return self.buf_agent_mask
 
     def available_actions(self):
+        """Return an array representing available actions for each agent."""
         act_mask = [np.ones([self.num_envs, n, self.act_dim[h]], dtype=np.bool_) for h, n in enumerate(self.n_agents)]
         return np.array(act_mask)
+
+    def close_extras(self):
+        """Closes the communication with subprocesses and joins the subprocesses."""
+        self.closed = True
+        for env in self.envs:
+            try: env.close()
+            except: pass

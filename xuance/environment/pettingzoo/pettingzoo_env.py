@@ -40,7 +40,7 @@ class PettingZoo_Env(ParallelEnv):
         self.scenario_name = env_name + "." + env_id
         self.n_handles = len(AGENT_NAME_DICT[self.scenario_name])
         self.side_names = AGENT_NAME_DICT[self.scenario_name]
-        self.env.reset()
+        self.env.reset(seed)
         try:
             self.state_space = self.env.state_space
         except:
