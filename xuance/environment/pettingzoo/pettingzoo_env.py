@@ -29,6 +29,15 @@ SISL_ENVS_MARL = ['multiwalker_v7', 'pursuit_v3', 'waterworld_v3']
 
 
 class PettingZoo_Env(ParallelEnv):
+    """
+    A wrapper for PettingZoo environments, provide a standardized interface for interacting
+    with the environments in the context of multi-agent reinforcement learning
+    Parameters:
+        env_name (str) – the name of the PettingZoo environment.
+        env_id (str) – environment id.
+        seed (int) – use to control randomness within the environment.
+        kwargs (dict) – a variable-length keyword argument.
+    """
     def __init__(self, env_name: str, env_id: str, seed: int, **kwargs):
         super(PettingZoo_Env, self).__init__()
         scenario = importlib.import_module('pettingzoo.' + env_name + '.' + env_id)
@@ -60,12 +69,15 @@ class PettingZoo_Env(ParallelEnv):
         self.individual_episode_reward = {k: 0.0 for k in self.agents}
 
     def close(self):
+        """Close the environment."""
         self.env.close()
 
     def render(self):
+        """Get the rendered images of the environment."""
         return self.env.render()
 
     def reset(self, seed=None, options=None):
+        """Reset the environment to its initial state."""
         observations, infos = self.env.reset()
         for agent_key in self.agents:
             self.individual_episode_reward[agent_key] = 0.0
@@ -74,6 +86,7 @@ class PettingZoo_Env(ParallelEnv):
         return observations, reset_info
 
     def step(self, actions):
+        """Take an action as input, perform a step in the underlying pettingzoo environment."""
         if self.continuous_actions:
             for k, v in actions.items():
                 actions[k] = np.clip(v, self.action_spaces[k].low, self.action_spaces[k].high)
@@ -85,12 +98,14 @@ class PettingZoo_Env(ParallelEnv):
         return observations, rewards, terminations, truncations, step_info
 
     def state(self):
+        """Returns the global state of the environment."""
         try:
             return np.array(self.env.state())
         except:
             return None
 
     def get_num(self, handle):
+        """Returns the number of agents in a group."""
         try:
             n = self.env.env.get_num(handle)
         except:
@@ -98,6 +113,7 @@ class PettingZoo_Env(ParallelEnv):
         return n
 
     def get_ids(self, handle):
+        """Returns the ids of all agents in the group."""
         try:
             ids = self.env.env.get_agent_id(handle)
         except:
@@ -110,6 +126,7 @@ class PettingZoo_Env(ParallelEnv):
         return ids
 
     def get_agent_mask(self):
+        """Create a boolean mask indicating which agents are currently alive."""
         if self.handles is None:
             return np.ones(self.n_agents_all, dtype=np.bool_)  # all alive
         else:
@@ -123,6 +140,7 @@ class PettingZoo_Env(ParallelEnv):
         return mask
 
     def get_handles(self):
+        """Returns all group handles in the environment."""
         if hasattr(self.env, 'handles'):
             return self.env.handles
         else:
