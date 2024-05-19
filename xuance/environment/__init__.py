@@ -1,5 +1,7 @@
 from argparse import Namespace
 
+from xuance.environment.utils import NewEnvironment, XuanCeEnvWrapprer
+
 from xuance.environment.gym import Gym_Env, MountainCar
 from .pettingzoo import PETTINGZOO_ENVIRONMENTS
 
@@ -117,7 +119,7 @@ def make_envs(config: Namespace):
         else:
             env = Gym_Env(config.env_id, config.seed, config.render_mode)
 
-        return env
+        return NewEnvironment(env)
 
     if config.vectorize in ["Dummy_MAgent", "Subproc_MAgent"]:  # for the support of magent2 environment
         from xuance.environment.magent2.magent_vec_env import DummyVecEnv_MAgent, SubprocVecEnv_Magent

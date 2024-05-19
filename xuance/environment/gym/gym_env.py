@@ -24,11 +24,6 @@ class Gym_Env(gym.Wrapper):
         self.metadata = self.env.metadata
         self.reward_range = self.env.reward_range
         self.max_episode_steps = self.env._max_episode_steps
-        self._episode_step = 0
-        self._episode_score = 0.0
-
-    def close(self):
-        self.env.close()
 
     def render(self, mode):
         return self.env.render()
