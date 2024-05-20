@@ -36,7 +36,7 @@ Source code
     from .vector_envs.subproc_vec_env import SubprocVecEnv
 
     REGISTRY_VEC_ENV = {
-        "Dummy_Gym": DummyVecEnv_Gym,
+        "DummyVecEnv": DummyVecEnv_Gym,
         "Dummy_Pettingzoo": DummyVecEnv_Pettingzoo,
         "Dummy_MAgent": DummyVecEnv_MAgent,
         "Dummy_StarCraft2": DummyVecEnv_StarCraft2,

@@ -2,7 +2,7 @@ agent: "PG"
 env_name: "Classic Control"
 env_id: "MountainCar-v0"
 representation: "Basic_MLP"
-vectorize: "Dummy_Gym"
+vectorize: "DummyVecEnv"
 policy: "Categorical_Actor"
 runner: "DRL"
 

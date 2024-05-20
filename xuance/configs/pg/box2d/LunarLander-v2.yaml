@@ -2,7 +2,7 @@ agent: "PG"
 env_name: "Box2D"
 env_id: "LunarLander-v2"
 representation: "Basic_MLP"
-vectorize: "Dummy_Gym"
+vectorize: "DummyVecEnv"
 policy: "Categorical_Actor"
 runner: "DRL"
 

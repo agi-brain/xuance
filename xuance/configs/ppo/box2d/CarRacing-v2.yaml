@@ -1,7 +1,7 @@
 agent: "PPO_Clip"  # Choice: PPO_Clip, PPO_KL
 env_name: "Box2D"
 env_id: "CarRacing-v2"
-vectorize: "Dummy_Gym"
+vectorize: "DummyVecEnv"
 representation: "Basic_CNN"
 policy: "Categorical_AC"
 runner: "DRL"

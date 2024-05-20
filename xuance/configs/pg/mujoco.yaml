@@ -1,7 +1,7 @@
 agent: "PG"
 env_name: "MuJoCo"
 env_id: "Ant-v4"
-vectorize: "Dummy_Gym"
+vectorize: "DummyVecEnv"
 policy: "Gaussian_Actor"
 representation: "Basic_MLP"
 runner: "DRL"

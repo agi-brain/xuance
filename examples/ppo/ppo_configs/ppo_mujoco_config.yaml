@@ -9,7 +9,7 @@ device: "cuda:0"
 
 agent: "PPO_Clip"  # choice: PPO_Clip, PPO_KL
 env_name: "MuJoCo"
-vectorize: "Dummy_Gym"
+vectorize: "DummyVecEnv"
 runner: "DRL"
 
 representation_hidden_size: [256,]

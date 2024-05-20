@@ -1,7 +1,7 @@
 agent: "TD3"
 env_name: "Box2D"
 env_id: "BipedalWalker-v3"
-vectorize: "Dummy_Gym"
+vectorize: "DummyVecEnv"
 representation: "Basic_Identical"
 policy: "TD3_Policy"
 runner: "DRL"

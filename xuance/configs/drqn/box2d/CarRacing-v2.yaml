@@ -1,7 +1,7 @@
 agent: "DRQN"
 env_name: "Box2D"
 env_id: "CarRacing-v2"
-vectorize: "Dummy_Gym"
+vectorize: "DummyVecEnv"
 policy: "DRQN_Policy"
 representation: "Basic_CNN"
 runner: "DRL"

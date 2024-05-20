@@ -1,7 +1,7 @@
 agent: "TD3"
 env_name: "Classic Control"
 env_id: "Pendulum-v1"
-vectorize: "Dummy_Gym"
+vectorize: "DummyVecEnv"
 representation: "Basic_Identical"
 policy: "TD3_Policy"
 runner: "DRL"

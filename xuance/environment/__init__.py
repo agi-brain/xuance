@@ -18,12 +18,12 @@ from xuance.environment.new_env_mas import DummyVecEnv_New_MAS, SubprocVecEnv_Ne
 from .vector_envs.subproc_vec_env import SubprocVecEnv
 
 REGISTRY_VEC_ENV = {
-    "Dummy_Gym": DummyVecEnv,
+    "DummyVecEnv": DummyVecEnv,
     "Dummy_Pettingzoo": DummyVecEnv_Pettingzoo,
     "Dummy_StarCraft2": DummyVecEnv_StarCraft2,
     "Dummy_Football": DummyVecEnv_GFootball,
     "Dummy_Atari": DummyVecEnv_Atari,
-    "Dummy_MiniGrid": DummyVecEnv,
+    "DummyVecEnv": DummyVecEnv,
     "Dummy_Drone": DummyVecEnv,
     "Dummy_Drone_MAS": DummyVecEnv_Drones_MAS,
     "Dummy_RoboticWarehouse": DummyVecEnv_RoboticWarehouse,

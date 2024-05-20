@@ -1,7 +1,7 @@
 agent: "DRQN"  # deep recurrent Q-networks
 env_name: "Classic Control"
 env_id: "MountainCar-v0"
-vectorize: "Dummy_Gym"
+vectorize: "DummyVecEnv"
 policy: "DRQN_Policy"
 representation: "Basic_MLP"
 runner: "DRL"

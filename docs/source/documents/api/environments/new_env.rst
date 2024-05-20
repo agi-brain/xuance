@@ -107,7 +107,7 @@ After that, import the vectorized environments in ./xuance/environments/__init__
     from xuance.environment.new_env.new_vec_env import DummyVecEnv_New, SubprocVecEnv_New
 
     REGISTRY_VEC_ENV = {
-        "Dummy_Gym": DummyVecEnv_Gym,
+        "DummyVecEnv": DummyVecEnv_Gym,
         "Dummy_Pettingzoo": DummyVecEnv_Pettingzoo,
         "Dummy_MAgent": DummyVecEnv_MAgent,
         "Dummy_StarCraft2": DummyVecEnv_StarCraft2,

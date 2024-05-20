@@ -1,7 +1,7 @@
 agent: "PPG"
 env_name: "Box2D"
 env_id: "LunarLander-v2"
-vectorize: "Dummy_Gym"
+vectorize: "DummyVecEnv"
 representation: "Basic_MLP"
 policy: "Categorical_PPG"
 runner: "DRL"

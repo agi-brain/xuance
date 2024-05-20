@@ -1,7 +1,7 @@
 agent: "A2C"
 env_name: "Classic Control"
 env_id: "Pendulum-v1"
-vectorize: "Dummy_Gym"
+vectorize: "DummyVecEnv"
 policy: "Gaussian_AC"
 representation: "Basic_MLP"
 runner: "DRL"

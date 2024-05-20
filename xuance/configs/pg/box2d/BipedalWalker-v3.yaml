@@ -2,7 +2,7 @@ agent: "PG"
 env_name: "Box2D"
 env_id: "BipedalWalker-v3"
 representation: "Basic_MLP"
-vectorize: "Dummy_Gym"
+vectorize: "DummyVecEnv"
 policy: "Gaussian_Actor"
 runner: "DRL"
 
