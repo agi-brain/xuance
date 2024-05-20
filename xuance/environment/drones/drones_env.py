@@ -6,13 +6,76 @@ from xuance.environment.drones.customized.HoverAviary import HoverAviary
 from gym_pybullet_drones.envs.VelocityAviary import VelocityAviary
 from xuance.environment.drones.customized.MultiHoverAviary import MultiHoverAviary
 from gym_pybullet_drones.utils.enums import ObservationType, ActionType
+from xuance.environment import RawEnvironment
 
 
-class Drones_Env:
+class Drone_Env(RawEnvironment):
+    def __init__(self, configs):
+        super(Drone_Env, self).__init__()
+        # import scenarios of gym-pybullet-drones
+        self.env_id = configs.env_id
+        REGISTRY = {
+            "CtrlAviary": CtrlAviary,
+            "HoverAviary": HoverAviary,
+            "VelocityAviary": VelocityAviary,
+            # you can add your customized scenarios here.
+        }
+        self.gui = configs.render  # Note: You cannot render multiple environments in parallel.
+        self.sleep = configs.sleep
+        self.env_id = configs.env_id
+
+        kwargs_env = {'gui': self.gui}
+        if self.env_id in ["HoverAviary"]:
+            kwargs_env.update({'obs': ObservationType(configs.obs_type),
+                               'act': ActionType(configs.act_type)})
+        if self.env_id != "HoverAviary":
+            kwargs_env.update({'num_drones': configs.num_drones})
+        self.env = REGISTRY[configs.env_id](**kwargs_env)
+
+        self._episode_step = 0
+        if self.env_id == "MultiHoverAviary":
+            self.observation_space = self.env.observation_space
+            self.observation_shape = self.env.observation_space.shape
+            self.action_space = self.env.action_space
+            self.action_shape = self.env.action_space.shape
+        else:
+            self.observation_space = self.space_reshape(self.env.observation_space)
+            self.action_space = self.space_reshape(self.env.action_space)
+        self.max_episode_steps = configs.max_episode_steps
+
+    def space_reshape(self, gym_space):
+        low = gym_space.low.reshape(-1)
+        high = gym_space.high.reshape(-1)
+        shape_obs = (gym_space.shape[-1], )
+        return Box(low=low, high=high, shape=shape_obs, dtype=gym_space.dtype)
+
+    def close(self):
+        self.env.close()
+
+    def render(self, *args, **kwargs):
+        return self.env.render()
+
+    def reset(self):
+        obs, info = self.env.reset()
+        self._episode_step = 0
+        obs_return = obs.reshape(-1)
+        return obs_return, info
+
+    def step(self, actions):
+        obs, reward, terminated, truncated, info = self.env.step(actions.reshape([1, -1]))
+        obs_return = obs.reshape(-1)
+        self._episode_step += 1
+        truncated = True if (self._episode_step >= self.max_episode_steps) else False
+        if self.gui:
+            time.sleep(self.sleep)
+        return obs_return, reward, terminated, truncated, info
+
+
+class Drones_MultiAgentEnv(RawEnvironment):
     def __init__(self, args):
+        super(Drones_MultiAgentEnv, self).__init__()
         # import scenarios of gym-pybullet-drones
         self.env_id = args.env_id
-
         REGISTRY = {
             "CtrlAviary": CtrlAviary,
             "HoverAviary": HoverAviary,

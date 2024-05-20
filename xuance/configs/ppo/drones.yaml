@@ -6,6 +6,7 @@ act_type: 'one_d_rpm'
 num_drones: 1
 record: False
 render: False
+sleep: 0.01
 obstacles: True
 max_episode_steps: 2000
 vectorize: "Dummy_Drone"

@@ -147,7 +147,6 @@ class Atari_Env(gym.Wrapper):
         self.reward_range = self.env.reward_range
         self._render_mode = render_mode
         self._episode_step = 0
-        self._episode_score = 0.0
 
     def close(self):
         self.env.close()
@@ -174,8 +173,6 @@ class Atari_Env(gym.Wrapper):
                 self.frames.append(self.observation(obs))
 
             self._episode_step = 0
-            self._episode_score = 0.0
-            info["episode_step"] = 0
         else:
             obs, _, done, _ = self.env.unwrapped.step(0)
             for _ in range(self.num_stack):
@@ -198,9 +195,6 @@ class Atari_Env(gym.Wrapper):
         truncated = self.was_real_done
         self.lifes = lives
         self._episode_step += 1
-        self._episode_score += reward
-        info["episode_score"] = self._episode_score
-        info["episode_step"] = self._episode_step
         return self._get_obs(), self.reward(reward), terminated, truncated, info
 
     def _get_obs(self):

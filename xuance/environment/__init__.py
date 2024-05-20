@@ -1,6 +1,6 @@
 from argparse import Namespace
 
-from xuance.environment.utils import NewEnvironment, XuanCeEnvWrapprer
+from xuance.environment.utils import MakeEnvironment, XuanCeEnvWrapprer, RawEnvironment
 
 from xuance.environment.gym import Gym_Env, MountainCar
 from .pettingzoo import PETTINGZOO_ENVIRONMENTS
@@ -96,13 +96,11 @@ def make_envs(config: Namespace):
 
         elif config.env_name == "MiniGrid":
             from xuance.environment.minigrid.minigrid_env import MiniGridEnv
-            env = MiniGridEnv(config.env_id, config.seed, config.render_mode,
-                              rgb_img_partial_obs_wrapper=config.RGBImgPartialObsWrapper,
-                              img_obs_wrapper=config.ImgObsWrapper)
+            env = MiniGridEnv(config)
 
         elif config.env_name == "Drones":
-            from xuance.environment.drones.drones_env import Drones_Env
-            env = Drones_Env(config)
+            from xuance.environment.drones.drones_env import Drone_Env
+            env = Drone_Env(config)
 
         elif config.env_name == "MetaDrive":
             from xuance.environment.metadrive.metadrive_env import MetaDrive_Env
@@ -119,7 +117,7 @@ def make_envs(config: Namespace):
         else:
             env = Gym_Env(config.env_id, config.seed, config.render_mode)
 
-        return NewEnvironment(env)
+        return MakeEnvironment(env)
 
     if config.vectorize in ["Dummy_MAgent", "Subproc_MAgent"]:  # for the support of magent2 environment
         from xuance.environment.magent2.magent_vec_env import DummyVecEnv_MAgent, SubprocVecEnv_Magent

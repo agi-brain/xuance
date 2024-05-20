@@ -23,7 +23,7 @@ class XuanCeEnvWrapprer:
         self._observation_space: Optional[spaces.Space] = None
         self._reward_range: Optional[Tuple[SupportsFloat, SupportsFloat]] = None
         self._metadata: Optional[dict] = None
-        self._max_episode_steps: Optional[SupportsInt] = None
+        self._max_episode_steps: Optional[int] = None
 
     @property
     def action_space(self) -> spaces.Space[ActType]:
@@ -77,7 +77,7 @@ class XuanCeEnvWrapprer:
     def max_episode_steps(self) -> int:
         """Returns the maximum of episode steps."""
         if self._max_episode_steps is None:
-            return self.env._max_episode_steps
+            return self.env.max_episode_steps
         return self._max_episode_steps
 
     @max_episode_steps.setter

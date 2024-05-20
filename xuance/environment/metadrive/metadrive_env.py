@@ -1,37 +1,30 @@
+from xuance.environment import RawEnvironment
 from metadrive.envs.metadrive_env import MetaDriveEnv
-import numpy as np
 
 
-class MetaDrive_Env:
-    def __init__(self, args):
-        self.env_id = args.env_id
-        args.env_config['use_render'] = args.render
-        self.env = MetaDriveEnv(config=args.env_config)
-
-        self._episode_step = 0  # The count of steps for current episode.
-        self._episode_score = 0.0  # The cumulated rewards for current episode.
+class MetaDrive_Env(RawEnvironment):
+    """
+    The raw environment of MetaDrive in XuanCe.
+    Parameters:
+        configs: the configurations of the environment.
+    """
+    def __init__(self, configs):
+        super(MetaDrive_Env, self).__init__()
+        self.env_id = configs.env_id
+        configs.env_config['use_render'] = configs.render
+        self.env = MetaDriveEnv(config=configs.env_config)
         self.observation_space = self.env.observation_space
         self.action_space = self.env.action_space
         self.max_episode_steps = self.env.episode_lengths
 
-    def close(self):
-        self.env.close()
+    def reset(self, **kwargs):
+        return self.env.reset(**kwargs)
+
+    def step(self, action):
+        return self.env.step(action)
 
     def render(self, *args, **kwargs):
-        return np.zeros([2, 2, 2])
+        return self.env.render()
 
-    def reset(self):
-        obs, info = self.env.reset()
-        self._episode_step = 0  # The count of steps for current episode.
-        self._episode_score = 0.0  # The cumulated rewards for current episode.
-        info["episode_step"] = self._episode_step
-        return obs, info
-
-    def step(self, actions):
-        observation, reward, terminated, truncated, info = self.env.step(actions)
-
-        self._episode_step += 1
-        self._episode_score += reward
-        info["episode_step"] = self._episode_step  # current episode step
-        info["episode_score"] = self._episode_score  # the accumulated rewards
-        return observation, reward, terminated, truncated, info
+    def close(self):
+        self.env.close()

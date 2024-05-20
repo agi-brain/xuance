@@ -61,6 +61,7 @@ class MARL_OnPolicyBuffer(BaseBuffer):
                  use_gae, use_advnorm, gamma, gae_lam, **kwargs):
         super(MARL_OnPolicyBuffer, self).__init__(n_agents, state_space, obs_space, act_space, rew_space, done_space,
                                                   n_envs, buffer_size)
+        assert buffer_size % self.n_envs == 0, "buffer_size must be divisible by the number of envs (parallels)"
         self.n_size = buffer_size // self.n_envs
         self.use_gae = use_gae
         self.use_advantage_norm = use_advnorm
@@ -537,6 +538,7 @@ class MARL_OffPolicyBuffer(BaseBuffer):
                  n_envs, buffer_size, batch_size, **kwargs):
         super(MARL_OffPolicyBuffer, self).__init__(n_agents, state_space, obs_space, act_space, rew_space, done_space,
                                                    n_envs, buffer_size)
+        assert buffer_size % self.n_envs == 0, "buffer_size must be divisible by the number of envs (parallels)"
         self.n_size = buffer_size // n_envs
         self.batch_size = batch_size
         if self.state_space is not None:
