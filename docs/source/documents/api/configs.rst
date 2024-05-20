@@ -3225,7 +3225,7 @@ Policy Gradient-based Implementations
                             agent: "A2C"
                             env_name: "Classic Control"
                             env_id: "CartPole-v1"
-                            vectorize: "Subproc_Gym"
+                            vectorize: "SubprocVecEnv"
                             policy: "Categorical_AC"
                             representation: "Basic_MLP"
                             runner: "DRL"

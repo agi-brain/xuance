@@ -6,7 +6,6 @@ from xuance.environment.vector_envs import DummyVecEnv, SubprocVecEnv
 from xuance.environment.gym import Gym_Env, MountainCar
 from .pettingzoo import PETTINGZOO_ENVIRONMENTS
 
-from .vector_envs.vector_env import VecEnv
 from xuance.environment.gym import DummyVecEnv_Atari, SubprocVecEnv_Atari
 from xuance.environment.pettingzoo import DummyVecEnv_Pettingzoo, SubprocVecEnv_Pettingzoo
 from xuance.environment.starcraft2 import DummyVecEnv_StarCraft2, SubprocVecEnv_StarCraft2
@@ -23,22 +22,17 @@ REGISTRY_VEC_ENV = {
     "Dummy_StarCraft2": DummyVecEnv_StarCraft2,
     "Dummy_Football": DummyVecEnv_GFootball,
     "Dummy_Atari": DummyVecEnv_Atari,
-    "DummyVecEnv": DummyVecEnv,
-    "Dummy_Drone": DummyVecEnv,
     "Dummy_Drone_MAS": DummyVecEnv_Drones_MAS,
     "Dummy_RoboticWarehouse": DummyVecEnv_RoboticWarehouse,
     "Dummy_NewEnv_MAS": DummyVecEnv_New_MAS,  # Add the newly defined vectorized environment for multi-agent systems
 
     # multiprocess #
-    "Subproc_Gym": SubprocVecEnv,
+    "SubprocVecEnv": SubprocVecEnv,
     "Subproc_Pettingzoo": SubprocVecEnv_Pettingzoo,
     "Subproc_StarCraft2": SubprocVecEnv_StarCraft2,
     "Subproc_Football": SubprocVecEnv_GFootball,
     "Subproc_Atari": SubprocVecEnv_Atari,
-    "Subproc_MiniGrid": SubprocVecEnv,
-    "Subproc_Drone": SubprocVecEnv,
     "Subproc_Drone_MAS": SubprocVecEnv_Drones_MAS,
-    "Subproc_MetaDrive": SubprocVecEnv,
     "Subproc_RoboticWarehouse": SubprocVecEnv_RoboticWarehouse,
     "Subproc_NewEnv_MAS": SubprocVecEnv_New_MAS,  # Add the newly defined vectorized environment for multi-agent systems
 }
@@ -89,16 +83,16 @@ def make_envs(config: Namespace):
             env = PlatformEnv()
 
         elif config.env_name == "MiniGrid":
-            from xuance.environment.minigrid.minigrid_env import MiniGridEnv
-            env = MiniGridEnv(config)
+            from xuance.environment.minigrid.minigrid_env import MiniGridEnv as RawEnv
+            env = RawEnv(config)
 
         elif config.env_name == "Drones":
             from xuance.environment.drones.drones_env import Drone_Env
             env = Drone_Env(config)
 
         elif config.env_name == "MetaDrive":
-            from xuance.environment.metadrive.metadrive_env import MetaDrive_Env
-            env = MetaDrive_Env(config)
+            from xuance.environment.metadrive.metadrive_env import MetaDrive_Env as RawEnv
+            env = RawEnv(config)
 
         elif config.env_name == "NewEnv":  # Add the newly defined vectorized environment
             from xuance.environment.new_env.new_env import New_Env

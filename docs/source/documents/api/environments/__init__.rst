@@ -45,7 +45,7 @@ Source code
         "Dummy_NewEnv": DummyVecEnv_New,  # Add the newly defined vectorized environment
 
         # multiprocess #
-        "Subproc_Gym": SubprocVecEnv_Gym,
+        "SubprocVecEnv": SubprocVecEnv_Gym,
         "Subproc_Pettingzoo": SubprocVecEnv_Pettingzoo,
         "Subproc_StarCraft2": SubprocVecEnv_StarCraft2,
         "Subproc_Football": SubprocVecEnv_GFootball,

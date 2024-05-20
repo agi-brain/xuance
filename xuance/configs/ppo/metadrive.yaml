@@ -4,7 +4,7 @@ env_id: "metadrive"
 env_config:  # the configs for MetaDrive environment
   map: "C"  # see https://metadrive-simulator.readthedocs.io/en/latest/rl_environments.html#generalization-environment for choices
 render: False
-vectorize: "Subproc_MetaDrive"
+vectorize: "SubprocVecEnv"
 policy: "Gaussian_AC"  # choice: Gaussian_AC for continuous actions, Categorical_AC for discrete actions.
 representation: "Basic_MLP"
 runner: "DRL"

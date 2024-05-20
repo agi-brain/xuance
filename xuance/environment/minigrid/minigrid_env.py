@@ -30,7 +30,7 @@ class MiniGridEnv(RawEnvironment):
         self.render_mode = config.render_mode
         self.image_size = np.prod(self.env.observation_space['image'].shape)  # height * width * channels
         self.dim_obs = self.image_size + 1  # direction
-        self.observation_space = Box(low=0, high=255, shape=[self.dim_obs, ], dtype=np.uint8, seed=seed)
+        self.observation_space = Box(low=0, high=255, shape=[self.dim_obs, ], dtype=np.uint8, seed=config.seed)
         self.action_space = self.env.action_space
         self.max_episode_steps = self.env.env.env.max_steps
 
