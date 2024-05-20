@@ -8,7 +8,7 @@ AGENT_NAME_DICT = {
     "mpe.simple_crypto_v3": ['eve', 'alice', 'bob'],
     "mpe.simple_push_v3": ['adversary', 'agent'],
     "mpe.simple_reference_v3": ['agent'],
-    "mpe.simple_speak_listener_v4": ['speaker', 'listener'],
+    "mpe.simple_speaker_listener_v4": ['speaker', 'listener'],
     "mpe.simple_spread_v3": ['agent'],
     "mpe.simple_tag_v3": ['adversary', 'agent'],
     "mpe.simple_v3": ['agent'],
