@@ -184,7 +184,7 @@ Source Code
             """
             def __init__(self,
                         config: Namespace,
-                        envs: DummyVecEnv_Gym,
+                        envs: DummyVecEnv,
                         policy: nn.Module,
                         optimizer: Sequence[torch.optim.Optimizer],
                         scheduler: Optional[Sequence[torch.optim.lr_scheduler._LRScheduler]] = None,
@@ -324,7 +324,7 @@ Source Code
         class TD3_Agent(Agent):
             def __init__(self,
                          config: Namespace,
-                         envs: DummyVecEnv_Gym,
+                         envs: DummyVecEnv,
                          policy: tk.Model,
                          optimizer: Sequence[tk.optimizers.Optimizer],
                          device: str = 'cpu'):

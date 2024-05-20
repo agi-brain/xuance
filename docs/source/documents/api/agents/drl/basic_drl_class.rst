@@ -195,7 +195,7 @@ Source Code
             """
             def __init__(self,
                         config: Namespace,
-                        envs: DummyVecEnv_Gym,
+                        envs: DummyVecEnv,
                         policy: nn.Module,
                         memory: Buffer,
                         learner: Learner,
@@ -346,7 +346,7 @@ Source Code
          class Agent(ABC):
             def __init__(self,
                         config: Namespace,
-                        envs: DummyVecEnv_Gym,
+                        envs: DummyVecEnv,
                         policy: tk.Model,
                         memory: Buffer,
                         learner: Learner,
@@ -498,7 +498,7 @@ Source Code
          class Agent(ABC):
             def __init__(self,
                         config: Namespace,
-                        envs: DummyVecEnv_Gym,
+                        envs: DummyVecEnv,
                         policy: nn.Cell,
                         memory: Buffer,
                         learner: Learner,

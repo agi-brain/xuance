@@ -4,7 +4,7 @@ from xuance.tensorflow.agents import *
 class NoisyDQN_Agent(Agent):
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecEnv_Gym,
+                 envs: DummyVecEnv,
                  policy: tk.Model,
                  optimizer: tk.optimizers.Optimizer,
                  device: str = 'cpu'):

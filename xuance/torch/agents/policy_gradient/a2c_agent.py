@@ -18,7 +18,7 @@ class A2C_Agent(Agent):
     """
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecEnv_Gym,
+                 envs: DummyVecEnv,
                  policy: nn.Module,
                  optimizer: torch.optim.Optimizer,
                  scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,

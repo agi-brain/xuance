@@ -1,6 +1,6 @@
 from xuance.environment.vector_envs.vector_env import VecEnv, AlreadySteppingError, NotSteppingError
 from xuance.environment.vector_envs.env_utils import obs_n_space_info
-from xuance.environment.gym.gym_vec_env import DummyVecEnv_Gym
+from xuance.environment import DummyVecEnv
 from operator import itemgetter
 from gymnasium.spaces.box import Box
 import numpy as np
@@ -266,7 +266,7 @@ class SubprocVecEnv_Pettingzoo(VecEnv):
         return np.array(act_mask)
 
 
-class DummyVecEnv_Pettingzoo(DummyVecEnv_Gym):
+class DummyVecEnv_Pettingzoo(DummyVecEnv):
     """
     Work with multiple environments in parallel in process level.
     Parameters:

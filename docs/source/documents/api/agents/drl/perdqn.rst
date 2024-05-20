@@ -181,7 +181,7 @@ Source Code
                 """
                 def __init__(self,
                             config: Namespace,
-                            envs: DummyVecEnv_Gym,
+                            envs: DummyVecEnv,
                             policy: nn.Module,
                             optimizer: torch.optim.Optimizer,
                             scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
@@ -336,7 +336,7 @@ Source Code
             class PerDQN_Agent(Agent):
                 def __init__(self,
                              config: Namespace,
-                             envs: DummyVecEnv_Gym,
+                             envs: DummyVecEnv,
                              policy: tk.Model,
                              optimizer: tk.optimizers.Optimizer,
                              device: str = 'cpu'):
@@ -488,7 +488,7 @@ Source Code
             class PerDQN_Agent(Agent):
                 def __init__(self,
                              config: Namespace,
-                             envs: DummyVecEnv_Gym,
+                             envs: DummyVecEnv,
                              policy: nn.Cell,
                              optimizer: nn.Optimizer,
                              scheduler):

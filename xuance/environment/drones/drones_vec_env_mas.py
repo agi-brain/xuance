@@ -1,5 +1,5 @@
 from xuance.environment.vector_envs.vector_env import NotSteppingError
-from xuance.environment.gym.gym_vec_env import DummyVecEnv_Gym, SubprocVecEnv_Gym
+from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.common import combined_shape
 from gymnasium.spaces import Box
 import numpy as np
@@ -43,7 +43,7 @@ def worker(remote, parent_remote, env_fn_wrappers):
             env.close()
 
 
-class SubprocVecEnv_Drones_MAS(SubprocVecEnv_Gym):
+class SubprocVecEnv_Drones_MAS(SubprocVecEnv):
     """
     VecEnv that runs multiple environments in parallel in subproceses and communicates with them via pipes.
     Recommended to use when num_envs > 1 and step() can be a bottleneck.
@@ -141,7 +141,7 @@ class SubprocVecEnv_Drones_MAS(SubprocVecEnv_Gym):
         return self.buf_agent_mask
 
 
-class DummyVecEnv_Drones_MAS(DummyVecEnv_Gym):
+class DummyVecEnv_Drones_MAS(DummyVecEnv):
     def __init__(self, env_fns):
         self.waiting = False
         self.envs = [fn() for fn in env_fns]

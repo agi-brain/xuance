@@ -1,51 +1,45 @@
 from argparse import Namespace
 
 from xuance.environment.utils import MakeEnvironment, XuanCeEnvWrapprer, RawEnvironment
+from xuance.environment.vector_envs import DummyVecEnv, SubprocVecEnv
 
 from xuance.environment.gym import Gym_Env, MountainCar
 from .pettingzoo import PETTINGZOO_ENVIRONMENTS
 
 from .vector_envs.vector_env import VecEnv
-from xuance.environment.gym import DummyVecEnv_Gym, SubprocVecEnv_Gym
 from xuance.environment.gym import DummyVecEnv_Atari, SubprocVecEnv_Atari
 from xuance.environment.pettingzoo import DummyVecEnv_Pettingzoo, SubprocVecEnv_Pettingzoo
 from xuance.environment.starcraft2 import DummyVecEnv_StarCraft2, SubprocVecEnv_StarCraft2
 from xuance.environment.football import DummyVecEnv_GFootball, SubprocVecEnv_GFootball
-from xuance.environment.minigrid import DummyVecEnv_MiniGrid, SubprocVecEnv_MiniGrid
-from xuance.environment.drones import DummyVecEnv_Drones, SubprocVecEnv_Drones
 from xuance.environment.drones import DummyVecEnv_Drones_MAS, SubprocVecEnv_Drones_MAS
-from xuance.environment.metadrive import SubprocVecEnv_MetaDrive
 from xuance.environment.robotic_warehouse import DummyVecEnv_RoboticWarehouse, SubprocVecEnv_RoboticWarehouse
-from xuance.environment.new_env import DummyVecEnv_New, SubprocVecEnv_New
 from xuance.environment.new_env_mas import DummyVecEnv_New_MAS, SubprocVecEnv_New_MAS
 
 from .vector_envs.subproc_vec_env import SubprocVecEnv
 
 REGISTRY_VEC_ENV = {
-    "Dummy_Gym": DummyVecEnv_Gym,
+    "Dummy_Gym": DummyVecEnv,
     "Dummy_Pettingzoo": DummyVecEnv_Pettingzoo,
     "Dummy_StarCraft2": DummyVecEnv_StarCraft2,
     "Dummy_Football": DummyVecEnv_GFootball,
     "Dummy_Atari": DummyVecEnv_Atari,
-    "Dummy_MiniGrid": DummyVecEnv_MiniGrid,
-    "Dummy_Drone": DummyVecEnv_Drones,
+    "Dummy_MiniGrid": DummyVecEnv,
+    "Dummy_Drone": DummyVecEnv,
     "Dummy_Drone_MAS": DummyVecEnv_Drones_MAS,
     "Dummy_RoboticWarehouse": DummyVecEnv_RoboticWarehouse,
-    "Dummy_NewEnv": DummyVecEnv_New,  # Add the newly defined vectorized environment
     "Dummy_NewEnv_MAS": DummyVecEnv_New_MAS,  # Add the newly defined vectorized environment for multi-agent systems
 
     # multiprocess #
-    "Subproc_Gym": SubprocVecEnv_Gym,
+    "Subproc_Gym": SubprocVecEnv,
     "Subproc_Pettingzoo": SubprocVecEnv_Pettingzoo,
     "Subproc_StarCraft2": SubprocVecEnv_StarCraft2,
     "Subproc_Football": SubprocVecEnv_GFootball,
     "Subproc_Atari": SubprocVecEnv_Atari,
-    "Subproc_MiniGrid": SubprocVecEnv_MiniGrid,
-    "Subproc_Drone": SubprocVecEnv_Drones,
+    "Subproc_MiniGrid": SubprocVecEnv,
+    "Subproc_Drone": SubprocVecEnv,
     "Subproc_Drone_MAS": SubprocVecEnv_Drones_MAS,
-    "Subproc_MetaDrive": SubprocVecEnv_MetaDrive,
+    "Subproc_MetaDrive": SubprocVecEnv,
     "Subproc_RoboticWarehouse": SubprocVecEnv_RoboticWarehouse,
-    "Subproc_NewEnv": SubprocVecEnv_New,  # Add the newly defined vectorized environment
     "Subproc_NewEnv_MAS": SubprocVecEnv_New_MAS,  # Add the newly defined vectorized environment for multi-agent systems
 }
 

@@ -24,7 +24,7 @@ class Agent(ABC):
 
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecEnv_Gym,
+                 envs: DummyVecEnv,
                  policy: nn.Module,
                  memory: Buffer,
                  learner: Learner,

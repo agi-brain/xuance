@@ -1,15 +1,17 @@
 from .vector_env import VecEnv
 import numpy as np
 import multiprocessing as mp
-from . import clear_mpi_env_vars, flatten_list, flatten_obs, CloudpickleWrapper
+from xuance.common import space2shape, combined_shape
+from . import clear_mpi_env_vars, flatten_list, CloudpickleWrapper
 
 
 def worker(remote, parent_remote, env_fn_wrappers):
     def step_env(env, action):
-        ob, reward, done, info = env.step(action)
-        if done:
-            ob = env.reset()
-        return ob, reward, done, info
+        obs, reward_n, terminated, truncated, info = env.step(action)
+        if terminated or truncated:
+            ob_reset, _ = env.reset()
+            info["reset_obs"] = ob_reset
+        return obs, reward_n, terminated, truncated, info
 
     parent_remote.close()
     envs = [env_fn_wrapper() for env_fn_wrapper in env_fn_wrappers.x]
@@ -27,6 +29,8 @@ def worker(remote, parent_remote, env_fn_wrappers):
                 break
             elif cmd == 'get_spaces':
                 remote.send(CloudpickleWrapper((envs[0].observation_space, envs[0].action_space)))
+            elif cmd == 'get_max_cycles':
+                remote.send(CloudpickleWrapper((envs[0].max_episode_steps)))
             else:
                 raise NotImplementedError
     except KeyboardInterrupt:
@@ -42,7 +46,7 @@ class SubprocVecEnv(VecEnv):
     Recommended to use when num_envs > 1 and step() can be a bottleneck.
     """
 
-    def __init__(self, env_fns, spaces=None, context='spawn', in_series=1):
+    def __init__(self, env_fns, context='spawn', in_series=1):
         """
         Arguments:
         env_fns: iterable of callables -  functions that create environments to run in subprocesses. Need to be cloud-pickleable
@@ -52,12 +56,12 @@ class SubprocVecEnv(VecEnv):
         self.waiting = False
         self.closed = False
         self.in_series = in_series
-        nenvs = len(env_fns)
-        assert nenvs % in_series == 0, "Number of envs must be divisible by number of envs to run in series"
-        self.nremotes = nenvs // in_series
-        env_fns = np.array_split(env_fns, self.nremotes)
+        num_envs = len(env_fns)
+        assert num_envs % in_series == 0, "Number of envs must be divisible by number of envs to run in series"
+        self.n_remotes = num_envs // in_series
+        env_fns = np.array_split(env_fns, self.n_remotes)
         ctx = mp.get_context(context)
-        self.remotes, self.work_remotes = zip(*[ctx.Pipe() for _ in range(self.nremotes)])
+        self.remotes, self.work_remotes = zip(*[ctx.Pipe() for _ in range(self.n_remotes)])
         self.ps = [ctx.Process(target=worker, args=(work_remote, remote, CloudpickleWrapper(env_fn)))
                    for (work_remote, remote, env_fn) in zip(self.work_remotes, self.remotes, env_fns)]
         for p in self.ps:
@@ -70,11 +74,25 @@ class SubprocVecEnv(VecEnv):
         self.remotes[0].send(('get_spaces', None))
         observation_space, action_space = self.remotes[0].recv().x
         self.viewer = None
-        VecEnv.__init__(self, nenvs, observation_space, action_space)
+        VecEnv.__init__(self, num_envs, observation_space, action_space)
+
+        self.obs_shape = space2shape(self.observation_space)
+        if isinstance(self.observation_space, dict):
+            self.buf_obs = {k: np.zeros(combined_shape(self.num_envs, v)) for k, v in
+                            zip(self.obs_shape.keys(), self.obs_shape.values())}
+        else:
+            self.buf_obs = np.zeros(combined_shape(self.num_envs, self.obs_shape), dtype=np.float32)
+        self.buf_terminated = np.zeros((self.num_envs,), dtype=np.bool_)
+        self.buf_truncated = np.zeros((self.num_envs,), dtype=np.bool_)
+        self.buf_rewards = np.zeros((self.num_envs,), dtype=np.float32)
+        self.buf_infos = [{} for _ in range(self.num_envs)]
+        self.actions = None
+        self.remotes[0].send(('get_max_cycles', None))
+        self.max_episode_length = self.remotes[0].recv().x
 
     def step_async(self, actions):
         self._assert_not_closed()
-        actions = np.array_split(actions, self.nremotes)
+        actions = np.array_split(actions, self.n_remotes)
         for remote, action in zip(self.remotes, actions):
             remote.send(('step', action))
         self.waiting = True
@@ -83,17 +101,27 @@ class SubprocVecEnv(VecEnv):
         self._assert_not_closed()
         results = [remote.recv() for remote in self.remotes]
         results = flatten_list(results)
+        obs, rewards, terminated, truncated, infos = zip(*results)
+        self.buf_obs, self.buf_rewards = np.array(obs), np.array(rewards)
+        self.buf_terminated, self.buf_truncated, self.buf_infos = np.array(terminated), np.array(truncated), list(infos)
+        for e in range(self.num_envs):
+            if self.buf_terminated[e] or self.buf_truncated[e]:
+                self.buf_infos[e]["reset_obs"] = np.array(infos[e]["reset_obs"])
         self.waiting = False
-        obs, rews, dones, infos = zip(*results)
-        return flatten_obs(obs), np.stack(rews), np.stack(dones), infos
+        return self.buf_obs.copy(), self.buf_rewards.copy(), self.buf_terminated.copy(), \
+               self.buf_truncated.copy(), self.buf_infos.copy()
 
     def reset(self):
         self._assert_not_closed()
         for remote in self.remotes:
             remote.send(('reset', None))
-        obs = [remote.recv() for remote in self.remotes]
-        obs = flatten_list(obs)
-        return flatten_obs(obs)
+        result = [remote.recv() for remote in self.remotes]
+        result = flatten_list(result)
+        obs, infos = zip(*result)
+        self.buf_obs, self.buf_infos = np.array(obs), list(infos)
+        self.buf_terminated = np.zeros((self.num_envs,), dtype=np.bool_)
+        self.buf_truncated = np.zeros((self.num_envs,), dtype=np.bool_)
+        return self.buf_obs.copy(), self.buf_infos.copy()
 
     def close_extras(self):
         self.closed = True
@@ -105,10 +133,10 @@ class SubprocVecEnv(VecEnv):
         for p in self.ps:
             p.join()
 
-    def get_images(self):
+    def render(self, mode):
         self._assert_not_closed()
         for pipe in self.remotes:
-            pipe.send(('render', None))
+            pipe.send(('render', mode))
         imgs = [pipe.recv() for pipe in self.remotes]
         imgs = flatten_list(imgs)
         return imgs

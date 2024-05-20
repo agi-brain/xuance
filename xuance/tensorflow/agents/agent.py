@@ -6,7 +6,7 @@ from xuance.tensorflow.agents import *
 class Agent(ABC):
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecEnv_Gym,
+                 envs: DummyVecEnv,
                  policy: tk.Model,
                  memory: Buffer,
                  learner: Learner,
