@@ -1,6 +1,6 @@
 from argparse import Namespace
 
-from xuance.environment.utils import MakeEnvironment, XuanCeEnvWrapprer, RawEnvironment
+from xuance.environment.utils import MakeEnvironment, XuanCeEnvWrapper, RawEnvironment
 from xuance.environment.vector_envs import DummyVecEnv, SubprocVecEnv
 
 from xuance.environment.gym import Gym_Env, MountainCar
@@ -18,6 +18,7 @@ from .vector_envs.subproc_vec_env import SubprocVecEnv
 
 REGISTRY_VEC_ENV = {
     "DummyVecEnv": DummyVecEnv,
+    # "DummyVecEnv_MAS": DummyVecEnv_MAS,
     "Dummy_Pettingzoo": DummyVecEnv_Pettingzoo,
     "Dummy_StarCraft2": DummyVecEnv_StarCraft2,
     "Dummy_Football": DummyVecEnv_GFootball,
@@ -87,20 +88,12 @@ def make_envs(config: Namespace):
             env = RawEnv(config)
 
         elif config.env_name == "Drones":
-            from xuance.environment.drones.drones_env import Drone_Env
-            env = Drone_Env(config)
+            from xuance.environment.drones.drones_env import Drone_Env as RawEnv
+            env = RawEnv(config)
 
         elif config.env_name == "MetaDrive":
             from xuance.environment.metadrive.metadrive_env import MetaDrive_Env as RawEnv
             env = RawEnv(config)
-
-        elif config.env_name == "NewEnv":  # Add the newly defined vectorized environment
-            from xuance.environment.new_env.new_env import New_Env
-            env = New_Env(config.env_id, config.seed, continuous=False)
-
-        elif config.env_name == "NewEnv_MAS":  # Add the newly defined vectorized environment
-            from xuance.environment.new_env_mas.new_env_mas import New_Env_MAS
-            env = New_Env_MAS(config, continuous=config.continuous_action)
 
         else:
             env = Gym_Env(config.env_id, config.seed, config.render_mode)
@@ -114,7 +107,8 @@ def make_envs(config: Namespace):
             "Subproc_MAgent": SubprocVecEnv_Magent
         })
     if config.vectorize in REGISTRY_VEC_ENV.keys():
-        return REGISTRY_VEC_ENV[config.vectorize]([_thunk for _ in range(config.parallels)])
+        env_fn = [_thunk for _ in range(config.parallels)]
+        return REGISTRY_VEC_ENV[config.vectorize](env_fn)
     elif config.vectorize == "NOREQUIRED":
         return _thunk()
     else:

@@ -10,11 +10,7 @@ class MiniGridEnv(RawEnvironment):
     The wrapper of minigrid environment.
 
     Args:
-        env_id: The environment id of minigrid.
-        seed: random seed.
-        render_mode: "rgb_array", "human".
-        rgb_img_partial_wrapper: whether to apply the RGB image's partial observation wrapper.
-        img_obs_wrapper:  whether to apply the image observation wrapper.
+        config: the configurations for the environment.
     """
     def __init__(self, config):
         super(MiniGridEnv, self).__init__()

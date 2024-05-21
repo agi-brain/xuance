@@ -3,13 +3,13 @@ from gym import spaces
 from gym.core import ActType, ObsType, RenderFrame
 
 
-class XuanCeEnvWrapprer:
+class XuanCeEnvWrapper:
     """
     Wraps an environment for single-agent system that can run in XuanCe.
     """
     def __new__(cls, *args, **kwargs):
-        if cls is XuanCeEnvWrapprer:
-            raise TypeError("Type XuanCeEnvWrapprer cannot be instantiated; It can be used only as a base class")
+        if cls is XuanCeEnvWrapper:
+            raise TypeError("Type XuanCeEnvWrapper cannot be instantiated; It can be used only as a base class")
         if super().__new__ is object.__new__ and cls.__init__ is not object.__init__:
             obj = super().__new__(cls)
         else:
@@ -17,7 +17,7 @@ class XuanCeEnvWrapprer:
         return obj
 
     def __init__(self, env, **kwargs):
-        super(XuanCeEnvWrapprer, self).__init__()
+        super(XuanCeEnvWrapper, self).__init__()
         self.env = env
         self._action_space: Optional[spaces.Space] = None
         self._observation_space: Optional[spaces.Space] = None
@@ -127,13 +127,13 @@ class XuanCeEnvWrapprer:
         return self.env
 
 
-class XuanCeMultiAgentEnvWrapprer(XuanCeEnvWrapprer):
+class XuanCeMultiAgentEnvWrapper(XuanCeEnvWrapper):
     """
     Wraps an environment for multi-agent system that can run in XuanCe.
     """
     def __new__(cls, *args, **kwargs):
-        if cls is XuanCeMultiAgentEnvWrapprer:
-            raise TypeError("Type XuanCeMultiAgentEnvWrapprer cannot be instantiated; "
+        if cls is XuanCeMultiAgentEnvWrapper:
+            raise TypeError("Type XuanCeMultiAgentEnvWrapper cannot be instantiated; "
                             "It can be used only as a base class")
         if super().__new__ is object.__new__ and cls.__init__ is not object.__init__:
             obj = super().__new__(cls)
@@ -142,7 +142,7 @@ class XuanCeMultiAgentEnvWrapprer(XuanCeEnvWrapprer):
         return obj
 
     def __init__(self, env, **kwargs):
-        super(XuanCeMultiAgentEnvWrapprer, self).__init__(env, **kwargs)
+        super(XuanCeMultiAgentEnvWrapper, self).__init__(env, **kwargs)
 
     @property
     def get_agent_mask(self):
