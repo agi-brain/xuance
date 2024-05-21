@@ -105,12 +105,15 @@ class RawMultiAgentEnv(ABC):
     def __init__(self, *args, **kwargs):
         super(RawMultiAgentEnv, self).__init__(*args, **kwargs)
         self.env = None
+        self.state_space: Optional[spaces.Space] = None
         self.observation_space: Optional[spaces.Space] = None
         self.action_space: Optional[spaces.Space] = None
-        self.agents: Optional[AgentKeys] = ["agent_1"]
+        self.agents: Optional[AgentKeys] = ["agent_0"]
         self.num_agents: Optional[int] = 1
-        self.group: Optional[List[AgentKeys]] = [["agent"]]
+        self.groups: Optional[AgentKeys] = ["agent"]
         self.num_groups: Optional[int] = 1
+        self.agents_group: Optional[List[AgentKeys]] = [["agent_0"]]
+        self.num_agents_group: List[int] = [1]
         self.max_episode_steps: Optional[int] = None
 
     @abstractmethod

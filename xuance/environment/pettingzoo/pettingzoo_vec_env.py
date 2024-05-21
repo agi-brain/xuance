@@ -277,14 +277,14 @@ class DummyVecEnv_Pettingzoo(DummyVecEnv):
         self.waiting = False
         self.envs = [fn() for fn in env_fns]
         env = self.envs[0]
-        self.handles = env.handles  # list of handles, e.g., [c_int(0), c_int(1)]. Handle means a group of agents.
-        VecEnv.__init__(self, len(env_fns), env.observation_spaces, env.action_spaces)
+        self.groups = env.groups  # list of handles, e.g., [c_int(0), c_int(1)]. Handle means a group of agents.
+        VecEnv.__init__(self, len(env_fns), env.observation_space, env.action_space)
         self.state_space = env.state_space  # Type: Box
         self.state_shape = self.state_space.shape  # Type: Tuple
         self.state_dtype = self.state_space.dtype  # Type: numpy.dtype
-        obs_n_space = env.observation_spaces  # [Box(dim_o), Box(dim_o), ...] ----> dict
+        obs_n_space = env.observation_space  # [Box(dim_o), Box(dim_o), ...] ----> dict
         self.agent_ids = env.agent_ids  # list of agent ids, e.g., [[0, 1, 2], [0, 1]]
-        self.n_agents = [env.get_num(h) for h in self.handles]  # number of agents for each handle, e.g., [3, 2]
+        self.n_agents = [env.get_num(h) for h in self.groups]  # number of agents for each handle, e.g., [3, 2]
         self.side_names = env.side_names  # the name of each side, e.g., ['red', 'blue']
 
         self.keys, self.shapes, self.dtypes = obs_n_space_info(obs_n_space)  # self.keys: the keys for all agents.
@@ -295,7 +295,7 @@ class DummyVecEnv_Pettingzoo(DummyVecEnv):
             self.act_dim = [env.action_spaces[keys[0]].n for keys in self.agent_keys]
         self.n_agent_all = len(self.keys)  # total number of agents
         self.obs_shapes = [self.shapes[self.agent_keys[h.value][0]] for h in
-                           self.handles]  # suppose agents in one handle share a same observation space.
+                           self.groups]  # suppose agents in one handle share a same observation space.
         self.obs_dtype = self.dtypes[self.keys[0]]
 
         # store data for current time step.

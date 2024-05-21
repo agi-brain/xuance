@@ -46,6 +46,10 @@ def make_envs(config: Namespace):
                                  continuous=config.continuous_action,
                                  render_mode=config.render_mode)
 
+        if config.env_name == "mpe":
+            from xuance.environment.multi_agent_env.mpe import MPE_Env as RawEnv
+            env = RawEnv(config)
+
         elif config.env_name == "StarCraft2":
             from xuance.environment.starcraft2.sc2_env import StarCraft2_Env
             env = StarCraft2_Env(map_name=config.env_id)

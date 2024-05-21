@@ -1,6 +1,7 @@
 from typing import Optional, Union, Tuple, List, SupportsFloat, SupportsInt
 from gym import spaces
 from gym.core import ActType, ObsType, RenderFrame
+from xuance.environment.utils.new import AgentKeys
 
 
 class XuanCeEnvWrapper:
@@ -146,6 +147,11 @@ class XuanCeMultiAgentEnvWrapper(XuanCeEnvWrapper):
     def __init__(self, env, **kwargs):
         super(XuanCeMultiAgentEnvWrapper, self).__init__(env, **kwargs)
         self._env_info: Optional[dict] = None
+        self._state_space: Optional[spaces.Space] = None
+        self.agents = self.env.agents
+        self.num_agents = self.env.num_agents
+        self.groups: Optional[List[AgentKeys]] = [["agent"]]
+        self.num_groups: Optional[int] = 1
 
     @property
     def env_info(self) -> Optional[dict]:
@@ -158,6 +164,18 @@ class XuanCeMultiAgentEnvWrapper(XuanCeEnvWrapper):
     def env_info(self, info: {}):
         """Sets the action space"""
         self._env_info = info
+
+    @property
+    def state_space(self) -> spaces.Space:
+        """Returns the global state space of the environment."""
+        if self._state_space is None:
+            return self.env.state_space
+        return self._state_space
+
+    @state_space.setter
+    def state_space(self, space: spaces.Space):
+        """Sets the global state space."""
+        self._state_space = space
 
     @property
     def agent_mask(self):
