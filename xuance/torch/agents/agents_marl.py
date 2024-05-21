@@ -53,7 +53,7 @@ class MARLAgents(object):
     def load_model(self, path, model=None):
         self.learner.load_model(path, model)
 
-    def act(self, **kwargs):
+    def action(self, **kwargs):
         raise NotImplementedError
 
     def train(self, **kwargs):
@@ -88,7 +88,7 @@ class RandomAgents(object):
         self.action_space = self.args.action_space
         self.nenvs = envs.num_envs
 
-    def act(self, obs_n, episode, test_mode, noise=False):
+    def action(self, obs_n, episode, test_mode, noise=False):
         rand_a = [[self.action_space[agent].sample() for agent in self.agent_keys] for e in range(self.nenvs)]
         random_actions = np.array(rand_a)
         return random_actions

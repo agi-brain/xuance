@@ -1,8 +1,8 @@
-from .vector_env import VecEnv
+from xuance.environment.vector_envs.vector_env import VecEnv
 import numpy as np
 import multiprocessing as mp
 from xuance.common import space2shape, combined_shape
-from . import clear_mpi_env_vars, flatten_list, CloudpickleWrapper
+from xuance.environment.vector_envs import clear_mpi_env_vars, flatten_list, CloudpickleWrapper
 
 
 def worker(remote, parent_remote, env_fn_wrappers):

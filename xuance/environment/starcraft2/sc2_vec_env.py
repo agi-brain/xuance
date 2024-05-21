@@ -2,7 +2,7 @@ from xuance.common import combined_shape
 from gymnasium.spaces import Discrete, Box
 import numpy as np
 import multiprocessing as mp
-from xuance.environment.vector_envs.subproc_vec_env import clear_mpi_env_vars, flatten_list, CloudpickleWrapper
+from xuance.environment.vector_envs.subprocess.subproc_vec_env import clear_mpi_env_vars, flatten_list, CloudpickleWrapper
 from xuance.environment.vector_envs.vector_env import VecEnv
 
 

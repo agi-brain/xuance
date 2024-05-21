@@ -148,10 +148,13 @@ class XuanCeMultiAgentEnvWrapper(XuanCeEnvWrapper):
         super(XuanCeMultiAgentEnvWrapper, self).__init__(env, **kwargs)
         self._env_info: Optional[dict] = None
         self._state_space: Optional[spaces.Space] = None
-        self.agents = self.env.agents
-        self.num_agents = self.env.num_agents
-        self.groups: Optional[List[AgentKeys]] = [["agent"]]
-        self.num_groups: Optional[int] = 1
+        self.agents: Optional[AgentKeys] = None  # e.g., ['red_0', 'red_1', 'blue_0', 'blue_1'].
+        self.num_agents: Optional[int] = None  # Number of all agents, e.g., 4.
+        self.teams_info = {  # Information of teams.
+            "names": ['red', 'blue'],  # should be consistent with the name of agents.
+            "num_teams": 2,
+            "agents_in_team": [["red_0", 'red_1'], ['blue_0', 'blue_1']]
+        }
 
     @property
     def env_info(self) -> Optional[dict]:
@@ -178,16 +181,16 @@ class XuanCeMultiAgentEnvWrapper(XuanCeEnvWrapper):
         self._state_space = space
 
     @property
+    def state(self):
+        """Returns global states in the multi-agent environment."""
+        return self.env.state
+
+    @property
     def agent_mask(self):
         """Returns mask variables to mark alive agents in multi-agent environment."""
         return self.env.get_agent_mask()
 
     @property
-    def state(self):
-        """Returns global states in the multi-agent environment."""
-        return self.env.get_state()
-
-    @property
     def avail_actions(self):
         """Returns mask variables to mark available actions for each agent."""
-        return self.env.get_avail_actions()
+        return self.env.avail_actions

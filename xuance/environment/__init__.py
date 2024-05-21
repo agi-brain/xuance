@@ -1,7 +1,8 @@
 from argparse import Namespace
 
 from xuance.environment.utils import MakeEnvironment, MakeMultiAgentEnvironment, XuanCeEnvWrapper, RawEnvironment, RawMultiAgentEnv
-from xuance.environment.vector_envs import DummyVecEnv, SubprocVecEnv, DummyVecEnv_Atari, SubprocVecEnv_Atari
+from xuance.environment.vector_envs import DummyVecEnv, SubprocVecEnv, \
+    DummyVecEnv_Atari, SubprocVecEnv_Atari, DummyVecMutliAgentEnv
 
 from xuance.environment.single_agent_env import Gym_Env
 from .pettingzoo import PETTINGZOO_ENVIRONMENTS
@@ -13,12 +14,12 @@ from xuance.environment.drones import DummyVecEnv_Drones_MAS, SubprocVecEnv_Dron
 from xuance.environment.robotic_warehouse import DummyVecEnv_RoboticWarehouse, SubprocVecEnv_RoboticWarehouse
 from xuance.environment.new_env_mas import DummyVecEnv_New_MAS, SubprocVecEnv_New_MAS
 
-from .vector_envs.subproc_vec_env import SubprocVecEnv
+from xuance.environment.vector_envs.subprocess.subproc_vec_env import SubprocVecEnv
 
 REGISTRY_VEC_ENV = {
     "DummyVecEnv": DummyVecEnv,
     # "DummyVecEnv_MAS": DummyVecEnv_MAS,
-    "Dummy_Pettingzoo": DummyVecEnv_Pettingzoo,
+    "Dummy_Pettingzoo": DummyVecMutliAgentEnv,
     "Dummy_StarCraft2": DummyVecEnv_StarCraft2,
     "Dummy_Football": DummyVecEnv_GFootball,
     "Dummy_Atari": DummyVecEnv_Atari,

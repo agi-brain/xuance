@@ -4,7 +4,7 @@ from xuance.environment import DummyVecEnv
 from operator import itemgetter
 from gymnasium.spaces.box import Box
 import numpy as np
-from xuance.environment.vector_envs.subproc_vec_env import clear_mpi_env_vars, flatten_list, CloudpickleWrapper
+from xuance.environment.vector_envs.subprocess.subproc_vec_env import clear_mpi_env_vars, flatten_list, CloudpickleWrapper
 import multiprocessing as mp
 
 
@@ -283,18 +283,17 @@ class DummyVecEnv_Pettingzoo(DummyVecEnv):
         self.state_shape = self.state_space.shape  # Type: Tuple
         self.state_dtype = self.state_space.dtype  # Type: numpy.dtype
         obs_n_space = env.observation_space  # [Box(dim_o), Box(dim_o), ...] ----> dict
-        self.agent_ids = env.agent_ids  # list of agent ids, e.g., [[0, 1, 2], [0, 1]]
-        self.n_agents = [env.get_num(h) for h in self.groups]  # number of agents for each handle, e.g., [3, 2]
-        self.side_names = env.side_names  # the name of each side, e.g., ['red', 'blue']
 
         self.keys, self.shapes, self.dtypes = obs_n_space_info(obs_n_space)  # self.keys: the keys for all agents.
-        self.agent_keys = [[self.keys[k] for k in ids] for ids in self.agent_ids]  # the keys for each handle of agents.
-        if isinstance(env.action_spaces[self.agent_keys[0][0]], Box):
-            self.act_dim = [env.action_spaces[keys[0]].shape[0] for keys in self.agent_keys]
+        # self.agent_keys = [[self.keys[k] for k in ids] for ids in self.agent_ids]  # the keys for each handle of agents.
+        self.agents = self.envs[0].agents
+        if isinstance(env.action_space[self.agents[0]], Box):
+            self.act_dim = [env.action_space[keys].shape[0] for keys in self.agents]
         else:
-            self.act_dim = [env.action_spaces[keys[0]].n for keys in self.agent_keys]
+            self.act_dim = [env.action_space[keys[0]].n for keys in self.agents]
         self.n_agent_all = len(self.keys)  # total number of agents
-        self.obs_shapes = [self.shapes[self.agent_keys[h.value][0]] for h in
+        self.num_agents = env.num_agents
+        self.obs_shapes = [self.shapes[self.agents[0]] for h in
                            self.groups]  # suppose agents in one handle share a same observation space.
         self.obs_dtype = self.dtypes[self.keys[0]]
 
@@ -308,12 +307,12 @@ class DummyVecEnv_Pettingzoo(DummyVecEnv):
         self.buf_infos_dict = [{} for _ in range(self.num_envs)]
         # buffer of numpy data
         self.buf_state = np.zeros((self.num_envs,) + self.state_shape, dtype=self.state_dtype)
-        self.buf_agent_mask = [np.ones([self.num_envs, n], dtype=np.bool_) for n in self.n_agents]
+        self.buf_agent_mask = [np.ones([self.num_envs, n], dtype=np.bool_) for n in env.num_agents_group]
         self.buf_obs = [np.zeros((self.num_envs, n) + tuple(self.obs_shapes[h]), dtype=self.obs_dtype) for h, n in
-                        enumerate(self.n_agents)]
-        self.buf_rews = [np.zeros((self.num_envs, n, 1), dtype=np.float32) for n in self.n_agents]
-        self.buf_dones = [np.ones((self.num_envs, n), dtype=np.bool_) for n in self.n_agents]
-        self.buf_trunctions = [np.ones((self.num_envs, n), dtype=np.bool_) for n in self.n_agents]
+                        enumerate(self.num_agents)]
+        self.buf_rews = [np.zeros((self.num_envs, n, 1), dtype=np.float32) for n in env.num_agents_group]
+        self.buf_dones = [np.ones((self.num_envs, n), dtype=np.bool_) for n in env.num_agents_group]
+        self.buf_trunctions = [np.ones((self.num_envs, n), dtype=np.bool_) for n in env.num_agents_group]
 
         self.max_episode_length = env.max_cycles  # the max length of one episode.
         self.actions = None  # the actions to be executed.

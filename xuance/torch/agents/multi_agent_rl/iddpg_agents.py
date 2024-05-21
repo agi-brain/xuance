@@ -49,7 +49,14 @@ class IDDPG_Agents(MARLAgents):
                                            config.log_dir, config.model_dir)
         self.on_policy = False
 
-    def act(self, obs_n, test_mode):
+    def action(self, obs_dict, test_mode):
+        """
+        Returns actions for agents.
+
+        Parameters:
+            obs_dict (dict): Observations for each agent in self.agent_keys
+            test_mode (bool): True for testing without noises.
+        """
         batch_size = len(obs_n)
         agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(batch_size, -1, -1).to(self.device)
         _, actions = self.policy(torch.Tensor(obs_n), agents_id)

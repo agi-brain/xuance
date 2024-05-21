@@ -10,7 +10,7 @@ from xuance.environment.vector_envs.env_utils import (
     CloudpickleWrapper,
 )
 
-from xuance.environment.vector_envs.subproc_vec_env import (
+from xuance.environment.vector_envs.subprocess.subproc_vec_env import (
     worker,
     SubprocVecEnv
 )
@@ -21,5 +21,8 @@ from xuance.environment.vector_envs.vector_env import (
     VecEnv
 )
 
-from xuance.environment.vector_envs.subproc_vec_env import SubprocVecEnv, SubprocVecEnv_Atari
-from xuance.environment.vector_envs.dummy_vec_env import DummyVecEnv, DummyVecEnv_Atari
+from xuance.environment.vector_envs.subprocess import SubprocVecEnv
+from xuance.environment.vector_envs.subprocess import SubprocVecEnv_Atari
+from xuance.environment.vector_envs.dummy import DummyVecEnv
+from xuance.environment.vector_envs.dummy import DummyVecEnv_Atari
+from xuance.environment.vector_envs.dummy import DummyVecMutliAgentEnv

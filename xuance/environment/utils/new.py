@@ -1,6 +1,7 @@
 from typing import Optional, List, Tuple, Dict, Any
 from abc import ABC, abstractmethod
 from gym import spaces
+import numpy as np
 
 AgentID = Any
 AgentValue = Any
@@ -106,14 +107,15 @@ class RawMultiAgentEnv(ABC):
         super(RawMultiAgentEnv, self).__init__(*args, **kwargs)
         self.env = None
         self.state_space: Optional[spaces.Space] = None
-        self.observation_space: Optional[spaces.Space] = None
-        self.action_space: Optional[spaces.Space] = None
-        self.agents: Optional[AgentKeys] = ["agent_0"]
-        self.num_agents: Optional[int] = 1
-        self.groups: Optional[AgentKeys] = ["agent"]
-        self.num_groups: Optional[int] = 1
-        self.agents_group: Optional[List[AgentKeys]] = [["agent_0"]]
-        self.num_agents_group: List[int] = [1]
+        self.observation_space: Optional[Dict[spaces.Space]] = None
+        self.action_space: Optional[Dict[spaces.Space]] = None
+        self.agents: Optional[AgentKeys] = None  # e.g., ['red_0', 'red_1', 'blue_0', 'blue_1'].
+        self.num_agents: Optional[int] = None  # Number of all agents, e.g., 4.
+        self.teams_info = {  # Information of teams.
+            "names": ['red', 'blue'],  # should be consistent with the name of agents.
+            "num_teams": 2,
+            "agents_in_team": [["red_0", 'red_1'], ['blue_0', 'blue_1']]
+        }
         self.max_episode_steps: Optional[int] = None
 
     @abstractmethod
@@ -158,4 +160,29 @@ class RawMultiAgentEnv(ABC):
     @abstractmethod
     def close(self):
         """Closes the environment."""
-        return NotImplementedError
+        return
+
+    @property
+    def get_agents_in_team(self):
+        agents_in_team = [[] for _ in range(self.teams_info['num_teams'])]
+        for i_team, team in enumerate(self.teams_info['names']):
+            for agent in self.agents:
+                if team in agent:  # for example, team='red' and agent='red_0'
+                    agents_in_team[i_team].append(agent)
+        return agents_in_team
+
+    @property
+    def state(self):
+        """Returns the global state of the environment."""
+        raise NotImplementedError
+
+    @property
+    def get_agent_mask(self):
+        """Create a boolean mask indicating which agents are currently alive."""
+        mask = np.ones(self.num_agents, dtype=np.bool_)
+        return mask
+
+    @property
+    def avail_actions(self):
+        """Returns a boolean mask indicating which actions are available for each agent."""
+        raise NotImplementedError

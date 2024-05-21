@@ -10,6 +10,8 @@ class DummyVecEnv(VecEnv):
     the step and reset commands are send to one environment at a time.
     Useful when debugging and when num_env == 1 (in the latter case,
     avoids communication overhead)
+    Parameters:
+        env_fns – environment function.
     """
     def __init__(self, env_fns):
         self.waiting = False
