@@ -147,3 +147,9 @@ class SubprocVecEnv(VecEnv):
     def __del__(self):
         if not self.closed:
             self.close()
+
+
+class SubprocVecEnv_Atari(SubprocVecEnv):
+    def __init__(self, env_fns):
+        super(SubprocVecEnv_Atari, self).__init__(env_fns)
+        self.buf_obs = np.zeros(combined_shape(self.num_envs, self.obs_shape), dtype=np.uint8)

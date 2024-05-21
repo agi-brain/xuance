@@ -24,6 +24,8 @@ class XuanCeEnvWrapper:
         self._reward_range: Optional[Tuple[SupportsFloat, SupportsFloat]] = None
         self._metadata: Optional[dict] = None
         self._max_episode_steps: Optional[int] = None
+        self._episode_step = 0
+        self._episode_score = 0.0
 
     @property
     def action_space(self) -> spaces.Space[ActType]:
@@ -143,11 +145,24 @@ class XuanCeMultiAgentEnvWrapper(XuanCeEnvWrapper):
 
     def __init__(self, env, **kwargs):
         super(XuanCeMultiAgentEnvWrapper, self).__init__(env, **kwargs)
+        self._env_info: Optional[dict] = None
 
     @property
-    def get_agent_mask(self):
+    def env_info(self) -> Optional[dict]:
+        """Returns the information of the environment."""
+        if self._env_info is None:
+            return self.env.env_info
+        return self._env_info
+
+    @env_info.setter
+    def env_info(self, info: {}):
+        """Sets the action space"""
+        self._env_info = info
+
+    @property
+    def agent_mask(self):
         """Returns mask variables to mark alive agents in multi-agent environment."""
-        return self.env.agent_mask()
+        return self.env.get_agent_mask()
 
     @property
     def state(self):
@@ -155,6 +170,6 @@ class XuanCeMultiAgentEnvWrapper(XuanCeEnvWrapper):
         return self.env.get_state()
 
     @property
-    def get_avail_actions(self):
+    def avail_actions(self):
         """Returns mask variables to mark available actions for each agent."""
         return self.env.get_avail_actions()

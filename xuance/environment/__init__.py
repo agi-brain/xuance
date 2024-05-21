@@ -1,12 +1,11 @@
 from argparse import Namespace
 
-from xuance.environment.utils import MakeEnvironment, XuanCeEnvWrapper, RawEnvironment
-from xuance.environment.vector_envs import DummyVecEnv, SubprocVecEnv
+from xuance.environment.utils import MakeEnvironment, MakeMultiAgentEnvironment, XuanCeEnvWrapper, RawEnvironment, RawMultiAgentEnv
+from xuance.environment.vector_envs import DummyVecEnv, SubprocVecEnv, DummyVecEnv_Atari, SubprocVecEnv_Atari
 
-from xuance.environment.gym import Gym_Env, MountainCar
+from xuance.environment.single_agent_env import Gym_Env
 from .pettingzoo import PETTINGZOO_ENVIRONMENTS
 
-from xuance.environment.gym import DummyVecEnv_Atari, SubprocVecEnv_Atari
 from xuance.environment.pettingzoo import DummyVecEnv_Pettingzoo, SubprocVecEnv_Pettingzoo
 from xuance.environment.starcraft2 import DummyVecEnv_StarCraft2, SubprocVecEnv_StarCraft2
 from xuance.environment.football import DummyVecEnv_GFootball, SubprocVecEnv_GFootball
@@ -69,12 +68,9 @@ def make_envs(config: Namespace):
             env = RoboticWarehouseEnv(config, render_mode=config.render_mode)
 
         elif config.env_name == "Atari":
-            from xuance.environment.gym.gym_env import Atari_Env
+            from xuance.environment.single_agent_env import Atari_Env
             env = Atari_Env(config.env_id, config.seed, config.render_mode,
                             config.obs_type, config.frame_skip, config.num_stack, config.img_size, config.noop_max)
-
-        elif config.env_id.__contains__("MountainCar"):
-            env = MountainCar(config.env_id, config.seed, config.render_mode)
 
         elif config.env_id.__contains__("CarRacing"):
             env = Gym_Env(config.env_id, config.seed, config.render_mode, continuous=False)
@@ -84,21 +80,24 @@ def make_envs(config: Namespace):
             env = PlatformEnv()
 
         elif config.env_name == "MiniGrid":
-            from xuance.environment.minigrid.minigrid_env import MiniGridEnv as RawEnv
+            from xuance.environment.single_agent_env.minigrid import MiniGridEnv as RawEnv
             env = RawEnv(config)
 
         elif config.env_name == "Drones":
-            from xuance.environment.drones.drones_env import Drone_Env as RawEnv
+            if config.agent_name == "iddpg":
+                from xuance.environment.multi_agent_env.drones import Drones_MultiAgentEnv as RawEnv
+            else:
+                from xuance.environment.single_agent_env.drones import Drone_Env as RawEnv
             env = RawEnv(config)
 
         elif config.env_name == "MetaDrive":
-            from xuance.environment.metadrive.metadrive_env import MetaDrive_Env as RawEnv
+            from xuance.environment.single_agent_env.metadrive import MetaDrive_Env as RawEnv
             env = RawEnv(config)
 
         else:
             env = Gym_Env(config.env_id, config.seed, config.render_mode)
 
-        return MakeEnvironment(env)
+        return MakeMultiAgentEnvironment(env)
 
     if config.vectorize in ["Dummy_MAgent", "Subproc_MAgent"]:  # for the support of magent2 environment
         from xuance.environment.magent2.magent_vec_env import DummyVecEnv_MAgent, SubprocVecEnv_Magent

@@ -21,5 +21,5 @@ from xuance.environment.vector_envs.vector_env import (
     VecEnv
 )
 
-from xuance.environment.vector_envs.subproc_vec_env import SubprocVecEnv
-from xuance.environment.vector_envs.dummy_vec_env import DummyVecEnv
+from xuance.environment.vector_envs.subproc_vec_env import SubprocVecEnv, SubprocVecEnv_Atari
+from xuance.environment.vector_envs.dummy_vec_env import DummyVecEnv, DummyVecEnv_Atari

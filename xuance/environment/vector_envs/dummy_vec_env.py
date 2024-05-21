@@ -87,3 +87,10 @@ class DummyVecEnv(VecEnv):
 
     def _save_infos(self, e, info):
         self.buf_infos[e] = info
+
+
+class DummyVecEnv_Atari(DummyVecEnv):
+    def __init__(self, env_fns):
+        super(DummyVecEnv_Atari, self).__init__(env_fns)
+        self.buf_obs = np.zeros(combined_shape(self.num_envs, self.obs_shape), dtype=np.uint8)
+

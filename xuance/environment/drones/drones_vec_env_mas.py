@@ -192,21 +192,21 @@ class DummyVecEnv_Drones_MAS(DummyVecEnv):
             self.buf_truncations[e] = truncated
             self.buf_info[e] = infos
             self.buf_info[e]["individual_episode_rewards"] = infos["episode_score"]
-            if all(done) or all(truncated):
+            if all(done) or truncated:
                 obs_reset, _ = self.envs[e].reset()
                 self.buf_info[e]["reset_obs"] = obs_reset
-                self.buf_info[e]["reset_agent_mask"] = self.envs[e].get_agent_mask()
-                self.buf_info[e]["reset_state"] = self.envs[e].state()
+                self.buf_info[e]["reset_agent_mask"] = self.envs[e].agent_mask
+                self.buf_info[e]["reset_state"] = self.envs[e].state
         self.waiting = False
         return self.buf_obs.copy(), self.buf_rews.copy(), self.buf_terminals.copy(), self.buf_truncations.copy(), self.buf_info.copy()
 
     def global_state(self):
         for e in range(self.num_envs):
-            self.buf_state[e] = self.envs[e].state()
+            self.buf_state[e] = self.envs[e].state
         return self.buf_state
 
     def agent_mask(self):
         for e in range(self.num_envs):
-            self.buf_agent_mask[e] = self.envs[e].get_agent_mask()
+            self.buf_agent_mask[e] = self.envs[e].agent_mask
         return self.buf_agent_mask
 
