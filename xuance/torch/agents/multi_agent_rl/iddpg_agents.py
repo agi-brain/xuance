@@ -32,95 +32,91 @@ class IDDPG_Agents(MARLAgents):
         self.noise_scale = config.start_noise
         self.delta_noise = (self.start_noise - self.end_noise) / (config.running_steps / self.n_envs)
 
-        # prepare representation and policy
+        # build policy, optimizers, schedulers
+        self.policy = self.build_policy()
+        optimizer = [torch.optim.Adam(self.policy.parameters_actor, self.config.lr_a, eps=1e-5),
+                     torch.optim.Adam(self.policy.parameters_critic, self.config.lr_c, eps=1e-5)]
+        scheduler = [torch.optim.lr_scheduler.LinearLR(optimizer[0], start_factor=1.0, end_factor=0.5,
+                                                       total_iters=self.config.running_steps),
+                     torch.optim.lr_scheduler.LinearLR(optimizer[1], start_factor=1.0, end_factor=0.5,
+                                                       total_iters=self.config.running_steps)]
+        # create experience replay buffer
+        self.memory = MARL_OffPolicyBuffer(n_agents=self.config.n_agents,
+                                           state_space=None,
+                                           obs_space=self.observation_space[self.agent_keys[0]].shape,
+                                           act_space=self.action_space[self.agent_keys[0]].shape,
+                                           n_envs=self.n_envs,
+                                           buffer_size=self.config.buffer_size,
+                                           batch_size=self.config.batch_size)
+        # create learner
+        self.learner = IDDPG_Learner(config, self.policy, optimizer, scheduler,
+                                     config.device, config.model_dir, config.gamma)
+
+    def build_policy(self):
         if self.use_parameter_sharing:  # all agents share a same representation, policy and optimizer.
-            if config.representation == "Basic_Identical":
+            if self.config.representation == "Basic_Identical":
                 representation = REGISTRY_Representation["Basic_Identical"](
                     input_shape=self.observation_space[self.agent_keys[0]].shape,
                     device=self.device)
-            elif config.representation == "Basic_MLP":
+            elif self.config.representation == "Basic_MLP":
                 representation = REGISTRY_Representation["Basic_MLP"](
                     input_shape=self.observation_space[self.agent_keys[0]].shape,
-                    hidden_sizes=config.representation_hidden_size,
-                    normalize=NormalizeFunctions[config.normalize] if hasattr(config, "normalize") else None,
+                    hidden_sizes=self.config.representation_hidden_size,
+                    normalize=NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None,
                     initialize=torch.nn.init.orthogonal_,
-                    activation=ActivationFunctions[config.activation],
+                    activation=ActivationFunctions[self.config.activation],
                     device=self.device)
             else:
-                raise f"The {config.agent} currently does not support the representation named {config.representation}."
-            if config.policy == "Independent_DDPG_Policy":
-                self.policy = REGISTRY_Policy["Independent_DDPG_Policy"](
+                raise f"The IDDPG currently does not support the representation named {self.config.representation}."
+            if self.config.policy == "Independent_DDPG_Policy":
+                policy = REGISTRY_Policy["Independent_DDPG_Policy"](
                     action_space=self.action_space[self.agent_keys[0]],
                     n_agents=self.n_agents,
                     representation=representation,
-                    actor_hidden_size=config.actor_hidden_size,
-                    critic_hidden_size=config.critic_hidden_size,
-                    normalize=NormalizeFunctions[config.normalize] if hasattr(config, "normalize") else None,
+                    actor_hidden_size=self.config.actor_hidden_size,
+                    critic_hidden_size=self.config.critic_hidden_size,
+                    normalize=NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None,
                     initialize=torch.nn.init.orthogonal_,
-                    activation=ActivationFunctions[config.activation],
-                    activation_action=ActivationFunctions[config.activation_action],
+                    activation=ActivationFunctions[self.config.activation],
+                    activation_action=ActivationFunctions[self.config.activation_action],
                     device=self.device)
             else:
-                raise f"The {config.agent} currently does not support the policy named {config.poicy}."
-            optimizer = [torch.optim.Adam(self.policy.parameters_actor, config.lr_a, eps=1e-5),
-                         torch.optim.Adam(self.policy.parameters_critic, config.lr_c, eps=1e-5)]
-            scheduler = [torch.optim.lr_scheduler.LinearLR(optimizer[0], start_factor=1.0, end_factor=0.5,
-                                                           total_iters=config.running_steps),
-                         torch.optim.lr_scheduler.LinearLR(optimizer[1], start_factor=1.0, end_factor=0.5,
-                                                           total_iters=config.running_steps)]
-            self.memory = MARL_OffPolicyBuffer(n_agents=config.n_agents,
-                                               state_space=None,
-                                               obs_space=self.observation_space[self.agent_keys[0]].shape,
-                                               act_space=self.action_space[self.agent_keys[0]].shape,
-                                               n_envs=envs.num_envs,
-                                               buffer_size=config.buffer_size,
-                                               batch_size=config.batch_size)
+                raise f"The IDDPG currently does not support the policy named {self.config.poicy}."
+
         else:  # agents have individual representations, policies and optimizers.
             representation = {key: None for key in self.agent_keys}
-            self.policy = {key: None for key in self.agent_keys}
-            optimizer = {key: None for key in self.agent_keys}
-            scheduler = {key: None for key in self.agent_keys}
-            if config.representation == "Basic_Identical":
+            policy = {key: None for key in self.agent_keys}
+            if self.config.representation == "Basic_Identical":
                 representation = {key: REGISTRY_Representation["Basic_Identical"](
                     input_shape=self.observation_space[self.agent_keys[0]].shape,
                     device=self.device) for key in self.agent_keys}
-            elif config.representation == "Basic_MLP":
+            elif self.config.representation == "Basic_MLP":
                 for key in self.agent_keys:
                     representation[key] = REGISTRY_Representation["Basic_MLP"](
                         input_shape=self.observation_space[key].shape,
-                        hidden_sizes=config.representation_hidden_size,
-                        normalize=NormalizeFunctions[config.normalize] if hasattr(config, "normalize") else None,
+                        hidden_sizes=self.config.representation_hidden_size,
+                        normalize=NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None,
                         initialize=torch.nn.init.orthogonal_,
-                        activation=ActivationFunctions[config.activation],
+                        activation=ActivationFunctions[self.config.activation],
                         device=self.device)
             else:
-                raise f"The {config.agent} currently does not support the representation of {config.representation}."
-            if config.policy == "Independent_DDPG_Policy":
+                raise f"The IDDPG currently does not support the representation of {self.config.representation}."
+            if self.config.policy == "Independent_DDPG_Policy":
                 for key in self.agent_keys:
-                    self.policy[key] = REGISTRY_Policy["Independent_DDPG_Policy"](
+                    policy[key] = REGISTRY_Policy["Independent_DDPG_Policy"](
                         action_space=self.action_space[key],
                         n_agents=self.n_agents,
                         representation=representation,
-                        actor_hidden_size=config.actor_hidden_size,
-                        critic_hidden_size=config.critic_hidden_size,
-                        normalize=NormalizeFunctions[config.normalize] if hasattr(config, "normalize") else None,
+                        actor_hidden_size=self.config.actor_hidden_size,
+                        critic_hidden_size=self.config.critic_hidden_size,
+                        normalize=NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None,
                         initialize=torch.nn.init.orthogonal_,
-                        activation=ActivationFunctions[config.activation],
-                        activation_action=ActivationFunctions[config.activation_action],
+                        activation=ActivationFunctions[self.config.activation],
+                        activation_action=ActivationFunctions[self.config.activation_action],
                         device=self.device)
             else:
-                raise f"The {config.agent} currently does not support the policy named {config.poicy}."
-            self.memory = MARL_OffPolicyBuffer(n_agents=config.n_agents,
-                                               state_space=None,
-                                               obs_space=self.observation_space[self.agent_keys[0]].shape,
-                                               act_space=self.action_space[self.agent_keys[0]].shape,
-                                               rew_space=config.rew_shape,
-                                               done_space=config.done_shape,
-                                               n_envs=envs.num_envs,
-                                               buffer_size=config.buffer_size,
-                                               batch_size=config.batch_size)
-        self.learner = IDDPG_Learner(config, self.policy, optimizer, scheduler,
-                                     config.device, config.model_dir, config.gamma)
+                raise f"The IDDPG currently does not support the policy named {self.config.poicy}."
+        return policy
 
     def store_experience(self, obs_dict, actions_dict, obs_next_dict, rewards_dict, terminals_dict, info):
         if self.use_parameter_sharing:
