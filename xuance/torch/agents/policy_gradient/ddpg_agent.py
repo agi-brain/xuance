@@ -38,7 +38,7 @@ class DDPG_Agent(Agent):
                                       self.action_space,
                                       self.auxiliary_info_shape,
                                       self.n_envs,
-                                      config.n_size,
+                                      config.buffer_size,
                                       config.batch_size)
         learner = DDPG_Learner(policy,
                                optimizer,

@@ -16,21 +16,19 @@ kernels: [8, 4, 4, 4]
 strides: [4, 2, 2, 2]
 actor_hidden_size: [128, 128]
 critic_hidden_size: [128, 128]
-activation: "LeakyReLU"
+activation: "leaky_relu"
 
 seed: 1069
 parallels: 5
-n_size: 100000
+buffer_size: 500000
 batch_size: 32  # 64
 actor_learning_rate: 0.001
 critic_learning_rate: 0.001
 gamma: 0.99
 alpha: 0.01
+use_automatic_entropy_tuning: False
 tau: 0.005
-learning_rate: 0.0007
 
-start_noise: 0.25
-end_noise: 0.05
 training_frequency: 1
 running_steps: 50000000  # 50M
 start_training: 10000

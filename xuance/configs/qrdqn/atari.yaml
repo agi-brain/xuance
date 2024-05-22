@@ -17,11 +17,11 @@ kernels: [8, 4, 3]  # [8, 6, 4, 4]
 strides: [4, 2, 1]  # [2, 2, 2, 2]
 
 q_hidden_size: [512, ]
-activation: "ReLU"
+activation: "relu"
 
 seed: 1069
 parallels: 5
-n_size: 100000
+buffer_size: 500000
 batch_size: 32  # 64
 learning_rate: 0.0001
 gamma: 0.99

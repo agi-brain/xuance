@@ -25,9 +25,6 @@ class SACDIS_Agent(Agent):
         self.gamma = config.gamma
         self.train_frequency = config.training_frequency
         self.start_training = config.start_training
-        self.start_noise = config.start_noise
-        self.end_noise = config.end_noise
-        self.noise_scale = config.start_noise
 
         self.observation_space = envs.observation_space
         self.action_space = envs.action_space
@@ -38,23 +35,21 @@ class SACDIS_Agent(Agent):
                         self.action_space,
                         self.auxiliary_info_shape,
                         self.n_envs,
-                        config.n_size,
+                        config.buffer_size,
                         config.batch_size)
-        learner = SACDIS_Learner(policy,
-                                 optimizer,
-                                 scheduler,
-                                 config.device,
-                                 config.model_dir,
-                                 config.gamma,
-                                 config.tau)
+        learner = SACDIS_Learner(policy, optimizer, scheduler, config.device, config.model_dir,
+                                 gamma=config.gamma,
+                                 tau=config.tau,
+                                 alpha=config.alpha,
+                                 use_automatic_entropy_tuning=config.use_automatic_entropy_tuning,
+                                 target_entropy=-np.prod(self.action_space.shape).item(),
+                                 lr_policy=config.actor_learning_rate)
         super(SACDIS_Agent, self).__init__(config, envs, policy, memory, learner, device,
                                            config.log_dir, config.model_dir)
 
     def _action(self, obs):
-        _, act_prob, act_distribution = self.policy(obs)
-        action = act_distribution.sample()
-        action = action.detach().cpu().numpy()
-        return action
+        _, action = self.policy(obs)
+        return action.detach().cpu().numpy()
 
     def train(self, train_steps):
         obs = self.envs.buf_obs

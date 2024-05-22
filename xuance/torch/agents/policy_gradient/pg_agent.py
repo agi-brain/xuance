@@ -21,7 +21,7 @@ class PG_Agent(Agent):
                  device: Optional[Union[int, str, torch.device]] = None):
         self.render = config.render
         self.n_envs = envs.num_envs
-        self.n_steps = config.n_steps
+        self.horizon_size = config.horizon_size
         self.n_minibatch = config.n_minibatch
         self.n_epoch = config.n_epoch
 
@@ -34,13 +34,13 @@ class PG_Agent(Agent):
         self.auxiliary_info_shape = {}
         self.atari = True if config.env_name == "Atari" else False
         Buffer = DummyOnPolicyBuffer_Atari if self.atari else DummyOnPolicyBuffer
-        self.buffer_size = self.n_envs * self.n_steps
+        self.buffer_size = self.n_envs * self.horizon_size
         self.batch_size = self.buffer_size // self.n_epoch
         memory = Buffer(self.observation_space,
                         self.action_space,
                         self.auxiliary_info_shape,
                         self.n_envs,
-                        self.n_steps,
+                        self.horizon_size,
                         config.use_gae,
                         config.use_advnorm,
                         self.gamma,

@@ -3,7 +3,7 @@ env_name: "Drones"
 env_id: "MultiHoverAviary"
 obs_type: 'kin'
 act_type: 'vel'
-num_drones: 10
+num_drones: 3
 record: False
 obstacles: True
 max_episode_steps: 2000
@@ -17,7 +17,7 @@ on_policy: False
 
 actor_hidden_size: [64, 64]
 critic_hidden_size: [64, 64]
-activation: 'LeakyReLU'
+activation: 'leaky_relu'
 activation_action: 'tanh'
 
 seed: 1

@@ -18,23 +18,4 @@ Football Academy - with a total of 11 scenarios
     - academy_single_goal_versus_lazy: Full 11 versus 11 games, where the opponents cannot move but they can only intercept the ball if it is close enough to them. Our center back defender has the ball at first.
 """
 
-GFOOTBALL_ENV_ID = {
-    "1v1": "1_vs_1_easy",
-    "5v5": "5_vs_5",
-    "11v11_competition": "11_vs_11_competition",
-    "11v11_kaggle": "11_vs_11_kaggle",
-    "11v11": "11_vs_11_stochastic",
-    "11v11_easy": "11_vs_11_easy_stochastic",
-    "11v11_hard": "11_vs_11_hard_stochastic",
-    "3v1": "academy_3_vs_1_with_keeper",
-    "corner": "academy_corner",
-    "ca_easy": "academy_counterattack_easy",
-    "ca_hard": "academy_counterattack_hard",
-    "eg": "academy_empty_goal",
-    "eg_close": "academy_empty_goal_close",
-    "psk": "academy_pass_and_shoot_with_keeper",
-    "rpsk": "academy_run_pass_and_shoot_with_keeper",
-    "rs": "academy_run_to_score",
-    "rsk": "academy_run_to_score_with_keeper",
-    "single_gvl": "academy_single_goal_versus_lazy",
-}
+from xuance.environment.football.gfootball_vec_env import SubprocVecEnv_GFootball, DummyVecEnv_GFootball

@@ -57,7 +57,7 @@ def split_distributions(distribution):
         logits = distribution.logits.view(-1, shape[-1])
         for logit in logits:
             dist = CategoricalDistribution(logits.shape[-1])
-            dist.set_param(logit.unsqueeze(0).detach())
+            dist.set_param(logits=logit.unsqueeze(0).detach())
             return_list.append(dist)
     elif isinstance(distribution, DiagGaussianDistribution):
         shape = distribution.mu.shape
@@ -77,7 +77,7 @@ def merge_distributions(distribution_list):
         logits = torch.cat([dist.logits for dist in distribution_list], dim=0)
         action_dim = logits.shape[-1]
         dist = CategoricalDistribution(action_dim)
-        dist.set_param(logits.detach())
+        dist.set_param(logits=logits.detach())
         return dist
     elif isinstance(distribution_list[0], DiagGaussianDistribution):
         shape = distribution_list.shape
@@ -97,7 +97,7 @@ def merge_distributions(distribution_list):
         action_dim = logits.shape[-1]
         dist = CategoricalDistribution(action_dim)
         logits = logits.view(shape + (action_dim, ))
-        dist.set_param(logits.detach())
+        dist.set_param(logits=logits.detach())
         return dist
     else:
         pass

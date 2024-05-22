@@ -7,10 +7,10 @@ representation: "Basic_Identical"
 vectorize: "Dummy_Pettingzoo"
 runner: "Pettingzoo_Runner"
 
-representation_hidden_size: [64, ]  # the units for each hidden layer
+representation_hidden_size: []  # the units for each hidden layer
 actor_hidden_size: [64, 64]
 critic_hidden_size: [64, 64]
-activation: 'LeakyReLU'
+activation: 'leaky_relu'
 activation_action: 'sigmoid'
 
 seed: 1
@@ -21,6 +21,7 @@ lr_a: 0.01  # learning rate for actor
 lr_c: 0.001  # learning rate for critic
 gamma: 0.95  # discount factor
 tau: 0.001  # soft update for target networks
+delay: 3
 
 start_noise: 1.0
 end_noise: 0.01

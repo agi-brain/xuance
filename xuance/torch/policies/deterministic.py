@@ -1,5 +1,8 @@
+import torch
+
 from xuance.torch.policies import *
 from xuance.torch.utils import *
+import numpy as np
 
 
 class BasicQhead(nn.Module):
@@ -46,7 +49,8 @@ class BasicRecurrent(nn.Module):
         else:
             raise "Unknown recurrent module!"
         self.rnn_layer = output
-        fc_layer = mlp_block(kwargs["recurrent_hidden_size"], kwargs["action_dim"], None, None, None, kwargs["device"])[0]
+        fc_layer = mlp_block(kwargs["recurrent_hidden_size"], kwargs["action_dim"], None, None, None, kwargs["device"])[
+            0]
         self.model = nn.Sequential(*fc_layer)
 
     def forward(self, x: torch.Tensor, h: torch.Tensor, c: torch.Tensor = None):
@@ -367,6 +371,7 @@ class ActorNet(nn.Module):
                  hidden_sizes: Sequence[int],
                  initialize: Optional[Callable[..., torch.Tensor]] = None,
                  activation: Optional[ModuleType] = None,
+                 activation_action: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None):
         super(ActorNet, self).__init__()
         layers = []
@@ -374,7 +379,7 @@ class ActorNet(nn.Module):
         for h in hidden_sizes:
             mlp, input_shape = mlp_block(input_shape[0], h, None, activation, initialize, device)
             layers.extend(mlp)
-        layers.extend(mlp_block(input_shape[0], action_dim, None, nn.Tanh, initialize, device)[0])
+        layers.extend(mlp_block(input_shape[0], action_dim, None, activation_action, initialize, device)[0])
         self.model = nn.Sequential(*layers)
 
     def forward(self, x: torch.tensor):
@@ -399,7 +404,7 @@ class CriticNet(nn.Module):
         self.model = nn.Sequential(*layers)
 
     def forward(self, x: torch.tensor, a: torch.tensor):
-        return self.model(torch.concat((x, a), dim=-1))[:, 0]
+        return self.model(torch.concat((x, a), dim=-1))
 
 
 class DDPGPolicy(nn.Module):
@@ -410,21 +415,24 @@ class DDPGPolicy(nn.Module):
                  critic_hidden_size: Sequence[int],
                  initialize: Optional[Callable[..., torch.Tensor]] = None,
                  activation: Optional[ModuleType] = None,
+                 activation_action: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None):
         super(DDPGPolicy, self).__init__()
         self.action_dim = action_space.shape[0]
         self.representation_info_shape = representation.output_shapes
+        # create networks
         self.actor_representation = representation
+        self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size,
+                              initialize, activation, activation_action, device)
         self.critic_representation = copy.deepcopy(representation)
-        self.target_actor_representation = copy.deepcopy(representation)
-        self.target_critic_representation = copy.deepcopy(representation)
-        self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size, initialize,
-                              activation, device)
         self.critic = CriticNet(representation.output_shapes['state'][0], self.action_dim, critic_hidden_size,
                                 initialize, activation, device)
+        # create target networks
+        self.target_actor_representation = copy.deepcopy(self.actor_representation)
         self.target_actor = copy.deepcopy(self.actor)
+        self.target_critic_representation = copy.deepcopy(self.critic_representation)
         self.target_critic = copy.deepcopy(self.critic)
-        
+
         # parameters
         self.actor_parameters = list(self.actor_representation.parameters()) + list(self.actor.parameters())
         self.critic_parameters = list(self.critic_representation.parameters()) + list(self.critic.parameters())
@@ -436,10 +444,8 @@ class DDPGPolicy(nn.Module):
 
     def Qtarget(self, observation: Union[np.ndarray, dict]):
         outputs_actor = self.target_actor_representation(observation)
-        outputs_critic = self.target_critic_representation(observation) 
+        outputs_critic = self.target_critic_representation(observation)
         act = self.target_actor(outputs_actor['state'])
-        # noise = torch.randn_like(act).clamp(-1, 1) * 0.1
-        # act = (act + noise).clamp(-1, 1)
         return self.target_critic(outputs_critic['state'], act)
 
     def Qaction(self, observation: Union[np.ndarray, dict], action: torch.Tensor):
@@ -448,8 +454,10 @@ class DDPGPolicy(nn.Module):
 
     def Qpolicy(self, observation: Union[np.ndarray, dict]):
         outputs_actor = self.actor_representation(observation)
+        act = self.actor(outputs_actor['state'])
         outputs_critic = self.critic_representation(observation)
-        return self.critic(outputs_critic['state'], self.actor(outputs_actor['state']))
+        q_eval = self.critic(outputs_critic['state'], act)
+        return q_eval
 
     def soft_update(self, tau=0.005):
         for ep, tp in zip(self.actor_representation.parameters(), self.target_actor_representation.parameters()):
@@ -475,66 +483,69 @@ class TD3Policy(nn.Module):
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., torch.Tensor]] = None,
                  activation: Optional[ModuleType] = None,
+                 activation_action: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None):
         super(TD3Policy, self).__init__()
         self.action_dim = action_space.shape[0]
         self.representation_info_shape = representation.output_shapes
 
         self.actor_representation = representation
-        self.criticA_representation = copy.deepcopy(representation)
-        self.criticB_representation = copy.deepcopy(representation)
+        self.critic_A_representation = copy.deepcopy(representation)
+        self.critic_B_representation = copy.deepcopy(representation)
 
         self.target_actor_representation = copy.deepcopy(representation)
-        self.target_criticA_representation = copy.deepcopy(representation)
-        self.target_criticB_representation = copy.deepcopy(representation)
+        self.target_critic_A_representation = copy.deepcopy(representation)
+        self.target_critic_B_representation = copy.deepcopy(representation)
 
         self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size,
-                              initialize, activation, device)
-        self.criticA = CriticNet(representation.output_shapes['state'][0], self.action_dim, critic_hidden_size,
-                                 initialize, activation, device)
-        self.criticB = CriticNet(representation.output_shapes['state'][0], self.action_dim, critic_hidden_size,
-                                 initialize, activation, device)
+                              initialize, activation, activation_action, device)
+        self.critic_A = CriticNet(representation.output_shapes['state'][0], self.action_dim, critic_hidden_size,
+                                  initialize, activation, device)
+        self.critic_B = CriticNet(representation.output_shapes['state'][0], self.action_dim, critic_hidden_size,
+                                  initialize, activation, device)
         self.target_actor = copy.deepcopy(self.actor)
-        self.target_criticA = copy.deepcopy(self.criticA)
-        self.target_criticB = copy.deepcopy(self.criticB)
+        self.target_critic_A = copy.deepcopy(self.critic_A)
+        self.target_critic_B = copy.deepcopy(self.critic_B)
 
         # parameters
         self.actor_parameters = list(self.actor_representation.parameters()) + list(self.actor.parameters())
-        self.critic_parameters = list(self.criticA_representation.parameters()) + list(self.criticA.parameters()) + list(self.criticB_representation.parameters()) + list(self.criticB.parameters())
+        self.critic_parameters = list(self.critic_A_representation.parameters()) + list(
+            self.critic_A.parameters()) + list(self.critic_B_representation.parameters()) + list(
+            self.critic_B.parameters())
 
-    def action(self, observation: Union[np.ndarray, dict]):
+    def forward(self, observation: Union[np.ndarray, dict]):
         outputs = self.actor_representation(observation)
         act = self.actor(outputs['state'])
         return outputs, act
 
     def Qtarget(self, observation: Union[np.ndarray, dict]):
         outputs_actor = self.target_actor_representation(observation)
-        outputs_criticA = self.target_criticA_representation(observation)
-        outputs_criticB = self.target_criticB_representation(observation)
+        outputs_critic_A = self.target_critic_A_representation(observation)
+        outputs_critic_B = self.target_critic_B_representation(observation)
         act = self.target_actor(outputs_actor['state'])
-        noise = torch.randn_like(act).clamp(-0.1, 0.1) * 0.1
+        noise = (torch.randn_like(act) * 0.2).clamp(-0.5, 0.5)
         act = (act + noise).clamp(-1, 1)
 
-        qa = self.target_criticA(outputs_criticA['state'], act).unsqueeze(dim=1)
-        qb = self.target_criticB(outputs_criticB['state'], act).unsqueeze(dim=1)
-        mim_q = torch.minimum(qa, qb)
-        return outputs_actor, mim_q
+        qa = self.target_critic_A(outputs_critic_A['state'], act)
+        qb = self.target_critic_B(outputs_critic_B['state'], act)
+        min_q = torch.min(qa, qb)
+        return min_q
 
     def Qaction(self, observation: Union[np.ndarray, dict], action: torch.Tensor):
-        outputs_criticA = self.criticA_representation(observation)
-        outputs_criticB = self.criticB_representation(observation)
-        qa = self.criticA(outputs_criticA['state'], action).unsqueeze(dim=1)
-        qb = self.criticB(outputs_criticB['state'], action).unsqueeze(dim=1)
-        return outputs_criticA, torch.cat((qa, qb), axis=-1)
+        outputs_critic_A = self.critic_A_representation(observation)
+        outputs_critic_B = self.critic_B_representation(observation)
+        q_eval_a = self.critic_A(outputs_critic_A['state'], action)
+        q_eval_b = self.critic_B(outputs_critic_B['state'], action)
+        return q_eval_a, q_eval_b
 
     def Qpolicy(self, observation: Union[np.ndarray, dict]):
         outputs_actor = self.actor_representation(observation)
-        outputs_criticA = self.criticA_representation(observation)
-        outputs_criticB = self.criticB_representation(observation)
+        outputs_critic_A = self.critic_A_representation(observation)
+        outputs_critic_B = self.critic_B_representation(observation)
         act = self.actor(outputs_actor['state'])
-        qa = self.criticA(outputs_criticA['state'], act).unsqueeze(dim=1)
-        qb = self.criticB(outputs_criticB['state'], act).unsqueeze(dim=1)
-        return outputs_actor, (qa + qb) / 2.0
+        q_eval_a = self.critic_A(outputs_critic_A['state'], act).unsqueeze(dim=1)
+        q_eval_b = self.critic_B(outputs_critic_B['state'], act).unsqueeze(dim=1)
+        return (q_eval_a + q_eval_b) / 2.0
 
     def soft_update(self, tau=0.005):
         for ep, tp in zip(self.actor_representation.parameters(), self.target_actor_representation.parameters()):
@@ -543,16 +554,16 @@ class TD3Policy(nn.Module):
         for ep, tp in zip(self.actor.parameters(), self.target_actor.parameters()):
             tp.data.mul_(1 - tau)
             tp.data.add_(tau * ep.data)
-        for ep, tp in zip(self.criticA_representation.parameters(), self.target_criticA_representation.parameters()):
+        for ep, tp in zip(self.critic_A_representation.parameters(), self.target_critic_A_representation.parameters()):
             tp.data.mul_(1 - tau)
             tp.data.add_(tau * ep.data)
-        for ep, tp in zip(self.criticA.parameters(), self.target_criticA.parameters()):
+        for ep, tp in zip(self.critic_A.parameters(), self.target_critic_A.parameters()):
             tp.data.mul_(1 - tau)
             tp.data.add_(tau * ep.data)
-        for ep, tp in zip(self.criticB_representation.parameters(), self.target_criticB_representation.parameters()):
+        for ep, tp in zip(self.critic_B_representation.parameters(), self.target_critic_B_representation.parameters()):
             tp.data.mul_(1 - tau)
             tp.data.add_(tau * ep.data)
-        for ep, tp in zip(self.criticB.parameters(), self.target_criticB.parameters()):
+        for ep, tp in zip(self.critic_B.parameters(), self.target_critic_B.parameters()):
             tp.data.mul_(1 - tau)
             tp.data.add_(tau * ep.data)
 
@@ -567,6 +578,7 @@ class PDQNPolicy(nn.Module):
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., torch.Tensor]] = None,
                  activation: Optional[ModuleType] = None,
+                 activation_action: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None):
         super(PDQNPolicy, self).__init__()
         self.representation = representation
@@ -578,10 +590,9 @@ class PDQNPolicy(nn.Module):
         self.conact_size = int(self.conact_sizes.sum())
 
         self.qnetwork = BasicQhead(self.observation_space.shape[0] + self.conact_size, self.num_disact,
-                                   qnetwork_hidden_size, normalize,
-                                   initialize, torch.nn.modules.activation.ReLU, device)
+                                   qnetwork_hidden_size, normalize, initialize, activation, device)
         self.conactor = ActorNet(self.observation_space.shape[0], self.conact_size, conactor_hidden_size,
-                                 initialize, torch.nn.modules.activation.ReLU, device)
+                                 initialize, activation, activation_action, device)
         self.target_conactor = copy.deepcopy(self.conactor)
         self.target_qnetwork = copy.deepcopy(self.qnetwork)
 
@@ -631,6 +642,7 @@ class MPDQNPolicy(nn.Module):
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., torch.Tensor]] = None,
                  activation: Optional[ModuleType] = None,
+                 activation_action: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None):
         super(MPDQNPolicy, self).__init__()
         self.representation = representation
@@ -644,9 +656,9 @@ class MPDQNPolicy(nn.Module):
 
         self.qnetwork = BasicQhead(self.observation_space.shape[0] + self.conact_size, self.num_disact,
                                    qnetwork_hidden_size, normalize,
-                                   initialize, torch.nn.modules.activation.ReLU, device)
+                                   initialize, activation, device)
         self.conactor = ActorNet(self.observation_space.shape[0], self.conact_size, conactor_hidden_size,
-                                 initialize, torch.nn.modules.activation.ReLU, device)
+                                 initialize, activation, activation_action, device)
         self.target_conactor = copy.deepcopy(self.conactor)
         self.target_qnetwork = copy.deepcopy(self.qnetwork)
 
@@ -738,6 +750,7 @@ class SPDQNPolicy(nn.Module):
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., torch.Tensor]] = None,
                  activation: Optional[ModuleType] = None,
+                 activation_action: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None):
         super(SPDQNPolicy, self).__init__()
         self.representation = representation
@@ -751,9 +764,9 @@ class SPDQNPolicy(nn.Module):
         for k in range(self.num_disact):
             self.qnetwork.append(
                 BasicQhead(self.observation_space.shape[0] + self.conact_sizes[k], 1, qnetwork_hidden_size, normalize,
-                           initialize, torch.nn.modules.activation.ReLU, device))
+                           initialize, activation, device))
         self.conactor = ActorNet(self.observation_space.shape[0], self.conact_size, conactor_hidden_size,
-                                 initialize, torch.nn.modules.activation.ReLU, device)
+                                 initialize, activation, activation_action, device)
         self.target_conactor = copy.deepcopy(self.conactor)
         self.target_qnetwork = copy.deepcopy(self.qnetwork)
 

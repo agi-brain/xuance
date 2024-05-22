@@ -21,7 +21,7 @@ class PPOKL_Agent(Agent):
                  device: Optional[Union[int, str, torch.device]] = None):
         self.render = config.render
         self.n_envs = envs.num_envs
-        self.n_steps = config.n_steps
+        self.horizon_size = config.horizon_size
         self.n_minibatch = config.n_minibatch
         self.n_epoch = config.n_epoch
 
@@ -29,18 +29,17 @@ class PPOKL_Agent(Agent):
         self.gae_lam = config.gae_lambda
         self.observation_space = envs.observation_space
         self.action_space = envs.action_space
-        self.representation_info_shape = policy.representation_actor.output_shapes
         self.auxiliary_info_shape = {"old_dist": None}
 
         self.atari = True if config.env_name == "Atari" else False
         Buffer = DummyOnPolicyBuffer_Atari if self.atari else DummyOnPolicyBuffer_Atari
-        self.buffer_size = self.n_envs * self.n_steps
+        self.buffer_size = self.n_envs * self.horizon_size
         self.batch_size = self.buffer_size // self.n_minibatch
         memory = Buffer(self.observation_space,
                         self.action_space,
                         self.auxiliary_info_shape,
                         self.n_envs,
-                        self.n_steps,
+                        self.horizon_size,
                         config.use_gae,
                         config.use_advnorm,
                         self.gamma,
@@ -88,8 +87,7 @@ class PPOKL_Agent(Agent):
                         sample_idx = indexes[start:end]
                         obs_batch, act_batch, ret_batch, value_batch, adv_batch, aux_batch = self.memory.sample(
                             sample_idx)
-                        step_info = self.learner.update(obs_batch, act_batch, ret_batch, value_batch, adv_batch,
-                                                        aux_batch['old_logp'])
+                        step_info = self.learner.update(obs_batch, act_batch, ret_batch, adv_batch, aux_batch['old_dist'])
                 self.log_infos(step_info, self.current_step)
                 self.memory.clear()
 

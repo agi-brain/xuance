@@ -2,9 +2,9 @@ dl_toolbox: "torch"  # The deep learning toolbox. Choices: "torch", "mindspore",
 project_name: "XuanCe_Benchmark"
 logger: "tensorboard"  # Choices: tensorboard, wandb.
 wandb_user_name: "1256405274"
-render: True
-render_mode: 'human' # Choices: 'human', 'rgb_array'.
-test_mode: True
+render: False
+render_mode: 'rgb_array' # Choices: 'human', 'rgb_array'.
+test_mode: False
 device: "cuda:0"
 
 agent: "MADDPG"  # the learning algorithms_marl

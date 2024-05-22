@@ -40,13 +40,13 @@ class IDDPG_Learner(LearnerMAS):
         agent_mask = torch.Tensor(sample['agent_mask']).float().reshape(-1, self.n_agents, 1).to(self.device)
         IDs = torch.eye(self.n_agents).unsqueeze(0).expand(self.args.batch_size, -1, -1).to(self.device)
 
-        q_eval = self.policy.critic(obs, actions, IDs)
-        q_next = self.policy.target_critic(obs_next, self.policy.target_actor(obs_next, IDs), IDs)
+        q_eval = self.policy.Qpolicy(obs, actions, IDs)
+        q_next = self.policy.Qtarget(obs_next, self.policy.Atarget(obs_next, IDs), IDs)
         q_target = rewards + (1-terminals) * self.args.gamma * q_next
 
         # calculate the loss function
         _, actions_eval = self.policy(obs, IDs)
-        loss_a = -(self.policy.critic(obs, actions_eval, IDs) * agent_mask).sum() / agent_mask.sum()
+        loss_a = -(self.policy.Qpolicy(obs, actions_eval, IDs) * agent_mask).sum() / agent_mask.sum()
         self.optimizer['actor'].zero_grad()
         loss_a.backward()
         torch.nn.utils.clip_grad_norm_(self.policy.parameters_actor, self.args.grad_clip_norm)

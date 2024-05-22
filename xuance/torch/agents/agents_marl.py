@@ -43,14 +43,15 @@ class MARLAgents(object):
         self.log_dir = log_dir
         self.model_dir_save, self.model_dir_load = config.model_dir_save, config.model_dir_load
         create_directory(log_dir)
-        create_directory(model_dir)
 
     def save_model(self, model_name):
+        if not os.path.exists(self.model_dir_save):
+            os.makedirs(self.model_dir_save)
         model_path = os.path.join(self.model_dir_save, model_name)
         self.learner.save_model(model_path)
 
-    def load_model(self, path, seed=1):
-        self.learner.load_model(path, seed)
+    def load_model(self, path, model=None):
+        self.learner.load_model(path, model)
 
     def act(self, **kwargs):
         raise NotImplementedError

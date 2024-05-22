@@ -11,11 +11,11 @@ representation_hidden_size: [128,]
 recurrent_hidden_size: 128
 recurrent_layer_N: 1
 dropout: 0
-activation: 'ReLU'
+activation: 'relu'
 
 seed: 1
 parallels: 10
-n_size: 50  # memory size for each parallel
+buffer_size: 500
 batch_size: 8  # batch size for training
 learning_rate: 0.001
 gamma: 0.99

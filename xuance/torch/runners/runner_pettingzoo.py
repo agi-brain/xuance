@@ -6,6 +6,7 @@ import wandb
 from torch.utils.tensorboard import SummaryWriter
 from .runner_basic import Runner_Base, make_envs
 from xuance.torch.agents import REGISTRY as REGISTRY_Agent
+from xuance.common import get_time_string
 from gymnasium.spaces.box import Box
 from tqdm import tqdm
 import numpy as np
@@ -17,13 +18,11 @@ class Pettingzoo_Runner(Runner_Base):
         self.args = args if type(args) == list else [args]
         self.fps = args[0].fps if type(args) == list else args.fps
 
-        time_string = time.asctime().replace(" ", "").replace(":", "_")
+        time_string = get_time_string()
         for arg in self.args:
             seed = f"seed_{arg.seed}_"
             arg.model_dir_load = arg.model_dir
             arg.model_dir_save = os.path.join(os.getcwd(), arg.model_dir, seed + time_string)
-            if (not os.path.exists(arg.model_dir_save)) and (not arg.test_mode):
-                os.makedirs(arg.model_dir_save)
 
             if arg.logger == "tensorboard":
                 log_dir = os.path.join(os.getcwd(), arg.log_dir, seed + time_string)
@@ -69,7 +68,7 @@ class Pettingzoo_Runner(Runner_Base):
                                dir=wandb_dir,
                                group=arg.env_id,
                                job_type=arg.agent,
-                               name=time.asctime(),
+                               name=time_string,
                                reinit=True)
                 break
 
@@ -103,8 +102,6 @@ class Pettingzoo_Runner(Runner_Base):
             arg.rew_shape, arg.done_shape, arg.act_prob_shape = (arg.n_agents, 1), (arg.n_agents,), (arg.dim_act,)
             self.marl_agents.append(REGISTRY_Agent[arg.agent](arg, self.envs, arg.device))
             self.marl_names.append(arg.agent)
-            if arg.test_mode:
-                self.marl_agents[h].load_model(arg.model_dir, arg.seed)
 
         self.print_infos(self.args)
 
@@ -374,7 +371,7 @@ class Pettingzoo_Runner(Runner_Base):
 
             self.render = True
             for h, mas_group in enumerate(self.marl_agents):
-                mas_group.load_model(mas_group.model_dir_load, mas_group.args.seed)
+                mas_group.load_model(mas_group.model_dir_load)
             self.test_episode(env_fn)
             print("Finish testing.")
         else:

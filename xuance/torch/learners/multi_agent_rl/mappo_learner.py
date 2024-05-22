@@ -192,7 +192,7 @@ class MAPPO_Clip_Learner(LearnerMAS):
         else:
             if self.use_value_norm:
                 self.value_normalizer.update(value_target)
-                value_pred = self.value_normalizer.normalize(value_target)
+                value_target = self.value_normalizer.normalize(value_target)
             if self.use_huber_loss:
                 loss_v = self.huber_loss(value_pred, value_target)
             else:

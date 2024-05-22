@@ -1,4 +1,4 @@
-agent: "PPO_Clip"
+agent: "PPO_Clip"  # Choice: PPO_Clip, PPO_KL
 vectorize: "Dummy_Atari"
 env_name: "Atari"
 env_id: "ALE/Breakout-v5"
@@ -18,12 +18,12 @@ strides: [4, 2, 1]
 fc_hidden_sizes: [512, ]  # fully connected layer hidden sizes.
 actor_hidden_size: []
 critic_hidden_size: []
-activation: "ReLU"
+activation: "relu"
 
 seed: 1
 parallels: 8
 running_steps: 10000000  # 10M
-n_steps: 128
+horizon_size: 128  # the horizon size for an environment, buffer_size = horizon_size * parallels.
 n_epoch: 4
 n_minibatch: 4
 learning_rate: 0.00025
@@ -32,7 +32,8 @@ use_grad_clip: True
 
 vf_coef: 0.25
 ent_coef: 0.01
-clip_range: 0.2
+target_kl: 0.25  # for PPO_KL agent
+clip_range: 0.2  # for PPO_Clip agent
 clip_grad_norm: 0.5
 gamma: 0.99
 use_gae: True

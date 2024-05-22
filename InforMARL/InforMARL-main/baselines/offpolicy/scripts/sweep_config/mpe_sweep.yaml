@@ -1,0 +1,55 @@
+program: train/train_mpe.py
+project: sweep_MPE
+name: simple_spread
+command:
+  - ${env}
+  - python3
+  - ${program}
+  - ${args}
+method: grid
+metric:
+  goal: maximize
+  name: average_episode_rewards
+parameters:
+  env_name:
+    distribution: constant
+    value: "MPE"
+  scenario_name:
+    distribution: constant
+    value: "simple_spread"
+  algorithm_name:
+    distribution: constant
+    value: "rmasac"
+  num_agents:
+    distribution: constant
+    value: 3
+  num_landmarks:
+    distribution: constant
+    value: 3
+  experiment_name:
+    distribution: constant
+    value: "hyper_sweep"
+  seed:
+    distribution: constant
+    value: 1
+  episode_length:
+    distribution: constant
+    value: 25
+  actor_train_interval_episode:
+    distribution: constant
+    value: 1
+  num_env_steps:
+    distribution: constant
+    value: 10000000
+  target_entropy_coef:
+    distribution: categorical
+    values: [0.005, 0.1, 0.3, 0.5, 0.7]
+  tau:
+    distribution: categorical
+    values: [0.0001, 0.001, 0.003, 0.005, 0.01]
+  lr:
+    distribution: categorical
+    values: [0.0001, 0.0005, 0.0007, 0.001, 0.01]
+  train_interval_episode:
+    distribution: categorical
+    values: [1, 2, 4, 8]

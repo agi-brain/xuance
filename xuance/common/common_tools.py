@@ -1,5 +1,6 @@
 import os
 import yaml
+import time
 import numpy as np
 import scipy.signal
 from copy import deepcopy
@@ -51,7 +52,7 @@ def get_config(file_dir):
     return config_dict
 
 
-def get_arguments(method, env, env_id, config_path=None, parser_args=None):
+def get_arguments(method, env, env_id, config_path=None, parser_args=None, is_test=False):
     """Get arguments from .yaml files
     Args:
         method: the algorithm name that will be implemented,
@@ -67,10 +68,8 @@ def get_arguments(method, env, env_id, config_path=None, parser_args=None):
     main_path_package = os.path.dirname(os.path.dirname(__file__))
     config_path_default = os.path.join(main_path_package, "configs")
 
-    ''' get the arguments from xuance/config/best_Lunar_C51.yaml '''
-    # 首先在xuance/configs/下找到basic.yaml文件，让其对该算法的参数进行初始化
+    ''' get the arguments from xuance/config/basic.yaml '''
     config_basic = get_config(os.path.join(config_path_default, "basic.yaml"))
-    # config_basic = get_config(os.path.join(config_path_default, "best_Lunar_C51.yaml"))
 
     ''' get the arguments from, e.g., xuance/config/dqn/box2d/CarRacing-v2.yaml '''
     if type(method) == list:  # for different groups of MARL algorithms.
@@ -98,6 +97,10 @@ def get_arguments(method, env, env_id, config_path=None, parser_args=None):
         if parser_args is not None:
             configs = [recursive_dict_update(config_i, parser_args.__dict__) for config_i in configs]
         args = [SN(**config_i) for config_i in configs]
+        if is_test:  # for test mode
+            for i_args in range(len(args)):
+                args[i_args].test_mode = int(is_test)
+                args[i_args].parallels = 1
     elif type(method) == str:
         if config_path is None:
             file_name_env_id = env + "/" + env_id + ".yaml"
@@ -117,7 +120,6 @@ def get_arguments(method, env, env_id, config_path=None, parser_args=None):
                     f"in the `get_runner()` function.")
         else:
             config_path = os.path.join(main_path, config_path)
-        # 然后再用该算法的自定义参数对basic.yaml文件的参数进行更新
         config_algo_default = get_config(config_path)
         configs = recursive_dict_update(config_basic, config_algo_default)
         # load parser_args and rewrite the parameters if their names are same.
@@ -126,6 +128,9 @@ def get_arguments(method, env, env_id, config_path=None, parser_args=None):
         if not ('env_id' in configs.keys()):
             configs['env_id'] = env_id
         args = SN(**configs)
+        if is_test:
+            args.test_mode = int(is_test)
+            args.parallels = 1
     else:
         raise RuntimeError("Unsupported agent_name or env_name!")
     return args
@@ -150,7 +155,7 @@ def get_runner(method,
     Returns:
         An implementation of a runner that enables to run the DRL algorithms.
     """
-    args = get_arguments(method, env, env_id, config_path, parser_args)
+    args = get_arguments(method, env, env_id, config_path, parser_args, is_test)
 
     device = args[0].device if type(args) == list else args.device
     dl_toolbox = args[0].dl_toolbox if type(args) == list else args.dl_toolbox
@@ -206,10 +211,6 @@ def get_runner(method,
                 else:
                     print("Failed to load arguments for the implementation!")
 
-            if is_test:
-                args[i_alg].test_mode = int(is_test)
-                args[i_alg].parallels = 1
-
         # print("Algorithm:", *[arg.agent for arg in args])
         print("Algorithm:", *agents_name_string)
         print("Environment:", args[0].env_name)
@@ -235,13 +236,10 @@ def get_runner(method,
             else:
                 print("Failed to load arguments for the implementation!")
 
-        if is_test:
-            args.test_mode = int(is_test)
-            args.parallels = 1
         print("Algorithm:", args.agent)
         print("Environment:", args.env_name)
         print("Scenario:", args.env_id)
-        runner = run_REGISTRY[args[0].runner](args) if type(args) == list else run_REGISTRY[args.runner](args)
+        runner = run_REGISTRY[args.runner](args)
         return runner
 
 
@@ -317,3 +315,16 @@ def discount_cumsum(x, discount=0.99):
     [4.890798, 4.9402, 3.98, 2.0]
     """
     return scipy.signal.lfilter([1], [1, float(-discount)], x[::-1], axis=0)[::-1]
+
+
+def get_time_string():
+    t_now = time.localtime(time.time())
+    t_year = str(t_now.tm_year).zfill(4)
+    t_month = str(t_now.tm_mon).zfill(2)
+    t_day = str(t_now.tm_mday).zfill(2)
+    t_hour = str(t_now.tm_hour).zfill(2)
+    t_min = str(t_now.tm_min).zfill(2)
+    t_sec = str(t_now.tm_sec).zfill(2)
+    time_string = f"{t_year}_{t_month}{t_day}_{t_hour}{t_min}{t_sec}"
+    return time_string
+

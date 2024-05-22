@@ -8,12 +8,12 @@ runner: "DRL"
 
 representation_hidden_size: [128,]
 actor_hidden_size: [128,]
-activation: 'ReLU'
+activation: 'relu'
 
 seed: 1
 parallels: 10
 running_steps: 300000
-n_steps: 500
+horizon_size: 500
 n_epoch: 1
 n_minibatch: 1
 learning_rate: 0.0004

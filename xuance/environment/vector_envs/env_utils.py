@@ -16,7 +16,7 @@ def tile_images(images):
     if image_nums >= 4:
         cols = 4
     else:
-        cols = 0
+        cols = image_nums
 
     try:
         big_img = np.zeros(

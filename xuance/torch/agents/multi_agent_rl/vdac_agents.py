@@ -15,7 +15,6 @@ class VDAC_Agents(MARLAgents):
                  device: Optional[Union[int, str, torch.device]] = None):
         self.gamma = config.gamma
         self.n_envs = envs.num_envs
-        self.n_size = config.n_size
         self.n_epoch = config.n_epoch
         self.n_minibatch = config.n_minibatch
         if config.state_space is not None:
@@ -54,7 +53,7 @@ class VDAC_Agents(MARLAgents):
 
         buffer = MARL_OnPolicyBuffer_RNN if self.use_recurrent else MARL_OnPolicyBuffer
         input_buffer = (config.n_agents, config.state_space.shape, config.obs_shape, config.act_shape, config.rew_shape,
-                        config.done_shape, envs.num_envs, config.n_size,
+                        config.done_shape, envs.num_envs, config.buffer_size,
                         config.use_gae, config.use_advnorm, config.gamma, config.gae_lambda)
         memory = buffer(*input_buffer, max_episode_length=envs.max_episode_length, dim_act=config.dim_act)
         self.buffer_size = memory.buffer_size
@@ -69,15 +68,17 @@ class VDAC_Agents(MARLAgents):
     def act(self, obs_n, *rnn_hidden, avail_actions=None, state=None, test_mode=False):
         batch_size = len(obs_n)
         agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(batch_size, -1, -1).to(self.device)
-        obs_in = torch.Tensor(obs_n).view([batch_size, self.n_agents, -1]).to(self.device)
+        obs_in = torch.Tensor(obs_n).reshape([batch_size, self.n_agents, -1]).to(self.device)
         if state is not None:
             state = torch.Tensor(state).to(self.device)
+        if avail_actions is not None:
+            avail_actions = torch.Tensor(avail_actions).to(self.device)
         if self.use_recurrent:
             batch_agents = batch_size * self.n_agents
-            hidden_state, dists, values_tot = self.policy(obs_in.view(batch_agents, 1, -1),
-                                                          agents_id.unsqueeze(2),
+            hidden_state, dists, values_tot = self.policy(obs_in.reshape(batch_agents, 1, -1),
+                                                          agents_id.reshape(batch_agents, 1, -1),
                                                           *rnn_hidden,
-                                                          avail_actions=avail_actions[:, :, np.newaxis],
+                                                          avail_actions=avail_actions.reshape(batch_agents, 1, -1),
                                                           state=state.unsqueeze(2))
             actions = dists.stochastic_sample()
             actions = actions.reshape(batch_size, self.n_agents)

@@ -11,7 +11,7 @@ import torch
 def get_repre_in(args, name=None):
     representation_name = args.representation if name is None else name
     input_dict = deepcopy(Representation_Inputs_All)
-    if args.env_name in ["StarCraft2", "Football", "MAgent2", "Drones"]:
+    if args.env_name in ["StarCraft2", "Football", "MAgent2"]:
         input_dict["input_shape"] = (args.dim_obs, )
     elif isinstance(args.observation_space, dict):
         input_dict["input_shape"] = space2shape(args.observation_space[args.agent_keys[0]])
@@ -72,7 +72,10 @@ def get_policy_in(args, representation):
     input_dict["normalize"] = NormalizeFunctions[args.normalize] if hasattr(args, "normalize") else None
     input_dict["initialize"] = torch.nn.init.orthogonal_
     input_dict["activation"] = ActivationFunctions[args.activation]
+    try: input_dict["activation_action"] = ActivationFunctions[args.activation_action]
+    except: pass
     input_dict["device"] = args.device
+
     if policy_name == "Gaussian_Actor":
         input_dict["fixed_std"] = None
     if policy_name == "DRQN_Policy":
@@ -85,7 +88,7 @@ def get_policy_in_marl(args, representation, mixer=None, ff_mixer=None, qtran_mi
     policy_name = args.policy
     input_dict = deepcopy(Policy_Inputs_All)
     try: input_dict["state_dim"] = args.dim_state[0]
-    except: input_dict["state_dim"] = None
+    except: pass
 
     if isinstance(args.action_space, dict):
         input_dict["action_space"] = args.action_space[args.agent_keys[0]]
@@ -93,7 +96,7 @@ def get_policy_in_marl(args, representation, mixer=None, ff_mixer=None, qtran_mi
         input_dict["action_space"] = args.action_space
 
     try: input_dict["n_agents"] = args.n_agents
-    except: input_dict["n_agents"] = 1
+    except: pass
     input_dict["representation"] = representation
     input_dict["mixer"] = mixer
     input_dict["ff_mixer"] = ff_mixer
@@ -104,11 +107,13 @@ def get_policy_in_marl(args, representation, mixer=None, ff_mixer=None, qtran_mi
     else:
         input_dict["actor_hidden_size"] = args.actor_hidden_size
         try: input_dict["critic_hidden_size"] = args.critic_hidden_size
-        except: input_dict["critic_hidden_size"] = None
+        except: pass
 
     input_dict["initialize"] = InitializeFunctions[args.initialize] if hasattr(args, "initialize") else None
     input_dict["normalize"] = NormalizeFunctions[args.normalize] if hasattr(args, "normalize") else None
     input_dict["activation"] = ActivationFunctions[args.activation]
+    try: input_dict["activation_action"] = ActivationFunctions[args.activation_action]
+    except: pass
 
     input_dict["device"] = args.device
     if policy_name == "Gaussian_Actor":

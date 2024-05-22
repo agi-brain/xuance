@@ -6,20 +6,20 @@ policy: "DDPG_Policy"
 representation: "Basic_MLP"
 runner: "DRL"
 
-representation_hidden_size: [64]
+representation_hidden_size: [256,]
 actor_hidden_size: [256,]
 critic_hidden_size: [256,]
-activation: "ReLU"
+activation: "relu"
+activation_action: 'tanh'
 
 seed: 1
 parallels: 10
-n_size: 200000
+buffer_size: 200000
 batch_size: 256
 actor_learning_rate: 0.001
 critic_learning_rate: 0.001
 gamma: 0.98
 tau: 0.005
-learning_rate: 0.0007
 
 start_noise: 0.1
 end_noise: 0.1

@@ -19,7 +19,7 @@ dropout: 0
 
 representation_hidden_size: [64, ]
 q_hidden_size: [64, ]  # the units for each hidden layer
-activation: "ReLU"
+activation: "relu"
 alpha: 0.1
 
 hidden_dim_mixing_net: 32  # hidden units of mixing network

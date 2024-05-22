@@ -1,0 +1,60 @@
+agent: "MAPPO"
+env_name: "RoboticWarehouse"
+env_id: "rware-tiny-2ag-v1"
+max_episode_steps: 100
+policy: "Categorical_MAAC_Policy"
+representation: "Basic_MLP"
+vectorize: "Dummy_RoboticWarehouse"
+runner: "MARL"
+
+# recurrent settings for Basic_RNN representation
+use_recurrent: False
+rnn:
+representation_hidden_size: [64, ]  # the units for each hidden layer
+gain: 0.01
+
+actor_hidden_size: [64, ]
+critic_hidden_size: [256, ]
+activation: "relu"
+activation_action: "sigmoid"
+
+seed: 1
+parallels: 128
+buffer_size: 3200
+n_epoch: 10
+n_minibatch: 1
+learning_rate: 0.0007
+weight_decay: 0
+
+vf_coef: 0.5
+ent_coef: 0.01
+target_kl: 0.25  # for MAPPO_KL learner
+clip_range: 0.2  # ratio clip range, for MAPPO_Clip learner
+clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+gamma: 0.95  # discount factor
+
+# tricks
+use_linear_lr_decay: False  # if use linear learning rate decay
+end_factor_lr_decay: 0.5
+use_global_state: False  # if use global state to replace merged observations
+use_grad_norm: True  # gradient normalization
+max_grad_norm: 10.0
+use_value_clip: True  # limit the value range
+value_clip_range: 0.2
+use_value_norm: False  # use running mean and std to normalize rewards.
+use_huber_loss: True  # True: use huber loss; False: use MSE loss.
+huber_delta: 10.0
+use_advnorm: True
+use_gae: True
+gae_lambda: 0.95
+
+start_training: 1
+running_steps: 10000000
+train_per_step: True
+training_frequency: 1
+
+test_steps: 10000
+eval_interval: 100000
+test_episode: 5
+log_dir: "./logs/mappo/"
+model_dir: "./models/mappo/"

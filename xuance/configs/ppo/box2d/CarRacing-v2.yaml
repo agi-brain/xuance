@@ -13,12 +13,12 @@ strides: [4, 2, 1]  # [2, 2, 2, 2]
 fc_hidden_sizes: [512, ]  # fully connected layer hidden sizes.
 actor_hidden_size: []
 critic_hidden_size: []
-activation: "ReLU"
+activation: "relu"
 
 seed: 1
 parallels: 2
 running_steps: 300000
-n_steps: 256
+horizon_size: 256  # the horizon size for an environment, buffer_size = horizon_size * parallels.
 n_epoch: 8
 n_minibatch: 8
 learning_rate: 0.0004

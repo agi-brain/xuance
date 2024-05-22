@@ -15,7 +15,7 @@ gain: 0.01
 
 actor_hidden_size: [128, ]
 critic_hidden_size: [128, ]
-activation: 'LeakyReLU'
+activation: 'leaky_relu'
 activation_action: 'sigmoid'
 
 seed: 1

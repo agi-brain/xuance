@@ -1,0 +1,42 @@
+agent: "SAC"
+env_name: "MetaDrive"
+env_id: "metadrive"
+env_config:  # the configs for MetaDrive environment
+  map: "C"  # see https://metadrive-simulator.readthedocs.io/en/latest/rl_environments.html#generalization-environment for choices
+render: False
+vectorize: "Subproc_MetaDrive"
+policy: "Gaussian_SAC"
+representation: "Basic_Identical"
+runner: "DRL"
+
+representation_hidden_size:
+actor_hidden_size: [512, 512]
+critic_hidden_size: [512, 512]
+activation: "relu"
+activation_action: 'tanh'
+
+seed: 1
+parallels: 4
+buffer_size: 1000000
+batch_size: 256
+actor_learning_rate: 0.0003
+critic_learning_rate: 0.0003
+gamma: 0.99
+alpha: 0.2
+use_automatic_entropy_tuning: True
+tau: 0.005
+
+training_frequency: 1
+running_steps: 1000000
+start_training: 10000
+
+use_obsnorm: False
+use_rewnorm: False
+obsnorm_range: 5
+rewnorm_range: 5
+
+test_steps: 10000
+eval_interval: 10000
+test_episode: 5
+log_dir: "./logs/sac/"
+model_dir: "./models/sac/"

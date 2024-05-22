@@ -68,7 +68,6 @@ class MultiHoverAviary(MultiHoverAviary_Official):
                          obs=obs,
                          act=act
                          )
-        # self.TARGET_POS = self.INIT_XYZS + np.array([[0, 0, 1 / (i + 1)] for i in range(num_drones)])
         self.TARGET_POS = np.array([[0, 0, 1],
                                     [0, 1, 1],
                                     [1, 0, 1],
@@ -78,11 +77,11 @@ class MultiHoverAviary(MultiHoverAviary_Official):
                                     [2, 0, 1],
                                     [0, 2, 1],
                                     [2, 0, 2],
-                                    [0, 2, 2],])
-        self.permutation = np.random.permutation(num_drones)
-        self.space_range_x = [-20.0, 20.0]
-        self.space_range_y = [-20.0, 20.0]
-        self.space_range_z = [0.05, 5.0]
+                                    [0, 2, 2], ])
+        self.NUM_TARGETS = self.NUM_DRONES
+        self.space_range_x = [-10.0, 10.0]
+        self.space_range_y = [-10.0, 10.0]
+        self.space_range_z = [0.02, 10.0]
         self.pose_limit = np.pi - 0.2
 
         ################################################################################
@@ -97,9 +96,25 @@ class MultiHoverAviary(MultiHoverAviary_Official):
 
         """
         states = np.array([self._getDroneStateVector(i) for i in range(self.NUM_DRONES)])
-        rewards = np.zeros([self.NUM_DRONES, 1])
+
+        target_pos = self.TARGET_POS[:self.NUM_TARGETS].reshape(self.NUM_TARGETS, 1, 3)
+        current_pos = states[:, :3].reshape(1, self.NUM_DRONES, 3)
+        relative_pos = target_pos - current_pos
+        distance_matrix = np.linalg.norm(relative_pos, axis=-1)
+        reward_team = -distance_matrix.min(axis=-1, keepdims=True).sum()
+        rewards = np.ones([self.NUM_DRONES, 1]) * reward_team
+
         for i in range(self.NUM_DRONES):
-            rewards[i, 0] = max(0, (1 - np.linalg.norm(self.TARGET_POS[i] - states[i][0:3])) * 20)
+            x, y, z = states[i][0], states[i][1], states[i][2]
+            if (max(abs(states[i][7]), abs(states[i][8])) > self.pose_limit) and (
+                    z < self.space_range_z[0] + 0.05):  # the drone fulls down
+                rewards[i] -= 10
+            for j in range(self.NUM_DRONES):  # penalize collision with each other
+                if i == j: continue
+                distance_ij = np.linalg.norm(states[i, :3] - states[j, :3])
+                if distance_ij < 0.1:
+                    rewards[i] -= 10
+
         return rewards
 
         ################################################################################
@@ -116,17 +131,32 @@ class MultiHoverAviary(MultiHoverAviary_Official):
         states = np.array([self._getDroneStateVector(i) for i in range(self.NUM_DRONES)])
         for i in range(self.NUM_DRONES):
             x, y, z = states[i][0], states[i][1], states[i][2]
-            if (x < self.space_range_x[0]) or (x > self.space_range_x[1]):
-                return True
-            if (y < self.space_range_y[0]) or (y > self.space_range_y[1]):
-                return True
-            if (z < self.space_range_z[0]) or (z > self.space_range_z[1]):  # Out of height
-                return True
             if (max(abs(states[i][7]), abs(states[i][8])) > self.pose_limit) and (z < self.space_range_z[0] + 0.05):
                 # The drone is too tilted
                 return True
-            if np.linalg.norm(self.TARGET_POS[i] - states[i][0:3]) < .0001:
-                return True
+
         return False
 
         ################################################################################
+
+    def _computeTruncated(self):
+        """Computes the current truncated value.
+
+        Returns
+        -------
+        bool
+            Whether the current episode timed out.
+
+        """
+        states = np.array([self._getDroneStateVector(i) for i in range(self.NUM_DRONES)])
+        for i in range(self.NUM_DRONES):
+            x, y, z = states[i][0], states[i][1], states[i][2]
+            if (x < self.space_range_x[0]) or (x > self.space_range_x[1]) or (y < self.space_range_y[0]) or (
+                    y > self.space_range_y[1]) or (z < self.space_range_z[0]) or (
+                    z > self.space_range_z[1]):  # out of range
+                return True
+
+        if self.step_counter / self.PYB_FREQ > self.EPISODE_LEN_SEC:
+            return True
+        else:
+            return False

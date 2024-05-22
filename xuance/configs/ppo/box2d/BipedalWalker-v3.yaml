@@ -9,12 +9,13 @@ runner: "DRL"
 representation_hidden_size: [128,]
 actor_hidden_size: [128,]
 critic_hidden_size: [128,]
-activation: 'LeakyReLU'
+activation: 'leaky_relu'
+activation_action: 'tanh'
 
 seed: 1
 parallels: 10
 running_steps: 300000
-n_steps: 256
+horizon_size: 256  # the horizon size for an environment, buffer_size = horizon_size * parallels.
 n_epoch: 8
 n_minibatch: 8
 learning_rate: 0.0004

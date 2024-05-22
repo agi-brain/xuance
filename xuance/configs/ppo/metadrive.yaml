@@ -1,0 +1,47 @@
+agent: "PPO_Clip"  # choice: PPO_Clip, PPO_KL
+env_name: "MetaDrive"
+env_id: "metadrive"
+env_config:  # the configs for MetaDrive environment
+  map: "C"  # see https://metadrive-simulator.readthedocs.io/en/latest/rl_environments.html#generalization-environment for choices
+render: False
+vectorize: "Subproc_MetaDrive"
+policy: "Gaussian_AC"  # choice: Gaussian_AC for continuous actions, Categorical_AC for discrete actions.
+representation: "Basic_MLP"
+runner: "DRL"
+
+representation_hidden_size: [512,]
+actor_hidden_size: [512, 512]
+critic_hidden_size: [512, 512]
+activation: "leaky_relu"
+activation_action: 'tanh'
+
+seed: 1
+parallels: 10
+running_steps: 500000
+horizon_size: 128  # the horizon size for an environment, buffer_size = horizon_size * parallels.
+n_epoch: 4
+n_minibatch: 4
+learning_rate: 0.00025
+
+use_grad_clip: True
+
+vf_coef: 0.25
+ent_coef: 0.0
+target_kl: 0.001  # for PPO_KL agent
+clip_range: 0.2  # for PPO_Clip agent
+clip_grad_norm: 0.5
+gamma: 0.99
+use_gae: True
+gae_lambda: 0.95
+use_advnorm: True
+
+use_obsnorm: True
+use_rewnorm: True
+obsnorm_range: 5
+rewnorm_range: 5
+
+test_steps: 10000
+eval_interval: 5000
+test_episode: 5
+log_dir: "./logs/ppo/"
+model_dir: "./models/ppo/"

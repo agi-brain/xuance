@@ -15,7 +15,6 @@ class IPPO_Agents(MARLAgents):
                  device: Optional[Union[int, str, torch.device]] = None):
         self.gamma = config.gamma
         self.n_envs = envs.num_envs
-        self.n_size = config.n_size
         self.n_epoch = config.n_epoch
         self.n_minibatch = config.n_minibatch
         if config.state_space is not None:
@@ -53,7 +52,7 @@ class IPPO_Agents(MARLAgents):
 
         buffer = MARL_OnPolicyBuffer_RNN if self.use_recurrent else MARL_OnPolicyBuffer
         input_buffer = (config.n_agents, config.state_space.shape, config.obs_shape, config.act_shape, config.rew_shape,
-                        config.done_shape, envs.num_envs, config.n_size,
+                        config.done_shape, envs.num_envs, config.buffer_size,
                         config.use_gae, config.use_advnorm, config.gamma, config.gae_lambda)
         memory = buffer(*input_buffer, max_episode_length=envs.max_episode_length, dim_act=config.dim_act)
         self.buffer_size = memory.buffer_size
@@ -107,8 +106,8 @@ class IPPO_Agents(MARLAgents):
         return hidden_state, values_n.detach().cpu().numpy()
 
     def train(self, i_step, **kwargs):
+        info_train = {}
         if self.memory.full:
-            info_train = {}
             indexes = np.arange(self.buffer_size)
             for _ in range(self.n_epoch):
                 np.random.shuffle(indexes)
@@ -122,6 +121,4 @@ class IPPO_Agents(MARLAgents):
                         info_train = self.learner.update(sample)
             self.learner.lr_decay(i_step)
             self.memory.clear()
-            return info_train
-        else:
-            return {}
+        return info_train

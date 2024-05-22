@@ -1,6 +1,8 @@
-import torch.distributions
+import torch
+
 from xuance.torch.policies import *
 from xuance.torch.utils import *
+import numpy as np
 
 
 def _init_layer(layer, gain=np.sqrt(2), bias=0.0):
@@ -29,7 +31,7 @@ class ActorNet(nn.Module):
         self.dist = CategoricalDistribution(action_dim)
 
     def forward(self, x: torch.Tensor):
-        self.dist.set_param(self.model(x))
+        self.dist.set_param(logits=self.model(x))
         return self.dist
 
 
@@ -69,13 +71,8 @@ class ActorCriticPolicy(nn.Module):
         self.action_dim = action_space.n
         self.representation = representation
         self.representation_info_shape = representation.output_shapes
-        self.actor = ActorNet(representation.output_shapes['state'][0],
-                              self.action_dim,
-                              actor_hidden_size,
-                              normalize,
-                              initialize,
-                              activation,
-                              device)
+        self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size,
+                              normalize, initialize, activation, device)
         self.critic = CriticNet(representation.output_shapes['state'][0], critic_hidden_size,
                                 normalize, initialize, activation, device)
 
@@ -142,7 +139,24 @@ class PPGActorCritic(nn.Module):
         return policy_outputs, a, v, aux_v
 
 
-class CriticNet_SACDIS(nn.Module):
+class Actor_SAC(ActorNet):
+    def __init__(self,
+                 state_dim: int,
+                 action_dim: int,
+                 hidden_sizes: Sequence[int],
+                 normalize: Optional[ModuleType] = None,
+                 initialize: Optional[Callable[..., torch.Tensor]] = None,
+                 activation: Optional[ModuleType] = None,
+                 device: Optional[Union[str, int, torch.device]] = None):
+        super(Actor_SAC, self).__init__(state_dim, action_dim, hidden_sizes, normalize, initialize, activation, device)
+        self.output = nn.Softmax(dim=-1)
+
+    def forward(self, x: torch.Tensor):
+        self.dist.set_param(probs=self.output(self.model(x)))
+        return self.dist
+
+
+class Critic_SAC(CriticNet, nn.Module):
     def __init__(self,
                  state_dim: int,
                  action_dim: int,
@@ -150,7 +164,7 @@ class CriticNet_SACDIS(nn.Module):
                  initialize: Optional[Callable[..., torch.Tensor]] = None,
                  activation: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None):
-        super(CriticNet_SACDIS, self).__init__()
+        nn.Module.__init__(self)
         layers = []
         input_shape = (state_dim,)
         for h in hidden_sizes:
@@ -161,34 +175,6 @@ class CriticNet_SACDIS(nn.Module):
 
     def forward(self, x: torch.tensor):
         return self.model(x)
-
-
-class ActorNet_SACDIS(nn.Module):
-    def __init__(self,
-                 state_dim: int,
-                 action_dim: int,
-                 hidden_sizes: Sequence[int],
-                 normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., torch.Tensor]] = None,
-                 activation: Optional[ModuleType] = None,
-                 device: Optional[Union[str, int, torch.device]] = None):
-        super(ActorNet_SACDIS, self).__init__()
-        layers = []
-        input_shape = (state_dim,)
-        for h in hidden_sizes:
-            mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initialize, device)
-            layers.extend(mlp)
-        layers.extend(mlp_block(input_shape[0], action_dim, None, None, None, device)[0])
-        self.output = nn.Sequential(*layers)
-        self.model = nn.Softmax(dim=-1)
-
-    def forward(self, x: torch.tensor):
-        action_prob = self.model(self.output(x))
-        dist = torch.distributions.Categorical(probs=action_prob)
-        # action_logits = self.output(x)
-        # dist = torch.distributions.Categorical(logits=action_logits)
-        # action_prob = dist.probs
-        return action_prob, dist
 
 
 class SACDISPolicy(nn.Module):
@@ -206,49 +192,79 @@ class SACDISPolicy(nn.Module):
         self.representation_info_shape = representation.output_shapes
 
         self.actor_representation = representation
-        self.critic_representation = copy.deepcopy(representation)
-        self.target_critic_representation = copy.deepcopy(representation)
+        self.actor = Actor_SAC(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size,
+                               normalize, initialize, activation, device)
 
-        self.actor = ActorNet_SACDIS(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size,
-                                     normalize, initialize, activation, device)
-        self.critic = CriticNet_SACDIS(representation.output_shapes['state'][0], self.action_dim, critic_hidden_size,
-                                       initialize, activation, device)
-        self.target_critic = copy.deepcopy(self.critic)
+        self.critic_1_representation = copy.deepcopy(representation)
+        self.critic_1 = Critic_SAC(representation.output_shapes['state'][0], self.action_dim, critic_hidden_size,
+                                   initialize, activation, device)
+        self.critic_2_representation = copy.deepcopy(representation)
+        self.critic_2 = Critic_SAC(representation.output_shapes['state'][0], self.action_dim, critic_hidden_size,
+                                   initialize, activation, device)
+        self.target_critic_1_representation = copy.deepcopy(self.critic_1_representation)
+        self.target_critic_1 = copy.deepcopy(self.critic_1)
+        self.target_critic_2_representation = copy.deepcopy(self.critic_2_representation)
+        self.target_critic_2 = copy.deepcopy(self.critic_2)
 
         self.actor_parameters = list(self.actor_representation.parameters()) + list(self.actor.parameters())
-        self.critic_parameters = list(self.critic_representation.parameters()) + list(self.critic.parameters())
+        self.critic_parameters = list(self.critic_1_representation.parameters()) + list(
+            self.critic_1.parameters()) + list(self.critic_2_representation.parameters()) + list(
+            self.critic_2.parameters())
 
     def forward(self, observation: Union[np.ndarray, dict]):
         outputs = self.actor_representation(observation)
-        act_prob, act_distribution = self.actor(outputs['state'])
-        return outputs, act_prob, act_distribution
-
-    def Qtarget(self, observation: Union[np.ndarray, dict]):
-        outputs_actor = self.actor_representation(observation)
-        outputs_critic = self.target_critic_representation(observation)
-        act_prob, act_distribution = self.actor(outputs_actor['state'])
-        # z = act_prob == 0.0
-        # z = z.float() * 1e-8
-        log_action_prob = torch.log(act_prob + 1e-5)
-        return act_prob, log_action_prob, self.target_critic(outputs_critic['state'])
-
-    def Qaction(self, observation: Union[np.ndarray, dict]):
-        outputs_critic = self.critic_representation(observation)
-        return outputs_critic, self.critic(outputs_critic['state'])
+        act_dist = self.actor(outputs['state'])
+        act_samples = act_dist.stochastic_sample()
+        return outputs, act_samples
 
     def Qpolicy(self, observation: Union[np.ndarray, dict]):
         outputs_actor = self.actor_representation(observation)
-        outputs_critic = self.critic_representation(observation)
-        act_prob, act_distribution = self.actor(outputs_actor['state'])
-        # z = act_prob == 0.0
-        # z = z.float() * 1e-8
-        log_action_prob = torch.log(act_prob + 1e-5)
-        return act_prob, log_action_prob, self.critic(outputs_critic['state'])
+        outputs_critic_1 = self.critic_1_representation(observation)
+        outputs_critic_2 = self.critic_2_representation(observation)
+
+        act_dist = self.actor(outputs_actor['state'])
+        act_prob = act_dist.probs
+        z = act_prob == 0.0
+        z = z.float() * 1e-8
+        log_action_prob = torch.log(act_prob + z)
+
+        q_1 = self.critic_1(outputs_critic_1['state'])
+        q_2 = self.critic_2(outputs_critic_2['state'])
+        return act_prob, log_action_prob, q_1, q_2
+
+    def Qtarget(self, observation: Union[np.ndarray, dict]):
+        outputs_actor = self.actor_representation(observation)
+        outputs_critic_1 = self.target_critic_1_representation(observation)
+        outputs_critic_2 = self.target_critic_2_representation(observation)
+
+        new_act_dist = self.actor(outputs_actor['state'])
+        new_act_prob = new_act_dist.probs
+        z = new_act_prob == 0.0
+        z = z.float() * 1e-8  # avoid log(0)
+        log_action_prob = torch.log(new_act_prob + z)
+
+        target_q_1 = self.target_critic_1(outputs_critic_1['state'])
+        target_q_2 = self.target_critic_2(outputs_critic_2['state'])
+        target_q = torch.min(target_q_1, target_q_2)
+        return new_act_prob, log_action_prob, target_q
+
+    def Qaction(self, observation: Union[np.ndarray, dict]):
+        outputs_critic_1 = self.critic_1_representation(observation)
+        outputs_critic_2 = self.critic_2_representation(observation)
+        q_1 = self.critic_1(outputs_critic_1['state'])
+        q_2 = self.critic_2(outputs_critic_2['state'])
+        return q_1, q_2
 
     def soft_update(self, tau=0.005):
-        for ep, tp in zip(self.critic_representation.parameters(), self.target_critic_representation.parameters()):
+        for ep, tp in zip(self.critic_1_representation.parameters(), self.target_critic_1_representation.parameters()):
             tp.data.mul_(1 - tau)
             tp.data.add_(tau * ep.data)
-        for ep, tp in zip(self.critic.parameters(), self.target_critic.parameters()):
+        for ep, tp in zip(self.critic_2_representation.parameters(), self.target_critic_2_representation.parameters()):
+            tp.data.mul_(1 - tau)
+            tp.data.add_(tau * ep.data)
+        for ep, tp in zip(self.critic_1.parameters(), self.target_critic_1.parameters()):
+            tp.data.mul_(1 - tau)
+            tp.data.add_(tau * ep.data)
+        for ep, tp in zip(self.critic_2.parameters(), self.target_critic_2.parameters()):
             tp.data.mul_(1 - tau)
             tp.data.add_(tau * ep.data)

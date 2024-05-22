@@ -64,7 +64,7 @@ class PDQN_Agent(Agent):
                                       self.buffer_action_space,
                                       self.auxiliary_info_shape,
                                       self.n_envs,
-                                      config.n_size,
+                                      config.buffer_size,
                                       config.batch_size)
         learner = PDQN_Learner(policy,
                                optimizer,

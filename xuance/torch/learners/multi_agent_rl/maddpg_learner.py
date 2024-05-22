@@ -45,7 +45,7 @@ class MADDPG_Learner(LearnerMAS):
 
         # train actor
         _, actions_eval = self.policy(obs, IDs)
-        loss_a = -(self.policy.critic(obs, actions_eval, IDs) * agent_mask).sum() / agent_mask.sum()
+        loss_a = -(self.policy.Qpolicy(obs, actions_eval, IDs) * agent_mask).sum() / agent_mask.sum()
         self.optimizer['actor'].zero_grad()
         loss_a.backward()
         if self.args.use_grad_clip:
@@ -55,9 +55,9 @@ class MADDPG_Learner(LearnerMAS):
             self.scheduler['actor'].step()
 
         # train critic
-        actions_next = self.policy.target_actor(obs_next, IDs)
-        q_eval = self.policy.critic(obs, actions, IDs)
-        q_next = self.policy.target_critic(obs_next, actions_next, IDs)
+        actions_next = self.policy.Atarget(obs_next, IDs)
+        q_eval = self.policy.Qpolicy(obs, actions, IDs)
+        q_next = self.policy.Qtarget(obs_next, actions_next, IDs)
         q_target = rewards + (1 - terminals) * self.args.gamma * q_next
         td_error = (q_eval - q_target.detach()) * agent_mask
         loss_c = (td_error ** 2).sum() / agent_mask.sum()

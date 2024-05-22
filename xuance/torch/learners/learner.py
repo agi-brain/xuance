@@ -24,17 +24,24 @@ class Learner(ABC):
     def save_model(self, model_path):
         torch.save(self.policy.state_dict(), model_path)
 
-    def load_model(self, path):
-        # 查看路径下的文件
+    def load_model(self, path, model=None):
         file_names = os.listdir(path)
-        # 查看该路径下最新的模型的文件夹
-        # print(f"file_names: {file_names}")
-        model_names = os.listdir(os.path.join(path,file_names[-1]))
-        # print(f"model_names: {model_names}")
-        # 加上包的路径
-        path = os.path.join(path,file_names[-1])
+        if model is not None:
+            path = os.path.join(path, model)
+            if model not in file_names:
+                raise RuntimeError(f"The folder '{path}' does not exist, please specify a correct path to load model.")
+        else:
+            for f in file_names:
+                if "seed_" not in f:
+                    file_names.remove(f)
+            file_names.sort()
+            path = os.path.join(path, file_names[-1])
+
+        model_names = os.listdir(path)
         if os.path.exists(path + "/obs_rms.npy"):
             model_names.remove("obs_rms.npy")
+        if len(model_names) == 0:
+            raise RuntimeError(f"There is no model file in '{path}'!")
         model_names.sort()
         model_path = os.path.join(path, model_names[-1])
         self.policy.load_state_dict(torch.load(model_path, map_location={
@@ -47,6 +54,8 @@ class Learner(ABC):
             "cuda:6": self.device,
             "cuda:7": self.device
         }))
+        print(f"Successfully load model from '{path}'.")
+        return path
 
     @abstractmethod
     def update(self, *args):
@@ -86,16 +95,24 @@ class LearnerMAS(ABC):
     def save_model(self, model_path):
         torch.save(self.policy.state_dict(), model_path)
 
-    def load_model(self, path, seed=1):
+    def load_model(self, path, model=None):
         file_names = os.listdir(path)
-        for f in file_names:
-            '''Change directory to the specified seed (if exists)'''
-            if f"seed_{seed}" in f:
-                path = os.path.join(path, f)
-                break
+        if model is not None:
+            path = os.path.join(path, model)
+            if model not in file_names:
+                raise RuntimeError(f"The folder '{path}' does not exist, please specify a correct path to load model.")
+        else:
+            for f in file_names:
+                if "seed_" not in f:
+                    file_names.remove(f)
+            file_names.sort()
+            path = os.path.join(path, file_names[-1])
+
         model_names = os.listdir(path)
         if os.path.exists(path + "/obs_rms.npy"):
             model_names.remove("obs_rms.npy")
+        if len(model_names) == 0:
+            raise RuntimeError(f"There is no model file in '{path}'!")
         model_names.sort()
         model_path = os.path.join(path, model_names[-1])
         self.policy.load_state_dict(torch.load(model_path, map_location={
@@ -108,6 +125,7 @@ class LearnerMAS(ABC):
             "cuda:6": self.device,
             "cuda:7": self.device
         }))
+        print(f"Successfully load model from '{path}'.")
 
     @abstractmethod
     def update(self, *args):

@@ -20,11 +20,11 @@ strides: [4, 2, 1]  # [2, 2, 2, 2]
 recurrent_hidden_size: 512
 recurrent_layer_N: 1
 dropout: 0
-activation: 'ReLU'
+activation: 'relu'
 
 seed: 1
 parallels: 5
-n_size: 1000
+buffer_size: 5000
 batch_size: 8  # batch size for training
 learning_rate: 0.0001
 gamma: 0.99

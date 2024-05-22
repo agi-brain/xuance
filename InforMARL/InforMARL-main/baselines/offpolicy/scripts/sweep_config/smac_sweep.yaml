@@ -1,0 +1,46 @@
+program: train/train_smac.py
+project: sweep_SMAC
+name: 3m
+command:
+  - ${env}
+  - python3
+  - ${program}
+  - ${args}
+method: grid
+metric:
+  goal: maximize
+  name: eval_win_rate
+parameters:
+  env_name:
+    distribution: constant
+    value: "StarCraft2"
+  map_name:
+    distribution: constant
+    value: "3m"
+  algorithm_name:
+    distribution: constant
+    value: "rmasac"
+  experiment_name:
+    distribution: constant
+    value: "hyper_sweep"
+  seed:
+    distribution: constant
+    value: 1
+  actor_train_interval_step:
+    distribution: constant
+    value: 1
+  num_env_steps:
+    distribution: constant
+    value: 10000000
+  target_entropy_coef:
+    distribution: categorical
+    values: [0.1, 0.3, 0.5, 0.7]
+  tau:
+    distribution: categorical
+    values: [0.0001, 0.001, 0.003, 0.005, 0.01]
+  lr:
+    distribution: categorical
+    values: [0.0001, 0.0005, 0.0007, 0.001, 0.01]
+  train_interval_episode:
+    distribution: categorical
+    values: [1, 2, 4, 8]

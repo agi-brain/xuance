@@ -9,11 +9,12 @@ runner: "DRL"
 representation_hidden_size:  # If you choose Basic_Identical representation, then ignore this value
 actor_hidden_size: [400, 300]
 critic_hidden_size: [400, 300]
-activation: "LeakyReLU"
+activation: "leaky_relu"
+activation_action: 'tanh'
 
 seed: 19089
 parallels: 4  # number of environments
-n_size: 50000  # replay buffer size
+buffer_size: 200000  # replay buffer size
 batch_size: 100
 actor_learning_rate: 0.001
 critic_learning_rate: 0.001

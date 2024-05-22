@@ -104,12 +104,12 @@ class VDAC_Learner(LearnerMAS):
         # actor loss
         rnn_hidden = self.policy.representation.init_hidden(batch_size * self.n_agents)
         _, pi_dist, value_pred = self.policy(obs[:, :, :-1].reshape(-1, episode_length, self.dim_obs),
-                                             IDs[:, :, :-1],
+                                             IDs[:, :, :-1].reshape(-1, episode_length, self.n_agents),
                                              *rnn_hidden,
-                                             avail_actions=avail_actions[:, :, :-1],
+                                             avail_actions=avail_actions[:, :, :-1].reshape(-1, episode_length, self.dim_act),
                                              state=state[:, :-1])
-        log_pi = pi_dist.log_prob(actions).unsqueeze(-1)
-        entropy = pi_dist.entropy().unsqueeze(-1)
+        log_pi = pi_dist.log_prob(actions.reshape(-1, episode_length)).reshape(batch_size, self.n_agents, episode_length, 1)
+        entropy = pi_dist.entropy().reshape(batch_size, self.n_agents, episode_length, 1)
 
         targets = returns
         advantages = targets - value_pred

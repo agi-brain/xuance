@@ -16,29 +16,6 @@ class NotSteppingError(Exception):
         Exception.__init__(self, msg)
 
 
-def tile_images(images):
-    image_nums = len(images)
-    image_shape = images[0].shape
-    image_height = image_shape[0]
-    image_width = image_shape[1]
-    rows = (image_nums - 1) // 4 + 1
-    if image_nums >= 4:
-        cols = 4
-    else:
-        cols = image_nums
-    try:
-        big_img = np.zeros(
-            (rows * image_height + 10 * (rows - 1), cols * image_width + 10 * (cols - 1), image_shape[2]), np.uint8)
-    except IndexError:
-        big_img = np.zeros((rows * image_height + 10 * (rows - 1), cols * image_width + 10 * (cols - 1)), np.uint8)
-    for i in range(image_nums):
-        c = i % 4
-        r = i // 4
-        big_img[10 * r + image_height * r:10 * r + image_height * r + image_height,
-        10 * c + image_width * c:10 * c + image_width * c + image_width] = images[i]
-    return big_img
-
-
 class VecEnv(ABC):
     def __init__(self, num_envs, observation_space, action_space):
         self.num_envs = num_envs

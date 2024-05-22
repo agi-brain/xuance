@@ -10,7 +10,6 @@ class Basic_Identical(nn.Module):
         assert len(input_shape) == 1
         self.output_shapes = {'state': (input_shape[0],)}
         self.device = device
-        self.model = nn.Sequential()
 
     def forward(self, observations: np.ndarray):
         state = torch.as_tensor(observations, dtype=torch.float32, device=self.device)

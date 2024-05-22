@@ -50,7 +50,7 @@ class MARL_OnPolicyBuffer(BaseBuffer):
         rew_space: reward space.
         done_space: terminal variable space.
         n_envs: number of parallel environments.
-        buffer_size: buffer size of transition data for one environment.
+        buffer_size: buffer size of total experience data.
         use_gae: whether to use GAE trick.
         use_advnorm: whether to use Advantage normalization trick.
         gamma: discount factor.
@@ -163,7 +163,7 @@ class MARL_OnPolicyBuffer_RNN(MARL_OnPolicyBuffer):
         rew_space: reward space.
         done_space: terminal variable space.
         n_envs: number of parallel environments.
-        buffer_size: buffer size of trajectory data for one environment.
+        buffer_size: buffer size of total experience data.
         use_gae: whether to use GAE trick.
         use_advnorm: whether to use Advantage normalization trick.
         gamma: discount factor.
@@ -528,7 +528,7 @@ class MARL_OffPolicyBuffer(BaseBuffer):
         rew_space: reward space.
         done_space: terminal variable space.
         n_envs: number of parallel environments.
-        buffer_size: buffer size for one environment.
+        buffer_size: buffer size of total experience data.
         batch_size: batch size of transition data for a sample.
         **kwargs: other arguments.
     """
@@ -586,7 +586,7 @@ class MARL_OffPolicyBuffer_RNN(MARL_OffPolicyBuffer):
         rew_space: reward space.
         done_space: terminal variable space.
         n_envs: number of parallel environments.
-        buffer_size: buffer size for one environment.
+        buffer_size: buffer size of total experience data.
         batch_size: batch size of episodes for a sample.
         kwargs: other arguments.
     """
@@ -673,7 +673,7 @@ class MeanField_OffPolicyBuffer(MARL_OffPolicyBuffer):
         rew_space: reward space.
         done_space: terminal variable space.
         n_envs: number of parallel environments.
-        buffer_size: buffer size for one environment.
+        buffer_size: buffer size of total experience data.
         batch_size: batch size of transition data for a sample.
     """
 
