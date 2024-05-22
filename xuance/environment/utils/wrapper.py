@@ -148,13 +148,40 @@ class XuanCeMultiAgentEnvWrapper(XuanCeEnvWrapper):
         super(XuanCeMultiAgentEnvWrapper, self).__init__(env, **kwargs)
         self._env_info: Optional[dict] = None
         self._state_space: Optional[spaces.Space] = None
-        self.agents: Optional[AgentKeys] = None  # e.g., ['red_0', 'red_1', 'blue_0', 'blue_1'].
-        self.num_agents: Optional[int] = None  # Number of all agents, e.g., 4.
+        self.agents = self.env.agents  # e.g., ['red_0', 'red_1', 'blue_0', 'blue_1'].
+        self.num_agents = self.env.num_agents  # Number of all agents, e.g., 4.
         self.teams_info = {  # Information of teams.
             "names": ['red', 'blue'],  # should be consistent with the name of agents.
             "num_teams": 2,
             "agents_in_team": [["red_0", 'red_1'], ['blue_0', 'blue_1']]
         }
+        self._episode_score = {agent: 0.0 for agent in self.agents}
+
+    def step(self, action: ActType) -> Tuple[dict, dict, dict, bool, dict]:
+        """Steps through the environment with action."""
+        observation, reward, terminated, truncated, info = self.env.step(action)
+        self._episode_step += 1
+        for agent in self.agents:
+            self._episode_score[agent] += reward[agent]
+        info["episode_step"] = self._episode_step  # current episode step
+        info["episode_score"] = self._episode_score  # the accumulated rewards
+        info["agent_mask"] = self.agent_mask
+        info["avail_actions"] = self.avail_actions
+        return observation, reward, terminated, truncated, info
+
+    def reset(self, **kwargs) -> Tuple[dict, dict]:
+        """Resets the environment with kwargs."""
+        try:
+            obs, info = self.env.reset(**kwargs)
+        except:
+            obs = self.env.reset(**kwargs)
+            info = {}
+        self._episode_step = 0
+        self._episode_score = {agent: 0.0 for agent in self.agents}
+        info["episode_step"] = self._episode_step
+        info["agent_mask"] = self.agent_mask
+        info["avail_actions"] = self.avail_actions
+        return obs, info
 
     @property
     def env_info(self) -> Optional[dict]:
@@ -188,9 +215,9 @@ class XuanCeMultiAgentEnvWrapper(XuanCeEnvWrapper):
     @property
     def agent_mask(self):
         """Returns mask variables to mark alive agents in multi-agent environment."""
-        return self.env.get_agent_mask()
+        return self.env.agent_mask()
 
     @property
     def avail_actions(self):
         """Returns mask variables to mark available actions for each agent."""
-        return self.env.avail_actions
+        return self.env.avail_actions()

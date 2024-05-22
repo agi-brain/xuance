@@ -28,7 +28,7 @@ class DummyVecEnv(VecEnv):
         self.buf_terminated = np.zeros((self.num_envs,), dtype=np.bool_)
         self.buf_truncated = np.zeros((self.num_envs,), dtype=np.bool_)
         self.buf_rewards = np.zeros((self.num_envs,), dtype=np.float32)
-        self.buf_infos = [{} for _ in range(self.num_envs)]
+        self.buf_info = [{} for _ in range(self.num_envs)]
         self.actions = None
         self.max_episode_length = env.max_episode_steps
 
@@ -37,7 +37,7 @@ class DummyVecEnv(VecEnv):
             obs, info = self.envs[e].reset()
             self._save_obs(e, obs)
             self._save_infos(e, info)
-        return self.buf_obs.copy(), self.buf_infos.copy()
+        return self.buf_obs.copy(), self.buf_info.copy()
 
     def step_async(self, actions):
         if self.waiting:
@@ -88,7 +88,7 @@ class DummyVecEnv(VecEnv):
             self.buf_obs[e] = obs
 
     def _save_infos(self, e, info):
-        self.buf_infos[e] = info
+        self.buf_info[e] = info
 
 
 class DummyVecEnv_Atari(DummyVecEnv):

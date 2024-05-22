@@ -8,7 +8,7 @@ class BaseBuffer(ABC):
     """
 
     def __init__(self, *args):
-        self.n_agents, self.state_space, self.obs_space, self.act_space, self.rew_space, self.done_space, self.n_envs, self.buffer_size = args
+        self.n_agents, self.state_space, self.obs_space, self.act_space, self.n_envs, self.buffer_size = args
         self.ptr = 0  # last data pointer
         self.size = 0  # current buffer size
 
@@ -526,18 +526,14 @@ class MARL_OffPolicyBuffer(BaseBuffer):
         state_space: global state space, type: Discrete, Box.
         obs_space: observation space for one agent (suppose same obs space for group agents).
         act_space: action space for one agent (suppose same actions space for group agents).
-        rew_space: reward space.
-        done_space: terminal variable space.
         n_envs: number of parallel environments.
         buffer_size: buffer size of total experience data.
         batch_size: batch size of transition data for a sample.
         **kwargs: other arguments.
     """
 
-    def __init__(self, n_agents, state_space, obs_space, act_space, rew_space, done_space,
-                 n_envs, buffer_size, batch_size, **kwargs):
-        super(MARL_OffPolicyBuffer, self).__init__(n_agents, state_space, obs_space, act_space, rew_space, done_space,
-                                                   n_envs, buffer_size)
+    def __init__(self, n_agents, state_space, obs_space, act_space, n_envs, buffer_size, batch_size, **kwargs):
+        super(MARL_OffPolicyBuffer, self).__init__(n_agents, state_space, obs_space, act_space, n_envs, buffer_size)
         assert buffer_size % self.n_envs == 0, "buffer_size must be divisible by the number of envs (parallels)"
         self.n_size = buffer_size // n_envs
         self.batch_size = batch_size
@@ -554,8 +550,8 @@ class MARL_OffPolicyBuffer(BaseBuffer):
             'obs': np.zeros((self.n_envs, self.n_size, self.n_agents) + self.obs_space).astype(np.float32),
             'actions': np.zeros((self.n_envs, self.n_size, self.n_agents) + self.act_space).astype(np.float32),
             'obs_next': np.zeros((self.n_envs, self.n_size, self.n_agents) + self.obs_space).astype(np.float32),
-            'rewards': np.zeros((self.n_envs, self.n_size) + self.rew_space).astype(np.float32),
-            'terminals': np.zeros((self.n_envs, self.n_size) + self.done_space).astype(np.bool_),
+            'rewards': np.zeros((self.n_envs, self.n_size, self.n_agents)).astype(np.float32),
+            'terminals': np.zeros((self.n_envs, self.n_size, self.n_agents)).astype(np.bool_),
             'agent_mask': np.ones((self.n_envs, self.n_size, self.n_agents)).astype(np.bool_)
         }
         if self.state_space is not None:

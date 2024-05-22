@@ -177,6 +177,3 @@ class Agent(ABC):
         else:
             self.writer.close()
 
-
-def get_total_iters(agent_name, args):
-    return args.running_steps

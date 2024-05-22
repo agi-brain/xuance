@@ -2,7 +2,7 @@ import torch
 import time
 import torch.nn.functional as F
 from abc import ABC, abstractmethod
-from typing import Optional, Sequence, Union
+from typing import Optional, Sequence, Dict, Union
 from argparse import Namespace
 import os
 
@@ -71,15 +71,9 @@ class LearnerMAS(ABC):
                  device: Optional[Union[int, str, torch.device]] = None,
                  model_dir: str = "./"):
         self.value_normalizer = None
-        self.args = config
+        self.config = config
         self.n_agents = config.n_agents
-        self.dim_obs = self.args.dim_obs
-        self.dim_act = self.args.dim_act
         self.dim_id = self.n_agents
-        self.device = torch.device("cuda" if (torch.cuda.is_available() and self.args.device == "gpu") else "cpu")
-        if self.device.type == "cuda":
-            torch.cuda.set_device(config.gpu_id)
-            print("Use cuda, gpu ID: ", config.gpu_id)
 
         self.policy = policy
         self.optimizer = optimizer

@@ -7,7 +7,7 @@ from pathlib import Path
 import wandb
 from torch.utils.tensorboard import SummaryWriter
 from .runner_basic import Runner_Base, make_envs
-from xuance.torch.agents import REGISTRY as REGISTRY_Agent
+from xuance.torch.agents import REGISTRY_Agents
 from xuance.common import get_time_string
 from tqdm import tqdm
 import numpy as np
@@ -78,7 +78,7 @@ class Runner_MARL(Runner_Base):
             args.act_shape = ()
 
         # Create MARL agents.
-        self.agents = REGISTRY_Agent[args.agent](args, self.envs, args.device)
+        self.agents = REGISTRY_Agents[args.agent](args, self.envs, args.device)
         self.on_policy = self.agents.on_policy
 
     def log_infos(self, info: dict, x_index: int):

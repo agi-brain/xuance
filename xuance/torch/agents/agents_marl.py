@@ -1,48 +1,88 @@
 import os.path
-from xuance.torch.agents import *
+import wandb
+import socket
+import numpy as np
+from pathlib import Path
+from argparse import Namespace
+from typing import Optional
+from torch import nn
+from torch.utils.tensorboard import SummaryWriter
+from xuance.common import get_time_string, create_directory
+from xuance.environment import DummyVecMutliAgentEnv
 
 
 class MARLAgents(object):
-    """The class of basic agents.
+    """Base class of agents for MARL.
 
     Args:
         config: the Namespace variable that provides hyper-parameters and other settings.
         envs: the vectorized environments.
-        policy: the neural network modules of the agent.
-        memory: the experience replay buffer.
-        learner: the learner for the corresponding agent.
-        device: the calculating device of the model, such as CPU or GPU.
-        log_dir: the directory of the log file.
-        model_dir: the directory for models saving.
     """
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecEnv_Pettingzoo,
-                 policy: nn.Module,
-                 memory: BaseBuffer,
-                 learner: LearnerMAS,
-                 device: Optional[Union[str, int, torch.device]] = None,
-                 log_dir: str = "./logs/",
-                 model_dir: str = "./models/"):
-        self.args = config
-        self.n_agents = config.n_agents
-        self.dim_obs = self.args.dim_obs
-        self.dim_act = self.args.dim_act
-        self.dim_id = self.n_agents
-        self.device = torch.device(
-            "cuda" if (torch.cuda.is_available() and config.device in ["gpu", "cuda:0"]) else "cpu")
-        self.envs = envs
+                 envs: DummyVecMutliAgentEnv):
+        # training settings
+        self.config = config
+        self.use_parameter_sharing = config.use_parameter_sharing
+        self.gamma = config.gamma
         self.start_training = config.start_training
+        self.training_frequency = config.training_frequency
+        self.device = config.device
 
+        # environment attributes
+        self.envs = envs
+        self.n_agents = config.n_agents
         self.render = config.render
-        self.nenvs = envs.num_envs
-        self.policy = policy
-        self.memory = memory
-        self.learner = learner
-        self.device = device
+        self.n_envs = envs.num_envs
+        self.agent_keys = envs.agents
+        self.observation_space = envs.observation_space
+        self.action_space = envs.action_space
+        self.current_step = 0
+        self.current_episode = np.zeros((self.n_envs,), np.int32)
+
+        # prepare directories
+        time_string = get_time_string()
+        seed = f"seed_{config.seed}_"
+        self.model_dir_load = config.model_dir
+        self.model_dir_save = os.path.join(os.getcwd(), config.model_dir, seed + time_string)
+
+        # create logger
+        if config.logger == "tensorboard":
+            log_dir = os.path.join(os.getcwd(), config.log_dir, seed + time_string)
+            if not os.path.exists(log_dir):
+                os.makedirs(log_dir)
+            self.writer = SummaryWriter(log_dir)
+            self.use_wandb = False
+        elif config.logger == "wandb":
+            config_dict = vars(config)
+            log_dir = config.log_dir
+            wandb_dir = Path(os.path.join(os.getcwd(), config.log_dir))
+            if not wandb_dir.exists():
+                os.makedirs(str(wandb_dir))
+            wandb.init(config=config_dict,
+                       project=config.project_name,
+                       entity=config.wandb_user_name,
+                       notes=socket.gethostname(),
+                       dir=wandb_dir,
+                       group=config.env_id,
+                       job_type=config.agent,
+                       name=time_string,
+                       reinit=True,
+                       settings=wandb.Settings(start_method="fork")
+                       )
+            # os.environ["WANDB_SILENT"] = "True"
+            self.use_wandb = True
+        else:
+            raise "No logger is implemented."
         self.log_dir = log_dir
-        self.model_dir_save, self.model_dir_load = config.model_dir_save, config.model_dir_load
-        create_directory(log_dir)
+
+        # predefine necessary components
+        self.policy: Optional[nn.Module] = None
+        self.learner: Optional[nn.Module] = None
+        self.memory: Optional[object] = None
+
+    def store_experience(self, *args, **kwargs):
+        raise NotImplementedError
 
     def save_model(self, model_name):
         if not os.path.exists(self.model_dir_save):
@@ -53,11 +93,43 @@ class MARLAgents(object):
     def load_model(self, path, model=None):
         self.learner.load_model(path, model)
 
+    def log_infos(self, info: dict, x_index: int):
+        """
+        info: (dict) information to be visualized
+        n_steps: current step
+        """
+        if self.use_wandb:
+            for k, v in info.items():
+                wandb.log({k: v}, step=x_index)
+        else:
+            for k, v in info.items():
+                try:
+                    self.writer.add_scalar(k, v, x_index)
+                except:
+                    self.writer.add_scalars(k, v, x_index)
+
+    def log_videos(self, info: dict, fps: int, x_index: int = 0):
+        if self.use_wandb:
+            for k, v in info.items():
+                wandb.log({k: wandb.Video(v, fps=fps, format='gif')}, step=x_index)
+        else:
+            for k, v in info.items():
+                self.writer.add_video(k, v, fps=fps, global_step=x_index)
+
     def action(self, **kwargs):
         raise NotImplementedError
 
     def train(self, **kwargs):
         raise NotImplementedError
+
+    def test(self, **kwargs):
+        raise NotImplementedError
+
+    def finish(self):
+        if self.use_wandb:
+            wandb.finish()
+        else:
+            self.writer.close()
 
 
 class linear_decay_or_increase(object):

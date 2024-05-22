@@ -131,7 +131,7 @@ class RawMultiAgentEnv(ABC):
 
     @abstractmethod
     def step(self, action_dict: MultiAgentDict) -> Tuple[
-        MultiAgentDict, MultiAgentDict, MultiAgentDict, MultiAgentDict, MultiAgentDict]:
+        MultiAgentDict, MultiAgentDict, MultiAgentDict, bool, MultiAgentDict]:
         """
         Steps through the environment with action.
 
@@ -141,8 +141,8 @@ class RawMultiAgentEnv(ABC):
         Return:
             observation (MultiAgentDict): The next step observations after executing actions.
             reward (MultiAgentDict): The rewards returned by the environment.
-            terminated(MultiAgentDict): A bool values that indicates if the environment should be terminated.
-            truncated(MultiAgentDict): A bool values that indicates if the environment should be truncated.
+            terminated(MultiAgentDict): A dict of bool values that indicates if the environment should be terminated.
+            truncated(bool): A bool value that indicates if the environment should be truncated.
             info (MultiAgentDict): The information about the environment.
         """
         raise NotImplementedError
@@ -176,13 +176,10 @@ class RawMultiAgentEnv(ABC):
         """Returns the global state of the environment."""
         raise NotImplementedError
 
-    @property
-    def get_agent_mask(self):
+    def agent_mask(self):
         """Create a boolean mask indicating which agents are currently alive."""
-        mask = np.ones(self.num_agents, dtype=np.bool_)
-        return mask
+        return {agent: True for agent in self.agents}
 
-    @property
     def avail_actions(self):
         """Returns a boolean mask indicating which actions are available for each agent."""
-        raise NotImplementedError
+        return {agent: np.ones(self.action_space[agent].n, np.bool_) for agent in self.agents}

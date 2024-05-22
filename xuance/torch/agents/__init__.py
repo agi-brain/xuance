@@ -14,11 +14,11 @@ from xuance.common import *
 from xuance.torch.learners import *
 from xuance.torch.policies import *
 from xuance.torch.utils import *
-from xuance.torch.policies import REGISTRY as REGISTRY_Policy
+from xuance.torch.policies import REGISTRY_Policy
 from xuance.torch.utils.input_reformat import get_repre_in, get_policy_in_marl
-from xuance.torch.representations import REGISTRY as REGISTRY_Representation
+from xuance.torch.representations import REGISTRY_Representation
 
-from .agent import Agent, get_total_iters
+from .agent import Agent
 from .agents_marl import MARLAgents, RandomAgents
 
 '''
@@ -71,7 +71,7 @@ from .multi_agent_rl import (
     MATD3_Agents
 )
 
-REGISTRY = {
+REGISTRY_Agents = {
     "PG": PG_Agent,
     "A2C": A2C_Agent,
     "PPO_Clip": PPOCLIP_Agent,

@@ -1,9 +1,8 @@
 import wandb
 from .runner_basic import *
-from xuance.torch.agents import get_total_iters
-from xuance.torch.representations import REGISTRY as REGISTRY_Representation
-from xuance.torch.agents import REGISTRY as REGISTRY_Agent
-from xuance.torch.policies import REGISTRY as REGISTRY_Policy
+from xuance.torch.representations import REGISTRY_Representation
+from xuance.torch.agents import REGISTRY_Agents
+from xuance.torch.policies import REGISTRY_Policy
 from xuance.torch.utils.input_reformat import get_repre_in, get_policy_in
 import itertools
 import torch
@@ -44,29 +43,27 @@ class Runner_DRL(Runner_Base):
             actor_optimizer = torch.optim.Adam(policy.actor_parameters, self.args.actor_learning_rate)
             critic_optimizer = torch.optim.Adam(policy.critic_parameters, self.args.critic_learning_rate)
             actor_lr_scheduler = torch.optim.lr_scheduler.LinearLR(actor_optimizer, start_factor=1.0, end_factor=0.25,
-                                                                   total_iters=get_total_iters(self.agent_name,
-                                                                                               self.args))
+                                                                   total_iters=self.args.running_steps)
             critic_lr_scheduler = torch.optim.lr_scheduler.LinearLR(critic_optimizer, start_factor=1.0, end_factor=0.25,
-                                                                    total_iters=get_total_iters(self.agent_name,
-                                                                                                self.args))
-            self.agent = REGISTRY_Agent[self.agent_name](self.args, self.envs, policy,
+                                                                    total_iters=self.args.running_steps)
+            self.agent = REGISTRY_Agents[self.agent_name](self.args, self.envs, policy,
                                                          [actor_optimizer, critic_optimizer],
                                                          [actor_lr_scheduler, critic_lr_scheduler], self.args.device)
         elif self.agent_name in ["PDQN", "MPDQN", "SPDQN"]:
             conactor_optimizer = torch.optim.Adam(policy.conactor.parameters(), self.args.learning_rate)
             qnetwork_optimizer = torch.optim.Adam(policy.qnetwork.parameters(), self.args.learning_rate)
             conactor_lr_scheduler = torch.optim.lr_scheduler.LinearLR(conactor_optimizer, start_factor=1.0, end_factor=0.25,
-                                                                   total_iters=get_total_iters(self.agent_name, self.args))
+                                                                   total_iters=self.args.running_steps)
             qnetwork_lr_scheduler = torch.optim.lr_scheduler.LinearLR(qnetwork_optimizer, start_factor=1.0, end_factor=0.25,
-                                                                    total_iters=get_total_iters(self.agent_name, self.args))
-            self.agent = REGISTRY_Agent[self.agent_name](self.args, self.envs, policy,
+                                                                    total_iters=self.args.running_steps)
+            self.agent = REGISTRY_Agents[self.agent_name](self.args, self.envs, policy,
                                                          [conactor_optimizer, qnetwork_optimizer],
                                                          [conactor_lr_scheduler, qnetwork_lr_scheduler], self.args.device)
         else:
             optimizer = torch.optim.Adam(policy.parameters(), self.args.learning_rate, eps=1e-5)
             lr_scheduler = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=1.0, end_factor=0.0,
-                                                             total_iters=get_total_iters(self.agent_name, self.args))
-            self.agent = REGISTRY_Agent[self.agent_name](self.args, self.envs, policy, optimizer, lr_scheduler,
+                                                             total_iters=self.args.running_steps)
+            self.agent = REGISTRY_Agents[self.agent_name](self.args, self.envs, policy, optimizer, lr_scheduler,
                                                          self.args.device)
 
     def run(self):

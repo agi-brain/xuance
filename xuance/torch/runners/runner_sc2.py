@@ -2,7 +2,7 @@ import os
 import socket
 from pathlib import Path
 from .runner_basic import Runner_Base
-from xuance.torch.agents import REGISTRY as REGISTRY_Agent
+from xuance.torch.agents import REGISTRY_Agents
 from xuance.common import get_time_string
 import wandb
 from torch.utils.tensorboard import SummaryWriter
@@ -64,7 +64,7 @@ class SC2_Runner(Runner_Base):
         args.state_space = self.envs.state_space
 
         # Create MARL agents.
-        self.agents = REGISTRY_Agent[args.agent](args, self.envs, args.device)
+        self.agents = REGISTRY_Agents[args.agent](args, self.envs, args.device)
         self.on_policy = self.agents.on_policy
 
     def init_rnn_hidden(self):

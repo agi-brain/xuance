@@ -2,7 +2,11 @@
 Independent Deep Deterministic Policy Gradient (IDDPG)
 Implementation: Pytorch
 """
-from xuance.torch.learners import *
+import torch
+from torch import nn
+from xuance.torch.learners import LearnerMAS
+from typing import Sequence, Optional, Union
+from argparse import Namespace
 
 
 class IDDPG_Learner(LearnerMAS):
@@ -10,7 +14,7 @@ class IDDPG_Learner(LearnerMAS):
                  config: Namespace,
                  policy: nn.Module,
                  optimizer: Sequence[torch.optim.Optimizer],
-                 scheduler: Sequence[torch.optim.lr_scheduler._LRScheduler] = None,
+                 scheduler: Sequence[torch.optim.lr_scheduler.LinearLR] = None,
                  device: Optional[Union[int, str, torch.device]] = None,
                  model_dir: str = "./",
                  gamma: float = 0.99,
@@ -30,26 +34,26 @@ class IDDPG_Learner(LearnerMAS):
             'critic': scheduler[1]
         }
 
-    def update(self, sample):
+    def update_share(self, sample):
         self.iterations += 1
         obs = torch.Tensor(sample['obs']).to(self.device)
         actions = torch.Tensor(sample['actions']).to(self.device)
         obs_next = torch.Tensor(sample['obs_next']).to(self.device)
-        rewards = torch.Tensor(sample['rewards']).to(self.device)
+        rewards = torch.Tensor(sample['rewards']).reshape(-1, self.n_agents, 1).to(self.device)
         terminals = torch.Tensor(sample['terminals']).float().reshape(-1, self.n_agents, 1).to(self.device)
         agent_mask = torch.Tensor(sample['agent_mask']).float().reshape(-1, self.n_agents, 1).to(self.device)
-        IDs = torch.eye(self.n_agents).unsqueeze(0).expand(self.args.batch_size, -1, -1).to(self.device)
+        IDs = torch.eye(self.n_agents).unsqueeze(0).expand(self.config.batch_size, -1, -1).to(self.device)
 
         q_eval = self.policy.Qpolicy(obs, actions, IDs)
         q_next = self.policy.Qtarget(obs_next, self.policy.Atarget(obs_next, IDs), IDs)
-        q_target = rewards + (1-terminals) * self.args.gamma * q_next
+        q_target = rewards + (1 - terminals) * self.gamma * q_next
 
         # calculate the loss function
         _, actions_eval = self.policy(obs, IDs)
         loss_a = -(self.policy.Qpolicy(obs, actions_eval, IDs) * agent_mask).sum() / agent_mask.sum()
         self.optimizer['actor'].zero_grad()
         loss_a.backward()
-        torch.nn.utils.clip_grad_norm_(self.policy.parameters_actor, self.args.grad_clip_norm)
+        torch.nn.utils.clip_grad_norm_(self.policy.parameters_actor, self.config.grad_clip_norm)
         self.optimizer['actor'].step()
         if self.scheduler['actor'] is not None:
             self.scheduler['actor'].step()
@@ -58,7 +62,7 @@ class IDDPG_Learner(LearnerMAS):
         loss_c = (td_error ** 2).sum() / agent_mask.sum()
         self.optimizer['critic'].zero_grad()
         loss_c.backward()
-        torch.nn.utils.clip_grad_norm_(self.policy.parameters_critic, self.args.grad_clip_norm)
+        torch.nn.utils.clip_grad_norm_(self.policy.parameters_critic, self.config.grad_clip_norm)
         self.optimizer['critic'].step()
         if self.scheduler['critic'] is not None:
             self.scheduler['critic'].step()
@@ -77,3 +81,6 @@ class IDDPG_Learner(LearnerMAS):
         }
 
         return info
+
+    def update(self, *args):
+        return
