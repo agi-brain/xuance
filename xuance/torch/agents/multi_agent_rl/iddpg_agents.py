@@ -4,7 +4,7 @@ from tqdm import tqdm
 from copy import deepcopy
 from operator import itemgetter
 from argparse import Namespace
-from xuance.environment import DummyVecMutliAgentEnv
+from xuance.environment import DummyVecMutliAgentEnv, make_envs
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.representations import REGISTRY_Representation
 from xuance.torch.policies import REGISTRY_Policy
@@ -184,6 +184,6 @@ class IDDPG_Agents(MARLAgents):
             if self.noise_scale >= self.end_noise:
                 self.noise_scale = self.noise_scale - self.delta_noise
 
-    def test(self, env_fn, test_episodes):
-        test_envs = env_fn
+    def test(self, test_envs, test_episodes):
         num_envs = test_envs.num_envs
+        
