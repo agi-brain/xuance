@@ -116,8 +116,7 @@ def run(args):
                 return make_envs(args_test)
 
             agent.render = True
-            # agent.load_model(agent.model_dir_load, args.seed)
-            agent.load_model(agent.model_dir_load)
+            agent.load_model(path=agent.model_dir_load)
             scores = agent.test(env_fn, args.test_episode)
             print(f"Mean Score: {np.mean(scores)}, Std: {np.std(scores)}")
             print("Finish testing.")
@@ -133,5 +132,6 @@ if __name__ == "__main__":
                          env=parser.env,
                          env_id=parser.env_id,
                          config_path=parser.config,
-                         parser_args=parser)
+                         parser_args=parser,
+                         is_test=parser.test)
     run(args)

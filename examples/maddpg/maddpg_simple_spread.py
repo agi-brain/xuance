@@ -12,6 +12,7 @@ from torch.utils.tensorboard import SummaryWriter
 from xuance import get_arguments
 from xuance.environment import make_envs
 from xuance.torch.utils.operations import set_seed
+from xuance.common import get_time_string
 
 
 def parse_args():
@@ -36,11 +37,10 @@ class Runner(object):
         # prepare directories
         self.args = args
         self.args.agent_name = args.agent
-        folder_name = f"seed_{args.seed}_" + time.asctime().replace(" ", "").replace(":", "_")
+        time_string = get_time_string()
+        folder_name = f"seed_{args.seed}_" + time_string
         self.args.model_dir_load = self.args.model_dir
         self.args.model_dir_save = os.path.join(os.getcwd(), self.args.model_dir, folder_name)
-        if (not os.path.exists(self.args.model_dir_save)) and (not self.args.test_mode):
-            os.makedirs(self.args.model_dir_save)
 
         # Logger
         if self.args.logger == "tensorboard":
@@ -61,14 +61,14 @@ class Runner(object):
                        dir=wandb_dir,
                        group=self.args.env_id,
                        job_type=self.args.agent,
-                       name=time.asctime(),
+                       name=time_string,
                        reinit=True)
             self.use_wandb = True
 
         # build environments
         self.envs = make_envs(args)
         self.n_envs = self.envs.num_envs
-        self.fps = 60
+        self.fps = 20
         self.agent_keys = self.args.agent_keys = self.envs.agent_keys[0]
         self.episode_length = self.envs.max_episode_length
         self.render = self.args.render
@@ -85,8 +85,6 @@ class Runner(object):
         self.args.rew_shape, self.args.done_shape = (self.args.n_agents, 1), (self.args.n_agents,)
         from xuance.torch.agents import MADDPG_Agents
         self.agents = MADDPG_Agents(self.args, self.envs, self.args.device)
-        if self.args.test_mode:
-            self.agents.load_model(self.args.model_dir)
         self.current_step, self.current_episode = 0, np.zeros((self.envs.num_envs,), np.int32)
 
     def log_infos(self, info: dict, x_index: int):
@@ -207,7 +205,7 @@ class Runner(object):
                 return make_envs(args_test)
 
             self.render = True
-            self.agents.load_model(self.args.model_dir)
+            self.agents.load_model(path=self.args.model_dir_load)
             self.test_episode(env_fn)
             print("Finish testing.")
         else:
@@ -266,7 +264,8 @@ if __name__ == "__main__":
                          env=parser.env,
                          env_id=parser.env_id,
                          config_path=parser.config,
-                         parser_args=parser)
+                         parser_args=parser,
+                         is_test=parser.test)
     runner = Runner(args)
 
     if args.benchmark:

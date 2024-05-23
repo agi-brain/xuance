@@ -3,7 +3,7 @@ project_name: "XuanCe_Benchmark"
 logger: "tensorboard"  # Choices: tensorboard, wandb.
 wandb_user_name: "your_user_name"
 render: True
-render_mode: 'human' # Choices: 'human', 'rgb_array'.
+render_mode: 'rgb_array' # Choices: 'human', 'rgb_array'.
 test_mode: False
 device: "cuda:0"
 
@@ -19,11 +19,11 @@ runner: "DRL"
 
 representation_hidden_size: [128,]
 q_hidden_size: [128,]
-activation: 'ReLU'
+activation: 'relu'
 
 seed: 1
 parallels: 10
-n_size: 10000
+buffer_size: 100000
 batch_size: 256
 learning_rate: 0.001
 gamma: 0.99

@@ -1,8 +1,8 @@
 dl_toolbox: "torch"  # The deep learning toolbox. Choices: "torch", "mindspore", "tensorlayer"
 project_name: "XuanCe_Benchmark"
 logger: "tensorboard"  # Choices: tensorboard, wandb.
-wandb_user_name: "1256405274"
-render: False
+wandb_user_name: "your_user_name"
+render: True
 render_mode: 'rgb_array' # Choices: 'human', 'rgb_array'.
 test_mode: False
 device: "cuda:0"
@@ -19,7 +19,7 @@ runner: "Pettingzoo_Runner"
 representation_hidden_size: [64, ]  # the units for each hidden layer
 actor_hidden_size: [64, 64]
 critic_hidden_size: [64, 64]
-activation: 'LeakyReLU'
+activation: 'leaky_relu'
 activation_action: 'sigmoid'
 
 seed: 1
@@ -30,7 +30,7 @@ lr_a: 0.01  # learning rate for actor
 lr_c: 0.001  # learning rate for critic
 gamma: 0.95  # discount factor
 tau: 0.001  # soft update for target networks
-num_agents: 5
+
 start_noise: 1.0
 end_noise: 0.01
 sigma: 0.1

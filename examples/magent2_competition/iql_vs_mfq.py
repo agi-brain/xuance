@@ -14,6 +14,7 @@ from gymnasium.spaces.box import Box
 from xuance import get_arguments
 from xuance.environment import make_envs
 from xuance.torch.utils.operations import set_seed
+from xuance.common import get_time_string
 
 
 def parse_args():
@@ -39,14 +40,12 @@ class Runner():
         # prepare directions
         self.args = args if type(args) == list else [args]
         self.fps = 20
-        time_string = time.asctime().replace(" ", "").replace(":", "_")
+        time_string = get_time_string()
         for i_method, arg in enumerate(self.args):
             arg.agent_name = arg.method[i_method]
             seed = f"seed_{arg.seed}_"
             arg.model_dir_load = arg.model_dir
             arg.model_dir_save = os.path.join(os.getcwd(), arg.model_dir, seed + time_string)
-            if (not os.path.exists(arg.model_dir_save)) and (not arg.test_mode):
-                os.makedirs(arg.model_dir_save)
 
             if arg.logger == "tensorboard":
                 log_dir = os.path.join(os.getcwd(), arg.log_dir, seed + time_string)
@@ -96,7 +95,7 @@ class Runner():
                                dir=wandb_dir,
                                group=arg.env_id,
                                job_type=arg.agent,
-                               name=time.asctime(),
+                               name=time_string,
                                reinit=True)
                 break
 
@@ -127,8 +126,6 @@ class Runner():
             arg.rew_shape, arg.done_shape, arg.act_prob_shape = (arg.n_agents, 1), (arg.n_agents,), (arg.dim_act,)
             self.marl_agents.append(REGISTRY_Agent[arg.agent](arg, self.envs, arg.device))
             self.marl_names.append(arg.agent)
-            if arg.test_mode:
-                self.marl_agents[h].load_model(arg.model_dir, arg.seed)
 
         self.print_infos(self.args)
 
@@ -391,7 +388,7 @@ class Runner():
 
             self.render = True
             for h, mas_group in enumerate(self.marl_agents):
-                mas_group.load_model(mas_group.model_dir_load, mas_group.args.seed)
+                mas_group.load_model(mas_group.model_dir_load)
             self.test_episode(env_fn)
             print("Finish testing.")
         else:
@@ -462,7 +459,8 @@ if __name__ == "__main__":
                          env=parser.env,
                          env_id=parser.env_id,
                          config_path=parser.config,
-                         parser_args=parser)
+                         parser_args=parser,
+                         is_test=parser.test)
     runner = Runner(args)
 
     if args[0].benchmark:

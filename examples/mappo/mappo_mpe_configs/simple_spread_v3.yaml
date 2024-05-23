@@ -3,8 +3,8 @@ project_name: "XuanCe_Benchmark"
 logger: "tensorboard"  # Choices: tensorboard, wandb.
 wandb_user_name: "your_user_name"
 render: True
-render_mode: 'human' # Choices: 'human', 'rgb_array'.
-test_mode: True
+render_mode: 'rgb_array' # Choices: 'human', 'rgb_array'.
+test_mode: False
 device: "cuda:0"
 
 agent: "MAPPO"
@@ -23,11 +23,11 @@ gain: 0.01
 
 actor_hidden_size: [64, 64]
 critic_hidden_size: [64, 64]
-activation: "ReLU"
+activation: "relu"
 
 seed: 1
 parallels: 128
-n_size: 3200
+buffer_size: 3200
 n_epoch: 10
 n_minibatch: 1
 learning_rate: 0.001

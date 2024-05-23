@@ -51,12 +51,13 @@ def run(args):
                         critic_hidden_size=args.critic_hidden_size,
                         initialize=None,
                         activation=ActivationFunctions[args.activation],
+                        activation_action=ActivationFunctions[args.activation_action],
                         device=args.device)
 
     # prepare the Agent
     from xuance.torch.agents import DDPG_Agent, get_total_iters
-    actor_optimizer = torch.optim.Adam(policy.actor.parameters(), args.actor_learning_rate)
-    critic_optimizer = torch.optim.Adam(policy.critic.parameters(), args.critic_learning_rate)
+    actor_optimizer = torch.optim.Adam(policy.actor_parameters, args.actor_learning_rate)
+    critic_optimizer = torch.optim.Adam(policy.critic_parameters, args.critic_learning_rate)
     actor_lr_scheduler = torch.optim.lr_scheduler.LinearLR(actor_optimizer, start_factor=1.0, end_factor=0.25,
                                                            total_iters=get_total_iters(agent_name, args))
     critic_lr_scheduler = torch.optim.lr_scheduler.LinearLR(critic_optimizer, start_factor=1.0, end_factor=0.25,
@@ -111,7 +112,7 @@ def run(args):
                 return make_envs(args_test)
 
             agent.render = True
-            agent.load_model(agent.model_dir_load, args.seed)
+            agent.load_model(path=agent.model_dir_load)
             scores = agent.test(env_fn, args.test_episode)
             print(f"Mean Score: {np.mean(scores)}, Std: {np.std(scores)}")
             print("Finish testing.")
@@ -127,5 +128,6 @@ if __name__ == "__main__":
                          env=parser.env,
                          env_id=parser.env_id,
                          config_path=parser.config,
-                         parser_args=parser)
+                         parser_args=parser,
+                         is_test=parser.test)
     run(args)

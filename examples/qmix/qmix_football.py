@@ -11,6 +11,7 @@ from torch.utils.tensorboard import SummaryWriter
 from xuance import get_arguments
 from xuance.environment import make_envs
 from xuance.torch.utils.operations import set_seed
+from xuance.common import get_time_string
 
 
 def parse_args():
@@ -37,8 +38,6 @@ class Runner():
         folder_name = f"seed_{args.seed}_" + time.asctime().replace(" ", "").replace(":", "_")
         self.args.model_dir_load = self.args.model_dir
         self.args.model_dir_save = os.path.join(os.getcwd(), self.args.model_dir, folder_name)
-        if (not os.path.exists(self.args.model_dir_save)) and (not self.args.test_mode):
-            os.makedirs(self.args.model_dir_save)
 
         if args.test:
             args.parallels = 1
@@ -65,7 +64,7 @@ class Runner():
                        dir=wandb_dir,
                        group=self.args.env_id,
                        job_type=self.args.agent,
-                       name=time.asctime(),
+                       name=time_string,
                        reinit=True)
             self.use_wandb = True
 
@@ -314,7 +313,8 @@ if __name__ == "__main__":
                          env=parser.env,
                          env_id=parser.env_id,
                          config_path=parser.config,
-                         parser_args=parser)
+                         parser_args=parser,
+                         is_test=parser.test)
     runner = Runner(args)
     runner.benchmark()
     runner.finish()

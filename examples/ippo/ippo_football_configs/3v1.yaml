@@ -36,11 +36,11 @@ gain: 0.01
 
 actor_hidden_size: [64, 64]
 critic_hidden_size: [64, 64]
-activation: "ReLU"
+activation: "relu"
 
 seed: 1
 parallels: 50
-n_size: 400
+buffer_size: 400
 n_epoch: 15
 n_minibatch: 2
 learning_rate: 5.0e-4

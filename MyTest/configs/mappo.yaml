@@ -1,14 +1,11 @@
-dl_toolbox: "torch"  # The deep learning toolbox. Choices: "torch", "mindspore", "tensorflow"
-
+dl_toolbox: "torch"  # The deep learning toolbox. Choices: "torch", "mindspore", "tensorlayer"
 project_name: "XuanCe_Benchmark"
-logger: "tensorboard"  # Choices: "tensorboard", "wandb".
-wandb_user_name: "1256405274"
-
+logger: "tensorboard"  # Choices: tensorboard, wandb.
+wandb_user_name: "your_user_name"
 render: True
 render_mode: 'human' # Choices: 'human', 'rgb_array'.
 test_mode: True
-
-device: "cuda:0"  # Choices: "cpu", "cuda", "auto".
+device: "cuda:0"
 
 agent: "MAPPO"
 env_name: "mpe"
@@ -18,7 +15,7 @@ policy: "Gaussian_MAAC_Policy"
 representation: "Basic_MLP"
 vectorize: "Dummy_Pettingzoo"
 runner: "Pettingzoo_Runner"
-num_agents: 3
+
 # recurrent settings for Basic_RNN representation
 use_recurrent: False
 rnn:
@@ -27,21 +24,21 @@ gain: 0.01
 
 actor_hidden_size: [64, 64]
 critic_hidden_size: [64, 64]
-activation: "ReLU"
+activation: "relu"
 
 seed: 1
-parallels: 128  # 128
-n_size: 3200
+parallels: 8  # 128
+buffer_size: 3200
 n_epoch: 10
 n_minibatch: 1
 learning_rate: 0.0007
 weight_decay: 0
 
-vf_coef: 0.5
+vf_coef: 1.0
 ent_coef: 0.01
 target_kl: 0.25  # for MAPPO_KL learner
 clip_range: 0.2  # ratio clip range, for MAPPO_Clip learner
-clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+#clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
 gamma: 0.95  # discount factor
 
 # tricks
