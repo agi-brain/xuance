@@ -33,6 +33,7 @@ class MARLAgents(object):
         self.envs = envs
         self.n_agents = config.n_agents
         self.render = config.render
+        self.fps = config.fps
         self.n_envs = envs.num_envs
         self.agent_keys = envs.agents
         self.observation_space = envs.observation_space

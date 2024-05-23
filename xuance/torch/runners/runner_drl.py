@@ -1,10 +1,9 @@
-import wandb
-from .runner_basic import *
+from xuance.torch.runners.runner_basic import Runner_Base
+from xuance.environment import make_envs
 from xuance.torch.representations import REGISTRY_Representation
 from xuance.torch.agents import REGISTRY_Agents
 from xuance.torch.policies import REGISTRY_Policy
 from xuance.torch.utils.input_reformat import get_repre_in, get_policy_in
-import itertools
 import torch
 import gym.spaces
 import numpy as np
@@ -47,24 +46,27 @@ class Runner_DRL(Runner_Base):
             critic_lr_scheduler = torch.optim.lr_scheduler.LinearLR(critic_optimizer, start_factor=1.0, end_factor=0.25,
                                                                     total_iters=self.args.running_steps)
             self.agent = REGISTRY_Agents[self.agent_name](self.args, self.envs, policy,
-                                                         [actor_optimizer, critic_optimizer],
-                                                         [actor_lr_scheduler, critic_lr_scheduler], self.args.device)
+                                                          [actor_optimizer, critic_optimizer],
+                                                          [actor_lr_scheduler, critic_lr_scheduler], self.args.device)
         elif self.agent_name in ["PDQN", "MPDQN", "SPDQN"]:
             conactor_optimizer = torch.optim.Adam(policy.conactor.parameters(), self.args.learning_rate)
             qnetwork_optimizer = torch.optim.Adam(policy.qnetwork.parameters(), self.args.learning_rate)
-            conactor_lr_scheduler = torch.optim.lr_scheduler.LinearLR(conactor_optimizer, start_factor=1.0, end_factor=0.25,
-                                                                   total_iters=self.args.running_steps)
-            qnetwork_lr_scheduler = torch.optim.lr_scheduler.LinearLR(qnetwork_optimizer, start_factor=1.0, end_factor=0.25,
-                                                                    total_iters=self.args.running_steps)
+            conactor_lr_scheduler = torch.optim.lr_scheduler.LinearLR(conactor_optimizer, start_factor=1.0,
+                                                                      end_factor=0.25,
+                                                                      total_iters=self.args.running_steps)
+            qnetwork_lr_scheduler = torch.optim.lr_scheduler.LinearLR(qnetwork_optimizer, start_factor=1.0,
+                                                                      end_factor=0.25,
+                                                                      total_iters=self.args.running_steps)
             self.agent = REGISTRY_Agents[self.agent_name](self.args, self.envs, policy,
-                                                         [conactor_optimizer, qnetwork_optimizer],
-                                                         [conactor_lr_scheduler, qnetwork_lr_scheduler], self.args.device)
+                                                          [conactor_optimizer, qnetwork_optimizer],
+                                                          [conactor_lr_scheduler, qnetwork_lr_scheduler],
+                                                          self.args.device)
         else:
             optimizer = torch.optim.Adam(policy.parameters(), self.args.learning_rate, eps=1e-5)
             lr_scheduler = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=1.0, end_factor=0.0,
                                                              total_iters=self.args.running_steps)
             self.agent = REGISTRY_Agents[self.agent_name](self.args, self.envs, policy, optimizer, lr_scheduler,
-                                                         self.args.device)
+                                                          self.args.device)
 
     def run(self):
         if self.args.test_mode:
@@ -73,6 +75,7 @@ class Runner_DRL(Runner_Base):
                 args_test.parallels = 1
                 args_test.render = True
                 return make_envs(args_test)
+
             self.agent.render = True
             self.agent.load_model(self.agent.model_dir_load)
             scores = self.agent.test(env_fn, self.args.test_episode)
@@ -85,10 +88,7 @@ class Runner_DRL(Runner_Base):
             self.agent.save_model("final_train_model.pth")
 
         self.envs.close()
-        if self.agent.use_wandb:
-            wandb.finish()
-        else:
-            self.agent.writer.close()
+        self.agent.finish()
 
     def benchmark(self):
         # test environment
@@ -96,6 +96,7 @@ class Runner_DRL(Runner_Base):
             args_test = deepcopy(self.args)
             args_test.parallels = args_test.test_episode
             return make_envs(args_test)
+
         train_steps = self.args.running_steps // self.n_envs
         eval_interval = self.args.eval_interval // self.n_envs
         test_episode = self.args.test_episode
@@ -121,7 +122,4 @@ class Runner_DRL(Runner_Base):
         print("Best Model Score: %.2f, std=%.2f" % (best_scores_info["mean"], best_scores_info["std"]))
 
         self.envs.close()
-        if self.agent.use_wandb:
-            wandb.finish()
-        else:
-            self.agent.writer.close()
+        self.agent.finish()

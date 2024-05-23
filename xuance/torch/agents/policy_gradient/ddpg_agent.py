@@ -131,7 +131,7 @@ class DDPG_Agent(Agent):
             self.log_videos(info=videos_info, fps=self.fps, x_index=self.current_step)
 
         if self.config.test_mode:
-            print("Best Score: %.2f" % (best_score))
+            print("Best Score: %.2f" % best_score)
 
         test_info = {
             "Test-Episode-Rewards/Mean-Score": np.mean(scores),
