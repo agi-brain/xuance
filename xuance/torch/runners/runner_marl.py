@@ -5,9 +5,9 @@ from xuance.torch.agents import REGISTRY_Agents
 from xuance.environment import make_envs
 
 
-class Runnner_MARL_Base(Runner_Base):
+class Runner_MARL(Runner_Base):
     def __init__(self, config):
-        super(Runnner_MARL_Base, self).__init__(config)
+        super(Runner_MARL, self).__init__(config)
         config.n_agents = self.envs.n_agents_all
         self.agents = REGISTRY_Agents[config.agent](config, self.envs)
         self.config = config

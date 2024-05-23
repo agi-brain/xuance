@@ -5,7 +5,7 @@ continuous_action: True
 policy: "MADDPG_Policy"
 representation: "Basic_Identical"
 vectorize: "Dummy_Pettingzoo"
-runner: "Pettingzoo_Runner"
+runner: "MARL"
 
 representation_hidden_size: []  # the units for each hidden layer
 actor_hidden_size: [64, 64]
