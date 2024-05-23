@@ -1,10 +1,4 @@
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import copy
-from typing import Sequence, Optional, Callable, Union
-from gymnasium.spaces import Space, Box, Discrete, Dict
-
+from xuance.torch.policies.core import ActorNet, CriticNet, VDN_mixer, QMIX_mixer, QMIX_FF_mixer, QTRAN_alt, QTRAN_base
 from .categorical import ActorCriticPolicy as Categorical_AC_Policy
 from .categorical import ActorPolicy as Categorical_Actor_Policy
 from .categorical import PPGActorCritic as Categorical_PPG_Policy
@@ -17,11 +11,9 @@ from .deterministic import BasicQnetwork, C51Qnetwork, DuelQnetwork, DDPGPolicy,
     TD3Policy, PDQNPolicy, MPDQNPolicy, SPDQNPolicy, DRQNPolicy
 from .gaussian import SACPolicy as Gaussian_SAC_Policy
 
-from .mixers import *
 from .deterministic_marl import BasicQnetwork as BasicQnetwork_marl
-from .deterministic_marl import Basic_DDPG_policy as BasicDDPG_marl
-from .deterministic_marl import MFQnetwork, MixingQnetwork, Weighted_MixingQnetwork, Qtran_MixingQnetwork, DCG_policy, \
-    Basic_DDPG_policy, MADDPG_policy, MATD3_policy
+from .deterministic_marl import Independent_DDPG_Policy
+from .deterministic_marl import MFQnetwork, MixingQnetwork, Weighted_MixingQnetwork, Qtran_MixingQnetwork, DCG_policy, MADDPG_policy, MATD3_policy
 from .categorical_marl import MeanFieldActorCriticPolicy, COMAPolicy
 from .categorical_marl import MAAC_Policy as Categorical_MAAC_Policy
 from .categorical_marl import MAAC_Policy_Share as Categorical_MAAC_Policy_Share
@@ -67,7 +59,7 @@ REGISTRY_Policy = {
     "Categorical_MAAC_Policy": Categorical_MAAC_Policy,
     "Categorical_MAAC_Policy_Share": Categorical_MAAC_Policy_Share,
     "Categorical_COMA_Policy": COMAPolicy,
-    "Independent_DDPG_Policy": BasicDDPG_marl,
+    "Independent_DDPG_Policy": Independent_DDPG_Policy,
     "MADDPG_Policy": MADDPG_policy,
     "MF_Q_network": MFQnetwork,
     "Categorical_MFAC_Policy": MeanFieldActorCriticPolicy,

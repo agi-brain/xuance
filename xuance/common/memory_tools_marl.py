@@ -1,5 +1,50 @@
 import numpy as np
 from abc import ABC, abstractmethod
+from typing import Optional, Union
+from xuance.common import space2shape
+
+
+def create_memory(shape: Optional[Union[tuple, dict]],
+                  n_envs: int,
+                  n_size: int,
+                  n_agent: Optional[int] = None,
+                  dtype: type = np.float32):
+    """
+    Create a numpy array for memory data.
+
+    Args:
+        shape: data shape.
+        n_envs: number of parallel environments.
+        n_size: length of data sequence for each environment.
+        n_agent: number of agents.
+        dtype: numpy data type.
+
+    Returns:
+        An empty memory space to store data. (initial: numpy.zeros())
+    """
+    if shape is None:
+        return None
+    elif isinstance(shape, dict):
+        memory = {}
+        for key, value in zip(shape.keys(), shape.values()):
+            if value is None:  # save an object type
+                if n_agent is None:
+                    memory[key] = np.zeros([n_envs, n_size], dtype=object)
+                else:
+                    memory[key] = np.zeros([n_envs, n_size, n_agent], dtype=object)
+            else:
+                if n_agent is None:
+                    memory[key] = np.zeros([n_envs, n_size] + list(value), dtype=dtype)
+                else:
+                    memory[key] = np.zeros([n_envs, n_size, n_agent] + list(value), dtype=dtype)
+        return memory
+    elif isinstance(shape, tuple):
+        if n_agent is None:
+            return np.zeros([n_envs, n_size] + list(shape), dtype)
+        else:
+            return np.zeros([n_envs, n_size, n_agent] + list(shape), dtype)
+    else:
+        raise NotImplementedError
 
 
 class BaseBuffer(ABC):
@@ -430,6 +475,7 @@ class COMA_Buffer_RNN(MARL_OnPolicyBuffer_RNN):
         gae_lam: gae lambda.
         **kwargs: other args.
     """
+
     def __init__(self, n_agents, state_space, obs_space, act_space, rew_space, done_space, n_envs, buffer_size,
                  use_gae, use_advnorm, gamma, gae_lam, **kwargs):
         self.td_lambda = kwargs['td_lambda']
@@ -517,9 +563,9 @@ class COMA_Buffer_RNN(MARL_OnPolicyBuffer_RNN):
         self.episode_data['returns'][i_env, :, path_slice] = returns[:-1]
 
 
-class MARL_OffPolicyBuffer(BaseBuffer):
+class MARL_OffPolicyBuffer_Share(BaseBuffer):
     """
-    Replay buffer for off-policy MARL algorithms.
+    Replay buffer for off-policy MARL algorithms with parameter sharing.
 
     Args:
         n_agents: number of agents.
@@ -533,30 +579,29 @@ class MARL_OffPolicyBuffer(BaseBuffer):
     """
 
     def __init__(self, n_agents, state_space, obs_space, act_space, n_envs, buffer_size, batch_size, **kwargs):
-        super(MARL_OffPolicyBuffer, self).__init__(n_agents, state_space, obs_space, act_space, n_envs, buffer_size)
+        super(MARL_OffPolicyBuffer_Share, self).__init__(n_agents, state_space, obs_space, act_space, n_envs,
+                                                         buffer_size)
         assert buffer_size % self.n_envs == 0, "buffer_size must be divisible by the number of envs (parallels)"
         self.n_size = buffer_size // n_envs
         self.batch_size = batch_size
-        if self.state_space is not None:
-            self.store_global_state = True
-        else:
-            self.store_global_state = False
+        self.store_global_state = False if self.state_space is None else True
         self.data = {}
         self.clear()
         self.keys = self.data.keys()
 
     def clear(self):
         self.data = {
-            'obs': np.zeros((self.n_envs, self.n_size, self.n_agents) + self.obs_space).astype(np.float32),
-            'actions': np.zeros((self.n_envs, self.n_size, self.n_agents) + self.act_space).astype(np.float32),
-            'obs_next': np.zeros((self.n_envs, self.n_size, self.n_agents) + self.obs_space).astype(np.float32),
-            'rewards': np.zeros((self.n_envs, self.n_size, self.n_agents)).astype(np.float32),
-            'terminals': np.zeros((self.n_envs, self.n_size, self.n_agents)).astype(np.bool_),
-            'agent_mask': np.ones((self.n_envs, self.n_size, self.n_agents)).astype(np.bool_)
+            'obs': create_memory(space2shape(self.obs_space), self.n_envs, self.n_size, self.n_agents),
+            'actions': create_memory(space2shape(self.act_space), self.n_envs, self.n_size, self.n_agents),
+            'obs_next': create_memory(space2shape(self.obs_space), self.n_envs, self.n_size, self.n_agents),
+            'rewards': create_memory((), self.n_envs, self.n_size, self.n_agents),
+            'terminals': create_memory((), self.n_envs, self.n_size, self.n_agents, np.bool_),
+            'agent_mask': create_memory((), self.n_envs, self.n_size, self.n_agents, np.bool_)
         }
-        if self.state_space is not None:
-            self.data.update({'state': np.zeros((self.n_envs, self.n_size) + self.state_space).astype(np.float32),
-                              'state_next': np.zeros((self.n_envs, self.n_size) + self.state_space).astype(np.float32)})
+        if self.store_global_state:
+            state_shape = space2shape(self.state_space)
+            self.data.update({'state': create_memory(state_shape, self.n_envs, self.n_size, None),
+                              'state_next': create_memory(state_shape, self.n_envs, self.n_size, None)})
         self.ptr, self.size = 0, 0
 
     def store(self, step_data):
@@ -565,14 +610,75 @@ class MARL_OffPolicyBuffer(BaseBuffer):
         self.ptr = (self.ptr + 1) % self.n_size
         self.size = np.min([self.size + 1, self.n_size])
 
-    def sample(self):
-        env_choices = np.random.choice(self.n_envs, self.batch_size)
-        step_choices = np.random.choice(self.size, self.batch_size)
+    def sample(self, env_choices=None, step_choices=None):
+        if env_choices is None:
+            env_choices = np.random.choice(self.n_envs, self.batch_size)
+        if step_choices is None:
+            step_choices = np.random.choice(self.size, self.batch_size)
         samples = {k: self.data[k][env_choices, step_choices] for k in self.keys}
         return samples
 
 
-class MARL_OffPolicyBuffer_RNN(MARL_OffPolicyBuffer):
+class MARL_OffPolicyBuffer_Split(BaseBuffer):
+    """
+    Replay buffer for off-policy MARL algorithms with parameter sharing.
+
+    Parameters:
+        agent_keys (str): The keys of agents.
+        state_space (Tuple): global state space, type: Discrete, Box.
+        obs_space (Dict[str, Tuple]): observation space for one agent (suppose same obs space for group agents).
+        act_space (Dict[str, Tuple]): action space for one agent (suppose same actions space for group agents).
+        n_envs (int): number of parallel environments.
+        buffer_size (int): buffer size of total experience data.
+        batch_size (int): batch size of transition data for a sample.
+        **kwargs: other arguments.
+    """
+
+    def __init__(self, agent_keys, state_space, obs_space, act_space, n_envs, buffer_size, batch_size, **kwargs):
+        n_agents = len(agent_keys)
+        self.agent_keys = agent_keys
+        super(MARL_OffPolicyBuffer_Split, self).__init__(n_agents, state_space, obs_space, act_space, n_envs,
+                                                         buffer_size)
+        del kwargs['n_agents']
+        self.split_buffers = {key: MARL_OffPolicyBuffer_Share(None, None, obs_space[key], act_space[key], n_envs,
+                                                              buffer_size, batch_size, **kwargs) for key in agent_keys}
+        assert buffer_size % self.n_envs == 0, "buffer_size must be divisible by the number of envs (parallels)"
+        self.n_size = buffer_size // n_envs
+        self.batch_size = batch_size
+        self.store_global_state = False if self.state_space is None else True
+        self.state, self.state_next = None, None
+        self.clear()
+
+    def clear(self, *args):
+        for key in self.agent_keys:
+            self.split_buffers[key].clear()
+        if self.store_global_state:
+            self.state = create_memory(space2shape(self.state_space), self.n_envs, self.n_size, None)
+            self.state_next = create_memory(space2shape(self.state_space), self.n_envs, self.n_size, None)
+        self.ptr, self.size = 0, 0
+
+    def store(self, step_date):
+        for key in self.agent_keys:
+            self.split_buffers[key].store(step_date[key])
+        if self.store_global_state:
+            self.state[:, self.ptr] = step_date['state']
+            self.state_next[:, self.ptr] = step_date['state_next']
+        self.ptr = (self.ptr + 1) % self.n_size
+        self.size = np.min([self.size + 1, self.n_size])
+
+    def sample(self, env_choices=None, step_choices=None):
+        if env_choices is None:
+            env_choices = np.random.choice(self.n_envs, self.batch_size)
+        if step_choices is None:
+            step_choices = np.random.choice(self.size, self.batch_size)
+        samples = {k: self.split_buffers[k].sample(env_choices, step_choices) for k in self.agent_keys}
+        if self.store_global_state:
+            samples['state'] = self.state[env_choices, step_choices]
+            samples['state_next'] = self.state_next[env_choices, step_choices]
+        return samples
+
+
+class MARL_OffPolicyBuffer_RNN(MARL_OffPolicyBuffer_Share):
     """
     Replay buffer for off-policy MARL algorithms with DRQN trick.
 
@@ -658,7 +764,7 @@ class MARL_OffPolicyBuffer_RNN(MARL_OffPolicyBuffer):
         return samples
 
 
-class MeanField_OffPolicyBuffer(MARL_OffPolicyBuffer):
+class MeanField_OffPolicyBuffer(MARL_OffPolicyBuffer_Share):
     """
     Replay buffer for off-policy Mean-Field MARL algorithms (Mean-Field Q-Learning).
 
@@ -692,6 +798,3 @@ class MeanField_OffPolicyBuffer(MARL_OffPolicyBuffer):
         next_index = (step_choices + 1) % self.n_size
         samples.update({'act_mean_next': self.data['act_mean'][env_choices, next_index]})
         return samples
-
-
-

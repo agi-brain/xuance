@@ -1,6 +1,51 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from typing import Sequence, Optional, Callable, Union
+from xuance.torch.utils import ModuleType, mlp_block
+
+
+class ActorNet(nn.Module):
+    def __init__(self,
+                 state_dim: int,
+                 action_dim: int,
+                 hidden_sizes: Sequence[int],
+                 initialize: Optional[Callable[..., torch.Tensor]] = None,
+                 activation: Optional[ModuleType] = None,
+                 activation_action: Optional[ModuleType] = None,
+                 device: Optional[Union[str, int, torch.device]] = None):
+        super(ActorNet, self).__init__()
+        layers = []
+        input_shape = (state_dim,)
+        for h in hidden_sizes:
+            mlp, input_shape = mlp_block(input_shape[0], h, None, activation, initialize, device)
+            layers.extend(mlp)
+        layers.extend(mlp_block(input_shape[0], action_dim, None, activation_action, initialize, device)[0])
+        self.model = nn.Sequential(*layers)
+
+    def forward(self, x: torch.tensor):
+        return self.model(x)
+
+
+class CriticNet(nn.Module):
+    def __init__(self,
+                 state_dim: int,
+                 action_dim: int,
+                 hidden_sizes: Sequence[int],
+                 initialize: Optional[Callable[..., torch.Tensor]] = None,
+                 activation: Optional[ModuleType] = None,
+                 device: Optional[Union[str, int, torch.device]] = None):
+        super(CriticNet, self).__init__()
+        layers = []
+        input_shape = (state_dim + action_dim,)
+        for h in hidden_sizes:
+            mlp, input_shape = mlp_block(input_shape[0], h, None, activation, initialize, device)
+            layers.extend(mlp)
+        layers.extend(mlp_block(input_shape[0], 1, None, None, initialize, device)[0])
+        self.model = nn.Sequential(*layers)
+
+    def forward(self, x: torch.tensor, a: torch.tensor):
+        return self.model(torch.concat((x, a), dim=-1))
 
 
 class VDN_mixer(nn.Module):
@@ -139,3 +184,4 @@ class QTRAN_alt(QTRAN_base):
                 q_actions.append(q)
             q_n.append(torch.cat(q_actions, dim=-1).unsqueeze(dim=1))
         return torch.cat(q_n, dim=1)
+

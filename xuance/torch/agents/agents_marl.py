@@ -4,7 +4,7 @@ import socket
 import numpy as np
 from pathlib import Path
 from argparse import Namespace
-from typing import Optional
+from typing import Optional, Dict
 from torch import nn
 from torch.utils.tensorboard import SummaryWriter
 from xuance.common import get_time_string, create_directory
@@ -50,16 +50,14 @@ class MARLAgents(object):
         # create logger
         if config.logger == "tensorboard":
             log_dir = os.path.join(os.getcwd(), config.log_dir, seed + time_string)
-            if not os.path.exists(log_dir):
-                os.makedirs(log_dir)
+            create_directory(log_dir)
             self.writer = SummaryWriter(log_dir)
             self.use_wandb = False
         elif config.logger == "wandb":
             config_dict = vars(config)
             log_dir = config.log_dir
             wandb_dir = Path(os.path.join(os.getcwd(), config.log_dir))
-            if not wandb_dir.exists():
-                os.makedirs(str(wandb_dir))
+            create_directory(str(wandb_dir))
             wandb.init(config=config_dict,
                        project=config.project_name,
                        entity=config.wandb_user_name,
@@ -78,9 +76,10 @@ class MARLAgents(object):
         self.log_dir = log_dir
 
         # predefine necessary components
-        self.policy: Optional[nn.Module] = None
-        self.learner: Optional[nn.Module] = None
-        self.memory: Optional[object] = None
+        self.model_keys = [self.agent_keys[0]] if self.use_parameter_sharing else self.agent_keys
+        self.policy: Optional[Dict, nn.Module] = None
+        self.learner: Optional[Dict, nn.Module] = None
+        self.memory: Optional[Dict[str, object], object] = None
 
     def store_experience(self, *args, **kwargs):
         raise NotImplementedError

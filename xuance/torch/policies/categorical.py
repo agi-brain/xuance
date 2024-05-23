@@ -1,8 +1,11 @@
 import torch
-
-from xuance.torch.policies import *
-from xuance.torch.utils import *
 import numpy as np
+import torch.nn as nn
+from typing import Sequence, Optional, Callable, Union
+from copy import deepcopy
+from gym.spaces import Space
+from xuance.torch import Module, Tensor
+from xuance.torch.utils import ModuleType, mlp_block, CategoricalDistribution
 
 
 def _init_layer(layer, gain=np.sqrt(2), bias=0.0):
@@ -11,13 +14,13 @@ def _init_layer(layer, gain=np.sqrt(2), bias=0.0):
     return layer
 
 
-class ActorNet(nn.Module):
+class ActorNet(Module):
     def __init__(self,
                  state_dim: int,
                  action_dim: int,
                  hidden_sizes: Sequence[int],
                  normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., torch.Tensor]] = None,
+                 initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None):
         super(ActorNet, self).__init__()
@@ -30,17 +33,17 @@ class ActorNet(nn.Module):
         self.model = nn.Sequential(*layers)
         self.dist = CategoricalDistribution(action_dim)
 
-    def forward(self, x: torch.Tensor):
+    def forward(self, x: Tensor):
         self.dist.set_param(logits=self.model(x))
         return self.dist
 
 
-class CriticNet(nn.Module):
+class CriticNet(Module):
     def __init__(self,
                  state_dim: int,
                  hidden_sizes: Sequence[int],
                  normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., torch.Tensor]] = None,
+                 initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None):
         super(CriticNet, self).__init__()
@@ -52,18 +55,18 @@ class CriticNet(nn.Module):
         layers.extend(mlp_block(input_shape[0], 1, None, None, initialize, device)[0])
         self.model = nn.Sequential(*layers)
 
-    def forward(self, x: torch.Tensor):
+    def forward(self, x: Tensor):
         return self.model(x)[:, 0]
 
 
-class ActorCriticPolicy(nn.Module):
+class ActorCriticPolicy(Module):
     def __init__(self,
                  action_space: Space,
-                 representation: nn.Module,
+                 representation: Module,
                  actor_hidden_size: Sequence[int] = None,
                  critic_hidden_size: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., torch.Tensor]] = None,
+                 initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None):
         super(ActorCriticPolicy, self).__init__()
@@ -83,13 +86,13 @@ class ActorCriticPolicy(nn.Module):
         return outputs, a, v
 
 
-class ActorPolicy(nn.Module):
+class ActorPolicy(Module):
     def __init__(self,
                  action_space: Space,
-                 representation: nn.Module,
+                 representation: Module,
                  actor_hidden_size: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., torch.Tensor]] = None,
+                 initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None):
         super(ActorPolicy, self).__init__()
@@ -105,21 +108,21 @@ class ActorPolicy(nn.Module):
         return outputs, a
 
 
-class PPGActorCritic(nn.Module):
+class PPGActorCritic(Module):
     def __init__(self,
                  action_space: Space,
-                 representation: nn.Module,
+                 representation: Module,
                  actor_hidden_size: Sequence[int] = None,
                  critic_hidden_size: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., torch.Tensor]] = None,
+                 initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None):
         super(PPGActorCritic, self).__init__()
         self.action_dim = action_space.n
         self.actor_representation = representation
-        self.critic_representation = copy.deepcopy(representation)
-        self.aux_critic_representation = copy.deepcopy(representation)
+        self.critic_representation = deepcopy(representation)
+        self.aux_critic_representation = deepcopy(representation)
         self.representation_info_shape = self.actor_representation.output_shapes
 
         self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size,
@@ -145,26 +148,26 @@ class Actor_SAC(ActorNet):
                  action_dim: int,
                  hidden_sizes: Sequence[int],
                  normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., torch.Tensor]] = None,
+                 initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None):
         super(Actor_SAC, self).__init__(state_dim, action_dim, hidden_sizes, normalize, initialize, activation, device)
         self.output = nn.Softmax(dim=-1)
 
-    def forward(self, x: torch.Tensor):
+    def forward(self, x: Tensor):
         self.dist.set_param(probs=self.output(self.model(x)))
         return self.dist
 
 
-class Critic_SAC(CriticNet, nn.Module):
+class Critic_SAC(CriticNet, Module):
     def __init__(self,
                  state_dim: int,
                  action_dim: int,
                  hidden_sizes: Sequence[int],
-                 initialize: Optional[Callable[..., torch.Tensor]] = None,
+                 initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None):
-        nn.Module.__init__(self)
+        Module.__init__(self)
         layers = []
         input_shape = (state_dim,)
         for h in hidden_sizes:
@@ -177,14 +180,14 @@ class Critic_SAC(CriticNet, nn.Module):
         return self.model(x)
 
 
-class SACDISPolicy(nn.Module):
+class SACDISPolicy(Module):
     def __init__(self,
                  action_space: Space,
-                 representation: nn.Module,
+                 representation: Module,
                  actor_hidden_size: Sequence[int],
                  critic_hidden_size: Sequence[int],
                  normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., torch.Tensor]] = None,
+                 initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None):
         super(SACDISPolicy, self).__init__()
@@ -195,16 +198,16 @@ class SACDISPolicy(nn.Module):
         self.actor = Actor_SAC(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size,
                                normalize, initialize, activation, device)
 
-        self.critic_1_representation = copy.deepcopy(representation)
+        self.critic_1_representation = deepcopy(representation)
         self.critic_1 = Critic_SAC(representation.output_shapes['state'][0], self.action_dim, critic_hidden_size,
                                    initialize, activation, device)
-        self.critic_2_representation = copy.deepcopy(representation)
+        self.critic_2_representation = deepcopy(representation)
         self.critic_2 = Critic_SAC(representation.output_shapes['state'][0], self.action_dim, critic_hidden_size,
                                    initialize, activation, device)
-        self.target_critic_1_representation = copy.deepcopy(self.critic_1_representation)
-        self.target_critic_1 = copy.deepcopy(self.critic_1)
-        self.target_critic_2_representation = copy.deepcopy(self.critic_2_representation)
-        self.target_critic_2 = copy.deepcopy(self.critic_2)
+        self.target_critic_1_representation = deepcopy(self.critic_1_representation)
+        self.target_critic_1 = deepcopy(self.critic_1)
+        self.target_critic_2_representation = deepcopy(self.critic_2_representation)
+        self.target_critic_2 = deepcopy(self.critic_2)
 
         self.actor_parameters = list(self.actor_representation.parameters()) + list(self.actor.parameters())
         self.critic_parameters = list(self.critic_1_representation.parameters()) + list(

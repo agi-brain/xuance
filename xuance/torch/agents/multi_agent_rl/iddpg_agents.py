@@ -5,12 +5,13 @@ from copy import deepcopy
 from operator import itemgetter
 from argparse import Namespace
 from xuance.environment import DummyVecMutliAgentEnv
+from xuance.torch import Tensor
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.representations import REGISTRY_Representation
 from xuance.torch.policies import REGISTRY_Policy
 from xuance.torch.learners import IDDPG_Learner
 from xuance.torch.agents import MARLAgents
-from xuance.common import MARL_OffPolicyBuffer
+from xuance.common import MARL_OffPolicyBuffer_Share, MARL_OffPolicyBuffer_Split
 
 
 class IDDPG_Agents(MARLAgents):
@@ -32,74 +33,72 @@ class IDDPG_Agents(MARLAgents):
         self.delta_noise = (self.start_noise - self.end_noise) / (config.running_steps / self.n_envs)
 
         # build policy, optimizers, schedulers
-        self.policy = self.build_policy()
-        optimizer = [torch.optim.Adam(self.policy.parameters_actor, self.config.lr_a, eps=1e-5),
-                     torch.optim.Adam(self.policy.parameters_critic, self.config.lr_c, eps=1e-5)]
-        scheduler = [torch.optim.lr_scheduler.LinearLR(optimizer[0], start_factor=1.0, end_factor=0.5,
-                                                       total_iters=self.config.running_steps),
-                     torch.optim.lr_scheduler.LinearLR(optimizer[1], start_factor=1.0, end_factor=0.5,
-                                                       total_iters=self.config.running_steps)]
-        # create experience replay buffer
-        self.memory = MARL_OffPolicyBuffer(n_agents=self.config.n_agents,
-                                           state_space=None,
-                                           obs_space=self.observation_space[self.agent_keys[0]].shape,
-                                           act_space=self.action_space[self.agent_keys[0]].shape,
-                                           n_envs=self.n_envs,
-                                           buffer_size=self.config.buffer_size,
-                                           batch_size=self.config.batch_size)
-        # create learner
-        self.learner = IDDPG_Learner(config, self.policy, optimizer, scheduler,
-                                     config.device, config.model_dir, config.gamma)
+        self.policy = self._build_policy()
+        optimizer, scheduler = {}, {}
+        for key in self.model_keys:
+            optimizer[key] = [torch.optim.Adam(self.policy.parameters_actor[key], self.config.lr_a, eps=1e-5),
+                              torch.optim.Adam(self.policy.parameters_critic[key], self.config.lr_c, eps=1e-5)]
+            scheduler[key] = [torch.optim.lr_scheduler.LinearLR(optimizer[key][0], start_factor=1.0, end_factor=0.5,
+                                                                total_iters=self.config.running_steps),
+                              torch.optim.lr_scheduler.LinearLR(optimizer[key][1], start_factor=1.0, end_factor=0.5,
+                                                                total_iters=self.config.running_steps)]
 
-    def build_policy(self):
-        """Build representation(s) and policy(ies) for agent(s)"""
+        # create experience replay buffer
+        input_buffer = dict(n_agents=self.config.n_agents,
+                            agent_keys=self.agent_keys,
+                            state_space=None,
+                            obs_space=self.observation_space[self.agent_keys[0]],
+                            act_space=self.action_space[self.agent_keys[0]],
+                            n_envs=self.n_envs,
+                            buffer_size=self.config.buffer_size,
+                            batch_size=self.config.batch_size)
+        if self.use_parameter_sharing:
+            self.memory = MARL_OffPolicyBuffer_Share(**input_buffer)
+        else:
+            input_buffer['obs_space'] = self.observation_space
+            input_buffer['act_space'] = self.action_space
+            self.memory = MARL_OffPolicyBuffer_Split(**input_buffer)
+
+        # create learner
+        self.learner = IDDPG_Learner(config, self.model_keys, self.policy, optimizer, scheduler)
+
+    def _build_policy(self):
+        """
+        Build representation(s) and policy(ies) for agent(s)
+        Returns:
+            policy (Dict[torch.nn.Module]): A dict of policies.
+        """
         normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
         initializer = torch.nn.init.orthogonal_
         activation = ActivationFunctions[self.config.activation]
         device = self.device
-        if self.use_parameter_sharing:  # all agents share a same representation, policy and optimizer.
-            input_shape = self.observation_space[self.agent_keys[0]].shape
+
+        # build representations
+        representation = {key: None for key in self.model_keys}
+        for key in self.model_keys:
+            input_shape = self.observation_space[key].shape
             if self.config.representation == "Basic_Identical":
-                representation = REGISTRY_Representation["Basic_Identical"](input_shape=input_shape, device=device)
+                representation[key] = REGISTRY_Representation["Basic_Identical"](input_shape=input_shape,
+                                                                                 device=self.device)
             elif self.config.representation == "Basic_MLP":
-                representation = REGISTRY_Representation["Basic_MLP"](
+                representation[key] = REGISTRY_Representation["Basic_MLP"](
                     input_shape=input_shape, hidden_sizes=self.config.representation_hidden_size,
                     normalize=normalize_fn, initialize=initializer, activation=activation, device=device)
             else:
-                raise f"The IDDPG currently does not support the representation named {self.config.representation}."
-            if self.config.policy == "Independent_DDPG_Policy":
-                policy = REGISTRY_Policy["Independent_DDPG_Policy"](
-                    action_space=self.action_space[self.agent_keys[0]], n_agents=self.n_agents,
-                    representation=representation,
-                    actor_hidden_size=self.config.actor_hidden_size, critic_hidden_size=self.config.critic_hidden_size,
-                    normalize=normalize_fn, initialize=initializer, activation=activation, device=device,
-                    activation_action=ActivationFunctions[self.config.activation_action])
-            else:
-                raise f"The IDDPG currently does not support the policy named {self.config.poicy}."
+                raise f"The IDDPG currently does not support the representation of {self.config.representation}."
 
-        else:  # agents have individual representations, policies and optimizers.
-            input_shape = [self.observation_space[key].shape for key in self.agent_keys]
-            representation = {key: None for key in self.agent_keys}
-            policy = {key: None for key in self.agent_keys}
-            for key in self.agent_keys:
-                if self.config.representation == "Basic_Identical":
-                    representation[key] = REGISTRY_Representation["Basic_Identical"](input_shape=input_shape[key],
-                                                                                     device=self.device)
-                elif self.config.representation == "Basic_MLP":
-                    representation[key] = REGISTRY_Representation["Basic_MLP"](
-                        input_shape=input_shape[key], hidden_sizes=self.config.representation_hidden_size,
-                        normalize=normalize_fn, initialize=initializer, activation=activation, device=device)
-                else:
-                    raise f"The IDDPG currently does not support the representation of {self.config.representation}."
-                if self.config.policy == "Independent_DDPG_Policy":
-                    policy[key] = REGISTRY_Policy["Independent_DDPG_Policy"](
-                        action_space=self.action_space[key], n_agents=self.n_agents, representation=representation,
-                        actor_hidden_size=self.config.actor_hidden_size,
-                        critic_hidden_size=self.config.critic_hidden_size,
-                        normalize=normalize_fn, initialize=initializer, activation=activation, device=device,
-                        activation_action=ActivationFunctions[self.config.activation_action])
-                else:
-                    raise f"The IDDPG currently does not support the policy named {self.config.poicy}."
+        # build policies
+        if self.config.policy == "Independent_DDPG_Policy":
+            policy = REGISTRY_Policy["Independent_DDPG_Policy"](
+                action_space=self.action_space, n_agents=self.n_agents, representation=representation,
+                actor_hidden_size=self.config.actor_hidden_size,
+                critic_hidden_size=self.config.critic_hidden_size,
+                nitialize=initializer, activation=activation, device=device,
+                activation_action=ActivationFunctions[self.config.activation_action],
+                use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys)
+        else:
+            raise f"The IDDPG currently does not support the policy named {self.config.poicy}."
+
         return policy
 
     def store_experience(self, obs_dict, actions_dict, obs_next_dict, rewards_dict, terminals_dict, info):
@@ -123,7 +122,15 @@ class IDDPG_Agents(MARLAgents):
                 'terminals': np.array([itemgetter(*self.agent_keys)(data) for data in terminals_dict]),
                 'agent_mask': np.array([itemgetter(*self.agent_keys)(data['agent_mask']) for data in info]),
             }
-            self.memory.store(experience_data)
+        else:
+            experience_data = {key: {'obs': [itemgetter(key)(data) for data in obs_dict],
+                                     'actions': [itemgetter(key)(data) for data in actions_dict],
+                                     'obs_next': [itemgetter(key)(data) for data in obs_next_dict],
+                                     'rewards': [itemgetter(key)(data) for data in rewards_dict],
+                                     'terminals': [itemgetter(key)(data) for data in terminals_dict],
+                                     'agent_mask': [itemgetter(key)(data['agent_mask']) for data in info],
+                                     } for key in self.agent_keys}
+        self.memory.store(experience_data)
 
     def action(self, obs_dict, test_mode):
         """
@@ -135,15 +142,23 @@ class IDDPG_Agents(MARLAgents):
         """
         n_env = len(obs_dict)
         if self.use_parameter_sharing:
-            obs_array = np.array([itemgetter(*self.agent_keys)(env_obs) for env_obs in obs_dict])
+            obs_tensor = Tensor(np.array([itemgetter(*self.agent_keys)(env_obs) for env_obs in obs_dict]))
+            obs_input = {self.model_keys[0]: obs_tensor}
             agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(n_env, -1, -1).to(self.device)
-            _, actions = self.policy(torch.Tensor(obs_array), agents_id)
+            actions = self.policy(obs_input, agents_id)[self.model_keys[0]]
+            actions = actions.cpu().detach().numpy()
+            if not test_mode:
+                actions += np.random.normal(0, self.noise_scale, size=actions.shape)
+            actions_dict = [{key: actions[e, agt] for agt, key in enumerate(self.agent_keys)} for e in range(n_env)]
         else:
-            raise NotImplementedError
-        actions = actions.cpu().detach().numpy()
-        if not test_mode:
-            actions += np.random.normal(0, self.noise_scale, size=actions.shape)
-        actions_dict = [{key: actions[e, agt] for agt, key in enumerate(self.agent_keys)} for e in range(n_env)]
+            obs_tensor_dict = {key: np.array([itemgetter(key)(env_obs) for env_obs in obs_dict])
+                               for key in self.agent_keys}
+            actions_dict_ = self.policy(obs_tensor_dict)
+            for key in self.agent_keys:
+                actions_dict_[key] = actions_dict_[key].cpu().detach().numpy()
+                if not test_mode:
+                    actions_dict_[key] += np.random.normal(0, self.noise_scale, size=actions_dict_[key].shape)
+            actions_dict = [{key: actions_dict_[key][i] for key in self.agent_keys} for i in range(n_env)]
         return actions_dict
 
     def train(self, train_steps):
@@ -154,8 +169,8 @@ class IDDPG_Agents(MARLAgents):
             train_steps (int): The number of steps to train the model.
         """
         obs_dict = self.envs.buf_obs
-        step_info = {}
         for _ in tqdm(range(train_steps)):
+            step_info = {}
             if self.current_step < self.start_training:
                 actions_dict = [{k: self.action_space[k].sample() for k in self.agent_keys} for _ in range(self.n_envs)]
             else:
@@ -164,11 +179,9 @@ class IDDPG_Agents(MARLAgents):
             self.store_experience(obs_dict, actions_dict, next_obs_dict, rewards_dict, terminated_dict, info)
             if self.current_step >= self.start_training and self.current_step % self.training_frequency == 0:
                 sample = self.memory.sample()
-                if self.use_parameter_sharing:
-                    step_info = self.learner.update_share(sample)
-                    step_info["noise_scale"] = self.noise_scale
-                else:
-                    raise NotImplementedError
+                step_info = self.learner.update(sample)
+                step_info["noise_scale"] = self.noise_scale
+                self.log_infos(step_info, self.current_step)
             obs_dict = deepcopy(next_obs_dict)
 
             for i in range(self.n_envs):

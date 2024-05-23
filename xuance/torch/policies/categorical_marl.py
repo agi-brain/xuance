@@ -1,15 +1,21 @@
-from xuance.torch.policies import *
-from xuance.torch.utils import *
+import torch
+import torch.nn as nn
+from copy import deepcopy
+from typing import Sequence, Optional, Callable, Union
+from gym.spaces import Discrete
+from xuance.torch.policies import ActorNet, CriticNet, VDN_mixer
+from xuance.torch.utils import ModuleType, mlp_block, CategoricalDistribution
+from xuance.torch import Tensor, Module
 
 
-class ActorNet(nn.Module):
+class ActorNet(Module):
     def __init__(self,
                  state_dim: int,
                  action_dim: int,
                  n_agents: int,
                  hidden_sizes: Sequence[int],
                  normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., torch.Tensor]] = None,
+                 initialize: Optional[Callable[..., Tensor]] = None,
                  gain: float = 1.0,
                  activation: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None):
@@ -23,17 +29,17 @@ class ActorNet(nn.Module):
         layers.extend(mlp_block(input_shape[0], action_dim, None, None, initialize, device)[0])
         self.pi_logits = nn.Sequential(*layers)
 
-    def forward(self, x: torch.Tensor):
+    def forward(self, x: Tensor):
         return self.pi_logits(x)
 
 
-class CriticNet(nn.Module):
+class CriticNet(Module):
     def __init__(self,
                  state_dim: int,
                  n_agents: int,
                  hidden_sizes: Sequence[int],
                  normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., torch.Tensor]] = None,
+                 initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None):
         super(CriticNet, self).__init__()
@@ -45,17 +51,17 @@ class CriticNet(nn.Module):
         layers.extend(mlp_block(input_shape[0], 1, None, None, initialize, device=device)[0])
         self.model = nn.Sequential(*layers)
 
-    def forward(self, x: torch.Tensor):
+    def forward(self, x: Tensor):
         return self.model(x)
 
 
-class COMA_Critic(nn.Module):
+class COMA_Critic(Module):
     def __init__(self,
                  state_dim: int,
                  act_dim: int,
                  hidden_sizes: Sequence[int],
                  normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., torch.Tensor]] = None,
+                 initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None):
         super(COMA_Critic, self).__init__()
@@ -67,11 +73,11 @@ class COMA_Critic(nn.Module):
         layers.extend(mlp_block(input_shape[0], act_dim, None, None, None, device)[0])
         self.model = nn.Sequential(*layers)
 
-    def forward(self, x: torch.Tensor):
+    def forward(self, x: Tensor):
         return self.model(x)
 
 
-class MAAC_Policy(nn.Module):
+class MAAC_Policy(Module):
     """
     MAAC_Policy: Multi-Agent Actor-Critic Policy
     """
@@ -79,12 +85,12 @@ class MAAC_Policy(nn.Module):
     def __init__(self,
                  action_space: Discrete,
                  n_agents: int,
-                 representation: nn.Module,
+                 representation: Module,
                  mixer: Optional[VDN_mixer] = None,
                  actor_hidden_size: Sequence[int] = None,
                  critic_hidden_size: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., torch.Tensor]] = None,
+                 initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None,
                  **kwargs):
@@ -104,8 +110,8 @@ class MAAC_Policy(nn.Module):
         self.mixer = mixer
         self.pi_dist = CategoricalDistribution(self.action_dim)
 
-    def forward(self, observation: torch.Tensor, agent_ids: torch.Tensor,
-                *rnn_hidden: torch.Tensor, avail_actions=None):
+    def forward(self, observation: Tensor, agent_ids: Tensor,
+                *rnn_hidden: Tensor, avail_actions=None):
         if avail_actions is not None:
             observation = torch.concat([observation, avail_actions], dim=-1)
         if self.use_rnn:
@@ -117,14 +123,14 @@ class MAAC_Policy(nn.Module):
         actor_input = torch.concat([outputs['state'], agent_ids], dim=-1)
         act_logits = self.actor(actor_input)
         if avail_actions is not None:
-            avail_actions = torch.Tensor(avail_actions)
+            avail_actions = Tensor(avail_actions)
             act_logits[avail_actions == 0] = -1e10
             self.pi_dist.set_param(logits=act_logits)
         else:
             self.pi_dist.set_param(logits=act_logits)
         return rnn_hidden, self.pi_dist
 
-    def get_values(self, critic_in: torch.Tensor, agent_ids: torch.Tensor, *rnn_hidden: torch.Tensor):
+    def get_values(self, critic_in: Tensor, agent_ids: Tensor, *rnn_hidden: Tensor):
         shape_obs = critic_in.shape
         # get representation features
         if self.use_rnn:
@@ -142,7 +148,7 @@ class MAAC_Policy(nn.Module):
         v = self.critic(critic_in)
         return rnn_hidden, v
 
-    def value_tot(self, values_n: torch.Tensor, global_state=None):
+    def value_tot(self, values_n: Tensor, global_state=None):
         if global_state is not None:
             global_state = torch.as_tensor(global_state).to(self.device)
         return values_n if self.mixer is None else self.mixer(values_n, global_state)
@@ -156,12 +162,12 @@ class MAAC_Policy_Share(MAAC_Policy):
     def __init__(self,
                  action_space: Discrete,
                  n_agents: int,
-                 representation: nn.Module,
+                 representation: Module,
                  mixer: Optional[VDN_mixer] = None,
                  actor_hidden_size: Sequence[int] = None,
                  critic_hidden_size: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., torch.Tensor]] = None,
+                 initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None,
                  **kwargs):
@@ -180,8 +186,8 @@ class MAAC_Policy_Share(MAAC_Policy):
         self.mixer = mixer
         self.pi_dist = CategoricalDistribution(self.action_dim)
 
-    def forward(self, observation: torch.Tensor, agent_ids: torch.Tensor,
-                *rnn_hidden: torch.Tensor, avail_actions=None, state=None):
+    def forward(self, observation: Tensor, agent_ids: Tensor,
+                *rnn_hidden: Tensor, avail_actions=None, state=None):
         batch_size = len(observation)
         if self.use_rnn:
             outputs = self.representation(observation, *rnn_hidden)
@@ -192,7 +198,7 @@ class MAAC_Policy_Share(MAAC_Policy):
         actor_critic_input = torch.concat([outputs['state'], agent_ids], dim=-1)
         act_logits = self.actor(actor_critic_input)
         if avail_actions is not None:
-            avail_actions = torch.Tensor(avail_actions)
+            avail_actions = Tensor(avail_actions)
             act_logits[avail_actions == 0] = -1e10
             self.pi_dist.set_param(logits=act_logits)
         else:
@@ -214,21 +220,21 @@ class MAAC_Policy_Share(MAAC_Policy):
 
         return rnn_hidden, self.pi_dist, values_tot
 
-    def value_tot(self, values_n: torch.Tensor, global_state=None):
+    def value_tot(self, values_n: Tensor, global_state=None):
         if global_state is not None:
             global_state = torch.as_tensor(global_state).to(self.device)
         return values_n if self.mixer is None else self.mixer(values_n, global_state)
 
 
-class COMAPolicy(nn.Module):
+class COMAPolicy(Module):
     def __init__(self,
                  action_space: Discrete,
                  n_agents: int,
-                 representation: nn.Module,
+                 representation: Module,
                  actor_hidden_size: Sequence[int] = None,
                  critic_hidden_size: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., torch.Tensor]] = None,
+                 initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None,
                  **kwargs):
@@ -247,13 +253,13 @@ class COMAPolicy(nn.Module):
             critic_input_dim += kwargs["dim_state"]
         self.critic = COMA_Critic(critic_input_dim, self.action_dim, critic_hidden_size,
                                   normalize, initialize, activation, device)
-        self.target_critic = copy.deepcopy(self.critic)
+        self.target_critic = deepcopy(self.critic)
         self.parameters_critic = list(self.critic.parameters())
         self.parameters_actor = list(self.representation.parameters()) + list(self.actor.parameters())
         self.pi_dist = CategoricalDistribution(self.action_dim)
 
-    def forward(self, observation: torch.Tensor, agent_ids: torch.Tensor,
-                *rnn_hidden: torch.Tensor, avail_actions=None, epsilon=0.0):
+    def forward(self, observation: Tensor, agent_ids: Tensor,
+                *rnn_hidden: Tensor, avail_actions=None, epsilon=0.0):
         if self.use_rnn:
             outputs = self.representation(observation, *rnn_hidden)
             rnn_hidden = (outputs['rnn_hidden'], outputs['rnn_cell'])
@@ -265,11 +271,11 @@ class COMAPolicy(nn.Module):
         act_probs = nn.functional.softmax(act_logits, dim=-1)
         act_probs = (1 - epsilon) * act_probs + epsilon * 1 / self.action_dim
         if avail_actions is not None:
-            avail_actions = torch.Tensor(avail_actions)
+            avail_actions = Tensor(avail_actions)
             act_probs[avail_actions == 0] = 0.0
         return rnn_hidden, act_probs
 
-    def get_values(self, critic_in: torch.Tensor, *rnn_hidden: torch.Tensor, target=False):
+    def get_values(self, critic_in: Tensor, *rnn_hidden: Tensor, target=False):
         # get critic values
         v = self.target_critic(critic_in) if target else self.critic(critic_in)
         return [None, None], v
@@ -279,15 +285,15 @@ class COMAPolicy(nn.Module):
             tp.data.copy_(ep)
 
 
-class MeanFieldActorCriticPolicy(nn.Module):
+class MeanFieldActorCriticPolicy(Module):
     def __init__(self,
                  action_space: Discrete,
                  n_agents: int,
-                 representation: nn.Module,
+                 representation: Module,
                  actor_hidden_size: Sequence[int] = None,
                  critic_hidden_size: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., torch.Tensor]] = None,
+                 initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None,
                  **kwargs
@@ -304,14 +310,14 @@ class MeanFieldActorCriticPolicy(nn.Module):
         self.parameters_critic = self.critic_net.parameters()
         self.pi_dist = CategoricalDistribution(self.action_dim)
 
-    def forward(self, observation: torch.Tensor, agent_ids: torch.Tensor):
+    def forward(self, observation: Tensor, agent_ids: Tensor):
         outputs = self.representation(observation)
         input_actor = torch.concat([outputs['state'], agent_ids], dim=-1)
         act_logits = self.actor_net(input_actor)
         self.pi_dist.set_param(logits=act_logits)
         return outputs, self.pi_dist
 
-    def critic(self, observation: torch.Tensor, actions_mean: torch.Tensor, agent_ids: torch.Tensor):
+    def critic(self, observation: Tensor, actions_mean: Tensor, agent_ids: Tensor):
         outputs = self.representation(observation)
         critic_in = torch.concat([outputs['state'], actions_mean, agent_ids], dim=-1)
         return self.critic_net(critic_in)

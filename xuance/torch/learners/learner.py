@@ -2,7 +2,7 @@ import torch
 import time
 import torch.nn.functional as F
 from abc import ABC, abstractmethod
-from typing import Optional, Sequence, Dict, Union
+from typing import Optional, Sequence, List, Union
 from argparse import Namespace
 import os
 
@@ -65,21 +65,21 @@ class Learner(ABC):
 class LearnerMAS(ABC):
     def __init__(self,
                  config: Namespace,
+                 model_keys: List[str],
                  policy: torch.nn.Module,
-                 optimizer: Union[torch.optim.Optimizer, Sequence[torch.optim.Optimizer]],
-                 scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
-                 device: Optional[Union[int, str, torch.device]] = None,
-                 model_dir: str = "./"):
+                 optimizer: Optional[dict],
+                 scheduler: Optional[dict] = None):
         self.value_normalizer = None
         self.config = config
         self.n_agents = config.n_agents
         self.dim_id = self.n_agents
 
+        self.model_keys = model_keys
         self.policy = policy
         self.optimizer = optimizer
         self.scheduler = scheduler
-        self.device = device
-        self.model_dir = model_dir
+        self.device = config.device
+        self.model_dir = config.model_dir
         self.running_steps = config.running_steps
         self.iterations = 0
 

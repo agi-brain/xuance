@@ -10,7 +10,7 @@ from xuance.torch.representations import REGISTRY_Representation
 from xuance.torch.policies import REGISTRY_Policy
 from xuance.torch.learners import IDDPG_Learner
 from xuance.torch.agents import MARLAgents
-from xuance.common import MARL_OffPolicyBuffer
+from xuance.common import MARL_OffPolicyBuffer_Share
 
 
 class MADDPG_Agents(MARLAgents):
