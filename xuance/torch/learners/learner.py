@@ -78,6 +78,8 @@ class LearnerMAS(ABC):
         self.policy = policy
         self.optimizer = optimizer
         self.scheduler = scheduler
+        self.use_grad_clip = config.use_grad_clip
+        self.grad_clip_norm = config.grad_clip_norm
         self.device = config.device
         self.model_dir = config.model_dir
         self.running_steps = config.running_steps

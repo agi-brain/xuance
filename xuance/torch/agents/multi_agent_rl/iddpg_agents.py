@@ -60,13 +60,14 @@ class IDDPG_Agents(MARLAgents):
             self.memory = MARL_OffPolicyBuffer_Split(**input_buffer)
 
         # create learner
-        self.learner = IDDPG_Learner(config, self.model_keys, self.policy, optimizer, scheduler)
+        self.learner = self._build_learner(self.config, self.model_keys, self.policy, optimizer, scheduler)
 
     def _build_policy(self):
         """
         Build representation(s) and policy(ies) for agent(s)
+
         Returns:
-            policy (Dict[torch.nn.Module]): A dict of policies.
+            policy (torch.nn.Module): A dict of policies.
         """
         normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
         initializer = torch.nn.init.orthogonal_
@@ -93,13 +94,16 @@ class IDDPG_Agents(MARLAgents):
                 action_space=self.action_space, n_agents=self.n_agents, representation=representation,
                 actor_hidden_size=self.config.actor_hidden_size,
                 critic_hidden_size=self.config.critic_hidden_size,
-                nitialize=initializer, activation=activation, device=device,
+                initialize=initializer, activation=activation, device=device,
                 activation_action=ActivationFunctions[self.config.activation_action],
                 use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys)
         else:
-            raise f"The IDDPG currently does not support the policy named {self.config.poicy}."
+            raise f"The IDDPG currently does not support the policy named {self.config.policy}."
 
         return policy
+
+    def _build_learner(self, config, model_keys, policy, optimizer, scheduler):
+        return IDDPG_Learner(config, model_keys, policy, optimizer, scheduler)
 
     def store_experience(self, obs_dict, actions_dict, obs_next_dict, rewards_dict, terminals_dict, info):
         """

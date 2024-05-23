@@ -7,6 +7,7 @@ representation: "Basic_Identical"
 vectorize: "Dummy_Pettingzoo"
 runner: "MARL"
 
+use_parameter_sharing: False
 representation_hidden_size: []  # the units for each hidden layer
 actor_hidden_size: [64, 64]
 critic_hidden_size: [64, 64]
@@ -22,13 +23,12 @@ lr_c: 0.001  # learning rate for critic
 gamma: 0.95  # discount factor
 tau: 0.001  # soft update for target networks
 
-#start_noise: 1.0
-#end_noise: 0.01
+start_noise: 1.0
+end_noise: 0.01
 sigma: 0.1
 start_training: 1000  # start training after n episodes
 running_steps: 10000000
-train_per_step: False  # True: train model per step; False: train model per episode.
-training_frequency: 1
+training_frequency: 25
 
 use_grad_clip: True
 grad_clip_norm: 0.5

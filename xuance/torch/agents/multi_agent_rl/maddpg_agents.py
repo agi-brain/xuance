@@ -1,77 +1,65 @@
 import torch
-import numpy as np
-from tqdm import tqdm
-from copy import deepcopy
-from operator import itemgetter
 from argparse import Namespace
 from xuance.environment import DummyVecMutliAgentEnv
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.representations import REGISTRY_Representation
 from xuance.torch.policies import REGISTRY_Policy
-from xuance.torch.learners import IDDPG_Learner
-from xuance.torch.agents import MARLAgents
-from xuance.common import MARL_OffPolicyBuffer_Share
+from xuance.torch.learners import MADDPG_Learner
+from xuance.torch.agents.multi_agent_rl.iddpg_agents import IDDPG_Agents
 
 
-class MADDPG_Agents(MARLAgents):
-    """The implementation of MADDPG agents.
+class MADDPG_Agents(IDDPG_Agents):
+    """The implementation of Independent DDPG agents.
 
     Args:
-        config: the Namespace variable that provides hyper-parameters and other settings.
+        config: The Namespace variable that provides hyper-parameters and other settings.
         envs: The vectorized environments.
     """
     def __init__(self,
                  config: Namespace,
                  envs: DummyVecMutliAgentEnv):
-        config.use
-        self.gamma = config.gamma
+        super(MADDPG_Agents, self).__init__(config, envs)
 
-        input_representation = get_repre_in(config)
-        representation = REGISTRY_Representation[config.representation](*input_representation)
-        input_policy = get_policy_in_marl(config, representation)
-        policy = REGISTRY_Policy[config.policy](*input_policy)
-        optimizer = [torch.optim.Adam(policy.parameters_actor, config.lr_a, eps=1e-5),
-                     torch.optim.Adam(policy.parameters_critic, config.lr_c, eps=1e-5)]
-        scheduler = [torch.optim.lr_scheduler.LinearLR(optimizer[0], start_factor=1.0, end_factor=0.5,
-                                                       total_iters=config.running_steps),
-                     torch.optim.lr_scheduler.LinearLR(optimizer[1], start_factor=1.0, end_factor=0.5,
-                                                       total_iters=config.running_steps)]
-        self.observation_space = envs.observation_space
-        self.action_space = envs.action_space
-        self.representation_info_shape = policy.representation_info_shape
-        self.auxiliary_info_shape = {}
+    def _build_policy(self):
+        """
+        Build representation(s) and policy(ies) for agent(s)
 
-        if config.state_space is not None:
-            config.dim_state, state_shape = config.state_space.shape, config.state_space.shape
+        Returns:
+            policy (torch.nn.Module): A dict of policies.
+        """
+        normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
+        initializer = torch.nn.init.orthogonal_
+        activation = ActivationFunctions[self.config.activation]
+        device = self.device
+
+        # build representations
+        representation = {key: None for key in self.model_keys}
+        for key in self.model_keys:
+            input_shape = self.observation_space[key].shape
+            if self.config.representation == "Basic_Identical":
+                representation[key] = REGISTRY_Representation["Basic_Identical"](input_shape=input_shape,
+                                                                                 device=self.device)
+            elif self.config.representation == "Basic_MLP":
+                representation[key] = REGISTRY_Representation["Basic_MLP"](
+                    input_shape=input_shape, hidden_sizes=self.config.representation_hidden_size,
+                    normalize=normalize_fn, initialize=initializer, activation=activation, device=device)
+            else:
+                raise f"The IDDPG currently does not support the representation of {self.config.representation}."
+
+        # build policies
+        if self.config.policy == "MADDPG_Policy":
+            policy = REGISTRY_Policy["MADDPG_Policy"](
+                action_space=self.action_space, n_agents=self.n_agents, representation=representation,
+                actor_hidden_size=self.config.actor_hidden_size,
+                critic_hidden_size=self.config.critic_hidden_size,
+                initialize=initializer, activation=activation, device=device,
+                activation_action=ActivationFunctions[self.config.activation_action],
+                use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys)
         else:
-            config.dim_state, state_shape = None, None
-        memory = MARL_OffPolicyBuffer(config.n_agents,
-                                      state_shape,
-                                      config.obs_shape,
-                                      config.act_shape,
-                                      config.rew_shape,
-                                      config.done_shape,
-                                      envs.num_envs,
-                                      config.buffer_size,
-                                      config.batch_size)
-        learner = MADDPG_Learner(config, policy, optimizer, scheduler,
-                                 config.device, config.model_dir, config.gamma)
-        super(MADDPG_Agents, self).__init__(config, envs, policy, memory, learner, device,
-                                            config.log_dir, config.model_dir)
-        self.on_policy = False
+            raise f"The IDDPG currently does not support the policy named {self.config.policy}."
 
-    def act(self, obs_n, test_mode):
-        batch_size = len(obs_n)
-        agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(batch_size, -1, -1).to(self.device)
-        _, actions = self.policy(torch.Tensor(obs_n), agents_id)
-        actions = actions.cpu().detach().numpy()
-        if test_mode:
-            return None, actions
-        else:
-            actions += np.random.normal(0, self.args.sigma, size=actions.shape)
-            return None, actions
+        return policy
 
-    def train(self, i_episode):
-        sample = self.memory.sample()
-        info_train = self.learner.update(sample)
-        return info_train
+    def _build_learner(self, config, model_keys, policy, optimizer, scheduler):
+        return MADDPG_Learner(config, model_keys, policy, optimizer, scheduler)
+

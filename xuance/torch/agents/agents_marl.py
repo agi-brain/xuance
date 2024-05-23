@@ -4,7 +4,7 @@ import socket
 import numpy as np
 from pathlib import Path
 from argparse import Namespace
-from typing import Optional, Dict
+from typing import Optional
 from torch import nn
 from torch.utils.tensorboard import SummaryWriter
 from xuance.common import get_time_string, create_directory
@@ -77,9 +77,9 @@ class MARLAgents(object):
 
         # predefine necessary components
         self.model_keys = [self.agent_keys[0]] if self.use_parameter_sharing else self.agent_keys
-        self.policy: Optional[Dict, nn.Module] = None
-        self.learner: Optional[Dict, nn.Module] = None
-        self.memory: Optional[Dict[str, object], object] = None
+        self.policy: Optional[nn.Module] = None
+        self.learner: Optional[nn.Module] = None
+        self.memory: Optional[object] = None
 
     def store_experience(self, *args, **kwargs):
         raise NotImplementedError
@@ -115,6 +115,12 @@ class MARLAgents(object):
         else:
             for k, v in info.items():
                 self.writer.add_video(k, v, fps=fps, global_step=x_index)
+
+    def _build_policy(self):
+        raise NotImplementedError
+
+    def _build_learner(self, *args):
+        raise NotImplementedError
 
     def action(self, **kwargs):
         raise NotImplementedError

@@ -384,7 +384,7 @@ class Independent_DDPG_Policy(Module):
     def __init__(self,
                  action_space: Optional[dict],
                  n_agents: int,
-                 representation: Optional[dict],
+                 representation: Optional[Dict[str, Module]],
                  actor_hidden_size: Sequence[int],
                  critic_hidden_size: Sequence[int],
                  initialize: Optional[Callable[..., Tensor]] = None,
@@ -408,15 +408,17 @@ class Independent_DDPG_Policy(Module):
         self.parameters_actor, self.parameters_critic = {}, {}
         for key in self.model_keys:
             dim_action = self.action_space[key].shape[-1]
-            dim_obs_actor = representation[key].output_shapes['state'][0]
-            dim_obs_critic = representation[key].output_shapes['state'][0]
+            dim_obs_actor, dim_obs_critic, dim_act_actor, dim_act_critic = self._get_actor_critic_input(
+                dim_action,
+                self.actor_representation[key].output_shapes['state'][0],
+                self.critic_representation[key].output_shapes['state'][0], n_agents)
 
             if self.use_parameter_sharing:
                 dim_obs_actor += self.n_agents
                 dim_obs_critic += self.n_agents
-            self.actor[key] = ActorNet(dim_obs_actor, dim_action, actor_hidden_size,
+            self.actor[key] = ActorNet(dim_obs_actor, dim_act_actor, actor_hidden_size,
                                        initialize, activation, activation_action, device)
-            self.critic[key] = CriticNet(dim_obs_critic, dim_action, critic_hidden_size,
+            self.critic[key] = CriticNet(dim_obs_critic, dim_act_critic, critic_hidden_size,
                                          initialize, activation, device)
             self.target_actor[key] = deepcopy(self.actor[key])
             self.target_critic[key] = deepcopy(self.critic[key])
@@ -424,6 +426,24 @@ class Independent_DDPG_Policy(Module):
                 self.actor[key].parameters())
             self.parameters_critic[key] = list(self.critic_representation[key].parameters()) + list(
                 self.critic[key].parameters())
+
+    def _get_actor_critic_input(self, dim_action, dim_actor_rep, dim_critic_rep, n_agents):
+        """
+        Returns the input dimensions of actor netwrok and critic networks.
+
+        Parameters:
+            dim_action: The dimension of actions.
+            dim_actor_rep: The dimension of the output of actor presentation.
+            dim_critic_rep: The dimension of the output of critic presentation.
+            n_agents: The number of agents.
+
+        Returns:
+            dim_actor_in: The dimension of input of the actor networks.
+            dim_critic_in: The dimension of the input of critic networks.
+        """
+        dim_actor_in, dim_critic_in = dim_actor_rep, dim_critic_rep
+        dim_act_actor, dim_act_critic = dim_action, dim_action
+        return dim_actor_in, dim_critic_in, dim_act_actor, dim_act_critic
 
     def forward(self, observation: Dict[str, Tensor],
                 agent_ids: Tensor = None, agent_key: str = None):
@@ -535,56 +555,114 @@ class Independent_DDPG_Policy(Module):
                     tp.data.add_(tau * ep.data)
 
 
-class MADDPG_policy(Independent_DDPG_Policy, Module):
+class MADDPG_Policy(Independent_DDPG_Policy):
     def __init__(self,
-                 action_space: Space,
+                 action_space: Optional[dict],
                  n_agents: int,
-                 representation: Module,
+                 representation: Optional[Dict[str, Module]],
                  actor_hidden_size: Sequence[int],
                  critic_hidden_size: Sequence[int],
-                 normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None,
                  activation_action: Optional[ModuleType] = None,
-                 device: Optional[Union[str, int, torch.device]] = None
-                 ):
-        Module.__init__(self)
-        self.action_dim = action_space.shape[-1]
-        self.n_agents = n_agents
-        self.representation_info_shape = representation.output_shapes
-        dim_input_actor = representation.output_shapes['state'][0]
-        dim_input_critic = (representation.output_shapes['state'][0] + self.action_dim) * self.n_agents
+                 device: Optional[Union[str, int, torch.device]] = None,
+                 **kwargs):
+        super(MADDPG_Policy, self).__init__(action_space, n_agents, representation,
+                                            actor_hidden_size, critic_hidden_size,
+                                            initialize, activation, activation_action, device, **kwargs)
 
-        self.actor_representation = representation
-        self.actor = ActorNet(dim_input_actor, self.action_dim, actor_hidden_size,
-                              normalize, initialize, activation, activation_action, device)
-        self.critic_representation = deepcopy(representation)
-        self.critic = CriticNet(dim_input_critic, n_agents, critic_hidden_size,
-                                normalize, initialize, activation, device)
+    def _get_actor_critic_input(self, dim_action, dim_actor_rep, dim_critic_rep, n_agents):
+        """
+        Returns the input dimensions of actor netwrok and critic networks.
 
-        self.target_actor_representation = deepcopy(self.actor_representation)
-        self.target_actor = deepcopy(self.actor)
-        self.target_critic_representation = deepcopy(self.critic_representation)
-        self.target_critic = deepcopy(self.critic)
+        Parameters:
+            dim_action: The dimension of actions.
+            dim_actor_rep: The dimension of the output of actor presentation.
+            dim_critic_rep: The dimension of the output of critic presentation.
+            n_agents: The number of agents.
 
-        self.parameters_actor = list(self.actor_representation.parameters()) + list(self.actor.parameters())
-        self.parameters_critic = list(self.critic_representation.parameters()) + list(self.critic.parameters())
+        Returns:
+            dim_actor_in: The dimension of input of the actor networks.
+            dim_critic_in: The dimension of the input of critic networks.
+        """
+        dim_actor_in = dim_actor_rep
+        dim_critic_in = dim_critic_rep * n_agents
+        dim_act_actor = dim_action
+        dim_act_critic = dim_action * n_agents
+        return dim_actor_in, dim_critic_in, dim_act_actor, dim_act_critic
 
-    def Qpolicy(self, observation: Tensor, actions: Tensor, agent_ids: Tensor):
-        bs = observation.shape[0]
-        outputs = self.critic_representation(observation)
-        critic_in = torch.concat([outputs['state'].reshape(bs, 1, -1).expand(-1, self.n_agents, -1),
-                                  actions.reshape(bs, 1, -1).expand(-1, self.n_agents, -1),
-                                  agent_ids], dim=-1)
-        return self.critic(critic_in)
+    def Qpolicy(self, observation: Dict[str, Tensor], actions: Dict[str, Tensor],
+                agent_ids: Tensor = None, agent_key: str = None):
+        """
+        Returns Q^policy of current observations and actions pairs.
 
-    def Qtarget(self, observation: Tensor, actions: Tensor, agent_ids: Tensor):
-        bs = observation.shape[0]
-        outputs = self.target_critic_representation(observation)
-        critic_in = torch.concat([outputs['state'].reshape(bs, 1, -1).expand(-1, self.n_agents, -1),
-                                  actions.reshape(bs, 1, -1).expand(-1, self.n_agents, -1),
-                                  agent_ids], dim=-1)
-        return self.target_critic(critic_in)
+        Parameters:
+            observation (Dict[Tensor]): The observations.
+            actions (Dict[Tensor]): The actions.
+            agent_ids (Dict[Tensor]): The agents' ids (for parameter sharing).
+            agent_key (str): Calculate actions for specified agent.
+
+        Returns:
+            q_eval: The evaluations of Q^policy.
+        """
+        q_eval = {}
+        agent_list = self.model_keys if agent_key is None else [agent_key]
+        outputs = {key: self.critic_representation[key](observation[key])['state'] for key in self.model_keys}
+        if self.use_parameter_sharing:
+            dim_outputs_rep = self.critic_representation[self.model_keys[0]].output_shapes['state'][0]
+            dim_action = self.action_space[self.model_keys[0]].shape[-1]
+            joint_obs_in = outputs[self.model_keys[0]].reshape([-1, self.n_agents * dim_outputs_rep])
+            joint_act_in = actions[self.model_keys[0]].reshape([-1, self.n_agents * dim_action])
+            joint_obs_in = joint_obs_in.unsqueeze(1).expand(-1, self.n_agents, -1)
+            joint_act_in = joint_act_in.unsqueeze(1).expand(-1, self.n_agents, -1)
+        else:
+            joint_obs_in = torch.concat([outputs[key] for key in self.model_keys], dim=-1)
+            joint_act_in = torch.concat([actions[key] for key in self.model_keys], dim=-1)
+
+        for key in agent_list:
+            if self.use_parameter_sharing:
+                critic_in = torch.concat([joint_obs_in, agent_ids], dim=-1)
+            else:
+                critic_in = joint_obs_in
+            q_eval[key] = self.critic[key](critic_in, joint_act_in)
+        return q_eval
+
+    def Qtarget(self, next_observation: Dict[str, Tensor], next_actions: Dict[str, Tensor],
+                agent_ids: Tensor = None, agent_key: str = None):
+        """
+        Returns the Q^target of next observations and actions pairs.
+
+        Parameters:
+            next_observation (Dict[Tensor]): The observations of next step.
+            next_actions (Dict[Tensor]): The actions of next step.
+            agent_ids (Dict[Tensor]): The agents' ids (for parameter sharing).
+            agent_key (str): Calculate actions for specified agent.
+
+        Returns:
+            q_target: The evaluations of Q^target.
+        """
+        q_target = {}
+        agent_list = self.model_keys if agent_key is None else [agent_key]
+        outputs = {key: self.target_critic_representation[key](next_observation[key])['state']
+                   for key in self.model_keys}
+        if self.use_parameter_sharing:
+            dim_outputs_rep = self.critic_representation[self.model_keys[0]].output_shapes['state'][0]
+            dim_action = self.action_space[self.model_keys[0]].shape[-1]
+            joint_obs_in = outputs[self.model_keys[0]].reshape([-1, self.n_agents * dim_outputs_rep])
+            joint_act_in = next_actions[self.model_keys[0]].reshape([-1, self.n_agents * dim_action])
+            joint_obs_in = joint_obs_in.unsqueeze(1).expand(-1, self.n_agents, -1)
+            joint_act_in = joint_act_in.unsqueeze(1).expand(-1, self.n_agents, -1)
+        else:
+            joint_obs_in = torch.concat([outputs[key] for key in self.model_keys], dim=-1)
+            joint_act_in = torch.concat([next_actions[key] for key in self.model_keys], dim=-1)
+
+        for key in agent_list:
+            if self.use_parameter_sharing:
+                critic_in = torch.concat([joint_obs_in, agent_ids], dim=-1)
+            else:
+                critic_in = joint_obs_in
+            q_target[key] = self.target_critic[key](critic_in, joint_act_in)
+        return q_target
 
 
 class MATD3_policy(Independent_DDPG_Policy, Module):

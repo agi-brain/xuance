@@ -36,39 +36,48 @@ class IDDPG_Learner(LearnerMAS):
         else:
             IDs = None
 
-        for key in self.model_keys:
-            obs = {key: Tensor(sample[key]['obs']).to(self.device)}
-            actions = {key: Tensor(sample[key]['actions']).to(self.device)}
-            obs_next = {key: Tensor(sample[key]['obs_next']).to(self.device)}
-            if self.use_parameter_sharing:
-                rewards = Tensor(sample[key]['rewards']).reshape(-1, self.n_agents, 1).to(self.device)
-                terminals = Tensor(sample[key]['terminals']).float().reshape(-1, self.n_agents, 1).to(self.device)
-                agent_mask = Tensor(sample[key]['agent_mask']).float().reshape(-1, self.n_agents, 1).to(self.device)
-            else:
-                rewards = Tensor(sample[key]['rewards']).reshape(-1, 1).to(self.device)
-                terminals = Tensor(sample[key]['terminals']).float().reshape(-1, 1).to(self.device)
-                agent_mask = Tensor(sample[key]['agent_mask']).float().reshape(-1, 1).to(self.device)
+        # prepare training data
+        obs = {key: Tensor(sample[key]['obs']).to(self.device) for key in self.model_keys}
+        actions = {key: Tensor(sample[key]['actions']).to(self.device) for key in self.model_keys}
+        obs_next = {key: Tensor(sample[key]['obs_next']).to(self.device) for key in self.model_keys}
+        if self.use_parameter_sharing:
+            rewards = {key: Tensor(sample[key]['rewards']).reshape(-1, self.n_agents, 1).to(self.device)
+                       for key in self.model_keys}
+            terminals = {key: Tensor(sample[key]['terminals']).float().reshape(-1, self.n_agents, 1).to(self.device)
+                         for key in self.model_keys}
+            agent_mask = {key: Tensor(sample[key]['agent_mask']).float().reshape(-1, self.n_agents, 1).to(self.device)
+                          for key in self.model_keys}
+        else:
+            rewards = {key: Tensor(sample[key]['rewards']).reshape(-1, 1).to(self.device)
+                       for key in self.model_keys}
+            terminals = {key: Tensor(sample[key]['terminals']).float().reshape(-1, 1).to(self.device)
+                         for key in self.model_keys}
+            agent_mask = {key: Tensor(sample[key]['agent_mask']).float().reshape(-1, 1).to(self.device)
+                          for key in self.model_keys}
 
+        # train the model
+        for key in self.model_keys:
             q_eval = self.policy.Qpolicy(obs, actions, IDs, key)
             q_next = self.policy.Qtarget(obs_next, self.policy.Atarget(obs_next, IDs, key), IDs, key)
-            q_target = rewards + (1 - terminals) * self.gamma * q_next[key]
+            q_target = rewards[key] + (1 - terminals[key]) * self.gamma * q_next[key]
 
             # calculate the loss function
             actions_eval = self.policy(obs, IDs, key)
             q_policy = self.policy.Qpolicy(obs, actions_eval, IDs, key)[key]
-            loss_a = -(q_policy * agent_mask).sum() / agent_mask.sum()
+            loss_a = -(q_policy * agent_mask[key]).sum() / agent_mask[key].sum()
             self.optimizer[key]['actor'].zero_grad()
             loss_a.backward()
-            torch.nn.utils.clip_grad_norm_(self.policy.parameters_actor[key], self.config.grad_clip_norm)
+            torch.nn.utils.clip_grad_norm_(self.policy.parameters_actor[key], self.grad_clip_norm)
             self.optimizer[key]['actor'].step()
             if self.scheduler[key]['actor'] is not None:
                 self.scheduler[key]['actor'].step()
 
-            td_error = (q_eval[key] - q_target.detach()) * agent_mask
-            loss_c = (td_error ** 2).sum() / agent_mask.sum()
+            td_error = (q_eval[key] - q_target.detach()) * agent_mask[key]
+            loss_c = (td_error ** 2).sum() / agent_mask[key].sum()
             self.optimizer[key]['critic'].zero_grad()
             loss_c.backward()
-            torch.nn.utils.clip_grad_norm_(self.policy.parameters_critic[key], self.config.grad_clip_norm)
+            if self.use_grad_clip:
+                torch.nn.utils.clip_grad_norm_(self.policy.parameters_critic[key], self.grad_clip_norm)
             self.optimizer[key]['critic'].step()
             if self.scheduler[key]['critic'] is not None:
                 self.scheduler[key]['critic'].step()
