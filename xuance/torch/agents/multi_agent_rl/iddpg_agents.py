@@ -4,7 +4,7 @@ from tqdm import tqdm
 from copy import deepcopy
 from operator import itemgetter
 from argparse import Namespace
-from xuance.environment import DummyVecMutliAgentEnv, make_envs
+from xuance.environment import DummyVecMutliAgentEnv
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.representations import REGISTRY_Representation
 from xuance.torch.policies import REGISTRY_Policy
@@ -17,14 +17,13 @@ class IDDPG_Agents(MARLAgents):
     """The implementation of Independent DDPG agents.
 
     Args:
-        config: the Namespace variable that provides hyper-parameters and other settings.
-        envs: the vectorized environments.
+        config: The Namespace variable that provides hyper-parameters and other settings.
+        envs: The vectorized environments.
     """
 
     def __init__(self,
                  config: Namespace,
                  envs: DummyVecMutliAgentEnv):
-        config.use_parameter_sharing = True
         super(IDDPG_Agents, self).__init__(config, envs)
 
         self.start_noise = config.start_noise
@@ -82,26 +81,25 @@ class IDDPG_Agents(MARLAgents):
             input_shape = [self.observation_space[key].shape for key in self.agent_keys]
             representation = {key: None for key in self.agent_keys}
             policy = {key: None for key in self.agent_keys}
-            if self.config.representation == "Basic_Identical":
-                representation = {key: REGISTRY_Representation["Basic_Identical"](
-                    input_shape=input_shape[key], device=self.device) for key in self.agent_keys}
-            elif self.config.representation == "Basic_MLP":
-                for key in self.agent_keys:
+            for key in self.agent_keys:
+                if self.config.representation == "Basic_Identical":
+                    representation[key] = REGISTRY_Representation["Basic_Identical"](input_shape=input_shape[key],
+                                                                                     device=self.device)
+                elif self.config.representation == "Basic_MLP":
                     representation[key] = REGISTRY_Representation["Basic_MLP"](
                         input_shape=input_shape[key], hidden_sizes=self.config.representation_hidden_size,
                         normalize=normalize_fn, initialize=initializer, activation=activation, device=device)
-            else:
-                raise f"The IDDPG currently does not support the representation of {self.config.representation}."
-            if self.config.policy == "Independent_DDPG_Policy":
-                for key in self.agent_keys:
+                else:
+                    raise f"The IDDPG currently does not support the representation of {self.config.representation}."
+                if self.config.policy == "Independent_DDPG_Policy":
                     policy[key] = REGISTRY_Policy["Independent_DDPG_Policy"](
                         action_space=self.action_space[key], n_agents=self.n_agents, representation=representation,
                         actor_hidden_size=self.config.actor_hidden_size,
                         critic_hidden_size=self.config.critic_hidden_size,
                         normalize=normalize_fn, initialize=initializer, activation=activation, device=device,
                         activation_action=ActivationFunctions[self.config.activation_action])
-            else:
-                raise f"The IDDPG currently does not support the policy named {self.config.poicy}."
+                else:
+                    raise f"The IDDPG currently does not support the policy named {self.config.poicy}."
         return policy
 
     def store_experience(self, obs_dict, actions_dict, obs_next_dict, rewards_dict, terminals_dict, info):
@@ -156,8 +154,8 @@ class IDDPG_Agents(MARLAgents):
             train_steps (int): The number of steps to train the model.
         """
         obs_dict = self.envs.buf_obs
+        step_info = {}
         for _ in tqdm(range(train_steps)):
-            step_info = {}
             if self.current_step < self.start_training:
                 actions_dict = [{k: self.action_space[k].sample() for k in self.agent_keys} for _ in range(self.n_envs)]
             else:

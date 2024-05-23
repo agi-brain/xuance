@@ -1,4 +1,16 @@
-from xuance.torch.agents import *
+import torch
+import numpy as np
+from tqdm import tqdm
+from copy import deepcopy
+from operator import itemgetter
+from argparse import Namespace
+from xuance.environment import DummyVecMutliAgentEnv
+from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
+from xuance.torch.representations import REGISTRY_Representation
+from xuance.torch.policies import REGISTRY_Policy
+from xuance.torch.learners import IDDPG_Learner
+from xuance.torch.agents import MARLAgents
+from xuance.common import MARL_OffPolicyBuffer
 
 
 class MADDPG_Agents(MARLAgents):
@@ -6,13 +18,12 @@ class MADDPG_Agents(MARLAgents):
 
     Args:
         config: the Namespace variable that provides hyper-parameters and other settings.
-        envs: the vectorized environments.
-        device: the calculating device of the model, such as CPU or GPU.
+        envs: The vectorized environments.
     """
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecEnv_Pettingzoo,
-                 device: Optional[Union[int, str, torch.device]] = None):
+                 envs: DummyVecMutliAgentEnv):
+        config.use
         self.gamma = config.gamma
 
         input_representation = get_repre_in(config)
