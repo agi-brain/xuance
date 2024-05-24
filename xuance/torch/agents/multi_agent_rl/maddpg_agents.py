@@ -9,7 +9,7 @@ from xuance.torch.agents.multi_agent_rl.iddpg_agents import IDDPG_Agents
 
 
 class MADDPG_Agents(IDDPG_Agents):
-    """The implementation of Independent DDPG agents.
+    """The implementation of MADDPG agents.
 
     Args:
         config: The Namespace variable that provides hyper-parameters and other settings.
@@ -33,8 +33,8 @@ class MADDPG_Agents(IDDPG_Agents):
         device = self.device
 
         # build representations
-        representation = {key: None for key in self.model_keys}
-        for key in self.model_keys:
+        representation = {key: None for key in self.agent_keys}
+        for key in self.agent_keys:
             input_shape = self.observation_space[key].shape
             if self.config.representation == "Basic_Identical":
                 representation[key] = REGISTRY_Representation["Basic_Identical"](input_shape=input_shape,
@@ -44,7 +44,7 @@ class MADDPG_Agents(IDDPG_Agents):
                     input_shape=input_shape, hidden_sizes=self.config.representation_hidden_size,
                     normalize=normalize_fn, initialize=initializer, activation=activation, device=device)
             else:
-                raise f"The IDDPG currently does not support the representation of {self.config.representation}."
+                raise f"The MADDPG currently does not support the representation of {self.config.representation}."
 
         # build policies
         if self.config.policy == "MADDPG_Policy":
@@ -54,12 +54,12 @@ class MADDPG_Agents(IDDPG_Agents):
                 critic_hidden_size=self.config.critic_hidden_size,
                 initialize=initializer, activation=activation, device=device,
                 activation_action=ActivationFunctions[self.config.activation_action],
-                use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys)
+                use_parameter_sharing=self.use_parameter_sharing, agent_keys=self.agent_keys)
         else:
-            raise f"The IDDPG currently does not support the policy named {self.config.policy}."
+            raise f"The MADDPG currently does not support the policy named {self.config.policy}."
 
         return policy
 
-    def _build_learner(self, config, model_keys, policy, optimizer, scheduler):
-        return MADDPG_Learner(config, model_keys, policy, optimizer, scheduler)
+    def _build_learner(self, config, agent_keys, policy, optimizer, scheduler):
+        return MADDPG_Learner(config, agent_keys, policy, optimizer, scheduler)
 

@@ -58,10 +58,19 @@ class MADDPG_Learner(LearnerMAS):
             agent_mask = {key: Tensor(sample[key]['agent_mask']).float().reshape(-1, 1).to(self.device)
                           for key in self.model_keys}
 
-        # update actor
+        # train the model
+        actions_eval = self.policy(obs, IDs)
+        actions_next = self.policy.Atarget(obs_next, IDs)
         for key in self.model_keys:
-            actions_eval = self.policy(obs, IDs)
-            q_policy = self.policy.Qpolicy(obs, actions_eval, IDs, key)
+            # update actor
+            actions_eval_detach_others = {}
+            for k in self.model_keys:
+                if k == key:
+                    actions_eval_detach_others[k] = actions_eval[key]
+                else:
+                    actions_eval_detach_others[k] = actions_eval[key].detach()
+
+            q_policy = self.policy.Qpolicy(obs, actions_eval_detach_others, IDs, key)
             loss_a = -(q_policy[key] * agent_mask[key]).sum() / agent_mask[key].sum()
             self.optimizer[key]['actor'].zero_grad()
             loss_a.backward()
@@ -70,17 +79,9 @@ class MADDPG_Learner(LearnerMAS):
             if self.scheduler[key]['actor'] is not None:
                 self.scheduler[key]['actor'].step()
 
-            lr_a = self.optimizer[key]['actor'].state_dict()['param_groups'][0]['lr']
-
-            info.update({
-                f"{key}/learning_rate_actor": lr_a,
-                f"{key}/loss_actor": loss_a.item(),
-            })
-
-        # update critic
-        q_eval = self.policy.Qpolicy(obs, actions, IDs)
-        q_next = self.policy.Qtarget(obs_next, self.policy.Atarget(obs_next, IDs), IDs)
-        for key in self.model_keys:
+            # update critic
+            q_eval = self.policy.Qpolicy(obs, actions, IDs, key)
+            q_next = self.policy.Qtarget(obs_next, actions_next, IDs, key)
             q_target = rewards[key] + (1 - terminals[key]) * self.gamma * q_next[key]
             td_error = (q_eval[key] - q_target.detach()) * agent_mask[key]
             loss_c = (td_error ** 2).sum() / agent_mask[key].sum()
@@ -92,10 +93,13 @@ class MADDPG_Learner(LearnerMAS):
             if self.scheduler[key]['critic'] is not None:
                 self.scheduler[key]['critic'].step()
 
+            lr_a = self.optimizer[key]['actor'].state_dict()['param_groups'][0]['lr']
             lr_c = self.optimizer[key]['critic'].state_dict()['param_groups'][0]['lr']
 
             info.update({
+                f"{key}/learning_rate_actor": lr_a,
                 f"{key}/learning_rate_critic": lr_c,
+                f"{key}/loss_actor": loss_a.item(),
                 f"{key}/loss_critic": loss_c.item(),
                 f"{key}/predictQ": q_eval[key].mean().item()
             })

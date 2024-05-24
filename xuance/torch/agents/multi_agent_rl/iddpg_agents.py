@@ -35,7 +35,7 @@ class IDDPG_Agents(MARLAgents):
         # build policy, optimizers, schedulers
         self.policy = self._build_policy()
         optimizer, scheduler = {}, {}
-        for key in self.model_keys:
+        for key in self.agent_keys:
             optimizer[key] = [torch.optim.Adam(self.policy.parameters_actor[key], self.config.lr_a, eps=1e-5),
                               torch.optim.Adam(self.policy.parameters_critic[key], self.config.lr_c, eps=1e-5)]
             scheduler[key] = [torch.optim.lr_scheduler.LinearLR(optimizer[key][0], start_factor=1.0, end_factor=0.5,
@@ -60,7 +60,7 @@ class IDDPG_Agents(MARLAgents):
             self.memory = MARL_OffPolicyBuffer_Split(**input_buffer)
 
         # create learner
-        self.learner = self._build_learner(self.config, self.model_keys, self.policy, optimizer, scheduler)
+        self.learner = self._build_learner(self.config, self.agent_keys, self.policy, optimizer, scheduler)
 
     def _build_policy(self):
         """
@@ -75,8 +75,8 @@ class IDDPG_Agents(MARLAgents):
         device = self.device
 
         # build representations
-        representation = {key: None for key in self.model_keys}
-        for key in self.model_keys:
+        representation = {key: None for key in self.agent_keys}
+        for key in self.agent_keys:
             input_shape = self.observation_space[key].shape
             if self.config.representation == "Basic_Identical":
                 representation[key] = REGISTRY_Representation["Basic_Identical"](input_shape=input_shape,
@@ -96,14 +96,14 @@ class IDDPG_Agents(MARLAgents):
                 critic_hidden_size=self.config.critic_hidden_size,
                 initialize=initializer, activation=activation, device=device,
                 activation_action=ActivationFunctions[self.config.activation_action],
-                use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys)
+                use_parameter_sharing=self.use_parameter_sharing, agent_keys=self.agent_keys)
         else:
             raise f"The IDDPG currently does not support the policy named {self.config.policy}."
 
         return policy
 
-    def _build_learner(self, config, model_keys, policy, optimizer, scheduler):
-        return IDDPG_Learner(config, model_keys, policy, optimizer, scheduler)
+    def _build_learner(self, config, agent_keys, policy, optimizer, scheduler):
+        return IDDPG_Learner(config, agent_keys, policy, optimizer, scheduler)
 
     def store_experience(self, obs_dict, actions_dict, obs_next_dict, rewards_dict, terminals_dict, info):
         """
@@ -147,9 +147,9 @@ class IDDPG_Agents(MARLAgents):
         n_env = len(obs_dict)
         if self.use_parameter_sharing:
             obs_tensor = Tensor(np.array([itemgetter(*self.agent_keys)(env_obs) for env_obs in obs_dict]))
-            obs_input = {self.model_keys[0]: obs_tensor}
+            obs_input = {self.agent_keys[0]: obs_tensor}
             agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(n_env, -1, -1).to(self.device)
-            actions = self.policy(obs_input, agents_id)[self.model_keys[0]]
+            actions = self.policy(obs_input, agents_id)[self.agent_keys[0]]
             actions = actions.cpu().detach().numpy()
             if not test_mode:
                 actions += np.random.normal(0, self.noise_scale, size=actions.shape)

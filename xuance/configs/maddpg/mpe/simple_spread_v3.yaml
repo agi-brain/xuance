@@ -7,7 +7,7 @@ representation: "Basic_Identical"
 vectorize: "Dummy_Pettingzoo"
 runner: "MARL"
 
-use_parameter_sharing: False
+use_parameter_sharing: True
 representation_hidden_size: []  # the units for each hidden layer
 actor_hidden_size: [64, 64]
 critic_hidden_size: [64, 64]
@@ -25,7 +25,7 @@ tau: 0.001  # soft update for target networks
 
 start_noise: 1.0
 end_noise: 0.01
-sigma: 0.1
+sigma: 0.1  # random noise for continuous actions
 start_training: 1000  # start training after n episodes
 running_steps: 10000000
 training_frequency: 25

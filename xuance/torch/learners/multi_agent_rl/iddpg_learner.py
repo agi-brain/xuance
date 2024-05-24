@@ -57,14 +57,10 @@ class IDDPG_Learner(LearnerMAS):
 
         # train the model
         for key in self.model_keys:
-            q_eval = self.policy.Qpolicy(obs, actions, IDs, key)
-            q_next = self.policy.Qtarget(obs_next, self.policy.Atarget(obs_next, IDs, key), IDs, key)
-            q_target = rewards[key] + (1 - terminals[key]) * self.gamma * q_next[key]
-
-            # calculate the loss function
+            # update actor
             actions_eval = self.policy(obs, IDs, key)
-            q_policy = self.policy.Qpolicy(obs, actions_eval, IDs, key)[key]
-            loss_a = -(q_policy * agent_mask[key]).sum() / agent_mask[key].sum()
+            q_policy = self.policy.Qpolicy(obs, actions_eval, IDs, key)
+            loss_a = -(q_policy[key] * agent_mask[key]).sum() / agent_mask[key].sum()
             self.optimizer[key]['actor'].zero_grad()
             loss_a.backward()
             torch.nn.utils.clip_grad_norm_(self.policy.parameters_actor[key], self.grad_clip_norm)
@@ -72,6 +68,10 @@ class IDDPG_Learner(LearnerMAS):
             if self.scheduler[key]['actor'] is not None:
                 self.scheduler[key]['actor'].step()
 
+            # updata critic
+            q_eval = self.policy.Qpolicy(obs, actions, IDs, key)
+            q_next = self.policy.Qtarget(obs_next, self.policy.Atarget(obs_next, IDs, key), IDs, key)
+            q_target = rewards[key] + (1 - terminals[key]) * self.gamma * q_next[key]
             td_error = (q_eval[key] - q_target.detach()) * agent_mask[key]
             loss_c = (td_error ** 2).sum() / agent_mask[key].sum()
             self.optimizer[key]['critic'].zero_grad()

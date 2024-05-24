@@ -1,82 +1,113 @@
 """
 Multi-Agent TD3
 """
-from xuance.torch.learners import *
+import torch
+from torch import nn
+from typing import Optional, List
+from argparse import Namespace
+from xuance.torch.learners import LearnerMAS
+from xuance.torch import Tensor
 
 
 class MATD3_Learner(LearnerMAS):
     def __init__(self,
                  config: Namespace,
+                 model_keys: List[str],
                  policy: nn.Module,
-                 optimizer: Sequence[torch.optim.Optimizer],
-                 scheduler: Sequence[torch.optim.lr_scheduler._LRScheduler] = None,
-                 device: Optional[Union[int, str, torch.device]] = None,
-                 model_dir: str = "./",
-                 gamma: float = 0.99,
-                 sync_frequency: int = 100,
-                 delay: int = 3
-                 ):
-        self.gamma = gamma
+                 optimizer: Optional[dict],
+                 scheduler: Optional[dict] = None):
+        self.gamma = config.gamma
         self.tau = config.tau
-        self.delay = delay
-        self.sync_frequency = sync_frequency
         self.mse_loss = nn.MSELoss()
-        super(MATD3_Learner, self).__init__(config, policy, optimizer, scheduler, device, model_dir)
-        self.optimizer = {
-            'actor': optimizer[0],
-            'critic': optimizer[1]
-        }
-        self.scheduler = {
-            'actor': scheduler[0],
-            'critic': scheduler[1]
-        }
+        self.actor_update_delay = config.actor_update_delay
+        super(MATD3_Learner, self).__init__(config, model_keys, policy, optimizer, scheduler)
+        self.use_parameter_sharing = config.use_parameter_sharing
+        self.optimizer = {key: {'actor': optimizer[key][0],
+                                'critic': optimizer[key][1]} for key in self.model_keys}
+        self.scheduler = {key: {'actor': scheduler[key][0],
+                                'critic': scheduler[key][1]} for key in self.model_keys}
 
     def update(self, sample):
         self.iterations += 1
-        obs = torch.Tensor(sample['obs']).to(self.device)
-        actions = torch.Tensor(sample['actions']).to(self.device)
-        obs_next = torch.Tensor(sample['obs_next']).to(self.device)
-        rewards = torch.Tensor(sample['rewards']).to(self.device)
-        terminals = torch.Tensor(sample['terminals']).float().reshape(-1, self.n_agents, 1).to(self.device)
-        agent_mask = torch.Tensor(sample['agent_mask']).float().reshape(-1, self.n_agents, 1).to(self.device)
-        IDs = torch.eye(self.n_agents).unsqueeze(0).expand(self.args.batch_size, -1, -1).to(self.device)
+        info = {}
+        if self.use_parameter_sharing:
+            sample = {self.model_keys[0]: sample}
+            IDs = torch.eye(self.n_agents).unsqueeze(0).expand(self.config.batch_size, -1, -1).to(self.device)
+        else:
+            IDs = None
 
-        # actor update
-        if self.iterations % self.delay == 0:
-            _, actions_eval = self.policy(obs, IDs)
-            policy_q = self.policy.Qpolicy(obs, actions_eval, IDs) * agent_mask
-            p_loss = -policy_q.sum() / agent_mask.sum()
-            self.optimizer['actor'].zero_grad()
-            p_loss.backward()
-            self.optimizer['actor'].step()
-            if self.scheduler['actor'] is not None:
-                self.scheduler['actor'].step()
-            self.policy.soft_update(self.tau)
+        # prepare training data
+        obs = {key: Tensor(sample[key]['obs']).to(self.device) for key in self.model_keys}
+        actions = {key: Tensor(sample[key]['actions']).to(self.device) for key in self.model_keys}
+        obs_next = {key: Tensor(sample[key]['obs_next']).to(self.device) for key in self.model_keys}
+        if self.use_parameter_sharing:
+            rewards = {key: Tensor(sample[key]['rewards']).reshape(-1, self.n_agents, 1).to(self.device)
+                       for key in self.model_keys}
+            terminals = {key: Tensor(sample[key]['terminals']).float().reshape(-1, self.n_agents, 1).to(self.device)
+                         for key in self.model_keys}
+            agent_mask = {key: Tensor(sample[key]['agent_mask']).float().reshape(-1, self.n_agents, 1).to(self.device)
+                          for key in self.model_keys}
+        else:
+            rewards = {key: Tensor(sample[key]['rewards']).reshape(-1, 1).to(self.device)
+                       for key in self.model_keys}
+            terminals = {key: Tensor(sample[key]['terminals']).float().reshape(-1, 1).to(self.device)
+                         for key in self.model_keys}
+            agent_mask = {key: Tensor(sample[key]['agent_mask']).float().reshape(-1, 1).to(self.device)
+                          for key in self.model_keys}
 
-        # train critic
-        action_q = self.policy.Qaction(obs, actions, IDs)
+        # train the model
+        if self.iterations % self.actor_update_delay == 0:  # update actor(s)
+            actions_eval = self.policy(obs, IDs)
+            for key in self.model_keys:
+                # update actor
+                actions_eval_detach_others = {}
+                for k in self.model_keys:
+                    if k == key:
+                        actions_eval_detach_others[k] = actions_eval[key]
+                    else:
+                        actions_eval_detach_others[k] = actions_eval[key].detach()
+
+                _, _, q_policy = self.policy.Qpolicy(obs, actions_eval_detach_others, IDs, key)
+                loss_a = -(q_policy[key] * agent_mask[key]).sum() / agent_mask[key].sum()
+                self.optimizer[key]['actor'].zero_grad()
+                loss_a.backward()
+                torch.nn.utils.clip_grad_norm_(self.policy.parameters_actor[key], self.grad_clip_norm)
+                self.optimizer[key]['actor'].step()
+                if self.scheduler[key]['actor'] is not None:
+                    self.scheduler[key]['actor'].step()
+
+                lr_a = self.optimizer[key]['actor'].state_dict()['param_groups'][0]['lr']
+
+                info.update({
+                    f"{key}/learning_rate_actor": lr_a,
+                    f"{key}/loss_actor": loss_a.item(),
+                })
+
+        # update critic(s)
         actions_next = self.policy.Atarget(obs_next, IDs)
-        q_next = self.policy.Qtarget(obs_next, actions_next, IDs)
-        q_target = rewards + (1 - terminals) * self.args.gamma * q_next
-        td_error = (action_q - q_target.detach()) * agent_mask
-        loss_c = (td_error ** 2).sum() / agent_mask.sum()
-        # loss_c = F.mse_loss(torch.tile(q_target.detach(), (1, 2)), action_q)
-        self.optimizer['critic'].zero_grad()
-        loss_c.backward()
-        torch.nn.utils.clip_grad_norm_(self.policy.parameters_critic, self.args.grad_clip_norm)
-        self.optimizer['critic'].step()
-        if self.scheduler['critic'] is not None:
-            self.scheduler['critic'].step()
+        for key in self.model_keys:
+            q_eval_A, q_eval_B, _ = self.policy.Qpolicy(obs, actions, IDs, key)
+            q_next = self.policy.Qtarget(obs_next, actions_next, IDs, key)
+            q_target = rewards[key] + (1 - terminals[key]) * self.gamma * q_next[key]
+            td_error_A = (q_eval_A[key] - q_target.detach()) * agent_mask[key]
+            td_error_B = (q_eval_B[key] - q_target.detach()) * agent_mask[key]
+            loss_c = ((td_error_A ** 2).sum() + (td_error_B ** 2).sum()) / agent_mask[key].sum()
+            self.optimizer[key]['critic'].zero_grad()
+            loss_c.backward()
+            if self.use_grad_clip:
+                torch.nn.utils.clip_grad_norm_(self.policy.parameters_critic[key], self.grad_clip_norm)
+            self.optimizer[key]['critic'].step()
+            if self.scheduler[key]['critic'] is not None:
+                self.scheduler[key]['critic'].step()
 
-        lr_a = self.optimizer['actor'].state_dict()['param_groups'][0]['lr']
-        lr_c = self.optimizer['critic'].state_dict()['param_groups'][0]['lr']
+            lr_c = self.optimizer[key]['critic'].state_dict()['param_groups'][0]['lr']
 
-        info = {
-            "learning_rate_actor": lr_a,
-            "learning_rate_critic": lr_c,
-            "loss_critic": loss_c.item()
-        }
-        if self.iterations % self.delay == 0:
-            info["loss_actor"] = p_loss.item()
+            info.update({
+                f"{key}/learning_rate_critic": lr_c,
+                f"{key}/loss_critic": loss_c.item(),
+                f"{key}/predictQ_A": q_eval_A[key].mean().item(),
+                f"{key}/predictQ_B": q_eval_B[key].mean().item()
+            })
 
+        self.policy.soft_update(self.tau)
         return info
