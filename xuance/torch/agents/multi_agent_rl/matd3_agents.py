@@ -34,8 +34,8 @@ class MATD3_Agents(IDDPG_Agents):
         device = self.device
 
         # build representations
-        representation = {key: None for key in self.agent_keys}
-        for key in self.agent_keys:
+        representation = {key: None for key in self.model_keys}
+        for key in self.model_keys:
             input_shape = self.observation_space[key].shape
             if self.config.representation == "Basic_Identical":
                 representation[key] = REGISTRY_Representation["Basic_Identical"](input_shape=input_shape,
@@ -55,11 +55,11 @@ class MATD3_Agents(IDDPG_Agents):
                 critic_hidden_size=self.config.critic_hidden_size,
                 initialize=initializer, activation=activation, device=device,
                 activation_action=ActivationFunctions[self.config.activation_action],
-                use_parameter_sharing=self.use_parameter_sharing, agent_keys=self.agent_keys)
+                use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys)
         else:
             raise f"The MATD3 currently does not support the policy named {self.config.policy}."
 
         return policy
 
-    def _build_learner(self, config, agent_keys, policy, optimizer, scheduler):
-        return MATD3_Learner(config, agent_keys, policy, optimizer, scheduler)
+    def _build_learner(self, config, model_keys, policy, optimizer, scheduler):
+        return MATD3_Learner(config, model_keys, policy, optimizer, scheduler)
