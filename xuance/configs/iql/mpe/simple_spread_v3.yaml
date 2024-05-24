@@ -5,8 +5,9 @@ continuous_action: False
 policy: "Basic_Q_network_marl"
 representation: "Basic_MLP"
 vectorize: "Dummy_Pettingzoo"
-runner: "Pettingzoo_Runner"
+runner: "MARL"
 
+use_parameter_sharing: True
 use_recurrent: False
 rnn:
 representation_hidden_size: [64, ]

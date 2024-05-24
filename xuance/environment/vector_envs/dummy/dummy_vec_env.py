@@ -19,6 +19,7 @@ class DummyVecEnv(VecEnv):
         self.envs = [fn() for fn in env_fns]
         env = self.envs[0]
         VecEnv.__init__(self, len(env_fns), env.observation_space, env.action_space)
+
         self.obs_shape = space2shape(self.observation_space)
         if isinstance(self.observation_space, Dict):
             self.buf_obs = {k: np.zeros(combined_shape(self.num_envs, v)) for k, v in
@@ -29,6 +30,7 @@ class DummyVecEnv(VecEnv):
         self.buf_truncated = np.zeros((self.num_envs,), dtype=np.bool_)
         self.buf_rewards = np.zeros((self.num_envs,), dtype=np.float32)
         self.buf_info = [{} for _ in range(self.num_envs)]
+
         self.actions = None
         self.max_episode_length = env.max_episode_steps
 

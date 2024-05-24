@@ -52,7 +52,7 @@ class MADDPG_Agents(IDDPG_Agents):
                 action_space=self.action_space, n_agents=self.n_agents, representation=representation,
                 actor_hidden_size=self.config.actor_hidden_size,
                 critic_hidden_size=self.config.critic_hidden_size,
-                initialize=initializer, activation=activation, device=device,
+                normalize=normalize_fn, initialize=initializer, activation=activation, device=device,
                 activation_action=ActivationFunctions[self.config.activation_action],
                 use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys)
         else:

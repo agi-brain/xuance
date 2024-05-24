@@ -1,4 +1,17 @@
-from xuance.torch.agents import *
+import torch
+import numpy as np
+from tqdm import tqdm
+from copy import deepcopy
+from operator import itemgetter
+from argparse import Namespace
+from xuance.environment import DummyVecMutliAgentEnv
+from xuance.torch import Tensor
+from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
+from xuance.torch.representations import REGISTRY_Representation
+from xuance.torch.policies import REGISTRY_Policy
+from xuance.torch.learners import IQL_Learner
+from xuance.torch.agents import MARLAgents
+from xuance.common import MARL_OffPolicyBuffer_Share, MARL_OffPolicyBuffer_Split, MARL_OffPolicyBuffer_RNN
 
 
 class IQL_Agents(MARLAgents):
@@ -7,53 +20,87 @@ class IQL_Agents(MARLAgents):
     Args:
         config: the Namespace variable that provides hyper-parameters and other settings.
         envs: the vectorized environments.
-        device: the calculating device of the model, such as CPU or GPU.
     """
+
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecEnv_Pettingzoo,
-                 device: Optional[Union[int, str, torch.device]] = None):
-        self.gamma = config.gamma
+                 envs: DummyVecMutliAgentEnv):
+        super(IQL_Agents, self).__init__(config, envs)
+
+        self.use_recurrent = config.use_recurrent
         self.start_greedy, self.end_greedy = config.start_greedy, config.end_greedy
         self.egreedy = self.start_greedy
         self.delta_egreedy = (self.start_greedy - self.end_greedy) / config.decay_step_greedy
 
-        input_representation = get_repre_in(config)
-        self.use_recurrent = config.use_recurrent
-        if self.use_recurrent:
-            kwargs_rnn = {"N_recurrent_layers": config.N_recurrent_layers,
-                          "dropout": config.dropout,
-                          "rnn": config.rnn}
-            representation = REGISTRY_Representation[config.representation](*input_representation, **kwargs_rnn)
-        else:
-            representation = REGISTRY_Representation[config.representation](*input_representation)
-        input_policy = get_policy_in_marl(config, representation)
-        policy = REGISTRY_Policy[config.policy](*input_policy,
-                                                use_recurrent=config.use_recurrent,
-                                                rnn=config.rnn)
-        optimizer = torch.optim.Adam(policy.parameters(), config.learning_rate, eps=1e-5)
+        self.policy = self._build_policy()
+        optimizer = torch.optim.Adam(self.policy.parameters(), config.learning_rate, eps=1e-5)
         scheduler = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=1.0, end_factor=0.5,
-                                                      total_iters=get_total_iters(config.agent_name, config))
-        self.observation_space = envs.observation_space
-        self.action_space = envs.action_space
-        self.representation_info_shape = policy.representation.output_shapes
-        self.auxiliary_info_shape = {}
+                                                      total_iters=self.config.running_steps)
 
-        if config.state_space is not None:
-            config.dim_state, state_shape = config.state_space.shape, config.state_space.shape
+        # create experience replay buffer
+        input_buffer = dict(n_agents=self.config.n_agents,
+                            agent_keys=self.agent_keys,
+                            state_space=None,
+                            obs_space=self.observation_space[self.agent_keys[0]],
+                            act_space=self.action_space[self.agent_keys[0]],
+                            n_envs=self.n_envs,
+                            buffer_size=self.config.buffer_size,
+                            batch_size=self.config.batch_size,
+                            max_episode_length=envs.max_episode_length)
+        if self.use_parameter_sharing:
+            buffer = MARL_OffPolicyBuffer_RNN if self.use_recurrent else MARL_OffPolicyBuffer_Share
+            self.memory = buffer(**input_buffer)
         else:
-            config.dim_state, state_shape = None, None
+            input_buffer['obs_space'] = self.observation_space
+            input_buffer['act_space'] = self.action_space
+            buffer = MARL_OffPolicyBuffer_RNN if self.use_recurrent else MARL_OffPolicyBuffer_Share
+            self.memory = buffer(**input_buffer)
 
-        buffer = MARL_OffPolicyBuffer_RNN if self.use_recurrent else MARL_OffPolicyBuffer
-        input_buffer = (config.n_agents, state_shape, config.obs_shape, config.act_shape, config.rew_shape,
-                        config.done_shape, envs.num_envs, config.buffer_size, config.batch_size)
-        memory = buffer(*input_buffer, max_episode_length=envs.max_episode_length, dim_act=config.dim_act)
+        # create learner
+        self.learner = self._build_learner(self.config, self.model_keys, self.policy, optimizer, scheduler)
 
-        learner = IQL_Learner(config, policy, optimizer, scheduler, config.device, config.model_dir, config.gamma,
-                              config.sync_frequency)
-        super(IQL_Agents, self).__init__(config, envs, policy, memory, learner, device,
-                                         config.log_dir, config.model_dir)
-        self.on_policy = False
+    def _build_policy(self):
+        """
+        Build representation(s) and policy(ies) for agent(s)
+
+        Returns:
+            policy (torch.nn.Module): A dict of policies.
+        """
+        normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
+        initializer = torch.nn.init.orthogonal_
+        activation = ActivationFunctions[self.config.activation]
+        device = self.device
+
+        # build representations
+        representation = {key: None for key in self.model_keys}
+        for key in self.model_keys:
+            input_shape = self.observation_space[key].shape
+            if self.config.representation == "Basic_Identical":
+                representation[key] = REGISTRY_Representation["Basic_Identical"](input_shape=input_shape,
+                                                                                 device=self.device)
+            elif self.config.representation == "Basic_MLP":
+                representation[key] = REGISTRY_Representation["Basic_MLP"](
+                    input_shape=input_shape, hidden_sizes=self.config.representation_hidden_size,
+                    normalize=normalize_fn, initialize=initializer, activation=activation, device=device)
+            elif self.config.representation == "Basic_RNN":
+                raise NotImplementedError
+            else:
+                raise f"The IQL currently does not support the representation of {self.config.representation}."
+
+        # build policies
+        if self.config.policy == "Basic_Q_network_marl":
+            policy = REGISTRY_Policy["Basic_Q_network_marl"](
+                action_space=self.action_space, n_agents=self.n_agents, representation=representation,
+                hidden_size=self.config.q_hidden_size,
+                normalize=normalize_fn, initialize=initializer, activation=activation,
+                device=device, use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys)
+        else:
+            raise f"The IQL currently does not support the policy named {self.config.policy}."
+
+        return policy
+
+    def _build_learner(self, config, model_keys, policy, optimizer, scheduler):
+        return IQL_Learner(config, model_keys, policy, optimizer, scheduler)
 
     def act(self, obs_n, *rnn_hidden, avail_actions=None, test_mode=False):
         batch_size = obs_n.shape[0]

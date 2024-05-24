@@ -1,40 +1,16 @@
 import torch
-import torch.nn as nn
 from copy import deepcopy
 from typing import Sequence, Optional, Callable, Union, Dict
-from gym.spaces import Discrete
+from gym.spaces import Discrete, Box
 from torch.distributions import Categorical
-from xuance.torch.policies import ActorNet, CriticNet, VDN_mixer, QTRAN_base, QMIX_FF_mixer
-from xuance.torch.utils import ModuleType, mlp_block
+from xuance.torch.policies import BasicQhead, ActorNet, CriticNet, VDN_mixer, QTRAN_base, QMIX_FF_mixer
+from xuance.torch.utils import ModuleType
 from xuance.torch import Tensor, Module
-
-
-class BasicQhead(Module):
-    def __init__(self,
-                 state_dim: int,
-                 n_actions: int,
-                 n_agents: int,
-                 hidden_sizes: Sequence[int],
-                 normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., Tensor]] = None,
-                 activation: Optional[ModuleType] = None,
-                 device: Optional[Union[str, int, torch.device]] = None):
-        super(BasicQhead, self).__init__()
-        layers_ = []
-        input_shape = (state_dim + n_agents,)
-        for h in hidden_sizes:
-            mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initialize, device)
-            layers_.extend(mlp)
-        layers_.extend(mlp_block(input_shape[0], n_actions, None, None, None, device)[0])
-        self.model = nn.Sequential(*layers_)
-
-    def forward(self, x: Tensor):
-        return self.model(x)
 
 
 class BasicQnetwork(Module):
     def __init__(self,
-                 action_space: Discrete,
+                 action_space: Optional[Dict[str, Discrete]],
                  n_agents: int,
                  representation: Module,
                  hidden_size: Sequence[int] = None,
@@ -44,18 +20,27 @@ class BasicQnetwork(Module):
                  device: Optional[Union[str, int, torch.device]] = None,
                  **kwargs):
         super(BasicQnetwork, self).__init__()
-        self.n_actions = action_space.n
-        self.representation = representation
-        self.target_representation = deepcopy(self.representation)
-        self.representation_info_shape = self.representation.output_shapes
+        self.action_space = action_space
+        self.n_agents = n_agents
+        self.use_parameter_sharing = kwargs['use_parameter_sharing']
+        self.model_keys = kwargs['model_keys']
+        self.representation_info_shape = {key: representation[key].output_shapes for key in self.model_keys}
         self.lstm = True if kwargs["rnn"] == "LSTM" else False
         self.use_rnn = True if kwargs["use_recurrent"] else False
-        self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.n_actions, n_agents,
-                                     hidden_size, normalize, initialize, activation, device)
-        self.target_Qhead = deepcopy(self.eval_Qhead)
 
-    def forward(self, observation: Tensor, agent_ids: Tensor,
-                *rnn_hidden: Tensor, avail_actions=None):
+        self.representation = representation
+        self.target_representation = deepcopy(self.representation)
+
+        self.dim_input_Q = {}
+        self.eval_Qhead, self.target_Qhead = {}, {}
+        for key in self.model_keys:
+            self.dim_input_Q[key] = self.representation_info_shape['state'][0] + self.n_agents
+            self.eval_Qhead = BasicQhead(self.dim_input_Q[key], self.n_actions, hidden_size,
+                                         normalize, initialize, activation, device)
+            self.target_Qhead = deepcopy(self.eval_Qhead)
+
+    def forward(self, observation: Dict[str, Tensor], agent_ids: Tensor = None,
+                *rnn_hidden: Tensor, avail_actions=None, agent_key: str = None):
         if self.use_rnn:
             outputs = self.representation(observation, *rnn_hidden)
             rnn_hidden = (outputs['rnn_hidden'], outputs['rnn_cell'])
@@ -84,10 +69,12 @@ class BasicQnetwork(Module):
         return rnn_hidden, self.target_Qhead(q_inputs)
 
     def copy_target(self):
-        for ep, tp in zip(self.representation.parameters(), self.target_representation.parameters()):
-            tp.data.copy_(ep)
-        for ep, tp in zip(self.eval_Qhead.parameters(), self.target_Qhead.parameters()):
-            tp.data.copy_(ep)
+        for k in self.model_keys:
+            param = [zip(self.representation[k].parameters(), self.target_representation[k].parameters()),
+                     zip(self.eval_Qhead[k].parameters(), self.target_Qhead[k].parameters())]
+            for p in param:
+                for ep, tp in p:
+                    tp.data.copy_(ep)
 
 
 class MFQnetwork(Module):
@@ -382,11 +369,12 @@ class DCG_policy(Module):
 
 class Independent_DDPG_Policy(Module):
     def __init__(self,
-                 action_space: Optional[dict],
+                 action_space: Optional[Dict[str, Box]],
                  n_agents: int,
                  representation: Optional[Dict[str, Module]],
                  actor_hidden_size: Sequence[int],
                  critic_hidden_size: Sequence[int],
+                 normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None,
                  activation_action: Optional[ModuleType] = None,
@@ -417,9 +405,9 @@ class Independent_DDPG_Policy(Module):
                 dim_obs_actor += self.n_agents
                 dim_obs_critic += self.n_agents
             self.actor[key] = ActorNet(dim_obs_actor, dim_act_actor, actor_hidden_size,
-                                       initialize, activation, activation_action, device)
+                                       normalize, initialize, activation, activation_action, device)
             self.critic[key] = CriticNet(dim_obs_critic, dim_act_critic, critic_hidden_size,
-                                         initialize, activation, device)
+                                         normalize, initialize, activation, device)
             self.target_actor[key] = deepcopy(self.actor[key])
             self.target_critic[key] = deepcopy(self.critic[key])
             self.parameters_actor[key] = list(self.actor_representation[key].parameters()) + list(
@@ -557,11 +545,12 @@ class Independent_DDPG_Policy(Module):
 
 class MADDPG_Policy(Independent_DDPG_Policy):
     def __init__(self,
-                 action_space: Optional[dict],
+                 action_space: Optional[Dict[str, Box]],
                  n_agents: int,
                  representation: Optional[Dict[str, Module]],
                  actor_hidden_size: Sequence[int],
                  critic_hidden_size: Sequence[int],
+                 normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None,
                  activation_action: Optional[ModuleType] = None,
@@ -569,7 +558,7 @@ class MADDPG_Policy(Independent_DDPG_Policy):
                  **kwargs):
         super(MADDPG_Policy, self).__init__(action_space, n_agents, representation,
                                             actor_hidden_size, critic_hidden_size,
-                                            initialize, activation, activation_action, device, **kwargs)
+                                            normalize, initialize, activation, activation_action, device, **kwargs)
 
     def _get_actor_critic_input(self, dim_action, dim_actor_rep, dim_critic_rep, n_agents):
         """
@@ -667,11 +656,12 @@ class MADDPG_Policy(Independent_DDPG_Policy):
 
 class MATD3_Policy(Independent_DDPG_Policy, Module):
     def __init__(self,
-                 action_space: Optional[dict],
+                 action_space: Optional[Dict[str, Box]],
                  n_agents: int,
                  representation: Optional[Dict[str, Module]],
                  actor_hidden_size: Sequence[int],
                  critic_hidden_size: Sequence[int],
+                 normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None,
                  activation_action: Optional[ModuleType] = None,
@@ -705,11 +695,11 @@ class MATD3_Policy(Independent_DDPG_Policy, Module):
                 dim_obs_actor += self.n_agents
                 dim_obs_critic += self.n_agents
             self.actor[key] = ActorNet(dim_obs_actor, dim_act_actor, actor_hidden_size,
-                                       initialize, activation, activation_action, device)
+                                       normalize, initialize, activation, activation_action, device)
             self.critic_A[key] = CriticNet(dim_obs_critic, dim_act_critic, critic_hidden_size,
-                                           initialize, activation, device)
+                                           normalize, initialize, activation, device)
             self.critic_B[key] = CriticNet(dim_obs_critic, dim_act_critic, critic_hidden_size,
-                                           initialize, activation, device)
+                                           normalize, initialize, activation, device)
             self.target_actor[key] = deepcopy(self.actor[key])
             self.target_critic_A[key] = deepcopy(self.critic_A[key])
             self.target_critic_B[key] = deepcopy(self.critic_B[key])

@@ -2,7 +2,30 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from typing import Sequence, Optional, Callable, Union
+from xuance.torch import Tensor, Module
 from xuance.torch.utils import ModuleType, mlp_block
+
+
+class BasicQhead(Module):
+    def __init__(self,
+                 state_dim: int,
+                 n_actions: int,
+                 hidden_sizes: Sequence[int],
+                 normalize: Optional[ModuleType] = None,
+                 initialize: Optional[Callable[..., Tensor]] = None,
+                 activation: Optional[ModuleType] = None,
+                 device: Optional[Union[str, int, torch.device]] = None):
+        super(BasicQhead, self).__init__()
+        layers_ = []
+        input_shape = (state_dim,)
+        for h in hidden_sizes:
+            mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initialize, device)
+            layers_.extend(mlp)
+        layers_.extend(mlp_block(input_shape[0], n_actions, None, None, initialize, device)[0])
+        self.model = nn.Sequential(*layers_)
+
+    def forward(self, x: Tensor):
+        return self.model(x)
 
 
 class ActorNet(nn.Module):
@@ -10,6 +33,7 @@ class ActorNet(nn.Module):
                  state_dim: int,
                  action_dim: int,
                  hidden_sizes: Sequence[int],
+                 normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., torch.Tensor]] = None,
                  activation: Optional[ModuleType] = None,
                  activation_action: Optional[ModuleType] = None,
@@ -18,7 +42,7 @@ class ActorNet(nn.Module):
         layers = []
         input_shape = (state_dim,)
         for h in hidden_sizes:
-            mlp, input_shape = mlp_block(input_shape[0], h, None, activation, initialize, device)
+            mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initialize, device)
             layers.extend(mlp)
         layers.extend(mlp_block(input_shape[0], action_dim, None, activation_action, initialize, device)[0])
         self.model = nn.Sequential(*layers)
@@ -32,6 +56,7 @@ class CriticNet(nn.Module):
                  state_dim: int,
                  action_dim: int,
                  hidden_sizes: Sequence[int],
+                 normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., torch.Tensor]] = None,
                  activation: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None):
@@ -39,7 +64,7 @@ class CriticNet(nn.Module):
         layers = []
         input_shape = (state_dim + action_dim,)
         for h in hidden_sizes:
-            mlp, input_shape = mlp_block(input_shape[0], h, None, activation, initialize, device)
+            mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initialize, device)
             layers.extend(mlp)
         layers.extend(mlp_block(input_shape[0], 1, None, None, initialize, device)[0])
         self.model = nn.Sequential(*layers)

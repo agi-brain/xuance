@@ -21,14 +21,17 @@ class DummyVecMutliAgentEnv(VecEnv):
         self.envs = [fn() for fn in env_fns]
         env = self.envs[0]
         VecEnv.__init__(self, len(env_fns), env.observation_space, env.action_space)
+
         self.teams = env.teams_info["names"]
         self.agents = env.agents
         self.n_agents_all = env.num_agents
         self.state_space = env.state_space  # Type: Box
-
         self.buf_state = np.zeros((self.num_envs,) + self.state_space.shape, dtype=self.state_space.dtype)
         self.buf_obs = [{} for _ in range(self.num_envs)]
         self.buf_info = [{} for _ in range(self.num_envs)]
+
+        self.actions = None
+        self.max_episode_length = env.max_episode_steps
 
     def reset(self):
         """Reset the vectorized environments."""
