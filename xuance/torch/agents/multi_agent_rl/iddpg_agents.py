@@ -143,11 +143,14 @@ class IDDPG_Agents(MARLAgents):
         Parameters:
             obs_dict (dict): Observations for each agent in self.agent_keys
             test_mode (bool): True for testing without noises.
+
+        Returns:
+            actions_dict (dict): The output actions.
         """
         n_env = len(obs_dict)
         if self.use_parameter_sharing:
-            obs_tensor = Tensor(np.array([itemgetter(*self.agent_keys)(env_obs) for env_obs in obs_dict]))
-            obs_input = {self.agent_keys[0]: obs_tensor}
+            obs_tensor = Tensor(np.array([itemgetter(*self.model_keys)(env_obs) for env_obs in obs_dict]))
+            obs_input = {self.model_keys[0]: obs_tensor}
             agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(n_env, -1, -1).to(self.device)
             actions = self.policy(obs_input, agents_id)[self.agent_keys[0]]
             actions = actions.cpu().detach().numpy()
@@ -155,9 +158,8 @@ class IDDPG_Agents(MARLAgents):
                 actions += np.random.normal(0, self.noise_scale, size=actions.shape)
             actions_dict = [{key: actions[e, agt] for agt, key in enumerate(self.agent_keys)} for e in range(n_env)]
         else:
-            obs_tensor_dict = {key: np.array([itemgetter(key)(env_obs) for env_obs in obs_dict])
-                               for key in self.agent_keys}
-            actions_dict_ = self.policy(obs_tensor_dict)
+            obs_input = {key: np.array([itemgetter(key)(env_obs) for env_obs in obs_dict]) for key in self.agent_keys}
+            actions_dict_ = self.policy(obs_input)
             for key in self.agent_keys:
                 actions_dict_[key] = actions_dict_[key].cpu().detach().numpy()
                 if not test_mode:
@@ -191,6 +193,7 @@ class IDDPG_Agents(MARLAgents):
             for i in range(self.n_envs):
                 if all(terminated_dict[i].values()) or truncated[i]:
                     obs_dict[i] = info[i]["reset_obs"]
+                    self.envs.buf_obs[i] = info[i]["reset_obs"]
                     if self.use_wandb:
                         step_info["Episode-Steps/env-%d" % i] = info[i]["episode_step"]
                         step_info["Train-Episode-Rewards/env-%d" % i] = info[i]["episode_score"]

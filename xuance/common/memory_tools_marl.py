@@ -579,12 +579,13 @@ class MARL_OffPolicyBuffer_Share(BaseBuffer):
     """
 
     def __init__(self, n_agents, state_space, obs_space, act_space, n_envs, buffer_size, batch_size, **kwargs):
-        super(MARL_OffPolicyBuffer_Share, self).__init__(n_agents, state_space, obs_space, act_space, n_envs,
-                                                         buffer_size)
+        super(MARL_OffPolicyBuffer_Share, self).__init__(n_agents, state_space, obs_space, act_space,
+                                                         n_envs, buffer_size)
         assert buffer_size % self.n_envs == 0, "buffer_size must be divisible by the number of envs (parallels)"
         self.n_size = buffer_size // n_envs
         self.batch_size = batch_size
         self.store_global_state = False if self.state_space is None else True
+        self.store_avail_actions = kwargs['store_avail_actions'] if 'store_avail_actions' in kwargs else False
         self.data = {}
         self.clear()
         self.keys = self.data.keys()
@@ -602,6 +603,11 @@ class MARL_OffPolicyBuffer_Share(BaseBuffer):
             state_shape = space2shape(self.state_space)
             self.data.update({'state': create_memory(state_shape, self.n_envs, self.n_size, None),
                               'state_next': create_memory(state_shape, self.n_envs, self.n_size, None)})
+        if self.store_avail_actions:
+            n_actions = self.act_space
+            self.data.update({
+                "avail_actions": create_memory(space2shape(self.act_space), self.n_envs, self.n_size, self.n_agents, np.bool_)
+                              })
         self.ptr, self.size = 0, 0
 
     def store(self, step_data):

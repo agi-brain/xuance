@@ -178,7 +178,8 @@ class XuanCeMultiAgentEnvWrapper(XuanCeEnvWrapper):
             info = {}
         self._episode_step = 0
         self._episode_score = {agent: 0.0 for agent in self.agents}
-        info["episode_step"] = self._episode_step
+        info["episode_step"] = self._episode_step  # current episode step
+        info["episode_score"] = self._episode_score  # the accumulated rewards
         info["agent_mask"] = self.agent_mask
         info["avail_actions"] = self.avail_actions
         return obs, info

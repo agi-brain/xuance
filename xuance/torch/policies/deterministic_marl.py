@@ -31,42 +31,92 @@ class BasicQnetwork(Module):
         self.representation = representation
         self.target_representation = deepcopy(self.representation)
 
-        self.dim_input_Q = {}
+        self.dim_input_Q, self.n_actions = {}, {}
         self.eval_Qhead, self.target_Qhead = {}, {}
+        self.parameters_model = {}
         for key in self.model_keys:
-            self.dim_input_Q[key] = self.representation_info_shape['state'][0] + self.n_agents
-            self.eval_Qhead = BasicQhead(self.dim_input_Q[key], self.n_actions, hidden_size,
-                                         normalize, initialize, activation, device)
-            self.target_Qhead = deepcopy(self.eval_Qhead)
+            self.n_actions[key] = self.action_space[key].n
+            self.dim_input_Q[key] = self.representation_info_shape[key]['state'][0] + self.n_agents
+            self.eval_Qhead[key] = BasicQhead(self.dim_input_Q[key], self.n_actions[key], hidden_size,
+                                              normalize, initialize, activation, device)
+            self.target_Qhead[key] = deepcopy(self.eval_Qhead[key])
+            self.parameters_model[key] = list(self.representation[key].parameters()) + list(
+                self.eval_Qhead[key].parameters())
 
-    def forward(self, observation: Dict[str, Tensor], agent_ids: Tensor = None,
-                *rnn_hidden: Tensor, avail_actions=None, agent_key: str = None):
-        if self.use_rnn:
-            outputs = self.representation(observation, *rnn_hidden)
-            rnn_hidden = (outputs['rnn_hidden'], outputs['rnn_cell'])
-        else:
-            outputs = self.representation(observation)
-            rnn_hidden = None
-        q_inputs = torch.concat([outputs['state'], agent_ids], dim=-1)
-        evalQ = self.eval_Qhead(q_inputs)
+    def forward(self, observation: Dict[str, Tensor], agent_ids: Tensor = None, *rnn_hidden: Tensor,
+                avail_actions: Dict[str, Tensor] = None, agent_key: str = None):
+        """
+        Returns actions of the policy.
+
+        Parameters:
+            observation (Dict[Tensor]): The input observations for the policies.
+            agent_ids (Tensor): The agents' ids (for parameter sharing).
+            *rnn_hidden (List[Tensor]): The hidden variables of the RNN.
+            avail_actions (Dict[str, Tensor]): Actions mask values, default is None.
+            agent_key (str): Calculate actions for specified agent.
+
+        Returns:
+            actions (Dict[Tensor]): The actions output by the policies.
+        """
+        evalQ, argmax_action = {}, {}
+        agent_list = self.model_keys if agent_key is None else [agent_key]
+
         if avail_actions is not None:
-            avail_actions = Tensor(avail_actions)
-            evalQ_detach = evalQ.clone().detach()
-            evalQ_detach[avail_actions == 0] = -9999999
-            argmax_action = evalQ_detach.argmax(dim=-1, keepdim=False)
-        else:
-            argmax_action = evalQ.argmax(dim=-1, keepdim=False)
+            avail_actions = {key: Tensor(avail_actions[key]) for key in agent_list}
+
+        for key in agent_list:
+            if self.use_rnn:
+                outputs = self.representation[key](observation[key], *rnn_hidden[key])
+                rnn_hidden = (outputs['rnn_hidden'], outputs['rnn_cell'])
+            else:
+                outputs = self.representation[key](observation[key])
+                rnn_hidden = None
+
+            if self.use_parameter_sharing:
+                q_inputs = torch.concat([outputs['state'], agent_ids], dim=-1)
+            else:
+                q_inputs = outputs['state']
+            evalQ[key] = self.eval_Qhead[key](q_inputs)
+
+            if avail_actions is not None:
+                evalQ_detach = evalQ[key].clone().detach()
+                evalQ_detach[avail_actions[key] == 0] = -9999999
+                argmax_action[key] = evalQ_detach.argmax(dim=-1, keepdim=False)
+            else:
+                argmax_action[key] = evalQ[key].argmax(dim=-1, keepdim=False)
+
         return rnn_hidden, argmax_action, evalQ
 
-    def target_Q(self, observation: Tensor, agent_ids: Tensor, *rnn_hidden: Tensor):
-        if self.use_rnn:
-            outputs = self.target_representation(observation, *rnn_hidden)
-            rnn_hidden = (outputs['rnn_hidden'], outputs['rnn_cell'])
-        else:
-            outputs = self.target_representation(observation)
-            rnn_hidden = None
-        q_inputs = torch.concat([outputs['state'], agent_ids], dim=-1)
-        return rnn_hidden, self.target_Qhead(q_inputs)
+    def Qtarget(self, next_observation: Dict[str, Tensor], agent_ids: Dict[str, Tensor],
+                *rnn_hidden: Tensor, agent_key: str = None):
+        """
+        Returns the Q^target of next observations and actions pairs.
+
+        Parameters:
+            next_observation (Dict[Tensor]): The observations of next step.
+            agent_ids (Dict[Tensor]): The agents' ids (for parameter sharing).
+            *rnn_hidden (List[Tensor]): The hidden variables of the RNN.
+            agent_key (str): Calculate actions for specified agent.
+
+        Returns:
+            rnn_hidden: The new hidden variables for RNN.
+            q_target: The evaluations of Q^target.
+        """
+        q_target = {}
+        agent_list = self.model_keys if agent_key is None else [agent_key]
+        for key in agent_list:
+            if self.use_rnn:
+                outputs = self.target_representation[key](next_observation[key], *rnn_hidden)
+                rnn_hidden = (outputs['rnn_hidden'], outputs['rnn_cell'])
+            else:
+                outputs = self.target_representation[key](next_observation[key])
+                rnn_hidden = None
+            if self.use_parameter_sharing:
+                q_inputs = torch.concat([outputs['state'], agent_ids], dim=-1)
+            else:
+                q_inputs = outputs['state']
+            q_target[key] = self.target_Qhead[key](q_inputs)
+        return rnn_hidden, q_target
 
     def copy_target(self):
         for k in self.model_keys:
@@ -822,8 +872,10 @@ class MATD3_Policy(Independent_DDPG_Policy, Module):
     def soft_update(self, tau=0.005):
         for k in self.model_keys:
             param = [zip(self.actor_representation[k].parameters(), self.target_actor_representation[k].parameters()),
-                     zip(self.critic_A_representation[k].parameters(), self.target_critic_A_representation[k].parameters()),
-                     zip(self.critic_B_representation[k].parameters(), self.target_critic_B_representation[k].parameters()),
+                     zip(self.critic_A_representation[k].parameters(),
+                         self.target_critic_A_representation[k].parameters()),
+                     zip(self.critic_B_representation[k].parameters(),
+                         self.target_critic_B_representation[k].parameters()),
                      zip(self.actor[k].parameters(), self.target_actor[k].parameters()),
                      zip(self.critic_A[k].parameters(), self.target_critic_A[k].parameters()),
                      zip(self.critic_B[k].parameters(), self.target_critic_B[k].parameters())]

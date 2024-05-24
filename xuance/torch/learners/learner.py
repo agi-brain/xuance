@@ -74,6 +74,7 @@ class LearnerMAS(ABC):
         self.n_agents = config.n_agents
         self.dim_id = self.n_agents
 
+        self.use_parameter_sharing = config.use_parameter_sharing
         self.model_keys = model_keys
         self.policy = policy
         self.optimizer = optimizer

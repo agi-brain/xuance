@@ -21,7 +21,6 @@ class MATD3_Learner(LearnerMAS):
         self.mse_loss = nn.MSELoss()
         self.actor_update_delay = config.actor_update_delay
         super(MATD3_Learner, self).__init__(config, model_keys, policy, optimizer, scheduler)
-        self.use_parameter_sharing = config.use_parameter_sharing
         self.optimizer = {key: {'actor': optimizer[key][0],
                                 'critic': optimizer[key][1]} for key in self.model_keys}
         self.scheduler = {key: {'actor': scheduler[key][0],

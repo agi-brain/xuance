@@ -28,6 +28,7 @@ class DummyVecMutliAgentEnv(VecEnv):
         self.state_space = env.state_space  # Type: Box
         self.buf_state = np.zeros((self.num_envs,) + self.state_space.shape, dtype=self.state_space.dtype)
         self.buf_obs = [{} for _ in range(self.num_envs)]
+        self.buf_avail_actions = [{} for _ in range(self.num_envs)]
         self.buf_info = [{} for _ in range(self.num_envs)]
 
         self.actions = None
@@ -70,9 +71,11 @@ class DummyVecMutliAgentEnv(VecEnv):
         for e in range(self.num_envs):
             action_n = self.actions[e]
             self.buf_obs[e], rew_dict[e], terminated_dict[e], truncated[e], self.buf_info[e] = self.envs[e].step(action_n)
+            self.buf_avail_actions[e] = self.buf_info[e]['avail_actions']
             if all(terminated_dict[e].values()) or truncated[e]:
-                obs_reset_dict, _ = self.envs[e].reset()
+                obs_reset_dict, info_reset = self.envs[e].reset()
                 self.buf_info[e]["reset_obs"] = obs_reset_dict
+                self.buf_info[e]["reset_avail_actions"] = info_reset['avail_actions']
         self.waiting = False
         return self.buf_obs.copy(), rew_dict, terminated_dict, truncated, self.buf_info.copy()
 
@@ -87,3 +90,4 @@ class DummyVecMutliAgentEnv(VecEnv):
 
     def render(self, mode):
         return [env.render(mode) for env in self.envs]
+

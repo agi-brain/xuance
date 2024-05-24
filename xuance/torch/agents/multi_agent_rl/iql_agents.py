@@ -4,6 +4,8 @@ from tqdm import tqdm
 from copy import deepcopy
 from operator import itemgetter
 from argparse import Namespace
+from typing import Optional, Dict, List
+from torch.distributions import Categorical
 from xuance.environment import DummyVecMutliAgentEnv
 from xuance.torch import Tensor
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
@@ -27,15 +29,19 @@ class IQL_Agents(MARLAgents):
                  envs: DummyVecMutliAgentEnv):
         super(IQL_Agents, self).__init__(config, envs)
 
-        self.use_recurrent = config.use_recurrent
         self.start_greedy, self.end_greedy = config.start_greedy, config.end_greedy
         self.egreedy = self.start_greedy
         self.delta_egreedy = (self.start_greedy - self.end_greedy) / config.decay_step_greedy
 
+        # build policy, optimizers, schedulers
+        self.use_recurrent = config.use_recurrent
+        self.rnn = config.rnn if hasattr(config, "rnn") else None
         self.policy = self._build_policy()
-        optimizer = torch.optim.Adam(self.policy.parameters(), config.learning_rate, eps=1e-5)
-        scheduler = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=1.0, end_factor=0.5,
-                                                      total_iters=self.config.running_steps)
+        optimizer, scheduler = {}, {}
+        for key in self.model_keys:
+            optimizer[key] = torch.optim.Adam(self.policy.parameters_model[key], config.learning_rate, eps=1e-5)
+            scheduler[key] = torch.optim.lr_scheduler.LinearLR(optimizer[key], start_factor=1.0, end_factor=0.5,
+                                                               total_iters=self.config.running_steps)
 
         # create experience replay buffer
         input_buffer = dict(n_agents=self.config.n_agents,
@@ -46,7 +52,8 @@ class IQL_Agents(MARLAgents):
                             n_envs=self.n_envs,
                             buffer_size=self.config.buffer_size,
                             batch_size=self.config.batch_size,
-                            max_episode_length=envs.max_episode_length)
+                            max_episode_length=envs.max_episode_length,
+                            store_avail_actions=True)
         if self.use_parameter_sharing:
             buffer = MARL_OffPolicyBuffer_RNN if self.use_recurrent else MARL_OffPolicyBuffer_Share
             self.memory = buffer(**input_buffer)
@@ -89,11 +96,13 @@ class IQL_Agents(MARLAgents):
 
         # build policies
         if self.config.policy == "Basic_Q_network_marl":
+
             policy = REGISTRY_Policy["Basic_Q_network_marl"](
                 action_space=self.action_space, n_agents=self.n_agents, representation=representation,
                 hidden_size=self.config.q_hidden_size,
                 normalize=normalize_fn, initialize=initializer, activation=activation,
-                device=device, use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys)
+                device=device, use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
+                use_recurrent=self.use_recurrent, rnn=self.rnn)
         else:
             raise f"The IQL currently does not support the policy named {self.config.policy}."
 
@@ -102,43 +111,114 @@ class IQL_Agents(MARLAgents):
     def _build_learner(self, config, model_keys, policy, optimizer, scheduler):
         return IQL_Learner(config, model_keys, policy, optimizer, scheduler)
 
-    def act(self, obs_n, *rnn_hidden, avail_actions=None, test_mode=False):
-        batch_size = obs_n.shape[0]
-        agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(batch_size, -1, -1).to(self.device)
-        obs_in = torch.Tensor(obs_n).view([batch_size, self.n_agents, -1]).to(self.device)
-        if self.use_recurrent:
-            batch_agents = batch_size * self.n_agents
-            hidden_state, greedy_actions, _ = self.policy(obs_in.view(batch_agents, 1, -1),
-                                                          agents_id.view(batch_agents, 1, -1),
-                                                          *rnn_hidden,
-                                                          avail_actions=avail_actions.reshape(batch_agents, 1, -1))
-            greedy_actions = greedy_actions.view(batch_size, self.n_agents)
-        else:
-            hidden_state, greedy_actions, _ = self.policy(obs_in, agents_id, avail_actions=avail_actions)
-        greedy_actions = greedy_actions.cpu().detach().numpy()
+    def store_experience(self, obs_dict, actions_dict, obs_next_dict, rewards_dict, terminals_dict, info):
+        """
+        Store experience data into replay buffer.
 
-        if test_mode:
-            return hidden_state, greedy_actions
+        Parameters:
+            obs_dict (List[dict]): Observations for each agent in self.agent_keys.
+            actions_dict (List[dict]): Actions for each agent in self.agent_keys.
+            obs_next_dict (List[dict]): Next observations for each agent in self.agent_keys.
+            rewards_dict (List[dict]): Rewards for each agent in self.agent_keys.
+            terminals_dict (List[dict]): Terminated values for each agent in self.agent_keys.
+            info (List[dict]): Other information for the environment at current step.
+        """
+        if self.use_parameter_sharing:
+            experience_data = {
+                'obs': np.array([itemgetter(*self.agent_keys)(data) for data in obs_dict]),
+                'actions': np.array([itemgetter(*self.agent_keys)(data) for data in actions_dict]),
+                'obs_next': np.array([itemgetter(*self.agent_keys)(data) for data in obs_next_dict]),
+                'rewards': np.array([itemgetter(*self.agent_keys)(data) for data in rewards_dict]),
+                'terminals': np.array([itemgetter(*self.agent_keys)(data) for data in terminals_dict]),
+                'agent_mask': np.array([itemgetter(*self.agent_keys)(data['agent_mask']) for data in info]),
+                'avail_actions': np.array([itemgetter(*self.agent_keys)(data['avail_actions']) for data in info]),
+            }
         else:
-            if avail_actions is None:
-                random_actions = np.random.choice(self.dim_act, [self.nenvs, self.n_agents])
-            else:
-                random_actions = Categorical(torch.Tensor(avail_actions)).sample().numpy()
-            if np.random.rand() < self.egreedy:
-                return hidden_state, random_actions
-            else:
-                return hidden_state, greedy_actions
+            raise NotImplementedError
+        self.memory.store(experience_data)
 
-    def train(self, i_step, n_epoch=1):
-        if self.egreedy >= self.end_greedy:
-            self.egreedy = self.start_greedy - self.delta_egreedy * i_step
-        info_train = {}
-        if i_step > self.start_training:
-            for i_epoch in range(n_epoch):
-                sample = self.memory.sample()
-                if self.use_recurrent:
-                    info_train = self.learner.update_recurrent(sample)
+    def action(self, obs_dict, *rnn_hidden,
+               avail_actions_dict: Optional[list] = None,
+               test_mode: Optional[bool] = False):
+        """
+        Returns actions for agents.
+
+        Parameters:
+            obs_dict (dict): Observations for each agent in self.agent_keys
+            *rnn_hidden (List[Tensor]): The hidden variables of the RNN.
+            avail_actions_dict (Optional[list]): Actions mask values, default is None.
+            test_mode (Optional[bool]): True for testing without noises.
+
+        Returns:
+            actions_dict (dict): The output actions.
+        """
+        n_env = len(obs_dict)
+        if self.use_parameter_sharing:
+            obs_tensor = Tensor(np.array([itemgetter(*self.agent_keys)(env_obs) for env_obs in obs_dict]))
+            obs_input = {self.agent_keys[0]: obs_tensor}
+            avail_actions_tensor = Tensor(np.array([itemgetter(*self.agent_keys)(mask) for mask in avail_actions_dict]))
+            avail_actions_input = {self.agent_keys[0]: avail_actions_tensor}
+            agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(n_env, -1, -1).to(self.device)
+
+            hidden_state, actions, _ = self.policy(obs_input, agents_id, avail_actions=avail_actions_input)
+            actions = actions[self.agent_keys[0]].cpu().detach().numpy()
+            actions_dict = [{key: actions[e, agt] for agt, key in enumerate(self.agent_keys)} for e in range(n_env)]
+            if not test_mode:
+                random_actions = [{k: Categorical(Tensor(avail_actions_dict[e][k])).sample().numpy()
+                                   for k in self.agent_keys} for e in range(n_env)]
+                if np.random.rand() < self.egreedy:
+                    return hidden_state, random_actions
                 else:
-                    info_train = self.learner.update(sample)
-        info_train["epsilon-greedy"] = self.egreedy
-        return info_train
+                    return hidden_state, actions_dict
+        else:
+            NotImplementedError
+
+    def train(self, train_steps):
+        """
+        Train the model for numerous steps.
+
+        Parameters:
+            train_steps (int): The number of steps to train the model.
+        """
+        obs_dict = self.envs.buf_obs
+        avail_actions = self.envs.buf_avail_actions
+        rnn_hidden_policy = {}
+        for _ in tqdm(range(train_steps)):
+            step_info = {}
+            if self.current_step < self.start_training:
+                actions_dict = [{k: self.action_space[k].sample() for k in self.agent_keys} for _ in range(self.n_envs)]
+            else:
+                rnn_hidden_next, actions_dict = self.action(obs_dict, *rnn_hidden_policy,
+                                                            avail_actions_dict=avail_actions,
+                                                            test_mode=False)
+            next_obs_dict, rewards_dict, terminated_dict, truncated, info = self.envs.step(actions_dict)
+            self.store_experience(obs_dict, actions_dict, next_obs_dict, rewards_dict, terminated_dict, info)
+            if self.current_step >= self.start_training and self.current_step % self.training_frequency == 0:
+                sample = self.memory.sample()
+                step_info = self.learner.update(sample)
+                step_info["epsilon_greedy"] = self.egreedy
+                self.log_infos(step_info, self.current_step)
+            obs_dict = deepcopy(next_obs_dict)
+            avail_actions = self.envs.buf_avail_actions
+
+            for i in range(self.n_envs):
+                if all(terminated_dict[i].values()) or truncated[i]:
+                    obs_dict[i] = info[i]["reset_obs"]
+                    avail_actions[i] = info[i]["reset_avail_actions"]
+                    self.envs.buf_obs[i] = info[i]["reset_obs"]
+                    self.envs.buf_avail_actions[i] = info[i]["reset_avail_actions"]
+                    if self.use_wandb:
+                        step_info["Episode-Steps/env-%d" % i] = info[i]["episode_step"]
+                        step_info["Train-Episode-Rewards/env-%d" % i] = info[i]["episode_score"]
+                    else:
+                        step_info["Episode-Steps"] = {"env-%d" % i: info[i]["episode_step"]}
+                        step_info["Train-Episode-Rewards"] = {
+                            "env-%d" % i: np.mean(itemgetter(*self.agent_keys)(info[i]["episode_score"]))}
+                    self.log_infos(step_info, self.current_step)
+
+            self.current_step += self.n_envs
+            if self.egreedy >= self.end_greedy:
+                self.egreedy = self.egreedy - self.delta_egreedy
+
+    def test(self, env_fn, test_episodes):
+        return
