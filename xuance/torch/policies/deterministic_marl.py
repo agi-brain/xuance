@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from copy import deepcopy
 from typing import Sequence, Optional, Callable, Union, Dict
-from gym.spaces import Discrete, Space
+from gym.spaces import Discrete
 from torch.distributions import Categorical
 from xuance.torch.policies import ActorNet, CriticNet, VDN_mixer, QTRAN_base, QMIX_FF_mixer
 from xuance.torch.utils import ModuleType, mlp_block
@@ -751,7 +751,9 @@ class MATD3_Policy(Independent_DDPG_Policy, Module):
             agent_key (str): Calculate actions for specified agent.
 
         Returns:
-            q_eval: The evaluations of Q^policy.
+            q_eval_A (Dict[Tensor]): The evaluations of Q^policy calculated by critic A.
+            q_eval_B (Dict[Tensor]): The evaluations of Q^policy calculated by critic B.
+            q_eval (Dict[Tensor]): The evaluations of Q^policy averaged by critic A and Critic B.
         """
         q_eval, q_eval_A, q_eval_B = {}, {}, {}
         agent_list = self.model_keys if agent_key is None else [agent_key]
@@ -794,7 +796,7 @@ class MATD3_Policy(Independent_DDPG_Policy, Module):
             agent_key (str): Calculate actions for specified agent.
 
         Returns:
-            q_target: The evaluations of Q^target.
+            q_target (Dict[Tensor]): The evaluations of Q^target.
         """
         q_target = {}
         agent_list = self.model_keys if agent_key is None else [agent_key]
