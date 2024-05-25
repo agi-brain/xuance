@@ -113,14 +113,13 @@ class IDDPG_Agents(MARLAgents):
             info (List[dict]): Other information for the environment at current step.
         """
         if self.use_parameter_sharing:
-            k = self.model_keys[0]
             experience_data = {
-                'obs': {k: np.array([itemgetter(*self.agent_keys)(data) for data in obs_dict])},
-                'actions': {k: np.array([itemgetter(*self.agent_keys)(data) for data in actions_dict])},
-                'obs_next': {k: np.array([itemgetter(*self.agent_keys)(data) for data in obs_next_dict])},
-                'rewards': {k: np.array([itemgetter(*self.agent_keys)(data) for data in rewards_dict])},
-                'terminals': {k: np.array([itemgetter(*self.agent_keys)(data) for data in terminals_dict])},
-                'agent_mask': {k: np.array([itemgetter(*self.agent_keys)(data['agent_mask']) for data in info])},
+                'obs': np.array([itemgetter(*self.agent_keys)(data) for data in obs_dict]),
+                'actions': np.array([itemgetter(*self.agent_keys)(data) for data in actions_dict]),
+                'obs_next': np.array([itemgetter(*self.agent_keys)(data) for data in obs_next_dict]),
+                'rewards': np.array([itemgetter(*self.agent_keys)(data) for data in rewards_dict]),
+                'terminals': np.array([itemgetter(*self.agent_keys)(data) for data in terminals_dict]),
+                'agent_mask': np.array([itemgetter(*self.agent_keys)(data['agent_mask']) for data in info]),
             }
         else:
             # experience_data = {key: {'obs': [itemgetter(key)(data) for data in obs_dict],

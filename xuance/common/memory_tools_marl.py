@@ -627,8 +627,11 @@ class MARL_OffPolicyBuffer(BaseBuffer):
             if data_key in ['state', 'state_next']:
                 self.data[data_key][:, self.ptr] = step_data[data_key]
                 continue
-            for agt_key in self.model_keys:
-                self.data[data_key][agt_key][:, self.ptr] = step_data[data_key][agt_key]
+            if self.use_parameter_sharing:
+                self.data[data_key][:, self.ptr] = step_data[data_key]
+            else:
+                for agt_key in self.model_keys:
+                    self.data[data_key][agt_key][:, self.ptr] = step_data[data_key][agt_key]
         self.ptr = (self.ptr + 1) % self.n_size
         self.size = np.min([self.size + 1, self.n_size])
 
@@ -637,13 +640,16 @@ class MARL_OffPolicyBuffer(BaseBuffer):
             batch_size = self.batch_size
         env_choices = np.random.choice(self.n_envs, batch_size)
         step_choices = np.random.choice(self.size, batch_size)
-        samples = {}
-        for data_key in self.data_keys:
-            if data_key in ['state', 'state_next']:
-                samples[data_key] = self.data[data_key][env_choices, step_choices]
-                continue
-            samples[data_key] = {agt_key: self.data[data_key][agt_key][env_choices, step_choices]
-                                 for agt_key in self.model_keys}
+        if self.use_parameter_sharing:
+            samples = {k: self.data[k][env_choices, step_choices] for k in self.data_keys}
+        else:
+            samples = {}
+            for data_key in self.data_keys:
+                if data_key in ['state', 'state_next']:
+                    samples[data_key] = self.data[data_key][env_choices, step_choices]
+                    continue
+                samples[data_key] = {agt_key: self.data[data_key][agt_key][env_choices, step_choices]
+                                     for agt_key in self.agent_keys}
         return samples
 
 
