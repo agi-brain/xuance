@@ -113,30 +113,23 @@ class IDDPG_Agents(MARLAgents):
             info (List[dict]): Other information for the environment at current step.
         """
         if self.use_parameter_sharing:
+            k = self.agent_keys[0]
             experience_data = {
-                'obs': np.array([itemgetter(*self.agent_keys)(data) for data in obs_dict]),
-                'actions': np.array([itemgetter(*self.agent_keys)(data) for data in actions_dict]),
-                'obs_next': np.array([itemgetter(*self.agent_keys)(data) for data in obs_next_dict]),
-                'rewards': np.array([itemgetter(*self.agent_keys)(data) for data in rewards_dict]),
-                'terminals': np.array([itemgetter(*self.agent_keys)(data) for data in terminals_dict]),
-                'agent_mask': np.array([itemgetter(*self.agent_keys)(data['agent_mask']) for data in info]),
+                'obs': {k: np.array([itemgetter(*self.agent_keys)(data) for data in obs_dict])},
+                'actions': {k: np.array([itemgetter(*self.agent_keys)(data) for data in actions_dict])},
+                'obs_next': {k: np.array([itemgetter(*self.agent_keys)(data) for data in obs_next_dict])},
+                'rewards': {k: np.array([itemgetter(*self.agent_keys)(data) for data in rewards_dict])},
+                'terminals': {k: np.array([itemgetter(*self.agent_keys)(data) for data in terminals_dict])},
+                'agent_mask': {k: np.array([itemgetter(*self.agent_keys)(data['agent_mask']) for data in info])},
             }
         else:
-            # experience_data = {key: {'obs': [itemgetter(key)(data) for data in obs_dict],
-            #                          'actions': [itemgetter(key)(data) for data in actions_dict],
-            #                          'obs_next': [itemgetter(key)(data) for data in obs_next_dict],
-            #                          'rewards': [itemgetter(key)(data) for data in rewards_dict],
-            #                          'terminals': [itemgetter(key)(data) for data in terminals_dict],
-            #                          'agent_mask': [itemgetter(key)(data['agent_mask']) for data in info],
-            #                          } for key in self.agent_keys}
             experience_data = {
                 'obs': {k: np.array([itemgetter(k)(data) for data in obs_dict]) for k in self.agent_keys},
                 'actions': {k: np.array([itemgetter(k)(data) for data in actions_dict]) for k in self.agent_keys},
                 'obs_next': {k: np.array([itemgetter(k)(data) for data in obs_next_dict]) for k in self.agent_keys},
                 'rewards': {k: np.array([itemgetter(k)(data) for data in rewards_dict]) for k in self.agent_keys},
                 'terminals': {k: np.array([itemgetter(k)(data) for data in terminals_dict]) for k in self.agent_keys},
-                'agent_mask': {k: np.array([itemgetter(k)(data['agent_mask']) for data in info]) for k in
-                               self.agent_keys},
+                'agent_mask': {k: np.array([itemgetter(k)(data['agent_mask']) for data in info]) for k in self.agent_keys},
             }
         self.memory.store(experience_data)
 
