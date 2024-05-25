@@ -28,10 +28,11 @@ class IQL_Agents(MARLAgents):
                  config: Namespace,
                  envs: DummyVecMutliAgentEnv):
         super(IQL_Agents, self).__init__(config, envs)
+        self.use_actions_mask = config.use_actions_mask
 
         self.start_greedy, self.end_greedy = config.start_greedy, config.end_greedy
         self.egreedy = self.start_greedy
-        self.delta_egreedy = (self.start_greedy - self.end_greedy) / config.decay_step_greedy
+        self.delta_egreedy = (self.start_greedy - self.end_greedy) / (config.decay_step_greedy / self.n_envs)
 
         # build policy, optimizers, schedulers
         self.use_recurrent = config.use_recurrent
@@ -53,15 +54,19 @@ class IQL_Agents(MARLAgents):
                             buffer_size=self.config.buffer_size,
                             batch_size=self.config.batch_size,
                             max_episode_length=envs.max_episode_length,
-                            store_avail_actions=True)
+                            store_avail_actions=self.use_actions_mask,
+                            n_actions=self.action_space[self.agent_keys[0]].n)
         if self.use_parameter_sharing:
             buffer = MARL_OffPolicyBuffer_RNN if self.use_recurrent else MARL_OffPolicyBuffer_Share
             self.memory = buffer(**input_buffer)
         else:
             input_buffer['obs_space'] = self.observation_space
             input_buffer['act_space'] = self.action_space
+            input_buffer['n_actions'] = {k: self.action_space[k].n for k in self.agent_keys}
             buffer = MARL_OffPolicyBuffer_RNN if self.use_recurrent else MARL_OffPolicyBuffer_Share
             self.memory = buffer(**input_buffer)
+
+        self.rnn_hidden_state = self.init_rnn_hidden()
 
         # create learner
         self.learner = self._build_learner(self.config, self.model_keys, self.policy, optimizer, scheduler)
@@ -137,41 +142,73 @@ class IQL_Agents(MARLAgents):
             raise NotImplementedError
         self.memory.store(experience_data)
 
-    def action(self, obs_dict, *rnn_hidden,
-               avail_actions_dict: Optional[list] = None,
+    def init_rnn_hidden(self):
+        """
+        Returns initialized hidden states of RNN.
+        """
+        rnn_hidden_states = {}
+        for key in self.model_keys:
+            if self.use_recurrent:
+                rnn_hidden_states[key] = self.policy.representation[key].init_hidden()
+            else:
+                rnn_hidden_states[key] = [None, None]
+        return rnn_hidden_states
+
+    def action(self, obs_dict,
+               avail_actions_dict: Optional[List[dict]] = None,
+               rnn_hidden: Optional[dict] = None,
                test_mode: Optional[bool] = False):
         """
         Returns actions for agents.
 
         Parameters:
-            obs_dict (dict): Observations for each agent in self.agent_keys
-            *rnn_hidden (List[Tensor]): The hidden variables of the RNN.
-            avail_actions_dict (Optional[list]): Actions mask values, default is None.
+            obs_dict (dict): Observations for each agent in self.agent_keys.
+            avail_actions_dict (Optional[List[dict]]): Actions mask values, default is None.
+            rnn_hidden (Optional[dict]): The hidden variables of the RNN.
             test_mode (Optional[bool]): True for testing without noises.
 
         Returns:
             actions_dict (dict): The output actions.
         """
         n_env = len(obs_dict)
-        if self.use_parameter_sharing:
-            obs_tensor = Tensor(np.array([itemgetter(*self.agent_keys)(env_obs) for env_obs in obs_dict]))
-            obs_input = {self.agent_keys[0]: obs_tensor}
+        if self.use_actions_mask:
             avail_actions_tensor = Tensor(np.array([itemgetter(*self.agent_keys)(mask) for mask in avail_actions_dict]))
             avail_actions_input = {self.agent_keys[0]: avail_actions_tensor}
+        else:
+            avail_actions_input = None
+
+        if self.use_parameter_sharing:
+            # prepare input tensors
+            obs_tensor = Tensor(np.array([itemgetter(*self.agent_keys)(env_obs) for env_obs in obs_dict]))
+            obs_input = {self.agent_keys[0]: obs_tensor}
             agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(n_env, -1, -1).to(self.device)
 
-            hidden_state, actions, _ = self.policy(obs_input, agents_id, avail_actions=avail_actions_input)
-            actions = actions[self.agent_keys[0]].cpu().detach().numpy()
-            actions_dict = [{key: actions[e, agt] for agt, key in enumerate(self.agent_keys)} for e in range(n_env)]
-            if not test_mode:
-                random_actions = [{k: Categorical(Tensor(avail_actions_dict[e][k])).sample().numpy()
-                                   for k in self.agent_keys} for e in range(n_env)]
-                if np.random.rand() < self.egreedy:
-                    return hidden_state, random_actions
-                else:
-                    return hidden_state, actions_dict
+            hidden_state, actions, _ = self.policy(obs_input, agents_id, avail_actions=avail_actions_input,
+                                                   rnn_hidden=rnn_hidden)
+            actions_array = actions[self.agent_keys[0]].cpu().detach().numpy()
+            actions_dict = [{k: actions_array[e, i] for i, k in enumerate(self.agent_keys)} for e in range(n_env)]
         else:
-            NotImplementedError
+            # prepare input tensors
+            obs_input = {key: np.array([itemgetter(key)(env_obs) for env_obs in obs_dict]) for key in self.agent_keys}
+            hidden_state, actions, _ = self.policy(obs_input, avail_actions=avail_actions_input,
+                                                   rnn_hidden=rnn_hidden)
+            actions_dict_ = {}
+            for key in self.model_keys:
+                actions_dict_[key] = actions[key].cpu().detach().numpy()
+            actions_dict = [{k: actions_dict_[k][e] for k in self.agent_keys} for e in range(n_env)]
+
+        if not test_mode:  # get random actions
+            if np.random.rand() < self.egreedy:
+                if self.use_actions_mask:
+                    actions_random = [{k: Categorical(Tensor(avail_actions_dict[e][k])).sample().numpy()
+                                       for k in self.agent_keys} for e in range(n_env)]
+                else:
+                    actions_random = [{k: self.action_space[k].sample() for k in self.agent_keys} for _ in range(n_env)]
+                return hidden_state, actions_random
+            else:
+                return hidden_state, actions_dict
+        else:
+            return hidden_state, actions_dict
 
     def train(self, train_steps):
         """
@@ -182,15 +219,12 @@ class IQL_Agents(MARLAgents):
         """
         obs_dict = self.envs.buf_obs
         avail_actions = self.envs.buf_avail_actions
-        rnn_hidden_policy = {}
         for _ in tqdm(range(train_steps)):
             step_info = {}
-            if self.current_step < self.start_training:
-                actions_dict = [{k: self.action_space[k].sample() for k in self.agent_keys} for _ in range(self.n_envs)]
-            else:
-                rnn_hidden_next, actions_dict = self.action(obs_dict, *rnn_hidden_policy,
-                                                            avail_actions_dict=avail_actions,
-                                                            test_mode=False)
+            rnn_hidden_next, actions_dict = self.action(obs_dict,
+                                                        avail_actions_dict=avail_actions,
+                                                        rnn_hidden=self.rnn_hidden_state,
+                                                        test_mode=False)
             next_obs_dict, rewards_dict, terminated_dict, truncated, info = self.envs.step(actions_dict)
             self.store_experience(obs_dict, actions_dict, next_obs_dict, rewards_dict, terminated_dict, info)
             if self.current_step >= self.start_training and self.current_step % self.training_frequency == 0:
@@ -200,6 +234,7 @@ class IQL_Agents(MARLAgents):
                 self.log_infos(step_info, self.current_step)
             obs_dict = deepcopy(next_obs_dict)
             avail_actions = self.envs.buf_avail_actions
+            self.rnn_hidden_state = deepcopy(rnn_hidden_next)
 
             for i in range(self.n_envs):
                 if all(terminated_dict[i].values()) or truncated[i]:

@@ -586,6 +586,7 @@ class MARL_OffPolicyBuffer_Share(BaseBuffer):
         self.batch_size = batch_size
         self.store_global_state = False if self.state_space is None else True
         self.store_avail_actions = kwargs['store_avail_actions'] if 'store_avail_actions' in kwargs else False
+        self.n_actions = kwargs['n_actions'] if 'n_actions' in kwargs else None
         self.data = {}
         self.clear()
         self.keys = self.data.keys()
@@ -601,13 +602,14 @@ class MARL_OffPolicyBuffer_Share(BaseBuffer):
         }
         if self.store_global_state:
             state_shape = space2shape(self.state_space)
-            self.data.update({'state': create_memory(state_shape, self.n_envs, self.n_size, None),
-                              'state_next': create_memory(state_shape, self.n_envs, self.n_size, None)})
-        if self.store_avail_actions:
-            n_actions = self.act_space
             self.data.update({
-                "avail_actions": create_memory(space2shape(self.act_space), self.n_envs, self.n_size, self.n_agents, np.bool_)
-                              })
+                'state': create_memory(state_shape, self.n_envs, self.n_size, None),
+                'state_next': create_memory(state_shape, self.n_envs, self.n_size, None)
+            })
+        if self.store_avail_actions:
+            self.data.update({
+                "avail_actions": create_memory((self.n_actions, ), self.n_envs, self.n_size, self.n_agents, np.bool_)
+            })
         self.ptr, self.size = 0, 0
 
     def store(self, step_data):

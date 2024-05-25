@@ -1,6 +1,6 @@
 import torch
 from copy import deepcopy
-from typing import Sequence, Optional, Callable, Union, Dict
+from typing import Sequence, Optional, Callable, Union, Dict, List
 from gym.spaces import Discrete, Box
 from torch.distributions import Categorical
 from xuance.torch.policies import BasicQhead, ActorNet, CriticNet, VDN_mixer, QTRAN_base, QMIX_FF_mixer
@@ -43,22 +43,25 @@ class BasicQnetwork(Module):
             self.parameters_model[key] = list(self.representation[key].parameters()) + list(
                 self.eval_Qhead[key].parameters())
 
-    def forward(self, observation: Dict[str, Tensor], agent_ids: Tensor = None, *rnn_hidden: Tensor,
-                avail_actions: Dict[str, Tensor] = None, agent_key: str = None):
+    def forward(self, observation: Dict[str, Tensor], agent_ids: Tensor = None,
+                avail_actions: Dict[str, Tensor] = None, agent_key: str = None,
+                rnn_hidden: Optional[Dict[str, List[Tensor]]] = None,):
         """
         Returns actions of the policy.
 
         Parameters:
             observation (Dict[Tensor]): The input observations for the policies.
             agent_ids (Tensor): The agents' ids (for parameter sharing).
-            *rnn_hidden (List[Tensor]): The hidden variables of the RNN.
             avail_actions (Dict[str, Tensor]): Actions mask values, default is None.
             agent_key (str): Calculate actions for specified agent.
+            rnn_hidden (Optional[Dict[str, List[Tensor]]]): The hidden variables of the RNN.
 
         Returns:
-            actions (Dict[Tensor]): The actions output by the policies.
+            rnn_hidden_new (Optional[Dict[str, List[Tensor]]]): The new hidden variables of the RNN.
+            argmax_action (Dict[str, Tensor]): The actions output by the policies.
+            evalQ (Dict[str, Tensor])： The evaluations of observation-action pairs.
         """
-        evalQ, argmax_action = {}, {}
+        rnn_hidden_new, evalQ, argmax_action = {}, {}, {}
         agent_list = self.model_keys if agent_key is None else [agent_key]
 
         if avail_actions is not None:
@@ -67,10 +70,10 @@ class BasicQnetwork(Module):
         for key in agent_list:
             if self.use_rnn:
                 outputs = self.representation[key](observation[key], *rnn_hidden[key])
-                rnn_hidden = (outputs['rnn_hidden'], outputs['rnn_cell'])
+                rnn_hidden_new[key] = (outputs['rnn_hidden'], outputs['rnn_cell'])
             else:
                 outputs = self.representation[key](observation[key])
-                rnn_hidden = None
+                rnn_hidden_new[key] = [None, None]
 
             if self.use_parameter_sharing:
                 q_inputs = torch.concat([outputs['state'], agent_ids], dim=-1)
@@ -85,7 +88,7 @@ class BasicQnetwork(Module):
             else:
                 argmax_action[key] = evalQ[key].argmax(dim=-1, keepdim=False)
 
-        return rnn_hidden, argmax_action, evalQ
+        return rnn_hidden_new, argmax_action, evalQ
 
     def Qtarget(self, next_observation: Dict[str, Tensor], agent_ids: Dict[str, Tensor],
                 *rnn_hidden: Tensor, agent_key: str = None):

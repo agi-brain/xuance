@@ -38,6 +38,7 @@ class DummyVecMutliAgentEnv(VecEnv):
         """Reset the vectorized environments."""
         for e in range(self.num_envs):
             self.buf_obs[e], self.buf_info[e] = self.envs[e].reset()
+            self.buf_avail_actions[e] = self.buf_info[e]['avail_actions']
         return self.buf_obs.copy(), self.buf_info.copy()
 
     def step_async(self, actions):
