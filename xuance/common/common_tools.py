@@ -4,8 +4,9 @@ import time
 import numpy as np
 import scipy.signal
 from copy import deepcopy
-from gym.spaces import Space, Dict
+from gym.spaces import Space
 from types import SimpleNamespace as SN
+from typing import Optional, Dict
 from xuance.configs import method_list
 
 EPS = 1e-8
@@ -283,7 +284,7 @@ def combined_shape(length, shape=None):
     return (length, shape) if np.isscalar(shape) else (length, *shape)
 
 
-def space2shape(observation_space: Space):
+def space2shape(observation_space):
     """Convert gym.space variable to shape
     Args:
         observation_space: the space variable with type of gym.Space.

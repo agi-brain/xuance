@@ -11,7 +11,7 @@ from xuance.torch.representations import REGISTRY_Representation
 from xuance.torch.policies import REGISTRY_Policy
 from xuance.torch.learners import IDDPG_Learner
 from xuance.torch.agents import MARLAgents
-from xuance.common import MARL_OffPolicyBuffer_Share, MARL_OffPolicyBuffer_Split
+from xuance.common import MARL_OffPolicyBuffer
 
 
 class IDDPG_Agents(MARLAgents):
@@ -44,20 +44,15 @@ class IDDPG_Agents(MARLAgents):
                                                                 total_iters=self.config.running_steps)]
 
         # create experience replay buffer
-        input_buffer = dict(n_agents=self.config.n_agents,
-                            agent_keys=self.agent_keys,
-                            state_space=None,
-                            obs_space=self.observation_space[self.agent_keys[0]],
-                            act_space=self.action_space[self.agent_keys[0]],
-                            n_envs=self.n_envs,
-                            buffer_size=self.config.buffer_size,
-                            batch_size=self.config.batch_size)
-        if self.use_parameter_sharing:
-            self.memory = MARL_OffPolicyBuffer_Share(**input_buffer)
-        else:
-            input_buffer['obs_space'] = self.observation_space
-            input_buffer['act_space'] = self.action_space
-            self.memory = MARL_OffPolicyBuffer_Split(**input_buffer)
+        self.memory = MARL_OffPolicyBuffer(n_agents=self.config.n_agents,
+                                           state_space=None,
+                                           obs_space=self.observation_space,
+                                           act_space=self.action_space,
+                                           n_envs=self.n_envs,
+                                           buffer_size=self.config.buffer_size,
+                                           batch_size=self.config.batch_size,
+                                           model_keys=self.model_keys,
+                                           use_parameter_sharing=self.use_parameter_sharing)
 
         # create learner
         self.learner = self._build_learner(self.config, self.model_keys, self.policy, optimizer, scheduler)
@@ -127,13 +122,22 @@ class IDDPG_Agents(MARLAgents):
                 'agent_mask': np.array([itemgetter(*self.agent_keys)(data['agent_mask']) for data in info]),
             }
         else:
-            experience_data = {key: {'obs': [itemgetter(key)(data) for data in obs_dict],
-                                     'actions': [itemgetter(key)(data) for data in actions_dict],
-                                     'obs_next': [itemgetter(key)(data) for data in obs_next_dict],
-                                     'rewards': [itemgetter(key)(data) for data in rewards_dict],
-                                     'terminals': [itemgetter(key)(data) for data in terminals_dict],
-                                     'agent_mask': [itemgetter(key)(data['agent_mask']) for data in info],
-                                     } for key in self.agent_keys}
+            # experience_data = {key: {'obs': [itemgetter(key)(data) for data in obs_dict],
+            #                          'actions': [itemgetter(key)(data) for data in actions_dict],
+            #                          'obs_next': [itemgetter(key)(data) for data in obs_next_dict],
+            #                          'rewards': [itemgetter(key)(data) for data in rewards_dict],
+            #                          'terminals': [itemgetter(key)(data) for data in terminals_dict],
+            #                          'agent_mask': [itemgetter(key)(data['agent_mask']) for data in info],
+            #                          } for key in self.agent_keys}
+            experience_data = {
+                'obs': {k: np.array([itemgetter(k)(data) for data in obs_dict]) for k in self.agent_keys},
+                'actions': {k: np.array([itemgetter(k)(data) for data in actions_dict]) for k in self.agent_keys},
+                'obs_next': {k: np.array([itemgetter(k)(data) for data in obs_next_dict]) for k in self.agent_keys},
+                'rewards': {k: np.array([itemgetter(k)(data) for data in rewards_dict]) for k in self.agent_keys},
+                'terminals': {k: np.array([itemgetter(k)(data) for data in terminals_dict]) for k in self.agent_keys},
+                'agent_mask': {k: np.array([itemgetter(k)(data['agent_mask']) for data in info]) for k in
+                               self.agent_keys},
+            }
         self.memory.store(experience_data)
 
     def action(self, obs_dict, test_mode):

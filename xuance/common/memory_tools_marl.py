@@ -563,7 +563,7 @@ class COMA_Buffer_RNN(MARL_OnPolicyBuffer_RNN):
         self.episode_data['returns'][i_env, :, path_slice] = returns[:-1]
 
 
-class MARL_OffPolicyBuffer_Share(BaseBuffer):
+class MARL_OffPolicyBuffer(BaseBuffer):
     """
     Replay buffer for off-policy MARL algorithms with parameter sharing.
 
@@ -579,26 +579,36 @@ class MARL_OffPolicyBuffer_Share(BaseBuffer):
     """
 
     def __init__(self, n_agents, state_space, obs_space, act_space, n_envs, buffer_size, batch_size, **kwargs):
-        super(MARL_OffPolicyBuffer_Share, self).__init__(n_agents, state_space, obs_space, act_space,
-                                                         n_envs, buffer_size)
-        assert buffer_size % self.n_envs == 0, "buffer_size must be divisible by the number of envs (parallels)"
+        super(MARL_OffPolicyBuffer, self).__init__(n_agents, state_space, obs_space, act_space,
+                                                   n_envs, buffer_size)
+        assert buffer_size % self.n_envs == 0, "buffer_size must be divisible by the number of envs (i.e., parallels)"
         self.n_size = buffer_size // n_envs
         self.batch_size = batch_size
+        self.model_keys = kwargs['model_keys']
         self.store_global_state = False if self.state_space is None else True
+        self.use_parameter_sharing = kwargs['use_parameter_sharing'] if 'use_parameter_sharing' in kwargs else False
         self.store_avail_actions = kwargs['store_avail_actions'] if 'store_avail_actions' in kwargs else False
         self.n_actions = kwargs['n_actions'] if 'n_actions' in kwargs else None
         self.data = {}
         self.clear()
-        self.keys = self.data.keys()
+        self.data_keys = self.data.keys()
 
     def clear(self):
+        num_agents = self.n_agents if self.use_parameter_sharing else None
+        obs_space = {key: self.obs_space[key] for key in self.model_keys}
+        act_space = {key: self.act_space[key] for key in self.model_keys}
+        reward_space = {key: () for key in self.model_keys}
+        terminal_space = {key: () for key in self.model_keys}
+        agent_mask_space = {key: () for key in self.model_keys}
+        avail_actions_space = {key: (self.n_actions,) for key in self.model_keys}
+
         self.data = {
-            'obs': create_memory(space2shape(self.obs_space), self.n_envs, self.n_size, self.n_agents),
-            'actions': create_memory(space2shape(self.act_space), self.n_envs, self.n_size, self.n_agents),
-            'obs_next': create_memory(space2shape(self.obs_space), self.n_envs, self.n_size, self.n_agents),
-            'rewards': create_memory((), self.n_envs, self.n_size, self.n_agents),
-            'terminals': create_memory((), self.n_envs, self.n_size, self.n_agents, np.bool_),
-            'agent_mask': create_memory((), self.n_envs, self.n_size, self.n_agents, np.bool_)
+            'obs': create_memory(space2shape(obs_space), self.n_envs, self.n_size, num_agents),
+            'actions': create_memory(space2shape(act_space), self.n_envs, self.n_size, num_agents),
+            'obs_next': create_memory(space2shape(obs_space), self.n_envs, self.n_size, num_agents),
+            'rewards': create_memory(reward_space, self.n_envs, self.n_size, num_agents),
+            'terminals': create_memory(terminal_space, self.n_envs, self.n_size, num_agents, np.bool_),
+            'agent_mask': create_memory(agent_mask_space, self.n_envs, self.n_size, num_agents, np.bool_)
         }
         if self.store_global_state:
             state_shape = space2shape(self.state_space)
@@ -608,22 +618,38 @@ class MARL_OffPolicyBuffer_Share(BaseBuffer):
             })
         if self.store_avail_actions:
             self.data.update({
-                "avail_actions": create_memory((self.n_actions, ), self.n_envs, self.n_size, self.n_agents, np.bool_)
+                "avail_actions": create_memory(avail_actions_space, self.n_envs, self.n_size, num_agents, np.bool_)
             })
         self.ptr, self.size = 0, 0
 
     def store(self, step_data):
-        for k in self.keys:
-            self.data[k][:, self.ptr] = step_data[k]
+        for data_key in self.data_keys:
+            if data_key in ['state', 'state_next']:
+                self.data[data_key][:, self.ptr] = step_data[data_key]
+                continue
+            if self.use_parameter_sharing:
+                self.data[data_key][:, self.ptr] = step_data[data_key]
+            else:
+                for agt_key in self.model_keys:
+                    self.data[data_key][agt_key][:, self.ptr] = step_data[data_key][agt_key]
         self.ptr = (self.ptr + 1) % self.n_size
         self.size = np.min([self.size + 1, self.n_size])
 
-    def sample(self, env_choices=None, step_choices=None):
-        if env_choices is None:
-            env_choices = np.random.choice(self.n_envs, self.batch_size)
-        if step_choices is None:
-            step_choices = np.random.choice(self.size, self.batch_size)
-        samples = {k: self.data[k][env_choices, step_choices] for k in self.keys}
+    def sample(self, batch_size=None):
+        if batch_size is None:
+            batch_size = self.batch_size
+        env_choices = np.random.choice(self.n_envs, batch_size)
+        step_choices = np.random.choice(self.size, batch_size)
+        if self.use_parameter_sharing:
+            samples = {k: self.data[k][env_choices, step_choices] for k in self.data_keys}
+        else:
+            samples = {}
+            for data_key in self.data_keys:
+                if data_key in ['state', 'state_next']:
+                    samples[data_key] = self.data[data_key][env_choices, step_choices]
+                    continue
+                samples[data_key] = {agt_key: self.data[data_key][agt_key][env_choices, step_choices]
+                                     for agt_key in self.agent_keys}
         return samples
 
 
@@ -686,7 +712,7 @@ class MARL_OffPolicyBuffer_Split(BaseBuffer):
         return samples
 
 
-class MARL_OffPolicyBuffer_RNN(MARL_OffPolicyBuffer_Share):
+class MARL_OffPolicyBuffer_RNN(MARL_OffPolicyBuffer):
     """
     Replay buffer for off-policy MARL algorithms with DRQN trick.
 
@@ -772,7 +798,7 @@ class MARL_OffPolicyBuffer_RNN(MARL_OffPolicyBuffer_Share):
         return samples
 
 
-class MeanField_OffPolicyBuffer(MARL_OffPolicyBuffer_Share):
+class MeanField_OffPolicyBuffer(MARL_OffPolicyBuffer):
     """
     Replay buffer for off-policy Mean-Field MARL algorithms (Mean-Field Q-Learning).
 

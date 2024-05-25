@@ -29,30 +29,28 @@ class IDDPG_Learner(LearnerMAS):
     def update(self, sample):
         self.iterations += 1
         info = {}
-        if self.use_parameter_sharing:
-            sample = {self.model_keys[0]: sample}
-            IDs = torch.eye(self.n_agents).unsqueeze(0).expand(self.config.batch_size, -1, -1).to(self.device)
-        else:
-            IDs = None
 
         # prepare training data
-        obs = {key: Tensor(sample[key]['obs']).to(self.device) for key in self.model_keys}
-        actions = {key: Tensor(sample[key]['actions']).to(self.device) for key in self.model_keys}
-        obs_next = {key: Tensor(sample[key]['obs_next']).to(self.device) for key in self.model_keys}
         if self.use_parameter_sharing:
-            rewards = {key: Tensor(sample[key]['rewards']).reshape(-1, self.n_agents, 1).to(self.device)
-                       for key in self.model_keys}
-            terminals = {key: Tensor(sample[key]['terminals']).float().reshape(-1, self.n_agents, 1).to(self.device)
-                         for key in self.model_keys}
-            agent_mask = {key: Tensor(sample[key]['agent_mask']).float().reshape(-1, self.n_agents, 1).to(self.device)
-                          for key in self.model_keys}
+            obs = {self.model_keys[0]: Tensor(sample['obs']).to(self.device)}
+            actions = {self.model_keys[0]: Tensor(sample['actions']).to(self.device)}
+            obs_next = {self.model_keys[0]: Tensor(sample['obs_next']).to(self.device)}
+            rewards = {self.model_keys[0]: Tensor(sample['rewards']).reshape(-1, self.n_agents, 1).to(self.device)}
+            terminals = {
+                self.model_keys[0]: Tensor(sample['terminals']).float().reshape(-1, self.n_agents, 1).to(self.device)}
+            agent_mask = {
+                self.model_keys[0]: Tensor(sample['agent_mask']).float().reshape(-1, self.n_agents, 1).to(self.device)}
+            IDs = torch.eye(self.n_agents).unsqueeze(0).expand(self.config.batch_size, -1, -1).to(self.device)
         else:
-            rewards = {key: Tensor(sample[key]['rewards']).reshape(-1, 1).to(self.device)
-                       for key in self.model_keys}
-            terminals = {key: Tensor(sample[key]['terminals']).float().reshape(-1, 1).to(self.device)
-                         for key in self.model_keys}
-            agent_mask = {key: Tensor(sample[key]['agent_mask']).float().reshape(-1, 1).to(self.device)
-                          for key in self.model_keys}
+            obs = {k: Tensor(sample['obs'][k]).to(self.device) for k in self.model_keys}
+            actions = {k: Tensor(sample['actions'][k]).to(self.device) for k in self.model_keys}
+            obs_next = {k: Tensor(sample['obs_next'][k]).to(self.device) for k in self.model_keys}
+            rewards = {k: Tensor(sample['rewards'][k]).reshape(-1, 1).to(self.device) for k in self.model_keys}
+            terminals = {k: Tensor(sample['terminals'][k]).float().reshape(-1, 1).to(self.device)
+                         for k in self.model_keys}
+            agent_mask = {k: Tensor(sample['agent_mask'][k]).float().reshape(-1, 1).to(self.device)
+                          for k in self.model_keys}
+            IDs = None
 
         # train the model
         for key in self.model_keys:

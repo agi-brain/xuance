@@ -13,7 +13,7 @@ from xuance.torch.representations import REGISTRY_Representation
 from xuance.torch.policies import REGISTRY_Policy
 from xuance.torch.learners import IQL_Learner
 from xuance.torch.agents import MARLAgents
-from xuance.common import MARL_OffPolicyBuffer_Share, MARL_OffPolicyBuffer_Split, MARL_OffPolicyBuffer_RNN
+from xuance.common import MARL_OffPolicyBuffer, MARL_OffPolicyBuffer_Split, MARL_OffPolicyBuffer_RNN
 
 
 class IQL_Agents(MARLAgents):
@@ -46,7 +46,7 @@ class IQL_Agents(MARLAgents):
 
         # create experience replay buffer
         input_buffer = dict(n_agents=self.config.n_agents,
-                            agent_keys=self.agent_keys,
+                            agent_keys=self.model_keys,
                             state_space=None,
                             obs_space=self.observation_space[self.agent_keys[0]],
                             act_space=self.action_space[self.agent_keys[0]],
@@ -54,7 +54,8 @@ class IQL_Agents(MARLAgents):
                             buffer_size=self.config.buffer_size,
                             batch_size=self.config.batch_size,
                             max_episode_length=envs.max_episode_length,
-                            store_avail_actions=self.use_actions_mask,
+                            use_actions_mask=self.use_actions_mask,
+                            use_parameter_sharing=self.use_parameter_sharing,
                             n_actions=self.action_space[self.agent_keys[0]].n)
         if self.use_parameter_sharing:
             buffer = MARL_OffPolicyBuffer_RNN if self.use_recurrent else MARL_OffPolicyBuffer_Share
@@ -256,4 +257,14 @@ class IQL_Agents(MARLAgents):
                 self.egreedy = self.egreedy - self.delta_egreedy
 
     def test(self, env_fn, test_episodes):
+        """
+        Test the model for some episodes.
+
+        Parameters:
+            env_fn: The function that can make some testing environments.
+            test_episodes (int): Number of episodes to test.
+
+        Returns:
+            scores (List(float)): A list of cumulative rewards for each episode.
+        """
         return
