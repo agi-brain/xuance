@@ -168,8 +168,8 @@ Source Code
                         config.dim_state, state_shape = None, None
 
                     input_representation = get_repre_in(config)
-                    self.use_recurrent = config.use_recurrent
-                    if self.use_recurrent:
+                    self.use_rnn = config.use_rnn
+                    if self.use_rnn:
                         kwargs_rnn = {"N_recurrent_layers": config.N_recurrent_layers,
                                     "dropout": config.dropout,
                                     "rnn": config.rnn}
@@ -181,7 +181,7 @@ Source Code
                     ff_mixer = QMIX_FF_mixer(config.dim_state[0], config.hidden_dim_ff_mix_net, config.n_agents, device)
                     input_policy = get_policy_in_marl(config, representation, mixer=mixer, ff_mixer=ff_mixer)
                     policy = REGISTRY_Policy[config.policy](*input_policy,
-                                                            use_recurrent=config.use_recurrent,
+                                                            use_rnn=config.use_rnn,
                                                             rnn=config.rnn)
                     optimizer = torch.optim.Adam(policy.parameters(), config.learning_rate, eps=1e-5)
                     scheduler = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=1.0, end_factor=0.5,
@@ -191,7 +191,7 @@ Source Code
                     self.representation_info_shape = policy.representation.output_shapes
                     self.auxiliary_info_shape = {}
 
-                    buffer = MARL_OffPolicyBuffer_RNN if self.use_recurrent else MARL_OffPolicyBuffer
+                    buffer = MARL_OffPolicyBuffer_RNN if self.use_rnn else MARL_OffPolicyBuffer
                     input_buffer = (config.n_agents, state_shape, config.obs_shape, config.act_shape, config.rew_shape,
                                     config.done_shape, envs.num_envs, config.buffer_size, config.batch_size)
                     memory = buffer(*input_buffer, max_episode_length=envs.max_episode_length, dim_act=config.dim_act)
@@ -207,7 +207,7 @@ Source Code
                     batch_size = obs_n.shape[0]
                     agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(batch_size, -1, -1).to(self.device)
                     obs_in = torch.Tensor(obs_n).view([batch_size, self.n_agents, -1]).to(self.device)
-                    if self.use_recurrent:
+                    if self.use_rnn:
                         batch_agents = batch_size * self.n_agents
                         hidden_state, greedy_actions, _ = self.policy(obs_in.view(batch_agents, 1, -1),
                                                                     agents_id.view(batch_agents, 1, -1),
@@ -237,7 +237,7 @@ Source Code
                     if i_step > self.start_training:
                         for i_epoch in range(n_epoch):
                             sample = self.memory.sample()
-                            if self.use_recurrent:
+                            if self.use_rnn:
                                 info_train = self.learner.update_recurrent(sample)
                             else:
                                 info_train = self.learner.update(sample)
@@ -272,8 +272,8 @@ Source Code
                         config.dim_state, state_shape = None, None
 
                     input_representation = get_repre_in(config)
-                    self.use_recurrent = config.use_recurrent
-                    if self.use_recurrent:
+                    self.use_rnn = config.use_rnn
+                    if self.use_rnn:
                         kwargs_rnn = {"N_recurrent_layers": config.N_recurrent_layers,
                                       "dropout": config.dropout,
                                       "rnn": config.rnn}
@@ -285,7 +285,7 @@ Source Code
                     ff_mixer = QMIX_FF_mixer(config.dim_state[0], config.hidden_dim_ff_mix_net, config.n_agents)
                     input_policy = get_policy_in_marl(config, representation, mixer=mixer, ff_mixer=ff_mixer)
                     policy = REGISTRY_Policy[config.policy](*input_policy,
-                                                            use_recurrent=config.use_recurrent,
+                                                            use_rnn=config.use_rnn,
                                                             rnn=config.rnn)
                     lr_scheduler = MyLinearLR(config.learning_rate, start_factor=1.0, end_factor=0.5,
                                               total_iters=get_total_iters(config.agent_name, config))
@@ -295,7 +295,7 @@ Source Code
                     self.representation_info_shape = policy.representation.output_shapes
                     self.auxiliary_info_shape = {}
 
-                    buffer = MARL_OffPolicyBuffer_RNN if self.use_recurrent else MARL_OffPolicyBuffer
+                    buffer = MARL_OffPolicyBuffer_RNN if self.use_rnn else MARL_OffPolicyBuffer
                     input_buffer = (config.n_agents, state_shape, config.obs_shape, config.act_shape, config.rew_shape,
                                     config.done_shape, envs.num_envs, config.buffer_size, config.batch_size)
                     memory = buffer(*input_buffer, max_episode_length=envs.max_episode_length, dim_act=config.dim_act)
@@ -310,7 +310,7 @@ Source Code
                     batch_size = obs_n.shape[0]
                     agents_id = tf.repeat(tf.expand_dims(tf.eye(self.n_agents), 0), batch_size, 0)
                     obs_in = tf.reshape(tf.convert_to_tensor(obs_n), [batch_size, self.n_agents, -1])
-                    if self.use_recurrent:
+                    if self.use_rnn:
                         batch_agents = batch_size * self.n_agents
                         input_policy = {'obs': obs_in.view(batch_agents, 1, -1),
                                         'ids': agents_id.view(batch_agents, 1, -1)}
@@ -342,7 +342,7 @@ Source Code
                     if i_step > self.start_training:
                         for i_epoch in range(n_epoch):
                             sample = self.memory.sample()
-                            if self.use_recurrent:
+                            if self.use_rnn:
                                 info_train = self.learner.update_recurrent(sample)
                             else:
                                 info_train = self.learner.update(sample)
@@ -373,8 +373,8 @@ Source Code
                         config.dim_state, state_shape = None, None
 
                     input_representation = get_repre_in(config)
-                    self.use_recurrent = config.use_recurrent
-                    if self.use_recurrent:
+                    self.use_rnn = config.use_rnn
+                    if self.use_rnn:
                         kwargs_rnn = {"N_recurrent_layers": config.N_recurrent_layers,
                                     "dropout": config.dropout,
                                     "rnn": config.rnn}
@@ -386,7 +386,7 @@ Source Code
                     ff_mixer = QMIX_FF_mixer(config.dim_state[0], config.hidden_dim_ff_mix_net, config.n_agents)
                     input_policy = get_policy_in_marl(config, representation, mixer=mixer, ff_mixer=ff_mixer)
                     policy = REGISTRY_Policy[config.policy](*input_policy,
-                                                            use_recurrent=config.use_recurrent,
+                                                            use_rnn=config.use_rnn,
                                                             rnn=config.rnn)
 
                     scheduler = lr_decay_model(learning_rate=config.learning_rate, decay_rate=0.5,
@@ -397,7 +397,7 @@ Source Code
                     self.representation_info_shape = policy.representation.output_shapes
                     self.auxiliary_info_shape = {}
 
-                    buffer = MARL_OffPolicyBuffer_RNN if self.use_recurrent else MARL_OffPolicyBuffer
+                    buffer = MARL_OffPolicyBuffer_RNN if self.use_rnn else MARL_OffPolicyBuffer
                     input_buffer = (config.n_agents, state_shape, config.obs_shape, config.act_shape, config.rew_shape,
                                     config.done_shape, envs.num_envs, config.buffer_size, config.batch_size)
                     memory = buffer(*input_buffer, max_episode_length=envs.max_episode_length, dim_act=config.dim_act)
@@ -412,7 +412,7 @@ Source Code
                     agents_id = ops.broadcast_to(self.expand_dims(self.eye(self.n_agents, self.n_agents, ms.float32), 0),
                                                 (batch_size, -1, -1))
                     obs_in = Tensor(obs_n).view(batch_size, self.n_agents, -1)
-                    if self.use_recurrent:
+                    if self.use_rnn:
                         batch_agents = batch_size * self.n_agents
                         hidden_state, greedy_actions, _ = self.policy(obs_in.view(batch_agents, 1, -1),
                                                                     agents_id.view(batch_agents, 1, -1),
@@ -442,7 +442,7 @@ Source Code
                     if i_step > self.start_training:
                         for i_epoch in range(n_epoch):
                             sample = self.memory.sample()
-                            if self.use_recurrent:
+                            if self.use_rnn:
                                 info_train = self.learner.update_recurrent(sample)
                             else:
                                 info_train = self.learner.update(sample)

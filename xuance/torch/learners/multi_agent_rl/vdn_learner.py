@@ -20,7 +20,7 @@ class VDN_Learner(LearnerMAS):
                  ):
         self.gamma = gamma
         self.sync_frequency = sync_frequency
-        self.use_recurrent = config.use_recurrent
+        self.use_rnn = config.use_rnn
         self.mse_loss = nn.MSELoss()
         super(VDN_Learner, self).__init__(config, policy, optimizer, scheduler, device, model_dir)
 

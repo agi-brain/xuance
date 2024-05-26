@@ -23,10 +23,10 @@ class IPPO_Agents(MARLAgents):
             config.dim_state, state_shape = None, None
 
         input_representation = get_repre_in(config)
-        self.use_recurrent = config.use_recurrent
+        self.use_rnn = config.use_rnn
         self.use_global_state = config.use_global_state
         # create representation for actor
-        if self.use_recurrent:
+        if self.use_rnn:
             input_representation[0] = (config.dim_obs + config.dim_act, )
             kwargs_rnn = {"N_recurrent_layers": config.N_recurrent_layers,
                           "dropout": config.dropout,
@@ -40,7 +40,7 @@ class IPPO_Agents(MARLAgents):
         # create policy
         input_policy = get_policy_in_marl(config, (representation, representation_critic))
         policy = REGISTRY_Policy[config.policy](*input_policy,
-                                                use_recurrent=config.use_recurrent,
+                                                use_rnn=config.use_rnn,
                                                 rnn=config.rnn,
                                                 gain=config.gain)
         optimizer = torch.optim.Adam(policy.parameters(),
@@ -50,7 +50,7 @@ class IPPO_Agents(MARLAgents):
         self.action_space = envs.action_space
         self.auxiliary_info_shape = {}
 
-        buffer = MARL_OnPolicyBuffer_RNN if self.use_recurrent else MARL_OnPolicyBuffer
+        buffer = MARL_OnPolicyBuffer_RNN if self.use_rnn else MARL_OnPolicyBuffer
         input_buffer = (config.n_agents, config.state_space.shape, config.obs_shape, config.act_shape, config.rew_shape,
                         config.done_shape, envs.num_envs, config.buffer_size,
                         config.use_gae, config.use_advnorm, config.gamma, config.gae_lambda)
@@ -70,7 +70,7 @@ class IPPO_Agents(MARLAgents):
         obs_in = torch.Tensor(obs_n).view([batch_size, self.n_agents, -1]).to(self.device)
         if avail_actions is not None:
             avail_actions = torch.Tensor(avail_actions).to(self.device)
-        if self.use_recurrent:
+        if self.use_rnn:
             batch_agents = batch_size * self.n_agents
             hidden_state, dists = self.policy(obs_in.view(batch_agents, 1, -1),
                                               agents_id.view(batch_agents, 1, -1),
@@ -95,7 +95,7 @@ class IPPO_Agents(MARLAgents):
         else:
             critic_in = torch.Tensor(obs_n).to(self.device)
         # get critic values
-        if self.use_recurrent:
+        if self.use_rnn:
             hidden_state, values_n = self.policy.get_values(critic_in.unsqueeze(2),  # add a sequence length axis.
                                                             agents_id.unsqueeze(2),
                                                             *rnn_hidden)
@@ -115,7 +115,7 @@ class IPPO_Agents(MARLAgents):
                     end = start + self.batch_size
                     sample_idx = indexes[start:end]
                     sample = self.memory.sample(sample_idx)
-                    if self.use_recurrent:
+                    if self.use_rnn:
                         info_train = self.learner.update_recurrent(sample)
                     else:
                         info_train = self.learner.update(sample)

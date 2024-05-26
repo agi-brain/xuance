@@ -12,7 +12,7 @@ class MFQ_Agents(MARLAgents):
         self.start_greedy, self.end_greedy = config.start_greedy, config.end_greedy
         self.egreedy = self.start_greedy
         self.delta_egreedy = (self.start_greedy - self.end_greedy) / config.decay_step_greedy
-        self.use_recurrent, self.rnn = config.use_recurrent, config.rnn
+        self.use_rnn, self.rnn = config.use_rnn, config.rnn
         self.rnn_hidden = None
 
         input_representation = get_repre_in(config)

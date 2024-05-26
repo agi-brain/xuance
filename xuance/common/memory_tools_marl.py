@@ -632,9 +632,9 @@ class MARL_OffPolicyBuffer(BaseBuffer):
             self.data: {'obs': {'agent_0': shape=[50, 200, 18],
                                 'agent_1': shape=[50, 200, 18],
                                 'agent_2': shape=[50, 200, 18]},  # dim_obs: 18
-                        'actions': {'agent_0': shape=[50, 200, 3, 5],
-                                    'agent_1': shape=[50, 200, 3, 5],
-                                    'agent_2': shape=[50, 200, 3, 5]},  # dim_act: 5
+                        'actions': {'agent_0': shape=[50, 200, 5],
+                                    'agent_1': shape=[50, 200, 5],
+                                    'agent_2': shape=[50, 200, 5]},  # dim_act: 5
                          ...}
         """
         num_agents = self.n_agents if self.use_parameter_sharing else None
@@ -651,7 +651,7 @@ class MARL_OffPolicyBuffer(BaseBuffer):
             'obs_next': create_memory(space2shape(obs_space), self.n_envs, self.n_size, num_agents),
             'rewards': create_memory(reward_space, self.n_envs, self.n_size, num_agents),
             'terminals': create_memory(terminal_space, self.n_envs, self.n_size, num_agents, np.bool_),
-            'agent_mask': create_memory(agent_mask_space, self.n_envs, self.n_size, num_agents, np.bool_)
+            'agent_mask': create_memory(agent_mask_space, self.n_envs, self.n_size, num_agents, np.bool_),
         }
         if self.store_global_state:
             state_shape = space2shape(self.state_space)
@@ -706,17 +706,24 @@ class MARL_OffPolicyBuffer_RNN(MARL_OffPolicyBuffer):
     Replay buffer for off-policy MARL algorithms with DRQN trick.
 
     Args:
-        n_agents: number of agents.
-        state_space: global state space, type: Discrete, Box.
-        obs_space: observation space for one agent (suppose same obs space for group agents).
-        act_space: action space for one agent (suppose same actions space for group agents).
-        n_envs: number of parallel environments.
-        buffer_size: buffer size of total experience data.
-        batch_size: batch size of episodes for a sample.
+        n_agents (int): number of agents.
+        state_space (Dict[str, Space]): global state space, type: Discrete, Box.
+        obs_space (Dict[str, Dict[str, Space]]): observation space for one agent (suppose same obs space for group agents).
+        act_space (Dict[str, Dict[str, Space]]): action space for one agent (suppose same actions space for group agents).
+        n_envs (int): number of parallel environments.
+        buffer_size (int): buffer size of total experience data.
+        batch_size (int): batch size of episodes for a sample.
         kwargs: other arguments.
     """
 
-    def __init__(self, n_agents, state_space, obs_space, act_space, n_envs, buffer_size, batch_size, **kwargs):
+    def __init__(self, n_agents: int,
+                 state_space: Dict[str, Space] = None,
+                 obs_space: Dict[str, Dict[str, Space]] = None,
+                 act_space: Dict[str, Dict[str, Space]] = None,
+                 n_envs: int = 1,
+                 buffer_size: int = 1,
+                 batch_size: int = 1,
+                 **kwargs):
         self.max_eps_len = kwargs['max_episode_length']
         super(MARL_OffPolicyBuffer_RNN, self).__init__(n_agents, state_space, obs_space, act_space,
                                                        n_envs, buffer_size, batch_size, **kwargs)
@@ -724,17 +731,57 @@ class MARL_OffPolicyBuffer_RNN(MARL_OffPolicyBuffer):
         self.clear_episodes()
 
     def clear(self):
+        """
+        Clear the memory data in the replay buffer.
+
+        Example:
+        An example shows the data shape: (n_agent=3, buffer_size=10000, max_eps_len=60).
+        When use_parameter_sharing is True, then
+            self.data: {'obs': {'agent_0': shape=[10000, 3, 61, 18]},  # dim_obs: 18
+                        'actions': {'agent_0': shape=[10000, 3, 61, 5]},  # dim_act: 5
+                         ...}
+        When use_parameter_sharing is False, then
+            self.data: {'obs': {'agent_0': shape=[10000, 61, 18],
+                                'agent_1': shape=[10000, 61, 18],
+                                'agent_2': shape=[10000, 61, 18]},  # dim_obs: 18
+                        'actions': {'agent_0': shape=[10000, 61, 5],
+                                    'agent_1': shape=[10000, 61, 5],
+                                    'agent_2': shape=[10000, 61, 5]},  # dim_act: 5
+                         ...}
+        """
+        seq_len = self.max_eps_len
+        if self.use_parameter_sharing:
+            obs_shape = {k: (self.buffer_size, self.n_agents, seq_len + 1) + space2shape(self.obs_space[k])
+                         for k in self.model_keys}
+            act_shape = {k: (self.buffer_size, self.n_agents, seq_len) + space2shape(self.act_space[k])
+                         for k in self.model_keys}
+            reward_shape = {k: (self.buffer_size, self.n_agents, seq_len) for k in self.model_keys}
+            terminal_shape = {k: (self.buffer_size, self.n_agents, self.max_eps_len) for k in self.model_keys}
+            agent_mask_shape = {k: (self.buffer_size, self.n_agents, seq_len) for k in self.model_keys}
+            avail_actions_shape = {k: (self.buffer_size, self.n_agents, seq_len + 1, self.n_actions[k])
+                                   for k in self.model_keys}
+        else:
+            obs_shape = {k: (self.buffer_size, seq_len + 1) + space2shape(self.obs_space[k]) for k in self.model_keys}
+            act_shape = {k: (self.buffer_size, seq_len) + space2shape(self.act_space[k]) for k in self.model_keys}
+            reward_shape = {k: (self.buffer_size, seq_len) for k in self.model_keys}
+            terminal_shape = {k: (self.buffer_size, self.max_eps_len) for k in self.model_keys}
+            agent_mask_shape = {k: (self.buffer_size, seq_len) for k in self.model_keys}
+            avail_actions_shape = {k: (self.buffer_size, seq_len + 1, self.n_actions[k]) for k in self.model_keys}
+
         self.data = {
-            'obs': np.zeros((self.buffer_size, self.n_agents, self.max_eps_len + 1) + self.obs_space, np.float),
-            'actions': np.zeros((self.buffer_size, self.n_agents, self.max_eps_len) + self.act_space, np.float),
-            'rewards': np.zeros((self.buffer_size, self.n_agents, self.max_eps_len) + self.rew_space, np.float),
-            'terminals': np.zeros((self.buffer_size, self.max_eps_len) + self.done_space, np.bool_),
-            'avail_actions': np.ones((self.buffer_size, self.n_agents, self.max_eps_len + 1, self.dim_act), np.bool_),
-            'filled': np.zeros((self.buffer_size, self.max_eps_len, 1)).astype(np.bool_)
+            'obs': {k: np.zeros(obs_shape[k], dtype=np.float32) for k in self.model_keys},
+            'actions': {k: np.zeros(act_shape[k], dtype=np.float32) for k in self.model_keys},
+            'rewards': {k: np.zeros(reward_shape[k], dtype=np.float32) for k in self.model_keys},
+            'terminals': {k: np.zeros(terminal_shape[k], dtype=np.bool_) for k in self.model_keys},
+            'agent_mask': {k: np.zeros(agent_mask_shape[k], dtype=np.bool_) for k in self.model_keys},
+            'filled': np.zeros((self.buffer_size, seq_len), dtype=np.bool_),
         }
-        if self.state_space is not None:
-            self.data.update({'state': np.zeros(
-                (self.buffer_size, self.max_eps_len + 1) + self.state_space).astype(np.float32)})
+
+        if self.store_global_state:
+            state_shape = (self.buffer_size, seq_len + 1) + space2shape(self.state_space)
+            self.data.update({'state': np.zeros(state_shape, dtype=np.float32)})
+        if self.use_actions_mask:
+            self.data.update({"avail_actions": {k: np.zeros(avail_actions_shape[k]) for k in self.model_keys}})
         self.ptr, self.size = 0, 0
 
     def clear_episodes(self):

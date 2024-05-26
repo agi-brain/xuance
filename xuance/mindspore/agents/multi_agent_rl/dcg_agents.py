@@ -11,8 +11,8 @@ class DCG_Agents(MARLAgents):
         self.delta_egreedy = (self.start_greedy - self.end_greedy) / config.decay_step_greedy
 
         input_representation = get_repre_in(config)
-        self.use_recurrent = config.use_recurrent
-        if self.use_recurrent:
+        self.use_rnn = config.use_rnn
+        if self.use_rnn:
             kwargs_rnn = {"N_recurrent_layers": config.N_recurrent_layers,
                           "dropout": config.dropout,
                           "rnn": config.rnn}
@@ -34,14 +34,14 @@ class DCG_Agents(MARLAgents):
                                                     config.state_space.shape[0], representation,
                                                     utility, payoffs, dcgraph, config.hidden_bias_dim,
                                                     None, None, nn.ReLU,
-                                                    use_recurrent=config.use_recurrent,
+                                                    use_rnn=config.use_rnn,
                                                     rnn=config.rnn)
         else:
             policy = REGISTRY_Policy[config.policy](config.action_space[config.agent_keys[0]],
                                                     config.state_space.shape[0], representation,
                                                     utility, payoffs, dcgraph, None,
                                                     None, None, nn.ReLU,
-                                                    use_recurrent=config.use_recurrent,
+                                                    use_rnn=config.use_rnn,
                                                     rnn=config.rnn)
         scheduler = lr_decay_model(learning_rate=config.learning_rate, decay_rate=0.5,
                                    decay_steps=get_total_iters(config.agent_name, config))
@@ -55,7 +55,7 @@ class DCG_Agents(MARLAgents):
             config.dim_state, state_shape = config.state_space.shape, config.state_space.shape
         else:
             config.dim_state, state_shape = None, None
-        buffer = MARL_OffPolicyBuffer_RNN if self.use_recurrent else MARL_OffPolicyBuffer
+        buffer = MARL_OffPolicyBuffer_RNN if self.use_rnn else MARL_OffPolicyBuffer
         input_buffer = (config.n_agents, state_shape, config.obs_shape, config.act_shape, config.rew_shape,
                         config.done_shape, envs.num_envs, config.buffer_size, config.batch_size)
         memory = buffer(*input_buffer, max_episode_length=envs.max_episode_length, dim_act=config.dim_act)
@@ -94,7 +94,7 @@ class DCG_Agents(MARLAgents):
         if i_step > self.start_training:
             for i_epoch in range(n_epoch):
                 sample = self.memory.sample()
-                if self.use_recurrent:
+                if self.use_rnn:
                     info_train = self.learner.update_recurrent(sample)
                 else:
                     info_train = self.learner.update(sample)

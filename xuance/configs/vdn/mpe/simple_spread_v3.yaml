@@ -8,7 +8,7 @@ vectorize: "Dummy_Pettingzoo"
 runner: "Pettingzoo_Runner"
 on_policy: False
 
-use_recurrent: False
+use_rnn: False
 rnn:
 representation_hidden_size: [64, ]
 q_hidden_size: [64, ]  # the units for each hidden layer

@@ -16,12 +16,12 @@ class MAPPO_Agents(MARLAgents):
             config.dim_state, state_shape = None, None
 
         input_representation = get_repre_in(config)
-        self.use_recurrent = config.use_recurrent
+        self.use_rnn = config.use_rnn
         self.use_global_state = config.use_global_state
         # create representation for actor
         kwargs_rnn = {"N_recurrent_layers": config.N_recurrent_layers,
                       "dropout": config.dropout,
-                      "rnn": config.rnn} if self.use_recurrent else {}
+                      "rnn": config.rnn} if self.use_rnn else {}
         representation = REGISTRY_Representation[config.representation](*input_representation, **kwargs_rnn)
         # create representation for critic
         if self.use_global_state:
@@ -32,7 +32,7 @@ class MAPPO_Agents(MARLAgents):
         # create policy
         input_policy = get_policy_in_marl(config, (representation, representation_critic))
         policy = REGISTRY_Policy[config.policy](*input_policy,
-                                                use_recurrent=config.use_recurrent,
+                                                use_rnn=config.use_rnn,
                                                 rnn=config.rnn,
                                                 gain=config.gain)
         lr_scheduler = MyLinearLR(config.learning_rate, start_factor=1.0, end_factor=0.5,
@@ -42,7 +42,7 @@ class MAPPO_Agents(MARLAgents):
         self.action_space = envs.action_space
         self.auxiliary_info_shape = {}
 
-        buffer = MARL_OnPolicyBuffer_RNN if self.use_recurrent else MARL_OnPolicyBuffer
+        buffer = MARL_OnPolicyBuffer_RNN if self.use_rnn else MARL_OnPolicyBuffer
         input_buffer = (config.n_agents, config.state_space.shape, config.obs_shape, config.act_shape, config.rew_shape,
                         config.done_shape, envs.num_envs, config.n_size,
                         config.use_gae, config.use_advnorm, config.gamma, config.gae_lambda)
@@ -74,7 +74,7 @@ class MAPPO_Agents(MARLAgents):
         critic_in = tf.reshape(tf.convert_to_tensor(obs_n, dtype=tf.float32), [batch_size, 1, -1])
         critic_in = tf.repeat(critic_in, repeats=self.n_agents, axis=1)
         # get critic values
-        if self.use_recurrent:
+        if self.use_rnn:
             hidden_state, values_n = self.policy.get_values(tf.expand_dims(critic_in, 2),  # add a sequence length axis.
                                                             tf.expand_dims(agents_id, 2),
                                                             *rnn_hidden)
@@ -94,7 +94,7 @@ class MAPPO_Agents(MARLAgents):
                     end = start + self.batch_size
                     sample_idx = indexes[start:end]
                     sample = self.memory.sample(sample_idx)
-                    if self.use_recurrent:
+                    if self.use_rnn:
                         info_train = self.learner.update_recurrent(sample)
                     else:
                         info_train = self.learner.update(sample)

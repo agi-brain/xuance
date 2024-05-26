@@ -8,7 +8,7 @@ vectorize: "Dummy_Pettingzoo"
 runner: "Pettingzoo_Runner"
 on_policy: False
 
-use_recurrent: False
+use_rnn: False
 rnn: "GRU"
 recurrent_layer_N: 1
 fc_hidden_sizes: [ 64, ]

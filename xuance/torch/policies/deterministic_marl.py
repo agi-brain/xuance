@@ -26,7 +26,7 @@ class BasicQnetwork(Module):
         self.model_keys = kwargs['model_keys']
         self.representation_info_shape = {key: representation[key].output_shapes for key in self.model_keys}
         self.lstm = True if kwargs["rnn"] == "LSTM" else False
-        self.use_rnn = True if kwargs["use_recurrent"] else False
+        self.use_rnn = True if kwargs["use_rnn"] else False
 
         self.representation = representation
         self.target_representation = deepcopy(self.representation)
@@ -193,7 +193,7 @@ class MixingQnetwork(Module):
         self.target_representation = deepcopy(self.representation)
         self.representation_info_shape = self.representation.output_shapes
         self.lstm = True if kwargs["rnn"] == "LSTM" else False
-        self.use_rnn = True if kwargs["use_recurrent"] else False
+        self.use_rnn = True if kwargs["use_rnn"] else False
         self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.n_actions, n_agents,
                                      hidden_size, normalize, initialize, activation, device)
         self.target_Qhead = deepcopy(self.eval_Qhead)
@@ -313,7 +313,7 @@ class Qtran_MixingQnetwork(Module):
         self.target_representation = deepcopy(self.representation)
         self.representation_info_shape = self.representation.output_shapes
         self.lstm = True if kwargs["rnn"] == "LSTM" else False
-        self.use_rnn = True if kwargs["use_recurrent"] else False
+        self.use_rnn = True if kwargs["use_rnn"] else False
         self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.n_actions, n_agents,
                                      hidden_size, normalize, initialize, activation, device)
         self.target_Qhead = deepcopy(self.eval_Qhead)
@@ -378,7 +378,7 @@ class DCG_policy(Module):
         self.representation = representation
         self.target_representation = deepcopy(self.representation)
         self.lstm = True if kwargs["rnn"] == "LSTM" else False
-        self.use_rnn = True if kwargs["use_recurrent"] else False
+        self.use_rnn = True if kwargs["use_rnn"] else False
         self.utility = utility
         self.target_utility = deepcopy(self.utility)
         self.payoffs = payoffs

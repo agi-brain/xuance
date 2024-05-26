@@ -7,7 +7,7 @@ representation: "Basic_MLP"
 vectorize: "Dummy_Pettingzoo"
 runner: "Pettingzoo_Runner"
 
-use_recurrent: False
+use_rnn: False
 rnn:
 representation_hidden_size: [64, ]
 q_hidden_size: [128, ]  # the units for each hidden layer

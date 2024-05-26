@@ -35,8 +35,7 @@ class IQL_Agents(MARLAgents):
         self.delta_egreedy = (self.start_greedy - self.end_greedy) / (config.decay_step_greedy / self.n_envs)
 
         # build policy, optimizers, schedulers
-        self.use_recurrent = config.use_recurrent
-        self.rnn = config.rnn if hasattr(config, "rnn") else None
+        self.use_rnn = config.use_rnn if hasattr(config, 'use_rnn') else False
         self.policy = self._build_policy()
         optimizer, scheduler = {}, {}
         for key in self.model_keys:
@@ -54,10 +53,12 @@ class IQL_Agents(MARLAgents):
                             model_keys=self.model_keys,
                             use_parameter_sharing=self.use_parameter_sharing,
                             n_actions={k: self.action_space[k].n for k in self.agent_keys},
-                            use_actions_mask=self.use_actions_mask,
-                            max_episode_length=envs.max_episode_length)
-        buffer = MARL_OffPolicyBuffer_RNN if self.use_recurrent else MARL_OffPolicyBuffer
-        self.memory = buffer(**input_buffer)
+                            use_actions_mask=self.use_actions_mask)
+        if self.use_rnn:
+            self.memory = MARL_OffPolicyBuffer(**input_buffer)
+        else:
+            input_buffer['max_episode_length'] = envs.max_episode_length
+            self.memory = MARL_OffPolicyBuffer_RNN(**input_buffer)
 
         # initialize the hidden states of the RNN is use RNN-based representations.
         self.rnn_hidden_state = self.init_rnn_hidden()
@@ -107,7 +108,7 @@ class IQL_Agents(MARLAgents):
                 hidden_size=self.config.q_hidden_size,
                 normalize=normalize_fn, initialize=initializer, activation=activation,
                 device=device, use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
-                use_recurrent=self.use_recurrent, rnn=self.rnn)
+                use_rnn=self.use_rnn, rnn=self.config.rnn if self.use_rnn else None)
         else:
             raise f"The IQL currently does not support the policy named {self.config.policy}."
 
@@ -165,8 +166,9 @@ class IQL_Agents(MARLAgents):
         """
         rnn_hidden_states = {}
         for key in self.model_keys:
-            if self.use_recurrent:
-                rnn_hidden_states[key] = self.policy.representation[key].init_hidden()
+            if self.use_rnn:
+                batch = self.n_envs * self.n_agents if self.use_parameter_sharing else self.n_envs
+                rnn_hidden_states[key] = self.policy.representation[key].init_hidden(batch)
             else:
                 rnn_hidden_states[key] = [None, None]
         return rnn_hidden_states

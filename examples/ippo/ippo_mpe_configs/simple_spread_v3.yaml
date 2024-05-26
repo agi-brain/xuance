@@ -16,7 +16,7 @@ representation: "Basic_MLP"
 vectorize: "Dummy_Pettingzoo"
 
 # recurrent settings for Basic_RNN representation
-use_recurrent: False
+use_rnn: False
 rnn:
 representation_hidden_size: [64, ]  # the units for each hidden layer
 gain: 0.01

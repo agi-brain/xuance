@@ -8,7 +8,7 @@ representation_critic: "Basic_MLP"
 vectorize: "Dummy_Pettingzoo"
 runner: "Pettingzoo_Runner"
 
-use_recurrent: False
+use_rnn: False
 rnn:
 representation_hidden_size: [128, ]
 gain: 0.01

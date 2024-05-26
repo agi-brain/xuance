@@ -18,7 +18,7 @@ runner: "StarCraft2_Runner"
 on_policy: True
 
 # recurrent settings for Basic_RNN representation
-use_recurrent: True
+use_rnn: True
 rnn: "GRU"
 recurrent_layer_N: 1
 fc_hidden_sizes: [64]

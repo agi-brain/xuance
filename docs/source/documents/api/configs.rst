@@ -4293,7 +4293,7 @@ MARL Implementations
                             vectorize: "Dummy_Pettingzoo"
                             runner: "Pettingzoo_Runner"
 
-                            use_recurrent: False
+                            use_rnn: False
                             rnn:
                             representation_hidden_size: [64, ]
                             q_hidden_size: [64, ]  # the units for each hidden layer
@@ -4348,7 +4348,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: False
+                            use_rnn: False
                             rnn:
                             representation_hidden_size: [64, ]
                             q_hidden_size: [64, ]  # the units for each hidden layer
@@ -4398,7 +4398,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -4451,7 +4451,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -4504,7 +4504,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -4556,7 +4556,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -4609,7 +4609,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -4662,7 +4662,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -4715,7 +4715,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -4768,7 +4768,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -4821,7 +4821,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -4874,7 +4874,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -4939,7 +4939,7 @@ MARL Implementations
                             runner: "Football_Runner"
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [128, ]
@@ -5000,7 +5000,7 @@ MARL Implementations
                             runner: "Pettingzoo_Runner"
                             on_policy: False
 
-                            use_recurrent: False
+                            use_rnn: False
                             rnn:
                             representation_hidden_size: [64, ]
                             q_hidden_size: [64, ]  # the units for each hidden layer
@@ -5052,7 +5052,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -5105,7 +5105,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -5159,7 +5159,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -5213,7 +5213,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -5267,7 +5267,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -5321,7 +5321,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -5375,7 +5375,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -5429,7 +5429,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -5483,7 +5483,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -5537,7 +5537,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -5603,7 +5603,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [128, ]
@@ -5663,7 +5663,7 @@ MARL Implementations
                             vectorize: "Dummy_Pettingzoo"
                             runner: "Pettingzoo_Runner"
 
-                            use_recurrent: False
+                            use_rnn: False
                             rnn:
                             representation_hidden_size: [64, ]
                             q_hidden_size: [128, ]  # the units for each hidden layer
@@ -5718,7 +5718,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -5774,7 +5774,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -5830,7 +5830,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -5886,7 +5886,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -5942,7 +5942,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -5998,7 +5998,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -6054,7 +6054,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -6110,7 +6110,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -6166,7 +6166,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -6222,7 +6222,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -6289,7 +6289,7 @@ MARL Implementations
                             runner: "Football_Runner"
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [128, ]
@@ -6353,7 +6353,7 @@ MARL Implementations
                             runner: "Pettingzoo_Runner"
                             on_policy: False
 
-                            use_recurrent: False
+                            use_rnn: False
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [ 64, ]
@@ -6414,7 +6414,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -6472,7 +6472,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -6530,7 +6530,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -6588,7 +6588,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -6646,7 +6646,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -6704,7 +6704,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -6762,7 +6762,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -6820,7 +6820,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -6878,7 +6878,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -6936,7 +6936,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -7001,7 +7001,7 @@ MARL Implementations
                             vectorize: "Dummy_Pettingzoo"
                             runner: "Pettingzoo_Runner"
 
-                            use_recurrent: False
+                            use_rnn: False
                             rnn:
                             representation_hidden_size: [256, ]
                             q_hidden_size: [256, ]  # the units for each hidden layer
@@ -7061,7 +7061,7 @@ MARL Implementations
                             runner: "Pettingzoo_Runner"
                             on_policy: False
 
-                            use_recurrent: False
+                            use_rnn: False
                             rnn:
                             representation_hidden_size: [32, ]
                             q_hidden_size: [128, ]  # the units for each hidden layer
@@ -7121,7 +7121,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -7183,7 +7183,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -7245,7 +7245,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -7307,7 +7307,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -7369,7 +7369,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -7431,7 +7431,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -7493,7 +7493,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -7555,7 +7555,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -7617,7 +7617,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -7679,7 +7679,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -8319,7 +8319,7 @@ MARL Implementations
                             vectorize: "Dummy_Pettingzoo"
                             runner: "Pettingzoo_Runner"
 
-                            use_recurrent: False
+                            use_rnn: False
                             rnn:
                             representation_hidden_size: [64, ]  # the units for each hidden layer
                             gain: 0.01
@@ -8388,7 +8388,7 @@ MARL Implementations
                             runner: "StarCraft2_Runner"
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, 64, 64]
@@ -8458,7 +8458,7 @@ MARL Implementations
                             on_policy: True
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, 64, 64]
@@ -8529,7 +8529,7 @@ MARL Implementations
                             runner: "StarCraft2_Runner"
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, 64, 64]
@@ -8598,7 +8598,7 @@ MARL Implementations
                             runner: "StarCraft2_Runner"
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, 64, 64]
@@ -8668,7 +8668,7 @@ MARL Implementations
                             on_policy: True
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, 64, 64]
@@ -8738,7 +8738,7 @@ MARL Implementations
                             on_policy: True
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, 64, 64]
@@ -8808,7 +8808,7 @@ MARL Implementations
                             on_policy: True
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, 64, 64]
@@ -8878,7 +8878,7 @@ MARL Implementations
                             on_policy: True
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, 64, 64]
@@ -8948,7 +8948,7 @@ MARL Implementations
                             on_policy: True
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, 64, 64]
@@ -9018,7 +9018,7 @@ MARL Implementations
                             on_policy: True
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, 64, 64]
@@ -9100,7 +9100,7 @@ MARL Implementations
                             runner: "Football_Runner"
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64]
@@ -9177,7 +9177,7 @@ MARL Implementations
                             runner: "Pettingzoo_Runner"
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: False
+                            use_rnn: False
                             rnn:
                             representation_hidden_size: [64, ]  # the units for each hidden layer
                             gain: 0.01
@@ -9242,7 +9242,7 @@ MARL Implementations
                             runner: "Pettingzoo_Runner"
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: False
+                            use_rnn: False
                             rnn:
                             representation_hidden_size: [64, ]  # the units for each hidden layer
                             gain: 0.01
@@ -9307,7 +9307,7 @@ MARL Implementations
                             runner: "Pettingzoo_Runner"
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: False
+                            use_rnn: False
                             rnn:
                             representation_hidden_size: [64, ]  # the units for each hidden layer
                             gain: 0.01
@@ -9376,7 +9376,7 @@ MARL Implementations
                             runner: "StarCraft2_Runner"
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, 64, 64]
@@ -9446,7 +9446,7 @@ MARL Implementations
                             on_policy: True
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, 64, 64]
@@ -9517,7 +9517,7 @@ MARL Implementations
                             runner: "StarCraft2_Runner"
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, 64, 64]
@@ -9586,7 +9586,7 @@ MARL Implementations
                             runner: "StarCraft2_Runner"
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, 64, 64]
@@ -9656,7 +9656,7 @@ MARL Implementations
                             on_policy: True
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64]
@@ -9726,7 +9726,7 @@ MARL Implementations
                             on_policy: True
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, 64, 64]
@@ -9796,7 +9796,7 @@ MARL Implementations
                             on_policy: True
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64,]
@@ -9866,7 +9866,7 @@ MARL Implementations
                             on_policy: True
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, 64, 64]
@@ -9936,7 +9936,7 @@ MARL Implementations
                             on_policy: True
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, 64, 64]
@@ -10006,7 +10006,7 @@ MARL Implementations
                             on_policy: True
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, 64, 64]
@@ -10088,7 +10088,7 @@ MARL Implementations
                             runner: "Football_Runner"
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64]
@@ -10166,7 +10166,7 @@ MARL Implementations
                             runner: "Football_Runner"
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64]
@@ -10386,7 +10386,7 @@ MARL Implementations
                             runner: "Pettingzoo_Runner"
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: False
+                            use_rnn: False
                             rnn:
                             representation_hidden_size: [64, ]  # the units for each hidden layer
                             gain: 0.01
@@ -10459,7 +10459,7 @@ MARL Implementations
                             runner: "StarCraft2_Runner"
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -10533,7 +10533,7 @@ MARL Implementations
                             runner: "StarCraft2_Runner"
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -10607,7 +10607,7 @@ MARL Implementations
                             runner: "StarCraft2_Runner"
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -10681,7 +10681,7 @@ MARL Implementations
                             runner: "StarCraft2_Runner"
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64,]
@@ -10749,7 +10749,7 @@ MARL Implementations
                             on_policy: True
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -10823,7 +10823,7 @@ MARL Implementations
                             on_policy: True
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -10897,7 +10897,7 @@ MARL Implementations
                             on_policy: True
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -10971,7 +10971,7 @@ MARL Implementations
                             on_policy: True
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -11045,7 +11045,7 @@ MARL Implementations
                             on_policy: True
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -11119,7 +11119,7 @@ MARL Implementations
                             on_policy: True
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -11201,7 +11201,7 @@ MARL Implementations
                             vectorize: "Dummy_Pettingzoo"
                             runner: "Pettingzoo_Runner"
 
-                            use_recurrent: False
+                            use_rnn: False
                             rnn:
                             representation_hidden_size: [128, ]
                             gain: 0.01
@@ -11262,7 +11262,7 @@ MARL Implementations
                             vectorize: "Subproc_StarCraft2"
                             runner: "StarCraft2_Runner"
 
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -11325,7 +11325,7 @@ MARL Implementations
                             vectorize: "Subproc_StarCraft2"
                             runner: "StarCraft2_Runner"
 
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -11388,7 +11388,7 @@ MARL Implementations
                             vectorize: "Subproc_StarCraft2"
                             runner: "StarCraft2_Runner"
 
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -11451,7 +11451,7 @@ MARL Implementations
                             vectorize: "Subproc_StarCraft2"
                             runner: "StarCraft2_Runner"
 
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -11514,7 +11514,7 @@ MARL Implementations
                             vectorize: "Subproc_StarCraft2"
                             runner: "StarCraft2_Runner"
 
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -11577,7 +11577,7 @@ MARL Implementations
                             vectorize: "Subproc_StarCraft2"
                             runner: "StarCraft2_Runner"
 
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -11640,7 +11640,7 @@ MARL Implementations
                             vectorize: "Subproc_StarCraft2"
                             runner: "StarCraft2_Runner"
 
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -11703,7 +11703,7 @@ MARL Implementations
                             vectorize: "Subproc_StarCraft2"
                             runner: "StarCraft2_Runner"
 
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -11766,7 +11766,7 @@ MARL Implementations
                             vectorize: "Subproc_StarCraft2"
                             runner: "StarCraft2_Runner"
 
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -11829,7 +11829,7 @@ MARL Implementations
                             vectorize: "Subproc_StarCraft2"
                             runner: "StarCraft2_Runner"
 
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -11900,7 +11900,7 @@ MARL Implementations
                             vectorize: "Dummy_Pettingzoo"
                             runner: "Pettingzoo_Runner"
 
-                            use_recurrent: False
+                            use_rnn: False
                             rnn:
                             representation_hidden_size: [64, ]
                             q_hidden_size: [64, ]  # the units for each hidden layer
@@ -11959,7 +11959,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: False
+                            use_rnn: False
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -12017,7 +12017,7 @@ MARL Implementations
                             runner: "Pettingzoo_Runner"
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: False
+                            use_rnn: False
                             rnn:
                             representation_hidden_size: [64, ]  # the units for each hidden layer
                             gain: 0.01
