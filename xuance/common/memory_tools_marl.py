@@ -2,50 +2,7 @@ import numpy as np
 from abc import ABC, abstractmethod
 from typing import Optional, Union, Dict
 from gym.spaces import Space
-from xuance.common import space2shape
-
-
-def create_memory(shape: Optional[Union[tuple, dict]],
-                  n_envs: int,
-                  n_size: int,
-                  n_agent: Optional[int] = None,
-                  dtype: type = np.float32):
-    """
-    Create a numpy array for memory data.
-
-    Args:
-        shape: data shape.
-        n_envs: number of parallel environments.
-        n_size: length of data sequence for each environment.
-        n_agent: number of agents.
-        dtype: numpy data type.
-
-    Returns:
-        An empty memory space to store data. (initial: numpy.zeros())
-    """
-    if shape is None:
-        return None
-    elif isinstance(shape, dict):
-        memory = {}
-        for key, value in zip(shape.keys(), shape.values()):
-            if value is None:  # save an object type
-                if n_agent is None:
-                    memory[key] = np.zeros([n_envs, n_size], dtype=object)
-                else:
-                    memory[key] = np.zeros([n_envs, n_size, n_agent], dtype=object)
-            else:
-                if n_agent is None:
-                    memory[key] = np.zeros([n_envs, n_size] + list(value), dtype=dtype)
-                else:
-                    memory[key] = np.zeros([n_envs, n_size, n_agent] + list(value), dtype=dtype)
-        return memory
-    elif isinstance(shape, tuple):
-        if n_agent is None:
-            return np.zeros([n_envs, n_size] + list(shape), dtype)
-        else:
-            return np.zeros([n_envs, n_size, n_agent] + list(shape), dtype)
-    else:
-        raise NotImplementedError
+from xuance.common import space2shape, create_memory
 
 
 class BaseBuffer(ABC):
@@ -609,9 +566,8 @@ class MARL_OffPolicyBuffer(BaseBuffer):
         assert buffer_size % self.n_envs == 0, "buffer_size must be divisible by the number of envs (i.e., parallels)"
         self.n_size = buffer_size // n_envs
         self.batch_size = batch_size
-        self.model_keys = kwargs['model_keys']
+        self.agent_keys = kwargs['agent_keys']
         self.store_global_state = False if self.state_space is None else True
-        self.use_parameter_sharing = kwargs['use_parameter_sharing'] if 'use_parameter_sharing' in kwargs else False
         self.use_actions_mask = kwargs['use_actions_mask'] if 'use_actions_mask' in kwargs else False
         self.n_actions = kwargs['n_actions'] if 'n_actions' in kwargs else None
         self.data = {}
@@ -637,32 +593,29 @@ class MARL_OffPolicyBuffer(BaseBuffer):
                                     'agent_2': shape=[50, 200, 5]},  # dim_act: 5
                          ...}
         """
-        num_agents = self.n_agents if self.use_parameter_sharing else None
-        obs_space = {key: self.obs_space[key] for key in self.model_keys}
-        act_space = {key: self.act_space[key] for key in self.model_keys}
-        reward_space = {key: () for key in self.model_keys}
-        terminal_space = {key: () for key in self.model_keys}
-        agent_mask_space = {key: () for key in self.model_keys}
-        avail_actions_space = {key: (self.n_actions[key],) for key in self.model_keys}
+        reward_space = {key: () for key in self.agent_keys}
+        terminal_space = {key: () for key in self.agent_keys}
+        agent_mask_space = {key: () for key in self.agent_keys}
+        avail_actions_space = {key: (self.n_actions[key],) for key in self.agent_keys}
 
         self.data = {
-            'obs': create_memory(space2shape(obs_space), self.n_envs, self.n_size, num_agents),
-            'actions': create_memory(space2shape(act_space), self.n_envs, self.n_size, num_agents),
-            'obs_next': create_memory(space2shape(obs_space), self.n_envs, self.n_size, num_agents),
-            'rewards': create_memory(reward_space, self.n_envs, self.n_size, num_agents),
-            'terminals': create_memory(terminal_space, self.n_envs, self.n_size, num_agents, np.bool_),
-            'agent_mask': create_memory(agent_mask_space, self.n_envs, self.n_size, num_agents, np.bool_),
+            'obs': create_memory(space2shape(self.obs_space), self.n_envs, self.n_size),
+            'actions': create_memory(space2shape(self.act_space), self.n_envs, self.n_size),
+            'obs_next': create_memory(space2shape(self.obs_space), self.n_envs, self.n_size),
+            'rewards': create_memory(reward_space, self.n_envs, self.n_size),
+            'terminals': create_memory(terminal_space, self.n_envs, self.n_size, np.bool_),
+            'agent_mask': create_memory(agent_mask_space, self.n_envs, self.n_size, np.bool_),
         }
         if self.store_global_state:
             state_shape = space2shape(self.state_space)
             self.data.update({
-                'state': create_memory(state_shape, self.n_envs, self.n_size, None),
-                'state_next': create_memory(state_shape, self.n_envs, self.n_size, None)
+                'state': create_memory(state_shape, self.n_envs, self.n_size),
+                'state_next': create_memory(state_shape, self.n_envs, self.n_size)
             })
         if self.use_actions_mask:
             self.data.update({
-                "avail_actions": create_memory(avail_actions_space, self.n_envs, self.n_size, num_agents, np.bool_),
-                "avail_actions_next": create_memory(avail_actions_space, self.n_envs, self.n_size, num_agents, np.bool_)
+                "avail_actions": create_memory(avail_actions_space, self.n_envs, self.n_size, np.bool_),
+                "avail_actions_next": create_memory(avail_actions_space, self.n_envs, self.n_size, np.bool_)
             })
         self.ptr, self.size = 0, 0
 
@@ -672,7 +625,7 @@ class MARL_OffPolicyBuffer(BaseBuffer):
             if data_key in ['state', 'state_next']:
                 self.data[data_key][:, self.ptr] = step_data[data_key]
                 continue
-            for agt_key in self.model_keys:
+            for agt_key in self.agent_keys:
                 self.data[data_key][agt_key][:, self.ptr] = step_data[data_key][agt_key]
         self.ptr = (self.ptr + 1) % self.n_size
         self.size = np.min([self.size + 1, self.n_size])
@@ -697,7 +650,7 @@ class MARL_OffPolicyBuffer(BaseBuffer):
                 samples[data_key] = self.data[data_key][env_choices, step_choices]
                 continue
             samples[data_key] = {agt_key: self.data[data_key][agt_key][env_choices, step_choices]
-                                 for agt_key in self.model_keys}
+                                 for agt_key in self.agent_keys}
         return samples
 
 
