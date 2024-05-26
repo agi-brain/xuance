@@ -7,7 +7,7 @@ representation: "Basic_MLP"
 vectorize: "Dummy_Pettingzoo"
 runner: "MARL"
 
-use_parameter_sharing: False
+use_parameter_sharing: True
 use_actions_mask: False
 use_recurrent: False
 rnn:

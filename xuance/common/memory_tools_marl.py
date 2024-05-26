@@ -612,7 +612,7 @@ class MARL_OffPolicyBuffer(BaseBuffer):
         self.model_keys = kwargs['model_keys']
         self.store_global_state = False if self.state_space is None else True
         self.use_parameter_sharing = kwargs['use_parameter_sharing'] if 'use_parameter_sharing' in kwargs else False
-        self.store_avail_actions = kwargs['store_avail_actions'] if 'store_avail_actions' in kwargs else False
+        self.use_actions_mask = kwargs['use_actions_mask'] if 'use_actions_mask' in kwargs else False
         self.n_actions = kwargs['n_actions'] if 'n_actions' in kwargs else None
         self.data = {}
         self.clear()
@@ -643,7 +643,7 @@ class MARL_OffPolicyBuffer(BaseBuffer):
         reward_space = {key: () for key in self.model_keys}
         terminal_space = {key: () for key in self.model_keys}
         agent_mask_space = {key: () for key in self.model_keys}
-        avail_actions_space = {key: (self.n_actions,) for key in self.model_keys}
+        avail_actions_space = {key: (self.n_actions[key],) for key in self.model_keys}
 
         self.data = {
             'obs': create_memory(space2shape(obs_space), self.n_envs, self.n_size, num_agents),
@@ -659,9 +659,10 @@ class MARL_OffPolicyBuffer(BaseBuffer):
                 'state': create_memory(state_shape, self.n_envs, self.n_size, None),
                 'state_next': create_memory(state_shape, self.n_envs, self.n_size, None)
             })
-        if self.store_avail_actions:
+        if self.use_actions_mask:
             self.data.update({
-                "avail_actions": create_memory(avail_actions_space, self.n_envs, self.n_size, num_agents, np.bool_)
+                "avail_actions": create_memory(avail_actions_space, self.n_envs, self.n_size, num_agents, np.bool_),
+                "avail_actions_next": create_memory(avail_actions_space, self.n_envs, self.n_size, num_agents, np.bool_)
             })
         self.ptr, self.size = 0, 0
 

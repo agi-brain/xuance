@@ -21,41 +21,49 @@ class IQL_Learner(LearnerMAS):
         self.sync_frequency = config.sync_frequency
         self.mse_loss = nn.MSELoss()
         super(IQL_Learner, self).__init__(config, model_keys, policy, optimizer, scheduler)
+        self.use_actions_mask = config.use_actions_mask
+        self.n_actions = {k: self.policy.action_space[k].n for k in self.model_keys}
         self.optimizer = optimizer
         self.scheduler = scheduler
 
     def update(self, sample):
         self.iterations += 1
         info = {}
-        if self.use_parameter_sharing:
-            sample = {self.model_keys[0]: sample}
-            IDs = torch.eye(self.n_agents).unsqueeze(0).expand(self.config.batch_size, -1, -1).to(self.device)
-        else:
-            IDs = None
 
         # prepare training data
-        obs = {key: Tensor(sample[key]['obs']).to(self.device) for key in self.model_keys}
-        actions = {key: Tensor(sample[key]['actions']).to(self.device) for key in self.model_keys}
-        obs_next = {key: Tensor(sample[key]['obs_next']).to(self.device) for key in self.model_keys}
+        obs = {k: Tensor(sample['obs'][k]).to(self.device) for k in self.model_keys}
+        actions = {k: Tensor(sample['actions'][k]).to(self.device) for k in self.model_keys}
+        obs_next = {k: Tensor(sample['obs_next'][k]).to(self.device) for k in self.model_keys}
+        rewards = {k: Tensor(sample['rewards'][k]).reshape(-1, 1).to(self.device) for k in self.model_keys}
+        terminals = {k: Tensor(sample['terminals'][k]).float().reshape(-1, 1).to(self.device) for k in self.model_keys}
+        agent_mask = {k: Tensor(sample['agent_mask'][k]).float().reshape(-1, 1).to(self.device)
+                      for k in self.model_keys}
+        avail_actions = {k: Tensor(sample['avail_actions'][k]).float().to(self.device)
+                         for k in self.model_keys} if self.use_actions_mask else None
+        avail_actions_next = {k: Tensor(sample['avail_actions_next'][k]).float().to(self.device)
+                              for k in self.model_keys} if self.use_actions_mask else None
+        IDs = None
         if self.use_parameter_sharing:
-            rewards = {key: Tensor(sample[key]['rewards']).reshape(-1, self.n_agents, 1).to(self.device)
-                       for key in self.model_keys}
-            terminals = {key: Tensor(sample[key]['terminals']).float().reshape(-1, self.n_agents, 1).to(self.device)
-                         for key in self.model_keys}
-            agent_mask = {key: Tensor(sample[key]['agent_mask']).float().reshape(-1, self.n_agents, 1).to(self.device)
-                          for key in self.model_keys}
-        else:
-            rewards = {key: Tensor(sample[key]['rewards']).reshape(-1, 1).to(self.device)
-                       for key in self.model_keys}
-            terminals = {key: Tensor(sample[key]['terminals']).float().reshape(-1, 1).to(self.device)
-                         for key in self.model_keys}
-            agent_mask = {key: Tensor(sample[key]['agent_mask']).float().reshape(-1, 1).to(self.device)
-                          for key in self.model_keys}
+            key = self.model_keys[0]
+            rewards = {key: rewards[key].reshape(-1, self.n_agents, 1)}
+            terminals = {key: terminals[key].reshape(-1, self.n_agents, 1)}
+            agent_mask = {key: agent_mask[key].reshape(-1, self.n_agents, 1)}
+            if self.use_actions_mask:
+                avail_actions = {key: avail_actions[key].reshape(-1, self.n_agents, self.n_actions[key])}
+                avail_actions_next = {key: avail_actions_next[key].reshape(-1, self.n_agents, self.n_actions[key])}
+            IDs = torch.eye(self.n_agents).unsqueeze(0).expand(self.config.batch_size, -1, -1).to(self.device)
 
         for key in self.model_keys:
-            _, _, q_eval = self.policy(obs, IDs, agent_key=key)
-            q_eval_a = q_eval[key].gather(-1, actions[key].long().reshape([self.config.batch_size, self.n_agents, 1]))
+            _, _, q_eval = self.policy(obs, IDs, avail_actions, agent_key=key)
+            if self.use_parameter_sharing:
+                actions_key = actions[key].long().reshape([self.config.batch_size, self.n_agents, 1])
+            else:
+                actions_key = actions[key].long().reshape([self.config.batch_size, 1])
+            q_eval_a = q_eval[key].gather(-1, actions_key)
             _, q_next = self.policy.Qtarget(obs_next, IDs, agent_key=key)
+
+            if self.use_actions_mask:
+                q_next[avail_actions_next == 0] = -9999999
 
             if self.config.double_q:
                 _, action_next_greedy, q_next_eval = self.policy(obs_next, IDs, agent_key=key)
@@ -106,7 +114,8 @@ class IQL_Learner(LearnerMAS):
         _, actions_greedy, q_eval = self.policy(obs.reshape(-1, episode_length + 1, self.dim_obs),
                                                 IDs.reshape(-1, episode_length + 1, self.n_agents),
                                                 *rnn_hidden,
-                                                avail_actions=avail_actions.reshape(-1, episode_length + 1, self.dim_act))
+                                                avail_actions=avail_actions.reshape(-1, episode_length + 1,
+                                                                                    self.dim_act))
         q_eval = q_eval[:, :-1].reshape(batch_size, self.n_agents, episode_length, self.dim_act)
         actions_greedy = actions_greedy.reshape(batch_size, self.n_agents, episode_length + 1, 1)
         q_eval_a = q_eval.gather(-1, actions.long().reshape([self.args.batch_size, self.n_agents, episode_length, 1]))
@@ -154,4 +163,3 @@ class IQL_Learner(LearnerMAS):
         }
 
         return info
-

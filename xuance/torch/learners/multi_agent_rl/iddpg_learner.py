@@ -35,8 +35,7 @@ class IDDPG_Learner(LearnerMAS):
         actions = {k: Tensor(sample['actions'][k]).to(self.device) for k in self.model_keys}
         obs_next = {k: Tensor(sample['obs_next'][k]).to(self.device) for k in self.model_keys}
         rewards = {k: Tensor(sample['rewards'][k]).reshape(-1, 1).to(self.device) for k in self.model_keys}
-        terminals = {k: Tensor(sample['terminals'][k]).float().reshape(-1, 1).to(self.device)
-                     for k in self.model_keys}
+        terminals = {k: Tensor(sample['terminals'][k]).float().reshape(-1, 1).to(self.device) for k in self.model_keys}
         agent_mask = {k: Tensor(sample['agent_mask'][k]).float().reshape(-1, 1).to(self.device)
                       for k in self.model_keys}
         IDs = None

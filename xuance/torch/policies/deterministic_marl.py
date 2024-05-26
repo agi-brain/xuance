@@ -36,7 +36,9 @@ class BasicQnetwork(Module):
         self.parameters_model = {}
         for key in self.model_keys:
             self.n_actions[key] = self.action_space[key].n
-            self.dim_input_Q[key] = self.representation_info_shape[key]['state'][0] + self.n_agents
+            self.dim_input_Q[key] = self.representation_info_shape[key]['state'][0]
+            if self.use_parameter_sharing:
+                self.dim_input_Q[key] += self.n_agents
             self.eval_Qhead[key] = BasicQhead(self.dim_input_Q[key], self.n_actions[key], hidden_size,
                                               normalize, initialize, activation, device)
             self.target_Qhead[key] = deepcopy(self.eval_Qhead[key])

@@ -5,7 +5,6 @@ from copy import deepcopy
 from operator import itemgetter
 from argparse import Namespace
 from xuance.environment import DummyVecMutliAgentEnv
-from xuance.torch import Tensor
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.representations import REGISTRY_Representation
 from xuance.torch.policies import REGISTRY_Policy
@@ -146,8 +145,7 @@ class IDDPG_Agents(MARLAgents):
         """
         n_env = len(obs_dict)
         if self.use_parameter_sharing:
-            obs_tensor = Tensor(np.array([itemgetter(*self.agent_keys)(env_obs) for env_obs in obs_dict]))
-            obs_input = {self.agent_keys[0]: obs_tensor}
+            obs_input = {self.agent_keys[0]: np.array([itemgetter(*self.agent_keys)(env_obs) for env_obs in obs_dict])}
             agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(n_env, -1, -1).to(self.device)
             actions = self.policy(obs_input, agents_id)[self.agent_keys[0]]
             actions = actions.cpu().detach().numpy()
