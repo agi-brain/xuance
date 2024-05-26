@@ -60,6 +60,6 @@ class MADDPG_Agents(IDDPG_Agents):
 
         return policy
 
-    def _build_learner(self, config, model_keys, policy, optimizer, scheduler):
-        return MADDPG_Learner(config, model_keys, policy, optimizer, scheduler)
+    def _build_learner(self, config, model_keys, agent_keys, policy, optimizer, scheduler):
+        return MADDPG_Learner(config, model_keys, agent_keys, policy, optimizer, scheduler)
 
