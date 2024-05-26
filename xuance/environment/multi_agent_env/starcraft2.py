@@ -51,6 +51,7 @@ class StarCraft2_Env(RawMultiAgentEnv):
 
     def step(self, actions):
         """ Takes actions as input, perform a step in the underlying StarCraft2 environment. """
+        actions_list = [actions[key] for key in self.agents]
         reward, terminated, info = self.env.step(actions)
         info.update(self.buf_info)
         obs = self.env.get_obs()
@@ -83,8 +84,10 @@ class StarCraft2_Env(RawMultiAgentEnv):
 
     def agent_mask(self):
         """Returns boolean mask variables indicating which agents are currently alive."""
-        return
+        return {agent: True for agent in self.agents}
 
     def avail_actions(self):
         """Returns a boolean mask indicating which actions are available for each agent."""
-        return self.env.get_avail_actions()
+        actions_mask_list = self.env.get_avail_actions()
+        return {key: actions_mask_list[index] for index, key in enumerate(self.agents)}
+

@@ -132,32 +132,18 @@ class IQL_Agents(MARLAgents):
             terminals_dict (List[dict]): Terminated values for each agent in self.agent_keys.
             info (List[dict]): Other information for the environment at current step.
         """
-        if self.use_parameter_sharing:
-            k = self.agent_keys[0]
-            experience_data = {
-                'obs': {k: np.array([itemgetter(*self.agent_keys)(data) for data in obs_dict])},
-                'actions': {k: np.array([itemgetter(*self.agent_keys)(data) for data in actions_dict])},
-                'obs_next': {k: np.array([itemgetter(*self.agent_keys)(data) for data in obs_next_dict])},
-                'rewards': {k: np.array([itemgetter(*self.agent_keys)(data) for data in rewards_dict])},
-                'terminals': {k: np.array([itemgetter(*self.agent_keys)(data) for data in terminals_dict])},
-                'agent_mask': {k: np.array([itemgetter(*self.agent_keys)(data['agent_mask']) for data in info])},
-                'avail_actions': {k: np.array([itemgetter(*self.agent_keys)(data) for data in avail_actions])},
-                'avail_actions_next': {k: np.array([itemgetter(*self.agent_keys)(data) for data in avail_actions_next])}
-            }
-        else:
-            experience_data = {
-                'obs': {k: np.array([itemgetter(k)(data) for data in obs_dict]) for k in self.agent_keys},
-                'actions': {k: np.array([itemgetter(k)(data) for data in actions_dict]) for k in self.agent_keys},
-                'obs_next': {k: np.array([itemgetter(k)(data) for data in obs_next_dict]) for k in self.agent_keys},
-                'rewards': {k: np.array([itemgetter(k)(data) for data in rewards_dict]) for k in self.agent_keys},
-                'terminals': {k: np.array([itemgetter(k)(data) for data in terminals_dict]) for k in self.agent_keys},
-                'agent_mask': {k: np.array([itemgetter(k)(data['agent_mask']) for data in info])
-                               for k in self.agent_keys},
-                'avail_actions': {k: np.array([itemgetter(k)(data) for data in avail_actions])
-                                  for k in self.agent_keys},
-                'avail_actions_next': {k: np.array([itemgetter(k)(data) for data in avail_actions_next])
-                                       for k in self.agent_keys}
-            }
+        experience_data = {
+            'obs': {k: np.array([itemgetter(k)(data) for data in obs_dict]) for k in self.agent_keys},
+            'actions': {k: np.array([itemgetter(k)(data) for data in actions_dict]) for k in self.agent_keys},
+            'obs_next': {k: np.array([itemgetter(k)(data) for data in obs_next_dict]) for k in self.agent_keys},
+            'rewards': {k: np.array([itemgetter(k)(data) for data in rewards_dict]) for k in self.agent_keys},
+            'terminals': {k: np.array([itemgetter(k)(data) for data in terminals_dict]) for k in self.agent_keys},
+            'agent_mask': {k: np.array([itemgetter(k)(data['agent_mask']) for data in info])
+                           for k in self.agent_keys},
+            'avail_actions': {k: np.array([itemgetter(k)(data) for data in avail_actions]) for k in self.agent_keys},
+            'avail_actions_next': {k: np.array([itemgetter(k)(data) for data in avail_actions_next])
+                                   for k in self.agent_keys}
+        }
         self.memory.store(experience_data)
 
     def init_rnn_hidden(self):
@@ -194,7 +180,11 @@ class IQL_Agents(MARLAgents):
         if self.use_parameter_sharing:
             # prepare input tensors
             key = self.agent_keys[0]
-            obs_input = {key: np.array([itemgetter(*self.agent_keys)(env_obs) for env_obs in obs_dict])}
+            if self.use_rnn:
+                obs_array = np.array([itemgetter(*self.agent_keys)(env_obs) for env_obs in obs_dict])
+                raise NotImplementedError
+            else:
+                obs_input = {key: np.array([itemgetter(*self.agent_keys)(env_obs) for env_obs in obs_dict])}
             if self.use_actions_mask:
                 avail_actions_input = {
                     key: np.array([itemgetter(*self.agent_keys)(mask) for mask in avail_actions_dict])}
@@ -202,22 +192,35 @@ class IQL_Agents(MARLAgents):
                 avail_actions_input = None
             agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(n_env, -1, -1).to(self.device)
 
-            hidden_state, actions, _ = self.policy(obs_input, agents_id, avail_actions=avail_actions_input,
+            hidden_state, actions, _ = self.policy(obs_input, agents_id,
+                                                   avail_actions=avail_actions_input,
                                                    rnn_hidden=rnn_hidden)
-            actions_array = actions[self.agent_keys[0]].cpu().detach().numpy()
-            actions_dict = [{k: actions_array[e, i] for i, k in enumerate(self.agent_keys)} for e in range(n_env)]
+            if self.use_rnn:
+                raise NotImplementedError
+            else:
+                actions_array = actions[self.agent_keys[0]].cpu().detach().numpy()
+                actions_dict = [{k: actions_array[e, i] for i, k in enumerate(self.agent_keys)} for e in range(n_env)]
         else:
             # prepare input tensors
-            obs_input = {k: np.array([itemgetter(k)(env_obs) for env_obs in obs_dict]) for k in self.agent_keys}
+            if self.use_rnn:
+                obs_input = {k: np.array([itemgetter(k)(env_obs) for env_obs in obs_dict])[:, np.newaxis]
+                             for k in self.agent_keys}
+            else:
+                obs_input = {k: np.array([itemgetter(k)(env_obs) for env_obs in obs_dict]) for k in self.agent_keys}
             if self.use_actions_mask:
                 avail_actions_input = {k: np.array([itemgetter(k)(mask) for mask in avail_actions_dict])
                                        for k in self.agent_keys}
             else:
                 avail_actions_input = None
-            hidden_state, actions, _ = self.policy(obs_input, avail_actions=avail_actions_input, rnn_hidden=rnn_hidden)
+            hidden_state, actions, _ = self.policy(obs_input,
+                                                   avail_actions=avail_actions_input,
+                                                   rnn_hidden=rnn_hidden)
             actions_dict_ = {}
             for key in self.model_keys:
-                actions_dict_[key] = actions[key].cpu().detach().numpy()
+                if self.use_rnn:
+                    actions_dict_[key] = actions[key].squeeze(1).cpu().detach().numpy()
+                else:
+                    actions_dict_[key] = actions[key].cpu().detach().numpy()
             actions_dict = [{k: actions_dict_[k][e] for k in self.agent_keys} for e in range(n_env)]
 
         if not test_mode:  # get random actions
