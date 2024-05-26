@@ -111,12 +111,12 @@ class IDDPG_Agents(MARLAgents):
             info (List[dict]): Other information for the environment at current step.
         """
         experience_data = {
-            'obs': {k: np.array([itemgetter(k)(data) for data in obs_dict]) for k in self.agent_keys},
-            'actions': {k: np.array([itemgetter(k)(data) for data in actions_dict]) for k in self.agent_keys},
-            'obs_next': {k: np.array([itemgetter(k)(data) for data in obs_next_dict]) for k in self.agent_keys},
-            'rewards': {k: np.array([itemgetter(k)(data) for data in rewards_dict]) for k in self.agent_keys},
-            'terminals': {k: np.array([itemgetter(k)(data) for data in terminals_dict]) for k in self.agent_keys},
-            'agent_mask': {k: np.array([itemgetter(k)(data['agent_mask']) for data in info]) for k in self.agent_keys},
+            'obs': {k: np.array([data[k] for data in obs_dict]) for k in self.agent_keys},
+            'actions': {k: np.array([data[k] for data in actions_dict]) for k in self.agent_keys},
+            'obs_next': {k: np.array([data[k] for data in obs_next_dict]) for k in self.agent_keys},
+            'rewards': {k: np.array([data[k] for data in rewards_dict]) for k in self.agent_keys},
+            'terminals': {k: np.array([data[k] for data in terminals_dict]) for k in self.agent_keys},
+            'agent_mask': {k: np.array([data['agent_mask'][k] for data in info]) for k in self.agent_keys},
         }
         self.memory.store(experience_data)
 
