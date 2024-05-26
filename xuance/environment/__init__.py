@@ -52,8 +52,8 @@ def make_envs(config: Namespace):
             env = RawEnv(config)
 
         elif config.env_name == "StarCraft2":
-            from xuance.environment.starcraft2.sc2_env import StarCraft2_Env
-            env = StarCraft2_Env(map_name=config.env_id)
+            from xuance.environment.multi_agent_env.starcraft2 import StarCraft2_Env as RawEnv
+            env = RawEnv(config)
 
         elif config.env_name == "Football":
             from xuance.environment.football.gfootball_env import GFootball_Env

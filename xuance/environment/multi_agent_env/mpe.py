@@ -1,8 +1,7 @@
-from xuance.environment import RawMultiAgentEnv
-from pettingzoo.utils.env import ParallelEnv
-import numpy as np
 import importlib
-from operator import itemgetter
+import numpy as np
+from xuance.environment import RawMultiAgentEnv
+
 
 TEAM_NAME_DICT = {
     "mpe.simple_adversary_v3": ['adversary', 'agent'],
@@ -19,13 +18,11 @@ TEAM_NAME_DICT = {
 
 class MPE_Env(RawMultiAgentEnv):
     """
-    A wrapper for PettingZoo environments, provide a standardized interface for interacting
-    with the environments in the context of multi-agent reinforcement learning
+    The implementation of MPE environments, provides a standardized interface for interacting
+    with the environments in the context of multi-agent reinforcement learning.
+
     Parameters:
-        env_name (str) – the name of the PettingZoo environment.
-        env_id (str) – environment id.
-        seed (int) – use to control randomness within the environment.
-        kwargs (dict) – a variable-length keyword argument.
+        config: The configurations of the environment.
     """
     def __init__(self, config):
         super(MPE_Env, self).__init__()

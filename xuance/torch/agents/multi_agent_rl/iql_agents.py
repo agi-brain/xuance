@@ -89,7 +89,13 @@ class IQL_Agents(MARLAgents):
                     input_shape=input_shape, hidden_sizes=self.config.representation_hidden_size,
                     normalize=normalize_fn, initialize=initializer, activation=activation, device=device)
             elif self.config.representation == "Basic_RNN":
-                raise NotImplementedError
+                representation[key] = REGISTRY_Representation["Basic_RNN"](
+                    input_shape=input_shape,
+                    hidden_sizes={'fc_hidden_sizes': self.config.fc_hidden_sizes,
+                                  'recurrent_hidden_size': self.config.recurrent_hidden_size},
+                    normalize=normalize_fn, initialize=initializer, activation=activation, device=device,
+                    N_recurrent_layers=self.config.N_recurrent_layers,
+                    dropout=self.config.dropout, rnn=self.config.rnn)
             else:
                 raise f"The IQL currently does not support the representation of {self.config.representation}."
 

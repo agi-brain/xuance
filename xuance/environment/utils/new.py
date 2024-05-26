@@ -106,10 +106,10 @@ class RawMultiAgentEnv(ABC):
     def __init__(self, *args, **kwargs):
         super(RawMultiAgentEnv, self).__init__(*args, **kwargs)
         self.env = None
+        self.agents: Optional[AgentKeys] = None  # e.g., ['red_0', 'red_1', 'blue_0', 'blue_1'].
         self.state_space: Optional[spaces.Space] = None
         self.observation_space: Optional[Dict[spaces.Space]] = None
         self.action_space: Optional[Dict[spaces.Space]] = None
-        self.agents: Optional[AgentKeys] = None  # e.g., ['red_0', 'red_1', 'blue_0', 'blue_1'].
         self.num_agents: Optional[int] = None  # Number of all agents, e.g., 4.
         self.teams_info = {  # Information of teams.
             "names": ['red', 'blue'],  # should be consistent with the name of agents.
@@ -171,13 +171,12 @@ class RawMultiAgentEnv(ABC):
                     agents_in_team[i_team].append(agent)
         return agents_in_team
 
-    @property
     def state(self):
         """Returns the global state of the environment."""
         raise NotImplementedError
 
     def agent_mask(self):
-        """Create a boolean mask indicating which agents are currently alive."""
+        """Returns boolean mask variables indicating which agents are currently alive."""
         return {agent: True for agent in self.agents}
 
     def avail_actions(self):

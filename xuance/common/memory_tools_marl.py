@@ -710,21 +710,16 @@ class MARL_OffPolicyBuffer_RNN(MARL_OffPolicyBuffer):
         state_space: global state space, type: Discrete, Box.
         obs_space: observation space for one agent (suppose same obs space for group agents).
         act_space: action space for one agent (suppose same actions space for group agents).
-        rew_space: reward space.
-        done_space: terminal variable space.
         n_envs: number of parallel environments.
         buffer_size: buffer size of total experience data.
         batch_size: batch size of episodes for a sample.
         kwargs: other arguments.
     """
 
-    def __init__(self, n_agents, state_space, obs_space, act_space, rew_space, done_space,
-                 n_envs, buffer_size, batch_size, **kwargs):
+    def __init__(self, n_agents, state_space, obs_space, act_space, n_envs, buffer_size, batch_size, **kwargs):
         self.max_eps_len = kwargs['max_episode_length']
-        self.dim_act = kwargs['dim_act']
-        super(MARL_OffPolicyBuffer_RNN, self).__init__(n_agents, state_space, obs_space, act_space, rew_space,
-                                                       done_space, n_envs, buffer_size, batch_size)
-
+        super(MARL_OffPolicyBuffer_RNN, self).__init__(n_agents, state_space, obs_space, act_space,
+                                                       n_envs, buffer_size, batch_size, **kwargs)
         self.episode_data = {}
         self.clear_episodes()
 
