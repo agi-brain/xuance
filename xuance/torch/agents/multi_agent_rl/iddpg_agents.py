@@ -45,7 +45,6 @@ class IDDPG_Agents(MARLAgents):
 
         # create experience replay buffer
         self.memory = MARL_OffPolicyBuffer(n_agents=self.config.n_agents,
-                                           state_space=None,
                                            obs_space=self.observation_space,
                                            act_space=self.action_space,
                                            n_envs=self.n_envs,
@@ -129,7 +128,8 @@ class IDDPG_Agents(MARLAgents):
                 'obs_next': {k: np.array([itemgetter(k)(data) for data in obs_next_dict]) for k in self.agent_keys},
                 'rewards': {k: np.array([itemgetter(k)(data) for data in rewards_dict]) for k in self.agent_keys},
                 'terminals': {k: np.array([itemgetter(k)(data) for data in terminals_dict]) for k in self.agent_keys},
-                'agent_mask': {k: np.array([itemgetter(k)(data['agent_mask']) for data in info]) for k in self.agent_keys},
+                'agent_mask': {k: np.array([itemgetter(k)(data['agent_mask']) for data in info])
+                               for k in self.agent_keys},
             }
         self.memory.store(experience_data)
 

@@ -13,7 +13,7 @@ from xuance.torch.representations import REGISTRY_Representation
 from xuance.torch.policies import REGISTRY_Policy
 from xuance.torch.learners import IQL_Learner
 from xuance.torch.agents import MARLAgents
-from xuance.common import MARL_OffPolicyBuffer, MARL_OffPolicyBuffer_Split, MARL_OffPolicyBuffer_RNN
+from xuance.common import MARL_OffPolicyBuffer, MARL_OffPolicyBuffer_RNN
 
 
 class IQL_Agents(MARLAgents):

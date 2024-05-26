@@ -1,6 +1,7 @@
 import numpy as np
 from abc import ABC, abstractmethod
-from typing import Optional, Union
+from typing import Optional, Union, Dict
+from gym.spaces import Space
 from xuance.common import space2shape
 
 
@@ -567,18 +568,42 @@ class MARL_OffPolicyBuffer(BaseBuffer):
     """
     Replay buffer for off-policy MARL algorithms with parameter sharing.
 
-    Args:
-        n_agents: number of agents.
-        state_space: global state space, type: Discrete, Box.
-        obs_space: observation space for one agent (suppose same obs space for group agents).
-        act_space: action space for one agent (suppose same actions space for group agents).
-        n_envs: number of parallel environments.
-        buffer_size: buffer size of total experience data.
-        batch_size: batch size of transition data for a sample.
+    Parameters:
+        n_agents (int): number of agents.
+        state_space (Dict[str, Space]): global state space, type: Discrete, Box.
+        obs_space (Dict[str, Dict[str, Space]]): observation space for one agent (suppose same obs space for group agents).
+        act_space (Dict[str, Dict[str, Space]]): action space for one agent (suppose same actions space for group agents).
+        n_envs (int): number of parallel environments.
+        buffer_size (int): buffer size of total experience data.
+        batch_size (int): batch size of transition data for a sample.
         **kwargs: other arguments.
+
+    Example:
+        $ obs_space={'agent_0': Box(-inf, inf, (18,), float32),
+                     'agent_1': Box(-inf, inf, (18,), float32),
+                     'agent_2': Box(-inf, inf, (18,), float32)},
+        $ act_space={'agent_0': Box(0.0, 1.0, (5,), float32),
+                     'agent_1': Box(0.0, 1.0, (5,), float32),
+                     'agent_2': Box(0.0, 1.0, (5,), float32)},
+        $ n_envs=50,
+        $ buffer_size=10000,
+        $ batch_size=256,
+        $ model_keys=['agent_0', 'agent_1', 'agent_2'],
+        $ use_parameter_sharing=False)
+        $ memory = MARL_OffPolicyBuffer(n_agents=3, obs_space=obs_space, act_space=act_space, n_envs=n_envs,
+                                        buffer_size=buffer_size, batch_size=batch_size, model_keys=model_keys,
+                                        use_parameter_sharing=use_parameter_sharing)
     """
 
-    def __init__(self, n_agents, state_space, obs_space, act_space, n_envs, buffer_size, batch_size, **kwargs):
+    def __init__(self,
+                 n_agents: int,
+                 state_space: Dict[str, Space] = None,
+                 obs_space: Dict[str, Dict[str, Space]] = None,
+                 act_space: Dict[str, Dict[str, Space]] = None,
+                 n_envs: int = 1,
+                 buffer_size: int = 1,
+                 batch_size: int = 1,
+                 **kwargs):
         super(MARL_OffPolicyBuffer, self).__init__(n_agents, state_space, obs_space, act_space,
                                                    n_envs, buffer_size)
         assert buffer_size % self.n_envs == 0, "buffer_size must be divisible by the number of envs (i.e., parallels)"
@@ -594,6 +619,24 @@ class MARL_OffPolicyBuffer(BaseBuffer):
         self.data_keys = self.data.keys()
 
     def clear(self):
+        """
+        Clear the memory data in the replay buffer.
+
+        Example:
+        An example shows the data shape: (n_env=50, n_agent=3, buffer_size=10000).
+        When use_parameter_sharing is True, then
+            self.data: {'obs': {'agent_0': shape=[50, 200, 3, 18]},  # dim_obs: 18
+                        'actions': {'agent_0': shape=[50, 200, 3, 5]},  # dim_act: 5
+                         ...}
+        When use_parameter_sharing is False, then
+            self.data: {'obs': {'agent_0': shape=[50, 200, 18],
+                                'agent_1': shape=[50, 200, 18],
+                                'agent_2': shape=[50, 200, 18]},  # dim_obs: 18
+                        'actions': {'agent_0': shape=[50, 200, 3, 5],
+                                    'agent_1': shape=[50, 200, 3, 5],
+                                    'agent_2': shape=[50, 200, 3, 5]},  # dim_act: 5
+                         ...}
+        """
         num_agents = self.n_agents if self.use_parameter_sharing else None
         obs_space = {key: self.obs_space[key] for key in self.model_keys}
         act_space = {key: self.act_space[key] for key in self.model_keys}
@@ -623,6 +666,7 @@ class MARL_OffPolicyBuffer(BaseBuffer):
         self.ptr, self.size = 0, 0
 
     def store(self, step_data):
+        """ Store a step of data into the replay buffer. """
         for data_key in self.data_keys:
             if data_key in ['state', 'state_next']:
                 self.data[data_key][:, self.ptr] = step_data[data_key]
@@ -633,6 +677,15 @@ class MARL_OffPolicyBuffer(BaseBuffer):
         self.size = np.min([self.size + 1, self.n_size])
 
     def sample(self, batch_size=None):
+        """
+        Sample a batch of data from the replay buffer.
+
+        Parameters:
+            batch_size (int): The size of the batch data to be sampled.
+
+        Returns:
+            samples (dict): The sampled data.
+        """
         if batch_size is None:
             batch_size = self.batch_size
         env_choices = np.random.choice(self.n_envs, batch_size)
@@ -644,65 +697,6 @@ class MARL_OffPolicyBuffer(BaseBuffer):
                 continue
             samples[data_key] = {agt_key: self.data[data_key][agt_key][env_choices, step_choices]
                                  for agt_key in self.model_keys}
-        return samples
-
-
-class MARL_OffPolicyBuffer_Split(BaseBuffer):
-    """
-    Replay buffer for off-policy MARL algorithms with parameter sharing.
-
-    Parameters:
-        agent_keys (str): The keys of agents.
-        state_space (Tuple): global state space, type: Discrete, Box.
-        obs_space (Dict[str, Tuple]): observation space for one agent (suppose same obs space for group agents).
-        act_space (Dict[str, Tuple]): action space for one agent (suppose same actions space for group agents).
-        n_envs (int): number of parallel environments.
-        buffer_size (int): buffer size of total experience data.
-        batch_size (int): batch size of transition data for a sample.
-        **kwargs: other arguments.
-    """
-
-    def __init__(self, agent_keys, state_space, obs_space, act_space, n_envs, buffer_size, batch_size, **kwargs):
-        n_agents = len(agent_keys)
-        self.agent_keys = agent_keys
-        super(MARL_OffPolicyBuffer_Split, self).__init__(n_agents, state_space, obs_space, act_space, n_envs,
-                                                         buffer_size)
-        del kwargs['n_agents']
-        self.split_buffers = {key: MARL_OffPolicyBuffer_Share(None, None, obs_space[key], act_space[key], n_envs,
-                                                              buffer_size, batch_size, **kwargs) for key in agent_keys}
-        assert buffer_size % self.n_envs == 0, "buffer_size must be divisible by the number of envs (parallels)"
-        self.n_size = buffer_size // n_envs
-        self.batch_size = batch_size
-        self.store_global_state = False if self.state_space is None else True
-        self.state, self.state_next = None, None
-        self.clear()
-
-    def clear(self, *args):
-        for key in self.agent_keys:
-            self.split_buffers[key].clear()
-        if self.store_global_state:
-            self.state = create_memory(space2shape(self.state_space), self.n_envs, self.n_size, None)
-            self.state_next = create_memory(space2shape(self.state_space), self.n_envs, self.n_size, None)
-        self.ptr, self.size = 0, 0
-
-    def store(self, step_date):
-        for key in self.agent_keys:
-            self.split_buffers[key].store(step_date[key])
-        if self.store_global_state:
-            self.state[:, self.ptr] = step_date['state']
-            self.state_next[:, self.ptr] = step_date['state_next']
-        self.ptr = (self.ptr + 1) % self.n_size
-        self.size = np.min([self.size + 1, self.n_size])
-
-    def sample(self, env_choices=None, step_choices=None):
-        if env_choices is None:
-            env_choices = np.random.choice(self.n_envs, self.batch_size)
-        if step_choices is None:
-            step_choices = np.random.choice(self.size, self.batch_size)
-        samples = {k: self.split_buffers[k].sample(env_choices, step_choices) for k in self.agent_keys}
-        if self.store_global_state:
-            samples['state'] = self.state[env_choices, step_choices]
-            samples['state_next'] = self.state_next[env_choices, step_choices]
         return samples
 
 
