@@ -66,6 +66,7 @@ class LearnerMAS(ABC):
     def __init__(self,
                  config: Namespace,
                  model_keys: List[str],
+                 agent_keys: List[str],
                  policy: torch.nn.Module,
                  optimizer: Optional[dict],
                  scheduler: Optional[dict] = None):
@@ -76,6 +77,7 @@ class LearnerMAS(ABC):
 
         self.use_parameter_sharing = config.use_parameter_sharing
         self.model_keys = model_keys
+        self.agent_keys = agent_keys
         self.policy = policy
         self.optimizer = optimizer
         self.scheduler = scheduler

@@ -596,7 +596,6 @@ class MARL_OffPolicyBuffer(BaseBuffer):
         reward_space = {key: () for key in self.agent_keys}
         terminal_space = {key: () for key in self.agent_keys}
         agent_mask_space = {key: () for key in self.agent_keys}
-        avail_actions_space = {key: (self.n_actions[key],) for key in self.agent_keys}
 
         self.data = {
             'obs': create_memory(space2shape(self.obs_space), self.n_envs, self.n_size),
@@ -613,6 +612,7 @@ class MARL_OffPolicyBuffer(BaseBuffer):
                 'state_next': create_memory(state_shape, self.n_envs, self.n_size)
             })
         if self.use_actions_mask:
+            avail_actions_space = {key: (self.n_actions[key],) for key in self.agent_keys}
             self.data.update({
                 "avail_actions": create_memory(avail_actions_space, self.n_envs, self.n_size, np.bool_),
                 "avail_actions_next": create_memory(avail_actions_space, self.n_envs, self.n_size, np.bool_)

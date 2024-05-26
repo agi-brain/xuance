@@ -3,24 +3,27 @@ Independent Deep Deterministic Policy Gradient (IDDPG)
 Implementation: Pytorch
 """
 import torch
+import numpy as np
 from torch import nn
 from xuance.torch.learners import LearnerMAS
 from xuance.torch import Tensor
 from typing import Optional, List
 from argparse import Namespace
+from operator import itemgetter
 
 
 class IDDPG_Learner(LearnerMAS):
     def __init__(self,
                  config: Namespace,
                  model_keys: List[str],
+                 agent_keys: List[str],
                  policy: nn.Module,
                  optimizer: Optional[dict],
                  scheduler: Optional[dict] = None):
         self.gamma = config.gamma
         self.tau = config.tau
         self.mse_loss = nn.MSELoss()
-        super(IDDPG_Learner, self).__init__(config, model_keys, policy, optimizer, scheduler)
+        super(IDDPG_Learner, self).__init__(config, model_keys, agent_keys, policy, optimizer, scheduler)
         self.optimizer = {key: {'actor': optimizer[key][0],
                                 'critic': optimizer[key][1]} for key in self.model_keys}
         self.scheduler = {key: {'actor': scheduler[key][0],
@@ -31,20 +34,29 @@ class IDDPG_Learner(LearnerMAS):
         info = {}
 
         # prepare training data
-        obs = {k: Tensor(sample['obs'][k]).to(self.device) for k in self.model_keys}
-        actions = {k: Tensor(sample['actions'][k]).to(self.device) for k in self.model_keys}
-        obs_next = {k: Tensor(sample['obs_next'][k]).to(self.device) for k in self.model_keys}
-        rewards = {k: Tensor(sample['rewards'][k]).reshape(-1, 1).to(self.device) for k in self.model_keys}
-        terminals = {k: Tensor(sample['terminals'][k]).float().reshape(-1, 1).to(self.device) for k in self.model_keys}
-        agent_mask = {k: Tensor(sample['agent_mask'][k]).float().reshape(-1, 1).to(self.device)
-                      for k in self.model_keys}
-        IDs = None
         if self.use_parameter_sharing:
-            key = self.model_keys[0]
-            rewards = {key: rewards[key].reshape(-1, self.n_agents, 1)}
-            terminals = {key: terminals[key].reshape(-1, self.n_agents, 1)}
-            agent_mask = {key: agent_mask[key].reshape(-1, self.n_agents, 1)}
+            k = self.model_keys[0]
+            obs = {k: Tensor(np.concatenate([itemgetter(*self.agent_keys)(sample['obs'])[i][:, None]
+                                             for i in range(self.n_agents)], axis=1)).to(self.device)}
+            actions = {k: Tensor(np.concatenate([itemgetter(*self.agent_keys)(sample['actions'])[i][:, None]
+                                                 for i in range(self.n_agents)], axis=1)).to(self.device)}
+            obs_next = {k: Tensor(np.concatenate([itemgetter(*self.agent_keys)(sample['obs_next'])[i][:, None]
+                                                  for i in range(self.n_agents)], axis=1)).to(self.device)}
+            rewards = {k: Tensor(np.concatenate([itemgetter(*self.agent_keys)(sample['rewards'])[i][:, None, None]
+                                                 for i in range(self.n_agents)], axis=1)).to(self.device)}
+            terminals = {k: Tensor(np.concatenate([itemgetter(*self.agent_keys)(sample['terminals'])[i][:, None, None]
+                                                   for i in range(self.n_agents)], axis=1)).to(self.device)}
+            agent_mask = {k: Tensor(np.concatenate([itemgetter(*self.agent_keys)(sample['agent_mask'])[i][:, None, None]
+                                                    for i in range(self.n_agents)], axis=1)).to(self.device)}
             IDs = torch.eye(self.n_agents).unsqueeze(0).expand(self.config.batch_size, -1, -1).to(self.device)
+        else:
+            obs = {k: Tensor(sample['obs'][k]).to(self.device) for k in self.agent_keys}
+            actions = {k: Tensor(sample['actions'][k]).to(self.device) for k in self.agent_keys}
+            obs_next = {k: Tensor(sample['obs_next'][k]).to(self.device) for k in self.agent_keys}
+            rewards = {k: Tensor(sample['rewards'][k][:, None]).to(self.device) for k in self.agent_keys}
+            terminals = {k: Tensor(sample['terminals'][k][:, None]).float().to(self.device) for k in self.agent_keys}
+            agent_mask = {k: Tensor(sample['agent_mask'][k][:, None]).float().to(self.device) for k in self.agent_keys}
+            IDs = None
 
         # train the model
         for key in self.model_keys:
