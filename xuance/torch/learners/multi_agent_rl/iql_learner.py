@@ -5,7 +5,6 @@ Implementation: Pytorch
 import torch
 from torch import nn
 from xuance.torch.learners import LearnerMAS
-from xuance.torch import Tensor
 from typing import Optional, List
 from argparse import Namespace
 
@@ -15,13 +14,14 @@ class IQL_Learner(LearnerMAS):
                  config: Namespace,
                  model_keys: List[str],
                  agent_keys: List[str],
+                 episode_length: int,
                  policy: nn.Module,
                  optimizer: Optional[dict],
                  scheduler: Optional[dict] = None):
         self.gamma = config.gamma
         self.sync_frequency = config.sync_frequency
         self.mse_loss = nn.MSELoss()
-        super(IQL_Learner, self).__init__(config, model_keys, agent_keys, policy, optimizer, scheduler)
+        super(IQL_Learner, self).__init__(config, model_keys, agent_keys, episode_length, policy, optimizer, scheduler)
         self.use_actions_mask = config.use_actions_mask
         self.n_actions = {k: self.policy.action_space[k].n for k in self.model_keys}
         self.optimizer = optimizer
@@ -88,36 +88,41 @@ class IQL_Learner(LearnerMAS):
             self.policy.copy_target()
         return info
 
-    def update_recurrent(self, sample):
+    def update_rnn(self, sample):
         self.iterations += 1
-        obs = Tensor(sample['obs']).to(self.device)
-        actions = Tensor(sample['actions']).to(self.device)
-        rewards = Tensor(sample['rewards']).mean(dim=1, keepdims=True).to(self.device)
-        terminals = Tensor(sample['terminals']).float().to(self.device)
-        avail_actions = Tensor(sample['avail_actions']).float().to(self.device)
-        filled = Tensor(sample['filled']).float().to(self.device)
-        batch_size = sample['batch_size']
-        episode_length = actions.shape[2]
-        IDs = torch.eye(self.n_agents).unsqueeze(1).unsqueeze(0).expand(batch_size, -1, episode_length + 1, -1).to(
-            self.device)
+        info = {}
+
+        # prepare training data
+        sample_Tensor = self.build_training_data(sample,
+                                                 use_parameter_sharing=self.use_parameter_sharing,
+                                                 use_actions_mask=self.use_actions_mask)
+        batch_size = sample_Tensor['batch_size']
+        obs = sample_Tensor['obs']
+        actions = sample_Tensor['actions']
+        rewards = sample_Tensor['rewards']
+        terminals = sample_Tensor['terminals']
+        agent_mask = sample_Tensor['agent_mask']
+        avail_actions = sample_Tensor['avail_actions']
+        filled = sample_Tensor['filled']
+        IDs = sample_Tensor['agent_ids']
 
         # Current Q
         rnn_hidden = self.policy.representation.init_hidden(batch_size * self.n_agents)
-        _, actions_greedy, q_eval = self.policy(obs.reshape(-1, episode_length + 1, self.dim_obs),
-                                                IDs.reshape(-1, episode_length + 1, self.n_agents),
+        _, actions_greedy, q_eval = self.policy(obs.reshape(-1, self.episode_length + 1, self.dim_obs),
+                                                IDs.reshape(-1, self.episode_length + 1, self.n_agents),
                                                 *rnn_hidden,
-                                                avail_actions=avail_actions.reshape(-1, episode_length + 1,
+                                                avail_actions=avail_actions.reshape(-1, self.episode_length + 1,
                                                                                     self.dim_act))
-        q_eval = q_eval[:, :-1].reshape(batch_size, self.n_agents, episode_length, self.dim_act)
-        actions_greedy = actions_greedy.reshape(batch_size, self.n_agents, episode_length + 1, 1)
-        q_eval_a = q_eval.gather(-1, actions.long().reshape([self.args.batch_size, self.n_agents, episode_length, 1]))
+        q_eval = q_eval[:, :-1].reshape(batch_size, self.n_agents, self.episode_length, self.dim_act)
+        actions_greedy = actions_greedy.reshape(batch_size, self.n_agents, self.episode_length + 1, 1)
+        q_eval_a = q_eval.gather(-1, actions.long().reshape([self.args.batch_size, self.n_agents, self.episode_length, 1]))
 
         # Target Q
         target_rnn_hidden = self.policy.target_representation.init_hidden(batch_size * self.n_agents)
-        _, q_next = self.policy.target_Q(obs.reshape(-1, episode_length + 1, self.dim_obs),
-                                         IDs.reshape(-1, episode_length + 1, self.n_agents),
+        _, q_next = self.policy.target_Q(obs.reshape(-1, self.episode_length + 1, self.dim_obs),
+                                         IDs.reshape(-1, self.episode_length + 1, self.n_agents),
                                          *target_rnn_hidden)
-        q_next = q_next[:, 1:].reshape(batch_size, self.n_agents, episode_length, self.dim_act)
+        q_next = q_next[:, 1:].reshape(batch_size, self.n_agents, self.episode_length, self.dim_act)
         q_next[avail_actions[:, :, 1:] == 0] = -9999999
 
         # use double-q trick
@@ -129,8 +134,8 @@ class IQL_Learner(LearnerMAS):
 
         filled_n = filled.unsqueeze(1).expand(-1, self.n_agents, -1, -1)
         rewards = rewards.expand(-1, self.n_agents, -1, -1)
-        terminals = terminals.unsqueeze(1).expand(batch_size, self.n_agents, episode_length, 1)
-        q_target = rewards + (1 - terminals) * self.args.gamma * q_next_a
+        terminals = terminals.unsqueeze(1).expand(batch_size, self.n_agents, self.episode_length, 1)
+        q_target = rewards + (1 - terminals) * self.gamma * q_next_a
 
         # calculate the loss function
         td_errors = q_eval_a - q_target.detach()

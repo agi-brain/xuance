@@ -69,6 +69,7 @@ class LearnerMAS(ABC):
                  config: Namespace,
                  model_keys: List[str],
                  agent_keys: List[str],
+                 episode_length: int,
                  policy: torch.nn.Module,
                  optimizer: Optional[dict],
                  scheduler: Optional[dict] = None):
@@ -80,6 +81,8 @@ class LearnerMAS(ABC):
         self.use_parameter_sharing = config.use_parameter_sharing
         self.model_keys = model_keys
         self.agent_keys = agent_keys
+        self.episode_length = episode_length
+        self.use_rnn = config.use_rnn if hasattr(config, 'use_rnn') else False
         self.policy = policy
         self.optimizer = optimizer
         self.scheduler = scheduler
@@ -92,46 +95,61 @@ class LearnerMAS(ABC):
 
     def build_training_data(self, sample: Optional[dict],
                             use_parameter_sharing: Optional[bool] = False,
-                            use_actions_mask: Optional[bool] = False):
+                            use_actions_mask: Optional[bool] = False,
+                            use_global_state: Optional[bool] = False):
         """
         Prepare the training data.
         """
         batch_size = sample['batch_size']
+        state, avail_actions, filled = None, None, None
+        obs_next, state_next, avail_actions_next = None, None, None
         if use_parameter_sharing:
             k = self.model_keys[0]
             getter = itemgetter(*self.agent_keys)
             obs = {k: Tensor(concat([getter(sample['obs'])[i][:, None] for i in range(self.n_agents)], 1)).to(self.device)}
             actions = {k: Tensor(concat([getter(sample['actions'])[i][:, None] for i in range(self.n_agents)], 1)).to(self.device)}
-            obs_next = {k: Tensor(concat([getter(sample['obs_next'])[i][:, None] for i in range(self.n_agents)], 1)).to(self.device)}
+            if not self.use_rnn:
+                obs_next = {k: Tensor(concat([getter(sample['obs_next'])[i][:, None] for i in range(self.n_agents)], 1)).to(self.device)}
             rewards = {k: Tensor(concat([getter(sample['rewards'])[i][:, None, None] for i in range(self.n_agents)], 1)).to(self.device)}
             terminals = {k: Tensor(concat([getter(sample['terminals'])[i][:, None, None] for i in range(self.n_agents)], 1)).to(self.device)}
             agent_mask = {k: Tensor(concat([getter(sample['agent_mask'])[i][:, None, None] for i in range(self.n_agents)], 1)).to(self.device)}
+
             if use_actions_mask:
                 avail_actions = {
                     k: Tensor(concat([getter(sample['avail_actions'])[i][:, None] for i in range(self.n_agents)], 1)).to(self.device)}
-                avail_actions_next = {
-                    k: Tensor(concat([getter(sample['avail_actions_next'])[i][:, None] for i in range(self.n_agents)], 1)).to(self.device)}
-            else:
-                avail_actions, avail_actions_next = None, None
+                if not self.use_rnn:
+                    avail_actions_next = {
+                        k: Tensor(concat([getter(sample['avail_actions_next'])[i][:, None] for i in range(self.n_agents)], 1)).to(self.device)}
+
             IDs = torch.eye(self.n_agents).unsqueeze(0).expand(batch_size, -1, -1).to(self.device)
 
         else:
             obs = {k: Tensor(sample['obs'][k]).to(self.device) for k in self.agent_keys}
             actions = {k: Tensor(sample['actions'][k]).to(self.device) for k in self.agent_keys}
-            obs_next = {k: Tensor(sample['obs_next'][k]).to(self.device) for k in self.agent_keys}
+            if not self.use_rnn:
+                obs_next = {k: Tensor(sample['obs_next'][k]).to(self.device) for k in self.agent_keys}
             rewards = {k: Tensor(sample['rewards'][k][:, None]).to(self.device) for k in self.agent_keys}
             terminals = {k: Tensor(sample['terminals'][k][:, None]).float().to(self.device) for k in self.agent_keys}
             agent_mask = {k: Tensor(sample['agent_mask'][k][:, None]).float().to(self.device) for k in self.agent_keys}
             if use_actions_mask:
                 avail_actions = {k: Tensor(sample['avail_actions'][k]).float().to(self.device) for k in self.agent_keys}
-                avail_actions_next = {k: Tensor(sample['avail_actions_next'][k]).float().to(self.device)
-                                      for k in self.model_keys}
-            else:
-                avail_actions, avail_actions_next = None, None
+                if not self.use_rnn:
+                    avail_actions_next = {k: Tensor(sample['avail_actions_next'][k]).float().to(self.device)
+                                          for k in self.model_keys}
             IDs = None
+
+        if use_global_state:
+            state = Tensor(sample['state']).to(self.device)
+            if not self.use_rnn:
+                state_next = Tensor(sample['state_next']).to(self.device)
+
+        if self.use_rnn:
+            filled = Tensor(sample['filled']).to(self.device)
 
         sample_Tensor = {
             'batch_size': batch_size,
+            'state': state,
+            'state_next': state_next,
             'obs': obs,
             'actions': actions,
             'obs_next': obs_next,
@@ -141,6 +159,7 @@ class LearnerMAS(ABC):
             'avail_actions': avail_actions,
             'avail_actions_next': avail_actions_next,
             'agent_ids': IDs,
+            'filled': filled,
         }
         return sample_Tensor
 

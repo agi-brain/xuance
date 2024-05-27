@@ -51,8 +51,8 @@ class IDDPG_Agents(MARLAgents):
                                            batch_size=self.config.batch_size)
 
         # create learner
-        self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, self.policy,
-                                           optimizer, scheduler)
+        self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, envs.max_episode_length,
+                                           self.policy, optimizer, scheduler)
 
     def _build_policy(self):
         """
@@ -94,8 +94,8 @@ class IDDPG_Agents(MARLAgents):
 
         return policy
 
-    def _build_learner(self, config, model_keys, agent_keys, policy, optimizer, scheduler):
-        return IDDPG_Learner(config, model_keys, agent_keys, policy, optimizer, scheduler)
+    def _build_learner(self, config, model_keys, agent_keys, episode_length, policy, optimizer, scheduler):
+        return IDDPG_Learner(config, model_keys, agent_keys, episode_length, policy, optimizer, scheduler)
 
     def store_experience(self, obs_dict, actions_dict, obs_next_dict, rewards_dict, terminals_dict, info):
         """

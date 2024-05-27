@@ -60,8 +60,8 @@ class IQL_Agents(MARLAgents):
         self.rnn_hidden_state = self.init_rnn_hidden()
 
         # create learner
-        self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, self.policy,
-                                           optimizer, scheduler)
+        self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, envs.max_episode_length,
+                                           self.policy, optimizer, scheduler)
 
     def _build_policy(self):
         """
@@ -110,8 +110,8 @@ class IQL_Agents(MARLAgents):
 
         return policy
 
-    def _build_learner(self, config, model_keys, agent_keys, policy, optimizer, scheduler):
-        return IQL_Learner(config, model_keys, agent_keys, policy, optimizer, scheduler)
+    def _build_learner(self, config, model_keys, agent_keys, episode_length, policy, optimizer, scheduler):
+        return IQL_Learner(config, model_keys, agent_keys, episode_length, policy, optimizer, scheduler)
 
     def store_experience(self, obs_dict, avail_actions, actions_dict, obs_next_dict, avail_actions_next,
                          rewards_dict, terminals_dict, info):
@@ -260,7 +260,10 @@ class IQL_Agents(MARLAgents):
                                   rewards_dict, terminated_dict, info)
             if self.current_step >= self.start_training and self.current_step % self.training_frequency == 0:
                 sample = self.memory.sample()
-                step_info = self.learner.update(sample)
+                if self.use_rnn:
+                    step_info = self.learner.update_rnn(sample)
+                else:
+                    step_info = self.learner.update(sample)
                 step_info["epsilon_greedy"] = self.egreedy
                 self.log_infos(step_info, self.current_step)
             obs_dict = deepcopy(next_obs_dict)

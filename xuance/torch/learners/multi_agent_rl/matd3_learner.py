@@ -13,6 +13,7 @@ class MATD3_Learner(LearnerMAS):
                  config: Namespace,
                  model_keys: List[str],
                  agent_keys: List[str],
+                 episode_length: int,
                  policy: nn.Module,
                  optimizer: Optional[dict],
                  scheduler: Optional[dict] = None):
@@ -20,7 +21,8 @@ class MATD3_Learner(LearnerMAS):
         self.tau = config.tau
         self.mse_loss = nn.MSELoss()
         self.actor_update_delay = config.actor_update_delay
-        super(MATD3_Learner, self).__init__(config, model_keys, agent_keys, policy, optimizer, scheduler)
+        super(MATD3_Learner, self).__init__(config, model_keys, agent_keys, episode_length,
+                                            policy, optimizer, scheduler)
         self.optimizer = {key: {'actor': optimizer[key][0],
                                 'critic': optimizer[key][1]} for key in self.model_keys}
         self.scheduler = {key: {'actor': scheduler[key][0],
