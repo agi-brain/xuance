@@ -106,57 +106,112 @@ class IQL_Learner(LearnerMAS):
         filled = sample_Tensor['filled']
         IDs = sample_Tensor['agent_ids']
 
-        # Current Q
-        rnn_hidden = self.policy.representation.init_hidden(batch_size * self.n_agents)
-        _, actions_greedy, q_eval = self.policy(obs.reshape(-1, self.episode_length + 1, self.dim_obs),
-                                                IDs.reshape(-1, self.episode_length + 1, self.n_agents),
-                                                *rnn_hidden,
-                                                avail_actions=avail_actions.reshape(-1, self.episode_length + 1,
-                                                                                    self.dim_act))
-        q_eval = q_eval[:, :-1].reshape(batch_size, self.n_agents, self.episode_length, self.dim_act)
-        actions_greedy = actions_greedy.reshape(batch_size, self.n_agents, self.episode_length + 1, 1)
-        q_eval_a = q_eval.gather(-1, actions.long().reshape([self.args.batch_size, self.n_agents, self.episode_length, 1]))
+        for key in self.model_keys:
+            if self.use_parameter_sharing:
+                # Current Q
+                rnn_hidden = self.policy.representation[key].init_hidden(batch_size * self.n_agents)
+                _, actions_greedy, q_eval = self.policy(obs[key].reshape(-1, self.episode_length + 1, self.dim_obs),
+                                                        IDs.reshape(-1, self.episode_length + 1, self.n_agents),
+                                                        *rnn_hidden,
+                                                        avail_actions=avail_actions.reshape(-1, self.episode_length + 1,
+                                                                                            self.dim_act))
+                q_eval = q_eval[:, :-1].reshape(batch_size, self.n_agents, self.episode_length, self.dim_act)
+                actions_greedy = actions_greedy.reshape(batch_size, self.n_agents, self.episode_length + 1, 1)
+                q_eval_a = q_eval.gather(-1, actions.long().reshape(
+                    [self.args.batch_size, self.n_agents, self.episode_length, 1]))
 
-        # Target Q
-        target_rnn_hidden = self.policy.target_representation.init_hidden(batch_size * self.n_agents)
-        _, q_next = self.policy.target_Q(obs.reshape(-1, self.episode_length + 1, self.dim_obs),
-                                         IDs.reshape(-1, self.episode_length + 1, self.n_agents),
-                                         *target_rnn_hidden)
-        q_next = q_next[:, 1:].reshape(batch_size, self.n_agents, self.episode_length, self.dim_act)
-        q_next[avail_actions[:, :, 1:] == 0] = -9999999
+                # Target Q
+                target_rnn_hidden = self.policy.target_representation.init_hidden(batch_size * self.n_agents)
+                _, q_next = self.policy.target_Q(obs.reshape(-1, self.episode_length + 1, self.dim_obs),
+                                                 IDs.reshape(-1, self.episode_length + 1, self.n_agents),
+                                                 *target_rnn_hidden)
+                q_next = q_next[:, 1:].reshape(batch_size, self.n_agents, self.episode_length, self.dim_act)
+                q_next[avail_actions[:, :, 1:] == 0] = -9999999
 
-        # use double-q trick
-        if self.args.double_q:
-            action_next_greedy = actions_greedy[:, :, 1:]
-            q_next_a = q_next.gather(-1, action_next_greedy.long().detach())
-        else:
-            q_next_a = q_next.max(dim=-1, keepdim=True).values
+                # use double-q trick
+                if self.args.double_q:
+                    action_next_greedy = actions_greedy[:, :, 1:]
+                    q_next_a = q_next.gather(-1, action_next_greedy.long().detach())
+                else:
+                    q_next_a = q_next.max(dim=-1, keepdim=True).values
 
-        filled_n = filled.unsqueeze(1).expand(-1, self.n_agents, -1, -1)
-        rewards = rewards.expand(-1, self.n_agents, -1, -1)
-        terminals = terminals.unsqueeze(1).expand(batch_size, self.n_agents, self.episode_length, 1)
-        q_target = rewards + (1 - terminals) * self.gamma * q_next_a
+                filled_n = filled.unsqueeze(1).expand(-1, self.n_agents, -1, -1)
+                rewards = rewards.expand(-1, self.n_agents, -1, -1)
+                terminals = terminals.unsqueeze(1).expand(batch_size, self.n_agents, self.episode_length, 1)
+                q_target = rewards + (1 - terminals) * self.gamma * q_next_a
 
-        # calculate the loss function
-        td_errors = q_eval_a - q_target.detach()
-        td_errors *= filled_n
-        loss = (td_errors ** 2).sum() / filled_n.sum()
-        self.optimizer.zero_grad()
-        loss.backward()
-        if self.args.use_grad_clip:
-            torch.nn.utils.clip_grad_norm_(self.policy.parameters(), self.args.grad_clip_norm)
-        self.optimizer.step()
-        if self.scheduler is not None:
-            self.scheduler.step()
+                # calculate the loss function
+                td_errors = q_eval_a - q_target.detach()
+                td_errors *= filled_n
+                loss = (td_errors ** 2).sum() / filled_n.sum()
+                self.optimizer.zero_grad()
+                loss.backward()
+                if self.args.use_grad_clip:
+                    torch.nn.utils.clip_grad_norm_(self.policy.parameters(), self.args.grad_clip_norm)
+                self.optimizer.step()
+                if self.scheduler is not None:
+                    self.scheduler.step()
 
-        if self.iterations % self.sync_frequency == 0:
-            self.policy.copy_target()
-        lr = self.optimizer.state_dict()['param_groups'][0]['lr']
+                if self.iterations % self.sync_frequency == 0:
+                    self.policy.copy_target()
+                lr = self.optimizer.state_dict()['param_groups'][0]['lr']
 
-        info = {
-            "learning_rate": lr,
-            "loss_Q": loss.item(),
-            "predictQ": q_eval_a.mean().item()
-        }
+                info.update({
+                    f"{key}/learning_rate": lr,
+                    f"{key}/loss_Q": loss.item(),
+                    f"{key}/predictQ": q_eval_a.mean().item()
+                })
+            else:
+                # Current Q
+                rnn_hidden = self.policy.representation[key].init_hidden(batch_size * self.n_agents)
+                _, actions_greedy, q_eval = self.policy(obs[key].reshape(batch_size, self.episode_length + 1, -1),
+                                                        avail_actions=avail_actions.reshape(batch_size, self.episode_length + 1, -1),
+                                                        agent_key=key,
+                                                        rnn_hidden=rnn_hidden)
+                q_eval = q_eval[:, :-1].reshape(batch_size, self.n_agents, self.episode_length, self.dim_act)
+                actions_greedy = actions_greedy.reshape(batch_size, self.n_agents, self.episode_length + 1, 1)
+                q_eval_a = q_eval.gather(-1, actions.long().reshape([self.args.batch_size, self.n_agents, self.episode_length, 1]))
+
+                # Target Q
+                target_rnn_hidden = self.policy.target_representation.init_hidden(batch_size * self.n_agents)
+                _, q_next = self.policy.target_Q(obs.reshape(-1, self.episode_length + 1, self.dim_obs),
+                                                 IDs.reshape(-1, self.episode_length + 1, self.n_agents),
+                                                 *target_rnn_hidden)
+                q_next = q_next[:, 1:].reshape(batch_size, self.n_agents, self.episode_length, self.dim_act)
+                q_next[avail_actions[:, :, 1:] == 0] = -9999999
+
+                # use double-q trick
+                if self.args.double_q:
+                    action_next_greedy = actions_greedy[:, :, 1:]
+                    q_next_a = q_next.gather(-1, action_next_greedy.long().detach())
+                else:
+                    q_next_a = q_next.max(dim=-1, keepdim=True).values
+
+                filled_n = filled.unsqueeze(1).expand(-1, self.n_agents, -1, -1)
+                rewards = rewards.expand(-1, self.n_agents, -1, -1)
+                terminals = terminals.unsqueeze(1).expand(batch_size, self.n_agents, self.episode_length, 1)
+                q_target = rewards + (1 - terminals) * self.gamma * q_next_a
+
+                # calculate the loss function
+                td_errors = q_eval_a - q_target.detach()
+                td_errors *= filled_n
+                loss = (td_errors ** 2).sum() / filled_n.sum()
+                self.optimizer.zero_grad()
+                loss.backward()
+                if self.args.use_grad_clip:
+                    torch.nn.utils.clip_grad_norm_(self.policy.parameters(), self.args.grad_clip_norm)
+                self.optimizer.step()
+                if self.scheduler is not None:
+                    self.scheduler.step()
+
+                if self.iterations % self.sync_frequency == 0:
+                    self.policy.copy_target()
+                lr = self.optimizer.state_dict()['param_groups'][0]['lr']
+
+                info.update({
+                    f"{key}/learning_rate": lr,
+                    f"{key}/loss_Q": loss.item(),
+                    f"{key}/predictQ": q_eval_a.mean().item()
+                })
 
         return info
