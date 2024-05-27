@@ -52,18 +52,16 @@ class StarCraft2_Env(RawMultiAgentEnv):
     def step(self, actions):
         """ Takes actions as input, perform a step in the underlying StarCraft2 environment. """
         actions_list = [actions[key] for key in self.agents]
-        reward, terminated, info = self.env.step(actions)
-        info.update(self.buf_info)
+        reward, terminated, info = self.env.step(actions_list)
+        reward_dict = {k: reward for k in self.agents}
+        terminated_dict = {k: terminated for k in self.agents}
         obs = self.env.get_obs()
+        obs_dict = {key: obs[index] for index, key in enumerate(self.agents)}
 
+        step_info = info
         self._episode_step += 1
-        self._episode_score += reward
-        reward_n = np.array([[reward] for _ in range(self.n_agents)])
-        self.buf_info = copy.deepcopy(info)
-        info["episode_step"] = self._episode_step
-        info["episode_score"] = self._episode_score
-        truncated = True if self._episode_step >= self.max_cycles else False
-        return obs, reward_n, [terminated], [truncated], info
+        truncated = True if self._episode_step >= self.max_episode_steps else False
+        return obs_dict, reward_dict, terminated_dict, truncated, step_info
 
     def render(self, mode):
         """

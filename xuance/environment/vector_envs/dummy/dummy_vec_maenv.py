@@ -1,8 +1,5 @@
 import numpy as np
-from gym.spaces import Dict, Box
-from xuance.common import space2shape, combined_shape
 from xuance.environment.vector_envs.vector_env import VecEnv, AlreadySteppingError, NotSteppingError
-from operator import itemgetter
 
 
 class DummyVecMutliAgentEnv(VecEnv):

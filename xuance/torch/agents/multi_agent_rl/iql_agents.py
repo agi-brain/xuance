@@ -44,13 +44,12 @@ class IQL_Agents(MARLAgents):
                                                                total_iters=self.config.running_steps)
 
         # create experience replay buffer
-        input_buffer = dict(n_agents=self.config.n_agents,
+        input_buffer = dict(agent_keys=self.agent_keys,
                             obs_space=self.observation_space,
                             act_space=self.action_space,
                             n_envs=self.n_envs,
                             buffer_size=self.config.buffer_size,
                             batch_size=self.config.batch_size,
-                            agent_keys=self.agent_keys,
                             n_actions={k: self.action_space[k].n for k in self.agent_keys},
                             use_actions_mask=self.use_actions_mask,
                             max_episode_length=envs.max_episode_length)
@@ -141,7 +140,10 @@ class IQL_Agents(MARLAgents):
             'avail_actions_next': {k: np.array([itemgetter(k)(data) for data in avail_actions_next])
                                    for k in self.agent_keys}
         }
-        self.memory.store(experience_data)
+        if self.use_rnn:
+            experience_data['episode_steps'] = np.array([data['episode_step'] for data in info]),
+        else:
+            self.memory.store(experience_data)
 
     def init_rnn_hidden(self):
         """
@@ -170,6 +172,7 @@ class IQL_Agents(MARLAgents):
             test_mode (Optional[bool]): True for testing without noises.
 
         Returns:
+            rnn_hidden_state (dict): The new hidden states for RNN (if self.use_rnn=True).
             actions_dict (dict): The output actions.
         """
         n_env = len(obs_dict)
@@ -200,13 +203,17 @@ class IQL_Agents(MARLAgents):
         else:
             # prepare input tensors
             if self.use_rnn:
-                obs_input = {k: np.array([itemgetter(k)(env_obs) for env_obs in obs_dict])[:, np.newaxis]
+                obs_input = {k: np.array([itemgetter(k)(env_obs) for env_obs in obs_dict])[:, None]
                              for k in self.agent_keys}
             else:
                 obs_input = {k: np.array([itemgetter(k)(env_obs) for env_obs in obs_dict]) for k in self.agent_keys}
             if self.use_actions_mask:
-                avail_actions_input = {k: np.array([itemgetter(k)(mask) for mask in avail_actions_dict])
-                                       for k in self.agent_keys}
+                if self.use_rnn:
+                    avail_actions_input = {k: np.array([itemgetter(k)(mask) for mask in avail_actions_dict])[:, None]
+                                           for k in self.agent_keys}
+                else:
+                    avail_actions_input = {k: np.array([itemgetter(k)(mask) for mask in avail_actions_dict])
+                                           for k in self.agent_keys}
             else:
                 avail_actions_input = None
             hidden_state, actions, _ = self.policy(obs_input,

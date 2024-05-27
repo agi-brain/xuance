@@ -43,13 +43,12 @@ class IDDPG_Agents(MARLAgents):
                                                                 total_iters=self.config.running_steps)]
 
         # create experience replay buffer
-        self.memory = MARL_OffPolicyBuffer(n_agents=self.config.n_agents,
+        self.memory = MARL_OffPolicyBuffer(agent_keys=self.agent_keys,
                                            obs_space=self.observation_space,
                                            act_space=self.action_space,
                                            n_envs=self.n_envs,
                                            buffer_size=self.config.buffer_size,
-                                           batch_size=self.config.batch_size,
-                                           agent_keys=self.agent_keys)
+                                           batch_size=self.config.batch_size)
 
         # create learner
         self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, self.policy,
