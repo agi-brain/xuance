@@ -634,6 +634,7 @@ class MARL_OffPolicyBuffer(BaseBuffer):
         Returns:
             samples (dict): The sampled data.
         """
+        assert self.size > 0, "You need to first store experience data into the buffer!"
         if batch_size is None:
             batch_size = self.batch_size
         env_choices = np.random.choice(self.n_envs, batch_size)
@@ -643,8 +644,7 @@ class MARL_OffPolicyBuffer(BaseBuffer):
             if data_key in ['state', 'state_next']:
                 samples[data_key] = self.data[data_key][env_choices, step_choices]
                 continue
-            samples[data_key] = {agt_key: self.data[data_key][agt_key][env_choices, step_choices]
-                                 for agt_key in self.agent_keys}
+            samples[data_key] = {k: self.data[data_key][k][env_choices, step_choices] for k in self.agent_keys}
         samples['batch_size'] = batch_size
         return samples
 
@@ -717,7 +717,9 @@ class MARL_OffPolicyBuffer_RNN(MARL_OffPolicyBuffer):
                     'actions': {'agent_0': shape=[10000, 60, 5],
                                 'agent_1': shape=[10000, 60, 5],
                                 'agent_2': shape=[10000, 60, 5]},  # dim_act: 5
-                     ...}
+                     ...
+                     'filled': shape=[10000, 60],  # Step mask values. True means current step is not terminated.
+                     }
         """
         self.data = {
             'obs': {k: np.zeros((self.buffer_size, self.max_eps_len + 1) + self.obs_shape[k], dtype=np.float32)
@@ -752,7 +754,7 @@ class MARL_OffPolicyBuffer_RNN(MARL_OffPolicyBuffer):
                                 'agent_1': shape=[16, 60, 5],
                                 'agent_2': shape=[16, 60, 5]},  # dim_act: 5
                      ...
-                     'filled': shape=[16, 60],
+                     'filled': shape=[16, 60],  # Step mask values. True means current step is not terminated.
                      }
         """
         self.episode_data = {
@@ -768,41 +770,86 @@ class MARL_OffPolicyBuffer_RNN(MARL_OffPolicyBuffer):
 
         if self.store_global_state:
             state_shape = (self.n_envs, self.max_eps_len + 1) + space2shape(self.state_space)
-            self.data.update({'state': np.zeros(state_shape, dtype=np.float32)})
+            self.episode_data.update({'state': np.zeros(state_shape, dtype=np.float32)})
         if self.use_actions_mask:
-            self.data.update({
+            self.episode_data.update({
                 "avail_actions": {k: np.zeros((self.n_envs, self.max_eps_len + 1) + self.avail_actions_shape[k],
                                               dtype=np.bool_) for k in self.agent_keys}})
 
-    def store(self, step_data):
+    def store(self, **step_data):
+        """
+        Stores a step of data for each environment.
+
+        Parameters:
+            step_data (dict): A dict of step data that to be stored into self.episode_data.
+        """
         envs_step = step_data['episode_steps']
+        envs_choice = range(self.n_envs)
         for data_key in self.data_keys:
             if data_key == "filled":
-                self.episode_data[data_key][:, envs_step] = True
+                self.episode_data["filled"][envs_choice, envs_step] = True
+                continue
             if data_key in ['state', 'state_next']:
-                self.episode_data[data_key][:, envs_step] = step_data[data_key]
+                self.episode_data[data_key][envs_choice, envs_step] = step_data[data_key]
                 continue
             for agt_key in self.agent_keys:
-                self.episode_data[data_key][agt_key][:, envs_step] = step_data[data_key][agt_key]
+                self.episode_data[data_key][agt_key][envs_choice, envs_step] = step_data[data_key][agt_key]
 
-    def store_episodes(self):
-        for i_env in range(self.n_envs):
-            for k in self.keys:
-                self.data[k][self.ptr] = self.episode_data[k][i_env].copy()
-            self.ptr = (self.ptr + 1) % self.buffer_size
-            self.size = np.min([self.size + 1, self.buffer_size])
-        self.clear_episodes()
+    def store_episodes(self, i_env):
+        """
+        Stores the episode of data for ith environment into the self.data.
 
-    def finish_path(self, i_env, next_t, *terminal_data):
-        obs_next, state_next, available_actions, filled = terminal_data
-        self.episode_data['obs'][i_env, :, next_t] = obs_next[i_env]
-        self.episode_data['state'][i_env, next_t] = state_next[i_env]
-        self.episode_data['avail_actions'][i_env, :, next_t] = available_actions[i_env]
-        self.episode_data['filled'][i_env] = filled[i_env]
+        Parameters:
+            i_env (int): The ith environment.
+        """
+        for data_key in self.data_keys:
+            if data_key == "filled":
+                self.data["filled"][self.ptr] = self.episode_data["filled"][i_env].copy()
+                continue
+            if data_key in ['state', 'state_next']:
+                self.data[data_key][self.ptr] = self.episode_data[data_key][i_env].copy()
+                continue
+            for agt_key in self.agent_keys:
+                self.data[data_key][agt_key][self.ptr] = self.episode_data[data_key][agt_key][i_env].copy()
+        self.ptr = (self.ptr + 1) % self.buffer_size
+        self.size = np.min([self.size + 1, self.buffer_size])
+        # clear the filled values for ith env.
+        self.episode_data['filled'][i_env] = np.zeros(self.max_eps_len, dtype=np.bool_)
 
-    def sample(self):
-        sample_choices = np.random.choice(self.size, self.batch_size)
-        samples = {k: self.data[k][sample_choices] for k in self.keys}
+    def finish_path(self, i_env, **terminal_data):
+        """
+        Address the terminal states, including store the terminal observations, avail_actions, and others.
+
+        Parameters:
+            i_env (int): The i-th environment.
+            terminal_data (dict): The terminal states.
+        """
+        env_step = terminal_data['episode_step']
+        # Store terminal data into self.episode_data.
+        if self.store_global_state:
+            self.episode_data['state'][i_env, env_step] = terminal_data['state']
+        for agt_key in self.agent_keys:
+            self.episode_data['obs'][agt_key][i_env, env_step] = terminal_data['obs'][agt_key]
+            if self.use_actions_mask:
+                self.episode_data['avail_actions'][agt_key][i_env, env_step] = terminal_data['avail_actions'][agt_key]
+        # Store the episode data of ith env into self.data.
+        self.store_episodes(i_env)
+
+    def sample(self, batch_size=None):
+        
+        assert self.size > 0, "You need to first store experience data into the buffer!"
+        if batch_size is None:
+            batch_size = self.batch_size
+        episode_choices = np.random.choice(self.size, batch_size)
+        samples = {}
+        for data_key in self.data_keys:
+            if data_key == "filled":
+                samples["filled"] = self.data['filled'][episode_choices]
+                continue
+            if data_key in ['state', 'state_next']:
+                samples[data_key] = self.data[data_key][episode_choices]
+                continue
+            samples[data_key] = {k: self.data[data_key][k][episode_choices] for k in self.agent_keys}
         return samples
 
 

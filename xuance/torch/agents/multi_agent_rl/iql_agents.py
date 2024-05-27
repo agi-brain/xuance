@@ -141,9 +141,8 @@ class IQL_Agents(MARLAgents):
                                    for k in self.agent_keys}
         }
         if self.use_rnn:
-            experience_data['episode_steps'] = np.array([data['episode_step'] for data in info]),
-        else:
-            self.memory.store(experience_data)
+            experience_data['episode_steps'] = np.array([data['episode_step'] - 1 for data in info])
+        self.memory.store(**experience_data)
 
     def init_rnn_hidden(self):
         """
@@ -270,6 +269,13 @@ class IQL_Agents(MARLAgents):
 
             for i in range(self.n_envs):
                 if all(terminated_dict[i].values()) or truncated[i]:
+                    if self.use_rnn:
+                        terminal_data = {
+                            'obs': next_obs_dict[i],
+                            'avail_actions': next_avail_actions[i],
+                            'episode_step': info[i]['episode_step']
+                        }
+                        self.memory.finish_path(i, **terminal_data)
                     obs_dict[i] = info[i]["reset_obs"]
                     avail_actions[i] = info[i]["reset_avail_actions"]
                     self.envs.buf_obs[i] = info[i]["reset_obs"]
