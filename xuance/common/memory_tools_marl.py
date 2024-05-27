@@ -836,21 +836,29 @@ class MARL_OffPolicyBuffer_RNN(MARL_OffPolicyBuffer):
         self.store_episodes(i_env)
 
     def sample(self, batch_size=None):
-        
+        """
+        Samples a batch of data for model training.
+
+        Parameters:
+            batch_size (int): The size of the data batch, default is self.batch_size (recommended).
+
+        Returns:
+            samples_dict (dict): A dict of sampled data.
+        """
         assert self.size > 0, "You need to first store experience data into the buffer!"
         if batch_size is None:
             batch_size = self.batch_size
         episode_choices = np.random.choice(self.size, batch_size)
-        samples = {}
+        samples_dict = {}
         for data_key in self.data_keys:
             if data_key == "filled":
-                samples["filled"] = self.data['filled'][episode_choices]
+                samples_dict["filled"] = self.data['filled'][episode_choices]
                 continue
             if data_key in ['state', 'state_next']:
-                samples[data_key] = self.data[data_key][episode_choices]
+                samples_dict[data_key] = self.data[data_key][episode_choices]
                 continue
-            samples[data_key] = {k: self.data[data_key][k][episode_choices] for k in self.agent_keys}
-        return samples
+            samples_dict[data_key] = {k: self.data[data_key][k][episode_choices] for k in self.agent_keys}
+        return samples_dict
 
 
 class MeanField_OffPolicyBuffer(MARL_OffPolicyBuffer):
