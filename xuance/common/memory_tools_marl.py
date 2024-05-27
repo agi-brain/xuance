@@ -639,14 +639,14 @@ class MARL_OffPolicyBuffer(BaseBuffer):
             batch_size = self.batch_size
         env_choices = np.random.choice(self.n_envs, batch_size)
         step_choices = np.random.choice(self.size, batch_size)
-        samples = {}
+        samples_dict = {}
         for data_key in self.data_keys:
             if data_key in ['state', 'state_next']:
-                samples[data_key] = self.data[data_key][env_choices, step_choices]
+                samples_dict[data_key] = self.data[data_key][env_choices, step_choices]
                 continue
-            samples[data_key] = {k: self.data[data_key][k][env_choices, step_choices] for k in self.agent_keys}
-        samples['batch_size'] = batch_size
-        return samples
+            samples_dict[data_key] = {k: self.data[data_key][k][env_choices, step_choices] for k in self.agent_keys}
+        samples_dict['batch_size'] = batch_size
+        return samples_dict
 
 
 class MARL_OffPolicyBuffer_RNN(MARL_OffPolicyBuffer):
@@ -858,6 +858,7 @@ class MARL_OffPolicyBuffer_RNN(MARL_OffPolicyBuffer):
                 samples_dict[data_key] = self.data[data_key][episode_choices]
                 continue
             samples_dict[data_key] = {k: self.data[data_key][k][episode_choices] for k in self.agent_keys}
+        samples_dict['batch_size'] = batch_size
         return samples_dict
 
 
