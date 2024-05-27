@@ -526,14 +526,14 @@ class MARL_OffPolicyBuffer(BaseBuffer):
     Replay buffer for off-policy MARL algorithms with parameter sharing.
 
     Parameters:
-        n_agents (int): number of agents.
-        state_space (Dict[str, Space]): global state space, type: Discrete, Box.
-        obs_space (Dict[str, Dict[str, Space]]): observation space for one agent (suppose same obs space for group agents).
-        act_space (Dict[str, Dict[str, Space]]): action space for one agent (suppose same actions space for group agents).
-        n_envs (int): number of parallel environments.
-        buffer_size (int): buffer size of total experience data.
-        batch_size (int): batch size of transition data for a sample.
-        **kwargs: other arguments.
+        n_agents (int): Number of agents.
+        state_space (Dict[str, Space]): Global state space, type: Discrete, Box.
+        obs_space (Dict[str, Dict[str, Space]]): Observation space for one agent (suppose same obs space for group agents).
+        act_space (Dict[str, Dict[str, Space]]): Action space for one agent (suppose same actions space for group agents).
+        n_envs (int): Number of parallel environments.
+        buffer_size (int): Buffer size of total experience data.
+        batch_size (int): Batch size of transition data for a sample.
+        **kwargs: Other arguments.
 
     Example:
         $ obs_space={'agent_0': Box(-inf, inf, (18,), float32),
@@ -651,6 +651,7 @@ class MARL_OffPolicyBuffer(BaseBuffer):
                 continue
             samples[data_key] = {agt_key: self.data[data_key][agt_key][env_choices, step_choices]
                                  for agt_key in self.agent_keys}
+        samples['batch_size'] = batch_size
         return samples
 
 
@@ -659,14 +660,31 @@ class MARL_OffPolicyBuffer_RNN(MARL_OffPolicyBuffer):
     Replay buffer for off-policy MARL algorithms with DRQN trick.
 
     Args:
-        n_agents (int): number of agents.
-        state_space (Dict[str, Space]): global state space, type: Discrete, Box.
-        obs_space (Dict[str, Dict[str, Space]]): observation space for one agent (suppose same obs space for group agents).
-        act_space (Dict[str, Dict[str, Space]]): action space for one agent (suppose same actions space for group agents).
-        n_envs (int): number of parallel environments.
-        buffer_size (int): buffer size of total experience data.
-        batch_size (int): batch size of episodes for a sample.
-        kwargs: other arguments.
+        n_agents (int): Number of agents.
+        state_space (Dict[str, Space]): Global state space, type: Discrete, Box.
+        obs_space (Dict[str, Dict[str, Space]]): Observation space for one agent (suppose same obs space for group agents).
+        act_space (Dict[str, Dict[str, Space]]): Action space for one agent (suppose same actions space for group agents).
+        n_envs (int): Number of parallel environments.
+        buffer_size (int): Buffer size of total experience data.
+        batch_size (int): Batch size of episodes for a sample.
+        max_episode_length (int): The sequence length of each episode data.
+        kwargs: Other arguments.
+
+    Example:
+        $ obs_space={'agent_0': Box(-inf, inf, (18,), float32),
+                     'agent_1': Box(-inf, inf, (18,), float32),
+                     'agent_2': Box(-inf, inf, (18,), float32)},
+        $ act_space={'agent_0': Box(0.0, 1.0, (5,), float32),
+                     'agent_1': Box(0.0, 1.0, (5,), float32),
+                     'agent_2': Box(0.0, 1.0, (5,), float32)},
+        $ n_envs=50,
+        $ buffer_size=10000,
+        $ batch_size=256,
+        $ model_keys=['agent_0', 'agent_1', 'agent_2'],
+        $ use_parameter_sharing=False)
+        $ memory = MARL_OffPolicyBuffer(n_agents=3, obs_space=obs_space, act_space=act_space, n_envs=n_envs,
+                                        buffer_size=buffer_size, batch_size=batch_size, model_keys=model_keys,
+                                        use_parameter_sharing=use_parameter_sharing)
     """
 
     def __init__(self, n_agents: int,
@@ -676,8 +694,9 @@ class MARL_OffPolicyBuffer_RNN(MARL_OffPolicyBuffer):
                  n_envs: int = 1,
                  buffer_size: int = 1,
                  batch_size: int = 1,
+                 max_episode_length: int = 1,
                  **kwargs):
-        self.max_eps_len = kwargs['max_episode_length']
+        self.max_eps_len = max_episode_length
         super(MARL_OffPolicyBuffer_RNN, self).__init__(n_agents, state_space, obs_space, act_space,
                                                        n_envs, buffer_size, batch_size, **kwargs)
         self.episode_data = {}

@@ -50,21 +50,19 @@ class IQL_Agents(MARLAgents):
                             n_envs=self.n_envs,
                             buffer_size=self.config.buffer_size,
                             batch_size=self.config.batch_size,
-                            model_keys=self.model_keys,
-                            use_parameter_sharing=self.use_parameter_sharing,
+                            agent_keys=self.agent_keys,
                             n_actions={k: self.action_space[k].n for k in self.agent_keys},
-                            use_actions_mask=self.use_actions_mask)
-        if self.use_rnn:
-            self.memory = MARL_OffPolicyBuffer(**input_buffer)
-        else:
-            input_buffer['max_episode_length'] = envs.max_episode_length
-            self.memory = MARL_OffPolicyBuffer_RNN(**input_buffer)
+                            use_actions_mask=self.use_actions_mask,
+                            max_episode_length=envs.max_episode_length)
+        buffer = MARL_OffPolicyBuffer_RNN if self.use_rnn else MARL_OffPolicyBuffer
+        self.memory = buffer(**input_buffer)
 
         # initialize the hidden states of the RNN is use RNN-based representations.
         self.rnn_hidden_state = self.init_rnn_hidden()
 
         # create learner
-        self.learner = self._build_learner(self.config, self.model_keys, self.policy, optimizer, scheduler)
+        self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, self.policy,
+                                           optimizer, scheduler)
 
     def _build_policy(self):
         """
@@ -102,7 +100,6 @@ class IQL_Agents(MARLAgents):
 
         # build policies
         if self.config.policy == "Basic_Q_network_marl":
-
             policy = REGISTRY_Policy["Basic_Q_network_marl"](
                 action_space=self.action_space, n_agents=self.n_agents, representation=representation,
                 hidden_size=self.config.q_hidden_size,
@@ -114,8 +111,8 @@ class IQL_Agents(MARLAgents):
 
         return policy
 
-    def _build_learner(self, config, model_keys, policy, optimizer, scheduler):
-        return IQL_Learner(config, model_keys, policy, optimizer, scheduler)
+    def _build_learner(self, config, model_keys, agent_keys, policy, optimizer, scheduler):
+        return IQL_Learner(config, model_keys, agent_keys, policy, optimizer, scheduler)
 
     def store_experience(self, obs_dict, avail_actions, actions_dict, obs_next_dict, avail_actions_next,
                          rewards_dict, terminals_dict, info):

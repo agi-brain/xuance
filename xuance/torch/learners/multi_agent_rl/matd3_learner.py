@@ -2,13 +2,10 @@
 Multi-Agent TD3
 """
 import torch
-import numpy as np
 from torch import nn
 from xuance.torch.learners import LearnerMAS
-from xuance.torch import Tensor
 from typing import Optional, List
 from argparse import Namespace
-from operator import itemgetter
 
 
 class MATD3_Learner(LearnerMAS):
@@ -34,29 +31,16 @@ class MATD3_Learner(LearnerMAS):
         info = {}
 
         # prepare training data
-        if self.use_parameter_sharing:
-            k = self.model_keys[0]
-            obs = {k: Tensor(np.concatenate([itemgetter(*self.agent_keys)(sample['obs'])[i][:, None]
-                                             for i in range(self.n_agents)], axis=1)).to(self.device)}
-            actions = {k: Tensor(np.concatenate([itemgetter(*self.agent_keys)(sample['actions'])[i][:, None]
-                                                 for i in range(self.n_agents)], axis=1)).to(self.device)}
-            obs_next = {k: Tensor(np.concatenate([itemgetter(*self.agent_keys)(sample['obs_next'])[i][:, None]
-                                                  for i in range(self.n_agents)], axis=1)).to(self.device)}
-            rewards = {k: Tensor(np.concatenate([itemgetter(*self.agent_keys)(sample['rewards'])[i][:, None, None]
-                                                 for i in range(self.n_agents)], axis=1)).to(self.device)}
-            terminals = {k: Tensor(np.concatenate([itemgetter(*self.agent_keys)(sample['terminals'])[i][:, None, None]
-                                                   for i in range(self.n_agents)], axis=1)).to(self.device)}
-            agent_mask = {k: Tensor(np.concatenate([itemgetter(*self.agent_keys)(sample['agent_mask'])[i][:, None, None]
-                                                    for i in range(self.n_agents)], axis=1)).to(self.device)}
-            IDs = torch.eye(self.n_agents).unsqueeze(0).expand(self.config.batch_size, -1, -1).to(self.device)
-        else:
-            obs = {k: Tensor(sample['obs'][k]).to(self.device) for k in self.agent_keys}
-            actions = {k: Tensor(sample['actions'][k]).to(self.device) for k in self.agent_keys}
-            obs_next = {k: Tensor(sample['obs_next'][k]).to(self.device) for k in self.agent_keys}
-            rewards = {k: Tensor(sample['rewards'][k][:, None]).to(self.device) for k in self.agent_keys}
-            terminals = {k: Tensor(sample['terminals'][k][:, None]).float().to(self.device) for k in self.agent_keys}
-            agent_mask = {k: Tensor(sample['agent_mask'][k][:, None]).float().to(self.device) for k in self.agent_keys}
-            IDs = None
+        sample_Tensor = self.build_training_data(sample,
+                                                 use_parameter_sharing=self.use_parameter_sharing,
+                                                 use_actions_mask=False)
+        obs = sample_Tensor['obs']
+        actions = sample_Tensor['actions']
+        obs_next = sample_Tensor['obs_next']
+        rewards = sample_Tensor['rewards']
+        terminals = sample_Tensor['terminals']
+        agent_mask = sample_Tensor['agent_mask']
+        IDs = sample_Tensor['agent_ids']
 
         # train the model
         if self.iterations % self.actor_update_delay == 0:  # update actor(s)
