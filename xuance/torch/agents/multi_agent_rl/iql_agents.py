@@ -169,8 +169,8 @@ class IQL_Agents(MARLAgents):
         """
         assert self.use_rnn is True, "This method cannot be called when self.use_rnn is False."
         for key in self.model_keys:
-            self.rnn_hidden_state[key] = self.policy.representation[key].init_hidden_item(i_env,
-                                                                                          *self.rnn_hidden_state[key])
+            self.rnn_hidden_state[key] = self.policy.representation[key].init_hidden_item(
+                i_env, *self.rnn_hidden_state[key])
 
     def action(self,
                obs_dict: Optional[dict],
@@ -208,10 +208,12 @@ class IQL_Agents(MARLAgents):
                 if self.use_actions_mask:
                     avail_actions_input = {key: np.array([itemgetter(*self.agent_keys)(data) for data in avail_actions_dict])}
                 agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(n_env, -1, -1).to(self.device)
+
             hidden_state, actions, _ = self.policy(observation=obs_input,
                                                    agent_ids=agents_id,
                                                    avail_actions=avail_actions_input,
                                                    rnn_hidden=rnn_hidden)
+
             actions_out = actions[key].reshape([n_env, self.n_agents]).cpu().detach().numpy()
             actions_dict = [{k: actions_out[e, i] for i, k in enumerate(self.agent_keys)} for e in range(n_env)]
         else:
@@ -227,6 +229,7 @@ class IQL_Agents(MARLAgents):
             hidden_state, actions, _ = self.policy(observation=obs_input,
                                                    avail_actions=avail_actions_input,
                                                    rnn_hidden=rnn_hidden)
+
             actions_out = {}
             for key in self.agent_keys:
                 if self.use_rnn:
@@ -238,8 +241,7 @@ class IQL_Agents(MARLAgents):
         if not test_mode:  # get random actions
             if np.random.rand() < self.egreedy:
                 if self.use_actions_mask:
-                    actions_dict = [{k: Categorical(Tensor(avail_actions_dict[e][k])).sample().numpy()
-                                       for k in self.agent_keys} for e in range(n_env)]
+                    actions_dict = [{k: Categorical(Tensor(avail_actions_dict[e][k])).sample().numpy() for k in self.agent_keys} for e in range(n_env)]
                 else:
                     actions_dict = [{k: self.action_space[k].sample() for k in self.agent_keys} for _ in range(n_env)]
         return hidden_state, actions_dict

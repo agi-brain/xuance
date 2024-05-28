@@ -105,22 +105,35 @@ class IQL_Learner(LearnerMAS):
         seq_len = filled.shape[1]
 
         if self.use_parameter_sharing:
+            key = self.model_keys[0]
             bs_rnn = batch_size * self.n_agents
-            obs[self.model_keys[0]] = obs[self.model_keys[0]].reshape([bs_rnn, seq_len + 1, -1])
-            avail_actions[self.model_keys[0]] = avail_actions[self.model_keys[0]].reshape(bs_rnn, seq_len + 1, -1)
+            filled = filled.unsqueeze(1).expand(-1, self.n_agents, -1, -1)
+            obs[key] = obs[key].reshape([bs_rnn, seq_len + 1, -1])
+            avail_actions_input = {key: avail_actions[key].reshape(bs_rnn, seq_len + 1, -1)}
             IDs = IDs.reshape(bs_rnn, seq_len + 1, -1)
+            rnn_hidden = {key: self.policy.representation[key].init_hidden(bs_rnn)}
+            _, actions_greedy, q_eval = self.policy(observation=obs,
+                                                    agent_ids=IDs,
+                                                    avail_actions=avail_actions_input,
+                                                    rnn_hidden=rnn_hidden)
+            target_rnn_hidden = {key: self.policy.target_representation[key].init_hidden(bs_rnn)}
+            _, q_next_seq = self.policy.Qtarget(observation=obs,
+                                                agent_ids=IDs,
+                                                rnn_hidden=target_rnn_hidden)
+            q_eval[key] = q_eval[key].reshape([batch_size, self.n_agents, seq_len + 1, -1])
+            q_next_seq[key] = q_next_seq[key].reshape([batch_size, self.n_agents, seq_len + 1, -1])
+            actions_greedy[key] = actions_greedy[key].reshape([batch_size, self.n_agents, -1])
         else:
             bs_rnn = batch_size * self.n_agents
-
-        rnn_hidden = {k: self.policy.representation[k].init_hidden(bs_rnn) for k in self.model_keys}
-        _, actions_greedy, q_eval = self.policy(observation=obs,
+            rnn_hidden = {k: self.policy.representation[k].init_hidden(bs_rnn) for k in self.model_keys}
+            _, actions_greedy, q_eval = self.policy(observation=obs,
+                                                    agent_ids=IDs,
+                                                    avail_actions=avail_actions,
+                                                    rnn_hidden=rnn_hidden)
+            target_rnn_hidden = {k: self.policy.target_representation[k].init_hidden(bs_rnn) for k in self.model_keys}
+            _, q_next_seq = self.policy.Qtarget(observation=obs,
                                                 agent_ids=IDs,
-                                                avail_actions=avail_actions,
-                                                rnn_hidden=rnn_hidden)
-        target_rnn_hidden = {k: self.policy.target_representation[k].init_hidden(bs_rnn) for k in self.model_keys}
-        _, q_next_seq = self.policy.Qtarget(observation=obs,
-                                            agent_ids=IDs,
-                                            rnn_hidden=target_rnn_hidden)
+                                                rnn_hidden=target_rnn_hidden)
 
         for key in self.model_keys:
             if self.use_parameter_sharing:
