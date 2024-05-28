@@ -54,7 +54,7 @@ class IQL_Learner(LearnerMAS):
                 q_next[key][avail_actions_next[key] == 0] = -9999999
 
             if self.config.double_q:
-                _, actions_next_greedy, q_next_eval = self.policy(obs_next, IDs, agent_key=key)
+                _, actions_next_greedy, _ = self.policy(obs_next, IDs, agent_key=key, avail_actions=avail_actions)
                 q_next_a = q_next[key].gather(-1, actions_next_greedy[key].unsqueeze(-1).long())
             else:
                 q_next_a = q_next[key].max(dim=-1, keepdim=True).values

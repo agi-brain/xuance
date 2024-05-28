@@ -155,11 +155,37 @@ class MixingQnetwork(BasicQnetwork):
             self.parameters_model += list(self.representation[key].parameters())
             self.parameters_model += list(self.eval_Qhead[key].parameters())
 
-    def Q_tot(self, q, states=None):
-        return self.eval_Qtot(q, states)
+    def Q_tot(self,
+              individual_values: Optional[Tensor],
+              states: Optional[Tensor] = None):
+        """
+        Returns the total Q values.
 
-    def target_Q_tot(self, q, states=None):
-        return self.target_Qtot(q, states)
+        Parameters:
+            individual_values (Optional[Tensor]): The individual Q values of all agents.
+            states (Optional[Tensor]): The global states if necessary, default is None.
+
+        Returns:
+            evalQ_tot (Tensor): The evaluated total Q values for the multi-agent team.
+        """
+        evalQ_tot = self.eval_Qtot(individual_values, states)
+        return evalQ_tot
+
+    def Qtarget_tot(self,
+                    individual_values: Optional[Tensor],
+                    states: Optional[Tensor] = None):
+        """
+        Returns the total Q values with target networks.
+
+        Parameters:
+            individual_values (Optional[Tensor]): The individual Q values of all agents.
+            states (Optional[Tensor]): The global states if necessary, default is None.
+
+        Returns:
+            q_target_tot (Tensor): The evaluated total Q values calculated by target networks.
+        """
+        q_target_tot = self.target_Qtot(individual_values, states)
+        return q_target_tot
 
     def copy_target(self):
         for k in self.model_keys:
