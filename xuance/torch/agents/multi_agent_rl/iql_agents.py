@@ -157,6 +157,18 @@ class IQL_Agents(MARLAgents):
                 rnn_hidden_states[key] = [None, None]
         return rnn_hidden_states
 
+    def init_hidden_item(self, i_env):
+        """
+        Returns initialized hidden states of RNN for i-th environment.
+
+        Parameters:
+            i_env (int): The index of environment that to be selected.
+        """
+        assert self.use_rnn is True, "This method cannot be called when self.use_rnn is False."
+        for key in self.model_keys:
+            self.rnn_hidden_state[key] = self.policy.representation[key].init_hidden_item(i_env,
+                                                                                          *self.rnn_hidden_state[key])
+
     def action(self, obs_dict,
                avail_actions_dict: Optional[List[dict]] = None,
                rnn_hidden: Optional[dict] = None,
@@ -279,6 +291,7 @@ class IQL_Agents(MARLAgents):
                             'episode_step': info[i]['episode_step']
                         }
                         self.memory.finish_path(i, **terminal_data)
+                        self.init_hidden_item(i)
                     obs_dict[i] = info[i]["reset_obs"]
                     avail_actions[i] = info[i]["reset_avail_actions"]
                     self.envs.buf_obs[i] = info[i]["reset_obs"]
