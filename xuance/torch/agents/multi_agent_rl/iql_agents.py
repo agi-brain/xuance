@@ -310,7 +310,7 @@ class IQL_Agents(MARLAgents):
 
             self.current_step += self.n_envs
             if self.egreedy >= self.end_greedy:
-                self.egreedy = self.egreedy - self.delta_egreedy
+                self.egreedy -= self.delta_egreedy
 
     def test(self, env_fn, n_episodes):
         """
@@ -382,3 +382,22 @@ class IQL_Agents(MARLAgents):
         self.log_infos(test_info, self.current_step)
         test_envs.close()
         return scores
+
+    def train_epochs(self, n_epoch):
+        """
+        Train the model for numerous epochs.
+
+        Parameters:
+            n_epoch (int): The number of epochs to train.
+        """
+        if self.egreedy >= self.end_greedy:
+            self.egreedy -= self.delta_egreedy
+        info_train = {}
+        for i_epoch in range(n_epoch):
+            sample = self.memory.sample()
+            if self.use_rnn:
+                info_train = self.learner.update_rnn(sample)
+            else:
+                info_train = self.learner.update(sample)
+        info_train["epsilon-greedy"] = self.egreedy
+        return info_train

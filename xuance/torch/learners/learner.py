@@ -1,8 +1,6 @@
 import os
-
 import numpy as np
 import torch
-import torch.nn.functional as F
 from numpy import concatenate as concat
 from abc import ABC, abstractmethod
 from typing import Optional, Sequence, List, Union
@@ -10,12 +8,14 @@ from argparse import Namespace
 from operator import itemgetter
 from xuance.torch import Tensor
 
+MAX_GPUs = 100
+
 
 class Learner(ABC):
     def __init__(self,
                  policy: torch.nn.Module,
                  optimizer: Union[torch.optim.Optimizer, Sequence[torch.optim.Optimizer]],
-                 scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
+                 scheduler: Optional[torch.optim.lr_scheduler.LinearLR] = None,
                  device: Optional[Union[int, str, torch.device]] = None,
                  model_dir: str = "./"):
         self.policy = policy
@@ -43,21 +43,13 @@ class Learner(ABC):
 
         model_names = os.listdir(path)
         if os.path.exists(path + "/obs_rms.npy"):
-            model_names.remove("obs_rms.npy")
+            model_names.remove(bytes("obs_rms.npy"))
         if len(model_names) == 0:
             raise RuntimeError(f"There is no model file in '{path}'!")
         model_names.sort()
         model_path = os.path.join(path, model_names[-1])
-        self.policy.load_state_dict(torch.load(model_path, map_location={
-            "cuda:0": self.device,
-            "cuda:1": self.device,
-            "cuda:2": self.device,
-            "cuda:3": self.device,
-            "cuda:4": self.device,
-            "cuda:5": self.device,
-            "cuda:6": self.device,
-            "cuda:7": self.device
-        }))
+        self.policy.load_state_dict(torch.load(str(model_path), map_location={
+            f"cuda:{i}": self.device for i in range(MAX_GPUs)}))
         print(f"Successfully load model from '{path}'.")
         return path
 
@@ -169,8 +161,15 @@ class LearnerMAS(ABC):
         }
         return sample_Tensor
 
-    def onehot_action(self, actions_int, num_actions):
-        return F.one_hot(actions_int.long(), num_classes=num_actions)
+    @abstractmethod
+    def update(self, *args):
+        raise NotImplementedError
+
+    def update_rnn(self, *args):
+        raise NotImplementedError
+
+    def action(self, *args, **kwargs):
+        raise NotImplementedError
 
     def save_model(self, model_path):
         torch.save(self.policy.state_dict(), model_path)
@@ -190,35 +189,11 @@ class LearnerMAS(ABC):
 
         model_names = os.listdir(path)
         if os.path.exists(path + "/obs_rms.npy"):
-            model_names.remove("obs_rms.npy")
+            model_names.remove(bytes("obs_rms.npy"))
         if len(model_names) == 0:
             raise RuntimeError(f"There is no model file in '{path}'!")
         model_names.sort()
         model_path = os.path.join(path, model_names[-1])
-        self.policy.load_state_dict(torch.load(model_path, map_location={
-            "cuda:0": self.device,
-            "cuda:1": self.device,
-            "cuda:2": self.device,
-            "cuda:3": self.device,
-            "cuda:4": self.device,
-            "cuda:5": self.device,
-            "cuda:6": self.device,
-            "cuda:7": self.device
-        }))
+        self.policy.load_state_dict(torch.load(str(model_path), map_location={
+            f"cuda:{i}": self.device for i in range(MAX_GPUs)}))
         print(f"Successfully load model from '{path}'.")
-
-    @abstractmethod
-    def update(self, *args):
-        raise NotImplementedError
-
-    def update_recurrent(self, *args):
-        pass
-
-    def act(self, *args, **kwargs):
-        pass
-
-    def get_hidden_states(self, *args):
-        pass
-
-    def lr_decay(self, *args):
-        pass
