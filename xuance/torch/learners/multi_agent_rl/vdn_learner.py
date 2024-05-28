@@ -18,8 +18,8 @@ class VDN_Learner(LearnerMAS):
                  agent_keys: List[str],
                  episode_length: int,
                  policy: nn.Module,
-                 optimizer: Optional[dict],
-                 scheduler: Optional[dict] = None):
+                 optimizer: Optional[torch.optim.Adam],
+                 scheduler: Optional[torch.optim.lr_scheduler.LinearLR] = None):
         self.gamma = config.gamma
         self.sync_frequency = config.sync_frequency
         super(VDN_Learner, self).__init__(config, model_keys, agent_keys, episode_length, policy, optimizer, scheduler)
@@ -68,24 +68,25 @@ class VDN_Learner(LearnerMAS):
 
             q_target = rewards[key] + (1 - terminals[key]) * self.gamma * q_next_a
 
-            # calculate the loss function
-            td_error = (q_eval_a - q_target.detach()) * agent_mask[key]
-            loss = (td_error ** 2).sum() / agent_mask[key].sum()
-            self.optimizer[key].zero_grad()
-            loss.backward()
-            if self.use_grad_clip:
-                torch.nn.utils.clip_grad_norm_(self.policy.parameters_model[key], self.grad_clip_norm)
-            self.optimizer[key].step()
-            if self.scheduler[key] is not None:
-                self.scheduler[key].step()
+        # calculate the loss function
+        td_error = (q_eval_a - q_target.detach()) * agent_mask[key]
+        loss = (td_error ** 2).sum() / agent_mask[key].sum()
 
-            lr = self.optimizer[key].state_dict()['param_groups'][0]['lr']
+        self.optimizer.zero_grad()
+        loss.backward()
+        if self.use_grad_clip:
+            torch.nn.utils.clip_grad_norm_(self.policy.parameters_model[key], self.grad_clip_norm)
+        self.optimizer.step()
+        if self.scheduler is not None:
+            self.scheduler.step()
 
-            info.update({
-                f"{key}/learning_rate": lr,
-                f"{key}/loss_Q": loss.item(),
-                f"{key}/predictQ": q_eval_a.mean().item()
-            })
+        lr = self.optimizer.state_dict()['param_groups'][0]['lr']
+
+        info.update({
+            f"{key}/learning_rate": lr,
+            f"{key}/loss_Q": loss.item(),
+            f"{key}/predictQ": q_eval_a.mean().item()
+        })
 
         if self.iterations % self.sync_frequency == 0:
             self.policy.copy_target()

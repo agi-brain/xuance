@@ -3,9 +3,10 @@ from argparse import Namespace
 from xuance.environment import DummyVecMutliAgentEnv
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.representations import REGISTRY_Representation
-from xuance.torch.policies import REGISTRY_Policy
+from xuance.torch.policies import REGISTRY_Policy, VDN_mixer
 from xuance.torch.learners import VDN_Learner
-from xuance.torch.agents import MARLAgents, IQL_Agents
+from xuance.torch.agents import MARLAgents
+from xuance.torch.agents.multi_agent_rl.iql_agents import IQL_Agents
 from xuance.common import MARL_OffPolicyBuffer, MARL_OffPolicyBuffer_RNN
 
 
@@ -19,7 +20,7 @@ class VDN_Agents(IQL_Agents, MARLAgents):
     def __init__(self,
                  config: Namespace,
                  envs: DummyVecMutliAgentEnv):
-        MARLAgents.__init__(config, envs)
+        MARLAgents.__init__(self, config, envs)
         self.use_actions_mask = config.use_actions_mask
 
         self.start_greedy, self.end_greedy = config.start_greedy, config.end_greedy
@@ -88,15 +89,16 @@ class VDN_Agents(IQL_Agents, MARLAgents):
                 raise f"The VDN currently does not support the representation of {self.config.representation}."
 
         # build policies
-        if self.config.policy == "Basic_Q_network_marl":
-            policy = REGISTRY_Policy["Basic_Q_network_marl"](
+        mixer = VDN_mixer()
+        if self.config.policy == "Mixing_Q_network":
+            policy = REGISTRY_Policy["Mixing_Q_network"](
                 action_space=self.action_space, n_agents=self.n_agents, representation=representation,
-                hidden_size=self.config.q_hidden_size,
+                mixer=mixer, hidden_size=self.config.q_hidden_size,
                 normalize=normalize_fn, initialize=initializer, activation=activation,
                 device=device, use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
                 use_rnn=self.use_rnn, rnn=self.config.rnn if self.use_rnn else None)
         else:
-            raise f"The IQL currently does not support the policy named {self.config.policy}."
+            raise f"The VDN currently does not support the policy named {self.config.policy}."
 
         return policy
 
