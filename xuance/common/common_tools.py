@@ -327,4 +327,3 @@ def get_time_string():
     t_sec = str(t_now.tm_sec).zfill(2)
     time_string = f"{t_year}_{t_month}{t_day}_{t_hour}{t_min}{t_sec}"
     return time_string
-

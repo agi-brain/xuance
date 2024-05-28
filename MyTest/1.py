@@ -1,6 +1,7 @@
-import torch
-print(torch.__version__)
-print(torch.cuda.is_available())
-#查看cuda版本
-print(torch.version.cuda)
-print(torch.cuda.device_count())
+import xuance
+runner = xuance.get_runner(method='mappo',
+                           env='mpe',
+                           env_id='simple_spread_v3',
+                           config_path='./configs/mappo.yaml',
+                           is_test=True)
+runner.run()

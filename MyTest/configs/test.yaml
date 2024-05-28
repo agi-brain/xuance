@@ -1,55 +1,46 @@
-dl_toolbox: "torch"  # The deep learning toolbox. Choices: "torch", "mindspore", "tensorflow"
-
+dl_toolbox: "torch"  # The deep learning toolbox. Choices: "torch", "mindspore", "tensorlayer"
 project_name: "XuanCe_Benchmark"
-logger: "wandb"  # Choices: "tensorboard", "wandb".
-wandb_user_name: "1256405274"
-
-render: False
+logger: "tensorboard"  # Choices: tensorboard, wandb.
+wandb_user_name: "your_user_name"
+render: True
 render_mode: 'human' # Choices: 'human', 'rgb_array'.
-test_mode: False
+test_mode: True
+device: "cuda:0"
 
-device: "cuda"  # Choices: "cpu", "cuda", "auto".
-
-
-agent: "QMIX"  # the learning algorithms_marl
-env_name: "mpe"
-env_id: "simple_spread_v3"
-continuous_action: False
-policy: "Mixing_Q_network"
+agent: "DQN"
+env_name: "BlackjackEnv"
+env_id: "blackjack-v0"
+vectorize: "Dummy_BlackjackEnv"
+policy: "Basic_Q_network"
 representation: "Basic_MLP"
-vectorize: "Dummy_Pettingzoo"
-runner: "Pettingzoo_Runner"
+runner: "DRL"
 
-use_recurrent: False
-rnn:
-representation_hidden_size: [64, ]
-q_hidden_size: [128, ]  # the units for each hidden layer
-activation: "ReLU"
-
-hidden_dim_mixing_net: 64  # hidden units of mixing network
-hidden_dim_hyper_net: 64  # hidden units of hyper network
+representation_hidden_size: [128,]
+q_hidden_size: [128,]
+activation: 'relu'
 
 seed: 1
-parallels: 16
-buffer_size: 100000
+parallels: 10
+buffer_size: 10000
 batch_size: 256
 learning_rate: 0.001
-gamma: 0.99  # discount factor
-double_q: True  # use double q learning
+gamma: 0.99
 
-start_greedy: 1.0
-end_greedy: 0.05
-decay_step_greedy: 2500000
-start_training: 1000  # start training after n episodes
-running_steps: 10000000  # 10M
-train_per_step: False  # True: train model per step; False: train model per episode.
+start_greedy: 0.5
+end_greedy: 0.01
+decay_step_greedy: 10000
+sync_frequency: 50
 training_frequency: 1
-sync_frequency: 100
+running_steps: 200000  # 200k
+start_training: 1000
 
-use_grad_clip: False
-grad_clip_norm: 0.5
+use_obsnorm: False
+use_rewnorm: False
+obsnorm_range: 5
+rewnorm_range: 5
 
-eval_interval: 100000
-test_episode: 5
-log_dir: "./logs/qmix/"
-model_dir: "./models/qmix/"
+test_steps: 50000
+eval_interval: 20000
+test_episode: 10
+log_dir: "./logs/dqn/"
+model_dir: "./models/dqn/"

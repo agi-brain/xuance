@@ -38,7 +38,7 @@ vf_coef: 1.0
 ent_coef: 0.01
 target_kl: 0.25  # for MAPPO_KL learner
 clip_range: 0.2  # ratio clip range, for MAPPO_Clip learner
-#clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
 gamma: 0.95  # discount factor
 
 # tricks
@@ -57,12 +57,12 @@ use_gae: True
 gae_lambda: 0.95
 
 start_training: 1
-running_steps: 10000000
+running_steps: 100000000
 train_per_step: True
 training_frequency: 1
 
 test_steps: 10000
 eval_interval: 100000
-test_episode: 5
+test_episode: 1
 log_dir: "./logs/mappo/"
 model_dir: "./models/mappo/"

@@ -16,7 +16,7 @@ from xuance.environment.metadrive import SubprocVecEnv_MetaDrive
 from xuance.environment.robotic_warehouse import DummyVecEnv_RoboticWarehouse, SubprocVecEnv_RoboticWarehouse
 from xuance.environment.new_env import DummyVecEnv_New, SubprocVecEnv_New
 from xuance.environment.new_env_mas import DummyVecEnv_New_MAS, SubprocVecEnv_New_MAS
-
+from xuance.environment.BlackjackEnv import SubprocVecBlackjackEnv, DummyVecBlackjackEnv
 from .vector_envs.subproc_vec_env import SubprocVecEnv
 
 REGISTRY_VEC_ENV = {
@@ -31,6 +31,8 @@ REGISTRY_VEC_ENV = {
     "Dummy_RoboticWarehouse": DummyVecEnv_RoboticWarehouse,
     "Dummy_NewEnv": DummyVecEnv_New,  # Add the newly defined vectorized environment
     "Dummy_NewEnv_MAS": DummyVecEnv_New_MAS,  # Add the newly defined vectorized environment for multi-agent systems
+    "Dummy_BlackjackEnv": DummyVecBlackjackEnv,
+
 
     # multiprocess #
     "Subproc_Gym": SubprocVecEnv_Gym,
@@ -45,6 +47,7 @@ REGISTRY_VEC_ENV = {
     "Subproc_RoboticWarehouse": SubprocVecEnv_RoboticWarehouse,
     "Subproc_NewEnv": SubprocVecEnv_New,  # Add the newly defined vectorized environment
     "Subproc_NewEnv_MAS": SubprocVecEnv_New_MAS,  # Add the newly defined vectorized environment for multi-agent systems
+    "Subproc_BlackjackEnv": SubprocVecBlackjackEnv,
 }
 
 
@@ -113,7 +116,9 @@ def make_envs(config: Namespace):
         elif config.env_name == "NewEnv_MAS":  # Add the newly defined vectorized environment
             from xuance.environment.new_env_mas.new_env_mas import New_Env_MAS
             env = New_Env_MAS(config, continuous=config.continuous_action)
-
+        elif config.env_name == "BlackjackEnv":
+            from xuance.environment.BlackjackEnv.BlackjackEnv import BlackjackEnv
+            env = BlackjackEnv(config.env_id, config.seed, render_mode=config.render_mode,continuous=False)
         else:
             env = Gym_Env(config.env_id, config.seed, config.render_mode)
 
