@@ -613,7 +613,7 @@ class MARL_OffPolicyBuffer(BaseBuffer):
             })
         self.ptr, self.size = 0, 0
 
-    def store(self, step_data):
+    def store(self, **step_data):
         """ Stores a step of data into the replay buffer. """
         for data_key in self.data_keys:
             if data_key in ['state', 'state_next']:

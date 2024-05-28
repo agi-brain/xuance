@@ -1,4 +1,6 @@
 import os
+
+import numpy as np
 import torch
 import torch.nn.functional as F
 from numpy import concatenate as concat
@@ -128,9 +130,13 @@ class LearnerMAS(ABC):
             actions = {k: Tensor(sample['actions'][k]).to(self.device) for k in self.agent_keys}
             if not self.use_rnn:
                 obs_next = {k: Tensor(sample['obs_next'][k]).to(self.device) for k in self.agent_keys}
-            rewards = {k: Tensor(sample['rewards'][k][:, None]).to(self.device) for k in self.agent_keys}
-            terminals = {k: Tensor(sample['terminals'][k][:, None]).float().to(self.device) for k in self.agent_keys}
-            agent_mask = {k: Tensor(sample['agent_mask'][k][:, None]).float().to(self.device) for k in self.agent_keys}
+                rewards = {k: Tensor(sample['rewards'][k][:, None]).to(self.device) for k in self.agent_keys}
+                terminals = {k: Tensor(sample['terminals'][k][:, None]).float().to(self.device) for k in self.agent_keys}
+                agent_mask = {k: Tensor(sample['agent_mask'][k][:, None]).float().to(self.device) for k in self.agent_keys}
+            else:
+                rewards = {k: Tensor(sample['rewards'][k][:, :, None]).to(self.device) for k in self.agent_keys}
+                terminals = {k: Tensor(sample['terminals'][k][:, :, None]).float().to(self.device) for k in self.agent_keys}
+                agent_mask = {k: Tensor(sample['agent_mask'][k][:, :, None]).float().to(self.device) for k in self.agent_keys}
             if use_actions_mask:
                 avail_actions = {k: Tensor(sample['avail_actions'][k]).float().to(self.device) for k in self.agent_keys}
                 if not self.use_rnn:
@@ -144,7 +150,7 @@ class LearnerMAS(ABC):
                 state_next = Tensor(sample['state_next']).to(self.device)
 
         if self.use_rnn:
-            filled = Tensor(sample['filled']).to(self.device)
+            filled = Tensor(sample['filled'][:, :, np.newaxis]).to(self.device)
 
         sample_Tensor = {
             'batch_size': batch_size,

@@ -47,7 +47,7 @@ class BasicQnetwork(Module):
 
     def forward(self, observation: Dict[str, Tensor], agent_ids: Tensor = None,
                 avail_actions: Dict[str, Tensor] = None, agent_key: str = None,
-                rnn_hidden: Optional[Dict[str, List[Tensor]]] = None,):
+                rnn_hidden: Optional[Dict[str, List[Tensor]]] = None):
         """
         Returns actions of the policy.
 
@@ -63,7 +63,7 @@ class BasicQnetwork(Module):
             argmax_action (Dict[str, Tensor]): The actions output by the policies.
             evalQ (Dict[str, Tensor])： The evaluations of observation-action pairs.
         """
-        rnn_hidden_new, evalQ, argmax_action = {}, {}, {}
+        rnn_hidden_new, argmax_action, evalQ = {}, {}, {}
         agent_list = self.model_keys if agent_key is None else [agent_key]
 
         if avail_actions is not None:
@@ -92,36 +92,37 @@ class BasicQnetwork(Module):
 
         return rnn_hidden_new, argmax_action, evalQ
 
-    def Qtarget(self, next_observation: Dict[str, Tensor], agent_ids: Dict[str, Tensor],
-                *rnn_hidden: Tensor, agent_key: str = None):
+    def Qtarget(self, observation: Dict[str, Tensor], agent_ids: Dict[str, Tensor],
+                agent_key: str = None,
+                rnn_hidden: Optional[Dict[str, List[Tensor]]] = None):
         """
         Returns the Q^target of next observations and actions pairs.
 
         Parameters:
-            next_observation (Dict[Tensor]): The observations of next step.
+            observation (Dict[Tensor]): The observations.
             agent_ids (Dict[Tensor]): The agents' ids (for parameter sharing).
-            *rnn_hidden (List[Tensor]): The hidden variables of the RNN.
             agent_key (str): Calculate actions for specified agent.
+            rnn_hidden (Optional[Dict[str, List[Tensor]]]): The hidden variables of the RNN.
 
         Returns:
-            rnn_hidden: The new hidden variables for RNN.
+            rnn_hidden_new (Optional[Dict[str, List[Tensor]]]): The new hidden variables of the RNN.
             q_target: The evaluations of Q^target.
         """
-        q_target = {}
+        rnn_hidden_new, q_target = {}, {}
         agent_list = self.model_keys if agent_key is None else [agent_key]
         for key in agent_list:
             if self.use_rnn:
-                outputs = self.target_representation[key](next_observation[key], *rnn_hidden)
-                rnn_hidden = (outputs['rnn_hidden'], outputs['rnn_cell'])
+                outputs = self.target_representation[key](observation[key], *rnn_hidden[key])
+                rnn_hidden_new[key] = (outputs['rnn_hidden'], outputs['rnn_cell'])
             else:
-                outputs = self.target_representation[key](next_observation[key])
-                rnn_hidden = None
+                outputs = self.target_representation[key](observation[key])
+                rnn_hidden_new[key] = None
             if self.use_parameter_sharing:
                 q_inputs = torch.concat([outputs['state'], agent_ids], dim=-1)
             else:
                 q_inputs = outputs['state']
             q_target[key] = self.target_Qhead[key](q_inputs)
-        return rnn_hidden, q_target
+        return rnn_hidden_new, q_target
 
     def copy_target(self):
         for k in self.model_keys:
