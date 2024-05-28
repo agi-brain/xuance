@@ -251,18 +251,18 @@ class IQL_Agents(MARLAgents):
         else:
             return hidden_state, actions_dict
 
-    def train(self, train_steps):
+    def train(self, n_steps):
         """
         Train the model for numerous steps.
 
         Parameters:
-            train_steps (int): The number of steps to train the model.
+            n_steps (int): The number of steps to train the model.
         """
         obs_dict = self.envs.buf_obs
         avail_actions = self.envs.buf_avail_actions
-        for _ in tqdm(range(train_steps)):
+        for _ in tqdm(range(n_steps)):
             step_info = {}
-            rnn_hidden_next, actions_dict = self.action(obs_dict,
+            rnn_hidden_next, actions_dict = self.action(obs_dict=obs_dict,
                                                         avail_actions_dict=avail_actions,
                                                         rnn_hidden=self.rnn_hidden_state,
                                                         test_mode=False)
@@ -309,15 +309,73 @@ class IQL_Agents(MARLAgents):
             if self.egreedy >= self.end_greedy:
                 self.egreedy = self.egreedy - self.delta_egreedy
 
-    def test(self, env_fn, test_episodes):
+    def test(self, env_fn, n_episodes):
         """
         Test the model for some episodes.
 
         Parameters:
             env_fn: The function that can make some testing environments.
-            test_episodes (int): Number of episodes to test.
+            n_episodes (int): Number of episodes to test.
 
         Returns:
             scores (List(float)): A list of cumulative rewards for each episode.
         """
-        return
+        test_envs = env_fn()
+        num_envs = test_envs.num_envs
+        videos, episode_videos = [[] for _ in range(num_envs)], []
+        current_episode, scores, best_score = 0, [0.0 for _ in range(num_envs)], -np.inf
+        obs_dict, info = test_envs.reset()
+        avail_actions = test_envs.buf_avail_actions
+        rnn_hidden_state = self.init_rnn_hidden()
+        if self.config.render_mode == "rgb_array" and self.render:
+            images = test_envs.render(self.config.render_mode)
+            for idx, img in enumerate(images):
+                videos[idx].append(img)
+
+        while current_episode < n_episodes:
+            rnn_hidden_next, actions_dict = self.action(obs_dict=obs_dict,
+                                                        avail_actions_dict=avail_actions,
+                                                        rnn_hidden=rnn_hidden_state,
+                                                        test_mode=True)
+            next_obs_dict, rewards_dict, terminated_dict, truncated, info = self.envs.step(actions_dict)
+            next_avail_actions = self.envs.buf_avail_actions
+            if self.config.render_mode == "rgb_array" and self.render:
+                images = test_envs.render(self.config.render_mode)
+                for idx, img in enumerate(images):
+                    videos[idx].append(img)
+
+            obs_dict = deepcopy(next_obs_dict)
+            avail_actions = deepcopy(next_avail_actions)
+            rnn_hidden_state = deepcopy(rnn_hidden_next)
+            for i in range(num_envs):
+                if all(terminated_dict[i].values()) or truncated[i]:
+                    if self.use_rnn:
+                        for key in self.agent_keys:
+                            rnn_hidden_state[key] = self.policy.representation[key].init_hidden_item(
+                                i, *rnn_hidden_state[key])
+                    obs_dict[i] = info[i]["reset_obs"]
+                    avail_actions[i] = info[i]["reset_avail_actions"]
+                    episode_score = float(np.mean(itemgetter(*self.agent_keys)(info[i]["episode_score"])))
+                    scores.append(episode_score)
+                    current_episode += 1
+                    if best_score < episode_score:
+                        best_score = episode_score
+                        episode_videos = videos[i].copy()
+                    if self.config.test_mode:
+                        print("Episode: %d, Score: %.2f" % (current_episode, episode_score))
+
+        if self.config.render_mode == "rgb_array" and self.render:
+            # time, height, width, channel -> time, channel, height, width
+            videos_info = {"Videos_Test": np.array([episode_videos], dtype=np.uint8).transpose((0, 1, 4, 2, 3))}
+            self.log_videos(info=videos_info, fps=self.fps, x_index=self.current_step)
+
+        if self.config.test_mode:
+            print("Best Score: %.2f" % best_score)
+
+        test_info = {
+            "Test-Episode-Rewards/Mean-Score": np.mean(scores),
+            "Test-Episode-Rewards/Std-Score": np.std(scores),
+        }
+        self.log_infos(test_info, self.current_step)
+        test_envs.close()
+        return scores

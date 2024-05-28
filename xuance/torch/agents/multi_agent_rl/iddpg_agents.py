@@ -117,7 +117,7 @@ class IDDPG_Agents(MARLAgents):
             'terminals': {k: np.array([data[k] for data in terminals_dict]) for k in self.agent_keys},
             'agent_mask': {k: np.array([data['agent_mask'][k] for data in info]) for k in self.agent_keys},
         }
-        self.memory.store(experience_data)
+        self.memory.store(**experience_data)
 
     def action(self, obs_dict, test_mode):
         """
@@ -149,15 +149,15 @@ class IDDPG_Agents(MARLAgents):
             actions_dict = [{key: actions_dict_[key][i] for key in self.agent_keys} for i in range(n_env)]
         return actions_dict
 
-    def train(self, train_steps):
+    def train(self, n_steps):
         """
         Train the model for numerous steps.
 
         Parameters:
-            train_steps (int): The number of steps to train the model.
+            n_steps (int): The number of steps to train the model.
         """
         obs_dict = self.envs.buf_obs
-        for _ in tqdm(range(train_steps)):
+        for _ in tqdm(range(n_steps)):
             step_info = {}
             if self.current_step < self.start_training:
                 actions_dict = [{k: self.action_space[k].sample() for k in self.agent_keys} for _ in range(self.n_envs)]
@@ -189,13 +189,13 @@ class IDDPG_Agents(MARLAgents):
             if self.noise_scale >= self.end_noise:
                 self.noise_scale = self.noise_scale - self.delta_noise
 
-    def test(self, env_fn, test_episodes):
+    def test(self, env_fn, n_episodes):
         """
         Test the model for some episodes.
 
         Parameters:
             env_fn: The function that can make some testing environments.
-            test_episodes (int): Number of episodes to test.
+            n_episodes (int): Number of episodes to test.
 
         Returns:
             scores (List(float)): A list of cumulative rewards for each episode.
@@ -210,7 +210,7 @@ class IDDPG_Agents(MARLAgents):
             for idx, img in enumerate(images):
                 videos[idx].append(img)
 
-        while current_episode < test_episodes:
+        while current_episode < n_episodes:
             actions_dict = self.action(obs_dict, test_mode=True)
             next_obs_dict, rewards_dict, terminated_dict, truncated, info = test_envs.step(actions_dict)
             if self.config.render_mode == "rgb_array" and self.render:
@@ -241,7 +241,7 @@ class IDDPG_Agents(MARLAgents):
 
         test_info = {
             "Test-Episode-Rewards/Mean-Score": np.mean(scores),
-            "Test-Episode-Rewards/Std-Score": np.std(scores)
+            "Test-Episode-Rewards/Std-Score": np.std(scores),
         }
         self.log_infos(test_info, self.current_step)
         test_envs.close()
