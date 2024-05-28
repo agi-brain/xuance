@@ -340,8 +340,8 @@ class IQL_Agents(MARLAgents):
                                                         avail_actions_dict=avail_actions,
                                                         rnn_hidden=rnn_hidden_state,
                                                         test_mode=True)
-            next_obs_dict, rewards_dict, terminated_dict, truncated, info = self.envs.step(actions_dict)
-            next_avail_actions = self.envs.buf_avail_actions
+            next_obs_dict, rewards_dict, terminated_dict, truncated, info = test_envs.step(actions_dict)
+            next_avail_actions = test_envs.buf_avail_actions
             if self.config.render_mode == "rgb_array" and self.render:
                 images = test_envs.render(self.config.render_mode)
                 for idx, img in enumerate(images):
