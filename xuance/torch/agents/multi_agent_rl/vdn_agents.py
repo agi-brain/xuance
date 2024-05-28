@@ -5,10 +5,11 @@ from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.representations import REGISTRY_Representation
 from xuance.torch.policies import REGISTRY_Policy
 from xuance.torch.learners import VDN_Learner
-from xuance.torch.agents import IQL_Agents
+from xuance.torch.agents import MARLAgents, IQL_Agents
+from xuance.common import MARL_OffPolicyBuffer, MARL_OffPolicyBuffer_RNN
 
 
-class VDN_Agents(IQL_Agents):
+class VDN_Agents(IQL_Agents, MARLAgents):
     """The implementation of Value Decomposition Networks (VDN) agents.
 
     Args:
@@ -18,7 +19,39 @@ class VDN_Agents(IQL_Agents):
     def __init__(self,
                  config: Namespace,
                  envs: DummyVecMutliAgentEnv):
-        super(VDN_Agents, self).__init__(config, envs)
+        MARLAgents.__init__(config, envs)
+        self.use_actions_mask = config.use_actions_mask
+
+        self.start_greedy, self.end_greedy = config.start_greedy, config.end_greedy
+        self.egreedy = self.start_greedy
+        self.delta_egreedy = (self.start_greedy - self.end_greedy) / (config.decay_step_greedy / self.n_envs)
+
+        # build policy, optimizers, schedulers
+        self.use_rnn = config.use_rnn if hasattr(config, 'use_rnn') else False
+        self.policy = self._build_policy()
+        optimizer = torch.optim.Adam(self.policy.parameters_model, config.learning_rate, eps=1e-5)
+        scheduler = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=1.0, end_factor=0.5,
+                                                      total_iters=self.config.running_steps)
+
+        # create experience replay buffer
+        input_buffer = dict(agent_keys=self.agent_keys,
+                            obs_space=self.observation_space,
+                            act_space=self.action_space,
+                            n_envs=self.n_envs,
+                            buffer_size=self.config.buffer_size,
+                            batch_size=self.config.batch_size,
+                            n_actions={k: self.action_space[k].n for k in self.agent_keys},
+                            use_actions_mask=self.use_actions_mask,
+                            max_episode_length=envs.max_episode_length)
+        buffer = MARL_OffPolicyBuffer_RNN if self.use_rnn else MARL_OffPolicyBuffer
+        self.memory = buffer(**input_buffer)
+
+        # initialize the hidden states of the RNN is use RNN-based representations.
+        self.rnn_hidden_state = self.init_rnn_hidden(self.n_envs)
+
+        # create learner
+        self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, envs.max_episode_length,
+                                           self.policy, optimizer, scheduler)
 
     def _build_policy(self):
         """

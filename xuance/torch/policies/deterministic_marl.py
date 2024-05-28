@@ -12,7 +12,7 @@ class BasicQnetwork(Module):
     def __init__(self,
                  action_space: Optional[Dict[str, Discrete]],
                  n_agents: int,
-                 representation: Module,
+                 representation: Dict[str, Module],
                  hidden_size: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., Tensor]] = None,
@@ -133,54 +133,11 @@ class BasicQnetwork(Module):
                     tp.data.copy_(ep)
 
 
-class MFQnetwork(Module):
+class MixingQnetwork(BasicQnetwork):
     def __init__(self,
-                 action_space: Discrete,
+                 action_space: Optional[Dict[str, Discrete]],
                  n_agents: int,
-                 representation: Module,
-                 hidden_size: Sequence[int] = None,
-                 normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., Tensor]] = None,
-                 activation: Optional[ModuleType] = None,
-                 device: Optional[Union[str, int, torch.device]] = None):
-        super(MFQnetwork, self).__init__()
-        self.n_actions = action_space.n
-        self.representation = representation
-        self.target_representation = deepcopy(self.representation)
-        self.representation_info_shape = self.representation.output_shapes
-
-        self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0] + self.n_actions, self.n_actions,
-                                     n_agents, hidden_size, normalize, initialize, activation, device)
-        self.target_Qhead = deepcopy(self.eval_Qhead)
-
-    def forward(self, observation: Tensor, actions_mean: Tensor, agent_ids: Tensor):
-        outputs = self.representation(observation)
-        q_inputs = torch.concat([outputs['state'], actions_mean, agent_ids], dim=-1)
-        evalQ = self.eval_Qhead(q_inputs)
-        argmax_action = evalQ.argmax(dim=-1, keepdim=False)
-        return outputs, argmax_action, evalQ
-
-    def sample_actions(self, logits: Tensor):
-        dist = Categorical(logits=logits)
-        return dist.sample()
-
-    def target_Q(self, observation: Tensor, actions_mean: Tensor, agent_ids: Tensor):
-        outputs = self.target_representation(observation)
-        q_inputs = torch.concat([outputs['state'], actions_mean, agent_ids], dim=-1)
-        return self.target_Qhead(q_inputs)
-
-    def copy_target(self):
-        for ep, tp in zip(self.representation.parameters(), self.target_representation.parameters()):
-            tp.data.copy_(ep)
-        for ep, tp in zip(self.eval_Qhead.parameters(), self.target_Qhead.parameters()):
-            tp.data.copy_(ep)
-
-
-class MixingQnetwork(Module):
-    def __init__(self,
-                 action_space: Discrete,
-                 n_agents: int,
-                 representation: Module,
+                 representation: Dict[str, Module],
                  mixer: Optional[VDN_mixer] = None,
                  hidden_size: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,
@@ -188,48 +145,15 @@ class MixingQnetwork(Module):
                  activation: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None,
                  **kwargs):
-        super(MixingQnetwork, self).__init__()
-        self.n_actions = action_space.n
-        self.representation = representation
-        self.target_representation = deepcopy(self.representation)
-        self.representation_info_shape = self.representation.output_shapes
-        self.lstm = True if kwargs["rnn"] == "LSTM" else False
-        self.use_rnn = True if kwargs["use_rnn"] else False
-        self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.n_actions, n_agents,
-                                     hidden_size, normalize, initialize, activation, device)
-        self.target_Qhead = deepcopy(self.eval_Qhead)
+        super(MixingQnetwork, self).__init__(action_space, n_agents, representation, hidden_size,
+                                             normalize, initialize, activation, device, **kwargs)
         self.eval_Qtot = mixer
         self.target_Qtot = deepcopy(self.eval_Qtot)
 
-    def forward(self, observation: Tensor, agent_ids: Tensor,
-                *rnn_hidden: Tensor, avail_actions=None):
-        if self.use_rnn:
-            outputs = self.representation(observation, *rnn_hidden)
-            rnn_hidden = (outputs['rnn_hidden'], outputs['rnn_cell'])
-        else:
-            outputs = self.representation(observation)
-            rnn_hidden = None
-        q_inputs = torch.concat([outputs['state'], agent_ids], dim=-1)
-        evalQ = self.eval_Qhead(q_inputs)
-        if avail_actions is not None:
-            avail_actions = Tensor(avail_actions)
-            evalQ_detach = evalQ.clone().detach()
-            evalQ_detach[avail_actions == 0] = -9999999
-            argmax_action = evalQ_detach.argmax(dim=-1, keepdim=False)
-        else:
-            argmax_action = evalQ.argmax(dim=-1, keepdim=False)
-
-        return rnn_hidden, argmax_action, evalQ
-
-    def target_Q(self, observation: Tensor, agent_ids: Tensor, *rnn_hidden: Tensor):
-        if self.use_rnn:
-            outputs = self.target_representation(observation, *rnn_hidden)
-            rnn_hidden = (outputs['rnn_hidden'], outputs['rnn_cell'])
-        else:
-            outputs = self.target_representation(observation)
-            rnn_hidden = None
-        q_inputs = torch.concat([outputs['state'], agent_ids], dim=-1)
-        return rnn_hidden, self.target_Qhead(q_inputs)
+        self.parameters_model = list(self.eval_Qtot.parameters())
+        for key in self.model_keys:
+            self.parameters_model += list(self.representation[key].parameters())
+            self.parameters_model += list(self.eval_Qhead[key].parameters())
 
     def Q_tot(self, q, states=None):
         return self.eval_Qtot(q, states)
@@ -238,12 +162,13 @@ class MixingQnetwork(Module):
         return self.target_Qtot(q, states)
 
     def copy_target(self):
-        for ep, tp in zip(self.representation.parameters(), self.target_representation.parameters()):
-            tp.data.copy_(ep)
-        for ep, tp in zip(self.eval_Qhead.parameters(), self.target_Qhead.parameters()):
-            tp.data.copy_(ep)
-        for ep, tp in zip(self.eval_Qtot.parameters(), self.target_Qtot.parameters()):
-            tp.data.copy_(ep)
+        for k in self.model_keys:
+            param = [zip(self.representation[k].parameters(), self.target_representation[k].parameters()),
+                     zip(self.eval_Qhead[k].parameters(), self.target_Qhead[k].parameters()),
+                     zip(self.eval_Qtot[k].parameters(), self.target_Qtot[k].parameters())]
+            for p in param:
+                for ep, tp in p:
+                    tp.data.copy_(ep)
 
 
 class Weighted_MixingQnetwork(MixingQnetwork):
@@ -421,6 +346,49 @@ class DCG_policy(Module):
         if self.dcg_s:
             for ep, tp in zip(self.bias.parameters(), self.target_bias.parameters()):
                 tp.data.copy_(ep)
+
+
+class MFQnetwork(Module):
+    def __init__(self,
+                 action_space: Discrete,
+                 n_agents: int,
+                 representation: Module,
+                 hidden_size: Sequence[int] = None,
+                 normalize: Optional[ModuleType] = None,
+                 initialize: Optional[Callable[..., Tensor]] = None,
+                 activation: Optional[ModuleType] = None,
+                 device: Optional[Union[str, int, torch.device]] = None):
+        super(MFQnetwork, self).__init__()
+        self.n_actions = action_space.n
+        self.representation = representation
+        self.target_representation = deepcopy(self.representation)
+        self.representation_info_shape = self.representation.output_shapes
+
+        self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0] + self.n_actions, self.n_actions,
+                                     n_agents, hidden_size, normalize, initialize, activation, device)
+        self.target_Qhead = deepcopy(self.eval_Qhead)
+
+    def forward(self, observation: Tensor, actions_mean: Tensor, agent_ids: Tensor):
+        outputs = self.representation(observation)
+        q_inputs = torch.concat([outputs['state'], actions_mean, agent_ids], dim=-1)
+        evalQ = self.eval_Qhead(q_inputs)
+        argmax_action = evalQ.argmax(dim=-1, keepdim=False)
+        return outputs, argmax_action, evalQ
+
+    def sample_actions(self, logits: Tensor):
+        dist = Categorical(logits=logits)
+        return dist.sample()
+
+    def target_Q(self, observation: Tensor, actions_mean: Tensor, agent_ids: Tensor):
+        outputs = self.target_representation(observation)
+        q_inputs = torch.concat([outputs['state'], actions_mean, agent_ids], dim=-1)
+        return self.target_Qhead(q_inputs)
+
+    def copy_target(self):
+        for ep, tp in zip(self.representation.parameters(), self.target_representation.parameters()):
+            tp.data.copy_(ep)
+        for ep, tp in zip(self.eval_Qhead.parameters(), self.target_Qhead.parameters()):
+            tp.data.copy_(ep)
 
 
 class Independent_DDPG_Policy(Module):
