@@ -57,7 +57,7 @@ class IQL_Agents(MARLAgents):
         self.memory = buffer(**input_buffer)
 
         # initialize the hidden states of the RNN is use RNN-based representations.
-        self.rnn_hidden_state = self.init_rnn_hidden()
+        self.rnn_hidden_state = self.init_rnn_hidden(self.n_envs)
 
         # create learner
         self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, envs.max_episode_length,
@@ -144,14 +144,17 @@ class IQL_Agents(MARLAgents):
             experience_data['episode_steps'] = np.array([data['episode_step'] - 1 for data in info])
         self.memory.store(**experience_data)
 
-    def init_rnn_hidden(self):
+    def init_rnn_hidden(self, n_envs):
         """
         Returns initialized hidden states of RNN if use RNN-based representations.
+
+        Parameters:
+            n_envs (int): The number of parallel environments.
         """
         rnn_hidden_states = {}
         for key in self.model_keys:
             if self.use_rnn:
-                batch = self.n_envs * self.n_agents if self.use_parameter_sharing else self.n_envs
+                batch = n_envs * self.n_agents if self.use_parameter_sharing else n_envs
                 rnn_hidden_states[key] = self.policy.representation[key].init_hidden(batch)
             else:
                 rnn_hidden_states[key] = [None, None]
@@ -326,7 +329,7 @@ class IQL_Agents(MARLAgents):
         current_episode, scores, best_score = 0, [0.0 for _ in range(num_envs)], -np.inf
         obs_dict, info = test_envs.reset()
         avail_actions = test_envs.buf_avail_actions
-        rnn_hidden_state = self.init_rnn_hidden()
+        rnn_hidden_state = self.init_rnn_hidden(num_envs)
         if self.config.render_mode == "rgb_array" and self.render:
             images = test_envs.render(self.config.render_mode)
             for idx, img in enumerate(images):
