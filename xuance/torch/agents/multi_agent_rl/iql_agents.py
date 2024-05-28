@@ -17,7 +17,7 @@ from xuance.common import MARL_OffPolicyBuffer, MARL_OffPolicyBuffer_RNN
 
 
 class IQL_Agents(MARLAgents):
-    """The implementation of Independent Q-Networks agents.
+    """The implementation of Independent Q-Learning agents.
 
     Args:
         config: the Namespace variable that provides hyper-parameters and other settings.
