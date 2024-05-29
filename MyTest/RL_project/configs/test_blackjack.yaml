@@ -20,7 +20,7 @@ q_hidden_size: [128,]
 activation: 'relu'
 
 seed: 1
-parallels: 10
+parallels: 1
 buffer_size: 10000
 batch_size: 256
 learning_rate: 0.001

@@ -4,6 +4,12 @@ This example
 """
 from gymnasium.spaces import Box, Discrete
 import numpy as np
+import functools
+
+import gymnasium
+
+from pettingzoo import AECEnv
+from pettingzoo.utils import agent_selector, wrappers
 
 
 class BlackjackEnv:
