@@ -104,6 +104,7 @@ class QMIX_Learner(LearnerMAS):
                                                  use_actions_mask=self.use_actions_mask,
                                                  use_global_state=True)
         batch_size = sample_Tensor['batch_size']
+        seq_len = sample['sequence_length']
         state = sample_Tensor['state']
         obs = sample_Tensor['obs']
         actions = sample_Tensor['actions']
@@ -111,9 +112,8 @@ class QMIX_Learner(LearnerMAS):
         terminals = sample_Tensor['terminals']
         agent_mask = sample_Tensor['agent_mask']
         avail_actions = sample_Tensor['avail_actions']
-        filled = sample_Tensor['filled']
+        filled = sample_Tensor['filled'].reshape([-1, 1])
         IDs = sample_Tensor['agent_ids']
-        seq_len = filled.shape[1]
 
         if self.use_parameter_sharing:
             key = self.model_keys[0]
@@ -123,41 +123,34 @@ class QMIX_Learner(LearnerMAS):
             IDs = IDs.reshape(bs_rnn, seq_len + 1, -1)
 
             rnn_hidden = {key: self.policy.representation[key].init_hidden(bs_rnn)}
-            _, actions_greedy, q_eval = self.policy(observation=obs,
-                                                    agent_ids=IDs,
-                                                    avail_actions=avail_actions_input,
+            _, actions_greedy, q_eval = self.policy(observation=obs, agent_ids=IDs, avail_actions=avail_actions_input,
                                                     rnn_hidden=rnn_hidden)
-            q_eval[key] = q_eval[key].reshape([batch_size, self.n_agents, seq_len + 1, -1])
-            q_eval_a = {key: q_eval[key].reshape([batch_size, self.n_agents, seq_len + 1, -1])[:, :, :-1].gather(
-                -1, actions[key].long().unsqueeze(-1))}
+            q_eval_a = q_eval[key][:, :-1].reshape([batch_size, self.n_agents, seq_len, -1]).gather(
+                -1, actions[key].long().unsqueeze(-1)) * agent_mask[key]
+            q_eval_a = q_eval_a.transpose(1, 2).reshape(-1, self.n_agents, 1)
 
             target_rnn_hidden = {key: self.policy.target_representation[key].init_hidden(bs_rnn)}
-            _, q_next_seq = self.policy.Qtarget(observation=obs,
-                                                agent_ids=IDs,
-                                                rnn_hidden=target_rnn_hidden)
-            q_next = q_next_seq[key].reshape([batch_size, self.n_agents, seq_len + 1, -1])[:, :, 1:]
+            _, q_next_seq = self.policy.Qtarget(observation=obs, agent_ids=IDs, rnn_hidden=target_rnn_hidden)
+            q_next = q_next_seq[key][:, 1:].reshape([batch_size, self.n_agents, seq_len, -1]) * agent_mask[key]
             if self.use_actions_mask:
                 q_next[avail_actions[key][:, :, 1:] == 0] = -9999999
             if self.config.double_q:
-                actions_greedy[key] = actions_greedy[key].reshape([batch_size, self.n_agents, -1])
-                q_next_a = {key: q_next.gather(-1, actions_greedy[key].unsqueeze(-1)[:, :, 1:].long().detach())}
+                act_next = actions_greedy[key].reshape([batch_size, self.n_agents, -1])[:, :, 1:].unsqueeze(-1).long()
+                q_next_a = q_next.gather(-1, act_next.detach()).transpose(1, 2).reshape(-1, self.n_agents, 1)
             else:
-                q_next_a = {key: q_next.max(dim=-1, keepdim=True).values}
+                q_next_a = q_next.max(dim=-1, keepdim=True).values.transpose(1, 2).reshape(-1, self.n_agents, 1)
 
         else:
             bs_rnn = batch_size
             rnn_hidden = {k: self.policy.representation[k].init_hidden(bs_rnn) for k in self.model_keys}
-            _, actions_greedy, q_eval = self.policy(observation=obs,
-                                                    agent_ids=IDs,
-                                                    avail_actions=avail_actions,
+            _, actions_greedy, q_eval = self.policy(observation=obs, agent_ids=IDs, avail_actions=avail_actions,
                                                     rnn_hidden=rnn_hidden)
-            q_eval_a = {k: q_eval[k][:, :-1].gather(-1, actions[k].long().unsqueeze(-1)) * agent_mask[k]
-                        for k in self.model_keys}
+            q_eval_a_list = [q_eval[k][:, :-1].gather(-1, actions[k].long().unsqueeze(-1)) * agent_mask[k] for k in
+                             self.model_keys]
+            q_eval_a = torch.concat(q_eval_a_list, dim=-1).reshape(-1, self.n_agents, 1)
 
             target_rnn_hidden = {k: self.policy.target_representation[k].init_hidden(bs_rnn) for k in self.model_keys}
-            _, q_next_seq = self.policy.Qtarget(observation=obs,
-                                                agent_ids=IDs,
-                                                rnn_hidden=target_rnn_hidden)
+            _, q_next_seq = self.policy.Qtarget(observation=obs, agent_ids=IDs, rnn_hidden=target_rnn_hidden)
 
             q_next = {k: q_next_seq[k][:, 1:] for k in self.model_keys}
             if self.use_actions_mask:
@@ -166,20 +159,22 @@ class QMIX_Learner(LearnerMAS):
 
             if self.config.double_q:
                 actions_next_greedy = {k: actions_greedy[k].unsqueeze(-1)[:, 1:] for k in self.model_keys}
-                q_next_a = {k: q_next[k].gather(-1, actions_next_greedy[k].long().detach()) * agent_mask[k]
-                            for k in self.model_keys}
+                q_next_a_list = [q_next[k].gather(-1, actions_next_greedy[k].long().detach()) * agent_mask[k] for k in
+                                 self.model_keys]
             else:
-                q_next_a = {k: q_next[k].max(dim=-1, keepdim=True).values * agent_mask[k] for k in self.model_keys}
+                q_next_a_list = [q_next[k].max(dim=-1, keepdim=True).values * agent_mask[k] for k in self.model_keys]
+            q_next_a = torch.concat(q_next_a_list, dim=-1).reshape(-1, self.n_agents, 1)
 
-        q_tot_eval = self.policy.Q_tot(q_eval_a, state[:, :-1])
-        q_tot_next = self.policy.Qtarget_tot(q_next_a, state[:, 1:])
+        q_tot_eval = self.policy.Q_tot(q_eval_a, state[:, :-1].reshape([batch_size * seq_len, -1]))
+        q_tot_next = self.policy.Qtarget_tot(q_next_a, state[:, 1:].reshape([batch_size * seq_len, -1]))
 
         if self.use_parameter_sharing:
-            rewards_tot = rewards[self.model_keys[0]].mean(dim=1)
-            terminals_tot = terminals[self.model_keys[0]].all(dim=1, keepdim=False).float()
+            rewards_tot = rewards[self.model_keys[0]].mean(dim=1).reshape([-1, 1])
+            terminals_tot = terminals[self.model_keys[0]].all(dim=1, keepdim=False).float().reshape([-1, 1])
         else:
-            rewards_tot = torch.concat([rewards[k] for k in self.model_keys], -1).mean(dim=-1, keepdim=True)
-            terminals_tot = torch.concat([terminals[k] for k in self.model_keys], -1).all(dim=1, keepdim=True).float()
+            rewards_tot = torch.concat([rewards[k] for k in self.model_keys], -1).mean(-1, True).reshape([-1, 1])
+            terminals_tot = torch.concat([terminals[k] for k in self.model_keys], -1).all(-1, True).reshape(
+                [-1, 1]).float()
 
         q_tot_target = rewards_tot + (1 - terminals_tot) * self.gamma * q_tot_next
 

@@ -859,6 +859,7 @@ class MARL_OffPolicyBuffer_RNN(MARL_OffPolicyBuffer):
                 continue
             samples_dict[data_key] = {k: self.data[data_key][k][episode_choices] for k in self.agent_keys}
         samples_dict['batch_size'] = batch_size
+        samples_dict['sequence_length'] = self.max_eps_len
         return samples_dict
 
 

@@ -152,7 +152,7 @@ class LearnerMAS(ABC):
                 state_next = Tensor(sample['state_next']).to(self.device)
 
         if self.use_rnn:
-            filled = Tensor(sample['filled'][:, :, np.newaxis]).float().to(self.device)
+            filled = Tensor(sample['filled']).float().to(self.device)
 
         sample_Tensor = {
             'batch_size': batch_size,
