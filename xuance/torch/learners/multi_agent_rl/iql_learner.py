@@ -123,7 +123,7 @@ class IQL_Learner(LearnerMAS):
             q_next_seq[key] = q_next_seq[key].reshape([batch_size, self.n_agents, seq_len + 1, -1])
             actions_greedy[key] = actions_greedy[key].reshape([batch_size, self.n_agents, -1])
         else:
-            bs_rnn = batch_size * self.n_agents
+            bs_rnn = batch_size
             rnn_hidden = {k: self.policy.representation[k].init_hidden(bs_rnn) for k in self.model_keys}
             _, actions_greedy, q_eval = self.policy(observation=obs,
                                                     agent_ids=IDs,

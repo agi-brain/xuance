@@ -81,6 +81,7 @@ class BasicQnetwork(Module):
                 q_inputs = torch.concat([outputs['state'], agent_ids], dim=-1)
             else:
                 q_inputs = outputs['state']
+
             evalQ[key] = self.eval_Qhead[key](q_inputs)
 
             if avail_actions is not None:
