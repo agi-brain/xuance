@@ -156,45 +156,54 @@ class MixingQnetwork(BasicQnetwork):
             self.parameters_model += list(self.eval_Qhead[key].parameters())
 
     def Q_tot(self,
-              individual_values: Optional[Tensor],
+              individual_values: Dict[str, Tensor],
               states: Optional[Tensor] = None):
         """
         Returns the total Q values.
 
         Parameters:
-            individual_values (Optional[Tensor]): The individual Q values of all agents.
+            individual_values (Dict[str, Tensor]): The individual Q values of all agents.
             states (Optional[Tensor]): The global states if necessary, default is None.
 
         Returns:
             evalQ_tot (Tensor): The evaluated total Q values for the multi-agent team.
         """
-        evalQ_tot = self.eval_Qtot(individual_values, states)
+        if self.use_parameter_sharing:
+            individual_inputs = individual_values[self.model_keys[0]]
+        else:
+            individual_inputs = torch.concat([individual_values[k][:, None] for k in self.model_keys], dim=1)
+        evalQ_tot = self.eval_Qtot(individual_inputs, states)
         return evalQ_tot
 
     def Qtarget_tot(self,
-                    individual_values: Optional[Tensor],
+                    individual_values: Dict[str, Tensor],
                     states: Optional[Tensor] = None):
         """
         Returns the total Q values with target networks.
 
         Parameters:
-            individual_values (Optional[Tensor]): The individual Q values of all agents.
+            individual_values (Dict[str, Tensor]): The individual Q values of all agents.
             states (Optional[Tensor]): The global states if necessary, default is None.
 
         Returns:
             q_target_tot (Tensor): The evaluated total Q values calculated by target networks.
         """
-        q_target_tot = self.target_Qtot(individual_values, states)
+        if self.use_parameter_sharing:
+            individual_inputs = individual_values[self.model_keys[0]]
+        else:
+            individual_inputs = torch.concat([individual_values[k][:, None] for k in self.model_keys], dim=1)
+        q_target_tot = self.target_Qtot(individual_inputs, states)
         return q_target_tot
 
     def copy_target(self):
         for k in self.model_keys:
             param = [zip(self.representation[k].parameters(), self.target_representation[k].parameters()),
-                     zip(self.eval_Qhead[k].parameters(), self.target_Qhead[k].parameters()),
-                     zip(self.eval_Qtot[k].parameters(), self.target_Qtot[k].parameters())]
+                     zip(self.eval_Qhead[k].parameters(), self.target_Qhead[k].parameters())]
             for p in param:
                 for ep, tp in p:
                     tp.data.copy_(ep)
+        for ep, tp in zip(self.eval_Qtot.parameters(), self.target_Qtot.parameters()):
+            tp.data.copy_(ep)
 
 
 class Weighted_MixingQnetwork(MixingQnetwork):

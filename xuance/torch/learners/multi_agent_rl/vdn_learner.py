@@ -47,12 +47,8 @@ class VDN_Learner(LearnerMAS):
         IDs = sample_Tensor['agent_ids']
 
         _, _, q_eval = self.policy(observation=obs, agent_ids=IDs, avail_actions=avail_actions)
-        if self.use_parameter_sharing:
-            q_eval_a = q_eval[self.model_keys[0]].gather(-1, actions[self.model_keys[0]].long().unsqueeze(-1))
-        else:
-            q_eval_a = [q_eval[k].gather(-1, actions[k].long().unsqueeze(-1)) for k in self.model_keys]
-            q_eval_a = torch.concat(q_eval_a, dim=None)
-        q_tot_eval = self.policy.Q_tot(q_eval_a * agent_mask)
+        q_eval_a = {k: q_eval[k].gather(-1, actions[k].long().unsqueeze(-1)) * agent_mask[k] for k in self.model_keys}
+        q_tot_eval = self.policy.Q_tot(q_eval_a)
 
         _, q_next = self.policy.Qtarget(observation=obs_next, agent_ids=IDs)
         if self.use_actions_mask:
@@ -60,12 +56,20 @@ class VDN_Learner(LearnerMAS):
                 q_next[key][avail_actions_next[key] == 0] = -9999999
         if self.config.double_q:
             _, actions_next_greedy, _ = self.policy(observation=obs_next, agent_ids=IDs, avail_actions=avail_actions)
-            q_next_a = [q_next[k].gather(-1, actions_next_greedy[k].long().unsqueeze(-1)) for k in self.model_keys]
-            q_next_a = torch.concat(q_next_a, dim=None)
+            q_next_a = {k: q_next[k].gather(-1, actions_next_greedy[k].long().unsqueeze(-1)) * agent_mask[k]
+                        for k in self.model_keys}
         else:
-            q_next_a = [q_next[k].max(dim=-1, keepdim=True) for k in self.model_keys]
-        q_tot_next = self.policy.Qtarget_tot(q_next_a * agent_mask)
-        q_tot_target = rewards + (1 - terminals) * self.gamma * q_tot_next
+            q_next_a = {k: q_next[k].max(dim=-1, keepdim=True).values * agent_mask[k] for k in self.model_keys}
+        q_tot_next = self.policy.Qtarget_tot(q_next_a)
+
+        if self.use_parameter_sharing:
+            rewards_tot = rewards[self.model_keys[0]].mean(dim=1)
+            terminals_tot = terminals[self.model_keys[0]].all(dim=1, keepdims=False).float()
+        else:
+            rewards_tot = torch.concat([rewards[k] for k in self.model_keys], -1).mean(dim=-1, keepdims=True)
+            terminals_tot = torch.concat([terminals[k] for k in self.model_keys], -1).all(dim=1, keepdim=True).float()
+
+        q_tot_target = rewards_tot + (1 - terminals_tot) * self.gamma * q_tot_next
 
         # calculate the loss function
         loss = self.mse_loss(q_tot_eval, q_tot_target.detach())
