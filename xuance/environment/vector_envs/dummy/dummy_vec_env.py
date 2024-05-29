@@ -63,10 +63,10 @@ class DummyVecEnv(VecEnv):
             raise NotSteppingError
         for e in range(self.num_envs):
             action = self.actions[e]
-            obs, self.buf_rewards[e], self.buf_terminated[e], self.buf_truncated[e], self.buf_infos[e] = self.envs[e].step(action)
+            obs, self.buf_rewards[e], self.buf_terminated[e], self.buf_truncated[e], self.buf_info[e] = self.envs[e].step(action)
             if self.buf_terminated[e] or self.buf_truncated[e]:
                 obs_reset, _ = self.envs[e].reset()
-                self.buf_infos[e]["reset_obs"] = obs_reset
+                self.buf_info[e]["reset_obs"] = obs_reset
             self._save_obs(e, obs)
         self.waiting = False
         return self.buf_obs.copy(), self.buf_rewards.copy(), self.buf_terminated.copy(), self.buf_truncated.copy(), self.buf_infos.copy()

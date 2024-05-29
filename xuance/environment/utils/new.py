@@ -171,6 +171,7 @@ class RawMultiAgentEnv(ABC):
                     agents_in_team[i_team].append(agent)
         return agents_in_team
 
+    @property
     def state(self):
         """Returns the global state of the environment."""
         raise NotImplementedError

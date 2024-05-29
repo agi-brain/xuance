@@ -1,4 +1,5 @@
 import numpy as np
+from xuance.common import space2shape
 from xuance.environment.vector_envs.vector_env import VecEnv, AlreadySteppingError, NotSteppingError
 
 
@@ -23,7 +24,7 @@ class DummyVecMutliAgentEnv(VecEnv):
         self.agents = env.agents
         self.n_agents_all = env.num_agents
         self.state_space = env.state_space  # Type: Box
-        self.buf_state = np.zeros((self.num_envs,) + self.state_space.shape, dtype=self.state_space.dtype)
+        self.buf_state = [np.zeros(space2shape(self.state_space)) for _ in range(self.num_envs)]
         self.buf_obs = [{} for _ in range(self.num_envs)]
         self.buf_avail_actions = [{} for _ in range(self.num_envs)]
         self.buf_info = [{} for _ in range(self.num_envs)]
@@ -70,10 +71,12 @@ class DummyVecMutliAgentEnv(VecEnv):
             action_n = self.actions[e]
             self.buf_obs[e], rew_dict[e], terminated_dict[e], truncated[e], self.buf_info[e] = self.envs[e].step(action_n)
             self.buf_avail_actions[e] = self.buf_info[e]['avail_actions']
+            self.buf_state[e] = self.envs[e].state()
             if all(terminated_dict[e].values()) or truncated[e]:
                 obs_reset_dict, info_reset = self.envs[e].reset()
                 self.buf_info[e]["reset_obs"] = obs_reset_dict
                 self.buf_info[e]["reset_avail_actions"] = info_reset['avail_actions']
+                self.buf_info[e]["reset_state"] = self.envs[e].state()
         self.waiting = False
         return self.buf_obs.copy(), rew_dict, terminated_dict, truncated, self.buf_info.copy()
 
