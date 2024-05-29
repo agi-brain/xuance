@@ -1,46 +1,58 @@
 """
 Weighted QMIX
-Paper link:
-https://proceedings.neurips.cc/paper/2020/file/73a427badebe0e32caa2e1fc7530b7f3-Paper.pdf
+Paper link: https://proceedings.neurips.cc/paper/2020/file/73a427badebe0e32caa2e1fc7530b7f3-Paper.pdf
 Implementation: Pytorch
 """
-from xuance.torch.learners import *
+import torch
+from torch import nn
+from xuance.torch.learners import LearnerMAS
+from typing import Optional, List
+from argparse import Namespace
 
 
 class WQMIX_Learner(LearnerMAS):
     def __init__(self,
                  config: Namespace,
+                 model_keys: List[str],
+                 agent_keys: List[str],
+                 episode_length: int,
                  policy: nn.Module,
-                 optimizer: torch.optim.Optimizer,
-                 scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
-                 device: Optional[Union[int, str, torch.device]] = None,
-                 model_dir: str = "./",
-                 gamma: float = 0.99,
-                 sync_frequency: int = 100
-                 ):
+                 optimizer: Optional[torch.optim.Adam],
+                 scheduler: Optional[torch.optim.lr_scheduler.LinearLR] = None):
         self.alpha = config.alpha
-        self.gamma = gamma
-        self.sync_frequency = sync_frequency
+        self.gamma = config.gamma
+        self.sync_frequency = config.sync_frequency
         self.mse_loss = nn.MSELoss()
-        super(WQMIX_Learner, self).__init__(config, policy, optimizer, scheduler, device, model_dir)
+        super(WQMIX_Learner, self).__init__(config, model_keys, agent_keys, episode_length, policy, optimizer, scheduler)
+        self.use_actions_mask = config.use_actions_mask
+        self.n_actions = {k: self.policy.action_space[k].n for k in self.model_keys}
+        self.optimizer = optimizer
+        self.scheduler = scheduler
 
     def update(self, sample):
         self.iterations += 1
-        state = torch.Tensor(sample['state']).to(self.device)
-        obs = torch.Tensor(sample['obs']).to(self.device)
-        actions = torch.Tensor(sample['actions']).to(self.device)
-        state_next = torch.Tensor(sample['state_next']).to(self.device)
-        obs_next = torch.Tensor(sample['obs_next']).to(self.device)
-        rewards = torch.Tensor(sample['rewards']).mean(dim=1).to(self.device)
-        terminals = torch.Tensor(sample['terminals']).all(dim=1, keepdims=True).float().to(self.device)
-        agent_mask = torch.Tensor(sample['agent_mask']).float().reshape(-1, self.n_agents, 1).to(self.device)
-        batch_size = actions.shape[0]
-        IDs = torch.eye(self.n_agents).unsqueeze(0).expand(self.args.batch_size, -1, -1).to(self.device)
+
+        # prepare training data
+        sample_Tensor = self.build_training_data(sample=sample,
+                                                 use_parameter_sharing=self.use_parameter_sharing,
+                                                 use_actions_mask=self.use_actions_mask,
+                                                 use_global_state=True)
+        state = sample_Tensor['state']
+        state_next = sample_Tensor['state_next']
+        obs = sample_Tensor['obs']
+        actions = sample_Tensor['actions']
+        obs_next = sample_Tensor['obs_next']
+        rewards = sample_Tensor['rewards']
+        terminals = sample_Tensor['terminals']
+        agent_mask = sample_Tensor['agent_mask']
+        avail_actions = sample_Tensor['avail_actions']
+        avail_actions_next = sample_Tensor['avail_actions_next']
+        IDs = sample_Tensor['agent_ids']
 
         # calculate Q_tot
         _, action_max, q_eval = self.policy(obs, IDs)
         action_max = action_max.unsqueeze(-1)
-        q_eval_a = q_eval.gather(-1, actions.long().reshape(batch_size, self.n_agents, 1))
+        q_eval_a = q_eval.gather(-1, actions.long().reshape([-1, self.n_agents, 1]))
         q_tot_eval = self.policy.Q_tot(q_eval_a * agent_mask, state)
 
         # calculate centralized Q
@@ -48,7 +60,7 @@ class WQMIX_Learner(LearnerMAS):
         q_tot_centralized = self.policy.q_feedforward(q_eval_centralized * agent_mask, state)
 
         # calculate y_i
-        if self.args.double_q:
+        if self.config.double_q:
             _, action_next_greedy, _ = self.policy(obs_next, IDs)
             action_next_greedy = action_next_greedy.unsqueeze(-1)
         else:
@@ -57,18 +69,18 @@ class WQMIX_Learner(LearnerMAS):
         q_eval_next_centralized = self.policy.target_q_centralized(obs_next, IDs).gather(-1, action_next_greedy)
         q_tot_next_centralized = self.policy.target_q_feedforward(q_eval_next_centralized * agent_mask, state_next)
 
-        target_value = rewards + (1 - terminals) * self.args.gamma * q_tot_next_centralized
+        target_value = rewards + (1 - terminals) * self.gamma * q_tot_next_centralized
         td_error = q_tot_eval - target_value.detach()
 
         # calculate weights
         ones = torch.ones_like(td_error)
         w = ones * self.alpha
-        if self.args.agent == "CWQMIX":
+        if self.config.agent == "CWQMIX":
             condition_1 = ((action_max == actions.reshape([-1, self.n_agents, 1])) * agent_mask).all(dim=1)
             condition_2 = target_value > q_tot_centralized
             conditions = condition_1 | condition_2
             w = torch.where(conditions, ones, w)
-        elif self.args.agent == "OWQMIX":
+        elif self.config.agent == "OWQMIX":
             condition = td_error < 0
             w = torch.where(condition, ones, w)
         else:
@@ -80,8 +92,8 @@ class WQMIX_Learner(LearnerMAS):
         loss = loss_qmix + loss_central
         self.optimizer.zero_grad()
         loss.backward()
-        if self.args.use_grad_clip:
-            torch.nn.utils.clip_grad_norm_(self.policy.parameters(), self.args.grad_clip_norm)
+        if self.use_grad_clip:
+            torch.nn.utils.clip_grad_norm_(self.policy.parameters(), self.grad_clip_norm)
         self.optimizer.step()
         if self.scheduler is not None:
             self.scheduler.step()
