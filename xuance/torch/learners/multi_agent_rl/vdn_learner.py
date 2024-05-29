@@ -44,19 +44,39 @@ class VDN_Learner(LearnerMAS):
         IDs = sample_Tensor['agent_ids']
 
         _, _, q_eval = self.policy(observation=obs, agent_ids=IDs, avail_actions=avail_actions)
-        q_eval_a = {k: q_eval[k].gather(-1, actions[k].long().unsqueeze(-1)) * agent_mask[k] for k in self.model_keys}
-        q_tot_eval = self.policy.Q_tot(q_eval_a)
-
         _, q_next = self.policy.Qtarget(observation=obs_next, agent_ids=IDs)
-        if self.use_actions_mask:
-            for key in self.model_keys:
+
+        if self.use_parameter_sharing:
+            key = self.model_keys[0]
+            q_eval_a = q_eval[key].gather(-1, actions[key].long().unsqueeze(-1)) * agent_mask[key]
+            q_eval_a = q_eval_a.reshape([-1, self.n_agents, 1])
+
+            if self.use_actions_mask:
                 q_next[key][avail_actions_next[key] == 0] = -9999999
-        if self.config.double_q:
-            _, actions_next_greedy, _ = self.policy(observation=obs_next, agent_ids=IDs, avail_actions=avail_actions)
-            q_next_a = {k: q_next[k].gather(-1, actions_next_greedy[k].long().unsqueeze(-1)) * agent_mask[k]
-                        for k in self.model_keys}
+            if self.config.double_q:
+                _, actions_next_greedy, _ = self.policy(observation=obs_next, agent_ids=IDs,
+                                                        avail_actions=avail_actions)
+                q_next_a = q_next[key].gather(-1, actions_next_greedy[key].long().unsqueeze(-1)) * agent_mask[key]
+            else:
+                q_next_a = q_next[key].max(dim=-1, keepdim=True).values * agent_mask[key]
+            q_next_a = q_next_a.reshape([-1, self.n_agents, 1])
+
         else:
-            q_next_a = {k: q_next[k].max(dim=-1, keepdim=True).values * agent_mask[k] for k in self.model_keys}
+            q_eval_a = torch.concat([q_eval[k].gather(-1, actions[k].long().unsqueeze(-1)) * agent_mask[k]
+                                     for k in self.model_keys], dim=-1).reshape([-1, self.n_agents, 1])
+            if self.use_actions_mask:
+                for key in self.model_keys:
+                    q_next[key][avail_actions_next[key] == 0] = -9999999
+            if self.config.double_q:
+                _, actions_next_greedy, _ = self.policy(observation=obs_next, agent_ids=IDs,
+                                                        avail_actions=avail_actions)
+                q_next_a_list = [q_next[k].gather(-1, actions_next_greedy[k].long().unsqueeze(-1)) * agent_mask[k]
+                                 for k in self.model_keys]
+            else:
+                q_next_a_list = [q_next[k].max(dim=-1, keepdim=True).values * agent_mask[k] for k in self.model_keys]
+            q_next_a = torch.concat(q_next_a_list, dim=-1).reshape([-1, self.n_agents, 1])
+
+        q_tot_eval = self.policy.Q_tot(q_eval_a)
         q_tot_next = self.policy.Qtarget_tot(q_next_a)
 
         if self.use_parameter_sharing:
@@ -138,8 +158,8 @@ class VDN_Learner(LearnerMAS):
             rnn_hidden = {k: self.policy.representation[k].init_hidden(bs_rnn) for k in self.model_keys}
             _, actions_greedy, q_eval = self.policy(observation=obs, agent_ids=IDs, avail_actions=avail_actions,
                                                     rnn_hidden=rnn_hidden)
-            q_eval_a_list = [q_eval[k][:, :-1].gather(-1, actions[k].long().unsqueeze(-1)) * agent_mask[k] for k in self.model_keys]
-            q_eval_a = torch.concat(q_eval_a_list, dim=-1).reshape(-1, self.n_agents, 1)
+            q_eval_a = torch.concat([q_eval[k][:, :-1].gather(-1, actions[k].long().unsqueeze(-1)) * agent_mask[k]
+                                     for k in self.model_keys], dim=-1).reshape(-1, self.n_agents, 1)
 
             target_rnn_hidden = {k: self.policy.target_representation[k].init_hidden(bs_rnn) for k in self.model_keys}
             _, q_next_seq = self.policy.Qtarget(observation=obs, agent_ids=IDs, rnn_hidden=target_rnn_hidden)

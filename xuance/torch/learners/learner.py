@@ -65,8 +65,8 @@ class LearnerMAS(ABC):
                  agent_keys: List[str],
                  episode_length: int,
                  policy: torch.nn.Module,
-                 optimizer: Optional[dict],
-                 scheduler: Optional[dict] = None):
+                 optimizer: Union[dict, Optional[torch.optim.Optimizer]],
+                 scheduler: Union[dict, Optional[torch.optim.lr_scheduler.LinearLR]] = None):
         self.value_normalizer = None
         self.config = config
         self.n_agents = config.n_agents

@@ -51,7 +51,7 @@ class WQMIX_Learner(LearnerMAS):
 
         # calculate Q_tot
         _, action_max, q_eval = self.policy(obs, IDs)
-        action_max = action_max.unsqueeze(-1)
+        action_max = {k: action_max[k].unsqueeze(-1) for k in self.model_keys}
         q_eval_a = q_eval.gather(-1, actions.long().reshape([-1, self.n_agents, 1]))
         q_tot_eval = self.policy.Q_tot(q_eval_a * agent_mask, state)
 
@@ -112,7 +112,7 @@ class WQMIX_Learner(LearnerMAS):
 
         return info
 
-    def update_recurrent(self, sample):
+    def update_rnn(self, sample):
         """
         Update the parameters of the model with recurrent neural networks.
         """

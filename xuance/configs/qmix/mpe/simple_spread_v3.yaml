@@ -8,7 +8,13 @@ vectorize: "Dummy_Pettingzoo"
 runner: "MARL"
 
 use_rnn: False
-rnn:
+rnn: "GRU"
+recurrent_layer_N: 1
+fc_hidden_sizes: [64, ]
+recurrent_hidden_size: 64
+N_recurrent_layers: 1
+dropout: 0
+
 representation_hidden_size: [64, ]
 q_hidden_size: [128, ]  # the units for each hidden layer
 activation: "relu"
