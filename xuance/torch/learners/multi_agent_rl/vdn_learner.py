@@ -132,7 +132,10 @@ class VDN_Learner(LearnerMAS):
             key = self.model_keys[0]
             bs_rnn = batch_size * self.n_agents
             obs[key] = obs[key].reshape([bs_rnn, seq_len + 1, -1])
-            avail_actions_input = {key: avail_actions[key].reshape(bs_rnn, seq_len + 1, -1)}
+            if self.use_actions_mask:
+                avail_actions_input = {key: avail_actions[key].reshape(bs_rnn, seq_len + 1, -1)}
+            else:
+                avail_actions_input = None
             IDs = IDs.reshape(bs_rnn, seq_len + 1, -1)
 
             rnn_hidden = {key: self.policy.representation[key].init_hidden(bs_rnn)}
