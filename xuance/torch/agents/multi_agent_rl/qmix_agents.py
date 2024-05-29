@@ -95,7 +95,7 @@ class QMIX_Agents(IQL_Agents, MARLAgents):
                     N_recurrent_layers=self.config.N_recurrent_layers,
                     dropout=self.config.dropout, rnn=self.config.rnn)
             else:
-                raise f"The VDN currently does not support the representation of {self.config.representation}."
+                raise f"The QMIX currently does not support the representation of {self.config.representation}."
 
         # build policies
         dim_state = self.state_space.shape[-1]
