@@ -190,20 +190,19 @@ class MixingQnetwork(BasicQnetwork):
 
     def copy_target(self):
         for k in self.model_keys:
-            param = [zip(self.representation[k].parameters(), self.target_representation[k].parameters()),
-                     zip(self.eval_Qhead[k].parameters(), self.target_Qhead[k].parameters())]
-            for p in param:
-                for ep, tp in p:
-                    tp.data.copy_(ep)
+            for ep, tp in zip(self.representation[k].parameters(), self.target_representation[k].parameters()):
+                tp.data.copy_(ep)
+            for ep, tp in zip(self.eval_Qhead[k].parameters(), self.target_Qhead[k].parameters()):
+                tp.data.copy_(ep)
         for ep, tp in zip(self.eval_Qtot.parameters(), self.target_Qtot.parameters()):
             tp.data.copy_(ep)
 
 
 class Weighted_MixingQnetwork(MixingQnetwork):
     def __init__(self,
-                 action_space: Discrete,
+                 action_space: Optional[Dict[str, Discrete]],
                  n_agents: int,
-                 representation: Module,
+                 representation: Dict[str, Module],
                  mixer: Optional[VDN_mixer] = None,
                  ff_mixer: Optional[QMIX_FF_mixer] = None,
                  hidden_size: Sequence[int] = None,
@@ -219,30 +218,83 @@ class Weighted_MixingQnetwork(MixingQnetwork):
         self.q_feedforward = ff_mixer
         self.target_q_feedforward = deepcopy(self.q_feedforward)
 
-    def q_centralized(self, observation: Tensor, agent_ids: Tensor, *rnn_hidden: Tensor):
-        if self.use_rnn:
-            outputs = self.representation(observation, *rnn_hidden)
-        else:
-            outputs = self.representation(observation)
-        q_inputs = torch.concat([outputs['state'], agent_ids], dim=-1)
-        return self.eval_Qhead_centralized(q_inputs)
+        self.parameters_model = list(self.eval_Qtot.parameters()) + list(self.q_feedforward.parameters())
+        for key in self.model_keys:
+            self.parameters_model += list(self.representation[key].parameters())
+            self.parameters_model += list(self.eval_Qhead[key].parameters())
+            self.parameters_model += list(self.eval_Qhead_centralized[key].parameters())
 
-    def target_q_centralized(self, observation: Tensor, agent_ids: Tensor, *rnn_hidden: Tensor):
-        if self.use_rnn:
-            outputs = self.target_representation(observation, *rnn_hidden)
-        else:
-            outputs = self.target_representation(observation)
-        q_inputs = torch.concat([outputs['state'], agent_ids], dim=-1)
-        return self.target_Qhead_centralized(q_inputs)
+    def q_centralized(self, observation: Dict[str, Tensor], agent_ids: Dict[str, Tensor],
+                      agent_key: str = None, rnn_hidden: Optional[Dict[str, List[Tensor]]] = None):
+        """
+        Returns the centralised Q value.
+
+        Parameters:
+            observation (Dict[Tensor]): The observations.
+            agent_ids (Dict[Tensor]): The agents' ids (for parameter sharing).
+            agent_key (str): Calculate actions for specified agent.
+            rnn_hidden (Optional[Dict[str, List[Tensor]]]): The hidden variables of the RNN.
+        Returns:
+            evalQ_cent (Tensor): The evaluated centralised Q values.
+        """
+        rnn_hidden_new, argmax_action, evalQ_cent = {}, {}, {}
+        agent_list = self.model_keys if agent_key is None else [agent_key]
+
+        for key in agent_list:
+            if self.use_parameter_sharing:
+                if self.use_rnn:
+                    outputs = self.representation[key](observation[key], *rnn_hidden[key])
+                    rnn_hidden_new[key] = (outputs['rnn_hidden'], outputs['rnn_cell'])
+                else:
+                    outputs = self.representation[key](observation[key])
+                    rnn_hidden_new[key] = [None, None]
+                q_inputs = torch.concat([outputs['state'], agent_ids], dim=-1)
+                evalQ_cent[key] = self.eval_Qhead_centralized[key](q_inputs)
+            else:
+                raise NotImplementedError
+
+        return evalQ_cent
+
+    def target_q_centralized(self, observation: Dict[str, Tensor], agent_ids: Dict[str, Tensor],
+                             agent_key: str = None, rnn_hidden: Optional[Dict[str, List[Tensor]]] = None):
+        """
+        Returns the centralised Q value with target networks.
+
+        Parameters:
+            observation (Dict[Tensor]): The observations.
+            agent_ids (Dict[Tensor]): The agents' ids (for parameter sharing).
+            agent_key (str): Calculate actions for specified agent.
+            rnn_hidden (Optional[Dict[str, List[Tensor]]]): The hidden variables of the RNN.
+        Returns:
+            evalQ_cent (Tensor): The evaluated centralised Q values.
+        """
+        rnn_hidden_new, q_target = {}, {}
+        agent_list = self.model_keys if agent_key is None else [agent_key]
+
+        for key in agent_list:
+            if self.use_parameter_sharing:
+                if self.use_rnn:
+                    outputs = self.target_representation[key](observation[key], *rnn_hidden[key])
+                    rnn_hidden_new[key] = (outputs['rnn_hidden'], outputs['rnn_cell'])
+                else:
+                    outputs = self.target_representation[key](observation[key])
+                    rnn_hidden_new[key] = None
+                q_inputs = torch.concat([outputs['state'], agent_ids], dim=-1)
+                q_target[key] = self.target_Qhead_centralized[key](q_inputs)
+            else:
+                raise NotImplementedError
+        return q_target
 
     def copy_target(self):
-        for ep, tp in zip(self.representation.parameters(), self.target_representation.parameters()):
-            tp.data.copy_(ep)
-        for ep, tp in zip(self.eval_Qhead.parameters(), self.target_Qhead.parameters()):
-            tp.data.copy_(ep)
+        for k in self.model_keys:
+            for ep, tp in zip(self.representation[k].parameters(), self.target_representation[k].parameters()):
+                tp.data.copy_(ep)
+            for ep, tp in zip(self.eval_Qhead[k].parameters(), self.target_Qhead[k].parameters()):
+                tp.data.copy_(ep)
+            for ep, tp in zip(self.eval_Qhead_centralized[k].parameters(),
+                              self.target_Qhead_centralized[k].parameters()):
+                tp.data.copy_(ep)
         for ep, tp in zip(self.eval_Qtot.parameters(), self.target_Qtot.parameters()):
-            tp.data.copy_(ep)
-        for ep, tp in zip(self.eval_Qhead_centralized.parameters(), self.target_Qhead_centralized.parameters()):
             tp.data.copy_(ep)
         for ep, tp in zip(self.q_feedforward.parameters(), self.target_q_feedforward.parameters()):
             tp.data.copy_(ep)

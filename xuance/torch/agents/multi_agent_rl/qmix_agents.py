@@ -4,10 +4,8 @@ from tqdm import tqdm
 from copy import deepcopy
 from operator import itemgetter
 from argparse import Namespace
-from typing import Optional, List
-from torch.distributions import Categorical
+from typing import List
 from xuance.environment import DummyVecMutliAgentEnv
-from xuance.torch import Tensor
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.representations import REGISTRY_Representation
 from xuance.torch.policies import REGISTRY_Policy, QMIX_mixer
