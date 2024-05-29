@@ -105,7 +105,6 @@ class QMIX_Learner(LearnerMAS):
                                                  use_global_state=True)
         batch_size = sample_Tensor['batch_size']
         state = sample_Tensor['state']
-        state_next = sample_Tensor['state_next']
         obs = sample_Tensor['obs']
         actions = sample_Tensor['actions']
         rewards = sample_Tensor['rewards']
@@ -172,8 +171,8 @@ class QMIX_Learner(LearnerMAS):
             else:
                 q_next_a = {k: q_next[k].max(dim=-1, keepdim=True).values * agent_mask[k] for k in self.model_keys}
 
-        q_tot_eval = self.policy.Q_tot(q_eval_a, state)
-        q_tot_next = self.policy.Qtarget_tot(q_next_a, state_next)
+        q_tot_eval = self.policy.Q_tot(q_eval_a, state[:, :-1])
+        q_tot_next = self.policy.Qtarget_tot(q_next_a, state[:, 1:])
 
         if self.use_parameter_sharing:
             rewards_tot = rewards[self.model_keys[0]].mean(dim=1)
