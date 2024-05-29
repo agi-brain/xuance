@@ -1,5 +1,4 @@
 agent: "QMIX"  # the learning algorithms_marl
-global_state: True
 env_name: "StarCraft2"
 env_id: "3m"
 fps: 15

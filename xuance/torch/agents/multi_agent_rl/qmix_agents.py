@@ -189,6 +189,7 @@ class QMIX_Agents(IQL_Agents, MARLAgents):
                 if all(terminated_dict[i].values()) or truncated[i]:
                     if self.use_rnn:
                         terminal_data = {
+                            'state': next_state[i],
                             'obs': next_obs_dict[i],
                             'avail_actions': next_avail_actions[i],
                             'episode_step': info[i]['episode_step']
