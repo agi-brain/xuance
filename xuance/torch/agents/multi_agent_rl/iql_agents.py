@@ -244,6 +244,26 @@ class IQL_Agents(MARLAgents):
                     actions_dict = [{k: self.action_space[k].sample() for k in self.agent_keys} for _ in range(n_env)]
         return hidden_state, actions_dict
 
+    def train_epochs(self, n_epoch=1):
+        """
+        Train the model for numerous epochs.
+
+        Parameters:
+            n_epoch (int): The number of epochs to train.
+
+        Returns:
+            info_train (dict): The information of training.
+        """
+        info_train = {}
+        for i_epoch in range(n_epoch):
+            sample = self.memory.sample()
+            if self.use_rnn:
+                info_train = self.learner.update_rnn(sample)
+            else:
+                info_train = self.learner.update(sample)
+        info_train["epsilon-greedy"] = self.egreedy
+        return info_train
+
     def train(self, n_steps):
         """
         Train the model for numerous steps.

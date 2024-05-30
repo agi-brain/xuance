@@ -243,6 +243,29 @@ class IPPO_Agents(MARLAgents):
 
         return hidden_state, values_n.detach().cpu().numpy()
 
+    def train_epochs(self, n_epochs=1):
+        """
+        Train the model for numerous epochs.
+
+        Returns:
+            info_train (dict): The information of training.
+        """
+        info_train = {}
+        if self.memory.full:
+            indexes = np.arange(self.buffer_size)
+            for _ in range(n_epochs):
+                np.random.shuffle(indexes)
+                for start in range(0, self.buffer_size, self.batch_size):
+                    end = start + self.batch_size
+                    sample_idx = indexes[start:end]
+                    sample = self.memory.sample(sample_idx)
+                    if self.use_rnn:
+                        info_train = self.learner.update_rnn(sample)
+                    else:
+                        info_train = self.learner.update(sample)
+            self.memory.clear()
+        return info_train
+
     def train(self, n_steps):
         """
         Train the model for numerous steps.
@@ -266,7 +289,9 @@ class IPPO_Agents(MARLAgents):
             self.store_experience(obs_dict, avail_actions, actions_dict, next_obs_dict, next_avail_actions,
                                   rewards_dict, terminated_dict, info,
                                   **{'state': state, 'next_state': next_state})
-            self.train_epochs(i_step)
+            train_info = self.train_epochs(n_epochs=self.n_epoch)
+            self.log_infos(train_info, self.c)
+
 
 
 
@@ -283,25 +308,3 @@ class IPPO_Agents(MARLAgents):
         """
         raise NotImplementedError
 
-    def train_epochs(self, i_step, **kwargs):
-        """
-        Train the model for numerous epochs.
-
-        Parameters:
-            i_step (int): The i-th step of running.
-        """
-        info_train = {}
-        if self.memory.full:
-            indexes = np.arange(self.buffer_size)
-            for _ in range(self.n_epoch):
-                np.random.shuffle(indexes)
-                for start in range(0, self.buffer_size, self.batch_size):
-                    end = start + self.batch_size
-                    sample_idx = indexes[start:end]
-                    sample = self.memory.sample(sample_idx)
-                    if self.use_rnn:
-                        info_train = self.learner.update_rnn(sample)
-                    else:
-                        info_train = self.learner.update(sample)
-            self.memory.clear()
-        return info_train
