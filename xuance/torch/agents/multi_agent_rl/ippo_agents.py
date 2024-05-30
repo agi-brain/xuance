@@ -183,7 +183,8 @@ class IPPO_Agents(MARLAgents):
                obs_dict: Optional[dict],
                state: Optional[np.ndarray] = None,
                avail_actions_dict: Optional[List[dict]] = None,
-               rnn_hidden: Optional[dict] = None,
+               rnn_hidden_actor: Optional[dict] = None,
+               rnn_hidden_critic: Optional[dict] = None,
                test_mode: Optional[bool] = False):
         """
         Returns actions for agents.
@@ -192,36 +193,26 @@ class IPPO_Agents(MARLAgents):
             obs_dict (dict): Observations for each agent in self.agent_keys.
             state (Optional[np.ndarray]): The global state.
             avail_actions_dict (Optional[List[dict]]): Actions mask values, default is None.
-            rnn_hidden (Optional[dict]): The hidden variables of the RNN.
+            rnn_hidden_actor (Optional[dict]): The RNN hidden states of actor representation.
+            rnn_hidden_critic (Optional[dict]): The RNN hidden states of critic representation.
             test_mode (Optional[bool]): True for testing without noises.
 
         Returns:
-            rnn_hidden_state (dict): The new hidden states for RNN (if self.use_rnn=True).
+            rnn_hidden_actor_new (dict): The new RNN hidden states of actor representation (if self.use_rnn=True).
+            rnn_hidden_critic_new (dict): The new RNN hidden states of critic representation (if self.use_rnn=True).
             actions_dict (dict): The output actions.
             log_pi_a (dict): The log of pi.
         """
         n_env = len(obs_dict)
         avail_actions_dict = None
+        rnn_hidden_actor_new, rnn_hidden_critic_new = {}, {}
+        actions_dict = {}
+        log_pi_a = {}
 
-        batch_size = len(obs_n)
-        agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(batch_size, -1, -1).to(self.device)
-        obs_in = torch.Tensor(obs_n).view([batch_size, self.n_agents, -1]).to(self.device)
-        if avail_actions is not None:
-            avail_actions = torch.Tensor(avail_actions).to(self.device)
-        if self.use_rnn:
-            batch_agents = batch_size * self.n_agents
-            hidden_state, dists = self.policy(obs_in.view(batch_agents, 1, -1),
-                                              agents_id.view(batch_agents, 1, -1),
-                                              *rnn_hidden,
-                                              avail_actions=avail_actions.reshape(batch_agents, 1, -1))
-            actions = dists.stochastic_sample()
-            log_pi_a = dists.log_prob(actions).reshape(batch_size, self.n_agents)
-            actions = actions.reshape(batch_size, self.n_agents)
-        else:
-            hidden_state, dists = self.policy(obs_in, agents_id, avail_actions=avail_actions)
-            actions = dists.stochastic_sample()
-            log_pi_a = dists.log_prob(actions)
-        return hidden_state, actions.detach().cpu().numpy(), log_pi_a.detach().cpu().numpy()
+
+
+
+        return rnn_hidden_actor_new, rnn_hidden_critic_new, actions_dict, log_pi_a
 
     def values(self, obs_n, *rnn_hidden, state=None):
         batch_size = len(obs_n)
@@ -278,22 +269,46 @@ class IPPO_Agents(MARLAgents):
         state = self.envs.buf_state if self.use_global_state else None
         for i_step in tqdm(range(n_steps)):
             step_info = {}
-            rnn_hidden_next, actions_dict = self.action(obs_dict=obs_dict,
-                                                        state=state,
-                                                        avail_actions_dict=avail_actions,
-                                                        rnn_hidden=self.rnn_hidden_actor,
-                                                        test_mode=False)
+            rnn_hidden_next_actor, rnn_hidden_next_critic, actions_dict = self.action(
+                obs_dict=obs_dict, state=state, avail_actions_dict=avail_actions,
+                rnn_hidden_actor=self.rnn_hidden_actor, rnn_hidden_critic=self.rnn_hidden_critic, test_mode=False)
             next_obs_dict, rewards_dict, terminated_dict, truncated, info = self.envs.step(actions_dict)
             next_state = self.envs.buf_state
             next_avail_actions = self.envs.buf_avail_actions
             self.store_experience(obs_dict, avail_actions, actions_dict, next_obs_dict, next_avail_actions,
                                   rewards_dict, terminated_dict, info,
                                   **{'state': state, 'next_state': next_state})
-            train_info = self.train_epochs(n_epochs=self.n_epoch)
-            self.log_infos(train_info, self.c)
+            if self.current_step >= self.start_training and self.current_step % self.training_frequency == 0:
+                train_info = self.train_epochs(n_epochs=self.n_epoch)
+                self.log_infos(train_info, self.current_step)
+            obs_dict = deepcopy(next_obs_dict)
+            avail_actions = deepcopy(next_avail_actions)
+            self.rnn_hidden_actor = deepcopy(rnn_hidden_next_actor)
+            self.rnn_hidden_critic = deepcopy(rnn_hidden_next_critic)
 
+            for i in range(self.n_envs):
+                if all(terminated_dict[i].values()) or truncated[i]:
+                    terminal_data = {
+                        'obs': next_obs_dict[i],
+                        'avail_actions': next_avail_actions[i],
+                        'episode_step': info[i]['episode_step']
+                    }
+                    self.memory.finish_path(i, **terminal_data)
+                    self.init_hidden_item(i)
+                    obs_dict[i] = info[i]["reset_obs"]
+                    avail_actions[i] = info[i]["reset_avail_actions"]
+                    self.envs.buf_obs[i] = info[i]["reset_obs"]
+                    self.envs.buf_avail_actions[i] = info[i]["reset_avail_actions"]
+                    if self.use_wandb:
+                        step_info["Episode-Steps/env-%d" % i] = info[i]["episode_step"]
+                        step_info["Train-Episode-Rewards/env-%d" % i] = info[i]["episode_score"]
+                    else:
+                        step_info["Episode-Steps"] = {"env-%d" % i: info[i]["episode_step"]}
+                        step_info["Train-Episode-Rewards"] = {
+                            "env-%d" % i: np.mean(itemgetter(*self.agent_keys)(info[i]["episode_score"]))}
+                    self.log_infos(step_info, self.current_step)
 
-
+            self.current_step += self.n_envs
 
     def test(self, env_fn, n_episodes):
         """
