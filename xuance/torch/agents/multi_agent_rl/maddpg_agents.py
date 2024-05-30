@@ -44,7 +44,7 @@ class MADDPG_Agents(IDDPG_Agents):
                     input_shape=input_shape, hidden_sizes=self.config.representation_hidden_size,
                     normalize=normalize_fn, initialize=initializer, activation=activation, device=device)
             else:
-                raise f"The MADDPG currently does not support the representation of {self.config.representation}."
+                raise AttributeError(f"MADDPG currently does not support {self.config.representation} representation.")
 
         # build policies
         if self.config.policy == "MADDPG_Policy":
@@ -56,7 +56,7 @@ class MADDPG_Agents(IDDPG_Agents):
                 activation_action=ActivationFunctions[self.config.activation_action],
                 use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys)
         else:
-            raise f"The MADDPG currently does not support the policy named {self.config.policy}."
+            raise AttributeError(f"MADDPG currently does not support the policy named {self.config.policy}.")
 
         return policy
 

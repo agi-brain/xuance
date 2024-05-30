@@ -100,7 +100,7 @@ class WQMIX_Learner(LearnerMAS):
             condition = td_error < 0
             w = torch.where(condition, ones, w)
         else:
-            raise f"The agent named is {self.config.agent} is currently not supported."
+            raise AttributeError(f"The agent named is {self.config.agent} is currently not supported.")
 
         # calculate losses and train
         loss_central = self.mse_loss(q_tot_centralized, target_value.detach())
@@ -224,7 +224,7 @@ class WQMIX_Learner(LearnerMAS):
             condition = td_error < 0
             w = torch.where(condition, ones, w)
         else:
-            raise f"The agent named is {self.config.agent} is currently not supported."
+            raise AttributeError(f"The agent named is {self.config.agent} is currently not supported.")
 
         # calculate losses and train
         loss_central = (((q_tot_centralized - target_value.detach()) ** 2) * filled).sum() / filled.sum()

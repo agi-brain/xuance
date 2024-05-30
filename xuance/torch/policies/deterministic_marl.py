@@ -20,6 +20,7 @@ class BasicQnetwork(Module):
                  device: Optional[Union[str, int, torch.device]] = None,
                  **kwargs):
         super(BasicQnetwork, self).__init__()
+        self.device = device
         self.action_space = action_space
         self.n_agents = n_agents
         self.use_parameter_sharing = kwargs['use_parameter_sharing']
@@ -33,7 +34,6 @@ class BasicQnetwork(Module):
 
         self.dim_input_Q, self.n_actions = {}, {}
         self.eval_Qhead, self.target_Qhead = {}, {}
-        self.parameters_model = {}
         for key in self.model_keys:
             self.n_actions[key] = self.action_space[key].n
             self.dim_input_Q[key] = self.representation_info_shape[key]['state'][0]
@@ -42,8 +42,14 @@ class BasicQnetwork(Module):
             self.eval_Qhead[key] = BasicQhead(self.dim_input_Q[key], self.n_actions[key], hidden_size,
                                               normalize, initialize, activation, device)
             self.target_Qhead[key] = deepcopy(self.eval_Qhead[key])
-            self.parameters_model[key] = list(self.representation[key].parameters()) + list(
+
+    @property
+    def parameters_model(self):
+        parameters_model = {}
+        for key in self.model_keys:
+            parameters_model[key] = list(self.representation[key].parameters()) + list(
                 self.eval_Qhead[key].parameters())
+        return parameters_model
 
     def forward(self, observation: Dict[str, Tensor], agent_ids: Tensor = None,
                 avail_actions: Dict[str, Tensor] = None, agent_key: str = None,
@@ -151,10 +157,13 @@ class MixingQnetwork(BasicQnetwork):
         self.eval_Qtot = mixer
         self.target_Qtot = deepcopy(self.eval_Qtot)
 
-        self.parameters_model = list(self.eval_Qtot.parameters())
+    @property
+    def parameters_model(self):
+        parameters_model = list(self.eval_Qtot.parameters())
         for key in self.model_keys:
-            self.parameters_model += list(self.representation[key].parameters())
-            self.parameters_model += list(self.eval_Qhead[key].parameters())
+            parameters_model += list(self.representation[key].parameters())
+            parameters_model += list(self.eval_Qhead[key].parameters())
+        return parameters_model
 
     def Q_tot(self, individual_values: Dict[str, Tensor], states: Optional[Tensor] = None):
         """
@@ -246,11 +255,14 @@ class Weighted_MixingQnetwork(MixingQnetwork):
         self.ff_mixer = ff_mixer
         self.target_ff_mixer = deepcopy(self.ff_mixer)
 
-        self.parameters_model = list(self.eval_Qtot.parameters()) + list(self.ff_mixer.parameters())
+    @property
+    def parameters_model(self):
+        parameters_model = list(self.eval_Qtot.parameters()) + list(self.ff_mixer.parameters())
         for key in self.model_keys:
-            self.parameters_model += list(self.representation[key].parameters())
-            self.parameters_model += list(self.eval_Qhead[key].parameters())
-            self.parameters_model += list(self.eval_Qhead_centralized[key].parameters())
+            parameters_model += list(self.representation[key].parameters())
+            parameters_model += list(self.eval_Qhead[key].parameters())
+            parameters_model += list(self.eval_Qhead_centralized[key].parameters())
+        return parameters_model
 
     def q_centralized(self, observation: Dict[str, Tensor], agent_ids: Dict[str, Tensor],
                       agent_key: str = None, rnn_hidden: Optional[Dict[str, List[Tensor]]] = None):
@@ -405,6 +417,7 @@ class Qtran_MixingQnetwork(Module):
                  device: Optional[Union[str, int, torch.device]] = None,
                  **kwargs):
         super(Qtran_MixingQnetwork, self).__init__()
+        self.device = device
         self.n_actions = action_space.n
         self.representation = representation
         self.target_representation = deepcopy(self.representation)
@@ -471,6 +484,7 @@ class DCG_policy(Module):
                  device: Optional[Union[str, int, torch.device]] = None,
                  **kwargs):
         super(DCG_policy, self).__init__()
+        self.device = device
         self.n_actions = action_space.n
         self.representation = representation
         self.target_representation = deepcopy(self.representation)
@@ -530,6 +544,7 @@ class MFQnetwork(Module):
                  activation: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None):
         super(MFQnetwork, self).__init__()
+        self.device = device
         self.n_actions = action_space.n
         self.representation = representation
         self.target_representation = deepcopy(self.representation)
@@ -576,6 +591,7 @@ class Independent_DDPG_Policy(Module):
                  device: Optional[Union[str, int, torch.device]] = None,
                  **kwargs):
         super(Independent_DDPG_Policy, self).__init__()
+        self.device = device
         self.action_space = action_space
         self.n_agents = n_agents
         self.use_parameter_sharing = kwargs['use_parameter_sharing']
@@ -588,7 +604,6 @@ class Independent_DDPG_Policy(Module):
         self.target_critic_representation = deepcopy(self.critic_representation)
 
         self.actor, self.target_actor, self.critic, self.target_critic = {}, {}, {}, {}
-        self.parameters_actor, self.parameters_critic = {}, {}
         for key in self.model_keys:
             dim_action = self.action_space[key].shape[-1]
             dim_obs_actor, dim_obs_critic, dim_act_actor, dim_act_critic = self._get_actor_critic_input(
@@ -605,10 +620,22 @@ class Independent_DDPG_Policy(Module):
                                          normalize, initialize, activation, device)
             self.target_actor[key] = deepcopy(self.actor[key])
             self.target_critic[key] = deepcopy(self.critic[key])
-            self.parameters_actor[key] = list(self.actor_representation[key].parameters()) + list(
+
+    @property
+    def parameters_actor(self):
+        parameters_actor = {}
+        for key in self.model_keys:
+            parameters_actor[key] = list(self.actor_representation[key].parameters()) + list(
                 self.actor[key].parameters())
-            self.parameters_critic[key] = list(self.critic_representation[key].parameters()) + list(
+        return parameters_actor
+
+    @property
+    def parameters_critic(self):
+        parameters_critic = {}
+        for key in self.model_keys:
+            parameters_critic[key] = list(self.critic_representation[key].parameters()) + list(
                 self.critic[key].parameters())
+        return parameters_critic
 
     def _get_actor_critic_input(self, dim_action, dim_actor_rep, dim_critic_rep, n_agents):
         """
@@ -863,6 +890,7 @@ class MATD3_Policy(Independent_DDPG_Policy, Module):
                  device: Optional[Union[str, int, torch.device]] = None,
                  **kwargs):
         Module.__init__(self)
+        self.device = device
         self.action_space = action_space
         self.n_agents = n_agents
         self.use_parameter_sharing = kwargs['use_parameter_sharing']
@@ -878,7 +906,6 @@ class MATD3_Policy(Independent_DDPG_Policy, Module):
 
         self.actor, self.target_actor = {}, {}
         self.critic_A, self.critic_B, self.target_critic_A, self.target_critic_B = {}, {}, {}, {}
-        self.parameters_actor, self.parameters_critic = {}, {}
         for key in self.model_keys:
             dim_action = self.action_space[key].shape[-1]
             dim_obs_actor, dim_obs_critic, dim_act_actor, dim_act_critic = self._get_actor_critic_input(
@@ -898,11 +925,23 @@ class MATD3_Policy(Independent_DDPG_Policy, Module):
             self.target_actor[key] = deepcopy(self.actor[key])
             self.target_critic_A[key] = deepcopy(self.critic_A[key])
             self.target_critic_B[key] = deepcopy(self.critic_B[key])
-            self.parameters_actor[key] = list(self.actor_representation[key].parameters()) + list(
+
+    @property
+    def parameters_actor(self):
+        parameters_actor = {}
+        for key in self.model_keys:
+            parameters_actor[key] = list(self.actor_representation[key].parameters()) + list(
                 self.actor[key].parameters())
-            self.parameters_critic[key] = list(self.critic_A_representation[key].parameters()) + list(
+        return parameters_actor
+
+    @property
+    def parameters_critic(self):
+        parameters_critic = {}
+        for key in self.model_keys:
+            parameters_critic[key] = list(self.critic_A_representation[key].parameters()) + list(
                 self.critic_A[key].parameters()) + list(self.critic_B_representation[key].parameters()) + list(
                 self.critic_B[key].parameters())
+        return parameters_critic
 
     def _get_actor_critic_input(self, dim_action, dim_actor_rep, dim_critic_rep, n_agents):
         """
@@ -1016,15 +1055,24 @@ class MATD3_Policy(Independent_DDPG_Policy, Module):
 
     def soft_update(self, tau=0.005):
         for k in self.model_keys:
-            param = [zip(self.actor_representation[k].parameters(), self.target_actor_representation[k].parameters()),
-                     zip(self.critic_A_representation[k].parameters(),
-                         self.target_critic_A_representation[k].parameters()),
-                     zip(self.critic_B_representation[k].parameters(),
-                         self.target_critic_B_representation[k].parameters()),
-                     zip(self.actor[k].parameters(), self.target_actor[k].parameters()),
-                     zip(self.critic_A[k].parameters(), self.target_critic_A[k].parameters()),
-                     zip(self.critic_B[k].parameters(), self.target_critic_B[k].parameters())]
-            for p in param:
-                for ep, tp in p:
-                    tp.data.mul_(1 - tau)
-                    tp.data.add_(tau * ep.data)
+            for ep, tp in zip(self.actor_representation[k].parameters(),
+                              self.target_actor_representation[k].parameters()):
+                tp.data.mul_(1 - tau)
+                tp.data.add_(tau * ep.data)
+            for ep, tp in zip(self.critic_A_representation[k].parameters(),
+                              self.target_critic_A_representation[k].parameters()):
+                tp.data.mul_(1 - tau)
+                tp.data.add_(tau * ep.data)
+            for ep, tp in zip(self.critic_B_representation[k].parameters(),
+                              self.target_critic_B_representation[k].parameters()):
+                tp.data.mul_(1 - tau)
+                tp.data.add_(tau * ep.data)
+            for ep, tp in zip(self.actor[k].parameters(), self.target_actor[k].parameters()):
+                tp.data.mul_(1 - tau)
+                tp.data.add_(tau * ep.data)
+            for ep, tp in zip(self.critic_A[k].parameters(), self.target_critic_A[k].parameters()):
+                tp.data.mul_(1 - tau)
+                tp.data.add_(tau * ep.data)
+            for ep, tp in zip(self.critic_B[k].parameters(), self.target_critic_B[k].parameters()):
+                tp.data.mul_(1 - tau)
+                tp.data.add_(tau * ep.data)

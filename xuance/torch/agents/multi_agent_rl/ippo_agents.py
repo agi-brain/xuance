@@ -114,7 +114,7 @@ class IPPO_Agents(MARLAgents):
                     N_recurrent_layers=self.config.N_recurrent_layers,
                     dropout=self.config.dropout, rnn=self.config.rnn)
             else:
-                raise f"The IPPO currently does not support the representation of {self.config.representation}."
+                raise AttributeError(f"IPPO currently doesn't support the {self.config.representation} representation.")
 
         # build policies
         if self.config.policy == "Categorical_MAAC_Policy":
@@ -126,7 +126,7 @@ class IPPO_Agents(MARLAgents):
                 device=device, use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
                 use_rnn=self.use_rnn, rnn=self.config.rnn if self.use_rnn else None)
         elif self.config.policy == "Gaussian_MAAC_Policy":
-            policy = REGISTRY_Policy["Categorical_MAAC_Policy"](
+            policy = REGISTRY_Policy["Gaussian_MAAC_Policy"](
                 action_space=self.action_space, n_agents=self.n_agents,
                 representation_actor=representation_actor, representation_critic=representation_critic,
                 hidden_size=self.config.q_hidden_size,
@@ -134,12 +134,15 @@ class IPPO_Agents(MARLAgents):
                 device=device, use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
                 use_rnn=self.use_rnn, rnn=self.config.rnn if self.use_rnn else None)
         else:
-            raise f"The IPPO currently does not support the policy named {self.config.policy}."
+            raise AttributeError(f"IPPO currently does not support the policy named {self.config.policy}.")
 
         return policy
 
     def _build_learner(self, config, model_keys, agent_keys, episode_length, policy, optimizer, scheduler):
         return IPPO_Learner(config, model_keys, agent_keys, episode_length, policy, optimizer, scheduler)
+
+    def store_experience(self, *args, **kwargs):
+        raise NotImplementedError
 
     def action(self, obs_n, *rnn_hidden, avail_actions=None, state=None, test_mode=False):
         batch_size = len(obs_n)
@@ -182,7 +185,35 @@ class IPPO_Agents(MARLAgents):
 
         return hidden_state, values_n.detach().cpu().numpy()
 
-    def train(self, i_step, **kwargs):
+    def train(self, n_steps):
+        """
+        Train the model for numerous steps.
+
+        Parameters:
+            n_steps (int): The number of steps to train the model.
+        """
+        raise NotImplementedError
+
+    def test(self, env_fn, n_episodes):
+        """
+        Test the model for some episodes.
+
+        Parameters:
+            env_fn: The function that can make some testing environments.
+            n_episodes (int): Number of episodes to test.
+
+        Returns:
+            scores (List(float)): A list of cumulative rewards for each episode.
+        """
+        raise NotImplementedError
+
+    def train_epochs(self, i_step, **kwargs):
+        """
+        Train the model for numerous epochs.
+
+        Parameters:
+            i_step (int): The i-th step of running.
+        """
         info_train = {}
         if self.memory.full:
             indexes = np.arange(self.buffer_size)

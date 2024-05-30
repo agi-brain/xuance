@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from copy import deepcopy
-from typing import Sequence, Optional, Callable, Union
+from typing import Sequence, Optional, Callable, Union, Dict
 from gym.spaces import Discrete
 from xuance.torch.policies import CategoricalActorNet as ActorNet
 from xuance.torch.policies import CategoricalCriticNet as CriticNet
@@ -16,10 +16,10 @@ class MAAC_Policy(Module):
     """
 
     def __init__(self,
-                 action_space: Discrete,
+                 action_space: Optional[Dict[str, Discrete]],
                  n_agents: int,
-                 representation_actor: Module,
-                 representation_critic: Module,
+                 representation_actor: Dict[str, Module],
+                 representation_critic: Dict[str, Module],
                  mixer: Optional[VDN_mixer] = None,
                  actor_hidden_size: Sequence[int] = None,
                  critic_hidden_size: Sequence[int] = None,
@@ -30,19 +30,57 @@ class MAAC_Policy(Module):
                  **kwargs):
         super(MAAC_Policy, self).__init__()
         self.device = device
-        self.action_dim = action_space.n
+        self.action_space = action_space
         self.n_agents = n_agents
-        self.representation = representation_actor[0]
-        self.representation_critic = representation[1]
-        self.representation_info_shape = self.representation.output_shapes
+        self.use_parameter_sharing = kwargs['use_parameter_sharing']
+        self.model_keys = kwargs['model_keys']
         self.lstm = True if kwargs["rnn"] == "LSTM" else False
         self.use_rnn = True if kwargs["use_rnn"] else False
-        self.actor = ActorNet(self.representation.output_shapes['state'][0], self.action_dim, n_agents,
-                              actor_hidden_size, normalize, initialize, kwargs['gain'], activation, device)
-        self.critic = CriticNet(self.representation_critic.output_shapes['state'][0], n_agents, critic_hidden_size,
-                                normalize, initialize, activation, device)
+
+        self.actor_representation = representation_actor
+        self.critic_representation = representation_critic
+
+        self.dim_input_critic, self.n_actions = {}, {}
+        self.actor, self.critic, self.pi_dist = {}, {}, {}
+        for key in self.model_keys:
+            self.n_actions[key] = self.action_space[key].n
+            dim_obs_actor, dim_obs_critic, dim_act_actor, dim_act_critic = self._get_actor_critic_input(
+                self.n_actions[key],
+                self.actor_representation[key].output_shapes['state'][0],
+                self.critic_representation[key].output_shapes['state'][0], n_agents)
+
+            if self.use_parameter_sharing:
+                dim_obs_actor += self.n_agents
+                dim_obs_critic += self.n_agents
+
+            self.actor[key] = ActorNet(dim_obs_actor, dim_act_actor, actor_hidden_size,
+                                       normalize, initialize, activation, device)
+            self.critic[key] = CriticNet(dim_obs_critic, critic_hidden_size, normalize, initialize, activation, device)
+            self.pi_dist[key] = CategoricalDistribution(self.n_actions[key])
+
         self.mixer = mixer
-        self.pi_dist = CategoricalDistribution(self.action_dim)
+
+    @property
+    def parameters_model(self):
+        return self.parameters()
+
+    def _get_actor_critic_input(self, dim_action, dim_actor_rep, dim_critic_rep, n_agents):
+        """
+        Returns the input dimensions of actor netwrok and critic networks.
+
+        Parameters:
+            dim_action: The dimension of actions.
+            dim_actor_rep: The dimension of the output of actor presentation.
+            dim_critic_rep: The dimension of the output of critic presentation.
+            n_agents: The number of agents.
+
+        Returns:
+            dim_actor_in: The dimension of input of the actor networks.
+            dim_critic_in: The dimension of the input of critic networks.
+        """
+        dim_actor_in, dim_critic_in = dim_actor_rep, dim_critic_rep
+        dim_act_actor, dim_act_critic = dim_action, dim_action
+        return dim_actor_in, dim_critic_in, dim_act_actor, dim_act_critic
 
     def forward(self, observation: Tensor, agent_ids: Tensor,
                 *rnn_hidden: Tensor, avail_actions=None):

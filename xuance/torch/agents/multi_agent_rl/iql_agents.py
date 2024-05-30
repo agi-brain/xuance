@@ -93,7 +93,7 @@ class IQL_Agents(MARLAgents):
                     N_recurrent_layers=self.config.N_recurrent_layers,
                     dropout=self.config.dropout, rnn=self.config.rnn)
             else:
-                raise f"The IQL currently does not support the representation of {self.config.representation}."
+                raise AttributeError(f"IQL currently does not support {self.config.representation} representation.")
 
         # build policies
         if self.config.policy == "Basic_Q_network_marl":
@@ -104,7 +104,7 @@ class IQL_Agents(MARLAgents):
                 device=device, use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
                 use_rnn=self.use_rnn, rnn=self.config.rnn if self.use_rnn else None)
         else:
-            raise f"The IQL currently does not support the policy named {self.config.policy}."
+            raise AttributeError(f"IQL currently does not support the policy named {self.config.policy}.")
 
         return policy
 

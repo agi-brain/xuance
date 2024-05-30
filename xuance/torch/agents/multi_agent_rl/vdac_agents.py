@@ -38,7 +38,7 @@ class VDAC_Agents(MARLAgents):
         elif config.mixer == "Independent":
             mixer = None
         else:
-            raise f"Mixer named {config.mixer} is not defined!"
+            raise AttributeError(f"Mixer named {config.mixer} is not defined!")
         input_policy = get_policy_in_marl(config, representation, mixer=mixer)
         policy = REGISTRY_Policy[config.policy](*input_policy,
                                                 use_rnn=config.use_rnn,
