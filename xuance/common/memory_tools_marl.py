@@ -142,17 +142,31 @@ class MARL_OnPolicyBuffer(BaseBuffer):
         self.ptr, self.size = 0, 0
         self.start_ids = np.zeros(self.n_envs, np.int64)  # the start index of the last episode for each env.
 
-    def store(self, step_data):
-        step_data_keys = step_data.keys()
-        for k in self.keys:
-            if k == "advantages":
+    def store(self, **step_data):
+        """ Stores a step of data into the replay buffer. """
+        for data_key in self.data_keys:
+            if data_key in ['state']:
+                self.data[data_key][:, self.ptr] = step_data[data_key]
                 continue
-            if k in step_data_keys:
-                self.data[k][:, self.ptr] = step_data[k]
+            if data_key in ['advantages', 'returns']:
+                continue
+            for agt_key in self.agent_keys:
+                self.data[data_key][agt_key][:, self.ptr] = step_data[data_key][agt_key]
         self.ptr = (self.ptr + 1) % self.n_size
         self.size = min(self.size + 1, self.n_size)
 
-    def finish_path(self, value, i_env, value_normalizer=None):  # when an episode is finished
+    def finish_path(self,
+                    i_env: Optional[int] = None,
+                    value_next: Optional[dict] = None,
+                    value_normalizer=None):
+        """
+        Calculates and stores the returns and advantages when an episode is finished.
+
+        Parameters:
+            i_env (int): The index of environment.
+            value_next (dict): The critic values of the terminal state.
+            value_normalizer: The value normalizer method, default is None.
+        """
         if self.size == 0:
             return
         if self.full:
@@ -161,49 +175,61 @@ class MARL_OnPolicyBuffer(BaseBuffer):
             path_slice = np.arange(self.start_ids[i_env], self.ptr).astype(np.int32)
 
         # calculate advantages and returns
-        rewards = np.array(self.data['rewards'][i_env, path_slice])
-        vs = np.append(np.array(self.data['values'][i_env, path_slice]), [value], axis=0)
-        dones = np.array(self.data['terminals'][i_env, path_slice])[:, :, None]
-        returns = np.zeros_like(rewards)
-        last_gae_lam = 0
-        step_nums = len(path_slice)
-        use_value_norm = False if (value_normalizer is None) else True
+        for key in self.agent_keys:
+            rewards = np.array(self.data['rewards'][key][i_env, path_slice])
+            vs = np.append(np.array(self.data['values'][key][i_env, path_slice]), [value_next[key]], axis=0)
+            dones = np.array(self.data['terminals'][key][i_env, path_slice])
+            returns = np.zeros_like(rewards)
+            last_gae_lam = 0
+            step_nums = len(path_slice)
+            use_value_norm = False if (value_normalizer is None) else True
 
-        if self.use_gae:
-            for t in reversed(range(step_nums)):
-                if use_value_norm:
-                    vs_t, vs_next = value_normalizer.denormalize(vs[t]), value_normalizer.denormalize(vs[t + 1])
-                else:
-                    vs_t, vs_next = vs[t], vs[t + 1]
-                delta = rewards[t] + (1 - dones[t]) * self.gamma * vs_next - vs_t
-                last_gae_lam = delta + (1 - dones[t]) * self.gamma * self.gae_lambda * last_gae_lam
-                returns[t] = last_gae_lam + vs_t
-            advantages = returns - value_normalizer.denormalize(vs[:-1]) if use_value_norm else returns - vs[:-1]
-        else:
-            returns = np.append(returns, [value], axis=0)
-            for t in reversed(range(step_nums)):
-                returns[t] = rewards[t] + (1 - dones[t]) * self.gamma * returns[t + 1]
-            advantages = returns - value_normalizer.denormalize(vs) if use_value_norm else returns - vs
-            advantages = advantages[:-1]
+            if self.use_gae:
+                for t in reversed(range(step_nums)):
+                    if use_value_norm:
+                        vs_t, vs_next = value_normalizer.denormalize(vs[t]), value_normalizer.denormalize(vs[t + 1])
+                    else:
+                        vs_t, vs_next = vs[t], vs[t + 1]
+                    delta = rewards[t] + (1 - dones[t]) * self.gamma * vs_next - vs_t
+                    last_gae_lam = delta + (1 - dones[t]) * self.gamma * self.gae_lambda * last_gae_lam
+                    returns[t] = last_gae_lam + vs_t
+                advantages = returns - value_normalizer.denormalize(vs[:-1]) if use_value_norm else returns - vs[:-1]
+            else:
+                returns = np.append(returns, [value_next], axis=0)
+                for t in reversed(range(step_nums)):
+                    returns[t] = rewards[t] + (1 - dones[t]) * self.gamma * returns[t + 1]
+                advantages = returns - value_normalizer.denormalize(vs) if use_value_norm else returns - vs
+                advantages = advantages[:-1]
 
-        self.data['returns'][i_env, path_slice] = returns
-        self.data['advantages'][i_env, path_slice] = advantages
+            self.data['returns'][key][i_env, path_slice] = returns
+            self.data['advantages'][key][i_env, path_slice] = advantages
         self.start_ids[i_env] = self.ptr
 
     def sample(self, indexes):
-        assert self.full, "Not enough transitions for on-policy buffer to random sample"
+        """
+        Samples a batch of data from the replay buffer.
 
-        samples = {}
+        Parameters:
+            indexes (int): The indexes of the data in the buffer that will be sampled.
+
+        Returns:
+            samples_dict (dict): The sampled data.
+        """
+        assert self.full, "Not enough transitions for on-policy buffer to random sample."
+        samples_dict = {}
         env_choices, step_choices = divmod(indexes, self.n_size)
-        for k in self.keys:
-            if k == "advantages":
-                adv_batch = self.data[k][env_choices, step_choices]
-                if self.use_advantage_norm:
-                    adv_batch = (adv_batch - np.mean(adv_batch)) / (np.std(adv_batch) + 1e-8)
-                samples[k] = adv_batch
+        for data_key in self.data_keys:
+            if data_key == "advantages":
+                adv_batch_dict = {}
+                for agt_key in self.agent_keys:
+                    adv_batch = self.data[data_key][agt_key][env_choices, step_choices]
+                    if self.use_advantage_norm:
+                        adv_batch_dict[agt_key] = (adv_batch - np.mean(adv_batch)) / (np.std(adv_batch) + 1e-8)
+                samples_dict[data_key] = adv_batch_dict
             else:
-                samples[k] = self.data[k][env_choices, step_choices]
-        return samples
+                samples_dict[data_key] = {k: self.data[data_key][k][env_choices, step_choices] for k in self.agent_keys}
+        samples_dict['batch_size'] = len(indexes)
+        return samples_dict
 
 
 class MARL_OnPolicyBuffer_RNN(MARL_OnPolicyBuffer):
@@ -678,9 +704,9 @@ class MARL_OffPolicyBuffer(BaseBuffer):
             batch_size (int): The size of the batch data to be sampled.
 
         Returns:
-            samples (dict): The sampled data.
+            samples_dict (dict): The sampled data.
         """
-        assert self.size > 0, "You need to first store experience data into the buffer!"
+        assert self.size > 0, "Not enough transitions for off-policy buffer to random sample."
         if batch_size is None:
             batch_size = self.batch_size
         env_choices = np.random.choice(self.n_envs, batch_size)

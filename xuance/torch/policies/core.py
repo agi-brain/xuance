@@ -70,8 +70,11 @@ class CategoricalActorNet(Module):
         self.model = nn.Sequential(*layers)
         self.dist = CategoricalDistribution(action_dim)
 
-    def forward(self, x: Tensor):
-        self.dist.set_param(logits=self.model(x))
+    def forward(self, x: Tensor, avail_actions: Optional[Tensor] = None):
+        logits = self.model(x)
+        if avail_actions is not None:
+            logits[avail_actions == 0] = -1e10
+        self.dist.set_param(logits=logits)
         return self.dist
 
 

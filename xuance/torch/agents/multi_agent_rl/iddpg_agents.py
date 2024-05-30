@@ -4,7 +4,7 @@ from tqdm import tqdm
 from copy import deepcopy
 from operator import itemgetter
 from argparse import Namespace
-from typing import Optional
+from typing import Optional, List
 from xuance.environment import DummyVecMutliAgentEnv
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.representations import REGISTRY_Representation
@@ -121,13 +121,13 @@ class IDDPG_Agents(MARLAgents):
         self.memory.store(**experience_data)
 
     def action(self,
-               obs_dict: Optional[dict],
+               obs_dict: List[dict],
                test_mode: Optional[bool] = False):
         """
         Returns actions for agents.
 
         Parameters:
-            obs_dict (dict): Observations for each agent in self.agent_keys.
+            obs_dict (List[dict]): Observations for each agent in self.agent_keys.
             test_mode (bool): True for testing without noises.
 
         Returns:

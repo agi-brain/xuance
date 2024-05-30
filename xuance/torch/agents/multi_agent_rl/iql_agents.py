@@ -171,7 +171,7 @@ class IQL_Agents(MARLAgents):
                 i_env, *self.rnn_hidden_state[key])
 
     def action(self,
-               obs_dict: Optional[dict],
+               obs_dict: List[dict],
                avail_actions_dict: Optional[List[dict]] = None,
                rnn_hidden: Optional[dict] = None,
                test_mode: Optional[bool] = False):
@@ -179,7 +179,7 @@ class IQL_Agents(MARLAgents):
         Returns actions for agents.
 
         Parameters:
-            obs_dict (dict): Observations for each agent in self.agent_keys.
+            obs_dict (List[dict]): Observations for each agent in self.agent_keys.
             avail_actions_dict (Optional[List[dict]]): Actions mask values, default is None.
             rnn_hidden (Optional[dict]): The hidden variables of the RNN.
             test_mode (Optional[bool]): True for testing without noises.
