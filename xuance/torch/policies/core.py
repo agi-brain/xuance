@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from typing import Sequence, Optional, Callable, Union
 from xuance.torch import Tensor, Module
-from xuance.torch.utils import ModuleType, mlp_block
+from xuance.torch.utils import ModuleType, mlp_block, CategoricalDistribution
 
 
 class BasicQhead(Module):
@@ -51,6 +51,30 @@ class ActorNet(nn.Module):
         return self.model(x)
 
 
+class CategoricalActorNet(Module):
+    def __init__(self,
+                 state_dim: int,
+                 action_dim: int,
+                 hidden_sizes: Sequence[int],
+                 normalize: Optional[ModuleType] = None,
+                 initialize: Optional[Callable[..., Tensor]] = None,
+                 activation: Optional[ModuleType] = None,
+                 device: Optional[Union[str, int, torch.device]] = None):
+        super(CategoricalActorNet, self).__init__()
+        layers = []
+        input_shape = (state_dim,)
+        for h in hidden_sizes:
+            mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initialize, device)
+            layers.extend(mlp)
+        layers.extend(mlp_block(input_shape[0], action_dim, None, None, initialize, device)[0])
+        self.model = nn.Sequential(*layers)
+        self.dist = CategoricalDistribution(action_dim)
+
+    def forward(self, x: Tensor):
+        self.dist.set_param(logits=self.model(x))
+        return self.dist
+
+
 class CriticNet(nn.Module):
     def __init__(self,
                  state_dim: int,
@@ -71,6 +95,27 @@ class CriticNet(nn.Module):
 
     def forward(self, x: torch.tensor, a: torch.tensor):
         return self.model(torch.concat((x, a), dim=-1))
+
+
+class CategoricalCriticNet(Module):
+    def __init__(self,
+                 state_dim: int,
+                 hidden_sizes: Sequence[int],
+                 normalize: Optional[ModuleType] = None,
+                 initialize: Optional[Callable[..., Tensor]] = None,
+                 activation: Optional[ModuleType] = None,
+                 device: Optional[Union[str, int, torch.device]] = None):
+        super(CategoricalCriticNet, self).__init__()
+        layers = []
+        input_shape = (state_dim,)
+        for h in hidden_sizes:
+            mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initialize, device)
+            layers.extend(mlp)
+        layers.extend(mlp_block(input_shape[0], 1, None, None, initialize, device)[0])
+        self.model = nn.Sequential(*layers)
+
+    def forward(self, x: Tensor):
+        return self.model(x)
 
 
 class VDN_mixer(nn.Module):

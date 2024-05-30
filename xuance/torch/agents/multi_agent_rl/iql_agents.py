@@ -28,14 +28,12 @@ class IQL_Agents(MARLAgents):
                  config: Namespace,
                  envs: DummyVecMutliAgentEnv):
         super(IQL_Agents, self).__init__(config, envs)
-        self.use_actions_mask = config.use_actions_mask
 
         self.start_greedy, self.end_greedy = config.start_greedy, config.end_greedy
         self.egreedy = self.start_greedy
         self.delta_egreedy = (self.start_greedy - self.end_greedy) / (config.decay_step_greedy / self.n_envs)
 
         # build policy, optimizers, schedulers
-        self.use_rnn = config.use_rnn if hasattr(config, 'use_rnn') else False
         self.policy = self._build_policy()
         optimizer, scheduler = {}, {}
         for key in self.model_keys:

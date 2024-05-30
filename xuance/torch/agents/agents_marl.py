@@ -23,7 +23,10 @@ class MARLAgents(object):
                  envs: DummyVecMutliAgentEnv):
         # training settings
         self.config = config
+        self.use_rnn = config.use_rnn if hasattr(config, "use_rnn") else False
         self.use_parameter_sharing = config.use_parameter_sharing
+        self.use_actions_mask = config.use_actions_mask
+
         self.gamma = config.gamma
         self.start_training = config.start_training
         self.training_frequency = config.training_frequency

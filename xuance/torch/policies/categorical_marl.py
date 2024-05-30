@@ -3,78 +3,11 @@ import torch.nn as nn
 from copy import deepcopy
 from typing import Sequence, Optional, Callable, Union
 from gym.spaces import Discrete
-from xuance.torch.policies import ActorNet, CriticNet, VDN_mixer
+from xuance.torch.policies import CategoricalActorNet as ActorNet
+from xuance.torch.policies import CategoricalCriticNet as CriticNet
+from xuance.torch.policies import VDN_mixer
 from xuance.torch.utils import ModuleType, mlp_block, CategoricalDistribution
 from xuance.torch import Tensor, Module
-
-
-class ActorNet(Module):
-    def __init__(self,
-                 state_dim: int,
-                 action_dim: int,
-                 n_agents: int,
-                 hidden_sizes: Sequence[int],
-                 normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., Tensor]] = None,
-                 gain: float = 1.0,
-                 activation: Optional[ModuleType] = None,
-                 device: Optional[Union[str, int, torch.device]] = None):
-        super(ActorNet, self).__init__()
-        layers = []
-        input_shape = (state_dim + n_agents,)
-        for h in hidden_sizes:
-            mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initialize,
-                                         device=device)
-            layers.extend(mlp)
-        layers.extend(mlp_block(input_shape[0], action_dim, None, None, initialize, device)[0])
-        self.pi_logits = nn.Sequential(*layers)
-
-    def forward(self, x: Tensor):
-        return self.pi_logits(x)
-
-
-class CriticNet(Module):
-    def __init__(self,
-                 state_dim: int,
-                 n_agents: int,
-                 hidden_sizes: Sequence[int],
-                 normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., Tensor]] = None,
-                 activation: Optional[ModuleType] = None,
-                 device: Optional[Union[str, int, torch.device]] = None):
-        super(CriticNet, self).__init__()
-        layers = []
-        input_shape = (state_dim + n_agents,)
-        for h in hidden_sizes:
-            mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initialize, device=device)
-            layers.extend(mlp)
-        layers.extend(mlp_block(input_shape[0], 1, None, None, initialize, device=device)[0])
-        self.model = nn.Sequential(*layers)
-
-    def forward(self, x: Tensor):
-        return self.model(x)
-
-
-class COMA_Critic(Module):
-    def __init__(self,
-                 state_dim: int,
-                 act_dim: int,
-                 hidden_sizes: Sequence[int],
-                 normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., Tensor]] = None,
-                 activation: Optional[ModuleType] = None,
-                 device: Optional[Union[str, int, torch.device]] = None):
-        super(COMA_Critic, self).__init__()
-        layers = []
-        input_shape = (state_dim,)
-        for h in hidden_sizes:
-            mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initialize, device)
-            layers.extend(mlp)
-        layers.extend(mlp_block(input_shape[0], act_dim, None, None, None, device)[0])
-        self.model = nn.Sequential(*layers)
-
-    def forward(self, x: Tensor):
-        return self.model(x)
 
 
 class MAAC_Policy(Module):
@@ -85,7 +18,8 @@ class MAAC_Policy(Module):
     def __init__(self,
                  action_space: Discrete,
                  n_agents: int,
-                 representation: Module,
+                 representation_actor: Module,
+                 representation_critic: Module,
                  mixer: Optional[VDN_mixer] = None,
                  actor_hidden_size: Sequence[int] = None,
                  critic_hidden_size: Sequence[int] = None,
@@ -98,7 +32,7 @@ class MAAC_Policy(Module):
         self.device = device
         self.action_dim = action_space.n
         self.n_agents = n_agents
-        self.representation = representation[0]
+        self.representation = representation_actor[0]
         self.representation_critic = representation[1]
         self.representation_info_shape = self.representation.output_shapes
         self.lstm = True if kwargs["rnn"] == "LSTM" else False
