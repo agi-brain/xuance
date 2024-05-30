@@ -205,7 +205,7 @@ class MARL_OnPolicyBuffer(BaseBuffer):
             self.data['advantages'][key][i_env, path_slice] = advantages
         self.start_ids[i_env] = self.ptr
 
-    def sample(self, indexes):
+    def sample(self, indexes: Optional[np.ndarray] = None):
         """
         Samples a batch of data from the replay buffer.
 

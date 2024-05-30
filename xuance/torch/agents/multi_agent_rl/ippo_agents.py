@@ -375,7 +375,7 @@ class IPPO_Agents(MARLAgents):
         obs_dict = self.envs.buf_obs
         avail_actions = self.envs.buf_avail_actions
         state = self.envs.buf_state if self.use_global_state else None
-        for i_step in tqdm(range(n_steps)):
+        for _ in tqdm(range(n_steps)):
             step_info = {}
             rnn_hidden_next_actor, rnn_hidden_next_critic, actions_dict, log_pi_a_dict, values_dict = self.action(
                 obs_dict=obs_dict, avail_actions_dict=avail_actions,
@@ -385,9 +385,9 @@ class IPPO_Agents(MARLAgents):
             next_avail_actions = self.envs.buf_avail_actions
             self.store_experience(obs_dict, avail_actions, actions_dict, log_pi_a_dict, rewards_dict, values_dict,
                                   terminated_dict, info, **{'state': state})
-            # if self.current_step >= self.start_training and self.current_step % self.training_frequency == 0:
-            #     train_info = self.train_epochs(n_epochs=self.n_epoch)
-            #     self.log_infos(train_info, self.current_step)
+            if self.current_step >= self.start_training and self.current_step % self.training_frequency == 0:
+                train_info = self.train_epochs(n_epochs=self.n_epoch)
+                self.log_infos(train_info, self.current_step)
             obs_dict = deepcopy(next_obs_dict)
             avail_actions = deepcopy(next_avail_actions)
             state = deepcopy(next_state)
