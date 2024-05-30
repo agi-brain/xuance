@@ -62,10 +62,12 @@ class WQMIX_Learner(LearnerMAS):
             q_eval_centralized_a[key] = q_eval_centralized[key].gather(-1, action_max[key].long()) * agent_mask[key]
 
             if self.config.double_q:
-                _, a_next_greedy, _ = self.policy(obs_next, agent_ids=IDs, avail_actions=avail_actions, agent_key=key)
+                _, a_next_greedy, _ = self.policy(observation=obs_next, agent_ids=IDs,
+                                                  avail_actions=avail_actions_next, agent_key=key)
                 actions_next_greedy[key] = a_next_greedy[key].unsqueeze(-1)
             else:
-                q_next_eval = self.policy.target_Q(obs_next, agent_ids=IDs, avail_actions=avail_actions, agent_key=key)
+                q_next_eval = self.policy.target_Q(observation=obs_next, agent_ids=IDs,
+                                                   avail_actions=avail_actions_next, agent_key=key)
                 actions_next_greedy[key] = q_next_eval[key].argmax(dim=-1, keepdim=True)
 
             q_eval_next_centralized_a[key] = q_eval_next_centralized[key].gather(
