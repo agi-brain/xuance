@@ -181,7 +181,7 @@ Source Code
                 self.gamma = gamma
                 self.clip_range = config.clip_range
                 self.use_linear_lr_decay = config.use_linear_lr_decay
-                self.use_grad_norm, self.max_grad_norm = config.use_grad_norm, config.max_grad_norm
+                self.use_grad_clip, self.grad_clip_norm = config.use_grad_clip, config.grad_clip_norm
                 self.use_value_norm = config.use_value_norm
                 self.vf_coef, self.ent_coef = config.vf_coef, config.ent_coef
                 super(VDAC_Learner, self).__init__(config, policy, optimizer, scheduler, device, model_dir)
@@ -250,8 +250,8 @@ Source Code
                 loss = loss_a + self.vf_coef * loss_c - self.ent_coef * loss_e
                 self.optimizer.zero_grad()
                 loss.backward()
-                if self.use_grad_norm:
-                    grad_norm = torch.nn.utils.clip_grad_norm_(self.policy.parameters(), self.max_grad_norm)
+                if self.use_grad_clip:
+                    grad_norm = torch.nn.utils.clip_grad_norm_(self.policy.parameters(), self.grad_clip_norm)
                     info["gradient_norm"] = grad_norm.item()
                 self.optimizer.step()
                 if self.scheduler is not None:
@@ -308,8 +308,8 @@ Source Code
 
                 self.optimizer.zero_grad()
                 loss.backward()
-                if self.use_grad_norm:
-                    grad_norm = torch.nn.utils.clip_grad_norm_(self.policy.parameters(), self.max_grad_norm)
+                if self.use_grad_clip:
+                    grad_norm = torch.nn.utils.clip_grad_norm_(self.policy.parameters(), self.grad_clip_norm)
                     info["gradient_norm"] = grad_norm.item()
                 self.optimizer.step()
                 if self.scheduler is not None:
@@ -354,7 +354,7 @@ Source Code
                 self.gamma = gamma
                 self.clip_range = config.clip_range
                 self.use_linear_lr_decay = config.use_linear_lr_decay
-                self.use_grad_norm, self.max_grad_norm = config.use_grad_norm, config.max_grad_norm
+                self.use_grad_clip, self.grad_clip_norm = config.use_grad_clip, config.grad_clip_norm
                 self.use_value_norm = config.use_value_norm
                 self.vf_coef, self.ent_coef = config.vf_coef, config.ent_coef
                 super(VDAC_Learner, self).__init__(config, policy, optimizer, device, model_dir)
@@ -394,7 +394,7 @@ Source Code
 
                         gradients = tape.gradient(loss, self.policy.trainable_param())
                         self.optimizer.apply_gradients([
-                            (tf.clip_by_norm(grad, self.max_grad_norm), var)
+                            (tf.clip_by_norm(grad, self.grad_clip_norm), var)
                             for (grad, var) in zip(gradients, self.policy.trainable_param())
                             if grad is not None
                         ])
@@ -460,14 +460,14 @@ Source Code
                 self.gamma = gamma
                 self.clip_range = config.clip_range
                 self.use_linear_lr_decay = config.use_linear_lr_decay
-                self.use_grad_norm, self.max_grad_norm = config.use_grad_norm, config.max_grad_norm
+                self.use_grad_clip, self.grad_clip_norm = config.use_grad_clip, config.grad_clip_norm
                 self.use_value_norm = config.use_value_norm
                 self.vf_coef, self.ent_coef = config.vf_coef, config.ent_coef
                 self.mse_loss = nn.MSELoss()
                 super(VDAC_Learner, self).__init__(config, policy, optimizer, scheduler, model_dir)
                 self.loss_net = self.PolicyNetWithLossCell(policy, config.vf_coef, config.ent_coef)
                 self.policy_train = TrainOneStepCellWithGradClip(self.loss_net, optimizer,
-                                                                 clip_type=config.clip_type, clip_value=config.max_grad_norm)
+                                                                 clip_type=config.clip_type, clip_value=config.grad_clip_norm)
                 self.policy_train.set_train()
                 self.lr = config.learning_rate
                 self.end_factor_lr_decay = config.end_factor_lr_decay

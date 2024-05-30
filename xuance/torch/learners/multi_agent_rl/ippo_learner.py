@@ -1,27 +1,28 @@
 """
 Independent Proximal Policy Optimization (IPPO)
-Paper link:
-https://arxiv.org/pdf/2103.01955.pdf
+Paper link: https://arxiv.org/pdf/2103.01955.pdf
 Implementation: Pytorch
 """
-from xuance.torch.learners import *
-from xuance.torch.utils.value_norm import ValueNorm
-from xuance.torch.utils.operations import update_linear_decay
+import torch
+from torch import nn
+from typing import Optional, List
+from argparse import Namespace
+from xuance.torch.utils import ValueNorm
+from xuance.torch.learners import LearnerMAS
 
 
 class IPPO_Learner(LearnerMAS):
     def __init__(self,
                  config: Namespace,
+                 model_keys: List[str],
+                 agent_keys: List[str],
+                 episode_length: int,
                  policy: nn.Module,
-                 optimizer: torch.optim.Optimizer,
-                 scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
-                 device: Optional[Union[int, str, torch.device]] = None,
-                 model_dir: str = "./",
-                 gamma: float = 0.99):
-        self.gamma = gamma
+                 optimizer: Optional[torch.optim.Adam],
+                 scheduler: Optional[torch.optim.lr_scheduler.LinearLR] = None):
+        self.gamma = config.gamma
         self.clip_range = config.clip_range
         self.use_linear_lr_decay = config.use_linear_lr_decay
-        self.use_grad_norm, self.max_grad_norm = config.use_grad_norm, config.max_grad_norm
         self.use_value_clip, self.value_clip_range = config.use_value_clip, config.value_clip_range
         self.use_huber_loss, self.huber_delta = config.use_huber_loss, config.huber_delta
         self.use_value_norm = config.use_value_norm
@@ -29,17 +30,13 @@ class IPPO_Learner(LearnerMAS):
         self.vf_coef, self.ent_coef = config.vf_coef, config.ent_coef
         self.mse_loss = nn.MSELoss()
         self.huber_loss = nn.HuberLoss(reduction="none", delta=self.huber_delta)
-        super(IPPO_Learner, self).__init__(config, policy, optimizer, scheduler, device, model_dir)
+        super(IPPO_Learner, self).__init__(config, model_keys, agent_keys, episode_length, policy, optimizer, scheduler)
         if self.use_value_norm:
-            self.value_normalizer = ValueNorm(1).to(device)
+            self.value_normalizer = ValueNorm(1).to(self.device)
         else:
             self.value_normalizer = None
         self.lr = config.learning_rate
         self.end_factor_lr_decay = config.end_factor_lr_decay
-
-    def lr_decay(self, i_step):
-        if self.use_linear_lr_decay:
-            update_linear_decay(self.optimizer, i_step, self.running_steps, self.lr, self.end_factor_lr_decay)
 
     def update(self, sample):
         info = {}
@@ -100,8 +97,8 @@ class IPPO_Learner(LearnerMAS):
         loss = loss_a + self.vf_coef * loss_c - self.ent_coef * loss_e
         self.optimizer.zero_grad()
         loss.backward()
-        if self.use_grad_norm:
-            grad_norm = torch.nn.utils.clip_grad_norm_(self.policy.parameters(), self.max_grad_norm)
+        if self.use_grad_clip:
+            grad_norm = torch.nn.utils.clip_grad_norm_(self.policy.parameters(), self.grad_clip_norm)
             info["gradient_norm"] = grad_norm.item()
         self.optimizer.step()
         if self.scheduler is not None:
@@ -121,7 +118,7 @@ class IPPO_Learner(LearnerMAS):
 
         return info
 
-    def update_recurrent(self, sample):
+    def update_rnn(self, sample):
         info = {}
         self.iterations += 1
         state = torch.Tensor(sample['state']).to(self.device)
@@ -194,8 +191,8 @@ class IPPO_Learner(LearnerMAS):
         loss = loss_a + self.vf_coef * loss_c - self.ent_coef * loss_e
         self.optimizer.zero_grad()
         loss.backward()
-        if self.use_grad_norm:
-            grad_norm = torch.nn.utils.clip_grad_norm_(self.policy.parameters(), self.max_grad_norm)
+        if self.use_grad_clip:
+            grad_norm = torch.nn.utils.clip_grad_norm_(self.policy.parameters(), self.grad_clip_norm)
             info["gradient_norm"] = grad_norm.item()
         self.optimizer.step()
         if self.scheduler is not None:

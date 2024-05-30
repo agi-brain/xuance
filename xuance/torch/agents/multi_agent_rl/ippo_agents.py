@@ -28,6 +28,8 @@ class IPPO_Agents(MARLAgents):
                  config: Namespace,
                  envs: DummyVecMutliAgentEnv):
         super(IPPO_Agents, self).__init__(config, envs)
+        self.state_space = envs.state_space
+        self.continuous_control = False
 
         self.n_epoch = config.n_epoch
         self.n_minibatch = config.n_minibatch
@@ -42,28 +44,24 @@ class IPPO_Agents(MARLAgents):
                                                       total_iters=self.config.running_steps)
 
         # create experience replay buffer
+        n_actions = {k: self.action_space[k].n for k in self.agent_keys} if self.continuous_control else None
         input_buffer = dict(agent_keys=self.agent_keys,
+                            state_space=self.state_space if self.use_global_state else None,
                             obs_space=self.observation_space,
                             act_space=self.action_space,
                             n_envs=self.n_envs,
                             buffer_size=self.config.buffer_size,
-                            batch_size=self.config.batch_size,
-                            n_actions={k: self.action_space[k].n for k in self.agent_keys},
+                            use_gae=self.config.use_gae,
+                            use_advnorm=self.config.use_advnorm,
+                            gamma=self.config.gamma,
+                            gae_lam=self.config.gae_lambda,
+                            n_actions=n_actions,
                             use_actions_mask=self.use_actions_mask,
                             max_episode_length=envs.max_episode_length)
         buffer = MARL_OnPolicyBuffer_RNN if self.use_rnn else MARL_OnPolicyBuffer
         self.memory = buffer(**input_buffer)
 
-        self.observation_space = envs.observation_space
-        self.action_space = envs.action_space
-        self.auxiliary_info_shape = {}
-
-        buffer = MARL_OnPolicyBuffer_RNN if self.use_rnn else MARL_OnPolicyBuffer
-        input_buffer = (config.n_agents, config.state_space.shape, config.obs_shape, config.act_shape, config.rew_shape,
-                        config.done_shape, envs.num_envs, config.buffer_size,
-                        config.use_gae, config.use_advnorm, config.gamma, config.gae_lambda)
-        memory = buffer(*input_buffer, max_episode_length=envs.max_episode_length, dim_act=config.dim_act)
-        self.buffer_size = memory.buffer_size
+        self.buffer_size = self.memory.buffer_size
         self.batch_size = self.buffer_size // self.n_minibatch
 
         self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, envs.max_episode_length,
@@ -125,6 +123,7 @@ class IPPO_Agents(MARLAgents):
                 normalize=normalize_fn, initialize=initializer, activation=activation,
                 device=device, use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
                 use_rnn=self.use_rnn, rnn=self.config.rnn if self.use_rnn else None)
+            self.continuous_control = False
         elif self.config.policy == "Gaussian_MAAC_Policy":
             policy = REGISTRY_Policy["Gaussian_MAAC_Policy"](
                 action_space=self.action_space, n_agents=self.n_agents,
@@ -133,6 +132,7 @@ class IPPO_Agents(MARLAgents):
                 normalize=normalize_fn, initialize=initializer, activation=activation,
                 device=device, use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
                 use_rnn=self.use_rnn, rnn=self.config.rnn if self.use_rnn else None)
+            self.continuous_control = True
         else:
             raise AttributeError(f"IPPO currently does not support the policy named {self.config.policy}.")
 

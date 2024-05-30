@@ -1,6 +1,6 @@
 import numpy as np
 from abc import ABC, abstractmethod
-from typing import List, Dict
+from typing import List, Dict, Optional
 from gym.spaces import Space
 from xuance.common import space2shape, create_memory
 
@@ -34,13 +34,13 @@ class BaseBuffer(ABC):
         raise NotImplementedError
 
     def store_transitions(self, *args, **kwargs):
-        return
+        raise NotImplementedError
 
     def store_episodes(self, *args, **kwargs):
-        return
+        raise NotImplementedError
 
     def finish_path(self, *args, **kwargs):
-        return
+        raise NotImplementedError
 
 
 class MARL_OnPolicyBuffer(BaseBuffer):
@@ -48,48 +48,97 @@ class MARL_OnPolicyBuffer(BaseBuffer):
     Replay buffer for on-policy MARL algorithms.
 
     Args:
-        n_agents: number of agents.
-        state_space: global state space, type: Discrete, Box.
-        obs_space: observation space for one agent (suppose same obs space for group agents).
-        act_space: action space for one agent (suppose same actions space for group agents).
-        rew_space: reward space.
-        done_space: terminal variable space.
-        n_envs: number of parallel environments.
-        buffer_size: buffer size of total experience data.
-        use_gae: whether to use GAE trick.
-        use_advnorm: whether to use Advantage normalization trick.
-        gamma: discount factor.
-        gae_lam: gae lambda.
+        agent_keys (List[str]): Keys that identify each agent.
+        state_space (Dict[str, Space]): Global state space, type: Discrete, Box.
+        obs_space (Dict[str, Dict[str, Space]]): Observation space for one agent (suppose same obs space for group agents).
+        act_space (Dict[str, Dict[str, Space]]): Action space for one agent (suppose same actions space for group agents).
+        n_envs (int): Number of parallel environments.
+        buffer_size (int): Buffer size of total experience data.
+        use_gae (bool): Whether to use GAE trick.
+        use_advnorm (bool): Whether to use Advantage normalization trick.
+        gamma (float): Discount factor.
+        gae_lam (float): gae lambda.
+        **kwargs: Other arguments.
+
+    Example:
+        $ state_space=None
+        $ obs_space={'agent_0': Box(-inf, inf, (18,), float32),
+                     'agent_1': Box(-inf, inf, (18,), float32),
+                     'agent_2': Box(-inf, inf, (18,), float32)},
+        $ act_space={'agent_0': Box(0.0, 1.0, (5,), float32),
+                     'agent_1': Box(0.0, 1.0, (5,), float32),
+                     'agent_2': Box(0.0, 1.0, (5,), float32)},
+        $ n_envs=16,
+        $ buffer_size=1600,
+        $ agent_keys=['agent_0', 'agent_1', 'agent_2'],
+        $ memory = MARL_OffPolicyBuffer(agent_keys=agent_keys, state_space=state_space, obs_space=obs_space,
+                                        act_space=act_space, n_envs=n_envs, buffer_size=buffer_size,
+                                        use_gae=False, use_advnorm=False, gamma=0.99, gae_lam=0.95)
     """
 
-    def __init__(self, n_agents, state_space, obs_space, act_space, rew_space, done_space, n_envs, buffer_size,
-                 use_gae, use_advnorm, gamma, gae_lam, **kwargs):
-        super(MARL_OnPolicyBuffer, self).__init__(n_agents, state_space, obs_space, act_space, rew_space, done_space,
-                                                  n_envs, buffer_size)
-        assert buffer_size % self.n_envs == 0, "buffer_size must be divisible by the number of envs (parallels)"
+    def __init__(self,
+                 agent_keys: List[str],
+                 state_space: Dict[str, Space] = None,
+                 obs_space: Dict[str, Dict[str, Space]] = None,
+                 act_space: Dict[str, Dict[str, Space]] = None,
+                 n_envs: int = 1,
+                 buffer_size: int = 1,
+                 use_gae: Optional[bool] = False,
+                 use_advnorm: Optional[bool] = False,
+                 gamma: Optional[float] = None,
+                 gae_lam: Optional[float] = None,
+                 **kwargs):
+        super(MARL_OnPolicyBuffer, self).__init__(agent_keys, state_space, obs_space, act_space, n_envs, buffer_size)
         self.n_size = buffer_size // self.n_envs
+        self.store_global_state = False if self.state_space is None else True
+        self.use_actions_mask = kwargs['use_actions_mask'] if 'use_actions_mask' in kwargs else False
+        self.n_actions = kwargs['n_actions'] if 'n_actions' in kwargs else None
         self.use_gae = use_gae
         self.use_advantage_norm = use_advnorm
         self.gamma, self.gae_lambda = gamma, gae_lam
+        # prepare an empty buffer to store data
         self.data, self.start_ids = {}, None
+        self.reward_space = {key: () for key in self.agent_keys}
+        self.terminal_space = {key: () for key in self.agent_keys}
+        self.agent_mask_space = {key: () for key in self.agent_keys}
         self.clear()
-        self.keys = self.data.keys()
-        self.data_shapes = {k: self.data[k].shape for k in self.keys}
+        self.data_keys = self.data.keys()
 
     def clear(self):
+        """
+        Clears the memory data in the replay buffer.
+
+        Example:
+        An example shows the data shape: (n_env=16, buffer_size=1600, agent_keys=['agent_0', 'agent_1', 'agent_2']).
+        self.data: {'obs': {'agent_0': shape=[16, 100, 18],
+                            'agent_1': shape=[16, 100, 18],
+                            'agent_2': shape=[16, 100, 18]},  # dim_obs: 18
+                    'actions': {'agent_0': shape=[16, 100, 5],
+                                'agent_1': shape=[16, 100, 5],
+                                'agent_2': shape=[16, 100, 5]},  # dim_act: 5
+                     ...}
+        """
         self.data = {
-            'obs': np.zeros((self.n_envs, self.n_size, self.n_agents) + self.obs_space).astype(np.float32),
-            'actions': np.zeros((self.n_envs, self.n_size, self.n_agents) + self.act_space).astype(np.float32),
-            'rewards': np.zeros((self.n_envs, self.n_size,) + self.rew_space).astype(np.float32),
-            'returns': np.zeros((self.n_envs, self.n_size,) + self.rew_space).astype(np.float32),
-            'values': np.zeros((self.n_envs, self.n_size, self.n_agents, 1)).astype(np.float32),
-            'log_pi_old': np.zeros((self.n_envs, self.n_size, self.n_agents,)).astype(np.float32),
-            'advantages': np.zeros((self.n_envs, self.n_size,) + self.rew_space).astype(np.float32),
-            'terminals': np.zeros((self.n_envs, self.n_size,) + self.done_space).astype(np.bool_),
-            'agent_mask': np.ones((self.n_envs, self.n_size, self.n_agents)).astype(np.bool_),
+            'obs': create_memory(space2shape(self.obs_space), self.n_envs, self.n_size),
+            'actions': create_memory(space2shape(self.act_space), self.n_envs, self.n_size),
+            'rewards': create_memory(self.reward_space, self.n_envs, self.n_size),
+            'returns': create_memory(self.reward_space, self.n_envs, self.n_size),
+            'values': create_memory(self.reward_space, self.n_envs, self.n_size),
+            'log_pi_old': create_memory(self.reward_space, self.n_envs, self.n_size),
+            'advantages': create_memory(self.reward_space, self.n_envs, self.n_size),
+            'terminals': create_memory(self.terminal_space, self.n_envs, self.n_size, np.bool_),
+            'agent_mask': create_memory(self.agent_mask_space, self.n_envs, self.n_size, np.bool_),
         }
-        if self.state_space is not None:
-            self.data.update({'state': np.zeros((self.n_envs, self.n_size,) + self.state_space).astype(np.float32)})
+
+        if self.store_global_state:
+            self.data.update({
+                'state': create_memory(space2shape(self.state_space), self.n_envs, self.n_size)
+            })
+        if self.use_actions_mask:
+            avail_actions_space = {key: (self.n_actions[key],) for key in self.agent_keys}
+            self.data.update({
+                "avail_actions": create_memory(avail_actions_space, self.n_envs, self.n_size, np.bool_),
+            })
         self.ptr, self.size = 0, 0
         self.start_ids = np.zeros(self.n_envs, np.int64)  # the start index of the last episode for each env.
 
@@ -525,9 +574,9 @@ class COMA_Buffer_RNN(MARL_OnPolicyBuffer_RNN):
 
 class MARL_OffPolicyBuffer(BaseBuffer):
     """
-    Replay buffer for off-policy MARL algorithms with parameter sharing.
+    Replay buffer for off-policy MARL algorithms.
 
-    Parameters:
+    Args:
         agent_keys (List[str]): Keys that identify each agent.
         state_space (Dict[str, Space]): Global state space, type: Discrete, Box.
         obs_space (Dict[str, Dict[str, Space]]): Observation space for one agent (suppose same obs space for group agents).
@@ -550,8 +599,7 @@ class MARL_OffPolicyBuffer(BaseBuffer):
         $ batch_size=256,
         $ agent_keys=['agent_0', 'agent_1', 'agent_2'],
         $ memory = MARL_OffPolicyBuffer(agent_keys=agent_keys, state_space=state_space, obs_space=obs_space, act_space=act_space,
-                                        n_envs=n_envs, buffer_size=buffer_size, batch_size=batch_size,
-                                        agent_keys=agent_keys)
+                                        n_envs=n_envs, buffer_size=buffer_size, batch_size=batch_size)
     """
 
     def __init__(self,
@@ -563,8 +611,7 @@ class MARL_OffPolicyBuffer(BaseBuffer):
                  buffer_size: int = 1,
                  batch_size: int = 1,
                  **kwargs):
-        super(MARL_OffPolicyBuffer, self).__init__(agent_keys, state_space, obs_space, act_space,
-                                                   n_envs, buffer_size)
+        super(MARL_OffPolicyBuffer, self).__init__(agent_keys, state_space, obs_space, act_space, n_envs, buffer_size)
         self.batch_size = batch_size
         self.store_global_state = False if self.state_space is None else True
         self.use_actions_mask = kwargs['use_actions_mask'] if 'use_actions_mask' in kwargs else False
@@ -600,10 +647,9 @@ class MARL_OffPolicyBuffer(BaseBuffer):
             'agent_mask': create_memory(agent_mask_space, self.n_envs, self.n_size, np.bool_),
         }
         if self.store_global_state:
-            state_shape = space2shape(self.state_space)
             self.data.update({
-                'state': create_memory(state_shape, self.n_envs, self.n_size),
-                'state_next': create_memory(state_shape, self.n_envs, self.n_size)
+                'state': create_memory(space2shape(self.state_space), self.n_envs, self.n_size),
+                'state_next': create_memory(space2shape(self.state_space), self.n_envs, self.n_size)
             })
         if self.use_actions_mask:
             avail_actions_space = {key: (self.n_actions[key],) for key in self.agent_keys}

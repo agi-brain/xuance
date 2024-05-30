@@ -44,8 +44,8 @@ gamma: 0.99  # discount factor
 # tricks
 use_linear_lr_decay: False  # if use linear learning rate decay
 end_factor_lr_decay: 0.5
-use_grad_norm: True  # gradient normalization
-max_grad_norm: 10.0
+use_grad_clip: True  # gradient normalization
+grad_clip_norm: 10.0
 use_value_norm: False  # use running mean and std to normalize rewards.
 use_advnorm: False  # use advantage normalization.
 use_gae: True  # use GAE trick to calculate returns.

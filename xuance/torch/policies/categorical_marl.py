@@ -62,7 +62,13 @@ class MAAC_Policy(Module):
 
     @property
     def parameters_model(self):
-        return self.parameters()
+        parameters = [] if self.mixer is None else self.mixer.parameters()
+        for key in self.model_keys:
+            parameters_key = list(self.actor_representation[key].parameters()) + list(
+                self.actor[key].parameters()) + list(self.critic_representation[key].parameters()) + list(
+                self.critic[key].parameters())
+            parameters += parameters_key
+        return parameters
 
     def _get_actor_critic_input(self, dim_action, dim_actor_rep, dim_critic_rep, n_agents):
         """
@@ -187,7 +193,8 @@ class MAAC_Policy_Share(MAAC_Policy):
                 values_tot = values_tot.reshape([-1, sequence_length, 1])
                 values_tot = values_tot.unsqueeze(1).expand(-1, self.n_agents, -1, -1)
         else:
-            values_tot = values_independent if self.mixer is None else self.value_tot(values_independent, global_state=state)
+            values_tot = values_independent if self.mixer is None else self.value_tot(values_independent,
+                                                                                      global_state=state)
             values_tot = values_tot.unsqueeze(1).expand(-1, self.n_agents, -1)
 
         return rnn_hidden, self.pi_dist, values_tot

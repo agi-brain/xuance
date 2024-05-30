@@ -22,7 +22,7 @@ class VDAC_Learner(LearnerMAS):
         self.gamma = gamma
         self.clip_range = config.clip_range
         self.use_linear_lr_decay = config.use_linear_lr_decay
-        self.use_grad_norm, self.max_grad_norm = config.use_grad_norm, config.max_grad_norm
+        self.use_grad_clip, self.grad_clip_norm = config.use_grad_clip, config.grad_clip_norm
         self.use_value_norm = config.use_value_norm
         self.vf_coef, self.ent_coef = config.vf_coef, config.ent_coef
         super(VDAC_Learner, self).__init__(config, policy, optimizer, scheduler, device, model_dir)
@@ -64,8 +64,8 @@ class VDAC_Learner(LearnerMAS):
 
         self.optimizer.zero_grad()
         loss.backward()
-        if self.use_grad_norm:
-            grad_norm = torch.nn.utils.clip_grad_norm_(self.policy.parameters(), self.max_grad_norm)
+        if self.use_grad_clip:
+            grad_norm = torch.nn.utils.clip_grad_norm_(self.policy.parameters(), self.grad_clip_norm)
             info["gradient_norm"] = grad_norm.item()
         self.optimizer.step()
         if self.scheduler is not None:
@@ -122,8 +122,8 @@ class VDAC_Learner(LearnerMAS):
 
         self.optimizer.zero_grad()
         loss.backward()
-        if self.use_grad_norm:
-            grad_norm = torch.nn.utils.clip_grad_norm_(self.policy.parameters(), self.max_grad_norm)
+        if self.use_grad_clip:
+            grad_norm = torch.nn.utils.clip_grad_norm_(self.policy.parameters(), self.grad_clip_norm)
             info["gradient_norm"] = grad_norm.item()
         self.optimizer.step()
         if self.scheduler is not None:

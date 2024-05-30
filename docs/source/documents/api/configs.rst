@@ -8347,8 +8347,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: False  # if use global state to replace merged observations
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.2
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -8422,8 +8422,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: False  # if use global state to replace joint observations
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.2
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -8492,8 +8492,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: False  # if use global state to replace merged observations
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.2
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -8563,8 +8563,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: False  # if use global state to replace joint observations
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.2
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -8632,8 +8632,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: False  # if use global state to replace joint observations
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.2
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -8702,8 +8702,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: False  # if use global state to replace joint observations
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.05
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -8772,8 +8772,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: False  # if use global state to replace joint observations
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.2
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -8842,8 +8842,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: False  # if use global state to replace joint observations
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.05
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -8912,8 +8912,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: False  # if use global state to replace joint observations
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.2
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -8982,8 +8982,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: False  # if use global state to replace joint observations
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.2
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -9052,8 +9052,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: False  # if use global state to replace joint observations
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.2
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -9133,8 +9133,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: False  # if use global state to calculate values
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.2
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -9205,8 +9205,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: False  # if use global state to replace merged observations
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.2
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -9270,8 +9270,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: False  # if use global state to replace merged observations
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.2
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -9335,8 +9335,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: False  # if use global state to replace merged observations
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.2
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -9410,8 +9410,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: True  # if use global state to calculate values
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.2
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -9480,8 +9480,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: True  # if use global state to replace merged observations
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.2
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -9551,8 +9551,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: True  # if use global state to calculate values
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.2
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -9620,8 +9620,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: True  # if use global state to calculate values
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.2
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -9690,8 +9690,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: True  # if use global state to calculate values
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.05
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -9760,8 +9760,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: True  # if use global state to calculate values
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.2
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -9830,8 +9830,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: True  # if use global state to calculate values
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.05
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -9900,8 +9900,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: True  # if use global state to calculate values
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.2
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -9970,8 +9970,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: True  # if use global state to calculate values
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.2
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -10040,8 +10040,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: True  # if use global state to calculate values
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.2
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -10121,8 +10121,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: True  # if use global state to calculate values
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.2
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -10199,8 +10199,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: True  # if use global state to calculate values
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.2
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -10418,8 +10418,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: False  # if use global state to replace merged observations
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.2
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -10496,8 +10496,8 @@ MARL Implementations
                             # tricks
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.2
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -10570,8 +10570,8 @@ MARL Implementations
                             # tricks
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.2
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -10644,8 +10644,8 @@ MARL Implementations
                             # tricks
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.2
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -10717,8 +10717,8 @@ MARL Implementations
                             # tricks
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_norm: False  # use running mean and std to normalize rewards.
                             use_advnorm: False  # use advantage normalization.
                             use_gae: True  # use GAE trick to calculate returns.
@@ -10787,8 +10787,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: False  # if use global state to replace joint observations
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.05
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -10861,8 +10861,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: False  # if use global state to replace joint observations
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.2
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -10935,8 +10935,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: False  # if use global state to replace joint observations
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.05
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -11009,8 +11009,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: False  # if use global state to replace joint observations
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.2
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -11083,8 +11083,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: False  # if use global state to replace joint observations
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.2
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -11157,8 +11157,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: False  # if use global state to replace joint observations
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.2
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -12047,8 +12047,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: False  # if use global state to replace merged observations
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.2
                             use_value_norm: True  # use running mean and std to normalize rewards.

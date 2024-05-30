@@ -79,7 +79,7 @@ class MAPPO_Learner(LearnerMAS):
         self.gamma = gamma
         self.clip_range = config.clip_range
         self.use_linear_lr_decay = config.use_linear_lr_decay
-        self.use_grad_norm, self.max_grad_norm = config.use_grad_norm, config.max_grad_norm
+        self.use_grad_clip, self.grad_clip_norm = config.use_grad_clip, config.grad_clip_norm
         self.use_value_clip, self.value_clip_range = config.use_value_clip, config.value_clip_range
         self.use_huber_loss, self.huber_delta = config.use_huber_loss, config.huber_delta
         self.use_value_norm = config.use_value_norm
@@ -91,9 +91,9 @@ class MAPPO_Learner(LearnerMAS):
         self.loss_net = self.PolicyNetWithLossCell(policy, self.n_agents, config.vf_coef, config.ent_coef,
                                                    config.clip_range, config.use_value_clip, config.value_clip_range,
                                                    config.use_huber_loss)
-        if self.args.use_grad_norm:
+        if self.args.use_grad_clip:
             self.policy_train = TrainOneStepCellWithGradClip(self.loss_net, self.optimizer, clip_type=config.clip_type,
-                                                             clip_value=config.max_grad_norm)
+                                                             clip_value=config.grad_clip_norm)
         else:
             self.policy_train = nn.TrainOneStepCell(self.loss_net, self.optimizer)
         self.lr = config.learning_rate

@@ -246,7 +246,7 @@ Source Code
                 self.gamma = gamma
                 self.clip_range = config.clip_range
                 self.use_linear_lr_decay = config.use_linear_lr_decay
-                self.use_grad_norm, self.max_grad_norm = config.use_grad_norm, config.max_grad_norm
+                self.use_grad_clip, self.grad_clip_norm = config.use_grad_clip, config.grad_clip_norm
                 self.use_value_norm = config.use_value_norm
                 self.vf_coef, self.ent_coef = config.vf_coef, config.ent_coef
                 self.tau = config.tau
@@ -356,7 +356,7 @@ Source Code
                 self.gamma = gamma
                 self.clip_range = config.clip_range
                 self.use_linear_lr_decay = config.use_linear_lr_decay
-                self.use_grad_norm, self.max_grad_norm = config.use_grad_norm, config.max_grad_norm
+                self.use_grad_clip, self.grad_clip_norm = config.use_grad_clip, config.grad_clip_norm
                 self.use_value_norm = config.use_value_norm
                 self.vf_coef, self.ent_coef = config.vf_coef, config.ent_coef
                 self.tau = config.tau
@@ -367,7 +367,7 @@ Source Code
                 self.bmm = ops.BatchMatMul()
                 self.loss_net = self.NetWithLossCell(policy, self.vf_coef, self.ent_coef)
                 self.policy_train = TrainOneStepCellWithGradClip(self.loss_net, self.optimizer,
-                                                                 clip_type=config.clip_type, clip_value=config.max_grad_norm)
+                                                                 clip_type=config.clip_type, clip_value=config.grad_clip_norm)
                 self.policy_train.set_train()
 
             def update(self, sample):
