@@ -163,13 +163,28 @@ class MixingQnetwork(BasicQnetwork):
         Returns the total Q values.
 
         Parameters:
-            individual_values (Dict[str, Tensor]): The individual Q values of all agents. (Shape: batch * n_agents * 1)
-            states (Optional[Tensor]): The global states if necessary, default is None. (Shape: batch * dim_state)
+            individual_values (Dict[str, Tensor]): The individual Q values of all agents.
+            states (Optional[Tensor]): The global states if necessary, default is None.
 
         Returns:
-            evalQ_tot (Tensor): The evaluated total Q values for the multi-agent team. (Shape: batch * 1)
+            evalQ_tot (Tensor): The evaluated total Q values for the multi-agent team.
         """
-        evalQ_tot = self.eval_Qtot(individual_values, states)
+        if self.use_parameter_sharing:
+            """
+            From dict to tensor. For example:
+                individual_values: {'agent_0': batch * n_agents * 1} -> 
+                individual_inputs: batch * n_agents * 1
+            """
+            individual_inputs = individual_values[self.model_keys[0]].reshape([-1, self.n_agents, 1])
+        else:
+            """
+            From dict to tensor. For example: 
+                individual_values: {'agent_0': batch * 1, 'agent_1': batch * 1, 'agent_2': batch * 1} -> 
+                individual_inputs: batch * 2 * 1
+            """
+            individual_inputs = torch.concat([individual_values[k] for k in self.model_keys],
+                                             dim=-1).reshape([-1, self.n_agents, 1])
+        evalQ_tot = self.eval_Qtot(individual_inputs, states)
         return evalQ_tot
 
     def Qtarget_tot(self,
@@ -179,13 +194,28 @@ class MixingQnetwork(BasicQnetwork):
         Returns the total Q values with target networks.
 
         Parameters:
-            individual_values (Dict[str, Tensor]): The individual Q values of all agents. (Shape: batch * n_agents * 1)
+            individual_values (Dict[str, Tensor]): The individual Q values of all agents.
             states (Optional[Tensor]): The global states if necessary, default is None. (Shape: batch * dim_state)
 
         Returns:
-            q_target_tot (Tensor): The evaluated total Q values calculated by target networks. (Shape: batch * 1)
+            q_target_tot (Tensor): The evaluated total Q values calculated by target networks.
         """
-        q_target_tot = self.target_Qtot(individual_values, states)
+        if self.use_parameter_sharing:
+            """
+            From dict to tensor. For example:
+                individual_values: {'agent_0': batch * n_agents * 1} -> 
+                individual_inputs: batch * n_agents * 1
+            """
+            individual_inputs = individual_values[self.model_keys[0]].reshape([-1, self.n_agents, 1])
+        else:
+            """
+            From dict to tensor. For example: 
+                individual_values: {'agent_0': batch * 1, 'agent_1': batch * 1, 'agent_2': batch * 1} -> 
+                individual_inputs: batch * 2 * 1
+            """
+            individual_inputs = torch.concat([individual_values[k] for k in self.model_keys],
+                                             dim=-1).reshape([-1, self.n_agents, 1])
+        q_target_tot = self.target_Qtot(individual_inputs, states)
         return q_target_tot
 
     def copy_target(self):
