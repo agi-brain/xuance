@@ -64,6 +64,9 @@ class IPPO_Agents(MARLAgents):
         self.buffer_size = self.memory.buffer_size
         self.batch_size = self.buffer_size // self.n_minibatch
 
+        # initialize the hidden states of the RNN is use RNN-based representations.
+        self.rnn_hidden_actor, self.rnn_hidden_critic = self.init_rnn_hidden(self.n_envs)
+
         self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, envs.max_episode_length,
                                            self.policy, optimizer, scheduler)
 
@@ -144,7 +147,62 @@ class IPPO_Agents(MARLAgents):
     def store_experience(self, *args, **kwargs):
         raise NotImplementedError
 
-    def action(self, obs_n, *rnn_hidden, avail_actions=None, state=None, test_mode=False):
+    def init_rnn_hidden(self, n_envs):
+        """
+        Returns initialized hidden states of RNN if use RNN-based representations.
+
+        Parameters:
+            n_envs (int): The number of parallel environments.
+        """
+        rnn_hidden_actor, rnn_hidden_critic = {}, {}
+        for key in self.model_keys:
+            if self.use_rnn:
+                batch = n_envs * self.n_agents if self.use_parameter_sharing else n_envs
+                rnn_hidden_actor[key] = self.policy.actor_representation[key].init_hidden(batch)
+                rnn_hidden_critic[key] = self.policy.critic_representation[key].init_hidden(batch)
+            else:
+                rnn_hidden_actor[key] = [None, None]
+                rnn_hidden_critic[key] = [None, None]
+        return rnn_hidden_actor, rnn_hidden_critic
+
+    def init_hidden_item(self, i_env):
+        """
+        Returns initialized hidden states of RNN for i-th environment.
+
+        Parameters:
+            i_env (int): The index of environment that to be selected.
+        """
+        assert self.use_rnn is True, "This method cannot be called when self.use_rnn is False."
+        for key in self.model_keys:
+            self.rnn_hidden_actor[key] = self.policy.actor_representation[key].init_hidden_item(
+                i_env, *self.rnn_hidden_actor[key])
+            self.rnn_hidden_critic[key] = self.policy.critic_representation[key].init_hidden_item(
+                i_env, *self.rnn_hidden_critic[key])
+
+    def action(self,
+               obs_dict: Optional[dict],
+               state: Optional[np.ndarray] = None,
+               avail_actions_dict: Optional[List[dict]] = None,
+               rnn_hidden: Optional[dict] = None,
+               test_mode: Optional[bool] = False):
+        """
+        Returns actions for agents.
+
+        Parameters:
+            obs_dict (dict): Observations for each agent in self.agent_keys.
+            state (Optional[np.ndarray]): The global state.
+            avail_actions_dict (Optional[List[dict]]): Actions mask values, default is None.
+            rnn_hidden (Optional[dict]): The hidden variables of the RNN.
+            test_mode (Optional[bool]): True for testing without noises.
+
+        Returns:
+            rnn_hidden_state (dict): The new hidden states for RNN (if self.use_rnn=True).
+            actions_dict (dict): The output actions.
+            log_pi_a (dict): The log of pi.
+        """
+        n_env = len(obs_dict)
+        avail_actions_dict = None
+
         batch_size = len(obs_n)
         agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(batch_size, -1, -1).to(self.device)
         obs_in = torch.Tensor(obs_n).view([batch_size, self.n_agents, -1]).to(self.device)
@@ -192,7 +250,25 @@ class IPPO_Agents(MARLAgents):
         Parameters:
             n_steps (int): The number of steps to train the model.
         """
-        raise NotImplementedError
+        obs_dict = self.envs.buf_obs
+        avail_actions = self.envs.buf_avail_actions
+        state = self.envs.buf_state if self.use_global_state else None
+        for i_step in tqdm(range(n_steps)):
+            step_info = {}
+            rnn_hidden_next, actions_dict = self.action(obs_dict=obs_dict,
+                                                        state=state,
+                                                        avail_actions_dict=avail_actions,
+                                                        rnn_hidden=self.rnn_hidden_actor,
+                                                        test_mode=False)
+            next_obs_dict, rewards_dict, terminated_dict, truncated, info = self.envs.step(actions_dict)
+            next_state = self.envs.buf_state
+            next_avail_actions = self.envs.buf_avail_actions
+            self.store_experience(obs_dict, avail_actions, actions_dict, next_obs_dict, next_avail_actions,
+                                  rewards_dict, terminated_dict, info,
+                                  **{'state': state, 'next_state': next_state})
+            self.train_epochs(i_step)
+
+
 
     def test(self, env_fn, n_episodes):
         """
@@ -224,9 +300,8 @@ class IPPO_Agents(MARLAgents):
                     sample_idx = indexes[start:end]
                     sample = self.memory.sample(sample_idx)
                     if self.use_rnn:
-                        info_train = self.learner.update_recurrent(sample)
+                        info_train = self.learner.update_rnn(sample)
                     else:
                         info_train = self.learner.update(sample)
-            self.learner.lr_decay(i_step)
             self.memory.clear()
         return info_train

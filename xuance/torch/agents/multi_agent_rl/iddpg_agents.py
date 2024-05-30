@@ -152,6 +152,26 @@ class IDDPG_Agents(MARLAgents):
             actions_dict = [{key: actions_dict_[key][i] for key in self.agent_keys} for i in range(n_env)]
         return actions_dict
 
+    def train_epochs(self, n_epoch=1):
+        """
+        Train the model for numerous epochs.
+
+        Parameters:
+            n_epoch (int): The number of epochs to train.
+
+        Returns:
+            info_train (dict): The information of training.
+        """
+        info_train = {}
+        for i_epoch in range(n_epoch):
+            sample = self.memory.sample()
+            if self.use_rnn:
+                info_train = self.learner.update_rnn(sample)
+            else:
+                info_train = self.learner.update(sample)
+        info_train["noise_scale"] = self.noise_scale
+        return info_train
+
     def train(self, n_steps):
         """
         Train the model for numerous steps.
@@ -169,10 +189,8 @@ class IDDPG_Agents(MARLAgents):
             next_obs_dict, rewards_dict, terminated_dict, truncated, info = self.envs.step(actions_dict)
             self.store_experience(obs_dict, actions_dict, next_obs_dict, rewards_dict, terminated_dict, info)
             if self.current_step >= self.start_training and self.current_step % self.training_frequency == 0:
-                sample = self.memory.sample()
-                step_info = self.learner.update(sample)
-                step_info["noise_scale"] = self.noise_scale
-                self.log_infos(step_info, self.current_step)
+                train_info = self.train_epochs(n_epoch=1)
+                self.log_infos(train_info, self.current_step)
             obs_dict = deepcopy(next_obs_dict)
 
             for i in range(self.n_envs):

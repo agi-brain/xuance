@@ -129,6 +129,9 @@ class MARLAgents(object):
     def action(self, **kwargs):
         raise NotImplementedError
 
+    def train_epochs(self, *args, **kwargs):
+        raise NotImplementedError
+
     def train(self, **kwargs):
         raise NotImplementedError
 

@@ -264,13 +264,8 @@ class IQL_Agents(MARLAgents):
             self.store_experience(obs_dict, avail_actions, actions_dict, next_obs_dict, next_avail_actions,
                                   rewards_dict, terminated_dict, info)
             if self.current_step >= self.start_training and self.current_step % self.training_frequency == 0:
-                sample = self.memory.sample()
-                if self.use_rnn:
-                    step_info = self.learner.update_rnn(sample)
-                else:
-                    step_info = self.learner.update(sample)
-                step_info["epsilon_greedy"] = self.egreedy
-                self.log_infos(step_info, self.current_step)
+                train_info = self.train_epochs(n_epoch=1)
+                self.log_infos(train_info, self.current_step)
             obs_dict = deepcopy(next_obs_dict)
             avail_actions = deepcopy(next_avail_actions)
             self.rnn_hidden_state = deepcopy(rnn_hidden_next)
@@ -372,22 +367,3 @@ class IQL_Agents(MARLAgents):
         self.log_infos(test_info, self.current_step)
         test_envs.close()
         return scores
-
-    def train_epochs(self, n_epoch):
-        """
-        Train the model for numerous epochs.
-
-        Parameters:
-            n_epoch (int): The number of epochs to train.
-        """
-        if self.egreedy >= self.end_greedy:
-            self.egreedy -= self.delta_egreedy
-        info_train = {}
-        for i_epoch in range(n_epoch):
-            sample = self.memory.sample()
-            if self.use_rnn:
-                info_train = self.learner.update_rnn(sample)
-            else:
-                info_train = self.learner.update(sample)
-        info_train["epsilon-greedy"] = self.egreedy
-        return info_train

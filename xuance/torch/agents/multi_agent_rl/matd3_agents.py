@@ -61,5 +61,5 @@ class MATD3_Agents(IDDPG_Agents):
 
         return policy
 
-    def _build_learner(self, config, model_keys, agent_keys, policy, optimizer, scheduler):
-        return MATD3_Learner(config, model_keys, agent_keys, policy, optimizer, scheduler)
+    def _build_learner(self, config, model_keys, agent_keys, episode_length, policy, optimizer, scheduler):
+        return MATD3_Learner(config, model_keys, agent_keys, episode_length, policy, optimizer, scheduler)

@@ -169,13 +169,8 @@ class QMIX_Agents(IQL_Agents, MARLAgents):
                                   rewards_dict, terminated_dict, info,
                                   **{'state': state, 'next_state': next_state})
             if self.current_step >= self.start_training and self.current_step % self.training_frequency == 0:
-                sample = self.memory.sample()
-                if self.use_rnn:
-                    step_info = self.learner.update_rnn(sample)
-                else:
-                    step_info = self.learner.update(sample)
-                step_info["epsilon_greedy"] = self.egreedy
-                self.log_infos(step_info, self.current_step)
+                train_info = self.train_epochs(n_epoch=1)
+                self.log_infos(train_info, self.current_step)
             obs_dict = deepcopy(next_obs_dict)
             avail_actions = deepcopy(next_avail_actions)
             state = deepcopy(next_state)
