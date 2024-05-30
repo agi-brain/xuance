@@ -23,7 +23,8 @@ class WQMIX_Learner(LearnerMAS):
         self.gamma = config.gamma
         self.sync_frequency = config.sync_frequency
         self.mse_loss = nn.MSELoss()
-        super(WQMIX_Learner, self).__init__(config, model_keys, agent_keys, episode_length, policy, optimizer, scheduler)
+        super(WQMIX_Learner, self).__init__(config, model_keys, agent_keys, episode_length, policy, optimizer,
+                                            scheduler)
         self.use_actions_mask = config.use_actions_mask
         self.n_actions = {k: self.policy.action_space[k].n for k in self.model_keys}
         self.optimizer = optimizer
@@ -49,47 +50,54 @@ class WQMIX_Learner(LearnerMAS):
         avail_actions_next = sample_Tensor['avail_actions_next']
         IDs = sample_Tensor['agent_ids']
 
-        if self.use_parameter_sharing:
+        # calculate Q_tot
+        _, action_max, q_eval = self.policy(observation=obs, agent_ids=IDs, avail_actions=avail_actions)
+        q_eval_centralized = self.policy.q_centralized(obs, IDs)
+        q_eval_next_centralized = self.policy.target_q_centralized(obs_next, IDs)
 
-            # calculate Q_tot
-            _, action_max, q_eval = self.policy(obs, IDs)
-            action_max = {k: action_max[k].unsqueeze(-1) for k in self.model_keys}
-            q_eval_a = q_eval.gather(-1, actions.long().reshape([-1, self.n_agents, 1]))
-            q_tot_eval = self.policy.Q_tot(q_eval_a * agent_mask, state)
+        q_eval_a, q_eval_centralized_a, q_eval_next_centralized_a, actions_next_greedy = {}, {}, {}, {}
+        for key in self.model_keys:
+            action_max[key] = action_max[key].unsqueeze(-1)
+            q_eval_a[key] = q_eval[key].gather(-1, actions[key].long().unsqueeze(-1)) * agent_mask[key]
+            q_eval_centralized_a[key] = q_eval_centralized[key].gather(-1, action_max[key].long()) * agent_mask[key]
 
-            # calculate centralized Q
-            q_eval_centralized = self.policy.q_centralized(obs, IDs).gather(-1, action_max.long())
-            q_tot_centralized = self.policy.q_feedforward(q_eval_centralized * agent_mask, state)
-
-            # calculate y_i
             if self.config.double_q:
-                _, action_next_greedy, _ = self.policy(obs_next, IDs)
-                action_next_greedy = action_next_greedy.unsqueeze(-1)
+                _, a_next_greedy, _ = self.policy(obs_next, agent_ids=IDs, avail_actions=avail_actions, agent_key=key)
+                actions_next_greedy[key] = a_next_greedy[key].unsqueeze(-1)
             else:
-                q_next_eval = self.policy.target_Q(obs_next, IDs)
-                action_next_greedy = q_next_eval.argmax(dim=-1, keepdim=True)
-            q_eval_next_centralized = self.policy.target_q_centralized(obs_next, IDs).gather(-1, action_next_greedy)
-            q_tot_next_centralized = self.policy.target_q_feedforward(q_eval_next_centralized * agent_mask, state_next)
+                q_next_eval = self.policy.target_Q(obs_next, agent_ids=IDs, avail_actions=avail_actions, agent_key=key)
+                actions_next_greedy[key] = q_next_eval[key].argmax(dim=-1, keepdim=True)
 
-            target_value = rewards + (1 - terminals) * self.gamma * q_tot_next_centralized
-            td_error = q_tot_eval - target_value.detach()
+            q_eval_next_centralized_a[key] = q_eval_next_centralized[key].gather(
+                -1, actions_next_greedy[key]) * agent_mask[key]
 
-            # calculate weights
-            ones = torch.ones_like(td_error)
-            w = ones * self.alpha
-            if self.config.agent == "CWQMIX":
-                condition_1 = ((action_max == actions.reshape([-1, self.n_agents, 1])) * agent_mask).all(dim=1)
-                condition_2 = target_value > q_tot_centralized
-                conditions = condition_1 | condition_2
-                w = torch.where(conditions, ones, w)
-            elif self.config.agent == "OWQMIX":
-                condition = td_error < 0
-                w = torch.where(condition, ones, w)
-            else:
-                raise NotImplementedError
+        q_tot_eval = self.policy.Q_tot(q_eval_a, state)  # calculate Q_tot
+        q_tot_centralized = self.policy.q_feedforward(q_eval_centralized_a, state)  # calculate centralized Q
+        q_tot_next_centralized = self.policy.target_q_feedforward(q_eval_next_centralized_a, state_next)  # y_i
 
+        if self.use_parameter_sharing:
+            rewards_tot = rewards[self.model_keys[0]].mean(dim=1)
+            terminals_tot = terminals[self.model_keys[0]].all(dim=1, keepdim=False).float()
         else:
-            raise NotImplementedError
+            rewards_tot = torch.concat([rewards[k] for k in self.model_keys], -1).mean(dim=-1, keepdim=True)
+            terminals_tot = torch.concat([terminals[k] for k in self.model_keys], -1).all(dim=1, keepdim=True).float()
+
+        target_value = rewards_tot + (1 - terminals_tot) * self.gamma * q_tot_next_centralized
+        td_error = q_tot_eval - target_value.detach()
+
+        # calculate weights
+        ones = torch.ones_like(td_error)
+        w = ones * self.alpha
+        if self.config.agent == "CWQMIX":
+            condition_1 = ((action_max == actions.reshape([-1, self.n_agents, 1])) * agent_mask).all(dim=1)
+            condition_2 = target_value > q_tot_centralized
+            conditions = condition_1 | condition_2
+            w = torch.where(conditions, ones, w)
+        elif self.config.agent == "OWQMIX":
+            condition = td_error < 0
+            w = torch.where(condition, ones, w)
+        else:
+            AttributeError("You have assigned an unexpected WQMIX learner!")
 
         # calculate losses and train
         loss_central = self.mse_loss(q_tot_centralized, target_value.detach())
@@ -117,7 +125,7 @@ class WQMIX_Learner(LearnerMAS):
 
         return info
 
-    def update_rnn(self, sample):
+    def update_recurrent(self, sample):
         """
         Update the parameters of the model with recurrent neural networks.
         """
@@ -139,7 +147,8 @@ class WQMIX_Learner(LearnerMAS):
         _, actions_greedy, q_eval = self.policy(obs.reshape(-1, episode_length + 1, self.dim_obs),
                                                 IDs.reshape(-1, episode_length + 1, self.n_agents),
                                                 *rnn_hidden,
-                                                avail_actions=avail_actions.reshape(-1, episode_length + 1, self.dim_act))
+                                                avail_actions=avail_actions.reshape(-1, episode_length + 1,
+                                                                                    self.dim_act))
         q_eval = q_eval[:, :-1].reshape(batch_size, self.n_agents, episode_length, self.dim_act)
         actions_greedy = actions_greedy.reshape(batch_size, self.n_agents, episode_length + 1, 1).detach()
         q_eval_a = q_eval.gather(-1, actions.long().reshape(batch_size, self.n_agents, episode_length, 1))
@@ -170,7 +179,7 @@ class WQMIX_Learner(LearnerMAS):
                                                                    IDs.reshape(-1, episode_length + 1, self.n_agents),
                                                                    *target_rnn_hidden)
         q_eval_next_centralized = q_eval_next_centralized[:, 1:].reshape(batch_size, self.n_agents, episode_length,
-                                                                      self.dim_act)
+                                                                         self.dim_act)
         q_eval_next_centralized_a = q_eval_next_centralized.gather(-1, action_next_greedy)
         q_eval_next_centralized_a = q_eval_next_centralized_a.transpose(1, 2).reshape(-1, self.n_agents, 1)
         q_tot_next_centralized = self.policy.target_q_feedforward(q_eval_next_centralized_a, state[:, 1:])

@@ -156,9 +156,7 @@ class MixingQnetwork(BasicQnetwork):
             self.parameters_model += list(self.representation[key].parameters())
             self.parameters_model += list(self.eval_Qhead[key].parameters())
 
-    def Q_tot(self,
-              individual_values: Dict[str, Tensor],
-              states: Optional[Tensor] = None):
+    def Q_tot(self, individual_values: Dict[str, Tensor], states: Optional[Tensor] = None):
         """
         Returns the total Q values.
 
@@ -245,10 +243,10 @@ class Weighted_MixingQnetwork(MixingQnetwork):
                                                       normalize, initialize, activation, device, **kwargs)
         self.eval_Qhead_centralized = deepcopy(self.eval_Qhead)
         self.target_Qhead_centralized = deepcopy(self.eval_Qhead_centralized)
-        self.q_feedforward = ff_mixer
-        self.target_q_feedforward = deepcopy(self.q_feedforward)
+        self.ff_mixer = ff_mixer
+        self.target_ff_mixer = deepcopy(self.ff_mixer)
 
-        self.parameters_model = list(self.eval_Qtot.parameters()) + list(self.q_feedforward.parameters())
+        self.parameters_model = list(self.eval_Qtot.parameters()) + list(self.ff_mixer.parameters())
         for key in self.model_keys:
             self.parameters_model += list(self.representation[key].parameters())
             self.parameters_model += list(self.eval_Qhead[key].parameters())
@@ -271,17 +269,19 @@ class Weighted_MixingQnetwork(MixingQnetwork):
         agent_list = self.model_keys if agent_key is None else [agent_key]
 
         for key in agent_list:
-            if self.use_parameter_sharing:
-                if self.use_rnn:
-                    outputs = self.representation[key](observation[key], *rnn_hidden[key])
-                    rnn_hidden_new[key] = (outputs['rnn_hidden'], outputs['rnn_cell'])
-                else:
-                    outputs = self.representation[key](observation[key])
-                    rnn_hidden_new[key] = [None, None]
-                q_inputs = torch.concat([outputs['state'], agent_ids], dim=-1)
-                evalQ_cent[key] = self.eval_Qhead_centralized[key](q_inputs)
+            if self.use_rnn:
+                outputs = self.representation[key](observation[key], *rnn_hidden[key])
+                rnn_hidden_new[key] = (outputs['rnn_hidden'], outputs['rnn_cell'])
             else:
-                raise NotImplementedError
+                outputs = self.representation[key](observation[key])
+                rnn_hidden_new[key] = [None, None]
+
+            if self.use_parameter_sharing:
+                q_inputs = torch.concat([outputs['state'], agent_ids], dim=-1)
+            else:
+                q_inputs = outputs['state']
+
+            evalQ_cent[key] = self.eval_Qhead_centralized[key](q_inputs)
 
         return evalQ_cent
 
@@ -296,24 +296,85 @@ class Weighted_MixingQnetwork(MixingQnetwork):
             agent_key (str): Calculate actions for specified agent.
             rnn_hidden (Optional[Dict[str, List[Tensor]]]): The hidden variables of the RNN.
         Returns:
-            evalQ_cent (Tensor): The evaluated centralised Q values.
+            q_target_cent (Tensor): The evaluated centralised Q values with target networks.
         """
-        rnn_hidden_new, q_target = {}, {}
+        rnn_hidden_new, q_target_cent = {}, {}
         agent_list = self.model_keys if agent_key is None else [agent_key]
 
         for key in agent_list:
-            if self.use_parameter_sharing:
-                if self.use_rnn:
-                    outputs = self.target_representation[key](observation[key], *rnn_hidden[key])
-                    rnn_hidden_new[key] = (outputs['rnn_hidden'], outputs['rnn_cell'])
-                else:
-                    outputs = self.target_representation[key](observation[key])
-                    rnn_hidden_new[key] = None
-                q_inputs = torch.concat([outputs['state'], agent_ids], dim=-1)
-                q_target[key] = self.target_Qhead_centralized[key](q_inputs)
+            if self.use_rnn:
+                outputs = self.target_representation[key](observation[key], *rnn_hidden[key])
+                rnn_hidden_new[key] = (outputs['rnn_hidden'], outputs['rnn_cell'])
             else:
-                raise NotImplementedError
-        return q_target
+                outputs = self.target_representation[key](observation[key])
+                rnn_hidden_new[key] = [None, None]
+
+            if self.use_parameter_sharing:
+                q_inputs = torch.concat([outputs['state'], agent_ids], dim=-1)
+            else:
+                q_inputs = outputs['state']
+
+            q_target_cent[key] = self.target_Qhead_centralized[key](q_inputs)
+
+        return q_target_cent
+
+    def q_feedforward(self, individual_values: Dict[str, Tensor], states: Optional[Tensor] = None):
+        """
+        Returns the total Q values with feedforward mixer networks.
+
+        Parameters:
+            individual_values (Dict[str, Tensor]): The individual Q values of all agents.
+            states (Optional[Tensor]): The global states if necessary, default is None.
+
+        Returns:
+            evalQ_tot (Tensor): The evaluated total Q values for the multi-agent team.
+        """
+        if self.use_parameter_sharing:
+            """
+            From dict to tensor. For example:
+                individual_values: {'agent_0': batch * n_agents * 1} -> 
+                individual_inputs: batch * n_agents * 1
+            """
+            individual_inputs = individual_values[self.model_keys[0]].reshape([-1, self.n_agents, 1])
+        else:
+            """
+            From dict to tensor. For example: 
+                individual_values: {'agent_0': batch * 1, 'agent_1': batch * 1, 'agent_2': batch * 1} -> 
+                individual_inputs: batch * 2 * 1
+            """
+            individual_inputs = torch.concat([individual_values[k] for k in self.model_keys],
+                                             dim=-1).reshape([-1, self.n_agents, 1])
+        evalQ_tot = self.ff_mixer(individual_inputs, states)
+        return evalQ_tot
+
+    def target_q_feedforward(self, individual_values: Dict[str, Tensor], states: Optional[Tensor] = None):
+        """
+        Returns the total Q values with target feedforward mixer networks.
+
+        Parameters:
+            individual_values (Dict[str, Tensor]): The individual Q values of all agents.
+            states (Optional[Tensor]): The global states if necessary, default is None.
+
+        Returns:
+            q_target_tot (Tensor): The evaluated total Q values for the multi-agent team.
+        """
+        if self.use_parameter_sharing:
+            """
+            From dict to tensor. For example:
+                individual_values: {'agent_0': batch * n_agents * 1} -> 
+                individual_inputs: batch * n_agents * 1
+            """
+            individual_inputs = individual_values[self.model_keys[0]].reshape([-1, self.n_agents, 1])
+        else:
+            """
+            From dict to tensor. For example: 
+                individual_values: {'agent_0': batch * 1, 'agent_1': batch * 1, 'agent_2': batch * 1} -> 
+                individual_inputs: batch * 2 * 1
+            """
+            individual_inputs = torch.concat([individual_values[k] for k in self.model_keys],
+                                             dim=-1).reshape([-1, self.n_agents, 1])
+        q_target_tot = self.target_ff_mixer(individual_inputs, states)
+        return q_target_tot
 
     def copy_target(self):
         for k in self.model_keys:
@@ -326,7 +387,7 @@ class Weighted_MixingQnetwork(MixingQnetwork):
                 tp.data.copy_(ep)
         for ep, tp in zip(self.eval_Qtot.parameters(), self.target_Qtot.parameters()):
             tp.data.copy_(ep)
-        for ep, tp in zip(self.q_feedforward.parameters(), self.target_q_feedforward.parameters()):
+        for ep, tp in zip(self.ff_mixer.parameters(), self.target_ff_mixer.parameters()):
             tp.data.copy_(ep)
 
 
