@@ -25,7 +25,6 @@ class WQMIX_Learner(LearnerMAS):
         self.mse_loss = nn.MSELoss()
         super(WQMIX_Learner, self).__init__(config, model_keys, agent_keys, episode_length, policy, optimizer,
                                             scheduler)
-        self.use_actions_mask = config.use_actions_mask
         self.n_actions = {k: self.policy.action_space[k].n for k in self.model_keys}
         self.optimizer = optimizer
         self.scheduler = scheduler

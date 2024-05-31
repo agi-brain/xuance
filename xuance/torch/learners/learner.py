@@ -77,6 +77,7 @@ class LearnerMAS(ABC):
         self.agent_keys = agent_keys
         self.episode_length = episode_length
         self.use_rnn = config.use_rnn if hasattr(config, 'use_rnn') else False
+        self.use_actions_mask = config.use_actions_mask if hasattr(config, 'use_actions_mask') else False
         self.policy = policy
         self.optimizer = optimizer
         self.scheduler = scheduler
@@ -131,20 +132,19 @@ class LearnerMAS(ABC):
         else:
             obs = {k: Tensor(sample['obs'][k]).to(self.device) for k in self.agent_keys}
             actions = {k: Tensor(sample['actions'][k]).to(self.device) for k in self.agent_keys}
-            if not self.use_rnn:
+            if self.use_rnn:
+                rewards = {k: Tensor(sample['rewards'][k][:, :, None]).to(self.device) for k in self.agent_keys}
+                terminals = {k: Tensor(sample['terminals'][k][:, :, None]).float().to(self.device) for k in self.agent_keys}
+                agent_mask = {k: Tensor(sample['agent_mask'][k][:, :, None]).float().to(self.device) for k in self.agent_keys}
+            else:
                 obs_next = {k: Tensor(sample['obs_next'][k]).to(self.device) for k in self.agent_keys}
                 rewards = {k: Tensor(sample['rewards'][k][:, None]).to(self.device) for k in self.agent_keys}
                 terminals = {k: Tensor(sample['terminals'][k][:, None]).float().to(self.device) for k in self.agent_keys}
                 agent_mask = {k: Tensor(sample['agent_mask'][k][:, None]).float().to(self.device) for k in self.agent_keys}
-            else:
-                rewards = {k: Tensor(sample['rewards'][k][:, :, None]).to(self.device) for k in self.agent_keys}
-                terminals = {k: Tensor(sample['terminals'][k][:, :, None]).float().to(self.device) for k in self.agent_keys}
-                agent_mask = {k: Tensor(sample['agent_mask'][k][:, :, None]).float().to(self.device) for k in self.agent_keys}
             if use_actions_mask:
                 avail_actions = {k: Tensor(sample['avail_actions'][k]).float().to(self.device) for k in self.agent_keys}
                 if not self.use_rnn:
-                    avail_actions_next = {k: Tensor(sample['avail_actions_next'][k]).float().to(self.device)
-                                          for k in self.model_keys}
+                    avail_actions_next = {k: Tensor(sample['avail_actions_next'][k]).float().to(self.device) for k in self.model_keys}
 
         if use_global_state:
             state = Tensor(sample['state']).to(self.device)

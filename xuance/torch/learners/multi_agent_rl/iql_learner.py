@@ -21,7 +21,6 @@ class IQL_Learner(LearnerMAS):
         self.gamma = config.gamma
         self.sync_frequency = config.sync_frequency
         super(IQL_Learner, self).__init__(config, model_keys, agent_keys, episode_length, policy, optimizer, scheduler)
-        self.use_actions_mask = config.use_actions_mask
         self.n_actions = {k: self.policy.action_space[k].n for k in self.model_keys}
 
     def update(self, sample):

@@ -39,8 +39,14 @@ class IPPO_Learner(LearnerMAS):
         self.end_factor_lr_decay = config.end_factor_lr_decay
 
     def update(self, sample):
-        info = {}
         self.iterations += 1
+        info = {}
+
+        # prepare training data
+        sample_Tensor = self.build_training_data(sample=sample,
+                                                 use_parameter_sharing=self.use_parameter_sharing,
+                                                 use_actions_mask=self.use_actions_mask)
+
         state = torch.Tensor(sample['state']).to(self.device)
         obs = torch.Tensor(sample['obs']).to(self.device)
         actions = torch.Tensor(sample['actions']).to(self.device)

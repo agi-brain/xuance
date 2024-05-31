@@ -23,7 +23,6 @@ class QMIX_Learner(LearnerMAS):
         self.sync_frequency = config.sync_frequency
         self.mse_loss = nn.MSELoss()
         super(QMIX_Learner, self).__init__(config, model_keys, agent_keys, episode_length, policy, optimizer, scheduler)
-        self.use_actions_mask = config.use_actions_mask
         self.n_actions = {k: self.policy.action_space[k].n for k in self.model_keys}
 
     def update(self, sample):
