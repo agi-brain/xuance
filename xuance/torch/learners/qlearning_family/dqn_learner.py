@@ -1,5 +1,5 @@
 """
-Deep Q-Network (VDN)
+Deep Q-Network (DQN)
 Paper link: https://www.nature.com/articles/nature14236
 Implementation: Pytorch
 """
@@ -41,6 +41,8 @@ class DQN_Learner(Learner):
         loss = self.mse_loss(predictQ, targetQ)
         self.optimizer.zero_grad()
         loss.backward()
+        if self.use_grad_clip:
+            torch.nn.utils.clip_grad_norm_(self.policy.parameters(), self.grad_clip_norm)
         self.optimizer.step()
         if self.scheduler is not None:
             self.scheduler.step()

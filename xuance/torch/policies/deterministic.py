@@ -373,6 +373,7 @@ class ActorNet(Module):
                  state_dim: int,
                  action_dim: int,
                  hidden_sizes: Sequence[int],
+                 normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None,
                  activation_action: Optional[ModuleType] = None,
@@ -381,7 +382,7 @@ class ActorNet(Module):
         layers = []
         input_shape = (state_dim,)
         for h in hidden_sizes:
-            mlp, input_shape = mlp_block(input_shape[0], h, None, activation, initialize, device)
+            mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initialize, device)
             layers.extend(mlp)
         layers.extend(mlp_block(input_shape[0], action_dim, None, activation_action, initialize, device)[0])
         self.model = nn.Sequential(*layers)
@@ -395,6 +396,7 @@ class CriticNet(Module):
                  state_dim: int,
                  action_dim: int,
                  hidden_sizes: Sequence[int],
+                 normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None):
@@ -402,7 +404,7 @@ class CriticNet(Module):
         layers = []
         input_shape = (state_dim + action_dim,)
         for h in hidden_sizes:
-            mlp, input_shape = mlp_block(input_shape[0], h, None, activation, initialize, device)
+            mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initialize, device)
             layers.extend(mlp)
         layers.extend(mlp_block(input_shape[0], 1, None, None, initialize, device)[0])
         self.model = nn.Sequential(*layers)
@@ -417,6 +419,7 @@ class DDPGPolicy(Module):
                  representation: Module,
                  actor_hidden_size: Sequence[int],
                  critic_hidden_size: Sequence[int],
+                 normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None,
                  activation_action: Optional[ModuleType] = None,
@@ -427,10 +430,10 @@ class DDPGPolicy(Module):
         # create networks
         self.actor_representation = representation
         self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size,
-                              initialize, activation, activation_action, device)
+                              normalize, initialize, activation, activation_action, device)
         self.critic_representation = deepcopy(representation)
         self.critic = CriticNet(representation.output_shapes['state'][0], self.action_dim, critic_hidden_size,
-                                initialize, activation, device)
+                                normalize, initialize, activation, device)
         # create target networks
         self.target_actor_representation = deepcopy(self.actor_representation)
         self.target_actor = deepcopy(self.actor)

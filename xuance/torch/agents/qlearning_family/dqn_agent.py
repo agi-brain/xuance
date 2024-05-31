@@ -98,7 +98,7 @@ class DQN_Agent(Agent):
         for _ in range(n_epochs):
             samples = self.memory.sample()
             train_info = self.learner.update(**samples)
-            train_info["epsilon-greedy"] = self.egreedy
+        train_info["epsilon-greedy"] = self.egreedy
         return train_info
 
     def train(self, train_steps):
