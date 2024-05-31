@@ -94,6 +94,10 @@ class MARL_OnPolicyBuffer(BaseBuffer):
         # prepare an empty buffer to store data
         self.data, self.start_ids = {}, None
         self.reward_space = {key: () for key in self.agent_keys}
+        self.returns = {key: () for key in self.agent_keys}
+        self.values = {key: () for key in self.agent_keys}
+        self.log_pi_old = {key: () for key in self.agent_keys}
+        self.advantages = {key: () for key in self.agent_keys}
         self.terminal_space = {key: () for key in self.agent_keys}
         self.agent_mask_space = {key: () for key in self.agent_keys}
         self.clear()

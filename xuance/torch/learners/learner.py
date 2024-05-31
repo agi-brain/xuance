@@ -94,6 +94,15 @@ class LearnerMAS(ABC):
                             use_global_state: Optional[bool] = False):
         """
         Prepare the training data.
+
+        Parameters:
+            sample (dict): The raw sampled data.
+            use_parameter_sharing (bool): Whether to use parameter sharing for individual agent models.
+            use_actions_mask (bool): Whether to use actions mask for unavailable actions.
+            use_global_state (bool): Whether to use global state.
+
+        Returns:
+            sample_Tensor (dict): The formatted sampled data.
         """
         batch_size = sample['batch_size']
         state, avail_actions, filled, seq_length = None, None, None, 0

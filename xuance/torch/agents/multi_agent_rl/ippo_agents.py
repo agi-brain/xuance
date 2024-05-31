@@ -430,4 +430,62 @@ class IPPO_Agents(MARLAgents):
         Returns:
             scores (List(float)): A list of cumulative rewards for each episode.
         """
-        raise NotImplementedError
+        test_envs = env_fn()
+        num_envs = test_envs.num_envs
+        videos, episode_videos = [[] for _ in range(num_envs)], []
+        current_episode, scores, best_score = 0, [0.0 for _ in range(num_envs)], -np.inf
+        obs_dict, info = test_envs.reset()
+        avail_actions = test_envs.buf_avail_actions
+        rnn_hidden_actor = self.init_rnn_hidden(num_envs)
+        if self.config.render_mode == "rgb_array" and self.render:
+            images = test_envs.render(self.config.render_mode)
+            for idx, img in enumerate(images):
+                videos[idx].append(img)
+
+        while current_episode < n_episodes:
+            rnn_hidden_next_actor, _, actions_dict, _, _ = self.action(obs_dict=obs_dict,
+                                                                       avail_actions_dict=avail_actions,
+                                                                       rnn_hidden_actor=rnn_hidden_actor,
+                                                                       test_mode=True)
+            next_obs_dict, rewards_dict, terminated_dict, truncated, info = test_envs.step(actions_dict)
+            next_avail_actions = test_envs.buf_avail_actions
+            if self.config.render_mode == "rgb_array" and self.render:
+                images = test_envs.render(self.config.render_mode)
+                for idx, img in enumerate(images):
+                    videos[idx].append(img)
+
+            obs_dict = deepcopy(next_obs_dict)
+            avail_actions = deepcopy(next_avail_actions)
+            rnn_hidden_actor = deepcopy(rnn_hidden_next_actor)
+            for i in range(num_envs):
+                if all(terminated_dict[i].values()) or truncated[i]:
+                    if self.use_rnn:
+                        for key in self.model_keys:
+                            rnn_hidden_actor[key] = self.policy.actor_representation[key].init_hidden_item(
+                                i, *rnn_hidden_actor[key])
+                    obs_dict[i] = info[i]["reset_obs"]
+                    avail_actions[i] = info[i]["reset_avail_actions"]
+                    episode_score = float(np.mean(itemgetter(*self.agent_keys)(info[i]["episode_score"])))
+                    scores.append(episode_score)
+                    current_episode += 1
+                    if best_score < episode_score:
+                        best_score = episode_score
+                        episode_videos = videos[i].copy()
+                    if self.config.test_mode:
+                        print("Episode: %d, Score: %.2f" % (current_episode, episode_score))
+
+        if self.config.render_mode == "rgb_array" and self.render:
+            # time, height, width, channel -> time, channel, height, width
+            videos_info = {"Videos_Test": np.array([episode_videos], dtype=np.uint8).transpose((0, 1, 4, 2, 3))}
+            self.log_videos(info=videos_info, fps=self.fps, x_index=self.current_step)
+
+        if self.config.test_mode:
+            print("Best Score: %.2f" % best_score)
+
+        test_info = {
+            "Test-Episode-Rewards/Mean-Score": np.mean(scores),
+            "Test-Episode-Rewards/Std-Score": np.std(scores),
+        }
+        self.log_infos(test_info, self.current_step)
+        test_envs.close()
+        return scores
