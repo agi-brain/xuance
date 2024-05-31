@@ -22,13 +22,15 @@ class DQN_Learner(Learner):
         self.mse_loss = nn.MSELoss()
         self.one_hot = nn.functional.one_hot
         super(DQN_Learner, self).__init__(config, episode_length, policy, optimizer, scheduler)
-        self.n_actions = self.policy.action_space.n
+        self.n_actions = self.policy.action_dim
 
-    def update(self, obs_batch, act_batch, rew_batch, next_batch, terminal_batch):
+    def update(self, **samples):
         self.iterations += 1
-        act_batch = torch.as_tensor(act_batch, device=self.device)
-        rew_batch = torch.as_tensor(rew_batch, device=self.device)
-        ter_batch = torch.as_tensor(terminal_batch, device=self.device)
+        obs_batch = samples['obs']
+        act_batch = torch.as_tensor(samples['actions'], device=self.device)
+        next_batch = samples['obs_next']
+        rew_batch = torch.as_tensor(samples['rewards'], device=self.device)
+        ter_batch = torch.as_tensor(samples['terminals'], device=self.device)
 
         _, _, evalQ = self.policy(obs_batch)
         _, _, targetQ = self.policy.target(next_batch)

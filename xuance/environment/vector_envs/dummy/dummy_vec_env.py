@@ -69,7 +69,7 @@ class DummyVecEnv(VecEnv):
                 self.buf_info[e]["reset_obs"] = obs_reset
             self._save_obs(e, obs)
         self.waiting = False
-        return self.buf_obs.copy(), self.buf_rewards.copy(), self.buf_terminated.copy(), self.buf_truncated.copy(), self.buf_infos.copy()
+        return self.buf_obs.copy(), self.buf_rewards.copy(), self.buf_terminated.copy(), self.buf_truncated.copy(), self.buf_info.copy()
 
     def close_extras(self):
         self.closed = True

@@ -97,6 +97,14 @@ class DQN_Agent(Agent):
             action = argmax_action.detach().cpu().numpy()
         return action
 
+    def train_epochs(self, n_epochs=1):
+        train_info = {}
+        for _ in range(n_epochs):
+            samples = self.memory.sample()
+            train_info = self.learner.update(**samples)
+            train_info["epsilon-greedy"] = self.egreedy
+        return train_info
+
     def train(self, train_steps):
         obs = self.envs.buf_obs
         for _ in tqdm(range(train_steps)):
@@ -108,19 +116,17 @@ class DQN_Agent(Agent):
 
             self.memory.store(obs, acts, self._process_reward(rewards), terminals, self._process_observation(next_obs))
             if self.current_step > self.start_training and self.current_step % self.training_frequency == 0:
-                # training
-                obs_batch, act_batch, rew_batch, terminal_batch, next_batch = self.memory.sample()
-                step_info = self.learner.update(obs_batch, act_batch, rew_batch, next_batch, terminal_batch)
-                step_info["epsilon-greedy"] = self.egreedy
+                step_info = self.train_epochs(n_epochs=1)
                 self.log_infos(step_info, self.current_step)
 
-            obs = next_obs
+            obs = deepcopy(next_obs)
             for i in range(self.n_envs):
                 if terminals[i] or trunctions[i]:
                     if self.atari and (~trunctions[i]):
                         pass
                     else:
                         obs[i] = infos[i]["reset_obs"]
+                        self.envs.buf_obs[i] = obs[i]
                         self.current_episode[i] += 1
                         if self.use_wandb:
                             step_info["Episode-Steps/env-%d" % i] = infos[i]["episode_step"]
@@ -155,7 +161,7 @@ class DQN_Agent(Agent):
                 for idx, img in enumerate(images):
                     videos[idx].append(img)
 
-            obs = next_obs
+            obs = deepcopy(next_obs)
             for i in range(num_envs):
                 if terminals[i] or trunctions[i]:
                     if self.atari and (~trunctions[i]):
