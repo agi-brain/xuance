@@ -1,28 +1,38 @@
-from xuance.torch.learners import *
+"""
+Proximal Policy Optimization with clip trick (PPO_CLIP)
+Paper link: https://arxiv.org/pdf/1707.06347.pdf
+Implementation: Pytorch
+"""
+import torch
+import numpy as np
+from torch import nn
+from xuance.torch.learners import Learner
+from typing import Optional, Union
+from argparse import Namespace
 from xuance.torch.utils.operations import merge_distributions
 
 
 class PPOKL_Learner(Learner):
     def __init__(self,
+                 config: Namespace,
+                 episode_length: int,
                  policy: nn.Module,
                  optimizer: torch.optim.Optimizer,
-                 scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
-                 device: Optional[Union[int, str, torch.device]] = None,
-                 model_dir: str = "./",
-                 vf_coef: float = 0.25,
-                 ent_coef: float = 0.005,
-                 target_kl: float = 0.25):
-        super(PPOKL_Learner, self).__init__(policy, optimizer, scheduler, device, model_dir)
-        self.vf_coef = vf_coef
-        self.ent_coef = ent_coef
-        self.target_kl = target_kl
-        self.kl_coef = 1.0
+                 scheduler: Union[dict, Optional[torch.optim.lr_scheduler.LinearLR]] = None):
+        super(PPOKL_Learner, self).__init__(config, episode_length, policy, optimizer, scheduler)
+        self.mse_loss = nn.MSELoss()
+        self.vf_coef = config.vf_coef
+        self.ent_coef = config.ent_coef
+        self.target_kl = config.target_kl
+        self.kl_coef = config.kl_coef
 
-    def update(self, obs_batch, act_batch, ret_batch, adv_batch, old_dists):
+    def update(self, **samples):
         self.iterations += 1
-        act_batch = torch.as_tensor(act_batch, device=self.device)
-        ret_batch = torch.as_tensor(ret_batch, device=self.device)
-        adv_batch = torch.as_tensor(adv_batch, device=self.device)
+        obs_batch = samples['obs']
+        act_batch = torch.as_tensor(samples['actions'], device=self.device)
+        ret_batch = torch.as_tensor(samples['returns'], device=self.device)
+        adv_batch = torch.as_tensor(samples['advantages'], device=self.device)
+        old_dists = samples['aux_batch']['old_dist']
 
         _, a_dist, v_pred = self.policy(obs_batch)
         log_prob = a_dist.log_prob(act_batch)
@@ -33,7 +43,7 @@ class PPOKL_Learner(Learner):
         # ppo-clip core implementations 
         ratio = (log_prob - old_logp_batch).exp().float()
         a_loss = -(ratio * adv_batch).mean() + self.kl_coef * kl
-        c_loss = F.mse_loss(v_pred, ret_batch)
+        c_loss = self.mse_loss(v_pred, ret_batch)
         e_loss = a_dist.entropy().mean()
         loss = a_loss - self.ent_coef * e_loss + self.vf_coef * c_loss
         if kl > self.target_kl * 1.5:

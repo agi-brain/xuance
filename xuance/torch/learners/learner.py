@@ -53,7 +53,7 @@ class Learner(ABC):
 
         model_names = os.listdir(path)
         if os.path.exists(path + "/obs_rms.npy"):
-            model_names.remove(bytes("obs_rms.npy"))
+            model_names.remove("obs_rms.npy")
         if len(model_names) == 0:
             raise RuntimeError(f"There is no model file in '{path}'!")
         model_names.sort()
@@ -215,7 +215,7 @@ class LearnerMAS(ABC):
 
         model_names = os.listdir(path)
         if os.path.exists(path + "/obs_rms.npy"):
-            model_names.remove(bytes("obs_rms.npy"))
+            model_names.remove("obs_rms.npy")
         if len(model_names) == 0:
             raise RuntimeError(f"There is no model file in '{path}'!")
         model_names.sort()
