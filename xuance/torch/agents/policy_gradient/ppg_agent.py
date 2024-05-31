@@ -1,4 +1,16 @@
-from xuance.torch.agents import *
+import torch
+import numpy as np
+from tqdm import tqdm
+from copy import deepcopy
+from argparse import Namespace
+from xuance.environment import DummyVecEnv
+from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
+from xuance.torch.representations import REGISTRY_Representation
+from xuance.torch.policies import REGISTRY_Policy
+from xuance.torch.learners import PPG_Learner
+from xuance.torch.agents import Agent
+from xuance.common import space2shape, DummyOnPolicyBuffer, DummyOnPolicyBuffer_Atari
+from xuance.torch.utils import split_distributions
 
 
 class PPG_Agent(Agent):
@@ -7,56 +19,86 @@ class PPG_Agent(Agent):
     Args:
         config: the Namespace variable that provides hyper-parameters and other settings.
         envs: the vectorized environments.
-        policy: the neural network modules of the agent.
-        optimizer: the method of optimizing.
-        scheduler: the learning rate decay scheduler.
-        device: the calculating device of the model, such as CPU or GPU.
     """
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecEnv,
-                 policy: nn.Module,
-                 optimizer: torch.optim.Optimizer,
-                 scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
-                 device: Optional[Union[int, str, torch.device]] = None):
-        self.render = config.render
-        self.n_envs = envs.num_envs
+                 envs: DummyVecEnv):
+        super(PPG_Agent, self).__init__(config, envs)
         self.horizon_size = config.horizon_size
         self.n_minibatch = config.n_minibatch
         self.n_epoch = config.n_epoch
+        self.gae_lam = config.gae_lambda
         self.policy_nepoch = config.policy_nepoch
         self.value_nepoch = config.value_nepoch
         self.aux_nepoch = config.aux_nepoch
-        
-        self.gamma = config.gamma
-        self.gae_lam = config.gae_lambda
-        self.observation_space = envs.observation_space
-        self.action_space = envs.action_space
-        self.representation_info_shape = policy.actor_representation.output_shapes
-        self.auxiliary_info_shape = {"old_dist": None}
 
+        # build policy, optimizer, lr_scheduler.
+        self.policy = self._build_policy()
+        optimizer = torch.optim.Adam(self.policy.parameters(), self.config.learning_rate, eps=1e-5)
+        lr_scheduler = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=1.0, end_factor=0.0,
+                                                         total_iters=self.config.running_steps)
+        
+        self.auxiliary_info_shape = {"old_dist": None}
+        self.atari = True if config.env_name == "Atari" else False
+        Buffer = DummyOnPolicyBuffer_Atari if self.atari else DummyOnPolicyBuffer
         self.buffer_size = self.n_envs * self.horizon_size
         self.batch_size = self.buffer_size // self.n_epoch
-        memory = DummyOnPolicyBuffer(self.observation_space,
-                                     self.action_space,
-                                     self.auxiliary_info_shape,
-                                     self.n_envs,
-                                     self.horizon_size,
-                                     config.use_gae,
-                                     config.use_advnorm,
-                                     self.gamma,
-                                     self.gae_lam)
-        learner = PPG_Learner(policy,
-                              optimizer,
-                              scheduler,
-                              config.device,
-                              config.model_dir,
-                              config.ent_coef,
-                              config.clip_range,
-                              config.kl_beta)
-        super(PPG_Agent, self).__init__(config, envs, policy, memory, learner, device, config.log_dir, config.model_dir)
+        input_buffer = dict(observation_space=self.observation_space,
+                            action_space=self.action_space,
+                            auxiliary_shape=self.auxiliary_info_shape,
+                            n_envs=self.n_envs,
+                            horizon_size=self.horizon_size,
+                            use_gae=config.use_gae,
+                            use_advnorm=config.use_advnorm,
+                            gamma=self.gamma,
+                            gae_lam=self.gae_lam)
+        self.memory = Buffer(**input_buffer)
+        self.learner = self._build_learner(self.config, envs.max_episode_length, self.policy, optimizer, lr_scheduler)
 
-    def _action(self, obs):
+    def _build_policy(self):
+        normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
+        initializer = torch.nn.init.orthogonal_
+        activation = ActivationFunctions[self.config.activation]
+        device = self.device
+
+        # build representation.
+        if self.config.representation == "Basic_Identical":
+            representation = REGISTRY_Representation["Basic_Identical"](input_shape=space2shape(self.observation_space),
+                                                                        device=self.device)
+        elif self.config.representation == "Basic_MLP":
+            representation = REGISTRY_Representation["Basic_MLP"](
+                input_shape=space2shape(self.observation_space),
+                hidden_sizes=self.config.representation_hidden_size,
+                normalize=normalize_fn, initialize=initializer, activation=activation, device=device)
+        elif self.config.representation == "Basic_CNN":
+            representation = REGISTRY_Representation["Basic_CNN"](
+                input_shape=space2shape(self.observation_space),
+                kernels=self.config.kernels, strides=self.config.strides, filters=self.config.filters,
+                normalize=normalize_fn, initialize=initializer, activation=activation, device=device)
+        else:
+            raise AttributeError(f"PPG currently does not support {self.config.representation} representation.")
+
+        # build policy.
+        if self.config.policy == "Categorical_PPG":
+            policy = REGISTRY_Policy["Categorical_PPG"](
+                action_space=self.action_space, representation=representation,
+                actor_hidden_size=self.config.actor_hidden_size, critic_hidden_size=self.config.critic_hidden_size,
+                normalize=normalize_fn, initialize=initializer, activation=activation, device=device)
+        elif self.config.policy == "Gaussian_PPG":
+            policy = REGISTRY_Policy["Gaussian_PPG"](
+                action_space=self.action_space, representation=representation,
+                actor_hidden_size=self.config.actor_hidden_size, critic_hidden_size=self.config.critic_hidden_size,
+                normalize=normalize_fn, initialize=initializer, activation=activation, device=device,
+                activation_action=ActivationFunctions[self.config.activation_action])
+        else:
+            raise AttributeError(f"PPG currently does not support the policy named {self.config.policy}.")
+
+        return policy
+
+    def _build_learner(self, *args):
+        return PPG_Learner(*args)
+
+    def action(self, obs):
         _, dists, vs, _ = self.policy(obs)
         acts = dists.stochastic_sample()
         vs = vs.detach().cpu().numpy()
@@ -69,12 +111,12 @@ class PPG_Agent(Agent):
             step_info = {}
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
-            acts, rets, dists = self._action(obs)
+            acts, rets, dists = self.action(obs)
             next_obs, rewards, terminals, trunctions, infos = self.envs.step(acts)
 
             self.memory.store(obs, acts, self._process_reward(rewards), rets, terminals, {"old_dist": dists})
             if self.memory.full:
-                _, vals, _ = self._action(self._process_observation(next_obs))
+                _, vals, _ = self.action(self._process_observation(next_obs))
                 for i in range(self.n_envs):
                     self.memory.finish_path(vals[i], i)
                 # policy update
@@ -84,18 +126,16 @@ class PPG_Agent(Agent):
                     for start in range(0, self.buffer_size, self.batch_size):
                         end = start + self.batch_size
                         sample_idx = indexes[start:end]
-                        obs_batch, act_batch, ret_batch, _, adv_batch, aux_batch = self.memory.sample(sample_idx)
-                        step_info.update(self.learner.update_policy(obs_batch, act_batch, ret_batch, adv_batch,
-                                                                    aux_batch['old_dist']))
+                        samples = self.memory.sample(sample_idx)
+                        step_info.update(self.learner.update_policy(**samples))
                 # critic update
                 for _ in range(self.value_nepoch):
                     np.random.shuffle(indexes)
                     for start in range(0, self.buffer_size, self.batch_size):
                         end = start + self.batch_size
                         sample_idx = indexes[start:end]
-                        obs_batch, act_batch, ret_batch, _, adv_batch, aux_batch = self.memory.sample(sample_idx)
-                        step_info.update(self.learner.update_critic(obs_batch, act_batch, ret_batch, adv_batch,
-                                                                    aux_batch['old_dist']))
+                        samples = self.memory.sample(sample_idx)
+                        step_info.update(self.learner.update_critic(**samples))
                     
                 # update old_prob
                 buffer_obs = self.memory.observations
@@ -107,16 +147,16 @@ class PPG_Agent(Agent):
                     for start in range(0, self.buffer_size, self.batch_size):
                         end = start + self.batch_size
                         sample_idx = indexes[start:end]
-                        obs_batch, act_batch, ret_batch, _, adv_batch, aux_batch = self.memory.sample(sample_idx)
-                        step_info.update(self.learner.update_auxiliary(obs_batch, act_batch, ret_batch, adv_batch,
-                                                                       aux_batch['old_dist']))
+                        samples = self.memory.sample(sample_idx)
+                        step_info.update(self.learner.update_auxiliary(**samples))
                 self.log_infos(step_info, self.current_step)
                 self.memory.clear()
 
-            obs = next_obs
+            obs = deepcopy(next_obs)
             for i in range(self.n_envs):
                 if terminals[i] or trunctions[i]:
                     obs[i] = infos[i]["reset_obs"]
+                    self.envs.buf_obs[i] = obs[i]
                     self.memory.finish_path(0, i)
                     self.current_episode[i] += 1
                     if self.use_wandb:
@@ -143,14 +183,14 @@ class PPG_Agent(Agent):
         while current_episode < test_episodes:
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
-            acts, rets, logps = self._action(obs)
+            acts, rets, logps = self.action(obs)
             next_obs, rewards, terminals, trunctions, infos = test_envs.step(acts)
             if self.config.render_mode == "rgb_array" and self.render:
                 images = test_envs.render(self.config.render_mode)
                 for idx, img in enumerate(images):
                     videos[idx].append(img)
 
-            obs = next_obs
+            obs = deepcopy(next_obs)
             for i in range(num_envs):
                 if terminals[i] or trunctions[i]:
                     obs[i] = infos[i]["reset_obs"]
