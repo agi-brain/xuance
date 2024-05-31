@@ -12,15 +12,17 @@ from typing import Dict
 def create_memory(shape: Optional[Union[tuple, dict]],
                   n_envs: int,
                   n_size: int,
+                  n_agents: Optional[int] = None,
                   dtype: type = np.float32):
     """
     Create a numpy array for memory data.
 
     Args:
-        shape: data shape.
-        n_envs: number of parallel environments.
-        n_size: length of data sequence for each environment.
-        dtype: numpy data type.
+        shape: Data shape.
+        n_envs: Number of parallel environments.
+        n_size: Length of data sequence for each environment.
+        n_agents: The number of agents, default is None. (For MARL)
+        dtype: Numpy data type.
 
     Returns:
         An empty memory space to store data. (initial: numpy.zeros())
@@ -31,12 +33,21 @@ def create_memory(shape: Optional[Union[tuple, dict]],
         memory = {}
         for key, value in zip(shape.keys(), shape.values()):
             if value is None:  # save an object type
-                memory[key] = np.zeros([n_envs, n_size], dtype=object)
+                if n_agents is None:
+                    memory[key] = np.zeros([n_envs, n_size], dtype=object)
+                else:
+                    memory[key] = np.zeros([n_envs, n_size, n_agents], dtype=object)
             else:
-                memory[key] = np.zeros([n_envs, n_size] + list(value), dtype=dtype)
+                if n_agents is None:
+                    memory[key] = np.zeros([n_envs, n_size] + list(value), dtype=dtype)
+                else:
+                    memory[key] = np.zeros([n_envs, n_size, n_agents] + list(value), dtype=dtype)
         return memory
     elif isinstance(shape, tuple):
-        return np.zeros([n_envs, n_size] + list(shape), dtype)
+        if n_agents is None:
+            return np.zeros([n_envs, n_size] + list(shape), dtype)
+        else:
+            return np.zeros([n_envs, n_size, n_agents] + list(shape), dtype)
     else:
         raise NotImplementedError
 
