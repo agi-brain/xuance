@@ -37,7 +37,7 @@ class PPOKL_Agent(Agent):
 
         self.auxiliary_info_shape = {"old_dist": None}
         self.atari = True if config.env_name == "Atari" else False
-        Buffer = DummyOnPolicyBuffer_Atari if self.atari else DummyOnPolicyBuffer_Atari
+        Buffer = DummyOnPolicyBuffer_Atari if self.atari else DummyOnPolicyBuffer
         self.buffer_size = self.n_envs * self.horizon_size
         self.batch_size = self.buffer_size // self.n_minibatch
         self.memory = Buffer(observation_space=self.observation_space,
