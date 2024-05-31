@@ -100,7 +100,7 @@ class PPOKL_Agent(Agent):
     def _build_learner(self, *args):
         return PPOKL_Learner(*args)
 
-    def _action(self, obs):
+    def action(self, obs):
         _, dists, vs = self.policy(obs)
         acts = dists.stochastic_sample()
         vs = vs.detach().cpu().numpy()
@@ -125,12 +125,12 @@ class PPOKL_Agent(Agent):
             step_info = {}
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
-            acts, values, dists = self._action(obs)
+            acts, values, dists = self.action(obs)
             next_obs, rewards, terminals, trunctions, infos = self.envs.step(acts)
 
             self.memory.store(obs, acts, self._process_reward(rewards), values, terminals, {"old_dist": dists})
             if self.memory.full:
-                _, vals, _ = self._action(self._process_observation(next_obs))
+                _, vals, _ = self.action(self._process_observation(next_obs))
                 for i in range(self.n_envs):
                     if terminals[i]:
                         self.memory.finish_path(0.0, i)
@@ -152,7 +152,7 @@ class PPOKL_Agent(Agent):
                         if terminals[i]:
                             self.memory.finish_path(0.0, i)
                         else:
-                            _, vals, _ = self._action(self._process_observation(next_obs))
+                            _, vals, _ = self.action(self._process_observation(next_obs))
                             self.memory.finish_path(vals[i], i)
                         obs[i] = infos[i]["reset_obs"]
                         self.envs.buf_obs[i] = obs[i]
@@ -181,7 +181,7 @@ class PPOKL_Agent(Agent):
         while current_episode < test_episode:
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
-            acts, rets, logps = self._action(obs)
+            acts, rets, logps = self.action(obs)
             next_obs, rewards, terminals, trunctions, infos = test_envs.step(acts)
             if self.config.render_mode == "rgb_array" and self.render:
                 images = test_envs.render(self.config.render_mode)

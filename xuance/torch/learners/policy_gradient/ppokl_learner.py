@@ -53,6 +53,8 @@ class PPOKL_Learner(Learner):
         self.kl_coef = np.clip(self.kl_coef, 0.1, 20)
         self.optimizer.zero_grad()
         loss.backward()
+        if self.use_grad_clip:
+            torch.nn.utils.clip_grad_norm_(self.policy.parameters(), self.grad_clip_norm)
         self.optimizer.step()
         if self.scheduler is not None:
             self.scheduler.step()
