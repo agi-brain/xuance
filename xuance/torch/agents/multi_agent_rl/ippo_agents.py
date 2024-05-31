@@ -285,8 +285,10 @@ class IPPO_Agents(MARLAgents):
                                                          avail_actions=avail_actions_input,
                                                          rnn_hidden=rnn_hidden_actor)
             if not test_mode:
-                rnn_hidden_critic_new, values_dict = self.policy.get_values(observation=obs_input,
-                                                                            rnn_hidden=rnn_hidden_critic)
+                rnn_hidden_critic_new, values_out = self.policy.get_values(observation=obs_input,
+                                                                           rnn_hidden=rnn_hidden_critic)
+                values_dict = [{k: values_out[k][e, 0].cpu().detach().numpy() for k in self.agent_keys}
+                               for e in range(n_env)]
 
             actions_out, log_pi_a = {}, {}
             for key in self.agent_keys:
@@ -294,7 +296,8 @@ class IPPO_Agents(MARLAgents):
                     actions_out[key] = pi_dists[key].stochastic_sample().squeeze(1)
                     log_pi_a[key] = pi_dists[key].log_prob(actions_out[key]).cpu().detach().numpy()
                 else:
-                    actions_out[key] = pi_dists[key].stochastic_sample().cpu().detach().numpy()
+                    actions_out[key] = pi_dists[key].stochastic_sample()
+                    log_pi_a[key] = pi_dists[key].log_prob(actions_out[key]).cpu().detach().numpy()
             actions_dict = [{k: actions_out[k].cpu().detach().numpy()[e] for k in self.agent_keys}
                             for e in range(n_env)]
             log_pi_a_dict = [{k: log_pi_a[k][e] for i, k in enumerate(self.agent_keys)} for e in range(n_env)]
@@ -337,8 +340,9 @@ class IPPO_Agents(MARLAgents):
         else:
             obs_input = {k: obs_dict[k][:, None] for k in self.agent_keys} if self.use_rnn else obs_dict
 
-            rnn_hidden_critic_new, values_dict = self.policy.get_values(observation=obs_input,
-                                                                        rnn_hidden=rnn_hidden_critic)
+            rnn_hidden_critic_new, values_out = self.policy.get_values(observation=obs_input,
+                                                                       rnn_hidden=rnn_hidden_critic)
+            values_dict = {k: values_out[k][0].cpu().detach().numpy() for k in self.agent_keys}
 
         return rnn_hidden_critic_new, values_dict
 
@@ -396,8 +400,10 @@ class IPPO_Agents(MARLAgents):
 
             for i in range(self.n_envs):
                 if all(terminated_dict[i].values()) or truncated[i]:
-                    _, value_next = self.values_next(obs_dict=obs_dict[i],
-                                                     rnn_hidden_critic=self.rnn_hidden_critic)
+                    if all(terminated_dict[i].values()):
+                        value_next = {key: 0.0 for key in self.agent_keys}
+                    else:
+                        _, value_next = self.values_next(obs_dict=obs_dict[i], rnn_hidden_critic=self.rnn_hidden_critic)
                     if self.use_rnn:
                         self.init_hidden_item(i)
                         raise NotImplementedError
@@ -447,15 +453,13 @@ class IPPO_Agents(MARLAgents):
                                                                        avail_actions_dict=avail_actions,
                                                                        rnn_hidden_actor=rnn_hidden_actor,
                                                                        test_mode=True)
-            next_obs_dict, rewards_dict, terminated_dict, truncated, info = test_envs.step(actions_dict)
-            next_avail_actions = test_envs.buf_avail_actions
+            obs_dict, rewards_dict, terminated_dict, truncated, info = test_envs.step(actions_dict)
+            avail_actions = test_envs.buf_avail_actions
             if self.config.render_mode == "rgb_array" and self.render:
                 images = test_envs.render(self.config.render_mode)
                 for idx, img in enumerate(images):
                     videos[idx].append(img)
 
-            obs_dict = deepcopy(next_obs_dict)
-            avail_actions = deepcopy(next_avail_actions)
             rnn_hidden_actor = deepcopy(rnn_hidden_next_actor)
             for i in range(num_envs):
                 if all(terminated_dict[i].values()) or truncated[i]:

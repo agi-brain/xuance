@@ -81,7 +81,10 @@ class IPPO_Learner(LearnerMAS):
                 agent_mask = {k: Tensor(concat([agt_mask_array[i][:, None, :, None] for i in range(self.n_agents)], 1)).float().to(self.device)}
                 IDs = torch.eye(self.n_agents).unsqueeze(1).unsqueeze(0).expand(batch_size, -1, seq_length + 1, -1).to(self.device)
             else:
-                rewards = {k: Tensor(concat([rew_array[i][:, None, None] for i in range(self.n_agents)], 1)).to(self.device)}
+                values = {k: Tensor(concat([values_array[i][:, None, None] for i in range(self.n_agents)], 1)).to(self.device)}
+                returns = {k: Tensor(concat([returns_array[i][:, None, None] for i in range(self.n_agents)], 1)).to(self.device)}
+                advantages = {k: Tensor(concat([advantages_array[i][:, None, None] for i in range(self.n_agents)], 1)).to(self.device)}
+                log_pi_old = {k: Tensor(concat([log_pi_old_array[i][:, None, None] for i in range(self.n_agents)], 1)).to(self.device)}
                 terminals = {k: Tensor(concat([ter_array[i][:, None, None] for i in range(self.n_agents)], 1)).float().to(self.device)}
                 agent_mask = {k: Tensor(concat([agt_mask_array[i][:, None, None] for i in range(self.n_agents)], 1)).float().to(self.device)}
                 IDs = torch.eye(self.n_agents).unsqueeze(0).expand(batch_size, -1, -1).to(self.device)
@@ -94,11 +97,17 @@ class IPPO_Learner(LearnerMAS):
             obs = {k: Tensor(sample['obs'][k]).to(self.device) for k in self.agent_keys}
             actions = {k: Tensor(sample['actions'][k]).to(self.device) for k in self.agent_keys}
             if self.use_rnn:
-                rewards = {k: Tensor(sample['rewards'][k][:, :, None]).to(self.device) for k in self.agent_keys}
+                values = {k: Tensor(sample['values'][k][:, :, None]).to(self.device) for k in self.agent_keys}
+                returns = {k: Tensor(sample['returns'][k][:, :, None]).to(self.device) for k in self.agent_keys}
+                advantages = {k: Tensor(sample['advantages'][k][:, :, None]).to(self.device) for k in self.agent_keys}
+                log_pi_old = {k: Tensor(sample['log_pi_old'][k][:, :, None]).to(self.device) for k in self.agent_keys}
                 terminals = {k: Tensor(sample['terminals'][k][:, :, None]).float().to(self.device) for k in self.agent_keys}
                 agent_mask = {k: Tensor(sample['agent_mask'][k][:, :, None]).float().to(self.device) for k in self.agent_keys}
             else:
-                rewards = {k: Tensor(sample['rewards'][k][:, None]).to(self.device) for k in self.agent_keys}
+                values = {k: Tensor(sample['values'][k][:, None]).to(self.device) for k in self.agent_keys}
+                returns = {k: Tensor(sample['returns'][k][:, None]).to(self.device) for k in self.agent_keys}
+                advantages = {k: Tensor(sample['advantages'][k][:, None]).to(self.device) for k in self.agent_keys}
+                log_pi_old = {k: Tensor(sample['log_pi_old'][k][:, None]).to(self.device) for k in self.agent_keys}
                 terminals = {k: Tensor(sample['terminals'][k][:, None]).float().to(self.device) for k in self.agent_keys}
                 agent_mask = {k: Tensor(sample['agent_mask'][k][:, None]).float().to(self.device) for k in self.agent_keys}
             if use_actions_mask:
@@ -115,10 +124,13 @@ class IPPO_Learner(LearnerMAS):
             'state': state,
             'obs': obs,
             'actions': actions,
+            'values': values,
+            'returns': returns,
+            'advantages': advantages,
+            'log_pi_old': log_pi_old,
             'terminals': terminals,
             'agent_mask': agent_mask,
             'avail_actions': avail_actions,
-            'avail_actions_next': avail_actions_next,
             'agent_ids': IDs,
             'filled': filled,
         }
@@ -137,12 +149,11 @@ class IPPO_Learner(LearnerMAS):
         actions = sample_Tensor['actions']
         agent_mask = sample_Tensor['agent_mask']
         avail_actions = sample_Tensor['avail_actions']
+        values = sample_Tensor['values']
+        returns = sample_Tensor['returns']
+        advantages = sample_Tensor['advantages']
+        log_pi_old = sample_Tensor['log_pi_old']
         IDs = sample_Tensor['agent_ids']
-
-        values = torch.Tensor(sample['values']).to(self.device)
-        returns = torch.Tensor(sample['returns']).to(self.device)
-        advantages = torch.Tensor(sample['advantages']).to(self.device)
-        log_pi_old = torch.Tensor(sample['log_pi_old']).to(self.device)
 
         # feedforward
         _, pi_dists_dict = self.policy(observation=obs, agent_ids=IDs, avail_actions=avail_actions)
@@ -150,10 +161,13 @@ class IPPO_Learner(LearnerMAS):
 
         # calculate losses for each agent
         loss_a, loss_e, loss_c = [], [], []
-        for key in self.agent_keys:
+        for key in self.model_keys:
             # actor loss
-            log_pi = pi_dists_dict[key].log_prob(actions[key])
-            ratio = torch.exp(log_pi - log_pi_old[key]).reshape(batch_size, self.n_agents, 1)
+            log_pi = pi_dists_dict[key].log_prob(actions[key]).unsqueeze(-1)
+            if self.use_parameter_sharing:
+                ratio = torch.exp(log_pi - log_pi_old[key]).reshape(batch_size, self.n_agents, 1)
+            else:
+                ratio = torch.exp(log_pi - log_pi_old[key]).reshape(batch_size, 1)
             advantages_mask = advantages[key].detach() * agent_mask[key]
             surrogate1 = ratio * advantages_mask
             surrogate2 = torch.clip(ratio, 1 - self.clip_range, 1 + self.clip_range) * advantages_mask
