@@ -1,55 +1,94 @@
-from xuance.torch.agents import *
+import torch
+import numpy as np
+from tqdm import tqdm
+from copy import deepcopy
+from operator import itemgetter
+from argparse import Namespace
+from typing import Optional, List
+from torch.distributions import Categorical
+from xuance.environment import DummyVecEnv
+from xuance.torch import Tensor
+from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
+from xuance.torch.representations import REGISTRY_Representation
+from xuance.torch.policies import REGISTRY_Policy
+from xuance.torch.learners import DQN_Learner
+from xuance.torch.agents import Agent
+from xuance.common import space2shape, DummyOffPolicyBuffer, DummyOffPolicyBuffer_Atari
 
 
 class DQN_Agent(Agent):
-    """The implementation of DQN agent.
+    """The implementation of Deep Q-Networks (DQN) agent.
 
     Args:
         config: the Namespace variable that provides hyper-parameters and other settings.
         envs: the vectorized environments.
-        policy: the neural network modules of the agent.
-        optimizer: the method of optimizing.
-        scheduler: the learning rate decay scheduler.
-        device: the calculating device of the model, such as CPU or GPU.
     """
+
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecEnv,
-                 policy: nn.Module,
-                 optimizer: torch.optim.Optimizer,
-                 scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
-                 device: Optional[Union[int, str, torch.device]] = None):
-        self.render = config.render
-        self.n_envs = envs.num_envs
+                 envs: DummyVecEnv):
+        super(DQN_Agent, self).__init__(config, envs)
 
-        self.gamma = config.gamma
-        self.train_frequency = config.training_frequency
-        self.start_training = config.start_training
-        self.start_greedy = config.start_greedy
-        self.end_greedy = config.end_greedy
+        self.start_greedy, self.end_greedy = config.start_greedy, config.end_greedy
         self.egreedy = config.start_greedy
+        self.delta_egreedy = (self.start_greedy - self.end_greedy) / (config.decay_step_greedy / self.n_envs)
 
-        self.observation_space = envs.observation_space
-        self.action_space = envs.action_space
+        # Build policy, optimizer, scheduler.
+        self.policy = self._build_policy()
+        optimizer = torch.optim.Adam(self.policy.parameters(), self.config.learning_rate, eps=1e-5)
+        lr_scheduler = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=1.0, end_factor=0.0,
+                                                         total_iters=self.config.running_steps)
+
+        # Create experience replay buffer.
+        input_differ = dict(observation_space=self.observation_space,
+                            action_space=self.action_space,
+                            auxiliary_shape={},
+                            n_envs=self.n_envs,
+                            buffer_size=self.config.buffer_size,
+                            batch_size=self.config.batch_size)
         self.auxiliary_info_shape = {}
         self.atari = True if config.env_name == "Atari" else False
         Buffer = DummyOffPolicyBuffer_Atari if self.atari else DummyOffPolicyBuffer
-        memory = Buffer(self.observation_space,
-                        self.action_space,
-                        self.auxiliary_info_shape,
-                        self.n_envs,
-                        config.buffer_size,
-                        config.batch_size)
-        learner = DQN_Learner(policy,
-                              optimizer,
-                              scheduler,
-                              config.device,
-                              config.model_dir,
-                              config.gamma,
-                              config.sync_frequency)
-        super(DQN_Agent, self).__init__(config, envs, policy, memory, learner, device, config.log_dir, config.model_dir)
+        self.memory = Buffer(**input_differ)
+        self.learner = self._build_learner(self.config, envs.max_episode_length, self.policy, optimizer, lr_scheduler)
 
-    def _action(self, obs, egreedy=0.0):
+    def _build_policy(self):
+        normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
+        initializer = torch.nn.init.orthogonal_
+        activation = ActivationFunctions[self.config.activation]
+        device = self.device
+
+        # build representation.
+        if self.config.representation == "Basic_Identical":
+            representation = REGISTRY_Representation["Basic_Identical"](input_shape=space2shape(self.observation_space),
+                                                                        device=self.device)
+        elif self.config.representation == "Basic_MLP":
+            representation = REGISTRY_Representation["Basic_MLP"](
+                input_shape=space2shape(self.observation_space),
+                hidden_sizes=self.config.representation_hidden_size,
+                normalize=normalize_fn, initialize=initializer, activation=activation, device=device)
+        elif self.config.representation == "Basic_CNN":
+            representation = REGISTRY_Representation["Basic_CNN"](
+                input_shape=space2shape(self.observation_space),
+                kernels=self.config.kernels, strides=self.config.strides, filters=self.config.filters,
+                normalize=normalize_fn, initialize=initializer, activation=activation, device=device)
+        else:
+            raise AttributeError(f"DQN currently does not support {self.config.representation} representation.")
+
+        # build policy.
+        if self.config.policy == "Basic_Q_network":
+            policy = REGISTRY_Policy["Basic_Q_network"](
+                action_space=self.action_space, representation=representation, hidden_size=self.config.q_hidden_size,
+                normalize=normalize_fn, initialize=initializer, activation=activation, device=device)
+        else:
+            raise AttributeError(f"DQN currently does not support the policy named {self.config.policy}.")
+
+        return policy
+
+    def _build_learner(self, *args):
+        return DQN_Learner(*args)
+
+    def action(self, obs, egreedy=0.0):
         _, argmax_action, _ = self.policy(obs)
         random_action = np.random.choice(self.action_space.n, self.n_envs)
         if np.random.rand() < egreedy:
@@ -64,11 +103,11 @@ class DQN_Agent(Agent):
             step_info = {}
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
-            acts = self._action(obs, self.egreedy)
+            acts = self.action(obs, self.egreedy)
             next_obs, rewards, terminals, trunctions, infos = self.envs.step(acts)
 
             self.memory.store(obs, acts, self._process_reward(rewards), terminals, self._process_observation(next_obs))
-            if self.current_step > self.start_training and self.current_step % self.train_frequency == 0:
+            if self.current_step > self.start_training and self.current_step % self.training_frequency == 0:
                 # training
                 obs_batch, act_batch, rew_batch, terminal_batch, next_batch = self.memory.sample()
                 step_info = self.learner.update(obs_batch, act_batch, rew_batch, next_batch, terminal_batch)
@@ -93,7 +132,7 @@ class DQN_Agent(Agent):
 
             self.current_step += self.n_envs
             if self.egreedy >= self.end_greedy:
-                self.egreedy = self.egreedy - (self.start_greedy - self.end_greedy) / self.config.decay_step_greedy
+                self.egreedy = self.egreedy - self.delta_egreedy
 
     def test(self, env_fn, test_episodes):
         test_envs = env_fn()
@@ -109,7 +148,7 @@ class DQN_Agent(Agent):
         while current_episode < test_episodes:
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
-            acts = self._action(obs, egreedy=0.0)
+            acts = self.action(obs, egreedy=0.0)
             next_obs, rewards, terminals, trunctions, infos = test_envs.step(acts)
             if self.config.render_mode == "rgb_array" and self.render:
                 images = test_envs.render(self.config.render_mode)

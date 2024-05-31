@@ -2,6 +2,7 @@ import os.path
 import wandb
 import socket
 import numpy as np
+from abc import ABC, abstractmethod
 from pathlib import Path
 from argparse import Namespace
 from typing import Optional
@@ -11,7 +12,7 @@ from xuance.common import get_time_string, create_directory
 from xuance.environment import DummyVecMutliAgentEnv
 
 
-class MARLAgents(object):
+class MARLAgents(ABC):
     """Base class of agents for MARL.
 
     Args:
@@ -21,7 +22,7 @@ class MARLAgents(object):
     def __init__(self,
                  config: Namespace,
                  envs: DummyVecMutliAgentEnv):
-        # training settings
+        # Training settings.
         self.config = config
         self.use_rnn = config.use_rnn if hasattr(config, "use_rnn") else False
         self.use_parameter_sharing = config.use_parameter_sharing
@@ -32,7 +33,7 @@ class MARLAgents(object):
         self.training_frequency = config.training_frequency
         self.device = config.device
 
-        # environment attributes
+        # Environment attributes.
         self.envs = envs
         self.envs.reset()
         self.n_agents = config.n_agents
@@ -45,13 +46,13 @@ class MARLAgents(object):
         self.current_step = 0
         self.current_episode = np.zeros((self.n_envs,), np.int32)
 
-        # prepare directories
+        # Prepare directories.
         time_string = get_time_string()
         seed = f"seed_{config.seed}_"
         self.model_dir_load = config.model_dir
         self.model_dir_save = os.path.join(os.getcwd(), config.model_dir, seed + time_string)
 
-        # create logger
+        # Create logger.
         if config.logger == "tensorboard":
             log_dir = os.path.join(os.getcwd(), config.log_dir, seed + time_string)
             create_directory(log_dir)
@@ -76,7 +77,7 @@ class MARLAgents(object):
             # os.environ["WANDB_SILENT"] = "True"
             self.use_wandb = True
         else:
-            raise "No logger is implemented."
+            raise AttributeError("No logger is implemented.")
         self.log_dir = log_dir
 
         # predefine necessary components
@@ -143,26 +144,6 @@ class MARLAgents(object):
             wandb.finish()
         else:
             self.writer.close()
-
-
-class linear_decay_or_increase(object):
-    def __init__(self, start, end, step_length):
-        self.start = start
-        self.end = end
-        self.step_length = step_length
-        if self.start > self.end:
-            self.is_decay = True
-            self.delta = (self.start - self.end) / self.step_length
-        else:
-            self.is_decay = False
-            self.delta = (self.end - self.start) / self.step_length
-        self.epsilon = start
-
-    def update(self):
-        if self.is_decay:
-            self.epsilon = max(self.epsilon - self.delta, self.end)
-        else:
-            self.epsilon = min(self.epsilon + self.delta, self.end)
 
 
 class RandomAgents(object):

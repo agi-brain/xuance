@@ -23,7 +23,7 @@ class QRDQN_Agent(Agent):
         self.n_envs = envs.num_envs
 
         self.gamma = config.gamma
-        self.train_frequency = config.training_frequency
+        self.training_frequency = config.training_frequency
         self.start_training = config.start_training
         self.start_greedy = config.start_greedy
         self.end_greedy = config.end_greedy
@@ -70,7 +70,7 @@ class QRDQN_Agent(Agent):
             next_obs, rewards, terminals, trunctions, infos = self.envs.step(acts)
 
             self.memory.store(obs, acts, self._process_reward(rewards), terminals, self._process_observation(next_obs))
-            if self.current_step > self.start_training and self.current_step % self.train_frequency == 0:
+            if self.current_step > self.start_training and self.current_step % self.training_frequency == 0:
                 # training
                 obs_batch, act_batch, rew_batch, terminal_batch, next_batch = self.memory.sample()
                 step_info = self.learner.update(obs_batch, act_batch, rew_batch, next_batch, terminal_batch)

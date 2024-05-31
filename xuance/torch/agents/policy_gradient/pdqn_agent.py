@@ -28,13 +28,13 @@ class PDQN_Agent(Agent):
         self.n_envs = envs.num_envs
 
         self.gamma = config.gamma
-        self.train_frequency = config.training_frequency
+        self.training_frequency = config.training_frequency
         self.start_training = config.start_training
         self.start_greedy = config.start_greedy
         self.end_greedy = config.end_greedy
         self.egreedy = config.start_greedy
 
-        self.train_frequency = config.training_frequency
+        self.training_frequency = config.training_frequency
         self.start_training = config.start_training
         self.start_noise = config.start_noise
         self.end_noise = config.end_noise
@@ -117,7 +117,7 @@ class PDQN_Agent(Agent):
             if self.render: self.envs.render("human")
             acts = np.concatenate(([disaction], con_actions), axis=0).ravel()
             self.memory.store(obs, acts, rewards, terminal, next_obs)
-            if self.current_step > self.start_training and self.current_step % self.train_frequency == 0:
+            if self.current_step > self.start_training and self.current_step % self.training_frequency == 0:
                 obs_batch, act_batch, rew_batch, terminal_batch, next_batch = self.memory.sample()
                 step_info.update(self.learner.update(obs_batch, act_batch, rew_batch, next_batch, terminal_batch))
 

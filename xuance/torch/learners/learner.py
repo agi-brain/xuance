@@ -13,16 +13,26 @@ MAX_GPUs = 100
 
 class Learner(ABC):
     def __init__(self,
+                 config: Namespace,
+                 episode_length: int,
                  policy: torch.nn.Module,
-                 optimizer: Union[torch.optim.Optimizer, Sequence[torch.optim.Optimizer]],
-                 scheduler: Optional[torch.optim.lr_scheduler.LinearLR] = None,
-                 device: Optional[Union[int, str, torch.device]] = None,
-                 model_dir: str = "./"):
+                 optimizer: Union[dict, Optional[torch.optim.Optimizer]],
+                 scheduler: Union[dict, Optional[torch.optim.lr_scheduler.LinearLR]] = None):
+        self.value_normalizer = None
+        self.config = config
+
+        self.episode_length = episode_length
+        self.use_rnn = config.use_rnn if hasattr(config, 'use_rnn') else False
+        self.use_actions_mask = config.use_actions_mask if hasattr(config, 'use_actions_mask') else False
         self.policy = policy
         self.optimizer = optimizer
         self.scheduler = scheduler
-        self.device = device
-        self.model_dir = model_dir
+
+        self.use_grad_clip = config.use_grad_clip
+        self.grad_clip_norm = config.grad_clip_norm
+        self.device = config.device
+        self.model_dir = config.model_dir
+        self.running_steps = config.running_steps
         self.iterations = 0
 
     def save_model(self, model_path):

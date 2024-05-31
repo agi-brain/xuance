@@ -1,18 +1,28 @@
-from xuance.torch.learners import *
+"""
+Deep Q-Network (VDN)
+Paper link: https://www.nature.com/articles/nature14236
+Implementation: Pytorch
+"""
+import torch
+from torch import nn
+from xuance.torch.learners import Learner
+from typing import Optional, List, Union
+from argparse import Namespace
 
 
 class DQN_Learner(Learner):
     def __init__(self,
+                 config: Namespace,
+                 episode_length: int,
                  policy: nn.Module,
                  optimizer: torch.optim.Optimizer,
-                 scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
-                 device: Optional[Union[int, str, torch.device]] = None,
-                 model_dir: str = "./",
-                 gamma: float = 0.99,
-                 sync_frequency: int = 100):
-        self.gamma = gamma
-        self.sync_frequency = sync_frequency
-        super(DQN_Learner, self).__init__(policy, optimizer, scheduler, device, model_dir)
+                 scheduler: Union[dict, Optional[torch.optim.lr_scheduler.LinearLR]] = None):
+        self.gamma = config.gamma
+        self.sync_frequency = config.sync_frequency
+        self.mse_loss = nn.MSELoss()
+        self.one_hot = nn.functional.one_hot
+        super(DQN_Learner, self).__init__(config, episode_length, policy, optimizer, scheduler)
+        self.n_actions = self.policy.action_space.n
 
     def update(self, obs_batch, act_batch, rew_batch, next_batch, terminal_batch):
         self.iterations += 1
@@ -24,9 +34,9 @@ class DQN_Learner(Learner):
         _, _, targetQ = self.policy.target(next_batch)
         targetQ = targetQ.max(dim=-1).values
         targetQ = rew_batch + self.gamma * (1 - ter_batch) * targetQ
-        predictQ = (evalQ * F.one_hot(act_batch.long(), evalQ.shape[1])).sum(dim=-1)
+        predictQ = (evalQ * self.one_hot(act_batch.long(), evalQ.shape[1])).sum(dim=-1)
 
-        loss = F.mse_loss(predictQ, targetQ)
+        loss = self.mse_loss(predictQ, targetQ)
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()

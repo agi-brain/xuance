@@ -1,5 +1,4 @@
 from xuance.torch.agents import *
-from xuance.torch.agents.agents_marl import linear_decay_or_increase
 
 
 class QTRAN_Agents(MARLAgents):

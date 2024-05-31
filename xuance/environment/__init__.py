@@ -46,18 +46,22 @@ def make_envs(config: Namespace):
             env = PettingZoo_Env(config.env_name, config.env_id, config.seed,
                                  continuous=config.continuous_action,
                                  render_mode=config.render_mode)
+            return MakeMultiAgentEnvironment(env)
 
         if config.env_name == "mpe":
             from xuance.environment.multi_agent_env.mpe import MPE_Env as RawEnv
             env = RawEnv(config)
+            return MakeMultiAgentEnvironment(env)
 
         elif config.env_name == "StarCraft2":
             from xuance.environment.multi_agent_env.starcraft2 import StarCraft2_Env as RawEnv
             env = RawEnv(config)
+            return MakeMultiAgentEnvironment(env)
 
         elif config.env_name == "Football":
             from xuance.environment.football.gfootball_env import GFootball_Env
             env = GFootball_Env(config)
+            return MakeMultiAgentEnvironment(env)
 
         elif config.env_name == "MAgent2":
             from xuance.environment.magent2.magent_env import MAgent_Env
@@ -67,26 +71,32 @@ def make_envs(config: Namespace):
                              extra_features=config.extra_features,
                              map_size=config.map_size,
                              render_mode=config.render_mode)
+            return MakeMultiAgentEnvironment(env)
 
         elif config.env_name == "RoboticWarehouse":
             from xuance.environment.robotic_warehouse.robotic_warehouse_env import RoboticWarehouseEnv
             env = RoboticWarehouseEnv(config, render_mode=config.render_mode)
+            return MakeMultiAgentEnvironment(env)
 
         elif config.env_name == "Atari":
             from xuance.environment.single_agent_env import Atari_Env
             env = Atari_Env(config.env_id, config.seed, config.render_mode,
                             config.obs_type, config.frame_skip, config.num_stack, config.img_size, config.noop_max)
+            return MakeEnvironment(env)
 
         elif config.env_id.__contains__("CarRacing"):
             env = Gym_Env(config.env_id, config.seed, config.render_mode, continuous=False)
+            return MakeEnvironment(env)
 
         elif config.env_id.__contains__("Platform"):
             from xuance.environment.gym_platform.envs.platform_env import PlatformEnv
             env = PlatformEnv()
+            return MakeEnvironment(env)
 
         elif config.env_name == "MiniGrid":
             from xuance.environment.single_agent_env.minigrid import MiniGridEnv as RawEnv
             env = RawEnv(config)
+            return MakeEnvironment(env)
 
         elif config.env_name == "Drones":
             if config.agent_name == "iddpg":
@@ -94,15 +104,16 @@ def make_envs(config: Namespace):
             else:
                 from xuance.environment.single_agent_env.drones import Drone_Env as RawEnv
             env = RawEnv(config)
+            return MakeEnvironment(env)
 
         elif config.env_name == "MetaDrive":
             from xuance.environment.single_agent_env.metadrive import MetaDrive_Env as RawEnv
             env = RawEnv(config)
+            return MakeEnvironment(env)
 
         else:
             env = Gym_Env(config.env_id, config.seed, config.render_mode)
-
-        return MakeMultiAgentEnvironment(env)
+            return MakeEnvironment(env)
 
     if config.vectorize in ["Dummy_MAgent", "Subproc_MAgent"]:  # for the support of magent2 environment
         from xuance.environment.magent2.magent_vec_env import DummyVecEnv_MAgent, SubprocVecEnv_Magent
