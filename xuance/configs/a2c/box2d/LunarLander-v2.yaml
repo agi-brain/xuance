@@ -25,7 +25,7 @@ use_gae: True
 gae_lambda: 0.95
 use_advnorm: True
 
-use_grad_clip: False  # gradient normalization
+use_grad_clip: True  # gradient normalization
 clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
 grad_clip_norm: 0.5
 use_actions_mask: False
