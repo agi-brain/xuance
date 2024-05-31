@@ -46,61 +46,66 @@ class IPPO_Learner(LearnerMAS):
         sample_Tensor = self.build_training_data(sample=sample,
                                                  use_parameter_sharing=self.use_parameter_sharing,
                                                  use_actions_mask=self.use_actions_mask)
+        batch_size = sample_Tensor['batch_size']
+        obs = sample_Tensor['obs']
+        actions = sample_Tensor['actions']
+        agent_mask = sample_Tensor['agent_mask']
+        avail_actions = sample_Tensor['avail_actions']
+        IDs = sample_Tensor['agent_ids']
 
-        state = torch.Tensor(sample['state']).to(self.device)
-        obs = torch.Tensor(sample['obs']).to(self.device)
-        actions = torch.Tensor(sample['actions']).to(self.device)
         values = torch.Tensor(sample['values']).to(self.device)
         returns = torch.Tensor(sample['returns']).to(self.device)
         advantages = torch.Tensor(sample['advantages']).to(self.device)
         log_pi_old = torch.Tensor(sample['log_pi_old']).to(self.device)
-        agent_mask = torch.Tensor(sample['agent_mask']).float().reshape(-1, self.n_agents, 1).to(self.device)
-        batch_size = obs.shape[0]
-        IDs = torch.eye(self.n_agents).unsqueeze(0).expand(batch_size, -1, -1).to(self.device)
 
-        # actor loss
-        _, pi_dist = self.policy(obs, IDs)
-        log_pi = pi_dist.log_prob(actions)
-        ratio = torch.exp(log_pi - log_pi_old).reshape(batch_size, self.n_agents, 1)
-        advantages_mask = advantages.detach() * agent_mask
-        surrogate1 = ratio * advantages_mask
-        surrogate2 = torch.clip(ratio, 1 - self.clip_range, 1 + self.clip_range) * advantages_mask
-        loss_a = -torch.sum(torch.min(surrogate1, surrogate2), dim=-2, keepdim=True).mean()
+        # feedforward
+        _, pi_dists_dict = self.policy(observation=obs, agent_ids=IDs, avail_actions=avail_actions)
+        _, value_pred_dict = self.policy.get_values(observation=obs, agent_ids=IDs)
 
-        # entropy loss
-        entropy = pi_dist.entropy().reshape(agent_mask.shape) * agent_mask
-        loss_e = entropy.mean()
+        # calculate losses for each agent
+        loss_a, loss_e, loss_c = [], [], []
+        for key in self.agent_keys:
+            # actor loss
+            log_pi = pi_dists_dict[key].log_prob(actions[key])
+            ratio = torch.exp(log_pi - log_pi_old[key]).reshape(batch_size, self.n_agents, 1)
+            advantages_mask = advantages[key].detach() * agent_mask[key]
+            surrogate1 = ratio * advantages_mask
+            surrogate2 = torch.clip(ratio, 1 - self.clip_range, 1 + self.clip_range) * advantages_mask
+            loss_a.append(-torch.sum(torch.min(surrogate1, surrogate2), dim=-2, keepdim=True).mean())
 
-        # critic loss
-        _, value_pred = self.policy.get_values(obs, IDs)
-        value_pred = value_pred.reshape(-1, 1)
-        value_target = returns.reshape(-1, 1)
-        values = values.reshape(-1, 1)
-        agent_mask_flatten = agent_mask.reshape(-1, 1)
-        if self.use_value_clip:
-            value_clipped = values + (value_pred - values).clamp(-self.value_clip_range, self.value_clip_range)
-            if self.use_value_norm:
-                self.value_normalizer.update(value_target)
-                value_target = self.value_normalizer.normalize(value_target)
-            if self.use_huber_loss:
-                loss_v = self.huber_loss(value_pred, value_target)
-                loss_v_clipped = self.huber_loss(value_clipped, value_target)
+            # entropy loss
+            entropy = pi_dists_dict[key].entropy().reshape(agent_mask[key].shape) * agent_mask[key]
+            loss_e.append(entropy.mean())
+
+            # critic loss
+            value_pred = value_pred_dict[key].reshape(-1, 1)
+            value_target = returns[key].reshape(-1, 1)
+            values_i = values[key].reshape(-1, 1)
+            agent_mask_flatten = agent_mask[key].reshape(-1, 1)
+            if self.use_value_clip:
+                value_clipped = values_i + (value_pred - values_i).clamp(-self.value_clip_range, self.value_clip_range)
+                if self.use_value_norm:
+                    self.value_normalizer.update(value_target)
+                    value_target = self.value_normalizer.normalize(value_target)
+                if self.use_huber_loss:
+                    loss_v = self.huber_loss(value_pred, value_target)
+                    loss_v_clipped = self.huber_loss(value_clipped, value_target)
+                else:
+                    loss_v = (value_pred - value_target) ** 2
+                    loss_v_clipped = (value_clipped - value_target) ** 2
+                loss_c_ = torch.max(loss_v, loss_v_clipped) * agent_mask_flatten
+                loss_c.append(loss_c_.sum() / agent_mask_flatten.sum())
             else:
-                loss_v = (value_pred - value_target) ** 2
-                loss_v_clipped = (value_clipped - value_target) ** 2
-            loss_c = torch.max(loss_v, loss_v_clipped) * agent_mask_flatten
-            loss_c = loss_c.sum() / agent_mask_flatten.sum()
-        else:
-            if self.use_value_norm:
-                self.value_normalizer.update(value_target)
-                value_target = self.value_normalizer.normalize(value_target)
-            if self.use_huber_loss:
-                loss_v = self.huber_loss(value_pred, value_target) * agent_mask_flatten
-            else:
-                loss_v = ((value_pred - value_target) ** 2) * agent_mask_flatten
-            loss_c = loss_v.sum() / agent_mask.sum()
+                if self.use_value_norm:
+                    self.value_normalizer.update(value_target)
+                    value_target = self.value_normalizer.normalize(value_target)
+                if self.use_huber_loss:
+                    loss_v = self.huber_loss(value_pred, value_target) * agent_mask_flatten
+                else:
+                    loss_v = ((value_pred - value_target) ** 2) * agent_mask_flatten
+                loss_c.append(loss_v.sum() / agent_mask_flatten.sum())
 
-        loss = loss_a + self.vf_coef * loss_c - self.ent_coef * loss_e
+        loss = (sum(loss_a) + self.vf_coef * sum(loss_c) - self.ent_coef * sum(loss_e)) / self.n_agents
         self.optimizer.zero_grad()
         loss.backward()
         if self.use_grad_clip:
@@ -115,9 +120,9 @@ class IPPO_Learner(LearnerMAS):
 
         info.update({
             "learning_rate": lr,
-            "actor_loss": loss_a.item(),
-            "critic_loss": loss_c.item(),
-            "entropy": loss_e.item(),
+            "actor_loss": sum(loss_a).item(),
+            "critic_loss": sum(loss_c).item(),
+            "entropy": sum(loss_e).item(),
             "loss": loss.item(),
             "predict_value": value_pred.mean().item()
         })
