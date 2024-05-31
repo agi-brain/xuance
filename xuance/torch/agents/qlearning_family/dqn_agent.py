@@ -2,12 +2,8 @@ import torch
 import numpy as np
 from tqdm import tqdm
 from copy import deepcopy
-from operator import itemgetter
 from argparse import Namespace
-from typing import Optional, List
-from torch.distributions import Categorical
 from xuance.environment import DummyVecEnv
-from xuance.torch import Tensor
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.representations import REGISTRY_Representation
 from xuance.torch.policies import REGISTRY_Policy
@@ -40,7 +36,7 @@ class DQN_Agent(Agent):
                                                          total_iters=self.config.running_steps)
 
         # Create experience replay buffer.
-        input_differ = dict(observation_space=self.observation_space,
+        input_buffer = dict(observation_space=self.observation_space,
                             action_space=self.action_space,
                             auxiliary_shape={},
                             n_envs=self.n_envs,
@@ -49,7 +45,7 @@ class DQN_Agent(Agent):
         self.auxiliary_info_shape = {}
         self.atari = True if config.env_name == "Atari" else False
         Buffer = DummyOffPolicyBuffer_Atari if self.atari else DummyOffPolicyBuffer
-        self.memory = Buffer(**input_differ)
+        self.memory = Buffer(**input_buffer)
         self.learner = self._build_learner(self.config, envs.max_episode_length, self.policy, optimizer, lr_scheduler)
 
     def _build_policy(self):

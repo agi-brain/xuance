@@ -31,8 +31,8 @@ class Agent(ABC):
         self.use_actions_mask = config.use_actions_mask if hasattr(config, "use_actions_mask") else False
 
         self.gamma = config.gamma
-        self.start_training = config.start_training
-        self.training_frequency = config.training_frequency
+        self.start_training = config.start_training if hasattr(config, "start_training") else 1
+        self.training_frequency = config.training_frequency if hasattr(config, "start_training") else 1
         self.device = config.device
 
         # Environment attributes.
