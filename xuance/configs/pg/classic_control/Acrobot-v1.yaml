@@ -9,6 +9,7 @@ runner: "DRL"
 representation_hidden_size: [128,]
 actor_hidden_size: [128,]
 activation: 'relu'
+activation_action: 'tanh'
 
 seed: 1
 parallels: 10
@@ -24,7 +25,7 @@ use_gae: False
 gae_lambda: 0.95
 use_advnorm: False
 
-use_grad_clip: False  # gradient normalization
+use_grad_clip: True  # gradient normalization
 clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
 grad_clip_norm: 0.5
 use_actions_mask: False
