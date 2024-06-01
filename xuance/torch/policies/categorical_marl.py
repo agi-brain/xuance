@@ -12,7 +12,7 @@ from xuance.torch import Tensor, Module
 
 class MAAC_Policy(Module):
     """
-    MAAC_Policy: Multi-Agent Actor-Critic Policy
+    MAAC_Policy: Multi-Agent Actor-Critic Policy with categorical policies.
     """
 
     def __init__(self,
