@@ -29,8 +29,8 @@ class MARLAgents(ABC):
         self.use_actions_mask = config.use_actions_mask
 
         self.gamma = config.gamma
-        self.start_training = config.start_training
-        self.training_frequency = config.training_frequency
+        self.start_training = config.start_training if hasattr(config, "start_training") else 1
+        self.training_frequency = config.training_frequency if hasattr(config, "training_frequency") else 1
         self.device = config.device
 
         # Environment attributes.

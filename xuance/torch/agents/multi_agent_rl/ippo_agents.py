@@ -129,8 +129,9 @@ class IPPO_Agents(MARLAgents):
             policy = REGISTRY_Policy["Gaussian_MAAC_Policy"](
                 action_space=self.action_space, n_agents=self.n_agents,
                 representation_actor=representation_actor, representation_critic=representation_critic,
-                hidden_size=self.config.q_hidden_size,
+                actor_hidden_size=self.config.actor_hidden_size, critic_hidden_size=self.config.critic_hidden_size,
                 normalize=normalize_fn, initialize=initializer, activation=activation,
+                activation_action=ActivationFunctions[self.config.activation_action],
                 device=device, use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
                 use_rnn=self.use_rnn, rnn=self.config.rnn if self.use_rnn else None)
             self.continuous_control = True
@@ -354,19 +355,18 @@ class IPPO_Agents(MARLAgents):
             info_train (dict): The information of training.
         """
         info_train = {}
-        if self.memory.full:
-            indexes = np.arange(self.buffer_size)
-            for _ in range(n_epochs):
-                np.random.shuffle(indexes)
-                for start in range(0, self.buffer_size, self.batch_size):
-                    end = start + self.batch_size
-                    sample_idx = indexes[start:end]
-                    sample = self.memory.sample(sample_idx)
-                    if self.use_rnn:
-                        info_train = self.learner.update_rnn(sample)
-                    else:
-                        info_train = self.learner.update(sample)
-            self.memory.clear()
+        indexes = np.arange(self.buffer_size)
+        for _ in range(n_epochs):
+            np.random.shuffle(indexes)
+            for start in range(0, self.buffer_size, self.batch_size):
+                end = start + self.batch_size
+                sample_idx = indexes[start:end]
+                sample = self.memory.sample(sample_idx)
+                if self.use_rnn:
+                    info_train = self.learner.update_rnn(sample)
+                else:
+                    info_train = self.learner.update(sample)
+        self.memory.clear()
         return info_train
 
     def train(self, n_steps):
@@ -389,7 +389,13 @@ class IPPO_Agents(MARLAgents):
             next_avail_actions = self.envs.buf_avail_actions
             self.store_experience(obs_dict, avail_actions, actions_dict, log_pi_a_dict, rewards_dict, values_dict,
                                   terminated_dict, info, **{'state': state})
-            if self.current_step >= self.start_training and self.current_step % self.training_frequency == 0:
+            if self.memory.full:
+                for i in range(self.n_envs):
+                    if all(terminated_dict[i].values()):
+                        value_next = {key: 0.0 for key in self.agent_keys}
+                    else:
+                        _, value_next = self.values_next(obs_dict=next_obs_dict[i], rnn_hidden_critic=rnn_hidden_next_critic)
+                    self.memory.finish_path(i_env=i, value_next=value_next, value_normalizer=self.learner.value_normalizer)
                 train_info = self.train_epochs(n_epochs=self.n_epoch)
                 self.log_infos(train_info, self.current_step)
             obs_dict = deepcopy(next_obs_dict)
