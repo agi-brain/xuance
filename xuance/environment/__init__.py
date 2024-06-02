@@ -13,11 +13,7 @@ def make_envs(config: Namespace,
               raw_env: Optional[Union[RawEnvironment]] = None,
               raw_multi_agent_env: Optional[Union[RawMultiAgentEnv]] = None):
     def _thunk():
-        if raw_env is not None:
-            return MakeEnvironment(raw_env(config))
-        elif raw_multi_agent_env is not None:
-            return MakeMultiAgentEnvironment(raw_multi_agent_env(config))
-        elif config.env_name in REGISTRY_ENV.keys():
+        if config.env_name in REGISTRY_ENV.keys():
             return MakeEnvironment(REGISTRY_ENV[config.env_name](config))
         elif config.env_name in REGISTRY_MULTI_AGENT_ENV.keys():
             return MakeMultiAgentEnvironment(REGISTRY_MULTI_AGENT_ENV[config.env_name](config))
