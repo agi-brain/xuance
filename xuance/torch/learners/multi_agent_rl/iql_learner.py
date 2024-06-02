@@ -103,7 +103,7 @@ class IQL_Learner(LearnerMAS):
         if self.use_parameter_sharing:
             key = self.model_keys[0]
             bs_rnn = batch_size * self.n_agents
-            filled = filled.unsqueeze(1).expand(-1, self.n_agents, -1, -1)
+            filled = filled.unsqueeze(1).unsqueeze(-1).expand(-1, self.n_agents, -1, -1)
             obs[key] = obs[key].reshape([bs_rnn, seq_len + 1, -1])
             avail_actions_input = {key: avail_actions[key].reshape(bs_rnn, seq_len + 1, -1)}
             IDs = IDs.reshape(bs_rnn, seq_len + 1, -1)

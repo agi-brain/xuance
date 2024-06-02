@@ -13,10 +13,10 @@ class Gym_Env(gym.Wrapper):
         render_mode: "rgb_array", "human"
     """
 
-    def __init__(self, env_id: str, seed: int, render_mode: str, **kwargs):
-        self.env = gym.make(env_id, render_mode=render_mode, **kwargs)
-        self.env.action_space.seed(seed=seed)
-        self.env.reset(seed=seed)
+    def __init__(self, config, **kwargs):
+        self.env = gym.make(config.env_id, render_mode=config.render_mode, **kwargs)
+        self.env.action_space.seed(seed=config.seed)
+        self.env.reset(seed=config.seed)
         super(Gym_Env, self).__init__(self.env)
         # self.env.seed(seed)
         self.observation_space = self.env.observation_space
@@ -100,43 +100,32 @@ class Atari_Env(gym.Wrapper):
         noop_max: max times of noop action for env.reset().
     """
 
-    def __init__(self,
-                 env_id: str,
-                 seed: int,
-                 render_mode: str = "rgb_array",
-                 obs_type: str = "grayscale",
-                 frame_skip: int = 4,
-                 num_stack: int = 4,
-                 image_size: Sequence[int] = None,
-                 noop_max: int = 30,
-                 ):
-        self.env = gym.make(env_id,
-                            render_mode=render_mode,
-                            obs_type=obs_type,
-                            frameskip=frame_skip)
-        self.env.action_space.seed(seed=seed)
-        self.env.unwrapped.reset(seed=seed)
+    def __init__(self, config):
+        self.env = gym.make(config.env_id,
+                            render_mode=config.render_mode,
+                            obs_type=config.obs_type,
+                            frameskip=config.frame_skip)
+        self.env.action_space.seed(seed=config.seed)
+        self.env.unwrapped.reset(seed=config.seed)
         self.max_episode_steps = self.env._max_episode_steps
         super(Atari_Env, self).__init__(self.env)
         # self.env.seed(seed)
-        self.num_stack = num_stack
-        self.obs_type = obs_type
+        self.num_stack = config.num_stack
+        self.obs_type = config.obs_type
         self.frames = deque([], maxlen=self.num_stack)
-        self.image_size = [210, 160] if image_size is None else image_size
-        self.noop_max = noop_max
+        self.image_size = [210, 160] if config.image_size is None else config.image_size
+        self.noop_max = config.noop_max
         self.lifes = self.env.unwrapped.ale.lives()
         self.was_real_done = True
         self.grayscale, self.rgb = False, False
         if self.obs_type == "rgb":
             self.rgb = True
-            self.observation_space = gym.spaces.Box(low=0, high=255,
-                                                    shape=(image_size[0], image_size[1], 3 * self.num_stack),
-                                                    dtype=np.uint8)
+            self.observation_space = gym.spaces.Box(
+                low=0, high=255, shape=(config.image_size[0], config.image_size[1], 3 * self.num_stack), dtype=np.uint8)
         elif self.obs_type == "grayscale":
             self.grayscale = True
-            self.observation_space = gym.spaces.Box(low=0, high=255,
-                                                    shape=(image_size[0], image_size[1], self.num_stack),
-                                                    dtype=np.uint8)
+            self.observation_space = gym.spaces.Box(
+                low=0, high=255, shape=(config.image_size[0], config.image_size[1], self.num_stack), dtype=np.uint8)
         else:  # ram type
             self.observation_space = self.env.observation_space
         # assert self.env.unwrapped.get_action_meanings()[0] == "NOOP"
@@ -145,7 +134,7 @@ class Atari_Env(gym.Wrapper):
         self.action_space = self.env.action_space
         self.metadata = self.env.metadata
         self.reward_range = self.env.reward_range
-        self._render_mode = render_mode
+        self._render_mode = config.render_mode
         self._episode_step = 0
 
     def close(self):

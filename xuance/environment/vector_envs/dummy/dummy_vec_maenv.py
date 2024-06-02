@@ -3,7 +3,7 @@ from xuance.common import space2shape
 from xuance.environment.vector_envs.vector_env import VecEnv, AlreadySteppingError, NotSteppingError
 
 
-class DummyVecMutliAgentEnv(VecEnv):
+class DummyVecMultiAgentEnv(VecEnv):
     """
     VecEnv that does runs multiple environments sequentially, that is,
     the step and reset commands are send to one environment at a time.
@@ -20,9 +20,8 @@ class DummyVecMutliAgentEnv(VecEnv):
         env = self.envs[0]
         VecEnv.__init__(self, len(env_fns), env.observation_space, env.action_space)
 
-        self.teams = env.teams_info["names"]
         self.agents = env.agents
-        self.n_agents_all = env.num_agents
+        self.num_agents = env.num_agents
         self.state_space = env.state_space  # Type: Box
         self.buf_state = [np.zeros(space2shape(self.state_space)) for _ in range(self.num_envs)]
         self.buf_obs = [{} for _ in range(self.num_envs)]

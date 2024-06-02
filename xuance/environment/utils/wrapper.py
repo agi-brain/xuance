@@ -1,6 +1,5 @@
 from typing import Optional, Union, Tuple, List, SupportsFloat, SupportsInt
 from gym import spaces
-from gym.core import ActType, ObsType, RenderFrame
 from xuance.environment.utils.new import AgentKeys
 
 
@@ -29,7 +28,7 @@ class XuanCeEnvWrapper:
         self._episode_score = 0.0
 
     @property
-    def action_space(self) -> spaces.Space[ActType]:
+    def action_space(self):
         """Returns the action space of the environment."""
         if self._action_space is None:
             return self.env.action_space
@@ -93,7 +92,7 @@ class XuanCeEnvWrapper:
         """Returns the environment render_mode."""
         return self.env.render_mode
 
-    def step(self, action: ActType) -> Tuple[ObsType, float, bool, bool, dict]:
+    def step(self, action):
         """Steps through the environment with action."""
         observation, reward, terminated, truncated, info = self.env.step(action)
         self._episode_step += 1
@@ -102,7 +101,7 @@ class XuanCeEnvWrapper:
         info["episode_score"] = self._episode_score  # the accumulated rewards
         return observation, reward, terminated, truncated, info
 
-    def reset(self, **kwargs) -> Tuple[ObsType, dict]:
+    def reset(self, **kwargs):
         """Resets the environment with kwargs."""
         try:
             obs, info = self.env.reset(**kwargs)
@@ -114,9 +113,7 @@ class XuanCeEnvWrapper:
         info["episode_step"] = self._episode_step
         return obs, info
 
-    def render(
-            self, *args, **kwargs
-    ) -> Optional[Union[RenderFrame, List[RenderFrame]]]:
+    def render(self, *args, **kwargs):
         """Renders the environment."""
         return self.env.render(*args, **kwargs)
 
@@ -157,7 +154,7 @@ class XuanCeMultiAgentEnvWrapper(XuanCeEnvWrapper):
         }
         self._episode_score = {agent: 0.0 for agent in self.agents}
 
-    def step(self, action: ActType) -> Tuple[dict, dict, dict, bool, dict]:
+    def step(self, action):
         """Steps through the environment with action."""
         observation, reward, terminated, truncated, info = self.env.step(action)
         self._episode_step += 1

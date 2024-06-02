@@ -616,7 +616,7 @@ class Independent_DDPG_Policy(Module):
                 dim_obs_critic += self.n_agents
             self.actor[key] = ActorNet(dim_obs_actor, dim_act_actor, actor_hidden_size,
                                        normalize, initialize, activation, activation_action, device)
-            self.critic[key] = CriticNet(dim_obs_critic, dim_act_critic, critic_hidden_size,
+            self.critic[key] = CriticNet(dim_obs_critic + dim_act_critic, critic_hidden_size,
                                          normalize, initialize, activation, device)
             self.target_actor[key] = deepcopy(self.actor[key])
             self.target_critic[key] = deepcopy(self.critic[key])
@@ -701,7 +701,7 @@ class Independent_DDPG_Policy(Module):
                 critic_in = torch.concat([outputs['state'], agent_ids], dim=-1)
             else:
                 critic_in = outputs['state']
-            q_eval[key] = self.critic[key](critic_in, actions[key])
+            q_eval[key] = self.critic[key](torch.concat([critic_in, actions[key]], dim=-1))
         return q_eval
 
     def Qtarget(self, next_observation: Dict[str, Tensor], next_actions: Dict[str, Tensor],
@@ -726,7 +726,7 @@ class Independent_DDPG_Policy(Module):
                 critic_in = torch.concat([outputs['state'], agent_ids], dim=-1)
             else:
                 critic_in = outputs['state']
-            q_target[key] = self.target_critic[key](critic_in, next_actions[key])
+            q_target[key] = self.target_critic[key](torch.concat([critic_in, next_actions[key]], dim=-1))
         return q_target
 
     def Atarget(self, next_observation: Dict[str, Tensor],

@@ -6,90 +6,10 @@ Note: The version of Python should be >= 3.10.
 import numpy as np
 from gym.spaces import Box
 import time
+from operator import itemgetter
 from xuance.environment import RawMultiAgentEnv
 from gym_pybullet_drones.utils.enums import DroneModel, Physics, ActionType, ObservationType
 from gym_pybullet_drones.envs.MultiHoverAviary import MultiHoverAviary as MultiHoverAviary_Official
-
-
-class Drones_MultiAgentEnv(RawMultiAgentEnv):
-    def __init__(self, args):
-        super(Drones_MultiAgentEnv, self).__init__()
-        # import scenarios of gym-pybullet-drones
-        self.env_id = args.env_id
-        REGISTRY = {
-            "MultiHoverAviary": MultiHoverAviary,
-            # you can add your customized scenarios here.
-        }
-        self.gui = args.render  # Note: You cannot render multiple environments in parallel.
-        self.sleep = args.sleep
-        self.env_id = args.env_id
-
-        kwargs_env = {'gui': self.gui}
-        if self.env_id in ["MultiHoverAviary"]:
-            kwargs_env.update({'num_drones': args.num_drones,
-                              'obs': ObservationType(args.obs_type),
-                               'act': ActionType(args.act_type)})
-        self.env = REGISTRY[args.env_id](**kwargs_env)
-
-        self._episode_step = 0
-        if self.env_id == "MultiHoverAviary":
-            self.observation_space = self.env.observation_space
-            self.observation_shape = self.env.observation_space.shape
-            self.action_space = self.env.action_space
-            self.action_shape = self.env.action_space.shape
-        else:
-            self.observation_space = self.space_reshape(self.env.observation_space)
-            self.action_space = self.space_reshape(self.env.action_space)
-        self.max_episode_steps = self.max_cycles = args.max_episode_steps
-
-        self.num_agents = args.num_drones
-        self.env_info = {
-            "n_agents": self.num_agents,
-            "obs_shape": self.env.observation_space.shape,
-            "act_space": self.action_space,
-            "state_shape": 20,
-            "n_actions": self.env.action_space.shape[-1],
-            "episode_limit": self.max_episode_steps,
-        }
-
-    def space_reshape(self, gym_space):
-        low = gym_space.low.reshape(-1)
-        high = gym_space.high.reshape(-1)
-        shape_obs = (gym_space.shape[-1], )
-        return Box(low=low, high=high, shape=shape_obs, dtype=gym_space.dtype)
-
-    def close(self):
-        self.env.close()
-
-    def render(self, *args, **kwargs):
-        return np.zeros([2, 2, 2])
-
-    def reset(self):
-        obs, info = self.env.reset()
-        info["episode_step"] = self._episode_step
-        self._episode_step = 0
-        obs_return = obs
-        return obs_return, info
-
-    def step(self, actions):
-        obs, reward, terminated, truncated, info = self.env.step(actions)
-        obs_return = obs
-        terminated = [terminated for _ in range(self.num_agents)]
-
-        self._episode_step += 1
-        truncated = True if (self._episode_step >= self.max_episode_steps) else False
-        info["episode_step"] = self._episode_step  # current episode step
-
-        if self.gui:
-            time.sleep(self.sleep)
-
-        return obs_return, reward, terminated, truncated, info
-
-    def get_agent_mask(self):
-        return np.ones(self.num_agents, dtype=np.bool_)  # 1 means available
-
-    def get_state(self):
-        return np.zeros([20])
 
 
 class MultiHoverAviary(MultiHoverAviary_Official):
@@ -249,3 +169,81 @@ class MultiHoverAviary(MultiHoverAviary_Official):
             return True
         else:
             return False
+
+
+REGISTRY = {
+    "MultiHoverAviary": MultiHoverAviary,
+    # you can add your customized scenarios here.
+}
+
+
+class Drones_MultiAgentEnv(RawMultiAgentEnv):
+    def __init__(self, config):
+        super(Drones_MultiAgentEnv, self).__init__()
+        # import scenarios of gym-pybullet-drones
+        self.env_id = config.env_id
+        self.gui = config.render  # Note: You cannot render multiple environments in parallel.
+        self.sleep = config.sleep
+        self.env_id = config.env_id
+
+        kwargs_env = {'gui': self.gui}
+        if self.env_id in ["MultiHoverAviary"]:
+            kwargs_env.update({'num_drones': config.num_drones,
+                               'obs': ObservationType(config.obs_type),
+                               'act': ActionType(config.act_type)})
+        self.env = REGISTRY[config.env_id](**kwargs_env)
+        self.num_agents = config.num_drones
+        self.agents = [f"agent_{i}" for i in range(self.num_agents)]
+
+        self.state_space = Box(-np.inf, np.inf, shape=[20, ])
+        obs_shape_i = (self.env.observation_space.shape[-1],)
+        act_shape_i = (self.env.action_space.shape[-1],)
+        self.observation_space = {k: Box(-np.inf, np.inf, obs_shape_i) for k in self.agents}
+        self.action_space = {k: Box(-np.inf, np.inf, act_shape_i) for k in self.agents}
+
+        self.max_episode_steps = self.max_cycles = config.max_episode_steps
+        self._episode_step = 0
+
+    def space_reshape(self, gym_space):
+        low = gym_space.low.reshape(-1)
+        high = gym_space.high.reshape(-1)
+        shape_obs = (gym_space.shape[-1],)
+        return Box(low=low, high=high, shape=shape_obs, dtype=gym_space.dtype)
+
+    def close(self):
+        self.env.close()
+
+    def render(self, *args, **kwargs):
+        return np.zeros([2, 2, 2])
+
+    def reset(self):
+        obs, info = self.env.reset()
+        info["episode_step"] = self._episode_step
+        self._episode_step = 0
+        obs_dict = {k: obs[i] for i, k in enumerate(self.agents)}
+        return obs_dict, info
+
+    def step(self, actions):
+        actions_array = np.array(itemgetter(*self.agents)(actions))
+        obs, reward, terminated, truncated, info = self.env.step(actions_array)
+        obs_dict = {k: obs[i] for i, k in enumerate(self.agents)}
+        terminated_dict = {k: terminated for i, k in enumerate(self.agents)}
+        rewrds_dict = {k: reward[i, 0] for i, k in enumerate(self.agents)}
+
+        self._episode_step += 1
+        truncated = True if (self._episode_step >= self.max_episode_steps) else False
+        info["episode_step"] = self._episode_step  # current episode step
+
+        if self.gui:
+            time.sleep(self.sleep)
+
+        return obs_dict, rewrds_dict, terminated_dict, truncated, info
+
+    def agent_mask(self):
+        return {agent: True for agent in self.agents}  # 1 means available
+
+    def state(self):
+        return self.state_space.sample()
+
+    def avail_actions(self):
+        return

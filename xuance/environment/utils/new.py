@@ -123,6 +123,26 @@ class RawMultiAgentEnv(ABC):
         }
         self.max_episode_steps: Optional[int] = None
 
+    def agent_mask(self):
+        """Returns boolean mask variables indicating which agents are currently alive."""
+        return {agent: True for agent in self.agents}
+
+    def avail_actions(self):
+        """Returns a boolean mask indicating which actions are available for each agent."""
+        return {agent: np.ones(self.action_space[agent].n, np.bool_) for agent in self.agents}
+
+    def get_agents_in_team(self):
+        agents_in_team = [[] for _ in range(self.teams_info['num_teams'])]
+        for i_team, team in enumerate(self.teams_info['names']):
+            for agent in self.agents:
+                if team in agent:  # for example, team='red' and agent='red_0'
+                    agents_in_team[i_team].append(agent)
+        return agents_in_team
+
+    def state(self):
+        """Returns the global state of the environment."""
+        raise NotImplementedError
+
     @abstractmethod
     def reset(self, **kwargs):
         """
@@ -166,28 +186,3 @@ class RawMultiAgentEnv(ABC):
     def close(self):
         """Closes the environment."""
         return
-
-    @abstractmethod
-    def agent_mask(self):
-        """Returns boolean mask variables indicating which agents are currently alive."""
-        return {agent: True for agent in self.agents}
-
-    @abstractmethod
-    def avail_actions(self):
-        """Returns a boolean mask indicating which actions are available for each agent."""
-        return {agent: np.ones(self.action_space[agent].n, np.bool_) for agent in self.agents}
-
-    @property
-    def get_agents_in_team(self):
-        agents_in_team = [[] for _ in range(self.teams_info['num_teams'])]
-        for i_team, team in enumerate(self.teams_info['names']):
-            for agent in self.agents:
-                if team in agent:  # for example, team='red' and agent='red_0'
-                    agents_in_team[i_team].append(agent)
-        return agents_in_team
-
-    @property
-    def state(self):
-        """Returns the global state of the environment."""
-        raise NotImplementedError
-

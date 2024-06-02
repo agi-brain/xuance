@@ -11,7 +11,7 @@ from xuance.torch.representations import REGISTRY_Representation
 from xuance.torch.policies import REGISTRY_Policy
 from xuance.torch.learners import IDDPG_Learner
 from xuance.torch.agents import MARLAgents
-from xuance.common import MARL_OffPolicyBuffer
+from xuance.common import MARL_OffPolicyBuffer, space2shape
 
 
 class IDDPG_Agents(MARLAgents):
@@ -70,7 +70,7 @@ class IDDPG_Agents(MARLAgents):
         # build representations
         representation = {key: None for key in self.model_keys}
         for key in self.model_keys:
-            input_shape = self.observation_space[key].shape
+            input_shape = space2shape(self.observation_space[key])
             if self.config.representation == "Basic_Identical":
                 representation[key] = REGISTRY_Representation["Basic_Identical"](input_shape=input_shape,
                                                                                  device=self.device)

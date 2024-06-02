@@ -8,7 +8,7 @@ from xuance.environment import make_envs
 class Runner_MARL(Runner_Base):
     def __init__(self, config):
         super(Runner_MARL, self).__init__(config)
-        config.n_agents = self.envs.n_agents_all
+        config.n_agents = self.envs.num_agents
         self.agents = REGISTRY_Agents[config.agent](config, self.envs)
         self.config = config
 
