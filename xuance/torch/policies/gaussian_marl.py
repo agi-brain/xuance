@@ -1,39 +1,11 @@
 import torch
 import torch.nn as nn
 from copy import deepcopy
-from typing import Sequence, Optional, Callable, Union
-from gym.spaces import Space, Discrete
+from typing import Sequence, Optional, Callable, Union, Dict
+from gym.spaces import Space, Box, Discrete
 from xuance.torch.policies import ActorNet, CriticNet, VDN_mixer
 from xuance.torch.utils import ModuleType, mlp_block, DiagGaussianDistribution, ActivatedDiagGaussianDistribution
 from xuance.torch import Tensor, Module
-
-
-class ActorNet(Module):
-    def __init__(self,
-                 state_dim: int,
-                 n_agents: int,
-                 action_dim: int,
-                 hidden_sizes: Sequence[int],
-                 normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., Tensor]] = None,
-                 activation: Optional[ModuleType] = None,
-                 activation_action: Optional[ModuleType] = None,
-                 device: Optional[Union[str, int, torch.device]] = None):
-        super(ActorNet, self).__init__()
-        self.device = device
-        layers = []
-        input_shape = (state_dim + n_agents,)
-        for h in hidden_sizes:
-            mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initialize, device)
-            layers.extend(mlp)
-        layers.extend(mlp_block(input_shape[0], action_dim, activation=activation_action, device=device)[0])
-        self.mu = nn.Sequential(*layers)
-        self.log_std = nn.Parameter(-torch.ones((action_dim,), device=device))
-        self.dist = DiagGaussianDistribution(action_dim)
-
-    def forward(self, x: Tensor):
-        self.dist.set_param(self.mu(x), self.log_std.exp())
-        return self.dist
 
 
 class ActorNet_SAC(Module):
@@ -68,36 +40,13 @@ class ActorNet_SAC(Module):
         return self.dist
 
 
-class CriticNet(Module):
-    def __init__(self,
-                 state_dim: int,
-                 n_agents: int,
-                 hidden_sizes: Sequence[int],
-                 normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., Tensor]] = None,
-                 activation: Optional[ModuleType] = None,
-                 device: Optional[Union[str, int, torch.device]] = None
-                 ):
-        super(CriticNet, self).__init__()
-        layers = []
-        input_shape = (state_dim + n_agents,)
-        for h in hidden_sizes:
-            mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initialize, device)
-            layers.extend(mlp)
-        layers.extend(mlp_block(input_shape[0], 1, None, None, initialize, device)[0])
-        self.model = nn.Sequential(*layers)
-
-    def forward(self, x: torch.tensor):
-        return self.model(x)
-
-
 class MAAC_Policy(Module):
     """
     MAAC_Policy: Multi-Agent Actor-Critic Policy with Gaussian distributions.
     """
 
     def __init__(self,
-                 action_space: Discrete,
+                 action_space: Optional[Dict[str, Box]],
                  n_agents: int,
                  representation_actor: Module,
                  representation_critic: Module,
@@ -125,6 +74,7 @@ class MAAC_Policy(Module):
         self.dim_input_critic = {}
         self.actor, self.critic = {}, {}
         for key in self.model_keys:
+            dim_action = self.action_space[key].shape[-1]
             dim_obs_actor, dim_obs_critic, dim_act_actor, dim_act_critic = self._get_actor_critic_input(
                 self.n_actions[key],
                 self.actor_representation[key].output_shapes['state'][0],

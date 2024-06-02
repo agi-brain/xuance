@@ -3,7 +3,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 from typing import Sequence, Optional, Callable, Union
 from xuance.torch import Tensor, Module
-from xuance.torch.utils import ModuleType, mlp_block, CategoricalDistribution
+from xuance.torch.utils import ModuleType, mlp_block, \
+    CategoricalDistribution, DiagGaussianDistribution, ActivatedDiagGaussianDistribution
 
 
 class BasicQhead(Module):
@@ -78,39 +79,65 @@ class CategoricalActorNet(Module):
         return self.dist
 
 
-class CriticNet(nn.Module):
+class CategoricalActorNet_SAC(CategoricalActorNet):
     def __init__(self,
                  state_dim: int,
                  action_dim: int,
                  hidden_sizes: Sequence[int],
                  normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., torch.Tensor]] = None,
+                 initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None):
-        super(CriticNet, self).__init__()
+        super(CategoricalActorNet_SAC, self).__init__(state_dim, action_dim, hidden_sizes,
+                                                      normalize, initialize, activation, device)
+        self.output = nn.Softmax(dim=-1)
+
+    def forward(self, x: Tensor, avail_actions: Optional[Tensor] = None):
+        logits = self.model(x)
+        if avail_actions is not None:
+            logits[avail_actions == 0] = -1e10
+        probs = self.output(logits)
+        self.dist.set_param(probs=probs)
+        return self.dist
+
+
+class GaussianActorNet(Module):
+    def __init__(self,
+                 state_dim: int,
+                 action_dim: int,
+                 hidden_sizes: Sequence[int],
+                 normalize: Optional[ModuleType] = None,
+                 initialize: Optional[Callable[..., Tensor]] = None,
+                 activation: Optional[ModuleType] = None,
+                 activation_action: Optional[ModuleType] = None,
+                 device: Optional[Union[str, int, torch.device]] = None):
+        super(GaussianActorNet, self).__init__()
         layers = []
-        input_shape = (state_dim + action_dim,)
+        input_shape = (state_dim,)
         for h in hidden_sizes:
             mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initialize, device)
             layers.extend(mlp)
-        layers.extend(mlp_block(input_shape[0], 1, None, None, initialize, device)[0])
-        self.model = nn.Sequential(*layers)
+        layers.extend(mlp_block(input_shape[0], action_dim, None, activation_action, initialize, device)[0])
+        self.mu = nn.Sequential(*layers)
+        self.logstd = nn.Parameter(-torch.ones((action_dim,), device=device))
+        self.dist = DiagGaussianDistribution(action_dim)
 
-    def forward(self, x: torch.tensor, a: torch.tensor):
-        return self.model(torch.concat((x, a), dim=-1))
+    def forward(self, x: Tensor):
+        self.dist.set_param(self.mu(x), self.logstd.exp())
+        return self.dist
 
 
-class CategoricalCriticNet(Module):
+class CriticNet(Module):
     def __init__(self,
-                 state_dim: int,
+                 input_dim: int,
                  hidden_sizes: Sequence[int],
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None):
-        super(CategoricalCriticNet, self).__init__()
+        super(CriticNet, self).__init__()
         layers = []
-        input_shape = (state_dim,)
+        input_shape = (input_dim,)
         for h in hidden_sizes:
             mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initialize, device)
             layers.extend(mlp)
@@ -119,6 +146,58 @@ class CategoricalCriticNet(Module):
 
     def forward(self, x: Tensor):
         return self.model(x)
+
+
+class Critic_SAC_Dis(CriticNet, Module):
+    def __init__(self,
+                 state_dim: int,
+                 action_dim: int,
+                 hidden_sizes: Sequence[int],
+                 initialize: Optional[Callable[..., Tensor]] = None,
+                 activation: Optional[ModuleType] = None,
+                 device: Optional[Union[str, int, torch.device]] = None):
+        Module.__init__(self)
+        layers = []
+        input_shape = (state_dim,)
+        for h in hidden_sizes:
+            mlp, input_shape = mlp_block(input_shape[0], h, None, activation, initialize, device)
+            layers.extend(mlp)
+        layers.extend(mlp_block(input_shape[0], action_dim, None, None, initialize, device)[0])
+        self.model = nn.Sequential(*layers)
+
+    def forward(self, x: torch.tensor):
+        return self.model(x)
+
+
+class ActorNet_SAC(Module):
+    def __init__(self,
+                 state_dim: int,
+                 action_dim: int,
+                 hidden_sizes: Sequence[int],
+                 normalize: Optional[ModuleType] = None,
+                 initialize: Optional[Callable[..., Tensor]] = None,
+                 activation: Optional[ModuleType] = None,
+                 activation_action: Optional[ModuleType] = None,
+                 device: Optional[Union[str, int, torch.device]] = None):
+        super(ActorNet_SAC, self).__init__()
+        layers = []
+        input_shape = (state_dim,)
+        for h in hidden_sizes:
+            mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initialize, device)
+            layers.extend(mlp)
+        self.device = device
+        self.output = nn.Sequential(*layers)
+        self.out_mu = nn.Linear(hidden_sizes[-1], action_dim, device=device)
+        self.out_log_std = nn.Linear(hidden_sizes[-1], action_dim, device=device)
+        self.dist = ActivatedDiagGaussianDistribution(action_dim, activation_action, device)
+
+    def forward(self, x: torch.tensor):
+        output = self.output(x)
+        mu = self.out_mu(output)
+        log_std = torch.clamp(self.out_log_std(output), -20, 2)
+        std = log_std.exp()
+        self.dist.set_param(mu, std)
+        return self.dist
 
 
 class VDN_mixer(nn.Module):

@@ -4,9 +4,9 @@ from copy import deepcopy
 from typing import Sequence, Optional, Callable, Union, Dict, List
 from gym.spaces import Discrete
 from xuance.torch.policies import CategoricalActorNet as ActorNet
-from xuance.torch.policies import CategoricalCriticNet as CriticNet
+from xuance.torch.policies.core import CriticNet
 from xuance.torch.policies import VDN_mixer
-from xuance.torch.utils import ModuleType, mlp_block, CategoricalDistribution
+from xuance.torch.utils import ModuleType, CategoricalDistribution
 from xuance.torch import Tensor, Module
 
 

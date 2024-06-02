@@ -5,58 +5,17 @@ from typing import Sequence, Optional, Callable, Union
 from copy import deepcopy
 from gym.spaces import Space
 from xuance.torch import Module, Tensor
-from xuance.torch.utils import ModuleType, mlp_block, CategoricalDistribution
+from xuance.torch.utils import ModuleType, mlp_block
+from xuance.torch.policies.core import CategoricalActorNet as ActorNet
+from xuance.torch.policies.core import CategoricalActorNet_SAC as Actor_SAC
+from xuance.torch.policies.core import CriticNet
+from xuance.torch.policies.core import Critic_SAC_Dis
 
 
 def _init_layer(layer, gain=np.sqrt(2), bias=0.0):
     nn.init.orthogonal_(layer.weight, gain=gain)
     nn.init.constant_(layer.bias, bias)
     return layer
-
-
-class ActorNet(Module):
-    def __init__(self,
-                 state_dim: int,
-                 action_dim: int,
-                 hidden_sizes: Sequence[int],
-                 normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., Tensor]] = None,
-                 activation: Optional[ModuleType] = None,
-                 device: Optional[Union[str, int, torch.device]] = None):
-        super(ActorNet, self).__init__()
-        layers = []
-        input_shape = (state_dim,)
-        for h in hidden_sizes:
-            mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initialize, device)
-            layers.extend(mlp)
-        layers.extend(mlp_block(input_shape[0], action_dim, None, None, initialize, device)[0])
-        self.model = nn.Sequential(*layers)
-        self.dist = CategoricalDistribution(action_dim)
-
-    def forward(self, x: Tensor):
-        self.dist.set_param(logits=self.model(x))
-        return self.dist
-
-
-class CriticNet(Module):
-    def __init__(self,
-                 state_dim: int,
-                 hidden_sizes: Sequence[int],
-                 normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., Tensor]] = None,
-                 activation: Optional[ModuleType] = None,
-                 device: Optional[Union[str, int, torch.device]] = None):
-        super(CriticNet, self).__init__()
-        layers = []
-        input_shape = (state_dim,)
-        for h in hidden_sizes:
-            mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initialize, device)
-            layers.extend(mlp)
-        layers.extend(mlp_block(input_shape[0], 1, None, None, initialize, device)[0])
-        self.model = nn.Sequential(*layers)
-
-    def forward(self, x: Tensor):
-        return self.model(x)[:, 0]
 
 
 class ActorCriticPolicy(Module):
@@ -83,7 +42,7 @@ class ActorCriticPolicy(Module):
         outputs = self.representation(observation)
         a = self.actor(outputs['state'])
         v = self.critic(outputs['state'])
-        return outputs, a, v
+        return outputs, a, v[:, 0]
 
 
 class ActorPolicy(Module):
@@ -139,45 +98,7 @@ class PPGActorCritic(Module):
         a = self.actor(policy_outputs['state'])
         v = self.critic(critic_outputs['state'])
         aux_v = self.aux_critic(aux_critic_outputs['state'])
-        return policy_outputs, a, v, aux_v
-
-
-class Actor_SAC(ActorNet):
-    def __init__(self,
-                 state_dim: int,
-                 action_dim: int,
-                 hidden_sizes: Sequence[int],
-                 normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., Tensor]] = None,
-                 activation: Optional[ModuleType] = None,
-                 device: Optional[Union[str, int, torch.device]] = None):
-        super(Actor_SAC, self).__init__(state_dim, action_dim, hidden_sizes, normalize, initialize, activation, device)
-        self.output = nn.Softmax(dim=-1)
-
-    def forward(self, x: Tensor):
-        self.dist.set_param(probs=self.output(self.model(x)))
-        return self.dist
-
-
-class Critic_SAC(CriticNet, Module):
-    def __init__(self,
-                 state_dim: int,
-                 action_dim: int,
-                 hidden_sizes: Sequence[int],
-                 initialize: Optional[Callable[..., Tensor]] = None,
-                 activation: Optional[ModuleType] = None,
-                 device: Optional[Union[str, int, torch.device]] = None):
-        Module.__init__(self)
-        layers = []
-        input_shape = (state_dim,)
-        for h in hidden_sizes:
-            mlp, input_shape = mlp_block(input_shape[0], h, None, activation, initialize, device)
-            layers.extend(mlp)
-        layers.extend(mlp_block(input_shape[0], action_dim, None, None, initialize, device)[0])
-        self.model = nn.Sequential(*layers)
-
-    def forward(self, x: torch.tensor):
-        return self.model(x)
+        return policy_outputs, a, v[:, 0], aux_v[:, 0]
 
 
 class SACDISPolicy(Module):
@@ -199,11 +120,11 @@ class SACDISPolicy(Module):
                                normalize, initialize, activation, device)
 
         self.critic_1_representation = deepcopy(representation)
-        self.critic_1 = Critic_SAC(representation.output_shapes['state'][0], self.action_dim, critic_hidden_size,
-                                   initialize, activation, device)
+        self.critic_1 = Critic_SAC_Dis(representation.output_shapes['state'][0], self.action_dim, critic_hidden_size,
+                                       initialize, activation, device)
         self.critic_2_representation = deepcopy(representation)
-        self.critic_2 = Critic_SAC(representation.output_shapes['state'][0], self.action_dim, critic_hidden_size,
-                                   initialize, activation, device)
+        self.critic_2 = Critic_SAC_Dis(representation.output_shapes['state'][0], self.action_dim, critic_hidden_size,
+                                       initialize, activation, device)
         self.target_critic_1_representation = deepcopy(self.critic_1_representation)
         self.target_critic_1 = deepcopy(self.critic_1)
         self.target_critic_2_representation = deepcopy(self.critic_2_representation)

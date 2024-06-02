@@ -1,6 +1,6 @@
 from xuance.torch.policies.core import (
     BasicQhead,
-    ActorNet, CategoricalActorNet, CriticNet, CategoricalCriticNet,
+    ActorNet, CategoricalActorNet, CriticNet,
     VDN_mixer, QMIX_mixer, QMIX_FF_mixer, QTRAN_alt, QTRAN_base)
 from .categorical import ActorCriticPolicy as Categorical_AC_Policy
 from .categorical import ActorPolicy as Categorical_Actor_Policy
