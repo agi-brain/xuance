@@ -5,7 +5,7 @@ continuous_action: True
 policy: "Gaussian_MAAC_Policy"
 representation: "Basic_MLP"
 vectorize: "Dummy_Pettingzoo"
-runner: "Pettingzoo_Runner"
+runner: "MARL"
 
 # recurrent settings for Basic_RNN representation
 use_rnn: False
@@ -23,6 +23,7 @@ representation_hidden_size: [64, ]  # the units for each hidden layer
 actor_hidden_size: [64, ]
 critic_hidden_size: [64, ]
 activation: "relu"
+use_parameter_sharing: False
 activation_action: "sigmoid"
 use_actions_mask: False
 use_agents_mask: False
@@ -41,6 +42,7 @@ target_kl: 0.25  # for MAPPO_KL learner
 clip_range: 0.2  # ratio clip range, for MAPPO_Clip learner
 clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
 gamma: 0.95  # discount factor
+running_steps: 10000000
 
 # tricks
 use_linear_lr_decay: False  # if use linear learning rate decay
@@ -54,9 +56,6 @@ huber_delta: 10.0
 use_advnorm: True
 use_gae: True
 gae_lambda: 0.95
-
-running_steps: 10000000
-
 use_grad_clip: True  # gradient normalization
 grad_clip_norm: 10.0
 
