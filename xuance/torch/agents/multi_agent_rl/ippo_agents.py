@@ -5,7 +5,7 @@ from copy import deepcopy
 from operator import itemgetter
 from argparse import Namespace
 from typing import Optional, List
-from xuance.environment import DummyVecMutliAgentEnv
+from xuance.environment import DummyVecMultiAgentEnv
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.representations import REGISTRY_Representation
 from xuance.torch.policies import REGISTRY_Policy
@@ -24,7 +24,7 @@ class IPPO_Agents(MARLAgents):
 
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecMutliAgentEnv):
+                 envs: DummyVecMultiAgentEnv):
         super(IPPO_Agents, self).__init__(config, envs)
         self.state_space = envs.state_space
         self.continuous_control = False

@@ -12,7 +12,7 @@ class DCG_Agents(MARLAgents):
     """
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecEnv_Pettingzoo,
+                 envs: DummyVecMultiAgentEnv,
                  device: Optional[Union[int, str, torch.device]] = None):
         self.gamma = config.gamma
         self.start_greedy, self.end_greedy = config.start_greedy, config.end_greedy

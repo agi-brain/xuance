@@ -4,7 +4,7 @@ from xuance.tensorflow.agents import *
 class MATD3_Agents(MARLAgents):
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecEnv_Pettingzoo,
+                 envs: DummyVecMultiAgentEnv,
                  device: str = "cpu:0"):
         self.gamma = config.gamma
 

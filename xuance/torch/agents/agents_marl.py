@@ -9,7 +9,7 @@ from typing import Optional
 from torch import nn
 from torch.utils.tensorboard import SummaryWriter
 from xuance.common import get_time_string, create_directory
-from xuance.environment import DummyVecMutliAgentEnv
+from xuance.environment import DummyVecMultiAgentEnv
 
 
 class MARLAgents(ABC):
@@ -21,7 +21,7 @@ class MARLAgents(ABC):
     """
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecMutliAgentEnv):
+                 envs: DummyVecMultiAgentEnv):
         # Training settings.
         self.config = config
         self.use_rnn = config.use_rnn if hasattr(config, "use_rnn") else False

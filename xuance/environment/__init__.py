@@ -2,10 +2,10 @@ from argparse import Namespace
 
 from xuance.environment.utils import MakeEnvironment, MakeMultiAgentEnvironment, XuanCeEnvWrapper, RawEnvironment, RawMultiAgentEnv
 from xuance.environment.vector_envs import DummyVecEnv, SubprocVecEnv, \
-    DummyVecEnv_Atari, SubprocVecEnv_Atari, DummyVecMultiAgentEnv
-
-from xuance.environment.single_agent_env import Gym_Env
-from xuance.environment.vector_envs.subprocess.subproc_vec_env import SubprocVecEnv
+    DummyVecEnv_Atari, SubprocVecEnv_Atari, DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
+from xuance.environment.single_agent_env.gym import Gym_Env
+from xuance.environment.single_agent_env import REGISTRY_ENV
+from xuance.environment.multi_agent_env import REGISTRY_MULTI_AGENT_ENV
 
 REGISTRY_VEC_ENV = {
     "DummyVecEnv": DummyVecEnv,
@@ -14,61 +14,19 @@ REGISTRY_VEC_ENV = {
 
     # multiprocess #
     "SubprocVecEnv": SubprocVecEnv,
+    "SubprocVecMultiAgentEnv": SubprocVecMultiAgentEnv,
     "Subproc_Atari": SubprocVecEnv_Atari,
 }
 
 
 def make_envs(config: Namespace):
     def _thunk():
-        if config.env_name == "mpe":
-            from xuance.environment.multi_agent_env.mpe import MPE_Env as RawEnv
-            env = RawEnv(config)
-            return MakeMultiAgentEnvironment(env)
-
-        elif config.env_name == "StarCraft2":
-            from xuance.environment.multi_agent_env.starcraft2 import StarCraft2_Env as RawEnv
-            env = RawEnv(config)
-            return MakeMultiAgentEnvironment(env)
-
-        elif config.env_name == "Football":
-            from xuance.environment.multi_agent_env.football import GFootball_Env
-            return MakeMultiAgentEnvironment(GFootball_Env(config))
-
-        elif config.env_name == "RoboticWarehouse":
-            from xuance.environment.multi_agent_env.robotic_warehouse import RoboticWarehouseEnv
-            return MakeMultiAgentEnvironment(RoboticWarehouseEnv(config))
-
-        elif config.env_name == "Atari":
-            from xuance.environment.single_agent_env import Atari_Env
-            return MakeEnvironment(Atari_Env(config))
-
-        elif config.env_id.__contains__("CarRacing"):
-            return MakeEnvironment(Gym_Env(config, continuous=False))
-
-        elif config.env_name == "Platform":
-            from xuance.environment.single_agent_env.platform import PlatformEnv
-            env = PlatformEnv(config)
-            return env
-
-        elif config.env_name == "MiniGrid":
-            from xuance.environment.single_agent_env.minigrid import MiniGridEnv as RawEnv
-            env = RawEnv(config)
-            return MakeEnvironment(env)
-
-        elif config.env_name == "Drones":
-            if config.num_drones > 1:
-                from xuance.environment.multi_agent_env.drones import Drones_MultiAgentEnv
-                return MakeMultiAgentEnvironment(Drones_MultiAgentEnv(config))
-            else:
-                from xuance.environment.single_agent_env.drones import Drone_Env
-                return MakeEnvironment(Drone_Env(config))
-
-        elif config.env_name == "MetaDrive":
-            from xuance.environment.single_agent_env.metadrive import MetaDrive_Env
-            return MakeEnvironment(MetaDrive_Env(config))
-
+        if config.env_name in REGISTRY_ENV.keys():
+            return MakeEnvironment(REGISTRY_ENV[config.env_name](config))
+        elif config.env_name in REGISTRY_MULTI_AGENT_ENV.keys():
+            return MakeMultiAgentEnvironment(REGISTRY_MULTI_AGENT_ENV[config.env_name](config))
         else:
-            return MakeEnvironment(Gym_Env(config))
+            raise AttributeError(f"The environment named {config.env_name} cannot be created.")
 
     if config.vectorize in REGISTRY_VEC_ENV.keys():
         env_fn = [_thunk for _ in range(config.parallels)]
@@ -76,5 +34,5 @@ def make_envs(config: Namespace):
     elif config.vectorize == "NOREQUIRED":
         return _thunk()
     else:
-        raise NotImplementedError
+        raise AttributeError(f"The vectorized method {config.vectorize} is not implemented.")
 

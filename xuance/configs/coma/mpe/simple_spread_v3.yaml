@@ -5,7 +5,7 @@ continuous_action: False
 policy: "Categorical_COMA_Policy"
 representation: "Basic_MLP"
 representation_critic: "Basic_MLP"
-vectorize: "Dummy_Pettingzoo"
+vectorize: "DummyVecMultiAgentEnv"
 runner: "Pettingzoo_Runner"
 
 use_rnn: False

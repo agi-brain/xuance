@@ -1,6 +1,6 @@
 import torch
 from argparse import Namespace
-from xuance.environment import DummyVecMutliAgentEnv
+from xuance.environment import DummyVecMultiAgentEnv
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.representations import REGISTRY_Representation
 from xuance.torch.policies import REGISTRY_Policy, VDN_mixer
@@ -19,7 +19,7 @@ class VDN_Agents(IQL_Agents, MARLAgents):
     """
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecMutliAgentEnv):
+                 envs: DummyVecMultiAgentEnv):
         MARLAgents.__init__(self, config, envs)
 
         self.start_greedy, self.end_greedy = config.start_greedy, config.end_greedy

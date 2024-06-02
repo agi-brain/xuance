@@ -835,7 +835,7 @@ class MADDPG_Policy(Independent_DDPG_Policy):
                 critic_in = torch.concat([joint_obs_in, agent_ids], dim=-1)
             else:
                 critic_in = joint_obs_in
-            q_eval[key] = self.critic[key](critic_in, joint_act_in)
+            q_eval[key] = self.critic[key](torch.concat([critic_in, joint_act_in], dim=-1))
         return q_eval
 
     def Qtarget(self, next_observation: Dict[str, Tensor], next_actions: Dict[str, Tensor],
@@ -872,7 +872,7 @@ class MADDPG_Policy(Independent_DDPG_Policy):
                 critic_in = torch.concat([joint_obs_in, agent_ids], dim=-1)
             else:
                 critic_in = joint_obs_in
-            q_target[key] = self.target_critic[key](critic_in, joint_act_in)
+            q_target[key] = self.target_critic[key](torch.concat([critic_in, joint_act_in], dim=-1))
         return q_target
 
 
@@ -918,9 +918,9 @@ class MATD3_Policy(Independent_DDPG_Policy, Module):
                 dim_obs_critic += self.n_agents
             self.actor[key] = ActorNet(dim_obs_actor, dim_act_actor, actor_hidden_size,
                                        normalize, initialize, activation, activation_action, device)
-            self.critic_A[key] = CriticNet(dim_obs_critic, dim_act_critic, critic_hidden_size,
+            self.critic_A[key] = CriticNet(dim_obs_critic + dim_act_critic, critic_hidden_size,
                                            normalize, initialize, activation, device)
-            self.critic_B[key] = CriticNet(dim_obs_critic, dim_act_critic, critic_hidden_size,
+            self.critic_B[key] = CriticNet(dim_obs_critic + dim_act_critic, critic_hidden_size,
                                            normalize, initialize, activation, device)
             self.target_actor[key] = deepcopy(self.actor[key])
             self.target_critic_A[key] = deepcopy(self.critic_A[key])

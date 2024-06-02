@@ -11,7 +11,7 @@ render: False
 sleep: 0.01
 policy: "Independent_DDPG_Policy"
 representation: "Basic_Identical"
-vectorize: "Dummy_Pettingzoo"
+vectorize: "DummyVecMultiAgentEnv"
 runner: "MARL"
 
 actor_hidden_size: [64, 64]

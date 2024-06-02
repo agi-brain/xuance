@@ -310,7 +310,7 @@ After that, import the vectorized environments in ./xuance/environments/__init__
 
     REGISTRY_VEC_ENV = {
         "DummyVecEnv": DummyVecEnv_Gym,
-        "Dummy_Pettingzoo": DummyVecEnv_Pettingzoo,
+        "DummyVecMultiAgentEnv": DummyVecMultiAgentEnv,
         "Dummy_MAgent": DummyVecEnv_MAgent,
         "Dummy_StarCraft2": DummyVecEnv_StarCraft2,
         "Dummy_Football": DummyVecEnv_GFootball,

@@ -209,7 +209,7 @@ Source Code
                 """
                 def __init__(self,
                             config: Namespace,
-                            envs: DummyVecEnv_Pettingzoo,
+                            envs: DummyVecMultiAgentEnv,
                             device: Optional[Union[int, str, torch.device]] = None):
                     self.gamma = config.gamma
                     self.n_envs = envs.num_envs
@@ -332,7 +332,7 @@ Source Code
             class IPPO_Agents(MARLAgents):
                 def __init__(self,
                              config: Namespace,
-                             envs: DummyVecEnv_Pettingzoo,
+                             envs: DummyVecMultiAgentEnv,
                              device: str = "cpu:0"):
                     self.gamma = config.gamma
                     self.n_envs = envs.num_envs
@@ -430,7 +430,7 @@ Source Code
             class IPPO_Agents(MARLAgents):
                 def __init__(self,
                              config: Namespace,
-                             envs: DummyVecEnv_Pettingzoo):
+                             envs: DummyVecMultiAgentEnv):
                     self.gamma = config.gamma
                     self.n_envs = envs.num_envs
                     self.n_size = config.n_size

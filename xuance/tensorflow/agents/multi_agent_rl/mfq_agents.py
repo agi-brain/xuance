@@ -5,7 +5,7 @@ from xuance.tensorflow.agents.agents_marl import linear_decay_or_increase
 class MFQ_Agents(MARLAgents):
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecEnv_Pettingzoo,
+                 envs: DummyVecMultiAgentEnv,
                  device: str = "cpu:0"):
         self.gamma = config.gamma
 

@@ -6,7 +6,7 @@ from operator import itemgetter
 from argparse import Namespace
 from typing import Optional, List
 from torch.distributions import Categorical
-from xuance.environment import DummyVecMutliAgentEnv
+from xuance.environment import DummyVecMultiAgentEnv
 from xuance.torch import Tensor
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.representations import REGISTRY_Representation
@@ -26,7 +26,7 @@ class IQL_Agents(MARLAgents):
 
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecMutliAgentEnv):
+                 envs: DummyVecMultiAgentEnv):
         super(IQL_Agents, self).__init__(config, envs)
 
         self.start_greedy, self.end_greedy = config.start_greedy, config.end_greedy

@@ -299,7 +299,7 @@ Source Code
          class MARLAgents(object):
             def __init__(self,
                         config: Namespace,
-                        envs: DummyVecEnv_Pettingzoo,
+                        envs: DummyVecMultiAgentEnv,
                         policy: nn.Module,
                         memory: BaseBuffer,
                         learner: LearnerMAS,
@@ -388,7 +388,7 @@ Source Code
          class MARLAgents(object):
             def __init__(self,
                         config: Namespace,
-                        envs: DummyVecEnv_Pettingzoo,
+                        envs: DummyVecMultiAgentEnv,
                         policy: tk.Model,
                         memory: BaseBuffer,
                         learner: LearnerMAS,
@@ -477,7 +477,7 @@ Source Code
          class MARLAgents(object):
             def __init__(self,
                         config: Namespace,
-                        envs: DummyVecEnv_Pettingzoo,
+                        envs: DummyVecMultiAgentEnv,
                         policy: nn.Cell,
                         memory: BaseBuffer,
                         learner: LearnerMAS,

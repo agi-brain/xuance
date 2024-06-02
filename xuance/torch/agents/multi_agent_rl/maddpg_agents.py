@@ -1,6 +1,6 @@
 import torch
 from argparse import Namespace
-from xuance.environment import DummyVecMutliAgentEnv
+from xuance.environment import DummyVecMultiAgentEnv
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.representations import REGISTRY_Representation
 from xuance.torch.policies import REGISTRY_Policy
@@ -17,7 +17,7 @@ class MADDPG_Agents(IDDPG_Agents):
     """
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecMutliAgentEnv):
+                 envs: DummyVecMultiAgentEnv):
         super(MADDPG_Agents, self).__init__(config, envs)
 
     def _build_policy(self):

@@ -4290,7 +4290,7 @@ MARL Implementations
                             continuous_action: False
                             policy: "Basic_Q_network_marl"
                             representation: "Basic_MLP"
-                            vectorize: "Dummy_Pettingzoo"
+                            vectorize: "DummyVecMultiAgentEnv"
                             runner: "Pettingzoo_Runner"
 
                             use_rnn: False
@@ -4996,7 +4996,7 @@ MARL Implementations
                             continuous_action: False
                             policy: "Mixing_Q_network"
                             representation: "Basic_MLP"
-                            vectorize: "Dummy_Pettingzoo"
+                            vectorize: "DummyVecMultiAgentEnv"
                             runner: "Pettingzoo_Runner"
                             on_policy: False
 
@@ -5660,7 +5660,7 @@ MARL Implementations
                             continuous_action: False
                             policy: "Mixing_Q_network"
                             representation: "Basic_MLP"
-                            vectorize: "Dummy_Pettingzoo"
+                            vectorize: "DummyVecMultiAgentEnv"
                             runner: "Pettingzoo_Runner"
 
                             use_rnn: False
@@ -6349,7 +6349,7 @@ MARL Implementations
                             continuous_action: False
                             policy: "Weighted_Mixing_Q_network"
                             representation: "Basic_MLP"
-                            vectorize: "Dummy_Pettingzoo"
+                            vectorize: "DummyVecMultiAgentEnv"
                             runner: "Pettingzoo_Runner"
                             on_policy: False
 
@@ -6998,7 +6998,7 @@ MARL Implementations
                             continuous_action: False
                             policy: "Qtran_Mixing_Q_network"
                             representation: "Basic_MLP"
-                            vectorize: "Dummy_Pettingzoo"
+                            vectorize: "DummyVecMultiAgentEnv"
                             runner: "Pettingzoo_Runner"
 
                             use_rnn: False
@@ -7057,7 +7057,7 @@ MARL Implementations
                             continuous_action: False
                             policy: "DCG_Policy"
                             representation: "Basic_MLP"
-                            vectorize: "Dummy_Pettingzoo"
+                            vectorize: "DummyVecMultiAgentEnv"
                             runner: "Pettingzoo_Runner"
                             on_policy: False
 
@@ -7744,7 +7744,7 @@ MARL Implementations
                             continuous_action: True
                             policy: "Independent_DDPG_Policy"
                             representation: "Basic_Identical"
-                            vectorize: "Dummy_Pettingzoo"
+                            vectorize: "DummyVecMultiAgentEnv"
                             runner: "Pettingzoo_Runner"
 
                             representation_hidden_size: [64, ]  # the units for each hidden layer
@@ -7788,7 +7788,7 @@ MARL Implementations
                             continuous_action: True
                             policy: "Independent_DDPG_Policy"
                             representation: "Basic_Identical"
-                            vectorize: "Dummy_Pettingzoo"
+                            vectorize: "DummyVecMultiAgentEnv"
                             runner: "Pettingzoo_Runner"
 
                             representation_hidden_size: [64, ]  # the units for each hidden layer
@@ -7832,7 +7832,7 @@ MARL Implementations
                             continuous_action: True
                             policy: "Independent_DDPG_Policy"
                             representation: "Basic_Identical"
-                            vectorize: "Dummy_Pettingzoo"
+                            vectorize: "DummyVecMultiAgentEnv"
                             runner: "Pettingzoo_Runner"
 
                             representation_hidden_size: []  # the units for each hidden layer
@@ -7884,7 +7884,7 @@ MARL Implementations
                             continuous_action: True
                             policy: "MADDPG_Policy"
                             representation: "Basic_Identical"
-                            vectorize: "Dummy_Pettingzoo"
+                            vectorize: "DummyVecMultiAgentEnv"
                             runner: "Pettingzoo_Runner"
                             on_policy: False
 
@@ -7929,7 +7929,7 @@ MARL Implementations
                             continuous_action: True
                             policy: "MADDPG_Policy"
                             representation: "Basic_Identical"
-                            vectorize: "Dummy_Pettingzoo"
+                            vectorize: "DummyVecMultiAgentEnv"
                             runner: "Pettingzoo_Runner"
 
                             representation_hidden_size: []  # the units for each hidden layer
@@ -7973,7 +7973,7 @@ MARL Implementations
                             continuous_action: True
                             policy: "MADDPG_Policy"
                             representation: "Basic_Identical"
-                            vectorize: "Dummy_Pettingzoo"
+                            vectorize: "DummyVecMultiAgentEnv"
                             runner: "Pettingzoo_Runner"
 
                             representation_hidden_size: []  # the units for each hidden layer
@@ -8026,7 +8026,7 @@ MARL Implementations
                             continuous_action: True
                             policy: "Gaussian_ISAC_Policy"
                             representation: "Basic_Identical"
-                            vectorize: "Dummy_Pettingzoo"
+                            vectorize: "DummyVecMultiAgentEnv"
                             runner: "Pettingzoo_Runner"
 
                             representation_hidden_size: [64, ]  # the units for each hidden layer
@@ -8071,7 +8071,7 @@ MARL Implementations
                             continuous_action: True
                             policy: "Gaussian_ISAC_Policy"
                             representation: "Basic_Identical"
-                            vectorize: "Dummy_Pettingzoo"
+                            vectorize: "DummyVecMultiAgentEnv"
                             runner: "Pettingzoo_Runner"
 
                             representation_hidden_size: [64, ]  # the units for each hidden layer
@@ -8116,7 +8116,7 @@ MARL Implementations
                             continuous_action: True
                             policy: "Gaussian_ISAC_Policy"
                             representation: "Basic_Identical"
-                            vectorize: "Dummy_Pettingzoo"
+                            vectorize: "DummyVecMultiAgentEnv"
                             runner: "Pettingzoo_Runner"
 
                             representation_hidden_size: [64, ]  # the units for each hidden layer
@@ -8169,7 +8169,7 @@ MARL Implementations
                             continuous_action: True
                             policy: "Gaussian_MASAC_Policy"
                             representation: "Basic_Identical"
-                            vectorize: "Dummy_Pettingzoo"
+                            vectorize: "DummyVecMultiAgentEnv"
                             runner: "Pettingzoo_Runner"
 
                             representation_hidden_size: [64, ]  # the units for each hidden layer
@@ -8215,7 +8215,7 @@ MARL Implementations
                             continuous_action: True
                             policy: "Gaussian_MASAC_Policy"
                             representation: "Basic_Identical"
-                            vectorize: "Dummy_Pettingzoo"
+                            vectorize: "DummyVecMultiAgentEnv"
                             runner: "Pettingzoo_Runner"
 
                             representation_hidden_size: [64, ]  # the units for each hidden layer
@@ -8261,7 +8261,7 @@ MARL Implementations
                             continuous_action: True
                             policy: "Gaussian_MASAC_Policy"
                             representation: "Basic_Identical"
-                            vectorize: "Dummy_Pettingzoo"
+                            vectorize: "DummyVecMultiAgentEnv"
                             runner: "Pettingzoo_Runner"
 
                             representation_hidden_size: [64, ]  # the units for each hidden layer
@@ -8316,7 +8316,7 @@ MARL Implementations
                             continuous_action: False
                             policy: "Categorical_MAAC_Policy"
                             representation: "Basic_MLP"
-                            vectorize: "Dummy_Pettingzoo"
+                            vectorize: "DummyVecMultiAgentEnv"
                             runner: "Pettingzoo_Runner"
 
                             use_rnn: False
@@ -9173,7 +9173,7 @@ MARL Implementations
                             continuous_action: True
                             policy: "Gaussian_MAAC_Policy"
                             representation: "Basic_MLP"
-                            vectorize: "Dummy_Pettingzoo"
+                            vectorize: "DummyVecMultiAgentEnv"
                             runner: "Pettingzoo_Runner"
 
                             # recurrent settings for Basic_RNN representation
@@ -9238,7 +9238,7 @@ MARL Implementations
                             continuous_action: True
                             policy: "Gaussian_MAAC_Policy"
                             representation: "Basic_MLP"
-                            vectorize: "Dummy_Pettingzoo"
+                            vectorize: "DummyVecMultiAgentEnv"
                             runner: "Pettingzoo_Runner"
 
                             # recurrent settings for Basic_RNN representation
@@ -9303,7 +9303,7 @@ MARL Implementations
                             continuous_action: True
                             policy: "Gaussian_MAAC_Policy"
                             representation: "Basic_MLP"
-                            vectorize: "Dummy_Pettingzoo"
+                            vectorize: "DummyVecMultiAgentEnv"
                             runner: "Pettingzoo_Runner"
 
                             # recurrent settings for Basic_RNN representation
@@ -10239,7 +10239,7 @@ MARL Implementations
                             continuous_action: True
                             policy: "MATD3_Policy"
                             representation: "Basic_Identical"
-                            vectorize: "Dummy_Pettingzoo"
+                            vectorize: "DummyVecMultiAgentEnv"
                             runner: "Pettingzoo_Runner"
 
                             representation_hidden_size: [64, ]  # the units for each hidden layer
@@ -10284,7 +10284,7 @@ MARL Implementations
                             continuous_action: True
                             policy: "MATD3_Policy"
                             representation: "Basic_Identical"
-                            vectorize: "Dummy_Pettingzoo"
+                            vectorize: "DummyVecMultiAgentEnv"
                             runner: "Pettingzoo_Runner"
 
                             representation_hidden_size: [64, ]  # the units for each hidden layer
@@ -10329,7 +10329,7 @@ MARL Implementations
                             continuous_action: True
                             policy: "MATD3_Policy"
                             representation: "Basic_Identical"
-                            vectorize: "Dummy_Pettingzoo"
+                            vectorize: "DummyVecMultiAgentEnv"
                             runner: "Pettingzoo_Runner"
 
                             representation_hidden_size: [64, ]  # the units for each hidden layer
@@ -10382,7 +10382,7 @@ MARL Implementations
                             continuous_action: False
                             policy: "Categorical_MAAC_Policy_Share"
                             representation: "Basic_MLP"
-                            vectorize: "Dummy_Pettingzoo"
+                            vectorize: "DummyVecMultiAgentEnv"
                             runner: "Pettingzoo_Runner"
 
                             # recurrent settings for Basic_RNN representation
@@ -11198,7 +11198,7 @@ MARL Implementations
                             policy: "Categorical_COMA_Policy"
                             representation: "Basic_MLP"
                             representation_critic: "Basic_MLP"
-                            vectorize: "Dummy_Pettingzoo"
+                            vectorize: "DummyVecMultiAgentEnv"
                             runner: "Pettingzoo_Runner"
 
                             use_rnn: False
@@ -11897,7 +11897,7 @@ MARL Implementations
                             continuous_action: False
                             policy: "MF_Q_network"
                             representation: "Basic_Identical"
-                            vectorize: "Dummy_Pettingzoo"
+                            vectorize: "DummyVecMultiAgentEnv"
                             runner: "Pettingzoo_Runner"
 
                             use_rnn: False
@@ -12013,7 +12013,7 @@ MARL Implementations
                             continuous_action: False
                             policy: "Categorical_MFAC_Policy"
                             representation: "Basic_Identical"
-                            vectorize: "Dummy_Pettingzoo"
+                            vectorize: "DummyVecMultiAgentEnv"
                             runner: "Pettingzoo_Runner"
 
                             # recurrent settings for Basic_RNN representation

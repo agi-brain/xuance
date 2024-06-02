@@ -4,7 +4,7 @@ env_id: "simple_spread_v3"
 continuous_action: False
 policy: "Categorical_MFAC_Policy"
 representation: "Basic_Identical"
-vectorize: "Dummy_Pettingzoo"
+vectorize: "DummyVecMultiAgentEnv"
 runner: "Pettingzoo_Runner"
 
 # recurrent settings for Basic_RNN representation

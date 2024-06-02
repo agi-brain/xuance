@@ -27,7 +27,7 @@ Source code
     from .vector_envs.vector_env import VecEnv
     from xuance.environment.gym.gym_vec_env import DummyVecEnv_Gym, SubprocVecEnv_Gym
     from xuance.environment.gym.gym_vec_env import DummyVecEnv_Atari, SubprocVecEnv_Atari
-    from xuance.environment.pettingzoo.pettingzoo_vec_env import DummyVecEnv_Pettingzoo, SubprocVecEnv_Pettingzoo
+    from xuance.environment.pettingzoo.pettingzoo_vec_env import DummyVecMultiAgentEnv, SubprocVecEnv_Pettingzoo
     from xuance.environment.magent2.magent_vec_env import DummyVecEnv_MAgent
     from xuance.environment.starcraft2.sc2_vec_env import DummyVecEnv_StarCraft2, SubprocVecEnv_StarCraft2
     from xuance.environment.football.gfootball_vec_env import DummyVecEnv_GFootball, SubprocVecEnv_GFootball
@@ -37,7 +37,7 @@ Source code
 
     REGISTRY_VEC_ENV = {
         "DummyVecEnv": DummyVecEnv_Gym,
-        "Dummy_Pettingzoo": DummyVecEnv_Pettingzoo,
+        "DummyVecMultiAgentEnv": DummyVecMultiAgentEnv,
         "Dummy_MAgent": DummyVecEnv_MAgent,
         "Dummy_StarCraft2": DummyVecEnv_StarCraft2,
         "Dummy_Football": DummyVecEnv_GFootball,

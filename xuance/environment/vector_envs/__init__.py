@@ -23,6 +23,7 @@ from xuance.environment.vector_envs.vector_env import (
 
 from xuance.environment.vector_envs.subprocess import SubprocVecEnv
 from xuance.environment.vector_envs.subprocess import SubprocVecEnv_Atari
+from xuance.environment.vector_envs.subprocess import SubprocVecMultiAgentEnv
 from xuance.environment.vector_envs.dummy import DummyVecEnv
 from xuance.environment.vector_envs.dummy import DummyVecEnv_Atari
 from xuance.environment.vector_envs.dummy import DummyVecMultiAgentEnv
