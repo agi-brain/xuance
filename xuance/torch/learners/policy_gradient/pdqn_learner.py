@@ -1,5 +1,5 @@
 """
-Parameterised deep Q network (PDQN)
+Parameterised deep Q network (P-DQN)
 Paper link: https://arxiv.org/pdf/1810.06394.pdf
 Implementation: Pytorch
 """

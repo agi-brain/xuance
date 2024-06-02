@@ -662,10 +662,9 @@ class MPDQNPolicy(Module):
         self.conact_size = int(self.conact_sizes.sum())
 
         self.qnetwork = BasicQhead(self.observation_space.shape[0] + self.conact_size, self.num_disact,
-                                   qnetwork_hidden_size, normalize,
-                                   initialize, activation, device)
+                                   qnetwork_hidden_size, normalize, initialize, activation, device)
         self.conactor = ActorNet(self.observation_space.shape[0], self.conact_size, conactor_hidden_size,
-                                 initialize, activation, activation_action, device)
+                                 normalize, initialize, activation, activation_action, device)
         self.target_conactor = deepcopy(self.conactor)
         self.target_qnetwork = deepcopy(self.qnetwork)
 
@@ -770,10 +769,10 @@ class SPDQNPolicy(Module):
         self.qnetwork = nn.ModuleList()
         for k in range(self.num_disact):
             self.qnetwork.append(
-                BasicQhead(self.observation_space.shape[0] + self.conact_sizes[k], 1, qnetwork_hidden_size, normalize,
-                           initialize, activation, device))
+                BasicQhead(self.observation_space.shape[0] + self.conact_sizes[k], 1, qnetwork_hidden_size,
+                           normalize, initialize, activation, device))
         self.conactor = ActorNet(self.observation_space.shape[0], self.conact_size, conactor_hidden_size,
-                                 initialize, activation, activation_action, device)
+                                 normalize, initialize, activation, activation_action, device)
         self.target_conactor = deepcopy(self.conactor)
         self.target_qnetwork = deepcopy(self.qnetwork)
 

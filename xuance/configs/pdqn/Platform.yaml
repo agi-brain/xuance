@@ -1,8 +1,8 @@
 agent: "PDQN"
 env_name: "Platform"
 env_id: "Platform-v0"
-vectorize: "NOREQUIRED"
 max_episode_steps: 200
+vectorize: "NOREQUIRED"
 render: False
 policy: "PDQN_Policy"
 representation: "Basic_MLP"

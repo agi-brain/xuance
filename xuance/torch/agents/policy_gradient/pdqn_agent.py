@@ -38,10 +38,10 @@ class PDQN_Agent(Agent):
         self.observation_space = envs.observation_space.spaces[0]
         old_as = envs.action_space
         num_disact = old_as.spaces[0].n
-        self.action_space = gym.spaces.Tuple((old_as.spaces[0], *(gym.spaces.Box(old_as.spaces[1].spaces[i].low,
-                                                                                 old_as.spaces[1].spaces[i].high,
-                                                                                 dtype=np.float32) for i in
-                                                                  range(0, num_disact))))
+        self.action_space = gym.spaces.Tuple((old_as.spaces[0],
+                                              *(gym.spaces.Box(old_as.spaces[1].spaces[i].low,
+                                                               old_as.spaces[1].spaces[i].high, dtype=np.float32)
+                                                for i in range(0, num_disact))))
         self.action_high = [self.action_space.spaces[i].high for i in range(1, num_disact + 1)]
         self.action_low = [self.action_space.spaces[i].low for i in range(1, num_disact + 1)]
         self.action_range = [self.action_space.spaces[i].high - self.action_space.spaces[i].low for i in
@@ -166,7 +166,7 @@ class PDQN_Agent(Agent):
 
             scores += rewards
             obs = deepcopy(next_obs)
-            self.noise_scale = self.start_noise - (self.start_noise - self.end_noise) / train_steps
+
             if terminal == True:
                 step_info["returns-step"] = scores
                 scores = 0
@@ -177,8 +177,12 @@ class PDQN_Agent(Agent):
                 self.log_infos(step_info, self.current_step)
 
             self.current_step += self.n_envs
+
             if self.egreedy >= self.end_greedy:
-                self.egreedy = self.egreedy - (self.start_greedy - self.end_greedy) / self.config.decay_step_greedy
+                self.egreedy -= self.delta_egreedy
+
+            if self.noise_scale >= self.end_noise:
+                self.noise_scale -= self.delta_noise
 
     def test(self, env_fn, test_episodes):
         test_envs = env_fn()
