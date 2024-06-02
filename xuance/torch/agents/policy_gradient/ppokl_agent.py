@@ -78,7 +78,7 @@ class PPOKL_Agent(Agent):
                 normalize=normalize_fn, initialize=initializer, activation=activation, device=device,
                 fc_hidden_sizes=self.config.fc_hidden_sizes)
         else:
-            raise AttributeError(f"PPO_CLIP currently does not support {self.config.representation} representation.")
+            raise AttributeError(f"PPO_KL currently does not support {self.config.representation} representation.")
 
         # build policy.
         if self.config.policy == "Categorical_AC":
@@ -93,7 +93,7 @@ class PPOKL_Agent(Agent):
                 normalize=normalize_fn, initialize=initializer, activation=activation, device=device,
                 activation_action=ActivationFunctions[self.config.activation_action])
         else:
-            raise AttributeError(f"PPO_CLIP currently does not support the policy named {self.config.policy}.")
+            raise AttributeError(f"PPO_KL currently does not support the policy named {self.config.policy}.")
 
         return policy
 
