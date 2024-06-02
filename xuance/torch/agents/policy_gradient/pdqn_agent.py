@@ -167,7 +167,7 @@ class PDQN_Agent(Agent):
             scores += rewards
             obs = deepcopy(next_obs)
 
-            if terminal == True:
+            if terminal:
                 step_info["returns-step"] = scores
                 scores = 0
                 returns = 0
@@ -199,7 +199,7 @@ class PDQN_Agent(Agent):
             self.envs.render("human")
             episode_score += rewards
             obs = deepcopy(next_obs)
-            if terminal == True:
+            if terminal:
                 scores.append(episode_score)
                 obs, _ = self.envs.reset()
                 current_episode += 1

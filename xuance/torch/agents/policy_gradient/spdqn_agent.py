@@ -131,7 +131,7 @@ class SPDQN_Agent(PDQN_Agent, Agent):
             scores += rewards
             obs = deepcopy(next_obs)
 
-            if terminal == True:
+            if terminal:
                 step_info["returns-step"] = scores
                 scores = 0
                 returns = 0
