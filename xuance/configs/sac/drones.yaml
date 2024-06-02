@@ -9,7 +9,7 @@ obstacles: True
 max_episode_steps: 2000  #
 render: False
 sleep: 0.01
-vectorize: "Dummy_Drone"
+vectorize: "DummyVecEnv"
 policy: "Gaussian_SAC"
 representation: "Basic_Identical"
 runner: "DRL"
@@ -35,6 +35,10 @@ training_frequency: 1
 running_steps: 1000000
 start_training: 10000
 
+use_grad_clip: False  # gradient normalization
+clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+grad_clip_norm: 0.5
+use_actions_mask: False
 use_obsnorm: False
 use_rewnorm: False
 obsnorm_range: 5

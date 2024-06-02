@@ -1,44 +1,52 @@
-import os
+import os.path
+import wandb
 import socket
-from pathlib import Path
-
 import numpy as np
-
-from xuance.torch.agents import *
-from xuance.common import get_time_string
+from abc import ABC
+from pathlib import Path
+from argparse import Namespace
+from mpi4py import MPI
+from typing import Optional
+from gym.spaces import Dict
+from torch import nn
+from torch.utils.tensorboard import SummaryWriter
+from xuance.common import get_time_string, create_directory, RunningMeanStd, space2shape, EPS
+from xuance.environment import DummyVecEnv
 
 
 class Agent(ABC):
-    """The class of basic agents.
+    """Base class of agent for single-agent DRL.
 
     Args:
         config: the Namespace variable that provides hyper-parameters and other settings.
         envs: the vectorized environments.
-        policy: the neural network modules of the agent.
-        memory: the experience replay buffer.
-        learner: the learner for the corresponding agent.
-        device: the calculating device of the model, such as CPU or GPU.
-        log_dir: the directory of the log file.
-        model_dir: the directory for models saving.
     """
 
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecEnv_Gym,
-                 policy: nn.Module,
-                 memory: Buffer,
-                 learner: Learner,
-                 device: Optional[Union[str, int, torch.device]] = None,
-                 log_dir: str = "./logs/",
-                 model_dir: str = "./models/"):
+                 envs: DummyVecEnv):
+        # Training settings.
         self.config = config
-        self.envs = envs
-        self.policy = policy
-        self.memory = memory
-        self.learner = learner
-        self.fps = config.fps
+        self.use_rnn = config.use_rnn if hasattr(config, "use_rnn") else False
+        self.use_actions_mask = config.use_actions_mask if hasattr(config, "use_actions_mask") else False
 
+        self.gamma = config.gamma
+        self.start_training = config.start_training if hasattr(config, "start_training") else 1
+        self.training_frequency = config.training_frequency if hasattr(config, "start_training") else 1
+        self.device = config.device
+
+        # Environment attributes.
+        self.envs = envs
+        self.envs.reset()
+        self.render = config.render
+        self.fps = config.fps
+        self.n_envs = envs.num_envs
         self.observation_space = envs.observation_space
+        self.action_space = envs.action_space
+        self.current_step = 0
+        self.current_episode = np.zeros((self.n_envs,), np.int32)
+
+        # Set normalizations for observations and rewards.
         self.comm = MPI.COMM_WORLD
         self.obs_rms = RunningMeanStd(shape=space2shape(self.observation_space), comm=self.comm, use_mpi=False)
         self.ret_rms = RunningMeanStd(shape=(), comm=self.comm, use_mpi=False)
@@ -48,23 +56,23 @@ class Agent(ABC):
         self.rewnorm_range = config.rewnorm_range
         self.returns = np.zeros((self.envs.num_envs,), np.float32)
 
+        # Prepare directories.
         time_string = get_time_string()
         seed = f"seed_{self.config.seed}_"
-        self.model_dir_save = os.path.join(os.getcwd(), model_dir, seed + time_string)
-        self.model_dir_load = model_dir
+        self.model_dir_load = config.model_dir
+        self.model_dir_save = os.path.join(os.getcwd(), config.model_dir, seed + time_string)
 
-        # logger
+        # Create logger.
         if config.logger == "tensorboard":
             log_dir = os.path.join(os.getcwd(), config.log_dir, seed + time_string)
-            if not os.path.exists(log_dir):
-                os.makedirs(log_dir)
+            create_directory(log_dir)
             self.writer = SummaryWriter(log_dir)
             self.use_wandb = False
         elif config.logger == "wandb":
             config_dict = vars(config)
+            log_dir = config.log_dir
             wandb_dir = Path(os.path.join(os.getcwd(), config.log_dir))
-            if not wandb_dir.exists():
-                os.makedirs(str(wandb_dir))
+            create_directory(str(wandb_dir))
             wandb.init(config=config_dict,
                        project=config.project_name,
                        entity=config.wandb_user_name,
@@ -79,13 +87,13 @@ class Agent(ABC):
             # os.environ["WANDB_SILENT"] = "True"
             self.use_wandb = True
         else:
-            raise "No logger is implemented."
-
-        self.device = device
+            raise AttributeError("No logger is implemented.")
         self.log_dir = log_dir
-        create_directory(log_dir)
-        self.current_step = 0
-        self.current_episode = np.zeros((self.envs.num_envs,), np.int32)
+
+        # Prepare necessary components.
+        self.policy: Optional[nn.Module] = None
+        self.learner: Optional[nn.Module] = None
+        self.memory: Optional[object] = None
 
     def save_model(self, model_name):
         # save the neural networks
@@ -159,15 +167,18 @@ class Agent(ABC):
         else:
             return rewards
 
-    @abstractmethod
-    def _action(self, observations):
+    def _build_policy(self):
         raise NotImplementedError
 
-    @abstractmethod
+    def _build_learner(self, *args):
+        raise NotImplementedError
+
+    def action(self, observations):
+        raise NotImplementedError
+
     def train(self, steps):
         raise NotImplementedError
 
-    @abstractmethod
     def test(self, env_fn, steps):
         raise NotImplementedError
 
@@ -177,6 +188,3 @@ class Agent(ABC):
         else:
             self.writer.close()
 
-
-def get_total_iters(agent_name, args):
-    return args.running_steps

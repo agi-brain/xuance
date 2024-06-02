@@ -12,7 +12,7 @@ env_name: "MiniGrid"
 env_id: "MiniGrid-Empty-5x5-v0"
 RGBImgPartialObsWrapper: False
 ImgObsWrapper: False
-vectorize: "Dummy_MiniGrid"
+vectorize: "DummyVecEnv"
 policy: "Basic_Q_network"
 representation: "Basic_MLP"
 runner: "DRL"

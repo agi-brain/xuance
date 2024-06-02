@@ -30,7 +30,7 @@ Here we show a config file named "mujoco.yaml" for MuJoCo environment in gym.
 
     agent: "PPO_Clip"  # choice: PPO_Clip, PPO_KL
     env_name: "MuJoCo"
-    vectorize: "Dummy_Gym"
+    vectorize: "DummyVecEnv"
     runner: "DRL"
 
     representation_hidden_size: [256,]

@@ -46,7 +46,11 @@ class Basic_RNN(nn.Module):
         return nn.Sequential(*layers), rnn_layer, input_shape
 
     def forward(self, x: torch.Tensor, h: torch.Tensor, c: torch.Tensor = None):
-        mlp_output = self.mlp(self.input_norm(x)) if self.use_normalize else self.mlp(x)
+        if self.use_normalize:
+            tensor_x = self.input_norm(torch.as_tensor(x, dtype=torch.float32, device=self.device))
+        else:
+            tensor_x = torch.as_tensor(x, dtype=torch.float32, device=self.device)
+        mlp_output = self.mlp(tensor_x)
         self.rnn.flatten_parameters()
         if self.lstm:
             output, (hn, cn) = self.rnn(mlp_output, (h, c))

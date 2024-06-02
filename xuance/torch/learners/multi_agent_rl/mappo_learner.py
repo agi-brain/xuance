@@ -22,7 +22,7 @@ class MAPPO_Clip_Learner(LearnerMAS):
         self.gamma = gamma
         self.clip_range = config.clip_range
         self.use_linear_lr_decay = config.use_linear_lr_decay
-        self.use_grad_norm, self.max_grad_norm = config.use_grad_norm, config.max_grad_norm
+        self.use_grad_clip, self.grad_clip_norm = config.use_grad_clip, config.grad_clip_norm
         self.use_value_clip, self.value_clip_range = config.use_value_clip, config.value_clip_range
         self.use_huber_loss, self.huber_delta = config.use_huber_loss, config.huber_delta
         self.use_value_norm = config.use_value_norm
@@ -103,8 +103,8 @@ class MAPPO_Clip_Learner(LearnerMAS):
         loss = loss_a + self.vf_coef * loss_c - self.ent_coef * loss_e
         self.optimizer.zero_grad()
         loss.backward()
-        if self.use_grad_norm:
-            grad_norm = torch.nn.utils.clip_grad_norm_(self.policy.parameters(), self.max_grad_norm)
+        if self.use_grad_clip:
+            grad_norm = torch.nn.utils.clip_grad_norm_(self.policy.parameters(), self.grad_clip_norm)
             info["gradient_norm"] = grad_norm.item()
         self.optimizer.step()
         if self.scheduler is not None:
@@ -202,8 +202,8 @@ class MAPPO_Clip_Learner(LearnerMAS):
         loss = loss_a + self.vf_coef * loss_c - self.ent_coef * loss_e
         self.optimizer.zero_grad()
         loss.backward()
-        if self.use_grad_norm:
-            grad_norm = torch.nn.utils.clip_grad_norm_(self.policy.parameters(), self.max_grad_norm)
+        if self.use_grad_clip:
+            grad_norm = torch.nn.utils.clip_grad_norm_(self.policy.parameters(), self.grad_clip_norm)
             info["gradient_norm"] = grad_norm.item()
         self.optimizer.step()
         if self.scheduler is not None:

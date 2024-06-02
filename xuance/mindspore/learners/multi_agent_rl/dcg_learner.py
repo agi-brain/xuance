@@ -11,18 +11,18 @@ import copy
 
 class DCG_Learner(LearnerMAS):
     class PolicyNetWithLossCell(nn.Cell):
-        def __init__(self, backbone, n_msg_iterations, dim_act, agent, use_recurrent):
+        def __init__(self, backbone, n_msg_iterations, dim_act, agent, use_rnn):
             super(DCG_Learner.PolicyNetWithLossCell, self).__init__(auto_prefix=False)
             self._backbone = backbone
             self.n_msg_iterations = n_msg_iterations
             self.expand_dims = ops.ExpandDims()
             self.dim_act = dim_act
             self.agent = agent
-            self.use_recurrent = use_recurrent
+            self.use_rnn = use_rnn
 
         def construct(self, s, o, a, label, *rnn_hidden):
             # get hidden states
-            if self.use_recurrent:
+            if self.use_rnn:
                 outputs = self._backbone.representation(o, *rnn_hidden)
                 hidden_states = outputs['state']
             else:
@@ -60,7 +60,7 @@ class DCG_Learner(LearnerMAS):
                  sync_frequency: int = 100
                  ):
         self.gamma = gamma
-        self.use_recurrent = config.use_recurrent
+        self.use_rnn = config.use_rnn
         self.sync_frequency = sync_frequency
         self.mse_loss = nn.MSELoss()
         super(DCG_Learner, self).__init__(config, policy, optimizer, scheduler, model_dir)
@@ -69,12 +69,12 @@ class DCG_Learner(LearnerMAS):
         self._mean = ops.ReduceMean(keep_dims=False)
         self.transpose = ops.Transpose()
         self.loss_net = self.PolicyNetWithLossCell(policy, config.n_msg_iterations,
-                                                   self.dim_act, config.agent, self.use_recurrent)
+                                                   self.dim_act, config.agent, self.use_rnn)
         self.policy_train = nn.TrainOneStepCell(self.loss_net, optimizer)
         self.policy_train.set_train()
 
     def get_hidden_states(self, obs_n, *rnn_hidden, use_target_net=False):
-        if self.use_recurrent:
+        if self.use_rnn:
             if use_target_net:
                 outputs = self.policy.target_representation(obs_n, *rnn_hidden)
             else:

@@ -1,7 +1,7 @@
 agent: "SACDIS"
 env_name: "Classic Control"
 env_id: "CartPole-v1"
-vectorize: "Dummy_Gym"
+vectorize: "DummyVecEnv"
 policy: "Discrete_SAC"
 representation: "Basic_MLP"
 runner: "DRL"
@@ -19,13 +19,17 @@ actor_learning_rate: 0.001
 critic_learning_rate: 0.001
 gamma: 0.99
 alpha: 0.2
-use_automatic_entropy_tuning: True
+use_automatic_entropy_tuning: False
 tau: 0.005
 
 training_frequency: 2
 running_steps: 500000
 start_training: 2000
 
+use_grad_clip: False  # gradient normalization
+clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+grad_clip_norm: 0.5
+use_actions_mask: False
 use_obsnorm: False
 use_rewnorm: False
 obsnorm_range: 5

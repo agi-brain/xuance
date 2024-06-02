@@ -45,7 +45,7 @@ class BasicQnetwork(tk.Model):
         self.obs_dim = self.representation.input_shapes[0]
         self.n_agents = n_agents
         self.lstm = True if kwargs["rnn"] == "LSTM" else False
-        self.use_rnn = True if kwargs["use_recurrent"] else False
+        self.use_rnn = True if kwargs["use_rnn"] else False
         self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, n_agents,
                                      hidden_size, normalize, initializer, activation, device)
         self.target_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, n_agents,
@@ -155,7 +155,7 @@ class MixingQnetwork(tk.Model):
         self.obs_dim = self.representation.input_shapes[0]
         self.n_agents = n_agents
         self.lstm = True if kwargs["rnn"] == "LSTM" else False
-        self.use_rnn = True if kwargs["use_recurrent"] else False
+        self.use_rnn = True if kwargs["use_rnn"] else False
         self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, n_agents,
                                      hidden_size, normalize, initializer, activation, device)
         self.target_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, n_agents,
@@ -277,7 +277,7 @@ class Qtran_MixingQnetwork(tk.Model):
         self.hidden_state_dim = self.representation.output_shapes['state'][0]
         self.n_agents = n_agents
         self.lstm = True if kwargs["rnn"] == "LSTM" else False
-        self.use_rnn = True if kwargs["use_recurrent"] else False
+        self.use_rnn = True if kwargs["use_rnn"] else False
         self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, n_agents,
                                      hidden_size, normalize, initializer, activation, device)
         self.target_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, n_agents,
@@ -329,7 +329,7 @@ class DCG_policy(tk.Model):
         self.representation = representation
         self.target_representation = representation
         self.lstm = True if kwargs["rnn"] == "LSTM" else False
-        self.use_rnn = True if kwargs["use_recurrent"] else False
+        self.use_rnn = True if kwargs["use_rnn"] else False
         self.utility = utility
         self.target_utility = utility
         self.payoffs = payoffs

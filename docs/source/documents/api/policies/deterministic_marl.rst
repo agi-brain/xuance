@@ -2175,7 +2175,7 @@ Source Code
                 self.target_representation = copy.deepcopy(self.representation)
                 self.representation_info_shape = self.representation.output_shapes
                 self.lstm = True if kwargs["rnn"] == "LSTM" else False
-                self.use_rnn = True if kwargs["use_recurrent"] else False
+                self.use_rnn = True if kwargs["use_rnn"] else False
                 self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, n_agents,
                                              hidden_size, normalize, initialize, activation, device)
                 self.target_Qhead = copy.deepcopy(self.eval_Qhead)
@@ -2277,7 +2277,7 @@ Source Code
                 self.target_representation = copy.deepcopy(self.representation)
                 self.representation_info_shape = self.representation.output_shapes
                 self.lstm = True if kwargs["rnn"] == "LSTM" else False
-                self.use_rnn = True if kwargs["use_recurrent"] else False
+                self.use_rnn = True if kwargs["use_rnn"] else False
                 self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, n_agents,
                                              hidden_size, normalize, initialize, activation, device)
                 self.target_Qhead = copy.deepcopy(self.eval_Qhead)
@@ -2442,7 +2442,7 @@ Source Code
                 self.representation = representation
                 self.target_representation = copy.deepcopy(self.representation)
                 self.lstm = True if kwargs["rnn"] == "LSTM" else False
-                self.use_rnn = True if kwargs["use_recurrent"] else False
+                self.use_rnn = True if kwargs["use_rnn"] else False
                 self.utility = utility
                 self.target_utility = copy.deepcopy(self.utility)
                 self.payoffs = payoffs
@@ -2748,7 +2748,7 @@ Source Code
                 self.obs_dim = self.representation.input_shapes[0]
                 self.n_agents = n_agents
                 self.lstm = True if kwargs["rnn"] == "LSTM" else False
-                self.use_rnn = True if kwargs["use_recurrent"] else False
+                self.use_rnn = True if kwargs["use_rnn"] else False
                 self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, n_agents,
                                             hidden_size, normalize, initializer, activation, device)
                 self.target_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, n_agents,
@@ -2858,7 +2858,7 @@ Source Code
                 self.obs_dim = self.representation.input_shapes[0]
                 self.n_agents = n_agents
                 self.lstm = True if kwargs["rnn"] == "LSTM" else False
-                self.use_rnn = True if kwargs["use_recurrent"] else False
+                self.use_rnn = True if kwargs["use_rnn"] else False
                 self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, n_agents,
                                             hidden_size, normalize, initializer, activation, device)
                 self.target_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, n_agents,
@@ -2980,7 +2980,7 @@ Source Code
                 self.hidden_state_dim = self.representation.output_shapes['state'][0]
                 self.n_agents = n_agents
                 self.lstm = True if kwargs["rnn"] == "LSTM" else False
-                self.use_rnn = True if kwargs["use_recurrent"] else False
+                self.use_rnn = True if kwargs["use_rnn"] else False
                 self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, n_agents,
                                             hidden_size, normalize, initializer, activation, device)
                 self.target_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, n_agents,
@@ -3032,7 +3032,7 @@ Source Code
                 self.representation = representation
                 self.target_representation = representation
                 self.lstm = True if kwargs["rnn"] == "LSTM" else False
-                self.use_rnn = True if kwargs["use_recurrent"] else False
+                self.use_rnn = True if kwargs["use_rnn"] else False
                 self.utility = utility
                 self.target_utility = utility
                 self.payoffs = payoffs
@@ -3367,7 +3367,7 @@ Source Code
                 self.target_representation = copy.deepcopy(self.representation)
                 self.representation_info_shape = self.representation.output_shapes
                 self.lstm = True if kwargs["rnn"] == "LSTM" else False
-                self.use_rnn = True if kwargs["use_recurrent"] else False
+                self.use_rnn = True if kwargs["use_rnn"] else False
                 self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, n_agents,
                                             hidden_size, normalize, initialize, activation)
                 self.target_Qhead = copy.deepcopy(self.eval_Qhead)
@@ -3468,7 +3468,7 @@ Source Code
                 self.target_representation = copy.deepcopy(self.representation)
                 self.representation_info_shape = self.representation.output_shapes
                 self.lstm = True if kwargs["rnn"] == "LSTM" else False
-                self.use_rnn = True if kwargs["use_recurrent"] else False
+                self.use_rnn = True if kwargs["use_rnn"] else False
                 self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, n_agents,
                                             hidden_size, normalize, initialize, activation)
                 self.target_Qhead = copy.deepcopy(self.eval_Qhead)
@@ -3587,7 +3587,7 @@ Source Code
                 self.target_representation = copy.deepcopy(self.representation)
                 self.representation_info_shape = self.representation.output_shapes
                 self.lstm = True if kwargs["rnn"] == "LSTM" else False
-                self.use_rnn = True if kwargs["use_recurrent"] else False
+                self.use_rnn = True if kwargs["use_rnn"] else False
                 self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, n_agents,
                                             hidden_size, normalize, initialize, activation)
                 self.target_Qhead = copy.deepcopy(self.eval_Qhead)
@@ -3651,7 +3651,7 @@ Source Code
                 self.representation = representation
                 self.target_representation = copy.deepcopy(self.representation)
                 self.lstm = True if kwargs["rnn"] == "LSTM" else False
-                self.use_rnn = True if kwargs["use_recurrent"] else False
+                self.use_rnn = True if kwargs["use_rnn"] else False
                 self.utility = utility
                 self.target_utility = copy.deepcopy(self.utility)
                 self.payoffs = payoffs

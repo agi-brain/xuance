@@ -1,23 +1,30 @@
-from xuance.torch.learners import *
+"""
+Policy Gradient (PG)
+Paper link: https://proceedings.neurips.cc/paper/2001/file/4b86abe48d358ecf194c56c69108433e-Paper.pdf
+Implementation: Pytorch
+"""
+import torch
+from torch import nn
+from xuance.torch.learners import Learner
+from typing import Optional, Union
+from argparse import Namespace
 
 
 class PG_Learner(Learner):
     def __init__(self,
+                 config: Namespace,
+                 episode_length: int,
                  policy: nn.Module,
                  optimizer: torch.optim.Optimizer,
-                 scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
-                 device: Optional[Union[int, str, torch.device]] = None,
-                 model_dir: str = "./",
-                 ent_coef: float = 0.005,
-                 clip_grad: Optional[float] = None):
-        super(PG_Learner, self).__init__(policy, optimizer, scheduler, device, model_dir)
-        self.ent_coef = ent_coef
-        self.clip_grad = clip_grad
+                 scheduler: Union[dict, Optional[torch.optim.lr_scheduler.LinearLR]] = None):
+        super(PG_Learner, self).__init__(config, episode_length, policy, optimizer, scheduler)
+        self.ent_coef = config.ent_coef
 
-    def update(self, obs_batch, act_batch, ret_batch):
+    def update(self, **samples):
         self.iterations += 1
-        act_batch = torch.as_tensor(act_batch, device=self.device)
-        ret_batch = torch.as_tensor(ret_batch, device=self.device)
+        obs_batch = samples['obs']
+        act_batch = torch.as_tensor(samples['actions'], device=self.device)
+        ret_batch = torch.as_tensor(samples['returns'], device=self.device)
         _, a_dist = self.policy(obs_batch)
         log_prob = a_dist.log_prob(act_batch)
 
@@ -27,7 +34,8 @@ class PG_Learner(Learner):
         loss = a_loss - self.ent_coef * e_loss
         self.optimizer.zero_grad()
         loss.backward()
-        torch.nn.utils.clip_grad_norm_(self.policy.parameters(), self.clip_grad)
+        if self.use_grad_clip:
+            torch.nn.utils.clip_grad_norm_(self.policy.parameters(), self.grad_clip_norm)
         self.optimizer.step()
         if self.scheduler is not None:
             self.scheduler.step()

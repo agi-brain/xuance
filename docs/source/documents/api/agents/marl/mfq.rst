@@ -164,14 +164,14 @@ Source Code
                 """
                 def __init__(self,
                             config: Namespace,
-                            envs: DummyVecEnv_Pettingzoo,
+                            envs: DummyVecMultiAgentEnv,
                             device: Optional[Union[int, str, torch.device]] = None):
                     self.gamma = config.gamma
 
                     self.start_greedy, self.end_greedy = config.start_greedy, config.end_greedy
                     self.egreedy = self.start_greedy
                     self.delta_egreedy = (self.start_greedy - self.end_greedy) / config.decay_step_greedy
-                    self.use_recurrent, self.rnn = config.use_recurrent, config.rnn
+                    self.use_rnn, self.rnn = config.use_rnn, config.rnn
                     self.rnn_hidden = None
 
                     input_representation = get_repre_in(config)
@@ -213,7 +213,7 @@ Source Code
                     obs_in = torch.Tensor(obs_n).to(self.device)
                     act_mean = torch.Tensor(act_mean).unsqueeze(dim=-2).repeat(1, self.n_agents, 1).to(self.device)
 
-                    if self.use_recurrent:  # awaiting to be tested
+                    if self.use_rnn:  # awaiting to be tested
                         batch_agents = batch_size * self.n_agents
                         hidden_state, greedy_actions, q_output = self.policy(obs_in.view(batch_agents, 1, -1),
                                                                             act_mean.view(batch_agents, 1, -1),
@@ -263,14 +263,14 @@ Source Code
             class MFQ_Agents(MARLAgents):
                 def __init__(self,
                              config: Namespace,
-                             envs: DummyVecEnv_Pettingzoo,
+                             envs: DummyVecMultiAgentEnv,
                              device: str = "cpu:0"):
                     self.gamma = config.gamma
 
                     self.start_greedy, self.end_greedy = config.start_greedy, config.end_greedy
                     self.egreedy = self.start_greedy
                     self.delta_egreedy = (self.start_greedy - self.end_greedy) / config.decay_step_greedy
-                    self.use_recurrent, self.rnn = config.use_recurrent, config.rnn
+                    self.use_rnn, self.rnn = config.use_rnn, config.rnn
                     self.rnn_hidden = None
 
                     input_representation = get_repre_in(config)
@@ -350,13 +350,13 @@ Source Code
             class MFQ_Agents(MARLAgents):
                 def __init__(self,
                              config: Namespace,
-                             envs: DummyVecEnv_Pettingzoo):
+                             envs: DummyVecMultiAgentEnv):
                     self.gamma = config.gamma
 
                     self.start_greedy, self.end_greedy = config.start_greedy, config.end_greedy
                     self.egreedy = self.start_greedy
                     self.delta_egreedy = (self.start_greedy - self.end_greedy) / config.decay_step_greedy
-                    self.use_recurrent, self.rnn = config.use_recurrent, config.rnn
+                    self.use_rnn, self.rnn = config.use_rnn, config.rnn
                     self.rnn_hidden = None
 
                     input_representation = get_repre_in(config)
@@ -397,7 +397,7 @@ Source Code
                     obs_in = Tensor(obs_n)
                     act_mean = ops.broadcast_to(self.expand_dims(Tensor(act_mean).astype(ms.float32), -2), (-1, self.n_agents, -1))
 
-                    if self.use_recurrent:  # awaiting to be tested
+                    if self.use_rnn:  # awaiting to be tested
                         batch_agents = batch_size * self.n_agents
                         hidden_state, greedy_actions, q_output = self.policy(obs_in.view(batch_agents, 1, -1),
                                                                              act_mean.view(batch_agents, 1, -1),

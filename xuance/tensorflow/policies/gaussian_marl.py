@@ -152,7 +152,7 @@ class MAAC_Policy(tk.Model):
         self.representation_critic = representation[1]
         self.representation_info_shape = self.representation.output_shapes
         self.lstm = True if kwargs["rnn"] == "LSTM" else False
-        self.use_rnn = True if kwargs["use_recurrent"] else False
+        self.use_rnn = True if kwargs["use_rnn"] else False
         self.actor = ActorNet(self.representation.output_shapes['state'][0], n_agents, self.action_dim,
                               actor_hidden_size, normalize, initialize, activation, device)
         dim_input_critic = self.representation_critic.output_shapes['state'][0]

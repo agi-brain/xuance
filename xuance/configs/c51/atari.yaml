@@ -25,8 +25,8 @@ buffer_size: 500000
 batch_size: 32  # 64
 learning_rate: 0.0001
 gamma: 0.99
-vmin: 0
-vmax: 200
+v_min: 0
+v_max: 200
 atom_num: 51
 
 start_greedy: 0.5
@@ -37,6 +37,9 @@ training_frequency: 1
 running_steps: 50000000  # 50M
 start_training: 10000
 
+use_grad_clip: False  # gradient normalization
+grad_clip_norm: 0.5
+use_actions_mask: False
 use_obsnorm: False
 use_rewnorm: False
 obsnorm_range: 5

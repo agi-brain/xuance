@@ -291,8 +291,8 @@ class C51Qnetwork(nn.Cell):
     def __init__(self,
                  action_space: Discrete,
                  atom_num: int,
-                 vmin: float,
-                 vmax: float,
+                 v_min: float,
+                 v_max: float,
                  representation: ModuleType,
                  hidden_size: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,
@@ -303,8 +303,8 @@ class C51Qnetwork(nn.Cell):
         super(C51Qnetwork, self).__init__()
         self.action_dim = action_space.n
         self.atom_num = atom_num
-        self.vmin = vmin
-        self.vmax = vmax
+        self.v_min = v_min
+        self.v_max = v_max
         self.representation = representation
         self.target_representation = copy.deepcopy(representation)
         self.representation_info_shape = self.representation.output_shapes
@@ -312,11 +312,11 @@ class C51Qnetwork(nn.Cell):
                                    hidden_size, normalize, initialize, activation)
         self.target_Zhead = copy.deepcopy(self.eval_Zhead)
         self._LinSpace = ms.ops.LinSpace()
-        self.supports = ms.Parameter(self._LinSpace(ms.Tensor(self.vmin, ms.float32),
-                                                    ms.Tensor(self.vmax, ms.float32),
+        self.supports = ms.Parameter(self._LinSpace(ms.Tensor(self.v_min, ms.float32),
+                                                    ms.Tensor(self.v_max, ms.float32),
                                                     self.atom_num),
                                      requires_grad=False)
-        self.deltaz = (vmax - vmin) / (atom_num - 1)
+        self.deltaz = (v_max - v_min) / (atom_num - 1)
 
     def construct(self, observation: Union[np.ndarray, dict]):
         outputs = self.representation(observation)

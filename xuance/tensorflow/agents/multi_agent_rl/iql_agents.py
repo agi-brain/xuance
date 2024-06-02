@@ -5,7 +5,7 @@ from xuance.tensorflow.agents.agents_marl import linear_decay_or_increase
 class IQL_Agents(MARLAgents):
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecEnv_Pettingzoo,
+                 envs: DummyVecMultiAgentEnv,
                  device: str = "cpu:0"):
         self.gamma = config.gamma
         self.start_greedy, self.end_greedy = config.start_greedy, config.end_greedy
@@ -13,8 +13,8 @@ class IQL_Agents(MARLAgents):
         self.delta_egreedy = (self.start_greedy - self.end_greedy) / config.decay_step_greedy
 
         input_representation = get_repre_in(config)
-        self.use_recurrent = config.use_recurrent
-        if self.use_recurrent:
+        self.use_rnn = config.use_rnn
+        if self.use_rnn:
             kwargs_rnn = {"N_recurrent_layers": config.N_recurrent_layers,
                           "dropout": config.dropout,
                           "rnn": config.rnn}
@@ -23,7 +23,7 @@ class IQL_Agents(MARLAgents):
             representation = REGISTRY_Representation[config.representation](*input_representation)
         input_policy = get_policy_in_marl(config, representation)
         policy = REGISTRY_Policy[config.policy](*input_policy,
-                                                use_recurrent=config.use_recurrent,
+                                                use_rnn=config.use_rnn,
                                                 rnn=config.rnn)
         # lr_scheduler = tk.optimizers.schedules.ExponentialDecay(config.learning_rate, decay_steps=1000,
         #                                                         decay_rate=0.9)
@@ -40,7 +40,7 @@ class IQL_Agents(MARLAgents):
         else:
             config.dim_state, state_shape = None, None
 
-        buffer = MARL_OffPolicyBuffer_RNN if self.use_recurrent else MARL_OffPolicyBuffer
+        buffer = MARL_OffPolicyBuffer_RNN if self.use_rnn else MARL_OffPolicyBuffer
         input_buffer = (config.n_agents, state_shape, config.obs_shape, config.act_shape, config.rew_shape,
                         config.done_shape, envs.num_envs, config.buffer_size, config.batch_size)
         memory = buffer(*input_buffer, max_episode_length=envs.max_episode_length, dim_act=config.dim_act)
@@ -55,7 +55,7 @@ class IQL_Agents(MARLAgents):
         batch_size = obs_n.shape[0]
         agents_id = tf.repeat(tf.expand_dims(tf.eye(self.n_agents), 0), batch_size, 0)
         obs_in = tf.reshape(tf.convert_to_tensor(obs_n), [batch_size, self.n_agents, -1])
-        if self.use_recurrent:
+        if self.use_rnn:
             batch_agents = batch_size * self.n_agents
             input_policy = {'obs': obs_in.view(batch_agents, 1, -1),
                             'ids': agents_id.view(batch_agents, 1, -1)}
@@ -87,7 +87,7 @@ class IQL_Agents(MARLAgents):
         if i_step > self.start_training:
             for i_epoch in range(n_epoch):
                 sample = self.memory.sample()
-                if self.use_recurrent:
+                if self.use_rnn:
                     info_train = self.learner.update_recurrent(sample)
                 else:
                     info_train = self.learner.update(sample)

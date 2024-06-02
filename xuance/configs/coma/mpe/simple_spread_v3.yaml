@@ -5,10 +5,10 @@ continuous_action: False
 policy: "Categorical_COMA_Policy"
 representation: "Basic_MLP"
 representation_critic: "Basic_MLP"
-vectorize: "Dummy_Pettingzoo"
+vectorize: "DummyVecMultiAgentEnv"
 runner: "Pettingzoo_Runner"
 
-use_recurrent: False
+use_rnn: False
 rnn:
 representation_hidden_size: [128, ]
 gain: 0.01

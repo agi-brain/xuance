@@ -16,3 +16,4 @@ wandb/
 .pypirc
 
 debug.py
+debug_marl.py

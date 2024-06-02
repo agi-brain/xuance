@@ -97,7 +97,7 @@ class MAAC_Policy(tk.Model):
         self.representation_critic = representation[1]
         self.representation_info_shape = self.representation.output_shapes
         self.lstm = True if kwargs["rnn"] == "LSTM" else False
-        self.use_rnn = True if kwargs["use_recurrent"] else False
+        self.use_rnn = True if kwargs["use_rnn"] else False
         self.actor = ActorNet(self.representation.output_shapes['state'][0], self.action_dim, n_agents,
                               actor_hidden_size, normalize, initializer, kwargs['gain'], activation, device)
         self.critic = CriticNet(self.representation.output_shapes['state'][0], n_agents, critic_hidden_size,
@@ -181,7 +181,7 @@ class MAAC_Policy_Share(MAAC_Policy):
         self.action_dim = action_space.n
         self.n_agents = n_agents
         self.lstm = True if kwargs["rnn"] == "LSTM" else False
-        self.use_rnn = True if kwargs["use_recurrent"] else False
+        self.use_rnn = True if kwargs["use_rnn"] else False
         self.representation = representation
         self.representation_info_shape = self.representation.output_shapes
         self.actor = ActorNet(self.representation.output_shapes['state'][0], self.action_dim, n_agents,
@@ -259,7 +259,7 @@ class COMAPolicy(tk.Model):
         self.representation = representation
         self.representation_info_shape = self.representation.output_shapes
         self.lstm = True if kwargs["rnn"] == "LSTM" else False
-        self.use_rnn = True if kwargs["use_recurrent"] else False
+        self.use_rnn = True if kwargs["use_rnn"] else False
         self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim, n_agents,
                               actor_hidden_size, normalize, initializer, kwargs['gain'], activation, device)
         critic_input_dim = kwargs['dim_obs'] + self.action_dim * self.n_agents

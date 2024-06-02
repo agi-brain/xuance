@@ -209,14 +209,14 @@ pettingzoo_vec_env.py
     :rtype: np.ndarray
 
 .. py:class::
-    xuance.environment.pettingzoo.pettingzoo_vec_env.DummyVecEnv_Pettingzoo(env_fns)
+    xuance.environment.pettingzoo.pettingzoo_vec_env.DummyVecMultiAgentEnv(env_fns)
 
     Work with multiple environments in parallel.
 
     :param env_fns: environment function.
 
 .. py:function::
-    xuance.environment.pettingzoo.pettingzoo_vec_env.DummyVecEnv_Pettingzoo.empty_dict_buffers(i_env)
+    xuance.environment.pettingzoo.pettingzoo_vec_env.DummyVecMultiAgentEnv.empty_dict_buffers(i_env)
 
     Reset the buffers for dictionary data.
 
@@ -224,7 +224,7 @@ pettingzoo_vec_env.py
     :type i_env: int
 
 .. py:function::
-    xuance.environment.pettingzoo.pettingzoo_vec_env.DummyVecEnv_Pettingzoo.reset()
+    xuance.environment.pettingzoo.pettingzoo_vec_env.DummyVecMultiAgentEnv.reset()
 
     Reset the vectorized environments.
 
@@ -232,7 +232,7 @@ pettingzoo_vec_env.py
     :rtype: tuple
 
 .. py:function::
-    xuance.environment.pettingzoo.pettingzoo_vec_env.DummyVecEnv_Pettingzoo.step_async(actions)
+    xuance.environment.pettingzoo.pettingzoo_vec_env.DummyVecMultiAgentEnv.step_async(actions)
 
     Sends asynchronous step commands to each subprocess with the specified actions.
 
@@ -240,7 +240,7 @@ pettingzoo_vec_env.py
     :type actions: np.ndarray
 
 .. py:function::
-    xuance.environment.pettingzoo.pettingzoo_vec_env.DummyVecEnv_Pettingzoo.step_wait()
+    xuance.environment.pettingzoo.pettingzoo_vec_env.DummyVecMultiAgentEnv.step_wait()
 
     Waits for the completion of asynchronous step operations and updates internal buffers with the received results.
 
@@ -248,7 +248,7 @@ pettingzoo_vec_env.py
     :rtype: tuple
 
 .. py:function::
-    xuance.environment.pettingzoo.pettingzoo_vec_env.DummyVecEnv_Pettingzoo.render(mode)
+    xuance.environment.pettingzoo.pettingzoo_vec_env.DummyVecMultiAgentEnv.render(mode)
 
     Sends a render command to each subprocess with the specified rendering mode.
 
@@ -258,7 +258,7 @@ pettingzoo_vec_env.py
     :rtype: np.ndarray
 
 .. py:function::
-    xuance.environment.pettingzoo.pettingzoo_vec_env.DummyVecEnv_Pettingzoo.global_state()
+    xuance.environment.pettingzoo.pettingzoo_vec_env.DummyVecMultiAgentEnv.global_state()
 
     Return the global state of the parallel environments.
 
@@ -266,7 +266,7 @@ pettingzoo_vec_env.py
     :rtype: np.ndarray
 
 .. py:function::
-    xuance.environment.pettingzoo.pettingzoo_vec_env.DummyVecEnv_Pettingzoo.agent_mask()
+    xuance.environment.pettingzoo.pettingzoo_vec_env.DummyVecMultiAgentEnv.agent_mask()
 
     Return the agent mask.
 
@@ -274,7 +274,7 @@ pettingzoo_vec_env.py
     :rtype: np.ndarray
 
 .. py:function::
-    xuance.environment.pettingzoo.pettingzoo_vec_env.DummyVecEnv_Pettingzoo.available_actions()
+    xuance.environment.pettingzoo.pettingzoo_vec_env.DummyVecMultiAgentEnv.available_actions()
 
     Return an array representing available actions for each agent.
 
@@ -661,7 +661,7 @@ Source Code
                     return np.array(act_mask)
 
 
-            class DummyVecEnv_Pettingzoo(DummyVecEnv_Gym):
+            class DummyVecMultiAgentEnv(DummyVecEnv_Gym):
                 def __init__(self, env_fns):
                     self.waiting = False
                     self.envs = [fn() for fn in env_fns]

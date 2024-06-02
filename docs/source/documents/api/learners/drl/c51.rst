@@ -162,7 +162,7 @@ Source Code
 
                 current_supports = self.policy.supports
                 next_supports = rew_batch.unsqueeze(1) + self.gamma * self.policy.supports * (1 - ter_batch.unsqueeze(1))
-                next_supports = next_supports.clamp(self.policy.vmin, self.policy.vmax)
+                next_supports = next_supports.clamp(self.policy.v_min, self.policy.v_max)
 
                 projection = 1 - (next_supports.unsqueeze(-1) - current_supports.unsqueeze(0)).abs() / self.policy.deltaz
                 target_dist = torch.bmm(target_dist.unsqueeze(1), projection.clamp(0, 1)).squeeze(1)
@@ -224,7 +224,7 @@ Source Code
 
                         current_supports = self.policy.supports
                         next_supports = tf.expand_dims(rew_batch, 1) + self.gamma * self.policy.supports * (1 - tf.expand_dims(ter_batch, 1))
-                        next_supports = tf.clip_by_value(next_supports, self.policy.vmin, self.policy.vmax)
+                        next_supports = tf.clip_by_value(next_supports, self.policy.v_min, self.policy.v_max)
 
                         projection = 1 - tf.math.abs((tf.expand_dims(next_supports, -1) - tf.expand_dims(current_supports, 0))) / self.policy.deltaz
                         target_dist = tf.squeeze(tf.linalg.matmul(tf.expand_dims(target_dist, 1), tf.clip_by_value(projection, 0, 1)), 1)
@@ -320,7 +320,7 @@ Source Code
 
                 current_supports = self.policy.supports
                 next_supports = self._unsqueeze(rew_batch, 1) + self.gamma * self.policy.supports * (1-self._unsqueeze(ter_batch, -1))
-                next_supports = clip_by_value(next_supports, Tensor(self.policy.vmin, ms.float32), Tensor(self.policy.vmax, ms.float32))
+                next_supports = clip_by_value(next_supports, Tensor(self.policy.v_min, ms.float32), Tensor(self.policy.v_max, ms.float32))
                 projection = 1 - self._abs((self._unsqueeze(next_supports, -1) - self._unsqueeze(current_supports, 0)))/self.policy.deltaz
 
                 loss = self.policy_train(obs_batch, act_batch, projection, targetA, targetZ)

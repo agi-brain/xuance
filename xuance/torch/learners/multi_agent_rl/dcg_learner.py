@@ -19,14 +19,14 @@ class DCG_Learner(LearnerMAS):
                  sync_frequency: int = 100
                  ):
         self.gamma = gamma
-        self.use_recurrent = config.use_recurrent
+        self.use_rnn = config.use_rnn
         self.sync_frequency = sync_frequency
         self.dim_hidden_state = policy.representation.output_shapes['state'][0]
         self.mse_loss = nn.MSELoss()
         super(DCG_Learner, self).__init__(config, policy, optimizer, scheduler, device, model_dir)
 
     def get_hidden_states(self, obs_n, *rnn_hidden, use_target_net=False):
-        if self.use_recurrent:
+        if self.use_rnn:
             if use_target_net:
                 outputs = self.policy.target_representation(obs_n, *rnn_hidden)
             else:

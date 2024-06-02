@@ -148,7 +148,7 @@ Source Code
                 """
                 def __init__(self,
                             config: Namespace,
-                            envs: DummyVecEnv_Pettingzoo,
+                            envs: DummyVecMultiAgentEnv,
                             device: Optional[Union[int, str, torch.device]] = None):
                     self.gamma = config.gamma
 
@@ -211,7 +211,7 @@ Source Code
             class MASAC_Agents(MARLAgents):
                 def __init__(self,
                              config: Namespace,
-                             envs: DummyVecEnv_Pettingzoo,
+                             envs: DummyVecMultiAgentEnv,
                              device: str = "cpu:0"):
                     self.gamma = config.gamma
 
@@ -274,7 +274,7 @@ Source Code
             class MASAC_Agents(MARLAgents):
                 def __init__(self,
                              config: Namespace,
-                             envs: DummyVecEnv_Pettingzoo):
+                             envs: DummyVecMultiAgentEnv):
                     self.gamma = config.gamma
 
                     input_representation = get_repre_in(config)

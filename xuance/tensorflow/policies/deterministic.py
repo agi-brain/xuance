@@ -275,8 +275,8 @@ class C51Qnetwork(tk.Model):
     def __init__(self,
                  action_space: Discrete,
                  atom_num: int,
-                 vmin: float,
-                 vmax: float,
+                 v_min: float,
+                 v_max: float,
                  representation: Basic_Identical,
                  hidden_size: Sequence[int] = None,
                  normalize: Optional[tk.layers.Layer] = None,
@@ -287,8 +287,8 @@ class C51Qnetwork(tk.Model):
         super(C51Qnetwork, self).__init__()
         self.action_dim = action_space.n
         self.atom_num = atom_num
-        self.vmin = vmin
-        self.vmax = vmax
+        self.v_min = v_min
+        self.v_max = v_max
         self.representation = representation
         self.target_representation = copy.deepcopy(representation)
         self.representation_info_shape = self.representation.output_shapes
@@ -297,8 +297,8 @@ class C51Qnetwork(tk.Model):
         self.target_Zhead = C51Qhead(self.representation.output_shapes['state'][0], self.action_dim, self.atom_num,
                                      hidden_size, normalize, initialize, activation, device)
         self.target_Zhead.set_weights(self.eval_Zhead.get_weights())
-        self.supports = tf.cast(tf.linspace(self.vmin, self.vmax, self.atom_num), dtype=tf.float32)
-        self.deltaz = (vmax - vmin) / (atom_num - 1)
+        self.supports = tf.cast(tf.linspace(self.v_min, self.v_max, self.atom_num), dtype=tf.float32)
+        self.deltaz = (v_max - v_min) / (atom_num - 1)
 
     def call(self, observation: Union[np.ndarray, dict], **kwargs):
         outputs = self.representation(observation)

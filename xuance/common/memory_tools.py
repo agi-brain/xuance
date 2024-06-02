@@ -93,6 +93,7 @@ class Buffer(ABC):
         action_space: the space for action data.
         auxiliary_info_shape: the shape for auxiliary data if needed.
     """
+
     def __init__(self,
                  observation_space: Space,
                  action_space: Space,
@@ -125,6 +126,7 @@ class EpisodeBuffer:
     """
     Episode buffer for DRQN agent.
     """
+
     def __init__(self):
         self.obs = []
         self.action = []
@@ -172,6 +174,7 @@ class DummyOnPolicyBuffer(Buffer):
         gamma: discount factor.
         gae_lam: gae lambda.
     """
+
     def __init__(self,
                  observation_space: Space,
                  action_space: Space,
@@ -253,16 +256,21 @@ class DummyOnPolicyBuffer(Buffer):
 
         env_choices, step_choices = divmod(indexes, self.n_size)
 
-        obs_batch = sample_batch(self.observations, tuple([env_choices, step_choices]))
-        act_batch = sample_batch(self.actions, tuple([env_choices, step_choices]))
-        ret_batch = sample_batch(self.returns, tuple([env_choices, step_choices]))
-        val_batch = sample_batch(self.values, tuple([env_choices, step_choices]))
+        samples_dict = {
+            'obs': sample_batch(self.observations, tuple([env_choices, step_choices])),
+            'actions': sample_batch(self.actions, tuple([env_choices, step_choices])),
+            'returns': sample_batch(self.returns, tuple([env_choices, step_choices])),
+            'values': sample_batch(self.values, tuple([env_choices, step_choices])),
+            'aux_batch': sample_batch(self.auxiliary_infos, tuple([env_choices, step_choices]))
+        }
         adv_batch = sample_batch(self.advantages, tuple([env_choices, step_choices]))
         if self.use_advnorm:
             adv_batch = (adv_batch - np.mean(adv_batch)) / (np.std(adv_batch) + 1e-8)
-        aux_batch = sample_batch(self.auxiliary_infos, tuple([env_choices, step_choices]))
+        samples_dict.update({
+            'advantages': adv_batch
+        })
 
-        return obs_batch, act_batch, ret_batch, val_batch, adv_batch, aux_batch
+        return samples_dict
 
 
 class DummyOnPolicyBuffer_Atari(DummyOnPolicyBuffer):
@@ -280,6 +288,7 @@ class DummyOnPolicyBuffer_Atari(DummyOnPolicyBuffer):
         gamma: discount factor.
         gae_lam: gae lambda.
     """
+
     def __init__(self,
                  observation_space: Space,
                  action_space: Space,
@@ -316,6 +325,7 @@ class DummyOffPolicyBuffer(Buffer):
         buffer_size: the total size of the replay buffer.
         batch_size: size of transition data for a batch of sample.
     """
+
     def __init__(self,
                  observation_space: Space,
                  action_space: Space,
@@ -325,6 +335,7 @@ class DummyOffPolicyBuffer(Buffer):
                  batch_size: int):
         super(DummyOffPolicyBuffer, self).__init__(observation_space, action_space, auxiliary_shape)
         self.n_envs, self.batch_size = n_envs, batch_size
+        assert buffer_size % self.n_envs == 0, "buffer_size must be divisible by the number of envs (parallels)"
         self.n_size = buffer_size // self.n_envs
         self.observations = create_memory(space2shape(self.observation_space), self.n_envs, self.n_size)
         self.next_observations = create_memory(space2shape(self.observation_space), self.n_envs, self.n_size)
@@ -352,12 +363,15 @@ class DummyOffPolicyBuffer(Buffer):
     def sample(self):
         env_choices = np.random.choice(self.n_envs, self.batch_size)
         step_choices = np.random.choice(self.size, self.batch_size)
-        obs_batch = sample_batch(self.observations, tuple([env_choices, step_choices]))
-        act_batch = sample_batch(self.actions, tuple([env_choices, step_choices]))
-        rew_batch = sample_batch(self.rewards, tuple([env_choices, step_choices]))
-        terminal_batch = sample_batch(self.terminals, tuple([env_choices, step_choices]))
-        next_batch = sample_batch(self.next_observations, tuple([env_choices, step_choices]))
-        return obs_batch, act_batch, rew_batch, terminal_batch, next_batch
+
+        samples_dict = {
+            'obs': sample_batch(self.observations, tuple([env_choices, step_choices])),
+            'actions': sample_batch(self.actions, tuple([env_choices, step_choices])),
+            'obs_next': sample_batch(self.next_observations, tuple([env_choices, step_choices])),
+            'rewards': sample_batch(self.rewards, tuple([env_choices, step_choices])),
+            'terminals': sample_batch(self.terminals, tuple([env_choices, step_choices])),
+        }
+        return samples_dict
 
 
 class RecurrentOffPolicyBuffer(Buffer):
@@ -374,6 +388,7 @@ class RecurrentOffPolicyBuffer(Buffer):
         episode_length: data length for an episode.
         lookup_length: the length of history data.
     """
+
     def __init__(self,
                  observation_space: Space,
                  action_space: Space,
@@ -385,6 +400,7 @@ class RecurrentOffPolicyBuffer(Buffer):
                  lookup_length: int):
         super(RecurrentOffPolicyBuffer, self).__init__(observation_space, action_space, auxiliary_shape)
         self.n_envs, self.buffer_size, self.episode_length, self.batch_size = n_envs, buffer_size, episode_length, batch_size
+        assert buffer_size % self.n_envs == 0, "buffer_size must be divisible by the number of envs (parallels)"
         self.n_size = self.buffer_size // self.n_envs
         self.lookup_length = lookup_length
         self.memory = deque(maxlen=self.n_size)
@@ -428,7 +444,13 @@ class RecurrentOffPolicyBuffer(Buffer):
                 rew_batch.append(sampled_data["rews"])
                 terminal_batch.append(sampled_data["done"])
 
-        return np.array(obs_batch), np.array(act_batch), np.array(rew_batch), np.array(terminal_batch)
+        samples_dict = {
+            'obs': np.array(obs_batch),
+            'actions': np.array(act_batch),
+            'rewards': np.array(rew_batch),
+            'terminals': np.array(terminal_batch),
+        }
+        return samples_dict
 
 
 class PerOffPolicyBuffer(Buffer):
@@ -444,6 +466,7 @@ class PerOffPolicyBuffer(Buffer):
         batch_size: batch size of transition data for a sample.
         alpha: prioritized factor.
     """
+
     def __init__(self,
                  observation_space: Space,
                  action_space: Space,
@@ -454,6 +477,7 @@ class PerOffPolicyBuffer(Buffer):
                  alpha: float = 0.6):
         super(PerOffPolicyBuffer, self).__init__(observation_space, action_space, auxiliary_shape)
         self.n_envs, self.batch_size = n_envs, batch_size
+        assert buffer_size % self.n_envs == 0, "buffer_size must be divisible by the number of envs (parallels)"
         self.n_size = buffer_size // self.n_envs
         self.observations = create_memory(space2shape(self.observation_space), self.n_envs, self.n_size)
         self.next_observations = create_memory(space2shape(self.observation_space), self.n_envs, self.n_size)
@@ -532,20 +556,18 @@ class PerOffPolicyBuffer(Buffer):
             weights[i] = np.array(weights_)
         step_choices = step_choices.astype(np.uint8)
 
-        obs_batch = sample_batch(self.observations, tuple([env_choices, step_choices.flatten()]))
-        act_batch = sample_batch(self.actions, tuple([env_choices, step_choices.flatten()]))
-        rew_batch = sample_batch(self.rewards, tuple([env_choices, step_choices.flatten()]))
-        terminal_batch = sample_batch(self.terminals, tuple([env_choices, step_choices.flatten()]))
-        next_batch = sample_batch(self.next_observations, tuple([env_choices, step_choices.flatten()]))
+        samples_dict = {
+            'obs': sample_batch(self.observations, tuple([env_choices, step_choices.flatten()])),
+            'actions': sample_batch(self.actions, tuple([env_choices, step_choices.flatten()])),
+            'obs_next': sample_batch(self.next_observations, tuple([env_choices, step_choices.flatten()])),
+            'rewards': sample_batch(self.rewards, tuple([env_choices, step_choices.flatten()])),
+            'terminals': sample_batch(self.terminals, tuple([env_choices, step_choices.flatten()])),
+            'weights': weights,
+            'step_choices': step_choices,
+        }
 
         # return tuple(list(encoded_sample) + [weights, idxes])
-        return (obs_batch,
-                act_batch,
-                rew_batch,
-                terminal_batch,
-                next_batch,
-                weights,
-                step_choices)
+        return samples_dict
 
     def update_priorities(self, idxes, priorities):
         priorities = priorities.reshape((self.n_envs, int(self.batch_size / self.n_envs)))
@@ -572,6 +594,7 @@ class DummyOffPolicyBuffer_Atari(DummyOffPolicyBuffer):
         buffer_size: the total size of the replay buffer.
         batch_size: batch size of transition data for a sample.
     """
+
     def __init__(self,
                  observation_space: Space,
                  action_space: Space,
@@ -591,4 +614,3 @@ class DummyOffPolicyBuffer_Atari(DummyOffPolicyBuffer):
         self.auxiliary_infos = create_memory(self.auxiliary_shape, self.n_envs, self.n_size)
         self.rewards = create_memory((), self.n_envs, self.n_size)
         self.terminals = create_memory((), self.n_envs, self.n_size)
-

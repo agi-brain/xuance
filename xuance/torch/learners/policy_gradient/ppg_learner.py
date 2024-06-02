@@ -1,29 +1,36 @@
-from xuance.torch.learners import *
+"""
+Phasic Policy Gradient (PPG)
+Paper link: http://proceedings.mlr.press/v139/cobbe21a/cobbe21a.pdf
+Implementation: Pytorch
+"""
+import torch
+from torch import nn
+from xuance.torch.learners import Learner
+from typing import Optional, Union
+from argparse import Namespace
 from xuance.torch.utils.operations import merge_distributions
 
 
 class PPG_Learner(Learner):
     def __init__(self,
+                 config: Namespace,
+                 episode_length: int,
                  policy: nn.Module,
                  optimizer: torch.optim.Optimizer,
-                 scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
-                 device: Optional[Union[int, str, torch.device]] = None,
-                 model_dir: str = "./",
-                 ent_coef: float = 0.005,
-                 clip_range: float = 0.25,
-                 kl_beta: float = 1.0):
-        super(PPG_Learner, self).__init__(policy, optimizer, scheduler, device, model_dir)
-        self.ent_coef = ent_coef
-        self.clip_range = clip_range
-        self.kl_beta = kl_beta
+                 scheduler: Union[dict, Optional[torch.optim.lr_scheduler.LinearLR]] = None):
+        super(PPG_Learner, self).__init__(config, episode_length, policy, optimizer, scheduler)
+        self.mse_loss = nn.MSELoss()
+        self.ent_coef = config.ent_coef
+        self.clip_range = config.clip_range
+        self.kl_beta = config.kl_beta
         self.policy_iterations = 0
         self.value_iterations = 0
 
-    def update_policy(self, obs_batch, act_batch, ret_batch, adv_batch, old_dists):
-        act_batch = torch.as_tensor(act_batch, device=self.device)
-        ret_batch = torch.as_tensor(ret_batch, device=self.device)
-        adv_batch = torch.as_tensor(adv_batch, device=self.device)
-        old_dist = merge_distributions(old_dists)
+    def update_policy(self, **samples):
+        obs_batch = samples['obs']
+        act_batch = torch.as_tensor(samples['actions'], device=self.device)
+        adv_batch = torch.as_tensor(samples['advantages'], device=self.device)
+        old_dist = merge_distributions(samples['aux_batch']['old_dist'])
         old_logp_batch = old_dist.log_prob(act_batch).detach()
 
         outputs, a_dist, _, _ = self.policy(obs_batch)
@@ -37,6 +44,8 @@ class PPG_Learner(Learner):
         loss = a_loss - self.ent_coef * e_loss
         self.optimizer.zero_grad()
         loss.backward()
+        if self.use_grad_clip:
+            torch.nn.utils.clip_grad_norm_(self.policy.parameters(), self.grad_clip_norm)
         self.optimizer.step()
         if self.scheduler is not None:
             self.scheduler.step()
@@ -54,12 +63,16 @@ class PPG_Learner(Learner):
 
         return info
 
-    def update_critic(self, obs_batch, act_batch, ret_batch, adv_batch, old_dists):
-        ret_batch = torch.as_tensor(ret_batch, device=self.device)
+    def update_critic(self, **samples):
+        obs_batch = samples['obs']
+        ret_batch = torch.as_tensor(samples['returns'], device=self.device)
+
         _, _, v_pred, _ = self.policy(obs_batch)
-        loss = F.mse_loss(v_pred, ret_batch)
+        loss = self.mse_loss(v_pred, ret_batch)
         self.optimizer.zero_grad()
         loss.backward()
+        if self.use_grad_clip:
+            torch.nn.utils.clip_grad_norm_(self.policy.parameters(), self.grad_clip_norm)
         self.optimizer.step()
         info = {
             "critic-loss": loss.item()
@@ -67,19 +80,20 @@ class PPG_Learner(Learner):
         self.value_iterations += 1
         return info
 
-    def update_auxiliary(self, obs_batch, act_batch, ret_batch, adv_batch, old_dists):
-        act_batch = torch.as_tensor(act_batch, device=self.device)
-        ret_batch = torch.as_tensor(ret_batch, device=self.device)
-        adv_batch = torch.as_tensor(adv_batch, device=self.device)
+    def update_auxiliary(self, **samples):
+        obs_batch = samples['obs']
+        ret_batch = torch.as_tensor(samples['returns'], device=self.device)
 
-        old_dist = merge_distributions(old_dists)
+        old_dist = merge_distributions(samples['aux_batch']['old_dist'])
         outputs, a_dist, v, aux_v = self.policy(obs_batch)
-        aux_loss = F.mse_loss(v.detach(), aux_v)
+        aux_loss = self.mse_loss(v.detach(), aux_v)
         kl_loss = a_dist.kl_divergence(old_dist).mean()
-        value_loss = F.mse_loss(v, ret_batch)
+        value_loss = self.mse_loss(v, ret_batch)
         loss = aux_loss + self.kl_beta * kl_loss + value_loss
         self.optimizer.zero_grad()
         loss.backward()
+        if self.use_grad_clip:
+            torch.nn.utils.clip_grad_norm_(self.policy.parameters(), self.grad_clip_norm)
         self.optimizer.step()
         info = {
             "kl-loss": loss.item()

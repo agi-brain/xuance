@@ -1,7 +1,7 @@
 agent: "NoisyDQN"
 env_name: "Classic Control"
 env_id: "CartPole-v1"
-vectorize: "Dummy_Gym"
+vectorize: "DummyVecEnv"
 policy: "Noisy_Q_network"
 representation: "Basic_MLP"
 runner: "DRL"
@@ -25,6 +25,9 @@ training_frequency: 2
 running_steps: 500000
 start_training: 1000
 
+use_grad_clip: False  # gradient normalization
+grad_clip_norm: 0.5
+use_actions_mask: False
 use_obsnorm: False
 use_rewnorm: False
 obsnorm_range: 5

@@ -5,7 +5,7 @@ from xuance.mindspore.utils.distributions import CategoricalDistribution
 class PPG_Agent(Agent):
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecEnv_Gym,
+                 envs: DummyVecEnv,
                  policy: nn.Cell,
                  optimizer: nn.Optimizer,
                  scheduler):

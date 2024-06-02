@@ -43,7 +43,7 @@ class BasicQnetwork(nn.Cell):
         self.target_representation = copy.deepcopy(self.representation)
         self.representation_info_shape = self.representation.output_shapes
         self.lstm = True if kwargs["rnn"] == "LSTM" else False
-        self.use_rnn = True if kwargs["use_recurrent"] else False
+        self.use_rnn = True if kwargs["use_rnn"] else False
         self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, n_agents,
                                      hidden_size, normalize, initialize, activation)
         self.target_Qhead = copy.deepcopy(self.eval_Qhead)
@@ -144,7 +144,7 @@ class MixingQnetwork(nn.Cell):
         self.target_representation = copy.deepcopy(self.representation)
         self.representation_info_shape = self.representation.output_shapes
         self.lstm = True if kwargs["rnn"] == "LSTM" else False
-        self.use_rnn = True if kwargs["use_recurrent"] else False
+        self.use_rnn = True if kwargs["use_rnn"] else False
         self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, n_agents,
                                      hidden_size, normalize, initialize, activation)
         self.target_Qhead = copy.deepcopy(self.eval_Qhead)
@@ -263,7 +263,7 @@ class Qtran_MixingQnetwork(nn.Cell):
         self.target_representation = copy.deepcopy(self.representation)
         self.representation_info_shape = self.representation.output_shapes
         self.lstm = True if kwargs["rnn"] == "LSTM" else False
-        self.use_rnn = True if kwargs["use_recurrent"] else False
+        self.use_rnn = True if kwargs["use_rnn"] else False
         self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, n_agents,
                                      hidden_size, normalize, initialize, activation)
         self.target_Qhead = copy.deepcopy(self.eval_Qhead)
@@ -327,7 +327,7 @@ class DCG_policy(nn.Cell):
         self.representation = representation
         self.target_representation = copy.deepcopy(self.representation)
         self.lstm = True if kwargs["rnn"] == "LSTM" else False
-        self.use_rnn = True if kwargs["use_recurrent"] else False
+        self.use_rnn = True if kwargs["use_rnn"] else False
         self.utility = utility
         self.target_utility = copy.deepcopy(self.utility)
         self.payoffs = payoffs

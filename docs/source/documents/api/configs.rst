@@ -84,7 +84,7 @@ DQN-based Implementations
                             agent: "DQN"
                             env_name: "Classic Control"
                             env_id: "CartPole-v1"
-                            vectorize: "Dummy_Gym"
+                            vectorize: "DummyVecEnv"
                             policy: "Basic_Q_network"
                             representation: "Basic_MLP"
                             runner: "DRL"
@@ -126,7 +126,7 @@ DQN-based Implementations
                             agent: "DQN"
                             env_name: "Classic Control"
                             env_id: "Acrobot-v1"
-                            vectorize: "Dummy_Gym"
+                            vectorize: "DummyVecEnv"
                             policy: "Basic_Q_network"
                             representation: "Basic_MLP"
                             runner: "DRL"
@@ -168,7 +168,7 @@ DQN-based Implementations
                             agent: "DQN"
                             env_name: "Classic Control"
                             env_id: "MountainCar-v0"
-                            vectorize: "Dummy_Gym"
+                            vectorize: "DummyVecEnv"
                             policy: "Basic_Q_network"
                             representation: "Basic_MLP"
                             runner: "DRL"
@@ -214,7 +214,7 @@ DQN-based Implementations
                             agent: "DQN"
                             env_name: "Box2D"
                             env_id: "CarRacing-v2"
-                            vectorize: "Dummy_Gym"
+                            vectorize: "DummyVecEnv"
                             policy: "Basic_Q_network"
                             representation: "Basic_CNN"
                             runner: "DRL"
@@ -260,7 +260,7 @@ DQN-based Implementations
                             agent: "DQN"
                             env_name: "Box2D"
                             env_id: "LunarLander-v2"
-                            vectorize: "Dummy_Gym"
+                            vectorize: "DummyVecEnv"
                             policy: "Basic_Q_network"
                             representation: "Basic_MLP"
                             runner: "DRL"
@@ -360,7 +360,7 @@ DQN-based Implementations
                             agent: "C51DQN"
                             env_name: "Classic Control"
                             env_id: "CartPole-v1"
-                            vectorize: "Dummy_Gym"
+                            vectorize: "DummyVecEnv"
                             policy: "C51_Q_network"
                             representation: "Basic_MLP"
                             runner: "DRL"
@@ -375,8 +375,8 @@ DQN-based Implementations
                             batch_size: 256
                             learning_rate: 0.001
                             gamma: 0.99
-                            vmin: 0
-                            vmax: 200
+                            v_min: 0
+                            v_max: 200
                             atom_num: 51
 
                             start_greedy: 0.5
@@ -406,7 +406,7 @@ DQN-based Implementations
                             agent: "C51DQN"
                             env_name: "Classic Control"
                             env_id: "Acrobot-v1"
-                            vectorize: "Dummy_Gym"
+                            vectorize: "DummyVecEnv"
                             policy: "C51_Q_network"
                             representation: "Basic_MLP"
                             runner: "DRL"
@@ -421,8 +421,8 @@ DQN-based Implementations
                             batch_size: 256
                             learning_rate: 0.001
                             gamma: 0.99
-                            vmin: 0
-                            vmax: 200
+                            v_min: 0
+                            v_max: 200
                             atom_num: 51
 
                             start_greedy: 0.5
@@ -452,7 +452,7 @@ DQN-based Implementations
                             agent: "C51DQN"
                             env_name: "Classic Control"
                             env_id: "MountainCar-v0"
-                            vectorize: "Dummy_Gym"
+                            vectorize: "DummyVecEnv"
                             policy: "C51_Q_network"
                             representation: "Basic_MLP"
                             runner: "DRL"
@@ -467,8 +467,8 @@ DQN-based Implementations
                             batch_size: 256
                             learning_rate: 0.001
                             gamma: 0.99
-                            vmin: 0
-                            vmax: 200
+                            v_min: 0
+                            v_max: 200
                             atom_num: 51
 
                             start_greedy: 0.5
@@ -502,7 +502,7 @@ DQN-based Implementations
                             agent: "C51DQN"
                             env_name: "Box2D"
                             env_id: "CarRacing-v2"
-                            vectorize: "Dummy_Gym"
+                            vectorize: "DummyVecEnv"
                             policy: "C51_Q_network"
                             representation: "Basic_CNN"
                             runner: "DRL"
@@ -521,8 +521,8 @@ DQN-based Implementations
                             batch_size: 32
                             learning_rate: 0.0001
                             gamma: 0.99
-                            vmin: 0
-                            vmax: 200
+                            v_min: 0
+                            v_max: 200
                             atom_num: 51
 
                             start_greedy: 0.5
@@ -552,7 +552,7 @@ DQN-based Implementations
                             agent: "C51DQN"
                             env_name: "Box2D"
                             env_id: "LunarLander-v2"
-                            vectorize: "Dummy_Gym"
+                            vectorize: "DummyVecEnv"
                             policy: "C51_Q_network"
                             representation: "Basic_MLP"
                             runner: "DRL"
@@ -567,8 +567,8 @@ DQN-based Implementations
                             batch_size: 256
                             learning_rate: 0.001
                             gamma: 0.99
-                            vmin: 0
-                            vmax: 200
+                            v_min: 0
+                            v_max: 200
                             atom_num: 51
 
                             start_greedy: 0.5
@@ -622,8 +622,8 @@ DQN-based Implementations
                     batch_size: 32  # 64
                     learning_rate: 0.0001
                     gamma: 0.99
-                    vmin: 0
-                    vmax: 200
+                    v_min: 0
+                    v_max: 200
                     atom_num: 51
 
                     start_greedy: 0.5
@@ -661,7 +661,7 @@ DQN-based Implementations
                             agent: "DDQN"
                             env_name: "Classic Control"
                             env_id: "CartPole-v1"
-                            vectorize: "Dummy_Gym"
+                            vectorize: "DummyVecEnv"
                             policy: "Basic_Q_network"
                             representation: "Basic_MLP"
                             runner: "DRL"
@@ -703,7 +703,7 @@ DQN-based Implementations
                             agent: "DDQN"
                             env_name: "Classic Control"
                             env_id: "Acrobot-v1"
-                            vectorize: "Dummy_Gym"
+                            vectorize: "DummyVecEnv"
                             policy: "Basic_Q_network"
                             representation: "Basic_MLP"
                             runner: "DRL"
@@ -745,7 +745,7 @@ DQN-based Implementations
                             agent: "DDQN"
                             env_name: "Classic Control"
                             env_id: "MountainCar-v0"
-                            vectorize: "Dummy_Gym"
+                            vectorize: "DummyVecEnv"
                             policy: "Basic_Q_network"
                             representation: "Basic_MLP"
                             runner: "DRL"
@@ -793,7 +793,7 @@ DQN-based Implementations
                             agent: "DDQN"
                             env_name: "Box2D"
                             env_id: "CarRacing-v2"
-                            vectorize: "Dummy_Gym"
+                            vectorize: "DummyVecEnv"
                             policy: "Basic_Q_network"
                             representation: "Basic_CNN"
                             runner: "DRL"
@@ -840,7 +840,7 @@ DQN-based Implementations
                             agent: "DDQN"
                             env_name: "Box2D"
                             env_id: "LunarLander-v2"
-                            vectorize: "Dummy_Gym"
+                            vectorize: "DummyVecEnv"
                             policy: "Basic_Q_network"
                             representation: "Basic_MLP"
                             runner: "DRL"
@@ -942,7 +942,7 @@ DQN-based Implementations
                             agent: "Duel_DQN"
                             env_name: "Classic Control"
                             env_id: "CartPole-v1"
-                            vectorize: "Dummy_Gym"
+                            vectorize: "DummyVecEnv"
                             policy: "Duel_Q_network"
                             representation: "Basic_MLP"
                             runner: "DRL"
@@ -985,7 +985,7 @@ DQN-based Implementations
                             agent: "Duel_DQN"
                             env_name: "Classic Control"
                             env_id: "Acrobot-v1"
-                            vectorize: "Dummy_Gym"
+                            vectorize: "DummyVecEnv"
                             policy: "Duel_Q_network"
                             representation: "Basic_MLP"
                             runner: "DRL"
@@ -1028,7 +1028,7 @@ DQN-based Implementations
                             agent: "Duel_DQN"
                             env_name: "Classic Control"
                             env_id: "MountainCar-v0"
-                            vectorize: "Dummy_Gym"
+                            vectorize: "DummyVecEnv"
                             policy: "Duel_Q_network"
                             representation: "Basic_MLP"
                             runner: "DRL"
@@ -1075,7 +1075,7 @@ DQN-based Implementations
                             agent: "Duel_DQN"
                             env_name: "Box2D"
                             env_id: "CarRacing-v2"
-                            vectorize: "Dummy_Gym"
+                            vectorize: "DummyVecEnv"
                             policy: "Duel_Q_network"
                             representation: "Basic_CNN"
                             runner: "DRL"
@@ -1122,7 +1122,7 @@ DQN-based Implementations
                             agent: "Duel_DQN"
                             env_name: "Box2D"
                             env_id: "LunarLander-v2"
-                            vectorize: "Dummy_Gym"
+                            vectorize: "DummyVecEnv"
                             policy: "Duel_Q_network"
                             representation: "Basic_MLP"
                             runner: "DRL"
@@ -1225,7 +1225,7 @@ DQN-based Implementations
                             agent: "NoisyDQN"
                             env_name: "Classic Control"
                             env_id: "CartPole-v1"
-                            vectorize: "Dummy_Gym"
+                            vectorize: "DummyVecEnv"
                             policy: "Noisy_Q_network"
                             representation: "Basic_MLP"
                             runner: "DRL"
@@ -1268,7 +1268,7 @@ DQN-based Implementations
                             agent: "NoisyDQN"
                             env_name: "Classic Control"
                             env_id: "Acrobot-v1"
-                            vectorize: "Dummy_Gym"
+                            vectorize: "DummyVecEnv"
                             policy: "Noisy_Q_network"
                             representation: "Basic_MLP"
                             runner: "DRL"
@@ -1311,7 +1311,7 @@ DQN-based Implementations
                             agent: "NoisyDQN"
                             env_name: "Classic Control"
                             env_id: "MountainCar-v0"
-                            vectorize: "Dummy_Gym"
+                            vectorize: "DummyVecEnv"
                             policy: "Noisy_Q_network"
                             representation: "Basic_MLP"
                             runner: "DRL"
@@ -1358,7 +1358,7 @@ DQN-based Implementations
                             agent: "NoisyDQN"
                             env_name: "Box2D"
                             env_id: "CarRacing-v2"
-                            vectorize: "Dummy_Gym"
+                            vectorize: "DummyVecEnv"
                             policy: "Noisy_Q_network"
                             representation: "Basic_CNN"
                             runner: "DRL"
@@ -1404,7 +1404,7 @@ DQN-based Implementations
                             agent: "NoisyDQN"
                             env_name: "Box2D"
                             env_id: "LunarLander-v2"
-                            vectorize: "Dummy_Gym"
+                            vectorize: "DummyVecEnv"
                             policy: "Noisy_Q_network"
                             representation: "Basic_MLP"
                             runner: "DRL"
@@ -1507,7 +1507,7 @@ DQN-based Implementations
                             agent: "PerDQN"
                             env_name: "Classic Control"
                             env_id: "CartPole-v1"
-                            vectorize: "Dummy_Gym"
+                            vectorize: "DummyVecEnv"
                             policy: "Basic_Q_network"
                             representation: "Basic_MLP"
                             runner: "DRL"
@@ -1552,7 +1552,7 @@ DQN-based Implementations
                             agent: "PerDQN"
                             env_name: "Classic Control"
                             env_id: "Acrobot-v1"
-                            vectorize: "Dummy_Gym"
+                            vectorize: "DummyVecEnv"
                             policy: "Basic_Q_network"
                             representation: "Basic_MLP"
                             runner: "DRL"
@@ -1597,7 +1597,7 @@ DQN-based Implementations
                             agent: "PerDQN"
                             env_name: "Classic Control"
                             env_id: "MountainCar-v0"
-                            vectorize: "Dummy_Gym"
+                            vectorize: "DummyVecEnv"
                             policy: "Basic_Q_network"
                             representation: "Basic_MLP"
                             runner: "DRL"
@@ -1647,7 +1647,7 @@ DQN-based Implementations
                             agent: "PerDQN"
                             env_name: "Box2D"
                             env_id: "CarRacing-v2"
-                            vectorize: "Dummy_Gym"
+                            vectorize: "DummyVecEnv"
                             policy: "Basic_Q_network"
                             representation: "Basic_CNN"
                             runner: "DRL"
@@ -1697,7 +1697,7 @@ DQN-based Implementations
                             agent: "PerDQN"
                             env_name: "Classic Control"
                             env_id: "LunarLander-v2"
-                            vectorize: "Dummy_Gym"
+                            vectorize: "DummyVecEnv"
                             policy: "Basic_Q_network"
                             representation: "Basic_MLP"
                             runner: "DRL"
@@ -1805,7 +1805,7 @@ DQN-based Implementations
                             agent: "QRDQN"
                             env_name: "Classic Control"
                             env_id: "CartPole-v1"
-                            vectorize: "Dummy_Gym"
+                            vectorize: "DummyVecEnv"
                             policy: "QR_Q_network"
                             representation: "Basic_MLP"
                             runner: "DRL"
@@ -1849,7 +1849,7 @@ DQN-based Implementations
                             agent: "QRDQN"
                             env_name: "Classic Control"
                             env_id: "Acrobot-v1"
-                            vectorize: "Dummy_Gym"
+                            vectorize: "DummyVecEnv"
                             policy: "QR_Q_network"
                             representation: "Basic_MLP"
                             runner: "DRL"
@@ -1892,7 +1892,7 @@ DQN-based Implementations
                             agent: "QRDQN"
                             env_name: "Classic Control"
                             env_id: "MountainCar-v0"
-                            vectorize: "Dummy_Gym"
+                            vectorize: "DummyVecEnv"
                             policy: "QR_Q_network"
                             representation: "Basic_MLP"
                             runner: "DRL"
@@ -1939,7 +1939,7 @@ DQN-based Implementations
                             agent: "QRDQN"
                             env_name: "Box2D"
                             env_id: "CarRacing-v2"
-                            vectorize: "Dummy_Gym"
+                            vectorize: "DummyVecEnv"
                             policy: "QR_Q_network"
                             representation: "Basic_CNN"
                             runner: "DRL"
@@ -1987,7 +1987,7 @@ DQN-based Implementations
                             agent: "QRDQN"
                             env_name: "Box2D"
                             env_id: "LunarLander-v2"
-                            vectorize: "Dummy_Gym"
+                            vectorize: "DummyVecEnv"
                             policy: "QR_Q_network"
                             representation: "Basic_MLP"
                             runner: "DRL"
@@ -2102,7 +2102,7 @@ Policy Gradient-based Implementations
                             env_name: "Classic Control"
                             env_id: "CartPole-v1"
                             representation: "Basic_MLP"
-                            vectorize: "Dummy_Gym"
+                            vectorize: "DummyVecEnv"
                             policy: "Categorical_Actor"
                             runner: "DRL"
 
@@ -2145,7 +2145,7 @@ Policy Gradient-based Implementations
                             env_name: "Classic Control"
                             env_id: "Acrobot-v1"
                             representation: "Basic_MLP"
-                            vectorize: "Dummy_Gym"
+                            vectorize: "DummyVecEnv"
                             policy: "Categorical_Actor"
                             runner: "DRL"
 
@@ -2188,7 +2188,7 @@ Policy Gradient-based Implementations
                             env_name: "Classic Control"
                             env_id: "Pendulum-v1"
                             representation: "Basic_MLP"
-                            vectorize: "Dummy_Gym"
+                            vectorize: "DummyVecEnv"
                             policy: "Gaussian_Actor"
                             runner: "DRL"
 
@@ -2231,7 +2231,7 @@ Policy Gradient-based Implementations
                             env_name: "Classic Control"
                             env_id: "MountainCar-v0"
                             representation: "Basic_MLP"
-                            vectorize: "Dummy_Gym"
+                            vectorize: "DummyVecEnv"
                             policy: "Categorical_Actor"
                             runner: "DRL"
 
@@ -2279,7 +2279,7 @@ Policy Gradient-based Implementations
                             env_name: "Box2D"
                             env_id: "BipedalWalker-v3"
                             representation: "Basic_MLP"
-                            vectorize: "Dummy_Gym"
+                            vectorize: "DummyVecEnv"
                             policy: "Gaussian_Actor"
                             runner: "DRL"
 
@@ -2322,7 +2322,7 @@ Policy Gradient-based Implementations
                             env_name: "Box2D"
                             env_id: "LunarLander-v2"
                             representation: "Basic_MLP"
-                            vectorize: "Dummy_Gym"
+                            vectorize: "DummyVecEnv"
                             policy: "Categorical_Actor"
                             runner: "DRL"
 
@@ -2364,7 +2364,7 @@ Policy Gradient-based Implementations
                     agent: "PG"
                     env_name: "MuJoCo"
                     env_id: "Ant-v4"
-                    vectorize: "Dummy_Gym"
+                    vectorize: "DummyVecEnv"
                     policy: "Gaussian_Actor"
                     representation: "Basic_MLP"
                     runner: "DRL"
@@ -2415,7 +2415,7 @@ Policy Gradient-based Implementations
                             agent: "PPG"
                             env_name: "Classic Control"
                             env_id: "CartPole-v1"
-                            vectorize: "Dummy_Gym"
+                            vectorize: "DummyVecEnv"
                             representation: "Basic_MLP"
                             policy: "Categorical_PPG"
                             runner: "DRL"
@@ -2462,7 +2462,7 @@ Policy Gradient-based Implementations
                             agent: "PPG"
                             env_name: "Classic Control"
                             env_id: "Acrobot-v1"
-                            vectorize: "Dummy_Gym"
+                            vectorize: "DummyVecEnv"
                             representation: "Basic_MLP"
                             policy: "Categorical_PPG"
                             runner: "DRL"
@@ -2510,7 +2510,7 @@ Policy Gradient-based Implementations
                             agent: "PPG"
                             env_name: "Classic Control"
                             env_id: "Pendulum-v1"
-                            vectorize: "Dummy_Gym"
+                            vectorize: "DummyVecEnv"
                             representation: "Basic_MLP"
                             policy: "Gaussian_PPG"
                             runner: "DRL"
@@ -2558,7 +2558,7 @@ Policy Gradient-based Implementations
                             agent: "PPG"
                             env_name: "Classic Control"
                             env_id: "MountainCar-v0"
-                            vectorize: "Dummy_Gym"
+                            vectorize: "DummyVecEnv"
                             representation: "Basic_MLP"
                             policy: "Categorical_PPG"
                             runner: "DRL"
@@ -2610,7 +2610,7 @@ Policy Gradient-based Implementations
                             agent: "PPG"
                             env_name: "Box2D"
                             env_id: "BipedalWalker-v3"
-                            vectorize: "Dummy_Gym"
+                            vectorize: "DummyVecEnv"
                             representation: "Basic_MLP"
                             policy: "Gaussian_PPG"
                             runner: "DRL"
@@ -2658,7 +2658,7 @@ Policy Gradient-based Implementations
                             agent: "PPG"
                             env_name: "Box2D"
                             env_id: "LunarLander-v2"
-                            vectorize: "Dummy_Gym"
+                            vectorize: "DummyVecEnv"
                             representation: "Basic_MLP"
                             policy: "Categorical_PPG"
                             runner: "DRL"
@@ -2705,7 +2705,7 @@ Policy Gradient-based Implementations
                     agent: "PPG"
                     env_name: "MuJoCo"
                     env_id: "InvertedPendulum-v2"
-                    vectorize: "Dummy_Gym"
+                    vectorize: "DummyVecEnv"
                     representation: "Basic_MLP"
                     policy: "Gaussian_PPG"
                     runner: "DRL"
@@ -2763,7 +2763,7 @@ Policy Gradient-based Implementations
                             agent: "PPO_Clip"  # Choice: PPO_Clip, PPO_KL
                             env_name: "Classic Control"
                             env_id: "CartPole-v1"
-                            vectorize: "Dummy_Gym"
+                            vectorize: "DummyVecEnv"
                             representation: "Basic_MLP"
                             policy: "Categorical_AC"
                             runner: "DRL"
@@ -2812,7 +2812,7 @@ Policy Gradient-based Implementations
                             agent: "PPO_Clip"  # Choice: PPO_Clip, PPO_KL
                             env_name: "Classic Control"
                             env_id: "Acrobot-v1"
-                            vectorize: "Dummy_Gym"
+                            vectorize: "DummyVecEnv"
                             representation: "Basic_MLP"
                             policy: "Categorical_AC"
                             runner: "DRL"
@@ -2861,7 +2861,7 @@ Policy Gradient-based Implementations
                             agent: "PPO_Clip"  # Choice: PPO_Clip, PPO_KL
                             env_name: "Classic Control"
                             env_id: "Pendulum-v1"
-                            vectorize: "Dummy_Gym"
+                            vectorize: "DummyVecEnv"
                             representation: "Basic_MLP"
                             policy: "Gaussian_AC"
                             runner: "DRL"
@@ -2910,7 +2910,7 @@ Policy Gradient-based Implementations
                             agent: "PPO_Clip"  # Choice: PPO_Clip, PPO_KL
                             env_name: "Classic Control"
                             env_id: "MountainCar-v0"
-                            vectorize: "Dummy_Gym"
+                            vectorize: "DummyVecEnv"
                             representation: "Basic_MLP"
                             policy: "Categorical_AC"
                             runner: "DRL"
@@ -2963,7 +2963,7 @@ Policy Gradient-based Implementations
                             agent: "PPO_Clip"  # Choice: PPO_Clip, PPO_KL
                             env_name: "Box2D"
                             env_id: "BipedalWalker-v3"
-                            vectorize: "Dummy_Gym"
+                            vectorize: "DummyVecEnv"
                             representation: "Basic_MLP"
                             policy: "Gaussian_AC"
                             runner: "DRL"
@@ -3011,7 +3011,7 @@ Policy Gradient-based Implementations
                             agent: "PPO_Clip"  # Choice: PPO_Clip, PPO_KL
                             env_name: "Box2D"
                             env_id: "CarRacing-v2"
-                            vectorize: "Dummy_Gym"
+                            vectorize: "DummyVecEnv"
                             representation: "Basic_CNN"
                             policy: "Categorical_AC"
                             runner: "DRL"
@@ -3062,7 +3062,7 @@ Policy Gradient-based Implementations
                             agent: "PPO_Clip"  # Choice: PPO_Clip, PPO_KL
                             env_name: "Box2D"
                             env_id: "LunarLander-v2"
-                            vectorize: "Dummy_Gym"
+                            vectorize: "DummyVecEnv"
                             representation: "Basic_MLP"
                             policy: "Categorical_AC"
                             runner: "DRL"
@@ -3167,7 +3167,7 @@ Policy Gradient-based Implementations
                     agent: "PPO_Clip"  # choice: PPO_Clip, PPO_KL
                     env_name: "MuJoCo"
                     env_id: "Ant-v4"
-                    vectorize: "Dummy_Gym"
+                    vectorize: "DummyVecEnv"
                     policy: "Gaussian_AC"  # choice: Gaussian_AC for continuous actions, Categorical_AC for discrete actions.
                     representation: "Basic_MLP"
                     runner: "DRL"
@@ -3225,7 +3225,7 @@ Policy Gradient-based Implementations
                             agent: "A2C"
                             env_name: "Classic Control"
                             env_id: "CartPole-v1"
-                            vectorize: "Subproc_Gym"
+                            vectorize: "SubprocVecEnv"
                             policy: "Categorical_AC"
                             representation: "Basic_MLP"
                             runner: "DRL"
@@ -3271,7 +3271,7 @@ Policy Gradient-based Implementations
                             agent: "A2C"
                             env_name: "Classic Control"
                             env_id: "Acrobot-v1"
-                            vectorize: "Dummy_Gym"
+                            vectorize: "DummyVecEnv"
                             policy: "Categorical_AC"
                             representation: "Basic_MLP"
                             runner: "DRL"
@@ -3317,7 +3317,7 @@ Policy Gradient-based Implementations
                             agent: "A2C"
                             env_name: "Classic Control"
                             env_id: "Pendulum-v1"
-                            vectorize: "Dummy_Gym"
+                            vectorize: "DummyVecEnv"
                             policy: "Gaussian_AC"
                             representation: "Basic_MLP"
                             runner: "DRL"
@@ -3363,7 +3363,7 @@ Policy Gradient-based Implementations
                             agent: "A2C"
                             env_name: "Classic Control"
                             env_id: "MountainCar-v0"
-                            vectorize: "Dummy_Gym"
+                            vectorize: "DummyVecEnv"
                             policy: "Categorical_AC"
                             representation: "Basic_MLP"
                             runner: "DRL"
@@ -3413,7 +3413,7 @@ Policy Gradient-based Implementations
                             agent: "A2C"
                             env_name: "Box2D"
                             env_id: "BipedalWalker-v3"
-                            vectorize: "Dummy_Gym"
+                            vectorize: "DummyVecEnv"
                             policy: "Gaussian_AC"
                             representation: "Basic_MLP"
                             runner: "DRL"
@@ -3458,7 +3458,7 @@ Policy Gradient-based Implementations
                             agent: "A2C"
                             env_name: "Box2D"
                             env_id: "LunarLander-v2"
-                            vectorize: "Dummy_Gym"
+                            vectorize: "DummyVecEnv"
                             policy: "Categorical_AC"
                             representation: "Basic_MLP"
                             runner: "DRL"
@@ -3557,7 +3557,7 @@ Policy Gradient-based Implementations
                     agent: "A2C"
                     env_name: "MuJoCo"
                     env_id: "Ant-v4"
-                    vectorize: "Dummy_Gym"
+                    vectorize: "DummyVecEnv"
                     policy: "Gaussian_AC"
                     representation: "Basic_MLP"
                     runner: "DRL"
@@ -3612,7 +3612,7 @@ Policy Gradient-based Implementations
                             agent: "SACDIS"
                             env_name: "Classic Control"
                             env_id: "CartPole-v1"
-                            vectorize: "Dummy_Gym"
+                            vectorize: "DummyVecEnv"
                             policy: "Discrete_SAC"
                             representation: "Basic_MLP"
                             runner: "DRL"
@@ -3657,7 +3657,7 @@ Policy Gradient-based Implementations
                             agent: "SACDIS"
                             env_name: "Classic Control"
                             env_id: "Acrobot-v1"
-                            vectorize: "Dummy_Gym"
+                            vectorize: "DummyVecEnv"
                             policy: "Discrete_SAC"
                             representation: "Basic_MLP"
                             runner: "DRL"
@@ -3702,7 +3702,7 @@ Policy Gradient-based Implementations
                             agent: "SAC"
                             env_name: "Classic Control"
                             env_id: "Pendulum-v1"
-                            vectorize: "Dummy_Gym"
+                            vectorize: "DummyVecEnv"
                             policy: "Gaussian_SAC"
                             representation: "Basic_MLP"
                             runner: "DRL"
@@ -3746,7 +3746,7 @@ Policy Gradient-based Implementations
                             agent: "SACDIS"
                             env_name: "Classic Control"
                             env_id: "MountainCar-v0"
-                            vectorize: "Dummy_Gym"
+                            vectorize: "DummyVecEnv"
                             policy: "Discrete_SAC"
                             representation: "Basic_MLP"
                             runner: "DRL"
@@ -3795,7 +3795,7 @@ Policy Gradient-based Implementations
                             agent: "SAC"
                             env_name: "Box2D"
                             env_id: "BipedalWalker-v3"
-                            vectorize: "Dummy_Gym"
+                            vectorize: "DummyVecEnv"
                             policy: "Gaussian_SAC"
                             representation: "Basic_MLP"
                             runner: "DRL"
@@ -3839,7 +3839,7 @@ Policy Gradient-based Implementations
                             agent: "SACDIS"
                             env_name: "Box2D"
                             env_id: "LunarLander-v2"
-                            vectorize: "Dummy_Gym"
+                            vectorize: "DummyVecEnv"
                             policy: "Discrete_SAC"
                             representation: "Basic_MLP"
                             runner: "DRL"
@@ -3937,7 +3937,7 @@ Policy Gradient-based Implementations
                     agent: "SAC"
                     env_name: "MuJoCo"
                     env_id: "Ant-v4"
-                    vectorize: "Dummy_Gym"
+                    vectorize: "DummyVecEnv"
                     policy: "Gaussian_SAC"
                     representation: "Basic_Identical"
                     runner: "DRL"
@@ -3992,7 +3992,7 @@ Policy Gradient-based Implementations
                             agent: "DDPG"
                             env_name: "Classic Control"
                             env_id: "Pendulum-v1"
-                            vectorize: "Dummy_Gym"
+                            vectorize: "DummyVecEnv"
                             policy: "DDPG_Policy"
                             representation: "Basic_Identical"
                             runner: "DRL"
@@ -4039,7 +4039,7 @@ Policy Gradient-based Implementations
                             agent: "DDPG"
                             env_name: "Box2D"
                             env_id: "BipedalWalker-v3"
-                            vectorize: "Dummy_Gym"
+                            vectorize: "DummyVecEnv"
                             policy: "DDPG_Policy"
                             representation: "Basic_Identical"
                             runner: "DRL"
@@ -4082,7 +4082,7 @@ Policy Gradient-based Implementations
                     agent: "DDPG"
                     env_name: "MuJoCo"
                     env_id: "Ant-v4"
-                    vectorize: "Dummy_Gym"
+                    vectorize: "DummyVecEnv"
                     policy: "DDPG_Policy"
                     representation: "Basic_Identical"
                     runner: "DRL"
@@ -4135,7 +4135,7 @@ Policy Gradient-based Implementations
                             agent: "TD3"
                             env_name: "Classic Control"
                             env_id: "Pendulum-v1"
-                            vectorize: "Dummy_Gym"
+                            vectorize: "DummyVecEnv"
                             representation: "Basic_Identical"
                             policy: "TD3_Policy"
                             runner: "DRL"
@@ -4182,7 +4182,7 @@ Policy Gradient-based Implementations
                             agent: "TD3"
                             env_name: "Box2D"
                             env_id: "BipedalWalker-v3"
-                            vectorize: "Dummy_Gym"
+                            vectorize: "DummyVecEnv"
                             representation: "Basic_Identical"
                             policy: "TD3_Policy"
                             runner: "DRL"
@@ -4225,7 +4225,7 @@ Policy Gradient-based Implementations
                     agent: "TD3"
                     env_name: "MuJoCo"
                     env_id: "Ant-v4"
-                    vectorize: "Dummy_Gym"
+                    vectorize: "DummyVecEnv"
                     policy: "TD3_Policy"
                     representation: "Basic_Identical"
                     runner: "DRL"
@@ -4290,10 +4290,10 @@ MARL Implementations
                             continuous_action: False
                             policy: "Basic_Q_network_marl"
                             representation: "Basic_MLP"
-                            vectorize: "Dummy_Pettingzoo"
+                            vectorize: "DummyVecMultiAgentEnv"
                             runner: "Pettingzoo_Runner"
 
-                            use_recurrent: False
+                            use_rnn: False
                             rnn:
                             representation_hidden_size: [64, ]
                             q_hidden_size: [64, ]  # the units for each hidden layer
@@ -4348,7 +4348,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: False
+                            use_rnn: False
                             rnn:
                             representation_hidden_size: [64, ]
                             q_hidden_size: [64, ]  # the units for each hidden layer
@@ -4398,7 +4398,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -4451,7 +4451,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -4504,7 +4504,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -4556,7 +4556,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -4609,7 +4609,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -4662,7 +4662,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -4715,7 +4715,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -4768,7 +4768,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -4821,7 +4821,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -4874,7 +4874,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -4939,7 +4939,7 @@ MARL Implementations
                             runner: "Football_Runner"
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [128, ]
@@ -4996,11 +4996,11 @@ MARL Implementations
                             continuous_action: False
                             policy: "Mixing_Q_network"
                             representation: "Basic_MLP"
-                            vectorize: "Dummy_Pettingzoo"
+                            vectorize: "DummyVecMultiAgentEnv"
                             runner: "Pettingzoo_Runner"
                             on_policy: False
 
-                            use_recurrent: False
+                            use_rnn: False
                             rnn:
                             representation_hidden_size: [64, ]
                             q_hidden_size: [64, ]  # the units for each hidden layer
@@ -5052,7 +5052,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -5105,7 +5105,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -5159,7 +5159,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -5213,7 +5213,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -5267,7 +5267,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -5321,7 +5321,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -5375,7 +5375,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -5429,7 +5429,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -5483,7 +5483,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -5537,7 +5537,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -5603,7 +5603,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [128, ]
@@ -5660,10 +5660,10 @@ MARL Implementations
                             continuous_action: False
                             policy: "Mixing_Q_network"
                             representation: "Basic_MLP"
-                            vectorize: "Dummy_Pettingzoo"
+                            vectorize: "DummyVecMultiAgentEnv"
                             runner: "Pettingzoo_Runner"
 
-                            use_recurrent: False
+                            use_rnn: False
                             rnn:
                             representation_hidden_size: [64, ]
                             q_hidden_size: [128, ]  # the units for each hidden layer
@@ -5718,7 +5718,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -5774,7 +5774,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -5830,7 +5830,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -5886,7 +5886,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -5942,7 +5942,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -5998,7 +5998,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -6054,7 +6054,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -6110,7 +6110,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -6166,7 +6166,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -6222,7 +6222,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -6289,7 +6289,7 @@ MARL Implementations
                             runner: "Football_Runner"
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [128, ]
@@ -6349,11 +6349,11 @@ MARL Implementations
                             continuous_action: False
                             policy: "Weighted_Mixing_Q_network"
                             representation: "Basic_MLP"
-                            vectorize: "Dummy_Pettingzoo"
+                            vectorize: "DummyVecMultiAgentEnv"
                             runner: "Pettingzoo_Runner"
                             on_policy: False
 
-                            use_recurrent: False
+                            use_rnn: False
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [ 64, ]
@@ -6414,7 +6414,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -6472,7 +6472,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -6530,7 +6530,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -6588,7 +6588,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -6646,7 +6646,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -6704,7 +6704,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -6762,7 +6762,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -6820,7 +6820,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -6878,7 +6878,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -6936,7 +6936,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -6998,10 +6998,10 @@ MARL Implementations
                             continuous_action: False
                             policy: "Qtran_Mixing_Q_network"
                             representation: "Basic_MLP"
-                            vectorize: "Dummy_Pettingzoo"
+                            vectorize: "DummyVecMultiAgentEnv"
                             runner: "Pettingzoo_Runner"
 
-                            use_recurrent: False
+                            use_rnn: False
                             rnn:
                             representation_hidden_size: [256, ]
                             q_hidden_size: [256, ]  # the units for each hidden layer
@@ -7057,11 +7057,11 @@ MARL Implementations
                             continuous_action: False
                             policy: "DCG_Policy"
                             representation: "Basic_MLP"
-                            vectorize: "Dummy_Pettingzoo"
+                            vectorize: "DummyVecMultiAgentEnv"
                             runner: "Pettingzoo_Runner"
                             on_policy: False
 
-                            use_recurrent: False
+                            use_rnn: False
                             rnn:
                             representation_hidden_size: [32, ]
                             q_hidden_size: [128, ]  # the units for each hidden layer
@@ -7121,7 +7121,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -7183,7 +7183,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -7245,7 +7245,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -7307,7 +7307,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -7369,7 +7369,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -7431,7 +7431,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -7493,7 +7493,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -7555,7 +7555,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -7617,7 +7617,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -7679,7 +7679,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -7744,7 +7744,7 @@ MARL Implementations
                             continuous_action: True
                             policy: "Independent_DDPG_Policy"
                             representation: "Basic_Identical"
-                            vectorize: "Dummy_Pettingzoo"
+                            vectorize: "DummyVecMultiAgentEnv"
                             runner: "Pettingzoo_Runner"
 
                             representation_hidden_size: [64, ]  # the units for each hidden layer
@@ -7788,7 +7788,7 @@ MARL Implementations
                             continuous_action: True
                             policy: "Independent_DDPG_Policy"
                             representation: "Basic_Identical"
-                            vectorize: "Dummy_Pettingzoo"
+                            vectorize: "DummyVecMultiAgentEnv"
                             runner: "Pettingzoo_Runner"
 
                             representation_hidden_size: [64, ]  # the units for each hidden layer
@@ -7832,7 +7832,7 @@ MARL Implementations
                             continuous_action: True
                             policy: "Independent_DDPG_Policy"
                             representation: "Basic_Identical"
-                            vectorize: "Dummy_Pettingzoo"
+                            vectorize: "DummyVecMultiAgentEnv"
                             runner: "Pettingzoo_Runner"
 
                             representation_hidden_size: []  # the units for each hidden layer
@@ -7884,7 +7884,7 @@ MARL Implementations
                             continuous_action: True
                             policy: "MADDPG_Policy"
                             representation: "Basic_Identical"
-                            vectorize: "Dummy_Pettingzoo"
+                            vectorize: "DummyVecMultiAgentEnv"
                             runner: "Pettingzoo_Runner"
                             on_policy: False
 
@@ -7929,7 +7929,7 @@ MARL Implementations
                             continuous_action: True
                             policy: "MADDPG_Policy"
                             representation: "Basic_Identical"
-                            vectorize: "Dummy_Pettingzoo"
+                            vectorize: "DummyVecMultiAgentEnv"
                             runner: "Pettingzoo_Runner"
 
                             representation_hidden_size: []  # the units for each hidden layer
@@ -7973,7 +7973,7 @@ MARL Implementations
                             continuous_action: True
                             policy: "MADDPG_Policy"
                             representation: "Basic_Identical"
-                            vectorize: "Dummy_Pettingzoo"
+                            vectorize: "DummyVecMultiAgentEnv"
                             runner: "Pettingzoo_Runner"
 
                             representation_hidden_size: []  # the units for each hidden layer
@@ -8026,7 +8026,7 @@ MARL Implementations
                             continuous_action: True
                             policy: "Gaussian_ISAC_Policy"
                             representation: "Basic_Identical"
-                            vectorize: "Dummy_Pettingzoo"
+                            vectorize: "DummyVecMultiAgentEnv"
                             runner: "Pettingzoo_Runner"
 
                             representation_hidden_size: [64, ]  # the units for each hidden layer
@@ -8071,7 +8071,7 @@ MARL Implementations
                             continuous_action: True
                             policy: "Gaussian_ISAC_Policy"
                             representation: "Basic_Identical"
-                            vectorize: "Dummy_Pettingzoo"
+                            vectorize: "DummyVecMultiAgentEnv"
                             runner: "Pettingzoo_Runner"
 
                             representation_hidden_size: [64, ]  # the units for each hidden layer
@@ -8116,7 +8116,7 @@ MARL Implementations
                             continuous_action: True
                             policy: "Gaussian_ISAC_Policy"
                             representation: "Basic_Identical"
-                            vectorize: "Dummy_Pettingzoo"
+                            vectorize: "DummyVecMultiAgentEnv"
                             runner: "Pettingzoo_Runner"
 
                             representation_hidden_size: [64, ]  # the units for each hidden layer
@@ -8169,7 +8169,7 @@ MARL Implementations
                             continuous_action: True
                             policy: "Gaussian_MASAC_Policy"
                             representation: "Basic_Identical"
-                            vectorize: "Dummy_Pettingzoo"
+                            vectorize: "DummyVecMultiAgentEnv"
                             runner: "Pettingzoo_Runner"
 
                             representation_hidden_size: [64, ]  # the units for each hidden layer
@@ -8215,7 +8215,7 @@ MARL Implementations
                             continuous_action: True
                             policy: "Gaussian_MASAC_Policy"
                             representation: "Basic_Identical"
-                            vectorize: "Dummy_Pettingzoo"
+                            vectorize: "DummyVecMultiAgentEnv"
                             runner: "Pettingzoo_Runner"
 
                             representation_hidden_size: [64, ]  # the units for each hidden layer
@@ -8261,7 +8261,7 @@ MARL Implementations
                             continuous_action: True
                             policy: "Gaussian_MASAC_Policy"
                             representation: "Basic_Identical"
-                            vectorize: "Dummy_Pettingzoo"
+                            vectorize: "DummyVecMultiAgentEnv"
                             runner: "Pettingzoo_Runner"
 
                             representation_hidden_size: [64, ]  # the units for each hidden layer
@@ -8316,10 +8316,10 @@ MARL Implementations
                             continuous_action: False
                             policy: "Categorical_MAAC_Policy"
                             representation: "Basic_MLP"
-                            vectorize: "Dummy_Pettingzoo"
+                            vectorize: "DummyVecMultiAgentEnv"
                             runner: "Pettingzoo_Runner"
 
-                            use_recurrent: False
+                            use_rnn: False
                             rnn:
                             representation_hidden_size: [64, ]  # the units for each hidden layer
                             gain: 0.01
@@ -8347,8 +8347,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: False  # if use global state to replace merged observations
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.2
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -8388,7 +8388,7 @@ MARL Implementations
                             runner: "StarCraft2_Runner"
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, 64, 64]
@@ -8422,8 +8422,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: False  # if use global state to replace joint observations
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.2
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -8458,7 +8458,7 @@ MARL Implementations
                             on_policy: True
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, 64, 64]
@@ -8492,8 +8492,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: False  # if use global state to replace merged observations
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.2
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -8529,7 +8529,7 @@ MARL Implementations
                             runner: "StarCraft2_Runner"
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, 64, 64]
@@ -8563,8 +8563,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: False  # if use global state to replace joint observations
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.2
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -8598,7 +8598,7 @@ MARL Implementations
                             runner: "StarCraft2_Runner"
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, 64, 64]
@@ -8632,8 +8632,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: False  # if use global state to replace joint observations
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.2
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -8668,7 +8668,7 @@ MARL Implementations
                             on_policy: True
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, 64, 64]
@@ -8702,8 +8702,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: False  # if use global state to replace joint observations
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.05
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -8738,7 +8738,7 @@ MARL Implementations
                             on_policy: True
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, 64, 64]
@@ -8772,8 +8772,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: False  # if use global state to replace joint observations
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.2
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -8808,7 +8808,7 @@ MARL Implementations
                             on_policy: True
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, 64, 64]
@@ -8842,8 +8842,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: False  # if use global state to replace joint observations
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.05
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -8878,7 +8878,7 @@ MARL Implementations
                             on_policy: True
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, 64, 64]
@@ -8912,8 +8912,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: False  # if use global state to replace joint observations
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.2
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -8948,7 +8948,7 @@ MARL Implementations
                             on_policy: True
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, 64, 64]
@@ -8982,8 +8982,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: False  # if use global state to replace joint observations
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.2
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -9018,7 +9018,7 @@ MARL Implementations
                             on_policy: True
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, 64, 64]
@@ -9052,8 +9052,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: False  # if use global state to replace joint observations
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.2
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -9100,7 +9100,7 @@ MARL Implementations
                             runner: "Football_Runner"
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64]
@@ -9133,8 +9133,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: False  # if use global state to calculate values
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.2
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -9173,11 +9173,11 @@ MARL Implementations
                             continuous_action: True
                             policy: "Gaussian_MAAC_Policy"
                             representation: "Basic_MLP"
-                            vectorize: "Dummy_Pettingzoo"
+                            vectorize: "DummyVecMultiAgentEnv"
                             runner: "Pettingzoo_Runner"
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: False
+                            use_rnn: False
                             rnn:
                             representation_hidden_size: [64, ]  # the units for each hidden layer
                             gain: 0.01
@@ -9205,8 +9205,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: False  # if use global state to replace merged observations
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.2
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -9238,11 +9238,11 @@ MARL Implementations
                             continuous_action: True
                             policy: "Gaussian_MAAC_Policy"
                             representation: "Basic_MLP"
-                            vectorize: "Dummy_Pettingzoo"
+                            vectorize: "DummyVecMultiAgentEnv"
                             runner: "Pettingzoo_Runner"
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: False
+                            use_rnn: False
                             rnn:
                             representation_hidden_size: [64, ]  # the units for each hidden layer
                             gain: 0.01
@@ -9270,8 +9270,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: False  # if use global state to replace merged observations
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.2
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -9303,11 +9303,11 @@ MARL Implementations
                             continuous_action: True
                             policy: "Gaussian_MAAC_Policy"
                             representation: "Basic_MLP"
-                            vectorize: "Dummy_Pettingzoo"
+                            vectorize: "DummyVecMultiAgentEnv"
                             runner: "Pettingzoo_Runner"
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: False
+                            use_rnn: False
                             rnn:
                             representation_hidden_size: [64, ]  # the units for each hidden layer
                             gain: 0.01
@@ -9335,8 +9335,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: False  # if use global state to replace merged observations
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.2
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -9376,7 +9376,7 @@ MARL Implementations
                             runner: "StarCraft2_Runner"
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, 64, 64]
@@ -9410,8 +9410,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: True  # if use global state to calculate values
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.2
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -9446,7 +9446,7 @@ MARL Implementations
                             on_policy: True
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, 64, 64]
@@ -9480,8 +9480,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: True  # if use global state to replace merged observations
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.2
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -9517,7 +9517,7 @@ MARL Implementations
                             runner: "StarCraft2_Runner"
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, 64, 64]
@@ -9551,8 +9551,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: True  # if use global state to calculate values
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.2
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -9586,7 +9586,7 @@ MARL Implementations
                             runner: "StarCraft2_Runner"
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, 64, 64]
@@ -9620,8 +9620,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: True  # if use global state to calculate values
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.2
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -9656,7 +9656,7 @@ MARL Implementations
                             on_policy: True
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64]
@@ -9690,8 +9690,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: True  # if use global state to calculate values
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.05
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -9726,7 +9726,7 @@ MARL Implementations
                             on_policy: True
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, 64, 64]
@@ -9760,8 +9760,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: True  # if use global state to calculate values
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.2
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -9796,7 +9796,7 @@ MARL Implementations
                             on_policy: True
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64,]
@@ -9830,8 +9830,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: True  # if use global state to calculate values
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.05
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -9866,7 +9866,7 @@ MARL Implementations
                             on_policy: True
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, 64, 64]
@@ -9900,8 +9900,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: True  # if use global state to calculate values
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.2
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -9936,7 +9936,7 @@ MARL Implementations
                             on_policy: True
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, 64, 64]
@@ -9970,8 +9970,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: True  # if use global state to calculate values
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.2
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -10006,7 +10006,7 @@ MARL Implementations
                             on_policy: True
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, 64, 64]
@@ -10040,8 +10040,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: True  # if use global state to calculate values
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.2
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -10088,7 +10088,7 @@ MARL Implementations
                             runner: "Football_Runner"
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64]
@@ -10121,8 +10121,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: True  # if use global state to calculate values
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.2
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -10166,7 +10166,7 @@ MARL Implementations
                             runner: "Football_Runner"
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64]
@@ -10199,8 +10199,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: True  # if use global state to calculate values
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.2
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -10239,7 +10239,7 @@ MARL Implementations
                             continuous_action: True
                             policy: "MATD3_Policy"
                             representation: "Basic_Identical"
-                            vectorize: "Dummy_Pettingzoo"
+                            vectorize: "DummyVecMultiAgentEnv"
                             runner: "Pettingzoo_Runner"
 
                             representation_hidden_size: [64, ]  # the units for each hidden layer
@@ -10284,7 +10284,7 @@ MARL Implementations
                             continuous_action: True
                             policy: "MATD3_Policy"
                             representation: "Basic_Identical"
-                            vectorize: "Dummy_Pettingzoo"
+                            vectorize: "DummyVecMultiAgentEnv"
                             runner: "Pettingzoo_Runner"
 
                             representation_hidden_size: [64, ]  # the units for each hidden layer
@@ -10329,7 +10329,7 @@ MARL Implementations
                             continuous_action: True
                             policy: "MATD3_Policy"
                             representation: "Basic_Identical"
-                            vectorize: "Dummy_Pettingzoo"
+                            vectorize: "DummyVecMultiAgentEnv"
                             runner: "Pettingzoo_Runner"
 
                             representation_hidden_size: [64, ]  # the units for each hidden layer
@@ -10382,11 +10382,11 @@ MARL Implementations
                             continuous_action: False
                             policy: "Categorical_MAAC_Policy_Share"
                             representation: "Basic_MLP"
-                            vectorize: "Dummy_Pettingzoo"
+                            vectorize: "DummyVecMultiAgentEnv"
                             runner: "Pettingzoo_Runner"
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: False
+                            use_rnn: False
                             rnn:
                             representation_hidden_size: [64, ]  # the units for each hidden layer
                             gain: 0.01
@@ -10418,8 +10418,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: False  # if use global state to replace merged observations
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.2
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -10459,7 +10459,7 @@ MARL Implementations
                             runner: "StarCraft2_Runner"
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -10496,8 +10496,8 @@ MARL Implementations
                             # tricks
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.2
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -10533,7 +10533,7 @@ MARL Implementations
                             runner: "StarCraft2_Runner"
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -10570,8 +10570,8 @@ MARL Implementations
                             # tricks
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.2
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -10607,7 +10607,7 @@ MARL Implementations
                             runner: "StarCraft2_Runner"
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -10644,8 +10644,8 @@ MARL Implementations
                             # tricks
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.2
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -10681,7 +10681,7 @@ MARL Implementations
                             runner: "StarCraft2_Runner"
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64,]
@@ -10717,8 +10717,8 @@ MARL Implementations
                             # tricks
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_norm: False  # use running mean and std to normalize rewards.
                             use_advnorm: False  # use advantage normalization.
                             use_gae: True  # use GAE trick to calculate returns.
@@ -10749,7 +10749,7 @@ MARL Implementations
                             on_policy: True
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -10787,8 +10787,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: False  # if use global state to replace joint observations
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.05
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -10823,7 +10823,7 @@ MARL Implementations
                             on_policy: True
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -10861,8 +10861,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: False  # if use global state to replace joint observations
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.2
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -10897,7 +10897,7 @@ MARL Implementations
                             on_policy: True
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -10935,8 +10935,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: False  # if use global state to replace joint observations
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.05
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -10971,7 +10971,7 @@ MARL Implementations
                             on_policy: True
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -11009,8 +11009,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: False  # if use global state to replace joint observations
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.2
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -11045,7 +11045,7 @@ MARL Implementations
                             on_policy: True
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -11083,8 +11083,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: False  # if use global state to replace joint observations
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.2
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -11119,7 +11119,7 @@ MARL Implementations
                             on_policy: True
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -11157,8 +11157,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: False  # if use global state to replace joint observations
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.2
                             use_value_norm: True  # use running mean and std to normalize rewards.
@@ -11198,10 +11198,10 @@ MARL Implementations
                             policy: "Categorical_COMA_Policy"
                             representation: "Basic_MLP"
                             representation_critic: "Basic_MLP"
-                            vectorize: "Dummy_Pettingzoo"
+                            vectorize: "DummyVecMultiAgentEnv"
                             runner: "Pettingzoo_Runner"
 
-                            use_recurrent: False
+                            use_rnn: False
                             rnn:
                             representation_hidden_size: [128, ]
                             gain: 0.01
@@ -11262,7 +11262,7 @@ MARL Implementations
                             vectorize: "Subproc_StarCraft2"
                             runner: "StarCraft2_Runner"
 
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -11325,7 +11325,7 @@ MARL Implementations
                             vectorize: "Subproc_StarCraft2"
                             runner: "StarCraft2_Runner"
 
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -11388,7 +11388,7 @@ MARL Implementations
                             vectorize: "Subproc_StarCraft2"
                             runner: "StarCraft2_Runner"
 
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -11451,7 +11451,7 @@ MARL Implementations
                             vectorize: "Subproc_StarCraft2"
                             runner: "StarCraft2_Runner"
 
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -11514,7 +11514,7 @@ MARL Implementations
                             vectorize: "Subproc_StarCraft2"
                             runner: "StarCraft2_Runner"
 
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -11577,7 +11577,7 @@ MARL Implementations
                             vectorize: "Subproc_StarCraft2"
                             runner: "StarCraft2_Runner"
 
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -11640,7 +11640,7 @@ MARL Implementations
                             vectorize: "Subproc_StarCraft2"
                             runner: "StarCraft2_Runner"
 
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -11703,7 +11703,7 @@ MARL Implementations
                             vectorize: "Subproc_StarCraft2"
                             runner: "StarCraft2_Runner"
 
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -11766,7 +11766,7 @@ MARL Implementations
                             vectorize: "Subproc_StarCraft2"
                             runner: "StarCraft2_Runner"
 
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -11829,7 +11829,7 @@ MARL Implementations
                             vectorize: "Subproc_StarCraft2"
                             runner: "StarCraft2_Runner"
 
-                            use_recurrent: True
+                            use_rnn: True
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -11897,10 +11897,10 @@ MARL Implementations
                             continuous_action: False
                             policy: "MF_Q_network"
                             representation: "Basic_Identical"
-                            vectorize: "Dummy_Pettingzoo"
+                            vectorize: "DummyVecMultiAgentEnv"
                             runner: "Pettingzoo_Runner"
 
-                            use_recurrent: False
+                            use_rnn: False
                             rnn:
                             representation_hidden_size: [64, ]
                             q_hidden_size: [64, ]  # the units for each hidden layer
@@ -11959,7 +11959,7 @@ MARL Implementations
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: False
+                            use_rnn: False
                             rnn: "GRU"
                             recurrent_layer_N: 1
                             fc_hidden_sizes: [64, ]
@@ -12013,11 +12013,11 @@ MARL Implementations
                             continuous_action: False
                             policy: "Categorical_MFAC_Policy"
                             representation: "Basic_Identical"
-                            vectorize: "Dummy_Pettingzoo"
+                            vectorize: "DummyVecMultiAgentEnv"
                             runner: "Pettingzoo_Runner"
 
                             # recurrent settings for Basic_RNN representation
-                            use_recurrent: False
+                            use_rnn: False
                             rnn:
                             representation_hidden_size: [64, ]  # the units for each hidden layer
                             gain: 0.01
@@ -12047,8 +12047,8 @@ MARL Implementations
                             use_linear_lr_decay: False  # if use linear learning rate decay
                             end_factor_lr_decay: 0.5
                             use_global_state: False  # if use global state to replace merged observations
-                            use_grad_norm: True  # gradient normalization
-                            max_grad_norm: 10.0
+                            use_grad_clip: True  # gradient normalization
+                            grad_clip_norm: 10.0
                             use_value_clip: True  # limit the value range
                             value_clip_range: 0.2
                             use_value_norm: True  # use running mean and std to normalize rewards.

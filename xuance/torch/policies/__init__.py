@@ -1,10 +1,7 @@
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import copy
-from typing import Sequence, Optional, Callable, Union
-from gymnasium.spaces import Space, Box, Discrete, Dict
-
+from xuance.torch.policies.core import (
+    BasicQhead,
+    ActorNet, CategoricalActorNet, CriticNet,
+    VDN_mixer, QMIX_mixer, QMIX_FF_mixer, QTRAN_alt, QTRAN_base)
 from .categorical import ActorCriticPolicy as Categorical_AC_Policy
 from .categorical import ActorPolicy as Categorical_Actor_Policy
 from .categorical import PPGActorCritic as Categorical_PPG_Policy
@@ -17,11 +14,9 @@ from .deterministic import BasicQnetwork, C51Qnetwork, DuelQnetwork, DDPGPolicy,
     TD3Policy, PDQNPolicy, MPDQNPolicy, SPDQNPolicy, DRQNPolicy
 from .gaussian import SACPolicy as Gaussian_SAC_Policy
 
-from .mixers import *
 from .deterministic_marl import BasicQnetwork as BasicQnetwork_marl
-from .deterministic_marl import Basic_DDPG_policy as BasicDDPG_marl
-from .deterministic_marl import MFQnetwork, MixingQnetwork, Weighted_MixingQnetwork, Qtran_MixingQnetwork, DCG_policy, \
-    Basic_DDPG_policy, MADDPG_policy, MATD3_policy
+from .deterministic_marl import Independent_DDPG_Policy
+from .deterministic_marl import MFQnetwork, MixingQnetwork, Weighted_MixingQnetwork, Qtran_MixingQnetwork, DCG_policy, MADDPG_Policy, MATD3_Policy
 from .categorical_marl import MeanFieldActorCriticPolicy, COMAPolicy
 from .categorical_marl import MAAC_Policy as Categorical_MAAC_Policy
 from .categorical_marl import MAAC_Policy_Share as Categorical_MAAC_Policy_Share
@@ -37,7 +32,7 @@ Mixer = {
     "QTRAN_base": QTRAN_base
 }
 
-REGISTRY = {
+REGISTRY_Policy = {
     # ↓ Single-Agent DRL ↓ #
     "Categorical_AC": Categorical_AC_Policy,
     "Categorical_Actor": Categorical_Actor_Policy,
@@ -67,14 +62,14 @@ REGISTRY = {
     "Categorical_MAAC_Policy": Categorical_MAAC_Policy,
     "Categorical_MAAC_Policy_Share": Categorical_MAAC_Policy_Share,
     "Categorical_COMA_Policy": COMAPolicy,
-    "Independent_DDPG_Policy": BasicDDPG_marl,
-    "MADDPG_Policy": MADDPG_policy,
+    "Independent_DDPG_Policy": Independent_DDPG_Policy,
+    "MADDPG_Policy": MADDPG_Policy,
     "MF_Q_network": MFQnetwork,
     "Categorical_MFAC_Policy": MeanFieldActorCriticPolicy,
     "Gaussian_MAAC_Policy": Gaussain_MAAC,
     "Gaussian_ISAC_Policy": Gaussian_ISAC,
     "Gaussian_MASAC_Policy": Gaussian_MASAC,
-    "MATD3_Policy": MATD3_policy
+    "MATD3_Policy": MATD3_Policy
 }
 
 Policy_Inputs = {
@@ -93,7 +88,7 @@ Policy_Inputs = {
                        "normalize", "initialize", "activation", "device"],
     "Noisy_Q_network": ["action_space", "representation", "hidden_sizes",
                         "normalize", "initialize", "activation", "device"],
-    "C51_Q_network": ["action_space", "atom_num", "vmin", "vmax", "representation", "hidden_sizes",
+    "C51_Q_network": ["action_space", "atom_num", "v_min", "v_max", "representation", "hidden_sizes",
                       "normalize", "initialize", "activation", "device"],
     "QR_Q_network": ["action_space", "quantile_num", "representation", "hidden_sizes",
                      "normalize", "initialize", "activation", "device"],

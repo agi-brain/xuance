@@ -9,7 +9,7 @@ device: "cuda:0"
 
 agent: "DDPG"
 env_name: "MuJoCo"
-vectorize: "Dummy_Gym"
+vectorize: "DummyVecEnv"
 runner: "DRL"
 
 representation_hidden_size:  # If you choose Basic_Identical representation, then ignore this value

@@ -4,10 +4,10 @@ env_id: "simple_spread_v3"
 continuous_action: False
 policy: "Qtran_Mixing_Q_network"
 representation: "Basic_MLP"
-vectorize: "Dummy_Pettingzoo"
+vectorize: "DummyVecMultiAgentEnv"
 runner: "Pettingzoo_Runner"
 
-use_recurrent: False
+use_rnn: False
 rnn:
 representation_hidden_size: [256, ]
 q_hidden_size: [256, ]  # the units for each hidden layer

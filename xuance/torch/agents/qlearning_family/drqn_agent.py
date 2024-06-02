@@ -1,4 +1,15 @@
-from xuance.torch.agents import *
+import torch
+import numpy as np
+from tqdm import tqdm
+from copy import deepcopy
+from argparse import Namespace
+from xuance.environment import DummyVecEnv
+from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
+from xuance.torch.representations import REGISTRY_Representation
+from xuance.torch.policies import REGISTRY_Policy
+from xuance.torch.learners import DRQN_Learner
+from xuance.torch.agents import Agent
+from xuance.common import space2shape, RecurrentOffPolicyBuffer, EpisodeBuffer
 
 
 class DRQN_Agent(Agent):
@@ -7,53 +18,78 @@ class DRQN_Agent(Agent):
     Args:
         config: the Namespace variable that provides hyper-parameters and other settings.
         envs: the vectorized environments.
-        policy: the neural network modules of the agent.
-        optimizer: the method of optimizing.
-        scheduler: the learning rate decay scheduler.
-        device: the calculating device of the model, such as CPU or GPU.
     """
+
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecEnv_Gym,
-                 policy: nn.Module,
-                 optimizer: torch.optim.Optimizer,
-                 scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
-                 device: Optional[Union[int, str, torch.device]] = None):
-        self.render = config.render
-        self.n_envs = envs.num_envs
+                 envs: DummyVecEnv):
+        super(DRQN_Agent, self).__init__(config, envs)
 
-        self.gamma = config.gamma
-        self.train_frequency = config.training_frequency
-        self.start_training = config.start_training
-        self.start_greedy = config.start_greedy
-        self.end_greedy = config.end_greedy
+        self.start_greedy, self.end_greedy = config.start_greedy, config.end_greedy
         self.egreedy = config.start_greedy
+        self.delta_egreedy = (self.start_greedy - self.end_greedy) / (config.decay_step_greedy / self.n_envs)
 
-        self.observation_space = envs.observation_space
-        self.action_space = envs.action_space
+        # Build policy, optimizer, scheduler.
+        self.policy = self._build_policy()
+        optimizer = torch.optim.Adam(self.policy.parameters(), self.config.learning_rate, eps=1e-5)
+        lr_scheduler = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=1.0, end_factor=0.0,
+                                                         total_iters=self.config.running_steps)
+
+        # Create experience replay buffer.
         self.auxiliary_info_shape = {}
-
         self.atari = True if config.env_name == "Atari" else False
-        memory = RecurrentOffPolicyBuffer(self.observation_space,
-                                          self.action_space,
-                                          self.auxiliary_info_shape,
-                                          self.n_envs,
-                                          config.buffer_size,
-                                          config.batch_size,
-                                          episode_length=envs.max_episode_length,
-                                          lookup_length=config.lookup_length)
-        learner = DRQN_Learner(policy,
-                               optimizer,
-                               scheduler,
-                               config.device,
-                               config.model_dir,
-                               config.gamma,
-                               config.sync_frequency)
-        super(DRQN_Agent, self).__init__(config, envs, policy, memory, learner, device,
-                                         config.log_dir, config.model_dir)
+        self.memory = RecurrentOffPolicyBuffer(self.observation_space,
+                                               self.action_space,
+                                               self.auxiliary_info_shape,
+                                               self.n_envs,
+                                               config.buffer_size,
+                                               config.batch_size,
+                                               episode_length=envs.max_episode_length,
+                                               lookup_length=config.lookup_length)
+        self.learner = self._build_learner(self.config, envs.max_episode_length, self.policy, optimizer, lr_scheduler)
         self.lstm = True if config.rnn == "LSTM" else False
 
-    def _action(self, obs, egreedy=0.0, rnn_hidden=None):
+    def _build_policy(self):
+        normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
+        initializer = torch.nn.init.orthogonal_
+        activation = ActivationFunctions[self.config.activation]
+        device = self.device
+
+        # build representation.
+        if self.config.representation == "Basic_Identical":
+            representation = REGISTRY_Representation["Basic_Identical"](input_shape=space2shape(self.observation_space),
+                                                                        device=self.device)
+        elif self.config.representation == "Basic_MLP":
+            representation = REGISTRY_Representation["Basic_MLP"](
+                input_shape=space2shape(self.observation_space),
+                hidden_sizes=self.config.representation_hidden_size,
+                normalize=normalize_fn, initialize=initializer, activation=activation, device=device)
+        elif self.config.representation == "Basic_CNN":
+            representation = REGISTRY_Representation["Basic_CNN"](
+                input_shape=space2shape(self.observation_space),
+                kernels=self.config.kernels, strides=self.config.strides, filters=self.config.filters,
+                normalize=normalize_fn, initialize=initializer, activation=activation, device=device)
+        else:
+            raise AttributeError(
+                f"{self.config.agent} currently does not support {self.config.representation} representation.")
+
+        # build policy.
+        if self.config.policy == "DRQN_Policy":
+            policy = REGISTRY_Policy["DRQN_Policy"](
+                action_space=self.action_space, representation=representation,
+                rnn=self.config.rnn, recurrent_hidden_size=self.config.recurrent_hidden_size,
+                recurrent_layer_N=self.config.recurrent_layer_N, dropout=self.config.dropout,
+                normalize=normalize_fn, initialize=initializer, activation=activation, device=device)
+        else:
+            raise AttributeError(
+                f"{self.config.agent} currently does not support the policy named {self.config.policy}.")
+
+        return policy
+
+    def _build_learner(self, *args):
+        return DRQN_Learner(*args)
+
+    def action(self, obs, egreedy=0.0, rnn_hidden=None):
         _, argmax_action, _, rnn_hidden_next = self.policy(obs[:, np.newaxis], *rnn_hidden)
         random_action = np.random.choice(self.action_space.n, self.n_envs)
         if np.random.rand() < egreedy:
@@ -61,6 +97,14 @@ class DRQN_Agent(Agent):
         else:
             action = argmax_action.detach().cpu().numpy()
         return action, rnn_hidden_next
+
+    def train_epochs(self, n_epoch=1):
+        train_info = {}
+        for _ in range(n_epoch):
+            samples = self.memory.sample()
+            train_info = self.learner.update(**samples)
+            train_info["epsilon-greedy"] = self.egreedy
+        return train_info
 
     def train(self, train_steps):
         obs = self.envs.buf_obs
@@ -73,19 +117,18 @@ class DRQN_Agent(Agent):
             step_info = {}
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
-            acts, self.rnn_hidden = self._action(obs, self.egreedy, self.rnn_hidden)
+            acts, self.rnn_hidden = self.action(obs, self.egreedy, self.rnn_hidden)
             next_obs, rewards, terminals, trunctions, infos = self.envs.step(acts)
 
-            if (self.current_step > self.start_training) and (self.current_step % self.train_frequency == 0):
+            if (self.current_step > self.start_training) and (self.current_step % self.training_frequency == 0):
                 # training
-                obs_batch, act_batch, rew_batch, terminal_batch = self.memory.sample()
-                step_info = self.learner.update(obs_batch, act_batch, rew_batch, terminal_batch)
-                step_info["epsilon-greedy"] = self.egreedy
-                self.log_infos(step_info, self.current_step)
+                train_infos = self.train_epochs(n_epoch=1)
+                self.log_infos(train_infos, self.current_step)
 
-            obs = next_obs
+            obs = deepcopy(next_obs)
             for i in range(self.n_envs):
-                episode_data[i].put([self._process_observation(obs[i]), acts[i], self._process_reward(rewards[i]), terminals[i]])
+                episode_data[i].put(
+                    [self._process_observation(obs[i]), acts[i], self._process_reward(rewards[i]), terminals[i]])
                 if terminals[i] or trunctions[i]:
                     if self.atari and (~trunctions[i]):
                         pass
@@ -103,11 +146,12 @@ class DRQN_Agent(Agent):
                         self.memory.store(episode_data[i])
                         episode_data[i] = EpisodeBuffer()
                         obs[i] = infos[i]["reset_obs"]
+                        self.envs.buf_obs[i] = obs[i]
                         episode_data[i].obs.append(self._process_observation(obs[i]))
 
             self.current_step += self.n_envs
             if self.egreedy > self.end_greedy:
-                self.egreedy = self.egreedy - (self.start_greedy - self.end_greedy) / self.config.decay_step_greedy
+                self.egreedy = self.egreedy - self.delta_egreedy
 
     def test(self, env_fn, test_episodes):
         test_envs = env_fn()
@@ -124,14 +168,14 @@ class DRQN_Agent(Agent):
         while current_episode < test_episodes:
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
-            acts, rnn_hidden = self._action(obs, egreedy=0.0, rnn_hidden=rnn_hidden)
+            acts, rnn_hidden = self.action(obs, egreedy=0.0, rnn_hidden=rnn_hidden)
             next_obs, rewards, terminals, trunctions, infos = test_envs.step(acts)
             if self.config.render_mode == "rgb_array" and self.render:
                 images = test_envs.render(self.config.render_mode)
                 for idx, img in enumerate(images):
                     videos[idx].append(img)
 
-            obs = next_obs
+            obs = deepcopy(next_obs)
             for i in range(num_envs):
                 if terminals[i] or trunctions[i]:
                     if self.atari and (~trunctions[i]):

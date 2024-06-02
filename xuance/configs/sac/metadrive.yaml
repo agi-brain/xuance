@@ -4,7 +4,7 @@ env_id: "metadrive"
 env_config:  # the configs for MetaDrive environment
   map: "C"  # see https://metadrive-simulator.readthedocs.io/en/latest/rl_environments.html#generalization-environment for choices
 render: False
-vectorize: "Subproc_MetaDrive"
+vectorize: "SubprocVecEnv"
 policy: "Gaussian_SAC"
 representation: "Basic_Identical"
 runner: "DRL"
@@ -30,6 +30,10 @@ training_frequency: 1
 running_steps: 1000000
 start_training: 10000
 
+use_grad_clip: False  # gradient normalization
+clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+grad_clip_norm: 0.5
+use_actions_mask: False
 use_obsnorm: False
 use_rewnorm: False
 obsnorm_range: 5

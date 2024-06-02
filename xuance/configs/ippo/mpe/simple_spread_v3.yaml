@@ -4,24 +4,34 @@ env_id: "simple_spread_v3"
 continuous_action: True
 policy: "Gaussian_MAAC_Policy"
 representation: "Basic_MLP"
-vectorize: "Dummy_Pettingzoo"
-runner: "Pettingzoo_Runner"
+vectorize: "DummyVecMultiAgentEnv"
+runner: "MARL"
 
 # recurrent settings for Basic_RNN representation
-use_recurrent: False
-rnn:
-representation_hidden_size: [64, ]  # the units for each hidden layer
+use_rnn: False
+rnn: "GRU"
+recurrent_layer_N: 1
+fc_hidden_sizes: [64, 64, 64]
+recurrent_hidden_size: 64
+N_recurrent_layers: 1
+dropout: 0
+normalize: "LayerNorm"
+initialize: "orthogonal"
 gain: 0.01
 
+representation_hidden_size: [64, ]  # the units for each hidden layer
 actor_hidden_size: [64, ]
-critic_hidden_size: [256, ]
+critic_hidden_size: [64, ]
 activation: "relu"
+use_parameter_sharing: False
 activation_action: "sigmoid"
+use_actions_mask: False
+use_agents_mask: False
 
 seed: 1
-parallels: 128
-buffer_size: 3200
-n_epoch: 10
+parallels: 16
+buffer_size: 400
+n_epoch: 1
 n_minibatch: 1
 learning_rate: 0.0007
 weight_decay: 0
@@ -32,13 +42,12 @@ target_kl: 0.25  # for MAPPO_KL learner
 clip_range: 0.2  # ratio clip range, for MAPPO_Clip learner
 clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
 gamma: 0.95  # discount factor
+running_steps: 10000000
 
 # tricks
 use_linear_lr_decay: False  # if use linear learning rate decay
 end_factor_lr_decay: 0.5
 use_global_state: False  # if use global state to replace merged observations
-use_grad_norm: True  # gradient normalization
-max_grad_norm: 10.0
 use_value_clip: True  # limit the value range
 value_clip_range: 0.2
 use_value_norm: False  # use running mean and std to normalize rewards.
@@ -47,11 +56,8 @@ huber_delta: 10.0
 use_advnorm: True
 use_gae: True
 gae_lambda: 0.95
-
-start_training: 1
-running_steps: 10000000
-train_per_step: True
-training_frequency: 1
+use_grad_clip: True  # gradient normalization
+grad_clip_norm: 10.0
 
 test_steps: 10000
 eval_interval: 100000

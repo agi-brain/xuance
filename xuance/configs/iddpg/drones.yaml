@@ -11,14 +11,14 @@ render: False
 sleep: 0.01
 policy: "Independent_DDPG_Policy"
 representation: "Basic_Identical"
-vectorize: "Dummy_Drone_MAS"
+vectorize: "DummyVecMultiAgentEnv"
 runner: "MARL"
-on_policy: False
 
 actor_hidden_size: [64, 64]
 critic_hidden_size: [64, 64]
 activation: 'leaky_relu'
 activation_action: 'tanh'
+use_parameter_sharing: True
 
 seed: 1
 parallels: 10

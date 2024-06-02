@@ -1,6 +1,7 @@
 agent: "PDQN"
 env_name: "Platform"
 env_id: "Platform-v0"
+max_episode_steps: 200
 vectorize: "NOREQUIRED"
 render: False
 policy: "PDQN_Policy"
@@ -32,6 +33,9 @@ test_steps: 10000
 eval_interval: 1000
 test_episode: 5
 
+use_grad_clip: False  # gradient normalization
+grad_clip_norm: 0.5
+use_actions_mask: False
 use_obsnorm: False
 use_rewnorm: False
 obsnorm_range: 5

@@ -209,7 +209,7 @@ Source Code
                 """
                 def __init__(self,
                             config: Namespace,
-                            envs: DummyVecEnv_Pettingzoo,
+                            envs: DummyVecMultiAgentEnv,
                             device: Optional[Union[int, str, torch.device]] = None):
                     self.gamma = config.gamma
                     self.n_envs = envs.num_envs
@@ -222,12 +222,12 @@ Source Code
                         config.dim_state, state_shape = None, None
 
                     input_representation = get_repre_in(config)
-                    self.use_recurrent = config.use_recurrent
+                    self.use_rnn = config.use_rnn
                     self.use_global_state = config.use_global_state
                     # create representation for actor
                     kwargs_rnn = {"N_recurrent_layers": config.N_recurrent_layers,
                                 "dropout": config.dropout,
-                                "rnn": config.rnn} if self.use_recurrent else {}
+                                "rnn": config.rnn} if self.use_rnn else {}
                     representation = REGISTRY_Representation[config.representation](*input_representation, **kwargs_rnn)
                     # create representation for critic
                     input_representation[0] = (config.dim_state,) if self.use_global_state else (config.dim_obs,)
@@ -235,7 +235,7 @@ Source Code
                     # create policy
                     input_policy = get_policy_in_marl(config, (representation, representation_critic))
                     policy = REGISTRY_Policy[config.policy](*input_policy,
-                                                            use_recurrent=config.use_recurrent,
+                                                            use_rnn=config.use_rnn,
                                                             rnn=config.rnn,
                                                             gain=config.gain)
                     optimizer = torch.optim.Adam(policy.parameters(),
@@ -245,7 +245,7 @@ Source Code
                     self.action_space = envs.action_space
                     self.auxiliary_info_shape = {}
 
-                    buffer = MARL_OnPolicyBuffer_RNN if self.use_recurrent else MARL_OnPolicyBuffer
+                    buffer = MARL_OnPolicyBuffer_RNN if self.use_rnn else MARL_OnPolicyBuffer
                     input_buffer = (config.n_agents, config.state_space.shape, config.obs_shape, config.act_shape, config.rew_shape,
                                     config.done_shape, envs.num_envs, config.n_size,
                                     config.use_gae, config.use_advnorm, config.gamma, config.gae_lambda)
@@ -263,7 +263,7 @@ Source Code
                     batch_size = len(obs_n)
                     agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(batch_size, -1, -1).to(self.device)
                     obs_in = torch.Tensor(obs_n).view([batch_size, self.n_agents, -1]).to(self.device)
-                    if self.use_recurrent:
+                    if self.use_rnn:
                         batch_agents = batch_size * self.n_agents
                         hidden_state, dists = self.policy(obs_in.view(batch_agents, 1, -1),
                                                         agents_id.view(batch_agents, 1, -1),
@@ -288,7 +288,7 @@ Source Code
                     else:
                         critic_in = torch.Tensor(obs_n).to(self.device)
                     # get critic values
-                    if self.use_recurrent:
+                    if self.use_rnn:
                         hidden_state, values_n = self.policy.get_values(critic_in.unsqueeze(2),  # add a sequence length axis.
                                                                         agents_id.unsqueeze(2),
                                                                         *rnn_hidden)
@@ -308,7 +308,7 @@ Source Code
                                 end = start + self.batch_size
                                 sample_idx = indexes[start:end]
                                 sample = self.memory.sample(sample_idx)
-                                if self.use_recurrent:
+                                if self.use_rnn:
                                     info_train = self.learner.update_recurrent(sample)
                                 else:
                                     info_train = self.learner.update(sample)
@@ -332,7 +332,7 @@ Source Code
             class IPPO_Agents(MARLAgents):
                 def __init__(self,
                              config: Namespace,
-                             envs: DummyVecEnv_Pettingzoo,
+                             envs: DummyVecMultiAgentEnv,
                              device: str = "cpu:0"):
                     self.gamma = config.gamma
                     self.n_envs = envs.num_envs
@@ -345,12 +345,12 @@ Source Code
                         config.dim_state, state_shape = None, None
 
                     input_representation = get_repre_in(config)
-                    self.use_recurrent = config.use_recurrent
+                    self.use_rnn = config.use_rnn
                     self.use_global_state = config.use_global_state
                     # create representation for actor
                     kwargs_rnn = {"N_recurrent_layers": config.N_recurrent_layers,
                                   "dropout": config.dropout,
-                                  "rnn": config.rnn} if self.use_recurrent else {}
+                                  "rnn": config.rnn} if self.use_rnn else {}
                     representation = REGISTRY_Representation[config.representation](*input_representation, **kwargs_rnn)
                     # create representation for critic
                     input_representation[0] = (config.dim_state,) if self.use_global_state else (config.dim_obs,)
@@ -358,7 +358,7 @@ Source Code
                     # create policy
                     input_policy = get_policy_in_marl(config, (representation, representation_critic))
                     policy = REGISTRY_Policy[config.policy](*input_policy,
-                                                            use_recurrent=config.use_recurrent,
+                                                            use_rnn=config.use_rnn,
                                                             rnn=config.rnn,
                                                             gain=config.gain)
                     lr_scheduler = MyLinearLR(config.learning_rate, start_factor=1.0, end_factor=0.5,
@@ -368,7 +368,7 @@ Source Code
                     self.action_space = envs.action_space
                     self.auxiliary_info_shape = {}
 
-                    buffer = MARL_OnPolicyBuffer_RNN if self.use_recurrent else MARL_OnPolicyBuffer
+                    buffer = MARL_OnPolicyBuffer_RNN if self.use_rnn else MARL_OnPolicyBuffer
                     input_buffer = (config.n_agents, config.state_space.shape, config.obs_shape, config.act_shape, config.rew_shape,
                                     config.done_shape, envs.num_envs, config.n_size,
                                     config.use_gae, config.use_advnorm, config.gamma, config.gae_lambda)
@@ -409,7 +409,7 @@ Source Code
                                 end = start + self.batch_size
                                 sample_idx = indexes[start:end]
                                 sample = self.memory.sample(sample_idx)
-                                if self.use_recurrent:
+                                if self.use_rnn:
                                     info_train = self.learner.update_recurrent(sample)
                                 else:
                                     info_train = self.learner.update(sample)
@@ -430,7 +430,7 @@ Source Code
             class IPPO_Agents(MARLAgents):
                 def __init__(self,
                              config: Namespace,
-                             envs: DummyVecEnv_Pettingzoo):
+                             envs: DummyVecMultiAgentEnv):
                     self.gamma = config.gamma
                     self.n_envs = envs.num_envs
                     self.n_size = config.n_size
@@ -442,12 +442,12 @@ Source Code
                         config.dim_state, state_shape = None, None
 
                     input_representation = get_repre_in(config)
-                    self.use_recurrent = config.use_recurrent
+                    self.use_rnn = config.use_rnn
                     self.use_global_state = config.use_global_state
                     # create representation for actor
                     kwargs_rnn = {"N_recurrent_layers": config.N_recurrent_layers,
                                   "dropout": config.dropout,
-                                  "rnn": config.rnn} if self.use_recurrent else {}
+                                  "rnn": config.rnn} if self.use_rnn else {}
                     representation = REGISTRY_Representation[config.representation](*input_representation, **kwargs_rnn)
                     # create representation for critic
                     input_representation[0] = (config.dim_state,) if self.use_global_state else (config.dim_obs,)
@@ -455,7 +455,7 @@ Source Code
                     # create policy
                     input_policy = get_policy_in_marl(config, (representation, representation_critic))
                     policy = REGISTRY_Policy[config.policy](*input_policy,
-                                                            use_recurrent=config.use_recurrent,
+                                                            use_rnn=config.use_rnn,
                                                             rnn=config.rnn,
                                                             gain=config.gain)
                     scheduler = lr_decay_model(learning_rate=config.learning_rate, decay_rate=0.5,
@@ -465,7 +465,7 @@ Source Code
                     self.action_space = envs.action_space
                     self.auxiliary_info_shape = {}
 
-                    buffer = MARL_OnPolicyBuffer_RNN if self.use_recurrent else MARL_OnPolicyBuffer
+                    buffer = MARL_OnPolicyBuffer_RNN if self.use_rnn else MARL_OnPolicyBuffer
                     input_buffer = (config.n_agents, config.state_space.shape, config.obs_shape, config.act_shape, config.rew_shape,
                                     config.done_shape, envs.num_envs, config.n_size,
                                     config.use_gae, config.use_advnorm, config.gamma, config.gae_lambda)
@@ -483,7 +483,7 @@ Source Code
                     agents_id = ops.broadcast_to(self.expand_dims(self.eye(self.n_agents, self.n_agents, ms.float32), 0),
                                                  (batch_size, -1, -1))
                     obs_in = Tensor(obs_n).view(batch_size, self.n_agents, -1)
-                    if self.use_recurrent:
+                    if self.use_rnn:
                         batch_agents = batch_size * self.n_agents
                         hidden_state, act_probs = self.policy(obs_in.view(batch_agents, 1, -1),
                                                               agents_id.view(batch_agents, 1, -1),
@@ -509,7 +509,7 @@ Source Code
                     else:
                         critic_in = Tensor(obs_n)
                     # get critic values
-                    if self.use_recurrent:
+                    if self.use_rnn:
                         hidden_state, values_n = self.policy.get_values(critic_in.unsqueeze(2),  # add a sequence length axis.
                                                                         agents_id.unsqueeze(2),
                                                                         *rnn_hidden)
@@ -529,7 +529,7 @@ Source Code
                                 end = start + self.batch_size
                                 sample_idx = indexes[start:end]
                                 sample = self.memory.sample(sample_idx)
-                                if self.use_recurrent:
+                                if self.use_rnn:
                                     info_train = self.learner.update_recurrent(sample)
                                 else:
                                     info_train = self.learner.update(sample)

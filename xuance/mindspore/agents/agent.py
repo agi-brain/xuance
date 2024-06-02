@@ -7,7 +7,7 @@ from xuance.mindspore.agents import *
 class Agent(ABC):
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecEnv_Gym,
+                 envs: DummyVecEnv,
                  policy: nn.Cell,
                  memory: Buffer,
                  learner: Learner,

@@ -4,7 +4,7 @@ from xuance.mindspore.agents import *
 class PG_Agent(Agent):
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecEnv_Gym,
+                 envs: DummyVecEnv,
                  policy: nn.Cell,
                  optimizer: nn.Optimizer,
                  scheduler):

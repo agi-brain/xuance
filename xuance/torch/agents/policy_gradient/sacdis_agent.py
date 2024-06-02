@@ -1,4 +1,15 @@
-from xuance.torch.agents import *
+import torch
+import numpy as np
+from tqdm import tqdm
+from copy import deepcopy
+from argparse import Namespace
+from xuance.environment import DummyVecEnv
+from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
+from xuance.torch.representations import REGISTRY_Representation
+from xuance.torch.policies import REGISTRY_Policy
+from xuance.torch.learners import SACDIS_Learner
+from xuance.torch.agents import Agent
+from xuance.common import space2shape, DummyOffPolicyBuffer, DummyOffPolicyBuffer_Atari
 
 
 class SACDIS_Agent(Agent):
@@ -7,49 +18,84 @@ class SACDIS_Agent(Agent):
     Args:
         config: the Namespace variable that provides hyper-parameters and other settings.
         envs: the vectorized environments.
-        policy: the neural network modules of the agent.
-        optimizer: the method of optimizing.
-        scheduler: the learning rate decay scheduler.
-        device: the calculating device of the model, such as CPU or GPU.
     """
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecEnv_Gym,
-                 policy: nn.Module,
-                 optimizer: Sequence[torch.optim.Optimizer],
-                 scheduler: Optional[Sequence[torch.optim.lr_scheduler._LRScheduler]] = None,
-                 device: Optional[Union[int, str, torch.device]] = None):
-        self.render = config.render
-        self.n_envs = envs.num_envs
+                 envs: DummyVecEnv):
+        super(SACDIS_Agent, self).__init__(config, envs)
 
-        self.gamma = config.gamma
-        self.train_frequency = config.training_frequency
-        self.start_training = config.start_training
+        # Build policy, optimizer, scheduler.
+        self.policy = self._build_policy()
+        optimizers = {
+            'actor': torch.optim.Adam(self.policy.actor_parameters, self.config.actor_learning_rate),
+            'critic': torch.optim.Adam(self.policy.critic_parameters, self.config.critic_learning_rate)}
+        lr_schedulers = {
+            'actor': torch.optim.lr_scheduler.LinearLR(optimizers['actor'], start_factor=1.0, end_factor=0.25,
+                                                       total_iters=self.config.running_steps),
+            'critic': torch.optim.lr_scheduler.LinearLR(optimizers['critic'], start_factor=1.0, end_factor=0.25,
+                                                        total_iters=self.config.running_steps)}
 
-        self.observation_space = envs.observation_space
-        self.action_space = envs.action_space
+        # Create experience replay buffer.
         self.auxiliary_info_shape = {}
+        input_buffer = dict(observation_space=self.observation_space,
+                            action_space=self.action_space,
+                            auxiliary_shape={},
+                            n_envs=self.n_envs,
+                            buffer_size=self.config.buffer_size,
+                            batch_size=self.config.batch_size)
         self.atari = True if config.env_name == "Atari" else False
         Buffer = DummyOffPolicyBuffer_Atari if self.atari else DummyOffPolicyBuffer
-        memory = Buffer(self.observation_space,
-                        self.action_space,
-                        self.auxiliary_info_shape,
-                        self.n_envs,
-                        config.buffer_size,
-                        config.batch_size)
-        learner = SACDIS_Learner(policy, optimizer, scheduler, config.device, config.model_dir,
-                                 gamma=config.gamma,
-                                 tau=config.tau,
-                                 alpha=config.alpha,
-                                 use_automatic_entropy_tuning=config.use_automatic_entropy_tuning,
-                                 target_entropy=-np.prod(self.action_space.shape).item(),
-                                 lr_policy=config.actor_learning_rate)
-        super(SACDIS_Agent, self).__init__(config, envs, policy, memory, learner, device,
-                                           config.log_dir, config.model_dir)
+        self.memory = Buffer(**input_buffer)
+        # Create learner.
+        self.learner = self._build_learner(self.config, envs.max_episode_length, self.policy, optimizers, lr_schedulers)
 
-    def _action(self, obs):
+    def _build_policy(self):
+        normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
+        initializer = torch.nn.init.orthogonal_
+        activation = ActivationFunctions[self.config.activation]
+        device = self.device
+
+        # build representations.
+        if self.config.representation == "Basic_Identical":
+            representation = REGISTRY_Representation["Basic_Identical"](input_shape=space2shape(self.observation_space),
+                                                                        device=self.device)
+        elif self.config.representation == "Basic_MLP":
+            representation = REGISTRY_Representation["Basic_MLP"](
+                input_shape=space2shape(self.observation_space),
+                hidden_sizes=self.config.representation_hidden_size,
+                normalize=normalize_fn, initialize=initializer, activation=activation, device=device)
+        elif self.config.representation == "Basic_CNN":
+            representation = REGISTRY_Representation["Basic_CNN"](
+                input_shape=space2shape(self.observation_space),
+                kernels=self.config.kernels, strides=self.config.strides, filters=self.config.filters,
+                normalize=normalize_fn, initialize=initializer, activation=activation, device=device)
+        else:
+            raise AttributeError(f"SACDIS currently does not support {self.config.representation} representation.")
+
+        # build policy
+        if self.config.policy == "Discrete_SAC":
+            policy = REGISTRY_Policy["Discrete_SAC"](
+                action_space=self.action_space, representation=representation,
+                actor_hidden_size=self.config.actor_hidden_size, critic_hidden_size=self.config.critic_hidden_size,
+                normalize=normalize_fn, initialize=initializer, activation=activation, device=device)
+        else:
+            raise AttributeError(f"SACDIS agent currently does not support the policy named {self.config.policy}.")
+
+        return policy
+
+    def _build_learner(self, *args):
+        return SACDIS_Learner(*args, target_entropy=-self.action_space.n)
+
+    def action(self, obs):
         _, action = self.policy(obs)
         return action.detach().cpu().numpy()
+
+    def train_epochs(self, n_epochs=1):
+        train_info = {}
+        for _ in range(n_epochs):
+            samples = self.memory.sample()
+            train_info = self.learner.update(**samples)
+        return train_info
 
     def train(self, train_steps):
         obs = self.envs.buf_obs
@@ -57,22 +103,22 @@ class SACDIS_Agent(Agent):
             step_info = {}
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
-            acts = self._action(obs)
+            acts = self.action(obs)
             next_obs, rewards, terminals, trunctions, infos = self.envs.step(acts)
             self.memory.store(obs, acts, self._process_reward(rewards), terminals, self._process_observation(next_obs))
-            if self.current_step > self.start_training and self.current_step % self.train_frequency == 0:
-                obs_batch, act_batch, rew_batch, terminal_batch, next_batch = self.memory.sample()
-                step_info = self.learner.update(obs_batch, act_batch, rew_batch, next_batch, terminal_batch)
-                self.log_infos(step_info, self.current_step)
+            if self.current_step > self.start_training and self.current_step % self.training_frequency == 0:
+                train_info = self.train_epochs(n_epochs=1)
+                self.log_infos(train_info, self.current_step)
 
             self.returns = self.gamma * self.returns + rewards
-            obs = next_obs
+            obs = deepcopy(next_obs)
             for i in range(self.n_envs):
                 if terminals[i] or trunctions[i]:
                     if self.atari and (~trunctions[i]):
                         pass
                     else:
                         obs[i] = infos[i]["reset_obs"]
+                        self.envs.buf_obs[i] = obs[i]
                         self.ret_rms.update(self.returns[i:i + 1])
                         self.returns[i] = 0.0
                         self.current_episode[i] += 1
@@ -99,14 +145,14 @@ class SACDIS_Agent(Agent):
         while current_episode < test_episodes:
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
-            acts = self._action(obs)
+            acts = self.action(obs)
             next_obs, rewards, terminals, trunctions, infos = test_envs.step(acts)
             if self.config.render_mode == "rgb_array" and self.render:
                 images = test_envs.render(self.config.render_mode)
                 for idx, img in enumerate(images):
                     videos[idx].append(img)
 
-            obs = next_obs
+            obs = deepcopy(next_obs)
             for i in range(num_envs):
                 if terminals[i] or trunctions[i]:
                     if self.atari and (~trunctions[i]):

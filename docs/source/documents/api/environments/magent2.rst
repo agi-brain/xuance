@@ -60,7 +60,7 @@ magent_vec_env.py
 .. py:class::
     xuance.environment.magent2.magent_vec_env.DummyVecEnv_MAgent(env_fns)
 
-    A custom environment class that extends the functionality of the DummyVecEnv_Pettingzoo class and is designed to work with the MAgent library.
+    A custom environment class that extends the functionality of the DummyVecMultiAgentEnv class and is designed to work with the MAgent library.
 
     :param env_fns: environment function.
 
@@ -246,13 +246,13 @@ Source Code
 
             from xuance.environment.vector_envs.vector_env import VecEnv, AlreadySteppingError, NotSteppingError
             from xuance.environment.vector_envs.env_utils import obs_n_space_info
-            from xuance.environment.pettingzoo.pettingzoo_vec_env import DummyVecEnv_Pettingzoo
+            from xuance.environment.pettingzoo.pettingzoo_vec_env import DummyVecMultiAgentEnv
             from operator import itemgetter
             import numpy as np
             import time
 
 
-            class DummyVecEnv_MAgent(DummyVecEnv_Pettingzoo):
+            class DummyVecEnv_MAgent(DummyVecMultiAgentEnv):
                 def __init__(self, env_fns):
                     self.waiting = False
                     self.envs = [fn() for fn in env_fns]

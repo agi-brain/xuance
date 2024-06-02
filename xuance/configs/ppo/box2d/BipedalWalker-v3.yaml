@@ -1,7 +1,7 @@
 agent: "PPO_Clip"  # Choice: PPO_Clip, PPO_KL
 env_name: "Box2D"
 env_id: "BipedalWalker-v3"
-vectorize: "Dummy_Gym"
+vectorize: "DummyVecEnv"
 representation: "Basic_MLP"
 policy: "Gaussian_AC"
 runner: "DRL"
@@ -20,18 +20,20 @@ n_epoch: 8
 n_minibatch: 8
 learning_rate: 0.0004
 
-use_grad_clip: True
-
 vf_coef: 0.25
 ent_coef: 0.01
-target_kl: 0.001  # for PPO_KL agent
+target_kl: 0.25  # for PPO_KL agent
+kl_coef: 1.0  # for PPO_KL agent
 clip_range: 0.2  # for PPO_Clip agent
-clip_grad_norm: 0.5
 gamma: 0.98
 use_gae: True
 gae_lambda: 0.95
 use_advnorm: True
 
+use_grad_clip: True  # gradient normalization
+clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+grad_clip_norm: 0.5
+use_actions_mask: False
 use_obsnorm: True
 use_rewnorm: True
 obsnorm_range: 5

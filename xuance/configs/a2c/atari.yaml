@@ -29,13 +29,15 @@ learning_rate: 0.0007
 
 vf_coef: 0.25
 ent_coef: 0.01
-clip_grad: 0.2
-clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
 gamma: 0.99
 use_gae: True
 gae_lambda: 0.95
 use_advnorm: True
 
+use_grad_clip: True  # gradient normalization
+clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+grad_clip_norm: 0.5
+use_actions_mask: False
 use_obsnorm: False
 use_rewnorm: False
 obsnorm_range: 5

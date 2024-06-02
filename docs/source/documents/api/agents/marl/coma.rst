@@ -179,7 +179,7 @@ Source Code
                 """
                 def __init__(self,
                             config: Namespace,
-                            envs: DummyVecEnv_Pettingzoo,
+                            envs: DummyVecMultiAgentEnv,
                             device: Optional[Union[int, str, torch.device]] = None):
                     self.gamma = config.gamma
                     self.start_greedy, self.end_greedy = config.start_greedy, config.end_greedy
@@ -197,16 +197,16 @@ Source Code
 
                     # create representation for COMA actor
                     input_representation = get_repre_in(config)
-                    self.use_recurrent = config.use_recurrent
+                    self.use_rnn = config.use_rnn
                     self.use_global_state = config.use_global_state
                     kwargs_rnn = {"N_recurrent_layers": config.N_recurrent_layers,
                                 "dropout": config.dropout,
-                                "rnn": config.rnn} if self.use_recurrent else {}
+                                "rnn": config.rnn} if self.use_rnn else {}
                     representation = REGISTRY_Representation[config.representation](*input_representation, **kwargs_rnn)
                     # create policy
                     input_policy = get_policy_in_marl(config, representation)
                     policy = REGISTRY_Policy[config.policy](*input_policy,
-                                                            use_recurrent=config.use_recurrent,
+                                                            use_rnn=config.use_rnn,
                                                             rnn=config.rnn,
                                                             gain=config.gain,
                                                             use_global_state=self.use_global_state,
@@ -228,7 +228,7 @@ Source Code
                         config.dim_state, state_shape = None, None
                     config.act_onehot_shape = config.act_shape + tuple([config.dim_act])
 
-                    buffer = COMA_Buffer_RNN if self.use_recurrent else COMA_Buffer
+                    buffer = COMA_Buffer_RNN if self.use_rnn else COMA_Buffer
                     input_buffer = (config.n_agents, config.state_space.shape, config.obs_shape, config.act_shape, config.rew_shape,
                                     config.done_shape, envs.num_envs, config.n_size,
                                     config.use_gae, config.use_advnorm, config.gamma, config.gae_lambda)
@@ -249,7 +249,7 @@ Source Code
                     agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(batch_size, -1, -1).to(self.device)
                     obs_in = torch.Tensor(obs_n).view([batch_size, self.n_agents, -1]).to(self.device)
                     epsilon = 0.0 if test_mode else self.egreedy
-                    if self.use_recurrent:
+                    if self.use_rnn:
                         batch_agents = batch_size * self.n_agents
                         hidden_state, action_probs = self.policy(obs_in.view(batch_agents, 1, -1),
                                                                 agents_id.view(batch_agents, 1, -1),
@@ -298,7 +298,7 @@ Source Code
                                 end = start + self.batch_size
                                 sample_idx = indexes[start:end]
                                 sample = self.memory.sample(sample_idx)
-                                if self.use_recurrent:
+                                if self.use_rnn:
                                     info_train = self.learner.update_recurrent(sample, self.egreedy)
                                 else:
                                     info_train = self.learner.update(sample, self.egreedy)
@@ -322,7 +322,7 @@ Source Code
             class COMA_Agents(MARLAgents):
                 def __init__(self,
                              config: Namespace,
-                             envs: DummyVecEnv_Pettingzoo):
+                             envs: DummyVecMultiAgentEnv):
                     self.gamma = config.gamma
                     self.start_greedy, self.end_greedy = config.start_greedy, config.end_greedy
                     self.egreedy = self.start_greedy
@@ -339,16 +339,16 @@ Source Code
 
                     # create representation for COMA actor
                     input_representation = get_repre_in(config)
-                    self.use_recurrent = config.use_recurrent
+                    self.use_rnn = config.use_rnn
                     self.use_global_state = config.use_global_state
                     kwargs_rnn = {"N_recurrent_layers": config.N_recurrent_layers,
                                   "dropout": config.dropout,
-                                  "rnn": config.rnn} if self.use_recurrent else {}
+                                  "rnn": config.rnn} if self.use_rnn else {}
                     representation = REGISTRY_Representation[config.representation](*input_representation, **kwargs_rnn)
                     # create policy
                     input_policy = get_policy_in_marl(config, representation)
                     policy = REGISTRY_Policy[config.policy](*input_policy,
-                                                            use_recurrent=config.use_recurrent,
+                                                            use_rnn=config.use_rnn,
                                                             rnn=config.rnn,
                                                             gain=config.gain,
                                                             use_global_state=self.use_global_state,
@@ -370,7 +370,7 @@ Source Code
                         config.dim_state, state_shape = None, None
                     config.act_onehot_shape = config.act_shape + tuple([config.dim_act])
 
-                    buffer = COMA_Buffer_RNN if self.use_recurrent else COMA_Buffer
+                    buffer = COMA_Buffer_RNN if self.use_rnn else COMA_Buffer
                     input_buffer = (config.n_agents, config.state_space.shape, config.obs_shape, config.act_shape, config.rew_shape,
                                     config.done_shape, envs.num_envs, config.n_size,
                                     config.use_gae, config.use_advnorm, config.gamma, config.gae_lambda)
@@ -391,7 +391,7 @@ Source Code
                                                  (batch_size, -1, -1))
                     obs_in = Tensor(obs_n).view(batch_size, self.n_agents, -1)
                     epsilon = 0.0 if test_mode else self.end_greedy
-                    if self.use_recurrent:
+                    if self.use_rnn:
                         batch_agents = batch_size * self.n_agents
                         hidden_state, action_probs = self.policy(obs_in.view(batch_agents, 1, -1),
                                                                  agents_id.view(batch_agents, 1, -1),
@@ -440,7 +440,7 @@ Source Code
                                 end = start + self.batch_size
                                 sample_idx = indexes[start:end]
                                 sample = self.memory.sample(sample_idx)
-                                if self.use_recurrent:
+                                if self.use_rnn:
                                     info_train = self.learner.update_recurrent(sample, self.egreedy)
                                 else:
                                     info_train = self.learner.update(sample, self.egreedy)

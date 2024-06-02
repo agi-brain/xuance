@@ -23,7 +23,7 @@ representation: "Basic_RNN"
 vectorize: "Subproc_Football"
 
 # recurrent settings for Basic_RNN representation
-use_recurrent: True
+use_rnn: True
 rnn: "GRU"
 recurrent_layer_N: 1
 fc_hidden_sizes: [64]
@@ -56,8 +56,8 @@ gamma: 0.99  # discount factor
 use_linear_lr_decay: False  # if use linear learning rate decay
 end_factor_lr_decay: 0.5
 use_global_state: True  # if use global state to calculate values
-use_grad_norm: True  # gradient normalization
-max_grad_norm: 10.0
+use_grad_clip: True  # gradient normalization
+grad_clip_norm: 10.0
 use_value_clip: True  # limit the value range
 value_clip_range: 0.2
 use_value_norm: True  # use running mean and std to normalize rewards.

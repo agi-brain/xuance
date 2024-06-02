@@ -4,8 +4,8 @@ env_id: "simple_adversary_v3"
 continuous_action: True
 policy: "Independent_DDPG_Policy"
 representation: "Basic_Identical"
-vectorize: "Dummy_Pettingzoo"
-runner: "Pettingzoo_Runner"
+vectorize: "DummyVecMultiAgentEnv"
+runner: "MARL"
 
 representation_hidden_size: [64, ]  # the units for each hidden layer
 actor_hidden_size: [64, 64]

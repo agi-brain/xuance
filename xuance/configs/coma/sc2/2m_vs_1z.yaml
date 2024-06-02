@@ -7,7 +7,7 @@ representation: "Basic_RNN"
 vectorize: "Subproc_StarCraft2"
 runner: "StarCraft2_Runner"
 
-use_recurrent: True
+use_rnn: True
 rnn: "GRU"
 recurrent_layer_N: 1
 fc_hidden_sizes: [64, ]

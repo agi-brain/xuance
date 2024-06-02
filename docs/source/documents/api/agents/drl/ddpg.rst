@@ -182,7 +182,7 @@ Source Code
             """
             def __init__(self,
                         config: Namespace,
-                        envs: DummyVecEnv_Gym,
+                        envs: DummyVecEnv,
                         policy: nn.Module,
                         optimizer: Sequence[torch.optim.Optimizer],
                         scheduler: Optional[Sequence[torch.optim.lr_scheduler._LRScheduler]] = None,
@@ -191,7 +191,7 @@ Source Code
                 self.n_envs = envs.num_envs
 
                 self.gamma = config.gamma
-                self.train_frequency = config.training_frequency
+                self.training_frequency = config.training_frequency
                 self.start_training = config.start_training
                 self.start_noise = config.start_noise
                 self.end_noise = config.end_noise
@@ -235,7 +235,7 @@ Source Code
                         acts = [self.action_space.sample() for _ in range(self.n_envs)]
                     next_obs, rewards, terminals, trunctions, infos = self.envs.step(acts)
                     self.memory.store(obs, acts, self._process_reward(rewards), terminals, self._process_observation(next_obs))
-                    if self.current_step > self.start_training and self.current_step % self.train_frequency == 0:
+                    if self.current_step > self.start_training and self.current_step % self.training_frequency == 0:
                         obs_batch, act_batch, rew_batch, terminal_batch, next_batch = self.memory.sample()
                         step_info = self.learner.update(obs_batch, act_batch, rew_batch, next_batch, terminal_batch)
                         step_info["noise_scale"] = self.noise_scale
@@ -324,7 +324,7 @@ Source Code
         class DDPG_Agent(Agent):
             def __init__(self,
                          config: Namespace,
-                         envs: DummyVecEnv_Gym,
+                         envs: DummyVecEnv,
                          policy: tk.Model,
                          optimizer: Sequence[tk.optimizers.Optimizer],
                          device: str = 'cpu'):
@@ -332,7 +332,7 @@ Source Code
                 self.n_envs = envs.num_envs
 
                 self.gamma = config.gamma
-                self.train_frequency = config.training_frequency
+                self.training_frequency = config.training_frequency
                 self.start_training = config.start_training
                 self.start_noise = config.start_noise
                 self.end_noise = config.end_noise
@@ -374,7 +374,7 @@ Source Code
                         acts = [self.action_space.sample() for _ in range(self.n_envs)]
                     next_obs, rewards, terminals, trunctions, infos = self.envs.step(acts)
                     self.memory.store(obs, acts, self._process_reward(rewards), terminals, self._process_observation(next_obs))
-                    if self.current_step > self.start_training and self.current_step % self.train_frequency == 0:
+                    if self.current_step > self.start_training and self.current_step % self.training_frequency == 0:
                         obs_batch, act_batch, rew_batch, terminal_batch, next_batch = self.memory.sample()
                         step_info = self.learner.update(obs_batch, act_batch, rew_batch, next_batch, terminal_batch)
                         step_info["noise_scale"] = self.noise_scale
@@ -461,7 +461,7 @@ Source Code
         class DDPG_Agent(Agent):
             def __init__(self,
                          config: Namespace,
-                         envs: DummyVecEnv_Gym,
+                         envs: DummyVecEnv,
                          policy: nn.Cell,
                          optimizer: Sequence[nn.Optimizer],
                          scheduler: Optional[nn.exponential_decay_lr] = None):
@@ -469,7 +469,7 @@ Source Code
                 self.n_envs = envs.num_envs
 
                 self.gamma = config.gamma
-                self.train_frequency = config.training_frequency
+                self.training_frequency = config.training_frequency
                 self.start_training = config.start_training
                 self.start_noise = config.start_noise
                 self.end_noise = config.end_noise
@@ -515,7 +515,7 @@ Source Code
                         acts = [self.action_space.sample() for _ in range(self.n_envs)]
                     next_obs, rewards, terminals, trunctions, infos = self.envs.step(acts)
                     self.memory.store(obs, acts, self._process_reward(rewards), terminals, self._process_observation(next_obs))
-                    if self.current_step > self.start_training and self.current_step % self.train_frequency == 0:
+                    if self.current_step > self.start_training and self.current_step % self.training_frequency == 0:
                         obs_batch, act_batch, rew_batch, terminal_batch, next_batch = self.memory.sample()
                         step_info = self.learner.update(obs_batch, act_batch, rew_batch, next_batch, terminal_batch)
                         step_info["noise_scale"] = self.noise_scale

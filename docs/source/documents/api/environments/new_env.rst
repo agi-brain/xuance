@@ -107,8 +107,8 @@ After that, import the vectorized environments in ./xuance/environments/__init__
     from xuance.environment.new_env.new_vec_env import DummyVecEnv_New, SubprocVecEnv_New
 
     REGISTRY_VEC_ENV = {
-        "Dummy_Gym": DummyVecEnv_Gym,
-        "Dummy_Pettingzoo": DummyVecEnv_Pettingzoo,
+        "DummyVecEnv": DummyVecEnv_Gym,
+        "DummyVecMultiAgentEnv": DummyVecMultiAgentEnv,
         "Dummy_MAgent": DummyVecEnv_MAgent,
         "Dummy_StarCraft2": DummyVecEnv_StarCraft2,
         "Dummy_Football": DummyVecEnv_GFootball,
@@ -116,7 +116,7 @@ After that, import the vectorized environments in ./xuance/environments/__init__
         "Dummy_NewEnv": DummyVecEnv_New,  # Add the newly defined vectorized environment
 
         # multiprocess #
-        "Subproc_Gym": SubprocVecEnv_Gym,
+        "SubprocVecEnv": SubprocVecEnv_Gym,
         "Subproc_Pettingzoo": SubprocVecEnv_Pettingzoo,
         "Subproc_StarCraft2": SubprocVecEnv_StarCraft2,
         "Subproc_Football": SubprocVecEnv_GFootball,

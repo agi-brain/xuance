@@ -5,14 +5,14 @@ from xuance.tensorflow.agents.agents_marl import linear_decay_or_increase
 class MFQ_Agents(MARLAgents):
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecEnv_Pettingzoo,
+                 envs: DummyVecMultiAgentEnv,
                  device: str = "cpu:0"):
         self.gamma = config.gamma
 
         self.start_greedy, self.end_greedy = config.start_greedy, config.end_greedy
         self.egreedy = self.start_greedy
         self.delta_egreedy = (self.start_greedy - self.end_greedy) / config.decay_step_greedy
-        self.use_recurrent, self.rnn = config.use_recurrent, config.rnn
+        self.use_rnn, self.rnn = config.use_rnn, config.rnn
         self.rnn_hidden = None
 
         input_representation = get_repre_in(config)

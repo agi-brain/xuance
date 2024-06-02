@@ -1,27 +1,36 @@
-from xuance.torch.learners import *
+"""
+Parameterised deep Q network (P-DQN)
+Paper link: https://arxiv.org/pdf/1810.06394.pdf
+Implementation: Pytorch
+"""
+import torch
+from torch import nn
+from xuance.torch.learners import Learner
+from typing import Optional, Union
+from argparse import Namespace
+
 
 class PDQN_Learner(Learner):
     def __init__(self,
+                 config: Namespace,
+                 episode_length: int,
                  policy: nn.Module,
-                 optimizers: Sequence[torch.optim.Optimizer],
-                 schedulers: Sequence[torch.optim.lr_scheduler._LRScheduler],
-                 device: Optional[Union[int, str, torch.device]] = None,
-                 model_dir: str = "./",
-                 gamma: float = 0.99,
-                 tau: float = 0.01):
-        self.tau = tau
-        self.gamma = gamma
-        super(PDQN_Learner, self).__init__(policy, optimizers, schedulers, device, model_dir)
+                 optimizer: torch.optim.Optimizer,
+                 scheduler: Union[dict, Optional[torch.optim.lr_scheduler.LinearLR]] = None):
+        super(PDQN_Learner, self).__init__(config, episode_length, policy, optimizer, scheduler)
+        self.tau = config.tau
+        self.gamma = config.gamma
+        self.mse_loss = nn.MSELoss()
 
-    def update(self, obs_batch, act_batch, rew_batch, next_batch, terminal_batch):
+    def update(self, **samples):
         self.iterations += 1
-        obs_batch = torch.as_tensor(obs_batch, device=self.device)
-        hyact_batch = torch.as_tensor(act_batch, device=self.device)
+        obs_batch = torch.as_tensor(samples['obs'], device=self.device)
+        hyact_batch = torch.as_tensor(samples['actions'], device=self.device)
         disact_batch = hyact_batch[:, 0].long()
         conact_batch = hyact_batch[:, 1:]
-        rew_batch = torch.as_tensor(rew_batch, device=self.device)
-        next_batch = torch.as_tensor(next_batch, device=self.device)
-        ter_batch = torch.as_tensor(terminal_batch, device=self.device)
+        rew_batch = torch.as_tensor(samples['rewards'], device=self.device)
+        next_batch = torch.as_tensor(samples['obs_next'], device=self.device)
+        ter_batch = torch.as_tensor(samples['terminals'], device=self.device)
 
         # optimize Q-network
         with torch.no_grad():
@@ -33,7 +42,7 @@ class PDQN_Learner(Learner):
 
         eval_qs = self.policy.Qeval(obs_batch, conact_batch)
         eval_q = eval_qs.gather(1, disact_batch.view(-1, 1)).squeeze()
-        q_loss = F.mse_loss(eval_q, target_q)
+        q_loss = self.mse_loss(eval_q, target_q)
 
         self.optimizer[1].zero_grad()
         q_loss.backward()

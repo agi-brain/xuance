@@ -19,7 +19,7 @@ class VDAC_Learner(LearnerMAS):
         self.gamma = gamma
         self.clip_range = config.clip_range
         self.use_linear_lr_decay = config.use_linear_lr_decay
-        self.use_grad_norm, self.max_grad_norm = config.use_grad_norm, config.max_grad_norm
+        self.use_grad_clip, self.grad_clip_norm = config.use_grad_clip, config.grad_clip_norm
         self.use_value_norm = config.use_value_norm
         self.vf_coef, self.ent_coef = config.vf_coef, config.ent_coef
         super(VDAC_Learner, self).__init__(config, policy, optimizer, device, model_dir)
@@ -59,7 +59,7 @@ class VDAC_Learner(LearnerMAS):
 
                 gradients = tape.gradient(loss, self.policy.trainable_param())
                 self.optimizer.apply_gradients([
-                    (tf.clip_by_norm(grad, self.max_grad_norm), var)
+                    (tf.clip_by_norm(grad, self.grad_clip_norm), var)
                     for (grad, var) in zip(gradients, self.policy.trainable_param())
                     if grad is not None
                 ])

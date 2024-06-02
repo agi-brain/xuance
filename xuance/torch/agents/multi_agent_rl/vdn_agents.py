@@ -1,99 +1,105 @@
-from xuance.torch.agents import *
+import torch
+from argparse import Namespace
+from xuance.environment import DummyVecMultiAgentEnv
+from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
+from xuance.torch.representations import REGISTRY_Representation
+from xuance.torch.policies import REGISTRY_Policy, VDN_mixer
+from xuance.torch.learners import VDN_Learner
+from xuance.torch.agents import MARLAgents
+from xuance.torch.agents.multi_agent_rl.iql_agents import IQL_Agents
+from xuance.common import MARL_OffPolicyBuffer, MARL_OffPolicyBuffer_RNN
 
 
-class VDN_Agents(MARLAgents):
-    """The implementation of VDN agents.
+class VDN_Agents(IQL_Agents, MARLAgents):
+    """The implementation of Value Decomposition Networks (VDN) agents.
 
     Args:
         config: the Namespace variable that provides hyper-parameters and other settings.
         envs: the vectorized environments.
-        device: the calculating device of the model, such as CPU or GPU.
     """
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecEnv_Pettingzoo,
-                 device: Optional[Union[int, str, torch.device]] = None):
-        self.gamma = config.gamma
+                 envs: DummyVecMultiAgentEnv):
+        MARLAgents.__init__(self, config, envs)
+
         self.start_greedy, self.end_greedy = config.start_greedy, config.end_greedy
         self.egreedy = self.start_greedy
-        self.delta_egreedy = (self.start_greedy - self.end_greedy) / config.decay_step_greedy
+        self.delta_egreedy = (self.start_greedy - self.end_greedy) / (config.decay_step_greedy / self.n_envs)
 
-        input_representation = get_repre_in(config)
-        self.use_recurrent = config.use_recurrent
-        if self.use_recurrent:
-            kwargs_rnn = {"N_recurrent_layers": config.N_recurrent_layers,
-                          "dropout": config.dropout,
-                          "rnn": config.rnn}
-            representation = REGISTRY_Representation[config.representation](*input_representation, **kwargs_rnn)
-        else:
-            representation = REGISTRY_Representation[config.representation](*input_representation)
-        mixer = VDN_mixer()
-        input_policy = get_policy_in_marl(config, representation, mixer)
-        policy = REGISTRY_Policy[config.policy](*input_policy,
-                                                use_recurrent=config.use_recurrent,
-                                                rnn=config.rnn)
-        optimizer = torch.optim.Adam(policy.parameters(), config.learning_rate, eps=1e-5)
+        # build policy, optimizers, schedulers
+        self.policy = self._build_policy()
+        optimizer = torch.optim.Adam(self.policy.parameters_model, config.learning_rate, eps=1e-5)
         scheduler = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=1.0, end_factor=0.5,
-                                                      total_iters=get_total_iters(config.agent_name, config))
-        self.observation_space = envs.observation_space
-        self.action_space = envs.action_space
-        self.representation_info_shape = policy.representation.output_shapes
-        self.auxiliary_info_shape = {}
+                                                      total_iters=self.config.running_steps)
 
-        if config.state_space is not None:
-            config.dim_state, state_shape = config.state_space.shape, config.state_space.shape
-        else:
-            config.dim_state, state_shape = None, None
+        # create experience replay buffer
+        input_buffer = dict(agent_keys=self.agent_keys,
+                            obs_space=self.observation_space,
+                            act_space=self.action_space,
+                            n_envs=self.n_envs,
+                            buffer_size=self.config.buffer_size,
+                            batch_size=self.config.batch_size,
+                            n_actions={k: self.action_space[k].n for k in self.agent_keys},
+                            use_actions_mask=self.use_actions_mask,
+                            max_episode_length=envs.max_episode_length)
+        buffer = MARL_OffPolicyBuffer_RNN if self.use_rnn else MARL_OffPolicyBuffer
+        self.memory = buffer(**input_buffer)
 
-        buffer = MARL_OffPolicyBuffer_RNN if self.use_recurrent else MARL_OffPolicyBuffer
-        input_buffer = (config.n_agents, state_shape, config.obs_shape, config.act_shape, config.rew_shape,
-                        config.done_shape, envs.num_envs, config.buffer_size, config.batch_size)
-        memory = buffer(*input_buffer, max_episode_length=envs.max_episode_length, dim_act=config.dim_act)
+        # initialize the hidden states of the RNN is use RNN-based representations.
+        self.rnn_hidden_state = self.init_rnn_hidden(self.n_envs)
 
-        learner = VDN_Learner(config, policy, optimizer, scheduler,
-                              config.device, config.model_dir, config.gamma,
-                              config.sync_frequency)
-        super(VDN_Agents, self).__init__(config, envs, policy, memory, learner, device,
-                                         config.log_dir, config.model_dir)
-        self.on_policy = False
+        # create learner
+        self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, envs.max_episode_length,
+                                           self.policy, optimizer, scheduler)
 
-    def act(self, obs_n, *rnn_hidden, avail_actions=None, test_mode=False):
-        batch_size = obs_n.shape[0]
-        agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(batch_size, -1, -1).to(self.device)
-        obs_in = torch.Tensor(obs_n).view([batch_size, self.n_agents, -1]).to(self.device)
-        if self.use_recurrent:
-            batch_agents = batch_size * self.n_agents
-            hidden_state, greedy_actions, _ = self.policy(obs_in.view(batch_agents, 1, -1),
-                                                          agents_id.view(batch_agents, 1, -1),
-                                                          *rnn_hidden,
-                                                          avail_actions=avail_actions.reshape(batch_agents, 1, -1))
-            greedy_actions = greedy_actions.view(batch_size, self.n_agents)
-        else:
-            hidden_state, greedy_actions, _ = self.policy(obs_in, agents_id, avail_actions=avail_actions)
-        greedy_actions = greedy_actions.cpu().detach().numpy()
+    def _build_policy(self):
+        """
+        Build representation(s) and policy(ies) for agent(s)
 
-        if test_mode:
-            return hidden_state, greedy_actions
-        else:
-            if avail_actions is None:
-                random_actions = np.random.choice(self.dim_act, [self.nenvs, self.n_agents])
+        Returns:
+            policy (torch.nn.Module): A dict of policies.
+        """
+        normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
+        initializer = torch.nn.init.orthogonal_
+        activation = ActivationFunctions[self.config.activation]
+        device = self.device
+
+        # build representations
+        representation = {key: None for key in self.model_keys}
+        for key in self.model_keys:
+            input_shape = self.observation_space[key].shape
+            if self.config.representation == "Basic_Identical":
+                representation[key] = REGISTRY_Representation["Basic_Identical"](input_shape=input_shape,
+                                                                                 device=self.device)
+            elif self.config.representation == "Basic_MLP":
+                representation[key] = REGISTRY_Representation["Basic_MLP"](
+                    input_shape=input_shape, hidden_sizes=self.config.representation_hidden_size,
+                    normalize=normalize_fn, initialize=initializer, activation=activation, device=device)
+            elif self.config.representation == "Basic_RNN":
+                representation[key] = REGISTRY_Representation["Basic_RNN"](
+                    input_shape=input_shape,
+                    hidden_sizes={'fc_hidden_sizes': self.config.fc_hidden_sizes,
+                                  'recurrent_hidden_size': self.config.recurrent_hidden_size},
+                    normalize=normalize_fn, initialize=initializer, activation=activation, device=device,
+                    N_recurrent_layers=self.config.N_recurrent_layers,
+                    dropout=self.config.dropout, rnn=self.config.rnn)
             else:
-                random_actions = Categorical(torch.Tensor(avail_actions)).sample().numpy()
-            if np.random.rand() < self.egreedy:
-                return hidden_state, random_actions
-            else:
-                return hidden_state, greedy_actions
+                raise AttributeError(f"VDN currently does not support {self.config.representation} representation.")
 
-    def train(self, i_step, n_epoch=1):
-        if self.egreedy >= self.end_greedy:
-            self.egreedy = self.start_greedy - self.delta_egreedy * i_step
-        info_train = {}
-        if i_step > self.start_training:
-            for i_epoch in range(n_epoch):
-                sample = self.memory.sample()
-                if self.use_recurrent:
-                    info_train = self.learner.update_recurrent(sample)
-                else:
-                    info_train = self.learner.update(sample)
-        info_train["epsilon-greedy"] = self.egreedy
-        return info_train
+        # build policies
+        mixer = VDN_mixer()
+        if self.config.policy == "Mixing_Q_network":
+            policy = REGISTRY_Policy["Mixing_Q_network"](
+                action_space=self.action_space, n_agents=self.n_agents, representation=representation,
+                mixer=mixer, hidden_size=self.config.q_hidden_size,
+                normalize=normalize_fn, initialize=initializer, activation=activation,
+                device=device, use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
+                use_rnn=self.use_rnn, rnn=self.config.rnn if self.use_rnn else None)
+        else:
+            raise AttributeError(f"VDN currently does not support the policy named {self.config.policy}.")
+
+        return policy
+
+    def _build_learner(self, config, model_keys, agent_keys, episode_length, policy, optimizer, scheduler):
+        return VDN_Learner(config, model_keys, agent_keys, episode_length, policy, optimizer, scheduler)
+

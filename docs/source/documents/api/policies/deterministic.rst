@@ -328,7 +328,7 @@ PyTorch
 
 
 .. py:class::
-  xuance.torch.policies.deterministic.C51Qnetwork(action_space, atom_num, vmin, vmax, representation, hidden_size, normalize, initialize, activation, device)
+  xuance.torch.policies.deterministic.C51Qnetwork(action_space, atom_num, v_min, v_max, representation, hidden_size, normalize, initialize, activation, device)
 
   An implementation of a C51 Q-network, 
   which is an extension of the standard deep Q-network (DQN) that represents Q-values as probability distributions over discrete support. 
@@ -339,10 +339,10 @@ PyTorch
   :type action_space: Space
   :param atom_num: Number of atoms for representing the Q-distribution.
   :type atom_num: int
-  :param vmin: Minimum value for the support of the Q-distribution.
-  :type vmin: float
-  :param vmax: Maximum value for the support of the Q-distribution.
-  :type vmax: float
+  :param v_min: Minimum value for the support of the Q-distribution.
+  :type v_min: float
+  :param v_max: Maximum value for the support of the Q-distribution.
+  :type v_max: float
   :param representation: The representation module.
   :type representation: nn.Module
   :param hidden_size: The sizes of the hidden layers.
@@ -1281,7 +1281,7 @@ TensorFlow
 
 
 .. py:class::
-  xuance.tensorflow.policies.deterministic.C51Qnetwork(action_space, atom_num, vmin, vmax, representation, hidden_size, normalize, initialize, activation, device)
+  xuance.tensorflow.policies.deterministic.C51Qnetwork(action_space, atom_num, v_min, v_max, representation, hidden_size, normalize, initialize, activation, device)
 
   An implementation of a C51 Q-network, 
   which is an extension of the standard deep Q-network (DQN) that represents Q-values as probability distributions over discrete support. 
@@ -1292,10 +1292,10 @@ TensorFlow
   :type action_space: Space
   :param atom_num: Number of atoms for representing the Q-distribution.
   :type atom_num: int
-  :param vmin: Minimum value for the support of the Q-distribution.
-  :type vmin: float
-  :param vmax: Maximum value for the support of the Q-distribution.
-  :type vmax: float
+  :param v_min: Minimum value for the support of the Q-distribution.
+  :type v_min: float
+  :param v_max: Maximum value for the support of the Q-distribution.
+  :type v_max: float
   :param representation: The representation module.
   :type representation: tk.Model
   :param hidden_size: The sizes of the hidden layers.
@@ -2246,7 +2246,7 @@ MindSpore
 
 
 .. py:class::
-  xuance.mindspore.policies.deterministic.C51Qnetwork(action_space, atom_num, vmin, vmax, representation, hidden_sizes, normalize, initialize, activation)
+  xuance.mindspore.policies.deterministic.C51Qnetwork(action_space, atom_num, v_min, v_max, representation, hidden_sizes, normalize, initialize, activation)
 
   An implementation of a C51 Q-network, 
   which is an extension of the standard deep Q-network (DQN) that represents Q-values as probability distributions over discrete support. 
@@ -2257,10 +2257,10 @@ MindSpore
   :type action_space: Space
   :param atom_num: Number of atoms for representing the Q-distribution.
   :type atom_num: int
-  :param vmin: Minimum value for the support of the Q-distribution.
-  :type vmin: float
-  :param vmax: Maximum value for the support of the Q-distribution.
-  :type vmax: float
+  :param v_min: Minimum value for the support of the Q-distribution.
+  :type v_min: float
+  :param v_max: Maximum value for the support of the Q-distribution.
+  :type v_max: float
   :param representation: The representation module.
   :type representation: nn.Cell
   :param hidden_size: The sizes of the hidden layers.
@@ -3164,8 +3164,8 @@ Source Code
             def __init__(self,
                          action_space: Discrete,
                          atom_num: int,
-                         vmin: float,
-                         vmax: float,
+                         v_min: float,
+                         v_max: float,
                          representation: nn.Module,
                          hidden_size: Sequence[int] = None,
                          normalize: Optional[ModuleType] = None,
@@ -3175,8 +3175,8 @@ Source Code
                 super(C51Qnetwork, self).__init__()
                 self.action_dim = action_space.n
                 self.atom_num = atom_num
-                self.vmin = vmin
-                self.vmax = vmax
+                self.v_min = v_min
+                self.v_max = v_max
                 self.representation = representation
                 self.target_representation = copy.deepcopy(representation)
                 self.representation_info_shape = self.representation.output_shapes
@@ -3184,9 +3184,9 @@ Source Code
                                            hidden_size,
                                            normalize, initialize, activation, device)
                 self.target_Zhead = copy.deepcopy(self.eval_Zhead)
-                self.supports = torch.nn.Parameter(torch.linspace(self.vmin, self.vmax, self.atom_num), requires_grad=False).to(
+                self.supports = torch.nn.Parameter(torch.linspace(self.v_min, self.v_max, self.atom_num), requires_grad=False).to(
                     device)
-                self.deltaz = (vmax - vmin) / (atom_num - 1)
+                self.deltaz = (v_max - v_min) / (atom_num - 1)
 
             def forward(self, observation: Union[np.ndarray, dict]):
                 outputs = self.representation(observation)
@@ -4014,8 +4014,8 @@ Source Code
             def __init__(self,
                          action_space: Discrete,
                          atom_num: int,
-                         vmin: float,
-                         vmax: float,
+                         v_min: float,
+                         v_max: float,
                          representation: Basic_Identical,
                          hidden_size: Sequence[int] = None,
                          normalize: Optional[tk.layers.Layer] = None,
@@ -4026,8 +4026,8 @@ Source Code
                 super(C51Qnetwork, self).__init__()
                 self.action_dim = action_space.n
                 self.atom_num = atom_num
-                self.vmin = vmin
-                self.vmax = vmax
+                self.v_min = v_min
+                self.v_max = v_max
                 self.representation = representation
                 self.target_representation = copy.deepcopy(representation)
                 self.representation_info_shape = self.representation.output_shapes
@@ -4036,8 +4036,8 @@ Source Code
                 self.target_Zhead = C51Qhead(self.representation.output_shapes['state'][0], self.action_dim, self.atom_num,
                                              hidden_size, normalize, initialize, activation, device)
                 self.target_Zhead.set_weights(self.eval_Zhead.get_weights())
-                self.supports = tf.cast(tf.linspace(self.vmin, self.vmax, self.atom_num), dtype=tf.float32)
-                self.deltaz = (vmax - vmin) / (atom_num - 1)
+                self.supports = tf.cast(tf.linspace(self.v_min, self.v_max, self.atom_num), dtype=tf.float32)
+                self.deltaz = (v_max - v_min) / (atom_num - 1)
 
             def call(self, observation: Union[np.ndarray, dict], **kwargs):
                 outputs = self.representation(observation)
@@ -4911,8 +4911,8 @@ Source Code
             def __init__(self,
                          action_space: Discrete,
                          atom_num: int,
-                         vmin: float,
-                         vmax: float,
+                         v_min: float,
+                         v_max: float,
                          representation: ModuleType,
                          hidden_size: Sequence[int] = None,
                          normalize: Optional[ModuleType] = None,
@@ -4923,8 +4923,8 @@ Source Code
                 super(C51Qnetwork, self).__init__()
                 self.action_dim = action_space.n
                 self.atom_num = atom_num
-                self.vmin = vmin
-                self.vmax = vmax
+                self.v_min = v_min
+                self.v_max = v_max
                 self.representation = representation
                 self.target_representation = copy.deepcopy(representation)
                 self.representation_info_shape = self.representation.output_shapes
@@ -4932,11 +4932,11 @@ Source Code
                                            hidden_size, normalize, initialize, activation)
                 self.target_Zhead = copy.deepcopy(self.eval_Zhead)
                 self._LinSpace = ms.ops.LinSpace()
-                self.supports = ms.Parameter(self._LinSpace(ms.Tensor(self.vmin, ms.float32),
-                                                            ms.Tensor(self.vmax, ms.float32),
+                self.supports = ms.Parameter(self._LinSpace(ms.Tensor(self.v_min, ms.float32),
+                                                            ms.Tensor(self.v_max, ms.float32),
                                                             self.atom_num),
                                              requires_grad=False)
-                self.deltaz = (vmax - vmin) / (atom_num - 1)
+                self.deltaz = (v_max - v_min) / (atom_num - 1)
 
             def construct(self, observation: Union[np.ndarray, dict]):
                 outputs = self.representation(observation)

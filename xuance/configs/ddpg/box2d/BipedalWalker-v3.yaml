@@ -1,7 +1,7 @@
 agent: "DDPG"
 env_name: "Box2D"
 env_id: "BipedalWalker-v3"
-vectorize: "Dummy_Gym"
+vectorize: "DummyVecEnv"
 representation: "Basic_Identical"
 policy: "DDPG_Policy"
 runner: "DRL"
@@ -27,6 +27,8 @@ training_frequency: 1
 running_steps: 2000000
 start_training: 1000
 
+use_grad_clip: False  # gradient normalization
+grad_clip_norm: 0.5
 use_obsnorm: False
 use_rewnorm: False
 obsnorm_range: 5

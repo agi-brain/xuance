@@ -12,7 +12,7 @@ class NoisyDQN_Agent(Agent):
         self.n_envs = envs.num_envs
 
         self.gamma = config.gamma
-        self.train_frequency = config.training_frequency
+        self.training_frequency = config.training_frequency
         self.start_training = config.start_training
         self.start_noise = config.start_noise
         self.end_noise = config.end_noise
@@ -55,7 +55,7 @@ class NoisyDQN_Agent(Agent):
             next_obs, rewards, terminals, trunctions, infos = self.envs.step(acts)
 
             self.memory.store(obs, acts, self._process_reward(rewards), terminals, self._process_observation(next_obs))
-            if self.current_step > self.start_training and self.current_step % self.train_frequency == 0:
+            if self.current_step > self.start_training and self.current_step % self.training_frequency == 0:
                 # training
                 obs_batch, act_batch, rew_batch, terminal_batch, next_batch = self.memory.sample()
                 self.policy.noise_scale = self.noise_scale

@@ -15,7 +15,7 @@ record: False
 render: True
 obstacles: True
 max_episode_steps: 200
-vectorize: "Dummy_Drone"
+vectorize: "DummyVecEnv"
 runner: "DRL"
 
 representation_hidden_size: [256,]

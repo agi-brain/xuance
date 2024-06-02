@@ -19,7 +19,7 @@ class MFAC_Learner(LearnerMAS):
         self.gamma = gamma
         self.clip_range = config.clip_range
         self.use_linear_lr_decay = config.use_linear_lr_decay
-        self.use_grad_norm, self.max_grad_norm = config.use_grad_norm, config.max_grad_norm
+        self.use_grad_clip, self.grad_clip_norm = config.use_grad_clip, config.grad_clip_norm
         self.use_value_norm = config.use_value_norm
         self.vf_coef, self.ent_coef = config.vf_coef, config.ent_coef
         self.tau = config.tau
