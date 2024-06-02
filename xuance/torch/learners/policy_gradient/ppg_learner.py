@@ -66,6 +66,8 @@ class PPG_Learner(Learner):
         loss = self.mse_loss(v_pred, ret_batch)
         self.optimizer.zero_grad()
         loss.backward()
+        if self.use_grad_clip:
+            torch.nn.utils.clip_grad_norm_(self.policy.parameters(), self.grad_clip_norm)
         self.optimizer.step()
         info = {
             "critic-loss": loss.item()
@@ -85,6 +87,8 @@ class PPG_Learner(Learner):
         loss = aux_loss + self.kl_beta * kl_loss + value_loss
         self.optimizer.zero_grad()
         loss.backward()
+        if self.use_grad_clip:
+            torch.nn.utils.clip_grad_norm_(self.policy.parameters(), self.grad_clip_norm)
         self.optimizer.step()
         info = {
             "kl-loss": loss.item()

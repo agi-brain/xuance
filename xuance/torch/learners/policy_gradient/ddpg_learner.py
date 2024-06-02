@@ -17,10 +17,10 @@ class DDPG_Learner(Learner):
                  policy: nn.Module,
                  optimizer: dict,
                  scheduler: Optional[dict] = None):
+        super(DDPG_Learner, self).__init__(config, episode_length, policy, optimizer, scheduler)
         self.tau = config.tau
         self.gamma = config.gamma
         self.mse_loss = nn.MSELoss()
-        super(DDPG_Learner, self).__init__(config, episode_length, policy, optimizer, scheduler)
 
     def update(self, **samples):
         self.iterations += 1

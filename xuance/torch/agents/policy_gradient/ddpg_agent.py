@@ -32,14 +32,12 @@ class DDPG_Agent(Agent):
         self.policy = self._build_policy()
         optimizers = {
             'actor': torch.optim.Adam(self.policy.actor_parameters, self.config.actor_learning_rate),
-            'critic': torch.optim.Adam(self.policy.critic_parameters, self.config.critic_learning_rate)
-        }
+            'critic': torch.optim.Adam(self.policy.critic_parameters, self.config.critic_learning_rate)}
         lr_schedulers = {
             'actor': torch.optim.lr_scheduler.LinearLR(optimizers['actor'], start_factor=1.0, end_factor=0.25,
                                                        total_iters=self.config.running_steps),
             'critic': torch.optim.lr_scheduler.LinearLR(optimizers['critic'], start_factor=1.0, end_factor=0.25,
-                                                        total_iters=self.config.running_steps)
-        }
+                                                        total_iters=self.config.running_steps)}
 
         # crate memory
         self.auxiliary_info_shape = {}
