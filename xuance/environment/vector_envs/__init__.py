@@ -27,3 +27,14 @@ from xuance.environment.vector_envs.subprocess import SubprocVecMultiAgentEnv
 from xuance.environment.vector_envs.dummy import DummyVecEnv
 from xuance.environment.vector_envs.dummy import DummyVecEnv_Atari
 from xuance.environment.vector_envs.dummy import DummyVecMultiAgentEnv
+
+REGISTRY_VEC_ENV = {
+    "DummyVecEnv": DummyVecEnv,
+    "DummyVecMultiAgentEnv": DummyVecMultiAgentEnv,
+    "Dummy_Atari": DummyVecEnv_Atari,
+
+    # multiprocess #
+    "SubprocVecEnv": SubprocVecEnv,
+    "SubprocVecMultiAgentEnv": SubprocVecMultiAgentEnv,
+    "Subproc_Atari": SubprocVecEnv_Atari,
+}
