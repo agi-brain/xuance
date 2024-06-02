@@ -84,3 +84,6 @@ class IDDPG_Learner(LearnerMAS):
 
         self.policy.soft_update(self.tau)
         return info
+
+    def update_rnn(self, *args):
+        raise NotImplementedError

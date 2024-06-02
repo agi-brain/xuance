@@ -505,11 +505,11 @@ class TD3Policy(Module):
         self.target_critic_B_representation = deepcopy(representation)
 
         self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size,
-                              initialize, activation, activation_action, device)
+                              normalize, initialize, activation, activation_action, device)
         self.critic_A = CriticNet(representation.output_shapes['state'][0], self.action_dim, critic_hidden_size,
-                                  initialize, activation, device)
+                                  normalize, initialize, activation, device)
         self.critic_B = CriticNet(representation.output_shapes['state'][0], self.action_dim, critic_hidden_size,
-                                  initialize, activation, device)
+                                  normalize, initialize, activation, device)
         self.target_actor = deepcopy(self.actor)
         self.target_critic_A = deepcopy(self.critic_A)
         self.target_critic_B = deepcopy(self.critic_B)
