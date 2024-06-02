@@ -444,7 +444,13 @@ class RecurrentOffPolicyBuffer(Buffer):
                 rew_batch.append(sampled_data["rews"])
                 terminal_batch.append(sampled_data["done"])
 
-        return np.array(obs_batch), np.array(act_batch), np.array(rew_batch), np.array(terminal_batch)
+        samples_dict = {
+            'obs': np.array(obs_batch),
+            'actions': np.array(act_batch),
+            'rewards': np.array(rew_batch),
+            'terminals': np.array(terminal_batch),
+        }
+        return samples_dict
 
 
 class PerOffPolicyBuffer(Buffer):
