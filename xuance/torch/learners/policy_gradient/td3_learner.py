@@ -1,5 +1,5 @@
 """
-Deep Deterministic Policy Gradient (DDPG)
+Twin Delayed Deep Deterministic Policy Gradient (TD3)
 Paper link: http://proceedings.mlr.press/v80/fujimoto18a/fujimoto18a.pdf
 Implementation: Pytorch
 """
@@ -41,6 +41,8 @@ class TD3_Learner(Learner):
         q_loss = self.mse_loss(action_q_A, target_q.detach()) + self.mse_loss(action_q_B, target_q.detach())
         self.optimizer['critic'].zero_grad()
         q_loss.backward()
+        if self.use_grad_clip:
+            torch.nn.utils.clip_grad_norm_(self.policy.critic_parameters, self.grad_clip_norm)
         self.optimizer['critic'].step()
         if self.scheduler is not None:
             self.scheduler['critic'].step()
@@ -51,6 +53,8 @@ class TD3_Learner(Learner):
             p_loss = -policy_q.mean()
             self.optimizer['actor'].zero_grad()
             p_loss.backward()
+            if self.use_grad_clip:
+                torch.nn.utils.clip_grad_norm_(self.policy.actor_parameters, self.grad_clip_norm)
             self.optimizer['actor'].step()
             if self.scheduler is not None:
                 self.scheduler['actor'].step()

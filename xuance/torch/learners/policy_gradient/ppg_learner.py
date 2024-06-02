@@ -1,3 +1,8 @@
+"""
+Phasic Policy Gradient (PPG)
+Paper link: http://proceedings.mlr.press/v139/cobbe21a/cobbe21a.pdf
+Implementation: Pytorch
+"""
 import torch
 from torch import nn
 from xuance.torch.learners import Learner

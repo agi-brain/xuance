@@ -1,5 +1,5 @@
 """
-Proximal Policy Optimization with clip trick (PPO_CLIP)
+Proximal Policy Optimization with KL divergence (PPO-KL)
 Paper link: https://arxiv.org/pdf/1707.06347.pdf
 Implementation: Pytorch
 """

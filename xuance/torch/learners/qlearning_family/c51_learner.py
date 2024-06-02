@@ -45,6 +45,8 @@ class C51_Learner(Learner):
         loss = -(target_dist * torch.log(current_dist + 1e-8)).sum(1).mean()
         self.optimizer.zero_grad()
         loss.backward()
+        if self.use_grad_clip:
+            torch.nn.utils.clip_grad_norm_(self.policy.parameters(), self.grad_clip_norm)
         self.optimizer.step()
         if self.scheduler is not None:
             self.scheduler.step()

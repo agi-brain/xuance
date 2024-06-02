@@ -69,7 +69,7 @@ class DQN_Agent(Agent):
                 kernels=self.config.kernels, strides=self.config.strides, filters=self.config.filters,
                 normalize=normalize_fn, initialize=initializer, activation=activation, device=device)
         else:
-            raise AttributeError(f"DQN currently does not support {self.config.representation} representation.")
+            raise AttributeError(f"{self.config.agent} currently does not support {self.config.representation} representation.")
 
         # build policy.
         if self.config.policy == "Basic_Q_network":
@@ -77,7 +77,7 @@ class DQN_Agent(Agent):
                 action_space=self.action_space, representation=representation, hidden_size=self.config.q_hidden_size,
                 normalize=normalize_fn, initialize=initializer, activation=activation, device=device)
         else:
-            raise AttributeError(f"DQN currently does not support the policy named {self.config.policy}.")
+            raise AttributeError(f"{self.config.agent} currently does not support the policy named {self.config.policy}.")
 
         return policy
 

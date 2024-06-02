@@ -1,5 +1,5 @@
 """
-Soft Actor-Critic with continuous action spaces (SAC)
+Soft Actor-Critic with discrete action spaces (SAC-Discrete)
 Paper link: https://arxiv.org/pdf/1910.07207.pdf
 Implementation: Pytorch
 """

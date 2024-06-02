@@ -44,6 +44,8 @@ class SAC_Learner(Learner):
         p_loss = (self.alpha * log_pi.reshape([-1]) - policy_q).mean()
         self.optimizer['actor'].zero_grad()
         p_loss.backward()
+        if self.use_grad_clip:
+            torch.nn.utils.clip_grad_norm_(self.policy.actor_parameters, self.grad_clip_norm)
         self.optimizer['actor'].step()
 
         # critic update
@@ -54,6 +56,8 @@ class SAC_Learner(Learner):
         q_loss = self.mse_loss(action_q_1, backup.detach()) + self.mse_loss(action_q_2, backup.detach())
         self.optimizer['critic'].zero_grad()
         q_loss.backward()
+        if self.use_grad_clip:
+            torch.nn.utils.clip_grad_norm_(self.policy.critic_parameters, self.grad_clip_norm)
         self.optimizer['critic'].step()
 
         # automatic entropy tuning
