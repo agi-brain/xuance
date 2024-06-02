@@ -599,7 +599,7 @@ class PDQNPolicy(Module):
         self.qnetwork = BasicQhead(self.observation_space.shape[0] + self.conact_size, self.num_disact,
                                    qnetwork_hidden_size, normalize, initialize, activation, device)
         self.conactor = ActorNet(self.observation_space.shape[0], self.conact_size, conactor_hidden_size,
-                                 initialize, activation, activation_action, device)
+                                 normalize, initialize, activation, activation_action, device)
         self.target_conactor = deepcopy(self.conactor)
         self.target_qnetwork = deepcopy(self.qnetwork)
 

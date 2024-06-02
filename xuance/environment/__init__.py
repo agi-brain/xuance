@@ -89,9 +89,9 @@ def make_envs(config: Namespace):
             return MakeEnvironment(env)
 
         elif config.env_id.__contains__("Platform"):
-            from xuance.environment.gym_platform.envs.platform_env import PlatformEnv
-            env = PlatformEnv()
-            return MakeEnvironment(env)
+            from xuance.environment.single_agent_env.platform import PlatformEnv
+            env = PlatformEnv(config)
+            return env
 
         elif config.env_name == "MiniGrid":
             from xuance.environment.single_agent_env.minigrid import MiniGridEnv as RawEnv
