@@ -39,7 +39,7 @@ def sample(env, timestep_max, number,gamma,V_table):
             a = eps_greedy(env.action_space, 0.99*(number-i)/number, V_table,obs)
             next_obs, reward, terminated, truncated, info = env.step(a)
             next_obs = next_obs.astype(int)
-            V_table[obs[0][0]][obs[0][1]][obs[0][2]] += reward
+            V_table[obs[0][0]][obs[0][1]][obs[0][2]] +=gamma**timestep * reward
             episode.append([obs, a, reward, next_obs])  # 把(obs, a, reward, next_obs)元组放入序列中
             obs = next_obs  # s_next变成当前状态,开始接下来的循环
             timestep += 1
@@ -60,21 +60,26 @@ def MC(episodes, V_table, gamma,l_rate):
     np.save('V_table.npy', V_table)
 def eps_greedy(action_space,epsilon,V_table,obs)->int:#返回一个动作
     obs=obs[0].astype(int)
-
+    action_0,action_1=0,0
     if np.random.rand() < epsilon:
         return action_space.sample()
     else:
         #如果动作为0，则在+1~+10中取所有后选状态的平均值;动作为1则取当前状态的值
-        values=[]
         for action in range(action_space.n):
             if action==0:#代表的意思是要所有的（在2-10以内）无A和有A，两类加起来平均
-                relevant_values = V_table[obs[0], obs[1] + 2:obs[1] + 10, obs[2]]
+                action_0+=np.sum(V_table[obs[0]][obs[1]+2:obs[1]+10][obs[2]])+V_table[obs[0]][obs[1]][0 if obs[2]==1 else 1]
+                non_zero_elements = V_table[obs[0]][obs[1] + 2:obs[1] + 10][0] != 0
                 # 计算非零元素的数量
-                if np.count_nonzero(relevant_values) > 0:
-                    values.append(np.sum(relevant_values) / np.count_nonzero(relevant_values))
+                count_non_zero = np.count_nonzero(non_zero_elements)
+                if count_non_zero!=0:
+                    action_0/=count_non_zero
+
             elif action==1:
-                values.append(V_table[obs[0], obs[1], obs[2]])
-        return np.argmax(values)
+                action_1=V_table[obs[0]][obs[1]][obs[2]]
+        if action_0> action_1:
+            return 0
+        else:
+            return 1
 
 def MC_test(V_table,env,number):
     obs,info = env.reset()
@@ -138,4 +143,6 @@ if __name__ == '__main__':
                          config_path=parser.config,
                          parser_args=parser)
     run(args)
-
+    # V_table = np.zeros((12, 30, 2))  # 一个12*30*2的表格来存储状态价值
+    # V_table=np.load('V_table.npy')
+    # print(V_table)
