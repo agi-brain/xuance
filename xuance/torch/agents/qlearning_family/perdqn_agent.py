@@ -1,67 +1,56 @@
-from xuance.torch.agents import *
+import numpy as np
+import torch
+from tqdm import tqdm
+from copy import deepcopy
+from argparse import Namespace
+from xuance.environment import DummyVecEnv
+from xuance.torch.learners import PerDQN_Learner
+from xuance.torch.agents.qlearning_family import DQN_Agent
+from xuance.common import PerOffPolicyBuffer
 
 
-class PerDQN_Agent(Agent):
+class PerDQN_Agent(DQN_Agent):
     """The implementation of Per-DQN agent.
 
     Args:
         config: the Namespace variable that provides hyper-parameters and other settings.
         envs: the vectorized environments.
-        policy: the neural network modules of the agent.
-        optimizer: the method of optimizing.
-        scheduler: the learning rate decay scheduler.
-        device: the calculating device of the model, such as CPU or GPU.
     """
+
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecEnv,
-                 policy: nn.Module,
-                 optimizer: torch.optim.Optimizer,
-                 scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
-                 device: Optional[Union[int, str, torch.device]] = None):
-        self.render = config.render
-        self.n_envs = envs.num_envs
-
-        self.gamma = config.gamma
-        self.training_frequency = config.training_frequency
-        self.start_training = config.start_training
-        self.start_greedy = config.start_greedy
-        self.end_greedy = config.end_greedy
-        self.egreedy = config.start_greedy
-
-        self.observation_space = envs.observation_space
-        self.action_space = envs.action_space
-        self.auxiliary_info_shape = {}
-
+                 envs: DummyVecEnv):
+        super(PerDQN_Agent, self).__init__(config, envs)
         self.PER_beta0 = config.PER_beta0
         self.PER_beta = config.PER_beta0
 
-        self.atari = True if config.env_name == "Atari" else False
-        memory = PerOffPolicyBuffer(self.observation_space,
-                                    self.action_space,
-                                    self.auxiliary_info_shape,
-                                    self.n_envs,
-                                    config.buffer_size,
-                                    config.batch_size,
-                                    config.PER_alpha)
-        learner = PerDQN_Learner(policy,
-                                 optimizer,
-                                 scheduler,
-                                 config.device,
-                                 config.model_dir,
-                                 config.gamma,
-                                 config.sync_frequency)
-        super(PerDQN_Agent, self).__init__(config, envs, policy, memory, learner, device,
-                                           config.log_dir, config.model_dir)
+        optimizer = torch.optim.Adam(self.policy.parameters(), self.config.learning_rate, eps=1e-5)
+        lr_scheduler = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=1.0, end_factor=0.0,
+                                                         total_iters=self.config.running_steps)
 
-    def _action(self, obs, egreedy=0.0):
-        _, argmax_action, _ = self.policy(obs)
-        random_action = np.random.choice(self.action_space.n, self.n_envs)
-        if np.random.rand() < egreedy:
-            action = random_action
-        else:
-            action = argmax_action.detach().cpu().numpy()
-        return action
+        # Create experience replay buffer.
+        self.auxiliary_info_shape = {}
+        self.atari = True if config.env_name == "Atari" else False
+        self.memory = PerOffPolicyBuffer(observation_space=self.observation_space,
+                                         action_space=self.action_space,
+                                         auxiliary_shape=self.auxiliary_info_shape,
+                                         n_envs=self.n_envs,
+                                         buffer_size=config.buffer_size,
+                                         batch_size=config.batch_size,
+                                         alpha=config.PER_alpha)
+        self.learner = self._build_learner(self.config, envs.max_episode_length, self.policy, optimizer, lr_scheduler)
+
+    def _build_learner(self, *args):
+        return PerDQN_Learner(*args)
+
+    def train_epochs(self, n_epochs=1):
+        train_info = {}
+        for _ in range(n_epochs):
+            samples = self.memory.sample(self.PER_beta)
+            td_error, step_info = self.learner.update(**samples)
+            self.memory.update_priorities(samples['step_choices'], td_error)
+        train_info["epsilon-greedy"] = self.egreedy
+        return train_info
 
     def train(self, train_steps):
         obs = self.envs.buf_obs
@@ -69,28 +58,23 @@ class PerDQN_Agent(Agent):
             step_info = {}
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
-            acts = self._action(obs, self.egreedy)
+            acts = self.action(obs, self.egreedy)
             next_obs, rewards, terminals, trunctions, infos = self.envs.step(acts)
 
             self.memory.store(obs, acts, self._process_reward(rewards), terminals, self._process_observation(next_obs))
             if self.current_step > self.start_training and self.current_step % self.training_frequency == 0:
-                # training
-                obs_batch, act_batch, rew_batch, terminal_batch, next_batch, weights, idxes = self.memory.sample(
-                    self.PER_beta)
-                td_error, step_info = self.learner.update(obs_batch, act_batch, rew_batch, next_batch, terminal_batch)
-                self.memory.update_priorities(idxes, td_error)
-                step_info["epsilon-greedy"] = self.egreedy
-                self.log_infos(step_info, self.current_step)
-            self.PER_beta += (1 - self.PER_beta0) / train_steps
+                train_info = self.train_epochs(n_epochs=1)
+                self.log_infos(train_info, self.current_step)
+                self.PER_beta += (1 - self.PER_beta0) / train_steps
 
-            obs = next_obs
-            self.egreedy = self.egreedy - (self.start_greedy - self.end_greedy) / train_steps
+            obs = deepcopy(next_obs)
             for i in range(self.n_envs):
                 if terminals[i] or trunctions[i]:
                     if self.atari and (~trunctions[i]):
                         pass
                     else:
                         obs[i] = infos[i]["reset_obs"]
+                        self.envs.buf_obs[i] = obs[i]
                         self.current_episode[i] += 1
                         if self.use_wandb:
                             step_info["Episode-Steps/env-%d" % i] = infos[i]["episode_step"]
@@ -102,7 +86,7 @@ class PerDQN_Agent(Agent):
 
             self.current_step += self.n_envs
             if self.egreedy > self.end_greedy:
-                self.egreedy = self.egreedy - (self.start_greedy - self.end_greedy) / self.config.decay_step_greedy
+                self.egreedy -= self.delta_egreedy
 
     def test(self, env_fn, test_episodes):
         test_envs = env_fn()
@@ -118,14 +102,14 @@ class PerDQN_Agent(Agent):
         while current_episode < test_episodes:
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
-            acts = self._action(obs, egreedy=0.0)
+            acts = self.action(obs, egreedy=0.0)
             next_obs, rewards, terminals, trunctions, infos = test_envs.step(acts)
             if self.config.render_mode == "rgb_array" and self.render:
                 images = test_envs.render(self.config.render_mode)
                 for idx, img in enumerate(images):
                     videos[idx].append(img)
 
-            obs = next_obs
+            obs = deepcopy(next_obs)
             for i in range(num_envs):
                 if terminals[i] or trunctions[i]:
                     if self.atari and (~trunctions[i]):
