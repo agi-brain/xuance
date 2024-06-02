@@ -43,8 +43,8 @@ def get_policy_in(args, representation):
     if policy_name in ["Basic_Q_network", "Duel_Q_network", "Noisy_Q_network", "C51_Q_network", "QR_Q_network"]:
         input_dict["hidden_sizes"] = args.q_hidden_size
         if policy_name == "C51_Q_network":
-            input_dict['vmin'] = args.vmin
-            input_dict['vmax'] = args.vmax
+            input_dict['v_min'] = args.v_min
+            input_dict['v_max'] = args.v_max
             input_dict['atom_num'] = args.atom_num
         elif policy_name == "QR_Q_network":
             input_dict['quantile_num'] = args.quantile_num

@@ -62,7 +62,7 @@ class C51_Learner(Learner):
         
         current_supports = self.policy.supports
         next_supports = self._unsqueeze(rew_batch, 1) + self.gamma * self.policy.supports * (1-self._unsqueeze(ter_batch, -1))
-        next_supports = clip_by_value(next_supports, Tensor(self.policy.vmin, ms.float32), Tensor(self.policy.vmax, ms.float32))
+        next_supports = clip_by_value(next_supports, Tensor(self.policy.v_min, ms.float32), Tensor(self.policy.v_max, ms.float32))
         projection = 1 - self._abs((self._unsqueeze(next_supports, -1) - self._unsqueeze(current_supports, 0)))/self.policy.deltaz
 
         loss = self.policy_train(obs_batch, act_batch, projection, targetA, targetZ)

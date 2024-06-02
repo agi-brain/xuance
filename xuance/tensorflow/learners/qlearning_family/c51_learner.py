@@ -29,7 +29,7 @@ class C51_Learner(Learner):
 
                 current_supports = self.policy.supports
                 next_supports = tf.expand_dims(rew_batch, 1) + self.gamma * self.policy.supports * (1 - tf.expand_dims(ter_batch, 1))
-                next_supports = tf.clip_by_value(next_supports, self.policy.vmin, self.policy.vmax)
+                next_supports = tf.clip_by_value(next_supports, self.policy.v_min, self.policy.v_max)
 
                 projection = 1 - tf.math.abs((tf.expand_dims(next_supports, -1) - tf.expand_dims(current_supports, 0))) / self.policy.deltaz
                 target_dist = tf.squeeze(tf.linalg.matmul(tf.expand_dims(target_dist, 1), tf.clip_by_value(projection, 0, 1)), 1)

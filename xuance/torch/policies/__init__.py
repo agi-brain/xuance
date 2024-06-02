@@ -88,7 +88,7 @@ Policy_Inputs = {
                        "normalize", "initialize", "activation", "device"],
     "Noisy_Q_network": ["action_space", "representation", "hidden_sizes",
                         "normalize", "initialize", "activation", "device"],
-    "C51_Q_network": ["action_space", "atom_num", "vmin", "vmax", "representation", "hidden_sizes",
+    "C51_Q_network": ["action_space", "atom_num", "v_min", "v_max", "representation", "hidden_sizes",
                       "normalize", "initialize", "activation", "device"],
     "QR_Q_network": ["action_space", "quantile_num", "representation", "hidden_sizes",
                      "normalize", "initialize", "activation", "device"],

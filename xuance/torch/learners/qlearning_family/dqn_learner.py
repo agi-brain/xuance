@@ -17,11 +17,11 @@ class DQN_Learner(Learner):
                  policy: nn.Module,
                  optimizer: torch.optim.Optimizer,
                  scheduler: Union[dict, Optional[torch.optim.lr_scheduler.LinearLR]] = None):
+        super(DQN_Learner, self).__init__(config, episode_length, policy, optimizer, scheduler)
         self.gamma = config.gamma
         self.sync_frequency = config.sync_frequency
         self.mse_loss = nn.MSELoss()
         self.one_hot = nn.functional.one_hot
-        super(DQN_Learner, self).__init__(config, episode_length, policy, optimizer, scheduler)
         self.n_actions = self.policy.action_dim
 
     def update(self, **samples):

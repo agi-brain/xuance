@@ -375,8 +375,8 @@ DQN-based Implementations
                             batch_size: 256
                             learning_rate: 0.001
                             gamma: 0.99
-                            vmin: 0
-                            vmax: 200
+                            v_min: 0
+                            v_max: 200
                             atom_num: 51
 
                             start_greedy: 0.5
@@ -421,8 +421,8 @@ DQN-based Implementations
                             batch_size: 256
                             learning_rate: 0.001
                             gamma: 0.99
-                            vmin: 0
-                            vmax: 200
+                            v_min: 0
+                            v_max: 200
                             atom_num: 51
 
                             start_greedy: 0.5
@@ -467,8 +467,8 @@ DQN-based Implementations
                             batch_size: 256
                             learning_rate: 0.001
                             gamma: 0.99
-                            vmin: 0
-                            vmax: 200
+                            v_min: 0
+                            v_max: 200
                             atom_num: 51
 
                             start_greedy: 0.5
@@ -521,8 +521,8 @@ DQN-based Implementations
                             batch_size: 32
                             learning_rate: 0.0001
                             gamma: 0.99
-                            vmin: 0
-                            vmax: 200
+                            v_min: 0
+                            v_max: 200
                             atom_num: 51
 
                             start_greedy: 0.5
@@ -567,8 +567,8 @@ DQN-based Implementations
                             batch_size: 256
                             learning_rate: 0.001
                             gamma: 0.99
-                            vmin: 0
-                            vmax: 200
+                            v_min: 0
+                            v_max: 200
                             atom_num: 51
 
                             start_greedy: 0.5
@@ -622,8 +622,8 @@ DQN-based Implementations
                     batch_size: 32  # 64
                     learning_rate: 0.0001
                     gamma: 0.99
-                    vmin: 0
-                    vmax: 200
+                    v_min: 0
+                    v_max: 200
                     atom_num: 51
 
                     start_greedy: 0.5
