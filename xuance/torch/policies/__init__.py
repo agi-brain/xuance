@@ -1,7 +1,16 @@
-from xuance.torch.policies.core import (
-    BasicQhead,
-    ActorNet, CategoricalActorNet, CriticNet,
-    VDN_mixer, QMIX_mixer, QMIX_FF_mixer, QTRAN_alt, QTRAN_base)
+from .core import BasicQhead
+from .core import ActorNet
+from .core import CategoricalActorNet
+from .core import CategoricalActorNet_SAC
+from .core import GaussianActorNet
+from .core import CriticNet
+from .core import GaussianActorNet_SAC
+from .core import VDN_mixer
+from .core import QMIX_mixer
+from .core import QMIX_FF_mixer
+from .core import QTRAN_base
+from .core import QTRAN_alt
+
 from .categorical import ActorCriticPolicy as Categorical_AC_Policy
 from .categorical import ActorPolicy as Categorical_Actor_Policy
 from .categorical import PPGActorCritic as Categorical_PPG_Policy
@@ -10,13 +19,23 @@ from .categorical import SACDISPolicy as Categorical_SAC_Policy
 from .gaussian import ActorCriticPolicy as Gaussian_AC_Policy
 from .gaussian import ActorPolicy as Gaussian_Actor_Policy
 from .gaussian import PPGActorCritic as Gaussian_PPG_Policy
-from .deterministic import BasicQnetwork, C51Qnetwork, DuelQnetwork, DDPGPolicy, NoisyQnetwork, QRDQN_Network, \
-    TD3Policy, PDQNPolicy, MPDQNPolicy, SPDQNPolicy, DRQNPolicy
 from .gaussian import SACPolicy as Gaussian_SAC_Policy
 
+from .deterministic import BasicQnetwork
+from .deterministic import DuelQnetwork
+from .deterministic import NoisyQnetwork
+from .deterministic import C51Qnetwork
+from .deterministic import QRDQN_Network
+from .deterministic import DDPGPolicy
+from .deterministic import TD3Policy
+from .deterministic import PDQNPolicy
+from .deterministic import MPDQNPolicy
+from .deterministic import SPDQNPolicy
+from .deterministic import DRQNPolicy
+
 from .deterministic_marl import BasicQnetwork as BasicQnetwork_marl
-from .deterministic_marl import Independent_DDPG_Policy
-from .deterministic_marl import MFQnetwork, MixingQnetwork, Weighted_MixingQnetwork, Qtran_MixingQnetwork, DCG_policy, MADDPG_Policy, MATD3_Policy
+from .deterministic_marl import MFQnetwork, MixingQnetwork, Weighted_MixingQnetwork, Qtran_MixingQnetwork, DCG_policy, \
+    Independent_DDPG_Policy, MADDPG_Policy, MATD3_Policy
 from .categorical_marl import MeanFieldActorCriticPolicy, COMAPolicy
 from .categorical_marl import MAAC_Policy as Categorical_MAAC_Policy
 from .categorical_marl import MAAC_Policy_Share as Categorical_MAAC_Policy_Share
@@ -72,100 +91,16 @@ REGISTRY_Policy = {
     "MATD3_Policy": MATD3_Policy
 }
 
-Policy_Inputs = {
-    # DRL (discrete action spaces) #
-    "Categorical_AC": ["action_space", "representation", "actor_hidden_size", "critic_hidden_size",
-                       "normalize", "initialize", "activation", "device"],
-    "Categorical_Actor": ["action_space", "representation", "actor_hidden_size",
-                          "normalize", "initialize", "activation", "device"],
-    "Discrete_SAC": ["action_space", "representation", "actor_hidden_size", "critic_hidden_size",
-                     "normalize", "initialize", "activation", "device"],
-    "Categorical_PPG": ["action_space", "representation", "actor_hidden_size", "critic_hidden_size",
-                        "normalize", "initialize", "activation", "device"],
-    "Basic_Q_network": ["action_space", "representation", "hidden_sizes",
-                        "normalize", "initialize", "activation", "device"],
-    "Duel_Q_network": ["action_space", "representation", "hidden_sizes",
-                       "normalize", "initialize", "activation", "device"],
-    "Noisy_Q_network": ["action_space", "representation", "hidden_sizes",
-                        "normalize", "initialize", "activation", "device"],
-    "C51_Q_network": ["action_space", "atom_num", "v_min", "v_max", "representation", "hidden_sizes",
-                      "normalize", "initialize", "activation", "device"],
-    "QR_Q_network": ["action_space", "quantile_num", "representation", "hidden_sizes",
-                     "normalize", "initialize", "activation", "device"],
-    # DRL (continuous action spaces) #
-    "Gaussian_AC": ["action_space", "representation", "actor_hidden_size", "critic_hidden_size",
-                    "normalize", "initialize", "activation", "activation_action", "device"],
-    "Gaussian_SAC": ["action_space", "representation", "actor_hidden_size", "critic_hidden_size",
-                     "normalize", "initialize", "activation", "activation_action", "device"],
-    "Gaussian_Actor": ["action_space", "representation", "actor_hidden_size",
-                       "normalize", "initialize", "activation", "activation_action", "device", "fixed_std"],
-    "Gaussian_PPG": ["action_space", "representation", "actor_hidden_size", "critic_hidden_size",
-                     "normalize", "initialize", "activation", "activation_action", "device"],
-    "DDPG_Policy": ["action_space", "representation", "actor_hidden_size", "critic_hidden_size",
-                    "initialize", "activation", "activation_action", "device"],
-    "SAC_Policy": ["action_space", "representation", "actor_hidden_size", "critic_hidden_size",
-                   "normalize", "initialize", "activation", "activation_action", "device"],
-    "TD3_Policy": ["action_space", "representation", "actor_hidden_size", "critic_hidden_size",
-                   "normalize", "initialize", "activation", "activation_action", "device"],
-    # DRL (hybrid action spaces) #
-    "PDQN_Policy": ['observation_space', 'action_space', 'representation', 'conactor_hidden_size',
-                    'qnetwork_hidden_size', 'normalize', 'initialize', 'activation', 'activation_action', 'device'],
-    "MPDQN_Policy": ['observation_space', 'action_space', 'representation', 'conactor_hidden_size',
-                     'qnetwork_hidden_size', 'normalize', 'initialize', 'activation', 'activation_action', 'device'],
-    "SPDQN_Policy": ['observation_space', 'action_space', 'representation', 'conactor_hidden_size',
-                     'qnetwork_hidden_size', 'normalize', 'initialize', 'activation', 'activation_action', 'device'],
-    #  MARL policies (discrete action spaces) #
-    "Basic_Q_network_marl": ["action_space", "n_agents", "representation", "hidden_sizes",
-                             "normalize", "initialize", "activation", "device"],
-    "Mixing_Q_network": ["action_space", "n_agents", "representation", "mixer", "hidden_sizes",
-                         "normalize", "initialize", "activation", "device"],
-    "Weighted_Mixing_Q_network": ["action_space", "n_agents", "representation", "mixer", "ff_mixer", "hidden_sizes",
-                                  "normalize", "initialize", "activation", "device"],
-    "Qtran_Mixing_Q_network": ["action_space", "n_agents", "representation", "mixer", "qtran_mixer", "hidden_sizes",
-                               "normalize", "initialize", "activation", "device"],
-    "Categorical_MAAC_Policy": ["action_space", "n_agents", "representation", "mixer", "actor_hidden_size",
-                                "critic_hidden_size", "normalize", "initialize", "activation", "device"],
-    "Categorical_MAAC_Policy_Share": ["action_space", "n_agents", "representation", "mixer", "actor_hidden_size",
-                                      "critic_hidden_size", "normalize", "initialize", "activation", "device"],
-    "Categorical_MFAC_Policy": ["action_space", "n_agents", "representation", "actor_hidden_size",
-                                "critic_hidden_size", "normalize", "initialize", "activation", "device"],
-    "Categorical_COMA_Policy": ["action_space", "n_agents", "representation", "actor_hidden_size",
-                                "critic_hidden_size", "normalize", "initialize", "activation", "device"],
-    "MF_Q_network": ["action_space", "n_agents", "representation", "hidden_sizes",
-                     "normalize", "initialize", "activation", "device"],
-    #  MARL policies (continuous action spaces) #
-    "Independent_DDPG_Policy": ["action_space", "n_agents", "representation", "actor_hidden_size",
-                                "critic_hidden_size", "normalize", "initialize", "activation", "activation_action",
-                                "device"],
-    "MADDPG_Policy": ["action_space", "n_agents", "representation", "actor_hidden_size", "critic_hidden_size",
-                      "normalize", "initialize", "activation", "activation_action", "device"],
-    "Gaussian_MAAC_Policy": ["action_space", "n_agents", "representation", "mixer", "actor_hidden_size",
-                             "critic_hidden_size", "normalize", "initialize", "activation", "activation_action",
-                             "device"],
-    "Gaussian_ISAC_Policy": ["action_space", "n_agents", "representation", "actor_hidden_size",
-                             "critic_hidden_size", "normalize", "initialize", "activation", "activation_action",
-                             "device"],
-    "Gaussian_MASAC_Policy": ["action_space", "n_agents", "representation", "actor_hidden_size", "critic_hidden_size",
-                              "normalize", "initialize", "activation", "activation_action", "device"],
-    "MATD3_Policy": ["action_space", "n_agents", "representation", "actor_hidden_size", "critic_hidden_size",
-                     "normalize", "initialize", "activation", "activation_action", "device"],
-}
-
-Policy_Inputs_All = {
-    "state_dim": None,
-    "action_space": None,
-    "n_agents": 1,
-    "representation": None,
-    "mixer": None,
-    "ff_mixer": None,
-    "qtran_mixer": None,
-    "hidden_sizes": None,
-    "actor_hidden_size": None,
-    "critic_hidden_size": None,
-    "normalize": None,
-    "initialize": None,
-    "activation": None,
-    "activation_action": None,
-    "device": None,
-    "fixed_std": None
-}
+__all__ = [
+    "ActorNet", "CategoricalActorNet", "CategoricalActorNet_SAC", "GaussianActorNet", "GaussianActorNet_SAC",
+    "BasicQhead", "CriticNet", "GaussianActorNet_SAC",
+    "VDN_mixer", "QMIX_mixer", "QMIX_FF_mixer", "QTRAN_base", "QTRAN_alt",
+    "Categorical_AC_Policy", "Categorical_Actor_Policy", "Categorical_PPG_Policy", "Categorical_SAC_Policy",
+    "Gaussian_AC_Policy", "Gaussian_Actor_Policy", "Gaussian_PPG_Policy", "Gaussian_SAC_Policy",
+    "BasicQnetwork", "DuelQnetwork", "NoisyQnetwork", "C51Qnetwork", "QRDQN_Network", "DDPGPolicy", "TD3Policy",
+    "PDQNPolicy", "MPDQNPolicy", "SPDQNPolicy", "DRQNPolicy",
+    "BasicQnetwork_marl", "MFQnetwork", "MixingQnetwork", "Weighted_MixingQnetwork", "Qtran_MixingQnetwork",
+    "DCG_policy", "Independent_DDPG_Policy", "MADDPG_Policy", "MATD3_Policy",
+    "MeanFieldActorCriticPolicy", "COMAPolicy", "Categorical_MAAC_Policy", "Categorical_MAAC_Policy_Share",
+    "Gaussian_ISAC", "Gaussian_MASAC", "Gaussain_MAAC",
+]

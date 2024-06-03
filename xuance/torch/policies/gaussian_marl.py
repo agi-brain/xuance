@@ -1,11 +1,11 @@
 import torch
-import torch.nn as nn
 from copy import deepcopy
 from typing import Sequence, Optional, Callable, Union, Dict
 from gym.spaces import Space, Box, Discrete
-from xuance.torch.policies import ActorNet, CriticNet, VDN_mixer
-from xuance.torch.utils import ModuleType, mlp_block, DiagGaussianDistribution, ActivatedDiagGaussianDistribution
+from xuance.torch.policies import CriticNet, VDN_mixer
+from xuance.torch.utils import ModuleType
 from xuance.torch import Tensor, Module
+from xuance.torch.policies.core import GaussianActorNet, GaussianActorNet_SAC
 
 
 class MAAC_Policy(Module):
@@ -46,18 +46,17 @@ class MAAC_Policy(Module):
                 self.n_actions[key],
                 self.actor_representation[key].output_shapes['state'][0],
                 self.critic_representation[key].output_shapes['state'][0], n_agents)
-            
+
             if self.use_parameter_sharing:
                 dim_actor_in += self.n_agents
                 dim_critic_in += self.n_agents
-            
-            self.actor[key] = ActorNet(dim_actor_in, dim_actor_out, actor_hidden_size,
-                                       normalize, initialize, activation, activation_action, device)
-            self.critic[key] = CriticNet(dim_critic_in, critic_hidden_size,
-                                         normalize, initialize, activation, device)
+
+            self.actor[key] = GaussianActorNet(dim_actor_in, dim_actor_out, actor_hidden_size,
+                                               normalize, initialize, activation, activation_action, device)
+            self.critic[key] = CriticNet(dim_critic_in, critic_hidden_size, normalize, initialize, activation, device)
         self.mixer = mixer
         self.pi_dist = None
-    
+
     def _get_actor_critic_input(self, dim_action, dim_actor_rep, dim_critic_rep, n_agents):
         """
         Returns the input dimensions of actor netwrok and critic networks.
@@ -135,8 +134,8 @@ class Basic_ISAC_policy(Module):
         dim_input_critic = representation.output_shapes['state'][0] + self.action_dim
 
         self.actor_representation = representation
-        self.actor = ActorNet_SAC(dim_input_actor, n_agents, self.action_dim, actor_hidden_size,
-                                  normalize, initialize, activation, activation_action, device)
+        self.actor = GaussianActorNet_SAC(dim_input_actor, n_agents, self.action_dim, actor_hidden_size,
+                                          normalize, initialize, activation, activation_action, device)
 
         self.critic_1_representation = deepcopy(representation)
         self.critic_1 = CriticNet(dim_input_critic, n_agents, critic_hidden_size,
@@ -235,8 +234,8 @@ class MASAC_policy(Basic_ISAC_policy, Module):
         dim_input_critic = (representation.output_shapes['state'][0] + self.action_dim) * self.n_agents
 
         self.actor_representation = representation
-        self.actor = ActorNet_SAC(dim_input_actor, n_agents, self.action_dim, actor_hidden_size,
-                                  normalize, initialize, activation, activation_action, device)
+        self.actor = GaussianActorNet_SAC(dim_input_actor, n_agents, self.action_dim, actor_hidden_size,
+                                          normalize, initialize, activation, activation_action, device)
 
         self.critic_1_representation = deepcopy(representation)
         self.critic_1 = CriticNet(dim_input_critic, n_agents, critic_hidden_size,

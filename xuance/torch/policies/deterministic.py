@@ -1,159 +1,34 @@
 import torch
 import numpy as np
 import torch.nn as nn
-import torch.nn.functional as F
 from typing import Sequence, Optional, Callable, Union
 from copy import deepcopy
 from gym.spaces import Space, Discrete
 from xuance.torch import Module, Tensor
-from xuance.torch.utils import ModuleType, mlp_block, lstm_block, gru_block
-from xuance.torch.policies.core import ActorNet, CriticNet
-
-
-class BasicQhead(Module):
-    def __init__(self,
-                 state_dim: int,
-                 action_dim: int,
-                 hidden_sizes: Sequence[int],
-                 normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., Tensor]] = None,
-                 activation: Optional[ModuleType] = None,
-                 device: Optional[Union[str, int, torch.device]] = None):
-        super(BasicQhead, self).__init__()
-        layers = []
-        input_shape = (state_dim,)
-        for h in hidden_sizes:
-            mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initialize, device)
-            layers.extend(mlp)
-        layers.extend(mlp_block(input_shape[0], action_dim, None, None, None, device)[0])
-        self.model = nn.Sequential(*layers)
-
-    def forward(self, x: Tensor):
-        return self.model(x)
-
-
-class BasicRecurrent(Module):
-    def __init__(self, **kwargs):
-        super(BasicRecurrent, self).__init__()
-        self.lstm = False
-        if kwargs["rnn"] == "GRU":
-            output, _ = gru_block(kwargs["input_dim"],
-                                  kwargs["recurrent_hidden_size"],
-                                  kwargs["recurrent_layer_N"],
-                                  kwargs["dropout"],
-                                  kwargs["initialize"],
-                                  kwargs["device"])
-        elif kwargs["rnn"] == "LSTM":
-            self.lstm = True
-            output, _ = lstm_block(kwargs["input_dim"],
-                                   kwargs["recurrent_hidden_size"],
-                                   kwargs["recurrent_layer_N"],
-                                   kwargs["dropout"],
-                                   kwargs["initialize"],
-                                   kwargs["device"])
-        else:
-            raise "Unknown recurrent module!"
-        self.rnn_layer = output
-        fc_layer = mlp_block(kwargs["recurrent_hidden_size"], kwargs["action_dim"], None, None, None, kwargs["device"])[
-            0]
-        self.model = nn.Sequential(*fc_layer)
-
-    def forward(self, x: Tensor, h: Tensor, c: Tensor = None):
-        self.rnn_layer.flatten_parameters()
-        if self.lstm:
-            output, (hn, cn) = self.rnn_layer(x, (h, c))
-            return hn, cn, self.model(output)
-        else:
-            output, hn = self.rnn_layer(x, h)
-            return hn, self.model(output)
-
-
-class DuelQhead(Module):
-    def __init__(self,
-                 state_dim: int,
-                 action_dim: int,
-                 hidden_sizes: Sequence[int],
-                 normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., Tensor]] = None,
-                 activation: Optional[ModuleType] = None,
-                 device: Optional[Union[str, int, torch.device]] = None):
-        super(DuelQhead, self).__init__()
-        v_layers = []
-        input_shape = (state_dim,)
-        for h in hidden_sizes:
-            v_mlp, input_shape = mlp_block(input_shape[0], h // 2, normalize, activation, initialize, device)
-            v_layers.extend(v_mlp)
-        v_layers.extend(mlp_block(input_shape[0], 1, None, None, None, device)[0])
-        a_layers = []
-        input_shape = (state_dim,)
-        for h in hidden_sizes:
-            a_mlp, input_shape = mlp_block(input_shape[0], h // 2, normalize, activation, initialize, device)
-            a_layers.extend(a_mlp)
-        a_layers.extend(mlp_block(input_shape[0], action_dim, None, None, None, device)[0])
-        self.a_model = nn.Sequential(*a_layers)
-        self.v_model = nn.Sequential(*v_layers)
-
-    def forward(self, x: Tensor):
-        v = self.v_model(x)
-        a = self.a_model(x)
-        q = v + (a - a.mean(dim=-1).unsqueeze(dim=-1))
-        return q
-
-
-class C51Qhead(Module):
-    def __init__(self,
-                 state_dim: int,
-                 action_dim: int,
-                 atom_num: int,
-                 hidden_sizes: Sequence[int],
-                 normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., Tensor]] = None,
-                 activation: Optional[ModuleType] = None,
-                 device: Optional[Union[str, int, torch.device]] = None):
-        super(C51Qhead, self).__init__()
-        self.action_dim = action_dim
-        self.atom_num = atom_num
-        layers = []
-        input_shape = (state_dim,)
-        for h in hidden_sizes:
-            mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initialize, device)
-            layers.extend(mlp)
-        layers.extend(mlp_block(input_shape[0], action_dim * atom_num, None, None, None, device)[0])
-        self.model = nn.Sequential(*layers)
-
-    def forward(self, x: Tensor):
-        dist_logits = self.model(x).view(-1, self.action_dim, self.atom_num)
-        dist_probs = F.softmax(dist_logits, dim=-1)
-        return dist_probs
-
-
-class QRDQNhead(Module):
-    def __init__(self,
-                 state_dim: int,
-                 action_dim: int,
-                 atom_num: int,
-                 hidden_sizes: Sequence[int],
-                 normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., Tensor]] = None,
-                 activation: Optional[ModuleType] = None,
-                 device: Optional[Union[str, int, torch.device]] = None):
-        super(QRDQNhead, self).__init__()
-        self.action_dim = action_dim
-        self.atom_num = atom_num
-        layers = []
-        input_shape = (state_dim,)
-        for h in hidden_sizes:
-            mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initialize, device)
-            layers.extend(mlp)
-        layers.extend(mlp_block(input_shape[0], action_dim * atom_num, None, None, None, device)[0])
-        self.model = nn.Sequential(*layers)
-
-    def forward(self, x: Tensor):
-        quantiles = self.model(x).view(-1, self.action_dim, self.atom_num)
-        return quantiles
+from xuance.torch.utils import ModuleType
+from xuance.torch.policies.core import BasicQhead
+from xuance.torch.policies.core import BasicRecurrent
+from xuance.torch.policies.core import DuelQhead
+from xuance.torch.policies.core import C51Qhead
+from xuance.torch.policies.core import QRDQNhead
+from xuance.torch.policies.core import ActorNet
+from xuance.torch.policies.core import CriticNet
 
 
 class BasicQnetwork(Module):
+    """
+    The base class to implement DQN based policy
+
+    Args:
+        action_space (Discrete): The action space, which type is gym.spaces.Discrete.
+        representation (Module): The representation module.
+        hidden_size: List of hidden units for fully connect layers.
+        normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
+        activation (Optional[ModuleType]): The activation function for each layer.
+        device (Optional[Union[str, int, torch.device]]): The calculating device.
+    """
+
     def __init__(self,
                  action_space: Discrete,
                  representation: Module,
@@ -172,12 +47,34 @@ class BasicQnetwork(Module):
         self.target_Qhead = deepcopy(self.eval_Qhead)
 
     def forward(self, observation: Union[np.ndarray, dict]):
+        """
+        Returns the output of the representation, greedy actions, and the evaluated Q-values.
+
+        Parameters:
+            observation: The original observation input.
+
+        Returns:
+            outputs: The hidden state output by the representation.
+            argmax_action: The greedy actions.
+            evalQ: The evaluated Q-values.
+        """
         outputs = self.representation(observation)
         evalQ = self.eval_Qhead(outputs['state'])
         argmax_action = evalQ.argmax(dim=-1)
         return outputs, argmax_action, evalQ
 
     def target(self, observation: Union[np.ndarray, dict]):
+        """
+        Returns the output of the representation, greedy actions, and the evaluated Q-values via target networks.
+
+        Parameters:
+            observation: The original observation input.
+
+        Returns:
+            outputs_target: The hidden state output by the representation.
+            argmax_action: The greedy actions from target networks.
+            targetQ: The evaluated Q-values output by target Q-network.
+        """
         outputs_target = self.target_representation(observation)
         targetQ = self.target_Qhead(outputs_target['state'])
         argmax_action = targetQ.argmax(dim=-1)
@@ -191,8 +88,20 @@ class BasicQnetwork(Module):
 
 
 class DuelQnetwork(Module):
+    """
+    The policy for deep dueling Q-networks.
+
+    Args:
+        action_space (Discrete): The action space, which type is gym.spaces.Discrete.
+        representation (Module): The representation module.
+        hidden_size: List of hidden units for fully connect layers.
+        normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
+        activation (Optional[ModuleType]): The activation function for each layer.
+        device (Optional[Union[str, int, torch.device]]): The calculating device.
+    """
     def __init__(self,
-                 action_space: Space,
+                 action_space: Discrete,
                  representation: Module,
                  hidden_size: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,
@@ -209,16 +118,38 @@ class DuelQnetwork(Module):
         self.target_Qhead = deepcopy(self.eval_Qhead)
 
     def forward(self, observation: Union[np.ndarray, dict]):
+        """
+        Returns the output of the representation, greedy actions, and the evaluated Q-values.
+
+        Parameters:
+            observation: The original observation input.
+
+        Returns:
+            outputs: The hidden state output by the representation.
+            argmax_action: The greedy actions.
+            evalQ: The evaluated Q-values.
+        """
         outputs = self.representation(observation)
         evalQ = self.eval_Qhead(outputs['state'])
         argmax_action = evalQ.argmax(dim=-1)
         return outputs, argmax_action, evalQ
 
     def target(self, observation: Union[np.ndarray, dict]):
-        outputs = self.target_representation(observation)
-        targetQ = self.target_Qhead(outputs['state'])
+        """
+        Returns the output of the representation, greedy actions, and the evaluated Q-values via target networks.
+
+        Parameters:
+            observation: The original observation input.
+
+        Returns:
+            outputs_target: The hidden state output by the representation.
+            argmax_action: The greedy actions from target networks.
+            targetQ: The evaluated Q-values output by target Q-network.
+        """
+        outputs_target = self.target_representation(observation)
+        targetQ = self.target_Qhead(outputs_target['state'])
         argmax_action = targetQ.argmax(dim=-1)
-        return outputs, argmax_action, targetQ
+        return outputs_target, argmax_action, targetQ
 
     def copy_target(self):
         for ep, tp in zip(self.representation.parameters(), self.target_representation.parameters()):
@@ -228,6 +159,18 @@ class DuelQnetwork(Module):
 
 
 class NoisyQnetwork(Module):
+    """
+    The policy for noisy deep Q-networks.
+
+    Args:
+        action_space (Discrete): The action space, which type is gym.spaces.Discrete.
+        representation (Module): The representation module.
+        hidden_size: List of hidden units for fully connect layers.
+        normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
+        activation (Optional[ModuleType]): The activation function for each layer.
+        device (Optional[Union[str, int, torch.device]]): The calculating device.
+    """
     def __init__(self,
                  action_space: Discrete,
                  representation: Module,
@@ -245,8 +188,11 @@ class NoisyQnetwork(Module):
                                      normalize, initialize, activation, device)
         self.target_Qhead = deepcopy(self.eval_Qhead)
         self.noise_scale = 0.0
+        self.eval_noise_parameter = []
+        self.target_noise_parameter = []
 
     def update_noise(self, noisy_bound: float = 0.0):
+        """Updates the noises for network parameters."""
         self.eval_noise_parameter = []
         self.target_noise_parameter = []
         for parameter in self.eval_Qhead.parameters():
@@ -254,6 +200,17 @@ class NoisyQnetwork(Module):
             self.target_noise_parameter.append(torch.randn_like(parameter) * noisy_bound)
 
     def forward(self, observation: Union[np.ndarray, dict]):
+        """
+        Returns the output of the representation, greedy actions, and the evaluated Q-values.
+
+        Parameters:
+            observation: The original observation input.
+
+        Returns:
+            outputs: The hidden state output by the representation.
+            argmax_action: The greedy actions.
+            evalQ: The evaluated Q-values.
+        """
         outputs = self.representation(observation)
         self.update_noise(self.noise_scale)
         for parameter, noise_param in zip(self.eval_Qhead.parameters(), self.eval_noise_parameter):
@@ -263,6 +220,17 @@ class NoisyQnetwork(Module):
         return outputs, argmax_action, evalQ
 
     def target(self, observation: Union[np.ndarray, dict]):
+        """
+        Returns the output of the representation, greedy actions, and the evaluated Q-values via target networks.
+
+        Parameters:
+            observation: The original observation input.
+
+        Returns:
+            outputs_target: The hidden state output by the representation.
+            argmax_action: The greedy actions from target networks.
+            targetQ: The evaluated Q-values output by target Q-network.
+        """
         outputs = self.target_representation(observation)
         self.update_noise(self.noise_scale)
         for parameter, noise_param in zip(self.target_Qhead.parameters(), self.target_noise_parameter):
@@ -279,6 +247,21 @@ class NoisyQnetwork(Module):
 
 
 class C51Qnetwork(Module):
+    """
+    The policy for C51 distributional deep Q-networks.
+
+    Args:
+        action_space (Discrete): The action space, which type is gym.spaces.Discrete.
+        atom_num (int): The number of atoms.
+        v_min (float): The lower bound of value distribution.
+        v_max (float): The upper bound of value distribution.
+        representation (Module): The representation module.
+        hidden_size: List of hidden units for fully connect layers.
+        normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
+        activation (Optional[ModuleType]): The activation function for each layer.
+        device (Optional[Union[str, int, torch.device]]): The calculating device.
+    """
     def __init__(self,
                  action_space: Discrete,
                  atom_num: int,
@@ -299,15 +282,24 @@ class C51Qnetwork(Module):
         self.target_representation = deepcopy(representation)
         self.representation_info_shape = self.representation.output_shapes
         self.eval_Zhead = C51Qhead(self.representation.output_shapes['state'][0], self.action_dim, self.atom_num,
-                                   hidden_size,
-                                   normalize, initialize, activation, device)
+                                   hidden_size, normalize, initialize, activation, device)
         self.target_Zhead = deepcopy(self.eval_Zhead)
         self.supports = torch.nn.Parameter(torch.linspace(self.v_min, self.v_max, self.atom_num),
-                                           requires_grad=False).to(
-            device)
+                                           requires_grad=False).to(device)
         self.deltaz = (v_max - v_min) / (atom_num - 1)
 
     def forward(self, observation: Union[np.ndarray, dict]):
+        """
+        Returns the output of the representation, greedy actions, and the evaluated Z-values.
+
+        Parameters:
+            observation: The original observation input.
+
+        Returns:
+            outputs: The hidden state output by the representation.
+            argmax_action: The greedy actions.
+            eval_Z: The evaluated Z-values.
+        """
         outputs = self.representation(observation)
         eval_Z = self.eval_Zhead(outputs['state'])
         eval_Q = (self.supports * eval_Z).sum(-1)
@@ -315,11 +307,22 @@ class C51Qnetwork(Module):
         return outputs, argmax_action, eval_Z
 
     def target(self, observation: Union[np.ndarray, dict]):
-        outputs = self.target_representation(observation)
-        target_Z = self.target_Zhead(outputs['state'])
+        """
+        Returns the output of the representation, greedy actions, and the evaluated Z-values via target networks.
+
+        Parameters:
+            observation: The original observation input.
+
+        Returns:
+            outputs_target: The hidden state output by the representation.
+            argmax_action: The greedy actions from target networks.
+            target_Z: The evaluated Z-values output by target Z-network.
+        """
+        outputs_target = self.target_representation(observation)
+        target_Z = self.target_Zhead(outputs_target['state'])
         target_Q = (self.supports * target_Z).sum(-1)
         argmax_action = target_Q.argmax(dim=-1)
-        return outputs, argmax_action, target_Z
+        return outputs_target, argmax_action, target_Z
 
     def copy_target(self):
         for ep, tp in zip(self.representation.parameters(), self.target_representation.parameters()):
@@ -329,6 +332,19 @@ class C51Qnetwork(Module):
 
 
 class QRDQN_Network(Module):
+    """
+    The policy for quantile regression deep Q-networks.
+
+    Args:
+        action_space (Discrete): The action space, which type is gym.spaces.Discrete.
+        quantile_num (int): The number of quantiles.
+        representation (Module): The representation module.
+        hidden_size: List of hidden units for fully connect layers.
+        normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
+        activation (Optional[ModuleType]): The activation function for each layer.
+        device (Optional[Union[str, int, torch.device]]): The calculating device.
+    """
     def __init__(self,
                  action_space: Discrete,
                  quantile_num: int,
@@ -345,11 +361,21 @@ class QRDQN_Network(Module):
         self.target_representation = deepcopy(representation)
         self.representation_info_shape = self.representation.output_shapes
         self.eval_Zhead = QRDQNhead(self.representation.output_shapes['state'][0], self.action_dim, self.quantile_num,
-                                    hidden_size,
-                                    normalize, initialize, activation, device)
+                                    hidden_size, normalize, initialize, activation, device)
         self.target_Zhead = deepcopy(self.eval_Zhead)
 
     def forward(self, observation: Union[np.ndarray, dict]):
+        """
+        Returns the output of the representation, greedy actions, and the evaluated Z-values.
+
+        Parameters:
+            observation: The original observation input.
+
+        Returns:
+            outputs: The hidden state output by the representation.
+            argmax_action: The greedy actions.
+            eval_Z: The evaluated Z-values.
+        """
         outputs = self.representation(observation)
         eval_Z = self.eval_Zhead(outputs['state'])
         eval_Q = eval_Z.mean(dim=-1)
@@ -357,6 +383,17 @@ class QRDQN_Network(Module):
         return outputs, argmax_action, eval_Z
 
     def target(self, observation: Union[np.ndarray, dict]):
+        """
+        Returns the output of the representation, greedy actions, and the evaluated Z-values via target networks.
+
+        Parameters:
+            observation: The original observation input.
+
+        Returns:
+            outputs_target: The hidden state output by the representation.
+            argmax_action: The greedy actions from target networks.
+            target_Z: The evaluated Z-values output by target Z-network.
+        """
         outputs = self.target_representation(observation)
         target_Z = self.target_Zhead(outputs['state'])
         target_Q = target_Z.mean(dim=-1)
@@ -371,6 +408,20 @@ class QRDQN_Network(Module):
 
 
 class DDPGPolicy(Module):
+    """
+    The policy of deep deterministic policy gradient.
+
+    Args:
+        action_space (Space): The action space.
+        representation (Module): The representation module.
+        actor_hidden_size (Sequence[int]): List of hidden units for actor network.
+        critic_hidden_size (Sequence[int]): List of hidden units for critic network.
+        normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
+        activation (Optional[ModuleType]): The activation function for each layer.
+        activation_action (Optional[ModuleType]): The activation of final layer to bound the actions.
+        device (Optional[Union[str, int, torch.device]]): The calculating device.
+    """
     def __init__(self,
                  action_space: Space,
                  representation: Module,
@@ -402,11 +453,22 @@ class DDPGPolicy(Module):
         self.critic_parameters = list(self.critic_representation.parameters()) + list(self.critic.parameters())
 
     def forward(self, observation: Union[np.ndarray, dict]):
+        """
+        Returns the output of the actor representations, and the actions.
+
+        Parameters:
+            observation: The original observation input.
+
+        Returns:
+            outputs: The output of the actor representations.
+            act: The actions calculated by the actor.
+        """
         outputs = self.actor_representation(observation)
         act = self.actor(outputs['state'])
         return outputs, act
 
     def Qtarget(self, observation: Union[np.ndarray, dict]):
+        """Returns the evaluated Q-values via target networks."""
         outputs_actor = self.target_actor_representation(observation)
         outputs_critic = self.target_critic_representation(observation)
         act = self.target_actor(outputs_actor['state'])
@@ -414,11 +476,13 @@ class DDPGPolicy(Module):
         return q_[:, 0]
 
     def Qaction(self, observation: Union[np.ndarray, dict], action: Tensor):
+        """Returns the evaluated Q-values of state-action pairs."""
         outputs = self.critic_representation(observation)
         q = self.critic(torch.concat([outputs['state'], action], dim=-1))
         return q[:, 0]
 
     def Qpolicy(self, observation: Union[np.ndarray, dict]):
+        """Returns the evaluated Q-values by calculating actions via actor networks."""
         outputs_actor = self.actor_representation(observation)
         act = self.actor(outputs_actor['state'])
         outputs_critic = self.critic_representation(observation)
@@ -441,6 +505,20 @@ class DDPGPolicy(Module):
 
 
 class TD3Policy(Module):
+    """
+    The policy of twin delayed deep deterministic policy gradient.
+
+    Args:
+        action_space (Space): The action space.
+        representation (Module): The representation module.
+        actor_hidden_size (Sequence[int]): List of hidden units for actor network.
+        critic_hidden_size (Sequence[int]): List of hidden units for critic network.
+        normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
+        activation (Optional[ModuleType]): The activation function for each layer.
+        activation_action (Optional[ModuleType]): The activation of final layer to bound the actions.
+        device (Optional[Union[str, int, torch.device]]): The calculating device.
+    """
     def __init__(self,
                  action_space: Space,
                  representation: Module,
@@ -480,11 +558,22 @@ class TD3Policy(Module):
             self.critic_B.parameters())
 
     def forward(self, observation: Union[np.ndarray, dict]):
+        """
+        Returns the output of the actor representations, and the actions.
+
+        Parameters:
+            observation: The original observation input.
+
+        Returns:
+            outputs: The output of the actor representations.
+            act: The actions calculated by the actor.
+        """
         outputs = self.actor_representation(observation)
         act = self.actor(outputs['state'])
         return outputs, act
 
     def Qtarget(self, observation: Union[np.ndarray, dict]):
+        """Returns the evaluated Q-values via target networks."""
         outputs_actor = self.target_actor_representation(observation)
         outputs_critic_A = self.target_critic_A_representation(observation)
         outputs_critic_B = self.target_critic_B_representation(observation)
@@ -498,6 +587,7 @@ class TD3Policy(Module):
         return min_q[:, 0]
 
     def Qaction(self, observation: Union[np.ndarray, dict], action: Tensor):
+        """Returns the evaluated Q-values of state-action pairs."""
         outputs_critic_A = self.critic_A_representation(observation)
         outputs_critic_B = self.critic_B_representation(observation)
         q_eval_a = self.critic_A(torch.concat([outputs_critic_A['state'], action], dim=-1))
@@ -505,6 +595,7 @@ class TD3Policy(Module):
         return q_eval_a[:, 0], q_eval_b[:, 0]
 
     def Qpolicy(self, observation: Union[np.ndarray, dict]):
+        """Returns the evaluated Q-values by calculating actions via actor networks."""
         outputs_actor = self.actor_representation(observation)
         outputs_critic_A = self.critic_A_representation(observation)
         outputs_critic_B = self.critic_B_representation(observation)
@@ -535,6 +626,21 @@ class TD3Policy(Module):
 
 
 class PDQNPolicy(Module):
+    """
+    The policy of parameterised deep Q network.
+
+    Args:
+        observation_space: The observation spaces.
+        action_space: The action spaces.
+        representation (Module): The representation module.
+        conactor_hidden_size (Sequence[int]): List of hidden units for actor network.
+        qnetwork_hidden_size (Sequence[int]): List of hidden units for q network.
+        normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
+        activation (Optional[ModuleType]): The activation function for each layer.
+        activation_action (Optional[ModuleType]): The activation of final layer to bound the actions.
+        device (Optional[Union[str, int, torch.device]]): The calculating device.
+    """
     def __init__(self,
                  observation_space,
                  action_space,
@@ -598,7 +704,22 @@ class PDQNPolicy(Module):
             tp.data.add_(tau * ep.data)
 
 
-class MPDQNPolicy(Module):
+class MPDQNPolicy(PDQNPolicy):
+    """
+    The policy of multi-pass parameterised deep Q network.
+
+    Args:
+        observation_space: The observation spaces.
+        action_space: The action spaces.
+        representation (Module): The representation module.
+        conactor_hidden_size (Sequence[int]): List of hidden units for actor network.
+        qnetwork_hidden_size (Sequence[int]): List of hidden units for q network.
+        normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
+        activation (Optional[ModuleType]): The activation function for each layer.
+        activation_action (Optional[ModuleType]): The activation of final layer to bound the actions.
+        device (Optional[Union[str, int, torch.device]]): The calculating device.
+    """
     def __init__(self,
                  observation_space,
                  action_space,
@@ -610,33 +731,12 @@ class MPDQNPolicy(Module):
                  activation: Optional[ModuleType] = None,
                  activation_action: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None):
-        super(MPDQNPolicy, self).__init__()
-        self.representation = representation
-        self.target_representation = deepcopy(representation)
-        self.observation_space = observation_space
+        super(MPDQNPolicy, self).__init__(observation_space, action_space, representation,
+                                          conactor_hidden_size, qnetwork_hidden_size,
+                                          normalize, initialize, activation, activation_action, device)
         self.obs_size = self.observation_space.shape[0]
-        self.action_space = action_space
-        self.num_disact = self.action_space.spaces[0].n
-        self.conact_sizes = np.array([self.action_space.spaces[i].shape[0] for i in range(1, self.num_disact + 1)])
-        self.conact_size = int(self.conact_sizes.sum())
-
-        self.qnetwork = BasicQhead(self.observation_space.shape[0] + self.conact_size, self.num_disact,
-                                   qnetwork_hidden_size, normalize, initialize, activation, device)
-        self.conactor = ActorNet(self.observation_space.shape[0], self.conact_size, conactor_hidden_size,
-                                 normalize, initialize, activation, activation_action, device)
-        self.target_conactor = deepcopy(self.conactor)
-        self.target_qnetwork = deepcopy(self.qnetwork)
-
         self.offsets = self.conact_sizes.cumsum()
         self.offsets = np.insert(self.offsets, 0, 0)
-
-    def Atarget(self, state):
-        target_conact = self.target_conactor(state)
-        return target_conact
-
-    def con_action(self, state):
-        conaction = self.conactor(state)
-        return conaction
 
     def Qtarget(self, state, action):
         batch_size = state.shape[0]
@@ -693,19 +793,23 @@ class MPDQNPolicy(Module):
         Q = torch.cat(Q, dim=1)
         return Q
 
-    def soft_update(self, tau=0.005):
-        for ep, tp in zip(self.representation.parameters(), self.target_representation.parameters()):
-            tp.data.mul_(1 - tau)
-            tp.data.add_(tau * ep.data)
-        for ep, tp in zip(self.conactor.parameters(), self.target_conactor.parameters()):
-            tp.data.mul_(1 - tau)
-            tp.data.add_(tau * ep.data)
-        for ep, tp in zip(self.qnetwork.parameters(), self.target_qnetwork.parameters()):
-            tp.data.mul_(1 - tau)
-            tp.data.add_(tau * ep.data)
 
+class SPDQNPolicy(PDQNPolicy):
+    """
+    The policy of split parameterised deep Q network.
 
-class SPDQNPolicy(Module):
+    Args:
+        observation_space: The observation spaces.
+        action_space: The action spaces.
+        representation (Module): The representation module.
+        conactor_hidden_size (Sequence[int]): List of hidden units for actor network.
+        qnetwork_hidden_size (Sequence[int]): List of hidden units for q network.
+        normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
+        activation (Optional[ModuleType]): The activation function for each layer.
+        activation_action (Optional[ModuleType]): The activation of final layer to bound the actions.
+        device (Optional[Union[str, int, torch.device]]): The calculating device.
+    """
     def __init__(self,
                  observation_space,
                  action_space,
@@ -717,14 +821,9 @@ class SPDQNPolicy(Module):
                  activation: Optional[ModuleType] = None,
                  activation_action: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None):
-        super(SPDQNPolicy, self).__init__()
-        self.representation = representation
-        self.target_representation = deepcopy(representation)
-        self.observation_space = observation_space
-        self.action_space = action_space
-        self.num_disact = self.action_space.spaces[0].n
-        self.conact_sizes = np.array([self.action_space.spaces[i].shape[0] for i in range(1, self.num_disact + 1)])
-        self.conact_size = int(self.conact_sizes.sum())
+        super(SPDQNPolicy, self).__init__(observation_space, action_space, representation,
+                                          conactor_hidden_size, qnetwork_hidden_size,
+                                          normalize, initialize, activation, activation_action, device)
         self.qnetwork = nn.ModuleList()
         for k in range(self.num_disact):
             self.qnetwork.append(
@@ -737,14 +836,6 @@ class SPDQNPolicy(Module):
 
         self.offsets = self.conact_sizes.cumsum()
         self.offsets = np.insert(self.offsets, 0, 0)
-
-    def Atarget(self, state):
-        target_conact = self.target_conactor(state)
-        return target_conact
-
-    def con_action(self, state):
-        conaction = self.conactor(state)
-        return conaction
 
     def Qtarget(self, state, action):
         target_Q = []
@@ -777,19 +868,16 @@ class SPDQNPolicy(Module):
         Q = torch.cat(Q, dim=1)
         return Q
 
-    def soft_update(self, tau=0.005):
-        for ep, tp in zip(self.representation.parameters(), self.target_representation.parameters()):
-            tp.data.mul_(1 - tau)
-            tp.data.add_(tau * ep.data)
-        for ep, tp in zip(self.conactor.parameters(), self.target_conactor.parameters()):
-            tp.data.mul_(1 - tau)
-            tp.data.add_(tau * ep.data)
-        for ep, tp in zip(self.qnetwork.parameters(), self.target_qnetwork.parameters()):
-            tp.data.mul_(1 - tau)
-            tp.data.add_(tau * ep.data)
-
 
 class DRQNPolicy(Module):
+    """
+    The policy of deep recurrent Q-networks.
+
+    Args:
+        action_space: The action space.
+        representation: The representation module.
+        **kwargs: The other arguments.
+    """
     def __init__(self,
                  action_space: Discrete,
                  representation: Module,
@@ -810,6 +898,19 @@ class DRQNPolicy(Module):
         self.target_Qhead = deepcopy(self.eval_Qhead)
 
     def forward(self, observation: Union[np.ndarray, dict], *rnn_hidden: Tensor):
+        """
+        Returns the output of the representation, greedy actions, the evaluated Q-values and the RNN hidden states.
+
+        Parameters:
+            observation: The original observation input.
+            rnn_hidden: The RNN hidden state.
+
+        Returns:
+            outputs: The hidden state output by the representation.
+            argmax_action: The greedy actions.
+            evalQ: The evaluated Q-values.
+            (hidden_states, cell_states): The updated RNN hidden states.
+        """
         if self.cnn:
             obs_shape = observation.shape
             outputs = self.representation(observation.reshape((-1,) + obs_shape[-3:]))

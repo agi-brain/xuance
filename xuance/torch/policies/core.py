@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from typing import Sequence, Optional, Callable, Union
 from xuance.torch import Tensor, Module
-from xuance.torch.utils import ModuleType, mlp_block
+from xuance.torch.utils import ModuleType, mlp_block, gru_block, lstm_block
 from xuance.torch.utils import CategoricalDistribution, DiagGaussianDistribution, ActivatedDiagGaussianDistribution
 
 
@@ -20,6 +20,7 @@ class BasicQhead(Module):
         activation (Optional[ModuleType]): The activation function for each layer.
         device (Optional[Union[str, int, torch.device]]): The calculating device.
     """
+
     def __init__(self,
                  state_dim: int,
                  n_actions: int,
@@ -46,6 +47,192 @@ class BasicQhead(Module):
         return self.model(x)
 
 
+class DuelQhead(Module):
+    """
+    A base class to build Q network and calculate the dueling Q values.
+
+    Args:
+        state_dim (int): The input state dimension.
+        n_actions (int): The number of discrete actions.
+        hidden_sizes: List of hidden units for fully connect layers.
+        normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
+        activation (Optional[ModuleType]): The activation function for each layer.
+        device (Optional[Union[str, int, torch.device]]): The calculating device.
+    """
+
+    def __init__(self,
+                 state_dim: int,
+                 n_actions: int,
+                 hidden_sizes: Sequence[int],
+                 normalize: Optional[ModuleType] = None,
+                 initialize: Optional[Callable[..., Tensor]] = None,
+                 activation: Optional[ModuleType] = None,
+                 device: Optional[Union[str, int, torch.device]] = None):
+        super(DuelQhead, self).__init__()
+        v_layers = []
+        input_shape = (state_dim,)
+        for h in hidden_sizes:
+            v_mlp, input_shape = mlp_block(input_shape[0], h // 2, normalize, activation, initialize, device)
+            v_layers.extend(v_mlp)
+        v_layers.extend(mlp_block(input_shape[0], 1, None, None, None, device)[0])
+        a_layers = []
+        input_shape = (state_dim,)
+        for h in hidden_sizes:
+            a_mlp, input_shape = mlp_block(input_shape[0], h // 2, normalize, activation, initialize, device)
+            a_layers.extend(a_mlp)
+        a_layers.extend(mlp_block(input_shape[0], n_actions, None, None, None, device)[0])
+        self.a_model = nn.Sequential(*a_layers)
+        self.v_model = nn.Sequential(*v_layers)
+
+    def forward(self, x: Tensor):
+        """
+        Returns the dueling Q-values.
+        Parameters:
+            x (Tensor): The input tensor.
+
+        Returns:
+            q: The dueling Q-values.
+        """
+        v = self.v_model(x)
+        a = self.a_model(x)
+        q = v + (a - a.mean(dim=-1).unsqueeze(dim=-1))
+        return q
+
+
+class C51Qhead(Module):
+    """
+    A base class to build Q network and calculate the distributional Q values.
+
+    Args:
+        state_dim (int): The input state dimension.
+        n_actions (int): The number of discrete actions.
+        atom_num (int): The number of atoms.
+        hidden_sizes: List of hidden units for fully connect layers.
+        normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
+        activation (Optional[ModuleType]): The activation function for each layer.
+        device (Optional[Union[str, int, torch.device]]): The calculating device.
+    """
+
+    def __init__(self,
+                 state_dim: int,
+                 n_actions: int,
+                 atom_num: int,
+                 hidden_sizes: Sequence[int],
+                 normalize: Optional[ModuleType] = None,
+                 initialize: Optional[Callable[..., Tensor]] = None,
+                 activation: Optional[ModuleType] = None,
+                 device: Optional[Union[str, int, torch.device]] = None):
+        super(C51Qhead, self).__init__()
+        self.n_actions = n_actions
+        self.atom_num = atom_num
+        layers = []
+        input_shape = (state_dim,)
+        for h in hidden_sizes:
+            mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initialize, device)
+            layers.extend(mlp)
+        layers.extend(mlp_block(input_shape[0], n_actions * atom_num, None, None, initialize, device)[0])
+        self.model = nn.Sequential(*layers)
+
+    def forward(self, x: Tensor):
+        """
+        Returns the discrete action distributions.
+        Parameters:
+            x (Tensor): The input tensor.
+        Returns:
+            dist_probs: The probability distribution of the discrete actions.
+        """
+        dist_logits = self.model(x).view(-1, self.n_actions, self.atom_num)
+        dist_probs = F.softmax(dist_logits, dim=-1)
+        return dist_probs
+
+
+class QRDQNhead(Module):
+    """
+    A base class to build Q networks for QRDQN policy.
+
+    Args:
+        state_dim (int): The input state dimension.
+        n_actions (int): The number of discrete actions.
+        atom_num (int): The number of atoms.
+        hidden_sizes: List of hidden units for fully connect layers.
+        normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
+        activation (Optional[ModuleType]): The activation function for each layer.
+        device (Optional[Union[str, int, torch.device]]): The calculating device.
+    """
+    def __init__(self,
+                 state_dim: int,
+                 n_actions: int,
+                 atom_num: int,
+                 hidden_sizes: Sequence[int],
+                 normalize: Optional[ModuleType] = None,
+                 initialize: Optional[Callable[..., Tensor]] = None,
+                 activation: Optional[ModuleType] = None,
+                 device: Optional[Union[str, int, torch.device]] = None):
+        super(QRDQNhead, self).__init__()
+        self.n_actions = n_actions
+        self.atom_num = atom_num
+        layers = []
+        input_shape = (state_dim,)
+        for h in hidden_sizes:
+            mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initialize, device)
+            layers.extend(mlp)
+        layers.extend(mlp_block(input_shape[0], n_actions * atom_num, None, None, None, device)[0])
+        self.model = nn.Sequential(*layers)
+
+    def forward(self, x: Tensor):
+        """
+        Returns the quantiles of the distribution.
+        Parameters:
+            x (Tensor): The input tensor.
+        Returns:
+            quantiles: The quantiles of the action distribution.
+        """
+        quantiles = self.model(x).view(-1, self.n_actions, self.atom_num)
+        return quantiles
+
+
+class BasicRecurrent(Module):
+    """Build recurrent  neural network to calculate Q values."""
+
+    def __init__(self, **kwargs):
+        super(BasicRecurrent, self).__init__()
+        self.lstm = False
+        if kwargs["rnn"] == "GRU":
+            output, _ = gru_block(kwargs["input_dim"],
+                                  kwargs["recurrent_hidden_size"],
+                                  kwargs["recurrent_layer_N"],
+                                  kwargs["dropout"],
+                                  kwargs["initialize"],
+                                  kwargs["device"])
+        elif kwargs["rnn"] == "LSTM":
+            self.lstm = True
+            output, _ = lstm_block(kwargs["input_dim"],
+                                   kwargs["recurrent_hidden_size"],
+                                   kwargs["recurrent_layer_N"],
+                                   kwargs["dropout"],
+                                   kwargs["initialize"],
+                                   kwargs["device"])
+        else:
+            raise "Unknown recurrent module!"
+        self.rnn_layer = output
+        fc_layer = mlp_block(kwargs["recurrent_hidden_size"], kwargs["action_dim"], None, None, None, kwargs["device"])[
+            0]
+        self.model = nn.Sequential(*fc_layer)
+
+    def forward(self, x: Tensor, h: Tensor, c: Tensor = None):
+        """Returns the rnn hidden and Q-values via RNN networks."""
+        self.rnn_layer.flatten_parameters()
+        if self.lstm:
+            output, (hn, cn) = self.rnn_layer(x, (h, c))
+            return hn, cn, self.model(output)
+        else:
+            output, hn = self.rnn_layer(x, h)
+            return hn, self.model(output)
+
+
 class ActorNet(nn.Module):
     """
     The actor network for deterministic policy, which outputs activated continuous actions directly.
@@ -60,6 +247,7 @@ class ActorNet(nn.Module):
         activation_action (Optional[ModuleType]): The activation of final layer to bound the actions.
         device (Optional[Union[str, int, torch.device]]): The calculating device.
     """
+
     def __init__(self,
                  state_dim: int,
                  action_dim: int,
@@ -100,6 +288,7 @@ class CategoricalActorNet(Module):
         activation (Optional[ModuleType]): The activation function for each layer.
         device (Optional[Union[str, int, torch.device]]): The calculating device.
     """
+
     def __init__(self,
                  state_dim: int,
                  action_dim: int,
@@ -148,6 +337,7 @@ class CategoricalActorNet_SAC(CategoricalActorNet):
         activation (Optional[ModuleType]): The activation function for each layer.
         device (Optional[Union[str, int, torch.device]]): The calculating device.
     """
+
     def __init__(self,
                  state_dim: int,
                  action_dim: int,
@@ -192,6 +382,7 @@ class GaussianActorNet(Module):
         activation_action (Optional[ModuleType]): The activation of final layer to bound the actions.
         device (Optional[Union[str, int, torch.device]]): The calculating device.
     """
+
     def __init__(self,
                  state_dim: int,
                  action_dim: int,
@@ -237,6 +428,7 @@ class CriticNet(Module):
         activation (Optional[ModuleType]): The activation function for each layer.
         device (Optional[Union[str, int, torch.device]]): The calculating device.
     """
+
     def __init__(self,
                  input_dim: int,
                  hidden_sizes: Sequence[int],
@@ -276,6 +468,7 @@ class GaussianActorNet_SAC(Module):
         activation_action (Optional[ModuleType]): The activation of final layer to bound the actions.
         device (Optional[Union[str, int, torch.device]]): The calculating device.
     """
+
     def __init__(self,
                  state_dim: int,
                  action_dim: int,
@@ -317,6 +510,7 @@ class VDN_mixer(nn.Module):
     """
     The value decomposition networks mixer. (Additivity)
     """
+
     def __init__(self):
         super(VDN_mixer, self).__init__()
 
@@ -335,6 +529,7 @@ class QMIX_mixer(nn.Module):
         n_agents (int): The number of agents.
         device (Optional[Union[str, int, torch.device]]): The calculating device.
     """
+
     def __init__(self,
                  dim_state: Optional[int] = None,
                  dim_hidden: int = 32,
@@ -397,6 +592,7 @@ class QMIX_FF_mixer(nn.Module):
     """
     The feedforward mixer without the constraints of monotonicity.
     """
+
     def __init__(self,
                  dim_state: int = 0,
                  dim_hidden: int = 32,
@@ -480,7 +676,8 @@ class QTRAN_alt(QTRAN_base):
     def counterfactual_values_hat(self, hidden_states_n, actions_n):
         action_repeat = actions_n.unsqueeze(dim=2).repeat(1, 1, self.dim_action, 1)
         action_self_all = torch.eye(self.dim_action).unsqueeze(0)
-        action_counterfactual_n = action_repeat.unsqueeze(dim=2).repeat(1, 1, self.n_agents, 1, 1)  # batch * N * N * dim_a * dim_a
+        action_counterfactual_n = action_repeat.unsqueeze(dim=2).repeat(1, 1, self.n_agents, 1,
+                                                                        1)  # batch * N * N * dim_a * dim_a
         q_n = []
         for agent in range(self.n_agents):
             action_counterfactual_n[:, agent, agent, :, :] = action_self_all
@@ -491,4 +688,3 @@ class QTRAN_alt(QTRAN_base):
                 q_actions.append(q)
             q_n.append(torch.cat(q_actions, dim=-1).unsqueeze(dim=1))
         return torch.cat(q_n, dim=1)
-
