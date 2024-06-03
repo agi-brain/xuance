@@ -19,7 +19,7 @@ gamma: 0.99
 
 start_greedy: 0.5
 end_greedy: 0.1
-decay_step_greedy: 20000
+decay_step_greedy: 200000
 sync_frequency: 100
 training_frequency: 4
 running_steps: 500000

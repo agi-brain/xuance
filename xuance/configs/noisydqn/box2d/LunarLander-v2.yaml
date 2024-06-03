@@ -19,7 +19,7 @@ gamma: 0.99
 
 start_noise: 0.05
 end_noise: 0.0
-decay_step_noise: 50000
+decay_step_noise: 500000
 sync_frequency: 100
 training_frequency: 2
 running_steps: 500000

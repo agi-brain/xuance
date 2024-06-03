@@ -12,7 +12,10 @@ from xuance.environment.vector_envs import REGISTRY_VEC_ENV
 def make_envs(config: Namespace,):
     def _thunk():
         if config.env_name in REGISTRY_ENV.keys():
-            return MakeEnvironment(REGISTRY_ENV[config.env_name](config))
+            if config.env_name == "Platform":
+                return REGISTRY_ENV[config.env_name](config)
+            else:
+                return MakeEnvironment(REGISTRY_ENV[config.env_name](config))
         elif config.env_name in REGISTRY_MULTI_AGENT_ENV.keys():
             return MakeMultiAgentEnvironment(REGISTRY_MULTI_AGENT_ENV[config.env_name](config))
         else:

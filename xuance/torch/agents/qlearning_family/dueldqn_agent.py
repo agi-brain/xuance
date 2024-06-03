@@ -20,7 +20,6 @@ class DuelDQN_Agent(DQN_Agent):
                  config: Namespace,
                  envs: DummyVecEnv):
         super(DuelDQN_Agent, self).__init__(config, envs)
-        super(DuelDQN_Agent, self).__init__(config, envs)
 
     def _build_policy(self):
         normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None

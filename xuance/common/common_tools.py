@@ -85,7 +85,7 @@ def get_arguments(method, env, env_id, config_path=None, parser_args=None, is_te
                 elif os.path.exists(config_path_env[i_agent]):
                     config_path.append(config_path_env[i_agent])
                 else:
-                    raise RuntimeError(
+                    raise AttributeError(
                         f"Cannot find file named '{config_path_env_id[i_agent]}' or '{config_path_env[i_agent]}'."
                         f"You can also customize the configuration file by specifying the `config_path` parameter "
                         f"in the `get_runner()` function.")
@@ -114,8 +114,8 @@ def get_arguments(method, env, env_id, config_path=None, parser_args=None, is_te
             else:
                 error_path_env_id = os.path.join('./xuance/configs', method, file_name_env_id)
                 error_path_env = os.path.join('./xuance/configs', method, file_name_env)
-                raise RuntimeError(
-                    f"The file of '{error_path_env_id}' or '{error_path_env}' does not exist in this library. "
+                raise AttributeError(
+                    f"The file '{error_path_env_id}' or '{error_path_env}' does not exist in this library. "
                     f"You can also customize the configuration file by specifying the `config_path` parameter "
                     f"in the `get_runner()` function.")
         else:
@@ -132,7 +132,7 @@ def get_arguments(method, env, env_id, config_path=None, parser_args=None, is_te
             args.test_mode = int(is_test)
             args.parallels = 1
     else:
-        raise RuntimeError("Unsupported agent_name or env_name!")
+        raise AttributeError("Unsupported agent_name or env_name!")
     return args
 
 
@@ -202,11 +202,11 @@ def get_runner(method,
                 args[i_alg].log_dir = args[i_alg].log_dir + notation + args[i_alg].env_id + '/'
             else:
                 if config_path is not None:
-                    raise RuntimeError(f"'model_dir' or 'log_dir' is not defined in {config_path} files.")
+                    raise AttributeError(f"'model_dir' or 'log_dir' is not defined in {config_path} files.")
                 elif method[i_alg] not in method_list.keys():
-                    raise RuntimeError(f"The method named '{method[i_alg]}' is currently not supported in XuanCe.")
+                    raise AttributeError(f"The method named '{method[i_alg]}' is currently not supported in XuanCe.")
                 elif args[i_alg].env not in method_list[method[i_alg]]:
-                    raise RuntimeError(
+                    raise AttributeError(
                         f"The environment named '{args[i_alg].env}' is currently not supported for {method_list[method[i_alg]]}.")
                 else:
                     print("Failed to load arguments for the implementation!")
@@ -219,7 +219,7 @@ def get_runner(method,
             if arg.agent_name != "random":
                 runner = REGISTRY_Runner[arg.runner](args)
                 return runner
-        raise "Both sides of policies are random!"
+        raise AttributeError("Both sides of policies are random!")
     else:
         args.agent_name = method
         notation = args.dl_toolbox + '/'
@@ -228,11 +228,11 @@ def get_runner(method,
             args.log_dir = os.path.join(args.log_dir, notation, args.env_id)
         else:
             if config_path is not None:
-                raise RuntimeError(f"'model_dir' or 'log_dir' is not defined in {config_path} file.")
+                raise AttributeError(f"'model_dir' or 'log_dir' is not defined in {config_path} file.")
             elif args.method not in method_list.keys():
-                raise RuntimeError(f"The method named '{args.method}' is currently not supported in XuanCe.")
+                raise AttributeError(f"The method named '{args.method}' is currently not supported in XuanCe.")
             elif args.env not in method_list[args.method]:
-                raise RuntimeError(f"The environment named '{args.env}' is currently not supported for {args.method}.")
+                raise AttributeError(f"The environment named '{args.env}' is currently not supported for {args.method}.")
             else:
                 print("Failed to load arguments for the implementation!")
 

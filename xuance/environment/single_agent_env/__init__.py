@@ -4,7 +4,7 @@ from typing import Optional
 
 REGISTRY_ENV: Optional[EnvironmentDict] = {
     "Classic Control": Gym_Env,
-    "Box2d": Gym_Env,
+    "Box2D": Gym_Env,
     "MuJoCo": Gym_Env
 }
 

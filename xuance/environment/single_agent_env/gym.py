@@ -14,6 +14,8 @@ class Gym_Env(gym.Wrapper):
     """
 
     def __init__(self, config, **kwargs):
+        if config.env_id == "CarRacing-v2":
+            kwargs['continuous'] = False
         self.env = gym.make(config.env_id, render_mode=config.render_mode, **kwargs)
         self.env.action_space.seed(seed=config.seed)
         self.env.reset(seed=config.seed)
@@ -113,7 +115,7 @@ class Atari_Env(gym.Wrapper):
         self.num_stack = config.num_stack
         self.obs_type = config.obs_type
         self.frames = deque([], maxlen=self.num_stack)
-        self.image_size = [210, 160] if config.image_size is None else config.image_size
+        self.image_size = [210, 160] if config.img_size is None else config.img_size
         self.noop_max = config.noop_max
         self.lifes = self.env.unwrapped.ale.lives()
         self.was_real_done = True
@@ -121,11 +123,11 @@ class Atari_Env(gym.Wrapper):
         if self.obs_type == "rgb":
             self.rgb = True
             self.observation_space = gym.spaces.Box(
-                low=0, high=255, shape=(config.image_size[0], config.image_size[1], 3 * self.num_stack), dtype=np.uint8)
+                low=0, high=255, shape=(config.img_size[0], config.img_size[1], 3 * self.num_stack), dtype=np.uint8)
         elif self.obs_type == "grayscale":
             self.grayscale = True
             self.observation_space = gym.spaces.Box(
-                low=0, high=255, shape=(config.image_size[0], config.image_size[1], self.num_stack), dtype=np.uint8)
+                low=0, high=255, shape=(config.img_size[0], config.img_size[1], self.num_stack), dtype=np.uint8)
         else:  # ram type
             self.observation_space = self.env.observation_space
         # assert self.env.unwrapped.get_action_meanings()[0] == "NOOP"

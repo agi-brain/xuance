@@ -134,7 +134,7 @@ class DQN_Agent(Agent):
 
             self.current_step += self.n_envs
             if self.egreedy >= self.end_greedy:
-                self.egreedy = self.egreedy - self.delta_egreedy
+                self.egreedy -= self.delta_egreedy
 
     def test(self, env_fn, test_episodes):
         test_envs = env_fn()

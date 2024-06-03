@@ -166,7 +166,7 @@ class PPGActorCritic(Module):
         a_dist = self.actor(policy_outputs['state'])
         value = self.critic(critic_outputs['state'])
         aux_value = self.aux_critic(policy_outputs['state'])
-        return policy_outputs, a_dist, value, aux_value
+        return policy_outputs, a_dist, value[:, 0], aux_value[:, 0]
 
 
 class SACPolicy(Module):
