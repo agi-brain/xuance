@@ -125,6 +125,8 @@ def run(args):
         for i in res:
             if i>0:
                 win+=1
+            elif i==0:
+                pass
             else:
                 fail+=1
         print("win:",win,"fail:",fail)

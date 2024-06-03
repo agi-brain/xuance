@@ -23,7 +23,7 @@ def parse_args():
     parser.add_argument("--config", type=str, default="./configs/test_blackjack.yaml")
     return parser.parse_args()
 
-def sample(env, timestep_max, number,gamma,V_table):
+def sample(env, timestep_max, number,V_table,l_rate,gamma):
     ''' 采样函数,策略Pi,限制最长时间步timestep_max,总共采样序列数number '''
     episodes = []
     for i in tqdm(range(number)):
@@ -39,49 +39,53 @@ def sample(env, timestep_max, number,gamma,V_table):
             a = eps_greedy(env.action_space, 0.99*(number-i)/number, V_table,obs)
             next_obs, reward, terminated, truncated, info = env.step(a)
             next_obs = next_obs.astype(int)
-            V_table[obs[0][0]][obs[0][1]][obs[0][2]] +=gamma**timestep * reward
+
+            value=V_table[obs[0][0],obs[0][1],obs[0][2]]
+            if next_obs[0][0]<12 and next_obs[0][1]<32 and next_obs[0][2]<2:
+                a_next = eps_greedy(env.action_space, 0.99 * (number - i) / number, V_table, next_obs)
+                n_obs, _, terminated, _, _ = env.step(a_next)
+                n_obs = n_obs.astype(int)
+                if not terminated:
+                    V_table[obs[0][0],obs[0][1],obs[0][2]] +=(
+                    value+l_rate*( reward+gamma*
+                                   V_table[n_obs[0][0],n_obs[0][1],n_obs[0][2]]-value))
             episode.append([obs, a, reward, next_obs])  # 把(obs, a, reward, next_obs)元组放入序列中
             obs = next_obs  # s_next变成当前状态,开始接下来的循环
             timestep += 1
-        episodes.append(episode)
-    return episodes
-
-
-def MC(episodes, V_table, gamma,l_rate):
-    for episode in tqdm(episodes):
-        G = 0
-        for i in range(len(episode) - 1, -1, -1):  #一个序列从后往前计算
-            [obs, a, r, obs_next] = episode[i]
-            obs = obs.astype(int)
-            index_value=V_table[obs[0][0]][obs[0][1]][obs[0][2]]
-            G = r + gamma * G
-            V_table[obs[0][0]][obs[0][1]][obs[0][2]] = index_value+ (G - index_value) * l_rate
-
+    #     episodes.append(episode)
+    # return episodes
     np.save('V_table.npy', V_table)
+
+# def sarsa(episodes, V_table, gamma,l_rate):
+#     for episode in tqdm(episodes):
+#         G = 0
+#         for i in range(len(episode) - 1, -1, -1):  #一个序列从后往前计算
+#             [obs, a, r, obs_next] = episode[i]
+#             obs = obs.astype(int)
+#             index_value=V_table[obs[0][0]][obs[0][1]][obs[0][2]]
+#             G = r + gamma * G
+#             V_table[obs[0][0]][obs[0][1]][obs[0][2]] = index_value+ (G - index_value) * l_rate
+#
+#     np.save('V_table.npy', V_table)
 def eps_greedy(action_space,epsilon,V_table,obs)->int:#返回一个动作
     obs=obs[0].astype(int)
-    action_0,action_1=0,0
+
     if np.random.rand() < epsilon:
         return action_space.sample()
     else:
         #如果动作为0，则在+1~+10中取所有后选状态的平均值;动作为1则取当前状态的值
+        values=[]
         for action in range(action_space.n):
             if action==0:#代表的意思是要所有的（在2-10以内）无A和有A，两类加起来平均
-                action_0+=np.sum(V_table[obs[0]][obs[1]+2:obs[1]+10][obs[2]])+V_table[obs[0]][obs[1]][0 if obs[2]==1 else 1]
-                non_zero_elements = V_table[obs[0]][obs[1] + 2:obs[1] + 10][0] != 0
+                relevant_values = V_table[obs[0], obs[1] + 2:obs[1] + 10, obs[2]]
                 # 计算非零元素的数量
-                count_non_zero = np.count_nonzero(non_zero_elements)
-                if count_non_zero!=0:
-                    action_0/=count_non_zero
-
+                if np.count_nonzero(relevant_values) > 0:
+                    values.append(np.sum(relevant_values) / np.count_nonzero(relevant_values))
             elif action==1:
-                action_1=V_table[obs[0]][obs[1]][obs[2]]
-        if action_0> action_1:
-            return 0
-        else:
-            return 1
+                values.append(V_table[obs[0], obs[1], obs[2]])
+        return np.argmax(values)
 
-def MC_test(V_table,env,number):
+def sarsa_test(V_table,env,number):
     obs,info = env.reset()
     obs = obs.astype(int)
 
@@ -118,18 +122,20 @@ def run(args):
     gamma = 0.99
     l_rate=0.001
     Test=True
-    V_table=np.zeros((12,30,2)) #一个12*30*2的表格来存储状态价值
+    V_table=np.zeros((12,32,2)) #一个12*32*2的表格来存储状态价值
     if not  Test:
-        episodes = sample(env, 20, 500000, gamma,V_table)
-        MC(episodes, V_table, gamma,l_rate=l_rate)
+        sample(env,20, 500000,V_table,l_rate,gamma)
+        # sarsa(episodes, V_table, gamma,l_rate=l_rate)
     else:
         V_table=np.load('V_table.npy')
-        res,ep=MC_test(V_table,env,50000)
+        res,ep=sarsa_test(V_table,env,50000)
         win=0
         fail=0
         for i in res:
             if i>0:
                 win+=1
+            elif i==0:
+                pass
             else:
                 fail+=1
         print("win:",win,"fail:",fail)
@@ -143,6 +149,4 @@ if __name__ == '__main__':
                          config_path=parser.config,
                          parser_args=parser)
     run(args)
-    # V_table = np.zeros((12, 30, 2))  # 一个12*30*2的表格来存储状态价值
-    # V_table=np.load('V_table.npy')
-    # print(V_table)
+
