@@ -1,9 +1,8 @@
 import os
-import numpy as np
 import torch
 from numpy import concatenate as concat
 from abc import ABC, abstractmethod
-from typing import Optional, Sequence, List, Union
+from typing import Optional, List, Union
 from argparse import Namespace
 from operator import itemgetter
 from xuance.torch import Tensor

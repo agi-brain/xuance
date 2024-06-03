@@ -1,10 +1,3 @@
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import numpy as np
-from typing import Sequence, Union, Optional, Callable
-from xuance.torch.utils.layers import *
-
 from .mlp import Basic_Identical, Basic_MLP
 from .cnn import Basic_CNN, AC_CNN_Atari
 from .rnn import Basic_RNN

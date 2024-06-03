@@ -1,4 +1,9 @@
-from xuance.torch.representations import *
+import torch
+import torch.nn as nn
+import numpy as np
+from typing import Sequence, Optional, Union, Callable
+from xuance.torch.utils.layers import cnn_block, mlp_block
+from xuance.torch.utils import ModuleType
 
 
 # process the input observations with stacks of CNN layers

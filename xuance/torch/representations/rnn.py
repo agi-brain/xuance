@@ -1,4 +1,8 @@
-from xuance.torch.representations import *
+import torch
+import torch.nn as nn
+from typing import Sequence, Optional, Union, Callable
+from xuance.torch.utils.layers import mlp_block, gru_block, lstm_block
+from xuance.torch.utils import ModuleType
 
 
 class Basic_RNN(nn.Module):

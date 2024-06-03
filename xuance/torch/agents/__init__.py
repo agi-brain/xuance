@@ -1,75 +1,44 @@
-from abc import ABC, abstractmethod
-from gym.spaces import Space, Box, Discrete, Dict
-from argparse import Namespace
-from mpi4py import MPI
-from tqdm import tqdm
-from torch.utils.tensorboard import SummaryWriter
-import wandb
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from torch.distributions import Categorical
-from xuance.environment import *
-from xuance.common import *
-from xuance.torch.learners import *
-from xuance.torch.policies import *
-from xuance.torch.utils import *
-from xuance.torch.policies import REGISTRY_Policy
-from xuance.torch.utils.input_reformat import get_repre_in, get_policy_in_marl
-from xuance.torch.representations import REGISTRY_Representation
-
 from .agent import Agent
 from .agents_marl import MARLAgents, RandomAgents
+'''Single-Agent DRL algorithms'''
+from .policy_gradient import PG_Agent
+from .policy_gradient import A2C_Agent
+from .policy_gradient import PPOCLIP_Agent
+from .policy_gradient import PPOKL_Agent
+from .policy_gradient import PPG_Agent
+from .policy_gradient import DDPG_Agent
+from .policy_gradient import TD3_Agent
+from .policy_gradient import PDQN_Agent
+from .policy_gradient import MPDQN_Agent
+from .policy_gradient import SPDQN_Agent
+from .policy_gradient import SAC_Agent
+from .policy_gradient import SACDIS_Agent
+from .qlearning_family import DQN_Agent
+from .qlearning_family import DuelDQN_Agent
+from .qlearning_family import DDQN_Agent
+from .qlearning_family import NoisyDQN_Agent
+from .qlearning_family import C51_Agent
+from .qlearning_family import QRDQN_Agent
+from .qlearning_family import PerDQN_Agent
+from .qlearning_family import DRQN_Agent
 
-'''
-Single-Agent DRL algorithms
-'''
-from .policy_gradient import (
-    PG_Agent,
-    A2C_Agent,
-    PPOCLIP_Agent,
-    PPOKL_Agent,
-    PPG_Agent,
-    DDPG_Agent,
-    TD3_Agent,
-    PDQN_Agent,
-    MPDQN_Agent,
-    SPDQN_Agent,
-    SAC_Agent,
-    SACDIS_Agent
-)
-from .qlearning_family import (
-    DQN_Agent,
-    DuelDQN_Agent,
-    DDQN_Agent,
-    NoisyDQN_Agent,
-    C51_Agent,
-    QRDQN_Agent,
-    PerDQN_Agent,
-    DRQN_Agent
-)
-'''
-Multi-Agent DRL algorithms
-'''
-from .multi_agent_rl import (
-    IQL_Agents,
-    VDN_Agents,
-    QMIX_Agents,
-    WQMIX_Agents,
-    QTRAN_Agents,
-    DCG_Agents,
-    VDAC_Agents,
-    COMA_Agents,
-    IDDPG_Agents,
-    MADDPG_Agents,
-    MFQ_Agents,
-    MFAC_Agents,
-    IPPO_Agents,
-    MAPPO_Agents,
-    ISAC_Agents,
-    MASAC_Agents,
-    MATD3_Agents
-)
+from .multi_agent_rl import IQL_Agents
+from .multi_agent_rl import VDN_Agents
+from .multi_agent_rl import QMIX_Agents
+from .multi_agent_rl import WQMIX_Agents
+from .multi_agent_rl import QTRAN_Agents
+from .multi_agent_rl import DCG_Agents
+from .multi_agent_rl import VDAC_Agents
+from .multi_agent_rl import COMA_Agents
+from .multi_agent_rl import IDDPG_Agents
+from .multi_agent_rl import MADDPG_Agents
+from .multi_agent_rl import MFQ_Agents
+from .multi_agent_rl import MFAC_Agents
+from .multi_agent_rl import IPPO_Agents
+from .multi_agent_rl import MAPPO_Agents
+from .multi_agent_rl import ISAC_Agents
+from .multi_agent_rl import MASAC_Agents
+from .multi_agent_rl import MATD3_Agents
 
 REGISTRY_Agents = {
     "PG": PG_Agent,

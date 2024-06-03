@@ -1,7 +1,7 @@
 import torch
 from copy import deepcopy
 from typing import Sequence, Optional, Callable, Union, Dict
-from gym.spaces import Space, Box, Discrete
+from gym.spaces import Space, Box
 from xuance.torch.policies import CriticNet, VDN_mixer
 from xuance.torch.utils import ModuleType
 from xuance.torch import Tensor, Module

@@ -2,7 +2,7 @@ import os.path
 import wandb
 import socket
 import numpy as np
-from abc import ABC, abstractmethod
+from abc import ABC
 from pathlib import Path
 from argparse import Namespace
 from typing import Optional
