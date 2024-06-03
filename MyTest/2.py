@@ -1,9 +1,7 @@
-import numpy as np
+from collections import defaultdict
 
-# 示例 Table 数据，假设为 3x3x3 的三维数组
-Table = np.zeros((3, 3))
+Q = defaultdict(lambda: 0.0)
 
-# 示例索引列表
-indices = [1, 2]
-Table[indices[0],indices[1]] = 1
-print(Table)
+# 访问不存在的键时，自动将该键的值设为0.0
+print(Q[(1, 2, 3),0])  # 输出: 0.0
+print(Q)  # 输出: defaultdict(<function <lambda> at ...>, {(1, 2, 3, 0): 0.0})

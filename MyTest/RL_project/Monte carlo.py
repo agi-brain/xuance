@@ -23,7 +23,7 @@ def parse_args():
     parser.add_argument("--config", type=str, default="./configs/test_blackjack.yaml")
     return parser.parse_args()
 
-def sample(env, timestep_max, number,gamma,V_table):
+def sample(env, timestep_max, number,V_table):
     ''' 采样函数,策略Pi,限制最长时间步timestep_max,总共采样序列数number '''
     episodes = []
     for i in tqdm(range(number)):
@@ -39,7 +39,7 @@ def sample(env, timestep_max, number,gamma,V_table):
             a = eps_greedy(env.action_space, 0.99*(number-i)/number, V_table,obs)
             next_obs, reward, terminated, truncated, info = env.step(a)
             next_obs = next_obs.astype(int)
-            V_table[obs[0][0]][obs[0][1]][obs[0][2]] += reward
+            V_table[obs[0][0],obs[0][1],obs[0][2]] += reward
             episode.append([obs, a, reward, next_obs])  # 把(obs, a, reward, next_obs)元组放入序列中
             obs = next_obs  # s_next变成当前状态,开始接下来的循环
             timestep += 1
@@ -53,9 +53,9 @@ def MC(episodes, V_table, gamma,l_rate):
         for i in range(len(episode) - 1, -1, -1):  #一个序列从后往前计算
             [obs, a, r, obs_next] = episode[i]
             obs = obs.astype(int)
-            index_value=V_table[obs[0][0]][obs[0][1]][obs[0][2]]
+            index_value=V_table[obs[0][0],obs[0][1],obs[0][2]]
             G = r + gamma * G
-            V_table[obs[0][0]][obs[0][1]][obs[0][2]] = index_value+ (G - index_value) * l_rate
+            V_table[obs[0][0],obs[0][1],obs[0][2]] = index_value+ (G - index_value) * l_rate
 
     np.save('V_table.npy', V_table)
 def eps_greedy(action_space,epsilon,V_table,obs)->int:#返回一个动作
@@ -68,13 +68,13 @@ def eps_greedy(action_space,epsilon,V_table,obs)->int:#返回一个动作
         values=[]
         for action in range(action_space.n):
             if action==0:#代表的意思是要所有的（在2-10以内）无A和有A，两类加起来平均
-                relevant_values = V_table[obs[0], obs[1] + 2:obs[1] + 10, obs[2]]
+                relevant_values = V_table[obs[0], obs[1] + 1:obs[1] + 10, obs[2]]
                 # 计算非零元素的数量
                 if np.count_nonzero(relevant_values) > 0:
                     values.append(np.sum(relevant_values) / np.count_nonzero(relevant_values))
             elif action==1:
                 values.append(V_table[obs[0], obs[1], obs[2]])
-        return np.argmax(values)
+        return np.argmax(values) #最后的动作只能是0或者1，
 
 def MC_test(V_table,env,number):
     obs,info = env.reset()
@@ -112,11 +112,11 @@ def run(args):
     args.action_space = env.action_space  # get action space
     gamma = 0.99
     l_rate=0.001
-    Test=True
+    Test=False
     V_table=np.zeros((12,30,2)) #一个12*30*2的表格来存储状态价值
     if not  Test:
-        episodes = sample(env, 20, 500000, gamma,V_table)
-        MC(episodes, V_table, gamma,l_rate=l_rate)
+        episodes = sample(env, 20, 500000, V_table)
+        MC(episodes, V_table, gamma,l_rate)
     else:
         V_table=np.load('V_table.npy')
         res,ep=MC_test(V_table,env,50000)
@@ -131,7 +131,6 @@ def run(args):
                 fail+=1
         print("win:",win,"fail:",fail)
 
-
 if __name__ == '__main__':
     parser = parse_args()
     args = get_arguments(method=parser.method,
@@ -140,4 +139,6 @@ if __name__ == '__main__':
                          config_path=parser.config,
                          parser_args=parser)
     run(args)
-
+    # V_table = np.zeros((12, 30, 2))  # 一个12*30*2的表格来存储状态价值
+    # V_table=np.load('V_table.npy')
+    # print(V_table)

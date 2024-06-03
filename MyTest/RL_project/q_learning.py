@@ -46,26 +46,19 @@ def sample(env, timestep_max, number, Q, l_rate, gamma):
         obs = tuple(obs[0].astype(int))
         terminated, truncated = False, False
         timestep = 0
-        while not terminated and timestep <= timestep_max:
+        # 在状态s下根据策略选择动作
+        while not terminated and timestep < timestep_max:
             # 选择初始动作
-            eps=0.99 * (number - i) / number
-            obs, a = sarsa(env,obs,gamma,l_rate,eps,Q)
+            a = eps_greedy(env.action_space, 0.99 * (number - i) / number, Q, obs)
+            next_obs, reward, terminated, truncated, info = env.step(a)
+            next_obs = tuple(next_obs[0].astype(int))
+            # q-learning更新规则
+            TD_target = reward + gamma * max([Q[(next_obs, action)] for action in range(env.action_space.n)] )
+            TD_error = TD_target - Q[obs, a]
+            Q[obs,a] += l_rate * TD_error
+            obs = next_obs
             timestep += 1
-    return Q
-
-def sarsa(env,obs,gamma,l_rate,eps,Q):
-    # 在状态s下根据策略选择动作
-    a = eps_greedy(env.action_space, eps, Q, obs)
-
-    next_obs, reward, terminated, truncated, info = env.step(a)
-    next_obs = tuple(next_obs[0].astype(int))
-    next_a = eps_greedy(env.action_space, eps, Q, next_obs)
-
-    # SARSA更新规则
-    TD_target = reward + gamma * Q[next_obs, next_a]
-    TD_error = TD_target - Q[obs, a]
-    Q[obs, a] += l_rate * TD_error
-    return next_obs,next_a
+    return  Q
 
 
 def eps_greedy(action_space,epsilon,Q,obs)->int:#返回一个动作
@@ -76,9 +69,8 @@ def eps_greedy(action_space,epsilon,Q,obs)->int:#返回一个动作
         q_values = [Q[(tuple(obs), action)] for action in range(action_space.n)]
         return np.argmax(q_values)
 
-def sarsa_test(Q,env,number):
+def q_learning_test(Q,env,number):
     obs,info = env.reset()
-
     res=[]
     for i in range(number):
         r=0
@@ -113,10 +105,10 @@ def run(args):
     if not  Test:
         Q=sample(env,20, 500000,Q, l_rate, gamma)
         save_Q(Q, 'Q.npy')
-        # sarsa(episodes, Q, gamma,l_rate=l_rate)
+        # q_learning(episodes, Q, gamma,l_rate=l_rate)
     else:
         Q=load_Q('Q.npy')
-        res=sarsa_test(Q,env,50000)
+        res=q_learning_test(Q,env,50000)
         win=0
         fail=0
         for i in res:
