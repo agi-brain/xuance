@@ -1,17 +1,15 @@
 from argparse import Namespace
-from typing import Optional, Union
-from xuance.environment.utils import MakeEnvironment, MakeMultiAgentEnvironment, XuanCeEnvWrapper, RawEnvironment, RawMultiAgentEnv
-from xuance.environment.vector_envs import DummyVecEnv, SubprocVecEnv, \
-    DummyVecEnv_Atari, SubprocVecEnv_Atari, DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
-from xuance.environment.single_agent_env.gym import Gym_Env
+from xuance.environment.utils import XuanCeEnvWrapper, MakeEnvironment, MakeMultiAgentEnvironment
+from xuance.environment.utils import RawEnvironment, RawMultiAgentEnv
+from xuance.environment.vector_envs import DummyVecEnv, SubprocVecEnv
+from xuance.environment.vector_envs import DummyVecEnv_Atari, SubprocVecEnv_Atari
+from xuance.environment.vector_envs import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.environment.single_agent_env import REGISTRY_ENV
 from xuance.environment.multi_agent_env import REGISTRY_MULTI_AGENT_ENV
 from xuance.environment.vector_envs import REGISTRY_VEC_ENV
 
 
-def make_envs(config: Namespace,
-              raw_env: Optional[Union[RawEnvironment]] = None,
-              raw_multi_agent_env: Optional[Union[RawMultiAgentEnv]] = None):
+def make_envs(config: Namespace,):
     def _thunk():
         if config.env_name in REGISTRY_ENV.keys():
             return MakeEnvironment(REGISTRY_ENV[config.env_name](config))
@@ -26,4 +24,4 @@ def make_envs(config: Namespace,
     elif config.vectorize == "NOREQUIRED":
         return _thunk()
     else:
-        raise AttributeError(f"The vectorized method {config.vectorize} is not implemented.")
+        raise AttributeError(f"The vectorizer {config.vectorize} is not implemented.")
