@@ -162,10 +162,10 @@ def get_runner(method,
     print("Calculating device:", device)
 
     if dl_toolbox == "torch":
-        from xuance.torch.runners import REGISTRY as run_REGISTRY
+        from xuance.torch.runners import REGISTRY_Runner
         print("Deep learning toolbox: PyTorch.")
     elif dl_toolbox == "mindspore":
-        from xuance.mindspore.runners import REGISTRY as run_REGISTRY
+        from xuance.mindspore.runners import REGISTRY_Runner
         from mindspore import context
         print("Deep learning toolbox: MindSpore.")
         if device != "Auto":
@@ -176,7 +176,7 @@ def get_runner(method,
         context.set_context(mode=context.GRAPH_MODE)  # 静态图（断点无法进入）
         # context.set_context(mode=context.PYNATIVE_MODE)  # 动态图（便于调试）
     elif dl_toolbox == "tensorflow":
-        from xuance.tensorflow.runners import REGISTRY as run_REGISTRY
+        from xuance.tensorflow.runners import REGISTRY_Runner
         print("Deep learning toolbox: TensorFlow.")
         if device in ["cpu", "CPU"]:
             os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
@@ -217,7 +217,7 @@ def get_runner(method,
         print("Scenario:", args[0].env_id)
         for arg in args:
             if arg.agent_name != "random":
-                runner = run_REGISTRY[arg.runner](args)
+                runner = REGISTRY_Runner[arg.runner](args)
                 return runner
         raise "Both sides of policies are random!"
     else:
@@ -239,7 +239,7 @@ def get_runner(method,
         print("Algorithm:", args.agent)
         print("Environment:", args.env_name)
         print("Scenario:", args.env_id)
-        runner = run_REGISTRY[args.runner](args)
+        runner = REGISTRY_Runner[args.runner](args)
         return runner
 
 

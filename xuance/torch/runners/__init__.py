@@ -6,7 +6,7 @@ from .runner_magent import MAgent_Runner
 from .runner_sc2 import SC2_Runner
 from .runner_football import Football_Runner
 
-REGISTRY = {
+REGISTRY_Runner = {
     "DL_toolbox": "PyTorch",
     "DRL": Runner_DRL,
     "MARL": Runner_MARL,

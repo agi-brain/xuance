@@ -4,8 +4,10 @@ Paper link: https://ojs.aaai.org/index.php/AAAI/article/view/11794
 Implementation: Pytorch
 """
 import torch
-
-from xuance.torch.learners import *
+from torch import nn
+from xuance.torch.learners import LearnerMAS
+from typing import Optional, Sequence, Union
+from argparse import Namespace
 
 
 class COMA_Learner(LearnerMAS):

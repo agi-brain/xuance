@@ -1,13 +1,9 @@
-from xuance.torch.runners.runner_basic import Runner_Base
-from xuance.environment import make_envs
-from xuance.torch.representations import REGISTRY_Representation
-from xuance.torch.agents import REGISTRY_Agents
-from xuance.torch.policies import REGISTRY_Policy
-from xuance.torch.utils.input_reformat import get_repre_in, get_policy_in
-import torch
 import gym.spaces
 import numpy as np
 from copy import deepcopy
+from xuance.torch.runners import Runner_Base
+from xuance.environment import make_envs
+from xuance.torch.agents import REGISTRY_Agents
 
 
 class Runner_DRL(Runner_Base):

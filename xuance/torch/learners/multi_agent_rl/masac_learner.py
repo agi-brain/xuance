@@ -2,7 +2,10 @@
 Multi-agent Soft Actor-critic (MASAC)
 Implementation: Pytorch
 """
-from xuance.torch.learners import *
+import torch
+from torch import nn
+from typing import Optional, Sequence, Union
+from argparse import Namespace
 from xuance.torch.learners.multi_agent_rl.isac_learner import ISAC_Learner
 
 

@@ -2,7 +2,11 @@
 Independent Soft Actor-critic (ISAC)
 Implementation: Pytorch
 """
-from xuance.torch.learners import *
+import torch
+from torch import nn
+from xuance.torch.learners import LearnerMAS
+from typing import Optional, Sequence, Union
+from argparse import Namespace
 
 
 class ISAC_Learner(LearnerMAS):

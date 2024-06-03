@@ -4,7 +4,11 @@ Paper link:
 http://proceedings.mlr.press/v80/yang18d/yang18d.pdf
 Implementation: Pytorch
 """
-from xuance.torch.learners import *
+import torch
+from torch import nn
+from xuance.torch.learners import LearnerMAS
+from typing import Optional, Union
+from argparse import Namespace
 
 
 class MFAC_Learner(LearnerMAS):

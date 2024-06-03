@@ -1,4 +1,18 @@
-from xuance.torch.agents import *
+import torch
+import numpy as np
+from tqdm import tqdm
+from copy import deepcopy
+from operator import itemgetter
+from argparse import Namespace
+from typing import List
+from xuance.environment import DummyVecMultiAgentEnv
+from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
+from xuance.torch.representations import REGISTRY_Representation
+from xuance.torch.policies import REGISTRY_Policy, QMIX_mixer
+from xuance.torch.learners import QMIX_Learner
+from xuance.torch.agents import MARLAgents
+from xuance.torch.agents.multi_agent_rl.iql_agents import IQL_Agents
+from xuance.common import MARL_OffPolicyBuffer, MARL_OffPolicyBuffer_RNN
 
 
 class MFQ_Agents(MARLAgents):
@@ -11,8 +25,7 @@ class MFQ_Agents(MARLAgents):
     """
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecMultiAgentEnv,
-                 device: Optional[Union[int, str, torch.device]] = None):
+                 envs: DummyVecMultiAgentEnv):
         self.gamma = config.gamma
 
         self.start_greedy, self.end_greedy = config.start_greedy, config.end_greedy

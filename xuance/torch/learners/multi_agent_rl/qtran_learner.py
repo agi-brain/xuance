@@ -4,7 +4,11 @@ Paper link:
 http://proceedings.mlr.press/v97/son19a/son19a.pdf
 Implementation: Pytorch
 """
-from xuance.torch.learners import *
+import torch
+from torch import nn
+from xuance.torch.learners import LearnerMAS
+from typing import Optional, Union
+from argparse import Namespace
 
 
 class QTRAN_Learner(LearnerMAS):

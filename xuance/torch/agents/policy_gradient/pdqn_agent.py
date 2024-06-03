@@ -5,7 +5,7 @@ from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
 from gym import spaces
-from xuance.environment import Gym_Env
+from xuance.environment.single_agent_env import Gym_Env
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.representations import REGISTRY_Representation
 from xuance.torch.policies import REGISTRY_Policy
