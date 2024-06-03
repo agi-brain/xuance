@@ -8,38 +8,6 @@ from xuance.torch.utils import ModuleType, mlp_block, DiagGaussianDistribution, 
 from xuance.torch import Tensor, Module
 
 
-class ActorNet_SAC(Module):
-    def __init__(self,
-                 state_dim: int,
-                 n_agents: int,
-                 action_dim: int,
-                 hidden_sizes: Sequence[int],
-                 normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., Tensor]] = None,
-                 activation: Optional[ModuleType] = None,
-                 activation_action: Optional[ModuleType] = None,
-                 device: Optional[Union[str, int, torch.device]] = None):
-        super(ActorNet_SAC, self).__init__()
-        self.device = device
-        layers = []
-        input_shape = (state_dim + n_agents,)
-        for h in hidden_sizes:
-            mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initialize, device)
-            layers.extend(mlp)
-        self.output = nn.Sequential(*layers)
-        self.mu = nn.Linear(input_shape[0], action_dim, device=device)
-        self.log_std = nn.Linear(input_shape[0], action_dim, device=device)
-        self.dist = ActivatedDiagGaussianDistribution(action_dim, activation_action, device)
-
-    def forward(self, x: Tensor):
-        output = self.output(x)
-        mu = self.mu(output)
-        log_std = torch.clamp(self.log_std(output), -20, 2)
-        std = log_std.exp()
-        self.dist.set_param(mu, std)
-        return self.dist
-
-
 class MAAC_Policy(Module):
     """
     MAAC_Policy: Multi-Agent Actor-Critic Policy with Gaussian distributions.
@@ -74,21 +42,19 @@ class MAAC_Policy(Module):
         self.dim_input_critic = {}
         self.actor, self.critic = {}, {}
         for key in self.model_keys:
-            dim_action = self.action_space[key].shape[-1]
-            dim_obs_actor, dim_obs_critic, dim_act_actor, dim_act_critic = self._get_actor_critic_input(
+            dim_actor_in, dim_actor_out, dim_critic_in, dim_critic_out = self._get_actor_critic_input(
                 self.n_actions[key],
                 self.actor_representation[key].output_shapes['state'][0],
                 self.critic_representation[key].output_shapes['state'][0], n_agents)
             
             if self.use_parameter_sharing:
-                dim_obs_actor += self.n_agents
-                dim_obs_critic += self.n_agents
+                dim_actor_in += self.n_agents
+                dim_critic_in += self.n_agents
             
-            self.actor[key] = ActorNet(self.actor_representation[key].output_shapes['state'][0], n_agents, self.action_dim,
-                                       actor_hidden_size, normalize, initialize, activation, activation_action, device)
-            dim_input_critic = self.critic_representation[key].output_shapes['state'][0]
-            self.critic[key] = CriticNet(dim_input_critic, n_agents, critic_hidden_size,
-                                    normalize, initialize, activation, device)
+            self.actor[key] = ActorNet(dim_actor_in, dim_actor_out, actor_hidden_size,
+                                       normalize, initialize, activation, activation_action, device)
+            self.critic[key] = CriticNet(dim_critic_in, critic_hidden_size,
+                                         normalize, initialize, activation, device)
         self.mixer = mixer
         self.pi_dist = None
     
@@ -97,7 +63,7 @@ class MAAC_Policy(Module):
         Returns the input dimensions of actor netwrok and critic networks.
 
         Parameters:
-            dim_action: The dimension of actions.
+            dim_action: The dimension of actions (continuous), or the number of actions (discrete).
             dim_actor_rep: The dimension of the output of actor presentation.
             dim_critic_rep: The dimension of the output of critic presentation.
             n_agents: The number of agents.
@@ -106,9 +72,9 @@ class MAAC_Policy(Module):
             dim_actor_in: The dimension of input of the actor networks.
             dim_critic_in: The dimension of the input of critic networks.
         """
-        dim_actor_in, dim_critic_in = dim_actor_rep, dim_critic_rep
-        dim_act_actor, dim_act_critic = dim_action, dim_action
-        return dim_actor_in, dim_critic_in, dim_act_actor, dim_act_critic
+        dim_actor_in, dim_actor_out = dim_actor_rep, dim_action
+        dim_critic_in, dim_critic_out = dim_critic_rep, 1
+        return dim_actor_in, dim_actor_out, dim_critic_in, dim_critic_out
 
     def forward(self, observation: Tensor, agent_ids: Tensor,
                 *rnn_hidden: Tensor, **kwargs):

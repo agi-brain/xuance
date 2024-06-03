@@ -3,11 +3,23 @@ import torch.nn as nn
 import torch.nn.functional as F
 from typing import Sequence, Optional, Callable, Union
 from xuance.torch import Tensor, Module
-from xuance.torch.utils import ModuleType, mlp_block, \
-    CategoricalDistribution, DiagGaussianDistribution, ActivatedDiagGaussianDistribution
+from xuance.torch.utils import ModuleType, mlp_block
+from xuance.torch.utils import CategoricalDistribution, DiagGaussianDistribution, ActivatedDiagGaussianDistribution
 
 
 class BasicQhead(Module):
+    """
+    A base class to build Q network and calculate the Q values.
+
+    Args:
+        state_dim (int): The input state dimension.
+        n_actions (int): The number of discrete actions.
+        hidden_sizes: List of hidden units for fully connect layers.
+        normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
+        activation (Optional[ModuleType]): The activation function for each layer.
+        device (Optional[Union[str, int, torch.device]]): The calculating device.
+    """
     def __init__(self,
                  state_dim: int,
                  n_actions: int,
@@ -26,16 +38,34 @@ class BasicQhead(Module):
         self.model = nn.Sequential(*layers_)
 
     def forward(self, x: Tensor):
+        """
+        Returns the output of the Q network.
+        Parameters:
+            x (Tensor): The input tensor.
+        """
         return self.model(x)
 
 
 class ActorNet(nn.Module):
+    """
+    The actor network for deterministic policy, which outputs activated continuous actions directly.
+    
+    Args:
+        state_dim (int): The input state dimension.
+        action_dim (int): The dimension of continuous action space.
+        hidden_sizes (Sequence[int]): List of hidden units for fully connect layers.
+        normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
+        activation (Optional[ModuleType]): The activation function for each layer.
+        activation_action (Optional[ModuleType]): The activation of final layer to bound the actions.
+        device (Optional[Union[str, int, torch.device]]): The calculating device.
+    """
     def __init__(self,
                  state_dim: int,
                  action_dim: int,
                  hidden_sizes: Sequence[int],
                  normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., torch.Tensor]] = None,
+                 initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None,
                  activation_action: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None):
@@ -48,11 +78,28 @@ class ActorNet(nn.Module):
         layers.extend(mlp_block(input_shape[0], action_dim, None, activation_action, initialize, device)[0])
         self.model = nn.Sequential(*layers)
 
-    def forward(self, x: torch.tensor):
+    def forward(self, x: Tensor):
+        """
+        Returns the output of the actor.
+        Parameters:
+            x (Tensor): The input tensor.
+        """
         return self.model(x)
 
 
 class CategoricalActorNet(Module):
+    """
+    The actor network for categorical policy, which outputs a distribution over all discrete actions.
+
+    Args:
+        state_dim (int): The input state dimension.
+        action_dim (int): The dimension of continuous action space.
+        hidden_sizes (Sequence[int]): List of hidden units for fully connect layers.
+        normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
+        activation (Optional[ModuleType]): The activation function for each layer.
+        device (Optional[Union[str, int, torch.device]]): The calculating device.
+    """
     def __init__(self,
                  state_dim: int,
                  action_dim: int,
@@ -72,6 +119,15 @@ class CategoricalActorNet(Module):
         self.dist = CategoricalDistribution(action_dim)
 
     def forward(self, x: Tensor, avail_actions: Optional[Tensor] = None):
+        """
+        Returns the stochastic distribution over all discrete actions.
+        Parameters:
+            x (Tensor): The input tensor.
+            avail_actions (Optional[Tensor]): The actions mask values when use actions mask, default is None.
+
+        Returns:
+            self.dist: CategoricalDistribution(action_dim), a distribution over all discrete actions.
+        """
         logits = self.model(x)
         if avail_actions is not None:
             logits[avail_actions == 0] = -1e10
@@ -80,6 +136,18 @@ class CategoricalActorNet(Module):
 
 
 class CategoricalActorNet_SAC(CategoricalActorNet):
+    """
+    The actor network for categorical policy in SAC-DIS, which outputs a distribution over all discrete actions.
+
+    Args:
+        state_dim (int): The input state dimension.
+        action_dim (int): The dimension of continuous action space.
+        hidden_sizes (Sequence[int]): List of hidden units for fully connect layers.
+        normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
+        activation (Optional[ModuleType]): The activation function for each layer.
+        device (Optional[Union[str, int, torch.device]]): The calculating device.
+    """
     def __init__(self,
                  state_dim: int,
                  action_dim: int,
@@ -93,6 +161,15 @@ class CategoricalActorNet_SAC(CategoricalActorNet):
         self.output = nn.Softmax(dim=-1)
 
     def forward(self, x: Tensor, avail_actions: Optional[Tensor] = None):
+        """
+        Returns the stochastic distribution over all discrete actions.
+        Parameters:
+            x (Tensor): The input tensor.
+            avail_actions (Optional[Tensor]): The actions mask values when use actions mask, default is None.
+
+        Returns:
+            self.dist: CategoricalDistribution(action_dim), a distribution over all discrete actions.
+        """
         logits = self.model(x)
         if avail_actions is not None:
             logits[avail_actions == 0] = -1e10
@@ -102,6 +179,19 @@ class CategoricalActorNet_SAC(CategoricalActorNet):
 
 
 class GaussianActorNet(Module):
+    """
+    The actor network for Gaussian policy, which outputs a distribution over the continuous action space.
+
+    Args:
+        state_dim (int): The input state dimension.
+        action_dim (int): The dimension of continuous action space.
+        hidden_sizes (Sequence[int]): List of hidden units for fully connect layers.
+        normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
+        activation (Optional[ModuleType]): The activation function for each layer.
+        activation_action (Optional[ModuleType]): The activation of final layer to bound the actions.
+        device (Optional[Union[str, int, torch.device]]): The calculating device.
+    """
     def __init__(self,
                  state_dim: int,
                  action_dim: int,
@@ -123,11 +213,30 @@ class GaussianActorNet(Module):
         self.dist = DiagGaussianDistribution(action_dim)
 
     def forward(self, x: Tensor):
+        """
+        Returns the stochastic distribution over the continuous action space.
+        Parameters:
+            x (Tensor): The input tensor.
+
+        Returns:
+            self.dist: A distribution over the continuous action space.
+        """
         self.dist.set_param(self.mu(x), self.logstd.exp())
         return self.dist
 
 
 class CriticNet(Module):
+    """
+    The critic network that outputs the evaluated values for states (State-Value) or state-action pairs (Q-value).
+
+    Args:
+        input_dim (int): The input dimension (dim_state or dim_state + dim_action).
+        hidden_sizes (Sequence[int]): List of hidden units for fully connect layers.
+        normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
+        activation (Optional[ModuleType]): The activation function for each layer.
+        device (Optional[Union[str, int, torch.device]]): The calculating device.
+    """
     def __init__(self,
                  input_dim: int,
                  hidden_sizes: Sequence[int],
@@ -145,31 +254,28 @@ class CriticNet(Module):
         self.model = nn.Sequential(*layers)
 
     def forward(self, x: Tensor):
+        """
+        Returns the output of the Q network.
+        Parameters:
+            x (Tensor): The input tensor.
+        """
         return self.model(x)
 
 
-class Critic_SAC_Dis(CriticNet, Module):
-    def __init__(self,
-                 state_dim: int,
-                 action_dim: int,
-                 hidden_sizes: Sequence[int],
-                 initialize: Optional[Callable[..., Tensor]] = None,
-                 activation: Optional[ModuleType] = None,
-                 device: Optional[Union[str, int, torch.device]] = None):
-        Module.__init__(self)
-        layers = []
-        input_shape = (state_dim,)
-        for h in hidden_sizes:
-            mlp, input_shape = mlp_block(input_shape[0], h, None, activation, initialize, device)
-            layers.extend(mlp)
-        layers.extend(mlp_block(input_shape[0], action_dim, None, None, initialize, device)[0])
-        self.model = nn.Sequential(*layers)
+class GaussianActorNet_SAC(Module):
+    """
+    The actor network for Gaussian policy in SAC, which outputs a distribution over the continuous action space.
 
-    def forward(self, x: torch.tensor):
-        return self.model(x)
-
-
-class ActorNet_SAC(Module):
+    Args:
+        state_dim (int): The input state dimension.
+        action_dim (int): The dimension of continuous action space.
+        hidden_sizes (Sequence[int]): List of hidden units for fully connect layers.
+        normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
+        activation (Optional[ModuleType]): The activation function for each layer.
+        activation_action (Optional[ModuleType]): The activation of final layer to bound the actions.
+        device (Optional[Union[str, int, torch.device]]): The calculating device.
+    """
     def __init__(self,
                  state_dim: int,
                  action_dim: int,
@@ -179,19 +285,26 @@ class ActorNet_SAC(Module):
                  activation: Optional[ModuleType] = None,
                  activation_action: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None):
-        super(ActorNet_SAC, self).__init__()
+        super(GaussianActorNet_SAC, self).__init__()
         layers = []
         input_shape = (state_dim,)
         for h in hidden_sizes:
             mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initialize, device)
             layers.extend(mlp)
-        self.device = device
         self.output = nn.Sequential(*layers)
         self.out_mu = nn.Linear(hidden_sizes[-1], action_dim, device=device)
         self.out_log_std = nn.Linear(hidden_sizes[-1], action_dim, device=device)
         self.dist = ActivatedDiagGaussianDistribution(action_dim, activation_action, device)
 
-    def forward(self, x: torch.tensor):
+    def forward(self, x: Tensor):
+        """
+        Returns the stochastic distribution over the continuous action space.
+        Parameters:
+            x (Tensor): The input tensor.
+
+        Returns:
+            self.dist: A distribution over the continuous action space.
+        """
         output = self.output(x)
         mu = self.out_mu(output)
         log_std = torch.clamp(self.out_log_std(output), -20, 2)
@@ -201,6 +314,9 @@ class ActorNet_SAC(Module):
 
 
 class VDN_mixer(nn.Module):
+    """
+    The value decomposition networks mixer. (Additivity)
+    """
     def __init__(self):
         super(VDN_mixer, self).__init__()
 
@@ -209,7 +325,22 @@ class VDN_mixer(nn.Module):
 
 
 class QMIX_mixer(nn.Module):
-    def __init__(self, dim_state, dim_hidden, dim_hypernet_hidden, n_agents, device):
+    """
+    The QMIX mixer. (Monotonicity)
+
+    Args:
+        dim_state (int): The dimension of global state.
+        dim_hidden (int): The size of rach hidden layer.
+        dim_hypernet_hidden (int): The size of rach hidden layer for hyper network.
+        n_agents (int): The number of agents.
+        device (Optional[Union[str, int, torch.device]]): The calculating device.
+    """
+    def __init__(self,
+                 dim_state: Optional[int] = None,
+                 dim_hidden: int = 32,
+                 dim_hypernet_hidden: int = 32,
+                 n_agents: int = 1,
+                 device: Optional[Union[str, int, torch.device]] = None):
         super(QMIX_mixer, self).__init__()
         self.device = device
         self.dim_state = dim_state
@@ -231,6 +362,16 @@ class QMIX_mixer(nn.Module):
                                        nn.Linear(self.dim_hypernet_hidden, 1)).to(device)
 
     def forward(self, values_n, states):
+        """
+        Returns the total Q-values for multi-agent team.
+
+        Parameters:
+            values_n: The individual values for agents in team.
+            states: The global states.
+
+        Returns:
+            q_tot: The total Q-values for the multi-agent team.
+        """
         states = torch.as_tensor(states, dtype=torch.float32, device=self.device)
         states = states.reshape(-1, self.dim_state)
         agent_qs = values_n.reshape(-1, 1, self.n_agents)
@@ -253,7 +394,14 @@ class QMIX_mixer(nn.Module):
 
 
 class QMIX_FF_mixer(nn.Module):
-    def __init__(self, dim_state, dim_hidden, n_agents, device):
+    """
+    The feedforward mixer without the constraints of monotonicity.
+    """
+    def __init__(self,
+                 dim_state: int = 0,
+                 dim_hidden: int = 32,
+                 n_agents: int = 1,
+                 device: Optional[Union[str, int, torch.device]] = None):
         super(QMIX_FF_mixer, self).__init__()
         self.device = device
         self.dim_state = dim_state
@@ -272,6 +420,13 @@ class QMIX_FF_mixer(nn.Module):
                                          nn.Linear(self.dim_hidden, 1)).to(self.device)
 
     def forward(self, values_n, states):
+        """
+        Returns the feedforward total Q-values.
+
+        Parameters:
+            values_n: The individual Q-values.
+            states: The global states.
+        """
         states = states.reshape(-1, self.dim_state)
         agent_qs = values_n.view([-1, self.n_agents])
         inputs = torch.cat([agent_qs, states], dim=-1).to(self.device)
