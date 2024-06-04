@@ -51,9 +51,9 @@ class Runner_DRL(Runner_Base):
     def benchmark(self):
         # test environment
         def env_fn():
-            args_test = deepcopy(self.config)
-            args_test.parallels = args_test.test_episode
-            return make_envs(args_test)
+            config_test = deepcopy(self.config)
+            config_test.parallels = config_test.test_episode
+            return make_envs(config_test)
 
         train_steps = self.config.running_steps // self.n_envs
         eval_interval = self.config.eval_interval // self.n_envs
