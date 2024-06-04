@@ -33,7 +33,7 @@ class IPPO_Agents(MARLAgents):
         self.n_minibatch = config.n_minibatch
         self.use_global_state = config.use_global_state
 
-        # create representation for actor
+        # create policy, optimizer, and lr_scheduler.
         self.policy = self._build_policy()
         optimizer = torch.optim.Adam(self.policy.parameters_model,
                                      lr=config.learning_rate, eps=1e-5,

@@ -10,6 +10,9 @@ from torch import nn
 from torch.utils.tensorboard import SummaryWriter
 from xuance.common import get_time_string, create_directory
 from xuance.environment import DummyVecMultiAgentEnv
+from xuance.torch.representations import REGISTRY_Representation
+from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
+from xuance.torch import ModuleDict
 
 
 class MARLAgents(ABC):
@@ -120,6 +123,36 @@ class MARLAgents(ABC):
         else:
             for k, v in info.items():
                 self.writer.add_video(k, v, fps=fps, global_step=x_index)
+                
+    def _build_representation(self, representation_key: str, config: Namespace):
+        normalize_fn = NormalizeFunctions[config.normalize] if hasattr(config, "normalize") else None
+        initializer = nn.init.orthogonal_
+        activation = ActivationFunctions[config.activation]
+        device = self.device
+        agent = config.agent
+
+        # build representations
+        representation = ModuleDict()
+        for key in self.model_keys:
+            input_shape = self.observation_space[key].shape
+            if representation_key == "Basic_Identical":
+                representation[key] = REGISTRY_Representation["Basic_Identical"](input_shape=input_shape,
+                                                                                 device=self.device)
+            elif representation_key == "Basic_MLP":
+                representation[key] = REGISTRY_Representation["Basic_MLP"](
+                    input_shape=input_shape, hidden_sizes=self.config.representation_hidden_size,
+                    normalize=normalize_fn, initialize=initializer, activation=activation, device=device)
+            elif representation_key == "Basic_RNN":
+                representation[key] = REGISTRY_Representation["Basic_RNN"](
+                    input_shape=input_shape,
+                    hidden_sizes={'fc_hidden_sizes': self.config.fc_hidden_sizes,
+                                  'recurrent_hidden_size': self.config.recurrent_hidden_size},
+                    normalize=normalize_fn, initialize=initializer, activation=activation, device=device,
+                    N_recurrent_layers=self.config.N_recurrent_layers,
+                    dropout=self.config.dropout, rnn=self.config.rnn)
+            else:
+                raise AttributeError(f"{agent} currently does not support {representation_key} representation.")
+        return representation
 
     def _build_policy(self):
         raise NotImplementedError

@@ -5,28 +5,30 @@ Implementation: Pytorch
 """
 import torch
 from torch import nn
-from xuance.torch.learners import LearnerMAS
-from typing import Optional, Sequence, Union
+from typing import Optional, List
 from argparse import Namespace
+from operator import itemgetter
+from numpy import concatenate as concat
+from xuance.torch import Tensor
+from xuance.torch.utils import ValueNorm
+from xuance.torch.learners import LearnerMAS
 
 
 class COMA_Learner(LearnerMAS):
     def __init__(self,
                  config: Namespace,
+                 model_keys: List[str],
+                 agent_keys: List[str],
+                 episode_length: int,
                  policy: nn.Module,
-                 optimizer: Sequence[torch.optim.Optimizer],
-                 scheduler: Sequence[torch.optim.lr_scheduler._LRScheduler] = None,
-                 device: Optional[Union[int, str, torch.device]] = None,
-                 model_dir: str = "./",
-                 gamma: float = 0.99,
-                 sync_frequency: int = 100
-                 ):
-        self.gamma = gamma
+                 optimizer: Optional[List[torch.optim.Adam]],
+                 scheduler: Optional[List[torch.optim.lr_scheduler.LinearLR]] = None):
+        self.gamma = config.gamma
         self.td_lambda = config.td_lambda
-        self.sync_frequency = sync_frequency
+        self.sync_frequency = config.sync_frequency
         self.use_global_state = config.use_global_state
         self.mse_loss = nn.MSELoss()
-        super(COMA_Learner, self).__init__(config, policy, optimizer, scheduler, device, model_dir)
+        super(COMA_Learner, self).__init__(config, model_keys, agent_keys, episode_length, policy, optimizer, scheduler)
         self.optimizer = {
             'actor': optimizer[0],
             'critic': optimizer[1]

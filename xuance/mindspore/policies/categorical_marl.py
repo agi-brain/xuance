@@ -254,7 +254,7 @@ class MAAC_Policy_Share(MAAC_Policy):
         return values_n if self.mixer is None else self.mixer(values_n, global_state)
 
 
-class COMAPolicy(nn.Cell):
+class COMA_Policy(nn.Cell):
     def __init__(self,
                  action_space: Discrete,
                  n_agents: int,
@@ -265,7 +265,7 @@ class COMAPolicy(nn.Cell):
                  initialize: Optional[Callable[..., ms.Tensor]] = None,
                  activation: Optional[ModuleType] = None,
                  **kwargs):
-        super(COMAPolicy, self).__init__()
+        super(COMA_Policy, self).__init__()
         self.action_dim = action_space.n
         self.n_agents = n_agents
         self.representation = representation

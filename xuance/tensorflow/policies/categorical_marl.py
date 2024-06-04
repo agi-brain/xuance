@@ -240,7 +240,7 @@ class MAAC_Policy_Share(MAAC_Policy):
             return params + self.representation.trainable_variables
 
 
-class COMAPolicy(tk.Model):
+class COMA_Policy(tk.Model):
     def __init__(self,
                  action_space: Discrete,
                  n_agents: int,
@@ -252,7 +252,7 @@ class COMAPolicy(tk.Model):
                  activation: Optional[tk.layers.Layer] = None,
                  device: Optional[Union[str, int]] = None,
                  **kwargs):
-        super(COMAPolicy, self).__init__()
+        super(COMA_Policy, self).__init__()
         self.device = device
         self.action_dim = action_space.n
         self.n_agents = n_agents
