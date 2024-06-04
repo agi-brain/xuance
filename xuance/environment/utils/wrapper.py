@@ -154,18 +154,6 @@ class XuanCeMultiAgentEnvWrapper(XuanCeEnvWrapper):
         }
         self._episode_score = {agent: 0.0 for agent in self.agents}
 
-    def step(self, action):
-        """Steps through the environment with action."""
-        observation, reward, terminated, truncated, info = self.env.step(action)
-        self._episode_step += 1
-        for agent in self.agents:
-            self._episode_score[agent] += reward[agent]
-        info["episode_step"] = self._episode_step  # current episode step
-        info["episode_score"] = self._episode_score  # the accumulated rewards
-        info["agent_mask"] = self.agent_mask
-        info["avail_actions"] = self.avail_actions
-        return observation, reward, terminated, truncated, info
-
     def reset(self, **kwargs) -> Tuple[dict, dict]:
         """Resets the environment with kwargs."""
         try:
@@ -179,7 +167,21 @@ class XuanCeMultiAgentEnvWrapper(XuanCeEnvWrapper):
         info["episode_score"] = self._episode_score  # the accumulated rewards
         info["agent_mask"] = self.agent_mask
         info["avail_actions"] = self.avail_actions
+        info["state"] = self.state
         return obs, info
+
+    def step(self, action):
+        """Steps through the environment with action."""
+        observation, reward, terminated, truncated, info = self.env.step(action)
+        self._episode_step += 1
+        for agent in self.agents:
+            self._episode_score[agent] += reward[agent]
+        info["episode_step"] = self._episode_step  # current episode step
+        info["episode_score"] = self._episode_score  # the accumulated rewards
+        info["agent_mask"] = self.agent_mask
+        info["avail_actions"] = self.avail_actions
+        info["state"] = self.state
+        return observation, reward, terminated, truncated, info
 
     @property
     def env_info(self) -> Optional[dict]:

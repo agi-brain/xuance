@@ -1,16 +1,18 @@
-from xuance.environment.vector_envs.vector_env import VecEnv
 import numpy as np
 import multiprocessing as mp
-from xuance.common import space2shape, combined_shape
+from xuance.common import space2shape
+from xuance.environment.vector_envs.vector_env import VecEnv
 from xuance.environment.vector_envs import clear_mpi_env_vars, flatten_list, CloudpickleWrapper
 
 
 def worker(remote, parent_remote, env_fn_wrappers):
     def step_env(env, action):
         obs, reward_n, terminated, truncated, info = env.step(action)
-        if terminated or truncated:
-            ob_reset, _ = env.reset()
+        if all(terminated.values()) or truncated:
+            ob_reset, info_reset = env.reset()
             info["reset_obs"] = ob_reset
+            info["reset_avail_actions"] = info_reset['avail_actions']
+            info["reset_state"] = info_reset['state']
         return obs, reward_n, terminated, truncated, info
 
     parent_remote.close()
@@ -27,10 +29,16 @@ def worker(remote, parent_remote, env_fn_wrappers):
             elif cmd == 'close':
                 remote.close()
                 break
-            elif cmd == 'get_spaces':
-                remote.send(CloudpickleWrapper((envs[0].observation_space, envs[0].action_space)))
-            elif cmd == 'get_max_cycles':
-                remote.send(CloudpickleWrapper((envs[0].max_episode_steps)))
+            elif cmd == 'get_env_info':
+                env_info = {
+                    'state_space': envs[0].state_space,
+                    'observation_space': envs[0].observation_space,
+                    'action_space': envs[0].action_space,
+                    'agents': envs[0].agents,
+                    'num_agents': envs[0].num_agents,
+                    'max_episode_steps': envs[0].max_episode_steps,
+                }
+                remote.send(CloudpickleWrapper(env_info))
             else:
                 raise NotImplementedError
     except KeyboardInterrupt:
@@ -71,24 +79,32 @@ class SubprocVecMultiAgentEnv(VecEnv):
         for remote in self.work_remotes:
             remote.close()
 
-        self.remotes[0].send(('get_spaces', None))
-        observation_space, action_space = self.remotes[0].recv().x
+        self.remotes[0].send(('get_env_info', None))
+        env_info = self.remotes[0].recv().x
         self.viewer = None
-        VecEnv.__init__(self, num_envs, observation_space, action_space)
+        VecEnv.__init__(self, num_envs, env_info['observation_space'], env_info['action_space'])
 
-        self.obs_shape = space2shape(self.observation_space)
-        if isinstance(self.observation_space, dict):
-            self.buf_obs = {k: np.zeros(combined_shape(self.num_envs, v)) for k, v in
-                            zip(self.obs_shape.keys(), self.obs_shape.values())}
-        else:
-            self.buf_obs = np.zeros(combined_shape(self.num_envs, self.obs_shape), dtype=np.float32)
-        self.buf_terminated = np.zeros((self.num_envs,), dtype=np.bool_)
-        self.buf_truncated = np.zeros((self.num_envs,), dtype=np.bool_)
-        self.buf_rewards = np.zeros((self.num_envs,), dtype=np.float32)
-        self.buf_infos = [{} for _ in range(self.num_envs)]
+        self.agents = env_info['agents']
+        self.num_agents = env_info['num_agents']
+        self.state_space = env_info['state_space']  # Type: Box
+        self.buf_state = [np.zeros(space2shape(self.state_space)) for _ in range(self.num_envs)]
+        self.buf_obs = [{} for _ in range(self.num_envs)]
+        self.buf_avail_actions = [{} for _ in range(self.num_envs)]
+
         self.actions = None
-        self.remotes[0].send(('get_max_cycles', None))
-        self.max_episode_steps = self.remotes[0].recv().x
+        self.max_episode_steps = env_info['max_episode_steps']
+
+    def reset(self):
+        self._assert_not_closed()
+        for remote in self.remotes:
+            remote.send(('reset', None))
+        result = [remote.recv() for remote in self.remotes]
+        result = flatten_list(result)
+        obs, info = zip(*result)
+        self.buf_obs = list(obs)
+        self.buf_state = [info[e]['state'] for e in range(self.num_envs)]
+        self.buf_avail_actions = [info[e]['avail_actions'] for e in range(self.num_envs)]
+        return list(obs), list(info)
 
     def step_async(self, actions):
         self._assert_not_closed()
@@ -101,27 +117,12 @@ class SubprocVecMultiAgentEnv(VecEnv):
         self._assert_not_closed()
         results = [remote.recv() for remote in self.remotes]
         results = flatten_list(results)
-        obs, rewards, terminated, truncated, infos = zip(*results)
-        self.buf_obs, self.buf_rewards = np.array(obs), np.array(rewards)
-        self.buf_terminated, self.buf_truncated, self.buf_infos = np.array(terminated), np.array(truncated), list(infos)
-        for e in range(self.num_envs):
-            if self.buf_terminated[e] or self.buf_truncated[e]:
-                self.buf_infos[e]["reset_obs"] = np.array(infos[e]["reset_obs"])
         self.waiting = False
-        return self.buf_obs.copy(), self.buf_rewards.copy(), self.buf_terminated.copy(), \
-               self.buf_truncated.copy(), self.buf_infos.copy()
-
-    def reset(self):
-        self._assert_not_closed()
-        for remote in self.remotes:
-            remote.send(('reset', None))
-        result = [remote.recv() for remote in self.remotes]
-        result = flatten_list(result)
-        obs, infos = zip(*result)
-        self.buf_obs, self.buf_infos = np.array(obs), list(infos)
-        self.buf_terminated = np.zeros((self.num_envs,), dtype=np.bool_)
-        self.buf_truncated = np.zeros((self.num_envs,), dtype=np.bool_)
-        return self.buf_obs.copy(), self.buf_infos.copy()
+        obs, rewards, terminated, truncated, info = zip(*results)
+        self.buf_obs = list(obs)
+        self.buf_state = [info[e]['state'] for e in range(self.num_envs)]
+        self.buf_avail_actions = [info[e]['avail_actions'] for e in range(self.num_envs)]
+        return list(obs), list(rewards), list(terminated), list(truncated), list(info)
 
     def close_extras(self):
         self.closed = True

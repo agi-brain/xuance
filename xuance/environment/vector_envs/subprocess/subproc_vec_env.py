@@ -1,7 +1,7 @@
-from xuance.environment.vector_envs.vector_env import VecEnv
 import numpy as np
 import multiprocessing as mp
 from xuance.common import space2shape, combined_shape
+from xuance.environment.vector_envs.vector_env import VecEnv
 from xuance.environment.vector_envs import clear_mpi_env_vars, flatten_list, CloudpickleWrapper
 
 
@@ -82,14 +82,20 @@ class SubprocVecEnv(VecEnv):
                             zip(self.obs_shape.keys(), self.obs_shape.values())}
         else:
             self.buf_obs = np.zeros(combined_shape(self.num_envs, self.obs_shape), dtype=np.float32)
-        self.buf_terminated = np.zeros((self.num_envs,), dtype=np.bool_)
-        self.buf_truncated = np.zeros((self.num_envs,), dtype=np.bool_)
-        self.buf_rewards = np.zeros((self.num_envs,), dtype=np.float32)
-        self.buf_info = [{} for _ in range(self.num_envs)]
 
         self.actions = None
         self.remotes[0].send(('get_max_cycles', None))
         self.max_episode_steps = self.remotes[0].recv().x
+
+    def reset(self):
+        self._assert_not_closed()
+        for remote in self.remotes:
+            remote.send(('reset', None))
+        result = [remote.recv() for remote in self.remotes]
+        result = flatten_list(result)
+        obs, info = zip(*result)
+        self.buf_obs = np.array(obs)
+        return np.array(obs), list(info)
 
     def step_async(self, actions):
         self._assert_not_closed()
@@ -102,27 +108,10 @@ class SubprocVecEnv(VecEnv):
         self._assert_not_closed()
         results = [remote.recv() for remote in self.remotes]
         results = flatten_list(results)
-        obs, rewards, terminated, truncated, infos = zip(*results)
-        self.buf_obs, self.buf_rewards = np.array(obs), np.array(rewards)
-        self.buf_terminated, self.buf_truncated, self.buf_infos = np.array(terminated), np.array(truncated), list(infos)
-        for e in range(self.num_envs):
-            if self.buf_terminated[e] or self.buf_truncated[e]:
-                self.buf_infos[e]["reset_obs"] = np.array(infos[e]["reset_obs"])
         self.waiting = False
-        return self.buf_obs.copy(), self.buf_rewards.copy(), self.buf_terminated.copy(), \
-               self.buf_truncated.copy(), self.buf_infos.copy()
-
-    def reset(self):
-        self._assert_not_closed()
-        for remote in self.remotes:
-            remote.send(('reset', None))
-        result = [remote.recv() for remote in self.remotes]
-        result = flatten_list(result)
-        obs, infos = zip(*result)
-        self.buf_obs, self.buf_infos = np.array(obs), list(infos)
-        self.buf_terminated = np.zeros((self.num_envs,), dtype=np.bool_)
-        self.buf_truncated = np.zeros((self.num_envs,), dtype=np.bool_)
-        return self.buf_obs.copy(), self.buf_infos.copy()
+        obs, rewards, terminated, truncated, info = zip(*results)
+        self.buf_obs = np.array(obs)
+        return np.array(obs), np.array(rewards), np.array(terminated), np.array(truncated), list(info)
 
     def close_extras(self):
         self.closed = True

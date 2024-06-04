@@ -39,6 +39,9 @@ class DummyVecEnv(VecEnv):
             obs, info = self.envs[e].reset()
             self._save_obs(e, obs)
             self._save_infos(e, info)
+        self.buf_terminated = np.zeros((self.num_envs,), dtype=np.bool_)
+        self.buf_truncated = np.zeros((self.num_envs,), dtype=np.bool_)
+        self.buf_rewards = np.zeros((self.num_envs,), dtype=np.float32)
         return self.buf_obs.copy(), self.buf_info.copy()
 
     def step_async(self, actions):
