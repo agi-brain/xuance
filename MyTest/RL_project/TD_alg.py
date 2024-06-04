@@ -14,6 +14,9 @@ from xuance.common import space2shape
 from xuance.environment import make_envs
 from xuance.torch.utils.operations import set_seed
 from xuance.torch.utils import ActivationFunctions
+
+from Util import save_Q,load_Q
+from Util import sarsa,expected_sarsa,eps_greedy,q_learning
 def parse_args():
     parser = argparse.ArgumentParser("Run a demo.")
     parser.add_argument("--method", type=str, default="dqn")
@@ -25,60 +28,27 @@ def parse_args():
     parser.add_argument("--config", type=str, default="./configs/test_blackjack.yaml")
     return parser.parse_args()
 
-def save_Q(Q, filename):
-    # 将字典转换为列表
-    Q_list = [(k, v) for k, v in Q.items()]
-    # 保存为npy文件
-    np.save(filename, Q_list)
-
-def load_Q(filename):
-    # 加载npy文件
-    Q_list = np.load(filename, allow_pickle=True)
-    # 将列表转换为字典
-    Q = defaultdict(lambda: 0.0)
-    for k, v in Q_list:
-        Q[k] = v
-    return Q
-def sample(env, timestep_max, number, Q, l_rate, gamma):
+def sample(env, timestep_max, number, Q, l_rate, gamma,Alg):
     ''' 采样函数,策略Pi,限制最长时间步timestep_max,总共采样序列数number '''
     for i in tqdm(range(number)):
         obs, info = env.reset()
         obs = tuple(obs[0].astype(int))
         terminated, truncated = False, False
         timestep = 0
-        while not terminated and timestep <= timestep_max:
+        while not terminated and timestep < timestep_max:
             # 选择初始动作
             eps=0.99 * (number - i) / number
-            obs, a = sarsa(env,obs,gamma,l_rate,eps,Q)
+            if Alg=='sarsa':
+                obs, a = sarsa(env, obs, gamma, l_rate, eps, Q)
+            elif Alg=='expected_sarsa':
+                obs, a = expected_sarsa(env,obs,gamma,l_rate,eps,Q)
+            elif Alg=='q_learning':
+                obs, a = q_learning(env, obs, gamma, l_rate, eps, Q)
             timestep += 1
     return Q
 
-def sarsa(env,obs,gamma,l_rate,eps,Q):
-    # 在状态s下根据策略选择动作
-    a = eps_greedy(env.action_space, eps, Q, obs)
-
-    next_obs, reward, terminated, truncated, info = env.step(a)
-    next_obs = tuple(next_obs[0].astype(int))
-    next_a = eps_greedy(env.action_space, eps, Q, next_obs)
-
-    # SARSA更新规则
-    TD_target = reward + gamma * Q[next_obs, next_a]
-    TD_error = TD_target - Q[obs, a]
-    Q[obs, a] += l_rate * TD_error
-    return next_obs,next_a
-
-
-def eps_greedy(action_space,epsilon,Q,obs)->int:#返回一个动作
-    if np.random.rand() < epsilon:
-        return action_space.sample()
-    else:
-        #如果动作为0，则在+1~+10中取所有后选状态的平均值;动作为1则取当前状态的值
-        q_values = [Q[(tuple(obs), action)] for action in range(action_space.n)]
-        return np.argmax(q_values)
-
-def sarsa_test(Q,env,number):
+def Alg_test(Q,env,number):
     obs,info = env.reset()
-
     res=[]
     for i in range(number):
         r=0
@@ -94,7 +64,7 @@ def sarsa_test(Q,env,number):
         obs,info=env.reset()
     return res
 
-def run(args):
+def run(args,Alg,Test=False):
     agent_name = args.agent  # get the name of Agent.
     set_seed(args.seed)  # set random seed.
 
@@ -106,17 +76,13 @@ def run(args):
     env = make_envs(args)  # create simulation environments
     args.observation_space = env.observation_space  # get observation space
     args.action_space = env.action_space  # get action space
-    gamma = 0.99
-    l_rate=0.001
-    Test=True
     Q = defaultdict(lambda: 0.0) #一个map来存储Q值，key=(state,action), value=Q值
-    if not  Test:
-        Q=sample(env,20, 500000,Q, l_rate, gamma)
-        save_Q(Q, 'Q.npy')
-        # sarsa(episodes, Q, gamma,l_rate=l_rate)
+    if not Test:
+        Q=sample(env,20, 500000,Q, args.learning_rate, args.gamma,Alg)
+        save_Q(Q, f'{Alg}.npy')
     else:
-        Q=load_Q('Q.npy')
-        res=sarsa_test(Q,env,50000)
+        Q=load_Q(f'{Alg}.npy')
+        res=Alg_test(Q,env,50000)
         win=0
         fail=0
         for i in res:
@@ -128,7 +94,6 @@ def run(args):
                 fail+=1
         print("win:",win,"fail:",fail)
 
-
 if __name__ == '__main__':
     parser = parse_args()
     args = get_arguments(method=parser.method,
@@ -136,5 +101,6 @@ if __name__ == '__main__':
                          env_id=parser.env_id,
                          config_path=parser.config,
                          parser_args=parser)
-    run(args)
+    Alg='q_learning'# 选择算法，可选sarsa,expected_sarsa,q_learning
+    run(args,Alg,Test=True)
 

@@ -4,7 +4,7 @@ logger: "tensorboard"  # Choices: tensorboard, wandb.
 wandb_user_name: "your_user_name"
 render: True
 render_mode: 'human' # Choices: 'human', 'rgb_array'.
-test_mode: False
+test_mode: True
 device: "cuda:0"
 
 agent: "DQN"
@@ -41,6 +41,6 @@ rewnorm_range: 5
 
 test_steps: 50000
 eval_interval: 20000
-test_episode: 10
+test_episode: 1000
 log_dir: "./logs/dqn/"
 model_dir: "./models/dqn/"
