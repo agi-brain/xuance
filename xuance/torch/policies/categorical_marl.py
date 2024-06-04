@@ -1,8 +1,8 @@
 import torch
 import torch.nn as nn
 from copy import deepcopy
-from typing import Sequence, Optional, Callable, Union, Dict, List
 from gym.spaces import Discrete
+from typing import Sequence, Optional, Callable, Union, Dict, List
 from xuance.torch.policies import CategoricalActorNet, ActorNet
 from xuance.torch.policies.core import CriticNet
 from xuance.torch.policies import VDN_mixer

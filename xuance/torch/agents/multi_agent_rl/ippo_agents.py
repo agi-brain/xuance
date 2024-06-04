@@ -7,7 +7,6 @@ from argparse import Namespace
 from typing import Optional, List
 from xuance.environment import DummyVecMultiAgentEnv
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
-from xuance.torch.representations import REGISTRY_Representation
 from xuance.torch.policies import REGISTRY_Policy
 from xuance.torch.learners import IPPO_Learner
 from xuance.torch.agents import MARLAgents
@@ -79,41 +78,11 @@ class IPPO_Agents(MARLAgents):
         initializer = torch.nn.init.orthogonal_
         activation = ActivationFunctions[self.config.activation]
         device = self.device
+        agent = self.config.agent
 
         # build representations
-        representation_actor = {key: None for key in self.model_keys}
-        representation_critic = {key: None for key in self.model_keys}
-        for key in self.model_keys:
-            input_shape = self.observation_space[key].shape
-            if self.config.representation == "Basic_Identical":
-                representation_actor[key] = REGISTRY_Representation["Basic_Identical"](input_shape=input_shape,
-                                                                                       device=self.device)
-                representation_critic[key] = REGISTRY_Representation["Basic_Identical"](input_shape=input_shape,
-                                                                                        device=self.device)
-            elif self.config.representation == "Basic_MLP":
-                representation_actor[key] = REGISTRY_Representation["Basic_MLP"](
-                    input_shape=input_shape, hidden_sizes=self.config.representation_hidden_size,
-                    normalize=normalize_fn, initialize=initializer, activation=activation, device=device)
-                representation_critic[key] = REGISTRY_Representation["Basic_MLP"](
-                    input_shape=input_shape, hidden_sizes=self.config.representation_hidden_size,
-                    normalize=normalize_fn, initialize=initializer, activation=activation, device=device)
-            elif self.config.representation == "Basic_RNN":
-                representation_actor[key] = REGISTRY_Representation["Basic_RNN"](
-                    input_shape=input_shape,
-                    hidden_sizes={'fc_hidden_sizes': self.config.fc_hidden_sizes,
-                                  'recurrent_hidden_size': self.config.recurrent_hidden_size},
-                    normalize=normalize_fn, initialize=initializer, activation=activation, device=device,
-                    N_recurrent_layers=self.config.N_recurrent_layers,
-                    dropout=self.config.dropout, rnn=self.config.rnn)
-                representation_critic[key] = REGISTRY_Representation["Basic_RNN"](
-                    input_shape=input_shape,
-                    hidden_sizes={'fc_hidden_sizes': self.config.fc_hidden_sizes,
-                                  'recurrent_hidden_size': self.config.recurrent_hidden_size},
-                    normalize=normalize_fn, initialize=initializer, activation=activation, device=device,
-                    N_recurrent_layers=self.config.N_recurrent_layers,
-                    dropout=self.config.dropout, rnn=self.config.rnn)
-            else:
-                raise AttributeError(f"IPPO currently doesn't support the {self.config.representation} representation.")
+        representation_actor = self._build_representation(self.config.representation, self.config)
+        representation_critic = self._build_representation(self.config.representation, self.config)
 
         # build policies
         if self.config.policy == "Categorical_MAAC_Policy":
@@ -136,7 +105,7 @@ class IPPO_Agents(MARLAgents):
                 use_rnn=self.use_rnn, rnn=self.config.rnn if self.use_rnn else None)
             self.continuous_control = True
         else:
-            raise AttributeError(f"IPPO currently does not support the policy named {self.config.policy}.")
+            raise AttributeError(f"{agent} currently does not support the policy named {self.config.policy}.")
 
         return policy
 
