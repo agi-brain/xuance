@@ -9,8 +9,8 @@ def worker(remote, parent_remote, env_fn_wrappers):
     def step_env(env, action):
         obs, reward_n, terminated, truncated, info = env.step(action)
         if terminated or truncated:
-            ob_reset, _ = env.reset()
-            info["reset_obs"] = ob_reset
+            obs_reset, _ = env.reset()
+            info["reset_obs"] = obs_reset
         return obs, reward_n, terminated, truncated, info
 
     parent_remote.close()
@@ -23,7 +23,7 @@ def worker(remote, parent_remote, env_fn_wrappers):
             elif cmd == 'reset':
                 remote.send([env.reset() for env in envs])
             elif cmd == 'render':
-                remote.send([env.render(mode) for env, mode in zip(envs, data)])
+                remote.send([env.render(data) for env in envs])
             elif cmd == 'close':
                 remote.close()
                 break

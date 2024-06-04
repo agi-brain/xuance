@@ -1,4 +1,3 @@
-import copy
 import numpy as np
 from smac.env import StarCraft2Env
 from xuance.environment import RawMultiAgentEnv

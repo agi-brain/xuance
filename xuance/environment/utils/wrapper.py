@@ -1,6 +1,5 @@
-from typing import Optional, Union, Tuple, List, SupportsFloat, SupportsInt
+from typing import Optional, Tuple, SupportsFloat
 from gym import spaces
-from xuance.environment.utils.new import AgentKeys
 
 
 class XuanCeEnvWrapper:
@@ -210,7 +209,7 @@ class XuanCeMultiAgentEnvWrapper(XuanCeEnvWrapper):
     @property
     def state(self):
         """Returns global states in the multi-agent environment."""
-        return self.env.state
+        return self.env.state()
 
     @property
     def agent_mask(self):
