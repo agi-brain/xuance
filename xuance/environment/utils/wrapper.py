@@ -6,14 +6,6 @@ class XuanCeEnvWrapper:
     """
     Wraps an environment for single-agent system that can run in XuanCe.
     """
-    def __new__(cls, *args, **kwargs):
-        if cls is XuanCeEnvWrapper:
-            raise TypeError("Type XuanCeEnvWrapper cannot be instantiated; It can be used only as a base class")
-        if super().__new__ is object.__new__ and cls.__init__ is not object.__init__:
-            obj = super().__new__(cls)
-        else:
-            obj = super().__new__(cls, *args, **kwargs)
-        return obj
 
     def __init__(self, env, **kwargs):
         super(XuanCeEnvWrapper, self).__init__()
@@ -130,15 +122,6 @@ class XuanCeMultiAgentEnvWrapper(XuanCeEnvWrapper):
     """
     Wraps an environment for multi-agent system that can run in XuanCe.
     """
-    def __new__(cls, *args, **kwargs):
-        if cls is XuanCeMultiAgentEnvWrapper:
-            raise TypeError("Type XuanCeMultiAgentEnvWrapper cannot be instantiated; "
-                            "It can be used only as a base class")
-        if super().__new__ is object.__new__ and cls.__init__ is not object.__init__:
-            obj = super().__new__(cls)
-        else:
-            obj = super().__new__(cls, *args, **kwargs)
-        return obj
 
     def __init__(self, env, **kwargs):
         super(XuanCeMultiAgentEnvWrapper, self).__init__(env, **kwargs)

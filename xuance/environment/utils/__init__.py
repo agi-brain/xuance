@@ -1,8 +1,7 @@
 from typing import Dict, Any
-from xuance.environment.utils.new import RawEnvironment, RawMultiAgentEnv
 from xuance.environment.utils.wrapper import XuanCeEnvWrapper, XuanCeMultiAgentEnvWrapper
-from xuance.environment.utils.base import MakeEnvironment, MakeMultiAgentEnvironment
-from xuance.environment.utils.new import MultiAgentDict, AgentKeys
+from xuance.environment.utils.base import RawEnvironment, RawMultiAgentEnv, MultiAgentDict, AgentKeys
+
 
 EnvName = Any
 EnvObject = Any
@@ -14,8 +13,6 @@ __all__ = [
     "RawMultiAgentEnv",
     "XuanCeEnvWrapper",
     "XuanCeMultiAgentEnvWrapper",
-    "MakeEnvironment",
-    "MakeMultiAgentEnvironment",
     "EnvironmentDict",
     "MultiAgentDict",
     "AgentKeys",
