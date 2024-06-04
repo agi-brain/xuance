@@ -36,7 +36,7 @@ class Runner_MARL(Runner_Base):
     def benchmark(self):
         def env_fn():
             config_test = copy.deepcopy(self.config)
-            config_test.parallels = config_test.test_episode
+            config_test.parallels = 1  # config_test.test_episode
             return make_envs(config_test)
 
         train_steps = self.config.running_steps // self.n_envs

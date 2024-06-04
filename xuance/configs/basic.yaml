@@ -4,8 +4,6 @@ project_name: "XuanCe_Benchmark"
 logger: "tensorboard"  # Choices: "tensorboard", "wandb".
 wandb_user_name: "your_user_name"
 
-parallels: 10
-seed: 2910
 render: True
 render_mode: 'rgb_array' # Choices: 'human', 'rgb_array'.
 fps: 50

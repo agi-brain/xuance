@@ -3,12 +3,12 @@ from xuance.torch.utils.operations import set_seed
 
 
 class Runner_Base(object):
-    def __init__(self, args):
+    def __init__(self, config):
         # set random seeds
-        set_seed(args.seed)
+        set_seed(config.seed)
 
         # build environments
-        self.envs = make_envs(args)
+        self.envs = make_envs(config)
         self.envs.reset()
         self.n_envs = self.envs.num_envs
 
