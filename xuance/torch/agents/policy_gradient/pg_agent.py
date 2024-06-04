@@ -50,7 +50,7 @@ class PG_Agent(Agent):
                             gamma=self.gamma,
                             gae_lam=self.gae_lam)
         self.memory = Buffer(**input_buffer)
-        self.learner = self._build_learner(self.config, envs.max_episode_length, self.policy, optimizer, lr_scheduler)
+        self.learner = self._build_learner(self.config, envs.max_episode_steps, self.policy, optimizer, lr_scheduler)
 
     def _build_policy(self):
         normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None

@@ -88,7 +88,7 @@ class SubprocVecMultiAgentEnv(VecEnv):
         self.buf_infos = [{} for _ in range(self.num_envs)]
         self.actions = None
         self.remotes[0].send(('get_max_cycles', None))
-        self.max_episode_length = self.remotes[0].recv().x
+        self.max_episode_steps = self.remotes[0].recv().x
 
     def step_async(self, actions):
         self._assert_not_closed()

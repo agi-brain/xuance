@@ -38,7 +38,7 @@ class PerDQN_Agent(DQN_Agent):
                                          buffer_size=config.buffer_size,
                                          batch_size=config.batch_size,
                                          alpha=config.PER_alpha)
-        self.learner = self._build_learner(self.config, envs.max_episode_length, self.policy, optimizer, lr_scheduler)
+        self.learner = self._build_learner(self.config, envs.max_episode_steps, self.policy, optimizer, lr_scheduler)
 
     def _build_learner(self, *args):
         return PerDQN_Learner(*args)

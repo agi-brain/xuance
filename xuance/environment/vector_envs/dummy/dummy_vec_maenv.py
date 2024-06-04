@@ -29,7 +29,7 @@ class DummyVecMultiAgentEnv(VecEnv):
         self.buf_info = [{} for _ in range(self.num_envs)]
 
         self.actions = None
-        self.max_episode_length = env.max_episode_steps
+        self.max_episode_steps = env.max_episode_steps
 
     def reset(self):
         """Reset the vectorized environments."""

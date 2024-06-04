@@ -53,7 +53,7 @@ class SC2_Runner(Runner_Base):
         self.current_step = 0
         self.env_step = 0
         self.current_episode = np.zeros((self.envs.num_envs,), np.int32)
-        self.episode_length = self.envs.max_episode_length
+        self.episode_length = self.envs.max_episode_steps
         self.num_agents, self.num_enemies = self.get_agent_num()
         args.n_agents = self.num_agents
         self.dim_obs, self.dim_act, self.dim_state = self.envs.dim_obs, self.envs.dim_act, self.envs.dim_state

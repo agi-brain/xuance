@@ -20,7 +20,7 @@ class PlatformEnv:
 
         self.observation_space = self.env.observation_space
         self.action_space = self.env.action_space
-        self.max_episode_length = config.max_episode_steps
+        self.max_episode_steps = config.max_episode_steps
 
     def close(self):
         """Close the environment."""

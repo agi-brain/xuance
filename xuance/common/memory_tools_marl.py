@@ -248,12 +248,12 @@ class MARL_OnPolicyBuffer_RNN(MARL_OnPolicyBuffer):
         use_advnorm: whether to use Advantage normalization trick.
         gamma: discount factor.
         gae_lam: gae lambda.
-        max_episode_length: maximum length of data for one episode trajectory.
+        max_episode_steps: maximum length of data for one episode trajectory.
     """
 
     def __init__(self, n_agents, state_space, obs_space, act_space, rew_space, done_space, n_envs, buffer_size,
                  use_gae, use_advnorm, gamma, gae_lam, **kwargs):
-        self.max_eps_len = kwargs['max_episode_length']
+        self.max_eps_len = kwargs['max_episode_steps']
         self.dim_act = kwargs['dim_act']
         super(MARL_OnPolicyBuffer_RNN, self).__init__(n_agents, state_space, obs_space, act_space, rew_space,
                                                       done_space, n_envs, buffer_size,
@@ -736,7 +736,7 @@ class MARL_OffPolicyBuffer_RNN(MARL_OffPolicyBuffer):
         n_envs (int): Number of parallel environments.
         buffer_size (int): Buffer size of total experience data.
         batch_size (int): Batch size of episodes for a sample.
-        max_episode_length (int): The sequence length of each episode data.
+        max_episode_steps (int): The sequence length of each episode data.
         **kwargs: Other arguments.
 
     Example:
@@ -751,11 +751,11 @@ class MARL_OffPolicyBuffer_RNN(MARL_OffPolicyBuffer):
         $ buffer_size=10000,
         $ batch_size=256,
         $ agent_keys=['agent_0', 'agent_1', 'agent_2'],
-        $ max_episode_length=60
+        $ max_episode_steps=60
         $ memory = MARL_OffPolicyBuffer_RNN(agent_keys=agent_keys, state_space=state_space,
                                             obs_space=obs_space, act_space=act_space,
                                             n_envs=n_envs, buffer_size=buffer_size, batch_size=batch_size,
-                                            max_episode_length=max_episode_length,
+                                            max_episode_steps=max_episode_steps,
                                             agent_keys=agent_keys)
     """
 
@@ -767,9 +767,9 @@ class MARL_OffPolicyBuffer_RNN(MARL_OffPolicyBuffer):
                  n_envs: int = 1,
                  buffer_size: int = 1,
                  batch_size: int = 1,
-                 max_episode_length: int = 1,
+                 max_episode_steps: int = 1,
                  **kwargs):
-        self.max_eps_len = max_episode_length
+        self.max_eps_len = max_episode_steps
         self.n_actions = kwargs['n_actions'] if 'n_actions' in kwargs else None
         self.obs_shape = {k: space2shape(obs_space[k]) for k in agent_keys}
         self.act_shape = {k: space2shape(act_space[k]) for k in agent_keys}

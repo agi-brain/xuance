@@ -57,7 +57,7 @@ class Runner_MARL(Runner_Base):
         self.current_step = 0
         self.env_step = 0
         self.current_episode = np.zeros((self.envs.num_envs,), np.int32)
-        self.episode_length = self.envs.max_episode_length
+        self.episode_length = self.envs.max_episode_steps
         self.num_agents = self.envs.num_agents
         args.n_agents = self.num_agents
         self.dim_obs = args.dim_obs = self.envs.obs_shape[-1]

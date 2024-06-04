@@ -44,9 +44,9 @@ class DRQN_Agent(Agent):
                                                self.n_envs,
                                                config.buffer_size,
                                                config.batch_size,
-                                               episode_length=envs.max_episode_length,
+                                               episode_length=envs.max_episode_steps,
                                                lookup_length=config.lookup_length)
-        self.learner = self._build_learner(self.config, envs.max_episode_length, self.policy, optimizer, lr_scheduler)
+        self.learner = self._build_learner(self.config, envs.max_episode_steps, self.policy, optimizer, lr_scheduler)
         self.lstm = True if config.rnn == "LSTM" else False
 
     def _build_policy(self):

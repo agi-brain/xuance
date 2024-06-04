@@ -70,7 +70,7 @@ class Runner(object):
         self.n_envs = self.envs.num_envs
         self.fps = 20
         self.agent_keys = self.args.agent_keys = self.envs.agent_keys[0]
-        self.episode_length = self.envs.max_episode_length
+        self.episode_length = self.envs.max_episode_steps
         self.render = self.args.render
 
         # environment details, representations, policies, optimizers, and agents.\

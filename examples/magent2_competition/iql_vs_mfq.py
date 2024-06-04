@@ -99,7 +99,7 @@ class Runner():
                                reinit=True)
                 break
 
-        self.episode_length = self.envs.max_episode_length
+        self.episode_length = self.envs.max_episode_steps
 
         # environment details, representations, policies, optimizers, and agents.
         for h, arg in enumerate(self.args):

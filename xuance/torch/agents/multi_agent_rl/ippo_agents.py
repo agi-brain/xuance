@@ -55,7 +55,7 @@ class IPPO_Agents(MARLAgents):
                             gae_lam=self.config.gae_lambda,
                             n_actions=n_actions,
                             use_actions_mask=self.use_actions_mask,
-                            max_episode_length=envs.max_episode_length)
+                            max_episode_steps=envs.max_episode_steps)
         buffer = MARL_OnPolicyBuffer_RNN if self.use_rnn else MARL_OnPolicyBuffer
         self.memory = buffer(**input_buffer)
 
@@ -65,7 +65,7 @@ class IPPO_Agents(MARLAgents):
         # initialize the hidden states of the RNN is use RNN-based representations.
         self.rnn_hidden_actor, self.rnn_hidden_critic = self.init_rnn_hidden(self.n_envs)
 
-        self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, envs.max_episode_length,
+        self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, envs.max_episode_steps,
                                            self.policy, optimizer, scheduler)
 
     def _build_policy(self):

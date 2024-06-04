@@ -185,7 +185,7 @@ Then, vectorize the simulation environment to enbale XuanCe to run multiple simu
             self.buf_rews = np.zeros((self.num_envs,) + self.rew_shape, dtype=np.float32)
             self.buf_info = [{} for _ in range(self.num_envs)]
 
-            self.max_episode_length = env_info["episode_limit"]
+            self.max_episode_steps = env_info["episode_limit"]
             self.actions = None
 
         def step_wait(self):
@@ -258,7 +258,7 @@ Then, vectorize the simulation environment to enbale XuanCe to run multiple simu
             self.buf_rews = np.zeros((self.num_envs,) + self.rew_shape, dtype=np.float32)
             self.buf_info = [{} for _ in range(self.num_envs)]
 
-            self.max_episode_length = env_info["episode_limit"]
+            self.max_episode_steps = env_info["episode_limit"]
             self.actions = None
 
         def reset(self):

@@ -48,7 +48,7 @@ class QMIX_Agents(IQL_Agents, MARLAgents):
                             batch_size=self.config.batch_size,
                             n_actions={k: self.action_space[k].n for k in self.agent_keys},
                             use_actions_mask=self.use_actions_mask,
-                            max_episode_length=envs.max_episode_length)
+                            max_episode_steps=envs.max_episode_steps)
         buffer = MARL_OffPolicyBuffer_RNN if self.use_rnn else MARL_OffPolicyBuffer
         self.memory = buffer(**input_buffer)
 
@@ -56,7 +56,7 @@ class QMIX_Agents(IQL_Agents, MARLAgents):
         self.rnn_hidden_state = self.init_rnn_hidden(self.n_envs)
 
         # create learner
-        self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, envs.max_episode_length,
+        self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, envs.max_episode_steps,
                                            self.policy, optimizer, scheduler)
 
     def _build_policy(self):

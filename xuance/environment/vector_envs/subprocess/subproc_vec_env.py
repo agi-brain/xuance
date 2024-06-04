@@ -85,10 +85,11 @@ class SubprocVecEnv(VecEnv):
         self.buf_terminated = np.zeros((self.num_envs,), dtype=np.bool_)
         self.buf_truncated = np.zeros((self.num_envs,), dtype=np.bool_)
         self.buf_rewards = np.zeros((self.num_envs,), dtype=np.float32)
-        self.buf_infos = [{} for _ in range(self.num_envs)]
+        self.buf_info = [{} for _ in range(self.num_envs)]
+
         self.actions = None
         self.remotes[0].send(('get_max_cycles', None))
-        self.max_episode_length = self.remotes[0].recv().x
+        self.max_episode_steps = self.remotes[0].recv().x
 
     def step_async(self, actions):
         self._assert_not_closed()

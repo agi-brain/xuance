@@ -41,7 +41,7 @@ class VDN_Agents(MARLAgents):
         buffer = MARL_OffPolicyBuffer_RNN if self.use_rnn else MARL_OffPolicyBuffer
         input_buffer = (config.n_agents, state_shape, config.obs_shape, config.act_shape, config.rew_shape,
                         config.done_shape, envs.num_envs, config.buffer_size, config.batch_size)
-        memory = buffer(*input_buffer, max_episode_length=envs.max_episode_length, dim_act=config.dim_act)
+        memory = buffer(*input_buffer, max_episode_steps=envs.max_episode_steps, dim_act=config.dim_act)
 
         learner = VDN_Learner(config, policy, optimizer, scheduler,
                               config.model_dir, config.gamma, config.sync_frequency)

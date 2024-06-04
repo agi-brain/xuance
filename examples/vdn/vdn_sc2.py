@@ -69,7 +69,7 @@ class Runner(object):
         self.envs.reset()
         self.n_envs = self.envs.num_envs
         self.fps = args.fps
-        self.episode_length = self.envs.max_episode_length
+        self.episode_length = self.envs.max_episode_steps
         self.render = args.render
 
         # environment details, training settings

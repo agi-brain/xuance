@@ -387,7 +387,7 @@ Source Code
                     self.battles_won = np.zeros(self.num_envs, np.int32)
                     self.dead_allies_count = np.zeros(self.num_envs, np.int32)
                     self.dead_enemies_count = np.zeros(self.num_envs, np.int32)
-                    self.max_episode_length = env_info["episode_limit"]
+                    self.max_episode_steps = env_info["episode_limit"]
 
                 def reset(self):
                     self._assert_not_closed()
@@ -503,7 +503,7 @@ Source Code
                     self.battles_won = np.zeros(self.num_envs, np.int32)
                     self.dead_allies_count = np.zeros(self.num_envs, np.int32)
                     self.dead_enemies_count = np.zeros(self.num_envs, np.int32)
-                    self.max_episode_length = env_info["episode_limit"]
+                    self.max_episode_steps = env_info["episode_limit"]
 
                 def reset(self):
                     self._assert_not_closed()

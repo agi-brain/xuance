@@ -52,7 +52,7 @@ class IDDPG_Agents(MARLAgents):
                                            batch_size=self.config.batch_size)
 
         # create learner
-        self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, envs.max_episode_length,
+        self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, envs.max_episode_steps,
                                            self.policy, optimizer, scheduler)
 
     def _build_policy(self):

@@ -47,7 +47,7 @@ class SACDIS_Agent(Agent):
         Buffer = DummyOffPolicyBuffer_Atari if self.atari else DummyOffPolicyBuffer
         self.memory = Buffer(**input_buffer)
         # Create learner.
-        self.learner = self._build_learner(self.config, envs.max_episode_length, self.policy, optimizers, lr_schedulers)
+        self.learner = self._build_learner(self.config, envs.max_episode_steps, self.policy, optimizers, lr_schedulers)
 
     def _build_policy(self):
         normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None

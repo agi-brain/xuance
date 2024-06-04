@@ -232,7 +232,7 @@ Source Code
                     input_buffer = (config.n_agents, config.state_space.shape, config.obs_shape, config.act_shape, config.rew_shape,
                                     config.done_shape, envs.num_envs, config.n_size,
                                     config.use_gae, config.use_advnorm, config.gamma, config.gae_lambda)
-                    memory = buffer(*input_buffer, max_episode_length=envs.max_episode_length,
+                    memory = buffer(*input_buffer, max_episode_steps=envs.max_episode_steps,
                                     dim_act=config.dim_act, td_lambda=config.td_lambda)
                     self.buffer_size = memory.buffer_size
                     self.batch_size = self.buffer_size // self.n_minibatch
@@ -374,7 +374,7 @@ Source Code
                     input_buffer = (config.n_agents, config.state_space.shape, config.obs_shape, config.act_shape, config.rew_shape,
                                     config.done_shape, envs.num_envs, config.n_size,
                                     config.use_gae, config.use_advnorm, config.gamma, config.gae_lambda)
-                    memory = buffer(*input_buffer, max_episode_length=envs.max_episode_length,
+                    memory = buffer(*input_buffer, max_episode_steps=envs.max_episode_steps,
                                     dim_act=config.dim_act, td_lambda=config.td_lambda)
                     self.buffer_size = memory.buffer_size
                     self.batch_size = self.buffer_size // self.n_minibatch

@@ -762,7 +762,7 @@ Source Code
                     self.buf_infos = [{} for _ in range(self.num_envs)]
                     self.actions = None
                     self.remotes[0].send(('get_max_cycles', None))
-                    self.max_episode_length = self.remotes[0].recv().x
+                    self.max_episode_steps = self.remotes[0].recv().x
 
                 def step_async(self, actions):
                     self._assert_not_closed()
@@ -848,9 +848,9 @@ Source Code
                     self.buf_infos = [{} for _ in range(self.num_envs)]
                     self.actions = None
                     try:
-                        self.max_episode_length = env.max_episode_steps
+                        self.max_episode_steps = env.max_episode_steps
                     except AttributeError:
-                        self.max_episode_length=1000
+                        self.max_episode_steps=1000
 
                 def reset(self):
                     for e in range(self.num_envs):

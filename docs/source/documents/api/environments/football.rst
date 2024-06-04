@@ -565,7 +565,7 @@ Source Code
                     self.actions = None
                     self.battles_game = np.zeros(self.num_envs, np.int32)
                     self.battles_won = np.zeros(self.num_envs, np.int32)
-                    self.max_episode_length = env_info["max_cycles"]
+                    self.max_episode_steps = env_info["max_cycles"]
 
                 def reset(self):
                     for remote in self.remotes:
@@ -666,7 +666,7 @@ Source Code
                     self.actions = None
                     self.battles_game = np.zeros(self.num_envs, np.int32)
                     self.battles_won = np.zeros(self.num_envs, np.int32)
-                    self.max_episode_length = env.max_cycles
+                    self.max_episode_steps = env.max_cycles
 
                 def reset(self):
                     for i_env, env in enumerate(self.envs):

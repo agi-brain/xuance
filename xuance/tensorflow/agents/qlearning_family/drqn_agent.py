@@ -29,7 +29,7 @@ class DRQN_Agent(Agent):
                                           self.n_envs,
                                           config.n_size,
                                           config.batch_size,
-                                          episode_length=envs.max_episode_length,
+                                          episode_length=envs.max_episode_steps,
                                           lookup_length=config.lookup_length)
         learner = DRQN_Learner(policy,
                                optimizer,

@@ -535,7 +535,7 @@ Source Code
                     self.buf_dones = [np.ones((self.num_envs, n), dtype=np.bool) for n in self.n_agents]
                     self.buf_trunctions = [np.ones((self.num_envs, n), dtype=np.bool) for n in self.n_agents]
 
-                    self.max_episode_length = env_info["max_cycles"]
+                    self.max_episode_steps = env_info["max_cycles"]
                     self.actions = None
 
                 def empty_dict_buffers(self, i_env):
@@ -702,7 +702,7 @@ Source Code
                     self.buf_dones = [np.ones((self.num_envs, n), dtype=np.bool) for n in self.n_agents]
                     self.buf_trunctions = [np.ones((self.num_envs, n), dtype=np.bool) for n in self.n_agents]
 
-                    self.max_episode_length = env.max_cycles
+                    self.max_episode_steps = env.max_cycles
                     self.actions = None
 
                 def empty_dict_buffers(self, i_env):

@@ -731,12 +731,12 @@ Source Code
             use_advnorm: whether to use Advantage normalization trick.
             gamma: discount factor.
             gae_lam: gae lambda.
-            max_episode_length: maximum length of data for one episode trajectory.
+            max_episode_steps: maximum length of data for one episode trajectory.
         """
 
         def __init__(self, n_agents, state_space, obs_space, act_space, rew_space, done_space, n_envs, buffer_size,
                     use_gae, use_advnorm, gamma, gae_lam, **kwargs):
-            self.max_eps_len = kwargs['max_episode_length']
+            self.max_eps_len = kwargs['max_episode_steps']
             self.dim_act = kwargs['dim_act']
             super(MARL_OnPolicyBuffer_RNN, self).__init__(n_agents, state_space, obs_space, act_space, rew_space,
                                                         done_space, n_envs, buffer_size,
@@ -1156,7 +1156,7 @@ Source Code
 
         def __init__(self, n_agents, state_space, obs_space, act_space, rew_space, done_space,
                     n_envs, buffer_size, batch_size, **kwargs):
-            self.max_eps_len = kwargs['max_episode_length']
+            self.max_eps_len = kwargs['max_episode_steps']
             self.dim_act = kwargs['dim_act']
             super(MARL_OffPolicyBuffer_RNN, self).__init__(n_agents, state_space, obs_space, act_space, rew_space,
                                                         done_space, n_envs, buffer_size, batch_size)

@@ -77,7 +77,7 @@ class Runner():
         # Environment details.
         self.n_envs = self.envs.num_envs
         self.fps = 20
-        self.episode_length = self.envs.max_episode_length
+        self.episode_length = self.envs.max_episode_steps
         self.render = self.args.render
         args.n_agents = self.num_agents = self.envs.num_agents
         self.num_enemies = self.envs.num_enemies
