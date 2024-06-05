@@ -93,6 +93,8 @@ def run(args,Alg,Test=False):
             else:
                 fail+=1
         print("win:",win,"fail:",fail)
+        print("获胜率: %.2f" % (win / (win+fail)))
+        print("失败率: %.2f" % (fail / (win + fail)))
 
 if __name__ == '__main__':
     parser = parse_args()
@@ -101,6 +103,6 @@ if __name__ == '__main__':
                          env_id=parser.env_id,
                          config_path=parser.config,
                          parser_args=parser)
-    Alg='q_learning'# 选择算法，可选sarsa,expected_sarsa,q_learning
+    Alg='sarsa'# 选择算法，可选sarsa,expected_sarsa,q_learning
     run(args,Alg,Test=True)
 

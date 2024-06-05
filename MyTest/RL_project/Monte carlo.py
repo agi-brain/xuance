@@ -56,8 +56,12 @@ def MC(episodes, V_table, gamma,l_rate):
             index_value=V_table[obs[0][0],obs[0][1],obs[0][2]]
             G = r + gamma * G
             V_table[obs[0][0],obs[0][1],obs[0][2]] = index_value+ (G - index_value) * l_rate
+    directory = "files"
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+    file_path = os.path.join(directory, "V_table.npy")
+    np.save(file_path, V_table)
 
-    np.save('V_table.npy', V_table)
 def eps_greedy(action_space,epsilon,V_table,obs)->int:#返回一个动作
     obs=obs[0].astype(int)
 
@@ -112,13 +116,13 @@ def run(args):
     args.action_space = env.action_space  # get action space
     gamma = 0.99
     l_rate=0.001
-    Test=False
+    Test=True
     V_table=np.zeros((12,30,2)) #一个12*30*2的表格来存储状态价值
     if not  Test:
         episodes = sample(env, 20, 500000, V_table)
         MC(episodes, V_table, gamma,l_rate)
     else:
-        V_table=np.load('V_table.npy')
+        V_table=np.load(os.path.join("files", "V_table.npy"))
         res,ep=MC_test(V_table,env,50000)
         win=0
         fail=0
@@ -130,6 +134,8 @@ def run(args):
             else:
                 fail+=1
         print("win:",win,"fail:",fail)
+        print("获胜率: %.2f" % (win / (win+fail)))
+        print("失败率: %.2f" % (fail / (win + fail)))
 
 if __name__ == '__main__':
     parser = parse_args()

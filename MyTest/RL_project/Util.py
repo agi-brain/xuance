@@ -1,3 +1,4 @@
+import os
 from collections import defaultdict
 
 import numpy as np
@@ -64,11 +65,17 @@ def save_Q(Q, filename):
     # 将字典转换为列表
     Q_list = [(k, v) for k, v in Q.items()]
     # 保存为npy文件
-    np.save(filename, Q_list)
+    # 确保files文件夹存在
+    directory = "files"
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+    # 保存V_table.npy到files文件夹中
+    file_path = os.path.join(directory, filename)
+    np.save(file_path, Q_list)
 
 def load_Q(filename):
     # 加载npy文件
-    Q_list = np.load(filename, allow_pickle=True)
+    Q_list = np.load(os.path.join("files", filename), allow_pickle=True)
     # 将列表转换为字典
     Q = defaultdict(lambda: 0.0)
     for k, v in Q_list:
