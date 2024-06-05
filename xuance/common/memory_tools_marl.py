@@ -88,6 +88,10 @@ class MARL_OnPolicyBuffer(BaseBuffer):
         self.store_global_state = False if self.state_space is None else True
         self.use_actions_mask = kwargs['use_actions_mask'] if 'use_actions_mask' in kwargs else False
         self.n_actions = kwargs['n_actions'] if 'n_actions' in kwargs else None
+        if self.use_actions_mask:
+            self.avail_actions_shape = {key: (self.n_actions[key],) for key in self.agent_keys}
+        else:
+            self.avail_actions_shape = {key: () for key in self.agent_keys}
         self.use_gae = use_gae
         self.use_advantage_norm = use_advnorm
         self.gamma, self.gae_lambda = gamma, gae_lam
@@ -194,11 +198,12 @@ class MARL_OnPolicyBuffer(BaseBuffer):
                     returns[t] = last_gae_lam + vs_t
                 advantages = returns - value_normalizer.denormalize(vs[:-1]) if use_value_norm else returns - vs[:-1]
             else:
-                returns = np.append(returns, [value_next], axis=0)
+                returns_ = np.append(returns, [value_next], axis=0)
                 for t in reversed(range(step_nums)):
-                    returns[t] = rewards[t] + (1 - dones[t]) * self.gamma * returns[t + 1]
-                advantages = returns - value_normalizer.denormalize(vs) if use_value_norm else returns - vs
+                    returns_[t] = rewards[t] + (1 - dones[t]) * self.gamma * returns_[t + 1]
+                advantages = returns_ - value_normalizer.denormalize(vs) if use_value_norm else returns_ - vs
                 advantages = advantages[:-1]
+                returns = returns_[:-1]
 
             self.data['returns'][key][i_env, path_slice] = returns
             self.data['advantages'][key][i_env, path_slice] = advantages
@@ -236,29 +241,56 @@ class MARL_OnPolicyBuffer_RNN(MARL_OnPolicyBuffer):
     Replay buffer for on-policy MARL algorithms with DRQN trick.
 
     Args:
-        n_agents: number of agents.
-        state_space: global state space, type: Discrete, Box.
-        obs_space: observation space for one agent (suppose same obs space for group agents).
-        act_space: action space for one agent (suppose same actions space for group agents).
-        rew_space: reward space.
-        done_space: terminal variable space.
-        n_envs: number of parallel environments.
-        buffer_size: buffer size of total experience data.
-        use_gae: whether to use GAE trick.
-        use_advnorm: whether to use Advantage normalization trick.
-        gamma: discount factor.
-        gae_lam: gae lambda.
-        max_episode_steps: maximum length of data for one episode trajectory.
+        agent_keys (List[str]): Keys that identify each agent.
+        state_space (Dict[str, Space]): Global state space, type: Discrete, Box.
+        obs_space (Dict[str, Dict[str, Space]]): Observation space for one agent (suppose same obs space for group agents).
+        act_space (Dict[str, Dict[str, Space]]): Action space for one agent (suppose same actions space for group agents).
+        n_envs (int): Number of parallel environments.
+        buffer_size (int): Buffer size of total experience data.
+        max_episode_steps (int): The sequence length of each episode data.
+        use_gae (bool): Whether to use GAE trick.
+        use_advnorm (bool): Whether to use Advantage normalization trick.
+        gamma (float): Discount factor.
+        gae_lam (float): gae lambda.
+        **kwargs: Other arguments.
+
+    Example:
+        >> state_space=None
+        >> obs_space={'agent_0': Box(-inf, inf, (18,), float32),
+                      'agent_1': Box(-inf, inf, (18,), float32),
+                      'agent_2': Box(-inf, inf, (18,), float32)},
+        >> act_space={'agent_0': Box(0.0, 1.0, (5,), float32),
+                      'agent_1': Box(0.0, 1.0, (5,), float32),
+                      'agent_2': Box(0.0, 1.0, (5,), float32)},
+        >> n_envs=16,
+        >> buffer_size=1600,
+        >> agent_keys=['agent_0', 'agent_1', 'agent_2'],
+        >> max_episode_steps = 100
+        >> memory = MARL_OffPolicyBuffer(agent_keys=agent_keys, state_space=state_space, obs_space=obs_space,
+                                         act_space=act_space, n_envs=n_envs, buffer_size=buffer_size,
+                                         max_episode_steps=max_episode_steps,
+                                         use_gae=False, use_advnorm=False, gamma=0.99, gae_lam=0.95)
     """
 
-    def __init__(self, n_agents, state_space, obs_space, act_space, rew_space, done_space, n_envs, buffer_size,
-                 use_gae, use_advnorm, gamma, gae_lam, **kwargs):
-        self.max_eps_len = kwargs['max_episode_steps']
-        self.dim_act = kwargs['dim_act']
-        super(MARL_OnPolicyBuffer_RNN, self).__init__(n_agents, state_space, obs_space, act_space, rew_space,
-                                                      done_space, n_envs, buffer_size,
-                                                      use_gae, use_advnorm, gamma, gae_lam,
-                                                      **kwargs)
+    def __init__(self,
+                 agent_keys: List[str],
+                 state_space: Dict[str, Space] = None,
+                 obs_space: Dict[str, Dict[str, Space]] = None,
+                 act_space: Dict[str, Dict[str, Space]] = None,
+                 n_envs: int = 1,
+                 buffer_size: int = 1,
+                 max_episode_steps: int = 1,
+                 use_gae: Optional[bool] = False,
+                 use_advnorm: Optional[bool] = False,
+                 gamma: Optional[float] = None,
+                 gae_lam: Optional[float] = None,
+                 **kwargs):
+        self.max_eps_len = max_episode_steps
+        self.n_actions = kwargs['n_actions'] if 'n_actions' in kwargs else None
+        self.obs_shape = {k: space2shape(obs_space[k]) for k in agent_keys}
+        self.act_shape = {k: space2shape(act_space[k]) for k in agent_keys}
+        super(MARL_OnPolicyBuffer_RNN, self).__init__(agent_keys, state_space, obs_space, act_space, n_envs,
+                                                      buffer_size, use_gae, use_advnorm, gamma, gae_lam, **kwargs)
         self.episode_data = {}
         self.clear_episodes()
 
@@ -268,126 +300,170 @@ class MARL_OnPolicyBuffer_RNN(MARL_OnPolicyBuffer):
 
     def clear(self):
         self.data = {
-            'obs': np.zeros((self.buffer_size, self.n_agents, self.max_eps_len + 1) + self.obs_space, np.float32),
-            'actions': np.zeros((self.buffer_size, self.n_agents, self.max_eps_len) + self.act_space, np.float32),
-            'rewards': np.zeros((self.buffer_size, self.n_agents, self.max_eps_len) + self.rew_space, np.float32),
-            'returns': np.zeros((self.buffer_size, self.n_agents, self.max_eps_len) + self.rew_space, np.float32),
-            'values': np.zeros((self.buffer_size, self.n_agents, self.max_eps_len) + self.rew_space, np.float32),
-            'advantages': np.zeros((self.buffer_size, self.n_agents, self.max_eps_len) + self.rew_space, np.float32),
-            'log_pi_old': np.zeros((self.buffer_size, self.n_agents, self.max_eps_len,), np.float32),
-            'terminals': np.zeros((self.buffer_size, self.max_eps_len) + self.done_space, np.bool_),
-            'avail_actions': np.ones((self.buffer_size, self.n_agents, self.max_eps_len + 1, self.dim_act), np.bool_),
-            'filled': np.zeros((self.buffer_size, self.max_eps_len, 1), np.bool_)
+            'obs': {k: np.zeros((self.buffer_size, self.max_eps_len) + self.obs_shape[k], np.float32)
+                    for k in self.agent_keys},
+            'actions': {k: np.zeros((self.buffer_size, self.max_eps_len) + self.act_shape[k], np.float32)
+                        for k in self.agent_keys},
+            'rewards': {k: np.zeros((self.buffer_size, self.max_eps_len), np.float32) for k in self.agent_keys},
+            'returns': {k: np.zeros((self.buffer_size, self.max_eps_len), np.float32) for k in self.agent_keys},
+            'values': {k: np.zeros((self.buffer_size, self.max_eps_len), np.float32) for k in self.agent_keys},
+            'advantages': {k: np.zeros((self.buffer_size, self.max_eps_len), np.float32) for k in self.agent_keys},
+            'log_pi_old': {k: np.zeros((self.buffer_size, self.max_eps_len), np.float32) for k in self.agent_keys},
+            'terminals': {k: np.zeros((self.buffer_size, self.max_eps_len), np.bool_) for k in self.agent_keys},
+            'agent_mask': {k: np.zeros((self.buffer_size, self.max_eps_len), np.bool_) for k in self.agent_keys},
+            'filled': np.zeros((self.buffer_size, self.max_eps_len), np.bool_)
         }
-        if self.state_space is not None:
+        if self.store_global_state:
             self.data.update({
-                'state': np.zeros((self.buffer_size, self.max_eps_len + 1) + self.state_space, np.float32)
+                'state': np.zeros((self.buffer_size, self.max_eps_len) + self.state_space, np.float32)
+            })
+        if self.use_actions_mask:
+            self.data.update({
+                'avail_actions': {k: np.zeros((self.buffer_size, self.max_eps_len) + self.avail_actions_shape[k],
+                                              dtype=np.bool_) for k in self.agent_keys}
             })
         self.ptr, self.size = 0, 0
 
     def clear_episodes(self):
         self.episode_data = {
-            'obs': np.zeros((self.n_envs, self.n_agents, self.max_eps_len + 1) + self.obs_space, dtype=np.float32),
-            'actions': np.zeros((self.n_envs, self.n_agents, self.max_eps_len) + self.act_space, dtype=np.float32),
-            'rewards': np.zeros((self.n_envs, self.n_agents, self.max_eps_len) + self.rew_space, dtype=np.float32),
-            'returns': np.zeros((self.n_envs, self.n_agents, self.max_eps_len) + self.rew_space, np.float32),
-            'values': np.zeros((self.n_envs, self.n_agents, self.max_eps_len) + self.rew_space, np.float32),
-            'advantages': np.zeros((self.n_envs, self.n_agents, self.max_eps_len) + self.rew_space, np.float32),
-            'log_pi_old': np.zeros((self.n_envs, self.n_agents, self.max_eps_len,), np.float32),
-            'terminals': np.zeros((self.n_envs, self.max_eps_len) + self.done_space, dtype=np.bool_),
-            'avail_actions': np.ones((self.n_envs, self.n_agents, self.max_eps_len + 1, self.dim_act), dtype=np.bool_),
-            'filled': np.zeros((self.n_envs, self.max_eps_len, 1), dtype=np.bool_),
+            'obs': {k: np.zeros((self.n_envs, self.max_eps_len) + self.obs_shape[k], np.float32)
+                    for k in self.agent_keys},
+            'actions': {k: np.zeros((self.n_envs, self.max_eps_len) + self.act_shape[k], np.float32)
+                        for k in self.agent_keys},
+            'rewards': {k: np.zeros((self.n_envs, self.max_eps_len), np.float32) for k in self.agent_keys},
+            'returns': {k: np.zeros((self.n_envs, self.max_eps_len), np.float32) for k in self.agent_keys},
+            'values': {k: np.zeros((self.n_envs, self.max_eps_len), np.float32) for k in self.agent_keys},
+            'advantages': {k: np.zeros((self.n_envs, self.max_eps_len), np.float32) for k in self.agent_keys},
+            'log_pi_old': {k: np.zeros((self.n_envs, self.max_eps_len), np.float32) for k in self.agent_keys},
+            'terminals': {k: np.zeros((self.n_envs, self.max_eps_len), np.bool_) for k in self.agent_keys},
+            'agent_mask': {k: np.zeros((self.n_envs, self.max_eps_len), np.bool_) for k in self.agent_keys},
+            'filled': np.zeros((self.n_envs, self.max_eps_len), np.bool_)
         }
-        if self.state_space is not None:
+        if self.store_global_state:
             self.episode_data.update({
-                'state': np.zeros((self.n_envs, self.max_eps_len + 1) + self.state_space, dtype=np.float32),
+                'state': np.zeros((self.n_envs, self.max_eps_len) + self.state_space, np.float32)
+            })
+        if self.use_actions_mask:
+            self.episode_data.update({
+                'avail_actions': {k: np.zeros((self.n_envs, self.max_eps_len) + self.avail_actions_shape[k],
+                                              dtype=np.bool_) for k in self.agent_keys}
             })
 
-    def store_transitions(self, t_envs, *transition_data):
-        obs_n, actions_dict, state, rewards, terminated, avail_actions = transition_data
-        self.episode_data['obs'][:, :, t_envs] = obs_n
-        self.episode_data['actions'][:, :, t_envs] = actions_dict['actions_n']
-        self.episode_data['rewards'][:, :, t_envs] = rewards
-        self.episode_data['values'][:, :, t_envs] = actions_dict['values']
-        self.episode_data['log_pi_old'][:, :, t_envs] = actions_dict['log_pi']
-        self.episode_data['terminals'][:, t_envs] = terminated
-        self.episode_data['avail_actions'][:, :, t_envs] = avail_actions
-        if self.state_space is not None:
-            self.episode_data['state'][:, t_envs] = state
+    def store(self, **step_data):
+        """
+        Stores a step of data for each environment.
 
-    def store_episodes(self):
-        episode_data_keys = self.episode_data.keys()
-        for i_env in range(self.n_envs):
-            for k in self.keys:
-                if k in episode_data_keys:
-                    self.data[k][self.ptr] = self.episode_data[k][i_env].copy()
-            self.ptr = (self.ptr + 1) % self.buffer_size
-            self.size = min(self.size + 1, self.buffer_size)
-        self.clear_episodes()
+        Parameters:
+            step_data (dict): A dict of step data that to be stored into self.episode_data.
+        """
+        envs_step = step_data['episode_steps']
+        envs_choice = range(self.n_envs)
+        for data_key in self.data_keys:
+            if data_key == 'filled':
+                self.episode_data["filled"][envs_choice, envs_step] = True
+                continue
+            if data_key in ['advantages', 'returns']:
+                continue
+            if data_key == 'state':
+                self.episode_data[data_key][envs_choice, envs_step] = step_data[data_key]
+                continue
+            for agt_key in self.agent_keys:
+                self.episode_data[data_key][agt_key][envs_choice, envs_step] = step_data[data_key][agt_key]
 
-    def finish_path(self, i_env, next_t, *terminal_data, value_next=None, value_normalizer=None):
-        obs_next, state_next, available_actions, filled = terminal_data
-        self.episode_data['obs'][i_env, :, next_t] = obs_next[i_env]
-        self.episode_data['state'][i_env, next_t] = state_next[i_env]
-        self.episode_data['avail_actions'][i_env, :, next_t] = available_actions[i_env]
-        self.episode_data['filled'][i_env] = filled[i_env]
+    def store_episodes(self, i_env):
+        """
+        Stores the episode of data for ith environment into the self.data.
 
-        """ when an episode is finished. """
-        if next_t > self.max_eps_len:
-            path_slice = np.arange(0, self.max_eps_len).astype(np.int32)
-        else:
-            path_slice = np.arange(0, next_t).astype(np.int32)
+        Parameters:
+            i_env (int): The ith environment.
+        """
+        for data_key in self.data_keys:
+            if data_key == "filled":
+                self.data["filled"][self.ptr] = self.episode_data["filled"][i_env].copy()
+                continue
+            if data_key in ['state']:
+                self.data[data_key][self.ptr] = self.episode_data[data_key][i_env].copy()
+                continue
+            for agt_key in self.agent_keys:
+                self.data[data_key][agt_key][self.ptr] = self.episode_data[data_key][agt_key][i_env].copy()
+        self.ptr = (self.ptr + 1) % self.buffer_size
+        self.size = np.min([self.size + 1, self.buffer_size])
+        # clear the filled values for ith env.
+        self.episode_data['filled'][i_env] = np.zeros(self.max_eps_len, dtype=np.bool_)
+
+    def finish_path(self,
+                    i_env: Optional[int] = None,
+                    i_step: Optional[int] = None,
+                    value_next: Optional[dict] = None,
+                    value_normalizer=None):
+        """
+        Calculates and stores the returns and advantages when an episode is finished.
+
+        Parameters:
+            i_env (int): The index of environment.
+            i_step (int): The index of step for current environment.
+            value_next (dict): The critic values of the terminal state.
+            value_normalizer: The value normalizer method, default is None.
+        """
+        env_step = i_step if i_step < self.max_eps_len else self.max_eps_len
+        path_slice = np.arange(0, env_step).astype(np.int32)
 
         # calculate advantages and returns
-        rewards = np.array(self.episode_data['rewards'][i_env, :, path_slice])
-        vs = np.append(np.array(self.episode_data['values'][i_env, :, path_slice]),
-                       [value_next.reshape(self.n_agents, 1)],
-                       axis=0)
-        dones = np.array(self.episode_data['terminals'][i_env, path_slice])[:, :, None]
-        returns = np.zeros_like(rewards)
-        last_gae_lam = 0
-        step_nums = len(path_slice)
-        use_value_norm = False if (value_normalizer is None) else True
+        for key in self.agent_keys:
+            rewards = np.array(self.episode_data['rewards'][key][i_env, path_slice])
+            vs = np.append(np.array(self.episode_data['values'][key][i_env, path_slice]), [value_next[key]], axis=0)
+            dones = np.array(self.episode_data['terminals'][key][i_env, path_slice])
+            returns = np.zeros_like(rewards)
+            last_gae_lam = 0
+            step_nums = len(path_slice)
+            use_value_norm = False if (value_normalizer is None) else True
 
-        if self.use_gae:
-            for t in reversed(range(step_nums)):
-                if use_value_norm:
-                    vs_t, vs_next = value_normalizer.denormalize(vs[t]), value_normalizer.denormalize(vs[t + 1])
-                else:
-                    vs_t, vs_next = vs[t], vs[t + 1]
-                delta = rewards[t] + (1 - dones[t]) * self.gamma * vs_next - vs_t
-                last_gae_lam = delta + (1 - dones[t]) * self.gamma * self.gae_lambda * last_gae_lam
-                returns[t] = last_gae_lam + vs_t
-            advantages = returns - value_normalizer.denormalize(vs[:-1]) if use_value_norm else returns - vs[:-1]
-        else:
-            returns = np.append(returns, [value_next.reshape(self.n_agents, 1)], axis=0)
-            for t in reversed(range(step_nums)):
-                returns[t] = rewards[t] + (1 - dones[t]) * self.gamma * returns[t + 1]
-            advantages = returns - value_normalizer.denormalize(vs) if use_value_norm else returns - vs
-            advantages = advantages[:-1]
-
-        self.episode_data['returns'][i_env, :, path_slice] = returns
-        self.episode_data['advantages'][i_env, :, path_slice] = advantages
-
-    def sample(self, indexes):
-        assert self.full, "Not enough transitions for on-policy buffer to random sample"
-        samples = {}
-        filled_batch = self.data['filled'][indexes]
-        samples['filled'] = filled_batch
-        for k in self.keys:
-            if k == "filled":
-                continue
-            if k == "advantages":
-                adv_batch = self.data[k][indexes]
-                if self.use_advantage_norm:
-                    adv_batch_copy = adv_batch.copy()
-                    filled_batch_n = filled_batch[:, None, :, :].repeat(self.n_agents, axis=1)
-                    adv_batch_copy[filled_batch_n == 0] = np.nan
-                    adv_batch = (adv_batch - np.nanmean(adv_batch_copy)) / (np.nanstd(adv_batch_copy) + 1e-8)
-                samples[k] = adv_batch
+            if self.use_gae:
+                for t in reversed(range(step_nums)):
+                    if use_value_norm:
+                        vs_t, vs_next = value_normalizer.denormalize(vs[t]), value_normalizer.denormalize(vs[t + 1])
+                    else:
+                        vs_t, vs_next = vs[t], vs[t + 1]
+                    delta = rewards[t] + (1 - dones[t]) * self.gamma * vs_next - vs_t
+                    last_gae_lam = delta + (1 - dones[t]) * self.gamma * self.gae_lambda * last_gae_lam
+                    returns[t] = last_gae_lam + vs_t
+                advantages = returns - value_normalizer.denormalize(vs[:-1]) if use_value_norm else returns - vs[:-1]
             else:
-                samples[k] = self.data[k][indexes]
-        return samples
+                returns_ = np.append(returns, [value_next[key]], axis=0)
+                for t in reversed(range(step_nums)):
+                    returns_[t] = rewards[t] + (1 - dones[t]) * self.gamma * returns_[t + 1]
+                advantages = returns_ - value_normalizer.denormalize(vs) if use_value_norm else returns_ - vs
+                advantages = advantages[:-1]
+                returns = returns_[:-1]
+
+            self.episode_data['returns'][key][i_env, path_slice] = returns
+            self.episode_data['advantages'][key][i_env, path_slice] = advantages
+        self.store_episodes(i_env)
+
+    def sample(self, indexes: Optional[np.ndarray] = None):
+        """
+        Samples a batch of data from the replay buffer.
+
+        Parameters:
+            indexes (int): The indexes of the data in the buffer that will be sampled.
+
+        Returns:
+            samples_dict (dict): The sampled data.
+        """
+        assert self.full, "Not enough transitions for on-policy buffer to random sample"
+        episode_choices = indexes
+        samples_dict = {}
+        for data_key in self.data_keys:
+            if data_key == "filled":
+                samples_dict["filled"] = self.data['filled'][episode_choices]
+                continue
+            if data_key in ['state', 'state_next']:
+                samples_dict[data_key] = self.data[data_key][episode_choices]
+                continue
+            samples_dict[data_key] = {k: self.data[data_key][k][episode_choices] for k in self.agent_keys}
+        samples_dict['batch_size'] = len(indexes)
+        samples_dict['sequence_length'] = self.max_eps_len
+        return samples_dict
 
 
 class MeanField_OnPolicyBuffer(MARL_OnPolicyBuffer):
@@ -642,6 +718,10 @@ class MARL_OffPolicyBuffer(BaseBuffer):
         self.store_global_state = False if self.state_space is None else True
         self.use_actions_mask = kwargs['use_actions_mask'] if 'use_actions_mask' in kwargs else False
         self.n_actions = kwargs['n_actions'] if 'n_actions' in kwargs else None
+        if self.use_actions_mask:
+            self.avail_actions_shape = {key: (self.n_actions[key],) for key in self.agent_keys}
+        else:
+            self.avail_actions_shape = {key: () for key in self.agent_keys}
         self.data = {}
         self.clear()
         self.data_keys = self.data.keys()
@@ -678,10 +758,9 @@ class MARL_OffPolicyBuffer(BaseBuffer):
                 'state_next': create_memory(space2shape(self.state_space), self.n_envs, self.n_size)
             })
         if self.use_actions_mask:
-            avail_actions_space = {key: (self.n_actions[key],) for key in self.agent_keys}
             self.data.update({
-                "avail_actions": create_memory(avail_actions_space, self.n_envs, self.n_size, np.bool_),
-                "avail_actions_next": create_memory(avail_actions_space, self.n_envs, self.n_size, np.bool_)
+                "avail_actions": create_memory(self.avail_actions_shape, self.n_envs, self.n_size, np.bool_),
+                "avail_actions_next": create_memory(self.avail_actions_shape, self.n_envs, self.n_size, np.bool_)
             })
         self.ptr, self.size = 0, 0
 
@@ -770,10 +849,8 @@ class MARL_OffPolicyBuffer_RNN(MARL_OffPolicyBuffer):
                  max_episode_steps: int = 1,
                  **kwargs):
         self.max_eps_len = max_episode_steps
-        self.n_actions = kwargs['n_actions'] if 'n_actions' in kwargs else None
         self.obs_shape = {k: space2shape(obs_space[k]) for k in agent_keys}
         self.act_shape = {k: space2shape(act_space[k]) for k in agent_keys}
-        self.avail_actions_shape = {k: (self.n_actions[k],) for k in agent_keys}
         super(MARL_OffPolicyBuffer_RNN, self).__init__(agent_keys, state_space, obs_space, act_space,
                                                        n_envs, buffer_size, batch_size, **kwargs)
         self.episode_data = {}
@@ -812,7 +889,7 @@ class MARL_OffPolicyBuffer_RNN(MARL_OffPolicyBuffer):
             self.data.update({'state': np.zeros(state_shape, dtype=np.float32)})
         if self.use_actions_mask:
             self.data.update({
-                "avail_actions": {k: np.zeros((self.buffer_size, self.max_eps_len + 1) + self.avail_actions_shape[k],
+                'avail_actions': {k: np.zeros((self.buffer_size, self.max_eps_len + 1) + self.avail_actions_shape[k],
                                               dtype=np.bool_) for k in self.agent_keys}})
         self.ptr, self.size = 0, 0
 

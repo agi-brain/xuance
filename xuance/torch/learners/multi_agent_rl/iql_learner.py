@@ -105,12 +105,13 @@ class IQL_Learner(LearnerMAS):
             bs_rnn = batch_size * self.n_agents
             filled = filled.unsqueeze(1).unsqueeze(-1).expand(-1, self.n_agents, -1, -1)
             obs[key] = obs[key].reshape([bs_rnn, seq_len + 1, -1])
-            avail_actions_input = {key: avail_actions[key].reshape(bs_rnn, seq_len + 1, -1)}
+            if self.use_actions_mask:
+                avail_actions[key] = avail_actions[key].reshape(bs_rnn, seq_len + 1, -1)
             IDs = IDs.reshape(bs_rnn, seq_len + 1, -1)
             rnn_hidden = {key: self.policy.representation[key].init_hidden(bs_rnn)}
             _, actions_greedy, q_eval = self.policy(observation=obs,
                                                     agent_ids=IDs,
-                                                    avail_actions=avail_actions_input,
+                                                    avail_actions=avail_actions,
                                                     rnn_hidden=rnn_hidden)
             target_rnn_hidden = {key: self.policy.target_representation[key].init_hidden(bs_rnn)}
             _, q_next_seq = self.policy.Qtarget(observation=obs,

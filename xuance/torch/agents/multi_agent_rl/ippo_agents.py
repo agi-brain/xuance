@@ -27,11 +27,9 @@ class IPPO_Agents(MARLAgents):
         super(IPPO_Agents, self).__init__(config, envs)
         self.state_space = envs.state_space
         self.continuous_control = False
-
         self.n_epoch = config.n_epoch
         self.n_minibatch = config.n_minibatch
         self.use_global_state = config.use_global_state
-
         # create policy, optimizer, and lr_scheduler.
         self.policy = self._build_policy()
         optimizer = torch.optim.Adam(self.policy.parameters_model,
@@ -39,31 +37,24 @@ class IPPO_Agents(MARLAgents):
                                      weight_decay=config.weight_decay)
         scheduler = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=1.0, end_factor=0.5,
                                                       total_iters=self.config.running_steps)
-
         # create experience replay buffer
         n_actions = {k: self.action_space[k].n for k in self.agent_keys} if self.continuous_control else None
-        input_buffer = dict(agent_keys=self.agent_keys,
-                            state_space=self.state_space if self.use_global_state else None,
-                            obs_space=self.observation_space,
-                            act_space=self.action_space,
-                            n_envs=self.n_envs,
-                            buffer_size=self.config.buffer_size,
-                            use_gae=self.config.use_gae,
-                            use_advnorm=self.config.use_advnorm,
-                            gamma=self.config.gamma,
-                            gae_lam=self.config.gae_lambda,
-                            n_actions=n_actions,
-                            use_actions_mask=self.use_actions_mask,
-                            max_episode_steps=envs.max_episode_steps)
         buffer = MARL_OnPolicyBuffer_RNN if self.use_rnn else MARL_OnPolicyBuffer
-        self.memory = buffer(**input_buffer)
-
+        self.memory = buffer(agent_keys=self.agent_keys,
+                             state_space=self.state_space if self.use_global_state else None,
+                             obs_space=self.observation_space,
+                             act_space=self.action_space,
+                             n_envs=self.n_envs,
+                             buffer_size=self.config.buffer_size,
+                             use_gae=self.config.use_gae,
+                             use_advnorm=self.config.use_advnorm,
+                             gamma=self.config.gamma,
+                             gae_lam=self.config.gae_lambda,
+                             n_actions=n_actions,
+                             use_actions_mask=self.use_actions_mask,
+                             max_episode_steps=envs.max_episode_steps)
         self.buffer_size = self.memory.buffer_size
         self.batch_size = self.buffer_size // self.n_minibatch
-
-        # initialize the hidden states of the RNN is use RNN-based representations.
-        self.rnn_hidden_actor, self.rnn_hidden_critic = self.init_rnn_hidden(self.n_envs)
-
         self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, envs.max_episode_steps,
                                            self.policy, optimizer, scheduler)
 
@@ -79,11 +70,9 @@ class IPPO_Agents(MARLAgents):
         activation = ActivationFunctions[self.config.activation]
         device = self.device
         agent = self.config.agent
-
         # build representations
         representation_actor = self._build_representation(self.config.representation, self.config)
         representation_critic = self._build_representation(self.config.representation, self.config)
-
         # build policies
         if self.config.policy == "Categorical_MAAC_Policy":
             policy = REGISTRY_Policy["Categorical_MAAC_Policy"](
@@ -106,7 +95,6 @@ class IPPO_Agents(MARLAgents):
             self.continuous_control = True
         else:
             raise AttributeError(f"{agent} currently does not support the policy named {self.config.policy}.")
-
         return policy
 
     def _build_learner(self, config, model_keys, agent_keys, episode_length, policy, optimizer, scheduler):
@@ -163,19 +151,27 @@ class IPPO_Agents(MARLAgents):
                 rnn_hidden_critic[key] = [None, None]
         return rnn_hidden_actor, rnn_hidden_critic
 
-    def init_hidden_item(self, i_env):
+    def init_hidden_item(self,
+                         i_env: int,
+                         rnn_hidden_actor: Optional[dict] = None,
+                         rnn_hidden_critic: Optional[dict] = None,):
         """
         Returns initialized hidden states of RNN for i-th environment.
 
         Parameters:
             i_env (int): The index of environment that to be selected.
+            rnn_hidden_actor (Optional[dict]): The RNN hidden states of actor representation.
+            rnn_hidden_critic (Optional[dict]): The RNN hidden states of critic representation.
         """
         assert self.use_rnn is True, "This method cannot be called when self.use_rnn is False."
-        for key in self.model_keys:
-            self.rnn_hidden_actor[key] = self.policy.actor_representation[key].init_hidden_item(
-                i_env, *self.rnn_hidden_actor[key])
-            self.rnn_hidden_critic[key] = self.policy.critic_representation[key].init_hidden_item(
-                i_env, *self.rnn_hidden_critic[key])
+        if self.use_parameter_sharing:
+            batch_index = np.arange(i_env * self.n_agents, (i_env + 1) * self.n_agents)
+        else:
+            batch_index = i_env
+        for k in self.model_keys:
+            rnn_hidden_actor[k] = self.policy.actor_representation[k].init_hidden_item(batch_index, *rnn_hidden_actor[k])
+            rnn_hidden_critic[k] = self.policy.critic_representation[k].init_hidden_item(batch_index, *rnn_hidden_critic[k])
+        return rnn_hidden_actor, rnn_hidden_critic
 
     def action(self,
                obs_dict: List[dict],
@@ -226,18 +222,21 @@ class IPPO_Agents(MARLAgents):
                                                          agent_ids=agents_id,
                                                          avail_actions=avail_actions_input,
                                                          rnn_hidden=rnn_hidden_actor)
+            actions_out = pi_dists[key].stochastic_sample()
+            log_pi_a = pi_dists[key].log_prob(actions_out).cpu().detach().numpy()
+            if self.use_rnn:
+                actions_out = actions_out.reshape(n_env, self.n_agents)
+                log_pi_a = log_pi_a.reshape(n_env, self.n_agents)
+            actions_dict = [{k: actions_out[e, i].cpu().detach().numpy() for i, k in enumerate(self.agent_keys)}
+                            for e in range(n_env)]
+            log_pi_a_dict = [{k: log_pi_a[e, i] for i, k in enumerate(self.agent_keys)} for e in range(n_env)]
             if not test_mode:
                 rnn_hidden_critic_new, values_out = self.policy.get_values(observation=obs_input,
                                                                            agent_ids=agents_id,
                                                                            rnn_hidden=rnn_hidden_critic)
-                values_dict = [{k: values_out[key][e, i, 0].cpu().detach().numpy()
-                                for i, k in enumerate(self.agent_keys)} for e in range(n_env)]
-
-            actions_out = pi_dists[key].stochastic_sample()
-            log_pi_a = pi_dists[key].log_prob(actions_out).cpu().detach().numpy()
-            actions_dict = [{k: actions_out[e, i].cpu().detach().numpy() for i, k in enumerate(self.agent_keys)}
-                            for e in range(n_env)]
-            log_pi_a_dict = [{k: log_pi_a[e, i] for i, k in enumerate(self.agent_keys)} for e in range(n_env)]
+                values_out = values_out[key].reshape(n_env, self.n_agents)
+                values_dict = [{k: values_out[e, i].cpu().detach().numpy() for i, k in enumerate(self.agent_keys)}
+                               for e in range(n_env)]
         else:
             if self.use_rnn:
                 obs_input = {k: np.array([itemgetter(k)(env_obs) for env_obs in obs_dict])[:, None] for k in
@@ -254,33 +253,31 @@ class IPPO_Agents(MARLAgents):
             rnn_hidden_actor_new, pi_dists = self.policy(observation=obs_input,
                                                          avail_actions=avail_actions_input,
                                                          rnn_hidden=rnn_hidden_actor)
+
+            actions_out = {k: pi_dists[k].stochastic_sample() for k in self.agent_keys}
+            log_pi_a = {k: pi_dists[k].log_prob(actions_out[k]).cpu().detach().numpy() for k in self.agent_keys}
+            actions_dict = [{k: actions_out[k].cpu().detach().numpy()[e].reshape([]) for k in self.agent_keys}
+                            for e in range(n_env)]
+            log_pi_a_dict = [{k: log_pi_a[k][e].reshape([]) for i, k in enumerate(self.agent_keys)}
+                             for e in range(n_env)]
+
             if not test_mode:
                 rnn_hidden_critic_new, values_out = self.policy.get_values(observation=obs_input,
                                                                            rnn_hidden=rnn_hidden_critic)
-                values_dict = [{k: values_out[k][e, 0].cpu().detach().numpy() for k in self.agent_keys}
+                values_dict = [{k: values_out[k][e].cpu().detach().numpy().reshape([]) for k in self.agent_keys}
                                for e in range(n_env)]
-
-            actions_out, log_pi_a = {}, {}
-            for key in self.agent_keys:
-                if self.use_rnn:
-                    actions_out[key] = pi_dists[key].stochastic_sample().squeeze(1)
-                    log_pi_a[key] = pi_dists[key].log_prob(actions_out[key]).cpu().detach().numpy()
-                else:
-                    actions_out[key] = pi_dists[key].stochastic_sample()
-                    log_pi_a[key] = pi_dists[key].log_prob(actions_out[key]).cpu().detach().numpy()
-            actions_dict = [{k: actions_out[k].cpu().detach().numpy()[e] for k in self.agent_keys}
-                            for e in range(n_env)]
-            log_pi_a_dict = [{k: log_pi_a[k][e] for i, k in enumerate(self.agent_keys)} for e in range(n_env)]
 
         return rnn_hidden_actor_new, rnn_hidden_critic_new, actions_dict, log_pi_a_dict, values_dict
 
     def values_next(self,
+                    i_env: int,
                     obs_dict: dict,
                     rnn_hidden_critic: Optional[dict] = None):
         """
         Returns critic values of one environment that finished an episode.
 
         Parameters:
+            i_env (int): The index of environment.
             obs_dict (dict): Observations for each agent in self.agent_keys.
             rnn_hidden_critic (Optional[dict]): The RNN hidden states of critic representation.
 
@@ -289,10 +286,13 @@ class IPPO_Agents(MARLAgents):
             values_dict: The critic values.
         """
         n_env = 1
-
+        rnn_hidden_critic_i = None
         if self.use_parameter_sharing:
             key = self.agent_keys[0]
             if self.use_rnn:
+                hidden_item_index = np.arange(i_env * self.n_agents, (i_env + 1) * self.n_agents)
+                rnn_hidden_critic_i = {key: self.policy.critic_representation[key].get_hidden_item(
+                    hidden_item_index, *rnn_hidden_critic[key])}
                 batch_size = n_env * self.n_agents
                 obs_array = np.array(itemgetter(*self.agent_keys)(obs_dict))
                 obs_input = {key: obs_array.reshape([batch_size, 1, -1])}
@@ -304,15 +304,18 @@ class IPPO_Agents(MARLAgents):
 
             rnn_hidden_critic_new, values_out = self.policy.get_values(observation=obs_input,
                                                                        agent_ids=agents_id,
-                                                                       rnn_hidden=rnn_hidden_critic)
-            values_dict = {k: values_out[key][0, i, 0].cpu().detach().numpy() for i, k in enumerate(self.agent_keys)}
+                                                                       rnn_hidden=rnn_hidden_critic_i)
+            values_out = values_out[key].reshape(self.n_agents)
+            values_dict = {k: values_out[i].cpu().detach().numpy() for i, k in enumerate(self.agent_keys)}
 
         else:
-            obs_input = {k: obs_dict[k][:, None] for k in self.agent_keys} if self.use_rnn else obs_dict
+            rnn_hidden_critic_i = {k: self.policy.critic_representation[k].get_hidden_item(i_env, *rnn_hidden_critic[k])
+                                   for k in self.agent_keys}
+            obs_input = {k: obs_dict[k][None, :] for k in self.agent_keys} if self.use_rnn else obs_dict
 
             rnn_hidden_critic_new, values_out = self.policy.get_values(observation=obs_input,
-                                                                       rnn_hidden=rnn_hidden_critic)
-            values_dict = {k: values_out[k][0].cpu().detach().numpy() for k in self.agent_keys}
+                                                                       rnn_hidden=rnn_hidden_critic_i)
+            values_dict = {k: values_out[k].cpu().detach().numpy().reshape([]) for k in self.agent_keys}
 
         return rnn_hidden_critic_new, values_dict
 
@@ -338,6 +341,56 @@ class IPPO_Agents(MARLAgents):
         self.memory.clear()
         return info_train
 
+    def run_episode(self, n_episodes: int):
+        """
+        Run a number of episodes to collect data sequence.
+
+        Parameters:
+            n_episodes: The number of episodes to run.
+        """
+        obs_dict, info = self.envs.reset()
+        avail_actions = self.envs.buf_avail_actions
+        state = self.envs.buf_state if self.use_global_state else None
+        episode_count = 0
+        self.memory.clear_episodes()
+        rnn_hidden_actor, rnn_hidden_critic = self.init_rnn_hidden(self.n_envs)
+        while episode_count < n_episodes:
+            step_info = {}
+            rnn_hidden_next_actor, rnn_hidden_next_critic, actions_dict, log_pi_a_dict, values_dict = self.action(
+                obs_dict=obs_dict, avail_actions_dict=avail_actions,
+                rnn_hidden_actor=rnn_hidden_actor, rnn_hidden_critic=rnn_hidden_critic, test_mode=False)
+            next_obs_dict, rewards_dict, terminated_dict, truncated, info = self.envs.step(actions_dict)
+            self.store_experience(obs_dict, avail_actions, actions_dict, log_pi_a_dict, rewards_dict, values_dict,
+                                  terminated_dict, info, **{'state': state})
+            obs_dict = deepcopy(next_obs_dict)
+            rnn_hidden_actor = deepcopy(rnn_hidden_next_actor)
+            rnn_hidden_critic = deepcopy(rnn_hidden_next_critic)
+
+            for i in range(self.n_envs):
+                if all(terminated_dict[i].values()) or truncated[i]:
+                    episode_count += 1
+                    self.current_step += info[i]["episode_step"]
+                    if all(terminated_dict[i].values()):
+                        value_next = {key: 0.0 for key in self.agent_keys}
+                    else:
+                        _, value_next = self.values_next(i_env=i, obs_dict=obs_dict[i],
+                                                         rnn_hidden_critic=rnn_hidden_critic)
+                    self.memory.finish_path(i_env=i, i_step=info[i]['episode_step'], value_next=value_next,
+                                            value_normalizer=self.learner.value_normalizer)
+                    rnn_hidden_actor, rnn_hidden_critic = self.init_hidden_item(i, rnn_hidden_actor, rnn_hidden_critic)
+                    obs_dict[i] = info[i]["reset_obs"]
+                    avail_actions[i] = info[i]["reset_avail_actions"]
+                    self.envs.buf_obs[i] = info[i]["reset_obs"]
+                    self.envs.buf_avail_actions[i] = info[i]["reset_avail_actions"]
+                    if self.use_wandb:
+                        step_info["Episode-Steps/env-%d" % i] = info[i]["episode_step"]
+                        step_info["Train-Episode-Rewards/env-%d" % i] = info[i]["episode_score"]
+                    else:
+                        step_info["Episode-Steps"] = {"env-%d" % i: info[i]["episode_step"]}
+                        step_info["Train-Episode-Rewards"] = {
+                            "env-%d" % i: np.mean(itemgetter(*self.agent_keys)(info[i]["episode_score"]))}
+                    self.log_infos(step_info, self.current_step)
+
     def train(self, n_steps):
         """
         Train the model for numerous steps.
@@ -345,6 +398,15 @@ class IPPO_Agents(MARLAgents):
         Parameters:
             n_steps (int): The number of steps to train the model.
         """
+        if self.use_rnn:
+            step_count = deepcopy(self.current_step)
+            while (self.current_step - step_count) < n_steps:
+                self.run_episode(self.n_envs)
+                if self.memory.full:
+                    train_info = self.train_epochs(n_epochs=self.n_epoch)
+                    self.log_infos(train_info, self.current_step)
+            return
+
         obs_dict = self.envs.buf_obs
         avail_actions = self.envs.buf_avail_actions
         state = self.envs.buf_state if self.use_global_state else None
@@ -363,8 +425,10 @@ class IPPO_Agents(MARLAgents):
                     if all(terminated_dict[i].values()):
                         value_next = {key: 0.0 for key in self.agent_keys}
                     else:
-                        _, value_next = self.values_next(obs_dict=next_obs_dict[i], rnn_hidden_critic=rnn_hidden_next_critic)
-                    self.memory.finish_path(i_env=i, value_next=value_next, value_normalizer=self.learner.value_normalizer)
+                        _, value_next = self.values_next(i_env=i, obs_dict=next_obs_dict[i],
+                                                         rnn_hidden_critic=rnn_hidden_next_critic)
+                    self.memory.finish_path(i_env=i, value_next=value_next,
+                                            value_normalizer=self.learner.value_normalizer)
                 train_info = self.train_epochs(n_epochs=self.n_epoch)
                 self.log_infos(train_info, self.current_step)
             obs_dict = deepcopy(next_obs_dict)
@@ -378,7 +442,8 @@ class IPPO_Agents(MARLAgents):
                     if all(terminated_dict[i].values()):
                         value_next = {key: 0.0 for key in self.agent_keys}
                     else:
-                        _, value_next = self.values_next(obs_dict=obs_dict[i], rnn_hidden_critic=self.rnn_hidden_critic)
+                        _, value_next = self.values_next(i_env=i, obs_dict=obs_dict[i],
+                                                         rnn_hidden_critic=self.rnn_hidden_critic)
                     if self.use_rnn:
                         self.init_hidden_item(i)
                         raise NotImplementedError
@@ -417,7 +482,7 @@ class IPPO_Agents(MARLAgents):
         current_episode, scores, best_score = 0, [0.0 for _ in range(num_envs)], -np.inf
         obs_dict, info = test_envs.reset()
         avail_actions = test_envs.buf_avail_actions
-        rnn_hidden_actor = self.init_rnn_hidden(num_envs)
+        rnn_hidden_actor, _ = self.init_rnn_hidden(num_envs)
         if self.config.render_mode == "rgb_array" and self.render:
             images = test_envs.render(self.config.render_mode)
             for idx, img in enumerate(images):
