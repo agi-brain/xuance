@@ -123,7 +123,8 @@ class MAAC_Policy(Module):
             else:
                 actor_input = outputs['state']
 
-            pi_dists[key] = self.actor[key](actor_input, avail_actions)
+            avail_actions_input = None if avail_actions is None else avail_actions[key]
+            pi_dists[key] = self.actor[key](actor_input, avail_actions_input)
         return rnn_hidden_new, pi_dists
 
     def get_values(self, observation: Dict[str, Tensor], agent_ids: Tensor = None, agent_key: str = None,
@@ -159,7 +160,7 @@ class MAAC_Policy(Module):
 
             values[key] = self.critic[key](critic_input)
 
-        return rnn_hidden, values
+        return rnn_hidden_new, values
 
     def value_tot(self, values_n: Tensor, global_state=None):
         if global_state is not None:

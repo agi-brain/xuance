@@ -38,7 +38,7 @@ class IPPO_Agents(MARLAgents):
         scheduler = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=1.0, end_factor=0.5,
                                                       total_iters=self.config.running_steps)
         # create experience replay buffer
-        n_actions = {k: self.action_space[k].n for k in self.agent_keys} if self.continuous_control else None
+        n_actions = None if self.continuous_control else {k: self.action_space[k].n for k in self.agent_keys}
         buffer = MARL_OnPolicyBuffer_RNN if self.use_rnn else MARL_OnPolicyBuffer
         self.memory = buffer(agent_keys=self.agent_keys,
                              state_space=self.state_space if self.use_global_state else None,
@@ -125,12 +125,14 @@ class IPPO_Agents(MARLAgents):
             'terminals': {k: np.array([itemgetter(k)(data) for data in terminals_dict]) for k in self.agent_keys},
             'agent_mask': {k: np.array([itemgetter(k)(data['agent_mask']) for data in info])
                            for k in self.agent_keys},
-            'avail_actions': {k: np.array([itemgetter(k)(data) for data in avail_actions]) for k in self.agent_keys},
         }
         if self.use_rnn:
             experience_data['episode_steps'] = np.array([data['episode_step'] - 1 for data in info])
         if self.use_global_state:
             experience_data['state'] = np.array(kwargs['state'])
+        if self.use_actions_mask:
+            experience_data['avail_actions'] = {k: np.array([itemgetter(k)(data) for data in avail_actions])
+                                                for k in self.agent_keys},
         self.memory.store(**experience_data)
 
     def init_rnn_hidden(self, n_envs):
@@ -140,15 +142,10 @@ class IPPO_Agents(MARLAgents):
         Parameters:
             n_envs (int): The number of parallel environments.
         """
-        rnn_hidden_actor, rnn_hidden_critic = {}, {}
-        for key in self.model_keys:
-            if self.use_rnn:
-                batch = n_envs * self.n_agents if self.use_parameter_sharing else n_envs
-                rnn_hidden_actor[key] = self.policy.actor_representation[key].init_hidden(batch)
-                rnn_hidden_critic[key] = self.policy.critic_representation[key].init_hidden(batch)
-            else:
-                rnn_hidden_actor[key] = [None, None]
-                rnn_hidden_critic[key] = [None, None]
+        assert self.use_rnn is True, "This method cannot be called when self.use_rnn is False."
+        batch_size = n_envs * self.n_agents if self.use_parameter_sharing else n_envs
+        rnn_hidden_actor = {k: self.policy.actor_representation[k].init_hidden(batch_size) for k in self.model_keys}
+        rnn_hidden_critic = {k: self.policy.critic_representation[k].init_hidden(batch_size) for k in self.model_keys}
         return rnn_hidden_actor, rnn_hidden_critic
 
     def init_hidden_item(self,
@@ -335,10 +332,7 @@ class IPPO_Agents(MARLAgents):
                 end = start + self.batch_size
                 sample_idx = indexes[start:end]
                 sample = self.memory.sample(sample_idx)
-                if self.use_rnn:
-                    info_train = self.learner.update_rnn(sample)
-                else:
-                    info_train = self.learner.update(sample)
+                info_train = self.learner.update_rnn(sample) if self.use_rnn else self.learner.update(sample)
         self.memory.clear()
         return info_train
 
@@ -350,7 +344,7 @@ class IPPO_Agents(MARLAgents):
             n_episodes: The number of episodes to run.
         """
         obs_dict, info = self.envs.reset()
-        avail_actions = self.envs.buf_avail_actions
+        avail_actions = self.envs.buf_avail_actions if self.use_actions_mask else None
         state = self.envs.buf_state if self.use_global_state else None
         episode_count = 0
         self.memory.clear_episodes()
@@ -361,9 +355,11 @@ class IPPO_Agents(MARLAgents):
                 obs_dict=obs_dict, avail_actions_dict=avail_actions,
                 rnn_hidden_actor=rnn_hidden_actor, rnn_hidden_critic=rnn_hidden_critic, test_mode=False)
             next_obs_dict, rewards_dict, terminated_dict, truncated, info = self.envs.step(actions_dict)
+            next_avail_actions = self.envs.buf_avail_actions if self.use_actions_mask else None
             self.store_experience(obs_dict, avail_actions, actions_dict, log_pi_a_dict, rewards_dict, values_dict,
                                   terminated_dict, info, **{'state': state})
             obs_dict = deepcopy(next_obs_dict)
+            avail_actions = deepcopy(next_avail_actions)
             rnn_hidden_actor = deepcopy(rnn_hidden_next_actor)
             rnn_hidden_critic = deepcopy(rnn_hidden_next_critic)
 
@@ -380,7 +376,8 @@ class IPPO_Agents(MARLAgents):
                                             value_normalizer=self.learner.value_normalizer)
                     rnn_hidden_actor, rnn_hidden_critic = self.init_hidden_item(i, rnn_hidden_actor, rnn_hidden_critic)
                     obs_dict[i] = info[i]["reset_obs"]
-                    avail_actions[i] = info[i]["reset_avail_actions"]
+                    if self.use_actions_mask:
+                        avail_actions[i] = info[i]["reset_avail_actions"]
                     self.envs.buf_obs[i] = info[i]["reset_obs"]
                     self.envs.buf_avail_actions[i] = info[i]["reset_avail_actions"]
                     if self.use_wandb:
@@ -400,16 +397,21 @@ class IPPO_Agents(MARLAgents):
             n_steps (int): The number of steps to train the model.
         """
         if self.use_rnn:
-            step_count = deepcopy(self.current_step)
-            while (self.current_step - step_count) < n_steps:
-                self.run_episode(self.n_envs)
-                if self.memory.full:
-                    train_info = self.train_epochs(n_epochs=self.n_epoch)
-                    self.log_infos(train_info, self.current_step)
+            with tqdm(total=n_steps) as process_bar:
+                step_start, step_last = deepcopy(self.current_step), deepcopy(self.current_step)
+                n_steps_all = n_steps * self.n_envs
+                while step_last - step_start < n_steps_all:
+                    self.run_episode(self.n_envs)
+                    if self.memory.full:
+                        train_info = self.train_epochs(n_epochs=self.n_epoch)
+                        self.log_infos(train_info, self.current_step)
+                    process_bar.update((self.current_step - step_last) // self.n_envs)
+                    step_last = deepcopy(self.current_step)
+                process_bar.update(n_steps - process_bar.last_print_n)
             return
 
         obs_dict = self.envs.buf_obs
-        avail_actions = self.envs.buf_avail_actions
+        avail_actions = self.envs.buf_avail_actions if self.use_actions_mask else None
         state = self.envs.buf_state if self.use_global_state else None
         for _ in tqdm(range(n_steps)):
             step_info = {}
@@ -417,8 +419,8 @@ class IPPO_Agents(MARLAgents):
                                                                          avail_actions_dict=avail_actions,
                                                                          test_mode=False)
             next_obs_dict, rewards_dict, terminated_dict, truncated, info = self.envs.step(actions_dict)
-            next_state = self.envs.buf_state
-            next_avail_actions = self.envs.buf_avail_actions
+            next_state = self.envs.buf_state if self.use_global_state else None
+            next_avail_actions = self.envs.buf_avail_actions if self.use_actions_mask else None
             self.store_experience(obs_dict, avail_actions, actions_dict, log_pi_a_dict, rewards_dict, values_dict,
                                   terminated_dict, info, **{'state': state})
             if self.memory.full:
@@ -431,9 +433,7 @@ class IPPO_Agents(MARLAgents):
                                             value_normalizer=self.learner.value_normalizer)
                 train_info = self.train_epochs(n_epochs=self.n_epoch)
                 self.log_infos(train_info, self.current_step)
-            obs_dict = deepcopy(next_obs_dict)
-            avail_actions = deepcopy(next_avail_actions)
-            state = deepcopy(next_state)
+            obs_dict, avail_actions, state = deepcopy(next_obs_dict), deepcopy(next_avail_actions), deepcopy(next_state)
 
             for i in range(self.n_envs):
                 if all(terminated_dict[i].values()) or truncated[i]:
@@ -441,12 +441,8 @@ class IPPO_Agents(MARLAgents):
                         value_next = {key: 0.0 for key in self.agent_keys}
                     else:
                         _, value_next = self.values_next(i_env=i, obs_dict=obs_dict[i])
-                    if self.use_rnn:
-                        self.init_hidden_item(i)
-                        raise NotImplementedError
-                    else:
-                        self.memory.finish_path(i_env=i, value_next=value_next,
-                                                value_normalizer=self.learner.value_normalizer)
+                    self.memory.finish_path(i_env=i, value_next=value_next,
+                                            value_normalizer=self.learner.value_normalizer)
                     obs_dict[i] = info[i]["reset_obs"]
                     avail_actions[i] = info[i]["reset_avail_actions"]
                     self.envs.buf_obs[i] = info[i]["reset_obs"]
