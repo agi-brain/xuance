@@ -198,7 +198,7 @@ class MARL_OnPolicyBuffer(BaseBuffer):
                     returns[t] = last_gae_lam + vs_t
                 advantages = returns - value_normalizer.denormalize(vs[:-1]) if use_value_norm else returns - vs[:-1]
             else:
-                returns_ = np.append(returns, [value_next], axis=0)
+                returns_ = np.append(returns, [value_next[key]], axis=0)
                 for t in reversed(range(step_nums)):
                     returns_[t] = rewards[t] + (1 - dones[t]) * self.gamma * returns_[t + 1]
                 advantages = returns_ - value_normalizer.denormalize(vs) if use_value_norm else returns_ - vs

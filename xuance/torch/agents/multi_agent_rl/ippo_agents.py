@@ -309,8 +309,9 @@ class IPPO_Agents(MARLAgents):
             values_dict = {k: values_out[i].cpu().detach().numpy() for i, k in enumerate(self.agent_keys)}
 
         else:
-            rnn_hidden_critic_i = {k: self.policy.critic_representation[k].get_hidden_item(i_env, *rnn_hidden_critic[k])
-                                   for k in self.agent_keys}
+            if self.use_rnn:
+                rnn_hidden_critic_i = {k: self.policy.critic_representation[k].get_hidden_item(
+                    i_env, *rnn_hidden_critic[k]) for k in self.agent_keys}
             obs_input = {k: obs_dict[k][None, :] for k in self.agent_keys} if self.use_rnn else obs_dict
 
             rnn_hidden_critic_new, values_out = self.policy.get_values(observation=obs_input,
@@ -412,9 +413,9 @@ class IPPO_Agents(MARLAgents):
         state = self.envs.buf_state if self.use_global_state else None
         for _ in tqdm(range(n_steps)):
             step_info = {}
-            rnn_hidden_next_actor, rnn_hidden_next_critic, actions_dict, log_pi_a_dict, values_dict = self.action(
-                obs_dict=obs_dict, avail_actions_dict=avail_actions,
-                rnn_hidden_actor=self.rnn_hidden_actor, rnn_hidden_critic=self.rnn_hidden_critic, test_mode=False)
+            _, _, actions_dict, log_pi_a_dict, values_dict = self.action(obs_dict=obs_dict,
+                                                                         avail_actions_dict=avail_actions,
+                                                                         test_mode=False)
             next_obs_dict, rewards_dict, terminated_dict, truncated, info = self.envs.step(actions_dict)
             next_state = self.envs.buf_state
             next_avail_actions = self.envs.buf_avail_actions
@@ -425,8 +426,7 @@ class IPPO_Agents(MARLAgents):
                     if all(terminated_dict[i].values()):
                         value_next = {key: 0.0 for key in self.agent_keys}
                     else:
-                        _, value_next = self.values_next(i_env=i, obs_dict=next_obs_dict[i],
-                                                         rnn_hidden_critic=rnn_hidden_next_critic)
+                        _, value_next = self.values_next(i_env=i, obs_dict=next_obs_dict[i])
                     self.memory.finish_path(i_env=i, value_next=value_next,
                                             value_normalizer=self.learner.value_normalizer)
                 train_info = self.train_epochs(n_epochs=self.n_epoch)
@@ -434,16 +434,13 @@ class IPPO_Agents(MARLAgents):
             obs_dict = deepcopy(next_obs_dict)
             avail_actions = deepcopy(next_avail_actions)
             state = deepcopy(next_state)
-            self.rnn_hidden_actor = deepcopy(rnn_hidden_next_actor)
-            self.rnn_hidden_critic = deepcopy(rnn_hidden_next_critic)
 
             for i in range(self.n_envs):
                 if all(terminated_dict[i].values()) or truncated[i]:
                     if all(terminated_dict[i].values()):
                         value_next = {key: 0.0 for key in self.agent_keys}
                     else:
-                        _, value_next = self.values_next(i_env=i, obs_dict=obs_dict[i],
-                                                         rnn_hidden_critic=self.rnn_hidden_critic)
+                        _, value_next = self.values_next(i_env=i, obs_dict=obs_dict[i])
                     if self.use_rnn:
                         self.init_hidden_item(i)
                         raise NotImplementedError

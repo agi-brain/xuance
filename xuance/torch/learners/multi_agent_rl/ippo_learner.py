@@ -82,17 +82,16 @@ class IPPO_Learner(LearnerMAS):
                 seq_len = act_array[0].shape[1]
                 obs[k] = obs[k].reshape([bs_rnn, seq_len, -1])
                 actions[k] = actions[k].reshape([bs_rnn, seq_len])
-                values[k] = values[k].reshape(-1, 1)
-                returns[k] = returns[k].reshape(-1, 1)
-                advantages[k] = advantages[k].reshape(-1, 1)
-                log_pi_old[k] = log_pi_old[k].reshape(-1, 1)
-                terminals[k] = terminals[k].reshape(-1, 1)
-                agent_mask[k] = agent_mask[k].reshape(-1, 1)
                 IDs = torch.eye(self.n_agents).unsqueeze(1).unsqueeze(0).expand(batch_size, -1, seq_len, -1).to(self.device)
                 IDs = IDs.reshape(bs_rnn, seq_len, -1)
             else:
                 IDs = torch.eye(self.n_agents).unsqueeze(0).expand(batch_size, -1, -1).to(self.device)
-
+            values[k] = values[k].reshape(-1, 1)
+            returns[k] = returns[k].reshape(-1, 1)
+            advantages[k] = advantages[k].reshape(-1, 1)
+            log_pi_old[k] = log_pi_old[k].reshape(-1, 1)
+            terminals[k] = terminals[k].reshape(-1, 1)
+            agent_mask[k] = agent_mask[k].reshape(-1, 1)
             if use_actions_mask:
                 act_mask_array = itemgetter(*self.agent_keys)(sample['avail_actions'])
                 avail_actions = {k: Tensor(concat([act_mask_array[i][:, None] for i in range(self.n_agents)], 1)).float().to(self.device)}
@@ -159,18 +158,18 @@ class IPPO_Learner(LearnerMAS):
         loss_a, loss_e, loss_c = [], [], []
         for key in self.model_keys:
             # actor loss
-            log_pi = pi_dists_dict[key].log_prob(actions[key]).unsqueeze(-1)
+            log_pi = pi_dists_dict[key].log_prob(actions[key]).reshape(-1, 1)
             if self.use_parameter_sharing:
                 ratio = torch.exp(log_pi - log_pi_old[key]).reshape(batch_size, self.n_agents, 1)
             else:
-                ratio = torch.exp(log_pi - log_pi_old[key]).reshape(batch_size, 1)
+                ratio = torch.exp(log_pi - log_pi_old[key]).reshape(-1, 1)
             advantages_mask = advantages[key].detach() * agent_mask[key]
             surrogate1 = ratio * advantages_mask
             surrogate2 = torch.clip(ratio, 1 - self.clip_range, 1 + self.clip_range) * advantages_mask
             loss_a.append(-torch.sum(torch.min(surrogate1, surrogate2), dim=-2, keepdim=True).mean())
 
             # entropy loss
-            entropy = pi_dists_dict[key].entropy().reshape(agent_mask[key].shape) * agent_mask[key]
+            entropy = pi_dists_dict[key].entropy().reshape(-1, 1) * agent_mask[key]
             loss_e.append(entropy.mean())
 
             # critic loss
