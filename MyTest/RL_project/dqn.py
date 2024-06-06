@@ -39,7 +39,8 @@ def run(args):
     n_envs = envs.num_envs  # get the number of vectorized environments.
 
     # prepare representation
-    from xuance.torch.representations import Basic_MLP
+    # from xuance.torch.representations import Basic_MLP
+    from MyTest.RL_project.common.mlp import Basic_MLP
     representation = Basic_MLP(input_shape=space2shape(args.observation_space),
                                hidden_sizes=args.representation_hidden_size,
                                normalize=None,
@@ -48,7 +49,7 @@ def run(args):
                                device=args.device)  # create representation
 
     # prepare policy
-    from xuance.torch.policies import BasicQnetwork
+    from common.deterministic import BasicQnetwork
     policy = BasicQnetwork(action_space=args.action_space,
                            representation=representation,
                            hidden_size=args.q_hidden_size,
@@ -58,7 +59,7 @@ def run(args):
                            device=args.device)  # create policy
 
     # prepare agent
-    from dqn_agent import DQN_Agent
+    from MyTest.RL_project.common.dqn_agent import DQN_Agent
     optimizer = torch.optim.Adam(policy.parameters(), args.learning_rate, eps=1e-5)
     lr_scheduler = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=1.0, end_factor=0.0)
     agent = DQN_Agent(config=args,
@@ -116,7 +117,7 @@ def run(args):
             # 统计scores中有多少个-1和多少个1
             win=np.sum(np.array(scores)==1)
             fail=np.sum(np.array(scores)==-1)
-            print(f"win:{win}  fail:{fail}")
+            print(f"DQN测试结果：\nwin:{win}  fail:{fail}")
             print("获胜率: %.2f" % (win/args.test_episode))
             print("失败率: %.2f" % (fail / args.test_episode))
             print("Finish testing.")

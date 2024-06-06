@@ -1,19 +1,11 @@
 from collections import defaultdict
 
-from BlackjackEnv import BlackjackEnv
-import numpy as np
 import argparse
-from agent import DQN_Agent
 from tqdm import tqdm
 import os
-from copy import deepcopy
-import numpy as np
-import torch.optim
 from xuance import get_arguments
-from xuance.common import space2shape
 from xuance.environment import make_envs
 from xuance.torch.utils.operations import set_seed
-from xuance.torch.utils import ActivationFunctions
 
 from Util import save_Q,load_Q
 from Util import sarsa,expected_sarsa,eps_greedy,q_learning
@@ -92,6 +84,7 @@ def run(args,Alg,Test=False):
                 pass
             else:
                 fail+=1
+        print(f"{Alg}测试结果：")
         print("win:",win,"fail:",fail)
         print("获胜率: %.2f" % (win / (win+fail)))
         print("失败率: %.2f" % (fail / (win + fail)))
@@ -103,6 +96,6 @@ if __name__ == '__main__':
                          env_id=parser.env_id,
                          config_path=parser.config,
                          parser_args=parser)
-    Alg='sarsa'# 选择算法，可选sarsa,expected_sarsa,q_learning
+    Alg='q_learning'# 选择算法，可选sarsa,expected_sarsa,q_learning
     run(args,Alg,Test=True)
 

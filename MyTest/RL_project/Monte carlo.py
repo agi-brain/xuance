@@ -1,17 +1,12 @@
-from BlackjackEnv import BlackjackEnv
-import numpy as np
 import argparse
-from agent import DQN_Agent
 from tqdm import tqdm
 import os
-from copy import deepcopy
 import numpy as np
-import torch.optim
 from xuance import get_arguments
-from xuance.common import space2shape
 from xuance.environment import make_envs
 from xuance.torch.utils.operations import set_seed
-from xuance.torch.utils import ActivationFunctions
+
+
 def parse_args():
     parser = argparse.ArgumentParser("Run a demo.")
     parser.add_argument("--method", type=str, default="dqn")
@@ -134,8 +129,8 @@ def run(args):
             else:
                 fail+=1
         print("win:",win,"fail:",fail)
-        print("获胜率: %.2f" % (win / (win+fail)))
-        print("失败率: %.2f" % (fail / (win + fail)))
+        print("获胜率: %.2f" % (win / 50000))
+        print("失败率: %.2f" % (fail /50000))
 
 if __name__ == '__main__':
     parser = parse_args()
