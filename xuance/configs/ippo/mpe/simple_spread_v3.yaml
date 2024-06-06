@@ -1,29 +1,28 @@
-agent: "IPPO"
-env_name: "mpe"
-env_id: "simple_spread_v3"
-continuous_action: True
-policy: "Gaussian_MAAC_Policy"
-representation: "Basic_MLP"
-vectorize: "SubprocVecMultiAgentEnv"
-runner: "MARL"
+agent: "IPPO"  # The agent name.
+env_name: "mpe"  # The environment name.
+env_id: "simple_spread_v3"  # The environment id.
+continuous_action: True  # If to use continuous control.
+policy: "Gaussian_MAAC_Policy"  # The policy name.
+representation: "Basic_MLP"  # The representation name.
+vectorize: "SubprocVecMultiAgentEnv"  # The method to vectorize your environment such that can run in parallel.
+runner: "MARL"  # The runner.
 
 # recurrent settings for Basic_RNN representation
-use_rnn: False
-rnn: "GRU"
-recurrent_layer_N: 1
-fc_hidden_sizes: [64, 64, 64]
-recurrent_hidden_size: 64
-N_recurrent_layers: 1
-dropout: 0
-normalize: "LayerNorm"
-initialize: "orthogonal"
-gain: 0.01
+use_rnn: False  # If to use recurrent neural network as representation. (The representation should be "Basic_RNN")
+rnn: "GRU"  # The type of recurrent layer.
+fc_hidden_sizes: [64, 64, 64]  # The hidden size of feed forward layer in RNN representation.
+recurrent_hidden_size: 64  # The hidden size of the recurrent layer.
+N_recurrent_layers: 1  # The number of recurrent layer.
+dropout: 0  # dropout should be a number in range [0, 1], the probability of an element being zeroed.
+normalize: "LayerNorm"  # Layer normalization.
+initialize: "orthogonal"  # Network initializer.
+gain: 0.01  # Gain value for network initialization.
 
-representation_hidden_size: [64, ]  # the units for each hidden layer
-actor_hidden_size: [64, ]
-critic_hidden_size: [64, ]
-activation: "relu"
-use_parameter_sharing: False
+representation_hidden_size: [64, ]  # A list of hidden units for each layer of Basic_MLP representation networks.
+actor_hidden_size: [64, ]  # A list of hidden units for each layer of actor network.
+critic_hidden_size: [64, ]  # A list of hidden units for each layer of critic network.
+activation: "relu"  # The activation function of each hidden layer.
+use_parameter_sharing: False  # If to use parameter sharing for all agents' policies.
 activation_action: "sigmoid"
 use_actions_mask: False
 use_agents_mask: False

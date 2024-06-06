@@ -395,15 +395,15 @@ class MARL_OnPolicyBuffer_RNN(MARL_OnPolicyBuffer):
                     i_env: Optional[int] = None,
                     i_step: Optional[int] = None,
                     value_next: Optional[dict] = None,
-                    value_normalizer=None):
+                    value_normalizer: Optional[dict] = None):
         """
         Calculates and stores the returns and advantages when an episode is finished.
 
         Parameters:
             i_env (int): The index of environment.
             i_step (int): The index of step for current environment.
-            value_next (dict): The critic values of the terminal state.
-            value_normalizer: The value normalizer method, default is None.
+            value_next (Optional[dict]): The critic values of the terminal state.
+            value_normalizer (Optional[dict]): The value normalizer method, default is None.
         """
         env_step = i_step if i_step < self.max_eps_len else self.max_eps_len
         path_slice = np.arange(0, env_step).astype(np.int32)
@@ -421,18 +421,19 @@ class MARL_OnPolicyBuffer_RNN(MARL_OnPolicyBuffer):
             if self.use_gae:
                 for t in reversed(range(step_nums)):
                     if use_value_norm:
-                        vs_t, vs_next = value_normalizer.denormalize(vs[t]), value_normalizer.denormalize(vs[t + 1])
+                        vs_t = value_normalizer[key].denormalize(vs[t])
+                        vs_next = value_normalizer[key].denormalize(vs[t + 1])
                     else:
                         vs_t, vs_next = vs[t], vs[t + 1]
                     delta = rewards[t] + (1 - dones[t]) * self.gamma * vs_next - vs_t
                     last_gae_lam = delta + (1 - dones[t]) * self.gamma * self.gae_lambda * last_gae_lam
                     returns[t] = last_gae_lam + vs_t
-                advantages = returns - value_normalizer.denormalize(vs[:-1]) if use_value_norm else returns - vs[:-1]
+                advantages = returns - value_normalizer[key].denormalize(vs[:-1]) if use_value_norm else returns - vs[:-1]
             else:
                 returns_ = np.append(returns, [value_next[key]], axis=0)
                 for t in reversed(range(step_nums)):
                     returns_[t] = rewards[t] + (1 - dones[t]) * self.gamma * returns_[t + 1]
-                advantages = returns_ - value_normalizer.denormalize(vs) if use_value_norm else returns_ - vs
+                advantages = returns_ - value_normalizer[key].denormalize(vs) if use_value_norm else returns_ - vs
                 advantages = advantages[:-1]
                 returns = returns_[:-1]
 
