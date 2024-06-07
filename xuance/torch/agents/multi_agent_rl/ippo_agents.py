@@ -253,8 +253,12 @@ class IPPO_Agents(MARLAgents):
 
             actions_out = {k: pi_dists[k].stochastic_sample() for k in self.agent_keys}
             log_pi_a = {k: pi_dists[k].log_prob(actions_out[k]).cpu().detach().numpy() for k in self.agent_keys}
-            actions_dict = [{k: actions_out[k].cpu().detach().numpy()[e].reshape([]) for k in self.agent_keys}
-                            for e in range(n_env)]
+            if self.continuous_control:
+                actions_dict = [{k: actions_out[k].cpu().detach().numpy()[e] for k in self.agent_keys}
+                                for e in range(n_env)]
+            else:
+                actions_dict = [{k: actions_out[k].cpu().detach().numpy()[e].reshape([]) for k in self.agent_keys}
+                                for e in range(n_env)]
             log_pi_a_dict = [{k: log_pi_a[k][e].reshape([]) for i, k in enumerate(self.agent_keys)}
                              for e in range(n_env)]
 
@@ -444,9 +448,10 @@ class IPPO_Agents(MARLAgents):
                     self.memory.finish_path(i_env=i, value_next=value_next,
                                             value_normalizer=self.learner.value_normalizer)
                     obs_dict[i] = info[i]["reset_obs"]
-                    avail_actions[i] = info[i]["reset_avail_actions"]
                     self.envs.buf_obs[i] = info[i]["reset_obs"]
-                    self.envs.buf_avail_actions[i] = info[i]["reset_avail_actions"]
+                    if self.use_actions_mask:
+                        avail_actions[i] = info[i]["reset_avail_actions"]
+                        self.envs.buf_avail_actions[i] = info[i]["reset_avail_actions"]
                     if self.use_wandb:
                         step_info["Episode-Steps/env-%d" % i] = info[i]["episode_step"]
                         step_info["Train-Episode-Rewards/env-%d" % i] = info[i]["episode_score"]
@@ -474,26 +479,28 @@ class IPPO_Agents(MARLAgents):
         videos, episode_videos = [[] for _ in range(num_envs)], []
         current_episode, scores, best_score = 0, [0.0 for _ in range(num_envs)], -np.inf
         obs_dict, info = test_envs.reset()
-        avail_actions = test_envs.buf_avail_actions
-        rnn_hidden_actor, _ = self.init_rnn_hidden(num_envs)
+        avail_actions = test_envs.buf_avail_actions if self.use_actions_mask else None
+        if self.use_rnn:
+            rnn_hidden_actor, _ = self.init_rnn_hidden(num_envs)
+        else:
+            rnn_hidden_actor = None
         if self.config.render_mode == "rgb_array" and self.render:
             images = test_envs.render(self.config.render_mode)
             for idx, img in enumerate(images):
                 videos[idx].append(img)
 
         while current_episode < n_episodes:
-            rnn_hidden_next_actor, _, actions_dict, _, _ = self.action(obs_dict=obs_dict,
-                                                                       avail_actions_dict=avail_actions,
-                                                                       rnn_hidden_actor=rnn_hidden_actor,
-                                                                       test_mode=True)
+            rnn_hidden_actor, _, actions_dict, _, _ = self.action(obs_dict=obs_dict,
+                                                                  avail_actions_dict=avail_actions,
+                                                                  rnn_hidden_actor=rnn_hidden_actor,
+                                                                  test_mode=True)
             obs_dict, rewards_dict, terminated_dict, truncated, info = test_envs.step(actions_dict)
-            avail_actions = test_envs.buf_avail_actions
+            avail_actions = test_envs.buf_avail_actions if self.use_actions_mask else None
             if self.config.render_mode == "rgb_array" and self.render:
                 images = test_envs.render(self.config.render_mode)
                 for idx, img in enumerate(images):
                     videos[idx].append(img)
 
-            rnn_hidden_actor = deepcopy(rnn_hidden_next_actor)
             for i in range(num_envs):
                 if all(terminated_dict[i].values()) or truncated[i]:
                     if self.use_rnn:
@@ -501,7 +508,8 @@ class IPPO_Agents(MARLAgents):
                             rnn_hidden_actor[key] = self.policy.actor_representation[key].init_hidden_item(
                                 i, *rnn_hidden_actor[key])
                     obs_dict[i] = info[i]["reset_obs"]
-                    avail_actions[i] = info[i]["reset_avail_actions"]
+                    if self.use_actions_mask:
+                        avail_actions[i] = info[i]["reset_avail_actions"]
                     episode_score = float(np.mean(itemgetter(*self.agent_keys)(info[i]["episode_score"])))
                     scores.append(episode_score)
                     current_episode += 1

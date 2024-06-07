@@ -1,10 +1,10 @@
 import torch
 from copy import deepcopy
-from typing import Sequence, Optional, Callable, Union, Dict
+from typing import Sequence, Optional, Callable, Union, Dict, List
 from gym.spaces import Space, Box
 from xuance.torch.policies import CriticNet, VDN_mixer
-from xuance.torch.utils import ModuleType
-from xuance.torch import Tensor, Module
+from xuance.torch.utils import ModuleType, DiagGaussianDistribution
+from xuance.torch import Tensor, Module, ModuleDict
 from xuance.torch.policies.core import GaussianActorNet, GaussianActorNet_SAC
 
 
@@ -40,22 +40,27 @@ class MAAC_Policy(Module):
         self.critic_representation = representation_critic
 
         self.dim_input_critic = {}
-        self.actor, self.critic = {}, {}
+        self.actor, self.critic = ModuleDict(), ModuleDict()
         for key in self.model_keys:
             dim_actor_in, dim_actor_out, dim_critic_in, dim_critic_out = self._get_actor_critic_input(
-                self.n_actions[key],
+                self.action_space[key].shape[-1],
                 self.actor_representation[key].output_shapes['state'][0],
                 self.critic_representation[key].output_shapes['state'][0], n_agents)
-
-            if self.use_parameter_sharing:
-                dim_actor_in += self.n_agents
-                dim_critic_in += self.n_agents
 
             self.actor[key] = GaussianActorNet(dim_actor_in, dim_actor_out, actor_hidden_size,
                                                normalize, initialize, activation, activation_action, device)
             self.critic[key] = CriticNet(dim_critic_in, critic_hidden_size, normalize, initialize, activation, device)
+        
         self.mixer = mixer
-        self.pi_dist = None
+
+    @property
+    def parameters_model(self):
+        parameters = list(self.actor_representation.parameters()) + list(self.actor.parameters()) + list(
+            self.critic_representation.parameters()) + list(self.critic.parameters())
+        if self.mixer is None:
+            return parameters
+        else:
+            return parameters + list(self.mixer.parameters())
 
     def _get_actor_critic_input(self, dim_action, dim_actor_rep, dim_critic_rep, n_agents):
         """
@@ -69,42 +74,88 @@ class MAAC_Policy(Module):
 
         Returns:
             dim_actor_in: The dimension of input of the actor networks.
+            dim_actor_out: The dimension of output of the actor networks.
             dim_critic_in: The dimension of the input of critic networks.
+            dim_critic_out: The dimension of the output of critic networks.
         """
         dim_actor_in, dim_actor_out = dim_actor_rep, dim_action
         dim_critic_in, dim_critic_out = dim_critic_rep, 1
+        if self.use_parameter_sharing:
+            dim_actor_in += n_agents
+            dim_critic_in += n_agents
         return dim_actor_in, dim_actor_out, dim_critic_in, dim_critic_out
 
-    def forward(self, observation: Tensor, agent_ids: Tensor,
-                *rnn_hidden: Tensor, **kwargs):
-        if self.use_rnn:
-            outputs = self.representation(observation, *rnn_hidden)
-            rnn_hidden = (outputs['rnn_hidden'], outputs['rnn_cell'])
-        else:
-            outputs = self.representation(observation)
-            rnn_hidden = None
-        actor_input = torch.concat([outputs['state'], agent_ids], dim=-1)
-        self.pi_dist = self.actor(actor_input)
-        return rnn_hidden, self.pi_dist
+    def forward(self, observation: Dict[str, Tensor], agent_ids: Optional[Tensor] = None,
+                avail_actions: Dict[str, Tensor] = None, agent_key: str = None,
+                rnn_hidden: Optional[Dict[str, List[Tensor]]] = None):
+        """
+        Returns actions of the policy.
 
-    def get_values(self, critic_in: Tensor, agent_ids: Tensor,
-                   *rnn_hidden: Tensor, **kwargs):
-        shape_input = critic_in.shape
-        # get representation features
-        if self.use_rnn:
-            batch_size, n_agent, episode_length, dim_input = tuple(shape_input)
-            outputs = self.representation_critic(critic_in.reshape(-1, episode_length, dim_input), *rnn_hidden)
-            outputs['state'] = outputs['state'].reshape(batch_size, n_agent, episode_length, -1)
-            rnn_hidden = (outputs['rnn_hidden'], outputs['rnn_cell'])
-        else:
-            batch_size, n_agent, dim_input = tuple(shape_input)
-            outputs = self.representation_critic(critic_in.reshape(-1, dim_input))
-            outputs['state'] = outputs['state'].reshape(batch_size, n_agent, -1)
-            rnn_hidden = None
-        # get critic values
-        critic_in = torch.concat([outputs['state'], agent_ids], dim=-1)
-        v = self.critic(critic_in)
-        return rnn_hidden, v
+        Parameters:
+            observation (Dict[str, Tensor]): The input observations for the policies.
+            agent_ids (Tensor): The agents' ids (for parameter sharing).
+            avail_actions (Dict[str, Tensor]): Actions mask values, default is None.
+            agent_key (str): Calculate actions for specified agent.
+            rnn_hidden (Optional[Dict[str, List[Tensor]]]): The RNN hidden states of actor representation.
+
+        Returns:
+            rnn_hidden_new (Optional[Dict[str, List[Tensor]]]): The new RNN hidden states of actor representation.
+            pi_dists (dict): The stochastic policy distributions.
+        """
+        rnn_hidden_new, pi_dists = {}, {}
+        agent_list = self.model_keys if agent_key is None else [agent_key]
+
+        for key in agent_list:
+            if self.use_rnn:
+                outputs = self.actor_representation[key](observation[key], *rnn_hidden[key])
+                rnn_hidden_new[key] = (outputs['rnn_hidden'], outputs['rnn_cell'])
+            else:
+                outputs = self.actor_representation[key](observation[key])
+                rnn_hidden_new[key] = [None, None]
+
+            if self.use_parameter_sharing:
+                actor_input = torch.concat([outputs['state'], agent_ids], dim=-1)
+            else:
+                actor_input = outputs['state']
+
+            pi_dists[key] = self.actor[key](actor_input)
+
+        return rnn_hidden, pi_dists
+
+    def get_values(self, observation: Dict[str, Tensor], agent_ids: Tensor = None, agent_key: str = None,
+                   rnn_hidden: Optional[Dict[str, List[Tensor]]] = None):
+        """
+        Get critic values via critic networks.
+
+        Parameters:
+            observation (Dict[str, Tensor]): The input observations for the policies.
+            agent_ids (Tensor): The agents' ids (for parameter sharing).
+            agent_key (str): Calculate actions for specified agent.
+            rnn_hidden (Optional[Dict[str, List[Tensor]]]): The RNN hidden states of critic representation.
+
+        Returns:
+            rnn_hidden_new (Optional[Dict[str, List[Tensor]]]): The new RNN hidden states of critic representation.
+            values (dict): The evaluated critic values.
+        """
+        rnn_hidden_new, values = {}, {}
+        agent_list = self.model_keys if agent_key is None else [agent_key]
+
+        for key in agent_list:
+            if self.use_rnn:
+                outputs = self.critic_representation[key](observation[key], *rnn_hidden[key])
+                rnn_hidden_new[key] = (outputs['rnn_hidden'], outputs['rnn_cell'])
+            else:
+                outputs = self.critic_representation[key](observation[key])
+                rnn_hidden_new[key] = [None, None]
+
+            if self.use_parameter_sharing:
+                critic_input = torch.concat([outputs['state'], agent_ids], dim=-1)
+            else:
+                critic_input = outputs['state']
+
+            values[key] = self.critic[key](critic_input)
+
+        return rnn_hidden_new, values
 
     def value_tot(self, values_n: Tensor, global_state=None):
         if global_state is not None:

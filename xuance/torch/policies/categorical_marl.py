@@ -41,22 +41,17 @@ class MAAC_Policy(Module):
         self.critic_representation = representation_critic
 
         self.dim_input_critic, self.n_actions = {}, {}
-        self.actor, self.critic, self.pi_dist = ModuleDict(), ModuleDict(), {}
+        self.actor, self.critic = ModuleDict(), ModuleDict()
         for key in self.model_keys:
             self.n_actions[key] = self.action_space[key].n
-            dim_obs_actor, dim_obs_critic, dim_act_actor, dim_act_critic = self._get_actor_critic_input(
+            dim_actor_in, dim_actor_out, dim_critic_in, dim_critic_out = self._get_actor_critic_input(
                 self.n_actions[key],
                 self.actor_representation[key].output_shapes['state'][0],
                 self.critic_representation[key].output_shapes['state'][0], n_agents)
 
-            if self.use_parameter_sharing:
-                dim_obs_actor += self.n_agents
-                dim_obs_critic += self.n_agents
-
-            self.actor[key] = CategoricalActorNet(dim_obs_actor, dim_act_actor, actor_hidden_size,
+            self.actor[key] = CategoricalActorNet(dim_actor_in, dim_actor_out, actor_hidden_size,
                                                   normalize, initialize, activation, device)
-            self.critic[key] = CriticNet(dim_obs_critic, critic_hidden_size, normalize, initialize, activation, device)
-            self.pi_dist[key] = CategoricalDistribution(self.n_actions[key])
+            self.critic[key] = CriticNet(dim_critic_in, critic_hidden_size, normalize, initialize, activation, device)
 
         self.mixer = mixer
 
@@ -81,11 +76,16 @@ class MAAC_Policy(Module):
 
         Returns:
             dim_actor_in: The dimension of input of the actor networks.
+            dim_actor_out: The dimension of output of the actor networks.
             dim_critic_in: The dimension of the input of critic networks.
+            dim_critic_out: The dimension of the output of critic networks.
         """
-        dim_actor_in, dim_critic_in = dim_actor_rep, dim_critic_rep
-        dim_act_actor, dim_act_critic = dim_action, dim_action
-        return dim_actor_in, dim_critic_in, dim_act_actor, dim_act_critic
+        dim_actor_in, dim_actor_out = dim_actor_rep, dim_action
+        dim_critic_in, dim_critic_out = dim_critic_rep, dim_action
+        if self.use_parameter_sharing:
+            dim_actor_in += n_agents
+            dim_critic_in += n_agents
+        return dim_actor_in, dim_actor_out, dim_critic_in, dim_critic_out
 
     def forward(self, observation: Dict[str, Tensor], agent_ids: Optional[Tensor] = None,
                 avail_actions: Dict[str, Tensor] = None, agent_key: str = None,
