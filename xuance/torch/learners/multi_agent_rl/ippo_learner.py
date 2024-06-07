@@ -81,7 +81,10 @@ class IPPO_Learner(LearnerMAS):
                 bs_rnn = batch_size * self.n_agents
                 seq_len = act_array[0].shape[1]
                 obs[k] = obs[k].reshape([bs_rnn, seq_len, -1])
-                actions[k] = actions[k].reshape([bs_rnn, seq_len])
+                if len(actions[k].shape) == 4:
+                    actions[k] = actions[k].reshape([bs_rnn, seq_len, -1])
+                else:
+                    actions[k] = actions[k].reshape([bs_rnn, seq_len])
                 IDs = torch.eye(self.n_agents).unsqueeze(1).unsqueeze(0).expand(batch_size, -1, seq_len, -1).to(self.device)
                 IDs = IDs.reshape(bs_rnn, seq_len, -1)
             else:

@@ -222,7 +222,10 @@ class IPPO_Agents(MARLAgents):
             actions_out = pi_dists[key].stochastic_sample()
             log_pi_a = pi_dists[key].log_prob(actions_out).cpu().detach().numpy()
             if self.use_rnn:
-                actions_out = actions_out.reshape(n_env, self.n_agents)
+                if self.continuous_control:
+                    actions_out = actions_out.reshape(n_env, self.n_agents, -1)
+                else:
+                    actions_out = actions_out.reshape(n_env, self.n_agents)
                 log_pi_a = log_pi_a.reshape(n_env, self.n_agents)
             actions_dict = [{k: actions_out[e, i].cpu().detach().numpy() for i, k in enumerate(self.agent_keys)}
                             for e in range(n_env)]
@@ -254,7 +257,7 @@ class IPPO_Agents(MARLAgents):
             actions_out = {k: pi_dists[k].stochastic_sample() for k in self.agent_keys}
             log_pi_a = {k: pi_dists[k].log_prob(actions_out[k]).cpu().detach().numpy() for k in self.agent_keys}
             if self.continuous_control:
-                actions_dict = [{k: actions_out[k].cpu().detach().numpy()[e] for k in self.agent_keys}
+                actions_dict = [{k: actions_out[k].cpu().detach().numpy()[e].reshape([-1]) for k in self.agent_keys}
                                 for e in range(n_env)]
             else:
                 actions_dict = [{k: actions_out[k].cpu().detach().numpy()[e].reshape([]) for k in self.agent_keys}
