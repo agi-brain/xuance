@@ -125,6 +125,16 @@ class MARLAgents(ABC):
                 self.writer.add_video(k, v, fps=fps, global_step=x_index)
                 
     def _build_representation(self, representation_key: str, config: Namespace):
+        """
+        Build representation for policies.
+
+        Parameters:
+            representation_key (str): The selection of representation, e.g., "Basic_MLP", "Basic_RNN", etc.
+            config: The configurations for creating the representation module.
+        
+        Returns:
+            representation (Module): The representation Module. 
+        """
         normalize_fn = NormalizeFunctions[config.normalize] if hasattr(config, "normalize") else None
         initializer = nn.init.orthogonal_
         activation = ActivationFunctions[config.activation]

@@ -5,7 +5,7 @@ continuous_action: True
 policy: "Gaussian_MAAC_Policy"
 representation: "Basic_MLP"
 vectorize: "DummyVecMultiAgentEnv"
-runner: "Pettingzoo_Runner"
+runner: "MARL"
 
 # recurrent settings for Basic_RNN representation
 use_rnn: False
@@ -14,14 +14,14 @@ representation_hidden_size: [64, ]  # the units for each hidden layer
 gain: 0.01
 
 actor_hidden_size: [64, ]
-critic_hidden_size: [256, ]
+critic_hidden_size: [64, ]
 activation: "relu"
 activation_action: "sigmoid"
 
 seed: 1
-parallels: 128
-buffer_size: 3200
-n_epoch: 10
+parallels: 16
+buffer_size: 400
+n_epoch: 1
 n_minibatch: 1
 learning_rate: 0.0007
 weight_decay: 0
