@@ -13,8 +13,8 @@ rnn:
 representation_hidden_size: [64, ]  # the units for each hidden layer
 gain: 0.01
 
-actor_hidden_size: [64, ]
-critic_hidden_size: [64, ]
+actor_hidden_size: [64, 64]
+critic_hidden_size: [64, 64]
 activation: "relu"
 activation_action: "sigmoid"
 
@@ -41,7 +41,7 @@ use_grad_clip: True  # gradient normalization
 grad_clip_norm: 10.0
 use_value_clip: True  # limit the value range
 value_clip_range: 0.2
-use_value_norm: False  # use running mean and std to normalize rewards.
+use_value_norm: True  # use running mean and std to normalize rewards.
 use_huber_loss: True  # True: use huber loss; False: use MSE loss.
 huber_delta: 10.0
 use_advnorm: True
