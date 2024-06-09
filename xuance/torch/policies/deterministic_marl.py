@@ -775,7 +775,7 @@ class MADDPG_Policy(Independent_DDPG_Policy):
                                             actor_hidden_size, critic_hidden_size,
                                             normalize, initialize, activation, activation_action, device, **kwargs)
 
-    def _get_actor_critic_input(self, dim_action, dim_actor_rep, dim_critic_rep, n_agents):
+    def _get_actor_critic_input(self, dim_actor_rep, dim_action, dim_critic_rep, n_agents):
         """
         Returns the input dimensions of actor netwrok and critic networks.
 
@@ -790,10 +790,12 @@ class MADDPG_Policy(Independent_DDPG_Policy):
             dim_critic_in: The dimension of the input of critic networks.
         """
         dim_actor_in = dim_actor_rep
-        dim_critic_in = dim_critic_rep * n_agents
-        dim_act_actor = dim_action
-        dim_act_critic = dim_action * n_agents
-        return dim_actor_in, dim_critic_in, dim_act_actor, dim_act_critic
+        dim_actor_out = dim_action
+        dim_critic_in = (dim_critic_rep + dim_action) * n_agents
+        if self.use_parameter_sharing:
+            dim_actor_in += n_agents
+            dim_critic_in += n_agents
+        return dim_actor_in, dim_actor_out, dim_critic_in
 
     def Qpolicy(self, observation: Dict[str, Tensor], actions: Dict[str, Tensor],
                 agent_ids: Tensor = None, agent_key: str = None):
