@@ -68,18 +68,7 @@ class IDDPG_Agents(MARLAgents):
         device = self.device
 
         # build representations
-        representation = {key: None for key in self.model_keys}
-        for key in self.model_keys:
-            input_shape = space2shape(self.observation_space[key])
-            if self.config.representation == "Basic_Identical":
-                representation[key] = REGISTRY_Representation["Basic_Identical"](input_shape=input_shape,
-                                                                                 device=self.device)
-            elif self.config.representation == "Basic_MLP":
-                representation[key] = REGISTRY_Representation["Basic_MLP"](
-                    input_shape=input_shape, hidden_sizes=self.config.representation_hidden_size,
-                    normalize=normalize_fn, initialize=initializer, activation=activation, device=device)
-            else:
-                raise AttributeError(f"IDDPG currently does not support {self.config.representation} representation.")
+        representation = self._build_representation(self.config.representation, self.config)
 
         # build policies
         if self.config.policy == "Independent_DDPG_Policy":

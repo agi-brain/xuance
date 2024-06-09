@@ -112,7 +112,7 @@ class IPPO_Agents(MARLAgents):
             actions_dict (List[dict]): Actions for each agent in self.agent_keys.
             log_pi_a (dict): The log of pi.
             rewards_dict (List[dict]): Rewards for each agent in self.agent_keys.
-            values_dict (List[dict]): Critic values for each agent in self.agent_keys.
+            values_dict (dict): Critic values for each agent in self.agent_keys.
             terminals_dict (List[dict]): Terminated values for each agent in self.agent_keys.
             info (List[dict]): Other information for the environment at current step.
             **kwargs: Other inputs.
@@ -120,9 +120,9 @@ class IPPO_Agents(MARLAgents):
         experience_data = {
             'obs': {k: np.array([data[k] for data in obs_dict]) for k in self.agent_keys},
             'actions': {k: np.array([data[k] for data in actions_dict]) for k in self.agent_keys},
-            'log_pi_old': {k: np.array([data[k] for data in log_pi_a]) for k in self.agent_keys},
+            'log_pi_old': log_pi_a,
             'rewards': {k: np.array([data[k] for data in rewards_dict]) for k in self.agent_keys},
-            'values': {k: np.array([data[k] for data in values_dict]) for k in self.agent_keys},
+            'values': values_dict,
             'terminals': {k: np.array([data[k] for data in terminals_dict]) for k in self.agent_keys},
             'agent_mask': {k: np.array([data['agent_mask'][k] for data in info]) for k in self.agent_keys},
         }
@@ -151,7 +151,7 @@ class IPPO_Agents(MARLAgents):
     def init_hidden_item(self,
                          i_env: int,
                          rnn_hidden_actor: Optional[dict] = None,
-                         rnn_hidden_critic: Optional[dict] = None,):
+                         rnn_hidden_critic: Optional[dict] = None):
         """
         Returns initialized hidden states of RNN for i-th environment.
 
@@ -229,14 +229,13 @@ class IPPO_Agents(MARLAgents):
                 log_pi_a = log_pi_a.reshape(n_env, self.n_agents)
             actions_dict = [{k: actions_out[e, i].cpu().detach().numpy() for i, k in enumerate(self.agent_keys)}
                             for e in range(n_env)]
-            log_pi_a_dict = [{k: log_pi_a[e, i] for i, k in enumerate(self.agent_keys)} for e in range(n_env)]
+            log_pi_a_dict = {k: log_pi_a[:, i] for i, k in enumerate(self.agent_keys)}
             if not test_mode:
                 rnn_hidden_critic_new, values_out = self.policy.get_values(observation=obs_input,
                                                                            agent_ids=agents_id,
                                                                            rnn_hidden=rnn_hidden_critic)
-                values_out = values_out[key].reshape(n_env, self.n_agents)
-                values_dict = [{k: values_out[e, i].cpu().detach().numpy() for i, k in enumerate(self.agent_keys)}
-                               for e in range(n_env)]
+                values_dict = {k: values_out[key][:, i].reshape(n_env).cpu().detach().numpy()
+                               for i, k in enumerate(self.agent_keys)}
         else:
             if self.use_rnn:
                 obs_input = {k: np.array([itemgetter(k)(env_obs) for env_obs in obs_dict])[:, None] for k in
@@ -262,14 +261,12 @@ class IPPO_Agents(MARLAgents):
             else:
                 actions_dict = [{k: actions_out[k].cpu().detach().numpy()[e].reshape([]) for k in self.agent_keys}
                                 for e in range(n_env)]
-            log_pi_a_dict = [{k: log_pi_a[k][e].reshape([]) for i, k in enumerate(self.agent_keys)}
-                             for e in range(n_env)]
+            log_pi_a_dict = {k: log_pi_a[k].reshape([n_env]) for i, k in enumerate(self.agent_keys)}
 
             if not test_mode:
                 rnn_hidden_critic_new, values_out = self.policy.get_values(observation=obs_input,
                                                                            rnn_hidden=rnn_hidden_critic)
-                values_dict = [{k: values_out[k][e].cpu().detach().numpy().reshape([]) for k in self.agent_keys}
-                               for e in range(n_env)]
+                values_dict = {k: values_out[k].cpu().detach().numpy().reshape([n_env]) for k in self.agent_keys}
 
         return rnn_hidden_actor_new, rnn_hidden_critic_new, actions_dict, log_pi_a_dict, values_dict
 
