@@ -7,11 +7,10 @@ from argparse import Namespace
 from typing import Optional, List
 from xuance.environment import DummyVecMultiAgentEnv
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
-from xuance.torch.representations import REGISTRY_Representation
 from xuance.torch.policies import REGISTRY_Policy
 from xuance.torch.learners import IDDPG_Learner
 from xuance.torch.agents import MARLAgents
-from xuance.common import MARL_OffPolicyBuffer, space2shape
+from xuance.common import MARL_OffPolicyBuffer
 
 
 class IDDPG_Agents(MARLAgents):

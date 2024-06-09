@@ -39,8 +39,8 @@ from .deterministic_marl import MFQnetwork, MixingQnetwork, Weighted_MixingQnetw
 from .categorical_marl import MeanFieldActorCriticPolicy, COMA_Policy
 from .categorical_marl import MAAC_Policy as Categorical_MAAC_Policy
 from .categorical_marl import MAAC_Policy_Share as Categorical_MAAC_Policy_Share
-from .gaussian_marl import Basic_ISAC_policy as Gaussian_ISAC
-from .gaussian_marl import MASAC_policy as Gaussian_MASAC
+from .gaussian_marl import Basic_ISAC_Policy as Gaussian_ISAC
+from .gaussian_marl import MASAC_Policy as Gaussian_MASAC
 from .gaussian_marl import MAAC_Policy as Gaussain_MAAC
 
 Mixer = {

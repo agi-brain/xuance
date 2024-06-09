@@ -65,26 +65,7 @@ class VDN_Agents(IQL_Agents, MARLAgents):
         device = self.device
 
         # build representations
-        representation = {key: None for key in self.model_keys}
-        for key in self.model_keys:
-            input_shape = self.observation_space[key].shape
-            if self.config.representation == "Basic_Identical":
-                representation[key] = REGISTRY_Representation["Basic_Identical"](input_shape=input_shape,
-                                                                                 device=self.device)
-            elif self.config.representation == "Basic_MLP":
-                representation[key] = REGISTRY_Representation["Basic_MLP"](
-                    input_shape=input_shape, hidden_sizes=self.config.representation_hidden_size,
-                    normalize=normalize_fn, initialize=initializer, activation=activation, device=device)
-            elif self.config.representation == "Basic_RNN":
-                representation[key] = REGISTRY_Representation["Basic_RNN"](
-                    input_shape=input_shape,
-                    hidden_sizes={'fc_hidden_sizes': self.config.fc_hidden_sizes,
-                                  'recurrent_hidden_size': self.config.recurrent_hidden_size},
-                    normalize=normalize_fn, initialize=initializer, activation=activation, device=device,
-                    N_recurrent_layers=self.config.N_recurrent_layers,
-                    dropout=self.config.dropout, rnn=self.config.rnn)
-            else:
-                raise AttributeError(f"VDN currently does not support {self.config.representation} representation.")
+        representation = self._build_representation(self.config.representation, self.config)
 
         # build policies
         mixer = VDN_mixer()

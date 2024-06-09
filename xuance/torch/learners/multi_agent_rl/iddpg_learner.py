@@ -32,7 +32,7 @@ class IDDPG_Learner(LearnerMAS):
         self.iterations += 1
         info = {}
 
-        # prepare training data
+        # prepare training data.
         sample_Tensor = self.build_training_data(sample,
                                                  use_parameter_sharing=self.use_parameter_sharing,
                                                  use_actions_mask=False)

@@ -598,18 +598,13 @@ class Independent_DDPG_Policy(Module):
         self.critic, self.target_critic = ModuleDict(), ModuleDict()
         for key in self.model_keys:
             dim_action = self.action_space[key].shape[-1]
-            dim_obs_actor, dim_obs_critic, dim_act_actor, dim_act_critic = self._get_actor_critic_input(
-                dim_action,
-                self.actor_representation[key].output_shapes['state'][0],
+            dim_actor_in, dim_actor_out, dim_critic_in = self._get_actor_critic_input(
+                self.actor_representation[key].output_shapes['state'][0], dim_action,
                 self.critic_representation[key].output_shapes['state'][0], n_agents)
 
-            if self.use_parameter_sharing:
-                dim_obs_actor += self.n_agents
-                dim_obs_critic += self.n_agents
-            self.actor[key] = ActorNet(dim_obs_actor, dim_act_actor, actor_hidden_size,
+            self.actor[key] = ActorNet(dim_actor_in, dim_actor_out, actor_hidden_size,
                                        normalize, initialize, activation, activation_action, device)
-            self.critic[key] = CriticNet(dim_obs_critic + dim_act_critic, critic_hidden_size,
-                                         normalize, initialize, activation, device)
+            self.critic[key] = CriticNet(dim_critic_in, critic_hidden_size, normalize, initialize, activation, device)
             self.target_actor[key] = deepcopy(self.actor[key])
             self.target_critic[key] = deepcopy(self.critic[key])
 
@@ -629,13 +624,13 @@ class Independent_DDPG_Policy(Module):
                 self.critic[key].parameters())
         return parameters_critic
 
-    def _get_actor_critic_input(self, dim_action, dim_actor_rep, dim_critic_rep, n_agents):
+    def _get_actor_critic_input(self, dim_actor_rep, dim_action, dim_critic_rep, n_agents):
         """
         Returns the input dimensions of actor netwrok and critic networks.
 
         Parameters:
-            dim_action: The dimension of actions.
             dim_actor_rep: The dimension of the output of actor presentation.
+            dim_action: The dimension of actions.
             dim_critic_rep: The dimension of the output of critic presentation.
             n_agents: The number of agents.
 
@@ -643,9 +638,12 @@ class Independent_DDPG_Policy(Module):
             dim_actor_in: The dimension of input of the actor networks.
             dim_critic_in: The dimension of the input of critic networks.
         """
-        dim_actor_in, dim_critic_in = dim_actor_rep, dim_critic_rep
-        dim_act_actor, dim_act_critic = dim_action, dim_action
-        return dim_actor_in, dim_critic_in, dim_act_actor, dim_act_critic
+        dim_actor_in, dim_actor_out = dim_actor_rep, dim_action
+        dim_critic_in = dim_critic_rep + dim_action
+        if self.use_parameter_sharing:
+            dim_actor_in += n_agents
+            dim_critic_in += n_agents
+        return dim_actor_in, dim_actor_out, dim_critic_in
 
     def forward(self, observation: Dict[str, Tensor],
                 agent_ids: Tensor = None, agent_key: str = None):
@@ -987,12 +985,13 @@ class MATD3_Policy(Independent_DDPG_Policy, Module):
 
         for key in agent_list:
             if self.use_parameter_sharing:
-                critic_in_A = torch.concat([joint_obs_in_A, agent_ids], dim=-1)
-                critic_in_B = torch.concat([joint_obs_in_B, agent_ids], dim=-1)
+                critic_in_A = torch.concat([joint_obs_in_A, joint_act_in, agent_ids], dim=-1)
+                critic_in_B = torch.concat([joint_obs_in_B, joint_act_in, agent_ids], dim=-1)
             else:
-                critic_in_A, critic_in_B = joint_obs_in_A, joint_obs_in_B
-            q_eval_A[key] = self.critic_A[key](critic_in_A, joint_act_in)
-            q_eval_B[key] = self.critic_B[key](critic_in_B, joint_act_in)
+                critic_in_A = torch.concat([joint_obs_in_A, joint_act_in], dim=-1)
+                critic_in_B = torch.concat([joint_obs_in_B, joint_act_in], dim=-1)
+            q_eval_A[key] = self.critic_A[key](critic_in_A)
+            q_eval_B[key] = self.critic_B[key](critic_in_B)
             q_eval[key] = (q_eval_A[key] + q_eval_B[key]) / 2.0
         return q_eval_A, q_eval_B, q_eval
 
@@ -1032,12 +1031,13 @@ class MATD3_Policy(Independent_DDPG_Policy, Module):
 
         for key in agent_list:
             if self.use_parameter_sharing:
-                critic_in_A = torch.concat([joint_obs_in_A, agent_ids], dim=-1)
-                critic_in_B = torch.concat([joint_obs_in_B, agent_ids], dim=-1)
+                critic_in_A = torch.concat([joint_obs_in_A, joint_act_in, agent_ids], dim=-1)
+                critic_in_B = torch.concat([joint_obs_in_B, joint_act_in, agent_ids], dim=-1)
             else:
-                critic_in_A, critic_in_B = joint_obs_in_A, joint_obs_in_B
-            q_target_A = self.target_critic_A[key](critic_in_A, joint_act_in)
-            q_target_B = self.target_critic_B[key](critic_in_B, joint_act_in)
+                critic_in_A = torch.concat([joint_obs_in_A, joint_act_in], dim=-1)
+                critic_in_B = torch.concat([joint_obs_in_B, joint_act_in], dim=-1)
+            q_target_A = self.target_critic_A[key](critic_in_A)
+            q_target_B = self.target_critic_B[key](critic_in_B)
             q_target[key] = torch.minimum(q_target_A, q_target_B)
         return q_target
 

@@ -1,76 +1,54 @@
 import torch
-import numpy as np
-from tqdm import tqdm
-from copy import deepcopy
-from operator import itemgetter
 from argparse import Namespace
-from typing import List
 from xuance.environment import DummyVecMultiAgentEnv
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
-from xuance.torch.representations import REGISTRY_Representation
-from xuance.torch.policies import REGISTRY_Policy, QMIX_mixer
-from xuance.torch.learners import QMIX_Learner
-from xuance.torch.agents import MARLAgents
-from xuance.torch.agents.multi_agent_rl.iql_agents import IQL_Agents
-from xuance.common import MARL_OffPolicyBuffer, MARL_OffPolicyBuffer_RNN
+from xuance.torch.policies import REGISTRY_Policy
+from xuance.torch.learners import MASAC_Learner
+from xuance.torch.agents.multi_agent_rl.isac_agents import ISAC_Agents
 
 
-class MASAC_Agents(MARLAgents):
+class MASAC_Agents(ISAC_Agents):
     """The implementation of MASAC agents.
 
     Args:
         config: the Namespace variable that provides hyper-parameters and other settings.
         envs: the vectorized environments.
-        device: the calculating device of the model, such as CPU or GPU.
     """
     def __init__(self,
                  config: Namespace,
                  envs: DummyVecMultiAgentEnv):
-        self.gamma = config.gamma
+        super(MASAC_Agents, self).__init__(config, envs)
 
-        input_representation = get_repre_in(config)
-        representation = REGISTRY_Representation[config.representation](*input_representation)
-        input_policy = get_policy_in_marl(config, representation)
-        policy = REGISTRY_Policy[config.policy](*input_policy)
-        optimizer = [torch.optim.Adam(policy.parameters_actor, config.lr_a, eps=1e-5),
-                     torch.optim.Adam(policy.parameters_critic, config.lr_c, eps=1e-5)]
-        scheduler = [torch.optim.lr_scheduler.LinearLR(optimizer[0], start_factor=1.0, end_factor=0.5,
-                                                       total_iters=get_total_iters(config.agent_name, config)),
-                     torch.optim.lr_scheduler.LinearLR(optimizer[1], start_factor=1.0, end_factor=0.5,
-                                                       total_iters=get_total_iters(config.agent_name, config))]
-        self.observation_space = envs.observation_space
-        self.action_space = envs.action_space
-        self.representation_info_shape = policy.representation_info_shape
-        self.auxiliary_info_shape = {}
+    def _build_policy(self):
+        """
+        Build representation(s) and policy(ies) for agent(s)
 
-        if config.state_space is not None:
-            config.dim_state, state_shape = config.state_space.shape, config.state_space.shape
+        Returns:
+            policy (torch.nn.Module): A dict of policies.
+        """
+        normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
+        initializer = torch.nn.init.orthogonal_
+        activation = ActivationFunctions[self.config.activation]
+        device = self.device
+        agent = self.config.agent
+
+        # build representations
+        representation = self._build_representation(self.config.representation, self.config)
+
+        # build policies
+        if self.config.policy == "Gaussian_MASAC_Policy":
+            policy = REGISTRY_Policy["Gaussian_MASAC_Policy"](
+                action_space=self.action_space, n_agents=self.n_agents, representation=representation,
+                actor_hidden_size=self.config.actor_hidden_size,
+                critic_hidden_size=self.config.critic_hidden_size,
+                normalize=normalize_fn, initialize=initializer, activation=activation,
+                activation_action=ActivationFunctions[self.config.activation_action],
+                device=device, use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
+                use_rnn=self.use_rnn, rnn=self.config.rnn if self.use_rnn else None)
         else:
-            config.dim_state, state_shape = None, None
-        memory = MARL_OffPolicyBuffer(config.n_agents,
-                                      state_shape,
-                                      config.obs_shape,
-                                      config.act_shape,
-                                      config.rew_shape,
-                                      config.done_shape,
-                                      envs.num_envs,
-                                      config.buffer_size,
-                                      config.batch_size)
-        learner = MASAC_Learner(config, policy, optimizer, scheduler, config.device, config.model_dir,
-                                use_automatic_entropy_tuning=config.use_automatic_entropy_tuning,
-                                target_entropy=-policy.action_dim,
-                                lr_policy=config.lr_a)
-        super(MASAC_Agents, self).__init__(config, envs, policy, memory, learner, device,
-                                           config.log_dir, config.model_dir)
-        self.on_policy = False
+            raise AttributeError(f"{agent} currently does not support the policy named {self.config.policy}.")
 
-    def act(self, obs_n, test_mode):
-        batch_size = len(obs_n)
-        agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(batch_size, -1, -1).to(self.device)
-        _, actions = self.policy(obs_n, agents_id)
-        return None, actions.cpu().detach().numpy()
+        return policy
 
-    def train(self, i_episode):
-        sample = self.memory.sample()
-        info_train = self.learner.update(sample)
-        return info_train
+    def _build_learner(self, config, model_keys, agent_keys, episode_length, policy, optimizer, scheduler):
+        return MASAC_Learner(config, model_keys, agent_keys, episode_length, policy, optimizer, scheduler)
