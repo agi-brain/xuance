@@ -2,9 +2,9 @@ import torch
 import numpy as np
 from copy import deepcopy
 from typing import Sequence, Optional, Callable, Union, Dict, List
-from gym.spaces import Space, Box
+from gym.spaces import Box
 from xuance.torch.policies import CriticNet, VDN_mixer
-from xuance.torch.utils import ModuleType, DiagGaussianDistribution
+from xuance.torch.utils import ModuleType
 from xuance.torch import Tensor, Module, ModuleDict
 from xuance.torch.policies.core import GaussianActorNet, GaussianActorNet_SAC
 

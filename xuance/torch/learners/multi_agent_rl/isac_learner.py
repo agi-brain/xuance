@@ -56,7 +56,7 @@ class ISAC_Learner(LearnerMAS):
             # actor update
             log_pi_eval = log_pi[key].unsqueeze(-1)
             policy_q = torch.min(policy_q_1[key], policy_q_2[key])
-            loss_a = ((self.alpha * log_pi_eval - policy_q) * agent_mask[key]).sum() / agent_mask[key].sum()
+            loss_a = ((self.alpha * log_pi_eval - policy_q.detach()) * agent_mask[key]).sum() / agent_mask[key].sum()
             self.optimizer[key]['actor'].zero_grad()
             loss_a.backward()
             if self.use_grad_clip:

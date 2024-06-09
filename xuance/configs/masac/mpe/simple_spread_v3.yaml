@@ -12,7 +12,7 @@ actor_hidden_size: [64, 64]
 critic_hidden_size: [64, 64]
 activation: 'leaky_relu'
 activation_action: 'sigmoid'
-use_parameter_sharing: True
+use_parameter_sharing: False
 use_actions_mask: False
 
 seed: 1
