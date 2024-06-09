@@ -92,6 +92,7 @@ REGISTRY_Policy = {
 }
 
 __all__ = [
+    "REGISTRY_Policy", "Mixer",
     "ActorNet", "CategoricalActorNet", "CategoricalActorNet_SAC", "GaussianActorNet", "GaussianActorNet_SAC",
     "BasicQhead", "CriticNet", "GaussianActorNet_SAC",
     "VDN_mixer", "QMIX_mixer", "QMIX_FF_mixer", "QTRAN_base", "QTRAN_alt",

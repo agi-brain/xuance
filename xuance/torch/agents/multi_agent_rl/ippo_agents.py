@@ -35,7 +35,8 @@ class IPPO_Agents(MARLAgents):
         optimizer = torch.optim.Adam(self.policy.parameters_model,
                                      lr=config.learning_rate, eps=1e-5,
                                      weight_decay=config.weight_decay)
-        scheduler = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=1.0, end_factor=0.5,
+        scheduler = torch.optim.lr_scheduler.LinearLR(optimizer,
+                                                      start_factor=1.0, end_factor=config.end_factor_lr_decay,
                                                       total_iters=self.config.running_steps)
         # create experience replay buffer
         n_actions = None if self.continuous_control else {k: self.action_space[k].n for k in self.agent_keys}
@@ -346,6 +347,7 @@ class IPPO_Agents(MARLAgents):
     def run_episode(self, n_episodes: int):
         """
         Run a number of episodes to collect data sequence.
+        Note: This method is called when self.use_rnn is True.
 
         Parameters:
             n_episodes: The number of episodes to run.

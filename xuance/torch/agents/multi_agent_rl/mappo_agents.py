@@ -170,10 +170,12 @@ class MAPPO_Agents(IPPO_Agents):
                             for e in range(n_env)]
             log_pi_a_dict = [{k: log_pi_a[e, i] for i, k in enumerate(self.agent_keys)} for e in range(n_env)]
             if not test_mode:
-                critic_input = np.repeat(obs_input[key].reshape(n_env, 1, -1), self.n_agents, axis=1)
+                critic_input = np.repeat(obs_input[key].reshape([n_env, 1, -1]), self.n_agents, axis=1)
                 if self.use_global_state:
                     state_input = np.repeat(state[:, None], self.n_agents, axis=1)
                     critic_input = np.concatenate([critic_input, state_input], axis=-1)
+                if self.use_rnn:
+                    critic_input = critic_input.reshape([batch_size, 1, -1])
                 rnn_hidden_critic_new, values_out = self.policy.get_values(observation={key: critic_input},
                                                                            agent_ids=agents_id,
                                                                            rnn_hidden=rnn_hidden_critic)
@@ -247,14 +249,16 @@ class MAPPO_Agents(IPPO_Agents):
                     hidden_item_index, *rnn_hidden_critic[key])}
                 batch_size = n_env * self.n_agents
                 obs_array = np.array(itemgetter(*self.agent_keys)(obs_dict))
-                obs_input = {key: obs_array.reshape([batch_size, 1, -1])}
+                critic_input = np.repeat(obs_array.reshape([n_env, 1, -1]), self.n_agents, axis=1).reshape([batch_size, 1, -1])
+                if self.use_global_state:
+                    critic_input = np.concatenate([critic_input, state.reshape([batch_size, 1, -1])], axis=-1)
                 agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(n_env, -1, -1).reshape(batch_size, 1, -1).to(
                     self.device)
             else:
-                obs_array = np.array([itemgetter(*self.agent_keys)(obs_dict)]).reshape(n_env, 1, -1)
+                obs_array = np.array([itemgetter(*self.agent_keys)(obs_dict)]).reshape([n_env, 1, -1])
                 critic_input = np.repeat(obs_array, self.n_agents, axis=1)
                 if self.use_global_state:
-                    state_input = np.repeat(state.reshape(n_env, 1, -1), self.n_agents, axis=1)
+                    state_input = np.repeat(state.reshape([n_env, 1, -1]), self.n_agents, axis=1)
                     critic_input = np.concatenate([critic_input, state_input], axis=-1)
                 agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(n_env, -1, -1).to(self.device)
 

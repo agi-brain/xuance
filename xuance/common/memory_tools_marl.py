@@ -178,6 +178,11 @@ class MARL_OnPolicyBuffer(BaseBuffer):
             path_slice = np.arange(self.start_ids[i_env], self.ptr).astype(np.int32)
 
         # calculate advantages and returns
+        use_value_norm = False if (value_normalizer is None) else True
+        use_parameter_sharing = False
+        if use_value_norm:
+            if value_normalizer.keys() != set(self.agent_keys):
+                use_parameter_sharing = True
         for key in self.agent_keys:
             rewards = np.array(self.data['rewards'][key][i_env, path_slice])
             vs = np.append(np.array(self.data['values'][key][i_env, path_slice]), [value_next[key]], axis=0)
@@ -185,23 +190,23 @@ class MARL_OnPolicyBuffer(BaseBuffer):
             returns = np.zeros_like(rewards)
             last_gae_lam = 0
             step_nums = len(path_slice)
-            use_value_norm = False if (value_normalizer is None) else True
+            key_vn = self.agent_keys[0] if use_parameter_sharing else key
 
             if self.use_gae:
                 for t in reversed(range(step_nums)):
                     if use_value_norm:
-                        vs_t, vs_next = value_normalizer[key].denormalize(vs[t]), value_normalizer[key].denormalize(vs[t + 1])
+                        vs_t, vs_next = value_normalizer[key_vn].denormalize(vs[t]), value_normalizer[key_vn].denormalize(vs[t + 1])
                     else:
                         vs_t, vs_next = vs[t], vs[t + 1]
                     delta = rewards[t] + (1 - dones[t]) * self.gamma * vs_next - vs_t
                     last_gae_lam = delta + (1 - dones[t]) * self.gamma * self.gae_lambda * last_gae_lam
                     returns[t] = last_gae_lam + vs_t
-                advantages = returns - value_normalizer[key].denormalize(vs[:-1]) if use_value_norm else returns - vs[:-1]
+                advantages = returns - value_normalizer[key_vn].denormalize(vs[:-1]) if use_value_norm else returns - vs[:-1]
             else:
                 returns_ = np.append(returns, [value_next[key]], axis=0)
                 for t in reversed(range(step_nums)):
                     returns_[t] = rewards[t] + (1 - dones[t]) * self.gamma * returns_[t + 1]
-                advantages = returns_ - value_normalizer[key].denormalize(vs) if use_value_norm else returns_ - vs
+                advantages = returns_ - value_normalizer[key_vn].denormalize(vs) if use_value_norm else returns_ - vs
                 advantages = advantages[:-1]
                 returns = returns_[:-1]
 
@@ -409,6 +414,11 @@ class MARL_OnPolicyBuffer_RNN(MARL_OnPolicyBuffer):
         path_slice = np.arange(0, env_step).astype(np.int32)
 
         # calculate advantages and returns
+        use_value_norm = False if (value_normalizer is None) else True
+        use_parameter_sharing = False
+        if use_value_norm:
+            if value_normalizer.keys() != set(self.agent_keys):
+                use_parameter_sharing = True
         for key in self.agent_keys:
             rewards = np.array(self.episode_data['rewards'][key][i_env, path_slice])
             vs = np.append(np.array(self.episode_data['values'][key][i_env, path_slice]), [value_next[key]], axis=0)
@@ -416,24 +426,24 @@ class MARL_OnPolicyBuffer_RNN(MARL_OnPolicyBuffer):
             returns = np.zeros_like(rewards)
             last_gae_lam = 0
             step_nums = len(path_slice)
-            use_value_norm = False if (value_normalizer is None) else True
+            key_vn = self.agent_keys[0] if use_parameter_sharing else key
 
             if self.use_gae:
                 for t in reversed(range(step_nums)):
                     if use_value_norm:
-                        vs_t = value_normalizer[key].denormalize(vs[t])
-                        vs_next = value_normalizer[key].denormalize(vs[t + 1])
+                        vs_t = value_normalizer[key_vn].denormalize(vs[t])
+                        vs_next = value_normalizer[key_vn].denormalize(vs[t + 1])
                     else:
                         vs_t, vs_next = vs[t], vs[t + 1]
                     delta = rewards[t] + (1 - dones[t]) * self.gamma * vs_next - vs_t
                     last_gae_lam = delta + (1 - dones[t]) * self.gamma * self.gae_lambda * last_gae_lam
                     returns[t] = last_gae_lam + vs_t
-                advantages = returns - value_normalizer[key].denormalize(vs[:-1]) if use_value_norm else returns - vs[:-1]
+                advantages = returns - value_normalizer[key_vn].denormalize(vs[:-1]) if use_value_norm else returns - vs[:-1]
             else:
                 returns_ = np.append(returns, [value_next[key]], axis=0)
                 for t in reversed(range(step_nums)):
                     returns_[t] = rewards[t] + (1 - dones[t]) * self.gamma * returns_[t + 1]
-                advantages = returns_ - value_normalizer[key].denormalize(vs) if use_value_norm else returns_ - vs
+                advantages = returns_ - value_normalizer[key_vn].denormalize(vs) if use_value_norm else returns_ - vs
                 advantages = advantages[:-1]
                 returns = returns_[:-1]
 

@@ -5,14 +5,14 @@ from gym.spaces import Discrete, Box
 from typing import Sequence, Optional, Callable, Union, Dict, List
 from xuance.torch.policies import BasicQhead, ActorNet, CriticNet, VDN_mixer, QTRAN_base, QMIX_FF_mixer
 from xuance.torch.utils import ModuleType
-from xuance.torch import Tensor, Module
+from xuance.torch import Tensor, Module, ModuleDict
 
 
 class BasicQnetwork(Module):
     def __init__(self,
                  action_space: Optional[Dict[str, Discrete]],
                  n_agents: int,
-                 representation: Dict[str, Module],
+                 representation: ModuleDict,
                  hidden_size: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., Tensor]] = None,
@@ -33,7 +33,7 @@ class BasicQnetwork(Module):
         self.target_representation = deepcopy(self.representation)
 
         self.dim_input_Q, self.n_actions = {}, {}
-        self.eval_Qhead, self.target_Qhead = {}, {}
+        self.eval_Qhead, self.target_Qhead = ModuleDict(), ModuleDict()
         for key in self.model_keys:
             self.n_actions[key] = self.action_space[key].n
             self.dim_input_Q[key] = self.representation_info_shape[key]['state'][0]
@@ -132,19 +132,17 @@ class BasicQnetwork(Module):
         return rnn_hidden_new, q_target
 
     def copy_target(self):
-        for k in self.model_keys:
-            param = [zip(self.representation[k].parameters(), self.target_representation[k].parameters()),
-                     zip(self.eval_Qhead[k].parameters(), self.target_Qhead[k].parameters())]
-            for p in param:
-                for ep, tp in p:
-                    tp.data.copy_(ep)
+        for ep, tp in zip(self.representation.parameters(), self.target_representation.parameters()):
+            tp.data.copy_(ep)
+        for ep, tp in zip(self.eval_Qhead.parameters(), self.target_Qhead.parameters()):
+            tp.data.copy_(ep)
 
 
 class MixingQnetwork(BasicQnetwork):
     def __init__(self,
                  action_space: Optional[Dict[str, Discrete]],
                  n_agents: int,
-                 representation: Dict[str, Module],
+                 representation: ModuleDict,
                  mixer: Optional[VDN_mixer] = None,
                  hidden_size: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,
@@ -159,10 +157,8 @@ class MixingQnetwork(BasicQnetwork):
 
     @property
     def parameters_model(self):
-        parameters_model = list(self.eval_Qtot.parameters())
-        for key in self.model_keys:
-            parameters_model += list(self.representation[key].parameters())
-            parameters_model += list(self.eval_Qhead[key].parameters())
+        parameters_model = list(self.eval_Qtot.parameters()) + list(self.representation.parameters()) + list(
+            self.eval_Qhead.parameters())
         return parameters_model
 
     def Q_tot(self, individual_values: Dict[str, Tensor], states: Optional[Tensor] = None):
@@ -226,11 +222,10 @@ class MixingQnetwork(BasicQnetwork):
         return q_target_tot
 
     def copy_target(self):
-        for k in self.model_keys:
-            for ep, tp in zip(self.representation[k].parameters(), self.target_representation[k].parameters()):
-                tp.data.copy_(ep)
-            for ep, tp in zip(self.eval_Qhead[k].parameters(), self.target_Qhead[k].parameters()):
-                tp.data.copy_(ep)
+        for ep, tp in zip(self.representation.parameters(), self.target_representation.parameters()):
+            tp.data.copy_(ep)
+        for ep, tp in zip(self.eval_Qhead.parameters(), self.target_Qhead.parameters()):
+            tp.data.copy_(ep)
         for ep, tp in zip(self.eval_Qtot.parameters(), self.target_Qtot.parameters()):
             tp.data.copy_(ep)
 
@@ -239,7 +234,7 @@ class Weighted_MixingQnetwork(MixingQnetwork):
     def __init__(self,
                  action_space: Optional[Dict[str, Discrete]],
                  n_agents: int,
-                 representation: Dict[str, Module],
+                 representation: ModuleDict,
                  mixer: Optional[VDN_mixer] = None,
                  ff_mixer: Optional[QMIX_FF_mixer] = None,
                  hidden_size: Sequence[int] = None,
@@ -257,11 +252,9 @@ class Weighted_MixingQnetwork(MixingQnetwork):
 
     @property
     def parameters_model(self):
-        parameters_model = list(self.eval_Qtot.parameters()) + list(self.ff_mixer.parameters())
-        for key in self.model_keys:
-            parameters_model += list(self.representation[key].parameters())
-            parameters_model += list(self.eval_Qhead[key].parameters())
-            parameters_model += list(self.eval_Qhead_centralized[key].parameters())
+        parameters_model = list(self.eval_Qtot.parameters()) + list(self.ff_mixer.parameters()) + list(
+            self.representation.parameters()) + list(self.eval_Qhead.parameters()) + list(
+            self.eval_Qhead_centralized.parameters())
         return parameters_model
 
     def q_centralized(self, observation: Dict[str, Tensor], agent_ids: Dict[str, Tensor],
@@ -389,14 +382,12 @@ class Weighted_MixingQnetwork(MixingQnetwork):
         return q_target_tot
 
     def copy_target(self):
-        for k in self.model_keys:
-            for ep, tp in zip(self.representation[k].parameters(), self.target_representation[k].parameters()):
-                tp.data.copy_(ep)
-            for ep, tp in zip(self.eval_Qhead[k].parameters(), self.target_Qhead[k].parameters()):
-                tp.data.copy_(ep)
-            for ep, tp in zip(self.eval_Qhead_centralized[k].parameters(),
-                              self.target_Qhead_centralized[k].parameters()):
-                tp.data.copy_(ep)
+        for ep, tp in zip(self.representation.parameters(), self.target_representation.parameters()):
+            tp.data.copy_(ep)
+        for ep, tp in zip(self.eval_Qhead.parameters(), self.target_Qhead.parameters()):
+            tp.data.copy_(ep)
+        for ep, tp in zip(self.eval_Qhead_centralized.parameters(), self.target_Qhead_centralized.parameters()):
+            tp.data.copy_(ep)
         for ep, tp in zip(self.eval_Qtot.parameters(), self.target_Qtot.parameters()):
             tp.data.copy_(ep)
         for ep, tp in zip(self.ff_mixer.parameters(), self.target_ff_mixer.parameters()):
@@ -581,7 +572,7 @@ class Independent_DDPG_Policy(Module):
     def __init__(self,
                  action_space: Optional[Dict[str, Box]],
                  n_agents: int,
-                 representation: Optional[Dict[str, Module]],
+                 representation: Optional[ModuleDict],
                  actor_hidden_size: Sequence[int],
                  critic_hidden_size: Sequence[int],
                  normalize: Optional[ModuleType] = None,
@@ -603,7 +594,8 @@ class Independent_DDPG_Policy(Module):
         self.target_actor_representation = deepcopy(self.actor_representation)
         self.target_critic_representation = deepcopy(self.critic_representation)
 
-        self.actor, self.target_actor, self.critic, self.target_critic = {}, {}, {}, {}
+        self.actor, self.target_actor = ModuleDict(), ModuleDict()
+        self.critic, self.target_critic = ModuleDict(), ModuleDict()
         for key in self.model_keys:
             dim_action = self.action_space[key].shape[-1]
             dim_obs_actor, dim_obs_critic, dim_act_actor, dim_act_critic = self._get_actor_critic_input(
@@ -754,22 +746,25 @@ class Independent_DDPG_Policy(Module):
         return next_actions
 
     def soft_update(self, tau=0.005):
-        for k in self.model_keys:
-            param = [zip(self.actor_representation[k].parameters(), self.target_actor_representation[k].parameters()),
-                     zip(self.critic_representation[k].parameters(), self.target_critic_representation[k].parameters()),
-                     zip(self.actor[k].parameters(), self.target_actor[k].parameters()),
-                     zip(self.critic[k].parameters(), self.target_critic[k].parameters())]
-            for p in param:
-                for ep, tp in p:
-                    tp.data.mul_(1 - tau)
-                    tp.data.add_(tau * ep.data)
+        for ep, tp in zip(self.actor_representation.parameters(), self.target_actor_representation.parameters()):
+            tp.data.mul_(1 - tau)
+            tp.data.add_(tau * ep.data)
+        for ep, tp in zip(self.critic_representation.parameters(), self.target_critic_representation.parameters()):
+            tp.data.mul_(1 - tau)
+            tp.data.add_(tau * ep.data)
+        for ep, tp in zip(self.actor.parameters(), self.target_actor.parameters()):
+            tp.data.mul_(1 - tau)
+            tp.data.add_(tau * ep.data)
+        for ep, tp in zip(self.critic.parameters(), self.target_critic.parameters()):
+            tp.data.mul_(1 - tau)
+            tp.data.add_(tau * ep.data)
 
 
 class MADDPG_Policy(Independent_DDPG_Policy):
     def __init__(self,
                  action_space: Optional[Dict[str, Box]],
                  n_agents: int,
-                 representation: Optional[Dict[str, Module]],
+                 representation: Optional[ModuleDict],
                  actor_hidden_size: Sequence[int],
                  critic_hidden_size: Sequence[int],
                  normalize: Optional[ModuleType] = None,
@@ -880,7 +875,7 @@ class MATD3_Policy(Independent_DDPG_Policy, Module):
     def __init__(self,
                  action_space: Optional[Dict[str, Box]],
                  n_agents: int,
-                 representation: Optional[Dict[str, Module]],
+                 representation: Optional[ModuleDict],
                  actor_hidden_size: Sequence[int],
                  critic_hidden_size: Sequence[int],
                  normalize: Optional[ModuleType] = None,
@@ -904,8 +899,9 @@ class MATD3_Policy(Independent_DDPG_Policy, Module):
         self.target_critic_A_representation = deepcopy(self.critic_A_representation)
         self.target_critic_B_representation = deepcopy(self.critic_B_representation)
 
-        self.actor, self.target_actor = {}, {}
-        self.critic_A, self.critic_B, self.target_critic_A, self.target_critic_B = {}, {}, {}, {}
+        self.actor, self.target_actor = ModuleDict(), ModuleDict()
+        self.critic_A, self.critic_B = ModuleDict(), ModuleDict()
+        self.target_critic_A, self.target_critic_B = ModuleDict(), ModuleDict()
         for key in self.model_keys:
             dim_action = self.action_space[key].shape[-1]
             dim_obs_actor, dim_obs_critic, dim_act_actor, dim_act_critic = self._get_actor_critic_input(
@@ -925,14 +921,6 @@ class MATD3_Policy(Independent_DDPG_Policy, Module):
             self.target_actor[key] = deepcopy(self.actor[key])
             self.target_critic_A[key] = deepcopy(self.critic_A[key])
             self.target_critic_B[key] = deepcopy(self.critic_B[key])
-
-    @property
-    def parameters_actor(self):
-        parameters_actor = {}
-        for key in self.model_keys:
-            parameters_actor[key] = list(self.actor_representation[key].parameters()) + list(
-                self.actor[key].parameters())
-        return parameters_actor
 
     @property
     def parameters_critic(self):
@@ -1054,25 +1042,21 @@ class MATD3_Policy(Independent_DDPG_Policy, Module):
         return q_target
 
     def soft_update(self, tau=0.005):
-        for k in self.model_keys:
-            for ep, tp in zip(self.actor_representation[k].parameters(),
-                              self.target_actor_representation[k].parameters()):
-                tp.data.mul_(1 - tau)
-                tp.data.add_(tau * ep.data)
-            for ep, tp in zip(self.critic_A_representation[k].parameters(),
-                              self.target_critic_A_representation[k].parameters()):
-                tp.data.mul_(1 - tau)
-                tp.data.add_(tau * ep.data)
-            for ep, tp in zip(self.critic_B_representation[k].parameters(),
-                              self.target_critic_B_representation[k].parameters()):
-                tp.data.mul_(1 - tau)
-                tp.data.add_(tau * ep.data)
-            for ep, tp in zip(self.actor[k].parameters(), self.target_actor[k].parameters()):
-                tp.data.mul_(1 - tau)
-                tp.data.add_(tau * ep.data)
-            for ep, tp in zip(self.critic_A[k].parameters(), self.target_critic_A[k].parameters()):
-                tp.data.mul_(1 - tau)
-                tp.data.add_(tau * ep.data)
-            for ep, tp in zip(self.critic_B[k].parameters(), self.target_critic_B[k].parameters()):
-                tp.data.mul_(1 - tau)
-                tp.data.add_(tau * ep.data)
+        for ep, tp in zip(self.actor_representation.parameters(), self.target_actor_representation.parameters()):
+            tp.data.mul_(1 - tau)
+            tp.data.add_(tau * ep.data)
+        for ep, tp in zip(self.critic_A_representation.parameters(), self.target_critic_A_representation.parameters()):
+            tp.data.mul_(1 - tau)
+            tp.data.add_(tau * ep.data)
+        for ep, tp in zip(self.critic_B_representation.parameters(), self.target_critic_B_representation.parameters()):
+            tp.data.mul_(1 - tau)
+            tp.data.add_(tau * ep.data)
+        for ep, tp in zip(self.actor.parameters(), self.target_actor.parameters()):
+            tp.data.mul_(1 - tau)
+            tp.data.add_(tau * ep.data)
+        for ep, tp in zip(self.critic_A.parameters(), self.target_critic_A.parameters()):
+            tp.data.mul_(1 - tau)
+            tp.data.add_(tau * ep.data)
+        for ep, tp in zip(self.critic_B.parameters(), self.target_critic_B.parameters()):
+            tp.data.mul_(1 - tau)
+            tp.data.add_(tau * ep.data)

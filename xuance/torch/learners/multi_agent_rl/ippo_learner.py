@@ -213,7 +213,7 @@ class IPPO_Learner(LearnerMAS):
             grad_norm = torch.nn.utils.clip_grad_norm_(self.policy.parameters(), self.grad_clip_norm)
             info["gradient_norm"] = grad_norm.item()
         self.optimizer.step()
-        if self.scheduler is not None:
+        if self.scheduler is not None and self.use_linear_lr_decay:
             self.scheduler.step()
 
         # Logger
