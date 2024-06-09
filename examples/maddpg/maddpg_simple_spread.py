@@ -51,29 +51,6 @@ class Runner(object):
         from xuance.torch.agents import MADDPG_Agents
         self.agents = MADDPG_Agents(self.args, self.envs)
 
-    def log_infos(self, info: dict, x_index: int):
-        """
-        info: (dict) information to be visualized
-        n_steps: current step
-        """
-        if self.use_wandb:
-            for k, v in info.items():
-                wandb.log({k: v}, step=x_index)
-        else:
-            for k, v in info.items():
-                try:
-                    self.writer.add_scalar(k, v, x_index)
-                except:
-                    self.writer.add_scalars(k, v, x_index)
-
-    def log_videos(self, info: dict, fps: int, x_index: int = 0):
-        if self.use_wandb:
-            for k, v in info.items():
-                wandb.log({k: wandb.Video(v, fps=fps, format='gif')}, step=x_index)
-        else:
-            for k, v in info.items():
-                self.writer.add_video(k, v, fps=fps, global_step=x_index)
-
     def run(self):
         if self.args.test_mode:
             def env_fn():
