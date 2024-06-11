@@ -4,22 +4,26 @@ logger: "tensorboard"  # Choices: tensorboard, wandb.
 wandb_user_name: "your_user_name"
 render: False
 render_mode: 'rgb_array' # Choices: 'human', 'rgb_array'.
+fps: 50
 test_mode: False
 device: "cuda:0"
 
 agent: "SAC"
 env_name: "MuJoCo"
+env_id: "Ant-v4"
 vectorize: "DummyVecEnv"
+policy: "Gaussian_SAC"
+representation: "Basic_Identical"
 runner: "DRL"
 
 representation_hidden_size:
 actor_hidden_size: [256, 256]
 critic_hidden_size: [256, 256]
 activation: "leaky_relu"
-activation_action: "tanh"
+activation_action: 'tanh'
 
 seed: 1
-parallels: 4
+parallels: 4  # number of environments
 buffer_size: 1000000
 batch_size: 256
 actor_learning_rate: 0.001
@@ -29,19 +33,22 @@ alpha: 0.2
 use_automatic_entropy_tuning: True
 tau: 0.005
 
-start_noise: 0.25
-end_noise: 0.01
 training_frequency: 1
 running_steps: 1000000
 start_training: 10000
 
+use_grad_clip: False  # gradient normalization
+clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+grad_clip_norm: 0.5
+use_actions_mask: False
 use_obsnorm: False
 use_rewnorm: False
 obsnorm_range: 5
 rewnorm_range: 5
 
 test_steps: 10000
-eval_interval: 5000
+eval_interval: 10000
 test_episode: 5
+
 log_dir: "./logs/sac/"
 model_dir: "./models/sac/"
