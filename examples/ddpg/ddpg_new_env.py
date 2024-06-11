@@ -59,8 +59,7 @@ if __name__ == "__main__":
     train_information = {"Deep learning toolbox": configs.dl_toolbox,
                          "Calculating device": configs.device,
                          "Algorithm": "DDPG_Agent",
-                         "Environment": f"{configs.env_name}/{configs.env_id}",
-                         "Start training": ""}
+                         "Environment": f"{configs.env_name}/{configs.env_id}"}
     for k, v in train_information.items():
         print(f"{k}: {v}")
 
@@ -100,7 +99,7 @@ if __name__ == "__main__":
                 return make_envs(configs)
 
 
-            Agent.load_model(path=configs.model_dir_load)
+            Agent.load_model(path=Agent.model_dir_load)
             scores = Agent.test(env_fn, configs.test_episode)
             print(f"Mean Score: {np.mean(scores)}, Std: {np.std(scores)}")
             print("Finish testing.")
