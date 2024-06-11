@@ -187,4 +187,5 @@ class Agent(ABC):
             wandb.finish()
         else:
             self.writer.close()
+        self.envs.close()
 

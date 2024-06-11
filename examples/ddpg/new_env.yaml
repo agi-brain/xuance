@@ -2,15 +2,15 @@ dl_toolbox: "torch"  # The deep learning toolbox. Choices: "torch", "mindspore",
 project_name: "XuanCe_Benchmark"
 logger: "tensorboard"  # Choices: tensorboard, wandb.
 wandb_user_name: "your_user_name"
-render: False
+render: True
 render_mode: 'rgb_array' # Choices: 'human', 'rgb_array'.
 fps: 50
 test_mode: False
 device: "cuda:0"
 
 agent: "DDPG"
-env_name: "MuJoCo"
-env_id: "Ant-v4"
+env_name: "MyNewEnv"
+env_id: "new-v1"
 vectorize: "DummyVecEnv"
 policy: "DDPG_Policy"
 representation: "Basic_Identical"
@@ -49,3 +49,4 @@ eval_interval: 5000
 test_episode: 5
 log_dir: "./logs/ddpg/"
 model_dir: "./models/ddpg/"
+model_dir: "./models/dqn/"

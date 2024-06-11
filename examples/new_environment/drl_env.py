@@ -4,7 +4,7 @@ import argparse
 import numpy as np
 from gym.spaces import Box, Discrete
 from xuance.environment import RawEnvironment
-from xuance.common import get_config
+from xuance.common import get_configs
 from xuance.torch.agents import DQN_Agent
 from xuance.environment import REGISTRY_ENV, make_envs
 
@@ -38,7 +38,7 @@ class MyNewEnv(RawEnvironment):
 
 
 REGISTRY_ENV['MyNewEnv'] = MyNewEnv  # Add your environment to the REGISTRY_ENV dictionary.
-config_dict = get_config(os.path.join(os.getcwd(), "new_env.yaml"))  # Get config files and return a dictionary.
+config_dict = get_configs(os.path.join(os.getcwd(), "new_env.yaml"))  # Get config files and return a dictionary.
 config = argparse.Namespace(**config_dict)  # Convert dictionary to a Namespace object with attributes.
 
 envs = make_envs(config)  # Create environments.

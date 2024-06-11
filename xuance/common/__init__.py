@@ -1,4 +1,4 @@
-from xuance.common.common_tools import EPS, recursive_dict_update, get_config, get_arguments, get_runner,\
+from xuance.common.common_tools import EPS, recursive_dict_update, get_configs, get_arguments, get_runner,\
     create_directory, combined_shape, space2shape, discount_cumsum, get_time_string
 from xuance.common.statistic_tools import mpi_mean, mpi_moments, RunningMeanStd
 from xuance.common.memory_tools import create_memory, store_element, sample_batch, Buffer, EpisodeBuffer, \
@@ -11,7 +11,7 @@ from xuance.common.segtree_tool import SegmentTree, SumSegmentTree, MinSegmentTr
 
 __all__ = [
     # common_tools
-    "EPS", "recursive_dict_update", "get_config", "get_arguments", "get_runner", "create_directory", "combined_shape",
+    "EPS", "recursive_dict_update", "get_configs", "get_arguments", "get_runner", "create_directory", "combined_shape",
     "space2shape", "discount_cumsum", "get_time_string",
     # statistic_tools
     "mpi_mean", "mpi_moments", "RunningMeanStd",
