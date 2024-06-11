@@ -1,5 +1,5 @@
-import numpy as np
 import torch
+import numpy as np
 from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace

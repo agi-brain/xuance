@@ -5,11 +5,10 @@ from copy import deepcopy
 from argparse import Namespace
 from xuance.environment import DummyVecEnv
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
-from xuance.torch.representations import REGISTRY_Representation
 from xuance.torch.policies import REGISTRY_Policy
 from xuance.torch.learners import DDPG_Learner
 from xuance.torch.agents import Agent
-from xuance.common import space2shape, DummyOffPolicyBuffer
+from xuance.common import DummyOffPolicyBuffer
 
 
 class DDPG_Agent(Agent):
@@ -56,16 +55,7 @@ class DDPG_Agent(Agent):
         device = self.device
 
         # build representations.
-        if self.config.representation == "Basic_Identical":
-            representation = REGISTRY_Representation["Basic_Identical"](input_shape=space2shape(self.observation_space),
-                                                                        device=self.device)
-        elif self.config.representation == "Basic_MLP":
-            representation = REGISTRY_Representation["Basic_MLP"](
-                input_shape=space2shape(self.observation_space),
-                hidden_sizes=self.config.representation_hidden_size,
-                normalize=normalize_fn, initialize=initializer, activation=activation, device=device)
-        else:
-            raise AttributeError(f"DDPG currently does not support {self.config.representation} representation.")
+        representation = self._build_representation(self.config.representation, self.config)
 
         # build policy
         if self.config.policy == "DDPG_Policy":

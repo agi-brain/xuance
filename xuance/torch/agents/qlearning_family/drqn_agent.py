@@ -5,11 +5,10 @@ from copy import deepcopy
 from argparse import Namespace
 from xuance.environment import DummyVecEnv
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
-from xuance.torch.representations import REGISTRY_Representation
 from xuance.torch.policies import REGISTRY_Policy
 from xuance.torch.learners import DRQN_Learner
 from xuance.torch.agents import Agent
-from xuance.common import space2shape, RecurrentOffPolicyBuffer, EpisodeBuffer
+from xuance.common import RecurrentOffPolicyBuffer, EpisodeBuffer
 
 
 class DRQN_Agent(Agent):
@@ -56,22 +55,7 @@ class DRQN_Agent(Agent):
         device = self.device
 
         # build representation.
-        if self.config.representation == "Basic_Identical":
-            representation = REGISTRY_Representation["Basic_Identical"](input_shape=space2shape(self.observation_space),
-                                                                        device=self.device)
-        elif self.config.representation == "Basic_MLP":
-            representation = REGISTRY_Representation["Basic_MLP"](
-                input_shape=space2shape(self.observation_space),
-                hidden_sizes=self.config.representation_hidden_size,
-                normalize=normalize_fn, initialize=initializer, activation=activation, device=device)
-        elif self.config.representation == "Basic_CNN":
-            representation = REGISTRY_Representation["Basic_CNN"](
-                input_shape=space2shape(self.observation_space),
-                kernels=self.config.kernels, strides=self.config.strides, filters=self.config.filters,
-                normalize=normalize_fn, initialize=initializer, activation=activation, device=device)
-        else:
-            raise AttributeError(
-                f"{self.config.agent} currently does not support {self.config.representation} representation.")
+        representation = self._build_representation(self.config.representation, self.config)
 
         # build policy.
         if self.config.policy == "DRQN_Policy":

@@ -2,11 +2,9 @@ import torch
 from argparse import Namespace
 from xuance.environment import DummyVecEnv
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
-from xuance.torch.representations import REGISTRY_Representation
 from xuance.torch.policies import REGISTRY_Policy
 from xuance.torch.learners import TD3_Learner
 from xuance.torch.agents.policy_gradient.ddpg_agent import DDPG_Agent
-from xuance.common import space2shape
 
 
 class TD3_Agent(DDPG_Agent):
@@ -28,16 +26,7 @@ class TD3_Agent(DDPG_Agent):
         device = self.device
 
         # build representations.
-        if self.config.representation == "Basic_Identical":
-            representation = REGISTRY_Representation["Basic_Identical"](input_shape=space2shape(self.observation_space),
-                                                                        device=self.device)
-        elif self.config.representation == "Basic_MLP":
-            representation = REGISTRY_Representation["Basic_MLP"](
-                input_shape=space2shape(self.observation_space),
-                hidden_sizes=self.config.representation_hidden_size,
-                normalize=normalize_fn, initialize=initializer, activation=activation, device=device)
-        else:
-            raise AttributeError(f"TD3 currently does not support {self.config.representation} representation.")
+        representation = self._build_representation(self.config.representation, self.config)
 
         # build policy
         if self.config.policy == "TD3_Policy":

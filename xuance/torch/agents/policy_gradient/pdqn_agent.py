@@ -7,11 +7,10 @@ from argparse import Namespace
 from gym import spaces
 from xuance.environment.single_agent_env import Gym_Env
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
-from xuance.torch.representations import REGISTRY_Representation
 from xuance.torch.policies import REGISTRY_Policy
 from xuance.torch.learners import PDQN_Learner
 from xuance.torch.agents import Agent
-from xuance.common import space2shape, DummyOffPolicyBuffer
+from xuance.common import DummyOffPolicyBuffer
 
 
 class PDQN_Agent(Agent):
@@ -85,17 +84,7 @@ class PDQN_Agent(Agent):
         device = self.device
 
         # build representation.
-        if self.config.representation == "Basic_Identical":
-            representation = REGISTRY_Representation["Basic_Identical"](input_shape=space2shape(self.observation_space),
-                                                                        device=self.device)
-        elif self.config.representation == "Basic_MLP":
-            representation = REGISTRY_Representation["Basic_MLP"](
-                input_shape=space2shape(self.observation_space),
-                hidden_sizes=self.config.representation_hidden_size,
-                normalize=normalize_fn, initialize=initializer, activation=activation, device=device)
-        else:
-            raise AttributeError(
-                f"{self.config.agent} currently does not support {self.config.representation} representation.")
+        representation = self._build_representation(self.config.representation, self.config)
 
         # build policy.
         if self.config.policy == "PDQN_Policy":

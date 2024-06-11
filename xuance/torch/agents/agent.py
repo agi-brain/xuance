@@ -12,6 +12,8 @@ from torch import nn
 from torch.utils.tensorboard import SummaryWriter
 from xuance.common import get_time_string, create_directory, RunningMeanStd, space2shape, EPS
 from xuance.environment import DummyVecEnv
+from xuance.torch.representations import REGISTRY_Representation
+from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 
 
 class Agent(ABC):
@@ -166,6 +168,44 @@ class Agent(ABC):
             return np.clip(rewards / std, -self.rewnorm_range, self.rewnorm_range)
         else:
             return rewards
+
+    def _build_representation(self, representation_key: str, config: Namespace):
+        """
+        Build representation for policies.
+
+        Parameters:
+            representation_key (str): The selection of representation, e.g., "Basic_MLP", "Basic_RNN", etc.
+            config: The configurations for creating the representation module.
+
+        Returns:
+            representation (Module): The representation Module.
+        """
+        normalize_fn = NormalizeFunctions[config.normalize] if hasattr(config, "normalize") else None
+        initializer = nn.init.orthogonal_
+        activation = ActivationFunctions[config.activation]
+
+        # build representations
+        input_shape = space2shape(self.observation_space)
+        if representation_key == "Basic_Identical":
+            representation = REGISTRY_Representation["Basic_Identical"](input_shape=input_shape, device=self.device)
+        elif representation_key == "Basic_MLP":
+            representation = REGISTRY_Representation["Basic_MLP"](
+                input_shape=input_shape, hidden_sizes=self.config.representation_hidden_size,
+                normalize=normalize_fn, initialize=initializer, activation=activation, device=self.device)
+        elif self.config.representation == "Basic_CNN":
+            representation = REGISTRY_Representation["Basic_CNN"](
+                input_shape=input_shape,
+                kernels=self.config.kernels, strides=self.config.strides, filters=self.config.filters,
+                normalize=normalize_fn, initialize=initializer, activation=activation, device=self.device)
+        elif self.config.representation == "AC_CNN_Atari":
+            representation = REGISTRY_Representation["AC_CNN_Atari"](
+                input_shape=space2shape(self.observation_space),
+                kernels=self.config.kernels, strides=self.config.strides, filters=self.config.filters,
+                normalize=normalize_fn, initialize=initializer, activation=activation, device=device,
+                fc_hidden_sizes=self.config.fc_hidden_sizes)
+        else:
+            raise AttributeError(f"{config.agent} currently does not support {representation_key} representation.")
+        return representation
 
     def _build_policy(self):
         raise NotImplementedError
