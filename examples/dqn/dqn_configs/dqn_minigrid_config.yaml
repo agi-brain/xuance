@@ -8,7 +8,7 @@ fps: 50
 test_mode: False
 device: "cuda:0"
 
-agent: "DQN"  # choice: PPO_Clip, PPO_KL
+agent: "DQN"
 env_name: "MiniGrid"
 env_id: "MiniGrid-Empty-5x5-v0"
 RGBImgPartialObsWrapper: False
