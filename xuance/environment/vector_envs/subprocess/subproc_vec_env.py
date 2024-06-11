@@ -1,5 +1,5 @@
 import numpy as np
-import multiprocessing as mp
+from multiprocessing import Process, Pipe
 from xuance.common import space2shape, combined_shape
 from xuance.environment.vector_envs.vector_env import VecEnv
 from xuance.environment.vector_envs import clear_mpi_env_vars, flatten_list, CloudpickleWrapper
@@ -30,7 +30,7 @@ def worker(remote, parent_remote, env_fn_wrappers):
             elif cmd == 'get_spaces':
                 remote.send(CloudpickleWrapper((envs[0].observation_space, envs[0].action_space)))
             elif cmd == 'get_max_cycles':
-                remote.send(CloudpickleWrapper((envs[0].max_episode_steps)))
+                remote.send(CloudpickleWrapper(envs[0].max_episode_steps))
             else:
                 raise NotImplementedError
     except KeyboardInterrupt:
@@ -46,7 +46,7 @@ class SubprocVecEnv(VecEnv):
     Recommended to use when num_envs > 1 and step() can be a bottleneck.
     """
 
-    def __init__(self, env_fns, context='spawn', in_series=1):
+    def __init__(self, env_fns, in_series=1):
         """
         Arguments:
         env_fns: iterable of callables -  functions that create environments to run in subprocesses. Need to be cloud-pickleable
@@ -55,14 +55,11 @@ class SubprocVecEnv(VecEnv):
         """
         self.waiting = False
         self.closed = False
-        self.in_series = in_series
         num_envs = len(env_fns)
-        assert num_envs % in_series == 0, "Number of envs must be divisible by number of envs to run in series"
         self.n_remotes = num_envs // in_series
         env_fns = np.array_split(env_fns, self.n_remotes)
-        ctx = mp.get_context(context)
-        self.remotes, self.work_remotes = zip(*[ctx.Pipe() for _ in range(self.n_remotes)])
-        self.ps = [ctx.Process(target=worker, args=(work_remote, remote, CloudpickleWrapper(env_fn)))
+        self.remotes, self.work_remotes = zip(*[Pipe() for _ in range(self.n_remotes)])
+        self.ps = [Process(target=worker, args=(work_remote, remote, CloudpickleWrapper(env_fn)))
                    for (work_remote, remote, env_fn) in zip(self.work_remotes, self.remotes, env_fns)]
         for p in self.ps:
             p.daemon = True  # if the main process crashes, we should not cause things to hang
