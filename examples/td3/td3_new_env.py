@@ -39,7 +39,7 @@ class MyNewEnv(RawEnvironment):
 
 def parse_args():
     parser = argparse.ArgumentParser("Example of XuanCe: TD3.")
-    parser.add_argument("--env-id", type=str, default="InvertedPendulum-v4")
+    parser.add_argument("--env-id", type=str, default="new_env_id")
     parser.add_argument("--test", type=int, default=0)
     parser.add_argument("--benchmark", type=int, default=0)
 
@@ -60,7 +60,8 @@ if __name__ == "__main__":
     train_information = {"Deep learning toolbox": configs.dl_toolbox,
                          "Calculating device": configs.device,
                          "Algorithm": configs.agent,
-                         "Environment": f"{configs.env_name}/{configs.env_id}"}
+                         "Environment": configs.env_name,
+                         "Scenario": configs.env_id}
     for k, v in train_information.items():
         print(f"{k}: {v}")
 

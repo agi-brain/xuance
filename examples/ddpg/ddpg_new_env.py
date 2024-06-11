@@ -58,8 +58,9 @@ if __name__ == "__main__":
 
     train_information = {"Deep learning toolbox": configs.dl_toolbox,
                          "Calculating device": configs.device,
-                         "Algorithm": "DDPG_Agent",
-                         "Environment": f"{configs.env_name}/{configs.env_id}"}
+                         "Algorithm": configs.agent,
+                         "Environment": configs.env_name,
+                         "Scenario": configs.env_id}
     for k, v in train_information.items():
         print(f"{k}: {v}")
 
