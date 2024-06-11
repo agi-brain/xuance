@@ -9,7 +9,7 @@
 project = 'XuanCe'
 copyright = '2023, XuanCe contributors'
 author = 'XuanCe contributors'
-release = 'v1.1'
+release = 'v1.2'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
