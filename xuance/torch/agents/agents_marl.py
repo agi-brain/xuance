@@ -46,6 +46,7 @@ class MARLAgents(ABC):
         self.agent_keys = envs.agents
         self.observation_space = envs.observation_space
         self.action_space = envs.action_space
+        self.episode_length = config.episode_length if hasattr(config, "episode_length") else envs.max_episode_steps
         self.current_step = 0
         self.current_episode = np.zeros((self.n_envs,), np.int32)
 

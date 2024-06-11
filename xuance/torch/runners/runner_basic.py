@@ -13,4 +13,7 @@ class Runner_Base(object):
         self.n_envs = self.envs.num_envs
 
     def run(self):
-        pass
+        raise NotImplementedError
+
+    def benchmark(self):
+        raise NotImplementedError
