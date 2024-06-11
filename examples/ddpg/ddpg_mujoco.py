@@ -28,7 +28,8 @@ if __name__ == "__main__":
     train_information = {"Deep learning toolbox": configs.dl_toolbox,
                          "Calculating device": configs.device,
                          "Algorithm": "DDPG_Agent",
-                         "Environment": f"MuJoCo/{configs.env_id}"}
+                         "Environment": f"{configs.env_name}",
+                         "Scenario": f"{configs.env_id}"}
     for k, v in train_information.items():
         print(f"{k}: {v}")
 
