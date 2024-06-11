@@ -8,9 +8,11 @@ fps: 50
 test_mode: False
 device: "cuda:0"
 
-agent: "DQN"
+agent: "DQN"  # choice: PPO_Clip, PPO_KL
 env_name: "MyNewEnv"
-env_id: "new-v1"
+env_id: "new_env_id"
+RGBImgPartialObsWrapper: False
+ImgObsWrapper: False
 vectorize: "DummyVecEnv"
 policy: "Basic_Q_network"
 representation: "Basic_MLP"
@@ -29,7 +31,7 @@ gamma: 0.99
 
 start_greedy: 0.5
 end_greedy: 0.01
-decay_step_greedy: 100000
+decay_step_greedy: 10000
 sync_frequency: 50
 training_frequency: 1
 running_steps: 200000  # 200k
