@@ -15,16 +15,9 @@ def parse_args():
     return parser.parse_args()
 
 
-def print_train_info(configs):
-    print("Deep learning toolbox:", configs.dl_toolbox)
-    print("Algorithm:", configs.agent)
-    print("Environment:", configs.env_name)
-    print("Scenario:", configs.env_id)
-
-
 if __name__ == "__main__":
     parser = parse_args()
-    configs_dict = get_configs(file_dir="./ddpg_mujoco_config.yaml")
+    configs_dict = get_configs(file_dir="ddpg_configs/ddpg_mujoco_config.yaml")
     configs_dict = recursive_dict_update(configs_dict, parser.__dict__)
     configs = argparse.Namespace(**configs_dict)
 
@@ -35,7 +28,8 @@ if __name__ == "__main__":
     train_information = {"Deep learning toolbox": configs.dl_toolbox,
                          "Calculating device": configs.device,
                          "Algorithm": "DDPG_Agent",
-                         "Environment": f"MuJoCo/{configs.env_id}"}
+                         "Environment": f"MuJoCo/{configs.env_id}",
+                         "Start training": ""}
     for k, v in train_information.items():
         print(f"{k}: {v}")
 
@@ -45,13 +39,13 @@ if __name__ == "__main__":
             configs_test.parallels = configs_test.test_episode
             return make_envs(configs_test)
 
-
         train_steps = configs.running_steps // configs.parallels
         eval_interval = configs.eval_interval // configs.parallels
         test_episode = configs.test_episode
         num_epoch = int(train_steps / eval_interval)
 
         test_scores = Agent.test(env_fn, test_episode)
+        Agent.save_model(model_name="best_model.pth")
         best_scores_info = {"mean": np.mean(test_scores),
                             "std": np.std(test_scores),
                             "step": Agent.current_step}
