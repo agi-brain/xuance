@@ -1,10 +1,40 @@
 import argparse
 import numpy as np
 from copy import deepcopy
+from gym.spaces import Box
 from xuance.common import get_configs, recursive_dict_update
-from xuance.environment import make_envs
+from xuance.environment import make_envs, RawEnvironment, REGISTRY_ENV
 from xuance.torch.utils.operations import set_seed
 from xuance.torch.agents import PPOCLIP_Agent
+
+
+class MyNewEnv(RawEnvironment):
+    def __init__(self, env_config):
+        super(MyNewEnv, self).__init__()
+        self.env_id = env_config.env_id
+        self.observation_space = Box(-np.inf, np.inf, shape=[18, ])
+        self.action_space = Box(-np.inf, np.inf, shape=[5, ])
+        self.max_episode_steps = 32
+        self._current_step = 0
+
+    def reset(self, **kwargs):
+        self._current_step = 0
+        return self.observation_space.sample(), {}
+
+    def step(self, action):
+        self._current_step += 1
+        observation = self.observation_space.sample()
+        rewards = np.random.random()
+        terminated = False
+        truncated = False if self._current_step < self.max_episode_steps else True
+        info = {}
+        return observation, rewards, terminated, truncated, info
+
+    def render(self, *args, **kwargs):
+        return np.ones([64, 64, 64])
+
+    def close(self):
+        return
 
 
 def parse_args():
@@ -18,10 +48,11 @@ def parse_args():
 
 if __name__ == "__main__":
     parser = parse_args()
-    configs_dict = get_configs(file_dir="ppo_configs/ppo_mujoco_config.yaml")
+    configs_dict = get_configs(file_dir="ppo_configs/ppo_new_env.yaml")
     configs_dict = recursive_dict_update(configs_dict, parser.__dict__)
     configs = argparse.Namespace(**configs_dict)
 
+    REGISTRY_ENV[configs.env_name] = MyNewEnv
     set_seed(configs.seed)
     envs = make_envs(configs)
     Agent = PPOCLIP_Agent(config=configs, envs=envs)

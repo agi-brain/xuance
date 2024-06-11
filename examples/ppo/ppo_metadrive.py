@@ -1,138 +1,81 @@
-import os
 import argparse
-from copy import deepcopy
 import numpy as np
-import torch.optim
-
-from xuance import get_arguments
-from xuance.common import space2shape
+from copy import deepcopy
+from xuance.common import get_configs, recursive_dict_update
 from xuance.environment import make_envs
 from xuance.torch.utils.operations import set_seed
-from xuance.torch.utils import ActivationFunctions
+from xuance.torch.agents import PPOCLIP_Agent
 
 
 def parse_args():
     parser = argparse.ArgumentParser("Example of XuanCe: PPO for Drones.")
-    parser.add_argument("--method", type=str, default="ppo")
-    parser.add_argument("--env", type=str, default="metadrive")
     parser.add_argument("--env-id", type=str, default="metadrive")
     parser.add_argument("--test", type=int, default=0)
-    parser.add_argument("--device", type=str, default="cuda:0")
     parser.add_argument("--benchmark", type=int, default=1)
-    parser.add_argument("--config", type=str, default="./ppo_configs/ppo_metadrive.yaml")
 
     return parser.parse_args()
 
 
-def run(args):
-    agent_name = args.agent
-    set_seed(args.seed)
+if __name__ == "__main__":
+    parser = parse_args()
+    configs_dict = get_configs(file_dir="ppo_configs/ppo_metadrive.yaml")
+    configs_dict = recursive_dict_update(configs_dict, parser.__dict__)
+    configs = argparse.Namespace(**configs_dict)
 
-    # prepare directories for results
-    args.model_dir = os.path.join(os.getcwd(), args.model_dir, args.env_id)
-    args.log_dir = os.path.join(args.log_dir, args.env_id)
+    set_seed(configs.seed)
+    envs = make_envs(configs)
+    Agent = PPOCLIP_Agent(config=configs, envs=envs)
 
-    # build environments
-    envs = make_envs(args)
-    args.observation_space = envs.observation_space
-    args.action_space = envs.action_space
-    n_envs = envs.num_envs
+    train_information = {"Deep learning toolbox": configs.dl_toolbox,
+                         "Calculating device": configs.device,
+                         "Algorithm": configs.agent,
+                         "Environment": f"{configs.env_name}/{configs.env_id}"}
+    for k, v in train_information.items():
+        print(f"{k}: {v}")
 
-    # prepare representation
-    from xuance.torch.representations import Basic_MLP
-    representation = Basic_MLP(input_shape=space2shape(args.observation_space),
-                               hidden_sizes=args.representation_hidden_size,
-                               normalize=None,
-                               initialize=torch.nn.init.orthogonal_,
-                               activation=ActivationFunctions[args.activation],
-                               device=args.device)
-
-    # prepare policy
-    from xuance.torch.policies import Gaussian_AC_Policy
-    policy = Gaussian_AC_Policy(action_space=args.action_space,
-                                representation=representation,
-                                actor_hidden_size=args.actor_hidden_size,
-                                critic_hidden_size=args.critic_hidden_size,
-                                normalize=None,
-                                initialize=torch.nn.init.orthogonal_,
-                                activation=ActivationFunctions[args.activation],
-                                device=args.device)
-
-    # prepare agent
-    from xuance.torch.agents import PPOCLIP_Agent, get_total_iters
-    optimizer = torch.optim.Adam(policy.parameters(), args.learning_rate, eps=1e-5)
-    lr_scheduler = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=1.0, end_factor=0.0,
-                                                     total_iters=get_total_iters(agent_name, args))
-    agent = PPOCLIP_Agent(config=args,
-                          envs=envs,
-                          policy=policy,
-                          optimizer=optimizer,
-                          scheduler=lr_scheduler,
-                          device=args.device)
-
-    # start running
-    envs.reset()
-    if args.benchmark:  # run benchmark
+    if configs.benchmark:
         def env_fn():
-            args_test = deepcopy(args)
-            args_test.parallels = args_test.test_episode
-            return make_envs(args_test)
+            configs_test = deepcopy(configs)
+            configs_test.parallels = configs_test.test_episode
+            return make_envs(configs_test)
 
-        train_steps = args.running_steps // n_envs
-        eval_interval = args.eval_interval // n_envs
-        test_episode = args.test_episode
+        train_steps = configs.running_steps // configs.parallels
+        eval_interval = configs.eval_interval // configs.parallels
+        test_episode = configs.test_episode
         num_epoch = int(train_steps / eval_interval)
 
-        test_scores = agent.test(env_fn, test_episode)
+        test_scores = Agent.test(env_fn, test_episode)
+        Agent.save_model(model_name="best_model.pth")
         best_scores_info = {"mean": np.mean(test_scores),
                             "std": np.std(test_scores),
-                            "step": agent.current_step}
-        agent.save_model(model_name="best_model.pth")
+                            "step": Agent.current_step}
         for i_epoch in range(num_epoch):
             print("Epoch: %d/%d:" % (i_epoch, num_epoch))
-            agent.train(eval_interval)
-            test_scores = agent.test(env_fn, test_episode)
+            Agent.train(eval_interval)
+            test_scores = Agent.test(env_fn, test_episode)
 
             if np.mean(test_scores) > best_scores_info["mean"]:
                 best_scores_info = {"mean": np.mean(test_scores),
                                     "std": np.std(test_scores),
-                                    "step": agent.current_step}
+                                    "step": Agent.current_step}
                 # save best model
-                agent.save_model(model_name="best_model.pth")
+                Agent.save_model(model_name="best_model.pth")
         # end benchmarking
         print("Best Model Score: %.2f, std=%.2f" % (best_scores_info["mean"], best_scores_info["std"]))
     else:
-        envs.close()
-        agent.render = False
-        if not args.test:  # train the model without testing
-            n_train_steps = args.running_steps // n_envs
-            agent.train(n_train_steps)
-            agent.save_model("final_train_model.pth")
-            print("Finish training!")
-        else:  # test a trained model
+        if configs.test:
             def env_fn():
-                args_test = deepcopy(args)
-                args_test.parallels = 1
-                args_test.render = True
-                return make_envs(args_test)
+                configs.parallels = configs.test_episode
+                return make_envs(configs)
 
-            agent.config.test_mode = True
-            agent.load_model(path=agent.model_dir_load)
-            scores = agent.test(env_fn, args.test_episode)
+
+            Agent.load_model(path=Agent.model_dir_load)
+            scores = Agent.test(env_fn, configs.test_episode)
             print(f"Mean Score: {np.mean(scores)}, Std: {np.std(scores)}")
             print("Finish testing.")
+        else:
+            Agent.train(configs.running_steps // configs.parallels)
+            Agent.save_model("final_train_model.pth")
+            print("Finish training!")
 
-    # the end.
-    envs.close()
-    agent.finish()
-
-
-if __name__ == "__main__":
-    parser = parse_args()
-    args = get_arguments(method=parser.method,
-                         env=parser.env,
-                         env_id=parser.env_id,
-                         config_path=parser.config,
-                         parser_args=parser,
-                         is_test=parser.test)
-    run(args)
+    Agent.finish()

@@ -4,12 +4,14 @@ logger: "tensorboard"  # Choices: tensorboard, wandb.
 wandb_user_name: "your_user_name"
 render: False
 render_mode: 'rgb_array' # Choices: 'human', 'rgb_array'.
+fps: 50
 test_mode: False
 device: "cuda:0"
 
-agent: "PPO_Clip"
+agent: "PPO_Clip"  # Choice: PPO_Clip, PPO_KL
 vectorize: "Dummy_Atari"
 env_name: "Atari"
+env_id: "ALE/Breakout-v5"
 obs_type: "grayscale"  # choice for Atari env: ram, rgb, grayscale
 img_size: [84, 84]  # default is 210 x 160 in gym[Atari]
 num_stack: 4  # frame stack trick
@@ -36,17 +38,20 @@ n_epoch: 4
 n_minibatch: 4
 learning_rate: 0.00025
 
-use_grad_clip: True
-
 vf_coef: 0.25
 ent_coef: 0.01
-clip_range: 0.2
-clip_grad_norm: 0.5
+target_kl: 0.25  # for PPO_KL agent
+kl_coef: 1.0  # for PPO_KL agent
+clip_range: 0.2  # for PPO_Clip agent
 gamma: 0.99
 use_gae: True
 gae_lambda: 0.95  # gae_lambda: Lambda parameter for calculating N-step advantage
 use_advnorm: True
 
+use_grad_clip: True  # gradient normalization
+clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+grad_clip_norm: 0.5
+use_actions_mask: False
 use_obsnorm: False
 use_rewnorm: False
 obsnorm_range: 5
