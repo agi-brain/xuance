@@ -20,4 +20,5 @@ __all__ = [
     "Runner_Base",
     "Runner_DRL",
     "Runner_MARL",
+    "REGISTRY_Runner"
 ]

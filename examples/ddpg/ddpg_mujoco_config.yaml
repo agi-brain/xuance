@@ -9,14 +9,17 @@ device: "cuda:0"
 
 agent: "DDPG"
 env_name: "MuJoCo"
+env_id: "Ant-v4"
 vectorize: "DummyVecEnv"
+policy: "DDPG_Policy"
+representation: "Basic_Identical"
 runner: "DRL"
 
 representation_hidden_size:  # If you choose Basic_Identical representation, then ignore this value
 actor_hidden_size: [400, 300]
 critic_hidden_size: [400, 300]
 activation: "leaky_relu"
-activation_action: "tanh"
+activation_action: 'tanh'
 
 seed: 19089
 parallels: 4  # number of environments
@@ -33,6 +36,8 @@ training_frequency: 1
 running_steps: 1000000  # 1M
 start_training: 10000
 
+use_grad_clip: False  # gradient normalization
+grad_clip_norm: 0.5
 use_obsnorm: False
 use_rewnorm: False
 obsnorm_range: 5
