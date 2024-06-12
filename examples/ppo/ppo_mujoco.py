@@ -22,20 +22,20 @@ if __name__ == "__main__":
     configs_dict = recursive_dict_update(configs_dict, parser.__dict__)
     configs = argparse.Namespace(**configs_dict)
 
-    set_seed(configs.seed)
-    envs = make_envs(configs)
-    Agent = PPOCLIP_Agent(config=configs, envs=envs)
+    set_seed(configs.seed)  # Set the random seed.
+    envs = make_envs(configs)  # Make the environment.
+    Agent = PPOCLIP_Agent(config=configs, envs=envs)  # Create the PPO agent.
 
     train_information = {"Deep learning toolbox": configs.dl_toolbox,
                          "Calculating device": configs.device,
                          "Algorithm": configs.agent,
                          "Environment": configs.env_name,
                          "Scenario": configs.env_id}
-    for k, v in train_information.items():
+    for k, v in train_information.items():  # Print the training information.
         print(f"{k}: {v}")
 
     if configs.benchmark:
-        def env_fn():
+        def env_fn():  # Define an environment function for test method.
             configs_test = deepcopy(configs)
             configs_test.parallels = configs_test.test_episode
             return make_envs(configs_test)

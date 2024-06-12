@@ -20,7 +20,7 @@ Welcome to XuanCe's documentation!
 We call it as **Xuan-Ce (玄策)** in Chinese.
 
 | **Xuan (玄)** means incredible, mysterious, and black box in Chinese.
-| **Ce (策)** means policy in Chinse.
+| **Ce (策)** means policy in Chinese.
 
 DRL algorithms are sensitive to hyper-parameters tuning, varying in performance with different tricks,
 and suffering from unstable training processes, therefore, sometimes DRL algorithms seems elusive and "Xuan".

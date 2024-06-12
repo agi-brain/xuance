@@ -15,59 +15,66 @@ Step 1: Create config file
 --------------------------------
 
 A config file should contains the necessary arguments of a PPO agent, and should be a YAML file.
-Here we show a config file named "mujoco.yaml" for MuJoCo environment in gym.
+Here we show a config file named "ppo_configs/ppo_mujoco_config.yaml" for MuJoCo environment in gym.
 
 .. code-block:: yaml
 
     dl_toolbox: "torch"  # The deep learning toolbox. Choices: "torch", "mindspore", "tensorlayer"
     project_name: "XuanCe_Benchmark"
     logger: "tensorboard"  # Choices: tensorboard, wandb.
-    wandb_user_name: "your_user_name"
-    render: False
+    wandb_user_name: "your_user_name"  # The username of wandb when the logger is wandb.
+    render: False # Whether to render the environment when testing.
     render_mode: 'rgb_array' # Choices: 'human', 'rgb_array'.
-    test_mode: False
-    device: "cuda:0"
+    fps: 50  # The frames per second for the rendering videos in log file.
+    test_mode: False  # Whether to run in test mode.
+    device: "cuda:0"  # Choose an calculating device.
 
-    agent: "PPO_Clip"  # choice: PPO_Clip, PPO_KL
-    env_name: "MuJoCo"
-    vectorize: "DummyVecEnv"
-    runner: "DRL"
+    agent: "PPO_Clip"  # The agent name.
+    env_name: "MuJoCo"  # The environment device.
+    env_id: "Ant-v4"  # The environment id.
+    vectorize: "DummyVecEnv"  # The vecrized method to create n parallel environments. Choices: DummyVecEnv, or SubprocVecEnv.
+    policy: "Gaussian_AC"  # choice: Gaussian_AC for continuous actions, Categorical_AC for discrete actions.
+    representation: "Basic_MLP"  # The representation name.
 
-    representation_hidden_size: [256,]
-    actor_hidden_size: [256,]
-    critic_hidden_size: [256,]
-    activation: "LeakyReLU"
+    representation_hidden_size: [256,]  # The size of hidden layers for representation network.
+    actor_hidden_size: [256,]  # The size of hidden layers for actor network.
+    critic_hidden_size: [256,]  # The size of hidden layers for critic network.
+    activation: "leaky_relu"  # The activation function for each hidden layer.
+    activation_action: 'tanh'  # The activation function for the last layer of actor network.
 
-    seed: 79811
-    parallels: 16
-    running_steps: 1000000
-    n_steps: 256
-    n_epoch: 16
-    n_minibatch: 8
-    learning_rate: 0.0004
+    seed: 79811  # The random seed.
+    parallels: 16  # The number of environments to run in parallel.
+    running_steps: 1000000  # The total running steps for all environments.
+    horizon_size: 256  # the horizon size for an environment, buffer_size = horizon_size * parallels.
+    n_epoch: 16  # The number of training epochs.
+    n_minibatch: 8  # The number of minibatch for each training epoch. batch_size = buffer_size // n_minibatch.
+    learning_rate: 0.0004  # The learning rate.
 
-    use_grad_clip: True
+    vf_coef: 0.25  # Coefficient factor for critic loss.
+    ent_coef: 0.0  # Coefficient factor for entropy loss.
+    target_kl: 0.25  # For PPO_KL learner.
+    kl_coef: 1.0  # For PPO_KL learner.
+    clip_range: 0.2  # The clip range for ratio in PPO_Clip learner.
+    gamma: 0.99  # Discount factor.
+    use_gae: True  # Use GAE trick.
+    gae_lambda: 0.95  # The GAE lambda.
+    use_advnorm: True  # Whether to use advantage normalization.
 
-    vf_coef: 0.25
-    ent_coef: 0.0
-    target_kl: 0.001  # for PPO_KL agent
-    clip_range: 0.2  # for PPO_Clip agent
-    clip_grad_norm: 0.5
-    gamma: 0.99
-    use_gae: True
-    gae_lambda: 0.95
-    use_advnorm: True
+    use_grad_clip: True  # Whether to clip the gradient during training.
+    clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+    grad_clip_norm: 0.5  # The max norm of the gradient.
+    use_actions_mask: False  # Whether to use action mask values.
+    use_obsnorm: True  # Whether to use observation normalization.
+    use_rewnorm: True  # Whether to use reward normalization.
+    obsnorm_range: 5  # The range of observation if use observation normalization.
+    rewnorm_range: 5  # The range of reward if use reward normalization.
 
-    use_obsnorm: True
-    use_rewnorm: True
-    obsnorm_range: 5
-    rewnorm_range: 5
+    test_steps: 10000  # The total steps for testing.
+    eval_interval: 5000  # The evaluate interval when use benchmark method.
+    test_episode: 5  # The test episodes.
+    log_dir: "./logs/ppo/"  # The main directory of log files.
+    model_dir: "./models/ppo/"  # The main directory of model files.
 
-    test_steps: 10000
-    eval_interval: 5000
-    test_episode: 5
-    log_dir: "./logs/ppo/"
-    model_dir: "./models/ppo/"
 
 .. raw:: html
 
@@ -79,6 +86,18 @@ Step 2: Get the attributes of the example
 This section mainly includes parameter reading, environment creation, model creation, and model training.
 First, create a `ppo_mujoco.py` file. The code writing process can be divided into the following steps:
 
+**Step 2.0 Import necessary tools**
+
+.. code-block:: python
+
+    import argparse
+    import numpy as np
+    from copy import deepcopy
+    from xuance.common import get_configs, recursive_dict_update
+    from xuance.environment import make_envs
+    from xuance.torch.utils.operations import set_seed
+    from xuance.torch.agents import PPOCLIP_Agent
+
 **Step 2.1 Get the hyper-parameters of command in console**
 
 Define the following function ``parse_args()``,
@@ -89,14 +108,10 @@ which uses the Python package `argparse` to read the command line instructions a
     import argparse
 
     def parse_args():
-        parser = argparse.ArgumentParser("Example of XuanCe.")
-        parser.add_argument("--method", type=str, default="ppo")
-        parser.add_argument("--env", type=str, default="mujoco")
+        parser = argparse.ArgumentParser("Example of XuanCe: PPO for MuJoCo.")
         parser.add_argument("--env-id", type=str, default="InvertedPendulum-v4")
         parser.add_argument("--test", type=int, default=0)
-        parser.add_argument("--device", type=str, default="cuda:0")
         parser.add_argument("--benchmark", type=int, default=1)
-        parser.add_argument("--config", type=str, default="./ppo_mujoco_config.yaml")
 
         return parser.parse_args()
 
@@ -107,152 +122,118 @@ and then the configuration parameters from Step 1 are obtained.
 
 .. code-block:: python
 
-    from xuance import get_arguments
-
     if __name__ == "__main__":
-    parser = parse_args()
-    args = get_arguments(method=parser.method,
-                         env=parser.env,
-                         env_id=parser.env_id,
-                         config_path=parser.config,
-                         parser_args=parser)
-    run(args)
+        parser = parse_args()
+        configs_dict = get_configs(file_dir="ppo_configs/ppo_mujoco_config.yaml")
+        configs_dict = recursive_dict_update(configs_dict, parser.__dict__)
+        configs = argparse.Namespace(**configs_dict)
 
-In this step, the ``get_arguments()`` function from "XuanCe" is called.
-In this function, it first searches for readable parameters based on the combination of the ``env`` and ``env_id`` variables in the `xuance/configs/` directory.
-If default parameters already exist, they are all read. Then, the function continues to index the configuration file from Step 1 using the ``config.path`` path and reads all the parameters from the .yaml file.
-Finally, it reads all the parameters from the ``parser``.
+In this step, the ``get_configs()`` method from "XuanCe" is called.
+This method can read the configuration files from the specified directory, and return a dictionary variable.
 
-During the three reading processes, if there are duplicate variable names, the latter parameters will overwrite the former ones.
-Ultimately, the ``get_arguments()`` function will return the ``args`` variable, which contains all the parameter information and is input into the ``run()`` function.
+Then, the ``recursive_dict_update`` method of "XuanCe" is called.
+This method can update the configurations of the .yaml file from the ``parser`` variable.
+
+Finally, convert the dictionary variable as ``Namespace`` type.
 
 .. raw:: html
 
    <br><hr>
 
-Step 3: Define run(), create and run the model
+Step 3: Create environment, PPO Agent, and run the task
 --------------------------------------------------------
-
-Define the run() function with the input as the args variable obtained in Step 2.
-In this function, environment creation is implemented, and modules such as representation, policy, and agent are instantiated to perform the training.
-
-Here is an example definition of the run() function with comments:
 
 .. code-block:: python
 
-    import os
-    from copy import deepcopy
+    import argparse
     import numpy as np
-    import torch.optim
-
-    from xuance.common import space2shape
+    from copy import deepcopy
+    from xuance.common import get_configs, recursive_dict_update
     from xuance.environment import make_envs
     from xuance.torch.utils.operations import set_seed
-    from xuance.torch.utils import ActivationFunctions
+    from xuance.torch.agents import PPOCLIP_Agent
 
-    def run(args):
-        agent_name = args.agent  # get the name of Agent.
-        set_seed(args.seed)  # set random seed.
 
-        # prepare directories for results
-        args.model_dir = os.path.join(os.getcwd(), args.model_dir, args.env_id)  # the path for saved model.
-        args.log_dir = os.path.join(args.log_dir, args.env_id)  # the path for logger file.
+    def parse_args():
+        parser = argparse.ArgumentParser("Example of XuanCe: PPO for MuJoCo.")
+        parser.add_argument("--env-id", type=str, default="InvertedPendulum-v4")
+        parser.add_argument("--test", type=int, default=0)
+        parser.add_argument("--benchmark", type=int, default=1)
 
-        # build environments
-        envs = make_envs(args)  # create simulation environments
-        args.observation_space = envs.observation_space  # get observation space
-        args.action_space = envs.action_space  # get action space
-        n_envs = envs.num_envs  # get the number of vectorized environments.
+        return parser.parse_args()
 
-        # prepare representation
-        from xuance.torch.representations import Basic_MLP
-        representation = Basic_MLP(input_shape=space2shape(args.observation_space),
-                                   hidden_sizes=args.representation_hidden_size,
-                                   normalize=None,
-                                   initialize=torch.nn.init.orthogonal_,
-                                   activation=ActivationFunctions[args.activation],
-                                   device=args.device)  # create representation
 
-        # prepare policy
-        from xuance.torch.policies import Gaussian_AC_Policy
-        policy = Gaussian_AC_Policy(action_space=args.action_space,
-                                    representation=representation,
-                                    actor_hidden_size=args.actor_hidden_size,
-                                    critic_hidden_size=args.critic_hidden_size,
-                                    normalize=None,
-                                    initialize=torch.nn.init.orthogonal_,
-                                    activation=ActivationFunctions[args.activation],
-                                    device=args.device)  # create Gaussian policy
+    if __name__ == "__main__":
+        parser = parse_args()
+        configs_dict = get_configs(file_dir="ppo_configs/ppo_mujoco_config.yaml")
+        configs_dict = recursive_dict_update(configs_dict, parser.__dict__)
+        configs = argparse.Namespace(**configs_dict)
 
-        # prepare agent
-        from xuance.torch.agents import PPOCLIP_Agent, get_total_iters
-        optimizer = torch.optim.Adam(policy.parameters(), args.learning_rate, eps=1e-5)  # create optimizer
-        lr_scheduler = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=1.0, end_factor=0.0,
-                                                        total_iters=get_total_iters(agent_name, args))  # for learning rate decay
-        agent = PPOCLIP_Agent(config=args,
-                              envs=envs,
-                              policy=policy,
-                              optimizer=optimizer,
-                              scheduler=lr_scheduler,
-                              device=args.device)  # create a PPO agent
+        set_seed(configs.seed)
+        envs = make_envs(configs)
+        Agent = PPOCLIP_Agent(config=configs, envs=envs)
 
-        # start running
-        envs.reset()  # reset the environments
-        if args.benchmark:  # run benchmark
-            def env_fn():  # for creating testing environments
-                args_test = deepcopy(args)
-                args_test.parallels = args_test.test_episode  # set number of testing environments.
-                return make_envs(args_test)  # make testing environments.
+        train_information = {"Deep learning toolbox": configs.dl_toolbox,
+                             "Calculating device": configs.device,
+                             "Algorithm": configs.agent,
+                             "Environment": configs.env_name,
+                             "Scenario": configs.env_id}
+        for k, v in train_information.items():
+            print(f"{k}: {v}")
 
-            train_steps = args.running_steps // n_envs  # calculate the total running steps.
-            eval_interval = args.eval_interval // n_envs  # calculate the number of training steps per epoch.
-            test_episode = args.test_episode  # calculate the number of testing episodes.
-            num_epoch = int(train_steps / eval_interval)  # calculate the number of epochs.
+        if configs.benchmark:
+            def env_fn():
+                configs_test = deepcopy(configs)
+                configs_test.parallels = configs_test.test_episode
+                return make_envs(configs_test)
 
-            test_scores = agent.test(env_fn, test_episode)  # first test
-            best_scores_info = {"mean": np.mean(test_scores),  # average episode scores.
-                                "std": np.std(test_scores),  # the standard deviation of the episode scores.
-                                "step": agent.current_step}  # current step
-            for i_epoch in range(num_epoch):  # begin benchmarking
+            train_steps = configs.running_steps // configs.parallels
+            eval_interval = configs.eval_interval // configs.parallels
+            test_episode = configs.test_episode
+            num_epoch = int(train_steps / eval_interval)
+
+            test_scores = Agent.test(env_fn, test_episode)
+            Agent.save_model(model_name="best_model.pth")
+            best_scores_info = {"mean": np.mean(test_scores),
+                                "std": np.std(test_scores),
+                                "step": Agent.current_step}
+            for i_epoch in range(num_epoch):
                 print("Epoch: %d/%d:" % (i_epoch, num_epoch))
-                agent.train(eval_interval)  # train the model for some steps
-                test_scores = agent.test(env_fn, test_episode)  # test the model for some episodes
+                Agent.train(eval_interval)
+                test_scores = Agent.test(env_fn, test_episode)
 
-                if np.mean(test_scores) > best_scores_info["mean"]:  # if current score is better than history
+                if np.mean(test_scores) > best_scores_info["mean"]:
                     best_scores_info = {"mean": np.mean(test_scores),
                                         "std": np.std(test_scores),
-                                        "step": agent.current_step}
+                                        "step": Agent.current_step}
                     # save best model
-                    agent.save_model(model_name="best_model.pth")
+                    Agent.save_model(model_name="best_model.pth")
             # end benchmarking
             print("Best Model Score: %.2f, std=%.2f" % (best_scores_info["mean"], best_scores_info["std"]))
         else:
-            if not args.test:  # train the model without testing
-                n_train_steps = args.running_steps // n_envs  # calculate the total steps of training
-                agent.train(n_train_steps)  # train the model directly.
-                agent.save_model("final_train_model.pth")  # save the final model file.
-                print("Finish training!")
-            else:  # test a trained model
+            if configs.test:
                 def env_fn():
-                    args_test = deepcopy(args)
-                    args_test.parallels = 1
-                    return make_envs(args_test)
+                    configs.parallels = configs.test_episode
+                    return make_envs(configs)
 
-                agent.render = True
-                agent.load_model(agent.model_dir_load, args.seed)  # load the model file
-                scores = agent.test(env_fn, args.test_episode)  # test the model
+
+                Agent.load_model(path=Agent.model_dir_load)
+                scores = Agent.test(env_fn, configs.test_episode)
                 print(f"Mean Score: {np.mean(scores)}, Std: {np.std(scores)}")
                 print("Finish testing.")
+            else:
+                Agent.train(configs.running_steps // configs.parallels)
+                Agent.save_model("final_train_model.pth")
+                print("Finish training!")
 
-        # the end.
-        envs.close()  # close the environment
-        agent.finish()  # finish the example
+        Agent.finish()
+
 
 After finishing the above three steps, you can run the `python_mujoco.py` file in console and train the model:
 
 .. code-block:: bash
 
-    python ppo_mujoco.py --method ppo --env mujoco --env-id Ant-v4
+    python ppo_mujoco.py --env-id Ant-v4 --benchmark 1
 
 The source code of this example can be visited at the following link:
 

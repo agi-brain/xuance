@@ -173,7 +173,7 @@ Alternatively, you can install XuanCe from its GitHub repository.
         pip install xuance -i http://mirrors.aliyun.com/pypi/simple/
         pip install xuance -i http://pypi.douban.com/simple/
 
-.. tip::
+.. error::
 
     During the installation of XuanCe, you might encount the following error:
 
@@ -201,6 +201,7 @@ Alternatively, you can install XuanCe from its GitHub repository.
 
         pip install mpi4py
 
+
 .. _Anaconda: https://www.anaconda.com/download
 .. _PyTorch: https://pytorch.org/get-started/locally/
 .. _TensorFlow2: https://www.tensorflow.org/install
@@ -219,6 +220,31 @@ Then, test the installation of xuance by typing:
 .. code-block:: python
 
     import xuance
+
+
+.. error::
+
+    If you are using Windows OS to import xuance, you might get an error likes this:
+
+    .. code-block:: bash
+
+        ...
+        from mpi4py import MPI
+        ImportError: DLL load failed: The specified module could not be found.
+
+    You can address the issue by the following steps:
+
+    **Step 1**: Download Microsoft MPI v10.0 from `Official Microsoft Download Center <https://www.microsoft.com/en-us/download/details.aspx?id=57467>`_.
+
+    **Step 2**: Remember to choose both "msmpisetup.exe" and "msmpisdk.msi" options, then click "Download" button and install the ".exe" file.
+
+    **Step 3**: Reinstall mpi4py:
+
+    .. code-block:: bash
+
+        pip uninstall mpi4py
+        pip install mpi4py
+
 
 If no error or warning messages are displayed, it indicates that XuanCe has been successfully installed.
 You can proceed to the next step and start using it.
