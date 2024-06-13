@@ -132,10 +132,10 @@ After defining a new class of environment, you need to add it to the ``REGISTRY_
     REGISTRY_ENV[configs.env_name] = MyNewEnv
 
 
-Step 4: Make the Your Environment and Run it with XuanCe
+Step 4: Make Your Environment and Run it with XuanCe
 -------------------------------------------------------------
 
-You can now directly make your environment and run it with XuanCe's algorithms.
+You can now make your environment and run it directly with XuanCe's algorithms.
 
 Here is the example of DDPG algorithm:
 
