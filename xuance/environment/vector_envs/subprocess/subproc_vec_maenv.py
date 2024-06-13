@@ -148,3 +148,8 @@ class SubprocVecMultiAgentEnv(VecEnv):
     def __del__(self):
         if not self.closed:
             self.close()
+
+
+class SubprocVecStarCraft2Env(SubprocVecMultiAgentEnv):
+    def __init__(self, env_fns, context='spawn', in_series=1):
+        super(SubprocVecStarCraft2Env, self).__init__(env_fns, context, in_series)

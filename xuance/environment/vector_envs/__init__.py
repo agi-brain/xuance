@@ -21,12 +21,13 @@ from xuance.environment.vector_envs.vector_env import (
     VecEnv
 )
 
-from xuance.environment.vector_envs.subprocess import SubprocVecEnv
-from xuance.environment.vector_envs.subprocess import SubprocVecEnv_Atari
-from xuance.environment.vector_envs.subprocess import SubprocVecMultiAgentEnv
-from xuance.environment.vector_envs.dummy import DummyVecEnv
-from xuance.environment.vector_envs.dummy import DummyVecEnv_Atari
-from xuance.environment.vector_envs.dummy import DummyVecMultiAgentEnv
+from .subprocess import SubprocVecEnv
+from .subprocess import SubprocVecEnv_Atari
+from .subprocess import SubprocVecMultiAgentEnv
+from .subprocess import SubprocVecStarCraft2Env
+from .dummy import DummyVecEnv
+from .dummy import DummyVecEnv_Atari
+from .dummy import DummyVecMultiAgentEnv
 
 REGISTRY_VEC_ENV = {
     "DummyVecEnv": DummyVecEnv,
@@ -37,4 +38,5 @@ REGISTRY_VEC_ENV = {
     "SubprocVecEnv": SubprocVecEnv,
     "SubprocVecMultiAgentEnv": SubprocVecMultiAgentEnv,
     "Subproc_Atari": SubprocVecEnv_Atari,
+    "Subproc_SMAC": SubprocVecStarCraft2Env
 }

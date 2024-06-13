@@ -156,7 +156,7 @@ class IQL_Learner(LearnerMAS):
             q_target = rewards[key] + (1 - terminals[key]) * self.gamma * q_next_a
 
             # calculate the loss function
-            mask_values = agent_mask[key] * filled
+            mask_values = agent_mask[key] * filled.unsqueeze(-1)
             td_errors = (q_eval_a - q_target.detach()) * mask_values
             loss = (td_errors ** 2).sum() / mask_values.sum()
             self.optimizer[key].zero_grad()

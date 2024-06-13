@@ -1,107 +1,21 @@
-import os
-import socket
-from pathlib import Path
 from .runner_basic import Runner_Base
 from xuance.torch.agents import REGISTRY_Agents
-from xuance.common import get_time_string
-import wandb
-from torch.utils.tensorboard import SummaryWriter
 import time
 import numpy as np
 from copy import deepcopy
 
 
 class SC2_Runner(Runner_Base):
-    def __init__(self, args):
-        super(SC2_Runner, self).__init__(args)
-        self.fps = args.fps
-        self.args = args
-        self.render = args.render
-        self.test_envs = None
-
-        time_string = get_time_string()
-        seed = f"seed_{self.args.seed}_"
-        self.args.model_dir_load = args.model_dir
-        self.args.model_dir_save = os.path.join(os.getcwd(), args.model_dir, seed + time_string)
-
-        if args.logger == "tensorboard":
-            log_dir = os.path.join(os.getcwd(), args.log_dir, seed + time_string)
-            if not os.path.exists(log_dir):
-                os.makedirs(log_dir)
-            self.writer = SummaryWriter(log_dir)
-            self.use_wandb = False
-        elif args.logger == "wandb":
-            config_dict = vars(args)
-            wandb_dir = Path(os.path.join(os.getcwd(), args.log_dir))
-            if not wandb_dir.exists():
-                os.makedirs(str(wandb_dir))
-            wandb.init(config=config_dict,
-                       project=args.project_name,
-                       entity=args.wandb_user_name,
-                       notes=socket.gethostname(),
-                       dir=wandb_dir,
-                       group=args.env_id,
-                       job_type=args.agent,
-                       name=time_string,
-                       reinit=True)
-            self.use_wandb = True
-        else:
-            raise RuntimeError(f"The logger named {args.logger} is implemented!")
-
-        self.running_steps = args.running_steps
-        self.training_frequency = args.training_frequency
-        self.current_step = 0
-        self.env_step = 0
-        self.current_episode = np.zeros((self.envs.num_envs,), np.int32)
-        self.episode_length = self.envs.max_episode_steps
+    def __init__(self, config):
+        super(SC2_Runner, self).__init__(config)
+        config.n_agents = self.envs.num_agents
+        self.agents = REGISTRY_Agents[config.agent](config, self.envs)
+        self.config = config
+        self.running_steps = config.running_steps
         self.num_agents, self.num_enemies = self.get_agent_num()
-        args.n_agents = self.num_agents
-        self.dim_obs, self.dim_act, self.dim_state = self.envs.dim_obs, self.envs.dim_act, self.envs.dim_state
-        args.dim_obs, args.dim_act = self.dim_obs, self.dim_act
-        args.obs_shape, args.act_shape = (self.dim_obs,), ()
-        args.rew_shape = args.done_shape = (1,)
-        args.action_space = self.envs.action_space
-        args.state_space = self.envs.state_space
-
-        # Create MARL agents.
-        self.agents = REGISTRY_Agents[args.agent](args, self.envs, args.device)
-        self.on_policy = self.agents.on_policy
-
-    def init_rnn_hidden(self):
-        rnn_hidden = self.agents.policy.representation.init_hidden(self.n_envs * self.num_agents)
-        if self.on_policy and self.args.agent in ["MAPPO"]:
-            rnn_hidden_critic = self.agents.policy.representation_critic.init_hidden(self.n_envs * self.num_agents)
-        else:
-            rnn_hidden_critic = [None, None]
-        return rnn_hidden, rnn_hidden_critic
 
     def get_agent_num(self):
         return self.envs.num_agents, self.envs.num_enemies
-
-    def log_infos(self, info: dict, x_index: int):
-        """
-        info: (dict) information to be visualized
-        n_steps: current step
-        """
-        if x_index <= self.running_steps:
-            if self.use_wandb:
-                for k, v in info.items():
-                    wandb.log({k: v}, step=x_index)
-            else:
-                for k, v in info.items():
-                    try:
-                        self.writer.add_scalar(k, v, x_index)
-                    except:
-                        self.writer.add_scalars(k, v, x_index)
-
-    def log_videos(self, info: dict, fps: int, x_index: int = 0):
-        if x_index <= self.running_steps:
-            if self.use_wandb:
-                for k, v in info.items():
-                    wandb.log({k: wandb.Video(v, fps=fps, format='gif')}, step=x_index)
-            else:
-                for k, v in info.items():
-                    self.writer.add_video(k, v, fps=fps, global_step=x_index)
 
     def get_actions(self, obs_n, avail_actions, *rnn_hidden, state=None, test_mode=False):
         log_pi_n, values_n, actions_n_onehot = None, None, None
@@ -312,11 +226,7 @@ class SC2_Runner(Runner_Base):
             print("Finish training.")
             self.agents.save_model("final_train_model.pth")
 
-        self.envs.close()
-        if self.use_wandb:
-            wandb.finish()
-        else:
-            self.writer.close()
+        self.agents.finish()
 
     def benchmark(self):
         test_interval = self.args.eval_interval
@@ -371,15 +281,12 @@ class SC2_Runner(Runner_Base):
         print("Best Score: %.4f, Std: %.4f" % (best_score["mean"], best_score["std"]))
         print("Best Win Rate: {}%".format(best_win_rate * 100))
 
-        self.envs.close()
-        if self.use_wandb:
-            wandb.finish()
-        else:
-            self.writer.close()
+        self.agents.finish()
 
     def time_estimate(self, start):
+        current_step = self.agents.current_step
         time_pass = int(time.time() - start)
-        time_left = int((self.running_steps - self.current_step) / self.current_step * time_pass)
+        time_left = int((self.running_steps - current_step) / current_step * time_pass)
         if time_left < 0:
             time_left = 0
         hours_pass, hours_left = time_pass // 3600, time_left // 3600
