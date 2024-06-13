@@ -9,7 +9,8 @@ Each simulation environment contains a rich variety of task scenarios, as shown 
 .. toctree::
     :hidden:
 
-    Make Environments <environments/__init__>
+    utils <environments/utils>
+    make_envs <environments/__init__>
     Vectorized Environments <environments/vector_envs>
     Gym <environments/gym>
     Gym Platform <environments/gym_platform>
@@ -24,7 +25,8 @@ Each simulation environment contains a rich variety of task scenarios, as shown 
     Customized Multi-Agent Environments <environments/new_env_mas>
     
 
-* :doc:`Make Environments <environments/__init__>`.
+* :doc:`utils <environments/utils>`.
+* :doc:`make_envs <environments/__init__>`.
 * :doc:`Vectorized Environments <environments/vector_envs>`.
 * :doc:`Gym <environments/gym>`.
 * :doc:`Gym Platform <environments/gym_platform>`.
