@@ -50,18 +50,7 @@ Here is an example:
             return
 
 
-Step 2: Add the Environment to the Registry
--------------------------------------------------------------
-
-After defining a new class of environment, you need to add it to the ``REGISTRY_ENV``.
-
-.. code-block:: python
-
-    from xuance.environment import REGISTRY_ENV
-    REGISTRY_ENV[configs.env_name] = MyNewEnv
-
-
-Step 3: Create the Config File and Read the Configurations
+Step 2: Create the Config File and Read the Configurations
 -------------------------------------------------------------
 
 Then, you need to create a YAML file by following the step 1 in :doc:`Professional Usage <professional_usage>`.
@@ -130,6 +119,17 @@ Then, read the configurations:
     from xuance.common import get_configs
     configs_dict = get_configs(file_dir="ddpg_new_env.yaml")
     configs = argparse.Namespace(**configs_dict)
+
+
+Step 3: Add the Environment to the Registry
+-------------------------------------------------------------
+
+After defining a new class of environment, you need to add it to the ``REGISTRY_ENV``.
+
+.. code-block:: python
+
+    from xuance.environment import REGISTRY_ENV
+    REGISTRY_ENV[configs.env_name] = MyNewEnv
 
 
 Step 4: Make the Your Environment and Run it with XuanCe
