@@ -104,20 +104,19 @@ class IQL_Agents(MARLAgents):
             info (List[dict]): Other information for the environment at current step.
         """
         experience_data = {
-            'obs': {k: np.array([itemgetter(k)(data) for data in obs_dict]) for k in self.agent_keys},
-            'actions': {k: np.array([itemgetter(k)(data) for data in actions_dict]) for k in self.agent_keys},
-            'obs_next': {k: np.array([itemgetter(k)(data) for data in obs_next_dict]) for k in self.agent_keys},
-            'rewards': {k: np.array([itemgetter(k)(data) for data in rewards_dict]) for k in self.agent_keys},
-            'terminals': {k: np.array([itemgetter(k)(data) for data in terminals_dict]) for k in self.agent_keys},
-            'agent_mask': {k: np.array([itemgetter(k)(data['agent_mask']) for data in info])
-                           for k in self.agent_keys},
+            'obs': {k: np.array([data[k] for data in obs_dict]) for k in self.agent_keys},
+            'actions': {k: np.array([data[k] for data in actions_dict]) for k in self.agent_keys},
+            'obs_next': {k: np.array([data[k] for data in obs_next_dict]) for k in self.agent_keys},
+            'rewards': {k: np.array([data[k] for data in rewards_dict]) for k in self.agent_keys},
+            'terminals': {k: np.array([data[k] for data in terminals_dict]) for k in self.agent_keys},
+            'agent_mask': {k: np.array([data['agent_mask'][k] for data in info]) for k in self.agent_keys},
         }
         if self.use_rnn:
             experience_data['episode_steps'] = np.array([data['episode_step'] - 1 for data in info])
         if self.use_actions_mask:
-            experience_data['avail_actions'] = {k: np.array([itemgetter(k)(data) for data in avail_actions])
-                                                for k in self.agent_keys},
-            experience_data['avail_actions_next'] = {k: np.array([itemgetter(k)(data) for data in avail_actions_next])
+            experience_data['avail_actions'] = {k: np.array([data[k] for data in avail_actions])
+                                                for k in self.agent_keys}
+            experience_data['avail_actions_next'] = {k: np.array([data[k] for data in avail_actions_next])
                                                      for k in self.agent_keys}
         self.memory.store(**experience_data)
 
@@ -293,7 +292,7 @@ class IQL_Agents(MARLAgents):
             if self.egreedy >= self.end_greedy:
                 self.egreedy -= (self.delta_egreedy * self.n_envs)
 
-    def run_episodes(self, env_fn, n_episodes: int = 1, test_mode: bool = False):
+    def run_episodes(self, env_fn=None, n_episodes: int = 1, test_mode: bool = False):
         """
         Run some episodes when use RNN.
 
@@ -302,7 +301,7 @@ class IQL_Agents(MARLAgents):
             n_episodes (int): Number of episodes.
             test_mode (bool): Whether to test the model.
         """
-        envs = env_fn() if test_mode else self.envs
+        envs = self.envs if env_fn is None else env_fn()
         num_envs = envs.num_envs
         videos, episode_videos = [[] for _ in range(num_envs)], []
         episode_count, scores, best_score = 0, [0.0 for _ in range(num_envs)], -np.inf
@@ -314,7 +313,8 @@ class IQL_Agents(MARLAgents):
                 for idx, img in enumerate(images):
                     videos[idx].append(img)
         else:
-            self.memory.clear_episodes()
+            if self.use_rnn:
+                self.memory.clear_episodes()
         rnn_hidden = self.init_rnn_hidden(num_envs)
 
         while episode_count < n_episodes:
@@ -389,7 +389,8 @@ class IQL_Agents(MARLAgents):
             }
 
             self.log_infos(test_info, self.current_step)
-            envs.close()
+            if env_fn is not None:
+                envs.close()
         return scores
 
     def train_epochs(self, n_epochs=1):

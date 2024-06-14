@@ -23,22 +23,17 @@ class StarCraft2_Env(RawMultiAgentEnv):
         self.observation_space = {k: Box(low=-np.inf, high=np.inf, shape=(self.env_info['obs_shape'], ))
                                   for k in self.agents}
         self.action_space = {k: Discrete(n=self.env_info['n_actions']) for k in self.agents}
-        self.teams_info = {
-            "names": ['agent'],
-            "num_teams": 1,
-            "agents_in_team": self.agents
-        }
         self.max_episode_steps = self.env_info['episode_limit']
-
-        self.n_agents = self.env_info["n_agents"]
-        self.num_enemies = self.env.n_enemies
-
         self._episode_step = 0
-        self.buf_info = {
-            'battle_won': 0,
-            'dead_allies': 0,
-            'dead_enemies': 0,
-        }
+
+    def get_env_info(self):
+        return {'state_space': self.state_space,
+                'observation_space': self.observation_space,
+                'action_space': self.action_space,
+                'agents': self.agents,
+                'num_agents': self.env_info["n_agents"],
+                'max_episode_steps': self.max_episode_steps,
+                'num_enemies': self.env.n_enemies}
 
     def reset(self):
         """ Resets the environment. """

@@ -129,20 +129,12 @@ class XuanCeMultiAgentEnvWrapper(XuanCeEnvWrapper):
         self._state_space: Optional[spaces.Space] = None
         self.agents = self.env.agents  # e.g., ['red_0', 'red_1', 'blue_0', 'blue_1'].
         self.num_agents = self.env.num_agents  # Number of all agents, e.g., 4.
-        self.teams_info = {  # Information of teams.
-            "names": ['red', 'blue'],  # should be consistent with the name of agents.
-            "num_teams": 2,
-            "agents_in_team": [["red_0", 'red_1'], ['blue_0', 'blue_1']]
-        }
         self._episode_score = {agent: 0.0 for agent in self.agents}
+        self.env_info = self.env.get_env_info()
 
     def reset(self, **kwargs) -> Tuple[dict, dict]:
         """Resets the environment with kwargs."""
-        try:
-            obs, info = self.env.reset(**kwargs)
-        except:
-            obs = self.env.reset(**kwargs)
-            info = {}
+        obs, info = self.env.reset(**kwargs)
         self._episode_step = 0
         self._episode_score = {agent: 0.0 for agent in self.agents}
         info["episode_step"] = self._episode_step  # current episode step

@@ -42,11 +42,6 @@ class MPE_Env(RawMultiAgentEnv):
         self.observation_space = {agent: self.env.observation_space(agent) for agent in self.agents}
         self.action_space = {agent: self.env.action_space(agent) for agent in self.agents}
         self.num_agents = self.env.num_agents
-        self.team_info = {
-            "names": TEAM_NAME_DICT[self.scenario_name],
-            "num_teams": len(TEAM_NAME_DICT[self.scenario_name]),
-            "agents_in_team": self.get_agents_in_team
-        }
         self.max_episode_steps = self.env.unwrapped.max_cycles
         self.individual_episode_reward = {k: 0.0 for k in self.agents}
         self._episode_step = 0

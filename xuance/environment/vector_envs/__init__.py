@@ -1,4 +1,4 @@
-from xuance.environment.vector_envs.env_utils import (
+from .env_utils import (
     tile_images,
     copy_obs_dict,
     dict_to_obs,
@@ -10,12 +10,12 @@ from xuance.environment.vector_envs.env_utils import (
     CloudpickleWrapper,
 )
 
-from xuance.environment.vector_envs.subprocess.subproc_vec_env import (
+from .subprocess.subproc_vec_env import (
     worker,
     SubprocVecEnv
 )
 
-from xuance.environment.vector_envs.vector_env import (
+from .vector_env import (
     AlreadySteppingError,
     NotSteppingError,
     VecEnv
@@ -24,19 +24,21 @@ from xuance.environment.vector_envs.vector_env import (
 from .subprocess import SubprocVecEnv
 from .subprocess import SubprocVecEnv_Atari
 from .subprocess import SubprocVecMultiAgentEnv
-from .subprocess import SubprocVecStarCraft2Env
+from .subprocess import SubprocVecEnv_StarCraft2
 from .dummy import DummyVecEnv
 from .dummy import DummyVecEnv_Atari
 from .dummy import DummyVecMultiAgentEnv
+from .dummy import DummyVecEnv_StarCraft2
 
 REGISTRY_VEC_ENV = {
     "DummyVecEnv": DummyVecEnv,
     "DummyVecMultiAgentEnv": DummyVecMultiAgentEnv,
     "Dummy_Atari": DummyVecEnv_Atari,
+    "Dummy_StarCraft2": DummyVecEnv_StarCraft2,
 
     # multiprocess #
     "SubprocVecEnv": SubprocVecEnv,
     "SubprocVecMultiAgentEnv": SubprocVecMultiAgentEnv,
     "Subproc_Atari": SubprocVecEnv_Atari,
-    "Subproc_SMAC": SubprocVecStarCraft2Env
+    "Subproc_StarCraft2": SubprocVecEnv_StarCraft2,
 }
