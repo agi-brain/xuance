@@ -27,6 +27,7 @@ def worker(remote, parent_remote, env_fn_wrappers):
             elif cmd == 'render':
                 remote.send([env.render(data) for env in envs])
             elif cmd == 'close':
+                remote.send([env.close() for env in envs])
                 remote.close()
                 break
             elif cmd == 'get_env_info':

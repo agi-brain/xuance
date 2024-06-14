@@ -280,11 +280,11 @@ class IQL_Agents(MARLAgents):
                         avail_actions[i] = info[i]["reset_avail_actions"]
                         self.envs.buf_avail_actions[i] = info[i]["reset_avail_actions"]
                     if self.use_wandb:
-                        step_info["Episode-Steps/env-%d" % i] = info[i]["episode_step"]
-                        step_info["Train-Episode-Rewards/env-%d" % i] = info[i]["episode_score"]
+                        step_info["Train-Results/Episode-Steps/env-%d" % i] = info[i]["episode_step"]
+                        step_info["Train-Results/Episode-Rewards/env-%d" % i] = info[i]["episode_score"]
                     else:
-                        step_info["Episode-Steps"] = {"env-%d" % i: info[i]["episode_step"]}
-                        step_info["Train-Episode-Rewards"] = {
+                        step_info["Train-Results/Episode-Steps"] = {"env-%d" % i: info[i]["episode_step"]}
+                        step_info["Train-Results/Episode-Rewards"] = {
                             "env-%d" % i: np.mean(itemgetter(*self.agent_keys)(info[i]["episode_score"]))}
                     self.log_infos(step_info, self.current_step)
 
@@ -363,16 +363,18 @@ class IQL_Agents(MARLAgents):
                             print("Episode: %d, Score: %.2f" % (episode_count, episode_score))
                     else:
                         if self.use_wandb:
-                            step_info["Episode-Steps/env-%d" % i] = info[i]["episode_step"]
-                            step_info["Train-Episode-Rewards/env-%d" % i] = info[i]["episode_score"]
+                            step_info["Train-Results/Episode-Steps/env-%d" % i] = info[i]["episode_step"]
+                            step_info["Train-Results/Episode-Rewards/env-%d" % i] = info[i]["episode_score"]
                         else:
-                            step_info["Episode-Steps"] = {"env-%d" % i: info[i]["episode_step"]}
-                            step_info["Train-Episode-Rewards"] = {
+                            step_info["Train-Results/Episode-Steps"] = {"env-%d" % i: info[i]["episode_step"]}
+                            step_info["Train-Results/Episode-Rewards"] = {
                                 "env-%d" % i: np.mean(itemgetter(*self.agent_keys)(info[i]["episode_score"]))}
                         self.current_step += info[i]["episode_step"]
                         self.log_infos(step_info, self.current_step)
-                        self.egreedy = self.start_greedy - self.delta_egreedy * self.current_step
-                        self.egreedy = self.end_greedy if self.egreedy < self.end_greedy else self.egreedy
+                        if self.egreedy > self.end_greedy:
+                            self.egreedy = self.start_greedy - self.delta_egreedy * self.current_step
+                        else:
+                            self.egreedy = self.end_greedy
 
         if test_mode:
             if self.config.render_mode == "rgb_array" and self.render:

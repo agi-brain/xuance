@@ -38,12 +38,11 @@ class SC2_Runner(Runner_Base):
         test_scores = np.zeros(n_test_runs, np.float)
         last_battles_info = self.get_battles_info()
         for i_test in range(n_test_runs):
-            running_scores = self.agents.run_episodes(None, n_episodes=self.config.test_episode, test_mode=True)
+            running_scores = self.agents.run_episodes(None, n_episodes=self.n_envs, test_mode=True)
             test_scores[i_test] = np.mean(running_scores)
         win_rate, allies_dead_ratio, enemies_dead_ratio = self.get_battles_result(last_battles_info)
         mean_test_score = test_scores.mean()
-        results_info = {"Test-Results/Mean-Episode-Rewards": mean_test_score,
-                        "Test-Results/Win-Rate": win_rate,
+        results_info = {"Test-Results/Win-Rate": win_rate,
                         "Test-Results/Allies-Dead-Ratio": allies_dead_ratio,
                         "Test-Results/Enemies-Dead-Ratio": enemies_dead_ratio}
         self.agents.log_infos(results_info, test_T)
@@ -67,7 +66,10 @@ class SC2_Runner(Runner_Base):
             last_battles_info = self.get_battles_info()
             time_start = time.time()
             while self.agents.current_step <= self.running_steps:
-                score = self.agents.run_episodes(None, n_episodes=self.config.parallels, test_mode=False)
+                score = self.agents.run_episodes(None, n_episodes=self.n_envs, test_mode=False)
+                if self.agents.current_step >= self.agents.start_training:
+                    train_info = self.agents.train_epochs(n_epochs=1)
+                    self.agents.log_infos(train_info, self.agents.current_step)
                 episode_scores.append(np.mean(score))
                 if (self.agents.current_step - last_test_T) / test_interval >= 1.0:
                     last_test_T += test_interval
@@ -108,7 +110,10 @@ class SC2_Runner(Runner_Base):
         time_start = time.time()
         while self.agents.current_step <= self.running_steps:
             # train
-            self.agents.run_episodes(None, n_episodes=self.config.parallels, test_mode=False)
+            self.agents.run_episodes(None, n_episodes=self.n_envs, test_mode=False)
+            if self.agents.current_step >= self.agents.start_training:
+                train_info = self.agents.train_epochs(n_epochs=1)
+                self.agents.log_infos(train_info, self.agents.current_step)
             # test
             if (self.agents.current_step - last_test_T) / test_interval >= 1.0:
                 last_test_T += test_interval

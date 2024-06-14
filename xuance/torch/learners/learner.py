@@ -1,6 +1,6 @@
 import os
 import torch
-from numpy import concatenate as concat
+import numpy as np
 from abc import ABC, abstractmethod
 from typing import Optional, List, Union
 from argparse import Namespace
@@ -114,51 +114,53 @@ class LearnerMAS(ABC):
             sample_Tensor (dict): The formatted sampled data.
         """
         batch_size = sample['batch_size']
-        state, avail_actions, filled, seq_length = None, None, None, 0
+        seq_length = sample['sequence_length'] if self.use_rnn else 0
+        state, avail_actions, filled = None, None, None
         obs_next, state_next, avail_actions_next = None, None, None
         IDs = None
         if use_parameter_sharing:
             k = self.model_keys[0]
-            obs_array = itemgetter(*self.agent_keys)(sample['obs'])
-            obs = {k: Tensor(concat([obs_array[i][:, None] for i in range(self.n_agents)], 1)).to(self.device)}
-            act_array = itemgetter(*self.agent_keys)(sample['actions'])
-            actions = {k: Tensor(concat([act_array[i][:, None] for i in range(self.n_agents)], 1)).to(self.device)}
-            rew_array = itemgetter(*self.agent_keys)(sample['rewards'])
-            ter_array = itemgetter(*self.agent_keys)(sample['terminals'])
-            agt_mask_array = itemgetter(*self.agent_keys)(sample['agent_mask'])
+            bs = batch_size * self.n_agents
+            obs_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['obs']), axis=1)).to(self.device)
+            actions_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['actions']), axis=1)).to(self.device)
+            rewards_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['rewards']), axis=1)).to(self.device)
+            ter_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['terminals']), 1)).float().to(self.device)
+            msk_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['agent_mask']), 1)).float().to(self.device)
             if self.use_rnn:
-                seq_length = act_array[0].shape[1]
-                rewards = {k: Tensor(concat([rew_array[i][:, None, :, None] for i in range(self.n_agents)], 1)).to(self.device)}
-                terminals = {k: Tensor(concat([ter_array[i][:, None, :, None] for i in range(self.n_agents)], 1)).float().to(self.device)}
-                agent_mask = {k: Tensor(concat([agt_mask_array[i][:, None, :, None] for i in range(self.n_agents)], 1)).float().to(self.device)}
-                IDs = torch.eye(self.n_agents).unsqueeze(1).unsqueeze(0).expand(batch_size, -1, seq_length + 1, -1).to(self.device)
+                obs = {k: obs_tensor.reshape(bs, seq_length + 1, -1)}
+                actions = {k: actions_tensor.reshape(bs, seq_length)}
+                rewards = {k: rewards_tensor.reshape(bs, seq_length)}
+                terminals = {k: ter_tensor.reshape(bs, seq_length)}
+                agent_mask = {k: msk_tensor.reshape(bs, seq_length)}
+                IDs = torch.eye(self.n_agents).unsqueeze(1).unsqueeze(0).expand(
+                    batch_size, -1, seq_length + 1, -1).reshape(bs, seq_length + 1, self.n_agents).to(self.device)
             else:
-                obs_next_array = itemgetter(*self.agent_keys)(sample['obs_next'])
-                obs_next = {k: Tensor(concat([obs_next_array[i][:, None] for i in range(self.n_agents)], 1)).to(self.device)}
-                rewards = {k: Tensor(concat([rew_array[i][:, None, None] for i in range(self.n_agents)], 1)).to(self.device)}
-                terminals = {k: Tensor(concat([ter_array[i][:, None, None] for i in range(self.n_agents)], 1)).float().to(self.device)}
-                agent_mask = {k: Tensor(concat([agt_mask_array[i][:, None, None] for i in range(self.n_agents)], 1)).float().to(self.device)}
-                IDs = torch.eye(self.n_agents).unsqueeze(0).expand(batch_size, -1, -1).to(self.device)
+                obs = {k: obs_tensor.reshape(bs, -1)}
+                actions = {k: actions_tensor.reshape(bs)}
+                rewards = {k: rewards_tensor.reshape(bs)}
+                terminals = {k: ter_tensor.reshape(bs)}
+                agent_mask = {k: msk_tensor.reshape(bs)}
+                obs_next = {k: Tensor(np.stack(itemgetter(*self.agent_keys)(sample['obs_next']),
+                                               axis=1)).to(self.device).reshape(bs, -1)}
+                IDs = torch.eye(self.n_agents).unsqueeze(0).expand(
+                    batch_size, -1, -1).reshape(bs, self.n_agents).to(self.device)
 
             if use_actions_mask:
-                act_mask_array = itemgetter(*self.agent_keys)(sample['avail_actions'])
-                avail_actions = {k: Tensor(concat([act_mask_array[i][:, None] for i in range(self.n_agents)], 1)).float().to(self.device)}
-                if not self.use_rnn:
-                    act_mask_next_array = itemgetter(*self.agent_keys)(sample['avail_actions'])
-                    avail_actions_next = {k: Tensor(concat([act_mask_next_array[i][:, None] for i in range(self.n_agents)], 1)).float().to(self.device)}
-
+                avail_a = np.stack(itemgetter(*self.agent_keys)(sample['avail_actions']), axis=1)
+                if self.use_rnn:
+                    avail_actions = {k: Tensor(avail_a.reshape([bs, seq_length + 1, -1])).float().to(self.device)}
+                else:
+                    avail_actions = {k: Tensor(avail_a.reshape([bs, -1])).float().to(self.device)}
+                    avail_a_next = np.stack(itemgetter(*self.agent_keys)(sample['avail_actions_next']), axis=1)
+                    avail_actions_next = {k: Tensor(avail_a_next.reshape([bs, -1])).float().to(self.device)}
         else:
             obs = {k: Tensor(sample['obs'][k]).to(self.device) for k in self.agent_keys}
             actions = {k: Tensor(sample['actions'][k]).to(self.device) for k in self.agent_keys}
-            if self.use_rnn:
-                rewards = {k: Tensor(sample['rewards'][k][:, :, None]).to(self.device) for k in self.agent_keys}
-                terminals = {k: Tensor(sample['terminals'][k][:, :, None]).float().to(self.device) for k in self.agent_keys}
-                agent_mask = {k: Tensor(sample['agent_mask'][k][:, :, None]).float().to(self.device) for k in self.agent_keys}
-            else:
+            rewards = {k: Tensor(sample['rewards'][k]).to(self.device) for k in self.agent_keys}
+            terminals = {k: Tensor(sample['terminals'][k]).float().to(self.device) for k in self.agent_keys}
+            agent_mask = {k: Tensor(sample['agent_mask'][k]).float().to(self.device) for k in self.agent_keys}
+            if not self.use_rnn:
                 obs_next = {k: Tensor(sample['obs_next'][k]).to(self.device) for k in self.agent_keys}
-                rewards = {k: Tensor(sample['rewards'][k][:, None]).to(self.device) for k in self.agent_keys}
-                terminals = {k: Tensor(sample['terminals'][k][:, None]).float().to(self.device) for k in self.agent_keys}
-                agent_mask = {k: Tensor(sample['agent_mask'][k][:, None]).float().to(self.device) for k in self.agent_keys}
             if use_actions_mask:
                 avail_actions = {k: Tensor(sample['avail_actions'][k]).float().to(self.device) for k in self.agent_keys}
                 if not self.use_rnn:
@@ -186,6 +188,7 @@ class LearnerMAS(ABC):
             'avail_actions_next': avail_actions_next,
             'agent_ids': IDs,
             'filled': filled,
+            'seq_length': seq_length,
         }
         return sample_Tensor
 
