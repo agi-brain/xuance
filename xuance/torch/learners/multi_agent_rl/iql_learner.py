@@ -31,6 +31,7 @@ class IQL_Learner(LearnerMAS):
         sample_Tensor = self.build_training_data(sample=sample,
                                                  use_parameter_sharing=self.use_parameter_sharing,
                                                  use_actions_mask=self.use_actions_mask)
+        batch_size = sample_Tensor['batch_size']
         obs = sample_Tensor['obs']
         actions = sample_Tensor['actions']
         obs_next = sample_Tensor['obs_next']
@@ -41,20 +42,22 @@ class IQL_Learner(LearnerMAS):
         avail_actions_next = sample_Tensor['avail_actions_next']
         IDs = sample_Tensor['agent_ids']
 
+        bs = batch_size * self.n_agents if self.use_parameter_sharing else batch_size
+
         _, _, q_eval = self.policy(observation=obs, agent_ids=IDs, avail_actions=avail_actions)
         _, q_next = self.policy.Qtarget(observation=obs_next, agent_ids=IDs)
 
         for key in self.model_keys:
-            q_eval_a = q_eval[key].gather(-1, actions[key].long().unsqueeze(-1))
+            q_eval_a = q_eval[key].gather(-1, actions[key].long().unsqueeze(-1)).reshape(bs)
 
             if self.use_actions_mask:
                 q_next[key][avail_actions_next[key] == 0] = -9999999
 
             if self.config.double_q:
                 _, actions_next_greedy, _ = self.policy(obs_next, IDs, agent_key=key, avail_actions=avail_actions)
-                q_next_a = q_next[key].gather(-1, actions_next_greedy[key].unsqueeze(-1).long())
+                q_next_a = q_next[key].gather(-1, actions_next_greedy[key].unsqueeze(-1).long()).reshape(bs)
             else:
-                q_next_a = q_next[key].max(dim=-1, keepdim=True).values
+                q_next_a = q_next[key].max(dim=-1, keepdim=True).values.reshape(bs)
 
             q_target = rewards[key] + (1 - terminals[key]) * self.gamma * q_next_a
 
