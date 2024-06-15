@@ -112,7 +112,7 @@ class SC2_Runner(Runner_Base):
             # train
             self.agents.run_episodes(None, n_episodes=self.n_envs, test_mode=False)
             if self.agents.current_step >= self.agents.start_training:
-                train_info = self.agents.train_epochs(n_epochs=1)
+                train_info = self.agents.train_epochs(n_epochs=self.n_envs)
                 self.agents.log_infos(train_info, self.agents.current_step)
             # test
             if (self.agents.current_step - last_test_T) / test_interval >= 1.0:

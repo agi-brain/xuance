@@ -172,72 +172,66 @@ class IQL_Agents(MARLAgents):
             rnn_hidden_state (dict): The new hidden states for RNN (if self.use_rnn=True).
             actions_dict (dict): The output actions.
         """
-        n_env = len(obs_dict)
+        batch_size = len(obs_dict)
+        bs = batch_size * self.n_agents if self.use_parameter_sharing else batch_size
         avail_actions_input = None
 
         if self.use_parameter_sharing:
             key = self.agent_keys[0]
+            obs_array = np.array([itemgetter(*self.agent_keys)(data) for data in obs_dict])
+            agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(batch_size, -1, -1).to(self.device)
+            avail_actions_array = np.array([itemgetter(*self.agent_keys)(data)
+                                            for data in avail_actions_dict]) if self.use_actions_mask else None
             if self.use_rnn:
-                batch_size = n_env * self.n_agents
-                obs_array = np.array([itemgetter(*self.agent_keys)(data) for data in obs_dict])
-                obs_input = {key: obs_array.reshape([batch_size, 1, -1])}
+                obs_input = {key: obs_array.reshape([bs, 1, -1])}
+                agents_id = agents_id.reshape(bs, 1, -1)
                 if self.use_actions_mask:
-                    avail_actions_array = np.array([itemgetter(*self.agent_keys)(data) for data in avail_actions_dict])
-                    avail_actions_input = {key: avail_actions_array.reshape([batch_size, 1, -1])}
-                agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(n_env, -1, -1).reshape(batch_size, 1, -1).to(
-                    self.device)
+                    avail_actions_input = {key: avail_actions_array.reshape([bs, 1, -1])}
             else:
-                obs_input = {key: np.array([itemgetter(*self.agent_keys)(env_obs) for env_obs in obs_dict])}
+                obs_input = {key: obs_array.reshape([bs, -1])}
+                agents_id = agents_id.reshape(bs, -1)
                 if self.use_actions_mask:
-                    avail_actions_input = {
-                        key: np.array([itemgetter(*self.agent_keys)(data) for data in avail_actions_dict])}
-                agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(n_env, -1, -1).to(self.device)
-
-            hidden_state, actions, _ = self.policy(observation=obs_input,
-                                                   agent_ids=agents_id,
-                                                   avail_actions=avail_actions_input,
-                                                   rnn_hidden=rnn_hidden)
-
-            actions_out = actions[key].reshape([n_env, self.n_agents]).cpu().detach().numpy()
-            actions_dict = [{k: actions_out[e, i] for i, k in enumerate(self.agent_keys)} for e in range(n_env)]
+                    avail_actions_input = {key: avail_actions_array.reshape([bs, -1])}
         else:
+            agents_id = None
             if self.use_rnn:
-                obs_input = {k: np.array([itemgetter(k)(env_obs) for env_obs in obs_dict])[:, None] for k in
-                             self.agent_keys}
+                obs_input = {k: np.stack([data[k] for data in obs_dict]).reshape([bs, 1, -1]) for k in self.agent_keys}
                 if self.use_actions_mask:
-                    avail_actions_input = {k: np.array([itemgetter(k)(mask) for mask in avail_actions_dict])[:, None]
+                    avail_actions_input = {k: np.stack([data[k] for data in avail_actions_dict]).reshape([bs, 1, -1])
                                            for k in self.agent_keys}
             else:
-                obs_input = {k: np.array([itemgetter(k)(env_obs) for env_obs in obs_dict]) for k in self.agent_keys}
+                obs_input = {k: np.stack([data[k] for data in obs_dict]).reshape(bs, -1) for k in self.agent_keys}
                 if self.use_actions_mask:
-                    avail_actions_input = {k: np.array([itemgetter(k)(mask) for mask in avail_actions_dict]) for k in
-                                           self.agent_keys}
+                    avail_actions_input = {k: np.array([data[k] for data in avail_actions_dict]).reshape([bs, -1])
+                                           for k in self.agent_keys}
 
-            hidden_state, actions, _ = self.policy(observation=obs_input,
-                                                   avail_actions=avail_actions_input,
-                                                   rnn_hidden=rnn_hidden)
+        hidden_state, actions, _ = self.policy(observation=obs_input,
+                                               agent_ids=agents_id,
+                                               avail_actions=avail_actions_input,
+                                               rnn_hidden=rnn_hidden)
 
-            actions_out = {}
-            for key in self.agent_keys:
-                if self.use_rnn:
-                    actions_out[key] = actions[key].squeeze(1).cpu().detach().numpy()
-                else:
-                    actions_out[key] = actions[key].cpu().detach().numpy()
-            actions_dict = [{k: actions_out[k][e] for k in self.agent_keys} for e in range(n_env)]
+        if self.use_parameter_sharing:
+            key = self.agent_keys[0]
+            actions_out = actions[key].reshape([batch_size, self.n_agents]).cpu().detach().numpy()
+            actions_dict = [{k: actions_out[e, i] for i, k in enumerate(self.agent_keys)} for e in range(batch_size)]
+        else:
+            actions_out = {k: actions[k].reshape(batch_size).cpu().detach().numpy() for k in self.agent_keys}
+            actions_dict = [{k: actions_out[k][i] for k in self.agent_keys} for i in range(batch_size)]
 
         if not test_mode:  # get random actions
             if np.random.rand() < self.egreedy:
                 if self.use_actions_mask:
-                    actions_dict = [
-                        {k: Categorical(Tensor(avail_actions_dict[e][k])).sample().numpy() for k in self.agent_keys} for
-                        e in range(n_env)]
+                    actions_dict = [{k: Categorical(Tensor(avail_actions_dict[e][k])).sample().numpy()
+                                     for k in self.agent_keys} for e in range(batch_size)]
                 else:
-                    actions_dict = [{k: self.action_space[k].sample() for k in self.agent_keys} for _ in range(n_env)]
+                    actions_dict = [{k: self.action_space[k].sample() for k in self.agent_keys} for _ in range(batch_size)]
         return hidden_state, actions_dict
 
     def train(self, n_steps):
         """
         Train the model for numerous steps.
+        If self.use_rnn is False, then the environments will run step by step in parallel.
+        When one environment is terminal, it will be reset automatically and continue runs.
 
         Parameters:
             n_steps (int): The number of steps to train the model.
@@ -249,7 +243,7 @@ class IQL_Agents(MARLAgents):
                 while step_last - step_start < n_steps_all:
                     self.run_episodes(None, n_episodes=self.n_envs, test_mode=False)
                     if self.current_step >= self.start_training:
-                        train_info = self.train_epochs(n_epochs=1)
+                        train_info = self.train_epochs(n_epochs=self.n_envs)
                         self.log_infos(train_info, self.current_step)
                     process_bar.update((self.current_step - step_last) // self.n_envs)
                     step_last = deepcopy(self.current_step)
@@ -339,6 +333,7 @@ class IQL_Agents(MARLAgents):
 
             for i in range(num_envs):
                 if all(terminated_dict[i].values()) or truncated[i]:
+                    episode_count += 1
                     obs_dict[i] = info[i]["reset_obs"]
                     envs.buf_obs[i] = info[i]["reset_obs"]
                     if self.use_actions_mask:
@@ -354,7 +349,6 @@ class IQL_Agents(MARLAgents):
                             self.memory.finish_path(i, **terminal_data)
                     episode_score = float(np.mean(itemgetter(*self.agent_keys)(info[i]["episode_score"])))
                     scores.append(episode_score)
-                    episode_count += 1
                     if test_mode:
                         if best_score < episode_score:
                             best_score = episode_score
@@ -386,8 +380,8 @@ class IQL_Agents(MARLAgents):
                 print("Best Score: %.2f" % best_score)
 
             test_info = {
-                "Test-Episode-Rewards/Mean-Score": np.mean(scores),
-                "Test-Episode-Rewards/Std-Score": np.std(scores),
+                "Test-Results/Episode-Rewards": np.mean(scores),
+                "Test-Results/Episode-Rewards-Std": np.std(scores),
             }
 
             self.log_infos(test_info, self.current_step)
