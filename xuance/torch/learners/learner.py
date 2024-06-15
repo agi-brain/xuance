@@ -129,16 +129,16 @@ class LearnerMAS(ABC):
             if self.use_rnn:
                 obs = {k: obs_tensor.reshape(bs, seq_length + 1, -1)}
                 actions = {k: actions_tensor.reshape(bs, seq_length)}
-                rewards = {k: rewards_tensor.reshape(bs, seq_length)}
-                terminals = {k: ter_tensor.reshape(bs, seq_length)}
+                rewards = {k: rewards_tensor.reshape(batch_size, self.n_agents, seq_length)}
+                terminals = {k: ter_tensor.reshape(batch_size, self.n_agents, seq_length)}
                 agent_mask = {k: msk_tensor.reshape(bs, seq_length)}
                 IDs = torch.eye(self.n_agents).unsqueeze(1).unsqueeze(0).expand(
                     batch_size, -1, seq_length + 1, -1).reshape(bs, seq_length + 1, self.n_agents).to(self.device)
             else:
                 obs = {k: obs_tensor.reshape(bs, -1)}
                 actions = {k: actions_tensor.reshape(bs)}
-                rewards = {k: rewards_tensor.reshape(bs)}
-                terminals = {k: ter_tensor.reshape(bs)}
+                rewards = {k: rewards_tensor.reshape(batch_size, self.n_agents)}
+                terminals = {k: ter_tensor.reshape(batch_size, self.n_agents)}
                 agent_mask = {k: msk_tensor.reshape(bs)}
                 obs_next = {k: Tensor(np.stack(itemgetter(*self.agent_keys)(sample['obs_next']),
                                                axis=1)).to(self.device).reshape(bs, -1)}

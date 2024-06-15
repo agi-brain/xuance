@@ -41,6 +41,10 @@ class IQL_Learner(LearnerMAS):
         avail_actions = sample_Tensor['avail_actions']
         avail_actions_next = sample_Tensor['avail_actions_next']
         IDs = sample_Tensor['agent_ids']
+        if self.use_parameter_sharing:
+            key = self.model_keys[0]
+            rewards[key] = rewards[key].reshape(batch_size * self.n_agents)
+            terminals[key] = terminals[key].reshape(batch_size * self.n_agents)
 
         bs = batch_size * self.n_agents if self.use_parameter_sharing else batch_size
 
@@ -104,8 +108,11 @@ class IQL_Learner(LearnerMAS):
         IDs = sample_Tensor['agent_ids']
 
         if self.use_parameter_sharing:
+            key = self.model_keys[0]
             bs_rnn = batch_size * self.n_agents
             filled = filled.unsqueeze(1).expand(-1, self.n_agents, -1).reshape(bs_rnn, seq_len)
+            rewards[key] = rewards[key].reshape(batch_size * self.n_agents, seq_len)
+            terminals[key] = terminals[key].reshape(batch_size * self.n_agents, seq_len)
         else:
             bs_rnn = batch_size
 
