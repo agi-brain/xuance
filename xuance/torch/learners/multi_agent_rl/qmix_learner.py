@@ -62,7 +62,7 @@ class QMIX_Learner(LearnerMAS):
 
         q_eval_a, q_next_a = {}, {}
         for key in self.model_keys:
-            q_eval_a[key] = q_eval[key].gather(-1, actions[key].long().unsqueeze(-1)).reshape(bs) * agent_mask[key]
+            q_eval_a[key] = q_eval[key].gather(-1, actions[key].long().unsqueeze(-1)).reshape(bs)
 
             if self.use_actions_mask:
                 q_next[key][avail_actions_next[key] == 0] = -9999999
@@ -70,9 +70,12 @@ class QMIX_Learner(LearnerMAS):
             if self.config.double_q:
                 _, act_next, _ = self.policy(observation=obs_next, agent_ids=IDs,
                                              avail_actions=avail_actions, agent_key=key)
-                q_next_a[key] = q_next[key].gather(-1, act_next[key].long().unsqueeze(-1)).reshape(bs) * agent_mask[key]
+                q_next_a[key] = q_next[key].gather(-1, act_next[key].long().unsqueeze(-1)).reshape(bs)
             else:
-                q_next_a[key] = q_next[key].max(dim=-1, keepdim=True).values.reshape(bs) * agent_mask[key]
+                q_next_a[key] = q_next[key].max(dim=-1, keepdim=True).values.reshape(bs)
+
+            q_eval_a[key] *= agent_mask[key]
+            q_next_a[key] *= agent_mask[key]
 
         q_tot_eval = self.policy.Q_tot(q_eval_a, state)
         q_tot_next = self.policy.Qtarget_tot(q_next_a, state_next)

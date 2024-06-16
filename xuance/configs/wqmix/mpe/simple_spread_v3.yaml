@@ -5,7 +5,7 @@ continuous_action: False
 policy: "Weighted_Mixing_Q_network"
 representation: "Basic_MLP"
 vectorize: "DummyVecMultiAgentEnv"
-runner: "Pettingzoo_Runner"
+runner: "MARL"
 
 use_rnn: False
 rnn: "GRU"
