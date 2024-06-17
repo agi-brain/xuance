@@ -147,9 +147,9 @@ class IQL_Agents(MARLAgents):
         """
         assert self.use_rnn is True, "This method cannot be called when self.use_rnn is False."
         if self.use_parameter_sharing:
-            batch_index = np.arange(i_env * self.n_agents, (i_env + 1) * self.n_agents)
+            batch_index = list(range(i_env * self.n_agents, (i_env + 1) * self.n_agents))
         else:
-            batch_index = i_env
+            batch_index = [i_env, ]
         for key in self.model_keys:
             rnn_hidden[key] = self.policy.representation[key].init_hidden_item(batch_index, *rnn_hidden[key])
         return rnn_hidden

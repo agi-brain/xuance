@@ -28,6 +28,7 @@ class VDN_Learner(LearnerMAS):
 
     def update(self, sample):
         self.iterations += 1
+        info = {}
 
         # prepare training data
         sample_Tensor = self.build_training_data(sample=sample,
@@ -59,7 +60,7 @@ class VDN_Learner(LearnerMAS):
 
         q_eval_a, q_next_a = {}, {}
         for key in self.model_keys:
-            q_eval_a[key] = q_eval[key].gather(-1, actions[key].long().unsqueeze(-1)).reshape(bs) * agent_mask[key]
+            q_eval_a[key] = q_eval[key].gather(-1, actions[key].long().unsqueeze(-1)).reshape(bs)
 
             if self.use_actions_mask:
                 q_next[key][avail_actions_next[key] == 0] = -9999999
@@ -67,9 +68,14 @@ class VDN_Learner(LearnerMAS):
             if self.config.double_q:
                 _, act_next, _ = self.policy(observation=obs_next, agent_ids=IDs,
                                              avail_actions=avail_actions, agent_key=key)
-                q_next_a[key] = q_next[key].gather(-1, act_next[key].long().unsqueeze(-1)).reshape(bs) * agent_mask[key]
+                q_next_a[key] = q_next[key].gather(-1, act_next[key].long().unsqueeze(-1)).reshape(bs)
             else:
-                q_next_a[key] = q_next[key].max(dim=-1, keepdim=True).values.reshape(bs) * agent_mask[key]
+                q_next_a[key] = q_next[key].max(dim=-1, keepdim=True).values.reshape(bs)
+
+            q_eval_a[key] *= agent_mask[key]
+            q_next_a[key] *= agent_mask[key]
+
+            info[f"IndividualQ/{key}"] = q_eval_a[key].mean().item()
 
         q_tot_eval = self.policy.Q_tot(q_eval_a)
         q_tot_next = self.policy.Qtarget_tot(q_next_a)
@@ -87,11 +93,11 @@ class VDN_Learner(LearnerMAS):
 
         lr = self.optimizer.state_dict()['param_groups'][0]['lr']
 
-        info = {
+        info.update({
             "learning_rate": lr,
             "loss_Q": loss.item(),
             "predictQ": q_tot_eval.mean().item()
-        }
+        })
 
         if self.iterations % self.sync_frequency == 0:
             self.policy.copy_target()
@@ -99,6 +105,7 @@ class VDN_Learner(LearnerMAS):
 
     def update_rnn(self, sample):
         self.iterations += 1
+        info = {}
 
         # prepare training data
         sample_Tensor = self.build_training_data(sample=sample,
@@ -152,6 +159,11 @@ class VDN_Learner(LearnerMAS):
             if self.use_parameter_sharing:
                 q_eval_a[key] = q_eval_a[key].reshape(batch_size, self.n_agents, seq_len).transpose(1, 2).reshape(-1, self.n_agents)
                 q_next_a[key] = q_next_a[key].reshape(batch_size, self.n_agents, seq_len).transpose(1, 2).reshape(-1, self.n_agents)
+            else:
+                q_eval_a[key] = q_eval_a[key].reshape(-1, 1)
+                q_next_a[key] = q_next_a[key].reshape(-1, 1)
+
+            info[f"IndividualQ/{key}"] = q_eval_a[key].mean().item()
 
         # calculate the total Q values.
         q_tot_eval = self.policy.Q_tot(q_eval_a)
@@ -171,11 +183,11 @@ class VDN_Learner(LearnerMAS):
 
         lr = self.optimizer.state_dict()['param_groups'][0]['lr']
 
-        info = {
+        info.update({
             "learning_rate": lr,
             "loss_Q": loss.item(),
             "predictQ": q_tot_eval.mean().item()
-        }
+        })
 
         if self.iterations % self.sync_frequency == 0:
             self.policy.copy_target()

@@ -72,13 +72,14 @@ class Basic_RNN(nn.Module):
         cell_states = torch.zeros_like(hidden_states).to(self.device) if self.lstm else None
         return hidden_states, cell_states
 
-    def init_hidden_item(self, i, *rnn_hidden):
+    def init_hidden_item(self, indexes: list, *rnn_hidden):
+        zeros_size = (self.N_recurrent_layer, len(indexes), self.recurrent_hidden_size)
         if self.lstm:
-            rnn_hidden[0][:, i] = torch.zeros(size=(self.N_recurrent_layer, self.recurrent_hidden_size)).to(self.device)
-            rnn_hidden[1][:, i] = torch.zeros(size=(self.N_recurrent_layer, self.recurrent_hidden_size)).to(self.device)
+            rnn_hidden[0][:, indexes] = torch.zeros(size=zeros_size).to(self.device)
+            rnn_hidden[1][:, indexes] = torch.zeros(size=zeros_size).to(self.device)
             return rnn_hidden
         else:
-            rnn_hidden[0][:, i] = torch.zeros(size=(self.N_recurrent_layer, self.recurrent_hidden_size)).to(self.device)
+            rnn_hidden[0][:, indexes] = torch.zeros(size=zeros_size).to(self.device)
             return rnn_hidden
 
     def get_hidden_item(self, i, *rnn_hidden):

@@ -28,6 +28,7 @@ class QMIX_Learner(LearnerMAS):
 
     def update(self, sample):
         self.iterations += 1
+        info = {}
 
         # prepare training data
         sample_Tensor = self.build_training_data(sample=sample,
@@ -77,6 +78,8 @@ class QMIX_Learner(LearnerMAS):
             q_eval_a[key] *= agent_mask[key]
             q_next_a[key] *= agent_mask[key]
 
+            info[f"IndividualQ/{key}"] = q_eval_a[key].mean().item()
+
         q_tot_eval = self.policy.Q_tot(q_eval_a, state)
         q_tot_next = self.policy.Qtarget_tot(q_next_a, state_next)
         q_tot_target = rewards_tot + (1 - terminals_tot) * self.gamma * q_tot_next
@@ -93,11 +96,11 @@ class QMIX_Learner(LearnerMAS):
 
         lr = self.optimizer.state_dict()['param_groups'][0]['lr']
 
-        info = {
+        info.update({
             "learning_rate": lr,
             "loss_Q": loss.item(),
             "predictQ": q_tot_eval.mean().item()
-        }
+        })
 
         if self.iterations % self.sync_frequency == 0:
             self.policy.copy_target()
@@ -105,6 +108,7 @@ class QMIX_Learner(LearnerMAS):
 
     def update_rnn(self, sample):
         self.iterations += 1
+        info = {}
 
         # prepare training data
         sample_Tensor = self.build_training_data(sample=sample,
@@ -160,6 +164,11 @@ class QMIX_Learner(LearnerMAS):
             if self.use_parameter_sharing:
                 q_eval_a[key] = q_eval_a[key].reshape(batch_size, self.n_agents, seq_len).transpose(1, 2).reshape(-1, self.n_agents)
                 q_next_a[key] = q_next_a[key].reshape(batch_size, self.n_agents, seq_len).transpose(1, 2).reshape(-1, self.n_agents)
+            else:
+                q_eval_a[key] = q_eval_a[key].reshape(-1, 1)
+                q_next_a[key] = q_next_a[key].reshape(-1, 1)
+
+            info[f"IndividualQ/{key}"] = q_eval_a[key].mean().item()
 
         # calculate the total Q values.
         q_tot_eval = self.policy.Q_tot(q_eval_a, state[:, :-1].reshape([batch_size * seq_len, -1]))
@@ -179,11 +188,11 @@ class QMIX_Learner(LearnerMAS):
 
         lr = self.optimizer.state_dict()['param_groups'][0]['lr']
 
-        info = {
+        info.update({
             "learning_rate": lr,
             "loss_Q": loss.item(),
             "predictQ": q_tot_eval.mean().item()
-        }
+        })
 
         if self.iterations % self.sync_frequency == 0:
             self.policy.copy_target()
