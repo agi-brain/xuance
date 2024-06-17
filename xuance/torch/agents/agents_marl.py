@@ -188,6 +188,7 @@ class MARLAgents(ABC):
             wandb.finish()
         else:
             self.writer.close()
+        self.envs.close()
 
 
 class RandomAgents(object):
