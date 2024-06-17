@@ -144,7 +144,6 @@ class WQMIX_Learner(LearnerMAS):
                                                  use_global_state=True)
         batch_size = sample_Tensor['batch_size']
         seq_len = sample['sequence_length']
-        seq_len = sample['sequence_length']
         state = sample_Tensor['state']
         obs = sample_Tensor['obs']
         actions = sample_Tensor['actions']
@@ -191,7 +190,7 @@ class WQMIX_Learner(LearnerMAS):
                 if self.use_actions_mask:
                     q_next_eval[avail_actions[key][:, 1:] == 0] = -9999999
                 act_next = q_next_eval.argmax(dim=-1, keepdim=True)
-            q_eval_next_centralized_a[key] = q_eval_next_centralized[key].gather(-1, act_next).reshape(bs_rnn, seq_len)
+            q_eval_next_centralized_a[key] = q_eval_next_centralized[key][:, 1:].gather(-1, act_next).reshape(bs_rnn, seq_len)
 
             q_eval_a[key] *= agent_mask[key]
             q_eval_centralized_a[key] *= agent_mask[key]
