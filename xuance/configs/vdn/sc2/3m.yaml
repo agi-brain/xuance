@@ -1,5 +1,4 @@
 agent: "VDN"  # the learning algorithms_marl
-global_state: False
 env_name: "StarCraft2"
 env_id: "3m"
 fps: 15
@@ -20,6 +19,8 @@ dropout: 0
 representation_hidden_size: [64, ]
 q_hidden_size: [64, ]  # the units for each hidden layer
 activation: "relu"
+use_parameter_sharing: True
+use_actions_mask: True
 
 seed: 1
 parallels: 8
@@ -34,15 +35,13 @@ end_greedy: 0.05
 decay_step_greedy: 50000
 start_training: 1000  # start training after n episodes
 running_steps: 1000000  # 1M
-training_frequency: 60
 sync_frequency: 200
 
 use_grad_clip: False
 grad_clip_norm: 0.5
-use_parameter_sharing: True
-use_actions_mask: True
 
 eval_interval: 10000
 test_episode: 16
+
 log_dir: "./logs/vdn/"
 model_dir: "./models/vdn/"
