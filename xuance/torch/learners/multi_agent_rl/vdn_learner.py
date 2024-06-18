@@ -75,8 +75,6 @@ class VDN_Learner(LearnerMAS):
             q_eval_a[key] *= agent_mask[key]
             q_next_a[key] *= agent_mask[key]
 
-            info[f"IndividualQ/{key}"] = q_eval_a[key].mean().item()
-
         q_tot_eval = self.policy.Q_tot(q_eval_a)
         q_tot_next = self.policy.Qtarget_tot(q_next_a)
         q_tot_target = rewards_tot + (1 - terminals_tot) * self.gamma * q_tot_next
@@ -162,8 +160,6 @@ class VDN_Learner(LearnerMAS):
             else:
                 q_eval_a[key] = q_eval_a[key].reshape(-1, 1)
                 q_next_a[key] = q_next_a[key].reshape(-1, 1)
-
-            info[f"IndividualQ/{key}"] = q_eval_a[key].mean().item()
 
         # calculate the total Q values.
         q_tot_eval = self.policy.Q_tot(q_eval_a)

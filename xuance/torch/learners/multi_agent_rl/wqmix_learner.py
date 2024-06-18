@@ -88,9 +88,6 @@ class WQMIX_Learner(LearnerMAS):
             q_eval_centralized_a[key] *= agent_mask[key]
             q_eval_next_centralized_a[key] *= agent_mask[key]
 
-            info[f"IndividualQ/{key}"] = q_eval_a[key].mean().item()
-            info[f"CentralizedQ/{key}"] = q_eval_centralized_a[key].mean().item()
-
         q_tot_eval = self.policy.Q_tot(q_eval_a, state)  # calculate Q_tot
         q_tot_centralized = self.policy.q_feedforward(q_eval_centralized_a, state)  # calculate centralized Q
         q_tot_next_centralized = self.policy.target_q_feedforward(q_eval_next_centralized_a, state_next)  # y_i
@@ -209,9 +206,6 @@ class WQMIX_Learner(LearnerMAS):
                 q_eval_a[key] = q_eval_a[key].reshape(-1, 1)
                 q_eval_centralized_a[key] = q_eval_centralized_a[key].reshape(-1, 1)
                 q_eval_next_centralized_a[key] = q_eval_next_centralized_a[key].reshape(-1, 1)
-
-            info[f"IndividualQ/{key}"] = q_eval_a[key].mean().item()
-            info[f"CentralizedQ/{key}"] = q_eval_centralized_a[key].mean().item()
 
         state_input = state[:, :-1].reshape([batch_size * seq_len, -1])
         state_input_next = state[:, 1:].reshape([batch_size * seq_len, -1])

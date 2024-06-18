@@ -35,7 +35,6 @@ end_greedy: 0.05
 decay_step_greedy: 50000
 start_training: 1000  # start training after n episodes
 running_steps: 2000000  # 2M
-training_frequency: 60
 sync_frequency: 200
 
 use_grad_clip: False
@@ -43,5 +42,6 @@ grad_clip_norm: 0.5
 
 eval_interval: 20000
 test_episode: 16
+
 log_dir: "./logs/iql/"
 model_dir: "./models/iql/"
