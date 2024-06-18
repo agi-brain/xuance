@@ -64,8 +64,8 @@ class WQMIX_Learner(LearnerMAS):
 
         # calculate Q_tot
         _, action_max, q_eval = self.policy(observation=obs, agent_ids=IDs, avail_actions=avail_actions)
-        q_eval_centralized = self.policy.q_centralized(observation=obs, agent_ids=IDs)
-        q_eval_next_centralized = self.policy.target_q_centralized(observation=obs_next, agent_ids=IDs)
+        _, q_eval_centralized = self.policy.q_centralized(observation=obs, agent_ids=IDs)
+        _, q_eval_next_centralized = self.policy.target_q_centralized(observation=obs_next, agent_ids=IDs)
 
         q_eval_a, q_eval_centralized_a, q_eval_next_centralized_a, act_next = {}, {}, {}, {}
         for key in self.model_keys:
@@ -171,9 +171,9 @@ class WQMIX_Learner(LearnerMAS):
         _, action_max, q_eval = self.policy(observation=obs, agent_ids=IDs,
                                             avail_actions=avail_actions, rnn_hidden=rnn_hidden)
         rnn_hidden_cent = {k: self.policy.representation[k].init_hidden(bs_rnn) for k in self.model_keys}
-        q_eval_centralized = self.policy.q_centralized(observation=obs, agent_ids=IDs, rnn_hidden=rnn_hidden_cent)
+        _, q_eval_centralized = self.policy.q_centralized(observation=obs, agent_ids=IDs, rnn_hidden=rnn_hidden_cent)
         target_rnn_hidden_cent = {k: self.policy.target_representation[k].init_hidden(bs_rnn) for k in self.model_keys}
-        q_eval_next_centralized = self.policy.target_q_centralized(observation=obs, agent_ids=IDs,
+        _, q_eval_next_centralized = self.policy.target_q_centralized(observation=obs, agent_ids=IDs,
                                                                    rnn_hidden=target_rnn_hidden_cent)
 
         q_eval_a, q_eval_centralized_a, q_eval_next_centralized_a = {}, {}, {}

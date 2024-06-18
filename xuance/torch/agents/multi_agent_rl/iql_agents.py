@@ -173,38 +173,7 @@ class IQL_Agents(MARLAgents):
             actions_dict (dict): The output actions.
         """
         batch_size = len(obs_dict)
-        bs = batch_size * self.n_agents if self.use_parameter_sharing else batch_size
-        avail_actions_input = None
-
-        if self.use_parameter_sharing:
-            key = self.agent_keys[0]
-            obs_array = np.array([itemgetter(*self.agent_keys)(data) for data in obs_dict])
-            agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(batch_size, -1, -1).to(self.device)
-            avail_actions_array = np.array([itemgetter(*self.agent_keys)(data)
-                                            for data in avail_actions_dict]) if self.use_actions_mask else None
-            if self.use_rnn:
-                obs_input = {key: obs_array.reshape([bs, 1, -1])}
-                agents_id = agents_id.reshape(bs, 1, -1)
-                if self.use_actions_mask:
-                    avail_actions_input = {key: avail_actions_array.reshape([bs, 1, -1])}
-            else:
-                obs_input = {key: obs_array.reshape([bs, -1])}
-                agents_id = agents_id.reshape(bs, -1)
-                if self.use_actions_mask:
-                    avail_actions_input = {key: avail_actions_array.reshape([bs, -1])}
-        else:
-            agents_id = None
-            if self.use_rnn:
-                obs_input = {k: np.stack([data[k] for data in obs_dict]).reshape([bs, 1, -1]) for k in self.agent_keys}
-                if self.use_actions_mask:
-                    avail_actions_input = {k: np.stack([data[k] for data in avail_actions_dict]).reshape([bs, 1, -1])
-                                           for k in self.agent_keys}
-            else:
-                obs_input = {k: np.stack([data[k] for data in obs_dict]).reshape(bs, -1) for k in self.agent_keys}
-                if self.use_actions_mask:
-                    avail_actions_input = {k: np.array([data[k] for data in avail_actions_dict]).reshape([bs, -1])
-                                           for k in self.agent_keys}
-
+        obs_input, agents_id, avail_actions_input = self._build_inputs(obs_dict, avail_actions_dict)
         hidden_state, actions, _ = self.policy(observation=obs_input,
                                                agent_ids=agents_id,
                                                avail_actions=avail_actions_input,

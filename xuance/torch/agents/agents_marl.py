@@ -1,11 +1,13 @@
 import os.path
 import wandb
 import socket
+import torch
 import numpy as np
 from abc import ABC
 from pathlib import Path
 from argparse import Namespace
-from typing import Optional
+from operator import itemgetter
+from typing import Optional, List
 from torch import nn
 from torch.utils.tensorboard import SummaryWriter
 from xuance.common import get_time_string, create_directory
@@ -170,6 +172,54 @@ class MARLAgents(ABC):
 
     def _build_learner(self, *args):
         raise NotImplementedError
+
+    def _build_inputs(self,
+                      obs_dict: List[dict],
+                      avail_actions_dict: Optional[List[dict]] = None):
+        """
+        Build inputs for representations before calculating actions.
+
+        Parameters:
+            obs_dict (List[dict]): Observations for each agent in self.agent_keys.
+            avail_actions_dict (Optional[List[dict]]): Actions mask values, default is None.
+
+        Returns:
+            obs_input: The represented observations.
+            agents_id: The agent id (One-Hot variables).
+        """
+        batch_size = len(obs_dict)
+        bs = batch_size * self.n_agents if self.use_parameter_sharing else batch_size
+        avail_actions_input = None
+
+        if self.use_parameter_sharing:
+            key = self.agent_keys[0]
+            obs_array = np.array([itemgetter(*self.agent_keys)(data) for data in obs_dict])
+            agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(batch_size, -1, -1).to(self.device)
+            avail_actions_array = np.array([itemgetter(*self.agent_keys)(data)
+                                            for data in avail_actions_dict]) if self.use_actions_mask else None
+            if self.use_rnn:
+                obs_input = {key: obs_array.reshape([bs, 1, -1])}
+                agents_id = agents_id.reshape(bs, 1, -1)
+                if self.use_actions_mask:
+                    avail_actions_input = {key: avail_actions_array.reshape([bs, 1, -1])}
+            else:
+                obs_input = {key: obs_array.reshape([bs, -1])}
+                agents_id = agents_id.reshape(bs, -1)
+                if self.use_actions_mask:
+                    avail_actions_input = {key: avail_actions_array.reshape([bs, -1])}
+        else:
+            agents_id = None
+            if self.use_rnn:
+                obs_input = {k: np.stack([data[k] for data in obs_dict]).reshape([bs, 1, -1]) for k in self.agent_keys}
+                if self.use_actions_mask:
+                    avail_actions_input = {k: np.stack([data[k] for data in avail_actions_dict]).reshape([bs, 1, -1])
+                                           for k in self.agent_keys}
+            else:
+                obs_input = {k: np.stack([data[k] for data in obs_dict]).reshape(bs, -1) for k in self.agent_keys}
+                if self.use_actions_mask:
+                    avail_actions_input = {k: np.array([data[k] for data in avail_actions_dict]).reshape([bs, -1])
+                                           for k in self.agent_keys}
+        return obs_input, agents_id, avail_actions_input
 
     def action(self, **kwargs):
         raise NotImplementedError

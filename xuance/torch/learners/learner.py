@@ -136,7 +136,12 @@ class LearnerMAS(ABC):
                     batch_size, -1, seq_length + 1, -1).reshape(bs, seq_length + 1, self.n_agents).to(self.device)
             else:
                 obs = {k: obs_tensor.reshape(bs, -1)}
-                actions = {k: actions_tensor.reshape(bs)}
+                if len(actions_tensor.shape) == 2:
+                    actions = {k: actions_tensor.reshape(bs)}
+                elif len(actions_tensor.shape) == 3:
+                    actions = {k: actions_tensor.reshape(bs, -1)}
+                else:
+                    raise AttributeError("Wrong actions shape.")
                 rewards = {k: rewards_tensor.reshape(batch_size, self.n_agents)}
                 terminals = {k: ter_tensor.reshape(batch_size, self.n_agents)}
                 agent_mask = {k: msk_tensor.reshape(bs)}

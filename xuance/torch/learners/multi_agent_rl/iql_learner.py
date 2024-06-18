@@ -43,10 +43,11 @@ class IQL_Learner(LearnerMAS):
         IDs = sample_Tensor['agent_ids']
         if self.use_parameter_sharing:
             key = self.model_keys[0]
+            bs = batch_size * self.n_agents
             rewards[key] = rewards[key].reshape(batch_size * self.n_agents)
             terminals[key] = terminals[key].reshape(batch_size * self.n_agents)
-
-        bs = batch_size * self.n_agents if self.use_parameter_sharing else batch_size
+        else:
+            bs = batch_size
 
         _, _, q_eval = self.policy(observation=obs, agent_ids=IDs, avail_actions=avail_actions)
         _, q_next = self.policy.Qtarget(observation=obs_next, agent_ids=IDs)
