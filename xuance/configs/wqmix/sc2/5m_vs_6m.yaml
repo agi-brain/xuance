@@ -40,6 +40,7 @@ end_greedy: 0.05
 decay_step_greedy: 1000000
 start_training: 1000  # start training after n episodes
 running_steps: 10000000  # 10M
+n_epochs: 8  # The number of training epochs after interaction.
 sync_frequency: 200
 
 use_grad_clip: False
