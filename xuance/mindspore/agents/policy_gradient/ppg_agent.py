@@ -13,7 +13,7 @@ class PPG_Agent(Agent):
         self.n_envs = envs.num_envs
         self.n_steps = config.n_steps
         self.n_minibatch = config.n_minibatch
-        self.n_epoch = config.n_epoch
+        self.n_epochs = config.n_epochs
         self.policy_nepoch = config.policy_nepoch
         self.value_nepoch = config.value_nepoch
         self.aux_nepoch = config.aux_nepoch
@@ -26,7 +26,7 @@ class PPG_Agent(Agent):
         self.auxiliary_info_shape = {"old_dist": None}
 
         self.buffer_size = self.n_envs * self.n_steps
-        self.batch_size = self.buffer_size // self.n_epoch
+        self.batch_size = self.buffer_size // self.n_epochs
         memory = DummyOnPolicyBuffer(self.observation_space,
                                      self.action_space,
                                      self.auxiliary_info_shape,

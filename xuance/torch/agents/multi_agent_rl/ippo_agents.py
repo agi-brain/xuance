@@ -408,7 +408,7 @@ class IPPO_Agents(MARLAgents):
                 while step_last - step_start < n_steps_all:
                     self.run_episode(self.n_envs)
                     if self.memory.full:
-                        train_info = self.train_epochs(n_epochs=self.n_epoch)
+                        train_info = self.train_epochs(n_epochs=self.n_epochs)
                         self.log_infos(train_info, self.current_step)
                     process_bar.update((self.current_step - step_last) // self.n_envs)
                     step_last = deepcopy(self.current_step)
@@ -436,7 +436,7 @@ class IPPO_Agents(MARLAgents):
                         _, value_next = self.values_next(i_env=i, obs_dict=next_obs_dict[i])
                     self.memory.finish_path(i_env=i, value_next=value_next,
                                             value_normalizer=self.learner.value_normalizer)
-                train_info = self.train_epochs(n_epochs=self.n_epoch)
+                train_info = self.train_epochs(n_epochs=self.n_epochs)
                 self.log_infos(train_info, self.current_step)
             obs_dict, avail_actions, state = deepcopy(next_obs_dict), deepcopy(next_avail_actions), deepcopy(next_state)
 

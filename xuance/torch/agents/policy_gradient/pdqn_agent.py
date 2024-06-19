@@ -150,7 +150,7 @@ class PDQN_Agent(Agent):
             acts = np.concatenate(([disaction], con_actions), axis=0).ravel()
             self.memory.store(obs, acts, rewards, terminal, next_obs)
             if self.current_step > self.start_training and self.current_step % self.training_frequency == 0:
-                train_info = self.train_epochs(n_epochs=1)
+                train_info = self.train_epochs(n_epochs=self.n_epochs)
                 self.log_infos(train_info, self.current_step)
 
             scores += rewards

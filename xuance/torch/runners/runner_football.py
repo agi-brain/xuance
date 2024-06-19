@@ -101,8 +101,8 @@ class Football_Runner(SC2_Runner):
 
         if not test_mode:
             self.agents.memory.store_episodes()  # store episode data
-            n_epoch = self.agents.n_epoch if self.on_policy else self.n_envs
-            train_info = self.agents.train(self.current_step, n_epoch=n_epoch)  # train
+            n_epochs = self.agents.n_epoch if self.on_policy else self.n_envs
+            train_info = self.agents.train(self.current_step, n_epochs=n_epochs)  # train
             train_info["Train-Results/Train-Episode-Rewards"] = np.mean(episode_score)
             train_info["Train-Results/Episode-Steps"] = np.mean(episode_step)
             self.log_infos(train_info, self.current_step)

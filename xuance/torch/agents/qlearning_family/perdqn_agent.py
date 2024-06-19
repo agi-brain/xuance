@@ -63,7 +63,7 @@ class PerDQN_Agent(DQN_Agent):
 
             self.memory.store(obs, acts, self._process_reward(rewards), terminals, self._process_observation(next_obs))
             if self.current_step > self.start_training and self.current_step % self.training_frequency == 0:
-                train_info = self.train_epochs(n_epochs=1)
+                train_info = self.train_epochs(n_epochs=self.n_epochs)
                 self.log_infos(train_info, self.current_step)
                 self.PER_beta += (1 - self.PER_beta0) / train_steps
 

@@ -26,7 +26,7 @@ activation: "relu"  # The activation function of each hidden layer.
 seed: 1  # Random seeds.
 parallels: 10  # Number of environments that to be implemented in parallel.
 buffer_size: 250  # Total buffer size.
-n_epoch: 10  # Number of epochs to update the model.
+n_epochs: 10  # Number of epochs to update the model.
 n_minibatch: 1  # Number of minibatch.
 learning_rate_actor: 0.0007  # Learning rate of actor.
 learning_rate_critic: 0.0007  # Learning rate of critic.

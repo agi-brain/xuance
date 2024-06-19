@@ -132,7 +132,7 @@ class ISAC_Agents(MARLAgents):
                             for i in range(n_env)]
         return None, actions_dict
 
-    def train_epochs(self, n_epoch=1):
+    def train_epochs(self, n_epochs=1):
         """
         Train the model for numerous epochs.
 
@@ -143,7 +143,7 @@ class ISAC_Agents(MARLAgents):
             info_train (dict): The information of training.
         """
         info_train = {}
-        for i_epoch in range(n_epoch):
+        for i_epoch in range(n_epochs):
             sample = self.memory.sample()
             if self.use_rnn:
                 info_train = self.learner.update_rnn(sample)
@@ -168,7 +168,7 @@ class ISAC_Agents(MARLAgents):
             next_obs_dict, rewards_dict, terminated_dict, truncated, info = self.envs.step(actions_dict)
             self.store_experience(obs_dict, actions_dict, next_obs_dict, rewards_dict, terminated_dict, info)
             if self.current_step >= self.start_training and self.current_step % self.training_frequency == 0:
-                train_info = self.train_epochs(n_epoch=1)
+                train_info = self.train_epochs(n_epochs=1)
                 self.log_infos(train_info, self.current_step)
             obs_dict = deepcopy(next_obs_dict)
 

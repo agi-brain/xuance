@@ -25,7 +25,7 @@ seed: 79811  # The random seed.
 parallels: 16  # The number of environments to run in parallel.
 running_steps: 1000000  # The total running steps for all environments.
 horizon_size: 256  # the horizon size for an environment, buffer_size = horizon_size * parallels.
-n_epoch: 16  # The number of training epochs.
+n_epochs: 16  # The number of training epochs.
 n_minibatch: 8  # The number of minibatch for each training epoch. batch_size = buffer_size // n_minibatch.
 learning_rate: 0.0004  # The learning rate.
 

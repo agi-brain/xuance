@@ -2,7 +2,6 @@ from .runner_basic import Runner_Base
 from xuance.torch.agents import REGISTRY_Agents
 import time
 import numpy as np
-from copy import deepcopy
 
 
 class SC2_Runner(Runner_Base):

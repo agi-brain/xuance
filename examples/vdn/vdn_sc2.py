@@ -211,7 +211,7 @@ class Runner(object):
         else:
             self.agents.memory.store_episodes()  # store episode data
             n_epoch = self.n_envs
-            train_info = self.agents.train(self.current_step, n_epoch=n_epoch)  # train
+            train_info = self.agents.train(self.current_step, n_epochs=n_epochs)  # train
             self.log_infos(train_info, self.current_step)
 
         mean_episode_score = np.mean(episode_score)

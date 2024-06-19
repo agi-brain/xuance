@@ -199,7 +199,7 @@ class IDDPG_Agents(MARLAgents):
                 while step_last - step_start < n_steps_all:
                     self.run_episodes(None, n_episodes=self.n_envs, test_mode=False)
                     if self.current_step >= self.start_training:
-                        train_info = self.train_epochs(n_epochs=1)
+                        train_info = self.train_epochs(n_epochs=self.n_epochs)
                         self.log_infos(train_info, self.current_step)
                     process_bar.update((self.current_step - step_last) // self.n_envs)
                     step_last = deepcopy(self.current_step)
@@ -216,7 +216,7 @@ class IDDPG_Agents(MARLAgents):
             next_obs_dict, rewards_dict, terminated_dict, truncated, info = self.envs.step(actions_dict)
             self.store_experience(obs_dict, actions_dict, next_obs_dict, rewards_dict, terminated_dict, info)
             if self.current_step >= self.start_training and self.current_step % self.training_frequency == 0:
-                train_info = self.train_epochs(n_epochs=1)
+                train_info = self.train_epochs(n_epochs=self.n_epochs)
                 self.log_infos(train_info, self.current_step)
             obs_dict = deepcopy(next_obs_dict)
 

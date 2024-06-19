@@ -27,7 +27,7 @@ class A2C_Agent(Agent):
                  envs: DummyVecEnv):
         super(A2C_Agent, self).__init__(config, envs)
         self.horizon_size = config.horizon_size
-        self.n_epoch = config.n_epoch
+        self.n_epochs = config.n_epochs
         self.n_minibatch = config.n_minibatch
         self.gae_lam = config.gae_lambda
 
@@ -118,7 +118,7 @@ class A2C_Agent(Agent):
                         self.memory.finish_path(0.0, i)
                     else:
                         self.memory.finish_path(vals[i], i)
-                train_info = self.train_epochs(self.n_epoch)
+                train_info = self.train_epochs(self.n_epochs)
                 self.log_infos(train_info, self.current_step)
                 self.memory.clear()
 

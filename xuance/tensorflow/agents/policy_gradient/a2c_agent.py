@@ -11,7 +11,7 @@ class A2C_Agent(Agent):
         self.render = config.render
         self.n_envs = envs.num_envs
         self.n_steps = config.n_steps
-        self.n_epoch = config.n_epoch
+        self.n_epochs = config.n_epochs
         self.n_minibatch = config.n_minibatch
 
         self.gamma = config.gamma
@@ -68,7 +68,7 @@ class A2C_Agent(Agent):
                     else:
                         self.memory.finish_path(vals[i], i)
                 indexes = np.arange(self.buffer_size)
-                for _ in range(self.n_epoch):
+                for _ in range(self.n_epochs):
                     np.random.shuffle(indexes)
                     for start in range(0, self.buffer_size, self.batch_size):
                         end = start + self.batch_size
