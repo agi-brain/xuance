@@ -128,7 +128,12 @@ class LearnerMAS(ABC):
             msk_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['agent_mask']), 1)).float().to(self.device)
             if self.use_rnn:
                 obs = {k: obs_tensor.reshape(bs, seq_length + 1, -1)}
-                actions = {k: actions_tensor.reshape(bs, seq_length)}
+                if len(actions_tensor.shape) == 3:
+                    actions = {k: actions_tensor.reshape(bs, seq_length)}
+                elif len(actions_tensor.shape) == 4:
+                    actions = {k: actions_tensor.reshape(bs, seq_length, -1)}
+                else:
+                    raise AttributeError("Wrong actions shape.")
                 rewards = {k: rewards_tensor.reshape(batch_size, self.n_agents, seq_length)}
                 terminals = {k: ter_tensor.reshape(batch_size, self.n_agents, seq_length)}
                 agent_mask = {k: msk_tensor.reshape(bs, seq_length)}

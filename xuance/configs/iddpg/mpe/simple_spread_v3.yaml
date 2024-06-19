@@ -7,6 +7,14 @@ representation: "Basic_Identical"
 vectorize: "DummyVecMultiAgentEnv"
 runner: "MARL"
 
+use_rnn: False
+rnn: "GRU"
+recurrent_layer_N: 1
+fc_hidden_sizes: [64, ]
+recurrent_hidden_size: 64
+N_recurrent_layers: 1
+dropout: 0
+
 representation_hidden_size: []  # the units for each hidden layer
 actor_hidden_size: [64, 64]
 critic_hidden_size: [64, 64]

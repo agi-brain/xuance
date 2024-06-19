@@ -168,18 +168,17 @@ class IDDPG_Agents(MARLAgents):
         batch_size = len(obs_dict)
 
         obs_input, agents_id, _ = self._build_inputs(obs_dict)
-        hidden_state, actions = self.policy(observation=obs_input,
-                                            agent_ids=agents_id)
+        hidden_state, actions = self.policy(observation=obs_input, agent_ids=agents_id, rnn_hidden=rnn_hidden)
 
         if self.use_parameter_sharing:
             key = self.agent_keys[0]
-            actions[key] = actions[key].cpu().detach().numpy()
+            actions[key] = actions[key].reshape(batch_size, self.n_agents, -1).cpu().detach().numpy()
             if not test_mode:
                 actions[key] += np.random.normal(0, self.noise_scale, size=actions[key].shape)
             actions_dict = [{k: actions[key][e, i] for i, k in enumerate(self.agent_keys)} for e in range(batch_size)]
         else:
             for key in self.agent_keys:
-                actions[key] = actions[key].cpu().detach().numpy()
+                actions[key] = actions[key].reshape(batch_size, -1).cpu().detach().numpy()
                 if not test_mode:
                     actions[key] += np.random.normal(0, self.noise_scale, size=actions[key].shape)
             actions_dict = [{k: actions[k][i] for k in self.agent_keys} for i in range(batch_size)]
@@ -200,7 +199,7 @@ class IDDPG_Agents(MARLAgents):
                 while step_last - step_start < n_steps_all:
                     self.run_episodes(None, n_episodes=self.n_envs, test_mode=False)
                     if self.current_step >= self.start_training:
-                        train_info = self.train_epochs(n_epochs=self.n_envs)
+                        train_info = self.train_epochs(n_epochs=1)
                         self.log_infos(train_info, self.current_step)
                     process_bar.update((self.current_step - step_last) // self.n_envs)
                     step_last = deepcopy(self.current_step)
@@ -252,7 +251,6 @@ class IDDPG_Agents(MARLAgents):
         videos, episode_videos = [[] for _ in range(num_envs)], []
         episode_count, scores, best_score = 0, [0.0 for _ in range(num_envs)], -np.inf
         obs_dict, info = envs.reset()
-        avail_actions = envs.buf_avail_actions if self.use_actions_mask else None
         if test_mode:
             if self.config.render_mode == "rgb_array" and self.render:
                 images = envs.render(self.config.render_mode)
@@ -266,7 +264,7 @@ class IDDPG_Agents(MARLAgents):
         while episode_count < n_episodes:
             step_info = {}
             if not test_mode and (self.current_step < self.start_training):
-                actions_dict = [{k: self.action_space[k].sample() for k in self.agent_keys} for _ in range(self.n_envs)]
+                actions_dict = [{k: self.action_space[k].sample() for k in self.agent_keys} for _ in range(num_envs)]
             else:
                 rnn_hidden, actions_dict = self.action(obs_dict=obs_dict, rnn_hidden=rnn_hidden, test_mode=test_mode)
             next_obs_dict, rewards_dict, terminated_dict, truncated, info = envs.step(actions_dict)
@@ -309,7 +307,7 @@ class IDDPG_Agents(MARLAgents):
                         self.current_step += info[i]["episode_step"]
                         self.log_infos(step_info, self.current_step)
                         if self.noise_scale >= self.end_noise:
-                            self.noise_scale -= (self.delta_noise * self.n_envs)
+                            self.noise_scale = self.start_noise - self.delta_noise * self.current_step
                         else:
                             self.noise_scale = self.end_noise
 

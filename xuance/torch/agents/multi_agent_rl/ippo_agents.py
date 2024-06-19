@@ -27,7 +27,7 @@ class IPPO_Agents(MARLAgents):
         super(IPPO_Agents, self).__init__(config, envs)
         self.state_space = envs.state_space
         self.continuous_control = False
-        self.n_epoch = config.n_epoch
+        self.n_epochs = config.n_epochs
         self.n_minibatch = config.n_minibatch
         self.use_global_state = config.use_global_state
         # create policy, optimizer, and lr_scheduler.

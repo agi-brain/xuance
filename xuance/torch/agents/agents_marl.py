@@ -36,6 +36,7 @@ class MARLAgents(ABC):
         self.gamma = config.gamma
         self.start_training = config.start_training if hasattr(config, "start_training") else 1
         self.training_frequency = config.training_frequency if hasattr(config, "training_frequency") else 1
+        self.n_epochs = config.n_epochs if hasattr(config, "n_epochs") else 1
         self.device = config.device
 
         # Environment attributes.
