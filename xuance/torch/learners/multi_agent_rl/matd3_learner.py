@@ -36,6 +36,7 @@ class MATD3_Learner(LearnerMAS):
         sample_Tensor = self.build_training_data(sample,
                                                  use_parameter_sharing=self.use_parameter_sharing,
                                                  use_actions_mask=False)
+        batch_size = sample_Tensor['batch_size']
         obs = sample_Tensor['obs']
         actions = sample_Tensor['actions']
         obs_next = sample_Tensor['obs_next']
@@ -43,10 +44,17 @@ class MATD3_Learner(LearnerMAS):
         terminals = sample_Tensor['terminals']
         agent_mask = sample_Tensor['agent_mask']
         IDs = sample_Tensor['agent_ids']
+        if self.use_parameter_sharing:
+            key = self.model_keys[0]
+            bs = batch_size * self.n_agents
+            rewards[key] = rewards[key].reshape(batch_size * self.n_agents)
+            terminals[key] = terminals[key].reshape(batch_size * self.n_agents)
+        else:
+            bs = batch_size
 
-        # train the model
+        # update actor(s)
         if self.iterations % self.actor_update_delay == 0:  # update actor(s)
-            actions_eval = self.policy(obs, IDs)
+            _, actions_eval = self.policy(observation=obs, agent_ids=IDs)
             for key in self.model_keys:
                 # update actor
                 actions_eval_detach_others = {}
