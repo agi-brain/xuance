@@ -39,6 +39,7 @@ class MADDPG_Learner(LearnerMAS):
         sample_Tensor = self.build_training_data(sample,
                                                  use_parameter_sharing=self.use_parameter_sharing,
                                                  use_actions_mask=False)
+        batch_size = sample_Tensor['batch_size']
         obs = sample_Tensor['obs']
         actions = sample_Tensor['actions']
         obs_next = sample_Tensor['obs_next']
@@ -46,33 +47,46 @@ class MADDPG_Learner(LearnerMAS):
         terminals = sample_Tensor['terminals']
         agent_mask = sample_Tensor['agent_mask']
         IDs = sample_Tensor['agent_ids']
+        if self.use_parameter_sharing:
+            key = self.model_keys[0]
+            bs = batch_size * self.n_agents
+            rewards[key] = rewards[key].reshape(batch_size * self.n_agents)
+            terminals[key] = terminals[key].reshape(batch_size * self.n_agents)
+        else:
+            bs = batch_size
 
         # train the model
-        actions_eval = self.policy(obs, IDs)
-        actions_next = self.policy.Atarget(obs_next, IDs)
+        _, actions_eval = self.policy(observation=obs, agent_ids=IDs)
+        _, actions_next = self.policy.Atarget(next_observation=obs_next, agent_ids=IDs)
         for key in self.model_keys:
             # update actor
-            actions_eval_detach_others = {}
+            actions_detach_others = {}
             for k in self.model_keys:
                 if k == key:
-                    actions_eval_detach_others[k] = actions_eval[key]
+                    actions_detach_others[k] = actions_eval[key]
                 else:
-                    actions_eval_detach_others[k] = actions_eval[key].detach()
+                    actions_detach_others[k] = actions_eval[key].detach()
 
-            q_policy = self.policy.Qpolicy(obs, actions_eval_detach_others, IDs, key)
-            loss_a = -(q_policy[key] * agent_mask[key]).sum() / agent_mask[key].sum()
+            _, q_policy = self.policy.Qpolicy(observation=obs, actions=actions_detach_others, agent_ids=IDs,
+                                              agent_key=key)
+            q_policy_i = q_policy[key].reshape(bs)
+            loss_a = -(q_policy_i * agent_mask[key]).sum() / agent_mask[key].sum()
             self.optimizer[key]['actor'].zero_grad()
             loss_a.backward()
-            torch.nn.utils.clip_grad_norm_(self.policy.parameters_actor[key], self.grad_clip_norm)
+            if self.use_grad_clip:
+                torch.nn.utils.clip_grad_norm_(self.policy.parameters_actor[key], self.grad_clip_norm)
             self.optimizer[key]['actor'].step()
             if self.scheduler[key]['actor'] is not None:
                 self.scheduler[key]['actor'].step()
 
             # update critic
-            q_eval = self.policy.Qpolicy(obs, actions, IDs, key)
-            q_next = self.policy.Qtarget(obs_next, actions_next, IDs, key)
-            q_target = rewards[key] + (1 - terminals[key]) * self.gamma * q_next[key]
-            td_error = (q_eval[key] - q_target.detach()) * agent_mask[key]
+            _, q_eval = self.policy.Qpolicy(observation=obs, actions=actions, agent_ids=IDs, agent_key=key)
+            _, q_next = self.policy.Qtarget(next_observation=obs_next, next_actions=actions_next, agent_ids=IDs,
+                                            agent_key=key)
+            q_eval_a = q_eval[key].reshape(bs)
+            q_next_i = q_next[key].reshape(bs)
+            q_target = rewards[key] + (1 - terminals[key]) * self.gamma * q_next_i
+            td_error = (q_eval_a - q_target.detach()) * agent_mask[key]
             loss_c = (td_error ** 2).sum() / agent_mask[key].sum()
             self.optimizer[key]['critic'].zero_grad()
             loss_c.backward()

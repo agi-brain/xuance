@@ -1,8 +1,8 @@
-agent: "MADDPG"  # the learning algorithms_marl
+agent: "IDDPG"  # the learning algorithms_marl
 env_name: "mpe"
-env_id: "simple_spread_v3"
+env_id: "simple_reference_v3"
 continuous_action: True
-policy: "MADDPG_Policy"
+policy: "Independent_DDPG_Policy"
 representation: "Basic_Identical"
 vectorize: "DummyVecMultiAgentEnv"
 runner: "MARL"
@@ -37,5 +37,5 @@ grad_clip_norm: 0.5
 eval_interval: 100000
 test_episode: 5
 
-log_dir: "./logs/maddpg/"
-model_dir: "./models/maddpg/"
+log_dir: "./logs/iddpg/"
+model_dir: "./models/iddpg/"
