@@ -963,7 +963,8 @@ class MATD3_Policy(Independent_DDPG_Policy, Module):
     def __init__(self,
                  action_space: Optional[Dict[str, Box]],
                  n_agents: int,
-                 representation: Optional[ModuleDict],
+                 actor_representation: Optional[ModuleDict],
+                 critic_representation: Optional[ModuleDict],
                  actor_hidden_size: Sequence[int],
                  critic_hidden_size: Sequence[int],
                  normalize: Optional[ModuleType] = None,
@@ -978,11 +979,12 @@ class MATD3_Policy(Independent_DDPG_Policy, Module):
         self.n_agents = n_agents
         self.use_parameter_sharing = kwargs['use_parameter_sharing']
         self.model_keys = kwargs['model_keys']
-        self.representation_info_shape = {key: representation[key].output_shapes for key in self.model_keys}
+        self.actor_representation_info_shape = {key: actor_representation[key].output_shapes for key in self.model_keys}
+        self.critic_representation_info_shape = {key: critic_representation[key].output_shapes for key in self.model_keys}
 
-        self.actor_representation = representation
-        self.critic_A_representation = deepcopy(representation)
-        self.critic_B_representation = deepcopy(representation)
+        self.actor_representation = actor_representation
+        self.critic_A_representation = critic_representation
+        self.critic_B_representation = deepcopy(critic_representation)
         self.target_actor_representation = deepcopy(self.actor_representation)
         self.target_critic_A_representation = deepcopy(self.critic_A_representation)
         self.target_critic_B_representation = deepcopy(self.critic_B_representation)

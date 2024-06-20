@@ -1,14 +1,17 @@
 """
 Multi-Agent TD3
 """
+import numpy as np
 import torch
 from torch import nn
-from xuance.torch.learners import LearnerMAS
+from xuance.torch.learners.multi_agent_rl.maddpg_learner import MADDPG_Learner
 from typing import Optional, List
 from argparse import Namespace
+from operator import itemgetter
+from xuance.torch import Tensor
 
 
-class MATD3_Learner(LearnerMAS):
+class MATD3_Learner(MADDPG_Learner):
     def __init__(self,
                  config: Namespace,
                  model_keys: List[str],
@@ -17,16 +20,9 @@ class MATD3_Learner(LearnerMAS):
                  policy: nn.Module,
                  optimizer: Optional[dict],
                  scheduler: Optional[dict] = None):
-        self.gamma = config.gamma
-        self.tau = config.tau
-        self.mse_loss = nn.MSELoss()
-        self.actor_update_delay = config.actor_update_delay
         super(MATD3_Learner, self).__init__(config, model_keys, agent_keys, episode_length,
                                             policy, optimizer, scheduler)
-        self.optimizer = {key: {'actor': optimizer[key][0],
-                                'critic': optimizer[key][1]} for key in self.model_keys}
-        self.scheduler = {key: {'actor': scheduler[key][0],
-                                'critic': scheduler[key][1]} for key in self.model_keys}
+        self.actor_update_delay = config.actor_update_delay
 
     def update(self, sample):
         self.iterations += 1
@@ -44,13 +40,12 @@ class MATD3_Learner(LearnerMAS):
         terminals = sample_Tensor['terminals']
         agent_mask = sample_Tensor['agent_mask']
         IDs = sample_Tensor['agent_ids']
-        if self.use_parameter_sharing:
-            key = self.model_keys[0]
-            bs = batch_size * self.n_agents
-            rewards[key] = rewards[key].reshape(batch_size * self.n_agents)
-            terminals[key] = terminals[key].reshape(batch_size * self.n_agents)
-        else:
-            bs = batch_size
+        bs = batch_size * self.n_agents if self.use_parameter_sharing else batch_size
+
+        obs_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['obs']), axis=1)).to(self.device)
+        obs_critic = {key: obs_tensor.reshape(batch_size, -1) for key in self.model_keys}
+        obs_next_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['obs_next']), axis=1)).to(self.device)
+        obs_next_critic = {key: obs_next_tensor.reshape(batch_size, -1) for key in self.model_keys}
 
         # update actor(s)
         if self.iterations % self.actor_update_delay == 0:  # update actor(s)
