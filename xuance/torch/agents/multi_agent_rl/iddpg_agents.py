@@ -5,8 +5,11 @@ from copy import deepcopy
 from operator import itemgetter
 from argparse import Namespace
 from typing import Optional, List
+from torch import nn
 from xuance.environment import DummyVecMultiAgentEnv
+from xuance.torch import ModuleDict
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
+from xuance.torch.representations import REGISTRY_Representation
 from xuance.torch.policies import REGISTRY_Policy
 from xuance.torch.learners import IDDPG_Learner
 from xuance.torch.agents import MARLAgents
@@ -71,12 +74,14 @@ class IDDPG_Agents(MARLAgents):
         device = self.device
 
         # build representations
-        representation = self._build_representation(self.config.representation, self.config)
+        actor_representation = self._build_representation(self.config.representation, self.config)
+        critic_representation = self._build_representation(self.config.representation, self.config)
 
         # build policies
         if self.config.policy == "Independent_DDPG_Policy":
             policy = REGISTRY_Policy["Independent_DDPG_Policy"](
-                action_space=self.action_space, n_agents=self.n_agents, representation=representation,
+                action_space=self.action_space, n_agents=self.n_agents,
+                actor_representation=actor_representation, critic_representation=critic_representation,
                 actor_hidden_size=self.config.actor_hidden_size,
                 critic_hidden_size=self.config.critic_hidden_size,
                 normalize=normalize_fn, initialize=initializer, activation=activation, device=device,
