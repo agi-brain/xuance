@@ -5,11 +5,14 @@ https://proceedings.neurips.cc/paper/2017/file/68a9750337a418a86fe06c1991a1d64c-
 Implementation: Pytorch
 Trick: Parameter sharing for all agents, with agents' one-hot IDs as actor-critic's inputs.
 """
+import numpy as np
 import torch
 from torch import nn
 from xuance.torch.learners import LearnerMAS
 from typing import Optional, List
 from argparse import Namespace
+from operator import itemgetter
+from xuance.torch import Tensor
 
 
 class MADDPG_Learner(LearnerMAS):
@@ -30,6 +33,79 @@ class MADDPG_Learner(LearnerMAS):
                                 'critic': optimizer[key][1]} for key in self.model_keys}
         self.scheduler = {key: {'actor': scheduler[key][0],
                                 'critic': scheduler[key][1]} for key in self.model_keys}
+    
+    def build_training_data(self, sample: Optional[dict],
+                            use_parameter_sharing: Optional[bool] = False,
+                            use_global_state: Optional[bool] = False):
+        """
+        Prepare the training data.
+
+        Parameters:
+            sample (dict): The raw sampled data.
+            use_parameter_sharing (bool): Whether to use parameter sharing for individual agent models.
+            use_global_state (bool): Whether to use global state.
+
+        Returns:
+            sample_Tensor (dict): The formatted sampled data.
+        """
+        batch_size = sample['batch_size']
+        seq_length = sample['sequence_length'] if self.use_rnn else 0
+        obs_next, filled, IDs = None, None, None
+        if use_parameter_sharing:
+            k = self.model_keys[0]
+            bs = batch_size * self.n_agents
+            obs_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['obs']), axis=1)).to(self.device)
+            actions_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['actions']), axis=1)).to(self.device)
+            rewards_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['rewards']), axis=1)).to(self.device)
+            ter_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['terminals']), 1)).float().to(self.device)
+            msk_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['agent_mask']), 1)).float().to(self.device)
+            if self.use_rnn:
+                obs = {k: obs_tensor.reshape(bs, seq_length + 1, -1)}
+                actions = {k: actions_tensor.reshape(bs, seq_length, -1)}
+                rewards = {k: rewards_tensor.reshape(batch_size, self.n_agents, seq_length)}
+                terminals = {k: ter_tensor.reshape(batch_size, self.n_agents, seq_length)}
+                agent_mask = {k: msk_tensor.reshape(bs, seq_length)}
+                IDs = torch.eye(self.n_agents).unsqueeze(1).unsqueeze(0).expand(
+                    batch_size, -1, seq_length + 1, -1).reshape(bs, seq_length + 1, self.n_agents).to(self.device)
+            else:
+                obs = {k: obs_tensor.reshape(bs, -1)}
+                actions = {k: actions_tensor.reshape(bs, -1)}
+                rewards = {k: rewards_tensor.reshape(batch_size, self.n_agents)}
+                terminals = {k: ter_tensor.reshape(batch_size, self.n_agents)}
+                agent_mask = {k: msk_tensor.reshape(bs)}
+                obs_next = {k: Tensor(np.stack(itemgetter(*self.agent_keys)(sample['obs_next']),
+                                               axis=1)).to(self.device).reshape(bs, -1)}
+                IDs = torch.eye(self.n_agents).unsqueeze(0).expand(
+                    batch_size, -1, -1).reshape(bs, self.n_agents).to(self.device)
+        else:
+            obs = {k: Tensor(sample['obs'][k]).to(self.device) for k in self.agent_keys}
+            actions = {k: Tensor(sample['actions'][k]).to(self.device) for k in self.agent_keys}
+            rewards = {k: Tensor(sample['rewards'][k]).to(self.device) for k in self.agent_keys}
+            terminals = {k: Tensor(sample['terminals'][k]).float().to(self.device) for k in self.agent_keys}
+            agent_mask = {k: Tensor(sample['agent_mask'][k]).float().to(self.device) for k in self.agent_keys}
+            if not self.use_rnn:
+                obs_next = {k: Tensor(sample['obs_next'][k]).to(self.device) for k in self.agent_keys}
+
+        if self.use_rnn:
+            filled = Tensor(sample['filled']).float().to(self.device)
+
+        sample_Tensor = {
+            'batch_size': batch_size,
+            'state': state,
+            'state_next': state_next,
+            'obs': obs,
+            'actions': actions,
+            'obs_next': obs_next,
+            'rewards': rewards,
+            'terminals': terminals,
+            'agent_mask': agent_mask,
+            'avail_actions': avail_actions,
+            'avail_actions_next': avail_actions_next,
+            'agent_ids': IDs,
+            'filled': filled,
+            'seq_length': seq_length,
+        }
+        return sample_Tensor
 
     def update(self, sample):
         self.iterations += 1
