@@ -126,9 +126,19 @@ class MADDPG_Learner(LearnerMAS):
         obs_joint = Tensor(concatenate(itemgetter(*self.agent_keys)(sample['obs']), axis=-1)).to(self.device)
         next_obs_joint = Tensor(concatenate(itemgetter(*self.agent_keys)(sample['obs_next']), axis=-1)).to(self.device)
 
-        # train the model
+        # get actions
         _, actions_eval = self.policy(observation=obs, agent_ids=IDs)
         _, actions_next = self.policy.Atarget(next_observation=obs_next, agent_ids=IDs)
+        # get values
+        if self.use_parameter_sharing:
+            act_critic = actions[self.model_keys[0]].reshape(batch_size, -1)
+            act_next = actions_next[self.model_keys[0]].reshape(batch_size, self.n_agents, -1).reshape(batch_size, -1)
+        else:
+            act_critic = torch.concat(itemgetter(*self.agent_keys)(actions), dim=-1).reshape(batch_size, -1)
+            act_next = torch.concat(itemgetter(*self.agent_keys)(actions_next), dim=-1).reshape(batch_size, -1)
+        _, q_eval = self.policy.Qpolicy(joint_observation=obs_joint, joint_actions=act_critic, agent_ids=IDs)
+        _, q_next = self.policy.Qtarget(joint_observation=next_obs_joint, joint_actions=act_next, agent_ids=IDs)
+
         for key in self.model_keys:
             mask_values = agent_mask[key]
             # update actor
@@ -151,16 +161,6 @@ class MADDPG_Learner(LearnerMAS):
                 self.scheduler[key]['actor'].step()
 
             # update critic
-            if self.use_parameter_sharing:
-                act_critic = actions[key].reshape(batch_size, -1)
-                act_next = actions_next[key].reshape(batch_size, self.n_agents, -1).reshape(batch_size, -1)
-            else:
-                act_critic = torch.concat(itemgetter(*self.agent_keys)(actions), dim=-1).reshape(batch_size, -1)
-                act_next = torch.concat(itemgetter(*self.agent_keys)(actions_next), dim=-1).reshape(batch_size, -1)
-            _, q_eval = self.policy.Qpolicy(joint_observation=obs_joint, joint_actions=act_critic,
-                                            agent_ids=IDs, agent_key=key)
-            _, q_next = self.policy.Qtarget(joint_observation=next_obs_joint, joint_actions=act_next,
-                                            agent_ids=IDs, agent_key=key)
             q_eval_a = q_eval[key].reshape(bs)
             q_next_i = q_next[key].reshape(bs)
             q_target = rewards[key] + (1 - terminals[key]) * self.gamma * q_next_i
@@ -211,24 +211,37 @@ class MADDPG_Learner(LearnerMAS):
         if self.use_parameter_sharing:
             key = self.model_keys[0]
             bs_rnn = batch_size * self.n_agents
-            actions_critic = {key: actions[key].transpose(1, 2)}
+            actions_joint = actions[key].transpose(1, 2).reshape(batch_size, seq_len, -1)
             filled = filled.unsqueeze(1).expand(-1, self.n_agents, -1).reshape(bs_rnn, seq_len)
             rewards[key] = rewards[key].reshape(bs_rnn, seq_len)
             terminals[key] = terminals[key].reshape(bs_rnn, seq_len)
             IDs_t = IDs[:, :-1]
         else:
-            bs_rnn = batch_size
-            actions_critic = actions
-            IDs_t = None
+            bs_rnn, IDs_t = batch_size, None
+            actions_joint = torch.concat(itemgetter(*self.agent_keys)(actions), dim=-1).reshape(batch_size, seq_len, -1)
 
-        # train the model
+        # initial hidden states for rnn
         rnn_hidden_actor = {k: self.policy.actor_representation[k].init_hidden(bs_rnn) for k in self.model_keys}
         rnn_hidden_critic = {k: self.policy.critic_representation[k].init_hidden(batch_size) for k in self.model_keys}
+        rnn_hidden_target_critic = {k: self.policy.target_critic_representation[k].init_hidden(batch_size)
+                                    for k in self.model_keys}
         # get actions
         _, actions_eval = self.policy(observation=obs, agent_ids=IDs, rnn_hidden=rnn_hidden_actor)
         _, actions_next = self.policy.Atarget(next_observation=obs, agent_ids=IDs, rnn_hidden=rnn_hidden_actor)
 
-        for key in self.model_keys:
+        # get q values
+        if self.use_parameter_sharing:
+            next_actions_joint = actions_next[self.model_keys[0]].reshape(
+                batch_size, self.n_agents, seq_len + 1, -1).transpose(1, 2).reshape(batch_size, seq_len + 1, -1)
+        else:
+            next_actions_joint = torch.concat(itemgetter(*self.agent_keys)(actions_next),
+                                              dim=-1).reshape(batch_size, seq_len + 1, -1)
+        _, q_eval = self.policy.Qpolicy(joint_observation=obs_joint[:, :-1], joint_actions=actions_joint,
+                                        agent_ids=IDs_t, rnn_hidden=rnn_hidden_critic)
+        _, q_next = self.policy.Qtarget(joint_observation=obs_joint, joint_actions=next_actions_joint, agent_ids=IDs,
+                                        rnn_hidden=rnn_hidden_target_critic)
+
+        for key in [self.model_keys[0]]:
             mask_values = agent_mask[key] * filled
             # update actor
             if self.use_parameter_sharing:
@@ -252,19 +265,6 @@ class MADDPG_Learner(LearnerMAS):
                 self.scheduler[key]['actor'].step()
 
             # update critic
-            if self.use_parameter_sharing:
-                act_critic = actions_critic[key].reshape(batch_size, seq_len, -1)
-                act_next = actions_next[key].reshape(
-                    batch_size, self.n_agents, seq_len + 1, -1).transpose(1, 2).reshape(batch_size, seq_len + 1, -1)
-            else:
-                act_critic = torch.concat(itemgetter(*self.agent_keys)(actions_critic),
-                                          dim=-1).reshape(batch_size, seq_len, -1)
-                act_next = torch.concat(itemgetter(*self.agent_keys)(actions_next),
-                                        dim=-1).reshape(batch_size, seq_len + 1, -1)
-            _, q_eval = self.policy.Qpolicy(joint_observation=obs_joint[:, :-1], joint_actions=act_critic,
-                                            agent_ids=IDs_t, agent_key=key, rnn_hidden=rnn_hidden_critic)
-            _, q_next = self.policy.Qtarget(joint_observation=obs_joint, joint_actions=act_next,
-                                            agent_ids=IDs, agent_key=key, rnn_hidden=rnn_hidden_critic)
             q_eval_a = q_eval[key].reshape(bs_rnn, seq_len)
             q_next_i = q_next[key][:, 1:].reshape(bs_rnn, seq_len)
             q_target = rewards[key] + (1 - terminals[key]) * self.gamma * q_next_i
