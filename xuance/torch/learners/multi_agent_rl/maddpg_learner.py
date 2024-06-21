@@ -141,25 +141,6 @@ class MADDPG_Learner(LearnerMAS):
 
         for key in self.model_keys:
             mask_values = agent_mask[key]
-            # update actor
-            if self.use_parameter_sharing:
-                act_eval = actions_eval[key].reshape(batch_size, self.n_agents, -1).reshape(batch_size, -1)
-            else:
-                act_detach_others = {k: actions_eval[k] if k == key else actions_eval[k].detach()
-                                     for k in self.agent_keys}
-                act_eval = torch.concat(itemgetter(*self.agent_keys)(act_detach_others), dim=-1).reshape(batch_size, -1)
-            _, q_policy = self.policy.Qpolicy(joint_observation=obs_joint, joint_actions=act_eval,
-                                              agent_ids=IDs, agent_key=key)
-            q_policy_i = q_policy[key].reshape(bs)
-            loss_a = -(q_policy_i * mask_values).sum() / mask_values.sum()
-            self.optimizer[key]['actor'].zero_grad()
-            loss_a.backward()
-            if self.use_grad_clip:
-                torch.nn.utils.clip_grad_norm_(self.policy.parameters_actor[key], self.grad_clip_norm)
-            self.optimizer[key]['actor'].step()
-            if self.scheduler[key]['actor'] is not None:
-                self.scheduler[key]['actor'].step()
-
             # update critic
             q_eval_a = q_eval[key].reshape(bs)
             q_next_i = q_next[key].reshape(bs)
@@ -173,6 +154,24 @@ class MADDPG_Learner(LearnerMAS):
             self.optimizer[key]['critic'].step()
             if self.scheduler[key]['critic'] is not None:
                 self.scheduler[key]['critic'].step()
+
+            # update actor
+            if self.use_parameter_sharing:
+                act_eval = actions_eval[key].reshape(batch_size, self.n_agents, -1).reshape(batch_size, -1)
+            else:
+                a_joint = {k: actions_eval[k] if k == key else actions[k] for k in self.agent_keys}
+                act_eval = torch.concat(itemgetter(*self.agent_keys)(a_joint), dim=-1).reshape(batch_size, -1)
+            _, q_policy = self.policy.Qpolicy(joint_observation=obs_joint, joint_actions=act_eval,
+                                              agent_ids=IDs, agent_key=key)
+            q_policy_i = q_policy[key].reshape(bs)
+            loss_a = -(q_policy_i * mask_values).sum() / mask_values.sum()
+            self.optimizer[key]['actor'].zero_grad()
+            loss_a.backward()
+            if self.use_grad_clip:
+                torch.nn.utils.clip_grad_norm_(self.policy.parameters_actor[key], self.grad_clip_norm)
+            self.optimizer[key]['actor'].step()
+            if self.scheduler[key]['actor'] is not None:
+                self.scheduler[key]['actor'].step()
 
             lr_a = self.optimizer[key]['actor'].state_dict()['param_groups'][0]['lr']
             lr_c = self.optimizer[key]['critic'].state_dict()['param_groups'][0]['lr']
@@ -243,27 +242,6 @@ class MADDPG_Learner(LearnerMAS):
 
         for key in self.model_keys:
             mask_values = agent_mask[key] * filled
-            # update actor
-            if self.use_parameter_sharing:
-                act_eval = actions_eval[key].reshape(
-                    batch_size, self.n_agents, seq_len + 1, -1).transpose(1, 2).reshape(batch_size, seq_len + 1, -1)
-            else:
-                act_detach_others = {k: actions_eval[k] if k == key else actions_eval[k].detach()
-                                     for k in self.agent_keys}
-                act_eval = torch.concat(itemgetter(*self.agent_keys)(act_detach_others),
-                                        dim=-1).reshape(batch_size, seq_len + 1, -1)
-            _, q_policy = self.policy.Qpolicy(joint_observation=obs_joint, joint_actions=act_eval, agent_key=key,
-                                              agent_ids=IDs, rnn_hidden=rnn_hidden_critic)
-            q_policy_i = q_policy[key][:, :-1].reshape(bs_rnn, seq_len)
-            loss_a = -(q_policy_i * mask_values).sum() / mask_values.sum()
-            self.optimizer[key]['actor'].zero_grad()
-            loss_a.backward()
-            if self.use_grad_clip:
-                torch.nn.utils.clip_grad_norm_(self.policy.parameters_actor[key], self.grad_clip_norm)
-            self.optimizer[key]['actor'].step()
-            if self.scheduler[key]['actor'] is not None:
-                self.scheduler[key]['actor'].step()
-
             # update critic
             q_eval_a = q_eval[key].reshape(bs_rnn, seq_len)
             q_next_i = q_next[key][:, 1:].reshape(bs_rnn, seq_len)
@@ -277,6 +255,25 @@ class MADDPG_Learner(LearnerMAS):
             self.optimizer[key]['critic'].step()
             if self.scheduler[key]['critic'] is not None:
                 self.scheduler[key]['critic'].step()
+
+            # update actor
+            if self.use_parameter_sharing:
+                act_eval = actions_eval[key][:, :-1].reshape(
+                    batch_size, self.n_agents, seq_len, -1).transpose(1, 2).reshape(batch_size, seq_len, -1)
+            else:
+                a_joint = {k: actions_eval[k][:, :-1] if k == key else actions[k] for k in self.agent_keys}
+                act_eval = torch.concat(itemgetter(*self.agent_keys)(a_joint), dim=-1).reshape(batch_size, seq_len, -1)
+            _, q_policy = self.policy.Qpolicy(joint_observation=obs_joint[:, :-1], joint_actions=act_eval,
+                                              agent_key=key, agent_ids=IDs_t, rnn_hidden=rnn_hidden_critic)
+            q_policy_i = q_policy[key].reshape(bs_rnn, seq_len)
+            loss_a = -(q_policy_i * mask_values).sum() / mask_values.sum()
+            self.optimizer[key]['actor'].zero_grad()
+            loss_a.backward()
+            if self.use_grad_clip:
+                torch.nn.utils.clip_grad_norm_(self.policy.parameters_actor[key], self.grad_clip_norm)
+            self.optimizer[key]['actor'].step()
+            if self.scheduler[key]['actor'] is not None:
+                self.scheduler[key]['actor'].step()
 
             lr_a = self.optimizer[key]['actor'].state_dict()['param_groups'][0]['lr']
             lr_c = self.optimizer[key]['critic'].state_dict()['param_groups'][0]['lr']
