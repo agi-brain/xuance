@@ -138,7 +138,7 @@ class MADDPG_Learner(LearnerMAS):
                 act_detach_others = {k: actions_eval[key] if k == key else actions_eval[key].detach()
                                      for k in self.model_keys}
                 act_eval = {key: torch.stack(itemgetter(*self.model_keys)(act_detach_others),
-                                             dim=2).reshape(batch_size, -1)}
+                                             dim=1).reshape(batch_size, -1)}
             _, q_policy = self.policy.Qpolicy(observation=obs_critic, actions=act_eval, agent_ids=IDs, agent_key=key)
             q_policy_i = q_policy[key].reshape(bs)
             loss_a = -(q_policy_i * agent_mask[key]).sum() / agent_mask[key].sum()
@@ -153,7 +153,7 @@ class MADDPG_Learner(LearnerMAS):
             # update critic
             if self.use_parameter_sharing:
                 act_critic = {key: actions[key].reshape(batch_size, -1)}
-                act_next = {key: actions_next[key].reshape(batch_size, -1)}
+                act_next = {key: actions_next[key].reshape(batch_size, self.n_agents, -1).reshape(batch_size, -1)}
             else:
                 act_critic = {key: torch.stack(itemgetter(*self.agent_keys)(actions), dim=1).reshape(batch_size, -1)}
                 act_next = {key: torch.stack(itemgetter(*self.agent_keys)(actions_next), dim=1).reshape(batch_size, -1)}
