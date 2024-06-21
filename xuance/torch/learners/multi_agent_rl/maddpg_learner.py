@@ -8,6 +8,7 @@ Trick: Parameter sharing for all agents, with agents' one-hot IDs as actor-criti
 import numpy as np
 import torch
 from torch import nn
+from numpy import concatenate
 from xuance.torch.learners import LearnerMAS
 from typing import Optional, List
 from argparse import Namespace
@@ -122,26 +123,25 @@ class MADDPG_Learner(LearnerMAS):
         IDs = sample_Tensor['agent_ids']
         bs = batch_size * self.n_agents if self.use_parameter_sharing else batch_size
 
-        obs_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['obs']), axis=1)).to(self.device)
-        obs_critic = {key: obs_tensor.reshape(batch_size, -1) for key in self.model_keys}
-        obs_next_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['obs_next']), axis=1)).to(self.device)
-        obs_next_critic = {key: obs_next_tensor.reshape(batch_size, -1) for key in self.model_keys}
+        obs_joint = Tensor(concatenate(itemgetter(*self.agent_keys)(sample['obs']), axis=-1)).to(self.device)
+        next_obs_joint = Tensor(concatenate(itemgetter(*self.agent_keys)(sample['obs_next']), axis=-1)).to(self.device)
 
         # train the model
         _, actions_eval = self.policy(observation=obs, agent_ids=IDs)
         _, actions_next = self.policy.Atarget(next_observation=obs_next, agent_ids=IDs)
         for key in self.model_keys:
+            mask_values = agent_mask[key]
             # update actor
             if self.use_parameter_sharing:
-                act_eval = {key: actions_eval[key].reshape(batch_size, self.n_agents, -1).reshape(batch_size, -1)}
+                act_eval = actions_eval[key].reshape(batch_size, self.n_agents, -1).reshape(batch_size, -1)
             else:
-                act_detach_others = {k: actions_eval[key] if k == key else actions_eval[key].detach()
-                                     for k in self.model_keys}
-                act_eval = {key: torch.stack(itemgetter(*self.model_keys)(act_detach_others),
-                                             dim=1).reshape(batch_size, -1)}
-            _, q_policy = self.policy.Qpolicy(observation=obs_critic, actions=act_eval, agent_ids=IDs, agent_key=key)
+                act_detach_others = {k: actions_eval[k] if k == key else actions_eval[k].detach()
+                                     for k in self.agent_keys}
+                act_eval = torch.concat(itemgetter(*self.model_keys)(act_detach_others), dim=-1).reshape(batch_size, -1)
+            _, q_policy = self.policy.Qpolicy(joint_observation=obs_joint, joint_actions=act_eval,
+                                              agent_ids=IDs, agent_key=key)
             q_policy_i = q_policy[key].reshape(bs)
-            loss_a = -(q_policy_i * agent_mask[key]).sum() / agent_mask[key].sum()
+            loss_a = -(q_policy_i * mask_values).sum() / mask_values.sum()
             self.optimizer[key]['actor'].zero_grad()
             loss_a.backward()
             if self.use_grad_clip:
@@ -152,19 +152,20 @@ class MADDPG_Learner(LearnerMAS):
 
             # update critic
             if self.use_parameter_sharing:
-                act_critic = {key: actions[key].reshape(batch_size, -1)}
-                act_next = {key: actions_next[key].reshape(batch_size, self.n_agents, -1).reshape(batch_size, -1)}
+                act_critic = actions[key].reshape(batch_size, -1)
+                act_next = actions_next[key].reshape(batch_size, self.n_agents, -1).reshape(batch_size, -1)
             else:
-                act_critic = {key: torch.stack(itemgetter(*self.agent_keys)(actions), dim=1).reshape(batch_size, -1)}
-                act_next = {key: torch.stack(itemgetter(*self.agent_keys)(actions_next), dim=1).reshape(batch_size, -1)}
-            _, q_eval = self.policy.Qpolicy(observation=obs_critic, actions=act_critic, agent_ids=IDs, agent_key=key)
-            _, q_next = self.policy.Qtarget(next_observation=obs_next_critic, next_actions=act_next, agent_ids=IDs,
-                                            agent_key=key)
+                act_critic = torch.concat(itemgetter(*self.agent_keys)(actions), dim=-1).reshape(batch_size, -1)
+                act_next = torch.concat(itemgetter(*self.agent_keys)(actions_next), dim=-1).reshape(batch_size, -1)
+            _, q_eval = self.policy.Qpolicy(joint_observation=obs_joint, joint_actions=act_critic,
+                                            agent_ids=IDs, agent_key=key)
+            _, q_next = self.policy.Qtarget(joint_observation=next_obs_joint, joint_actions=act_next,
+                                            agent_ids=IDs, agent_key=key)
             q_eval_a = q_eval[key].reshape(bs)
             q_next_i = q_next[key].reshape(bs)
             q_target = rewards[key] + (1 - terminals[key]) * self.gamma * q_next_i
-            td_error = (q_eval_a - q_target.detach()) * agent_mask[key]
-            loss_c = (td_error ** 2).sum() / agent_mask[key].sum()
+            td_error = (q_eval_a - q_target.detach()) * mask_values
+            loss_c = (td_error ** 2).sum() / mask_values.sum()
             self.optimizer[key]['critic'].zero_grad()
             loss_c.backward()
             if self.use_grad_clip:
@@ -236,7 +237,7 @@ class MADDPG_Learner(LearnerMAS):
                 act_eval = {key: actions_eval[key].reshape(
                     batch_size, self.n_agents, seq_len + 1, -1).transpose(1, 2).reshape(batch_size, seq_len + 1, -1)}
             else:
-                act_detach_others = {k: actions_eval[key] if k == key else actions_eval[key].detach()
+                act_detach_others = {k: actions_eval[k] if k == key else actions_eval[k].detach()
                                      for k in self.model_keys}
                 act_eval = {key: torch.stack(itemgetter(*self.agent_keys)(act_detach_others),
                                              dim=2).reshape(batch_size, seq_len + 1, -1)}
