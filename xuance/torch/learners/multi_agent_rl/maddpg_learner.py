@@ -147,7 +147,7 @@ class MADDPG_Learner(LearnerMAS):
             else:
                 act_detach_others = {k: actions_eval[k] if k == key else actions_eval[k].detach()
                                      for k in self.agent_keys}
-                act_eval = torch.concat(itemgetter(*self.model_keys)(act_detach_others), dim=-1).reshape(batch_size, -1)
+                act_eval = torch.concat(itemgetter(*self.agent_keys)(act_detach_others), dim=-1).reshape(batch_size, -1)
             _, q_policy = self.policy.Qpolicy(joint_observation=obs_joint, joint_actions=act_eval,
                                               agent_ids=IDs, agent_key=key)
             q_policy_i = q_policy[key].reshape(bs)
@@ -241,7 +241,7 @@ class MADDPG_Learner(LearnerMAS):
         _, q_next = self.policy.Qtarget(joint_observation=obs_joint, joint_actions=next_actions_joint, agent_ids=IDs,
                                         rnn_hidden=rnn_hidden_target_critic)
 
-        for key in [self.model_keys[0]]:
+        for key in self.model_keys:
             mask_values = agent_mask[key] * filled
             # update actor
             if self.use_parameter_sharing:
