@@ -1022,7 +1022,6 @@ class MATD3_Policy(MADDPG_Policy, Module):
             rnn_hidden (Optional[Dict[str, List[Tensor]]]): The hidden variables of the RNN.
 
         Returns:
-            rnn_hidden_new (Optional[Dict[str, List[Tensor]]]): The new hidden variables of the RNN.
             q_eval_A (Dict[Tensor]): The evaluations of Q^policy calculated by critic A.
             q_eval_B (Dict[Tensor]): The evaluations of Q^policy calculated by critic B.
             q_eval (Dict[Tensor]): The evaluations of Q^policy averaged by critic A and Critic B.
