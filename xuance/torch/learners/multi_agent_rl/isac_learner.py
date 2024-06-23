@@ -61,17 +61,20 @@ class ISAC_Learner(LearnerMAS):
         # feedforward
         log_pi, policy_q_1, policy_q_2 = self.policy.Qpolicy(observation=obs, agent_ids=IDs)
         action_q_1, action_q_2 = self.policy.Qaction(observation=obs, actions=actions, agent_ids=IDs)
-        log_pi_next, target_q = self.policy.Qtarget(next_observation=obs_next, agent_ids=IDs)
+        log_pi_next, next_q = self.policy.Qtarget(next_observation=obs_next, agent_ids=IDs)
 
         for key in self.model_keys:
+            mask_values = agent_mask[key]
             # critic update
-            log_pi_next_eval = log_pi_next[key].unsqueeze(-1)
-            target_value = target_q[key] - self.alpha * log_pi_next_eval
+            action_q_1_i, action_q_2_i = action_q_1[key].reshape(bs), action_q_2[key].reshape(bs)
+            log_pi_next_eval = log_pi_next[key].reshape(bs)
+            next_q_i = next_q[key].reshape(bs)
+            target_value = next_q_i - self.alpha * log_pi_next_eval
             backup = rewards[key] + (1 - terminals[key]) * self.gamma * target_value
-            td_error_1, td_error_2 = action_q_1[key] - backup.detach(), action_q_2[key] - backup.detach()
-            td_error_1 *= agent_mask[key]
-            td_error_2 *= agent_mask[key]
-            loss_c = ((td_error_1 ** 2).sum() + (td_error_2 ** 2).sum()) / agent_mask[key].sum()
+            td_error_1, td_error_2 = action_q_1_i - backup.detach(), action_q_2_i - backup.detach()
+            td_error_1 *= mask_values
+            td_error_2 *= mask_values
+            loss_c = ((td_error_1 ** 2).sum() + (td_error_2 ** 2).sum()) / mask_values.sum()
             self.optimizer[key]['critic'].zero_grad()
             loss_c.backward()
             if self.use_grad_clip:
@@ -81,10 +84,9 @@ class ISAC_Learner(LearnerMAS):
                 self.scheduler[key]['critic'].step()
 
             # actor update
-            log_pi_eval = log_pi[key].unsqueeze(-1)
-            policy_q = torch.min(policy_q_1[key], policy_q_2[key])
-            loss_a = ((self.alpha * log_pi_eval - policy_q.detach()) * agent_mask[key]).sum() / agent_mask[
-                key].sum()
+            log_pi_eval = log_pi[key].reshape(bs)
+            policy_q = torch.min(policy_q_1[key], policy_q_2[key]).reshape(bs)
+            loss_a = ((self.alpha * log_pi_eval - policy_q.detach()) * mask_values).sum() / mask_values.sum()
             self.optimizer[key]['actor'].zero_grad()
             loss_a.backward()
             if self.use_grad_clip:
