@@ -168,7 +168,8 @@ class Basic_ISAC_Policy(Module):
     def __init__(self,
                  action_space: Optional[Dict[str, Box]],
                  n_agents: int,
-                 representation: ModuleDict,
+                 actor_representation: ModuleDict,
+                 critic_representation: ModuleDict,
                  actor_hidden_size: Sequence[int],
                  critic_hidden_size: Sequence[int],
                  normalize: Optional[ModuleType] = None,
@@ -186,9 +187,9 @@ class Basic_ISAC_Policy(Module):
         self.lstm = True if kwargs["rnn"] == "LSTM" else False
         self.use_rnn = True if kwargs["use_rnn"] else False
 
-        self.actor_representation = representation
-        self.critic_1_representation = deepcopy(representation)
-        self.critic_2_representation = deepcopy(representation)
+        self.actor_representation = actor_representation
+        self.critic_1_representation = critic_representation
+        self.critic_2_representation = deepcopy(critic_representation)
         self.target_critic_1_representation = deepcopy(self.critic_1_representation)
         self.target_critic_2_representation = deepcopy(self.critic_2_representation)
 
@@ -247,7 +248,8 @@ class Basic_ISAC_Policy(Module):
         return dim_actor_in, dim_actor_out, dim_critic_in
 
     def forward(self, observation: Dict[str, Tensor],
-                agent_ids: Tensor = None, agent_key: str = None):
+                agent_ids: Tensor = None, agent_key: str = None,
+                rnn_hidden: Optional[Dict[str, List[Tensor]]] = None):
         """
         Returns actions of the policy.
 
@@ -255,23 +257,33 @@ class Basic_ISAC_Policy(Module):
             observation (Dict[Tensor]): The input observations for the policies.
             agent_ids (Tensor): The agents' ids (for parameter sharing).
             agent_key (str): Calculate actions for specified agent.
+            rnn_hidden (Optional[Dict[str, List[Tensor]]]): The hidden variables of the RNN.
 
         Returns:
+            rnn_hidden_new (Optional[Dict[str, List[Tensor]]]): The new hidden variables of the RNN.
             actions (Dict[Tensor]): The actions output by the policies.
         """
-        act_dists, actions_dict = {}, {}
+        rnn_hidden_new, act_dists, actions_dict = deepcopy(rnn_hidden), {}, {}
         agent_list = self.model_keys if agent_key is None else [agent_key]
         for key in agent_list:
-            outputs = self.actor_representation[key](observation[key])
+            if self.use_rnn:
+                outputs = self.actor_representation[key](observation[key], *rnn_hidden[key])
+                rnn_hidden_new.update({key: (outputs['rnn_hidden'], outputs['rnn_cell'])})
+            else:
+                outputs = self.actor_representation[key](observation[key])
+
             if self.use_parameter_sharing:
                 actor_in = torch.concat([outputs['state'], agent_ids], dim=-1)
             else:
                 actor_in = outputs['state']
             act_dists = self.actor[key](actor_in)
             actions_dict[key] = act_dists.activated_rsample()
-        return outputs, actions_dict
+        return rnn_hidden_new, actions_dict
 
-    def Qpolicy(self, observation: Dict[str, Tensor], agent_ids: Tensor = None, agent_key: str = None):
+    def Qpolicy(self, observation: Dict[str, Tensor],
+                agent_ids: Tensor = None, agent_key: str = None,
+                rnn_hidden_actor: Optional[Dict[str, List[Tensor]]] = None,
+                rnn_hidden_critic: Optional[Dict[str, List[Tensor]]] = None):
         """
         Returns Q^policy of current observations and actions pairs.
 
@@ -279,16 +291,26 @@ class Basic_ISAC_Policy(Module):
             observation (Dict[Tensor]): The observations.
             agent_ids (Dict[Tensor]): The agents' ids (for parameter sharing).
             agent_key (str): Calculate actions for specified agent.
+            rnn_hidden_actor (Optional[Dict[str, List[Tensor]]]): The RNN hidden states for actor representation.
+            rnn_hidden_critic (Optional[Dict[str, List[Tensor]]]): The RNN hidden states for critic representation.
 
         Returns:
-            q_eval: The evaluations of Q^policy.
+            log_action_prob: The log of action probabilities.
+            q_1: The evaluation of Q values with critic 1.
+            q_2: The evaluation of Q values with critic 2.
         """
         log_action_prob, q_1, q_2 = {}, {}, {}
         agent_list = self.model_keys if agent_key is None else [agent_key]
+
         for key in agent_list:
-            outputs_actor = self.actor_representation[key](observation[key])
-            outputs_critic_1 = self.critic_1_representation[key](observation[key])
-            outputs_critic_2 = self.critic_2_representation[key](observation[key])
+            if self.use_rnn:
+                outputs_actor = self.actor_representation[key](observation[key], *rnn_hidden_actor[key])
+                outputs_critic_1 = self.critic_1_representation[key](observation[key], *rnn_hidden_critic[key])
+                outputs_critic_2 = self.critic_2_representation[key](observation[key], *rnn_hidden_critic[key])
+            else:
+                outputs_actor = self.actor_representation[key](observation[key])
+                outputs_critic_1 = self.critic_1_representation[key](observation[key])
+                outputs_critic_2 = self.critic_2_representation[key](observation[key])
 
             actor_in = outputs_actor['state']
             if self.use_parameter_sharing:
@@ -304,7 +326,10 @@ class Basic_ISAC_Policy(Module):
             q_1[key], q_2[key] = self.critic_1[key](critic_1_in), self.critic_2[key](critic_2_in)
         return log_action_prob, q_1, q_2
 
-    def Qtarget(self, next_observation: Dict[str, Tensor], agent_ids: Tensor = None, agent_key: str = None):
+    def Qtarget(self, next_observation: Dict[str, Tensor],
+                agent_ids: Tensor = None, agent_key: str = None,
+                rnn_hidden_actor: Optional[Dict[str, List[Tensor]]] = None,
+                rnn_hidden_critic: Optional[Dict[str, List[Tensor]]] = None):
         """
         Returns the Q^target of next observations and actions pairs.
 
@@ -312,6 +337,8 @@ class Basic_ISAC_Policy(Module):
             next_observation (Dict[Tensor]): The observations of next step.
             agent_ids (Dict[Tensor]): The agents' ids (for parameter sharing).
             agent_key (str): Calculate actions for specified agent.
+            rnn_hidden_actor (Optional[Dict[str, List[Tensor]]]): The RNN hidden states for actor representation.
+            rnn_hidden_critic (Optional[Dict[str, List[Tensor]]]): The RNN hidden states for critic representation.
 
         Returns:
             q_target: The evaluations of Q^target.
@@ -319,9 +346,14 @@ class Basic_ISAC_Policy(Module):
         new_act_log, target_q = {}, {}
         agent_list = self.model_keys if agent_key is None else [agent_key]
         for key in agent_list:
-            outputs_actor = self.actor_representation[key](next_observation[key])
-            outputs_critic_1 = self.target_critic_1_representation[key](next_observation[key])
-            outputs_critic_2 = self.target_critic_2_representation[key](next_observation[key])
+            if self.use_rnn:
+                outputs_actor = self.actor_representation[key](next_observation[key], *rnn_hidden_actor[key])
+                outputs_critic_1 = self.target_critic_1_representation[key](next_observation[key], *rnn_hidden_critic[key])
+                outputs_critic_2 = self.target_critic_2_representation[key](next_observation[key], *rnn_hidden_critic[key])
+            else:
+                outputs_actor = self.actor_representation[key](next_observation[key])
+                outputs_critic_1 = self.target_critic_1_representation[key](next_observation[key])
+                outputs_critic_2 = self.target_critic_2_representation[key](next_observation[key])
 
             actor_in = outputs_actor['state']
             if self.use_parameter_sharing:
@@ -339,7 +371,8 @@ class Basic_ISAC_Policy(Module):
         return new_act_log, target_q
 
     def Qaction(self, observation: Union[np.ndarray, dict], actions: Tensor,
-                agent_ids: Tensor, agent_key: str = None):
+                agent_ids: Tensor, agent_key: str = None,
+                rnn_hidden_critic: Optional[Dict[str, List[Tensor]]] = None):
         """
         Returns the evaluated Q-values for current observation-action pairs.
 
@@ -356,8 +389,12 @@ class Basic_ISAC_Policy(Module):
         q_1, q_2 = {}, {}
         agent_list = self.model_keys if agent_key is None else [agent_key]
         for key in agent_list:
-            outputs_critic_1 = self.critic_1_representation[key](observation[key])
-            outputs_critic_2 = self.critic_2_representation[key](observation[key])
+            if self.use_rnn:
+                outputs_critic_1 = self.critic_1_representation[key](observation[key], *rnn_hidden_critic[key])
+                outputs_critic_2 = self.critic_2_representation[key](observation[key], *rnn_hidden_critic[key])
+            else:
+                outputs_critic_1 = self.critic_1_representation[key](observation[key])
+                outputs_critic_2 = self.critic_2_representation[key](observation[key])
 
             critic_1_in = torch.concat([outputs_critic_1['state'], actions[key]], dim=-1)
             critic_2_in = torch.concat([outputs_critic_2['state'], actions[key]], dim=-1)

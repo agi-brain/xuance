@@ -42,6 +42,7 @@ class ISAC_Learner(LearnerMAS):
         sample_Tensor = self.build_training_data(sample,
                                                  use_parameter_sharing=self.use_parameter_sharing,
                                                  use_actions_mask=False)
+        batch_size = sample_Tensor['batch_size']
         obs = sample_Tensor['obs']
         actions = sample_Tensor['actions']
         obs_next = sample_Tensor['obs_next']
@@ -49,26 +50,21 @@ class ISAC_Learner(LearnerMAS):
         terminals = sample_Tensor['terminals']
         agent_mask = sample_Tensor['agent_mask']
         IDs = sample_Tensor['agent_ids']
+        if self.use_parameter_sharing:
+            key = self.model_keys[0]
+            bs = batch_size * self.n_agents
+            rewards[key] = rewards[key].reshape(batch_size * self.n_agents)
+            terminals[key] = terminals[key].reshape(batch_size * self.n_agents)
+        else:
+            bs = batch_size
 
-        # train the model
+        # feedforward
         log_pi, policy_q_1, policy_q_2 = self.policy.Qpolicy(observation=obs, agent_ids=IDs)
-        for key in self.model_keys:
-            # actor update
-            log_pi_eval = log_pi[key].unsqueeze(-1)
-            policy_q = torch.min(policy_q_1[key], policy_q_2[key])
-            loss_a = ((self.alpha * log_pi_eval - policy_q.detach()) * agent_mask[key]).sum() / agent_mask[key].sum()
-            self.optimizer[key]['actor'].zero_grad()
-            loss_a.backward()
-            if self.use_grad_clip:
-                torch.nn.utils.clip_grad_norm_(self.policy.parameters_actor[key], self.grad_clip_norm)
-            self.optimizer[key]['actor'].step()
-            if self.scheduler[key]['actor'] is not None:
-                self.scheduler[key]['actor'].step()
+        action_q_1, action_q_2 = self.policy.Qaction(observation=obs, actions=actions, agent_ids=IDs)
+        log_pi_next, target_q = self.policy.Qtarget(next_observation=obs_next, agent_ids=IDs)
 
+        for key in self.model_keys:
             # critic update
-            action_q_1, action_q_2 = self.policy.Qaction(observation=obs, actions=actions,
-                                                         agent_ids=IDs, agent_key=key)
-            log_pi_next, target_q = self.policy.Qtarget(next_observation=obs_next, agent_ids=IDs, agent_key=key)
             log_pi_next_eval = log_pi_next[key].unsqueeze(-1)
             target_value = target_q[key] - self.alpha * log_pi_next_eval
             backup = rewards[key] + (1 - terminals[key]) * self.gamma * target_value
@@ -83,6 +79,19 @@ class ISAC_Learner(LearnerMAS):
             self.optimizer[key]['critic'].step()
             if self.scheduler[key]['critic'] is not None:
                 self.scheduler[key]['critic'].step()
+
+            # actor update
+            log_pi_eval = log_pi[key].unsqueeze(-1)
+            policy_q = torch.min(policy_q_1[key], policy_q_2[key])
+            loss_a = ((self.alpha * log_pi_eval - policy_q.detach()) * agent_mask[key]).sum() / agent_mask[
+                key].sum()
+            self.optimizer[key]['actor'].zero_grad()
+            loss_a.backward()
+            if self.use_grad_clip:
+                torch.nn.utils.clip_grad_norm_(self.policy.parameters_actor[key], self.grad_clip_norm)
+            self.optimizer[key]['actor'].step()
+            if self.scheduler[key]['actor'] is not None:
+                self.scheduler[key]['actor'].step()
 
             # automatic entropy tuning
             if self.use_automatic_entropy_tuning:
