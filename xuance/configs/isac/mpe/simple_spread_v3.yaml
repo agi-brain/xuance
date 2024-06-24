@@ -30,8 +30,8 @@ start_training: 1000  # start training after n episodes
 running_steps: 10000000
 training_frequency: 25
 
-use_grad_clip: True
-grad_clip_norm: 0.5
+use_grad_clip: False
+grad_clip_norm: 10
 
 eval_interval: 100000
 test_episode: 5

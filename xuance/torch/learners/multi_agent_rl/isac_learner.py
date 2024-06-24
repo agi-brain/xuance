@@ -59,7 +59,6 @@ class ISAC_Learner(LearnerMAS):
             bs = batch_size
 
         # feedforward
-        log_pi, policy_q_1, policy_q_2 = self.policy.Qpolicy(observation=obs, agent_ids=IDs)
         action_q_1, action_q_2 = self.policy.Qaction(observation=obs, actions=actions, agent_ids=IDs)
         log_pi_next, next_q = self.policy.Qtarget(next_observation=obs_next, agent_ids=IDs)
 
@@ -84,9 +83,10 @@ class ISAC_Learner(LearnerMAS):
                 self.scheduler[key]['critic'].step()
 
             # actor update
+            log_pi, policy_q_1, policy_q_2 = self.policy.Qpolicy(observation=obs, agent_ids=IDs, agent_key=key)
             log_pi_eval = log_pi[key].reshape(bs)
             policy_q = torch.min(policy_q_1[key], policy_q_2[key]).reshape(bs)
-            loss_a = ((self.alpha * log_pi_eval - policy_q.detach()) * mask_values).sum() / mask_values.sum()
+            loss_a = ((self.alpha * log_pi_eval - policy_q) * mask_values).sum() / mask_values.sum()
             self.optimizer[key]['actor'].zero_grad()
             loss_a.backward()
             if self.use_grad_clip:
@@ -121,5 +121,5 @@ class ISAC_Learner(LearnerMAS):
         self.policy.soft_update(self.tau)
         return info
 
-    def update_rnn(self, *args):
+    def update_rnn(self, sample):
         raise NotImplementedError

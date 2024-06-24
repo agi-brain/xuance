@@ -108,20 +108,21 @@ class ISAC_Agents(IDDPG_Agents, MARLAgents):
             rnn_hidden_state (dict): The new hidden states for RNN (if self.use_rnn=True).
             actions_dict (dict): The output actions.
         """
-        n_env = len(obs_dict)
+        batch_size = len(obs_dict)
+
+        obs_input, agents_id, avail_actions_input = self._build_inputs(obs_dict)
+        hidden_state, actions = self.policy(observation=obs_input, agent_ids=agents_id,
+                                            avail_actions=avail_actions_input, rnn_hidden=rnn_hidden)
+
         if self.use_parameter_sharing:
             key = self.model_keys[0]
-            obs_input = {self.agent_keys[0]: np.array([itemgetter(*self.agent_keys)(env_obs) for env_obs in obs_dict])}
-            agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(n_env, -1, -1).to(self.device)
-            _, actions = self.policy(obs_input, agents_id)
-            actions_dict = [{k: actions[key][e, agt].cpu().detach().numpy() for agt, k in enumerate(self.agent_keys)}
-                            for e in range(n_env)]
+            actions[key] = actions[key].reshape(batch_size, self.n_agents, -1).cpu().detach().numpy()
+            actions_dict = [{k: actions[key][e, i] for i, k in enumerate(self.agent_keys)} for e in range(batch_size)]
         else:
-            obs_input = {key: np.array([itemgetter(key)(env_obs) for env_obs in obs_dict]) for key in self.agent_keys}
-            _, actions = self.policy(obs_input)
-            actions_dict = [{key: actions[key][i].cpu().detach().numpy() for key in self.agent_keys}
-                            for i in range(n_env)]
-        return None, actions_dict
+            actions_dict = [{k: actions[k][i].cpu().detach().numpy() for k in self.agent_keys}
+                            for i in range(batch_size)]
+
+        return hidden_state, actions_dict
 
     def train(self, n_steps):
         """

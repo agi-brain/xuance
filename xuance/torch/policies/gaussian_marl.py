@@ -247,8 +247,8 @@ class Basic_ISAC_Policy(Module):
             dim_critic_in += n_agents
         return dim_actor_in, dim_actor_out, dim_critic_in
 
-    def forward(self, observation: Dict[str, Tensor],
-                agent_ids: Tensor = None, agent_key: str = None,
+    def forward(self, observation: Dict[str, Tensor], agent_ids: Tensor = None,
+                avail_actions: Dict[str, Tensor] = None, agent_key: str = None,
                 rnn_hidden: Optional[Dict[str, List[Tensor]]] = None):
         """
         Returns actions of the policy.
@@ -256,6 +256,7 @@ class Basic_ISAC_Policy(Module):
         Parameters:
             observation (Dict[Tensor]): The input observations for the policies.
             agent_ids (Tensor): The agents' ids (for parameter sharing).
+            avail_actions (Dict[str, Tensor]): Actions mask values, default is None.
             agent_key (str): Calculate actions for specified agent.
             rnn_hidden (Optional[Dict[str, List[Tensor]]]): The hidden variables of the RNN.
 
