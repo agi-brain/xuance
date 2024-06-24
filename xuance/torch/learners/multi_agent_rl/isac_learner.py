@@ -4,9 +4,12 @@ Implementation: Pytorch
 """
 import torch
 from torch import nn
+from numpy import concatenate
 from xuance.torch.learners import LearnerMAS
 from typing import Optional, List
 from argparse import Namespace
+from operator import itemgetter
+from xuance.torch import Tensor
 
 
 class ISAC_Learner(LearnerMAS):
@@ -64,7 +67,7 @@ class ISAC_Learner(LearnerMAS):
 
         for key in self.model_keys:
             mask_values = agent_mask[key]
-            # critic update
+            # update critic
             action_q_1_i, action_q_2_i = action_q_1[key].reshape(bs), action_q_2[key].reshape(bs)
             log_pi_next_eval = log_pi_next[key].reshape(bs)
             next_q_i = next_q[key].reshape(bs)
@@ -82,7 +85,7 @@ class ISAC_Learner(LearnerMAS):
             if self.scheduler[key]['critic'] is not None:
                 self.scheduler[key]['critic'].step()
 
-            # actor update
+            # update actor
             log_pi, policy_q_1, policy_q_2 = self.policy.Qpolicy(observation=obs, agent_ids=IDs, agent_key=key)
             log_pi_eval = log_pi[key].reshape(bs)
             policy_q = torch.min(policy_q_1[key], policy_q_2[key]).reshape(bs)
@@ -122,4 +125,101 @@ class ISAC_Learner(LearnerMAS):
         return info
 
     def update_rnn(self, sample):
-        raise NotImplementedError
+        self.iterations += 1
+        info = {}
+
+        # prepare training data
+        sample_Tensor = self.build_training_data(sample=sample,
+                                                 use_parameter_sharing=self.use_parameter_sharing,
+                                                 use_actions_mask=self.use_actions_mask)
+        batch_size = sample_Tensor['batch_size']
+        seq_len = sample_Tensor['seq_length']
+        obs = sample_Tensor['obs']
+        actions = sample_Tensor['actions']
+        rewards = sample_Tensor['rewards']
+        terminals = sample_Tensor['terminals']
+        agent_mask = sample_Tensor['agent_mask']
+        filled = sample_Tensor['filled']
+        IDs = sample_Tensor['agent_ids']
+
+        if self.use_parameter_sharing:
+            key = self.model_keys[0]
+            bs_rnn = batch_size * self.n_agents
+            filled = filled.unsqueeze(1).expand(-1, self.n_agents, -1).reshape(bs_rnn, seq_len)
+            rewards[key] = rewards[key].reshape(bs_rnn, seq_len)
+            terminals[key] = terminals[key].reshape(bs_rnn, seq_len)
+            IDs_t = IDs[:, :-1]
+        else:
+            bs_rnn, IDs_t = batch_size, None
+
+        # initial hidden states for rnn
+        rnn_hidden_actor = {k: self.policy.actor_representation[k].init_hidden(bs_rnn) for k in self.model_keys}
+        rnn_hidden_critic = {k: self.policy.critic_1_representation[k].init_hidden(bs_rnn) for k in self.model_keys}
+
+        obs_t = {k: v[:, :-1] for k, v in obs.items()}
+        action_q_1, action_q_2 = self.policy.Qaction(observation=obs_t, actions=actions, agent_ids=IDs_t,
+                                                     rnn_hidden_critic=rnn_hidden_critic)
+        log_pi_next, next_q = self.policy.Qtarget(next_observation=obs, agent_ids=IDs,
+                                                  rnn_hidden_actor=rnn_hidden_actor,
+                                                  rnn_hidden_critic=rnn_hidden_critic)
+        for key in self.model_keys:
+            mask_values = agent_mask[key] * filled
+            # update critic
+            action_q_1_i = action_q_1[key].reshape(bs_rnn, seq_len)
+            action_q_2_i = action_q_2[key].reshape(bs_rnn, seq_len)
+            log_pi_next_eval = log_pi_next[key][:, 1:].reshape(bs_rnn, seq_len)
+            next_q_i = next_q[key][:, 1:].reshape(bs_rnn, seq_len)
+            target_value = next_q_i - self.alpha * log_pi_next_eval
+            backup = rewards[key] + (1 - terminals[key]) * self.gamma * target_value
+            td_error_1, td_error_2 = action_q_1_i - backup.detach(), action_q_2_i - backup.detach()
+            td_error_1 *= mask_values
+            td_error_2 *= mask_values
+            loss_c = ((td_error_1 ** 2).sum() + (td_error_2 ** 2).sum()) / mask_values.sum()
+            self.optimizer[key]['critic'].zero_grad()
+            loss_c.backward()
+            if self.use_grad_clip:
+                torch.nn.utils.clip_grad_norm_(self.policy.parameters_critic[key], self.grad_clip_norm)
+            self.optimizer[key]['critic'].step()
+            if self.scheduler[key]['critic'] is not None:
+                self.scheduler[key]['critic'].step()
+
+            # update actor
+            log_pi, policy_q_1, policy_q_2 = self.policy.Qpolicy(observation=obs, agent_ids=IDs, agent_key=key,
+                                                                 rnn_hidden_actor=rnn_hidden_actor,
+                                                                 rnn_hidden_critic=rnn_hidden_critic)
+            log_pi_eval = log_pi[key][:, :-1].reshape(bs_rnn, seq_len)
+            policy_q = torch.min(policy_q_1[key][:, :-1], policy_q_2[key][:, :-1]).reshape(bs_rnn, seq_len)
+            loss_a = ((self.alpha * log_pi_eval - policy_q) * mask_values).sum() / mask_values.sum()
+            self.optimizer[key]['actor'].zero_grad()
+            loss_a.backward()
+            if self.use_grad_clip:
+                torch.nn.utils.clip_grad_norm_(self.policy.parameters_actor[key], self.grad_clip_norm)
+            self.optimizer[key]['actor'].step()
+            if self.scheduler[key]['actor'] is not None:
+                self.scheduler[key]['actor'].step()
+
+            # automatic entropy tuning
+            if self.use_automatic_entropy_tuning:
+                alpha_loss = -(self.log_alpha * (log_pi[key] + self.target_entropy).detach()).mean()
+                self.alpha_optimizer.zero_grad()
+                alpha_loss.backward()
+                self.alpha_optimizer.step()
+                self.alpha = self.log_alpha.exp()
+            else:
+                alpha_loss = 0
+
+            lr_a = self.optimizer[key]['actor'].state_dict()['param_groups'][0]['lr']
+            lr_c = self.optimizer[key]['critic'].state_dict()['param_groups'][0]['lr']
+
+            info.update({
+                f"{key}/learning_rate_actor": lr_a,
+                f"{key}/learning_rate_critic": lr_c,
+                f"{key}/loss_actor": loss_a.item(),
+                f"{key}/loss_critic": loss_c.item(),
+                f"{key}/predictQ": policy_q.mean().item(),
+                f"{key}/alpha_loss": alpha_loss.item(),
+                f"{key}/alpha": self.alpha.item(),
+            })
+
+        self.policy.soft_update(self.tau)
+        return info

@@ -1,7 +1,6 @@
 """
 Multi-Agent TD3
 """
-import numpy as np
 import torch
 from torch import nn
 from numpy import concatenate

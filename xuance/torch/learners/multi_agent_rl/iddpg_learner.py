@@ -60,9 +60,10 @@ class IDDPG_Learner(LearnerMAS):
         _, q_next = self.policy.Qtarget(next_observation=obs_next, next_actions=next_actions, agent_ids=IDs)
 
         for key in self.model_keys:
+            mask_values = agent_mask[key]
             # update actor
             q_policy_i = q_policy[key].reshape(bs)
-            loss_a = -(q_policy_i * agent_mask[key]).sum() / agent_mask[key].sum()
+            loss_a = -(q_policy_i * mask_values).sum() / mask_values.sum()
             self.optimizer[key]['actor'].zero_grad()
             loss_a.backward()
             if self.use_grad_clip:
@@ -75,8 +76,8 @@ class IDDPG_Learner(LearnerMAS):
             q_eval_a = q_eval[key].reshape(bs)
             q_next_i = q_next[key].reshape(bs)
             q_target = rewards[key] + (1 - terminals[key]) * self.gamma * q_next_i
-            td_error = (q_eval_a - q_target.detach()) * agent_mask[key]
-            loss_c = (td_error ** 2).sum() / agent_mask[key].sum()
+            td_error = (q_eval_a - q_target.detach()) * mask_values
+            loss_c = (td_error ** 2).sum() / mask_values.sum()
             self.optimizer[key]['critic'].zero_grad()
             loss_c.backward()
             if self.use_grad_clip:

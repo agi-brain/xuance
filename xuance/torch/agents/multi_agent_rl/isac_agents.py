@@ -111,16 +111,16 @@ class ISAC_Agents(IDDPG_Agents, MARLAgents):
         batch_size = len(obs_dict)
 
         obs_input, agents_id, avail_actions_input = self._build_inputs(obs_dict)
-        hidden_state, actions = self.policy(observation=obs_input, agent_ids=agents_id,
-                                            avail_actions=avail_actions_input, rnn_hidden=rnn_hidden)
+        hidden_state, actions = self.policy(observation=obs_input, agent_ids=agents_id, rnn_hidden=rnn_hidden)
 
         if self.use_parameter_sharing:
             key = self.model_keys[0]
             actions[key] = actions[key].reshape(batch_size, self.n_agents, -1).cpu().detach().numpy()
             actions_dict = [{k: actions[key][e, i] for i, k in enumerate(self.agent_keys)} for e in range(batch_size)]
         else:
-            actions_dict = [{k: actions[k][i].cpu().detach().numpy() for k in self.agent_keys}
-                            for i in range(batch_size)]
+            for key in self.agent_keys:
+                actions[key] = actions[key].reshape(batch_size, -1).cpu().detach().numpy()
+            actions_dict = [{k: actions[k][i] for k in self.agent_keys} for i in range(batch_size)]
 
         return hidden_state, actions_dict
 
