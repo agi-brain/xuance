@@ -39,7 +39,6 @@ class ISAC_Agents(IDDPG_Agents, MARLAgents):
                                                                 total_iters=self.config.running_steps)]
 
         # create experience replay buffer
-        n_actions = None if self.continuous_control else {k: self.action_space[k].n for k in self.agent_keys}
         buffer = MARL_OffPolicyBuffer_RNN if self.use_rnn else MARL_OffPolicyBuffer
         self.memory = buffer(agent_keys=self.agent_keys,
                              obs_space=self.observation_space,
@@ -47,8 +46,8 @@ class ISAC_Agents(IDDPG_Agents, MARLAgents):
                              n_envs=self.n_envs,
                              buffer_size=self.config.buffer_size,
                              batch_size=self.config.batch_size,
-                             n_actions=n_actions,
-                             use_actions_mask=self.use_actions_mask,
+                             n_actions=None,
+                             use_actions_mask=False,
                              max_episode_steps=envs.max_episode_steps)
 
         # create learner

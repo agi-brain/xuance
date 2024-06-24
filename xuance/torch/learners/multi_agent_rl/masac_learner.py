@@ -4,9 +4,12 @@ Implementation: Pytorch
 """
 import torch
 from torch import nn
+from numpy import concatenate
 from typing import Optional, List
 from argparse import Namespace
 from xuance.torch.learners.multi_agent_rl.isac_learner import ISAC_Learner
+from operator import itemgetter
+from xuance.torch import Tensor
 
 
 class MASAC_Learner(ISAC_Learner):
@@ -29,6 +32,7 @@ class MASAC_Learner(ISAC_Learner):
         sample_Tensor = self.build_training_data(sample,
                                                  use_parameter_sharing=self.use_parameter_sharing,
                                                  use_actions_mask=False)
+        batch_size = sample_Tensor['batch_size']
         obs = sample_Tensor['obs']
         actions = sample_Tensor['actions']
         obs_next = sample_Tensor['obs_next']
@@ -36,32 +40,36 @@ class MASAC_Learner(ISAC_Learner):
         terminals = sample_Tensor['terminals']
         agent_mask = sample_Tensor['agent_mask']
         IDs = sample_Tensor['agent_ids']
+        if self.use_parameter_sharing:
+            key = self.model_keys[0]
+            bs = batch_size * self.n_agents
+            joint_actions = actions[key].reshape(batch_size, -1)
+            rewards[key] = rewards[key].reshape(batch_size * self.n_agents)
+            terminals[key] = terminals[key].reshape(batch_size * self.n_agents)
+        else:
+            bs = batch_size
+            joint_actions = torch.concat(itemgetter(*self.agent_keys)(actions), dim=-1).reshape(batch_size, -1)
+
+        obs_joint = Tensor(concatenate(itemgetter(*self.agent_keys)(sample['obs']), axis=-1)).to(self.device)
+        next_obs_joint = Tensor(concatenate(itemgetter(*self.agent_keys)(sample['obs_next']), axis=-1)).to(self.device)
 
         # train the model
-        log_pi, policy_q_1, policy_q_2 = self.policy.Qpolicy(observation=obs, agent_ids=IDs)
-        action_q_1, action_q_2 = self.policy.Qaction(observation=obs, actions=actions, agent_ids=IDs)
-        log_pi_next, target_q = self.policy.Qtarget(next_observation=obs_next, agent_ids=IDs)
+        action_q_1, action_q_2 = self.policy.Qaction(observation=obs, joint_observation=obs_joint,
+                                                     joint_actions=joint_actions, agent_ids=IDs)
+        log_pi_next, target_q = self.policy.Qtarget(next_observation=obs_next, joint_observation=next_obs_joint,
+                                                    agent_ids=IDs)
         for key in self.model_keys:
-            # actor update
-            log_pi_eval = log_pi[key].unsqueeze(-1)
-            policy_q = torch.min(policy_q_1[key], policy_q_2[key])
-            loss_a = ((self.alpha * log_pi_eval - policy_q.detach()) * agent_mask[key]).sum() / agent_mask[key].sum()
-            self.optimizer[key]['actor'].zero_grad()
-            loss_a.backward()
-            if self.use_grad_clip:
-                torch.nn.utils.clip_grad_norm_(self.policy.parameters_actor[key], self.grad_clip_norm)
-            self.optimizer[key]['actor'].step()
-            if self.scheduler[key]['actor'] is not None:
-                self.scheduler[key]['actor'].step()
-
+            mask_values = agent_mask[key]
             # critic update
-            log_pi_next_eval = log_pi_next[key].unsqueeze(-1)
-            target_value = target_q[key] - self.alpha * log_pi_next_eval
+            action_q_1_i = action_q_1[key].reshape(bs)
+            action_q_2_i = action_q_2[key].reshape(bs)
+            log_pi_next_eval = log_pi_next[key].reshape(bs)
+            target_value = target_q[key].reshape(bs) - self.alpha * log_pi_next_eval
             backup = rewards[key] + (1 - terminals[key]) * self.gamma * target_value
-            td_error_1, td_error_2 = action_q_1[key] - backup.detach(), action_q_2[key] - backup.detach()
-            td_error_1 *= agent_mask[key]
-            td_error_2 *= agent_mask[key]
-            loss_c = ((td_error_1 ** 2).sum() + (td_error_2 ** 2).sum()) / agent_mask[key].sum()
+            td_error_1, td_error_2 = action_q_1_i - backup.detach(), action_q_2_i - backup.detach()
+            td_error_1 *= mask_values
+            td_error_2 *= mask_values
+            loss_c = ((td_error_1 ** 2).sum() + (td_error_2 ** 2).sum()) / mask_values.sum()
             self.optimizer[key]['critic'].zero_grad()
             loss_c.backward()
             if self.use_grad_clip:
@@ -69,6 +77,20 @@ class MASAC_Learner(ISAC_Learner):
             self.optimizer[key]['critic'].step()
             if self.scheduler[key]['critic'] is not None:
                 self.scheduler[key]['critic'].step()
+
+            # actor update
+            log_pi, policy_q_1, policy_q_2 = self.policy.Qpolicy(observation=obs, joint_observation=obs_joint,
+                                                                 agent_ids=IDs, agent_key=key)
+            log_pi_eval = log_pi[key].reshape(bs)
+            policy_q = torch.min(policy_q_1[key], policy_q_2[key]).reshape(bs)
+            loss_a = ((self.alpha * log_pi_eval - policy_q) * mask_values).sum() / mask_values.sum()
+            self.optimizer[key]['actor'].zero_grad()
+            loss_a.backward()
+            if self.use_grad_clip:
+                torch.nn.utils.clip_grad_norm_(self.policy.parameters_actor[key], self.grad_clip_norm)
+            self.optimizer[key]['actor'].step()
+            if self.scheduler[key]['actor'] is not None:
+                self.scheduler[key]['actor'].step()
 
             # automatic entropy tuning
             if self.use_automatic_entropy_tuning:
@@ -95,3 +117,6 @@ class MASAC_Learner(ISAC_Learner):
 
         self.policy.soft_update(self.tau)
         return info
+
+    def update_rnn(self, sample):
+        return

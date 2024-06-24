@@ -4,12 +4,9 @@ Implementation: Pytorch
 """
 import torch
 from torch import nn
-from numpy import concatenate
 from xuance.torch.learners import LearnerMAS
 from typing import Optional, List
 from argparse import Namespace
-from operator import itemgetter
-from xuance.torch import Tensor
 
 
 class ISAC_Learner(LearnerMAS):
