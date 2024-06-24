@@ -504,7 +504,7 @@ class MASAC_Policy(Basic_ISAC_Policy):
             actor_in = torch.concat([outputs_actor[key], agent_ids], dim=-1)
             act_dist = self.actor[key](actor_in)
             act_sample[key], log_action_prob[key] = act_dist.activated_rsample_and_logprob()
-            joint_actions = act_sample[key].reshape(batch_size, self.n_agents, -1).reshape(batch_size, -1)
+            joint_actions = act_sample[key]
         else:
             for key in self.model_keys:
                 actor_in = outputs_actor[key]
@@ -515,16 +515,25 @@ class MASAC_Policy(Basic_ISAC_Policy):
         for key in agent_list:
             if self.use_parameter_sharing:
                 if self.use_rnn:
-                    raise NotImplemented
+                    joint_obs_rep_1 = outputs_critic_1[key].unsqueeze(1).expand(-1, self.n_agents, -1, -1)
+                    joint_obs_rep_2 = outputs_critic_2[key].unsqueeze(1).expand(-1, self.n_agents, -1, -1)
+                    joint_obs_rep_1 = joint_obs_rep_1.reshape(bs, seq_len, -1)
+                    joint_obs_rep_2 = joint_obs_rep_2.reshape(bs, seq_len, -1)
+                    joint_act_in = joint_actions.reshape(batch_size, self.n_agents, seq_len, -1).transpose(
+                        1, 2).reshape(batch_size, seq_len, -1)
+                    joint_act_in = joint_act_in.unsqueeze(1).expand(-1, self.n_agents, -1, -1).reshape(bs, seq_len, -1)
                 else:
                     joint_obs_rep_1 = outputs_critic_1[key].unsqueeze(1).expand(-1, self.n_agents, -1).reshape(bs, -1)
                     joint_obs_rep_2 = outputs_critic_2[key].unsqueeze(1).expand(-1, self.n_agents, -1).reshape(bs, -1)
-                    joint_act_in = joint_actions.unsqueeze(1).expand(-1, self.n_agents, -1).reshape(bs, -1)
+                    joint_act_in = joint_actions.reshape(batch_size, self.n_agents, -1).reshape(batch_size, -1)
+                    joint_act_in = joint_act_in.unsqueeze(1).expand(-1, self.n_agents, -1).reshape(bs, -1)
                 critic_1_in = torch.concat([joint_obs_rep_1, joint_act_in, agent_ids], dim=-1)
                 critic_2_in = torch.concat([joint_obs_rep_2, joint_act_in, agent_ids], dim=-1)
             else:
                 if self.use_rnn:
-                    raise NotImplemented
+                    joint_obs_rep_1 = outputs_critic_1[key].reshape(bs, seq_len, -1)
+                    joint_obs_rep_2 = outputs_critic_2[key].reshape(bs, seq_len, -1)
+                    joint_act_in = joint_actions.reshape(bs, seq_len, -1)
                 else:
                     joint_obs_rep_1 = outputs_critic_1[key].reshape(bs, -1)
                     joint_obs_rep_2 = outputs_critic_2[key].reshape(bs, -1)
@@ -581,7 +590,7 @@ class MASAC_Policy(Basic_ISAC_Policy):
             actor_in = torch.concat([outputs_actor[key], agent_ids], dim=-1)
             act_dist = self.actor[key](actor_in)
             act_sample[key], new_act_log[key] = act_dist.activated_rsample_and_logprob()
-            joint_actions = act_sample[key].reshape(batch_size, self.n_agents, -1).reshape(batch_size, -1)
+            joint_actions = act_sample[key]
         else:
             for key in agent_list:
                 actor_in = outputs_actor[key]
@@ -592,16 +601,25 @@ class MASAC_Policy(Basic_ISAC_Policy):
         for key in agent_list:
             if self.use_parameter_sharing:
                 if self.use_rnn:
-                    raise NotImplemented
+                    joint_obs_rep_1 = outputs_critic_1[key].unsqueeze(1).expand(-1, self.n_agents, -1, -1)
+                    joint_obs_rep_2 = outputs_critic_2[key].unsqueeze(1).expand(-1, self.n_agents, -1, -1)
+                    joint_obs_rep_1 = joint_obs_rep_1.reshape(bs, seq_len, -1)
+                    joint_obs_rep_2 = joint_obs_rep_2.reshape(bs, seq_len, -1)
+                    joint_act_in = joint_actions.reshape(batch_size, self.n_agents, seq_len, -1).transpose(
+                        1, 2).reshape(batch_size, seq_len, -1)
+                    joint_act_in = joint_act_in.unsqueeze(1).expand(-1, self.n_agents, -1, -1).reshape(bs, seq_len, -1)
                 else:
                     joint_obs_rep_1 = outputs_critic_1[key].unsqueeze(1).expand(-1, self.n_agents, -1).reshape(bs, -1)
                     joint_obs_rep_2 = outputs_critic_2[key].unsqueeze(1).expand(-1, self.n_agents, -1).reshape(bs, -1)
-                    joint_act_in = joint_actions.unsqueeze(1).expand(-1, self.n_agents, -1).reshape(bs, -1)
+                    joint_act_in = joint_actions.reshape(batch_size, self.n_agents, -1).reshape(batch_size, -1)
+                    joint_act_in = joint_act_in.unsqueeze(1).expand(-1, self.n_agents, -1).reshape(bs, -1)
                 critic_1_in = torch.concat([joint_obs_rep_1, joint_act_in, agent_ids], dim=-1)
                 critic_2_in = torch.concat([joint_obs_rep_2, joint_act_in, agent_ids], dim=-1)
             else:
                 if self.use_rnn:
-                    raise NotImplemented
+                    joint_obs_rep_1 = outputs_critic_1[key].reshape(bs, seq_len, -1)
+                    joint_obs_rep_2 = outputs_critic_2[key].reshape(bs, seq_len, -1)
+                    joint_act_in = joint_actions.reshape(bs, seq_len, -1)
                 else:
                     joint_obs_rep_1 = outputs_critic_1[key].reshape(bs, -1)
                     joint_obs_rep_2 = outputs_critic_2[key].reshape(bs, -1)
@@ -652,7 +670,11 @@ class MASAC_Policy(Basic_ISAC_Policy):
         for key in agent_list:
             if self.use_parameter_sharing:
                 if self.use_rnn:
-                    raise NotImplemented
+                    joint_obs_rep_1 = outputs_critic_1[key].unsqueeze(1).expand(-1, self.n_agents, -1, -1)
+                    joint_obs_rep_2 = outputs_critic_2[key].unsqueeze(1).expand(-1, self.n_agents, -1, -1)
+                    joint_obs_rep_1 = joint_obs_rep_1.reshape(bs, seq_len, -1)
+                    joint_obs_rep_2 = joint_obs_rep_2.reshape(bs, seq_len, -1)
+                    joint_act_in = joint_actions.unsqueeze(1).expand(-1, self.n_agents, -1, -1).reshape(bs, seq_len, -1)
                 else:
                     joint_obs_rep_1 = outputs_critic_1[key].unsqueeze(1).expand(-1, self.n_agents, -1).reshape(bs, -1)
                     joint_obs_rep_2 = outputs_critic_2[key].unsqueeze(1).expand(-1, self.n_agents, -1).reshape(bs, -1)
@@ -661,7 +683,9 @@ class MASAC_Policy(Basic_ISAC_Policy):
                 critic_2_in = torch.concat([joint_obs_rep_2, joint_act_in, agent_ids], dim=-1)
             else:
                 if self.use_rnn:
-                    raise NotImplemented
+                    joint_obs_rep_1 = outputs_critic_1[key].reshape(bs, seq_len, -1)
+                    joint_obs_rep_2 = outputs_critic_2[key].reshape(bs, seq_len, -1)
+                    joint_act_in = joint_actions.reshape(bs, seq_len, -1)
                 else:
                     joint_obs_rep_1 = outputs_critic_1[key].reshape(bs, -1)
                     joint_obs_rep_2 = outputs_critic_2[key].reshape(bs, -1)

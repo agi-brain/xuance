@@ -43,19 +43,20 @@ class MASAC_Learner(ISAC_Learner):
         if self.use_parameter_sharing:
             key = self.model_keys[0]
             bs = batch_size * self.n_agents
-            joint_actions = actions[key].reshape(batch_size, -1)
+            obs_joint = obs[key].reshape(batch_size, -1)
+            next_obs_joint = obs_next[key].reshape(batch_size, -1)
+            actions_joint = actions[key].reshape(batch_size, -1)
             rewards[key] = rewards[key].reshape(batch_size * self.n_agents)
             terminals[key] = terminals[key].reshape(batch_size * self.n_agents)
         else:
             bs = batch_size
-            joint_actions = torch.concat(itemgetter(*self.agent_keys)(actions), dim=-1).reshape(batch_size, -1)
-
-        obs_joint = Tensor(concatenate(itemgetter(*self.agent_keys)(sample['obs']), axis=-1)).to(self.device)
-        next_obs_joint = Tensor(concatenate(itemgetter(*self.agent_keys)(sample['obs_next']), axis=-1)).to(self.device)
+            obs_joint = torch.concat(itemgetter(*self.agent_keys)(obs), dim=-1).reshape(batch_size, -1)
+            next_obs_joint = torch.concat(itemgetter(*self.agent_keys)(obs_next), dim=-1).reshape(batch_size, -1)
+            actions_joint = torch.concat(itemgetter(*self.agent_keys)(actions), dim=-1).reshape(batch_size, -1)
 
         # train the model
         action_q_1, action_q_2 = self.policy.Qaction(observation=obs, joint_observation=obs_joint,
-                                                     joint_actions=joint_actions, agent_ids=IDs)
+                                                     joint_actions=actions_joint, agent_ids=IDs)
         log_pi_next, target_q = self.policy.Qtarget(next_observation=obs_next, joint_observation=next_obs_joint,
                                                     agent_ids=IDs)
         for key in self.model_keys:
@@ -119,4 +120,109 @@ class MASAC_Learner(ISAC_Learner):
         return info
 
     def update_rnn(self, sample):
-        return
+        self.iterations += 1
+        info = {}
+
+        # prepare training data
+        sample_Tensor = self.build_training_data(sample=sample,
+                                                 use_parameter_sharing=self.use_parameter_sharing,
+                                                 use_actions_mask=self.use_actions_mask)
+        batch_size = sample_Tensor['batch_size']
+        seq_len = sample_Tensor['seq_length']
+        obs = sample_Tensor['obs']
+        actions = sample_Tensor['actions']
+        rewards = sample_Tensor['rewards']
+        terminals = sample_Tensor['terminals']
+        agent_mask = sample_Tensor['agent_mask']
+        filled = sample_Tensor['filled']
+        IDs = sample_Tensor['agent_ids']
+
+        if self.use_parameter_sharing:
+            key = self.model_keys[0]
+            bs_rnn = batch_size * self.n_agents
+            filled = filled.unsqueeze(1).expand(-1, self.n_agents, -1).reshape(bs_rnn, seq_len)
+            obs_joint = obs[key].reshape(batch_size, self.n_agents, seq_len + 1, -1).transpose(
+                1, 2).reshape(batch_size, seq_len + 1, -1)
+            actions_joint = actions[key].reshape(batch_size, self.n_agents, seq_len, -1).transpose(
+                1, 2).reshape(batch_size, seq_len, -1)
+            rewards[key] = rewards[key].reshape(bs_rnn, seq_len)
+            terminals[key] = terminals[key].reshape(bs_rnn, seq_len)
+            IDs_t = IDs[:, :-1]
+        else:
+            bs_rnn, IDs_t = batch_size, None
+            obs_joint = torch.concat(itemgetter(*self.agent_keys)(obs), dim=-1).reshape(batch_size, seq_len + 1, -1)
+            actions_joint = torch.concat(itemgetter(*self.agent_keys)(actions), dim=-1).reshape(batch_size, seq_len, -1)
+
+        # initial hidden states for rnn
+        rnn_hidden_actor = {k: self.policy.actor_representation[k].init_hidden(bs_rnn) for k in self.model_keys}
+        rnn_hidden_critic = {k: self.policy.critic_1_representation[k].init_hidden(batch_size) for k in self.model_keys}
+
+        obs_t = {k: v[:, :-1] for k, v in obs.items()}
+
+        action_q_1, action_q_2 = self.policy.Qaction(observation=obs_t, joint_observation=obs_joint[:, :-1],
+                                                     joint_actions=actions_joint, agent_ids=IDs_t,
+                                                     rnn_hidden_critic=rnn_hidden_critic)
+        log_pi_next, target_q = self.policy.Qtarget(next_observation=obs, joint_observation=obs_joint, agent_ids=IDs,
+                                                    rnn_hidden_actor=rnn_hidden_actor,
+                                                    rnn_hidden_critic=rnn_hidden_critic)
+        for key in self.model_keys:
+            mask_values = agent_mask[key] * filled
+            # critic update
+            action_q_1_i = action_q_1[key].reshape(bs_rnn, seq_len)
+            action_q_2_i = action_q_2[key].reshape(bs_rnn, seq_len)
+            log_pi_next_eval = log_pi_next[key][:, 1:].reshape(bs_rnn, seq_len)
+            target_value = target_q[key][:, 1:].reshape(bs_rnn, seq_len) - self.alpha * log_pi_next_eval
+            backup = rewards[key] + (1 - terminals[key]) * self.gamma * target_value
+            td_error_1, td_error_2 = action_q_1_i - backup.detach(), action_q_2_i - backup.detach()
+            td_error_1 *= mask_values
+            td_error_2 *= mask_values
+            loss_c = ((td_error_1 ** 2).sum() + (td_error_2 ** 2).sum()) / mask_values.sum()
+            self.optimizer[key]['critic'].zero_grad()
+            loss_c.backward()
+            if self.use_grad_clip:
+                torch.nn.utils.clip_grad_norm_(self.policy.parameters_critic[key], self.grad_clip_norm)
+            self.optimizer[key]['critic'].step()
+            if self.scheduler[key]['critic'] is not None:
+                self.scheduler[key]['critic'].step()
+
+            # actor update
+            log_pi, policy_q_1, policy_q_2 = self.policy.Qpolicy(observation=obs, joint_observation=obs_joint,
+                                                                 agent_ids=IDs, agent_key=key,
+                                                                 rnn_hidden_actor=rnn_hidden_actor,
+                                                                 rnn_hidden_critic=rnn_hidden_critic)
+            log_pi_eval = log_pi[key][:, :-1].reshape(bs_rnn, seq_len)
+            policy_q = torch.min(policy_q_1[key][:, :-1], policy_q_2[key][:, :-1]).reshape(bs_rnn, seq_len)
+            loss_a = ((self.alpha * log_pi_eval - policy_q) * mask_values).sum() / mask_values.sum()
+            self.optimizer[key]['actor'].zero_grad()
+            loss_a.backward()
+            if self.use_grad_clip:
+                torch.nn.utils.clip_grad_norm_(self.policy.parameters_actor[key], self.grad_clip_norm)
+            self.optimizer[key]['actor'].step()
+            if self.scheduler[key]['actor'] is not None:
+                self.scheduler[key]['actor'].step()
+
+            # automatic entropy tuning
+            if self.use_automatic_entropy_tuning:
+                alpha_loss = -(self.log_alpha * (log_pi[key] + self.target_entropy).detach()).mean()
+                self.alpha_optimizer.zero_grad()
+                alpha_loss.backward()
+                self.alpha_optimizer.step()
+                self.alpha = self.log_alpha.exp()
+            else:
+                alpha_loss = 0
+
+            lr_a = self.optimizer[key]['actor'].state_dict()['param_groups'][0]['lr']
+            lr_c = self.optimizer[key]['critic'].state_dict()['param_groups'][0]['lr']
+
+            info.update({
+                f"{key}/learning_rate_actor": lr_a,
+                f"{key}/learning_rate_critic": lr_c,
+                f"{key}/loss_actor": loss_a.item(),
+                f"{key}/loss_critic": loss_c.item(),
+                f"{key}/predictQ": policy_q.mean().item(),
+                f"{key}/alpha_loss": alpha_loss.item(),
+                f"{key}/alpha": self.alpha.item(),
+            })
+
+        self.policy.soft_update(self.tau)
+        return info
