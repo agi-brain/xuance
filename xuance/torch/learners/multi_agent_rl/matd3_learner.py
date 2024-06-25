@@ -8,10 +8,10 @@ from typing import Optional, List
 from argparse import Namespace
 from operator import itemgetter
 from xuance.torch import Tensor
-from xuance.torch.learners.multi_agent_rl.maddpg_learner import MADDPG_Learner
+from xuance.torch.learners import LearnerMAS
 
 
-class MATD3_Learner(MADDPG_Learner):
+class MATD3_Learner(LearnerMAS):
     def __init__(self,
                  config: Namespace,
                  model_keys: List[str],
@@ -20,8 +20,15 @@ class MATD3_Learner(MADDPG_Learner):
                  policy: nn.Module,
                  optimizer: Optional[dict],
                  scheduler: Optional[dict] = None):
+        self.gamma = config.gamma
+        self.tau = config.tau
+        self.mse_loss = nn.MSELoss()
         super(MATD3_Learner, self).__init__(config, model_keys, agent_keys, episode_length,
                                             policy, optimizer, scheduler)
+        self.optimizer = {key: {'actor': optimizer[key][0],
+                                'critic': optimizer[key][1]} for key in self.model_keys}
+        self.scheduler = {key: {'actor': scheduler[key][0],
+                                'critic': scheduler[key][1]} for key in self.model_keys}
         self.actor_update_delay = config.actor_update_delay
 
     def update(self, sample):
@@ -40,22 +47,30 @@ class MATD3_Learner(MADDPG_Learner):
         terminals = sample_Tensor['terminals']
         agent_mask = sample_Tensor['agent_mask']
         IDs = sample_Tensor['agent_ids']
-        bs = batch_size * self.n_agents if self.use_parameter_sharing else batch_size
-
-        obs_joint = Tensor(concatenate(itemgetter(*self.agent_keys)(sample['obs']), axis=-1)).to(self.device)
-        next_obs_joint = Tensor(concatenate(itemgetter(*self.agent_keys)(sample['obs_next']), axis=-1)).to(self.device)
+        if self.use_parameter_sharing:
+            key = self.model_keys[0]
+            bs = batch_size * self.n_agents
+            obs_joint = obs[key].reshape(batch_size, -1)
+            next_obs_joint = obs_next[key].reshape(batch_size, -1)
+            actions_joint = actions[key].reshape(batch_size, -1)
+            rewards[key] = rewards[key].reshape(batch_size * self.n_agents)
+            terminals[key] = terminals[key].reshape(batch_size * self.n_agents)
+        else:
+            bs = batch_size
+            obs_joint = torch.concat(itemgetter(*self.agent_keys)(obs), dim=-1).reshape(batch_size, -1)
+            next_obs_joint = torch.concat(itemgetter(*self.agent_keys)(obs_next), dim=-1).reshape(batch_size, -1)
+            actions_joint = torch.concat(itemgetter(*self.agent_keys)(actions), dim=-1).reshape(batch_size, -1)
 
         # get values
         _, actions_next = self.policy.Atarget(next_observation=obs_next, agent_ids=IDs)
         if self.use_parameter_sharing:
-            act_critic = actions[self.model_keys[0]].reshape(batch_size, -1)
-            act_next = actions_next[self.model_keys[0]].reshape(batch_size, self.n_agents, -1).reshape(batch_size, -1)
+            key = self.model_keys[0]
+            actions_next_joint = actions_next[key].reshape(batch_size, self.n_agents, -1).reshape(batch_size, -1)
         else:
-            act_critic = torch.concat(itemgetter(*self.agent_keys)(actions), dim=-1).reshape(batch_size, -1)
-            act_next = torch.concat(itemgetter(*self.agent_keys)(actions_next), dim=-1).reshape(batch_size, -1)
-        q_eval_A, q_eval_B, _ = self.policy.Qpolicy(joint_observation=obs_joint, joint_actions=act_critic,
+            actions_next_joint = torch.concat(itemgetter(*self.model_keys)(actions_next), -1).reshape(batch_size, -1)
+        q_eval_A, q_eval_B, _ = self.policy.Qpolicy(joint_observation=obs_joint, joint_actions=actions_joint,
                                                     agent_ids=IDs)
-        q_next = self.policy.Qtarget(joint_observation=next_obs_joint, joint_actions=act_next, agent_ids=IDs)
+        q_next = self.policy.Qtarget(joint_observation=next_obs_joint, joint_actions=actions_next_joint, agent_ids=IDs)
 
         # update critic(s)
         for key in self.model_keys:
@@ -134,18 +149,20 @@ class MATD3_Learner(MADDPG_Learner):
         filled = sample_Tensor['filled']
         IDs = sample_Tensor['agent_ids']
 
-        obs_joint = Tensor(concatenate(itemgetter(*self.agent_keys)(sample['obs']), axis=-1)).to(self.device)
-
         if self.use_parameter_sharing:
             key = self.model_keys[0]
             bs_rnn = batch_size * self.n_agents
-            actions_joint = actions[key].transpose(1, 2).reshape(batch_size, seq_len, -1)
             filled = filled.unsqueeze(1).expand(-1, self.n_agents, -1).reshape(bs_rnn, seq_len)
+            obs_joint = obs[key].reshape(batch_size, self.n_agents, seq_len + 1, -1).transpose(
+                1, 2).reshape(batch_size, seq_len + 1, -1)
+            actions_joint = actions[key].reshape(batch_size, self.n_agents, seq_len, -1).transpose(
+                1, 2).reshape(batch_size, seq_len, -1)
             rewards[key] = rewards[key].reshape(bs_rnn, seq_len)
             terminals[key] = terminals[key].reshape(bs_rnn, seq_len)
             IDs_t = IDs[:, :-1]
         else:
             bs_rnn, IDs_t = batch_size, None
+            obs_joint = torch.concat(itemgetter(*self.agent_keys)(obs), dim=-1).reshape(batch_size, seq_len + 1, -1)
             actions_joint = torch.concat(itemgetter(*self.agent_keys)(actions), dim=-1).reshape(batch_size, seq_len, -1)
 
         # initial hidden states for rnn

@@ -5,15 +5,12 @@ https://proceedings.neurips.cc/paper/2017/file/68a9750337a418a86fe06c1991a1d64c-
 Implementation: Pytorch
 Trick: Parameter sharing for all agents, with agents' one-hot IDs as actor-critic's inputs.
 """
-import numpy as np
 import torch
 from torch import nn
-from numpy import concatenate
 from xuance.torch.learners import LearnerMAS
 from typing import Optional, List
 from argparse import Namespace
 from operator import itemgetter
-from xuance.torch import Tensor
 
 
 class MADDPG_Learner(LearnerMAS):
@@ -51,7 +48,6 @@ class MADDPG_Learner(LearnerMAS):
         terminals = sample_Tensor['terminals']
         agent_mask = sample_Tensor['agent_mask']
         IDs = sample_Tensor['agent_ids']
-        bs = batch_size * self.n_agents if self.use_parameter_sharing else batch_size
         if self.use_parameter_sharing:
             key = self.model_keys[0]
             bs = batch_size * self.n_agents
@@ -145,40 +141,42 @@ class MADDPG_Learner(LearnerMAS):
         filled = sample_Tensor['filled']
         IDs = sample_Tensor['agent_ids']
 
-        obs_joint = Tensor(concatenate(itemgetter(*self.agent_keys)(sample['obs']), axis=-1)).to(self.device)
-
         if self.use_parameter_sharing:
             key = self.model_keys[0]
             bs_rnn = batch_size * self.n_agents
-            actions_joint = actions[key].transpose(1, 2).reshape(batch_size, seq_len, -1)
             filled = filled.unsqueeze(1).expand(-1, self.n_agents, -1).reshape(bs_rnn, seq_len)
+            obs_joint = obs[key].reshape(batch_size, self.n_agents, seq_len + 1, -1).transpose(
+                1, 2).reshape(batch_size, seq_len + 1, -1)
+            actions_joint = actions[key].reshape(batch_size, self.n_agents, seq_len, -1).transpose(
+                1, 2).reshape(batch_size, seq_len, -1)
             rewards[key] = rewards[key].reshape(bs_rnn, seq_len)
             terminals[key] = terminals[key].reshape(bs_rnn, seq_len)
             IDs_t = IDs[:, :-1]
         else:
             bs_rnn, IDs_t = batch_size, None
+            obs_joint = torch.concat(itemgetter(*self.agent_keys)(obs), dim=-1).reshape(batch_size, seq_len + 1, -1)
             actions_joint = torch.concat(itemgetter(*self.agent_keys)(actions), dim=-1).reshape(batch_size, seq_len, -1)
 
         # initial hidden states for rnn
         rnn_hidden_actor = {k: self.policy.actor_representation[k].init_hidden(bs_rnn) for k in self.model_keys}
         rnn_hidden_critic = {k: self.policy.critic_representation[k].init_hidden(batch_size) for k in self.model_keys}
-        rnn_hidden_target_critic = {k: self.policy.target_critic_representation[k].init_hidden(batch_size)
-                                    for k in self.model_keys}
+
         # get actions
         _, actions_eval = self.policy(observation=obs, agent_ids=IDs, rnn_hidden=rnn_hidden_actor)
         _, actions_next = self.policy.Atarget(next_observation=obs, agent_ids=IDs, rnn_hidden=rnn_hidden_actor)
 
         # get q values
         if self.use_parameter_sharing:
-            next_actions_joint = actions_next[self.model_keys[0]].reshape(
-                batch_size, self.n_agents, seq_len + 1, -1).transpose(1, 2).reshape(batch_size, seq_len + 1, -1)
+            key = self.model_keys[0]
+            actions_next_joint = actions_next[key].reshape(batch_size, self.n_agents, seq_len + 1, -1).transpose(
+                1, 2).reshape(batch_size, seq_len + 1, -1)
         else:
-            next_actions_joint = torch.concat(itemgetter(*self.agent_keys)(actions_next),
+            actions_next_joint = torch.concat(itemgetter(*self.agent_keys)(actions_next),
                                               dim=-1).reshape(batch_size, seq_len + 1, -1)
         _, q_eval = self.policy.Qpolicy(joint_observation=obs_joint[:, :-1], joint_actions=actions_joint,
                                         agent_ids=IDs_t, rnn_hidden=rnn_hidden_critic)
-        _, q_next = self.policy.Qtarget(joint_observation=obs_joint, joint_actions=next_actions_joint, agent_ids=IDs,
-                                        rnn_hidden=rnn_hidden_target_critic)
+        _, q_next = self.policy.Qtarget(joint_observation=obs_joint, joint_actions=actions_next_joint, agent_ids=IDs,
+                                        rnn_hidden=rnn_hidden_critic)
 
         for key in self.model_keys:
             mask_values = agent_mask[key] * filled
@@ -201,8 +199,8 @@ class MADDPG_Learner(LearnerMAS):
                 act_eval = actions_eval[key][:, :-1].reshape(
                     batch_size, self.n_agents, seq_len, -1).transpose(1, 2).reshape(batch_size, seq_len, -1)
             else:
-                a_joint = {k: actions_eval[k][:, :-1] if k == key else actions[k] for k in self.agent_keys}
-                act_eval = torch.concat(itemgetter(*self.agent_keys)(a_joint), dim=-1).reshape(batch_size, seq_len, -1)
+                a_dict = {k: actions_eval[k][:, :-1] if k == key else actions[k] for k in self.agent_keys}
+                act_eval = torch.concat(itemgetter(*self.agent_keys)(a_dict), dim=-1).reshape(batch_size, seq_len, -1)
             _, q_policy = self.policy.Qpolicy(joint_observation=obs_joint[:, :-1], joint_actions=act_eval,
                                               agent_key=key, agent_ids=IDs_t, rnn_hidden=rnn_hidden_critic)
             q_policy_i = q_policy[key].reshape(bs_rnn, seq_len)

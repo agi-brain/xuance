@@ -4,12 +4,10 @@ Implementation: Pytorch
 """
 import torch
 from torch import nn
-from numpy import concatenate
 from typing import Optional, List
 from argparse import Namespace
 from xuance.torch.learners.multi_agent_rl.isac_learner import ISAC_Learner
 from operator import itemgetter
-from xuance.torch import Tensor
 
 
 class MASAC_Learner(ISAC_Learner):
@@ -178,7 +176,7 @@ class MASAC_Learner(ISAC_Learner):
             actions_eval_joint = actions_eval[key].reshape(batch_size, self.n_agents, seq_len + 1, -1).transpose(
                 1, 2).reshape(batch_size, seq_len + 1, -1)
         else:
-            actions_eval_joint = torch.concat(itemgetter(*self.model_keys)(actions_eval),
+            actions_eval_joint = torch.concat(itemgetter(*self.agent_keys)(actions_eval),
                                               dim=-1).reshape(batch_size, seq_len + 1, -1)
         _, _, action_q_1, action_q_2 = self.policy.Qaction(joint_observation=obs_joint[:, :-1],
                                                            joint_actions=actions_joint,
