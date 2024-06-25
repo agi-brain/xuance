@@ -59,8 +59,10 @@ class ISAC_Learner(LearnerMAS):
             bs = batch_size
 
         # feedforward
-        action_q_1, action_q_2 = self.policy.Qaction(observation=obs, actions=actions, agent_ids=IDs)
-        log_pi_next, next_q = self.policy.Qtarget(next_observation=obs_next, agent_ids=IDs)
+        _, actions_eval, log_pi_eval = self.policy(observation=obs, agent_ids=IDs)
+        _, actions_next, log_pi_next = self.policy(observation=obs_next, agent_ids=IDs)
+        _, _, action_q_1, action_q_2 = self.policy.Qaction(observation=obs, actions=actions, agent_ids=IDs)
+        _, _, next_q = self.policy.Qtarget(next_observation=obs_next, next_actions=actions_next, agent_ids=IDs)
 
         for key in self.model_keys:
             mask_values = agent_mask[key]
@@ -83,10 +85,11 @@ class ISAC_Learner(LearnerMAS):
                 self.scheduler[key]['critic'].step()
 
             # update actor
-            log_pi, policy_q_1, policy_q_2 = self.policy.Qpolicy(observation=obs, agent_ids=IDs, agent_key=key)
-            log_pi_eval = log_pi[key].reshape(bs)
+            _, _, policy_q_1, policy_q_2 = self.policy.Qpolicy(observation=obs, actions=actions_eval, agent_ids=IDs,
+                                                               agent_key=key)
+            log_pi_eval_i = log_pi_eval[key].reshape(bs)
             policy_q = torch.min(policy_q_1[key], policy_q_2[key]).reshape(bs)
-            loss_a = ((self.alpha * log_pi_eval - policy_q) * mask_values).sum() / mask_values.sum()
+            loss_a = ((self.alpha * log_pi_eval_i - policy_q) * mask_values).sum() / mask_values.sum()
             self.optimizer[key]['actor'].zero_grad()
             loss_a.backward()
             if self.use_grad_clip:
@@ -97,7 +100,7 @@ class ISAC_Learner(LearnerMAS):
 
             # automatic entropy tuning
             if self.use_automatic_entropy_tuning:
-                alpha_loss = -(self.log_alpha * (log_pi[key] + self.target_entropy).detach()).mean()
+                alpha_loss = -(self.log_alpha * (log_pi_eval_i + self.target_entropy).detach()).mean()
                 self.alpha_optimizer.zero_grad()
                 alpha_loss.backward()
                 self.alpha_optimizer.step()
@@ -153,18 +156,18 @@ class ISAC_Learner(LearnerMAS):
         rnn_hidden_actor = {k: self.policy.actor_representation[k].init_hidden(bs_rnn) for k in self.model_keys}
         rnn_hidden_critic = {k: self.policy.critic_1_representation[k].init_hidden(bs_rnn) for k in self.model_keys}
 
+        _, actions_eval, log_pi_eval = self.policy(observation=obs, agent_ids=IDs, rnn_hidden=rnn_hidden_actor)
         obs_t = {k: v[:, :-1] for k, v in obs.items()}
-        action_q_1, action_q_2 = self.policy.Qaction(observation=obs_t, actions=actions, agent_ids=IDs_t,
-                                                     rnn_hidden_critic=rnn_hidden_critic)
-        log_pi_next, next_q = self.policy.Qtarget(next_observation=obs, agent_ids=IDs,
-                                                  rnn_hidden_actor=rnn_hidden_actor,
-                                                  rnn_hidden_critic=rnn_hidden_critic)
+        _, _, action_q_1, action_q_2 = self.policy.Qaction(observation=obs_t, actions=actions, agent_ids=IDs_t,
+                                                           rnn_hidden_critic=rnn_hidden_critic)
+        _, _, next_q = self.policy.Qtarget(next_observation=obs, next_actions=actions_eval, agent_ids=IDs,
+                                           rnn_hidden_critic=rnn_hidden_critic)
         for key in self.model_keys:
             mask_values = agent_mask[key] * filled
             # update critic
             action_q_1_i = action_q_1[key].reshape(bs_rnn, seq_len)
             action_q_2_i = action_q_2[key].reshape(bs_rnn, seq_len)
-            log_pi_next_eval = log_pi_next[key][:, 1:].reshape(bs_rnn, seq_len)
+            log_pi_next_eval = log_pi_eval[key][:, 1:].reshape(bs_rnn, seq_len)
             next_q_i = next_q[key][:, 1:].reshape(bs_rnn, seq_len)
             target_value = next_q_i - self.alpha * log_pi_next_eval
             backup = rewards[key] + (1 - terminals[key]) * self.gamma * target_value
@@ -181,12 +184,12 @@ class ISAC_Learner(LearnerMAS):
                 self.scheduler[key]['critic'].step()
 
             # update actor
-            log_pi, policy_q_1, policy_q_2 = self.policy.Qpolicy(observation=obs, agent_ids=IDs, agent_key=key,
-                                                                 rnn_hidden_actor=rnn_hidden_actor,
-                                                                 rnn_hidden_critic=rnn_hidden_critic)
-            log_pi_eval = log_pi[key][:, :-1].reshape(bs_rnn, seq_len)
+            _, _, policy_q_1, policy_q_2 = self.policy.Qpolicy(observation=obs, actions=actions_eval,
+                                                               agent_ids=IDs, agent_key=key,
+                                                               rnn_hidden_critic=rnn_hidden_critic)
+            log_pi_eval_i = log_pi_eval[key][:, :-1].reshape(bs_rnn, seq_len)
             policy_q = torch.min(policy_q_1[key][:, :-1], policy_q_2[key][:, :-1]).reshape(bs_rnn, seq_len)
-            loss_a = ((self.alpha * log_pi_eval - policy_q) * mask_values).sum() / mask_values.sum()
+            loss_a = ((self.alpha * log_pi_eval_i - policy_q) * mask_values).sum() / mask_values.sum()
             self.optimizer[key]['actor'].zero_grad()
             loss_a.backward()
             if self.use_grad_clip:
@@ -197,7 +200,7 @@ class ISAC_Learner(LearnerMAS):
 
             # automatic entropy tuning
             if self.use_automatic_entropy_tuning:
-                alpha_loss = -(self.log_alpha * (log_pi[key] + self.target_entropy).detach()).mean()
+                alpha_loss = -(self.log_alpha * (log_pi_eval_i + self.target_entropy).detach()).mean()
                 self.alpha_optimizer.zero_grad()
                 alpha_loss.backward()
                 self.alpha_optimizer.step()
