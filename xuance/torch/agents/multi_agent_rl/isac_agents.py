@@ -110,7 +110,7 @@ class ISAC_Agents(IDDPG_Agents, MARLAgents):
         batch_size = len(obs_dict)
 
         obs_input, agents_id, avail_actions_input = self._build_inputs(obs_dict)
-        hidden_state, actions = self.policy(observation=obs_input, agent_ids=agents_id, rnn_hidden=rnn_hidden)
+        hidden_state, actions, _ = self.policy(observation=obs_input, agent_ids=agents_id, rnn_hidden=rnn_hidden)
 
         if self.use_parameter_sharing:
             key = self.model_keys[0]

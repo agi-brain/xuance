@@ -55,10 +55,17 @@ class MASAC_Learner(ISAC_Learner):
             actions_joint = torch.concat(itemgetter(*self.agent_keys)(actions), dim=-1).reshape(batch_size, -1)
 
         # train the model
-        action_q_1, action_q_2 = self.policy.Qaction(observation=obs, joint_observation=obs_joint,
-                                                     joint_actions=actions_joint, agent_ids=IDs)
-        log_pi_next, target_q = self.policy.Qtarget(next_observation=obs_next, joint_observation=next_obs_joint,
-                                                    agent_ids=IDs)
+        _, actions_eval, log_pi_eval = self.policy(observation=obs, agent_ids=IDs)
+        _, actions_next, log_pi_next = self.policy(observation=obs_next, agent_ids=IDs)
+        if self.use_parameter_sharing:
+            key = self.model_keys[0]
+            actions_next_joint = actions_next[key].reshape(batch_size, self.n_agents, -1).reshape(batch_size, -1)
+        else:
+            actions_next_joint = torch.concat(itemgetter(*self.model_keys)(actions_next), -1).reshape(batch_size, -1)
+        _, _, action_q_1, action_q_2 = self.policy.Qaction(observation=obs, joint_observation=obs_joint,
+                                                           joint_actions=actions_joint, agent_ids=IDs)
+        _, _, target_q = self.policy.Qtarget(next_observation=obs_next, joint_observation=next_obs_joint,
+                                             joint_actions=actions_next_joint, agent_ids=IDs)
         for key in self.model_keys:
             mask_values = agent_mask[key]
             # critic update
@@ -80,11 +87,19 @@ class MASAC_Learner(ISAC_Learner):
                 self.scheduler[key]['critic'].step()
 
             # actor update
-            log_pi, policy_q_1, policy_q_2 = self.policy.Qpolicy(observation=obs, joint_observation=obs_joint,
-                                                                 agent_ids=IDs, agent_key=key)
-            log_pi_eval = log_pi[key].reshape(bs)
+            if self.use_parameter_sharing:
+                actions_eval_joint = actions_eval[key].reshape(batch_size, self.n_agents, -1).reshape(batch_size, -1)
+            else:
+                actions_eval_detach_others = {k: actions_eval[k] if k == key else actions_eval[k].detach()
+                                              for k in self.model_keys}
+                actions_eval_joint = torch.concat(itemgetter(*self.model_keys)(actions_eval_detach_others),
+                                                  dim=-1).reshape(batch_size, -1)
+            _, _, policy_q_1, policy_q_2 = self.policy.Qpolicy(observation=obs, joint_observation=obs_joint,
+                                                               joint_actions=actions_eval_joint,
+                                                               agent_ids=IDs, agent_key=key)
+            log_pi_eval_i = log_pi_eval[key].reshape(bs)
             policy_q = torch.min(policy_q_1[key], policy_q_2[key]).reshape(bs)
-            loss_a = ((self.alpha * log_pi_eval - policy_q) * mask_values).sum() / mask_values.sum()
+            loss_a = ((self.alpha * log_pi_eval_i - policy_q) * mask_values).sum() / mask_values.sum()
             self.optimizer[key]['actor'].zero_grad()
             loss_a.backward()
             if self.use_grad_clip:
@@ -95,7 +110,7 @@ class MASAC_Learner(ISAC_Learner):
 
             # automatic entropy tuning
             if self.use_automatic_entropy_tuning:
-                alpha_loss = -(self.log_alpha * (log_pi[key] + self.target_entropy).detach()).mean()
+                alpha_loss = -(self.log_alpha * (log_pi_eval_i + self.target_entropy).detach()).mean()
                 self.alpha_optimizer.zero_grad()
                 alpha_loss.backward()
                 self.alpha_optimizer.step()
@@ -157,20 +172,27 @@ class MASAC_Learner(ISAC_Learner):
         rnn_hidden_actor = {k: self.policy.actor_representation[k].init_hidden(bs_rnn) for k in self.model_keys}
         rnn_hidden_critic = {k: self.policy.critic_1_representation[k].init_hidden(batch_size) for k in self.model_keys}
 
+        _, actions_eval, log_pi_eval = self.policy(observation=obs, agent_ids=IDs, rnn_hidden=rnn_hidden_actor)
+        if self.use_parameter_sharing:
+            key = self.model_keys[0]
+            actions_next_joint = actions_eval[key].reshape(batch_size, self.n_agents, seq_len + 1, -1).transpose(
+                1, 2).reshape(batch_size, seq_len + 1, -1)
+        else:
+            actions_next_joint = torch.concat(itemgetter(*self.model_keys)(actions_eval),
+                                              dim=-1).reshape(batch_size, seq_len + 1, -1)
         obs_t = {k: v[:, :-1] for k, v in obs.items()}
-
-        action_q_1, action_q_2 = self.policy.Qaction(observation=obs_t, joint_observation=obs_joint[:, :-1],
-                                                     joint_actions=actions_joint, agent_ids=IDs_t,
-                                                     rnn_hidden_critic=rnn_hidden_critic)
-        log_pi_next, target_q = self.policy.Qtarget(next_observation=obs, joint_observation=obs_joint, agent_ids=IDs,
-                                                    rnn_hidden_actor=rnn_hidden_actor,
-                                                    rnn_hidden_critic=rnn_hidden_critic)
+        _, _, action_q_1, action_q_2 = self.policy.Qaction(observation=obs_t, joint_observation=obs_joint[:, :-1],
+                                                           joint_actions=actions_joint, agent_ids=IDs_t,
+                                                           rnn_hidden_critic=rnn_hidden_critic)
+        _, _, target_q = self.policy.Qtarget(next_observation=obs, joint_observation=obs_joint,
+                                             joint_actions=actions_next_joint, agent_ids=IDs,
+                                             rnn_hidden_critic=rnn_hidden_critic)
         for key in self.model_keys:
             mask_values = agent_mask[key] * filled
             # critic update
             action_q_1_i = action_q_1[key].reshape(bs_rnn, seq_len)
             action_q_2_i = action_q_2[key].reshape(bs_rnn, seq_len)
-            log_pi_next_eval = log_pi_next[key][:, 1:].reshape(bs_rnn, seq_len)
+            log_pi_next_eval = log_pi_eval[key][:, 1:].reshape(bs_rnn, seq_len)
             target_value = target_q[key][:, 1:].reshape(bs_rnn, seq_len) - self.alpha * log_pi_next_eval
             backup = rewards[key] + (1 - terminals[key]) * self.gamma * target_value
             td_error_1, td_error_2 = action_q_1_i - backup.detach(), action_q_2_i - backup.detach()
@@ -186,13 +208,20 @@ class MASAC_Learner(ISAC_Learner):
                 self.scheduler[key]['critic'].step()
 
             # actor update
-            log_pi, policy_q_1, policy_q_2 = self.policy.Qpolicy(observation=obs, joint_observation=obs_joint,
-                                                                 agent_ids=IDs, agent_key=key,
-                                                                 rnn_hidden_actor=rnn_hidden_actor,
-                                                                 rnn_hidden_critic=rnn_hidden_critic)
-            log_pi_eval = log_pi[key][:, :-1].reshape(bs_rnn, seq_len)
-            policy_q = torch.min(policy_q_1[key][:, :-1], policy_q_2[key][:, :-1]).reshape(bs_rnn, seq_len)
-            loss_a = ((self.alpha * log_pi_eval - policy_q) * mask_values).sum() / mask_values.sum()
+            if self.use_parameter_sharing:
+                actions_eval_joint = actions_next_joint[:, :-1]
+            else:
+                actions_eval_detach_others = {k: actions_eval[k] if k == key else actions_eval[k].detach()
+                                              for k in self.model_keys}
+                actions_eval_joint = torch.concat(itemgetter(*self.model_keys)(actions_eval_detach_others),
+                                                  dim=-1).reshape(batch_size, seq_len + 1, -1)[:, :-1]
+            _, _, policy_q_1, policy_q_2 = self.policy.Qpolicy(observation=obs_t, joint_observation=obs_joint[:, :-1],
+                                                               joint_actions=actions_eval_joint,
+                                                               agent_ids=IDs_t, agent_key=key,
+                                                               rnn_hidden_critic=rnn_hidden_critic)
+            log_pi_eval_i = log_pi_eval[key][:, :-1].reshape(bs_rnn, seq_len)
+            policy_q = torch.min(policy_q_1[key], policy_q_2[key]).reshape(bs_rnn, seq_len)
+            loss_a = ((self.alpha * log_pi_eval_i - policy_q) * mask_values).sum() / mask_values.sum()
             self.optimizer[key]['actor'].zero_grad()
             loss_a.backward()
             if self.use_grad_clip:
@@ -203,7 +232,7 @@ class MASAC_Learner(ISAC_Learner):
 
             # automatic entropy tuning
             if self.use_automatic_entropy_tuning:
-                alpha_loss = -(self.log_alpha * (log_pi[key] + self.target_entropy).detach()).mean()
+                alpha_loss = -(self.log_alpha * (log_pi_eval_i + self.target_entropy).detach()).mean()
                 self.alpha_optimizer.zero_grad()
                 alpha_loss.backward()
                 self.alpha_optimizer.step()
