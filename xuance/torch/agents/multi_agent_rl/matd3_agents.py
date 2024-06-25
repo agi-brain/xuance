@@ -42,7 +42,8 @@ class MATD3_Agents(IDDPG_Agents):
 
         # build representations
         representation = ModuleDict()
-        input_shape = (sum([self.observation_space[k].shape[0] for k in self.agent_keys]), )
+        input_shape = (sum([self.observation_space[k].shape[0] + self.action_space[k].shape[0]
+                            for k in self.agent_keys]),)
         for key in self.model_keys:
             if representation_key == "Basic_Identical":
                 representation[key] = REGISTRY_Representation["Basic_Identical"](input_shape=input_shape,
