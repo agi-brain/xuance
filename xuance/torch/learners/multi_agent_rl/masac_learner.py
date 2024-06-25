@@ -175,17 +175,17 @@ class MASAC_Learner(ISAC_Learner):
         _, actions_eval, log_pi_eval = self.policy(observation=obs, agent_ids=IDs, rnn_hidden=rnn_hidden_actor)
         if self.use_parameter_sharing:
             key = self.model_keys[0]
-            actions_next_joint = actions_eval[key].reshape(batch_size, self.n_agents, seq_len + 1, -1).transpose(
+            actions_eval_joint = actions_eval[key].reshape(batch_size, self.n_agents, seq_len + 1, -1).transpose(
                 1, 2).reshape(batch_size, seq_len + 1, -1)
         else:
-            actions_next_joint = torch.concat(itemgetter(*self.model_keys)(actions_eval),
+            actions_eval_joint = torch.concat(itemgetter(*self.model_keys)(actions_eval),
                                               dim=-1).reshape(batch_size, seq_len + 1, -1)
         _, _, action_q_1, action_q_2 = self.policy.Qaction(joint_observation=obs_joint[:, :-1],
                                                            joint_actions=actions_joint,
                                                            agent_ids=IDs_t,
                                                            rnn_hidden_critic_1=rnn_hidden_critic,
                                                            rnn_hidden_critic_2=rnn_hidden_critic)
-        _, _, target_q = self.policy.Qtarget(joint_observation=obs_joint, joint_actions=actions_next_joint,
+        _, _, target_q = self.policy.Qtarget(joint_observation=obs_joint, joint_actions=actions_eval_joint,
                                              agent_ids=IDs,
                                              rnn_hidden_critic_1=rnn_hidden_critic,
                                              rnn_hidden_critic_2=rnn_hidden_critic)
@@ -211,7 +211,7 @@ class MASAC_Learner(ISAC_Learner):
 
             # actor update
             if self.use_parameter_sharing:
-                actions_eval_joint = actions_next_joint[:, :-1]
+                actions_eval_joint = actions_eval_joint[:, :-1]
             else:
                 actions_eval_detach_others = {k: actions_eval[k] if k == key else actions_eval[k].detach()
                                               for k in self.model_keys}
