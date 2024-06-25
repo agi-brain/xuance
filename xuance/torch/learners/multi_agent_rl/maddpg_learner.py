@@ -35,76 +35,6 @@ class MADDPG_Learner(LearnerMAS):
         self.scheduler = {key: {'actor': scheduler[key][0],
                                 'critic': scheduler[key][1]} for key in self.model_keys}
 
-    def build_training_data(self, sample: Optional[dict],
-                            use_parameter_sharing: Optional[bool] = False,
-                            use_actions_mask: Optional[bool] = False,
-                            use_global_state: Optional[bool] = False):
-        """
-        Prepare the training data.
-
-        Parameters:
-            sample (dict): The raw sampled data.
-            use_parameter_sharing (bool): Whether to use parameter sharing for individual agent models.
-            use_actions_mask (bool): Whether to use actions mask for unavailable actions.
-            use_global_state (bool): Whether to use global state.
-
-        Returns:
-            sample_Tensor (dict): The formatted sampled data.
-        """
-        batch_size = sample['batch_size']
-        seq_length = sample['sequence_length'] if self.use_rnn else 0
-        obs_next, filled, IDs = None, None, None
-        if use_parameter_sharing:
-            k = self.model_keys[0]
-            bs = batch_size * self.n_agents
-            obs_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['obs']), axis=1)).to(self.device)
-            actions_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['actions']), axis=1)).to(self.device)
-            rewards_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['rewards']), axis=1)).to(self.device)
-            ter_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['terminals']), 1)).float().to(self.device)
-            msk_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['agent_mask']), 1)).float().to(self.device)
-            if self.use_rnn:
-                obs = {k: obs_tensor.reshape(bs, seq_length + 1, -1)}
-                actions = {k: actions_tensor.reshape(batch_size, self.n_agents, seq_length, -1)}
-                rewards = {k: rewards_tensor.reshape(bs, seq_length)}
-                terminals = {k: ter_tensor.reshape(bs, seq_length)}
-                agent_mask = {k: msk_tensor.reshape(bs, seq_length)}
-                IDs = torch.eye(self.n_agents).unsqueeze(1).unsqueeze(0).expand(
-                    batch_size, -1, seq_length + 1, -1).to(self.device).reshape(bs, seq_length + 1, -1)
-            else:
-                obs = {k: obs_tensor.reshape(bs, -1)}
-                actions = {k: actions_tensor.reshape(batch_size, self.n_agents, -1)}
-                rewards = {k: rewards_tensor.reshape(bs)}
-                terminals = {k: ter_tensor.reshape(bs)}
-                agent_mask = {k: msk_tensor.reshape(bs)}
-                obs_next = {k: Tensor(np.stack(itemgetter(*self.agent_keys)(sample['obs_next']),
-                                               axis=1)).to(self.device).reshape(bs, -1)}
-                IDs = torch.eye(self.n_agents).unsqueeze(0).expand(batch_size, -1, -1).to(self.device).reshape(bs, -1)
-        else:
-            obs = {k: Tensor(sample['obs'][k]).to(self.device) for k in self.agent_keys}
-            actions = {k: Tensor(sample['actions'][k]).to(self.device) for k in self.agent_keys}
-            rewards = {k: Tensor(sample['rewards'][k]).to(self.device) for k in self.agent_keys}
-            terminals = {k: Tensor(sample['terminals'][k]).float().to(self.device) for k in self.agent_keys}
-            agent_mask = {k: Tensor(sample['agent_mask'][k]).float().to(self.device) for k in self.agent_keys}
-            if not self.use_rnn:
-                obs_next = {k: Tensor(sample['obs_next'][k]).to(self.device) for k in self.agent_keys}
-
-        if self.use_rnn:
-            filled = Tensor(sample['filled']).float().to(self.device)
-
-        sample_Tensor = {
-            'batch_size': batch_size,
-            'obs': obs,
-            'actions': actions,
-            'obs_next': obs_next,
-            'rewards': rewards,
-            'terminals': terminals,
-            'agent_mask': agent_mask,
-            'agent_ids': IDs,
-            'filled': filled,
-            'seq_length': seq_length,
-        }
-        return sample_Tensor
-
     def update(self, sample):
         self.iterations += 1
         info = {}
@@ -122,22 +52,32 @@ class MADDPG_Learner(LearnerMAS):
         agent_mask = sample_Tensor['agent_mask']
         IDs = sample_Tensor['agent_ids']
         bs = batch_size * self.n_agents if self.use_parameter_sharing else batch_size
-
-        obs_joint = Tensor(concatenate(itemgetter(*self.agent_keys)(sample['obs']), axis=-1)).to(self.device)
-        next_obs_joint = Tensor(concatenate(itemgetter(*self.agent_keys)(sample['obs_next']), axis=-1)).to(self.device)
+        if self.use_parameter_sharing:
+            key = self.model_keys[0]
+            bs = batch_size * self.n_agents
+            obs_joint = obs[key].reshape(batch_size, -1)
+            next_obs_joint = obs_next[key].reshape(batch_size, -1)
+            actions_joint = actions[key].reshape(batch_size, -1)
+            rewards[key] = rewards[key].reshape(batch_size * self.n_agents)
+            terminals[key] = terminals[key].reshape(batch_size * self.n_agents)
+        else:
+            bs = batch_size
+            obs_joint = torch.concat(itemgetter(*self.agent_keys)(obs), dim=-1).reshape(batch_size, -1)
+            next_obs_joint = torch.concat(itemgetter(*self.agent_keys)(obs_next), dim=-1).reshape(batch_size, -1)
+            actions_joint = torch.concat(itemgetter(*self.agent_keys)(actions), dim=-1).reshape(batch_size, -1)
 
         # get actions
         _, actions_eval = self.policy(observation=obs, agent_ids=IDs)
         _, actions_next = self.policy.Atarget(next_observation=obs_next, agent_ids=IDs)
         # get values
         if self.use_parameter_sharing:
-            act_critic = actions[self.model_keys[0]].reshape(batch_size, -1)
-            act_next = actions_next[self.model_keys[0]].reshape(batch_size, self.n_agents, -1).reshape(batch_size, -1)
+            key = self.model_keys[0]
+            actions_next_joint = actions_next[key].reshape(batch_size, self.n_agents, -1).reshape(batch_size, -1)
         else:
-            act_critic = torch.concat(itemgetter(*self.agent_keys)(actions), dim=-1).reshape(batch_size, -1)
-            act_next = torch.concat(itemgetter(*self.agent_keys)(actions_next), dim=-1).reshape(batch_size, -1)
-        _, q_eval = self.policy.Qpolicy(joint_observation=obs_joint, joint_actions=act_critic, agent_ids=IDs)
-        _, q_next = self.policy.Qtarget(joint_observation=next_obs_joint, joint_actions=act_next, agent_ids=IDs)
+            actions_next_joint = torch.concat(itemgetter(*self.model_keys)(actions_next), -1).reshape(batch_size, -1)
+        _, q_eval = self.policy.Qpolicy(joint_observation=obs_joint, joint_actions=actions_joint, agent_ids=IDs)
+        _, q_next = self.policy.Qtarget(joint_observation=next_obs_joint, joint_actions=actions_next_joint,
+                                        agent_ids=IDs)
 
         for key in self.model_keys:
             mask_values = agent_mask[key]

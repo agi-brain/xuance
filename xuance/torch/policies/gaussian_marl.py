@@ -283,7 +283,8 @@ class Basic_ISAC_Policy(Module):
     def Qpolicy(self, observation: Dict[str, Tensor],
                 actions: Dict[str, Tensor],
                 agent_ids: Tensor = None, agent_key: str = None,
-                rnn_hidden_critic: Optional[Dict[str, List[Tensor]]] = None):
+                rnn_hidden_critic_1: Optional[Dict[str, List[Tensor]]] = None,
+                rnn_hidden_critic_2: Optional[Dict[str, List[Tensor]]] = None):
         """
         Returns Q^policy of current observations and actions pairs.
 
@@ -292,7 +293,8 @@ class Basic_ISAC_Policy(Module):
             actions (Dict[Tensor]): The actions.
             agent_ids (Dict[Tensor]): The agents' ids (for parameter sharing).
             agent_key (str): Calculate actions for specified agent.
-            rnn_hidden_critic (Optional[Dict[str, List[Tensor]]]): The RNN hidden states for critic representation.
+            rnn_hidden_critic_1 (Optional[Dict[str, List[Tensor]]]): The RNN hidden states for critic_1 representation.
+            rnn_hidden_critic_2 (Optional[Dict[str, List[Tensor]]]): The RNN hidden states for critic_2 representation.
 
         Returns:
             rnn_hidden_critic_new_1: The updated rnn states for critic_1_representation.
@@ -300,14 +302,14 @@ class Basic_ISAC_Policy(Module):
             q_1: The evaluation of Q values with critic 1.
             q_2: The evaluation of Q values with critic 2.
         """
-        rnn_hidden_critic_new_1, rnn_hidden_critic_new_2 = deepcopy(rnn_hidden_critic), deepcopy(rnn_hidden_critic)
+        rnn_hidden_critic_new_1, rnn_hidden_critic_new_2 = deepcopy(rnn_hidden_critic_1), deepcopy(rnn_hidden_critic_2)
         q_1, q_2 = {}, {}
         agent_list = self.model_keys if agent_key is None else [agent_key]
 
         for key in agent_list:
             if self.use_rnn:
-                outputs_critic_1 = self.critic_1_representation[key](observation[key], *rnn_hidden_critic[key])
-                outputs_critic_2 = self.critic_2_representation[key](observation[key], *rnn_hidden_critic[key])
+                outputs_critic_1 = self.critic_1_representation[key](observation[key], *rnn_hidden_critic_1[key])
+                outputs_critic_2 = self.critic_2_representation[key](observation[key], *rnn_hidden_critic_2[key])
                 rnn_hidden_critic_new_1.update({key: (outputs_critic_1['rnn_hidden'], outputs_critic_1['rnn_cell'])})
                 rnn_hidden_critic_new_2.update({key: (outputs_critic_2['rnn_hidden'], outputs_critic_2['rnn_cell'])})
             else:
@@ -325,8 +327,8 @@ class Basic_ISAC_Policy(Module):
     def Qtarget(self, next_observation: Dict[str, Tensor],
                 next_actions: Dict[str, Tensor],
                 agent_ids: Tensor = None, agent_key: str = None,
-                rnn_hidden_actor: Optional[Dict[str, List[Tensor]]] = None,
-                rnn_hidden_critic: Optional[Dict[str, List[Tensor]]] = None):
+                rnn_hidden_critic_1: Optional[Dict[str, List[Tensor]]] = None,
+                rnn_hidden_critic_2: Optional[Dict[str, List[Tensor]]] = None):
         """
         Returns the Q^target of next observations and actions pairs.
 
@@ -335,23 +337,23 @@ class Basic_ISAC_Policy(Module):
             next_actions (Dict[Tensor]): The actions of next step.
             agent_ids (Dict[Tensor]): The agents' ids (for parameter sharing).
             agent_key (str): Calculate actions for specified agent.
-            rnn_hidden_actor (Optional[Dict[str, List[Tensor]]]): The RNN hidden states for actor representation.
-            rnn_hidden_critic (Optional[Dict[str, List[Tensor]]]): The RNN hidden states for critic representation.
+            rnn_hidden_critic_1 (Optional[Dict[str, List[Tensor]]]): The RNN hidden states for critic_1 representation.
+            rnn_hidden_critic_2 (Optional[Dict[str, List[Tensor]]]): The RNN hidden states for critic_2 representation.
 
         Returns:
             rnn_hidden_critic_new_1: The updated rnn states for critic_1_representation.
             rnn_hidden_critic_new_2: The updated rnn states for critic_2_representation.
             q_target: The evaluations of Q^target.
         """
-        rnn_hidden_critic_new_1, rnn_hidden_critic_new_2 = deepcopy(rnn_hidden_critic), deepcopy(rnn_hidden_critic)
+        rnn_hidden_critic_new_1, rnn_hidden_critic_new_2 = deepcopy(rnn_hidden_critic_1), deepcopy(rnn_hidden_critic_2)
         target_q = {}
         agent_list = self.model_keys if agent_key is None else [agent_key]
         for key in agent_list:
             if self.use_rnn:
                 outputs_critic_1 = self.target_critic_1_representation[key](next_observation[key],
-                                                                            *rnn_hidden_critic[key])
+                                                                            *rnn_hidden_critic_1[key])
                 outputs_critic_2 = self.target_critic_2_representation[key](next_observation[key],
-                                                                            *rnn_hidden_critic[key])
+                                                                            *rnn_hidden_critic_2[key])
                 rnn_hidden_critic_new_1.update({key: (outputs_critic_1['rnn_hidden'], outputs_critic_1['rnn_cell'])})
                 rnn_hidden_critic_new_2.update({key: (outputs_critic_2['rnn_hidden'], outputs_critic_2['rnn_cell'])})
             else:
@@ -370,7 +372,8 @@ class Basic_ISAC_Policy(Module):
     def Qaction(self, observation: Union[np.ndarray, dict],
                 actions: Tensor,
                 agent_ids: Tensor, agent_key: str = None,
-                rnn_hidden_critic: Optional[Dict[str, List[Tensor]]] = None):
+                rnn_hidden_critic_1: Optional[Dict[str, List[Tensor]]] = None,
+                rnn_hidden_critic_2: Optional[Dict[str, List[Tensor]]] = None):
         """
         Returns the evaluated Q-values for current observation-action pairs.
 
@@ -379,7 +382,8 @@ class Basic_ISAC_Policy(Module):
             actions: The selected actions.
             agent_ids (Dict[Tensor]): The agents' ids (for parameter sharing).
             agent_key (str): Calculate actions for specified agent.
-            rnn_hidden_critic (Optional[Dict[str, List[Tensor]]]): The RNN hidden states for critic representation.
+            rnn_hidden_critic_1 (Optional[Dict[str, List[Tensor]]]): The RNN hidden states for critic_1 representation.
+            rnn_hidden_critic_2 (Optional[Dict[str, List[Tensor]]]): The RNN hidden states for critic_2 representation.
 
         Returns:
             rnn_hidden_critic_new_1: The updated rnn states for critic_1_representation.
@@ -387,13 +391,13 @@ class Basic_ISAC_Policy(Module):
             q_1: The Q-value calculated by the first critic network.
             q_2: The Q-value calculated by the other critic network.
         """
-        rnn_hidden_critic_new_1, rnn_hidden_critic_new_2 = deepcopy(rnn_hidden_critic), deepcopy(rnn_hidden_critic)
+        rnn_hidden_critic_new_1, rnn_hidden_critic_new_2 = deepcopy(rnn_hidden_critic_1), deepcopy(rnn_hidden_critic_2)
         q_1, q_2 = {}, {}
         agent_list = self.model_keys if agent_key is None else [agent_key]
         for key in agent_list:
             if self.use_rnn:
-                outputs_critic_1 = self.critic_1_representation[key](observation[key], *rnn_hidden_critic[key])
-                outputs_critic_2 = self.critic_2_representation[key](observation[key], *rnn_hidden_critic[key])
+                outputs_critic_1 = self.critic_1_representation[key](observation[key], *rnn_hidden_critic_1[key])
+                outputs_critic_2 = self.critic_2_representation[key](observation[key], *rnn_hidden_critic_2[key])
                 rnn_hidden_critic_new_1.update({key: (outputs_critic_1['rnn_hidden'], outputs_critic_1['rnn_cell'])})
                 rnn_hidden_critic_new_2.update({key: (outputs_critic_2['rnn_hidden'], outputs_critic_2['rnn_cell'])})
             else:
@@ -464,21 +468,21 @@ class MASAC_Policy(Basic_ISAC_Policy):
             dim_critic_in += n_agents
         return dim_actor_in, dim_actor_out, dim_critic_in
 
-    def Qpolicy(self, observation: Dict[str, Tensor],
-                joint_observation: Optional[Tensor] = None,
+    def Qpolicy(self, joint_observation: Optional[Tensor] = None,
                 joint_actions: Optional[Tensor] = None,
                 agent_ids: Tensor = None, agent_key: str = None,
-                rnn_hidden_critic: Optional[Dict[str, List[Tensor]]] = None):
+                rnn_hidden_critic_1: Optional[Dict[str, List[Tensor]]] = None,
+                rnn_hidden_critic_2: Optional[Dict[str, List[Tensor]]] = None):
         """
         Returns Q^policy of current observations and actions pairs.
 
         Parameters:
-            observation (Dict[Tensor]): The observations.
             joint_observation (Optional[Tensor]): The joint observations of the team.
             joint_actions (Optional[Tensor]): The joint actions of the team.
             agent_ids (Dict[Tensor]): The agents' ids (for parameter sharing).
             agent_key (str): Calculate actions for specified agent.
-            rnn_hidden_critic (Optional[Dict[str, List[Tensor]]]): The RNN hidden states for critic representation.
+            rnn_hidden_critic_1 (Optional[Dict[str, List[Tensor]]]): The RNN hidden states for critic_1 representation.
+            rnn_hidden_critic_2 (Optional[Dict[str, List[Tensor]]]): The RNN hidden states for critic_2 representation.
 
         Returns:
             rnn_hidden_critic_new_1: The updated rnn states for critic_1_representation.
@@ -486,16 +490,16 @@ class MASAC_Policy(Basic_ISAC_Policy):
             q_1: The evaluations of Q^policy with critic 1.
             q_2: The evaluations of Q^policy with critic 2.
         """
-        rnn_hidden_critic_new_1, rnn_hidden_critic_new_2 = deepcopy(rnn_hidden_critic), deepcopy(rnn_hidden_critic)
+        rnn_hidden_critic_new_1, rnn_hidden_critic_new_2 = deepcopy(rnn_hidden_critic_1), deepcopy(rnn_hidden_critic_2)
         q_1, q_2 = {}, {}
         agent_list = self.model_keys if agent_key is None else [agent_key]
         batch_size = joint_observation.shape[0]
-        seq_len = observation[agent_list[0]].shape[1] if self.use_rnn else 1
+        seq_len = joint_observation.shape[1] if self.use_rnn else 1
 
         if self.use_rnn:
-            outputs_critic_1 = {k: self.critic_1_representation[k](joint_observation, *rnn_hidden_critic[k])
+            outputs_critic_1 = {k: self.critic_1_representation[k](joint_observation, *rnn_hidden_critic_1[k])
                                 for k in agent_list}
-            outputs_critic_2 = {k: self.critic_2_representation[k](joint_observation, *rnn_hidden_critic[k])
+            outputs_critic_2 = {k: self.critic_2_representation[k](joint_observation, *rnn_hidden_critic_2[k])
                                 for k in agent_list}
             rnn_hidden_critic_new_1.update({k: (outputs_critic_1[k]['rnn_hidden'], outputs_critic_1[k]['rnn_cell'])
                                             for k in agent_list})
@@ -542,37 +546,37 @@ class MASAC_Policy(Basic_ISAC_Policy):
 
         return rnn_hidden_critic_new_1, rnn_hidden_critic_new_2, q_1, q_2
 
-    def Qtarget(self, next_observation: Dict[str, Tensor],
-                joint_observation: Optional[Tensor] = None,
+    def Qtarget(self, joint_observation: Optional[Tensor] = None,
                 joint_actions: Optional[Tensor] = None,
                 agent_ids: Tensor = None, agent_key: str = None,
-                rnn_hidden_critic: Optional[Dict[str, List[Tensor]]] = None):
+                rnn_hidden_critic_1: Optional[Dict[str, List[Tensor]]] = None,
+                rnn_hidden_critic_2: Optional[Dict[str, List[Tensor]]] = None):
         """
         Returns the Q^target of next observations and actions pairs.
 
         Parameters:
-            next_observation (Dict[Tensor]): The observations of next step.
             joint_observation (Optional[Tensor]): The joint observations of the team.
             joint_actions (Optional[Tensor]): The joint actions of the team.
             agent_ids (Dict[Tensor]): The agents' ids (for parameter sharing).
             agent_key (str): Calculate actions for specified agent.
-            rnn_hidden_critic (Optional[Dict[str, List[Tensor]]]): The RNN hidden states for critic representation.
+            rnn_hidden_critic_1 (Optional[Dict[str, List[Tensor]]]): The RNN hidden states for critic_1 representation.
+            rnn_hidden_critic_2 (Optional[Dict[str, List[Tensor]]]): The RNN hidden states for critic_2 representation.
 
         Returns:
             rnn_hidden_critic_new_1: The updated rnn states for critic_1_representation.
             rnn_hidden_critic_new_2: The updated rnn states for critic_2_representation.
             q_target: The evaluations of Q^target.
         """
-        rnn_hidden_critic_new_1, rnn_hidden_critic_new_2 = deepcopy(rnn_hidden_critic), deepcopy(rnn_hidden_critic)
+        rnn_hidden_critic_new_1, rnn_hidden_critic_new_2 = deepcopy(rnn_hidden_critic_1), deepcopy(rnn_hidden_critic_2)
         target_q = {}
         agent_list = self.model_keys if agent_key is None else [agent_key]
         batch_size = joint_observation.shape[0]
-        seq_len = next_observation[agent_list[0]].shape[1] if self.use_rnn else 1
+        seq_len = joint_observation.shape[1] if self.use_rnn else 1
 
         if self.use_rnn:
-            outputs_critic_1 = {k: self.target_critic_1_representation[k](joint_observation, *rnn_hidden_critic[k])
+            outputs_critic_1 = {k: self.target_critic_1_representation[k](joint_observation, *rnn_hidden_critic_1[k])
                                 for k in agent_list}
-            outputs_critic_2 = {k: self.target_critic_2_representation[k](joint_observation, *rnn_hidden_critic[k])
+            outputs_critic_2 = {k: self.target_critic_2_representation[k](joint_observation, *rnn_hidden_critic_2[k])
                                 for k in agent_list}
             rnn_hidden_critic_new_1.update({k: (outputs_critic_1[k]['rnn_hidden'], outputs_critic_1[k]['rnn_cell'])
                                             for k in agent_list})
@@ -619,21 +623,21 @@ class MASAC_Policy(Basic_ISAC_Policy):
             target_q[key] = torch.min(q_1, q_2)
         return rnn_hidden_critic_new_1, rnn_hidden_critic_new_2, target_q
 
-    def Qaction(self, observation: Union[np.ndarray, dict],
-                joint_observation: Optional[Tensor] = None,
+    def Qaction(self, joint_observation: Optional[Tensor] = None,
                 joint_actions: Optional[Tensor] = None,
                 agent_ids: Optional[Tensor] = None, agent_key: str = None,
-                rnn_hidden_critic: Optional[Dict[str, List[Tensor]]] = None):
+                rnn_hidden_critic_1: Optional[Dict[str, List[Tensor]]] = None,
+                rnn_hidden_critic_2: Optional[Dict[str, List[Tensor]]] = None):
         """
         Returns the evaluated Q-values for current observation-action pairs.
 
         Parameters:
-            observation: The original observation.
             joint_observation (Optional[Tensor]): The joint observations of the team.
             joint_actions (Tensor): The joint actions of the team.
             agent_ids (Dict[Tensor]): The agents' ids (for parameter sharing).
             agent_key (str): Calculate actions for specified agent.
-            rnn_hidden_critic (Optional[Dict[str, List[Tensor]]]): The RNN hidden states for critic representation.
+            rnn_hidden_critic_1 (Optional[Dict[str, List[Tensor]]]): The RNN hidden states for critic_1 representation.
+            rnn_hidden_critic_2 (Optional[Dict[str, List[Tensor]]]): The RNN hidden states for critic_2 representation.
 
         Returns:
             rnn_hidden_critic_new_1: The updated rnn states for critic_1_representation.
@@ -641,16 +645,16 @@ class MASAC_Policy(Basic_ISAC_Policy):
             q_1: The Q-value calculated by the first critic network.
             q_2: The Q-value calculated by the other critic network.
         """
-        rnn_hidden_critic_new_1, rnn_hidden_critic_new_2 = deepcopy(rnn_hidden_critic), deepcopy(rnn_hidden_critic)
+        rnn_hidden_critic_new_1, rnn_hidden_critic_new_2 = deepcopy(rnn_hidden_critic_1), deepcopy(rnn_hidden_critic_2)
         q_1, q_2 = {}, {}
         agent_list = self.model_keys if agent_key is None else [agent_key]
         batch_size = joint_observation.shape[0]
-        seq_len = observation[agent_list[0]].shape[1] if self.use_rnn else 1
+        seq_len = joint_observation.shape[1] if self.use_rnn else 1
 
         if self.use_rnn:
-            outputs_critic_1 = {k: self.critic_1_representation[k](joint_observation, *rnn_hidden_critic[k])
+            outputs_critic_1 = {k: self.critic_1_representation[k](joint_observation, *rnn_hidden_critic_1[k])
                                 for k in agent_list}
-            outputs_critic_2 = {k: self.critic_2_representation[k](joint_observation, *rnn_hidden_critic[k])
+            outputs_critic_2 = {k: self.critic_2_representation[k](joint_observation, *rnn_hidden_critic_2[k])
                                 for k in agent_list}
             rnn_hidden_critic_new_1.update({k: (outputs_critic_1[k]['rnn_hidden'], outputs_critic_1[k]['rnn_cell'])
                                             for k in agent_list})

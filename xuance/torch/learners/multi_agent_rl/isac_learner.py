@@ -159,9 +159,11 @@ class ISAC_Learner(LearnerMAS):
         _, actions_eval, log_pi_eval = self.policy(observation=obs, agent_ids=IDs, rnn_hidden=rnn_hidden_actor)
         obs_t = {k: v[:, :-1] for k, v in obs.items()}
         _, _, action_q_1, action_q_2 = self.policy.Qaction(observation=obs_t, actions=actions, agent_ids=IDs_t,
-                                                           rnn_hidden_critic=rnn_hidden_critic)
+                                                           rnn_hidden_critic_1=rnn_hidden_critic,
+                                                           rnn_hidden_critic_2=rnn_hidden_critic)
         _, _, next_q = self.policy.Qtarget(next_observation=obs, next_actions=actions_eval, agent_ids=IDs,
-                                           rnn_hidden_critic=rnn_hidden_critic)
+                                           rnn_hidden_critic_1=rnn_hidden_critic,
+                                           rnn_hidden_critic_2=rnn_hidden_critic)
         for key in self.model_keys:
             mask_values = agent_mask[key] * filled
             # update critic
@@ -186,7 +188,8 @@ class ISAC_Learner(LearnerMAS):
             # update actor
             _, _, policy_q_1, policy_q_2 = self.policy.Qpolicy(observation=obs, actions=actions_eval,
                                                                agent_ids=IDs, agent_key=key,
-                                                               rnn_hidden_critic=rnn_hidden_critic)
+                                                               rnn_hidden_critic_1=rnn_hidden_critic,
+                                                               rnn_hidden_critic_2=rnn_hidden_critic)
             log_pi_eval_i = log_pi_eval[key][:, :-1].reshape(bs_rnn, seq_len)
             policy_q = torch.min(policy_q_1[key][:, :-1], policy_q_2[key][:, :-1]).reshape(bs_rnn, seq_len)
             loss_a = ((self.alpha * log_pi_eval_i - policy_q) * mask_values).sum() / mask_values.sum()

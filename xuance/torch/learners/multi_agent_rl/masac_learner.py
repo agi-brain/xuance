@@ -62,10 +62,10 @@ class MASAC_Learner(ISAC_Learner):
             actions_next_joint = actions_next[key].reshape(batch_size, self.n_agents, -1).reshape(batch_size, -1)
         else:
             actions_next_joint = torch.concat(itemgetter(*self.model_keys)(actions_next), -1).reshape(batch_size, -1)
-        _, _, action_q_1, action_q_2 = self.policy.Qaction(observation=obs, joint_observation=obs_joint,
-                                                           joint_actions=actions_joint, agent_ids=IDs)
-        _, _, target_q = self.policy.Qtarget(next_observation=obs_next, joint_observation=next_obs_joint,
-                                             joint_actions=actions_next_joint, agent_ids=IDs)
+        _, _, action_q_1, action_q_2 = self.policy.Qaction(joint_observation=obs_joint, joint_actions=actions_joint,
+                                                           agent_ids=IDs)
+        _, _, target_q = self.policy.Qtarget(joint_observation=next_obs_joint, joint_actions=actions_next_joint,
+                                             agent_ids=IDs)
         for key in self.model_keys:
             mask_values = agent_mask[key]
             # critic update
@@ -94,7 +94,7 @@ class MASAC_Learner(ISAC_Learner):
                                               for k in self.model_keys}
                 actions_eval_joint = torch.concat(itemgetter(*self.model_keys)(actions_eval_detach_others),
                                                   dim=-1).reshape(batch_size, -1)
-            _, _, policy_q_1, policy_q_2 = self.policy.Qpolicy(observation=obs, joint_observation=obs_joint,
+            _, _, policy_q_1, policy_q_2 = self.policy.Qpolicy(joint_observation=obs_joint,
                                                                joint_actions=actions_eval_joint,
                                                                agent_ids=IDs, agent_key=key)
             log_pi_eval_i = log_pi_eval[key].reshape(bs)
@@ -180,13 +180,15 @@ class MASAC_Learner(ISAC_Learner):
         else:
             actions_next_joint = torch.concat(itemgetter(*self.model_keys)(actions_eval),
                                               dim=-1).reshape(batch_size, seq_len + 1, -1)
-        obs_t = {k: v[:, :-1] for k, v in obs.items()}
-        _, _, action_q_1, action_q_2 = self.policy.Qaction(observation=obs_t, joint_observation=obs_joint[:, :-1],
-                                                           joint_actions=actions_joint, agent_ids=IDs_t,
-                                                           rnn_hidden_critic=rnn_hidden_critic)
-        _, _, target_q = self.policy.Qtarget(next_observation=obs, joint_observation=obs_joint,
-                                             joint_actions=actions_next_joint, agent_ids=IDs,
-                                             rnn_hidden_critic=rnn_hidden_critic)
+        _, _, action_q_1, action_q_2 = self.policy.Qaction(joint_observation=obs_joint[:, :-1],
+                                                           joint_actions=actions_joint,
+                                                           agent_ids=IDs_t,
+                                                           rnn_hidden_critic_1=rnn_hidden_critic,
+                                                           rnn_hidden_critic_2=rnn_hidden_critic)
+        _, _, target_q = self.policy.Qtarget(joint_observation=obs_joint, joint_actions=actions_next_joint,
+                                             agent_ids=IDs,
+                                             rnn_hidden_critic_1=rnn_hidden_critic,
+                                             rnn_hidden_critic_2=rnn_hidden_critic)
         for key in self.model_keys:
             mask_values = agent_mask[key] * filled
             # critic update
@@ -215,10 +217,11 @@ class MASAC_Learner(ISAC_Learner):
                                               for k in self.model_keys}
                 actions_eval_joint = torch.concat(itemgetter(*self.model_keys)(actions_eval_detach_others),
                                                   dim=-1).reshape(batch_size, seq_len + 1, -1)[:, :-1]
-            _, _, policy_q_1, policy_q_2 = self.policy.Qpolicy(observation=obs_t, joint_observation=obs_joint[:, :-1],
+            _, _, policy_q_1, policy_q_2 = self.policy.Qpolicy(joint_observation=obs_joint[:, :-1],
                                                                joint_actions=actions_eval_joint,
                                                                agent_ids=IDs_t, agent_key=key,
-                                                               rnn_hidden_critic=rnn_hidden_critic)
+                                                               rnn_hidden_critic_1=rnn_hidden_critic,
+                                                               rnn_hidden_critic_2=rnn_hidden_critic)
             log_pi_eval_i = log_pi_eval[key][:, :-1].reshape(bs_rnn, seq_len)
             policy_q = torch.min(policy_q_1[key], policy_q_2[key]).reshape(bs_rnn, seq_len)
             loss_a = ((self.alpha * log_pi_eval_i - policy_q) * mask_values).sum() / mask_values.sum()
