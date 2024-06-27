@@ -295,8 +295,6 @@ class IPPO_Agents(MARLAgents):
     def train(self, n_steps):
         """
         Train the model for numerous steps.
-        If self.use_rnn is False, then the environments will run step by step in parallel.
-        When one environment is terminal, it will be reset automatically and continue runs.
 
         Parameters:
             n_steps (int): The number of steps to train the model.
@@ -353,6 +351,9 @@ class IPPO_Agents(MARLAgents):
                     if self.use_actions_mask:
                         avail_actions[i] = info[i]["reset_avail_actions"]
                         self.envs.buf_avail_actions[i] = info[i]["reset_avail_actions"]
+                    if self.use_global_state:
+                        state[i] = info[i]["reset_state"]
+                        self.envs.buf_state[i] = info[i]["reset_state"]
                     if self.use_wandb:
                         step_info["Train-Results/Episode-Steps/env-%d" % i] = info[i]["episode_step"]
                         step_info["Train-Results/Episode-Rewards/env-%d" % i] = info[i]["episode_score"]
