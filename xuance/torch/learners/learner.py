@@ -114,7 +114,7 @@ class LearnerMAS(ABC):
             sample_Tensor (dict): The formatted sampled data.
         """
         batch_size = sample['batch_size']
-        seq_length = sample['sequence_length'] if self.use_rnn else 0
+        seq_length = sample['sequence_length'] if self.use_rnn else 1
         state, avail_actions, filled = None, None, None
         obs_next, state_next, avail_actions_next = None, None, None
         IDs = None

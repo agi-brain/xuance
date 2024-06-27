@@ -1,7 +1,6 @@
 import torch
 import numpy as np
 from copy import deepcopy
-from operator import itemgetter
 from typing import Sequence, Optional, Callable, Union, Dict, List
 from gym.spaces import Box
 from xuance.torch.policies import CriticNet, VDN_mixer
@@ -104,23 +103,21 @@ class MAAC_Policy(Module):
             rnn_hidden_new (Optional[Dict[str, List[Tensor]]]): The new RNN hidden states of actor representation.
             pi_dists (dict): The stochastic policy distributions.
         """
-        rnn_hidden_new, pi_dists = {}, {}
+        rnn_hidden_new, pi_dists = deepcopy(rnn_hidden), {}
         agent_list = self.model_keys if agent_key is None else [agent_key]
 
         for key in agent_list:
             if self.use_rnn:
                 outputs = self.actor_representation[key](observation[key], *rnn_hidden[key])
-                rnn_hidden_new[key] = (outputs['rnn_hidden'], outputs['rnn_cell'])
+                rnn_hidden_new.update({key: (outputs['rnn_hidden'], outputs['rnn_cell'])})
             else:
                 outputs = self.actor_representation[key](observation[key])
-                rnn_hidden_new[key] = [None, None]
 
             if self.use_parameter_sharing:
-                actor_input = torch.concat([outputs['state'], agent_ids], dim=-1)
+                actor_in = torch.concat([outputs['state'], agent_ids], dim=-1)
             else:
-                actor_input = outputs['state']
-
-            pi_dists[key] = self.actor[key](actor_input)
+                actor_in = outputs['state']
+            pi_dists[key] = self.actor[key](actor_in)
 
         return rnn_hidden, pi_dists
 
@@ -139,23 +136,22 @@ class MAAC_Policy(Module):
             rnn_hidden_new (Optional[Dict[str, List[Tensor]]]): The new RNN hidden states of critic representation.
             values (dict): The evaluated critic values.
         """
-        rnn_hidden_new, values = {}, {}
+        rnn_hidden_new, values = deepcopy(rnn_hidden), {}
         agent_list = self.model_keys if agent_key is None else [agent_key]
 
         for key in agent_list:
             if self.use_rnn:
                 outputs = self.critic_representation[key](observation[key], *rnn_hidden[key])
-                rnn_hidden_new[key] = (outputs['rnn_hidden'], outputs['rnn_cell'])
+                rnn_hidden_new.update({key: (outputs['rnn_hidden'], outputs['rnn_cell'])})
             else:
                 outputs = self.critic_representation[key](observation[key])
-                rnn_hidden_new[key] = [None, None]
 
             if self.use_parameter_sharing:
-                critic_input = torch.concat([outputs['state'], agent_ids], dim=-1)
+                critic_in = torch.concat([outputs['state'], agent_ids], dim=-1)
             else:
-                critic_input = outputs['state']
+                critic_in = outputs['state']
 
-            values[key] = self.critic[key](critic_input)
+            values[key] = self.critic[key](critic_in)
 
         return rnn_hidden_new, values
 
