@@ -166,11 +166,8 @@ class IPPO_Learner(LearnerMAS):
         advantages = sample_Tensor['advantages']
         log_pi_old = sample_Tensor['log_pi_old']
         IDs = sample_Tensor['agent_ids']
-        if self.use_parameter_sharing:
-            key = self.model_keys[0]
-            bs = batch_size * self.n_agents
-        else:
-            bs = batch_size
+
+        bs = batch_size * self.n_agents if self.use_parameter_sharing else batch_size
 
         # feedforward
         _, pi_dists_dict = self.policy(observation=obs, agent_ids=IDs, avail_actions=avail_actions)
@@ -227,11 +224,11 @@ class IPPO_Learner(LearnerMAS):
                 f"{key}/predict_value": value_pred_i.mean().item()
             })
 
-        loss = (sum(loss_a) + self.vf_coef * sum(loss_c) - self.ent_coef * sum(loss_e)) / self.n_agents
+        loss = sum(loss_a) + self.vf_coef * sum(loss_c) - self.ent_coef * sum(loss_e)
         self.optimizer.zero_grad()
         loss.backward()
         if self.use_grad_clip:
-            grad_norm = torch.nn.utils.clip_grad_norm_(self.policy.parameters(), self.grad_clip_norm)
+            grad_norm = torch.nn.utils.clip_grad_norm_(self.policy.parameters_model, self.grad_clip_norm)
             info["gradient_norm"] = grad_norm.item()
         self.optimizer.step()
         if self.scheduler is not None and self.use_linear_lr_decay:

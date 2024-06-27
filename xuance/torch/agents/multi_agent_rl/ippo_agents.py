@@ -198,7 +198,7 @@ class IPPO_Agents(MARLAgents):
             values_dict (dict): The evaluated critic values (when test_mode is False).
         """
         n_env = len(obs_dict)
-        rnn_hidden_critic_new, values_out, values_dict = {}, {}, {}
+        rnn_hidden_critic_new, values_out, log_pi_a_dict, values_dict = {}, {}, {}, {}
 
         obs_input, agents_id, avail_actions_input = self._build_inputs(obs_dict, avail_actions_dict)
         rnn_hidden_actor_new, pi_dists = self.policy(observation=obs_input,
@@ -212,31 +212,30 @@ class IPPO_Agents(MARLAgents):
 
         if self.use_parameter_sharing:
             key = self.agent_keys[0]
-            actions_out = pi_dists[key].stochastic_sample()
-            log_pi_a = pi_dists[key].log_prob(actions_out).cpu().detach().numpy()
+            actions_sample = pi_dists[key].stochastic_sample()
             if self.continuous_control:
-                actions_out = actions_out.reshape(n_env, self.n_agents, -1)
+                actions_out = actions_sample.reshape(n_env, self.n_agents, -1)
             else:
-                actions_out = actions_out.reshape(n_env, self.n_agents)
-            log_pi_a = log_pi_a.reshape(n_env, self.n_agents)
+                actions_out = actions_sample.reshape(n_env, self.n_agents)
             actions_dict = [{k: actions_out[e, i].cpu().detach().numpy() for i, k in enumerate(self.agent_keys)}
                             for e in range(n_env)]
-            log_pi_a_dict = {k: log_pi_a[:, i] for i, k in enumerate(self.agent_keys)}
             if not test_mode:
+                log_pi_a = pi_dists[key].log_prob(actions_sample).cpu().detach().numpy()
+                log_pi_a = log_pi_a.reshape(n_env, self.n_agents)
+                log_pi_a_dict = {k: log_pi_a[:, i] for i, k in enumerate(self.agent_keys)}
                 values_out[key] = values_out[key].reshape(n_env, self.n_agents)
                 values_dict = {k: values_out[key][:, i].cpu().detach().numpy() for i, k in enumerate(self.agent_keys)}
         else:
-            actions_out = {k: pi_dists[k].stochastic_sample() for k in self.agent_keys}
-            log_pi_a = {k: pi_dists[k].log_prob(actions_out[k]).cpu().detach().numpy() for k in self.agent_keys}
+            actions_sample = {k: pi_dists[k].stochastic_sample() for k in self.agent_keys}
             if self.continuous_control:
-                actions_dict = [{k: actions_out[k].cpu().detach().numpy()[e].reshape([-1]) for k in self.agent_keys}
+                actions_dict = [{k: actions_sample[k].cpu().detach().numpy()[e].reshape([-1]) for k in self.agent_keys}
                                 for e in range(n_env)]
             else:
-                actions_dict = [{k: actions_out[k].cpu().detach().numpy()[e].reshape([]) for k in self.agent_keys}
+                actions_dict = [{k: actions_sample[k].cpu().detach().numpy()[e].reshape([]) for k in self.agent_keys}
                                 for e in range(n_env)]
-            log_pi_a_dict = {k: log_pi_a[k].reshape([n_env]) for i, k in enumerate(self.agent_keys)}
-
             if not test_mode:
+                log_pi_a = {k: pi_dists[k].log_prob(actions_sample[k]).cpu().detach().numpy() for k in self.agent_keys}
+                log_pi_a_dict = {k: log_pi_a[k].reshape([n_env]) for i, k in enumerate(self.agent_keys)}
                 values_dict = {k: values_out[k].cpu().detach().numpy().reshape([n_env]) for k in self.agent_keys}
 
         return rnn_hidden_actor_new, rnn_hidden_critic_new, actions_dict, log_pi_a_dict, values_dict
