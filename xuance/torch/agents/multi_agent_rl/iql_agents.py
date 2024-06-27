@@ -263,6 +263,9 @@ class IQL_Agents(MARLAgents):
             env_fn: The function that can make some testing environments.
             n_episodes (int): Number of episodes.
             test_mode (bool): Whether to test the model.
+
+        Returns:
+            Scores: The episode scores.
         """
         envs = self.envs if env_fn is None else env_fn()
         num_envs = envs.num_envs
