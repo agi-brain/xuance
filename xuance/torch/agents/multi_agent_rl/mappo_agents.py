@@ -45,7 +45,7 @@ class MAPPO_Agents(IPPO_Agents):
         representation = ModuleDict()
         dim_obs_all = sum([self.observation_space[k].shape[-1] for k in self.agent_keys])
         if self.use_global_state:
-            dim_obs_all += self.state_space.shape[-1]
+            dim_obs_all = self.state_space.shape[-1]
         input_shape = (dim_obs_all, )
         for key in self.model_keys:
             if representation_key == "Basic_Identical":
@@ -120,6 +120,7 @@ class MAPPO_Agents(IPPO_Agents):
 
         Parameters:
             obs_dict (dict): Observations for each agent in self.agent_keys.
+            state (Optional[np.ndarray]): The global state.
             avail_actions_dict (Optional[List[dict]]): Actions mask values, default is None.
             rnn_hidden_actor (Optional[dict]): The RNN hidden states of actor representation.
             rnn_hidden_critic (Optional[dict]): The RNN hidden states of critic representation.
@@ -133,92 +134,49 @@ class MAPPO_Agents(IPPO_Agents):
             values_dict (dict): The evaluated critic values (when test_mode is False).
         """
         n_env = len(obs_dict)
-        avail_actions_input = None
-        rnn_hidden_critic_new, values_dict = {}, {}
+        rnn_hidden_critic_new, values_out, log_pi_a_dict, values_dict = {}, {}, {}, {}
+
+        obs_input, agents_id, avail_actions_input = self._build_inputs(obs_dict, avail_actions_dict)
+        rnn_hidden_actor_new, pi_dists = self.policy(observation=obs_input,
+                                                     agent_ids=agents_id,
+                                                     avail_actions=avail_actions_input,
+                                                     rnn_hidden=rnn_hidden_actor)
+        if not test_mode:
+            if self.use_global_state:
+                critic_input = state
+            else:
+                critic_input = obs_input
+            rnn_hidden_critic_new, values_out = self.policy.get_values(observation=critic_input,
+                                                                       agent_ids=agents_id,
+                                                                       rnn_hidden=rnn_hidden_critic)
 
         if self.use_parameter_sharing:
             key = self.agent_keys[0]
-            if self.use_rnn:
-                batch_size = n_env * self.n_agents
-                obs_array = np.array([itemgetter(*self.agent_keys)(data) for data in obs_dict])
-                obs_input = {key: obs_array.reshape([batch_size, 1, -1])}
-                if self.use_actions_mask:
-                    avail_actions_array = np.array([itemgetter(*self.agent_keys)(data) for data in avail_actions_dict])
-                    avail_actions_input = {key: avail_actions_array.reshape([batch_size, 1, -1])}
-                agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(n_env, -1, -1).reshape(batch_size, 1, -1).to(
-                    self.device)
+            actions_sample = pi_dists[key].stochastic_sample()
+            if self.continuous_control:
+                actions_out = actions_sample.reshape(n_env, self.n_agents, -1)
             else:
-                obs_input = {key: np.array([itemgetter(*self.agent_keys)(env_obs) for env_obs in obs_dict])}
-                if self.use_actions_mask:
-                    avail_actions_input = {
-                        key: np.array([itemgetter(*self.agent_keys)(data) for data in avail_actions_dict])}
-                agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(n_env, -1, -1).to(self.device)
-
-            rnn_hidden_actor_new, pi_dists = self.policy(observation=obs_input,
-                                                         agent_ids=agents_id,
-                                                         avail_actions=avail_actions_input,
-                                                         rnn_hidden=rnn_hidden_actor)
-            actions_out = pi_dists[key].stochastic_sample()
-            log_pi_a = pi_dists[key].log_prob(actions_out).cpu().detach().numpy()
-            if self.use_rnn:
-                if self.continuous_control:
-                    actions_out = actions_out.reshape(n_env, self.n_agents, -1)
-                else:
-                    actions_out = actions_out.reshape(n_env, self.n_agents)
-                log_pi_a = log_pi_a.reshape(n_env, self.n_agents)
+                actions_out = actions_sample.reshape(n_env, self.n_agents)
             actions_dict = [{k: actions_out[e, i].cpu().detach().numpy() for i, k in enumerate(self.agent_keys)}
                             for e in range(n_env)]
-            log_pi_a_dict = [{k: log_pi_a[e, i] for i, k in enumerate(self.agent_keys)} for e in range(n_env)]
             if not test_mode:
-                critic_input = np.repeat(obs_input[key].reshape([n_env, 1, -1]), self.n_agents, axis=1)
-                if self.use_global_state:
-                    state_input = np.repeat(state[:, None], self.n_agents, axis=1)
-                    critic_input = np.concatenate([critic_input, state_input], axis=-1)
-                if self.use_rnn:
-                    critic_input = critic_input.reshape([batch_size, 1, -1])
-                rnn_hidden_critic_new, values_out = self.policy.get_values(observation={key: critic_input},
-                                                                           agent_ids=agents_id,
-                                                                           rnn_hidden=rnn_hidden_critic)
-                values_out = values_out[key].reshape(n_env, self.n_agents)
-                values_dict = [{k: values_out[e, i].cpu().detach().numpy() for i, k in enumerate(self.agent_keys)}
-                               for e in range(n_env)]
+                log_pi_a = pi_dists[key].log_prob(actions_sample).cpu().detach().numpy()
+                log_pi_a = log_pi_a.reshape(n_env, self.n_agents)
+                log_pi_a_dict = {k: log_pi_a[:, i] for i, k in enumerate(self.agent_keys)}
+                values_out[key] = values_out[key].reshape(n_env, self.n_agents)
+                values_dict = {k: values_out[key][:, i].cpu().detach().numpy() for i, k in enumerate(self.agent_keys)}
         else:
-            if self.use_rnn:
-                obs_input = {k: np.array([itemgetter(k)(env_obs) for env_obs in obs_dict])[:, None] for k in
-                             self.agent_keys}
-                if self.use_actions_mask:
-                    avail_actions_input = {k: np.array([itemgetter(k)(mask) for mask in avail_actions_dict])[:, None]
-                                           for k in self.agent_keys}
-            else:
-                obs_input = {k: np.array([itemgetter(k)(env_obs) for env_obs in obs_dict]) for k in self.agent_keys}
-                if self.use_actions_mask:
-                    avail_actions_input = {k: np.array([itemgetter(k)(mask) for mask in avail_actions_dict]) for k in
-                                           self.agent_keys}
-
-            rnn_hidden_actor_new, pi_dists = self.policy(observation=obs_input,
-                                                         avail_actions=avail_actions_input,
-                                                         rnn_hidden=rnn_hidden_actor)
-
-            actions_out = {k: pi_dists[k].stochastic_sample() for k in self.agent_keys}
-            log_pi_a = {k: pi_dists[k].log_prob(actions_out[k]).cpu().detach().numpy() for k in self.agent_keys}
+            actions_sample = {k: pi_dists[k].stochastic_sample() for k in self.agent_keys}
             if self.continuous_control:
-                actions_dict = [{k: actions_out[k].cpu().detach().numpy()[e].reshape([-1]) for k in self.agent_keys}
+                actions_dict = [{k: actions_sample[k].cpu().detach().numpy()[e].reshape([-1]) for k in self.agent_keys}
                                 for e in range(n_env)]
             else:
-                actions_dict = [{k: actions_out[k].cpu().detach().numpy()[e].reshape([]) for k in self.agent_keys}
+                actions_dict = [{k: actions_sample[k].cpu().detach().numpy()[e].reshape([]) for k in self.agent_keys}
                                 for e in range(n_env)]
-            log_pi_a_dict = [{k: log_pi_a[k][e].reshape([]) for i, k in enumerate(self.agent_keys)}
-                             for e in range(n_env)]
-
             if not test_mode:
-                critic_input_array = np.concatenate([obs_input[k].reshape(n_env, 1, -1) for k in self.agent_keys], axis=1).reshape(n_env, -1)
-                if self.use_global_state:
-                    critic_input_array = np.concatenate([critic_input_array, state], axis=-1)
-                critic_input = {k: critic_input_array for k in self.agent_keys}
-                rnn_hidden_critic_new, values_out = self.policy.get_values(observation=critic_input,
-                                                                           rnn_hidden=rnn_hidden_critic)
-                values_dict = [{k: values_out[k][e].cpu().detach().numpy().reshape([]) for k in self.agent_keys}
-                               for e in range(n_env)]
+                log_pi_a = {k: pi_dists[k].log_prob(actions_sample[k]).cpu().detach().numpy() for k in self.agent_keys}
+                log_pi_a_dict = {k: log_pi_a[k].reshape([n_env]) for i, k in enumerate(self.agent_keys)}
+                values_dict = {k: values_out[k].cpu().detach().numpy().reshape([n_env]) for k in self.agent_keys}
 
         return rnn_hidden_actor_new, rnn_hidden_critic_new, actions_dict, log_pi_a_dict, values_dict
 
@@ -233,6 +191,7 @@ class MAPPO_Agents(IPPO_Agents):
         Parameters:
             i_env (int): The index of environment.
             obs_dict (dict): Observations for each agent in self.agent_keys.
+            state (Optional[np.ndarray]): The global state.
             rnn_hidden_critic (Optional[dict]): The RNN hidden states of critic representation.
 
         Returns:
@@ -248,18 +207,21 @@ class MAPPO_Agents(IPPO_Agents):
                 rnn_hidden_critic_i = {key: self.policy.critic_representation[key].get_hidden_item(
                     hidden_item_index, *rnn_hidden_critic[key])}
                 batch_size = n_env * self.n_agents
-                obs_array = np.array(itemgetter(*self.agent_keys)(obs_dict))
-                critic_input = np.repeat(obs_array.reshape([n_env, 1, -1]), self.n_agents, axis=1).reshape([batch_size, 1, -1])
                 if self.use_global_state:
-                    critic_input = np.concatenate([critic_input, state.reshape([batch_size, 1, -1])], axis=-1)
+                    critic_input = np.repeat(state.reshape([n_env, 1, -1]),
+                                             self.n_agents, axis=1).reshape([batch_size, 1, -1])
+                else:
+                    obs_array = np.array(itemgetter(*self.agent_keys)(obs_dict))
+                    critic_input = np.repeat(obs_array.reshape([n_env, 1, -1]),
+                                             self.n_agents, axis=1).reshape([batch_size, 1, -1])
                 agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(n_env, -1, -1).reshape(batch_size, 1, -1).to(
                     self.device)
             else:
-                obs_array = np.array([itemgetter(*self.agent_keys)(obs_dict)]).reshape([n_env, 1, -1])
-                critic_input = np.repeat(obs_array, self.n_agents, axis=1)
                 if self.use_global_state:
-                    state_input = np.repeat(state.reshape([n_env, 1, -1]), self.n_agents, axis=1)
-                    critic_input = np.concatenate([critic_input, state_input], axis=-1)
+                    critic_input = np.repeat(state.reshape([n_env, 1, -1]), self.n_agents, axis=1)
+                else:
+                    obs_array = np.array([itemgetter(*self.agent_keys)(obs_dict)]).reshape([n_env, 1, -1])
+                    critic_input = np.repeat(obs_array, self.n_agents, axis=1)
                 agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(n_env, -1, -1).to(self.device)
 
             rnn_hidden_critic_new, values_out = self.policy.get_values(observation={key: critic_input},
