@@ -9,7 +9,6 @@ from torch import nn
 from typing import Optional, List
 from argparse import Namespace
 from operator import itemgetter
-from numpy import concatenate as concat
 from xuance.torch import Tensor
 from xuance.torch.utils import ValueNorm
 from xuance.torch.learners import LearnerMAS
@@ -197,8 +196,8 @@ class IPPO_Learner(LearnerMAS):
                 value_clipped = values_i + (value_pred_i - values_i).clamp(-self.value_clip_range,
                                                                            self.value_clip_range)
                 if self.use_value_norm:
-                    self.value_normalizer[key].update(value_target)
-                    value_target = self.value_normalizer[key].normalize(value_target)
+                    self.value_normalizer[key].update(value_target.reshape(bs, 1))
+                    value_target = self.value_normalizer[key].normalize(value_target.reshape(bs, 1)).reshape(bs)
                 if self.use_huber_loss:
                     loss_v = self.huber_loss(value_pred_i, value_target)
                     loss_v_clipped = self.huber_loss(value_clipped, value_target)
@@ -260,18 +259,18 @@ class IPPO_Learner(LearnerMAS):
         advantages = sample_Tensor['advantages']
         log_pi_old = sample_Tensor['log_pi_old']
         avail_actions = sample_Tensor['avail_actions']
+        agent_mask = sample_Tensor['agent_mask']
         filled = sample_Tensor['filled']
         seq_len = filled.shape[1]
         IDs = sample_Tensor['agent_ids']
 
-        rnn_hidden_actor, rnn_hidden_critic = {}, {}
-        for key in self.model_keys:
-            if self.use_parameter_sharing:
-                filled = filled.unsqueeze(1).expand(batch_size, self.n_agents, seq_len).reshape(-1, 1)
-            else:
-                filled = filled.reshape(-1, 1)
-            rnn_hidden_actor[key] = self.policy.actor_representation[key].init_hidden(bs_rnn)
-            rnn_hidden_critic[key] = self.policy.critic_representation[key].init_hidden(bs_rnn)
+        if self.use_parameter_sharing:
+            bs_rnn = batch_size * self.n_agents
+            filled = filled.unsqueeze(1).expand(-1, self.n_agents, -1).reshape(bs_rnn, seq_len)
+
+        # feedfowrd
+        rnn_hidden_actor = {k: self.policy.actor_representation[k].init_hidden(bs_rnn) for k in self.model_keys}
+        rnn_hidden_critic = {k: self.policy.critic_representation[k].init_hidden(bs_rnn) for k in self.model_keys}
 
         # feedforward
         _, pi_dist_dict = self.policy(obs, agent_ids=IDs, avail_actions=avail_actions, rnn_hidden=rnn_hidden_actor)
@@ -285,34 +284,35 @@ class IPPO_Learner(LearnerMAS):
         # calculate losses for each agent
         loss_a, loss_e, loss_c = [], [], []
         for key in self.model_keys:
-            log_pi = pi_dist_dict[key].log_prob(actions[key]).reshape(-1, 1)
+            mask_values = agent_mask[key] * filled
+            log_pi = pi_dist_dict[key].log_prob(actions[key]).reshape(bs_rnn, seq_len)
             ratio = torch.exp(log_pi - log_pi_old[key])
             surrogate1 = ratio * advantages[key]
             surrogate2 = torch.clip(ratio, 1 - self.clip_range, 1 + self.clip_range) * advantages[key]
-            loss_a.append(-(torch.min(surrogate1, surrogate2) * filled).sum() / filled.sum())
+            loss_a.append(-(torch.min(surrogate1, surrogate2) * mask_values).sum() / mask_values.sum())
 
             # entropy loss
-            entropy = pi_dist_dict[key].entropy().reshape(-1, 1)
-            entropy = entropy * filled
-            loss_e.append(entropy.sum() / filled.sum())
+            entropy = pi_dist_dict[key].entropy().reshape(bs_rnn, seq_len)
+            entropy = entropy * mask_values
+            loss_e.append(entropy.sum() / mask_values.sum())
 
             # critic loss
-            value_pred_i = value_pred_dict[key].reshape(-1, 1)
-            value_target = returns[key].reshape(-1, 1)
-            values_i = values[key].reshape(-1, 1)
+            value_pred_i = value_pred_dict[key].reshape(bs_rnn, seq_len)
+            value_target = returns[key].reshape(bs_rnn, seq_len)
+            values_i = values[key].reshape(bs_rnn, seq_len)
             if self.use_value_clip:
                 value_clipped = values_i + (value_pred_i - values_i).clamp(-self.value_clip_range, self.value_clip_range)
                 if self.use_value_norm:
-                    self.value_normalizer[key].update(value_target)
-                    value_target = self.value_normalizer[key].normalize(value_target)
+                    self.value_normalizer[key].update(value_target.reshape(-1, 1))
+                    value_target = self.value_normalizer[key].normalize(value_target.reshape(-1, 1)).reshape(bs_rnn, seq_len)
                 if self.use_huber_loss:
                     loss_v = self.huber_loss(value_pred_i, value_target)
                     loss_v_clipped = self.huber_loss(value_clipped, value_target)
                 else:
                     loss_v = (value_pred_i - value_target) ** 2
                     loss_v_clipped = (value_clipped - value_target) ** 2
-                loss_c_ = torch.max(loss_v, loss_v_clipped) * filled
-                loss_c.append(loss_c_.sum() / filled.sum())
+                loss_c_ = torch.max(loss_v, loss_v_clipped) * mask_values
+                loss_c.append(loss_c_.sum() / mask_values.sum())
             else:
                 if self.use_value_norm:
                     self.value_normalizer[key].update(value_target)
@@ -321,7 +321,7 @@ class IPPO_Learner(LearnerMAS):
                     loss_v = self.huber_loss(value_pred_i, value_target)
                 else:
                     loss_v = (value_pred_i - value_target) ** 2
-                loss_c.append((loss_v * filled).sum() / filled.sum())
+                loss_c.append((loss_v * mask_values).sum() / mask_values.sum())
 
             info.update({
                 f"{key}/actor_loss": loss_a[-1].item(),

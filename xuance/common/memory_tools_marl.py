@@ -156,7 +156,7 @@ class MARL_OnPolicyBuffer(BaseBuffer):
             for agt_key in self.agent_keys:
                 self.data[data_key][agt_key][:, self.ptr] = step_data[data_key][agt_key]
         self.ptr = (self.ptr + 1) % self.n_size
-        self.size = min(self.size + 1, self.n_size)
+        self.size = np.min([self.size + 1, self.n_size])
 
     def finish_path(self,
                     i_env: Optional[int] = None,
@@ -184,9 +184,9 @@ class MARL_OnPolicyBuffer(BaseBuffer):
             if value_normalizer.keys() != set(self.agent_keys):
                 use_parameter_sharing = True
         for key in self.agent_keys:
-            rewards = np.array(self.data['rewards'][key][i_env, path_slice])
-            vs = np.append(np.array(self.data['values'][key][i_env, path_slice]), [value_next[key]], axis=0)
-            dones = np.array(self.data['terminals'][key][i_env, path_slice])
+            rewards = self.data['rewards'][key][i_env, path_slice]
+            vs = np.append(self.data['values'][key][i_env, path_slice], [value_next[key]], axis=0)
+            dones = self.data['terminals'][key][i_env, path_slice]
             returns = np.zeros_like(rewards)
             last_gae_lam = 0
             step_nums = len(path_slice)

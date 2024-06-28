@@ -101,40 +101,6 @@ class IPPO_Agents(MARLAgents):
     def _build_learner(self, config, model_keys, agent_keys, episode_length, policy, optimizer, scheduler):
         return IPPO_Learner(config, model_keys, agent_keys, episode_length, policy, optimizer, scheduler)
 
-    def store_experience(self, obs_dict, avail_actions, actions_dict, log_pi_a, rewards_dict, values_dict,
-                         terminals_dict, info, **kwargs):
-        """
-        Store experience data into replay buffer.
-
-        Parameters:
-            obs_dict (List[dict]): Observations for each agent in self.agent_keys.
-            avail_actions (List[dict]): Actions mask values for each agent in self.agent_keys.
-            actions_dict (List[dict]): Actions for each agent in self.agent_keys.
-            log_pi_a (dict): The log of pi.
-            rewards_dict (List[dict]): Rewards for each agent in self.agent_keys.
-            values_dict (dict): Critic values for each agent in self.agent_keys.
-            terminals_dict (List[dict]): Terminated values for each agent in self.agent_keys.
-            info (List[dict]): Other information for the environment at current step.
-            **kwargs: Other inputs.
-        """
-        experience_data = {
-            'obs': {k: np.array([data[k] for data in obs_dict]) for k in self.agent_keys},
-            'actions': {k: np.array([data[k] for data in actions_dict]) for k in self.agent_keys},
-            'log_pi_old': log_pi_a,
-            'rewards': {k: np.array([data[k] for data in rewards_dict]) for k in self.agent_keys},
-            'values': values_dict,
-            'terminals': {k: np.array([data[k] for data in terminals_dict]) for k in self.agent_keys},
-            'agent_mask': {k: np.array([data['agent_mask'][k] for data in info]) for k in self.agent_keys},
-        }
-        if self.use_rnn:
-            experience_data['episode_steps'] = np.array([data['episode_step'] - 1 for data in info])
-        if self.use_global_state:
-            experience_data['state'] = np.array(kwargs['state'])
-        if self.use_actions_mask:
-            experience_data['avail_actions'] = {k: np.array([data[k] for data in avail_actions])
-                                                for k in self.agent_keys},
-        self.memory.store(**experience_data)
-
     def init_rnn_hidden(self, n_envs):
         """
         Returns initialized hidden states of RNN if use RNN-based representations.
@@ -173,6 +139,40 @@ class IPPO_Agents(MARLAgents):
         for k in self.model_keys:
             rnn_hidden_critic[k] = self.policy.critic_representation[k].init_hidden_item(b_index, *rnn_hidden_critic[k])
         return rnn_hidden_actor, rnn_hidden_critic
+
+    def store_experience(self, obs_dict, avail_actions, actions_dict, log_pi_a, rewards_dict, values_dict,
+                         terminals_dict, info, **kwargs):
+        """
+        Store experience data into replay buffer.
+
+        Parameters:
+            obs_dict (List[dict]): Observations for each agent in self.agent_keys.
+            avail_actions (List[dict]): Actions mask values for each agent in self.agent_keys.
+            actions_dict (List[dict]): Actions for each agent in self.agent_keys.
+            log_pi_a (dict): The log of pi.
+            rewards_dict (List[dict]): Rewards for each agent in self.agent_keys.
+            values_dict (dict): Critic values for each agent in self.agent_keys.
+            terminals_dict (List[dict]): Terminated values for each agent in self.agent_keys.
+            info (List[dict]): Other information for the environment at current step.
+            **kwargs: Other inputs.
+        """
+        experience_data = {
+            'obs': {k: np.array([data[k] for data in obs_dict]) for k in self.agent_keys},
+            'actions': {k: np.array([data[k] for data in actions_dict]) for k in self.agent_keys},
+            'log_pi_old': log_pi_a,
+            'rewards': {k: np.array([data[k] for data in rewards_dict]) for k in self.agent_keys},
+            'values': values_dict,
+            'terminals': {k: np.array([data[k] for data in terminals_dict]) for k in self.agent_keys},
+            'agent_mask': {k: np.array([data['agent_mask'][k] for data in info]) for k in self.agent_keys},
+        }
+        if self.use_rnn:
+            experience_data['episode_steps'] = np.array([data['episode_step'] - 1 for data in info])
+        if self.use_global_state:
+            experience_data['state'] = np.array(kwargs['state'])
+        if self.use_actions_mask:
+            experience_data['avail_actions'] = {k: np.array([data[k] for data in avail_actions])
+                                                for k in self.agent_keys}
+        self.memory.store(**experience_data)
 
     def action(self,
                obs_dict: List[dict],
@@ -304,9 +304,8 @@ class IPPO_Agents(MARLAgents):
                 n_steps_all = n_steps * self.n_envs
                 while step_last - step_start < n_steps_all:
                     self.run_episodes(None, n_episodes=self.n_envs, test_mode=False)
-                    if self.memory.full:
-                        train_info = self.train_epochs(n_epochs=self.n_epochs)
-                        self.log_infos(train_info, self.current_step)
+                    train_info = self.train_epochs(n_epochs=self.n_epochs)
+                    self.log_infos(train_info, self.current_step)
                     process_bar.update((self.current_step - step_last) // self.n_envs)
                     step_last = deepcopy(self.current_step)
                 process_bar.update(n_steps - process_bar.last_print_n)
@@ -332,8 +331,8 @@ class IPPO_Agents(MARLAgents):
                         _, value_next = self.values_next(i_env=i, obs_dict=next_obs_dict[i])
                     self.memory.finish_path(i_env=i, value_next=value_next,
                                             value_normalizer=self.learner.value_normalizer)
-                train_info = self.train_epochs(n_epochs=self.n_epochs)
-                self.log_infos(train_info, self.current_step)
+            train_info = self.train_epochs(n_epochs=self.n_epochs)
+            self.log_infos(train_info, self.current_step)
             obs_dict, avail_actions = deepcopy(next_obs_dict), deepcopy(next_avail_actions)
             state = self.envs.buf_state if self.use_global_state else None
 
@@ -476,15 +475,16 @@ class IPPO_Agents(MARLAgents):
             info_train (dict): The information of training.
         """
         info_train = {}
-        indexes = np.arange(self.buffer_size)
-        for _ in range(n_epochs):
-            np.random.shuffle(indexes)
-            for start in range(0, self.buffer_size, self.batch_size):
-                end = start + self.batch_size
-                sample_idx = indexes[start:end]
-                sample = self.memory.sample(sample_idx)
-                info_train = self.learner.update_rnn(sample) if self.use_rnn else self.learner.update(sample)
-        self.memory.clear()
+        if self.memory.full:
+            indexes = np.arange(self.buffer_size)
+            for _ in range(n_epochs):
+                np.random.shuffle(indexes)
+                for start in range(0, self.buffer_size, self.batch_size):
+                    end = start + self.batch_size
+                    sample_idx = indexes[start:end]
+                    sample = self.memory.sample(sample_idx)
+                    info_train = self.learner.update_rnn(sample) if self.use_rnn else self.learner.update(sample)
+            self.memory.clear()
         return info_train
 
     def test(self, env_fn, n_episodes):
