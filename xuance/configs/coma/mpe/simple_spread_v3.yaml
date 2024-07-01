@@ -39,7 +39,6 @@ running_steps: 10000000  # The total running steps.
 use_global_state: False  # If to use global state to replace merged observations.
 use_parameter_sharing: True  # If to use parameter sharing for all agents' policies.
 use_actions_mask: False  # If to use action masks.
-use_agents_mask: True  # If to use agent masks.
 
 gamma: 0.95  # Discount factor.
 td_lambda: 0.1  # TD lambda.

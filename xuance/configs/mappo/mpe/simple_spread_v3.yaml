@@ -25,7 +25,6 @@ activation: "relu"  # The activation function of each hidden layer.
 activation_action: "sigmoid"  # The activation function for the last layer of the actor.
 use_parameter_sharing: False  # If to use parameter sharing for all agents' policies.
 use_actions_mask: False  # If to use actions mask for unavailable actions.
-use_agents_mask: False  # If to use agents mask for inactive agents.
 
 seed: 1  # Random seed.
 parallels: 16  # The number of environments to run in parallel.

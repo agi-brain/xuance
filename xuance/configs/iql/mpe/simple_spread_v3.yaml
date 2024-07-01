@@ -39,7 +39,6 @@ use_grad_clip: False
 grad_clip_norm: 0.5
 use_parameter_sharing: True
 use_actions_mask: False
-use_agents_mask: True
 
 eval_interval: 100000
 test_episode: 5
