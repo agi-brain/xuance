@@ -126,8 +126,9 @@ class MAPPO_Agents(IPPO_Agents):
             critic_input = state
         else:
             if self.use_parameter_sharing:
+                key = self.model_keys[0]
                 bs = batch_size * self.n_agents
-                joint_obs = obs_batch[self.model_keys[0]].reshape([batch_size, self.n_agents, -1]).reshape([bs, 1, -1])
+                joint_obs = obs_batch[key].reshape([batch_size, self.n_agents, -1]).reshape([batch_size, 1, -1])
                 joint_obs = np.repeat(joint_obs, repeats=self.n_agents, axis=1)
             else:
                 bs = batch_size
