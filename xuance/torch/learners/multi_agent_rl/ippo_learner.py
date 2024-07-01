@@ -265,7 +265,6 @@ class IPPO_Learner(LearnerMAS):
         IDs = sample_Tensor['agent_ids']
 
         if self.use_parameter_sharing:
-            bs_rnn = batch_size * self.n_agents
             filled = filled.unsqueeze(1).expand(-1, self.n_agents, -1).reshape(bs_rnn, seq_len)
 
         # feedfowrd
@@ -301,10 +300,12 @@ class IPPO_Learner(LearnerMAS):
             value_target = returns[key].reshape(bs_rnn, seq_len)
             values_i = values[key].reshape(bs_rnn, seq_len)
             if self.use_value_clip:
-                value_clipped = values_i + (value_pred_i - values_i).clamp(-self.value_clip_range, self.value_clip_range)
+                value_clipped = values_i + (value_pred_i - values_i).clamp(-self.value_clip_range,
+                                                                           self.value_clip_range)
                 if self.use_value_norm:
                     self.value_normalizer[key].update(value_target.reshape(-1, 1))
-                    value_target = self.value_normalizer[key].normalize(value_target.reshape(-1, 1)).reshape(bs_rnn, seq_len)
+                    value_target = self.value_normalizer[key].normalize(value_target.reshape(-1, 1))
+                    value_target = value_target.reshape(bs_rnn, seq_len)
                 if self.use_huber_loss:
                     loss_v = self.huber_loss(value_pred_i, value_target)
                     loss_v_clipped = self.huber_loss(value_clipped, value_target)

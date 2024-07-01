@@ -282,7 +282,7 @@ class IPPO_Agents(MARLAgents):
         else:
             if self.use_rnn:
                 rnn_hidden_critic_i = {k: self.policy.critic_representation[k].get_hidden_item(
-                    i_env, *rnn_hidden_critic[k]) for k in self.agent_keys}
+                    [i_env, ], *rnn_hidden_critic[k]) for k in self.agent_keys}
             obs_input = {k: obs_dict[k][None, :] for k in self.agent_keys} if self.use_rnn else obs_dict
 
             rnn_hidden_critic_new, values_out = self.policy.get_values(observation=obs_input,

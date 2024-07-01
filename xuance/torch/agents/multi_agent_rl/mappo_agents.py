@@ -126,14 +126,14 @@ class MAPPO_Agents(IPPO_Agents):
             critic_input = state
         else:
             if self.use_parameter_sharing:
-                k = self.model_keys[0]
                 bs = batch_size * self.n_agents
-                joint_obs = obs_batch[k].reshape([batch_size, self.n_agents, -1]).reshape([bs, 1, -1])
-                joint_obs = np.repeat(joint_obs, repeats=self.n_agents, axis=1).reshape([bs, -1])
-                critic_input = {k: joint_obs}
+                joint_obs = obs_batch[self.model_keys[0]].reshape([batch_size, self.n_agents, -1]).reshape([bs, 1, -1])
+                joint_obs = np.repeat(joint_obs, repeats=self.n_agents, axis=1)
             else:
-                joint_obs = np.stack(itemgetter(*self.agent_keys)(obs_batch), axis=1).reshape([batch_size, -1])
-                critic_input = {k: joint_obs for k in self.agent_keys}
+                bs = batch_size
+                joint_obs = np.stack(itemgetter(*self.agent_keys)(obs_batch), axis=1)
+            joint_obs = joint_obs.reshape([bs, 1, -1]) if self.use_rnn else joint_obs.reshape([bs, -1])
+            critic_input = {k: joint_obs for k in self.model_keys}
         return critic_input
 
     def action(self,
@@ -258,8 +258,9 @@ class MAPPO_Agents(IPPO_Agents):
         else:
             if self.use_rnn:
                 rnn_hidden_critic_i = {k: self.policy.critic_representation[k].get_hidden_item(
-                    i_env, *rnn_hidden_critic[k]) for k in self.agent_keys}
-                obs_input = {k: obs_dict[k][None, :] for k in self.agent_keys}
+                    [i_env, ], *rnn_hidden_critic[k]) for k in self.agent_keys}
+                joint_obs = np.stack(itemgetter(*self.agent_keys)(obs_dict), axis=0).reshape([n_env, 1, -1])
+                critic_input = {k: joint_obs for k in self.agent_keys}
             else:
                 critic_input_array = np.concatenate([obs_dict[k].reshape(n_env, 1, -1) for k in self.agent_keys],
                                                     axis=1).reshape(n_env, -1)
