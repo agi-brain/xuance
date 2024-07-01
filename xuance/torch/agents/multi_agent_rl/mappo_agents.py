@@ -20,6 +20,7 @@ class MAPPO_Agents(IPPO_Agents):
         config: the Namespace variable that provides hyper-parameters and other settings.
         envs: the vectorized environments.
     """
+
     def __init__(self,
                  config: Namespace,
                  envs: DummyVecMultiAgentEnv):
@@ -46,7 +47,7 @@ class MAPPO_Agents(IPPO_Agents):
         dim_obs_all = sum([self.observation_space[k].shape[-1] for k in self.agent_keys])
         if self.use_global_state:
             dim_obs_all = self.state_space.shape[-1]
-        input_shape = (dim_obs_all, )
+        input_shape = (dim_obs_all,)
         for key in self.model_keys:
             if representation_key == "Basic_Identical":
                 representation[key] = REGISTRY_Representation["Basic_Identical"](input_shape=input_shape,
@@ -108,6 +109,33 @@ class MAPPO_Agents(IPPO_Agents):
     def _build_learner(self, config, model_keys, agent_keys, episode_length, policy, optimizer, scheduler):
         return MAPPO_Clip_Learner(config, model_keys, agent_keys, episode_length, policy, optimizer, scheduler)
 
+    def _build_critic_inputs(self, batch_size: int, obs_batch: dict,
+                             state: Optional[np.ndarray]):
+        """
+        Build inputs for critic representations before calculating actions.
+
+        Parameters:
+            batch_size (int): The size of the obs batch.
+            obs_batch (dict): Observations for each agent in self.agent_keys.
+            state (Optional[np.ndarray]): The global state.
+
+        Returns:
+            critic_input: The represented observations.
+        """
+        if self.use_global_state:
+            critic_input = state
+        else:
+            if self.use_parameter_sharing:
+                k = self.model_keys[0]
+                bs = batch_size * self.n_agents
+                joint_obs = obs_batch[k].reshape([batch_size, self.n_agents, -1]).reshape([bs, 1, -1])
+                joint_obs = np.repeat(joint_obs, repeats=self.n_agents, axis=1).reshape([bs, -1])
+                critic_input = {k: joint_obs}
+            else:
+                joint_obs = np.stack(itemgetter(*self.agent_keys)(obs_batch), axis=1).reshape([batch_size, -1])
+                critic_input = {k: joint_obs for k in self.agent_keys}
+        return critic_input
+
     def action(self,
                obs_dict: List[dict],
                state: Optional[np.ndarray] = None,
@@ -142,10 +170,7 @@ class MAPPO_Agents(IPPO_Agents):
                                                      avail_actions=avail_actions_input,
                                                      rnn_hidden=rnn_hidden_actor)
         if not test_mode:
-            if self.use_global_state:
-                critic_input = state
-            else:
-                critic_input = obs_input
+            critic_input = self._build_critic_inputs(batch_size=n_env, obs_batch=obs_input, state=state)
             rnn_hidden_critic_new, values_out = self.policy.get_values(observation=critic_input,
                                                                        agent_ids=agents_id,
                                                                        rnn_hidden=rnn_hidden_critic)
@@ -236,7 +261,8 @@ class MAPPO_Agents(IPPO_Agents):
                     i_env, *rnn_hidden_critic[k]) for k in self.agent_keys}
                 obs_input = {k: obs_dict[k][None, :] for k in self.agent_keys}
             else:
-                critic_input_array = np.concatenate([obs_dict[k].reshape(n_env, 1, -1) for k in self.agent_keys], axis=1).reshape(n_env, -1)
+                critic_input_array = np.concatenate([obs_dict[k].reshape(n_env, 1, -1) for k in self.agent_keys],
+                                                    axis=1).reshape(n_env, -1)
                 if self.use_global_state:
                     critic_input_array = np.concatenate([critic_input_array, state], axis=-1)
                 critic_input = {k: critic_input_array for k in self.agent_keys}
@@ -246,4 +272,3 @@ class MAPPO_Agents(IPPO_Agents):
             values_dict = {k: values_out[k].cpu().detach().numpy().reshape([]) for k in self.agent_keys}
 
         return rnn_hidden_critic_new, values_dict
-
