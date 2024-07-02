@@ -1,4 +1,4 @@
-Professional Usage
+Further Usage
 ================================
 
 The previous page demonstrated how to directly run an algorithm by calling the runner.
@@ -32,7 +32,7 @@ Here we show a config file named "ppo_configs/ppo_mujoco_config.yaml" for MuJoCo
     agent: "PPO_Clip"  # The agent name.
     env_name: "MuJoCo"  # The environment device.
     env_id: "Ant-v4"  # The environment id.
-    vectorize: "DummyVecEnv"  # The vecrized method to create n parallel environments. Choices: DummyVecEnv, or SubprocVecEnv.
+    vectorize: "DummyVecEnv"  # The vectorized method to create n parallel environments. Choices: DummyVecEnv, or SubprocVecEnv.
     policy: "Gaussian_AC"  # choice: Gaussian_AC for continuous actions, Categorical_AC for discrete actions.
     representation: "Basic_MLP"  # The representation name.
 

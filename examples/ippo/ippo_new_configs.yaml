@@ -8,8 +8,8 @@ test_mode: False
 device: "cuda:0"
 
 agent: "IPPO"
-env_name: "mpe"
-env_id: "simple_spread_v3"
+env_name: "MyNewMultiAgentEnv"
+env_id: "new_env_id"
 fps: 50
 continuous_action: True
 policy: "Gaussian_MAAC_Policy"

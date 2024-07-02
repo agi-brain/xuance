@@ -1,15 +1,69 @@
 import argparse
 import numpy as np
 from copy import deepcopy
+from gym.spaces import Box
 from xuance.common import get_configs, recursive_dict_update
-from xuance.environment import make_envs
+from xuance.environment import make_envs, RawMultiAgentEnv, REGISTRY_MULTI_AGENT_ENV
 from xuance.torch.utils.operations import set_seed
 from xuance.torch.agents import IPPO_Agents
 
 
+class MyNewMultiAgentEnv(RawMultiAgentEnv):
+    def __init__(self, env_config):
+        super(MyNewMultiAgentEnv, self).__init__()
+        self.env_id = env_config.env_id
+        self.num_agents = 3
+        self.agents = [f"agent_{i}" for i in range(self.num_agents)]
+        self.state_space = Box(-np.inf, np.inf, shape=[8, ])
+        self.observation_space = {agent: Box(-np.inf, np.inf, shape=[8, ]) for agent in self.agents}
+        self.action_space = {agent: Box(-np.inf, np.inf, shape=[2, ]) for agent in self.agents}
+        self.max_episode_steps = 25
+        self._current_step = 0
+
+    def get_env_info(self):
+        return {'state_space': self.state_space,
+                'observation_space': self.observation_space,
+                'action_space': self.action_space,
+                'agents': self.agents,
+                'num_agents': self.num_agents,
+                'max_episode_steps': self.max_episode_steps}
+
+    def avail_actions(self):
+        return None
+
+    def agent_mask(self):
+        """Returns boolean mask variables indicating which agents are currently alive."""
+        return {agent: True for agent in self.agents}
+
+    def state(self):
+        """Returns the global state of the environment."""
+        return self.state_space.sample()
+
+    def reset(self):
+        observation = {agent: self.observation_space[agent].sample() for agent in self.agents}
+        info = {}
+        self._current_step = 0
+        return observation, info
+
+    def step(self, action_dict):
+        self._current_step += 1
+        observation = {agent: self.observation_space[agent].sample() for agent in self.agents}
+        rewards = {agent: np.random.random() for agent in self.agents}
+        terminated = {agent: False for agent in self.agents}
+        truncated = False if self._current_step < self.max_episode_steps else True
+        info = {}
+        return observation, rewards, terminated, truncated, info
+
+    def render(self, *args, **kwargs):
+        return np.ones([64, 64, 64])
+
+    def close(self):
+        return
+
+
 def parse_args():
     parser = argparse.ArgumentParser("Example of XuanCe: IPPO for MPE.")
-    parser.add_argument("--env-id", type=str, default="simple_spread_v3")
+    parser.add_argument("--env-id", type=str, default="new_env_id")
     parser.add_argument("--test", type=int, default=0)
     parser.add_argument("--benchmark", type=int, default=1)
 
@@ -18,10 +72,11 @@ def parse_args():
 
 if __name__ == "__main__":
     parser = parse_args()
-    configs_dict = get_configs(file_dir="ippo_mpe_configs/simple_spread_v3.yaml")
+    configs_dict = get_configs(file_dir="ippo_new_configs.yaml")
     configs_dict = recursive_dict_update(configs_dict, parser.__dict__)
     configs = argparse.Namespace(**configs_dict)
 
+    REGISTRY_MULTI_AGENT_ENV[configs.env_name] = MyNewMultiAgentEnv
     set_seed(configs.seed)  # Set the random seed.
     envs = make_envs(configs)  # Make the environment.
     Agents = IPPO_Agents(config=configs, envs=envs)  # Create the Independent PPO agents.

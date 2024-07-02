@@ -18,11 +18,9 @@ Each simulation environment contains a rich variety of task scenarios, as shown 
     Drones <environments/drones>
     MetaDrive <environments/metadrive>
     PettingZoo <environments/pettingzoo>
-    StarCraft2 Multi-Agent Challenge <environments/starcraft2>
+    SMAC <environments/starcraft2>
     MAgent2 <environments/magent2>
     Google Research Football <environments/football>
-    Customized Environments <environments/new_env>
-    Customized Multi-Agent Environments <environments/new_env_mas>
     
 
 * :doc:`utils <environments/utils>`.
@@ -34,8 +32,7 @@ Each simulation environment contains a rich variety of task scenarios, as shown 
 * :doc:`Drones <environments/drones>`.
 * :doc:`MetaDrive <environments/metadrive>`.
 * :doc:`PettingZoo <environments/pettingzoo>`.
-* :doc:`StarCraft2 Multi-Agent Challenge <environments/starcraft2>`.
+* :doc:`SMAC <environments/starcraft2>`.
 * :doc:`MAgent2 <environments/magent2>`.
 * :doc:`Google Research Football <environments/football>`.
-* :doc:`Customized Environments <environments/new_env>`.
 

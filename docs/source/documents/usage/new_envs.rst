@@ -1,4 +1,4 @@
-Run Your New Environment
+New Environment
 =========================================================
 
 In XuanCe, users have the flexibility to create and run their own customized environments in addition to utilizing the provided ones.
@@ -18,6 +18,7 @@ Here is an example:
 
 .. code-block:: python
 
+    import numpy as np
     from gym.spaces import Box
     from xuance.environment import RawEnvironment
 
@@ -53,7 +54,7 @@ Here is an example:
 Step 2: Create the Config File and Read the Configurations
 -------------------------------------------------------------
 
-Then, you need to create a YAML file by following the step 1 in :doc:`Professional Usage <professional_usage>`.
+Then, you need to create a YAML file by following the step 1 in :doc:`Further Usage <further_usage>`.
 
 Here is an example of configurations for DDPG algorithm, named "ddpg_new_env.yaml".
 
@@ -116,6 +117,7 @@ Then, read the configurations:
 
 .. code-block:: python
 
+    import argparse
     from xuance.common import get_configs
     configs_dict = get_configs(file_dir="ddpg_new_env.yaml")
     configs = argparse.Namespace(**configs_dict)

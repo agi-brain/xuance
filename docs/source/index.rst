@@ -90,8 +90,9 @@ XuanCe contains four main parts:
 
    documents/usage/installation
    documents/usage/basic_usage
-   documents/usage/professional_usage
+   documents/usage/further_usage
    documents/usage/new_envs
+   documents/usage/new_marl_envs
 
 .. toctree::
    :maxdepth: 1
