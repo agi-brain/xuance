@@ -2,7 +2,6 @@ import torch
 from argparse import Namespace
 from xuance.environment import DummyVecMultiAgentEnv
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
-from xuance.torch.representations import REGISTRY_Representation
 from xuance.torch.policies import REGISTRY_Policy, VDN_mixer
 from xuance.torch.learners import VDN_Learner
 from xuance.torch.agents import MARLAgents

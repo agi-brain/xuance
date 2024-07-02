@@ -25,12 +25,11 @@ activation: "relu"  # The activation function of each hidden layer.
 activation_action: "sigmoid"  # The activation function for the last layer of the actor.
 use_parameter_sharing: False  # If to use parameter sharing for all agents' policies.
 use_actions_mask: False  # If to use actions mask for unavailable actions.
-use_agents_mask: False  # If to use agents mask for inactive agents.
 
 seed: 1  # Random seed.
 parallels: 16  # The number of environments to run in parallel.
 buffer_size: 400  # Number of the transitions (use_rnn is False), or the episodes (use_rnn is True) in replay buffer.
-n_epoch: 1  # Number of epochs to train.
+n_epochs: 1  # Number of epochs to train.
 n_minibatch: 1  # Number of minibatch to sample and train.  batch_size = buffer_size // n_minibatch.
 learning_rate: 0.0007  # Learning rate.
 weight_decay: 0  # The steps to decay the greedy epsilon.

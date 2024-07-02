@@ -97,7 +97,7 @@ class DQN_Agent(Agent):
 
             self.memory.store(obs, acts, self._process_reward(rewards), terminals, self._process_observation(next_obs))
             if self.current_step > self.start_training and self.current_step % self.training_frequency == 0:
-                step_info = self.train_epochs(n_epochs=1)
+                step_info = self.train_epochs(n_epochs=self.n_epochs)
                 self.log_infos(step_info, self.current_step)
 
             obs = deepcopy(next_obs)

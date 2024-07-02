@@ -8,7 +8,7 @@ class MFAC_Agents(MARLAgents):
         self.gamma = config.gamma
         self.n_envs = envs.num_envs
         self.n_size = config.buffer_size
-        self.n_epoch = config.n_epoch
+        self.n_epochs = config.n_epochs
         self.n_minibatch = config.n_minibatch
         if config.state_space is not None:
             config.dim_state, state_shape = config.state_space.shape, config.state_space.shape
@@ -78,7 +78,7 @@ class MFAC_Agents(MARLAgents):
         if self.memory.full:
             info_train = {}
             indexes = np.arange(self.buffer_size)
-            for _ in range(self.n_epoch):
+            for _ in range(self.n_epochs):
                 np.random.shuffle(indexes)
                 for start in range(0, self.buffer_size, self.batch_size):
                     end = start + self.batch_size

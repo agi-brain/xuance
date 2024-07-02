@@ -84,12 +84,12 @@ class QTRAN_Agents(MARLAgents):
             else:
                 return hidden_state, greedy_actions
 
-    def train(self, i_step, n_epoch=1):
+    def train(self, i_step, n_epochs=1):
         if self.egreedy >= self.end_greedy:
             self.egreedy = self.start_greedy - self.delta_egreedy * i_step
         info_train = {}
         if i_step > self.start_training:
-            for i_epoch in range(n_epoch):
+            for i_epoch in range(n_epochs):
                 sample = self.memory.sample()
                 info_train = self.learner.update(sample)
         info_train["epsilon-greedy"] = self.egreedy

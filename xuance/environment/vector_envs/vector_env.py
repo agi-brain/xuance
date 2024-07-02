@@ -74,7 +74,7 @@ class VecEnv(ABC):
         raise NotImplementedError
 
     def close(self):
-        if self.closed == True:
+        if self.closed is True:
             return
         self.close_extras()
         self.closed = True

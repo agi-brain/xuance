@@ -1,8 +1,9 @@
-from xuance.environment.vector_envs.dummy.dummy_vec_env import DummyVecEnv, DummyVecEnv_Atari
-from xuance.environment.vector_envs.dummy.dummy_vec_maenv import DummyVecMultiAgentEnv
+from .dummy_vec_env import DummyVecEnv, DummyVecEnv_Atari
+from .dummy_vec_maenv import DummyVecMultiAgentEnv, DummyVecEnv_StarCraft2
 
 __all__ = [
     "DummyVecEnv",
     "DummyVecEnv_Atari",
     "DummyVecMultiAgentEnv",
+    "DummyVecEnv_StarCraft2",
 ]

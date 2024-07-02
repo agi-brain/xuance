@@ -15,7 +15,7 @@ seed: 1
 parallels: 10
 running_steps: 300000
 horizon_size: 500
-n_epoch: 1
+n_epochs: 1
 n_minibatch: 1
 learning_rate: 0.0004
 

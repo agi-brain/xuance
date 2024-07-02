@@ -27,17 +27,11 @@ def worker(remote, parent_remote, env_fn_wrappers):
             elif cmd == 'render':
                 remote.send([env.render(data) for env in envs])
             elif cmd == 'close':
+                remote.send([env.close() for env in envs])
                 remote.close()
                 break
             elif cmd == 'get_env_info':
-                env_info = {
-                    'state_space': envs[0].state_space,
-                    'observation_space': envs[0].observation_space,
-                    'action_space': envs[0].action_space,
-                    'agents': envs[0].agents,
-                    'num_agents': envs[0].num_agents,
-                    'max_episode_steps': envs[0].max_episode_steps,
-                }
+                env_info = envs[0].env_info
                 remote.send(CloudpickleWrapper(env_info))
             else:
                 raise NotImplementedError
@@ -80,19 +74,19 @@ class SubprocVecMultiAgentEnv(VecEnv):
             remote.close()
 
         self.remotes[0].send(('get_env_info', None))
-        env_info = self.remotes[0].recv().x
+        self.env_info = self.remotes[0].recv().x
         self.viewer = None
-        VecEnv.__init__(self, num_envs, env_info['observation_space'], env_info['action_space'])
+        VecEnv.__init__(self, num_envs, self.env_info['observation_space'], self.env_info['action_space'])
 
-        self.agents = env_info['agents']
-        self.num_agents = env_info['num_agents']
-        self.state_space = env_info['state_space']  # Type: Box
+        self.agents = self.env_info['agents']
+        self.num_agents = self.env_info['num_agents']
+        self.state_space = self.env_info['state_space']  # Type: Box
         self.buf_state = [np.zeros(space2shape(self.state_space)) for _ in range(self.num_envs)]
         self.buf_obs = [{} for _ in range(self.num_envs)]
         self.buf_avail_actions = [{} for _ in range(self.num_envs)]
 
         self.actions = None
-        self.max_episode_steps = env_info['max_episode_steps']
+        self.max_episode_steps = self.env_info['max_episode_steps']
 
     def reset(self):
         self._assert_not_closed()
@@ -148,3 +142,33 @@ class SubprocVecMultiAgentEnv(VecEnv):
     def __del__(self):
         if not self.closed:
             self.close()
+
+
+class SubprocVecEnv_StarCraft2(SubprocVecMultiAgentEnv):
+    def __init__(self, env_fns, context='spawn', in_series=1):
+        super(SubprocVecEnv_StarCraft2, self).__init__(env_fns, context, in_series)
+        self.num_enemies = self.env_info['num_enemies']
+        self.battles_game = np.zeros(self.num_envs, np.int32)
+        self.battles_won = np.zeros(self.num_envs, np.int32)
+        self.dead_allies_count = np.zeros(self.num_envs, np.int32)
+        self.dead_enemies_count = np.zeros(self.num_envs, np.int32)
+
+    def step_wait(self):
+        self._assert_not_closed()
+        results = [remote.recv() for remote in self.remotes]
+        results = flatten_list(results)
+        self.waiting = False
+        obs, rewards, terminated, truncated, info = zip(*results)
+        self.buf_obs = list(obs)
+        self.buf_state = [info[e]['state'] for e in range(self.num_envs)]
+        self.buf_avail_actions = [info[e]['avail_actions'] for e in range(self.num_envs)]
+        for i in range(self.num_envs):
+            if all(terminated[i].values()) or truncated[i]:
+                self.battles_game[i] += 1
+                if info[i]['battle_won']:
+                    self.battles_won[i] += 1
+                self.dead_allies_count[i] += info[i]['dead_allies']
+                self.dead_enemies_count[i] += info[i]['dead_enemies']
+
+        return list(obs), list(rewards), list(terminated), list(truncated), list(info)
+

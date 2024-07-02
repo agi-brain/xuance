@@ -24,7 +24,7 @@ hidden_dim_hyper_net: 32  # hidden units of hyper network
 seed: 1
 parallels: 128
 buffer_size: 3200
-n_epoch: 10
+n_epochs: 10
 n_minibatch: 1
 learning_rate: 0.0007
 weight_decay: 0

@@ -12,6 +12,7 @@ class StarCraft2_Env(RawMultiAgentEnv):
     Parameters:
         config: The configurations of the environment.
     """
+
     def __init__(self, config):
         super(StarCraft2_Env, self).__init__()
         self.env = StarCraft2Env(map_name=config.env_id)
@@ -19,26 +20,22 @@ class StarCraft2_Env(RawMultiAgentEnv):
 
         self.num_agents = self.env_info['n_agents']
         self.agents = [f"agent_{i}" for i in range(self.num_agents)]
-        self.state_space = Box(low=-np.inf, high=np.inf, shape=(self.env_info['state_shape'], ))
-        self.observation_space = {k: Box(low=-np.inf, high=np.inf, shape=(self.env_info['obs_shape'], ))
+        self.state_space = Box(low=-np.inf, high=np.inf, shape=(self.env_info['state_shape'],))
+        self.observation_space = {k: Box(low=-np.inf, high=np.inf, shape=(self.env_info['obs_shape'],))
                                   for k in self.agents}
         self.action_space = {k: Discrete(n=self.env_info['n_actions']) for k in self.agents}
-        self.teams_info = {
-            "names": ['agent'],
-            "num_teams": 1,
-            "agents_in_team": self.agents
-        }
+        self.env.reset()
         self.max_episode_steps = self.env_info['episode_limit']
-
-        self.n_agents = self.env_info["n_agents"]
-        self.num_enemies = self.env.n_enemies
-
         self._episode_step = 0
-        self.buf_info = {
-            'battle_won': 0,
-            'dead_allies': 0,
-            'dead_enemies': 0,
-        }
+
+    def get_env_info(self):
+        return {'state_space': self.state_space,
+                'observation_space': self.observation_space,
+                'action_space': self.action_space,
+                'agents': self.agents,
+                'num_agents': self.env_info["n_agents"],
+                'max_episode_steps': self.max_episode_steps,
+                'num_enemies': self.env.n_enemies}
 
     def reset(self):
         """ Resets the environment. """
@@ -52,6 +49,10 @@ class StarCraft2_Env(RawMultiAgentEnv):
         """ Takes actions as input, perform a step in the underlying StarCraft2 environment. """
         actions_list = [actions[key] for key in self.agents]
         reward, terminated, info = self.env.step(actions_list)
+        if info == {}:
+            info = {'battle_won': 0,
+                    'dead_allies': 0,
+                    'dead_enemies': 0}
         reward_dict = {k: reward for k in self.agents}
         terminated_dict = {k: terminated for k in self.agents}
         obs = self.env.get_obs()
@@ -87,4 +88,3 @@ class StarCraft2_Env(RawMultiAgentEnv):
         """Returns a boolean mask indicating which actions are available for each agent."""
         actions_mask_list = self.env.get_avail_actions()
         return {key: actions_mask_list[index] for index, key in enumerate(self.agents)}
-

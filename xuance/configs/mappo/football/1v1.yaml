@@ -35,7 +35,7 @@ activation: "relu"
 seed: 1
 parallels: 50
 buffer_size: 100
-n_epoch: 10
+n_epochs: 10
 n_minibatch: 1
 learning_rate: 5.0e-4
 weight_decay: 0

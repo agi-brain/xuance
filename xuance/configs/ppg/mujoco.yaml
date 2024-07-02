@@ -17,7 +17,7 @@ parallels: 16
 running_steps: 1000000  # 1M
 horizon_size: 256  # the horizon size for an environment, buffer_size = horizon_size * parallels.
 n_minibatch: 4
-n_epoch: 1
+n_epochs: 1
 policy_nepoch: 2
 value_nepoch: 4
 aux_nepoch: 8

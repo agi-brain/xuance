@@ -82,9 +82,9 @@ class DRQN_Agent(Agent):
             action = argmax_action.detach().cpu().numpy()
         return action, rnn_hidden_next
 
-    def train_epochs(self, n_epoch=1):
+    def train_epochs(self, n_epochs=1):
         train_info = {}
-        for _ in range(n_epoch):
+        for _ in range(n_epochs):
             samples = self.memory.sample()
             train_info = self.learner.update(**samples)
             train_info["epsilon-greedy"] = self.egreedy
@@ -106,7 +106,7 @@ class DRQN_Agent(Agent):
 
             if (self.current_step > self.start_training) and (self.current_step % self.training_frequency == 0):
                 # training
-                train_infos = self.train_epochs(n_epoch=1)
+                train_infos = self.train_epochs(n_epochs=1)
                 self.log_infos(train_infos, self.current_step)
 
             obs = deepcopy(next_obs)

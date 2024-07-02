@@ -19,7 +19,7 @@ seed: 1
 parallels: 2
 running_steps: 300000
 horizon_size: 256  # the horizon size for an environment, buffer_size = horizon_size * parallels.
-n_epoch: 8
+n_epochs: 8
 n_minibatch: 8
 learning_rate: 0.0004
 

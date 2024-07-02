@@ -1,8 +1,8 @@
-agent: "ISAC"  # the learning algorithms_marl
+agent: "IDDPG"  # the learning algorithms_marl
 env_name: "mpe"
-env_id: "simple_spread_v3"
+env_id: "simple_reference_v3"
 continuous_action: True
-policy: "Gaussian_ISAC_Policy"
+policy: "Independent_DDPG_Policy"
 representation: "Basic_Identical"
 vectorize: "DummyVecMultiAgentEnv"
 runner: "MARL"
@@ -23,18 +23,19 @@ lr_a: 0.01  # learning rate for actor
 lr_c: 0.001  # learning rate for critic
 gamma: 0.95  # discount factor
 tau: 0.001  # soft update for target networks
-alpha: 0.01
-use_automatic_entropy_tuning: True
 
+start_noise: 1.0
+end_noise: 0.01
+sigma: 0.1  # random noise for continuous actions
 start_training: 1000  # start training after n episodes
 running_steps: 10000000
 training_frequency: 25
 
-use_grad_clip: False
-grad_clip_norm: 10
+use_grad_clip: True
+grad_clip_norm: 0.5
 
 eval_interval: 100000
 test_episode: 5
 
-log_dir: "./logs/isac/"
-model_dir: "./models/isac/"
+log_dir: "./logs/iddpg/"
+model_dir: "./models/iddpg/"

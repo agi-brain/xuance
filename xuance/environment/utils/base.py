@@ -116,12 +116,15 @@ class RawMultiAgentEnv(ABC):
         self.observation_space: Optional[Dict[spaces.Space]] = None
         self.action_space: Optional[Dict[spaces.Space]] = None
         self.num_agents: Optional[int] = None  # Number of all agents, e.g., 4.
-        self.teams_info = {  # Information of teams.
-            "names": ['red', 'blue'],  # should be consistent with the name of agents.
-            "num_teams": 2,
-            "agents_in_team": [["red_0", 'red_1'], ['blue_0', 'blue_1']]
-        }
         self.max_episode_steps: Optional[int] = None
+
+    def get_env_info(self):
+        return {'state_space': self.state_space,
+                'observation_space': self.observation_space,
+                'action_space': self.action_space,
+                'agents': self.agents,
+                'num_agents': self.num_agents,
+                'max_episode_steps': self.max_episode_steps}
 
     def agent_mask(self):
         """Returns boolean mask variables indicating which agents are currently alive."""
@@ -130,14 +133,6 @@ class RawMultiAgentEnv(ABC):
     def avail_actions(self):
         """Returns a boolean mask indicating which actions are available for each agent."""
         return {agent: np.ones(self.action_space[agent].n, np.bool_) for agent in self.agents}
-
-    def get_agents_in_team(self):
-        agents_in_team = [[] for _ in range(self.teams_info['num_teams'])]
-        for i_team, team in enumerate(self.teams_info['names']):
-            for agent in self.agents:
-                if team in agent:  # for example, team='red' and agent='red_0'
-                    agents_in_team[i_team].append(agent)
-        return agents_in_team
 
     def state(self):
         """Returns the global state of the environment."""

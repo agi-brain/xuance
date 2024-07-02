@@ -24,12 +24,11 @@ critic_hidden_size: []
 activation: "relu"
 use_parameter_sharing: False  # If to use parameter sharing for all agents' policies.
 use_actions_mask: True  # If to use actions mask for unavailable actions.
-use_agents_mask: False  # If to use agents mask for inactive agents.
 
 seed: 1
 parallels: 8
 buffer_size: 128
-n_epoch: 15
+n_epochs: 15
 n_minibatch: 1
 learning_rate: 0.0007  # 7e-4
 weight_decay: 0
@@ -40,7 +39,6 @@ target_kl: 0.25
 clip_range: 0.2
 clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
 gamma: 0.99  # discount factor
-running_steps: 1000000
 
 # tricks
 use_linear_lr_decay: False  # if use linear learning rate decay
@@ -57,6 +55,7 @@ gae_lambda: 0.95
 use_grad_clip: True  # gradient normalization
 grad_clip_norm: 10.0
 
+running_steps: 1000000
 eval_interval: 10000
 test_episode: 16
 

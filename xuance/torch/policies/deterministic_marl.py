@@ -267,7 +267,9 @@ class Weighted_MixingQnetwork(MixingQnetwork):
             agent_ids (Dict[Tensor]): The agents' ids (for parameter sharing).
             agent_key (str): Calculate actions for specified agent.
             rnn_hidden (Optional[Dict[str, List[Tensor]]]): The hidden variables of the RNN.
+
         Returns:
+            rnn_hidden_new (Optional[Dict[str, List[Tensor]]]): The new hidden variables of the RNN.
             evalQ_cent (Tensor): The evaluated centralised Q values.
         """
         rnn_hidden_new, argmax_action, evalQ_cent = {}, {}, {}
@@ -288,7 +290,7 @@ class Weighted_MixingQnetwork(MixingQnetwork):
 
             evalQ_cent[key] = self.eval_Qhead_centralized[key](q_inputs)
 
-        return evalQ_cent
+        return rnn_hidden_new, evalQ_cent
 
     def target_q_centralized(self, observation: Dict[str, Tensor], agent_ids: Dict[str, Tensor],
                              agent_key: str = None, rnn_hidden: Optional[Dict[str, List[Tensor]]] = None):
@@ -300,7 +302,9 @@ class Weighted_MixingQnetwork(MixingQnetwork):
             agent_ids (Dict[Tensor]): The agents' ids (for parameter sharing).
             agent_key (str): Calculate actions for specified agent.
             rnn_hidden (Optional[Dict[str, List[Tensor]]]): The hidden variables of the RNN.
+
         Returns:
+            rnn_hidden_new (Optional[Dict[str, List[Tensor]]]): The new hidden variables of the RNN.
             q_target_cent (Tensor): The evaluated centralised Q values with target networks.
         """
         rnn_hidden_new, q_target_cent = {}, {}
@@ -321,7 +325,7 @@ class Weighted_MixingQnetwork(MixingQnetwork):
 
             q_target_cent[key] = self.target_Qhead_centralized[key](q_inputs)
 
-        return q_target_cent
+        return rnn_hidden_new, q_target_cent
 
     def q_feedforward(self, individual_values: Dict[str, Tensor], states: Optional[Tensor] = None):
         """
@@ -572,7 +576,8 @@ class Independent_DDPG_Policy(Module):
     def __init__(self,
                  action_space: Optional[Dict[str, Box]],
                  n_agents: int,
-                 representation: Optional[ModuleDict],
+                 actor_representation: Optional[ModuleDict],
+                 critic_representation: Optional[ModuleDict],
                  actor_hidden_size: Sequence[int],
                  critic_hidden_size: Sequence[int],
                  normalize: Optional[ModuleType] = None,
@@ -587,10 +592,14 @@ class Independent_DDPG_Policy(Module):
         self.n_agents = n_agents
         self.use_parameter_sharing = kwargs['use_parameter_sharing']
         self.model_keys = kwargs['model_keys']
-        self.representation_info_shape = {key: representation[key].output_shapes for key in self.model_keys}
+        self.actor_representation_info_shape = {key: actor_representation[key].output_shapes for key in self.model_keys}
+        self.critic_representation_info_shape = {key: critic_representation[key].output_shapes
+                                                 for key in self.model_keys}
+        self.lstm = True if kwargs["rnn"] == "LSTM" else False
+        self.use_rnn = True if kwargs["use_rnn"] else False
 
-        self.actor_representation = representation
-        self.critic_representation = deepcopy(representation)
+        self.actor_representation = actor_representation
+        self.critic_representation = critic_representation
         self.target_actor_representation = deepcopy(self.actor_representation)
         self.target_critic_representation = deepcopy(self.critic_representation)
 
@@ -646,7 +655,8 @@ class Independent_DDPG_Policy(Module):
         return dim_actor_in, dim_actor_out, dim_critic_in
 
     def forward(self, observation: Dict[str, Tensor],
-                agent_ids: Tensor = None, agent_key: str = None):
+                agent_ids: Tensor = None, agent_key: str = None,
+                rnn_hidden: Optional[Dict[str, List[Tensor]]] = None):
         """
         Returns actions of the policy.
         
@@ -654,23 +664,31 @@ class Independent_DDPG_Policy(Module):
             observation (Dict[Tensor]): The input observations for the policies.
             agent_ids (Tensor): The agents' ids (for parameter sharing).
             agent_key (str): Calculate actions for specified agent.
+            rnn_hidden (Optional[Dict[str, List[Tensor]]]): The hidden variables of the RNN.
 
         Returns:
+            rnn_hidden_new (Optional[Dict[str, List[Tensor]]]): The new hidden variables of the RNN.
             actions (Dict[Tensor]): The actions output by the policies.
         """
-        actions = {}
+        rnn_hidden_new, actions = deepcopy(rnn_hidden), {}
         agent_list = self.model_keys if agent_key is None else [agent_key]
         for key in agent_list:
-            outputs = self.actor_representation[key](observation[key])
+            if self.use_rnn:
+                outputs = self.actor_representation[key](observation[key], *rnn_hidden[key])
+                rnn_hidden_new.update({key: (outputs['rnn_hidden'], outputs['rnn_cell'])})
+            else:
+                outputs = self.actor_representation[key](observation[key])
+
             if self.use_parameter_sharing:
                 actor_in = torch.concat([outputs['state'], agent_ids], dim=-1)
             else:
                 actor_in = outputs['state']
             actions[key] = self.actor[key](actor_in)
-        return actions
+        return rnn_hidden_new, actions
 
     def Qpolicy(self, observation: Dict[str, Tensor], actions: Dict[str, Tensor],
-                agent_ids: Tensor = None, agent_key: str = None):
+                agent_ids: Tensor = None, agent_key: str = None,
+                rnn_hidden: Optional[Dict[str, List[Tensor]]] = None):
         """
         Returns Q^policy of current observations and actions pairs.
 
@@ -679,23 +697,32 @@ class Independent_DDPG_Policy(Module):
             actions (Dict[Tensor]): The actions.
             agent_ids (Dict[Tensor]): The agents' ids (for parameter sharing).
             agent_key (str): Calculate actions for specified agent.
+            rnn_hidden (Optional[Dict[str, List[Tensor]]]): The hidden variables of the RNN.
 
         Returns:
+            rnn_hidden_new (Optional[Dict[str, List[Tensor]]]): The new hidden variables of the RNN.
             q_eval: The evaluations of Q^policy.
         """
-        q_eval = {}
+        rnn_hidden_new, q_eval = deepcopy(rnn_hidden), {}
         agent_list = self.model_keys if agent_key is None else [agent_key]
+
         for key in agent_list:
-            outputs = self.critic_representation[key](observation[key])
+            if self.use_rnn:
+                outputs = self.critic_representation[key](observation[key], *rnn_hidden[key])
+                rnn_hidden_new.update({key: (outputs['rnn_hidden'], outputs['rnn_cell'])})
+            else:
+                outputs = self.critic_representation[key](observation[key])
+
             if self.use_parameter_sharing:
                 critic_in = torch.concat([outputs['state'], agent_ids], dim=-1)
             else:
                 critic_in = outputs['state']
             q_eval[key] = self.critic[key](torch.concat([critic_in, actions[key]], dim=-1))
-        return q_eval
+        return rnn_hidden_new, q_eval
 
     def Qtarget(self, next_observation: Dict[str, Tensor], next_actions: Dict[str, Tensor],
-                agent_ids: Tensor = None, agent_key: str = None):
+                agent_ids: Tensor = None, agent_key: str = None,
+                rnn_hidden: Optional[Dict[str, List[Tensor]]] = None):
         """
         Returns the Q^target of next observations and actions pairs.
 
@@ -704,23 +731,31 @@ class Independent_DDPG_Policy(Module):
             next_actions (Dict[Tensor]): The actions of next step.
             agent_ids (Dict[Tensor]): The agents' ids (for parameter sharing).
             agent_key (str): Calculate actions for specified agent.
+            rnn_hidden (Optional[Dict[str, List[Tensor]]]): The hidden variables of the RNN.
 
         Returns:
+            rnn_hidden_new (Optional[Dict[str, List[Tensor]]]): The new hidden variables of the RNN.
             q_target: The evaluations of Q^target.
         """
-        q_target = {}
+        rnn_hidden_new, q_target = deepcopy(rnn_hidden), {}
         agent_list = self.model_keys if agent_key is None else [agent_key]
         for key in agent_list:
-            outputs = self.target_critic_representation[key](next_observation[key])
+            if self.use_rnn:
+                outputs = self.target_critic_representation[key](next_observation[key], *rnn_hidden[key])
+                rnn_hidden_new.update({key: (outputs['rnn_hidden'], outputs['rnn_cell'])})
+            else:
+                outputs = self.target_critic_representation[key](next_observation[key])
+
             if self.use_parameter_sharing:
                 critic_in = torch.concat([outputs['state'], agent_ids], dim=-1)
             else:
                 critic_in = outputs['state']
             q_target[key] = self.target_critic[key](torch.concat([critic_in, next_actions[key]], dim=-1))
-        return q_target
+        return rnn_hidden_new, q_target
 
     def Atarget(self, next_observation: Dict[str, Tensor],
-                agent_ids: Tensor = None, agent_key: str = None):
+                agent_ids: Tensor = None, agent_key: str = None,
+                rnn_hidden: Optional[Dict[str, List[Tensor]]] = None):
         """
         Returns the next actions by target policies.
 
@@ -728,20 +763,28 @@ class Independent_DDPG_Policy(Module):
             next_observation (Dict[Tensor]): The observations of next step.
             agent_ids (Dict[Tensor]): The agents' ids (for parameter sharing).
             agent_key (str): Calculate actions for specified agent.
+            rnn_hidden (Optional[Dict[str, List[Tensor]]]): The hidden variables of the RNN.
 
         Returns:
+            rnn_hidden_new (Optional[Dict[str, List[Tensor]]]): The new hidden variables of the RNN.
             next_actions (Dict[Tensor]): The next actions.
         """
-        next_actions = {}
+        rnn_hidden_new, next_actions = deepcopy(rnn_hidden), {}
         agent_list = self.model_keys if agent_key is None else [agent_key]
+
         for key in agent_list:
-            outputs = self.target_actor_representation[key](next_observation[key])
+            if self.use_rnn:
+                outputs = self.target_actor_representation[key](next_observation[key], *rnn_hidden[key])
+                rnn_hidden_new.update({key: (outputs['rnn_hidden'], outputs['rnn_cell'])})
+            else:
+                outputs = self.target_actor_representation[key](next_observation[key])
+
             if self.use_parameter_sharing:
                 actor_in = torch.concat([outputs['state'], agent_ids], dim=-1)
             else:
                 actor_in = outputs['state']
             next_actions[key] = self.target_actor[key](actor_in)
-        return next_actions
+        return rnn_hidden_new, next_actions
 
     def soft_update(self, tau=0.005):
         for ep, tp in zip(self.actor_representation.parameters(), self.target_actor_representation.parameters()):
@@ -762,7 +805,8 @@ class MADDPG_Policy(Independent_DDPG_Policy):
     def __init__(self,
                  action_space: Optional[Dict[str, Box]],
                  n_agents: int,
-                 representation: Optional[ModuleDict],
+                 actor_representation: Optional[ModuleDict],
+                 critic_representation: Optional[ModuleDict],
                  actor_hidden_size: Sequence[int],
                  critic_hidden_size: Sequence[int],
                  normalize: Optional[ModuleType] = None,
@@ -771,7 +815,7 @@ class MADDPG_Policy(Independent_DDPG_Policy):
                  activation_action: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None,
                  **kwargs):
-        super(MADDPG_Policy, self).__init__(action_space, n_agents, representation,
+        super(MADDPG_Policy, self).__init__(action_space, n_agents, actor_representation, critic_representation,
                                             actor_hidden_size, critic_hidden_size,
                                             normalize, initialize, activation, activation_action, device, **kwargs)
 
@@ -789,93 +833,118 @@ class MADDPG_Policy(Independent_DDPG_Policy):
             dim_actor_in: The dimension of input of the actor networks.
             dim_critic_in: The dimension of the input of critic networks.
         """
-        dim_actor_in = dim_actor_rep
-        dim_actor_out = dim_action
-        dim_critic_in = (dim_critic_rep + dim_action) * n_agents
+        dim_actor_in, dim_actor_out = dim_actor_rep, dim_action
+        dim_critic_in = dim_critic_rep
         if self.use_parameter_sharing:
             dim_actor_in += n_agents
             dim_critic_in += n_agents
         return dim_actor_in, dim_actor_out, dim_critic_in
 
-    def Qpolicy(self, observation: Dict[str, Tensor], actions: Dict[str, Tensor],
-                agent_ids: Tensor = None, agent_key: str = None):
+    def Qpolicy(self, joint_observation: Tensor, joint_actions: Tensor,
+                agent_ids: Tensor = None, agent_key: str = None,
+                rnn_hidden: Optional[Dict[str, List[Tensor]]] = None):
         """
         Returns Q^policy of current observations and actions pairs.
 
         Parameters:
-            observation (Dict[Tensor]): The observations.
-            actions (Dict[Tensor]): The actions.
+            joint_observation (Tensor): The joint observations of the team.
+            joint_actions (Tensor): The joint actions of the team.
             agent_ids (Dict[Tensor]): The agents' ids (for parameter sharing).
             agent_key (str): Calculate actions for specified agent.
+            rnn_hidden (Optional[Dict[str, List[Tensor]]]): The hidden variables of the RNN.
 
         Returns:
+            rnn_hidden_new (Optional[Dict[str, List[Tensor]]]): The new hidden variables of the RNN.
             q_eval: The evaluations of Q^policy.
         """
-        q_eval = {}
+        rnn_hidden_new, q_eval = deepcopy(rnn_hidden), {}
         agent_list = self.model_keys if agent_key is None else [agent_key]
-        outputs = {key: self.critic_representation[key](observation[key])['state'] for key in self.model_keys}
-        if self.use_parameter_sharing:
-            dim_outputs_rep = self.critic_representation[self.model_keys[0]].output_shapes['state'][0]
-            dim_action = self.action_space[self.model_keys[0]].shape[-1]
-            joint_obs_in = outputs[self.model_keys[0]].reshape([-1, self.n_agents * dim_outputs_rep])
-            joint_act_in = actions[self.model_keys[0]].reshape([-1, self.n_agents * dim_action])
-            joint_obs_in = joint_obs_in.unsqueeze(1).expand(-1, self.n_agents, -1)
-            joint_act_in = joint_act_in.unsqueeze(1).expand(-1, self.n_agents, -1)
+        batch_size = joint_observation.shape[0]
+        seq_len = joint_observation.shape[1] if self.use_rnn else 1
+
+        critic_rep_in = torch.concat([joint_observation, joint_actions], dim=-1)
+        if self.use_rnn:
+            outputs = {k: self.critic_representation[k](critic_rep_in, *rnn_hidden[k]) for k in agent_list}
+            rnn_hidden_new.update({k: (outputs[k]['rnn_hidden'], outputs[k]['rnn_cell']) for k in agent_list})
         else:
-            joint_obs_in = torch.concat([outputs[key] for key in self.model_keys], dim=-1)
-            joint_act_in = torch.concat([actions[key] for key in self.model_keys], dim=-1)
+            outputs = {k: self.critic_representation[k](critic_rep_in) for k in agent_list}
+
+        bs = batch_size * self.n_agents if self.use_parameter_sharing else batch_size
 
         for key in agent_list:
             if self.use_parameter_sharing:
-                critic_in = torch.concat([joint_obs_in, agent_ids], dim=-1)
+                if self.use_rnn:
+                    joint_rep_out = outputs[key]['state'].unsqueeze(1).expand(-1, self.n_agents, -1, -1)
+                    joint_rep_out = joint_rep_out.reshape(bs, seq_len, -1)
+                else:
+                    joint_rep_out = outputs[key]['state'].unsqueeze(1).expand(-1, self.n_agents, -1)
+                    joint_rep_out = joint_rep_out.reshape(bs, -1)
+                critic_in = torch.concat([joint_rep_out, agent_ids], dim=-1)
             else:
-                critic_in = joint_obs_in
-            q_eval[key] = self.critic[key](torch.concat([critic_in, joint_act_in], dim=-1))
-        return q_eval
+                if self.use_rnn:
+                    joint_rep_out = outputs[key]['state'].reshape(bs, seq_len, -1)
+                else:
+                    joint_rep_out = outputs[key]['state'].reshape(bs, -1)
+                critic_in = joint_rep_out
+            q_eval[key] = self.critic[key](critic_in)
+        return rnn_hidden_new, q_eval
 
-    def Qtarget(self, next_observation: Dict[str, Tensor], next_actions: Dict[str, Tensor],
-                agent_ids: Tensor = None, agent_key: str = None):
+    def Qtarget(self, joint_observation: Tensor, joint_actions: Tensor,
+                agent_ids: Tensor = None, agent_key: str = None,
+                rnn_hidden: Optional[Dict[str, List[Tensor]]] = None):
         """
         Returns the Q^target of next observations and actions pairs.
 
         Parameters:
-            next_observation (Dict[Tensor]): The observations of next step.
-            next_actions (Dict[Tensor]): The actions of next step.
+            joint_observation (Tensor): The joint observations of the team.
+            joint_actions (Tensor): The joint actions of the team.
             agent_ids (Dict[Tensor]): The agents' ids (for parameter sharing).
             agent_key (str): Calculate actions for specified agent.
+            rnn_hidden (Optional[Dict[str, List[Tensor]]]): The hidden variables of the RNN.
 
         Returns:
+            rnn_hidden_new (Optional[Dict[str, List[Tensor]]]): The new hidden variables of the RNN.
             q_target: The evaluations of Q^target.
         """
-        q_target = {}
+        rnn_hidden_new, q_target = deepcopy(rnn_hidden), {}
         agent_list = self.model_keys if agent_key is None else [agent_key]
-        outputs = {key: self.target_critic_representation[key](next_observation[key])['state']
-                   for key in self.model_keys}
-        if self.use_parameter_sharing:
-            dim_outputs_rep = self.critic_representation[self.model_keys[0]].output_shapes['state'][0]
-            dim_action = self.action_space[self.model_keys[0]].shape[-1]
-            joint_obs_in = outputs[self.model_keys[0]].reshape([-1, self.n_agents * dim_outputs_rep])
-            joint_act_in = next_actions[self.model_keys[0]].reshape([-1, self.n_agents * dim_action])
-            joint_obs_in = joint_obs_in.unsqueeze(1).expand(-1, self.n_agents, -1)
-            joint_act_in = joint_act_in.unsqueeze(1).expand(-1, self.n_agents, -1)
+        batch_size = joint_observation.shape[0]
+        seq_len = joint_observation.shape[1] if self.use_rnn else 1
+
+        critic_rep_in = torch.concat([joint_observation, joint_actions], dim=-1)
+        if self.use_rnn:
+            outputs = {k: self.target_critic_representation[k](critic_rep_in, *rnn_hidden[k]) for k in agent_list}
+            rnn_hidden_new.update({k: (outputs[k]['rnn_hidden'], outputs[k]['rnn_cell']) for k in agent_list})
         else:
-            joint_obs_in = torch.concat([outputs[key] for key in self.model_keys], dim=-1)
-            joint_act_in = torch.concat([next_actions[key] for key in self.model_keys], dim=-1)
+            outputs = {k: self.target_critic_representation[k](critic_rep_in) for k in agent_list}
+
+        bs = batch_size * self.n_agents if self.use_parameter_sharing else batch_size
 
         for key in agent_list:
             if self.use_parameter_sharing:
-                critic_in = torch.concat([joint_obs_in, agent_ids], dim=-1)
+                if self.use_rnn:
+                    joint_rep_out = outputs[key]['state'].unsqueeze(1).expand(-1, self.n_agents, -1, -1)
+                    joint_rep_out = joint_rep_out.reshape(bs, seq_len, -1)
+                else:
+                    joint_rep_out = outputs[key]['state'].unsqueeze(1).expand(-1, self.n_agents, -1)
+                    joint_rep_out = joint_rep_out.reshape(bs, -1)
+                critic_in = torch.concat([joint_rep_out, agent_ids], dim=-1)
             else:
-                critic_in = joint_obs_in
-            q_target[key] = self.target_critic[key](torch.concat([critic_in, joint_act_in], dim=-1))
-        return q_target
+                if self.use_rnn:
+                    joint_rep_out = outputs[key]['state'].reshape(bs, seq_len, -1)
+                else:
+                    joint_rep_out = outputs[key]['state'].reshape(bs, -1)
+                critic_in = joint_rep_out
+            q_target[key] = self.target_critic[key](critic_in)
+        return rnn_hidden_new, q_target
 
 
-class MATD3_Policy(Independent_DDPG_Policy, Module):
+class MATD3_Policy(MADDPG_Policy, Module):
     def __init__(self,
                  action_space: Optional[Dict[str, Box]],
                  n_agents: int,
-                 representation: Optional[ModuleDict],
+                 actor_representation: Optional[ModuleDict],
+                 critic_representation: Optional[ModuleDict],
                  actor_hidden_size: Sequence[int],
                  critic_hidden_size: Sequence[int],
                  normalize: Optional[ModuleType] = None,
@@ -890,11 +959,14 @@ class MATD3_Policy(Independent_DDPG_Policy, Module):
         self.n_agents = n_agents
         self.use_parameter_sharing = kwargs['use_parameter_sharing']
         self.model_keys = kwargs['model_keys']
-        self.representation_info_shape = {key: representation[key].output_shapes for key in self.model_keys}
+        self.actor_representation_info_shape = {key: actor_representation[key].output_shapes for key in self.model_keys}
+        self.critic_representation_info_shape = {key: critic_representation[key].output_shapes for key in self.model_keys}
+        self.lstm = True if kwargs["rnn"] == "LSTM" else False
+        self.use_rnn = True if kwargs["use_rnn"] else False
 
-        self.actor_representation = representation
-        self.critic_A_representation = deepcopy(representation)
-        self.critic_B_representation = deepcopy(representation)
+        self.actor_representation = actor_representation
+        self.critic_A_representation = critic_representation
+        self.critic_B_representation = deepcopy(critic_representation)
         self.target_actor_representation = deepcopy(self.actor_representation)
         self.target_critic_A_representation = deepcopy(self.critic_A_representation)
         self.target_critic_B_representation = deepcopy(self.critic_B_representation)
@@ -904,20 +976,14 @@ class MATD3_Policy(Independent_DDPG_Policy, Module):
         self.target_critic_A, self.target_critic_B = ModuleDict(), ModuleDict()
         for key in self.model_keys:
             dim_action = self.action_space[key].shape[-1]
-            dim_obs_actor, dim_obs_critic, dim_act_actor, dim_act_critic = self._get_actor_critic_input(
-                dim_action,
-                self.actor_representation[key].output_shapes['state'][0],
+            dim_actor_in, dim_actor_out, dim_critic_in = self._get_actor_critic_input(
+                self.actor_representation[key].output_shapes['state'][0], dim_action,
                 self.critic_A_representation[key].output_shapes['state'][0], n_agents)
 
-            if self.use_parameter_sharing:
-                dim_obs_actor += self.n_agents
-                dim_obs_critic += self.n_agents
-            self.actor[key] = ActorNet(dim_obs_actor, dim_act_actor, actor_hidden_size,
+            self.actor[key] = ActorNet(dim_actor_in, dim_actor_out, actor_hidden_size,
                                        normalize, initialize, activation, activation_action, device)
-            self.critic_A[key] = CriticNet(dim_obs_critic + dim_act_critic, critic_hidden_size,
-                                           normalize, initialize, activation, device)
-            self.critic_B[key] = CriticNet(dim_obs_critic + dim_act_critic, critic_hidden_size,
-                                           normalize, initialize, activation, device)
+            self.critic_A[key] = CriticNet(dim_critic_in, critic_hidden_size, normalize, initialize, activation, device)
+            self.critic_B[key] = CriticNet(dim_critic_in, critic_hidden_size, normalize, initialize, activation, device)
             self.target_actor[key] = deepcopy(self.actor[key])
             self.target_critic_A[key] = deepcopy(self.critic_A[key])
             self.target_critic_B[key] = deepcopy(self.critic_B[key])
@@ -931,36 +997,18 @@ class MATD3_Policy(Independent_DDPG_Policy, Module):
                 self.critic_B[key].parameters())
         return parameters_critic
 
-    def _get_actor_critic_input(self, dim_action, dim_actor_rep, dim_critic_rep, n_agents):
-        """
-        Returns the input dimensions of actor netwrok and critic networks.
-
-        Parameters:
-            dim_action: The dimension of actions.
-            dim_actor_rep: The dimension of the output of actor presentation.
-            dim_critic_rep: The dimension of the output of critic presentation.
-            n_agents: The number of agents.
-
-        Returns:
-            dim_actor_in: The dimension of input of the actor networks.
-            dim_critic_in: The dimension of the input of critic networks.
-        """
-        dim_actor_in = dim_actor_rep
-        dim_critic_in = dim_critic_rep * n_agents
-        dim_act_actor = dim_action
-        dim_act_critic = dim_action * n_agents
-        return dim_actor_in, dim_critic_in, dim_act_actor, dim_act_critic
-
-    def Qpolicy(self, observation: Dict[str, Tensor], actions: Dict[str, Tensor],
-                agent_ids: Tensor = None, agent_key: str = None):
+    def Qpolicy(self, joint_observation: Tensor, joint_actions: Tensor,
+                agent_ids: Tensor = None, agent_key: str = None,
+                rnn_hidden: Optional[Dict[str, List[Tensor]]] = None):
         """
         Returns Q^policy of current observations and actions pairs.
 
         Parameters:
-            observation (Dict[Tensor]): The observations.
-            actions (Dict[Tensor]): The actions.
+            joint_observation (Tensor): The joint observations of the team.
+            joint_actions (Tensor): The joint actions of the team.
             agent_ids (Dict[Tensor]): The agents' ids (for parameter sharing).
             agent_key (str): Calculate actions for specified agent.
+            rnn_hidden (Optional[Dict[str, List[Tensor]]]): The hidden variables of the RNN.
 
         Returns:
             q_eval_A (Dict[Tensor]): The evaluations of Q^policy calculated by critic A.
@@ -969,78 +1017,106 @@ class MATD3_Policy(Independent_DDPG_Policy, Module):
         """
         q_eval, q_eval_A, q_eval_B = {}, {}, {}
         agent_list = self.model_keys if agent_key is None else [agent_key]
-        outputs_A = {key: self.critic_A_representation[key](observation[key])['state'] for key in self.model_keys}
-        outputs_B = {key: self.critic_B_representation[key](observation[key])['state'] for key in self.model_keys}
-        if self.use_parameter_sharing:
-            dim_outputs_rep = self.critic_A_representation[self.model_keys[0]].output_shapes['state'][0]
-            dim_action = self.action_space[self.model_keys[0]].shape[-1]
-            joint_obs_in_A = outputs_A[self.model_keys[0]].reshape([-1, self.n_agents * dim_outputs_rep])
-            joint_obs_in_A = joint_obs_in_A.unsqueeze(1).expand(-1, self.n_agents, -1)
-            joint_obs_in_B = outputs_B[self.model_keys[0]].reshape([-1, self.n_agents * dim_outputs_rep])
-            joint_obs_in_B = joint_obs_in_B.unsqueeze(1).expand(-1, self.n_agents, -1)
-            joint_act_in = actions[self.model_keys[0]].reshape([-1, self.n_agents * dim_action])
-            joint_act_in = joint_act_in.unsqueeze(1).expand(-1, self.n_agents, -1)
+        batch_size = joint_observation.shape[0]
+        seq_len = joint_observation.shape[1] if self.use_rnn else 1
+
+        critic_rep_in = torch.concat([joint_observation, joint_actions], dim=-1)
+        if self.use_rnn:
+            outputs_A = {k: self.critic_A_representation[k](critic_rep_in, *rnn_hidden[k]) for k in agent_list}
+            outputs_B = {k: self.critic_B_representation[k](critic_rep_in, *rnn_hidden[k]) for k in agent_list}
         else:
-            joint_obs_in_A = torch.concat([outputs_A[key] for key in self.model_keys], dim=-1)
-            joint_obs_in_B = torch.concat([outputs_B[key] for key in self.model_keys], dim=-1)
-            joint_act_in = torch.concat([actions[key] for key in self.model_keys], dim=-1)
+            outputs_A = {k: self.critic_A_representation[k](critic_rep_in) for k in agent_list}
+            outputs_B = {k: self.critic_B_representation[k](critic_rep_in) for k in agent_list}
+
+        bs = batch_size * self.n_agents if self.use_parameter_sharing else batch_size
 
         for key in agent_list:
             if self.use_parameter_sharing:
-                critic_in_A = torch.concat([joint_obs_in_A, joint_act_in, agent_ids], dim=-1)
-                critic_in_B = torch.concat([joint_obs_in_B, joint_act_in, agent_ids], dim=-1)
+                if self.use_rnn:
+                    joint_rep_out_A = outputs_A[key]['state'].unsqueeze(1).expand(-1, self.n_agents, -1, -1)
+                    joint_rep_out_B = outputs_B[key]['state'].unsqueeze(1).expand(-1, self.n_agents, -1, -1)
+                    joint_rep_out_A = joint_rep_out_A.reshape(bs, seq_len, -1)
+                    joint_rep_out_B = joint_rep_out_B.reshape(bs, seq_len, -1)
+                else:
+                    joint_rep_out_A = outputs_A[key]['state'].unsqueeze(1).expand(-1, self.n_agents, -1)
+                    joint_rep_out_B = outputs_B[key]['state'].unsqueeze(1).expand(-1, self.n_agents, -1)
+                    joint_rep_out_A = joint_rep_out_A.reshape(bs, -1)
+                    joint_rep_out_B = joint_rep_out_B.reshape(bs, -1)
+                critic_in_A = torch.concat([joint_rep_out_A, agent_ids], dim=-1)
+                critic_in_B = torch.concat([joint_rep_out_B, agent_ids], dim=-1)
             else:
-                critic_in_A = torch.concat([joint_obs_in_A, joint_act_in], dim=-1)
-                critic_in_B = torch.concat([joint_obs_in_B, joint_act_in], dim=-1)
+                if self.use_rnn:
+                    joint_rep_out_A = outputs_A[key]['state'].reshape(bs, seq_len, -1)
+                    joint_rep_out_B = outputs_B[key]['state'].reshape(bs, seq_len, -1)
+                else:
+                    joint_rep_out_A = outputs_A[key]['state'].reshape(bs, -1)
+                    joint_rep_out_B = outputs_B[key]['state'].reshape(bs, -1)
+                critic_in_A = joint_rep_out_A
+                critic_in_B = joint_rep_out_B
             q_eval_A[key] = self.critic_A[key](critic_in_A)
             q_eval_B[key] = self.critic_B[key](critic_in_B)
             q_eval[key] = (q_eval_A[key] + q_eval_B[key]) / 2.0
+
         return q_eval_A, q_eval_B, q_eval
 
-    def Qtarget(self, next_observation: Dict[str, Tensor], next_actions: Dict[str, Tensor],
-                agent_ids: Tensor = None, agent_key: str = None):
+    def Qtarget(self, joint_observation: Tensor, joint_actions: Tensor,
+                agent_ids: Tensor = None, agent_key: str = None,
+                rnn_hidden: Optional[Dict[str, List[Tensor]]] = None):
         """
         Returns the Q^target of next observations and actions pairs.
 
         Parameters:
-            next_observation (Dict[Tensor]): The observations of next step.
-            next_actions (Dict[Tensor]): The actions of next step.
+            joint_observation (Tensor): The joint observations of the team.
+            joint_actions (Tensor): The joint actions of the team.
             agent_ids (Dict[Tensor]): The agents' ids (for parameter sharing).
             agent_key (str): Calculate actions for specified agent.
+            rnn_hidden (Optional[Dict[str, List[Tensor]]]): The hidden variables of the RNN.
 
         Returns:
             q_target (Dict[Tensor]): The evaluations of Q^target.
         """
         q_target = {}
         agent_list = self.model_keys if agent_key is None else [agent_key]
-        outputs_A = {key: self.target_critic_A_representation[key](next_observation[key])['state']
-                     for key in self.model_keys}
-        outputs_B = {key: self.target_critic_B_representation[key](next_observation[key])['state']
-                     for key in self.model_keys}
-        if self.use_parameter_sharing:
-            dim_outputs_rep = self.critic_A_representation[self.model_keys[0]].output_shapes['state'][0]
-            dim_action = self.action_space[self.model_keys[0]].shape[-1]
-            joint_obs_in_A = outputs_A[self.model_keys[0]].reshape([-1, self.n_agents * dim_outputs_rep])
-            joint_obs_in_A = joint_obs_in_A.unsqueeze(1).expand(-1, self.n_agents, -1)
-            joint_obs_in_B = outputs_B[self.model_keys[0]].reshape([-1, self.n_agents * dim_outputs_rep])
-            joint_obs_in_B = joint_obs_in_B.unsqueeze(1).expand(-1, self.n_agents, -1)
-            joint_act_in = next_actions[self.model_keys[0]].reshape([-1, self.n_agents * dim_action])
-            joint_act_in = joint_act_in.unsqueeze(1).expand(-1, self.n_agents, -1)
+        batch_size = joint_observation.shape[0]
+        seq_len = joint_observation.shape[1] if self.use_rnn else 1
+
+        critic_rep_in = torch.concat([joint_observation, joint_actions], dim=-1)
+        if self.use_rnn:
+            outputs_A = {k: self.target_critic_A_representation[k](critic_rep_in, *rnn_hidden[k]) for k in agent_list}
+            outputs_B = {k: self.target_critic_B_representation[k](critic_rep_in, *rnn_hidden[k]) for k in agent_list}
         else:
-            joint_obs_in_A = torch.concat([outputs_A[key] for key in self.model_keys], dim=-1)
-            joint_obs_in_B = torch.concat([outputs_B[key] for key in self.model_keys], dim=-1)
-            joint_act_in = torch.concat([next_actions[key] for key in self.model_keys], dim=-1)
+            outputs_A = {k: self.target_critic_A_representation[k](critic_rep_in) for k in agent_list}
+            outputs_B = {k: self.target_critic_B_representation[k](critic_rep_in) for k in agent_list}
+
+        bs = batch_size * self.n_agents if self.use_parameter_sharing else batch_size
 
         for key in agent_list:
             if self.use_parameter_sharing:
-                critic_in_A = torch.concat([joint_obs_in_A, joint_act_in, agent_ids], dim=-1)
-                critic_in_B = torch.concat([joint_obs_in_B, joint_act_in, agent_ids], dim=-1)
+                if self.use_rnn:
+                    joint_rep_out_A = outputs_A[key]['state'].unsqueeze(1).expand(-1, self.n_agents, -1, -1)
+                    joint_rep_out_B = outputs_B[key]['state'].unsqueeze(1).expand(-1, self.n_agents, -1, -1)
+                    joint_rep_out_A = joint_rep_out_A.reshape(bs, seq_len, -1)
+                    joint_rep_out_B = joint_rep_out_B.reshape(bs, seq_len, -1)
+                else:
+                    joint_rep_out_A = outputs_A[key]['state'].unsqueeze(1).expand(-1, self.n_agents, -1)
+                    joint_rep_out_B = outputs_B[key]['state'].unsqueeze(1).expand(-1, self.n_agents, -1)
+                    joint_rep_out_A = joint_rep_out_A.reshape(bs, -1)
+                    joint_rep_out_B = joint_rep_out_B.reshape(bs, -1)
+                critic_in_A = torch.concat([joint_rep_out_A, agent_ids], dim=-1)
+                critic_in_B = torch.concat([joint_rep_out_B, agent_ids], dim=-1)
             else:
-                critic_in_A = torch.concat([joint_obs_in_A, joint_act_in], dim=-1)
-                critic_in_B = torch.concat([joint_obs_in_B, joint_act_in], dim=-1)
+                if self.use_rnn:
+                    joint_rep_out_A = outputs_A[key]['state'].reshape(bs, seq_len, -1)
+                    joint_rep_out_B = outputs_B[key]['state'].reshape(bs, seq_len, -1)
+                else:
+                    joint_rep_out_A = outputs_A[key]['state'].reshape(bs, -1)
+                    joint_rep_out_B = outputs_B[key]['state'].reshape(bs, -1)
+                critic_in_A = joint_rep_out_A
+                critic_in_B = joint_rep_out_B
             q_target_A = self.target_critic_A[key](critic_in_A)
             q_target_B = self.target_critic_B[key](critic_in_B)
             q_target[key] = torch.minimum(q_target_A, q_target_B)
+
         return q_target
 
     def soft_update(self, tau=0.005):

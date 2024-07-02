@@ -20,6 +20,7 @@ class DummyVecMultiAgentEnv(VecEnv):
         env = self.envs[0]
         VecEnv.__init__(self, len(env_fns), env.observation_space, env.action_space)
 
+        self.env_info = env.env_info
         self.agents = env.agents
         self.num_agents = env.num_agents
         self.state_space = env.state_space  # Type: Box
@@ -92,3 +93,43 @@ class DummyVecMultiAgentEnv(VecEnv):
     def render(self, mode):
         return [env.render(mode) for env in self.envs]
 
+
+class DummyVecEnv_StarCraft2(DummyVecMultiAgentEnv):
+    def __init__(self, env_fns):
+        super(DummyVecEnv_StarCraft2, self).__init__(env_fns)
+        self.num_enemies = self.env_info['num_enemies']
+        self.battles_game = np.zeros(self.num_envs, np.int32)
+        self.battles_won = np.zeros(self.num_envs, np.int32)
+        self.dead_allies_count = np.zeros(self.num_envs, np.int32)
+        self.dead_enemies_count = np.zeros(self.num_envs, np.int32)
+
+    def step_wait(self):
+        """
+        Waits for the completion of asynchronous step operations and updates internal buffers with the received results.
+        """
+        if not self.waiting:
+            raise NotSteppingError
+
+        rew_dict = [{} for _ in self.envs]
+        terminated_dict = [{} for _ in self.envs]
+        truncated = [False for _ in self.envs]
+        for e in range(self.num_envs):
+            action_n = self.actions[e]
+            self.buf_obs[e], rew_dict[e], terminated_dict[e], truncated[e], self.buf_info[e] = self.envs[e].step(
+                action_n)
+            self.buf_avail_actions[e] = self.buf_info[e]['avail_actions']
+            self.buf_state[e] = self.buf_info[e]['state']
+            if all(terminated_dict[e].values()) or truncated[e]:
+                obs_reset_dict, info_reset = self.envs[e].reset()
+                self.buf_info[e]["reset_obs"] = obs_reset_dict
+                self.buf_info[e]["reset_avail_actions"] = info_reset['avail_actions']
+                self.buf_info[e]["reset_state"] = info_reset['state']
+
+                self.battles_game[e] += 1
+                if self.buf_info[e]['battle_won']:
+                    self.battles_won[e] += 1
+                self.dead_allies_count[e] += self.buf_info[e]['dead_allies']
+                self.dead_enemies_count[e] += self.buf_info[e]['dead_enemies']
+
+        self.waiting = False
+        return self.buf_obs.copy(), rew_dict, terminated_dict, truncated, self.buf_info.copy()

@@ -25,7 +25,7 @@ class PPG_Agent(Agent):
         super(PPG_Agent, self).__init__(config, envs)
         self.horizon_size = config.horizon_size
         self.n_minibatch = config.n_minibatch
-        self.n_epoch = config.n_epoch
+        self.n_epochs = config.n_epochs
         self.gae_lam = config.gae_lambda
         self.policy_nepoch = config.policy_nepoch
         self.value_nepoch = config.value_nepoch
@@ -41,7 +41,7 @@ class PPG_Agent(Agent):
         self.atari = True if config.env_name == "Atari" else False
         Buffer = DummyOnPolicyBuffer_Atari if self.atari else DummyOnPolicyBuffer
         self.buffer_size = self.n_envs * self.horizon_size
-        self.batch_size = self.buffer_size // self.n_epoch
+        self.batch_size = self.buffer_size // self.n_epochs
         input_buffer = dict(observation_space=self.observation_space,
                             action_space=self.action_space,
                             auxiliary_shape=self.auxiliary_info_shape,

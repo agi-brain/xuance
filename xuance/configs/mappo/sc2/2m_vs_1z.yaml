@@ -6,7 +6,6 @@ policy: "Categorical_MAAC_Policy"
 representation: "Basic_RNN"
 vectorize: "Subproc_StarCraft2"
 runner: "StarCraft2_Runner"
-on_policy: True
 
 # recurrent settings for Basic_RNN representation
 use_rnn: True
@@ -23,11 +22,13 @@ gain: 0.01
 actor_hidden_size: []
 critic_hidden_size: []
 activation: "relu"
+use_parameter_sharing: False  # If to use parameter sharing for all agents' policies.
+use_actions_mask: True  # If to use actions mask for unavailable actions.
 
 seed: 1
 parallels: 8
 buffer_size: 128
-n_epoch: 15
+n_epochs: 15
 n_minibatch: 1
 learning_rate: 0.0007  # 7e-4
 weight_decay: 0
@@ -42,9 +43,7 @@ gamma: 0.99  # discount factor
 # tricks
 use_linear_lr_decay: False  # if use linear learning rate decay
 end_factor_lr_decay: 0.5
-use_global_state: True  # if use global state to replace merged observations
-use_grad_clip: True  # gradient normalization
-grad_clip_norm: 10.0
+use_global_state: False  # if use global state to replace merged observations
 use_value_clip: True  # limit the value range
 value_clip_range: 0.2
 use_value_norm: True  # use running mean and std to normalize rewards.
@@ -53,14 +52,12 @@ huber_delta: 10.0
 use_advnorm: True  # use advantage normalization.
 use_gae: True  # use GAE trick to calculate returns.
 gae_lambda: 0.95
+use_grad_clip: True  # gradient normalization
+grad_clip_norm: 10.0
 
-start_training: 1
 running_steps: 1000000
-train_per_step: True
-training_frequency: 1
-
-test_steps: 10000
 eval_interval: 10000
 test_episode: 16
+
 log_dir: "./logs/mappo/"
 model_dir: "./models/mappo/"

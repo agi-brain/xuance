@@ -30,7 +30,7 @@ class COMA_Agents(MARLAgents):
         self.egreedy = self.start_greedy
         self.delta_egreedy = (self.start_greedy - self.end_greedy) / (config.decay_step_greedy / self.n_envs)
 
-        self.n_epoch = config.n_epoch
+        self.n_epochs = config.n_epochs
         self.n_minibatch = config.n_minibatch
         self.use_global_state = config.use_global_state
 
@@ -254,7 +254,7 @@ class COMA_Agents(MARLAgents):
         info_train = {}
         if self.memory.full:
             indexes = np.arange(self.buffer_size)
-            for _ in range(self.n_epoch):
+            for _ in range(self.n_epochs):
                 np.random.shuffle(indexes)
                 for start in range(0, self.buffer_size, self.batch_size):
                     end = start + self.batch_size
