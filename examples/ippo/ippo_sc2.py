@@ -47,7 +47,7 @@ class SC2_Runner:
         return win_rate, allies_dead_ratio, enemies_dead_ratio
 
     def test_episodes(self, test_T, n_test_runs):
-        test_scores = np.zeros(n_test_runs, np.float)
+        test_scores = np.zeros(n_test_runs, np.float32)
         last_battles_info = self.get_battles_info()
         for i_test in range(n_test_runs):
             running_scores = self.agents.run_episodes(None, n_episodes=self.n_envs, test_mode=True)
@@ -177,7 +177,7 @@ class SC2_Runner:
 
 if __name__ == "__main__":
     parser = parse_args()
-    configs_dict = get_configs(file_dir="ippo_mpe_configs/simple_spread_v3.yaml")
+    configs_dict = get_configs(file_dir="ippo_sc2_configs/3m.yaml")
     configs_dict = recursive_dict_update(configs_dict, parser.__dict__)
     configs = argparse.Namespace(**configs_dict)
 

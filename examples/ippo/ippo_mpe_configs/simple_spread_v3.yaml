@@ -14,7 +14,7 @@ fps: 50
 continuous_action: True
 policy: "Gaussian_MAAC_Policy"
 representation: "Basic_MLP"
-vectorize: "DummyVecMultiAgentEnv"
+vectorize: "SubprocVecMultiAgentEnv"
 
 # recurrent settings for Basic_RNN representation.
 use_rnn: False  # If to use recurrent neural network as representation. (The representation should be "Basic_RNN").

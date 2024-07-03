@@ -111,7 +111,7 @@ class Football_Runner(SC2_Runner):
         return mean_episode_score
 
     def test_episodes(self, test_T, n_test_runs):
-        test_scores = np.zeros(n_test_runs, np.float)
+        test_scores = np.zeros(n_test_runs, np.float32)
         last_battles_info = self.get_battles_info()
         for i_test in range(n_test_runs):
             test_scores[i_test] = self.run_episodes(test_mode=True)
