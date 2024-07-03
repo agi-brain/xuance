@@ -25,6 +25,7 @@ from .subprocess import SubprocVecEnv
 from .subprocess import SubprocVecEnv_Atari
 from .subprocess import SubprocVecMultiAgentEnv
 from .subprocess import SubprocVecEnv_StarCraft2
+from .subprocess import SubprocVecEnv_Football
 from .dummy import DummyVecEnv
 from .dummy import DummyVecEnv_Atari
 from .dummy import DummyVecMultiAgentEnv
@@ -41,4 +42,5 @@ REGISTRY_VEC_ENV = {
     "SubprocVecMultiAgentEnv": SubprocVecMultiAgentEnv,
     "Subproc_Atari": SubprocVecEnv_Atari,
     "Subproc_StarCraft2": SubprocVecEnv_StarCraft2,
+    "Subproc_Football": SubprocVecEnv_Football,
 }

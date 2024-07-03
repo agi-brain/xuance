@@ -172,3 +172,28 @@ class SubprocVecEnv_StarCraft2(SubprocVecMultiAgentEnv):
 
         return list(obs), list(rewards), list(terminated), list(truncated), list(info)
 
+
+class SubprocVecEnv_Football(SubprocVecMultiAgentEnv):
+    def __init__(self, env_fns, context='spawn', in_series=1):
+        super(SubprocVecEnv_Football, self).__init__(env_fns, context, in_series)
+        self.num_adversaries = self.env_info['num_adversaries']
+        self.battles_game = np.zeros(self.num_envs, np.int32)
+        self.battles_won = np.zeros(self.num_envs, np.int32)
+
+    def step_wait(self):
+        self._assert_not_closed()
+        results = [remote.recv() for remote in self.remotes]
+        results = flatten_list(results)
+        self.waiting = False
+        obs, rewards, terminated, truncated, info = zip(*results)
+        self.buf_obs = list(obs)
+        self.buf_state = [info[e]['state'] for e in range(self.num_envs)]
+        self.buf_avail_actions = [info[e]['avail_actions'] for e in range(self.num_envs)]
+        for i in range(self.num_envs):
+            if all(terminated[i].values()) or truncated[i]:
+                self.battles_game[i] += 1
+                if info[i]['battle_won']:
+                    self.battles_won[i] += 1
+
+        return list(obs), list(rewards), list(terminated), list(truncated), list(info)
+

@@ -1,19 +1,17 @@
 from .runner_sc2 import SC2_Runner
-import numpy as np
-from copy import deepcopy
+from xuance.torch.agents import REGISTRY_Agents
 import time
-import wandb
+import numpy as np
 
 
 class Football_Runner(SC2_Runner):
-    def __init__(self, args):
-        self.num_agents, self.num_adversaries = 0, 0
-        if args.test:
-            args.parallels = 1
-            args.render = True
-        else:
-            args.render = False
-        super(Football_Runner, self).__init__(args)
+    def __init__(self, config):
+        super(Football_Runner, self).__init__(config)
+        config.n_agents = self.envs.num_agents
+        self.agents = REGISTRY_Agents[config.agent](config, self.envs)
+        self.config = config
+        self.running_steps = config.running_steps
+        self.num_agents, self.num_adversaries = self.get_agent_num()
 
     def get_agent_num(self):
         return self.envs.num_agents, self.envs.num_adversaries
@@ -29,86 +27,19 @@ class Football_Runner(SC2_Runner):
         win_rate = incre_battles_won / incre_battles_game if incre_battles_game > 0 else 0.0
         return win_rate
 
-    def run_episodes(self, test_mode=False):
-        episode_score, episode_step, best_score = [], [], -np.inf
-
-        # reset the envs
-        obs_n, state, infos = self.envs.reset()
-        envs_done = self.envs.buf_done
-        self.env_step = 0
-        filled = np.zeros([self.n_envs, self.episode_length, 1], np.int32)
-        rnn_hidden, rnn_hidden_critic = self.init_rnn_hidden()
-
-        while not envs_done.all():
-            available_actions = self.envs.get_avail_actions()
-            actions_dict = self.get_actions(obs_n, available_actions, rnn_hidden, rnn_hidden_critic,
-                                            state=state, test_mode=test_mode)
-            next_obs_n, next_state, rewards, terminated, truncated, info = self.envs.step(actions_dict['actions_n'])
-            envs_done = self.envs.buf_done
-            rnn_hidden, rnn_hidden_critic = actions_dict['rnn_hidden'], actions_dict['rnn_hidden_critic']
-
-            if test_mode:
-                for i_env in range(self.n_envs):
-                    if terminated[i_env] or truncated[i_env]:
-                        episode_score.append(info[i_env]["episode_score"])
-                        if best_score < episode_score[-1]:
-                            best_score = episode_score[-1]
-            else:
-                filled[:, self.env_step] = np.ones([self.n_envs, 1])
-                # store transition data
-                transition = (obs_n, actions_dict, state, rewards, terminated, available_actions)
-                self.agents.memory.store_transitions(self.env_step, *transition)
-                for i_env in range(self.n_envs):
-                    if envs_done[i_env]:
-                        filled[i_env, self.env_step, 0] = 0
-                    else:
-                        self.current_step += 1
-                    if terminated[i_env] or truncated[i_env]:  # one env is terminal
-                        episode_score.append(info[i_env]["episode_score"])
-                        episode_step.append(info[i_env]["episode_step"])
-                        available_actions = self.envs.get_avail_actions()
-                        terminal_data = (next_obs_n, next_state, available_actions, filled)
-                        if self.on_policy:
-                            if terminated[i_env]:
-                                values_next = np.array([0.0 for _ in range(self.num_agents)])
-                            else:
-                                batch_select = np.arange(i_env * self.num_agents, (i_env + 1) * self.num_agents)
-                                kwargs = {"state": [next_state[i_env]]}
-                                if self.args.agent == "VDAC":
-                                    rnn_h_ac_i = self.agents.policy.representation.get_hidden_item(batch_select,
-                                                                                                   *rnn_hidden)
-                                    kwargs.update({"avail_actions": available_actions[i_env:i_env + 1],
-                                                   "test_mode": test_mode})
-                                    _, _, values_next = self.agents.act(next_obs_n[i_env:i_env + 1],
-                                                                        *rnn_h_ac_i, **kwargs)
-                                else:
-                                    rnn_h_critic_i = self.agents.policy.representation_critic.get_hidden_item(
-                                        batch_select,
-                                        *rnn_hidden_critic)
-                                    if self.args.agent == "COMA":
-                                        kwargs.update({"actions_n": actions_dict["actions_n"],
-                                                       "actions_onehot": actions_dict["act_n_onehot"]})
-                                    _, values_next = self.agents.values(next_obs_n[i_env:i_env + 1],
-                                                                        *rnn_h_critic_i, **kwargs)
-                            self.agents.memory.finish_path(i_env, self.env_step + 1, *terminal_data,
-                                                           value_next=values_next,
-                                                           value_normalizer=self.agents.learner.value_normalizer)
-                        else:
-                            self.agents.memory.finish_path(i_env, self.env_step + 1, *terminal_data)
-                        self.current_step += 1
-                self.env_step += 1
-            obs_n, state = deepcopy(next_obs_n), deepcopy(next_state)
-
-        if not test_mode:
-            self.agents.memory.store_episodes()  # store episode data
-            n_epochs = self.agents.n_epoch if self.on_policy else self.n_envs
-            train_info = self.agents.train(self.current_step, n_epochs=n_epochs)  # train
-            train_info["Train-Results/Train-Episode-Rewards"] = np.mean(episode_score)
-            train_info["Train-Results/Episode-Steps"] = np.mean(episode_step)
-            self.log_infos(train_info, self.current_step)
-
-        mean_episode_score = np.mean(episode_score)
-        return mean_episode_score
+    def test_episodes(self, test_T, n_test_runs):
+        test_scores = np.zeros(n_test_runs, np.float32)
+        _, last_battles_info = self.get_battles_info()
+        for i_test in range(n_test_runs):
+            running_scores = self.agents.run_episodes(None, n_episodes=self.n_envs, test_mode=True)
+            test_scores[i_test] = np.mean(running_scores)
+        win_rate, allies_dead_ratio, enemies_dead_ratio = self.get_battles_result(last_battles_info)
+        mean_test_score = test_scores.mean()
+        results_info = {"Test-Results/Win-Rate": win_rate,
+                        "Test-Results/Allies-Dead-Ratio": allies_dead_ratio,
+                        "Test-Results/Enemies-Dead-Ratio": enemies_dead_ratio}
+        self.agents.log_infos(results_info, test_T)
+        return mean_test_score, test_scores.std(), win_rate
 
     def test_episodes(self, test_T, n_test_runs):
         test_scores = np.zeros(n_test_runs, np.float32)
@@ -173,10 +104,6 @@ class Football_Runner(SC2_Runner):
         print("Best Score: %.4f, Std: %.4f" % (best_score["mean"], best_score["std"]))
         print("Best Win Rate: {}%".format(best_win_rate * 100))
 
-        self.envs.close()
-        if self.use_wandb:
-            wandb.finish()
-        else:
-            self.writer.close()
+        self.agents.finish()
 
 
