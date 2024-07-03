@@ -178,7 +178,7 @@ After defining a new class of environment, you need to add it to the ``REGISTRY_
 .. code-block:: python
 
     from xuance.environment import REGISTRY_MULTI_AGENT_ENV
-    REGISTRY_ENV[configs.env_name] = MyNewMultiAgentEnv
+    REGISTRY_MULTI_AGENT_ENV[configs.env_name] = MyNewMultiAgentEnv
 
 
 Step 4: Make Your Environment and Run it with XuanCe
