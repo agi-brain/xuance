@@ -95,7 +95,7 @@ class SC2_Runner(Runner_Base):
         n_test_runs = self.config.test_episode // self.n_envs
         last_test_T = 0
 
-        # test the mode at step 0
+        # test the model at step 0
         test_score_mean, test_score_std, test_win_rate = self.test_episodes(last_test_T, n_test_runs)
         best_score = {"mean": test_score_mean,
                       "std": test_score_std,

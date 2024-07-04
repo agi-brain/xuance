@@ -29,57 +29,88 @@ class Football_Runner(SC2_Runner):
 
     def test_episodes(self, test_T, n_test_runs):
         test_scores = np.zeros(n_test_runs, np.float32)
-        _, last_battles_info = self.get_battles_info()
+        last_battles_info = self.get_battles_info()
         for i_test in range(n_test_runs):
             running_scores = self.agents.run_episodes(None, n_episodes=self.n_envs, test_mode=True)
             test_scores[i_test] = np.mean(running_scores)
-        win_rate, allies_dead_ratio, enemies_dead_ratio = self.get_battles_result(last_battles_info)
-        mean_test_score = test_scores.mean()
-        results_info = {"Test-Results/Win-Rate": win_rate,
-                        "Test-Results/Allies-Dead-Ratio": allies_dead_ratio,
-                        "Test-Results/Enemies-Dead-Ratio": enemies_dead_ratio}
-        self.agents.log_infos(results_info, test_T)
-        return mean_test_score, test_scores.std(), win_rate
-
-    def test_episodes(self, test_T, n_test_runs):
-        test_scores = np.zeros(n_test_runs, np.float32)
-        last_battles_info = self.get_battles_info()
-        for i_test in range(n_test_runs):
-            test_scores[i_test] = self.run_episodes(test_mode=True)
         win_rate = self.get_battles_result(last_battles_info)
         mean_test_score = test_scores.mean()
         results_info = {"Test-Results/Mean-Episode-Rewards": mean_test_score,
                         "Test-Results/Win-Rate": win_rate}
-        self.log_infos(results_info, test_T)
+        self.agents.log_infos(results_info, test_T)
         return mean_test_score, test_scores.std(), win_rate
 
+    def run(self):
+        if self.config.test_mode:
+            n_test_episodes = self.config.test_episode
+            self.agents.load_model(self.config.model_dir_load)
+            test_score_mean, test_score_std, test_win_rate = self.test_episodes(0, n_test_episodes)
+            agent_info = f"Algo: {self.config.agent}, Map: {self.config.env_id}, seed: {self.config.seed}, "
+            print(agent_info, "Win rate: %.3f, Mean score: %.2f. " % (test_win_rate, test_score_mean))
+            print("Finish testing.")
+        else:
+            test_interval = self.config.eval_interval
+            last_test_T = 0
+            episode_scores = []
+            agent_info = f"Algo: {self.config.agent}, Map: {self.config.env_id}, seed: {self.config.seed}, "
+            print(f"Steps: {self.agents.current_step} / {self.running_steps}: ")
+            print(agent_info, "Win rate: %-, Mean score: -.")
+            last_battles_info = self.get_battles_info()
+            time_start = time.time()
+            while self.agents.current_step <= self.running_steps:
+                score = self.agents.run_episodes(None, n_episodes=self.n_envs, test_mode=False)
+                if self.agents.current_step >= self.agents.start_training:
+                    train_info = self.agents.train_epochs(n_epochs=1)
+                    self.agents.log_infos(train_info, self.agents.current_step)
+                episode_scores.append(np.mean(score))
+                if (self.agents.current_step - last_test_T) / test_interval >= 1.0:
+                    last_test_T += test_interval
+                    # log train results before testing.
+                    train_win_rate, allies_dead_ratio, enemies_dead_ratio = self.get_battles_result(last_battles_info)
+                    results_info = {"Train-Results/Win-Rate": train_win_rate}
+                    self.agents.log_infos(results_info, last_test_T)
+                    last_battles_info = self.get_battles_info()
+                    time_pass, time_left = self.time_estimate(time_start)
+                    print(f"Steps: {self.agents.current_step} / {self.running_steps}: ")
+                    print(agent_info, "Win rate: %.3f, Mean score: %.2f. " % (train_win_rate, np.mean(episode_scores)),
+                          time_pass, time_left)
+                    episode_scores = []
+
+            print("Finish training.")
+            self.agents.save_model("final_train_model.pth")
+
+        self.agents.finish()
+
     def benchmark(self):
-        test_interval = self.args.eval_interval
-        n_test_runs = self.args.test_episode // self.n_envs
+        test_interval = self.config.eval_interval
+        n_test_runs = self.config.test_episode // self.n_envs
         last_test_T = 0
 
-        # test the mode at step 0
+        # test the model at step 0
         test_score_mean, test_score_std, test_win_rate = self.test_episodes(last_test_T, n_test_runs)
         best_score = {"mean": test_score_mean,
                       "std": test_score_std,
-                      "step": self.current_step}
+                      "step": self.agents.current_step}
         best_win_rate = test_win_rate
 
-        agent_info = f"Algo: {self.args.agent}, Map: {self.args.env_id}, seed: {self.args.seed}, "
-        print(f"Steps: {self.current_step} / {self.running_steps}: ")
+        agent_info = f"Algo: {self.config.agent}, Map: {self.config.env_id}, seed: {self.config.seed}, "
+        print(f"Steps: {self.agents.current_step} / {self.running_steps}: ")
         print(agent_info, "Win rate: %.3f, Mean score: %.2f. " % (test_win_rate, test_score_mean))
         last_battles_info = self.get_battles_info()
         time_start = time.time()
-        while self.current_step <= self.running_steps:
+        while self.agents.current_step <= self.running_steps:
             # train
-            self.run_episodes(test_mode=False)
+            self.agents.run_episodes(test_mode=False)
+            if self.agents.current_step >= self.agents.start_training:
+                train_info = self.agents.train_epochs(n_epochs=self.n_envs)
+                self.agents.log_infos(train_info, self.agents.current_step)
             # test
-            if (self.current_step - last_test_T) / test_interval >= 1.0:
+            if (self.agents.current_step - last_test_T) / test_interval >= 1.0:
                 last_test_T += test_interval
                 # log train results before testing.
                 train_win_rate = self.get_battles_result(last_battles_info)
                 results_info = {"Train-Results/Win-Rate": train_win_rate}
-                self.log_infos(results_info, last_test_T)
+                self.agents.log_infos(results_info, last_test_T)
 
                 # test the model
                 test_score_mean, test_score_std, test_win_rate = self.test_episodes(last_test_T, n_test_runs)
@@ -87,7 +118,7 @@ class Football_Runner(SC2_Runner):
                 if best_score["mean"] < test_score_mean:
                     best_score = {"mean": test_score_mean,
                                   "std": test_score_std,
-                                  "step": self.current_step}
+                                  "step": self.agents.current_step}
                 if best_win_rate < test_win_rate:
                     best_win_rate = test_win_rate
                     self.agents.save_model("best_model.pth")  # save best model
@@ -96,7 +127,7 @@ class Football_Runner(SC2_Runner):
 
                 # Estimate the physic running time
                 time_pass, time_left = self.time_estimate(time_start)
-                print(f"Steps: {self.current_step} / {self.running_steps}: ")
+                print(f"Steps: {self.agents.current_step} / {self.running_steps}: ")
                 print(agent_info, "Win rate: %.3f, Mean score: %.2f. " % (test_win_rate, test_score_mean), time_pass, time_left)
 
         # end benchmarking

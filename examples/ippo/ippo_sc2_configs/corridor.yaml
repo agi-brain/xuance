@@ -14,7 +14,6 @@ fps: 15
 policy: "Categorical_MAAC_Policy"
 representation: "Basic_RNN"
 vectorize: "Subproc_StarCraft2"
-runner: "StarCraft2_Runner"
 
 # recurrent settings for Basic_RNN representation
 use_rnn: True

@@ -181,6 +181,15 @@ class GFootball_Env(RawMultiAgentEnv):
         state_shape = self.state().shape
         self.state_space = Box(-np.inf, np.inf, state_shape)
 
+    def get_env_info(self):
+        return {'state_space': self.state_space,
+                'observation_space': self.observation_space,
+                'action_space': self.action_space,
+                'agents': self.agents,
+                'num_agents': self.num_agents,
+                'max_episode_steps': self.max_episode_steps,
+                'num_adversaries': self.num_adversaries}
+
     def close(self):
         """Close the environment."""
         self.env.close()

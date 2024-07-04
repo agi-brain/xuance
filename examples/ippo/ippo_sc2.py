@@ -177,7 +177,7 @@ class SC2_Runner:
 
 if __name__ == "__main__":
     parser = parse_args()
-    configs_dict = get_configs(file_dir="ippo_sc2_configs/3m.yaml")
+    configs_dict = get_configs(file_dir=f"ippo_sc2_configs/{parser.env_id}.yaml")
     configs_dict = recursive_dict_update(configs_dict, parser.__dict__)
     configs = argparse.Namespace(**configs_dict)
 

@@ -192,7 +192,7 @@ class SubprocVecEnv_Football(SubprocVecMultiAgentEnv):
         for i in range(self.num_envs):
             if all(terminated[i].values()) or truncated[i]:
                 self.battles_game[i] += 1
-                if info[i]['battle_won']:
+                if info[i]['score_reward'] > 0:
                     self.battles_won[i] += 1
 
         return list(obs), list(rewards), list(terminated), list(truncated), list(info)
