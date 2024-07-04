@@ -18,7 +18,7 @@ def parse_args():
 
 if __name__ == "__main__":
     parser = parse_args()
-    configs_dict = get_configs(file_dir="maddpg_simple_spread_config.yaml")
+    configs_dict = get_configs(file_dir=f"mappo_mpe_configs/{parser.env_id}.yaml")
     configs_dict = recursive_dict_update(configs_dict, parser.__dict__)
     configs = argparse.Namespace(**configs_dict)
 
