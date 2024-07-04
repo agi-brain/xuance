@@ -2,18 +2,18 @@ dl_toolbox: "torch"  # The deep learning toolbox. Choices: "torch", "mindspore",
 project_name: "XuanCe_Benchmark"
 logger: "tensorboard"  # Choices: tensorboard, wandb.
 wandb_user_name: "your_user_name"
+render: True
+render_mode: 'rgb_array' # Choices: 'human', 'rgb_array'.
+fps: 15
 test_mode: False
 device: "cuda:0"
 
 agent: "VDN"  # the learning algorithms_marl
-global_state: False
 env_name: "StarCraft2"
 env_id: "25m"
-fps: 15
 policy: "Mixing_Q_network"
 representation: "Basic_RNN"
 vectorize: "Subproc_StarCraft2"
-on_policy: False
 
 # recurrent settings for Basic_RNN representation
 use_rnn: True
@@ -27,6 +27,8 @@ dropout: 0
 representation_hidden_size: [64, ]
 q_hidden_size: [64, ]  # the units for each hidden layer
 activation: "relu"
+use_parameter_sharing: True
+use_actions_mask: True
 
 seed: 1
 parallels: 8
@@ -41,8 +43,7 @@ end_greedy: 0.05
 decay_step_greedy: 50000
 start_training: 1000  # start training after n episodes
 running_steps: 5000000  # 5M
-train_per_step: False  # True: train model per step; False: train model per episode.
-training_frequency: 1
+n_epochs: 8  # The number of training epochs after interaction.
 sync_frequency: 200
 
 use_grad_clip: False
@@ -50,5 +51,6 @@ grad_clip_norm: 0.5
 
 eval_interval: 50000
 test_episode: 16
+
 log_dir: "./logs/vdn/"
 model_dir: "./models/vdn/"
