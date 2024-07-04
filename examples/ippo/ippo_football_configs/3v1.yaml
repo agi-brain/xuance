@@ -19,6 +19,7 @@ rewards_type: "scoring,checkpoints"  # comma separated list of rewards to be add
 smm_width: 96  # width of super minimap
 smm_height: 72  # height of super minimap
 fps: 15
+episode_length: 200
 policy: "Categorical_MAAC_Policy"
 representation: "Basic_RNN"
 vectorize: "Subproc_Football"
@@ -43,7 +44,7 @@ use_actions_mask: False  # If to use actions mask for unavailable actions.
 
 seed: 1
 parallels: 50
-buffer_size: 400
+buffer_size: 50
 n_epochs: 15
 n_minibatch: 2
 learning_rate: 5.0e-4

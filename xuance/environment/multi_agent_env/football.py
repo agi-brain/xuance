@@ -174,7 +174,7 @@ class GFootball_Env(RawMultiAgentEnv):
         obs_shape_i = (self.env.observation_space.shape[-1], )
         self.observation_space = {k: Box(-np.inf, np.inf, obs_shape_i) for k in self.agents}
         self.action_space = {k: self.env.action_space[i] for i, k in enumerate(self.agents)}
-        self.max_episode_steps = self.env.unwrapped.observation()[0]['steps_left']
+        self.max_episode_steps = config.episode_length
         self._episode_step = 0
         self.env.reset()
         state_shape = self.state().shape
