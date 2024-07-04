@@ -1,131 +1,82 @@
-import os
-import socket
-import time
-from pathlib import Path
-import wandb
 import argparse
-from copy import deepcopy
 import numpy as np
-from tqdm import tqdm
-from torch.utils.tensorboard import SummaryWriter
-
-from xuance import get_arguments
+from copy import deepcopy
+from xuance.common import get_configs, recursive_dict_update
 from xuance.environment import make_envs
 from xuance.torch.utils.operations import set_seed
-from xuance.common import get_time_string
+from xuance.torch.agents import MADDPG_Agents
 
 
 def parse_args():
-    parser = argparse.ArgumentParser("Example of XuanCe: MADDPG.")
-    parser.add_argument("--method", type=str, default="maddpg")
-    parser.add_argument("--env", type=str, default="mpe")
+    parser = argparse.ArgumentParser("Example of XuanCe: MADDPG for MPE.")
     parser.add_argument("--env-id", type=str, default="simple_spread_v3")
-    parser.add_argument("--seed", type=int, default=1)
     parser.add_argument("--test", type=int, default=0)
-    parser.add_argument("--device", type=str, default="cpu")
     parser.add_argument("--benchmark", type=int, default=1)
-    parser.add_argument("--config", type=str, default="examples/maddpg/maddpg_simple_spread_config.yaml")
 
     return parser.parse_args()
 
 
-class Runner(object):
-    def __init__(self, args):
-        # set random seeds
-        set_seed(args.seed)
-
-        # prepare directories
-        self.args = args
-        self.args.agent_name = args.agent
-        time_string = get_time_string()
-        folder_name = f"seed_{args.seed}_" + time_string
-        self.args.model_dir_load = self.args.model_dir
-        self.args.model_dir_save = os.path.join(os.getcwd(), self.args.model_dir, folder_name)
-
-        # build environments
-        self.envs = make_envs(args)
-        self.n_envs = self.envs.num_envs
-        self.args.n_agents = self.envs.num_agents
-
-        # environment details, representations, policies, optimizers, and agents.\
-        from xuance.torch.agents import MADDPG_Agents
-        self.agents = MADDPG_Agents(self.args, self.envs)
-
-    def run(self):
-        if self.args.test_mode:
-            def env_fn():
-                args_test = deepcopy(self.args)
-                args_test.parallels = args_test.test_episode
-                return make_envs(args_test)
-
-            self.render = True
-            self.agents.load_model(path=self.args.model_dir_load)
-            self.test_episode(env_fn)
-            print("Finish testing.")
-        else:
-            n_train_episodes = self.args.running_steps // self.episode_length // self.n_envs
-            self.train_episode(n_train_episodes)
-            print("Finish training.")
-            self.agents.save_model("final_train_model.pth")
-
-    def benchmark(self):
-        def env_fn():
-            args_test = deepcopy(self.args)
-            args_test.parallels = args_test.test_episode
-            return make_envs(args_test)
-
-        n_train_episodes = self.args.running_steps // self.n_envs
-        n_eval_interval = self.args.eval_interval // self.n_envs
-        num_epoch = int(n_train_episodes / n_eval_interval)
-
-        test_scores = self.agents.test(env_fn, n_episodes=self.args.test_episode)
-        best_scores = {
-            "mean": np.mean(test_scores),
-            "std": np.std(test_scores),
-            "step": self.agents.current_step
-        }
-        self.agents.save_model("best_model.pth")
-
-        for i_epoch in range(num_epoch):
-            print("Epoch: %d/%d:" % (i_epoch, num_epoch))
-            self.agents.train(n_steps=n_eval_interval)
-            test_scores = self.agents.test(env_fn, n_episodes=self.args.test_episode)
-
-            mean_test_scores = np.mean(test_scores)
-            if mean_test_scores > best_scores["mean"]:
-                best_scores = {
-                    "mean": mean_test_scores,
-                    "std": np.std(test_scores),
-                    "step": self.agents.current_step
-                }
-                # save best model
-                self.agents.save_model("best_model.pth")
-
-        # end benchmarking
-        print("Finish benchmarking.")
-        print("Best Score, Mean: ", best_scores["mean"], "Std: ", best_scores["std"])
-
-    def finish(self):
-        self.envs.close()
-        if self.use_wandb:
-            wandb.finish()
-        else:
-            self.writer.close()
-
-
 if __name__ == "__main__":
     parser = parse_args()
-    args = get_arguments(method=parser.method,
-                         env=parser.env,
-                         env_id=parser.env_id,
-                         config_path=parser.config,
-                         parser_args=parser,
-                         is_test=parser.test)
-    runner = Runner(args)
+    configs_dict = get_configs(file_dir="maddpg_simple_spread_config.yaml")
+    configs_dict = recursive_dict_update(configs_dict, parser.__dict__)
+    configs = argparse.Namespace(**configs_dict)
 
-    if args.benchmark:
-        runner.benchmark()
+    set_seed(configs.seed)
+    envs = make_envs(configs)
+    Agent = MADDPG_Agents(config=configs, envs=envs)
+
+    train_information = {"Deep learning toolbox": configs.dl_toolbox,
+                         "Calculating device": configs.device,
+                         "Algorithm": configs.agent,
+                         "Environment": configs.env_name,
+                         "Scenario": configs.env_id}
+    for k, v in train_information.items():
+        print(f"{k}: {v}")
+
+    if configs.benchmark:
+        def env_fn():
+            configs_test = deepcopy(configs)
+            configs_test.parallels = configs_test.test_episode
+            return make_envs(configs_test)
+
+        train_steps = configs.running_steps // configs.parallels
+        eval_interval = configs.eval_interval // configs.parallels
+        test_episode = configs.test_episode
+        num_epoch = int(train_steps / eval_interval)
+
+        test_scores = Agent.test(env_fn, test_episode)
+        Agent.save_model(model_name="best_model.pth")
+        best_scores_info = {"mean": np.mean(test_scores),
+                            "std": np.std(test_scores),
+                            "step": Agent.current_step}
+        for i_epoch in range(num_epoch):
+            print("Epoch: %d/%d:" % (i_epoch, num_epoch))
+            Agent.train(eval_interval)
+            test_scores = Agent.test(env_fn, test_episode)
+
+            if np.mean(test_scores) > best_scores_info["mean"]:
+                best_scores_info = {"mean": np.mean(test_scores),
+                                    "std": np.std(test_scores),
+                                    "step": Agent.current_step}
+                # save best model
+                Agent.save_model(model_name="best_model.pth")
+        # end benchmarking
+        print("Best Model Score: %.2f, std=%.2f" % (best_scores_info["mean"], best_scores_info["std"]))
     else:
-        runner.run()
+        if configs.test:
+            def env_fn():
+                configs.parallels = configs.test_episode
+                return make_envs(configs)
 
-    runner.finish()
+
+            Agent.load_model(path=Agent.model_dir_load)
+            scores = Agent.test(env_fn, configs.test_episode)
+            print(f"Mean Score: {np.mean(scores)}, Std: {np.std(scores)}")
+            print("Finish testing.")
+        else:
+            Agent.train(configs.running_steps // configs.parallels)
+            Agent.save_model("final_train_model.pth")
+            print("Finish training!")
+
+    Agent.finish()

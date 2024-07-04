@@ -4,13 +4,13 @@ logger: "tensorboard"  # Choices: tensorboard, wandb.
 wandb_user_name: "your_user_name"
 render: True
 render_mode: 'rgb_array' # Choices: 'human', 'rgb_array'.
+fps: 15
 test_mode: False
 device: "cuda:0"
 
 agent: "IPPO"
 env_name: "StarCraft2"
 env_id: "2m_vs_1z"
-fps: 15
 policy: "Categorical_MAAC_Policy"
 representation: "Basic_RNN"
 vectorize: "Subproc_StarCraft2"
