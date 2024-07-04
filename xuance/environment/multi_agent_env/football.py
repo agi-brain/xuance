@@ -21,7 +21,6 @@ import numpy as np
 import gfootball.env as football_env
 from gym.spaces import Box
 from gfootball.env import _apply_output_wrappers
-from gym.spaces import MultiDiscrete, Discrete
 from gfootball.env.football_env import FootballEnv
 from gfootball.env import config as gf_config
 from xuance.environment import RawMultiAgentEnv
@@ -113,8 +112,8 @@ class football_raw_env(FootballEnv):
 
     def step(self, action):
         obs, reward, terminated, info = self.env.step(action)
-        truncated = False
         global_reward = np.sum(reward)
+        truncated = False
         reward_n = np.array([global_reward] * self.n_agents)
         return obs, reward_n, terminated, truncated, info
 
@@ -202,6 +201,7 @@ class GFootball_Env(RawMultiAgentEnv):
         """Reset the environment."""
         obs, info = self.env.reset()
         obs_dict = {k: obs[i] for i, k in enumerate(self.agents)}
+        self._episode_step = 0
         return obs_dict, info
 
     def step(self, actions):
@@ -211,10 +211,12 @@ class GFootball_Env(RawMultiAgentEnv):
             actions: the actions for all agents.
         """
         actions_list = [int(actions[k]) for k in self.agents]
-        obs, reward, terminated, truncated, info = self.env.step(actions_list)
+        obs, reward, terminated, _, info = self.env.step(actions_list)
         obs_dict = {k: obs[i] for i, k in enumerate(self.agents)}
         reward_dict = {k: reward[i] for i, k in enumerate(self.agents)}
         terminated_dict = {k: terminated for k in self.agents}
+        self._episode_step += 1
+        truncated = True if self._episode_step >= self.max_episode_steps else False
         return obs_dict, reward_dict, terminated_dict, truncated, info
 
     def get_more_info(self, info):

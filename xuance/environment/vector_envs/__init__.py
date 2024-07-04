@@ -30,12 +30,14 @@ from .dummy import DummyVecEnv
 from .dummy import DummyVecEnv_Atari
 from .dummy import DummyVecMultiAgentEnv
 from .dummy import DummyVecEnv_StarCraft2
+from .dummy import DummyVecEnv_Football
 
 REGISTRY_VEC_ENV = {
     "DummyVecEnv": DummyVecEnv,
     "DummyVecMultiAgentEnv": DummyVecMultiAgentEnv,
     "Dummy_Atari": DummyVecEnv_Atari,
     "Dummy_StarCraft2": DummyVecEnv_StarCraft2,
+    "Dummy_Football": DummyVecEnv_Football,
 
     # multiprocess #
     "SubprocVecEnv": SubprocVecEnv,

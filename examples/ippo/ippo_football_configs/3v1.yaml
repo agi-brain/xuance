@@ -38,8 +38,8 @@ gain: 0.01
 actor_hidden_size: [64, 64]
 critic_hidden_size: [64, 64]
 activation: "relu"
-use_parameter_sharing: False  # If to use parameter sharing for all agents' policies.
-use_actions_mask: True  # If to use actions mask for unavailable actions.
+use_parameter_sharing: True  # If to use parameter sharing for all agents' policies.
+use_actions_mask: False  # If to use actions mask for unavailable actions.
 
 seed: 1
 parallels: 50
