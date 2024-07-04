@@ -4,14 +4,13 @@ logger: "tensorboard"  # Choices: tensorboard, wandb.
 wandb_user_name: "your_user_name"
 render: True
 render_mode: 'rgb_array' # Choices: 'human', 'rgb_array'.
+fps: 15
 test_mode: False
 device: "cuda:0"
 
 agent: "QMIX"  # the learning algorithms_marl
-global_state: True
 env_name: "StarCraft2"
 env_id: "8m_vs_9m"
-fps: 15
 policy: "Mixing_Q_network"
 representation: "Basic_RNN"
 vectorize: "Subproc_StarCraft2"
@@ -28,6 +27,8 @@ dropout: 0
 representation_hidden_size: [64, ]
 q_hidden_size: [64, ]  # the units for each hidden layer
 activation: "relu"
+use_parameter_sharing: True
+use_actions_mask: True
 
 hidden_dim_mixing_net: 32  # hidden units of mixing network
 hidden_dim_hyper_net: 32  # hidden units of hyper network
@@ -45,8 +46,7 @@ end_greedy: 0.05
 decay_step_greedy: 5000000
 start_training: 1000  # start training after n episodes
 running_steps: 10000000  # 10M
-train_per_step: False  # True: train model per step; False: train model per episode.
-training_frequency: 1
+n_epochs: 8  # The number of training epochs after interaction.
 sync_frequency: 200
 
 use_grad_clip: False
@@ -54,5 +54,6 @@ grad_clip_norm: 0.5
 
 eval_interval: 100000
 test_episode: 16
-log_dir: "./logs/qmix/8m_vs_9m/"
-model_dir: "./models/qmix/8m_vs_9m/"
+
+log_dir: "./logs/qmix/"
+model_dir: "./models/qmix/"

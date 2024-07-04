@@ -2,11 +2,13 @@ dl_toolbox: "torch"  # The deep learning toolbox. Choices: "torch", "mindspore",
 project_name: "XuanCe_Benchmark"
 logger: "tensorboard"  # Choices: tensorboard, wandb.
 wandb_user_name: "your_user_name"
+render: False
+render_mode: 'rgb_array' # Choices: 'human', 'rgb_array'.
+fps: 15
 test_mode: False
 device: "cuda:0"
 
 agent: "QMIX"  # the learning algorithms_marl
-global_state: True
 # environment settings
 env_name: "Football"
 scenario: "academy_3_vs_1_with_keeper"
@@ -17,11 +19,10 @@ obs_type: "simple115v2"  # representation used to build the observation, choices
 rewards_type: "scoring,checkpoints"  # comma separated list of rewards to be added
 smm_width: 96  # width of super minimap
 smm_height: 72  # height of super minimap
-fps: 15
+episode_length: 200
 policy: "Mixing_Q_network"
 representation: "Basic_RNN"
 vectorize: "Subproc_Football"
-runner: "Football_Runner"
 
 # recurrent settings for Basic_RNN representation
 use_rnn: True
@@ -35,6 +36,8 @@ dropout: 0
 representation_hidden_size: [128, ]
 q_hidden_size: [128, ]  # the units for each hidden layer
 activation: "relu"
+use_parameter_sharing: True
+use_actions_mask: False
 
 hidden_dim_mixing_net: 128  # hidden units of mixing network
 hidden_dim_hyper_net: 128  # hidden units of hyper network
@@ -52,8 +55,6 @@ end_greedy: 0.05
 decay_step_greedy: 50000
 start_training: 1000  # start training after n episodes
 running_steps: 25000000  # 25M
-train_per_step: False  # True: train model per step; False: train model per episode.
-training_frequency: 1
 sync_frequency: 200
 
 use_grad_clip: False
@@ -61,6 +62,7 @@ grad_clip_norm: 0.5
 
 eval_interval: 250000
 test_episode: 50
+
 log_dir: "./logs/qmix/"
 model_dir: "./models/qmix/"
 videos_dir: "./videos/qmix/"
