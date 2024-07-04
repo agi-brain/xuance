@@ -16,7 +16,8 @@ gain: 0.01
 actor_hidden_size: [64, ]
 critic_hidden_size: [256, ]
 activation: "relu"
-activation_action: "sigmoid"
+use_parameter_sharing: True  # If to use parameter sharing for all agents' policies.
+use_actions_mask: False  # If to use actions mask for unavailable actions.
 
 seed: 1
 parallels: 128
@@ -37,8 +38,6 @@ gamma: 0.95  # discount factor
 use_linear_lr_decay: False  # if use linear learning rate decay
 end_factor_lr_decay: 0.5
 use_global_state: False  # if use global state to replace merged observations
-use_grad_clip: True  # gradient normalization
-grad_clip_norm: 10.0
 use_value_clip: True  # limit the value range
 value_clip_range: 0.2
 use_value_norm: True  # use running mean and std to normalize rewards.
@@ -47,14 +46,12 @@ huber_delta: 10.0
 use_advnorm: True
 use_gae: True
 gae_lambda: 0.95
+use_grad_clip: True  # gradient normalization
+grad_clip_norm: 10.0
 
-start_training: 1
 running_steps: 10000000
-train_per_step: True
-training_frequency: 1
-
-test_steps: 10000
 eval_interval: 100000
 test_episode: 5
+
 log_dir: "./logs/mappo/"
 model_dir: "./models/mappo/"

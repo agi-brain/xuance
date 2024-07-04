@@ -320,7 +320,7 @@ class MARL_OnPolicyBuffer_RNN(MARL_OnPolicyBuffer):
         }
         if self.store_global_state:
             self.data.update({
-                'state': np.zeros((self.buffer_size, self.max_eps_len) + self.state_space, np.float32)
+                'state': np.zeros((self.buffer_size, self.max_eps_len) + self.state_space.shape, np.float32)
             })
         if self.use_actions_mask:
             self.data.update({

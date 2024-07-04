@@ -23,7 +23,7 @@ actor_hidden_size: [64, ]  # A list of hidden units for each layer of actor netw
 critic_hidden_size: [64, ]  # A list of hidden units for each layer of critic network.
 activation: "relu"  # The activation function of each hidden layer.
 activation_action: "sigmoid"  # The activation function for the last layer of the actor.
-use_parameter_sharing: False  # If to use parameter sharing for all agents' policies.
+use_parameter_sharing: True  # If to use parameter sharing for all agents' policies.
 use_actions_mask: False  # If to use actions mask for unavailable actions.
 
 seed: 1  # Random seed.
