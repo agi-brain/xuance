@@ -12,7 +12,7 @@ from torch import nn
 from torch.utils.tensorboard import SummaryWriter
 from xuance.common import get_time_string, create_directory
 from xuance.environment import DummyVecMultiAgentEnv
-from xuance.torch.representations import REGISTRY_Representation
+from xuance.torch import REGISTRY_Representation, REGISTRY_Policy, REGISTRY_Learners
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch import ModuleDict
 
@@ -143,7 +143,6 @@ class MARLAgents(ABC):
         initializer = nn.init.orthogonal_
         activation = ActivationFunctions[config.activation]
         device = self.device
-        agent = config.agent
 
         # build representations
         representation = ModuleDict()
@@ -165,14 +164,14 @@ class MARLAgents(ABC):
                     N_recurrent_layers=self.config.N_recurrent_layers,
                     dropout=self.config.dropout, rnn=self.config.rnn)
             else:
-                raise AttributeError(f"{agent} currently does not support {representation_key} representation.")
+                raise AttributeError(f"{representation_key} is not registered in REGISTRY_Representation.")
         return representation
 
     def _build_policy(self):
         raise NotImplementedError
 
     def _build_learner(self, *args):
-        raise NotImplementedError
+        return REGISTRY_Learners(*args)
 
     def _build_inputs(self,
                       obs_dict: List[dict],

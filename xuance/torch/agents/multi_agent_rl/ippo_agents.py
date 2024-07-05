@@ -135,7 +135,7 @@ class IPPO_Agents(MARLAgents):
         for k in self.model_keys:
             rnn_hidden_actor[k] = self.policy.actor_representation[k].init_hidden_item(b_index, *rnn_hidden_actor[k])
         if rnn_hidden_critic is None:
-            return rnn_hidden_actor, rnn_hidden_critic
+            return rnn_hidden_actor, None
         for k in self.model_keys:
             rnn_hidden_critic[k] = self.policy.critic_representation[k].init_hidden_item(b_index, *rnn_hidden_critic[k])
         return rnn_hidden_actor, rnn_hidden_critic

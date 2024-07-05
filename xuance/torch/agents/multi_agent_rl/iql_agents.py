@@ -75,10 +75,11 @@ class IQL_Agents(MARLAgents):
         # build policies
         if self.config.policy == "Basic_Q_network_marl":
             policy = REGISTRY_Policy["Basic_Q_network_marl"](
-                action_space=self.action_space, n_agents=self.n_agents, representation=representation,
+                action_space=self.action_space, n_agents=self.n_agents,
+                representation=representation,
                 hidden_size=self.config.q_hidden_size,
-                normalize=normalize_fn, initialize=initializer, activation=activation,
-                device=device, use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
+                normalize=normalize_fn, initialize=initializer, activation=activation, device=device,
+                use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
                 use_rnn=self.use_rnn, rnn=self.config.rnn if self.use_rnn else None)
         else:
             raise AttributeError(f"IQL currently does not support the policy named {self.config.policy}.")
