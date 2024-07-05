@@ -2,6 +2,7 @@ agent: "MADDPG"  # the learning algorithms_marl
 env_name: "mpe"
 env_id: "simple_adversary_v3"
 continuous_action: True
+learner: "MADDPG_Learner"
 policy: "MADDPG_Policy"
 representation: "Basic_Identical"
 vectorize: "DummyVecMultiAgentEnv"

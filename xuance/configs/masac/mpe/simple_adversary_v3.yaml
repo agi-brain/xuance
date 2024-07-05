@@ -2,6 +2,7 @@ agent: "MASAC"  # the learning algorithms_marl
 env_name: "mpe"
 env_id: "simple_adversary_v3"
 continuous_action: True
+learner: "MASAC_Learner"
 policy: "Gaussian_MASAC_Policy"
 representation: "Basic_Identical"
 vectorize: "DummyVecMultiAgentEnv"

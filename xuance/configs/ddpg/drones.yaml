@@ -12,6 +12,7 @@ sleep: 0.01
 vectorize: "DummyVecEnv"
 policy: "DDPG_Policy"
 representation: "Basic_Identical"
+learner: "DDPG_Learner"
 runner: "DRL"
 
 actor_hidden_size: [64, 64]

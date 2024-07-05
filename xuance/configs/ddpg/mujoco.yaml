@@ -4,6 +4,7 @@ env_id: "Ant-v4"
 vectorize: "DummyVecEnv"
 policy: "DDPG_Policy"
 representation: "Basic_Identical"
+learner: "DDPG_Learner"
 runner: "DRL"
 
 representation_hidden_size:  # If you choose Basic_Identical representation, then ignore this value

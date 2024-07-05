@@ -6,7 +6,6 @@ from argparse import Namespace
 from xuance.environment import DummyVecEnv
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.policies import REGISTRY_Policy
-from xuance.torch.learners import DRQN_Learner
 from xuance.torch.agents import Agent
 from xuance.common import RecurrentOffPolicyBuffer, EpisodeBuffer
 
@@ -55,7 +54,7 @@ class DRQN_Agent(Agent):
         device = self.device
 
         # build representation.
-        representation = self._build_representation(self.config.representation, self.config)
+        representation = self._build_representation(self.config.representation, self.observation_space, self.config)
 
         # build policy.
         if self.config.policy == "DRQN_Policy":
@@ -69,9 +68,6 @@ class DRQN_Agent(Agent):
                 f"{self.config.agent} currently does not support the policy named {self.config.policy}.")
 
         return policy
-
-    def _build_learner(self, *args):
-        return DRQN_Learner(*args)
 
     def action(self, obs, egreedy=0.0, rnn_hidden=None):
         _, argmax_action, _, rnn_hidden_next = self.policy(obs[:, np.newaxis], *rnn_hidden)

@@ -5,6 +5,7 @@ max_episode_steps: 200
 render: False
 sleep: 0.01
 continuous_action: True
+learner: "MADDPG_Learner"
 policy: "MADDPG_Policy"
 representation: "Basic_Identical"
 vectorize: "Dummy_NewEnv_MAS"

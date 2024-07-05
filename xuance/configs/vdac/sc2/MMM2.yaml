@@ -2,6 +2,7 @@ agent: "VDAC"
 env_name: "StarCraft2"
 env_id: "MMM2"
 fps: 15
+learner: "VDAC_Learner"
 policy: "Categorical_MAAC_Policy_Share"
 representation: "Basic_RNN"
 vectorize: "Subproc_StarCraft2"

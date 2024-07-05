@@ -9,6 +9,7 @@ frame_skip: 4  # frame skip trick
 noop_max: 30  # Do no-op action for a number of steps in [1, noop_max].
 policy: "DRQN_Policy"
 representation: "Basic_CNN"
+learner: "DRQN_Learner"
 runner: "DRL"
 rnn: "LSTM"
 

@@ -10,6 +10,7 @@ max_episode_steps: 2000  #
 render: False
 sleep: 0.01
 vectorize: "DummyVecEnv"
+learner: "SAC_Learner"
 policy: "Gaussian_SAC"
 representation: "Basic_Identical"
 runner: "DRL"

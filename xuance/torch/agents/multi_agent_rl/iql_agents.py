@@ -10,7 +10,6 @@ from xuance.environment import DummyVecMultiAgentEnv
 from xuance.torch import Tensor
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.policies import REGISTRY_Policy
-from xuance.torch.learners import IQL_Learner
 from xuance.torch.agents import MARLAgents
 from xuance.common import MARL_OffPolicyBuffer, MARL_OffPolicyBuffer_RNN
 
@@ -70,7 +69,7 @@ class IQL_Agents(MARLAgents):
         device = self.device
 
         # build representations
-        representation = self._build_representation(self.config.representation, self.config)
+        representation = self._build_representation(self.config.representation, self.observation_space, self.config)
 
         # build policies
         if self.config.policy == "Basic_Q_network_marl":
@@ -85,9 +84,6 @@ class IQL_Agents(MARLAgents):
             raise AttributeError(f"IQL currently does not support the policy named {self.config.policy}.")
 
         return policy
-
-    def _build_learner(self, config, model_keys, agent_keys, episode_length, policy, optimizer, scheduler):
-        return IQL_Learner(config, model_keys, agent_keys, episode_length, policy, optimizer, scheduler)
 
     def store_experience(self, obs_dict, avail_actions, actions_dict, obs_next_dict, avail_actions_next,
                          rewards_dict, terminals_dict, info):

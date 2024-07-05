@@ -4,6 +4,7 @@ env_id: "LunarLander-v2"
 vectorize: "DummyVecEnv"
 policy: "DRQN_Policy"
 representation: "Basic_MLP"
+learner: "DRQN_Learner"
 runner: "DRL"
 rnn: "LSTM"
 

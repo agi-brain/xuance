@@ -6,7 +6,6 @@ from argparse import Namespace
 from xuance.environment import DummyVecEnv
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.policies import REGISTRY_Policy
-from xuance.torch.learners import DQN_Learner
 from xuance.torch.agents import Agent
 from xuance.common import DummyOffPolicyBuffer, DummyOffPolicyBuffer_Atari
 
@@ -53,7 +52,7 @@ class NoisyDQN_Agent(Agent):
         device = self.device
 
         # build representation.
-        representation = self._build_representation(self.config.representation, self.config)
+        representation = self._build_representation(self.config.representation, self.observation_space, self.config)
 
         # build policy.
         if self.config.policy == "Noisy_Q_network":
@@ -64,9 +63,6 @@ class NoisyDQN_Agent(Agent):
             raise AttributeError(f"{self.config.agent} currently does not support the policy named {self.config.policy}.")
 
         return policy
-
-    def _build_learner(self, *args):
-        return DQN_Learner(*args)
 
     def action(self, obs):
         self.policy.noise_scale = self.noise_scale

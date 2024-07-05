@@ -7,10 +7,11 @@ from abc import ABC
 from pathlib import Path
 from argparse import Namespace
 from operator import itemgetter
-from typing import Optional, List
+from typing import Optional, List, Dict, Union
+from gym.spaces import Space
 from torch import nn
 from torch.utils.tensorboard import SummaryWriter
-from xuance.common import get_time_string, create_directory
+from xuance.common import get_time_string, create_directory, space2shape
 from xuance.environment import DummyVecMultiAgentEnv
 from xuance.torch import REGISTRY_Representation, REGISTRY_Policy, REGISTRY_Learners
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
@@ -128,7 +129,9 @@ class MARLAgents(ABC):
             for k, v in info.items():
                 self.writer.add_video(k, v, fps=fps, global_step=x_index)
                 
-    def _build_representation(self, representation_key: str, config: Namespace):
+    def _build_representation(self, representation_key: str,
+                              input_space: Union[Dict[str, Space], tuple],
+                              config: Namespace):
         """
         Build representation for policies.
 
@@ -139,31 +142,32 @@ class MARLAgents(ABC):
         Returns:
             representation (Module): The representation Module. 
         """
-        normalize_fn = NormalizeFunctions[config.normalize] if hasattr(config, "normalize") else None
-        initializer = nn.init.orthogonal_
-        activation = ActivationFunctions[config.activation]
-        device = self.device
 
         # build representations
         representation = ModuleDict()
         for key in self.model_keys:
-            input_shape = self.observation_space[key].shape
-            if representation_key == "Basic_Identical":
-                representation[key] = REGISTRY_Representation["Basic_Identical"](input_shape=input_shape,
-                                                                                 device=self.device)
-            elif representation_key == "Basic_MLP":
-                representation[key] = REGISTRY_Representation["Basic_MLP"](
-                    input_shape=input_shape, hidden_sizes=self.config.representation_hidden_size,
-                    normalize=normalize_fn, initialize=initializer, activation=activation, device=device)
-            elif representation_key == "Basic_RNN":
-                representation[key] = REGISTRY_Representation["Basic_RNN"](
-                    input_shape=input_shape,
-                    hidden_sizes={'fc_hidden_sizes': self.config.fc_hidden_sizes,
-                                  'recurrent_hidden_size': self.config.recurrent_hidden_size},
-                    normalize=normalize_fn, initialize=initializer, activation=activation, device=device,
-                    N_recurrent_layers=self.config.N_recurrent_layers,
-                    dropout=self.config.dropout, rnn=self.config.rnn)
+            if self.use_rnn:
+                hidden_sizes = {'fc_hidden_sizes': self.config.fc_hidden_sizes,
+                                'recurrent_hidden_size': self.config.recurrent_hidden_size}
             else:
+                hidden_sizes = config.representation_hidden_size if hasattr(config,
+                                                                            "representation_hidden_size") else None,
+            input_representations = dict(
+                input_shape=space2shape(input_space[key]),
+                hidden_sizes=hidden_sizes,
+                normalize=NormalizeFunctions[config.normalize] if hasattr(config, "normalize") else None,
+                initialize=nn.init.orthogonal_,
+                activation=ActivationFunctions[config.activation],
+                kernels=config.kernels if hasattr(config, "kernels") else None,
+                strides=config.strides if hasattr(config, "strides") else None,
+                filters=config.filters if hasattr(config, "filters") else None,
+                fc_hidden_sizes=config.fc_hidden_sizes if hasattr(config, "fc_hidden_sizes") else None,
+                N_recurrent_layers=config.N_recurrent_layers if hasattr(config, "N_recurrent_layers") else None,
+                rnn=config.rnn if hasattr(config, "rnn") else None,
+                dropout=config.dropout if hasattr(config, "dropout") else None,
+                device=self.device)
+            representation[key] = REGISTRY_Representation[representation_key](**input_representations)
+            if representation_key not in REGISTRY_Representation:
                 raise AttributeError(f"{representation_key} is not registered in REGISTRY_Representation.")
         return representation
 
@@ -171,7 +175,7 @@ class MARLAgents(ABC):
         raise NotImplementedError
 
     def _build_learner(self, *args):
-        return REGISTRY_Learners(*args)
+        return REGISTRY_Learners[self.config.learner](*args)
 
     def _build_inputs(self,
                       obs_dict: List[dict],

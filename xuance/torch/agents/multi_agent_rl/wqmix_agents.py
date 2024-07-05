@@ -3,7 +3,6 @@ from argparse import Namespace
 from xuance.environment import DummyVecMultiAgentEnv
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.policies import REGISTRY_Policy, QMIX_mixer, QMIX_FF_mixer
-from xuance.torch.learners import WQMIX_Learner
 from xuance.torch.agents.multi_agent_rl.qmix_agents import QMIX_Agents
 
 
@@ -32,7 +31,7 @@ class WQMIX_Agents(QMIX_Agents):
         device = self.device
 
         # build representations
-        representation = self._build_representation(self.config.representation, self.config)
+        representation = self._build_representation(self.config.representation, self.observation_space, self.config)
 
         # build policies
         dim_state = self.state_space.shape[-1]
@@ -50,6 +49,3 @@ class WQMIX_Agents(QMIX_Agents):
             raise AttributeError(f"WQMIX currently does not support the policy named {self.config.policy}.")
 
         return policy
-
-    def _build_learner(self, config, model_keys, agent_keys, episode_length, policy, optimizer, scheduler):
-        return WQMIX_Learner(config, model_keys, agent_keys, episode_length, policy, optimizer, scheduler)

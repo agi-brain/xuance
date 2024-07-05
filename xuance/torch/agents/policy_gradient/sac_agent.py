@@ -6,7 +6,6 @@ from argparse import Namespace
 from xuance.environment import DummyVecEnv
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.policies import REGISTRY_Policy
-from xuance.torch.learners import SAC_Learner
 from xuance.torch.agents import Agent
 from xuance.common import DummyOffPolicyBuffer
 
@@ -53,7 +52,7 @@ class SAC_Agent(Agent):
         device = self.device
 
         # build representations.
-        representation = self._build_representation(self.config.representation, self.config)
+        representation = self._build_representation(self.config.representation, self.observation_space, self.config)
 
         # build policy
         if self.config.policy == "Gaussian_SAC":
@@ -66,9 +65,6 @@ class SAC_Agent(Agent):
             raise AttributeError(f"SAC currently does not support the policy named {self.config.policy}.")
 
         return policy
-
-    def _build_learner(self, *args):
-        return SAC_Learner(*args, target_entropy=-np.prod(self.action_space.shape).item())
 
     def action(self, obs):
         _, action = self.policy(obs)

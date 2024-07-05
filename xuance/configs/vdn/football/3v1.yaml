@@ -11,6 +11,7 @@ rewards_type: "scoring,checkpoints"  # comma separated list of rewards to be add
 smm_width: 96  # width of super minimap
 smm_height: 72  # height of super minimap
 fps: 15
+learner: "VDN_Learner"
 policy: "Mixing_Q_network"
 representation: "Basic_RNN"
 vectorize: "Dummy_Football"

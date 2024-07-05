@@ -4,6 +4,7 @@ env_id: "LunarLander-v2"
 vectorize: "DummyVecEnv"
 policy: "Basic_Q_network"
 representation: "Basic_MLP"
+learner: "DDQN_Learner"
 runner: "DRL"
 
 representation_hidden_size: [128,]

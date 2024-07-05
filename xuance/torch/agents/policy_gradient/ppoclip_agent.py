@@ -6,7 +6,6 @@ from argparse import Namespace
 from xuance.environment import DummyVecEnv
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.policies import REGISTRY_Policy
-from xuance.torch.learners import PPOCLIP_Learner
 from xuance.torch.agents import Agent
 from xuance.common import DummyOnPolicyBuffer, DummyOnPolicyBuffer_Atari
 
@@ -57,7 +56,7 @@ class PPOCLIP_Agent(Agent):
         device = self.device
 
         # build representation.
-        representation = self._build_representation(self.config.representation, self.config)
+        representation = self._build_representation(self.config.representation, self.observation_space, self.config)
 
         # build policy.
         if self.config.policy == "Categorical_AC":
@@ -75,9 +74,6 @@ class PPOCLIP_Agent(Agent):
             raise AttributeError(f"PPO_CLIP currently does not support the policy named {self.config.policy}.")
 
         return policy
-
-    def _build_learner(self, *args):
-        return PPOCLIP_Learner(*args)
 
     def action(self, obs):
         _, dists, vs = self.policy(obs)

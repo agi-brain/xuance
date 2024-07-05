@@ -4,6 +4,7 @@ env_id: "MountainCar-v0"
 vectorize: "DummyVecEnv"
 representation: "Basic_MLP"
 policy: "Categorical_AC"
+learner: "PPOCLIP_Learner"
 runner: "DRL"
 
 representation_hidden_size: [128,]

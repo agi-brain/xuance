@@ -8,7 +8,6 @@ from typing import List
 from xuance.environment import DummyVecMultiAgentEnv
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.policies import REGISTRY_Policy, QMIX_mixer
-from xuance.torch.learners import QMIX_Learner
 from xuance.torch.agents import MARLAgents
 from xuance.torch.agents.multi_agent_rl.iql_agents import IQL_Agents
 from xuance.common import MARL_OffPolicyBuffer, MARL_OffPolicyBuffer_RNN
@@ -71,7 +70,7 @@ class QMIX_Agents(IQL_Agents, MARLAgents):
         device = self.device
 
         # build representations
-        representation = self._build_representation(self.config.representation, self.config)
+        representation = self._build_representation(self.config.representation, self.observation_space, self.config)
 
         # build policies
         dim_state = self.state_space.shape[-1]
@@ -88,9 +87,6 @@ class QMIX_Agents(IQL_Agents, MARLAgents):
             raise AttributeError(f"QMIX currently does not support the policy named {self.config.policy}.")
 
         return policy
-
-    def _build_learner(self, config, model_keys, agent_keys, episode_length, policy, optimizer, scheduler):
-        return QMIX_Learner(config, model_keys, agent_keys, episode_length, policy, optimizer, scheduler)
 
     def store_experience(self, obs_dict, avail_actions, actions_dict, obs_next_dict, avail_actions_next,
                          rewards_dict, terminals_dict, info, **kwargs):

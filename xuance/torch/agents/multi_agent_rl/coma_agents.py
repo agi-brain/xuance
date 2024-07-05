@@ -8,7 +8,6 @@ from typing import List, Optional
 from xuance.environment import DummyVecMultiAgentEnv
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.policies import REGISTRY_Policy
-from xuance.torch.learners import COMA_Learner
 from xuance.torch.agents import MARLAgents
 from xuance.common import COMA_Buffer, COMA_Buffer_RNN
 
@@ -91,9 +90,6 @@ class COMA_Agents(MARLAgents):
             raise AttributeError(f"COMA currently does not support the policy named {self.config.policy}.")
 
         return policy
-
-    def _build_learner(self, *args):
-        return COMA_Learner(*args)
 
     def init_rnn_hidden(self, n_envs):
         """

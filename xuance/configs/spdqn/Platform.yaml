@@ -3,6 +3,7 @@ env_name: "Platform"
 env_id: "Platform-v0"
 max_episode_steps: 200
 vectorize: "NOREQUIRED"
+learner: "SPDQN_Learner"
 policy: "SPDQN_Policy"
 render: False
 representation: "Basic_MLP"

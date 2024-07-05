@@ -4,6 +4,7 @@ env_id: "Platform-v0"
 max_episode_steps: 200
 vectorize: "NOREQUIRED"
 render: False
+learner: "MPDQN_Learner"
 policy: "MPDQN_Policy"
 representation: "Basic_MLP"
 runner: "DRL"

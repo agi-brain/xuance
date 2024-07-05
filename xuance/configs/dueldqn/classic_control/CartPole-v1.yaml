@@ -4,6 +4,7 @@ env_id: "CartPole-v1"
 vectorize: "DummyVecEnv"
 policy: "Duel_Q_network"
 representation: "Basic_MLP"
+learner: "DuelDQN_Learner"
 runner: "DRL"
 
 representation_hidden_size: [128, ]

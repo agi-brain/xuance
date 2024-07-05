@@ -4,6 +4,7 @@ env_id: "Acrobot-v1"
 representation: "Basic_MLP"
 vectorize: "DummyVecEnv"
 policy: "Categorical_Actor"
+learner: "PG_Learner"
 runner: "DRL"
 
 representation_hidden_size: [128,]

@@ -8,7 +8,6 @@ from gym import spaces
 from xuance.environment.single_agent_env import Gym_Env
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.policies import REGISTRY_Policy
-from xuance.torch.learners import PDQN_Learner
 from xuance.torch.agents import Agent
 from xuance.common import DummyOffPolicyBuffer
 
@@ -84,7 +83,7 @@ class PDQN_Agent(Agent):
         device = self.device
 
         # build representation.
-        representation = self._build_representation(self.config.representation, self.config)
+        representation = self._build_representation(self.config.representation, self.observation_space, self.config)
 
         # build policy.
         if self.config.policy == "PDQN_Policy":
@@ -100,9 +99,6 @@ class PDQN_Agent(Agent):
                 f"{self.config.agent} currently does not support the policy named {self.config.policy}.")
 
         return policy
-
-    def _build_learner(self, *args):
-        return PDQN_Learner(*args)
 
     def action(self, obs):
         with torch.no_grad():

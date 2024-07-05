@@ -10,7 +10,8 @@ from xuance.torch.utils import ModuleType
 class Basic_Identical(nn.Module):
     def __init__(self,
                  input_shape: Sequence[int],
-                 device: Optional[Union[str, int, torch.device]] = None):
+                 device: Optional[Union[str, int, torch.device]] = None,
+                 **kwargs):
         super(Basic_Identical, self).__init__()
         assert len(input_shape) == 1
         self.output_shapes = {'state': (input_shape[0],)}
@@ -29,7 +30,8 @@ class Basic_MLP(nn.Module):
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., torch.Tensor]] = None,
                  activation: Optional[ModuleType] = None,
-                 device: Optional[Union[str, int, torch.device]] = None):
+                 device: Optional[Union[str, int, torch.device]] = None,
+                 **kwargs):
         super(Basic_MLP, self).__init__()
         self.input_shape = input_shape
         self.hidden_sizes = hidden_sizes

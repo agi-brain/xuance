@@ -8,7 +8,6 @@ from typing import Optional, List
 from xuance.environment import DummyVecMultiAgentEnv
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.policies import REGISTRY_Policy
-from xuance.torch.learners import IPPO_Learner
 from xuance.torch.agents import MARLAgents
 from xuance.common import MARL_OnPolicyBuffer, MARL_OnPolicyBuffer_RNN
 
@@ -72,13 +71,13 @@ class IPPO_Agents(MARLAgents):
         device = self.device
         agent = self.config.agent
         # build representations
-        representation_actor = self._build_representation(self.config.representation, self.config)
-        representation_critic = self._build_representation(self.config.representation, self.config)
+        A_representation = self._build_representation(self.config.representation, self.observation_space, self.config)
+        C_representation = self._build_representation(self.config.representation, self.observation_space, self.config)
         # build policies
         if self.config.policy == "Categorical_MAAC_Policy":
             policy = REGISTRY_Policy["Categorical_MAAC_Policy"](
                 action_space=self.action_space, n_agents=self.n_agents,
-                representation_actor=representation_actor, representation_critic=representation_critic,
+                representation_actor=A_representation, representation_critic=C_representation,
                 actor_hidden_size=self.config.actor_hidden_size, critic_hidden_size=self.config.critic_hidden_size,
                 normalize=normalize_fn, initialize=initializer, activation=activation,
                 device=device, use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
@@ -87,7 +86,7 @@ class IPPO_Agents(MARLAgents):
         elif self.config.policy == "Gaussian_MAAC_Policy":
             policy = REGISTRY_Policy["Gaussian_MAAC_Policy"](
                 action_space=self.action_space, n_agents=self.n_agents,
-                representation_actor=representation_actor, representation_critic=representation_critic,
+                representation_actor=A_representation, representation_critic=C_representation,
                 actor_hidden_size=self.config.actor_hidden_size, critic_hidden_size=self.config.critic_hidden_size,
                 normalize=normalize_fn, initialize=initializer, activation=activation,
                 activation_action=ActivationFunctions[self.config.activation_action],
@@ -97,9 +96,6 @@ class IPPO_Agents(MARLAgents):
         else:
             raise AttributeError(f"{agent} currently does not support the policy named {self.config.policy}.")
         return policy
-
-    def _build_learner(self, config, model_keys, agent_keys, episode_length, policy, optimizer, scheduler):
-        return IPPO_Learner(config, model_keys, agent_keys, episode_length, policy, optimizer, scheduler)
 
     def init_rnn_hidden(self, n_envs):
         """

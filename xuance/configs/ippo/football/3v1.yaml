@@ -10,6 +10,7 @@ rewards_type: "scoring,checkpoints"  # comma separated list of rewards to be add
 smm_width: 96  # width of super minimap
 smm_height: 72  # height of super minimap
 fps: 15
+learner: "IPPO_Learner"
 policy: "Categorical_MAAC_Policy"
 representation: "Basic_RNN"
 vectorize: "Subproc_Football"

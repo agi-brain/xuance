@@ -2,6 +2,7 @@ agent: "OWQMIX"  # choice: CWQMIX, OWQMIX
 env_name: "StarCraft2"
 env_id: "2m_vs_1z"
 fps: 15
+learner: "WQMIX_Learner"
 policy: "Weighted_Mixing_Q_network"
 representation: "Basic_RNN"
 vectorize: "Subproc_StarCraft2"

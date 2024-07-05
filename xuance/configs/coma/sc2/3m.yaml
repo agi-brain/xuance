@@ -2,6 +2,7 @@ agent: "COMA"  # the learning algorithms_marl
 env_name: "StarCraft2"
 env_id: "3m"
 fps: 15
+learner: "COMA_Learner"
 policy: "Categorical_COMA_Policy"
 representation: "Basic_RNN"
 vectorize: "Subproc_StarCraft2"

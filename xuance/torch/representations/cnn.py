@@ -16,7 +16,8 @@ class Basic_CNN(nn.Module):
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., torch.Tensor]] = None,
                  activation: Optional[ModuleType] = None,
-                 device: Optional[Union[str, int, torch.device]] = None):
+                 device: Optional[Union[str, int, torch.device]] = None,
+                 **kwargs):
         super(Basic_CNN, self).__init__()
         self.input_shape = (input_shape[2], input_shape[0], input_shape[1])  # Channels x Height x Width
         self.kernels = kernels
@@ -57,7 +58,8 @@ class AC_CNN_Atari(nn.Module):
                  initialize: Optional[Callable[..., torch.Tensor]] = None,
                  activation: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None,
-                 fc_hidden_sizes: Sequence[int] = ()):
+                 fc_hidden_sizes: Sequence[int] = (),
+                 **kwargs):
         super(AC_CNN_Atari, self).__init__()
         self.input_shape = (input_shape[2], input_shape[0], input_shape[1])  # Channels x Height x Width
         self.kernels = kernels

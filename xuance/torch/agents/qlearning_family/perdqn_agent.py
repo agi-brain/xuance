@@ -4,7 +4,6 @@ from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
 from xuance.environment import DummyVecEnv
-from xuance.torch.learners import PerDQN_Learner
 from xuance.torch.agents.qlearning_family import DQN_Agent
 from xuance.common import PerOffPolicyBuffer
 
@@ -39,9 +38,6 @@ class PerDQN_Agent(DQN_Agent):
                                          batch_size=config.batch_size,
                                          alpha=config.PER_alpha)
         self.learner = self._build_learner(self.config, envs.max_episode_steps, self.policy, optimizer, lr_scheduler)
-
-    def _build_learner(self, *args):
-        return PerDQN_Learner(*args)
 
     def train_epochs(self, n_epochs=1):
         train_info = {}

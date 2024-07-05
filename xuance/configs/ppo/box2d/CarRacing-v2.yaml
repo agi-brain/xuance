@@ -4,6 +4,7 @@ env_id: "CarRacing-v2"
 vectorize: "DummyVecEnv"
 representation: "Basic_CNN"
 policy: "Categorical_AC"
+learner: "PPOCLIP_Learner"
 runner: "DRL"
 
 # the following three arguments are for "Basic_CNN" representation.

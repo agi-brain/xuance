@@ -2,6 +2,7 @@ agent: "IPPO"  # The agent name.
 env_name: "mpe"  # The environment name.
 env_id: "simple_spread_v3"  # The environment id.
 continuous_action: True  # If to use continuous control.
+learner: "IPPO_Learner"
 policy: "Gaussian_MAAC_Policy"  # The policy name.
 representation: "Basic_MLP"  # The representation name.
 vectorize: "SubprocVecMultiAgentEnv"  # The method to vectorize your environment such that can run in parallel.

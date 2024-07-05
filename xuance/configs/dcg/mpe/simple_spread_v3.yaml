@@ -2,11 +2,11 @@ agent: "DCG"  # Options: DCG, DCG_S
 env_name: "mpe"
 env_id: "simple_spread_v3"
 continuous_action: False
+learner: "DCG_Learner"
 policy: "DCG_Policy"
 representation: "Basic_MLP"
 vectorize: "DummyVecMultiAgentEnv"
 runner: "Pettingzoo_Runner"
-on_policy: False
 
 use_rnn: False
 rnn:

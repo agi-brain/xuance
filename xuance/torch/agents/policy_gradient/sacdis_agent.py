@@ -6,7 +6,6 @@ from argparse import Namespace
 from xuance.environment import DummyVecEnv
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.policies import REGISTRY_Policy
-from xuance.torch.learners import SACDIS_Learner
 from xuance.torch.agents import Agent
 from xuance.common import DummyOffPolicyBuffer, DummyOffPolicyBuffer_Atari
 
@@ -55,7 +54,7 @@ class SACDIS_Agent(Agent):
         device = self.device
 
         # build representations.
-        representation = self._build_representation(self.config.representation, self.config)
+        representation = self._build_representation(self.config.representation, self.observation_space, self.config)
 
         # build policy
         if self.config.policy == "Discrete_SAC":
@@ -67,9 +66,6 @@ class SACDIS_Agent(Agent):
             raise AttributeError(f"SACDIS agent currently does not support the policy named {self.config.policy}.")
 
         return policy
-
-    def _build_learner(self, *args):
-        return SACDIS_Learner(*args, target_entropy=-self.action_space.n)
 
     def action(self, obs):
         _, action = self.policy(obs)

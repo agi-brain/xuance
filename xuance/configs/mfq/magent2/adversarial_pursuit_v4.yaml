@@ -6,6 +6,7 @@ max_cycles: 500
 extra_features: False
 map_size: 45
 render_mode: "rgb_array"
+learner: "MFQ_Learner"
 policy: "MF_Q_network"
 representation: "Basic_MLP"
 vectorize: "Dummy_MAgent"

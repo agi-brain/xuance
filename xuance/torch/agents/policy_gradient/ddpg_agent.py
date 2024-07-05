@@ -6,7 +6,6 @@ from argparse import Namespace
 from xuance.environment import DummyVecEnv
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.policies import REGISTRY_Policy
-from xuance.torch.learners import DDPG_Learner
 from xuance.torch.agents import Agent
 from xuance.common import DummyOffPolicyBuffer
 
@@ -55,7 +54,7 @@ class DDPG_Agent(Agent):
         device = self.device
 
         # build representations.
-        representation = self._build_representation(self.config.representation, self.config)
+        representation = self._build_representation(self.config.representation, self.observation_space, self.config)
 
         # build policy
         if self.config.policy == "DDPG_Policy":
@@ -68,9 +67,6 @@ class DDPG_Agent(Agent):
             raise AttributeError(f"DDPG currently does not support the policy named {self.config.policy}.")
 
         return policy
-
-    def _build_learner(self, *args):
-        return DDPG_Learner(*args)
 
     def action(self, obs, noise_scale=0.0):
         _, action = self.policy(obs)

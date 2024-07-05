@@ -2,6 +2,7 @@ agent: "IPPO"
 env_name: "StarCraft2"
 env_id: "5m_vs_6m"
 fps: 15
+learner: "IPPO_Learner"
 policy: "Categorical_MAAC_Policy"
 representation: "Basic_RNN"
 vectorize: "Subproc_StarCraft2"

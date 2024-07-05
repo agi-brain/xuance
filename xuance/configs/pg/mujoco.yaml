@@ -4,6 +4,7 @@ env_id: "Ant-v4"
 vectorize: "DummyVecEnv"
 policy: "Gaussian_Actor"
 representation: "Basic_MLP"
+learner: "PG_Learner"
 runner: "DRL"
 
 representation_hidden_size: [256, 256]

@@ -2,6 +2,7 @@ agent: "COMA"  # the learning algorithms
 env_name: "mpe"  # Environment name.
 env_id: "simple_spread_v3"  # Environment map.
 continuous_action: False  # Continuous action space or not.
+learner: "COMA_Learner"
 policy: "Categorical_COMA_Policy"  # Name of policy.
 representation: "Basic_MLP"  # Name of representation.
 representation_critic: "Basic_MLP"  # Name of representation for critic.

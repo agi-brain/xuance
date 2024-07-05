@@ -4,6 +4,7 @@ env_id: "BipedalWalker-v3"
 vectorize: "DummyVecEnv"
 representation: "Basic_MLP"
 policy: "Gaussian_PPG"
+learner: "PPG_Learner"
 runner: "DRL"
 
 representation_hidden_size: [128,]

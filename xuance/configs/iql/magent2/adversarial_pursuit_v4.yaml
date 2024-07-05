@@ -6,11 +6,11 @@ max_cycles: 500
 extra_features: False
 map_size: 45
 render_mode: "rgb_array"
+learner: "IQL_Learner"
 policy: "Basic_Q_network_marl"
 representation: "Basic_MLP"
 vectorize: "Dummy_MAgent"
 runner: "MAgent_Runner"
-on_policy: False
 
 # recurrent settings for Basic_RNN representation
 use_rnn: False

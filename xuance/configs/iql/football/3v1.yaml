@@ -12,6 +12,7 @@ smm_width: 96  # width of super minimap
 smm_height: 72  # height of super minimap
 fps: 15
 max_episode_steps: 1000
+learner: "IQL_Learner"
 policy: "Basic_Q_network_marl"
 representation: "Basic_RNN"
 vectorize: "Subproc_Football"

@@ -8,7 +8,6 @@ from typing import List, Optional
 from xuance.environment import DummyVecMultiAgentEnv
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.policies import REGISTRY_Policy
-from xuance.torch.learners import ISAC_Learner
 from xuance.torch.agents import MARLAgents
 from xuance.torch.agents.multi_agent_rl.iddpg_agents import IDDPG_Agents
 from xuance.common import MARL_OffPolicyBuffer, MARL_OffPolicyBuffer_RNN
@@ -68,14 +67,14 @@ class ISAC_Agents(IDDPG_Agents, MARLAgents):
         agent = self.config.agent
 
         # build representations
-        actor_representation = self._build_representation(self.config.representation, self.config)
-        critic_representation = self._build_representation(self.config.representation, self.config)
+        A_representation = self._build_representation(self.config.representation, self.observation_space, self.config)
+        C_representation = self._build_representation(self.config.representation, self.observation_space, self.config)
 
         # build policies
         if self.config.policy == "Gaussian_ISAC_Policy":
             policy = REGISTRY_Policy["Gaussian_ISAC_Policy"](
                 action_space=self.action_space, n_agents=self.n_agents,
-                actor_representation=actor_representation, critic_representation=critic_representation,
+                actor_representation=A_representation, critic_representation=C_representation,
                 actor_hidden_size=self.config.actor_hidden_size,
                 critic_hidden_size=self.config.critic_hidden_size,
                 normalize=normalize_fn, initialize=initializer, activation=activation,
@@ -87,9 +86,6 @@ class ISAC_Agents(IDDPG_Agents, MARLAgents):
             raise AttributeError(f"{agent} currently does not support the policy named {self.config.policy}.")
 
         return policy
-
-    def _build_learner(self, config, model_keys, agent_keys, episode_length, policy, optimizer, scheduler):
-        return ISAC_Learner(config, model_keys, agent_keys, episode_length, policy, optimizer, scheduler)
 
     def action(self,
                obs_dict: List[dict],

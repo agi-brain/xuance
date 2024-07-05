@@ -3,7 +3,6 @@ from argparse import Namespace
 from xuance.environment import DummyVecEnv
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.policies import REGISTRY_Policy
-from xuance.torch.learners import C51_Learner
 from xuance.torch.agents.qlearning_family.dqn_agent import DQN_Agent
 
 
@@ -26,7 +25,7 @@ class C51_Agent(DQN_Agent):
         device = self.device
 
         # build representation.
-        representation = self._build_representation(self.config.representation, self.config)
+        representation = self._build_representation(self.config.representation, self.observation_space, self.config)
 
         # build policy.
         if self.config.policy == "C51_Q_network":
@@ -40,5 +39,3 @@ class C51_Agent(DQN_Agent):
 
         return policy
 
-    def _build_learner(self, *args):
-        return C51_Learner(*args)

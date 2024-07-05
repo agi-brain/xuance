@@ -2,6 +2,7 @@ agent: "QTRAN_base"  # Options: QTRAN_base, QTRAN_alt
 env_name: "mpe"
 env_id: "simple_spread_v3"
 continuous_action: False
+learner: "QTRAN_Learner"
 policy: "Qtran_Mixing_Q_network"
 representation: "Basic_MLP"
 vectorize: "DummyVecMultiAgentEnv"

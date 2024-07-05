@@ -2,6 +2,7 @@ agent: "IQL"  # the learning algorithms_marl
 env_name: "RoboticWarehouse"
 env_id: "rware-tiny-2ag-v1"
 max_episode_steps: 100
+learner: "IQL_Learner"
 policy: "Basic_Q_network_marl"
 representation: "Basic_MLP"
 vectorize: "DummyVecMultiAgentEnv"

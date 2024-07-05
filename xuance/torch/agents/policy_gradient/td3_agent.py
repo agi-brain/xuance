@@ -3,7 +3,6 @@ from argparse import Namespace
 from xuance.environment import DummyVecEnv
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.policies import REGISTRY_Policy
-from xuance.torch.learners import TD3_Learner
 from xuance.torch.agents.policy_gradient.ddpg_agent import DDPG_Agent
 
 
@@ -26,7 +25,7 @@ class TD3_Agent(DDPG_Agent):
         device = self.device
 
         # build representations.
-        representation = self._build_representation(self.config.representation, self.config)
+        representation = self._build_representation(self.config.representation, self.observation_space, self.config)
 
         # build policy
         if self.config.policy == "TD3_Policy":
@@ -39,6 +38,3 @@ class TD3_Agent(DDPG_Agent):
             raise AttributeError(f"TD3 currently does not support the policy named {self.config.policy}.")
 
         return policy
-
-    def _build_learner(self, *args):
-        return TD3_Learner(*args)

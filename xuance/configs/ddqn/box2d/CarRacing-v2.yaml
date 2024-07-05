@@ -4,6 +4,7 @@ env_id: "CarRacing-v2"
 vectorize: "DummyVecEnv"
 policy: "Basic_Q_network"
 representation: "Basic_CNN"
+learner: "DDQN_Learner"
 runner: "DRL"
 
 # the following three arguments are for "Basic_CNN" representation.

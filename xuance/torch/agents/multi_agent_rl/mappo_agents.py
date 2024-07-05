@@ -1,15 +1,11 @@
 import torch
-import torch.nn as nn
 import numpy as np
 from argparse import Namespace
 from operator import itemgetter
 from typing import Optional, List
 from xuance.environment import DummyVecMultiAgentEnv
-from xuance.torch import ModuleDict
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
-from xuance.torch.representations import REGISTRY_Representation
 from xuance.torch.policies import REGISTRY_Policy
-from xuance.torch.learners import MAPPO_Clip_Learner
 from xuance.torch.agents.multi_agent_rl.ippo_agents import IPPO_Agents
 
 
@@ -26,48 +22,6 @@ class MAPPO_Agents(IPPO_Agents):
                  envs: DummyVecMultiAgentEnv):
         super(MAPPO_Agents, self).__init__(config, envs)
 
-    def _build_critic_representation(self, representation_key: str, config: Namespace):
-        """
-        Build representation for critics in MAPPO.
-
-        Parameters:
-            representation_key (str): The selection of representation, e.g., "Basic_MLP", "Basic_RNN", etc.
-            config: The configurations for creating the representation module.
-        
-        Returns:
-            representation (Module): The representation Module. 
-        """
-        normalize_fn = NormalizeFunctions[config.normalize] if hasattr(config, "normalize") else None
-        initializer = nn.init.orthogonal_
-        activation = ActivationFunctions[config.activation]
-        device = self.device
-        agent = config.agent
-        # build representations
-        representation = ModuleDict()
-        dim_obs_all = sum([self.observation_space[k].shape[-1] for k in self.agent_keys])
-        if self.use_global_state:
-            dim_obs_all = self.state_space.shape[-1]
-        input_shape = (dim_obs_all,)
-        for key in self.model_keys:
-            if representation_key == "Basic_Identical":
-                representation[key] = REGISTRY_Representation["Basic_Identical"](input_shape=input_shape,
-                                                                                 device=self.device)
-            elif representation_key == "Basic_MLP":
-                representation[key] = REGISTRY_Representation["Basic_MLP"](
-                    input_shape=input_shape, hidden_sizes=self.config.representation_hidden_size,
-                    normalize=normalize_fn, initialize=initializer, activation=activation, device=device)
-            elif representation_key == "Basic_RNN":
-                representation[key] = REGISTRY_Representation["Basic_RNN"](
-                    input_shape=input_shape,
-                    hidden_sizes={'fc_hidden_sizes': self.config.fc_hidden_sizes,
-                                  'recurrent_hidden_size': self.config.recurrent_hidden_size},
-                    normalize=normalize_fn, initialize=initializer, activation=activation, device=device,
-                    N_recurrent_layers=self.config.N_recurrent_layers,
-                    dropout=self.config.dropout, rnn=self.config.rnn)
-            else:
-                raise AttributeError(f"{agent} currently does not support {representation_key} representation.")
-        return representation
-
     def _build_policy(self):
         """
         Build representation(s) and policy(ies) for agent(s)
@@ -80,13 +34,18 @@ class MAPPO_Agents(IPPO_Agents):
         activation = ActivationFunctions[self.config.activation]
         device = self.device
         # build representations
-        representation_actor = self._build_representation(self.config.representation, self.config)
-        representation_critic = self._build_critic_representation(self.config.representation, self.config)
+        A_representation = self._build_representation(self.config.representation, self.observation_space, self.config)
+        if self.use_global_state:
+            dim_obs_all = sum(self.state_space.shape)
+        else:
+            dim_obs_all = sum([sum(self.observation_space[k].shape) for k in self.agent_keys])
+        space_critic_in = {k: (dim_obs_all, ) for k in self.agent_keys}
+        C_representation = self._build_representation(self.config.representation, space_critic_in, self.config)
         # build policies
         if self.config.policy == "Categorical_MAAC_Policy":
             policy = REGISTRY_Policy["Categorical_MAAC_Policy"](
                 action_space=self.action_space, n_agents=self.n_agents,
-                representation_actor=representation_actor, representation_critic=representation_critic,
+                representation_actor=A_representation, representation_critic=C_representation,
                 actor_hidden_size=self.config.actor_hidden_size, critic_hidden_size=self.config.critic_hidden_size,
                 normalize=normalize_fn, initialize=initializer, activation=activation,
                 device=device, use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
@@ -95,7 +54,7 @@ class MAPPO_Agents(IPPO_Agents):
         elif self.config.policy == "Gaussian_MAAC_Policy":
             policy = REGISTRY_Policy["Gaussian_MAAC_Policy"](
                 action_space=self.action_space, n_agents=self.n_agents,
-                representation_actor=representation_actor, representation_critic=representation_critic,
+                representation_actor=A_representation, representation_critic=C_representation,
                 actor_hidden_size=self.config.actor_hidden_size, critic_hidden_size=self.config.critic_hidden_size,
                 normalize=normalize_fn, initialize=initializer, activation=activation,
                 activation_action=ActivationFunctions[self.config.activation_action],
@@ -105,9 +64,6 @@ class MAPPO_Agents(IPPO_Agents):
         else:
             raise AttributeError(f"MAPPO currently does not support the policy named {self.config.policy}.")
         return policy
-
-    def _build_learner(self, config, model_keys, agent_keys, episode_length, policy, optimizer, scheduler):
-        return MAPPO_Clip_Learner(config, model_keys, agent_keys, episode_length, policy, optimizer, scheduler)
 
     def _build_critic_inputs(self, batch_size: int, obs_batch: dict,
                              state: Optional[np.ndarray]):

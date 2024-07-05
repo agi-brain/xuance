@@ -3,7 +3,6 @@ from argparse import Namespace
 from xuance.environment.single_agent_env import Gym_Env
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.policies import REGISTRY_Policy
-from xuance.torch.learners import MPDQN_Learner
 from xuance.torch.agents.policy_gradient.pdqn_agent import PDQN_Agent
 
 
@@ -26,7 +25,7 @@ class MPDQN_Agent(PDQN_Agent):
         device = self.device
 
         # build representation.
-        representation = self._build_representation(self.config.representation, self.config)
+        representation = self._build_representation(self.config.representation, self.observation_space, self.config)
 
         # build policy.
         if self.config.policy == "MPDQN_Policy":
@@ -43,5 +42,3 @@ class MPDQN_Agent(PDQN_Agent):
 
         return policy
 
-    def _build_learner(self, *args):
-        return MPDQN_Learner(*args)

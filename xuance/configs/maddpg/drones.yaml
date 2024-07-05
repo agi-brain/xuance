@@ -9,6 +9,7 @@ obstacles: True
 max_episode_steps: 1000
 render: False
 sleep: 0.01
+learner: "MADDPG_Learner"
 policy: "MADDPG_Policy"
 representation: "Basic_Identical"
 vectorize: "Dummy_Drone_MAS"
