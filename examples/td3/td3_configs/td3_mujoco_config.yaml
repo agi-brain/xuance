@@ -14,6 +14,7 @@ env_id: "Ant-v4"
 vectorize: "DummyVecEnv"
 representation: "Basic_Identical"
 policy: "TD3_Policy"
+learner: "TD3_Learner"
 runner: "DRL"
 
 representation_hidden_size:  # If you choose Basic_Identical representation, then ignore this value

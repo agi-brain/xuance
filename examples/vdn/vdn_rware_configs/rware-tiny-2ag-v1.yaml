@@ -10,6 +10,7 @@ agent: "VDN"  # the learning algorithms_marl
 env_name: "RoboticWarehouse"
 env_id: "rware-tiny-2ag-v1"
 max_episode_steps: 100
+learner: "VDN_Learner"
 policy: "Mixing_Q_network"
 representation: "Basic_MLP"
 vectorize: "Dummy_RoboticWarehouse"

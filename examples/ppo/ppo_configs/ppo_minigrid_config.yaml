@@ -14,6 +14,7 @@ env_id: "MiniGrid-Empty-5x5-v0"
 RGBImgPartialObsWrapper: False
 ImgObsWrapper: False
 vectorize: "DummyVecEnv"
+learner: "PPOCLIP_Learner"
 policy: "Categorical_AC"  # choice: Gaussian_AC for continuous actions, Categorical_AC for discrete actions.
 representation: "Basic_MLP"
 runner: "DRL"

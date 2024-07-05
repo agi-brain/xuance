@@ -12,6 +12,7 @@ agent: "MAPPO"
 env_name: "RoboticWarehouse"
 env_id: "rware-tiny-2ag-v1"
 max_episode_steps: 100
+learner: "MAPPO_Clip_Learner"
 policy: "Categorical_MAAC_Policy"
 representation: "Basic_MLP"
 vectorize: "Dummy_RoboticWarehouse"

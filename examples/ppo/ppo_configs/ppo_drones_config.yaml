@@ -20,6 +20,7 @@ obstacles: True
 max_episode_steps: 2000
 vectorize: "DummyVecEnv"
 policy: "Gaussian_AC"  # choice: Gaussian_AC for continuous actions, Categorical_AC for discrete actions.
+learner: "PPOCLIP_Learner"
 representation: "Basic_MLP"
 runner: "DRL"
 

@@ -12,6 +12,7 @@ agent: "IPPO"
 env_name: "mpe"
 env_id: "simple_spread_v3"
 continuous_action: True
+learner: "IPPO_Learner"
 policy: "Gaussian_MAAC_Policy"
 representation: "Basic_MLP"
 vectorize: "SubprocVecMultiAgentEnv"

@@ -11,6 +11,7 @@ device: "cuda:0"
 agent: "OWQMIX"  # choice: CWQMIX, OWQMIX
 env_name: "StarCraft2"
 env_id: "1c3s5z"
+learner: "WQMIX_Learner"
 policy: "Weighted_Mixing_Q_network"
 representation: "Basic_RNN"
 vectorize: "Subproc_StarCraft2"

@@ -16,6 +16,7 @@ img_size: [84, 84]  # default is 210 x 160 in gym[Atari]
 num_stack: 4  # frame stack trick
 frame_skip: 4  # frame skip trick
 noop_max: 30  # Do no-op action for a number of steps in [1, noop_max].
+learner: "DQN_Learner"
 policy: "Basic_Q_network"
 representation: "Basic_CNN"
 runner: "DRL"
