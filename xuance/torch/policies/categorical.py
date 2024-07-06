@@ -18,6 +18,51 @@ def _init_layer(layer, gain=np.sqrt(2), bias=0.0):
     return layer
 
 
+class ActorPolicy(Module):
+    """
+    Actor for stochastic policy with categorical distributions. (Discrete action space)
+
+    Args:
+        action_space (Discrete): The discrete action space.
+        representation (Module): The representation module.
+        actor_hidden_size (Sequence[int]): A list of hidden layer sizes for actor network.
+        normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
+        activation (Optional[ModuleType]): The activation function for each layer.
+        device (Optional[Union[str, int, torch.device]]): The calculating device.
+    """
+
+    def __init__(self,
+                 action_space: Discrete,
+                 representation: Module,
+                 actor_hidden_size: Sequence[int] = None,
+                 normalize: Optional[ModuleType] = None,
+                 initialize: Optional[Callable[..., Tensor]] = None,
+                 activation: Optional[ModuleType] = None,
+                 device: Optional[Union[str, int, torch.device]] = None):
+        super(ActorPolicy, self).__init__()
+        self.action_dim = action_space.n
+        self.representation = representation
+        self.representation_info_shape = self.representation.output_shapes
+        self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size,
+                              normalize, initialize, activation, device)
+
+    def forward(self, observation: Union[np.ndarray, dict]):
+        """
+        Returns the hidden states, action distribution.
+
+        Parameters:
+            observation: The original observation of agent.
+
+        Returns:
+            outputs: The outputs of representation.
+            a_dist: The distribution of actions output by actor.
+        """
+        outputs = self.representation(observation)
+        a_dist = self.actor(outputs['state'])
+        return outputs, a_dist, None
+
+
 class ActorCriticPolicy(Module):
     """
     Actor-Critic for stochastic policy with categorical distributions. (Discrete action space)
@@ -67,51 +112,6 @@ class ActorCriticPolicy(Module):
         a_dist = self.actor(outputs['state'])
         value = self.critic(outputs['state'])
         return outputs, a_dist, value[:, 0]
-
-
-class ActorPolicy(Module):
-    """
-    Actor for stochastic policy with categorical distributions. (Discrete action space)
-
-    Args:
-        action_space (Discrete): The discrete action space.
-        representation (Module): The representation module.
-        actor_hidden_size (Sequence[int]): A list of hidden layer sizes for actor network.
-        normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
-        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
-        activation (Optional[ModuleType]): The activation function for each layer.
-        device (Optional[Union[str, int, torch.device]]): The calculating device.
-    """
-
-    def __init__(self,
-                 action_space: Discrete,
-                 representation: Module,
-                 actor_hidden_size: Sequence[int] = None,
-                 normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., Tensor]] = None,
-                 activation: Optional[ModuleType] = None,
-                 device: Optional[Union[str, int, torch.device]] = None):
-        super(ActorPolicy, self).__init__()
-        self.action_dim = action_space.n
-        self.representation = representation
-        self.representation_info_shape = self.representation.output_shapes
-        self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size,
-                              normalize, initialize, activation, device)
-
-    def forward(self, observation: Union[np.ndarray, dict]):
-        """
-        Returns the hidden states, action distribution.
-
-        Parameters:
-            observation: The original observation of agent.
-
-        Returns:
-            outputs: The outputs of representation.
-            a_dist: The distribution of actions output by actor.
-        """
-        outputs = self.representation(observation)
-        a_dist = self.actor(outputs['state'])
-        return outputs, a_dist
 
 
 class PPGActorCritic(Module):

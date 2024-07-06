@@ -25,7 +25,7 @@ class PG_Learner(Learner):
         obs_batch = samples['obs']
         act_batch = torch.as_tensor(samples['actions'], device=self.device)
         ret_batch = torch.as_tensor(samples['returns'], device=self.device)
-        _, a_dist = self.policy(obs_batch)
+        _, a_dist, _ = self.policy(obs_batch)
         log_prob = a_dist.log_prob(act_batch)
 
         a_loss = -(ret_batch * log_prob).mean()
