@@ -68,21 +68,28 @@ class PPG_Agent(OnPolicyAgent):
 
         return policy
 
-    def action(self, observations: np.ndarray, **kwargs):
+    def action(self, observations: np.ndarray,
+               return_dists: bool = False, return_logpi: bool = False):
         """Returns actions and values.
 
         Parameters:
             observations (np.ndarray): The observation.
+            return_dists (bool): Whether to return dists.
+            return_logpi (bool): Whether to return log_pi.
 
         Returns:
             actions: The actions to be executed.
             values: The evaluated values.
+            dists: The policy distributions.
+            log_pi: Log of stochastic actions.
         """
         _, policy_dists, values, _ = self.policy(observations)
         actions = policy_dists.stochastic_sample()
-        values = values.detach().cpu().numpy()
+        log_pi = policy_dists.log_prob(actions) if return_logpi else None
+        dists = split_distributions(policy_dists) if return_dists else None
         actions = actions.detach().cpu().numpy()
-        return {"actions": actions, "values": values, "dists": split_distributions(policy_dists), "log_pi": None}
+        values = values.detach().cpu().numpy()
+        return {"actions": actions, "values": values, "dists": dists, "log_pi": log_pi}
 
     def get_aux_info(self, policy_output: dict = None):
         """Returns auxiliary information.
@@ -102,7 +109,7 @@ class PPG_Agent(OnPolicyAgent):
             step_info = {}
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
-            policy_out = self.action(obs)
+            policy_out = self.action(obs, return_dists=True, return_logpi=False)
             acts, rets = policy_out['actions'], policy_out['values']
             next_obs, rewards, terminals, trunctions, infos = self.envs.step(acts)
             aux_info = self.get_aux_info(policy_out)
@@ -135,7 +142,7 @@ class PPG_Agent(OnPolicyAgent):
                 # update old_prob
                 buffer_obs = self.memory.observations
                 buffer_act = self.memory.actions
-                new_policy_out = self.action(buffer_obs)
+                new_policy_out = self.action(buffer_obs, return_dists=True)
                 aux_info = self.get_aux_info(new_policy_out)
                 self.memory.auxiliary_infos.update(aux_info)
                 for _ in range(self.aux_nepoch):

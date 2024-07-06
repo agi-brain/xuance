@@ -6,6 +6,7 @@ from argparse import Namespace
 from xuance.torch.agents.base import Agent
 from xuance.environment import DummyVecEnv
 from xuance.common import DummyOnPolicyBuffer, DummyOnPolicyBuffer_Atari
+from xuance.torch.utils import split_distributions
 
 
 class OnPolicyAgent(Agent):
@@ -59,24 +60,31 @@ class OnPolicyAgent(Agent):
         values_next = policy_out['values']
         return values_next
 
-    def action(self, observations: np.ndarray, **kwargs):
+    def action(self, observations: np.ndarray,
+               return_dists: bool = False, return_logpi: bool = False):
         """Returns actions and values.
 
         Parameters:
             observations (np.ndarray): The observation.
+            return_dists (bool): Whether to return dists.
+            return_logpi (bool): Whether to return log_pi.
 
         Returns:
             actions: The actions to be executed.
             values: The evaluated values.
+            dists: The policy distributions.
+            log_pi: Log of stochastic actions.
         """
         _, policy_dists, values = self.policy(observations)
         actions = policy_dists.stochastic_sample()
+        log_pi = policy_dists.log_prob(actions).detach().cpu().numpy() if return_logpi else None
+        dists = split_distributions(policy_dists) if return_dists else None
         actions = actions.detach().cpu().numpy()
         if values is None:
             values = 0
         else:
             values = values.detach().cpu().numpy()
-        return {"actions": actions, "values": values, "dists": None, "log_pi": None}
+        return {"actions": actions, "values": values, "dists": dists, "log_pi": log_pi}
 
     def get_aux_info(self, policy_output: dict = None):
         """Returns auxiliary information.
@@ -107,7 +115,7 @@ class OnPolicyAgent(Agent):
             step_info = {}
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
-            policy_out = self.action(obs)
+            policy_out = self.action(obs, return_dists=False, return_logpi=False)
             acts, vals = policy_out['actions'], policy_out['values']
             next_obs, rewards, terminals, trunctions, infos = self.envs.step(acts)
             aux_info = self.get_aux_info()
@@ -163,8 +171,8 @@ class OnPolicyAgent(Agent):
         while current_episode < test_episodes:
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
-            acts, rets = self.action(obs)
-            next_obs, rewards, terminals, trunctions, infos = test_envs.step(acts)
+            policy_out = self.action(obs)
+            next_obs, rewards, terminals, trunctions, infos = test_envs.step(policy_out['actions'])
             if self.config.render_mode == "rgb_array" and self.render:
                 images = test_envs.render(self.config.render_mode)
                 for idx, img in enumerate(images):
