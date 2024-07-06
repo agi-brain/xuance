@@ -649,8 +649,8 @@ Source Code
                 'values': np.zeros((self.n_envs, self.n_size, self.n_agents, 1)).astype(np.float32),
                 'log_pi_old': np.zeros((self.n_envs, self.n_size, self.n_agents,)).astype(np.float32),
                 'advantages': np.zeros((self.n_envs, self.n_size,) + self.rew_space).astype(np.float32),
-                'terminals': np.zeros((self.n_envs, self.n_size,) + self.done_space).astype(np.bool),
-                'agent_mask': np.ones((self.n_envs, self.n_size, self.n_agents)).astype(np.bool),
+                'terminals': np.zeros((self.n_envs, self.n_size,) + self.done_space).astype(np.bool_),
+                'agent_mask': np.ones((self.n_envs, self.n_size, self.n_agents)).astype(np.bool_),
             }
             if self.state_space is not None:
                 self.data.update({'state': np.zeros((self.n_envs, self.n_size,) + self.state_space).astype(np.float32)})
@@ -758,9 +758,9 @@ Source Code
                 'values': np.zeros((self.buffer_size, self.n_agents, self.max_eps_len) + self.rew_space, np.float32),
                 'advantages': np.zeros((self.buffer_size, self.n_agents, self.max_eps_len) + self.rew_space, np.float32),
                 'log_pi_old': np.zeros((self.buffer_size, self.n_agents, self.max_eps_len,), np.float32),
-                'terminals': np.zeros((self.buffer_size, self.max_eps_len) + self.done_space, np.bool),
-                'avail_actions': np.ones((self.buffer_size, self.n_agents, self.max_eps_len + 1, self.dim_act), np.bool),
-                'filled': np.zeros((self.buffer_size, self.max_eps_len, 1), np.bool)
+                'terminals': np.zeros((self.buffer_size, self.max_eps_len) + self.done_space, np.bool_),
+                'avail_actions': np.ones((self.buffer_size, self.n_agents, self.max_eps_len + 1, self.dim_act), np.bool_),
+                'filled': np.zeros((self.buffer_size, self.max_eps_len, 1), np.bool_)
             }
             if self.state_space is not None:
                 self.data.update({
@@ -777,9 +777,9 @@ Source Code
                 'values': np.zeros((self.n_envs, self.n_agents, self.max_eps_len) + self.rew_space, np.float32),
                 'advantages': np.zeros((self.n_envs, self.n_agents, self.max_eps_len) + self.rew_space, np.float32),
                 'log_pi_old': np.zeros((self.n_envs, self.n_agents, self.max_eps_len,), np.float32),
-                'terminals': np.zeros((self.n_envs, self.max_eps_len) + self.done_space, dtype=np.bool),
-                'avail_actions': np.ones((self.n_envs, self.n_agents, self.max_eps_len + 1, self.dim_act), dtype=np.bool),
-                'filled': np.zeros((self.n_envs, self.max_eps_len, 1), dtype=np.bool),
+                'terminals': np.zeros((self.n_envs, self.max_eps_len) + self.done_space, dtype=np.bool_),
+                'avail_actions': np.ones((self.n_envs, self.n_agents, self.max_eps_len + 1, self.dim_act), dtype=np.bool_),
+                'filled': np.zeros((self.n_envs, self.max_eps_len, 1), dtype=np.bool_),
             }
             if self.state_space is not None:
                 self.episode_data.update({
@@ -909,8 +909,8 @@ Source Code
                 'returns': np.zeros((self.n_envs, self.n_size,) + self.rew_space).astype(np.float32),
                 'values': np.zeros((self.n_envs, self.n_size, self.n_agents, 1)).astype(np.float32),
                 'advantages': np.zeros((self.n_envs, self.n_size,) + self.rew_space).astype(np.float32),
-                'terminals': np.zeros((self.n_envs, self.n_size,) + self.done_space).astype(np.bool),
-                'agent_mask': np.ones((self.n_envs, self.n_size, self.n_agents)).astype(np.bool),
+                'terminals': np.zeros((self.n_envs, self.n_size,) + self.done_space).astype(np.bool_),
+                'agent_mask': np.ones((self.n_envs, self.n_size, self.n_agents)).astype(np.bool_),
             })
             if self.state_space is not None:
                 self.data.update({'state': np.zeros((self.n_envs, self.n_size,) + self.state_space).astype(np.float32)})
@@ -941,8 +941,8 @@ Source Code
                 'returns': np.zeros((self.n_envs, self.n_size,) + self.rew_space).astype(np.float32),
                 'values': np.zeros((self.n_envs, self.n_size, self.n_agents, 1)).astype(np.float32),
                 'log_pi_old': np.zeros((self.n_envs, self.n_size, self.n_agents,)).astype(np.float32),
-                'terminals': np.zeros((self.n_envs, self.n_size,) + self.done_space).astype(np.bool),
-                'agent_mask': np.ones((self.n_envs, self.n_size, self.n_agents)).astype(np.bool),
+                'terminals': np.zeros((self.n_envs, self.n_size,) + self.done_space).astype(np.bool_),
+                'agent_mask': np.ones((self.n_envs, self.n_size, self.n_agents)).astype(np.bool_),
             }
             if self.state_space is not None:
                 self.data.update({'state': np.zeros((self.n_envs, self.n_size,) + self.state_space).astype(np.float32)})
@@ -1009,9 +1009,9 @@ Source Code
                 'values': np.zeros((self.buffer_size, self.n_agents, self.max_eps_len) + self.rew_space, np.float32),
                 'advantages': np.zeros((self.buffer_size, self.n_agents, self.max_eps_len) + self.rew_space, np.float32),
                 'log_pi_old': np.zeros((self.buffer_size, self.n_agents, self.max_eps_len,), np.float32),
-                'terminals': np.zeros((self.buffer_size, self.max_eps_len) + self.done_space, np.bool),
-                'avail_actions': np.ones((self.buffer_size, self.n_agents, self.max_eps_len + 1, self.dim_act), np.bool),
-                'filled': np.zeros((self.buffer_size, self.max_eps_len, 1), np.bool)
+                'terminals': np.zeros((self.buffer_size, self.max_eps_len) + self.done_space, np.bool_),
+                'avail_actions': np.ones((self.buffer_size, self.n_agents, self.max_eps_len + 1, self.dim_act), np.bool_),
+                'filled': np.zeros((self.buffer_size, self.max_eps_len, 1), np.bool_)
             }
             if self.state_space is not None:
                 self.data.update({'state': np.zeros(
@@ -1028,9 +1028,9 @@ Source Code
                 'values': np.zeros((self.n_envs, self.n_agents, self.max_eps_len) + self.rew_space, np.float32),
                 'advantages': np.zeros((self.n_envs, self.n_agents, self.max_eps_len) + self.rew_space, np.float32),
                 'log_pi_old': np.zeros((self.n_envs, self.n_agents, self.max_eps_len,), np.float32),
-                'terminals': np.zeros((self.n_envs, self.max_eps_len) + self.done_space, dtype=np.bool),
-                'avail_actions': np.ones((self.n_envs, self.n_agents, self.max_eps_len + 1, self.dim_act), dtype=np.bool),
-                'filled': np.zeros((self.n_envs, self.max_eps_len, 1), dtype=np.bool),
+                'terminals': np.zeros((self.n_envs, self.max_eps_len) + self.done_space, dtype=np.bool_),
+                'avail_actions': np.ones((self.n_envs, self.n_agents, self.max_eps_len + 1, self.dim_act), dtype=np.bool_),
+                'filled': np.zeros((self.n_envs, self.max_eps_len, 1), dtype=np.bool_),
             }
             if self.state_space is not None:
                 self.episode_data.update({
@@ -1116,8 +1116,8 @@ Source Code
                 'actions': np.zeros((self.n_envs, self.n_size, self.n_agents) + self.act_space).astype(np.float32),
                 'obs_next': np.zeros((self.n_envs, self.n_size, self.n_agents) + self.obs_space).astype(np.float32),
                 'rewards': np.zeros((self.n_envs, self.n_size) + self.rew_space).astype(np.float32),
-                'terminals': np.zeros((self.n_envs, self.n_size) + self.done_space).astype(np.bool),
-                'agent_mask': np.ones((self.n_envs, self.n_size, self.n_agents)).astype(np.bool)
+                'terminals': np.zeros((self.n_envs, self.n_size) + self.done_space).astype(np.bool_),
+                'agent_mask': np.ones((self.n_envs, self.n_size, self.n_agents)).astype(np.bool_)
             }
             if self.state_space is not None:
                 self.data.update({'state': np.zeros((self.n_envs, self.n_size) + self.state_space).astype(np.float32),
@@ -1169,9 +1169,9 @@ Source Code
                 'obs': np.zeros((self.buffer_size, self.n_agents, self.max_eps_len + 1) + self.obs_space, np.float),
                 'actions': np.zeros((self.buffer_size, self.n_agents, self.max_eps_len) + self.act_space, np.float),
                 'rewards': np.zeros((self.buffer_size, self.n_agents, self.max_eps_len) + self.rew_space, np.float),
-                'terminals': np.zeros((self.buffer_size, self.max_eps_len) + self.done_space, np.bool),
-                'avail_actions': np.ones((self.buffer_size, self.n_agents, self.max_eps_len + 1, self.dim_act), np.bool),
-                'filled': np.zeros((self.buffer_size, self.max_eps_len, 1)).astype(np.bool)
+                'terminals': np.zeros((self.buffer_size, self.max_eps_len) + self.done_space, np.bool_),
+                'avail_actions': np.ones((self.buffer_size, self.n_agents, self.max_eps_len + 1, self.dim_act), np.bool_),
+                'filled': np.zeros((self.buffer_size, self.max_eps_len, 1)).astype(np.bool_)
             }
             if self.state_space is not None:
                 self.data.update({'state': np.zeros(
@@ -1183,9 +1183,9 @@ Source Code
                 'obs': np.zeros((self.n_envs, self.n_agents, self.max_eps_len + 1) + self.obs_space, dtype=np.float32),
                 'actions': np.zeros((self.n_envs, self.n_agents, self.max_eps_len) + self.act_space, dtype=np.float32),
                 'rewards': np.zeros((self.n_envs, self.n_agents, self.max_eps_len) + self.rew_space, dtype=np.float32),
-                'terminals': np.zeros((self.n_envs, self.max_eps_len) + self.done_space, dtype=np.bool),
-                'avail_actions': np.ones((self.n_envs, self.n_agents, self.max_eps_len + 1, self.dim_act), dtype=np.bool),
-                'filled': np.zeros((self.n_envs, self.max_eps_len, 1), dtype=np.bool),
+                'terminals': np.zeros((self.n_envs, self.max_eps_len) + self.done_space, dtype=np.bool_),
+                'avail_actions': np.ones((self.n_envs, self.n_agents, self.max_eps_len + 1, self.dim_act), dtype=np.bool_),
+                'filled': np.zeros((self.n_envs, self.max_eps_len, 1), dtype=np.bool_),
             }
             if self.state_space is not None:
                 self.episode_data.update({

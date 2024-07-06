@@ -605,8 +605,8 @@ Source Code
 
             def train_episode(self, n_episodes):
                 act_mean_last = [np.zeros([self.n_envs, arg.dim_act]) for arg in self.args]
-                terminal_handle = np.zeros([self.n_handles, self.n_envs], dtype=np.bool)
-                truncate_handle = np.zeros([self.n_handles, self.n_envs], dtype=np.bool)
+                terminal_handle = np.zeros([self.n_handles, self.n_envs], dtype=np.bool_)
+                truncate_handle = np.zeros([self.n_handles, self.n_envs], dtype=np.bool_)
                 episode_score = np.zeros([self.n_handles, self.n_envs, 1], dtype=np.float32)
                 episode_info, train_info = {}, {}
                 for _ in tqdm(range(n_episodes)):
@@ -689,8 +689,8 @@ Source Code
                     for idx, img in enumerate(images):
                         videos[idx].append(img)
                 act_mean_last = [np.zeros([num_envs, arg.dim_act]) for arg in self.args]
-                terminal_handle = np.zeros([self.n_handles, num_envs], dtype=np.bool)
-                truncate_handle = np.zeros([self.n_handles, num_envs], dtype=np.bool)
+                terminal_handle = np.zeros([self.n_handles, num_envs], dtype=np.bool_)
+                truncate_handle = np.zeros([self.n_handles, num_envs], dtype=np.bool_)
                 episode_score = np.zeros([self.n_handles, num_envs, 1], dtype=np.float32)
 
                 for step in range(self.episode_length):
@@ -1039,8 +1039,8 @@ Source Code
 
             def train_episode(self, n_episodes):
                 act_mean_last = [np.zeros([self.n_envs, arg.dim_act]) for arg in self.args]
-                terminal_handle = np.zeros([self.n_handles, self.n_envs], dtype=np.bool)
-                truncate_handle = np.zeros([self.n_handles, self.n_envs], dtype=np.bool)
+                terminal_handle = np.zeros([self.n_handles, self.n_envs], dtype=np.bool_)
+                truncate_handle = np.zeros([self.n_handles, self.n_envs], dtype=np.bool_)
                 episode_score = np.zeros([self.n_handles, self.n_envs, 1], dtype=np.float32)
                 episode_info, train_info = {}, {}
                 for _ in tqdm(range(n_episodes)):
@@ -1123,8 +1123,8 @@ Source Code
                     for idx, img in enumerate(images):
                         videos[idx].append(img)
                 act_mean_last = [np.zeros([num_envs, arg.dim_act]) for arg in self.args]
-                terminal_handle = np.zeros([self.n_handles, num_envs], dtype=np.bool)
-                truncate_handle = np.zeros([self.n_handles, num_envs], dtype=np.bool)
+                terminal_handle = np.zeros([self.n_handles, num_envs], dtype=np.bool_)
+                truncate_handle = np.zeros([self.n_handles, num_envs], dtype=np.bool_)
                 episode_score = np.zeros([self.n_handles, num_envs, 1], dtype=np.float32)
 
                 for step in range(self.episode_length):
@@ -1474,8 +1474,8 @@ Source Code
 
             def train_episode(self, n_episodes):
                 act_mean_last = [np.zeros([self.n_envs, arg.dim_act]) for arg in self.args]
-                terminal_handle = np.zeros([self.n_handles, self.n_envs], dtype=np.bool)
-                truncate_handle = np.zeros([self.n_handles, self.n_envs], dtype=np.bool)
+                terminal_handle = np.zeros([self.n_handles, self.n_envs], dtype=np.bool_)
+                truncate_handle = np.zeros([self.n_handles, self.n_envs], dtype=np.bool_)
                 episode_score = np.zeros([self.n_handles, self.n_envs, 1], dtype=np.float32)
                 episode_info, train_info = {}, {}
                 for _ in tqdm(range(n_episodes)):
@@ -1559,8 +1559,8 @@ Source Code
                     for idx, img in enumerate(images):
                         videos[idx].append(img)
                 act_mean_last = [np.zeros([num_envs, arg.dim_act]) for arg in self.args]
-                terminal_handle = np.zeros([self.n_handles, num_envs], dtype=np.bool)
-                truncate_handle = np.zeros([self.n_handles, num_envs], dtype=np.bool)
+                terminal_handle = np.zeros([self.n_handles, num_envs], dtype=np.bool_)
+                truncate_handle = np.zeros([self.n_handles, num_envs], dtype=np.bool_)
                 episode_score = np.zeros([self.n_handles, num_envs, 1], dtype=np.float32)
 
                 for step in range(self.episode_length):

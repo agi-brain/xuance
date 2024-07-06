@@ -244,7 +244,7 @@ Source Code
                     self.max_cycles = self.env_info["episode_limit"]
                     self._episode_step = 0
                     self._episode_score = 0
-                    self.filled = np.zeros([self.max_cycles, 1], np.bool)
+                    self.filled = np.zeros([self.max_cycles, 1], np.bool_)
                     self.env.reset()
                     self.buf_info = {
                         'battle_won': 0,
@@ -377,9 +377,9 @@ Source Code
 
                     self.buf_obs = np.zeros(combined_shape(self.num_envs, self.obs_shape), dtype=np.float32)
                     self.buf_state = np.zeros(combined_shape(self.num_envs, self.dim_state), dtype=np.float32)
-                    self.buf_terminal = np.zeros((self.num_envs, 1), dtype=np.bool)
-                    self.buf_truncation = np.zeros((self.num_envs, 1), dtype=np.bool)
-                    self.buf_done = np.zeros((self.num_envs,), dtype=np.bool)
+                    self.buf_terminal = np.zeros((self.num_envs, 1), dtype=np.bool_)
+                    self.buf_truncation = np.zeros((self.num_envs, 1), dtype=np.bool_)
+                    self.buf_done = np.zeros((self.num_envs,), dtype=np.bool_)
                     self.buf_rew = np.zeros((self.num_envs,) + self.rew_shape, dtype=np.float32)
                     self.buf_info = [{} for _ in range(self.num_envs)]
                     self.actions = None
@@ -397,7 +397,7 @@ Source Code
                     result = flatten_list(result)
                     obs, state, infos = zip(*result)
                     self.buf_obs, self.buf_state, self.buf_info = np.array(obs), np.array(state), list(infos)
-                    self.buf_done = np.zeros((self.num_envs,), dtype=np.bool)
+                    self.buf_done = np.zeros((self.num_envs,), dtype=np.bool_)
                     return self.buf_obs.copy(), self.buf_state.copy(), self.buf_info.copy()
 
                 def step_async(self, actions):
@@ -493,9 +493,9 @@ Source Code
 
                     self.buf_obs = np.zeros(combined_shape(self.num_envs, self.obs_shape), dtype=np.float32)
                     self.buf_state = np.zeros(combined_shape(self.num_envs, self.dim_state), dtype=np.float32)
-                    self.buf_terminal = np.zeros((self.num_envs, 1), dtype=np.bool)
-                    self.buf_truncation = np.zeros((self.num_envs, 1), dtype=np.bool)
-                    self.buf_done = np.zeros((self.num_envs,), dtype=np.bool)
+                    self.buf_terminal = np.zeros((self.num_envs, 1), dtype=np.bool_)
+                    self.buf_truncation = np.zeros((self.num_envs, 1), dtype=np.bool_)
+                    self.buf_done = np.zeros((self.num_envs,), dtype=np.bool_)
                     self.buf_rew = np.zeros((self.num_envs,) + self.rew_shape, dtype=np.float32)
                     self.buf_info = [{} for _ in range(self.num_envs)]
                     self.actions = None
@@ -510,7 +510,7 @@ Source Code
                     for i_env, env in enumerate(self.envs):
                         obs, state, infos = env.reset()
                         self.buf_obs[i_env], self.buf_state[i_env], self.buf_info[i_env] = np.array(obs), np.array(state), list(infos)
-                    self.buf_done = np.zeros((self.num_envs,), dtype=np.bool)
+                    self.buf_done = np.zeros((self.num_envs,), dtype=np.bool_)
                     return self.buf_obs.copy(), self.buf_state.copy(), self.buf_info.copy()
 
                 def step_async(self, actions):

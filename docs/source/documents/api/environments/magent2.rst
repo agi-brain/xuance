@@ -283,12 +283,12 @@ Source Code
                     self.buf_infos_dict = [{} for _ in range(self.num_envs)]
                     # buffer of numpy data
                     self.buf_state = np.zeros((self.num_envs,) + self.state_shape, dtype=self.state_dtype)
-                    self.buf_agent_mask = [np.ones([self.num_envs, n], dtype=np.bool) for n in self.n_agents]
+                    self.buf_agent_mask = [np.ones([self.num_envs, n], dtype=np.bool_) for n in self.n_agents]
                     self.buf_obs = [np.zeros((self.num_envs, n, np.prod(self.obs_shapes[h])), dtype=self.obs_dtype) for h, n in
                                     enumerate(self.n_agents)]
                     self.buf_rews = [np.zeros((self.num_envs, n, 1), dtype=np.float32) for n in self.n_agents]
-                    self.buf_dones = [np.ones((self.num_envs, n), dtype=np.bool) for n in self.n_agents]
-                    self.buf_trunctions = [np.ones((self.num_envs, n), dtype=np.bool) for n in self.n_agents]
+                    self.buf_dones = [np.ones((self.num_envs, n), dtype=np.bool_) for n in self.n_agents]
+                    self.buf_trunctions = [np.ones((self.num_envs, n), dtype=np.bool_) for n in self.n_agents]
 
                     self.max_episode_steps = env.max_cycles
                     self.actions = None
@@ -400,7 +400,7 @@ Source Code
                     return np.array(self.envs[e].state())
 
                 def agent_mask(self):
-                    agent_mask = [np.ones([self.num_envs, n], dtype=np.bool) for n in self.n_agents]
+                    agent_mask = [np.ones([self.num_envs, n], dtype=np.bool_) for n in self.n_agents]
                     for e, env in enumerate(self.envs):
                         mask = env.get_agent_mask()
                         for h, ids in enumerate(self.agent_ids):
