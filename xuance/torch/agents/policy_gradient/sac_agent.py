@@ -43,7 +43,8 @@ class SAC_Agent(Agent):
                                            buffer_size=self.config.buffer_size,
                                            batch_size=self.config.batch_size)
         # Create learner.
-        self.learner = self._build_learner(self.config, envs.max_episode_steps, self.policy, optimizers, lr_schedulers)
+        self.learner = self._build_learner(self.config, envs.max_episode_steps, self.policy, optimizers, lr_schedulers,
+                                           -np.prod(self.action_space.shape).item())
 
     def _build_policy(self):
         normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None

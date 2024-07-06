@@ -151,7 +151,7 @@ class MARLAgents(ABC):
                                 'recurrent_hidden_size': self.config.recurrent_hidden_size}
             else:
                 hidden_sizes = config.representation_hidden_size if hasattr(config,
-                                                                            "representation_hidden_size") else None,
+                                                                            "representation_hidden_size") else None
             input_representations = dict(
                 input_shape=space2shape(input_space[key]),
                 hidden_sizes=hidden_sizes,
