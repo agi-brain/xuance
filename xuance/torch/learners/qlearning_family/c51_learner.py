@@ -6,18 +6,17 @@ Implementation: Pytorch
 import torch
 from torch import nn
 from xuance.torch.learners import Learner
-from typing import Optional, Union
 from argparse import Namespace
 
 
 class C51_Learner(Learner):
     def __init__(self,
                  config: Namespace,
-                 episode_length: int,
-                 policy: nn.Module,
-                 optimizer: torch.optim.Optimizer,
-                 scheduler: Union[dict, Optional[torch.optim.lr_scheduler.LinearLR]] = None):
-        super(C51_Learner, self).__init__(config, episode_length, policy, optimizer, scheduler)
+                 policy: nn.Module):
+        super(C51_Learner, self).__init__(config, policy)
+        self.optimizer = torch.optim.Adam(self.policy.parameters(), self.config.learning_rate, eps=1e-5)
+        self.scheduler = torch.optim.lr_scheduler.LinearLR(self.optimizer, start_factor=1.0, end_factor=0.0,
+                                                           total_iters=self.config.running_steps)
         self.gamma = config.gamma
         self.sync_frequency = config.sync_frequency
         self.one_hot = nn.functional.one_hot

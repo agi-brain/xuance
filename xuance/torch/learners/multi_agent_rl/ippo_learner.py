@@ -19,10 +19,15 @@ class IPPO_Learner(LearnerMAS):
                  config: Namespace,
                  model_keys: List[str],
                  agent_keys: List[str],
-                 episode_length: int,
-                 policy: nn.Module,
-                 optimizer: Optional[torch.optim.Adam],
-                 scheduler: Optional[torch.optim.lr_scheduler.LinearLR] = None):
+                 policy: nn.Module):
+        super(IPPO_Learner, self).__init__(config, model_keys, agent_keys, policy)
+        self.optimizer = torch.optim.Adam(self.policy.parameters_model, lr=config.learning_rate, eps=1e-5,
+                                          weight_decay=config.weight_decay)
+        self.scheduler = torch.optim.lr_scheduler.LinearLR(self.optimizer,
+                                                           start_factor=1.0, end_factor=config.end_factor_lr_decay,
+                                                           total_iters=self.config.running_steps)
+        self.lr = config.learning_rate
+        self.end_factor_lr_decay = config.end_factor_lr_decay
         self.gamma = config.gamma
         self.clip_range = config.clip_range
         self.use_linear_lr_decay = config.use_linear_lr_decay
@@ -33,13 +38,10 @@ class IPPO_Learner(LearnerMAS):
         self.vf_coef, self.ent_coef = config.vf_coef, config.ent_coef
         self.mse_loss = nn.MSELoss()
         self.huber_loss = nn.HuberLoss(reduction="none", delta=self.huber_delta)
-        super(IPPO_Learner, self).__init__(config, model_keys, agent_keys, episode_length, policy, optimizer, scheduler)
         if self.use_value_norm:
             self.value_normalizer = {key: ValueNorm(1).to(self.device) for key in self.model_keys}
         else:
             self.value_normalizer = None
-        self.lr = config.learning_rate
-        self.end_factor_lr_decay = config.end_factor_lr_decay
 
     def build_training_data(self, sample: Optional[dict],
                             use_parameter_sharing: Optional[bool] = False,

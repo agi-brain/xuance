@@ -5,7 +5,7 @@ Implementation: Pytorch
 import torch
 from torch import nn
 from xuance.torch.learners import LearnerMAS
-from typing import Optional, List
+from typing import List
 from argparse import Namespace
 
 
@@ -14,20 +14,23 @@ class ISAC_Learner(LearnerMAS):
                  config: Namespace,
                  model_keys: List[str],
                  agent_keys: List[str],
-                 episode_length: int,
-                 policy: nn.Module,
-                 optimizer: Optional[dict],
-                 scheduler: Optional[dict] = None):
-        super(ISAC_Learner, self).__init__(config, model_keys, agent_keys, episode_length, policy, optimizer, scheduler)
+                 policy: nn.Module):
+        super(ISAC_Learner, self).__init__(config, model_keys, agent_keys, policy)
+        self.optimizer = {
+            key: {'actor': torch.optim.Adam(self.policy.parameters_actor[key], self.config.lr_a, eps=1e-5),
+                  'critic': torch.optim.Adam(self.policy.parameters_critic[key], self.config.lr_c, eps=1e-5)}
+            for key in self.model_keys}
+        self.scheduler = {
+            key: {'actor': torch.optim.lr_scheduler.LinearLR(self.optimizer[key]['actor'], start_factor=1.0,
+                                                             end_factor=0.5, total_iters=self.config.running_steps),
+                  'critic': torch.optim.lr_scheduler.LinearLR(self.optimizer[key]['critic'], start_factor=1.0,
+                                                              end_factor=0.5, total_iters=self.config.running_steps)}
+            for key in self.model_keys}
         self.gamma = config.gamma
         self.tau = config.tau
         self.alpha = config.alpha
         self.mse_loss = nn.MSELoss()
         self.use_automatic_entropy_tuning = config.use_automatic_entropy_tuning
-        self.optimizer = {key: {'actor': optimizer[key][0],
-                                'critic': optimizer[key][1]} for key in self.model_keys}
-        self.scheduler = {key: {'actor': scheduler[key][0],
-                                'critic': scheduler[key][1]} for key in self.model_keys}
         if self.use_automatic_entropy_tuning:
             self.target_entropy = -policy.action_space[self.agent_keys[0]].shape[-1]
             self.log_alpha = nn.Parameter(torch.zeros(1, requires_grad=True, device=self.device))

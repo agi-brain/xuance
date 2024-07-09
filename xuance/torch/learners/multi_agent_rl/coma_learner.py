@@ -5,12 +5,8 @@ Implementation: Pytorch
 """
 import torch
 from torch import nn
-from typing import Optional, List
+from typing import List
 from argparse import Namespace
-from operator import itemgetter
-from numpy import concatenate as concat
-from xuance.torch import Tensor
-from xuance.torch.utils import ValueNorm
 from xuance.torch.learners import LearnerMAS
 
 
@@ -19,24 +15,23 @@ class COMA_Learner(LearnerMAS):
                  config: Namespace,
                  model_keys: List[str],
                  agent_keys: List[str],
-                 episode_length: int,
-                 policy: nn.Module,
-                 optimizer: Optional[List[torch.optim.Adam]],
-                 scheduler: Optional[List[torch.optim.lr_scheduler.LinearLR]] = None):
+                 policy: nn.Module):
+        super(COMA_Learner, self).__init__(config, model_keys, agent_keys, policy)
+        self.optimizer = {
+            'actor': torch.optim.Adam(self.policy.parameters_actor, config.learning_rate_actor, eps=1e-5),
+            'critic': torch.optim.Adam(self.policy.parameters_critic, config.learning_rate_critic, eps=1e-5)
+        }
+        self.scheduler = {
+            'actor': torch.optim.lr_scheduler.LinearLR(self.optimizer['actor'], start_factor=1.0, end_factor=0.5,
+                                                       total_iters=self.config.running_steps),
+            'critic': torch.optim.lr_scheduler.LinearLR(self.optimizer['critic'], start_factor=1.0, end_factor=0.5,
+                                                        total_iters=self.config.running_steps)
+        }
         self.gamma = config.gamma
         self.td_lambda = config.td_lambda
         self.sync_frequency = config.sync_frequency
         self.use_global_state = config.use_global_state
         self.mse_loss = nn.MSELoss()
-        super(COMA_Learner, self).__init__(config, model_keys, agent_keys, episode_length, policy, optimizer, scheduler)
-        self.optimizer = {
-            'actor': optimizer[0],
-            'critic': optimizer[1]
-        }
-        self.scheduler = {
-            'actor': scheduler[0],
-            'critic': scheduler[1]
-        }
         self.iterations_actor = self.iterations
         self.iterations_critic = 0
 

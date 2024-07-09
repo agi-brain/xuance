@@ -6,7 +6,7 @@ Implementation: Pytorch
 import torch
 from torch import nn
 from xuance.torch.learners import LearnerMAS
-from typing import Optional, List
+from typing import List
 from argparse import Namespace
 from operator import itemgetter
 
@@ -16,14 +16,14 @@ class QMIX_Learner(LearnerMAS):
                  config: Namespace,
                  model_keys: List[str],
                  agent_keys: List[str],
-                 episode_length: int,
-                 policy: nn.Module,
-                 optimizer: Optional[torch.optim.Adam],
-                 scheduler: Optional[torch.optim.lr_scheduler.LinearLR] = None):
+                 policy: nn.Module):
         self.gamma = config.gamma
         self.sync_frequency = config.sync_frequency
         self.mse_loss = nn.MSELoss()
-        super(QMIX_Learner, self).__init__(config, model_keys, agent_keys, episode_length, policy, optimizer, scheduler)
+        super(QMIX_Learner, self).__init__(config, model_keys, agent_keys, policy)
+        self.optimizer = torch.optim.Adam(self.policy.parameters_model, config.learning_rate, eps=1e-5)
+        self.scheduler = torch.optim.lr_scheduler.LinearLR(self.optimizer, start_factor=1.0, end_factor=0.5,
+                                                           total_iters=self.config.running_steps)
         self.n_actions = {k: self.policy.action_space[k].n for k in self.model_keys}
 
     def update(self, sample):

@@ -28,9 +28,6 @@ class NoisyDQN_Agent(Agent):
 
         # Build policy, optimizer, scheduler.
         self.policy = self._build_policy()
-        optimizer = torch.optim.Adam(self.policy.parameters(), self.config.learning_rate, eps=1e-5)
-        lr_scheduler = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=1.0, end_factor=0.0,
-                                                         total_iters=self.config.running_steps)
 
         # Create experience replay buffer.
         input_buffer = dict(observation_space=self.observation_space,
@@ -43,7 +40,7 @@ class NoisyDQN_Agent(Agent):
         self.atari = True if config.env_name == "Atari" else False
         Buffer = DummyOffPolicyBuffer_Atari if self.atari else DummyOffPolicyBuffer
         self.memory = Buffer(**input_buffer)
-        self.learner = self._build_learner(self.config, envs.max_episode_steps, self.policy, optimizer, lr_scheduler)
+        self.learner = self._build_learner(self.config, self.policy)
 
     def _build_policy(self):
         normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None

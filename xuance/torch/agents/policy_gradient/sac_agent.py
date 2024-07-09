@@ -25,14 +25,6 @@ class SAC_Agent(Agent):
 
         # Build policy, optimizer, scheduler.
         self.policy = self._build_policy()
-        optimizers = {
-            'actor': torch.optim.Adam(self.policy.actor_parameters, self.config.actor_learning_rate),
-            'critic': torch.optim.Adam(self.policy.critic_parameters, self.config.critic_learning_rate)}
-        lr_schedulers = {
-            'actor': torch.optim.lr_scheduler.LinearLR(optimizers['actor'], start_factor=1.0, end_factor=0.25,
-                                                       total_iters=self.config.running_steps),
-            'critic': torch.optim.lr_scheduler.LinearLR(optimizers['critic'], start_factor=1.0, end_factor=0.25,
-                                                        total_iters=self.config.running_steps)}
 
         # Create experience replay buffer.
         self.auxiliary_info_shape = {}
@@ -42,9 +34,8 @@ class SAC_Agent(Agent):
                                            n_envs=self.n_envs,
                                            buffer_size=self.config.buffer_size,
                                            batch_size=self.config.batch_size)
-        # Create learner.
-        self.learner = self._build_learner(self.config, envs.max_episode_steps, self.policy, optimizers, lr_schedulers,
-                                           -np.prod(self.action_space.shape).item())
+        # build learner
+        self.learner = self._build_learner(self.config, self.policy, -np.prod(self.action_space.shape).item())
 
     def _build_policy(self):
         normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None

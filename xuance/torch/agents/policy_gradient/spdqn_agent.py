@@ -50,14 +50,6 @@ class SPDQN_Agent(PDQN_Agent, Agent):
 
         # Build policy, optimizer, scheduler.
         self.policy = self._build_policy()
-        conactor_optimizer = torch.optim.Adam(self.policy.conactor.parameters(), self.config.learning_rate)
-        qnetwork_optimizer = torch.optim.Adam(self.policy.qnetwork.parameters(), self.config.learning_rate)
-        optimizers = [conactor_optimizer, qnetwork_optimizer]
-        conactor_lr_scheduler = torch.optim.lr_scheduler.LinearLR(conactor_optimizer, start_factor=1.0, end_factor=0.25,
-                                                                  total_iters=self.config.running_steps)
-        qnetwork_lr_scheduler = torch.optim.lr_scheduler.LinearLR(qnetwork_optimizer, start_factor=1.0, end_factor=0.25,
-                                                                  total_iters=self.config.running_steps)
-        lr_schedulers = [conactor_lr_scheduler, qnetwork_lr_scheduler]
 
         self.memory = DummyOffPolicyBuffer(observation_space=self.observation_space,
                                            action_space=self.buffer_action_space,
@@ -65,7 +57,7 @@ class SPDQN_Agent(PDQN_Agent, Agent):
                                            n_envs=self.n_envs,
                                            buffer_size=config.buffer_size,
                                            batch_size=config.batch_size)
-        self.learner = self._build_learner(self.config, envs.max_episode_steps, self.policy, optimizers, lr_schedulers)
+        self.learner = self._build_learner(self.config, self.policy)
 
         self.num_disact = self.action_space.spaces[0].n
         self.conact_sizes = np.array([self.action_space.spaces[i].shape[0] for i in range(1, self.num_disact + 1)])

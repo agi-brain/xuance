@@ -1,4 +1,3 @@
-import torch
 import numpy as np
 from tqdm import tqdm
 from copy import deepcopy
@@ -23,10 +22,6 @@ class PerDQN_Agent(DQN_Agent):
         self.PER_beta0 = config.PER_beta0
         self.PER_beta = config.PER_beta0
 
-        optimizer = torch.optim.Adam(self.policy.parameters(), self.config.learning_rate, eps=1e-5)
-        lr_scheduler = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=1.0, end_factor=0.0,
-                                                         total_iters=self.config.running_steps)
-
         # Create experience replay buffer.
         self.auxiliary_info_shape = {}
         self.atari = True if config.env_name == "Atari" else False
@@ -37,7 +32,7 @@ class PerDQN_Agent(DQN_Agent):
                                          buffer_size=config.buffer_size,
                                          batch_size=config.batch_size,
                                          alpha=config.PER_alpha)
-        self.learner = self._build_learner(self.config, envs.max_episode_steps, self.policy, optimizer, lr_scheduler)
+        self.learner = self._build_learner(self.config, self.policy)
 
     def train_epochs(self, n_epochs=1):
         train_info = {}

@@ -8,7 +8,7 @@ Trick: Parameter sharing for all agents, with agents' one-hot IDs as actor-criti
 import torch
 from torch import nn
 from xuance.torch.learners import LearnerMAS
-from typing import Optional, List
+from typing import List
 from argparse import Namespace
 from operator import itemgetter
 
@@ -18,19 +18,21 @@ class MADDPG_Learner(LearnerMAS):
                  config: Namespace,
                  model_keys: List[str],
                  agent_keys: List[str],
-                 episode_length: int,
-                 policy: nn.Module,
-                 optimizer: Optional[dict],
-                 scheduler: Optional[dict] = None):
+                 policy: nn.Module):
+        super(MADDPG_Learner, self).__init__(config, model_keys, agent_keys, policy)
+        self.optimizer = {
+            key: {'actor': torch.optim.Adam(self.policy.parameters_actor[key], self.config.lr_a, eps=1e-5),
+                  'critic': torch.optim.Adam(self.policy.parameters_critic[key], self.config.lr_c, eps=1e-5)}
+            for key in self.model_keys}
+        self.scheduler = {
+            key: {'actor': torch.optim.lr_scheduler.LinearLR(self.optimizer[key]['actor'], start_factor=1.0,
+                                                             end_factor=0.5, total_iters=self.config.running_steps),
+                  'critic': torch.optim.lr_scheduler.LinearLR(self.optimizer[key]['critic'], start_factor=1.0,
+                                                              end_factor=0.5, total_iters=self.config.running_steps)}
+            for key in self.model_keys}
         self.gamma = config.gamma
         self.tau = config.tau
         self.mse_loss = nn.MSELoss()
-        super(MADDPG_Learner, self).__init__(config, model_keys, agent_keys, episode_length,
-                                             policy, optimizer, scheduler)
-        self.optimizer = {key: {'actor': optimizer[key][0],
-                                'critic': optimizer[key][1]} for key in self.model_keys}
-        self.scheduler = {key: {'actor': scheduler[key][0],
-                                'critic': scheduler[key][1]} for key in self.model_keys}
 
     def update(self, sample):
         self.iterations += 1

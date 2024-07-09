@@ -35,12 +35,6 @@ class COMA_Agents(MARLAgents):
 
         # create policy, optimizer, and lr_scheduler.
         self.policy = self._build_policy()
-        optimizer = [torch.optim.Adam(self.policy.parameters_actor, config.learning_rate_actor, eps=1e-5),
-                     torch.optim.Adam(self.policy.parameters_critic, config.learning_rate_critic, eps=1e-5)]
-        scheduler = [torch.optim.lr_scheduler.LinearLR(optimizer[0], start_factor=1.0, end_factor=0.5,
-                                                       total_iters=self.config.running_steps),
-                     torch.optim.lr_scheduler.LinearLR(optimizer[1], start_factor=1.0, end_factor=0.5,
-                                                       total_iters=self.config.running_steps)]
 
         # create experience replay buffer
         buffer = COMA_Buffer_RNN if self.use_rnn else COMA_Buffer
@@ -56,8 +50,7 @@ class COMA_Agents(MARLAgents):
         # initialize the hidden states of the RNN is use RNN-based representations.
         self.rnn_hidden_actor, self.rnn_hidden_critic = self.init_rnn_hidden(self.n_envs)
 
-        self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, envs.max_episode_steps,
-                                           self.policy, optimizer, scheduler)
+        self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, self.policy)
 
     def _build_policy(self):
         """

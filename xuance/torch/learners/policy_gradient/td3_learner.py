@@ -6,18 +6,22 @@ Implementation: Pytorch
 import torch
 from torch import nn
 from xuance.torch.learners import Learner
-from typing import Optional
 from argparse import Namespace
 
 
 class TD3_Learner(Learner):
     def __init__(self,
                  config: Namespace,
-                 episode_length: int,
-                 policy: nn.Module,
-                 optimizer: dict,
-                 scheduler: Optional[dict] = None):
-        super(TD3_Learner, self).__init__(config, episode_length, policy, optimizer, scheduler)
+                 policy: nn.Module):
+        super(TD3_Learner, self).__init__(config, policy)
+        self.optimizer = {
+            'actor': torch.optim.Adam(self.policy.actor_parameters, self.config.actor_learning_rate),
+            'critic': torch.optim.Adam(self.policy.critic_parameters, self.config.critic_learning_rate)}
+        self.scheduler = {
+            'actor': torch.optim.lr_scheduler.LinearLR(self.optimizer['actor'], start_factor=1.0, end_factor=0.25,
+                                                       total_iters=self.config.running_steps),
+            'critic': torch.optim.lr_scheduler.LinearLR(self.optimizer['critic'], start_factor=1.0, end_factor=0.25,
+                                                        total_iters=self.config.running_steps)}
         self.tau = config.tau
         self.gamma = config.gamma
         self.actor_update_delay = config.actor_update_delay

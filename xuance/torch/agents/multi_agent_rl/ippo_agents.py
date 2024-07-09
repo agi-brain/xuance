@@ -31,12 +31,7 @@ class IPPO_Agents(MARLAgents):
         self.use_global_state = config.use_global_state
         # create policy, optimizer, and lr_scheduler.
         self.policy = self._build_policy()
-        optimizer = torch.optim.Adam(self.policy.parameters_model,
-                                     lr=config.learning_rate, eps=1e-5,
-                                     weight_decay=config.weight_decay)
-        scheduler = torch.optim.lr_scheduler.LinearLR(optimizer,
-                                                      start_factor=1.0, end_factor=config.end_factor_lr_decay,
-                                                      total_iters=self.config.running_steps)
+
         # create experience replay buffer
         n_actions = None if self.continuous_control else {k: self.action_space[k].n for k in self.agent_keys}
         buffer = MARL_OnPolicyBuffer_RNN if self.use_rnn else MARL_OnPolicyBuffer
@@ -55,8 +50,7 @@ class IPPO_Agents(MARLAgents):
                              max_episode_steps=envs.max_episode_steps)
         self.buffer_size = self.memory.buffer_size
         self.batch_size = self.buffer_size // self.n_minibatch
-        self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, envs.max_episode_steps,
-                                           self.policy, optimizer, scheduler)
+        self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, self.policy)
 
     def _build_policy(self):
         """

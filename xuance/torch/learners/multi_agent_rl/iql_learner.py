@@ -5,7 +5,7 @@ Implementation: Pytorch
 import torch
 from torch import nn
 from xuance.torch.learners import LearnerMAS
-from typing import Optional, List
+from typing import List
 from argparse import Namespace
 
 
@@ -14,13 +14,15 @@ class IQL_Learner(LearnerMAS):
                  config: Namespace,
                  model_keys: List[str],
                  agent_keys: List[str],
-                 episode_length: int,
-                 policy: nn.Module,
-                 optimizer: Optional[dict],
-                 scheduler: Optional[dict] = None):
+                 policy: nn.Module):
+        super(IQL_Learner, self).__init__(config, model_keys, agent_keys, policy)
+        self.optimizer = {key: torch.optim.Adam(self.policy.parameters_model[key], config.learning_rate, eps=1e-5)
+                          for key in self.model_keys}
+        self.scheduler = {key: torch.optim.lr_scheduler.LinearLR(self.optimizer[key], start_factor=1.0, end_factor=0.5,
+                                                                 total_iters=self.config.running_steps)
+                          for key in self.model_keys}
         self.gamma = config.gamma
         self.sync_frequency = config.sync_frequency
-        super(IQL_Learner, self).__init__(config, model_keys, agent_keys, episode_length, policy, optimizer, scheduler)
         self.n_actions = {k: self.policy.action_space[k].n for k in self.model_keys}
 
     def update(self, sample):

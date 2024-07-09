@@ -5,12 +5,10 @@ https://proceedings.neurips.cc/paper_files/paper/2022/file/9c1535a02f0ce07943334
 Implementation: Pytorch
 """
 import torch
-import numpy as np
 from torch import nn
-from typing import Optional, List
+from typing import List
 from argparse import Namespace
 from operator import itemgetter
-from xuance.torch import Tensor
 from xuance.torch.learners.multi_agent_rl.ippo_learner import IPPO_Learner
 
 
@@ -19,13 +17,9 @@ class MAPPO_Clip_Learner(IPPO_Learner):
                  config: Namespace,
                  model_keys: List[str],
                  agent_keys: List[str],
-                 episode_length: int,
-                 policy: nn.Module,
-                 optimizer: Optional[torch.optim.Adam],
-                 scheduler: Optional[torch.optim.lr_scheduler.LinearLR] = None):
-        super(MAPPO_Clip_Learner, self).__init__(config, model_keys, agent_keys, episode_length,
-                                                 policy, optimizer, scheduler)
-    
+                 policy: nn.Module):
+        super(MAPPO_Clip_Learner, self).__init__(config, model_keys, agent_keys, policy)
+
     def update(self, sample):
         self.iterations += 1
         info = {}

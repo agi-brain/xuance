@@ -29,9 +29,6 @@ class DRQN_Agent(Agent):
 
         # Build policy, optimizer, scheduler.
         self.policy = self._build_policy()
-        optimizer = torch.optim.Adam(self.policy.parameters(), self.config.learning_rate, eps=1e-5)
-        lr_scheduler = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=1.0, end_factor=0.0,
-                                                         total_iters=self.config.running_steps)
 
         # Create experience replay buffer.
         self.auxiliary_info_shape = {}
@@ -44,7 +41,7 @@ class DRQN_Agent(Agent):
                                                config.batch_size,
                                                episode_length=envs.max_episode_steps,
                                                lookup_length=config.lookup_length)
-        self.learner = self._build_learner(self.config, envs.max_episode_steps, self.policy, optimizer, lr_scheduler)
+        self.learner = self._build_learner(self.config, self.policy)
         self.lstm = True if config.rnn == "LSTM" else False
 
     def _build_policy(self):

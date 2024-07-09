@@ -33,11 +33,6 @@ class IQL_Agents(MARLAgents):
 
         # build policy, optimizers, schedulers
         self.policy = self._build_policy()
-        optimizer, scheduler = {}, {}
-        for key in self.model_keys:
-            optimizer[key] = torch.optim.Adam(self.policy.parameters_model[key], config.learning_rate, eps=1e-5)
-            scheduler[key] = torch.optim.lr_scheduler.LinearLR(optimizer[key], start_factor=1.0, end_factor=0.5,
-                                                               total_iters=self.config.running_steps)
 
         # create experience replay buffer
         input_buffer = dict(agent_keys=self.agent_keys,
@@ -53,8 +48,7 @@ class IQL_Agents(MARLAgents):
         self.memory = buffer(**input_buffer)
 
         # create learner
-        self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, envs.max_episode_steps,
-                                           self.policy, optimizer, scheduler)
+        self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, self.policy)
 
     def _build_policy(self):
         """

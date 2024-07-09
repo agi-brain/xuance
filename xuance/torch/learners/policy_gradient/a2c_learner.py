@@ -11,12 +11,11 @@ from argparse import Namespace
 class A2C_Learner(Learner):
     def __init__(self,
                  config: Namespace,
-                 episode_length: int,
                  policy: nn.Module):
-        super(A2C_Learner, self).__init__(config, episode_length, policy)
-        self.optimizer = torch.optim.Adam(self.policy.parameters(), self.config.learning_rate, eps=1e-5)
+        super(A2C_Learner, self).__init__(config, policy)
+        self.optimizer = torch.optim.Adam(self.policy.parameters(), config.learning_rate, eps=1e-5)
         self.scheduler = torch.optim.lr_scheduler.LinearLR(self.optimizer, start_factor=1.0, end_factor=0.0,
-                                                           total_iters=self.config.running_steps)
+                                                           total_iters=config.running_steps)
         self.mse_loss = nn.MSELoss()
         self.vf_coef = config.vf_coef
         self.ent_coef = config.ent_coef

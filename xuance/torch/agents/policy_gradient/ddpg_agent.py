@@ -26,16 +26,7 @@ class DDPG_Agent(Agent):
         self.noise_scale = config.start_noise
         self.delta_noise = (self.start_noise - self.end_noise) / (config.running_steps / self.n_envs)
 
-        # build policy, optimizer, lr_scheduler
-        self.policy = self._build_policy()
-        optimizers = {
-            'actor': torch.optim.Adam(self.policy.actor_parameters, self.config.actor_learning_rate),
-            'critic': torch.optim.Adam(self.policy.critic_parameters, self.config.critic_learning_rate)}
-        lr_schedulers = {
-            'actor': torch.optim.lr_scheduler.LinearLR(optimizers['actor'], start_factor=1.0, end_factor=0.25,
-                                                       total_iters=self.config.running_steps),
-            'critic': torch.optim.lr_scheduler.LinearLR(optimizers['critic'], start_factor=1.0, end_factor=0.25,
-                                                        total_iters=self.config.running_steps)}
+        self.policy = self._build_policy()  # build policy
 
         # crate memory
         self.auxiliary_info_shape = {}
@@ -45,7 +36,7 @@ class DDPG_Agent(Agent):
                                            n_envs=self.n_envs,
                                            buffer_size=config.buffer_size,
                                            batch_size=config.batch_size)
-        self.learner = self._build_learner(self.config, envs.max_episode_steps, self.policy, optimizers, lr_schedulers)
+        self.learner = self._build_learner(self.config, self.policy)
 
     def _build_policy(self):
         normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None

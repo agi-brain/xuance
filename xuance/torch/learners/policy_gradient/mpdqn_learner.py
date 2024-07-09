@@ -6,18 +6,22 @@ Implementation: Pytorch
 import torch
 from torch import nn
 from xuance.torch.learners import Learner
-from typing import Optional, Union
 from argparse import Namespace
 
 
 class MPDQN_Learner(Learner):
     def __init__(self,
                  config: Namespace,
-                 episode_length: int,
-                 policy: nn.Module,
-                 optimizer: torch.optim.Optimizer,
-                 scheduler: Union[dict, Optional[torch.optim.lr_scheduler.LinearLR]] = None):
-        super(MPDQN_Learner, self).__init__(config, episode_length, policy, optimizer, scheduler)
+                 policy: nn.Module):
+        super(MPDQN_Learner, self).__init__(config, policy)
+        conactor_optimizer = torch.optim.Adam(self.policy.conactor.parameters(), self.config.learning_rate)
+        qnetwork_optimizer = torch.optim.Adam(self.policy.qnetwork.parameters(), self.config.learning_rate)
+        self.optimizers = [conactor_optimizer, qnetwork_optimizer]
+        conactor_lr_scheduler = torch.optim.lr_scheduler.LinearLR(conactor_optimizer, start_factor=1.0, end_factor=0.25,
+                                                                  total_iters=self.config.running_steps)
+        qnetwork_lr_scheduler = torch.optim.lr_scheduler.LinearLR(qnetwork_optimizer, start_factor=1.0, end_factor=0.25,
+                                                                  total_iters=self.config.running_steps)
+        self.scheduler = [conactor_lr_scheduler, qnetwork_lr_scheduler]
         self.tau = config.tau
         self.gamma = config.gamma
         self.mse_loss = nn.MSELoss()

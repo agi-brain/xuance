@@ -28,15 +28,6 @@ class ISAC_Agents(IDDPG_Agents, MARLAgents):
         self.continuous_control = False
         # build policy, optimizers, schedulers
         self.policy = self._build_policy()
-        optimizer, scheduler = {}, {}
-        for key in self.model_keys:
-            optimizer[key] = [torch.optim.Adam(self.policy.parameters_actor[key], self.config.lr_a, eps=1e-5),
-                              torch.optim.Adam(self.policy.parameters_critic[key], self.config.lr_c, eps=1e-5)]
-            scheduler[key] = [torch.optim.lr_scheduler.LinearLR(optimizer[key][0], start_factor=1.0, end_factor=0.5,
-                                                                total_iters=self.config.running_steps),
-                              torch.optim.lr_scheduler.LinearLR(optimizer[key][1], start_factor=1.0, end_factor=0.5,
-                                                                total_iters=self.config.running_steps)]
-
         # create experience replay buffer
         buffer = MARL_OffPolicyBuffer_RNN if self.use_rnn else MARL_OffPolicyBuffer
         self.memory = buffer(agent_keys=self.agent_keys,
@@ -50,8 +41,7 @@ class ISAC_Agents(IDDPG_Agents, MARLAgents):
                              max_episode_steps=envs.max_episode_steps)
 
         # create learner
-        self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, envs.max_episode_steps,
-                                           self.policy, optimizer, scheduler)
+        self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, self.policy)
 
     def _build_policy(self):
         """

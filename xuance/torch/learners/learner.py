@@ -13,17 +13,16 @@ MAX_GPUs = 100
 class Learner(ABC):
     def __init__(self,
                  config: Namespace,
-                 episode_length: int,
                  policy: torch.nn.Module):
         self.value_normalizer = None
         self.config = config
 
-        self.episode_length = episode_length
+        self.episode_length = config.episode_length
         self.use_rnn = config.use_rnn if hasattr(config, 'use_rnn') else False
         self.use_actions_mask = config.use_actions_mask if hasattr(config, 'use_actions_mask') else False
         self.policy = policy
-        self.optimizer: Union[dict, Optional[torch.optim.Optimizer]] = None
-        self.scheduler: Union[dict, Optional[torch.optim.lr_scheduler.LinearLR]] = None
+        self.optimizer: Union[dict, list, Optional[torch.optim.Optimizer]] = None
+        self.scheduler: Union[dict, list, Optional[torch.optim.lr_scheduler.LinearLR]] = None
 
         self.use_grad_clip = config.use_grad_clip
         self.grad_clip_norm = config.grad_clip_norm
@@ -70,10 +69,7 @@ class LearnerMAS(ABC):
                  config: Namespace,
                  model_keys: List[str],
                  agent_keys: List[str],
-                 episode_length: int,
-                 policy: torch.nn.Module,
-                 optimizer: Union[dict, Optional[torch.optim.Optimizer]],
-                 scheduler: Union[dict, Optional[torch.optim.lr_scheduler.LinearLR]] = None):
+                 policy: torch.nn.Module):
         self.value_normalizer = None
         self.config = config
         self.n_agents = config.n_agents
@@ -82,12 +78,12 @@ class LearnerMAS(ABC):
         self.use_parameter_sharing = config.use_parameter_sharing
         self.model_keys = model_keys
         self.agent_keys = agent_keys
-        self.episode_length = episode_length
+        self.episode_length = config.episode_length
         self.use_rnn = config.use_rnn if hasattr(config, 'use_rnn') else False
         self.use_actions_mask = config.use_actions_mask if hasattr(config, 'use_actions_mask') else False
         self.policy = policy
-        self.optimizer = optimizer
-        self.scheduler = scheduler
+        self.optimizer: Union[dict, list, Optional[torch.optim.Optimizer]] = None
+        self.scheduler: Union[dict, list, Optional[torch.optim.lr_scheduler.LinearLR]] = None
         self.use_grad_clip = config.use_grad_clip
         self.grad_clip_norm = config.grad_clip_norm
         self.device = config.device

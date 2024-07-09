@@ -20,22 +20,10 @@ class PPOCLIP_Agent(OnPolicyAgent):
                  config: Namespace,
                  envs: DummyVecEnv):
         super(PPOCLIP_Agent, self).__init__(config, envs)
-        # Build memory.
         self.auxiliary_info_shape = {"old_logp": ()}
-        self.memory = self._build_memory(self.auxiliary_info_shape)
-
-        # Build policy.
-        self.policy = self._build_policy()
-
-        # Build optimizer.
-        optimizer = torch.optim.Adam(self.policy.parameters(), self.config.learning_rate, eps=1e-5)
-
-        # Build learning rate scheduler.
-        lr_scheduler = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=1.0, end_factor=0.0,
-                                                         total_iters=self.config.running_steps)
-
-        # Build learner.
-        self.learner = self._build_learner(self.config, envs.max_episode_steps, self.policy, optimizer, lr_scheduler)
+        self.memory = self._build_memory(self.auxiliary_info_shape)  # build memory
+        self.policy = self._build_policy()  # build policy
+        self.learner = self._build_learner(self.config, self.policy)  # build learner
 
     def _build_policy(self):
         normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None

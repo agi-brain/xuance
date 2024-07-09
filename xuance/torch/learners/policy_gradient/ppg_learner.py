@@ -6,7 +6,6 @@ Implementation: Pytorch
 import torch
 from torch import nn
 from xuance.torch.learners import Learner
-from typing import Optional, Union
 from argparse import Namespace
 from xuance.torch.utils.operations import merge_distributions
 
@@ -14,11 +13,11 @@ from xuance.torch.utils.operations import merge_distributions
 class PPG_Learner(Learner):
     def __init__(self,
                  config: Namespace,
-                 episode_length: int,
-                 policy: nn.Module,
-                 optimizer: torch.optim.Optimizer,
-                 scheduler: Union[dict, Optional[torch.optim.lr_scheduler.LinearLR]] = None):
-        super(PPG_Learner, self).__init__(config, episode_length, policy, optimizer, scheduler)
+                 policy: nn.Module):
+        super(PPG_Learner, self).__init__(config, policy)
+        self.optimizer = torch.optim.Adam(self.policy.parameters(), self.config.learning_rate, eps=1e-5)
+        self.scheduler = torch.optim.lr_scheduler.LinearLR(self.optimizer, start_factor=1.0, end_factor=0.0,
+                                                           total_iters=self.config.running_steps)
         self.mse_loss = nn.MSELoss()
         self.ent_coef = config.ent_coef
         self.clip_range = config.clip_range
