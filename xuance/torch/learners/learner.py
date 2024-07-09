@@ -14,9 +14,7 @@ class Learner(ABC):
     def __init__(self,
                  config: Namespace,
                  episode_length: int,
-                 policy: torch.nn.Module,
-                 optimizer: Union[dict, Optional[torch.optim.Optimizer]],
-                 scheduler: Union[dict, Optional[torch.optim.lr_scheduler.LinearLR]] = None):
+                 policy: torch.nn.Module):
         self.value_normalizer = None
         self.config = config
 
@@ -24,8 +22,8 @@ class Learner(ABC):
         self.use_rnn = config.use_rnn if hasattr(config, 'use_rnn') else False
         self.use_actions_mask = config.use_actions_mask if hasattr(config, 'use_actions_mask') else False
         self.policy = policy
-        self.optimizer = optimizer
-        self.scheduler = scheduler
+        self.optimizer: Union[dict, Optional[torch.optim.Optimizer]] = None
+        self.scheduler: Union[dict, Optional[torch.optim.lr_scheduler.LinearLR]] = None
 
         self.use_grad_clip = config.use_grad_clip
         self.grad_clip_norm = config.grad_clip_norm
