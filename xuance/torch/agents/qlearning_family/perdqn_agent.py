@@ -1,4 +1,3 @@
-import numpy as np
 from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
@@ -49,7 +48,8 @@ class PerDQN_Agent(DQN_Agent):
             step_info = {}
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
-            acts = self.action(obs, self.egreedy)
+            policy_out = self.action(obs, self.egreedy)
+            acts = policy_out['actions']
             next_obs, rewards, terminals, trunctions, infos = self.envs.step(acts)
 
             self.memory.store(obs, acts, self._process_reward(rewards), terminals, self._process_observation(next_obs))
@@ -78,57 +78,3 @@ class PerDQN_Agent(DQN_Agent):
             self.current_step += self.n_envs
             if self.egreedy > self.end_greedy:
                 self.egreedy -= self.delta_egreedy
-
-    def test(self, env_fn, test_episodes):
-        test_envs = env_fn()
-        num_envs = test_envs.num_envs
-        videos, episode_videos = [[] for _ in range(num_envs)], []
-        current_episode, scores, best_score = 0, [], -np.inf
-        obs, infos = test_envs.reset()
-        if self.config.render_mode == "rgb_array" and self.render:
-            images = test_envs.render(self.config.render_mode)
-            for idx, img in enumerate(images):
-                videos[idx].append(img)
-
-        while current_episode < test_episodes:
-            self.obs_rms.update(obs)
-            obs = self._process_observation(obs)
-            acts = self.action(obs, egreedy=0.0)
-            next_obs, rewards, terminals, trunctions, infos = test_envs.step(acts)
-            if self.config.render_mode == "rgb_array" and self.render:
-                images = test_envs.render(self.config.render_mode)
-                for idx, img in enumerate(images):
-                    videos[idx].append(img)
-
-            obs = deepcopy(next_obs)
-            for i in range(num_envs):
-                if terminals[i] or trunctions[i]:
-                    if self.atari and (~trunctions[i]):
-                        pass
-                    else:
-                        obs[i] = infos[i]["reset_obs"]
-                        scores.append(infos[i]["episode_score"])
-                        current_episode += 1
-                        if best_score < infos[i]["episode_score"]:
-                            best_score = infos[i]["episode_score"]
-                            episode_videos = videos[i].copy()
-                        if self.config.test_mode:
-                            print("Episode: %d, Score: %.2f" % (current_episode, infos[i]["episode_score"]))
-
-        if self.config.render_mode == "rgb_array" and self.render:
-            # time, height, width, channel -> time, channel, height, width
-            videos_info = {"Videos_Test": np.array([episode_videos], dtype=np.uint8).transpose((0, 1, 4, 2, 3))}
-            self.log_videos(info=videos_info, fps=self.fps, x_index=self.current_step)
-
-        if self.config.test_mode:
-            print("Best Score: %.2f" % (best_score))
-
-        test_info = {
-            "Test-Episode-Rewards/Mean-Score": np.mean(scores),
-            "Test-Episode-Rewards/Std-Score": np.std(scores)
-        }
-        self.log_infos(test_info, self.current_step)
-
-        test_envs.close()
-
-        return scores

@@ -41,7 +41,7 @@ class Agent(ABC):
         # Environment attributes.
         self.envs = envs
         self.envs.reset()
-        self.config.episode_length = envs.max_episode_steps
+        self.episode_length = self.config.episode_length = envs.max_episode_steps
         self.render = config.render
         self.fps = config.fps
         self.n_envs = envs.num_envs
