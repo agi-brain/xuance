@@ -39,7 +39,7 @@ class PerDQN_Agent(DQN_Agent):
             samples = self.memory.sample(self.PER_beta)
             td_error, step_info = self.learner.update(**samples)
             self.memory.update_priorities(samples['step_choices'], td_error)
-        train_info["epsilon-greedy"] = self.egreedy
+        train_info["epsilon-greedy"] = self.e_greedy
         return train_info
 
     def train(self, train_steps):
@@ -48,7 +48,7 @@ class PerDQN_Agent(DQN_Agent):
             step_info = {}
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
-            policy_out = self.action(obs, self.egreedy)
+            policy_out = self.action(obs, test_mode=False)
             acts = policy_out['actions']
             next_obs, rewards, terminals, trunctions, infos = self.envs.step(acts)
 
@@ -76,5 +76,5 @@ class PerDQN_Agent(DQN_Agent):
                         self.log_infos(step_info, self.current_step)
 
             self.current_step += self.n_envs
-            if self.egreedy > self.end_greedy:
-                self.egreedy -= self.delta_egreedy
+            if self.e_greedy > self.end_greedy:
+                self.e_greedy -= self.delta_egreedy

@@ -19,7 +19,7 @@ class DQN_Agent(OffPolicyAgent):
                  envs: DummyVecEnv):
         super(DQN_Agent, self).__init__(config, envs)
         self.start_greedy, self.end_greedy = config.start_greedy, config.end_greedy
-        self.egreedy = config.start_greedy
+        self.e_greedy = config.start_greedy
         self.delta_egreedy = (self.start_greedy - self.end_greedy) / (config.decay_step_greedy / self.n_envs)
 
         self.policy = self._build_policy()  # build policy

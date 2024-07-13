@@ -19,7 +19,16 @@ class OffPolicyAgent(Agent):
                  config: Namespace,
                  envs: DummyVecEnv):
         super(OffPolicyAgent, self).__init__(config, envs)
+        self.start_greedy = config.start_greedy if hasattr(config, "start_greedy") else None
+        self.end_greedy = config.end_greedy if hasattr(config, "start_greedy") else None
+        self.start_noise = config.start_noise if hasattr(config, "start_noise") else None
+        self.end_noise = config.end_noise if hasattr(config, "end_noise") else None
+        self.auxiliary_info_shape = None
         self.memory: Optional[DummyOffPolicyBuffer] = None
+        self.e_greedy: Optional[float] = None
+        self.delta_egreedy: Optional[float] = None
+        self.noise_scale: Optional[float] = None
+        self.delta_noise: Optional[float] = None
 
     def _build_memory(self, auxiliary_info_shape=None):
         self.atari = True if self.config.env_name == "Atari" else False
@@ -35,14 +44,37 @@ class OffPolicyAgent(Agent):
     def _build_policy(self):
         raise NotImplementedError
 
+    def _update_explore_factor(self):
+        if self.e_greedy is not None:
+            if self.e_greedy > self.end_greedy:
+                self.e_greedy -= self.delta_egreedy
+        elif self.noise_scale is not None:
+            if self.noise_scale >= self.end_noise:
+                self.noise_scale -= self.delta_noise
+
+    def exploration(self, pi_actions):
+        """Returns the actions for exploration.
+
+        Parameters:
+            pi_actions: The original output actions.
+
+        Returns:
+            explore_actions: The actions with noisy values.
+        """
+        random_actions = np.random.choice(self.action_space.n, self.n_envs)
+        if np.random.rand() < self.e_greedy:
+            actions = random_actions
+        else:
+            actions = pi_actions.detach().cpu().numpy()
+        return actions
+
     def action(self, observations: np.ndarray,
-               e_greedy: float = None, noise_scale: float = None):
+               test_mode: Optional[bool] = False):
         """Returns actions and values.
 
         Parameters:
             observations (np.ndarray): The observation.
-            e_greedy (float): The epsilon greedy.
-            noise_scale (float): The scale of noise.
+            test_mode (Optional[bool]): True for testing without noises.
 
         Returns:
             actions: The actions to be executed.
@@ -51,16 +83,10 @@ class OffPolicyAgent(Agent):
             log_pi: Log of stochastic actions.
         """
         _, actions_output, _ = self.policy(observations)
-        if e_greedy is not None:
-            random_actions = np.random.choice(self.action_space.n, self.n_envs)
-            if np.random.rand() < e_greedy:
-                actions = random_actions
-            else:
-                actions = actions_output.detach().cpu().numpy()
-        elif noise_scale is not None:
-            actions = actions_output + np.random.normal(size=actions_output.shape) * noise_scale
+        if test_mode:
+            actions = self.exploration(actions_output)
         else:
-            actions = actions_output
+            actions = actions_output.detach().cpu().numpy()
         return {"actions": actions}
 
     def train_epochs(self, n_epochs=1):
@@ -68,9 +94,9 @@ class OffPolicyAgent(Agent):
         for _ in range(n_epochs):
             samples = self.memory.sample()
             train_info = self.learner.update(**samples)
-        if hasattr(self, "egreedy"):
-            train_info["epsilon-greedy"] = self.egreedy
-        elif hasattr(self, "noise_scale"):
+        if self.e_greedy is not None:
+            train_info["epsilon-greedy"] = self.e_greedy
+        elif self.noise_scale is not None:
             train_info["noise_scale"] = self.noise_scale
         else:
             pass
@@ -82,7 +108,7 @@ class OffPolicyAgent(Agent):
             step_info = {}
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
-            policy_out = self.action(obs, self.egreedy)
+            policy_out = self.action(obs, test_mode=False)
             acts = policy_out['actions']
             next_obs, rewards, terminals, trunctions, infos = self.envs.step(acts)
 
@@ -109,8 +135,8 @@ class OffPolicyAgent(Agent):
                         self.log_infos(step_info, self.current_step)
 
             self.current_step += self.n_envs
-            if self.egreedy >= self.end_greedy:
-                self.egreedy -= self.delta_egreedy
+            if self.e_greedy >= self.end_greedy:
+                self.e_greedy -= self.delta_egreedy
 
     def test(self, env_fn, test_episodes):
         test_envs = env_fn()
@@ -126,7 +152,7 @@ class OffPolicyAgent(Agent):
         while current_episode < test_episodes:
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
-            policy_out = self.action(obs)
+            policy_out = self.action(obs, test_mode=True)
             next_obs, rewards, terminals, trunctions, infos = test_envs.step(policy_out['actions'])
             if self.config.render_mode == "rgb_array" and self.render:
                 images = test_envs.render(self.config.render_mode)
