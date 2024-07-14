@@ -89,6 +89,17 @@ class OffPolicyAgent(Agent):
             actions = actions_output.detach().cpu().numpy()
         return {"actions": actions}
 
+    def get_aux_info(self, policy_output: dict = None):
+        """Returns auxiliary information.
+
+        Parameters:
+            policy_output (dict): The output information of the policy.
+
+        Returns:
+            aux_info (dict): The auxiliary information.
+        """
+        return None
+
     def train_epochs(self, n_epochs=1):
         train_info = {}
         for _ in range(n_epochs):

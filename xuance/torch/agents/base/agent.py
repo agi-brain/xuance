@@ -134,9 +134,13 @@ class Agent(ABC):
         """
         if self.use_wandb:
             for k, v in info.items():
+                if v is None:
+                    continue
                 wandb.log({k: v}, step=x_index)
         else:
             for k, v in info.items():
+                if v is None:
+                    continue
                 try:
                     self.writer.add_scalar(k, v, x_index)
                 except:
@@ -145,11 +149,15 @@ class Agent(ABC):
     def log_videos(self, info: dict, fps: int, x_index: int = 0):
         if self.use_wandb:
             for k, v in info.items():
+                if v is None:
+                    continue
                 wandb.log({k: wandb.Video(v, fps=fps, format='gif')}, step=x_index)
         else:
             for k, v in info.items():
+                if v is None:
+                    continue
                 self.writer.add_video(k, v, fps=fps, global_step=x_index)
-
+8
     def _process_observation(self, observations):
         if self.use_obsnorm:
             if isinstance(self.observation_space, Dict):
