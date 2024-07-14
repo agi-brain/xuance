@@ -21,14 +21,18 @@ class OffPolicyAgent(Agent):
         super(OffPolicyAgent, self).__init__(config, envs)
         self.start_greedy = config.start_greedy if hasattr(config, "start_greedy") else None
         self.end_greedy = config.end_greedy if hasattr(config, "start_greedy") else None
+        self.delta_egreedy: Optional[float] = None
+        self.e_greedy: Optional[float] = None
+
         self.start_noise = config.start_noise if hasattr(config, "start_noise") else None
         self.end_noise = config.end_noise if hasattr(config, "end_noise") else None
+        self.delta_noise: Optional[float] = None
+        self.noise_scale: Optional[float] = None
+        self.actions_low = self.action_space.low if hasattr(self.action_space, "low") else None
+        self.actions_high = self.action_space.high if hasattr(self.action_space, "high") else None
+
         self.auxiliary_info_shape = None
         self.memory: Optional[DummyOffPolicyBuffer] = None
-        self.e_greedy: Optional[float] = None
-        self.delta_egreedy: Optional[float] = None
-        self.noise_scale: Optional[float] = None
-        self.delta_noise: Optional[float] = None
 
     def _build_memory(self, auxiliary_info_shape=None):
         self.atari = True if self.config.env_name == "Atari" else False
@@ -51,6 +55,8 @@ class OffPolicyAgent(Agent):
         elif self.noise_scale is not None:
             if self.noise_scale >= self.end_noise:
                 self.noise_scale -= self.delta_noise
+        else:
+            return
 
     def exploration(self, pi_actions):
         """Returns the actions for exploration.
@@ -61,12 +67,18 @@ class OffPolicyAgent(Agent):
         Returns:
             explore_actions: The actions with noisy values.
         """
-        random_actions = np.random.choice(self.action_space.n, self.n_envs)
-        if np.random.rand() < self.e_greedy:
-            actions = random_actions
+        if self.e_greedy is not None:
+            random_actions = np.random.choice(self.action_space.n, self.n_envs)
+            if np.random.rand() < self.e_greedy:
+                explore_actions = random_actions
+            else:
+                explore_actions = pi_actions.detach().cpu().numpy()
+        elif self.noise_scale is not None:
+            explore_actions = pi_actions + np.random.normal(size=pi_actions.shape) * self.noise_scale
+            explore_actions = np.clip(explore_actions, self.actions_low, self.actions_high)
         else:
-            actions = pi_actions.detach().cpu().numpy()
-        return actions
+            explore_actions = pi_actions
+        return explore_actions
 
     def action(self, observations: np.ndarray,
                test_mode: Optional[bool] = False):
@@ -89,28 +101,13 @@ class OffPolicyAgent(Agent):
             actions = actions_output.detach().cpu().numpy()
         return {"actions": actions}
 
-    def get_aux_info(self, policy_output: dict = None):
-        """Returns auxiliary information.
-
-        Parameters:
-            policy_output (dict): The output information of the policy.
-
-        Returns:
-            aux_info (dict): The auxiliary information.
-        """
-        return None
-
     def train_epochs(self, n_epochs=1):
         train_info = {}
         for _ in range(n_epochs):
             samples = self.memory.sample()
             train_info = self.learner.update(**samples)
-        if self.e_greedy is not None:
-            train_info["epsilon-greedy"] = self.e_greedy
-        elif self.noise_scale is not None:
-            train_info["noise_scale"] = self.noise_scale
-        else:
-            pass
+        train_info["epsilon-greedy"] = self.e_greedy
+        train_info["noise_scale"] = self.noise_scale
         return train_info
 
     def train(self, train_steps):
@@ -125,9 +122,10 @@ class OffPolicyAgent(Agent):
 
             self.memory.store(obs, acts, self._process_reward(rewards), terminals, self._process_observation(next_obs))
             if self.current_step > self.start_training and self.current_step % self.training_frequency == 0:
-                step_info = self.train_epochs(n_epochs=self.n_epochs)
-                self.log_infos(step_info, self.current_step)
+                train_info = self.train_epochs(n_epochs=self.n_epochs)
+                self.log_infos(train_info, self.current_step)
 
+            self.returns = self.gamma * self.returns + rewards
             obs = deepcopy(next_obs)
             for i in range(self.n_envs):
                 if terminals[i] or trunctions[i]:
@@ -136,6 +134,8 @@ class OffPolicyAgent(Agent):
                     else:
                         obs[i] = infos[i]["reset_obs"]
                         self.envs.buf_obs[i] = obs[i]
+                        self.ret_rms.update(self.returns[i:i + 1])
+                        self.returns[i] = 0.0
                         self.current_episode[i] += 1
                         if self.use_wandb:
                             step_info["Episode-Steps/env-%d" % i] = infos[i]["episode_step"]
@@ -146,8 +146,7 @@ class OffPolicyAgent(Agent):
                         self.log_infos(step_info, self.current_step)
 
             self.current_step += self.n_envs
-            if self.e_greedy >= self.end_greedy:
-                self.e_greedy -= self.delta_egreedy
+            self._update_explore_factor()
 
     def test(self, env_fn, test_episodes):
         test_envs = env_fn()
@@ -191,7 +190,7 @@ class OffPolicyAgent(Agent):
             self.log_videos(info=videos_info, fps=self.fps, x_index=self.current_step)
 
         if self.config.test_mode:
-            print("Best Score: %.2f" % (best_score))
+            print("Best Score: %.2f" % best_score)
 
         test_info = {
             "Test-Episode-Rewards/Mean-Score": np.mean(scores),

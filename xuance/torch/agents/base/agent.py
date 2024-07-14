@@ -157,7 +157,7 @@ class Agent(ABC):
                 if v is None:
                     continue
                 self.writer.add_video(k, v, fps=fps, global_step=x_index)
-8
+
     def _process_observation(self, observations):
         if self.use_obsnorm:
             if isinstance(self.observation_space, Dict):

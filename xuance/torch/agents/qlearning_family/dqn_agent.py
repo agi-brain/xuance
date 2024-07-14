@@ -1,4 +1,5 @@
 import torch
+import numpy as np
 from argparse import Namespace
 from xuance.environment import DummyVecEnv
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
@@ -23,7 +24,7 @@ class DQN_Agent(OffPolicyAgent):
         self.delta_egreedy = (self.start_greedy - self.end_greedy) / (config.decay_step_greedy / self.n_envs)
 
         self.policy = self._build_policy()  # build policy
-        self.memory = self._build_memory(auxiliary_info_shape={})  # build memory
+        self.memory = self._build_memory()  # build memory
         self.learner = self._build_learner(self.config, self.policy)  # build learner
 
     def _build_policy(self):
