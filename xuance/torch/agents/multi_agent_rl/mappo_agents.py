@@ -160,7 +160,8 @@ class MAPPO_Agents(IPPO_Agents):
                 log_pi_a_dict = {k: log_pi_a[k].reshape([n_env]) for i, k in enumerate(self.agent_keys)}
                 values_dict = {k: values_out[k].cpu().detach().numpy().reshape([n_env]) for k in self.agent_keys}
 
-        return rnn_hidden_actor_new, rnn_hidden_critic_new, actions_dict, log_pi_a_dict, values_dict
+        return {"rnn_hidden_actor": rnn_hidden_actor_new, "rnn_hidden_critic": rnn_hidden_critic_new,
+                "actions": actions_dict, "log_pi": log_pi_a_dict, "values": values_dict}
 
     def values_next(self,
                     i_env: int,

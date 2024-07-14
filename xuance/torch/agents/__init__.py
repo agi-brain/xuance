@@ -1,5 +1,5 @@
 from xuance.torch.agents.base import Agent, MARLAgents, RandomAgents
-from xuance.torch.agents.core import OnPolicyAgent, OffPolicyAgent, OffPolicyMARLAgents
+from xuance.torch.agents.core import OnPolicyAgent, OffPolicyAgent, OffPolicyMARLAgents, OnPolicyMARLAgents
 
 '''Single-Agent Reinforcement Learning algorithms'''
 from .policy_gradient import PG_Agent
@@ -90,7 +90,7 @@ REGISTRY_Agents = {
 __all__ = [
     "Agent", "MARLAgents", "RandomAgents",
 
-    "OnPolicyAgent", "OffPolicyAgent", "OffPolicyMARLAgents",
+    "OnPolicyAgent", "OffPolicyAgent", "OffPolicyMARLAgents", "OnPolicyMARLAgents",
 
     "REGISTRY_Agents",
 
