@@ -87,11 +87,7 @@ class MARL_OnPolicyBuffer(BaseBuffer):
         self.n_size = buffer_size // self.n_envs
         self.store_global_state = False if self.state_space is None else True
         self.use_actions_mask = kwargs['use_actions_mask'] if 'use_actions_mask' in kwargs else False
-        self.n_actions = kwargs['n_actions'] if 'n_actions' in kwargs else None
-        if self.use_actions_mask:
-            self.avail_actions_shape = {key: (self.n_actions[key],) for key in self.agent_keys}
-        else:
-            self.avail_actions_shape = {key: () for key in self.agent_keys}
+        self.avail_actions_shape = kwargs['avail_actions_shape'] if 'avail_actions_shape' in kwargs else None
         self.use_gae = use_gae
         self.use_advantage_norm = use_advnorm
         self.gamma, self.gae_lambda = gamma, gae_lam
@@ -138,9 +134,8 @@ class MARL_OnPolicyBuffer(BaseBuffer):
                 'state': create_memory(space2shape(self.state_space), self.n_envs, self.n_size)
             })
         if self.use_actions_mask:
-            avail_actions_space = {key: (self.n_actions[key],) for key in self.agent_keys}
             self.data.update({
-                "avail_actions": create_memory(avail_actions_space, self.n_envs, self.n_size, np.bool_),
+                "avail_actions": create_memory(self.avail_actions_shape, self.n_envs, self.n_size, np.bool_),
             })
         self.ptr, self.size = 0, 0
         self.start_ids = np.zeros(self.n_envs, np.int64)  # the start index of the last episode for each env.
@@ -728,11 +723,7 @@ class MARL_OffPolicyBuffer(BaseBuffer):
         self.batch_size = batch_size
         self.store_global_state = False if self.state_space is None else True
         self.use_actions_mask = kwargs['use_actions_mask'] if 'use_actions_mask' in kwargs else False
-        self.n_actions = kwargs['n_actions'] if 'n_actions' in kwargs else None
-        if self.use_actions_mask:
-            self.avail_actions_shape = {key: (self.n_actions[key],) for key in self.agent_keys}
-        else:
-            self.avail_actions_shape = {key: () for key in self.agent_keys}
+        self.avail_actions_shape = kwargs['avail_actions_shape'] if 'avail_actions_shape' in kwargs else None
         self.data = {}
         self.clear()
         self.data_keys = self.data.keys()

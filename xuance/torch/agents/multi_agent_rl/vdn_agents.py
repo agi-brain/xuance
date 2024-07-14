@@ -3,12 +3,11 @@ from argparse import Namespace
 from xuance.environment import DummyVecMultiAgentEnv
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.policies import REGISTRY_Policy, VDN_mixer
-from xuance.torch.agents import MARLAgents
-from xuance.torch.agents.multi_agent_rl.iql_agents import IQL_Agents
+from xuance.torch.agents import OffPolicyMARLAgents
 from xuance.common import MARL_OffPolicyBuffer, MARL_OffPolicyBuffer_RNN
 
 
-class VDN_Agents(IQL_Agents, MARLAgents):
+class VDN_Agents(OffPolicyMARLAgents):
     """The implementation of Value Decomposition Networks (VDN) agents.
 
     Args:
@@ -18,32 +17,14 @@ class VDN_Agents(IQL_Agents, MARLAgents):
     def __init__(self,
                  config: Namespace,
                  envs: DummyVecMultiAgentEnv):
-        MARLAgents.__init__(self, config, envs)
+        super(VDN_Agents, self).__init__(config, envs)
 
         self.start_greedy, self.end_greedy = config.start_greedy, config.end_greedy
-        self.egreedy = self.start_greedy
+        self.e_greedy = self.start_greedy
         self.delta_egreedy = (self.start_greedy - self.end_greedy) / (config.decay_step_greedy / self.n_envs)
 
-        # build policy, optimizers, schedulers
-        self.policy = self._build_policy()
-
-        # create experience replay buffer
-        input_buffer = dict(agent_keys=self.agent_keys,
-                            obs_space=self.observation_space,
-                            act_space=self.action_space,
-                            n_envs=self.n_envs,
-                            buffer_size=self.config.buffer_size,
-                            batch_size=self.config.batch_size,
-                            n_actions={k: self.action_space[k].n for k in self.agent_keys},
-                            use_actions_mask=self.use_actions_mask,
-                            max_episode_steps=envs.max_episode_steps)
-        buffer = MARL_OffPolicyBuffer_RNN if self.use_rnn else MARL_OffPolicyBuffer
-        self.memory = buffer(**input_buffer)
-
-        # initialize the hidden states of the RNN is use RNN-based representations.
-        self.rnn_hidden_state = self.init_rnn_hidden(self.n_envs)
-
-        # create learner
+        self.policy = self._build_policy()  # build policy
+        self.memory = self._build_memory()  # build memory
         self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, self.policy)
 
     def _build_policy(self):

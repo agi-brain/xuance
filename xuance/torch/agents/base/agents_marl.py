@@ -33,6 +33,7 @@ class MARLAgents(ABC):
         self.use_rnn = config.use_rnn if hasattr(config, "use_rnn") else False
         self.use_parameter_sharing = config.use_parameter_sharing
         self.use_actions_mask = config.use_actions_mask if hasattr(config, "use_actions_mask") else False
+        self.use_global_state = config.use_global_state if hasattr(config, "use_global_state") else False
 
         self.gamma = config.gamma
         self.start_training = config.start_training if hasattr(config, "start_training") else 1
@@ -48,6 +49,7 @@ class MARLAgents(ABC):
         self.fps = config.fps
         self.n_envs = envs.num_envs
         self.agent_keys = envs.agents
+        self.state_space = envs.state_space if self.use_global_state else None
         self.observation_space = envs.observation_space
         self.action_space = envs.action_space
         self.episode_length = config.episode_length if hasattr(config, "episode_length") else envs.max_episode_steps
@@ -114,9 +116,13 @@ class MARLAgents(ABC):
         """
         if self.use_wandb:
             for k, v in info.items():
+                if v is None:
+                    continue
                 wandb.log({k: v}, step=x_index)
         else:
             for k, v in info.items():
+                if v is None:
+                    continue
                 try:
                     self.writer.add_scalar(k, v, x_index)
                 except:
@@ -125,9 +131,13 @@ class MARLAgents(ABC):
     def log_videos(self, info: dict, fps: int, x_index: int = 0):
         if self.use_wandb:
             for k, v in info.items():
+                if v is None:
+                    continue
                 wandb.log({k: wandb.Video(v, fps=fps, format='gif')}, step=x_index)
         else:
             for k, v in info.items():
+                if v is None:
+                    continue
                 self.writer.add_video(k, v, fps=fps, global_step=x_index)
                 
     def _build_representation(self, representation_key: str,
