@@ -51,10 +51,10 @@ class OffPolicyAgent(Agent):
     def _update_explore_factor(self):
         if self.e_greedy is not None:
             if self.e_greedy > self.end_greedy:
-                self.e_greedy -= self.delta_egreedy
+                self.e_greedy = self.start_greedy - self.current_step * self.delta_egreedy
         elif self.noise_scale is not None:
             if self.noise_scale >= self.end_noise:
-                self.noise_scale -= self.delta_noise
+                self.noise_scale = self.start_noise - self.current_step * self.delta_noise
         else:
             return
 
@@ -96,9 +96,9 @@ class OffPolicyAgent(Agent):
         """
         _, actions_output, _ = self.policy(observations)
         if test_mode:
-            actions = self.exploration(actions_output)
-        else:
             actions = actions_output.detach().cpu().numpy()
+        else:
+            actions = self.exploration(actions_output)
         return {"actions": actions}
 
     def train_epochs(self, n_epochs=1):

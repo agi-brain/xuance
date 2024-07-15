@@ -65,7 +65,7 @@ class DDPG_Agent(OffPolicyAgent):
         """
         _, actions_output = self.policy(observations)
         if test_mode:
-            actions = self.exploration(actions_output)
-        else:
             actions = actions_output.detach().cpu().numpy()
+        else:
+            actions = self.exploration(actions_output.detach().cpu().numpy())
         return {"actions": actions}

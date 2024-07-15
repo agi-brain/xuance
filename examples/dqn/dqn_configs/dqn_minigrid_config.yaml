@@ -19,13 +19,13 @@ policy: "Basic_Q_network"
 representation: "Basic_MLP"
 runner: "DRL"
 
-representation_hidden_size: [128,]
-q_hidden_size: [128,]
+representation_hidden_size: [64,]
+q_hidden_size: [64,]
 activation: 'relu'
 
 seed: 1
 parallels: 10
-buffer_size: 100000
+buffer_size: 10000
 batch_size: 256
 learning_rate: 0.001
 gamma: 0.99

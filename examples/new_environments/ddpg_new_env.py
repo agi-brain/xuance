@@ -1,11 +1,11 @@
 import argparse
 import numpy as np
 from copy import deepcopy
-from gym.spaces import Box, Discrete
+from gym.spaces import Box
 from xuance.common import get_configs, recursive_dict_update
 from xuance.environment import make_envs, RawEnvironment, REGISTRY_ENV
 from xuance.torch.utils.operations import set_seed
-from xuance.torch.agents import DQN_Agent
+from xuance.torch.agents import DDPG_Agent
 
 
 class MyNewEnv(RawEnvironment):
@@ -13,7 +13,7 @@ class MyNewEnv(RawEnvironment):
         super(MyNewEnv, self).__init__()
         self.env_id = env_config.env_id
         self.observation_space = Box(-np.inf, np.inf, shape=[18, ])
-        self.action_space = Discrete(n=5)
+        self.action_space = Box(-np.inf, np.inf, shape=[5, ])
         self.max_episode_steps = 32
         self._current_step = 0
 
@@ -38,24 +38,23 @@ class MyNewEnv(RawEnvironment):
 
 
 def parse_args():
-    parser = argparse.ArgumentParser("Example of XuanCe: DQN.")
+    parser = argparse.ArgumentParser("Example of XuanCe: DDPG.")
     parser.add_argument("--env-id", type=str, default="new_env_id")
     parser.add_argument("--test", type=int, default=0)
     parser.add_argument("--benchmark", type=int, default=1)
-
     return parser.parse_args()
 
 
 if __name__ == "__main__":
     parser = parse_args()
-    configs_dict = get_configs(file_dir="dqn_configs/dqn_new_env.yaml")
+    configs_dict = get_configs(file_dir="new_configs/ddpg_new_env.yaml")
     configs_dict = recursive_dict_update(configs_dict, parser.__dict__)
     configs = argparse.Namespace(**configs_dict)
 
     REGISTRY_ENV[configs.env_name] = MyNewEnv
     set_seed(configs.seed)
     envs = make_envs(configs)
-    Agent = DQN_Agent(config=configs, envs=envs)
+    Agent = DDPG_Agent(config=configs, envs=envs)
 
     train_information = {"Deep learning toolbox": configs.dl_toolbox,
                          "Calculating device": configs.device,

@@ -5,7 +5,7 @@ from gym.spaces import Box
 from xuance.common import get_configs, recursive_dict_update
 from xuance.environment import make_envs, RawEnvironment, REGISTRY_ENV
 from xuance.torch.utils.operations import set_seed
-from xuance.torch.agents import TD3_Agent
+from xuance.torch.agents import PPOCLIP_Agent
 
 
 class MyNewEnv(RawEnvironment):
@@ -38,24 +38,24 @@ class MyNewEnv(RawEnvironment):
 
 
 def parse_args():
-    parser = argparse.ArgumentParser("Example of XuanCe: TD3.")
+    parser = argparse.ArgumentParser("Example of XuanCe: PPO for MuJoCo.")
     parser.add_argument("--env-id", type=str, default="new_env_id")
     parser.add_argument("--test", type=int, default=0)
-    parser.add_argument("--benchmark", type=int, default=0)
+    parser.add_argument("--benchmark", type=int, default=1)
 
     return parser.parse_args()
 
 
 if __name__ == "__main__":
     parser = parse_args()
-    configs_dict = get_configs(file_dir="td3_configs/td3_new_env.yaml")
+    configs_dict = get_configs(file_dir="new_configs/ppo_new_env.yaml")
     configs_dict = recursive_dict_update(configs_dict, parser.__dict__)
     configs = argparse.Namespace(**configs_dict)
 
     REGISTRY_ENV[configs.env_name] = MyNewEnv
     set_seed(configs.seed)
     envs = make_envs(configs)
-    Agent = TD3_Agent(config=configs, envs=envs)
+    Agent = PPOCLIP_Agent(config=configs, envs=envs)
 
     train_information = {"Deep learning toolbox": configs.dl_toolbox,
                          "Calculating device": configs.device,
