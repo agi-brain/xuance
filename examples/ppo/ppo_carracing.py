@@ -4,12 +4,12 @@ from copy import deepcopy
 from xuance.common import get_configs, recursive_dict_update
 from xuance.environment import make_envs
 from xuance.torch.utils.operations import set_seed
-from xuance.torch.agents import MAPPO_Agents
+from xuance.torch.agents import PPOCLIP_Agent
 
 
 def parse_args():
-    parser = argparse.ArgumentParser("Example of XuanCe.")
-    parser.add_argument("--env-id", type=str, default="rware-tiny-2ag-v1")
+    parser = argparse.ArgumentParser("Example of XuanCe: PPO for Car Racing.")
+    parser.add_argument("--env-id", type=str, default="CarRacing-v2")
     parser.add_argument("--test", type=int, default=0)
     parser.add_argument("--benchmark", type=int, default=1)
 
@@ -18,50 +18,49 @@ def parse_args():
 
 if __name__ == "__main__":
     parser = parse_args()
-    configs_dict = get_configs(file_dir=f"mappo_rware_configs/{parser.env_id}.yaml")
+    configs_dict = get_configs(file_dir="ppo_configs/ppo_carracing_config.yaml")
     configs_dict = recursive_dict_update(configs_dict, parser.__dict__)
     configs = argparse.Namespace(**configs_dict)
 
-    set_seed(configs.seed)  # Set the random seed.
-    envs = make_envs(configs)  # Make the environment.
-    Agents = MAPPO_Agents(config=configs, envs=envs)  # Create the Independent PPO agents.
+    set_seed(configs.seed)
+    envs = make_envs(configs)
+    Agent = PPOCLIP_Agent(config=configs, envs=envs)
 
     train_information = {"Deep learning toolbox": configs.dl_toolbox,
                          "Calculating device": configs.device,
                          "Algorithm": configs.agent,
                          "Environment": configs.env_name,
                          "Scenario": configs.env_id}
-    for k, v in train_information.items():  # Print the training information.
+    for k, v in train_information.items():
         print(f"{k}: {v}")
 
     if configs.benchmark:
-        def env_fn():  # Define an environment function for test method.
+        def env_fn():
             configs_test = deepcopy(configs)
             configs_test.parallels = configs_test.test_episode
             return make_envs(configs_test)
-
 
         train_steps = configs.running_steps // configs.parallels
         eval_interval = configs.eval_interval // configs.parallels
         test_episode = configs.test_episode
         num_epoch = int(train_steps / eval_interval)
 
-        test_scores = Agents.test(env_fn, test_episode)
-        Agents.save_model(model_name="best_model.pth")
+        test_scores = Agent.test(env_fn, test_episode)
+        Agent.save_model(model_name="best_model.pth")
         best_scores_info = {"mean": np.mean(test_scores),
                             "std": np.std(test_scores),
-                            "step": Agents.current_step}
+                            "step": Agent.current_step}
         for i_epoch in range(num_epoch):
             print("Epoch: %d/%d:" % (i_epoch, num_epoch))
-            Agents.train(eval_interval)
-            test_scores = Agents.test(env_fn, test_episode)
+            Agent.train(eval_interval)
+            test_scores = Agent.test(env_fn, test_episode)
 
             if np.mean(test_scores) > best_scores_info["mean"]:
                 best_scores_info = {"mean": np.mean(test_scores),
                                     "std": np.std(test_scores),
-                                    "step": Agents.current_step}
+                                    "step": Agent.current_step}
                 # save best model
-                Agents.save_model(model_name="best_model.pth")
+                Agent.save_model(model_name="best_model.pth")
         # end benchmarking
         print("Best Model Score: %.2f, std=%.2f" % (best_scores_info["mean"], best_scores_info["std"]))
     else:
@@ -71,13 +70,13 @@ if __name__ == "__main__":
                 return make_envs(configs)
 
 
-            Agents.load_model(path=Agents.model_dir_load)
-            scores = Agents.test(env_fn, configs.test_episode)
+            Agent.load_model(path=Agent.model_dir_load)
+            scores = Agent.test(env_fn, configs.test_episode)
             print(f"Mean Score: {np.mean(scores)}, Std: {np.std(scores)}")
             print("Finish testing.")
         else:
-            Agents.train(configs.running_steps // configs.parallels)
-            Agents.save_model("final_train_model.pth")
+            Agent.train(configs.running_steps // configs.parallels)
+            Agent.save_model("final_train_model.pth")
             print("Finish training!")
 
-    Agents.finish()
+    Agent.finish()

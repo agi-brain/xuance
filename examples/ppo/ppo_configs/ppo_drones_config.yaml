@@ -22,7 +22,6 @@ vectorize: "DummyVecEnv"
 policy: "Gaussian_AC"  # choice: Gaussian_AC for continuous actions, Categorical_AC for discrete actions.
 learner: "PPOCLIP_Learner"
 representation: "Basic_MLP"
-runner: "DRL"
 
 representation_hidden_size: [512,]
 actor_hidden_size: [512,]

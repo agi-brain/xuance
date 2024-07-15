@@ -17,7 +17,6 @@ vectorize: "SubprocVecEnv"
 learner: "PPOCLIP_Learner"
 policy: "Gaussian_AC"  # choice: Gaussian_AC for continuous actions, Categorical_AC for discrete actions.
 representation: "Basic_MLP"
-runner: "DRL"
 
 representation_hidden_size: [512,]
 actor_hidden_size: [512, 512]
