@@ -5,7 +5,7 @@ continuous_action: True
 learner: "MADDPG_Learner"
 policy: "MADDPG_Policy"
 representation: "Basic_Identical"
-vectorize: "DummyVecMultiAgentEnv"
+vectorize: "SubprocVecMultiAgentEnv"
 runner: "MARL"
 
 representation_hidden_size: []  # the units for each hidden layer
