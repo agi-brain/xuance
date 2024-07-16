@@ -1,8 +1,7 @@
 from .runner_basic import *
-from xuance.tensorflow.representations import REGISTRY as REGISTRY_Representation
-from xuance.tensorflow.agents import REGISTRY as REGISTRY_Agent
+from xuance.tensorflow.representations import REGISTRY_Representation
+from xuance.tensorflow.agents import REGISTRY_Agent
 from xuance.tensorflow.policies import REGISTRY as REGISTRY_Policy
-from xuance.tensorflow.utils.input_reformat import get_repre_in, get_policy_in
 import tensorflow.keras as tk
 import gym.spaces
 import numpy as np
@@ -10,9 +9,10 @@ from copy import deepcopy
 
 
 class Runner_DRL(Runner_Base):
-    def __init__(self, args):
-        self.args = args
-        self.agent_name = self.args.agent
+    def __init__(self, config):
+        self.config = config
+        self.env_id = self.config.env_id
+        self.agent_name = self.config.agent
         self.env_id = self.args.env_id
         super(Runner_DRL, self).__init__(self.args)
 

@@ -69,7 +69,7 @@ from .multi_agent_rl.isac_agents import ISAC_Agents
 from .multi_agent_rl.masac_agents import MASAC_Agents
 from .multi_agent_rl.matd3_agents import MATD3_Agents
 
-REGISTRY = {
+REGISTRY_Agent = {
     "PG": PG_Agent,
     "A2C": A2C_Agent,
     "PPO_Clip": PPOCLIP_Agent,

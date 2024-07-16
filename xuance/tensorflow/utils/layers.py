@@ -75,7 +75,7 @@ def cnn_block(input_shape: Sequence[int],
 def pooling_block(input_shape: Sequence[int],
                   scale: int,
                   pooling: Optional[tk.layers.Layer] = None,
-                  device: str = "cpu") -> Sequence[ModelType]:
+                  device: str = "cpu") -> Sequence[ModuleType]:
     assert len(input_shape) == 3  # CxHxW
     block = []
     C, H, W = input_shape
@@ -88,7 +88,7 @@ def gru_block(input_dim: Sequence[int],
               num_layers: int = 1,
               dropout: float = 0,
               initialize: Optional[Callable[[tf.Tensor], tf.Tensor]] = None,
-              device: str = "cpu") -> ModelType:
+              device: str = "cpu") -> ModuleType:
     gru = tk.layers.GRU(units=output_dim,
                         dropout=dropout,
                         return_sequences=True,
@@ -101,7 +101,7 @@ def lstm_block(input_dim: Sequence[int],
                num_layers: int = 1,
                dropout: float = 0,
                initialize: Optional[Callable[[tf.Tensor], tf.Tensor]] = None,
-               device: str = "cpu") -> ModelType:
+               device: str = "cpu") -> ModuleType:
     lstm = tk.layers.LSTM(units=output_dim,
                           dropout=dropout,
                           return_sequences=True,
