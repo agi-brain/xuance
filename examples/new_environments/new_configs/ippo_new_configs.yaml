@@ -12,6 +12,7 @@ agent: "IPPO"
 env_name: "MyNewMultiAgentEnv"
 env_id: "new_env_id"
 continuous_action: True
+learner: "IPPO_Learner"  # The learner name.
 policy: "Gaussian_MAAC_Policy"
 representation: "Basic_MLP"
 vectorize: "DummyVecMultiAgentEnv"

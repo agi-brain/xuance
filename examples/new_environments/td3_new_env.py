@@ -41,7 +41,7 @@ def parse_args():
     parser = argparse.ArgumentParser("Example of XuanCe: TD3.")
     parser.add_argument("--env-id", type=str, default="new_env_id")
     parser.add_argument("--test", type=int, default=0)
-    parser.add_argument("--benchmark", type=int, default=0)
+    parser.add_argument("--benchmark", type=int, default=1)
 
     return parser.parse_args()
 
