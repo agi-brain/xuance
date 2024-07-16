@@ -6,7 +6,7 @@ import unittest
 
 n_steps = 10000
 device = 'cuda:0'
-test_mode = True
+test_mode = False
 
 
 class TestValueBaseAlgo(unittest.TestCase):

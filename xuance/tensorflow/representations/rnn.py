@@ -1,2 +1,3 @@
-from xuance.tensorflow.representations import *
-
+class Basic_RNN():
+    def __init__(self):
+        pass

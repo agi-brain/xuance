@@ -2,12 +2,13 @@ import torch
 import torch.nn as nn
 import numpy as np
 from typing import Sequence, Optional, Union, Callable
+from xuance.torch import Module
 from xuance.torch.utils.layers import mlp_block
 from xuance.torch.utils import ModuleType
 
 
 # directly returns the original observation
-class Basic_Identical(nn.Module):
+class Basic_Identical(Module):
     def __init__(self,
                  input_shape: Sequence[int],
                  device: Optional[Union[str, int, torch.device]] = None,
@@ -23,7 +24,7 @@ class Basic_Identical(nn.Module):
 
 
 # process the input observations with stacks of MLP layers
-class Basic_MLP(nn.Module):
+class Basic_MLP(Module):
     def __init__(self,
                  input_shape: Sequence[int],
                  hidden_sizes: Sequence[int],

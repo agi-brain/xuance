@@ -1,10 +1,15 @@
-from xuance.tensorflow.representations import *
+import numpy as np
+from typing import Sequence, Optional
+from xuance.tensorflow import tf, tk, Module
+from xuance.tensorflow.utils.layers import mlp_block
+from xuance.tensorflow.utils import ModuleType
 
 
-class Basic_Identical(tk.Model):
+# directly returns the original observation
+class Basic_Identical(Module):
     def __init__(self,
                  input_shape: Sequence[int],
-                 device: str = "cpu"):
+                 device: Optional[str] = None):
         super(Basic_Identical, self).__init__()
         self.input_shapes = input_shape
         self.output_shapes = {'state': (np.prod(input_shape),)}
@@ -17,14 +22,15 @@ class Basic_Identical(tk.Model):
             return {'state': state}
 
 
-class Basic_MLP(tk.Model):
+class Basic_MLP(Module):
     def __init__(self,
                  input_shapes: Sequence[int],
                  hidden_sizes: Sequence[int],
-                 normalize: Optional[tk.layers.Layer] = None,
+                 normalize: Optional[ModuleType] = None,
                  initializer: Optional[tk.initializers.Initializer] = None,
-                 activation: Optional[tk.layers.Layer] = None,
-                 device: str = "cpu"):
+                 activation: Optional[ModuleType] = None,
+                 device: Optional[str] = None,
+                 **kwargs):
         super(Basic_MLP, self).__init__()
         self.input_shapes = input_shapes
         self.hidden_sizes = hidden_sizes
@@ -37,10 +43,10 @@ class Basic_MLP(tk.Model):
 
     def _create_network(self):
         layers = [tk.layers.Flatten()]
-        input_shapes = (np.prod(self.input_shapes),)
+        input_shape = self.input_shape
         for h in self.hidden_sizes:
-            mlp, input_shapes = mlp_block(input_shapes[0], h, self.normalize, self.activation, self.initializer,
-                                          self.device)
+            mlp, input_shape = mlp_block(input_shape[0], h, self.normalize, self.activation, self.initializer,
+                                         device=self.device)
             layers.extend(mlp)
         return tk.Sequential(layers)
 
@@ -48,4 +54,3 @@ class Basic_MLP(tk.Model):
         with tf.device(self.device):
             tensor_observation = tf.convert_to_tensor(observations, dtype=tf.float32)
             return {'state': self.model(tensor_observation)}
-

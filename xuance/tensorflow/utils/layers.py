@@ -4,7 +4,7 @@ import tensorflow.keras as tk
 import tensorflow_addons as tfa
 from typing import Any, Dict, Optional, Sequence, Tuple, Type, Union, Callable
 
-ModelType = Type[tk.Model]
+ModuleType = Type[tk.Model]
 
 
 def mlp_block(input_dim: int,

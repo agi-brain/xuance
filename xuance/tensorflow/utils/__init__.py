@@ -1,6 +1,4 @@
-from .operations import *
-from .layers import *
-from .distributions import *
+from .layers import tk, ModuleType, mlp_block, cnn_block, pooling_block, gru_block, lstm_block
 
 ActivationFunctions = {
     "ReLU": tk.layers.Activation('relu'),
