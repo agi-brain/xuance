@@ -1,31 +1,8 @@
-from abc import ABC, abstractmethod
-from gym.spaces import Space, Box, Discrete, Dict
-from argparse import Namespace
-from mpi4py import MPI
-from tqdm import tqdm
-from torch.utils.tensorboard import SummaryWriter
-import wandb
+from xuance.tensorflow.agents.base.agent import Agent, get_total_iters
+from xuance.tensorflow.agents.base.agents_marl import RandomAgents
+from xuance.tensorflow.agents.base.agent import get_total_iters
 
-import tensorflow as tf
-import tensorflow.keras as tk
-
-from xuance.environment import *
-from xuance.common import *
-from xuance.tensorflow.learners import *
-from xuance.tensorflow.policies import *
-from xuance.tensorflow.utils import *
-from xuance.tensorflow.policies import REGISTRY as REGISTRY_Policy
-from xuance.tensorflow.utils.input_reformat import get_repre_in, get_policy_in_marl
-from xuance.tensorflow.representations import REGISTRY as REGISTRY_Representation
-from xuance.tensorflow.runners.runner_basic import MyLinearLR
-
-from .agent import Agent, get_total_iters
-from .agents_marl import MARLAgents, RandomAgents
-from .agent import get_total_iters
-
-'''
-Single-Agent DRL Algorithms
-'''
+'''Single-Agent DRL Algorithms'''
 from .policy_gradient.pg_agent import PG_Agent
 from .policy_gradient.a2c_agent import A2C_Agent
 from .policy_gradient.ppoclip_agent import PPOCLIP_Agent
@@ -48,9 +25,7 @@ from .qlearning_family.qrdqn_agent import QRDQN_Agent
 from .qlearning_family.perdqn_agent import PerDQN_Agent
 from .qlearning_family.drqn_agent import DRQN_Agent
 
-'''
-Multi-Agent DRL algorithms
-'''
+'''Multi-Agent DRL algorithms'''
 from .multi_agent_rl.iql_agents import IQL_Agents
 from .multi_agent_rl.vdn_agents import VDN_Agents
 from .multi_agent_rl.qmix_agents import QMIX_Agents
@@ -69,7 +44,7 @@ from .multi_agent_rl.isac_agents import ISAC_Agents
 from .multi_agent_rl.masac_agents import MASAC_Agents
 from .multi_agent_rl.matd3_agents import MATD3_Agents
 
-REGISTRY_Agent = {
+REGISTRY_Agents = {
     "PG": PG_Agent,
     "A2C": A2C_Agent,
     "PPO_Clip": PPOCLIP_Agent,

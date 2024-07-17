@@ -5,7 +5,7 @@ from typing import Optional
 from argparse import Namespace
 from xuance.environment import DummyVecEnv
 from xuance.common import DummyOffPolicyBuffer, DummyOffPolicyBuffer_Atari
-from xuance.torch.agents.base import Agent
+from xuance.tensorflow.agents.base import Agent
 
 
 class OffPolicyAgent(Agent):

@@ -44,8 +44,6 @@ class Runner_DRL(Runner_Base):
             self.agent.train(n_train_steps)
             print("Finish training.")
             self.agent.save_model("final_train_model.pth")
-
-        self.envs.close()
         self.agent.finish()
 
     def benchmark(self):
@@ -78,6 +76,4 @@ class Runner_DRL(Runner_Base):
 
         # end benchmarking
         print("Best Model Score: %.2f, std=%.2f" % (best_scores_info["mean"], best_scores_info["std"]))
-
-        self.envs.close()
         self.agent.finish()

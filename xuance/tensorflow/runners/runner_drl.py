@@ -1,105 +1,62 @@
-from .runner_basic import *
-from xuance.tensorflow.representations import REGISTRY_Representation
-from xuance.tensorflow.agents import REGISTRY_Agent
-from xuance.tensorflow.policies import REGISTRY as REGISTRY_Policy
-import tensorflow.keras as tk
 import gym.spaces
 import numpy as np
 from copy import deepcopy
+from xuance.environment import make_envs
+from xuance.tensorflow.runners import Runner_Base
+from xuance.tensorflow.agents import REGISTRY_Agent
 
 
 class Runner_DRL(Runner_Base):
     def __init__(self, config):
         self.config = config
         self.env_id = self.config.env_id
-        self.agent_name = self.config.agent
-        self.env_id = self.args.env_id
-        super(Runner_DRL, self).__init__(self.args)
+        super(Runner_DRL, self).__init__(self.config)
 
         if self.env_id in ['Platform-v0']:
-            self.args.observation_space = self.envs.observation_space.spaces[0]
+            self.config.observation_space = self.envs.observation_space.spaces[0]
             old_as = self.envs.action_space
             num_disact = old_as.spaces[0].n
-            self.args.action_space = gym.spaces.Tuple(
+            self.config.action_space = gym.spaces.Tuple(
                 (old_as.spaces[0], *(gym.spaces.Box(old_as.spaces[1].spaces[i].low,
                                                     old_as.spaces[1].spaces[i].high, dtype=np.float32) for i in
                                      range(0, num_disact))))
         else:
-            self.args.observation_space = self.envs.observation_space
-            self.args.action_space = self.envs.action_space
+            self.config.observation_space = self.envs.observation_space
+            self.config.action_space = self.envs.action_space
 
-        input_representation = get_repre_in(self.args)
-        representation = REGISTRY_Representation[self.args.representation](*input_representation)
-
-        input_policy = get_policy_in(self.args, representation)
-        if self.agent_name == "DRQN":
-            policy = REGISTRY_Policy[self.args.policy](**input_policy)
-        else:
-            policy = REGISTRY_Policy[self.args.policy](*input_policy)
-
-        if self.agent_name in ["DDPG", "TD3", "SAC", "SACDIS"]:
-            # actor_lr_scheduler = MyLinearLR(self.args.actor_learning_rate, start_factor=1.0, end_factor=0.25,
-            #                                 total_iters=get_total_iters(self.agent_name, self.args))
-            actor_lr_scheduler = tk.optimizers.schedules.ExponentialDecay(self.args.actor_learning_rate,
-                                                                          decay_steps=1000, decay_rate=0.9)
-            actor_optimizer = tk.optimizers.Adam(actor_lr_scheduler)
-            # critic_lr_scheduler = MyLinearLR(self.args.critic_learning_rate, start_factor=1.0, end_factor=0.25,
-            #                                  total_iters=get_total_iters(self.agent_name, self.args))
-            critic_lr_scheduler = tk.optimizers.schedules.ExponentialDecay(self.args.critic_learning_rate,
-                                                                           decay_steps=1000, decay_rate=0.9)
-            critic_optimizer = tk.optimizers.Adam(critic_lr_scheduler)
-            self.agent = REGISTRY_Agent[self.agent_name](self.args, self.envs, policy,
-                                                         [actor_optimizer, critic_optimizer], self.args.device)
-        elif self.agent_name in ["PDQN", "MPDQN", "SPDQN"]:
-            conactor_lr_scheduler = tk.optimizers.schedules.ExponentialDecay(self.args.learning_rate,
-                                                                             decay_steps=1000, decay_rate=0.9)
-            conactor_optimizer = tk.optimizers.Adam(conactor_lr_scheduler)
-            qnetwork_lr_scheduler = tk.optimizers.schedules.ExponentialDecay(self.args.learning_rate,
-                                                                             decay_steps=1000, decay_rate=0.9)
-            qnetwork_optimizer = tk.optimizers.Adam(qnetwork_lr_scheduler)
-            self.agent = REGISTRY_Agent[self.agent_name](self.args, self.envs, policy,
-                                                         [conactor_optimizer, qnetwork_optimizer],
-                                                         self.args.device)
-        else:
-            # lr_scheduler = MyLinearLR(self.args.learning_rate, start_factor=1.0, end_factor=0.25,
-            #                           total_iters=get_total_iters(self.agent_name, self.args))
-            lr_scheduler = tk.optimizers.schedules.ExponentialDecay(self.args.learning_rate, decay_steps=1000,
-                                                                    decay_rate=0.9)
-            optimizer = tk.optimizers.Adam(lr_scheduler)
-            self.agent = REGISTRY_Agent[self.agent_name](self.args, self.envs, policy, optimizer, self.args.device)
+        self.agent = REGISTRY_Agent[self.config.agent](self.config, self.envs)
 
     def run(self):
-        if self.args.test_mode:
+        if self.config.test_mode:
             def env_fn():
-                args_test = deepcopy(self.args)
-                args_test.parallels = 1
-                return make_envs(args_test)
+                config_test = deepcopy(self.config)
+                config_test.parallels = 1
+                config_test.render = True
+                return make_envs(config_test)
+
             self.agent.render = True
-            self.agent.load_model(self.agent.model_dir_load, self.args.seed)
-            scores = self.agent.test(env_fn, self.args.test_episode)
+            self.agent.load_model(self.agent.model_dir_load)
+            scores = self.agent.test(env_fn, self.config.test_episode)
             print(f"Mean Score: {np.mean(scores)}, Std: {np.std(scores)}")
             print("Finish testing.")
         else:
-            n_train_steps = self.args.running_steps // self.n_envs
+            n_train_steps = self.config.running_steps // self.n_envs
             self.agent.train(n_train_steps)
             print("Finish training.")
-            self.agent.save_model("final_train_model")
+            self.agent.save_model("final_train_model.pth")
 
-        self.envs.close()
-        if self.agent.use_wandb:
-            wandb.finish()
-        else:
-            self.agent.writer.close()
+        self.agent.finish()
 
     def benchmark(self):
         # test environment
         def env_fn():
-            args_test = deepcopy(self.args)
-            args_test.parallels = args_test.test_episode
-            return make_envs(args_test)
-        train_steps = self.args.running_steps // self.n_envs
-        eval_interval = self.args.eval_interval // self.n_envs
-        test_episode = self.args.test_episode
+            config_test = deepcopy(self.config)
+            config_test.parallels = config_test.test_episode
+            return make_envs(config_test)
+
+        train_steps = self.config.running_steps // self.n_envs
+        eval_interval = self.config.eval_interval // self.n_envs
+        test_episode = self.config.test_episode
         num_epoch = int(train_steps / eval_interval)
 
         test_scores = self.agent.test(env_fn, test_episode)
@@ -116,13 +73,8 @@ class Runner_DRL(Runner_Base):
                                     "std": np.std(test_scores),
                                     "step": self.agent.current_step}
                 # save best model
-                self.agent.save_model(model_name="best_model")
+                self.agent.save_model(model_name="best_model.pth")
 
         # end benchmarking
         print("Best Model Score: %.2f, std=%.2f" % (best_scores_info["mean"], best_scores_info["std"]))
-
-        self.envs.close()
-        if self.agent.use_wandb:
-            wandb.finish()
-        else:
-            self.agent.writer.close()
+        self.agent.finish()

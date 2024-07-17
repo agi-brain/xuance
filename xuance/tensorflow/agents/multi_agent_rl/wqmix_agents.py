@@ -1,5 +1,4 @@
 from xuance.tensorflow.agents import *
-from xuance.tensorflow.agents.agents_marl import linear_decay_or_increase
 
 
 class WQMIX_Agents(MARLAgents):

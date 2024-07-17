@@ -37,7 +37,7 @@ Mixer = {
     "QTRAN_base": QTRAN_base
 }
 
-REGISTRY = {
+REGISTRY_Policy = {
     # ↓ Single-Agent DRL ↓ #
     "Categorical_AC": Categorical_AC_Policy,
     "Categorical_Actor": Categorical_Actor_Policy,

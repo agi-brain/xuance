@@ -8,22 +8,15 @@ from argparse import Namespace
 from mpi4py import MPI
 from typing import Optional
 from gym.spaces import Dict, Space
-from torch import nn
 from torch.utils.tensorboard import SummaryWriter
 from xuance.common import get_time_string, create_directory, RunningMeanStd, space2shape, EPS
 from xuance.environment import DummyVecEnv
-from xuance.torch import REGISTRY_Representation, REGISTRY_Learners, Module
-from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
+from xuance.tensorflow import Module
+from xuance.tensorflow import REGISTRY_Representation, REGISTRY_Learners
+from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions
 
 
 class Agent(ABC):
-    """Base class of agent for single-agent DRL.
-
-    Args:
-        config: the Namespace variable that provides hyper-parameters and other settings.
-        envs: the vectorized environments.
-    """
-
     def __init__(self,
                  config: Namespace,
                  envs: DummyVecEnv):
@@ -98,7 +91,7 @@ class Agent(ABC):
         self.policy: Optional[Module] = None
         self.learner: Optional[Module] = None
         self.memory: Optional[object] = None
-
+    
     def save_model(self, model_name):
         # save the neural networks
         if not os.path.exists(self.model_dir_save):
@@ -197,7 +190,7 @@ class Agent(ABC):
             input_shape=space2shape(input_space),
             hidden_sizes=config.representation_hidden_size if hasattr(config, "representation_hidden_size") else None,
             normalize=NormalizeFunctions[config.normalize] if hasattr(config, "normalize") else None,
-            initialize=nn.init.orthogonal_,
+            initialize={},
             activation=ActivationFunctions[config.activation],
             kernels=config.kernels if hasattr(config, "kernels") else None,
             strides=config.strides if hasattr(config, "strides") else None,
@@ -230,4 +223,3 @@ class Agent(ABC):
         else:
             self.writer.close()
         self.envs.close()
-
