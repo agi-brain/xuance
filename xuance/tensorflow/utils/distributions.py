@@ -1,9 +1,7 @@
-import tensorflow_probability as tfp
-import tensorflow as tf
-
-tfd = tfp.distributions
-kl_div = tfd.kl_divergence
+from xuance.tensorflow import tf, tfd
 from abc import ABC, abstractmethod
+
+kl_div = tfd.kl_divergence
 
 
 class Distribution(ABC):

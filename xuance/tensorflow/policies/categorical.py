@@ -1,8 +1,12 @@
-from xuance.tensorflow.policies import *
-from xuance.tensorflow.utils import *
+import numpy as np
+from typing import Sequence, Optional, Union
+from copy import deepcopy
+from gym.spaces import Space, Discrete
+from xuance.tensorflow import tf, tfd, tk, Module, Tensor
+from xuance.tensorflow.utils import mlp_block, CategoricalDistribution
 
 
-class ActorNet(tk.Model):
+class ActorNet(Module):
     def __init__(self,
                  state_dim: int,
                  action_dim: int,
@@ -27,7 +31,7 @@ class ActorNet(tk.Model):
         return logits
 
 
-class CriticNet(tk.Model):
+class CriticNet(Module):
     def __init__(self,
                  state_dim: int,
                  hidden_sizes: Sequence[int],
@@ -48,10 +52,10 @@ class CriticNet(tk.Model):
         return self.model(x)[:, 0]
 
 
-class ActorCriticPolicy(tk.Model):
+class ActorCriticPolicy(Module):
     def __init__(self,
                  action_space: Space,
-                 representation: tk.Model,
+                 representation: Module,
                  actor_hidden_size: Sequence[int] = None,
                  critic_hidden_size: Sequence[int] = None,
                  normalize: Optional[tk.layers.Layer] = None,
@@ -74,10 +78,10 @@ class ActorCriticPolicy(tk.Model):
         return outputs, a, v
 
 
-class ActorPolicy(tk.Model):
+class ActorPolicy(Module):
     def __init__(self,
                  action_space: Space,
-                 representation: tk.Model,
+                 representation: Module,
                  actor_hidden_size: Sequence[int] = None,
                  normalize: Optional[tk.layers.Layer] = None,
                  initializer: Optional[tk.initializers.Initializer] = None,
@@ -96,10 +100,10 @@ class ActorPolicy(tk.Model):
         return outputs, a
 
 
-class PPGActorCritic(tk.Model):
+class PPGActorCritic(Module):
     def __init__(self,
                  action_space: Space,
-                 representation: tk.Model,
+                 representation: Module,
                  actor_hidden_size: Sequence[int] = None,
                  critic_hidden_size: Sequence[int] = None,
                  normalize: Optional[tk.layers.Layer] = None,
@@ -110,8 +114,8 @@ class PPGActorCritic(tk.Model):
         super(PPGActorCritic, self).__init__()
         self.action_dim = action_space.n
         self.actor_representation = representation
-        self.critic_representation = copy.deepcopy(representation)
-        self.aux_critic_representation = copy.deepcopy(representation)
+        self.critic_representation = deepcopy(representation)
+        self.aux_critic_representation = deepcopy(representation)
         self.representation_info_shape = self.actor_representation.output_shapes
 
         self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size,
@@ -131,7 +135,7 @@ class PPGActorCritic(tk.Model):
         return policy_outputs, a, v, aux_v
 
 
-class CriticNet_SACDIS(tk.Model):
+class CriticNet_SACDIS(Module):
     def __init__(self,
                  state_dim: int,
                  action_dim: int,
@@ -152,7 +156,7 @@ class CriticNet_SACDIS(tk.Model):
         return self.model(x)
 
 
-class ActorNet_SACDIS(tk.Model):
+class ActorNet_SACDIS(Module):
     def __init__(self,
                  state_dim: int,
                  action_dim: int,
@@ -177,10 +181,10 @@ class ActorNet_SACDIS(tk.Model):
         return action_prob, dist
 
 
-class SACDISPolicy(tk.Model):
+class SACDISPolicy(Module):
     def __init__(self,
                  action_space: Space,
-                 representation: tk.Model,
+                 representation: Module,
                  actor_hidden_size: Sequence[int],
                  critic_hidden_size: Sequence[int],
                  normalize: Optional[tk.layers.Layer] = None,
@@ -190,14 +194,14 @@ class SACDISPolicy(tk.Model):
         super(SACDISPolicy, self).__init__()
         self.action_dim = action_space.n
         self.representation = representation
-        self.representation_critic = copy.deepcopy(representation)
+        self.representation_critic = deepcopy(representation)
         self.representation_info_shape = self.representation.output_shapes
 
         self.actor = ActorNet_SACDIS(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size,
                                      normalize, initializer, activation, device)
         self.critic = CriticNet_SACDIS(representation.output_shapes['state'][0], self.action_dim, critic_hidden_size,
                                        initializer, activation, device)
-        self.target_representation_critic = copy.deepcopy(self.representation_critic)
+        self.target_representation_critic = deepcopy(self.representation_critic)
         self.target_critic = CriticNet_SACDIS(representation.output_shapes['state'][0], self.action_dim,
                                               critic_hidden_size, initializer, activation, device)
         self.target_critic.set_weights(self.critic.get_weights())

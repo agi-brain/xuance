@@ -1,10 +1,13 @@
-from xuance.tensorflow.learners import *
+import os
+from abc import ABC, abstractmethod
 from argparse import Namespace
+from typing import Union, Sequence
+from xuance.tensorflow import Module, tk, tf
 
 
 class Learner(ABC):
     def __init__(self,
-                 policy: tk.Model,
+                 policy: Module,
                  optimizer: Union[tk.optimizers.Optimizer, Sequence[tk.optimizers.Optimizer]],
                  device: str = "cpu:0",
                  model_dir: str = "./"):
@@ -40,7 +43,7 @@ class Learner(ABC):
 class LearnerMAS(ABC):
     def __init__(self,
                  config: Namespace,
-                 policy: tk.Model,
+                 policy: Module,
                  optimizer: Union[tk.optimizers.Optimizer, Sequence[tk.optimizers.Optimizer]],
                  device: str = "cpu:0",
                  model_dir: str = "./"):
