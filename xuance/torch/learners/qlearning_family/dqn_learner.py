@@ -53,8 +53,8 @@ class DQN_Learner(Learner):
 
         info = {
             "Qloss": loss.item(),
+            "predictQ": predictQ.mean().item(),
             "learning_rate": lr,
-            "predictQ": predictQ.mean().item()
         }
 
         return info

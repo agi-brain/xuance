@@ -53,7 +53,7 @@ class DQN_Learner(Learner):
             info = {
                 "Qloss": loss.numpy(),
                 "predictQ": tf.math.reduce_mean(predictQ).numpy(),
-                "lr": lr.numpy()
+                "learning_rate": lr.numpy(),
             }
 
         return info
