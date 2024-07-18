@@ -6,7 +6,7 @@ Implementation: Pytorch
 import torch
 from torch import nn
 from xuance.torch.learners import Learner
-from typing import Optional
+from xuance.common import Optional
 from argparse import Namespace
 
 

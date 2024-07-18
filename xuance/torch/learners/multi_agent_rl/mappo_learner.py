@@ -6,7 +6,7 @@ Implementation: Pytorch
 """
 import torch
 from torch import nn
-from typing import List
+from xuance.common import List
 from argparse import Namespace
 from operator import itemgetter
 from xuance.torch.learners.multi_agent_rl.ippo_learner import IPPO_Learner

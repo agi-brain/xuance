@@ -1,6 +1,6 @@
 import torch
 import numpy as np
-from typing import Sequence, Optional, Callable, Union
+from xuance.common import Sequence, Optional, Callable, Union
 from copy import deepcopy
 from gym.spaces import Box
 from xuance.torch import Module, Tensor

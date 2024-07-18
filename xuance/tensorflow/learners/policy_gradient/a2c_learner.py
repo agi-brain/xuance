@@ -1,9 +1,15 @@
-from xuance.tensorflow.learners import *
+"""
+Advantage Actor-Critic (A2C)
+Implementation: TensorFlow2
+"""
+from xuance.common import Optional
+from xuance.tensorflow import tf, tk, Module
+from xuance.tensorflow.learners import Learner
 
 
 class A2C_Learner(Learner):
     def __init__(self,
-                 policy: tk.Model,
+                 policy: Module,
                  optimizer: tk.optimizers.Optimizer,
                  device: str = "cpu:0",
                  model_dir: str = "./",

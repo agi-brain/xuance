@@ -1,9 +1,15 @@
-from xuance.tensorflow.learners import *
+"""
+DQN with Dueling network (Dueling DQN)
+Paper link: http://proceedings.mlr.press/v48/wangf16.pdf
+Implementation: TensorFlow2
+"""
+from xuance.tensorflow import tf, tk, Module
+from xuance.tensorflow.learners import Learner
 
 
 class DuelDQN_Learner(Learner):
     def __init__(self,
-                 policy: tk.Model,
+                 policy: Module,
                  optimizer: tk.optimizers.Optimizer,
                  device: str = "cpu:0",
                  model_dir: str = "./",

@@ -314,7 +314,7 @@ Source Code
             def __init__(self,
                          config: Namespace,
                          envs: DummyVecEnv,
-                         policy: tk.Model,
+                         policy: Module,
                          optimizer: Sequence[tk.optimizers.Optimizer],
                          device: str = 'cpu'):
                 self.render = config.render

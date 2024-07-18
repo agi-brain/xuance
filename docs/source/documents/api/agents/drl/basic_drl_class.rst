@@ -347,7 +347,7 @@ Source Code
             def __init__(self,
                         config: Namespace,
                         envs: DummyVecEnv,
-                        policy: tk.Model,
+                        policy: Module,
                         memory: Buffer,
                         learner: Learner,
                         device: str = "cpu",

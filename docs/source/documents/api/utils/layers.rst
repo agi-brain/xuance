@@ -126,9 +126,9 @@ TensorFlow
   :param output_dim: the dimension of the output data.
   :type output_dim: int
   :param normalize: The method of normalization.
-  :type normalize: tk.Model
+  :type normalize: Module
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: tk.Model
+  :type activation: Module
   :param initialize: The initialization for the parameters of the networks.
   :type initialize: tf.Tensor
   :param device: The calculating device.
@@ -150,9 +150,9 @@ TensorFlow
   :param stride: Stride of the convolution.
   :type stride: int
   :param normalize: The method of normalization.
-  :type normalize: tk.Model
+  :type normalize: Module
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: tk.Model
+  :type activation: Module
   :param initialize: The initialization for the parameters of the networks.
   :type initialize: tf.Tensor
   :param device: The calculating device.
@@ -322,7 +322,7 @@ Source Code
 
         import torch
         import torch.nn as nn
-        from typing import Optional, Sequence, Tuple, Type, Union, Callable
+        from xuance.common import Optional, Sequence, Tuple, Type, Union, Callable
 
         ModuleType = Type[nn.Module]
 
@@ -441,9 +441,9 @@ Source Code
         import tensorflow as tf
         import tensorflow.keras as tk
         import tensorflow_addons as tfa
-        from typing import Any, Dict, Optional, Sequence, Tuple, Type, Union, Callable
+        from xuance.common import Any, Dict, Optional, Sequence, Tuple, Type, Union, Callable
 
-        ModelType = Type[tk.Model]
+        ModelType = Type[Module]
 
 
         def mlp_block(input_dim: int,
@@ -554,7 +554,7 @@ Source Code
 
         import mindspore as ms
         import mindspore.nn as nn
-        from typing import Any, Dict, Optional, Sequence, Tuple, Type, Union, Callable
+        from xuance.common import Any, Dict, Optional, Sequence, Tuple, Type, Union, Callable
 
         ModuleType = Type[nn.Cell]
 

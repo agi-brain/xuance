@@ -1,7 +1,7 @@
 from tqdm import tqdm
 import numpy as np
 from copy import deepcopy
-from typing import Optional
+from xuance.common import Optional
 from argparse import Namespace
 from xuance.environment import DummyVecEnv
 from xuance.common import DummyOffPolicyBuffer, DummyOffPolicyBuffer_Atari

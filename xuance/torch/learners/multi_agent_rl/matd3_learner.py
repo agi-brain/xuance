@@ -3,7 +3,7 @@ Multi-Agent TD3
 """
 import torch
 from torch import nn
-from typing import List
+from xuance.common import List
 from argparse import Namespace
 from operator import itemgetter
 from xuance.torch.learners import LearnerMAS

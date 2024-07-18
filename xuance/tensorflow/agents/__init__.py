@@ -1,48 +1,46 @@
-from xuance.tensorflow.agents.base.agent import Agent, get_total_iters
-from xuance.tensorflow.agents.base.agents_marl import RandomAgents
-from xuance.tensorflow.agents.base.agent import get_total_iters
+from .base import Agent, MARLAgents, RandomAgents
+from .core import OffPolicyAgent
 
-'''Single-Agent DRL Algorithms'''
-from .policy_gradient.pg_agent import PG_Agent
-from .policy_gradient.a2c_agent import A2C_Agent
-from .policy_gradient.ppoclip_agent import PPOCLIP_Agent
-from .policy_gradient.ppokl_agent import PPOKL_Agent
-from .policy_gradient.ppg_agent import PPG_Agent
-from .policy_gradient.ddpg_agent import DDPG_Agent
-from .policy_gradient.td3_agent import TD3_Agent
-from .policy_gradient.pdqn_agent import PDQN_Agent
-from .policy_gradient.mpdqn_agent import MPDQN_Agent
-from .policy_gradient.spdqn_agent import SPDQN_Agent
-from .policy_gradient.sac_agent import SAC_Agent
-from .policy_gradient.sacdis_agent import SACDIS_Agent
+'''Single-Agent Reinforcement Learning algorithms'''
+from .policy_gradient import PG_Agent
+from .policy_gradient import A2C_Agent
+from .policy_gradient import PPOCLIP_Agent
+from .policy_gradient import PPOKL_Agent
+from .policy_gradient import PPG_Agent
+from .policy_gradient import DDPG_Agent
+from .policy_gradient import TD3_Agent
+from .policy_gradient import PDQN_Agent
+from .policy_gradient import MPDQN_Agent
+from .policy_gradient import SPDQN_Agent
+from .policy_gradient import SAC_Agent
+from .policy_gradient import SACDIS_Agent
+from .qlearning_family import DQN_Agent
+from .qlearning_family import DuelDQN_Agent
+from .qlearning_family import DDQN_Agent
+from .qlearning_family import NoisyDQN_Agent
+from .qlearning_family import C51_Agent
+from .qlearning_family import QRDQN_Agent
+from .qlearning_family import PerDQN_Agent
+from .qlearning_family import DRQN_Agent
 
-from .qlearning_family.dqn_agent import DQN_Agent
-from .qlearning_family.dueldqn_agent import DuelDQN_Agent
-from .qlearning_family.ddqn_agent import DDQN_Agent
-from .qlearning_family.noisydqn_agent import NoisyDQN_Agent
-from .qlearning_family.c51_agent import C51_Agent
-from .qlearning_family.qrdqn_agent import QRDQN_Agent
-from .qlearning_family.perdqn_agent import PerDQN_Agent
-from .qlearning_family.drqn_agent import DRQN_Agent
-
-'''Multi-Agent DRL algorithms'''
-from .multi_agent_rl.iql_agents import IQL_Agents
-from .multi_agent_rl.vdn_agents import VDN_Agents
-from .multi_agent_rl.qmix_agents import QMIX_Agents
-from .multi_agent_rl.wqmix_agents import WQMIX_Agents
-from .multi_agent_rl.qtran_agents import QTRAN_Agents
-from .multi_agent_rl.dcg_agents import DCG_Agents
-from .multi_agent_rl.vdac_agents import VDAC_Agents
-from .multi_agent_rl.coma_agents import COMA_Agents
-from .multi_agent_rl.iddpg_agents import IDDPG_Agents
-from .multi_agent_rl.maddpg_agents import MADDPG_Agents
-from .multi_agent_rl.mfq_agents import MFQ_Agents
-from .multi_agent_rl.mfac_agents import MFAC_Agents
-from .multi_agent_rl.ippo_agents import IPPO_Agents
-from .multi_agent_rl.mappo_agents import MAPPO_Agents
-from .multi_agent_rl.isac_agents import ISAC_Agents
-from .multi_agent_rl.masac_agents import MASAC_Agents
-from .multi_agent_rl.matd3_agents import MATD3_Agents
+'''Multi-Agent Reinforcement Learning Algorithms'''
+from .multi_agent_rl import IQL_Agents
+from .multi_agent_rl import VDN_Agents
+from .multi_agent_rl import QMIX_Agents
+from .multi_agent_rl import WQMIX_Agents
+from .multi_agent_rl import QTRAN_Agents
+from .multi_agent_rl import DCG_Agents
+from .multi_agent_rl import VDAC_Agents
+from .multi_agent_rl import COMA_Agents
+from .multi_agent_rl import IDDPG_Agents
+from .multi_agent_rl import MADDPG_Agents
+from .multi_agent_rl import MFQ_Agents
+from .multi_agent_rl import MFAC_Agents
+from .multi_agent_rl import IPPO_Agents
+from .multi_agent_rl import MAPPO_Agents
+from .multi_agent_rl import ISAC_Agents
+from .multi_agent_rl import MASAC_Agents
+from .multi_agent_rl import MATD3_Agents
 
 REGISTRY_Agents = {
     "PG": PG_Agent,
@@ -50,12 +48,9 @@ REGISTRY_Agents = {
     "PPO_Clip": PPOCLIP_Agent,
     "PPO_KL": PPOKL_Agent,
     "PPG": PPG_Agent,
-    "PDQN": PDQN_Agent,
-    "MPDQN": MPDQN_Agent,
-    "SPDQN": SPDQN_Agent,
     "DDPG": DDPG_Agent,
     "SAC": SAC_Agent,
-    "SACDIS":SACDIS_Agent,
+    "SACDIS": SACDIS_Agent,
     "TD3": TD3_Agent,
     "DQN": DQN_Agent,
     "Duel_DQN": DuelDQN_Agent,
@@ -64,6 +59,9 @@ REGISTRY_Agents = {
     "PerDQN": PerDQN_Agent,
     "C51DQN": C51_Agent,
     "QRDQN": QRDQN_Agent,
+    "PDQN": PDQN_Agent,
+    "MPDQN": MPDQN_Agent,
+    "SPDQN": SPDQN_Agent,
     "DRQN": DRQN_Agent,
 
     "RANDOM": RandomAgents,
@@ -86,7 +84,21 @@ REGISTRY_Agents = {
     "MAPPO": MAPPO_Agents,
     "ISAC": ISAC_Agents,
     "MASAC": MASAC_Agents,
-    # "MADQN": MADQN_Agents,
-    # "MAAC": MAAC_Agents,
     "MATD3": MATD3_Agents,
 }
+
+__all__ = [
+    "Agent", "MARLAgents", "RandomAgents",
+
+    "OffPolicyAgent",
+
+    "REGISTRY_Agents",
+
+    "PG_Agent", "A2C_Agent", "PPOCLIP_Agent", "PPOKL_Agent", "PPG_Agent", "DDPG_Agent", "TD3_Agent", "PDQN_Agent",
+    "MPDQN_Agent", "SPDQN_Agent", "SAC_Agent", "SACDIS_Agent", "DQN_Agent", "DuelDQN_Agent", "DDQN_Agent",
+    "NoisyDQN_Agent", "C51_Agent", "QRDQN_Agent", "PerDQN_Agent", "DRQN_Agent",
+
+    "IQL_Agents", "VDN_Agents", "QMIX_Agents", "WQMIX_Agents", "QTRAN_Agents", "DCG_Agents", "VDAC_Agents",
+    "COMA_Agents", "IDDPG_Agents", "MADDPG_Agents", "MFQ_Agents", "MFAC_Agents", "IPPO_Agents", "MAPPO_Agents",
+    "ISAC_Agents", "MASAC_Agents", "MATD3_Agents"
+]

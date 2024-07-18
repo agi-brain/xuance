@@ -7,7 +7,7 @@ from abc import ABC
 from pathlib import Path
 from argparse import Namespace
 from operator import itemgetter
-from typing import Optional, List, Dict, Union
+from xuance.common import Optional, List, Dict, Union
 from gym.spaces import Space
 from torch import nn
 from torch.utils.tensorboard import SummaryWriter

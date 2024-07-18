@@ -1,4 +1,11 @@
-from xuance.tensorflow.agents import *
+import numpy as np
+from tqdm import tqdm
+from argparse import Namespace
+from xuance.common import DummyOffPolicyBuffer, DummyOffPolicyBuffer_Atari
+from xuance.environment import DummyVecMultiAgentEnv
+from xuance.tensorflow import tk, Module
+from xuance.tensorflow.agents import MARLAgents
+from xuance.tensorflow.learners import DQN_Learner
 
 
 class MFQ_Agents(MARLAgents):

@@ -5,7 +5,7 @@ import torch
 import torch_scatter
 
 
-class DCG_utility(tk.Model):
+class DCG_utility(Module):
     def __init__(self, dim_input, dim_hidden, dim_output):
         super(DCG_utility, self).__init__()
         self.dim_input = dim_input

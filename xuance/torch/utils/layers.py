@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from typing import Optional, Sequence, Tuple, Type, Union, Callable
+from xuance.common import Optional, Sequence, Tuple, Type, Union, Callable
 
 ModuleType = Type[nn.Module]
 

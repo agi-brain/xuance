@@ -1,7 +1,7 @@
 import mindspore as ms
 import mindspore.nn as nn
 import numpy as np
-from typing import Sequence, Optional, Callable, Union
+from xuance.common import Sequence, Optional, Callable, Union
 from gym.spaces import Space, Box, Discrete, Dict
 from torch.utils.tensorboard import SummaryWriter
 from xuance.mindspore.utils.set_trainer import *

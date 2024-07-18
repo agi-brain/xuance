@@ -1,11 +1,18 @@
-from xuance.tensorflow.agents import *
+import numpy as np
+from tqdm import tqdm
+from argparse import Namespace
+from xuance.common import DummyOffPolicyBuffer, DummyOffPolicyBuffer_Atari
+from xuance.environment import DummyVecEnv
+from xuance.tensorflow import tk, Module
+from xuance.tensorflow.agents import Agent
+from xuance.tensorflow.learners import C51_Learner
 
 
 class C51_Agent(Agent):
     def __init__(self,
                  config: Namespace,
                  envs: DummyVecEnv,
-                 policy: tk.Model,
+                 policy: Module,
                  optimizer: tk.optimizers.Optimizer,
                  device: str = 'cpu'):
         self.render = config.render

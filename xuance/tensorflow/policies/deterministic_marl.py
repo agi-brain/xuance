@@ -2,9 +2,10 @@ import numpy as np
 from xuance.tensorflow.policies import *
 from xuance.tensorflow.utils import *
 from xuance.tensorflow.representations import Basic_Identical
+from xuance.tensorflow import Tensor
 
 
-class BasicQhead(tk.Model):
+class BasicQhead(Module):
     def __init__(self,
                  state_dim: int,
                  action_dim: int,
@@ -23,11 +24,11 @@ class BasicQhead(tk.Model):
         layers_.extend(mlp_block(input_shape[0], action_dim, None, None, None, device)[0])
         self.model = tk.Sequential(layers_)
 
-    def call(self, x: tf.Tensor, **kwargs):
+    def call(self, x: Tensor, **kwargs):
         return self.model(x)
 
 
-class BasicQnetwork(tk.Model):
+class BasicQnetwork(Module):
     def __init__(self,
                  action_space: Discrete,
                  n_agents: int,
@@ -90,7 +91,7 @@ class BasicQnetwork(tk.Model):
         self.target_Qhead.set_weights(self.eval_Qhead.get_weights())
 
 
-class MFQnetwork(tk.Model):
+class MFQnetwork(Module):
     def __init__(self,
                  action_space: Discrete,
                  n_agents: int,
@@ -122,11 +123,11 @@ class MFQnetwork(tk.Model):
         argmax_action = tf.argmax(evalQ, axis=-1)
         return outputs, argmax_action, evalQ
 
-    def sample_actions(self, logits: tf.Tensor):
+    def sample_actions(self, logits: Tensor):
         dist = tfp.distributions.Categorical(logits=logits)
         return dist.sample()
 
-    def target_Q(self, observation: tf.Tensor, actions_mean: tf.Tensor, agent_ids: tf.Tensor):
+    def target_Q(self, observation: Tensor, actions_mean: Tensor, agent_ids: Tensor):
         outputs = self.target_representation(observation)
         q_inputs = tf.concat([outputs['state'], actions_mean, agent_ids], axis=-1)
         return self.target_Qhead(q_inputs)
@@ -136,7 +137,7 @@ class MFQnetwork(tk.Model):
         self.target_Qhead.set_weights(self.eval_Qhead.get_weights())
 
 
-class MixingQnetwork(tk.Model):
+class MixingQnetwork(Module):
     def __init__(self,
                  action_space: Discrete,
                  n_agents: int,
@@ -256,7 +257,7 @@ class Weighted_MixingQnetwork(MixingQnetwork):
         self.target_q_feedforward.set_weights(self.q_feedforward.get_weights())
 
 
-class Qtran_MixingQnetwork(tk.Model):
+class Qtran_MixingQnetwork(Module):
     def __init__(self,
                  action_space: Discrete,
                  n_agents: int,
@@ -311,14 +312,14 @@ class Qtran_MixingQnetwork(tk.Model):
         self.target_qtran_net.set_weights(self.qtran_net.get_weights())
 
 
-class DCG_policy(tk.Model):
+class DCG_policy(Module):
     def __init__(self,
                  action_space: Discrete,
                  global_state_dim: int,
                  representation: Optional[Basic_Identical],
-                 utility: Optional[tk.Model] = None,
-                 payoffs: Optional[tk.Model] = None,
-                 dcgraph: Optional[tk.Model] = None,
+                 utility: Optional[Module] = None,
+                 payoffs: Optional[Module] = None,
+                 dcgraph: Optional[Module] = None,
                  hidden_size_bias: Sequence[int] = None,
                  normalize: Optional[tk.layers.Layer] = None,
                  initializer: Optional[tk.initializers.Initializer] = None,
@@ -344,7 +345,7 @@ class DCG_policy(tk.Model):
             self.target_bias = BasicQhead(global_state_dim, 1, 0, hidden_size_bias,
                                           normalize, initializer, activation, device)
 
-    def call(self, inputs: Union[np.ndarray, dict], *rnn_hidden: tf.Tensor, **kwargs):
+    def call(self, inputs: Union[np.ndarray, dict], *rnn_hidden: Tensor, **kwargs):
         observations = tf.reshape(inputs['obs'], [-1, self.obs_dim])
         IDs = tf.reshape(inputs['ids'], [-1, self.n_agents])
         outputs = self.representation(observations)
@@ -362,7 +363,7 @@ class DCG_policy(tk.Model):
             self.target_bias.set_weights(self.bias.get_weights())
 
 
-class ActorNet(tk.Model):
+class ActorNet(Module):
     def __init__(self,
                  state_dim: int,
                  n_agents: int,
@@ -381,11 +382,11 @@ class ActorNet(tk.Model):
         layers.extend(mlp_block(input_shape[0], action_dim, None, tk.layers.Activation("tanh"), initializer, device)[0])
         self.model = tk.Sequential(layers)
 
-    def call(self, x: tf.Tensor, **kwargs):
+    def call(self, x: Tensor, **kwargs):
         return self.model(x)
 
 
-class CriticNet(tk.Model):
+class CriticNet(Module):
     def __init__(self,
                  independent: bool,
                  state_dim: int,
@@ -409,11 +410,11 @@ class CriticNet(tk.Model):
         layers.extend(mlp_block(input_shape[0], 1, None, None, initializer, device)[0])
         self.model = tk.Sequential(layers)
 
-    def call(self, x: tf.Tensor, **kwargs):
+    def call(self, x: Tensor, **kwargs):
         return self.model(x)
 
 
-class Basic_DDPG_policy(tk.Model):
+class Basic_DDPG_policy(Module):
     def __init__(self,
                  action_space: Space,
                  n_agents: int,
@@ -455,7 +456,7 @@ class Basic_DDPG_policy(tk.Model):
         act = self.actor_net(actor_in)
         return outputs, tf.reshape(act, [-1, self.n_agents, self.action_dim])
 
-    def critic(self, observation: tf.Tensor, actions: tf.Tensor, agent_ids: tf.Tensor):
+    def critic(self, observation: Tensor, actions: Tensor, agent_ids: Tensor):
         observation = tf.reshape(observation, [-1, self.obs_dim])
         actions = tf.reshape(actions, [-1, self.action_dim])
         agent_ids = tf.reshape(agent_ids, [-1, self.n_agents])
@@ -463,7 +464,7 @@ class Basic_DDPG_policy(tk.Model):
         critic_in = tf.concat([outputs['state'], actions, agent_ids], axis=-1)
         return tf.reshape(self.critic_net(critic_in), [-1, self.n_agents, 1])
 
-    def target_critic(self, observation: tf.Tensor, actions: tf.Tensor, agent_ids: tf.Tensor):
+    def target_critic(self, observation: Tensor, actions: Tensor, agent_ids: Tensor):
         observation = tf.reshape(observation, [-1, self.obs_dim])
         actions = tf.reshape(actions, [-1, self.action_dim])
         agent_ids = tf.reshape(agent_ids, [-1, self.n_agents])
@@ -508,7 +509,7 @@ class MADDPG_policy(Basic_DDPG_policy):
         self.parameters_critic = self.critic_net.trainable_variables
         self.soft_update(1.0)
 
-    def critic(self, observation: tf.Tensor, actions: tf.Tensor, agent_ids: tf.Tensor):
+    def critic(self, observation: Tensor, actions: Tensor, agent_ids: Tensor):
         bs = observation.shape[0]
         outputs_n = tf.reshape(self.representation(observation)['state'], (bs, 1, -1))
         outputs_n = tf.tile(outputs_n, (1, self.n_agents, 1))
@@ -516,7 +517,7 @@ class MADDPG_policy(Basic_DDPG_policy):
         critic_in = tf.concat([outputs_n, actions_n, agent_ids], axis=-1)
         return self.critic_net(critic_in)
 
-    def target_critic(self, observation: tf.Tensor, actions: tf.Tensor, agent_ids: tf.Tensor):
+    def target_critic(self, observation: Tensor, actions: Tensor, agent_ids: Tensor):
         bs = observation.shape[0]
         outputs_n = tf.reshape(self.representation(observation)['state'], (bs, 1, -1))
         outputs_n = tf.tile(outputs_n, (1, self.n_agents, 1))
@@ -525,7 +526,7 @@ class MADDPG_policy(Basic_DDPG_policy):
         return self.target_critic_net(critic_in)
 
 
-class MATD3_policy(tk.Model):
+class MATD3_policy(Module):
     def __init__(self,
                  action_space: Space,
                  n_agents: int,
@@ -567,7 +568,7 @@ class MATD3_policy(tk.Model):
         act = self.actor_net(actor_in)
         return outputs, tf.reshape(act, [-1, self.n_agents, self.action_dim])
 
-    def critic(self, observation: tf.Tensor, actions: tf.Tensor, agent_ids: tf.Tensor):
+    def critic(self, observation: Tensor, actions: Tensor, agent_ids: Tensor):
         bs = observation.shape[0]
         outputs_n = tf.reshape(self.representation(observation)['state'], (bs, 1, -1))
         outputs_n = tf.tile(outputs_n, (1, self.n_agents, 1))
@@ -577,7 +578,7 @@ class MATD3_policy(tk.Model):
         qb = self.critic_net_B(critic_in)
         return outputs_n, (qa + qb) / 2.0
 
-    def target_critic(self, observation: tf.Tensor, actions: tf.Tensor, agent_ids: tf.Tensor):
+    def target_critic(self, observation: Tensor, actions: Tensor, agent_ids: Tensor):
         bs = observation.shape[0]
         outputs_n = tf.reshape(self.representation(observation)['state'], (bs, 1, -1))
         outputs_n = tf.tile(outputs_n, (1, self.n_agents, 1))
@@ -588,7 +589,7 @@ class MATD3_policy(tk.Model):
         min_q = tf.math.minimum(qa, qb)
         return outputs_n, min_q
 
-    def Qaction(self, observation: tf.Tensor, actions: tf.Tensor, agent_ids: tf.Tensor):
+    def Qaction(self, observation: Tensor, actions: Tensor, agent_ids: Tensor):
         bs = observation.shape[0]
         outputs_n = tf.reshape(self.representation(observation)['state'], (bs, 1, -1))
         outputs_n = tf.tile(outputs_n, (1, self.n_agents, 1))

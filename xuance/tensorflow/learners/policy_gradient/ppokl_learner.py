@@ -1,11 +1,17 @@
-from torch import kl_div
-from xuance.tensorflow.learners import *
+"""
+Proximal Policy Optimization with KL divergence (PPO-KL)
+Paper link: https://arxiv.org/pdf/1707.06347.pdf
+Implementation: TensorFlow2
+"""
+import numpy as np
+from xuance.tensorflow import tf, tk, Module
+from xuance.tensorflow.learners import Learner
 from xuance.tensorflow.utils.operations import merge_distributions
 
 
 class PPOKL_Learner(Learner):
     def __init__(self,
-                 policy: tk.Model,
+                 policy: Module,
                  optimizer: tk.optimizers.Optimizer,
                  device: str = "cpu:0",
                  model_dir: str = "./",

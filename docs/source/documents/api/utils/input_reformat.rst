@@ -79,7 +79,7 @@ TensorFlow
   :param args: the arguments.
   :type args: Namespace
   :param representation: The representation module.
-  :type representation: tk.Model
+  :type representation: Module
   :return: a list of input specifications.
   :rtype: list
 
@@ -92,13 +92,13 @@ TensorFlow
   :param args: the arguments.
   :type args: Namespace
   :param representation: The representation module.
-  :type representation: tk.Model
+  :type representation: Module
   :param mixer: The mixer for independent values.
-  :type mixer: tk.Model
+  :type mixer: Module
   :param ff_mixer: the feed forward mixer, default is None.
-  :type ff_mixer: tk.Model
+  :type ff_mixer: Module
   :param qtran_mixer: the QTRAN mixer, default is None.
-  :type qtran_mixer: tk.Model
+  :type qtran_mixer: Module
   :return: a list of input specifications.
   :rtype: list
 

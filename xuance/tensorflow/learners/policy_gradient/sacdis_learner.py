@@ -1,9 +1,16 @@
-from xuance.tensorflow.learners import *
+"""
+Soft Actor-Critic with discrete action spaces (SAC-Discrete)
+Paper link: https://arxiv.org/pdf/1910.07207.pdf
+Implementation: TensorFlow2
+"""
+from xuance.common import Sequence
+from xuance.tensorflow import tf, tk, Module
+from xuance.tensorflow.learners import Learner
 
 
 class SACDIS_Learner(Learner):
     def __init__(self,
-                 policy: tk.Model,
+                 policy: Module,
                  optimizers: Sequence[tk.optimizers.Optimizer],
                  device: str = "cpu:0",
                  model_dir: str = "./",

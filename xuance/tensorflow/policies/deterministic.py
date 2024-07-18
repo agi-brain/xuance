@@ -1,10 +1,13 @@
 import numpy as np
-from xuance.tensorflow.policies import *
-from xuance.tensorflow.utils import *
+from copy import deepcopy
+from gym.spaces import Space, Discrete
+from xuance.common import Sequence, Optional, Union, Callable, Dict
+from xuance.tensorflow import tf, tk, Module, Tensor
 from xuance.tensorflow.representations import Basic_Identical
+from xuance.tensorflow.utils import mlp_block, lstm_block, gru_block
 
 
-class BasicQhead(tk.Model):
+class BasicQhead(Module):
     def __init__(self,
                  state_dim: int,
                  action_dim: int,
@@ -22,11 +25,11 @@ class BasicQhead(tk.Model):
         layers.extend(mlp_block(input_shape[0], action_dim, None, None, None, device)[0])
         self.model = tk.Sequential(layers)
 
-    def call(self, inputs: tf.Tensor, **kwargs):
+    def call(self, inputs: Tensor, **kwargs):
         return self.model(inputs)
 
 
-class BasicRecurrent(tk.Model):
+class BasicRecurrent(Module):
     def __init__(self, **kwargs):
         super(BasicRecurrent, self).__init__()
         self.lstm = False
@@ -51,7 +54,7 @@ class BasicRecurrent(tk.Model):
         fc_layer = mlp_block(kwargs["recurrent_hidden_size"], kwargs["action_dim"], None, None, None, kwargs["device"])[0]
         self.model = tk.Sequential(*fc_layer)
 
-    def call(self, x: tf.Tensor, **kwargs):
+    def call(self, x: Tensor, **kwargs):
         if self.lstm:
             output, hn, cn = self.rnn_layer(x)
             return hn, cn, self.model(output)
@@ -60,7 +63,7 @@ class BasicRecurrent(tk.Model):
             return hn, self.model(output)
 
 
-class DuelQhead(tk.Model):
+class DuelQhead(Module):
     def __init__(self,
                  state_dim: int,
                  action_dim: int,
@@ -85,14 +88,14 @@ class DuelQhead(tk.Model):
         self.a_model = tk.Sequential(a_layers)
         self.v_model = tk.Sequential(v_layers)
 
-    def call(self, x: tf.Tensor, **kwargs):
+    def call(self, x: Tensor, **kwargs):
         v = self.v_model(x)
         a = self.a_model(x)
         q = v + (a - tf.expand_dims(tf.reduce_mean(a, axis=-1), axis=-1))
         return q
 
 
-class C51Qhead(tk.Model):
+class C51Qhead(Module):
     def __init__(self,
                  state_dim: int,
                  action_dim: int,
@@ -113,13 +116,13 @@ class C51Qhead(tk.Model):
         layers.extend(mlp_block(input_shape[0], action_dim * atom_num, None, None, None, device)[0])
         self.model = tk.Sequential(layers)
 
-    def call(self, x: tf.Tensor, **kwargs):
+    def call(self, x: Tensor, **kwargs):
         dist_logits = tf.reshape(self.model(x), [-1, self.action_dim, self.atom_num])
         dist_probs = tf.nn.softmax(dist_logits, axis=-1)
         return dist_probs
 
 
-class QRDQNhead(tk.Model):
+class QRDQNhead(Module):
     def __init__(self,
                  state_dim: int,
                  action_dim: int,
@@ -140,32 +143,32 @@ class QRDQNhead(tk.Model):
         layers.extend(mlp_block(input_shape[0], action_dim * atom_num, None, None, None, device)[0])
         self.model = tk.Sequential(layers)
 
-    def call(self, x: tf.Tensor, **kwargs):
+    def call(self, x: Tensor, **kwargs):
         quantiles = tf.reshape(self.model(x), [-1, self.action_dim, self.atom_num])
         return quantiles
 
 
-class BasicQnetwork(tk.Model):
+class BasicQnetwork(Module):
     def __init__(self,
                  action_space: Discrete,
-                 representation: tk.Model,
+                 representation: Module,
                  hidden_size: Sequence[int] = None,
                  normalize: Optional[tk.layers.Layer] = None,
-                 initializer: Optional[tk.initializers.Initializer] = None,
+                 initialize: Optional[tk.initializers.Initializer] = None,
                  activation: Optional[tk.layers.Layer] = None,
                  device: str = "cpu:0"):
         super(BasicQnetwork, self).__init__()
         self.action_dim = action_space.n
         self.representation = representation
-        self.target_representation = copy.deepcopy(representation)
+        self.target_representation = deepcopy(representation)
         self.representation_info_shape = self.representation.output_shapes
         self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, hidden_size,
-                                     normalize, initializer, activation, device)
+                                     normalize, initialize, activation, device)
         self.target_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, hidden_size,
-                                       normalize, initializer, activation, device)
+                                       normalize, initialize, activation, device)
         self.target_Qhead.set_weights(self.eval_Qhead.get_weights())
 
-    def call(self, observation: tf.Tensor, **kwargs):
+    def call(self, observation: Tensor, **kwargs):
         outputs = self.representation(observation)
         evalQ = self.eval_Qhead(outputs['state'])
         argmax_action = tf.math.argmax(evalQ, axis=-1)
@@ -182,19 +185,19 @@ class BasicQnetwork(tk.Model):
         self.target_Qhead.set_weights(self.eval_Qhead.get_weights())
 
 
-class DuelQnetwork(tk.Model):
+class DuelQnetwork(Module):
     def __init__(self,
                  action_space: Space,
                  representation: Basic_Identical,
                  hidden_size: Sequence[int] = None,
                  normalize: Optional[tk.layers.Layer] = None,
-                 initialize: Optional[Callable[..., tf.Tensor]] = None,
+                 initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[tk.layers.Layer] = None,
                  device: str = "cpu:0"):
         super(DuelQnetwork, self).__init__()
         self.action_dim = action_space.n
         self.representation = representation
-        self.target_representation = copy.deepcopy(representation)
+        self.target_representation = deepcopy(representation)
         self.representation_info_shape = self.representation.output_shapes
         self.eval_Qhead = DuelQhead(self.representation.output_shapes['state'][0], self.action_dim, hidden_size,
                                     normalize, initialize, activation, device)
@@ -219,19 +222,19 @@ class DuelQnetwork(tk.Model):
         self.target_Qhead.set_weights(self.eval_Qhead.get_weights())
 
 
-class NoisyQnetwork(tk.Model):
+class NoisyQnetwork(Module):
     def __init__(self,
                  action_space: Discrete,
                  representation: Basic_Identical,
                  hidden_size: Sequence[int] = None,
                  normalize: Optional[tk.layers.Layer] = None,
-                 initialize: Optional[Callable[..., tf.Tensor]] = None,
+                 initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[tk.layers.Layer] = None,
                  device: str = "cpu:0"):
         super(NoisyQnetwork, self).__init__()
         self.action_dim = action_space.n
         self.representation = representation
-        self.target_representation = copy.deepcopy(representation)
+        self.target_representation = deepcopy(representation)
         self.representation_info_shape = self.representation.output_shapes
         self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, hidden_size,
                                      normalize, initialize, activation, device)
@@ -272,7 +275,7 @@ class NoisyQnetwork(tk.Model):
         self.target_Qhead.set_weights(self.eval_Qhead.get_weights())
 
 
-class C51Qnetwork(tk.Model):
+class C51Qnetwork(Module):
     def __init__(self,
                  action_space: Discrete,
                  atom_num: int,
@@ -281,7 +284,7 @@ class C51Qnetwork(tk.Model):
                  representation: Basic_Identical,
                  hidden_size: Sequence[int] = None,
                  normalize: Optional[tk.layers.Layer] = None,
-                 initialize: Optional[Callable[..., tf.Tensor]] = None,
+                 initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[tk.layers.Layer] = None,
                  device: str = "cpu:0"):
         assert isinstance(action_space, Discrete)
@@ -291,7 +294,7 @@ class C51Qnetwork(tk.Model):
         self.v_min = v_min
         self.v_max = v_max
         self.representation = representation
-        self.target_representation = copy.deepcopy(representation)
+        self.target_representation = deepcopy(representation)
         self.representation_info_shape = self.representation.output_shapes
         self.eval_Zhead = C51Qhead(self.representation.output_shapes['state'][0], self.action_dim, self.atom_num,
                                    hidden_size, normalize, initialize, activation, device)
@@ -320,21 +323,21 @@ class C51Qnetwork(tk.Model):
         self.target_Zhead.set_weights(self.eval_Zhead.get_weights())
 
 
-class QRDQN_Network(tk.Model):
+class QRDQN_Network(Module):
     def __init__(self,
                  action_space: Discrete,
                  quantile_num: int,
                  representation: Basic_Identical,
                  hidden_size: Sequence[int] = None,
                  normalize: Optional[tk.layers.Layer] = None,
-                 initialize: Optional[Callable[..., tf.Tensor]] = None,
+                 initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[tk.layers.Layer] = None,
                  device: str = "cpu:0"):
         super(QRDQN_Network, self).__init__()
         self.action_dim = action_space.n
         self.quantile_num = quantile_num
         self.representation = representation
-        self.target_representation = copy.deepcopy(representation)
+        self.target_representation = deepcopy(representation)
         self.representation_info_shape = self.representation.output_shapes
         self.eval_Zhead = QRDQNhead(self.representation.output_shapes['state'][0], self.action_dim, self.quantile_num,
                                     hidden_size,
@@ -363,12 +366,12 @@ class QRDQN_Network(tk.Model):
         self.target_Zhead.set_weights(self.eval_Zhead.get_weights())
 
 
-class ActorNet(tk.Model):
+class ActorNet(Module):
     def __init__(self,
                  state_dim: int,
                  action_dim: int,
                  hidden_sizes: Sequence[int],
-                 initialize: Optional[Callable[..., tf.Tensor]] = None,
+                 initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[tk.layers.Layer] = None,
                  device: str = "cpu:0"):
         super(ActorNet, self).__init__()
@@ -380,16 +383,16 @@ class ActorNet(tk.Model):
         layers.extend(mlp_block(input_shape[0], action_dim, None, tk.layers.Activation('tanh'), initialize, device)[0])
         self.model = tk.Sequential(layers)
 
-    def call(self, x: tf.Tensor, **kwargs):
+    def call(self, x: Tensor, **kwargs):
         return self.model(x)
 
 
-class CriticNet(tk.Model):
+class CriticNet(Module):
     def __init__(self,
                  state_dim: int,
                  action_dim: int,
                  hidden_sizes: Sequence[int],
-                 initialize: Optional[Callable[..., tf.Tensor]] = None,
+                 initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[tk.layers.Layer] = None,
                  device: str = "cpu:0"):
         super(CriticNet, self).__init__()
@@ -407,13 +410,13 @@ class CriticNet(tk.Model):
         return self.model(tf.concat((x, a), axis=-1))[:, 0]
 
 
-class DDPGPolicy(tk.Model):
+class DDPGPolicy(Module):
     def __init__(self,
                  action_space: Space,
                  representation: Basic_Identical,
                  actor_hidden_size: Sequence[int],
                  critic_hidden_size: Sequence[int],
-                 initialize: Optional[Callable[..., tf.Tensor]] = None,
+                 initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[tk.layers.Layer] = None,
                  device: str = "cpu:0"):
         super(DDPGPolicy, self).__init__()
@@ -443,7 +446,7 @@ class DDPGPolicy(tk.Model):
         inputs_critic = {'x': outputs['state'], 'a': act}
         return self.target_critic(inputs_critic)
 
-    def Qaction(self, observation: Union[np.ndarray, dict], action: tf.Tensor):
+    def Qaction(self, observation: Union[np.ndarray, dict], action: Tensor):
         outputs = self.representation(observation)
         inputs_critic = {'x': outputs['state'], 'a': action}
         return self.critic(inputs_critic)
@@ -461,14 +464,14 @@ class DDPGPolicy(tk.Model):
             tp.assign((1 - tau) * tp + tau * ep)
 
 
-class TD3Policy(tk.Model):
+class TD3Policy(Module):
     def __init__(self,
                  action_space: Space,
                  representation: Basic_Identical,
                  actor_hidden_size: Sequence[int],
                  critic_hidden_size: Sequence[int],
                  normalize: Optional[tk.layers.Layer] = None,
-                 initialize: Optional[Callable[..., tf.Tensor]] = None,
+                 initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[tk.layers.Layer] = None,
                  device: str = "cpu:0"):
         super(TD3Policy, self).__init__()
@@ -506,7 +509,7 @@ class TD3Policy(tk.Model):
         mim_q = tf.minimum(qa, qb)
         return outputs, mim_q
 
-    def Qaction(self, observation: Union[np.ndarray, dict], action: tf.Tensor):
+    def Qaction(self, observation: Union[np.ndarray, dict], action: Tensor):
         outputs = self.representation(observation)
         inputs_critic = {'x': outputs['state'], 'a': action}
         qa = tf.expand_dims(self.criticA(inputs_critic), axis=1)
@@ -530,7 +533,7 @@ class TD3Policy(tk.Model):
             tp.assign((1 - tau) * tp + tau * ep)
 
 
-class PDQNPolicy(tk.Model):
+class PDQNPolicy(Module):
     def __init__(self,
                  observation_space,
                  action_space,
@@ -538,12 +541,12 @@ class PDQNPolicy(tk.Model):
                  conactor_hidden_size: Sequence[int],
                  qnetwork_hidden_size: Sequence[int],
                  normalize: Optional[tk.layers.Layer] = None,
-                 initialize: Optional[Callable[..., tf.Tensor]] = None,
+                 initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[tk.layers.Layer] = None,
                  device: str = "cpu:0"):
         super(PDQNPolicy, self).__init__()
         self.representation = representation
-        self.target_representation = copy.deepcopy(representation)
+        self.target_representation = deepcopy(representation)
         self.observation_space = observation_space
         self.action_space = action_space
         self.num_disact = self.action_space.spaces[0].n
@@ -597,7 +600,7 @@ class PDQNPolicy(tk.Model):
             tp.assign((1 - tau) * tp + tau * ep)
 
 
-class MPDQNPolicy(tk.Model):
+class MPDQNPolicy(Module):
     def __init__(self,
                  observation_space,
                  action_space,
@@ -605,12 +608,12 @@ class MPDQNPolicy(tk.Model):
                  conactor_hidden_size: Sequence[int],
                  qnetwork_hidden_size: Sequence[int],
                  normalize: Optional[tk.layers.Layer] = None,
-                 initialize: Optional[Callable[..., tf.Tensor]] = None,
+                 initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[tk.layers.Layer] = None,
                  device: str = "cpu:0"):
         super(MPDQNPolicy, self).__init__()
         self.representation = representation
-        self.target_representation = copy.deepcopy(representation)
+        self.target_representation = deepcopy(representation)
         self.observation_space = observation_space
         self.obs_size = self.observation_space.shape[0]
         self.action_space = action_space
@@ -707,7 +710,7 @@ class MPDQNPolicy(tk.Model):
             tp.assign((1 - tau) * tp + tau * ep)
 
 
-class SPDQNPolicy(tk.Model):
+class SPDQNPolicy(Module):
     def __init__(self,
                  observation_space,
                  action_space,
@@ -715,12 +718,12 @@ class SPDQNPolicy(tk.Model):
                  conactor_hidden_size: Sequence[int],
                  qnetwork_hidden_size: Sequence[int],
                  normalize: Optional[tk.layers.Layer] = None,
-                 initialize: Optional[Callable[..., tf.Tensor]] = None,
+                 initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[tk.layers.Layer] = None,
                  device: str = "cpu:0"):
         super(SPDQNPolicy, self).__init__()
         self.representation = representation
-        self.target_representation = copy.deepcopy(representation)
+        self.target_representation = deepcopy(representation)
         self.observation_space = observation_space
         self.action_space = action_space
         self.num_disact = self.action_space.spaces[0].n
@@ -794,10 +797,10 @@ class SPDQNPolicy(tk.Model):
                 tp.assign((1 - tau) * tp + tau * ep)
 
 
-class DRQNPolicy(tk.Model):
+class DRQNPolicy(Module):
     def __init__(self,
                  action_space: Discrete,
-                 representation: tk.Model,
+                 representation: Module,
                  **kwargs):
         super(DRQNPolicy, self).__init__()
         self.device = kwargs['device']
@@ -805,7 +808,7 @@ class DRQNPolicy(tk.Model):
         self.rnn_hidden_dim = kwargs['recurrent_hidden_size']
         self.action_dim = action_space.n
         self.representation = representation
-        self.target_representation = copy.deepcopy(representation)
+        self.target_representation = deepcopy(representation)
         self.representation_info_shape = self.representation.output_shapes
         kwargs["input_dim"] = self.representation.output_shapes['state'][0]
         kwargs["action_dim"] = self.action_dim
@@ -815,7 +818,7 @@ class DRQNPolicy(tk.Model):
         self.target_Qhead = BasicRecurrent(**kwargs)
         self.target_Qhead.set_weights(self.eval_Qhead.get_weights())
 
-    def call(self, observation: Union[np.ndarray, dict], *rnn_hidden: tf.Tensor, **kwargs):
+    def call(self, observation: Union[np.ndarray, dict], *rnn_hidden: Tensor, **kwargs):
         if self.cnn:
             obs_shape = observation.shape
             outputs = self.representation(observation.reshape((-1,) + obs_shape[-3:]))
@@ -833,7 +836,7 @@ class DRQNPolicy(tk.Model):
         argmax_action = tf.math.argmax(evalQ[:, -1], axis=-1)
         return outputs, argmax_action, evalQ, (hidden_states, cell_states)
 
-    def target(self, observation: Union[np.ndarray, dict], *rnn_hidden: tf.Tensor):
+    def target(self, observation: Union[np.ndarray, dict], *rnn_hidden: Tensor):
         if self.cnn:
             obs_shape = observation.shape
             outputs = self.target_representation(observation.reshape((-1,) + obs_shape[-3:]))

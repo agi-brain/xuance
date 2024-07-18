@@ -1,6 +1,6 @@
 import torch
 from argparse import Namespace
-from typing import List, Optional
+from xuance.common import List, Optional
 from xuance.environment import DummyVecMultiAgentEnv
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.policies import REGISTRY_Policy

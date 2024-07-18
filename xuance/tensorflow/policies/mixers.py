@@ -1,8 +1,7 @@
-import tensorflow as tf
-import tensorflow.keras as tk
+from xuance.tensorflow import tf, tk, Module
 
 
-class VDN_mixer(tk.Model):
+class VDN_mixer(Module):
     def __init__(self):
         super(VDN_mixer, self).__init__()
 
@@ -10,7 +9,7 @@ class VDN_mixer(tk.Model):
         return tf.reduce_sum(values_n, axis=1)
 
 
-class QMIX_mixer(tk.Model):
+class QMIX_mixer(Module):
     def __init__(self, dim_state, dim_hidden, dim_hypernet_hidden, n_agents, device):
         super(QMIX_mixer, self).__init__()
         self.device = device
@@ -58,7 +57,7 @@ class QMIX_mixer(tk.Model):
         return q_tot
 
 
-class QMIX_FF_mixer(tk.Model):
+class QMIX_FF_mixer(Module):
     def __init__(self, dim_state, dim_hidden, n_agents):
         super(QMIX_FF_mixer, self).__init__()
         self.dim_state = dim_state
@@ -90,7 +89,7 @@ class QMIX_FF_mixer(tk.Model):
         return q_tot
 
 
-class QTRAN_base(tk.Model):
+class QTRAN_base(Module):
     def __init__(self, dim_state, dim_action, dim_hidden, n_agents, dim_utility_hidden):
         super(QTRAN_base, self).__init__()
         self.dim_state = dim_state

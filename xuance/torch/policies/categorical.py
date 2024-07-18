@@ -1,7 +1,7 @@
 import torch
 import numpy as np
 import torch.nn as nn
-from typing import Sequence, Optional, Callable, Union
+from xuance.common import Sequence, Optional, Callable, Union
 from copy import deepcopy
 from gym.spaces import Discrete
 from xuance.torch import Module, Tensor

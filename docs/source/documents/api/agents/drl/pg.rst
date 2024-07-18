@@ -68,7 +68,7 @@ TensorFlow
   :param envs: The vectorized environments.
   :type envs: xuance.environments.vector_envs.vector_env.VecEnv
   :param policy: The policy that provides actions and values.
-  :type policy: tk.Model
+  :type policy: Module
   :param optimizer: The optimizer that updates the parameters.
   :type optimizer: torch.optim.Optimizer
   :param device: Choose CPU or GPU to train the model.
@@ -332,7 +332,7 @@ Source Code
             def __init__(self,
                          config: Namespace,
                          envs: DummyVecEnv,
-                         policy: tk.Model,
+                         policy: Module,
                          optimizer: tk.optimizers.Optimizer,
                          device: str = 'cpu'):
                 self.render = config.render

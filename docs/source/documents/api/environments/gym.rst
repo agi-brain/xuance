@@ -420,7 +420,7 @@ Source Code
             import gym
             import numpy as np
             from collections import deque
-            from typing import Sequence
+            from xuance.common import Sequence
             import cv2
 
 

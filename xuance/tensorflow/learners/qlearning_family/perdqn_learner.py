@@ -1,9 +1,15 @@
-from xuance.tensorflow.learners import *
+"""
+DQN with Prioritized Experience Replay (PER-DQN)
+Paper link: https://arxiv.org/pdf/1511.05952.pdf
+Implementation: TensorFlow2
+"""
+from xuance.tensorflow import tf, tk, Module
+from xuance.tensorflow.learners import Learner
 
 
 class PerDQN_Learner(Learner):
     def __init__(self,
-                 policy: tk.Model,
+                 policy: Module,
                  optimizer: tk.optimizers.Optimizer,
                  device: str = "cpu:0",
                  model_dir: str = "./",

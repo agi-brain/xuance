@@ -1,6 +1,6 @@
 from xuance.environment.single_agent_env.gym import Gym_Env
 from xuance.environment.utils import EnvironmentDict
-from typing import Optional
+from xuance.common import Optional
 
 REGISTRY_ENV: Optional[EnvironmentDict] = {
     "Classic Control": Gym_Env,

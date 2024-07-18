@@ -1,5 +1,5 @@
 from xuance.environment.utils import EnvironmentDict
-from typing import Optional
+from xuance.common import Optional
 from xuance.environment.multi_agent_env.mpe import MPE_Env
 
 REGISTRY_MULTI_AGENT_ENV: Optional[EnvironmentDict] = {

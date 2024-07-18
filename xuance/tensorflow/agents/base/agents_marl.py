@@ -1,11 +1,17 @@
-from xuance.tensorflow.agents import *
+import os
+import numpy as np
+from argparse import Namespace
+from xuance.common import BaseBuffer, create_directory
+from xuance.environment import DummyVecMultiAgentEnv
+from xuance.tensorflow import Module
+from xuance.tensorflow.learners import LearnerMAS
 
 
 class MARLAgents(object):
     def __init__(self,
                  config: Namespace,
                  envs: DummyVecMultiAgentEnv,
-                 policy: tk.Model,
+                 policy: Module,
                  memory: BaseBuffer,
                  learner: LearnerMAS,
                  device: str = "cpu:0",

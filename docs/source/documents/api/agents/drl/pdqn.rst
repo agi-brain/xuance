@@ -399,7 +399,7 @@ Source Code
                 def __init__(self,
                              config: Namespace,
                              envs: Gym_Env,
-                             policy: tk.Model,
+                             policy: Module,
                              optimizer: Sequence[tk.optimizers.Optimizer],
                              device: str = 'cpu'):
                     self.envs = envs

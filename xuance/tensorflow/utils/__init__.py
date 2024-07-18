@@ -5,12 +5,12 @@ from .operations import update_linear_decay, set_seed, get_flat_params, assign_f
 from .value_norm import ValueNorm
 
 ActivationFunctions = {
-    "ReLU": tk.layers.Activation('relu'),
-    "LeakyReLU": tk.layers.Activation('leaky_relu'),
-    "Tanh": tk.layers.Activation('tanh'),
-    "Sigmoid": tk.layers.Activation('sigmoid'),
-    "Softmax": tk.layers.Activation('softmax'),
-    "Elu": tk.layers.Activation('elu'),
+    "relu": tk.layers.Activation('relu'),
+    "leaky_relu": tk.layers.Activation('leaky_relu'),
+    "tanh": tk.layers.Activation('tanh'),
+    "sigmoid": tk.layers.Activation('sigmoid'),
+    "softmax": tk.layers.Activation('softmax'),
+    "elu": tk.layers.Activation('elu'),
 }
 
 NormalizeFunctions = {

@@ -1,9 +1,15 @@
-from xuance.tensorflow.learners import *
+"""
+Proximal Policy Optimization with clip trick (PPO_CLIP)
+Paper link: https://arxiv.org/pdf/1707.06347.pdf
+Implementation: TensorFlow2
+"""
+from xuance.tensorflow import tf, tk, Module
+from xuance.tensorflow.learners import Learner
 
 
 class PPOCLIP_Learner(Learner):
     def __init__(self,
-                 policy: tk.Model,
+                 policy: Module,
                  optimizer: tk.optimizers.Optimizer,
                  device: str = "cpu:0",
                  model_dir: str = "./",

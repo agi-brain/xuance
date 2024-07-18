@@ -4,13 +4,16 @@ Paper link:
 https://arxiv.org/pdf/1706.05296.pdf
 Implementation: TensorFlow 2.X
 """
-from xuance.tensorflow.learners import *
+from argparse import Namespace
+from xuance.common import Sequence
+from xuance.tensorflow import tf, tk, Module
+from xuance.tensorflow.learners import LearnerMAS
 
 
 class VDN_Learner(LearnerMAS):
     def __init__(self,
                  config: Namespace,
-                 policy: tk.Model,
+                 policy: Module,
                  optimizer: tk.optimizers.Optimizer,
                  device: str = "cpu:0",
                  model_dir: str = "./",

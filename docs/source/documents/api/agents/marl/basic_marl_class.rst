@@ -108,7 +108,7 @@ TensorFlow
    :param envs: The vectorized environments.
    :type envs: xuance.environments.vector_envs.vector_env.VecEnv
    :param policy: The policy that provides actions and values.
-   :type policy: tk.Model
+   :type policy: Module
    :param memory: Experice replay buffer.
    :type memory: xuance.common.memory_tools.Buffer
    :param learner: The learner that updates parameters of policy.
@@ -389,7 +389,7 @@ Source Code
             def __init__(self,
                         config: Namespace,
                         envs: DummyVecMultiAgentEnv,
-                        policy: tk.Model,
+                        policy: Module,
                         memory: BaseBuffer,
                         learner: LearnerMAS,
                         device: str = "cpu:0",

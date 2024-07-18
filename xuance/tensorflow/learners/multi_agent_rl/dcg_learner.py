@@ -3,16 +3,15 @@ DCG: Deep coordination graphs
 Paper link: http://proceedings.mlr.press/v119/boehmer20a/boehmer20a.pdf
 Implementation: TensorFlow 2.X
 """
-import torch
-
-from xuance.tensorflow.learners import *
-import torch_scatter
+from argparse import Namespace
+from xuance.tensorflow import tf, tk, Module
+from xuance.tensorflow.learners import LearnerMAS
 
 
 class DCG_Learner(LearnerMAS):
     def __init__(self,
                  config: Namespace,
-                 policy: tk.Model,
+                 policy: Module,
                  optimizer: tk.optimizers.Optimizer,
                  device: str = "cpu:0",
                  model_dir: str = "./",

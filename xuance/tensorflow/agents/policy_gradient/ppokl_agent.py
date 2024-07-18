@@ -1,11 +1,19 @@
-from xuance.tensorflow.agents import *
+import numpy as np
+from tqdm import tqdm
+from argparse import Namespace
+from xuance.common import DummyOnPolicyBuffer, DummyOnPolicyBuffer_Atari
+from xuance.environment import DummyVecEnv
+from xuance.tensorflow import tf, tk, Module
+from xuance.tensorflow.utils import split_distributions
+from xuance.tensorflow.agents import Agent
+from xuance.tensorflow.learners import PPOKL_Learner
 
 
 class PPOKL_Agent(Agent):
     def __init__(self,
                  config: Namespace,
                  envs: DummyVecEnv,
-                 policy: tk.Model,
+                 policy: Module,
                  optimizer: tk.optimizers.Optimizer,
                  device: str = 'cpu'):
         self.render = config.render

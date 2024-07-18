@@ -1,9 +1,16 @@
-from xuance.tensorflow.learners import *
+"""
+Deep Deterministic Policy Gradient (DDPG)
+Paper link: https://arxiv.org/pdf/1509.02971.pdf
+Implementation: TensorFlow2
+"""
+from xuance.common import Sequence
+from xuance.tensorflow import tf, tk, Module
+from xuance.tensorflow.learners import Learner
 
 
 class DDPG_Learner(Learner):
     def __init__(self,
-                 policy: tk.Model,
+                 policy: Module,
                  optimizers: Sequence[tk.optimizers.Optimizer],
                  device: str = "cpu:0",
                  model_dir: str = "./",

@@ -1,9 +1,15 @@
-from xuance.tensorflow.learners import *
+"""
+DQN with Double Q-learning (Double DQN)
+Paper link: https://ojs.aaai.org/index.php/AAAI/article/view/10295
+Implementation: TensorFlow2
+"""
+from xuance.tensorflow import tf, tk, Module
+from xuance.tensorflow.learners import Learner
 
 
 class DDQN_Learner(Learner):
     def __init__(self,
-                 policy: tk.Model,
+                 policy: Module,
                  optimizer: tk.optimizers.Optimizer,
                  device: str = "cpu:0",
                  model_dir: str = "./",

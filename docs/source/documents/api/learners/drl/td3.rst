@@ -221,7 +221,7 @@ Source Code
 
         class TD3_Learner(Learner):
             def __init__(self,
-                         policy: tk.Model,
+                         policy: Module,
                          optimizers: Sequence[tk.optimizers.Optimizer],
                          device: str = "cpu:0",
                          model_dir: str = "./",

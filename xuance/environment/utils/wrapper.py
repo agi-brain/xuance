@@ -1,4 +1,4 @@
-from typing import Optional, Tuple, SupportsFloat
+from xuance.common import Optional, Tuple, SupportsFloat
 from gym import spaces
 
 

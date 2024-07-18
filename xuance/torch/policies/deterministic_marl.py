@@ -2,7 +2,7 @@ import torch
 from torch.distributions import Categorical
 from copy import deepcopy
 from gym.spaces import Discrete, Box
-from typing import Sequence, Optional, Callable, Union, Dict, List
+from xuance.common import Sequence, Optional, Callable, Union, Dict, List
 from xuance.torch.policies import BasicQhead, ActorNet, CriticNet, VDN_mixer, QTRAN_base, QMIX_FF_mixer
 from xuance.torch.utils import ModuleType
 from xuance.torch import Tensor, Module, ModuleDict

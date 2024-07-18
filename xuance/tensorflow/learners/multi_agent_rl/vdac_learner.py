@@ -1,16 +1,17 @@
 """
 Value Decomposition Actor-Critic (VDAC)
 Paper link: https://ojs.aaai.org/index.php/AAAI/article/view/17353
-Implementation: Pytorch
+Implementation: TensorFlow2
 """
-from xuance.tensorflow.learners import *
-from xuance.torch.utils.operations import update_linear_decay
+from argparse import Namespace
+from xuance.tensorflow import tf, tk, Module
+from xuance.tensorflow.learners import LearnerMAS
 
 
 class VDAC_Learner(LearnerMAS):
     def __init__(self,
                  config: Namespace,
-                 policy: tk.Model,
+                 policy: Module,
                  optimizer: tk.optimizers.Optimizer,
                  device: str = "cpu:0",
                  model_dir: str = "./",

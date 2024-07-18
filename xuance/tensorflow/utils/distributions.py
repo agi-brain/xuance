@@ -1,4 +1,4 @@
-from xuance.tensorflow import tf, tfd
+from xuance.tensorflow import tf, tfd, Tensor
 from abc import ABC, abstractmethod
 
 kl_div = tfd.kl_divergence
@@ -18,7 +18,7 @@ class Distribution(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def log_prob(self, x: tf.Tensor):
+    def log_prob(self, x: Tensor):
         raise NotImplementedError
 
     @abstractmethod

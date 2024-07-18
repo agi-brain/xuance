@@ -1,7 +1,7 @@
 from tqdm import tqdm
 import numpy as np
 from copy import deepcopy
-from typing import Optional, List, Union
+from xuance.common import Optional, List, Union
 from argparse import Namespace
 from operator import itemgetter
 from torch.distributions import Categorical

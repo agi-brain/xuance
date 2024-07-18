@@ -1,8 +1,7 @@
 import random
 import numpy as np
 from .distributions import CategoricalDistribution, DiagGaussianDistribution
-import tensorflow as tf
-import tensorflow.keras as tk
+from xuance.tensorflow import tf, tk, Module, Tensor
 
 
 def update_linear_decay(optimizer, step, total_steps, initial_lr, end_factor):
@@ -19,17 +18,17 @@ def set_seed(seed):
     np.random.seed(seed)
     random.seed(seed)
 
-# def get_flat_grad(y: tf.Tensor, model: tk.Model) -> tf.Tensor:
+# def get_flat_grad(y: Tensor, model: Module) -> Tensor:
 #     grads = torch.autograd.grad(y, model.parameters())
 #     return torch.cat([grad.reshape(-1) for grad in grads])
 
 
-def get_flat_params(model: tk.Model) -> tf.Tensor:
+def get_flat_params(model: Module) -> Tensor:
     params = model.parameters()
     return tf.concat([param.reshape(-1) for param in params])
 
 
-def assign_from_flat_grads(flat_grads: tf.Tensor, model: tk.Model) -> tk.Model:
+def assign_from_flat_grads(flat_grads: Tensor, model: Module) -> Module:
     prev_ind = 0
     for param in model.parameters():
         flat_size = int(np.prod(list(param.size())))
@@ -38,7 +37,7 @@ def assign_from_flat_grads(flat_grads: tf.Tensor, model: tk.Model) -> tk.Model:
     return model
 
 
-def assign_from_flat_params(flat_params: tf.Tensor, model: tk.Model) -> tk.Model:
+def assign_from_flat_params(flat_params: Tensor, model: Module) -> Module:
     prev_ind = 0
     for param in model.parameters():
         flat_size = int(np.prod(list(param.size())))

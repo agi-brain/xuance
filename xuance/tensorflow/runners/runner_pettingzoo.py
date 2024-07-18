@@ -5,7 +5,7 @@ from pathlib import Path
 import wandb
 from torch.utils.tensorboard import SummaryWriter
 from .runner_basic import Runner_Base, make_envs
-from xuance.tensorflow.agents import REGISTRY as REGISTRY_Agent
+from xuance.tensorflow.agents import REGISTRY_Agents
 from gymnasium.spaces.box import Box
 from tqdm import tqdm
 import numpy as np

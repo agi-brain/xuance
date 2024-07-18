@@ -1,6 +1,6 @@
 import mindspore as ms
 import mindspore.nn as nn
-from typing import Any, Dict, Optional, Sequence, Tuple, Type, Union, Callable
+from xuance.common import Any, Dict, Optional, Sequence, Tuple, Type, Union, Callable
 
 ModuleType = Type[nn.Cell]
 

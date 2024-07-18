@@ -1,5 +1,5 @@
 import numpy as np
-from typing import Sequence, Optional, Union, Callable
+from xuance.common import Sequence, Optional, Union, Callable
 from xuance.tensorflow import tf, tk, tfa, Module
 from xuance.tensorflow.utils.layers import cnn_block, mlp_block
 from xuance.tensorflow.utils import ModuleType

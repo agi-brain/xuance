@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import numpy as np
-from typing import Sequence, Optional, Union, Callable
+from xuance.common import Sequence, Optional, Union, Callable
 from xuance.torch import Module
 from xuance.torch.utils.layers import mlp_block
 from xuance.torch.utils import ModuleType

@@ -1,9 +1,16 @@
-from xuance.tensorflow.learners import *
+"""
+Policy Gradient (PG)
+Paper link: https://proceedings.neurips.cc/paper/2001/file/4b86abe48d358ecf194c56c69108433e-Paper.pdf
+Implementation: TensorFlow2
+"""
+from xuance.common import Optional
+from xuance.tensorflow import tf, tk, Module
+from xuance.tensorflow.learners import Learner
 
 
 class PG_Learner(Learner):
     def __init__(self,
-                 policy: tk.Model,
+                 policy: Module,
                  optimizer: tk.optimizers.Optimizer,
                  device: str = "cpu:0",
                  model_dir: str = "./",

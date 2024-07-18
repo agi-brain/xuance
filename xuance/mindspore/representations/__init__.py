@@ -1,6 +1,6 @@
 import mindspore as ms
 import mindspore.nn as nn
-from typing import Sequence, Optional, Union, Callable
+from xuance.common import Sequence, Optional, Union, Callable
 import numpy as np
 from xuance.mindspore.utils.layers import *
 

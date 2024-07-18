@@ -3,7 +3,7 @@ import numpy as np
 from copy import deepcopy
 from xuance.environment import make_envs
 from xuance.tensorflow.runners import Runner_Base
-from xuance.tensorflow.agents import REGISTRY_Agent
+from xuance.tensorflow.agents import REGISTRY_Agents
 
 
 class Runner_DRL(Runner_Base):
@@ -24,7 +24,7 @@ class Runner_DRL(Runner_Base):
             self.config.observation_space = self.envs.observation_space
             self.config.action_space = self.envs.action_space
 
-        self.agent = REGISTRY_Agent[self.config.agent](self.config, self.envs)
+        self.agent = REGISTRY_Agents[self.config.agent](self.config, self.envs)
 
     def run(self):
         if self.config.test_mode:

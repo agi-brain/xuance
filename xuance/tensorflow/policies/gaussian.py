@@ -1,13 +1,13 @@
 import numpy as np
-from xuance.tensorflow.policies import *
-from xuance.tensorflow.utils import *
+from gym.spaces import Space, Box
+from copy import deepcopy
+from xuance.common import Sequence, Optional, Union
+from xuance.tensorflow import tf, tk, Module, tfd, Tensor
 from xuance.tensorflow.representations import Basic_Identical
-import tensorflow_probability as tfp
-
-tfd = tfp.distributions
+from xuance.tensorflow.utils import mlp_block, DiagGaussianDistribution
 
 
-class ActorNet(tk.Model):
+class ActorNet(Module):
     def __init__(self,
                  state_dim: int,
                  action_dim: int,
@@ -27,12 +27,12 @@ class ActorNet(tk.Model):
         self.logstd = tf.Variable(tf.zeros((action_dim,)) - 1, trainable=True)
         self.dist = DiagGaussianDistribution(action_dim)
 
-    def call(self, x: tf.Tensor, **kwargs):
+    def call(self, x: Tensor, **kwargs):
         self.dist.set_param(self.mu_model(x), tf.math.exp(self.logstd))
         return self.mu_model(x)
 
 
-class CriticNet(tk.Model):
+class CriticNet(Module):
     def __init__(self,
                  state_dim: int,
                  hidden_sizes: Sequence[int],
@@ -49,14 +49,14 @@ class CriticNet(tk.Model):
         layers.extend(mlp_block(input_shapes[0], 1, device=device)[0])
         self.model = tk.Sequential(layers)
 
-    def call(self, x: tf.Tensor, **kwargs):
+    def call(self, x: Tensor, **kwargs):
         return self.model(x)[:, 0]
 
 
-class ActorCriticPolicy(tk.Model):
+class ActorCriticPolicy(Module):
     def __init__(self,
                  action_space: Space,
-                 representation: tk.Model,
+                 representation: Module,
                  actor_hidden_size: Sequence[int] = None,
                  critic_hidden_size: Sequence[int] = None,
                  normalize: Optional[tk.layers.Layer] = None,
@@ -79,10 +79,10 @@ class ActorCriticPolicy(tk.Model):
         return outputs, a, v
 
 
-class ActorPolicy(tk.Model):
+class ActorPolicy(Module):
     def __init__(self,
                  action_space: Space,
-                 representation: tk.Model,
+                 representation: Module,
                  actor_hidden_size: Sequence[int] = None,
                  normalize: Optional[tk.layers.Layer] = None,
                  initializer: Optional[tk.initializers.Initializer] = None,
@@ -102,10 +102,10 @@ class ActorPolicy(tk.Model):
         return outputs, a
 
 
-class PPGActorCritic(tk.Model):
+class PPGActorCritic(Module):
     def __init__(self,
                  action_space: Space,
-                 representation: tk.Model,
+                 representation: Module,
                  actor_hidden_size: Sequence[int] = None,
                  critic_hidden_size: Sequence[int] = None,
                  normalize: Optional[tk.layers.Layer] = None,
@@ -115,7 +115,7 @@ class PPGActorCritic(tk.Model):
         super(PPGActorCritic, self).__init__()
         self.action_dim = action_space.shape[0]
         self.actor_representation = representation
-        self.critic_representation = copy.deepcopy(representation)
+        self.critic_representation = deepcopy(representation)
         self.representation_info_shape = self.actor_representation.output_shapes
         self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size,
                               normalize, initializer, activation, device)
@@ -133,7 +133,7 @@ class PPGActorCritic(tk.Model):
         return policy_outputs, a, v, aux_v
 
 
-class ActorNet_SAC(tk.Model):
+class ActorNet_SAC(Module):
     def __init__(self,
                  state_dim: int,
                  action_dim: int,
@@ -154,7 +154,7 @@ class ActorNet_SAC(tk.Model):
         self.out_std = tk.layers.Dense(units=action_dim,
                                        input_shape=(hidden_sizes[0],))
 
-    def call(self, x: tf.Tensor, **kwargs):
+    def call(self, x: Tensor, **kwargs):
         output = self.outputs(x)
         mu = tf.tanh(self.out_mu(output))
         std = tf.clip_by_value(self.out_std(output), -20, 2)
@@ -164,7 +164,7 @@ class ActorNet_SAC(tk.Model):
         # return mu, std
 
 
-class CriticNet_SAC(tk.Model):
+class CriticNet_SAC(Module):
     def __init__(self,
                  state_dim: int,
                  action_dim: int,
@@ -187,7 +187,7 @@ class CriticNet_SAC(tk.Model):
         return self.model(tf.concat((obs, act), axis=-1))
 
 
-class SACPolicy(tk.Model):
+class SACPolicy(Module):
     def __init__(self,
                  action_space: Space,
                  representation: Basic_Identical,
@@ -227,7 +227,7 @@ class SACPolicy(tk.Model):
         inputs = {'obs': outputs['state'], 'act': act}
         return outputs, act_log, self.target_critic(inputs)
 
-    def Qaction(self, observation: Union[np.ndarray, dict], action: tf.Tensor):
+    def Qaction(self, observation: Union[np.ndarray, dict], action: Tensor):
         outputs = self.representation(observation)
         inputs = {'obs': outputs['state'], 'act': action}
         return outputs, self.critic(inputs)

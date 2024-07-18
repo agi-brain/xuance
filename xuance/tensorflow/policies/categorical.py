@@ -1,5 +1,5 @@
 import numpy as np
-from typing import Sequence, Optional, Union
+from xuance.common import Sequence, Optional, Union
 from copy import deepcopy
 from gym.spaces import Space, Discrete
 from xuance.tensorflow import tf, tfd, tk, Module, Tensor
@@ -25,7 +25,7 @@ class ActorNet(Module):
         self.model = tk.Sequential(layers)
         self.dist = CategoricalDistribution(action_dim)
 
-    def call(self, x: tf.Tensor, **kwargs):
+    def call(self, x: Tensor, **kwargs):
         logits = self.model(x)
         self.dist.set_param(logits)
         return logits
@@ -48,7 +48,7 @@ class CriticNet(Module):
         layers.extend(mlp_block(input_shapes[0], 1, device=device)[0])
         self.model = tk.Sequential(layers)
 
-    def call(self, x: tf.Tensor, **kwargs):
+    def call(self, x: Tensor, **kwargs):
         return self.model(x)[:, 0]
 
 
@@ -152,7 +152,7 @@ class CriticNet_SACDIS(Module):
         layers.extend(mlp_block(input_shape[0], action_dim, None, None, initializer, device)[0])
         self.model = tk.Sequential(layers)
 
-    def call(self, x: tf.Tensor, **kwargs):
+    def call(self, x: Tensor, **kwargs):
         return self.model(x)
 
 
@@ -175,7 +175,7 @@ class ActorNet_SACDIS(Module):
         self.outputs = tk.Sequential(layers)
         self.model = tk.layers.Softmax(axis=-1)
 
-    def call(self, x: tf.Tensor, **kwargs):
+    def call(self, x: Tensor, **kwargs):
         action_prob = self.model(self.outputs(x))
         dist = tfd.Categorical(probs=action_prob)
         return action_prob, dist

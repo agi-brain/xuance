@@ -345,11 +345,11 @@ TensorFlow
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
   :param normalize: The method of normalization.
-  :type normalize: tk.Model
+  :type normalize: Module
   :param initialize: The initialization for the parameters of the networks.
   :type initialize: tf.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: tk.Model
+  :type activation: Module
   :param device: The calculating device.
   :type device: str
 
@@ -377,11 +377,11 @@ TensorFlow
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
   :param normalize: The method of normalization.
-  :type normalize: tk.Model
+  :type normalize: Module
   :param initialize: The initialization for the parameters of the networks.
   :type initialize: tf.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: tk.Model
+  :type activation: Module
   :param device: The calculating device.
   :type device: str
 
@@ -408,17 +408,17 @@ TensorFlow
   :param action_space: The action space of the environment.
   :type action_space: Space
   :param representation: The representation module.
-  :type representation: tk.Model
+  :type representation: Module
   :param actor_hidden_size: The sizes of the hidden layers in actor network.
   :type actor_hidden_size: list
   :param critic_hidden_size: The sizes of the hidden layers in critic networks.
   :type critic_hidden_size: list
   :param normalize: The method of normalization.
-  :type normalize: tk.Model
+  :type normalize: Module
   :param initialize: The initialization for the parameters of the networks.
   :type initialize: tf.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: tk.Model
+  :type activation: Module
   :param device: The calculating device.
   :type device: str
 
@@ -444,15 +444,15 @@ TensorFlow
   :param action_space: The action space of the environment.
   :type action_space: Space
   :param representation: The representation module.
-  :type representation: tk.Model
+  :type representation: Module
   :param actor_hidden_size: The sizes of the hidden layers in actor network.
   :type actor_hidden_size: list
   :param normalize: The method of normalization.
-  :type normalize: tk.Model
+  :type normalize: Module
   :param initialize: The initialization for the parameters of the networks.
   :type initialize: tf.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: tk.Model
+  :type activation: Module
   :param device: The calculating device.
   :type device: str
   :param fixed_std: A boolean indicating whether the standard deviation of the actor's output distribution is fixed.
@@ -479,17 +479,17 @@ TensorFlow
   :param action_space: The action space of the environment.
   :type action_space: Space
   :param representation: The representation module.
-  :type representation: tk.Model
+  :type representation: Module
   :param actor_hidden_size: The sizes of the hidden layers in actor network.
   :type actor_hidden_size: list
   :param critic_hidden_size: The sizes of the hidden layers in critic networks.
   :type critic_hidden_size: list
   :param normalize: The method of normalization.
-  :type normalize: tk.Model
+  :type normalize: Module
   :param initialize: The initialization for the parameters of the networks.
   :type initialize: tf.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: tk.Model
+  :type activation: Module
   :param device: The calculating device.
   :type device: str
 
@@ -517,11 +517,11 @@ TensorFlow
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
   :param normalize: The method of normalization.
-  :type normalize: tk.Model
+  :type normalize: Module
   :param initialize: The initialization for the parameters of the networks.
   :type initialize: tf.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: tk.Model
+  :type activation: Module
   :param device: The calculating device.
   :type device: str
 
@@ -547,11 +547,11 @@ TensorFlow
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
   :param normalize: The method of normalization.
-  :type normalize: tk.Model
+  :type normalize: Module
   :param initialize: The initialization for the parameters of the networks.
   :type initialize: tf.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: tk.Model
+  :type activation: Module
   :param device: The calculating device.
   :type device: str
 
@@ -574,17 +574,17 @@ TensorFlow
   :param action_space: The action space of the environment.
   :type action_space: Space
   :param representation: The representation module.
-  :type representation: tk.Model
+  :type representation: Module
   :param actor_hidden_size: The sizes of the hidden layers in actor network.
   :type actor_hidden_size: list
   :param critic_hidden_size: The sizes of the hidden layers in critic networks.
   :type critic_hidden_size: list
   :param normalize: The method of normalization.
-  :type normalize: tk.Model
+  :type normalize: Module
   :param initialize: The initialization for the parameters of the networks.
   :type initialize: tf.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: tk.Model
+  :type activation: Module
   :param device: The calculating device.
   :type device: str
 
@@ -1181,7 +1181,7 @@ Source Code
         tfd = tfp.distributions
 
 
-        class ActorNet(tk.Model):
+        class ActorNet(Module):
             def __init__(self,
                          state_dim: int,
                          action_dim: int,
@@ -1206,7 +1206,7 @@ Source Code
                 return self.mu_model(x)
 
 
-        class CriticNet(tk.Model):
+        class CriticNet(Module):
             def __init__(self,
                          state_dim: int,
                          hidden_sizes: Sequence[int],
@@ -1227,10 +1227,10 @@ Source Code
                 return self.model(x)[:, 0]
 
 
-        class ActorCriticPolicy(tk.Model):
+        class ActorCriticPolicy(Module):
             def __init__(self,
                          action_space: Space,
-                         representation: tk.Model,
+                         representation: Module,
                          actor_hidden_size: Sequence[int] = None,
                          critic_hidden_size: Sequence[int] = None,
                          normalize: Optional[tk.layers.Layer] = None,
@@ -1253,10 +1253,10 @@ Source Code
                 return outputs, a, v
 
 
-        class ActorPolicy(tk.Model):
+        class ActorPolicy(Module):
             def __init__(self,
                          action_space: Space,
-                         representation: tk.Model,
+                         representation: Module,
                          actor_hidden_size: Sequence[int] = None,
                          normalize: Optional[tk.layers.Layer] = None,
                          initializer: Optional[tk.initializers.Initializer] = None,
@@ -1276,10 +1276,10 @@ Source Code
                 return outputs, a
 
 
-        class PPGActorCritic(tk.Model):
+        class PPGActorCritic(Module):
             def __init__(self,
                          action_space: Space,
-                         representation: tk.Model,
+                         representation: Module,
                          actor_hidden_size: Sequence[int] = None,
                          critic_hidden_size: Sequence[int] = None,
                          normalize: Optional[tk.layers.Layer] = None,
@@ -1307,7 +1307,7 @@ Source Code
                 return policy_outputs, a, v, aux_v
 
 
-        class ActorNet_SAC(tk.Model):
+        class ActorNet_SAC(Module):
             def __init__(self,
                          state_dim: int,
                          action_dim: int,
@@ -1338,7 +1338,7 @@ Source Code
                 # return mu, std
 
 
-        class CriticNet_SAC(tk.Model):
+        class CriticNet_SAC(Module):
             def __init__(self,
                          state_dim: int,
                          action_dim: int,
@@ -1361,7 +1361,7 @@ Source Code
                 return self.model(tf.concat((obs, act), axis=-1))
 
 
-        class SACPolicy(tk.Model):
+        class SACPolicy(Module):
             def __init__(self,
                          action_space: Space,
                          representation: Basic_Identical,

@@ -2,7 +2,7 @@ import os
 import torch
 import numpy as np
 from abc import ABC, abstractmethod
-from typing import Optional, List, Union
+from xuance.common import Optional, List, Union
 from argparse import Namespace
 from operator import itemgetter
 from xuance.torch import Tensor

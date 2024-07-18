@@ -1,5 +1,5 @@
 from mpi4py import MPI
-from typing import Union, Sequence
+from xuance.common import Union, Sequence
 import numpy as np
 
 

@@ -5,13 +5,16 @@ https://proceedings.neurips.cc/paper/2017/file/68a9750337a418a86fe06c1991a1d64c-
 Implementation: TensorFlow 2.X
 Trick: Parameter sharing for all agents, with agents' one-hot IDs as actor-critic's inputs.
 """
-from xuance.tensorflow.learners import *
+from argparse import Namespace
+from xuance.common import Sequence
+from xuance.tensorflow import tf, tk, Module
+from xuance.tensorflow.learners import LearnerMAS
 
 
 class MADDPG_Learner(LearnerMAS):
     def __init__(self,
                  config: Namespace,
-                 policy: tk.Model,
+                 policy: Module,
                  optimizer: Sequence[tk.optimizers.Optimizer],
                  device: str = "cpu:0",
                  model_dir: str = "./",

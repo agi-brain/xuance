@@ -2,7 +2,7 @@ from tqdm import tqdm
 import torch
 import numpy as np
 from copy import deepcopy
-from typing import Optional, List, Union
+from xuance.common import Optional, List, Union
 from argparse import Namespace
 from operator import itemgetter
 from xuance.torch.agents.base import MARLAgents

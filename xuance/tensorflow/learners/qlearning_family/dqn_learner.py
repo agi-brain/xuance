@@ -1,24 +1,33 @@
-from xuance.tensorflow.learners import *
+"""
+Deep Q-Network (DQN)
+Paper link: https://www.nature.com/articles/nature14236
+Implementation: TensorFlow2
+"""
+from argparse import Namespace
+from xuance.tensorflow import tf, tk, Module
+from xuance.tensorflow.learners import Learner
 
 
 class DQN_Learner(Learner):
     def __init__(self,
-                 policy: tk.Model,
-                 optimizer: tk.optimizers.Optimizer,
-                 device: str = "cpu:0",
-                 model_dir: str = "./",
-                 gamma: float = 0.99,
-                 sync_frequency: int = 100):
-        self.gamma = gamma
-        self.sync_frequency = sync_frequency
-        super(DQN_Learner, self).__init__(policy, optimizer, device, model_dir)
+                 config: Namespace,
+                 policy: Module):
+        super(DQN_Learner, self).__init__(config, policy)
+        lr_scheduler = tk.optimizers.schedules.ExponentialDecay(config.learning_rate, decay_steps=config.running_steps,
+                                                                decay_rate=0.9)
+        self.optimizer = tk.optimizers.Adam(lr_scheduler)
+        self.gamma = config.gamma
+        self.sync_frequency = config.sync_frequency
+        self.n_actions = self.policy.action_dim
 
-    def update(self, obs_batch, act_batch, rew_batch, next_batch, terminal_batch):
+    def update(self, **samples):
         self.iterations += 1
         with tf.device(self.device):
-            act_batch = tf.convert_to_tensor(act_batch, dtype=tf.int32)
-            rew_batch = tf.convert_to_tensor(rew_batch, dtype=tf.float32)
-            ter_batch = tf.convert_to_tensor(terminal_batch, dtype=tf.float32)
+            obs_batch = samples['obs']
+            act_batch = tf.convert_to_tensor(samples['actions'], dtype=tf.int32)
+            next_batch = samples['obs_next']
+            rew_batch = tf.convert_to_tensor(samples['rewards'], dtype=tf.float32)
+            ter_batch = tf.convert_to_tensor(samples['terminals'], dtype=tf.float32)
 
             with tf.GradientTape() as tape:
                 _, _, evalQ = self.policy(obs_batch)

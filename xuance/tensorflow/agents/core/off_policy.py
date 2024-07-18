@@ -1,7 +1,7 @@
 from tqdm import tqdm
 import numpy as np
 from copy import deepcopy
-from typing import Optional
+from xuance.common import Optional
 from argparse import Namespace
 from xuance.environment import DummyVecEnv
 from xuance.common import DummyOffPolicyBuffer, DummyOffPolicyBuffer_Atari
@@ -72,7 +72,7 @@ class OffPolicyAgent(Agent):
             if np.random.rand() < self.e_greedy:
                 explore_actions = random_actions
             else:
-                explore_actions = pi_actions.detach().cpu().numpy()
+                explore_actions = pi_actions.numpy()
         elif self.noise_scale is not None:
             explore_actions = pi_actions + np.random.normal(size=pi_actions.shape) * self.noise_scale
             explore_actions = np.clip(explore_actions, self.actions_low, self.actions_high)
@@ -96,7 +96,7 @@ class OffPolicyAgent(Agent):
         """
         _, actions_output, _ = self.policy(observations)
         if test_mode:
-            actions = actions_output.detach().cpu().numpy()
+            actions = actions_output.numpy()
         else:
             actions = self.exploration(actions_output)
         return {"actions": actions}

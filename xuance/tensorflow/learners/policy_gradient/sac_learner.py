@@ -1,9 +1,16 @@
-from xuance.tensorflow.learners import *
+"""
+Soft Actor-Critic with continuous action spaces (SAC)
+Paper link: http://proceedings.mlr.press/v80/haarnoja18b/haarnoja18b.pdf
+Implementation: TensorFlow2
+"""
+from xuance.common import Sequence
+from xuance.tensorflow import tf, tk, Module
+from xuance.tensorflow.learners import Learner
 
 
 class SAC_Learner(Learner):
     def __init__(self,
-                 policy: tk.Model,
+                 policy: Module,
                  optimizers: Sequence[tk.optimizers.Optimizer],
                  device: str = "cpu:0",
                  model_dir: str = "./",

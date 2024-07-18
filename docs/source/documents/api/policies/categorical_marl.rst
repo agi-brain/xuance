@@ -338,13 +338,13 @@ TensorFlow
   :param hidden_sizes: The number of hidden units for hidden layers.
   :type hidden_sizes: list
   :param normalize: The method of normalization.
-  :type normalize: tk.Model
+  :type normalize: Module
   :param initialize: The initialization for the parameters of the networks.
   :type initialize: tf.Tensor
   :param gain: optional scaling factor.
   :type gain: float
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: tk.Model
+  :type activation: Module
   :param device: The calculating device.
   :type device: str
 
@@ -368,11 +368,11 @@ TensorFlow
   :param hidden_sizes: The number of hidden units for hidden layers.
   :type hidden_sizes: list
   :param normalize: The method of normalization.
-  :type normalize: tk.Model
+  :type normalize: Module
   :param initialize: The initialization for the parameters of the networks.
   :type initialize: tf.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: tk.Model
+  :type activation: Module
   :param device: The calculating device.
   :type device: str
 
@@ -397,11 +397,11 @@ TensorFlow
   :param hidden_sizes: The number of hidden units for hidden layers.
   :type hidden_sizes: list
   :param normalize: The method of normalization.
-  :type normalize: tk.Model
+  :type normalize: Module
   :param initialize: The initialization for the parameters of the networks.
   :type initialize: tf.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: tk.Model
+  :type activation: Module
   :param device: The calculating device.
   :type device: str
 
@@ -423,19 +423,19 @@ TensorFlow
   :param n_agents: The number of agents.
   :type n_agents: int
   :param representation: The representation module.
-  :type representation: tk.Model
+  :type representation: Module
   :param mixer: The mixer for independent values.
-  :type mixer: tk.Model
+  :type mixer: Module
   :param actor_hidden_size: The number of hidden units for actor's hidden layers.
   :type actor_hidden_size: list
   :param critic_hidden_size: The number of hidden units for critic's hidden layers.
   :type critic_hidden_size: list
   :param normalize: The method of normalization.
-  :type normalize: tk.Model
+  :type normalize: Module
   :param initialize: The initialization for the parameters of the networks.
   :type initialize: tf.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: tk.Model
+  :type activation: Module
   :param device: The calculating device.
   :type device: str
 
@@ -491,19 +491,19 @@ TensorFlow
   :param n_agents: The number of agents.
   :type n_agents: int
   :param representation: The representation module.
-  :type representation: tk.Model
+  :type representation: Module
   :param mixer: The mixer for independent values.
-  :type mixer: tk.Model
+  :type mixer: Module
   :param actor_hidden_size: The sizes of the hidden layers in actor network.
   :type actor_hidden_size: list
   :param critic_hidden_size: The sizes of the hidden layers in critic networks.
   :type critic_hidden_size: list
   :param normalize: The method of normalization.
-  :type normalize: tk.Model
+  :type normalize: Module
   :param initialize: The initialization for the parameters of the networks.
   :type initialize: tf.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: tk.Model
+  :type activation: Module
   :param device: The calculating device.
   :type device: str
 
@@ -548,17 +548,17 @@ TensorFlow
   :param n_agents: The number of agents.
   :type n_agents: int
   :param representation: The representation module.
-  :type representation: tk.Model
+  :type representation: Module
   :param actor_hidden_size: The sizes of the hidden layers in actor network.
   :type actor_hidden_size: list
   :param critic_hidden_size: The sizes of the hidden layers in critic networks.
   :type critic_hidden_size: list
   :param normalize: The method of normalization.
-  :type normalize: tk.Model
+  :type normalize: Module
   :param initialize: The initialization for the parameters of the networks.
   :type initialize: tf.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: tk.Model
+  :type activation: Module
   :param device: The calculating device.
   :type device: str
 
@@ -609,17 +609,17 @@ TensorFlow
   :param n_agents: The number of agents.
   :type n_agents: int
   :param representation: The representation module.
-  :type representation: tk.Model
+  :type representation: Module
   :param actor_hidden_size: The sizes of the hidden layers in actor network.
   :type actor_hidden_size: list
   :param critic_hidden_size: The sizes of the hidden layers in critic networks.
   :type critic_hidden_size: list
   :param normalize: The method of normalization.
-  :type normalize: tk.Model
+  :type normalize: Module
   :param initialize: The initialization for the parameters of the networks.
   :type initialize: tf.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: tk.Model
+  :type activation: Module
   :param device: The calculating device.
   :type device: str
   :param kwargs: The other arguments.
@@ -1310,7 +1310,7 @@ Source Code
         from xuance.tensorflow.representations import Basic_Identical
 
 
-        class ActorNet(tk.Model):
+        class ActorNet(Module):
             def __init__(self,
                         state_dim: int,
                         action_dim: int,
@@ -1336,7 +1336,7 @@ Source Code
                 return self.pi_logits(x)
 
 
-        class CriticNet(tk.Model):
+        class CriticNet(Module):
             def __init__(self,
                         state_dim: int,
                         n_agents: int,
@@ -1358,7 +1358,7 @@ Source Code
                 return self.model(x)[:, :, 0]
 
 
-        class COMA_CriticNet(tk.Model):
+        class COMA_CriticNet(Module):
             def __init__(self,
                         state_dim: int,
                         act_dim: int,
@@ -1380,7 +1380,7 @@ Source Code
                 return self.model(x)
 
 
-        class MAAC_Policy(tk.Model):
+        class MAAC_Policy(Module):
             """
             MAAC_Policy: Multi-Agent Actor-Critic Policy
             """
@@ -1474,7 +1474,7 @@ Source Code
             def __init__(self,
                         action_space: Discrete,
                         n_agents: int,
-                        representation: tk.Model,
+                        representation: Module,
                         mixer: Optional[VDN_mixer] = None,
                         actor_hidden_size: Sequence[int] = None,
                         critic_hidden_size: Sequence[int] = None,
@@ -1547,7 +1547,7 @@ Source Code
                     return params + self.representation.trainable_variables
 
 
-        class COMAPolicy(tk.Model):
+        class COMAPolicy(Module):
             def __init__(self,
                         action_space: Discrete,
                         n_agents: int,
@@ -1616,11 +1616,11 @@ Source Code
                 self.target_critic.set_weights(self.critic.get_weights())
 
 
-        class MeanFieldActorCriticPolicy(tk.Model):
+        class MeanFieldActorCriticPolicy(Module):
             def __init__(self,
                         action_space: Discrete,
                         n_agents: int,
-                        representation: tk.Model,
+                        representation: Module,
                         actor_hidden_size: Sequence[int] = None,
                         critic_hidden_size: Sequence[int] = None,
                         normalize: Optional[tk.layers.Layer] = None,

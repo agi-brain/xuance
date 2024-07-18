@@ -198,7 +198,7 @@ Source Code
 
         class A2C_Learner(Learner):
             def __init__(self,
-                         policy: tk.Model,
+                         policy: Module,
                          optimizer: tk.optimizers.Optimizer,
                          device: str = "cpu:0",
                          model_dir: str = "./",

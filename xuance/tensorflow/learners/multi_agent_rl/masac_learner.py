@@ -2,13 +2,16 @@
 Multi-agent Soft Actor-critic (MASAC)
 Implementation: TensorFlow 2.X
 """
-from xuance.tensorflow.learners import *
+from argparse import Namespace
+from xuance.common import Sequence
+from xuance.tensorflow import tf, tk, Module
+from xuance.tensorflow.learners import LearnerMAS
 
 
 class MASAC_Learner(LearnerMAS):
     def __init__(self,
                  config: Namespace,
-                 policy: tk.Model,
+                 policy: Module,
                  optimizer: Sequence[tk.optimizers.Optimizer],
                  device: str = "cpu:0",
                  model_dir: str = "./",

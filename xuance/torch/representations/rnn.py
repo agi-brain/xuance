@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from typing import Sequence, Optional, Union, Callable, Tuple
+from xuance.common import Sequence, Optional, Union, Callable, Tuple
 from xuance.torch.utils.layers import mlp_block, gru_block, lstm_block
 from xuance.torch.utils import ModuleType
 

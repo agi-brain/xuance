@@ -5,7 +5,7 @@ Implementation: Pytorch
 """
 import torch
 from torch import nn
-from typing import List
+from xuance.common import List
 from argparse import Namespace
 from xuance.torch.learners import LearnerMAS
 

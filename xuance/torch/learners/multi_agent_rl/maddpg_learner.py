@@ -8,7 +8,7 @@ Trick: Parameter sharing for all agents, with agents' one-hot IDs as actor-criti
 import torch
 from torch import nn
 from xuance.torch.learners import LearnerMAS
-from typing import List
+from xuance.common import List
 from argparse import Namespace
 from operator import itemgetter
 

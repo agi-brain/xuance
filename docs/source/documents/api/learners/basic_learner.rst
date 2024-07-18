@@ -55,7 +55,7 @@ TensorFlow
     The basic class of the learner.
 
     :param policy: The policy that provides actions and values.
-    :type policy: tk.Model
+    :type policy: Module
     :param optimizer: The optimizer that update the parameters of the model.
     :type optimizer: tk.optimizers.Optimizer
     :param device: Choose CPU or GPU to train the model.
@@ -142,7 +142,7 @@ Source Code
             import time
             import torch.nn.functional as F
             from abc import ABC, abstractmethod
-            from typing import Optional, Sequence, Union
+            from xuance.common import Optional, Sequence, Union
             from argparse import Namespace
             import os
 
@@ -274,7 +274,7 @@ Source Code
 
             class Learner(ABC):
                 def __init__(self,
-                            policy: tk.Model,
+                            policy: Module,
                             optimizer: Union[tk.optimizers.Optimizer, Sequence[tk.optimizers.Optimizer]],
                             device: str = "cpu:0",
                             model_dir: str = "./"):
@@ -310,7 +310,7 @@ Source Code
             class LearnerMAS(ABC):
                 def __init__(self,
                             config: Namespace,
-                            policy: tk.Model,
+                            policy: Module,
                             optimizer: Union[tk.optimizers.Optimizer, Sequence[tk.optimizers.Optimizer]],
                             device: str = "cpu:0",
                             model_dir: str = "./"):
@@ -384,7 +384,7 @@ Source Code
             from mindspore.ops import OneHot, Eye
             import time
             from abc import ABC, abstractmethod
-            from typing import Optional, Sequence, Union
+            from xuance.common import Optional, Sequence, Union
             from torch.utils.tensorboard import SummaryWriter
             from argparse import Namespace
             import os

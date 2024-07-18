@@ -1,13 +1,16 @@
-# TD3 add three tricks to DDPG:
-# 1. noisy action in target actor
-# 2. double critic network
-# 3. delayed actor update
-from xuance.tensorflow.learners import *
+"""
+Twin Delayed Deep Deterministic Policy Gradient (TD3)
+Paper link: http://proceedings.mlr.press/v80/fujimoto18a/fujimoto18a.pdf
+Implementation: TensorFlow2
+"""
+from xuance.common import Sequence
+from xuance.tensorflow import tf, tk, Module
+from xuance.tensorflow.learners import Learner
 
 
 class TD3_Learner(Learner):
     def __init__(self,
-                 policy: tk.Model,
+                 policy: Module,
                  optimizers: Sequence[tk.optimizers.Optimizer],
                  device: str = "cpu:0",
                  model_dir: str = "./",

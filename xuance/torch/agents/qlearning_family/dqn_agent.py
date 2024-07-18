@@ -1,5 +1,4 @@
 import torch
-import numpy as np
 from argparse import Namespace
 from xuance.environment import DummyVecEnv
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
@@ -42,6 +41,6 @@ class DQN_Agent(OffPolicyAgent):
                 action_space=self.action_space, representation=representation, hidden_size=self.config.q_hidden_size,
                 normalize=normalize_fn, initialize=initializer, activation=activation, device=device)
         else:
-            raise AttributeError(f"{self.config.agent} currently does not support the policy named {self.config.policy}.")
+            raise AttributeError(f"{self.config.agent} does not support the policy named {self.config.policy}.")
 
         return policy

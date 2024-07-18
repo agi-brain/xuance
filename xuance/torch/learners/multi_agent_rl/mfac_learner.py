@@ -7,7 +7,7 @@ Implementation: Pytorch
 import torch
 from torch import nn
 from xuance.torch.learners import LearnerMAS
-from typing import Optional, Union
+from xuance.common import Optional, Union
 from argparse import Namespace
 
 

@@ -1,10 +1,9 @@
-from optparse import Option
 import tensorflow as tf
 import tensorflow.keras as tk
-import tensorflow_addons as tfa
-from typing import Any, Dict, Optional, Sequence, Tuple, Type, Union, Callable
+from xuance.common import Optional, Sequence, Type, Callable
+from xuance.tensorflow import Module, Tensor
 
-ModuleType = Type[tk.Model]
+ModuleType = Type[Module]
 
 
 def mlp_block(input_dim: int,
@@ -87,7 +86,7 @@ def gru_block(input_dim: Sequence[int],
               output_dim: int,
               num_layers: int = 1,
               dropout: float = 0,
-              initialize: Optional[Callable[[tf.Tensor], tf.Tensor]] = None,
+              initialize: Optional[Callable[[Tensor], Tensor]] = None,
               device: str = "cpu") -> ModuleType:
     gru = tk.layers.GRU(units=output_dim,
                         dropout=dropout,
@@ -100,7 +99,7 @@ def lstm_block(input_dim: Sequence[int],
                output_dim: int,
                num_layers: int = 1,
                dropout: float = 0,
-               initialize: Optional[Callable[[tf.Tensor], tf.Tensor]] = None,
+               initialize: Optional[Callable[[Tensor], Tensor]] = None,
                device: str = "cpu") -> ModuleType:
     lstm = tk.layers.LSTM(units=output_dim,
                           dropout=dropout,

@@ -1,9 +1,16 @@
-from xuance.tensorflow.learners import *
+"""
+Split parameterised deep Q network (SP-DQN)
+Paper link: https://arxiv.org/pdf/1810.06394.pdf
+Implementation: TensorFlow2
+"""
+from xuance.common import Sequence
+from xuance.tensorflow import tf, tk, Module
+from xuance.tensorflow.learners import Learner
 
 
 class SPDQN_Learner(Learner):
     def __init__(self,
-                 policy: tk.Model,
+                 policy: Module,
                  optimizers: Sequence[tk.optimizers.Optimizer],
                  device: str = "cpu:0",
                  model_dir: str = "./",

@@ -7,7 +7,7 @@ Implementation: Pytorch
 import torch
 from torch import nn
 from xuance.torch.learners import LearnerMAS
-from typing import Optional, Union
+from xuance.common import Optional, Union
 from argparse import Namespace
 from xuance.torch.utils.value_norm import ValueNorm
 from xuance.torch.utils.operations import update_linear_decay

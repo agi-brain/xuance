@@ -92,11 +92,11 @@ TensorFlow
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
   :param normalize: The method of normalization.
-  :type normalize: tk.Model
+  :type normalize: Module
   :param initialize: The initialization for the parameters of the networks.
   :type initialize: tf.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: tk.Model
+  :type activation: Module
   :param device: The calculating device.
   :type device: str
 
@@ -106,7 +106,7 @@ TensorFlow
   Create the multi-layer perceptron netowrks.
 
   :return: The neural network module.
-  :rtype: tk.Model
+  :rtype: Module
 
 .. py:function::
   xuance.tensorflow.representations.mlp.Basic_MLP.call(observations)
@@ -244,7 +244,7 @@ Source Code
         from xuance.tensorflow.representations import *
 
 
-        class Basic_Identical(tk.Model):
+        class Basic_Identical(Module):
             def __init__(self,
                          input_shape: Sequence[int],
                          device: str = "cpu"):
@@ -260,7 +260,7 @@ Source Code
                     return {'state': state}
 
 
-        class Basic_MLP(tk.Model):
+        class Basic_MLP(Module):
             def __init__(self,
                          input_shapes: Sequence[int],
                          hidden_sizes: Sequence[int],

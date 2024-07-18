@@ -1,7 +1,7 @@
 import tensorflow as tf
 import tensorflow.keras as tk
 import copy
-from typing import Sequence, Optional, Callable, Union
+from xuance.common import Sequence, Optional, Callable, Union
 from gym.spaces import Space, Box, Discrete, Dict
 
 from .categorical import ActorCriticPolicy as Categorical_AC_Policy

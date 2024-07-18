@@ -243,7 +243,7 @@ Source Code
         class QTRAN_Learner(LearnerMAS):
             def __init__(self,
                          config: Namespace,
-                         policy: tk.Model,
+                         policy: Module,
                          optimizer: tk.optimizers.Optimizer,
                          device: str = "cpu:0",
                          model_dir: str = "./",

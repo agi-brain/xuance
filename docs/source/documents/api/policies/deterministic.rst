@@ -982,11 +982,11 @@ TensorFlow
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
   :param normalize: The method of normalization.
-  :type normalize: tk.Model
+  :type normalize: Module
   :param initialize: The initialization for the parameters of the networks.
   :type initialize: tf.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: tk.Model
+  :type activation: Module
   :param device: The calculating device.
   :type device: str
 
@@ -1029,11 +1029,11 @@ TensorFlow
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
   :param normalize: The method of normalization.
-  :type normalize: tk.Model
+  :type normalize: Module
   :param initialize: The initialization for the parameters of the networks.
   :type initialize: tf.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: tk.Model
+  :type activation: Module
   :param device: The calculating device.
   :type device: str
 
@@ -1071,11 +1071,11 @@ TensorFlow
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
   :param normalize: The method of normalization.
-  :type normalize: tk.Model
+  :type normalize: Module
   :param initialize: The initialization for the parameters of the networks.
   :type initialize: tf.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: tk.Model
+  :type activation: Module
   :param device: The calculating device.
   :type device: str
 
@@ -1106,11 +1106,11 @@ TensorFlow
   :param hidden_sizes: The sizes of the hidden layers.
   :type hidden_sizes: Sequence[int]
   :param normalize: The method of normalization.
-  :type normalize: tk.Model
+  :type normalize: Module
   :param initialize: The initialization for the parameters of the networks.
   :type initialize: tf.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: tk.Model
+  :type activation: Module
   :param device: The calculating device.
   :type device: str
 
@@ -1135,15 +1135,15 @@ TensorFlow
   :param action_space: The action space of the environment.
   :type action_space: Space
   :param representation: The representation module.
-  :type representation: tk.Model
+  :type representation: Module
   :param hidden_size: The sizes of the hidden layers.
   :type hidden_size: list
   :param normalize: The method of normalization.
-  :type normalize: tk.Model
+  :type normalize: Module
   :param initialize: The initialization for the parameters of the networks.
   :type initialize: tf.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: tk.Model
+  :type activation: Module
   :param device: The calculating device.
   :type device: str
 
@@ -1183,15 +1183,15 @@ TensorFlow
   :param action_space: The action space of the environment.
   :type action_space: Space
   :param representation: The representation module.
-  :type representation: tk.Model
+  :type representation: Module
   :param hidden_size: The sizes of the hidden layers.
   :type hidden_size: list
   :param normalize: The method of normalization.
-  :type normalize: tk.Model
+  :type normalize: Module
   :param initialize: The initialization for the parameters of the networks.
   :type initialize: tf.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: tk.Model
+  :type activation: Module
   :param device: The calculating device.
   :type device: str
 
@@ -1231,15 +1231,15 @@ TensorFlow
   :param action_space: The action space of the environment.
   :type action_space: Space
   :param representation: The representation module.
-  :type representation: tk.Model
+  :type representation: Module
   :param hidden_size: The sizes of the hidden layers.
   :type hidden_size: list
   :param normalize: The method of normalization.
-  :type normalize: tk.Model
+  :type normalize: Module
   :param initialize: The initialization for the parameters of the networks.
   :type initialize: tf.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: tk.Model
+  :type activation: Module
   :param device: The calculating device.
   :type device: str
 
@@ -1297,15 +1297,15 @@ TensorFlow
   :param v_max: Maximum value for the support of the Q-distribution.
   :type v_max: float
   :param representation: The representation module.
-  :type representation: tk.Model
+  :type representation: Module
   :param hidden_size: The sizes of the hidden layers.
   :type hidden_size: list
   :param normalize: The method of normalization.
-  :type normalize: tk.Model
+  :type normalize: Module
   :param initialize: The initialization for the parameters of the networks.
   :type initialize: tf.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: tk.Model
+  :type activation: Module
   :param device: The calculating device.
   :type device: str
 
@@ -1346,15 +1346,15 @@ TensorFlow
   :param quantile_num: Number of quantile levels.
   :type quantile_num: int
   :param representation: The representation module.
-  :type representation: tk.Model
+  :type representation: Module
   :param hidden_size: The sizes of the hidden layers.
   :type hidden_size: list
   :param normalize: The method of normalization.
-  :type normalize: tk.Model
+  :type normalize: Module
   :param initialize: The initialization for the parameters of the networks.
   :type initialize: tf.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: tk.Model
+  :type activation: Module
   :param device: The calculating device.
   :type device: str
 
@@ -1400,7 +1400,7 @@ TensorFlow
   :param initialize: The initialization for the parameters of the networks.
   :type initialize: tf.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: tk.Model
+  :type activation: Module
   :param device: The calculating device.
   :type device: str
 
@@ -1430,7 +1430,7 @@ TensorFlow
   :param initialize: The initialization for the parameters of the networks.
   :type initialize: tf.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: tk.Model
+  :type activation: Module
   :param device: The calculating device.
   :type device: str
 
@@ -1452,7 +1452,7 @@ TensorFlow
   :param action_space: The action space of the environment.
   :type action_space: Space
   :param representation: The representation module.
-  :type representation: tk.Model
+  :type representation: Module
   :param actor_hidden_size: The sizes of the hidden layers in actor network.
   :type actor_hidden_size: list
   :param critic_hidden_size: The sizes of the hidden layers in critic networks.
@@ -1460,7 +1460,7 @@ TensorFlow
   :param initialize: The initialization for the parameters of the networks.
   :type initialize: tf.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: tk.Model
+  :type activation: Module
   :param device: The calculating device.
   :type device: str
 
@@ -1526,7 +1526,7 @@ TensorFlow
   :param action_space: The action space of the environment.
   :type action_space: Space
   :param representation: The representation module.
-  :type representation: tk.Model
+  :type representation: Module
   :param actor_hidden_size: The sizes of the hidden layers in actor network.
   :type actor_hidden_size: list
   :param critic_hidden_size: The sizes of the hidden layers in critic networks.
@@ -1534,7 +1534,7 @@ TensorFlow
   :param initialize: The initialization for the parameters of the networks.
   :type initialize: tf.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: tk.Model
+  :type activation: Module
   :param device: The calculating device.
   :type device: str
 
@@ -1599,17 +1599,17 @@ TensorFlow
   :param action_space: The action space of the environment.
   :type action_space: Space
   :param representation: The representation module.
-  :type representation: tk.Model
+  :type representation: Module
   :param conactor_hidden_size: A sequence of integers specifying the sizes of hidden layers in the conactor network.
   :type conactor_hidden_size: list
   :param qnetwork_hidden_size: A sequence of integers specifying the sizes of hidden layers in the Q-network.
   :type qnetwork_hidden_size: list
   :param normalize: The method of normalization.
-  :type normalize: tk.Model
+  :type normalize: Module
   :param initialize: The initialization for the parameters of the networks.
   :type initialize: tf.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: tk.Model
+  :type activation: Module
   :param device: The calculating device.
   :type device: str
 
@@ -1685,17 +1685,17 @@ TensorFlow
   :param action_space: The action space of the environment.
   :type action_space: Space
   :param representation: The representation module.
-  :type representation: tk.Model
+  :type representation: Module
   :param conactor_hidden_size: A sequence of integers specifying the sizes of hidden layers in the conactor network.
   :type conactor_hidden_size: list
   :param qnetwork_hidden_size: A sequence of integers specifying the sizes of hidden layers in the Q-network.
   :type qnetwork_hidden_size: list
   :param normalize: The method of normalization.
-  :type normalize: tk.Model
+  :type normalize: Module
   :param initialize: The initialization for the parameters of the networks.
   :type initialize: tf.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: tk.Model
+  :type activation: Module
   :param device: The calculating device.
   :type device: str
 
@@ -1771,17 +1771,17 @@ TensorFlow
   :param action_space: The action space of the environment.
   :type action_space: Space
   :param representation: The representation module.
-  :type representation: tk.Model
+  :type representation: Module
   :param conactor_hidden_size: A sequence of integers specifying the sizes of hidden layers in the conactor network.
   :type conactor_hidden_size: list
   :param qnetwork_hidden_size: A sequence of integers specifying the sizes of hidden layers in the Q-network.
   :type qnetwork_hidden_size: list
   :param normalize: The method of normalization.
-  :type normalize: tk.Model
+  :type normalize: Module
   :param initialize: The initialization for the parameters of the networks.
   :type initialize: tf.Tensor
   :param activation: The choose of activation functions for hidden layers.
-  :type activation: tk.Model
+  :type activation: Module
   :param device: The calculating device.
   :type device: str
 
@@ -1857,7 +1857,7 @@ TensorFlow
   :param action_space: The action space of the environment.
   :type action_space: Space
   :param representation: The representation module.
-  :type representation: tk.Model
+  :type representation: Module
   :param kwargs: The necessary arguments.
   :type kwargs: dict
 
@@ -3742,7 +3742,7 @@ Source Code
         from xuance.tensorflow.representations import Basic_Identical
 
 
-        class BasicQhead(tk.Model):
+        class BasicQhead(Module):
             def __init__(self,
                          state_dim: int,
                          action_dim: int,
@@ -3764,7 +3764,7 @@ Source Code
                 return self.model(inputs)
 
 
-        class BasicRecurrent(tk.Model):
+        class BasicRecurrent(Module):
             def __init__(self, **kwargs):
                 super(BasicRecurrent, self).__init__()
                 self.lstm = False
@@ -3798,7 +3798,7 @@ Source Code
                     return hn, self.model(output)
 
 
-        class DuelQhead(tk.Model):
+        class DuelQhead(Module):
             def __init__(self,
                          state_dim: int,
                          action_dim: int,
@@ -3830,7 +3830,7 @@ Source Code
                 return q
 
 
-        class C51Qhead(tk.Model):
+        class C51Qhead(Module):
             def __init__(self,
                          state_dim: int,
                          action_dim: int,
@@ -3857,7 +3857,7 @@ Source Code
                 return dist_probs
 
 
-        class QRDQNhead(tk.Model):
+        class QRDQNhead(Module):
             def __init__(self,
                          state_dim: int,
                          action_dim: int,
@@ -3883,10 +3883,10 @@ Source Code
                 return quantiles
 
 
-        class BasicQnetwork(tk.Model):
+        class BasicQnetwork(Module):
             def __init__(self,
                          action_space: Discrete,
-                         representation: tk.Model,
+                         representation: Module,
                          hidden_size: Sequence[int] = None,
                          normalize: Optional[tk.layers.Layer] = None,
                          initializer: Optional[tk.initializers.Initializer] = None,
@@ -3920,7 +3920,7 @@ Source Code
                 self.target_Qhead.set_weights(self.eval_Qhead.get_weights())
 
 
-        class DuelQnetwork(tk.Model):
+        class DuelQnetwork(Module):
             def __init__(self,
                          action_space: Space,
                          representation: Basic_Identical,
@@ -3957,7 +3957,7 @@ Source Code
                 self.target_Qhead.set_weights(self.eval_Qhead.get_weights())
 
 
-        class NoisyQnetwork(tk.Model):
+        class NoisyQnetwork(Module):
             def __init__(self,
                          action_space: Discrete,
                          representation: Basic_Identical,
@@ -4010,7 +4010,7 @@ Source Code
                 self.target_Qhead.set_weights(self.eval_Qhead.get_weights())
 
 
-        class C51Qnetwork(tk.Model):
+        class C51Qnetwork(Module):
             def __init__(self,
                          action_space: Discrete,
                          atom_num: int,
@@ -4058,7 +4058,7 @@ Source Code
                 self.target_Zhead.set_weights(self.eval_Zhead.get_weights())
 
 
-        class QRDQN_Network(tk.Model):
+        class QRDQN_Network(Module):
             def __init__(self,
                          action_space: Discrete,
                          quantile_num: int,
@@ -4101,7 +4101,7 @@ Source Code
                 self.target_Zhead.set_weights(self.eval_Zhead.get_weights())
 
 
-        class ActorNet(tk.Model):
+        class ActorNet(Module):
             def __init__(self,
                          state_dim: int,
                          action_dim: int,
@@ -4122,7 +4122,7 @@ Source Code
                 return self.model(x)
 
 
-        class CriticNet(tk.Model):
+        class CriticNet(Module):
             def __init__(self,
                          state_dim: int,
                          action_dim: int,
@@ -4145,7 +4145,7 @@ Source Code
                 return self.model(tf.concat((x, a), axis=-1))[:, 0]
 
 
-        class DDPGPolicy(tk.Model):
+        class DDPGPolicy(Module):
             def __init__(self,
                          action_space: Space,
                          representation: Basic_Identical,
@@ -4199,7 +4199,7 @@ Source Code
                     tp.assign((1 - tau) * tp + tau * ep)
 
 
-        class TD3Policy(tk.Model):
+        class TD3Policy(Module):
             def __init__(self,
                          action_space: Space,
                          representation: Basic_Identical,
@@ -4268,7 +4268,7 @@ Source Code
                     tp.assign((1 - tau) * tp + tau * ep)
 
 
-        class PDQNPolicy(tk.Model):
+        class PDQNPolicy(Module):
             def __init__(self,
                          observation_space,
                          action_space,
@@ -4335,7 +4335,7 @@ Source Code
                     tp.assign((1 - tau) * tp + tau * ep)
 
 
-        class MPDQNPolicy(tk.Model):
+        class MPDQNPolicy(Module):
             def __init__(self,
                          observation_space,
                          action_space,
@@ -4445,7 +4445,7 @@ Source Code
                     tp.assign((1 - tau) * tp + tau * ep)
 
 
-        class SPDQNPolicy(tk.Model):
+        class SPDQNPolicy(Module):
             def __init__(self,
                          observation_space,
                          action_space,
@@ -4532,10 +4532,10 @@ Source Code
                         tp.assign((1 - tau) * tp + tau * ep)
 
 
-        class DRQNPolicy(tk.Model):
+        class DRQNPolicy(Module):
             def __init__(self,
                          action_space: Discrete,
-                         representation: tk.Model,
+                         representation: Module,
                          **kwargs):
                 super(DRQNPolicy, self).__init__()
                 self.device = kwargs['device']

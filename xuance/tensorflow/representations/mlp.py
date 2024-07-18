@@ -1,5 +1,5 @@
 import numpy as np
-from typing import Sequence, Optional
+from xuance.common import Sequence, Optional
 from xuance.tensorflow import tf, tk, Module
 from xuance.tensorflow.utils.layers import mlp_block
 from xuance.tensorflow.utils import ModuleType
@@ -24,7 +24,7 @@ class Basic_Identical(Module):
 
 class Basic_MLP(Module):
     def __init__(self,
-                 input_shapes: Sequence[int],
+                 input_shape: Sequence[int],
                  hidden_sizes: Sequence[int],
                  normalize: Optional[ModuleType] = None,
                  initializer: Optional[tk.initializers.Initializer] = None,
@@ -32,7 +32,7 @@ class Basic_MLP(Module):
                  device: Optional[str] = None,
                  **kwargs):
         super(Basic_MLP, self).__init__()
-        self.input_shapes = input_shapes
+        self.input_shapes = input_shape
         self.hidden_sizes = hidden_sizes
         self.normalize = normalize
         self.initializer = initializer
@@ -43,7 +43,7 @@ class Basic_MLP(Module):
 
     def _create_network(self):
         layers = [tk.layers.Flatten()]
-        input_shape = self.input_shape
+        input_shape = self.input_shapes
         for h in self.hidden_sizes:
             mlp, input_shape = mlp_block(input_shape[0], h, self.normalize, self.activation, self.initializer,
                                          device=self.device)

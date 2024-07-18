@@ -1,9 +1,15 @@
-from xuance.tensorflow.learners import *
+"""
+Deep Recurrent Q-Netwrk (DRQN)
+Paper link: https://cdn.aaai.org/ocs/11673/11673-51288-1-PB.pdf
+Implementation: TensorFlow2
+"""
+from xuance.tensorflow import tf, tk, Module
+from xuance.tensorflow.learners import Learner
 
 
 class DRQN_Learner(Learner):
     def __init__(self,
-                 policy: tk.Model,
+                 policy: Module,
                  optimizer: tk.optimizers.Optimizer,
                  device: str = "cpu:0",
                  model_dir: str = "./",

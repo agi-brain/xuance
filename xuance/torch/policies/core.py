@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import Sequence, Optional, Callable, Union
+from xuance.common import Sequence, Optional, Callable, Union
 from xuance.torch import Tensor, Module
 from xuance.torch.utils import ModuleType, mlp_block, gru_block, lstm_block
 from xuance.torch.utils import CategoricalDistribution, DiagGaussianDistribution, ActivatedDiagGaussianDistribution

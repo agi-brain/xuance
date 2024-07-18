@@ -1,6 +1,6 @@
 import numpy as np
 from abc import ABC, abstractmethod
-from typing import List, Dict, Optional
+from xuance.common import List, Dict, Optional
 from gym.spaces import Space
 from xuance.common import space2shape, create_memory
 

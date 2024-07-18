@@ -17,7 +17,7 @@ class ValueNorm(nn.Module):
 
         self.running_mean = nn.Parameter(tf.zeros(input_shape), requires_grad=False)
         self.running_mean_sq = nn.Parameter(tf.zeros(input_shape), requires_grad=False)
-        self.debiasing_term = nn.Parameter(tf.tensor(0.0), requires_grad=False)
+        self.debiasing_term = nn.Parameter(Tensor(0.0), requires_grad=False)
 
         self.reset_parameters()
 

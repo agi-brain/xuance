@@ -1,11 +1,18 @@
-from xuance.tensorflow.agents import *
+import numpy as np
+from tqdm import tqdm
+from argparse import Namespace
+from xuance.common import DummyOffPolicyBuffer, Sequence
+from xuance.environment import DummyVecEnv
+from xuance.tensorflow import tk, Module
+from xuance.tensorflow.agents import Agent
+from xuance.tensorflow.learners import DDPG_Learner
 
 
 class DDPG_Agent(Agent):
     def __init__(self,
                  config: Namespace,
                  envs: DummyVecEnv,
-                 policy: tk.Model,
+                 policy: Module,
                  optimizer: Sequence[tk.optimizers.Optimizer],
                  device: str = 'cpu'):
         self.render = config.render

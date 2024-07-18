@@ -1,4 +1,4 @@
-from typing import Dict, Any
+from xuance.common import Dict, Any
 from .wrapper import XuanCeEnvWrapper, XuanCeMultiAgentEnvWrapper
 from .base import RawEnvironment, RawMultiAgentEnv, MultiAgentDict, AgentKeys
 

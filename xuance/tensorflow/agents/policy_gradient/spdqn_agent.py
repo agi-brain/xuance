@@ -1,13 +1,20 @@
-from xuance.tensorflow.agents import *
+import numpy as np
 import gym
 from gym import spaces
+from tqdm import tqdm
+from argparse import Namespace
+from xuance.common import Sequence, DummyOffPolicyBuffer
+from xuance.environment import RawEnvironment
+from xuance.tensorflow import tf, tk, Module
+from xuance.tensorflow.agents import Agent
+from xuance.tensorflow.learners import SPDQN_Learner
 
 
 class SPDQN_Agent(Agent):
     def __init__(self,
                  config: Namespace,
-                 envs: Gym_Env,
-                 policy: tk.Model,
+                 envs: RawEnvironment,
+                 policy: Module,
                  optimizer: Sequence[tk.optimizers.Optimizer],
                  device: str = 'cpu'):
         self.envs = envs

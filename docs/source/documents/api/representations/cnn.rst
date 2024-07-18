@@ -126,10 +126,10 @@ TensorFlow
     :param filters: Number of channels produced by the convolution
     :type filters: Sequence of int
     :param normalize: The normalizer for the hidden variables of the representation.
-    :type normalize: tk.Model
+    :type normalize: Module
     :param initialize: The initializer of the parameters of the representation.
     :param activation: The activation function of each hidden layer.
-    :type activation: tk.Model
+    :type activation: Module
     :param device: Choose CPU or GPU to train the model.
     :type device: str, int, torch.device
 
@@ -139,7 +139,7 @@ TensorFlow
     Create the convolutional neural netowrks.
 
     :return: The neural network module.
-    :rtype: tk.Model
+    :rtype: Module
 
 .. py:function::
     xuance.tensorflow.representations.cnn.Basic_CNN.call(observations)
@@ -360,7 +360,7 @@ Source Code
         from xuance.tensorflow.representations import *
 
 
-        class Basic_CNN(tk.Model):
+        class Basic_CNN(Module):
             def __init__(self,
                          input_shape: Sequence[int],
                          kernels: Sequence[int],

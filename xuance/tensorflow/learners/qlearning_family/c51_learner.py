@@ -1,9 +1,15 @@
-from xuance.tensorflow.learners import *
+"""
+Distributional Reinforcement Learning (C51DQN)
+Paper link: http://proceedings.mlr.press/v70/bellemare17a/bellemare17a.pdf
+Implementation: TensorFlow2
+"""
+from xuance.tensorflow import tf, tk, Module
+from xuance.tensorflow.learners import Learner
 
 
 class C51_Learner(Learner):
     def __init__(self,
-                 policy: tk.Model,
+                 policy: Module,
                  optimizer: tk.optimizers.Optimizer,
                  device: str = "cpu:0",
                  model_dir: str = "./",

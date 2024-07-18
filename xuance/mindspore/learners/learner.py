@@ -3,7 +3,7 @@ import mindspore as ms
 from mindspore.ops import OneHot, Eye
 import time
 from abc import ABC, abstractmethod
-from typing import Optional, Sequence, Union
+from xuance.common import Optional, Sequence, Union
 from torch.utils.tensorboard import SummaryWriter
 from argparse import Namespace
 import os

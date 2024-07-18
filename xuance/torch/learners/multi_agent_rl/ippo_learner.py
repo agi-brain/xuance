@@ -6,7 +6,7 @@ Implementation: Pytorch
 import numpy as np
 import torch
 from torch import nn
-from typing import Optional, List
+from xuance.common import Optional, List
 from argparse import Namespace
 from operator import itemgetter
 from xuance.torch import Tensor

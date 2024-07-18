@@ -1,10 +1,16 @@
-from xuance.tensorflow.learners import *
+"""
+Phasic Policy Gradient (PPG)
+Paper link: http://proceedings.mlr.press/v139/cobbe21a/cobbe21a.pdf
+Implementation: TensorFlow2
+"""
+from xuance.tensorflow import tf, tk, Module
+from xuance.tensorflow.learners import Learner
 from xuance.tensorflow.utils.operations import merge_distributions
 
 
 class PPG_Learner(Learner):
     def __init__(self,
-                 policy: tk.Model,
+                 policy: Module,
                  optimizer: tk.optimizers.Optimizer,
                  device: str = "cpu:0",
                  model_dir: str = "./",
