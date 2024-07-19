@@ -26,7 +26,7 @@ class BasicQnetwork(Module):
                                        normalize, initialize, activation)
         self.target_Qhead.set_weights(self.eval_Qhead.get_weights())
 
-    def call(self, observation: Union[Tensor, np.ndarray], **kwargs):
+    def call(self, observation: Union[Tensor, np.ndarray]):
         outputs = self.representation(observation)
         evalQ = self.eval_Qhead(outputs['state'])
         argmax_action = tf.math.argmax(evalQ, axis=-1)

@@ -195,8 +195,7 @@ class Agent(ABC):
             kernels=config.kernels if hasattr(config, "kernels") else None,
             strides=config.strides if hasattr(config, "strides") else None,
             filters=config.filters if hasattr(config, "filters") else None,
-            fc_hidden_sizes=config.fc_hidden_sizes if hasattr(config, "fc_hidden_sizes") else None,
-            device=self.device)
+            fc_hidden_sizes=config.fc_hidden_sizes if hasattr(config, "fc_hidden_sizes") else None)
         representation = REGISTRY_Representation[representation_key](**input_representations)
         if representation_key not in REGISTRY_Representation:
             raise AttributeError(f"{representation_key} is not registered in REGISTRY_Representation.")

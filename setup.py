@@ -37,13 +37,13 @@ setup(
     ],
     extras_require={
         "torch": ["torch==1.13.0"],
-        "tensorflow": ["tensorflow==2.11.0",
-                       "tensorflow-addons==0.19.0",
-                       "tensorflow-probability==0.19.0"],
+        "tensorflow": ["tensorflow==2.6.0",
+                       "tensorflow-addons==0.21.0",
+                       "tensorflow-probability==0.14.0"],
         "mindspore": ["mindspore==2.2.0"],
         "all": [
             "torch==1.13.0",
-            "tensorflow==2.11.0",
+            "tensorflow==2.6.0",
             "mindspore==2.2.0"  # mindspore might be installed manually.
         ],
         "atari": ["atari-py==0.2.9",  # for Atari

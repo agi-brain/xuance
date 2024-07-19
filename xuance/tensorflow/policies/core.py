@@ -76,7 +76,7 @@ class DuelQhead(Module):
         self.a_model = tk.Sequential(a_layers)
         self.v_model = tk.Sequential(v_layers)
 
-    def call(self, x: Union[Tensor, np.ndarray], **kwargs):
+    def call(self, x: Union[Tensor, np.ndarray]):
         """
         Returns the dueling Q-values.
         Parameters:
@@ -123,7 +123,7 @@ class C51Qhead(Module):
         layers.extend(mlp_block(input_shape[0], n_actions * atom_num, None, None, initialize)[0])
         self.model = tk.Sequential(layers)
 
-    def call(self, x: Union[Tensor, np.ndarray], **kwargs):
+    def call(self, x: Union[Tensor, np.ndarray]):
         """
         Returns the discrete action distributions.
         Parameters:
@@ -170,7 +170,7 @@ class QRDQNhead(Module):
         layers.extend(mlp_block(input_shape[0], n_actions * atom_num, None, None, None)[0])
         self.model = tk.Sequential(layers)
 
-    def call(self, x: Union[Tensor, np.ndarray], **kwargs):
+    def call(self, x: Union[Tensor, np.ndarray]):
         """
         Returns the quantiles of the distribution.
         Parameters:
@@ -206,7 +206,7 @@ class BasicRecurrent(Module):
         fc_layer = mlp_block(kwargs["recurrent_hidden_size"], kwargs["action_dim"], None, None, None)[0]
         self.model = tk.Sequential(*fc_layer)
 
-    def call(self, x: Union[Tensor, np.ndarray], **kwargs):
+    def call(self, x: Union[Tensor, np.ndarray]):
         """Returns the rnn hidden and Q-values via RNN networks."""
         if self.lstm:
             output, hn, cn = self.rnn_layer(x)
@@ -246,7 +246,7 @@ class ActorNet(Module):
         layers.extend(mlp_block(input_shape[0], action_dim, None, activation_action, initialize)[0])
         self.model = tk.Sequential(layers)
 
-    def call(self, x: Union[Tensor, np.ndarray], **kwargs):
+    def call(self, x: Union[Tensor, np.ndarray]):
         """
         Returns the output of the actor.
         Parameters:
@@ -284,7 +284,7 @@ class CriticNet(Module):
         layers.extend(mlp_block(input_shape[0], 1, None, None, initialize)[0])
         self.model = tk.Sequential(layers)
 
-    def call(self, x: Union[Tensor, np.ndarray], **kwargs):
+    def call(self, x: Union[Tensor, np.ndarray]):
         """
         Returns the output of the Q network.
         Parameters:
