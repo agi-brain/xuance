@@ -1,7 +1,5 @@
-import tensorflow as tf
-import tensorflow.keras as tk
 from xuance.common import Optional, Sequence, Type, Callable
-from xuance.tensorflow import Module, Tensor
+from xuance.tensorflow import Module, Tensor, tf, tk
 
 ModuleType = Type[Module]
 

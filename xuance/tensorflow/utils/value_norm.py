@@ -1,9 +1,9 @@
 import numpy as np
 import torch.nn as nn
-from xuance.tensorflow import tf
+from xuance.tensorflow import tf, Tensor, Module
 
 
-class ValueNorm(nn.Module):
+class ValueNorm(Module):
     """ Normalize a vector of observations - across the first norm_axes dimensions"""
 
     def __init__(self, input_shape, norm_axes=1, beta=0.99999, per_element_update=False, epsilon=1e-5):

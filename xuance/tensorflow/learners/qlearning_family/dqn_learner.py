@@ -48,7 +48,7 @@ class DQN_Learner(Learner):
 
             if self.iterations % self.sync_frequency == 0:
                 self.policy.copy_target()
-            lr = self.optimizer._decayed_lr(tf.float32)
+            lr = self.optimizer.learning_rate
 
             info = {
                 "Qloss": loss.numpy(),

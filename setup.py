@@ -37,7 +37,9 @@ setup(
     ],
     extras_require={
         "torch": ["torch==1.13.0"],
-        "tensorflow": ["tensorflow==2.6.0"],
+        "tensorflow": ["tensorflow==2.11.0",
+                       "tensorflow-addons==0.19.0",
+                       "tensorflow-probability==0.19.0"],
         "mindspore": ["mindspore==2.2.0"],
         "all": [
             "torch==1.13.0",
