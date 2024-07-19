@@ -22,38 +22,37 @@ class DQN_Learner(Learner):
 
     def update(self, **samples):
         self.iterations += 1
-        with tf.device(self.device):
-            obs_batch = samples['obs']
-            act_batch = tf.convert_to_tensor(samples['actions'], dtype=tf.int32)
-            next_batch = samples['obs_next']
-            rew_batch = tf.convert_to_tensor(samples['rewards'], dtype=tf.float32)
-            ter_batch = tf.convert_to_tensor(samples['terminals'], dtype=tf.float32)
+        obs_batch = samples['obs']
+        act_batch = samples['actions']
+        next_batch = samples['obs_next']
+        rew_batch = samples['rewards']
+        ter_batch = samples['terminals']
 
-            with tf.GradientTape() as tape:
-                _, _, evalQ = self.policy(obs_batch)
-                _, _, targetQ = self.policy.target(next_batch)
-                targetQ = tf.math.reduce_max(targetQ, axis=-1)
-                targetQ = rew_batch + self.gamma * (1 - ter_batch) * targetQ
-                targetQ = tf.stop_gradient(targetQ)
+        with tf.GradientTape() as tape:
+            _, _, evalQ = self.policy(obs_batch)
+            _, _, targetQ = self.policy.target(next_batch)
+            targetQ = tf.math.reduce_max(targetQ, axis=-1)
+            targetQ = rew_batch + self.gamma * (1 - ter_batch) * targetQ
+            targetQ = tf.stop_gradient(targetQ)
 
-                predictQ = tf.math.reduce_sum(evalQ * tf.one_hot(act_batch, evalQ.shape[1]), axis=-1)
+            predictQ = tf.math.reduce_sum(evalQ * tf.one_hot(act_batch, evalQ.shape[1]), axis=-1)
 
-                loss = tk.losses.mean_squared_error(targetQ, predictQ)
-                gradients = tape.gradient(loss, self.policy.trainable_variables)
-                self.optimizer.apply_gradients([
-                    (grad, var)
-                    for (grad, var) in zip(gradients, self.policy.trainable_variables)
-                    if grad is not None
-                ])
+            loss = tk.losses.mean_squared_error(targetQ, predictQ)
+            gradients = tape.gradient(loss, self.policy.trainable_variables)
+            self.optimizer.apply_gradients([
+                (grad, var)
+                for (grad, var) in zip(gradients, self.policy.trainable_variables)
+                if grad is not None
+            ])
 
-            if self.iterations % self.sync_frequency == 0:
-                self.policy.copy_target()
-            lr = self.optimizer.learning_rate
+        if self.iterations % self.sync_frequency == 0:
+            self.policy.copy_target()
+        lr = self.optimizer.learning_rate
 
-            info = {
-                "Qloss": loss.numpy(),
-                "predictQ": tf.math.reduce_mean(predictQ).numpy(),
-                "learning_rate": lr.numpy(),
-            }
+        info = {
+            "Qloss": loss.numpy(),
+            "predictQ": tf.math.reduce_mean(predictQ).numpy(),
+            "learning_rate": lr.numpy(),
+        }
 
         return info

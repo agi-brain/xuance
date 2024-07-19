@@ -17,9 +17,7 @@ class Basic_Identical(Module):
         self.model = tk.Sequential([tk.layers.Flatten()])
 
     def call(self, observations: np.ndarray, **kwargs):
-        with tf.device(self.device):
-            state = tf.convert_to_tensor(observations, dtype=tf.float32)
-            return {'state': state}
+        return {'state': observations}
 
 
 class Basic_MLP(Module):
@@ -45,12 +43,9 @@ class Basic_MLP(Module):
         layers = [tk.layers.Flatten()]
         input_shape = self.input_shapes
         for h in self.hidden_sizes:
-            mlp, input_shape = mlp_block(input_shape[0], h, self.normalize, self.activation, self.initializer,
-                                         device=self.device)
+            mlp, input_shape = mlp_block(input_shape[0], h, self.normalize, self.activation, self.initializer)
             layers.extend(mlp)
         return tk.Sequential(layers)
 
     def call(self, observations: np.ndarray, **kwargs):
-        with tf.device(self.device):
-            tensor_observation = tf.convert_to_tensor(observations, dtype=tf.float32)
-            return {'state': self.model(tensor_observation)}
+        return {'state': self.model(observations)}

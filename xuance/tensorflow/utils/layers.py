@@ -8,23 +8,21 @@ def mlp_block(input_dim: int,
               output_dim: int,
               normalize: Optional[tk.layers.Layer] = None,
               activation: Optional[tk.layers.Layer] = None,
-              initializer: Optional[tk.initializers.Initializer] = None,
-              device: str = "cpu:0"):
-    with tf.device(device):
-        block = []
-        if initializer is not None:
-            linear = tk.layers.Dense(units=output_dim,
-                                     activation=activation,
-                                     kernel_initializer=initializer,
-                                     input_shape=(input_dim,))
-        else:
-            linear = tk.layers.Dense(units=output_dim,
-                                     activation=activation,
-                                     input_shape=(input_dim,))
-        block.append(linear)
-        if normalize is not None:
-            block.append(normalize())
-        return block, (output_dim,)
+              initializer: Optional[tk.initializers.Initializer] = None):
+    block = []
+    if initializer is not None:
+        linear = tk.layers.Dense(units=output_dim,
+                                 activation=activation,
+                                 kernel_initializer=initializer,
+                                 input_shape=(input_dim,))
+    else:
+        linear = tk.layers.Dense(units=output_dim,
+                                 activation=activation,
+                                 input_shape=(input_dim,))
+    block.append(linear)
+    if normalize is not None:
+        block.append(normalize())
+    return block, (output_dim,)
 
 
 def cnn_block(input_shape: Sequence[int],
@@ -33,50 +31,47 @@ def cnn_block(input_shape: Sequence[int],
               stride: int,
               normalize: Optional[tk.layers.Layer] = None,
               activation: Optional[tk.layers.Layer] = None,
-              initializer: Optional[tk.initializers.Initializer] = None,
-              device: str = "cpu:0"):
+              initializer: Optional[tk.initializers.Initializer] = None):
     assert len(input_shape) == 3
     H, W, C = input_shape
-    with tf.device(device):
-        block = []
-        if initializer is not None:
-            cnn = tk.layers.Conv2D(filters=filters,
-                                   kernel_size=kernel_size,
-                                   padding='same',
-                                   strides=(stride, stride),
-                                   activation=activation,
-                                   kernel_initializer=initializer,
-                                   input_shape=input_shape)
-        else:
-            cnn = tk.layers.Conv2D(filters=filters,
-                                   kernel_size=kernel_size,
-                                   padding='same',
-                                   strides=(stride, stride),
-                                   activation=activation,
-                                   input_shape=input_shape)
-        block.append(cnn)
-        if normalize is not None:
-            block.append(normalize())
+    block = []
+    if initializer is not None:
+        cnn = tk.layers.Conv2D(filters=filters,
+                               kernel_size=kernel_size,
+                               padding='same',
+                               strides=(stride, stride),
+                               activation=activation,
+                               kernel_initializer=initializer,
+                               input_shape=input_shape)
+    else:
+        cnn = tk.layers.Conv2D(filters=filters,
+                               kernel_size=kernel_size,
+                               padding='same',
+                               strides=(stride, stride),
+                               activation=activation,
+                               input_shape=input_shape)
+    block.append(cnn)
+    if normalize is not None:
+        block.append(normalize())
 
-        if H % stride == 0:
-            H = H // stride
-        else:
-            H = (H + stride) // stride
-        if W % stride == 0:
-            W = W // stride
-        else:
-            W = (W + stride) // stride
-        return block, (H, W, filters)
+    if H % stride == 0:
+        H = H // stride
+    else:
+        H = (H + stride) // stride
+    if W % stride == 0:
+        W = W // stride
+    else:
+        W = (W + stride) // stride
+    return block, (H, W, filters)
 
 
 def pooling_block(input_shape: Sequence[int],
                   scale: int,
-                  pooling: Optional[tk.layers.Layer] = None,
-                  device: str = "cpu") -> Sequence[ModuleType]:
+                  pooling: Optional[tk.layers.Layer] = None) -> Sequence[ModuleType]:
     assert len(input_shape) == 3  # CxHxW
     block = []
     C, H, W = input_shape
-    block.append(pooling(output_size=(H // scale, W // scale), device=device))
+    block.append(pooling(output_size=(H // scale, W // scale)))
     return block
 
 
@@ -84,8 +79,7 @@ def gru_block(input_dim: Sequence[int],
               output_dim: int,
               num_layers: int = 1,
               dropout: float = 0,
-              initialize: Optional[Callable[[Tensor], Tensor]] = None,
-              device: str = "cpu") -> ModuleType:
+              initialize: Optional[Callable[[Tensor], Tensor]] = None) -> ModuleType:
     gru = tk.layers.GRU(units=output_dim,
                         dropout=dropout,
                         return_sequences=True,
@@ -97,8 +91,7 @@ def lstm_block(input_dim: Sequence[int],
                output_dim: int,
                num_layers: int = 1,
                dropout: float = 0,
-               initialize: Optional[Callable[[Tensor], Tensor]] = None,
-               device: str = "cpu") -> ModuleType:
+               initialize: Optional[Callable[[Tensor], Tensor]] = None) -> ModuleType:
     lstm = tk.layers.LSTM(units=output_dim,
                           dropout=dropout,
                           return_sequences=True,

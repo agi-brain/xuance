@@ -20,9 +20,9 @@ class BasicQhead(Module):
         layers = []
         input_shape = (state_dim,)
         for h in hidden_sizes:
-            mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initializer, device)
+            mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initializer)
             layers.extend(mlp)
-        layers.extend(mlp_block(input_shape[0], action_dim, None, None, None, device)[0])
+        layers.extend(mlp_block(input_shape[0], action_dim, None, None, None)[0])
         self.model = tk.Sequential(layers)
 
     def call(self, inputs: Tensor, **kwargs):
