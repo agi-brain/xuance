@@ -23,7 +23,6 @@ class DQN_Agent(OffPolicyAgent):
         normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
         initializer = tk.initializers.orthogonal
         activation = ActivationFunctions[self.config.activation]
-        device = self.device
 
         # build representation.
         representation = self._build_representation(self.config.representation, self.observation_space, self.config)
@@ -32,7 +31,7 @@ class DQN_Agent(OffPolicyAgent):
         if self.config.policy == "Basic_Q_network":
             policy = REGISTRY_Policy["Basic_Q_network"](
                 action_space=self.action_space, representation=representation, hidden_size=self.config.q_hidden_size,
-                normalize=normalize_fn, initialize=initializer, activation=activation, device=device)
+                normalize=normalize_fn, initialize=initializer, activation=activation)
         else:
             raise AttributeError(f"{self.config.agent} does not support the policy named {self.config.policy}.")
 

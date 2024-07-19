@@ -1,151 +1,10 @@
 import numpy as np
 from copy import deepcopy
 from gym.spaces import Space, Discrete
-from xuance.common import Sequence, Optional, Union, Callable, Dict
+from xuance.common import Sequence, Optional, Union, Callable
 from xuance.tensorflow import tf, tk, Module, Tensor
 from xuance.tensorflow.representations import Basic_Identical
-from xuance.tensorflow.utils import mlp_block, lstm_block, gru_block
-
-
-class BasicQhead(Module):
-    def __init__(self,
-                 state_dim: int,
-                 action_dim: int,
-                 hidden_sizes: Sequence[int],
-                 normalize: Optional[tk.layers.Layer] = None,
-                 initializer: Optional[tk.initializers.Initializer] = None,
-                 activation: Optional[tk.layers.Layer] = None,
-                 device: str = "cpu:0"):
-        super(BasicQhead, self).__init__()
-        layers = []
-        input_shape = (state_dim,)
-        for h in hidden_sizes:
-            mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initializer)
-            layers.extend(mlp)
-        layers.extend(mlp_block(input_shape[0], action_dim, None, None, None)[0])
-        self.model = tk.Sequential(layers)
-
-    def call(self, inputs: Tensor, **kwargs):
-        return self.model(inputs)
-
-
-class BasicRecurrent(Module):
-    def __init__(self, **kwargs):
-        super(BasicRecurrent, self).__init__()
-        self.lstm = False
-        if kwargs["rnn"] == "GRU":
-            output, _ = gru_block(kwargs["input_dim"],
-                                  kwargs["recurrent_hidden_size"],
-                                  kwargs["recurrent_layer_N"],
-                                  kwargs["dropout"],
-                                  kwargs["initialize"],
-                                  kwargs["device"])
-        elif kwargs["rnn"] == "LSTM":
-            self.lstm = True
-            output, _ = lstm_block(kwargs["input_dim"],
-                                   kwargs["recurrent_hidden_size"],
-                                   kwargs["recurrent_layer_N"],
-                                   kwargs["dropout"],
-                                   kwargs["initialize"],
-                                   kwargs["device"])
-        else:
-            raise "Unknown recurrent module!"
-        self.rnn_layer = output
-        fc_layer = mlp_block(kwargs["recurrent_hidden_size"], kwargs["action_dim"], None, None, None, kwargs["device"])[0]
-        self.model = tk.Sequential(*fc_layer)
-
-    def call(self, x: Tensor, **kwargs):
-        if self.lstm:
-            output, hn, cn = self.rnn_layer(x)
-            return hn, cn, self.model(output)
-        else:
-            output, hn = self.rnn_layer(x)
-            return hn, self.model(output)
-
-
-class DuelQhead(Module):
-    def __init__(self,
-                 state_dim: int,
-                 action_dim: int,
-                 hidden_sizes: Sequence[int],
-                 normalize: Optional[tk.layers.Layer] = None,
-                 initializer: Optional[tk.initializers.Initializer] = None,
-                 activation: Optional[tk.layers.Layer] = None,
-                 device: str = "cpu:0"):
-        super(DuelQhead, self).__init__()
-        v_layers = []
-        input_shape = (state_dim,)
-        for h in hidden_sizes:
-            v_mlp, input_shape = mlp_block(input_shape[0], h // 2, normalize, activation, initializer, device)
-            v_layers.extend(v_mlp)
-        v_layers.extend(mlp_block(input_shape[0], 1, None, None, None, device)[0])
-        a_layers = []
-        input_shape = (state_dim,)
-        for h in hidden_sizes:
-            a_mlp, input_shape = mlp_block(input_shape[0], h // 2, normalize, activation, initializer, device)
-            a_layers.extend(a_mlp)
-        a_layers.extend(mlp_block(input_shape[0], action_dim, None, None, None, device)[0])
-        self.a_model = tk.Sequential(a_layers)
-        self.v_model = tk.Sequential(v_layers)
-
-    def call(self, x: Tensor, **kwargs):
-        v = self.v_model(x)
-        a = self.a_model(x)
-        q = v + (a - tf.expand_dims(tf.reduce_mean(a, axis=-1), axis=-1))
-        return q
-
-
-class C51Qhead(Module):
-    def __init__(self,
-                 state_dim: int,
-                 action_dim: int,
-                 atom_num: int,
-                 hidden_sizes: Sequence[int],
-                 normalize: Optional[tk.layers.Layer] = None,
-                 initializer: Optional[tk.initializers.Initializer] = None,
-                 activation: Optional[tk.layers.Layer] = None,
-                 device: str = "cpu:0"):
-        super(C51Qhead, self).__init__()
-        self.action_dim = action_dim
-        self.atom_num = atom_num
-        layers = []
-        input_shape = (state_dim,)
-        for h in hidden_sizes:
-            mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initializer, device)
-            layers.extend(mlp)
-        layers.extend(mlp_block(input_shape[0], action_dim * atom_num, None, None, None, device)[0])
-        self.model = tk.Sequential(layers)
-
-    def call(self, x: Tensor, **kwargs):
-        dist_logits = tf.reshape(self.model(x), [-1, self.action_dim, self.atom_num])
-        dist_probs = tf.nn.softmax(dist_logits, axis=-1)
-        return dist_probs
-
-
-class QRDQNhead(Module):
-    def __init__(self,
-                 state_dim: int,
-                 action_dim: int,
-                 atom_num: int,
-                 hidden_sizes: Sequence[int],
-                 normalize: Optional[tk.layers.Layer] = None,
-                 initializer: Optional[tk.initializers.Initializer] = None,
-                 activation: Optional[tk.layers.Layer] = None,
-                 device: str = "cpu:0"):
-        super(QRDQNhead, self).__init__()
-        self.action_dim = action_dim
-        self.atom_num = atom_num
-        layers = []
-        input_shape = (state_dim,)
-        for h in hidden_sizes:
-            mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initializer, device)
-            layers.extend(mlp)
-        layers.extend(mlp_block(input_shape[0], action_dim * atom_num, None, None, None, device)[0])
-        self.model = tk.Sequential(layers)
-
-    def call(self, x: Tensor, **kwargs):
-        quantiles = tf.reshape(self.model(x), [-1, self.action_dim, self.atom_num])
-        return quantiles
+from .core import BasicQhead, BasicRecurrent, DuelQhead, C51Qhead, QRDQNhead, ActorNet, CriticNet
 
 
 class BasicQnetwork(Module):
@@ -155,20 +14,19 @@ class BasicQnetwork(Module):
                  hidden_size: Sequence[int] = None,
                  normalize: Optional[tk.layers.Layer] = None,
                  initialize: Optional[tk.initializers.Initializer] = None,
-                 activation: Optional[tk.layers.Layer] = None,
-                 device: str = "cpu:0"):
+                 activation: Optional[tk.layers.Layer] = None):
         super(BasicQnetwork, self).__init__()
         self.action_dim = action_space.n
         self.representation = representation
         self.target_representation = deepcopy(representation)
         self.representation_info_shape = self.representation.output_shapes
         self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, hidden_size,
-                                     normalize, initialize, activation, device)
+                                     normalize, initialize, activation)
         self.target_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, hidden_size,
-                                       normalize, initialize, activation, device)
+                                       normalize, initialize, activation)
         self.target_Qhead.set_weights(self.eval_Qhead.get_weights())
 
-    def call(self, observation: Tensor, **kwargs):
+    def call(self, observation: Union[Tensor, np.ndarray], **kwargs):
         outputs = self.representation(observation)
         evalQ = self.eval_Qhead(outputs['state'])
         argmax_action = tf.math.argmax(evalQ, axis=-1)
@@ -200,9 +58,9 @@ class DuelQnetwork(Module):
         self.target_representation = deepcopy(representation)
         self.representation_info_shape = self.representation.output_shapes
         self.eval_Qhead = DuelQhead(self.representation.output_shapes['state'][0], self.action_dim, hidden_size,
-                                    normalize, initialize, activation, device)
+                                    normalize, initialize, activation)
         self.target_Qhead = DuelQhead(self.representation.output_shapes['state'][0], self.action_dim, hidden_size,
-                                      normalize, initialize, activation, device)
+                                      normalize, initialize, activation)
         self.target_Qhead.set_weights(self.eval_Qhead.get_weights())
 
     def call(self, observation: Union[np.ndarray, dict], **kwargs):
@@ -237,9 +95,9 @@ class NoisyQnetwork(Module):
         self.target_representation = deepcopy(representation)
         self.representation_info_shape = self.representation.output_shapes
         self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, hidden_size,
-                                     normalize, initialize, activation, device)
+                                     normalize, initialize, activation)
         self.target_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, hidden_size,
-                                       normalize, initialize, activation, device)
+                                       normalize, initialize, activation)
         self.target_Qhead.set_weights(self.eval_Qhead.get_weights())
         self.noise_scale = 0.0
 
@@ -297,9 +155,9 @@ class C51Qnetwork(Module):
         self.target_representation = deepcopy(representation)
         self.representation_info_shape = self.representation.output_shapes
         self.eval_Zhead = C51Qhead(self.representation.output_shapes['state'][0], self.action_dim, self.atom_num,
-                                   hidden_size, normalize, initialize, activation, device)
+                                   hidden_size, normalize, initialize, activation)
         self.target_Zhead = C51Qhead(self.representation.output_shapes['state'][0], self.action_dim, self.atom_num,
-                                     hidden_size, normalize, initialize, activation, device)
+                                     hidden_size, normalize, initialize, activation)
         self.target_Zhead.set_weights(self.eval_Zhead.get_weights())
         self.supports = tf.cast(tf.linspace(self.v_min, self.v_max, self.atom_num), dtype=tf.float32)
         self.deltaz = (v_max - v_min) / (atom_num - 1)
@@ -364,50 +222,6 @@ class QRDQN_Network(Module):
     def copy_target(self):
         self.target_representation.set_weights(self.representation.get_weights())
         self.target_Zhead.set_weights(self.eval_Zhead.get_weights())
-
-
-class ActorNet(Module):
-    def __init__(self,
-                 state_dim: int,
-                 action_dim: int,
-                 hidden_sizes: Sequence[int],
-                 initialize: Optional[Callable[..., Tensor]] = None,
-                 activation: Optional[tk.layers.Layer] = None,
-                 device: str = "cpu:0"):
-        super(ActorNet, self).__init__()
-        layers = []
-        input_shape = (state_dim,)
-        for h in hidden_sizes:
-            mlp, input_shape = mlp_block(input_shape[0], h, None, activation, initialize, device)
-            layers.extend(mlp)
-        layers.extend(mlp_block(input_shape[0], action_dim, None, tk.layers.Activation('tanh'), initialize, device)[0])
-        self.model = tk.Sequential(layers)
-
-    def call(self, x: Tensor, **kwargs):
-        return self.model(x)
-
-
-class CriticNet(Module):
-    def __init__(self,
-                 state_dim: int,
-                 action_dim: int,
-                 hidden_sizes: Sequence[int],
-                 initialize: Optional[Callable[..., Tensor]] = None,
-                 activation: Optional[tk.layers.Layer] = None,
-                 device: str = "cpu:0"):
-        super(CriticNet, self).__init__()
-        layers = []
-        input_shape = (state_dim + action_dim,)
-        for h in hidden_sizes:
-            mlp, input_shape = mlp_block(input_shape[0], h, None, activation, initialize, device)
-            layers.extend(mlp)
-        layers.extend(mlp_block(input_shape[0], 1, None, None, initialize, device)[0])
-        self.model = tk.Sequential(layers)
-
-    def call(self, inputs: Dict, **kwargs):
-        x = inputs['x']
-        a = inputs['a']
-        return self.model(tf.concat((x, a), axis=-1))[:, 0]
 
 
 class DDPGPolicy(Module):
@@ -554,14 +368,13 @@ class PDQNPolicy(Module):
         self.conact_size = int(self.conact_sizes.sum())
 
         self.qnetwork = BasicQhead(self.observation_space.shape[0] + self.conact_size, self.num_disact,
-                                   qnetwork_hidden_size, normalize,
-                                   initialize, activation, device)
+                                   qnetwork_hidden_size, normalize, initialize, activation)
         self.dim_input = self.observation_space.shape[0] + self.conact_size
         self.qnetwork._set_inputs(tf.TensorSpec([None, self.dim_input], tf.float32, name='inputs'))
         self.conactor = ActorNet(self.observation_space.shape[0], self.conact_size, conactor_hidden_size,
                                  initialize, activation, device)
         self.target_qnetwork = BasicQhead(self.observation_space.shape[0] + self.conact_size, self.num_disact,
-                                          qnetwork_hidden_size, normalize, initialize, activation, device)
+                                          qnetwork_hidden_size, normalize, initialize, activation)
         self.target_conactor = ActorNet(self.observation_space.shape[0], self.conact_size, conactor_hidden_size,
                                         initialize, activation, device)
         self.target_conactor.set_weights(self.conactor.get_weights())
@@ -622,18 +435,16 @@ class MPDQNPolicy(Module):
         self.conact_size = int(self.conact_sizes.sum())
 
         self.qnetwork = BasicQhead(self.observation_space.shape[0] + self.conact_size, self.num_disact,
-                                   qnetwork_hidden_size, normalize,
-                                   initialize, activation, device)
+                                   qnetwork_hidden_size, normalize, initialize, activation)
         self.dim_input = self.observation_space.shape[0] + self.conact_size
         self.qnetwork._set_inputs(tf.TensorSpec([None, self.dim_input], tf.float32, name='inputs'))
         self.conactor = ActorNet(self.observation_space.shape[0], self.conact_size, conactor_hidden_size,
                                  initialize, activation, device)
 
         self.target_qnetwork = BasicQhead(self.observation_space.shape[0] + self.conact_size, self.num_disact,
-                                          qnetwork_hidden_size, normalize,
-                                          initialize, activation, device)
+                                          qnetwork_hidden_size, normalize, initialize, activation)
         self.target_conactor = ActorNet(self.observation_space.shape[0], self.conact_size, conactor_hidden_size,
-                                        initialize, activation, device)
+                                        initialize, activation)
         self.offsets = self.conact_sizes.cumsum()
         self.offsets = np.insert(self.offsets, 0, 0)
         self.soft_update(tau=1.0)
@@ -818,7 +629,7 @@ class DRQNPolicy(Module):
         self.target_Qhead = BasicRecurrent(**kwargs)
         self.target_Qhead.set_weights(self.eval_Qhead.get_weights())
 
-    def call(self, observation: Union[np.ndarray, dict], *rnn_hidden: Tensor, **kwargs):
+    def call(self, observation: Union[np.ndarray, dict], *rnn_hidden: Union[Tensor, np.ndarray], **kwargs):
         if self.cnn:
             obs_shape = observation.shape
             outputs = self.representation(observation.reshape((-1,) + obs_shape[-3:]))

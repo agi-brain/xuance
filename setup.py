@@ -43,7 +43,7 @@ setup(
         "mindspore": ["mindspore==2.2.0"],
         "all": [
             "torch==1.13.0",
-            "tensorflow==2.6.0",
+            "tensorflow==2.11.0",
             "mindspore==2.2.0"  # mindspore might be installed manually.
         ],
         "atari": ["atari-py==0.2.9",  # for Atari
@@ -61,7 +61,7 @@ setup(
         "tqdm==4.62.3",
         "pyglet==1.5.15",
         "pettingzoo>=1.23.0",  # for MARL
-        "tensorboard==2.11.2",  # logger
+        "tensorboard>=2.11.2",  # logger
         "wandb==0.15.3",
         "moviepy==1.0.3",
         "imageio",  # default version is 2.9.0

@@ -6,13 +6,7 @@ from copy import deepcopy
 from gym.spaces import Space, Discrete
 from xuance.torch import Module, Tensor
 from xuance.torch.utils import ModuleType
-from xuance.torch.policies.core import BasicQhead
-from xuance.torch.policies.core import BasicRecurrent
-from xuance.torch.policies.core import DuelQhead
-from xuance.torch.policies.core import C51Qhead
-from xuance.torch.policies.core import QRDQNhead
-from xuance.torch.policies.core import ActorNet
-from xuance.torch.policies.core import CriticNet
+from .core import BasicQhead, BasicRecurrent, DuelQhead, C51Qhead, QRDQNhead, ActorNet, CriticNet
 
 
 class BasicQnetwork(Module):
