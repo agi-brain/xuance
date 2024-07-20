@@ -1,5 +1,5 @@
-from xuance.common import Optional, Sequence, Type, Callable
-from xuance.tensorflow import Module, Tensor, tf, tk
+from xuance.common import Optional, Sequence, Type, Callable, Tuple
+from xuance.tensorflow import Module, Tensor, tk
 
 ModuleType = Type[Module]
 
@@ -79,7 +79,7 @@ def gru_block(input_dim: Sequence[int],
               output_dim: int,
               num_layers: int = 1,
               dropout: float = 0,
-              initialize: Optional[Callable[[Tensor], Tensor]] = None) -> ModuleType:
+              initialize: Optional[Callable[[Tensor], Tensor]] = None):
     gru = tk.layers.GRU(units=output_dim,
                         dropout=dropout,
                         return_sequences=True,
@@ -91,7 +91,7 @@ def lstm_block(input_dim: Sequence[int],
                output_dim: int,
                num_layers: int = 1,
                dropout: float = 0,
-               initialize: Optional[Callable[[Tensor], Tensor]] = None) -> ModuleType:
+               initialize: Optional[Callable[[Tensor], Tensor]] = None):
     lstm = tk.layers.LSTM(units=output_dim,
                           dropout=dropout,
                           return_sequences=True,

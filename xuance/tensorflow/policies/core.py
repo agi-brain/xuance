@@ -208,7 +208,7 @@ class BasicRecurrent(Module):
             raise "Unknown recurrent module!"
         self.rnn_layer = output
         fc_layer = mlp_block(kwargs["recurrent_hidden_size"], kwargs["action_dim"], None, None, None)[0]
-        self.model = tk.Sequential(*fc_layer)
+        self.model = tk.Sequential(fc_layer)
 
     @tf.function
     def call(self, x: Union[Tensor, np.ndarray], **kwargs):

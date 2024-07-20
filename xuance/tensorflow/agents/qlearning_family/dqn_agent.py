@@ -7,6 +7,12 @@ from xuance.tensorflow.agents import OffPolicyAgent
 
 
 class DQN_Agent(OffPolicyAgent):
+    """The implementation of Deep Q-Networks (DQN) agent.
+
+    Args:
+        config: the Namespace variable that provides hyper-parameters and other settings.
+        envs: the vectorized environments.
+    """
     def __init__(self,
                  config: Namespace,
                  envs: DummyVecEnv):

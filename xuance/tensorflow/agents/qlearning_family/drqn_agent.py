@@ -1,60 +1,83 @@
 import numpy as np
 from tqdm import tqdm
+from copy import deepcopy
 from argparse import Namespace
-from xuance.common import RecurrentOffPolicyBuffer
 from xuance.environment import DummyVecEnv
-from xuance.tensorflow import tk, Module
-from xuance.tensorflow.agents import Agent
-from xuance.tensorflow.learners import DRQN_Learner
+from xuance.tensorflow import tk
+from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions
+from xuance.tensorflow.policies import REGISTRY_Policy
+from xuance.tensorflow.agents import OffPolicyAgent
+from xuance.common import RecurrentOffPolicyBuffer, EpisodeBuffer
 
 
-class DRQN_Agent(Agent):
+class DRQN_Agent(OffPolicyAgent):
+    """The implementation of Deep Recurrent Q-Netowrk (DRQN) agent.
+
+    Args:
+        config: the Namespace variable that provides hyper-parameters and other settings.
+        envs: the vectorized environments.
+    """
+
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecEnv,
-                 policy: Module,
-                 optimizer: tk.optimizers.Optimizer,
-                 device: str = 'cpu'):
-        self.render = config.render
-        self.n_envs = envs.num_envs
+                 envs: DummyVecEnv):
+        super(DRQN_Agent, self).__init__(config, envs)
 
-        self.gamma = config.gamma
-        self.training_frequency = config.training_frequency
-        self.start_training = config.start_training
-        self.start_greedy = config.start_greedy
-        self.end_greedy = config.end_greedy
+        self.start_greedy, self.end_greedy = config.start_greedy, config.end_greedy
         self.egreedy = config.start_greedy
+        self.delta_egreedy = (self.start_greedy - self.end_greedy) / (config.decay_step_greedy / self.n_envs)
 
-        self.observation_space = envs.observation_space
-        self.action_space = envs.action_space
+        self.policy = self._build_policy()  # build policy
         self.auxiliary_info_shape = {}
-
-        self.atari = True if config.env_name == "Atari" else False
-        memory = RecurrentOffPolicyBuffer(self.observation_space,
-                                          self.action_space,
-                                          self.auxiliary_info_shape,
-                                          self.n_envs,
-                                          config.n_size,
-                                          config.batch_size,
-                                          episode_length=envs.max_episode_steps,
-                                          lookup_length=config.lookup_length)
-        learner = DRQN_Learner(policy,
-                               optimizer,
-                               config.device,
-                               config.model_dir,
-                               config.gamma,
-                               config.sync_frequency)
-        super(DRQN_Agent, self).__init__(config, envs, policy, memory, learner, device, config.log_dir, config.model_dir)
+        self.memory = self._build_memory(auxiliary_info_shape=self.auxiliary_info_shape)  # build memory
+        self.learner = self._build_learner(self.config, self.policy)  # build learner
         self.lstm = True if config.rnn == "LSTM" else False
 
-    def _action(self, obs, egreedy=0.0, rnn_hidden=None):
+    def _build_memory(self, auxiliary_info_shape=None):
+        self.atari = True if self.config.env_name == "Atari" else False
+        Buffer = RecurrentOffPolicyBuffer(self.observation_space,
+                                          self.action_space,
+                                          auxiliary_info_shape,
+                                          self.n_envs,
+                                          self.config.buffer_size,
+                                          self.config.batch_size,
+                                          episode_length=self.episode_length,
+                                          lookup_length=self.config.lookup_length)
+        return Buffer
+
+    def _build_policy(self):
+        normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
+        initializer = tk.initializers.orthogonal
+        activation = ActivationFunctions[self.config.activation]
+
+        # build representation.
+        representation = self._build_representation(self.config.representation, self.observation_space, self.config)
+
+        # build policy.
+        if self.config.policy == "DRQN_Policy":
+            policy = REGISTRY_Policy["DRQN_Policy"](
+                action_space=self.action_space, representation=representation,
+                rnn=self.config.rnn, recurrent_hidden_size=self.config.recurrent_hidden_size,
+                recurrent_layer_N=self.config.recurrent_layer_N, dropout=self.config.dropout,
+                normalize=normalize_fn, initialize=initializer, activation=activation)
+        else:
+            raise AttributeError(
+                f"{self.config.agent} currently does not support the policy named {self.config.policy}.")
+
+        return policy
+
+    def action(self, obs, egreedy=0.0, rnn_hidden=None):
         _, argmax_action, _, rnn_hidden_next = self.policy(obs[:, np.newaxis], *rnn_hidden)
         random_action = np.random.choice(self.action_space.n, self.n_envs)
         if np.random.rand() < egreedy:
-            action = random_action
+            actions = random_action
         else:
-            action = argmax_action.numpy()
-        return action, rnn_hidden_next
+            actions = argmax_action.numpy()
+        if self.lstm:
+            rnn_hidden_next_np = (rnn_hidden_next[0].numpy(), rnn_hidden_next[1].numpy())
+        else:
+            rnn_hidden_next_np = rnn_hidden_next.numpy()
+        return {"actions": actions, "rnn_hidden_next": rnn_hidden_next_np}
 
     def train(self, train_steps):
         obs = self.envs.buf_obs
@@ -67,19 +90,19 @@ class DRQN_Agent(Agent):
             step_info = {}
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
-            acts, self.rnn_hidden = self._action(obs, self.egreedy, self.rnn_hidden)
+            policy_out = self.action(obs, self.egreedy, self.rnn_hidden)
+            acts, self.rnn_hidden = policy_out['actions'], policy_out['rnn_hidden_next']
             next_obs, rewards, terminals, trunctions, infos = self.envs.step(acts)
 
             if (self.current_step > self.start_training) and (self.current_step % self.training_frequency == 0):
                 # training
-                obs_batch, act_batch, rew_batch, terminal_batch = self.memory.sample()
-                step_info = self.learner.update(obs_batch, act_batch, rew_batch, terminal_batch)
-                step_info["epsilon-greedy"] = self.egreedy
-                self.log_infos(step_info, self.current_step)
+                train_infos = self.train_epochs(n_epochs=1)
+                self.log_infos(train_infos, self.current_step)
 
-            obs = next_obs
+            obs = deepcopy(next_obs)
             for i in range(self.n_envs):
-                episode_data[i].put([self._process_observation(obs[i]), acts[i], self._process_reward(rewards[i]), terminals[i]])
+                episode_data[i].put(
+                    [self._process_observation(obs[i]), acts[i], self._process_reward(rewards[i]), terminals[i]])
                 if terminals[i] or trunctions[i]:
                     if self.atari and (~trunctions[i]):
                         pass
@@ -97,11 +120,12 @@ class DRQN_Agent(Agent):
                         self.memory.store(episode_data[i])
                         episode_data[i] = EpisodeBuffer()
                         obs[i] = infos[i]["reset_obs"]
+                        self.envs.buf_obs[i] = obs[i]
                         episode_data[i].obs.append(self._process_observation(obs[i]))
 
             self.current_step += self.n_envs
             if self.egreedy > self.end_greedy:
-                self.egreedy = self.egreedy - (self.start_greedy - self.end_greedy) / self.config.decay_step_greedy
+                self.egreedy = self.egreedy - self.delta_egreedy
 
     def test(self, env_fn, test_episodes):
         test_envs = env_fn()
@@ -118,14 +142,15 @@ class DRQN_Agent(Agent):
         while current_episode < test_episodes:
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
-            acts, rnn_hidden = self._action(obs, egreedy=0.0, rnn_hidden=rnn_hidden)
+            policy_out = self.action(obs, egreedy=0.0, rnn_hidden=rnn_hidden)
+            acts, rnn_hidden = policy_out['actions'], policy_out['rnn_hidden_next']
             next_obs, rewards, terminals, trunctions, infos = test_envs.step(acts)
             if self.config.render_mode == "rgb_array" and self.render:
                 images = test_envs.render(self.config.render_mode)
                 for idx, img in enumerate(images):
                     videos[idx].append(img)
 
-            obs = next_obs
+            obs = deepcopy(next_obs)
             for i in range(num_envs):
                 if terminals[i] or trunctions[i]:
                     if self.atari and (~trunctions[i]):
