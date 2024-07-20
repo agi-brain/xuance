@@ -14,7 +14,10 @@ class DuelDQN_Learner(Learner):
                  config: Namespace,
                  policy: Module):
         super(DuelDQN_Learner, self).__init__(config, policy)
-        self.optimizer = tk.optimizers.Adam(config.learning_rate)
+        if ("macOS" in self.os_name) and ("arm" in self.os_name):  # For macOS with Apple's M-series chips.
+            self.optimizer = tk.optimizers.legacy.Adam(config.learning_rate)
+        else:
+            self.optimizer = tk.optimizers.Adam(config.learning_rate)
         self.gamma = config.gamma
         self.sync_frequency = config.sync_frequency
 

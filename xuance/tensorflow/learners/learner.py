@@ -1,4 +1,5 @@
 import os
+import platform
 from abc import ABC, abstractmethod
 from argparse import Namespace
 from xuance.common import Union, Sequence, Optional
@@ -9,6 +10,7 @@ class Learner(ABC):
     def __init__(self,
                  config: Namespace,
                  policy: Module):
+        self.os_name = platform.platform()
         self.value_normalizer = None
         self.config = config
 
