@@ -15,6 +15,7 @@ class DCG_utility(Module):
                   tk.layers.Dense(units=self.dim_output, activation=None, input_shape=(self.dim_hidden,))]
         self.outputs = tk.Sequential(layers)
 
+    @tf.function
     def call(self, hidden_states_n, **kwargs):
         return self.outputs(hidden_states_n)
 
@@ -27,6 +28,7 @@ class DCG_payoff(DCG_utility):
         dim_payoff_out = 2 * self.payoff_rank * self.dim_act if self.low_rank_payoff else self.dim_act ** 2
         super(DCG_payoff, self).__init__(dim_input, dim_hidden, dim_payoff_out)
 
+    @tf.function
     def call(self, hidden_states_n, edges_from=None, edges_to=None, **kwargs):
         input_payoff_0 = tf.concat([tf.gather(hidden_states_n, edges_from, axis=1),
                                     tf.gather(hidden_states_n, edges_to, axis=1)], axis=-1)

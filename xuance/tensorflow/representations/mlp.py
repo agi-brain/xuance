@@ -1,6 +1,6 @@
 import numpy as np
 from xuance.common import Sequence, Optional, Union
-from xuance.tensorflow import tk, Module, Tensor
+from xuance.tensorflow import tf, tk, Module, Tensor
 from xuance.tensorflow.utils.layers import mlp_block
 from xuance.tensorflow.utils import ModuleType
 
@@ -14,8 +14,9 @@ class Basic_Identical(Module):
         self.output_shapes = {'state': (np.prod(input_shape),)}
         self.model = tk.Sequential([tk.layers.Flatten()])
 
-    def call(self, observations: Union[Tensor, np.ndarray]):
-        return {'state': observations}
+    @tf.function
+    def call(self, x: Union[Tensor, np.ndarray], **kwargs):
+        return {'state': x}
 
 
 class Basic_MLP(Module):
@@ -43,5 +44,6 @@ class Basic_MLP(Module):
             layers.extend(mlp)
         return tk.Sequential(layers)
 
-    def call(self, observations: Union[Tensor, np.ndarray]):
-        return {'state': self.model(observations)}
+    @tf.function
+    def call(self, x: Union[Tensor, np.ndarray], **kwargs):
+        return {'state': self.model(x)}

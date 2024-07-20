@@ -26,6 +26,7 @@ class ActorNet(Module):
         self.pi_logits = tk.Sequential(layers)
         self.dist = CategoricalDistribution(action_dim)
 
+    @tf.function
     def call(self, x: Tensor, **kwargs):
         self.dist.set_param(self.pi_logits(x))
         return self.pi_logits(x)
@@ -49,6 +50,7 @@ class CriticNet(Module):
         layers.extend(mlp_block(input_shape[0], 1, None, None, None, device)[0])
         self.model = tk.Sequential(layers)
 
+    @tf.function
     def call(self, x: Tensor, **kwargs):
         return self.model(x)[:, :, 0]
 
@@ -71,6 +73,7 @@ class COMA_CriticNet(Module):
         layers.extend(mlp_block(input_shape[0], act_dim, None, None, None, device)[0])
         self.model = tk.Sequential(layers)
 
+    @tf.function
     def call(self, x: Tensor, **kwargs):
         return self.model(x)
 
@@ -108,6 +111,7 @@ class MAAC_Policy(Module):
         self.identical_rep = True if isinstance(self.representation, Basic_Identical) else False
         self.pi_dist = CategoricalDistribution(self.action_dim)
 
+    @tf.function
     def call(self, inputs: Union[np.ndarray, dict], *rnn_hidden, **kwargs):
         observation = inputs['obs']
         agent_ids = inputs['ids']
@@ -194,6 +198,7 @@ class MAAC_Policy_Share(MAAC_Policy):
         self.identical_rep = True if isinstance(self.representation, Basic_Identical) else False
         self.pi_dist = CategoricalDistribution(self.action_dim)
 
+    @tf.function
     def call(self, inputs: Union[np.ndarray, dict], *rnn_hidden, **kwargs):
         observation = inputs['obs']
         agent_ids = inputs['ids']
@@ -274,6 +279,7 @@ class COMA_Policy(Module):
         self.parameters_critic = self.critic.trainable_variables
         self.pi_dist = CategoricalDistribution(self.action_dim)
 
+    @tf.function
     def call(self, inputs: Union[np.ndarray, dict], *rnn_hidden, **kwargs):
         observation = inputs['obs']
         agent_ids = inputs['ids']
@@ -335,6 +341,7 @@ class MeanFieldActorCriticPolicy(Module):
         self.identical_rep = True if isinstance(self.representation, Basic_Identical) else False
         self.pi_dist = CategoricalDistribution(self.action_dim)
 
+    @tf.function
     def call(self, inputs: Union[np.ndarray, dict], **kwargs):
         observations = inputs['obs']
         IDs = inputs['ids']

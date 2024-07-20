@@ -26,6 +26,7 @@ class BasicQnetwork(Module):
                                        normalize, initialize, activation)
         self.target_Qhead.set_weights(self.eval_Qhead.get_weights())
 
+    @tf.function
     def call(self, observation: Union[Tensor, np.ndarray]):
         outputs = self.representation(observation)
         evalQ = self.eval_Qhead(outputs['state'])
@@ -63,6 +64,7 @@ class DuelQnetwork(Module):
                                       normalize, initialize, activation)
         self.target_Qhead.set_weights(self.eval_Qhead.get_weights())
 
+    @tf.function
     def call(self, observation: Union[np.ndarray, dict], **kwargs):
         outputs = self.representation(observation)
         evalQ = self.eval_Qhead(outputs['state'])
@@ -110,6 +112,7 @@ class NoisyQnetwork(Module):
             self.target_noise_parameter.append(
                 tf.random.uniform(shape=parameter.shape, minval=-1.0, maxval=1.0) * noisy_bound)
 
+    @tf.function
     def call(self, observation: Union[np.ndarray, dict], **kwargs):
         outputs = self.representation(observation)
         self.update_noise(self.noise_scale)
@@ -162,6 +165,7 @@ class C51Qnetwork(Module):
         self.supports = tf.cast(tf.linspace(self.v_min, self.v_max, self.atom_num), dtype=tf.float32)
         self.deltaz = (v_max - v_min) / (atom_num - 1)
 
+    @tf.function
     def call(self, observation: Union[np.ndarray, dict], **kwargs):
         outputs = self.representation(observation)
         eval_Z = self.eval_Zhead(outputs['state'])
@@ -205,6 +209,7 @@ class QRDQN_Network(Module):
                                       normalize, initialize, activation, device)
         self.target_Zhead.set_weights(self.eval_Zhead.get_weights())
 
+    @tf.function
     def call(self, observation: Union[np.ndarray, dict], **kwargs):
         outputs = self.representation(observation)
         eval_Z = self.eval_Zhead(outputs['state'])
@@ -249,6 +254,7 @@ class DDPGPolicy(Module):
                                        initialize, activation, device)
         self.soft_update(tau=1.0)
 
+    @tf.function
     def call(self, observation: Union[np.ndarray, dict], **kwargs):
         outputs = self.representation(observation)
         act = self.actor(outputs['state'])
@@ -307,6 +313,7 @@ class TD3Policy(Module):
         self.target_criticA.set_weights(self.criticA.get_weights())
         self.target_criticB.set_weights(self.criticB.get_weights())
 
+    @tf.function
     def call(self, observation: Union[np.ndarray, dict], **kwargs):
         outputs = self.representation(observation)
         act = self.actor(outputs['state'])
@@ -629,6 +636,7 @@ class DRQNPolicy(Module):
         self.target_Qhead = BasicRecurrent(**kwargs)
         self.target_Qhead.set_weights(self.eval_Qhead.get_weights())
 
+    @tf.function
     def call(self, observation: Union[np.ndarray, dict], *rnn_hidden: Union[Tensor, np.ndarray], **kwargs):
         if self.cnn:
             obs_shape = observation.shape

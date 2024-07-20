@@ -25,6 +25,7 @@ class ActorNet(Module):
         self.model = tk.Sequential(layers)
         self.dist = CategoricalDistribution(action_dim)
 
+    @tf.function
     def call(self, x: Tensor, **kwargs):
         logits = self.model(x)
         self.dist.set_param(logits)
@@ -48,6 +49,7 @@ class CriticNet(Module):
         layers.extend(mlp_block(input_shapes[0], 1, device=device)[0])
         self.model = tk.Sequential(layers)
 
+    @tf.function
     def call(self, x: Tensor, **kwargs):
         return self.model(x)[:, 0]
 
@@ -71,6 +73,7 @@ class ActorCriticPolicy(Module):
         self.critic = CriticNet(representation.output_shapes['state'][0], critic_hidden_size,
                                 normalize, initializer, activation, device)
 
+    @tf.function
     def call(self, observations: Union[np.ndarray, dict], **kwargs):
         outputs = self.representation(observations)
         a = self.actor(outputs['state'])
@@ -94,6 +97,7 @@ class ActorPolicy(Module):
         self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size,
                               normalize, initializer, activation, device)
 
+    @tf.function
     def call(self, observation: Union[np.ndarray, dict], **kwargs):
         outputs = self.representation(observation)
         a = self.actor(outputs['state'])
@@ -125,6 +129,7 @@ class PPGActorCritic(Module):
         self.aux_critic = CriticNet(representation.output_shapes['state'][0], critic_hidden_size,
                                     normalize, initializer, activation, device)
 
+    @tf.function
     def call(self, observation: Union[np.ndarray, dict], **kwargs):
         policy_outputs = self.actor_representation(observation)
         critic_outputs = self.critic_representation(observation)
@@ -152,6 +157,7 @@ class CriticNet_SACDIS(Module):
         layers.extend(mlp_block(input_shape[0], action_dim, None, None, initializer, device)[0])
         self.model = tk.Sequential(layers)
 
+    @tf.function
     def call(self, x: Tensor, **kwargs):
         return self.model(x)
 
@@ -175,6 +181,7 @@ class ActorNet_SACDIS(Module):
         self.outputs = tk.Sequential(layers)
         self.model = tk.layers.Softmax(axis=-1)
 
+    @tf.function
     def call(self, x: Tensor, **kwargs):
         action_prob = self.model(self.outputs(x))
         dist = tfd.Categorical(probs=action_prob)
@@ -206,6 +213,7 @@ class SACDISPolicy(Module):
                                               critic_hidden_size, initializer, activation, device)
         self.target_critic.set_weights(self.critic.get_weights())
 
+    @tf.function
     def call(self, observation: Union[np.ndarray, dict], **kwargs):
         outputs = self.representation(observation)
         act_prob, act_distribution = self.actor(outputs['state'])

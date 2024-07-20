@@ -39,6 +39,7 @@ class Basic_CNN(Module):
         layers.append(tk.layers.Flatten())
         return tk.Sequential(*layers)
 
+    @tf.function
     def call(self, observations: np.ndarray, **kwargs):
         with tf.device(self.device):
             tensor_observation = tf.convert_to_tensor(np.transpose(observations, (0, 3, 1, 2)), dtype=tf.float32)

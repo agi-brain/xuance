@@ -5,6 +5,7 @@ class VDN_mixer(Module):
     def __init__(self):
         super(VDN_mixer, self).__init__()
 
+    @tf.function
     def call(self, values_n, states=None, **kwargs):
         return tf.reduce_sum(values_n, axis=1)
 
@@ -36,6 +37,7 @@ class QMIX_mixer(Module):
                                                         input_shape=(self.dim_state,)),
                                         tk.layers.Dense(units=1, input_shape=(self.dim_hypernet_hidden,))])
 
+    @tf.function
     def call(self, values_n, states=None, **kwargs):
         states = tf.reshape(states, [-1, self.dim_state])
         agent_qs = tf.reshape(values_n, [-1, 1, self.n_agents])
@@ -78,6 +80,7 @@ class QMIX_FF_mixer(Module):
                               tk.layers.Dense(input_shape=(self.dim_hidden,), units=1)]
         self.ff_net_bias = tk.Sequential(layers_ff_net_bias)
 
+    @tf.function
     def call(self, values_n, states=None, **kwargs):
         states = tf.reshape(states, [-1, self.dim_state])
         agent_qs = tf.reshape(values_n, [-1, self.n_agents])
@@ -112,6 +115,7 @@ class QTRAN_base(Module):
                        tk.layers.Dense(input_shape=(self.dim_hidden,), units=1)]
         self.V_jt = tk.Sequential(linear_V_jt)
 
+    @tf.function
     def call(self, hidden_states_n, actions_n=None, **kwargs):
         input_q = tf.reshape(tf.concat([hidden_states_n, actions_n], axis=-1), [-1, self.dim_q_input])
         input_v = tf.reshape(hidden_states_n, [-1, self.dim_v_input])

@@ -24,6 +24,7 @@ class BasicQhead(Module):
         layers_.extend(mlp_block(input_shape[0], action_dim, None, None, None, device)[0])
         self.model = tk.Sequential(layers_)
 
+    @tf.function
     def call(self, x: Tensor, **kwargs):
         return self.model(x)
 
@@ -54,6 +55,7 @@ class BasicQnetwork(Module):
                                        hidden_size, normalize, initializer, activation, device)
         self.target_Qhead.set_weights(self.eval_Qhead.get_weights())
 
+    @tf.function
     def call(self, inputs: Union[np.ndarray, dict], *rnn_hidden, **kwargs):
         observations = tf.reshape(inputs['obs'], [-1, self.obs_dim])
         IDs = tf.reshape(inputs['ids'], [-1, self.n_agents])
@@ -113,6 +115,7 @@ class MFQnetwork(Module):
                                        n_agents, hidden_size, normalize, initializer, activation, device)
         self.target_Qhead.set_weights(self.eval_Qhead.get_weights())
 
+    @tf.function
     def call(self, inputs: Union[np.ndarray, dict], **kwargs):
         observation = inputs["obs"]
         actions_mean = inputs["act_mean"]
@@ -168,6 +171,7 @@ class MixingQnetwork(Module):
         self.target_Qhead.set_weights(self.eval_Qhead.get_weights())
         self.target_Qtot.set_weights(self.eval_Qtot.get_weights())
 
+    @tf.function
     def call(self, inputs: Union[np.ndarray, dict], *rnn_hidden, **kwargs):
         observations = tf.reshape(inputs['obs'], [-1, self.obs_dim])
         IDs = tf.reshape(inputs['ids'], [-1, self.n_agents])
@@ -290,6 +294,7 @@ class Qtran_MixingQnetwork(Module):
         self.target_Qhead.set_weights(self.eval_Qhead.get_weights())
         self.target_qtran_net.set_weights(self.qtran_net.get_weights())
 
+    @tf.function
     def call(self, inputs: Union[np.ndarray, dict], *rnn_hidden, **kwargs):
         observations = tf.reshape(inputs['obs'], [-1, self.obs_dim])
         IDs = tf.reshape(inputs['ids'], [-1, self.n_agents])
@@ -345,6 +350,7 @@ class DCG_policy(Module):
             self.target_bias = BasicQhead(global_state_dim, 1, 0, hidden_size_bias,
                                           normalize, initializer, activation, device)
 
+    @tf.function
     def call(self, inputs: Union[np.ndarray, dict], *rnn_hidden: Tensor, **kwargs):
         observations = tf.reshape(inputs['obs'], [-1, self.obs_dim])
         IDs = tf.reshape(inputs['ids'], [-1, self.n_agents])
@@ -382,6 +388,7 @@ class ActorNet(Module):
         layers.extend(mlp_block(input_shape[0], action_dim, None, tk.layers.Activation("tanh"), initializer, device)[0])
         self.model = tk.Sequential(layers)
 
+    @tf.function
     def call(self, x: Tensor, **kwargs):
         return self.model(x)
 
@@ -410,6 +417,7 @@ class CriticNet(Module):
         layers.extend(mlp_block(input_shape[0], 1, None, None, initializer, device)[0])
         self.model = tk.Sequential(layers)
 
+    @tf.function
     def call(self, x: Tensor, **kwargs):
         return self.model(x)
 
@@ -448,6 +456,7 @@ class Basic_DDPG_policy(Module):
         self.parameters_critic = self.critic_net.trainable_variables
         self.soft_update(1.0)
 
+    @tf.function
     def call(self, inputs: Union[np.ndarray, dict], **kwargs):
         observations = tf.reshape(inputs['obs'], [-1, self.obs_dim])
         IDs = tf.reshape(inputs['ids'], [-1, self.n_agents])
@@ -560,6 +569,7 @@ class MATD3_policy(Module):
         self.soft_update(tau=1.0)
         self.critic_parameters = self.critic_net_A.trainable_variables + self.critic_net_B.trainable_variables
 
+    @tf.function
     def call(self, inputs: Union[np.ndarray, dict], **kwargs):
         observations = tf.reshape(inputs['obs'], [-1, self.obs_dim])
         IDs = tf.reshape(inputs['ids'], [-1, self.n_agents])

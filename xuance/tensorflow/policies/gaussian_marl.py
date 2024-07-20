@@ -27,6 +27,7 @@ class BasicQhead(Module):
         layers_.extend(mlp_block(input_shape[0], action_dim, None, None, None, device)[0])
         self.model = tk.Sequential(layers_)
 
+    @tf.function
     def call(self, x: Tensor, **kwargs):
         return self.model(x)
 
@@ -52,6 +53,7 @@ class BasicQnetwork(Module):
                                        hidden_size, normalize, initializer, activation, device)
         self.copy_target()
 
+    @tf.function
     def call(self, inputs: Union[np.ndarray, dict], **kwargs):
         observations = tf.reshape(inputs['obs'], [-1, self.obs_dim])
         IDs = tf.reshape(inputs['ids'], [-1, self.n_agents])
@@ -98,6 +100,7 @@ class ActorNet(Module):
         self.out_mu = tk.layers.Dense(units=action_dim, input_shape=(hidden_sizes[0],))
         self.out_std = tk.layers.Dense(units=action_dim, input_shape=(hidden_sizes[0],))
 
+    @tf.function
     def call(self, x: Tensor, **kwargs):
         output = self.outputs(x)
         mu = tf.sigmoid(self.out_mu(output))
@@ -125,6 +128,7 @@ class CriticNet(Module):
         layers.extend(mlp_block(input_shape[0], 1, None, None, initializer, device)[0])
         self.model = tk.Sequential(layers)
 
+    @tf.function
     def call(self, x: Tensor, **kwargs):
         return self.model(x)
 
@@ -164,6 +168,7 @@ class MAAC_Policy(Module):
         self.identical_rep = True if isinstance(self.representation, Basic_Identical) else False
         self.pi_dist = None
 
+    @tf.function
     def call(self, inputs: Union[np.ndarray, dict], *rnn_hidden, **kwargs):
         observation = inputs['obs']
         agent_ids = inputs['ids']
@@ -253,6 +258,7 @@ class Basic_ISAC_policy(Module):
         self.parameters_critic = self.critic_net.trainable_variables
         self.soft_update(tau=1.0)
 
+    @tf.function
     def call(self, inputs: Union[np.ndarray, dict], **kwargs):
         observations = tf.reshape(inputs['obs'], [-1, self.obs_dim])
         IDs = tf.reshape(inputs['ids'], [-1, self.n_agents])
