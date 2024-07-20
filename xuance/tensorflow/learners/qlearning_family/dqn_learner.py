@@ -3,6 +3,7 @@ Deep Q-Network (DQN)
 Paper link: https://www.nature.com/articles/nature14236
 Implementation: TensorFlow2
 """
+import numpy as np
 from argparse import Namespace
 from xuance.tensorflow import tf, tk, Module
 from xuance.tensorflow.learners import Learner
@@ -13,21 +14,13 @@ class DQN_Learner(Learner):
                  config: Namespace,
                  policy: Module):
         super(DQN_Learner, self).__init__(config, policy)
-        lr_scheduler = tk.optimizers.schedules.ExponentialDecay(config.learning_rate, decay_steps=config.running_steps,
-                                                                decay_rate=0.9)
-        self.optimizer = tk.optimizers.Adam(lr_scheduler)
+        self.optimizer = tk.optimizers.Adam(config.learning_rate)
         self.gamma = config.gamma
         self.sync_frequency = config.sync_frequency
         self.n_actions = self.policy.action_dim
 
-    def update(self, **samples):
-        self.iterations += 1
-        obs_batch = samples['obs']
-        act_batch = samples['actions']
-        next_batch = samples['obs_next']
-        rew_batch = samples['rewards']
-        ter_batch = samples['terminals']
-
+    @tf.function
+    def learn(self, obs_batch, act_batch, next_batch, rew_batch, ter_batch):
         with tf.GradientTape() as tape:
             _, _, evalQ = self.policy(obs_batch)
             _, _, targetQ = self.policy.target(next_batch)
@@ -44,15 +37,21 @@ class DQN_Learner(Learner):
                 for (grad, var) in zip(gradients, self.policy.trainable_variables)
                 if grad is not None
             ])
+        return predictQ, loss
 
+    def update(self, **samples):
+        self.iterations += 1
+        obs_batch = samples['obs']
+        act_batch = samples['actions'].astype(np.int32)
+        next_batch = samples['obs_next']
+        rew_batch = samples['rewards']
+        ter_batch = samples['terminals']
+        predictQ, loss = self.learn(obs_batch, act_batch, next_batch, rew_batch, ter_batch)
         if self.iterations % self.sync_frequency == 0:
             self.policy.copy_target()
-        lr = self.optimizer.learning_rate(self.iterations)
 
         info = {
             "Qloss": loss.numpy(),
             "predictQ": tf.math.reduce_mean(predictQ).numpy(),
-            "learning_rate": lr.numpy(),
         }
-
         return info

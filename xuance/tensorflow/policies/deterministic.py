@@ -33,6 +33,7 @@ class BasicQnetwork(Module):
         argmax_action = tf.math.argmax(evalQ, axis=-1)
         return outputs, argmax_action, evalQ
 
+    @tf.function
     def target(self, observation: Union[np.ndarray, dict]):
         outputs_target = self.target_representation(observation)
         targetQ = self.target_Qhead(outputs_target['state'])
