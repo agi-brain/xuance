@@ -1,10 +1,12 @@
-from xuance.tensorflow import tf, tfd, Tensor
-from abc import ABC, abstractmethod
+from tensorflow.keras.activations import softplus
+from abc import abstractmethod
+from xuance.tensorflow import tf, tfd, Tensor, Module
+
 
 kl_div = tfd.kl_divergence
 
 
-class Distribution(ABC):
+class Distribution(Module):
     def __init__(self):
         super(Distribution, self).__init__()
         self.distribution = None
@@ -39,9 +41,15 @@ class CategoricalDistribution(Distribution):
         super(CategoricalDistribution, self).__init__()
         self.action_dim = action_dim
 
-    def set_param(self, logits):
-        self.logits = logits
-        self.distribution = tfd.Categorical(logits=logits)
+    def set_param(self, probs=None, logits=None):
+        if probs is not None:
+            self.distribution = tfd.Categorical(probs=probs)
+        elif logits is not None:
+            self.distribution = tfd.Categorical(logits=logits)
+        else:
+            raise RuntimeError("Failed to setup distributions without given probs or logits.")
+        self.probs = self.distribution.probs
+        self.logits = self.distribution.logits
 
     def get_param(self):
         return self.logits
@@ -49,15 +57,19 @@ class CategoricalDistribution(Distribution):
     def log_prob(self, x):
         return self.distribution.log_prob(x)
 
+    @tf.function
     def entropy(self):
         return self.distribution.entropy()
 
+    @tf.function
     def stochastic_sample(self):
         return self.distribution.sample()
 
+    @tf.function
     def deterministic_sample(self):
         return tf.argmax(self.distribution.probs, dim=1)
 
+    @tf.function
     def kl_divergence(self, other: Distribution):
         assert isinstance(other,
                           CategoricalDistribution), "KL Divergence should be measured by two same distribution with the same type"
@@ -93,3 +105,20 @@ class DiagGaussianDistribution(Distribution):
         assert isinstance(other,
                           DiagGaussianDistribution), "KL Divergence should be measured by two same distribution with the same type"
         return kl_div(self.distribution, other.distribution)
+
+
+class ActivatedDiagGaussianDistribution(DiagGaussianDistribution):
+    def __init__(self, action_dim: int, activation_action):
+        super(ActivatedDiagGaussianDistribution, self).__init__(action_dim)
+        self.activation_fn = activation_action()
+
+    def activated_rsample(self):
+        return self.activation_fn(self.stochastic_sample())
+
+    def activated_rsample_and_logprob(self):
+        act_pre_activated = self.stochastic_sample()  # sample without being activated.
+        act_activated = self.activation_fn(act_pre_activated)
+        log_prob = self.distribution.log_prob(act_pre_activated)
+        correction = - 2. * (tf.math.log(Tensor([2.0])) - act_pre_activated - softplus(-2. * act_pre_activated))
+        log_prob += correction
+        return act_activated, log_prob.sum(-1)

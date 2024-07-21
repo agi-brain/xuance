@@ -1,11 +1,11 @@
 import numpy as np
-from xuance.tensorflow.policies import *
-from xuance.tensorflow.utils import *
+import torch
+from gym.spaces import Space, Discrete
+from xuance.common import Sequence, Optional, Union
+from xuance.tensorflow import tf, tk, tfd, Tensor, Module
 from xuance.tensorflow.representations import Basic_Identical
-import tensorflow_probability as tfp
-from xuance.tensorflow import Tensor
-
-tfd = tfp.distributions
+from xuance.tensorflow.utils import mlp_block, CategoricalDistribution
+from .core import VDN_mixer
 
 
 class BasicQhead(Module):
@@ -223,7 +223,7 @@ class MAAC_Policy(Module):
             return params + self.representation.trainable_variables
 
 
-class Basic_ISAC_policy(Module):
+class Basic_ISAC_Policy(Module):
     def __init__(self,
                  action_space: Space,
                  n_agents: int,
@@ -235,7 +235,7 @@ class Basic_ISAC_policy(Module):
                  activation: Optional[tk.layers.Layer] = None,
                  device: str = "cpu:0"
                  ):
-        super(Basic_ISAC_policy, self).__init__()
+        super(Basic_ISAC_Policy, self).__init__()
         self.action_dim = action_space.shape[0]
         self.n_agents = n_agents
         self.representation = representation
@@ -298,7 +298,7 @@ class Basic_ISAC_policy(Module):
             tp.assign((1 - tau) * tp + tau * ep)
 
 
-class MASAC_policy(Basic_ISAC_policy):
+class MASAC_Policy(Basic_ISAC_Policy):
     def __init__(self,
                  action_space: Space,
                  n_agents: int,
@@ -310,7 +310,7 @@ class MASAC_policy(Basic_ISAC_policy):
                  activation: Optional[tk.layers.Layer] = None,
                  device: str = "cpu:0"
                  ):
-        super(MASAC_policy, self).__init__(action_space, n_agents, representation,
+        super(MASAC_Policy, self).__init__(action_space, n_agents, representation,
                                            actor_hidden_size, critic_hidden_size,
                                            normalize, initializer, activation, device)
         dim_input_critic = (representation.output_shapes['state'][0] + self.action_dim) * self.n_agents

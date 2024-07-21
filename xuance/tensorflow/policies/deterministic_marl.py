@@ -1,8 +1,11 @@
 import numpy as np
-from xuance.tensorflow.policies import *
-from xuance.tensorflow.utils import *
+from copy import deepcopy
+from gym.spaces import Space, Discrete
+from xuance.common import Sequence, Optional, Union
 from xuance.tensorflow.representations import Basic_Identical
-from xuance.tensorflow import Tensor
+from xuance.tensorflow import tf, tk, tfp, Tensor, Module
+from xuance.tensorflow.utils import mlp_block
+from .core import VDN_mixer, QMIX_FF_mixer, QTRAN_base
 
 
 class BasicQhead(Module):
@@ -43,7 +46,7 @@ class BasicQnetwork(Module):
         super(BasicQnetwork, self).__init__()
         self.action_dim = action_space.n
         self.representation = representation
-        self.target_representation = copy.deepcopy(self.representation)
+        self.target_representation = deepcopy(self.representation)
         self.representation_info_shape = self.representation.output_shapes
         self.obs_dim = self.representation.input_shapes[0]
         self.n_agents = n_agents
@@ -106,7 +109,7 @@ class MFQnetwork(Module):
         super(MFQnetwork, self).__init__()
         self.action_dim = action_space.n
         self.representation = representation
-        self.target_representation = copy.deepcopy(self.representation)
+        self.target_representation = deepcopy(self.representation)
         self.representation_info_shape = self.representation.output_shapes
 
         self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0] + self.action_dim, self.action_dim,
@@ -155,7 +158,7 @@ class MixingQnetwork(Module):
         super(MixingQnetwork, self).__init__()
         self.action_dim = action_space.n
         self.representation = representation
-        self.target_representation = copy.deepcopy(self.representation)
+        self.target_representation = deepcopy(self.representation)
         self.representation_info_shape = self.representation.output_shapes
         self.obs_dim = self.representation.input_shapes[0]
         self.n_agents = n_agents
@@ -277,7 +280,7 @@ class Qtran_MixingQnetwork(Module):
         super(Qtran_MixingQnetwork, self).__init__()
         self.action_dim = action_space.n
         self.representation = representation
-        self.target_representation = copy.deepcopy(self.representation)
+        self.target_representation = deepcopy(self.representation)
         self.representation_info_shape = self.representation.output_shapes
         self.obs_dim = self.representation.input_shapes[0]
         self.hidden_state_dim = self.representation.output_shapes['state'][0]
@@ -422,7 +425,7 @@ class CriticNet(Module):
         return self.model(x)
 
 
-class Basic_DDPG_policy(Module):
+class Independent_DDPG_Policy(Module):
     def __init__(self,
                  action_space: Space,
                  n_agents: int,
@@ -434,7 +437,7 @@ class Basic_DDPG_policy(Module):
                  activation: Optional[tk.layers.Layer] = None,
                  device: str = "cpu:0"
                  ):
-        super(Basic_DDPG_policy, self).__init__()
+        super(Independent_DDPG_Policy, self).__init__()
         self.action_dim = action_space.shape[0]
         self.n_agents = n_agents
         self.representation = representation
@@ -496,7 +499,7 @@ class Basic_DDPG_policy(Module):
             tp.assign((1 - tau) * tp + tau * ep)
 
 
-class MADDPG_policy(Basic_DDPG_policy):
+class MADDPG_Policy(Independent_DDPG_Policy):
     def __init__(self,
                  action_space: Space,
                  n_agents: int,
@@ -508,7 +511,7 @@ class MADDPG_policy(Basic_DDPG_policy):
                  activation: Optional[tk.layers.Layer] = None,
                  device: str = "cpu:0"
                  ):
-        super(MADDPG_policy, self).__init__(action_space, n_agents, representation,
+        super(MADDPG_Policy, self).__init__(action_space, n_agents, representation,
                                             actor_hidden_size, critic_hidden_size,
                                             normalize, initializer, activation, device)
         self.critic_net = CriticNet(False, representation.output_shapes['state'][0], n_agents, self.action_dim,
@@ -535,7 +538,7 @@ class MADDPG_policy(Basic_DDPG_policy):
         return self.target_critic_net(critic_in)
 
 
-class MATD3_policy(Module):
+class MATD3_Policy(Module):
     def __init__(self,
                  action_space: Space,
                  n_agents: int,
@@ -547,7 +550,7 @@ class MATD3_policy(Module):
                  activation: Optional[tk.layers.Layer] = None,
                  device: str = "cpu:0"
                  ):
-        super(MATD3_policy, self).__init__()
+        super(MATD3_Policy, self).__init__()
         self.action_dim = action_space.shape[0]
         self.n_agents = n_agents
         self.representation = representation

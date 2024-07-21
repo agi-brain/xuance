@@ -1,8 +1,10 @@
 import numpy as np
-from xuance.tensorflow.policies import *
-from xuance.tensorflow.utils import *
+from gym.spaces import Discrete
+from xuance.common import Sequence, Optional, Union
+from xuance.tensorflow import tf, tk, Tensor, Module
 from xuance.tensorflow.representations import Basic_Identical
-from xuance.tensorflow import Tensor
+from xuance.tensorflow.utils import mlp_block, CategoricalDistribution
+from .core import VDN_mixer
 
 
 class ActorNet(Module):

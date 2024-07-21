@@ -3,52 +3,54 @@ Policy Gradient (PG)
 Paper link: https://proceedings.neurips.cc/paper/2001/file/4b86abe48d358ecf194c56c69108433e-Paper.pdf
 Implementation: TensorFlow2
 """
-from xuance.common import Optional
+from argparse import Namespace
 from xuance.tensorflow import tf, tk, Module
 from xuance.tensorflow.learners import Learner
 
 
 class PG_Learner(Learner):
     def __init__(self,
-                 policy: Module,
-                 optimizer: tk.optimizers.Optimizer,
-                 device: str = "cpu:0",
-                 model_dir: str = "./",
-                 ent_coef: float = 0.005,
-                 clip_grad: Optional[float] = None):
-        super(PG_Learner, self).__init__(policy, optimizer, device, model_dir)
-        self.ent_coef = ent_coef
-        self.clip_grad = clip_grad
+                 config: Namespace,
+                 policy: Module):
+        super(PG_Learner, self).__init__(config, policy)
+        if ("macOS" in self.os_name) and ("arm" in self.os_name):  # For macOS with Apple's M-series chips.
+            self.optimizer = tk.optimizers.legacy.Adam(config.learning_rate)
+        else:
+            self.optimizer = tk.optimizers.Adam(config.learning_rate)
+        self.ent_coef = config.ent_coef
 
-    def update(self, obs_batch, act_batch, ret_batch):
+    @tf.function
+    def learn(self, obs_batch, act_batch, ret_batch):
+        with tf.GradientTape() as tape:
+            _, logits, _ = self.policy(obs_batch)
+            self.policy.actor.dist.set_param(logits=logits)
+            a_dist = self.policy.actor.dist
+            log_prob = a_dist.log_prob(act_batch)
+
+            a_loss = -tf.reduce_mean(ret_batch * log_prob)
+            e_loss = tf.reduce_mean(a_dist.entropy())
+
+            loss = a_loss - self.ent_coef * e_loss
+            gradients = tape.gradient(loss, self.policy.trainable_variables)
+
+            self.optimizer.apply_gradients([
+                (tf.clip_by_norm(grad, self.grad_clip_norm), var)
+                for (grad, var) in zip(gradients, self.policy.trainable_variables)
+                if grad is not None
+            ])
+        return a_loss, e_loss
+
+    def update(self, **samples):
         self.iterations += 1
-        with tf.device(self.device):
-            act_batch = tf.convert_to_tensor(act_batch, dtype=tf.float32)
-            ret_batch = tf.convert_to_tensor(ret_batch)
+        obs_batch = samples['obs']
+        act_batch = samples['actions']
+        ret_batch = samples['returns']
 
-            with tf.GradientTape() as tape:
-                outputs, _ = self.policy(obs_batch)
-                a_dist = self.policy.actor.dist
-                log_prob = a_dist.log_prob(act_batch)
+        a_loss, e_loss = self.learn(obs_batch, act_batch, ret_batch)
 
-                a_loss = -tf.reduce_mean(ret_batch * log_prob)
-                e_loss = tf.reduce_mean(a_dist.entropy())
+        info = {
+            "actor-loss": a_loss.numpy(),
+            "entropy": e_loss.numpy()
+        }
 
-                loss = a_loss - self.ent_coef * e_loss
-                gradients = tape.gradient(loss, self.policy.trainable_variables)
-
-                self.optimizer.apply_gradients([
-                    (tf.clip_by_norm(grad, self.clip_grad), var)
-                    for (grad, var) in zip(gradients, self.policy.trainable_variables)
-                    if grad is not None
-                ])
-
-            lr = self.optimizer._decayed_lr(tf.float32)
-
-            info = {
-                "actor-loss": a_loss.numpy(),
-                "entropy": e_loss.numpy(),
-                "learning_rate": lr.numpy()
-            }
-
-            return info
+        return info

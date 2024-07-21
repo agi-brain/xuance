@@ -1,12 +1,11 @@
-from tqdm import tqdm
 import numpy as np
+from tqdm import tqdm
 from copy import deepcopy
-from xuance.common import Optional
 from argparse import Namespace
-from xuance.torch.agents.base import Agent
+from xuance.common import Optional, DummyOnPolicyBuffer, DummyOnPolicyBuffer_Atari
 from xuance.environment import DummyVecEnv
-from xuance.common import DummyOnPolicyBuffer, DummyOnPolicyBuffer_Atari
 from xuance.torch.utils import split_distributions
+from xuance.torch.agents.base import Agent
 
 
 class OnPolicyAgent(Agent):

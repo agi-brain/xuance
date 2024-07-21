@@ -1,14 +1,13 @@
 from tqdm import tqdm
 import numpy as np
 from copy import deepcopy
-from xuance.common import Optional, List, Union
 from argparse import Namespace
 from operator import itemgetter
-from torch.distributions import Categorical
-from xuance.torch import Tensor
-from xuance.torch.agents.base import MARLAgents
+from xuance.common import Optional, List, Union, MARL_OffPolicyBuffer, MARL_OffPolicyBuffer_RNN
 from xuance.environment import DummyVecMultiAgentEnv
-from xuance.common import MARL_OffPolicyBuffer, MARL_OffPolicyBuffer_RNN
+from xuance.torch import Tensor
+from xuance.torch.utils.distributions import Categorical
+from xuance.torch.agents.base import MARLAgents
 
 
 class OffPolicyMARLAgents(MARLAgents):
