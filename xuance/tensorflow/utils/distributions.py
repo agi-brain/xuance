@@ -1,12 +1,12 @@
 from tensorflow.keras.activations import softplus
-from abc import abstractmethod
-from xuance.tensorflow import tf, tfd, Tensor, Module
+from abc import ABC, abstractmethod
+from xuance.tensorflow import tf, tfd, Tensor
 
 
 kl_div = tfd.kl_divergence
 
 
-class Distribution(Module):
+class Distribution(ABC):
     def __init__(self):
         super(Distribution, self).__init__()
         self.distribution = None
@@ -50,6 +50,7 @@ class CategoricalDistribution(Distribution):
             raise RuntimeError("Failed to setup distributions without given probs or logits.")
         self.probs = self.distribution.probs
         self.logits = self.distribution.logits
+        return self.distribution
 
     def get_param(self):
         return self.logits
@@ -57,7 +58,7 @@ class CategoricalDistribution(Distribution):
     def log_prob(self, x):
         return self.distribution.log_prob(x)
 
-    @tf.function
+    # @tf.function
     def entropy(self):
         return self.distribution.entropy()
 

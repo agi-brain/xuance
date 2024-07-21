@@ -130,6 +130,7 @@ class OnPolicyMARLAgents(MARLAgents):
 
     def action(self,
                obs_dict: List[dict],
+               state: Optional[np.ndarray] = None,
                avail_actions_dict: Optional[List[dict]] = None,
                rnn_hidden_actor: Optional[dict] = None,
                rnn_hidden_critic: Optional[dict] = None,
@@ -139,6 +140,7 @@ class OnPolicyMARLAgents(MARLAgents):
 
         Parameters:
             obs_dict (dict): Observations for each agent in self.agent_keys.
+            state (Optional[np.ndarray]): The global state.
             avail_actions_dict (Optional[List[dict]]): Actions mask values, default is None.
             rnn_hidden_actor (Optional[dict]): The RNN hidden states of actor representation.
             rnn_hidden_critic (Optional[dict]): The RNN hidden states of critic representation.
@@ -198,6 +200,7 @@ class OnPolicyMARLAgents(MARLAgents):
     def values_next(self,
                     i_env: int,
                     obs_dict: dict,
+                    state: Optional[np.ndarray] = None,
                     rnn_hidden_critic: Optional[dict] = None):
         """
         Returns critic values of one environment that finished an episode.
@@ -205,6 +208,7 @@ class OnPolicyMARLAgents(MARLAgents):
         Parameters:
             i_env (int): The index of environment.
             obs_dict (dict): Observations for each agent in self.agent_keys.
+            state (Optional[np.ndarray]): The global state.
             rnn_hidden_critic (Optional[dict]): The RNN hidden states of critic representation.
 
         Returns:
@@ -291,7 +295,7 @@ class OnPolicyMARLAgents(MARLAgents):
         state = self.envs.buf_state if self.use_global_state else None
         for _ in tqdm(range(n_steps)):
             step_info = {}
-            policy_out = self.action(obs_dict=obs_dict, avail_actions_dict=avail_actions, test_mode=False)
+            policy_out = self.action(obs_dict=obs_dict, state=state, avail_actions_dict=avail_actions, test_mode=False)
             actions_dict, log_pi_a_dict = policy_out['actions'], policy_out['log_pi']
             values_dict = policy_out['values']
             next_obs_dict, rewards_dict, terminated_dict, truncated, info = self.envs.step(actions_dict)
@@ -303,7 +307,7 @@ class OnPolicyMARLAgents(MARLAgents):
                     if all(terminated_dict[i].values()):
                         value_next = {key: 0.0 for key in self.agent_keys}
                     else:
-                        _, value_next = self.values_next(i_env=i, obs_dict=next_obs_dict[i])
+                        _, value_next = self.values_next(i_env=i, obs_dict=next_obs_dict[i], state=state[i])
                     self.memory.finish_path(i_env=i, value_next=value_next,
                                             value_normalizer=self.learner.value_normalizer)
             train_info = self.train_epochs(n_epochs=self.n_epochs)
@@ -316,7 +320,7 @@ class OnPolicyMARLAgents(MARLAgents):
                     if all(terminated_dict[i].values()):
                         value_next = {key: 0.0 for key in self.agent_keys}
                     else:
-                        _, value_next = self.values_next(i_env=i, obs_dict=obs_dict[i])
+                        _, value_next = self.values_next(i_env=i, obs_dict=obs_dict[i], state=state[i])
                     self.memory.finish_path(i_env=i, value_next=value_next,
                                             value_normalizer=self.learner.value_normalizer)
                     obs_dict[i] = info[i]["reset_obs"]
@@ -369,7 +373,7 @@ class OnPolicyMARLAgents(MARLAgents):
 
         while episode_count < n_episodes:
             step_info = {}
-            policy_out = self.action(obs_dict=obs_dict, avail_actions_dict=avail_actions,
+            policy_out = self.action(obs_dict=obs_dict, state=state, avail_actions_dict=avail_actions,
                                      rnn_hidden_actor=rnn_hidden_actor, rnn_hidden_critic=rnn_hidden_critic,
                                      test_mode=test_mode)
             rnn_hidden_actor, rnn_hidden_critic = policy_out['rnn_hidden_actor'], policy_out['rnn_hidden_critic']
@@ -405,7 +409,7 @@ class OnPolicyMARLAgents(MARLAgents):
                         if all(terminated_dict[i].values()):
                             value_next = {key: 0.0 for key in self.agent_keys}
                         else:
-                            _, value_next = self.values_next(i_env=i, obs_dict=obs_dict[i],
+                            _, value_next = self.values_next(i_env=i, obs_dict=obs_dict[i], state=state[i],
                                                              rnn_hidden_critic=rnn_hidden_critic)
                         self.memory.finish_path(i_env=i, i_step=info[i]['episode_step'], value_next=value_next,
                                                 value_normalizer=self.learner.value_normalizer)

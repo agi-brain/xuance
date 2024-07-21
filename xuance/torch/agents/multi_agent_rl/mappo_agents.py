@@ -79,7 +79,13 @@ class MAPPO_Agents(IPPO_Agents):
             critic_input: The represented observations.
         """
         if self.use_global_state:
-            critic_input = state
+            if self.use_parameter_sharing:
+                key = self.model_keys[0]
+                bs = batch_size * self.n_agents
+                state_n = np.stack([state for _ in range(self.n_agents)], axis=1).reshape([bs, -1])
+                critic_input = {key: state_n}
+            else:
+                critic_input = {k: state for k in self.model_keys}
         else:
             if self.use_parameter_sharing:
                 key = self.model_keys[0]
