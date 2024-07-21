@@ -229,7 +229,7 @@ class MAPPO_Agents(IPPO_Agents):
                 critic_input_array = np.concatenate([obs_dict[k].reshape(n_env, 1, -1) for k in self.agent_keys],
                                                     axis=1).reshape(n_env, -1)
                 if self.use_global_state:
-                    critic_input_array = np.concatenate([critic_input_array, state], axis=-1)
+                    critic_input_array = state.reshape([n_env, -1])
                 critic_input = {k: critic_input_array for k in self.agent_keys}
 
             rnn_hidden_critic_new, values_out = self.policy.get_values(observation=critic_input,
