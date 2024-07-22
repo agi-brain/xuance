@@ -20,7 +20,6 @@ class ActorPolicy(Module):
         normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
         initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
         activation (Optional[ModuleType]): The activation function for each layer.
-        device (Optional[Union[str, int, torch.device]]): The calculating device.
     """
     def __init__(self,
                  action_space: Discrete,
@@ -98,9 +97,9 @@ class ActorCriticPolicy(Module):
             value: The state values output by critic.
         """
         outputs = self.representation(observation)
-        a_dist = self.actor(outputs['state'])
+        logits = self.actor(outputs['state'])
         value = self.critic(outputs['state'])
-        return outputs, a_dist, value
+        return outputs, logits, value[:, 0]
 
 
 class PPGActorCritic(Module):
