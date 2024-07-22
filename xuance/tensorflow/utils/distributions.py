@@ -58,19 +58,15 @@ class CategoricalDistribution(Distribution):
     def log_prob(self, x):
         return self.distribution.log_prob(x)
 
-    # @tf.function
     def entropy(self):
         return self.distribution.entropy()
 
-    @tf.function
     def stochastic_sample(self):
         return self.distribution.sample()
 
-    @tf.function
     def deterministic_sample(self):
         return tf.argmax(self.distribution.probs, dim=1)
 
-    @tf.function
     def kl_divergence(self, other: Distribution):
         assert isinstance(other,
                           CategoricalDistribution), "KL Divergence should be measured by two same distribution with the same type"
