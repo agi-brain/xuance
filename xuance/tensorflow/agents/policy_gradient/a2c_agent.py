@@ -34,12 +34,12 @@ class A2C_Agent(OnPolicyAgent):
             policy = REGISTRY_Policy["Categorical_AC"](
                 action_space=self.action_space, representation=representation,
                 actor_hidden_size=self.config.actor_hidden_size, critic_hidden_size=self.config.critic_hidden_size,
-                normalize=normalize_fn, initialize=initializer, activation=activation, device=device)
+                normalize=normalize_fn, initialize=initializer, activation=activation)
         elif self.config.policy == "Gaussian_AC":
             policy = REGISTRY_Policy["Gaussian_AC"](
                 action_space=self.action_space, representation=representation,
                 actor_hidden_size=self.config.actor_hidden_size, critic_hidden_size=self.config.critic_hidden_size,
-                normalize=normalize_fn, initialize=initializer, activation=activation, device=device,
+                normalize=normalize_fn, initialize=initializer, activation=activation,
                 activation_action=ActivationFunctions[self.config.activation_action])
         else:
             raise AttributeError(f"A2C currently does not support the policy named {self.config.policy}.")

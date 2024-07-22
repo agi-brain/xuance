@@ -15,6 +15,7 @@ rank_0/
 docs/build
 wandb/
 .pypirc
+.pytest_cache
 
 debug.py
 debug_marl.py

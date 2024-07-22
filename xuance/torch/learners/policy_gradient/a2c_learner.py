@@ -4,8 +4,8 @@ Implementation: Pytorch
 """
 import torch
 from torch import nn
-from xuance.torch.learners import Learner
 from argparse import Namespace
+from xuance.torch.learners import Learner
 
 
 class A2C_Learner(Learner):

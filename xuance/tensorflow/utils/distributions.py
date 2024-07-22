@@ -5,6 +5,11 @@ from xuance.tensorflow import tf, tfd, Tensor
 
 kl_div = tfd.kl_divergence
 
+try:
+    tf.compat.v1.enable_eager_execution()
+except ValueError:
+    pass
+
 
 class Distribution(ABC):
     def __init__(self):
