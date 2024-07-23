@@ -153,7 +153,6 @@ class QRDQNhead(Module):
        normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
        activation (Optional[ModuleType]): The activation function for each layer.
-       device (Optional[Union[str, int, torch.device]]): The calculating device.
     """
     def __init__(self,
                  state_dim: int,
@@ -162,8 +161,7 @@ class QRDQNhead(Module):
                  hidden_sizes: Sequence[int],
                  normalize: Optional[tk.layers.Layer] = None,
                  initialize: Optional[tk.initializers.Initializer] = None,
-                 activation: Optional[tk.layers.Layer] = None,
-                 device: str = "cpu:0"):
+                 activation: Optional[tk.layers.Layer] = None):
         super(QRDQNhead, self).__init__()
         self.action_dim = n_actions
         self.atom_num = atom_num
@@ -321,7 +319,6 @@ class CategoricalActorNet_SAC(CategoricalActorNet):
         normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
         initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
         activation (Optional[ModuleType]): The activation function for each layer.
-        device (Optional[Union[str, int, torch.device]]): The calculating device.
     """
 
     def __init__(self,
@@ -512,9 +509,8 @@ class QMIX_mixer(Module):
         dim_hypernet_hidden (int): The size of rach hidden layer for hyper network.
         n_agents (int): The number of agents.
     """
-    def __init__(self, dim_state, dim_hidden, dim_hypernet_hidden, n_agents, device):
+    def __init__(self, dim_state, dim_hidden, dim_hypernet_hidden, n_agents):
         super(QMIX_mixer, self).__init__()
-        self.device = device
         self.dim_state = dim_state
         self.dim_hidden = dim_hidden
         self.dim_hypernet_hidden = dim_hypernet_hidden

@@ -53,7 +53,7 @@ def split_distributions(distribution):
         logits = tf.reshape(distribution.logits, [-1, shape[-1]])
         for logit in logits:
             dist = CategoricalDistribution(logits.shape[-1])
-            dist.set_param(tf.stop_gradient(tf.expand_dims(logit, 0)))
+            dist.set_param(logits=tf.stop_gradient(tf.expand_dims(logit, 0)))
             return_list.append(dist)
     elif isinstance(distribution, DiagGaussianDistribution):
         shape = distribution.mu.shape

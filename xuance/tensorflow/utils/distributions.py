@@ -5,11 +5,6 @@ from xuance.tensorflow import tf, tfd, Tensor
 
 kl_div = tfd.kl_divergence
 
-try:
-    tf.compat.v1.enable_eager_execution()
-except ValueError:
-    pass
-
 
 class Distribution(ABC):
     def __init__(self):
@@ -44,6 +39,7 @@ class Distribution(ABC):
 class CategoricalDistribution(Distribution):
     def __init__(self, action_dim: int):
         super(CategoricalDistribution, self).__init__()
+        self.probs, self.logits = None, None
         self.action_dim = action_dim
 
     def set_param(self, probs=None, logits=None):
@@ -55,7 +51,6 @@ class CategoricalDistribution(Distribution):
             raise RuntimeError("Failed to setup distributions without given probs or logits.")
         self.probs = self.distribution.probs
         self.logits = self.distribution.logits
-        return self.distribution
 
     def get_param(self):
         return self.logits
@@ -81,6 +76,7 @@ class CategoricalDistribution(Distribution):
 class DiagGaussianDistribution(Distribution):
     def __init__(self, action_dim: int):
         super(DiagGaussianDistribution, self).__init__()
+        self.mu, self.std = None, None
         self.action_dim = action_dim
 
     def set_param(self, mu, std):

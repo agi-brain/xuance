@@ -229,55 +229,97 @@ class QRDQN_Network(Module):
 
 
 class DDPGPolicy(Module):
+    """
+    The policy of deep deterministic policy gradient.
+
+    Args:
+        action_space (Space): The action space.
+        representation (Module): The representation module.
+        actor_hidden_size (Sequence[int]): List of hidden units for actor network.
+        critic_hidden_size (Sequence[int]): List of hidden units for critic network.
+        normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
+        activation (Optional[ModuleType]): The activation function for each layer.
+        activation_action (Optional[ModuleType]): The activation of final layer to bound the actions.
+    """
     def __init__(self,
                  action_space: Space,
                  representation: Basic_Identical,
                  actor_hidden_size: Sequence[int],
                  critic_hidden_size: Sequence[int],
+                 normalize: Optional[Module] = None,
                  initialize: Optional[Callable[..., Tensor]] = None,
-                 activation: Optional[tk.layers.Layer] = None):
+                 activation: Optional[tk.layers.Layer] = None,
+                 activation_action: Optional[tk.layers.Layer] = None):
         super(DDPGPolicy, self).__init__()
         self.action_dim = action_space.shape[0]
-        self.representation = representation
-        self.representation_info_shape = self.representation.output_shapes
-
-        self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size, initialize,
-                              activation)
-        self.critic = CriticNet(representation.output_shapes['state'][0], self.action_dim, critic_hidden_size,
-                                initialize, activation)
+        self.representation_info_shape = representation.output_shapes
+        # create networks
+        self.actor_representation = representation
+        self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size,
+                              normalize, initialize, activation, activation_action)
+        self.critic_representation = deepcopy(representation)
+        self.critic = CriticNet(representation.output_shapes['state'][0] + self.action_dim, critic_hidden_size,
+                                normalize, initialize, activation)
+        # create target networks
+        self.target_actor_representation = deepcopy(self.actor_representation)
         self.target_actor = ActorNet(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size,
-                                     initialize, activation)
-        self.target_critic = CriticNet(representation.output_shapes['state'][0], self.action_dim, critic_hidden_size,
-                                       initialize, activation)
-        self.soft_update(tau=1.0)
+                                     normalize, initialize, activation, activation_action)
+        for ep, tp in zip(self.actor.variables, self.target_actor.variables):
+            tp.assign(ep)
+        self.target_critic_representation = deepcopy(self.critic_representation)
+        self.target_critic = CriticNet(representation.output_shapes['state'][0] + self.action_dim, critic_hidden_size,
+                                       normalize, initialize, activation)
+        for ep, tp in zip(self.critic.variables, self.target_critic.variables):
+            tp.assign(ep)
 
     @tf.function
     def call(self, observation: Union[np.ndarray, dict], **kwargs):
-        outputs = self.representation(observation)
+        """
+        Returns the output of the actor representations, and the actions.
+
+        Parameters:
+            observation: The original observation input.
+
+        Returns:
+            outputs: The output of the actor representations.
+            act: The actions calculated by the actor.
+        """
+        outputs = self.actor_representation(observation)
         act = self.actor(outputs['state'])
         return outputs, act
 
     @tf.function
     def Qtarget(self, observation: Union[np.ndarray, dict]):
-        outputs = self.representation(observation)
-        act = self.target_actor(outputs['state'])
-        inputs_critic = {'x': outputs['state'], 'a': act}
-        return self.target_critic(inputs_critic)
+        """Returns the evaluated Q-values via target networks."""
+        outputs_actor = self.target_actor_representation(observation)
+        outputs_critic = self.target_critic_representation(observation)
+        act = self.target_actor(outputs_actor['state'])
+        q_ = self.target_critic(tf.concat([outputs_critic['state'], act], axis=-1))
+        return q_[:, 0]
 
     @tf.function
     def Qaction(self, observation: Union[np.ndarray, dict], action: Tensor):
-        outputs = self.representation(observation)
-        inputs_critic = {'x': outputs['state'], 'a': action}
-        return self.critic(inputs_critic)
+        """Returns the evaluated Q-values of state-action pairs."""
+        outputs = self.critic_representation(observation)
+        q = self.critic(tf.concat([outputs['state'], action], axis=-1))
+        return q[:, 0]
 
     @tf.function
     def Qpolicy(self, observation: Union[np.ndarray, dict]):
-        outputs = self.representation(observation)
-        action = self.actor(outputs['state'])
-        inputs_critic = {'x': outputs['state'], 'a': action}
-        return self.critic(inputs_critic)
+        """Returns the evaluated Q-values by calculating actions via actor networks."""
+        outputs_actor = self.actor_representation(observation)
+        act = self.actor(outputs_actor['state'])
+        outputs_critic = self.critic_representation(observation)
+        q_eval = self.critic(tf.concat([outputs_critic['state'], act], axis=-1))
+        return q_eval[:, 0]
 
+    @tf.function
     def soft_update(self, tau=0.005):
+        for ep, tp in zip(self.actor_representation.variables, self.target_actor_representation.variables):
+            tp.assign((1 - tau) * tp + tau * ep)
+        for ep, tp in zip(self.critic_representation.variables, self.target_critic_representation.variables):
+            tp.assign((1 - tau) * tp + tau * ep)
         for ep, tp in zip(self.actor.variables, self.target_actor.variables):
             tp.assign((1 - tau) * tp + tau * ep)
         for ep, tp in zip(self.critic.variables, self.target_critic.variables):

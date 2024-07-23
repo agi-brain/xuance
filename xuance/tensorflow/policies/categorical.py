@@ -3,10 +3,9 @@ from copy import deepcopy
 from gym.spaces import Discrete
 from xuance.common import Sequence, Optional, Union
 from xuance.tensorflow import tf, tk, Module
-from xuance.tensorflow.policies.core import CategoricalActorNet as ActorNet
-from xuance.tensorflow.policies.core import CategoricalActorNet_SAC as Actor_SAC
-from xuance.tensorflow.policies.core import CriticNet
-from xuance.tensorflow.policies.core import BasicQhead
+from .core import CategoricalActorNet as ActorNet
+from .core import CategoricalActorNet_SAC as Actor_SAC
+from .core import CriticNet, BasicQhead
 
 
 class ActorPolicy(Module):
@@ -103,16 +102,26 @@ class ActorCriticPolicy(Module):
 
 
 class PPGActorCritic(Module):
+    """
+    Actor-Critic for PPG with categorical distributions. (Discrete action space)
+
+    Args:
+        action_space (Discrete): The discrete action space.
+        representation (Module): The representation module.
+        actor_hidden_size (Sequence[int]): A list of hidden layer sizes for actor network.
+        critic_hidden_size (Sequence[int]): A list of hidden layer sizes for critic network.
+        normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
+        activation (Optional[ModuleType]): The activation function for each layer.
+    """
     def __init__(self,
                  action_space: Discrete,
                  representation: Module,
                  actor_hidden_size: Sequence[int] = None,
                  critic_hidden_size: Sequence[int] = None,
                  normalize: Optional[tk.layers.Layer] = None,
-                 initializer: Optional[tk.initializers.Initializer] = None,
-                 activation: Optional[tk.layers.Layer] = None,
-                 device: str = "cpu:0"):
-        assert isinstance(action_space, Discrete)
+                 initialize: Optional[tk.initializers.Initializer] = None,
+                 activation: Optional[tk.layers.Layer] = None):
         super(PPGActorCritic, self).__init__()
         self.action_dim = action_space.n
         self.actor_representation = representation
@@ -121,21 +130,33 @@ class PPGActorCritic(Module):
         self.representation_info_shape = self.actor_representation.output_shapes
 
         self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size,
-                              normalize, initializer, activation, device)
+                              normalize, initialize, activation)
         self.critic = CriticNet(representation.output_shapes['state'][0], critic_hidden_size,
-                                normalize, initializer, activation, device)
+                                normalize, initialize, activation)
         self.aux_critic = CriticNet(representation.output_shapes['state'][0], critic_hidden_size,
-                                    normalize, initializer, activation, device)
+                                    normalize, initialize, activation)
 
     @tf.function
     def call(self, observation: Union[np.ndarray, dict], **kwargs):
+        """
+        Returns the actors representation output, action distribution, values, and auxiliary values.
+
+        Parameters:
+            observation: The original observation of agent.
+
+        Returns:
+            policy_outputs: The outputs of actor representation.
+            a_dist: The distribution of actions output by actor.
+            value: The state values output by critic.
+            aux_value: The auxiliary values output by aux_critic.
+        """
         policy_outputs = self.actor_representation(observation)
         critic_outputs = self.critic_representation(observation)
         aux_critic_outputs = self.aux_critic_representation(observation)
-        a = self.actor(policy_outputs['state'])
-        v = self.critic(critic_outputs['state'])
-        aux_v = self.aux_critic(aux_critic_outputs['state'])
-        return policy_outputs, a, v, aux_v
+        a_logits = self.actor(policy_outputs['state'])
+        value = self.critic(critic_outputs['state'])
+        aux_value = self.aux_critic(aux_critic_outputs['state'])
+        return policy_outputs, a_logits, value[:, 0], aux_value[:, 0]
 
 
 class SACDISPolicy(Module):

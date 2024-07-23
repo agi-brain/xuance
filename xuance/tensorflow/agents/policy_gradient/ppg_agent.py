@@ -1,64 +1,103 @@
 import numpy as np
 from tqdm import tqdm
+from copy import deepcopy
 from argparse import Namespace
-from xuance.common import DummyOnPolicyBuffer, DummyOnPolicyBuffer_Atari
 from xuance.environment import DummyVecEnv
-from xuance.tensorflow import tf, tk, Module
+from xuance.tensorflow import tk
+from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions
+from xuance.tensorflow.policies import REGISTRY_Policy
+from xuance.tensorflow.agents import OnPolicyAgent
 from xuance.tensorflow.utils import split_distributions
-from xuance.tensorflow.agents import Agent
-from xuance.tensorflow.learners import PPG_Learner
 
 
-class PPG_Agent(Agent):
+class PPG_Agent(OnPolicyAgent):
+    """The implementation of PPG agent.
+
+    Args:
+        config: the Namespace variable that provides hyper-parameters and other settings.
+        envs: the vectorized environments.
+    """
+
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecEnv,
-                 policy: Module,
-                 optimizer: tk.optimizers.Optimizer,
-                 device: str = 'cpu'):
-        self.render = config.render
-        self.n_envs = envs.num_envs
-        self.n_steps = config.n_steps
-        self.n_minibatch = config.n_minibatch
-        self.n_epochs = config.n_epochs
+                 envs: DummyVecEnv):
+        super(PPG_Agent, self).__init__(config, envs)
         self.policy_nepoch = config.policy_nepoch
         self.value_nepoch = config.value_nepoch
         self.aux_nepoch = config.aux_nepoch
 
-        self.gamma = config.gamma
-        self.gae_lam = config.gae_lambda
-        self.observation_space = envs.observation_space
-        self.action_space = envs.action_space
-        self.representation_info_shape = policy.actor_representation.output_shapes
         self.auxiliary_info_shape = {"old_dist": None}
+        self.memory = self._build_memory(self.auxiliary_info_shape)  # build memory
+        self.policy = self._build_policy()  # build policy
+        self.learner = self._build_learner(self.config, self.policy)  # build learner.
 
-        self.buffer_size = self.n_envs * self.n_steps
-        self.batch_size = self.buffer_size // self.n_epochs
-        memory = DummyOnPolicyBuffer(self.observation_space,
-                                     self.action_space,
-                                     self.auxiliary_info_shape,
-                                     self.n_envs,
-                                     self.n_steps,
-                                     config.use_gae,
-                                     config.use_advnorm,
-                                     self.gamma,
-                                     self.gae_lam)
-        learner = PPG_Learner(policy,
-                              optimizer,
-                              config.device,
-                              config.model_dir,
-                              config.ent_coef,
-                              config.clip_range,
-                              config.kl_beta)
-        super(PPG_Agent, self).__init__(config, envs, policy, memory, learner, device, config.log_dir, config.model_dir)
+    def _build_policy(self):
+        normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
+        initializer = tk.initializers.orthogonal
+        activation = ActivationFunctions[self.config.activation]
 
-    def _action(self, obs):
-        _, _, vs, _ = self.policy(obs)
-        dists = self.policy.actor.dist
-        acts = dists.stochastic_sample()
-        vs = vs.numpy()
-        acts = acts.numpy()
-        return acts, vs, split_distributions(dists)
+        # build representation.
+        representation = self._build_representation(self.config.representation, self.observation_space, self.config)
+
+        # build policy.
+        if self.config.policy == "Categorical_PPG":
+            policy = REGISTRY_Policy["Categorical_PPG"](
+                action_space=self.action_space, representation=representation,
+                actor_hidden_size=self.config.actor_hidden_size, critic_hidden_size=self.config.critic_hidden_size,
+                normalize=normalize_fn, initialize=initializer, activation=activation)
+        elif self.config.policy == "Gaussian_PPG":
+            policy = REGISTRY_Policy["Gaussian_PPG"](
+                action_space=self.action_space, representation=representation,
+                actor_hidden_size=self.config.actor_hidden_size, critic_hidden_size=self.config.critic_hidden_size,
+                normalize=normalize_fn, initialize=initializer, activation=activation,
+                activation_action=ActivationFunctions[self.config.activation_action])
+        else:
+            raise AttributeError(f"PPG currently does not support the policy named {self.config.policy}.")
+
+        return policy
+
+    def action(self, observations: np.ndarray,
+               return_dists: bool = False, return_logpi: bool = False):
+        """Returns actions and values.
+
+        Parameters:
+            observations (np.ndarray): The observation.
+            return_dists (bool): Whether to return dists.
+            return_logpi (bool): Whether to return log_pi.
+
+        Returns:
+            actions: The actions to be executed.
+            values: The evaluated values.
+            dists: The policy distributions.
+            log_pi: Log of stochastic actions.
+        """
+        shape_obs = observations.shape
+        if len(shape_obs) > 2:
+            observations = observations.reshape(-1, shape_obs[-1])
+            _, policy_logits, values, _ = self.policy(observations)
+            policy_logits = policy_logits.numpy().reshape(shape_obs[:-1] + (self.action_space.n, ))
+        else:
+            _, policy_logits, values, _ = self.policy(observations)
+        self.policy.actor.dist.set_param(logits=policy_logits)
+        policy_dists = self.policy.actor.dist
+        actions = policy_dists.stochastic_sample()
+        log_pi = policy_dists.log_prob(actions) if return_logpi else None
+        dists = split_distributions(policy_dists) if return_dists else None
+        actions = actions.numpy()
+        values = values.numpy()
+        return {"actions": actions, "values": values, "dists": dists, "log_pi": log_pi}
+
+    def get_aux_info(self, policy_output: dict = None):
+        """Returns auxiliary information.
+
+        Parameters:
+            policy_output (dict): The output information of the policy.
+
+        Returns:
+            aux_info (dict): The auxiliary information.
+        """
+        aux_info = {"old_dist": policy_output["dists"]}
+        return aux_info
 
     def train(self, train_steps):
         obs = self.envs.buf_obs
@@ -66,14 +105,18 @@ class PPG_Agent(Agent):
             step_info = {}
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
-            acts, rets, dists = self._action(obs)
+            policy_out = self.action(obs, return_dists=True, return_logpi=False)
+            acts, rets = policy_out['actions'], policy_out['values']
             next_obs, rewards, terminals, trunctions, infos = self.envs.step(acts)
-
-            self.memory.store(obs, acts, self._process_reward(rewards), rets, terminals, {"old_dist": dists})
+            aux_info = self.get_aux_info(policy_out)
+            self.memory.store(obs, acts, self._process_reward(rewards), rets, terminals, aux_info)
             if self.memory.full:
-                _, vals, _ = self._action(self._process_observation(next_obs))
+                vals = self.get_terminated_values(next_obs, rewards)
                 for i in range(self.n_envs):
-                    self.memory.finish_path(vals[i], i)
+                    if terminals[i]:
+                        self.memory.finish_path(0.0, i)
+                    else:
+                        self.memory.finish_path(vals[i], i)
                 # policy update
                 indexes = np.arange(self.buffer_size)
                 for _ in range(self.policy_nepoch):
@@ -81,105 +124,55 @@ class PPG_Agent(Agent):
                     for start in range(0, self.buffer_size, self.batch_size):
                         end = start + self.batch_size
                         sample_idx = indexes[start:end]
-                        obs_batch, act_batch, ret_batch, _, adv_batch, aux_batch = self.memory.sample(sample_idx)
-                        step_info.update(self.learner.update_policy(obs_batch, act_batch, ret_batch, adv_batch,
-                                                                    aux_batch['old_dist']))
+                        samples = self.memory.sample(sample_idx)
+                        step_info.update(self.learner.update_policy(**samples))
                 # critic update
                 for _ in range(self.value_nepoch):
                     np.random.shuffle(indexes)
                     for start in range(0, self.buffer_size, self.batch_size):
                         end = start + self.batch_size
                         sample_idx = indexes[start:end]
-                        obs_batch, act_batch, ret_batch, _, adv_batch, aux_batch = self.memory.sample(sample_idx)
-                        step_info.update(self.learner.update_critic(obs_batch, act_batch, ret_batch, adv_batch,
-                                                                    aux_batch['old_dist']))
+                        samples = self.memory.sample(sample_idx)
+                        step_info.update(self.learner.update_critic(**samples))
 
                 # update old_prob
-                buffer_obs_shape = self.memory.observations.shape
-                buffer_obs = self.memory.observations.reshape([-1, buffer_obs_shape[-1]])
+                buffer_obs = self.memory.observations
                 buffer_act = self.memory.actions
-                _, new_logits, _, _ = self.policy(buffer_obs)
-                try:
-                    self.policy.actor.dist.set_param(tf.reshape(new_logits, buffer_obs_shape[0:-1] + (-1,)))
-                except:
-                    new_std = tf.math.exp(self.policy.actor.logstd)
-                    self.policy.actor.dist.set_param(tf.reshape(new_logits, buffer_obs_shape[0:-1] + (-1,)), new_std)
-                new_dist = self.policy.actor.dist
-                self.memory.auxiliary_infos['old_dist'] = split_distributions(new_dist)
+                new_policy_out = self.action(buffer_obs, return_dists=True)
+                aux_info = self.get_aux_info(new_policy_out)
+                self.memory.auxiliary_infos.update(aux_info)
                 for _ in range(self.aux_nepoch):
                     np.random.shuffle(indexes)
                     for start in range(0, self.buffer_size, self.batch_size):
                         end = start + self.batch_size
                         sample_idx = indexes[start:end]
-                        obs_batch, act_batch, ret_batch, _, adv_batch, aux_batch = self.memory.sample(sample_idx)
-                        step_info.update(self.learner.update_auxiliary(obs_batch, act_batch, ret_batch, adv_batch,
-                                                                       aux_batch['old_dist']))
+                        samples = self.memory.sample(sample_idx)
+                        step_info.update(self.learner.update_auxiliary(**samples))
                 self.log_infos(step_info, self.current_step)
                 self.memory.clear()
 
-            obs = next_obs
+            self.returns = self.gamma * self.returns + rewards
+            obs = deepcopy(next_obs)
             for i in range(self.n_envs):
                 if terminals[i] or trunctions[i]:
-                    obs[i] = infos[i]["reset_obs"]
-                    self.memory.finish_path(0, i)
-                    self.current_episode[i] += 1
-                    if self.use_wandb:
-                        step_info["Episode-Steps/env-%d" % i] = infos[i]["episode_step"]
-                        step_info["Train-Episode-Rewards/env-%d" % i] = infos[i]["episode_score"]
+                    self.ret_rms.update(self.returns[i:i + 1])
+                    self.returns[i] = 0.0
+                    if self.atari and (~trunctions[i]):
+                        pass
                     else:
-                        step_info["Episode-Steps"] = {"env-%d" % i: infos[i]["episode_step"]}
-                        step_info["Train-Episode-Rewards"] = {"env-%d" % i: infos[i]["episode_score"]}
-                    self.log_infos(step_info, self.current_step)
-
+                        if terminals[i]:
+                            self.memory.finish_path(0, i)
+                        else:
+                            vals = self.get_terminated_values(next_obs, rewards)
+                            self.memory.finish_path(vals[i], i)
+                        obs[i] = infos[i]["reset_obs"]
+                        self.envs.buf_obs[i] = obs[i]
+                        self.current_episode[i] += 1
+                        if self.use_wandb:
+                            step_info["Episode-Steps/env-%d" % i] = infos[i]["episode_step"]
+                            step_info["Train-Episode-Rewards/env-%d" % i] = infos[i]["episode_score"]
+                        else:
+                            step_info["Episode-Steps"] = {"env-%d" % i: infos[i]["episode_step"]}
+                            step_info["Train-Episode-Rewards"] = {"env-%d" % i: infos[i]["episode_score"]}
+                        self.log_infos(step_info, self.current_step)
             self.current_step += self.n_envs
-
-    def test(self, env_fn, test_episodes):
-        test_envs = env_fn()
-        num_envs = test_envs.num_envs
-        videos, episode_videos = [[] for _ in range(num_envs)], []
-        current_episode, scores, best_score = 0, [], -np.inf
-        obs, infos = test_envs.reset()
-        if self.config.render_mode == "rgb_array" and self.render:
-            images = test_envs.render(self.config.render_mode)
-            for idx, img in enumerate(images):
-                videos[idx].append(img)
-
-        while current_episode < test_episodes:
-            self.obs_rms.update(obs)
-            obs = self._process_observation(obs)
-            acts, rets, logps = self._action(obs)
-            next_obs, rewards, terminals, trunctions, infos = test_envs.step(acts)
-            if self.config.render_mode == "rgb_array" and self.render:
-                images = test_envs.render(self.config.render_mode)
-                for idx, img in enumerate(images):
-                    videos[idx].append(img)
-
-            obs = next_obs
-            for i in range(num_envs):
-                if terminals[i] or trunctions[i]:
-                    obs[i] = infos[i]["reset_obs"]
-                    scores.append(infos[i]["episode_score"])
-                    current_episode += 1
-                    if best_score < infos[i]["episode_score"]:
-                        best_score = infos[i]["episode_score"]
-                        episode_videos = videos[i].copy()
-                    if self.config.test_mode:
-                        print("Episode: %d, Score: %.2f" % (current_episode, infos[i]["episode_score"]))
-
-        if self.config.render_mode == "rgb_array" and self.render:
-            # time, height, width, channel -> time, channel, height, width
-            videos_info = {"Videos_Test": np.array([episode_videos], dtype=np.uint8).transpose((0, 1, 4, 2, 3))}
-            self.log_videos(info=videos_info, fps=self.fps, x_index=self.current_step)
-
-        if self.config.test_mode:
-            print("Best Score: %.2f" % (best_score))
-
-        test_info = {
-            "Test-Episode-Rewards/Mean-Score": np.mean(scores),
-            "Test-Episode-Rewards/Std-Score": np.std(scores)
-        }
-        self.log_infos(test_info, self.current_step)
-
-        test_envs.close()
-
-        return scores

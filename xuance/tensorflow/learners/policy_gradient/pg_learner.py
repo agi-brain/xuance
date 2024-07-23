@@ -33,11 +33,15 @@ class PG_Learner(Learner):
             loss = a_loss - self.ent_coef * e_loss
             gradients = tape.gradient(loss, self.policy.trainable_variables)
 
-            self.optimizer.apply_gradients([
-                (tf.clip_by_norm(grad, self.grad_clip_norm), var)
-                for (grad, var) in zip(gradients, self.policy.trainable_variables)
-                if grad is not None
-            ])
+            if self.use_grad_clip:
+                self.optimizer.apply_gradients([
+                    (tf.clip_by_norm(grad, self.grad_clip_norm), var)
+                    for (grad, var) in zip(gradients, self.policy.trainable_variables)
+                    if grad is not None
+                ])
+            else:
+                self.optimizer.apply_gradients([(grad, var) for (grad, var) in
+                                                zip(gradients, self.policy.trainable_variables) if grad is not None])
         return a_loss, e_loss
 
     def update(self, **samples):

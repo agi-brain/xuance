@@ -59,9 +59,6 @@ class DDPG_Agent(OffPolicyAgent):
 
         Returns:
             actions: The actions to be executed.
-            values: The evaluated values.
-            dists: The policy distributions.
-            log_pi: Log of stochastic actions.
         """
         _, actions_output = self.policy(observations)
         if test_mode:

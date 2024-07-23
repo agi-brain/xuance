@@ -1,40 +1,40 @@
-import numpy as np
 import gym
-from gym import spaces
+import numpy as np
 from tqdm import tqdm
+from copy import deepcopy
 from argparse import Namespace
-from xuance.common import Sequence, DummyOffPolicyBuffer
-from xuance.environment import RawEnvironment
-from xuance.tensorflow import tf, tk, Module
+from gym import spaces
+from xuance.common import DummyOffPolicyBuffer
+from xuance.environment.single_agent_env import Gym_Env
+from xuance.tensorflow import tk
+from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions
+from xuance.tensorflow.policies import REGISTRY_Policy
 from xuance.tensorflow.agents import Agent
-from xuance.tensorflow.learners import SPDQN_Learner
+from xuance.tensorflow.agents.policy_gradient.pdqn_agent import PDQN_Agent
 
 
-class SPDQN_Agent(Agent):
+class SPDQN_Agent(PDQN_Agent, Agent):
+    """The implementation of SPDQN agent.
+
+    Args:
+        config: the Namespace variable that provides hyper-parameters and other settings.
+        envs: the vectorized environments.
+    """
     def __init__(self,
                  config: Namespace,
-                 envs: RawEnvironment,
-                 policy: Module,
-                 optimizer: Sequence[tk.optimizers.Optimizer],
-                 device: str = 'cpu'):
-        self.envs = envs
-        self.render = config.render
-        self.n_envs = envs.num_envs
-
-        self.gamma = config.gamma
-        self.training_frequency = config.training_frequency
-        self.start_training = config.start_training
-        self.start_noise = config.start_noise
-        self.end_noise = config.end_noise
+                 envs: Gym_Env,):
+        Agent.__init__(self, config, envs)
+        self.start_noise, self.end_noise = config.start_noise, config.end_noise
         self.noise_scale = config.start_noise
+        self.delta_noise = (self.start_noise - self.end_noise) / (config.running_steps / self.n_envs)
 
         self.observation_space = envs.observation_space.spaces[0]
         old_as = envs.action_space
         num_disact = old_as.spaces[0].n
-        self.action_space = gym.spaces.Tuple((old_as.spaces[0], *(gym.spaces.Box(old_as.spaces[1].spaces[i].low,
-                                                                                 old_as.spaces[1].spaces[i].high,
-                                                                                 dtype=np.float32) for i in
-                                                                  range(0, num_disact))))
+        self.action_space = gym.spaces.Tuple((old_as.spaces[0],
+                                              *(gym.spaces.Box(old_as.spaces[1].spaces[i].low,
+                                                               old_as.spaces[1].spaces[i].high, dtype=np.float32)
+                                                for i in range(0, num_disact))))
         self.action_high = [self.action_space.spaces[i].high for i in range(1, num_disact + 1)]
         self.action_low = [self.action_space.spaces[i].low for i in range(1, num_disact + 1)]
         self.action_range = [self.action_space.spaces[i].high - self.action_space.spaces[i].low for i in
@@ -48,53 +48,44 @@ class SPDQN_Agent(Agent):
         self.epsilon_final = 0.1
         self.buffer_action_space = spaces.Box(np.zeros(4), np.ones(4), dtype=np.float64)
 
-        memory = DummyOffPolicyBuffer(self.observation_space,
-                                      self.buffer_action_space,
-                                      self.auxiliary_info_shape,
-                                      self.n_envs,
-                                      config.n_size,
-                                      config.batch_size)
-        learner = SPDQN_Learner(policy,
-                                optimizer,
-                                config.device,
-                                config.model_dir,
-                                config.gamma,
-                                config.tau)
+        # Build policy, optimizer, scheduler.
+        self.policy = self._build_policy()
+
+        self.memory = DummyOffPolicyBuffer(observation_space=self.observation_space,
+                                           action_space=self.buffer_action_space,
+                                           auxiliary_shape=self.auxiliary_info_shape,
+                                           n_envs=self.n_envs,
+                                           buffer_size=config.buffer_size,
+                                           batch_size=config.batch_size)
+        self.learner = self._build_learner(self.config, self.policy)
 
         self.num_disact = self.action_space.spaces[0].n
         self.conact_sizes = np.array([self.action_space.spaces[i].shape[0] for i in range(1, self.num_disact + 1)])
         self.conact_size = int(self.conact_sizes.sum())
 
-        super(SPDQN_Agent, self).__init__(config, envs, policy, memory, learner, device,
-                                          config.log_dir, config.model_dir)
+    def _build_policy(self):
+        normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
+        initializer = tk.initializers.orthogonal
+        activation = ActivationFunctions[self.config.activation]
+        device = self.device
 
-    def _action(self, obs):
-        with tf.device(self.device):
-            obs = tf.convert_to_tensor(obs, tf.float32)
-            obs = tf.expand_dims(obs, axis=0)
-            con_actions = self.policy.con_action(obs)
-            con_actions = tf.stop_gradient(con_actions)
-            rnd = np.random.rand()
-            if rnd < self.epsilon:
-                disaction = np.random.choice(self.num_disact)
-            else:
-                q = self.policy.Qeval(obs, con_actions)
-                q = tf.stop_gradient(q)
-                q = q.numpy()
-                disaction = np.argmax(q)
+        # build representation.
+        representation = self._build_representation(self.config.representation, self.observation_space, self.config)
 
-        con_actions = con_actions.numpy()
-        con_actions = np.squeeze(con_actions, axis=0)
-        offset = np.array([self.conact_sizes[i] for i in range(disaction)], dtype=int).sum()
-        conaction = con_actions[offset:offset + self.conact_sizes[disaction]]
+        # build policy.
+        if self.config.policy == "SPDQN_Policy":
+            policy = REGISTRY_Policy["SPDQN_Policy"](
+                observation_space=self.observation_space, action_space=self.action_space,
+                representation=representation,
+                conactor_hidden_size=self.config.conactor_hidden_size,
+                qnetwork_hidden_size=self.config.qnetwork_hidden_size,
+                normalize=normalize_fn, initialize=initializer, activation=activation, device=device,
+                activation_action=ActivationFunctions[self.config.activation_action])
+        else:
+            raise AttributeError(
+                f"{self.config.agent} currently does not support the policy named {self.config.policy}.")
 
-        return disaction, conaction, con_actions
-
-    def pad_action(self, disaction, conaction):
-        con_actions = [np.zeros((1,), dtype=np.float32), np.zeros((1,), dtype=np.float32),
-                       np.zeros((1,), dtype=np.float32)]
-        con_actions[disaction][:] = conaction
-        return (disaction, con_actions)
+        return policy
 
     def train(self, train_steps=10000):
         episodes = np.zeros((self.nenvs,), np.int32)
@@ -102,21 +93,22 @@ class SPDQN_Agent(Agent):
         obs, _ = self.envs.reset()
         for _ in tqdm(range(train_steps)):
             step_info = {}
-            disaction, conaction, con_actions = self._action(obs)
+            disaction, conaction, con_actions = self.action(obs)
             action = self.pad_action(disaction, conaction)
-            action[1][disaction] = self.action_range[disaction] * (action[1][disaction] + 1) / 2. + self.action_low[disaction]
+            action[1][disaction] = self.action_range[disaction] * (action[1][disaction] + 1) / 2. + self.action_low[
+                disaction]
             (next_obs, steps), rewards, terminal, _ = self.envs.step(action)
             if self.render: self.envs.render("human")
             acts = np.concatenate(([disaction], con_actions), axis=0).ravel()
             self.memory.store(obs, acts, rewards, terminal, next_obs)
             if self.current_step > self.start_training and self.current_step % self.training_frequency == 0:
-                obs_batch, act_batch, rew_batch, terminal_batch, next_batch = self.memory.sample()
-                step_info.update(self.learner.update(obs_batch, act_batch, rew_batch, next_batch, terminal_batch))
+                train_info = self.train_epochs(n_epochs=self.n_epochs)
+                self.log_infos(train_info, self.current_step)
 
             scores += rewards
-            obs = next_obs
-            self.noise_scale = self.start_noise - (self.start_noise - self.end_noise) / train_steps
-            if terminal == True:
+            obs = deepcopy(next_obs)
+
+            if terminal:
                 step_info["returns-step"] = scores
                 scores = 0
                 returns = 0
@@ -126,47 +118,5 @@ class SPDQN_Agent(Agent):
                 self.log_infos(step_info, self.current_step)
 
             self.current_step += self.n_envs
-
-    def test(self, env_fn, test_episodes):
-        test_envs = env_fn()
-        episode_score = 0
-        current_episode, scores, best_score = 0, [], -np.inf
-        obs, _ = self.envs.reset()
-
-        while current_episode < test_episodes:
-            disaction, conaction, con_actions = self._action(obs)
-            action = self.pad_action(disaction, conaction)
-            action[1][disaction] = self.action_range[disaction] * (action[1][disaction] + 1) / 2. + self.action_low[disaction]
-            (next_obs, steps), rewards, terminal, _ = self.envs.step(action)
-            self.envs.render("human")
-            episode_score += rewards
-            obs = next_obs
-            if terminal == True:
-                scores.append(episode_score)
-                obs, _ = self.envs.reset()
-                current_episode += 1
-                if best_score < episode_score:
-                    best_score = episode_score
-                episode_score = 0
-                if self.config.test_mode:
-                    print("Episode: %d, Score: %.2f" % (current_episode, episode_score))
-
-        if self.config.test_mode:
-            print("Best Score: %.2f" % (best_score))
-
-        test_info = {
-            "Test-Episode-Rewards/Mean-Score": np.mean(scores),
-            "Test-Episode-Rewards/Std-Score": np.std(scores)
-        }
-        self.log_infos(test_info, self.current_step)
-
-        test_envs.close()
-
-        return scores
-
-    def end_episode(self, episode):
-        if episode < self.epsilon_steps:
-            self.epsilon = self.epsilon_initial - (self.epsilon_initial - self.epsilon_final) * (
-                    episode / self.epsilon_steps)
-        else:
-            self.epsilon = self.epsilon_final
+            if self.noise_scale >= self.end_noise:
+                self.noise_scale -= self.delta_noise
