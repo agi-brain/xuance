@@ -28,8 +28,7 @@ class PPG_Learner(Learner):
     def learn_policy(self, obs_batch, act_batch, adv_batch, old_dist):
         with tf.GradientTape() as tape:
             old_logp_batch = tf.stop_gradient(old_dist.log_prob(act_batch))
-            outputs, a_logits, _, _ = self.policy(obs_batch)
-            self.policy.actor.dist.set_param(logits=a_logits)
+            self.policy(obs_batch)
             a_dist = self.policy.actor.dist
             log_prob = a_dist.log_prob(act_batch)
             # ppo-clip core implementations
@@ -80,8 +79,7 @@ class PPG_Learner(Learner):
     @tf.function
     def learn_auxiliary(self, obs_batch, ret_batch, old_dist):
         with tf.GradientTape() as tape:
-            outputs, a_logits, v, aux_v = self.policy(obs_batch)
-            self.policy.actor.dist.set_param(logits=a_logits)
+            _, _, v, aux_v = self.policy(obs_batch)
             a_dist = self.policy.actor.dist
             aux_loss = tk.losses.mean_squared_error(tf.stop_gradient(v), aux_v)
             kl_loss = tf.reduce_mean(a_dist.kl_divergence(old_dist))

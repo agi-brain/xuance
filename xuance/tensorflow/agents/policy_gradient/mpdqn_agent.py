@@ -1,7 +1,6 @@
 from argparse import Namespace
 from xuance.environment.single_agent_env import Gym_Env
-from xuance.tensorflow import tk
-from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions
+from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
 from xuance.tensorflow.policies import REGISTRY_Policy
 from xuance.tensorflow.agents.policy_gradient.pdqn_agent import PDQN_Agent
 
@@ -20,7 +19,7 @@ class MPDQN_Agent(PDQN_Agent):
 
     def _build_policy(self):
         normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
-        initializer = tk.initializers.orthogonal
+        initializer = InitializeFunctions[self.config.initialize] if hasattr(self.config, "initialize") else None
         activation = ActivationFunctions[self.config.activation]
 
         # build representation.

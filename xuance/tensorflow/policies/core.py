@@ -290,7 +290,6 @@ class CategoricalActorNet(Module):
         self.model = tk.Sequential(layers)
         self.dist = CategoricalDistribution(action_dim)
 
-    @tf.function
     def call(self, x: Union[Tensor, np.ndarray], avail_actions: Optional[Tensor] = None, **kwargs):
         """
         Returns the stochastic distribution over all discrete actions.
@@ -305,6 +304,7 @@ class CategoricalActorNet(Module):
         logits = self.model(x)
         if avail_actions is not None:
             logits[avail_actions == 0] = -1e10
+        self.dist.set_param(logits=logits)
         return logits
 
 

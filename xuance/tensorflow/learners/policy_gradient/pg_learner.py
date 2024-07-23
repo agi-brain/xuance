@@ -22,8 +22,7 @@ class PG_Learner(Learner):
     @tf.function
     def learn(self, obs_batch, act_batch, ret_batch):
         with tf.GradientTape() as tape:
-            _, logits, _ = self.policy(obs_batch)
-            self.policy.actor.dist.set_param(logits=logits)
+            self.policy(obs_batch)
             a_dist = self.policy.actor.dist
             log_prob = a_dist.log_prob(act_batch)
 

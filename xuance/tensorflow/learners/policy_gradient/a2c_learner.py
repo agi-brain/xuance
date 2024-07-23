@@ -22,8 +22,7 @@ class A2C_Learner(Learner):
     @tf.function
     def learn(self, obs_batch, act_batch, ret_batch, adv_batch):
         with tf.GradientTape() as tape:
-            outputs, logits, v_pred = self.policy(obs_batch)
-            self.policy.actor.dist.set_param(logits=logits)
+            outputs, _, v_pred = self.policy(obs_batch)
             a_dist = self.policy.actor.dist
             log_prob = a_dist.log_prob(act_batch)
 

@@ -34,7 +34,6 @@ class ActorPolicy(Module):
         self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size,
                               normalize, initialize, activation)
 
-    @tf.function
     def call(self, observation: Union[np.ndarray, dict], **kwargs):
         """
         Returns the hidden states, action distribution.
@@ -82,7 +81,6 @@ class ActorCriticPolicy(Module):
         self.critic = CriticNet(representation.output_shapes['state'][0], critic_hidden_size,
                                 normalize, initialize, activation)
 
-    @tf.function
     def call(self, observation: Union[np.ndarray, dict], **kwargs):
         """
         Returns the hidden states, action distribution, and values.
@@ -136,7 +134,6 @@ class PPGActorCritic(Module):
         self.aux_critic = CriticNet(representation.output_shapes['state'][0], critic_hidden_size,
                                     normalize, initialize, activation)
 
-    @tf.function
     def call(self, observation: Union[np.ndarray, dict], **kwargs):
         """
         Returns the actors representation output, action distribution, values, and auxiliary values.
