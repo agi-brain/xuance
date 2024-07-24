@@ -1,4 +1,4 @@
-from xuance.common import Optional, Sequence, Type, Callable, Tuple
+from xuance.common import Optional, Sequence, Type, Callable
 from xuance.tensorflow import Module, Tensor, tk
 
 ModuleType = Type[Module]

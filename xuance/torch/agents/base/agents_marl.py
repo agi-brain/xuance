@@ -7,13 +7,12 @@ from abc import ABC
 from pathlib import Path
 from argparse import Namespace
 from operator import itemgetter
-from xuance.common import Optional, List, Dict, Union
 from gym.spaces import Space
 from torch import nn
 from torch.utils.tensorboard import SummaryWriter
-from xuance.common import get_time_string, create_directory, space2shape
+from xuance.common import get_time_string, create_directory, space2shape, Optional, List, Dict, Union
 from xuance.environment import DummyVecMultiAgentEnv
-from xuance.torch import REGISTRY_Representation, REGISTRY_Policy, REGISTRY_Learners
+from xuance.torch import REGISTRY_Representation, REGISTRY_Learners
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch import ModuleDict
 
