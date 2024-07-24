@@ -3,71 +3,97 @@ Twin Delayed Deep Deterministic Policy Gradient (TD3)
 Paper link: http://proceedings.mlr.press/v80/fujimoto18a/fujimoto18a.pdf
 Implementation: TensorFlow2
 """
-from xuance.common import Sequence
+from argparse import Namespace
 from xuance.tensorflow import tf, tk, Module
 from xuance.tensorflow.learners import Learner
 
 
 class TD3_Learner(Learner):
     def __init__(self,
-                 policy: Module,
-                 optimizers: Sequence[tk.optimizers.Optimizer],
-                 device: str = "cpu:0",
-                 model_dir: str = "./",
-                 gamma: float = 0.99,
-                 tau: float = 0.01,
-                 delay: int = 3):
-        self.tau = tau
-        self.gamma = gamma
-        self.delay = delay
-        super(TD3_Learner, self).__init__(policy, optimizers, device, model_dir)
+                 config: Namespace,
+                 policy: Module):
+        super(TD3_Learner, self).__init__(config, policy)
+        if ("macOS" in self.os_name) and ("arm" in self.os_name):  # For macOS with Apple's M-series chips.
+            self.optimizer = {'actor': tk.optimizers.legacy.Adam(config.actor_learning_rate),
+                              'critic': tk.optimizers.legacy.Adam(config.critic_learning_rate)}
+        else:
+            self.optimizer = {'actor': tk.optimizers.Adam(config.actor_learning_rate),
+                              'critic': tk.optimizers.Adam(config.critic_learning_rate)}
+        self.tau = config.tau
+        self.gamma = config.gamma
+        self.actor_update_delay = config.actor_update_delay
 
-    def update(self, obs_batch, act_batch, rew_batch, next_batch, terminal_batch):
-        self.iterations += 1
-        with tf.device(self.device):
-            act_batch = tf.convert_to_tensor(act_batch)
-            rew_batch = tf.expand_dims(tf.convert_to_tensor(rew_batch), axis=1)
-            ter_batch = tf.expand_dims(tf.convert_to_tensor(terminal_batch), axis=1)
-
-            with tf.GradientTape() as tape:
-                # critic update
-                _, action_q = self.policy.Qaction(obs_batch, act_batch)
-                _, target_q = self.policy.Qtarget(next_batch)
-                backup = rew_batch + self.gamma * (1 - ter_batch) * target_q
-                backup = tf.stop_gradient(tf.reshape(tf.tile(backup, (1, 2)), [-1, ]))
-
-                q_loss = tk.losses.mean_squared_error(backup, tf.reshape(action_q, [-1, ]))
-                train_parameters = self.policy.criticA.trainable_variables + self.policy.criticB.trainable_variables
-                gradients = tape.gradient(q_loss, train_parameters)
-                self.optimizer[1].apply_gradients([
-                    (grad, var)
-                    for (grad, var) in zip(gradients, train_parameters)
+    @tf.function
+    def learn_actor(self, obs_batch):
+        with tf.GradientTape() as tape:
+            policy_q = self.policy.Qpolicy(obs_batch)
+            p_loss = -tf.reduce_mean(policy_q)
+            gradients = tape.gradient(p_loss,
+                                      self.policy.actor.trainable_variables + self.policy.actor_representation.trainable_variables)
+            if self.use_grad_clip:
+                self.optimizer['actor'].apply_gradients([
+                    (tf.clip_by_norm(grad, self.grad_clip_norm), var)
+                    for (grad, var) in zip(gradients,
+                                           self.policy.actor.trainable_variables + self.policy.actor_representation.trainable_variables)
                     if grad is not None
                 ])
+            else:
+                self.optimizer['actor'].apply_gradients([
+                    (grad, var)
+                    for (grad, var) in zip(gradients,
+                                           self.policy.actor.trainable_variables + self.policy.actor_representation.trainable_variables)
+                    if grad is not None
+                ])
+        return p_loss
 
-            with tf.GradientTape() as tape:
-                # actor update
-                if self.iterations % self.delay == 0:
-                    _, policy_q = self.policy.Qpolicy(obs_batch)
-                    p_loss = -tf.reduce_mean(policy_q)
-                    gradients = tape.gradient(p_loss, self.policy.actor.trainable_variables)
-                    self.optimizer[0].apply_gradients([
-                        (grad, var)
-                        for (grad, var) in zip(gradients, self.policy.actor.trainable_variables)
-                        if grad is not None
-                    ])
-                    self.policy.soft_update(self.tau)
+    @tf.function
+    def learn_critic(self, obs_batch, act_batch, rew_batch, next_batch, ter_batch):
+        with tf.GradientTape() as tape:
+            action_q_A, action_q_B = self.policy.Qaction(obs_batch, act_batch)
+            action_q_A = tf.reshape(action_q_A, [-1])
+            action_q_B = tf.reshape(action_q_B, [-1])
+            next_q = tf.reshape(self.policy.Qtarget(next_batch), [-1])
+            target_q = rew_batch + self.gamma * (1 - ter_batch) * next_q
+            target_q = tf.stop_gradient(tf.reshape(target_q, [-1]))
+            q_loss = tk.losses.mean_squared_error(target_q, action_q_A) + tk.losses.mean_squared_error(target_q, action_q_B)
+            gradients = tape.gradient(
+                q_loss,
+                self.policy.critic_A_representation.trainable_variables + self.policy.critic_B_representation.trainable_variables + self.policy.critic_A.trainable_variables + self.policy.critic_B.trainable_variables)
+            if self.use_grad_clip:
+                self.optimizer['critic'].apply_gradients([
+                    (tf.clip_by_norm(grad, self.grad_clip_norm), var)
+                    for (grad, var) in zip(gradients,
+                                           self.policy.critic_A_representation.trainable_variables + self.policy.critic_B_representation.trainable_variables + self.policy.critic_A.trainable_variables + self.policy.critic_B.trainable_variables)
+                    if grad is not None
+                ])
+            else:
+                self.optimizer['critic'].apply_gradients([
+                    (grad, var)
+                    for (grad, var) in zip(gradients,
+                                           self.policy.critic_A_representation.trainable_variables + self.policy.critic_B_representation.trainable_variables + self.policy.critic_A.trainable_variables + self.policy.critic_B.trainable_variables)
+                    if grad is not None
+                ])
+        return q_loss, action_q_A, action_q_B
 
-            actor_lr = self.optimizer[0]._decayed_lr(tf.float32)
-            critic_lr = self.optimizer[1]._decayed_lr(tf.float32)
+    def update(self, **samples):
+        self.iterations += 1
+        info = {}
+        obs_batch = samples['obs']
+        act_batch = samples['actions']
+        next_batch = samples['obs_next']
+        rew_batch = samples['rewards']
+        ter_batch = samples['terminals']
 
-            info = {
-                "Qloss": q_loss.numpy(),
-                "Qvalue": tf.math.reduce_mean(action_q).numpy(),
-                "actor_lr": actor_lr.numpy(),
-                "critic_lr": critic_lr.numpy()
-            }
-            if self.iterations % self.delay == 0:
-                info["Ploss"] = p_loss.numpy()
+        q_loss, action_q_A, action_q_B = self.learn_critic(obs_batch, act_batch, rew_batch, next_batch, ter_batch)
+        if self.iterations % self.actor_update_delay == 0:
+            p_loss = self.learn_actor(obs_batch)
+            self.policy.soft_update(self.tau)
+            info["Ploss"] = p_loss.numpy()
 
-            return info
+        info.update({
+            "Qloss": q_loss.numpy(),
+            "QvalueA": tf.math.reduce_mean(action_q_A).numpy(),
+            "QvalueB": tf.math.reduce_mean(action_q_B).numpy(),
+        })
+
+        return info

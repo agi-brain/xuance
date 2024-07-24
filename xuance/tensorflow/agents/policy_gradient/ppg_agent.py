@@ -3,6 +3,7 @@ from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
 from xuance.environment import DummyVecEnv
+from xuance.tensorflow import tf
 from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
 from xuance.tensorflow.policies import REGISTRY_Policy
 from xuance.tensorflow.agents import OnPolicyAgent
@@ -21,6 +22,7 @@ class PPG_Agent(OnPolicyAgent):
                  config: Namespace,
                  envs: DummyVecEnv):
         super(PPG_Agent, self).__init__(config, envs)
+        self.continuous_control = False
         self.policy_nepoch = config.policy_nepoch
         self.value_nepoch = config.value_nepoch
         self.aux_nepoch = config.aux_nepoch
@@ -44,12 +46,14 @@ class PPG_Agent(OnPolicyAgent):
                 action_space=self.action_space, representation=representation,
                 actor_hidden_size=self.config.actor_hidden_size, critic_hidden_size=self.config.critic_hidden_size,
                 normalize=normalize_fn, initialize=initializer, activation=activation)
+            self.continuous_control = False
         elif self.config.policy == "Gaussian_PPG":
             policy = REGISTRY_Policy["Gaussian_PPG"](
                 action_space=self.action_space, representation=representation,
                 actor_hidden_size=self.config.actor_hidden_size, critic_hidden_size=self.config.critic_hidden_size,
                 normalize=normalize_fn, initialize=initializer, activation=activation,
                 activation_action=ActivationFunctions[self.config.activation_action])
+            self.continuous_control = True
         else:
             raise AttributeError(f"PPG currently does not support the policy named {self.config.policy}.")
 
@@ -73,11 +77,18 @@ class PPG_Agent(OnPolicyAgent):
         shape_obs = observations.shape
         if len(shape_obs) > 2:
             observations = observations.reshape(-1, shape_obs[-1])
-            _, policy_logits, values, _ = self.policy(observations)
-            policy_logits = policy_logits.numpy().reshape(shape_obs[:-1] + (self.action_space.n, ))
+            if self.continuous_control:
+                _, policy_mean, values, _ = self.policy(observations)
+                policy_mean = policy_mean.numpy().reshape(shape_obs[:-1] + self.action_space.shape)
+                policy_std = tf.exp(self.policy.actor.logstd).numpy()
+                self.policy.actor.dist.set_param(policy_mean, policy_std)
+            else:
+                _, policy_logits, values, _ = self.policy(observations)
+                policy_logits = policy_logits.numpy().reshape(shape_obs[:-1] + (self.action_space.n, ))
+                self.policy.actor.dist.set_param(logits=policy_logits)
+            values = tf.reshape(values, shape_obs[:-1])
         else:
-            _, policy_logits, values, _ = self.policy(observations)
-        self.policy.actor.dist.set_param(logits=policy_logits)
+            _, _, values, _ = self.policy(observations)
         policy_dists = self.policy.actor.dist
         actions = policy_dists.stochastic_sample()
         log_pi = policy_dists.log_prob(actions) if return_logpi else None

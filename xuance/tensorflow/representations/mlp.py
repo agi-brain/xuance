@@ -8,7 +8,7 @@ from xuance.tensorflow.utils import ModuleType
 # directly returns the original observation
 class Basic_Identical(Module):
     def __init__(self,
-                 input_shape: Sequence[int]):
+                 input_shape: Sequence[int], **kwargs):
         super(Basic_Identical, self).__init__()
         self.input_shapes = input_shape
         self.output_shapes = {'state': (np.prod(input_shape),)}
@@ -16,7 +16,7 @@ class Basic_Identical(Module):
 
     @tf.function
     def call(self, x: Union[Tensor, np.ndarray], **kwargs):
-        return {'state': x}
+        return {'state': self.model(x)}
 
 
 class Basic_MLP(Module):

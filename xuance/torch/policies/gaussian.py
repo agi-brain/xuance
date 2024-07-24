@@ -5,8 +5,8 @@ from copy import deepcopy
 from gym.spaces import Box
 from xuance.torch import Module, Tensor
 from xuance.torch.utils import ModuleType
-from xuance.torch.policies.core import GaussianActorNet as ActorNet
-from xuance.torch.policies.core import CriticNet, GaussianActorNet_SAC
+from .core import GaussianActorNet as ActorNet
+from .core import CriticNet, GaussianActorNet_SAC
 
 
 class ActorPolicy(Module):

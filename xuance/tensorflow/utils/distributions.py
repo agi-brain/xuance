@@ -108,7 +108,7 @@ class DiagGaussianDistribution(Distribution):
 class ActivatedDiagGaussianDistribution(DiagGaussianDistribution):
     def __init__(self, action_dim: int, activation_action):
         super(ActivatedDiagGaussianDistribution, self).__init__(action_dim)
-        self.activation_fn = activation_action()
+        self.activation_fn = activation_action
 
     def activated_rsample(self):
         return self.activation_fn(self.stochastic_sample())
@@ -117,6 +117,6 @@ class ActivatedDiagGaussianDistribution(DiagGaussianDistribution):
         act_pre_activated = self.stochastic_sample()  # sample without being activated.
         act_activated = self.activation_fn(act_pre_activated)
         log_prob = self.distribution.log_prob(act_pre_activated)
-        correction = - 2. * (tf.math.log(Tensor([2.0])) - act_pre_activated - softplus(-2. * act_pre_activated))
+        correction = - 2. * (tf.math.log(2.0) - act_pre_activated - softplus(-2. * act_pre_activated))
         log_prob += correction
-        return act_activated, log_prob.sum(-1)
+        return act_activated, tf.math.reduce_sum(log_prob, axis=-1)

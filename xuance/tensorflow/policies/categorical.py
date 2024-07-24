@@ -20,6 +20,7 @@ class ActorPolicy(Module):
         initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
         activation (Optional[ModuleType]): The activation function for each layer.
     """
+
     def __init__(self,
                  action_space: Discrete,
                  representation: Module,
@@ -112,6 +113,7 @@ class PPGActorCritic(Module):
         initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
         activation (Optional[ModuleType]): The activation function for each layer.
     """
+
     def __init__(self,
                  action_space: Discrete,
                  representation: Module,
@@ -157,62 +159,148 @@ class PPGActorCritic(Module):
 
 
 class SACDISPolicy(Module):
+    """
+    Actor-Critic for SAC with categorical distributions. (Discrete action space)
+
+    Args:
+        action_space (Discrete): The discrete action space.
+        representation (Module): The representation module.
+        actor_hidden_size (Sequence[int]): A list of hidden layer sizes for actor network.
+        critic_hidden_size (Sequence[int]): A list of hidden layer sizes for critic network.
+        normalize (Optional[tk.layers.Layer]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[tk.initializers.Initializer]): The parameters initializer.
+        activation (Optional[tk.layers.Layer]): The activation function for each layer.
+    """
+
     def __init__(self,
                  action_space: Discrete,
                  representation: Module,
                  actor_hidden_size: Sequence[int],
                  critic_hidden_size: Sequence[int],
                  normalize: Optional[tk.layers.Layer] = None,
-                 initializer: Optional[tk.initializers.Initializer] = None,
-                 activation: Optional[tk.layers.Layer] = None,
-                 device: str = "cpu:0"):
+                 initialize: Optional[tk.initializers.Initializer] = None,
+                 activation: Optional[tk.layers.Layer] = None):
         super(SACDISPolicy, self).__init__()
         self.action_dim = action_space.n
-        self.representation = representation
-        self.representation_critic = deepcopy(representation)
-        self.representation_info_shape = self.representation.output_shapes
+        self.representation_info_shape = representation.output_shapes
 
+        self.actor_representation = representation
         self.actor = Actor_SAC(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size,
-                                     normalize, initializer, activation, device)
-        self.critic = BasicQhead(representation.output_shapes['state'][0], self.action_dim, critic_hidden_size,
-                                       initializer, activation, device)
-        self.target_representation_critic = deepcopy(self.representation_critic)
-        self.target_critic = BasicQhead(representation.output_shapes['state'][0], self.action_dim,
-                                              critic_hidden_size, initializer, activation, device)
-        self.target_critic.set_weights(self.critic.get_weights())
+                               normalize, initialize, activation)
+
+        self.critic_1_representation = deepcopy(representation)
+        self.critic_1 = BasicQhead(representation.output_shapes['state'][0], self.action_dim, critic_hidden_size,
+                                   normalize, initialize, activation)
+        self.critic_2_representation = deepcopy(representation)
+        self.critic_2 = BasicQhead(representation.output_shapes['state'][0], self.action_dim, critic_hidden_size,
+                                   normalize, initialize, activation)
+        self.target_critic_1_representation = deepcopy(self.critic_1_representation)
+        self.target_critic_2_representation = deepcopy(self.critic_2_representation)
+        self.target_critic_1 = BasicQhead(representation.output_shapes['state'][0], self.action_dim, critic_hidden_size,
+                                          normalize, initialize, activation)
+        self.target_critic_2 = BasicQhead(representation.output_shapes['state'][0], self.action_dim, critic_hidden_size,
+                                          normalize, initialize, activation)
+        for ep, tp in zip(self.critic_1.variables, self.target_critic_1.variables):
+            tp.assign(ep)
+        for ep, tp in zip(self.critic_2.variables, self.target_critic_2.variables):
+            tp.assign(ep)
 
     @tf.function
     def call(self, observation: Union[np.ndarray, dict], **kwargs):
-        outputs = self.representation(observation)
-        act_prob, act_distribution = self.actor(outputs['state'])
-        return outputs, act_prob, act_distribution
+        """
+        Returns the output of actor representation and samples of actions.
 
-    @tf.function
-    def Qtarget(self, observation: Union[np.ndarray, dict]):
-        outputs_actor = self.representation(observation)
-        outputs_critic = self.target_representation_critic(observation)
-        act_prob, act_distribution = self.actor(outputs_actor['state'])
-        value = self.target_critic(outputs_critic['state'])
-        log_action_prob = tf.math.log(act_prob + 1e-5)
-        return act_prob, log_action_prob, value
+        Parameters:
+            observation: The original observation of an agent.
 
-    @tf.function
-    def Qaction(self, observation: Union[np.ndarray, dict]):
-        outputs_critic = self.representation_critic(observation)
-        return outputs_critic, self.critic(outputs_critic['state'])
+        Returns:
+            outputs: The outputs of the actor representation.
+            act_sample: The sampled actions from the distribution output by the actor.
+        """
+        outputs = self.actor_representation(observation)
+        _ = self.actor(outputs['state'])
+        act_samples = self.actor.dist.stochastic_sample()
+        return outputs, act_samples
 
     @tf.function
     def Qpolicy(self, observation: Union[np.ndarray, dict]):
-        outputs_actor = self.representation(observation)
-        outputs_critic = self.representation_critic(observation)
-        act_prob, act_distribution = self.actor(outputs_actor['state'])
-        # z = act_prob == 0.0
-        # z = z.float() * 1e-8
-        log_action_prob = tf.math.log(act_prob + 1e-5)
-        return act_prob, log_action_prob, self.critic(outputs_critic['state'])
+        """
+        Feedforward and calculate the action probabilities, log of action probabilities, and Q-values.
 
+        Parameters:
+            observation: The original observation of an agent.
+
+        Returns:
+            act_prob: The probabilities of actions.
+            log_action_prob: The log of action probabilities.
+            q_1: The Q-value calculated by the first critic network.
+            q_2: The Q-value calculated by the other critic network.
+        """
+        outputs_actor = self.actor_representation(observation)
+        outputs_critic_1 = self.critic_1_representation(observation)
+        outputs_critic_2 = self.critic_2_representation(observation)
+
+        act_prob = self.actor(outputs_actor['state'])
+        z = act_prob == 0.0
+        z = tf.cast(z, dtype=tf.float32) * 1e-8
+        log_action_prob = tf.math.log(act_prob + z)
+
+        q_1 = self.critic_1(outputs_critic_1['state'])
+        q_2 = self.critic_2(outputs_critic_2['state'])
+        return act_prob, log_action_prob, q_1, q_2
+
+    @tf.function
+    def Qtarget(self, observation: Union[np.ndarray, dict]):
+        """
+        Calculate the action probabilities, log of action probabilities, and Q-values with target networks.
+
+        Parameters:
+            observation: The original observation of an agent.
+
+        Returns:
+            new_act_prob: The probabilities of actions.
+            log_action_prob: The log of action probabilities.
+            target_q: The minimum of Q-values calculated by the target critic networks.
+        """
+        outputs_actor = self.actor_representation(observation)
+        outputs_critic_1 = self.target_critic_1_representation(observation)
+        outputs_critic_2 = self.target_critic_2_representation(observation)
+
+        new_act_prob = self.actor(outputs_actor['state'])
+        z = new_act_prob == 0.0
+        z = tf.cast(z, dtype=tf.float32) * 1e-8
+        log_action_prob = tf.math.log(new_act_prob + z)
+
+        target_q_1 = self.target_critic_1(outputs_critic_1['state'])
+        target_q_2 = self.target_critic_2(outputs_critic_2['state'])
+        target_q = tf.math.minimum(target_q_1, target_q_2)
+        return new_act_prob, log_action_prob, target_q
+
+    @tf.function
+    def Qaction(self, observation: Union[np.ndarray, dict]):
+        """
+        Returns the evaluated Q-values for current observations.
+
+        Parameters:
+            observation: The original observation.
+
+        Returns:
+            q_1: The Q-value calculated by the first critic network.
+            q_2: The Q-value calculated by the other critic network.
+        """
+        outputs_critic_1 = self.critic_1_representation(observation)
+        outputs_critic_2 = self.critic_2_representation(observation)
+        q_1 = self.critic_1(outputs_critic_1['state'])
+        q_2 = self.critic_2(outputs_critic_2['state'])
+        return q_1, q_2
+
+    @tf.function
     def soft_update(self, tau=0.005):
-        for ep, tp in zip(self.representation_critic.variables, self.target_representation_critic.variables):
+        for ep, tp in zip(self.critic_1_representation.variables, self.target_critic_1_representation.variables):
             tp.assign((1 - tau) * tp + tau * ep)
-        for ep, tp in zip(self.critic.variables, self.target_critic.variables):
+        for ep, tp in zip(self.critic_2_representation.variables, self.target_critic_2_representation.variables):
+            tp.assign((1 - tau) * tp + tau * ep)
+        for ep, tp in zip(self.critic_1.variables, self.target_critic_1.variables):
+            tp.assign((1 - tau) * tp + tau * ep)
+        for ep, tp in zip(self.critic_2.variables, self.target_critic_2.variables):
             tp.assign((1 - tau) * tp + tau * ep)

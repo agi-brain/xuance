@@ -3,59 +3,68 @@ Proximal Policy Optimization with clip trick (PPO_CLIP)
 Paper link: https://arxiv.org/pdf/1707.06347.pdf
 Implementation: TensorFlow2
 """
+from argparse import Namespace
 from xuance.tensorflow import tf, tk, Module
 from xuance.tensorflow.learners import Learner
 
 
 class PPOCLIP_Learner(Learner):
     def __init__(self,
-                 policy: Module,
-                 optimizer: tk.optimizers.Optimizer,
-                 device: str = "cpu:0",
-                 model_dir: str = "./",
-                 vf_coef: float = 0.25,
-                 ent_coef: float = 0.005,
-                 clip_range: float = 0.25):
-        super(PPOCLIP_Learner, self).__init__(policy, optimizer, device, model_dir)
-        self.vf_coef = vf_coef
-        self.ent_coef = ent_coef
-        self.clip_range = clip_range
+                 config: Namespace,
+                 policy: Module):
+        super(PPOCLIP_Learner, self).__init__(config, policy)
+        if ("macOS" in self.os_name) and ("arm" in self.os_name):  # For macOS with Apple's M-series chips.
+            self.optimizer = tk.optimizers.legacy.Adam(config.learning_rate)
+        else:
+            self.optimizer = tk.optimizers.Adam(config.learning_rate)
+        self.vf_coef = config.vf_coef
+        self.ent_coef = config.ent_coef
+        self.clip_range = config.clip_range
 
-    def update(self, obs_batch, act_batch, ret_batch, value_batch, adv_batch, old_logp):
-        self.iterations += 1
-        with tf.device(self.device):
-            act_batch = tf.convert_to_tensor(act_batch)
-            ret_batch = tf.convert_to_tensor(ret_batch)
-            adv_batch = tf.convert_to_tensor(adv_batch)
-            old_logp_batch = tf.convert_to_tensor(old_logp)
+    @tf.function
+    def learn(self, obs_batch, act_batch, ret_batch, adv_batch, old_logp):
+        with tf.GradientTape() as tape:
+            outputs, a_dist, v_pred = self.policy(obs_batch)
+            a_dist = self.policy.actor.dist
+            log_prob = a_dist.log_prob(act_batch)
 
-            with tf.GradientTape() as tape:
-                outputs, a_dist, v_pred = self.policy(obs_batch)
-                a_dist = self.policy.actor.dist
-                log_prob = a_dist.log_prob(act_batch)
-
-                # ppo-clip core implementations
-                ratio = tf.math.exp(log_prob - old_logp_batch)
-                surrogate1 = tf.clip_by_value(ratio, 1.0 - self.clip_range, 1.0 + self.clip_range) * adv_batch
-                surrogate2 = adv_batch * ratio
-                a_loss = -tf.reduce_mean(tf.math.minimum(surrogate1, surrogate2))
-                c_loss = tk.losses.mean_squared_error(ret_batch, v_pred)
-                e_loss = tf.reduce_mean(a_dist.entropy())
-                loss = a_loss - self.ent_coef * e_loss + self.vf_coef * c_loss
-                gradients = tape.gradient(loss, self.policy.trainable_variables)
+            # ppo-clip core implementations
+            ratio = tf.math.exp(log_prob - old_logp)
+            surrogate1 = tf.clip_by_value(ratio, 1.0 - self.clip_range, 1.0 + self.clip_range) * adv_batch
+            surrogate2 = adv_batch * ratio
+            a_loss = -tf.reduce_mean(tf.math.minimum(surrogate1, surrogate2))
+            c_loss = tk.losses.mean_squared_error(ret_batch, v_pred)
+            e_loss = tf.reduce_mean(a_dist.entropy())
+            loss = a_loss - self.ent_coef * e_loss + self.vf_coef * c_loss
+            gradients = tape.gradient(loss, self.policy.trainable_variables)
+            if self.use_grad_clip:
+                self.optimizer.apply_gradients([
+                    (tf.clip_by_norm(grad, self.grad_clip_norm), var)
+                    for (grad, var) in zip(gradients, self.policy.trainable_variables)
+                    if grad is not None
+                ])
+            else:
                 self.optimizer.apply_gradients([
                     (grad, var)
                     for (grad, var) in zip(gradients, self.policy.trainable_variables)
                     if grad is not None
                 ])
+        return a_loss, c_loss, e_loss, v_pred
 
-            lr = self.optimizer._decayed_lr(tf.float32)
-            info = {
-                "actor-loss": a_loss.numpy(),
-                "critic-loss": c_loss.numpy(),
-                "entropy": e_loss.numpy(),
-                "learning_rate": lr.numpy(),
-                "predict_value": tf.math.reduce_mean(v_pred).numpy(),
-            }
+    def update(self, **samples):
+        self.iterations += 1
+        obs_batch = samples['obs']
+        act_batch = samples['actions']
+        ret_batch = samples['returns']
+        adv_batch = samples['advantages']
+        old_logp = samples['aux_batch']['old_logp']
 
-            return info
+        a_loss, c_loss, e_loss, v_pred = self.learn(obs_batch, act_batch, ret_batch, adv_batch, old_logp)
+        info = {
+            "actor-loss": a_loss.numpy(),
+            "critic-loss": c_loss.numpy(),
+            "entropy": e_loss.numpy(),
+            "predict_value": tf.math.reduce_mean(v_pred).numpy(),
+        }
+
+        return info

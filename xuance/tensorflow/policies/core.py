@@ -331,8 +331,7 @@ class CategoricalActorNet_SAC(CategoricalActorNet):
         super(CategoricalActorNet_SAC, self).__init__(state_dim, action_dim, hidden_sizes,
                                                       normalize, initialize, activation)
 
-    @tf.function
-    def call(self, x: Union[Tensor, np.ndarray], avail_actions: Optional[Tensor] = None):
+    def call(self, x: Union[Tensor, np.ndarray], avail_actions: Optional[Tensor] = None, **kwargs):
         """
         Returns the stochastic distribution over all discrete actions.
         Parameters:
@@ -347,7 +346,7 @@ class CategoricalActorNet_SAC(CategoricalActorNet):
             logits[avail_actions == 0] = -1e10
         probs = softmax(logits)
         self.dist.set_param(probs=probs)
-        return self.dist
+        return probs
 
 
 class GaussianActorNet(Module):
@@ -384,9 +383,9 @@ class GaussianActorNet(Module):
                                       shape=(action_dim, ),
                                       initializer=tf.ones,
                                       trainable=True)
+        # self.logstd = tf.Variable(tf.zeros((action_dim,)) - 1, trainable=True)
         self.dist = DiagGaussianDistribution(action_dim)
 
-    @tf.function
     def call(self, x: Union[Tensor, np.ndarray], **kwargs):
         """
         Returns the stochastic distribution over the continuous action space.
@@ -396,8 +395,9 @@ class GaussianActorNet(Module):
         Returns:
             self.dist: A distribution over the continuous action space.
         """
-        self.dist.set_param(self.mu(x), self.logstd.exp())
-        return self.dist
+        mu_ = self.mu(x)
+        self.dist.set_param(mu_, tf.exp(self.logstd))
+        return mu_
 
 
 class CriticNet(Module):
@@ -469,7 +469,6 @@ class GaussianActorNet_SAC(Module):
         self.out_log_std = tk.layers.Dense(units=action_dim, activation=None, input_shape=(hidden_sizes[-1], ))
         self.dist = ActivatedDiagGaussianDistribution(action_dim, activation_action)
 
-    @tf.function
     def call(self, x: Union[Tensor, np.ndarray], **kwargs):
         """
         Returns the stochastic distribution over the continuous action space.
@@ -482,9 +481,9 @@ class GaussianActorNet_SAC(Module):
         output = self.out(x)
         mu = self.out_mu(output)
         log_std = tf.clip_by_value(self.out_log_std(output), -20, 2)
-        std = log_std.exp()
+        std = tf.exp(log_std)
         self.dist.set_param(mu, std)
-        return self.dist
+        return mu
 
 
 class VDN_mixer(Module):
