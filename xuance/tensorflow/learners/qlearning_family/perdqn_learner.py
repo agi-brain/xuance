@@ -34,11 +34,18 @@ class PerDQN_Learner(Learner):
             td_error = targetQ - predictQ
             loss = tk.losses.mean_squared_error(targetQ, predictQ)
             gradients = tape.gradient(loss, self.policy.trainable_variables)
-            self.optimizer.apply_gradients([
-                (grad, var)
-                for (grad, var) in zip(gradients, self.policy.trainable_variables)
-                if grad is not None
-            ])
+            if self.use_grad_clip:
+                self.optimizer.apply_gradients([
+                    (tf.clip_by_norm(grad, self.grad_clip_norm), var)
+                    for (grad, var) in zip(gradients, self.policy.trainable_variables)
+                    if grad is not None
+                ])
+            else:
+                self.optimizer.apply_gradients([
+                    (grad, var)
+                    for (grad, var) in zip(gradients, self.policy.trainable_variables)
+                    if grad is not None
+                ])
         return td_error, predictQ, loss
 
     def update(self, **samples):

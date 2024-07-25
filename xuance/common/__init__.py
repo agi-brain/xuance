@@ -1,4 +1,4 @@
-from typing import Optional, Union, List, Dict, Sequence, Callable, Any, Tuple, SupportsFloat, Type
+from typing import Optional, Union, List, Dict, Sequence, Callable, Any, Tuple, SupportsFloat, Type, Mapping
 from xuance.common.common_tools import EPS, recursive_dict_update, get_configs, get_arguments, get_runner,\
     create_directory, combined_shape, space2shape, discount_cumsum, get_time_string
 from xuance.common.statistic_tools import mpi_mean, mpi_moments, RunningMeanStd
@@ -12,7 +12,7 @@ from xuance.common.segtree_tool import SegmentTree, SumSegmentTree, MinSegmentTr
 
 __all__ = [
     # typing
-    "Optional", "Union", "List", "Dict", "Sequence", "Callable", "Any", "Tuple", "SupportsFloat", "Type",
+    "Optional", "Union", "List", "Dict", "Sequence", "Callable", "Any", "Tuple", "SupportsFloat", "Type", "Mapping",
     # common_tools
     "EPS", "recursive_dict_update", "get_configs", "get_arguments", "get_runner", "create_directory", "combined_shape",
     "space2shape", "discount_cumsum", "get_time_string",

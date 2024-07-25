@@ -4,8 +4,10 @@ Paper link:
 http://proceedings.mlr.press/v80/rashid18a/rashid18a.pdf
 Implementation: TensorFlow 2.X
 """
+import numpy as np
 from argparse import Namespace
-from xuance.common import Sequence
+from operator import itemgetter
+from xuance.common import List
 from xuance.tensorflow import tf, tk, Module
 from xuance.tensorflow.learners import LearnerMAS
 
@@ -13,69 +15,93 @@ from xuance.tensorflow.learners import LearnerMAS
 class QMIX_Learner(LearnerMAS):
     def __init__(self,
                  config: Namespace,
-                 policy: Module,
-                 optimizer: tk.optimizers.Optimizer,
-                 device: str = "cpu:0",
-                 model_dir: str = "./",
-                 gamma: float = 0.99,
-                 sync_frequency: int = 100
-                 ):
-        self.gamma = gamma
-        self.sync_frequency = sync_frequency
-        super(QMIX_Learner, self).__init__(config, policy, optimizer, device, model_dir)
+                 model_keys: List[str],
+                 agent_keys: List[str],
+                 policy: Module):
+        super(QMIX_Learner, self).__init__(config, model_keys, agent_keys, policy)
+        if ("macOS" in self.os_name) and ("arm" in self.os_name):  # For macOS with Apple's M-series chips.
+            self.optimizer = tk.optimizers.legacy.Adam(config.learning_rate)
+        else:
+            self.optimizer = tk.optimizers.Adam(config.learning_rate)
+        self.gamma = config.gamma
+        self.sync_frequency = config.sync_frequency
+        self.n_actions = {k: self.policy.action_space[k].n for k in self.model_keys}
 
     def update(self, sample):
         self.iterations += 1
-        with tf.device(self.device):
-            state = tf.convert_to_tensor(sample['state'])
-            state_next = tf.convert_to_tensor(sample['state_next'])
-            obs = tf.convert_to_tensor(sample['obs'])
-            actions = tf.convert_to_tensor(sample['actions'], dtype=tf.int64)
-            obs_next = tf.convert_to_tensor(sample['obs_next'])
-            rewards = tf.reduce_mean(tf.convert_to_tensor(sample['rewards']), axis=1)
-            terminals = tf.reshape(tf.convert_to_tensor(sample['terminals'].all(axis=-1, keepdims=True), dtype=tf.float32), [-1, 1])
-            agent_mask = tf.reshape(tf.convert_to_tensor(sample['agent_mask'], dtype=tf.float32), [-1, self.n_agents, 1])
-            IDs = tf.tile(tf.expand_dims(tf.eye(self.n_agents), axis=0), multiples=(self.args.batch_size, 1, 1))
-            batch_size = obs.shape[0]
+        info = {}
 
-            with tf.GradientTape() as tape:
-                inputs_policy = {"obs": obs, "ids": IDs}
-                _, _, q_eval = self.policy(inputs_policy)
-                q_eval_a = tf.gather(q_eval, tf.reshape(actions, [self.args.batch_size, self.n_agents, 1]), axis=-1, batch_dims=-1)
-                q_tot_eval = self.policy.Q_tot(q_eval_a * agent_mask, state)
-                inputs_target = {"obs": obs_next, "ids": IDs}
-                q_next = self.policy.target_Q(inputs_target)
+        # prepare training data
+        sample_Tensor = self.build_training_data(sample=sample,
+                                                 use_parameter_sharing=self.use_parameter_sharing,
+                                                 use_actions_mask=self.use_actions_mask,
+                                                 use_global_state=True)
+        batch_size = sample_Tensor['batch_size']
+        state = sample_Tensor['state']
+        state_next = sample_Tensor['state_next']
+        obs = sample_Tensor['obs']
+        actions = sample_Tensor['actions']
+        obs_next = sample_Tensor['obs_next']
+        rewards = sample_Tensor['rewards']
+        terminals = sample_Tensor['terminals']
+        agent_mask = sample_Tensor['agent_mask']
+        avail_actions = sample_Tensor['avail_actions']
+        avail_actions_next = sample_Tensor['avail_actions_next']
+        IDs = sample_Tensor['agent_ids']
 
-                if self.args.double_q:
-                    _, action_next_greedy, _ = self.policy(inputs_target)
-                    action_next_greedy = tf.reshape(tf.cast(action_next_greedy, dtype=tf.int64),
-                                                    [batch_size, self.n_agents, 1])
-                    q_next_a = tf.gather(q_next, action_next_greedy, axis=-1, batch_dims=-1)
+        if self.use_parameter_sharing:
+            key = self.model_keys[0]
+            bs = batch_size * self.n_agents
+            rewards_tot = rewards[key].mean(axis=1).reshape(batch_size, 1)
+            terminals_tot = terminals[key].all(axis=1, keepdims=False).astype(np.float32).reshape(batch_size, 1)
+        else:
+            bs = batch_size
+            rewards_tot = tf.stack(itemgetter(*self.agent_keys)(rewards), axis=1).mean(dim=-1, keepdim=True)
+            terminals_tot = tf.stack(itemgetter(*self.agent_keys)(rewards), axis=1).all(dim=1, keepdim=True).float()
+
+        with tf.GradientTape() as tape:
+            _, _, q_eval = self.policy(observation=obs, agent_ids=IDs, avail_actions=avail_actions)
+            _, q_next = self.policy.Qtarget(observation=obs_next, agent_ids=IDs)
+
+            q_eval_a, q_next_a = {}, {}
+            for key in self.model_keys:
+                q_eval_a[key] = tf.reshape(tf.gather(q_eval[key], tf.cast(actions[key][:, None], dtype=tf.int32),
+                                                     axis=-1, batch_dims=-1), [bs])
+                if self.use_actions_mask:
+                    q_next[key][avail_actions_next[key] == 0] = -9999999
+
+                if self.config.double_q:
+                    _, act_next, _ = self.policy(observation=obs_next, agent_ids=IDs,
+                                                 avail_actions=avail_actions, agent_key=key)
+                    q_next_a[key] = tf.reshape(tf.gather(q_next[key], act_next[key][:, None],
+                                                         axis=-1, batch_dims=-1), [bs])
                 else:
-                    q_next_a = tf.reduce_max(q_next, axis=-1, keepdims=True)
-                q_tot_next = self.policy.target_Q_tot(q_next_a * agent_mask, state_next)
-                q_tot_target = rewards + (1-terminals) * self.args.gamma * q_tot_next
+                    q_next_a[key] = q_next[key].max(dim=-1, keepdim=True).values.reshape(bs)
 
-                # calculate the loss function
-                q_tot_eval = tf.reshape(q_tot_eval, [-1])
-                q_tot_target = tf.stop_gradient(tf.reshape(q_tot_target, [-1]))
-                loss = tk.losses.mean_squared_error(q_tot_target, q_tot_eval)
-                gradients = tape.gradient(loss, self.policy.trainable_variables)
-                self.optimizer.apply_gradients([
-                    (grad, var)
-                    for (grad, var) in zip(gradients, self.policy.trainable_variables)
-                    if grad is not None
-                ])
+                q_eval_a[key] *= agent_mask[key]
+                q_next_a[key] *= agent_mask[key]
+
+            q_tot_eval = self.policy.Q_tot(q_eval_a, state)
+            q_tot_next = self.policy.Qtarget_tot(q_next_a, state_next)
+            q_tot_target = rewards_tot + (1 - terminals_tot) * self.gamma * q_tot_next
+
+            q_tot_target = tf.reshape(q_tot_target, [-1])
+            q_tot_eval = tf.reshape(q_tot_eval, [-1])
+
+            # calculate the loss function
+            loss = tk.losses.mean_squared_error(tf.stop_gradient(q_tot_target), q_tot_eval)
+            gradients = tape.gradient(loss, self.policy.trainable_variables)
+            self.optimizer.apply_gradients([
+                (grad, var)
+                for (grad, var) in zip(gradients, self.policy.trainable_variables)
+                if grad is not None
+            ])
+
+            info.update({
+                "loss_Q": loss.numpy(),
+                "predictQ": tf.math.reduce_mean(q_tot_eval).numpy()
+            })
 
             if self.iterations % self.sync_frequency == 0:
                 self.policy.copy_target()
-
-            lr = self.optimizer._decayed_lr(tf.float32)
-
-            info = {
-                "learning_rate": lr.numpy(),
-                "loss_Q": loss.numpy(),
-                "predictQ": tf.math.reduce_mean(q_eval_a).numpy()
-            }
-
-            return info
+        return info

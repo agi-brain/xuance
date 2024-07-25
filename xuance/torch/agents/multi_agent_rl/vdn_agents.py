@@ -4,7 +4,6 @@ from xuance.environment import DummyVecMultiAgentEnv
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.policies import REGISTRY_Policy, VDN_mixer
 from xuance.torch.agents import OffPolicyMARLAgents
-from xuance.common import MARL_OffPolicyBuffer, MARL_OffPolicyBuffer_RNN
 
 
 class VDN_Agents(OffPolicyMARLAgents):

@@ -12,9 +12,9 @@ from torch import nn
 from torch.utils.tensorboard import SummaryWriter
 from xuance.common import get_time_string, create_directory, space2shape, Optional, List, Dict, Union
 from xuance.environment import DummyVecMultiAgentEnv
-from xuance.torch import REGISTRY_Representation, REGISTRY_Learners
+from xuance.torch import ModuleDict, REGISTRY_Representation, REGISTRY_Learners
+from xuance.torch.learners import learner
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
-from xuance.torch import ModuleDict
 
 
 class MARLAgents(ABC):
@@ -93,7 +93,7 @@ class MARLAgents(ABC):
         # predefine necessary components
         self.model_keys = [self.agent_keys[0]] if self.use_parameter_sharing else self.agent_keys
         self.policy: Optional[nn.Module] = None
-        self.learner: Optional[nn.Module] = None
+        self.learner: Optional[learner] = None
         self.memory: Optional[object] = None
 
     def store_experience(self, *args, **kwargs):

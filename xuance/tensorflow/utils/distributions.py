@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from xuance.tensorflow import tf, tfd, Tensor
 
 
+Categorical = tfd.Categorical
 kl_div = tfd.kl_divergence
 
 

@@ -13,7 +13,7 @@ from xuance.common import get_time_string, create_directory, RunningMeanStd, spa
 from xuance.environment import DummyVecEnv
 from xuance.tensorflow import Module
 from xuance.tensorflow import REGISTRY_Representation, REGISTRY_Learners
-from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions
+from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
 
 
 class Agent(ABC):
@@ -190,7 +190,7 @@ class Agent(ABC):
             input_shape=space2shape(input_space),
             hidden_sizes=config.representation_hidden_size if hasattr(config, "representation_hidden_size") else None,
             normalize=NormalizeFunctions[config.normalize] if hasattr(config, "normalize") else None,
-            initialize={},
+            initialize=InitializeFunctions[config.initialize] if hasattr(self.config, "initialize") else None,
             activation=ActivationFunctions[config.activation],
             kernels=config.kernels if hasattr(config, "kernels") else None,
             strides=config.strides if hasattr(config, "strides") else None,
