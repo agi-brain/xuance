@@ -327,12 +327,13 @@ class Weighted_MixingQnetwork(MixingQnetwork):
         return rnn_hidden_new, q_target_cent
 
     @tf.function
-    def q_feedforward(self, individual_values: Dict[str, np.ndarray], states: Optional[np.ndarray] = None):
+    def q_feedforward(self, individual_values: Union[Dict[str, np.ndarray], Dict[str, Tensor]],
+                      states: Optional[np.ndarray] = None):
         """
         Returns the total Q values with feedforward mixer networks.
 
         Parameters:
-            individual_values (Dict[str, np.ndarray]): The individual Q values of all agents.
+            individual_values (Union[Dict[str, np.ndarray], Dict[str, Tensor]]): The individual Q values of all agents.
             states (Optional[np.ndarray]): The global states if necessary, default is None.
 
         Returns:
