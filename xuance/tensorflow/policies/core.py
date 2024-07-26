@@ -526,16 +526,16 @@ class QMIX_mixer(Module):
         self.n_agents = n_agents
         # self.hyper_w_1 = nn.Linear(self.dim_state, self.dim_hidden * self.n_agents)
         # self.hyper_w_2 = nn.Linear(self.dim_state, self.dim_hidden)
-        linear_w_1 = [tk.layers.Dense(units=self.dim_hypernet_hidden,
-                                      activation=tk.layers.Activation('relu'),
-                                      input_shape=(self.dim_state,)),
-                      tk.layers.Dense(units=self.dim_hidden * self.n_agents, input_shape=(self.dim_hypernet_hidden,))]
-        self.hyper_w_1 = tk.Sequential(linear_w_1)
-        linear_w_2 = [tk.layers.Dense(units=self.dim_hypernet_hidden,
-                                      activation=tk.layers.Activation('relu'),
-                                      input_shape=(self.dim_state,)),
-                      tk.layers.Dense(units=self.dim_hidden, input_shape=(self.dim_hypernet_hidden,))]
-        self.hyper_w_2 = tk.Sequential(linear_w_2)
+        self.hyper_w_1 = tk.Sequential([tk.layers.Dense(units=self.dim_hypernet_hidden,
+                                                        activation=tk.layers.Activation('relu'),
+                                                        input_shape=(self.dim_state,)),
+                                        tk.layers.Dense(units=self.dim_hidden * self.n_agents,
+                                                        input_shape=(self.dim_hypernet_hidden,))])
+        self.hyper_w_2 = tk.Sequential([tk.layers.Dense(units=self.dim_hypernet_hidden,
+                                                        activation=tk.layers.Activation('relu'),
+                                                        input_shape=(self.dim_state,)),
+                                        tk.layers.Dense(units=self.dim_hidden,
+                                                        input_shape=(self.dim_hypernet_hidden,))])
 
         self.hyper_b_1 = tk.layers.Dense(units=self.dim_hidden, input_shape=(self.dim_state,))
         self.hyper_b_2 = tk.Sequential([tk.layers.Dense(units=self.dim_hypernet_hidden,

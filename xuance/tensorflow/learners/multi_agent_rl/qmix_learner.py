@@ -56,8 +56,9 @@ class QMIX_Learner(LearnerMAS):
             terminals_tot = terminals[key].all(axis=1, keepdims=False).astype(np.float32).reshape(batch_size, 1)
         else:
             bs = batch_size
-            rewards_tot = tf.stack(itemgetter(*self.agent_keys)(rewards), axis=1).mean(dim=-1, keepdim=True)
-            terminals_tot = tf.stack(itemgetter(*self.agent_keys)(rewards), axis=1).all(dim=1, keepdim=True).float()
+            rewards_tot = np.stack(itemgetter(*self.agent_keys)(rewards), axis=1).mean(axis=-1, keepdims=True)
+            terminals_tot = np.stack(itemgetter(*self.agent_keys)(terminals),
+                                     axis=1).all(axis=1, keepdims=True).astype(np.float32)
 
         with tf.GradientTape() as tape:
             _, _, q_eval = self.policy(observation=obs, agent_ids=IDs, avail_actions=avail_actions)

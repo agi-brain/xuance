@@ -36,14 +36,12 @@ class WQMIX_Agents(QMIX_Agents):
         dim_state = self.state_space.shape[-1]
         mixer = QMIX_mixer(dim_state, self.config.hidden_dim_mixing_net,
                            self.config.hidden_dim_hyper_net, self.n_agents)
-        target_mixer = QMIX_mixer(dim_state, self.config.hidden_dim_mixing_net,
-                                  self.config.hidden_dim_hyper_net, self.n_agents)
         ff_mixer = QMIX_FF_mixer(dim_state, self.config.hidden_dim_ff_mix_net, self.n_agents)
         target_ff_mixer = QMIX_FF_mixer(dim_state, self.config.hidden_dim_ff_mix_net, self.n_agents)
         if self.config.policy == "Weighted_Mixing_Q_network":
             policy = REGISTRY_Policy["Weighted_Mixing_Q_network"](
                 action_space=self.action_space, n_agents=self.n_agents, representation=representation,
-                mixer=[mixer, target_mixer], ff_mixer=[ff_mixer, target_ff_mixer],
+                mixer=[mixer, mixer], ff_mixer=[ff_mixer, target_ff_mixer],
                 hidden_size=self.config.q_hidden_size,
                 normalize=normalize_fn, initialize=initializer, activation=activation,
                 use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,

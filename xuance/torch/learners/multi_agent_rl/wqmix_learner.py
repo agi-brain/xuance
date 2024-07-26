@@ -57,7 +57,7 @@ class WQMIX_Learner(LearnerMAS):
         else:
             bs = batch_size
             rewards_tot = torch.stack(itemgetter(*self.agent_keys)(rewards), dim=1).mean(dim=-1, keepdim=True)
-            terminals_tot = torch.stack(itemgetter(*self.agent_keys)(rewards), dim=1).all(dim=1, keepdim=True).float()
+            terminals_tot = torch.stack(itemgetter(*self.agent_keys)(terminals), dim=1).all(dim=1, keepdim=True).float()
 
         # calculate Q_tot
         _, action_max, q_eval = self.policy(observation=obs, agent_ids=IDs, avail_actions=avail_actions)

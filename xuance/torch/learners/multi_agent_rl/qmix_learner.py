@@ -56,7 +56,7 @@ class QMIX_Learner(LearnerMAS):
         else:
             bs = batch_size
             rewards_tot = torch.stack(itemgetter(*self.agent_keys)(rewards), dim=1).mean(dim=-1, keepdim=True)
-            terminals_tot = torch.stack(itemgetter(*self.agent_keys)(rewards), dim=1).all(dim=1, keepdim=True).float()
+            terminals_tot = torch.stack(itemgetter(*self.agent_keys)(terminals), dim=1).all(dim=1, keepdim=True).float()
 
         _, _, q_eval = self.policy(observation=obs, agent_ids=IDs, avail_actions=avail_actions)
         _, q_next = self.policy.Qtarget(observation=obs_next, agent_ids=IDs)

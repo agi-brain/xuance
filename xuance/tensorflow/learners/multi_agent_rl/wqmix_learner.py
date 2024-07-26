@@ -57,8 +57,9 @@ class WQMIX_Learner(LearnerMAS):
             terminals_tot = terminals[key].all(axis=1, keepdims=False).astype(np.float32).reshape(batch_size, 1)
         else:
             bs = batch_size
-            rewards_tot = tf.stack(itemgetter(*self.agent_keys)(rewards), axis=1).mean(dim=-1, keepdim=True)
-            terminals_tot = tf.stack(itemgetter(*self.agent_keys)(rewards), axis=1).all(dim=1, keepdim=True).float()
+            rewards_tot = np.stack(itemgetter(*self.agent_keys)(rewards), axis=1).mean(axis=-1, keepdims=True)
+            terminals_tot = np.stack(itemgetter(*self.agent_keys)(terminals),
+                                     axis=1).all(axis=1, keepdims=True).astype(np.float32)
 
         with tf.GradientTape() as tape:
             # calculate Q_tot
@@ -112,8 +113,13 @@ class WQMIX_Learner(LearnerMAS):
                 raise AttributeError(f"The agent named is {self.config.agent} is currently not supported.")
 
             # calculate losses and train
+            target_value = tf.reshape(target_value, [batch_size])
+            q_tot_centralized = tf.reshape(q_tot_centralized, [batch_size])
+            td_error = tf.reshape(td_error, [batch_size])
+            w = tf.reshape(w, [batch_size])
+
             loss_central = tk.losses.mean_squared_error(target_value, q_tot_centralized)
-            loss_qmix = (tf.stop_gradient(w) * (td_error ** 2)).mean()
+            loss_qmix = tf.reduce_mean(tf.stop_gradient(w) * (td_error ** 2))
             loss = loss_qmix + loss_central
             gradients = tape.gradient(loss, self.policy.trainable_variables)
             if self.use_grad_clip:

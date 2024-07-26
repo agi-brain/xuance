@@ -4,7 +4,7 @@ from gym.spaces import Space, Discrete
 from xuance.common import Sequence, Optional, Union, Dict, List
 from xuance.tensorflow.representations import Basic_Identical
 from xuance.tensorflow import tf, tk, tfp, Tensor, Module
-from .core import BasicQhead, ActorNet, CriticNet, VDN_mixer, QMIX_FF_mixer, QTRAN_base
+from .core import BasicQhead, ActorNet, CriticNet, VDN_mixer, QTRAN_base
 
 
 class BasicQnetwork(Module):
@@ -129,13 +129,10 @@ class BasicQnetwork(Module):
             q_target[key] = self.target_Qhead[key](q_inputs)
         return rnn_hidden_new, q_target
 
-    @tf.function
     def copy_target(self):
         for key in self.model_keys:
-            for ep, tp in zip(self.representation[key].variables, self.target_representation[key].variables):
-                tp.assign(ep)
-            for ep, tp in zip(self.eval_Qhead[key].variables, self.target_Qhead[key].variables):
-                tp.assign(ep)
+            self.target_representation[key].set_weights(self.representation[key].get_weights())
+            self.target_Qhead[key].set_weights(self.eval_Qhead[key].get_weights())
 
 
 class MixingQnetwork(BasicQnetwork):
@@ -217,15 +214,11 @@ class MixingQnetwork(BasicQnetwork):
         q_target_tot = self.target_Qtot(individual_inputs, states)
         return q_target_tot
 
-    @tf.function
     def copy_target(self):
         for key in self.model_keys:
-            for ep, tp in zip(self.representation[key].variables, self.target_representation[key].variables):
-                tp.assign(ep)
-            for ep, tp in zip(self.eval_Qhead[key].variables, self.target_Qhead[key].variables):
-                tp.assign(ep)
-        for ep, tp in zip(self.eval_Qtot.variables, self.target_Qtot.variables):
-            tp.assign(ep)
+            self.target_representation[key].set_weights(self.representation.get_weights())
+            self.target_Qhead[key].set_weights(self.eval_Qhead[key].get_weights())
+        self.target_Qtot.set_weights(self.eval_Qtot.get_weights())
 
 
 class Weighted_MixingQnetwork(MixingQnetwork):
@@ -250,9 +243,9 @@ class Weighted_MixingQnetwork(MixingQnetwork):
                                                             normalize, initialize, activation)
             self.target_Qhead_centralized[key].set_weights(self.eval_Qhead_centralized[key].get_weights())
 
-        self.q_feedforward = ff_mixer[0]
-        self.target_q_feedforward = ff_mixer[1]
-        self.target_q_feedforward.set_weights(self.q_feedforward.get_weights())
+        self.ff_mixer = ff_mixer[0]
+        self.target_ff_mixer = ff_mixer[1]
+        self.target_ff_mixer.set_weights(self.ff_mixer.get_weights())
 
     @tf.function
     def q_centralized(self, observation: Dict[str, np.ndarray], agent_ids: Dict[str, np.ndarray],
@@ -358,18 +351,42 @@ class Weighted_MixingQnetwork(MixingQnetwork):
         return evalQ_tot
 
     @tf.function
+    def target_q_feedforward(self, individual_values: Dict[str, np.ndarray],
+                             states: Optional[np.ndarray] = None):
+        """
+        Returns the total Q values with target feedforward mixer networks.
+
+        Parameters:
+            individual_values (Dict[str, np.ndarray]): The individual Q values of all agents.
+            states (Optional[np.ndarray]): The global states if necessary, default is None.
+
+        Returns:
+            q_target_tot (Tensor): The evaluated total Q values for the multi-agent team.
+        """
+        if self.use_parameter_sharing:
+            """
+            From dict to tensor. For example:
+                individual_values: {'agent_0': batch * n_agents * 1} -> 
+                individual_inputs: batch * n_agents * 1
+            """
+            individual_inputs = tf.reshape(individual_values[self.model_keys[0]], [-1, self.n_agents, 1])
+        else:
+            """
+            From dict to tensor. For example: 
+                individual_values: {'agent_0': batch * 1, 'agent_1': batch * 1, 'agent_2': batch * 1} -> 
+                individual_inputs: batch * 2 * 1
+            """
+            individual_inputs = tf.reshape(tf.concat([individual_values[k] for k in self.model_keys],
+                                                     axis=-1), [-1, self.n_agents, 1])
+        q_target_tot = self.target_ff_mixer(individual_inputs, states)
+        return q_target_tot
+
     def copy_target(self):
         for key in self.model_keys:
-            for ep, tp in zip(self.representation[key].variables, self.target_representation[key].variables):
-                tp.assign(ep)
-            for ep, tp in zip(self.eval_Qhead[key].variables, self.target_Qhead[key].variables):
-                tp.assign(ep)
-            for ep, tp in zip(self.eval_Qhead_centralized[key].variables, self.target_Qhead_centralized[key].variables):
-                tp.assign(ep)
-        for ep, tp in zip(self.eval_Qtot.variables, self.target_Qtot.variables):
-            tp.assign(ep)
-        for ep, tp in zip(self.q_feedforward.variables, self.target_q_feedforward.variables):
-            tp.assign(ep)
+            self.target_representation[key].set_weights(self.representation[key].get_weights())
+            self.target_Qhead[key].set_weights(self.eval_Qhead[key].get_weights())
+            self.target_Qhead_centralized[key].set_weights(self.eval_Qhead_centralized[key].get_weights())
+        self.target_ff_mixer.set_weights(self.ff_mixer.get_weights())
 
 
 class Qtran_MixingQnetwork(Module):
