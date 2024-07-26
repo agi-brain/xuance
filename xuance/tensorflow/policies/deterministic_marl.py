@@ -142,8 +142,8 @@ class MixingQnetwork(BasicQnetwork):
     def __init__(self,
                  action_space: Optional[Dict[str, Discrete]],
                  n_agents: int,
-                 representation: Union[Basic_Identical, dict],
-                 mixer: Optional[VDN_mixer] = None,
+                 representation: Union[Module, dict],
+                 mixer: Optional[List[Module]] = None,
                  hidden_size: Sequence[int] = None,
                  normalize: Optional[tk.layers.Layer] = None,
                  initialize: Optional[tk.initializers.Initializer] = None,
@@ -151,8 +151,9 @@ class MixingQnetwork(BasicQnetwork):
                  **kwargs):
         super(MixingQnetwork, self).__init__(action_space, n_agents, representation, hidden_size,
                                              normalize, initialize, activation, **kwargs)
-        self.eval_Qtot = mixer
-        self.target_Qtot = deepcopy(mixer)
+        self.eval_Qtot = mixer[0]
+        self.target_Qtot = mixer[1]
+        self.target_Qtot.set_weights(self.eval_Qtot.get_weights())
 
     @tf.function
     def Q_tot(self, individual_values: Dict[str, np.ndarray], states: Optional[np.ndarray] = None):
@@ -223,56 +224,151 @@ class MixingQnetwork(BasicQnetwork):
                 tp.assign(ep)
             for ep, tp in zip(self.eval_Qhead[key].variables, self.target_Qhead[key].variables):
                 tp.assign(ep)
-            for ep, tp in zip(self.eval_Qtot.variables, self.target_Qtot.variables):
-                tp.assign(ep)
+        for ep, tp in zip(self.eval_Qtot.variables, self.target_Qtot.variables):
+            tp.assign(ep)
 
 
 class Weighted_MixingQnetwork(MixingQnetwork):
     def __init__(self,
-                 action_space: Discrete,
+                 action_space: Optional[Dict[str, Discrete]],
                  n_agents: int,
                  representation: Optional[Basic_Identical],
-                 mixer: Optional[VDN_mixer] = None,
-                 ff_mixer: Optional[QMIX_FF_mixer] = None,
+                 mixer: Optional[List[Module]] = None,
+                 ff_mixer: Optional[List[Module]] = None,
                  hidden_size: Sequence[int] = None,
                  normalize: Optional[tk.layers.Layer] = None,
-                 initializer: Optional[tk.initializers.Initializer] = None,
+                 initialize: Optional[tk.initializers.Initializer] = None,
                  activation: Optional[tk.layers.Layer] = None,
-                 device: str = "cpu:0",
                  **kwargs):
         super(Weighted_MixingQnetwork, self).__init__(action_space, n_agents, representation, mixer, hidden_size,
-                                                      normalize, initializer, activation, device, **kwargs)
-        self.eval_Qhead_centralized = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim,
-                                                 n_agents, hidden_size, normalize, initializer, activation, device)
-        self.target_Qhead_centralized = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim,
-                                                   n_agents, hidden_size, normalize, initializer, activation, device)
-        self.q_feedforward = ff_mixer
-        self.target_q_feedforward = ff_mixer
-        self.target_Qhead.set_weights(self.eval_Qhead.get_weights())
-        self.target_Qtot.set_weights(self.eval_Qtot.get_weights())
-        self.target_Qhead_centralized.set_weights(self.eval_Qhead_centralized.get_weights())
+                                                      normalize, initialize, activation, **kwargs)
+        self.eval_Qhead_centralized, self.target_Qhead_centralized = {}, {}
+        for key in self.model_keys:
+            self.eval_Qhead_centralized[key] = BasicQhead(self.dim_input_Q[key], self.n_actions[key], hidden_size,
+                                                          normalize, initialize, activation)
+            self.target_Qhead_centralized[key] = BasicQhead(self.dim_input_Q[key], self.n_actions[key], hidden_size,
+                                                            normalize, initialize, activation)
+            self.target_Qhead_centralized[key].set_weights(self.eval_Qhead_centralized[key].get_weights())
+
+        self.q_feedforward = ff_mixer[0]
+        self.target_q_feedforward = ff_mixer[1]
         self.target_q_feedforward.set_weights(self.q_feedforward.get_weights())
 
-    def q_centralized(self, inputs: Union[np.ndarray, dict]):
-        observations = tf.reshape(inputs['obs'], [-1, self.obs_dim])
-        IDs = tf.reshape(inputs['ids'], [-1, self.n_agents])
-        outputs = self.representation(observations)
-        q_inputs = tf.concat([outputs['state'], IDs], axis=-1)
-        return tf.reshape(self.eval_Qhead_centralized(q_inputs), [-1, self.n_agents, self.action_dim])
+    @tf.function
+    def q_centralized(self, observation: Dict[str, np.ndarray], agent_ids: Dict[str, np.ndarray],
+                      agent_key: str = None, rnn_hidden: Optional[Dict[str, List[np.ndarray]]] = None):
+        """
+        Returns the centralised Q value.
 
-    def target_q_centralized(self, inputs: Union[np.ndarray, dict]):
-        observations = tf.reshape(inputs['obs'], [-1, self.obs_dim])
-        IDs = tf.reshape(inputs['ids'], [-1, self.n_agents])
-        outputs = self.target_representation(observations)
-        q_inputs = tf.concat([outputs['state'], IDs], axis=-1)
-        return tf.reshape(self.target_Qhead_centralized(q_inputs), [-1, self.n_agents, self.action_dim])
+        Parameters:
+            observation (Dict[np.ndarray]): The observations.
+            agent_ids (Dict[np.ndarray]): The agents' ids (for parameter sharing).
+            agent_key (str): Calculate actions for specified agent.
+            rnn_hidden (Optional[Dict[str, List[np.ndarray]]]): The hidden variables of the RNN.
 
+        Returns:
+            rnn_hidden_new (Optional[Dict[str, List[Tensor]]]): The new hidden variables of the RNN.
+            evalQ_cent (Tensor): The evaluated centralised Q values.
+        """
+        rnn_hidden_new, argmax_action, evalQ_cent = {}, {}, {}
+        agent_list = self.model_keys if agent_key is None else [agent_key]
+
+        for key in agent_list:
+            if self.use_rnn:
+                outputs = self.representation[key](observation[key], *rnn_hidden[key])
+                rnn_hidden_new[key] = (outputs['rnn_hidden'], outputs['rnn_cell'])
+            else:
+                outputs = self.representation[key](observation[key])
+                rnn_hidden_new[key] = [None, None]
+
+            if self.use_parameter_sharing:
+                q_inputs = tf.concat([outputs['state'], agent_ids], axis=-1)
+            else:
+                q_inputs = outputs['state']
+
+            evalQ_cent[key] = self.eval_Qhead_centralized[key](q_inputs)
+
+        return rnn_hidden_new, evalQ_cent
+
+    @tf.function
+    def target_q_centralized(self, observation: Dict[str, np.ndarray], agent_ids: Dict[str, np.ndarray],
+                             agent_key: str = None, rnn_hidden: Optional[Dict[str, List[np.ndarray]]] = None):
+        """
+        Returns the centralised Q value with target networks.
+
+        Parameters:
+            observation (Dict[np.ndarray]): The observations.
+            agent_ids (Dict[np.ndarray]): The agents' ids (for parameter sharing).
+            agent_key (str): Calculate actions for specified agent.
+            rnn_hidden (Optional[Dict[str, List[np.ndarray]]]): The hidden variables of the RNN.
+
+        Returns:
+            rnn_hidden_new (Optional[Dict[str, List[Tensor]]]): The new hidden variables of the RNN.
+            q_target_cent (Tensor): The evaluated centralised Q values with target networks.
+        """
+        rnn_hidden_new, q_target_cent = {}, {}
+        agent_list = self.model_keys if agent_key is None else [agent_key]
+
+        for key in agent_list:
+            if self.use_rnn:
+                outputs = self.target_representation[key](observation[key], *rnn_hidden[key])
+                rnn_hidden_new[key] = (outputs['rnn_hidden'], outputs['rnn_cell'])
+            else:
+                outputs = self.target_representation[key](observation[key])
+                rnn_hidden_new[key] = [None, None]
+
+            if self.use_parameter_sharing:
+                q_inputs = tf.concat([outputs['state'], agent_ids], axis=-1)
+            else:
+                q_inputs = outputs['state']
+
+            q_target_cent[key] = self.target_Qhead_centralized[key](q_inputs)
+
+        return rnn_hidden_new, q_target_cent
+
+    @tf.function
+    def q_feedforward(self, individual_values: Dict[str, np.ndarray], states: Optional[np.ndarray] = None):
+        """
+        Returns the total Q values with feedforward mixer networks.
+
+        Parameters:
+            individual_values (Dict[str, np.ndarray]): The individual Q values of all agents.
+            states (Optional[np.ndarray]): The global states if necessary, default is None.
+
+        Returns:
+            evalQ_tot (Tensor): The evaluated total Q values for the multi-agent team.
+        """
+        if self.use_parameter_sharing:
+            """
+            From dict to tensor. For example:
+                individual_values: {'agent_0': batch * n_agents * 1} -> 
+                individual_inputs: batch * n_agents * 1
+            """
+            individual_inputs = tf.reshape(individual_values[self.model_keys[0]], [-1, self.n_agents, 1])
+        else:
+            """
+            From dict to tensor. For example: 
+                individual_values: {'agent_0': batch * 1, 'agent_1': batch * 1, 'agent_2': batch * 1} -> 
+                individual_inputs: batch * 2 * 1
+            """
+            individual_inputs = tf.concat([individual_values[k] for k in self.model_keys],
+                                          axis=-1).reshape([-1, self.n_agents, 1])
+        evalQ_tot = self.ff_mixer(individual_inputs, states)
+        return evalQ_tot
+
+    @tf.function
     def copy_target(self):
-        self.target_representation.set_weights(self.representation.get_weights())
-        self.target_Qhead.set_weights(self.eval_Qhead.get_weights())
-        self.target_Qtot.set_weights(self.eval_Qtot.get_weights())
-        self.target_Qhead_centralized.set_weights(self.eval_Qhead_centralized.get_weights())
-        self.target_q_feedforward.set_weights(self.q_feedforward.get_weights())
+        for key in self.model_keys:
+            for ep, tp in zip(self.representation[key].variables, self.target_representation[key].variables):
+                tp.assign(ep)
+            for ep, tp in zip(self.eval_Qhead[key].variables, self.target_Qhead[key].variables):
+                tp.assign(ep)
+            for ep, tp in zip(self.eval_Qhead_centralized[key].variables, self.target_Qhead_centralized[key].variables):
+                tp.assign(ep)
+        for ep, tp in zip(self.eval_Qtot.variables, self.target_Qtot.variables):
+            tp.assign(ep)
+        for ep, tp in zip(self.q_feedforward.variables, self.target_q_feedforward.variables):
+            tp.assign(ep)
 
 
 class Qtran_MixingQnetwork(Module):

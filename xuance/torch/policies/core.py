@@ -615,7 +615,7 @@ class QMIX_FF_mixer(nn.Module):
                                          nn.ReLU(),
                                          nn.Linear(self.dim_hidden, 1)).to(self.device)
 
-    def forward(self, values_n, states):
+    def forward(self, values_n, states=None):
         """
         Returns the feedforward total Q-values.
 

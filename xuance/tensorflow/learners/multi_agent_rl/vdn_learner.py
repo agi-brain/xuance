@@ -88,11 +88,18 @@ class VDN_Learner(LearnerMAS):
             # calculate the loss function
             loss = tk.losses.mean_squared_error(tf.stop_gradient(q_tot_target), q_tot_eval)
             gradients = tape.gradient(loss, self.policy.trainable_variables)
-            self.optimizer.apply_gradients([
-                (grad, var)
-                for (grad, var) in zip(gradients, self.policy.trainable_variables)
-                if grad is not None
-            ])
+            if self.use_grad_clip:
+                self.optimizer.apply_gradients([
+                    (tf.clip_by_norm(grad, self.grad_clip_norm), var)
+                    for (grad, var) in zip(gradients, self.policy.trainable_variables)
+                    if grad is not None
+                ])
+            else:
+                self.optimizer.apply_gradients([
+                    (grad, var)
+                    for (grad, var) in zip(gradients, self.policy.trainable_variables)
+                    if grad is not None
+                ])
 
             info.update({
                 "loss_Q": loss.numpy(),

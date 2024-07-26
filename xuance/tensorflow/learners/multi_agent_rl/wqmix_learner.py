@@ -4,7 +4,10 @@ Paper link:
 https://proceedings.neurips.cc/paper/2020/file/73a427badebe0e32caa2e1fc7530b7f3-Paper.pdf
 Implementation: TensorFlow 2.X
 """
+import numpy as np
 from argparse import Namespace
+from operator import itemgetter
+from xuance.common import List
 from xuance.tensorflow import tf, tk, Module
 from xuance.tensorflow.learners import LearnerMAS
 
@@ -12,81 +15,114 @@ from xuance.tensorflow.learners import LearnerMAS
 class WQMIX_Learner(LearnerMAS):
     def __init__(self,
                  config: Namespace,
-                 policy: Module,
-                 optimizer: tk.optimizers.Optimizer,
-                 device: str = "cpu:0",
-                 model_dir: str = "./",
-                 gamma: float = 0.99,
-                 sync_frequency: int = 100
-                 ):
+                 model_keys: List[str],
+                 agent_keys: List[str],
+                 policy: Module):
+        super(WQMIX_Learner, self).__init__(config, model_keys, agent_keys, policy)
+        if ("macOS" in self.os_name) and ("arm" in self.os_name):  # For macOS with Apple's M-series chips.
+            self.optimizer = tk.optimizers.legacy.Adam(config.learning_rate)
+        else:
+            self.optimizer = tk.optimizers.Adam(config.learning_rate)
         self.alpha = config.alpha
-        self.gamma = gamma
-        self.sync_frequency = sync_frequency
-        super(WQMIX_Learner, self).__init__(config, policy, optimizer, device, model_dir)
+        self.gamma = config.gamma
+        self.sync_frequency = config.sync_frequency
+        self.n_actions = {k: self.policy.action_space[k].n for k in self.model_keys}
 
     def update(self, sample):
         self.iterations += 1
-        with tf.device(self.device):
-            state = tf.convert_to_tensor(sample['state'])
-            state_next = tf.convert_to_tensor(sample['state_next'])
-            obs = tf.convert_to_tensor(sample['obs'])
-            actions = tf.convert_to_tensor(sample['actions'], dtype=tf.int64)
-            obs_next = tf.convert_to_tensor(sample['obs_next'])
-            rewards = tf.reduce_mean(tf.convert_to_tensor(sample['rewards']), axis=1)
-            terminals = tf.reshape(tf.convert_to_tensor(sample['terminals'].all(axis=-1, keepdims=True), dtype=tf.float32), [-1, 1])
-            agent_mask = tf.reshape(tf.convert_to_tensor(sample['agent_mask'], dtype=tf.float32),
-                                    [-1, self.n_agents, 1])
-            IDs = tf.tile(tf.expand_dims(tf.eye(self.n_agents), axis=0), multiples=(self.args.batch_size, 1, 1))
-            batch_size = obs.shape[0]
+        info = {}
 
-            with tf.GradientTape() as tape:
-                # calculate Q_tot
-                inputs_policy = {"obs": obs, "ids": IDs}
-                _, action_max, q_eval = self.policy(inputs_policy)
-                action_max = tf.expand_dims(action_max, axis=-1)
-                q_eval_a = tf.gather(q_eval, indices=tf.reshape(actions, [self.args.batch_size, self.n_agents, 1]), axis=-1, batch_dims=-1)
-                q_tot_eval = self.policy.Q_tot(q_eval_a * agent_mask, state)
+        # prepare training data
+        sample_Tensor = self.build_training_data(sample=sample,
+                                                 use_parameter_sharing=self.use_parameter_sharing,
+                                                 use_actions_mask=self.use_actions_mask,
+                                                 use_global_state=True)
+        batch_size = sample_Tensor['batch_size']
+        state = sample_Tensor['state']
+        state_next = sample_Tensor['state_next']
+        obs = sample_Tensor['obs']
+        actions = sample_Tensor['actions']
+        obs_next = sample_Tensor['obs_next']
+        rewards = sample_Tensor['rewards']
+        terminals = sample_Tensor['terminals']
+        agent_mask = sample_Tensor['agent_mask']
+        avail_actions = sample_Tensor['avail_actions']
+        avail_actions_next = sample_Tensor['avail_actions_next']
+        IDs = sample_Tensor['agent_ids']
 
-                # calculate centralized Q
-                q_eval_centralized = tf.gather(self.policy.q_centralized(inputs_policy), action_max, axis=-1, batch_dims=-1)
-                q_tot_centralized = self.policy.q_feedforward(q_eval_centralized*agent_mask, state)
+        if self.use_parameter_sharing:
+            key = self.model_keys[0]
+            bs = batch_size * self.n_agents
+            rewards_tot = rewards[key].mean(axis=1).reshape(batch_size, 1)
+            terminals_tot = terminals[key].all(axis=1, keepdims=False).astype(np.float32).reshape(batch_size, 1)
+        else:
+            bs = batch_size
+            rewards_tot = tf.stack(itemgetter(*self.agent_keys)(rewards), axis=1).mean(dim=-1, keepdim=True)
+            terminals_tot = tf.stack(itemgetter(*self.agent_keys)(rewards), axis=1).all(dim=1, keepdim=True).float()
 
-                # calculate y_i
-                inputs_target = {"obs": obs_next, "ids": IDs}
-                if self.args.double_q:
-                    _, action_next_greedy, _ = self.policy(inputs_target)
-                    action_next_greedy = tf.expand_dims(action_next_greedy, axis=-1)
+        with tf.GradientTape() as tape:
+            # calculate Q_tot
+            _, action_max, q_eval = self.policy(observation=obs, agent_ids=IDs, avail_actions=avail_actions)
+            _, q_eval_centralized = self.policy.q_centralized(observation=obs, agent_ids=IDs)
+            _, q_eval_next_centralized = self.policy.target_q_centralized(observation=obs_next, agent_ids=IDs)
+
+            q_eval_a, q_eval_centralized_a, q_eval_next_centralized_a, act_next = {}, {}, {}, {}
+            for key in self.model_keys:
+                actions_eval = tf.cast(actions[key][:, None], dtype=tf.int32)
+                q_eval_a[key] = tf.reshape(tf.gather(q_eval[key], actions_eval, axis=-1, batch_dims=-1), [bs])
+                q_eval_centralized_a[key] = tf.reshape(tf.gather(q_eval_centralized[key], actions_eval,
+                                                                 axis=-1, batch_dims=-1), [bs])
+
+                if self.config.double_q:
+                    _, a_next_greedy, _ = self.policy(observation=obs_next, agent_ids=IDs,
+                                                      avail_actions=avail_actions_next, agent_key=key)
+                    act_next[key] = tf.expand_dims(a_next_greedy[key], axis=-1)
                 else:
-                    q_next_eval = self.policy.target_Q(inputs_target)
-                    action_next_greedy = tf.argmax(q_next_eval, axis=-1)
-                q_eval_next_centralized = tf.gather(self.policy.target_q_centralized(inputs_target), action_next_greedy, axis=-1, batch_dims=-1)
-                q_tot_next_centralized = self.policy.target_q_feedforward(q_eval_next_centralized*agent_mask, state_next)
+                    _, q_next_eval = self.policy.Qtarget(observation=obs_next, agent_ids=IDs, agent_key=key)
+                    if self.use_actions_mask:
+                        q_next_eval[key][avail_actions_next[key] == 0] = -9999999
+                    act_next[key] = tf.argmax(q_next_eval[key], axis=-1)
+                q_eval_next_centralized_a[key] = tf.reshape(tf.gather(q_eval_next_centralized[key], act_next[key],
+                                                                      axis=-1, batch_dims=-1), [bs])
 
-                target_value = rewards + (1 - terminals) * self.args.gamma * q_tot_next_centralized
-                td_error = q_tot_eval - tf.stop_gradient(target_value)
+                q_eval_a[key] *= agent_mask[key]
+                q_eval_centralized_a[key] *= agent_mask[key]
+                q_eval_next_centralized_a[key] *= agent_mask[key]
 
-                # calculate weights
-                ones = tf.ones_like(td_error)
-                w = ones * self.alpha
-                if self.args.agent == "CWQMIX":
-                    condition_1 = tf.cast((action_max == tf.reshape(actions, [-1, self.n_agents, 1])), dtype=tf.float32)
-                    condition_1 = tf.reduce_all(tf.cast(condition_1 * agent_mask, dtype=tf.bool), axis=1)
-                    condition_2 = target_value > q_tot_centralized
-                    conditions = condition_1 | condition_2
-                    w = tf.where(conditions, ones, w)
-                elif self.args.agent == "OWQMIX":
-                    condition = td_error < 0
-                    w = tf.where(condition, ones, w)
-                else:
-                    AttributeError("You have assigned an unexpected WQMIX learner!")
+            q_tot_eval = self.policy.Q_tot(q_eval_a, state)  # calculate Q_tot
+            q_tot_centralized = self.policy.q_feedforward(q_eval_centralized_a, state)  # calculate centralized Q
+            q_tot_next_centralized = self.policy.target_q_feedforward(q_eval_next_centralized_a, state_next)  # y_i
 
-                # calculate losses and train
-                y_true = tf.stop_gradient(tf.reshape(target_value, [-1]))
-                y_pred = tf.reshape(q_tot_centralized, [-1])
-                loss_central = tk.losses.mean_squared_error(y_true, y_pred)
-                loss_qmix = tf.reduce_mean((w * (td_error ** 2)))
-                loss = loss_qmix + loss_central
-                gradients = tape.gradient(loss, self.policy.trainable_variables)
+            target_value = rewards_tot + (1 - terminals_tot) * self.gamma * q_tot_next_centralized
+            target_value = tf.stop_gradient(target_value)
+            td_error = q_tot_eval - target_value
+
+            # calculate weights
+            ones = tf.ones_like(td_error)
+            w = ones * self.alpha
+            if self.config.agent == "CWQMIX":
+                condition_1 = ((action_max == actions.reshape([-1, self.n_agents, 1])) * agent_mask).all(dim=1)
+                condition_2 = target_value > q_tot_centralized
+                conditions = condition_1 | condition_2
+                w = tf.where(conditions, ones, w)
+            elif self.config.agent == "OWQMIX":
+                condition = td_error < 0
+                w = tf.where(condition, ones, w)
+            else:
+                raise AttributeError(f"The agent named is {self.config.agent} is currently not supported.")
+
+            # calculate losses and train
+            loss_central = tk.losses.mean_squared_error(target_value, q_tot_centralized)
+            loss_qmix = (tf.stop_gradient(w) * (td_error ** 2)).mean()
+            loss = loss_qmix + loss_central
+            gradients = tape.gradient(loss, self.policy.trainable_variables)
+            if self.use_grad_clip:
+                self.optimizer.apply_gradients([
+                    (tf.clip_by_norm(grad, self.grad_clip_norm), var)
+                    for (grad, var) in zip(gradients, self.policy.trainable_variables)
+                    if grad is not None
+                ])
+            else:
                 self.optimizer.apply_gradients([
                     (grad, var)
                     for (grad, var) in zip(gradients, self.policy.trainable_variables)
@@ -96,14 +132,11 @@ class WQMIX_Learner(LearnerMAS):
             if self.iterations % self.sync_frequency == 0:
                 self.policy.copy_target()
 
-            lr = self.optimizer._decayed_lr(tf.float32)
-
-            info = {
-                "learning_rate": lr.numpy(),
+            info.update({
                 "loss_Qmix": loss_qmix.numpy(),
                 "loss_central": loss_central.numpy(),
                 "loss": loss.numpy(),
                 "predictQ": tf.math.reduce_mean(q_tot_eval).numpy()
-            }
+            })
 
-            return info
+        return info
