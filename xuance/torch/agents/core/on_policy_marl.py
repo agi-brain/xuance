@@ -307,7 +307,8 @@ class OnPolicyMARLAgents(MARLAgents):
                     if all(terminated_dict[i].values()):
                         value_next = {key: 0.0 for key in self.agent_keys}
                     else:
-                        _, value_next = self.values_next(i_env=i, obs_dict=next_obs_dict[i], state=state[i])
+                        state_i = state[i] if self.use_global_state else None
+                        _, value_next = self.values_next(i_env=i, obs_dict=next_obs_dict[i], state=state_i)
                     self.memory.finish_path(i_env=i, value_next=value_next,
                                             value_normalizer=self.learner.value_normalizer)
             train_info = self.train_epochs(n_epochs=self.n_epochs)
@@ -320,7 +321,8 @@ class OnPolicyMARLAgents(MARLAgents):
                     if all(terminated_dict[i].values()):
                         value_next = {key: 0.0 for key in self.agent_keys}
                     else:
-                        _, value_next = self.values_next(i_env=i, obs_dict=obs_dict[i], state=state[i])
+                        state_i = state[i] if self.use_global_state else None
+                        _, value_next = self.values_next(i_env=i, obs_dict=obs_dict[i], state=state_i)
                     self.memory.finish_path(i_env=i, value_next=value_next,
                                             value_normalizer=self.learner.value_normalizer)
                     obs_dict[i] = info[i]["reset_obs"]
