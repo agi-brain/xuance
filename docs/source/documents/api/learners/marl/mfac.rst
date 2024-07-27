@@ -207,12 +207,12 @@ Source Code
 
                 self.policy.soft_update(self.tau)
                 # Logger
-                lr_a = self.optimizer['actor'].state_dict()['param_groups'][0]['lr']
-                lr_c = self.optimizer['critic'].state_dict()['param_groups'][0]['lr']
+                learning_rate_actor = self.optimizer['actor'].state_dict()['param_groups'][0]['lr']
+                learning_rate_critic = self.optimizer['critic'].state_dict()['param_groups'][0]['lr']
 
                 info = {
-                    "learning_rate_actor": lr_a,
-                    "learning_rate_critic": lr_c,
+                    "learning_rate_actor": learning_rate_actor,
+                    "learning_rate_critic": learning_rate_critic,
                     "actor_loss": loss_a.item(),
                     "critic_loss": loss_c.item(),
                     "actor_gradient_norm": grad_norm_actor.item()

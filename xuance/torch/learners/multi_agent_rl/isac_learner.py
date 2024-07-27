@@ -17,8 +17,8 @@ class ISAC_Learner(LearnerMAS):
                  policy: nn.Module):
         super(ISAC_Learner, self).__init__(config, model_keys, agent_keys, policy)
         self.optimizer = {
-            key: {'actor': torch.optim.Adam(self.policy.parameters_actor[key], self.config.lr_a, eps=1e-5),
-                  'critic': torch.optim.Adam(self.policy.parameters_critic[key], self.config.lr_c, eps=1e-5)}
+            key: {'actor': torch.optim.Adam(self.policy.parameters_actor[key], self.config.learning_rate_actor, eps=1e-5),
+                  'critic': torch.optim.Adam(self.policy.parameters_critic[key], self.config.learning_rate_critic, eps=1e-5)}
             for key in self.model_keys}
         self.scheduler = {
             key: {'actor': torch.optim.lr_scheduler.LinearLR(self.optimizer[key]['actor'], start_factor=1.0,
@@ -35,7 +35,7 @@ class ISAC_Learner(LearnerMAS):
             self.target_entropy = -policy.action_space[self.agent_keys[0]].shape[-1]
             self.log_alpha = nn.Parameter(torch.zeros(1, requires_grad=True, device=self.device))
             self.alpha = self.log_alpha.exp()
-            self.alpha_optimizer = torch.optim.Adam([self.log_alpha], lr=config.lr_a)
+            self.alpha_optimizer = torch.optim.Adam([self.log_alpha], lr=config.learning_rate_actor)
 
     def update(self, sample):
         self.iterations += 1
@@ -111,12 +111,12 @@ class ISAC_Learner(LearnerMAS):
             else:
                 alpha_loss = 0
 
-            lr_a = self.optimizer[key]['actor'].state_dict()['param_groups'][0]['lr']
-            lr_c = self.optimizer[key]['critic'].state_dict()['param_groups'][0]['lr']
+            learning_rate_actor = self.optimizer[key]['actor'].state_dict()['param_groups'][0]['lr']
+            learning_rate_critic = self.optimizer[key]['critic'].state_dict()['param_groups'][0]['lr']
 
             info.update({
-                f"{key}/learning_rate_actor": lr_a,
-                f"{key}/learning_rate_critic": lr_c,
+                f"{key}/learning_rate_actor": learning_rate_actor,
+                f"{key}/learning_rate_critic": learning_rate_critic,
                 f"{key}/loss_actor": loss_a.item(),
                 f"{key}/loss_critic": loss_c.item(),
                 f"{key}/predictQ": policy_q.mean().item(),
@@ -214,12 +214,12 @@ class ISAC_Learner(LearnerMAS):
             else:
                 alpha_loss = 0
 
-            lr_a = self.optimizer[key]['actor'].state_dict()['param_groups'][0]['lr']
-            lr_c = self.optimizer[key]['critic'].state_dict()['param_groups'][0]['lr']
+            learning_rate_actor = self.optimizer[key]['actor'].state_dict()['param_groups'][0]['lr']
+            learning_rate_critic = self.optimizer[key]['critic'].state_dict()['param_groups'][0]['lr']
 
             info.update({
-                f"{key}/learning_rate_actor": lr_a,
-                f"{key}/learning_rate_critic": lr_c,
+                f"{key}/learning_rate_actor": learning_rate_actor,
+                f"{key}/learning_rate_critic": learning_rate_critic,
                 f"{key}/loss_actor": loss_a.item(),
                 f"{key}/loss_critic": loss_c.item(),
                 f"{key}/predictQ": policy_q.mean().item(),

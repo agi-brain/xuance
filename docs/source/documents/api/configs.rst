@@ -3626,8 +3626,8 @@ Policy Gradient-based Implementations
                             parallels: 16
                             n_size: 20000
                             batch_size: 256
-                            actor_learning_rate: 0.001
-                            critic_learning_rate: 0.01
+                            learning_rate_actor: 0.001
+                            learning_rate_critic: 0.01
                             gamma: 0.98
                             tau: 0.005
 
@@ -3671,8 +3671,8 @@ Policy Gradient-based Implementations
                             parallels: 16
                             n_size: 20000
                             batch_size: 256
-                            actor_learning_rate: 0.001
-                            critic_learning_rate: 0.01
+                            learning_rate_actor: 0.001
+                            learning_rate_critic: 0.01
                             gamma: 0.98
                             tau: 0.005
 
@@ -3716,8 +3716,8 @@ Policy Gradient-based Implementations
                             parallels: 16
                             n_size: 20000
                             batch_size: 256
-                            actor_learning_rate: 0.001
-                            critic_learning_rate: 0.001
+                            learning_rate_actor: 0.001
+                            learning_rate_critic: 0.001
                             gamma: 0.98
                             tau: 0.005
 
@@ -3760,8 +3760,8 @@ Policy Gradient-based Implementations
                             parallels: 16
                             n_size: 20000
                             batch_size: 256
-                            actor_learning_rate: 0.001
-                            critic_learning_rate: 0.01
+                            learning_rate_actor: 0.001
+                            learning_rate_critic: 0.01
                             gamma: 0.98
                             tau: 0.005
 
@@ -3809,8 +3809,8 @@ Policy Gradient-based Implementations
                             parallels: 16
                             n_size: 20000
                             batch_size: 256
-                            actor_learning_rate: 0.001
-                            critic_learning_rate: 0.001
+                            learning_rate_actor: 0.001
+                            learning_rate_critic: 0.001
                             gamma: 0.98
                             tau: 0.005
 
@@ -3853,8 +3853,8 @@ Policy Gradient-based Implementations
                             parallels: 16
                             n_size: 20000
                             batch_size: 256
-                            actor_learning_rate: 0.001
-                            critic_learning_rate: 0.01
+                            learning_rate_actor: 0.001
+                            learning_rate_critic: 0.01
                             gamma: 0.98
                             tau: 0.005
 
@@ -3905,8 +3905,8 @@ Policy Gradient-based Implementations
                     parallels: 5
                     n_size: 100000
                     batch_size: 32  # 64
-                    actor_learning_rate: 0.001
-                    critic_learning_rate: 0.001
+                    learning_rate_actor: 0.001
+                    learning_rate_critic: 0.001
                     gamma: 0.99
                     alpha: 0.01
                     tau: 0.005
@@ -3951,8 +3951,8 @@ Policy Gradient-based Implementations
                     parallels: 4
                     n_size: 250000
                     batch_size: 256
-                    actor_learning_rate: 0.001
-                    critic_learning_rate: 0.001
+                    learning_rate_actor: 0.001
+                    learning_rate_critic: 0.001
                     gamma: 0.99
                     alpha: 0.2
                     tau: 0.005
@@ -4005,8 +4005,8 @@ Policy Gradient-based Implementations
                             parallels: 10
                             n_size: 200000
                             batch_size: 256
-                            actor_learning_rate: 0.001
-                            critic_learning_rate: 0.001
+                            learning_rate_actor: 0.001
+                            learning_rate_critic: 0.001
                             gamma: 0.98
                             tau: 0.005
                             learning_rate: 0.0007
@@ -4052,8 +4052,8 @@ Policy Gradient-based Implementations
                             parallels: 10
                             n_size: 200000
                             batch_size: 256
-                            actor_learning_rate: 0.001
-                            critic_learning_rate: 0.001
+                            learning_rate_actor: 0.001
+                            learning_rate_critic: 0.001
                             gamma: 0.98
                             tau: 0.005
                             learning_rate: 0.0007
@@ -4096,8 +4096,8 @@ Policy Gradient-based Implementations
                     parallels: 4  # number of environments
                     n_size: 50000  # replay buffer size
                     batch_size: 100
-                    actor_learning_rate: 0.001
-                    critic_learning_rate: 0.001
+                    learning_rate_actor: 0.001
+                    learning_rate_critic: 0.001
                     gamma: 0.99
                     tau: 0.005
 
@@ -4148,8 +4148,8 @@ Policy Gradient-based Implementations
                             parallels: 10
                             n_size: 20000
                             batch_size: 256
-                            actor_learning_rate: 0.0005
-                            critic_learning_rate: 0.001
+                            learning_rate_actor: 0.0005
+                            learning_rate_critic: 0.001
                             gamma: 0.98
                             tau: 0.005
                             actor_update_delay: 3
@@ -4195,8 +4195,8 @@ Policy Gradient-based Implementations
                             parallels: 10
                             n_size: 20000
                             batch_size: 256
-                            actor_learning_rate: 0.0005
-                            critic_learning_rate: 0.001
+                            learning_rate_actor: 0.0005
+                            learning_rate_critic: 0.001
                             gamma: 0.98
                             tau: 0.005
                             actor_update_delay: 3
@@ -4239,9 +4239,9 @@ Policy Gradient-based Implementations
                     parallels: 4  # number of environments
                     n_size: 50000
                     batch_size: 100
-                    actor_learning_rate: 0.001
+                    learning_rate_actor: 0.001
                     actor_update_delay: 2
-                    critic_learning_rate: 0.001
+                    learning_rate_critic: 0.001
                     gamma: 0.99
                     tau: 0.005
 
@@ -7757,8 +7757,8 @@ MARL Implementations
                             parallels: 16
                             buffer_size: 100000
                             batch_size: 256
-                            lr_a: 0.01  # learning rate for actor
-                            lr_c: 0.001  # learning rate for critic
+                            learning_rate_actor: 0.01  # learning rate for actor
+                            learning_rate_critic: 0.001  # learning rate for critic
                             gamma: 0.95  # discount factor
                             tau: 0.001  # soft update for target networks
 
@@ -7801,8 +7801,8 @@ MARL Implementations
                             parallels: 16
                             buffer_size: 100000
                             batch_size: 256
-                            lr_a: 0.01  # learning rate for actor
-                            lr_c: 0.001  # learning rate for critic
+                            learning_rate_actor: 0.01  # learning rate for actor
+                            learning_rate_critic: 0.001  # learning rate for critic
                             gamma: 0.95  # discount factor
                             tau: 0.001  # soft update for target networks
 
@@ -7845,8 +7845,8 @@ MARL Implementations
                             parallels: 16
                             buffer_size: 100000
                             batch_size: 256
-                            lr_a: 0.01  # learning rate for actor
-                            lr_c: 0.001  # learning rate for critic
+                            learning_rate_actor: 0.01  # learning rate for actor
+                            learning_rate_critic: 0.001  # learning rate for critic
                             gamma: 0.95  # discount factor
                             tau: 0.001  # soft update for target networks
 
@@ -7898,8 +7898,8 @@ MARL Implementations
                             parallels: 16
                             buffer_size: 100000
                             batch_size: 256
-                            lr_a: 0.01  # learning rate for actor
-                            lr_c: 0.001  # learning rate for critic
+                            learning_rate_actor: 0.01  # learning rate for actor
+                            learning_rate_critic: 0.001  # learning rate for critic
                             gamma: 0.95  # discount factor
                             tau: 0.001  # soft update for target networks
 
@@ -7942,8 +7942,8 @@ MARL Implementations
                             parallels: 16
                             buffer_size: 100000
                             batch_size: 256
-                            lr_a: 0.01  # learning rate for actor
-                            lr_c: 0.001  # learning rate for critic
+                            learning_rate_actor: 0.01  # learning rate for actor
+                            learning_rate_critic: 0.001  # learning rate for critic
                             gamma: 0.95  # discount factor
                             tau: 0.001  # soft update for target networks
 
@@ -7986,8 +7986,8 @@ MARL Implementations
                             parallels: 16
                             buffer_size: 100000
                             batch_size: 256
-                            lr_a: 0.01  # learning rate for actor
-                            lr_c: 0.001  # learning rate for critic
+                            learning_rate_actor: 0.01  # learning rate for actor
+                            learning_rate_critic: 0.001  # learning rate for critic
                             gamma: 0.95  # discount factor
                             tau: 0.001  # soft update for target networks
 
@@ -8039,8 +8039,8 @@ MARL Implementations
                             parallels: 16
                             buffer_size: 100000
                             batch_size: 256
-                            lr_a: 0.01  # learning rate for actor
-                            lr_c: 0.001  # learning rate for critic
+                            learning_rate_actor: 0.01  # learning rate for actor
+                            learning_rate_critic: 0.001  # learning rate for critic
                             gamma: 0.95  # discount factor
                             tau: 0.001  # soft update for target networks
                             alpha: 0.01
@@ -8084,8 +8084,8 @@ MARL Implementations
                             parallels: 16
                             buffer_size: 100000
                             batch_size: 256
-                            lr_a: 0.01  # learning rate for actor
-                            lr_c: 0.001  # learning rate for critic
+                            learning_rate_actor: 0.01  # learning rate for actor
+                            learning_rate_critic: 0.001  # learning rate for critic
                             gamma: 0.95  # discount factor
                             tau: 0.001  # soft update for target networks
                             alpha: 0.01
@@ -8129,8 +8129,8 @@ MARL Implementations
                             parallels: 16
                             buffer_size: 100000
                             batch_size: 256
-                            lr_a: 0.01  # learning rate for actor
-                            lr_c: 0.001  # learning rate for critic
+                            learning_rate_actor: 0.01  # learning rate for actor
+                            learning_rate_critic: 0.001  # learning rate for critic
                             gamma: 0.95  # discount factor
                             tau: 0.001  # soft update for target networks
                             alpha: 0.01
@@ -8182,8 +8182,8 @@ MARL Implementations
                             parallels: 16
                             buffer_size: 100000
                             batch_size: 256
-                            lr_a: 0.01  # learning rate for actor
-                            lr_c: 0.001  # learning rate for critic
+                            learning_rate_actor: 0.01  # learning rate for actor
+                            learning_rate_critic: 0.001  # learning rate for critic
                             gamma: 0.95  # discount factor
                             tau: 0.001  # soft update for target networks
                             alpha: 0.01
@@ -8228,8 +8228,8 @@ MARL Implementations
                             parallels: 16
                             buffer_size: 100000
                             batch_size: 256
-                            lr_a: 0.01  # learning rate for actor
-                            lr_c: 0.001  # learning rate for critic
+                            learning_rate_actor: 0.01  # learning rate for actor
+                            learning_rate_critic: 0.001  # learning rate for critic
                             gamma: 0.95  # discount factor
                             tau: 0.001  # soft update for target networks
                             alpha: 0.01
@@ -8274,8 +8274,8 @@ MARL Implementations
                             parallels: 16
                             buffer_size: 100000
                             batch_size: 256
-                            lr_a: 0.01  # learning rate for actor
-                            lr_c: 0.001  # learning rate for critic
+                            learning_rate_actor: 0.01  # learning rate for actor
+                            learning_rate_critic: 0.001  # learning rate for critic
                             gamma: 0.95  # discount factor
                             tau: 0.001  # soft update for target networks
                             alpha: 0.01
@@ -10252,8 +10252,8 @@ MARL Implementations
                             parallels: 16
                             buffer_size: 100000
                             batch_size: 256
-                            lr_a: 0.01  # learning rate for actor
-                            lr_c: 0.001  # learning rate for critic
+                            learning_rate_actor: 0.01  # learning rate for actor
+                            learning_rate_critic: 0.001  # learning rate for critic
                             gamma: 0.95  # discount factor
                             tau: 0.001  # soft update for target networks
 
@@ -10297,8 +10297,8 @@ MARL Implementations
                             parallels: 16
                             buffer_size: 100000
                             batch_size: 256
-                            lr_a: 0.01  # learning rate for actor
-                            lr_c: 0.001  # learning rate for critic
+                            learning_rate_actor: 0.01  # learning rate for actor
+                            learning_rate_critic: 0.001  # learning rate for critic
                             gamma: 0.95  # discount factor
                             tau: 0.001  # soft update for target networks
 
@@ -10342,8 +10342,8 @@ MARL Implementations
                             parallels: 16
                             buffer_size: 100000
                             batch_size: 256
-                            lr_a: 0.01  # learning rate for actor
-                            lr_c: 0.001  # learning rate for critic
+                            learning_rate_actor: 0.01  # learning rate for actor
+                            learning_rate_critic: 0.001  # learning rate for critic
                             gamma: 0.95  # discount factor
                             tau: 0.001  # soft update for target networks
 

@@ -204,14 +204,14 @@ Source Code
                         self.scheduler['actor'].step()
                     self.policy.soft_update(self.tau)
 
-                lr_a = self.optimizer['actor'].state_dict()['param_groups'][0]['lr']
-                lr_c_A = self.optimizer['critic_A'].state_dict()['param_groups'][0]['lr']
-                lr_c_B = self.optimizer['critic_B'].state_dict()['param_groups'][0]['lr']
+                learning_rate_actor = self.optimizer['actor'].state_dict()['param_groups'][0]['lr']
+                learning_rate_critic_A = self.optimizer['critic_A'].state_dict()['param_groups'][0]['lr']
+                learning_rate_critic_B = self.optimizer['critic_B'].state_dict()['param_groups'][0]['lr']
 
                 info = {
-                    "learning_rate_actor": lr_a,
-                    "learning_rate_critic_A": lr_c_A,
-                    "learning_rate_critic_B": lr_c_B,
+                    "learning_rate_actor": learning_rate_actor,
+                    "learning_rate_critic_A": learning_rate_critic_A,
+                    "learning_rate_critic_B": learning_rate_critic_B,
                     "loss_critic_A": loss_c.item(),
                     "loss_critic_B": loss_c.item()
                 }
@@ -298,12 +298,12 @@ Source Code
                             ])
                             self.policy.soft_update(self.tau)
 
-                    lr_a = self.optimizer['actor']._decayed_lr(tf.float32)
-                    lr_c = self.optimizer['critic']._decayed_lr(tf.float32)
+                    learning_rate_actor = self.optimizer['actor']._decayed_lr(tf.float32)
+                    learning_rate_critic = self.optimizer['critic']._decayed_lr(tf.float32)
 
                     info = {
-                        "learning_rate_actor": lr_a.numpy(),
-                        "learning_rate_critic_A": lr_c.numpy(),
+                        "learning_rate_actor": learning_rate_actor.numpy(),
+                        "learning_rate_critic_A": learning_rate_critic.numpy(),
                         "loss_critic": loss_c.numpy(),
                         "predictQ": tf.math.reduce_mean(action_q).numpy()
                     }
@@ -427,14 +427,14 @@ Source Code
                     p_loss = self.actor_train(batch_size, obs, IDs, agent_mask)
                     self.policy.soft_update(self.tau)
 
-                lr_a = self.scheduler['actor'](self.iterations).asnumpy()
-                lr_c_A = self.scheduler['critic_A'](self.iterations).asnumpy()
-                lr_c_B = self.scheduler['critic_B'](self.iterations).asnumpy()
+                learning_rate_actor = self.scheduler['actor'](self.iterations).asnumpy()
+                learning_rate_critic_A = self.scheduler['critic_A'](self.iterations).asnumpy()
+                learning_rate_critic_B = self.scheduler['critic_B'](self.iterations).asnumpy()
 
                 info = {
-                    "learning_rate_actor": lr_a,
-                    "learning_rate_critic_A": lr_c_A,
-                    "learning_rate_critic_B": lr_c_B,
+                    "learning_rate_actor": learning_rate_actor,
+                    "learning_rate_critic_A": learning_rate_critic_A,
+                    "learning_rate_critic_B": learning_rate_critic_B,
                     "loss_critic_A": loss_c_A.asnumpy(),
                     "loss_critic_B": loss_c_B.asnumpy()
                 }

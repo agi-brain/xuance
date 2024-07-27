@@ -112,12 +112,12 @@ class MASAC_Learner(ISAC_Learner):
             else:
                 alpha_loss = 0
 
-            lr_a = self.optimizer[key]['actor'].state_dict()['param_groups'][0]['lr']
-            lr_c = self.optimizer[key]['critic'].state_dict()['param_groups'][0]['lr']
+            learning_rate_actor = self.optimizer[key]['actor'].state_dict()['param_groups'][0]['lr']
+            learning_rate_critic = self.optimizer[key]['critic'].state_dict()['param_groups'][0]['lr']
 
             info.update({
-                f"{key}/learning_rate_actor": lr_a,
-                f"{key}/learning_rate_critic": lr_c,
+                f"{key}/learning_rate_actor": learning_rate_actor,
+                f"{key}/learning_rate_critic": learning_rate_critic,
                 f"{key}/loss_actor": loss_a.item(),
                 f"{key}/loss_critic": loss_c.item(),
                 f"{key}/predictQ": policy_q.mean().item(),
@@ -237,12 +237,12 @@ class MASAC_Learner(ISAC_Learner):
             else:
                 alpha_loss = 0
 
-            lr_a = self.optimizer[key]['actor'].state_dict()['param_groups'][0]['lr']
-            lr_c = self.optimizer[key]['critic'].state_dict()['param_groups'][0]['lr']
+            learning_rate_actor = self.optimizer[key]['actor'].state_dict()['param_groups'][0]['lr']
+            learning_rate_critic = self.optimizer[key]['critic'].state_dict()['param_groups'][0]['lr']
 
             info.update({
-                f"{key}/learning_rate_actor": lr_a,
-                f"{key}/learning_rate_critic": lr_c,
+                f"{key}/learning_rate_actor": learning_rate_actor,
+                f"{key}/learning_rate_critic": learning_rate_critic,
                 f"{key}/loss_actor": loss_a.item(),
                 f"{key}/loss_critic": loss_c.item(),
                 f"{key}/predictQ": policy_q.mean().item(),

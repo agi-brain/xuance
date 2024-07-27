@@ -42,10 +42,10 @@ class Runner_DRL(Runner_Base):
             policy = REGISTRY_Policy[self.args.policy](*input_policy)
 
         if self.agent_name in ["DDPG", "TD3", "SAC", "SACDIS"]:
-            actor_lr_scheduler = lr_decay_model(learning_rate=self.args.actor_learning_rate,
+            actor_lr_scheduler = lr_decay_model(learning_rate=self.args.learning_rate_actor,
                                                 decay_rate=0.5,
                                                 decay_steps=get_total_iters(self.agent_name, self.args))
-            critic_lr_scheduler = lr_decay_model(learning_rate=self.args.critic_learning_rate,
+            critic_lr_scheduler = lr_decay_model(learning_rate=self.args.learning_rate_critic,
                                                  decay_rate=0.5,
                                                  decay_steps=get_total_iters(self.agent_name, self.args))
             actor_optimizer = Adam(policy.actor.trainable_params(), actor_lr_scheduler, eps=1e-5)

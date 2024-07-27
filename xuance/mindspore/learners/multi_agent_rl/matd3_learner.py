@@ -108,14 +108,14 @@ class MATD3_Learner(LearnerMAS):
             p_loss = self.actor_train(batch_size, obs, IDs, agent_mask)
             self.policy.soft_update(self.tau)
 
-        lr_a = self.scheduler['actor'](self.iterations).asnumpy()
-        lr_c_A = self.scheduler['critic_A'](self.iterations).asnumpy()
-        lr_c_B = self.scheduler['critic_B'](self.iterations).asnumpy()
+        learning_rate_actor = self.scheduler['actor'](self.iterations).asnumpy()
+        learning_rate_critic_A = self.scheduler['critic_A'](self.iterations).asnumpy()
+        learning_rate_critic_B = self.scheduler['critic_B'](self.iterations).asnumpy()
 
         info = {
-            "learning_rate_actor": lr_a,
-            "learning_rate_critic_A": lr_c_A,
-            "learning_rate_critic_B": lr_c_B,
+            "learning_rate_actor": learning_rate_actor,
+            "learning_rate_critic_A": learning_rate_critic_A,
+            "learning_rate_critic_B": learning_rate_critic_B,
             "loss_critic_A": loss_c_A.asnumpy(),
             "loss_critic_B": loss_c_B.asnumpy()
         }

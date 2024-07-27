@@ -1,6 +1,6 @@
 import numpy as np
 from copy import deepcopy
-from gym.spaces import Space, Discrete
+from gym.spaces import Space, Discrete, Box
 from xuance.common import Sequence, Optional, Union, Dict, List
 from xuance.tensorflow.representations import Basic_Identical
 from xuance.tensorflow import tf, tk, tfp, Tensor, Module
@@ -546,115 +546,364 @@ class MFQnetwork(Module):
 
 class Independent_DDPG_Policy(Module):
     def __init__(self,
-                 action_space: Space,
+                 action_space: Optional[Dict[str, Box]],
                  n_agents: int,
-                 representation: Optional[Basic_Identical],
+                 actor_representation: Optional[Dict[str, Module]],
+                 critic_representation: Optional[Dict[str, Module]],
                  actor_hidden_size: Sequence[int],
                  critic_hidden_size: Sequence[int],
                  normalize: Optional[tk.layers.Layer] = None,
-                 initializer: Optional[tk.initializers.Initializer] = None,
+                 initialize: Optional[tk.initializers.Initializer] = None,
                  activation: Optional[tk.layers.Layer] = None,
-                 device: str = "cpu:0"
-                 ):
+                 activation_action: Optional[tk.layers.Layer] = None,
+                 **kwargs):
         super(Independent_DDPG_Policy, self).__init__()
-        self.action_dim = action_space.shape[0]
+        self.action_space = action_space
         self.n_agents = n_agents
-        self.representation = representation
-        self.obs_dim = self.representation.input_shapes[0]
-        self.representation_info_shape = self.representation.output_shapes
+        self.use_parameter_sharing = kwargs['use_parameter_sharing']
+        self.model_keys = kwargs['model_keys']
+        self.actor_representation_info_shape = {key: actor_representation[key].output_shapes for key in self.model_keys}
+        self.critic_representation_info_shape = {key: critic_representation[key].output_shapes
+                                                 for key in self.model_keys}
+        self.lstm = True if kwargs["rnn"] == "LSTM" else False
+        self.use_rnn = True if kwargs["use_rnn"] else False
 
-        self.actor_net = ActorNet(representation.output_shapes['state'][0], n_agents, self.action_dim,
-                                  actor_hidden_size, normalize, initializer, activation, device)
-        self.target_actor_net = ActorNet(representation.output_shapes['state'][0], n_agents, self.action_dim,
-                                         actor_hidden_size, normalize, initializer, activation, device)
-        self.critic_net = CriticNet(True, representation.output_shapes['state'][0], n_agents, self.action_dim,
-                                    critic_hidden_size, normalize, initializer, activation, device)
-        self.target_critic_net = CriticNet(True, representation.output_shapes['state'][0], n_agents, self.action_dim,
-                                           critic_hidden_size, normalize, initializer, activation, device)
-        if isinstance(self.representation, Basic_Identical):
-            self.parameters_actor = self.actor_net.trainable_variables
-        else:
-            self.parameters_actor = self.representation.trainable_variables + self.actor_net.trainable_variables
-        self.parameters_critic = self.critic_net.trainable_variables
-        self.soft_update(1.0)
+        self.actor_representation = actor_representation
+        self.critic_representation = critic_representation
+        self.target_actor_representation = deepcopy(self.actor_representation)
+        self.target_critic_representation = deepcopy(self.critic_representation)
+
+        self.actor, self.target_actor, self.critic, self.target_critic = {}, {}, {}, {}
+        for key in self.model_keys:
+            dim_action = self.action_space[key].shape[-1]
+            dim_actor_in, dim_actor_out, dim_critic_in = self._get_actor_critic_input(
+                self.actor_representation[key].output_shapes['state'][0], dim_action,
+                self.critic_representation[key].output_shapes['state'][0], n_agents)
+
+            self.actor[key] = ActorNet(dim_actor_in, dim_actor_out, actor_hidden_size,
+                                       normalize, initialize, activation, activation_action)
+            self.target_actor[key] = ActorNet(dim_actor_in, dim_actor_out, actor_hidden_size,
+                                              normalize, initialize, activation, activation_action)
+            self.critic[key] = CriticNet(dim_critic_in, critic_hidden_size, normalize, initialize, activation)
+            self.target_critic[key] = CriticNet(dim_critic_in, critic_hidden_size, normalize, initialize, activation)
+            self.target_actor[key].set_weights(self.actor[key].get_weights())
+            self.target_critic[key].set_weights(self.critic[key].get_weights())
+
+    def parameters_actor(self, key):
+        return self.actor_representation[key].trainable_variables + self.actor[key].trainable_variables
+
+    def parameters_critic(self, key):
+        return self.critic_representation[key].trainable_variables + self.critic[key].trainable_variables
+
+    def _get_actor_critic_input(self, dim_actor_rep, dim_action, dim_critic_rep, n_agents):
+        """
+        Returns the input dimensions of actor netwrok and critic networks.
+
+        Parameters:
+            dim_actor_rep: The dimension of the output of actor presentation.
+            dim_action: The dimension of actions.
+            dim_critic_rep: The dimension of the output of critic presentation.
+            n_agents: The number of agents.
+
+        Returns:
+            dim_actor_in: The dimension of input of the actor networks.
+            dim_critic_in: The dimension of the input of critic networks.
+        """
+        dim_actor_in, dim_actor_out = dim_actor_rep, dim_action
+        dim_critic_in = dim_critic_rep + dim_action
+        if self.use_parameter_sharing:
+            dim_actor_in += n_agents
+            dim_critic_in += n_agents
+        return dim_actor_in, dim_actor_out, dim_critic_in
 
     @tf.function
-    def call(self, inputs: Union[np.ndarray, dict], **kwargs):
-        observations = tf.reshape(inputs['obs'], [-1, self.obs_dim])
-        IDs = tf.reshape(inputs['ids'], [-1, self.n_agents])
-        outputs = self.representation(observations)
-        actor_in = tf.concat([outputs['state'], IDs], axis=-1)
-        act = self.actor_net(actor_in)
-        return outputs, tf.reshape(act, [-1, self.n_agents, self.action_dim])
+    def call(self, observation: Dict[str, np.ndarray],
+             agent_ids: np.ndarray = None, agent_key: str = None,
+             rnn_hidden: Optional[Dict[str, List[np.ndarray]]] = None):
+        """
+        Returns actions of the policy.
 
-    def critic(self, observation: Tensor, actions: Tensor, agent_ids: Tensor):
-        observation = tf.reshape(observation, [-1, self.obs_dim])
-        actions = tf.reshape(actions, [-1, self.action_dim])
-        agent_ids = tf.reshape(agent_ids, [-1, self.n_agents])
-        outputs = self.representation(observation)
-        critic_in = tf.concat([outputs['state'], actions, agent_ids], axis=-1)
-        return tf.reshape(self.critic_net(critic_in), [-1, self.n_agents, 1])
+        Parameters:
+            observation (Dict[np.ndarray]): The input observations for the policies.
+            agent_ids (np.ndarray): The agents' ids (for parameter sharing).
+            agent_key (str): Calculate actions for specified agent.
+            rnn_hidden (Optional[Dict[str, List[np.ndarray]]]): The hidden variables of the RNN.
 
-    def target_critic(self, observation: Tensor, actions: Tensor, agent_ids: Tensor):
-        observation = tf.reshape(observation, [-1, self.obs_dim])
-        actions = tf.reshape(actions, [-1, self.action_dim])
-        agent_ids = tf.reshape(agent_ids, [-1, self.n_agents])
-        outputs = self.representation(observation)
-        critic_in = tf.concat([outputs['state'], actions, agent_ids], axis=-1)
-        return tf.reshape(self.target_critic_net(critic_in), [-1, self.n_agents, 1])
+        Returns:
+            rnn_hidden_new (Optional[Dict[str, List[Tensor]]]): The new hidden variables of the RNN.
+            actions (Dict[Tensor]): The actions output by the policies.
+        """
+        rnn_hidden_new, actions = deepcopy(rnn_hidden), {}
+        agent_list = self.model_keys if agent_key is None else [agent_key]
+        for key in agent_list:
+            if self.use_rnn:
+                outputs = self.actor_representation[key](observation[key], *rnn_hidden[key])
+                rnn_hidden_new.update({key: (outputs['rnn_hidden'], outputs['rnn_cell'])})
+            else:
+                outputs = self.actor_representation[key](observation[key])
 
-    def target_actor(self, inputs: Union[np.ndarray, dict]):
-        observations = tf.reshape(inputs['obs'], [-1, self.obs_dim])
-        IDs = tf.reshape(inputs['ids'], [-1, self.n_agents])
-        outputs = self.representation(observations)
-        actor_in = tf.concat([outputs['state'], IDs], axis=-1)
-        act = self.target_actor_net(actor_in)
-        return tf.reshape(act, [-1, self.n_agents, self.action_dim])
+            if self.use_parameter_sharing:
+                actor_in = tf.concat([outputs['state'], agent_ids], axis=-1)
+            else:
+                actor_in = outputs['state']
+            actions[key] = self.actor[key](actor_in)
+        return rnn_hidden_new, actions
 
+    @tf.function
+    def Qpolicy(self, observation: Dict[str, np.ndarray], actions: Dict[str, np.ndarray],
+                agent_ids: np.ndarray = None, agent_key: str = None,
+                rnn_hidden: Optional[Dict[str, List[np.ndarray]]] = None):
+        """
+        Returns Q^policy of current observations and actions pairs.
+
+        Parameters:
+            observation (Dict[np.ndarray]): The observations.
+            actions (Dict[np.ndarray]): The actions.
+            agent_ids (Dict[np.ndarray]): The agents' ids (for parameter sharing).
+            agent_key (str): Calculate actions for specified agent.
+            rnn_hidden (Optional[Dict[str, List[np.ndarray]]]): The hidden variables of the RNN.
+
+        Returns:
+            rnn_hidden_new (Optional[Dict[str, List[Tensor]]]): The new hidden variables of the RNN.
+            q_eval: The evaluations of Q^policy.
+        """
+        rnn_hidden_new, q_eval = deepcopy(rnn_hidden), {}
+        agent_list = self.model_keys if agent_key is None else [agent_key]
+
+        for key in agent_list:
+            if self.use_rnn:
+                outputs = self.critic_representation[key](observation[key], *rnn_hidden[key])
+                rnn_hidden_new.update({key: (outputs['rnn_hidden'], outputs['rnn_cell'])})
+            else:
+                outputs = self.critic_representation[key](observation[key])
+
+            if self.use_parameter_sharing:
+                critic_in = tf.concat([outputs['state'], agent_ids], axis=-1)
+            else:
+                critic_in = outputs['state']
+            q_eval[key] = self.critic[key](tf.concat([critic_in, actions[key]], axis=-1))
+        return rnn_hidden_new, q_eval
+
+    @tf.function
+    def Qtarget(self, next_observation: Dict[str, np.ndarray], next_actions: Dict[str, np.ndarray],
+                agent_ids: np.ndarray = None, agent_key: str = None,
+                rnn_hidden: Optional[Dict[str, List[np.ndarray]]] = None):
+        """
+        Returns the Q^target of next observations and actions pairs.
+
+        Parameters:
+            next_observation (Dict[np.ndarray]): The observations of next step.
+            next_actions (Dict[np.ndarray]): The actions of next step.
+            agent_ids (Dict[np.ndarray]): The agents' ids (for parameter sharing).
+            agent_key (str): Calculate actions for specified agent.
+            rnn_hidden (Optional[Dict[str, List[np.ndarray]]]): The hidden variables of the RNN.
+
+        Returns:
+            rnn_hidden_new (Optional[Dict[str, List[Tensor]]]): The new hidden variables of the RNN.
+            q_target: The evaluations of Q^target.
+        """
+        rnn_hidden_new, q_target = deepcopy(rnn_hidden), {}
+        agent_list = self.model_keys if agent_key is None else [agent_key]
+        for key in agent_list:
+            if self.use_rnn:
+                outputs = self.target_critic_representation[key](next_observation[key], *rnn_hidden[key])
+                rnn_hidden_new.update({key: (outputs['rnn_hidden'], outputs['rnn_cell'])})
+            else:
+                outputs = self.target_critic_representation[key](next_observation[key])
+
+            if self.use_parameter_sharing:
+                critic_in = tf.concat([outputs['state'], agent_ids], axis=-1)
+            else:
+                critic_in = outputs['state']
+            q_target[key] = self.target_critic[key](tf.concat([critic_in, next_actions[key]], axis=-1))
+        return rnn_hidden_new, q_target
+
+    @tf.function
+    def Atarget(self, next_observation: Dict[str, np.ndarray],
+                agent_ids: np.ndarray = None, agent_key: str = None,
+                rnn_hidden: Optional[Dict[str, List[np.ndarray]]] = None):
+        """
+        Returns the next actions by target policies.
+
+        Parameters:
+            next_observation (Dict[np.ndarray]): The observations of next step.
+            agent_ids (Dict[np.ndarray]): The agents' ids (for parameter sharing).
+            agent_key (str): Calculate actions for specified agent.
+            rnn_hidden (Optional[Dict[str, List[np.ndarray]]]): The hidden variables of the RNN.
+
+        Returns:
+            rnn_hidden_new (Optional[Dict[str, List[Tensor]]]): The new hidden variables of the RNN.
+            next_actions (Dict[Tensor]): The next actions.
+        """
+        rnn_hidden_new, next_actions = deepcopy(rnn_hidden), {}
+        agent_list = self.model_keys if agent_key is None else [agent_key]
+
+        for key in agent_list:
+            if self.use_rnn:
+                outputs = self.target_actor_representation[key](next_observation[key], *rnn_hidden[key])
+                rnn_hidden_new.update({key: (outputs['rnn_hidden'], outputs['rnn_cell'])})
+            else:
+                outputs = self.target_actor_representation[key](next_observation[key])
+
+            if self.use_parameter_sharing:
+                actor_in = tf.concat([outputs['state'], agent_ids], axis=-1)
+            else:
+                actor_in = outputs['state']
+            next_actions[key] = self.target_actor[key](actor_in)
+        return rnn_hidden_new, next_actions
+
+    @tf.function
     def soft_update(self, tau=0.005):
-        for ep, tp in zip(self.actor_net.variables, self.target_actor_net.variables):
-            tp.assign((1 - tau) * tp + tau * ep)
-        for ep, tp in zip(self.critic_net.variables, self.target_critic_net.variables):
-            tp.assign((1 - tau) * tp + tau * ep)
+        for key in self.model_keys:
+            for ep, tp in zip(self.actor_representation[key].variables,
+                              self.target_actor_representation[key].variables):
+                tp.assign((1 - tau) * tp + tau * ep)
+            for ep, tp in zip(self.critic_representation[key].variables,
+                              self.target_critic_representation[key].variables):
+                tp.assign((1 - tau) * tp + tau * ep)
+            for ep, tp in zip(self.actor[key].variables, self.target_actor[key].variables):
+                tp.assign((1 - tau) * tp + tau * ep)
+            for ep, tp in zip(self.critic[key].variables, self.target_critic[key].variables):
+                tp.assign((1 - tau) * tp + tau * ep)
 
 
 class MADDPG_Policy(Independent_DDPG_Policy):
     def __init__(self,
-                 action_space: Space,
+                 action_space: Optional[Dict[str, Box]],
                  n_agents: int,
-                 representation: Optional[Basic_Identical],
+                 actor_representation: Optional[Dict[str, Module]],
+                 critic_representation: Optional[Dict[str, Module]],
                  actor_hidden_size: Sequence[int],
                  critic_hidden_size: Sequence[int],
                  normalize: Optional[tk.layers.Layer] = None,
-                 initializer: Optional[tk.initializers.Initializer] = None,
+                 initialize: Optional[tk.initializers.Initializer] = None,
                  activation: Optional[tk.layers.Layer] = None,
-                 device: str = "cpu:0"
-                 ):
-        super(MADDPG_Policy, self).__init__(action_space, n_agents, representation,
+                 activation_action: Optional[tk.layers.Layer] = None,
+                 **kwargs):
+        super(MADDPG_Policy, self).__init__(action_space, n_agents, actor_representation, critic_representation,
                                             actor_hidden_size, critic_hidden_size,
-                                            normalize, initializer, activation, device)
-        self.critic_net = CriticNet(False, representation.output_shapes['state'][0], n_agents, self.action_dim,
-                                    critic_hidden_size, normalize, initializer, activation, device)
-        self.target_critic_net = CriticNet(False, representation.output_shapes['state'][0], n_agents, self.action_dim,
-                                           critic_hidden_size, normalize, initializer, activation, device)
-        self.parameters_critic = self.critic_net.trainable_variables
-        self.soft_update(1.0)
+                                            normalize, initialize, activation, activation_action, **kwargs)
 
-    def critic(self, observation: Tensor, actions: Tensor, agent_ids: Tensor):
-        bs = observation.shape[0]
-        outputs_n = tf.reshape(self.representation(observation)['state'], (bs, 1, -1))
-        outputs_n = tf.tile(outputs_n, (1, self.n_agents, 1))
-        actions_n = tf.tile(tf.reshape(actions, (bs, 1, -1)), (1, self.n_agents, 1))
-        critic_in = tf.concat([outputs_n, actions_n, agent_ids], axis=-1)
-        return self.critic_net(critic_in)
+    def _get_actor_critic_input(self, dim_actor_rep, dim_action, dim_critic_rep, n_agents):
+        """
+        Returns the input dimensions of actor netwrok and critic networks.
 
-    def target_critic(self, observation: Tensor, actions: Tensor, agent_ids: Tensor):
-        bs = observation.shape[0]
-        outputs_n = tf.reshape(self.representation(observation)['state'], (bs, 1, -1))
-        outputs_n = tf.tile(outputs_n, (1, self.n_agents, 1))
-        actions_n = tf.tile(tf.reshape(actions, (bs, 1, -1)), (1, self.n_agents, 1))
-        critic_in = tf.concat([outputs_n, actions_n, agent_ids], axis=-1)
-        return self.target_critic_net(critic_in)
+        Parameters:
+            dim_action: The dimension of actions.
+            dim_actor_rep: The dimension of the output of actor presentation.
+            dim_critic_rep: The dimension of the output of critic presentation.
+            n_agents: The number of agents.
+
+        Returns:
+            dim_actor_in: The dimension of input of the actor networks.
+            dim_critic_in: The dimension of the input of critic networks.
+        """
+        dim_actor_in, dim_actor_out = dim_actor_rep, dim_action
+        dim_critic_in = dim_critic_rep
+        if self.use_parameter_sharing:
+            dim_actor_in += n_agents
+            dim_critic_in += n_agents
+        return dim_actor_in, dim_actor_out, dim_critic_in
+
+    @tf.function
+    def Qpolicy(self, joint_observation: np.ndarray, joint_actions: np.ndarray,
+                agent_ids: np.ndarray = None, agent_key: str = None,
+                rnn_hidden: Optional[Dict[str, List[np.ndarray]]] = None):
+        """
+        Returns Q^policy of current observations and actions pairs.
+
+        Parameters:
+            joint_observation (np.ndarray): The joint observations of the team.
+            joint_actions (np.ndarray): The joint actions of the team.
+            agent_ids (Dict[np.ndarray]): The agents' ids (for parameter sharing).
+            agent_key (str): Calculate actions for specified agent.
+            rnn_hidden (Optional[Dict[str, List[np.ndarray]]]): The hidden variables of the RNN.
+
+        Returns:
+            rnn_hidden_new (Optional[Dict[str, List[Tensor]]]): The new hidden variables of the RNN.
+            q_eval: The evaluations of Q^policy.
+        """
+        rnn_hidden_new, q_eval = deepcopy(rnn_hidden), {}
+        agent_list = self.model_keys if agent_key is None else [agent_key]
+        batch_size = joint_observation.shape[0]
+        seq_len = joint_observation.shape[1] if self.use_rnn else 1
+
+        critic_rep_in = tf.concat([joint_observation, joint_actions], axis=-1)
+        if self.use_rnn:
+            outputs = {k: self.critic_representation[k](critic_rep_in, *rnn_hidden[k]) for k in agent_list}
+            rnn_hidden_new.update({k: (outputs[k]['rnn_hidden'], outputs[k]['rnn_cell']) for k in agent_list})
+        else:
+            outputs = {k: self.critic_representation[k](critic_rep_in) for k in agent_list}
+
+        bs = batch_size * self.n_agents if self.use_parameter_sharing else batch_size
+
+        for key in agent_list:
+            if self.use_parameter_sharing:
+                if self.use_rnn:
+                    joint_rep_out = tf.repeat(tf.expand_dims(outputs[key]['state'], axis=1), self.n_agents, axis=1)
+                    joint_rep_out = tf.reshape(joint_rep_out, [bs, seq_len, -1])
+                else:
+                    joint_rep_out = tf.repeat(tf.expand_dims(outputs[key]['state'], 1), self.n_agents, axis=1)
+                    joint_rep_out = tf.reshape(joint_rep_out, [bs, -1])
+                critic_in = tf.concat([joint_rep_out, agent_ids], axis=-1)
+            else:
+                if self.use_rnn:
+                    joint_rep_out = tf.reshape(outputs[key]['state'], [bs, seq_len, -1])
+                else:
+                    joint_rep_out = tf.reshape(outputs[key]['state'], [bs, -1])
+                critic_in = joint_rep_out
+            q_eval[key] = self.critic[key](critic_in)
+        return rnn_hidden_new, q_eval
+
+    @tf.function
+    def Qtarget(self, joint_observation: np.ndarray, joint_actions: np.ndarray,
+                agent_ids: np.ndarray = None, agent_key: str = None,
+                rnn_hidden: Optional[Dict[str, List[np.ndarray]]] = None):
+        """
+        Returns the Q^target of next observations and actions pairs.
+
+        Parameters:
+            joint_observation (np.ndarray): The joint observations of the team.
+            joint_actions (np.ndarray): The joint actions of the team.
+            agent_ids (Dict[np.ndarray]): The agents' ids (for parameter sharing).
+            agent_key (str): Calculate actions for specified agent.
+            rnn_hidden (Optional[Dict[str, List[np.ndarray]]]): The hidden variables of the RNN.
+
+        Returns:
+            rnn_hidden_new (Optional[Dict[str, List[Tensor]]]): The new hidden variables of the RNN.
+            q_target: The evaluations of Q^target.
+        """
+        rnn_hidden_new, q_target = deepcopy(rnn_hidden), {}
+        agent_list = self.model_keys if agent_key is None else [agent_key]
+        batch_size = joint_observation.shape[0]
+        seq_len = joint_observation.shape[1] if self.use_rnn else 1
+
+        critic_rep_in = tf.concat([joint_observation, joint_actions], axis=-1)
+        if self.use_rnn:
+            outputs = {k: self.target_critic_representation[k](critic_rep_in, *rnn_hidden[k]) for k in agent_list}
+            rnn_hidden_new.update({k: (outputs[k]['rnn_hidden'], outputs[k]['rnn_cell']) for k in agent_list})
+        else:
+            outputs = {k: self.target_critic_representation[k](critic_rep_in) for k in agent_list}
+
+        bs = batch_size * self.n_agents if self.use_parameter_sharing else batch_size
+
+        for key in agent_list:
+            if self.use_parameter_sharing:
+                if self.use_rnn:
+                    joint_rep_out = tf.repeat(tf.expand_dims(outputs[key]['state'], axis=1), self.n_agents, axis=1)
+                    joint_rep_out = tf.reshape(joint_rep_out, [bs, seq_len, -1])
+                else:
+                    joint_rep_out = tf.repeat(tf.expand_dims(outputs[key]['state'], axis=1), self.n_agents, axis=1)
+                    joint_rep_out = tf.reshape(joint_rep_out, [bs, -1])
+                critic_in = tf.concat([joint_rep_out, agent_ids], axis=-1)
+            else:
+                if self.use_rnn:
+                    joint_rep_out = tf.reshape(outputs[key]['state'], [bs, seq_len, -1])
+                else:
+                    joint_rep_out = tf.reshape(outputs[key]['state'], [bs, -1])
+                critic_in = joint_rep_out
+            q_target[key] = self.target_critic[key](critic_in)
+        return rnn_hidden_new, q_target
 
 
 class MATD3_Policy(Module):

@@ -19,9 +19,9 @@ class MATD3_Agents(MARLAgents):
         representation = REGISTRY_Representation[config.representation](*input_representation)
         input_policy = get_policy_in_marl(config, representation)
         policy = REGISTRY_Policy[config.policy](*input_policy)
-        lr_scheduler = [MyLinearLR(config.lr_a, start_factor=1.0, end_factor=0.5,
+        lr_scheduler = [MyLinearLR(config.learning_rate_actor, start_factor=1.0, end_factor=0.5,
                                    total_iters=get_total_iters(config.agent_name, config)),
-                        MyLinearLR(config.lr_c, start_factor=1.0, end_factor=0.5,
+                        MyLinearLR(config.learning_rate_critic, start_factor=1.0, end_factor=0.5,
                                    total_iters=get_total_iters(config.agent_name, config))]
         optimizer = [tk.optimizers.Adam(lr_scheduler[0]),
                      tk.optimizers.Adam(lr_scheduler[1])]

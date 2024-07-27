@@ -17,8 +17,8 @@ class MATD3_Learner(LearnerMAS):
                  policy: nn.Module):
         super(MATD3_Learner, self).__init__(config, model_keys, agent_keys, policy)
         self.optimizer = {
-            key: {'actor': torch.optim.Adam(self.policy.parameters_actor[key], self.config.lr_a, eps=1e-5),
-                  'critic': torch.optim.Adam(self.policy.parameters_critic[key], self.config.lr_c, eps=1e-5)}
+            key: {'actor': torch.optim.Adam(self.policy.parameters_actor[key], self.config.learning_rate_actor, eps=1e-5),
+                  'critic': torch.optim.Adam(self.policy.parameters_critic[key], self.config.learning_rate_critic, eps=1e-5)}
             for key in self.model_keys}
         self.scheduler = {
             key: {'actor': torch.optim.lr_scheduler.LinearLR(self.optimizer[key]['actor'], start_factor=1.0,
@@ -89,10 +89,10 @@ class MATD3_Learner(LearnerMAS):
             if self.scheduler[key]['critic'] is not None:
                 self.scheduler[key]['critic'].step()
 
-            lr_c = self.optimizer[key]['critic'].state_dict()['param_groups'][0]['lr']
+            learning_rate_critic = self.optimizer[key]['critic'].state_dict()['param_groups'][0]['lr']
 
             info.update({
-                f"{key}/learning_rate_critic": lr_c,
+                f"{key}/learning_rate_critic": learning_rate_critic,
                 f"{key}/loss_critic": loss_c.item(),
                 f"{key}/predictQ_A": q_eval_A[key].mean().item(),
                 f"{key}/predictQ_B": q_eval_B[key].mean().item()
@@ -120,10 +120,10 @@ class MATD3_Learner(LearnerMAS):
                 if self.scheduler[key]['actor'] is not None:
                     self.scheduler[key]['actor'].step()
 
-                lr_a = self.optimizer[key]['actor'].state_dict()['param_groups'][0]['lr']
+                learning_rate_actor = self.optimizer[key]['actor'].state_dict()['param_groups'][0]['lr']
 
                 info.update({
-                    f"{key}/learning_rate_actor": lr_a,
+                    f"{key}/learning_rate_actor": learning_rate_actor,
                     f"{key}/loss_actor": loss_a.item(),
                     f"{key}/q_policy": q_policy_i.mean().item(),
                 })
@@ -199,10 +199,10 @@ class MATD3_Learner(LearnerMAS):
             if self.scheduler[key]['critic'] is not None:
                 self.scheduler[key]['critic'].step()
 
-            lr_c = self.optimizer[key]['critic'].state_dict()['param_groups'][0]['lr']
+            learning_rate_critic = self.optimizer[key]['critic'].state_dict()['param_groups'][0]['lr']
 
             info.update({
-                f"{key}/learning_rate_critic": lr_c,
+                f"{key}/learning_rate_critic": learning_rate_critic,
                 f"{key}/loss_critic": loss_c.item(),
                 f"{key}/predictQ_A": q_eval_A[key].mean().item(),
                 f"{key}/predictQ_B": q_eval_B[key].mean().item()
@@ -232,10 +232,10 @@ class MATD3_Learner(LearnerMAS):
                 if self.scheduler[key]['actor'] is not None:
                     self.scheduler[key]['actor'].step()
 
-                lr_a = self.optimizer[key]['actor'].state_dict()['param_groups'][0]['lr']
+                learning_rate_actor = self.optimizer[key]['actor'].state_dict()['param_groups'][0]['lr']
 
                 info.update({
-                    f"{key}/learning_rate_actor": lr_a,
+                    f"{key}/learning_rate_actor": learning_rate_actor,
                     f"{key}/loss_actor": loss_a.item(),
                     f"{key}/q_policy": q_policy_i.mean().item(),
                 })

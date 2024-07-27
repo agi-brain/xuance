@@ -137,13 +137,13 @@ Source Code
                     policy = REGISTRY_Policy[self.args.policy](*input_policy)
 
                 if self.agent_name in ["DDPG", "TD3", "SAC", "SACDIS"]:
-                    actor_optimizer = torch.optim.Adam(policy.actor.parameters(), self.args.actor_learning_rate)
+                    actor_optimizer = torch.optim.Adam(policy.actor.parameters(), self.args.learning_rate_actor)
                     if self.agent_name == "TD3":
                         critic_optimizer = torch.optim.Adam(
                             itertools.chain(policy.criticA.parameters(), policy.criticB.parameters()),
-                            self.args.critic_learning_rate)
+                            self.args.learning_rate_critic)
                     else:
-                        critic_optimizer = torch.optim.Adam(policy.critic.parameters(), self.args.critic_learning_rate)
+                        critic_optimizer = torch.optim.Adam(policy.critic.parameters(), self.args.learning_rate_critic)
                     actor_lr_scheduler = torch.optim.lr_scheduler.LinearLR(actor_optimizer, start_factor=1.0, end_factor=0.25,
                                                                         total_iters=get_total_iters(self.agent_name,
                                                                                                     self.args))
@@ -274,14 +274,14 @@ Source Code
                     policy = REGISTRY_Policy[self.args.policy](*input_policy)
 
                 if self.agent_name in ["DDPG", "TD3", "SAC", "SACDIS"]:
-                    # actor_lr_scheduler = MyLinearLR(self.args.actor_learning_rate, start_factor=1.0, end_factor=0.25,
+                    # actor_lr_scheduler = MyLinearLR(self.args.learning_rate_actor, start_factor=1.0, end_factor=0.25,
                     #                                 total_iters=get_total_iters(self.agent_name, self.args))
-                    actor_lr_scheduler = tk.optimizers.schedules.ExponentialDecay(self.args.actor_learning_rate,
+                    actor_lr_scheduler = tk.optimizers.schedules.ExponentialDecay(self.args.learning_rate_actor,
                                                                                 decay_steps=1000, decay_rate=0.9)
                     actor_optimizer = tk.optimizers.Adam(actor_lr_scheduler)
-                    # critic_lr_scheduler = MyLinearLR(self.args.critic_learning_rate, start_factor=1.0, end_factor=0.25,
+                    # critic_lr_scheduler = MyLinearLR(self.args.learning_rate_critic, start_factor=1.0, end_factor=0.25,
                     #                                  total_iters=get_total_iters(self.agent_name, self.args))
-                    critic_lr_scheduler = tk.optimizers.schedules.ExponentialDecay(self.args.critic_learning_rate,
+                    critic_lr_scheduler = tk.optimizers.schedules.ExponentialDecay(self.args.learning_rate_critic,
                                                                                 decay_steps=1000, decay_rate=0.9)
                     critic_optimizer = tk.optimizers.Adam(critic_lr_scheduler)
                     self.agent = REGISTRY_Agent[self.agent_name](self.args, self.envs, policy,
@@ -413,10 +413,10 @@ Source Code
                     policy = REGISTRY_Policy[self.args.policy](*input_policy)
 
                 if self.agent_name in ["DDPG", "TD3", "SAC", "SACDIS"]:
-                    actor_lr_scheduler = lr_decay_model(learning_rate=self.args.actor_learning_rate,
+                    actor_lr_scheduler = lr_decay_model(learning_rate=self.args.learning_rate_actor,
                                                         decay_rate=0.5,
                                                         decay_steps=get_total_iters(self.agent_name, self.args))
-                    critic_lr_scheduler = lr_decay_model(learning_rate=self.args.critic_learning_rate,
+                    critic_lr_scheduler = lr_decay_model(learning_rate=self.args.learning_rate_critic,
                                                         decay_rate=0.5,
                                                         decay_steps=get_total_iters(self.agent_name, self.args))
                     actor_optimizer = Adam(policy.actor.trainable_params(), actor_lr_scheduler, eps=1e-5)

@@ -75,12 +75,12 @@ class ISAC_Learner(LearnerMAS):
 
             self.policy.soft_update(self.tau)
 
-            lr_a = self.optimizer['actor']._decayed_lr(tf.float32)
-            lr_c = self.optimizer['critic']._decayed_lr(tf.float32)
+            learning_rate_actor = self.optimizer['actor']._decayed_lr(tf.float32)
+            learning_rate_critic = self.optimizer['critic']._decayed_lr(tf.float32)
 
             info = {
-                "learning_rate_actor": lr_a.numpy(),
-                "learning_rate_critic": lr_c.numpy(),
+                "learning_rate_actor": learning_rate_actor.numpy(),
+                "learning_rate_critic": learning_rate_critic.numpy(),
                 "loss_actor": loss_a.numpy(),
                 "loss_critic": loss_c.numpy(),
                 "predictQ": tf.math.reduce_mean(q_eval).numpy()

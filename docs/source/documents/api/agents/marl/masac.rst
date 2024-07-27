@@ -156,8 +156,8 @@ Source Code
                     representation = REGISTRY_Representation[config.representation](*input_representation)
                     input_policy = get_policy_in_marl(config, representation, config.agent_keys)
                     policy = REGISTRY_Policy[config.policy](*input_policy)
-                    optimizer = [torch.optim.Adam(policy.parameters_actor, config.lr_a, eps=1e-5),
-                                torch.optim.Adam(policy.parameters_critic, config.lr_c, eps=1e-5)]
+                    optimizer = [torch.optim.Adam(policy.parameters_actor, config.learning_rate_actor, eps=1e-5),
+                                torch.optim.Adam(policy.parameters_critic, config.learning_rate_critic, eps=1e-5)]
                     scheduler = [torch.optim.lr_scheduler.LinearLR(optimizer[0], start_factor=1.0, end_factor=0.5,
                                                                 total_iters=get_total_iters(config.agent_name, config)),
                                 torch.optim.lr_scheduler.LinearLR(optimizer[1], start_factor=1.0, end_factor=0.5,
@@ -219,9 +219,9 @@ Source Code
                     representation = REGISTRY_Representation[config.representation](*input_representation)
                     input_policy = get_policy_in_marl(config, representation, config.agent_keys)
                     policy = REGISTRY_Policy[config.policy](*input_policy)
-                    lr_scheduler = [MyLinearLR(config.lr_a, start_factor=1.0, end_factor=0.5,
+                    lr_scheduler = [MyLinearLR(config.learning_rate_actor, start_factor=1.0, end_factor=0.5,
                                                total_iters=get_total_iters(config.agent_name, config)),
-                                    MyLinearLR(config.lr_c, start_factor=1.0, end_factor=0.5,
+                                    MyLinearLR(config.learning_rate_critic, start_factor=1.0, end_factor=0.5,
                                                total_iters=get_total_iters(config.agent_name, config))]
                     optimizer = [tk.optimizers.Adam(lr_scheduler[0]),
                                  tk.optimizers.Adam(lr_scheduler[1])]
@@ -281,9 +281,9 @@ Source Code
                     representation = REGISTRY_Representation[config.representation](*input_representation)
                     input_policy = get_policy_in_marl(config, representation, config.agent_keys)
                     policy = REGISTRY_Policy[config.policy](*input_policy)
-                    scheduler = [lr_decay_model(learning_rate=config.lr_a, decay_rate=0.5,
+                    scheduler = [lr_decay_model(learning_rate=config.learning_rate_actor, decay_rate=0.5,
                                                 decay_steps=get_total_iters(config.agent_name, config)),
-                                 lr_decay_model(learning_rate=config.lr_c, decay_rate=0.5,
+                                 lr_decay_model(learning_rate=config.learning_rate_critic, decay_rate=0.5,
                                                 decay_steps=get_total_iters(config.agent_name, config))]
                     optimizer = [Adam(policy.parameters_actor, scheduler[0], eps=1e-5),
                                  Adam(policy.parameters_critic, scheduler[1], eps=1e-5)]

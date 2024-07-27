@@ -22,11 +22,11 @@ class SAC_Learner(Learner):
                  target_entropy: Optional[float] = None):
         super(SAC_Learner, self).__init__(config, policy)
         if ("macOS" in self.os_name) and ("arm" in self.os_name):  # For macOS with Apple's M-series chips.
-            self.optimizer = {'actor': tk.optimizers.legacy.Adam(config.actor_learning_rate),
-                              'critic': tk.optimizers.legacy.Adam(config.critic_learning_rate)}
+            self.optimizer = {'actor': tk.optimizers.legacy.Adam(config.learning_rate_actor),
+                              'critic': tk.optimizers.legacy.Adam(config.learning_rate_critic)}
         else:
-            self.optimizer = {'actor': tk.optimizers.Adam(config.actor_learning_rate),
-                              'critic': tk.optimizers.Adam(config.critic_learning_rate)}
+            self.optimizer = {'actor': tk.optimizers.Adam(config.learning_rate_actor),
+                              'critic': tk.optimizers.Adam(config.learning_rate_critic)}
         self.tau = config.tau
         self.gamma = config.gamma
         self.alpha = config.alpha
@@ -36,9 +36,9 @@ class SAC_Learner(Learner):
             self.alpha_layer = AlphaLayer(policy.action_dim)
             self.alpha = tf.exp(self.alpha_layer.log_alpha)
             if ("macOS" in self.os_name) and ("arm" in self.os_name):  # For macOS with Apple's M-series chips.
-                self.alpha_optimizer = tk.optimizers.legacy.Adam(config.actor_learning_rate)
+                self.alpha_optimizer = tk.optimizers.legacy.Adam(config.learning_rate_actor)
             else:
-                self.alpha_optimizer = tk.optimizers.Adam(config.actor_learning_rate)
+                self.alpha_optimizer = tk.optimizers.Adam(config.learning_rate_actor)
 
     @tf.function
     def learn_actor(self, obs_batch):

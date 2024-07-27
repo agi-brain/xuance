@@ -23,8 +23,8 @@ seed: 1069
 parallels: 5
 buffer_size: 500000
 batch_size: 32  # 64
-actor_learning_rate: 0.001
-critic_learning_rate: 0.001
+learning_rate_actor: 0.001
+learning_rate_critic: 0.001
 gamma: 0.99
 alpha: 0.01
 use_automatic_entropy_tuning: False

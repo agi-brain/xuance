@@ -27,9 +27,9 @@ seed: 6782
 parallels: 4  # number of environments
 buffer_size: 200000
 batch_size: 256
-actor_learning_rate: 0.001
+learning_rate_actor: 0.001
 actor_update_delay: 2
-critic_learning_rate: 0.001
+learning_rate_critic: 0.001
 gamma: 0.99
 tau: 0.005
 

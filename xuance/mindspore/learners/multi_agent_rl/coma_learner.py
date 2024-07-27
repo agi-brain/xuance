@@ -109,12 +109,12 @@ class COMA_Learner(LearnerMAS):
         loss_coma = self.actor_train(obs, IDs, epsilon, actions, agent_mask, advantages)
 
         # Logger
-        lr_a = self.scheduler['actor'](self.iterations).asnumpy()
-        lr_c = self.scheduler['critic'](self.iterations).asnumpy()
+        learning_rate_actor = self.scheduler['actor'](self.iterations).asnumpy()
+        learning_rate_critic = self.scheduler['critic'](self.iterations).asnumpy()
 
         info = {
-            "learning_rate_actor": lr_a,
-            "learning_rate_critic": lr_c,
+            "learning_rate_actor": learning_rate_actor,
+            "learning_rate_critic": learning_rate_critic,
             "actor_loss": loss_coma.asnumpy(),
             "critic_loss": loss_c.asnumpy(),
         }

@@ -17,8 +17,8 @@ seed: 1
 parallels: 10
 buffer_size: 200000
 batch_size: 256
-actor_learning_rate: 0.001
-critic_learning_rate: 0.001
+learning_rate_actor: 0.001
+learning_rate_critic: 0.001
 gamma: 0.98
 tau: 0.005
 

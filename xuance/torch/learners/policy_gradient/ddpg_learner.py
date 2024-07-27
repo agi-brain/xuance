@@ -15,8 +15,8 @@ class DDPG_Learner(Learner):
                  policy: nn.Module):
         super(DDPG_Learner, self).__init__(config, policy)
         self.optimizer = {
-            'actor': torch.optim.Adam(self.policy.actor_parameters, self.config.actor_learning_rate),
-            'critic': torch.optim.Adam(self.policy.critic_parameters, self.config.critic_learning_rate)}
+            'actor': torch.optim.Adam(self.policy.actor_parameters, self.config.learning_rate_actor),
+            'critic': torch.optim.Adam(self.policy.critic_parameters, self.config.learning_rate_critic)}
         self.scheduler = {
             'actor': torch.optim.lr_scheduler.LinearLR(self.optimizer['actor'], start_factor=1.0, end_factor=0.25,
                                                        total_iters=self.config.running_steps),

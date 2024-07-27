@@ -372,10 +372,10 @@ Source Code
                             for (grad, var) in zip(gradients, self.policy.trainable_variables)
                             if grad is not None
                         ])
-                    lr_critic = self.optimizer._decayed_lr(tf.float32)
+                    learning_rate_criticritic = self.optimizer._decayed_lr(tf.float32)
                     info = {
                         "critic-loss": loss.numpy(),
-                        "lr_critic": lr_critic.numpy()
+                        "learning_rate_criticritic": learning_rate_criticritic.numpy()
                     }
                     self.value_iterations += 1
                     return info
@@ -400,11 +400,11 @@ Source Code
                             for (grad, var) in zip(gradients, self.policy.trainable_variables)
                             if grad is not None
                         ])
-                    lr_aux = self.optimizer._decayed_lr(tf.float32)
+                    learning_rate_actorux = self.optimizer._decayed_lr(tf.float32)
 
                     info = {
                         "kl-loss": loss.numpy(),
-                        "lr_aux": lr_aux.numpy()
+                        "learning_rate_actorux": learning_rate_actorux.numpy()
                     }
                     return info
 

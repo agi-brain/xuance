@@ -38,9 +38,9 @@ class SACDIS_Learner(Learner):
             self.alpha_layer = AlphaLayer(1)
             self.alpha = tf.exp(self.alpha_layer.log_alpha)
             if ("macOS" in self.os_name) and ("arm" in self.os_name):  # For macOS with Apple's M-series chips.
-                self.alpha_optimizer = tk.optimizers.legacy.Adam(config.actor_learning_rate)
+                self.alpha_optimizer = tk.optimizers.legacy.Adam(config.learning_rate_actor)
             else:
-                self.alpha_optimizer = tk.optimizers.Adam(config.actor_learning_rate)\
+                self.alpha_optimizer = tk.optimizers.Adam(config.learning_rate_actor)\
 
     @tf.function
     def learn_actor(self, obs_batch):

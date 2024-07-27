@@ -84,12 +84,12 @@ class MADDPG_Learner(LearnerMAS):
         loss_c = self.critic_train(obs, actions, IDs, agent_mask, q_target)
         self.policy.soft_update(self.tau)
 
-        lr_a = self.scheduler['actor'](self.iterations).asnumpy()
-        lr_c = self.scheduler['critic'](self.iterations).asnumpy()
+        learning_rate_actor = self.scheduler['actor'](self.iterations).asnumpy()
+        learning_rate_critic = self.scheduler['critic'](self.iterations).asnumpy()
 
         info = {
-            "learning_rate_actor": lr_a,
-            "learning_rate_critic": lr_c,
+            "learning_rate_actor": learning_rate_actor,
+            "learning_rate_critic": learning_rate_critic,
             "loss_actor": loss_a.asnumpy(),
             "loss_critic": loss_c.asnumpy()
         }

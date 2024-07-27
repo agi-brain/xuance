@@ -14,12 +14,12 @@ class DDPG_Learner(Learner):
                  policy: Module):
         super(DDPG_Learner, self).__init__(config, policy)
         if ("macOS" in self.os_name) and ("arm" in self.os_name):  # For macOS with Apple's M-series chips.
-            self.optimizer = {'actor': tk.optimizers.legacy.Adam(config.actor_learning_rate),
-                              'critic': tk.optimizers.legacy.Adam(config.critic_learning_rate)}
+            self.optimizer = {'actor': tk.optimizers.legacy.Adam(config.learning_rate_actor),
+                              'critic': tk.optimizers.legacy.Adam(config.learning_rate_critic)}
 
         else:
-            self.optimizer = {'actor': tk.optimizers.Adam(config.actor_learning_rate),
-                              'critic': tk.optimizers.Adam(config.critic_learning_rate)}
+            self.optimizer = {'actor': tk.optimizers.Adam(config.learning_rate_actor),
+                              'critic': tk.optimizers.Adam(config.learning_rate_critic)}
         self.tau = config.tau
         self.gamma = config.gamma
 

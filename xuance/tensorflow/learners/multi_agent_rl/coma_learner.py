@@ -87,12 +87,12 @@ class COMA_Learner(LearnerMAS):
                 ])
 
             # Logger
-            lr_a = self.optimizer['actor']._decayed_lr(tf.float32)
-            lr_c = self.optimizer['critic']._decayed_lr(tf.float32)
+            learning_rate_actor = self.optimizer['actor']._decayed_lr(tf.float32)
+            learning_rate_critic = self.optimizer['critic']._decayed_lr(tf.float32)
 
             info = {
-                "learning_rate_actor": lr_a.numpy(),
-                "learning_rate_critic": lr_c.numpy(),
+                "learning_rate_actor": learning_rate_actor.numpy(),
+                "learning_rate_critic": learning_rate_critic.numpy(),
                 "actor_loss": loss_coma.numpy(),
                 "critic_loss": loss_c.numpy(),
                 "advantage": tf.math.reduce_mean(advantages).numpy()

@@ -93,12 +93,12 @@ class COMA_Learner(LearnerMAS):
             self.scheduler['actor'].step()
 
         # Logger
-        lr_a = self.optimizer['actor'].state_dict()['param_groups'][0]['lr']
-        lr_c = self.optimizer['critic'].state_dict()['param_groups'][0]['lr']
+        learning_rate_actor = self.optimizer['actor'].state_dict()['param_groups'][0]['lr']
+        learning_rate_critic = self.optimizer['critic'].state_dict()['param_groups'][0]['lr']
 
         info = {
-            "learning_rate_actor": lr_a,
-            "learning_rate_critic": lr_c,
+            "learning_rate_actor": learning_rate_actor,
+            "learning_rate_critic": learning_rate_critic,
             "actor_loss": loss_coma.item(),
             "critic_loss": loss_c.item(),
             "advantage": advantages.mean().item(),
@@ -177,12 +177,12 @@ class COMA_Learner(LearnerMAS):
             self.scheduler['actor'].step()
 
         # Logger
-        lr_a = self.optimizer['actor'].state_dict()['param_groups'][0]['lr']
-        lr_c = self.optimizer['critic'].state_dict()['param_groups'][0]['lr']
+        learning_rate_actor = self.optimizer['actor'].state_dict()['param_groups'][0]['lr']
+        learning_rate_critic = self.optimizer['critic'].state_dict()['param_groups'][0]['lr']
 
         info = {
-            "learning_rate_actor": lr_a,
-            "learning_rate_critic": lr_c,
+            "learning_rate_actor": learning_rate_actor,
+            "learning_rate_critic": learning_rate_critic,
             "actor_loss": loss_coma.item(),
             "critic_loss": loss_c.item(),
             "advantage": advantages.mean().item(),

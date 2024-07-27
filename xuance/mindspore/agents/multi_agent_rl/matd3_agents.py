@@ -11,11 +11,11 @@ class MATD3_Agents(MARLAgents):
         representation = REGISTRY_Representation[config.representation](*input_representation)
         input_policy = get_policy_in_marl(config, representation)
         policy = REGISTRY_Policy[config.policy](*input_policy)
-        scheduler = [lr_decay_model(learning_rate=config.lr_a, decay_rate=0.5,
+        scheduler = [lr_decay_model(learning_rate=config.learning_rate_actor, decay_rate=0.5,
                                     decay_steps=get_total_iters(config.agent_name, config)),
-                     lr_decay_model(learning_rate=config.lr_c, decay_rate=0.5,
+                     lr_decay_model(learning_rate=config.learning_rate_critic, decay_rate=0.5,
                                     decay_steps=get_total_iters(config.agent_name, config)),
-                     lr_decay_model(learning_rate=config.lr_c, decay_rate=0.5,
+                     lr_decay_model(learning_rate=config.learning_rate_critic, decay_rate=0.5,
                                     decay_steps=get_total_iters(config.agent_name, config))]
         optimizer = [Adam(policy.parameters_actor, scheduler[0], eps=1e-5),
                      Adam(policy.parameters_critic_A, scheduler[1], eps=1e-5),

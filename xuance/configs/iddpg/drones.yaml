@@ -25,8 +25,8 @@ seed: 1
 parallels: 10
 buffer_size: 1000000
 batch_size: 1024
-lr_a: 0.001  # learning rate for actor
-lr_c: 0.001  # learning rate for critic
+learning_rate_actor: 0.001  # learning rate for actor
+learning_rate_critic: 0.001  # learning rate for critic
 gamma: 0.99  # discount factor
 tau: 0.005  # soft update for target networks
 

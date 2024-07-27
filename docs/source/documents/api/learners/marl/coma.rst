@@ -243,12 +243,12 @@ Source Code
                     self.scheduler['actor'].step()
 
                 # Logger
-                lr_a = self.optimizer['actor'].state_dict()['param_groups'][0]['lr']
-                lr_c = self.optimizer['critic'].state_dict()['param_groups'][0]['lr']
+                learning_rate_actor = self.optimizer['actor'].state_dict()['param_groups'][0]['lr']
+                learning_rate_critic = self.optimizer['critic'].state_dict()['param_groups'][0]['lr']
 
                 info = {
-                    "learning_rate_actor": lr_a,
-                    "learning_rate_critic": lr_c,
+                    "learning_rate_actor": learning_rate_actor,
+                    "learning_rate_critic": learning_rate_critic,
                     "actor_loss": loss_coma.item(),
                     "critic_loss": loss_c.item(),
                     "advantage": advantages.mean().item(),
@@ -327,12 +327,12 @@ Source Code
                     self.scheduler['actor'].step()
 
                 # Logger
-                lr_a = self.optimizer['actor'].state_dict()['param_groups'][0]['lr']
-                lr_c = self.optimizer['critic'].state_dict()['param_groups'][0]['lr']
+                learning_rate_actor = self.optimizer['actor'].state_dict()['param_groups'][0]['lr']
+                learning_rate_critic = self.optimizer['critic'].state_dict()['param_groups'][0]['lr']
 
                 info = {
-                    "learning_rate_actor": lr_a,
-                    "learning_rate_critic": lr_c,
+                    "learning_rate_actor": learning_rate_actor,
+                    "learning_rate_critic": learning_rate_critic,
                     "actor_loss": loss_coma.item(),
                     "critic_loss": loss_c.item(),
                     "advantage": advantages.mean().item(),
@@ -435,12 +435,12 @@ Source Code
                         ])
 
                     # Logger
-                    lr_a = self.optimizer['actor']._decayed_lr(tf.float32)
-                    lr_c = self.optimizer['critic']._decayed_lr(tf.float32)
+                    learning_rate_actor = self.optimizer['actor']._decayed_lr(tf.float32)
+                    learning_rate_critic = self.optimizer['critic']._decayed_lr(tf.float32)
 
                     info = {
-                        "learning_rate_actor": lr_a.numpy(),
-                        "learning_rate_critic": lr_c.numpy(),
+                        "learning_rate_actor": learning_rate_actor.numpy(),
+                        "learning_rate_critic": learning_rate_critic.numpy(),
                         "actor_loss": loss_coma.numpy(),
                         "critic_loss": loss_c.numpy(),
                         "advantage": tf.math.reduce_mean(advantages).numpy()
@@ -565,12 +565,12 @@ Source Code
                 loss_coma = self.actor_train(obs, IDs, epsilon, actions, agent_mask, advantages)
 
                 # Logger
-                lr_a = self.scheduler['actor'](self.iterations).asnumpy()
-                lr_c = self.scheduler['critic'](self.iterations).asnumpy()
+                learning_rate_actor = self.scheduler['actor'](self.iterations).asnumpy()
+                learning_rate_critic = self.scheduler['critic'](self.iterations).asnumpy()
 
                 info = {
-                    "learning_rate_actor": lr_a,
-                    "learning_rate_critic": lr_c,
+                    "learning_rate_actor": learning_rate_actor,
+                    "learning_rate_critic": learning_rate_critic,
                     "actor_loss": loss_coma.asnumpy(),
                     "critic_loss": loss_c.asnumpy(),
                 }

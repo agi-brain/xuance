@@ -88,8 +88,8 @@ Here is an example of configurations for DDPG algorithm, named "ddpg_new_env.yam
     parallels: 4  # number of environments
     buffer_size: 200000  # replay buffer size
     batch_size: 100
-    actor_learning_rate: 0.001
-    critic_learning_rate: 0.001
+    learning_rate_actor: 0.001
+    learning_rate_critic: 0.001
     gamma: 0.99
     tau: 0.005
 
