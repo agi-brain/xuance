@@ -906,92 +906,196 @@ class MADDPG_Policy(Independent_DDPG_Policy):
         return rnn_hidden_new, q_target
 
 
-class MATD3_Policy(Module):
+class MATD3_Policy(MADDPG_Policy, Module):
     def __init__(self,
-                 action_space: Space,
+                 action_space: Optional[Dict[str, Box]],
                  n_agents: int,
-                 representation: Optional[Basic_Identical],
+                 actor_representation: Optional[Dict[str, Module]],
+                 critic_representation: Optional[Dict[str, Module]],
                  actor_hidden_size: Sequence[int],
                  critic_hidden_size: Sequence[int],
                  normalize: Optional[tk.layers.Layer] = None,
-                 initializer: Optional[tk.initializers.Initializer] = None,
+                 initialize: Optional[tk.initializers.Initializer] = None,
                  activation: Optional[tk.layers.Layer] = None,
-                 device: str = "cpu:0"
-                 ):
-        super(MATD3_Policy, self).__init__()
-        self.action_dim = action_space.shape[0]
+                 activation_action: Optional[tk.layers.Layer] = None,
+                 **kwargs):
+        Module.__init__(self)
+        self.action_space = action_space
         self.n_agents = n_agents
-        self.representation = representation
-        self.obs_dim = self.representation.input_shapes[0]
-        self.representation_info_shape = self.representation.output_shapes
+        self.use_parameter_sharing = kwargs['use_parameter_sharing']
+        self.model_keys = kwargs['model_keys']
+        self.actor_representation_info_shape = {key: actor_representation[key].output_shapes for key in self.model_keys}
+        self.critic_representation_info_shape = {key: critic_representation[key].output_shapes for key in
+                                                 self.model_keys}
+        self.lstm = True if kwargs["rnn"] == "LSTM" else False
+        self.use_rnn = True if kwargs["use_rnn"] else False
 
-        self.actor_net = ActorNet(representation.output_shapes['state'][0], n_agents, self.action_dim,
-                                  actor_hidden_size, normalize, initializer, activation, device)
-        self.target_actor_net = ActorNet(representation.output_shapes['state'][0], n_agents, self.action_dim,
-                                         actor_hidden_size, normalize, initializer, activation, device)
-        self.critic_net_A = CriticNet(False, representation.output_shapes['state'][0], n_agents, self.action_dim,
-                                      critic_hidden_size, normalize, initializer, activation, device)
-        self.critic_net_B = CriticNet(False, representation.output_shapes['state'][0], n_agents, self.action_dim,
-                                      critic_hidden_size, normalize, initializer, activation, device)
-        self.target_critic_net_A = CriticNet(False, representation.output_shapes['state'][0], n_agents, self.action_dim,
-                                             critic_hidden_size, normalize, initializer, activation, device)
-        self.target_critic_net_B = CriticNet(False, representation.output_shapes['state'][0], n_agents, self.action_dim,
-                                             critic_hidden_size, normalize, initializer, activation, device)
-        self.soft_update(tau=1.0)
-        self.critic_parameters = self.critic_net_A.trainable_variables + self.critic_net_B.trainable_variables
+        self.actor_representation = actor_representation
+        self.critic_A_representation = critic_representation
+        self.critic_B_representation = deepcopy(critic_representation)
+        self.target_actor_representation = deepcopy(self.actor_representation)
+        self.target_critic_A_representation = deepcopy(self.critic_A_representation)
+        self.target_critic_B_representation = deepcopy(self.critic_B_representation)
+
+        self.actor, self.target_actor, self.critic_A, self.critic_B = {}, {}, {}, {}
+        self.target_critic_A, self.target_critic_B = {}, {}
+        for key in self.model_keys:
+            dim_action = self.action_space[key].shape[-1]
+            dim_actor_in, dim_actor_out, dim_critic_in = self._get_actor_critic_input(
+                self.actor_representation[key].output_shapes['state'][0], dim_action,
+                self.critic_A_representation[key].output_shapes['state'][0], n_agents)
+
+            self.actor[key] = ActorNet(dim_actor_in, dim_actor_out, actor_hidden_size,
+                                       normalize, initialize, activation, activation_action)
+            self.target_actor[key] = ActorNet(dim_actor_in, dim_actor_out, actor_hidden_size,
+                                              normalize, initialize, activation, activation_action)
+            self.critic_A[key] = CriticNet(dim_critic_in, critic_hidden_size, normalize, initialize, activation)
+            self.critic_B[key] = CriticNet(dim_critic_in, critic_hidden_size, normalize, initialize, activation)
+            self.target_critic_A[key] = CriticNet(dim_critic_in, critic_hidden_size, normalize, initialize, activation)
+            self.target_critic_B[key] = CriticNet(dim_critic_in, critic_hidden_size, normalize, initialize, activation)
+            self.target_actor[key].set_weights(self.actor[key].get_weights())
+            self.target_critic_A[key].set_weights(self.critic_A[key].get_weights())
+            self.target_critic_B[key].set_weights(self.critic_B[key].get_weights())
+
+    def parameters_critic(self, key):
+        return self.critic_A_representation[key].trainable_variables + self.critic_A[key].trainable_variables + \
+               self.critic_B_representation[key].trainable_variables + self.critic_B[key].trainable_variables
 
     @tf.function
-    def call(self, inputs: Union[np.ndarray, dict], **kwargs):
-        observations = tf.reshape(inputs['obs'], [-1, self.obs_dim])
-        IDs = tf.reshape(inputs['ids'], [-1, self.n_agents])
-        outputs = self.representation(observations)
-        actor_in = tf.concat([outputs['state'], IDs], axis=-1)
-        act = self.actor_net(actor_in)
-        return outputs, tf.reshape(act, [-1, self.n_agents, self.action_dim])
+    def Qpolicy(self, joint_observation: np.ndarray, joint_actions: np.ndarray,
+                agent_ids: np.ndarray = None, agent_key: str = None,
+                rnn_hidden: Optional[Dict[str, List[np.ndarray]]] = None):
+        """
+        Returns Q^policy of current observations and actions pairs.
 
-    def critic(self, observation: Tensor, actions: Tensor, agent_ids: Tensor):
-        bs = observation.shape[0]
-        outputs_n = tf.reshape(self.representation(observation)['state'], (bs, 1, -1))
-        outputs_n = tf.tile(outputs_n, (1, self.n_agents, 1))
-        actions_n = tf.tile(tf.reshape(actions, (bs, 1, -1)), (1, self.n_agents, 1))
-        critic_in = tf.concat([outputs_n, actions_n, agent_ids], axis=-1)
-        qa = self.critic_net_A(critic_in)
-        qb = self.critic_net_B(critic_in)
-        return outputs_n, (qa + qb) / 2.0
+        Parameters:
+            joint_observation (np.ndarray): The joint observations of the team.
+            joint_actions (np.ndarray): The joint actions of the team.
+            agent_ids (Dict[np.ndarray]): The agents' ids (for parameter sharing).
+            agent_key (str): Calculate actions for specified agent.
+            rnn_hidden (Optional[Dict[str, List[np.ndarray]]]): The hidden variables of the RNN.
 
-    def target_critic(self, observation: Tensor, actions: Tensor, agent_ids: Tensor):
-        bs = observation.shape[0]
-        outputs_n = tf.reshape(self.representation(observation)['state'], (bs, 1, -1))
-        outputs_n = tf.tile(outputs_n, (1, self.n_agents, 1))
-        actions_n = tf.tile(tf.reshape(actions, (bs, 1, -1)), (1, self.n_agents, 1))
-        critic_in = tf.concat([outputs_n, actions_n, agent_ids], axis=-1)
-        qa = self.target_critic_net_A(critic_in)
-        qb = self.target_critic_net_B(critic_in)
-        min_q = tf.math.minimum(qa, qb)
-        return outputs_n, min_q
+        Returns:
+            q_eval_A (Dict[Tensor]): The evaluations of Q^policy calculated by critic A.
+            q_eval_B (Dict[Tensor]): The evaluations of Q^policy calculated by critic B.
+            q_eval (Dict[Tensor]): The evaluations of Q^policy averaged by critic A and Critic B.
+        """
+        q_eval, q_eval_A, q_eval_B = {}, {}, {}
+        agent_list = self.model_keys if agent_key is None else [agent_key]
+        batch_size = joint_observation.shape[0]
+        seq_len = joint_observation.shape[1] if self.use_rnn else 1
 
-    def Qaction(self, observation: Tensor, actions: Tensor, agent_ids: Tensor):
-        bs = observation.shape[0]
-        outputs_n = tf.reshape(self.representation(observation)['state'], (bs, 1, -1))
-        outputs_n = tf.tile(outputs_n, (1, self.n_agents, 1))
-        actions_n = tf.tile(tf.reshape(actions, (bs, 1, -1)), (1, self.n_agents, 1))
-        critic_in = tf.concat([outputs_n, actions_n, agent_ids], axis=-1)
-        qa = self.critic_net_A(critic_in)
-        qb = self.critic_net_B(critic_in)
-        return outputs_n, tf.concat((qa, qb), axis=-1)
+        critic_rep_in = tf.concat([joint_observation, joint_actions], axis=-1)
+        if self.use_rnn:
+            outputs_A = {k: self.critic_A_representation[k](critic_rep_in, *rnn_hidden[k]) for k in agent_list}
+            outputs_B = {k: self.critic_B_representation[k](critic_rep_in, *rnn_hidden[k]) for k in agent_list}
+        else:
+            outputs_A = {k: self.critic_A_representation[k](critic_rep_in) for k in agent_list}
+            outputs_B = {k: self.critic_B_representation[k](critic_rep_in) for k in agent_list}
 
-    def target_actor(self, inputs: Union[np.ndarray, dict]):
-        observations = tf.reshape(inputs['obs'], [-1, self.obs_dim])
-        IDs = tf.reshape(inputs['ids'], [-1, self.n_agents])
-        outputs = self.representation(observations)
-        actor_in = tf.concat([outputs['state'], IDs], axis=-1)
-        act = self.target_actor_net(actor_in)
-        return tf.reshape(act, [-1, self.n_agents, self.action_dim])
+        bs = batch_size * self.n_agents if self.use_parameter_sharing else batch_size
 
+        for key in agent_list:
+            if self.use_parameter_sharing:
+                joint_rep_out_A = tf.repeat(tf.expand_dims(outputs_A[key]['state'], axis=1), self.n_agents, axis=1)
+                joint_rep_out_B = tf.repeat(tf.expand_dims(outputs_B[key]['state'], axis=1), self.n_agents, axis=1)
+                if self.use_rnn:
+                    joint_rep_out_A = tf.reshape(joint_rep_out_A, [bs, seq_len, -1])
+                    joint_rep_out_B = tf.reshape(joint_rep_out_B, [bs, seq_len, -1])
+                else:
+                    joint_rep_out_A = tf.reshape(joint_rep_out_A, [bs, -1])
+                    joint_rep_out_B = tf.reshape(joint_rep_out_B, [bs, -1])
+                critic_in_A = tf.concat([joint_rep_out_A, agent_ids], axis=-1)
+                critic_in_B = tf.concat([joint_rep_out_B, agent_ids], axis=-1)
+            else:
+                if self.use_rnn:
+                    joint_rep_out_A = tf.reshape(outputs_A[key]['state'], [bs, seq_len, -1])
+                    joint_rep_out_B = tf.reshape(outputs_B[key]['state'], [bs, seq_len, -1])
+                else:
+                    joint_rep_out_A = tf.reshape(outputs_A[key]['state'], [bs, -1])
+                    joint_rep_out_B = tf.reshape(outputs_B[key]['state'], [bs, -1])
+                critic_in_A = joint_rep_out_A
+                critic_in_B = joint_rep_out_B
+            q_eval_A[key] = self.critic_A[key](critic_in_A)
+            q_eval_B[key] = self.critic_B[key](critic_in_B)
+            q_eval[key] = (q_eval_A[key] + q_eval_B[key]) / 2.0
+
+        return q_eval_A, q_eval_B, q_eval
+
+    @tf.function
+    def Qtarget(self, joint_observation: np.ndarray, joint_actions: np.ndarray,
+                agent_ids: np.ndarray = None, agent_key: str = None,
+                rnn_hidden: Optional[Dict[str, List[np.ndarray]]] = None):
+        """
+        Returns the Q^target of next observations and actions pairs.
+
+        Parameters:
+            joint_observation (np.ndarray): The joint observations of the team.
+            joint_actions (np.ndarray): The joint actions of the team.
+            agent_ids (Dict[np.ndarray]): The agents' ids (for parameter sharing).
+            agent_key (str): Calculate actions for specified agent.
+            rnn_hidden (Optional[Dict[str, List[np.ndarray]]]): The hidden variables of the RNN.
+
+        Returns:
+            q_target (Dict[Tensor]): The evaluations of Q^target.
+        """
+        q_target = {}
+        agent_list = self.model_keys if agent_key is None else [agent_key]
+        batch_size = joint_observation.shape[0]
+        seq_len = joint_observation.shape[1] if self.use_rnn else 1
+
+        critic_rep_in = tf.concat([joint_observation, joint_actions], axis=-1)
+        if self.use_rnn:
+            outputs_A = {k: self.target_critic_A_representation[k](critic_rep_in, *rnn_hidden[k]) for k in agent_list}
+            outputs_B = {k: self.target_critic_B_representation[k](critic_rep_in, *rnn_hidden[k]) for k in agent_list}
+        else:
+            outputs_A = {k: self.target_critic_A_representation[k](critic_rep_in) for k in agent_list}
+            outputs_B = {k: self.target_critic_B_representation[k](critic_rep_in) for k in agent_list}
+
+        bs = batch_size * self.n_agents if self.use_parameter_sharing else batch_size
+
+        for key in agent_list:
+            if self.use_parameter_sharing:
+                joint_rep_out_A = tf.repeat(tf.expand_dims(outputs_A[key]['state'], axis=1), self.n_agents, axis=1)
+                joint_rep_out_B = tf.repeat(tf.expand_dims(outputs_B[key]['state'], axis=1), self.n_agents, axis=1)
+                if self.use_rnn:
+                    joint_rep_out_A = tf.reshape(joint_rep_out_A, [bs, seq_len, -1])
+                    joint_rep_out_B = tf.reshape(joint_rep_out_B, [bs, seq_len, -1])
+                else:
+                    joint_rep_out_A = tf.reshape(joint_rep_out_A, [bs, -1])
+                    joint_rep_out_B = tf.reshape(joint_rep_out_B, [bs, -1])
+                critic_in_A = tf.concat([joint_rep_out_A, agent_ids], axis=-1)
+                critic_in_B = tf.concat([joint_rep_out_B, agent_ids], axis=-1)
+            else:
+                if self.use_rnn:
+                    joint_rep_out_A = tf.reshape(outputs_A[key]['state'], [bs, seq_len, -1])
+                    joint_rep_out_B = tf.reshape(outputs_B[key]['state'], [bs, seq_len, -1])
+                else:
+                    joint_rep_out_A = tf.reshape(outputs_A[key]['state'], [bs, -1])
+                    joint_rep_out_B = tf.reshape(outputs_B[key]['state'], [bs, -1])
+                critic_in_A = joint_rep_out_A
+                critic_in_B = joint_rep_out_B
+            q_target_A = self.target_critic_A[key](critic_in_A)
+            q_target_B = self.target_critic_B[key](critic_in_B)
+            q_target[key] = tf.math.minimum(q_target_A, q_target_B)
+
+        return q_target
+
+    @tf.function
     def soft_update(self, tau=0.005):
-        for ep, tp in zip(self.actor_net.variables, self.target_actor_net.variables):
-            tp.assign((1 - tau) * tp + tau * ep)
-        for ep, tp in zip(self.critic_net_A.variables, self.target_critic_net_A.variables):
-            tp.assign((1 - tau) * tp + tau * ep)
-        for ep, tp in zip(self.critic_net_B.variables, self.target_critic_net_B.variables):
-            tp.assign((1 - tau) * tp + tau * ep)
+        for key in self.model_keys:
+            for ep, tp in zip(self.actor_representation[key].variables,
+                              self.target_actor_representation[key].variables):
+                tp.assign((1 - tau) * tp + tau * ep)
+            for ep, tp in zip(self.critic_A_representation[key].variables,
+                              self.target_critic_A_representation[key].variables):
+                tp.assign((1 - tau) * tp + tau * ep)
+            for ep, tp in zip(self.critic_B_representation[key].variables,
+                              self.target_critic_B_representation[key].variables):
+                tp.assign((1 - tau) * tp + tau * ep)
+            for ep, tp in zip(self.actor[key].variables, self.target_actor[key].variables):
+                tp.assign((1 - tau) * tp + tau * ep)
+            for ep, tp in zip(self.critic_A[key].variables, self.target_critic_A[key].variables):
+                tp.assign((1 - tau) * tp + tau * ep)
+            for ep, tp in zip(self.critic_B[key].variables, self.target_critic_B[key].variables):
+                tp.assign((1 - tau) * tp + tau * ep)
