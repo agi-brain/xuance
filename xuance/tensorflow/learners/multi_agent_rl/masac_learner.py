@@ -49,20 +49,20 @@ class MASAC_Learner(ISAC_Learner):
             actions_joint = np.stack(itemgetter(*self.agent_keys)(actions), axis=-1).reshape(batch_size, -1)
 
         # Update critic
-        with tf.GradientTape() as tape:
-            _, actions_next, log_pi_next = self.policy(observation=obs_next, agent_ids=IDs)
-            if self.use_parameter_sharing:
-                key = self.model_keys[0]
-                actions_next_joint = tf.reshape(tf.reshape(actions_next[key], [batch_size, self.n_agents, -1]),
-                                                [batch_size, -1])
-            else:
-                actions_next_joint = tf.reshape(tf.concat(itemgetter(*self.model_keys)(actions_next), -1),
-                                                [batch_size, -1])
-            _, _, action_q_1, action_q_2 = self.policy.Qaction(joint_observation=obs_joint, joint_actions=actions_joint,
-                                                               agent_ids=IDs)
-            _, _, target_q = self.policy.Qtarget(joint_observation=next_obs_joint, joint_actions=actions_next_joint,
-                                                 agent_ids=IDs)
-            for key in self.model_keys:
+        _, actions_next, log_pi_next = self.policy(observation=obs_next, agent_ids=IDs)
+        if self.use_parameter_sharing:
+            key = self.model_keys[0]
+            actions_next_joint = tf.reshape(tf.reshape(actions_next[key], [batch_size, self.n_agents, -1]),
+                                            [batch_size, -1])
+        else:
+            actions_next_joint = tf.reshape(tf.concat(itemgetter(*self.model_keys)(actions_next), -1),
+                                            [batch_size, -1])
+        _, _, action_q_1, action_q_2 = self.policy.Qaction(joint_observation=obs_joint, joint_actions=actions_joint,
+                                                           agent_ids=IDs)
+        _, _, target_q = self.policy.Qtarget(joint_observation=next_obs_joint, joint_actions=actions_next_joint,
+                                             agent_ids=IDs)
+        for key in self.model_keys:
+            with tf.GradientTape() as tape:
                 mask_values = agent_mask[key]
                 action_q_1_i = tf.reshape(action_q_1[key], [bs])
                 action_q_2_i = tf.reshape(action_q_2[key], [bs])
@@ -91,10 +91,10 @@ class MASAC_Learner(ISAC_Learner):
                 info.update({f"{key}/loss_critic": loss_c.numpy()})
 
         # Update actor
-        with tf.GradientTape() as tape:
-            _, actions_eval, log_pi_eval = self.policy(observation=obs, agent_ids=IDs)
-            log_pi_eval_i = {}
-            for key in self.model_keys:
+        _, actions_eval, log_pi_eval = self.policy(observation=obs, agent_ids=IDs)
+        log_pi_eval_i = {}
+        for key in self.model_keys:
+            with tf.GradientTape() as tape:
                 mask_values = agent_mask[key]
                 if self.use_parameter_sharing:
                     actions_eval_joint = tf.reshape(tf.reshape(actions_eval[key], [batch_size, self.n_agents, -1]),
@@ -130,8 +130,8 @@ class MASAC_Learner(ISAC_Learner):
 
         # Automatically entropy tuning
         if self.use_automatic_entropy_tuning:
-            with tf.GradientTape() as tape:
-                for key in self.model_keys:
+            for key in self.model_keys:
+                with tf.GradientTape() as tape:
                     alpha_loss = -tf.math.reduce_mean(
                         self.alpha_layer[key].log_alpha.value() * (log_pi_eval_i[key] + self.target_entropy[key]))
                     gradients = tape.gradient(alpha_loss, self.alpha_layer[key].trainable_variables)

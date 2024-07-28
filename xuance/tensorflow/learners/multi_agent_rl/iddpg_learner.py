@@ -53,11 +53,11 @@ class IDDPG_Learner(LearnerMAS):
             bs = batch_size
 
         # updata critic
-        with tf.GradientTape() as tape:
+        for key in self.model_keys:
             _, q_eval = self.policy.Qpolicy(observation=obs, actions=actions, agent_ids=IDs)
             _, next_actions = self.policy.Atarget(next_observation=obs_next, agent_ids=IDs)
             _, q_next = self.policy.Qtarget(next_observation=obs_next, next_actions=next_actions, agent_ids=IDs)
-            for key in self.model_keys:
+            with tf.GradientTape() as tape:
                 mask_values = agent_mask[key]
                 q_eval_a = tf.reshape(q_eval[key], [bs])
                 q_next_i = tf.reshape(q_next[key], [bs])
@@ -82,10 +82,10 @@ class IDDPG_Learner(LearnerMAS):
                              f"{key}/predictQ": tf.math.reduce_mean(q_eval[key]).numpy()})
 
         # update actor
-        with tf.GradientTape() as tape:
-            _, actions_eval = self.policy(observation=obs, agent_ids=IDs)
-            _, q_policy = self.policy.Qpolicy(observation=obs, actions=actions_eval, agent_ids=IDs)
-            for key in self.model_keys:
+        _, actions_eval = self.policy(observation=obs, agent_ids=IDs)
+        _, q_policy = self.policy.Qpolicy(observation=obs, actions=actions_eval, agent_ids=IDs)
+        for key in self.model_keys:
+            with tf.GradientTape() as tape:
                 mask_values = agent_mask[key]
                 q_policy_i = tf.reshape(q_policy[key], [bs])
                 loss_a = -tf.reduce_sum(q_policy_i * mask_values) / tf.reduce_sum(mask_values)

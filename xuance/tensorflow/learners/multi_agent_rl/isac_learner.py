@@ -65,12 +65,12 @@ class ISAC_Learner(LearnerMAS):
             bs = batch_size
 
         # Update critic
-        with tf.GradientTape() as tape:
-            _, actions_next, log_pi_next = self.policy(observation=obs_next, agent_ids=IDs)
-            _, _, action_q_1, action_q_2 = self.policy.Qaction(observation=obs, actions=actions, agent_ids=IDs)
-            _, _, next_q = self.policy.Qtarget(next_observation=obs_next, next_actions=actions_next, agent_ids=IDs)
+        _, actions_next, log_pi_next = self.policy(observation=obs_next, agent_ids=IDs)
+        _, _, action_q_1, action_q_2 = self.policy.Qaction(observation=obs, actions=actions, agent_ids=IDs)
+        _, _, next_q = self.policy.Qtarget(next_observation=obs_next, next_actions=actions_next, agent_ids=IDs)
 
-            for key in self.model_keys:
+        for key in self.model_keys:
+            with tf.GradientTape() as tape:
                 mask_values = agent_mask[key]
                 action_q_1_i, action_q_2_i = tf.reshape(action_q_1[key], [bs]), tf.reshape(action_q_2[key], [bs])
                 log_pi_next_eval = tf.reshape(log_pi_next[key], [bs])
@@ -99,10 +99,10 @@ class ISAC_Learner(LearnerMAS):
                 info.update({f"{key}/loss_critic": loss_c.numpy()})
 
         # Update actor
-        with tf.GradientTape() as tape:
-            _, actions_eval, log_pi_eval = self.policy(observation=obs, agent_ids=IDs)
-            log_pi_eval_i = {}
-            for key in self.model_keys:
+        _, actions_eval, log_pi_eval = self.policy(observation=obs, agent_ids=IDs)
+        log_pi_eval_i = {}
+        for key in self.model_keys:
+            with tf.GradientTape() as tape:
                 _, _, policy_q_1, policy_q_2 = self.policy.Qpolicy(observation=obs, actions=actions_eval, agent_ids=IDs,
                                                                    agent_key=key)
                 log_pi_eval_i[key] = tf.reshape(log_pi_eval[key], [bs])
@@ -128,8 +128,8 @@ class ISAC_Learner(LearnerMAS):
 
         # Automatic entropy tuning
         if self.use_automatic_entropy_tuning:
-            with tf.GradientTape() as tape:
-                for key in self.model_keys:
+            for key in self.model_keys:
+                with tf.GradientTape() as tape:
                     alpha_loss = -tf.math.reduce_mean(self.alpha_layer[key].log_alpha.value() * (log_pi_eval_i[key] + self.target_entropy[key]))
                     gradients = tape.gradient(alpha_loss, self.alpha_layer[key].trainable_variables)
                     self.alpha_optimizer[key].apply_gradients([

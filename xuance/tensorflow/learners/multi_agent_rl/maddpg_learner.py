@@ -64,19 +64,19 @@ class MADDPG_Learner(LearnerMAS):
             actions_joint = np.concat(itemgetter(*self.agent_keys)(actions), axis=-1).reshape(batch_size, -1)
 
         # update critic
-        with tf.GradientTape() as tape:
-            _, actions_next = self.policy.Atarget(next_observation=obs_next, agent_ids=IDs)
-            if self.use_parameter_sharing:
-                key = self.model_keys[0]
-                actions_next_joint = tf.reshape(tf.reshape(actions_next[key], [batch_size, self.n_agents, -1]),
-                                                [batch_size, -1])
-            else:
-                actions_next_joint = tf.reshape(tf.concat(itemgetter(*self.model_keys)(actions_next), -1),
-                                                [batch_size, -1])
-            _, q_eval = self.policy.Qpolicy(joint_observation=obs_joint, joint_actions=actions_joint, agent_ids=IDs)
-            _, q_next = self.policy.Qtarget(joint_observation=next_obs_joint, joint_actions=actions_next_joint,
-                                            agent_ids=IDs)
-            for key in self.model_keys:
+        _, actions_next = self.policy.Atarget(next_observation=obs_next, agent_ids=IDs)
+        if self.use_parameter_sharing:
+            key = self.model_keys[0]
+            actions_next_joint = tf.reshape(tf.reshape(actions_next[key], [batch_size, self.n_agents, -1]),
+                                            [batch_size, -1])
+        else:
+            actions_next_joint = tf.reshape(tf.concat(itemgetter(*self.model_keys)(actions_next), -1),
+                                            [batch_size, -1])
+        _, q_eval = self.policy.Qpolicy(joint_observation=obs_joint, joint_actions=actions_joint, agent_ids=IDs)
+        _, q_next = self.policy.Qtarget(joint_observation=next_obs_joint, joint_actions=actions_next_joint,
+                                        agent_ids=IDs)
+        for key in self.model_keys:
+            with tf.GradientTape() as tape:
                 mask_values = agent_mask[key]
                 q_eval_a = tf.reshape(q_eval[key], [bs])
                 q_next_i = tf.reshape(q_next[key], [bs])
@@ -101,9 +101,9 @@ class MADDPG_Learner(LearnerMAS):
                              f"{key}/predictQ": tf.math.reduce_mean(q_eval[key]).numpy()})
 
         # Update actor
-        with tf.GradientTape() as tape:
-            _, actions_eval = self.policy(observation=obs, agent_ids=IDs)
-            for key in self.model_keys:
+        _, actions_eval = self.policy(observation=obs, agent_ids=IDs)
+        for key in self.model_keys:
+            with tf.GradientTape() as tape:
                 mask_values = agent_mask[key]
                 if self.use_parameter_sharing:
                     act_eval = tf.reshape(tf.reshape(actions_eval[key], [batch_size, self.n_agents, -1]), [batch_size, -1])
