@@ -48,7 +48,8 @@ setup(
         ],
         "atari": ["atari-py==0.2.9",  # for Atari
                   "ale-py==0.7.5"],
-        "box2d": ["box2d-py==2.3.5"],  # for box2d
+        "box2d": ["swig==4.2.1",
+                  "box2d-py==2.3.5"],  # for box2d
     },
     install_requires=[
         "numpy>=1.21.6",

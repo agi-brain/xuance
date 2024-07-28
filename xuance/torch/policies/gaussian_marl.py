@@ -1,12 +1,11 @@
 import torch
 import numpy as np
 from copy import deepcopy
-from xuance.common import Sequence, Optional, Callable, Union, Dict, List
 from gym.spaces import Box
-from xuance.torch.policies import CriticNet
+from xuance.common import Sequence, Optional, Callable, Union, Dict, List
 from xuance.torch.utils import ModuleType
 from xuance.torch import Tensor, Module, ModuleDict
-from xuance.torch.policies.core import GaussianActorNet, GaussianActorNet_SAC
+from .core import GaussianActorNet, GaussianActorNet_SAC, CriticNet
 
 
 class MAAC_Policy(Module):
@@ -190,8 +189,8 @@ class Basic_ISAC_Policy(Module):
                                                    normalize, initialize, activation, activation_action, device)
             self.critic_1[key] = CriticNet(dim_critic_in, critic_hidden_size, normalize, initialize, activation, device)
             self.critic_2[key] = CriticNet(dim_critic_in, critic_hidden_size, normalize, initialize, activation, device)
-            self.target_critic_1 = deepcopy(self.critic_1)
-            self.target_critic_2 = deepcopy(self.critic_2)
+        self.target_critic_1 = deepcopy(self.critic_1)
+        self.target_critic_2 = deepcopy(self.critic_2)
 
     @property
     def parameters_actor(self):
@@ -363,9 +362,9 @@ class Basic_ISAC_Policy(Module):
         Returns the evaluated Q-values for current observation-action pairs.
 
         Parameters:
-            observation: The original observation.
-            actions: The selected actions.
-            agent_ids (Dict[Tensor]): The agents' ids (for parameter sharing).
+            observation (Union[np.ndarray, dict]): The original observation.
+            actions (Tensor): The selected actions.
+            agent_ids (Tensor): The agents' ids (for parameter sharing).
             agent_key (str): Calculate actions for specified agent.
             rnn_hidden_critic_1 (Optional[Dict[str, List[Tensor]]]): The RNN hidden states for critic_1 representation.
             rnn_hidden_critic_2 (Optional[Dict[str, List[Tensor]]]): The RNN hidden states for critic_2 representation.

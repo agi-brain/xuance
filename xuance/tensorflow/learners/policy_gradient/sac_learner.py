@@ -10,9 +10,9 @@ from xuance.tensorflow.learners import Learner
 
 
 class AlphaLayer(Module):
-    def __init__(self, action_dim):
+    def __init__(self):
         super(AlphaLayer, self).__init__()
-        self.log_alpha = self.add_weight(name="log_of_alpha", shape=(action_dim,), initializer=tf.zeros, trainable=True)
+        self.log_alpha = self.add_weight(name="log_of_alpha", shape=[], initializer=tf.zeros, trainable=True)
 
 
 class SAC_Learner(Learner):
@@ -33,7 +33,7 @@ class SAC_Learner(Learner):
         self.use_automatic_entropy_tuning = config.use_automatic_entropy_tuning
         if self.use_automatic_entropy_tuning:
             self.target_entropy = target_entropy
-            self.alpha_layer = AlphaLayer(policy.action_dim)
+            self.alpha_layer = AlphaLayer()
             self.alpha = tf.exp(self.alpha_layer.log_alpha)
             if ("macOS" in self.os_name) and ("arm" in self.os_name):  # For macOS with Apple's M-series chips.
                 self.alpha_optimizer = tk.optimizers.legacy.Adam(config.learning_rate_actor)

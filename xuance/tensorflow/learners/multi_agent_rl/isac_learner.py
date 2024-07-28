@@ -28,16 +28,17 @@ class ISAC_Learner(LearnerMAS):
                 for key in self.model_keys}
         self.gamma = config.gamma
         self.tau = config.tau
-        self.alpha = config.alpha
+        self.alpha = {key: config.alpha for key in self.model_keys}
         self.use_automatic_entropy_tuning = config.use_automatic_entropy_tuning
         if self.use_automatic_entropy_tuning:
-            self.target_entropy = -policy.action_space[self.agent_keys[0]].shape[-1]
-            self.alpha_layer = AlphaLayer(policy.action_dim)
-            self.alpha = tf.exp(self.alpha_layer.log_alpha)
+            self.target_entropy = {key: -policy.action_space[key].shape[-1] for key in self.model_keys}
+            self.alpha_layer = {key: AlphaLayer() for key in self.model_keys}
+            self.alpha = {key: tf.exp(self.alpha_layer[key].log_alpha) for key in self.model_keys}
             if ("macOS" in self.os_name) and ("arm" in self.os_name):  # For macOS with Apple's M-series chips.
-                self.alpha_optimizer = tk.optimizers.legacy.Adam(config.learning_rate_actor)
+                self.alpha_optimizer = {key: tk.optimizers.legacy.Adam(config.learning_rate_actor)
+                                        for key in self.model_keys}
             else:
-                self.alpha_optimizer = tk.optimizers.Adam(config.learning_rate_actor)
+                self.alpha_optimizer = {key: tk.optimizers.Adam(config.learning_rate_actor) for key in self.model_keys}
 
     def update(self, sample):
         self.iterations += 1
@@ -71,24 +72,25 @@ class ISAC_Learner(LearnerMAS):
 
             for key in self.model_keys:
                 mask_values = agent_mask[key]
-                action_q_1_i, action_q_2_i = action_q_1[key].reshape(bs), action_q_2[key].reshape(bs)
-                log_pi_next_eval = log_pi_next[key].reshape(bs)
-                next_q_i = next_q[key].reshape(bs)
-                target_value = next_q_i - self.alpha * log_pi_next_eval
+                action_q_1_i, action_q_2_i = tf.reshape(action_q_1[key], [bs]), tf.reshape(action_q_2[key], [bs])
+                log_pi_next_eval = tf.reshape(log_pi_next[key], [bs])
+                next_q_i = tf.reshape(next_q[key], [bs])
+                target_value = next_q_i - self.alpha[key] * log_pi_next_eval
                 backup = rewards[key] + (1 - terminals[key]) * self.gamma * target_value
-                td_error_1, td_error_2 = action_q_1_i - backup.detach(), action_q_2_i - backup.detach()
+                backup = tf.stop_gradient(backup)
+                td_error_1, td_error_2 = action_q_1_i - backup, action_q_2_i - backup
                 td_error_1 *= mask_values
                 td_error_2 *= mask_values
-                loss_c = ((td_error_1 ** 2).sum() + (td_error_2 ** 2).sum()) / mask_values.sum()
+                loss_c = (tf.reduce_sum(td_error_1 ** 2) + tf.reduce_sum(td_error_2 ** 2)) / tf.reduce_sum(mask_values)
                 gradients = tape.gradient(loss_c, self.policy.parameters_critic(key))
                 if self.use_grad_clip:
-                    self.optimizer['critic'].apply_gradients([
+                    self.optimizer[key]['critic'].apply_gradients([
                         (tf.clip_by_norm(grad, self.grad_clip_norm), var)
                         for (grad, var) in zip(gradients, self.policy.parameters_critic(key))
                         if grad is not None
                     ])
                 else:
-                    self.optimizer['critic'].apply_gradients([
+                    self.optimizer[key]['critic'].apply_gradients([
                         (grad, var)
                         for (grad, var) in zip(gradients, self.policy.parameters_critic(key))
                         if grad is not None
@@ -99,12 +101,13 @@ class ISAC_Learner(LearnerMAS):
         # Update actor
         with tf.GradientTape() as tape:
             _, actions_eval, log_pi_eval = self.policy(observation=obs, agent_ids=IDs)
+            log_pi_eval_i = {}
             for key in self.model_keys:
                 _, _, policy_q_1, policy_q_2 = self.policy.Qpolicy(observation=obs, actions=actions_eval, agent_ids=IDs,
                                                                    agent_key=key)
-                log_pi_eval_i = log_pi_eval[key].reshape(bs)
-                policy_q = tf.reshape(tf.math.minimum(policy_q_1[key], policy_q_2[key]), bs)
-                loss_a = tf.reduce_sum((self.alpha * log_pi_eval_i - policy_q) * mask_values) / tf.reduce_sum(
+                log_pi_eval_i[key] = tf.reshape(log_pi_eval[key], [bs])
+                policy_q = tf.reshape(tf.math.minimum(policy_q_1[key], policy_q_2[key]), [bs])
+                loss_a = tf.reduce_sum((self.alpha[key] * log_pi_eval_i[key] - policy_q) * mask_values) / tf.reduce_sum(
                     mask_values)
                 gradients = tape.gradient(loss_a, self.policy.parameters_actor(key))
                 if self.use_grad_clip:
@@ -120,22 +123,27 @@ class ISAC_Learner(LearnerMAS):
                         if grad is not None
                     ])
 
-                info.update({f"{key}/loss_actor": loss_a.item(),
-                             f"{key}/predictQ": policy_q.mean().item()})
+                info.update({f"{key}/loss_actor": loss_a.numpy(),
+                             f"{key}/predictQ": tf.math.reduce_mean(policy_q).numpy()})
 
         # automatic entropy tuning
         if self.use_automatic_entropy_tuning:
             with tf.GradientTape() as tape:
-                alpha_loss = -(self.log_alpha * (log_pi_eval_i + self.target_entropy).detach()).mean()
-                gradients = tape.gradient(alpha_loss, self.alpha_layer.trainable_variables)
-                self.alpha_optimizer.apply_gradients([
-                    (grad, var)
-                    for (grad, var) in zip(gradients, self.alpha_layer.trainable_variables)
-                    if grad is not None
-                ])
+                for key in self.model_keys:
+                    alpha_loss = -tf.math.reduce_mean(self.alpha_layer[key].log_alpha.value() * (log_pi_eval_i[key] + self.target_entropy[key]))
+                    gradients = tape.gradient(alpha_loss, self.alpha_layer[key].trainable_variables)
+                    self.alpha_optimizer[key].apply_gradients([
+                        (grad, var)
+                        for (grad, var) in zip(gradients, self.alpha_layer[key].trainable_variables)
+                        if grad is not None
+                    ])
+                    self.alpha[key] = tf.math.exp(self.alpha_layer[key].log_alpha)
+                    info.update({f"{key}/alpha_loss": alpha_loss.numpy(),
+                                 f"{key}/alpha": self.alpha[key].numpy()})
         else:
-            alpha_loss = 0
-        info.update({"alpha_loss": alpha_loss.numpy(),
-                     "alpha": self.alpha.numpy()})
+            for key in self.model_keys:
+                info.update({f"{key}/alpha_loss": 0.0,
+                             f"{key}/alpha": self.alpha[key]})
+
         self.policy.soft_update(self.tau)
         return info

@@ -1,10 +1,10 @@
-import torch
 from argparse import Namespace
 from xuance.common import List, Optional
 from xuance.environment import DummyVecMultiAgentEnv
-from xuance.torch.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
-from xuance.torch.policies import REGISTRY_Policy
-from xuance.torch.agents import OffPolicyMARLAgents
+from xuance.tensorflow import tf
+from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
+from xuance.tensorflow.policies import REGISTRY_Policy
+from xuance.tensorflow.agents import OffPolicyMARLAgents
 
 
 class ISAC_Agents(OffPolicyMARLAgents):
@@ -82,11 +82,11 @@ class ISAC_Agents(OffPolicyMARLAgents):
 
         if self.use_parameter_sharing:
             key = self.model_keys[0]
-            actions[key] = actions[key].reshape(batch_size, self.n_agents, -1).cpu().detach().numpy()
+            actions[key] = tf.reshape(actions[key], [batch_size, self.n_agents, -1]).numpy()
             actions_dict = [{k: actions[key][e, i] for i, k in enumerate(self.agent_keys)} for e in range(batch_size)]
         else:
             for key in self.agent_keys:
-                actions[key] = actions[key].reshape(batch_size, -1).cpu().detach().numpy()
+                actions[key] = tf.reshape(actions[key], [batch_size, -1]).numpy()
             actions_dict = [{k: actions[k][i] for k in self.agent_keys} for i in range(batch_size)]
 
         return {"hidden_state": hidden_state, "actions": actions_dict}
