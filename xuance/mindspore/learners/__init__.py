@@ -49,3 +49,7 @@ from .multi_agent_rl.mappo_learner import MAPPO_Learner
 from .multi_agent_rl.isac_learner import ISAC_Learner
 from .multi_agent_rl.masac_learner import MASAC_Learner
 from .multi_agent_rl.matd3_learner import MATD3_Learner
+
+REGISTRY_Learners = {
+
+}
