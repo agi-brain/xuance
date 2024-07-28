@@ -2,31 +2,21 @@
 Multi-agent Soft Actor-critic (MASAC)
 Implementation: TensorFlow 2.X
 """
+import numpy as np
 from argparse import Namespace
-from xuance.common import Sequence
-from xuance.tensorflow import tf, tk, Module
-from xuance.tensorflow.learners import LearnerMAS
+from operator import itemgetter
+from xuance.common import List
+from xuance.tensorflow import tf, Module
+from xuance.tensorflow.learners.multi_agent_rl.isac_learner import ISAC_Learner
 
 
-class MASAC_Learner(LearnerMAS):
+class MASAC_Learner(ISAC_Learner):
     def __init__(self,
                  config: Namespace,
-                 policy: Module,
-                 optimizer: Sequence[tk.optimizers.Optimizer],
-                 device: str = "cpu:0",
-                 model_dir: str = "./",
-                 gamma: float = 0.99,
-                 sync_frequency: int = 100
-                 ):
-        self.gamma = gamma
-        self.tau = config.tau
-        self.alpha = config.alpha
-        self.sync_frequency = sync_frequency
-        super(MASAC_Learner, self).__init__(config, policy, optimizer, device, model_dir)
-        self.optimizer = {
-            'actor': optimizer[0],
-            'critic': optimizer[1]
-        }
+                 model_keys: List[str],
+                 agent_keys: List[str],
+                 policy: Module):
+        super(MASAC_Learner, self).__init__(config, model_keys, agent_keys, policy)
 
     def update(self, sample):
         self.iterations += 1
@@ -54,86 +44,109 @@ class MASAC_Learner(LearnerMAS):
             terminals[key] = terminals[key].reshape(batch_size * self.n_agents)
         else:
             bs = batch_size
-            obs_joint = torch.concat(itemgetter(*self.agent_keys)(obs), dim=-1).reshape(batch_size, -1)
-            next_obs_joint = torch.concat(itemgetter(*self.agent_keys)(obs_next), dim=-1).reshape(batch_size, -1)
-            actions_joint = torch.concat(itemgetter(*self.agent_keys)(actions), dim=-1).reshape(batch_size, -1)
+            obs_joint = np.stack(itemgetter(*self.agent_keys)(obs), axis=-1).reshape(batch_size, -1)
+            next_obs_joint = np.stack(itemgetter(*self.agent_keys)(obs_next), axis=-1).reshape(batch_size, -1)
+            actions_joint = np.stack(itemgetter(*self.agent_keys)(actions), axis=-1).reshape(batch_size, -1)
 
-        # train the model
-        _, actions_eval, log_pi_eval = self.policy(observation=obs, agent_ids=IDs)
-        _, actions_next, log_pi_next = self.policy(observation=obs_next, agent_ids=IDs)
-        if self.use_parameter_sharing:
-            key = self.model_keys[0]
-            actions_next_joint = actions_next[key].reshape(batch_size, self.n_agents, -1).reshape(batch_size, -1)
-        else:
-            actions_next_joint = torch.concat(itemgetter(*self.model_keys)(actions_next), -1).reshape(batch_size, -1)
-        _, _, action_q_1, action_q_2 = self.policy.Qaction(joint_observation=obs_joint, joint_actions=actions_joint,
-                                                           agent_ids=IDs)
-        _, _, target_q = self.policy.Qtarget(joint_observation=next_obs_joint, joint_actions=actions_next_joint,
-                                             agent_ids=IDs)
-        for key in self.model_keys:
-            mask_values = agent_mask[key]
-            # critic update
-            action_q_1_i = action_q_1[key].reshape(bs)
-            action_q_2_i = action_q_2[key].reshape(bs)
-            log_pi_next_eval = log_pi_next[key].reshape(bs)
-            target_value = target_q[key].reshape(bs) - self.alpha * log_pi_next_eval
-            backup = rewards[key] + (1 - terminals[key]) * self.gamma * target_value
-            td_error_1, td_error_2 = action_q_1_i - backup.detach(), action_q_2_i - backup.detach()
-            td_error_1 *= mask_values
-            td_error_2 *= mask_values
-            loss_c = ((td_error_1 ** 2).sum() + (td_error_2 ** 2).sum()) / mask_values.sum()
-            self.optimizer[key]['critic'].zero_grad()
-            loss_c.backward()
-            if self.use_grad_clip:
-                torch.nn.utils.clip_grad_norm_(self.policy.parameters_critic[key], self.grad_clip_norm)
-            self.optimizer[key]['critic'].step()
-            if self.scheduler[key]['critic'] is not None:
-                self.scheduler[key]['critic'].step()
-
-            # actor update
+        # Update critic
+        with tf.GradientTape() as tape:
+            _, actions_next, log_pi_next = self.policy(observation=obs_next, agent_ids=IDs)
             if self.use_parameter_sharing:
-                actions_eval_joint = actions_eval[key].reshape(batch_size, self.n_agents, -1).reshape(batch_size, -1)
+                key = self.model_keys[0]
+                actions_next_joint = tf.reshape(tf.reshape(actions_next[key], [batch_size, self.n_agents, -1]),
+                                                [batch_size, -1])
             else:
-                actions_eval_detach_others = {k: actions_eval[k] if k == key else actions_eval[k].detach()
-                                              for k in self.model_keys}
-                actions_eval_joint = torch.concat(itemgetter(*self.model_keys)(actions_eval_detach_others),
-                                                  dim=-1).reshape(batch_size, -1)
-            _, _, policy_q_1, policy_q_2 = self.policy.Qpolicy(joint_observation=obs_joint,
-                                                               joint_actions=actions_eval_joint,
-                                                               agent_ids=IDs, agent_key=key)
-            log_pi_eval_i = log_pi_eval[key].reshape(bs)
-            policy_q = torch.min(policy_q_1[key], policy_q_2[key]).reshape(bs)
-            loss_a = ((self.alpha * log_pi_eval_i - policy_q) * mask_values).sum() / mask_values.sum()
-            self.optimizer[key]['actor'].zero_grad()
-            loss_a.backward()
-            if self.use_grad_clip:
-                torch.nn.utils.clip_grad_norm_(self.policy.parameters_actor[key], self.grad_clip_norm)
-            self.optimizer[key]['actor'].step()
-            if self.scheduler[key]['actor'] is not None:
-                self.scheduler[key]['actor'].step()
+                actions_next_joint = tf.reshape(tf.concat(itemgetter(*self.model_keys)(actions_next), -1),
+                                                [batch_size, -1])
+            _, _, action_q_1, action_q_2 = self.policy.Qaction(joint_observation=obs_joint, joint_actions=actions_joint,
+                                                               agent_ids=IDs)
+            _, _, target_q = self.policy.Qtarget(joint_observation=next_obs_joint, joint_actions=actions_next_joint,
+                                                 agent_ids=IDs)
+            for key in self.model_keys:
+                mask_values = agent_mask[key]
+                action_q_1_i = tf.reshape(action_q_1[key], [bs])
+                action_q_2_i = tf.reshape(action_q_2[key], [bs])
+                log_pi_next_eval = tf.reshape(log_pi_next[key], [bs])
+                target_value = tf.reshape(target_q[key], [bs]) - self.alpha[key] * log_pi_next_eval
+                backup = rewards[key] + (1 - terminals[key]) * self.gamma * target_value
+                backup = tf.stop_gradient(backup)
+                td_error_1, td_error_2 = action_q_1_i - backup, action_q_2_i - backup
+                td_error_1 *= mask_values
+                td_error_2 *= mask_values
+                loss_c = (tf.reduce_sum(td_error_1 ** 2) + tf.reduce_sum(td_error_2 ** 2)) / tf.reduce_sum(mask_values)
+                gradients = tape.gradient(loss_c, self.policy.parameters_critic(key))
+                if self.use_grad_clip:
+                    self.optimizer[key]['critic'].apply_gradients([
+                        (tf.clip_by_norm(grad, self.grad_clip_norm), var)
+                        for (grad, var) in zip(gradients, self.policy.parameters_critic(key))
+                        if grad is not None
+                    ])
+                else:
+                    self.optimizer[key]['critic'].apply_gradients([
+                        (grad, var)
+                        for (grad, var) in zip(gradients, self.policy.parameters_critic(key))
+                        if grad is not None
+                    ])
 
-            # automatic entropy tuning
-            if self.use_automatic_entropy_tuning:
-                alpha_loss = -(self.log_alpha * (log_pi_eval_i + self.target_entropy).detach()).mean()
-                self.alpha_optimizer.zero_grad()
-                alpha_loss.backward()
-                self.alpha_optimizer.step()
-                self.alpha = self.log_alpha.exp()
-            else:
-                alpha_loss = 0
+                info.update({f"{key}/loss_critic": loss_c.numpy()})
 
-            learning_rate_actor = self.optimizer[key]['actor'].state_dict()['param_groups'][0]['lr']
-            learning_rate_critic = self.optimizer[key]['critic'].state_dict()['param_groups'][0]['lr']
+        # Update actor
+        with tf.GradientTape() as tape:
+            _, actions_eval, log_pi_eval = self.policy(observation=obs, agent_ids=IDs)
+            log_pi_eval_i = {}
+            for key in self.model_keys:
+                mask_values = agent_mask[key]
+                if self.use_parameter_sharing:
+                    actions_eval_joint = tf.reshape(tf.reshape(actions_eval[key], [batch_size, self.n_agents, -1]),
+                                                    [batch_size, -1])
+                else:
+                    actions_eval_detach_others = {k: actions_eval[k] if k == key else tf.stop_gradient(actions_eval[k])
+                                                  for k in self.model_keys}
+                    actions_eval_joint = tf.reshape(tf.concat(itemgetter(*self.model_keys)(actions_eval_detach_others),
+                                                              axis=-1), [batch_size, -1])
+                _, _, policy_q_1, policy_q_2 = self.policy.Qpolicy(joint_observation=obs_joint,
+                                                                   joint_actions=actions_eval_joint,
+                                                                   agent_ids=IDs, agent_key=key)
+                log_pi_eval_i[key] = tf.reshape(log_pi_eval[key], [bs])
+                policy_q = tf.reshape(tf.math.minimum(policy_q_1[key], policy_q_2[key]), [bs])
+                loss_a = tf.reduce_sum((self.alpha[key] * log_pi_eval_i[key] - policy_q) * mask_values) / tf.reduce_sum(
+                    mask_values)
+                gradients = tape.gradient(loss_a, self.policy.parameters_actor(key))
+                if self.use_grad_clip:
+                    self.optimizer[key]['actor'].apply_gradients([
+                        (tf.clip_by_norm(grad, self.grad_clip_norm), var)
+                        for (grad, var) in zip(gradients, self.policy.parameters_actor(key))
+                        if grad is not None
+                    ])
+                else:
+                    self.optimizer[key]['actor'].apply_gradients([
+                        (grad, var)
+                        for (grad, var) in zip(gradients, self.policy.parameters_actor(key))
+                        if grad is not None
+                    ])
 
-            info.update({
-                f"{key}/learning_rate_actor": learning_rate_actor,
-                f"{key}/learning_rate_critic": learning_rate_critic,
-                f"{key}/loss_actor": loss_a.item(),
-                f"{key}/loss_critic": loss_c.item(),
-                f"{key}/predictQ": policy_q.mean().item(),
-                f"{key}/alpha_loss": alpha_loss.item(),
-                f"{key}/alpha": self.alpha.item(),
-            })
+                info.update({f"{key}/loss_actor": loss_a.numpy(),
+                             f"{key}/predictQ": tf.math.reduce_mean(policy_q).numpy()})
+
+        # Automatically entropy tuning
+        if self.use_automatic_entropy_tuning:
+            with tf.GradientTape() as tape:
+                for key in self.model_keys:
+                    alpha_loss = -tf.math.reduce_mean(
+                        self.alpha_layer[key].log_alpha.value() * (log_pi_eval_i[key] + self.target_entropy[key]))
+                    gradients = tape.gradient(alpha_loss, self.alpha_layer[key].trainable_variables)
+                    self.alpha_optimizer[key].apply_gradients([
+                        (grad, var)
+                        for (grad, var) in zip(gradients, self.alpha_layer[key].trainable_variables)
+                        if grad is not None
+                    ])
+                    self.alpha[key] = tf.math.exp(self.alpha_layer[key].log_alpha)
+                    info.update({f"{key}/alpha_loss": alpha_loss.numpy(),
+                                 f"{key}/alpha": self.alpha[key].numpy()})
+        else:
+            for key in self.model_keys:
+                info.update({f"{key}/alpha_loss": 0.0,
+                             f"{key}/alpha": self.alpha[key]})
 
         self.policy.soft_update(self.tau)
         return info

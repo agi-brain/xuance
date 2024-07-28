@@ -66,7 +66,7 @@ class MASAC_Learner(ISAC_Learner):
             action_q_1_i = action_q_1[key].reshape(bs)
             action_q_2_i = action_q_2[key].reshape(bs)
             log_pi_next_eval = log_pi_next[key].reshape(bs)
-            target_value = target_q[key].reshape(bs) - self.alpha * log_pi_next_eval
+            target_value = target_q[key].reshape(bs) - self.alpha[key] * log_pi_next_eval
             backup = rewards[key] + (1 - terminals[key]) * self.gamma * target_value
             td_error_1, td_error_2 = action_q_1_i - backup.detach(), action_q_2_i - backup.detach()
             td_error_1 *= mask_values
@@ -93,7 +93,7 @@ class MASAC_Learner(ISAC_Learner):
                                                                agent_ids=IDs, agent_key=key)
             log_pi_eval_i = log_pi_eval[key].reshape(bs)
             policy_q = torch.min(policy_q_1[key], policy_q_2[key]).reshape(bs)
-            loss_a = ((self.alpha * log_pi_eval_i - policy_q) * mask_values).sum() / mask_values.sum()
+            loss_a = ((self.alpha[key] * log_pi_eval_i - policy_q) * mask_values).sum() / mask_values.sum()
             self.optimizer[key]['actor'].zero_grad()
             loss_a.backward()
             if self.use_grad_clip:
@@ -104,11 +104,11 @@ class MASAC_Learner(ISAC_Learner):
 
             # automatic entropy tuning
             if self.use_automatic_entropy_tuning:
-                alpha_loss = -(self.log_alpha * (log_pi_eval_i + self.target_entropy).detach()).mean()
-                self.alpha_optimizer.zero_grad()
+                alpha_loss = -(self.log_alpha[key] * (log_pi_eval_i + self.target_entropy[key]).detach()).mean()
+                self.alpha_optimizer[key].zero_grad()
                 alpha_loss.backward()
-                self.alpha_optimizer.step()
-                self.alpha = self.log_alpha.exp()
+                self.alpha_optimizer[key].step()
+                self.alpha[key] = self.log_alpha[key].exp()
             else:
                 alpha_loss = 0
 
@@ -122,7 +122,7 @@ class MASAC_Learner(ISAC_Learner):
                 f"{key}/loss_critic": loss_c.item(),
                 f"{key}/predictQ": policy_q.mean().item(),
                 f"{key}/alpha_loss": alpha_loss.item(),
-                f"{key}/alpha": self.alpha.item(),
+                f"{key}/alpha": self.alpha[key].item(),
             })
 
         self.policy.soft_update(self.tau)
@@ -189,7 +189,7 @@ class MASAC_Learner(ISAC_Learner):
             action_q_1_i = action_q_1[key].reshape(bs_rnn, seq_len)
             action_q_2_i = action_q_2[key].reshape(bs_rnn, seq_len)
             log_pi_next_eval = log_pi_eval[key][:, 1:].reshape(bs_rnn, seq_len)
-            target_value = target_q[key][:, 1:].reshape(bs_rnn, seq_len) - self.alpha * log_pi_next_eval
+            target_value = target_q[key][:, 1:].reshape(bs_rnn, seq_len) - self.alpha[key] * log_pi_next_eval
             backup = rewards[key] + (1 - terminals[key]) * self.gamma * target_value
             td_error_1, td_error_2 = action_q_1_i - backup.detach(), action_q_2_i - backup.detach()
             td_error_1 *= mask_values
@@ -218,7 +218,7 @@ class MASAC_Learner(ISAC_Learner):
                                                                rnn_hidden_critic_2=rnn_hidden_critic)
             log_pi_eval_i = log_pi_eval[key][:, :-1].reshape(bs_rnn, seq_len)
             policy_q = torch.min(policy_q_1[key], policy_q_2[key]).reshape(bs_rnn, seq_len)
-            loss_a = ((self.alpha * log_pi_eval_i - policy_q) * mask_values).sum() / mask_values.sum()
+            loss_a = ((self.alpha[key] * log_pi_eval_i - policy_q) * mask_values).sum() / mask_values.sum()
             self.optimizer[key]['actor'].zero_grad()
             loss_a.backward()
             if self.use_grad_clip:
@@ -229,11 +229,11 @@ class MASAC_Learner(ISAC_Learner):
 
             # automatic entropy tuning
             if self.use_automatic_entropy_tuning:
-                alpha_loss = -(self.log_alpha * (log_pi_eval_i + self.target_entropy).detach()).mean()
-                self.alpha_optimizer.zero_grad()
+                alpha_loss = -(self.log_alpha[key] * (log_pi_eval_i + self.target_entropy[key]).detach()).mean()
+                self.alpha_optimizer[key].zero_grad()
                 alpha_loss.backward()
-                self.alpha_optimizer.step()
-                self.alpha = self.log_alpha.exp()
+                self.alpha_optimizer[key].step()
+                self.alpha[key] = self.log_alpha[key].exp()
             else:
                 alpha_loss = 0
 
@@ -247,7 +247,7 @@ class MASAC_Learner(ISAC_Learner):
                 f"{key}/loss_critic": loss_c.item(),
                 f"{key}/predictQ": policy_q.mean().item(),
                 f"{key}/alpha_loss": alpha_loss.item(),
-                f"{key}/alpha": self.alpha.item(),
+                f"{key}/alpha": self.alpha[key].item(),
             })
 
         self.policy.soft_update(self.tau)

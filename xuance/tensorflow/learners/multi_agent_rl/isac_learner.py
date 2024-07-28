@@ -126,7 +126,7 @@ class ISAC_Learner(LearnerMAS):
                 info.update({f"{key}/loss_actor": loss_a.numpy(),
                              f"{key}/predictQ": tf.math.reduce_mean(policy_q).numpy()})
 
-        # automatic entropy tuning
+        # Automatic entropy tuning
         if self.use_automatic_entropy_tuning:
             with tf.GradientTape() as tape:
                 for key in self.model_keys:

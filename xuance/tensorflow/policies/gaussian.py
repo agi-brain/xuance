@@ -208,6 +208,15 @@ class SACPolicy(Module):
         for ep, tp in zip(self.critic_2.variables, self.target_critic_2.variables):
             tp.assign(ep)
 
+    @property
+    def parameters_actor(self):
+        return self.actor_representation.trainable_variables + self.actor.trainable_variables
+
+    @property
+    def parameters_critic(self):
+        return self.critic_1_representation.trainable_variables + self.critic_1.trainable_variables + \
+               self.critic_2_representation.trainable_variables + self.critic_2.trainable_variables
+
     @tf.function
     def call(self, observation: Union[np.ndarray, dict], **kwargs):
         """

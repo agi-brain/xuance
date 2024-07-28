@@ -1,9 +1,8 @@
-import torch
 from argparse import Namespace
 from xuance.environment import DummyVecMultiAgentEnv
-from xuance.torch.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
-from xuance.torch.policies import REGISTRY_Policy
-from xuance.torch.agents.multi_agent_rl.isac_agents import ISAC_Agents
+from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
+from xuance.tensorflow.policies import REGISTRY_Policy
+from xuance.tensorflow.agents.multi_agent_rl.isac_agents import ISAC_Agents
 
 
 class MASAC_Agents(ISAC_Agents):
