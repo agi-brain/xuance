@@ -33,9 +33,11 @@ class ISAC_Learner(LearnerMAS):
         self.use_automatic_entropy_tuning = config.use_automatic_entropy_tuning
         if self.use_automatic_entropy_tuning:
             self.target_entropy = {key: -policy.action_space[key].shape[-1] for key in self.model_keys}
-            self.log_alpha = {key: nn.Parameter(torch.zeros(1, requires_grad=True, device=self.device)) for key in self.model_keys}
+            self.log_alpha = {key: nn.Parameter(torch.zeros(1, requires_grad=True, device=self.device))
+                              for key in self.model_keys}
             self.alpha = {key: self.log_alpha[key].exp() for key in self.model_keys}
-            self.alpha_optimizer = {key: torch.optim.Adam([self.log_alpha], lr=config.learning_rate_actor) for key in self.model_keys}
+            self.alpha_optimizer = {key: torch.optim.Adam([self.log_alpha[key]], lr=config.learning_rate_actor)
+                                    for key in self.model_keys}
 
     def update(self, sample):
         self.iterations += 1
