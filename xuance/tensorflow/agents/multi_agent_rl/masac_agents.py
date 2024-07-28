@@ -1,64 +1,53 @@
-import numpy as np
-from tqdm import tqdm
+import torch
 from argparse import Namespace
-from xuance.common import DummyOffPolicyBuffer, DummyOffPolicyBuffer_Atari
 from xuance.environment import DummyVecMultiAgentEnv
-from xuance.tensorflow import tk, Module
-from xuance.tensorflow.agents import MARLAgents
-from xuance.tensorflow.learners import DQN_Learner
+from xuance.torch.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
+from xuance.torch.policies import REGISTRY_Policy
+from xuance.torch.agents.multi_agent_rl.isac_agents import ISAC_Agents
 
 
-class MASAC_Agents(MARLAgents):
+class MASAC_Agents(ISAC_Agents):
+    """The implementation of MASAC agents.
+
+    Args:
+        config: the Namespace variable that provides hyper-parameters and other settings.
+        envs: the vectorized environments.
+    """
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecMultiAgentEnv,
-                 device: str = "cpu:0"):
-        self.gamma = config.gamma
+                 envs: DummyVecMultiAgentEnv):
+        super(MASAC_Agents, self).__init__(config, envs)
 
-        input_representation = get_repre_in(config)
-        representation = REGISTRY_Representation[config.representation](*input_representation)
-        input_policy = get_policy_in_marl(config, representation)
-        policy = REGISTRY_Policy[config.policy](*input_policy)
-        lr_scheduler = [MyLinearLR(config.learning_rate_actor, start_factor=1.0, end_factor=0.5,
-                                   total_iters=get_total_iters(config.agent_name, config)),
-                        MyLinearLR(config.learning_rate_critic, start_factor=1.0, end_factor=0.5,
-                                   total_iters=get_total_iters(config.agent_name, config))]
-        optimizer = [tk.optimizers.Adam(lr_scheduler[0]),
-                     tk.optimizers.Adam(lr_scheduler[1])]
-        self.observation_space = envs.observation_space
-        self.action_space = envs.action_space
-        self.representation_info_shape = policy.representation.output_shapes
-        self.auxiliary_info_shape = {}
+    def _build_policy(self):
+        """
+        Build representation(s) and policy(ies) for agent(s)
 
-        if config.state_space is not None:
-            config.dim_state, state_shape = config.state_space.shape, config.state_space.shape
+        Returns:
+            policy (torch.nn.Module): A dict of policies.
+        """
+        normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
+        initializer = InitializeFunctions[self.config.initialize] if hasattr(self.config, "initialize") else None
+        activation = ActivationFunctions[self.config.activation]
+        agent = self.config.agent
+
+        # build representations
+        A_representation = self._build_representation(self.config.representation, self.observation_space, self.config)
+        critic_in = [sum(self.observation_space[k].shape) + sum(self.action_space[k].shape) for k in self.agent_keys]
+        space_critic_in = {k: (sum(critic_in),) for k in self.agent_keys}
+        C_representation = self._build_representation(self.config.representation, space_critic_in, self.config)
+
+        # build policies
+        if self.config.policy == "Gaussian_MASAC_Policy":
+            policy = REGISTRY_Policy["Gaussian_MASAC_Policy"](
+                action_space=self.action_space, n_agents=self.n_agents,
+                actor_representation=A_representation, critic_representation=C_representation,
+                actor_hidden_size=self.config.actor_hidden_size,
+                critic_hidden_size=self.config.critic_hidden_size,
+                normalize=normalize_fn, initialize=initializer, activation=activation,
+                activation_action=ActivationFunctions[self.config.activation_action],
+                use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
+                use_rnn=self.use_rnn, rnn=self.config.rnn if self.use_rnn else None)
         else:
-            config.dim_state, state_shape = None, None
-        memory = MARL_OffPolicyBuffer(config.n_agents,
-                                      state_shape,
-                                      config.obs_shape,
-                                      config.act_shape,
-                                      config.rew_shape,
-                                      config.done_shape,
-                                      envs.num_envs,
-                                      config.buffer_size,
-                                      config.batch_size)
-        learner = MASAC_Learner(config, policy, optimizer, config.device, config.model_dir, config.gamma)
-        super(MASAC_Agents, self).__init__(config, envs, policy, memory, learner, device,
-                                           config.log_dir, config.model_dir)
-        self.on_policy = False
+            raise AttributeError(f"{agent} currently does not support the policy named {self.config.policy}.")
 
-    def act(self, obs_n, test_mode):
-        batch_size = len(obs_n)
-        with tf.device(self.device):
-            agents_id = tf.tile(tf.expand_dims(tf.eye(self.n_agents), axis=0), multiples=(batch_size, 1, 1))
-            inputs_policy = {"obs": tf.convert_to_tensor(obs_n), "ids": agents_id}
-            _, dists = self.policy(inputs_policy)
-            acts = dists.sample()
-        actions = acts.numpy()
-        return None, actions
-
-    def train(self, i_episode):
-        sample = self.memory.sample()
-        info_train = self.learner.update(sample)
-        return info_train
+        return policy
