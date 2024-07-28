@@ -1,5 +1,5 @@
 from .base import Agent, MARLAgents, RandomAgents
-from .core import OffPolicyAgent, OnPolicyAgent, OffPolicyMARLAgents
+from .core import OffPolicyAgent, OnPolicyAgent, OffPolicyMARLAgents, OnPolicyMARLAgents
 
 '''Single-Agent Reinforcement Learning algorithms'''
 from .policy_gradient import PG_Agent
@@ -90,7 +90,7 @@ REGISTRY_Agents = {
 __all__ = [
     "Agent", "MARLAgents", "RandomAgents",
 
-    "OffPolicyAgent", "OnPolicyAgent", "OffPolicyMARLAgents",
+    "OffPolicyAgent", "OnPolicyAgent", "OffPolicyMARLAgents", "OnPolicyMARLAgents",
 
     "REGISTRY_Agents",
 

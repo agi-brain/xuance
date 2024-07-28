@@ -70,7 +70,6 @@ class MAAC_Policy(Module):
             dim_critic_in += n_agents
         return dim_actor_in, dim_actor_out, dim_critic_in, dim_critic_out
 
-    @tf.function
     def call(self, observation: Dict[str, np.ndarray], agent_ids: Optional[np.ndarray] = None,
              avail_actions: Dict[str, np.ndarray] = None, agent_key: str = None,
              rnn_hidden: Optional[Dict[str, List[np.ndarray]]] = None):
@@ -88,7 +87,7 @@ class MAAC_Policy(Module):
             rnn_hidden_new (Optional[Dict[str, List[Tensor]]]): The new RNN hidden states of actor representation.
             pi_dists (dict): The stochastic policy distributions.
         """
-        rnn_hidden_new, pi_dists = deepcopy(rnn_hidden), {}
+        rnn_hidden_new, pi_mu = deepcopy(rnn_hidden), {}
         agent_list = self.model_keys if agent_key is None else [agent_key]
 
         for key in agent_list:
@@ -102,9 +101,9 @@ class MAAC_Policy(Module):
                 actor_in = tf.concat([outputs['state'], agent_ids], axis=-1)
             else:
                 actor_in = outputs['state']
-            pi_dists[key] = self.actor[key](actor_in)
+            pi_mu[key] = self.actor[key](actor_in)
 
-        return rnn_hidden, pi_dists
+        return rnn_hidden, pi_mu
 
     @tf.function
     def get_values(self, observation: Dict[str, np.ndarray], agent_ids: np.ndarray = None, agent_key: str = None,
