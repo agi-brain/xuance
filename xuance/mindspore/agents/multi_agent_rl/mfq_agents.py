@@ -1,5 +1,5 @@
 from xuance.mindspore.agents import *
-from xuance.mindspore.agents.agents_marl import linear_decay_or_increase
+from xuance.mindspore.agents.base.agents_marl import linear_decay_or_increase
 
 
 class MFQ_Agents(MARLAgents):
