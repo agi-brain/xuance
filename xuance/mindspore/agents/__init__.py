@@ -14,7 +14,6 @@ from xuance.mindspore.learners import *
 from xuance.mindspore.utils import *
 from xuance.mindspore.policies import *
 from xuance.mindspore.policies import REGISTRY as REGISTRY_Policy
-from xuance.mindspore.utils.input_reformat import get_repre_in, get_policy_in_marl
 from xuance.mindspore.representations import REGISTRY as REGISTRY_Representation
 from mindspore.nn import Adam
 from mindspore.nn.learning_rate_schedule import ExponentialDecayLR as lr_decay_model

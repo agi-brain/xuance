@@ -1,8 +1,8 @@
 import gym.spaces
 import numpy as np
 from copy import deepcopy
-from xuance.torch.runners import Runner_Base
 from xuance.environment import make_envs
+from xuance.torch.runners import Runner_Base
 from xuance.torch.agents import REGISTRY_Agents
 
 

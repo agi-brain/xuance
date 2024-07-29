@@ -1,7 +1,7 @@
-from .runner_basic import Runner_Base
-from xuance.torch.agents import REGISTRY_Agents
 import time
 import numpy as np
+from xuance.torch.runners.runner_basic import Runner_Base
+from xuance.torch.agents import REGISTRY_Agents
 
 
 class SC2_Runner(Runner_Base):

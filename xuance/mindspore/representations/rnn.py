@@ -1,12 +1,14 @@
-from xuance.mindspore.representations import *
+from xuance.common import Sequence, Optional, Callable, Tuple
+from xuance.mindspore import Module, Tensor
+from xuance.mindspore.utils import ms, nn, mlp_block, gru_block, lstm_block, ModuleType
 
 
-class Basic_RNN(nn.Cell):
+class Basic_RNN(Module):
     def __init__(self,
                  input_shape: Sequence[int],
                  hidden_sizes: dict,
-                 normalize: Optional[nn.Cell] = None,
-                 initialize: Optional[Callable[..., ms.Tensor]] = None,
+                 normalize: Optional[Module] = None,
+                 initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None,
                  **kwargs):
         super(Basic_RNN, self).__init__()
@@ -28,7 +30,7 @@ class Basic_RNN(nn.Cell):
         else:
             self.use_normalize = False
 
-    def _create_network(self):
+    def _create_network(self) -> Tuple[Module, Module, int]:
         layers = []
         input_shape = self.input_shape
         for h in self.fc_hidden_sizes:
@@ -42,7 +44,7 @@ class Basic_RNN(nn.Cell):
                                                self.dropout, self.initialize)
         return nn.SequentialCell(*layers), rnn_layer, input_shape
 
-    def forward(self, x: ms.Tensor, h: ms.Tensor, c: ms.Tensor = None):
+    def forward(self, x: Tensor, h: Tensor, c: Tensor = None):
         mlp_output = self.mlp(self.input_norm(x)) if self.use_normalize else self.mlp(x)
         self.rnn.flatten_parameters()
         if self.lstm:
@@ -61,13 +63,14 @@ class Basic_RNN(nn.Cell):
         cell_states = ms.ops.zeros_like(hidden_states) if self.lstm else None
         return hidden_states, cell_states
 
-    def init_hidden_item(self, i, *rnn_hidden):
+    def init_hidden_item(self, indexes: list, *rnn_hidden):
+        zeros_size = (self.N_recurrent_layer, len(indexes), self.recurrent_hidden_size)
         if self.lstm:
-            rnn_hidden[0][:, i] = ms.ops.zeros(size=(self.N_recurrent_layer, self.recurrent_hidden_size))
-            rnn_hidden[1][:, i] = ms.ops.zeros(size=(self.N_recurrent_layer, self.recurrent_hidden_size))
+            rnn_hidden[0][:, indexes] = ms.ops.zeros(size=zeros_size)
+            rnn_hidden[1][:, indexes] = ms.ops.zeros(size=zeros_size)
             return rnn_hidden
         else:
-            rnn_hidden[0][:, i] = ms.ops.zeros(size=(self.N_recurrent_layer, self.recurrent_hidden_size))
+            rnn_hidden[0][:, indexes] = ms.ops.zeros(size=zeros_size)
             return rnn_hidden
 
     def get_hidden_item(self, i, *rnn_hidden):

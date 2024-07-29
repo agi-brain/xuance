@@ -1,7 +1,7 @@
 import time
 import numpy as np
-from .runner_sc2 import SC2_Runner
-from xuance.torch.agents import REGISTRY_Agents
+from xuance.tensorflow.runners.runner_sc2 import SC2_Runner
+from xuance.tensorflow.agents import REGISTRY_Agents
 
 
 class Football_Runner(SC2_Runner):

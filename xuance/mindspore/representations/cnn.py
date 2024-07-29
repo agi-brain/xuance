@@ -1,19 +1,22 @@
-from xuance.mindspore.representations import *
+import numpy as np
+from xuance.common import Sequence, Optional, Callable
+from xuance.mindspore import Module, Tensor
+from xuance.mindspore.utils import ms, nn, cnn_block, mlp_block, ModuleType
 
 
 # process the input observations with stacks of CNN layers
-class Basic_CNN(nn.Cell):
+class Basic_CNN(Module):
     def __init__(self,
                  input_shape: Sequence[int],
                  kernels: Sequence[int],
                  strides: Sequence[int],
                  filters: Sequence[int],
                  normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., ms.Tensor]] = None,
-                 activation: Optional[ModuleType] = None
-                 ):
+                 initialize: Optional[Callable[..., Tensor]] = None,
+                 activation: Optional[ModuleType] = None,
+                 **kwargs):
         super(Basic_CNN, self).__init__()
-        self.input_shape = (input_shape[2], input_shape[0], input_shape[1])
+        self.input_shape = (input_shape[2], input_shape[0], input_shape[1])  # Channels x Height x Width
         self.kernels = kernels
         self.strides = strides
         self.filters = filters
@@ -34,21 +37,23 @@ class Basic_CNN(nn.Cell):
         layers.append(nn.Flatten())
         return nn.SequentialCell(*layers)
 
-    def construct(self, observations: ms.tensor):
+    def construct(self, observations: Tensor):
+        observations = observations / 255.0
         tensor_observation = self._transpose(observations, (0, 3, 1, 2)).astype("float32")
         return {'state': self.model(tensor_observation)}
 
 
-class AC_CNN_Atari(nn.Cell):
+class AC_CNN_Atari(Module):
     def __init__(self,
                  input_shape: Sequence[int],
                  kernels: Sequence[int],
                  strides: Sequence[int],
                  filters: Sequence[int],
                  normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., ms.Tensor]] = None,
+                 initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None,
-                 fc_hidden_sizes: Sequence[int] = ()):
+                 fc_hidden_sizes: Sequence[int] = (),
+                 **kwargs):
         super(AC_CNN_Atari, self).__init__()
         self.input_shape = (input_shape[2], input_shape[0], input_shape[1])  # Channels x Height x Width
         self.kernels = kernels
@@ -83,5 +88,5 @@ class AC_CNN_Atari(nn.Cell):
 
     def construct(self, observations: np.ndarray):
         observations = observations / 255.0
-        tensor_observation = ms.tensor(np.transpose(observations, (0, 3, 1, 2))).astype(ms.float32)
+        tensor_observation = Tensor(np.transpose(observations, (0, 3, 1, 2))).astype(ms.float32)
         return {'state': self.model(tensor_observation)}

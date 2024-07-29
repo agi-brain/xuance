@@ -5,7 +5,7 @@ from pathlib import Path
 import wandb
 from torch.utils.tensorboard import SummaryWriter
 from .runner_basic import *
-from xuance.mindspore.agents import REGISTRY as REGISTRY_Agent
+from xuance.mindspore.agents import REGISTRY_Agents
 from gymnasium.spaces.box import Box
 from tqdm import tqdm
 import numpy as np
@@ -98,7 +98,7 @@ class Pettingzoo_Runner(Runner_Base):
                 arg.obs_shape = self.envs.observation_space[self.agent_keys[h][0]].shape
                 arg.dim_obs = arg.obs_shape[0]
             arg.rew_shape, arg.done_shape, arg.act_prob_shape = (arg.n_agents, 1), (arg.n_agents,), (arg.dim_act,)
-            self.marl_agents.append(REGISTRY_Agent[arg.agent](arg, self.envs))
+            self.marl_agents.append(REGISTRY_Agents[arg.agent](arg, self.envs))
             self.marl_names.append(arg.agent)
             if arg.test_mode:
                 self.marl_agents[h].load_model(arg.model_dir)

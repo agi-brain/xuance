@@ -1,10 +1,7 @@
-import torch
-import torch.nn as nn
 import numpy as np
 from xuance.common import Sequence, Optional, Union, Callable
-from xuance.torch import Module
-from xuance.torch.utils.layers import mlp_block
-from xuance.torch.utils import ModuleType
+from xuance.torch import Module, Tensor
+from xuance.torch.utils import torch, nn, mlp_block, ModuleType
 
 
 # directly returns the original observation
@@ -29,7 +26,7 @@ class Basic_MLP(Module):
                  input_shape: Sequence[int],
                  hidden_sizes: Sequence[int],
                  normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., torch.Tensor]] = None,
+                 initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None,
                  **kwargs):

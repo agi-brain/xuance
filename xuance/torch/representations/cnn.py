@@ -1,20 +1,18 @@
-import torch
-import torch.nn as nn
 import numpy as np
 from xuance.common import Sequence, Optional, Union, Callable
-from xuance.torch.utils.layers import cnn_block, mlp_block
-from xuance.torch.utils import ModuleType
+from xuance.torch import Module, Tensor
+from xuance.torch.utils import torch, nn, cnn_block, mlp_block, ModuleType
 
 
 # process the input observations with stacks of CNN layers
-class Basic_CNN(nn.Module):
+class Basic_CNN(Module):
     def __init__(self,
                  input_shape: Sequence[int],
                  kernels: Sequence[int],
                  strides: Sequence[int],
                  filters: Sequence[int],
                  normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., torch.Tensor]] = None,
+                 initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None,
                  **kwargs):
@@ -48,14 +46,14 @@ class Basic_CNN(nn.Module):
         return {'state': self.model(tensor_observation)}
 
 
-class AC_CNN_Atari(nn.Module):
+class AC_CNN_Atari(Module):
     def __init__(self,
                  input_shape: Sequence[int],
                  kernels: Sequence[int],
                  strides: Sequence[int],
                  filters: Sequence[int],
                  normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., torch.Tensor]] = None,
+                 initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None,
                  fc_hidden_sizes: Sequence[int] = (),

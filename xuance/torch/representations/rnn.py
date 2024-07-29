@@ -1,16 +1,14 @@
-import torch
-import torch.nn as nn
 from xuance.common import Sequence, Optional, Union, Callable, Tuple
-from xuance.torch.utils.layers import mlp_block, gru_block, lstm_block
-from xuance.torch.utils import ModuleType
+from xuance.torch import Module, Tensor
+from xuance.torch.utils import torch, nn, mlp_block, gru_block, lstm_block, ModuleType
 
 
-class Basic_RNN(nn.Module):
+class Basic_RNN(Module):
     def __init__(self,
                  input_shape: Sequence[int],
                  hidden_sizes: dict,
-                 normalize: Optional[nn.Module] = None,
-                 initialize: Optional[Callable[..., torch.Tensor]] = None,
+                 normalize: Optional[Module] = None,
+                 initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None,
                  **kwargs):
@@ -34,7 +32,7 @@ class Basic_RNN(nn.Module):
         else:
             self.use_normalize = False
 
-    def _create_network(self) -> Tuple[nn.Module, nn.Module, int]:
+    def _create_network(self) -> Tuple[Module, Module, int]:
         layers = []
         input_shape = self.input_shape
         for h in self.fc_hidden_sizes:
@@ -49,7 +47,7 @@ class Basic_RNN(nn.Module):
                                                self.dropout, self.initialize, self.device)
         return nn.Sequential(*layers), rnn_layer, input_shape
 
-    def forward(self, x: torch.Tensor, h: torch.Tensor, c: torch.Tensor = None):
+    def forward(self, x: Tensor, h: Tensor, c: Tensor = None):
         if self.use_normalize:
             tensor_x = self.input_norm(torch.as_tensor(x, dtype=torch.float32, device=self.device))
         else:

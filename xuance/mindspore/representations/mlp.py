@@ -1,25 +1,28 @@
-from xuance.mindspore.representations import *
+import numpy as np
+from xuance.common import Sequence, Optional, Callable
+from xuance.mindspore import Module, Tensor
+from xuance.mindspore.utils import nn, mlp_block, ModuleType
 
 
 # directly returns the original observation
-class Basic_Identical(nn.Cell):
+class Basic_Identical(Module):
     def __init__(self,
                  input_shape: Sequence[int]):
         super(Basic_Identical, self).__init__()
         assert len(input_shape) == 1
         self.output_shapes = {'state': (input_shape[0],)}
 
-    def construct(self, observations: ms.tensor):
+    def construct(self, observations: np.ndarray):
         return {'state': observations}
 
 
 # process the input observations with stacks of MLP layers
-class Basic_MLP(nn.Cell):
+class Basic_MLP(Module):
     def __init__(self,
                  input_shape: Sequence[int],
                  hidden_sizes: Sequence[int],
                  normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., ms.Tensor]] = None,
+                 initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None
                  ):
         super(Basic_MLP, self).__init__()
@@ -39,5 +42,5 @@ class Basic_MLP(nn.Cell):
             layers.extend(mlp)
         return nn.SequentialCell(*layers)
 
-    def construct(self, observations):
+    def construct(self, observations: np.ndarray):
         return {'state': self.model(observations)}
