@@ -1,87 +1,64 @@
-from xuance.mindspore.policies import *
-from xuance.mindspore.utils import *
-from mindspore.nn.probability.distribution import Categorical
-import copy
+import mindspore as ms
+import mindspore.nn as nn
+import numpy as np
+from copy import deepcopy
+from gym.spaces import Discrete
+from xuance.common import Sequence, Optional, Callable, Union
+from xuance.mindspore import Module, Tensor
+from xuance.mindspore.utils import ModuleType
+from .core import CategoricalActorNet as ActorNet
+# from .core import CategoricalActorNet_SAC as Actor_SAC
+from .core import CriticNet, BasicQhead
 
 
-class ActorNet(nn.Cell):
-    class Sample(nn.Cell):
-        def __init__(self):
-            super(ActorNet.Sample, self).__init__()
-            self._dist = Categorical(dtype=ms.float32)
+def _init_layer(layer, gain=np.sqrt(2), bias=0.0):
+    nn.init.orthogonal_(layer.weight, gain=gain)
+    nn.init.constant_(layer.bias, bias)
+    return layer
 
-        def construct(self, probs: ms.tensor):
-            return self._dist.sample(probs=probs).astype("int32")
 
-    class LogProb(nn.Cell):
-        def __init__(self):
-            super(ActorNet.LogProb, self).__init__()
-            self._dist = Categorical(dtype=ms.float32)
+class ActorPolicy(Module):
+    """
+    Actor for stochastic policy with categorical distributions. (Discrete action space)
 
-        def construct(self, value, probs):
-            return self._dist._log_prob(value=value, probs=probs)
-
-    class Entropy(nn.Cell):
-        def __init__(self):
-            super(ActorNet.Entropy, self).__init__()
-            self._dist = Categorical(dtype=ms.float32)
-
-        def construct(self, probs):
-            return self._dist.entropy(probs=probs)
-
+    Args:
+        action_space (Discrete): The discrete action space.
+        representation (Module): The representation module.
+        actor_hidden_size (Sequence[int]): A list of hidden layer sizes for actor network.
+        normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
+        activation (Optional[ModuleType]): The activation function for each layer.
+    """
     def __init__(self,
-                 state_dim: int,
-                 action_dim: int,
-                 hidden_sizes: Sequence[int],
+                 action_space: Discrete,
+                 representation: ModuleType,
+                 actor_hidden_size: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., ms.Tensor]] = None,
+                 initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None
                  ):
-        super(ActorNet, self).__init__()
-        layers = []
-        input_shape = (state_dim,)
-        for h in hidden_sizes:
-            mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initialize)
-            layers.extend(mlp)
-        layers.extend(mlp_block(input_shape[0], action_dim, None, nn.Softmax, None)[0])
-        self.model = nn.SequentialCell(*layers)
-        self.sample = self.Sample()
-        self.log_prob = self.LogProb()
-        self.entropy = self.Entropy()
+        assert isinstance(action_space, Discrete)
+        super(ActorPolicy, self).__init__()
+        self.action_dim = action_space.n
+        self.representation = representation
+        self.representation_info_shape = self.representation.output_shapes
+        self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size,
+                              normalize, initialize, activation)
 
-    def construct(self, x: ms.Tensor):
-        return self.model(x)
-
-
-class CriticNet(nn.Cell):
+    def construct(self, observation: Tensor):
+        outputs = self.representation(observation)
+        a = self.actor(outputs['state'])
+        return outputs, a
+    
+    
+class ActorCriticPolicy(Module):
     def __init__(self,
-                 state_dim: int,
-                 hidden_sizes: Sequence[int],
-                 normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., ms.Tensor]] = None,
-                 activation: Optional[ModuleType] = None
-                 ):
-        super(CriticNet, self).__init__()
-        layers = []
-        input_shape = (state_dim,)
-        for h in hidden_sizes:
-            mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initialize)
-            layers.extend(mlp)
-        layers.extend(mlp_block(input_shape[0], 1, None, None, None)[0])
-        self.model = nn.SequentialCell(*layers)
-
-    def construct(self, x: ms.Tensor):
-        return self.model(x)[:, 0]
-
-
-class ActorCriticPolicy(nn.Cell):
-    def __init__(self,
-                 action_space: Space,
+                 action_space: Discrete,
                  representation: ModuleType,
                  actor_hidden_size: Sequence[int] = None,
                  critic_hidden_size: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., ms.Tensor]] = None,
+                 initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None
                  ):
         assert isinstance(action_space, Discrete)
@@ -94,51 +71,28 @@ class ActorCriticPolicy(nn.Cell):
         self.critic = CriticNet(representation.output_shapes['state'][0], critic_hidden_size,
                                 normalize, initialize, activation)
 
-    def construct(self, observation: ms.tensor):
+    def construct(self, observation: Tensor):
         outputs = self.representation(observation)
         a = self.actor(outputs['state'])
         v = self.critic(outputs['state'])
         return outputs, a, v
 
 
-class ActorPolicy(nn.Cell):
+class PPGActorCritic(Module):
     def __init__(self,
-                 action_space: Space,
-                 representation: ModuleType,
-                 actor_hidden_size: Sequence[int] = None,
-                 normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., ms.Tensor]] = None,
-                 activation: Optional[ModuleType] = None
-                 ):
-        assert isinstance(action_space, Discrete)
-        super(ActorPolicy, self).__init__()
-        self.action_dim = action_space.n
-        self.representation = representation
-        self.representation_info_shape = self.representation.output_shapes
-        self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size,
-                              normalize, initialize, activation)
-
-    def construct(self, observation: ms.tensor):
-        outputs = self.representation(observation)
-        a = self.actor(outputs['state'])
-        return outputs, a
-
-
-class PPGActorCritic(nn.Cell):
-    def __init__(self,
-                 action_space: Space,
+                 action_space: Discrete,
                  representation: ModuleType,
                  actor_hidden_size: Sequence[int] = None,
                  critic_hidden_size: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., ms.Tensor]] = None,
+                 initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None
                  ):
         super(PPGActorCritic, self).__init__()
         self.action_dim = action_space.n
         self.actor_representation = representation
-        self.critic_representation = copy.deepcopy(representation)
-        self.aux_critic_representation = copy.deepcopy(representation)
+        self.critic_representation = deepcopy(representation)
+        self.aux_critic_representation = deepcopy(representation)
         self.representation_info_shape = self.actor_representation.output_shapes
 
         self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size,
@@ -148,7 +102,7 @@ class PPGActorCritic(nn.Cell):
         self.aux_critic = CriticNet(representation.output_shapes['state'][0], critic_hidden_size,
                                     normalize, initialize, activation)
 
-    def construct(self, observation: ms.tensor):
+    def construct(self, observation: Tensor):
         policy_outputs = self.actor_representation(observation)
         critic_outputs = self.critic_representation(observation)
         a = self.actor(policy_outputs['state'])
@@ -157,14 +111,14 @@ class PPGActorCritic(nn.Cell):
         return policy_outputs, a, v, aux_v
 
 
-# class SACDISPolicy(nn.Cell):
+# class SACDISPolicy(Module):
 #     def __init__(self,
 #                  action_space: Space,
 #                  representation: ModuleType,
 #                  actor_hidden_size: Sequence[int],
 #                  critic_hidden_size: Sequence[int],
 #                  normalize: Optional[ModuleType] = None,
-#                  initialize: Optional[Callable[..., ms.Tensor]] = None,
+#                  initialize: Optional[Callable[..., Tensor]] = None,
 #                  activation: Optional[ModuleType] = None):
 #         assert isinstance(action_space, Discrete)
 #         super(SACDISPolicy, self).__init__()
@@ -202,7 +156,7 @@ class PPGActorCritic(nn.Cell):
 #         act = self._unsqueeze(act, -1)
 #         return act_log, self.target_critic(outputs['state'], act)
 
-#     def Qaction(self, observation: Union[np.ndarray, dict], action: ms.Tensor):
+#     def Qaction(self, observation: Union[np.ndarray, dict], action: Tensor):
 #         outputs = self.representation(observation)
 #         action = self._unsqueeze(action, -1)
 #         return outputs, self.critic(outputs['state'], action)
@@ -224,40 +178,22 @@ class PPGActorCritic(nn.Cell):
 #         for ep, tp in zip(self.critic.trainable_params(), self.target_critic.trainable_params()):
 #             tp.assign_value((tau * ep.data + (1 - tau) * tp.data))
 
-class CriticNet_SACDIS(nn.Cell):
+
+
+class SACDISPolicy(Module):
     def __init__(self,
-                 state_dim: int,
-                 action_dim: int,
-                 hidden_sizes: Sequence[int],
-                 initialize: Optional[Callable[..., ms.Tensor]] = None,
-                 activation: Optional[ModuleType] = None):
-        super(CriticNet_SACDIS, self).__init__()
-        layers = []
-        input_shape = (state_dim,)
-        for h in hidden_sizes:
-            mlp, input_shape = mlp_block(input_shape[0], h, None, activation, initialize)
-            layers.extend(mlp)
-        layers.extend(mlp_block(input_shape[0], action_dim, None, None, initialize)[0])
-        self.model = nn.SequentialCell(*layers)
-
-    def construct(self, x: ms.tensor):
-        return self.model(x)
-
-
-class SACDISPolicy(nn.Cell):
-    def __init__(self,
-                 action_space: Space,
+                 action_space: Discrete,
                  representation: ModuleType,
                  actor_hidden_size: Sequence[int],
                  critic_hidden_size: Sequence[int],
                  normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., ms.Tensor]] = None,
+                 initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None):
         # assert isinstance(action_space, Box)
         super(SACDISPolicy, self).__init__()
         self.action_dim = action_space.n
         self.representation = representation
-        self.representation_critic = copy.deepcopy(representation)
+        self.representation_critic = deepcopy(representation)
         self.representation_info_shape = self.representation.output_shapes
         try:
             self.representation_params = self.representation.trainable_params()
@@ -266,35 +202,35 @@ class SACDISPolicy(nn.Cell):
 
         self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size,
                               normalize, initialize, activation)
-        self.critic = CriticNet_SACDIS(representation.output_shapes['state'][0], self.action_dim, critic_hidden_size,
+        self.critic = BasicQhead(representation.output_shapes['state'][0], self.action_dim, critic_hidden_size,
                                        initialize, activation)
-        self.target_representation_critic = copy.deepcopy(self.representation_critic)
-        self.target_critic = copy.deepcopy(self.critic)
+        self.target_representation_critic = deepcopy(self.representation_critic)
+        self.target_critic = deepcopy(self.critic)
         self.actor_params = self.representation_params + self.actor.trainable_params()
         self._log = ms.ops.Log()
 
-    def construct(self, observation: ms.tensor):
+    def construct(self, observation: Tensor):
         outputs = self.representation(observation)
         act_prob = self.actor(outputs["state"])
         return outputs, act_prob
 
-    def action(self, observation: ms.tensor):
+    def action(self, observation: Tensor):
         outputs = self.representation(observation)
         act_prob = self.actor(outputs[0])
         return outputs, act_prob
 
-    def Qtarget(self, observation: ms.tensor):
+    def Qtarget(self, observation: Tensor):
         outputs = self.representation(observation)
         outputs_critic = self.target_representation_critic(observation)
         act_prob = self.actor(outputs['state'])
         log_action_prob = self._log(act_prob + 1e-10)
         return act_prob, log_action_prob, self.target_critic(outputs_critic['state'])
 
-    def Qaction(self, observation: ms.tensor):
+    def Qaction(self, observation: Tensor):
         outputs = self.representation_critic(observation)
         return outputs, self.critic(outputs['state'])
 
-    def Qpolicy(self, observation: ms.tensor):
+    def Qpolicy(self, observation: Tensor):
         outputs = self.representation(observation)
         outputs_critic = self.representation_critic(observation)
         act_prob = self.actor(outputs['state'])

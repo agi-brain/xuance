@@ -1,15 +1,14 @@
 import torch
-import numpy as np
 import torch.nn as nn
-from xuance.common import Sequence, Optional, Callable, Union
+import numpy as np
 from copy import deepcopy
 from gym.spaces import Discrete
+from xuance.common import Sequence, Optional, Callable, Union
 from xuance.torch import Module, Tensor
 from xuance.torch.utils import ModuleType
-from xuance.torch.policies.core import CategoricalActorNet as ActorNet
-from xuance.torch.policies.core import CategoricalActorNet_SAC as Actor_SAC
-from xuance.torch.policies.core import CriticNet
-from xuance.torch.policies.core import BasicQhead
+from .core import CategoricalActorNet as ActorNet
+from .core import CategoricalActorNet_SAC as Actor_SAC
+from .core import BasicQhead, CriticNet
 
 
 def _init_layer(layer, gain=np.sqrt(2), bias=0.0):

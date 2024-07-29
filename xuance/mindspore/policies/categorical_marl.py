@@ -1,116 +1,20 @@
-from xuance.mindspore.policies import *
-from xuance.mindspore.utils import *
-from xuance.mindspore.representations import Basic_Identical
-from mindspore.nn.probability.distribution import Categorical
-import copy
-
-
-class ActorNet(nn.Cell):
-    class Sample(nn.Cell):
-        def __init__(self):
-            super(ActorNet.Sample, self).__init__()
-            self._dist = Categorical(dtype=ms.float32)
-
-        def construct(self, probs: ms.tensor):
-            return self._dist.sample(probs=probs).astype("int32")
-
-    class LogProb(nn.Cell):
-        def __init__(self):
-            super(ActorNet.LogProb, self).__init__()
-            self._dist = Categorical(dtype=ms.float32)
-
-        def construct(self, value, probs):
-            return self._dist._log_prob(value=value, probs=probs)
-
-    class Entropy(nn.Cell):
-        def __init__(self):
-            super(ActorNet.Entropy, self).__init__()
-            self._dist = Categorical(dtype=ms.float32)
-
-        def construct(self, probs):
-            return self._dist.entropy(probs=probs)
-
-    class KL_Div(nn.Cell):
-        def __init__(self):
-            super(ActorNet.KL_Div, self).__init__()
-            self._dist = Categorical(dtype=ms.float32)
-
-        def construct(self, probs_p, probs_q):
-            return self._dist.kl_loss('Categorical', probs_p, probs_q)
-
-    def __init__(self,
-                 state_dim: int,
-                 action_dim: int,
-                 n_agents: int,
-                 hidden_sizes: Sequence[int],
-                 normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., ms.Tensor]] = None,
-                 gain: float = 1.0,
-                 activation: Optional[ModuleType] = None):
-        super(ActorNet, self).__init__()
-        layers = []
-        input_shape = (state_dim + n_agents,)
-        for h in hidden_sizes:
-            mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initialize)
-            layers.extend(mlp)
-        layers.extend(mlp_block(input_shape[0], action_dim, None, None, initialize)[0])
-        self.model = nn.SequentialCell(*layers)
-        self.sample = self.Sample()
-        self.log_prob = self.LogProb()
-        self.entropy = self.Entropy()
-        self.kl_div = self.KL_Div()
-
-    def construct(self, x: ms.Tensor):
-        return self.model(x)
-
-
-class CriticNet(nn.Cell):
-    def __init__(self,
-                 state_dim: int,
-                 n_agents: int,
-                 hidden_sizes: Sequence[int],
-                 normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., ms.Tensor]] = None,
-                 activation: Optional[ModuleType] = None):
-        super(CriticNet, self).__init__()
-        layers = []
-        input_shape = (state_dim + n_agents,)
-        for h in hidden_sizes:
-            mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initialize)
-            layers.extend(mlp)
-        layers.extend(mlp_block(input_shape[0], 1, None, None, None)[0])
-        self.model = nn.SequentialCell(*layers)
-
-    def construct(self, x: ms.Tensor):
-        return self.model(x)
-
-
-class COMA_Critic(nn.Cell):
-    def __init__(self,
-                 state_dim: int,
-                 act_dim: int,
-                 hidden_sizes: Sequence[int],
-                 normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., ms.Tensor]] = None,
-                 activation: Optional[ModuleType] = None):
-        super(COMA_Critic, self).__init__()
-        layers = []
-        input_shape = (state_dim,)
-        for h in hidden_sizes:
-            mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initialize)
-            layers.extend(mlp)
-        layers.extend(mlp_block(input_shape[0], act_dim, None, None, None)[0])
-        self.model = nn.SequentialCell(*layers)
-
-    def construct(self, x: ms.Tensor):
-        return self.model(x)
+import mindspore as ms
+import mindspore.nn as nn
+from copy import deepcopy
+from gym.spaces import Discrete
+from xuance.common import Sequence, Optional, Callable, Union, Dict, List
+from xuance.mindspore.policies import CategoricalActorNet, ActorNet
+from xuance.mindspore.policies.core import CriticNet
+from xuance.mindspore.policies import VDN_mixer
+from xuance.mindspore.utils import ModuleType, CategoricalDistribution
+from xuance.mindspore import Tensor, Module, ModuleDict
 
 
 class MAAC_Policy(nn.Cell):
     def __init__(self,
                  action_space: Discrete,
                  n_agents: int,
-                 representation: Optional[Basic_Identical],
+                 representation: ModuleDict,
                  mixer: Optional[VDN_mixer] = None,
                  actor_hidden_size: Sequence[int] = None,
                  critic_hidden_size: Sequence[int] = None,
@@ -258,7 +162,7 @@ class COMA_Policy(nn.Cell):
     def __init__(self,
                  action_space: Discrete,
                  n_agents: int,
-                 representation: Optional[Basic_Identical],
+                 representation: ModuleDict,
                  actor_hidden_size: Sequence[int] = None,
                  critic_hidden_size: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,
@@ -279,7 +183,7 @@ class COMA_Policy(nn.Cell):
             critic_input_dim += kwargs["dim_state"]
         self.critic = COMA_Critic(critic_input_dim, self.action_dim, critic_hidden_size,
                                   normalize, initialize, activation)
-        self.target_critic = copy.deepcopy(self.critic)
+        self.target_critic = deepcopy(self.critic)
         self.parameters_critic = self.critic.trainable_params()
         self.parameters_actor = self.representation.trainable_params() + self.actor.trainable_params()
         self.eye = ms.ops.Eye()
@@ -316,7 +220,7 @@ class MeanFieldActorCriticPolicy(nn.Cell):
     def __init__(self,
                  action_space: Discrete,
                  n_agents: int,
-                 representation: Optional[Basic_Identical],
+                 representation: ModuleDict,
                  actor_hidden_size: Sequence[int] = None,
                  critic_hidden_size: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,

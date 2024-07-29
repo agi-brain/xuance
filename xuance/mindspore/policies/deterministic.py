@@ -1,177 +1,39 @@
-from xuance.mindspore.utils import *
-import copy
-from gym.spaces import Space, Box, Discrete, Dict
+import mindspore as ms
+import mindspore.nn as nn
+import numpy as np
+from copy import deepcopy
+from gym.spaces import Space, Discrete
+from xuance.common import Sequence, Optional, Callable, Union
+from xuance.torch import Module, Tensor
+from xuance.torch.utils import ModuleType
+from .core import BasicQhead, BasicRecurrent, DuelQhead, C51Qhead, QRDQNhead, ActorNet, CriticNet
 
 
-class BasicQhead(nn.Cell):
-    def __init__(self,
-                 state_dim: int,
-                 action_dim: int,
-                 hidden_sizes: Sequence[int],
-                 normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., ms.Tensor]] = None,
-                 activation: Optional[ModuleType] = None
-                 ):
-        super(BasicQhead, self).__init__()
-        layers = []
-        input_shape = (state_dim,)
-        for h in hidden_sizes:
-            mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initialize)
-            layers.extend(mlp)
-        layers.extend(mlp_block(input_shape[0], action_dim, None, None, None)[0])
-        self.model = nn.SequentialCell(*layers)
-
-    def construct(self, x: ms.tensor):
-        return self.model(x)
-
-
-class BasicRecurrent(nn.Cell):
-    def __init__(self, **kwargs):
-        super(BasicRecurrent, self).__init__()
-        self.lstm = False
-        if kwargs["rnn"] == "GRU":
-            output, _ = gru_block(kwargs["input_dim"],
-                                  kwargs["recurrent_hidden_size"],
-                                  kwargs["recurrent_layer_N"],
-                                  kwargs["dropout"],
-                                  kwargs["initialize"])
-        elif kwargs["rnn"] == "LSTM":
-            self.lstm = True
-            output, _ = lstm_block(kwargs["input_dim"],
-                                   kwargs["recurrent_hidden_size"],
-                                   kwargs["recurrent_layer_N"],
-                                   kwargs["dropout"],
-                                   kwargs["initialize"])
-        else:
-            raise "Unknown recurrent module!"
-        self.rnn_layer = output
-        fc_layer = mlp_block(kwargs["recurrent_hidden_size"], kwargs["action_dim"], None, None, None)[0]
-        self.model = nn.SequentialCell(*fc_layer)
-
-    def construct(self, x: ms.tensor, h: ms.tensor, c: ms.tensor = None):
-        # self.rnn_layer.flatten_parameters()
-        if self.lstm:
-            output, (hn, cn) = self.rnn_layer(x, (h, c))
-            return hn, cn, self.model(output)
-        else:
-            output, hn = self.rnn_layer(x, h)
-            return hn, self.model(output)
-
-
-class DuelQhead(nn.Cell):
-    def __init__(self,
-                 state_dim: int,
-                 action_dim: int,
-                 hidden_sizes: Sequence[int],
-                 normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., ms.Tensor]] = None,
-                 activation: Optional[ModuleType] = None
-                 ):
-        super(DuelQhead, self).__init__()
-        v_layers = []
-        input_shape = (state_dim,)
-        for h in hidden_sizes:
-            v_mlp, input_shape = mlp_block(input_shape[0], h // 2, normalize, activation, initialize)
-            v_layers.extend(v_mlp)
-        v_layers.extend(mlp_block(input_shape[0], 1, None, None, None)[0])
-
-        a_layers = []
-        input_shape = (state_dim,)
-        for h in hidden_sizes:
-            a_mlp, input_shape = mlp_block(input_shape[0], h // 2, normalize, activation, initialize)
-            a_layers.extend(a_mlp)
-        a_layers.extend(mlp_block(input_shape[0], action_dim, None, None, None)[0])
-
-        self.a_model = nn.SequentialCell(*a_layers)
-        self.v_model = nn.SequentialCell(*v_layers)
-
-        self._mean = ms.ops.ReduceMean(keep_dims=True)
-
-    def construct(self, x: ms.tensor):
-        v = self.v_model(x)
-        a = self.a_model(x)
-        q = v + (a - self._mean(a))
-        return q
-
-
-class C51Qhead(nn.Cell):
-    def __init__(self,
-                 state_dim: int,
-                 action_dim: int,
-                 atom_num: int,
-                 hidden_sizes: Sequence[int],
-                 normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., ms.Tensor]] = None,
-                 activation: Optional[ModuleType] = None
-                 ):
-        super(C51Qhead, self).__init__()
-        self.action_dim = action_dim
-        self.atom_num = atom_num
-        layers = []
-        input_shape = (state_dim,)
-        for h in hidden_sizes:
-            mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initialize)
-            layers.extend(mlp)
-        layers.extend(mlp_block(input_shape[0], action_dim * atom_num, None, None, None)[0])
-        self.model = nn.SequentialCell(*layers)
-        self._softmax = ms.ops.Softmax(axis=-1)
-
-    def construct(self, x: ms.tensor):
-        dist_logits = self.model(x).view(-1, self.action_dim, self.atom_num)
-        dist_probs = self._softmax(dist_logits)
-        return dist_probs
-
-
-class QRDQNhead(nn.Cell):
-    def __init__(self,
-                 state_dim: int,
-                 action_dim: int,
-                 atom_num: int,
-                 hidden_sizes: Sequence[int],
-                 normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., ms.Tensor]] = None,
-                 activation: Optional[ModuleType] = None
-                 ):
-        super(QRDQNhead, self).__init__()
-        self.action_dim = action_dim
-        self.atom_num = atom_num
-        layers = []
-        input_shape = (state_dim,)
-        for h in hidden_sizes:
-            mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initialize)
-            layers.extend(mlp)
-        layers.extend(mlp_block(input_shape[0], action_dim * atom_num, None, None, None)[0])
-        self.model = nn.SequentialCell(*layers)
-
-    def construct(self, x: ms.tensor):
-        return self.model(x).view(-1, self.action_dim, self.atom_num)
-
-
-class BasicQnetwork(nn.Cell):
+class BasicQnetwork(Module):
     def __init__(self,
                  action_space: Discrete,
                  representation: ModuleType,
                  hidden_size: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., ms.Tensor]] = None,
+                 initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None
                  ):
         super(BasicQnetwork, self).__init__()
         self.action_dim = action_space.n
         self.representation = representation
-        self.target_representation = copy.deepcopy(representation)
+        self.target_representation = deepcopy(representation)
         self.representation_info_shape = self.representation.output_shapes
         self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, hidden_size,
                                      normalize, initialize, activation)
-        self.target_Qhead = copy.deepcopy(self.eval_Qhead)
+        self.target_Qhead = deepcopy(self.eval_Qhead)
 
-    def construct(self, observation: ms.tensor):
+    def construct(self, observation: Tensor):
         outputs = self.representation(observation)
         evalQ = self.eval_Qhead(outputs['state'])
         argmax_action = evalQ.argmax(axis=-1)
         return outputs, argmax_action, evalQ
 
-    def target(self, observation: ms.tensor):
+    def target(self, observation: Tensor):
         outputs_target = self.target_representation(observation)
         targetQ = self.target_Qhead(outputs_target['state'])
         argmax_action = targetQ.argmax(axis=-1)
@@ -187,31 +49,31 @@ class BasicQnetwork(nn.Cell):
             tp.assign_value(ep)
 
 
-class DuelQnetwork(nn.Cell):
+class DuelQnetwork(Module):
     def __init__(self,
                  action_space: Space,
                  representation: ModuleType,
                  hidden_size: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., ms.Tensor]] = None,
+                 initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None
                  ):
         super(DuelQnetwork, self).__init__()
         self.action_dim = action_space.n
         self.representation = representation
-        self.target_representation = copy.deepcopy(representation)
+        self.target_representation = deepcopy(representation)
         self.representation_info_shape = self.representation.output_shapes
         self.eval_Qhead = DuelQhead(self.representation.output_shapes['state'][0], self.action_dim, hidden_size,
                                     normalize, initialize, activation)
-        self.target_Qhead = copy.deepcopy(self.eval_Qhead)
+        self.target_Qhead = deepcopy(self.eval_Qhead)
 
-    def construct(self, observation: ms.tensor):
+    def construct(self, observation: Tensor):
         outputs = self.representation(observation)
         evalQ = self.eval_Qhead(outputs['state'])
         argmax_action = evalQ.argmax(axis=-1)
         return outputs, argmax_action, evalQ
 
-    def target(self, observation: ms.tensor):
+    def target(self, observation: Tensor):
         outputs = self.target_representation(observation)
         targetQ = self.target_Qhead(outputs['state'])
         argmax_action = targetQ.argmax(axis=-1)
@@ -227,23 +89,23 @@ class DuelQnetwork(nn.Cell):
             tp.assign_value(ep)
 
 
-class NoisyQnetwork(nn.Cell):
+class NoisyQnetwork(Module):
     def __init__(self,
                  action_space: Discrete,
                  representation: ModuleType,
                  hidden_size: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., ms.Tensor]] = None,
+                 initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None
                  ):
         super(NoisyQnetwork, self).__init__()
         self.action_dim = action_space.n
         self.representation = representation
-        self.target_representation = copy.deepcopy(representation)
+        self.target_representation = deepcopy(representation)
         self.representation_info_shape = self.representation.output_shapes
         self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, hidden_size,
                                      normalize, initialize, activation)
-        self.target_Qhead = copy.deepcopy(self.eval_Qhead)
+        self.target_Qhead = deepcopy(self.eval_Qhead)
 
         self._stdnormal = ms.ops.StandardNormal()
         self._assign = ms.ops.Assign()
@@ -264,13 +126,13 @@ class NoisyQnetwork(nn.Cell):
             for parameter, noise_param in zip(self.target_Qhead.trainable_params(), self.target_noise_parameter):
                 _ = self._assign(parameter, parameter + noise_param)
 
-    def construct(self, observation: ms.tensor):
+    def construct(self, observation: Tensor):
         outputs = self.representation(observation)
         evalQ = self.eval_Qhead(outputs['state'])
         argmax_action = evalQ.argmax(axis=-1)
         return outputs, argmax_action, evalQ
 
-    def target(self, observation: ms.tensor):
+    def target(self, observation: Tensor):
         outputs = self.target_representation(observation)
         self.noisy_parameters(is_target=True)
         targetQ = self.target_Qhead(outputs['state'])
@@ -287,7 +149,7 @@ class NoisyQnetwork(nn.Cell):
             tp.assign_value(ep)
 
 
-class C51Qnetwork(nn.Cell):
+class C51Qnetwork(Module):
     def __init__(self,
                  action_space: Discrete,
                  atom_num: int,
@@ -296,7 +158,7 @@ class C51Qnetwork(nn.Cell):
                  representation: ModuleType,
                  hidden_size: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., ms.Tensor]] = None,
+                 initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None
                  ):
         assert isinstance(action_space, Discrete)
@@ -306,14 +168,14 @@ class C51Qnetwork(nn.Cell):
         self.v_min = v_min
         self.v_max = v_max
         self.representation = representation
-        self.target_representation = copy.deepcopy(representation)
+        self.target_representation = deepcopy(representation)
         self.representation_info_shape = self.representation.output_shapes
         self.eval_Zhead = C51Qhead(self.representation.output_shapes['state'][0], self.action_dim, self.atom_num,
                                    hidden_size, normalize, initialize, activation)
-        self.target_Zhead = copy.deepcopy(self.eval_Zhead)
+        self.target_Zhead = deepcopy(self.eval_Zhead)
         self._LinSpace = ms.ops.LinSpace()
-        self.supports = ms.Parameter(self._LinSpace(ms.Tensor(self.v_min, ms.float32),
-                                                    ms.Tensor(self.v_max, ms.float32),
+        self.supports = ms.Parameter(self._LinSpace(Tensor(self.v_min, ms.float32),
+                                                    Tensor(self.v_max, ms.float32),
                                                     self.atom_num),
                                      requires_grad=False)
         self.deltaz = (v_max - v_min) / (atom_num - 1)
@@ -339,37 +201,37 @@ class C51Qnetwork(nn.Cell):
             tp.assign_value(ep)
 
 
-class QRDQN_Network(nn.Cell):
+class QRDQN_Network(Module):
     def __init__(self,
                  action_space: Discrete,
                  quantile_num: int,
                  representation: ModuleType,
                  hidden_size: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., ms.Tensor]] = None,
+                 initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None
                  ):
         super(QRDQN_Network, self).__init__()
         self.action_dim = action_space.n
         self.quantile_num = quantile_num
         self.representation = representation
-        self.target_representation = copy.deepcopy(representation)
+        self.target_representation = deepcopy(representation)
         self.representation_info_shape = self.representation.output_shapes
         self.eval_Zhead = QRDQNhead(self.representation.output_shapes['state'][0], self.action_dim, self.quantile_num,
                                     hidden_size,
                                     normalize, initialize, activation)
-        self.target_Zhead = copy.deepcopy(self.eval_Zhead)
+        self.target_Zhead = deepcopy(self.eval_Zhead)
 
         self._mean = ms.ops.ReduceMean()
 
-    def construct(self, observation: ms.tensor):
+    def construct(self, observation: Tensor):
         outputs = self.representation(observation)
         evalZ = self.eval_Zhead(outputs['state'])
         evalQ = self._mean(evalZ, -1)
         argmax_action = evalQ.argmax(axis=-1)
         return outputs, argmax_action, evalZ
 
-    def target(self, observation: ms.tensor):
+    def target(self, observation: Tensor):
         outputs = self.target_representation(observation)
         target_Z = self.target_Zhead(outputs['state'])
         target_Q = self._mean(target_Z, -1)
@@ -386,59 +248,15 @@ class QRDQN_Network(nn.Cell):
             tp.assign_value(ep)
 
 
-class ActorNet(nn.Cell):
-    def __init__(self,
-                 state_dim: int,
-                 action_dim: int,
-                 hidden_sizes: Sequence[int],
-                 initialize: Optional[Callable[..., ms.Tensor]] = None,
-                 activation: Optional[ModuleType] = None
-                 ):
-        super(ActorNet, self).__init__()
-        layers = []
-        input_shape = (state_dim,)
-        for h in hidden_sizes:
-            mlp, input_shape = mlp_block(input_shape[0], h, None, activation, initialize)
-            layers.extend(mlp)
-        layers.extend(mlp_block(input_shape[0], action_dim, None, nn.Tanh, initialize)[0])
-        self.model = nn.SequentialCell(*layers)
-
-    def construct(self, x: ms.tensor):
-        return self.model(x)
-
-
-class CriticNet(nn.Cell):
-    def __init__(self,
-                 state_dim: int,
-                 action_dim: int,
-                 hidden_sizes: Sequence[int],
-                 initialize: Optional[Callable[..., ms.Tensor]] = None,
-                 activation: Optional[ModuleType] = None
-                 ):
-        super(CriticNet, self).__init__()
-        layers = []
-        input_shape = (state_dim + action_dim,)
-        for h in hidden_sizes:
-            mlp, input_shape = mlp_block(input_shape[0], h, None, activation, initialize)
-            layers.extend(mlp)
-        layers.extend(mlp_block(input_shape[0], 1, None, None, initialize)[0])
-        self._concat = ms.ops.Concat(axis=-1)
-        self.model = nn.SequentialCell(*layers)
-
-    def construct(self, x: ms.tensor, a: ms.tensor):
-        return self.model(self._concat((x, a)))[:, 0]
-
-
-class DDPGPolicy(nn.Cell):
+class DDPGPolicy(Module):
     def __init__(self,
                  action_space: Space,
                  representation: ModuleType,
                  actor_hidden_size: Sequence[int],
                  critic_hidden_size: Sequence[int],
-                 initialize: Optional[Callable[..., ms.Tensor]] = None,
+                 initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None
                  ):
-        assert isinstance(action_space, Box)
         super(DDPGPolicy, self).__init__()
         self.action_dim = action_space.shape[0]
         self.representation = representation
@@ -448,27 +266,27 @@ class DDPGPolicy(nn.Cell):
                               activation)
         self.critic = CriticNet(representation.output_shapes['state'][0], self.action_dim, critic_hidden_size,
                                 initialize, activation)
-        self.target_actor = copy.deepcopy(self.actor)
-        self.target_critic = copy.deepcopy(self.critic)
+        self.target_actor = deepcopy(self.actor)
+        self.target_critic = deepcopy(self.critic)
         # options
         self._standard_normal = ms.ops.StandardNormal()
-        self._min_act, self._max_act = ms.Tensor(-1.0), ms.Tensor(1.0)
+        self._min_act, self._max_act = Tensor(-1.0), Tensor(1.0)
 
-    def construct(self, observation: ms.tensor):
+    def construct(self, observation: Tensor):
         outputs = self.representation(observation)
         act = self.actor(outputs['state'])
         return outputs, act
 
-    def Qtarget(self, observation: ms.tensor):
+    def Qtarget(self, observation: Tensor):
         outputs = self.representation(observation)
         act = self.target_actor(outputs['state'])
         return self.target_critic(outputs['state'], act)
 
-    def Qaction(self, observation: ms.tensor, action: ms.tensor):
+    def Qaction(self, observation: Tensor, action: Tensor):
         outputs = self.representation(observation)
         return self.critic(outputs['state'], action)
 
-    def Qpolicy(self, observation: ms.tensor):
+    def Qpolicy(self, observation: Tensor):
         outputs = self.representation(observation)
         return self.critic(outputs['state'], self.actor(outputs['state']))
 
@@ -479,14 +297,14 @@ class DDPGPolicy(nn.Cell):
             tp.assign_value((tau * ep.data + (1 - tau) * tp.data))
 
 
-class TD3Policy(nn.Cell):
+class TD3Policy(Module):
     def __init__(self,
                  action_space: Space,
                  representation: ModuleType,
                  actor_hidden_size: Sequence[int],
                  critic_hidden_size: Sequence[int],
                  normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., ms.Tensor]] = None,
+                 initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None
                  ):
         super(TD3Policy, self).__init__()
@@ -503,23 +321,23 @@ class TD3Policy(nn.Cell):
                                  initialize, activation)
         self.criticB = CriticNet(representation.output_shapes['state'][0], self.action_dim, critic_hidden_size,
                                  initialize, activation)
-        self.target_actor = copy.deepcopy(self.actor)
-        self.target_criticA = copy.deepcopy(self.criticA)
-        self.target_criticB = copy.deepcopy(self.criticB)
+        self.target_actor = deepcopy(self.actor)
+        self.target_criticA = deepcopy(self.criticA)
+        self.target_criticB = deepcopy(self.criticB)
         self.actor_params = self.representation_params + self.actor.trainable_params()
         # options
         self._standard_normal = ms.ops.StandardNormal()
-        self._min_act, self._max_act = ms.Tensor(-1.0), ms.Tensor(1.0)
+        self._min_act, self._max_act = Tensor(-1.0), Tensor(1.0)
         self._minimum = ms.ops.Minimum()
         self._concat = ms.ops.Concat(axis=-1)
         self._expand_dims = ms.ops.ExpandDims()
 
-    def action(self, observation: ms.tensor):
+    def action(self, observation: Tensor):
         outputs = self.representation(observation)
         act = self.actor(outputs['state'])
         return outputs, act
 
-    def Qtarget(self, observation: ms.tensor):
+    def Qtarget(self, observation: Tensor):
         outputs = self.representation(observation)
         act = self.target_actor(outputs['state'])
         noise = ms.ops.clip_by_value(self._standard_normal(act.shape), self._min_act, self._max_act) * 0.1
@@ -529,13 +347,13 @@ class TD3Policy(nn.Cell):
         mim_q = self._minimum(qa, qb)
         return outputs, mim_q
 
-    def Qaction(self, observation: ms.tensor, action: ms.tensor):
+    def Qaction(self, observation: Tensor, action: Tensor):
         outputs = self.representation(observation)
         qa = self._expand_dims(self.criticA(outputs['state'], action), 1)
         qb = self._expand_dims(self.criticB(outputs['state'], action), 1)
         return outputs, self._concat((qa, qb))
 
-    def Qpolicy(self, observation: ms.tensor):
+    def Qpolicy(self, observation: Tensor):
         outputs = self.representation(observation)
         act = self.actor(outputs['state'])
         qa = self._expand_dims(self.criticA(outputs['state'], act), 1)
@@ -551,7 +369,7 @@ class TD3Policy(nn.Cell):
             tp.assign_value((tau * ep.data + (1 - tau) * tp.data))
 
 
-class PDQNPolicy(nn.Cell):
+class PDQNPolicy(Module):
     def __init__(self,
                  observation_space,
                  action_space,
@@ -559,7 +377,7 @@ class PDQNPolicy(nn.Cell):
                  conactor_hidden_size: Sequence[int],
                  qnetwork_hidden_size: Sequence[int],
                  normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., ms.Tensor]] = None,
+                 initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None):
         super(PDQNPolicy, self).__init__()
         self.representation = representation
@@ -574,8 +392,8 @@ class PDQNPolicy(nn.Cell):
                                    initialize, nn.ReLU)
         self.conactor = ActorNet(self.observation_space.shape[0], self.conact_size, conactor_hidden_size,
                                  initialize, nn.ReLU)
-        self.target_conactor = copy.deepcopy(self.conactor)
-        self.target_qnetwork = copy.deepcopy(self.qnetwork)
+        self.target_conactor = deepcopy(self.conactor)
+        self.target_qnetwork = deepcopy(self.qnetwork)
         self._concat = ms.ops.Concat(1)
 
     def Atarget(self, state):
@@ -614,7 +432,7 @@ class PDQNPolicy(nn.Cell):
             tp.assign_value((tau * ep.data + (1 - tau) * tp.data))
 
 
-class MPDQNPolicy(nn.Cell):
+class MPDQNPolicy(Module):
     def __init__(self,
                  observation_space,
                  action_space,
@@ -622,7 +440,7 @@ class MPDQNPolicy(nn.Cell):
                  conactor_hidden_size: Sequence[int],
                  qnetwork_hidden_size: Sequence[int],
                  normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., ms.Tensor]] = None,
+                 initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None):
         super(MPDQNPolicy, self).__init__()
         self.representation = representation
@@ -638,12 +456,12 @@ class MPDQNPolicy(nn.Cell):
                                    initialize, nn.ReLU)
         self.conactor = ActorNet(self.observation_space.shape[0], self.conact_size, conactor_hidden_size,
                                  initialize, nn.ReLU)
-        self.target_conactor = copy.deepcopy(self.conactor)
-        self.target_qnetwork = copy.deepcopy(self.qnetwork)
+        self.target_conactor = deepcopy(self.conactor)
+        self.target_qnetwork = deepcopy(self.qnetwork)
 
         self.offsets = self.conact_sizes.cumsum()
         self.offsets = np.insert(self.offsets, 0, 0)
-        self.offsets = ms.Tensor(self.offsets)
+        self.offsets = Tensor(self.offsets)
 
         self._concat = ms.ops.Concat(1)
         self._zeroslike = ms.ops.ZerosLike()
@@ -670,7 +488,7 @@ class MPDQNPolicy(nn.Cell):
             input_q[i * batch_size:(i + 1) * batch_size,
             self.obs_size + self.offsets[i]: self.obs_size + self.offsets[i + 1]] \
                 = action[:, self.offsets[i]:self.offsets[i + 1]]
-        input_q = ms.Tensor(input_q, dtype=ms.float32)
+        input_q = Tensor(input_q, dtype=ms.float32)
         eval_qall = self.target_qnetwork(input_q)
         for i in range(self.num_disact):
             eval_q = eval_qall[i * batch_size:(i + 1) * batch_size, i]
@@ -692,7 +510,7 @@ class MPDQNPolicy(nn.Cell):
         #     input_q[i * batch_size:(i + 1) * batch_size, self.obs_size + self.offsets[i]: self.obs_size + self.offsets[i + 1]] \
         #         = action[:, self.offsets[i]:self.offsets[i + 1]]
         #         # = self._squeeze(action[:, self.offsets[i]:self.offsets[i + 1]])
-        # input_q = ms.Tensor(input_q, dtype=ms.float32)
+        # input_q = Tensor(input_q, dtype=ms.float32)
         eval_qall = self.qnetwork(input_q)
         for i in range(self.num_disact):
             eval_q = eval_qall[i * batch_size:(i + 1) * batch_size, i]
@@ -731,7 +549,7 @@ class MPDQNPolicy(nn.Cell):
             tp.assign_value((tau * ep.data + (1 - tau) * tp.data))
 
 
-class SPDQNPolicy(nn.Cell):
+class SPDQNPolicy(Module):
     def __init__(self,
                  observation_space,
                  action_space,
@@ -739,7 +557,7 @@ class SPDQNPolicy(nn.Cell):
                  conactor_hidden_size: Sequence[int],
                  qnetwork_hidden_size: Sequence[int],
                  normalize: Optional[ModuleType] = None,
-                 initialize: Optional[Callable[..., ms.Tensor]] = None,
+                 initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None):
         super(SPDQNPolicy, self).__init__()
         self.representation = representation
@@ -755,12 +573,12 @@ class SPDQNPolicy(nn.Cell):
                                    initialize, nn.ReLU)
         self.conactor = ActorNet(self.observation_space.shape[0], self.conact_size, conactor_hidden_size,
                                  initialize, nn.ReLU)
-        self.target_conactor = copy.deepcopy(self.conactor)
-        self.target_qnetwork = copy.deepcopy(self.qnetwork)
+        self.target_conactor = deepcopy(self.conactor)
+        self.target_qnetwork = deepcopy(self.qnetwork)
 
         self.offsets = self.conact_sizes.cumsum()
         self.offsets = np.insert(self.offsets, 0, 0)
-        self.offsets = ms.Tensor(self.offsets)
+        self.offsets = Tensor(self.offsets)
 
         self._concat = ms.ops.Concat(1)
         self._zeroslike = ms.ops.ZerosLike()
@@ -786,7 +604,7 @@ class SPDQNPolicy(nn.Cell):
             input_q[i * batch_size:(i + 1) * batch_size,
             self.obs_size + self.offsets[i]: self.obs_size + self.offsets[i + 1]] \
                 = action[:, self.offsets[i]:self.offsets[i + 1]]
-        input_q = ms.Tensor(input_q, dtype=ms.float32)
+        input_q = Tensor(input_q, dtype=ms.float32)
         eval_qall = self.target_qnetwork(input_q)
         for i in range(self.num_disact):
             eval_q = eval_qall[i * batch_size:(i + 1) * batch_size, i]
@@ -830,27 +648,27 @@ class SPDQNPolicy(nn.Cell):
             tp.assign_value((tau * ep.data + (1 - tau) * tp.data))
 
 
-class DRQNPolicy(nn.Cell):
+class DRQNPolicy(Module):
     def __init__(self,
                  action_space: Discrete,
-                 representation: nn.Cell,
+                 representation: Module,
                  **kwargs):
         super(DRQNPolicy, self).__init__()
         self.recurrent_layer_N = kwargs['recurrent_layer_N']
         self.rnn_hidden_dim = kwargs['recurrent_hidden_size']
         self.action_dim = action_space.n
         self.representation = representation
-        self.target_representation = copy.deepcopy(representation)
+        self.target_representation = deepcopy(representation)
         self.representation_info_shape = self.representation.output_shapes
         kwargs["input_dim"] = self.representation.output_shapes['state'][0]
         kwargs["action_dim"] = self.action_dim
         self.lstm = True if kwargs["rnn"] == "LSTM" else False
         self.cnn = True if self.representation.cls_name == "Basic_CNN" else False
         self.eval_Qhead = BasicRecurrent(**kwargs)
-        self.target_Qhead = copy.deepcopy(self.eval_Qhead)
+        self.target_Qhead = deepcopy(self.eval_Qhead)
         self._zeroslike = ms.ops.ZerosLike()
 
-    def construct(self, observation: Union[np.ndarray, dict], *rnn_hidden: ms.tensor):
+    def construct(self, observation: Union[np.ndarray, dict], *rnn_hidden: Tensor):
         if self.cnn:
             obs_shape = observation.shape
             outputs = self.representation(observation.reshape((-1,) + obs_shape[-3:]))
@@ -865,7 +683,7 @@ class DRQNPolicy(nn.Cell):
         argmax_action = evalQ[:, -1].argmax(axis=-1)
         return outputs, argmax_action, evalQ, (hidden_states, cell_states)
 
-    def target(self, observation: Union[np.ndarray, dict], *rnn_hidden: ms.tensor):
+    def target(self, observation: Union[np.ndarray, dict], *rnn_hidden: Tensor):
         if self.cnn:
             obs_shape = observation.shape
             outputs = self.representation(observation.reshape((-1,) + obs_shape[-3:]))
