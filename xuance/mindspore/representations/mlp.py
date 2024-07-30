@@ -7,7 +7,8 @@ from xuance.mindspore.utils import nn, mlp_block, ModuleType
 # directly returns the original observation
 class Basic_Identical(Module):
     def __init__(self,
-                 input_shape: Sequence[int]):
+                 input_shape: Sequence[int],
+                 **kwargs):
         super(Basic_Identical, self).__init__()
         assert len(input_shape) == 1
         self.output_shapes = {'state': (input_shape[0],)}
@@ -23,8 +24,8 @@ class Basic_MLP(Module):
                  hidden_sizes: Sequence[int],
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., Tensor]] = None,
-                 activation: Optional[ModuleType] = None
-                 ):
+                 activation: Optional[ModuleType] = None,
+                 **kwargs):
         super(Basic_MLP, self).__init__()
         self.input_shape = input_shape
         self.hidden_sizes = hidden_sizes
