@@ -1,114 +1,102 @@
-from xuance.mindspore.agents import *
+import numpy as np
+from argparse import Namespace
+from xuance.common import Optional
+from xuance.environment import DummyVecMultiAgentEnv
+from xuance.mindspore.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
+from xuance.mindspore.policies import REGISTRY_Policy
+from xuance.mindspore.agents import OnPolicyMARLAgents
 
 
-class IPPO_Agents(MARLAgents):
+class IPPO_Agents(OnPolicyMARLAgents):
+    """The implementation of Independent PPO agents.
+
+    Args:
+        config: the Namespace variable that provides hyper-parameters and other settings.
+        envs: the vectorized environments.
+    """
+
     def __init__(self,
                  config: Namespace,
                  envs: DummyVecMultiAgentEnv):
-        self.gamma = config.gamma
-        self.n_envs = envs.num_envs
-        self.n_size = config.n_size
-        self.n_epochs = config.n_epochs
-        self.n_minibatch = config.n_minibatch
-        if config.state_space is not None:
-            config.dim_state, state_shape = config.state_space.shape[0], config.state_space.shape
+        super(IPPO_Agents, self).__init__(config, envs)
+
+        self.policy = self._build_policy()  # build policy
+        self.memory = self._build_memory()  # build memory
+        self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, self.policy)
+
+    def _build_policy(self):
+        """
+        Build representation(s) and policy(ies) for agent(s)
+
+        Returns:
+            policy (torch.nn.Module): A dict of policies.
+        """
+        normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
+        initializer = InitializeFunctions[self.config.initialize] if hasattr(self.config, "initialize") else None
+        activation = ActivationFunctions[self.config.activation]
+        agent = self.config.agent
+        # build representations
+        A_representation = self._build_representation(self.config.representation, self.observation_space, self.config)
+        C_representation = self._build_representation(self.config.representation, self.observation_space, self.config)
+        # build policies
+        if self.config.policy == "Categorical_MAAC_Policy":
+            policy = REGISTRY_Policy["Categorical_MAAC_Policy"](
+                action_space=self.action_space, n_agents=self.n_agents,
+                representation_actor=A_representation, representation_critic=C_representation,
+                actor_hidden_size=self.config.actor_hidden_size, critic_hidden_size=self.config.critic_hidden_size,
+                normalize=normalize_fn, initialize=initializer, activation=activation,
+                use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
+                use_rnn=self.use_rnn, rnn=self.config.rnn if self.use_rnn else None)
+            self.continuous_control = False
+        elif self.config.policy == "Gaussian_MAAC_Policy":
+            policy = REGISTRY_Policy["Gaussian_MAAC_Policy"](
+                action_space=self.action_space, n_agents=self.n_agents,
+                representation_actor=A_representation, representation_critic=C_representation,
+                actor_hidden_size=self.config.actor_hidden_size, critic_hidden_size=self.config.critic_hidden_size,
+                normalize=normalize_fn, initialize=initializer, activation=activation,
+                activation_action=ActivationFunctions[self.config.activation_action],
+                use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
+                use_rnn=self.use_rnn, rnn=self.config.rnn if self.use_rnn else None)
+            self.continuous_control = True
         else:
-            config.dim_state, state_shape = None, None
+            raise AttributeError(f"{agent} currently does not support the policy named {self.config.policy}.")
+        return policy
 
-        input_representation = get_repre_in(config)
-        self.use_rnn = config.use_rnn
-        self.use_global_state = config.use_global_state
-        # create representation for actor
-        kwargs_rnn = {"N_recurrent_layers": config.N_recurrent_layers,
-                      "dropout": config.dropout,
-                      "rnn": config.rnn} if self.use_rnn else {}
-        representation = REGISTRY_Representation[config.representation](*input_representation, **kwargs_rnn)
-        # create representation for critic
-        input_representation[0] = (config.dim_state,) if self.use_global_state else (config.dim_obs,)
-        representation_critic = REGISTRY_Representation[config.representation](*input_representation, **kwargs_rnn)
-        # create policy
-        input_policy = get_policy_in_marl(config, (representation, representation_critic))
-        policy = REGISTRY_Policy[config.policy](*input_policy,
-                                                use_rnn=config.use_rnn,
-                                                rnn=config.rnn,
-                                                gain=config.gain)
-        scheduler = lr_decay_model(learning_rate=config.learning_rate, decay_rate=0.5,
-                                   decay_steps=get_total_iters(config.agent_name, config))
-        optimizer = Adam(policy.trainable_params(), config.learning_rate, eps=1e-5)
-        self.observation_space = envs.observation_space
-        self.action_space = envs.action_space
-        self.auxiliary_info_shape = {}
+    def init_rnn_hidden(self, n_envs):
+        """
+        Returns initialized hidden states of RNN if use RNN-based representations.
 
-        buffer = MARL_OnPolicyBuffer_RNN if self.use_rnn else MARL_OnPolicyBuffer
-        input_buffer = (config.n_agents, config.state_space.shape, config.obs_shape, config.act_shape, config.rew_shape,
-                        config.done_shape, envs.num_envs, config.n_size,
-                        config.use_gae, config.use_advnorm, config.gamma, config.gae_lambda)
-        memory = buffer(*input_buffer, max_episode_steps=envs.max_episode_steps, dim_act=config.dim_act)
-        self.buffer_size = memory.buffer_size
-        self.batch_size = self.buffer_size // self.n_minibatch
-
-        learner = IPPO_Learner(config, policy, optimizer, scheduler, config.model_dir, config.gamma)
-        super(IPPO_Agents, self).__init__(config, envs, policy, memory, learner, config.log_dir, config.model_dir)
-        self.share_values = True if config.rew_shape[0] == 1 else False
-        self.on_policy = True
-
-    def act(self, obs_n, *rnn_hidden, avail_actions=None, state=None, test_mode=False):
-        batch_size = len(obs_n)
-        agents_id = ops.broadcast_to(self.expand_dims(self.eye(self.n_agents, self.n_agents, ms.float32), 0),
-                                     (batch_size, -1, -1))
-        obs_in = Tensor(obs_n).view(batch_size, self.n_agents, -1)
+        Parameters:
+            n_envs (int): The number of parallel environments.
+        """
+        rnn_hidden_actor, rnn_hidden_critic = None, None
         if self.use_rnn:
-            batch_agents = batch_size * self.n_agents
-            hidden_state, act_probs = self.policy(obs_in.view(batch_agents, 1, -1),
-                                                  agents_id.view(batch_agents, 1, -1),
-                                                  *rnn_hidden,
-                                                  avail_actions=avail_actions.reshape(batch_agents, 1, -1))
-            actions = self.policy.actor.sample(act_probs)
-            log_pi_a = self.policy.actor.log_prob(value=actions, probs=act_probs)
-            actions = actions.reshape(batch_size, self.n_agents)
-        else:
-            hidden_state, act_probs = self.policy(obs_in, agents_id, avail_actions=avail_actions)
-            actions = self.policy.actor.sample(act_probs)
-            log_pi_a = self.policy.actor.log_prob(value=actions, probs=act_probs)
-        return hidden_state, actions.asnumpy(), log_pi_a.asnumpy()
+            batch = n_envs * self.n_agents if self.use_parameter_sharing else n_envs
+            rnn_hidden_actor = {k: self.policy.actor_representation[k].init_hidden(batch) for k in self.model_keys}
+            rnn_hidden_critic = {k: self.policy.critic_representation[k].init_hidden(batch) for k in self.model_keys}
+        return rnn_hidden_actor, rnn_hidden_critic
 
-    def values(self, obs_n, *rnn_hidden, state=None):
-        batch_size = len(obs_n)
-        agents_id = ops.broadcast_to(self.expand_dims(self.eye(self.n_agents, self.n_agents, ms.float32), 0),
-                                     (batch_size, -1, -1))
-        # build critic input
-        if self.use_global_state:
-            state = Tensor(state).unsqueeze(1)
-            critic_in = state.expand(-1, self.n_agents, -1)
-        else:
-            critic_in = Tensor(obs_n)
-        # get critic values
-        if self.use_rnn:
-            hidden_state, values_n = self.policy.get_values(critic_in.unsqueeze(2),  # add a sequence length axis.
-                                                            agents_id.unsqueeze(2),
-                                                            *rnn_hidden)
-            values_n = values_n.squeeze(2)
-        else:
-            hidden_state, values_n = self.policy.get_values(critic_in, agents_id)
+    def init_hidden_item(self,
+                         i_env: int,
+                         rnn_hidden_actor: Optional[dict] = None,
+                         rnn_hidden_critic: Optional[dict] = None):
+        """
+        Returns initialized hidden states of RNN for i-th environment.
 
-        return hidden_state, values_n.asnumpy()
-
-    def train(self, i_step, **kwargs):
-        if self.memory.full:
-            info_train = {}
-            indexes = np.arange(self.buffer_size)
-            for _ in range(self.n_epochs):
-                np.random.shuffle(indexes)
-                for start in range(0, self.buffer_size, self.batch_size):
-                    end = start + self.batch_size
-                    sample_idx = indexes[start:end]
-                    sample = self.memory.sample(sample_idx)
-                    if self.use_rnn:
-                        info_train = self.learner.update_recurrent(sample)
-                    else:
-                        info_train = self.learner.update(sample)
-            self.learner.lr_decay(i_step)
-            self.memory.clear()
-            return info_train
+        Parameters:
+            i_env (int): The index of environment that to be selected.
+            rnn_hidden_actor (Optional[dict]): The RNN hidden states of actor representation.
+            rnn_hidden_critic (Optional[dict]): The RNN hidden states of critic representation.
+        """
+        assert self.use_rnn is True, "This method cannot be called when self.use_rnn is False."
+        if self.use_parameter_sharing:
+            b_index = np.arange(i_env * self.n_agents, (i_env + 1) * self.n_agents)
         else:
-            return {}
+            b_index = [i_env, ]
+        for k in self.model_keys:
+            rnn_hidden_actor[k] = self.policy.actor_representation[k].init_hidden_item(b_index, *rnn_hidden_actor[k])
+        if rnn_hidden_critic is None:
+            return rnn_hidden_actor, None
+        for k in self.model_keys:
+            rnn_hidden_critic[k] = self.policy.critic_representation[k].init_hidden_item(b_index, *rnn_hidden_critic[k])
+        return rnn_hidden_actor, rnn_hidden_critic

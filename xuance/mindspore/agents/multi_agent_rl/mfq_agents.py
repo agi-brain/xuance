@@ -1,11 +1,18 @@
-from xuance.mindspore.agents import *
-from xuance.mindspore.agents.base.agents_marl import linear_decay_or_increase
+import numpy as np
+from tqdm import tqdm
+from argparse import Namespace
+from xuance.common import DummyOffPolicyBuffer, DummyOffPolicyBuffer_Atari
+from xuance.environment import DummyVecMultiAgentEnv
+from xuance.mindspore import ms, Module
+from xuance.mindspore.agents import MARLAgents
+from xuance.mindspore.learners import DQN_Learner
 
 
 class MFQ_Agents(MARLAgents):
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecMultiAgentEnv):
+                 envs: DummyVecMultiAgentEnv,
+                 device: str = "cpu:0"):
         self.gamma = config.gamma
 
         self.start_greedy, self.end_greedy = config.start_greedy, config.end_greedy
@@ -18,9 +25,9 @@ class MFQ_Agents(MARLAgents):
         representation = REGISTRY_Representation[config.representation](*input_representation)
         input_policy = get_policy_in_marl(config, representation)
         policy = REGISTRY_Policy[config.policy](*input_policy)
-        scheduler = lr_decay_model(learning_rate=config.learning_rate, decay_rate=0.5,
-                                   decay_steps=get_total_iters(config.agent_name, config))
-        optimizer = Adam(policy.trainable_params(), scheduler, eps=1e-5)
+        lr_scheduler = MyLinearLR(config.learning_rate, start_factor=1.0, end_factor=0.5,
+                                  total_iters=get_total_iters(config.agent_name, config))
+        optimizer = tk.optimizers.Adam(lr_scheduler)
         self.observation_space = envs.observation_space
         self.action_space = envs.action_space
         self.representation_info_shape = policy.representation.output_shapes
@@ -40,42 +47,33 @@ class MFQ_Agents(MARLAgents):
                                            envs.num_envs,
                                            config.buffer_size,
                                            config.batch_size)
-        learner = MFQ_Learner(config, policy, optimizer, scheduler,
-                              config.model_dir, config.gamma, config.sync_frequency)
-        super(MFQ_Agents, self).__init__(config, envs, policy, memory, learner, config.log_dir, config.model_dir)
+        learner = MFQ_Learner(config, policy, optimizer,
+                              config.device, config.model_dir, config.gamma, config.sync_frequency)
+        super(MFQ_Agents, self).__init__(config, envs, policy, memory, learner, device,
+                                         config.log_dir, config.model_dir)
         self.on_policy = False
 
     def act(self, obs_n, *rnn_hidden, test_mode=False, act_mean=None, agent_mask=None, avail_actions=None):
         batch_size = obs_n.shape[0]
-        agents_id = ops.broadcast_to(self.expand_dims(self.eye(self.n_agents, self.n_agents, ms.float32), 0),
-                                     (batch_size, -1, -1))
-        obs_in = Tensor(obs_n)
-        act_mean = ops.broadcast_to(self.expand_dims(Tensor(act_mean).astype(ms.float32), -2), (-1, self.n_agents, -1))
-
-        if self.use_rnn:  # awaiting to be tested
-            batch_agents = batch_size * self.n_agents
-            hidden_state, greedy_actions, q_output = self.policy(obs_in.view(batch_agents, 1, -1),
-                                                                 act_mean.view(batch_agents, 1, -1),
-                                                                 agents_id.view(batch_agents, 1, -1),
-                                                                 *rnn_hidden,
-                                                                 avail_actions=avail_actions)
-        else:
-            hidden_state, greedy_actions, q_output = self.policy(obs_in, act_mean, agents_id)
-        n_alive = ops.broadcast_to(self.expand_dims(Tensor(agent_mask).sum(axis=-1), -1), (-1, int(self.dim_act)))
-        action_n_mask = ops.broadcast_to(self.expand_dims(Tensor(agent_mask), -1), (-1, -1, int(self.dim_act)))
+        act_mean = np.expand_dims(act_mean, axis=-2).repeat(self.n_agents, axis=1)
+        inputs = {"obs": obs_n,
+                  "act_mean": act_mean,
+                  "ids": np.tile(np.expand_dims(np.eye(self.n_agents), 0), (batch_size, 1, 1))}
+        _, greedy_actions, q_output = self.policy(inputs)
+        n_alive = np.expand_dims(np.sum(agent_mask, axis=-1), axis=-1).repeat(self.dim_act, axis=1)
+        action_n_mask = np.expand_dims(agent_mask, axis=-1).repeat(self.dim_act, axis=-1)
         act_neighbor_sample = self.policy.sample_actions(logits=q_output)
-        act_neighbor_onehot = self.learner.onehot_action(act_neighbor_sample, self.dim_act) * action_n_mask
-        act_mean_current = act_neighbor_onehot.sum(axis=1) / n_alive
-        act_mean_current = act_mean_current.asnumpy()
-        greedy_actions = greedy_actions.asnumpy()
+        act_neighbor_onehot = self.learner.onehot_action(act_neighbor_sample, self.dim_act).numpy() * action_n_mask
+        act_mean_current = np.sum(act_neighbor_onehot, axis=1) / n_alive
+        greedy_actions = greedy_actions.numpy()
         if test_mode:
-            return hidden_state, greedy_actions, act_mean_current
+            return None, greedy_actions, act_mean_current
         else:
             random_actions = np.random.choice(self.dim_act, [self.nenvs, self.n_agents])
             if np.random.rand() < self.egreedy:
-                return hidden_state, random_actions, act_mean_current
+                return None, random_actions, act_mean_current
             else:
-                return hidden_state, greedy_actions, act_mean_current
+                return None, greedy_actions, act_mean_current
 
     def train(self, i_step, n_epochs=1):
         if self.egreedy >= self.end_greedy:

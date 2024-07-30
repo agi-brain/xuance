@@ -44,7 +44,7 @@ setup(
         "all": [
             "torch==1.13.0",
             "tensorflow==2.6.0",
-            "mindspore==2.2.0"  # mindspore might be installed manually.
+            "mindspore==2.2.14"  # mindspore might be installed manually.
         ],
         "atari": ["atari-py==0.2.9",  # for Atari
                   "ale-py==0.7.5"],

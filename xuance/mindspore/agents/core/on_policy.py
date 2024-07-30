@@ -4,8 +4,8 @@ from copy import deepcopy
 from argparse import Namespace
 from xuance.common import Optional, DummyOnPolicyBuffer, DummyOnPolicyBuffer_Atari
 from xuance.environment import DummyVecEnv
-from xuance.torch.utils import split_distributions
-from xuance.torch.agents.base import Agent
+from xuance.mindspore.utils import split_distributions
+from xuance.mindspore.agents.base import Agent
 
 
 class OnPolicyAgent(Agent):

@@ -1,10 +1,18 @@
-from xuance.mindspore.agents import *
+import numpy as np
+from tqdm import tqdm
+from argparse import Namespace
+from xuance.common import DummyOffPolicyBuffer, DummyOffPolicyBuffer_Atari
+from xuance.environment import DummyVecMultiAgentEnv
+from xuance.mindspore import ms, Module
+from xuance.mindspore.agents import MARLAgents
+from xuance.mindspore.learners import DQN_Learner
 
 
 class DCG_Agents(MARLAgents):
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecMultiAgentEnv):
+                 envs: DummyVecMultiAgentEnv,
+                 device: str = "cpu:0"):
         self.gamma = config.gamma
         self.start_greedy, self.end_greedy = config.start_greedy, config.end_greedy
         self.egreedy = self.start_greedy
@@ -30,22 +38,22 @@ class DCG_Agents(MARLAgents):
         else:
             action_space = config.action_space[config.agent_keys[0]]
         if config.agent == "DCG_S":
-            policy = REGISTRY_Policy[config.policy](config.action_space[config.agent_keys[0]],
+            policy = REGISTRY_Policy[config.policy](action_space,
                                                     config.state_space.shape[0], representation,
                                                     utility, payoffs, dcgraph, config.hidden_bias_dim,
-                                                    None, None, nn.ReLU,
+                                                    None, None, tk.layers.Activation('relu'), device,
                                                     use_rnn=config.use_rnn,
                                                     rnn=config.rnn)
         else:
-            policy = REGISTRY_Policy[config.policy](config.action_space[config.agent_keys[0]],
+            policy = REGISTRY_Policy[config.policy](action_space,
                                                     config.state_space.shape[0], representation,
                                                     utility, payoffs, dcgraph, None,
-                                                    None, None, nn.ReLU,
+                                                    None, None, tk.layers.Activation('relu'), device,
                                                     use_rnn=config.use_rnn,
                                                     rnn=config.rnn)
-        scheduler = lr_decay_model(learning_rate=config.learning_rate, decay_rate=0.5,
-                                   decay_steps=get_total_iters(config.agent_name, config))
-        optimizer = Adam(policy.trainable_params(), scheduler, eps=1e-5)
+        lr_scheduler = MyLinearLR(config.learning_rate, start_factor=1.0, end_factor=0.5,
+                                  total_iters=get_total_iters(config.agent_name, config))
+        optimizer = tk.optimizers.Adam(lr_scheduler)
         self.observation_space = envs.observation_space
         self.action_space = envs.action_space
         self.representation_info_shape = policy.representation.output_shapes
@@ -55,25 +63,28 @@ class DCG_Agents(MARLAgents):
             config.dim_state, state_shape = config.state_space.shape, config.state_space.shape
         else:
             config.dim_state, state_shape = None, None
+
         buffer = MARL_OffPolicyBuffer_RNN if self.use_rnn else MARL_OffPolicyBuffer
         input_buffer = (config.n_agents, state_shape, config.obs_shape, config.act_shape, config.rew_shape,
                         config.done_shape, envs.num_envs, config.buffer_size, config.batch_size)
         memory = buffer(*input_buffer, max_episode_steps=envs.max_episode_steps, dim_act=config.dim_act)
 
         from xuance.mindspore.learners.multi_agent_rl.dcg_learner import DCG_Learner
-        learner = DCG_Learner(config, policy, optimizer, scheduler,
-                              config.model_dir, config.gamma, config.sync_frequency)
-        super(DCG_Agents, self).__init__(config, envs, policy, memory, learner, config.log_dir, config.model_dir)
+        learner = DCG_Learner(config, policy, optimizer,
+                              config.device, config.model_dir, config.gamma, config.sync_frequency)
+
+        super(DCG_Agents, self).__init__(config, envs, policy, memory, learner, device,
+                                         config.log_dir, config.model_dir)
         self.on_policy = False
 
     def act(self, obs_n, *rnn_hidden, avail_actions=None, test_mode=False):
         batch_size = obs_n.shape[0]
-        obs_n = Tensor(obs_n)
-        obs_in = obs_n.view(batch_size * self.n_agents, 1, -1)
+        obs_n = tf.convert_to_tensor(obs_n)
+        obs_in = tf.reshape(obs_n, [batch_size * self.n_agents, 1, -1])
         rnn_hidden_next, hidden_states = self.learner.get_hidden_states(obs_in, *rnn_hidden)
-        greedy_actions = self.learner.act(hidden_states.view(batch_size, self.n_agents, -1),
+        greedy_actions = self.learner.act(tf.reshape(hidden_states, [batch_size, self.n_agents, -1]),
                                           avail_actions=avail_actions)
-        greedy_actions = greedy_actions.asnumpy()
+        greedy_actions = greedy_actions.numpy()
 
         if test_mode:
             return rnn_hidden_next, greedy_actions
@@ -81,7 +92,7 @@ class DCG_Agents(MARLAgents):
             if avail_actions is None:
                 random_actions = np.random.choice(self.dim_act, [self.nenvs, self.n_agents])
             else:
-                random_actions = Categorical(Tensor(avail_actions)).sample().asnumpy()
+                random_actions = CategoricalDistribution(tf.convert_to_tensor(avail_actions)).stochastic_sample().numpy()
             if np.random.rand() < self.egreedy:
                 return rnn_hidden_next, random_actions
             else:

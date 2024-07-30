@@ -1,59 +1,52 @@
-from xuance.mindspore.agents import *
+from argparse import Namespace
+from xuance.environment import DummyVecMultiAgentEnv
+from xuance.mindspore.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
+from xuance.mindspore.policies import REGISTRY_Policy
+from xuance.mindspore.agents.multi_agent_rl.iddpg_agents import IDDPG_Agents
 
 
-class MATD3_Agents(MARLAgents):
+class MATD3_Agents(IDDPG_Agents):
+    """The implementation of MATD3 agents.
+
+    Args:
+        config: The Namespace variable that provides hyper-parameters and other settings.
+        envs: The vectorized environments.
+    """
+
     def __init__(self,
                  config: Namespace,
                  envs: DummyVecMultiAgentEnv):
-        self.gamma = config.gamma
+        super(MATD3_Agents, self).__init__(config, envs)
 
-        input_representation = get_repre_in(config)
-        representation = REGISTRY_Representation[config.representation](*input_representation)
-        input_policy = get_policy_in_marl(config, representation)
-        policy = REGISTRY_Policy[config.policy](*input_policy)
-        scheduler = [lr_decay_model(learning_rate=config.learning_rate_actor, decay_rate=0.5,
-                                    decay_steps=get_total_iters(config.agent_name, config)),
-                     lr_decay_model(learning_rate=config.learning_rate_critic, decay_rate=0.5,
-                                    decay_steps=get_total_iters(config.agent_name, config)),
-                     lr_decay_model(learning_rate=config.learning_rate_critic, decay_rate=0.5,
-                                    decay_steps=get_total_iters(config.agent_name, config))]
-        optimizer = [Adam(policy.parameters_actor, scheduler[0], eps=1e-5),
-                     Adam(policy.parameters_critic_A, scheduler[1], eps=1e-5),
-                     Adam(policy.parameters_critic_B, scheduler[2], eps=1e-5)]
+    def _build_policy(self):
+        """
+        Build representation(s) and policy(ies) for agent(s)
 
-        self.observation_space = envs.observation_space
-        self.action_space = envs.action_space
-        self.representation_info_shape = policy.representation.output_shapes
-        self.auxiliary_info_shape = {}
+        Returns:
+            policy (torch.nn.Module): A dict of policies.
+        """
+        normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
+        initializer = InitializeFunctions[self.config.initialize] if hasattr(self.config, "initialize") else None
+        activation = ActivationFunctions[self.config.activation]
 
-        if config.state_space is not None:
-            config.dim_state, state_shape = config.state_space.shape, config.state_space.shape
+        # build representations
+        A_representation = self._build_representation(self.config.representation, self.observation_space, self.config)
+        critic_in = [sum(self.observation_space[k].shape) + sum(self.action_space[k].shape) for k in self.agent_keys]
+        space_critic_in = {k: (sum(critic_in),) for k in self.agent_keys}
+        C_representation = self._build_representation(self.config.representation, space_critic_in, self.config)
+
+        # build policies
+        if self.config.policy == "MATD3_Policy":
+            policy = REGISTRY_Policy["MATD3_Policy"](
+                action_space=self.action_space, n_agents=self.n_agents,
+                actor_representation=A_representation, critic_representation=C_representation,
+                actor_hidden_size=self.config.actor_hidden_size,
+                critic_hidden_size=self.config.critic_hidden_size,
+                normalize=normalize_fn, initialize=initializer, activation=activation,
+                activation_action=ActivationFunctions[self.config.activation_action],
+                use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
+                use_rnn=self.use_rnn, rnn=self.config.rnn if self.use_rnn else None)
         else:
-            config.dim_state, state_shape = None, None
-        memory = MARL_OffPolicyBuffer(config.n_agents,
-                                      state_shape,
-                                      config.obs_shape,
-                                      config.act_shape,
-                                      config.rew_shape,
-                                      config.done_shape,
-                                      envs.num_envs,
-                                      config.buffer_size,
-                                      config.batch_size)
-        learner = MATD3_Learner(config, policy, optimizer, scheduler, config.device, config.model_dir, config.gamma)
-        super(MATD3_Agents, self).__init__(config, envs, policy, memory, learner, config.log_dir, config.model_dir)
-        self.on_policy = False
+            raise AttributeError(f"MATD3 currently does not support the policy named {self.config.policy}.")
 
-    def act(self, obs_n, test_mode):
-        batch_size = len(obs_n)
-        agents_id = ops.broadcast_to(self.expand_dims(self.eye(self.n_agents, self.n_agents, ms.float32), 0),
-                                     (batch_size, -1, -1))
-        _, actions = self.policy(Tensor(obs_n), agents_id)
-        actions = actions.asnumpy()
-        if not test_mode:
-            actions += np.random.normal(0, self.args.sigma, size=actions.shape)
-        return None, actions
-
-    def train(self, i_episode):
-        sample = self.memory.sample()
-        info_train = self.learner.update(sample)
-        return info_train
+        return policy

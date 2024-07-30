@@ -6,7 +6,7 @@ from argparse import Namespace
 from operator import itemgetter
 from xuance.common import MARL_OnPolicyBuffer, MARL_OnPolicyBuffer_RNN, Optional, List, Union
 from xuance.environment import DummyVecMultiAgentEnv
-from xuance.torch.agents.base import MARLAgents
+from xuance.mindspore.agents.base import MARLAgents
 
 
 class OnPolicyMARLAgents(MARLAgents):

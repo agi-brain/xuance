@@ -6,14 +6,12 @@ from abc import ABC
 from pathlib import Path
 from argparse import Namespace
 from mpi4py import MPI
-from xuance.common import Optional
 from gym.spaces import Dict, Space
-from torch import nn
 from torch.utils.tensorboard import SummaryWriter
-from xuance.common import get_time_string, create_directory, RunningMeanStd, space2shape, EPS
+from xuance.common import get_time_string, create_directory, RunningMeanStd, space2shape, EPS, Optional
 from xuance.environment import DummyVecEnv
 from xuance.torch import REGISTRY_Representation, REGISTRY_Learners, Module
-from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
+from xuance.torch.utils import nn, NormalizeFunctions, ActivationFunctions
 
 
 class Agent(ABC):

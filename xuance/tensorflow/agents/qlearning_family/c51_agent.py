@@ -1,7 +1,6 @@
 from argparse import Namespace
 from xuance.environment import DummyVecEnv
-from xuance.tensorflow import tk
-from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions
+from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
 from xuance.tensorflow.agents.qlearning_family.dqn_agent import DQN_Agent
 from xuance.tensorflow.policies import REGISTRY_Policy
 
@@ -20,7 +19,7 @@ class C51_Agent(DQN_Agent):
 
     def _build_policy(self):
         normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
-        initializer = tk.initializers.orthogonal
+        initializer = InitializeFunctions[self.config.initialize] if hasattr(self.config, "initialize") else None
         activation = ActivationFunctions[self.config.activation]
 
         # build representation.
