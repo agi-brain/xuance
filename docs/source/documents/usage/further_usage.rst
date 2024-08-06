@@ -237,6 +237,6 @@ After finishing the above three steps, you can run the `python_mujoco.py` file i
 
 The source code of this example can be visited at the following link:
 
-`https://github.com/agi-brain/xuance/examples/ppo/ppo_mujoco.py <https://github.com/agi-brain/xuance/examples/ppo/ppo_mujoco.py/>`_
+`https://github.com/agi-brain/xuance/blob/master/examples/ppo/ppo_mujoco.py <https://github.com/agi-brain/xuance/blob/master/examples/ppo/ppo_mujoco.py>`_
 
 
