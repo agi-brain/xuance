@@ -1,9 +1,17 @@
-from xuance.mindspore.learners import *
+"""
+Deep Recurrent Q-Netwrk (DRQN)
+Paper link: https://cdn.aaai.org/ocs/11673/11673-51288-1-PB.pdf
+Implementation: MindSpore
+"""
+import mindspore as ms
+from xuance.mindspore import Module
+from xuance.mindspore.learners import Learner
+from argparse import Namespace
 from mindspore.ops import OneHot
 
 
 class DRQN_Learner(Learner):
-    class PolicyNetWithLossCell(nn.Cell):
+    class PolicyNetWithLossCell(Module):
         def __init__(self, backbone, loss_fn):
             super(DRQN_Learner.PolicyNetWithLossCell, self).__init__(auto_prefix=False)
             self._backbone = backbone
@@ -19,15 +27,11 @@ class DRQN_Learner(Learner):
             return loss
 
     def __init__(self,
-                 policy: nn.Cell,
-                 optimizer: nn.Optimizer,
-                 scheduler: Optional[nn.exponential_decay_lr] = None,
-                 model_dir: str = "./",
-                 gamma: float = 0.99,
-                 sync_frequency: int = 100):
+                 config: Namespace,
+                 policy: Module):
         self.gamma = gamma
         self.sync_frequency = sync_frequency
-        super(DRQN_Learner, self).__init__(policy, optimizer, scheduler, model_dir)
+        super(DRQN_Learner, self).__init__(config, policy)
         # define loss function
         loss_fn = nn.MSELoss()
         self._onehot = OneHot()

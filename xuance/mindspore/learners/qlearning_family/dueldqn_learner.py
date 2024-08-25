@@ -1,9 +1,17 @@
-from xuance.mindspore.learners import *
+"""
+DQN with Dueling network (Dueling DQN)
+Paper link: http://proceedings.mlr.press/v48/wangf16.pdf
+Implementation: MindSpore
+"""
+import mindspore as ms
+from xuance.mindspore import Module
+from xuance.mindspore.learners import Learner
+from argparse import Namespace
 from mindspore.ops import OneHot
 
 
 class DuelDQN_Learner(Learner):
-    class PolicyNetWithLossCell(nn.Cell):
+    class PolicyNetWithLossCell(Module):
         def __init__(self, backbone, loss_fn):
             super(DuelDQN_Learner.PolicyNetWithLossCell, self).__init__(auto_prefix=False)
             self._backbone = backbone
@@ -17,15 +25,11 @@ class DuelDQN_Learner(Learner):
             return loss
 
     def __init__(self,
-                 policy: nn.Cell,
-                 optimizer: nn.Optimizer,
-                 scheduler: Optional[nn.exponential_decay_lr] = None,
-                 model_dir: str = "./",
-                 gamma: float = 0.99,
-                 sync_frequency: int = 100):
+                 config: Namespace,
+                 policy: Module):
         self.gamma = gamma
         self.sync_frequency = sync_frequency
-        super(DuelDQN_Learner, self).__init__(policy, optimizer, scheduler, model_dir)
+        super(DuelDQN_Learner, self).__init__(config, policy)
         # define mindspore trainer
         loss_fn = nn.MSELoss()
         self.loss_net = self.PolicyNetWithLossCell(policy, loss_fn)

@@ -1,9 +1,17 @@
-from xuance.mindspore.learners import *
+"""
+DQN with Prioritized Experience Replay (PER-DQN)
+Paper link: https://arxiv.org/pdf/1511.05952.pdf
+Implementation: Pytorch
+"""
+import mindspore as ms
+from xuance.mindspore import Module
+from xuance.mindspore.learners import Learner
+from argparse import Namespace
 from mindspore.ops import OneHot
 
 
 class PerDQN_Learner(Learner):
-    class PolicyNetWithLossCell(nn.Cell):
+    class PolicyNetWithLossCell(Module):
         def __init__(self, backbone, loss_fn):
             super(PerDQN_Learner.PolicyNetWithLossCell, self).__init__(auto_prefix=False)
             self._backbone = backbone
@@ -17,15 +25,11 @@ class PerDQN_Learner(Learner):
             return loss
 
     def __init__(self,
-                 policy: nn.Cell,
-                 optimizer: nn.Optimizer,
-                 scheduler: Optional[nn.exponential_decay_lr] = None,
-                 model_dir: str = "./",
-                 gamma: float = 0.99,
-                 sync_frequency: int = 100):
+                 config: Namespace,
+                 policy: Module):
         self.gamma = gamma
         self.sync_frequency = sync_frequency
-        super(PerDQN_Learner, self).__init__(policy, optimizer, scheduler, model_dir)
+        super(PerDQN_Learner, self).__init__(config, policy)
         # define loss function
         loss_fn = nn.MSELoss()
         # connect the feed forward network with loss function.

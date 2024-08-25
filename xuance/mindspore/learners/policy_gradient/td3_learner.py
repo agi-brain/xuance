@@ -1,12 +1,16 @@
-# TD3 add three tricks to DDPG:
-# 1. noisy action in target actor
-# 2. double critic network
-# 3. delayed actor update
-from xuance.mindspore.learners import *
+"""
+Twin Delayed Deep Deterministic Policy Gradient (TD3)
+Paper link: http://proceedings.mlr.press/v80/fujimoto18a/fujimoto18a.pdf
+Implementation: MindSpore
+"""
+import mindspore as ms
+from xuance.mindspore import Module
+from xuance.mindspore.learners import Learner
+from argparse import Namespace
 
 
 class TD3_Learner(Learner):
-    class ActorNetWithLossCell(nn.Cell):
+    class ActorNetWithLossCell(Module):
         def __init__(self, backbone):
             super(TD3_Learner.ActorNetWithLossCell, self).__init__()
             self._backbone = backbone
@@ -17,7 +21,7 @@ class TD3_Learner(Learner):
             loss_p = -self._mean(policy_q)
             return loss_p
 
-    class CriticNetWithLossCell(nn.Cell):
+    class CriticNetWithLossCell(Module):
         def __init__(self, backbone, gamma):
             super(TD3_Learner.CriticNetWithLossCell, self).__init__()
             self._backbone = backbone
@@ -32,17 +36,12 @@ class TD3_Learner(Learner):
             return loss_q
 
     def __init__(self,
-                 policy: nn.Cell,
-                 optimizers: nn.Optimizer,
-                 schedulers: Optional[nn.exponential_decay_lr] = None,
-                 model_dir: str = "./",
-                 gamma: float = 0.99,
-                 tau: float = 0.01,
-                 delay: int = 3):
+                 config: Namespace,
+                 policy: Module):
         self.tau = tau
         self.gamma = gamma
         self.delay = delay
-        super(TD3_Learner, self).__init__(policy, optimizers, schedulers, model_dir)
+        super(TD3_Learner, self).__init__(config, policy)
         self._expand_dims = ms.ops.ExpandDims()
         # define mindspore trainers
         self.actor_loss_net = self.ActorNetWithLossCell(policy)

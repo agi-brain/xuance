@@ -29,7 +29,7 @@ class PG_Learner(Learner):
                  config: Namespace,
                  policy: Module):
         super(PG_Learner, self).__init__(config, policy)
-        self.optimizer = ms.nn.Adam(learning_rate=self.config.learning_rate)
+        self.optimizer = ms.nn.Adam(params=policy.trainable_params(), learning_rate=self.config.learning_rate, eps=1e-5)
         # define mindspore trainer
         self.loss_net = self.PolicyNetWithLossCell(policy, self.ent_coef)
         # self.policy_train = nn.TrainOneStepCell(self.loss_net, optimizer)

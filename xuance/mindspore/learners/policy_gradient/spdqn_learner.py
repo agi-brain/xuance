@@ -1,9 +1,17 @@
-from xuance.mindspore.learners import *
+"""
+Split parameterised deep Q network (SP-DQN)
+Paper link: https://arxiv.org/pdf/1810.06394.pdf
+Implementation: MindSpore
+"""
+import mindspore as ms
+from xuance.mindspore import Module
+from xuance.mindspore.learners import Learner
+from argparse import Namespace
 from mindspore.ops import OneHot
 
 
 class SPDQN_Learner(Learner):
-    class QNetWithLossCell(nn.Cell):
+    class QNetWithLossCell(Module):
         def __init__(self, backbone, loss_fn):
             super(SPDQN_Learner.QNetWithLossCell, self).__init__(auto_prefix=False)
             self._backbone = backbone
@@ -16,7 +24,7 @@ class SPDQN_Learner(Learner):
             q_loss = self._loss_fn(eval_q, label)
             return q_loss
 
-    class ConActorNetWithLossCell(nn.Cell):
+    class ConActorNetWithLossCell(Module):
         def __init__(self, backbone):
             super(SPDQN_Learner.ConActorNetWithLossCell, self).__init__(auto_prefix=False)
             self._backbone = backbone
@@ -28,15 +36,11 @@ class SPDQN_Learner(Learner):
             return p_loss
 
     def __init__(self,
-                 policy: nn.Cell,
-                 optimizer: Sequence[nn.Optimizer],
-                 scheduler: Optional[Sequence[nn.exponential_decay_lr]] = None,
-                 model_dir: str = "./",
-                 gamma: float = 0.99,
-                 tau: float = 0.01):
-        self.gamma = gamma
-        self.tau = tau
-        super(SPDQN_Learner, self).__init__(policy, optimizer, scheduler, model_dir)
+                 config: Namespace,
+                 policy: Module):
+        self.gamma = config.gamma
+        self.tau = config.tau
+        super(SPDQN_Learner, self).__init__(config, policy)
         # define loss function
         loss_fn = nn.MSELoss()
         # connect the feed forward network with loss function.

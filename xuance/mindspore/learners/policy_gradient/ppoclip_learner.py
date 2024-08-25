@@ -1,8 +1,16 @@
-from xuance.mindspore.learners import *
+"""
+Proximal Policy Optimization with clip trick (PPO_CLIP)
+Paper link: https://arxiv.org/pdf/1707.06347.pdf
+Implementation: MindSpore
+"""
+import mindspore as ms
+from xuance.mindspore import Module
+from xuance.mindspore.learners import Learner
+from argparse import Namespace
 
 
 class PPOCLIP_Learner(Learner):
-    class PolicyNetWithLossCell(nn.Cell):
+    class PolicyNetWithLossCell(Module):
         def __init__(self, backbone, ent_coef, vf_coef, clip_range):
             super(PPOCLIP_Learner.PolicyNetWithLossCell, self).__init__()
             self._backbone = backbone
@@ -27,14 +35,9 @@ class PPOCLIP_Learner(Learner):
             return loss
 
     def __init__(self,
-                 policy: nn.Cell,
-                 optimizer: nn.Optimizer,
-                 scheduler: Optional[nn.exponential_decay_lr] = None,
-                 model_dir: str = "./",
-                 vf_coef: float = 0.25,
-                 ent_coef: float = 0.005,
-                 clip_range: float = 0.25):
-        super(PPOCLIP_Learner, self).__init__(policy, optimizer, scheduler, model_dir)
+                 config: Namespace,
+                 policy: Module):
+        super(PPOCLIP_Learner, self).__init__(config, policy)
         self.vf_coef = vf_coef
         self.ent_coef = ent_coef
         self.clip_range = clip_range

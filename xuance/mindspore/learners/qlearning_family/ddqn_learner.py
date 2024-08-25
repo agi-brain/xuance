@@ -1,9 +1,17 @@
-from xuance.mindspore.learners import *
+"""
+DQN with Double Q-learning (Double DQN)
+Paper link: https://ojs.aaai.org/index.php/AAAI/article/view/10295
+Implementation: MindSpore
+"""
+import mindspore as ms
+from xuance.mindspore import Module
+from xuance.mindspore.learners import Learner
+from argparse import Namespace
 from mindspore.ops import OneHot
 
 
 class DDQN_Learner(Learner):
-    class PolicyNetWithLossCell(nn.Cell):
+    class PolicyNetWithLossCell(Module):
         def __init__(self, backbone, loss_fn):
             super(DDQN_Learner.PolicyNetWithLossCell, self).__init__(auto_prefix=False)
             self._backbone = backbone
@@ -18,16 +26,12 @@ class DDQN_Learner(Learner):
             return loss
 
     def __init__(self,
-                 policy: nn.Cell,
-                 optimizer: nn.Optimizer,
-                 scheduler: Optional[nn.exponential_decay_lr] = None,
-                 model_dir: str = "./",
-                 gamma: float = 0.99,
-                 sync_frequency: int = 100):
-        self.gamma = gamma
-        self.sync_frequency = sync_frequency
+                 config: Namespace,
+                 policy: Module):
+        self.gamma = config.gamma
+        self.sync_frequency = config.sync_frequency
         self.one_hot = OneHot()
-        super(DDQN_Learner, self).__init__(policy, optimizer, scheduler, model_dir)
+        super(DDQN_Learner, self).__init__(config, policy)
         # define mindspore trainer
         loss_fn = nn.MSELoss()
         self.loss_net = self.PolicyNetWithLossCell(self.policy, loss_fn)

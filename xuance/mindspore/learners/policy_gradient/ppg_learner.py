@@ -1,9 +1,18 @@
-from xuance.mindspore.learners import *
+"""
+Phasic Policy Gradient (PPG)
+Paper link: http://proceedings.mlr.press/v139/cobbe21a/cobbe21a.pdf
+Implementation: MindSpore
+"""
+import mindspore as ms
+from xuance.mindspore import Module
+from xuance.mindspore.learners import Learner
+from argparse import Namespace
 from xuance.mindspore.utils.operations import merge_distributions
 from mindspore.nn.probability.distribution import Categorical
 
+
 class PPG_Learner(Learner):
-    class PolicyNetWithLossCell(nn.Cell):
+    class PolicyNetWithLossCell(Module):
         def __init__(self, backbone, ent_coef, kl_beta, clip_range, loss_fn):
             super(PPG_Learner.PolicyNetWithLossCell, self).__init__(auto_prefix=False)
             self._backbone = backbone
@@ -41,14 +50,9 @@ class PPG_Learner(Learner):
             return loss
     
     def __init__(self,
-                 policy: nn.Cell,
-                 optimizer: nn.Optimizer,
-                 scheduler: Optional[nn.exponential_decay_lr] = None,
-                 model_dir: str = "./",
-                 ent_coef: float = 0.005,
-                 clip_range: float = 0.25,
-                 kl_beta: float = 1.0):
-        super(PPG_Learner, self).__init__(policy, optimizer, scheduler, model_dir)
+                 config: Namespace,
+                 policy: Module):
+        super(PPG_Learner, self).__init__(config, policy)
         self.ent_coef = ent_coef
         self.clip_range = clip_range
         self.kl_beta = kl_beta

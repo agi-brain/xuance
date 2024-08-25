@@ -1,8 +1,16 @@
-from xuance.mindspore.learners import *
+"""
+Soft Actor-Critic with discrete action spaces (SAC-Discrete)
+Paper link: https://arxiv.org/pdf/1910.07207.pdf
+Implementation: MindSpore
+"""
+import mindspore as ms
+from xuance.mindspore import Module
+from xuance.mindspore.learners import Learner
+from argparse import Namespace
 
 
 class SACDIS_Learner(Learner):
-    class ActorNetWithLossCell(nn.Cell):
+    class ActorNetWithLossCell(Module):
         def __init__(self, backbone):
             super(SACDIS_Learner.ActorNetWithLossCell, self).__init__()
             self._backbone = backbone
@@ -13,7 +21,7 @@ class SACDIS_Learner(Learner):
             p_loss = (action_prob * inside_term).sum(axis=1).mean()
             return p_loss
 
-    class CriticNetWithLossCell(nn.Cell):
+    class CriticNetWithLossCell(Module):
         def __init__(self, backbone):
             super(SACDIS_Learner.CriticNetWithLossCell, self).__init__()
             self._backbone = backbone
@@ -27,15 +35,11 @@ class SACDIS_Learner(Learner):
             return loss_q
 
     def __init__(self,
-                 policy: nn.Cell,
-                 optimizers: nn.Optimizer,
-                 schedulers: Optional[nn.exponential_decay_lr] = None,
-                 model_dir: str = "./",
-                 gamma: float = 0.99,
-                 tau: float = 0.01):
-        self.tau = tau
-        self.gamma = gamma
-        super(SACDIS_Learner, self).__init__(policy, optimizers, schedulers, model_dir)
+                 config: Namespace,
+                 policy: Module):
+        self.tau = config.tau
+        self.gamma = config.gamma
+        super(SACDIS_Learner, self).__init__(config, policy)
         # define mindspore trainers
         self.actor_loss_net = self.ActorNetWithLossCell(policy)
         self.actor_train = nn.TrainOneStepCell(self.actor_loss_net, optimizers['actor'])

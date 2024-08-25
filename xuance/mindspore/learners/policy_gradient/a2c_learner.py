@@ -1,8 +1,15 @@
-from xuance.mindspore.learners import *
+"""
+Advantage Actor-Critic (A2C)
+Implementation: MindSpore
+"""
+import mindspore as ms
+from xuance.mindspore import Module
+from xuance.mindspore.learners import Learner
+from argparse import Namespace
 
 
 class A2C_Learner(Learner):
-    class ACNetWithLossCell(nn.Cell):
+    class ACNetWithLossCell(Module):
         def __init__(self, backbone, ent_coef, vf_coef):
             super(A2C_Learner.ACNetWithLossCell, self).__init__()
             self._backbone = backbone
@@ -22,15 +29,9 @@ class A2C_Learner(Learner):
             return loss
 
     def __init__(self,
-                 policy: nn.Cell,
-                 optimizer: nn.Optimizer,
-                 scheduler: Optional[nn.exponential_decay_lr] = None,
-                 model_dir: str = "./",
-                 vf_coef: float = 0.25,
-                 ent_coef: float = 0.005,
-                 clip_grad: Optional[float] = None,
-                 clip_type: Optional[int] = None):
-        super(A2C_Learner, self).__init__(policy, optimizer, scheduler, model_dir)
+                 config: Namespace,
+                 policy: Module):
+        super(A2C_Learner, self).__init__(config, policy)
         self.vf_coef = vf_coef
         self.ent_coef = ent_coef
         self.clip_grad = clip_grad
