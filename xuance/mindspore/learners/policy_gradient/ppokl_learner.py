@@ -1,10 +1,10 @@
 from xuance.mindspore.learners import *
 
 
-class PPOCLIP_Learner(Learner):
+class PPOKL_Learner(Learner):
     class PolicyNetWithLossCell(nn.Cell):
         def __init__(self, backbone, ent_coef, vf_coef, clip_range):
-            super(PPOCLIP_Learner.PolicyNetWithLossCell, self).__init__()
+            super(PPOKL_Learner.PolicyNetWithLossCell, self).__init__()
             self._backbone = backbone
             self._ent_coef = ent_coef
             self._vf_coef = vf_coef
@@ -35,7 +35,7 @@ class PPOCLIP_Learner(Learner):
                  vf_coef: float = 0.25,
                  ent_coef: float = 0.005,
                  clip_range: float = 0.25):
-        super(PPOCLIP_Learner, self).__init__(policy, optimizer, scheduler, summary_writer, model_dir)
+        super(PPOKL_Learner, self).__init__(policy, optimizer, scheduler, summary_writer, model_dir)
         self.vf_coef = vf_coef
         self.ent_coef = ent_coef
         self.clip_range = clip_range

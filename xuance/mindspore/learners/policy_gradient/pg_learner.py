@@ -1,8 +1,16 @@
-from xuance.mindspore.learners import *
+"""
+Policy Gradient (PG)
+Paper link: https://proceedings.neurips.cc/paper/2001/file/4b86abe48d358ecf194c56c69108433e-Paper.pdf
+Implementation: MindSpore
+"""
+import mindspore as ms
+from xuance.mindspore import Module
+from xuance.mindspore.learners import Learner
+from argparse import Namespace
 
 
 class PG_Learner(Learner):
-    class PolicyNetWithLossCell(nn.Cell):
+    class PolicyNetWithLossCell(Module):
         def __init__(self, backbone, ent_coef):
             super(PG_Learner.PolicyNetWithLossCell, self).__init__(auto_prefix=False)
             self._backbone = backbone
@@ -18,16 +26,10 @@ class PG_Learner(Learner):
             return loss
 
     def __init__(self,
-                 policy: nn.Cell,
-                 optimizer: nn.Optimizer,
-                 scheduler: Optional[nn.exponential_decay_lr] = None,
-                 model_dir: str = "./",
-                 ent_coef: float = 0.005,
-                 clip_grad: Optional[float] = None,
-                 clip_type: Optional[int] = None):
-        super(PG_Learner, self).__init__(policy, optimizer, scheduler, model_dir)
-        self.ent_coef = ent_coef
-        self.clip_grad = clip_grad
+                 config: Namespace,
+                 policy: Module):
+        super(PG_Learner, self).__init__(config, policy)
+        self.optimizer = ms.nn.Adam(learning_rate=self.config.learning_rate)
         # define mindspore trainer
         self.loss_net = self.PolicyNetWithLossCell(policy, self.ent_coef)
         # self.policy_train = nn.TrainOneStepCell(self.loss_net, optimizer)

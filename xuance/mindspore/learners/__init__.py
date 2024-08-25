@@ -1,55 +1,65 @@
-import mindspore as ms
-import mindspore.nn as nn
-import numpy as np
-from xuance.common import Sequence, Optional, Callable, Union
-from gym.spaces import Space, Box, Discrete, Dict
-from torch.utils.tensorboard import SummaryWriter
-from xuance.mindspore.utils.set_trainer import *
-from argparse import Namespace
-from mindspore import Tensor
-from mindspore.ops import OneHot, GatherD
-import mindspore.ops as ops
-
 from .learner import Learner, LearnerMAS
-from .policy_gradient.pg_learner import PG_Learner
-from .policy_gradient.a2c_learner import A2C_Learner
-from .policy_gradient.ppoclip_learner import PPOCLIP_Learner
-from .policy_gradient.ppg_learner import PPG_Learner
-from .policy_gradient.ddpg_learner import DDPG_Learner
-from .policy_gradient.td3_learner import TD3_Learner
-from .policy_gradient.sac_learner import SAC_Learner
-from .policy_gradient.sacdis_learner import SACDIS_Learner
-from .policy_gradient.pdqn_learner import PDQN_Learner
-from .policy_gradient.mpdqn_learner import MPDQN_Learner
-from .policy_gradient.spdqn_learner import SPDQN_Learner
+from .policy_gradient import PG_Learner, A2C_Learner, PPOCLIP_Learner, PPOKL_Learner, PPG_Learner, DDPG_Learner, \
+    TD3_Learner, SAC_Learner, SACDIS_Learner, PDQN_Learner, MPDQN_Learner, SPDQN_Learner
 
-from .qlearning_family.dqn_learner import DQN_Learner
-from .qlearning_family.noisydqn_learner import NoisyDQN_Learner
-from .qlearning_family.dueldqn_learner import DuelDQN_Learner
-from .qlearning_family.ddqn_learner import DDQN_Learner
-from .qlearning_family.c51_learner import C51_Learner
-from .qlearning_family.perdqn_learner import PerDQN_Learner
-from .qlearning_family.qrdqn_learner import QRDQN_Learner
-from .qlearning_family.drqn_learner import DRQN_Learner
+from .qlearning_family import DQN_Learner, DuelDQN_Learner, DDQN_Learner, PerDQN_Learner, C51_Learner, QRDQN_Learner, \
+    DRQN_Learner
 
-from .multi_agent_rl.iql_learner import IQL_Learner
-from .multi_agent_rl.vdn_learner import VDN_Learner
-from .multi_agent_rl.qmix_learner import QMIX_Learner
-from .multi_agent_rl.wqmix_learner import WQMIX_Learner
-from .multi_agent_rl.qtran_learner import QTRAN_Learner
-# from .multi_agent_rl.dcg_learner import DCG_Learner
-from .multi_agent_rl.vdac_learner import VDAC_Learner
-from .multi_agent_rl.coma_learner import COMA_Learner
-from .multi_agent_rl.iddpg_learner import IDDPG_Learner
-from .multi_agent_rl.maddpg_learner import MADDPG_Learner
-from .multi_agent_rl.mfq_learner import MFQ_Learner
-from .multi_agent_rl.mfac_learner import MFAC_Learner
-from .multi_agent_rl.ippo_learner import IPPO_Learner
-from .multi_agent_rl.mappo_learner import MAPPO_Learner
-from .multi_agent_rl.isac_learner import ISAC_Learner
-from .multi_agent_rl.masac_learner import MASAC_Learner
-from .multi_agent_rl.matd3_learner import MATD3_Learner
+from .multi_agent_rl import IQL_Learner, VDN_Learner, QMIX_Learner, WQMIX_Learner, QTRAN_Learner, VDAC_Learner, \
+    COMA_Learner, IDDPG_Learner, MADDPG_Learner, MFQ_Learner, MFAC_Learner, IPPO_Learner, MAPPO_Learner, \
+    ISAC_Learner, MASAC_Learner, MATD3_Learner
 
 REGISTRY_Learners = {
+    "BasicLearner": Learner,
+    "BasicLearnerMAS": LearnerMAS,
+    "PG_Learner": PG_Learner,
+    "A2C_Learner": A2C_Learner,
+    "PPOCLIP_Learner": PPOCLIP_Learner,
+    "PPOKL_Learner": PPOKL_Learner,
+    "PPG_Learner": PPG_Learner,
+    "DDPG_Learner": DDPG_Learner,
+    "TD3_Learner": TD3_Learner,
+    "SAC_Learner": SAC_Learner,
+    "SACDIS_Learner": SACDIS_Learner,
+    "PDQN_Learner": PDQN_Learner,
+    "MPDQN_Learner": MPDQN_Learner,
+    "SPDQN_Learner": SPDQN_Learner,
 
+    "DQN_Learner": DQN_Learner,
+    "DuelDQN_Learner": DuelDQN_Learner,
+    "DDQN_Learner": DDQN_Learner,
+    "PerDQN_Learner": PerDQN_Learner,
+    "C51_Learner": C51_Learner,
+    "QRDQN_Learner": QRDQN_Learner,
+    "DRQN_Learner": DRQN_Learner,
+
+    "IQL_Learner": IQL_Learner,
+    "VDN_Learner": VDN_Learner,
+    "QMIX_Learner": QMIX_Learner,
+    "WQMIX_Learner": WQMIX_Learner,
+    "QTRAN_Learner": QTRAN_Learner,
+    "VDAC_Learner": VDAC_Learner,
+    "COMA_Learner": COMA_Learner,
+    "IDDPG_Learner": IDDPG_Learner,
+    "MADDPG_Learner": MADDPG_Learner,
+    "MFQ_Learner": MFQ_Learner,
+    "MFAC_Learner": MFAC_Learner,
+    "IPPO_Learner": IPPO_Learner,
+    "MAPPO_Clip_Learner": MAPPO_Learner,
+    "ISAC_Learner": ISAC_Learner,
+    "MASAC_Learner": MASAC_Learner,
+    "MATD3_Learner": MATD3_Learner,
 }
+
+__all__ = [
+    "REGISTRY_Learners", "Learner", "LearnerMAS",
+
+    "PG_Learner", "A2C_Learner", "PPOCLIP_Learner", "PPOKL_Learner", "PPG_Learner", "DDPG_Learner", "TD3_Learner",
+    "SAC_Learner", "SACDIS_Learner", "PDQN_Learner", "MPDQN_Learner", "SPDQN_Learner",
+
+    "DQN_Learner", "DuelDQN_Learner", "DDQN_Learner", "PerDQN_Learner", "C51_Learner", "QRDQN_Learner", "DRQN_Learner",
+
+    "IQL_Learner", "VDN_Learner", "QMIX_Learner", "WQMIX_Learner", "QTRAN_Learner", "VDAC_Learner", "COMA_Learner",
+    "IDDPG_Learner", "MADDPG_Learner", "MFQ_Learner", "MFAC_Learner", "IPPO_Learner", "MAPPO_Learner",
+    "ISAC_Learner", "MASAC_Learner", "MATD3_Learner",
+]

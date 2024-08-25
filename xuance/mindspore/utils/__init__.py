@@ -32,5 +32,5 @@ NormalizeFunctions = {
 }
 
 InitializeFunctions = {
-    "orthogonal": ms.common.initializer.Orthogonal
+    "orthogonal": ms.common.initializer.Orthogonal,
 }
