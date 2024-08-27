@@ -300,28 +300,46 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
 
 </details>
 
-### [Magent2](https://magent2.farama.org/)
+[//]: # (### [Magent2]&#40;https://magent2.farama.org/&#41;)
 
-<details open>
-<summary>(Click to hide)</summary>
+[//]: # ()
+[//]: # (<details open>)
 
-<table rules="none" align="center"><tr>
-<td> <center>
-<img src="./docs/source/figures/magent/battle.gif" height=100" /><br/><font color="AAAAAA">Battle</font>
-</center></td>
-<td> <center>
-<img src="./docs/source/figures/magent/tiger_deer.gif" height=100" /> <br/> <font color="AAAAAA">Tiger Deer</font>
-</center> </td>
-<td> <center>
-<img src="./docs/source/figures/magent/battlefield.gif" height=100" /> <br/> <font color="AAAAAA">Battle Field</font>
-</center> </td>
-<td> <center>
-<br/> <font color="AAAAAA">...</font>
-</center> </td>
-</tr>
-</table>
+[//]: # (<summary>&#40;Click to hide&#41;</summary>)
 
-</details>
+[//]: # ()
+[//]: # (<table rules="none" align="center"><tr>)
+
+[//]: # (<td> <center>)
+
+[//]: # (<img src="./docs/source/figures/magent/battle.gif" height=100" /><br/><font color="AAAAAA">Battle</font>)
+
+[//]: # (</center></td>)
+
+[//]: # (<td> <center>)
+
+[//]: # (<img src="./docs/source/figures/magent/tiger_deer.gif" height=100" /> <br/> <font color="AAAAAA">Tiger Deer</font>)
+
+[//]: # (</center> </td>)
+
+[//]: # (<td> <center>)
+
+[//]: # (<img src="./docs/source/figures/magent/battlefield.gif" height=100" /> <br/> <font color="AAAAAA">Battle Field</font>)
+
+[//]: # (</center> </td>)
+
+[//]: # (<td> <center>)
+
+[//]: # (<br/> <font color="AAAAAA">...</font>)
+
+[//]: # (</center> </td>)
+
+[//]: # (</tr>)
+
+[//]: # (</table>)
+
+[//]: # ()
+[//]: # (</details>)
 
 ### [SMAC](https://github.com/oxwhirl/smac)
 
