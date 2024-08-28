@@ -19,7 +19,7 @@ class BasicQnetwork(Module):
         super(BasicQnetwork, self).__init__()
         self.action_dim = action_space.n
         self.representation = representation
-        # self.target_representation = deepcopy(representation)
+        self.target_representation = deepcopy(representation)
         self.representation_info_shape = self.representation.output_shapes
         self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, hidden_size,
                                      normalize, initialize, activation)

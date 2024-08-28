@@ -37,9 +37,9 @@ class Basic_CNN(Module):
         layers.append(nn.Flatten())
         return nn.SequentialCell(*layers)
 
-    def construct(self, observations: Tensor):
+    def construct(self, observations: np.ndarray):
         observations = observations / 255.0
-        tensor_observation = self._transpose(observations, (0, 3, 1, 2)).astype("float32")
+        tensor_observation = Tensor(np.transpose(observations, (0, 3, 1, 2))).astype(ms.float32)
         return {'state': self.model(tensor_observation)}
 
 

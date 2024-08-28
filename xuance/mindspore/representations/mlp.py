@@ -14,7 +14,8 @@ class Basic_Identical(Module):
         self.output_shapes = {'state': (input_shape[0],)}
 
     def construct(self, observations: np.ndarray):
-        return {'state': observations}
+        state = Tensor(observations)
+        return {'state': state}
 
 
 # process the input observations with stacks of MLP layers
@@ -44,4 +45,5 @@ class Basic_MLP(Module):
         return nn.SequentialCell(*layers)
 
     def construct(self, observations: np.ndarray):
-        return {'state': self.model(observations)}
+        tensor_observation = Tensor(observations)
+        return {'state': self.model(tensor_observation)}

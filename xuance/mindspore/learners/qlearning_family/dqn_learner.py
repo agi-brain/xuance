@@ -27,8 +27,7 @@ class DQN_Learner(Learner):
 
     def forward_fn(self, x, a, label):
         _, _, _evalQ = self.policy(x)
-        _predict_Q = (_evalQ * self.one_hot(a.astype(ms.int32), _evalQ.shape[1], Tensor(1.0), Tensor(0.0))).sum(
-            axis=-1)
+        _predict_Q = (_evalQ * self.one_hot(a.astype(ms.int32), _evalQ.shape[1], Tensor(1.0), Tensor(0.0))).sum(axis=-1)
         loss = self.mse_loss(_predict_Q, label)
         return loss, _predict_Q
 
@@ -40,7 +39,6 @@ class DQN_Learner(Learner):
         next_batch = Tensor(samples['obs_next'])
         ter_batch = Tensor(samples['terminals'])
 
-        _, _, evalQ = self.policy(obs_batch)
         _, _, targetQ = self.policy.target(next_batch)
         targetQ = targetQ.max(axis=-1)
         targetQ = rew_batch + self.gamma * (1 - ter_batch) * targetQ
