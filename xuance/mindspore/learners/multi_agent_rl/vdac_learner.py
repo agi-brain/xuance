@@ -3,12 +3,16 @@ Value Decomposition Actor-Critic (VDAC)
 Paper link: https://ojs.aaai.org/index.php/AAAI/article/view/17353
 Implementation: MindSpore
 """
-from xuance.mindspore.learners import *
+import mindspore as ms
+from xuance.mindspore import Module
+from xuance.mindspore.learners import LearnerMAS
+from xuance.common import List
+from argparse import Namespace
 from xuance.torch.utils.operations import update_linear_decay
 
 
 class VDAC_Learner(LearnerMAS):
-    class PolicyNetWithLossCell(nn.Cell):
+    class PolicyNetWithLossCell(Module):
         def __init__(self, backbone, vf_coef, ent_coef):
             super(VDAC_Learner.PolicyNetWithLossCell, self).__init__()
             self._backbone = backbone
@@ -31,12 +35,9 @@ class VDAC_Learner(LearnerMAS):
 
     def __init__(self,
                  config: Namespace,
-                 policy: nn.Cell,
-                 optimizer: nn.Optimizer,
-                 scheduler: Optional[nn.exponential_decay_lr] = None,
-                 model_dir: str = "./",
-                 gamma: float = 0.99,
-                 ):
+                 model_keys: List[str],
+                 agent_keys: List[str],
+                 policy: Module):
         self.gamma = gamma
         self.clip_range = config.clip_range
         self.use_linear_lr_decay = config.use_linear_lr_decay
@@ -44,7 +45,7 @@ class VDAC_Learner(LearnerMAS):
         self.use_value_norm = config.use_value_norm
         self.vf_coef, self.ent_coef = config.vf_coef, config.ent_coef
         self.mse_loss = nn.MSELoss()
-        super(VDAC_Learner, self).__init__(config, policy, optimizer, scheduler, model_dir)
+        super(VDAC_Learner, self).__init__(config, model_keys, agent_keys, policy)
         self.loss_net = self.PolicyNetWithLossCell(policy, config.vf_coef, config.ent_coef)
         self.policy_train = TrainOneStepCellWithGradClip(self.loss_net, optimizer,
                                                          clip_type=config.clip_type, clip_value=config.grad_clip_norm)

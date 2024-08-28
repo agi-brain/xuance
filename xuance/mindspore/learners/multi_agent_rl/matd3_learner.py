@@ -2,11 +2,15 @@
 Multi-Agent TD3
 
 """
-from xuance.mindspore.learners import *
+import mindspore as ms
+from xuance.mindspore import Module
+from xuance.mindspore.learners import LearnerMAS
+from xuance.common import List
+from argparse import Namespace
 
 
 class MATD3_Learner(LearnerMAS):
-    class ActorNetWithLossCell(nn.Cell):
+    class ActorNetWithLossCell(Module):
         def __init__(self, backbone, n_agents):
             super(MATD3_Learner.ActorNetWithLossCell, self).__init__()
             self._backbone = backbone
@@ -20,7 +24,7 @@ class MATD3_Learner(LearnerMAS):
             loss_a = -policy_q.mean()
             return loss_a
 
-    class CriticNetWithLossCell_A(nn.Cell):
+    class CriticNetWithLossCell_A(Module):
         def __init__(self, backbone):
             super(MATD3_Learner.CriticNetWithLossCell_A, self).__init__()
             self._backbone = backbone
@@ -32,7 +36,7 @@ class MATD3_Learner(LearnerMAS):
             loss_c = (td_error ** 2).sum() / agt_mask.sum()
             return loss_c
 
-    class CriticNetWithLossCell_B(nn.Cell):
+    class CriticNetWithLossCell_B(Module):
         def __init__(self, backbone):
             super(MATD3_Learner.CriticNetWithLossCell_B, self).__init__()
             self._backbone = backbone
@@ -46,20 +50,15 @@ class MATD3_Learner(LearnerMAS):
 
     def __init__(self,
                  config: Namespace,
-                 policy: nn.Cell,
-                 optimizer: Sequence[nn.Optimizer],
-                 scheduler: Sequence[nn .exponential_decay_lr] = None,
-                 model_dir: str = "./",
-                 gamma: float = 0.99,
-                 sync_frequency: int = 100,
-                 delay: int = 3
-                 ):
+                 model_keys: List[str],
+                 agent_keys: List[str],
+                 policy: Module):
         self.gamma = gamma
         self.tau = config.tau
         self.delay = delay
         self.sync_frequency = sync_frequency
         self.mse_loss = nn.MSELoss()
-        super(MATD3_Learner, self).__init__(config, policy, optimizer, scheduler, model_dir)
+        super(MATD3_Learner, self).__init__(config, model_keys, agent_keys, policy)
         self.optimizer = {
             'actor': optimizer[0],
             'critic_A': optimizer[1],

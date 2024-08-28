@@ -3,11 +3,15 @@ COMA: Counterfactual Multi-Agent Policy Gradients
 Paper link: https://ojs.aaai.org/index.php/AAAI/article/view/11794
 Implementation: MindSpore
 """
-from xuance.mindspore.learners import *
+import mindspore as ms
+from xuance.mindspore import Module
+from xuance.mindspore.learners import LearnerMAS
+from xuance.common import List
+from argparse import Namespace
 
 
 class COMA_Learner(LearnerMAS):
-    class ActorNetWithLossCell(nn.Cell):
+    class ActorNetWithLossCell(Module):
         def __init__(self, backbone, n_agents):
             super(COMA_Learner.ActorNetWithLossCell, self).__init__()
             self._backbone = backbone
@@ -22,7 +26,7 @@ class COMA_Learner(LearnerMAS):
             loss_coma = -(advantages * log_pi_a).sum() / agent_mask.sum()
             return loss_coma
 
-    class CriticNetWithLossCell(nn.Cell):
+    class CriticNetWithLossCell(Module):
         def __init__(self, backbone, n_agents):
             super(COMA_Learner.CriticNetWithLossCell, self).__init__()
             self._backbone = backbone
@@ -40,20 +44,16 @@ class COMA_Learner(LearnerMAS):
 
     def __init__(self,
                  config: Namespace,
-                 policy: nn.Cell,
-                 optimizer: Sequence[nn.Optimizer],
-                 scheduler: Sequence[nn.exponential_decay_lr] = None,
-                 model_dir: str = "./",
-                 gamma: float = 0.99,
-                 sync_frequency: int = 100
-                 ):
+                 model_keys: List[str],
+                 agent_keys: List[str],
+                 policy: Module):
         self.gamma = gamma
         self.td_lambda = config.td_lambda
         self.sync_frequency = sync_frequency
         self.use_global_state = config.use_global_state
         self.mse_loss = nn.MSELoss()
         self._concat = ms.ops.Concat(axis=-1)
-        super(COMA_Learner, self).__init__(config, policy, optimizer, scheduler, model_dir)
+        super(COMA_Learner, self).__init__(config, model_keys, agent_keys, policy)
         self.optimizer = {
             'actor': optimizer[0],
             'critic': optimizer[1]

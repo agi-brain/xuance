@@ -4,12 +4,16 @@ Paper link:
 https://arxiv.org/pdf/2103.01955.pdf
 Implementation: MindSpore
 """
-from xuance.mindspore.learners import *
+import mindspore as ms
+from xuance.mindspore import Module
+from xuance.mindspore.learners import LearnerMAS
+from xuance.common import List
+from argparse import Namespace
 from xuance.mindspore.utils.operations import update_linear_decay
 
 
 class MAPPO_Learner(LearnerMAS):
-    class PolicyNetWithLossCell(nn.Cell):
+    class PolicyNetWithLossCell(Module):
         def __init__(self, backbone, n_agents, vf_coef, ent_coef, clip_range, use_value_clip, value_clip_range,
                      use_huber_loss):
             super(MAPPO_Learner.PolicyNetWithLossCell, self).__init__()
@@ -70,12 +74,9 @@ class MAPPO_Learner(LearnerMAS):
 
     def __init__(self,
                  config: Namespace,
-                 policy: nn.Cell,
-                 optimizer: nn.Optimizer,
-                 scheduler: Optional[nn.exponential_decay_lr] = None,
-                 model_dir: str = "./",
-                 gamma: float = 0.99,
-                 ):
+                 model_keys: List[str],
+                 agent_keys: List[str],
+                 policy: Module):
         self.gamma = gamma
         self.clip_range = config.clip_range
         self.use_linear_lr_decay = config.use_linear_lr_decay
@@ -86,7 +87,7 @@ class MAPPO_Learner(LearnerMAS):
         self.use_global_state = config.use_global_state
         self.vf_coef, self.ent_coef = config.vf_coef, config.ent_coef
         self.mse_loss = nn.MSELoss()
-        super(MAPPO_Learner, self).__init__(config, policy, optimizer, scheduler, model_dir)
+        super(MAPPO_Learner, self).__init__(config, model_keys, agent_keys, policy)
         # define mindspore trainers
         self.loss_net = self.PolicyNetWithLossCell(policy, self.n_agents, config.vf_coef, config.ent_coef,
                                                    config.clip_range, config.use_value_clip, config.value_clip_range,

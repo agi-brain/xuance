@@ -3,11 +3,15 @@ Multi-agent Soft Actor-critic (MASAC)
 Implementation: Pytorch
 Creator: Kun Jiang (kjiang@seu.edu.cn)
 """
-from xuance.mindspore.learners import *
+import mindspore as ms
+from xuance.mindspore import Module
+from xuance.mindspore.learners import LearnerMAS
+from xuance.common import List
+from argparse import Namespace
 
 
 class MASAC_Learner(LearnerMAS):
-    class ActorNetWithLossCell(nn.Cell):
+    class ActorNetWithLossCell(Module):
         def __init__(self, backbone, n_agents, alpha):
             super(MASAC_Learner.ActorNetWithLossCell, self).__init__()
             self._backbone = backbone
@@ -22,7 +26,7 @@ class MASAC_Learner(LearnerMAS):
             loss_a = -(self._backbone.critic_for_train(o, actions_eval, ids) - self.alpha * log_pi_a * agt_mask).sum() / agt_mask.sum()
             return loss_a
 
-    class CriticNetWithLossCell(nn.Cell):
+    class CriticNetWithLossCell(Module):
         def __init__(self, backbone):
             super(MASAC_Learner.CriticNetWithLossCell, self).__init__()
             self._backbone = backbone
@@ -35,19 +39,15 @@ class MASAC_Learner(LearnerMAS):
 
     def __init__(self,
                  config: Namespace,
-                 policy: nn.Cell,
-                 optimizer: Sequence[nn.Optimizer],
-                 scheduler: Sequence[nn.exponential_decay_lr] = None,
-                 model_dir: str = "./",
-                 gamma: float = 0.99,
-                 sync_frequency: int = 100
-                 ):
+                 model_keys: List[str],
+                 agent_keys: List[str],
+                 policy: Module):
         self.gamma = gamma
         self.tau = config.tau
         self.alpha = config.alpha
         self.sync_frequency = sync_frequency
         self.mse_loss = nn.MSELoss()
-        super(MASAC_Learner, self).__init__(config, policy, optimizer, scheduler, model_dir)
+        super(MASAC_Learner, self).__init__(config, model_keys, agent_keys, policy)
         self.optimizer = {
             'actor': optimizer[0],
             'critic': optimizer[1]

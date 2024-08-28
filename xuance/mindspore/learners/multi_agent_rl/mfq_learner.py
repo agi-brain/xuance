@@ -4,11 +4,15 @@ Paper link:
 http://proceedings.mlr.press/v80/yang18d/yang18d.pdf
 Implementation: MindSpore
 """
-from xuance.mindspore.learners import *
+import mindspore as ms
+from xuance.mindspore import Module
+from xuance.mindspore.learners import LearnerMAS
+from xuance.common import List
+from argparse import Namespace
 
 
 class MFQ_Learner(LearnerMAS):
-    class PolicyNetWithLossCell(nn.Cell):
+    class PolicyNetWithLossCell(Module):
         def __init__(self, backbone, n_agents):
             super(MFQ_Learner.PolicyNetWithLossCell, self).__init__()
             self._backbone = backbone
@@ -23,20 +27,15 @@ class MFQ_Learner(LearnerMAS):
 
     def __init__(self,
                  config: Namespace,
-                 policy: nn.Cell,
-                 optimizer: nn.Optimizer,
-                 scheduler: Optional[nn.exponential_decay_lr] = None,
-                 summary_writer: Optional[SummaryWriter] = None,
-                 model_dir: str = "./",
-                 gamma: float = 0.99,
-                 sync_frequency: int = 100
-                 ):
+                 model_keys: List[str],
+                 agent_keys: List[str],
+                 policy: Module):
         self.gamma = gamma
         self.temperature = config.temperature
         self.sync_frequency = sync_frequency
         self.mse_loss = nn.MSELoss()
         self.softmax = nn.Softmax(axis=-1)
-        super(MFQ_Learner, self).__init__(config, policy, optimizer, scheduler, model_dir)
+        super(MFQ_Learner, self).__init__(config, model_keys, agent_keys, policy)
         self.bmm = ops.BatchMatMul()
         self.loss_net = self.PolicyNetWithLossCell(policy, self.n_agents)
         self.poliy_train = nn.TrainOneStepCell(self.loss_net, optimizer)

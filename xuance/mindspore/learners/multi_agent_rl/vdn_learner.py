@@ -4,11 +4,15 @@ Paper link:
 https://arxiv.org/pdf/1706.05296.pdf
 Implementation: MindSpore
 """
-from xuance.mindspore.learners import *
+import mindspore as ms
+from xuance.mindspore import Module
+from xuance.mindspore.learners import LearnerMAS
+from xuance.common import List
+from argparse import Namespace
 
 
 class VDN_Learner(LearnerMAS):
-    class PolicyNetWithLossCell(nn.Cell):
+    class PolicyNetWithLossCell(Module):
         def __init__(self, backbone):
             super(VDN_Learner.PolicyNetWithLossCell, self).__init__(auto_prefix=False)
             self._backbone = backbone
@@ -23,17 +27,13 @@ class VDN_Learner(LearnerMAS):
 
     def __init__(self,
                  config: Namespace,
-                 policy: nn.Cell,
-                 optimizer: nn.Optimizer,
-                 scheduler: Optional[nn.exponential_decay_lr] = None,
-                 model_dir: str = "./",
-                 gamma: float = 0.99,
-                 sync_frequency: int = 100
-                 ):
+                 model_keys: List[str],
+                 agent_keys: List[str],
+                 policy: Module):
         self.gamma = gamma
         self.sync_frequency = sync_frequency
         self.mse_loss = nn.MSELoss()
-        super(VDN_Learner, self).__init__(config, policy, optimizer, scheduler, model_dir)
+        super(VDN_Learner, self).__init__(config, model_keys, agent_keys, policy)
         # build train net
         self._mean = ops.ReduceMean(keep_dims=False)
         self.loss_net = self.PolicyNetWithLossCell(policy)

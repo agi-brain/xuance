@@ -2,11 +2,15 @@
 Independent Deep Deterministic Policy Gradient (IDDPG)
 Implementation: MindSpore
 """
-from xuance.mindspore.learners import *
+import mindspore as ms
+from xuance.mindspore import Module
+from xuance.mindspore.learners import LearnerMAS
+from xuance.common import List
+from argparse import Namespace
 
 
 class IDDPG_Learner(LearnerMAS):
-    class ActorNetWithLossCell(nn.Cell):
+    class ActorNetWithLossCell(Module):
         def __init__(self, backbone):
             super(IDDPG_Learner.ActorNetWithLossCell, self).__init__()
             self._backbone = backbone
@@ -17,7 +21,7 @@ class IDDPG_Learner(LearnerMAS):
             loss_a = -(self._backbone.critic(o, actions_eval, ids) * agt_mask).sum() / agt_mask.sum()
             return loss_a
 
-    class CriticNetWithLossCell(nn.Cell):
+    class CriticNetWithLossCell(Module):
         def __init__(self, backbone):
             super(IDDPG_Learner.CriticNetWithLossCell, self).__init__()
             self._backbone = backbone
@@ -31,18 +35,14 @@ class IDDPG_Learner(LearnerMAS):
 
     def __init__(self,
                  config: Namespace,
-                 policy: nn.Cell,
-                 optimizer: Sequence[nn.Optimizer],
-                 scheduler: Sequence[nn.exponential_decay_lr] = None,
-                 model_dir: str = "./",
-                 gamma: float = 0.99,
-                 sync_frequency: int = 100
-                 ):
+                 model_keys: List[str],
+                 agent_keys: List[str],
+                 policy: Module):
         self.gamma = gamma
         self.tau = config.tau
         self.sync_frequency = sync_frequency
         self.mse_loss = nn.MSELoss()
-        super(IDDPG_Learner, self).__init__(config, policy, optimizer, scheduler, model_dir)
+        super(IDDPG_Learner, self).__init__(config, model_keys, agent_keys, policy)
         self.optimizer = {
             'actor': optimizer[0],
             'critic': optimizer[1]

@@ -4,11 +4,15 @@ Paper link:
 http://proceedings.mlr.press/v80/yang18d/yang18d.pdf
 Implementation: MindSpore
 """
-from xuance.mindspore.learners import *
+import mindspore as ms
+from xuance.mindspore import Module
+from xuance.mindspore.learners import LearnerMAS
+from xuance.common import List
+from argparse import Namespace
 
 
 class MFAC_Learner(LearnerMAS):
-    class NetWithLossCell(nn.Cell):
+    class NetWithLossCell(Module):
         def __init__(self, backbone, vf_coef, ent_coef):
             super(MFAC_Learner.NetWithLossCell, self).__init__()
             self._backbone = backbone
@@ -34,12 +38,9 @@ class MFAC_Learner(LearnerMAS):
 
     def __init__(self,
                  config: Namespace,
-                 policy: nn.Cell,
-                 optimizer: Sequence[nn.Optimizer],
-                 scheduler: Optional[nn.exponential_decay_lr] = None,
-                 model_dir: str = "./",
-                 gamma: float = 0.99,
-                 ):
+                 model_keys: List[str],
+                 agent_keys: List[str],
+                 policy: Module):
         self.gamma = gamma
         self.clip_range = config.clip_range
         self.use_linear_lr_decay = config.use_linear_lr_decay
@@ -48,7 +49,7 @@ class MFAC_Learner(LearnerMAS):
         self.vf_coef, self.ent_coef = config.vf_coef, config.ent_coef
         self.tau = config.tau
         self.mse_loss = nn.MSELoss()
-        super(MFAC_Learner, self).__init__(config, policy, optimizer, scheduler, model_dir)
+        super(MFAC_Learner, self).__init__(config, model_keys, agent_keys, policy)
         self.optimizer = optimizer
         self.scheduler = scheduler
         self.bmm = ops.BatchMatMul()

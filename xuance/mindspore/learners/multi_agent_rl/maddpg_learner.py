@@ -5,11 +5,15 @@ https://proceedings.neurips.cc/paper/2017/file/68a9750337a418a86fe06c1991a1d64c-
 Implementation: MindSpore
 Trick: Parameter sharing for all agents, with agents' one-hot IDs as actor-critic's inputs.
 """
-from xuance.mindspore.learners import *
+import mindspore as ms
+from xuance.mindspore import Module
+from xuance.mindspore.learners import LearnerMAS
+from xuance.common import List
+from argparse import Namespace
 
 
 class MADDPG_Learner(LearnerMAS):
-    class ActorNetWithLossCell(nn.Cell):
+    class ActorNetWithLossCell(Module):
         def __init__(self, backbone, n_agents):
             super(MADDPG_Learner.ActorNetWithLossCell, self).__init__()
             self._backbone = backbone
@@ -21,7 +25,7 @@ class MADDPG_Learner(LearnerMAS):
             loss_a = -(self._backbone.critic(o, actions_eval, ids) * agt_mask).sum() / agt_mask.sum()
             return loss_a
 
-    class CriticNetWithLossCell(nn.Cell):
+    class CriticNetWithLossCell(Module):
         def __init__(self, backbone):
             super(MADDPG_Learner.CriticNetWithLossCell, self).__init__()
             self._backbone = backbone
@@ -35,18 +39,14 @@ class MADDPG_Learner(LearnerMAS):
 
     def __init__(self,
                  config: Namespace,
-                 policy: nn.Cell,
-                 optimizer: Sequence[nn.Optimizer],
-                 scheduler: Sequence[nn.exponential_decay_lr] = None,
-                 model_dir: str = "./",
-                 gamma: float = 0.99,
-                 sync_frequency: int = 100
-                 ):
+                 model_keys: List[str],
+                 agent_keys: List[str],
+                 policy: Module):
         self.gamma = gamma
         self.tau = config.tau
         self.sync_frequency = sync_frequency
         self.mse_loss = nn.MSELoss()
-        super(MADDPG_Learner, self).__init__(config, policy, optimizer, scheduler, model_dir)
+        super(MADDPG_Learner, self).__init__(config, model_keys, agent_keys, policy)
         self.optimizer = {
             'actor': optimizer[0],
             'critic': optimizer[1]
