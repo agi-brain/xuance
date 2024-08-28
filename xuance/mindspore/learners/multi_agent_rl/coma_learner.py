@@ -3,8 +3,7 @@ COMA: Counterfactual Multi-Agent Policy Gradients
 Paper link: https://ojs.aaai.org/index.php/AAAI/article/view/11794
 Implementation: MindSpore
 """
-import mindspore as ms
-from xuance.mindspore import Module
+from xuance.mindspore import ms, Module, Tensor
 from xuance.mindspore.learners import LearnerMAS
 from xuance.common import List
 from argparse import Namespace

@@ -3,8 +3,7 @@ Soft Actor-Critic with discrete action spaces (SAC-Discrete)
 Paper link: https://arxiv.org/pdf/1910.07207.pdf
 Implementation: MindSpore
 """
-import mindspore as ms
-from xuance.mindspore import Module
+from xuance.mindspore import ms, Module, Tensor
 from xuance.mindspore.learners import Learner
 from argparse import Namespace
 

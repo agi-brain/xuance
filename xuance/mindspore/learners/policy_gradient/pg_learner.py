@@ -3,8 +3,7 @@ Policy Gradient (PG)
 Paper link: https://proceedings.neurips.cc/paper/2001/file/4b86abe48d358ecf194c56c69108433e-Paper.pdf
 Implementation: MindSpore
 """
-import mindspore as ms
-from xuance.mindspore import Module
+from xuance.mindspore import ms, Module, Tensor
 from xuance.mindspore.learners import Learner
 from argparse import Namespace
 

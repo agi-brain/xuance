@@ -3,8 +3,7 @@ Soft Actor-Critic with continuous action spaces (SAC)
 Paper link: http://proceedings.mlr.press/v80/haarnoja18b/haarnoja18b.pdf
 Implementation: MindSpore
 """
-import mindspore as ms
-from xuance.mindspore import Module
+from xuance.mindspore import ms, Module, Tensor
 from xuance.mindspore.learners import Learner
 from argparse import Namespace
 from mindspore.nn.probability.distribution import Normal

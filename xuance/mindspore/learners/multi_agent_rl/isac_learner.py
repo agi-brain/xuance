@@ -3,8 +3,7 @@ Independent Soft Actor-critic (ISAC)
 Implementation: Pytorch
 Creator: Kun Jiang (kjiang@seu.edu.cn)
 """
-import mindspore as ms
-from xuance.mindspore import Module
+from xuance.mindspore import ms, Module, Tensor
 from xuance.mindspore.learners import LearnerMAS
 from xuance.common import List
 from argparse import Namespace

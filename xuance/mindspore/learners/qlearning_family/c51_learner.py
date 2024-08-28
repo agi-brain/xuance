@@ -3,11 +3,10 @@ Distributional Reinforcement Learning (C51DQN)
 Paper link: http://proceedings.mlr.press/v70/bellemare17a/bellemare17a.pdf
 Implementation: MindSpore
 """
-import mindspore as ms
-from xuance.mindspore import Module
+from xuance.mindspore import ms, Module, Tensor
 from xuance.mindspore.learners import Learner
 from argparse import Namespace
-from mindspore.ops import OneHot,Log,BatchMatMul,ExpandDims,Squeeze,ReduceSum,Abs,ReduceMean,clip_by_value
+from mindspore.ops import OneHot, Log, BatchMatMul, ExpandDims, Squeeze, ReduceSum, Abs, ReduceMean, clip_by_value
 
 
 class C51_Learner(Learner):
@@ -29,12 +28,17 @@ class C51_Learner(Learner):
 
         def construct(self, x, a, projection, target_a, target_z):
             _, _, evalZ = self._backbone(x)
-            
-            current_dist = self._sum(evalZ * self._unsqueeze(self._onehot(a, evalZ.shape[1], self.on_value, self.off_value), -1), 1)
-            target_dist = self._sum(target_z * self._unsqueeze(self._onehot(target_a, evalZ.shape[1], self.on_value, self.off_value), -1), 1)
-            
-            target_dist = self._squeeze(self._bmm(self._unsqueeze(target_dist, 1),clip_by_value(projection,self.clamp_min_value,self.clamp_max_value)))
-            loss = -self._mean(self._sum((target_dist *  self._log(current_dist + 1e-8)), 1))
+
+            current_dist = self._sum(
+                evalZ * self._unsqueeze(self._onehot(a, evalZ.shape[1], self.on_value, self.off_value), -1), 1)
+            target_dist = self._sum(
+                target_z * self._unsqueeze(self._onehot(target_a, evalZ.shape[1], self.on_value, self.off_value), -1),
+                1)
+
+            target_dist = self._squeeze(self._bmm(self._unsqueeze(target_dist, 1),
+                                                  clip_by_value(projection, self.clamp_min_value,
+                                                                self.clamp_max_value)))
+            loss = -self._mean(self._sum((target_dist * self._log(current_dist + 1e-8)), 1))
 
             return loss
 
@@ -63,11 +67,14 @@ class C51_Learner(Learner):
         ter_batch = Tensor(terminal_batch)
 
         _, targetA, targetZ = self.policy(next_batch)
-        
+
         current_supports = self.policy.supports
-        next_supports = self._unsqueeze(rew_batch, 1) + self.gamma * self.policy.supports * (1-self._unsqueeze(ter_batch, -1))
-        next_supports = clip_by_value(next_supports, Tensor(self.policy.v_min, ms.float32), Tensor(self.policy.v_max, ms.float32))
-        projection = 1 - self._abs((self._unsqueeze(next_supports, -1) - self._unsqueeze(current_supports, 0)))/self.policy.deltaz
+        next_supports = self._unsqueeze(rew_batch, 1) + self.gamma * self.policy.supports * (
+                    1 - self._unsqueeze(ter_batch, -1))
+        next_supports = clip_by_value(next_supports, Tensor(self.policy.v_min, ms.float32),
+                                      Tensor(self.policy.v_max, ms.float32))
+        projection = 1 - self._abs(
+            (self._unsqueeze(next_supports, -1) - self._unsqueeze(current_supports, 0))) / self.policy.deltaz
 
         loss = self.policy_train(obs_batch, act_batch, projection, targetA, targetZ)
 

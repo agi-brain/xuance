@@ -3,8 +3,7 @@ Proximal Policy Optimization with KL divergence (PPO-KL)
 Paper link: https://arxiv.org/pdf/1707.06347.pdf
 Implementation: MindSpore
 """
-import mindspore as ms
-from xuance.mindspore import Module
+from xuance.mindspore import ms, Module, Tensor
 from xuance.mindspore.learners import Learner
 from argparse import Namespace
 

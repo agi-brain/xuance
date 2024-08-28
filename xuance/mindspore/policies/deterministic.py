@@ -1,27 +1,25 @@
-import mindspore as ms
 import mindspore.nn as nn
 import numpy as np
 from copy import deepcopy
 from gym.spaces import Space, Discrete
 from xuance.common import Sequence, Optional, Callable, Union
-from xuance.torch import Module, Tensor
-from xuance.torch.utils import ModuleType
+from xuance.mindspore import ms, Module, Tensor
+from xuance.mindspore.utils import ModuleType
 from .core import BasicQhead, BasicRecurrent, DuelQhead, C51Qhead, QRDQNhead, ActorNet, CriticNet
 
 
 class BasicQnetwork(Module):
     def __init__(self,
                  action_space: Discrete,
-                 representation: ModuleType,
+                 representation: Module,
                  hidden_size: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., Tensor]] = None,
-                 activation: Optional[ModuleType] = None
-                 ):
+                 activation: Optional[ModuleType] = None):
         super(BasicQnetwork, self).__init__()
         self.action_dim = action_space.n
         self.representation = representation
-        self.target_representation = deepcopy(representation)
+        # self.target_representation = deepcopy(representation)
         self.representation_info_shape = self.representation.output_shapes
         self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, hidden_size,
                                      normalize, initialize, activation)
@@ -717,4 +715,3 @@ class DRQNPolicy(Module):
             tp.assign_value(ep)
         for ep, tp in zip(self.eval_Qhead.trainable_params(), self.target_Qhead.trainable_params()):
             tp.assign_value(ep)
-

@@ -20,5 +20,5 @@ wandb/
 debug.py
 debug_marl.py
 
-demo_tensorflow.py
+demo_mindspore.py
 mnist.npz

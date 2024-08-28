@@ -5,8 +5,7 @@ https://proceedings.neurips.cc/paper/2017/file/68a9750337a418a86fe06c1991a1d64c-
 Implementation: MindSpore
 Trick: Parameter sharing for all agents, with agents' one-hot IDs as actor-critic's inputs.
 """
-import mindspore as ms
-from xuance.mindspore import Module
+from xuance.mindspore import ms, Module, Tensor
 from xuance.mindspore.learners import LearnerMAS
 from xuance.common import List
 from argparse import Namespace

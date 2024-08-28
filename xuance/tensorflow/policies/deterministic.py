@@ -3,7 +3,6 @@ from copy import deepcopy
 from gym.spaces import Space, Discrete
 from xuance.common import Sequence, Optional, Union, Callable
 from xuance.tensorflow import tf, tk, Module, Tensor
-from xuance.tensorflow.representations import Basic_Identical
 from .core import BasicQhead, BasicRecurrent, DuelQhead, C51Qhead, QRDQNhead, ActorNet, CriticNet
 
 
@@ -48,7 +47,7 @@ class BasicQnetwork(Module):
 class DuelQnetwork(Module):
     def __init__(self,
                  action_space: Discrete,
-                 representation: Basic_Identical,
+                 representation: Module,
                  hidden_size: Sequence[int] = None,
                  normalize: Optional[tk.layers.Layer] = None,
                  initialize: Optional[Callable[..., Tensor]] = None,
@@ -86,7 +85,7 @@ class DuelQnetwork(Module):
 class NoisyQnetwork(Module):
     def __init__(self,
                  action_space: Discrete,
-                 representation: Basic_Identical,
+                 representation: Module,
                  hidden_size: Sequence[int] = None,
                  normalize: Optional[tk.layers.Layer] = None,
                  initialize: Optional[Callable[..., Tensor]] = None,
@@ -143,7 +142,7 @@ class C51Qnetwork(Module):
                  atom_num: int,
                  v_min: float,
                  v_max: float,
-                 representation: Basic_Identical,
+                 representation: Module,
                  hidden_size: Sequence[int] = None,
                  normalize: Optional[tk.layers.Layer] = None,
                  initialize: Optional[Callable[..., Tensor]] = None,
@@ -190,7 +189,7 @@ class QRDQN_Network(Module):
     def __init__(self,
                  action_space: Discrete,
                  quantile_num: int,
-                 representation: Basic_Identical,
+                 representation: Module,
                  hidden_size: Sequence[int] = None,
                  normalize: Optional[tk.layers.Layer] = None,
                  initialize: Optional[Callable[..., Tensor]] = None,
@@ -245,7 +244,7 @@ class DDPGPolicy(Module):
 
     def __init__(self,
                  action_space: Space,
-                 representation: Basic_Identical,
+                 representation: Module,
                  actor_hidden_size: Sequence[int],
                  critic_hidden_size: Sequence[int],
                  normalize: Optional[Module] = None,
@@ -333,7 +332,7 @@ class TD3Policy(Module):
 
     Args:
         action_space (Space): The action space.
-        representation (Basic_Identical): The representation module.
+        representation (Module): The representation module.
         actor_hidden_size (Sequence[int]): List of hidden units for actor network.
         critic_hidden_size (Sequence[int]): List of hidden units for critic network.
         normalize (Optional[tk.layers.Layer]): The layer normalization over a minibatch of inputs.
@@ -344,7 +343,7 @@ class TD3Policy(Module):
 
     def __init__(self,
                  action_space: Space,
-                 representation: Basic_Identical,
+                 representation: Module,
                  actor_hidden_size: Sequence[int],
                  critic_hidden_size: Sequence[int],
                  normalize: Optional[tk.layers.Layer] = None,
@@ -451,7 +450,7 @@ class PDQNPolicy(Module):
     def __init__(self,
                  observation_space,
                  action_space,
-                 representation: Basic_Identical,
+                 representation: Module,
                  conactor_hidden_size: Sequence[int],
                  qnetwork_hidden_size: Sequence[int],
                  normalize: Optional[tk.layers.Layer] = None,
@@ -521,7 +520,7 @@ class MPDQNPolicy(Module):
     def __init__(self,
                  observation_space,
                  action_space,
-                 representation: Basic_Identical,
+                 representation: Module,
                  conactor_hidden_size: Sequence[int],
                  qnetwork_hidden_size: Sequence[int],
                  normalize: Optional[tk.layers.Layer] = None,
@@ -629,7 +628,7 @@ class SPDQNPolicy(Module):
     def __init__(self,
                  observation_space,
                  action_space,
-                 representation: Basic_Identical,
+                 representation: Module,
                  conactor_hidden_size: Sequence[int],
                  qnetwork_hidden_size: Sequence[int],
                  normalize: Optional[tk.layers.Layer] = None,

@@ -3,8 +3,7 @@ DQN with Dueling network (Dueling DQN)
 Paper link: http://proceedings.mlr.press/v48/wangf16.pdf
 Implementation: MindSpore
 """
-import mindspore as ms
-from xuance.mindspore import Module
+from xuance.mindspore import ms, Module, Tensor
 from xuance.mindspore.learners import Learner
 from argparse import Namespace
 from mindspore.ops import OneHot

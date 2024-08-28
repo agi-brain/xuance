@@ -3,55 +3,50 @@ Deep Q-Network (DQN)
 Paper link: https://www.nature.com/articles/nature14236
 Implementation: MindSpore
 """
-import mindspore as ms
-from xuance.mindspore import Module
+from xuance.mindspore import ms, Module, Tensor
 from xuance.mindspore.learners import Learner
 from argparse import Namespace
 from mindspore.ops import OneHot
+from mindspore.nn import MSELoss, Adam
 
 
 class DQN_Learner(Learner):
-    class PolicyNetWithLossCell(Module):
-        def __init__(self, backbone, loss_fn):
-            super(DQN_Learner.PolicyNetWithLossCell, self).__init__(auto_prefix=False)
-            self._backbone = backbone
-            self._loss_fn = loss_fn
-            self._onehot = OneHot()
-
-        def construct(self, x, a, label):
-            _, _, _evalQ = self._backbone(x)
-            _predict_Q = (_evalQ * self._onehot(a.astype(ms.int32), _evalQ.shape[1], Tensor(1.0), Tensor(0.0))).sum(axis=-1)
-            loss = self._loss_fn(_predict_Q, label)
-            return loss
-
     def __init__(self,
                  config: Namespace,
                  policy: Module):
+        super(DQN_Learner, self).__init__(config, policy)
+        self.optimizer = Adam(params=self.policy.trainable_params(), learning_rate=self.config.learning_rate, eps=1e-5)
         self.gamma = config.gamma
         self.sync_frequency = config.sync_frequency
-        super(DQN_Learner, self).__init__(config, policy)
-        # define loss function
-        loss_fn = nn.MSELoss()
-        # connect the feed forward network with loss function.
-        self.loss_net = self.PolicyNetWithLossCell(policy, loss_fn)
-        # define the training network
-        self.policy_train = nn.TrainOneStepCell(self.loss_net, optimizer)
-        # set the training network as train mode.
-        self.policy_train.set_train()
+        self.mse_loss = MSELoss()
+        self.one_hot = OneHot()
+        self.n_actions = self.policy.action_dim
+        # Get gradient function
+        self.grad_fn = ms.value_and_grad(self.forward_fn, None, self.optimizer.parameters, has_aux=True)
+        self.policy.set_train()
 
-    def update(self, obs_batch, act_batch, rew_batch, next_batch, terminal_batch):
+    def forward_fn(self, x, a, label):
+        _, _, _evalQ = self.policy(x)
+        _predict_Q = (_evalQ * self.one_hot(a.astype(ms.int32), _evalQ.shape[1], Tensor(1.0), Tensor(0.0))).sum(
+            axis=-1)
+        loss = self.mse_loss(_predict_Q, label)
+        return loss, _predict_Q
+
+    def update(self, **samples):
         self.iterations += 1
-        obs_batch = Tensor(obs_batch)
-        act_batch = Tensor(act_batch)
-        rew_batch = Tensor(rew_batch)
-        next_batch = Tensor(next_batch)
-        ter_batch = Tensor(terminal_batch)
+        obs_batch = Tensor(samples['obs'])
+        act_batch = Tensor(samples['actions'])
+        rew_batch = Tensor(samples['rewards'])
+        next_batch = Tensor(samples['obs_next'])
+        ter_batch = Tensor(samples['terminals'])
 
+        _, _, evalQ = self.policy(obs_batch)
         _, _, targetQ = self.policy.target(next_batch)
         targetQ = targetQ.max(axis=-1)
         targetQ = rew_batch + self.gamma * (1 - ter_batch) * targetQ
 
-        loss = self.policy_train(obs_batch, act_batch, targetQ)
+        (loss, predictQ), grads = self.grad_fn(obs_batch, act_batch, targetQ)
+        self.optimizer(grads)
 
         # hard update for target network
         if self.iterations % self.sync_frequency == 0:
@@ -61,6 +56,7 @@ class DQN_Learner(Learner):
 
         info = {
             "Qloss": loss.asnumpy(),
+            "predictQ": predictQ.mean().asnumpy(),
             "learning_rate": lr
         }
 

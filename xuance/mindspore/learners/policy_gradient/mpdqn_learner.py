@@ -3,8 +3,7 @@ Multi-pass parameterised deep Q network (MP-DQN)
 Paper link: https://arxiv.org/pdf/1905.04388.pdf
 Implementation: MindSpore
 """
-import mindspore as ms
-from xuance.mindspore import Module
+from xuance.mindspore import ms, Module, Tensor
 from xuance.mindspore.learners import Learner
 from argparse import Namespace
 from mindspore.ops import OneHot

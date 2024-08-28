@@ -3,8 +3,7 @@ Parameterised deep Q network (P-DQN)
 Paper link: https://arxiv.org/pdf/1810.06394.pdf
 Implementation: MindSpore
 """
-import mindspore as ms
-from xuance.mindspore import Module
+from xuance.mindspore import ms, Module, Tensor
 from xuance.mindspore.learners import Learner
 from argparse import Namespace
 from mindspore.ops import OneHot
