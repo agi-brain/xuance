@@ -3,11 +3,11 @@ Deep Q-Network (DQN)
 Paper link: https://www.nature.com/articles/nature14236
 Implementation: MindSpore
 """
-from xuance.mindspore import ms, Module, Tensor
+from xuance.mindspore import ms, Module, Tensor, optim
 from xuance.mindspore.learners import Learner
 from argparse import Namespace
 from mindspore.ops import OneHot
-from mindspore.nn import MSELoss, Adam
+from mindspore.nn import MSELoss
 
 
 class DQN_Learner(Learner):
@@ -15,7 +15,9 @@ class DQN_Learner(Learner):
                  config: Namespace,
                  policy: Module):
         super(DQN_Learner, self).__init__(config, policy)
-        self.optimizer = Adam(params=self.policy.trainable_params(), learning_rate=self.config.learning_rate, eps=1e-5)
+        self.optimizer = optim.Adam(params=self.policy.trainable_params(), lr=self.config.learning_rate, eps=1e-5)
+        self.scheduler = optim.lr_scheduler.LinearLR(self.optimizer, start_factor=1.0, end_factor=0.9,
+                                                     total_iters=self.config.running_steps)
         self.gamma = config.gamma
         self.sync_frequency = config.sync_frequency
         self.mse_loss = MSELoss()
@@ -50,12 +52,13 @@ class DQN_Learner(Learner):
         if self.iterations % self.sync_frequency == 0:
             self.policy.copy_target()
 
-        lr = self.scheduler(self.iterations).asnumpy()
+        self.scheduler.step()
+        lr = self.scheduler.get_last_lr()[0]
 
         info = {
             "Qloss": loss.asnumpy(),
             "predictQ": predictQ.mean().asnumpy(),
-            "learning_rate": lr
+            "learning_rate": lr.asnumpy(),
         }
 
         return info

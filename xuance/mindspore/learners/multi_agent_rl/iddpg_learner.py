@@ -2,7 +2,7 @@
 Independent Deep Deterministic Policy Gradient (IDDPG)
 Implementation: MindSpore
 """
-from xuance.mindspore import ms, Module, Tensor
+from xuance.mindspore import ms, Module, Tensor, optim
 from xuance.mindspore.learners import LearnerMAS
 from xuance.common import List
 from argparse import Namespace

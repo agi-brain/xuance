@@ -173,8 +173,8 @@ def get_runner(method,
                 device = "CPU"
             context.set_context(device_target=device)
         # context.set_context(enable_graph_kernel=True)
-        context.set_context(mode=context.GRAPH_MODE)  # Graph mode (静态图, 断点无法进入)
-        # context.set_context(mode=context.PYNATIVE_MODE)  # Pynative mode (动态图, 便于调试)
+        # context.set_context(mode=context.GRAPH_MODE)  # Graph mode (静态图, 断点无法进入)
+        context.set_context(mode=context.PYNATIVE_MODE)  # Pynative mode (动态图, 便于调试)
     elif dl_toolbox == "tensorflow":
         from xuance.tensorflow.runners import REGISTRY_Runner
         print("Deep learning toolbox: TensorFlow.")

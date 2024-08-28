@@ -3,7 +3,7 @@ Twin Delayed Deep Deterministic Policy Gradient (TD3)
 Paper link: http://proceedings.mlr.press/v80/fujimoto18a/fujimoto18a.pdf
 Implementation: MindSpore
 """
-from xuance.mindspore import ms, Module, Tensor
+from xuance.mindspore import ms, Module, Tensor, optim
 from xuance.mindspore.learners import Learner
 from argparse import Namespace
 

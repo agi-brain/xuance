@@ -3,7 +3,7 @@ import numpy as np
 from copy import deepcopy
 from gym.spaces import Space, Discrete
 from xuance.common import Sequence, Optional, Callable, Union
-from xuance.mindspore import ms, Module, Tensor
+from xuance.mindspore import ms, Module, Tensor, ops
 from xuance.mindspore.utils import ModuleType
 from .core import BasicQhead, BasicRecurrent, DuelQhead, C51Qhead, QRDQNhead, ActorNet, CriticNet
 

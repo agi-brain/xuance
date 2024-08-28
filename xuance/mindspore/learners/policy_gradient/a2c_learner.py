@@ -2,7 +2,7 @@
 Advantage Actor-Critic (A2C)
 Implementation: MindSpore
 """
-from xuance.mindspore import ms, Module, Tensor
+from xuance.mindspore import ms, Module, Tensor, optim
 from xuance.mindspore.learners import Learner
 from argparse import Namespace
 

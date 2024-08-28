@@ -3,7 +3,7 @@ DQN with Double Q-learning (Double DQN)
 Paper link: https://ojs.aaai.org/index.php/AAAI/article/view/10295
 Implementation: MindSpore
 """
-from xuance.mindspore import ms, Module, Tensor
+from xuance.mindspore import ms, Module, Tensor, optim
 from xuance.mindspore.learners import Learner
 from argparse import Namespace
 from mindspore.ops import OneHot

@@ -3,7 +3,7 @@ DQN with Prioritized Experience Replay (PER-DQN)
 Paper link: https://arxiv.org/pdf/1511.05952.pdf
 Implementation: Pytorch
 """
-from xuance.mindspore import ms, Module, Tensor
+from xuance.mindspore import ms, Module, Tensor, optim
 from xuance.mindspore.learners import Learner
 from argparse import Namespace
 from mindspore.ops import OneHot

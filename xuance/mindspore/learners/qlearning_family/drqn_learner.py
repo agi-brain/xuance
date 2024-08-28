@@ -3,7 +3,7 @@ Deep Recurrent Q-Netwrk (DRQN)
 Paper link: https://cdn.aaai.org/ocs/11673/11673-51288-1-PB.pdf
 Implementation: MindSpore
 """
-from xuance.mindspore import ms, Module, Tensor
+from xuance.mindspore import ms, Module, Tensor, optim
 from xuance.mindspore.learners import Learner
 from argparse import Namespace
 from mindspore.ops import OneHot

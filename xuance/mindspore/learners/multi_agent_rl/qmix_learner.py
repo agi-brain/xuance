@@ -4,7 +4,7 @@ Paper link:
 http://proceedings.mlr.press/v80/rashid18a/rashid18a.pdf
 Implementation: MindSpore
 """
-from xuance.mindspore import ms, Module, Tensor
+from xuance.mindspore import ms, Module, Tensor, optim
 from xuance.mindspore.learners import LearnerMAS
 from xuance.common import List
 from argparse import Namespace

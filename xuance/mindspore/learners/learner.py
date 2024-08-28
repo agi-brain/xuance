@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 from xuance.common import Optional, List, Union
 from argparse import Namespace
 from operator import itemgetter
-from xuance.mindspore import Tensor, Module
+from xuance.mindspore import Tensor, Module, optim
 
 
 class Learner(ABC):
@@ -20,7 +20,7 @@ class Learner(ABC):
         self.use_actions_mask = config.use_actions_mask if hasattr(config, 'use_actions_mask') else False
         self.policy = policy
         self.optimizer: Union[dict, list, Optional[ms.nn.Optimizer]] = None
-        self.scheduler: Union[dict, list, Optional[ms.experimental.optim.lr_scheduler.LRScheduler]] = None
+        self.scheduler: Union[dict, list, Optional[optim.lr_scheduler.LRScheduler]] = None
 
         self.use_grad_clip = config.use_grad_clip
         self.grad_clip_norm = config.grad_clip_norm

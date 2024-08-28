@@ -3,7 +3,7 @@ Phasic Policy Gradient (PPG)
 Paper link: http://proceedings.mlr.press/v139/cobbe21a/cobbe21a.pdf
 Implementation: MindSpore
 """
-from xuance.mindspore import ms, Module, Tensor
+from xuance.mindspore import ms, Module, Tensor, optim
 from xuance.mindspore.learners import Learner
 from argparse import Namespace
 from xuance.mindspore.utils.operations import merge_distributions

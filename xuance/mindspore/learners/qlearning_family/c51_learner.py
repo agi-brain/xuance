@@ -3,7 +3,7 @@ Distributional Reinforcement Learning (C51DQN)
 Paper link: http://proceedings.mlr.press/v70/bellemare17a/bellemare17a.pdf
 Implementation: MindSpore
 """
-from xuance.mindspore import ms, Module, Tensor
+from xuance.mindspore import ms, Module, Tensor, optim
 from xuance.mindspore.learners import Learner
 from argparse import Namespace
 from mindspore.ops import OneHot, Log, BatchMatMul, ExpandDims, Squeeze, ReduceSum, Abs, ReduceMean, clip_by_value

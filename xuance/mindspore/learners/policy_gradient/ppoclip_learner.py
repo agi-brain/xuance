@@ -3,7 +3,7 @@ Proximal Policy Optimization with clip trick (PPO_CLIP)
 Paper link: https://arxiv.org/pdf/1707.06347.pdf
 Implementation: MindSpore
 """
-from xuance.mindspore import ms, Module, Tensor
+from xuance.mindspore import ms, Module, Tensor, optim
 from xuance.mindspore.learners import Learner
 from argparse import Namespace
 
