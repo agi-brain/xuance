@@ -143,10 +143,10 @@ class BasicRecurrent(nn.Cell):
     def construct(self, x: ms.tensor, h: ms.tensor, c: ms.tensor = None):
         # self.rnn_layer.flatten_parameters()
         if self.lstm:
-            output, (hn, cn) = self.rnn_layer(x, (h, c))
+            output, (hn, cn) = self.rnn_layer(Tensor(x), (Tensor(h), Tensor(c)))
             return hn, cn, self.model(output)
         else:
-            output, hn = self.rnn_layer(x, h)
+            output, hn = self.rnn_layer(Tensor(x), Tensor(h))
             return hn, self.model(output)
 
 
