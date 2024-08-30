@@ -7,93 +7,107 @@ from xuance.mindspore import ms, Module, Tensor, optim
 from xuance.mindspore.learners import Learner
 from argparse import Namespace
 from xuance.mindspore.utils.operations import merge_distributions
-from mindspore.nn.probability.distribution import Categorical
+from mindspore.nn import MSELoss
 
 
 class PPG_Learner(Learner):
-    class PolicyNetWithLossCell(Module):
-        def __init__(self, backbone, ent_coef, kl_beta, clip_range, loss_fn):
-            super(PPG_Learner.PolicyNetWithLossCell, self).__init__(auto_prefix=False)
-            self._backbone = backbone
-            self._ent_coef = ent_coef
-            self._kl_beta = kl_beta
-            self._clip_range = clip_range
-            self._loss_fn = loss_fn
-            self._mean = ms.ops.ReduceMean(keep_dims=True)
-            self._minimum = ms.ops.Minimum()
-            self._exp = ms.ops.Exp()
-            self._categorical = Categorical()
-
-        def construct(self, x, a, r, adv, old_log, old_dist_logits, v, update_type):
-            loss = 0
-            if update_type == 0:
-                _, a_dist, _, _ = self._backbone(x)
-                log_prob = self._categorical.log_prob(a, a_dist)
-                # ppo-clip core implementations 
-                ratio = self._exp(log_prob - old_log)
-                surrogate1 = ms.ops.clip_by_value(ratio, 1.0 - self._clip_range, 1.0 + self._clip_range) * adv
-                surrogate2 = adv * ratio
-                a_loss = -self._minimum(surrogate1, surrogate2).mean()
-                entropy = self._categorical.entropy(a_dist)
-                e_loss = entropy.mean()
-                loss = a_loss - self._ent_coef * e_loss
-            elif update_type == 1:
-                _,_,v_pred,_ = self._backbone(x)
-                loss = self._loss_fn(v_pred, r)
-            elif update_type == 2:
-                _, a_dist, _, aux_v  = self._backbone(x)
-                aux_loss = self._loss_fn(v, aux_v)
-                kl_loss = self._categorical.kl_loss('Categorical',a_dist, old_dist_logits).mean()
-                value_loss = self._loss_fn(v,r)
-                loss = aux_loss + self._kl_beta * kl_loss + value_loss
-            return loss
-    
     def __init__(self,
                  config: Namespace,
                  policy: Module):
         super(PPG_Learner, self).__init__(config, policy)
-        self.ent_coef = ent_coef
-        self.clip_range = clip_range
-        self.kl_beta = kl_beta
+        self.optimizer = optim.Adam(params=self.policy.trainable_params(), lr=self.config.learning_rate, eps=1e-5)
+        self.scheduler = optim.lr_scheduler.LinearLR(self.optimizer, start_factor=1.0, end_factor=0.5,
+                                                     total_iters=self.config.running_steps)
+        self.mse_loss = MSELoss()
+        self.ent_coef = config.ent_coef
+        self.clip_range = config.clip_range
+        self.kl_beta = config.kl_beta
         self.policy_iterations = 0
         self.value_iterations = 0
-        loss_fn = nn.MSELoss()
-        # define mindspore trainer
-        self.loss_net = self.PolicyNetWithLossCell(policy, self.ent_coef, self.kl_beta, self.clip_range, loss_fn)
-        self.policy_train = nn.TrainOneStepCell(self.loss_net, optimizer)
-        self.policy_train.set_train()
+        # Get gradient function
+        self._mean = ms.ops.ReduceMean(keep_dims=True)
+        self._minimum = ms.ops.Minimum()
+        self._exp = ms.ops.Exp()
+        self.grad_fn_policy = ms.value_and_grad(self.forward_fn_policy, None, self.optimizer.parameters, has_aux=True)
+        self.grad_fn_critic = ms.value_and_grad(self.forward_fn_critic, None, self.optimizer.parameters, has_aux=True)
+        self.grad_fn_auxiliary = ms.value_and_grad(self.forward_fn_auxiliary, None, self.optimizer.parameters,
+                                                   has_aux=True)
+        self.policy.set_train()
 
-    def update(self, obs_batch, act_batch, ret_batch, adv_batch, old_dists, update_type):
+    def forward_fn_policy(self, obs_batch, act_batch, adv_batch, old_logp_batch):
+        _, a_dist, _, _ = self.policy(obs_batch)
+        log_prob = a_dist.log_prob(act_batch)
+        # ppo-clip core implementations
+        ratio = self._exp(log_prob - old_logp_batch)
+        surrogate1 = ms.ops.clip_by_value(ratio, 1.0 - self.clip_range, 1.0 + self.clip_range) * adv_batch
+        surrogate2 = adv_batch * ratio
+        a_loss = -self._minimum(surrogate1, surrogate2).mean()
+        e_loss = a_dist.entropy().mean()
+        loss = a_loss - self.ent_coef * e_loss
+        return loss, a_loss, e_loss, ratio
+
+    def forward_fn_critic(self, obs_batch, ret_batch):
+        _, _, v_pred, _ = self.policy(obs_batch)
+        loss = self.mse_loss(v_pred, ret_batch)
+        return loss, v_pred
+
+    def forward_fn_auxiliary(self, obs_batch, ret_batch, old_dist):
+        _, a_dist, v, aux_v = self.policy(obs_batch)
+        aux_loss = self.mse_loss(v, aux_v)
+        kl_loss = self._categorical.kl_loss('Categorical', a_dist, old_dist).mean()
+        value_loss = self.mse_loss(v, ret_batch)
+        loss = aux_loss + self.kl_beta * kl_loss + value_loss
+        return loss, v
+
+    def update_policy(self, **samples):
         self.iterations += 1
-        info = {}
-        obs_batch = Tensor(obs_batch)
-        act_batch = Tensor(act_batch)
-        ret_batch = Tensor(ret_batch)
-        adv_batch = Tensor(adv_batch)
-        old_dist = merge_distributions(old_dists)
+        obs_batch = Tensor(samples['obs'])
+        act_batch = Tensor(samples['actions'])
+        adv_batch = Tensor(samples['advantages'])
+        old_dist = merge_distributions(samples['aux_batch']['old_dist'])
         old_logp_batch = old_dist.log_prob(act_batch)
 
-        _, _, v, _  = self.policy(obs_batch)
+        (loss, a_loss, e_loss, ratio), grads = self.grad_fn_policy(obs_batch, act_batch, adv_batch, old_logp_batch)
+        self.optimizer(grads)
 
-        if update_type == 0:
-            loss = self.policy_train(obs_batch, act_batch, ret_batch, adv_batch, old_logp_batch, old_dist.logits, v, update_type)
+        self.scheduler.step()
+        lr = self.scheduler.get_last_lr()[0]
 
-            lr = self.scheduler(self.iterations).asnumpy()
-            # self.writer.add_scalar("actor-loss", self.loss_net.loss_a.asnumpy(), self.iterations)
-            # self.writer.add_scalar("entropy", self.loss_net.loss_e.asnumpy(), self.iterations)
-            info["total-loss"] = loss.asnumpy()
-            info["learning_rate"] = lr
-            self.policy_iterations += 1
-        
-        elif update_type == 1:
-            loss = self.policy_train(obs_batch, act_batch, ret_batch, adv_batch, old_logp_batch, old_dist.logits, v, update_type)
-
-            info["critic-loss"] = loss.asnumpy()
-            self.value_iterations += 1
-        
-        elif update_type == 2:
-            loss = self.policy_train(obs_batch, act_batch, ret_batch, adv_batch, old_logp_batch, old_dist.logits, v, update_type)
-
-            info["kl-loss"] = loss.asnumpy()
+        info = {
+            "actor-loss": a_loss.asnumpy(),
+            "entropy": e_loss.asnumpy(),
+            "learning_rate": lr.asnumpy(),
+            "clip_ratio": ratio.asnumpy(),
+        }
+        self.policy_iterations += 1
 
         return info
+
+    def update_critic(self, **samples):
+        obs_batch = Tensor(samples['obs'])
+        ret_batch = Tensor(samples['returns'])
+
+        (loss, v_pred), grads = self.grad_fn_critic(obs_batch, ret_batch)
+        self.optimizer(grads)
+
+        info = {
+            "critic-loss": loss.asnumpy()
+        }
+        self.value_iterations += 1
+        return info
+
+    def update_auxiliary(self, **samples):
+        obs_batch = samples['obs']
+        ret_batch = Tensor(samples['returns'])
+        old_dist = merge_distributions(samples['aux_batch']['old_dist'])
+
+        (loss, v), grads = self.grad_fn_auxiliary(obs_batch, ret_batch, old_dist)
+        self.optimizer(grads)
+
+        info = {
+            "kl-loss": loss.asnumpy()
+        }
+        return info
+
+    def update(self, *args):
+        return

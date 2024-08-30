@@ -1,6 +1,4 @@
 import mindspore as ms
-import mindspore.nn as nn
-import numpy as np
 from copy import deepcopy
 from gym.spaces import Discrete
 from xuance.common import Sequence, Optional, Callable, Union
@@ -9,12 +7,6 @@ from xuance.mindspore.utils import ModuleType
 from .core import CategoricalActorNet as ActorNet
 from .core import CategoricalActorNet_SAC as Actor_SAC
 from .core import BasicQhead, CriticNet
-
-
-def _init_layer(layer, gain=np.sqrt(2), bias=0.0):
-    nn.init.orthogonal_(layer.weight, gain=gain)
-    nn.init.constant_(layer.bias, bias)
-    return layer
 
 
 class ActorPolicy(Module):
@@ -48,7 +40,7 @@ class ActorPolicy(Module):
     def construct(self, observation: Tensor):
         outputs = self.representation(observation)
         a = self.actor(outputs['state'])
-        return outputs, a
+        return outputs, a, None
     
     
 class ActorCriticPolicy(Module):

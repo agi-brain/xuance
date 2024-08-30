@@ -52,11 +52,11 @@ def split_distributions(distribution):
     _unsqueeze = ExpandDims()
     return_list = []
     if isinstance(distribution, CategoricalDistribution):
-        shape = distribution.logits.shape
-        logits = distribution.logits.view(-1,shape[-1])
-        for logit in logits:
-            dist = CategoricalDistribution(logits.shape[-1])
-            dist.set_param(_unsqueeze(logit, 0))
+        shape = distribution.probs.shape
+        probs = distribution.probs.view(-1,shape[-1])
+        for prob in probs:
+            dist = CategoricalDistribution(probs.shape[-1])
+            dist.set_param(_unsqueeze(prob, 0))
             return_list.append(dist)
     else:
         raise NotImplementedError
@@ -65,10 +65,10 @@ def split_distributions(distribution):
 
 def merge_distributions(distribution_list):
     if isinstance(distribution_list[0], CategoricalDistribution):
-        logits = ms.ops.concat([dist.logits for dist in distribution_list], 0)
-        action_dim = logits.shape[-1]
+        probs = ms.ops.concat([dist.probs for dist in distribution_list], 0)
+        action_dim = probs.shape[-1]
         dist = CategoricalDistribution(action_dim)
-        dist.set_param(logits)
+        dist.set_param(probs)
         return dist
     else:
         raise NotImplementedError

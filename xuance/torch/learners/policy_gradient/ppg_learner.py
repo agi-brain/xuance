@@ -99,5 +99,5 @@ class PPG_Learner(Learner):
         }
         return info
 
-    def update(self):
-        pass
+    def update(self, *args):
+        return

@@ -76,13 +76,13 @@ class OnPolicyAgent(Agent):
         """
         _, policy_dists, values = self.policy(observations)
         actions = policy_dists.stochastic_sample()
-        log_pi = policy_dists.log_prob(actions).detach().cpu().numpy() if return_logpi else None
+        log_pi = policy_dists.log_prob(actions).asnumpy() if return_logpi else None
         dists = split_distributions(policy_dists) if return_dists else None
-        actions = actions.detach().cpu().numpy()
+        actions = actions.asnumpy()
         if values is None:
             values = 0
         else:
-            values = values.detach().cpu().numpy()
+            values = values.asnumpy()
         return {"actions": actions, "values": values, "dists": dists, "log_pi": log_pi}
 
     def get_aux_info(self, policy_output: dict = None):
