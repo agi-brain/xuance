@@ -7,8 +7,8 @@ from xuance.common import Sequence, Optional, Callable, Union
 from xuance.mindspore import Module, Tensor
 from xuance.mindspore.utils import ModuleType
 from .core import CategoricalActorNet as ActorNet
-# from .core import CategoricalActorNet_SAC as Actor_SAC
-from .core import CriticNet, BasicQhead
+from .core import CategoricalActorNet_SAC as Actor_SAC
+from .core import BasicQhead, CriticNet
 
 
 def _init_layer(layer, gain=np.sqrt(2), bias=0.0):
@@ -31,7 +31,7 @@ class ActorPolicy(Module):
     """
     def __init__(self,
                  action_space: Discrete,
-                 representation: ModuleType,
+                 representation: Module,
                  actor_hidden_size: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., Tensor]] = None,
@@ -54,7 +54,7 @@ class ActorPolicy(Module):
 class ActorCriticPolicy(Module):
     def __init__(self,
                  action_space: Discrete,
-                 representation: ModuleType,
+                 representation: Module,
                  actor_hidden_size: Sequence[int] = None,
                  critic_hidden_size: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,
@@ -81,7 +81,7 @@ class ActorCriticPolicy(Module):
 class PPGActorCritic(Module):
     def __init__(self,
                  action_space: Discrete,
-                 representation: ModuleType,
+                 representation: Module,
                  actor_hidden_size: Sequence[int] = None,
                  critic_hidden_size: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,
@@ -114,7 +114,7 @@ class PPGActorCritic(Module):
 # class SACDISPolicy(Module):
 #     def __init__(self,
 #                  action_space: Space,
-#                  representation: ModuleType,
+#                  representation: Module,
 #                  actor_hidden_size: Sequence[int],
 #                  critic_hidden_size: Sequence[int],
 #                  normalize: Optional[ModuleType] = None,
@@ -183,7 +183,7 @@ class PPGActorCritic(Module):
 class SACDISPolicy(Module):
     def __init__(self,
                  action_space: Discrete,
-                 representation: ModuleType,
+                 representation: Module,
                  actor_hidden_size: Sequence[int],
                  critic_hidden_size: Sequence[int],
                  normalize: Optional[ModuleType] = None,

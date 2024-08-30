@@ -1,9 +1,9 @@
 import mindspore as ms
 import mindspore.nn as nn
-from mindspore.nn.probability.distribution import Categorical, Normal
 from xuance.common import Sequence, Optional, Callable, Union
 from xuance.mindspore import Tensor, Module
 from xuance.mindspore.utils import ModuleType, mlp_block, gru_block, lstm_block
+from mindspore.nn.probability.distribution import Categorical, Normal
 
 
 class BasicQhead(nn.Cell):
@@ -13,8 +13,7 @@ class BasicQhead(nn.Cell):
                  hidden_sizes: Sequence[int],
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., ms.Tensor]] = None,
-                 activation: Optional[ModuleType] = None
-                 ):
+                 activation: Optional[ModuleType] = None):
         super(BasicQhead, self).__init__()
         layers = []
         input_shape = (state_dim,)
@@ -156,8 +155,7 @@ class ActorNet(nn.Cell):
                  action_dim: int,
                  hidden_sizes: Sequence[int],
                  initialize: Optional[Callable[..., ms.Tensor]] = None,
-                 activation: Optional[ModuleType] = None
-                 ):
+                 activation: Optional[ModuleType] = None):
         super(ActorNet, self).__init__()
         layers = []
         input_shape = (state_dim,)
@@ -218,6 +216,48 @@ class CategoricalActorNet(nn.Cell):
 
     def construct(self, x: ms.Tensor):
         return self.model(x)
+
+
+class CategoricalActorNet_SAC(CategoricalActorNet):
+    """
+    The actor network for categorical policy in SAC-DIS, which outputs a distribution over all discrete actions.
+
+    Args:
+        state_dim (int): The input state dimension.
+        action_dim (int): The dimension of continuous action space.
+        hidden_sizes (Sequence[int]): List of hidden units for fully connect layers.
+        normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
+        activation (Optional[ModuleType]): The activation function for each layer.
+    """
+
+    def __init__(self,
+                 state_dim: int,
+                 action_dim: int,
+                 hidden_sizes: Sequence[int],
+                 normalize: Optional[ModuleType] = None,
+                 initialize: Optional[Callable[..., Tensor]] = None,
+                 activation: Optional[ModuleType] = None):
+        super(CategoricalActorNet_SAC, self).__init__(state_dim, action_dim, hidden_sizes,
+                                                      normalize, initialize, activation)
+        self.output = nn.Softmax(dim=-1)
+
+    def forward(self, x: Tensor, avail_actions: Optional[Tensor] = None):
+        """
+        Returns the stochastic distribution over all discrete actions.
+        Parameters:
+            x (Tensor): The input tensor.
+            avail_actions (Optional[Tensor]): The actions mask values when use actions mask, default is None.
+
+        Returns:
+            self.dist: CategoricalDistribution(action_dim), a distribution over all discrete actions.
+        """
+        logits = self.model(x)
+        if avail_actions is not None:
+            logits[avail_actions == 0] = -1e10
+        probs = self.output(logits)
+        self.dist.set_param(probs=probs)
+        return self.dist
 
 
 class GaussianActorNet(nn.Cell):
