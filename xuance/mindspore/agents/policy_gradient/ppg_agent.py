@@ -74,27 +74,12 @@ class PPG_Agent(OnPolicyAgent):
             dists: The policy distributions.
             log_pi: Log of stochastic actions.
         """
-        shape_obs = observations.shape
-        if len(shape_obs) > 2:
-            observations = observations.reshape(-1, shape_obs[-1])
-            if self.continuous_control:
-                _, policy_mean, values, _ = self.policy(observations)
-                policy_mean = policy_mean.numpy().reshape(shape_obs[:-1] + self.action_space.shape)
-                policy_std = ms.exp(self.policy.actor.logstd).numpy()
-                self.policy.actor.dist.set_param(policy_mean, policy_std)
-            else:
-                _, policy_logits, values, _ = self.policy(observations)
-                policy_logits = policy_logits.numpy().reshape(shape_obs[:-1] + (self.action_space.n, ))
-                self.policy.actor.dist.set_param(logits=policy_logits)
-            values = ms.reshape(values, shape_obs[:-1])
-        else:
-            _, _, values, _ = self.policy(observations)
-        policy_dists = self.policy.actor.dist
+        _, policy_dists, values, _ = self.policy(observations)
         actions = policy_dists.stochastic_sample()
         log_pi = policy_dists.log_prob(actions) if return_logpi else None
         dists = split_distributions(policy_dists) if return_dists else None
-        actions = actions.numpy()
-        values = values.numpy()
+        actions = actions.asnumpy()
+        values = values.asnumpy()
         return {"actions": actions, "values": values, "dists": dists, "log_pi": log_pi}
 
     def get_aux_info(self, policy_output: dict = None):

@@ -51,10 +51,10 @@ class PPG_Learner(Learner):
         loss = self.mse_loss(v_pred, ret_batch)
         return loss, v_pred
 
-    def forward_fn_auxiliary(self, obs_batch, ret_batch, old_dist):
+    def forward_fn_auxiliary(self, obs_batch, ret_batch, old_probs):
         _, a_dist, v, aux_v = self.policy(obs_batch)
         aux_loss = self.mse_loss(v, aux_v)
-        kl_loss = self._categorical.kl_loss('Categorical', a_dist, old_dist).mean()
+        kl_loss = a_dist.distribution.kl_loss('Categorical', old_probs).mean()
         value_loss = self.mse_loss(v, ret_batch)
         loss = aux_loss + self.kl_beta * kl_loss + value_loss
         return loss, v
@@ -99,9 +99,12 @@ class PPG_Learner(Learner):
     def update_auxiliary(self, **samples):
         obs_batch = samples['obs']
         ret_batch = Tensor(samples['returns'])
+        act_batch = Tensor(samples['actions'])
         old_dist = merge_distributions(samples['aux_batch']['old_dist'])
+        old_logp_batch = old_dist.log_prob(act_batch)
+        old_probs = self._exp(old_logp_batch)
 
-        (loss, v), grads = self.grad_fn_auxiliary(obs_batch, ret_batch, old_dist)
+        (loss, v), grads = self.grad_fn_auxiliary(obs_batch, ret_batch, old_probs)
         self.optimizer(grads)
 
         info = {
