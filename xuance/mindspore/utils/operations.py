@@ -2,7 +2,7 @@ import random
 import mindspore as ms
 import mindspore.nn as nn
 import numpy as np
-from mindspore.ops import ExpandDims, Concat
+from mindspore.ops import ExpandDims, Concat, clip_by_value
 from .distributions import CategoricalDistribution, DiagGaussianDistribution
 
 
@@ -92,3 +92,11 @@ def merge_distributions(distribution_list):
         return dist
     else:
         raise NotImplementedError
+
+
+def clip_grads(grads, low, high):
+    new_grads = ()
+    for grad in grads:
+        t = clip_by_value(grad, low, high)
+        new_grads = new_grads + (t, )
+    return new_grads

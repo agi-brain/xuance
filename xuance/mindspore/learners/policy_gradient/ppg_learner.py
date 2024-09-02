@@ -59,7 +59,7 @@ class PPG_Learner(Learner):
             mean, std = old_dists_param['mean'], old_dists_param['std']
             kl_loss = a_dist.distribution.kl_loss('Normal', mean, std).mean()
         else:
-            probs = old_dists_param['old_probs']
+            probs = old_dists_param['probs']
             kl_loss = a_dist.distribution.kl_loss('Categorical', probs).mean()
         value_loss = self.mse_loss(v, ret_batch)
         loss = aux_loss + self.kl_beta * kl_loss + value_loss

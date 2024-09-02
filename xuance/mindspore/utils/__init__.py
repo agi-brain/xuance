@@ -10,7 +10,7 @@ from .distributions import (
     ActivatedDiagGaussianDistribution
 )
 from .operations import (update_linear_decay, set_seed, get_flat_grad, get_flat_params, assign_from_flat_grads,
-                         assign_from_flat_params, split_distributions, merge_distributions)
+                         assign_from_flat_params, split_distributions, merge_distributions, clip_grads)
 from .value_norm import ValueNorm
 
 ActivationFunctions = {

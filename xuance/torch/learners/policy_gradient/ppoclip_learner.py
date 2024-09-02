@@ -56,8 +56,8 @@ class PPOCLIP_Learner(Learner):
         cr = ((ratio < 1 - self.clip_range).sum() + (ratio > 1 + self.clip_range).sum()) / ratio.shape[0]
         
         info = {
-            "actor-loss": a_loss.item(),
-            "critic-loss": c_loss.item(),
+            "actor_loss": a_loss.item(),
+            "critic_loss": c_loss.item(),
             "entropy": e_loss.item(),
             "learning_rate": lr,
             "predict_value": v_pred.mean().item(),

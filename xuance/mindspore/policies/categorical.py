@@ -44,6 +44,18 @@ class ActorPolicy(Module):
     
     
 class ActorCriticPolicy(Module):
+    """
+    Actor-Critic for stochastic policy with categorical distributions. (Discrete action space)
+
+    Args:
+        action_space (Discrete): The discrete action space.
+        representation (Module): The representation module.
+        actor_hidden_size (Sequence[int]): A list of hidden layer sizes for actor network.
+        critic_hidden_size (Sequence[int]): A list of hidden layer sizes for critic network.
+        normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
+        activation (Optional[ModuleType]): The activation function for each layer.
+    """
     def __init__(self,
                  action_space: Discrete,
                  representation: Module,
@@ -51,9 +63,7 @@ class ActorCriticPolicy(Module):
                  critic_hidden_size: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., Tensor]] = None,
-                 activation: Optional[ModuleType] = None
-                 ):
-        assert isinstance(action_space, Discrete)
+                 activation: Optional[ModuleType] = None):
         super(ActorCriticPolicy, self).__init__()
         self.action_dim = action_space.n
         self.representation = representation
@@ -64,10 +74,21 @@ class ActorCriticPolicy(Module):
                                 normalize, initialize, activation)
 
     def construct(self, observation: Tensor):
+        """
+        Returns the hidden states, action distribution, and values.
+
+        Parameters:
+            observation: The original observation of agent.
+
+        Returns:
+            outputs: The outputs of representation.
+            a_dist: The distribution of actions output by actor.
+            value: The state values output by critic.
+        """
         outputs = self.representation(observation)
-        a = self.actor(outputs['state'])
-        v = self.critic(outputs['state'])
-        return outputs, a, v
+        a_dist = self.actor(outputs['state'])
+        value = self.critic(outputs['state'])
+        return outputs, a_dist, value
 
 
 class PPGActorCritic(Module):
