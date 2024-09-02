@@ -77,7 +77,7 @@ class PPG_Learner(Learner):
             "actor-loss": a_loss.asnumpy(),
             "entropy": e_loss.asnumpy(),
             "learning_rate": lr.asnumpy(),
-            "clip_ratio": ratio.asnumpy(),
+            "clip_ratio": ratio.mean().asnumpy(),
         }
         self.policy_iterations += 1
 
@@ -99,10 +99,8 @@ class PPG_Learner(Learner):
     def update_auxiliary(self, **samples):
         obs_batch = samples['obs']
         ret_batch = Tensor(samples['returns'])
-        act_batch = Tensor(samples['actions'])
         old_dist = merge_distributions(samples['aux_batch']['old_dist'])
-        old_logp_batch = old_dist.log_prob(act_batch)
-        old_probs = self._exp(old_logp_batch)
+        old_probs = old_dist.probs
 
         (loss, v), grads = self.grad_fn_auxiliary(obs_batch, ret_batch, old_probs)
         self.optimizer(grads)

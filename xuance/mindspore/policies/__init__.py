@@ -18,7 +18,7 @@ from .categorical import SACDISPolicy as Categorical_SAC_Policy
 
 from .gaussian import ActorCriticPolicy as Gaussian_AC_Policy
 from .gaussian import ActorPolicy as Gaussian_Actor_Policy
-# from .gaussian import PPGActorCritic as Gaussian_PPG_Policy
+from .gaussian import PPGActorCritic as Gaussian_PPG_Policy
 from .gaussian import SACPolicy as Gaussian_SAC_Policy
 
 from .deterministic import BasicQnetwork
@@ -59,7 +59,7 @@ REGISTRY_Policy = {
     "Gaussian_AC": Gaussian_AC_Policy,
     "Gaussian_SAC": Gaussian_SAC_Policy,
     "Discrete_SAC": Categorical_SAC_Policy,
-    # "Gaussian_PPG": Gaussian_PPG_Policy,
+    "Gaussian_PPG": Gaussian_PPG_Policy,
     "Gaussian_Actor": Gaussian_Actor_Policy,
     "Basic_Q_network": BasicQnetwork,
     "Duel_Q_network": DuelQnetwork,
