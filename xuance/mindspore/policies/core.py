@@ -150,22 +150,41 @@ class BasicRecurrent(Module):
 
 
 class ActorNet(Module):
+    """
+    The actor network for deterministic policy, which outputs activated continuous actions directly.
+
+    Args:
+        state_dim (int): The input state dimension.
+        action_dim (int): The dimension of continuous action space.
+        hidden_sizes (Sequence[int]): List of hidden units for fully connect layers.
+        normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
+        activation (Optional[ModuleType]): The activation function for each layer.
+        activation_action (Optional[ModuleType]): The activation of final layer to bound the actions.
+    """
     def __init__(self,
                  state_dim: int,
                  action_dim: int,
                  hidden_sizes: Sequence[int],
+                 normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., ms.Tensor]] = None,
-                 activation: Optional[ModuleType] = None):
+                 activation: Optional[ModuleType] = None,
+                 activation_action: Optional[ModuleType] = None):
         super(ActorNet, self).__init__()
         layers = []
         input_shape = (state_dim,)
         for h in hidden_sizes:
-            mlp, input_shape = mlp_block(input_shape[0], h, None, activation, initialize)
+            mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initialize)
             layers.extend(mlp)
-        layers.extend(mlp_block(input_shape[0], action_dim, None, nn.Tanh, initialize)[0])
+        layers.extend(mlp_block(input_shape[0], action_dim, None, activation_action, initialize)[0])
         self.model = nn.SequentialCell(*layers)
 
     def construct(self, x: ms.tensor):
+        """
+        Returns the output of the actor.
+        Parameters:
+            x (Tensor): The input tensor.
+        """
         return self.model(x)
 
 

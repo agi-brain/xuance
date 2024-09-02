@@ -247,55 +247,20 @@ class QRDQN_Network(Module):
 
 
 class DDPGPolicy(Module):
-    def __init__(self,
-                 action_space: Space,
-                 representation: ModuleType,
-                 actor_hidden_size: Sequence[int],
-                 critic_hidden_size: Sequence[int],
-                 initialize: Optional[Callable[..., Tensor]] = None,
-                 activation: Optional[ModuleType] = None
-                 ):
-        super(DDPGPolicy, self).__init__()
-        self.action_dim = action_space.shape[0]
-        self.representation = representation
-        self.representation_info_shape = self.representation.output_shapes
+    """
+    The policy of deep deterministic policy gradient.
 
-        self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size, initialize,
-                              activation)
-        self.critic = CriticNet(representation.output_shapes['state'][0], self.action_dim, critic_hidden_size,
-                                initialize, activation)
-        self.target_actor = deepcopy(self.actor)
-        self.target_critic = deepcopy(self.critic)
-        # options
-        self._standard_normal = ms.ops.StandardNormal()
-        self._min_act, self._max_act = Tensor(-1.0), Tensor(1.0)
+    Args:
+        action_space (Space): The action space.
+        representation (Module): The representation module.
+        actor_hidden_size (Sequence[int]): List of hidden units for actor network.
+        critic_hidden_size (Sequence[int]): List of hidden units for critic network.
+        normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
+        activation (Optional[ModuleType]): The activation function for each layer.
+        activation_action (Optional[ModuleType]): The activation of final layer to bound the actions.
+    """
 
-    def construct(self, observation: Tensor):
-        outputs = self.representation(observation)
-        act = self.actor(outputs['state'])
-        return outputs, act
-
-    def Qtarget(self, observation: Tensor):
-        outputs = self.representation(observation)
-        act = self.target_actor(outputs['state'])
-        return self.target_critic(outputs['state'], act)
-
-    def Qaction(self, observation: Tensor, action: Tensor):
-        outputs = self.representation(observation)
-        return self.critic(outputs['state'], action)
-
-    def Qpolicy(self, observation: Tensor):
-        outputs = self.representation(observation)
-        return self.critic(outputs['state'], self.actor(outputs['state']))
-
-    def soft_update(self, tau=0.005):
-        for ep, tp in zip(self.actor.trainable_params(), self.target_actor.trainable_params()):
-            tp.assign_value((tau * ep.data + (1 - tau) * tp.data))
-        for ep, tp in zip(self.critic.trainable_params(), self.target_critic.trainable_params()):
-            tp.assign_value((tau * ep.data + (1 - tau) * tp.data))
-
-
-class TD3Policy(Module):
     def __init__(self,
                  action_space: Space,
                  representation: ModuleType,
@@ -303,67 +268,188 @@ class TD3Policy(Module):
                  critic_hidden_size: Sequence[int],
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., Tensor]] = None,
-                 activation: Optional[ModuleType] = None
-                 ):
-        super(TD3Policy, self).__init__()
+                 activation: Optional[ModuleType] = None,
+                 activation_action: Optional[ModuleType] = None):
+        super(DDPGPolicy, self).__init__()
         self.action_dim = action_space.shape[0]
-        self.representation = representation
-        self.representation_info_shape = self.representation.output_shapes
-        try:
-            self.representation_params = self.representation.trainable_params()
-        except:
-            self.representation_params = []
+        self.representation_info_shape = representation.output_shapes
+        # create networks
+        self.actor_representation = representation
         self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size,
-                              initialize, activation)
-        self.criticA = CriticNet(representation.output_shapes['state'][0], self.action_dim, critic_hidden_size,
-                                 initialize, activation)
-        self.criticB = CriticNet(representation.output_shapes['state'][0], self.action_dim, critic_hidden_size,
-                                 initialize, activation)
+                              normalize, initialize, activation, activation_action)
+        self.critic_representation = deepcopy(representation)
+        self.critic = CriticNet(representation.output_shapes['state'][0] + self.action_dim, critic_hidden_size,
+                                normalize, initialize, activation)
+        # create target networks
+        self.target_actor_representation = deepcopy(self.actor_representation)
         self.target_actor = deepcopy(self.actor)
-        self.target_criticA = deepcopy(self.criticA)
-        self.target_criticB = deepcopy(self.criticB)
-        self.actor_params = self.representation_params + self.actor.trainable_params()
-        # options
-        self._standard_normal = ms.ops.StandardNormal()
-        self._min_act, self._max_act = Tensor(-1.0), Tensor(1.0)
-        self._minimum = ms.ops.Minimum()
-        self._concat = ms.ops.Concat(axis=-1)
-        self._expand_dims = ms.ops.ExpandDims()
+        self.target_critic_representation = deepcopy(self.critic_representation)
+        self.target_critic = deepcopy(self.critic)
 
-    def action(self, observation: Tensor):
-        outputs = self.representation(observation)
+        # parameters
+        self.actor_parameters = self.actor_representation.trainable_params() + self.actor.trainable_params()
+        self.critic_parameters = self.critic_representation.trainable_params() + self.critic.trainable_params()
+
+    def construct(self, observation: Tensor):
+        """
+        Returns the output of the actor representations, and the actions.
+
+        Parameters:
+            observation: The original observation input.
+
+        Returns:
+            outputs: The output of the actor representations.
+            act: The actions calculated by the actor.
+        """
+        outputs = self.actor_representation(observation)
         act = self.actor(outputs['state'])
         return outputs, act
 
-    def Qtarget(self, observation: Tensor):
-        outputs = self.representation(observation)
-        act = self.target_actor(outputs['state'])
-        noise = ms.ops.clip_by_value(self._standard_normal(act.shape), self._min_act, self._max_act) * 0.1
-        act = ms.ops.clip_by_value(act + noise, self._min_act, self._max_act)
-        qa = self._expand_dims(self.target_criticA(outputs['state'], act), 1)
-        qb = self._expand_dims(self.target_criticB(outputs['state'], act), 1)
-        mim_q = self._minimum(qa, qb)
-        return outputs, mim_q
+    def Qtarget(self, observation: Union[np.ndarray, dict]):
+        """Returns the evaluated Q-values via target networks."""
+        outputs_actor = self.target_actor_representation(observation)
+        outputs_critic = self.target_critic_representation(observation)
+        act = self.target_actor(outputs_actor['state'])
+        q_ = self.target_critic(ops.concat([outputs_critic['state'], act], axis=-1))
+        return q_
 
-    def Qaction(self, observation: Tensor, action: Tensor):
-        outputs = self.representation(observation)
-        qa = self._expand_dims(self.criticA(outputs['state'], action), 1)
-        qb = self._expand_dims(self.criticB(outputs['state'], action), 1)
-        return outputs, self._concat((qa, qb))
+    def Qaction(self, observation: Union[np.ndarray, dict], action: Tensor):
+        """Returns the evaluated Q-values of state-action pairs."""
+        outputs = self.critic_representation(observation)
+        q = self.critic(ops.concat([outputs['state'], action], axis=-1))
+        return q
 
-    def Qpolicy(self, observation: Tensor):
-        outputs = self.representation(observation)
-        act = self.actor(outputs['state'])
-        qa = self._expand_dims(self.criticA(outputs['state'], act), 1)
-        qb = self._expand_dims(self.criticB(outputs['state'], act), 1)
-        return outputs, (qa + qb) / 2.0
+    def Qpolicy(self, observation: Union[np.ndarray, dict]):
+        """Returns the evaluated Q-values by calculating actions via actor networks."""
+        outputs_actor = self.actor_representation(observation)
+        act = self.actor(outputs_actor['state'])
+        outputs_critic = self.critic_representation(observation)
+        q_eval = self.critic(ops.concat([outputs_critic['state'], act], axis=-1))
+        return q_eval
 
     def soft_update(self, tau=0.005):
+        for ep, tp in zip(self.actor_representation.trainable_params(),
+                          self.target_actor_representation.trainable_params()):
+            tp.assign_value((tau * ep.data + (1 - tau) * tp.data))
         for ep, tp in zip(self.actor.trainable_params(), self.target_actor.trainable_params()):
             tp.assign_value((tau * ep.data + (1 - tau) * tp.data))
-        for ep, tp in zip(self.criticA.trainable_params(), self.target_criticA.trainable_params()):
+        for ep, tp in zip(self.critic_representation.trainable_params(),
+                          self.target_critic_representation.trainable_params()):
             tp.assign_value((tau * ep.data + (1 - tau) * tp.data))
-        for ep, tp in zip(self.criticB.trainable_params(), self.target_criticB.trainable_params()):
+        for ep, tp in zip(self.critic.trainable_params(), self.target_critic.trainable_params()):
+            tp.assign_value((tau * ep.data + (1 - tau) * tp.data))
+
+
+class TD3Policy(Module):
+    """
+    The policy of twin delayed deep deterministic policy gradient.
+
+    Args:
+        action_space (Space): The action space.
+        representation (Module): The representation module.
+        actor_hidden_size (Sequence[int]): List of hidden units for actor network.
+        critic_hidden_size (Sequence[int]): List of hidden units for critic network.
+        normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
+        activation (Optional[ModuleType]): The activation function for each layer.
+        activation_action (Optional[ModuleType]): The activation of final layer to bound the actions.
+    """
+
+    def __init__(self,
+                 action_space: Space,
+                 representation: ModuleType,
+                 actor_hidden_size: Sequence[int],
+                 critic_hidden_size: Sequence[int],
+                 normalize: Optional[ModuleType] = None,
+                 initialize: Optional[Callable[..., Tensor]] = None,
+                 activation: Optional[ModuleType] = None,
+                 activation_action: Optional[ModuleType] = None):
+        super(TD3Policy, self).__init__()
+        self.action_dim = action_space.shape[0]
+        self.representation_info_shape = representation.output_shapes
+
+        self.actor_representation = representation
+        self.critic_A_representation = deepcopy(representation)
+        self.critic_B_representation = deepcopy(representation)
+
+        self.target_actor_representation = deepcopy(representation)
+        self.target_critic_A_representation = deepcopy(representation)
+        self.target_critic_B_representation = deepcopy(representation)
+
+        self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size,
+                              normalize, initialize, activation, activation_action)
+        self.critic_A = CriticNet(representation.output_shapes['state'][0] + self.action_dim, critic_hidden_size,
+                                  normalize, initialize, activation)
+        self.critic_B = CriticNet(representation.output_shapes['state'][0] + self.action_dim, critic_hidden_size,
+                                  normalize, initialize, activation)
+        self.target_actor = deepcopy(self.actor)
+        self.target_critic_A = deepcopy(self.critic_A)
+        self.target_critic_B = deepcopy(self.critic_B)
+
+        # parameters
+        self.actor_parameters = self.actor_representation.trainable_params() + self.actor.trainable_params()
+        self.critic_parameters = self.critic_A_representation.trainable_params() + self.critic_A.trainable_params() + \
+                                 self.critic_B_representation.trainable_params() + self.critic_B.trainable_params()
+
+    def construct(self, observation: Union[Tensor, dict]):
+        """
+        Returns the output of the actor representations, and the actions.
+
+        Parameters:
+            observation: The original observation input.
+
+        Returns:
+            outputs: The output of the actor representations.
+            act: The actions calculated by the actor.
+        """
+        outputs = self.actor_representation(observation)
+        act = self.actor(outputs['state'])
+        return outputs, act
+
+    def Qtarget(self, observation: Union[Tensor, dict]):
+        """Returns the evaluated Q-values via target networks."""
+        outputs_actor = self.target_actor_representation(observation)
+        outputs_critic_A = self.target_critic_A_representation(observation)
+        outputs_critic_B = self.target_critic_B_representation(observation)
+        act = self.target_actor(outputs_actor['state'])
+        noise = (ops.randn_like(act) * 0.2).clamp(-0.5, 0.5)
+        act = (act + noise).clamp(-1, 1)
+
+        qa = self.target_critic_A(ops.concat([outputs_critic_A['state'], act], axis=-1))
+        qb = self.target_critic_B(ops.concat([outputs_critic_B['state'], act], axis=-1))
+        min_q = ops.minimum(qa, qb)
+        return min_q
+
+    def Qaction(self, observation: Union[Tensor, dict], action: Tensor):
+        """Returns the evaluated Q-values of state-action pairs."""
+        outputs_critic_A = self.critic_A_representation(observation)
+        outputs_critic_B = self.critic_B_representation(observation)
+        q_eval_a = self.critic_A(ops.concat([outputs_critic_A['state'], action], axis=-1))
+        q_eval_b = self.critic_B(ops.concat([outputs_critic_B['state'], action], axis=-1))
+        return q_eval_a, q_eval_b
+
+    def Qpolicy(self, observation: Union[Tensor, dict]):
+        """Returns the evaluated Q-values by calculating actions via actor networks."""
+        outputs_actor = self.actor_representation(observation)
+        outputs_critic_A = self.critic_A_representation(observation)
+        outputs_critic_B = self.critic_B_representation(observation)
+        act = self.actor(outputs_actor['state'])
+        q_eval_a = self.critic_A(ops.concat([outputs_critic_A['state'], act], axis=-1)).unsqueeze(dim=1)
+        q_eval_b = self.critic_B(ops.concat([outputs_critic_B['state'], act], axis=-1)).unsqueeze(dim=1)
+        return (q_eval_a + q_eval_b) / 2.0
+
+    def soft_update(self, tau=0.005):
+        for ep, tp in zip(self.actor_representation.trainable_params(), self.target_actor_representation.trainable_params()):
+            tp.assign_value((tau * ep.data + (1 - tau) * tp.data))
+        for ep, tp in zip(self.actor.trainable_params(), self.target_actor.trainable_params()):
+            tp.assign_value((tau * ep.data + (1 - tau) * tp.data))
+        for ep, tp in zip(self.critic_A_representation.trainable_params(), self.target_critic_A_representation.trainable_params()):
+            tp.assign_value((tau * ep.data + (1 - tau) * tp.data))
+        for ep, tp in zip(self.critic_A.trainable_params(), self.target_critic_A.trainable_params()):
+            tp.assign_value((tau * ep.data + (1 - tau) * tp.data))
+        for ep, tp in zip(self.critic_B_representation.trainable_params(), self.target_critic_B_representation.trainable_params()):
+            tp.assign_value((tau * ep.data + (1 - tau) * tp.data))
+        for ep, tp in zip(self.critic_B.trainable_params(), self.target_critic_B.trainable_params()):
             tp.assign_value((tau * ep.data + (1 - tau) * tp.data))
 
 

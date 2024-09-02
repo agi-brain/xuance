@@ -5,6 +5,7 @@ Implementation: MindSpore
 """
 from xuance.mindspore import ms, Module, Tensor, optim
 from xuance.mindspore.learners import Learner
+from xuance.mindspore.utils import clip_grads
 from argparse import Namespace
 from mindspore.nn import MSELoss
 
@@ -15,8 +16,8 @@ class DDPG_Learner(Learner):
                  policy: Module):
         super(DDPG_Learner, self).__init__(config, policy)
         self.optimizer = {
-            'actor': optim.Adam(params=self.policy.trainable_params(), lr=self.config.learning_rate, eps=1e-5),
-            'critic': optim.Adam(params=self.policy.trainable_params(), lr=self.config.learning_rate, eps=1e-5),
+            'actor': optim.Adam(params=self.policy.actor_parameters, lr=self.config.learning_rate, eps=1e-5),
+            'critic': optim.Adam(params=self.policy.critic_parameters, lr=self.config.learning_rate, eps=1e-5),
         }
         self.scheduler = {
             'actor': optim.lr_scheduler.LinearLR(self.optimizer['actor'], start_factor=1.0, end_factor=0.5,
@@ -34,14 +35,14 @@ class DDPG_Learner(Learner):
                                                 has_aux=True)
         self.policy.set_train()
 
-    def forward_fn_actor(self, x):
-        policy_q = self.policy.Qpolicy(x)
+    def forward_fn_actor(self, obs_batch):
+        policy_q = self.policy.Qpolicy(obs_batch)
         loss_a = -policy_q.mean()
         return loss_a, policy_q
 
-    def forward_fn_critic(self, x, a, q_target):
-        action_q = self.policy.Qaction(x, a)
-        loss_q = self.mse_loss(logits=action_q, labels=q_target)
+    def forward_fn_critic(self, obs_batch, act_batch, backup):
+        action_q = self.policy.Qaction(obs_batch, act_batch)
+        loss_q = self.mse_loss(logits=action_q, labels=backup)
         return loss_q, action_q
 
     def update(self, **samples):
@@ -55,10 +56,14 @@ class DDPG_Learner(Learner):
         target_q = self.policy.Qtarget(next_batch)
         backup = rew_batch + (1 - ter_batch) * self.gamma * target_q
 
-        (q_loss, action_q), grads_critic = self.grad_fn_critic(obs_batch, act_batch, next_batch, backup)
+        (q_loss, action_q), grads_critic = self.grad_fn_critic(obs_batch, act_batch, backup)
+        if self.use_grad_clip:
+            grads_critic = clip_grads(grads_critic, Tensor(-self.grad_clip_norm), Tensor(self.grad_clip_norm))
         self.optimizer['critic'](grads_critic)
 
-        (p_loss, _), grads_actor = self.grad_fn_critic(obs_batch)
+        (p_loss, _), grads_actor = self.grad_fn_actor(obs_batch)
+        if self.use_grad_clip:
+            grads_actor = clip_grads(grads_actor, Tensor(-self.grad_clip_norm), Tensor(self.grad_clip_norm))
         self.optimizer['actor'](grads_actor)
 
         self.policy.soft_update(self.tau)
