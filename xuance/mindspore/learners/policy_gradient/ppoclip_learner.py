@@ -42,7 +42,6 @@ class PPOCLIP_Learner(Learner):
         return loss, loss_a, loss_c, loss_e, v_pred, ratio
 
     def update(self, **samples):
-        return {}
         self.iterations += 1
         obs_batch = Tensor(samples['obs'])
         act_batch = Tensor(samples['actions'])
@@ -52,8 +51,8 @@ class PPOCLIP_Learner(Learner):
 
         (loss, a_loss, c_loss, e_loss, v_pred, ratio), grads = self.grad_fn(obs_batch, act_batch, old_logp_batch,
                                                                             adv_batch, ret_batch)
-        # if self.use_grad_clip:
-        #     grads = clip_grads(grads, Tensor(-self.grad_clip_norm), Tensor(self.grad_clip_norm))
+        if self.use_grad_clip:
+            grads = clip_grads(grads, Tensor(-self.grad_clip_norm), Tensor(self.grad_clip_norm))
         self.optimizer(grads)
 
         # Logger
