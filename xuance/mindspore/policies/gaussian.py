@@ -149,6 +149,19 @@ class PPGActorCritic(Module):
 
 
 class SACPolicy(Module):
+    """
+    Actor-Critic for SAC with Gaussian distributions. (Continuous action space)
+
+    Args:
+        action_space (Box): The continuous action space.
+        representation (Module): The representation module.
+        actor_hidden_size (Sequence[int]): A list of hidden layer sizes for actor network.
+        critic_hidden_size (Sequence[int]): A list of hidden layer sizes for critic network.
+        normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
+        activation (Optional[ModuleType]): The activation function for each layer.
+        activation_action (Optional[ModuleType]): The activation of final layer to bound the actions.
+    """
     def __init__(self,
                  action_space: Box,
                  representation: Module,
