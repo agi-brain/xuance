@@ -5,6 +5,8 @@ Implementation: MindSpore
 """
 from xuance.mindspore import ms, Module, Tensor, optim
 from xuance.mindspore.learners import Learner
+from xuance.mindspore.utils import clip_grads
+from xuance.mindspore.utils.operations import merge_distributions
 from argparse import Namespace
 from mindspore.nn import MSELoss
 
@@ -31,29 +33,61 @@ class PPOKL_Learner(Learner):
         # Get gradient function
         self.grad_fn = ms.value_and_grad(self.forward_fn, None, self.optimizer.parameters, has_aux=True)
         self.policy.set_train()
+        self.continuous_control = True if ("gaussian" in str(type(self.policy))) else False
 
-    def forward_fn(self, obs_batch, act_batch, adv_batch, old_logp_batch):
+    def forward_fn(self, obs_batch, act_batch, ret_batch, adv_batch, old_dists_param):
+        old_log_prob = old_dists_param['log_prob']
         outputs, act_dist, v_pred = self.policy(obs_batch)
         log_prob = act_dist.log_prob(act_batch)
-        ratio = self._exp(log_prob - old_log_p)
-        surrogate1 = ms.ops.clip_by_value(ratio, self._clip_range[0], self._clip_range[1]) * adv
-        surrogate2 = adv * ratio
-        loss_a = -self._mean(self._minimum(surrogate1, surrogate2))
-        loss_c = self._loss(logits=v_pred, labels=ret)
-        loss_e = self._mean(self._backbone.actor.entropy(probs=act_probs))
-        loss = loss_a - self._ent_coef * loss_e + self._vf_coef * loss_c
-        return loss
+        ratio = self._exp(log_prob - old_log_prob)
+        if self.continuous_control:
+            mean, std = old_dists_param['mean'], old_dists_param['std']
+            kl = act_dist.distribution.kl_loss('Normal', mean, std).mean()
+        else:
+            probs = old_dists_param['probs']
+            kl = act_dist.distribution.kl_loss('Categorical', probs).mean()
+        loss_a = -(ratio * adv_batch).mean() + self.kl_coef * kl
+        loss_c = self._loss(logits=v_pred, labels=ret_batch)
+        loss_e = self._mean(act_dist.entropy())
+        loss = loss_a - self.ent_coef * loss_e + self.vf_coef * loss_c
+        return loss, loss_a, loss_c, loss_e, kl, v_pred
 
-    def update(self, obs_batch, act_batch, ret_batch, adv_batch, old_logp):
+    def update(self, **samples):
         self.iterations += 1
-        obs_batch = Tensor(obs_batch)
-        act_batch = Tensor(act_batch)
-        ret_batch = Tensor(ret_batch)
-        adv_batch = Tensor(adv_batch)
-        old_logp_batch = Tensor(old_logp)
+        obs_batch = Tensor(samples['obs'])
+        act_batch = Tensor(samples['actions'])
+        ret_batch = Tensor(samples['returns'])
+        adv_batch = Tensor(samples['advantages'])
+        old_dist = merge_distributions(samples['aux_batch']['old_dist'])
+        old_logp_batch = old_dist.log_prob(act_batch)
+        if self.continuous_control:
+            old_dists_param = {
+                "mean": old_dist.mu,
+                "std": old_dist.std,
+                "log_prob": old_logp_batch
+            }
+        else:
+            old_dists_param = {
+                "probs": old_dist.probs,
+                "log_prob": old_logp_batch
+            }
 
-        loss = self.policy_train(obs_batch, act_batch, old_logp_batch, adv_batch, ret_batch)
-        # Logger
-        lr = self.scheduler(self.iterations).asnumpy()
-        self.writer.add_scalar("tot-loss", loss.asnumpy(), self.iterations)
-        self.writer.add_scalar("learning_rate", lr, self.iterations)
+        (loss, loss_a, loss_c, loss_e, kl, v_pred), grads = self.grad_fn(obs_batch, act_batch, ret_batch, adv_batch,
+                                                                         old_dists_param)
+        if self.use_grad_clip:
+            grads = clip_grads(grads, Tensor(-self.grad_clip_norm), Tensor(self.grad_clip_norm))
+        self.optimizer(grads)
+
+        self.scheduler.step()
+        lr = self.scheduler.get_last_lr()[0]
+
+        info = {
+            "actor-loss": loss_a.asnumpy(),
+            "critic-loss": loss_c.asnumpy(),
+            "entropy": loss_e.asnumpy(),
+            "learning_rate": lr.asnumpy(),
+            "kl": kl.asnumpy(),
+            "predict_value": v_pred.mean().asnumpy()
+        }
+
+        return info

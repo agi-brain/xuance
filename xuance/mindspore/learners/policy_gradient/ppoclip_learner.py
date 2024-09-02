@@ -24,19 +24,19 @@ class PPOCLIP_Learner(Learner):
         self.clip_range = config.clip_range
         # APIs
         self._clip_range = [Tensor(1.0 - self.clip_range), Tensor(1.0 + self.clip_range)]
-        self._loss = MSELoss()
+        self.loss = MSELoss()
         # Get gradient function
         self.grad_fn = ms.value_and_grad(self.forward_fn, None, self.optimizer.parameters, has_aux=True)
         self.policy.set_train()
 
-    def forward_fn(self, x, a, old_log_p, adv, ret):
-        outputs, act_dist, v_pred = self.policy(x)
-        log_prob = act_dist.log_prob(a)
-        ratio = ops.exp(log_prob - old_log_p)
-        surrogate1 = ms.ops.clip_by_value(ratio, self._clip_range[0], self._clip_range[1]) * adv
-        surrogate2 = adv * ratio
+    def forward_fn(self, obs_batch, act_batch, old_logp_batch, adv_batch, ret_batch):
+        outputs, act_dist, v_pred = self.policy(obs_batch)
+        log_prob = act_dist.log_prob(act_batch)
+        ratio = ops.exp(log_prob - old_logp_batch)
+        surrogate1 = ms.ops.clip_by_value(ratio, self._clip_range[0], self._clip_range[1]) * adv_batch
+        surrogate2 = adv_batch * ratio
         loss_a = -ops.minimum(surrogate1, surrogate2).mean()
-        loss_c = self._loss(v_pred, ret)
+        loss_c = self.loss(v_pred, ret_batch)
         loss_e = act_dist.entropy().mean()
         loss = loss_a - self.ent_coef * loss_e + self.vf_coef * loss_c
         return loss, loss_a, loss_c, loss_e, v_pred, ratio
