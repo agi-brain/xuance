@@ -2,8 +2,8 @@ import random
 import mindspore as ms
 import mindspore.nn as nn
 import numpy as np
-from mindspore.ops import ExpandDims
-from .distributions import CategoricalDistribution
+from mindspore.ops import ExpandDims, Concat
+from .distributions import CategoricalDistribution, DiagGaussianDistribution
 
 
 def update_linear_decay(optimizer, step, total_steps, initial_lr, end_factor):
@@ -58,17 +58,37 @@ def split_distributions(distribution):
             dist = CategoricalDistribution(probs.shape[-1])
             dist.set_param(_unsqueeze(prob, 0))
             return_list.append(dist)
+    elif isinstance(distribution, DiagGaussianDistribution):
+        shape = distribution.mu.shape
+        means = distribution.mu.view(-1, shape[-1])
+        std = distribution.std
+        for mu in means:
+            dist = DiagGaussianDistribution(shape[-1])
+            dist.set_param(mu, std)
+            return_list.append(dist)
     else:
         raise NotImplementedError
     return np.array(return_list).reshape(shape[:-1])
 
 
 def merge_distributions(distribution_list):
+    cat = Concat(axis=0)
     if isinstance(distribution_list[0], CategoricalDistribution):
         probs = ms.ops.concat([dist.probs for dist in distribution_list], 0)
         action_dim = probs.shape[-1]
         dist = CategoricalDistribution(action_dim)
         dist.set_param(probs)
+        return dist
+    elif isinstance(distribution_list[0], DiagGaussianDistribution):
+        shape = distribution_list.shape
+        distribution_list = distribution_list.reshape([-1])
+        mu = cat([dist.mu for dist in distribution_list])
+        std = cat([dist.std for dist in distribution_list])
+        action_dim = distribution_list[0].mu.shape[-1]
+        dist = DiagGaussianDistribution(action_dim)
+        mu = mu.view(shape + (action_dim,))
+        std = std.view(shape + (action_dim,))
+        dist.set_param(mu, std)
         return dist
     else:
         raise NotImplementedError

@@ -121,13 +121,13 @@ class PPGActorCritic(Module):
         self.critic_representation = deepcopy(representation)
         self.representation_info_shape = self.actor_representation.output_shapes
         self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size,
-                              normalize, initialize, activation, activation_action, device)
+                              normalize, initialize, activation, activation_action)
         self.critic = CriticNet(representation.output_shapes['state'][0], critic_hidden_size,
-                                normalize, initialize, activation, device)
+                                normalize, initialize, activation)
         self.aux_critic = CriticNet(representation.output_shapes['state'][0], critic_hidden_size,
-                                    normalize, initialize, activation, device)
+                                    normalize, initialize, activation)
 
-    def forward(self, observation: Union[Tensor, dict]):
+    def construct(self, observation: Union[Tensor, dict]):
         """
         Returns the actors representation output, action distribution, values, and auxiliary values.
 
@@ -145,7 +145,7 @@ class PPGActorCritic(Module):
         a_dist = self.actor(policy_outputs['state'])
         value = self.critic(critic_outputs['state'])
         aux_value = self.aux_critic(policy_outputs['state'])
-        return policy_outputs, a_dist, value[:, 0], aux_value[:, 0]
+        return policy_outputs, a_dist, value, aux_value
 
 
 class SACPolicy(Module):

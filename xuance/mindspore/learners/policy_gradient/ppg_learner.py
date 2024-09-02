@@ -33,6 +33,7 @@ class PPG_Learner(Learner):
         self.grad_fn_auxiliary = ms.value_and_grad(self.forward_fn_auxiliary, None, self.optimizer.parameters,
                                                    has_aux=True)
         self.policy.set_train()
+        self.continuous_control = True if ("gaussian" in str(type(self.policy))) else False
 
     def forward_fn_policy(self, obs_batch, act_batch, adv_batch, old_logp_batch):
         _, a_dist, _, _ = self.policy(obs_batch)
@@ -51,10 +52,15 @@ class PPG_Learner(Learner):
         loss = self.mse_loss(v_pred, ret_batch)
         return loss, v_pred
 
-    def forward_fn_auxiliary(self, obs_batch, ret_batch, old_probs):
+    def forward_fn_auxiliary(self, obs_batch, ret_batch, old_dists_param):
         _, a_dist, v, aux_v = self.policy(obs_batch)
         aux_loss = self.mse_loss(v, aux_v)
-        kl_loss = a_dist.distribution.kl_loss('Categorical', old_probs).mean()
+        if self.continuous_control:
+            mean, std = old_dists_param['mean'], old_dists_param['std']
+            kl_loss = a_dist.distribution.kl_loss('Normal', mean, std).mean()
+        else:
+            probs = old_dists_param['old_probs']
+            kl_loss = a_dist.distribution.kl_loss('Categorical', probs).mean()
         value_loss = self.mse_loss(v, ret_batch)
         loss = aux_loss + self.kl_beta * kl_loss + value_loss
         return loss, v
@@ -100,9 +106,17 @@ class PPG_Learner(Learner):
         obs_batch = samples['obs']
         ret_batch = Tensor(samples['returns'])
         old_dist = merge_distributions(samples['aux_batch']['old_dist'])
-        old_probs = old_dist.probs
+        if self.continuous_control:
+            old_dists_param = {
+                "mean": old_dist.mu,
+                "std": old_dist.std
+            }
+        else:
+            old_dists_param = {
+                "probs": old_dist.probs
+            }
 
-        (loss, v), grads = self.grad_fn_auxiliary(obs_batch, ret_batch, old_probs)
+        (loss, v), grads = self.grad_fn_auxiliary(obs_batch, ret_batch, old_dists_param)
         self.optimizer(grads)
 
         info = {
@@ -112,3 +126,4 @@ class PPG_Learner(Learner):
 
     def update(self, *args):
         return
+

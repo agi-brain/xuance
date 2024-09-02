@@ -6,69 +6,74 @@ Implementation: MindSpore
 from xuance.mindspore import ms, Module, Tensor, optim
 from xuance.mindspore.learners import Learner
 from argparse import Namespace
+from mindspore.nn import MSELoss
 
 
 class DDPG_Learner(Learner):
-    class ActorNetWithLossCell(Module):
-        def __init__(self, backbone):
-            super(DDPG_Learner.ActorNetWithLossCell, self).__init__()
-            self._backbone = backbone
-            self._mean = ms.ops.ReduceMean()
-
-        def construct(self, x):
-            policy_q = self._backbone.Qpolicy(x)
-            loss_a = -self._mean(policy_q)
-            return loss_a
-
-    class CriticNetWithLossCell(Module):
-        def __init__(self, backbone, gamma):
-            super(DDPG_Learner.CriticNetWithLossCell, self).__init__()
-            self._backbone = backbone
-            self._gamma = gamma
-            self._loss = nn.MSELoss()
-
-        def construct(self, x, a, x_, q_target):
-            action_q = self._backbone.Qaction(x, a)
-            loss_q = self._loss(logits=action_q, labels=q_target)
-            return loss_q
-
     def __init__(self,
                  config: Namespace,
                  policy: Module):
+        super(DDPG_Learner, self).__init__(config, policy)
+        self.optimizer = {
+            'actor': optim.Adam(params=self.policy.trainable_params(), lr=self.config.learning_rate, eps=1e-5),
+            'critic': optim.Adam(params=self.policy.trainable_params(), lr=self.config.learning_rate, eps=1e-5),
+        }
+        self.scheduler = {
+            'actor': optim.lr_scheduler.LinearLR(self.optimizer['actor'], start_factor=1.0, end_factor=0.5,
+                                                 total_iters=self.config.running_steps),
+            'critic': optim.lr_scheduler.LinearLR(self.optimizer['critic'], start_factor=1.0, end_factor=0.5,
+                                                  total_iters=self.config.running_steps)
+        }
         self.tau = config.tau
         self.gamma = config.gamma
-        super(DDPG_Learner, self).__init__(config, policy)
-        # define mindspore trainers
-        self.actor_loss_net = self.ActorNetWithLossCell(policy)
-        self.actor_train = nn.TrainOneStepCell(self.actor_loss_net, optimizers['actor'])
-        self.actor_train.set_train()
-        self.critic_loss_net = self.CriticNetWithLossCell(policy, self.gamma)
-        self.critic_train = nn.TrainOneStepCell(self.critic_loss_net, optimizers['critic'])
-        self.critic_train.set_train()
+        self.mse_loss = MSELoss()
+        # Get gradient function
+        self.grad_fn_actor = ms.value_and_grad(self.forward_fn_actor, None, self.optimizer['actor'].parameters,
+                                               has_aux=True)
+        self.grad_fn_critic = ms.value_and_grad(self.forward_fn_critic, None, self.optimizer['critic'].parameters,
+                                                has_aux=True)
+        self.policy.set_train()
 
-    def update(self, obs_batch, act_batch, rew_batch, next_batch, terminal_batch):
+    def forward_fn_actor(self, x):
+        policy_q = self.policy.Qpolicy(x)
+        loss_a = -policy_q.mean()
+        return loss_a, policy_q
+
+    def forward_fn_critic(self, x, a, q_target):
+        action_q = self.policy.Qaction(x, a)
+        loss_q = self.mse_loss(logits=action_q, labels=q_target)
+        return loss_q, action_q
+
+    def update(self, **samples):
         self.iterations += 1
-        obs_batch = Tensor(obs_batch)
-        act_batch = Tensor(act_batch)
-        rew_batch = Tensor(rew_batch)
-        next_batch = Tensor(next_batch)
-        ter_batch = Tensor(terminal_batch)
+        obs_batch = Tensor(samples['obs'])
+        act_batch = Tensor(samples['actions'])
+        rew_batch = Tensor(samples['rewards'])
+        next_batch = Tensor(samples['obs_next'])
+        ter_batch = Tensor(samples['terminals'])
 
         target_q = self.policy.Qtarget(next_batch)
         backup = rew_batch + (1 - ter_batch) * self.gamma * target_q
-        q_loss = self.critic_train(obs_batch, act_batch, next_batch, backup)
-        p_loss = self.actor_train(obs_batch)
+
+        (q_loss, action_q), grads_critic = self.grad_fn_critic(obs_batch, act_batch, next_batch, backup)
+        self.optimizer['critic'](grads_critic)
+
+        (p_loss, _), grads_actor = self.grad_fn_critic(obs_batch)
+        self.optimizer['actor'](grads_actor)
 
         self.policy.soft_update(self.tau)
 
-        actor_lr = self.scheduler['actor'](self.iterations).asnumpy()
-        critic_lr = self.scheduler['critic'](self.iterations).asnumpy()
+        self.scheduler['actor'].step()
+        self.scheduler['critic'].step()
+        actor_lr = self.scheduler['actor'].get_last_lr()[0]
+        critic_lr = self.scheduler['critic'].get_last_lr()[0]
 
         info = {
             "Qloss": q_loss.asnumpy(),
             "Ploss": p_loss.asnumpy(),
-            "actor_lr": actor_lr,
-            "critic_lr": critic_lr
+            "Qvalue": action_q.mean().asnumpy(),
+            "actor_lr": actor_lr.asnumpy(),
+            "critic_lr": critic_lr.asnumpy()
         }
 
         return info
