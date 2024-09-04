@@ -232,7 +232,10 @@ class CategoricalActorNet(Module):
         if avail_actions is not None:
             logits[avail_actions == 0] = -1e10
         probs = self.softmax(logits)
-        self.dist.set_param(probs=probs)
+        try:
+            self.dist.set_param(probs=probs)
+        except:
+            pass
         return self.dist
 
 
