@@ -1,7 +1,7 @@
 import mindspore as ms
 import mindspore.nn as nn
 from xuance.common import Sequence, Optional, Callable, Union
-from xuance.mindspore import Tensor, Module
+from xuance.mindspore import Tensor, Module, ops
 from xuance.mindspore.utils import ModuleType, mlp_block, gru_block, lstm_block
 from xuance.mindspore.utils import CategoricalDistribution, DiagGaussianDistribution, ActivatedDiagGaussianDistribution
 
@@ -258,7 +258,7 @@ class CategoricalActorNet_SAC(CategoricalActorNet):
                  activation: Optional[ModuleType] = None):
         super(CategoricalActorNet_SAC, self).__init__(state_dim, action_dim, hidden_sizes,
                                                       normalize, initialize, activation)
-        self.output = nn.Softmax(dim=-1)
+        self.output = nn.Softmax()
 
     def forward(self, x: Tensor, avail_actions: Optional[Tensor] = None):
         """
@@ -346,32 +346,54 @@ class CriticNet(Module):
 
 
 class GaussianActorNet_SAC(Module):
+    """
+    The actor network for Gaussian policy in SAC, which outputs a distribution over the continuous action space.
+
+    Args:
+        state_dim (int): The input state dimension.
+        action_dim (int): The dimension of continuous action space.
+        hidden_sizes (Sequence[int]): List of hidden units for fully connect layers.
+        normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
+        activation (Optional[ModuleType]): The activation function for each layer.
+        activation_action (Optional[ModuleType]): The activation of final layer to bound the actions.
+        device (Optional[Union[str, int, torch.device]]): The calculating device.
+    """
+
     def __init__(self,
                  state_dim: int,
                  action_dim: int,
                  hidden_sizes: Sequence[int],
+                 normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., Tensor]] = None,
-                 activation: Optional[ModuleType] = None):
-        super.__init__()
+                 activation: Optional[ModuleType] = None,
+                 activation_action: Optional[ModuleType] = None):
+        super(GaussianActorNet_SAC, self).__init__()
         layers = []
         input_shape = (state_dim,)
         for h in hidden_sizes:
-            mlp, input_shape = mlp_block(input_shape[0], h, None, activation, initialize)
+            mlp, input_shape = mlp_block(input_shape[0], h, normalize, activation, initialize)
             layers.extend(mlp)
         self.output = nn.SequentialCell(*layers)
-        self.out_mu = nn.Dense(hidden_sizes[0], action_dim)
-        self.out_std = nn.Dense(hidden_sizes[0], action_dim)
-        self._tanh = ms.ops.Tanh()
-        self._exp = ms.ops.Exp()
+        self.out_mu = nn.Dense(hidden_sizes[-1], action_dim)
+        self.out_log_std = nn.Dense(hidden_sizes[-1], action_dim)
+        self.dist = ActivatedDiagGaussianDistribution(action_dim, activation_action)
 
     def construct(self, x: Tensor):
+        """
+        Returns the stochastic distribution over the continuous action space.
+        Parameters:
+            x (Tensor): The input tensor.
+
+        Returns:
+            self.dist: A distribution over the continuous action space.
+        """
         output = self.output(x)
-        mu = self._tanh(self.out_mu(output))
-        std = ms.ops.clip_by_value(self.out_std(output), -20, 2)
-        std = self._exp(std)
-        # dist = Normal(mu, std)
-        # return dist
-        return mu, std
+        mu = self.out_mu(output)
+        log_std = ops.clip_by_value(self.out_log_std(output), -20, 2)
+        std = ops.exp(log_std)
+        self.dist.set_param(mu, std)
+        return self.dist
 
 
 class VDN_mixer(Module):

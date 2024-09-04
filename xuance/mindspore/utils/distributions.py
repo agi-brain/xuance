@@ -89,9 +89,6 @@ class DiagGaussianDistribution(Distribution):
     def stochastic_sample(self):
         return self.distribution.sample()
 
-    def rsample(self):
-        return self.distribution.rsample()
-
     def deterministic_sample(self):
         return self.mu
 
@@ -102,19 +99,18 @@ class DiagGaussianDistribution(Distribution):
 
 
 class ActivatedDiagGaussianDistribution(DiagGaussianDistribution):
-    def __init__(self, action_dim: int, activation_action, device):
+    def __init__(self, action_dim: int, activation_action):
         super(ActivatedDiagGaussianDistribution, self).__init__(action_dim)
         self.activation_fn = activation_action()
-        self.device = device
 
     def activated_rsample(self):
-        return self.activation_fn(self.rsample())
+        return self.activation_fn(self.stochastic_sample())
 
     def activated_rsample_and_logprob(self):
-        act_pre_activated = self.rsample()  # sample without being activated.
+        act_pre_activated = self.stochastic_sample()  # sample without being activated.
         act_activated = self.activation_fn(act_pre_activated)
         log_prob = self.distribution.log_prob(act_pre_activated)
-        correction = - 2. * (ops.log(Tensor([2.0])).to(self.device) - act_pre_activated - ops.softplus(-2. * act_pre_activated))
+        correction = - 2. * (ops.log(Tensor([2.0])) - act_pre_activated - ops.softplus(-2. * act_pre_activated))
         log_prob += correction
         return act_activated, log_prob.sum(-1)
 
