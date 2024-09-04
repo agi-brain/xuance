@@ -32,8 +32,8 @@ class SACDIS_Agent(OffPolicyAgent):
         representation = self._build_representation(self.config.representation, self.observation_space, self.config)
 
         # build policy
-        if self.config.policy == "Discrete_SAC":
-            policy = REGISTRY_Policy["Discrete_SAC"](
+        if self.config.policy == "Categorical_SAC":
+            policy = REGISTRY_Policy["Categorical_SAC"](
                 action_space=self.action_space, representation=representation,
                 actor_hidden_size=self.config.actor_hidden_size, critic_hidden_size=self.config.critic_hidden_size,
                 normalize=normalize_fn, initialize=initializer, activation=activation)

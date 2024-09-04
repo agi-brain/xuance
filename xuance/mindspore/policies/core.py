@@ -258,24 +258,6 @@ class CategoricalActorNet_SAC(CategoricalActorNet):
                  activation: Optional[ModuleType] = None):
         super(CategoricalActorNet_SAC, self).__init__(state_dim, action_dim, hidden_sizes,
                                                       normalize, initialize, activation)
-        self.output = nn.Softmax()
-
-    def forward(self, x: Tensor, avail_actions: Optional[Tensor] = None):
-        """
-        Returns the stochastic distribution over all discrete actions.
-        Parameters:
-            x (Tensor): The input tensor.
-            avail_actions (Optional[Tensor]): The actions mask values when use actions mask, default is None.
-
-        Returns:
-            self.dist: CategoricalDistribution(action_dim), a distribution over all discrete actions.
-        """
-        logits = self.model(x)
-        if avail_actions is not None:
-            logits[avail_actions == 0] = -1e10
-        probs = self.output(logits)
-        self.dist.set_param(probs=probs)
-        return self.dist
 
 
 class GaussianActorNet(Module):

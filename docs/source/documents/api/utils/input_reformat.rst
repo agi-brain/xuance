@@ -230,7 +230,7 @@ Source Code
                 input_dict["dropout"] = args.dropout
             else:
                 input_dict["actor_hidden_size"] = args.actor_hidden_size
-                if policy_name in ["Categorical_AC", "Categorical_PPG", "Gaussian_AC", "Discrete_SAC", "Gaussian_SAC", "Gaussian_PPG", "DDPG_Policy", "TD3_Policy"]:
+                if policy_name in ["Categorical_AC", "Categorical_PPG", "Gaussian_AC", "Categorical_SAC", "Gaussian_SAC", "Gaussian_PPG", "DDPG_Policy", "TD3_Policy"]:
                     input_dict["critic_hidden_size"] = args.critic_hidden_size
             input_dict["normalize"] = NormalizeFunctions[args.normalize] if hasattr(args, "normalize") else None
             input_dict["initialize"] = torch.nn.init.orthogonal_
@@ -342,7 +342,7 @@ Source Code
                 input_dict["dropout"] = args.dropout
             else:
                 input_dict["actor_hidden_size"] = args.actor_hidden_size
-                if policy_name in ["Categorical_AC", "Categorical_PPG", "Gaussian_AC", "Discrete_SAC", "Gaussian_SAC", "Gaussian_PPG", "DDPG_Policy", "TD3_Policy"]:
+                if policy_name in ["Categorical_AC", "Categorical_PPG", "Gaussian_AC", "Categorical_SAC", "Gaussian_SAC", "Gaussian_PPG", "DDPG_Policy", "TD3_Policy"]:
                     input_dict["critic_hidden_size"] = args.critic_hidden_size
             input_dict["normalize"] = None
             input_dict["initialize"] = tk.initializers.GlorotUniform(seed=0)
@@ -461,7 +461,7 @@ Source Code
                 input_dict["dropout"] = args.dropout
             else:
                 input_dict["actor_hidden_size"] = args.actor_hidden_size
-                if policy_name in ["Categorical_AC", "Categorical_PPG", "Discrete_SAC", "Gaussian_SAC", "Gaussian_AC", "DDPG_Policy", "TD3_Policy"]:
+                if policy_name in ["Categorical_AC", "Categorical_PPG", "Categorical_SAC", "Gaussian_SAC", "Gaussian_AC", "DDPG_Policy", "TD3_Policy"]:
                     input_dict["critic_hidden_size"] = args.critic_hidden_size
             input_dict["normalize"] = None
             input_dict["initialize"] = TruncatedNormal

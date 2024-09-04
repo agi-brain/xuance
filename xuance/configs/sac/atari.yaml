@@ -8,7 +8,7 @@ num_stack: 4  # frame stack trick
 frame_skip: 4  # frame skip trick
 noop_max: 30  # Do no-op action for a number of steps in [1, noop_max].
 representation: "Basic_CNN"
-policy: "Discrete_SAC"
+policy: "Categorical_SAC"
 learner: "SACDIS_Learner"
 runner: "DRL"
 

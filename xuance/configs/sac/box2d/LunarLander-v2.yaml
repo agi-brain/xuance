@@ -3,7 +3,7 @@ env_name: "Box2D"
 env_id: "LunarLander-v2"
 vectorize: "DummyVecEnv"
 learner: "SACDIS_Learner"
-policy: "Discrete_SAC"
+policy: "Categorical_SAC"
 representation: "Basic_MLP"
 runner: "DRL"
 

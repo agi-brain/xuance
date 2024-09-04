@@ -3613,7 +3613,7 @@ Policy Gradient-based Implementations
                             env_name: "Classic Control"
                             env_id: "CartPole-v1"
                             vectorize: "DummyVecEnv"
-                            policy: "Discrete_SAC"
+                            policy: "Categorical_SAC"
                             representation: "Basic_MLP"
                             runner: "DRL"
 
@@ -3658,7 +3658,7 @@ Policy Gradient-based Implementations
                             env_name: "Classic Control"
                             env_id: "Acrobot-v1"
                             vectorize: "DummyVecEnv"
-                            policy: "Discrete_SAC"
+                            policy: "Categorical_SAC"
                             representation: "Basic_MLP"
                             runner: "DRL"
 
@@ -3747,7 +3747,7 @@ Policy Gradient-based Implementations
                             env_name: "Classic Control"
                             env_id: "MountainCar-v0"
                             vectorize: "DummyVecEnv"
-                            policy: "Discrete_SAC"
+                            policy: "Categorical_SAC"
                             representation: "Basic_MLP"
                             runner: "DRL"
 
@@ -3840,7 +3840,7 @@ Policy Gradient-based Implementations
                             env_name: "Box2D"
                             env_id: "LunarLander-v2"
                             vectorize: "DummyVecEnv"
-                            policy: "Discrete_SAC"
+                            policy: "Categorical_SAC"
                             representation: "Basic_MLP"
                             runner: "DRL"
 
@@ -3891,7 +3891,7 @@ Policy Gradient-based Implementations
                     frame_skip: 4  # frame skip trick
                     noop_max: 30  # Do no-op action for a number of steps in [1, noop_max].
                     representation: "Basic_CNN"
-                    policy: "Discrete_SAC"
+                    policy: "Categorical_SAC"
                     runner: "DRL"
 
                     filters: [32, 32, 64, 64]

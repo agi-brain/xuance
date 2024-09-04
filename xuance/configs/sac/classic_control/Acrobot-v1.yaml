@@ -3,7 +3,7 @@ env_name: "Classic Control"
 env_id: "Acrobot-v1"
 vectorize: "DummyVecEnv"
 learner: "SACDIS_Learner"
-policy: "Discrete_SAC"
+policy: "Categorical_SAC"
 representation: "Basic_MLP"
 runner: "DRL"
 
