@@ -37,10 +37,10 @@ class ActorPolicy(Module):
         self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size,
                               normalize, initialize, activation, activation_action)
 
-    def construct(self, observation: Tensor):
+    def construct(self, observation: Union[Tensor, dict]):
         outputs = self.representation(observation)
-        a = self.actor(outputs['state'])
-        return outputs, a
+        a_dist = self.actor(outputs['state'])
+        return outputs, a_dist, None
 
 
 class ActorCriticPolicy(Module):
