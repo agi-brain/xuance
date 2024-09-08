@@ -46,8 +46,8 @@ class BasicQnetwork(Module):
     def parameters_model(self):
         parameters_model = {}
         for key in self.model_keys:
-            parameters_model[key] = self.representation[key].trainable_variables + self.eval_Qhead[
-                key].trainable_variables
+            parameters_model[key] = self.representation[key].trainable_variables + \
+                                    self.eval_Qhead[key].trainable_variables
         return parameters_model
 
     @tf.function
