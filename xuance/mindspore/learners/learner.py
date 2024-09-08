@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 from xuance.common import Optional, List, Union
 from argparse import Namespace
 from operator import itemgetter
-from xuance.mindspore import Tensor, Module, optim
+from xuance.mindspore import Tensor, Module, optim, ops
 
 
 class Learner(ABC):
@@ -87,6 +87,7 @@ class LearnerMAS(ABC):
         self.model_dir = config.model_dir
         self.running_steps = config.running_steps
         self.iterations = 0
+        self.eye = ops.Eye()
 
     def onehot_action(self, actions_int, num_actions):
         return self._one_hot(actions_int.astype(ms.int32), num_actions,
@@ -116,11 +117,11 @@ class LearnerMAS(ABC):
         if use_parameter_sharing:
             k = self.model_keys[0]
             bs = batch_size * self.n_agents
-            obs_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['obs']), axis=1)).to(self.device)
-            actions_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['actions']), axis=1)).to(self.device)
-            rewards_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['rewards']), axis=1)).to(self.device)
-            ter_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['terminals']), 1)).float().to(self.device)
-            msk_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['agent_mask']), 1)).float().to(self.device)
+            obs_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['obs']), axis=1))
+            actions_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['actions']), axis=1))
+            rewards_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['rewards']), axis=1))
+            ter_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['terminals']), 1)).astype(ms.float32)
+            msk_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['agent_mask']), 1)).astype(ms.float32)
             if self.use_rnn:
                 obs = {k: obs_tensor.reshape(bs, seq_length + 1, -1)}
                 if len(actions_tensor.shape) == 3:
@@ -132,8 +133,8 @@ class LearnerMAS(ABC):
                 rewards = {k: rewards_tensor.reshape(batch_size, self.n_agents, seq_length)}
                 terminals = {k: ter_tensor.reshape(batch_size, self.n_agents, seq_length)}
                 agent_mask = {k: msk_tensor.reshape(bs, seq_length)}
-                IDs = ms.eye(self.n_agents).unsqueeze(1).unsqueeze(0).expand(
-                    batch_size, -1, seq_length + 1, -1).reshape(bs, seq_length + 1, self.n_agents).to(self.device)
+                IDs = self.eye(self.n_agents, self.n_agents, ms.float32).unsqueeze(1).unsqueeze(0).broadcast_to(
+                    (batch_size, -1, seq_length + 1, -1)).reshape(bs, seq_length + 1, self.n_agents)
             else:
                 obs = {k: obs_tensor.reshape(bs, -1)}
                 if len(actions_tensor.shape) == 2:
@@ -146,38 +147,39 @@ class LearnerMAS(ABC):
                 terminals = {k: ter_tensor.reshape(batch_size, self.n_agents)}
                 agent_mask = {k: msk_tensor.reshape(bs)}
                 obs_next = {k: Tensor(np.stack(itemgetter(*self.agent_keys)(sample['obs_next']),
-                                               axis=1)).to(self.device).reshape(bs, -1)}
-                IDs = ms.eye(self.n_agents).unsqueeze(0).expand(
-                    batch_size, -1, -1).reshape(bs, self.n_agents).to(self.device)
+                                               axis=1)).reshape(bs, -1)}
+                IDs = self.eye(self.n_agents, self.n_agents, ms.float32).unsqueeze(0).broadcast_to(
+                    (batch_size, -1, -1)).reshape(bs, self.n_agents)
 
             if use_actions_mask:
                 avail_a = np.stack(itemgetter(*self.agent_keys)(sample['avail_actions']), axis=1)
                 if self.use_rnn:
-                    avail_actions = {k: Tensor(avail_a.reshape([bs, seq_length + 1, -1])).float().to(self.device)}
+                    avail_actions = {k: Tensor(avail_a.reshape([bs, seq_length + 1, -1])).astype(ms.float32)}
                 else:
-                    avail_actions = {k: Tensor(avail_a.reshape([bs, -1])).float().to(self.device)}
+                    avail_actions = {k: Tensor(avail_a.reshape([bs, -1])).astype(ms.float32)}
                     avail_a_next = np.stack(itemgetter(*self.agent_keys)(sample['avail_actions_next']), axis=1)
-                    avail_actions_next = {k: Tensor(avail_a_next.reshape([bs, -1])).float().to(self.device)}
+                    avail_actions_next = {k: Tensor(avail_a_next.reshape([bs, -1])).astype(ms.float32)}
         else:
-            obs = {k: Tensor(sample['obs'][k]).to(self.device) for k in self.agent_keys}
-            actions = {k: Tensor(sample['actions'][k]).to(self.device) for k in self.agent_keys}
-            rewards = {k: Tensor(sample['rewards'][k]).to(self.device) for k in self.agent_keys}
-            terminals = {k: Tensor(sample['terminals'][k]).float().to(self.device) for k in self.agent_keys}
-            agent_mask = {k: Tensor(sample['agent_mask'][k]).float().to(self.device) for k in self.agent_keys}
+            obs = {k: Tensor(sample['obs'][k]) for k in self.agent_keys}
+            actions = {k: Tensor(sample['actions'][k]) for k in self.agent_keys}
+            rewards = {k: Tensor(sample['rewards'][k]) for k in self.agent_keys}
+            terminals = {k: Tensor(sample['terminals'][k]).astype(ms.float32) for k in self.agent_keys}
+            agent_mask = {k: Tensor(sample['agent_mask'][k]).astype(ms.float32) for k in self.agent_keys}
             if not self.use_rnn:
-                obs_next = {k: Tensor(sample['obs_next'][k]).to(self.device) for k in self.agent_keys}
+                obs_next = {k: Tensor(sample['obs_next'][k]) for k in self.agent_keys}
             if use_actions_mask:
-                avail_actions = {k: Tensor(sample['avail_actions'][k]).float().to(self.device) for k in self.agent_keys}
+                avail_actions = {k: Tensor(sample['avail_actions'][k]).astype(ms.float32) for k in self.agent_keys}
                 if not self.use_rnn:
-                    avail_actions_next = {k: Tensor(sample['avail_actions_next'][k]).float().to(self.device) for k in self.model_keys}
+                    avail_actions_next = {k: Tensor(sample['avail_actions_next'][k]).astype(ms.float32)
+                                          for k in self.model_keys}
 
         if use_global_state:
-            state = Tensor(sample['state']).to(self.device)
+            state = Tensor(sample['state'])
             if not self.use_rnn:
-                state_next = Tensor(sample['state_next']).to(self.device)
+                state_next = Tensor(sample['state_next'])
 
         if self.use_rnn:
-            filled = Tensor(sample['filled']).float().to(self.device)
+            filled = Tensor(sample['filled']).astype(ms.float32)
 
         sample_Tensor = {
             'batch_size': batch_size,

@@ -3,16 +3,16 @@ from mindspore.nn.probability.distribution import Categorical
 from copy import deepcopy
 from gym.spaces import Discrete, Box
 from xuance.common import Sequence, Optional, Callable, Union, Dict, List
-from xuance.mindspore.policies import BasicQhead, ActorNet, CriticNet, VDN_mixer, QTRAN_base, QMIX_FF_mixer
 from xuance.mindspore.utils import ModuleType
 from xuance.mindspore import Tensor, Module, ModuleDict, ops
+from .core import BasicQhead, ActorNet, CriticNet, VDN_mixer, QTRAN_base, QMIX_FF_mixer
 
 
 class BasicQnetwork(Module):
     def __init__(self,
                  action_space: Optional[Dict[str, Discrete]],
                  n_agents: int,
-                 representation: ModuleDict,
+                 representation: Dict[str, Module],
                  hidden_size: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., Tensor]] = None,
@@ -40,6 +40,8 @@ class BasicQnetwork(Module):
             self.eval_Qhead[key] = BasicQhead(self.dim_input_Q[key], self.n_actions[key], hidden_size,
                                               normalize, initialize, activation)
             self.target_Qhead[key] = deepcopy(self.eval_Qhead[key])
+            # update parameters name
+            self.representation[key].update_parameters_name(key + '_')
 
         # MindSpore APIs
         self.argmax = ops.Argmax(output_type=ms.int32, axis=-1)
@@ -143,7 +145,7 @@ class MixingQnetwork(BasicQnetwork):
     def __init__(self,
                  action_space: Optional[Dict[str, Discrete]],
                  n_agents: int,
-                 representation: ModuleDict,
+                 representation: Dict[str, Module],
                  mixer: Optional[VDN_mixer] = None,
                  hidden_size: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,
@@ -230,7 +232,7 @@ class Weighted_MixingQnetwork(MixingQnetwork):
     def __init__(self,
                  action_space: Optional[Dict[str, Discrete]],
                  n_agents: int,
-                 representation: ModuleDict,
+                 representation: Dict[str, Module],
                  mixer: Optional[VDN_mixer] = None,
                  ff_mixer: Optional[QMIX_FF_mixer] = None,
                  hidden_size: Sequence[int] = None,
@@ -393,7 +395,7 @@ class Qtran_MixingQnetwork(Module):
     def __init__(self,
                  action_space: Discrete,
                  n_agents: int,
-                 representation: ModuleDict,
+                 representation: Dict[str, Module],
                  mixer: Optional[VDN_mixer] = None,
                  qtran_mixer: Optional[QTRAN_base] = None,
                  hidden_size: Sequence[int] = None,
@@ -457,7 +459,7 @@ class DCG_policy(Module):
     def __init__(self,
                  action_space: Discrete,
                  global_state_dim: int,
-                 representation: ModuleDict,
+                 representation: Dict[str, Module],
                  utility: Optional[Module] = None,
                  payoffs: Optional[Module] = None,
                  dcgraph: Optional[Module] = None,
@@ -519,7 +521,7 @@ class MFQnetwork(Module):
     def __init__(self,
                  action_space: Discrete,
                  n_agents: int,
-                 representation: ModuleDict,
+                 representation: Dict[str, Module],
                  hidden_size: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., Tensor]] = None,
@@ -559,8 +561,8 @@ class Independent_DDPG_Policy(Module):
     def __init__(self,
                  action_space: Optional[Dict[str, Box]],
                  n_agents: int,
-                 actor_representation: Optional[ModuleDict],
-                 critic_representation: Optional[ModuleDict],
+                 actor_representation: Dict[str, Module],
+                 critic_representation: Dict[str, Module],
                  actor_hidden_size: Sequence[int],
                  critic_hidden_size: Sequence[int],
                  normalize: Optional[ModuleType] = None,
@@ -783,8 +785,8 @@ class MADDPG_Policy(Independent_DDPG_Policy):
     def __init__(self,
                  action_space: Optional[Dict[str, Box]],
                  n_agents: int,
-                 actor_representation: Optional[ModuleDict],
-                 critic_representation: Optional[ModuleDict],
+                 actor_representation: Dict[str, Module],
+                 critic_representation: Dict[str, Module],
                  actor_hidden_size: Sequence[int],
                  critic_hidden_size: Sequence[int],
                  normalize: Optional[ModuleType] = None,
@@ -920,8 +922,8 @@ class MATD3_Policy(MADDPG_Policy, Module):
     def __init__(self,
                  action_space: Optional[Dict[str, Box]],
                  n_agents: int,
-                 actor_representation: Optional[ModuleDict],
-                 critic_representation: Optional[ModuleDict],
+                 actor_representation: Dict[str, Module],
+                 critic_representation: Dict[str, Module],
                  actor_hidden_size: Sequence[int],
                  critic_hidden_size: Sequence[int],
                  normalize: Optional[ModuleType] = None,
@@ -947,9 +949,9 @@ class MATD3_Policy(MADDPG_Policy, Module):
         self.target_critic_A_representation = deepcopy(self.critic_A_representation)
         self.target_critic_B_representation = deepcopy(self.critic_B_representation)
 
-        self.actor, self.target_actor = ModuleDict(), ModuleDict()
-        self.critic_A, self.critic_B = ModuleDict(), ModuleDict()
-        self.target_critic_A, self.target_critic_B = ModuleDict(), ModuleDict()
+        self.actor, self.target_actor = {}, {}
+        self.critic_A, self.critic_B = {}, {}
+        self.target_critic_A, self.target_critic_B = {}, {}
         for key in self.model_keys:
             dim_action = self.action_space[key].shape[-1]
             dim_actor_in, dim_actor_out, dim_critic_in = self._get_actor_critic_input(

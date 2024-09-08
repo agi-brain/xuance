@@ -205,10 +205,10 @@ class OffPolicyMARLAgents(MARLAgents):
 
         if self.use_parameter_sharing:
             key = self.agent_keys[0]
-            actions_out = actions[key].reshape([batch_size, self.n_agents]).cpu().detach().numpy()
+            actions_out = actions[key].reshape([batch_size, self.n_agents]).asnumpy()
             actions_dict = [{k: actions_out[e, i] for i, k in enumerate(self.agent_keys)} for e in range(batch_size)]
         else:
-            actions_out = {k: actions[k].reshape(batch_size).cpu().detach().numpy() for k in self.agent_keys}
+            actions_out = {k: actions[k].reshape(batch_size).asnumpy() for k in self.agent_keys}
             actions_dict = [{k: actions_out[k][i] for k in self.agent_keys} for i in range(batch_size)]
 
         if not test_mode:  # get random actions

@@ -10,7 +10,7 @@ from gym.spaces import Space
 from torch.utils.tensorboard import SummaryWriter
 from xuance.common import get_time_string, create_directory, space2shape, Optional, List, Dict, Union
 from xuance.environment import DummyVecMultiAgentEnv
-from xuance.mindspore import Module, REGISTRY_Representation, REGISTRY_Learners
+from xuance.mindspore import Tensor, Module, REGISTRY_Representation, REGISTRY_Learners
 from xuance.mindspore.learners import learner
 from xuance.mindspore.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
 
@@ -200,7 +200,7 @@ class MARLAgents(ABC):
         if self.use_parameter_sharing:
             key = self.agent_keys[0]
             obs_array = np.array([itemgetter(*self.agent_keys)(data) for data in obs_dict])
-            agents_id = np.eye(self.n_agents, dtype=np.float32)[None].repeat(batch_size, axis=0)
+            agents_id = Tensor(np.eye(self.n_agents, dtype=np.float32)[None].repeat(batch_size, axis=0))
             avail_actions_array = np.array([itemgetter(*self.agent_keys)(data)
                                             for data in avail_actions_dict]) if self.use_actions_mask else None
             if self.use_rnn:
