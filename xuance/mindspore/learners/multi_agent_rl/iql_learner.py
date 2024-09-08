@@ -29,7 +29,8 @@ class IQL_Learner(LearnerMAS):
                         for key in self.model_keys}
         self.policy.set_train()
 
-    def forward_fn(self, obs, actions, agt_mask, avail_actions, ids, q_target, agent_key, rnn_hidden=None):
+    def forward_fn(self, obs, actions, agt_mask, avail_actions, ids, q_target, agent_key):
+        rnn_hidden = None
         _, _, q_eval = self.policy(observation=obs, agent_ids=ids, avail_actions=avail_actions,
                                    agent_key=agent_key, rnn_hidden=rnn_hidden)
         q_eval_a = q_eval[agent_key].gather(actions[agent_key].astype(ms.int32).unsqueeze(-1), axis=-1, batch_dims=-1)

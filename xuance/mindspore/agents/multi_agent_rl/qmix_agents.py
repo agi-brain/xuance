@@ -47,12 +47,10 @@ class QMIX_Agents(OffPolicyMARLAgents):
         dim_state = self.state_space.shape[-1]
         mixer = QMIX_mixer(dim_state, self.config.hidden_dim_mixing_net,
                            self.config.hidden_dim_hyper_net, self.n_agents)
-        target_mixer = QMIX_mixer(dim_state, self.config.hidden_dim_mixing_net,
-                                  self.config.hidden_dim_hyper_net, self.n_agents)
         if self.config.policy == "Mixing_Q_network":
             policy = REGISTRY_Policy["Mixing_Q_network"](
                 action_space=self.action_space, n_agents=self.n_agents, representation=representation,
-                mixer=[mixer, target_mixer], hidden_size=self.config.q_hidden_size,
+                mixer=mixer, hidden_size=self.config.q_hidden_size,
                 normalize=normalize_fn, initialize=initializer, activation=activation,
                 use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
                 use_rnn=self.use_rnn, rnn=self.config.rnn if self.use_rnn else None)

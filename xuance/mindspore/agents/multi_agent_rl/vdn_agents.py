@@ -41,11 +41,10 @@ class VDN_Agents(OffPolicyMARLAgents):
 
         # build policies
         mixer = VDN_mixer()
-        target_mixer = VDN_mixer()
         if self.config.policy == "Mixing_Q_network":
             policy = REGISTRY_Policy["Mixing_Q_network"](
                 action_space=self.action_space, n_agents=self.n_agents, representation=representation,
-                mixer=[mixer, target_mixer], hidden_size=self.config.q_hidden_size,
+                mixer=mixer, hidden_size=self.config.q_hidden_size,
                 normalize=normalize_fn, initialize=initializer, activation=activation,
                 use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
                 use_rnn=self.use_rnn, rnn=self.config.rnn if self.use_rnn else None)

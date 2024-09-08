@@ -19,38 +19,6 @@ class WQMIX_Learner(LearnerMAS):
             self._backbone = backbone
             self.alpha = alpha
 
-        def construct(self, s, o, ids, a, label, agt_mask):
-            # calculate Q_tot
-            _, action_max, q_eval = self._backbone(o, ids)
-            action_max = action_max.view(-1, self.n_agent, 1)
-            q_eval_a = GatherD()(q_eval, -1, a)
-            q_tot_eval = self._backbone.Q_tot(q_eval_a * agt_mask, s)
-
-            # calculate centralized Q
-            q_centralized_eval = self._backbone.q_centralized(o, ids)
-            q_centralized_eval_a = GatherD()(q_centralized_eval, -1, action_max)
-            q_tot_centralized = self._backbone.q_feedforward(q_centralized_eval_a * agt_mask, s)
-            td_error = q_tot_eval - label
-
-            # calculate weights
-            ones = ops.ones_like(td_error)
-            w = ones * self.alpha
-            if self.agent == "CWQMIX":
-                condition_1 = ((action_max == a).astype(ms.float32) * agt_mask).astype(ms.bool_).all(axis=1)
-                condition_2 = label > q_tot_centralized
-                conditions = ops.logical_or(condition_1, condition_2)
-                w = ms.numpy.where(conditions, ones, w)
-            elif self.agent == "OWQMIX":
-                condition = td_error < 0
-                w = ms.numpy.where(condition, ones, w)
-            else:
-                AttributeError("You have assigned an unexpected WQMIX learner!")
-
-            loss_central = ((q_tot_centralized - label) ** 2).sum() / agt_mask.sum()
-            loss_qmix = (w * (td_error ** 2)).mean()
-            loss = loss_qmix + loss_central
-            return loss
-
     def __init__(self,
                  config: Namespace,
                  model_keys: List[str],
@@ -66,6 +34,38 @@ class WQMIX_Learner(LearnerMAS):
         self.loss_net = self.PolicyNetWithLossCell(policy, self.n_agents, self.args.agent, self.alpha)
         self.policy_train = nn.TrainOneStepCell(self.loss_net, optimizer)
         self.policy_train.set_train()
+
+    def forward_fn(self, s, o, ids, a, label, agt_mask):
+        # calculate Q_tot
+        _, action_max, q_eval = self._backbone(o, ids)
+        action_max = action_max.view(-1, self.n_agent, 1)
+        q_eval_a = GatherD()(q_eval, -1, a)
+        q_tot_eval = self._backbone.Q_tot(q_eval_a * agt_mask, s)
+
+        # calculate centralized Q
+        q_centralized_eval = self._backbone.q_centralized(o, ids)
+        q_centralized_eval_a = GatherD()(q_centralized_eval, -1, action_max)
+        q_tot_centralized = self._backbone.q_feedforward(q_centralized_eval_a * agt_mask, s)
+        td_error = q_tot_eval - label
+
+        # calculate weights
+        ones = ops.ones_like(td_error)
+        w = ones * self.alpha
+        if self.agent == "CWQMIX":
+            condition_1 = ((action_max == a).astype(ms.float32) * agt_mask).astype(ms.bool_).all(axis=1)
+            condition_2 = label > q_tot_centralized
+            conditions = ops.logical_or(condition_1, condition_2)
+            w = ms.numpy.where(conditions, ones, w)
+        elif self.agent == "OWQMIX":
+            condition = td_error < 0
+            w = ms.numpy.where(condition, ones, w)
+        else:
+            AttributeError("You have assigned an unexpected WQMIX learner!")
+
+        loss_central = ((q_tot_centralized - label) ** 2).sum() / agt_mask.sum()
+        loss_qmix = (w * (td_error ** 2)).mean()
+        loss = loss_qmix + loss_central
+        return loss
 
     def update(self, sample):
         self.iterations += 1

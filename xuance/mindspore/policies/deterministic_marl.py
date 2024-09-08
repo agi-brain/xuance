@@ -41,7 +41,8 @@ class BasicQnetwork(Module):
                                               normalize, initialize, activation)
             self.target_Qhead[key] = deepcopy(self.eval_Qhead[key])
             # update parameters name
-            self.representation[key].update_parameters_name(key + '_')
+            self.representation[key].update_parameters_name(key + '_rep_')
+            self.eval_Qhead[key].update_parameters_name(key + '_eval_Qhead_')
 
         # MindSpore APIs
         self.argmax = ops.Argmax(output_type=ms.int32, axis=-1)
@@ -156,6 +157,12 @@ class MixingQnetwork(BasicQnetwork):
                                              normalize, initialize, activation, **kwargs)
         self.eval_Qtot = mixer
         self.target_Qtot = deepcopy(self.eval_Qtot)
+
+    def trainable_params(self, recurse=True):
+        params = self.eval_Qtot.trainable_params()
+        for key in self.model_keys:
+            params = params + self.representation[key].trainable_params() + self.eval_Qhead[key].trainable_params()
+        return params
 
     def Q_tot(self, individual_values: Dict[str, Tensor], states: Optional[Tensor] = None):
         """
