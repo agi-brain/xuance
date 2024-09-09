@@ -4,104 +4,143 @@ Paper link:
 https://proceedings.neurips.cc/paper/2020/file/73a427badebe0e32caa2e1fc7530b7f3-Paper.pdf
 Implementation: MindSpore
 """
-from xuance.mindspore import ms, Module, Tensor, optim
+from mindspore.nn import MSELoss
+from xuance.mindspore import ms, Module, Tensor, optim, ops
 from xuance.mindspore.learners import LearnerMAS
+from xuance.mindspore.utils import clip_grads
 from xuance.common import List
 from argparse import Namespace
+from operator import itemgetter
 
 
 class WQMIX_Learner(LearnerMAS):
-    class PolicyNetWithLossCell(Module):
-        def __init__(self, backbone, n_agent, agent_name, alpha):
-            super(WQMIX_Learner.PolicyNetWithLossCell, self).__init__(auto_prefix=False)
-            self.n_agent = n_agent
-            self.agent = agent_name
-            self._backbone = backbone
-            self.alpha = alpha
-
     def __init__(self,
                  config: Namespace,
                  model_keys: List[str],
                  agent_keys: List[str],
                  policy: Module):
-        self.alpha = config.alpha
-        self.gamma = gamma
-        self.sync_frequency = sync_frequency
-        self.mse_loss = nn.MSELoss()
         super(WQMIX_Learner, self).__init__(config, model_keys, agent_keys, policy)
-        # build train net
-        self._mean = ops.ReduceMean(keep_dims=False)
-        self.loss_net = self.PolicyNetWithLossCell(policy, self.n_agents, self.args.agent, self.alpha)
-        self.policy_train = nn.TrainOneStepCell(self.loss_net, optimizer)
-        self.policy_train.set_train()
+        self.optimizer = optim.Adam(params=self.policy.trainable_params(), lr=config.learning_rate, eps=1e-5)
+        self.scheduler = optim.lr_scheduler.LinearLR(self.optimizer, start_factor=1.0, end_factor=0.5,
+                                                     total_iters=self.config.running_steps)
+        self.alpha = config.alpha
+        self.gamma = config.gamma
+        self.sync_frequency = config.sync_frequency
+        self.mse_loss = MSELoss()
+        self.n_actions = {k: self.policy.action_space[k].n for k in self.model_keys}
+        # Get gradient function
+        self.grad_fn = ms.value_and_grad(self.forward_fn, None, self.optimizer.parameters, has_aux=True)
+        self.policy.set_train()
 
-    def forward_fn(self, s, o, ids, a, label, agt_mask):
+    def forward_fn(self, state, obs, actions, agt_mask, avail_actions, ids, target_value):
         # calculate Q_tot
-        _, action_max, q_eval = self._backbone(o, ids)
-        action_max = action_max.view(-1, self.n_agent, 1)
-        q_eval_a = GatherD()(q_eval, -1, a)
-        q_tot_eval = self._backbone.Q_tot(q_eval_a * agt_mask, s)
+        _, action_max, q_eval = self.policy(observation=obs, agent_ids=ids, avail_actions=avail_actions)
+        _, q_eval_centralized = self.policy.q_centralized(observation=obs, agent_ids=ids)
 
-        # calculate centralized Q
-        q_centralized_eval = self._backbone.q_centralized(o, ids)
-        q_centralized_eval_a = GatherD()(q_centralized_eval, -1, action_max)
-        q_tot_centralized = self._backbone.q_feedforward(q_centralized_eval_a * agt_mask, s)
-        td_error = q_tot_eval - label
+        q_eval_a, q_eval_centralized_a, q_eval_next_centralized_a, act_next = {}, {}, {}, {}
+        for key in self.model_keys:
+            action_max[key] = action_max[key].unsqueeze(-1)
+            q_eval_a[key] = q_eval[key].gather(actions[key].unsqueeze(-1).astype(ms.int32), -1, -1).reshape(-1)
+            q_eval_centralized_a[key] = q_eval_centralized[key].gather(action_max[key].astype(ms.int32),
+                                                                       -1, -1).reshape(-1)
+            q_eval_a[key] *= agt_mask[key]
+            q_eval_centralized_a[key] *= agt_mask[key]
+
+        q_tot_eval = self.policy.Q_tot(q_eval_a, state)  # calculate Q_tot
+        q_tot_centralized = self.policy.q_feedforward(q_eval_centralized_a, state)  # calculate centralized Q
+        td_error = q_tot_eval - target_value
 
         # calculate weights
         ones = ops.ones_like(td_error)
         w = ones * self.alpha
-        if self.agent == "CWQMIX":
-            condition_1 = ((action_max == a).astype(ms.float32) * agt_mask).astype(ms.bool_).all(axis=1)
-            condition_2 = label > q_tot_centralized
-            conditions = ops.logical_or(condition_1, condition_2)
-            w = ms.numpy.where(conditions, ones, w)
-        elif self.agent == "OWQMIX":
+        if self.config.agent == "CWQMIX":
+            condition_1 = ((action_max == actions.reshape([-1, self.n_agents, 1])) * agt_mask).all(axis=1)
+            condition_2 = target_value > q_tot_centralized
+            conditions = condition_1 | condition_2
+            w = ops.where(conditions, ones, w)
+        elif self.config.agent == "OWQMIX":
             condition = td_error < 0
-            w = ms.numpy.where(condition, ones, w)
+            w = ops.where(condition, ones, w)
         else:
-            AttributeError("You have assigned an unexpected WQMIX learner!")
+            raise AttributeError(f"The agent named is {self.config.agent} is currently not supported.")
 
-        loss_central = ((q_tot_centralized - label) ** 2).sum() / agt_mask.sum()
-        loss_qmix = (w * (td_error ** 2)).mean()
+        # calculate losses and train
+        loss_central = self.mse_loss(logits=q_tot_centralized, labels=ops.stop_gradient(target_value))
+        loss_qmix = (ops.stop_gradient(w) * (td_error ** 2)).mean()
         loss = loss_qmix + loss_central
-        return loss
+        return loss, loss_qmix, loss_central, q_tot_eval
 
     def update(self, sample):
         self.iterations += 1
-        state = Tensor(sample['state'])
-        obs = Tensor(sample['obs'])
-        actions = Tensor(sample['actions']).view(-1, self.n_agents, 1).astype(ms.int32)
-        state_next = Tensor(sample['state_next'])
-        obs_next = Tensor(sample['obs_next'])
-        rewards = self._mean(Tensor(sample['rewards']), 1)
-        terminals = Tensor(sample['terminals']).view(-1, self.n_agents, 1).all(axis=1, keep_dims=True)
-        agent_mask = Tensor(sample['agent_mask']).view(-1, self.n_agents, 1)
-        batch_size = obs.shape[0]
-        IDs = ops.broadcast_to(self.expand_dims(self.eye(self.n_agents, self.n_agents, ms.float32), 0),
-                               (batch_size, -1, -1))
-        # calculate y_i
-        if self.args.double_q:
-            _, action_next_greedy, _ = self.policy(obs_next, IDs)
-            action_next_greedy = self.expand_dims(action_next_greedy, -1).astype(ms.int32)
+        info = {}
+
+        # prepare training data
+        sample_Tensor = self.build_training_data(sample=sample,
+                                                 use_parameter_sharing=self.use_parameter_sharing,
+                                                 use_actions_mask=self.use_actions_mask,
+                                                 use_global_state=True)
+        batch_size = sample_Tensor['batch_size']
+        state = sample_Tensor['state']
+        state_next = sample_Tensor['state_next']
+        obs = sample_Tensor['obs']
+        actions = sample_Tensor['actions']
+        obs_next = sample_Tensor['obs_next']
+        rewards = sample_Tensor['rewards']
+        terminals = sample_Tensor['terminals']
+        agent_mask = sample_Tensor['agent_mask']
+        avail_actions = sample_Tensor['avail_actions']
+        avail_actions_next = sample_Tensor['avail_actions_next']
+        IDs = sample_Tensor['agent_ids']
+
+        if self.use_parameter_sharing:
+            key = self.model_keys[0]
+            bs = batch_size * self.n_agents
+            rewards_tot = rewards[key].mean(axis=1).reshape(batch_size, 1)
+            terminals_tot = terminals[key].all(axis=1).astype(ms.float32).reshape(batch_size, 1)
         else:
-            q_next_eval = self.policy.target_Q(obs_next, IDs)
-            action_next_greedy = q_next_eval.argmax(axis=-1, keepdims=True)
-        q_eval_next_centralized = GatherD()(self.policy.target_q_centralized(obs_next, IDs), -1, action_next_greedy)
-        q_tot_next_centralized = self.policy.target_q_feedforward(q_eval_next_centralized*agent_mask, state_next)
+            bs = batch_size
+            rewards_tot = ops.stack(itemgetter(*self.agent_keys)(rewards), axis=1).mean(axis=-1).reshape(batch_size, 1)
+            terminals_tot = ops.stack(itemgetter(*self.agent_keys)(terminals),
+                                      axis=1).all(axis=1).astype(ms.float32).reshape(batch_size, 1)
 
-        target_value = rewards + (1 - terminals) * self.args.gamma * q_tot_next_centralized
+        # calculate Q_tot
+        _, q_eval_next_centralized = self.policy.target_q_centralized(observation=obs_next, agent_ids=IDs)
 
-        # calculate losses and train
-        loss = self.policy_train(state, obs, IDs, actions, target_value, agent_mask)
+        q_eval_next_centralized_a, act_next = {}, {}
+        for key in self.model_keys:
+            if self.config.double_q:
+                _, a_next_greedy, _ = self.policy(observation=obs_next, agent_ids=IDs,
+                                                  avail_actions=avail_actions_next, agent_key=key)
+                act_next[key] = a_next_greedy[key].unsqueeze(-1)
+            else:
+                _, q_next_eval = self.policy.Qtarget(observation=obs_next, agent_ids=IDs, agent_key=key)
+                if self.use_actions_mask:
+                    q_next_eval[key][avail_actions_next[key] == 0] = -9999999
+                act_next[key] = q_next_eval[key].argmax(dim=-1, keepdim=True)
+            q_eval_next_centralized_a[key] = q_eval_next_centralized[key].gather(act_next[key], -1, -1).reshape(bs)
+            q_eval_next_centralized_a[key] *= agent_mask[key]
+
+        q_tot_next_centralized = self.policy.target_q_feedforward(q_eval_next_centralized_a, state_next)  # y_i
+
+        target_value = rewards_tot + (1 - terminals_tot) * self.gamma * q_tot_next_centralized
+
+        (loss, loss_qmix, loss_central, q_tot_eval), grads = self.grad_fn(state, obs, actions, agent_mask,
+                                                                          avail_actions, IDs, target_value)
+        if self.use_grad_clip:
+            clip_grads(grads, Tensor(-self.grad_clip_norm), Tensor(self.grad_clip_norm))
+        self.optimizer(grads)
+
         if self.iterations % self.sync_frequency == 0:
             self.policy.copy_target()
+        self.scheduler.step()
+        lr = self.scheduler.get_last_lr()[0]
 
-        lr = self.scheduler(self.iterations).asnumpy()
-
-        info = {
-            "learning_rate": lr,
-            "loss": loss.asnumpy()
-        }
+        info.update({
+            "learning_rate": lr.asnumpy(),
+            "loss_Qmix": loss_qmix.asnumpy(),
+            "loss_central": loss_central.asnumpy(),
+            "loss": loss.asnumpy(),
+            "predictQ": q_tot_eval.mean().asnumpy()
+        })
 
         return info

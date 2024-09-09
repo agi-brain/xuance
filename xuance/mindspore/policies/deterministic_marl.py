@@ -253,6 +253,16 @@ class Weighted_MixingQnetwork(MixingQnetwork):
         self.target_Qhead_centralized = deepcopy(self.eval_Qhead_centralized)
         self.ff_mixer = ff_mixer
         self.target_ff_mixer = deepcopy(self.ff_mixer)
+        # update parameters name for self.eval_Qhead_centralized
+        for key in self.model_keys:
+            self.eval_Qhead_centralized[key].update_parameters_name(key + '_eval_Qhead_centralized_')
+
+    def trainable_params(self, recurse=True):
+        params = self.eval_Qtot.trainable_params() + self.ff_mixer.trainable_params()
+        for key in self.model_keys:
+            params = (params + self.representation[key].trainable_params() + self.eval_Qhead[key].trainable_params() +
+                      self.eval_Qhead_centralized[key].trainable_params())
+        return params
 
     def q_centralized(self, observation: Dict[str, Tensor], agent_ids: Dict[str, Tensor],
                       agent_key: str = None, rnn_hidden: Optional[Dict[str, List[Tensor]]] = None):
