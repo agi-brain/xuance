@@ -1,5 +1,6 @@
 import mindspore as ms
 import mindspore.nn as nn
+import mindspore.ops as ops
 from xuance.common import Optional, Sequence, Tuple, Type, Union, Callable
 
 ModuleType = Type[nn.Cell]
@@ -15,12 +16,12 @@ def mlp_block(input_dim: int,
     linear = nn.Dense(int(input_dim), int(output_dim))
     if initialize is not None:
         initialize(linear.weight)
-        linear.bias.data.zero_()
+        linear.bias.data.set_data(ops.zeros(linear.bias.data.shape))
     block.append(linear)
     if activation is not None:
         block.append(activation())
     if normalize is not None:
-        block.append(normalize(output_dim))
+        block.append(normalize((output_dim, )))
     return block, (output_dim,)
 
 
@@ -40,6 +41,7 @@ def cnn_block(input_shape: Sequence[int],
     if initialize is not None:
         initialize(cnn.weight)
         cnn.bias.data.zero_()
+        cnn.bias.data.set_data(ops.zeros(cnn.bias.data.shape))
     block.append(cnn)
     C = filter
     H = int((H + 2 * padding - (kernel_size - 1) - 1) / stride + 1)
@@ -52,7 +54,7 @@ def cnn_block(input_shape: Sequence[int],
         elif normalize == nn.LayerNorm:
             block.append(normalize((C, H, W)))
         else:
-            block.append(normalize(C))
+            block.append(normalize((C, )))
     return block, (C, H, W)
 
 

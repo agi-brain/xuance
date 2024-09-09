@@ -32,40 +32,7 @@ class IPPO_Learner(LearnerMAS):
             self.expand_dims = ops.ExpandDims()
             self.broadcast_to = ops.BroadcastTo((-1, self.n_agents, -1))
 
-        def construct(self, bs, s, o, a, log_pi_old, values, returns, advantages, agt_mask, ids):
-            _, act_prob = self._backbone(o, ids)
-            log_pi = self._backbone.actor.log_prob(value=a, probs=act_prob)
-            ratio = self.exp(log_pi - log_pi_old).view(bs, self.n_agents, 1)
-            advantages_mask = advantages * agt_mask
-            surrogate1 = ratio * advantages_mask
-            surrogate2 = ops.clip_by_value(ratio, Tensor(1 - self.clip_range), Tensor(1 + self.clip_range)) * advantages_mask
-            loss_a = -self.miminum(surrogate1, surrogate2).sum(axis=-2, keepdims=True).mean()
 
-            entropy = self._backbone.actor.entropy(probs=act_prob).reshape(agt_mask.shape) * agt_mask
-            loss_e = entropy.mean()
-
-            _, value_pred = self._backbone.get_values(o, ids)
-            value_pred = value_pred * agt_mask
-            value_target = returns
-            if self.use_value_clip:
-                value_clipped = values + ops.clip_by_value(value_pred - values, -self.value_clip_range, self.value_clip_range)
-                if self.use_huber_loss:
-                    loss_v = self.huber_loss(logits=value_pred, labels=value_target)
-                    loss_v_clipped = self.huber_loss(logits=value_clipped, labels=value_target)
-                else:
-                    loss_v = (value_pred - value_target) ** 2
-                    loss_v_clipped = (value_clipped - value_target) ** 2
-                loss_c = self.maximum(loss_v, loss_v_clipped) * agt_mask
-                loss_c = loss_c.sum() / agt_mask.sum()
-            else:
-                if self.use_huber_loss:
-                    loss_v = self.huber_loss(logits=value_pred, labels=value_target) * agt_mask
-                else:
-                    loss_v = ((value_pred - value_target) ** 2) * agt_mask
-                loss_c = loss_v.sum() / agt_mask.sum()
-
-            loss = loss_a + self.vf_coef * loss_c - self.ent_coef * loss_e
-            return loss
 
     def __init__(self,
                  config: Namespace,
@@ -95,9 +62,42 @@ class IPPO_Learner(LearnerMAS):
         self.lr = config.learning_rate
         self.end_factor_lr_decay = config.end_factor_lr_decay
 
-    def lr_decay(self, i_step):
-        if self.use_linear_lr_decay:
-            update_linear_decay(self.optimizer, i_step, self.running_steps, self.lr, self.end_factor_lr_decay)
+    def forward_fn(self, bs, s, o, a, log_pi_old, values, returns, advantages, agt_mask, ids):
+        _, act_prob = self._backbone(o, ids)
+        log_pi = self._backbone.actor.log_prob(value=a, probs=act_prob)
+        ratio = self.exp(log_pi - log_pi_old).view(bs, self.n_agents, 1)
+        advantages_mask = advantages * agt_mask
+        surrogate1 = ratio * advantages_mask
+        surrogate2 = ops.clip_by_value(ratio, Tensor(1 - self.clip_range),
+                                       Tensor(1 + self.clip_range)) * advantages_mask
+        loss_a = -self.miminum(surrogate1, surrogate2).sum(axis=-2, keepdims=True).mean()
+
+        entropy = self._backbone.actor.entropy(probs=act_prob).reshape(agt_mask.shape) * agt_mask
+        loss_e = entropy.mean()
+
+        _, value_pred = self._backbone.get_values(o, ids)
+        value_pred = value_pred * agt_mask
+        value_target = returns
+        if self.use_value_clip:
+            value_clipped = values + ops.clip_by_value(value_pred - values, -self.value_clip_range,
+                                                       self.value_clip_range)
+            if self.use_huber_loss:
+                loss_v = self.huber_loss(logits=value_pred, labels=value_target)
+                loss_v_clipped = self.huber_loss(logits=value_clipped, labels=value_target)
+            else:
+                loss_v = (value_pred - value_target) ** 2
+                loss_v_clipped = (value_clipped - value_target) ** 2
+            loss_c = self.maximum(loss_v, loss_v_clipped) * agt_mask
+            loss_c = loss_c.sum() / agt_mask.sum()
+        else:
+            if self.use_huber_loss:
+                loss_v = self.huber_loss(logits=value_pred, labels=value_target) * agt_mask
+            else:
+                loss_v = ((value_pred - value_target) ** 2) * agt_mask
+            loss_c = loss_v.sum() / agt_mask.sum()
+
+        loss = loss_a + self.vf_coef * loss_c - self.ent_coef * loss_e
+        return loss
 
     def update(self, sample):
         self.iterations += 1
