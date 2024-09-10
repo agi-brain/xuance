@@ -46,7 +46,8 @@ class IPPO_Learner(LearnerMAS):
         self.grad_fn = ms.value_and_grad(self.forward_fn, None, self.optimizer.parameters, has_aux=True)
         self.policy.set_train()
 
-    def forward_fn(self, bs, obs, actions, avail_actions, log_pi_old, values, returns, advantages, agt_mask, ids):
+    def forward_fn(self, *args):
+        bs, obs, actions, avail_actions, log_pi_old, values, returns, advantages, agt_mask, ids = args
         # feedforward
         _, pi_dists_dict = self.policy(observation=obs, agent_ids=ids, avail_actions=avail_actions)
         _, value_pred_dict = self.policy.get_values(observation=obs, agent_ids=ids)

@@ -137,7 +137,7 @@ class CategoricalDistribution(Distribution):
         return self.logits
 
     def log_prob(self, x):
-        return self.distribution.log_prob(value=x)
+        return self.distribution.log_prob(value=Tensor(x))
 
     def entropy(self):
         return self.distribution.entropy()
@@ -169,7 +169,7 @@ class DiagGaussianDistribution(Distribution):
         return self.mu, self.std
 
     def log_prob(self, x: ms.Tensor):
-        return self.distribution.log_prob(value=x).sum(-1)
+        return self.distribution.log_prob(value=Tensor(x)).sum(-1)
 
     def entropy(self):
         return self.distribution.entropy().sum(-1)

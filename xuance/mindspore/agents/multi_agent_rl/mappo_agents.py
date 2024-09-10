@@ -3,6 +3,7 @@ from argparse import Namespace
 from operator import itemgetter
 from xuance.common import Optional, List
 from xuance.environment import DummyVecMultiAgentEnv
+from xuance.mindspore import Tensor
 from xuance.mindspore.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
 from xuance.mindspore.policies import REGISTRY_Policy
 from xuance.mindspore.agents.multi_agent_rl.ippo_agents import IPPO_Agents
@@ -139,28 +140,28 @@ class MAPPO_Agents(IPPO_Agents):
 
         if self.use_parameter_sharing:
             key = self.agent_keys[0]
-            actions_sample = pi_dists[key].stochastic_sample().numpy()
+            actions_sample = pi_dists[key].stochastic_sample().asnumpy()
             if self.continuous_control:
                 actions_out = actions_sample.reshape(n_env, self.n_agents, -1)
             else:
                 actions_out = actions_sample.reshape(n_env, self.n_agents)
             actions_dict = [{k: actions_out[e, i] for i, k in enumerate(self.agent_keys)} for e in range(n_env)]
             if not test_mode:
-                log_pi_a = pi_dists[key].log_prob(actions_sample).numpy()
+                log_pi_a = pi_dists[key].log_prob(actions_sample).asnumpy()
                 log_pi_a = log_pi_a.reshape(n_env, self.n_agents)
                 log_pi_a_dict = {k: log_pi_a[:, i] for i, k in enumerate(self.agent_keys)}
-                values_out[key] = values_out[key].numpy().reshape(n_env, self.n_agents)
+                values_out[key] = values_out[key].asnumpy().reshape(n_env, self.n_agents)
                 values_dict = {k: values_out[key][:, i] for i, k in enumerate(self.agent_keys)}
         else:
-            actions_sample = {k: pi_dists[k].stochastic_sample().numpy() for k in self.agent_keys}
+            actions_sample = {k: pi_dists[k].stochastic_sample().asnumpy() for k in self.agent_keys}
             if self.continuous_control:
                 actions_dict = [{k: actions_sample[k][e].reshape([-1]) for k in self.agent_keys} for e in range(n_env)]
             else:
                 actions_dict = [{k: actions_sample[k][e].reshape([]) for k in self.agent_keys} for e in range(n_env)]
             if not test_mode:
-                log_pi_a = {k: pi_dists[k].log_prob(actions_sample[k]).numpy() for k in self.agent_keys}
+                log_pi_a = {k: pi_dists[k].log_prob(actions_sample[k]).asnumpy() for k in self.agent_keys}
                 log_pi_a_dict = {k: log_pi_a[k].reshape([n_env]) for i, k in enumerate(self.agent_keys)}
-                values_dict = {k: values_out[k].numpy().reshape([n_env]) for k in self.agent_keys}
+                values_dict = {k: values_out[k].asnumpy().reshape([n_env]) for k in self.agent_keys}
 
         return {"rnn_hidden_actor": rnn_hidden_actor_new, "rnn_hidden_critic": rnn_hidden_critic_new,
                 "actions": actions_dict, "log_pi": log_pi_a_dict, "values": values_dict}
@@ -209,7 +210,7 @@ class MAPPO_Agents(IPPO_Agents):
                 agents_id = np.eye(self.n_agents, dtype=np.float32)[None].repeat(n_env, 0).reshape(batch_size, -1)
 
             rnn_hidden_critic_new, values_out = self.policy.get_values(observation={key: critic_input},
-                                                                       agent_ids=agents_id,
+                                                                       agent_ids=Tensor(agents_id),
                                                                        rnn_hidden=rnn_hidden_critic_i)
             values_out = values_out[key].numpy().reshape(self.n_agents)
             values_dict = {k: values_out[i] for i, k in enumerate(self.agent_keys)}
