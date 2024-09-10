@@ -621,14 +621,16 @@ class Independent_DDPG_Policy(Module):
     def parameters_actor(self):
         parameters_actor = {}
         for key in self.model_keys:
-            parameters_actor[key] = self.actor_representation[key].parameters() + self.actor[key].parameters()
+            parameters_actor[key] = self.actor_representation[key].trainable_params() + self.actor[
+                key].trainable_params()
         return parameters_actor
 
     @property
     def parameters_critic(self):
         parameters_critic = {}
         for key in self.model_keys:
-            parameters_critic[key] = self.critic_representation[key].parameters() + self.critic[key].parameters()
+            parameters_critic[key] = self.critic_representation[key].trainable_params() + self.critic[
+                key].trainable_params()
         return parameters_critic
 
     def _get_actor_critic_input(self, dim_actor_rep, dim_action, dim_critic_rep, n_agents):
@@ -652,9 +654,9 @@ class Independent_DDPG_Policy(Module):
             dim_critic_in += n_agents
         return dim_actor_in, dim_actor_out, dim_critic_in
 
-    def forward(self, observation: Dict[str, Tensor],
-                agent_ids: Tensor = None, agent_key: str = None,
-                rnn_hidden: Optional[Dict[str, List[Tensor]]] = None):
+    def construct(self, observation: Dict[str, Tensor],
+                  agent_ids: Tensor = None, agent_key: str = None,
+                  rnn_hidden: Optional[Dict[str, List[Tensor]]] = None):
         """
         Returns actions of the policy.
 
