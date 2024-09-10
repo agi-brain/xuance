@@ -1,5 +1,5 @@
 from tqdm import tqdm
-import torch
+import mindspore as ms
 import numpy as np
 from copy import deepcopy
 from argparse import Namespace
@@ -172,26 +172,26 @@ class OnPolicyMARLAgents(MARLAgents):
                 actions_out = actions_sample.reshape(n_env, self.n_agents, -1)
             else:
                 actions_out = actions_sample.reshape(n_env, self.n_agents)
-            actions_dict = [{k: actions_out[e, i].cpu().detach().numpy() for i, k in enumerate(self.agent_keys)}
+            actions_dict = [{k: actions_out[e, i].asnumpy() for i, k in enumerate(self.agent_keys)}
                             for e in range(n_env)]
             if not test_mode:
-                log_pi_a = pi_dists[key].log_prob(actions_sample).cpu().detach().numpy()
+                log_pi_a = pi_dists[key].log_prob(actions_sample).asnumpy()
                 log_pi_a = log_pi_a.reshape(n_env, self.n_agents)
                 log_pi_a_dict = {k: log_pi_a[:, i] for i, k in enumerate(self.agent_keys)}
                 values_out[key] = values_out[key].reshape(n_env, self.n_agents)
-                values_dict = {k: values_out[key][:, i].cpu().detach().numpy() for i, k in enumerate(self.agent_keys)}
+                values_dict = {k: values_out[key][:, i].asnumpy() for i, k in enumerate(self.agent_keys)}
         else:
             actions_sample = {k: pi_dists[k].stochastic_sample() for k in self.agent_keys}
             if self.continuous_control:
-                actions_dict = [{k: actions_sample[k].cpu().detach().numpy()[e].reshape([-1]) for k in self.agent_keys}
+                actions_dict = [{k: actions_sample[k].asnumpy()[e].reshape([-1]) for k in self.agent_keys}
                                 for e in range(n_env)]
             else:
-                actions_dict = [{k: actions_sample[k].cpu().detach().numpy()[e].reshape([]) for k in self.agent_keys}
+                actions_dict = [{k: actions_sample[k].asnumpy()[e].reshape([]) for k in self.agent_keys}
                                 for e in range(n_env)]
             if not test_mode:
-                log_pi_a = {k: pi_dists[k].log_prob(actions_sample[k]).cpu().detach().numpy() for k in self.agent_keys}
+                log_pi_a = {k: pi_dists[k].log_prob(actions_sample[k]).asnumpy() for k in self.agent_keys}
                 log_pi_a_dict = {k: log_pi_a[k].reshape([n_env]) for i, k in enumerate(self.agent_keys)}
-                values_dict = {k: values_out[k].cpu().detach().numpy().reshape([n_env]) for k in self.agent_keys}
+                values_dict = {k: values_out[k].asnumpy().reshape([n_env]) for k in self.agent_keys}
 
         return {"rnn_hidden_actor": rnn_hidden_actor_new, "rnn_hidden_critic": rnn_hidden_critic_new,
                 "actions": actions_dict, "log_pi": log_pi_a_dict, "values": values_dict}
@@ -225,17 +225,18 @@ class OnPolicyMARLAgents(MARLAgents):
                 batch_size = n_env * self.n_agents
                 obs_array = np.array(itemgetter(*self.agent_keys)(obs_dict))
                 obs_input = {key: obs_array.reshape([batch_size, 1, -1])}
-                agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(n_env, -1, -1).reshape(batch_size, 1, -1).to(
-                    self.device)
+                agents_id = self.eye(self.n_agents, self.n_agents, ms.float32).unsqueeze(0).broadcast_to(
+                    (n_env, -1, -1)).reshape(batch_size, 1, -1)
             else:
                 obs_input = {key: np.array([itemgetter(*self.agent_keys)(obs_dict)])}
-                agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(n_env, -1, -1).to(self.device)
+                agents_id = self.eye(self.n_agents, self.n_agents, ms.float32).unsqueeze(0).broadcast_to(
+                    (n_env, -1, -1))
 
             rnn_hidden_critic_new, values_out = self.policy.get_values(observation=obs_input,
                                                                        agent_ids=agents_id,
                                                                        rnn_hidden=rnn_hidden_critic_i)
-            values_out = values_out[key].reshape(self.n_agents)
-            values_dict = {k: values_out[i].cpu().detach().numpy() for i, k in enumerate(self.agent_keys)}
+            values_out_key = values_out[key].reshape(self.n_agents)
+            values_dict = {k: values_out_key[i].asnumpy() for i, k in enumerate(self.agent_keys)}
 
         else:
             if self.use_rnn:
@@ -245,7 +246,7 @@ class OnPolicyMARLAgents(MARLAgents):
 
             rnn_hidden_critic_new, values_out = self.policy.get_values(observation=obs_input,
                                                                        rnn_hidden=rnn_hidden_critic_i)
-            values_dict = {k: values_out[k].cpu().detach().numpy().reshape([]) for k in self.agent_keys}
+            values_dict = {k: values_out[k].asnumpy().reshape([]) for k in self.agent_keys}
 
         return rnn_hidden_critic_new, values_dict
 

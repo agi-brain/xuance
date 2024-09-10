@@ -327,7 +327,7 @@ class CriticNet(Module):
         self.model = nn.SequentialCell(*layers)
 
     def construct(self, x: ms.Tensor):
-        return self.model(x)[:, 0]
+        return self.model(x)
 
 
 class GaussianActorNet_SAC(Module):

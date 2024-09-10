@@ -127,7 +127,7 @@ class WQMIX_Learner(LearnerMAS):
         (loss, loss_qmix, loss_central, q_tot_eval), grads = self.grad_fn(state, obs, actions, agent_mask,
                                                                           avail_actions, IDs, target_value)
         if self.use_grad_clip:
-            clip_grads(grads, Tensor(-self.grad_clip_norm), Tensor(self.grad_clip_norm))
+            grads = clip_grads(grads, Tensor(-self.grad_clip_norm), Tensor(self.grad_clip_norm))
         self.optimizer(grads)
 
         if self.iterations % self.sync_frequency == 0:

@@ -11,6 +11,7 @@ class MAAC_Policy(Module):
     """
     MAAC_Policy: Multi-Agent Actor-Critic Policy with Gaussian distributions.
     """
+
     def __init__(self,
                  action_space: Optional[Dict[str, Box]],
                  n_agents: int,
@@ -75,9 +76,9 @@ class MAAC_Policy(Module):
             dim_critic_in += n_agents
         return dim_actor_in, dim_actor_out, dim_critic_in, dim_critic_out
 
-    def forward(self, observation: Dict[str, Tensor], agent_ids: Optional[Tensor] = None,
-                avail_actions: Dict[str, Tensor] = None, agent_key: str = None,
-                rnn_hidden: Optional[Dict[str, List[Tensor]]] = None):
+    def construct(self, observation: Dict[str, Tensor], agent_ids: Optional[Tensor] = None,
+                  avail_actions: Dict[str, Tensor] = None, agent_key: str = None,
+                  rnn_hidden: Optional[Dict[str, List[Tensor]]] = None):
         """
         Returns actions of the policy.
 
@@ -226,8 +227,8 @@ class Basic_ISAC_Policy(Module):
             dim_critic_in += n_agents
         return dim_actor_in, dim_actor_out, dim_critic_in
 
-    def forward(self, observation: Dict[str, Tensor], agent_ids: Tensor = None, agent_key: str = None,
-                rnn_hidden: Optional[Dict[str, List[Tensor]]] = None):
+    def construct(self, observation: Dict[str, Tensor], agent_ids: Tensor = None, agent_key: str = None,
+                  rnn_hidden: Optional[Dict[str, List[Tensor]]] = None):
         """
         Returns actions of the policy.
 
@@ -584,7 +585,7 @@ class MASAC_Policy(Basic_ISAC_Policy):
                 critic_2_in = joint_rep_out_2
             q_1 = self.target_critic_1[key](critic_1_in)
             q_2 = self.target_critic_2[key](critic_2_in)
-            target_q[key] = torch.min(q_1, q_2)
+            target_q[key] = ops.minimum(q_1, q_2)
         return rnn_hidden_critic_new_1, rnn_hidden_critic_new_2, target_q
 
     def Qaction(self, joint_observation: Optional[Tensor] = None,

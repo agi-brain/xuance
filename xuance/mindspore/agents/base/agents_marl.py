@@ -10,7 +10,7 @@ from gym.spaces import Space
 from torch.utils.tensorboard import SummaryWriter
 from xuance.common import get_time_string, create_directory, space2shape, Optional, List, Dict, Union
 from xuance.environment import DummyVecMultiAgentEnv
-from xuance.mindspore import Tensor, Module, REGISTRY_Representation, REGISTRY_Learners
+from xuance.mindspore import Tensor, Module, REGISTRY_Representation, REGISTRY_Learners, ops
 from xuance.mindspore.learners import learner
 from xuance.mindspore.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
 
@@ -87,6 +87,7 @@ class MARLAgents(ABC):
         self.policy: Optional[Module] = None
         self.learner: Optional[learner] = None
         self.memory: Optional[object] = None
+        self.eye = ops.Eye()
 
     def store_experience(self, *args, **kwargs):
         raise NotImplementedError

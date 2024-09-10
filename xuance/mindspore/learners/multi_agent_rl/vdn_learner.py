@@ -91,7 +91,7 @@ class VDN_Learner(LearnerMAS):
         # calculate the loss function
         (loss, q_tot_eval), grads = self.grad_fn(obs, actions, agent_mask, avail_actions, IDs, q_tot_target)
         if self.use_grad_clip:
-            clip_grads(grads, Tensor(-self.grad_clip_norm), Tensor(self.grad_clip_norm))
+            grads = clip_grads(grads, Tensor(-self.grad_clip_norm), Tensor(self.grad_clip_norm))
         self.optimizer(grads)
 
         self.scheduler.step()
