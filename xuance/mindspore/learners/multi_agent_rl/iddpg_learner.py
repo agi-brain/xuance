@@ -2,36 +2,13 @@
 Independent Deep Deterministic Policy Gradient (IDDPG)
 Implementation: MindSpore
 """
-from xuance.mindspore import ms, Module, Tensor, optim
+from xuance.mindspore import ms, Module, Tensor, optim, ops
 from xuance.mindspore.learners import LearnerMAS
 from xuance.common import List
 from argparse import Namespace
 
 
 class IDDPG_Learner(LearnerMAS):
-    class ActorNetWithLossCell(Module):
-        def __init__(self, backbone):
-            super(IDDPG_Learner.ActorNetWithLossCell, self).__init__()
-            self._backbone = backbone
-            self._mean = ms.ops.ReduceMean(keep_dims=True)
-
-        def construct(self, o, ids, agt_mask):
-            _, actions_eval = self._backbone(o, ids)
-            loss_a = -(self._backbone.critic(o, actions_eval, ids) * agt_mask).sum() / agt_mask.sum()
-            return loss_a
-
-    class CriticNetWithLossCell(Module):
-        def __init__(self, backbone):
-            super(IDDPG_Learner.CriticNetWithLossCell, self).__init__()
-            self._backbone = backbone
-            self._loss = nn.MSELoss()
-
-        def construct(self, o, a, ids, agt_mask, tar_q):
-            q_eval = self._backbone.critic(o, a, ids)
-            td_error = (q_eval - tar_q) * agt_mask
-            loss_c = (td_error ** 2).sum() / agt_mask.sum()
-            return loss_c
-
     def __init__(self,
                  config: Namespace,
                  model_keys: List[str],
@@ -58,6 +35,17 @@ class IDDPG_Learner(LearnerMAS):
         self.critic_loss_net = self.CriticNetWithLossCell(policy)
         self.critic_train = nn.TrainOneStepCell(self.critic_loss_net, self.optimizer['critic'])
         self.critic_train.set_train()
+
+    def forward_fn_actor(self, obs, ids, agt_mask):
+        _, actions_eval = self.policy(obs, ids)
+        loss_a = -(self.policy.critic(obs, actions_eval, ids) * agt_mask).sum() / agt_mask.sum()
+        return loss_a
+
+    def forward_fn_critic(self, o, a, ids, agt_mask, tar_q):
+        q_eval = self.policy.critic(o, a, ids)
+        td_error = (q_eval - tar_q) * agt_mask
+        loss_c = (td_error ** 2).sum() / agt_mask.sum()
+        return loss_c
 
     def update(self, sample):
         self.iterations += 1
