@@ -984,6 +984,10 @@ class MATD3_Policy(MADDPG_Policy, Module):
             self.target_actor[key] = deepcopy(self.actor[key])
             self.target_critic_A[key] = deepcopy(self.critic_A[key])
             self.target_critic_B[key] = deepcopy(self.critic_B[key])
+            # Update parameters name
+            self.actor[key].update_parameters_name(key + '_actor_')
+            self.critic_A[key].update_parameters_name(key + '_critic_A_')
+            self.critic_B[key].update_parameters_name(key + '_critic_B_')
 
     @property
     def parameters_critic(self):

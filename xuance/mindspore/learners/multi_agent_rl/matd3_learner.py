@@ -1,124 +1,150 @@
 """
 Multi-Agent TD3
-
 """
-from xuance.mindspore import ms, Module, Tensor, optim
+from mindspore.nn import MSELoss
+from xuance.mindspore import ms, Module, Tensor, optim, ops
 from xuance.mindspore.learners import LearnerMAS
+from xuance.mindspore.utils import clip_grads
 from xuance.common import List
 from argparse import Namespace
+from operator import itemgetter
 
 
 class MATD3_Learner(LearnerMAS):
-    class ActorNetWithLossCell(Module):
-        def __init__(self, backbone, n_agents):
-            super(MATD3_Learner.ActorNetWithLossCell, self).__init__()
-            self._backbone = backbone
-            self._mean = ms.ops.ReduceMean(keep_dims=True)
-            self.n_agents = n_agents
-
-        def construct(self, bs, o, ids, agt_mask):
-            _, actions_eval = self._backbone(o, ids)
-            actions_n_eval = ms.ops.broadcast_to(actions_eval.view(bs, 1, -1), (-1, self.n_agents, -1))
-            _, policy_q = self._backbone.Qpolicy(o, actions_n_eval, ids)
-            loss_a = -policy_q.mean()
-            return loss_a
-
-    class CriticNetWithLossCell_A(Module):
-        def __init__(self, backbone):
-            super(MATD3_Learner.CriticNetWithLossCell_A, self).__init__()
-            self._backbone = backbone
-            self._loss = nn.MSELoss()
-
-        def construct(self, o, acts, ids, agt_mask, tar_q):
-            _, q_eval = self._backbone.Qaction_A(o, acts, ids)
-            td_error = (q_eval - tar_q) * agt_mask
-            loss_c = (td_error ** 2).sum() / agt_mask.sum()
-            return loss_c
-
-    class CriticNetWithLossCell_B(Module):
-        def __init__(self, backbone):
-            super(MATD3_Learner.CriticNetWithLossCell_B, self).__init__()
-            self._backbone = backbone
-            self._loss = nn.MSELoss()
-
-        def construct(self, o, acts, ids, agt_mask, tar_q):
-            _, q_eval = self._backbone.Qaction_B(o, acts, ids)
-            td_error = (q_eval - tar_q) * agt_mask
-            loss_c = (td_error ** 2).sum() / agt_mask.sum()
-            return loss_c
-
     def __init__(self,
                  config: Namespace,
                  model_keys: List[str],
                  agent_keys: List[str],
                  policy: Module):
-        self.gamma = gamma
-        self.tau = config.tau
-        self.delay = delay
-        self.sync_frequency = sync_frequency
-        self.mse_loss = nn.MSELoss()
         super(MATD3_Learner, self).__init__(config, model_keys, agent_keys, policy)
         self.optimizer = {
-            'actor': optimizer[0],
-            'critic_A': optimizer[1],
-            'critic_B': optimizer[2]
-        }
+            key: {
+                'actor': optim.Adam(params=self.policy.parameters_actor[key], lr=self.config.learning_rate_actor,
+                                    eps=1e-5),
+                'critic': optim.Adam(params=self.policy.parameters_critic[key], lr=self.config.learning_rate_critic,
+                                     eps=1e-5)}
+            for key in self.model_keys}
         self.scheduler = {
-            'actor': scheduler[0],
-            'critic_A': scheduler[1],
-            'critic_B': scheduler[2]
-        }
-        # define mindspore trainers
-        self.actor_loss_net = self.ActorNetWithLossCell(policy, self.n_agents)
-        self.actor_train = nn.TrainOneStepCell(self.actor_loss_net, self.optimizer['actor'])
-        self.actor_train.set_train()
-        self.critic_loss_net_A = self.CriticNetWithLossCell_A(policy)
-        self.critic_train_A = nn.TrainOneStepCell(self.critic_loss_net_A, self.optimizer['critic_A'])
-        self.critic_train_A.set_train()
-        self.critic_loss_net_B = self.CriticNetWithLossCell_B(policy)
-        self.critic_train_B = nn.TrainOneStepCell(self.critic_loss_net_B, self.optimizer['critic_B'])
-        self.critic_train_B.set_train()
+            key: {'actor': optim.lr_scheduler.LinearLR(self.optimizer[key]['actor'], start_factor=1.0,
+                                                       end_factor=0.5, total_iters=self.config.running_steps),
+                  'critic': optim.lr_scheduler.LinearLR(self.optimizer[key]['critic'], start_factor=1.0,
+                                                        end_factor=0.5, total_iters=self.config.running_steps)}
+            for key in self.model_keys}
+        self.gamma = config.gamma
+        self.tau = config.tau
+        self.mse_loss = MSELoss()
+        self.actor_update_delay = config.actor_update_delay
+        # Get gradient function
+        self.grad_fn_actor = {key: ms.value_and_grad(self.forward_fn_actor, None,
+                                                     self.optimizer[key]['actor'].parameters, has_aux=True)
+                              for key in self.model_keys}
+        self.grad_fn_critic = {key: ms.value_and_grad(self.forward_fn_critic, None,
+                                                      self.optimizer[key]['critic'].parameters, has_aux=True)
+                               for key in self.model_keys}
+        self.policy.set_train()
+
+    def forward_fn_actor(self, batch_size, obs, obs_joint, actions, ids, mask_values, agent_key):
+        _, actions_eval = self.policy(observation=obs, agent_ids=ids)
+        if self.use_parameter_sharing:
+            act_eval = actions_eval[agent_key].reshape(batch_size, self.n_agents, -1).reshape(batch_size, -1)
+        else:
+            a_joint = {k: actions_eval[k] if k == agent_key else actions[k] for k in self.agent_keys}
+            act_eval = ops.cat(itemgetter(*self.agent_keys)(a_joint), axis=-1).reshape(batch_size, -1)
+        _, _, q_policy = self.policy.Qpolicy(joint_observation=obs_joint, joint_actions=act_eval, agent_ids=ids,
+                                             agent_key=agent_key)
+        q_policy_i = q_policy[agent_key].reshape(-1)
+        loss_a = -(q_policy_i * mask_values).sum() / mask_values.sum()
+        return loss_a, q_policy_i
+
+    def forward_fn_critic(self, obs_joint, actions_joint, ids, mask_values, q_target, agent_key):
+        q_eval_A, q_eval_B, _ = self.policy.Qpolicy(joint_observation=obs_joint, joint_actions=actions_joint,
+                                                    agent_ids=ids)
+        q_eval_A_i, q_eval_B_i = q_eval_A[agent_key].reshape(-1), q_eval_B[agent_key].reshape(-1)
+        td_error_A = (q_eval_A_i - ops.stop_gradient(q_target)) * mask_values
+        td_error_B = (q_eval_B_i - ops.stop_gradient(q_target)) * mask_values
+        loss_c = ((td_error_A ** 2).sum() + (td_error_B ** 2).sum()) / mask_values.sum()
+        return loss_c, q_eval_A_i, q_eval_B_i
 
     def update(self, sample):
         self.iterations += 1
-        obs = Tensor(sample['obs'])
-        actions = Tensor(sample['actions'])
-        obs_next = Tensor(sample['obs_next'])
-        rewards = Tensor(sample['rewards'])
-        terminals = Tensor(sample['terminals']).view(-1, self.n_agents, 1)
-        agent_mask = Tensor(sample['agent_mask']).view(-1, self.n_agents, 1)
-        batch_size = obs.shape[0]
-        IDs = ops.broadcast_to(self.expand_dims(self.eye(self.n_agents, self.n_agents, ms.float32), 0),
-                               (batch_size, -1, -1))
+        info = {}
 
-        # train critic
-        actions_next = self.policy.target_actor(obs_next, IDs)
-        actions_next_n = ms.ops.broadcast_to(actions_next.view(batch_size, 1, -1), (-1, self.n_agents, -1))
-        _, target_q = self.policy.Qtarget(obs_next, actions_next_n, IDs)
-        q_target = rewards + (1 - terminals) * self.args.gamma * target_q
+        # prepare training data
+        sample_Tensor = self.build_training_data(sample,
+                                                 use_parameter_sharing=self.use_parameter_sharing,
+                                                 use_actions_mask=False)
+        batch_size = sample_Tensor['batch_size']
+        obs = sample_Tensor['obs']
+        actions = sample_Tensor['actions']
+        obs_next = sample_Tensor['obs_next']
+        rewards = sample_Tensor['rewards']
+        terminals = sample_Tensor['terminals']
+        agent_mask = sample_Tensor['agent_mask']
+        IDs = sample_Tensor['agent_ids']
+        if self.use_parameter_sharing:
+            key = self.model_keys[0]
+            bs = batch_size * self.n_agents
+            obs_joint = obs[key].reshape(batch_size, -1)
+            next_obs_joint = obs_next[key].reshape(batch_size, -1)
+            actions_joint = actions[key].reshape(batch_size, -1)
+            rewards[key] = rewards[key].reshape(batch_size * self.n_agents)
+            terminals[key] = terminals[key].reshape(batch_size * self.n_agents)
+        else:
+            bs = batch_size
+            obs_joint = ops.cat(itemgetter(*self.agent_keys)(obs), axis=-1).reshape(batch_size, -1)
+            next_obs_joint = ops.cat(itemgetter(*self.agent_keys)(obs_next), axis=-1).reshape(batch_size, -1)
+            actions_joint = ops.cat(itemgetter(*self.agent_keys)(actions), axis=-1).reshape(batch_size, -1)
 
-        actions_n = ms.ops.broadcast_to(actions.view(batch_size, 1, -1), (-1, self.n_agents, -1))
-        loss_c_A = self.critic_train_A(obs, actions_n, IDs, agent_mask, q_target)
-        loss_c_B = self.critic_train_B(obs, actions_n, IDs, agent_mask, q_target)
+        # get values
+        _, actions_next = self.policy.Atarget(next_observation=obs_next, agent_ids=IDs)
+        if self.use_parameter_sharing:
+            key = self.model_keys[0]
+            actions_next_joint = actions_next[key].reshape(batch_size, self.n_agents, -1).reshape(batch_size, -1)
+        else:
+            actions_next_joint = ops.cat(itemgetter(*self.model_keys)(actions_next), axis=-1).reshape(batch_size, -1)
 
-        # actor update
-        if self.iterations % self.delay == 0:
-            p_loss = self.actor_train(batch_size, obs, IDs, agent_mask)
+        q_next = self.policy.Qtarget(joint_observation=next_obs_joint, joint_actions=actions_next_joint, agent_ids=IDs)
+
+        # update critic(s)
+        for key in self.model_keys:
+            mask_values = agent_mask[key]
+            q_next_i = q_next[key].reshape(bs)
+            q_target = rewards[key] + (1 - terminals[key]) * self.gamma * q_next_i
+            (loss_c, q_eval_A_i, q_eval_B_i), grads_critic = self.grad_fn_critic[key](obs_joint, actions_joint, IDs,
+                                                                                      mask_values, q_target, key)
+            if self.use_grad_clip:
+                grads_critic = clip_grads(grads_critic, Tensor(-self.grad_clip_norm), Tensor(self.grad_clip_norm))
+            self.optimizer[key]['critic'](grads_critic)
+
+            self.scheduler[key]['critic'].step()
+            learning_rate_critic = self.scheduler[key]['critic'].get_last_lr()[0]
+
+            info.update({
+                f"{key}/learning_rate_critic": learning_rate_critic.asnumpy(),
+                f"{key}/loss_critic": loss_c.asnumpy(),
+                f"{key}/predictQ_A": q_eval_A_i.mean().asnumpy(),
+                f"{key}/predictQ_B": q_eval_B_i.mean().asnumpy()
+            })
+
+        # update actor(s)
+        if self.iterations % self.actor_update_delay == 0:
+            for key in self.model_keys:
+                mask_values = agent_mask[key]
+                # update actor
+                (loss_a, q_policy_i), grads_actor = self.grad_fn_actor[key](batch_size, obs, obs_joint, actions,
+                                                                            IDs, mask_values, key)
+                if self.use_grad_clip:
+                    grads_actor = clip_grads(grads_actor, Tensor(-self.grad_clip_norm), Tensor(self.grad_clip_norm))
+                self.optimizer[key]['actor'](grads_actor)
+
+                self.scheduler[key]['actor'].step()
+                learning_rate_actor = self.scheduler[key]['actor'].get_last_lr()[0]
+
+                info.update({
+                    f"{key}/learning_rate_actor": learning_rate_actor.asnumpy(),
+                    f"{key}/loss_actor": loss_a.asnumpy(),
+                    f"{key}/q_policy": q_policy_i.mean().asnumpy(),
+                })
             self.policy.soft_update(self.tau)
-
-        learning_rate_actor = self.scheduler['actor'](self.iterations).asnumpy()
-        learning_rate_critic_A = self.scheduler['critic_A'](self.iterations).asnumpy()
-        learning_rate_critic_B = self.scheduler['critic_B'](self.iterations).asnumpy()
-
-        info = {
-            "learning_rate_actor": learning_rate_actor,
-            "learning_rate_critic_A": learning_rate_critic_A,
-            "learning_rate_critic_B": learning_rate_critic_B,
-            "loss_critic_A": loss_c_A.asnumpy(),
-            "loss_critic_B": loss_c_B.asnumpy()
-        }
-
-        if self.iterations % self.delay == 0:
-            info["loss_actor"] = p_loss.asnumpy()
 
         return info

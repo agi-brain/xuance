@@ -1,7 +1,7 @@
 from .core import BasicQhead
 from .core import ActorNet
 from .core import CategoricalActorNet
-# from .core import CategoricalActorNet_SAC
+from .core import CategoricalActorNet_SAC
 from .core import GaussianActorNet
 from .core import CriticNet
 from .core import GaussianActorNet_SAC
@@ -39,8 +39,8 @@ from .deterministic_marl import MFQnetwork, MixingQnetwork, Weighted_MixingQnetw
 from .categorical_marl import MeanFieldActorCriticPolicy, COMA_Policy
 from .categorical_marl import MAAC_Policy as Categorical_MAAC_Policy
 from .categorical_marl import MAAC_Policy_Share as Categorical_MAAC_Policy_Share
-# from .gaussian_marl import Basic_ISAC_Policy as Gaussian_ISAC
-# from .gaussian_marl import MASAC_Policy as Gaussian_MASAC
+from .gaussian_marl import Basic_ISAC_Policy as Gaussian_ISAC
+from .gaussian_marl import MASAC_Policy as Gaussian_MASAC
 from .gaussian_marl import MAAC_Policy as Gaussain_MAAC
 
 Mixer = {
@@ -86,22 +86,22 @@ REGISTRY_Policy = {
     "MF_Q_network": MFQnetwork,
     "Categorical_MFAC_Policy": MeanFieldActorCriticPolicy,
     "Gaussian_MAAC_Policy": Gaussain_MAAC,
-    # "Gaussian_ISAC_Policy": Gaussian_ISAC,
-    # "Gaussian_MASAC_Policy": Gaussian_MASAC,
+    "Gaussian_ISAC_Policy": Gaussian_ISAC,
+    "Gaussian_MASAC_Policy": Gaussian_MASAC,
     "MATD3_Policy": MATD3_Policy
 }
 
-# __all__ = [
-#     "REGISTRY_Policy", "Mixer",
-#     "ActorNet", "CategoricalActorNet", "CategoricalActorNet_SAC", "GaussianActorNet", "GaussianActorNet_SAC",
-#     "BasicQhead", "CriticNet", "GaussianActorNet_SAC",
-#     "VDN_mixer", "QMIX_mixer", "QMIX_FF_mixer", "QTRAN_base", "QTRAN_alt",
-#     "Categorical_AC_Policy", "Categorical_Actor_Policy", "Categorical_PPG_Policy", "Categorical_SAC_Policy",
-#     "Gaussian_AC_Policy", "Gaussian_Actor_Policy", "Gaussian_PPG_Policy", "Gaussian_SAC_Policy",
-#     "BasicQnetwork", "DuelQnetwork", "NoisyQnetwork", "C51Qnetwork", "QRDQN_Network", "DDPGPolicy", "TD3Policy",
-#     "PDQNPolicy", "MPDQNPolicy", "SPDQNPolicy", "DRQNPolicy",
-#     "BasicQnetwork_marl", "MFQnetwork", "MixingQnetwork", "Weighted_MixingQnetwork", "Qtran_MixingQnetwork",
-#     "DCG_policy", "Independent_DDPG_Policy", "MADDPG_Policy", "MATD3_Policy",
-#     "MeanFieldActorCriticPolicy", "COMA_Policy", "Categorical_MAAC_Policy", "Categorical_MAAC_Policy_Share",
-#     "Gaussian_ISAC", "Gaussian_MASAC", "Gaussain_MAAC",
-# ]
+__all__ = [
+    "REGISTRY_Policy", "Mixer",
+    "ActorNet", "CategoricalActorNet", "CategoricalActorNet_SAC", "GaussianActorNet", "GaussianActorNet_SAC",
+    "BasicQhead", "CriticNet", "GaussianActorNet_SAC",
+    "VDN_mixer", "QMIX_mixer", "QMIX_FF_mixer", "QTRAN_base", "QTRAN_alt",
+    "Categorical_AC_Policy", "Categorical_Actor_Policy", "Categorical_PPG_Policy", "Categorical_SAC_Policy",
+    "Gaussian_AC_Policy", "Gaussian_Actor_Policy", "Gaussian_PPG_Policy", "Gaussian_SAC_Policy",
+    "BasicQnetwork", "DuelQnetwork", "NoisyQnetwork", "C51Qnetwork", "QRDQN_Network", "DDPGPolicy", "TD3Policy",
+    "PDQNPolicy", "MPDQNPolicy", "SPDQNPolicy", "DRQNPolicy",
+    "BasicQnetwork_marl", "MFQnetwork", "MixingQnetwork", "Weighted_MixingQnetwork", "Qtran_MixingQnetwork",
+    "DCG_policy", "Independent_DDPG_Policy", "MADDPG_Policy", "MATD3_Policy",
+    "MeanFieldActorCriticPolicy", "COMA_Policy", "Categorical_MAAC_Policy", "Categorical_MAAC_Policy_Share",
+    "Gaussian_ISAC", "Gaussian_MASAC", "Gaussain_MAAC",
+]

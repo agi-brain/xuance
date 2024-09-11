@@ -127,8 +127,8 @@ class MATD3_Learner(LearnerMAS):
                     f"{key}/loss_actor": loss_a.item(),
                     f"{key}/q_policy": q_policy_i.mean().item(),
                 })
+            self.policy.soft_update(self.tau)
 
-        self.policy.soft_update(self.tau)
         return info
 
     def update_rnn(self, sample):
@@ -239,6 +239,6 @@ class MATD3_Learner(LearnerMAS):
                     f"{key}/loss_actor": loss_a.item(),
                     f"{key}/q_policy": q_policy_i.mean().item(),
                 })
+            self.policy.soft_update(self.tau)
 
-        self.policy.soft_update(self.tau)
         return info

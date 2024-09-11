@@ -81,11 +81,11 @@ class ISAC_Agents(OffPolicyMARLAgents):
 
         if self.use_parameter_sharing:
             key = self.model_keys[0]
-            actions[key] = tf.reshape(actions[key], [batch_size, self.n_agents, -1]).numpy()
+            actions[key] = actions[key].reshape([batch_size, self.n_agents, -1]).asnumpy()
             actions_dict = [{k: actions[key][e, i] for i, k in enumerate(self.agent_keys)} for e in range(batch_size)]
         else:
             for key in self.agent_keys:
-                actions[key] = tf.reshape(actions[key], [batch_size, -1]).numpy()
+                actions[key] = actions[key].reshape([batch_size, -1]).asnumpy()
             actions_dict = [{k: actions[k][i] for k in self.agent_keys} for i in range(batch_size)]
 
         return {"hidden_state": hidden_state, "actions": actions_dict}

@@ -184,6 +184,10 @@ class Basic_ISAC_Policy(Module):
                                                    normalize, initialize, activation, activation_action)
             self.critic_1[key] = CriticNet(dim_critic_in, critic_hidden_size, normalize, initialize, activation)
             self.critic_2[key] = CriticNet(dim_critic_in, critic_hidden_size, normalize, initialize, activation)
+            # Update parameters name
+            self.actor[key].update_parameters_name(key + '_actor_')
+            self.critic_1[key].update_parameters_name(key + '_critic_1_')
+            self.critic_2[key].update_parameters_name(key + '_critic_2_')
         self.target_critic_1 = deepcopy(self.critic_1)
         self.target_critic_2 = deepcopy(self.critic_2)
 
@@ -191,17 +195,18 @@ class Basic_ISAC_Policy(Module):
     def parameters_actor(self):
         parameters_actor = {}
         for key in self.model_keys:
-            parameters_actor[key] = list(self.actor_representation[key].parameters()) + list(
-                self.actor[key].parameters())
+            parameters_actor[key] = list(self.actor_representation[key].trainable_params()) + \
+                                    list(self.actor[key].trainable_params())
         return parameters_actor
 
     @property
     def parameters_critic(self):
         parameters_critic = {}
         for key in self.model_keys:
-            parameters_critic[key] = list(self.critic_1_representation[key].parameters()) + list(
-                self.critic_1[key].parameters()) + list(self.critic_2_representation[key].parameters()) + list(
-                self.critic_2[key].parameters())
+            parameters_critic[key] = list(self.critic_1_representation[key].trainable_params()) + \
+                                     list(self.critic_1[key].trainable_params()) + \
+                                     list(self.critic_2_representation[key].trainable_params()) + \
+                                     list(self.critic_2[key].trainable_params())
         return parameters_critic
 
     def _get_actor_critic_input(self, dim_actor_rep, dim_action, dim_critic_rep, n_agents):
