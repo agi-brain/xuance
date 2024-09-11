@@ -90,7 +90,7 @@ class ActorCriticPolicy(Module):
         """
         outputs = self.representation(observation)
         a = self.actor(outputs['state'])
-        v = self.critic(outputs['state'])
+        v = self.critic(outputs['state'])[:, 0]
         return outputs, a, v
 
 
@@ -146,8 +146,8 @@ class PPGActorCritic(Module):
         policy_outputs = self.actor_representation(observation)
         critic_outputs = self.critic_representation(observation)
         a_dist = self.actor(policy_outputs['state'])
-        value = self.critic(critic_outputs['state'])
-        aux_value = self.aux_critic(policy_outputs['state'])
+        value = self.critic(critic_outputs['state'])[:, 0]
+        aux_value = self.aux_critic(policy_outputs['state'])[:, 0]
         return policy_outputs, a_dist, value, aux_value
 
 
