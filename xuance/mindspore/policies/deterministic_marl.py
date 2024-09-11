@@ -872,10 +872,10 @@ class MADDPG_Policy(Independent_DDPG_Policy):
         for key in agent_list:
             if self.use_parameter_sharing:
                 if self.use_rnn:
-                    joint_rep_out = outputs[key]['state'].unsqueeze(1).expand(-1, self.n_agents, -1, -1)
+                    joint_rep_out = outputs[key]['state'].unsqueeze(1).broadcast_to((-1, self.n_agents, -1, -1))
                     joint_rep_out = joint_rep_out.reshape(bs, seq_len, -1)
                 else:
-                    joint_rep_out = outputs[key]['state'].unsqueeze(1).expand(-1, self.n_agents, -1)
+                    joint_rep_out = outputs[key]['state'].unsqueeze(1).broadcast_to((-1, self.n_agents, -1))
                     joint_rep_out = joint_rep_out.reshape(bs, -1)
                 critic_in = ops.cat([joint_rep_out, agent_ids], axis=-1)
             else:
@@ -921,10 +921,10 @@ class MADDPG_Policy(Independent_DDPG_Policy):
         for key in agent_list:
             if self.use_parameter_sharing:
                 if self.use_rnn:
-                    joint_rep_out = outputs[key]['state'].unsqueeze(1).expand(-1, self.n_agents, -1, -1)
+                    joint_rep_out = outputs[key]['state'].unsqueeze(1).broadcast_to((-1, self.n_agents, -1, -1))
                     joint_rep_out = joint_rep_out.reshape(bs, seq_len, -1)
                 else:
-                    joint_rep_out = outputs[key]['state'].unsqueeze(1).expand(-1, self.n_agents, -1)
+                    joint_rep_out = outputs[key]['state'].unsqueeze(1).broadcast_to((-1, self.n_agents, -1))
                     joint_rep_out = joint_rep_out.reshape(bs, -1)
                 critic_in = ops.cat([joint_rep_out, agent_ids], axis=-1)
             else:
@@ -1031,13 +1031,13 @@ class MATD3_Policy(MADDPG_Policy, Module):
         for key in agent_list:
             if self.use_parameter_sharing:
                 if self.use_rnn:
-                    joint_rep_out_A = outputs_A[key]['state'].unsqueeze(1).expand(-1, self.n_agents, -1, -1)
-                    joint_rep_out_B = outputs_B[key]['state'].unsqueeze(1).expand(-1, self.n_agents, -1, -1)
+                    joint_rep_out_A = outputs_A[key]['state'].unsqueeze(1).broadcast_to((-1, self.n_agents, -1, -1))
+                    joint_rep_out_B = outputs_B[key]['state'].unsqueeze(1).broadcast_to((-1, self.n_agents, -1, -1))
                     joint_rep_out_A = joint_rep_out_A.reshape(bs, seq_len, -1)
                     joint_rep_out_B = joint_rep_out_B.reshape(bs, seq_len, -1)
                 else:
-                    joint_rep_out_A = outputs_A[key]['state'].unsqueeze(1).expand(-1, self.n_agents, -1)
-                    joint_rep_out_B = outputs_B[key]['state'].unsqueeze(1).expand(-1, self.n_agents, -1)
+                    joint_rep_out_A = outputs_A[key]['state'].unsqueeze(1).broadcast_to((-1, self.n_agents, -1))
+                    joint_rep_out_B = outputs_B[key]['state'].unsqueeze(1).broadcast_to((-1, self.n_agents, -1))
                     joint_rep_out_A = joint_rep_out_A.reshape(bs, -1)
                     joint_rep_out_B = joint_rep_out_B.reshape(bs, -1)
                 critic_in_A = ops.cat([joint_rep_out_A, agent_ids], axis=-1)
@@ -1091,13 +1091,13 @@ class MATD3_Policy(MADDPG_Policy, Module):
         for key in agent_list:
             if self.use_parameter_sharing:
                 if self.use_rnn:
-                    joint_rep_out_A = outputs_A[key]['state'].unsqueeze(1).expand(-1, self.n_agents, -1, -1)
-                    joint_rep_out_B = outputs_B[key]['state'].unsqueeze(1).expand(-1, self.n_agents, -1, -1)
+                    joint_rep_out_A = outputs_A[key]['state'].unsqueeze(1).broadcast_to((-1, self.n_agents, -1, -1))
+                    joint_rep_out_B = outputs_B[key]['state'].unsqueeze(1).broadcast_to((-1, self.n_agents, -1, -1))
                     joint_rep_out_A = joint_rep_out_A.reshape(bs, seq_len, -1)
                     joint_rep_out_B = joint_rep_out_B.reshape(bs, seq_len, -1)
                 else:
-                    joint_rep_out_A = outputs_A[key]['state'].unsqueeze(1).expand(-1, self.n_agents, -1)
-                    joint_rep_out_B = outputs_B[key]['state'].unsqueeze(1).expand(-1, self.n_agents, -1)
+                    joint_rep_out_A = outputs_A[key]['state'].unsqueeze(1).broadcast_to((-1, self.n_agents, -1))
+                    joint_rep_out_B = outputs_B[key]['state'].unsqueeze(1).broadcast_to((-1, self.n_agents, -1))
                     joint_rep_out_A = joint_rep_out_A.reshape(bs, -1)
                     joint_rep_out_B = joint_rep_out_B.reshape(bs, -1)
                 critic_in_A = ops.cat([joint_rep_out_A, agent_ids], axis=-1)

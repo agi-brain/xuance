@@ -8,7 +8,6 @@ from xuance.mindspore.learners import LearnerMAS
 from xuance.mindspore.utils import clip_grads
 from xuance.common import List
 from argparse import Namespace
-from operator import itemgetter
 
 
 class IDDPG_Learner(LearnerMAS):
@@ -34,6 +33,7 @@ class IDDPG_Learner(LearnerMAS):
         self.gamma = config.gamma
         self.tau = config.tau
         self.mse_loss = MSELoss()
+        # Get gradient function
         self.grad_fn_actor = {key: ms.value_and_grad(self.forward_fn_actor, None,
                                                      self.optimizer[key]['actor'].parameters, has_aux=True)
                               for key in self.model_keys}
@@ -109,9 +109,9 @@ class IDDPG_Learner(LearnerMAS):
             info.update({
                 f"{key}/learning_rate_actor": learning_rate_actor.asnumpy(),
                 f"{key}/learning_rate_critic": learning_rate_critic.asnumpy(),
-                f"{key}/loss_actor": loss_a.numpy(),
-                f"{key}/loss_critic": loss_c.numpy(),
-                f"{key}/predictQ": q_eval_a.mean().numpy()
+                f"{key}/loss_actor": loss_a.asnumpy(),
+                f"{key}/loss_critic": loss_c.asnumpy(),
+                f"{key}/predictQ": q_eval_a.mean().asnumpy()
             })
 
         self.policy.soft_update(self.tau)
