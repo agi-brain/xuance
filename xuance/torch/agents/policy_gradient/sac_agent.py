@@ -3,6 +3,7 @@ import numpy as np
 from argparse import Namespace
 from xuance.common import Optional
 from xuance.environment import DummyVecEnv
+from xuance.torch import Module
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.policies import REGISTRY_Policy
 from xuance.torch.agents import OffPolicyAgent
@@ -25,7 +26,7 @@ class SAC_Agent(OffPolicyAgent):
         self.memory = self._build_memory()  # build memory
         self.learner = self._build_learner(self.config, self.policy, -np.prod(self.action_space.shape).item())
 
-    def _build_policy(self):
+    def _build_policy(self) -> Module:
         normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
         initializer = torch.nn.init.orthogonal_
         activation = ActivationFunctions[self.config.activation]

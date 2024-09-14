@@ -1,7 +1,7 @@
 from argparse import Namespace
 from xuance.common import List, Optional
 from xuance.environment import DummyVecMultiAgentEnv
-from xuance.tensorflow import tf
+from xuance.tensorflow import tf, Module
 from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
 from xuance.tensorflow.policies import REGISTRY_Policy
 from xuance.tensorflow.agents import OffPolicyMARLAgents
@@ -24,7 +24,7 @@ class ISAC_Agents(OffPolicyMARLAgents):
         self.memory = self._build_memory()  # build memory
         self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, self.policy)
 
-    def _build_policy(self):
+    def _build_policy(self) -> Module:
         """
         Build representation(s) and policy(ies) for agent(s)
 

@@ -6,7 +6,7 @@ from argparse import Namespace
 from gym import spaces
 from xuance.common import DummyOffPolicyBuffer
 from xuance.environment.single_agent_env import Gym_Env
-from xuance.tensorflow import tk
+from xuance.tensorflow import tk, Module
 from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions
 from xuance.tensorflow.policies import REGISTRY_Policy
 from xuance.tensorflow.agents import Agent
@@ -63,7 +63,7 @@ class SPDQN_Agent(PDQN_Agent, Agent):
         self.conact_sizes = np.array([self.action_space.spaces[i].shape[0] for i in range(1, self.num_disact + 1)])
         self.conact_size = int(self.conact_sizes.sum())
 
-    def _build_policy(self):
+    def _build_policy(self) -> Module:
         normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
         initializer = tk.initializers.orthogonal
         activation = ActivationFunctions[self.config.activation]

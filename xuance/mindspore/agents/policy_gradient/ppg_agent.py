@@ -3,7 +3,7 @@ from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
 from xuance.environment import DummyVecEnv
-from xuance.mindspore import ms
+from xuance.mindspore import Module
 from xuance.mindspore.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
 from xuance.mindspore.policies import REGISTRY_Policy
 from xuance.mindspore.agents import OnPolicyAgent
@@ -32,7 +32,7 @@ class PPG_Agent(OnPolicyAgent):
         self.policy = self._build_policy()  # build policy
         self.learner = self._build_learner(self.config, self.policy)  # build learner.
 
-    def _build_policy(self):
+    def _build_policy(self) -> Module:
         normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
         initializer = InitializeFunctions[self.config.initialize] if hasattr(self.config, "initialize") else None
         activation = ActivationFunctions[self.config.activation]

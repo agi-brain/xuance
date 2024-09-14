@@ -1,5 +1,6 @@
 from argparse import Namespace
 from xuance.environment import DummyVecMultiAgentEnv
+from xuance.mindspore import Module
 from xuance.mindspore.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
 from xuance.mindspore.policies import REGISTRY_Policy
 from xuance.mindspore.agents import OffPolicyMARLAgents
@@ -26,7 +27,7 @@ class IQL_Agents(OffPolicyMARLAgents):
         self.memory = self._build_memory()  # build memory
         self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, self.policy)
 
-    def _build_policy(self):
+    def _build_policy(self) -> Module:
         """
         Build representation(s) and policy(ies) for agent(s)
 

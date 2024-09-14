@@ -205,10 +205,10 @@ class Agent(ABC):
             raise AttributeError(f"{representation_key} is not registered in REGISTRY_Representation.")
         return representation
 
-    def _build_policy(self):
+    def _build_policy(self) -> Module:
         raise NotImplementedError
 
-    def _build_learner(self, *args):
+    def _build_learner(self, *args) -> Module:
         return REGISTRY_Learners[self.config.learner](*args)
 
     def action(self, observations):

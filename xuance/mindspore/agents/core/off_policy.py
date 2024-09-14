@@ -4,6 +4,7 @@ from copy import deepcopy
 from argparse import Namespace
 from xuance.common import Optional, DummyOffPolicyBuffer, DummyOffPolicyBuffer_Atari
 from xuance.environment import DummyVecEnv
+from xuance.mindspore import Module
 from xuance.mindspore.agents.base import Agent
 
 
@@ -44,7 +45,7 @@ class OffPolicyAgent(Agent):
                             batch_size=self.config.batch_size)
         return Buffer(**input_buffer)
 
-    def _build_policy(self):
+    def _build_policy(self) -> Module:
         raise NotImplementedError
 
     def _update_explore_factor(self):

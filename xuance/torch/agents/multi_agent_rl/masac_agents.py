@@ -1,6 +1,7 @@
 import torch
 from argparse import Namespace
 from xuance.environment import DummyVecMultiAgentEnv
+from xuance.torch import Module
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.policies import REGISTRY_Policy
 from xuance.torch.agents.multi_agent_rl.isac_agents import ISAC_Agents
@@ -18,7 +19,7 @@ class MASAC_Agents(ISAC_Agents):
                  envs: DummyVecMultiAgentEnv):
         super(MASAC_Agents, self).__init__(config, envs)
 
-    def _build_policy(self):
+    def _build_policy(self) -> Module:
         """
         Build representation(s) and policy(ies) for agent(s)
 

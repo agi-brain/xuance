@@ -1,5 +1,6 @@
 from argparse import Namespace
 from xuance.environment import DummyVecEnv
+from xuance.tensorflow import Module
 from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
 from xuance.tensorflow.policies import REGISTRY_Policy
 from xuance.tensorflow.agents.policy_gradient.ddpg_agent import DDPG_Agent
@@ -17,7 +18,7 @@ class TD3_Agent(DDPG_Agent):
                  envs: DummyVecEnv):
         super(TD3_Agent, self).__init__(config, envs)
 
-    def _build_policy(self):
+    def _build_policy(self) -> Module:
         normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
         initializer = InitializeFunctions[self.config.initialize] if hasattr(self.config, "initialize") else None
         activation = ActivationFunctions[self.config.activation]

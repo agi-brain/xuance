@@ -5,6 +5,7 @@ from xuance.common import Optional
 from argparse import Namespace
 from xuance.environment import DummyVecEnv
 from xuance.common import DummyOffPolicyBuffer, DummyOffPolicyBuffer_Atari
+from xuance.tensorflow import Module
 from xuance.tensorflow.agents.base import Agent
 
 
@@ -45,7 +46,7 @@ class OffPolicyAgent(Agent):
                             batch_size=self.config.batch_size)
         return Buffer(**input_buffer)
 
-    def _build_policy(self):
+    def _build_policy(self) -> Module:
         raise NotImplementedError
 
     def _update_explore_factor(self):

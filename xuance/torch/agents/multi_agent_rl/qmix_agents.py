@@ -1,6 +1,7 @@
 import torch
 from argparse import Namespace
 from xuance.environment import DummyVecMultiAgentEnv
+from xuance.torch import Module
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.policies import REGISTRY_Policy, QMIX_mixer
 from xuance.torch.agents import OffPolicyMARLAgents
@@ -29,7 +30,7 @@ class QMIX_Agents(OffPolicyMARLAgents):
         self.memory = self._build_memory()  # build memory
         self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, self.policy)
 
-    def _build_policy(self):
+    def _build_policy(self) -> Module:
         """
         Build representation(s) and policy(ies) for agent(s)
 

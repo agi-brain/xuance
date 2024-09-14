@@ -5,6 +5,7 @@ from argparse import Namespace
 from operator import itemgetter
 from xuance.common import MARL_OnPolicyBuffer, MARL_OnPolicyBuffer_RNN, Optional, List, Union
 from xuance.environment import DummyVecMultiAgentEnv
+from xuance.tensorflow import Module
 from xuance.tensorflow.agents.base import MARLAgents
 
 
@@ -50,7 +51,7 @@ class OnPolicyMARLAgents(MARLAgents):
         Buffer = MARL_OnPolicyBuffer_RNN if self.use_rnn else MARL_OnPolicyBuffer
         return Buffer(**input_buffer)
 
-    def _build_policy(self):
+    def _build_policy(self) -> Module:
         raise NotImplementedError
 
     def store_experience(self, obs_dict, avail_actions, actions_dict, log_pi_a, rewards_dict, values_dict,

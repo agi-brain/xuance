@@ -12,7 +12,7 @@ from torch import nn
 from torch.utils.tensorboard import SummaryWriter
 from xuance.common import get_time_string, create_directory, space2shape, Optional, List, Dict, Union
 from xuance.environment import DummyVecMultiAgentEnv
-from xuance.torch import ModuleDict, REGISTRY_Representation, REGISTRY_Learners
+from xuance.torch import ModuleDict, REGISTRY_Representation, REGISTRY_Learners, Module
 from xuance.torch.learners import learner
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 
@@ -141,7 +141,7 @@ class MARLAgents(ABC):
                 
     def _build_representation(self, representation_key: str,
                               input_space: Union[Dict[str, Space], tuple],
-                              config: Namespace):
+                              config: Namespace) -> Module:
         """
         Build representation for policies.
 
@@ -181,10 +181,10 @@ class MARLAgents(ABC):
                 raise AttributeError(f"{representation_key} is not registered in REGISTRY_Representation.")
         return representation
 
-    def _build_policy(self):
+    def _build_policy(self) -> Module:
         raise NotImplementedError
 
-    def _build_learner(self, *args):
+    def _build_learner(self, *args) -> Module:
         return REGISTRY_Learners[self.config.learner](*args)
 
     def _build_inputs(self,

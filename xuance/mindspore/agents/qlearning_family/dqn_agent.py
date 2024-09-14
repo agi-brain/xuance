@@ -1,5 +1,6 @@
 from argparse import Namespace
 from xuance.environment import DummyVecEnv
+from xuance.mindspore import Module
 from xuance.mindspore.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
 from xuance.mindspore.policies import REGISTRY_Policy
 from xuance.mindspore.agents import OffPolicyAgent
@@ -24,7 +25,7 @@ class DQN_Agent(OffPolicyAgent):
         self.memory = self._build_memory()  # build memory
         self.learner = self._build_learner(self.config, self.policy)  # build learner
 
-    def _build_policy(self):
+    def _build_policy(self) -> Module:
         normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
         initializer = InitializeFunctions[self.config.initialize] if hasattr(self.config, "initialize") else None
         activation = ActivationFunctions[self.config.activation]

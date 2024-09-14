@@ -179,7 +179,7 @@ class Agent(ABC):
 
     def _build_representation(self, representation_key: str,
                               input_space: Optional[Space],
-                              config: Namespace):
+                              config: Namespace) -> Module:
         """
         Build representation for policies.
 
@@ -207,7 +207,7 @@ class Agent(ABC):
             raise AttributeError(f"{representation_key} is not registered in REGISTRY_Representation.")
         return representation
 
-    def _build_policy(self):
+    def _build_policy(self) -> Module:
         raise NotImplementedError
 
     def _build_learner(self, *args):

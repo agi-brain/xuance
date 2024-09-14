@@ -3,7 +3,7 @@ from argparse import Namespace
 from operator import itemgetter
 from xuance.common import Optional, List
 from xuance.environment import DummyVecMultiAgentEnv
-from xuance.mindspore import Tensor
+from xuance.mindspore import Tensor, Module
 from xuance.mindspore.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
 from xuance.mindspore.policies import REGISTRY_Policy
 from xuance.mindspore.agents.multi_agent_rl.ippo_agents import IPPO_Agents
@@ -22,7 +22,7 @@ class MAPPO_Agents(IPPO_Agents):
                  envs: DummyVecMultiAgentEnv):
         super(MAPPO_Agents, self).__init__(config, envs)
 
-    def _build_policy(self):
+    def _build_policy(self) -> Module:
         """
         Build representation(s) and policy(ies) for agent(s)
 

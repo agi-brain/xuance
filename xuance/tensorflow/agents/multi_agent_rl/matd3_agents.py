@@ -1,5 +1,6 @@
 from argparse import Namespace
 from xuance.environment import DummyVecMultiAgentEnv
+from xuance.tensorflow import Module
 from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
 from xuance.tensorflow.policies import REGISTRY_Policy
 from xuance.tensorflow.agents.multi_agent_rl.iddpg_agents import IDDPG_Agents
@@ -18,7 +19,7 @@ class MATD3_Agents(IDDPG_Agents):
                  envs: DummyVecMultiAgentEnv):
         super(MATD3_Agents, self).__init__(config, envs)
 
-    def _build_policy(self):
+    def _build_policy(self) -> Module:
         """
         Build representation(s) and policy(ies) for agent(s)
 

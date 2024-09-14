@@ -1,6 +1,7 @@
 import torch
 from argparse import Namespace
 from xuance.environment import DummyVecEnv
+from xuance.torch import Module
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.policies import REGISTRY_Policy
 from xuance.torch.agents import OffPolicyAgent
@@ -26,7 +27,7 @@ class DQN_Agent(OffPolicyAgent):
         self.memory = self._build_memory()  # build memory
         self.learner = self._build_learner(self.config, self.policy)  # build learner
 
-    def _build_policy(self):
+    def _build_policy(self) -> Module:
         normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
         initializer = torch.nn.init.orthogonal_
         activation = ActivationFunctions[self.config.activation]

@@ -4,6 +4,7 @@ from copy import deepcopy
 from argparse import Namespace
 from xuance.common import Optional, DummyOnPolicyBuffer, DummyOnPolicyBuffer_Atari
 from xuance.environment import DummyVecEnv
+from xuance.mindspore import Module
 from xuance.mindspore.utils import split_distributions
 from xuance.mindspore.agents.base import Agent
 
@@ -42,7 +43,7 @@ class OnPolicyAgent(Agent):
                             gae_lam=self.gae_lam)
         return Buffer(**input_buffer)
 
-    def _build_policy(self):
+    def _build_policy(self) -> Module:
         raise NotImplementedError
 
     def get_terminated_values(self, observations_next: np.ndarray, rewards: np.ndarray = None):

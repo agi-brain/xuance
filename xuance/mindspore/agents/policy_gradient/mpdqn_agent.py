@@ -1,5 +1,6 @@
 from argparse import Namespace
 from xuance.environment.single_agent_env import Gym_Env
+from xuance.mindspore import Module
 from xuance.mindspore.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
 from xuance.mindspore.policies import REGISTRY_Policy
 from xuance.mindspore.agents.policy_gradient.pdqn_agent import PDQN_Agent
@@ -17,7 +18,7 @@ class MPDQN_Agent(PDQN_Agent):
                  envs: Gym_Env):
         super(MPDQN_Agent, self).__init__(config, envs)
 
-    def _build_policy(self):
+    def _build_policy(self) -> Module:
         normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
         initializer = InitializeFunctions[self.config.initialize] if hasattr(self.config, "initialize") else None
         activation = ActivationFunctions[self.config.activation]

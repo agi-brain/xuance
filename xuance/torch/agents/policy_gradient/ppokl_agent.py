@@ -3,6 +3,7 @@ from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
 from xuance.environment import DummyVecEnv
+from xuance.torch import Module
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.policies import REGISTRY_Policy
 from xuance.torch.agents import OnPolicyAgent
@@ -24,7 +25,7 @@ class PPOKL_Agent(OnPolicyAgent):
         self.policy = self._build_policy()  # build policy
         self.learner = self._build_learner(self.config, self.policy)  # build learner
 
-    def _build_policy(self):
+    def _build_policy(self) -> Module:
         normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
         initializer = torch.nn.init.orthogonal_
         activation = ActivationFunctions[self.config.activation]
