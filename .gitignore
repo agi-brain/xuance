@@ -20,6 +20,8 @@ wandb/
 debug.py
 debug_marl.py
 debug_ddp.py
+.debug_ddp.py.swp
+dataset/
 
 demo_mindspore.py
 mnist.npz
