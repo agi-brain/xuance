@@ -5,9 +5,9 @@ Implementation: Pytorch
 """
 import torch
 from torch import nn
-from xuance.torch.learners import Learner
 from argparse import Namespace
-from torch.utils.data.distributed import DistributedSampler
+from xuance.torch.learners import Learner
+from torch.utils.data import DataLoader, DistributedSampler
 from torch.nn.parallel import DistributedDataParallel
 
 
@@ -72,9 +72,6 @@ class DQN_Learner(Learner):
         next_batch = samples['obs_next']
         rew_batch = torch.as_tensor(samples['rewards'], device=self.device)
         ter_batch = torch.as_tensor(samples['terminals'], device=self.device)
-
-        # shuffle samples
-
 
         _, _, evalQ = self.policy.module(obs_batch)
         _, _, targetQ = self.policy.module.target(next_batch)
