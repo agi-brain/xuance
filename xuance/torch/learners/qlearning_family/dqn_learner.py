@@ -3,7 +3,6 @@ Deep Q-Network (DQN)
 Paper link: https://www.nature.com/articles/nature14236
 Implementation: Pytorch
 """
-import os
 import torch
 from torch import nn
 from argparse import Namespace

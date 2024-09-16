@@ -36,6 +36,7 @@ class Agent(ABC):
             torch.backends.cudnn.deterministic = True
             torch.backends.cudnn.benchmark = False
             init_distributed_mode(config)
+            torch.cuda.set_device(config.local_rank)
 
         self.gamma = config.gamma
         self.start_training = config.start_training if hasattr(config, "start_training") else 1
