@@ -73,7 +73,7 @@ class DQN_Learner(Learner):
         rew_batch = torch.as_tensor(samples['rewards'], device=self.device)
         ter_batch = torch.as_tensor(samples['terminals'], device=self.device)
 
-        _, _, evalQ = self.policy.module(obs_batch)
+        _, _, evalQ = self.policy(obs_batch)
         _, _, targetQ = self.policy.module.target(next_batch)
         targetQ = targetQ.max(dim=-1).values
         targetQ = rew_batch + self.gamma * (1 - ter_batch) * targetQ
@@ -83,7 +83,7 @@ class DQN_Learner(Learner):
         self.optimizer.zero_grad()
         loss.backward()
         if self.use_grad_clip:
-            torch.nn.utils.clip_grad_norm_(self.policy.module.parameters(), self.grad_clip_norm)
+            torch.nn.utils.clip_grad_norm_(self.policy.parameters(), self.grad_clip_norm)
         self.optimizer.step()
         if self.scheduler is not None:
             self.scheduler.step()
