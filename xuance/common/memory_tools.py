@@ -370,6 +370,7 @@ class DummyOffPolicyBuffer(Buffer):
             'obs_next': sample_batch(self.next_observations, tuple([env_choices, step_choices])),
             'rewards': sample_batch(self.rewards, tuple([env_choices, step_choices])),
             'terminals': sample_batch(self.terminals, tuple([env_choices, step_choices])),
+            'batch_size': self.batch_size,
         }
         return samples_dict
 
@@ -449,6 +450,7 @@ class RecurrentOffPolicyBuffer(Buffer):
             'actions': np.array(act_batch),
             'rewards': np.array(rew_batch),
             'terminals': np.array(terminal_batch),
+            'batch_size': self.batch_size,
         }
         return samples_dict
 
@@ -564,6 +566,7 @@ class PerOffPolicyBuffer(Buffer):
             'terminals': sample_batch(self.terminals, tuple([env_choices, step_choices.flatten()])),
             'weights': weights,
             'step_choices': step_choices,
+            'batch_size': self.batch_size,
         }
 
         # return tuple(list(encoded_sample) + [weights, idxes])

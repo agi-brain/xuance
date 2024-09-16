@@ -25,6 +25,7 @@ class Learner(ABC):
         self.optimizer: Union[dict, list, Optional[torch.optim.Optimizer]] = None
         self.scheduler: Union[dict, list, Optional[torch.optim.lr_scheduler.LinearLR]] = None
 
+        self.use_ddp = config.use_ddp
         self.use_grad_clip = config.use_grad_clip
         self.grad_clip_norm = config.grad_clip_norm
         self.device = config.device

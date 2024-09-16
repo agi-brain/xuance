@@ -1,10 +1,14 @@
+import os
+import torch
 import numpy as np
 from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
+from torch.utils.data import DataLoader, DistributedSampler
 from xuance.common import Optional, DummyOffPolicyBuffer, DummyOffPolicyBuffer_Atari
 from xuance.environment import DummyVecEnv
 from xuance.torch import Module
+from xuance.torch.utils import StepBatchDataset
 from xuance.torch.agents.base import Agent
 
 
@@ -105,7 +109,19 @@ class OffPolicyAgent(Agent):
         train_info = {}
         for _ in range(n_epochs):
             samples = self.memory.sample()
-            train_info = self.learner.update_parallel(**samples) if self.use_ddp else self.learner.update(**samples)
+            batch_size = samples['batch_size']
+            if self.use_ddp:
+                training_set = StepBatchDataset(data_size=batch_size, **samples)
+                training_sampler = DistributedSampler(training_set)
+                training_loader = DataLoader(training_set, batch_size=batch_size, sampler=training_sampler)
+                training_loader.sampler.set_epoch(0)
+                for sample in training_loader:
+                    local_rank = os.environ['LOCAL_RANK']
+                    for k, v in sample.items():
+                        v = v.to(torch.device("cuda", int(local_rank)))
+                    train_info = self.learner.update(**sample)
+            else:
+                train_info = self.learner.update(**samples)
         train_info["epsilon-greedy"] = self.e_greedy
         train_info["noise_scale"] = self.noise_scale
         return train_info
