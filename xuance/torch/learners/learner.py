@@ -1,6 +1,7 @@
 import os
 import torch
 import numpy as np
+import torch.distributed as dist
 from abc import ABC, abstractmethod
 from xuance.common import Optional, List, Union
 from argparse import Namespace
@@ -32,7 +33,11 @@ class Learner(ABC):
         self.iterations = 0
 
     def save_model(self, model_path):
-        torch.save(self.policy.state_dict(), model_path)
+        if self.config.use_ddp:
+            if dist.get_rank() == 0:
+                torch.save(self.policy.module.state_dict(), model_path)
+        else:
+            torch.save(self.policy.state_dict(), model_path)
 
     def load_model(self, path, model=None):
         file_names = os.listdir(path)

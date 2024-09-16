@@ -1,8 +1,32 @@
+import os
 import random
 import torch
-import torch.nn as nn
 import numpy as np
+import torch.nn as nn
+import torch.distributed as dist
+from argparse import Namespace
 from .distributions import CategoricalDistribution, DiagGaussianDistribution
+
+
+def init_distributed_mode(config: Namespace):
+    if 'RANK' in os.environ and 'WORLD_SIZE' in os.environ:
+        config.rank = int(os.environ["RANK"])
+        config.world_size = int(os.environ['WORLD_SIZE'])
+        config.local_rank = int(os.environ['LOCAL_RANK'])
+    else:
+        print('Not using distributed mode')
+        config.distributed = False
+        return
+
+    config.distributed = True
+    config.dist_url = 'env://'
+
+    print('| distributed init (rank {}): {}'.format(config.rank, config.dist_url), flush=True)
+    dist.init_process_group(backend='nccl',
+                            init_method='env://',
+                            world_size=config.world_size,
+                            rank=config.rank)
+    dist.barrier()
 
 
 def update_linear_decay(optimizer, step, total_steps, initial_lr, end_factor):

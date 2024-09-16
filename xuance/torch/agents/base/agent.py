@@ -1,6 +1,7 @@
 import os.path
 import wandb
 import socket
+import torch
 import numpy as np
 from abc import ABC
 from pathlib import Path
@@ -11,7 +12,7 @@ from torch.utils.tensorboard import SummaryWriter
 from xuance.common import get_time_string, create_directory, RunningMeanStd, space2shape, EPS, Optional
 from xuance.environment import DummyVecEnv
 from xuance.torch import REGISTRY_Representation, REGISTRY_Learners, Module
-from xuance.torch.utils import nn, NormalizeFunctions, ActivationFunctions
+from xuance.torch.utils import nn, NormalizeFunctions, ActivationFunctions, init_distributed_mode
 
 
 class Agent(ABC):
@@ -30,6 +31,10 @@ class Agent(ABC):
         self.use_rnn = config.use_rnn if hasattr(config, "use_rnn") else False
         self.use_actions_mask = config.use_actions_mask if hasattr(config, "use_actions_mask") else False
         self.use_ddp = config.use_ddp if hasattr(config, "use_ddp") else False
+        if self.use_ddp:
+            torch.backends.cudnn.deterministic = True
+            torch.backends.cudnn.benchmark = False
+            init_distributed_mode(config)
 
         self.gamma = config.gamma
         self.start_training = config.start_training if hasattr(config, "start_training") else 1

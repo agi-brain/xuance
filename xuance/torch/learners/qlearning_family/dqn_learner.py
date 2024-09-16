@@ -8,7 +8,7 @@ import torch
 from torch import nn
 from argparse import Namespace
 from xuance.torch.learners import Learner
-from xuance.torch.utils.data import StepBatchDataset
+from xuance.torch.utils import StepBatchDataset
 from torch.utils.data import DataLoader, DistributedSampler
 from torch.nn.parallel import DistributedDataParallel
 
@@ -31,61 +31,60 @@ class DQN_Learner(Learner):
             self.policy = DistributedDataParallel(self.policy, find_unused_parameters=True,
                                                   device_ids=[self.config.local_rank])
 
-    # def update(self, **samples):
-    #     self.iterations += 1
-    #     obs_batch = samples['obs']
-    #     act_batch = torch.as_tensor(samples['actions'], device=self.device)
-    #     next_batch = samples['obs_next']
-    #     rew_batch = torch.as_tensor(samples['rewards'], device=self.device)
-    #     ter_batch = torch.as_tensor(samples['terminals'], device=self.device)
-    #
-    #     _, _, evalQ = self.policy(obs_batch)
-    #     _, _, targetQ = self.policy.target(next_batch)
-    #     targetQ = targetQ.max(dim=-1).values
-    #     targetQ = rew_batch + self.gamma * (1 - ter_batch) * targetQ
-    #     predictQ = (evalQ * self.one_hot(act_batch.long(), evalQ.shape[1])).sum(dim=-1)
-    #
-    #     loss = self.mse_loss(predictQ, targetQ)
-    #     self.optimizer.zero_grad()
-    #     loss.backward()
-    #     if self.use_grad_clip:
-    #         torch.nn.utils.clip_grad_norm_(self.policy.parameters(), self.grad_clip_norm)
-    #     self.optimizer.step()
-    #     if self.scheduler is not None:
-    #         self.scheduler.step()
-    #
-    #     # hard update for target network
-    #     if self.iterations % self.sync_frequency == 0:
-    #         self.policy.copy_target()
-    #     lr = self.optimizer.state_dict()['param_groups'][0]['lr']
-    #
-    #     info = {
-    #         "Qloss": loss.item(),
-    #         "predictQ": predictQ.mean().item(),
-    #         "learning_rate": lr,
-    #     }
-    #
-    #     return info
-
     def update(self, **samples):
         self.iterations += 1
-        # obs_batch = samples['obs']
-        # act_batch = torch.as_tensor(samples['actions'], device=self.device)
-        # next_batch = samples['obs_next']
-        # rew_batch = torch.as_tensor(samples['rewards'], device=self.device)
-        # ter_batch = torch.as_tensor(samples['terminals'], device=self.device)
+        obs_batch = samples['obs']
+        act_batch = torch.as_tensor(samples['actions'], device=self.device)
+        next_batch = samples['obs_next']
+        rew_batch = torch.as_tensor(samples['rewards'], device=self.device)
+        ter_batch = torch.as_tensor(samples['terminals'], device=self.device)
+
+        _, _, evalQ = self.policy(obs_batch)
+        _, _, targetQ = self.policy.target(next_batch)
+        targetQ = targetQ.max(dim=-1).values
+        targetQ = rew_batch + self.gamma * (1 - ter_batch) * targetQ
+        predictQ = (evalQ * self.one_hot(act_batch.long(), evalQ.shape[1])).sum(dim=-1)
+
+        loss = self.mse_loss(predictQ, targetQ)
+        self.optimizer.zero_grad()
+        loss.backward()
+        if self.use_grad_clip:
+            torch.nn.utils.clip_grad_norm_(self.policy.parameters(), self.grad_clip_norm)
+        self.optimizer.step()
+        if self.scheduler is not None:
+            self.scheduler.step()
+
+        # hard update for target network
+        if self.iterations % self.sync_frequency == 0:
+            self.policy.copy_target()
+        lr = self.optimizer.state_dict()['param_groups'][0]['lr']
+
+        info = {
+            "Qloss": loss.item(),
+            "predictQ": predictQ.mean().item(),
+            "learning_rate": lr,
+        }
+
+        return info
+
+    def update_parallel(self, **samples):
+        self.iterations += 1
         batch_size = len(samples['obs'])
 
         training_set = StepBatchDataset(data_size=batch_size, **samples)
         training_sampler = DistributedSampler(training_set)
         training_loader = DataLoader(training_set, batch_size=batch_size, sampler=training_sampler)
         training_loader.sampler.set_epoch(0)
+
         loss_list, predictQ_list = [], []
         for obs_batch, act_batch, next_batch, rew_batch, ter_batch in training_loader:
             local_rank = os.environ['LOCAL_RANK']
+            obs_batch = obs_batch.to(torch.device("cuda", int(local_rank)))
             act_batch = act_batch.to(torch.device("cuda", int(local_rank)))
+            next_batch = next_batch.to(torch.device("cuda", int(local_rank)))
             rew_batch = rew_batch.to(torch.device("cuda", int(local_rank)))
             ter_batch = ter_batch.to(torch.device("cuda", int(local_rank)))
+
             _, _, evalQ = self.policy(obs_batch)
             _, _, targetQ = self.policy.module.target(next_batch)
             targetQ = targetQ.max(dim=-1).values
@@ -117,5 +116,3 @@ class DQN_Learner(Learner):
         }
 
         return info
-
-

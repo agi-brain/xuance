@@ -105,7 +105,7 @@ class OffPolicyAgent(Agent):
         train_info = {}
         for _ in range(n_epochs):
             samples = self.memory.sample()
-            train_info = self.learner.update(**samples)
+            train_info = self.learner.update_parallel(**samples) if self.use_ddp else self.learner.update(**samples)
         train_info["epsilon-greedy"] = self.e_greedy
         train_info["noise_scale"] = self.noise_scale
         return train_info

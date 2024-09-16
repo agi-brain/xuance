@@ -41,8 +41,8 @@ class Basic_CNN(Module):
 
     def forward(self, observations: np.ndarray):
         observations = observations / 255.0
-        tensor_observation = torch.as_tensor(np.transpose(observations, (0, 3, 1, 2)), dtype=torch.float32,
-                                             device=self.device)
+        tensor_observation = torch.as_tensor(observations, dtype=torch.float32,
+                                             device=self.device).permute((0, 3, 1, 2))
         return {'state': self.model(tensor_observation)}
 
 
@@ -93,6 +93,6 @@ class AC_CNN_Atari(Module):
 
     def forward(self, observations: np.ndarray):
         observations = observations / 255.0
-        tensor_observation = torch.as_tensor(np.transpose(observations, (0, 3, 1, 2)), dtype=torch.float32,
-                                             device=self.device)
+        tensor_observation = torch.as_tensor(observations, dtype=torch.float32,
+                                             device=self.device).permute((0, 3, 1, 2))
         return {'state': self.model(tensor_observation)}
