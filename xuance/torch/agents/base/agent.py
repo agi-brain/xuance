@@ -3,6 +3,7 @@ import wandb
 import socket
 import torch
 import numpy as np
+import torch.distributed as dist
 from abc import ABC
 from pathlib import Path
 from argparse import Namespace
@@ -104,6 +105,10 @@ class Agent(ABC):
         self.memory: Optional[object] = None
 
     def save_model(self, model_name):
+        if self.use_ddp:
+            if dist.get_rank() > 0:
+                return
+
         # save the neural networks
         if not os.path.exists(self.model_dir_save):
             os.makedirs(self.model_dir_save)
@@ -116,6 +121,7 @@ class Agent(ABC):
                                 'mean': self.obs_rms.mean,
                                 'var': self.obs_rms.var}
             np.save(obs_norm_path, observation_stat)
+
 
     def load_model(self, path, model=None):
         # load neural networks
