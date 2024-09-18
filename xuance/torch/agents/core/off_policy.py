@@ -110,8 +110,9 @@ class OffPolicyAgent(Agent):
         for _ in range(n_epochs):
             if self.use_ddp:
                 batch_size = self.config.batch_size // self.config.world_size
-                samples = self.memory.sample(batch_size)
-                train_info = self.learner.update(**samples)
+                for _ in range(self.config.world_size):
+                    samples = self.memory.sample(batch_size)
+                    train_info = self.learner.update(**samples)
             else:
                 samples = self.memory.sample()
                 train_info = self.learner.update(**samples)
