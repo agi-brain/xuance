@@ -4,18 +4,17 @@ import torch
 import numpy as np
 import torch.nn as nn
 from torch.distributed import init_process_group
-from argparse import Namespace
 from .distributions import CategoricalDistribution, DiagGaussianDistribution
 
 
-def init_distributed_mode(rank, world_size):
+def init_distributed_mode(rank, world_size, master_port: str = None):
     """
     Args:
         rank: Unique identifier of each process
         world_size: Total number of processes
     """
     os.environ["MASTER_ADDR"] = "localhost"
-    os.environ["MASTER_PORT"] = "12355"
+    os.environ["MASTER_PORT"] = "12355" if master_port is None else master_port
     torch.cuda.set_device(rank)
     init_process_group(backend='nccl', rank=rank, world_size=world_size)
 

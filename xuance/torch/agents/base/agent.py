@@ -35,7 +35,8 @@ class Agent(ABC):
         if self.use_ddp:
             torch.backends.cudnn.deterministic = True
             torch.backends.cudnn.benchmark = False
-            init_distributed_mode(config.rank, config.world_size)
+            init_distributed_mode(config.rank, config.world_size,
+                                  config.master_port if hasattr(config, "master_port") else None)
             torch.cuda.set_device(config.rank)
 
         self.gamma = config.gamma
