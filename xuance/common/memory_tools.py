@@ -360,9 +360,10 @@ class DummyOffPolicyBuffer(Buffer):
         self.ptr = (self.ptr + 1) % self.n_size
         self.size = min(self.size + 1, self.n_size)
 
-    def sample(self):
-        env_choices = np.random.choice(self.n_envs, self.batch_size)
-        step_choices = np.random.choice(self.size, self.batch_size)
+    def sample(self, batch_size=None):
+        bs = self.batch_size if batch_size is None else batch_size
+        env_choices = np.random.choice(self.n_envs, bs)
+        step_choices = np.random.choice(self.size, bs)
 
         samples_dict = {
             'obs': sample_batch(self.observations, tuple([env_choices, step_choices])),
@@ -370,7 +371,7 @@ class DummyOffPolicyBuffer(Buffer):
             'obs_next': sample_batch(self.next_observations, tuple([env_choices, step_choices])),
             'rewards': sample_batch(self.rewards, tuple([env_choices, step_choices])),
             'terminals': sample_batch(self.terminals, tuple([env_choices, step_choices])),
-            'batch_size': self.batch_size,
+            'batch_size': bs,
         }
         return samples_dict
 

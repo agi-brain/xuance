@@ -9,7 +9,7 @@ class StepBatchDataset(Dataset):
     def __getitem__(self, index):
         sample = {}
         for k, v in self.data.items():
-            if k is 'batch_size':
+            if k == 'batch_size':
                 continue
             sample[k] = v[index - 1]
         return sample
