@@ -108,13 +108,16 @@ class OffPolicyAgent(Agent):
     def train_epochs(self, n_epochs=1):
         train_info = {}
         for _ in range(n_epochs):
+            samples = self.memory.sample()
+            batch_size = samples['batch_size']
             if self.use_ddp:
-                batch_size = self.config.batch_size // self.config.world_size
-                for _ in range(self.config.world_size):
-                    samples = self.memory.sample(batch_size)
-                    train_info = self.learner.update(**samples)
+                training_set = StepBatchDataset(data_size=batch_size, **samples)
+                training_sampler = DistributedSampler(training_set)
+                training_loader = DataLoader(training_set, batch_size=batch_size, sampler=training_sampler)
+                training_loader.sampler.set_epoch(0)
+                for sample in training_loader:
+                    train_info = self.learner.update(**sample)
             else:
-                samples = self.memory.sample()
                 train_info = self.learner.update(**samples)
         train_info["epsilon-greedy"] = self.e_greedy
         train_info["noise_scale"] = self.noise_scale
