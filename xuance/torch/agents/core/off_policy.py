@@ -112,8 +112,10 @@ class OffPolicyAgent(Agent):
             batch_size = samples['batch_size']
             if self.use_ddp:
                 training_set = StepBatchDataset(data_size=batch_size, **samples)
-                training_sampler = DistributedSampler(training_set)
-                training_loader = DataLoader(training_set, batch_size=batch_size, sampler=training_sampler)
+                training_loader = DataLoader(dataset=training_set,
+                                             batch_size=batch_size,
+                                             shuffle=False,
+                                             sampler=DistributedSampler(training_set))
                 training_loader.sampler.set_epoch(0)
                 for sample in training_loader:
                     train_info = self.learner.update(**sample)

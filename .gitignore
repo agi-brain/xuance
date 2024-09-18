@@ -19,7 +19,7 @@ wandb/
 
 debug.py
 debug_marl.py
-debug_ddp.py
+debug_*.py
 .debug_ddp.py.swp
 dataset/
 

@@ -3,30 +3,21 @@ import random
 import torch
 import numpy as np
 import torch.nn as nn
-import torch.distributed as dist
+from torch.distributed import init_process_group
 from argparse import Namespace
 from .distributions import CategoricalDistribution, DiagGaussianDistribution
 
 
-def init_distributed_mode(config: Namespace):
-    if 'RANK' in os.environ and 'WORLD_SIZE' in os.environ:
-        config.rank = int(os.environ["RANK"])
-        config.world_size = int(os.environ['WORLD_SIZE'])
-        config.local_rank = int(os.environ['LOCAL_RANK'])
-    else:
-        print('Not using distributed mode')
-        config.distributed = False
-        return
-
-    config.distributed = True
-    config.dist_url = 'env://'
-
-    print('| distributed init (rank {}): {}'.format(config.rank, config.dist_url), flush=True)
-    dist.init_process_group(backend='nccl',
-                            init_method='env://',
-                            world_size=config.world_size,
-                            rank=config.rank)
-    dist.barrier()
+def init_distributed_mode(rank, world_size):
+    """
+    Args:
+        rank: Unique identifier of each process
+        world_size: Total number of processes
+    """
+    os.environ["MASTER_ADDR"] = "localhost"
+    os.environ["MASTER_PORT"] = "12355"
+    torch.cuda.set_device(rank)
+    init_process_group(backend='nccl', rank=rank, world_size=world_size)
 
 
 def update_linear_decay(optimizer, step, total_steps, initial_lr, end_factor):
@@ -109,7 +100,7 @@ def merge_distributions(distribution_list):
         std = torch.cat([dist.std for dist in distribution_list], dim=0)
         action_dim = distribution_list[0].mu.shape[-1]
         dist = DiagGaussianDistribution(action_dim)
-        mu = mu.view(shape + (action_dim, ))
+        mu = mu.view(shape + (action_dim,))
         std = std.view(shape + (action_dim,))
         dist.set_param(mu, std)
         return dist
@@ -119,7 +110,7 @@ def merge_distributions(distribution_list):
         logits = torch.cat([dist.logits for dist in distribution_list], dim=0)
         action_dim = logits.shape[-1]
         dist = CategoricalDistribution(action_dim)
-        logits = logits.view(shape + (action_dim, ))
+        logits = logits.view(shape + (action_dim,))
         dist.set_param(logits=logits.detach())
         return dist
     else:

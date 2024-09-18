@@ -11,7 +11,7 @@ class StepBatchDataset(Dataset):
         for k, v in self.data.items():
             if k == 'batch_size':
                 continue
-            sample[k] = v[index - 1]
+            sample[k] = v[index]
         return sample
 
     def __len__(self):

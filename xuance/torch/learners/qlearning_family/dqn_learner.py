@@ -26,21 +26,17 @@ class DQN_Learner(Learner):
         self.n_actions = self.policy.action_dim
         # parallel settings
         if self.use_ddp:
+            self.device = config.rank
             self.policy = DistributedDataParallel(self.policy, find_unused_parameters=True,
-                                                  device_ids=[self.config.local_rank])
+                                                  device_ids=[self.config.rank])
 
     def update(self, **samples):
         self.iterations += 1
-        if self.use_ddp:
-            local_rank = os.environ['LOCAL_RANK']
-            device = torch.device("cuda", int(local_rank))
-        else:
-            device = self.device
-        obs_batch = torch.as_tensor(samples['obs'], device=device)
-        act_batch = torch.as_tensor(samples['actions'], device=device)
-        next_batch = torch.as_tensor(samples['obs_next'], device=device)
-        rew_batch = torch.as_tensor(samples['rewards'], device=device)
-        ter_batch = torch.as_tensor(samples['terminals'], device=device)
+        obs_batch = torch.as_tensor(samples['obs'], device=self.device)
+        act_batch = torch.as_tensor(samples['actions'], device=self.device)
+        next_batch = torch.as_tensor(samples['obs_next'], device=self.device)
+        rew_batch = torch.as_tensor(samples['rewards'], device=self.device)
+        ter_batch = torch.as_tensor(samples['terminals'], device=self.device)
 
         _, _, evalQ = self.policy(obs_batch)
         _, _, targetQ = self.policy.module.target(next_batch) if self.use_ddp else self.policy.target(next_batch)
