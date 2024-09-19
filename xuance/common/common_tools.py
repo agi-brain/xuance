@@ -157,7 +157,10 @@ def get_runner(method,
     """
     args = get_arguments(method, env, env_id, config_path, parser_args, is_test)
 
-    device = args[0].device if type(args) == list else args.device
+    if type(args) == list:
+        device = f"GPU-{args[0].rank}" if args[0].distributed_training else args[0].device
+    else:
+        device = f"GPU-{args.rank}" if args.distributed_training else args.device
     dl_toolbox = args[0].dl_toolbox if type(args) == list else args.dl_toolbox
     print("Calculating device:", device)
 

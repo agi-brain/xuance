@@ -31,8 +31,8 @@ class Agent(ABC):
         self.config = config
         self.use_rnn = config.use_rnn if hasattr(config, "use_rnn") else False
         self.use_actions_mask = config.use_actions_mask if hasattr(config, "use_actions_mask") else False
-        self.use_ddp = config.use_ddp if hasattr(config, "use_ddp") else False
-        if self.use_ddp:
+        self.distributed_training = config.distributed_training
+        if self.distributed_training:
             torch.backends.cudnn.deterministic = True
             torch.backends.cudnn.benchmark = False
             init_distributed_mode(config.rank, config.world_size,
@@ -107,7 +107,7 @@ class Agent(ABC):
         self.memory: Optional[object] = None
 
     def save_model(self, model_name):
-        if self.use_ddp:
+        if self.distributed_training:
             if dist.get_rank() > 0:
                 return
 

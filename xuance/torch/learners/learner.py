@@ -24,7 +24,7 @@ class Learner(ABC):
         self.optimizer: Union[dict, list, Optional[torch.optim.Optimizer]] = None
         self.scheduler: Union[dict, list, Optional[torch.optim.lr_scheduler.LinearLR]] = None
 
-        self.use_ddp = config.use_ddp
+        self.distributed_training = config.distributed_training
         self.use_grad_clip = config.use_grad_clip
         self.grad_clip_norm = config.grad_clip_norm
         self.device = config.device
@@ -33,7 +33,7 @@ class Learner(ABC):
         self.iterations = 0
 
     def save_model(self, model_path):
-        if self.use_ddp:
+        if self.distributed_training:
             torch.save(self.policy.module.state_dict(), model_path)
         else:
             torch.save(self.policy.state_dict(), model_path)
