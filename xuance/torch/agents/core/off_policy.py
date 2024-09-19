@@ -1,14 +1,10 @@
-import os
-import torch
 import numpy as np
 from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
-from torch.utils.data import DataLoader, DistributedSampler
 from xuance.common import Optional, DummyOffPolicyBuffer, DummyOffPolicyBuffer_Atari
 from xuance.environment import DummyVecEnv
 from xuance.torch import Module
-from xuance.torch.utils import StepBatchDataset
 from xuance.torch.agents.base import Agent
 
 
@@ -110,8 +106,8 @@ class OffPolicyAgent(Agent):
         for _ in range(n_epochs):
             if self.distributed_training:
                 batch_per_gpu = self.config.batch_size // self.config.world_size
-                sample_per_gpu = self.memory.sample(batch_per_gpu)
-                train_info = self.learner.update(**sample_per_gpu)
+                samples_per_gpu = self.memory.sample(batch_per_gpu)
+                train_info = self.learner.update(**samples_per_gpu)
             else:
                 samples = self.memory.sample()
                 train_info = self.learner.update(**samples)

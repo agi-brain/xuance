@@ -1,7 +1,6 @@
 import os.path
 import wandb
 import socket
-import torch
 import numpy as np
 import torch.distributed as dist
 from abc import ABC
@@ -33,11 +32,8 @@ class Agent(ABC):
         self.use_actions_mask = config.use_actions_mask if hasattr(config, "use_actions_mask") else False
         self.distributed_training = config.distributed_training
         if self.distributed_training:
-            torch.backends.cudnn.deterministic = True
-            torch.backends.cudnn.benchmark = False
-            init_distributed_mode(config.rank, config.world_size,
-                                  config.master_port if hasattr(config, "master_port") else None)
-            torch.cuda.set_device(config.rank)
+            master_port = config.master_port if hasattr(config, "master_port") else None
+            init_distributed_mode(config.rank, config.world_size, master_port=master_port)
 
         self.gamma = config.gamma
         self.start_training = config.start_training if hasattr(config, "start_training") else 1

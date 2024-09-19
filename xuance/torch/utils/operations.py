@@ -12,8 +12,9 @@ def init_distributed_mode(rank, world_size, master_port: str = None):
     Args:
         rank: Unique identifier of each process
         world_size: Total number of processes
+        master_port: The communication port of master device
     """
-    os.environ["MASTER_ADDR"] = "localhost"
+    os.environ["MASTER_ADDR"] = "localhost"  # The IP address of the machine that is running the rank 0 process.
     os.environ["MASTER_PORT"] = "12355" if master_port is None else master_port
     torch.cuda.set_device(rank)
     init_process_group(backend='nccl', rank=rank, world_size=world_size)
