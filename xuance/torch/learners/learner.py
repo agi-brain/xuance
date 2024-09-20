@@ -6,7 +6,6 @@ from xuance.common import Optional, List, Union
 from argparse import Namespace
 from operator import itemgetter
 from xuance.torch import Tensor, DistributedDataParallel
-from xuance.torch.utils import init_distributed_mode
 
 MAX_GPUs = 100
 
@@ -17,18 +16,17 @@ class Learner(ABC):
                  policy: torch.nn.Module):
         self.value_normalizer = None
         self.config = config
+        self.distributed_training = config.distributed_training
 
         self.episode_length = config.episode_length
         self.use_rnn = config.use_rnn if hasattr(config, 'use_rnn') else False
         self.use_actions_mask = config.use_actions_mask if hasattr(config, 'use_actions_mask') else False
-        self.policy = policy
         self.optimizer: Union[dict, list, Optional[torch.optim.Optimizer]] = None
         self.scheduler: Union[dict, list, Optional[torch.optim.lr_scheduler.LinearLR]] = None
 
-        self.distributed_training = config.distributed_training
         if self.distributed_training:
-            master_port = config.master_port if hasattr(config, "master_port") else None
-            init_distributed_mode(int(os.environ['LOCAL_RANK']), config.world_size, master_port=master_port)
+            self.policy = DistributedDataParallel(policy, find_unused_parameters=True,
+                                                  device_ids=[int(os.environ['LOCAL_RANK'])])
             self.device = int(os.environ['LOCAL_RANK'])
             self.snapshot_path = os.path.join(config.model_dir, "DDP_Snapshot")
             if os.path.exists(self.snapshot_path):
@@ -37,9 +35,8 @@ class Learner(ABC):
                     self.load_snapshot(self.snapshot_path)
             else:
                 os.makedirs(self.snapshot_path)
-            self.policy = DistributedDataParallel(self.policy, find_unused_parameters=True,
-                                                  device_ids=[int(os.environ['LOCAL_RANK'])])
         else:
+            self.policy = policy
             self.device = config.device
         self.use_grad_clip = config.use_grad_clip
         self.grad_clip_norm = config.grad_clip_norm

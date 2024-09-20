@@ -12,7 +12,7 @@ from torch.utils.tensorboard import SummaryWriter
 from xuance.common import get_time_string, create_directory, RunningMeanStd, space2shape, EPS, Optional
 from xuance.environment import DummyVecEnv
 from xuance.torch import REGISTRY_Representation, REGISTRY_Learners, Module
-from xuance.torch.utils import nn, NormalizeFunctions, ActivationFunctions
+from xuance.torch.utils import nn, NormalizeFunctions, ActivationFunctions, init_distributed_mode
 
 
 class Agent(ABC):
@@ -31,6 +31,9 @@ class Agent(ABC):
         self.use_rnn = config.use_rnn if hasattr(config, "use_rnn") else False
         self.use_actions_mask = config.use_actions_mask if hasattr(config, "use_actions_mask") else False
         self.distributed_training = config.distributed_training
+        if self.distributed_training:
+            master_port = config.master_port if hasattr(config, "master_port") else None
+            init_distributed_mode(int(os.environ['LOCAL_RANK']), config.world_size, master_port=master_port)
 
         self.gamma = config.gamma
         self.start_training = config.start_training if hasattr(config, "start_training") else 1
