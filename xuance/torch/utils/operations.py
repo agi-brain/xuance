@@ -7,7 +7,7 @@ from torch.distributed import init_process_group
 from .distributions import CategoricalDistribution, DiagGaussianDistribution
 
 
-def init_distributed_mode(rank, world_size, master_port: str = None):
+def init_distributed_mode(master_port: str = None):
     """
     Args:
         rank: Unique identifier of each process
@@ -16,8 +16,8 @@ def init_distributed_mode(rank, world_size, master_port: str = None):
     """
     os.environ["MASTER_ADDR"] = "localhost"  # The IP address of the machine that is running the rank 0 process.
     os.environ["MASTER_PORT"] = "12355" if master_port is None else master_port
-    torch.cuda.set_device(rank)
-    init_process_group(backend='nccl', rank=rank, world_size=world_size)
+    torch.cuda.set_device(int(os.environ["LOCAL_RANK"]))
+    init_process_group(backend='nccl')
 
 
 def update_linear_decay(optimizer, step, total_steps, initial_lr, end_factor):

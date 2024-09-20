@@ -105,7 +105,7 @@ class OffPolicyAgent(Agent):
         train_info = {}
         for _ in range(n_epochs):
             if self.distributed_training:
-                batch_per_gpu = self.config.batch_size // self.config.world_size
+                batch_per_gpu = self.config.batch_size // self.world_size
                 samples_per_gpu = self.memory.sample(batch_per_gpu)
                 train_info = self.learner.update(**samples_per_gpu)
             else:
