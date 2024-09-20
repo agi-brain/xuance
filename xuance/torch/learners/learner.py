@@ -6,6 +6,7 @@ from xuance.common import Optional, List, Union
 from argparse import Namespace
 from operator import itemgetter
 from xuance.torch import Tensor, DistributedDataParallel
+from xuance.torch.utils import init_distributed_mode
 
 MAX_GPUs = 100
 
@@ -26,11 +27,14 @@ class Learner(ABC):
 
         self.distributed_training = config.distributed_training
         if self.distributed_training:
+            master_port = config.master_port if hasattr(config, "master_port") else None
+            init_distributed_mode(int(os.environ['LOCAL_RANK']), config.world_size, master_port=master_port)
             self.device = int(os.environ['LOCAL_RANK'])
             self.snapshot_path = os.path.join(config.model_dir, "DDP_Snapshot")
             if os.path.exists(self.snapshot_path):
-                print("Loading Snapshot...")
-                self.load_snapshot(self.snapshot_path)
+                if os.path.exists(os.path.join(self.snapshot_path, "snapshot.pt")):
+                    print("Loading Snapshot...")
+                    self.load_snapshot(self.snapshot_path)
             else:
                 os.makedirs(self.snapshot_path)
             self.policy = DistributedDataParallel(self.policy, find_unused_parameters=True,
