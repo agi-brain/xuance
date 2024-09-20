@@ -26,15 +26,17 @@ class Learner(ABC):
 
         self.distributed_training = config.distributed_training
         if self.distributed_training:
+            self.device = int(os.environ['LOCAL_RANK'])
             self.snapshot_path = os.path.join(config.model_dir, "DDP_Snapshot")
             if os.path.exists(self.snapshot_path):
                 print("Loading Snapshot...")
                 self.load_snapshot(self.snapshot_path)
             else:
                 os.makedirs(self.snapshot_path)
-            self.device = int(os.environ['LOCAL_RANK'])
             self.policy = DistributedDataParallel(self.policy, find_unused_parameters=True,
                                                   device_ids=[int(os.environ['LOCAL_RANK'])])
+        else:
+            self.device = config.device
         self.use_grad_clip = config.use_grad_clip
         self.grad_clip_norm = config.grad_clip_norm
         self.device = config.device
