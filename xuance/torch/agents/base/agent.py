@@ -33,7 +33,7 @@ class Agent(ABC):
         self.distributed_training = config.distributed_training
         if self.distributed_training:
             master_port = config.master_port if hasattr(config, "master_port") else None
-            init_distributed_mode(config.rank, config.world_size, master_port=master_port)
+            init_distributed_mode(int(os.environ['LOCAL_RANK']), config.world_size, master_port=master_port)
 
         self.gamma = config.gamma
         self.start_training = config.start_training if hasattr(config, "start_training") else 1
@@ -119,7 +119,6 @@ class Agent(ABC):
                                 'mean': self.obs_rms.mean,
                                 'var': self.obs_rms.var}
             np.save(obs_norm_path, observation_stat)
-
 
     def load_model(self, path, model=None):
         # load neural networks

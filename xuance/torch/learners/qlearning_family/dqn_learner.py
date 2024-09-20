@@ -7,7 +7,6 @@ import torch
 from torch import nn
 from argparse import Namespace
 from xuance.torch.learners import Learner
-from torch.nn.parallel import DistributedDataParallel
 
 
 class DQN_Learner(Learner):
@@ -22,12 +21,7 @@ class DQN_Learner(Learner):
         self.sync_frequency = config.sync_frequency
         self.mse_loss = nn.MSELoss()
         self.one_hot = nn.functional.one_hot
-        self.n_actions = self.policy.action_dim
-        # parallel settings
-        if self.distributed_training:
-            self.device = config.rank
-            self.policy = DistributedDataParallel(self.policy, find_unused_parameters=True,
-                                                  device_ids=[self.config.rank])
+        self.n_actions = self.policy.module.action_dim if self.distributed_training else self.policy.action_dim
 
     def update(self, **samples):
         self.iterations += 1

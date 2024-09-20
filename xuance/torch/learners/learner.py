@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 from xuance.common import Optional, List, Union
 from argparse import Namespace
 from operator import itemgetter
-from xuance.torch import Tensor
+from xuance.torch import Tensor, DistributedDataParallel
 
 MAX_GPUs = 100
 
@@ -25,6 +25,16 @@ class Learner(ABC):
         self.scheduler: Union[dict, list, Optional[torch.optim.lr_scheduler.LinearLR]] = None
 
         self.distributed_training = config.distributed_training
+        if self.distributed_training:
+            self.snapshot_path = os.path.join(config.model_dir, "DDP_Snapshot")
+            if os.path.exists(self.snapshot_path):
+                print("Loading Snapshot...")
+                self.load_snapshot(self.snapshot_path)
+            else:
+                os.makedirs(self.snapshot_path)
+            self.device = int(os.environ['LOCAL_RANK'])
+            self.policy = DistributedDataParallel(self.policy, find_unused_parameters=True,
+                                                  device_ids=[int(os.environ['LOCAL_RANK'])])
         self.use_grad_clip = config.use_grad_clip
         self.grad_clip_norm = config.grad_clip_norm
         self.device = config.device
@@ -35,6 +45,7 @@ class Learner(ABC):
     def save_model(self, model_path):
         if self.distributed_training:
             torch.save(self.policy.module.state_dict(), model_path)
+            self.save_snapshot()
         else:
             torch.save(self.policy.state_dict(), model_path)
 
@@ -62,6 +73,20 @@ class Learner(ABC):
             f"cuda:{i}": self.device for i in range(MAX_GPUs)}))
         print(f"Successfully load model from '{path}'.")
         return path
+
+    def load_snapshot(self, snapshot_path):
+        loc = f"cuda: {self.device}"
+        snapshot = torch.load(snapshot_path, map_location=loc)
+        self.policy.load_state_dict(snapshot["MODEL_STATE"])
+        print("Resuming training from snapshot.")
+
+    def save_snapshot(self):
+        snapshot = {
+            "MODEL_STATE": self.policy.module.state_dict(),
+        }
+        snapshot_pt = os.path.join(self.snapshot_path, "snapshot.pt")
+        torch.save(snapshot, snapshot_pt)
+        print(f"Training snapshot saved at {self.snapshot_path}")
 
     @abstractmethod
     def update(self, *args):
