@@ -28,7 +28,7 @@ class Learner(ABC):
             self.policy = DistributedDataParallel(policy, find_unused_parameters=True,
                                                   device_ids=[int(os.environ['LOCAL_RANK'])])
             self.device = int(os.environ['LOCAL_RANK'])
-            self.snapshot_path = os.path.join(config.model_dir, "DDP_Snapshot")
+            self.snapshot_path = os.path.join(os.getcwd(), config.model_dir, "DDP_Snapshot")
             if os.path.exists(self.snapshot_path):
                 if os.path.exists(os.path.join(self.snapshot_path, "snapshot.pt")):
                     print("Loading Snapshot...")

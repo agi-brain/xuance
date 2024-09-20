@@ -1,4 +1,4 @@
-import os.path
+import os
 import wandb
 import socket
 import numpy as np
@@ -9,6 +9,7 @@ from argparse import Namespace
 from mpi4py import MPI
 from gym.spaces import Dict, Space
 from torch.utils.tensorboard import SummaryWriter
+from torch.distributed import destroy_process_group
 from xuance.common import get_time_string, create_directory, RunningMeanStd, space2shape, EPS, Optional
 from xuance.environment import DummyVecEnv
 from xuance.torch import REGISTRY_Representation, REGISTRY_Learners, Module
@@ -241,3 +242,4 @@ class Agent(ABC):
             if os.path.exists(self.learner.snapshot_path):
                 os.remove(os.path.join(self.learner.snapshot_path, "snapshot.pt"))
                 os.removedirs(self.learner.snapshot_path)
+            destroy_process_group()
