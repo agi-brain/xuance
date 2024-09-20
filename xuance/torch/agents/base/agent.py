@@ -240,7 +240,8 @@ class Agent(ABC):
             self.writer.close()
         self.envs.close()
         if self.distributed_training:
-            if os.path.exists(self.learner.snapshot_path):
-                os.remove(os.path.join(self.learner.snapshot_path, "snapshot.pt"))
-                os.removedirs(self.learner.snapshot_path)
+            if dist.get_rank() == 0:
+                if os.path.exists(self.learner.snapshot_path):
+                    os.remove(os.path.join(self.learner.snapshot_path, "snapshot.pt"))
+                    os.removedirs(self.learner.snapshot_path)
             destroy_process_group()
