@@ -25,7 +25,7 @@ class Learner(ABC):
         self.scheduler: Union[dict, list, Optional[torch.optim.lr_scheduler.LinearLR]] = None
 
         if self.distributed_training:
-            self.policy = DistributedDataParallel(policy, find_unused_parameters=True,
+            self.policy = DistributedDataParallel(policy,  # find_unused_parameters=True,
                                                   device_ids=[int(os.environ['LOCAL_RANK'])])
             self.device = int(os.environ['LOCAL_RANK'])
             self.snapshot_path = os.path.join(config.model_dir, "DDP_Snapshot")
