@@ -25,8 +25,7 @@ class DQN_Learner(Learner):
 
     def update(self, **samples):
         self.iterations += 1
-        sample_Tensor = self.build_training_data(samples=samples,
-                                                 use_distributed_training=self.distributed_training)
+        sample_Tensor = self.build_training_data(samples=samples)
         obs_batch = sample_Tensor['obs']
         act_batch = sample_Tensor['actions']
         next_batch = sample_Tensor['obs_next']
@@ -53,10 +52,17 @@ class DQN_Learner(Learner):
             self.policy.copy_target()
         lr = self.optimizer.state_dict()['param_groups'][0]['lr']
 
-        info = {
-            "Qloss": loss.item(),
-            "predictQ": predictQ.mean().item(),
-            "learning_rate": lr,
-        }
+        if self.distributed_training:
+            info = {
+                f"Qloss_rank_{self.rank}": loss.item(),
+                f"predictQ_rank_{self.rank}": predictQ.mean().item(),
+                f"learning_rate_rank_{self.rank}": lr,
+            }
+        else:
+            info = {
+                "Qloss": loss.item(),
+                "predictQ": predictQ.mean().item(),
+                "learning_rate": lr,
+            }
 
         return info

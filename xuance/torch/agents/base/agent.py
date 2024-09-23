@@ -1,4 +1,6 @@
 import os
+
+import torch
 import wandb
 import socket
 import numpy as np
@@ -33,9 +35,13 @@ class Agent(ABC):
         self.use_actions_mask = config.use_actions_mask if hasattr(config, "use_actions_mask") else False
         self.distributed_training = config.distributed_training
         if self.distributed_training:
+            self.rank = int(os.environ['LOCAL_RANK'])
             master_port = config.master_port if hasattr(config, "master_port") else None
             init_distributed_mode(master_port=master_port)
             self.world_size = dist.get_world_size()
+        else:
+            self.rank = 0
+            self.world_size = 1
 
         self.gamma = config.gamma
         self.start_training = config.start_training if hasattr(config, "start_training") else 1
@@ -66,7 +72,19 @@ class Agent(ABC):
         self.returns = np.zeros((self.envs.num_envs,), np.float32)
 
         # Prepare directories.
-        time_string = get_time_string()
+        if self.distributed_training and self.world_size > 1:
+            if self.rank == 0:
+                time_string = get_time_string()
+                time_string_array = bytearray(time_string, 'utf-8')
+                time_string_tensor = torch.as_tensor(time_string_array, dtype=torch.uint8)
+                for dst_rank in range(1, self.world_size):
+                    dist.send(tensor=time_string_tensor, dst=dst_rank)
+            else:
+                recv_time_string_tensor = torch.zeros(50, dtype=torch.uint8)
+                dist.recv(tensor=recv_time_string_tensor, src=0)
+                time_string = bytes(recv_time_string_tensor.tolist()).decode('utf-8').rstrip('\x00')
+        else:
+            time_string = get_time_string()
         seed = f"seed_{self.config.seed}_"
         self.model_dir_load = config.model_dir
         self.model_dir_save = os.path.join(os.getcwd(), config.model_dir, seed + time_string)
@@ -81,18 +99,19 @@ class Agent(ABC):
             config_dict = vars(config)
             log_dir = config.log_dir
             wandb_dir = Path(os.path.join(os.getcwd(), config.log_dir))
-            create_directory(str(wandb_dir))
-            wandb.init(config=config_dict,
-                       project=config.project_name,
-                       entity=config.wandb_user_name,
-                       notes=socket.gethostname(),
-                       dir=wandb_dir,
-                       group=config.env_id,
-                       job_type=config.agent,
-                       name=time_string,
-                       reinit=True,
-                       settings=wandb.Settings(start_method="fork")
-                       )
+            if self.rank == 0:
+                create_directory(str(wandb_dir))
+                wandb.init(config=config_dict,
+                           project=config.project_name,
+                           entity=config.wandb_user_name,
+                           notes=socket.gethostname(),
+                           dir=wandb_dir,
+                           group=config.env_id,
+                           job_type=config.agent,
+                           name=time_string,
+                           reinit=True,
+                           settings=wandb.Settings(start_method="fork")
+                           )
             # os.environ["WANDB_SILENT"] = "True"
             self.use_wandb = True
         else:

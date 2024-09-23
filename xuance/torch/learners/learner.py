@@ -27,7 +27,7 @@ class Learner(ABC):
 
         if self.distributed_training:
             self.world_size = int(os.environ['WORLD_SIZE'])
-            self.device = int(os.environ['LOCAL_RANK'])
+            self.rank = self.device = int(os.environ['LOCAL_RANK'])
             self.snapshot_path = os.path.join(os.getcwd(), config.model_dir, "DDP_Snapshot")
             if os.path.exists(self.snapshot_path):
                 if os.path.exists(os.path.join(self.snapshot_path, "snapshot.pt")):
@@ -37,6 +37,8 @@ class Learner(ABC):
                 if self.device == 0:
                     os.makedirs(self.snapshot_path)
         else:
+            self.world_size = 1
+            self.rank = 0
             self.device = config.device
         self.use_grad_clip = config.use_grad_clip
         self.grad_clip_norm = config.grad_clip_norm
@@ -45,11 +47,10 @@ class Learner(ABC):
         self.running_steps = config.running_steps
         self.iterations = 0
 
-    def build_training_data(self, samples: Optional[dict],
-                            use_distributed_training: bool = False):
+    def build_training_data(self, samples: Optional[dict]):
         batch_size = samples['batch_size']
         samples_Tensor = {}
-        if use_distributed_training:
+        if self.world_size > 1:  # i.e., Multi-GPU settings.
             rank = int(os.environ['RANK'])
             batch_size_local = batch_size // self.world_size
             if rank < self.world_size - 1:

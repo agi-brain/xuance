@@ -62,21 +62,22 @@ class Runner_DRL(Runner_Base):
         test_episode = self.config.test_episode
         num_epoch = int(train_steps / eval_interval)
 
-        test_scores = self.agent.test(env_fn, test_episode)
+        test_scores = self.agent.test(env_fn, test_episode) if self.rank == 0 else 0.0
         best_scores_info = {"mean": np.mean(test_scores),
                             "std": np.std(test_scores),
                             "step": self.agent.current_step}
         for i_epoch in range(num_epoch):
             self.rprint("Epoch: %d/%d:" % (i_epoch, num_epoch))
             self.agent.train(eval_interval)
-            test_scores = self.agent.test(env_fn, test_episode)
+            if self.rank == 0:
+                test_scores = self.agent.test(env_fn, test_episode)
 
-            if np.mean(test_scores) > best_scores_info["mean"]:
-                best_scores_info = {"mean": np.mean(test_scores),
-                                    "std": np.std(test_scores),
-                                    "step": self.agent.current_step}
-                # save best model
-                self.agent.save_model(model_name="best_model.pth")
+                if np.mean(test_scores) > best_scores_info["mean"]:
+                    best_scores_info = {"mean": np.mean(test_scores),
+                                        "std": np.std(test_scores),
+                                        "step": self.agent.current_step}
+                    # save best model
+                    self.agent.save_model(model_name="best_model.pth")
 
         # end benchmarking
         self.rprint("Best Model Score: %.2f, std=%.2f" % (best_scores_info["mean"], best_scores_info["std"]))
