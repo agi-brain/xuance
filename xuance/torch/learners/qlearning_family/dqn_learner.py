@@ -21,7 +21,7 @@ class DQN_Learner(Learner):
         self.sync_frequency = config.sync_frequency
         self.mse_loss = nn.MSELoss()
         self.one_hot = nn.functional.one_hot
-        self.n_actions = self.policy.module.action_dim if self.distributed_training else self.policy.action_dim
+        self.n_actions = self.policy.action_dim
 
     def update(self, **samples):
         self.iterations += 1
@@ -34,7 +34,7 @@ class DQN_Learner(Learner):
         ter_batch = sample_Tensor['terminals']
 
         _, _, evalQ = self.policy(obs_batch)
-        _, _, targetQ = self.policy.module.target(next_batch) if self.distributed_training else self.policy.target(next_batch)
+        _, _, targetQ = self.policy.target(next_batch)
         targetQ = targetQ.max(dim=-1).values
         targetQ = rew_batch + self.gamma * (1 - ter_batch) * targetQ
         predictQ = (evalQ * self.one_hot(act_batch.long(), evalQ.shape[1])).sum(dim=-1)
@@ -50,10 +50,7 @@ class DQN_Learner(Learner):
 
         # hard update for target network
         if self.iterations % self.sync_frequency == 0:
-            if self.distributed_training:
-                self.policy.module.copy_target()
-            else:
-                self.policy.copy_target()
+            self.policy.copy_target()
         lr = self.optimizer.state_dict()['param_groups'][0]['lr']
 
         info = {

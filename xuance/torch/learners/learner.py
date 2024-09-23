@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 from xuance.common import Optional, List, Union
 from argparse import Namespace
 from operator import itemgetter
-from xuance.torch import Tensor, DistributedDataParallel
+from xuance.torch import Tensor
 
 MAX_GPUs = 100
 
@@ -21,13 +21,12 @@ class Learner(ABC):
         self.episode_length = config.episode_length
         self.use_rnn = config.use_rnn if hasattr(config, 'use_rnn') else False
         self.use_actions_mask = config.use_actions_mask if hasattr(config, 'use_actions_mask') else False
+        self.policy = policy
         self.optimizer: Union[dict, list, Optional[torch.optim.Optimizer]] = None
         self.scheduler: Union[dict, list, Optional[torch.optim.lr_scheduler.LinearLR]] = None
 
         if self.distributed_training:
             self.world_size = int(os.environ['WORLD_SIZE'])
-            self.policy = DistributedDataParallel(policy, find_unused_parameters=True,
-                                                  device_ids=[int(os.environ['LOCAL_RANK'])])
             self.device = int(os.environ['LOCAL_RANK'])
             self.snapshot_path = os.path.join(os.getcwd(), config.model_dir, "DDP_Snapshot")
             if os.path.exists(self.snapshot_path):
@@ -37,7 +36,6 @@ class Learner(ABC):
             else:
                 os.makedirs(self.snapshot_path)
         else:
-            self.policy = policy
             self.device = config.device
         self.use_grad_clip = config.use_grad_clip
         self.grad_clip_norm = config.grad_clip_norm
@@ -70,11 +68,9 @@ class Learner(ABC):
         return samples_Tensor
 
     def save_model(self, model_path):
+        torch.save(self.policy.state_dict(), model_path)
         if self.distributed_training:
-            torch.save(self.policy.module.state_dict(), model_path)
             self.save_snapshot()
-        else:
-            torch.save(self.policy.state_dict(), model_path)
 
     def load_model(self, path, model=None):
         file_names = os.listdir(path)
@@ -109,7 +105,7 @@ class Learner(ABC):
 
     def save_snapshot(self):
         snapshot = {
-            "MODEL_STATE": self.policy.module.state_dict(),
+            "MODEL_STATE": self.policy.state_dict(),
         }
         snapshot_pt = os.path.join(self.snapshot_path, "snapshot.pt")
         torch.save(snapshot, snapshot_pt)

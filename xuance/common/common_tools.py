@@ -158,9 +158,18 @@ def get_runner(method,
     args = get_arguments(method, env, env_id, config_path, parser_args, is_test)
 
     if type(args) == list:
-        device = f"GPU-{os.environ['RANK']}" if args[0].distributed_training else args[0].device
+        distributed_training = True if args[0].distributed_training else False
+        device = f"GPU-{os.environ['RANK']}" if distributed_training else args[0].device
     else:
-        device = f"GPU-{os.environ['RANK']}" if args.distributed_training else args.device
+        distributed_training = True if args.distributed_training else False
+        device = f"GPU-{os.environ['RANK']}" if distributed_training else args.device
+    if distributed_training:
+        num_gpus = int(os.environ['WORLD_SIZE'])
+        if num_gpus > 1:
+            print(f"Use {num_gpus} GPUs for distributed training.")
+        else:
+            print(f"Distributed training is set but with {num_gpus} GPU.")
+
     dl_toolbox = args[0].dl_toolbox if type(args) == list else args.dl_toolbox
     print("Calculating device:", device)
 

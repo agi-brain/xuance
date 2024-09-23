@@ -1,4 +1,3 @@
-from .data import StepBatchDataset
 from .layers import (
     torch, nn,
     ModuleType,

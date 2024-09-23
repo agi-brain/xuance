@@ -1,10 +1,11 @@
+import os
 import torch
 import numpy as np
 import torch.nn as nn
 from xuance.common import Sequence, Optional, Callable, Union
 from copy import deepcopy
 from gym.spaces import Space, Discrete
-from xuance.torch import Module, Tensor
+from xuance.torch import Module, Tensor, DistributedDataParallel
 from xuance.torch.utils import ModuleType
 from .core import BasicQhead, BasicRecurrent, DuelQhead, C51Qhead, QRDQNhead, ActorNet, CriticNet
 
@@ -21,6 +22,7 @@ class BasicQnetwork(Module):
         initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
         activation (Optional[ModuleType]): The activation function for each layer.
         device (Optional[Union[str, int, torch.device]]): The calculating device.
+        use_distributed_training (str): Whether to use multi-GPU for distributed training.
     """
 
     def __init__(self,
@@ -30,7 +32,8 @@ class BasicQnetwork(Module):
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None,
-                 device: Optional[Union[str, int, torch.device]] = None):
+                 device: Optional[Union[str, int, torch.device]] = None,
+                 use_distributed_training: bool = False):
         super(BasicQnetwork, self).__init__()
         self.action_dim = action_space.n
         self.representation = representation
@@ -39,6 +42,13 @@ class BasicQnetwork(Module):
         self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, hidden_size,
                                      normalize, initialize, activation, device)
         self.target_Qhead = deepcopy(self.eval_Qhead)
+        # Prepare DDP module.
+        self.distributed_training = use_distributed_training
+        if self.distributed_training:
+            self.representation = DistributedDataParallel(module=self.representation,
+                                                          device_ids=[int(os.environ['LOCAL_RANK'])])
+            self.eval_Qhead = DistributedDataParallel(module=self.eval_Qhead,
+                                                      device_ids=[int(os.environ['LOCAL_RANK'])])
 
     def forward(self, observation: Union[np.ndarray, dict]):
         """
@@ -94,6 +104,7 @@ class DuelQnetwork(Module):
         activation (Optional[ModuleType]): The activation function for each layer.
         device (Optional[Union[str, int, torch.device]]): The calculating device.
     """
+
     def __init__(self,
                  action_space: Discrete,
                  representation: Module,
@@ -165,6 +176,7 @@ class NoisyQnetwork(Module):
         activation (Optional[ModuleType]): The activation function for each layer.
         device (Optional[Union[str, int, torch.device]]): The calculating device.
     """
+
     def __init__(self,
                  action_space: Discrete,
                  representation: Module,
@@ -256,6 +268,7 @@ class C51Qnetwork(Module):
         activation (Optional[ModuleType]): The activation function for each layer.
         device (Optional[Union[str, int, torch.device]]): The calculating device.
     """
+
     def __init__(self,
                  action_space: Discrete,
                  atom_num: int,
@@ -339,6 +352,7 @@ class QRDQN_Network(Module):
         activation (Optional[ModuleType]): The activation function for each layer.
         device (Optional[Union[str, int, torch.device]]): The calculating device.
     """
+
     def __init__(self,
                  action_space: Discrete,
                  quantile_num: int,
@@ -416,6 +430,7 @@ class DDPGPolicy(Module):
         activation_action (Optional[ModuleType]): The activation of final layer to bound the actions.
         device (Optional[Union[str, int, torch.device]]): The calculating device.
     """
+
     def __init__(self,
                  action_space: Space,
                  representation: Module,
@@ -513,6 +528,7 @@ class TD3Policy(Module):
         activation_action (Optional[ModuleType]): The activation of final layer to bound the actions.
         device (Optional[Union[str, int, torch.device]]): The calculating device.
     """
+
     def __init__(self,
                  action_space: Space,
                  representation: Module,
@@ -635,6 +651,7 @@ class PDQNPolicy(Module):
         activation_action (Optional[ModuleType]): The activation of final layer to bound the actions.
         device (Optional[Union[str, int, torch.device]]): The calculating device.
     """
+
     def __init__(self,
                  observation_space,
                  action_space,
@@ -714,6 +731,7 @@ class MPDQNPolicy(PDQNPolicy):
         activation_action (Optional[ModuleType]): The activation of final layer to bound the actions.
         device (Optional[Union[str, int, torch.device]]): The calculating device.
     """
+
     def __init__(self,
                  observation_space,
                  action_space,
@@ -804,6 +822,7 @@ class SPDQNPolicy(PDQNPolicy):
         activation_action (Optional[ModuleType]): The activation of final layer to bound the actions.
         device (Optional[Union[str, int, torch.device]]): The calculating device.
     """
+
     def __init__(self,
                  observation_space,
                  action_space,
@@ -872,6 +891,7 @@ class DRQNPolicy(Module):
         representation: The representation module.
         **kwargs: The other arguments.
     """
+
     def __init__(self,
                  action_space: Discrete,
                  representation: Module,
