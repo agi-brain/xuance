@@ -49,6 +49,7 @@ class Learner(ABC):
     def build_training_data(self, samples: Optional[dict],
                             use_distributed_training: bool = False):
         batch_size = samples['batch_size']
+        samples_Tensor = {}
         if use_distributed_training:
             rank = int(os.environ['RANK'])
             batch_size_local = batch_size // self.world_size
@@ -56,26 +57,17 @@ class Learner(ABC):
                 indices = range(rank * batch_size_local, (rank + 1) * batch_size_local)
             else:
                 indices = range(rank * batch_size_local, batch_size)
-            obs_batch = torch.as_tensor(samples['obs'][indices], device=self.device)
-            act_batch = torch.as_tensor(samples['actions'][indices], device=self.device)
-            next_batch = torch.as_tensor(samples['obs_next'][indices], device=self.device)
-            rew_batch = torch.as_tensor(samples['rewards'][indices], device=self.device)
-            ter_batch = torch.as_tensor(samples['terminals'][indices], device=self.device)
+            for k, v in samples.items():
+                if k == 'batch_size':
+                    continue
+                samples_Tensor[k] = torch.as_tensor(v[indices], device=self.device)
         else:
-            obs_batch = torch.as_tensor(samples['obs'], device=self.device)
-            act_batch = torch.as_tensor(samples['actions'], device=self.device)
-            next_batch = torch.as_tensor(samples['obs_next'], device=self.device)
-            rew_batch = torch.as_tensor(samples['rewards'], device=self.device)
-            ter_batch = torch.as_tensor(samples['terminals'], device=self.device)
+            for k, v in samples.items():
+                if k == 'batch_size':
+                    continue
+                samples_Tensor[k] = torch.as_tensor(v, device=self.device)
 
-        sample_Tensor = {
-            'obs': obs_batch,
-            'actions': act_batch,
-            'next_batch': next_batch,
-            'rew_batch': rew_batch,
-            'ter_batch': ter_batch
-        }
-        return sample_Tensor
+        return samples_Tensor
 
     def save_model(self, model_path):
         if self.distributed_training:
