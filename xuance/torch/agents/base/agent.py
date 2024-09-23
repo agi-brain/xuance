@@ -90,7 +90,11 @@ class Agent(ABC):
         # Create logger.
         if config.logger == "tensorboard":
             log_dir = os.path.join(os.getcwd(), config.log_dir, seed + time_string)
-            create_directory(log_dir)
+            if self.rank == 0:
+                create_directory(log_dir)
+            else:
+                while not os.path.exists(log_dir):
+                    pass
             self.writer = SummaryWriter(log_dir)
             self.use_wandb = False
         elif config.logger == "wandb":
@@ -99,17 +103,20 @@ class Agent(ABC):
             wandb_dir = Path(os.path.join(os.getcwd(), config.log_dir))
             if self.rank == 0:
                 create_directory(str(wandb_dir))
-                wandb.init(config=config_dict,
-                           project=config.project_name,
-                           entity=config.wandb_user_name,
-                           notes=socket.gethostname(),
-                           dir=wandb_dir,
-                           group=config.env_id,
-                           job_type=config.agent,
-                           name=time_string,
-                           reinit=True,
-                           settings=wandb.Settings(start_method="fork")
-                           )
+            else:
+                while not os.path.exists(str(wandb_dir)):
+                    pass
+            wandb.init(config=config_dict,
+                       project=config.project_name,
+                       entity=config.wandb_user_name,
+                       notes=socket.gethostname(),
+                       dir=wandb_dir,
+                       group=config.env_id,
+                       job_type=config.agent,
+                       name=time_string,
+                       reinit=True,
+                       settings=wandb.Settings(start_method="fork")
+                       )
             # os.environ["WANDB_SILENT"] = "True"
             self.use_wandb = True
         else:
