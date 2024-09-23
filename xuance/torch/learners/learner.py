@@ -109,7 +109,6 @@ class Learner(ABC):
         }
         snapshot_pt = os.path.join(self.snapshot_path, "snapshot.pt")
         torch.save(snapshot, snapshot_pt)
-        print(f"Training snapshot saved at {self.snapshot_path}")
 
     @abstractmethod
     def update(self, *args):

@@ -14,10 +14,13 @@ def init_distributed_mode(master_port: str = None):
         world_size: Total number of processes
         master_port: The communication port of master device
     """
+    rank = os.environ["LOCAL_RANK"]
     os.environ["MASTER_ADDR"] = "localhost"  # The IP address of the machine that is running the rank 0 process.
     os.environ["MASTER_PORT"] = "12355" if master_port is None else master_port
     torch.cuda.set_device(int(os.environ["LOCAL_RANK"]))
     init_process_group(backend='nccl')
+    if rank == 0:
+        print("The distributed process group is initialized.")
 
 
 def update_linear_decay(optimizer, step, total_steps, initial_lr, end_factor):

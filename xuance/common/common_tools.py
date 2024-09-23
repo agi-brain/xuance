@@ -164,18 +164,22 @@ def get_runner(method,
         distributed_training = True if args.distributed_training else False
         device = f"GPU-{os.environ['RANK']}" if distributed_training else args.device
     if distributed_training:
+        rank = int(os.environ['LOCAL_RANK'])
         num_gpus = int(os.environ['WORLD_SIZE'])
-        if num_gpus > 1:
-            print(f"Use {num_gpus} GPUs for distributed training.")
-        else:
-            print(f"Distributed training is set but with {num_gpus} GPU.")
+        if rank == 0:
+            if num_gpus > 1:
+                print(f"Calculating devices: {num_gpus} visible GPUs for distributed training.")
+            else:
+                print(f"Calculating device: {num_gpus} visible GPU for distributed training.")
+    else:
+        rank = 0
+        print(f"Calculating device: {device}")
 
     dl_toolbox = args[0].dl_toolbox if type(args) == list else args.dl_toolbox
-    print("Calculating device:", device)
-
     if dl_toolbox == "torch":
         from xuance.torch.runners import REGISTRY_Runner
-        print("Deep learning toolbox: PyTorch.")
+        if rank == 0:
+            print("Deep learning toolbox: PyTorch.")
     elif dl_toolbox == "mindspore":
         from xuance.mindspore.runners import REGISTRY_Runner
         from mindspore import context
@@ -223,10 +227,10 @@ def get_runner(method,
                 else:
                     print("Failed to load arguments for the implementation!")
 
-        # print("Algorithm:", *[arg.agent for arg in args])
-        print("Algorithm:", *agents_name_string)
-        print("Environment:", args[0].env_name)
-        print("Scenario:", args[0].env_id)
+        if rank == 0:
+            print("Algorithm:", *agents_name_string)
+            print("Environment:", args[0].env_name)
+            print("Scenario:", args[0].env_id)
         for arg in args:
             if arg.agent_name != "random":
                 runner = REGISTRY_Runner[arg.runner](args)
@@ -248,9 +252,10 @@ def get_runner(method,
             else:
                 print("Failed to load arguments for the implementation!")
 
-        print("Algorithm:", args.agent)
-        print("Environment:", args.env_name)
-        print("Scenario:", args.env_id)
+        if rank == 0:
+            print("Algorithm:", args.agent)
+            print("Environment:", args.env_name)
+            print("Scenario:", args.env_id)
         runner = REGISTRY_Runner[args.runner](args)
         return runner
 
