@@ -75,14 +75,12 @@ class Agent(ABC):
         if self.distributed_training and self.world_size > 1:
             if self.rank == 0:
                 time_string = get_time_string()
-                time_string_array = bytearray(time_string, 'utf-8')
-                time_string_tensor = torch.as_tensor(time_string_array, dtype=torch.uint8)
-                for dst_rank in range(1, self.world_size):
-                    dist.send(tensor=time_string_tensor, dst=dst_rank)
+                time_string_tensor = torch.tensor(list(time_string.encode('utf-8')), dtype=torch.uint8).to(self.rank)
             else:
-                recv_time_string_tensor = torch.zeros(50, dtype=torch.uint8)
-                dist.recv(tensor=recv_time_string_tensor, src=0)
-                time_string = bytes(recv_time_string_tensor.tolist()).decode('utf-8').rstrip('\x00')
+                time_string_tensor = torch.empty(50, dtype=torch.uint8).to(self.rank)
+
+            dist.broadcast(time_string_tensor, src=0)
+            time_string = bytes(time_string_tensor.cpu().tolist()).decode('utf-8').rstrip('\x00')
         else:
             time_string = get_time_string()
         seed = f"seed_{self.config.seed}_"
