@@ -26,26 +26,13 @@ class DQN_Learner(Learner):
 
     def update(self, **samples):
         self.iterations += 1
-        batch_size = samples['batch_size']
-        if self.distributed_training:
-            rank = int(os.environ['RANK'])
-            world_size = int(os.environ['WORLD_SIZE'])
-            batch_size_local = batch_size // world_size
-            if rank < world_size - 1:
-                indices = range(rank * batch_size_local, (rank + 1) * batch_size_local)
-            else:
-                indices = range(rank * batch_size_local, batch_size)
-            obs_batch = torch.as_tensor(samples['obs'][indices], device=self.device)
-            act_batch = torch.as_tensor(samples['actions'][indices], device=self.device)
-            next_batch = torch.as_tensor(samples['obs_next'][indices], device=self.device)
-            rew_batch = torch.as_tensor(samples['rewards'][indices], device=self.device)
-            ter_batch = torch.as_tensor(samples['terminals'][indices], device=self.device)
-        else:
-            obs_batch = torch.as_tensor(samples['obs'], device=self.device)
-            act_batch = torch.as_tensor(samples['actions'], device=self.device)
-            next_batch = torch.as_tensor(samples['obs_next'], device=self.device)
-            rew_batch = torch.as_tensor(samples['rewards'], device=self.device)
-            ter_batch = torch.as_tensor(samples['terminals'], device=self.device)
+        sample_Tensor = self.build_training_data(samples=samples,
+                                                 use_distributed_training=self.distributed_training)
+        obs_batch = sample_Tensor['obs']
+        act_batch = sample_Tensor['actions']
+        next_batch = sample_Tensor['obs_next']
+        rew_batch = sample_Tensor['rewards']
+        ter_batch = sample_Tensor['terminals']
 
         _, _, evalQ = self.policy(obs_batch)
         _, _, targetQ = self.policy.module.target(next_batch) if self.distributed_training else self.policy.target(next_batch)
