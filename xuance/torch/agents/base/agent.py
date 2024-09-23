@@ -94,7 +94,7 @@ class Agent(ABC):
                 create_directory(log_dir)
             else:
                 while not os.path.exists(log_dir):
-                    pass
+                    pass  # Wait until the master process finishes creating directory.
             self.writer = SummaryWriter(log_dir)
             self.use_wandb = False
         elif config.logger == "wandb":
@@ -105,7 +105,7 @@ class Agent(ABC):
                 create_directory(str(wandb_dir))
             else:
                 while not os.path.exists(str(wandb_dir)):
-                    pass
+                    pass  # Wait until the master process finishes creating directory.
             wandb.init(config=config_dict,
                        project=config.project_name,
                        entity=config.wandb_user_name,

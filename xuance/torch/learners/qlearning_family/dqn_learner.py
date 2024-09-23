@@ -54,9 +54,9 @@ class DQN_Learner(Learner):
 
         if self.distributed_training:
             info = {
-                f"Qloss_rank_{self.rank}": loss.item(),
-                f"predictQ_rank_{self.rank}": predictQ.mean().item(),
-                f"learning_rate_rank_{self.rank}": lr,
+                f"Qloss/rank_{self.rank}": loss.item(),
+                f"predictQ/rank_{self.rank}": predictQ.mean().item(),
+                f"learning_rate/rank_{self.rank}": lr,
             }
         else:
             info = {
