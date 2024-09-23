@@ -34,6 +34,7 @@ class DQN_Learner(Learner):
         rew_batch = sample_Tensor['rewards']
         ter_batch = sample_Tensor['terminals']
 
+        self.optimizer.zero_grad()
         _, _, evalQ = self.policy(obs_batch)
         _, _, targetQ = self.policy.module.target(next_batch) if self.distributed_training else self.policy.target(next_batch)
         targetQ = targetQ.max(dim=-1).values
@@ -41,7 +42,6 @@ class DQN_Learner(Learner):
         predictQ = (evalQ * self.one_hot(act_batch.long(), evalQ.shape[1])).sum(dim=-1)
 
         loss = self.mse_loss(predictQ, targetQ)
-        self.optimizer.zero_grad()
         loss.backward()
         if self.use_grad_clip:
             torch.nn.utils.clip_grad_norm_(self.policy.parameters(), self.grad_clip_norm)
