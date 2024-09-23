@@ -77,7 +77,7 @@ class Agent(ABC):
                 time_string = get_time_string()
                 time_string_tensor = torch.tensor(list(time_string.encode('utf-8')), dtype=torch.uint8).to(self.rank)
             else:
-                time_string_tensor = torch.empty(50, dtype=torch.uint8).to(self.rank)
+                time_string_tensor = torch.zeros(16, dtype=torch.uint8).to(self.rank)
 
             dist.broadcast(time_string_tensor, src=0)
             time_string = bytes(time_string_tensor.cpu().tolist()).decode('utf-8').rstrip('\x00')
