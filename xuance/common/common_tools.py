@@ -225,7 +225,8 @@ def get_runner(method,
                     raise AttributeError(
                         f"The environment named '{args[i_alg].env}' is currently not supported for {method_list[method[i_alg]]}.")
                 else:
-                    print("Failed to load arguments for the implementation!")
+                    if rank == 0:
+                        print("Failed to load arguments for the implementation!")
 
         if rank == 0:
             print("Algorithm:", *agents_name_string)
@@ -250,7 +251,8 @@ def get_runner(method,
             elif args.env not in method_list[args.method]:
                 raise AttributeError(f"The environment named '{args.env}' is currently not supported for {args.method}.")
             else:
-                print("Failed to load arguments for the implementation!")
+                if rank == 0:
+                    print("Failed to load arguments for the implementation!")
 
         if rank == 0:
             print("Algorithm:", args.agent)

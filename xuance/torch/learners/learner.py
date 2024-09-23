@@ -34,7 +34,8 @@ class Learner(ABC):
                     print("Loading Snapshot...")
                     self.load_snapshot(self.snapshot_path)
             else:
-                os.makedirs(self.snapshot_path)
+                if self.device == 0:
+                    os.makedirs(self.snapshot_path)
         else:
             self.device = config.device
         self.use_grad_clip = config.use_grad_clip
