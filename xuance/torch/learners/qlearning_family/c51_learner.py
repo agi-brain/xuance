@@ -23,16 +23,17 @@ class C51_Learner(Learner):
 
     def update(self, **samples):
         self.iterations += 1
-        obs_batch = samples['obs']
-        act_batch = torch.as_tensor(samples['actions'], device=self.device).long()
-        next_batch = samples['obs_next']
-        rew_batch = torch.as_tensor(samples['rewards'], device=self.device)
-        ter_batch = torch.as_tensor(samples['terminals'], device=self.device)
+        sample_Tensor = self.build_training_data(samples=samples)
+        obs_batch = sample_Tensor['obs']
+        act_batch = sample_Tensor['actions']
+        next_batch = sample_Tensor['obs_next']
+        rew_batch = sample_Tensor['rewards']
+        ter_batch = sample_Tensor['terminals']
 
         _, _, evalZ = self.policy(obs_batch)
         _, targetA, targetZ = self.policy.target(next_batch)
 
-        current_dist = (evalZ * self.one_hot(act_batch, evalZ.shape[1]).unsqueeze(-1)).sum(1)
+        current_dist = (evalZ * self.one_hot(act_batch.long(), evalZ.shape[1]).unsqueeze(-1)).sum(1)
         target_dist = (targetZ * self.one_hot(targetA.detach(), evalZ.shape[1]).unsqueeze(-1)).sum(1).detach()
 
         current_supports = self.policy.supports
@@ -49,14 +50,21 @@ class C51_Learner(Learner):
         self.optimizer.step()
         if self.scheduler is not None:
             self.scheduler.step()
+
         # hard update for target network
         if self.iterations % self.sync_frequency == 0:
             self.policy.copy_target()
         lr = self.optimizer.state_dict()['param_groups'][0]['lr']
 
-        info = {
-            "Qloss": loss.item(),
-            "learning_rate": lr
-        }
+        if self.distributed_training:
+            info = {
+                f"Qloss/rank_{self.rank}": loss.item(),
+                f"learning_rate/rank_{self.rank}": lr
+            }
+        else:
+            info = {
+                "Qloss": loss.item(),
+                "learning_rate": lr
+            }
 
         return info

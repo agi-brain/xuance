@@ -46,7 +46,7 @@ class OnPolicyAgent(Agent):
     def _build_policy(self) -> Module:
         raise NotImplementedError
 
-    def get_terminated_values(self, observations_next: np.ndarray, rewards: np.ndarray = None):
+    def get_terminated_values(self, observations_next: np.ndarray, rewards: np.ndarray = None) -> np.ndarray:
         """Returns values for terminated states.
 
         Parameters:
@@ -61,7 +61,7 @@ class OnPolicyAgent(Agent):
         return values_next
 
     def action(self, observations: np.ndarray,
-               return_dists: bool = False, return_logpi: bool = False):
+               return_dists: bool = False, return_logpi: bool = False) -> dict:
         """Returns actions and values.
 
         Parameters:
@@ -86,7 +86,7 @@ class OnPolicyAgent(Agent):
             values = values.detach().cpu().numpy()
         return {"actions": actions, "values": values, "dists": dists, "log_pi": log_pi}
 
-    def get_aux_info(self, policy_output: dict = None):
+    def get_aux_info(self, policy_output: dict = None) -> dict:
         """Returns auxiliary information.
 
         Parameters:
@@ -95,9 +95,9 @@ class OnPolicyAgent(Agent):
         Returns:
             aux_info (dict): The auxiliary information.
         """
-        return None
+        return {}
 
-    def train_epochs(self, n_epochs=1):
+    def train_epochs(self, n_epochs: int = 1) -> dict:
         indexes = np.arange(self.buffer_size)
         train_info = {}
         for _ in range(n_epochs):
@@ -109,7 +109,7 @@ class OnPolicyAgent(Agent):
                 train_info = self.learner.update(**samples)
         return train_info
 
-    def train(self, train_steps):
+    def train(self, train_steps: int) -> None:
         obs = self.envs.buf_obs
         for _ in tqdm(range(train_steps)):
             step_info = {}
@@ -148,16 +148,17 @@ class OnPolicyAgent(Agent):
                         obs[i] = infos[i]["reset_obs"]
                         self.envs.buf_obs[i] = obs[i]
                         self.current_episode[i] += 1
-                        if self.use_wandb:
-                            step_info["Episode-Steps/env-%d" % i] = infos[i]["episode_step"]
-                            step_info["Train-Episode-Rewards/env-%d" % i] = infos[i]["episode_score"]
-                        else:
-                            step_info["Episode-Steps"] = {"env-%d" % i: infos[i]["episode_step"]}
-                            step_info["Train-Episode-Rewards"] = {"env-%d" % i: infos[i]["episode_score"]}
-                        self.log_infos(step_info, self.current_step)
+                        if self.rank == 0:
+                            if self.use_wandb:
+                                step_info[f"Episode-Steps/env-{i}"] = infos[i]["episode_step"]
+                                step_info[f"Train-Episode-Rewards/env-{i}"] = infos[i]["episode_score"]
+                            else:
+                                step_info["Episode-Steps"] = {f"env-{i}": infos[i]["episode_step"]}
+                                step_info["Train-Episode-Rewards"] = {f"env-{i}": infos[i]["episode_score"]}
+                            self.log_infos(step_info, self.current_step)
             self.current_step += self.n_envs
 
-    def test(self, env_fn, test_episodes):
+    def test(self, env_fn, test_episodes: int) -> list:
         test_envs = env_fn()
         num_envs = test_envs.num_envs
         videos, episode_videos = [[] for _ in range(num_envs)], []

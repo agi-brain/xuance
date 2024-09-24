@@ -30,11 +30,12 @@ class TD3_Learner(Learner):
     def update(self, **samples):
         self.iterations += 1
         info = {}
-        obs_batch = samples['obs']
-        act_batch = torch.as_tensor(samples['actions'], device=self.device)
-        next_batch = samples['obs_next']
-        rew_batch = torch.as_tensor(samples['rewards'], device=self.device)
-        ter_batch = torch.as_tensor(samples['terminals'], device=self.device)
+        sample_Tensor = self.build_training_data(samples=samples)
+        obs_batch = sample_Tensor['obs']
+        act_batch = sample_Tensor['actions']
+        next_batch = sample_Tensor['obs_next']
+        rew_batch = sample_Tensor['rewards']
+        ter_batch = sample_Tensor['terminals']
 
         # critic update
         action_q_A, action_q_B = self.policy.Qaction(obs_batch, act_batch)
@@ -68,12 +69,21 @@ class TD3_Learner(Learner):
         actor_lr = self.optimizer['actor'].state_dict()['param_groups'][0]['lr']
         critic_lr = self.optimizer['critic'].state_dict()['param_groups'][0]['lr']
 
-        info.update({
-            "Qloss": q_loss.item(),
-            "QvalueA": action_q_A.mean().item(),
-            "QvalueB": action_q_B.mean().item(),
-            "actor_lr": actor_lr,
-            "critic_lr": critic_lr
-        })
+        if self.distributed_training:
+            info.update({
+                f"Qloss/rank_{self.rank}": q_loss.item(),
+                f"QvalueA/rank_{self.rank}": action_q_A.mean().item(),
+                f"QvalueB/rank_{self.rank}": action_q_B.mean().item(),
+                f"actor_lr/rank_{self.rank}": actor_lr,
+                f"critic_lr/rank_{self.rank}": critic_lr
+            })
+        else:
+            info.update({
+                "Qloss": q_loss.item(),
+                "QvalueA": action_q_A.mean().item(),
+                "QvalueB": action_q_B.mean().item(),
+                "actor_lr": actor_lr,
+                "critic_lr": critic_lr
+            })
 
         return info

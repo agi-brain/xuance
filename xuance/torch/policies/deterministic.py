@@ -45,10 +45,9 @@ class BasicQnetwork(Module):
         # Prepare DDP module.
         self.distributed_training = use_distributed_training
         if self.distributed_training:
-            self.representation = DistributedDataParallel(module=self.representation,
-                                                          device_ids=[int(os.environ['LOCAL_RANK'])])
-            self.eval_Qhead = DistributedDataParallel(module=self.eval_Qhead,
-                                                      device_ids=[int(os.environ['LOCAL_RANK'])])
+            self.rank = int(os.environ["RANK"])
+            self.representation = DistributedDataParallel(module=self.representation, device_ids=[self.rank])
+            self.eval_Qhead = DistributedDataParallel(module=self.eval_Qhead, device_ids=[self.rank])
 
     def forward(self, observation: Union[np.ndarray, dict]):
         """
@@ -103,6 +102,7 @@ class DuelQnetwork(Module):
         initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
         activation (Optional[ModuleType]): The activation function for each layer.
         device (Optional[Union[str, int, torch.device]]): The calculating device.
+        use_distributed_training (str): Whether to use multi-GPU for distributed training.
     """
 
     def __init__(self,
@@ -112,7 +112,8 @@ class DuelQnetwork(Module):
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None,
-                 device: Optional[Union[str, int, torch.device]] = None):
+                 device: Optional[Union[str, int, torch.device]] = None,
+                 use_distributed_training: bool = False):
         super(DuelQnetwork, self).__init__()
         self.action_dim = action_space.n
         self.representation = representation
@@ -121,6 +122,12 @@ class DuelQnetwork(Module):
         self.eval_Qhead = DuelQhead(self.representation.output_shapes['state'][0], self.action_dim, hidden_size,
                                     normalize, initialize, activation, device)
         self.target_Qhead = deepcopy(self.eval_Qhead)
+        # Prepare DDP module.
+        self.distributed_training = use_distributed_training
+        if self.distributed_training:
+            self.rank = int(os.environ["RANK"])
+            self.representation = DistributedDataParallel(module=self.representation, device_ids=[self.rank])
+            self.eval_Qhead = DistributedDataParallel(module=self.eval_Qhead, device_ids=[self.rank])
 
     def forward(self, observation: Union[np.ndarray, dict]):
         """
@@ -175,6 +182,7 @@ class NoisyQnetwork(Module):
         initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
         activation (Optional[ModuleType]): The activation function for each layer.
         device (Optional[Union[str, int, torch.device]]): The calculating device.
+        use_distributed_training (str): Whether to use multi-GPU for distributed training.
     """
 
     def __init__(self,
@@ -184,7 +192,8 @@ class NoisyQnetwork(Module):
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None,
-                 device: Optional[Union[str, int, torch.device]] = None):
+                 device: Optional[Union[str, int, torch.device]] = None,
+                 use_distributed_training: bool = False):
         super(NoisyQnetwork, self).__init__()
         self.action_dim = action_space.n
         self.representation = representation
@@ -196,6 +205,12 @@ class NoisyQnetwork(Module):
         self.noise_scale = 0.0
         self.eval_noise_parameter = []
         self.target_noise_parameter = []
+        # Prepare DDP module.
+        self.distributed_training = use_distributed_training
+        if self.distributed_training:
+            self.rank = int(os.environ["RANK"])
+            self.representation = DistributedDataParallel(module=self.representation, device_ids=[self.rank])
+            self.eval_Qhead = DistributedDataParallel(module=self.eval_Qhead, device_ids=[self.rank])
 
     def update_noise(self, noisy_bound: float = 0.0):
         """Updates the noises for network parameters."""
@@ -267,6 +282,7 @@ class C51Qnetwork(Module):
         initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
         activation (Optional[ModuleType]): The activation function for each layer.
         device (Optional[Union[str, int, torch.device]]): The calculating device.
+        use_distributed_training (str): Whether to use multi-GPU for distributed training.
     """
 
     def __init__(self,
@@ -279,7 +295,8 @@ class C51Qnetwork(Module):
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None,
-                 device: Optional[Union[str, int, torch.device]] = None):
+                 device: Optional[Union[str, int, torch.device]] = None,
+                 use_distributed_training: bool = False):
         super(C51Qnetwork, self).__init__()
         self.action_dim = action_space.n
         self.atom_num = atom_num
@@ -294,6 +311,12 @@ class C51Qnetwork(Module):
         self.supports = torch.nn.Parameter(torch.linspace(self.v_min, self.v_max, self.atom_num),
                                            requires_grad=False).to(device)
         self.deltaz = (v_max - v_min) / (atom_num - 1)
+        # Prepare DDP module.
+        self.distributed_training = use_distributed_training
+        if self.distributed_training:
+            self.rank = int(os.environ["RANK"])
+            self.representation = DistributedDataParallel(module=self.representation, device_ids=[self.rank])
+            self.eval_Zhead = DistributedDataParallel(module=self.eval_Zhead, device_ids=[self.rank])
 
     def forward(self, observation: Union[np.ndarray, dict]):
         """
@@ -351,6 +374,7 @@ class QRDQN_Network(Module):
         initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
         activation (Optional[ModuleType]): The activation function for each layer.
         device (Optional[Union[str, int, torch.device]]): The calculating device.
+        use_distributed_training (str): Whether to use multi-GPU for distributed training.
     """
 
     def __init__(self,
@@ -361,7 +385,8 @@ class QRDQN_Network(Module):
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None,
-                 device: Optional[Union[str, int, torch.device]] = None):
+                 device: Optional[Union[str, int, torch.device]] = None,
+                 use_distributed_training: bool = False):
         super(QRDQN_Network, self).__init__()
         self.action_dim = action_space.n
         self.quantile_num = quantile_num
@@ -371,6 +396,12 @@ class QRDQN_Network(Module):
         self.eval_Zhead = QRDQNhead(self.representation.output_shapes['state'][0], self.action_dim, self.quantile_num,
                                     hidden_size, normalize, initialize, activation, device)
         self.target_Zhead = deepcopy(self.eval_Zhead)
+        # Prepare DDP module.
+        self.distributed_training = use_distributed_training
+        if self.distributed_training:
+            self.rank = int(os.environ["RANK"])
+            self.representation = DistributedDataParallel(module=self.representation, device_ids=[self.rank])
+            self.eval_Zhead = DistributedDataParallel(module=self.eval_Zhead, device_ids=[self.rank])
 
     def forward(self, observation: Union[np.ndarray, dict]):
         """
@@ -429,6 +460,7 @@ class DDPGPolicy(Module):
         activation (Optional[ModuleType]): The activation function for each layer.
         activation_action (Optional[ModuleType]): The activation of final layer to bound the actions.
         device (Optional[Union[str, int, torch.device]]): The calculating device.
+        use_distributed_training (str): Whether to use multi-GPU for distributed training.
     """
 
     def __init__(self,
@@ -440,7 +472,8 @@ class DDPGPolicy(Module):
                  initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None,
                  activation_action: Optional[ModuleType] = None,
-                 device: Optional[Union[str, int, torch.device]] = None):
+                 device: Optional[Union[str, int, torch.device]] = None,
+                 use_distributed_training: bool = False):
         super(DDPGPolicy, self).__init__()
         self.action_dim = action_space.shape[0]
         self.representation_info_shape = representation.output_shapes
@@ -460,6 +493,15 @@ class DDPGPolicy(Module):
         # parameters
         self.actor_parameters = list(self.actor_representation.parameters()) + list(self.actor.parameters())
         self.critic_parameters = list(self.critic_representation.parameters()) + list(self.critic.parameters())
+
+        # Prepare DDP module.
+        self.distributed_training = use_distributed_training
+        if self.distributed_training:
+            self.rank = int(os.environ["RANK"])
+            self.actor_representation = DistributedDataParallel(self.actor_representation, device_ids=[self.rank])
+            self.actor = DistributedDataParallel(module=self.actor, device_ids=[self.rank])
+            self.critic_representation = DistributedDataParallel(self.critic_representation, device_ids=[self.rank])
+            self.critic = DistributedDataParallel(module=self.critic, device_ids=[self.rank])
 
     def forward(self, observation: Union[np.ndarray, dict]):
         """
@@ -527,6 +569,7 @@ class TD3Policy(Module):
         activation (Optional[ModuleType]): The activation function for each layer.
         activation_action (Optional[ModuleType]): The activation of final layer to bound the actions.
         device (Optional[Union[str, int, torch.device]]): The calculating device.
+        use_distributed_training (str): Whether to use multi-GPU for distributed training.
     """
 
     def __init__(self,
@@ -538,7 +581,8 @@ class TD3Policy(Module):
                  initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None,
                  activation_action: Optional[ModuleType] = None,
-                 device: Optional[Union[str, int, torch.device]] = None):
+                 device: Optional[Union[str, int, torch.device]] = None,
+                 use_distributed_training: bool = False):
         super(TD3Policy, self).__init__()
         self.action_dim = action_space.shape[0]
         self.representation_info_shape = representation.output_shapes
@@ -566,6 +610,17 @@ class TD3Policy(Module):
         self.critic_parameters = list(self.critic_A_representation.parameters()) + list(
             self.critic_A.parameters()) + list(self.critic_B_representation.parameters()) + list(
             self.critic_B.parameters())
+
+        # Prepare DDP module.
+        self.distributed_training = use_distributed_training
+        if self.distributed_training:
+            self.rank = int(os.environ["RANK"])
+            self.actor_representation = DistributedDataParallel(self.actor_representation, device_ids=[self.rank])
+            self.critic_A_representation = DistributedDataParallel(self.critic_A_representation, device_ids=[self.rank])
+            self.critic_B_representation = DistributedDataParallel(self.critic_B_representation, device_ids=[self.rank])
+            self.actor = DistributedDataParallel(module=self.actor, device_ids=[self.rank])
+            self.critic_A = DistributedDataParallel(module=self.critic_A, device_ids=[self.rank])
+            self.critic_B = DistributedDataParallel(module=self.critic_B, device_ids=[self.rank])
 
     def forward(self, observation: Union[np.ndarray, dict]):
         """
@@ -650,6 +705,7 @@ class PDQNPolicy(Module):
         activation (Optional[ModuleType]): The activation function for each layer.
         activation_action (Optional[ModuleType]): The activation of final layer to bound the actions.
         device (Optional[Union[str, int, torch.device]]): The calculating device.
+        use_distributed_training (str): Whether to use multi-GPU for distributed training.
     """
 
     def __init__(self,
@@ -662,7 +718,8 @@ class PDQNPolicy(Module):
                  initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None,
                  activation_action: Optional[ModuleType] = None,
-                 device: Optional[Union[str, int, torch.device]] = None):
+                 device: Optional[Union[str, int, torch.device]] = None,
+                 use_distributed_training: bool = False):
         super(PDQNPolicy, self).__init__()
         self.representation = representation
         self.target_representation = deepcopy(representation)
@@ -678,6 +735,14 @@ class PDQNPolicy(Module):
                                  normalize, initialize, activation, activation_action, device)
         self.target_conactor = deepcopy(self.conactor)
         self.target_qnetwork = deepcopy(self.qnetwork)
+
+        # Prepare DDP module.
+        self.distributed_training = use_distributed_training
+        if self.distributed_training:
+            self.rank = int(os.environ["RANK"])
+            self.representation = DistributedDataParallel(module=self.representation, device_ids=[self.rank])
+            self.qnetwork = DistributedDataParallel(module=self.qnetwork, device_ids=[self.rank])
+            self.conactor = DistributedDataParallel(module=self.conactor, device_ids=[self.rank])
 
     def Atarget(self, state):
         target_conact = self.target_conactor(state)
@@ -730,6 +795,7 @@ class MPDQNPolicy(PDQNPolicy):
         activation (Optional[ModuleType]): The activation function for each layer.
         activation_action (Optional[ModuleType]): The activation of final layer to bound the actions.
         device (Optional[Union[str, int, torch.device]]): The calculating device.
+        use_distributed_training (str): Whether to use multi-GPU for distributed training.
     """
 
     def __init__(self,
@@ -742,10 +808,12 @@ class MPDQNPolicy(PDQNPolicy):
                  initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None,
                  activation_action: Optional[ModuleType] = None,
-                 device: Optional[Union[str, int, torch.device]] = None):
+                 device: Optional[Union[str, int, torch.device]] = None,
+                 use_distributed_training: bool = False):
         super(MPDQNPolicy, self).__init__(observation_space, action_space, representation,
                                           conactor_hidden_size, qnetwork_hidden_size,
-                                          normalize, initialize, activation, activation_action, device)
+                                          normalize, initialize, activation, activation_action, device,
+                                          use_distributed_training)
         self.obs_size = self.observation_space.shape[0]
         self.offsets = self.conact_sizes.cumsum()
         self.offsets = np.insert(self.offsets, 0, 0)
@@ -821,6 +889,7 @@ class SPDQNPolicy(PDQNPolicy):
         activation (Optional[ModuleType]): The activation function for each layer.
         activation_action (Optional[ModuleType]): The activation of final layer to bound the actions.
         device (Optional[Union[str, int, torch.device]]): The calculating device.
+        use_distributed_training (str): Whether to use multi-GPU for distributed training.
     """
 
     def __init__(self,
@@ -833,10 +902,12 @@ class SPDQNPolicy(PDQNPolicy):
                  initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None,
                  activation_action: Optional[ModuleType] = None,
-                 device: Optional[Union[str, int, torch.device]] = None):
+                 device: Optional[Union[str, int, torch.device]] = None,
+                 use_distributed_training: bool = False):
         super(SPDQNPolicy, self).__init__(observation_space, action_space, representation,
                                           conactor_hidden_size, qnetwork_hidden_size,
-                                          normalize, initialize, activation, activation_action, device)
+                                          normalize, initialize, activation, activation_action, device,
+                                          use_distributed_training)
         self.qnetwork = nn.ModuleList()
         for k in range(self.num_disact):
             self.qnetwork.append(
@@ -849,6 +920,12 @@ class SPDQNPolicy(PDQNPolicy):
 
         self.offsets = self.conact_sizes.cumsum()
         self.offsets = np.insert(self.offsets, 0, 0)
+
+        # Prepare DDP module.
+        if self.distributed_training:
+            for k in range(self.num_disact):
+                self.qnetwork[k] = DistributedDataParallel(module=self.qnetwork[k], device_ids=[self.rank])
+            self.conactor = DistributedDataParallel(module=self.conactor, device_ids=[self.rank])
 
     def Qtarget(self, state, action):
         target_Q = []
@@ -910,6 +987,13 @@ class DRQNPolicy(Module):
         self.cnn = True if self.representation._get_name() == "Basic_CNN" else False
         self.eval_Qhead = BasicRecurrent(**kwargs)
         self.target_Qhead = deepcopy(self.eval_Qhead)
+
+        # Prepare DDP module.
+        self.distributed_training = kwargs['use_distributed_training']
+        if self.distributed_training:
+            self.rank = int(os.environ["RANK"])
+            self.representation = DistributedDataParallel(module=self.representation, device_ids=[self.rank])
+            self.eval_Qhead = DistributedDataParallel(module=self.eval_Qhead, device_ids=[self.rank])
 
     def forward(self, observation: Union[np.ndarray, dict], *rnn_hidden: Tensor):
         """

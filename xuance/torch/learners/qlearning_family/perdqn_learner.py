@@ -26,11 +26,12 @@ class PerDQN_Learner(Learner):
 
     def update(self, **samples):
         self.iterations += 1
-        obs_batch = samples['obs']
-        act_batch = torch.as_tensor(samples['actions'], device=self.device)
-        next_batch = samples['obs_next']
-        rew_batch = torch.as_tensor(samples['rewards'], device=self.device)
-        ter_batch = torch.as_tensor(samples['terminals'], device=self.device)
+        sample_Tensor = self.build_training_data(samples=samples)
+        obs_batch = sample_Tensor['obs']
+        act_batch = sample_Tensor['actions']
+        next_batch = sample_Tensor['obs_next']
+        rew_batch = sample_Tensor['rewards']
+        ter_batch = sample_Tensor['terminals']
 
         _, _, evalQ = self.policy(obs_batch)
         _, _, targetQ = self.policy.target(next_batch)
@@ -53,10 +54,17 @@ class PerDQN_Learner(Learner):
             self.policy.copy_target()
         lr = self.optimizer.state_dict()['param_groups'][0]['lr']
 
-        info = {
-            "Qloss": loss.item(),
-            "learning_rate": lr,
-            "predictQ": predictQ.mean().item()
-        }
+        if self.distributed_training:
+            info = {
+                f"Qloss/rank_{self.rank}": loss.item(),
+                f"learning_rate/rank_{self.rank}": lr,
+                f"predictQ/rank_{self.rank}": predictQ.mean().item()
+            }
+        else:
+            info = {
+                "Qloss": loss.item(),
+                "learning_rate": lr,
+                "predictQ": predictQ.mean().item()
+            }
         
         return np.abs(td_error.cpu().detach().numpy()), info

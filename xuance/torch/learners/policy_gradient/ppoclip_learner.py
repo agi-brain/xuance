@@ -24,12 +24,12 @@ class PPOCLIP_Learner(Learner):
 
     def update(self, **samples):
         self.iterations += 1
-
-        obs_batch = samples['obs']
-        act_batch = torch.as_tensor(samples['actions'], device=self.device)
-        ret_batch = torch.as_tensor(samples['returns'], device=self.device)
-        adv_batch = torch.as_tensor(samples['advantages'], device=self.device)
-        old_logp_batch = torch.as_tensor(samples['aux_batch']['old_logp'], device=self.device)
+        sample_Tensor = self.build_training_data(samples=samples)
+        obs_batch = sample_Tensor['obs']
+        act_batch = sample_Tensor['actions']
+        ret_batch = sample_Tensor['returns']
+        adv_batch = sample_Tensor['advantages']
+        old_logp_batch = sample_Tensor['aux_batch']['old_logp']
 
         outputs, a_dist, v_pred = self.policy(obs_batch)
         log_prob = a_dist.log_prob(act_batch)
@@ -55,13 +55,23 @@ class PPOCLIP_Learner(Learner):
         lr = self.optimizer.state_dict()['param_groups'][0]['lr']
         cr = ((ratio < 1 - self.clip_range).sum() + (ratio > 1 + self.clip_range).sum()) / ratio.shape[0]
         
-        info = {
-            "actor_loss": a_loss.item(),
-            "critic_loss": c_loss.item(),
-            "entropy": e_loss.item(),
-            "learning_rate": lr,
-            "predict_value": v_pred.mean().item(),
-            "clip_ratio": cr
-        }
+        if self.distributed_training:
+            info = {
+                f"actor_loss/rank_{self.rank}": a_loss.item(),
+                f"critic_loss/rank_{self.rank}": c_loss.item(),
+                f"entropy/rank_{self.rank}": e_loss.item(),
+                f"learning_rate/rank_{self.rank}": lr,
+                f"predict_value/rank_{self.rank}": v_pred.mean().item(),
+                f"clip_ratio/rank_{self.rank}": cr
+            }
+        else:
+            info = {
+                "actor_loss": a_loss.item(),
+                "critic_loss": c_loss.item(),
+                "entropy": e_loss.item(),
+                "learning_rate": lr,
+                "predict_value": v_pred.mean().item(),
+                "clip_ratio": cr
+            }
 
         return info

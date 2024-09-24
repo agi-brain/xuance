@@ -37,11 +37,12 @@ class SACDIS_Learner(Learner):
 
     def update(self, **samples):
         self.iterations += 1
-        obs_batch = samples['obs']
-        act_batch = torch.as_tensor(samples['actions'], device=self.device).unsqueeze(-1)
-        next_batch = samples['obs_next']
-        rew_batch = torch.as_tensor(samples['rewards'], device=self.device).unsqueeze(-1)
-        ter_batch = torch.as_tensor(samples['terminals'], device=self.device).reshape([-1, 1])
+        sample_Tensor = self.build_training_data(samples=samples)
+        obs_batch = sample_Tensor['obs']
+        act_batch = sample_Tensor['actions'].unsqueeze(-1)
+        next_batch = sample_Tensor['obs_next']
+        rew_batch = sample_Tensor['rewards'].unsqueeze(-1)
+        ter_batch = sample_Tensor['terminals'].reshape([-1, 1])
 
         # actor update
         action_prob, log_pi, policy_q_1, policy_q_2 = self.policy.Qpolicy(obs_batch)
@@ -87,17 +88,28 @@ class SACDIS_Learner(Learner):
         actor_lr = self.optimizer['actor'].state_dict()['param_groups'][0]['lr']
         critic_lr = self.optimizer['critic'].state_dict()['param_groups'][0]['lr']
 
-        info = {
-            "Qloss": q_loss.item(),
-            "Ploss": p_loss.item(),
-            "Qvalue": policy_q.mean().item(),
-            "actor_lr": actor_lr,
-            "critic_lr": critic_lr,
-        }
+        if self.distributed_training:
+            info = {
+                f"Qloss/rank_{self.rank}": q_loss.item(),
+                f"Ploss/rank_{self.rank}": p_loss.item(),
+                f"Qvalue/rank_{self.rank}": policy_q.mean().item(),
+                f"actor_lr/rank_{self.rank}": actor_lr,
+                f"critic_lr/rank_{self.rank}": critic_lr,
+            }
+        else:
+            info = {
+                "Qloss": q_loss.item(),
+                "Ploss": p_loss.item(),
+                "Qvalue": policy_q.mean().item(),
+                "actor_lr": actor_lr,
+                "critic_lr": critic_lr,
+            }
         if self.use_automatic_entropy_tuning:
-            info.update({
-                "alpha_loss": alpha_loss.item(),
-                "alpha": self.alpha.item(),
-            })
+            if self.distributed_training:
+                info.update({f"alpha_loss/rank_{self.rank}": alpha_loss.item(),
+                             f"alpha/rank_{self.rank}": self.alpha.item()})
+            else:
+                info.update({"alpha_loss": alpha_loss.item(),
+                             "alpha": self.alpha.item()})
 
         return info

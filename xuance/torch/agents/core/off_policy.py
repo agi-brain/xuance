@@ -149,7 +149,7 @@ class OffPolicyAgent(Agent):
             self.current_step += self.n_envs
             self._update_explore_factor()
 
-    def test(self, env_fn, test_episodes):
+    def test(self, env_fn, test_episodes: int) -> list:
         test_envs = env_fn()
         num_envs = test_envs.num_envs
         videos, episode_videos = [[] for _ in range(num_envs)], []

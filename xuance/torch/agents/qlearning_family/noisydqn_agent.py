@@ -56,7 +56,8 @@ class NoisyDQN_Agent(Agent):
         if self.config.policy == "Noisy_Q_network":
             policy = REGISTRY_Policy["Noisy_Q_network"](
                 action_space=self.action_space, representation=representation, hidden_size=self.config.q_hidden_size,
-                normalize=normalize_fn, initialize=initializer, activation=activation, device=device)
+                normalize=normalize_fn, initialize=initializer, activation=activation, device=device,
+                use_distributed_training=self.distributed_training)
         else:
             raise AttributeError(f"{self.config.agent} currently does not support the policy named {self.config.policy}.")
 
@@ -99,13 +100,14 @@ class NoisyDQN_Agent(Agent):
                         obs[i] = infos[i]["reset_obs"]
                         self.envs.buf_obs[i] = obs[i]
                         self.current_episode[i] += 1
-                        if self.use_wandb:
-                            step_info["Episode-Steps/env-%d" % i] = infos[i]["episode_step"]
-                            step_info["Train-Episode-Rewards/env-%d" % i] = infos[i]["episode_score"]
-                        else:
-                            step_info["Episode-Steps"] = {"env-%d" % i: infos[i]["episode_step"]}
-                            step_info["Train-Episode-Rewards"] = {"env-%d" % i: infos[i]["episode_score"]}
-                        self.log_infos(step_info, self.current_step)
+                        if self.rank == 0:
+                            if self.use_wandb:
+                                step_info[f"Episode-Steps/env-{i}"] = infos[i]["episode_step"]
+                                step_info[f"Train-Episode-Rewards/env-{i}"] = infos[i]["episode_score"]
+                            else:
+                                step_info["Episode-Steps"] = {f"env-{i}": infos[i]["episode_step"]}
+                                step_info["Train-Episode-Rewards"] = {f"env-{i}": infos[i]["episode_score"]}
+                            self.log_infos(step_info, self.current_step)
 
             self.current_step += self.n_envs
             if self.noise_scale > self.end_noise:

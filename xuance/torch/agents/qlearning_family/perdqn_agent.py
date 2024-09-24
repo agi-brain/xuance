@@ -67,13 +67,14 @@ class PerDQN_Agent(DQN_Agent):
                         obs[i] = infos[i]["reset_obs"]
                         self.envs.buf_obs[i] = obs[i]
                         self.current_episode[i] += 1
-                        if self.use_wandb:
-                            step_info["Episode-Steps/env-%d" % i] = infos[i]["episode_step"]
-                            step_info["Train-Episode-Rewards/env-%d" % i] = infos[i]["episode_score"]
-                        else:
-                            step_info["Episode-Steps"] = {"env-%d" % i: infos[i]["episode_step"]}
-                            step_info["Train-Episode-Rewards"] = {"env-%d" % i: infos[i]["episode_score"]}
-                        self.log_infos(step_info, self.current_step)
+                        if self.rank == 0:
+                            if self.use_wandb:
+                                step_info[f"Episode-Steps/env-{i}"] = infos[i]["episode_step"]
+                                step_info[f"Train-Episode-Rewards/env-{i}"] = infos[i]["episode_score"]
+                            else:
+                                step_info["Episode-Steps"] = {f"env-{i}": infos[i]["episode_step"]}
+                                step_info["Train-Episode-Rewards"] = {f"env-{i}": infos[i]["episode_score"]}
+                            self.log_infos(step_info, self.current_step)
 
             self.current_step += self.n_envs
             if self.e_greedy > self.end_greedy:

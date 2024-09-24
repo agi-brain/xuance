@@ -34,7 +34,8 @@ class C51_Agent(DQN_Agent):
                 action_space=self.action_space,
                 atom_num=self.config.atom_num, v_min=self.config.v_min, v_max=self.config.v_max,
                 representation=representation, hidden_size=self.config.q_hidden_size,
-                normalize=normalize_fn, initialize=initializer, activation=activation, device=device)
+                normalize=normalize_fn, initialize=initializer, activation=activation, device=device,
+                use_distributed_training=self.distributed_training)
         else:
             raise AttributeError(f"C51 currently does not support the policy named {self.config.policy}.")
 

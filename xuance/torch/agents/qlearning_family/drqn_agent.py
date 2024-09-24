@@ -61,7 +61,8 @@ class DRQN_Agent(OffPolicyAgent):
                 action_space=self.action_space, representation=representation,
                 rnn=self.config.rnn, recurrent_hidden_size=self.config.recurrent_hidden_size,
                 recurrent_layer_N=self.config.recurrent_layer_N, dropout=self.config.dropout,
-                normalize=normalize_fn, initialize=initializer, activation=activation, device=device)
+                normalize=normalize_fn, initialize=initializer, activation=activation, device=device,
+                use_distributed_training=self.distributed_training)
         else:
             raise AttributeError(
                 f"{self.config.agent} currently does not support the policy named {self.config.policy}.")
@@ -108,13 +109,14 @@ class DRQN_Agent(OffPolicyAgent):
                         self.rnn_hidden = self.policy.init_hidden_item(self.rnn_hidden, i)
                         dones[i] = True
                         self.current_episode[i] += 1
-                        if self.use_wandb:
-                            step_info["Episode-Steps/env-%d" % i] = infos[i]["episode_step"]
-                            step_info["Train-Episode-Rewards/env-%d" % i] = infos[i]["episode_score"]
-                        else:
-                            step_info["Episode-Steps"] = {"env-%d" % i: infos[i]["episode_step"]}
-                            step_info["Train-Episode-Rewards"] = {"env-%d" % i: infos[i]["episode_score"]}
-                        self.log_infos(step_info, self.current_step)
+                        if self.rank == 0:
+                            if self.use_wandb:
+                                step_info[f"Episode-Steps/env-{i}"] = infos[i]["episode_step"]
+                                step_info[f"Train-Episode-Rewards/env-{i}"] = infos[i]["episode_score"]
+                            else:
+                                step_info[f"Episode-Steps"] = {f"env-{i}": infos[i]["episode_step"]}
+                                step_info[f"Train-Episode-Rewards"] = {f"env-{i}": infos[i]["episode_score"]}
+                            self.log_infos(step_info, self.current_step)
                         self.memory.store(episode_data[i])
                         episode_data[i] = EpisodeBuffer()
                         obs[i] = infos[i]["reset_obs"]

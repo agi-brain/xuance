@@ -1,10 +1,11 @@
+import os
 import torch
 import torch.nn as nn
 import numpy as np
 from copy import deepcopy
 from gym.spaces import Discrete
 from xuance.common import Sequence, Optional, Callable, Union
-from xuance.torch import Module, Tensor
+from xuance.torch import Module, Tensor, DistributedDataParallel
 from xuance.torch.utils import ModuleType
 from .core import CategoricalActorNet as ActorNet
 from .core import CategoricalActorNet_SAC as Actor_SAC
@@ -29,6 +30,7 @@ class ActorPolicy(Module):
         initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
         activation (Optional[ModuleType]): The activation function for each layer.
         device (Optional[Union[str, int, torch.device]]): The calculating device.
+        use_distributed_training (str): Whether to use multi-GPU for distributed training.
     """
 
     def __init__(self,
@@ -38,13 +40,21 @@ class ActorPolicy(Module):
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None,
-                 device: Optional[Union[str, int, torch.device]] = None):
+                 device: Optional[Union[str, int, torch.device]] = None,
+                 use_distributed_training: bool = False):
         super(ActorPolicy, self).__init__()
         self.action_dim = action_space.n
         self.representation = representation
         self.representation_info_shape = self.representation.output_shapes
         self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size,
                               normalize, initialize, activation, device)
+
+        # Prepare DDP module.
+        self.distributed_training = use_distributed_training
+        if self.distributed_training:
+            self.rank = int(os.environ["RANK"])
+            self.representation = DistributedDataParallel(module=self.representation, device_ids=[self.rank])
+            self.actor = DistributedDataParallel(module=self.actor, device_ids=[self.rank])
 
     def forward(self, observation: Union[np.ndarray, dict]):
         """
@@ -75,6 +85,7 @@ class ActorCriticPolicy(Module):
         initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
         activation (Optional[ModuleType]): The activation function for each layer.
         device (Optional[Union[str, int, torch.device]]): The calculating device.
+        use_distributed_training (str): Whether to use multi-GPU for distributed training.
     """
 
     def __init__(self,
@@ -85,7 +96,8 @@ class ActorCriticPolicy(Module):
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None,
-                 device: Optional[Union[str, int, torch.device]] = None):
+                 device: Optional[Union[str, int, torch.device]] = None,
+                 use_distributed_training: bool = False):
         super(ActorCriticPolicy, self).__init__()
         self.action_dim = action_space.n
         self.representation = representation
@@ -94,6 +106,14 @@ class ActorCriticPolicy(Module):
                               normalize, initialize, activation, device)
         self.critic = CriticNet(representation.output_shapes['state'][0], critic_hidden_size,
                                 normalize, initialize, activation, device)
+
+        # Prepare DDP module.
+        self.distributed_training = use_distributed_training
+        if self.distributed_training:
+            self.rank = int(os.environ["RANK"])
+            self.representation = DistributedDataParallel(module=self.representation, device_ids=[self.rank])
+            self.actor = DistributedDataParallel(module=self.actor, device_ids=[self.rank])
+            self.critic = DistributedDataParallel(module=self.critic, device_ids=[self.rank])
 
     def forward(self, observation: Union[np.ndarray, dict]):
         """
@@ -126,6 +146,7 @@ class PPGActorCritic(Module):
         initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
         activation (Optional[ModuleType]): The activation function for each layer.
         device (Optional[Union[str, int, torch.device]]): The calculating device.
+        use_distributed_training (str): Whether to use multi-GPU for distributed training.
     """
 
     def __init__(self,
@@ -136,7 +157,8 @@ class PPGActorCritic(Module):
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None,
-                 device: Optional[Union[str, int, torch.device]] = None):
+                 device: Optional[Union[str, int, torch.device]] = None,
+                 use_distributed_training: bool = False):
         super(PPGActorCritic, self).__init__()
         self.action_dim = action_space.n
         self.actor_representation = representation
@@ -150,6 +172,15 @@ class PPGActorCritic(Module):
                                 normalize, initialize, activation, device)
         self.aux_critic = CriticNet(representation.output_shapes['state'][0], critic_hidden_size,
                                     normalize, initialize, activation, device)
+
+        # Prepare DDP module.
+        self.distributed_training = use_distributed_training
+        if self.distributed_training:
+            self.rank = int(os.environ["RANK"])
+            self.representation = DistributedDataParallel(module=self.representation, device_ids=[self.rank])
+            self.actor = DistributedDataParallel(module=self.actor, device_ids=[self.rank])
+            self.critic = DistributedDataParallel(module=self.critic, device_ids=[self.rank])
+            self.aux_critic = DistributedDataParallel(module=self.aux_critic, device_ids=[self.rank])
 
     def forward(self, observation: Union[np.ndarray, dict]):
         """
@@ -186,6 +217,7 @@ class SACDISPolicy(Module):
         initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
         activation (Optional[ModuleType]): The activation function for each layer.
         device (Optional[Union[str, int, torch.device]]): The calculating device.
+        use_distributed_training (str): Whether to use multi-GPU for distributed training.
     """
 
     def __init__(self,
@@ -196,7 +228,8 @@ class SACDISPolicy(Module):
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None,
-                 device: Optional[Union[str, int, torch.device]] = None):
+                 device: Optional[Union[str, int, torch.device]] = None,
+                 use_distributed_training: bool = False):
         super(SACDISPolicy, self).__init__()
         self.action_dim = action_space.n
         self.representation_info_shape = representation.output_shapes
@@ -220,6 +253,17 @@ class SACDISPolicy(Module):
         self.critic_parameters = list(self.critic_1_representation.parameters()) + list(
             self.critic_1.parameters()) + list(self.critic_2_representation.parameters()) + list(
             self.critic_2.parameters())
+
+        # Prepare DDP module.
+        self.distributed_training = use_distributed_training
+        if self.distributed_training:
+            self.rank = int(os.environ["RANK"])
+            self.actor_representation = DistributedDataParallel(self.actor_representation, device_ids=[self.rank])
+            self.critic_1_representation = DistributedDataParallel(self.critic_1_representation, device_ids=[self.rank])
+            self.critic_2_representation = DistributedDataParallel(self.critic_2_representation, device_ids=[self.rank])
+            self.actor = DistributedDataParallel(module=self.actor, device_ids=[self.rank])
+            self.critic_1 = DistributedDataParallel(module=self.critic_1, device_ids=[self.rank])
+            self.critic_2 = DistributedDataParallel(module=self.critic_2, device_ids=[self.rank])
 
     def forward(self, observation: Union[np.ndarray, dict]):
         """

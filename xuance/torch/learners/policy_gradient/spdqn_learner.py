@@ -28,13 +28,14 @@ class SPDQN_Learner(Learner):
 
     def update(self, **samples):
         self.iterations += 1
-        obs_batch = torch.as_tensor(samples['obs'], device=self.device)
-        hyact_batch = torch.as_tensor(samples['actions'], device=self.device)
+        sample_Tensor = self.build_training_data(samples=samples)
+        obs_batch = sample_Tensor['obs']
+        hyact_batch = sample_Tensor['actions']
+        rew_batch = sample_Tensor['rewards']
+        next_batch = sample_Tensor['obs_next']
+        ter_batch = sample_Tensor['terminals']
         disact_batch = hyact_batch[:, 0].long()
         conact_batch = hyact_batch[:, 1:]
-        rew_batch = torch.as_tensor(samples['rewards'], device=self.device)
-        next_batch = torch.as_tensor(samples['obs_next'], device=self.device)
-        ter_batch = torch.as_tensor(samples['terminals'], device=self.device)
 
         # optimize Q-network
         with torch.no_grad():
@@ -65,10 +66,17 @@ class SPDQN_Learner(Learner):
 
         self.policy.soft_update(self.tau)
 
-        info = {
-            "Q_loss": q_loss.item(),
-            "P_loss": q_loss.item(),
-            'Qvalue': eval_q.mean().item()
-        }
+        if self.distributed_training:
+            info = {
+                f"Q_loss/rank_{self.rank}": q_loss.item(),
+                f"P_loss/rank_{self.rank}": q_loss.item(),
+                f"Qvalue/rank_{self.rank}": eval_q.mean().item()
+            }
+        else:
+            info = {
+                "Q_loss": q_loss.item(),
+                "P_loss": q_loss.item(),
+                'Qvalue': eval_q.mean().item()
+            }
 
         return info

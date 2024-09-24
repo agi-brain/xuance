@@ -22,11 +22,12 @@ class A2C_Learner(Learner):
 
     def update(self, **samples):
         self.iterations += 1
+        sample_Tensor = self.build_training_data(samples=samples)
+        obs_batch = sample_Tensor['obs']
+        act_batch = sample_Tensor['actions']
+        ret_batch = sample_Tensor['returns']
+        adv_batch = sample_Tensor['advantages']
 
-        obs_batch = samples['obs']
-        act_batch = torch.as_tensor(samples['actions'], device=self.device)
-        ret_batch = torch.as_tensor(samples['returns'], device=self.device)
-        adv_batch = torch.as_tensor(samples['advantages'], device=self.device)
         outputs, a_dist, v_pred = self.policy(obs_batch)
         log_prob = a_dist.log_prob(act_batch)
 
@@ -46,12 +47,21 @@ class A2C_Learner(Learner):
         # Logger
         lr = self.optimizer.state_dict()['param_groups'][0]['lr']
 
-        info = {
-            "actor-loss": a_loss.item(),
-            "critic-loss": c_loss.item(),
-            "entropy": e_loss.item(),
-            "learning_rate": lr,
-            "predict_value": v_pred.mean().item()
-        }
+        if self.distributed_training:
+            info = {
+                f"actor-loss/rank_{self.rank}": a_loss.item(),
+                f"critic-loss/rank_{self.rank}": c_loss.item(),
+                f"entropy/rank_{self.rank}": e_loss.item(),
+                f"learning_rate/rank_{self.rank}": lr,
+                f"predict_value/rank_{self.rank}": v_pred.mean().item()
+            }
+        else:
+            info = {
+                "actor-loss": a_loss.item(),
+                "critic-loss": c_loss.item(),
+                "entropy": e_loss.item(),
+                "learning_rate": lr,
+                "predict_value": v_pred.mean().item()
+            }
 
         return info

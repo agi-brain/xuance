@@ -28,11 +28,12 @@ class DDPG_Learner(Learner):
 
     def update(self, **samples):
         self.iterations += 1
-        obs_batch = samples['obs']
-        act_batch = torch.as_tensor(samples['actions'], device=self.device)
-        next_batch = samples['obs_next']
-        rew_batch = torch.as_tensor(samples['rewards'], device=self.device)
-        ter_batch = torch.as_tensor(samples['terminals'], device=self.device)
+        sample_Tensor = self.build_training_data(samples=samples)
+        obs_batch = sample_Tensor['obs']
+        act_batch = sample_Tensor['actions']
+        next_batch = sample_Tensor['obs_next']
+        rew_batch = sample_Tensor['rewards']
+        ter_batch = sample_Tensor['terminals']
 
         # critic update
         action_q = self.policy.Qaction(obs_batch, act_batch).reshape([-1])
@@ -63,12 +64,21 @@ class DDPG_Learner(Learner):
         actor_lr = self.optimizer['actor'].state_dict()['param_groups'][0]['lr']
         critic_lr = self.optimizer['critic'].state_dict()['param_groups'][0]['lr']
 
-        info = {
-            "Qloss": q_loss.item(),
-            "Ploss": p_loss.item(),
-            "Qvalue": action_q.mean().item(),
-            "actor_lr": actor_lr,
-            "critic_lr": critic_lr
-        }
+        if self.distributed_training:
+            info = {
+                f"Qloss/rank_{self.rank}": q_loss.item(),
+                f"Ploss/rank_{self.rank}": p_loss.item(),
+                f"Qvalue/rank_{self.rank}": action_q.mean().item(),
+                f"actor_lr/rank_{self.rank}": actor_lr,
+                f"critic_lr/rank_{self.rank}": critic_lr
+            }
+        else:
+            info = {
+                "Qloss": q_loss.item(),
+                "Ploss": p_loss.item(),
+                "Qvalue": action_q.mean().item(),
+                "actor_lr": actor_lr,
+                "critic_lr": critic_lr
+            }
 
         return info

@@ -26,10 +26,12 @@ class PPG_Learner(Learner):
         self.value_iterations = 0
 
     def update_policy(self, **samples):
-        obs_batch = samples['obs']
-        act_batch = torch.as_tensor(samples['actions'], device=self.device)
-        adv_batch = torch.as_tensor(samples['advantages'], device=self.device)
-        old_dist = merge_distributions(samples['aux_batch']['old_dist'])
+        self.policy_iterations += 1
+        sample_Tensor = self.build_training_data(samples=samples)
+        obs_batch = sample_Tensor['obs']
+        act_batch = sample_Tensor['actions']
+        adv_batch = sample_Tensor['advantages']
+        old_dist = merge_distributions(sample_Tensor['aux_batch']['old_dist'])
         old_logp_batch = old_dist.log_prob(act_batch).detach()
 
         outputs, a_dist, _, _ = self.policy(obs_batch)
@@ -52,19 +54,28 @@ class PPG_Learner(Learner):
         lr = self.optimizer.state_dict()['param_groups'][0]['lr']
         cr = ((ratio < 1 - self.clip_range).sum() + (ratio > 1 + self.clip_range).sum()) / ratio.shape[0]
 
-        info = {
-            "actor-loss": a_loss.item(),
-            "entropy": e_loss.item(),
-            "learning_rate": lr,
-            "clip_ratio": cr,
-        }
-        self.policy_iterations += 1
+        if self.distributed_training:
+            info = {
+                f"actor-loss/rank_{self.rank}": a_loss.item(),
+                f"entropy/rank_{self.rank}": e_loss.item(),
+                f"learning_rate/rank_{self.rank}": lr,
+                f"clip_ratio/rank_{self.rank}": cr,
+            }
+        else:
+            info = {
+                "actor-loss": a_loss.item(),
+                "entropy": e_loss.item(),
+                "learning_rate": lr,
+                "clip_ratio": cr,
+            }
 
         return info
 
     def update_critic(self, **samples):
-        obs_batch = samples['obs']
-        ret_batch = torch.as_tensor(samples['returns'], device=self.device)
+        self.value_iterations += 1
+        sample_Tensor = self.build_training_data(samples=samples)
+        obs_batch = sample_Tensor['obs']
+        ret_batch = sample_Tensor['returns']
 
         _, _, v_pred, _ = self.policy(obs_batch)
         loss = self.mse_loss(v_pred, ret_batch)
@@ -73,17 +84,19 @@ class PPG_Learner(Learner):
         if self.use_grad_clip:
             torch.nn.utils.clip_grad_norm_(self.policy.parameters(), self.grad_clip_norm)
         self.optimizer.step()
-        info = {
-            "critic-loss": loss.item()
-        }
-        self.value_iterations += 1
+
+        if self.distributed_training:
+            info = {f"critic-loss/rank_{self.rank}": loss.item()}
+        else:
+            info = {"critic-loss": loss.item()}
         return info
 
     def update_auxiliary(self, **samples):
-        obs_batch = samples['obs']
-        ret_batch = torch.as_tensor(samples['returns'], device=self.device)
+        sample_Tensor = self.build_training_data(samples=samples)
+        obs_batch = sample_Tensor['obs']
+        ret_batch = sample_Tensor['returns']
+        old_dist = merge_distributions(sample_Tensor['aux_batch']['old_dist'])
 
-        old_dist = merge_distributions(samples['aux_batch']['old_dist'])
         outputs, a_dist, v, aux_v = self.policy(obs_batch)
         aux_loss = self.mse_loss(v.detach(), aux_v)
         kl_loss = a_dist.kl_divergence(old_dist).mean()
@@ -94,9 +107,11 @@ class PPG_Learner(Learner):
         if self.use_grad_clip:
             torch.nn.utils.clip_grad_norm_(self.policy.parameters(), self.grad_clip_norm)
         self.optimizer.step()
-        info = {
-            "kl-loss": loss.item()
-        }
+
+        if self.distributed_training:
+            info = {f"kl-loss/rank_{self.rank}": loss.item()}
+        else:
+            info = {"kl-loss": loss.item()}
         return info
 
     def update(self, *args):
