@@ -3,9 +3,11 @@ DQN with Prioritized Experience Replay (PER-DQN)
 Paper link: https://arxiv.org/pdf/1511.05952.pdf
 Implementation: Pytorch
 """
+import os
 import torch
 import numpy as np
 from torch import nn
+from xuance.common import Optional
 from xuance.torch.learners import Learner
 from argparse import Namespace
 
@@ -23,6 +25,28 @@ class PerDQN_Learner(Learner):
         self.mse_loss = nn.MSELoss()
         self.one_hot = nn.functional.one_hot
         self.n_actions = self.policy.action_dim
+
+    def build_training_data(self, samples: Optional[dict]):
+        batch_size = samples['batch_size']
+        samples_Tensor = {}
+        if self.world_size > 1:  # i.e., Multi-GPU settings.
+            rank = int(os.environ['RANK'])
+            batch_size_local = batch_size // self.world_size
+            if rank < self.world_size - 1:
+                indices = range(rank * batch_size_local, (rank + 1) * batch_size_local)
+            else:
+                indices = range(rank * batch_size_local, batch_size)
+            for k, v in samples.items():
+                if k in ['batch_size', 'weights', 'step_choices']:
+                    continue
+                samples_Tensor[k] = torch.as_tensor(v[indices], device=self.device)
+        else:
+            for k, v in samples.items():
+                if k in ['batch_size', 'weights', 'step_choices']:
+                    continue
+                samples_Tensor[k] = torch.as_tensor(v, device=self.device)
+
+        return samples_Tensor
 
     def update(self, **samples):
         self.iterations += 1
