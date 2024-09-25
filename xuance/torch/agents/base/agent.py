@@ -1,5 +1,4 @@
 import os
-
 import torch
 import wandb
 import socket
@@ -35,10 +34,10 @@ class Agent(ABC):
         self.use_actions_mask = config.use_actions_mask if hasattr(config, "use_actions_mask") else False
         self.distributed_training = config.distributed_training
         if self.distributed_training:
+            self.world_size = int(os.environ['WORLD_SIZE'])
             self.rank = int(os.environ['LOCAL_RANK'])
             master_port = config.master_port if hasattr(config, "master_port") else None
             init_distributed_mode(master_port=master_port)
-            self.world_size = dist.get_world_size()
         else:
             self.rank = 0
             self.world_size = 1
