@@ -261,7 +261,8 @@ class DummyOnPolicyBuffer(Buffer):
             'actions': sample_batch(self.actions, tuple([env_choices, step_choices])),
             'returns': sample_batch(self.returns, tuple([env_choices, step_choices])),
             'values': sample_batch(self.values, tuple([env_choices, step_choices])),
-            'aux_batch': sample_batch(self.auxiliary_infos, tuple([env_choices, step_choices]))
+            'aux_batch': sample_batch(self.auxiliary_infos, tuple([env_choices, step_choices])),
+            'batch_size': len(indexes),
         }
         adv_batch = sample_batch(self.advantages, tuple([env_choices, step_choices]))
         if self.use_advnorm:
