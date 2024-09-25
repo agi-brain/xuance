@@ -13,6 +13,7 @@ master_port: '12355'  # The master port for current experiment when use distribu
 agent:  # The agent name.
 env_name:  # The environment device.
 env_id:  # The environment id.
+env_seed: 1  # The random seed to initialize the first environment.
 vectorize: "DummyVecEnv"  # The vectorized method to create n parallel environments.
 policy:  # choice: Gaussian_AC for continuous actions, Categorical_AC for discrete actions.
 representation: "Basic_MLP"  # The representation name.

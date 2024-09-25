@@ -1,6 +1,7 @@
 agent: "QRDQN"
 env_name: "Box2D"
 env_id: "CarRacing-v2"
+env_seed: 1
 vectorize: "DummyVecEnv"
 learner: "QRDQN_Learner"
 policy: "QR_Q_network"

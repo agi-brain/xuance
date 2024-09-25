@@ -1,6 +1,7 @@
 agent: "OWQMIX"  # choice: CWQMIX, OWQMIX
 env_name: "StarCraft2"
 env_id: "25m"
+env_seed: 1
 fps: 15
 learner: "WQMIX_Learner"
 policy: "Weighted_Mixing_Q_network"

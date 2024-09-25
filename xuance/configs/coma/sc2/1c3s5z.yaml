@@ -1,6 +1,7 @@
 agent: "COMA"  # the learning algorithms_marl
 env_name: "StarCraft2"
 env_id: "1c3s5z"
+env_seed: 1
 fps: 15
 learner: "COMA_Learner"
 policy: "Categorical_COMA_Policy"

@@ -1,6 +1,7 @@
 agent: "PPO_Clip"  # choice: PPO_Clip, PPO_KL
 env_name: "MuJoCo"
 env_id: "Ant-v4"
+env_seed: 1
 vectorize: "DummyVecEnv"
 learner: "PPOCLIP_Learner"
 policy: "Gaussian_AC"  # choice: Gaussian_AC for continuous actions, Categorical_AC for discrete actions.

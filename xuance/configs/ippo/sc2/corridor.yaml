@@ -1,6 +1,7 @@
 agent: "IPPO"
 env_name: "StarCraft2"
 env_id: "corridor"
+env_seed: 1
 fps: 15
 learner: "IPPO_Learner"
 policy: "Categorical_MAAC_Policy"

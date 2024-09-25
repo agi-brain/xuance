@@ -2,6 +2,7 @@ agent: "MAPPO"  # the learning algorithms_marl
 # environment settings
 env_name: "Football"
 scenario: "1_vs_1_easy"
+env_seed: 1
 use_stacked_frames: False  # Whether to use stacked_frames
 num_agent: 1
 num_adversary: 0

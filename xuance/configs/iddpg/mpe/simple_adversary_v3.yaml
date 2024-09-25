@@ -1,6 +1,7 @@
 agent: "IDDPG"  # the learning algorithms_marl
 env_name: "mpe"
 env_id: "simple_adversary_v3"
+env_seed: 1
 continuous_action: True
 learner: "IDDPG_Learner"
 policy: "Independent_DDPG_Policy"

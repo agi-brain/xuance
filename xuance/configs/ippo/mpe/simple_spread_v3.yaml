@@ -1,6 +1,7 @@
 agent: "IPPO"  # The agent name.
 env_name: "mpe"  # The environment name.
 env_id: "simple_spread_v3"  # The environment id.
+env_seed: 1
 continuous_action: True  # If to use continuous control.
 learner: "IPPO_Learner"  # The learner name.
 policy: "Gaussian_MAAC_Policy"  # The policy name.

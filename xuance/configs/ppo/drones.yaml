@@ -1,6 +1,7 @@
 agent: "PPO_Clip"  # choice: PPO_Clip, PPO_KL
 env_name: "Drones"
 env_id: "HoverAviary"  # choices: ['CtrlAviary', 'HoverAviary', 'VelocityAviary']
+env_seed: 1
 obs_type: 'kin'
 act_type: 'one_d_rpm'
 num_drones: 1

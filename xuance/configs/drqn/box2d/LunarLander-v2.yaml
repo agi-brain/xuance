@@ -1,6 +1,7 @@
 agent: "DRQN"  # deep recurrent Q-networks
 env_name: "Classic Control"
 env_id: "LunarLander-v2"
+env_seed: 1
 vectorize: "DummyVecEnv"
 policy: "DRQN_Policy"
 representation: "Basic_MLP"

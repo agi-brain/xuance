@@ -16,6 +16,7 @@ class PlatformEnv:
         self.render_mode = config.render_mode
         env = gym.make(self.env_id, max_episode_steps=config.max_episode_steps)
         self.env = env.unwrapped
+        self.env.reset(seed=config.env_seed)
         self.num_envs = 1
 
         self.observation_space = self.env.observation_space

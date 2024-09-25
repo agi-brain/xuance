@@ -192,6 +192,7 @@ class Drones_MultiAgentEnv(RawMultiAgentEnv):
                                'obs': ObservationType(config.obs_type),
                                'act': ActionType(config.act_type)})
         self.env = REGISTRY[config.env_id](**kwargs_env)
+        self.env.reset(seed=config.env_seed)
         self.num_agents = config.num_drones
         self.agents = [f"agent_{i}" for i in range(self.num_agents)]
 
@@ -199,7 +200,7 @@ class Drones_MultiAgentEnv(RawMultiAgentEnv):
         obs_shape_i = (self.env.observation_space.shape[-1],)
         act_shape_i = (self.env.action_space.shape[-1],)
         self.observation_space = {k: Box(-np.inf, np.inf, obs_shape_i) for k in self.agents}
-        self.action_space = {k: Box(-np.inf, np.inf, act_shape_i) for k in self.agents}
+        self.action_space = {k: Box(-np.inf, np.inf, act_shape_i, seed=config.env_seed) for k in self.agents}
 
         self.max_episode_steps = self.max_cycles = config.max_episode_steps
         self._episode_step = 0

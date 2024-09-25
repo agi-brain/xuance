@@ -21,12 +21,13 @@ class MiniGridEnv(RawEnvironment):
             self.env = RGBImgPartialObsWrapper(self.env)
         if img_obs_wrapper:
             self.env = ImgObsWrapper(self.env)
+        self.env.reset(seed=config.env_seed)
 
         self.env_id = config.env_id
         self.render_mode = config.render_mode
         self.image_size = np.prod(self.env.observation_space['image'].shape)  # height * width * channels
         self.dim_obs = self.image_size + 1  # direction
-        self.observation_space = Box(low=0, high=255, shape=[self.dim_obs, ], dtype=np.uint8, seed=config.seed)
+        self.observation_space = Box(low=0, high=255, shape=[self.dim_obs, ], dtype=np.uint8)
         self.action_space = self.env.action_space
         self.max_episode_steps = self.env.env.env.max_steps
 

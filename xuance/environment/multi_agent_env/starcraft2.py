@@ -24,7 +24,7 @@ class StarCraft2_Env(RawMultiAgentEnv):
         self.observation_space = {k: Box(low=-np.inf, high=np.inf, shape=(self.env_info['obs_shape'],))
                                   for k in self.agents}
         self.action_space = {k: Discrete(n=self.env_info['n_actions']) for k in self.agents}
-        self.env.reset()
+        self.env.reset(seed=config.env_seed)
         self.max_episode_steps = self.env_info['episode_limit']
         self._episode_step = 0
 

@@ -13,6 +13,7 @@ class MetaDrive_Env(RawEnvironment):
         self.env_id = configs.env_id
         configs.env_config['use_render'] = configs.render
         self.env = MetaDriveEnv(config=configs.env_config)
+        self.env.reset(seed=configs.env_seed)
         self.observation_space = self.env.observation_space
         self.action_space = self.env.action_space
         self.max_episode_steps = self.env.episode_lengths

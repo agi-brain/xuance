@@ -13,10 +13,10 @@ class DummyVecMultiAgentEnv(VecEnv):
         env_fns – environment function.
     """
 
-    def __init__(self, env_fns):
+    def __init__(self, env_fns, env_seed):
         self.waiting = False
         self.closed = False
-        self.envs = [fn() for fn in env_fns]
+        self.envs = [fn(env_seed=env_seed + inx_env) for inx_env, fn in enumerate(env_fns)]
         env = self.envs[0]
         VecEnv.__init__(self, len(env_fns), env.observation_space, env.action_space)
 
@@ -95,8 +95,8 @@ class DummyVecMultiAgentEnv(VecEnv):
 
 
 class DummyVecEnv_StarCraft2(DummyVecMultiAgentEnv):
-    def __init__(self, env_fns):
-        super(DummyVecEnv_StarCraft2, self).__init__(env_fns)
+    def __init__(self, env_fns, env_seed):
+        super(DummyVecEnv_StarCraft2, self).__init__(env_fns, env_seed)
         self.num_enemies = self.env_info['num_enemies']
         self.battles_game = np.zeros(self.num_envs, np.int32)
         self.battles_won = np.zeros(self.num_envs, np.int32)
@@ -136,8 +136,8 @@ class DummyVecEnv_StarCraft2(DummyVecMultiAgentEnv):
 
 
 class DummyVecEnv_Football(DummyVecMultiAgentEnv):
-    def __init__(self, env_fns):
-        super(DummyVecEnv_Football, self).__init__(env_fns)
+    def __init__(self, env_fns, env_seed):
+        super(DummyVecEnv_Football, self).__init__(env_fns, env_seed)
         self.num_adversaries = self.env_info['num_adversaries']
         self.battles_game = np.zeros(self.num_envs, np.int32)
         self.battles_won = np.zeros(self.num_envs, np.int32)

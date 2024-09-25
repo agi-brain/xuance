@@ -1,6 +1,7 @@
 agent: "MAPPO"
 env_name: "StarCraft2"
 env_id: "1c3s5z"
+env_seed: 1
 fps: 15
 learner: "MAPPO_Clip_Learner"
 policy: "Categorical_MAAC_Policy"

@@ -1,6 +1,7 @@
 agent: "IDDPG"  # the learning algorithms_marl
 env_name: "Drones"
 env_id: "MultiHoverAviary"
+env_seed: 1
 obs_type: 'kin'
 act_type: 'vel'
 num_drones: 3

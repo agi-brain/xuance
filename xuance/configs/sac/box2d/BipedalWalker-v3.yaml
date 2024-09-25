@@ -1,6 +1,7 @@
 agent: "SAC"
 env_name: "Box2D"
 env_id: "BipedalWalker-v3"
+env_seed: 1
 vectorize: "DummyVecEnv"
 learner: "SAC_Learner"
 policy: "Gaussian_SAC"

@@ -1,6 +1,7 @@
 agent: "OWQMIX"  # choice: CWQMIX, OWQMIX
 env_name: "mpe"
 env_id: "simple_spread_v3"
+env_seed: 1
 continuous_action: False
 learner: "WQMIX_Learner"
 policy: "Weighted_Mixing_Q_network"

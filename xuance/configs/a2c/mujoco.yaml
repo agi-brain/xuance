@@ -1,6 +1,7 @@
 agent: "A2C"
 env_name: "MuJoCo"
 env_id: "Ant-v4"
+env_seed: 1
 vectorize: "DummyVecEnv"
 learner: "A2C_Learner"
 policy: "Gaussian_AC"

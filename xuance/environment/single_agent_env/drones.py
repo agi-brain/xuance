@@ -132,6 +132,7 @@ class Drone_Env(RawEnvironment):
         if self.env_id != "HoverAviary":
             kwargs_env.update({'num_drones': config.num_drones})
         self.env = REGISTRY[config.env_id](**kwargs_env)
+        self.env.reset(seed=config.env_seed)
 
         self._episode_step = 0
         self.observation_space = self.space_reshape(self.env.observation_space)

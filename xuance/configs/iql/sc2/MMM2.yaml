@@ -1,6 +1,7 @@
 agent: "IQL"  # the learning algorithms_marl
 env_name: "StarCraft2"
 env_id: "MMM2"
+env_seed: 1
 fps: 15
 learner: "IQL_Learner"
 policy: "Basic_Q_network_marl"

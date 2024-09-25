@@ -14,8 +14,9 @@ class RoboticWarehouseEnv(RawMultiAgentEnv):
         self.env = gym.make(config.env_id)
         self.num_agents = self.env.env.n_agents  # the number of agents
         self.agents = [f'agent_{i}' for i in range(self.num_agents)]
-        self.seed = config.seed  # random seed
+        self.seed = config.env_seed  # random seed
         self.env.seed(self.seed)
+        self.env.reset(seed=self.seed)
 
         self.observation_space = {k: self.env.observation_space[i] for i, k in enumerate(self.agents)}
         self.action_space = {k: self.env.action_space[i] for i, k in enumerate(self.agents)}

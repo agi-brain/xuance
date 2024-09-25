@@ -176,7 +176,7 @@ class GFootball_Env(RawMultiAgentEnv):
         self.action_space = {k: self.env.action_space[i] for i, k in enumerate(self.agents)}
         self.max_episode_steps = config.episode_length
         self._episode_step = 0
-        self.env.reset()
+        self.env.reset(seed=config.env_seed)
         state_shape = self.state().shape
         self.state_space = Box(-np.inf, np.inf, state_shape)
 

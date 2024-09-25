@@ -5,7 +5,7 @@ from xuance.environment.vector_envs.vector_env import VecEnv
 from xuance.environment.vector_envs import clear_mpi_env_vars, flatten_list, CloudpickleWrapper
 
 
-def worker(remote, parent_remote, env_fn_wrappers):
+def worker(remote, parent_remote, env_fn_wrappers, env_seed: int = None):
     def step_env(env, action):
         obs, reward_n, terminated, truncated, info = env.step(action)
         if all(terminated.values()) or truncated:
@@ -16,7 +16,11 @@ def worker(remote, parent_remote, env_fn_wrappers):
         return obs, reward_n, terminated, truncated, info
 
     parent_remote.close()
-    envs = [env_fn_wrapper() for env_fn_wrapper in env_fn_wrappers.x]
+    if env_seed is None:
+        envs = [env_fn_wrapper() for env_fn_wrapper in env_fn_wrappers.x]
+    else:
+        envs = [env_fn_wrapper(env_seed=env_seed + i_env) for i_env, env_fn_wrapper in enumerate(env_fn_wrappers.x)]
+
     try:
         while True:
             cmd, data = remote.recv()
@@ -48,7 +52,7 @@ class SubprocVecMultiAgentEnv(VecEnv):
     Recommended to use when num_envs > 1 and step() can be a bottleneck.
     """
 
-    def __init__(self, env_fns, context='spawn', in_series=1):
+    def __init__(self, env_fns, env_seed, context='spawn', in_series=1):
         """
         Arguments:
         env_fns: iterable of callables -  functions that create environments to run in subprocesses. Need to be cloud-pickleable
@@ -66,6 +70,14 @@ class SubprocVecMultiAgentEnv(VecEnv):
         self.remotes, self.work_remotes = zip(*[ctx.Pipe() for _ in range(self.n_remotes)])
         self.ps = [ctx.Process(target=worker, args=(work_remote, remote, CloudpickleWrapper(env_fn)))
                    for (work_remote, remote, env_fn) in zip(self.work_remotes, self.remotes, env_fns)]
+        if env_seed is None:
+            self.ps = [ctx.Process(target=worker, args=(work_remote, remote, CloudpickleWrapper(env_fn)))
+                       for (work_remote, remote, env_fn) in zip(self.work_remotes, self.remotes, env_fns)]
+        else:
+            self.ps = [ctx.Process(target=worker, args=(work_remote, remote, CloudpickleWrapper(env_fn),
+                                                        env_seed + ith_remote * in_series))
+                       for (ith_remote, work_remote, remote, env_fn) in zip(
+                    range(self.n_remotes), self.work_remotes, self.remotes, env_fns)]
         for p in self.ps:
             p.daemon = True  # if the main process crashes, we should not cause things to hang
             with clear_mpi_env_vars():
@@ -145,8 +157,8 @@ class SubprocVecMultiAgentEnv(VecEnv):
 
 
 class SubprocVecEnv_StarCraft2(SubprocVecMultiAgentEnv):
-    def __init__(self, env_fns, context='spawn', in_series=1):
-        super(SubprocVecEnv_StarCraft2, self).__init__(env_fns, context, in_series)
+    def __init__(self, env_fns, env_seed, context='spawn', in_series=1):
+        super(SubprocVecEnv_StarCraft2, self).__init__(env_fns, env_seed, context, in_series)
         self.num_enemies = self.env_info['num_enemies']
         self.battles_game = np.zeros(self.num_envs, np.int32)
         self.battles_won = np.zeros(self.num_envs, np.int32)
@@ -174,8 +186,8 @@ class SubprocVecEnv_StarCraft2(SubprocVecMultiAgentEnv):
 
 
 class SubprocVecEnv_Football(SubprocVecMultiAgentEnv):
-    def __init__(self, env_fns, context='spawn', in_series=1):
-        super(SubprocVecEnv_Football, self).__init__(env_fns, context, in_series)
+    def __init__(self, env_fns, env_seed, context='spawn', in_series=1):
+        super(SubprocVecEnv_Football, self).__init__(env_fns, env_seed, context, in_series)
         self.num_adversaries = self.env_info['num_adversaries']
         self.battles_game = np.zeros(self.num_envs, np.int32)
         self.battles_won = np.zeros(self.num_envs, np.int32)

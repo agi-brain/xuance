@@ -9,7 +9,8 @@ from xuance.environment.vector_envs import REGISTRY_VEC_ENV
 
 
 def make_envs(config: Namespace):
-    def _thunk():
+    def _thunk(env_seed: int = None):
+        config.env_seed = env_seed
         if config.env_name in REGISTRY_ENV.keys():
             if config.env_name == "Platform":
                 return REGISTRY_ENV[config.env_name](config)
@@ -22,7 +23,7 @@ def make_envs(config: Namespace):
 
     if config.vectorize in REGISTRY_VEC_ENV.keys():
         env_fn = [_thunk for _ in range(config.parallels)]
-        return REGISTRY_VEC_ENV[config.vectorize](env_fn)
+        return REGISTRY_VEC_ENV[config.vectorize](env_fn, config.env_seed)
     elif config.vectorize == "NOREQUIRED":
         return _thunk()
     else:

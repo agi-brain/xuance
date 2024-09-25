@@ -1,6 +1,7 @@
 agent: "VDAC"
 env_name: "StarCraft2"
 env_id: "1c3s5z"
+env_seed: 1
 fps: 15
 learner: "VDAC_Learner"
 policy: "Categorical_MAAC_Policy_Share"

@@ -1,6 +1,7 @@
 agent: "IQL"  # the learning algorithms_marl
 env_name: "mpe"
 env_id: "simple_spread_v3"
+env_seed: 1
 continuous_action: False
 learner: "IQL_Learner"
 policy: "Basic_Q_network_marl"

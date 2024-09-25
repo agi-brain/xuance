@@ -33,7 +33,7 @@ class MPE_Env(RawMultiAgentEnv):
         self.scenario_name = env_name + "." + env_id
         scenario = importlib.import_module(f'pettingzoo.{env_name}.{env_id}')  # create scenario
         self.env = scenario.parallel_env(continuous_actions=self.continuous_actions, render_mode=self.render_mode)
-        self.env.reset(config.seed)
+        self.env.reset(config.env_seed)
 
         # Set basic attributes
         self.metadata = self.env.metadata

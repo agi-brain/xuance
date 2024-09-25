@@ -1,6 +1,7 @@
 agent: "DQN"
 env_name: "Box2D"
 env_id: "LunarLander-v2"
+env_seed: 1
 vectorize: "DummyVecEnv"
 policy: "Basic_Q_network"
 representation: "Basic_MLP"

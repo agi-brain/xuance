@@ -1,6 +1,7 @@
 agent: "PPO_Clip"  # Choice: PPO_Clip, PPO_KL
 env_name: "Classic Control"
 env_id: "Pendulum-v1"
+env_seed: 1
 vectorize: "DummyVecEnv"
 representation: "Basic_MLP"
 policy: "Gaussian_AC"

@@ -8,7 +8,7 @@ class Gym_Env(gym.Wrapper):
     """
     Args:
         env_id: The environment id of Atari, such as "Breakout-v5", "Pong-v5", etc.
-        seed: random seed.
+        env_seed: The random seed to set the environment.
         render_mode: "rgb_array", "human"
     """
 
@@ -16,10 +16,10 @@ class Gym_Env(gym.Wrapper):
         if config.env_id == "CarRacing-v2":
             kwargs['continuous'] = False
         self.env = gym.make(config.env_id, render_mode=config.render_mode, **kwargs)
-        self.env.action_space.seed(seed=config.seed)
-        self.env.reset(seed=config.seed)
+        self.env.action_space.seed(seed=config.env_seed)
+        self.env.reset(seed=config.env_seed)
         super(Gym_Env, self).__init__(self.env)
-        # self.env.seed(seed)
+        # self.env.seed(config.env_seed)
         self.observation_space = self.env.observation_space
         self.action_space = self.env.action_space
         self.metadata = self.env.metadata
@@ -46,8 +46,8 @@ class Gym_Env(gym.Wrapper):
 
 
 class MountainCar(Gym_Env):
-    def __init__(self, env_id: str, seed: int, render_mode: str):
-        super(MountainCar, self).__init__(env_id, seed, render_mode)
+    def __init__(self, env_id: str, env_seed: int, render_mode: str):
+        super(MountainCar, self).__init__(env_id, env_seed, render_mode)
         self.num_stack = 4
         self.frames = deque([], maxlen=self.num_stack)
         self.observation_space = gym.spaces.Box(low=np.array([-1.2, -0.07, -1.2, -0.07, -1.2, -0.07, -1.2, -0.07]),
@@ -90,7 +90,7 @@ class Atari_Env(gym.Wrapper):
         Frame Stacking: Stack k last frames. Returns lazy array, which is much more memory efficient.
     Args:
         env_id: The environment id of Atari, such as "Breakout-v5", "Pong-v5", etc.
-        seed: random seed.
+        env_seed: The random seed to set up the environment.
         obs_type: This argument determines what observations are returned by the environment. Its values are:
                     ram: The 128 Bytes of RAM are returned
                     rgb: An RGB rendering of the game is returned
@@ -106,11 +106,11 @@ class Atari_Env(gym.Wrapper):
                             render_mode=config.render_mode,
                             obs_type=config.obs_type,
                             frameskip=config.frame_skip)
-        self.env.action_space.seed(seed=config.seed)
-        self.env.unwrapped.reset(seed=config.seed)
+        self.env.action_space.seed(seed=config.env_seed)
+        self.env.unwrapped.reset(seed=config.env_seed)
         self.max_episode_steps = self.env._max_episode_steps
         super(Atari_Env, self).__init__(self.env)
-        # self.env.seed(seed)
+        # self.env.seed(config.env_seed)
         self.num_stack = config.num_stack
         self.obs_type = config.obs_type
         self.frames = deque([], maxlen=self.num_stack)

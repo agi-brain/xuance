@@ -11,12 +11,13 @@ class DummyVecEnv(VecEnv):
     Useful when debugging and when num_env == 1 (in the latter case,
     avoids communication overhead)
     Parameters:
-        env_fns – environment function.
+        env_fns: environment function.
+        env_seed: the random seed for the first environment.
     """
-    def __init__(self, env_fns):
+    def __init__(self, env_fns, env_seed):
         self.waiting = False
         self.closed = False
-        self.envs = [fn() for fn in env_fns]
+        self.envs = [fn(env_seed=env_seed + inx_env) for inx_env, fn in enumerate(env_fns)]
         env = self.envs[0]
         VecEnv.__init__(self, len(env_fns), env.observation_space, env.action_space)
 
@@ -97,7 +98,7 @@ class DummyVecEnv(VecEnv):
 
 
 class DummyVecEnv_Atari(DummyVecEnv):
-    def __init__(self, env_fns):
-        super(DummyVecEnv_Atari, self).__init__(env_fns)
+    def __init__(self, env_fns, env_seed):
+        super(DummyVecEnv_Atari, self).__init__(env_fns, env_seed)
         self.buf_obs = np.zeros(combined_shape(self.num_envs, self.obs_shape), dtype=np.uint8)
 
