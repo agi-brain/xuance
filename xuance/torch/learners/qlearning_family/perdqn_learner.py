@@ -26,36 +26,13 @@ class PerDQN_Learner(Learner):
         self.one_hot = nn.functional.one_hot
         self.n_actions = self.policy.action_dim
 
-    def build_training_data(self, samples: Optional[dict]):
-        batch_size = samples['batch_size']
-        samples_Tensor = {}
-        if self.world_size > 1:  # i.e., Multi-GPU settings.
-            rank = int(os.environ['RANK'])
-            batch_size_local = batch_size // self.world_size
-            if rank < self.world_size - 1:
-                indices = range(rank * batch_size_local, (rank + 1) * batch_size_local)
-            else:
-                indices = range(rank * batch_size_local, batch_size)
-            for k, v in samples.items():
-                if k in ['batch_size', 'weights', 'step_choices']:
-                    continue
-                samples_Tensor[k] = torch.as_tensor(v[indices], device=self.device)
-        else:
-            for k, v in samples.items():
-                if k in ['batch_size', 'weights', 'step_choices']:
-                    continue
-                samples_Tensor[k] = torch.as_tensor(v, device=self.device)
-
-        return samples_Tensor
-
     def update(self, **samples):
         self.iterations += 1
-        sample_Tensor = self.build_training_data(samples=samples)
-        obs_batch = sample_Tensor['obs']
-        act_batch = sample_Tensor['actions']
-        next_batch = sample_Tensor['obs_next']
-        rew_batch = sample_Tensor['rewards']
-        ter_batch = sample_Tensor['terminals']
+        obs_batch = torch.as_tensor(samples['obs'], device=self.device)
+        act_batch = torch.as_tensor(samples['actions'], device=self.device)
+        next_batch = torch.as_tensor(samples['obs_next'], device=self.device)
+        rew_batch = torch.as_tensor(samples['rewards'], device=self.device)
+        ter_batch = torch.as_tensor(samples['terminals'], device=self.device)
 
         _, _, evalQ = self.policy(obs_batch)
         _, _, targetQ = self.policy.target(next_batch)

@@ -22,11 +22,10 @@ class A2C_Learner(Learner):
 
     def update(self, **samples):
         self.iterations += 1
-        sample_Tensor = self.build_training_data(samples=samples)
-        obs_batch = sample_Tensor['obs']
-        act_batch = sample_Tensor['actions']
-        ret_batch = sample_Tensor['returns']
-        adv_batch = sample_Tensor['advantages']
+        obs_batch = torch.as_tensor(samples['obs'], device=self.device)
+        act_batch = torch.as_tensor(samples['actions'], device=self.device)
+        ret_batch = torch.as_tensor(samples['returns'], device=self.device)
+        adv_batch = torch.as_tensor(samples['adv_batch'], device=self.device)
 
         outputs, a_dist, v_pred = self.policy(obs_batch)
         log_prob = a_dist.log_prob(act_batch)

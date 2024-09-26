@@ -41,8 +41,8 @@ class OffPolicyAgent(Agent):
                             action_space=self.action_space,
                             auxiliary_shape=auxiliary_info_shape,
                             n_envs=self.n_envs,
-                            buffer_size=self.config.buffer_size,
-                            batch_size=self.config.batch_size)
+                            buffer_size=self.buffer_size,
+                            batch_size=self.batch_size)
         return Buffer(**input_buffer)
 
     def _build_policy(self) -> Module:
@@ -137,14 +137,13 @@ class OffPolicyAgent(Agent):
                         self.ret_rms.update(self.returns[i:i + 1])
                         self.returns[i] = 0.0
                         self.current_episode[i] += 1
-                        if self.rank == 0:
-                            if self.use_wandb:
-                                step_info[f"Episode-Steps/env-{i}"] = infos[i]["episode_step"]
-                                step_info[f"Train-Episode-Rewards/env-{i}"] = infos[i]["episode_score"]
-                            else:
-                                step_info["Episode-Steps"] = {f"env-{i}": infos[i]["episode_step"]}
-                                step_info["Train-Episode-Rewards"] = {f"env-{i}": infos[i]["episode_score"]}
-                            self.log_infos(step_info, self.current_step)
+                        if self.use_wandb:
+                            step_info[f"Episode-Steps/rank_{self.rank}/env-{i}"] = infos[i]["episode_step"]
+                            step_info[f"Train-Episode-Rewards/rank_{self.rank}/env-{i}"] = infos[i]["episode_score"]
+                        else:
+                            step_info[f"Episode-Steps/rank_{self.rank}"] = {f"env-{i}": infos[i]["episode_step"]}
+                            step_info[f"Train-Episode-Rewards/rank_{self.rank}"] = {f"env-{i}": infos[i]["episode_score"]}
+                        self.log_infos(step_info, self.current_step)
 
             self.current_step += self.n_envs
             self._update_explore_factor()

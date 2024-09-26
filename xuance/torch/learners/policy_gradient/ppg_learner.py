@@ -27,11 +27,10 @@ class PPG_Learner(Learner):
 
     def update_policy(self, **samples):
         self.policy_iterations += 1
-        sample_Tensor = self.build_training_data(samples=samples)
-        obs_batch = sample_Tensor['obs']
-        act_batch = sample_Tensor['actions']
-        adv_batch = sample_Tensor['advantages']
-        old_dist = merge_distributions(sample_Tensor['aux_batch']['old_dist'])
+        obs_batch = torch.as_tensor(samples['obs'], device=self.device)
+        act_batch = torch.as_tensor(samples['actions'], device=self.device)
+        adv_batch = torch.as_tensor(samples['advantages'], device=self.device)
+        old_dist = merge_distributions(samples['aux_batch']['old_dist'])
         old_logp_batch = old_dist.log_prob(act_batch).detach()
 
         outputs, a_dist, _, _ = self.policy(obs_batch)
@@ -73,9 +72,8 @@ class PPG_Learner(Learner):
 
     def update_critic(self, **samples):
         self.value_iterations += 1
-        sample_Tensor = self.build_training_data(samples=samples)
-        obs_batch = sample_Tensor['obs']
-        ret_batch = sample_Tensor['returns']
+        obs_batch = torch.as_tensor(samples['obs'], device=self.device)
+        ret_batch = torch.as_tensor(samples['returns'], device=self.device)
 
         _, _, v_pred, _ = self.policy(obs_batch)
         loss = self.mse_loss(v_pred, ret_batch)
@@ -92,10 +90,9 @@ class PPG_Learner(Learner):
         return info
 
     def update_auxiliary(self, **samples):
-        sample_Tensor = self.build_training_data(samples=samples)
-        obs_batch = sample_Tensor['obs']
-        ret_batch = sample_Tensor['returns']
-        old_dist = merge_distributions(sample_Tensor['aux_batch']['old_dist'])
+        obs_batch = torch.as_tensor(samples['obs'], device=self.device)
+        ret_batch = torch.as_tensor(samples['returns'], device=self.device)
+        old_dist = merge_distributions(samples['aux_batch']['old_dist'])
 
         outputs, a_dist, v, aux_v = self.policy(obs_batch)
         aux_loss = self.mse_loss(v.detach(), aux_v)

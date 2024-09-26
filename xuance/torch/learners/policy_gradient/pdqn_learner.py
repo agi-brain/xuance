@@ -28,12 +28,11 @@ class PDQN_Learner(Learner):
 
     def update(self, **samples):
         self.iterations += 1
-        sample_Tensor = self.build_training_data(samples=samples)
-        obs_batch = sample_Tensor['obs']
-        hyact_batch = sample_Tensor['actions']
-        rew_batch = sample_Tensor['rewards']
-        next_batch = sample_Tensor['obs_next']
-        ter_batch = sample_Tensor['terminals']
+        obs_batch = torch.as_tensor(samples['obs'], device=self.device)
+        hyact_batch = torch.as_tensor(samples['actions'], device=self.device)
+        next_batch = torch.as_tensor(samples['obs_next'], device=self.device)
+        rew_batch = torch.as_tensor(samples['rewards'], device=self.device)
+        ter_batch = torch.as_tensor(samples['terminals'], device=self.device)
         disact_batch = hyact_batch[:, 0].long()
         conact_batch = hyact_batch[:, 1:]
 

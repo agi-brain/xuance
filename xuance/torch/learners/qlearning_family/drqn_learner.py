@@ -25,12 +25,11 @@ class DRQN_Learner(Learner):
 
     def update(self, **samples):
         self.iterations += 1
-        sample_Tensor = self.build_training_data(samples=samples)
-        obs_batch = sample_Tensor['obs']
-        act_batch = sample_Tensor['actions']
-        rew_batch = sample_Tensor['rewards']
-        ter_batch = sample_Tensor['terminals']
-        batch_size = sample_Tensor['batch_size']
+        obs_batch = torch.as_tensor(samples['obs'], device=self.device)
+        act_batch = torch.as_tensor(samples['actions'], device=self.device)
+        rew_batch = torch.as_tensor(samples['rewards'], device=self.device)
+        ter_batch = torch.as_tensor(samples['terminals'], device=self.device)
+        batch_size = samples['batch_size']
 
         rnn_hidden = self.policy.init_hidden(batch_size)
         _, _, evalQ, _ = self.policy(obs_batch[:, 0:-1], *rnn_hidden)

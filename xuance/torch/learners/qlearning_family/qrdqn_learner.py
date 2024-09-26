@@ -25,12 +25,11 @@ class QRDQN_Learner(Learner):
 
     def update(self, **samples):
         self.iterations += 1
-        sample_Tensor = self.build_training_data(samples=samples)
-        obs_batch = sample_Tensor['obs']
-        act_batch = sample_Tensor['actions']
-        next_batch = sample_Tensor['obs_next']
-        rew_batch = sample_Tensor['rewards']
-        ter_batch = sample_Tensor['terminals']
+        obs_batch = torch.as_tensor(samples['obs'], device=self.device)
+        act_batch = torch.as_tensor(samples['actions'], device=self.device)
+        next_batch = torch.as_tensor(samples['obs_next'], device=self.device)
+        rew_batch = torch.as_tensor(samples['rewards'], device=self.device)
+        ter_batch = torch.as_tensor(samples['terminals'], device=self.device)
 
         _, _, evalZ = self.policy(obs_batch)
         _, targetA, targetZ = self.policy(next_batch)

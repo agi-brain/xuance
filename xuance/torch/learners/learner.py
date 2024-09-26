@@ -47,28 +47,6 @@ class Learner(ABC):
         self.running_steps = config.running_steps
         self.iterations = 0
 
-    def build_training_data(self, samples: Optional[dict]):
-        batch_size = samples['batch_size']
-        samples_Tensor = {}
-        if self.world_size > 1:  # i.e., Multi-GPU settings.
-            rank = int(os.environ['RANK'])
-            batch_size_local = batch_size // self.world_size
-            if rank < self.world_size - 1:
-                indices = range(rank * batch_size_local, (rank + 1) * batch_size_local)
-            else:
-                indices = range(rank * batch_size_local, batch_size)
-            for k, v in samples.items():
-                if k == 'batch_size':
-                    continue
-                samples_Tensor[k] = torch.as_tensor(v[indices], device=self.device)
-        else:
-            for k, v in samples.items():
-                if k == 'batch_size':
-                    continue
-                samples_Tensor[k] = torch.as_tensor(v, device=self.device)
-
-        return samples_Tensor
-
     def save_model(self, model_path):
         torch.save(self.policy.state_dict(), model_path)
         if self.distributed_training:

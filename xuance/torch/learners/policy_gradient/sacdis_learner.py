@@ -37,12 +37,11 @@ class SACDIS_Learner(Learner):
 
     def update(self, **samples):
         self.iterations += 1
-        sample_Tensor = self.build_training_data(samples=samples)
-        obs_batch = sample_Tensor['obs']
-        act_batch = sample_Tensor['actions'].unsqueeze(-1)
-        next_batch = sample_Tensor['obs_next']
-        rew_batch = sample_Tensor['rewards'].unsqueeze(-1)
-        ter_batch = sample_Tensor['terminals'].reshape([-1, 1])
+        obs_batch = torch.as_tensor(samples['obs'], device=self.device)
+        act_batch = torch.as_tensor(samples['actions'], device=self.device).unsqueeze(-1)
+        next_batch = torch.as_tensor(samples['obs_next'], device=self.device)
+        rew_batch = torch.as_tensor(samples['rewards'], device=self.device).unsqueeze(-1)
+        ter_batch = torch.as_tensor(samples['terminals'], device=self.device).reshape([-1, 1])
 
         # actor update
         action_prob, log_pi, policy_q_1, policy_q_2 = self.policy.Qpolicy(obs_batch)
