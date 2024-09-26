@@ -34,18 +34,8 @@ class OffPolicyAgent(Agent):
         self.auxiliary_info_shape = None
         self.memory: Optional[DummyOffPolicyBuffer] = None
 
-        if self.distributed_training:
-            if self.config.buffer_size < self.world_size:
-                raise AttributeError("The config.buffer_size is less than the number of GPUs.")
-            else:
-                self.buffer_size = self.config.buffer_size // self.world_size
-            if self.config.batch_size < self.world_size:
-                raise AttributeError("The config.batch_size is less than the number of GPUs.")
-            else:
-                self.batch_size = self.config.batch_size // self.world_size
-        else:
-            self.buffer_size = self.config.buffer_size
-            self.batch_size = self.config.batch_size
+        self.buffer_size = self.config.buffer_size
+        self.batch_size = self.config.batch_size
 
     def _build_memory(self, auxiliary_info_shape=None):
         self.atari = True if self.config.env_name == "Atari" else False
