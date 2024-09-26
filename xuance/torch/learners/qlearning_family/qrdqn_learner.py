@@ -29,7 +29,7 @@ class QRDQN_Learner(Learner):
         act_batch = torch.as_tensor(samples['actions'], device=self.device)
         next_batch = torch.as_tensor(samples['obs_next'], device=self.device)
         rew_batch = torch.as_tensor(samples['rewards'], device=self.device)
-        ter_batch = torch.as_tensor(samples['terminals'], device=self.device)
+        ter_batch = torch.as_tensor(samples['terminals'], dtype=torch.float, device=self.device)
 
         _, _, evalZ = self.policy(obs_batch)
         _, targetA, targetZ = self.policy(next_batch)

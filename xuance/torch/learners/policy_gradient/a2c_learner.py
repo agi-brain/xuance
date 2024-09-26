@@ -25,7 +25,7 @@ class A2C_Learner(Learner):
         obs_batch = torch.as_tensor(samples['obs'], device=self.device)
         act_batch = torch.as_tensor(samples['actions'], device=self.device)
         ret_batch = torch.as_tensor(samples['returns'], device=self.device)
-        adv_batch = torch.as_tensor(samples['adv_batch'], device=self.device)
+        adv_batch = torch.as_tensor(samples['advantages'], device=self.device)
 
         outputs, a_dist, v_pred = self.policy(obs_batch)
         log_prob = a_dist.log_prob(act_batch)

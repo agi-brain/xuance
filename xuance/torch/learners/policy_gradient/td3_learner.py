@@ -34,7 +34,7 @@ class TD3_Learner(Learner):
         act_batch = torch.as_tensor(samples['actions'], device=self.device)
         next_batch = torch.as_tensor(samples['obs_next'], device=self.device)
         rew_batch = torch.as_tensor(samples['rewards'], device=self.device)
-        ter_batch = torch.as_tensor(samples['terminals'], device=self.device)
+        ter_batch = torch.as_tensor(samples['terminals'], dtype=torch.float, device=self.device)
 
         # critic update
         action_q_A, action_q_B = self.policy.Qaction(obs_batch, act_batch)

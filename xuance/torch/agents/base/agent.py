@@ -38,19 +38,9 @@ class Agent(ABC):
             self.rank = int(os.environ['LOCAL_RANK'])
             master_port = config.master_port if hasattr(config, "master_port") else None
             init_distributed_mode(master_port=master_port)
-            if self.config.buffer_size < self.world_size:
-                raise AttributeError("The config.buffer_size is less than the number of GPUs.")
-            else:
-                self.buffer_size = self.config.buffer_size // self.world_size
-            if self.config.batch_size < self.world_size:
-                raise AttributeError("The config.batch_size is less than the number of GPUs.")
-            else:
-                self.batch_size = self.config.batch_size // self.world_size
         else:
             self.world_size = 1
             self.rank = 0
-            self.buffer_size = self.config.buffer_size
-            self.batch_size = self.config.batch_size
 
         self.gamma = config.gamma
         self.start_training = config.start_training if hasattr(config, "start_training") else 1

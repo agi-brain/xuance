@@ -28,7 +28,7 @@ class DRQN_Learner(Learner):
         obs_batch = torch.as_tensor(samples['obs'], device=self.device)
         act_batch = torch.as_tensor(samples['actions'], device=self.device)
         rew_batch = torch.as_tensor(samples['rewards'], device=self.device)
-        ter_batch = torch.as_tensor(samples['terminals'], device=self.device)
+        ter_batch = torch.as_tensor(samples['terminals'], dtype=torch.float, device=self.device)
         batch_size = samples['batch_size']
 
         rnn_hidden = self.policy.init_hidden(batch_size)

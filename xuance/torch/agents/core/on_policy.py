@@ -148,14 +148,14 @@ class OnPolicyAgent(Agent):
                         obs[i] = infos[i]["reset_obs"]
                         self.envs.buf_obs[i] = obs[i]
                         self.current_episode[i] += 1
-                        if self.rank == 0:
-                            if self.use_wandb:
-                                step_info[f"Episode-Steps/env-{i}"] = infos[i]["episode_step"]
-                                step_info[f"Train-Episode-Rewards/env-{i}"] = infos[i]["episode_score"]
-                            else:
-                                step_info["Episode-Steps"] = {f"env-{i}": infos[i]["episode_step"]}
-                                step_info["Train-Episode-Rewards"] = {f"env-{i}": infos[i]["episode_score"]}
-                            self.log_infos(step_info, self.current_step)
+                        if self.use_wandb:
+                            step_info[f"Episode-Steps/rank_{self.rank}/env-{i}"] = infos[i]["episode_step"]
+                            step_info[f"Train-Episode-Rewards/rank_{self.rank}/env-{i}"] = infos[i]["episode_score"]
+                        else:
+                            step_info[f"Episode-Steps/rank_{self.rank}"] = {f"env-{i}": infos[i]["episode_step"]}
+                            step_info[f"Train-Episode-Rewards/rank_{self.rank}"] = {
+                                f"env-{i}": infos[i]["episode_score"]}
+                        self.log_infos(step_info, self.current_step)
             self.current_step += self.n_envs
 
     def test(self, env_fn, test_episodes: int) -> list:

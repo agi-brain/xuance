@@ -32,7 +32,7 @@ class PDQN_Learner(Learner):
         hyact_batch = torch.as_tensor(samples['actions'], device=self.device)
         next_batch = torch.as_tensor(samples['obs_next'], device=self.device)
         rew_batch = torch.as_tensor(samples['rewards'], device=self.device)
-        ter_batch = torch.as_tensor(samples['terminals'], device=self.device)
+        ter_batch = torch.as_tensor(samples['terminals'], dtype=torch.float, device=self.device)
         disact_batch = hyact_batch[:, 0].long()
         conact_batch = hyact_batch[:, 1:]
 

@@ -28,7 +28,7 @@ class PPOCLIP_Learner(Learner):
         act_batch = torch.as_tensor(samples['actions'], device=self.device)
         ret_batch = torch.as_tensor(samples['returns'], device=self.device)
         adv_batch = torch.as_tensor(samples['advantages'], device=self.device)
-        old_logp_batch = samples['aux_batch']['old_logp']
+        old_logp_batch = torch.as_tensor(samples['aux_batch']['old_logp'], device=self.device)
 
         outputs, a_dist, v_pred = self.policy(obs_batch)
         log_prob = a_dist.log_prob(act_batch)
