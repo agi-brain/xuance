@@ -81,6 +81,7 @@ class SPDQN_Agent(PDQN_Agent, Agent):
                 conactor_hidden_size=self.config.conactor_hidden_size,
                 qnetwork_hidden_size=self.config.qnetwork_hidden_size,
                 normalize=normalize_fn, initialize=initializer, activation=activation, device=device,
+                use_distributed_training=self.distributed_training,
                 activation_action=ActivationFunctions[self.config.activation_action])
         else:
             raise AttributeError(

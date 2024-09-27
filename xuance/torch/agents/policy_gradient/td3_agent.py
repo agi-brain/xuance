@@ -34,6 +34,7 @@ class TD3_Agent(DDPG_Agent):
                 action_space=self.action_space, representation=representation,
                 actor_hidden_size=self.config.actor_hidden_size, critic_hidden_size=self.config.critic_hidden_size,
                 normalize=normalize_fn, initialize=initializer, device=device,
+                use_distributed_training=self.distributed_training,
                 activation=activation, activation_action=ActivationFunctions[self.config.activation_action])
         else:
             raise AttributeError(f"TD3 currently does not support the policy named {self.config.policy}.")
