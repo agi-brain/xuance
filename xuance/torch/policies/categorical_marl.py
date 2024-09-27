@@ -13,6 +13,21 @@ from xuance.torch import Tensor, Module, ModuleDict
 class MAAC_Policy(Module):
     """
     MAAC_Policy: Multi-Agent Actor-Critic Policy with categorical policies.
+
+    Args:
+        action_space (Optional[Dict[str, Discrete]]): The discrete action space.
+        n_agents (int): The number of agents.
+        representation_actor (ModuleDict): A dict of representation modules for each agent's actor.
+        representation_critic (ModuleDict): A dict of representation modules for each agent's critic.
+        mixer (Module): The mixer module that mix together the individual values to the total value.
+        actor_hidden_size (Sequence[int]): A list of hidden layer sizes for actor network.
+        critic_hidden_size (Sequence[int]): A list of hidden layer sizes for critic network.
+        normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
+        activation (Optional[ModuleType]): The activation function for each layer.
+        device (Optional[Union[str, int, torch.device]]): The calculating device.
+        use_distributed_training (str): Whether to use multi-GPU for distributed training.
+        **kwargs: The other args.
     """
 
     def __init__(self,
@@ -27,6 +42,7 @@ class MAAC_Policy(Module):
                  initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None,
+                 use_distributed_training: bool = False,
                  **kwargs):
         super(MAAC_Policy, self).__init__()
         self.device = device
