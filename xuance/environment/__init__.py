@@ -23,7 +23,7 @@ def make_envs(config: Namespace):
             raise AttributeError(f"The environment named {config.env_name} cannot be created.")
 
     if config.distributed_training:
-        rank = int(os.environ['LOCAL_RANK'])
+        rank = int(os.environ['RANK'])
         config.env_seed += rank * config.parallels
 
     if config.vectorize in REGISTRY_VEC_ENV.keys():

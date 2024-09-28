@@ -111,11 +111,12 @@ class DRQN_Agent(OffPolicyAgent):
                         self.current_episode[i] += 1
                         if self.rank == 0:
                             if self.use_wandb:
-                                step_info[f"Episode-Steps/env-{i}"] = infos[i]["episode_step"]
-                                step_info[f"Train-Episode-Rewards/env-{i}"] = infos[i]["episode_score"]
+                                step_info[f"Episode-Steps/rank_{self.rank}/env-{i}"] = infos[i]["episode_step"]
+                                step_info[f"Train-Episode-Rewards/rank_{self.rank}/env-{i}"] = infos[i]["episode_score"]
                             else:
-                                step_info[f"Episode-Steps"] = {f"env-{i}": infos[i]["episode_step"]}
-                                step_info[f"Train-Episode-Rewards"] = {f"env-{i}": infos[i]["episode_score"]}
+                                step_info[f"Episode-Steps/rank_{self.rank}"] = {f"env-{i}": infos[i]["episode_step"]}
+                                step_info[f"Train-Episode-Rewards/rank_{self.rank}"] = {
+                                    f"env-{i}": infos[i]["episode_score"]}
                             self.log_infos(step_info, self.current_step)
                         self.memory.store(episode_data[i])
                         episode_data[i] = EpisodeBuffer()

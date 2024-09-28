@@ -27,7 +27,7 @@ class Learner(ABC):
 
         if self.distributed_training:
             self.world_size = int(os.environ['WORLD_SIZE'])
-            self.rank = self.device = int(os.environ['LOCAL_RANK'])
+            self.rank = self.device = int(os.environ['RANK'])
             self.snapshot_path = os.path.join(os.getcwd(), config.model_dir, "DDP_Snapshot")
             if os.path.exists(self.snapshot_path):
                 if os.path.exists(os.path.join(self.snapshot_path, "snapshot.pt")):

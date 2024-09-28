@@ -37,7 +37,7 @@ class MARLAgents(ABC):
         self.distributed_training = config.distributed_training
         if self.distributed_training:
             self.world_size = int(os.environ['WORLD_SIZE'])
-            self.rank = int(os.environ['LOCAL_RANK'])
+            self.rank = int(os.environ['RANK'])
             master_port = config.master_port if hasattr(config, "master_port") else None
             init_distributed_mode(master_port=master_port)
         else:

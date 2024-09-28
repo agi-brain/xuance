@@ -164,7 +164,7 @@ def get_runner(method,
         distributed_training = True if args.distributed_training else False
         device = f"GPU-{os.environ['RANK']}" if distributed_training else args.device
     if distributed_training:
-        rank = int(os.environ['LOCAL_RANK'])
+        rank = int(os.environ['RANK'])
         num_gpus = int(os.environ['WORLD_SIZE'])
         if rank == 0:
             if num_gpus > 1:

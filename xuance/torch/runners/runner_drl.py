@@ -28,7 +28,7 @@ class Runner_DRL(Runner_Base):
 
         self.agent = REGISTRY_Agents[self.config.agent](self.config, self.envs)
         if self.agent.distributed_training:
-            self.rank = int(os.environ['LOCAL_RANK'])
+            self.rank = int(os.environ['RANK'])
 
     def run(self):
         if self.config.test_mode:
