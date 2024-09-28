@@ -720,8 +720,8 @@ class Independent_DDPG_Policy(Module):
                                                                          device_ids=[self.rank])
                 self.critic_representation[key] = DistributedDataParallel(module=self.critic_representation[key],
                                                                           device_ids=[self.rank])
-                self.actor = DistributedDataParallel(module=self.actor, device_ids=[self.rank])
-                self.critic = DistributedDataParallel(module=self.critic, device_ids=[self.rank])
+                self.actor[key] = DistributedDataParallel(module=self.actor[key], device_ids=[self.rank])
+                self.critic[key] = DistributedDataParallel(module=self.critic[key], device_ids=[self.rank])
 
     @property
     def parameters_actor(self):
