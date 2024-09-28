@@ -7,26 +7,66 @@ from .core import BasicQhead, BasicRecurrent, DuelQhead, C51Qhead, QRDQNhead, Ac
 
 
 class BasicQnetwork(Module):
+    """
+    The base class to implement DQN based policy
+
+    Args:
+        action_space (Discrete): The action space, which type is gym.spaces.Discrete.
+        representation (Module): The representation module.
+        hidden_size (Sequence[int]): List of hidden units for fully connect layers.
+        normalize (Optional[tk.layers.Layer]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[tk.initializers.Initializer]): The parameters initializer.
+        activation (Optional[tk.layers.Layer]): The activation function for each layer.
+        use_distributed_training (bool): Whether to use multi-GPU for distributed training.
+    """
+
     def __init__(self,
                  action_space: Discrete,
                  representation: Module,
                  hidden_size: Sequence[int] = None,
                  normalize: Optional[tk.layers.Layer] = None,
                  initialize: Optional[tk.initializers.Initializer] = None,
-                 activation: Optional[tk.layers.Layer] = None):
+                 activation: Optional[tk.layers.Layer] = None,
+                 use_distributed_training: bool = False):
         super(BasicQnetwork, self).__init__()
         self.action_dim = action_space.n
-        self.representation = representation
-        self.target_representation = deepcopy(representation)
-        self.representation_info_shape = self.representation.output_shapes
-        self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, hidden_size,
-                                     normalize, initialize, activation)
-        self.target_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, hidden_size,
-                                       normalize, initialize, activation)
-        self.target_Qhead.set_weights(self.eval_Qhead.get_weights())
+
+        self.use_distributed_training = use_distributed_training
+        if self.use_distributed_training:
+            self.mirrored_strategy = tf.distribute.MirroredStrategy()
+            with self.mirrored_strategy.scope():
+                self.representation = representation
+                self.target_representation = deepcopy(representation)
+                self.representation_info_shape = self.representation.output_shapes
+                self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, hidden_size,
+                                             normalize, initialize, activation)
+                self.target_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, hidden_size,
+                                               normalize, initialize, activation)
+                self.target_Qhead.set_weights(self.eval_Qhead.get_weights())
+        else:
+            self.mirrored_strategy = None
+            self.representation = representation
+            self.target_representation = deepcopy(representation)
+            self.representation_info_shape = self.representation.output_shapes
+            self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, hidden_size,
+                                         normalize, initialize, activation)
+            self.target_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, hidden_size,
+                                           normalize, initialize, activation)
+            self.target_Qhead.set_weights(self.eval_Qhead.get_weights())
 
     @tf.function
     def call(self, observation: Union[Tensor, np.ndarray]):
+        """
+        Returns the output of the representation, greedy actions, and the evaluated Q-values.
+
+        Parameters:
+            observation: The original observation input.
+
+        Returns:
+            outputs: The hidden state output by the representation.
+            argmax_action: The greedy actions.
+            evalQ: The evaluated Q-values.
+        """
         outputs = self.representation(observation)
         evalQ = self.eval_Qhead(outputs['state'])
         argmax_action = tf.math.argmax(evalQ, axis=-1)
@@ -34,6 +74,17 @@ class BasicQnetwork(Module):
 
     @tf.function
     def target(self, observation: Union[np.ndarray, dict]):
+        """
+        Returns the output of the representation, greedy actions, and the evaluated Q-values via target networks.
+
+        Parameters:
+            observation: The original observation input.
+
+        Returns:
+            outputs_target: The hidden state output by the representation.
+            argmax_action: The greedy actions from target networks.
+            targetQ: The evaluated Q-values output by target Q-network.
+        """
         outputs_target = self.target_representation(observation)
         targetQ = self.target_Qhead(outputs_target['state'])
         argmax_action = tf.math.argmax(targetQ, axis=-1)
