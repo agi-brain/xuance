@@ -54,7 +54,8 @@ class QMIX_Agents(OffPolicyMARLAgents):
                 action_space=self.action_space, n_agents=self.n_agents, representation=representation,
                 mixer=mixer, hidden_size=self.config.q_hidden_size,
                 normalize=normalize_fn, initialize=initializer, activation=activation,
-                device=device, use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
+                device=device, use_distributed_training=self.distributed_training,
+                use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
                 use_rnn=self.use_rnn, rnn=self.config.rnn if self.use_rnn else None)
         else:
             raise AttributeError(f"QMIX currently does not support the policy named {self.config.policy}.")

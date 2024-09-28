@@ -17,12 +17,12 @@ class BasicQnetwork(Module):
     Args:
         action_space (Discrete): The action space, which type is gym.spaces.Discrete.
         representation (Module): The representation module.
-        hidden_size: List of hidden units for fully connect layers.
+        hidden_size (Sequence[int]): List of hidden units for fully connect layers.
         normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
         initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
         activation (Optional[ModuleType]): The activation function for each layer.
         device (Optional[Union[str, int, torch.device]]): The calculating device.
-        use_distributed_training (str): Whether to use multi-GPU for distributed training.
+        use_distributed_training (bool): Whether to use multi-GPU for distributed training.
     """
 
     def __init__(self,
@@ -42,6 +42,7 @@ class BasicQnetwork(Module):
         self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, hidden_size,
                                      normalize, initialize, activation, device)
         self.target_Qhead = deepcopy(self.eval_Qhead)
+
         # Prepare DDP module.
         self.distributed_training = use_distributed_training
         if self.distributed_training:
@@ -102,7 +103,7 @@ class DuelQnetwork(Module):
         initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
         activation (Optional[ModuleType]): The activation function for each layer.
         device (Optional[Union[str, int, torch.device]]): The calculating device.
-        use_distributed_training (str): Whether to use multi-GPU for distributed training.
+        use_distributed_training (bool): Whether to use multi-GPU for distributed training.
     """
 
     def __init__(self,
@@ -182,7 +183,7 @@ class NoisyQnetwork(Module):
         initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
         activation (Optional[ModuleType]): The activation function for each layer.
         device (Optional[Union[str, int, torch.device]]): The calculating device.
-        use_distributed_training (str): Whether to use multi-GPU for distributed training.
+        use_distributed_training (bool): Whether to use multi-GPU for distributed training.
     """
 
     def __init__(self,
@@ -282,7 +283,7 @@ class C51Qnetwork(Module):
         initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
         activation (Optional[ModuleType]): The activation function for each layer.
         device (Optional[Union[str, int, torch.device]]): The calculating device.
-        use_distributed_training (str): Whether to use multi-GPU for distributed training.
+        use_distributed_training (bool): Whether to use multi-GPU for distributed training.
     """
 
     def __init__(self,
@@ -374,7 +375,7 @@ class QRDQN_Network(Module):
         initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
         activation (Optional[ModuleType]): The activation function for each layer.
         device (Optional[Union[str, int, torch.device]]): The calculating device.
-        use_distributed_training (str): Whether to use multi-GPU for distributed training.
+        use_distributed_training (bool): Whether to use multi-GPU for distributed training.
     """
 
     def __init__(self,
@@ -460,7 +461,7 @@ class DDPGPolicy(Module):
         activation (Optional[ModuleType]): The activation function for each layer.
         activation_action (Optional[ModuleType]): The activation of final layer to bound the actions.
         device (Optional[Union[str, int, torch.device]]): The calculating device.
-        use_distributed_training (str): Whether to use multi-GPU for distributed training.
+        use_distributed_training (bool): Whether to use multi-GPU for distributed training.
     """
 
     def __init__(self,
@@ -569,7 +570,7 @@ class TD3Policy(Module):
         activation (Optional[ModuleType]): The activation function for each layer.
         activation_action (Optional[ModuleType]): The activation of final layer to bound the actions.
         device (Optional[Union[str, int, torch.device]]): The calculating device.
-        use_distributed_training (str): Whether to use multi-GPU for distributed training.
+        use_distributed_training (bool): Whether to use multi-GPU for distributed training.
     """
 
     def __init__(self,
@@ -705,7 +706,7 @@ class PDQNPolicy(Module):
         activation (Optional[ModuleType]): The activation function for each layer.
         activation_action (Optional[ModuleType]): The activation of final layer to bound the actions.
         device (Optional[Union[str, int, torch.device]]): The calculating device.
-        use_distributed_training (str): Whether to use multi-GPU for distributed training.
+        use_distributed_training (bool): Whether to use multi-GPU for distributed training.
     """
 
     def __init__(self,
@@ -795,7 +796,7 @@ class MPDQNPolicy(PDQNPolicy):
         activation (Optional[ModuleType]): The activation function for each layer.
         activation_action (Optional[ModuleType]): The activation of final layer to bound the actions.
         device (Optional[Union[str, int, torch.device]]): The calculating device.
-        use_distributed_training (str): Whether to use multi-GPU for distributed training.
+        use_distributed_training (bool): Whether to use multi-GPU for distributed training.
     """
 
     def __init__(self,
@@ -889,7 +890,7 @@ class SPDQNPolicy(PDQNPolicy):
         activation (Optional[ModuleType]): The activation function for each layer.
         activation_action (Optional[ModuleType]): The activation of final layer to bound the actions.
         device (Optional[Union[str, int, torch.device]]): The calculating device.
-        use_distributed_training (str): Whether to use multi-GPU for distributed training.
+        use_distributed_training (bool): Whether to use multi-GPU for distributed training.
     """
 
     def __init__(self,

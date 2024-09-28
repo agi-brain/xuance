@@ -48,7 +48,8 @@ class IPPO_Agents(OnPolicyMARLAgents):
                 representation_actor=A_representation, representation_critic=C_representation,
                 actor_hidden_size=self.config.actor_hidden_size, critic_hidden_size=self.config.critic_hidden_size,
                 normalize=normalize_fn, initialize=initializer, activation=activation,
-                device=device, use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
+                device=device, use_distributed_training=self.distributed_training,
+                use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
                 use_rnn=self.use_rnn, rnn=self.config.rnn if self.use_rnn else None)
             self.continuous_control = False
         elif self.config.policy == "Gaussian_MAAC_Policy":
@@ -58,7 +59,8 @@ class IPPO_Agents(OnPolicyMARLAgents):
                 actor_hidden_size=self.config.actor_hidden_size, critic_hidden_size=self.config.critic_hidden_size,
                 normalize=normalize_fn, initialize=initializer, activation=activation,
                 activation_action=ActivationFunctions[self.config.activation_action],
-                device=device, use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
+                device=device, use_distributed_training=self.distributed_training,
+                use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
                 use_rnn=self.use_rnn, rnn=self.config.rnn if self.use_rnn else None)
             self.continuous_control = True
         else:

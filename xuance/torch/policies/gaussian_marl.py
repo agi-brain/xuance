@@ -1,23 +1,39 @@
+import os
 import torch
 import numpy as np
 from copy import deepcopy
 from gym.spaces import Box
 from xuance.common import Sequence, Optional, Callable, Union, Dict, List
 from xuance.torch.utils import ModuleType
-from xuance.torch import Tensor, Module, ModuleDict
+from xuance.torch import Tensor, Module, ModuleDict, DistributedDataParallel
 from .core import GaussianActorNet, GaussianActorNet_SAC, CriticNet
 
 
 class MAAC_Policy(Module):
     """
     MAAC_Policy: Multi-Agent Actor-Critic Policy with Gaussian distributions.
+
+    Args:
+        action_space (Box): The continuous action space.
+        n_agents (int): The number of agents.
+        representation_actor (ModuleDict): A dict of representation modules for each agent's actor.
+        representation_critic (ModuleDict): A dict of representation modules for each agent's critic.
+        actor_hidden_size (Sequence[int]): A list of hidden layer sizes for actor network.
+        critic_hidden_size (Sequence[int]): A list of hidden layer sizes for critic network.
+        normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
+        activation (Optional[ModuleType]): The activation function for each layer.
+        activation_action (Optional[ModuleType]): The activation of final layer to bound the actions.
+        device (Optional[Union[str, int, torch.device]]): The calculating device.
+        use_distributed_training (bool): Whether to use multi-GPU for distributed training.
+        **kwargs: Other arguments.
     """
 
     def __init__(self,
                  action_space: Optional[Dict[str, Box]],
                  n_agents: int,
-                 representation_actor: Module,
-                 representation_critic: Module,
+                 representation_actor: ModuleDict,
+                 representation_critic: ModuleDict,
                  actor_hidden_size: Sequence[int] = None,
                  critic_hidden_size: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,
@@ -25,6 +41,7 @@ class MAAC_Policy(Module):
                  activation: Optional[ModuleType] = None,
                  activation_action: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None,
+                 use_distributed_training: bool = False,
                  **kwargs):
         super(MAAC_Policy, self).__init__()
         self.device = device
@@ -49,6 +66,18 @@ class MAAC_Policy(Module):
             self.actor[key] = GaussianActorNet(dim_actor_in, dim_actor_out, actor_hidden_size,
                                                normalize, initialize, activation, activation_action, device)
             self.critic[key] = CriticNet(dim_critic_in, critic_hidden_size, normalize, initialize, activation, device)
+
+        # Prepare DDP module.
+        self.distributed_training = use_distributed_training
+        if self.distributed_training:
+            self.rank = int(os.environ["RANK"])
+            for key in self.model_keys:
+                self.actor_representation[key] = DistributedDataParallel(module=self.actor_representation[key],
+                                                                         device_ids=[self.rank])
+                self.critic_representation[key] = DistributedDataParallel(module=self.critic_representation[key],
+                                                                          device_ids=[self.rank])
+                self.actor[key] = DistributedDataParallel(module=self.actor[key], device_ids=[self.rank])
+                self.critic[key] = DistributedDataParallel(module=self.critic[key], device_ids=[self.rank])
 
     @property
     def parameters_model(self):
@@ -150,6 +179,25 @@ class MAAC_Policy(Module):
 
 
 class Basic_ISAC_Policy(Module):
+    """
+    Basic_ISAC_Policy: The basic policy for independent soft actor-critic.
+
+    Args:
+        action_space (Box): The continuous action space.
+        n_agents (int): The number of agents.
+        actor_representation (ModuleDict): A dict of representation modules for each agent's actor.
+        critic_representation (ModuleDict): A dict of representation modules for each agent's critic.
+        actor_hidden_size (Sequence[int]): A list of hidden layer sizes for actor network.
+        critic_hidden_size (Sequence[int]): A list of hidden layer sizes for critic network.
+        normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
+        activation (Optional[ModuleType]): The activation function for each layer.
+        activation_action (Optional[ModuleType]): The activation of final layer to bound the actions.
+        device (Optional[Union[str, int, torch.device]]): The calculating device.
+        use_distributed_training (bool): Whether to use multi-GPU for distributed training.
+        **kwargs: Other arguments.
+    """
+
     def __init__(self,
                  action_space: Optional[Dict[str, Box]],
                  n_agents: int,
@@ -162,6 +210,7 @@ class Basic_ISAC_Policy(Module):
                  activation: Optional[ModuleType] = None,
                  activation_action: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None,
+                 use_distributed_training: bool = False,
                  **kwargs):
         super(Basic_ISAC_Policy, self).__init__()
         self.device = device
@@ -191,6 +240,21 @@ class Basic_ISAC_Policy(Module):
             self.critic_2[key] = CriticNet(dim_critic_in, critic_hidden_size, normalize, initialize, activation, device)
         self.target_critic_1 = deepcopy(self.critic_1)
         self.target_critic_2 = deepcopy(self.critic_2)
+
+        # Prepare DDP module.
+        self.distributed_training = use_distributed_training
+        if self.distributed_training:
+            self.rank = int(os.environ["RANK"])
+            for key in self.model_keys:
+                self.actor_representation[key] = DistributedDataParallel(module=self.actor_representation[key],
+                                                                         device_ids=[self.rank])
+                self.critic_1_representation[key] = DistributedDataParallel(module=self.critic_1_representation[key],
+                                                                            device_ids=[self.rank])
+                self.critic_2_representation[key] = DistributedDataParallel(module=self.critic_2_representation[key],
+                                                                            device_ids=[self.rank])
+                self.actor[key] = DistributedDataParallel(module=self.actor[key], device_ids=[self.rank])
+                self.critic_1[key] = DistributedDataParallel(module=self.critic_1[key], device_ids=[self.rank])
+                self.critic_2[key] = DistributedDataParallel(module=self.critic_2[key], device_ids=[self.rank])
 
     @property
     def parameters_actor(self):
@@ -412,6 +476,25 @@ class Basic_ISAC_Policy(Module):
 
 
 class MASAC_Policy(Basic_ISAC_Policy):
+    """
+    Basic_ISAC_Policy: The basic policy for independent soft actor-critic.
+
+    Args:
+        action_space (Box): The continuous action space.
+        n_agents (int): The number of agents.
+        actor_representation (ModuleDict): A dict of representation modules for each agent's actor.
+        critic_representation (ModuleDict): A dict of representation modules for each agent's critic.
+        actor_hidden_size (Sequence[int]): A list of hidden layer sizes for actor network.
+        critic_hidden_size (Sequence[int]): A list of hidden layer sizes for critic network.
+        normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
+        activation (Optional[ModuleType]): The activation function for each layer.
+        activation_action (Optional[ModuleType]): The activation of final layer to bound the actions.
+        device (Optional[Union[str, int, torch.device]]): The calculating device.
+        use_distributed_training (bool): Whether to use multi-GPU for distributed training.
+        **kwargs: Other arguments.
+    """
+
     def __init__(self,
                  action_space: Optional[Dict[str, Box]],
                  n_agents: int,
@@ -424,10 +507,12 @@ class MASAC_Policy(Basic_ISAC_Policy):
                  activation: Optional[ModuleType] = None,
                  activation_action: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None,
+                 use_distributed_training: bool = False,
                  **kwargs):
         super(MASAC_Policy, self).__init__(action_space, n_agents, actor_representation, critic_representation,
                                            actor_hidden_size, critic_hidden_size,
-                                           normalize, initialize, activation, activation_action, device, **kwargs)
+                                           normalize, initialize, activation, activation_action, device,
+                                           use_distributed_training, **kwargs)
 
     def _get_actor_critic_input(self, dim_actor_rep, dim_action, dim_critic_rep, n_agents):
         """
@@ -667,4 +752,3 @@ class MASAC_Policy(Basic_ISAC_Policy):
             q_2[key] = self.critic_2[key](critic_2_in)
 
         return rnn_hidden_critic_new_1, rnn_hidden_critic_new_2, q_1, q_2
-

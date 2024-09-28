@@ -51,7 +51,8 @@ class ISAC_Agents(OffPolicyMARLAgents):
                 critic_hidden_size=self.config.critic_hidden_size,
                 normalize=normalize_fn, initialize=initializer, activation=activation,
                 activation_action=ActivationFunctions[self.config.activation_action],
-                device=device, use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
+                device=device, use_distributed_training=self.distributed_training,
+                use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
                 use_rnn=self.use_rnn, rnn=self.config.rnn if self.use_rnn else None)
             self.continuous_control = True
         else:

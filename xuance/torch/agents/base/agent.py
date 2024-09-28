@@ -129,7 +129,7 @@ class Agent(ABC):
 
     def save_model(self, model_name):
         if self.distributed_training:
-            if dist.get_rank() > 0:
+            if self.rank > 0:
                 return
 
         # save the neural networks

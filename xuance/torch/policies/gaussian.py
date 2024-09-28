@@ -23,7 +23,7 @@ class ActorPolicy(Module):
         activation (Optional[ModuleType]): The activation function for each layer.
         activation_action (Optional[ModuleType]): The activation of final layer to bound the actions.
         device (Optional[Union[str, int, torch.device]]): The calculating device.
-        use_distributed_training (str): Whether to use multi-GPU for distributed training.
+        use_distributed_training (bool): Whether to use multi-GPU for distributed training.
     """
 
     def __init__(self,
@@ -81,7 +81,7 @@ class ActorCriticPolicy(Module):
         activation (Optional[ModuleType]): The activation function for each layer.
         activation_action (Optional[ModuleType]): The activation of final layer to bound the actions.
         device (Optional[Union[str, int, torch.device]]): The calculating device.
-        use_distributed_training (str): Whether to use multi-GPU for distributed training.
+        use_distributed_training (bool): Whether to use multi-GPU for distributed training.
     """
 
     def __init__(self,
@@ -144,7 +144,7 @@ class PPGActorCritic(Module):
         activation (Optional[ModuleType]): The activation function for each layer.
         activation_action (Optional[ModuleType]): The activation of final layer to bound the actions.
         device (Optional[Union[str, int, torch.device]]): The calculating device.
-        use_distributed_training (str): Whether to use multi-GPU for distributed training.
+        use_distributed_training (bool): Whether to use multi-GPU for distributed training.
     """
 
     def __init__(self,
@@ -214,7 +214,7 @@ class SACPolicy(Module):
         activation (Optional[ModuleType]): The activation function for each layer.
         activation_action (Optional[ModuleType]): The activation of final layer to bound the actions.
         device (Optional[Union[str, int, torch.device]]): The calculating device.
-        use_distributed_training (str): Whether to use multi-GPU for distributed training.
+        use_distributed_training (bool): Whether to use multi-GPU for distributed training.
     """
 
     def __init__(self,

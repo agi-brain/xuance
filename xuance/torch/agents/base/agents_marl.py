@@ -3,6 +3,7 @@ import wandb
 import socket
 import torch
 import numpy as np
+import torch.distributed as dist
 from abc import ABC
 from pathlib import Path
 from argparse import Namespace
@@ -14,7 +15,7 @@ from xuance.common import get_time_string, create_directory, space2shape, Option
 from xuance.environment import DummyVecMultiAgentEnv
 from xuance.torch import ModuleDict, REGISTRY_Representation, REGISTRY_Learners, Module
 from xuance.torch.learners import learner
-from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
+from xuance.torch.utils import NormalizeFunctions, ActivationFunctions, init_distributed_mode
 
 
 class MARLAgents(ABC):
@@ -33,6 +34,15 @@ class MARLAgents(ABC):
         self.use_parameter_sharing = config.use_parameter_sharing
         self.use_actions_mask = config.use_actions_mask if hasattr(config, "use_actions_mask") else False
         self.use_global_state = config.use_global_state if hasattr(config, "use_global_state") else False
+        self.distributed_training = config.distributed_training
+        if self.distributed_training:
+            self.world_size = int(os.environ['WORLD_SIZE'])
+            self.rank = int(os.environ['LOCAL_RANK'])
+            master_port = config.master_port if hasattr(config, "master_port") else None
+            init_distributed_mode(master_port=master_port)
+        else:
+            self.world_size = 1
+            self.rank = 0
 
         self.gamma = config.gamma
         self.start_training = config.start_training if hasattr(config, "start_training") else 1
@@ -57,7 +67,17 @@ class MARLAgents(ABC):
         self.current_episode = np.zeros((self.n_envs,), np.int32)
 
         # Prepare directories.
-        time_string = get_time_string()
+        if self.distributed_training and self.world_size > 1:
+            if self.rank == 0:
+                time_string = get_time_string()
+                time_string_tensor = torch.tensor(list(time_string.encode('utf-8')), dtype=torch.uint8).to(self.rank)
+            else:
+                time_string_tensor = torch.zeros(16, dtype=torch.uint8).to(self.rank)
+
+            dist.broadcast(time_string_tensor, src=0)
+            time_string = bytes(time_string_tensor.cpu().tolist()).decode('utf-8').rstrip('\x00')
+        else:
+            time_string = get_time_string()
         seed = f"seed_{config.seed}_"
         self.model_dir_load = config.model_dir
         self.model_dir_save = os.path.join(os.getcwd(), config.model_dir, seed + time_string)
@@ -65,14 +85,22 @@ class MARLAgents(ABC):
         # Create logger.
         if config.logger == "tensorboard":
             log_dir = os.path.join(os.getcwd(), config.log_dir, seed + time_string)
-            create_directory(log_dir)
+            if self.rank == 0:
+                create_directory(log_dir)
+            else:
+                while not os.path.exists(log_dir):
+                    pass  # Wait until the master process finishes creating directory.
             self.writer = SummaryWriter(log_dir)
             self.use_wandb = False
         elif config.logger == "wandb":
             config_dict = vars(config)
             log_dir = config.log_dir
             wandb_dir = Path(os.path.join(os.getcwd(), config.log_dir))
-            create_directory(str(wandb_dir))
+            if self.rank == 0:
+                create_directory(str(wandb_dir))
+            else:
+                while not os.path.exists(str(wandb_dir)):
+                    pass  # Wait until the master process finishes creating directory.
             wandb.init(config=config_dict,
                        project=config.project_name,
                        entity=config.wandb_user_name,
@@ -100,12 +128,18 @@ class MARLAgents(ABC):
         raise NotImplementedError
 
     def save_model(self, model_name):
+        if self.distributed_training:
+            if self.rank > 0:
+                return
+
+        # save the neural networks
         if not os.path.exists(self.model_dir_save):
             os.makedirs(self.model_dir_save)
         model_path = os.path.join(self.model_dir_save, model_name)
         self.learner.save_model(model_path)
 
     def load_model(self, path, model=None):
+        # load neural networks
         self.learner.load_model(path, model)
 
     def log_infos(self, info: dict, x_index: int):

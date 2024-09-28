@@ -30,7 +30,7 @@ class ActorPolicy(Module):
         initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
         activation (Optional[ModuleType]): The activation function for each layer.
         device (Optional[Union[str, int, torch.device]]): The calculating device.
-        use_distributed_training (str): Whether to use multi-GPU for distributed training.
+        use_distributed_training (bool): Whether to use multi-GPU for distributed training.
     """
 
     def __init__(self,
@@ -85,7 +85,7 @@ class ActorCriticPolicy(Module):
         initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
         activation (Optional[ModuleType]): The activation function for each layer.
         device (Optional[Union[str, int, torch.device]]): The calculating device.
-        use_distributed_training (str): Whether to use multi-GPU for distributed training.
+        use_distributed_training (bool): Whether to use multi-GPU for distributed training.
     """
 
     def __init__(self,
@@ -146,7 +146,7 @@ class PPGActorCritic(Module):
         initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
         activation (Optional[ModuleType]): The activation function for each layer.
         device (Optional[Union[str, int, torch.device]]): The calculating device.
-        use_distributed_training (str): Whether to use multi-GPU for distributed training.
+        use_distributed_training (bool): Whether to use multi-GPU for distributed training.
     """
 
     def __init__(self,
@@ -217,7 +217,7 @@ class SACDISPolicy(Module):
         initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
         activation (Optional[ModuleType]): The activation function for each layer.
         device (Optional[Union[str, int, torch.device]]): The calculating device.
-        use_distributed_training (str): Whether to use multi-GPU for distributed training.
+        use_distributed_training (bool): Whether to use multi-GPU for distributed training.
     """
 
     def __init__(self,

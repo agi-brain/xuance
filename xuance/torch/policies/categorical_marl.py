@@ -1,3 +1,4 @@
+import os
 import torch
 import torch.nn as nn
 from copy import deepcopy
@@ -7,7 +8,7 @@ from xuance.torch.policies import CategoricalActorNet, ActorNet
 from xuance.torch.policies.core import CriticNet
 from xuance.torch.policies import VDN_mixer
 from xuance.torch.utils import ModuleType, CategoricalDistribution
-from xuance.torch import Tensor, Module, ModuleDict
+from xuance.torch import Tensor, Module, ModuleDict, DistributedDataParallel
 
 
 class MAAC_Policy(Module):
@@ -26,7 +27,7 @@ class MAAC_Policy(Module):
         initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
         activation (Optional[ModuleType]): The activation function for each layer.
         device (Optional[Union[str, int, torch.device]]): The calculating device.
-        use_distributed_training (str): Whether to use multi-GPU for distributed training.
+        use_distributed_training (bool): Whether to use multi-GPU for distributed training.
         **kwargs: The other args.
     """
 
@@ -70,6 +71,20 @@ class MAAC_Policy(Module):
             self.critic[key] = CriticNet(dim_critic_in, critic_hidden_size, normalize, initialize, activation, device)
 
         self.mixer = mixer
+
+        # Prepare DDP module.
+        self.distributed_training = use_distributed_training
+        if self.distributed_training:
+            self.rank = int(os.environ["RANK"])
+            for key in self.model_keys:
+                self.actor_representation[key] = DistributedDataParallel(module=self.actor_representation[key],
+                                                                         device_ids=[self.rank])
+                self.critic_representation[key] = DistributedDataParallel(module=self.critic_representation[key],
+                                                                          device_ids=[self.rank])
+                self.actor[key] = DistributedDataParallel(module=self.actor[key], device_ids=[self.rank])
+                self.critic[key] = DistributedDataParallel(module=self.critic[key], device_ids=[self.rank])
+            if self.mixer is not None:
+                self.mixer = DistributedDataParallel(module=self.mixer, device_ids=[self.rank])
 
     @property
     def parameters_model(self):
@@ -200,6 +215,7 @@ class MAAC_Policy_Share(MAAC_Policy):
                  initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None,
+                 use_distributed_training: bool = False,
                  **kwargs):
         super(MAAC_Policy, self).__init__()
         self.device = device

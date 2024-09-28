@@ -50,6 +50,7 @@ class IQL_Agents(OffPolicyMARLAgents):
                 representation=representation,
                 hidden_size=self.config.q_hidden_size,
                 normalize=normalize_fn, initialize=initializer, activation=activation, device=device,
+                use_distributed_training=self.distributed_training,
                 use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
                 use_rnn=self.use_rnn, rnn=self.config.rnn if self.use_rnn else None)
         else:

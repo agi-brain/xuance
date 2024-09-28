@@ -37,6 +37,9 @@ class OffPolicyMARLAgents(MARLAgents):
         self.auxiliary_info_shape = None
         self.memory: Optional[MARL_OffPolicyBuffer, MARL_OffPolicyBuffer_RNN] = None
 
+        self.buffer_size = self.config.buffer_size
+        self.batch_size = self.config.batch_size
+
     def _build_memory(self):
         """Build replay buffer for models training
         """
@@ -49,8 +52,8 @@ class OffPolicyMARLAgents(MARLAgents):
                             obs_space=self.observation_space,
                             act_space=self.action_space,
                             n_envs=self.n_envs,
-                            buffer_size=self.config.buffer_size,
-                            batch_size=self.config.batch_size,
+                            buffer_size=self.buffer_size,
+                            batch_size=self.batch_size,
                             avail_actions_shape=avail_actions_shape,
                             use_actions_mask=self.use_actions_mask,
                             max_episode_steps=self.episode_length)

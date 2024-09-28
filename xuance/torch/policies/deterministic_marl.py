@@ -1,3 +1,4 @@
+import os
 import torch
 from torch.distributions import Categorical
 from copy import deepcopy
@@ -5,10 +6,26 @@ from gym.spaces import Discrete, Box
 from xuance.common import Sequence, Optional, Callable, Union, Dict, List
 from xuance.torch.policies import BasicQhead, ActorNet, CriticNet, VDN_mixer, QTRAN_base, QMIX_FF_mixer
 from xuance.torch.utils import ModuleType
-from xuance.torch import Tensor, Module, ModuleDict
+from xuance.torch import Tensor, Module, ModuleDict, DistributedDataParallel
 
 
 class BasicQnetwork(Module):
+    """
+    The base class to implement DQN based policy
+
+    Args:
+        action_space (Discrete): The action space, which type is gym.spaces.Discrete.
+        n_agents (int): The number of agents.
+        representation (ModuleDict): A dict of the representation module for all agents.
+        hidden_size (Sequence[int]): List of hidden units for fully connect layers.
+        normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
+        activation (Optional[ModuleType]): The activation function for each layer.
+        device (Optional[Union[str, int, torch.device]]): The calculating device.
+        use_distributed_training (bool): Whether to use multi-GPU for distributed training.
+        **kwargs: Other arguments.
+    """
+
     def __init__(self,
                  action_space: Optional[Dict[str, Discrete]],
                  n_agents: int,
@@ -18,6 +35,7 @@ class BasicQnetwork(Module):
                  initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None,
+                 use_distributed_training: bool = False,
                  **kwargs):
         super(BasicQnetwork, self).__init__()
         self.device = device
@@ -42,6 +60,15 @@ class BasicQnetwork(Module):
             self.eval_Qhead[key] = BasicQhead(self.dim_input_Q[key], self.n_actions[key], hidden_size,
                                               normalize, initialize, activation, device)
             self.target_Qhead[key] = deepcopy(self.eval_Qhead[key])
+
+        # Prepare DDP module.
+        self.distributed_training = use_distributed_training
+        if self.distributed_training:
+            self.rank = int(os.environ["RANK"])
+            for key in self.model_keys:
+                self.representation[key] = DistributedDataParallel(module=self.representation[key],
+                                                                   device_ids=[self.rank])
+                self.eval_Qhead[key] = DistributedDataParallel(module=self.eval_Qhead[key], device_ids=[self.rank])
 
     @property
     def parameters_model(self):
@@ -139,6 +166,23 @@ class BasicQnetwork(Module):
 
 
 class MixingQnetwork(BasicQnetwork):
+    """
+    The base class to implement value-decomposition based policy.
+
+    Args:
+        action_space (Discrete): The action space, which type is gym.spaces.Discrete.
+        n_agents (int): The number of agents.
+        representation (ModuleDict): A dict of the representation module for all agents.
+        mixer (Module): The mixer module that mix together the individual values to the total value.
+        hidden_size (Sequence[int]): List of hidden units for fully connect layers.
+        normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
+        activation (Optional[ModuleType]): The activation function for each layer.
+        device (Optional[Union[str, int, torch.device]]): The calculating device.
+        use_distributed_training (bool): Whether to use multi-GPU for distributed training.
+        **kwargs: Other arguments.
+    """
+
     def __init__(self,
                  action_space: Optional[Dict[str, Discrete]],
                  n_agents: int,
@@ -149,11 +193,15 @@ class MixingQnetwork(BasicQnetwork):
                  initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None,
+                 use_distributed_training: bool = False,
                  **kwargs):
         super(MixingQnetwork, self).__init__(action_space, n_agents, representation, hidden_size,
-                                             normalize, initialize, activation, device, **kwargs)
+                                             normalize, initialize, activation, device, use_distributed_training,
+                                             **kwargs)
         self.eval_Qtot = mixer
         self.target_Qtot = deepcopy(self.eval_Qtot)
+        if self.distributed_training:
+            self.eval_Qtot = DistributedDataParallel(module=self.eval_Qtot, device_ids=[self.rank])
 
     @property
     def parameters_model(self):
@@ -231,6 +279,24 @@ class MixingQnetwork(BasicQnetwork):
 
 
 class Weighted_MixingQnetwork(MixingQnetwork):
+    """
+    The base class to implement weighted value-decomposition based policy.
+
+    Args:
+        action_space (Discrete): The action space, which type is gym.spaces.Discrete.
+        n_agents (int): The number of agents.
+        representation (ModuleDict): A dict of the representation module for all agents.
+        mixer (Module): The mixer module that mix together the individual values to the total value.
+        ff_mixer (Module): The feedforward mixer module that mix together the individual values to the total value.
+        hidden_size (Sequence[int]): List of hidden units for fully connect layers.
+        normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
+        activation (Optional[ModuleType]): The activation function for each layer.
+        device (Optional[Union[str, int, torch.device]]): The calculating device.
+        use_distributed_training (bool): Whether to use multi-GPU for distributed training.
+        **kwargs: Other arguments.
+    """
+
     def __init__(self,
                  action_space: Optional[Dict[str, Discrete]],
                  n_agents: int,
@@ -242,13 +308,21 @@ class Weighted_MixingQnetwork(MixingQnetwork):
                  initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None,
+                 use_distributed_training: bool = False,
                  **kwargs):
         super(Weighted_MixingQnetwork, self).__init__(action_space, n_agents, representation, mixer, hidden_size,
-                                                      normalize, initialize, activation, device, **kwargs)
+                                                      normalize, initialize, activation, device,
+                                                      use_distributed_training, **kwargs)
         self.eval_Qhead_centralized = deepcopy(self.eval_Qhead)
         self.target_Qhead_centralized = deepcopy(self.eval_Qhead_centralized)
         self.ff_mixer = ff_mixer
         self.target_ff_mixer = deepcopy(self.ff_mixer)
+
+        if self.distributed_training:
+            for key in self.model_keys:
+                self.eval_Qhead_centralized[key] = DistributedDataParallel(module=self.eval_Qhead_centralized[key],
+                                                                           device_ids=[self.rank])[key]
+            self.ff_mixer = DistributedDataParallel(module=self.ff_mixer, device_ids=[self.rank])
 
     @property
     def parameters_model(self):
@@ -573,6 +647,25 @@ class MFQnetwork(Module):
 
 
 class Independent_DDPG_Policy(Module):
+    """
+    The policy of deep deterministic policy gradient.
+
+    Args:
+        action_space (Optional[Dict[str, Box]]): The action space.
+        n_agents (int): The number of agents.
+        actor_representation (Optional[ModuleDict]): The representation module for actor network.
+        critic_representation (Optional[ModuleDict]): The representation module for critic network.
+        actor_hidden_size (Sequence[int]): List of hidden units for actor network.
+        critic_hidden_size (Sequence[int]): List of hidden units for critic network.
+        normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
+        activation (Optional[ModuleType]): The activation function for each layer.
+        activation_action (Optional[ModuleType]): The activation of final layer to bound the actions.
+        device (Optional[Union[str, int, torch.device]]): The calculating device.
+        use_distributed_training (bool): Whether to use multi-GPU for distributed training.
+        **kwargs: Other arguments.
+    """
+
     def __init__(self,
                  action_space: Optional[Dict[str, Box]],
                  n_agents: int,
@@ -585,6 +678,7 @@ class Independent_DDPG_Policy(Module):
                  activation: Optional[ModuleType] = None,
                  activation_action: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None,
+                 use_distributed_training: bool = False,
                  **kwargs):
         super(Independent_DDPG_Policy, self).__init__()
         self.device = device
@@ -616,6 +710,18 @@ class Independent_DDPG_Policy(Module):
             self.critic[key] = CriticNet(dim_critic_in, critic_hidden_size, normalize, initialize, activation, device)
             self.target_actor[key] = deepcopy(self.actor[key])
             self.target_critic[key] = deepcopy(self.critic[key])
+
+        # Prepare DDP module.
+        self.distributed_training = use_distributed_training
+        if self.distributed_training:
+            self.rank = int(os.environ["RANK"])
+            for key in self.model_keys:
+                self.actor_representation[key] = DistributedDataParallel(module=self.actor_representation[key],
+                                                                         device_ids=[self.rank])
+                self.critic_representation[key] = DistributedDataParallel(module=self.critic_representation[key],
+                                                                          device_ids=[self.rank])
+                self.actor = DistributedDataParallel(module=self.actor, device_ids=[self.rank])
+                self.critic = DistributedDataParallel(module=self.critic, device_ids=[self.rank])
 
     @property
     def parameters_actor(self):
@@ -802,6 +908,25 @@ class Independent_DDPG_Policy(Module):
 
 
 class MADDPG_Policy(Independent_DDPG_Policy):
+    """
+    The policy of deep deterministic policy gradient.
+
+    Args:
+        action_space (Optional[Dict[str, Box]]): The action space.
+        n_agents (int): The number of agents.
+        actor_representation (Module): The representation module for actor network.
+        critic_representation (Module): The representation module for critic network.
+        actor_hidden_size (Sequence[int]): List of hidden units for actor network.
+        critic_hidden_size (Sequence[int]): List of hidden units for critic network.
+        normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
+        activation (Optional[ModuleType]): The activation function for each layer.
+        activation_action (Optional[ModuleType]): The activation of final layer to bound the actions.
+        device (Optional[Union[str, int, torch.device]]): The calculating device.
+        use_distributed_training (bool): Whether to use multi-GPU for distributed training.
+        **kwargs: Other arguments.
+    """
+
     def __init__(self,
                  action_space: Optional[Dict[str, Box]],
                  n_agents: int,
@@ -814,10 +939,12 @@ class MADDPG_Policy(Independent_DDPG_Policy):
                  activation: Optional[ModuleType] = None,
                  activation_action: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None,
+                 use_distributed_training: bool = False,
                  **kwargs):
         super(MADDPG_Policy, self).__init__(action_space, n_agents, actor_representation, critic_representation,
                                             actor_hidden_size, critic_hidden_size,
-                                            normalize, initialize, activation, activation_action, device, **kwargs)
+                                            normalize, initialize, activation, activation_action, device,
+                                            use_distributed_training, **kwargs)
 
     def _get_actor_critic_input(self, dim_actor_rep, dim_action, dim_critic_rep, n_agents):
         """
@@ -940,6 +1067,25 @@ class MADDPG_Policy(Independent_DDPG_Policy):
 
 
 class MATD3_Policy(MADDPG_Policy, Module):
+    """
+    The policy of deep deterministic policy gradient.
+
+    Args:
+        action_space (Optional[Dict[str, Box]]): The action space.
+        n_agents (int): The number of agents.
+        actor_representation (Module): The representation module for actor network.
+        critic_representation (Module): The representation module for critic network.
+        actor_hidden_size (Sequence[int]): List of hidden units for actor network.
+        critic_hidden_size (Sequence[int]): List of hidden units for critic network.
+        normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
+        activation (Optional[ModuleType]): The activation function for each layer.
+        activation_action (Optional[ModuleType]): The activation of final layer to bound the actions.
+        device (Optional[Union[str, int, torch.device]]): The calculating device.
+        use_distributed_training (bool): Whether to use multi-GPU for distributed training.
+        **kwargs: Other arguments.
+    """
+
     def __init__(self,
                  action_space: Optional[Dict[str, Box]],
                  n_agents: int,
@@ -952,6 +1098,7 @@ class MATD3_Policy(MADDPG_Policy, Module):
                  activation: Optional[ModuleType] = None,
                  activation_action: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None,
+                 use_distributed_training: bool = False,
                  **kwargs):
         Module.__init__(self)
         self.device = device
@@ -960,7 +1107,8 @@ class MATD3_Policy(MADDPG_Policy, Module):
         self.use_parameter_sharing = kwargs['use_parameter_sharing']
         self.model_keys = kwargs['model_keys']
         self.actor_representation_info_shape = {key: actor_representation[key].output_shapes for key in self.model_keys}
-        self.critic_representation_info_shape = {key: critic_representation[key].output_shapes for key in self.model_keys}
+        self.critic_representation_info_shape = {key: critic_representation[key].output_shapes for key in
+                                                 self.model_keys}
         self.lstm = True if kwargs["rnn"] == "LSTM" else False
         self.use_rnn = True if kwargs["use_rnn"] else False
 
@@ -987,6 +1135,21 @@ class MATD3_Policy(MADDPG_Policy, Module):
             self.target_actor[key] = deepcopy(self.actor[key])
             self.target_critic_A[key] = deepcopy(self.critic_A[key])
             self.target_critic_B[key] = deepcopy(self.critic_B[key])
+
+        # Prepare DDP module.
+        self.distributed_training = use_distributed_training
+        if self.distributed_training:
+            self.rank = int(os.environ["RANK"])
+            for key in self.model_keys:
+                self.actor_representation[key] = DistributedDataParallel(module=self.actor_representation[key],
+                                                                         device_ids=[self.rank])
+                self.critic_A_representation[key] = DistributedDataParallel(module=self.critic_A_representation[key],
+                                                                            device_ids=[self.rank])
+                self.critic_B_representation[key] = DistributedDataParallel(module=self.critic_B_representation[key],
+                                                                            device_ids=[self.rank])
+                self.actor[key] = DistributedDataParallel(module=self.actor[key], device_ids=[self.rank])
+                self.critic_A[key] = DistributedDataParallel(module=self.critic_A[key], device_ids=[self.rank])
+                self.critic_B[key] = DistributedDataParallel(module=self.critic_B[key], device_ids=[self.rank])
 
     @property
     def parameters_critic(self):
