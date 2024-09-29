@@ -24,29 +24,30 @@ class DQN_Learner(Learner):
 
     @tf.function
     def learn(self, obs_batch, act_batch, next_batch, rew_batch, ter_batch):
-        with tf.GradientTape() as tape:
-            _, _, evalQ = self.policy(obs_batch)
-            _, _, targetQ = self.policy.target(next_batch)
-            targetQ = tf.math.reduce_max(targetQ, axis=-1)
-            targetQ = rew_batch + self.gamma * (1 - ter_batch) * targetQ
-            targetQ = tf.stop_gradient(targetQ)
+        with self.policy.mirrored_strategy.scope():
+            with tf.GradientTape() as tape:
+                _, _, evalQ = self.policy(obs_batch)
+                _, _, targetQ = self.policy.target(next_batch)
+                targetQ = tf.math.reduce_max(targetQ, axis=-1)
+                targetQ = rew_batch + self.gamma * (1 - ter_batch) * targetQ
+                targetQ = tf.stop_gradient(targetQ)
 
-            predictQ = tf.math.reduce_sum(evalQ * tf.one_hot(act_batch, evalQ.shape[1]), axis=-1)
+                predictQ = tf.math.reduce_sum(evalQ * tf.one_hot(act_batch, evalQ.shape[1]), axis=-1)
 
-            loss = tk.losses.mean_squared_error(targetQ, predictQ)
-            gradients = tape.gradient(loss, self.policy.trainable_variables)
-            if self.use_grad_clip:
-                self.optimizer.apply_gradients([
-                    (tf.clip_by_norm(grad, self.grad_clip_norm), var)
-                    for (grad, var) in zip(gradients, self.policy.trainable_variables)
-                    if grad is not None
-                ])
-            else:
-                self.optimizer.apply_gradients([
-                    (grad, var)
-                    for (grad, var) in zip(gradients, self.policy.trainable_variables)
-                    if grad is not None
-                ])
+                loss = tk.losses.mean_squared_error(targetQ, predictQ)
+                gradients = tape.gradient(loss, self.policy.trainable_variables)
+                if self.use_grad_clip:
+                    self.optimizer.apply_gradients([
+                        (tf.clip_by_norm(grad, self.grad_clip_norm), var)
+                        for (grad, var) in zip(gradients, self.policy.trainable_variables)
+                        if grad is not None
+                    ])
+                else:
+                    self.optimizer.apply_gradients([
+                        (grad, var)
+                        for (grad, var) in zip(gradients, self.policy.trainable_variables)
+                        if grad is not None
+                    ])
         return predictQ, loss
 
     def update(self, **samples):

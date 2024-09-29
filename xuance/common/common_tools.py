@@ -158,11 +158,11 @@ def get_runner(method,
     args = get_arguments(method, env, env_id, config_path, parser_args, is_test)
 
     if type(args) == list:
+        device = args[0].device
         distributed_training = True if args[0].distributed_training else False
-        device = f"GPU-{os.environ['RANK']}" if distributed_training else args[0].device
     else:
+        device = args.device
         distributed_training = True if args.distributed_training else False
-        device = f"GPU-{os.environ['RANK']}" if distributed_training else args.device
     if distributed_training:
         rank = int(os.environ['RANK'])
         num_gpus = int(os.environ['WORLD_SIZE'])
