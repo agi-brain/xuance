@@ -16,9 +16,9 @@ class ActorPolicy(Module):
         action_space (Discrete): The discrete action space.
         representation (Module): The representation module.
         actor_hidden_size (Sequence[int]): A list of hidden layer sizes for actor network.
-        normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
-        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
-        activation (Optional[ModuleType]): The activation function for each layer.
+        normalize (Optional[tk.layers.Layer]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[tk.initializers.Initializer]): The parameters initializer.
+        activation (Optional[tk.layers.Layer]): The activation function for each layer.
     """
 
     def __init__(self,
@@ -60,9 +60,9 @@ class ActorCriticPolicy(Module):
         representation (Module): The representation module.
         actor_hidden_size (Sequence[int]): A list of hidden layer sizes for actor network.
         critic_hidden_size (Sequence[int]): A list of hidden layer sizes for critic network.
-        normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
-        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
-        activation (Optional[ModuleType]): The activation function for each layer.
+        normalize (Optional[tk.layers.Layer]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[tk.initializers.Initializer]): The parameters initializer.
+        activation (Optional[tk.layers.Layer]): The activation function for each layer.
     """
 
     def __init__(self,
@@ -109,9 +109,9 @@ class PPGActorCritic(Module):
         representation (Module): The representation module.
         actor_hidden_size (Sequence[int]): A list of hidden layer sizes for actor network.
         critic_hidden_size (Sequence[int]): A list of hidden layer sizes for critic network.
-        normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
-        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
-        activation (Optional[ModuleType]): The activation function for each layer.
+        normalize (Optional[tk.layers.Layer]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[tk.initializers.Initializer]): The parameters initializer.
+        activation (Optional[tk.layers.Layer]): The activation function for each layer.
     """
 
     def __init__(self,

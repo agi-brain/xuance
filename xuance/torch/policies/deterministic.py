@@ -965,8 +965,8 @@ class DRQNPolicy(Module):
     The policy of deep recurrent Q-networks.
 
     Args:
-        action_space: The action space.
-        representation: The representation module.
+        action_space (Discrete): The action space.
+        representation (Module): The representation module.
         **kwargs: The other arguments.
     """
 

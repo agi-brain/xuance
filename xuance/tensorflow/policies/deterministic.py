@@ -38,10 +38,10 @@ class BasicQnetwork(Module):
                 self.representation = representation
                 self.target_representation = deepcopy(representation)
                 self.representation_info_shape = self.representation.output_shapes
-                self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, hidden_size,
-                                             normalize, initialize, activation)
-                self.target_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, hidden_size,
-                                               normalize, initialize, activation)
+                self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim,
+                                             hidden_size, normalize, initialize, activation)
+                self.target_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim,
+                                               hidden_size, normalize, initialize, activation)
                 self.target_Qhead.set_weights(self.eval_Qhead.get_weights())
         else:
             self.mirrored_strategy = None
@@ -96,13 +96,27 @@ class BasicQnetwork(Module):
 
 
 class DuelQnetwork(Module):
+    """
+    The policy for deep dueling Q-networks.
+
+    Args:
+        action_space (Discrete): The action space, which type is gym.spaces.Discrete.
+        representation (Module): The representation module.
+        hidden_size (Sequence[int]): List of hidden units for fully connect layers.
+        normalize (Optional[tk.layers.Layer]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
+        activation (Optional[tk.layers.Layer]): The activation function for each layer.
+        use_distributed_training (bool): Whether to use multi-GPU for distributed training.
+    """
+
     def __init__(self,
                  action_space: Discrete,
                  representation: Module,
                  hidden_size: Sequence[int] = None,
                  normalize: Optional[tk.layers.Layer] = None,
                  initialize: Optional[Callable[..., Tensor]] = None,
-                 activation: Optional[tk.layers.Layer] = None):
+                 activation: Optional[tk.layers.Layer] = None,
+                 use_distributed_training: bool = False):
         super(DuelQnetwork, self).__init__()
         self.action_dim = action_space.n
         self.representation = representation
@@ -116,6 +130,17 @@ class DuelQnetwork(Module):
 
     @tf.function
     def call(self, observation: Union[np.ndarray, dict], **kwargs):
+        """
+        Returns the output of the representation, greedy actions, and the evaluated Q-values.
+
+        Parameters:
+            observation: The original observation input.
+
+        Returns:
+            outputs: The hidden state output by the representation.
+            argmax_action: The greedy actions.
+            evalQ: The evaluated Q-values.
+        """
         outputs = self.representation(observation)
         evalQ = self.eval_Qhead(outputs['state'])
         argmax_action = tf.math.argmax(evalQ, axis=-1)
@@ -123,6 +148,17 @@ class DuelQnetwork(Module):
 
     @tf.function
     def target(self, observation: Union[np.ndarray, dict]):
+        """
+        Returns the output of the representation, greedy actions, and the evaluated Q-values via target networks.
+
+        Parameters:
+            observation: The original observation input.
+
+        Returns:
+            outputs_target: The hidden state output by the representation.
+            argmax_action: The greedy actions from target networks.
+            targetQ: The evaluated Q-values output by target Q-network.
+        """
         outputs = self.target_representation(observation)
         targetQ = self.target_Qhead(outputs['state'])
         argmax_action = tf.math.argmax(targetQ, axis=-1)
@@ -134,13 +170,27 @@ class DuelQnetwork(Module):
 
 
 class NoisyQnetwork(Module):
+    """
+    The policy for noisy deep Q-networks.
+
+    Args:
+        action_space (Discrete): The action space, which type is gym.spaces.Discrete.
+        representation (Module): The representation module.
+        hidden_size (Sequence[int]): List of hidden units for fully connect layers.
+        normalize (Optional[tk.layers.Layer]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
+        activation (Optional[tk.layers.Layer]): The activation function for each layer.
+        use_distributed_training (bool): Whether to use multi-GPU for distributed training.
+    """
+
     def __init__(self,
                  action_space: Discrete,
                  representation: Module,
                  hidden_size: Sequence[int] = None,
                  normalize: Optional[tk.layers.Layer] = None,
                  initialize: Optional[Callable[..., Tensor]] = None,
-                 activation: Optional[tk.layers.Layer] = None):
+                 activation: Optional[tk.layers.Layer] = None,
+                 use_distributed_training: bool = False):
         super(NoisyQnetwork, self).__init__()
         self.action_dim = action_space.n
         self.representation = representation
@@ -152,8 +202,11 @@ class NoisyQnetwork(Module):
                                        normalize, initialize, activation)
         self.target_Qhead.set_weights(self.eval_Qhead.get_weights())
         self.noise_scale = 0.0
+        self.eval_noise_parameter = []
+        self.target_noise_parameter = []
 
     def update_noise(self, noisy_bound: float = 0.0):
+        """Updates the noises for network parameters."""
         self.eval_noise_parameter = []
         self.target_noise_parameter = []
         for parameter in self.eval_Qhead.variables:
@@ -164,6 +217,17 @@ class NoisyQnetwork(Module):
 
     @tf.function
     def call(self, observation: Union[np.ndarray, dict], **kwargs):
+        """
+        Returns the output of the representation, greedy actions, and the evaluated Q-values.
+
+        Parameters:
+            observation: The original observation input.
+
+        Returns:
+            outputs: The hidden state output by the representation.
+            argmax_action: The greedy actions.
+            evalQ: The evaluated Q-values.
+        """
         outputs = self.representation(observation)
         self.update_noise(self.noise_scale)
         for parameter, noise_param in zip(self.eval_Qhead.variables, self.eval_noise_parameter):
@@ -174,6 +238,17 @@ class NoisyQnetwork(Module):
 
     @tf.function
     def target(self, observation: Union[np.ndarray, dict]):
+        """
+        Returns the output of the representation, greedy actions, and the evaluated Q-values via target networks.
+
+        Parameters:
+            observation: The original observation input.
+
+        Returns:
+            outputs_target: The hidden state output by the representation.
+            argmax_action: The greedy actions from target networks.
+            targetQ: The evaluated Q-values output by target Q-network.
+        """
         outputs = self.target_representation(observation)
         self.update_noise(self.noise_scale)
         for parameter, noise_param in zip(self.target_Qhead.variables, self.target_noise_parameter):
@@ -188,6 +263,22 @@ class NoisyQnetwork(Module):
 
 
 class C51Qnetwork(Module):
+    """
+    The policy for C51 distributional deep Q-networks.
+
+    Args:
+        action_space (Discrete): The action space, which type is gym.spaces.Discrete.
+        atom_num (int): The number of atoms.
+        v_min (float): The lower bound of value distribution.
+        v_max (float): The upper bound of value distribution.
+        representation (Module): The representation module.
+        hidden_size (Sequence[int]): List of hidden units for fully connect layers.
+        normalize (Optional[tk.layers.Layer]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
+        activation (Optional[tk.layers.Layer]): The activation function for each layer.
+        use_distributed_training (bool): Whether to use multi-GPU for distributed training.
+    """
+
     def __init__(self,
                  action_space: Discrete,
                  atom_num: int,
@@ -197,8 +288,8 @@ class C51Qnetwork(Module):
                  hidden_size: Sequence[int] = None,
                  normalize: Optional[tk.layers.Layer] = None,
                  initialize: Optional[Callable[..., Tensor]] = None,
-                 activation: Optional[tk.layers.Layer] = None):
-        assert isinstance(action_space, Discrete)
+                 activation: Optional[tk.layers.Layer] = None,
+                 use_distributed_training: bool = False):
         super(C51Qnetwork, self).__init__()
         self.action_dim = action_space.n
         self.atom_num = atom_num
@@ -217,6 +308,17 @@ class C51Qnetwork(Module):
 
     @tf.function
     def call(self, observation: Union[np.ndarray, dict], **kwargs):
+        """
+        Returns the output of the representation, greedy actions, and the evaluated Z-values.
+
+        Parameters:
+            observation: The original observation input.
+
+        Returns:
+            outputs: The hidden state output by the representation.
+            argmax_action: The greedy actions.
+            eval_Z: The evaluated Z-values.
+        """
         outputs = self.representation(observation)
         eval_Z = self.eval_Zhead(outputs['state'])
         eval_Q = tf.reduce_sum(self.supports * eval_Z, axis=-1)
@@ -225,6 +327,17 @@ class C51Qnetwork(Module):
 
     @tf.function
     def target(self, observation: Union[np.ndarray, dict]):
+        """
+        Returns the output of the representation, greedy actions, and the evaluated Z-values via target networks.
+
+        Parameters:
+            observation: The original observation input.
+
+        Returns:
+            outputs_target: The hidden state output by the representation.
+            argmax_action: The greedy actions from target networks.
+            target_Z: The evaluated Z-values output by target Z-network.
+        """
         outputs = self.target_representation(observation)
         target_Z = self.target_Zhead(outputs['state'])
         target_Q = tf.reduce_sum(self.supports * target_Z, axis=-1)
@@ -237,6 +350,20 @@ class C51Qnetwork(Module):
 
 
 class QRDQN_Network(Module):
+    """
+    The policy for quantile regression deep Q-networks.
+
+    Args:
+        action_space (Discrete): The action space, which type is gym.spaces.Discrete.
+        quantile_num (int): The number of quantiles.
+        representation (Module): The representation module.
+        hidden_size (Sequence[int]): List of hidden units for fully connect layers.
+        normalize (Optional[tk.layers.Layer]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
+        activation (Optional[tk.layers.Layer]): The activation function for each layer.
+        use_distributed_training (bool): Whether to use multi-GPU for distributed training.
+    """
+
     def __init__(self,
                  action_space: Discrete,
                  quantile_num: int,
@@ -244,7 +371,8 @@ class QRDQN_Network(Module):
                  hidden_size: Sequence[int] = None,
                  normalize: Optional[tk.layers.Layer] = None,
                  initialize: Optional[Callable[..., Tensor]] = None,
-                 activation: Optional[tk.layers.Layer] = None):
+                 activation: Optional[tk.layers.Layer] = None,
+                 use_distributed_training: bool = False):
         super(QRDQN_Network, self).__init__()
         self.action_dim = action_space.n
         self.quantile_num = quantile_num
@@ -259,6 +387,17 @@ class QRDQN_Network(Module):
 
     @tf.function
     def call(self, observation: Union[np.ndarray, dict], **kwargs):
+        """
+        Returns the output of the representation, greedy actions, and the evaluated Z-values.
+
+        Parameters:
+            observation: The original observation input.
+
+        Returns:
+            outputs: The hidden state output by the representation.
+            argmax_action: The greedy actions.
+            eval_Z: The evaluated Z-values.
+        """
         outputs = self.representation(observation)
         eval_Z = self.eval_Zhead(outputs['state'])
         eval_Q = tf.reduce_mean(eval_Z, axis=-1)
@@ -267,6 +406,17 @@ class QRDQN_Network(Module):
 
     @tf.function
     def target(self, observation: Union[np.ndarray, dict]):
+        """
+        Returns the output of the representation, greedy actions, and the evaluated Z-values via target networks.
+
+        Parameters:
+            observation: The original observation input.
+
+        Returns:
+            outputs_target: The hidden state output by the representation.
+            argmax_action: The greedy actions from target networks.
+            target_Z: The evaluated Z-values output by target Z-network.
+        """
         outputs = self.target_representation(observation)
         target_Z = self.target_Zhead(outputs['state'])
         target_Q = tf.reduce_mean(target_Z, axis=-1)
@@ -287,10 +437,11 @@ class DDPGPolicy(Module):
         representation (Module): The representation module.
         actor_hidden_size (Sequence[int]): List of hidden units for actor network.
         critic_hidden_size (Sequence[int]): List of hidden units for critic network.
-        normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
+        normalize (Optional[Module]): The layer normalization over a minibatch of inputs.
         initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
-        activation (Optional[ModuleType]): The activation function for each layer.
-        activation_action (Optional[ModuleType]): The activation of final layer to bound the actions.
+        activation (Optional[tk.layers.Layer]): The activation function for each layer.
+        activation_action (Optional[tk.layers.Layer]): The activation of final layer to bound the actions.
+        use_distributed_training (bool): Whether to use multi-GPU for distributed training.
     """
 
     def __init__(self,
@@ -301,7 +452,8 @@ class DDPGPolicy(Module):
                  normalize: Optional[Module] = None,
                  initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[tk.layers.Layer] = None,
-                 activation_action: Optional[tk.layers.Layer] = None):
+                 activation_action: Optional[tk.layers.Layer] = None,
+                 use_distributed_training: bool = False):
         super(DDPGPolicy, self).__init__()
         self.action_dim = action_space.shape[0]
         self.representation_info_shape = representation.output_shapes
@@ -390,6 +542,7 @@ class TD3Policy(Module):
         initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
         activation (Optional[tk.layers.Layer]): The activation function for each layer.
         activation_action (Optional[tk.layers.Layer]): The activation of final layer to bound the actions.
+        use_distributed_training (bool): Whether to use multi-GPU for distributed training.
     """
 
     def __init__(self,
@@ -400,7 +553,8 @@ class TD3Policy(Module):
                  normalize: Optional[tk.layers.Layer] = None,
                  initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[tk.layers.Layer] = None,
-                 activation_action: Optional[tk.layers.Layer] = None):
+                 activation_action: Optional[tk.layers.Layer] = None,
+                 use_distributed_training: bool = False):
         super(TD3Policy, self).__init__()
         self.action_dim = action_space.shape[0]
         self.representation_info_shape = representation.output_shapes
@@ -498,6 +652,22 @@ class TD3Policy(Module):
 
 
 class PDQNPolicy(Module):
+    """
+    The policy of parameterised deep Q network.
+
+    Args:
+        observation_space: The observation spaces.
+        action_space: The action spaces.
+        representation (Module): The representation module.
+        conactor_hidden_size (Sequence[int]): List of hidden units for actor network.
+        qnetwork_hidden_size (Sequence[int]): List of hidden units for q network.
+        normalize (Optional[tk.layers.Layer]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
+        activation (Optional[tk.layers.Layer]): The activation function for each layer.
+        activation_action (Optional[tk.layers.Layer]): The activation of final layer to bound the actions.
+        use_distributed_training (bool): Whether to use multi-GPU for distributed training.
+    """
+
     def __init__(self,
                  observation_space,
                  action_space,
@@ -506,7 +676,9 @@ class PDQNPolicy(Module):
                  qnetwork_hidden_size: Sequence[int],
                  normalize: Optional[tk.layers.Layer] = None,
                  initialize: Optional[Callable[..., Tensor]] = None,
-                 activation: Optional[tk.layers.Layer] = None):
+                 activation: Optional[tk.layers.Layer] = None,
+                 activation_action: Optional[tk.layers.Layer] = None,
+                 use_distributed_training: bool = False):
         super(PDQNPolicy, self).__init__()
         self.representation = representation
         self.target_representation = deepcopy(representation)
@@ -521,11 +693,11 @@ class PDQNPolicy(Module):
         self.dim_input = self.observation_space.shape[0] + self.conact_size
         self.qnetwork._set_inputs(tf.TensorSpec([None, self.dim_input], tf.float32, name='inputs'))
         self.conactor = ActorNet(self.observation_space.shape[0], self.conact_size, conactor_hidden_size,
-                                 initialize, activation)
+                                 initialize, activation, activation_action)
         self.target_qnetwork = BasicQhead(self.observation_space.shape[0] + self.conact_size, self.num_disact,
                                           qnetwork_hidden_size, normalize, initialize, activation)
         self.target_conactor = ActorNet(self.observation_space.shape[0], self.conact_size, conactor_hidden_size,
-                                        initialize, activation)
+                                        initialize, activation, activation_action)
         self.target_conactor.set_weights(self.conactor.get_weights())
         self.target_qnetwork.set_weights(self.qnetwork.get_weights())
 
@@ -568,6 +740,22 @@ class PDQNPolicy(Module):
 
 
 class MPDQNPolicy(Module):
+    """
+    The policy of multi-pass parameterised deep Q network.
+
+    Args:
+        observation_space: The observation spaces.
+        action_space: The action spaces.
+        representation (Module): The representation module.
+        conactor_hidden_size (Sequence[int]): List of hidden units for actor network.
+        qnetwork_hidden_size (Sequence[int]): List of hidden units for q network.
+        normalize (Optional[tk.layers.Layer]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
+        activation (Optional[tk.layers.Layer]): The activation function for each layer.
+        activation_action (Optional[tk.layers.Layer]): The activation of final layer to bound the actions.
+        use_distributed_training (bool): Whether to use multi-GPU for distributed training.
+    """
+
     def __init__(self,
                  observation_space,
                  action_space,
@@ -577,7 +765,8 @@ class MPDQNPolicy(Module):
                  normalize: Optional[tk.layers.Layer] = None,
                  initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[tk.layers.Layer] = None,
-                 device: str = "cpu:0"):
+                 activation_action: Optional[tk.layers.Layer] = None,
+                 use_distributed_training: bool = False):
         super(MPDQNPolicy, self).__init__()
         self.representation = representation
         self.target_representation = deepcopy(representation)
@@ -593,12 +782,12 @@ class MPDQNPolicy(Module):
         self.dim_input = self.observation_space.shape[0] + self.conact_size
         self.qnetwork._set_inputs(tf.TensorSpec([None, self.dim_input], tf.float32, name='inputs'))
         self.conactor = ActorNet(self.observation_space.shape[0], self.conact_size, conactor_hidden_size,
-                                 initialize, activation, device)
+                                 initialize, activation, activation_action)
 
         self.target_qnetwork = BasicQhead(self.observation_space.shape[0] + self.conact_size, self.num_disact,
                                           qnetwork_hidden_size, normalize, initialize, activation)
         self.target_conactor = ActorNet(self.observation_space.shape[0], self.conact_size, conactor_hidden_size,
-                                        initialize, activation)
+                                        initialize, activation, activation_action)
         self.offsets = self.conact_sizes.cumsum()
         self.offsets = np.insert(self.offsets, 0, 0)
         self.soft_update(tau=1.0)
@@ -676,6 +865,22 @@ class MPDQNPolicy(Module):
 
 
 class SPDQNPolicy(Module):
+    """
+    The policy of split parameterised deep Q network.
+
+    Args:
+        observation_space: The observation spaces.
+        action_space: The action spaces.
+        representation (Module): The representation module.
+        conactor_hidden_size (Sequence[int]): List of hidden units for actor network.
+        qnetwork_hidden_size (Sequence[int]): List of hidden units for q network.
+        normalize (Optional[tk.layers.Layer]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
+        activation (Optional[tk.layers.Layer]): The activation function for each layer.
+        activation_action (Optional[tk.layers.Layer]): The activation of final layer to bound the actions.
+        use_distributed_training (bool): Whether to use multi-GPU for distributed training.
+    """
+
     def __init__(self,
                  observation_space,
                  action_space,
@@ -685,7 +890,8 @@ class SPDQNPolicy(Module):
                  normalize: Optional[tk.layers.Layer] = None,
                  initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[tk.layers.Layer] = None,
-                 device: str = "cpu:0"):
+                 activation_action: Optional[tk.layers.Layer] = None,
+                 use_distributed_training: bool = False):
         super(SPDQNPolicy, self).__init__()
         self.representation = representation
         self.target_representation = deepcopy(representation)
@@ -698,18 +904,18 @@ class SPDQNPolicy(Module):
         for k in range(self.num_disact):
             self.qnetwork.append(
                 BasicQhead(self.observation_space.shape[0] + self.conact_sizes[k], 1, qnetwork_hidden_size, normalize,
-                           initialize, activation, device))
+                           initialize, activation))
             dim_input = self.observation_space.shape[0] + self.conact_sizes[k]
             self.qnetwork[k]._set_inputs(tf.TensorSpec([None, dim_input], tf.float32, name='inputs_%d' % (k)))
 
         self.conactor = ActorNet(self.observation_space.shape[0], self.conact_size, conactor_hidden_size,
-                                 initialize, activation, device)
+                                 initialize, activation, activation_action)
         for k in range(self.num_disact):
             self.target_qnetwork.append(
                 BasicQhead(self.observation_space.shape[0] + self.conact_sizes[k], 1, qnetwork_hidden_size, normalize,
-                           initialize, activation, device))
+                           initialize, activation))
         self.target_conactor = ActorNet(self.observation_space.shape[0], self.conact_size, conactor_hidden_size,
-                                        initialize, activation, device)
+                                        initialize, activation, activation_action)
 
         self.offsets = self.conact_sizes.cumsum()
         self.offsets = np.insert(self.offsets, 0, 0)
@@ -763,6 +969,15 @@ class SPDQNPolicy(Module):
 
 
 class DRQNPolicy(Module):
+    """
+    The policy of deep recurrent Q-networks.
+
+    Args:
+        action_space (Discrete): The action space.
+        representation (Module): The representation module.
+        **kwargs: The other arguments.
+    """
+
     def __init__(self,
                  action_space: Discrete,
                  representation: Module,
@@ -784,6 +999,19 @@ class DRQNPolicy(Module):
 
     @tf.function
     def call(self, observation: Union[np.ndarray, dict], *rnn_hidden: Union[Tensor, np.ndarray], **kwargs):
+        """
+        Returns the output of the representation, greedy actions, the evaluated Q-values and the RNN hidden states.
+
+        Parameters:
+            observation: The original observation input.
+            rnn_hidden: The RNN hidden state.
+
+        Returns:
+            outputs: The hidden state output by the representation.
+            argmax_action: The greedy actions.
+            evalQ: The evaluated Q-values.
+            (hidden_states, cell_states): The updated RNN hidden states.
+        """
         if self.cnn:
             obs_shape = observation.shape
             outputs = self.representation(observation.reshape((-1,) + obs_shape[-3:]))
