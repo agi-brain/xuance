@@ -15,40 +15,56 @@ class DQN_Learner(Learner):
                  policy: Module):
         super(DQN_Learner, self).__init__(config, policy)
         if ("macOS" in self.os_name) and ("arm" in self.os_name):  # For macOS with Apple's M-series chips.
-            self.optimizer = tk.optimizers.legacy.Adam(config.learning_rate)
+            if self.distributed_training:
+                with self.policy.mirrored_strategy.scope():
+                    self.optimizer = tk.optimizers.legacy.Adam(config.learning_rate)
+            else:
+                self.optimizer = tk.optimizers.legacy.Adam(config.learning_rate)
         else:
-            self.optimizer = tk.optimizers.Adam(config.learning_rate)
+            if self.distributed_training:
+                with self.policy.mirrored_strategy.scope():
+                    self.optimizer = tk.optimizers.Adam(config.learning_rate)
+            else:
+                self.optimizer = tk.optimizers.Adam(config.learning_rate)
         self.gamma = config.gamma
         self.sync_frequency = config.sync_frequency
         self.n_actions = self.policy.action_dim
 
     @tf.function
-    def learn(self, obs_batch, act_batch, next_batch, rew_batch, ter_batch):
-        with self.policy.mirrored_strategy.scope():
-            with tf.GradientTape() as tape:
-                _, _, evalQ = self.policy(obs_batch)
-                _, _, targetQ = self.policy.target(next_batch)
-                targetQ = tf.math.reduce_max(targetQ, axis=-1)
-                targetQ = rew_batch + self.gamma * (1 - ter_batch) * targetQ
-                targetQ = tf.stop_gradient(targetQ)
+    def forward_fn(self, obs_batch, act_batch, next_batch, rew_batch, ter_batch):
+        with tf.GradientTape() as tape:
+            _, _, evalQ = self.policy(obs_batch)
+            _, _, targetQ = self.policy.target(next_batch)
+            targetQ = tf.math.reduce_max(targetQ, axis=-1)
+            targetQ = rew_batch + self.gamma * (1 - ter_batch) * targetQ
+            targetQ = tf.stop_gradient(targetQ)
 
-                predictQ = tf.math.reduce_sum(evalQ * tf.one_hot(act_batch, evalQ.shape[1]), axis=-1)
+            predictQ = tf.math.reduce_sum(evalQ * tf.one_hot(act_batch, evalQ.shape[1]), axis=-1)
 
-                loss = tk.losses.mean_squared_error(targetQ, predictQ)
-                gradients = tape.gradient(loss, self.policy.trainable_variables)
-                if self.use_grad_clip:
-                    self.optimizer.apply_gradients([
-                        (tf.clip_by_norm(grad, self.grad_clip_norm), var)
-                        for (grad, var) in zip(gradients, self.policy.trainable_variables)
-                        if grad is not None
-                    ])
-                else:
-                    self.optimizer.apply_gradients([
-                        (grad, var)
-                        for (grad, var) in zip(gradients, self.policy.trainable_variables)
-                        if grad is not None
-                    ])
+            loss = tk.losses.mean_squared_error(targetQ, predictQ)
+            gradients = tape.gradient(loss, self.policy.trainable_variables)
+            if self.use_grad_clip:
+                self.optimizer.apply_gradients([
+                    (tf.clip_by_norm(grad, self.grad_clip_norm), var)
+                    for (grad, var) in zip(gradients, self.policy.trainable_variables)
+                    if grad is not None
+                ])
+            else:
+                self.optimizer.apply_gradients([
+                    (grad, var)
+                    for (grad, var) in zip(gradients, self.policy.trainable_variables)
+                    if grad is not None
+                ])
         return predictQ, loss
+
+    @tf.function
+    def learn(self, *inputs):
+        if self.distributed_training:
+            predictQ, loss = self.policy.mirrored_strategy.run(self.forward_fn, args=inputs)
+            return predictQ, self.policy.mirrored_strategy.reduce(tf.distribute.ReduceOp.SUM, loss, axis=None)
+        else:
+            predictQ, loss = self.forward_fn(inputs)
+            return predictQ, loss
 
     def update(self, **samples):
         self.iterations += 1

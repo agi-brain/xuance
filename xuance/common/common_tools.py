@@ -163,17 +163,20 @@ def get_runner(method,
     else:
         device = args.device
         distributed_training = True if args.distributed_training else False
-    if distributed_training:
-        rank = int(os.environ['RANK'])
-        num_gpus = int(os.environ['WORLD_SIZE'])
-        if rank == 0:
-            if num_gpus > 1:
-                print(f"Calculating devices: {num_gpus} visible GPUs for distributed training.")
-            else:
-                print(f"Calculating device: {num_gpus} visible GPU for distributed training.")
-    else:
-        rank = 0
-        print(f"Calculating device: {device}")
+    # if distributed_training:
+    #     rank = int(os.environ['RANK'])
+    #     num_gpus = int(os.environ['WORLD_SIZE'])
+    #     if rank == 0:
+    #         if num_gpus > 1:
+    #             print(f"Calculating devices: {num_gpus} visible GPUs for distributed training.")
+    #         else:
+    #             print(f"Calculating device: {num_gpus} visible GPU for distributed training.")
+    # else:
+    #     rank = 0
+    #     print(f"Calculating device: {device}")
+
+    rank = 0
+    print(f"Calculating device: {device}")
 
     dl_toolbox = args[0].dl_toolbox if type(args) == list else args.dl_toolbox
     if dl_toolbox == "torch":

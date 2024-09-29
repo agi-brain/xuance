@@ -15,6 +15,7 @@ class Learner(ABC):
         self.os_name = platform.platform()
         self.value_normalizer = None
         self.config = config
+        self.distributed_training = config.distributed_training
 
         self.episode_length = config.episode_length
         self.use_rnn = config.use_rnn if hasattr(config, 'use_rnn') else False

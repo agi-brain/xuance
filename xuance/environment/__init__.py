@@ -23,7 +23,8 @@ def make_envs(config: Namespace):
             raise AttributeError(f"The environment named {config.env_name} cannot be created.")
 
     if config.distributed_training:
-        rank = int(os.environ['RANK'])
+        # rank = int(os.environ['RANK'])  # for torch.nn.parallel.DistributedDataParallel
+        rank = 1
         config.env_seed += rank * config.parallels
 
     if config.vectorize in REGISTRY_VEC_ENV.keys():

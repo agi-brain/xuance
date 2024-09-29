@@ -38,7 +38,7 @@ class DQN_Agent(OffPolicyAgent):
             policy = REGISTRY_Policy["Basic_Q_network"](
                 action_space=self.action_space, representation=representation, hidden_size=self.config.q_hidden_size,
                 normalize=normalize_fn, initialize=initializer, activation=activation,
-                use_distributed_training=self.config.use_distributed_training, gamma=self.config)
+                use_distributed_training=self.distributed_training)
         else:
             raise AttributeError(f"{self.config.agent} does not support the policy named {self.config.policy}.")
 
