@@ -59,7 +59,8 @@ class DRQN_Agent(OffPolicyAgent):
                 action_space=self.action_space, representation=representation,
                 rnn=self.config.rnn, recurrent_hidden_size=self.config.recurrent_hidden_size,
                 recurrent_layer_N=self.config.recurrent_layer_N, dropout=self.config.dropout,
-                normalize=normalize_fn, initialize=initializer, activation=activation)
+                normalize=normalize_fn, initialize=initializer, activation=activation,
+                use_distributed_training=self.distributed_training)
         else:
             raise AttributeError(
                 f"{self.config.agent} currently does not support the policy named {self.config.policy}.")

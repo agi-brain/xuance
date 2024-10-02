@@ -15,14 +15,22 @@ class QRDQN_Learner(Learner):
                  policy: Module):
         super(QRDQN_Learner, self).__init__(config, policy)
         if ("macOS" in self.os_name) and ("arm" in self.os_name):  # For macOS with Apple's M-series chips.
-            self.optimizer = tk.optimizers.legacy.Adam(config.learning_rate)
+            if self.distributed_training:
+                with self.policy.mirrored_strategy.scope():
+                    self.optimizer = tk.optimizers.legacy.Adam(config.learning_rate)
+            else:
+                self.optimizer = tk.optimizers.legacy.Adam(config.learning_rate)
         else:
-            self.optimizer = tk.optimizers.Adam(config.learning_rate)
+            if self.distributed_training:
+                with self.policy.mirrored_strategy.scope():
+                    self.optimizer = tk.optimizers.Adam(config.learning_rate)
+            else:
+                self.optimizer = tk.optimizers.Adam(config.learning_rate)
         self.gamma = config.gamma
         self.sync_frequency = config.sync_frequency
 
     @tf.function
-    def learn(self, obs_batch, act_batch, next_batch, rew_batch, ter_batch):
+    def forward_fn(self, obs_batch, act_batch, next_batch, rew_batch, ter_batch):
         with tf.GradientTape() as tape:
             _, _, evalZ = self.policy(obs_batch)
             _, targetA, targetZ = self.policy.target(next_batch)
@@ -49,6 +57,15 @@ class QRDQN_Learner(Learner):
                     if grad is not None
                 ])
         return current_quantile, loss
+
+    def learn(self, *inputs):
+        if self.distributed_training:
+            predictQ, loss = self.policy.mirrored_strategy.run(self.forward_fn, args=inputs)
+            return (self.policy.mirrored_strategy.reduce(tf.distribute.ReduceOp.SUM, predictQ, axis=None),
+                    self.policy.mirrored_strategy.reduce(tf.distribute.ReduceOp.SUM, loss, axis=None))
+        else:
+            predictQ, loss = self.forward_fn(*inputs)
+            return predictQ, loss
 
     def update(self, **samples):
         self.iterations += 1

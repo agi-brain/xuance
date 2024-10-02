@@ -37,6 +37,7 @@ class BasicQnetwork(Module):
             with self.mirrored_strategy.scope():
                 self.representation = representation
                 self.target_representation = deepcopy(representation)
+                self.representation.build((None,) + self.representation.input_shapes)
                 self.representation_info_shape = self.representation.output_shapes
                 self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim,
                                              hidden_size, normalize, initialize, activation)
@@ -48,11 +49,15 @@ class BasicQnetwork(Module):
             self.representation = representation
             self.target_representation = deepcopy(representation)
             self.representation_info_shape = self.representation.output_shapes
-            self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, hidden_size,
-                                         normalize, initialize, activation)
-            self.target_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, hidden_size,
-                                           normalize, initialize, activation)
+            self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim,
+                                         hidden_size, normalize, initialize, activation)
+            self.target_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim,
+                                           hidden_size, normalize, initialize, activation)
             self.target_Qhead.set_weights(self.eval_Qhead.get_weights())
+
+    @property
+    def trainable_variables(self):
+        return self.representation.trainable_variables + self.eval_Qhead.trainable_variables
 
     @tf.function
     def call(self, observation: Union[Tensor, np.ndarray]):
@@ -119,14 +124,33 @@ class DuelQnetwork(Module):
                  use_distributed_training: bool = False):
         super(DuelQnetwork, self).__init__()
         self.action_dim = action_space.n
-        self.representation = representation
-        self.target_representation = deepcopy(representation)
-        self.representation_info_shape = self.representation.output_shapes
-        self.eval_Qhead = DuelQhead(self.representation.output_shapes['state'][0], self.action_dim, hidden_size,
-                                    normalize, initialize, activation)
-        self.target_Qhead = DuelQhead(self.representation.output_shapes['state'][0], self.action_dim, hidden_size,
-                                      normalize, initialize, activation)
-        self.target_Qhead.set_weights(self.eval_Qhead.get_weights())
+
+        self.use_distributed_training = use_distributed_training
+        if self.use_distributed_training:
+            self.mirrored_strategy = tf.distribute.MirroredStrategy()
+            with self.mirrored_strategy.scope():
+                self.representation = representation
+                self.target_representation = deepcopy(representation)
+                self.representation.build((None,) + self.representation.input_shapes)
+                self.representation_info_shape = self.representation.output_shapes
+                self.eval_Qhead = DuelQhead(self.representation.output_shapes['state'][0], self.action_dim,
+                                            hidden_size, normalize, initialize, activation)
+                self.target_Qhead = DuelQhead(self.representation.output_shapes['state'][0], self.action_dim,
+                                              hidden_size, normalize, initialize, activation)
+                self.target_Qhead.set_weights(self.eval_Qhead.get_weights())
+        else:
+            self.representation = representation
+            self.target_representation = deepcopy(representation)
+            self.representation_info_shape = self.representation.output_shapes
+            self.eval_Qhead = DuelQhead(self.representation.output_shapes['state'][0], self.action_dim,
+                                        hidden_size, normalize, initialize, activation)
+            self.target_Qhead = DuelQhead(self.representation.output_shapes['state'][0], self.action_dim,
+                                          hidden_size, normalize, initialize, activation)
+            self.target_Qhead.set_weights(self.eval_Qhead.get_weights())
+
+    @property
+    def trainable_variables(self):
+        return self.representation.trainable_variables + self.eval_Qhead.trainable_variables
 
     @tf.function
     def call(self, observation: Union[np.ndarray, dict], **kwargs):
@@ -193,17 +217,35 @@ class NoisyQnetwork(Module):
                  use_distributed_training: bool = False):
         super(NoisyQnetwork, self).__init__()
         self.action_dim = action_space.n
-        self.representation = representation
-        self.target_representation = deepcopy(representation)
-        self.representation_info_shape = self.representation.output_shapes
-        self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, hidden_size,
-                                     normalize, initialize, activation)
-        self.target_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim, hidden_size,
-                                       normalize, initialize, activation)
+
+        self.use_distributed_training = use_distributed_training
+        if self.use_distributed_training:
+            self.mirrored_strategy = tf.distribute.MirroredStrategy()
+            with self.mirrored_strategy.scope():
+                self.representation = representation
+                self.target_representation = deepcopy(representation)
+                self.representation.build((None,) + self.representation.input_shapes)
+                self.representation_info_shape = self.representation.output_shapes
+                self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim,
+                                             hidden_size, normalize, initialize, activation)
+                self.target_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim,
+                                               hidden_size, normalize, initialize, activation)
+        else:
+            self.representation = representation
+            self.target_representation = deepcopy(representation)
+            self.representation_info_shape = self.representation.output_shapes
+            self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim,
+                                         hidden_size, normalize, initialize, activation)
+            self.target_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.action_dim,
+                                           hidden_size, normalize, initialize, activation)
         self.target_Qhead.set_weights(self.eval_Qhead.get_weights())
         self.noise_scale = 0.0
         self.eval_noise_parameter = []
         self.target_noise_parameter = []
+
+    @property
+    def trainable_variables(self):
+        return self.representation.trainable_variables + self.eval_Qhead.trainable_variables
 
     def update_noise(self, noisy_bound: float = 0.0):
         """Updates the noises for network parameters."""
@@ -295,16 +337,36 @@ class C51Qnetwork(Module):
         self.atom_num = atom_num
         self.v_min = v_min
         self.v_max = v_max
-        self.representation = representation
-        self.target_representation = deepcopy(representation)
-        self.representation_info_shape = self.representation.output_shapes
-        self.eval_Zhead = C51Qhead(self.representation.output_shapes['state'][0], self.action_dim, self.atom_num,
-                                   hidden_size, normalize, initialize, activation)
-        self.target_Zhead = C51Qhead(self.representation.output_shapes['state'][0], self.action_dim, self.atom_num,
-                                     hidden_size, normalize, initialize, activation)
-        self.target_Zhead.set_weights(self.eval_Zhead.get_weights())
+
+        self.use_distributed_training = use_distributed_training
+        if self.use_distributed_training:
+            self.mirrored_strategy = tf.distribute.MirroredStrategy()
+            with self.mirrored_strategy.scope():
+                self.representation = representation
+                self.target_representation = deepcopy(representation)
+                self.representation.build((None,) + self.representation.input_shapes)
+                self.representation_info_shape = self.representation.output_shapes
+                self.eval_Zhead = C51Qhead(self.representation.output_shapes['state'][0], self.action_dim,
+                                           self.atom_num, hidden_size, normalize, initialize, activation)
+                self.target_Zhead = C51Qhead(self.representation.output_shapes['state'][0], self.action_dim,
+                                             self.atom_num, hidden_size, normalize, initialize, activation)
+                self.target_Zhead.set_weights(self.eval_Zhead.get_weights())
+        else:
+            self.representation = representation
+            self.target_representation = deepcopy(representation)
+            self.representation_info_shape = self.representation.output_shapes
+            self.eval_Zhead = C51Qhead(self.representation.output_shapes['state'][0], self.action_dim,
+                                       self.atom_num, hidden_size, normalize, initialize, activation)
+            self.target_Zhead = C51Qhead(self.representation.output_shapes['state'][0], self.action_dim,
+                                         self.atom_num, hidden_size, normalize, initialize, activation)
+            self.target_Zhead.set_weights(self.eval_Zhead.get_weights())
+
         self.supports = tf.cast(tf.linspace(self.v_min, self.v_max, self.atom_num), dtype=tf.float32)
         self.deltaz = (v_max - v_min) / (atom_num - 1)
+
+    @property
+    def trainable_variables(self):
+        return self.representation.trainable_variables + self.eval_Zhead.trainable_variables
 
     @tf.function
     def call(self, observation: Union[np.ndarray, dict], **kwargs):
@@ -376,14 +438,32 @@ class QRDQN_Network(Module):
         super(QRDQN_Network, self).__init__()
         self.action_dim = action_space.n
         self.quantile_num = quantile_num
-        self.representation = representation
-        self.target_representation = deepcopy(representation)
-        self.representation_info_shape = self.representation.output_shapes
-        self.eval_Zhead = QRDQNhead(self.representation.output_shapes['state'][0], self.action_dim, self.quantile_num,
-                                    hidden_size, normalize, initialize, activation)
-        self.target_Zhead = QRDQNhead(self.representation.output_shapes['state'][0], self.action_dim, self.quantile_num,
-                                      hidden_size, normalize, initialize, activation)
-        self.target_Zhead.set_weights(self.eval_Zhead.get_weights())
+
+        self.use_distributed_training = use_distributed_training
+        if self.use_distributed_training:
+            self.mirrored_strategy = tf.distribute.MirroredStrategy()
+            with self.mirrored_strategy.scope():
+                self.representation = representation
+                self.target_representation = deepcopy(representation)
+                self.representation_info_shape = self.representation.output_shapes
+                self.eval_Zhead = QRDQNhead(self.representation.output_shapes['state'][0], self.action_dim,
+                                            self.quantile_num, hidden_size, normalize, initialize, activation)
+                self.target_Zhead = QRDQNhead(self.representation.output_shapes['state'][0], self.action_dim,
+                                              self.quantile_num, hidden_size, normalize, initialize, activation)
+                self.target_Zhead.set_weights(self.eval_Zhead.get_weights())
+        else:
+            self.representation = representation
+            self.target_representation = deepcopy(representation)
+            self.representation_info_shape = self.representation.output_shapes
+            self.eval_Zhead = QRDQNhead(self.representation.output_shapes['state'][0], self.action_dim,
+                                        self.quantile_num, hidden_size, normalize, initialize, activation)
+            self.target_Zhead = QRDQNhead(self.representation.output_shapes['state'][0], self.action_dim,
+                                          self.quantile_num, hidden_size, normalize, initialize, activation)
+            self.target_Zhead.set_weights(self.eval_Zhead.get_weights())
+
+    @property
+    def trainable_variables(self):
+        return self.representation.trainable_variables + self.eval_Zhead.trainable_variables
 
     @tf.function
     def call(self, observation: Union[np.ndarray, dict], **kwargs):

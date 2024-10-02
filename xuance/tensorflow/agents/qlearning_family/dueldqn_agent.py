@@ -30,7 +30,8 @@ class DuelDQN_Agent(DQN_Agent):
         if self.config.policy == "Duel_Q_network":
             policy = REGISTRY_Policy["Duel_Q_network"](
                 action_space=self.action_space, representation=representation, hidden_size=self.config.q_hidden_size,
-                normalize=normalize_fn, initialize=initializer, activation=activation)
+                normalize=normalize_fn, initialize=initializer, activation=activation,
+                use_distributed_training=self.distributed_training)
         else:
             raise AttributeError(f"{self.config.agent} currently does not support the policy named {self.config.policy}.")
 
