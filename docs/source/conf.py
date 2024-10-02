@@ -31,7 +31,7 @@ exclude_patterns = []
 # import sphinx_rtd_theme
 # html_theme = "sphinx_rtd_theme"
 # html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
-html_theme = "renku"
+html_theme = "renku"  # furo is suggested
 import renku_sphinx_theme
 html_theme_path = [renku_sphinx_theme.get_path()]
 html_logo = "figures/logo_2.png"
