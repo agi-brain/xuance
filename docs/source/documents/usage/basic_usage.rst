@@ -101,7 +101,7 @@ Users can specify "is_test=True" to perform testing.
 
     import xuance
     runner = xuance.get_runner(method='dqn',
-                               env_name='classic_control',
+                               env='classic_control',
                                env_id='CartPole-v1',
                                is_test=True)
     runner.run()
