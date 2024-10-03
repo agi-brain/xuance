@@ -39,7 +39,8 @@ class SAC_Agent(OffPolicyAgent):
                 action_space=self.action_space, representation=representation,
                 actor_hidden_size=self.config.actor_hidden_size, critic_hidden_size=self.config.critic_hidden_size,
                 normalize=normalize_fn, initialize=initializer,
-                activation=activation, activation_action=ActivationFunctions[self.config.activation_action])
+                activation=activation, activation_action=ActivationFunctions[self.config.activation_action],
+                use_distributed_training=self.distributed_training)
         else:
             raise AttributeError(f"SAC currently does not support the policy named {self.config.policy}.")
 

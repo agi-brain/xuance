@@ -73,8 +73,7 @@ class C51_Learner(Learner):
             loss = self.policy.mirrored_strategy.run(self.forward_fn, args=inputs)
             return self.policy.mirrored_strategy.reduce(tf.distribute.ReduceOp.SUM, loss, axis=None)
         else:
-            loss = self.forward_fn(*inputs)
-            return loss
+            return self.forward_fn(*inputs)
 
     def update(self, **samples):
         self.iterations += 1

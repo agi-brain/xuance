@@ -14,13 +14,21 @@ class PG_Learner(Learner):
                  policy: Module):
         super(PG_Learner, self).__init__(config, policy)
         if ("macOS" in self.os_name) and ("arm" in self.os_name):  # For macOS with Apple's M-series chips.
-            self.optimizer = tk.optimizers.legacy.Adam(config.learning_rate)
+            if self.distributed_training:
+                with self.policy.mirrored_strategy.scope():
+                    self.optimizer = tk.optimizers.legacy.Adam(config.learning_rate)
+            else:
+                self.optimizer = tk.optimizers.legacy.Adam(config.learning_rate)
         else:
-            self.optimizer = tk.optimizers.Adam(config.learning_rate)
+            if self.distributed_training:
+                with self.policy.mirrored_strategy.scope():
+                    self.optimizer = tk.optimizers.Adam(config.learning_rate)
+            else:
+                self.optimizer = tk.optimizers.Adam(config.learning_rate)
         self.ent_coef = config.ent_coef
 
     @tf.function
-    def learn(self, obs_batch, act_batch, ret_batch):
+    def forward_fn(self, obs_batch, act_batch, ret_batch):
         with tf.GradientTape() as tape:
             self.policy(obs_batch)
             a_dist = self.policy.actor.dist
@@ -42,6 +50,15 @@ class PG_Learner(Learner):
                 self.optimizer.apply_gradients([(grad, var) for (grad, var) in
                                                 zip(gradients, self.policy.trainable_variables) if grad is not None])
         return a_loss, e_loss
+
+    @tf.function
+    def learn(self, *inputs):
+        if self.distributed_training:
+            a_loss, e_loss = self.policy.mirrored_strategy.run(self.forward_fn, args=inputs)
+            return (self.policy.mirrored_strategy.reduce(tf.distribute.ReduceOp.SUM, a_loss, axis=None),
+                    self.policy.mirrored_strategy.reduce(tf.distribute.ReduceOp.SUM, e_loss, axis=None))
+        else:
+            return self.forward_fn(*inputs)
 
     def update(self, **samples):
         self.iterations += 1

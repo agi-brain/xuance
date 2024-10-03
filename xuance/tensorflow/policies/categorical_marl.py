@@ -278,7 +278,7 @@ class COMA_Policy(Module):
                                      normalize, initializer, activation, device)
         self.target_critic = COMA_CriticNet(critic_input_dim, self.action_dim, critic_hidden_size,
                                             normalize, initializer, activation, device)
-        self.parameters_critic = self.critic.trainable_variables
+        self.critic_trainable_variables = self.critic.trainable_variables
         self.pi_dist = CategoricalDistribution(self.action_dim)
 
     @tf.function

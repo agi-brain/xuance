@@ -484,6 +484,8 @@ class GaussianActorNet_SAC(Module):
         self.out_mu = tk.layers.Dense(units=action_dim, activation=None, input_shape=(hidden_sizes[-1],))
         self.out_log_std = tk.layers.Dense(units=action_dim, activation=None, input_shape=(hidden_sizes[-1],))
         self.dist = ActivatedDiagGaussianDistribution(action_dim, activation_action)
+        self.out_mu.build(input_shape=(None, hidden_sizes[-1]))
+        self.out_log_std.build(input_shape=(None, hidden_sizes[-1]))
 
     def call(self, x: Union[Tensor, np.ndarray], **kwargs):
         """

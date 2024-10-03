@@ -185,10 +185,10 @@ class Basic_ISAC_Policy(Module):
             self.target_critic_1[key].set_weights(self.critic_1[key].get_weights())
             self.target_critic_2[key].set_weights(self.critic_2[key].get_weights())
 
-    def parameters_actor(self, key):
+    def actor_trainable_variables(self, key):
         return self.actor_representation[key].trainable_variables + self.actor[key].trainable_variables
 
-    def parameters_critic(self, key):
+    def critic_trainable_variables(self, key):
         return self.critic_1_representation[key].trainable_variables + self.critic_1[key].trainable_variables + \
                self.critic_2_representation[key].trainable_variables + self.critic_2[key].trainable_variables
 

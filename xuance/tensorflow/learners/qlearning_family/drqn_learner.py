@@ -71,8 +71,7 @@ class DRQN_Learner(Learner):
             return (self.policy.mirrored_strategy.reduce(tf.distribute.ReduceOp.SUM, predictQ, axis=None),
                     self.policy.mirrored_strategy.reduce(tf.distribute.ReduceOp.SUM, loss, axis=None))
         else:
-            predictQ, loss = self.forward_fn(*inputs)
-            return predictQ, loss
+            return self.forward_fn(*inputs)
 
     def update(self, **samples):
         self.iterations += 1

@@ -64,8 +64,7 @@ class PerDQN_Learner(Learner):
                     self.policy.mirrored_strategy.reduce(tf.distribute.ReduceOp.SUM, predictQ, axis=None),
                     self.policy.mirrored_strategy.reduce(tf.distribute.ReduceOp.SUM, loss, axis=None))
         else:
-            td_error, predictQ, loss = self.forward_fn(*inputs)
-            return td_error, predictQ, loss
+            return self.forward_fn(*inputs)
 
     def update(self, **samples):
         self.iterations += 1

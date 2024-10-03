@@ -61,10 +61,10 @@ class COMA_Learner(LearnerMAS):
                 q_eval_a *= agent_mask
                 targets *= agent_mask
                 loss_c = tf.reduce_sum((q_eval_a - tf.stop_gradient(targets)) ** 2) / tf.reduce_sum(agent_mask)
-                gradients = tape.gradient(loss_c, self.policy.parameters_critic)
+                gradients = tape.gradient(loss_c, self.policy.critic_trainable_variables)
                 self.optimizer['critic'].apply_gradients([
                     (tf.clip_by_norm(grad, self.args.clip_grad), var)
-                    for (grad, var) in zip(gradients, self.policy.parameters_critic)
+                    for (grad, var) in zip(gradients, self.policy.critic_trainable_variables)
                     if grad is not None
                 ])
 

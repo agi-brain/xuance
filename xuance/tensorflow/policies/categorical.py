@@ -19,6 +19,7 @@ class ActorPolicy(Module):
         normalize (Optional[tk.layers.Layer]): The layer normalization over a minibatch of inputs.
         initialize (Optional[tk.initializers.Initializer]): The parameters initializer.
         activation (Optional[tk.layers.Layer]): The activation function for each layer.
+        use_distributed_training (bool): Whether to use multi-GPU for distributed training.
     """
 
     def __init__(self,
@@ -27,13 +28,25 @@ class ActorPolicy(Module):
                  actor_hidden_size: Sequence[int] = None,
                  normalize: Optional[tk.layers.Layer] = None,
                  initialize: Optional[tk.initializers.Initializer] = None,
-                 activation: Optional[tk.layers.Layer] = None):
+                 activation: Optional[tk.layers.Layer] = None,
+                 use_distributed_training: bool = False):
         super(ActorPolicy, self).__init__()
         self.action_dim = action_space.n
-        self.representation = representation
-        self.representation_info_shape = self.representation.output_shapes
-        self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size,
-                              normalize, initialize, activation)
+
+        self.use_distributed_training = use_distributed_training
+        if self.use_distributed_training:
+            self.mirrored_strategy = tf.distribute.MirroredStrategy()
+            with self.mirrored_strategy.scope():
+                self.representation = representation
+                self.representation.build((None,) + self.representation.input_shapes)
+                self.representation_info_shape = self.representation.output_shapes
+                self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim,
+                                      actor_hidden_size, normalize, initialize, activation)
+        else:
+            self.representation = representation
+            self.representation_info_shape = self.representation.output_shapes
+            self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim,
+                                  actor_hidden_size, normalize, initialize, activation)
 
     def call(self, observation: Union[np.ndarray, dict], **kwargs):
         """
@@ -63,6 +76,7 @@ class ActorCriticPolicy(Module):
         normalize (Optional[tk.layers.Layer]): The layer normalization over a minibatch of inputs.
         initialize (Optional[tk.initializers.Initializer]): The parameters initializer.
         activation (Optional[tk.layers.Layer]): The activation function for each layer.
+        use_distributed_training (bool): Whether to use multi-GPU for distributed training.
     """
 
     def __init__(self,
@@ -72,15 +86,29 @@ class ActorCriticPolicy(Module):
                  critic_hidden_size: Sequence[int] = None,
                  normalize: Optional[tk.layers.Layer] = None,
                  initialize: Optional[tk.initializers.Initializer] = None,
-                 activation: Optional[tk.layers.Layer] = None):
+                 activation: Optional[tk.layers.Layer] = None,
+                 use_distributed_training: bool = False):
         super(ActorCriticPolicy, self).__init__()
         self.action_dim = action_space.n
-        self.representation = representation
-        self.representation_info_shape = self.representation.output_shapes
-        self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size,
-                              normalize, initialize, activation)
-        self.critic = CriticNet(representation.output_shapes['state'][0], critic_hidden_size,
-                                normalize, initialize, activation)
+
+        self.use_distributed_training = use_distributed_training
+        if self.use_distributed_training:
+            self.mirrored_strategy = tf.distribute.MirroredStrategy()
+            with self.mirrored_strategy.scope():
+                self.representation = representation
+                self.representation.build((None,) + self.representation.input_shapes)
+                self.representation_info_shape = self.representation.output_shapes
+                self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim,
+                                      actor_hidden_size, normalize, initialize, activation)
+                self.critic = CriticNet(representation.output_shapes['state'][0],
+                                        critic_hidden_size, normalize, initialize, activation)
+        else:
+            self.representation = representation
+            self.representation_info_shape = self.representation.output_shapes
+            self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim,
+                                  actor_hidden_size, normalize, initialize, activation)
+            self.critic = CriticNet(representation.output_shapes['state'][0],
+                                    critic_hidden_size, normalize, initialize, activation)
 
     def call(self, observation: Union[np.ndarray, dict], **kwargs):
         """
@@ -112,6 +140,7 @@ class PPGActorCritic(Module):
         normalize (Optional[tk.layers.Layer]): The layer normalization over a minibatch of inputs.
         initialize (Optional[tk.initializers.Initializer]): The parameters initializer.
         activation (Optional[tk.layers.Layer]): The activation function for each layer.
+        use_distributed_training (bool): Whether to use multi-GPU for distributed training.
     """
 
     def __init__(self,
@@ -121,20 +150,41 @@ class PPGActorCritic(Module):
                  critic_hidden_size: Sequence[int] = None,
                  normalize: Optional[tk.layers.Layer] = None,
                  initialize: Optional[tk.initializers.Initializer] = None,
-                 activation: Optional[tk.layers.Layer] = None):
+                 activation: Optional[tk.layers.Layer] = None,
+                 use_distributed_training: bool = False):
         super(PPGActorCritic, self).__init__()
         self.action_dim = action_space.n
-        self.actor_representation = representation
-        self.critic_representation = deepcopy(representation)
-        self.aux_critic_representation = deepcopy(representation)
-        self.representation_info_shape = self.actor_representation.output_shapes
 
-        self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size,
-                              normalize, initialize, activation)
-        self.critic = CriticNet(representation.output_shapes['state'][0], critic_hidden_size,
-                                normalize, initialize, activation)
-        self.aux_critic = CriticNet(representation.output_shapes['state'][0], critic_hidden_size,
-                                    normalize, initialize, activation)
+        self.use_distributed_training = use_distributed_training
+        if self.use_distributed_training:
+            self.mirrored_strategy = tf.distribute.MirroredStrategy()
+            with self.mirrored_strategy.scope():
+                self.actor_representation = representation
+                self.critic_representation = deepcopy(representation)
+                self.aux_critic_representation = deepcopy(representation)
+                self.representation_info_shape = self.actor_representation.output_shapes
+                self.actor_representation.build((None,) + self.actor_representation.input_shapes)
+                self.critic_representation.build((None,) + self.critic_representation.input_shapes)
+                self.aux_critic_representation.build((None,) + self.aux_critic_representation.input_shapes)
+
+                self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim,
+                                      actor_hidden_size, normalize, initialize, activation)
+                self.critic = CriticNet(representation.output_shapes['state'][0],
+                                        critic_hidden_size, normalize, initialize, activation)
+                self.aux_critic = CriticNet(representation.output_shapes['state'][0],
+                                            critic_hidden_size, normalize, initialize, activation)
+        else:
+            self.actor_representation = representation
+            self.critic_representation = deepcopy(representation)
+            self.aux_critic_representation = deepcopy(representation)
+            self.representation_info_shape = self.actor_representation.output_shapes
+
+            self.actor = ActorNet(representation.output_shapes['state'][0], self.action_dim,
+                                  actor_hidden_size, normalize, initialize, activation)
+            self.critic = CriticNet(representation.output_shapes['state'][0],
+                                    critic_hidden_size, normalize, initialize, activation)
+            self.aux_critic = CriticNet(representation.output_shapes['state'][0],
+                                        critic_hidden_size, normalize, initialize, activation)
 
     def call(self, observation: Union[np.ndarray, dict], **kwargs):
         """
@@ -170,6 +220,7 @@ class SACDISPolicy(Module):
         normalize (Optional[tk.layers.Layer]): The layer normalization over a minibatch of inputs.
         initialize (Optional[tk.initializers.Initializer]): The parameters initializer.
         activation (Optional[tk.layers.Layer]): The activation function for each layer.
+        use_distributed_training (bool): Whether to use multi-GPU for distributed training.
     """
 
     def __init__(self,
@@ -179,31 +230,65 @@ class SACDISPolicy(Module):
                  critic_hidden_size: Sequence[int],
                  normalize: Optional[tk.layers.Layer] = None,
                  initialize: Optional[tk.initializers.Initializer] = None,
-                 activation: Optional[tk.layers.Layer] = None):
+                 activation: Optional[tk.layers.Layer] = None,
+                 use_distributed_training: bool = False):
         super(SACDISPolicy, self).__init__()
         self.action_dim = action_space.n
         self.representation_info_shape = representation.output_shapes
 
-        self.actor_representation = representation
-        self.actor = Actor_SAC(representation.output_shapes['state'][0], self.action_dim, actor_hidden_size,
-                               normalize, initialize, activation)
+        self.use_distributed_training = use_distributed_training
+        if self.use_distributed_training:
+            self.mirrored_strategy = tf.distribute.MirroredStrategy()
+            with self.mirrored_strategy.scope():
+                self.actor_representation = representation
+                self.critic_1_representation = deepcopy(representation)
+                self.critic_2_representation = deepcopy(representation)
+                self.target_critic_1_representation = deepcopy(self.critic_1_representation)
+                self.target_critic_2_representation = deepcopy(self.critic_2_representation)
+                self.actor_representation.build((None,) + self.actor_representation.input_shapes)
+                self.critic_1_representation.build((None,) + self.critic_1_representation.input_shapes)
+                self.critic_2_representation.build((None,) + self.critic_2_representation.input_shapes)
 
-        self.critic_1_representation = deepcopy(representation)
-        self.critic_1 = BasicQhead(representation.output_shapes['state'][0], self.action_dim, critic_hidden_size,
-                                   normalize, initialize, activation)
-        self.critic_2_representation = deepcopy(representation)
-        self.critic_2 = BasicQhead(representation.output_shapes['state'][0], self.action_dim, critic_hidden_size,
-                                   normalize, initialize, activation)
-        self.target_critic_1_representation = deepcopy(self.critic_1_representation)
-        self.target_critic_2_representation = deepcopy(self.critic_2_representation)
-        self.target_critic_1 = BasicQhead(representation.output_shapes['state'][0], self.action_dim, critic_hidden_size,
-                                          normalize, initialize, activation)
-        self.target_critic_2 = BasicQhead(representation.output_shapes['state'][0], self.action_dim, critic_hidden_size,
-                                          normalize, initialize, activation)
+                self.actor = Actor_SAC(representation.output_shapes['state'][0], self.action_dim,
+                                       actor_hidden_size, normalize, initialize, activation)
+                self.critic_1 = BasicQhead(representation.output_shapes['state'][0], self.action_dim,
+                                           critic_hidden_size, normalize, initialize, activation)
+                self.critic_2 = BasicQhead(representation.output_shapes['state'][0], self.action_dim,
+                                           critic_hidden_size, normalize, initialize, activation)
+                self.target_critic_1 = BasicQhead(representation.output_shapes['state'][0], self.action_dim,
+                                                  critic_hidden_size, normalize, initialize, activation)
+                self.target_critic_2 = BasicQhead(representation.output_shapes['state'][0], self.action_dim,
+                                                  critic_hidden_size, normalize, initialize, activation)
+        else:
+            self.actor_representation = representation
+            self.actor = Actor_SAC(representation.output_shapes['state'][0], self.action_dim,
+                                   actor_hidden_size, normalize, initialize, activation)
+
+            self.critic_1_representation = deepcopy(representation)
+            self.critic_1 = BasicQhead(representation.output_shapes['state'][0], self.action_dim,
+                                       critic_hidden_size, normalize, initialize, activation)
+            self.critic_2_representation = deepcopy(representation)
+            self.critic_2 = BasicQhead(representation.output_shapes['state'][0], self.action_dim,
+                                       critic_hidden_size, normalize, initialize, activation)
+            self.target_critic_1_representation = deepcopy(self.critic_1_representation)
+            self.target_critic_2_representation = deepcopy(self.critic_2_representation)
+            self.target_critic_1 = BasicQhead(representation.output_shapes['state'][0], self.action_dim,
+                                              critic_hidden_size, normalize, initialize, activation)
+            self.target_critic_2 = BasicQhead(representation.output_shapes['state'][0], self.action_dim,
+                                              critic_hidden_size, normalize, initialize, activation)
         for ep, tp in zip(self.critic_1.variables, self.target_critic_1.variables):
             tp.assign(ep)
         for ep, tp in zip(self.critic_2.variables, self.target_critic_2.variables):
             tp.assign(ep)
+
+    @property
+    def actor_trainable_variables(self):
+        return self.actor_representation.trainable_variables + self.actor.trainable_variables
+
+    @property
+    def critic_trainable_variables(self):
+        return self.critic_1_representation.trainable_variables + self.critic_1.trainable_variables + \
+               self.critic_2_representation.trainable_variables + self.critic_2.trainable_variables
 
     @tf.function
     def call(self, observation: Union[np.ndarray, dict], **kwargs):

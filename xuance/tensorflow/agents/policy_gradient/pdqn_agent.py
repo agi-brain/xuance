@@ -84,7 +84,8 @@ class PDQN_Agent(Agent):
                 conactor_hidden_size=self.config.conactor_hidden_size,
                 qnetwork_hidden_size=self.config.qnetwork_hidden_size,
                 normalize=normalize_fn, initialize=initializer, activation=activation,
-                activation_action=ActivationFunctions[self.config.activation_action])
+                activation_action=ActivationFunctions[self.config.activation_action],
+                use_distributed_training=self.distributed_training)
         else:
             raise AttributeError(
                 f"{self.config.agent} currently does not support the policy named {self.config.policy}.")

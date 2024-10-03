@@ -64,17 +64,17 @@ class IDDPG_Learner(LearnerMAS):
                 q_target = rewards[key] + (1 - terminals[key]) * self.gamma * q_next_i
                 td_error = (q_eval_a - tf.stop_gradient(q_target)) * mask_values
                 loss_c = tf.reduce_sum(td_error ** 2) / tf.reduce_sum(mask_values)
-                gradients = tape.gradient(loss_c, self.policy.parameters_critic(key))
+                gradients = tape.gradient(loss_c, self.policy.critic_trainable_variables(key))
                 if self.use_grad_clip:
                     self.optimizer[key]['critic'].apply_gradients([
                         (tf.clip_by_norm(grad, self.grad_clip_norm), var)
-                        for (grad, var) in zip(gradients, self.policy.parameters_critic(key))
+                        for (grad, var) in zip(gradients, self.policy.critic_trainable_variables(key))
                         if grad is not None
                     ])
                 else:
                     self.optimizer[key]['critic'].apply_gradients([
                         (grad, var)
-                        for (grad, var) in zip(gradients, self.policy.parameters_critic(key))
+                        for (grad, var) in zip(gradients, self.policy.critic_trainable_variables(key))
                         if grad is not None
                     ])
 
@@ -89,17 +89,17 @@ class IDDPG_Learner(LearnerMAS):
                 mask_values = agent_mask[key]
                 q_policy_i = tf.reshape(q_policy[key], [bs])
                 loss_a = -tf.reduce_sum(q_policy_i * mask_values) / tf.reduce_sum(mask_values)
-                gradients = tape.gradient(loss_a, self.policy.parameters_actor(key))
+                gradients = tape.gradient(loss_a, self.policy.actor_trainable_variables(key))
                 if self.use_grad_clip:
                     self.optimizer[key]['actor'].apply_gradients([
                         (tf.clip_by_norm(grad, self.grad_clip_norm), var)
-                        for (grad, var) in zip(gradients, self.policy.parameters_actor(key))
+                        for (grad, var) in zip(gradients, self.policy.actor_trainable_variables(key))
                         if grad is not None
                     ])
                 else:
                     self.optimizer[key]['actor'].apply_gradients([
                         (grad, var)
-                        for (grad, var) in zip(gradients, self.policy.parameters_actor(key))
+                        for (grad, var) in zip(gradients, self.policy.actor_trainable_variables(key))
                         if grad is not None
                     ])
                 info.update({f"{key}/loss_actor": loss_a.numpy()})

@@ -36,13 +36,15 @@ class PG_Agent(OnPolicyAgent):
             policy = REGISTRY_Policy["Categorical_Actor"](
                 action_space=self.action_space, representation=representation,
                 actor_hidden_size=self.config.actor_hidden_size,
-                normalize=normalize_fn, initialize=initializer, activation=activation)
+                normalize=normalize_fn, initialize=initializer, activation=activation,
+                use_distributed_training=self.distributed_training)
         elif self.config.policy == "Gaussian_Actor":
             policy = REGISTRY_Policy["Gaussian_Actor"](
                 action_space=self.action_space, representation=representation,
                 actor_hidden_size=self.config.actor_hidden_size,
                 normalize=normalize_fn, initialize=initializer, activation=activation,
-                activation_action=ActivationFunctions[self.config.activation_action])
+                activation_action=ActivationFunctions[self.config.activation_action],
+                use_distributed_training=self.distributed_training)
         else:
             raise AttributeError(f"PG currently does not support the policy named {self.config.policy}.")
 

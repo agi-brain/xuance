@@ -15,15 +15,23 @@ class PPOKL_Learner(Learner):
                  policy: Module):
         super(PPOKL_Learner, self).__init__(config, policy)
         if ("macOS" in self.os_name) and ("arm" in self.os_name):  # For macOS with Apple's M-series chips.
-            self.optimizer = tk.optimizers.legacy.Adam(config.learning_rate)
+            if self.distributed_training:
+                with self.policy.mirrored_strategy.scope():
+                    self.optimizer = tk.optimizers.legacy.Adam(config.learning_rate)
+            else:
+                self.optimizer = tk.optimizers.legacy.Adam(config.learning_rate)
         else:
-            self.optimizer = tk.optimizers.Adam(config.learning_rate)
+            if self.distributed_training:
+                with self.policy.mirrored_strategy.scope():
+                    self.optimizer = tk.optimizers.Adam(config.learning_rate)
+            else:
+                self.optimizer = tk.optimizers.Adam(config.learning_rate)
         self.vf_coef = config.vf_coef
         self.ent_coef = config.ent_coef
         self.target_kl = config.target_kl
         self.kl_coef = config.kl_coef
 
-    def learn(self, obs_batch, act_batch, ret_batch, adv_batch, old_dists):
+    def forward_fn(self, obs_batch, act_batch, ret_batch, adv_batch, old_dists):
         with tf.GradientTape() as tape:
             outputs, _, v_pred = self.policy(obs_batch)
             a_dist = self.policy.actor.dist
@@ -57,6 +65,18 @@ class PPOKL_Learner(Learner):
                     if grad is not None
                 ])
         return a_loss, c_loss, e_loss, kl, v_pred
+
+    @tf.function
+    def learn(self, *inputs):
+        if self.distributed_training:
+            a_loss, c_loss, e_loss, kl, v_pred = self.policy.mirrored_strategy.run(self.forward_fn, args=inputs)
+            return (self.policy.mirrored_strategy.reduce(tf.distribute.ReduceOp.SUM, a_loss, axis=None),
+                    self.policy.mirrored_strategy.reduce(tf.distribute.ReduceOp.SUM, c_loss, axis=None),
+                    self.policy.mirrored_strategy.reduce(tf.distribute.ReduceOp.SUM, e_loss, axis=None),
+                    self.policy.mirrored_strategy.reduce(tf.distribute.ReduceOp.SUM, kl, axis=None),
+                    self.policy.mirrored_strategy.reduce(tf.distribute.ReduceOp.SUM, v_pred, axis=None))
+        else:
+            return self.forward_fn(*inputs)
 
     def update(self, **samples):
         self.iterations += 1

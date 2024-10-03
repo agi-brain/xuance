@@ -589,10 +589,10 @@ class Independent_DDPG_Policy(Module):
             self.target_actor[key].set_weights(self.actor[key].get_weights())
             self.target_critic[key].set_weights(self.critic[key].get_weights())
 
-    def parameters_actor(self, key):
+    def actor_trainable_variables(self, key):
         return self.actor_representation[key].trainable_variables + self.actor[key].trainable_variables
 
-    def parameters_critic(self, key):
+    def critic_trainable_variables(self, key):
         return self.critic_representation[key].trainable_variables + self.critic[key].trainable_variables
 
     def _get_actor_critic_input(self, dim_actor_rep, dim_action, dim_critic_rep, n_agents):
@@ -957,7 +957,7 @@ class MATD3_Policy(MADDPG_Policy, Module):
             self.target_critic_A[key].set_weights(self.critic_A[key].get_weights())
             self.target_critic_B[key].set_weights(self.critic_B[key].get_weights())
 
-    def parameters_critic(self, key):
+    def critic_trainable_variables(self, key):
         return self.critic_A_representation[key].trainable_variables + self.critic_A[key].trainable_variables + \
                self.critic_B_representation[key].trainable_variables + self.critic_B[key].trainable_variables
 

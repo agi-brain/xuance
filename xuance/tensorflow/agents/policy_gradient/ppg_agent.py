@@ -45,14 +45,16 @@ class PPG_Agent(OnPolicyAgent):
             policy = REGISTRY_Policy["Categorical_PPG"](
                 action_space=self.action_space, representation=representation,
                 actor_hidden_size=self.config.actor_hidden_size, critic_hidden_size=self.config.critic_hidden_size,
-                normalize=normalize_fn, initialize=initializer, activation=activation)
+                normalize=normalize_fn, initialize=initializer, activation=activation,
+                use_distributed_training=self.distributed_training)
             self.continuous_control = False
         elif self.config.policy == "Gaussian_PPG":
             policy = REGISTRY_Policy["Gaussian_PPG"](
                 action_space=self.action_space, representation=representation,
                 actor_hidden_size=self.config.actor_hidden_size, critic_hidden_size=self.config.critic_hidden_size,
                 normalize=normalize_fn, initialize=initializer, activation=activation,
-                activation_action=ActivationFunctions[self.config.activation_action])
+                activation_action=ActivationFunctions[self.config.activation_action],
+                use_distributed_training=self.distributed_training)
             self.continuous_control = True
         else:
             raise AttributeError(f"PPG currently does not support the policy named {self.config.policy}.")
