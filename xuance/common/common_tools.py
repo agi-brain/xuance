@@ -163,42 +163,40 @@ def get_runner(method,
     else:
         device = args.device
         distributed_training = True if args.distributed_training else False
-    # if distributed_training:
-    #     rank = int(os.environ['RANK'])
-    #     num_gpus = int(os.environ['WORLD_SIZE'])
-    #     if rank == 0:
-    #         if num_gpus > 1:
-    #             print(f"Calculating devices: {num_gpus} visible GPUs for distributed training.")
-    #         else:
-    #             print(f"Calculating device: {num_gpus} visible GPU for distributed training.")
-    # else:
-    #     rank = 0
-    #     print(f"Calculating device: {device}")
+    if distributed_training:
+        print(f"Calculating device: Multi-GPU distributed training.")
+    else:
+        print(f"Calculating device: {device}")
 
-    rank = 0
-    print(f"Calculating device: {device}")
+    dl_toolbox = args[0].dl_toolbox if type(args) == list else args.dl_toolbox  # The choice of deep learning toolbox.
+    rank = 0  # Avoid printing the same information when using distributed training.
 
-    dl_toolbox = args[0].dl_toolbox if type(args) == list else args.dl_toolbox
     if dl_toolbox == "torch":
+        rank = int(os.environ['RANK']) if distributed_training else 0
         from xuance.torch.runners import REGISTRY_Runner
         if rank == 0:
             print("Deep learning toolbox: PyTorch.")
+
     elif dl_toolbox == "mindspore":
         from xuance.mindspore.runners import REGISTRY_Runner
-        from mindspore import context
+        import mindspore as ms
         print("Deep learning toolbox: MindSpore.")
         if device != "Auto":
-            if device in ["cpu", "CPU", "gpu", "GPU"]:
-                device = "CPU"
-            context.set_context(device_target=device)
-        # context.set_context(enable_graph_kernel=True)
-        # context.set_context(mode=context.GRAPH_MODE)  # Graph mode (静态图, 断点无法进入)
-        context.set_context(mode=context.PYNATIVE_MODE)  # Pynative mode (动态图, 便于调试)
+            if device in ["cpu", "CPU"]:
+                ms.set_context(device_target="CPU")
+            elif device in ["gpu", "GPU"]:
+                ms.set_context(device_target="GPU")
+            else:
+                ms.set_context(device_target=device)  # Other devices like Ascend.
+        # ms.set_context(mode=ms.GRAPH_MODE)  # Graph mode (静态图模式，加速)
+        # ms.set_context(mode=ms.PYNATIVE_MODE)  # Pynative mode (动态图模式)
+
     elif dl_toolbox == "tensorflow":
         from xuance.tensorflow.runners import REGISTRY_Runner
         print("Deep learning toolbox: TensorFlow.")
         if device in ["cpu", "CPU"]:
             os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+
     else:
         if dl_toolbox == '':
             raise AttributeError("You have to assign a deep learning toolbox")
