@@ -445,6 +445,7 @@ class QRDQN_Network(Module):
             with self.mirrored_strategy.scope():
                 self.representation = representation
                 self.target_representation = deepcopy(representation)
+                self.representation.build((None,) + self.representation.input_shapes)
                 self.representation_info_shape = self.representation.output_shapes
                 self.eval_Zhead = QRDQNhead(self.representation.output_shapes['state'][0], self.action_dim,
                                             self.quantile_num, hidden_size, normalize, initialize, activation)
@@ -1066,16 +1067,35 @@ class DRQNPolicy(Module):
         self.recurrent_layer_N = kwargs['recurrent_layer_N']
         self.rnn_hidden_dim = kwargs['recurrent_hidden_size']
         self.action_dim = action_space.n
-        self.representation = representation
-        self.target_representation = deepcopy(representation)
-        self.representation_info_shape = self.representation.output_shapes
-        kwargs["input_dim"] = self.representation.output_shapes['state'][0]
         kwargs["action_dim"] = self.action_dim
         self.lstm = True if kwargs["rnn"] == "LSTM" else False
-        self.cnn = True if self.representation.name == "basic_cnn" else False
-        self.eval_Qhead = BasicRecurrent(**kwargs)
-        self.target_Qhead = BasicRecurrent(**kwargs)
-        self.target_Qhead.set_weights(self.eval_Qhead.get_weights())
+        self.cnn = True if representation.name == "basic_cnn" else False
+
+        self.use_distributed_training = kwargs["use_distributed_training"]
+        if self.use_distributed_training:
+            self.mirrored_strategy = tf.distribute.MirroredStrategy()
+            with self.mirrored_strategy.scope():
+                self.representation = representation
+                self.target_representation = deepcopy(representation)
+                self.representation_info_shape = self.representation.output_shapes
+                kwargs["input_dim"] = self.representation.output_shapes['state'][0]
+                self.eval_Qhead = BasicRecurrent(**kwargs)
+                self.target_Qhead = BasicRecurrent(**kwargs)
+                self.representation.build((None, ) + self.representation.input_shapes)
+                self.target_representation.build((None,) + self.target_representation.input_shapes)
+                self.target_Qhead.set_weights(self.eval_Qhead.get_weights())
+        else:
+            self.representation = representation
+            self.target_representation = deepcopy(representation)
+            self.representation_info_shape = self.representation.output_shapes
+            kwargs["input_dim"] = self.representation.output_shapes['state'][0]
+            self.eval_Qhead = BasicRecurrent(**kwargs)
+            self.target_Qhead = BasicRecurrent(**kwargs)
+            self.target_Qhead.set_weights(self.eval_Qhead.get_weights())
+
+    @property
+    def trainable_variables(self):
+        return self.representation.trainable_variables + self.eval_Qhead.trainable_variables
 
     @tf.function
     def call(self, observation: Union[np.ndarray, dict], *rnn_hidden: Union[Tensor, np.ndarray], **kwargs):

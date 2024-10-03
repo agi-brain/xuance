@@ -213,17 +213,25 @@ class BasicRecurrent(Module):
             raise "Unknown recurrent module!"
         self.rnn_layer = output
         fc_layer = mlp_block(kwargs["recurrent_hidden_size"], kwargs["action_dim"], None, None, None)[0]
+        self.output_dim = kwargs["action_dim"]
         self.model = tk.Sequential(fc_layer)
+        self.rnn_layer.build(input_shape=(None, None, kwargs["input_dim"]))
 
     @tf.function
     def call(self, x: Union[Tensor, np.ndarray], **kwargs):
         """Returns the rnn hidden and Q-values via RNN networks."""
         if self.lstm:
-            output, hn, cn = self.rnn_layer(x)
-            return hn, cn, self.model(output)
+            rnn_output, hn, cn = self.rnn_layer(x)
+            fc_input_shape = rnn_output.shape
+            fc_input = tf.reshape(x, [-1, fc_input_shape[-1]])
+            fc_output = self.model(fc_input)
+            return hn, cn, tf.reshape(fc_output, fc_input_shape[:-1] + (self.output_dim, ))
         else:
-            output, hn = self.rnn_layer(x)
-            return hn, self.model(output)
+            rnn_output, hn = self.rnn_layer(x)
+            fc_input_shape = rnn_output.shape
+            fc_input = tf.reshape(x, [-1, fc_input_shape[-1]])
+            fc_output = self.model(fc_input)
+            return hn, tf.reshape(fc_output, fc_input_shape[:-1] + (self.output_dim,))
 
 
 class ActorNet(Module):

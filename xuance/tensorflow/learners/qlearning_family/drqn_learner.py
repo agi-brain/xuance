@@ -68,7 +68,8 @@ class DRQN_Learner(Learner):
     def learn(self, *inputs):
         if self.distributed_training:
             predictQ, loss = self.policy.mirrored_strategy.run(self.forward_fn, args=inputs)
-            return predictQ, self.policy.mirrored_strategy.reduce(tf.distribute.ReduceOp.SUM, loss, axis=None)
+            return (self.policy.mirrored_strategy.reduce(tf.distribute.ReduceOp.SUM, predictQ, axis=None),
+                    self.policy.mirrored_strategy.reduce(tf.distribute.ReduceOp.SUM, loss, axis=None))
         else:
             predictQ, loss = self.forward_fn(*inputs)
             return predictQ, loss
