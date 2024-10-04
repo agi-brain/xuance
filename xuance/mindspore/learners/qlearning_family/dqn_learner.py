@@ -27,11 +27,17 @@ class DQN_Learner(Learner):
         self.grad_fn = ms.value_and_grad(self.forward_fn, None, self.optimizer.parameters, has_aux=True)
         self.policy.set_train()
 
-    def forward_fn(self, x, a, label):
-        _, _, _evalQ = self.policy(x)
-        _predict_Q = (_evalQ * self.one_hot(a.astype(ms.int32), _evalQ.shape[1], Tensor(1.0), Tensor(0.0))).sum(axis=-1)
-        loss = self.mse_loss(_predict_Q, label)
-        return loss, _predict_Q
+    def forward_fn(self, obs_batch, act_batch, next_batch, rew_batch, ter_batch):
+        _, _, evalQ = self.policy(obs_batch)
+        _, _, targetQ = self.policy.target(next_batch)
+        targetQ = targetQ.max(axis=-1)
+        targetQ = rew_batch + self.gamma * (1 - ter_batch) * targetQ
+
+        predict_Q = (evalQ * self.one_hot(act_batch.astype(ms.int32), evalQ.shape[1],
+                                          Tensor(1.0), Tensor(0.0))).sum(axis=-1)
+        loss = self.mse_loss(logits=predict_Q, labels=targetQ)
+
+        return loss, predict_Q
 
     def update(self, **samples):
         self.iterations += 1
@@ -41,11 +47,7 @@ class DQN_Learner(Learner):
         next_batch = Tensor(samples['obs_next'])
         ter_batch = Tensor(samples['terminals'])
 
-        _, _, targetQ = self.policy.target(next_batch)
-        targetQ = targetQ.max(axis=-1)
-        targetQ = rew_batch + self.gamma * (1 - ter_batch) * targetQ
-
-        (loss, predictQ), grads = self.grad_fn(obs_batch, act_batch, targetQ)
+        (loss, predictQ), grads = self.grad_fn(obs_batch, act_batch, next_batch, rew_batch, ter_batch)
         self.optimizer(grads)
 
         # hard update for target network
