@@ -48,7 +48,8 @@ class ActorPolicy(Module):
         self.distributed_training = use_distributed_training
         if self.distributed_training:
             self.rank = int(os.environ["RANK"])
-            self.representation = DistributedDataParallel(module=self.representation, device_ids=[self.rank])
+            if self.representation._get_name() != "Basic_Identical":
+                self.representation = DistributedDataParallel(module=self.representation, device_ids=[self.rank])
             self.actor = DistributedDataParallel(module=self.actor, device_ids=[self.rank])
 
     def forward(self, observation: Union[np.ndarray, dict]):
@@ -108,7 +109,8 @@ class ActorCriticPolicy(Module):
         self.distributed_training = use_distributed_training
         if self.distributed_training:
             self.rank = int(os.environ["RANK"])
-            self.representation = DistributedDataParallel(module=self.representation, device_ids=[self.rank])
+            if self.representation._get_name() != "Basic_Identical":
+                self.representation = DistributedDataParallel(module=self.representation, device_ids=[self.rank])
             self.actor = DistributedDataParallel(module=self.actor, device_ids=[self.rank])
             self.critic = DistributedDataParallel(module=self.critic, device_ids=[self.rank])
 
@@ -174,7 +176,8 @@ class PPGActorCritic(Module):
         self.distributed_training = use_distributed_training
         if self.distributed_training:
             self.rank = int(os.environ["RANK"])
-            self.representation = DistributedDataParallel(module=self.representation, device_ids=[self.rank])
+            if self.representation._get_name() != "Basic_Identical":
+                self.representation = DistributedDataParallel(module=self.representation, device_ids=[self.rank])
             self.actor = DistributedDataParallel(module=self.actor, device_ids=[self.rank])
             self.critic = DistributedDataParallel(module=self.critic, device_ids=[self.rank])
             self.aux_critic = DistributedDataParallel(module=self.aux_critic, device_ids=[self.rank])
@@ -256,9 +259,14 @@ class SACPolicy(Module):
         self.distributed_training = use_distributed_training
         if self.distributed_training:
             self.rank = int(os.environ["RANK"])
-            self.actor_representation = DistributedDataParallel(self.actor_representation, device_ids=[self.rank])
-            self.critic_1_representation = DistributedDataParallel(self.critic_1_representation, device_ids=[self.rank])
-            self.critic_2_representation = DistributedDataParallel(self.critic_2_representation, device_ids=[self.rank])
+            if self.actor_representation._get_name() != "Basic_Identical":
+                self.actor_representation = DistributedDataParallel(self.actor_representation, device_ids=[self.rank])
+            if self.critic_1_representation._get_name() != "Basic_Identical":
+                self.critic_1_representation = DistributedDataParallel(self.critic_1_representation,
+                                                                       device_ids=[self.rank])
+            if self.critic_2_representation._get_name() != "Basic_Identical":
+                self.critic_2_representation = DistributedDataParallel(self.critic_2_representation,
+                                                                       device_ids=[self.rank])
             self.actor = DistributedDataParallel(module=self.actor, device_ids=[self.rank])
             self.critic_1 = DistributedDataParallel(module=self.critic_1, device_ids=[self.rank])
             self.critic_2 = DistributedDataParallel(module=self.critic_2, device_ids=[self.rank])

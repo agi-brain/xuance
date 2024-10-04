@@ -200,7 +200,8 @@ def get_runner(method,
             raise AttributeError("Cannot find a deep learning toolbox named " + dl_toolbox)
 
     if distributed_training:
-        print(f"Calculating device: Multi-GPU distributed training.")
+        if rank == 0:
+            print(f"Calculating device: Multi-GPU distributed training.")
     else:
         print(f"Calculating device: {device}")
 

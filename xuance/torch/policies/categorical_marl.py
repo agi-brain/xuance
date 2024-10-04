@@ -77,10 +77,12 @@ class MAAC_Policy(Module):
         if self.distributed_training:
             self.rank = int(os.environ["RANK"])
             for key in self.model_keys:
-                self.actor_representation[key] = DistributedDataParallel(module=self.actor_representation[key],
-                                                                         device_ids=[self.rank])
-                self.critic_representation[key] = DistributedDataParallel(module=self.critic_representation[key],
-                                                                          device_ids=[self.rank])
+                if self.actor_representation[key]._get_name() != "Basic_Identical":
+                    self.actor_representation[key] = DistributedDataParallel(self.actor_representation[key],
+                                                                             device_ids=[self.rank])
+                if self.critic_representation[key]._get_name() != "Basic_Identical":
+                    self.critic_representation[key] = DistributedDataParallel(self.critic_representation[key],
+                                                                              device_ids=[self.rank])
                 self.actor[key] = DistributedDataParallel(module=self.actor[key], device_ids=[self.rank])
                 self.critic[key] = DistributedDataParallel(module=self.critic[key], device_ids=[self.rank])
             if self.mixer is not None:

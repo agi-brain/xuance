@@ -47,7 +47,8 @@ class BasicQnetwork(Module):
         self.distributed_training = use_distributed_training
         if self.distributed_training:
             self.rank = int(os.environ["RANK"])
-            self.representation = DistributedDataParallel(module=self.representation, device_ids=[self.rank])
+            if self.representation._get_name() != "Basic_Identical":
+                self.representation = DistributedDataParallel(module=self.representation, device_ids=[self.rank])
             self.eval_Qhead = DistributedDataParallel(module=self.eval_Qhead, device_ids=[self.rank])
 
     def forward(self, observation: Union[np.ndarray, dict]):
@@ -127,7 +128,8 @@ class DuelQnetwork(Module):
         self.distributed_training = use_distributed_training
         if self.distributed_training:
             self.rank = int(os.environ["RANK"])
-            self.representation = DistributedDataParallel(module=self.representation, device_ids=[self.rank])
+            if self.representation._get_name() != "Basic_Identical":
+                self.representation = DistributedDataParallel(module=self.representation, device_ids=[self.rank])
             self.eval_Qhead = DistributedDataParallel(module=self.eval_Qhead, device_ids=[self.rank])
 
     def forward(self, observation: Union[np.ndarray, dict]):
@@ -210,7 +212,8 @@ class NoisyQnetwork(Module):
         self.distributed_training = use_distributed_training
         if self.distributed_training:
             self.rank = int(os.environ["RANK"])
-            self.representation = DistributedDataParallel(module=self.representation, device_ids=[self.rank])
+            if self.representation._get_name() != "Basic_Identical":
+                self.representation = DistributedDataParallel(module=self.representation, device_ids=[self.rank])
             self.eval_Qhead = DistributedDataParallel(module=self.eval_Qhead, device_ids=[self.rank])
 
     def update_noise(self, noisy_bound: float = 0.0):
@@ -316,7 +319,8 @@ class C51Qnetwork(Module):
         self.distributed_training = use_distributed_training
         if self.distributed_training:
             self.rank = int(os.environ["RANK"])
-            self.representation = DistributedDataParallel(module=self.representation, device_ids=[self.rank])
+            if self.representation._get_name() != "Basic_Identical":
+                self.representation = DistributedDataParallel(module=self.representation, device_ids=[self.rank])
             self.eval_Zhead = DistributedDataParallel(module=self.eval_Zhead, device_ids=[self.rank])
 
     def forward(self, observation: Union[np.ndarray, dict]):
@@ -401,7 +405,8 @@ class QRDQN_Network(Module):
         self.distributed_training = use_distributed_training
         if self.distributed_training:
             self.rank = int(os.environ["RANK"])
-            self.representation = DistributedDataParallel(module=self.representation, device_ids=[self.rank])
+            if self.representation._get_name() != "Basic_Identical":
+                self.representation = DistributedDataParallel(module=self.representation, device_ids=[self.rank])
             self.eval_Zhead = DistributedDataParallel(module=self.eval_Zhead, device_ids=[self.rank])
 
     def forward(self, observation: Union[np.ndarray, dict]):
@@ -499,9 +504,11 @@ class DDPGPolicy(Module):
         self.distributed_training = use_distributed_training
         if self.distributed_training:
             self.rank = int(os.environ["RANK"])
-            self.actor_representation = DistributedDataParallel(self.actor_representation, device_ids=[self.rank])
+            if self.actor_representation._get_name() != "Basic_Identical":
+                self.actor_representation = DistributedDataParallel(self.actor_representation, device_ids=[self.rank])
+            if self.critic_representation._get_name() != "Basic_Identical":
+                self.critic_representation = DistributedDataParallel(self.critic_representation, device_ids=[self.rank])
             self.actor = DistributedDataParallel(module=self.actor, device_ids=[self.rank])
-            self.critic_representation = DistributedDataParallel(self.critic_representation, device_ids=[self.rank])
             self.critic = DistributedDataParallel(module=self.critic, device_ids=[self.rank])
 
     def forward(self, observation: Union[np.ndarray, dict]):
@@ -616,9 +623,14 @@ class TD3Policy(Module):
         self.distributed_training = use_distributed_training
         if self.distributed_training:
             self.rank = int(os.environ["RANK"])
-            self.actor_representation = DistributedDataParallel(self.actor_representation, device_ids=[self.rank])
-            self.critic_A_representation = DistributedDataParallel(self.critic_A_representation, device_ids=[self.rank])
-            self.critic_B_representation = DistributedDataParallel(self.critic_B_representation, device_ids=[self.rank])
+            if self.actor_representation._get_name() != "Basic_Identical":
+                self.actor_representation = DistributedDataParallel(self.actor_representation, device_ids=[self.rank])
+            if self.critic_A_representation._get_name() != "Basic_Identical":
+                self.critic_A_representation = DistributedDataParallel(self.critic_A_representation,
+                                                                       device_ids=[self.rank])
+            if self.critic_B_representation._get_name() != "Basic_Identical":
+                self.critic_B_representation = DistributedDataParallel(self.critic_B_representation,
+                                                                       device_ids=[self.rank])
             self.actor = DistributedDataParallel(module=self.actor, device_ids=[self.rank])
             self.critic_A = DistributedDataParallel(module=self.critic_A, device_ids=[self.rank])
             self.critic_B = DistributedDataParallel(module=self.critic_B, device_ids=[self.rank])
@@ -741,7 +753,8 @@ class PDQNPolicy(Module):
         self.distributed_training = use_distributed_training
         if self.distributed_training:
             self.rank = int(os.environ["RANK"])
-            self.representation = DistributedDataParallel(module=self.representation, device_ids=[self.rank])
+            if self.representation._get_name() != "Basic_Identical":
+                self.representation = DistributedDataParallel(module=self.representation, device_ids=[self.rank])
             self.qnetwork = DistributedDataParallel(module=self.qnetwork, device_ids=[self.rank])
             self.conactor = DistributedDataParallel(module=self.conactor, device_ids=[self.rank])
 
@@ -993,7 +1006,8 @@ class DRQNPolicy(Module):
         self.distributed_training = kwargs['use_distributed_training']
         if self.distributed_training:
             self.rank = int(os.environ["RANK"])
-            self.representation = DistributedDataParallel(module=self.representation, device_ids=[self.rank])
+            if self.representation._get_name() != "Basic_Identical":
+                self.representation = DistributedDataParallel(module=self.representation, device_ids=[self.rank])
             self.eval_Qhead = DistributedDataParallel(module=self.eval_Qhead, device_ids=[self.rank])
 
     def forward(self, observation: Union[np.ndarray, dict], *rnn_hidden: Tensor):
