@@ -163,10 +163,6 @@ def get_runner(method,
     else:
         device = args.device
         distributed_training = True if args.distributed_training else False
-    if distributed_training:
-        print(f"Calculating device: Multi-GPU distributed training.")
-    else:
-        print(f"Calculating device: {device}")
 
     dl_toolbox = args[0].dl_toolbox if type(args) == list else args.dl_toolbox  # The choice of deep learning toolbox.
     rank = 0  # Avoid printing the same information when using distributed training.
@@ -202,6 +198,11 @@ def get_runner(method,
             raise AttributeError("You have to assign a deep learning toolbox")
         else:
             raise AttributeError("Cannot find a deep learning toolbox named " + dl_toolbox)
+
+    if distributed_training:
+        print(f"Calculating device: Multi-GPU distributed training.")
+    else:
+        print(f"Calculating device: {device}")
 
     if type(args) == list:
         agents_name_string = []
