@@ -6,7 +6,8 @@ render: False
 render_mode: 'rgb_array' # Choices: 'human', 'rgb_array'.
 fps: 15
 test_mode: False
-device: "cuda:0"
+if self.representation._get_name() != "Basic_Identical":
+                self.representation = DistributedDataParallel(module=self.representation, device_ids=[self.rank])"cuda:0"
 
 agent: "QMIX"  # the learning algorithms_marl
 env_name: "StarCraft2"

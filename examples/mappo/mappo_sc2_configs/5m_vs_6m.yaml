@@ -6,7 +6,9 @@ render: True
 render_mode: 'rgb_array' # Choices: 'human', 'rgb_array'.
 fps: 15
 test_mode: False
-device: "cuda:0"
+device: "cuda:0"  # Choose an calculating device. PyTorch: "cpu", "cuda:0"; TensorFlow: "cpu"/"CPU", "gpu"/"GPU"; MindSpore: "CPU", "GPU", "Ascend", "Davinci".
+distributed_training: False  # Whether to use multi-GPU for distributed training.
+master_port: '12355'  # The master port for current experiment when use distributed training.
 
 agent: "MAPPO"
 env_name: "StarCraft2"
