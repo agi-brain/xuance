@@ -1,40 +1,23 @@
 import torch
-import numpy as np
-from tqdm import tqdm
-from copy import deepcopy
-from operator import itemgetter
 from argparse import Namespace
-from xuance.common import List
 from xuance.environment import DummyVecMultiAgentEnv
+from xuance.torch import Module
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
-from xuance.torch.representations import REGISTRY_Representation
-from xuance.torch.policies import REGISTRY_Policy, QMIX_mixer
-from xuance.torch.learners import QMIX_Learner
-from xuance.torch.agents import MARLAgents
-from xuance.torch.agents.multi_agent_rl.iql_agents import IQL_Agents
-from xuance.common import MARL_OffPolicyBuffer, MARL_OffPolicyBuffer_RNN
+from xuance.torch.policies import REGISTRY_Policy, QTRAN_base, QTRAN_alt, VDN_mixer
+from xuance.torch.agents import OffPolicyMARLAgents
 
 
-class QTRAN_Agents(MARLAgents):
+class QTRAN_Agents(OffPolicyMARLAgents):
     """The implementation of QTRAN agents.
 
     Args:
         config: the Namespace variable that provides hyper-parameters and other settings.
         envs: the vectorized environments.
-        device: the calculating device of the model, such as CPU or GPU.
     """
     def __init__(self,
                  config: Namespace,
                  envs: DummyVecMultiAgentEnv):
-        self.gamma = config.gamma
-        self.start_greedy, self.end_greedy = config.start_greedy, config.end_greedy
-        self.egreedy = self.start_greedy
-        self.delta_egreedy = (self.start_greedy - self.end_greedy) / config.decay_step_greedy
-
-        if config.state_space is not None:
-            config.dim_state, state_shape = config.state_space.shape, config.state_space.shape
-        else:
-            config.dim_state, state_shape = None, None
+        super(QTRAN_Agents, self).__init__(config, envs)
 
         input_representation = get_repre_in(config)
         self.use_rnn = config.use_rnn
@@ -77,6 +60,51 @@ class QTRAN_Agents(MARLAgents):
         super(QTRAN_Agents, self).__init__(config, envs, policy, memory, learner, device,
                                            config.log_dir, config.model_dir)
         self.on_policy = False
+
+        # build policy, optimizers, schedulers
+        self.policy = self._build_policy()  # build policy
+        self.memory = self._build_memory()  # build memory
+        self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, self.policy)
+
+    def _build_policy(self) -> Module:
+        """
+        Build representation(s) and policy(ies) for agent(s)
+
+        Returns:
+            policy (torch.nn.Module): A dict of policies.
+        """
+        normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
+        initializer = torch.nn.init.orthogonal_
+        activation = ActivationFunctions[self.config.activation]
+        device = self.device
+
+        # build representations
+        representation = self._build_representation(self.config.representation, self.observation_space, self.config)
+
+        # build policies
+        dim_state = self.state_space.shape[-1]
+        mixer = VDN_mixer()
+        if self.config.agent == "QTRAN_base":
+            qtran_net = QTRAN_base(self.config.dim_state[0], self.config.dim_act, self.config.qtran_net_hidden_dim,
+                                   self.config.n_agents, self.config.q_hidden_size[0], device)
+        elif self.config.agent == "QTRAN_alt":
+            qtran_net = QTRAN_alt(self.config.dim_state[0], self.config.dim_act, self.config.qtran_net_hidden_dim,
+                                  self.config.n_agents, self.config.q_hidden_size[0], device)
+        else:
+            raise ValueError("Mixer {} not recognised.".format(self.config.agent))
+
+        if self.config.policy == "Qtran_Mixing_Q_network":
+            policy = REGISTRY_Policy["Qtran_Mixing_Q_network"](
+                action_space=self.action_space, n_agents=self.n_agents, representation=representation,
+                mixer=mixer, hidden_size=self.config.q_hidden_size,
+                normalize=normalize_fn, initialize=initializer, activation=activation,
+                device=device, use_distributed_training=self.distributed_training,
+                use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
+                use_rnn=self.use_rnn, rnn=self.config.rnn if self.use_rnn else None)
+        else:
+            raise AttributeError(f"QMIX currently does not support the policy named {self.config.policy}.")
+
+        return policy
 
     def act(self, obs_n, *rnn_hidden, avail_actions=None, test_mode=False):
         batch_size = obs_n.shape[0]

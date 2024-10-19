@@ -634,7 +634,7 @@ class QMIX_FF_mixer(nn.Module):
 
 
 class QTRAN_base(nn.Module):
-    def __init__(self, dim_state, dim_action, dim_hidden, n_agents, dim_utility_hidden):
+    def __init__(self, dim_state, dim_action, dim_hidden, n_agents, dim_utility_hidden, device):
         super(QTRAN_base, self).__init__()
         self.dim_state = dim_state
         self.dim_action = dim_action
@@ -647,12 +647,12 @@ class QTRAN_base(nn.Module):
                                   nn.ReLU(),
                                   nn.Linear(self.dim_hidden, self.dim_hidden),
                                   nn.ReLU(),
-                                  nn.Linear(self.dim_hidden, 1))
+                                  nn.Linear(self.dim_hidden, 1)).to(device)
         self.V_jt = nn.Sequential(nn.Linear(self.dim_v_input, self.dim_hidden),
                                   nn.ReLU(),
                                   nn.Linear(self.dim_hidden, self.dim_hidden),
                                   nn.ReLU(),
-                                  nn.Linear(self.dim_hidden, 1))
+                                  nn.Linear(self.dim_hidden, 1)).to(device)
 
     def forward(self, hidden_states_n, actions_n):
         input_q = torch.cat([hidden_states_n, actions_n], dim=-1).view([-1, self.dim_q_input])
@@ -663,8 +663,8 @@ class QTRAN_base(nn.Module):
 
 
 class QTRAN_alt(QTRAN_base):
-    def __init__(self, dim_state, dim_action, dim_hidden, n_agents, dim_utility_hidden):
-        super(QTRAN_alt, self).__init__(dim_state, dim_action, dim_hidden, n_agents, dim_utility_hidden)
+    def __init__(self, dim_state, dim_action, dim_hidden, n_agents, dim_utility_hidden, device):
+        super(QTRAN_alt, self).__init__(dim_state, dim_action, dim_hidden, n_agents, dim_utility_hidden, device)
 
     def counterfactual_values(self, q_self_values, q_selected_values):
         q_repeat = q_selected_values.unsqueeze(dim=1).repeat(1, self.n_agents, 1, self.dim_action)

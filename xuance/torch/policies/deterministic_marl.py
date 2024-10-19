@@ -474,6 +474,24 @@ class Weighted_MixingQnetwork(MixingQnetwork):
 
 
 class Qtran_MixingQnetwork(Module):
+    """
+    The base class to implement weighted value-decomposition based policy.
+
+    Args:
+        action_space (Discrete): The action space, which type is gym.spaces.Discrete.
+        n_agents (int): The number of agents.
+        representation (ModuleDict): A dict of the representation module for all agents.
+        mixer (Module): The mixer module that mix together the individual values to the total value.
+        qtran_mixer (Module): The feedforward mixer module that mix together the individual values to the total value.
+        hidden_size (Sequence[int]): List of hidden units for fully connect layers.
+        normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
+        activation (Optional[ModuleType]): The activation function for each layer.
+        device (Optional[Union[str, int, torch.device]]): The calculating device.
+        use_distributed_training (bool): Whether to use multi-GPU for distributed training.
+        **kwargs: Other arguments.
+    """
+
     def __init__(self,
                  action_space: Discrete,
                  n_agents: int,
@@ -485,6 +503,7 @@ class Qtran_MixingQnetwork(Module):
                  initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None,
                  device: Optional[Union[str, int, torch.device]] = None,
+                 use_distributed_training: bool = False,
                  **kwargs):
         super(Qtran_MixingQnetwork, self).__init__()
         self.device = device
