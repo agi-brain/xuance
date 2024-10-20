@@ -20,7 +20,7 @@ dropout: 0
 representation_hidden_size: [256, ]
 q_hidden_size: [256, ]  # the units for each hidden layer
 activation: "relu"
-se_parameter_sharing: False
+use_parameter_sharing: False
 use_actions_mask: False
 
 hidden_dim_mixing_net: 64  # hidden units of mixing network

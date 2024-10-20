@@ -473,7 +473,7 @@ class Weighted_MixingQnetwork(MixingQnetwork):
             tp.data.copy_(ep)
 
 
-class Qtran_MixingQnetwork(Module):
+class Qtran_MixingQnetwork(BasicQnetwork):
     """
     The base class to implement weighted value-decomposition based policy.
 
@@ -493,11 +493,11 @@ class Qtran_MixingQnetwork(Module):
     """
 
     def __init__(self,
-                 action_space: Discrete,
+                 action_space: Optional[Dict[str, Discrete]],
                  n_agents: int,
-                 representation: Module,
+                 representation: ModuleDict,
                  mixer: Optional[VDN_mixer] = None,
-                 qtran_mixer: Optional[QTRAN_base] = None,
+                 qtran_mixer: Module = None,
                  hidden_size: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., Tensor]] = None,
@@ -505,49 +505,22 @@ class Qtran_MixingQnetwork(Module):
                  device: Optional[Union[str, int, torch.device]] = None,
                  use_distributed_training: bool = False,
                  **kwargs):
-        super(Qtran_MixingQnetwork, self).__init__()
-        self.device = device
-        self.n_actions = action_space.n
-        self.representation = representation
-        self.target_representation = deepcopy(self.representation)
-        self.representation_info_shape = self.representation.output_shapes
-        self.lstm = True if kwargs["rnn"] == "LSTM" else False
-        self.use_rnn = True if kwargs["use_rnn"] else False
-        self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0], self.n_actions, n_agents,
-                                     hidden_size, normalize, initialize, activation, device)
-        self.target_Qhead = deepcopy(self.eval_Qhead)
+        super(Qtran_MixingQnetwork, self).__init__(action_space, n_agents, representation, hidden_size,
+                                                   normalize, initialize, activation, device, use_distributed_training,
+                                                   **kwargs)
         self.qtran_net = qtran_mixer
         self.target_qtran_net = deepcopy(qtran_mixer)
         self.q_tot = mixer
 
-    def forward(self, observation: Tensor, agent_ids: Tensor,
-                *rnn_hidden: Tensor, avail_actions=None):
-        if self.use_rnn:
-            outputs = self.representation(observation, *rnn_hidden)
-            rnn_hidden = (outputs['rnn_hidden'], outputs['rnn_cell'])
-        else:
-            outputs = self.representation(observation)
-            rnn_hidden = None
-        q_inputs = torch.concat([outputs['state'], agent_ids], dim=-1)
-        evalQ = self.eval_Qhead(q_inputs)
-        if avail_actions is not None:
-            avail_actions = Tensor(avail_actions)
-            evalQ_detach = evalQ.clone().detach()
-            evalQ_detach[avail_actions == 0] = -9999999
-            argmax_action = evalQ_detach.argmax(dim=-1, keepdim=False)
-        else:
-            argmax_action = evalQ.argmax(dim=-1, keepdim=False)
-        return rnn_hidden, outputs['state'], argmax_action, evalQ
+        if self.distributed_training:
+            self.qtran_net = DistributedDataParallel(module=self.qtran_net, device_ids=[self.rank])
+            self.q_tot = DistributedDataParallel(module=self.q_tot, device_ids=[self.rank])
 
-    def target_Q(self, observation: Tensor, agent_ids: Tensor, *rnn_hidden: Tensor):
-        if self.use_rnn:
-            outputs = self.target_representation(observation, *rnn_hidden)
-            rnn_hidden = (outputs['rnn_hidden'], outputs['rnn_cell'])
-        else:
-            outputs = self.target_representation(observation)
-            rnn_hidden = None
-        q_inputs = torch.concat([outputs['state'], agent_ids], dim=-1)
-        return rnn_hidden, outputs['state'], self.target_Qhead(q_inputs)
+    @property
+    def parameters_model(self):
+        parameters_model = list(self.qtran_net.parameters()) + list(self.q_tot.parameters()) + \
+                           list(self.representation.parameters()) + list(self.eval_Qhead.parameters())
+        return parameters_model
 
     def copy_target(self):
         for ep, tp in zip(self.representation.parameters(), self.target_representation.parameters()):

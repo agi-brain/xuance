@@ -18,48 +18,8 @@ class QTRAN_Agents(OffPolicyMARLAgents):
                  config: Namespace,
                  envs: DummyVecMultiAgentEnv):
         super(QTRAN_Agents, self).__init__(config, envs)
-
-        input_representation = get_repre_in(config)
-        self.use_rnn = config.use_rnn
-        if self.use_rnn:
-            kwargs_rnn = {"N_recurrent_layers": config.N_recurrent_layers,
-                          "dropout": config.dropout,
-                          "rnn": config.rnn}
-            representation = REGISTRY_Representation[config.representation](*input_representation, **kwargs_rnn)
-        else:
-            representation = REGISTRY_Representation[config.representation](*input_representation)
-        mixer = VDN_mixer()
-        if config.agent == "QTRAN_base":
-            qtran_net = QTRAN_base(config.dim_state[0], config.dim_act, config.qtran_net_hidden_dim,
-                                   config.n_agents, config.q_hidden_size[0]).to(device)
-        elif config.agent == "QTRAN_alt":
-            qtran_net = QTRAN_alt(config.dim_state[0], config.dim_act, config.qtran_net_hidden_dim,
-                                  config.n_agents, config.q_hidden_size[0]).to(device)
-        else:
-            raise ValueError("Mixer {} not recognised.".format(config.agent))
-        input_policy = get_policy_in_marl(config, representation, mixer, qtran_mixer=qtran_net)
-        policy = REGISTRY_Policy[config.policy](*input_policy,
-                                                use_rnn=config.use_rnn,
-                                                rnn=config.rnn)
-        optimizer = torch.optim.Adam(policy.parameters(), config.learning_rate, eps=1e-5)
-        scheduler = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=1.0, end_factor=0.5,
-                                                      total_iters=get_total_iters(config.agent_name, config))
-        self.observation_space = envs.observation_space
-        self.action_space = envs.action_space
-        self.representation_info_shape = policy.representation.output_shapes
-        self.auxiliary_info_shape = {}
-
-        buffer = MARL_OffPolicyBuffer_RNN if self.use_rnn else MARL_OffPolicyBuffer
-        input_buffer = (config.n_agents, state_shape, config.obs_shape, config.act_shape, config.rew_shape,
-                        config.done_shape, envs.num_envs, config.buffer_size, config.batch_size)
-        memory = buffer(*input_buffer, max_episode_steps=envs.max_episode_steps, dim_act=config.dim_act)
-
-        learner = QTRAN_Learner(config, policy, optimizer, scheduler,
-                                config.device, config.model_dir, config.gamma,
-                                config.sync_frequency)
-        super(QTRAN_Agents, self).__init__(config, envs, policy, memory, learner, device,
-                                           config.log_dir, config.model_dir)
-        self.on_policy = False
+        self.state_space = envs.state_space
+        self.use_global_state = True
 
         # build policy, optimizers, schedulers
         self.policy = self._build_policy()  # build policy
@@ -83,12 +43,13 @@ class QTRAN_Agents(OffPolicyMARLAgents):
 
         # build policies
         dim_state = self.state_space.shape[-1]
+        dim_action = self.action_space
         mixer = VDN_mixer()
         if self.config.agent == "QTRAN_base":
-            qtran_net = QTRAN_base(self.config.dim_state[0], self.config.dim_act, self.config.qtran_net_hidden_dim,
+            qtran_net = QTRAN_base(dim_state, self.config.dim_act, self.config.qtran_net_hidden_dim,
                                    self.config.n_agents, self.config.q_hidden_size[0], device)
         elif self.config.agent == "QTRAN_alt":
-            qtran_net = QTRAN_alt(self.config.dim_state[0], self.config.dim_act, self.config.qtran_net_hidden_dim,
+            qtran_net = QTRAN_alt(dim_state, self.config.dim_act, self.config.qtran_net_hidden_dim,
                                   self.config.n_agents, self.config.q_hidden_size[0], device)
         else:
             raise ValueError("Mixer {} not recognised.".format(self.config.agent))
@@ -96,7 +57,8 @@ class QTRAN_Agents(OffPolicyMARLAgents):
         if self.config.policy == "Qtran_Mixing_Q_network":
             policy = REGISTRY_Policy["Qtran_Mixing_Q_network"](
                 action_space=self.action_space, n_agents=self.n_agents, representation=representation,
-                mixer=mixer, hidden_size=self.config.q_hidden_size,
+                mixer=mixer, qtran_net=qtran_net,
+                hidden_size=self.config.q_hidden_size,
                 normalize=normalize_fn, initialize=initializer, activation=activation,
                 device=device, use_distributed_training=self.distributed_training,
                 use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
