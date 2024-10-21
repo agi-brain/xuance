@@ -4,7 +4,7 @@ from torch.distributions import Categorical
 from copy import deepcopy
 from gym.spaces import Discrete, Box
 from xuance.common import Sequence, Optional, Callable, Union, Dict, List
-from xuance.torch.policies import BasicQhead, ActorNet, CriticNet, VDN_mixer, QTRAN_base, QMIX_FF_mixer
+from xuance.torch.policies import BasicQhead, ActorNet, CriticNet, VDN_mixer, QMIX_FF_mixer
 from xuance.torch.utils import ModuleType
 from xuance.torch import Tensor, Module, ModuleDict, DistributedDataParallel
 
@@ -521,6 +521,91 @@ class Qtran_MixingQnetwork(BasicQnetwork):
         parameters_model = list(self.qtran_net.parameters()) + list(self.q_tot.parameters()) + \
                            list(self.representation.parameters()) + list(self.eval_Qhead.parameters())
         return parameters_model
+
+    def forward(self, observation: Dict[str, Tensor], agent_ids: Tensor = None,
+                avail_actions: Dict[str, Tensor] = None, agent_key: str = None,
+                rnn_hidden: Optional[Dict[str, List[Tensor]]] = None):
+        """
+        Returns actions of the policy.
+
+        Parameters:
+            observation (Dict[Tensor]): The input observations for the policies.
+            agent_ids (Tensor): The agents' ids (for parameter sharing).
+            avail_actions (Dict[str, Tensor]): Actions mask values, default is None.
+            agent_key (str): Calculate actions for specified agent.
+            rnn_hidden (Optional[Dict[str, List[Tensor]]]): The hidden variables of the RNN.
+
+        Returns:
+            rnn_hidden_new (Optional[Dict[str, List[Tensor]]]): The new hidden variables of the RNN.
+            rep_hidden_state (Dict[str, Tensor]): The hidden states.
+            argmax_action (Dict[str, Tensor]): The actions output by the policies.
+            evalQ (Dict[str, Tensor])： The evaluations of observation-action pairs.
+        """
+        rnn_hidden_new, argmax_action, evalQ = {}, {}, {}
+        agent_list = self.model_keys if agent_key is None else [agent_key]
+        rep_hidden_state = {}
+
+        if avail_actions is not None:
+            avail_actions = {key: Tensor(avail_actions[key]) for key in agent_list}
+
+        for key in agent_list:
+            if self.use_rnn:
+                outputs = self.representation[key](observation[key], *rnn_hidden[key])
+                rnn_hidden_new[key] = (outputs['rnn_hidden'], outputs['rnn_cell'])
+            else:
+                outputs = self.representation[key](observation[key])
+                rnn_hidden_new[key] = [None, None]
+
+            if self.use_parameter_sharing:
+                q_inputs = torch.concat([outputs['state'], agent_ids], dim=-1)
+            else:
+                q_inputs = outputs['state']
+            rep_hidden_state[key] = outputs['state']
+
+            evalQ[key] = self.eval_Qhead[key](q_inputs)
+
+            if avail_actions is not None:
+                evalQ_detach = evalQ[key].clone().detach()
+                evalQ_detach[avail_actions[key] == 0] = -9999999
+                argmax_action[key] = evalQ_detach.argmax(dim=-1, keepdim=False)
+            else:
+                argmax_action[key] = evalQ[key].argmax(dim=-1, keepdim=False)
+
+        return rnn_hidden_new, rep_hidden_state, argmax_action, evalQ
+
+    def Qtarget(self, observation: Dict[str, Tensor], agent_ids: Dict[str, Tensor],
+                agent_key: str = None,
+                rnn_hidden: Optional[Dict[str, List[Tensor]]] = None):
+        """
+        Returns the Q^target of next observations and actions pairs.
+
+        Parameters:
+            observation (Dict[Tensor]): The observations.
+            agent_ids (Dict[Tensor]): The agents' ids (for parameter sharing).
+            agent_key (str): Calculate actions for specified agent.
+            rnn_hidden (Optional[Dict[str, List[Tensor]]]): The hidden variables of the RNN.
+
+        Returns:
+            rnn_hidden_new (Optional[Dict[str, List[Tensor]]]): The new hidden variables of the RNN.
+            rep_hidden_state (Dict[str, Tensor]): The hidden states.
+            q_target: The evaluations of Q^target.
+        """
+        rnn_hidden_new, q_target, rep_hidden_state = {}, {}, {}
+        agent_list = self.model_keys if agent_key is None else [agent_key]
+        for key in agent_list:
+            if self.use_rnn:
+                outputs = self.target_representation[key](observation[key], *rnn_hidden[key])
+                rnn_hidden_new[key] = (outputs['rnn_hidden'], outputs['rnn_cell'])
+            else:
+                outputs = self.target_representation[key](observation[key])
+                rnn_hidden_new[key] = None
+            if self.use_parameter_sharing:
+                q_inputs = torch.concat([outputs['state'], agent_ids], dim=-1)
+            else:
+                q_inputs = outputs['state']
+            rep_hidden_state[key] = outputs['state']
+            q_target[key] = self.target_Qhead[key](q_inputs)
+        return rnn_hidden_new, rep_hidden_state, q_target
 
     def copy_target(self):
         for ep, tp in zip(self.representation.parameters(), self.target_representation.parameters()):

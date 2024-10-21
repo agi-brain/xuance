@@ -7,52 +7,86 @@ Implementation: Pytorch
 import torch
 from torch import nn
 from xuance.torch.learners import LearnerMAS
-from xuance.common import Optional, Union
+from xuance.common import List
 from argparse import Namespace
+from operator import itemgetter
 
 
 class QTRAN_Learner(LearnerMAS):
     def __init__(self,
                  config: Namespace,
-                 policy: nn.Module,
-                 optimizer: torch.optim.Optimizer,
-                 scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
-                 device: Optional[Union[int, str, torch.device]] = None,
-                 model_dir: str = "./",
-                 gamma: float = 0.99,
-                 sync_frequency: int = 100
-                 ):
-        self.gamma = gamma
-        self.sync_frequency = sync_frequency
+                 model_keys: List[str],
+                 agent_keys: List[str],
+                 policy: nn.Module):
+        self.gamma = config.gamma
+        self.sync_frequency = config.sync_frequency
         self.mse_loss = nn.MSELoss()
-        super(QTRAN_Learner, self).__init__(config, policy, optimizer, scheduler, device, model_dir)
+        super(QTRAN_Learner, self).__init__(config, model_keys, agent_keys, policy)
+        self.optimizer = torch.optim.Adam(self.policy.parameters_model, config.learning_rate, eps=1e-5)
+        self.scheduler = torch.optim.lr_scheduler.LinearLR(self.optimizer, start_factor=1.0, end_factor=0.5,
+                                                           total_iters=self.config.running_steps)
+        self.n_actions = {k: self.policy.action_space[k].n for k in self.model_keys}
 
     def update(self, sample):
         self.iterations += 1
-        obs = torch.Tensor(sample['obs']).to(self.device)
-        actions = torch.Tensor(sample['actions']).to(self.device)
-        actions_onehot = self.onehot_action(actions, self.dim_act)
-        obs_next = torch.Tensor(sample['obs_next']).to(self.device)
-        rewards = torch.Tensor(sample['rewards']).mean(dim=1).to(self.device)
-        terminals = torch.Tensor(sample['terminals']).all(dim=1, keepdims=True).float().to(self.device)
-        agent_mask = torch.Tensor(sample['agent_mask']).float().reshape(-1, self.n_agents, 1).to(self.device)
-        IDs = torch.eye(self.n_agents).unsqueeze(0).expand(self.args.batch_size, -1, -1).to(self.device)
+        info = {}
 
-        _, hidden_state, _, q_eval = self.policy(obs, IDs)
-        # get mask input
-        actions_mask = agent_mask.repeat(1, 1, self.dim_act)
-        hidden_mask = agent_mask.repeat(1, 1, hidden_state.shape[-1])
-        q_joint, v_joint = self.policy.qtran_net(hidden_state * hidden_mask,
-                                                 actions_onehot * actions_mask)
-        _, hidden_state_next, q_next_eval = self.policy.target_Q(obs_next.reshape([self.args.batch_size, self.n_agents, -1]), IDs)
-        if self.args.double_q:
-            _, _, actions_next_greedy, _ = self.policy(obs_next, IDs)
+        # prepare training data
+        sample_Tensor = self.build_training_data(sample=sample,
+                                                 use_parameter_sharing=self.use_parameter_sharing,
+                                                 use_actions_mask=self.use_actions_mask,
+                                                 use_global_state=True)
+        batch_size = sample_Tensor['batch_size']
+        state = sample_Tensor['state']
+        state_next = sample_Tensor['state_next']
+        obs = sample_Tensor['obs']
+        actions = sample_Tensor['actions']
+        obs_next = sample_Tensor['obs_next']
+        rewards = sample_Tensor['rewards']
+        terminals = sample_Tensor['terminals']
+        agent_mask = sample_Tensor['agent_mask']
+        avail_actions = sample_Tensor['avail_actions']
+        avail_actions_next = sample_Tensor['avail_actions_next']
+        IDs = sample_Tensor['agent_ids']
+
+        if self.use_parameter_sharing:
+            key = self.model_keys[0]
+            bs = batch_size * self.n_agents
+            rewards_tot = rewards[key].mean(dim=1).reshape(batch_size, 1)
+            terminals_tot = terminals[key].all(dim=1, keepdim=False).float().reshape(batch_size, 1)
         else:
-            actions_next_greedy = q_next_eval.argmax(dim=-1, keepdim=False)
+            bs = batch_size
+            rewards_tot = torch.stack(itemgetter(*self.agent_keys)(rewards), dim=1).mean(dim=-1, keepdim=True)
+            terminals_tot = torch.stack(itemgetter(*self.agent_keys)(terminals), dim=1).all(dim=1, keepdim=True).float()
+
+        _, hidden_state, _, q_eval = self.policy(observation=obs, agent_ids=IDs, avail_actions=avail_actions)
+        _, hidden_state_next, q_next = self.policy.Qtarget(observation=obs_next, agent_ids=IDs)
+
+        q_eval_a, q_next_a = {}, {}
+        for key in self.model_keys:
+            q_eval_a[key] = q_eval[key].gather(-1, actions[key].long().unsqueeze(-1)).reshape(bs)
+
+            if self.use_actions_mask:
+                q_next[key][avail_actions_next[key] == 0] = -9999999
+
+            if self.config.double_q:
+                _, _, act_next, _ = self.policy(observation=obs_next, agent_ids=IDs,
+                                                avail_actions=avail_actions, agent_key=key)
+                q_next_a[key] = q_next[key].gather(-1, act_next[key].long().unsqueeze(-1)).reshape(bs)
+            else:
+                q_next_a[key] = q_next[key].max(dim=-1, keepdim=True).values.reshape(bs)
+
+            q_eval_a[key] *= agent_mask[key]
+            q_next_a[key] *= agent_mask[key]
+
+        hidden_mask = agent_mask.repeat(1, 1, hidden_state.shape[-1])
+
+        q_joint, v_joint = self.policy.qtran_net(hidden_state * hidden_mask, actions_onehot * actions_mask)
         q_joint_next, _ = self.policy.target_qtran_net(hidden_state_next * hidden_mask,
                                                        self.onehot_action(actions_next_greedy,
                                                                           self.dim_act) * actions_mask)
-        y_dqn = rewards + (1 - terminals) * self.args.gamma * q_joint_next
+
+        y_dqn = rewards + (1 - terminals) * self.gamma * q_joint_next
         loss_td = self.mse_loss(q_joint, y_dqn.detach())
 
         action_greedy = q_eval.argmax(dim=-1, keepdim=False)  # \bar{u}

@@ -1,7 +1,8 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from xuance.common import Sequence, Optional, Callable, Union
+from gym.spaces import Discrete
+from xuance.common import Sequence, Optional, Callable, Union, Dict
 from xuance.torch import Tensor, Module
 from xuance.torch.utils import ModuleType, mlp_block, gru_block, lstm_block
 from xuance.torch.utils import CategoricalDistribution, DiagGaussianDistribution, ActivatedDiagGaussianDistribution
@@ -236,7 +237,7 @@ class BasicRecurrent(Module):
 class ActorNet(nn.Module):
     """
     The actor network for deterministic policy, which outputs activated continuous actions directly.
-    
+
     Args:
         state_dim (int): The input state dimension.
         action_dim (int): The dimension of continuous action space.
@@ -634,13 +635,35 @@ class QMIX_FF_mixer(nn.Module):
 
 
 class QTRAN_base(nn.Module):
-    def __init__(self, dim_state, dim_action, dim_hidden, n_agents, dim_utility_hidden, device):
+    """
+    The basic QTRAN module.
+
+    Args:
+        dim_state (int): The dimension of the global state.
+        action_space (Dict[str, Discrete]): The action space for all agents.
+        dim_hidden (int): The dimension of the hidden layers.
+        n_agents (int): The number of agents.
+        dim_utility_hidden (int): The dimension of the utility hidden states.
+        use_parameter_sharing (bool): Whether to use parameters sharing trick.
+        device: Optional[Union[str, int, torch.device]]: The calculating device.
+    """
+    def __init__(self,
+                 dim_state: int = None,
+                 action_space: Dict[str, Discrete] = None,
+                 dim_hidden: int = 32,
+                 n_agents: int = 1,
+                 dim_utility_hidden: int = 1,
+                 use_parameter_sharing: bool = False,
+                 device: Optional[Union[str, int, torch.device]] = None):
         super(QTRAN_base, self).__init__()
         self.dim_state = dim_state
-        self.dim_action = dim_action
+        self.action_space = action_space
         self.dim_hidden = dim_hidden
         self.n_agents = n_agents
-        self.dim_q_input = (dim_utility_hidden + self.dim_action) * self.n_agents
+        self.use_parameter_sharing = use_parameter_sharing
+
+        dim_joint_actions = sum([space_i.n for space_i in list(action_space.values())])
+        self.dim_q_input = dim_utility_hidden * self.n_agents + dim_joint_actions
         self.dim_v_input = dim_utility_hidden * self.n_agents
 
         self.Q_jt = nn.Sequential(nn.Linear(self.dim_q_input, self.dim_hidden),
@@ -663,8 +686,29 @@ class QTRAN_base(nn.Module):
 
 
 class QTRAN_alt(QTRAN_base):
-    def __init__(self, dim_state, dim_action, dim_hidden, n_agents, dim_utility_hidden, device):
-        super(QTRAN_alt, self).__init__(dim_state, dim_action, dim_hidden, n_agents, dim_utility_hidden, device)
+    """
+    The basic QTRAN module.
+
+    Args:
+        dim_state (int): The dimension of the global state.
+        action_space (Dict[str, Discrete]): The action space for all agents.
+        dim_hidden (int): The dimension of the hidden layers.
+        n_agents (int): The number of agents.
+        dim_utility_hidden (int): The dimension of the utility hidden states.
+        use_parameter_sharing (bool): Whether to use parameters sharing trick.
+        device: Optional[Union[str, int, torch.device]]: The calculating device.
+    """
+
+    def __init__(self,
+                 dim_state: int = None,
+                 action_space: Dict[str, Discrete] = None,
+                 dim_hidden: int = 32,
+                 n_agents: int = 1,
+                 dim_utility_hidden: int = 1,
+                 use_parameter_sharing: bool = False,
+                 device: Optional[Union[str, int, torch.device]] = None):
+        super(QTRAN_alt, self).__init__(dim_state, action_space, dim_hidden, n_agents, dim_utility_hidden,
+                                        use_parameter_sharing, device)
 
     def counterfactual_values(self, q_self_values, q_selected_values):
         q_repeat = q_selected_values.unsqueeze(dim=1).repeat(1, self.n_agents, 1, self.dim_action)
@@ -674,10 +718,9 @@ class QTRAN_alt(QTRAN_base):
         return counterfactual_values_n.sum(dim=2)
 
     def counterfactual_values_hat(self, hidden_states_n, actions_n):
-        action_repeat = actions_n.unsqueeze(dim=2).repeat(1, 1, self.dim_action, 1)
+        action_repeat = actions_n.unsqueeze(2).repeat(1, 1, self.dim_action, 1)
         action_self_all = torch.eye(self.dim_action).unsqueeze(0)
-        action_counterfactual_n = action_repeat.unsqueeze(dim=2).repeat(1, 1, self.n_agents, 1,
-                                                                        1)  # batch * N * N * dim_a * dim_a
+        action_counterfactual_n = action_repeat.unsqueeze(2).repeat(1, 1, self.n_agents, 1, 1)  # batch * N * N * dim_a * dim_a
         q_n = []
         for agent in range(self.n_agents):
             action_counterfactual_n[:, agent, agent, :, :] = action_self_all

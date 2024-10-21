@@ -1,5 +1,6 @@
 import torch
 from argparse import Namespace
+from xuance.common import List, Optional
 from xuance.environment import DummyVecMultiAgentEnv
 from xuance.torch import Module
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
@@ -14,6 +15,7 @@ class QTRAN_Agents(OffPolicyMARLAgents):
         config: the Namespace variable that provides hyper-parameters and other settings.
         envs: the vectorized environments.
     """
+
     def __init__(self,
                  config: Namespace,
                  envs: DummyVecMultiAgentEnv):
@@ -43,21 +45,21 @@ class QTRAN_Agents(OffPolicyMARLAgents):
 
         # build policies
         dim_state = self.state_space.shape[-1]
-        dim_action = self.action_space
+        action_space = self.action_space
         mixer = VDN_mixer()
         if self.config.agent == "QTRAN_base":
-            qtran_net = QTRAN_base(dim_state, self.config.dim_act, self.config.qtran_net_hidden_dim,
-                                   self.config.n_agents, self.config.q_hidden_size[0], device)
+            qtran_mixer = QTRAN_base(dim_state, action_space, self.config.qtran_net_hidden_dim,
+                                     self.config.n_agents, self.config.q_hidden_size[0], device)
         elif self.config.agent == "QTRAN_alt":
-            qtran_net = QTRAN_alt(dim_state, self.config.dim_act, self.config.qtran_net_hidden_dim,
-                                  self.config.n_agents, self.config.q_hidden_size[0], device)
+            qtran_mixer = QTRAN_alt(dim_state, action_space, self.config.qtran_net_hidden_dim,
+                                    self.config.n_agents, self.config.q_hidden_size[0], device)
         else:
             raise ValueError("Mixer {} not recognised.".format(self.config.agent))
 
         if self.config.policy == "Qtran_Mixing_Q_network":
             policy = REGISTRY_Policy["Qtran_Mixing_Q_network"](
                 action_space=self.action_space, n_agents=self.n_agents, representation=representation,
-                mixer=mixer, qtran_net=qtran_net,
+                mixer=mixer, qtran_mixer=qtran_mixer,
                 hidden_size=self.config.q_hidden_size,
                 normalize=normalize_fn, initialize=initializer, activation=activation,
                 device=device, use_distributed_training=self.distributed_training,
@@ -68,40 +70,39 @@ class QTRAN_Agents(OffPolicyMARLAgents):
 
         return policy
 
-    def act(self, obs_n, *rnn_hidden, avail_actions=None, test_mode=False):
-        batch_size = obs_n.shape[0]
-        agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(batch_size, -1, -1).to(self.device)
-        obs_in = torch.Tensor(obs_n).view([batch_size, self.n_agents, -1]).to(self.device)
-        if self.use_rnn:
-            batch_agents = batch_size * self.n_agents
-            hidden_state, _, greedy_actions, _ = self.policy(obs_in.view(batch_agents, 1, -1),
-                                                             agents_id.view(batch_agents, 1, -1),
-                                                             *rnn_hidden,
-                                                             avail_actions=avail_actions.reshape(batch_agents, 1, -1))
-            greedy_actions = greedy_actions.view(batch_size, self.n_agents)
-        else:
-            hidden_state, _, greedy_actions, _ = self.policy(obs_in, agents_id, avail_actions=avail_actions)
-        greedy_actions = greedy_actions.cpu().detach().numpy()
+    def action(self,
+               obs_dict: List[dict],
+               avail_actions_dict: Optional[List[dict]] = None,
+               rnn_hidden: Optional[dict] = None,
+               test_mode: Optional[bool] = False):
+        """
+        Returns actions for agents.
 
-        if test_mode:
-            return hidden_state, greedy_actions
-        else:
-            if avail_actions is None:
-                random_actions = np.random.choice(self.dim_act, [self.nenvs, self.n_agents])
-            else:
-                random_actions = Categorical(torch.Tensor(avail_actions)).sample().numpy()
-            if np.random.rand() < self.egreedy:
-                return hidden_state, random_actions
-            else:
-                return hidden_state, greedy_actions
+        Parameters:
+            obs_dict (List[dict]): Observations for each agent in self.agent_keys.
+            avail_actions_dict (Optional[List[dict]]): Actions mask values, default is None.
+            rnn_hidden (Optional[dict]): The hidden variables of the RNN.
+            test_mode (Optional[bool]): True for testing without noises.
 
-    def train(self, i_step, n_epochs=1):
-        if self.egreedy >= self.end_greedy:
-            self.egreedy = self.start_greedy - self.delta_egreedy * i_step
-        info_train = {}
-        if i_step > self.start_training:
-            for i_epoch in range(n_epochs):
-                sample = self.memory.sample()
-                info_train = self.learner.update(sample)
-        info_train["epsilon-greedy"] = self.egreedy
-        return info_train
+        Returns:
+            rnn_hidden_state (dict): The new hidden states for RNN (if self.use_rnn=True).
+            actions_dict (dict): The output actions.
+        """
+        batch_size = len(obs_dict)
+        obs_input, agents_id, avail_actions_input = self._build_inputs(obs_dict, avail_actions_dict)
+        hidden_state, _, actions, _ = self.policy(observation=obs_input,
+                                                  agent_ids=agents_id,
+                                                  avail_actions=avail_actions_input,
+                                                  rnn_hidden=rnn_hidden)
+
+        if self.use_parameter_sharing:
+            key = self.agent_keys[0]
+            actions_out = actions[key].reshape([batch_size, self.n_agents]).cpu().detach().numpy()
+            actions_dict = [{k: actions_out[e, i] for i, k in enumerate(self.agent_keys)} for e in range(batch_size)]
+        else:
+            actions_out = {k: actions[k].reshape(batch_size).cpu().detach().numpy() for k in self.agent_keys}
+            actions_dict = [{k: actions_out[k][i] for k in self.agent_keys} for i in range(batch_size)]
+
+        if not test_mode:  # get random actions
+            actions_dict = self.exploration(batch_size, actions_dict, avail_actions_dict)
+        return {"hidden_state": hidden_state, "actions": actions_dict}
