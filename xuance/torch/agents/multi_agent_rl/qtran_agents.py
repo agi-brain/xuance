@@ -48,11 +48,11 @@ class QTRAN_Agents(OffPolicyMARLAgents):
         action_space = self.action_space
         mixer = VDN_mixer()
         if self.config.agent == "QTRAN_base":
-            qtran_mixer = QTRAN_base(dim_state, action_space, self.config.qtran_net_hidden_dim,
-                                     self.config.n_agents, self.config.q_hidden_size[0], device)
+            qtran_mixer = QTRAN_base(dim_state, action_space, self.config.qtran_net_hidden_dim, self.config.n_agents,
+                                     self.config.q_hidden_size[0], self.use_parameter_sharing, device)
         elif self.config.agent == "QTRAN_alt":
-            qtran_mixer = QTRAN_alt(dim_state, action_space, self.config.qtran_net_hidden_dim,
-                                    self.config.n_agents, self.config.q_hidden_size[0], device)
+            qtran_mixer = QTRAN_alt(dim_state, action_space, self.config.qtran_net_hidden_dim, self.config.n_agents,
+                                    self.config.q_hidden_size[0], self.use_parameter_sharing, device)
         else:
             raise ValueError("Mixer {} not recognised.".format(self.config.agent))
 

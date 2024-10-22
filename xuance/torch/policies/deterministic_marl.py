@@ -607,6 +607,43 @@ class Qtran_MixingQnetwork(BasicQnetwork):
             q_target[key] = self.target_Qhead[key](q_inputs)
         return rnn_hidden_new, rep_hidden_state, q_target
 
+    def Q_tran(self, hidden_states: Dict[str, Tensor], actions: Dict[str, Tensor],
+               avail_agents: Dict[str, Tensor] = None, avail_actions: Dict[str, Tensor] = None):
+        """
+        Returns the total Q values.
+
+        hidden_states (Dict[str, Tensor]): The hidden states.
+            actions (Dict[str, Tensor]): The executed actions.
+            avail_agents (Dict[str, Tensor]): Agent mask values, default is None.
+            avail_actions (Dict[str, Tensor]): Actions mask values, default is None.
+
+        Returns:
+            evalQ_tot (Tensor): The evaluated total Q values for the multi-agent team.
+        """
+        if self.use_parameter_sharing:
+            """
+            From dict to tensor. For example:
+                individual_values: {'agent_0': batch * n_agents * 1} -> 
+                individual_inputs: batch * n_agents * 1
+            """
+            individual_inputs = individual_values[self.model_keys[0]].reshape([-1, self.n_agents, 1])
+
+            hidden_states_joint = hidden_states[self.model_keys[0]].reshape([-1, self.n_agents, 1])
+            individual_inputs
+        else:
+            """
+            From dict to tensor. For example: 
+                individual_values: {'agent_0': batch * 1, 'agent_1': batch * 1, 'agent_2': batch * 1} -> 
+                individual_inputs: batch * 2 * 1
+            """
+            individual_inputs = torch.concat([individual_values[k] for k in self.model_keys],
+                                             dim=-1).reshape([-1, self.n_agents, 1])
+            hidden_states_joint = torch.concat([hidden_states[k] for k in self.model_keys],
+                                               dim=-1).reshape([-1, self.n_agents, 1])
+
+        self.qtran_net()
+
+
     def copy_target(self):
         for ep, tp in zip(self.representation.parameters(), self.target_representation.parameters()):
             tp.data.copy_(ep)

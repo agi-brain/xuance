@@ -62,7 +62,7 @@ class QTRAN_Learner(LearnerMAS):
         _, hidden_state, _, q_eval = self.policy(observation=obs, agent_ids=IDs, avail_actions=avail_actions)
         _, hidden_state_next, q_next = self.policy.Qtarget(observation=obs_next, agent_ids=IDs)
 
-        q_eval_a, q_next_a = {}, {}
+        q_eval_a, q_next_a, hidden_state_mask = {}, {}, {}
         for key in self.model_keys:
             q_eval_a[key] = q_eval[key].gather(-1, actions[key].long().unsqueeze(-1)).reshape(bs)
 
@@ -79,9 +79,7 @@ class QTRAN_Learner(LearnerMAS):
             q_eval_a[key] *= agent_mask[key]
             q_next_a[key] *= agent_mask[key]
 
-        hidden_mask = agent_mask.repeat(1, 1, hidden_state.shape[-1])
-
-        q_joint, v_joint = self.policy.qtran_net(hidden_state * hidden_mask, actions_onehot * actions_mask)
+        q_joint, v_joint = self.policy.qtran_net(hidden_state, actions, agent_mask, avail_actions)
         q_joint_next, _ = self.policy.target_qtran_net(hidden_state_next * hidden_mask,
                                                        self.onehot_action(actions_next_greedy,
                                                                           self.dim_act) * actions_mask)
