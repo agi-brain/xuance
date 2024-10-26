@@ -677,9 +677,9 @@ class QTRAN_base(nn.Module):
                                   nn.ReLU(),
                                   nn.Linear(self.dim_hidden, 1)).to(device)
 
-    def forward(self, hidden_states_n, actions_n):
-        input_q = torch.cat([hidden_states_n, actions_n], dim=-1).view([-1, self.dim_q_input])
-        input_v = hidden_states_n.view([-1, self.dim_v_input])
+    def forward(self, hidden_state_inputs, hidden_state_action_inputs):
+        input_q = hidden_state_action_inputs.view([-1, self.dim_q_input])
+        input_v = hidden_state_inputs.view([-1, self.dim_v_input])
         q_jt = self.Q_jt(input_q)
         v_jt = self.V_jt(input_v)
         return q_jt, v_jt

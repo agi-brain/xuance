@@ -79,7 +79,7 @@ class QTRAN_Learner(LearnerMAS):
             q_eval_a[key] *= agent_mask[key]
             q_next_a[key] *= agent_mask[key]
 
-        q_joint, v_joint = self.policy.qtran_net(hidden_state, actions, agent_mask, avail_actions)
+        q_joint, v_joint = self.policy.Q_tran(hidden_state, actions, agent_mask)
         q_joint_next, _ = self.policy.target_qtran_net(hidden_state_next * hidden_mask,
                                                        self.onehot_action(actions_next_greedy,
                                                                           self.dim_act) * actions_mask)

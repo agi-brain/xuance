@@ -1,6 +1,7 @@
 import os
 import torch
 from torch.distributions import Categorical
+from torch.nn.functional import one_hot
 from copy import deepcopy
 from gym.spaces import Discrete, Box
 from xuance.common import Sequence, Optional, Callable, Union, Dict, List
@@ -608,41 +609,35 @@ class Qtran_MixingQnetwork(BasicQnetwork):
         return rnn_hidden_new, rep_hidden_state, q_target
 
     def Q_tran(self, hidden_states: Dict[str, Tensor], actions: Dict[str, Tensor],
-               avail_agents: Dict[str, Tensor] = None, avail_actions: Dict[str, Tensor] = None):
+               agent_mask: Dict[str, Tensor] = None, avail_actions: Dict[str, Tensor] = None):
         """
         Returns the total Q values.
 
-        hidden_states (Dict[str, Tensor]): The hidden states.
+        Parameters:
+            hidden_states (Dict[str, Tensor]): The hidden states.
             actions (Dict[str, Tensor]): The executed actions.
-            avail_agents (Dict[str, Tensor]): Agent mask values, default is None.
+            agent_mask (Dict[str, Tensor]): Agent mask values, default is None.
             avail_actions (Dict[str, Tensor]): Actions mask values, default is None.
 
         Returns:
             evalQ_tot (Tensor): The evaluated total Q values for the multi-agent team.
         """
         if self.use_parameter_sharing:
-            """
-            From dict to tensor. For example:
-                individual_values: {'agent_0': batch * n_agents * 1} -> 
-                individual_inputs: batch * n_agents * 1
-            """
-            individual_inputs = individual_values[self.model_keys[0]].reshape([-1, self.n_agents, 1])
-
-            hidden_states_joint = hidden_states[self.model_keys[0]].reshape([-1, self.n_agents, 1])
-            individual_inputs
+            key = self.model_keys[0]
+            dim_hidden = hidden_states[key].shape[-1]
+            actions_onehot = one_hot(actions[key].long(), self.action_space[key].n)
+            hidden_states_input = hidden_states[key].reshape([-1, self.n_agents, dim_hidden])
+            if avail_actions is not None:
+                actions_onehot *= avail_actions[key]
+            if agent_mask is not None:
+                hidden_states_input *= agent_mask[key].unsqueeze(-1).repeat(1, self.n_agents)
+            hidden_state_action_input = torch.cat([hidden_states_input, actions_onehot], dim=-1)
         else:
-            """
-            From dict to tensor. For example: 
-                individual_values: {'agent_0': batch * 1, 'agent_1': batch * 1, 'agent_2': batch * 1} -> 
-                individual_inputs: batch * 2 * 1
-            """
-            individual_inputs = torch.concat([individual_values[k] for k in self.model_keys],
-                                             dim=-1).reshape([-1, self.n_agents, 1])
-            hidden_states_joint = torch.concat([hidden_states[k] for k in self.model_keys],
-                                               dim=-1).reshape([-1, self.n_agents, 1])
+            hidden_states_input = torch.cat([hidden_states[k] for k in self.model_keys], dim=-1)
+            actions_onehot = torch.cat([actions[k] for k in self.model_keys], dim=-1)
+            hidden_state_action_input = torch.cat([hidden_states_input, actions_onehot], dim=-1)
 
-        self.qtran_net()
-
+        self.qtran_net(hidden_states_input, hidden_state_action_input)
 
     def copy_target(self):
         for ep, tp in zip(self.representation.parameters(), self.target_representation.parameters()):
