@@ -677,8 +677,18 @@ class QTRAN_base(nn.Module):
                                   nn.ReLU(),
                                   nn.Linear(self.dim_hidden, 1)).to(device)
 
-    def forward(self, hidden_state_inputs, hidden_state_action_inputs):
-        input_q = hidden_state_action_inputs.view([-1, self.dim_q_input])
+    def forward(self, hidden_state_inputs, actions_onehot):
+        """Calculating the joint Q and V values.
+
+        Parameters:
+            hidden_state_inputs: The joint hidden states inputs for QTRAN network.
+            actions_onehot: The joint onehot actions for QTRAN network.
+
+        Returns:
+            q_jt (Tensor): The evaluated joint Q values.
+            v_jt (Tensor): The evaluated joint V values.
+        """
+        input_q = torch.cat([hidden_state_inputs, actions_onehot], dim=-1).view([-1, self.dim_q_input])
         input_v = hidden_state_inputs.view([-1, self.dim_v_input])
         q_jt = self.Q_jt(input_q)
         v_jt = self.V_jt(input_v)

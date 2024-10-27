@@ -62,9 +62,12 @@ class QTRAN_Learner(LearnerMAS):
         _, hidden_state, _, q_eval = self.policy(observation=obs, agent_ids=IDs, avail_actions=avail_actions)
         _, hidden_state_next, q_next = self.policy.Qtarget(observation=obs_next, agent_ids=IDs)
 
-        q_eval_a, q_next_a, hidden_state_mask = {}, {}, {}
+        q_eval_a, q_eval_greedy_a, q_next_a, hidden_state_mask = {}, {}, {}, {}
+        actions_greedy, actions_next_greedy = {}, {}
         for key in self.model_keys:
             q_eval_a[key] = q_eval[key].gather(-1, actions[key].long().unsqueeze(-1)).reshape(bs)
+            actions_greedy[key] = q_eval[key].argmax(dim=-1, keepdim=False)  # \bar{u}
+            q_eval_greedy_a[key] = q_eval[key].gather(-1, actions_greedy[key].long().unsqueeze(-1)).reshape(bs)
 
             if self.use_actions_mask:
                 q_next[key][avail_actions_next[key] == 0] = -9999999
@@ -72,50 +75,46 @@ class QTRAN_Learner(LearnerMAS):
             if self.config.double_q:
                 _, _, act_next, _ = self.policy(observation=obs_next, agent_ids=IDs,
                                                 avail_actions=avail_actions, agent_key=key)
+                actions_next_greedy[key] = act_next[key]
                 q_next_a[key] = q_next[key].gather(-1, act_next[key].long().unsqueeze(-1)).reshape(bs)
             else:
+                actions_next_greedy[key] = q_next[key].argmax(dim=-1, keepdim=False)
                 q_next_a[key] = q_next[key].max(dim=-1, keepdim=True).values.reshape(bs)
 
             q_eval_a[key] *= agent_mask[key]
+            q_eval_greedy_a[key] *= agent_mask[key]
             q_next_a[key] *= agent_mask[key]
 
         q_joint, v_joint = self.policy.Q_tran(hidden_state, actions, agent_mask)
-        q_joint_next, _ = self.policy.target_qtran_net(hidden_state_next * hidden_mask,
-                                                       self.onehot_action(actions_next_greedy,
-                                                                          self.dim_act) * actions_mask)
+        q_joint_next, _ = self.policy.Q_tran_target(hidden_state_next, actions_next_greedy, agent_mask)
 
-        y_dqn = rewards + (1 - terminals) * self.gamma * q_joint_next
-        loss_td = self.mse_loss(q_joint, y_dqn.detach())
+        y_dqn = rewards_tot + (1 - terminals_tot) * self.gamma * q_joint_next
+        loss_td = self.mse_loss(q_joint, y_dqn.detach())  # TD loss
 
-        action_greedy = q_eval.argmax(dim=-1, keepdim=False)  # \bar{u}
-        q_eval_greedy_a = q_eval.gather(-1, action_greedy.long().reshape([self.args.batch_size, self.n_agents, 1]))
-        q_tot_greedy = self.policy.q_tot(q_eval_greedy_a * agent_mask)
-        q_joint_greedy_hat, _ = self.policy.qtran_net(hidden_state * hidden_mask,
-                                                      self.onehot_action(action_greedy, self.dim_act) * actions_mask)
+        q_tot_greedy = self.policy.Q_tot(q_eval_greedy_a)
+        q_joint_greedy_hat, _ = self.policy.Q_tran(hidden_state, actions_greedy, agent_mask)
         error_opt = q_tot_greedy - q_joint_greedy_hat.detach() + v_joint
-        loss_opt = torch.mean(error_opt ** 2)
+        loss_opt = torch.mean(error_opt ** 2)  # OPT loss
 
-        q_eval_a = q_eval.gather(-1, actions.long().reshape([self.args.batch_size, self.n_agents, 1]))
-        if self.args.agent == "QTRAN_base":
-            q_tot = self.policy.q_tot(q_eval_a * agent_mask)
-            q_joint_hat, _ = self.policy.qtran_net(hidden_state * hidden_mask,
-                                                   actions_onehot * actions_mask)
+        if self.config.agent == "QTRAN_base":
+            q_tot = self.policy.Q_tot(q_eval_a)
+            q_joint_hat = q_joint
             error_nopt = q_tot - q_joint_hat.detach() + v_joint
             error_nopt = error_nopt.clamp(max=0)
-            loss_nopt = torch.mean(error_nopt ** 2)
-        elif self.args.agent == "QTRAN_alt":
+            loss_nopt = torch.mean(error_nopt ** 2)  # NOPT loss
+        elif self.config.agent == "QTRAN_alt":
             q_tot_counterfactual = self.policy.qtran_net.counterfactual_values(q_eval, q_eval_a) * actions_mask
             q_joint_hat_counterfactual = self.policy.qtran_net.counterfactual_values_hat(hidden_state * hidden_mask,
                                                                                          actions_onehot * actions_mask)
             error_nopt = q_tot_counterfactual - q_joint_hat_counterfactual.detach() + v_joint.unsqueeze(dim=-1).repeat(
                 1, self.n_agents, self.dim_act)
             error_nopt_min = torch.min(error_nopt, dim=-1).values
-            loss_nopt = torch.mean(error_nopt_min ** 2)
+            loss_nopt = torch.mean(error_nopt_min ** 2)  # NOPT loss
         else:
-            raise ValueError("Mixer {} not recognised.".format(self.args.agent))
+            raise ValueError("Mixer {} not recognised.".format(self.config.agent))
 
         # calculate the loss function
-        loss = loss_td + self.args.lambda_opt * loss_opt + self.args.lambda_nopt * loss_nopt
+        loss = loss_td + self.config.lambda_opt * loss_opt + self.config.lambda_nopt * loss_nopt
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()

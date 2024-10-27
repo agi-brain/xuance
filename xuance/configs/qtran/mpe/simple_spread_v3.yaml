@@ -17,8 +17,8 @@ recurrent_hidden_size: 64
 N_recurrent_layers: 1
 dropout: 0
 
-representation_hidden_size: [256, ]
-q_hidden_size: [256, ]  # the units for each hidden layer
+representation_hidden_size: [64, ]
+q_hidden_size: [64, ]  # the units for each hidden layer
 activation: "relu"
 use_parameter_sharing: False
 use_actions_mask: False

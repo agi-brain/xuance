@@ -608,6 +608,36 @@ class Qtran_MixingQnetwork(BasicQnetwork):
             q_target[key] = self.target_Qhead[key](q_inputs)
         return rnn_hidden_new, rep_hidden_state, q_target
 
+    def Q_tot(self, individual_values: Dict[str, Tensor], states: Optional[Tensor] = None):
+        """
+        Returns the total Q values.
+
+        Parameters:
+            individual_values (Dict[str, Tensor]): The individual Q values of all agents.
+            states (Optional[Tensor]): The global states if necessary, default is None.
+
+        Returns:
+            evalQ_tot (Tensor): The evaluated total Q values for the multi-agent team.
+        """
+        if self.use_parameter_sharing:
+            """
+            From dict to tensor. For example:
+                individual_values: {'agent_0': batch * n_agents * 1} -> 
+                individual_inputs: batch * n_agents * 1
+            """
+            individual_inputs = individual_values[self.model_keys[0]].reshape([-1, self.n_agents, 1])
+        else:
+            """
+            From dict to tensor. For example: 
+                individual_values: {'agent_0': batch * 1, 'agent_1': batch * 1, 'agent_2': batch * 1} -> 
+                individual_inputs: batch * 2 * 1
+            """
+            individual_inputs = torch.concat([individual_values[k] for k in self.model_keys],
+                                             dim=-1).reshape([-1, self.n_agents, 1])
+
+        eval_Q_tot = self.q_tot(individual_inputs, states)
+        return eval_Q_tot
+
     def Q_tran(self, hidden_states: Dict[str, Tensor], actions: Dict[str, Tensor],
                agent_mask: Dict[str, Tensor] = None, avail_actions: Dict[str, Tensor] = None):
         """
@@ -620,24 +650,59 @@ class Qtran_MixingQnetwork(BasicQnetwork):
             avail_actions (Dict[str, Tensor]): Actions mask values, default is None.
 
         Returns:
-            evalQ_tot (Tensor): The evaluated total Q values for the multi-agent team.
+            q_jt (Tensor): The evaluated joint Q values.
+            v_jt (Tensor): The evaluated joint V values.
         """
         if self.use_parameter_sharing:
             key = self.model_keys[0]
-            dim_hidden = hidden_states[key].shape[-1]
+            dim_hidden_state = hidden_states[key].shape[-1]
+            batch_size = hidden_states[key].shape[0] // self.n_agents
             actions_onehot = one_hot(actions[key].long(), self.action_space[key].n)
-            hidden_states_input = hidden_states[key].reshape([-1, self.n_agents, dim_hidden])
+            actions_onehot = actions_onehot.reshape(batch_size, self.n_agents, -1)
+            hidden_states_input = hidden_states[key].reshape([-1, self.n_agents, dim_hidden_state])
             if avail_actions is not None:
                 actions_onehot *= avail_actions[key]
             if agent_mask is not None:
-                hidden_states_input *= agent_mask[key].unsqueeze(-1).repeat(1, self.n_agents)
-            hidden_state_action_input = torch.cat([hidden_states_input, actions_onehot], dim=-1)
+                agent_mask = agent_mask[key].reshape(batch_size, self.n_agents, 1).repeat(1, 1, dim_hidden_state)
+                hidden_states_input *= agent_mask
         else:
             hidden_states_input = torch.cat([hidden_states[k] for k in self.model_keys], dim=-1)
             actions_onehot = torch.cat([actions[k] for k in self.model_keys], dim=-1)
-            hidden_state_action_input = torch.cat([hidden_states_input, actions_onehot], dim=-1)
+        q_jt, v_jt = self.qtran_net(hidden_states_input, actions_onehot)
+        return q_jt, v_jt
 
-        self.qtran_net(hidden_states_input, hidden_state_action_input)
+    def Q_tran_target(self, hidden_states: Dict[str, Tensor], actions: Dict[str, Tensor],
+                      agent_mask: Dict[str, Tensor] = None, avail_actions: Dict[str, Tensor] = None):
+        """
+        Returns the total Q values.
+
+        Parameters:
+            hidden_states (Dict[str, Tensor]): The hidden states.
+            actions (Dict[str, Tensor]): The executed actions.
+            agent_mask (Dict[str, Tensor]): Agent mask values, default is None.
+            avail_actions (Dict[str, Tensor]): Actions mask values, default is None.
+
+        Returns:
+            q_jt (Tensor): The evaluated joint Q values.
+            v_jt (Tensor): The evaluated joint V values.
+        """
+        if self.use_parameter_sharing:
+            key = self.model_keys[0]
+            dim_hidden_state = hidden_states[key].shape[-1]
+            batch_size = hidden_states[key].shape[0] // self.n_agents
+            actions_onehot = one_hot(actions[key].long(), self.action_space[key].n)
+            actions_onehot = actions_onehot.reshape(batch_size, self.n_agents, -1)
+            hidden_states_input = hidden_states[key].reshape([-1, self.n_agents, dim_hidden_state])
+            if avail_actions is not None:
+                actions_onehot *= avail_actions[key]
+            if agent_mask is not None:
+                agent_mask = agent_mask[key].reshape(batch_size, self.n_agents, 1).repeat(1, 1, dim_hidden_state)
+                hidden_states_input *= agent_mask
+        else:
+            hidden_states_input = torch.cat([hidden_states[k] for k in self.model_keys], dim=-1)
+            actions_onehot = torch.cat([actions[k] for k in self.model_keys], dim=-1)
+        q_jt, v_jt = self.target_qtran_net(hidden_states_input, actions_onehot)
+        return q_jt, v_jt
 
     def copy_target(self):
         for ep, tp in zip(self.representation.parameters(), self.target_representation.parameters()):
