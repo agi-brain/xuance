@@ -137,7 +137,7 @@ class QTRAN_Learner(LearnerMAS):
             "loss_opt": loss_opt.item(),
             "loss_nopt": loss_nopt.item(),
             "loss": loss.item(),
-            "predictQ": q_eval_a.mean().item()
+            "Q_joint": q_joint.mean().item()
         }
 
         return info

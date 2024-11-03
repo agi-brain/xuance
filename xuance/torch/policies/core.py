@@ -676,11 +676,15 @@ class QTRAN_base(nn.Module):
                                   nn.Linear(self.dim_hidden, self.dim_hidden),
                                   nn.ReLU(),
                                   nn.Linear(self.dim_hidden, 1)).to(device)
+        self.action_encoding = nn.Sequential(nn.Linear(ae_input, ae_input),
+                                             nn.ReLU(),
+                                             nn.Linear(ae_input, ae_input))
 
-    def forward(self, hidden_state_inputs, actions_onehot):
+    def forward(self, states, hidden_state_inputs, actions_onehot):
         """Calculating the joint Q and V values.
 
         Parameters:
+            states: The global states.
             hidden_state_inputs: The joint hidden states inputs for QTRAN network.
             actions_onehot: The joint onehot actions for QTRAN network.
 

@@ -664,7 +664,7 @@ class Qtran_MixingQnetwork(BasicQnetwork):
                 actions_onehot *= avail_actions[key]
             if agent_mask is not None:
                 agent_mask = agent_mask[key].reshape(batch_size, self.n_agents, 1).repeat(1, 1, dim_hidden_state)
-                hidden_states_input *= agent_mask
+                hidden_states_input = hidden_states_input * agent_mask
         else:
             hidden_states_input = torch.cat([hidden_states[k] for k in self.model_keys], dim=-1)
             actions_onehot = torch.cat([actions[k] for k in self.model_keys], dim=-1)
@@ -697,7 +697,7 @@ class Qtran_MixingQnetwork(BasicQnetwork):
                 actions_onehot *= avail_actions[key]
             if agent_mask is not None:
                 agent_mask = agent_mask[key].reshape(batch_size, self.n_agents, 1).repeat(1, 1, dim_hidden_state)
-                hidden_states_input *= agent_mask
+                hidden_states_input = hidden_states_input * agent_mask
         else:
             hidden_states_input = torch.cat([hidden_states[k] for k in self.model_keys], dim=-1)
             actions_onehot = torch.cat([actions[k] for k in self.model_keys], dim=-1)
