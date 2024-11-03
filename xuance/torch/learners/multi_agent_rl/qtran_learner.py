@@ -62,7 +62,7 @@ class QTRAN_Learner(LearnerMAS):
         _, hidden_state, _, q_eval = self.policy(observation=obs, agent_ids=IDs, avail_actions=avail_actions)
         _, hidden_state_next, q_next = self.policy.Qtarget(observation=obs_next, agent_ids=IDs)
 
-        q_eval_a, q_eval_greedy_a, q_next_a, hidden_state_mask = {}, {}, {}, {}
+        q_eval_a, q_eval_greedy_a, q_next_a = {}, {}, {}
         actions_greedy, actions_next_greedy = {}, {}
         for key in self.model_keys:
             q_eval_a[key] = q_eval[key].gather(-1, actions[key].long().unsqueeze(-1)).reshape(bs)
@@ -85,17 +85,22 @@ class QTRAN_Learner(LearnerMAS):
             q_eval_greedy_a[key] *= agent_mask[key]
             q_next_a[key] *= agent_mask[key]
 
+        # -- TD Loss --
         q_joint, v_joint = self.policy.Q_tran(hidden_state, actions, agent_mask)
         q_joint_next, _ = self.policy.Q_tran_target(hidden_state_next, actions_next_greedy, agent_mask)
 
         y_dqn = rewards_tot + (1 - terminals_tot) * self.gamma * q_joint_next
-        loss_td = self.mse_loss(q_joint, y_dqn.detach())  # TD loss
+        loss_td = self.mse_loss(q_joint, y_dqn.detach())
+        # -- TD Loss --
 
+        # -- Opt Loss --
         q_tot_greedy = self.policy.Q_tot(q_eval_greedy_a)
         q_joint_greedy_hat, _ = self.policy.Q_tran(hidden_state, actions_greedy, agent_mask)
         error_opt = q_tot_greedy - q_joint_greedy_hat.detach() + v_joint
-        loss_opt = torch.mean(error_opt ** 2)  # OPT loss
+        loss_opt = torch.mean(error_opt ** 2)
+        # -- Opt Loss --
 
+        # -- Nopt Loss --
         if self.config.agent == "QTRAN_base":
             q_tot = self.policy.Q_tot(q_eval_a)
             q_joint_hat = q_joint
@@ -112,6 +117,7 @@ class QTRAN_Learner(LearnerMAS):
             loss_nopt = torch.mean(error_nopt_min ** 2)  # NOPT loss
         else:
             raise ValueError("Mixer {} not recognised.".format(self.config.agent))
+        # -- Nopt loss --
 
         # calculate the loss function
         loss = loss_td + self.config.lambda_opt * loss_opt + self.config.lambda_nopt * loss_nopt
