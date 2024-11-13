@@ -86,8 +86,8 @@ class QTRAN_Learner(LearnerMAS):
             q_next_a[key] *= agent_mask[key]
 
         # -- TD Loss --
-        q_joint, v_joint = self.policy.Q_tran(hidden_state, actions, agent_mask)
-        q_joint_next, _ = self.policy.Q_tran_target(hidden_state_next, actions_next_greedy, agent_mask)
+        q_joint, v_joint = self.policy.Q_tran(state, hidden_state, actions, agent_mask)
+        q_joint_next, _ = self.policy.Q_tran_target(state_next, hidden_state_next, actions_next_greedy, agent_mask)
 
         y_dqn = rewards_tot + (1 - terminals_tot) * self.gamma * q_joint_next
         loss_td = self.mse_loss(q_joint, y_dqn.detach())
@@ -95,7 +95,7 @@ class QTRAN_Learner(LearnerMAS):
 
         # -- Opt Loss --
         q_tot_greedy = self.policy.Q_tot(q_eval_greedy_a)
-        q_joint_greedy_hat, _ = self.policy.Q_tran(hidden_state, actions_greedy, agent_mask)
+        q_joint_greedy_hat, _ = self.policy.Q_tran(state, hidden_state, actions_greedy, agent_mask)
         error_opt = q_tot_greedy - q_joint_greedy_hat.detach() + v_joint
         loss_opt = torch.mean(error_opt ** 2)
         # -- Opt Loss --

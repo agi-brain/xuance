@@ -509,6 +509,8 @@ class Qtran_MixingQnetwork(BasicQnetwork):
         super(Qtran_MixingQnetwork, self).__init__(action_space, n_agents, representation, hidden_size,
                                                    normalize, initialize, activation, device, use_distributed_training,
                                                    **kwargs)
+        self.n_actions_list = [a_space.n for a_space in action_space.values()]
+        self.n_actions_max = max(self.n_actions_list)
         self.qtran_net = qtran_mixer
         self.target_qtran_net = deepcopy(qtran_mixer)
         self.q_tot = mixer
@@ -599,13 +601,16 @@ class Qtran_MixingQnetwork(BasicQnetwork):
                 rnn_hidden_new[key] = (outputs['rnn_hidden'], outputs['rnn_cell'])
             else:
                 outputs = self.target_representation[key](observation[key])
-                rnn_hidden_new[key] = None
+                rnn_hidden_new[key] = [None, None]
+
             if self.use_parameter_sharing:
                 q_inputs = torch.concat([outputs['state'], agent_ids], dim=-1)
             else:
                 q_inputs = outputs['state']
             rep_hidden_state[key] = outputs['state']
+
             q_target[key] = self.target_Qhead[key](q_inputs)
+
         return rnn_hidden_new, rep_hidden_state, q_target
 
     def Q_tot(self, individual_values: Dict[str, Tensor], states: Optional[Tensor] = None):
@@ -638,12 +643,13 @@ class Qtran_MixingQnetwork(BasicQnetwork):
         eval_Q_tot = self.q_tot(individual_inputs, states)
         return eval_Q_tot
 
-    def Q_tran(self, hidden_states: Dict[str, Tensor], actions: Dict[str, Tensor],
+    def Q_tran(self, states: Tensor, hidden_states: Dict[str, Tensor], actions: Dict[str, Tensor],
                agent_mask: Dict[str, Tensor] = None, avail_actions: Dict[str, Tensor] = None):
         """
         Returns the total Q values.
 
         Parameters:
+            states (Tensor): The global states.
             hidden_states (Dict[str, Tensor]): The hidden states.
             actions (Dict[str, Tensor]): The executed actions.
             agent_mask (Dict[str, Tensor]): Agent mask values, default is None.
@@ -668,15 +674,16 @@ class Qtran_MixingQnetwork(BasicQnetwork):
         else:
             hidden_states_input = torch.cat([hidden_states[k] for k in self.model_keys], dim=-1)
             actions_onehot = torch.cat([actions[k] for k in self.model_keys], dim=-1)
-        q_jt, v_jt = self.qtran_net(hidden_states_input, actions_onehot)
+        q_jt, v_jt = self.qtran_net(states, hidden_states_input, actions_onehot)
         return q_jt, v_jt
 
-    def Q_tran_target(self, hidden_states: Dict[str, Tensor], actions: Dict[str, Tensor],
+    def Q_tran_target(self, states: Tensor, hidden_states: Dict[str, Tensor], actions: Dict[str, Tensor],
                       agent_mask: Dict[str, Tensor] = None, avail_actions: Dict[str, Tensor] = None):
         """
         Returns the total Q values.
 
         Parameters:
+            states (Tensor): The global states.
             hidden_states (Dict[str, Tensor]): The hidden states.
             actions (Dict[str, Tensor]): The executed actions.
             agent_mask (Dict[str, Tensor]): Agent mask values, default is None.
@@ -701,7 +708,7 @@ class Qtran_MixingQnetwork(BasicQnetwork):
         else:
             hidden_states_input = torch.cat([hidden_states[k] for k in self.model_keys], dim=-1)
             actions_onehot = torch.cat([actions[k] for k in self.model_keys], dim=-1)
-        q_jt, v_jt = self.target_qtran_net(hidden_states_input, actions_onehot)
+        q_jt, v_jt = self.target_qtran_net(states, hidden_states_input, actions_onehot)
         return q_jt, v_jt
 
     def copy_target(self):
