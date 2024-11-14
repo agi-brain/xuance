@@ -109,6 +109,7 @@ class QTRAN_Learner(LearnerMAS):
             error_nopt = error_nopt.clamp(max=0)
             loss_nopt = torch.mean(error_nopt ** 2)  # NOPT loss
         elif self.config.agent == "QTRAN_alt":
+
             q_tot_counterfactual = self.policy.qtran_net.counterfactual_values(q_eval, q_eval_a) * actions_mask
             q_joint_hat_counterfactual = self.policy.qtran_net.counterfactual_values_hat(hidden_state * hidden_mask,
                                                                                          actions_onehot * actions_mask)

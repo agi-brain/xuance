@@ -685,7 +685,8 @@ class QTRAN_base(nn.Module):
                                              nn.Linear(self.dim_ae_input, self.dim_ae_input)).to(device)
 
     def forward(self, states: Tensor, hidden_state_inputs: Tensor, actions_onehot: Tensor):
-        """Calculating the joint Q and V values.
+        """
+        Calculating the joint Q and V values.
 
         Parameters:
             states (Tensor): The global states.
@@ -710,7 +711,7 @@ class QTRAN_alt(QTRAN_base):
     """
     The basic QTRAN module.
 
-    Args:
+    Parameters:
         dim_state (int): The dimension of the global state.
         action_space (Dict[str, Discrete]): The action space for all agents.
         dim_hidden (int): The dimension of the hidden layers.
@@ -721,17 +722,68 @@ class QTRAN_alt(QTRAN_base):
     """
 
     def __init__(self,
-                 dim_state: int = None,
+                 dim_state: int = 0,
                  action_space: Dict[str, Discrete] = None,
                  dim_hidden: int = 32,
                  n_agents: int = 1,
                  dim_utility_hidden: int = 1,
                  use_parameter_sharing: bool = False,
                  device: Optional[Union[str, int, torch.device]] = None):
-        super(QTRAN_alt, self).__init__(dim_state, action_space, dim_hidden, n_agents, dim_utility_hidden,
-                                        use_parameter_sharing, device)
+        super(QTRAN_alt, self).__init__()
+        self.dim_state = dim_state
+        self.action_space = action_space
+        self.n_actions_list = [a_space.n for a_space in action_space.values()]
+        self.n_actions_max = max(self.n_actions_list)
+        self.dim_hidden = dim_hidden
+        self.n_agents = n_agents
+        self.use_parameter_sharing = use_parameter_sharing
+
+        self.dim_q_input = self.dim_state + dim_utility_hidden + self.n_actions_max
+        self.dim_v_input = self.dim_state
+
+        self.Q_jt = nn.Sequential(nn.Linear(self.dim_q_input, self.dim_hidden),
+                                  nn.ReLU(),
+                                  nn.Linear(self.dim_hidden, self.dim_hidden),
+                                  nn.ReLU(),
+                                  nn.Linear(self.dim_hidden, self.n_actions_max)).to(device)
+        self.V_jt = nn.Sequential(nn.Linear(self.dim_v_input, self.dim_hidden),
+                                  nn.ReLU(),
+                                  nn.Linear(self.dim_hidden, self.dim_hidden),
+                                  nn.ReLU(),
+                                  nn.Linear(self.dim_hidden, 1)).to(device)
+
+    def forward(self, states: Tensor, hidden_state_inputs: Tensor, actions_onehot: Tensor):
+        """Calculating the joint Q and V values.
+
+        Parameters:
+            states (Tensor): The global states.
+            hidden_state_inputs (Tensor): The joint hidden states inputs for QTRAN network.
+            actions_onehot (Tensor): The joint onehot actions for QTRAN network.
+
+        Returns:
+            q_jt (Tensor): The evaluated joint Q values.
+            v_jt (Tensor): The evaluated joint V values.
+        """
+        h_state_action_input = torch.cat([hidden_state_inputs, actions_onehot], dim=-1)
+        h_state_action_encode = self.action_encoding(h_state_action_input).reshape(-1, self.n_agents, self.dim_ae_input)
+        h_state_action_encode = h_state_action_encode.sum(dim=1)  # Sum across agents
+        input_q = torch.cat([states, h_state_action_encode], dim=-1)
+        input_v = states
+        q_jt = self.Q_jt(input_q)
+        v_jt = self.V_jt(input_v)
+        return q_jt, v_jt
 
     def counterfactual_values(self, q_self_values, q_selected_values):
+        """
+        Calculating the counterfactual Q values.
+
+        Parameters:
+            q_self_values:
+            q_selected_values:
+
+        Returns:
+
+        """
         q_repeat = q_selected_values.unsqueeze(dim=1).repeat(1, self.n_agents, 1, self.dim_action)
         counterfactual_values_n = q_repeat
         for agent in range(self.n_agents):
@@ -739,6 +791,16 @@ class QTRAN_alt(QTRAN_base):
         return counterfactual_values_n.sum(dim=2)
 
     def counterfactual_values_hat(self, hidden_states_n, actions_n):
+        """
+        Calculating the counterfactual Q values.
+
+        Parameters:
+            hidden_states_n:
+            actions_n:
+
+        Returns:
+
+        """
         action_repeat = actions_n.unsqueeze(2).repeat(1, 1, self.dim_action, 1)
         action_self_all = torch.eye(self.dim_action).unsqueeze(0)
         action_counterfactual_n = action_repeat.unsqueeze(2).repeat(1, 1, self.n_agents, 1, 1)  # batch * N * N * dim_a * dim_a
