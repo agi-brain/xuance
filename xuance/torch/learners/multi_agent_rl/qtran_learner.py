@@ -7,6 +7,8 @@ Implementation: Pytorch
 import torch
 from torch import nn
 from xuance.torch.learners import LearnerMAS
+
+
 from xuance.common import List
 from argparse import Namespace
 from operator import itemgetter
@@ -29,7 +31,6 @@ class QTRAN_Learner(LearnerMAS):
 
     def update(self, sample):
         self.iterations += 1
-        info = {}
 
         # prepare training data
         sample_Tensor = self.build_training_data(sample=sample,

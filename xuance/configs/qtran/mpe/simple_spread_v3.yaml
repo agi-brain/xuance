@@ -27,7 +27,7 @@ hidden_dim_mixing_net: 64  # hidden units of mixing network
 hidden_dim_hyper_net: 64  # hidden units of hyper network
 qtran_net_hidden_dim: 64
 lambda_opt: 1.0
-lambda_nopt: 1.0
+lambda_nopt: 0.1
 
 seed: 1
 parallels: 16

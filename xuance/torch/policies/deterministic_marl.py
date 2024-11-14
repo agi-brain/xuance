@@ -672,8 +672,9 @@ class Qtran_MixingQnetwork(BasicQnetwork):
                 agent_mask = agent_mask[key].reshape(batch_size, self.n_agents, 1).repeat(1, 1, dim_hidden_state)
                 hidden_states_input = hidden_states_input * agent_mask
         else:
-            hidden_states_input = torch.cat([hidden_states[k] for k in self.model_keys], dim=-1)
-            actions_onehot = torch.cat([actions[k] for k in self.model_keys], dim=-1)
+            hidden_states_input = torch.cat([hidden_states[k].unsqueeze(1) for k in self.model_keys], dim=1)
+            actions_onehot = torch.cat([one_hot(actions[k].long(), self.n_actions_max).unsqueeze(1)
+                                        for k in self.model_keys], dim=1)
         q_jt, v_jt = self.qtran_net(states, hidden_states_input, actions_onehot)
         return q_jt, v_jt
 
@@ -706,8 +707,9 @@ class Qtran_MixingQnetwork(BasicQnetwork):
                 agent_mask = agent_mask[key].reshape(batch_size, self.n_agents, 1).repeat(1, 1, dim_hidden_state)
                 hidden_states_input = hidden_states_input * agent_mask
         else:
-            hidden_states_input = torch.cat([hidden_states[k] for k in self.model_keys], dim=-1)
-            actions_onehot = torch.cat([actions[k] for k in self.model_keys], dim=-1)
+            hidden_states_input = torch.cat([hidden_states[k].unsqueeze(1) for k in self.model_keys], dim=1)
+            actions_onehot = torch.cat([one_hot(actions[k].long(), self.n_actions_max).unsqueeze(1)
+                                        for k in self.model_keys], dim=1)
         q_jt, v_jt = self.target_qtran_net(states, hidden_states_input, actions_onehot)
         return q_jt, v_jt
 
