@@ -27,13 +27,13 @@ hidden_dim_mixing_net: 64  # hidden units of mixing network
 hidden_dim_hyper_net: 64  # hidden units of hyper network
 qtran_net_hidden_dim: 64
 lambda_opt: 1.0
-lambda_nopt: 0.1
+lambda_nopt: 1.0
 
 seed: 1
 parallels: 16
-buffer_size: 100000
-batch_size: 256
-learning_rate: 0.001
+buffer_size: 1000000
+batch_size: 32
+learning_rate: 0.0005
 gamma: 0.99  # discount factor
 double_q: True  # use double q learning
 
@@ -43,7 +43,7 @@ decay_step_greedy: 2500000
 start_training: 1000  # start training after n episodes
 running_steps: 10000000  # 10M
 training_frequency: 25
-sync_frequency: 200
+sync_frequency: 10000
 
 use_grad_clip: False
 grad_clip_norm: 0.5

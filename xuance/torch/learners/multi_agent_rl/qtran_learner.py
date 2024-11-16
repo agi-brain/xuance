@@ -5,6 +5,7 @@ http://proceedings.mlr.press/v97/son19a/son19a.pdf
 Implementation: Pytorch
 """
 import torch
+from sympy.physics.units import action
 from torch import nn
 from xuance.torch.learners import LearnerMAS
 
@@ -31,6 +32,7 @@ class QTRAN_Learner(LearnerMAS):
 
     def update(self, sample):
         self.iterations += 1
+        info = {}
 
         # prepare training data
         sample_Tensor = self.build_training_data(sample=sample,
@@ -86,40 +88,71 @@ class QTRAN_Learner(LearnerMAS):
             q_eval_greedy_a[key] *= agent_mask[key]
             q_next_a[key] *= agent_mask[key]
 
-        # -- TD Loss --
-        q_joint, v_joint = self.policy.Q_tran(state, hidden_state, actions, agent_mask)
-        q_joint_next, _ = self.policy.Q_tran_target(state_next, hidden_state_next, actions_next_greedy, agent_mask)
-
-        y_dqn = rewards_tot + (1 - terminals_tot) * self.gamma * q_joint_next
-        loss_td = self.mse_loss(q_joint, y_dqn.detach())
-        # -- TD Loss --
-
-        # -- Opt Loss --
-        q_tot_greedy = self.policy.Q_tot(q_eval_greedy_a)
-        q_joint_greedy_hat, _ = self.policy.Q_tran(state, hidden_state, actions_greedy, agent_mask)
-        error_opt = q_tot_greedy - q_joint_greedy_hat.detach() + v_joint
-        loss_opt = torch.mean(error_opt ** 2)
-        # -- Opt Loss --
-
-        # -- Nopt Loss --
         if self.config.agent == "QTRAN_base":
+            # -- TD Loss --
+            q_joint, v_joint = self.policy.Q_tran(state, hidden_state, actions, agent_mask)
+            q_joint_next, _ = self.policy.Q_tran_target(state_next, hidden_state_next, actions_next_greedy, agent_mask)
+
+            y_dqn = rewards_tot + (1 - terminals_tot) * self.gamma * q_joint_next
+            loss_td = self.mse_loss(q_joint, y_dqn.detach())  # TD loss
+
+            # -- Opt Loss --
+            # Argmax across the current agents' actions
+            q_tot_greedy = self.policy.Q_tot(q_eval_greedy_a)
+            q_joint_greedy_hat, _ = self.policy.Q_tran(state, hidden_state, actions_greedy, agent_mask)
+            error_opt = q_tot_greedy - q_joint_greedy_hat.detach() + v_joint
+            loss_opt = torch.mean(error_opt ** 2)  # Opt loss
+
+            # -- Nopt Loss --
             q_tot = self.policy.Q_tot(q_eval_a)
             q_joint_hat = q_joint
             error_nopt = q_tot - q_joint_hat.detach() + v_joint
             error_nopt = error_nopt.clamp(max=0)
             loss_nopt = torch.mean(error_nopt ** 2)  # NOPT loss
-        elif self.config.agent == "QTRAN_alt":
 
-            q_tot_counterfactual = self.policy.qtran_net.counterfactual_values(q_eval, q_eval_a) * actions_mask
-            q_joint_hat_counterfactual = self.policy.qtran_net.counterfactual_values_hat(hidden_state * hidden_mask,
-                                                                                         actions_onehot * actions_mask)
-            error_nopt = q_tot_counterfactual - q_joint_hat_counterfactual.detach() + v_joint.unsqueeze(dim=-1).repeat(
-                1, self.n_agents, self.dim_act)
+            info["Q_joint"] = q_joint.mean().item()
+
+        elif self.config.agent == "QTRAN_alt":
+            # -- TD Loss -- (Computed for all agents)
+            q_count, v_joint = self.policy.Q_tran(state, hidden_state, actions, agent_mask)
+            actions_choosen = itemgetter(*self.model_keys)(actions)
+            actions_choosen = actions_choosen.reshape(-1, self.n_agents, 1)
+            q_joint_choosen = q_count.gather(-1, actions_choosen.long()).reshape(-1, self.n_agents)
+            q_next_count, _ = self.policy.Q_tran_target(state_next, hidden_state_next, actions_next_greedy, agent_mask)
+            actions_next_choosen = itemgetter(*self.model_keys)(actions_next_greedy)
+            actions_next_choosen = actions_next_choosen.reshape(-1, self.n_agents, 1)
+            q_joint_next_choosen = q_next_count.gather(-1, actions_next_choosen.long()).reshape(-1, self.n_agents)
+
+            y_dqn = rewards_tot + (1 - terminals_tot) * self.gamma * q_joint_next_choosen
+            loss_td = self.mse_loss(q_joint_choosen, y_dqn.detach())  # TD loss
+
+            # -- Opt Loss -- (Computed for all agents)
+            q_tot_greedy = self.policy.Q_tot(q_eval_greedy_a)
+            q_joint_greedy_hat, _ = self.policy.Q_tran(state, hidden_state, actions_greedy, agent_mask)
+            actions_greedy_current = itemgetter(*self.model_keys)(actions_greedy)
+            actions_greedy_current = actions_greedy_current.reshape(-1, self.n_agents, 1)
+            q_joint_greedy_hat_all = q_joint_greedy_hat.gather(
+                -1, actions_greedy_current.long()).reshape(-1, self.n_agents)
+            error_opt = q_tot_greedy - q_joint_greedy_hat_all.detach() + v_joint
+            loss_opt = torch.mean(error_opt ** 2)  # Opt loss
+
+            # -- Nopt Loss --
+            q_eval_count = itemgetter(*self.model_keys)(q_eval).reshape(batch_size * self.n_agents, -1)
+            q_sums = itemgetter(*self.model_keys)(q_eval_a).reshape(-1, self.n_agents)
+            q_sums_repeat = q_sums.unsqueeze(dim=1).repeat(1, self.n_agents, 1)
+            agent_mask_diag = (1 - torch.eye(self.n_agents, dtype=torch.float32,
+                                             device=self.device)).unsqueeze(0).repeat(batch_size, 1, 1)
+            q_sum_mask = (q_sums_repeat * agent_mask_diag).sum(dim=-1)
+            q_count_for_nopt = q_count.view(batch_size * self.n_agents, -1)
+            v_joint_repeated = v_joint.repeat(1, self.n_agents).view(-1, 1)
+            error_nopt = q_eval_count + q_sum_mask.view(-1, 1) - q_count_for_nopt.detach() + v_joint_repeated
             error_nopt_min = torch.min(error_nopt, dim=-1).values
             loss_nopt = torch.mean(error_nopt_min ** 2)  # NOPT loss
+
+            info["Q_joint"] = q_joint_choosen.mean().item()
+
         else:
             raise ValueError("Mixer {} not recognised.".format(self.config.agent))
-        # -- Nopt loss --
 
         # calculate the loss function
         loss = loss_td + self.config.lambda_opt * loss_opt + self.config.lambda_nopt * loss_nopt
@@ -133,13 +166,12 @@ class QTRAN_Learner(LearnerMAS):
             self.policy.copy_target()
         lr = self.optimizer.state_dict()['param_groups'][0]['lr']
 
-        info = {
+        info.update({
             "learning_rate": lr,
             "loss_td": loss_td.item(),
             "loss_opt": loss_opt.item(),
             "loss_nopt": loss_nopt.item(),
-            "loss": loss.item(),
-            "Q_joint": q_joint.mean().item()
-        }
+            "loss": loss.item()
+        })
 
         return info

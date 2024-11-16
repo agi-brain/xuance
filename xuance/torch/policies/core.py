@@ -707,7 +707,7 @@ class QTRAN_base(nn.Module):
         return q_jt, v_jt
 
 
-class QTRAN_alt(QTRAN_base):
+class QTRAN_alt(nn.Module):
     """
     The basic QTRAN module.
 
@@ -737,8 +737,9 @@ class QTRAN_alt(QTRAN_base):
         self.dim_hidden = dim_hidden
         self.n_agents = n_agents
         self.use_parameter_sharing = use_parameter_sharing
+        self.device = device
 
-        self.dim_q_input = self.dim_state + dim_utility_hidden + self.n_actions_max
+        self.dim_q_input = self.dim_state + dim_utility_hidden + self.n_actions_max + self.n_agents
         self.dim_v_input = self.dim_state
 
         self.Q_jt = nn.Sequential(nn.Linear(self.dim_q_input, self.dim_hidden),
@@ -751,6 +752,10 @@ class QTRAN_alt(QTRAN_base):
                                   nn.Linear(self.dim_hidden, self.dim_hidden),
                                   nn.ReLU(),
                                   nn.Linear(self.dim_hidden, 1)).to(device)
+        self.dim_ae_input = dim_utility_hidden + self.n_actions_max
+        self.action_encoding = nn.Sequential(nn.Linear(self.dim_ae_input, self.dim_ae_input),
+                                             nn.ReLU(),
+                                             nn.Linear(self.dim_ae_input, self.dim_ae_input)).to(device)
 
     def forward(self, states: Tensor, hidden_state_inputs: Tensor, actions_onehot: Tensor):
         """Calculating the joint Q and V values.
@@ -766,51 +771,18 @@ class QTRAN_alt(QTRAN_base):
         """
         h_state_action_input = torch.cat([hidden_state_inputs, actions_onehot], dim=-1)
         h_state_action_encode = self.action_encoding(h_state_action_input).reshape(-1, self.n_agents, self.dim_ae_input)
-        h_state_action_encode = h_state_action_encode.sum(dim=1)  # Sum across agents
-        input_q = torch.cat([states, h_state_action_encode], dim=-1)
+        bs, dim_h = h_state_action_encode.shape[0], h_state_action_encode.shape[-1]
+        agent_ids = torch.eye(self.n_agents, dtype=torch.float32, device=self.device)
+        agent_masks = (1 - agent_ids)
+        repeat_agent_ids = agent_ids.unsqueeze(0).repeat(bs, 1, 1)
+        repeated_agent_masks = agent_masks.unsqueeze(0).unsqueeze(-1).repeat(bs, 1, 1, dim_h)
+        repeated_h_state_action_encode = h_state_action_encode.unsqueeze(2).repeat(1, 1, self.n_agents, 1)
+        h_state_action_encode = repeated_h_state_action_encode * repeated_agent_masks
+        h_state_action_encode = h_state_action_encode.sum(dim=2)  # Sum across other agents
+
+        repeated_states = states.unsqueeze(1).repeat(1, self.n_agents, 1)
+        input_q = torch.cat([repeated_states, h_state_action_encode, repeat_agent_ids], dim=-1)
         input_v = states
         q_jt = self.Q_jt(input_q)
         v_jt = self.V_jt(input_v)
         return q_jt, v_jt
-
-    def counterfactual_values(self, q_self_values, q_selected_values):
-        """
-        Calculating the counterfactual Q values.
-
-        Parameters:
-            q_self_values:
-            q_selected_values:
-
-        Returns:
-
-        """
-        q_repeat = q_selected_values.unsqueeze(dim=1).repeat(1, self.n_agents, 1, self.dim_action)
-        counterfactual_values_n = q_repeat
-        for agent in range(self.n_agents):
-            counterfactual_values_n[:, agent, agent] = q_self_values[:, agent, :]
-        return counterfactual_values_n.sum(dim=2)
-
-    def counterfactual_values_hat(self, hidden_states_n, actions_n):
-        """
-        Calculating the counterfactual Q values.
-
-        Parameters:
-            hidden_states_n:
-            actions_n:
-
-        Returns:
-
-        """
-        action_repeat = actions_n.unsqueeze(2).repeat(1, 1, self.dim_action, 1)
-        action_self_all = torch.eye(self.dim_action).unsqueeze(0)
-        action_counterfactual_n = action_repeat.unsqueeze(2).repeat(1, 1, self.n_agents, 1, 1)  # batch * N * N * dim_a * dim_a
-        q_n = []
-        for agent in range(self.n_agents):
-            action_counterfactual_n[:, agent, agent, :, :] = action_self_all
-            q_actions = []
-            for a in range(self.dim_action):
-                input_a = action_counterfactual_n[:, :, agent, a, :]
-                q, _ = self.forward(hidden_states_n, input_a)
-                q_actions.append(q)
-            q_n.append(torch.cat(q_actions, dim=-1).unsqueeze(dim=1))
-        return torch.cat(q_n, dim=1)
