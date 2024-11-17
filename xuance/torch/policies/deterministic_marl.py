@@ -1,5 +1,7 @@
 import os
 import torch
+from setuptools.dist import sequence
+from sympy.physics.units import action
 from torch.distributions import Categorical
 from torch.nn.functional import one_hot
 from copy import deepcopy
@@ -659,18 +661,32 @@ class Qtran_MixingQnetwork(BasicQnetwork):
             q_jt (Tensor): The evaluated joint Q values.
             v_jt (Tensor): The evaluated joint V values.
         """
+        seq_len = states.shape[1] if self.use_rnn else 1
+        batch_size = states.shape[0]
         if self.use_parameter_sharing:
             key = self.model_keys[0]
             dim_hidden_state = hidden_states[key].shape[-1]
-            batch_size = hidden_states[key].shape[0] // self.n_agents
             actions_onehot = one_hot(actions[key].long(), self.action_space[key].n)
-            actions_onehot = actions_onehot.reshape(batch_size, self.n_agents, -1)
-            hidden_states_input = hidden_states[key].reshape([-1, self.n_agents, dim_hidden_state])
+            if self.use_rnn:
+                actions_onehot = actions_onehot.reshape(batch_size, self.n_agents, seq_len, -1)
+                hidden_states_input = hidden_states[key].reshape([-1, self.n_agents, seq_len, dim_hidden_state])
+            else:
+                actions_onehot = actions_onehot.reshape(batch_size, self.n_agents, -1)
+                hidden_states_input = hidden_states[key].reshape([-1, self.n_agents, dim_hidden_state])
+
             if avail_actions is not None:
                 actions_onehot *= avail_actions[key]
             if agent_mask is not None:
-                agent_mask = agent_mask[key].reshape(batch_size, self.n_agents, 1).repeat(1, 1, dim_hidden_state)
+                if self.use_rnn:
+                    agent_mask = agent_mask[key].reshape(
+                        batch_size, self.n_agents, seq_len, 1).repeat(1, 1, 1, dim_hidden_state)
+                else:
+                    agent_mask = agent_mask[key].reshape(batch_size, self.n_agents, 1).repeat(1, 1, dim_hidden_state)
                 hidden_states_input = hidden_states_input * agent_mask
+            if self.use_rnn:
+                states = states.reshape(batch_size * seq_len, -1)
+                hidden_states_input = hidden_states_input.transpose(1, 2).reshape(-1, self.n_agents, dim_hidden_state)
+                actions_onehot = actions_onehot.transpose(1, 2).reshape(-1, self.n_agents, self.n_actions_max)
         else:
             hidden_states_input = torch.cat([hidden_states[k].unsqueeze(1) for k in self.model_keys], dim=1)
             actions_onehot = torch.cat([one_hot(actions[k].long(), self.n_actions_max).unsqueeze(1)
@@ -694,18 +710,32 @@ class Qtran_MixingQnetwork(BasicQnetwork):
             q_jt (Tensor): The evaluated joint Q values.
             v_jt (Tensor): The evaluated joint V values.
         """
+        seq_len = states.shape[1] if self.use_rnn else 1
+        batch_size = states.shape[0]
         if self.use_parameter_sharing:
             key = self.model_keys[0]
             dim_hidden_state = hidden_states[key].shape[-1]
-            batch_size = hidden_states[key].shape[0] // self.n_agents
             actions_onehot = one_hot(actions[key].long(), self.action_space[key].n)
-            actions_onehot = actions_onehot.reshape(batch_size, self.n_agents, -1)
-            hidden_states_input = hidden_states[key].reshape([-1, self.n_agents, dim_hidden_state])
+            if self.use_rnn:
+                actions_onehot = actions_onehot.reshape(batch_size, self.n_agents, seq_len, -1)
+                hidden_states_input = hidden_states[key].reshape([-1, self.n_agents, seq_len, dim_hidden_state])
+            else:
+                actions_onehot = actions_onehot.reshape(batch_size, self.n_agents, -1)
+                hidden_states_input = hidden_states[key].reshape([-1, self.n_agents, dim_hidden_state])
+
             if avail_actions is not None:
                 actions_onehot *= avail_actions[key]
             if agent_mask is not None:
-                agent_mask = agent_mask[key].reshape(batch_size, self.n_agents, 1).repeat(1, 1, dim_hidden_state)
+                if self.use_rnn:
+                    agent_mask = agent_mask[key].reshape(
+                        batch_size, self.n_agents, seq_len, 1).repeat(1, 1, 1, dim_hidden_state)
+                else:
+                    agent_mask = agent_mask[key].reshape(batch_size, self.n_agents, 1).repeat(1, 1, dim_hidden_state)
                 hidden_states_input = hidden_states_input * agent_mask
+            if self.use_rnn:
+                states = states.reshape(batch_size * seq_len, -1)
+                hidden_states_input = hidden_states_input.transpose(1, 2).reshape(-1, self.n_agents, dim_hidden_state)
+                actions_onehot = actions_onehot.transpose(1, 2).reshape(-1, self.n_agents, self.n_actions_max)
         else:
             hidden_states_input = torch.cat([hidden_states[k].unsqueeze(1) for k in self.model_keys], dim=1)
             actions_onehot = torch.cat([one_hot(actions[k].long(), self.n_actions_max).unsqueeze(1)
