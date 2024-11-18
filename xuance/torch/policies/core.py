@@ -2,7 +2,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from gym.spaces import Discrete
-from sympy.physics.units import action
 
 from xuance.common import Sequence, Optional, Callable, Union, Dict
 from xuance.torch import Tensor, Module
