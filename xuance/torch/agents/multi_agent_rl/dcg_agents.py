@@ -1,5 +1,6 @@
 import torch
 import numpy as np
+from torch.nn import Module
 from tqdm import tqdm
 from copy import deepcopy
 from operator import itemgetter
@@ -10,26 +11,30 @@ from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.representations import REGISTRY_Representation
 from xuance.torch.policies import REGISTRY_Policy, QMIX_mixer
 from xuance.torch.learners import QMIX_Learner
-from xuance.torch.agents import MARLAgents
+from xuance.torch.agents import OffPolicyMARLAgents
 from xuance.torch.agents.multi_agent_rl.iql_agents import IQL_Agents
 from xuance.common import MARL_OffPolicyBuffer, MARL_OffPolicyBuffer_RNN
 
 
-class DCG_Agents(MARLAgents):
+class DCG_Agents(OffPolicyMARLAgents):
     """The implementation of DCG agents.
 
     Args:
         config: the Namespace variable that provides hyper-parameters and other settings.
         envs: the vectorized environments.
-        device: the calculating device of the model, such as CPU or GPU.
     """
     def __init__(self,
                  config: Namespace,
                  envs: DummyVecMultiAgentEnv):
-        self.gamma = config.gamma
-        self.start_greedy, self.end_greedy = config.start_greedy, config.end_greedy
-        self.egreedy = self.start_greedy
+        super(DCG_Agents, self).__init__(config, envs)
+        self.state_space = envs.state_space
+        self.use_global_state = True if config.agent == "DCG_S" else False
         self.delta_egreedy = (self.start_greedy - self.end_greedy) / config.decay_step_greedy
+
+        # build policy, optimizers, schedulers
+        self.policy = self._build_policy()  # build policy
+        self.memory = self._build_memory()  # build memory
+        self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, self.policy)
 
         input_representation = get_repre_in(config)
         self.use_rnn = config.use_rnn
@@ -89,6 +94,36 @@ class DCG_Agents(MARLAgents):
         super(DCG_Agents, self).__init__(config, envs, policy, memory, learner, device,
                                          config.log_dir, config.model_dir)
         self.on_policy = False
+
+    def _build_policy(self) -> Module:
+        """
+        Build representation(s) and policy(ies) for agent(s)
+
+        Returns:
+            policy (torch.nn.Module): A dict of policies.
+        """
+        normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
+        initializer = torch.nn.init.orthogonal_
+        activation = ActivationFunctions[self.config.activation]
+        device = self.device
+
+        # build representation
+        representation = self._build_representation(self.config.representation, self.observation_space, self.config)
+
+        # build policies
+        dim_state = self.state_space.shape[-1]
+        from xuance.torch.policies.coordination_graph import DCG_utility, DCG_payoff, Coordination_Graph
+        repre_state_dim = representation[self.model_keys[0]].output_shapes['state'][0]
+        max_action_dim = max([act_space.n for act_space in self.action_space.values()])
+        utility = DCG_utility(repre_state_dim, self.config.hidden_utility_dim, max_action_dim, self.device)
+        payoffs = DCG_payoff(repre_state_dim * 2, self.config.hidden_payoff_dim, max_action_dim,
+                             self.config.low_rank_payoff, self.config.payoff_rank, self.device)
+        dcgraph = Coordination_Graph(self.n_agents, self.config.graph_type, self.device)
+        dcgraph.set_coordination_graph()
+
+        if self.config.policy == "DCG_Policy":
+            input_policy = dict()
+
 
     def act(self, obs_n, *rnn_hidden, avail_actions=None, test_mode=False):
         batch_size = obs_n.shape[0]

@@ -20,5 +20,7 @@ __all__ = [
     "Runner_Base",
     "Runner_DRL",
     "Runner_MARL",
+    "SC2_Runner",
+    "Football_Runner",
     "REGISTRY_Runner"
 ]

@@ -15,7 +15,7 @@ class BasicQnetwork(Module):
     The base class to implement DQN based policy
 
     Args:
-        action_space (Discrete): The action space, which type is gym.spaces.Discrete.
+        action_space (Optional[Dict[str, Discrete]]): The action space, which type is gym.spaces.Discrete.
         n_agents (int): The number of agents.
         representation (ModuleDict): A dict of the representation module for all agents.
         hidden_size (Sequence[int]): List of hidden units for fully connect layers.
@@ -172,7 +172,7 @@ class MixingQnetwork(BasicQnetwork):
     The base class to implement value-decomposition based policy.
 
     Args:
-        action_space (Discrete): The action space, which type is gym.spaces.Discrete.
+        action_space (Optional[Dict[str, Discrete]]): The action space, which type is gym.spaces.Discrete.
         n_agents (int): The number of agents.
         representation (ModuleDict): A dict of the representation module for all agents.
         mixer (Module): The mixer module that mix together the individual values to the total value.
@@ -285,7 +285,7 @@ class Weighted_MixingQnetwork(MixingQnetwork):
     The base class to implement weighted value-decomposition based policy.
 
     Args:
-        action_space (Discrete): The action space, which type is gym.spaces.Discrete.
+        action_space (Optional[Dict[str, Discrete]]): The action space, which type is gym.spaces.Discrete.
         n_agents (int): The number of agents.
         representation (ModuleDict): A dict of the representation module for all agents.
         mixer (Module): The mixer module that mix together the individual values to the total value.
@@ -479,7 +479,7 @@ class Qtran_MixingQnetwork(BasicQnetwork):
     The base class to implement weighted value-decomposition based policy.
 
     Args:
-        action_space (Discrete): The action space, which type is gym.spaces.Discrete.
+        action_space (Optional[Dict[str, Discrete]]): The action space, which type is gym.spaces.Discrete.
         n_agents (int): The number of agents.
         representation (ModuleDict): A dict of the representation module for all agents.
         mixer (Module): The mixer module that mix together the individual values to the total value.
@@ -751,9 +751,27 @@ class Qtran_MixingQnetwork(BasicQnetwork):
 
 
 class DCG_policy(Module):
+    """
+    The deep coordination graph policy.
+
+    Args:
+        action_space (Optional[Dict[str, Discrete]]): The action space, which type is gym.spaces.Discrete.
+        n_agents(int): The number of agents.
+        representation (ModuleDict): A dict of the representation module for all agents.
+        utility (Module): The utility module that outputs an agent's utility value.
+        payoffs (Module): The payoff module that outputs two agents' payoff value.
+        dcgraph (Module): The deep coordination graph module.
+        hidden_size_bias (Sequence[int]): List of hidden units for fully connect layers of bias net.
+        normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
+        activation(Optional[ModuleType]): The activation function for each layer.
+        device (Optional[Union[str, int, torch.device]]): The calculating device.
+        use_distributed_training (bool): Whether to use multi-GPU for distributed training.
+        **kwargs: Other arguments.
+    """
     def __init__(self,
                  action_space: Discrete,
-                 global_state_dim: int,
+                 n_agents: int,
                  representation: Module,
                  utility: Optional[Module] = None,
                  payoffs: Optional[Module] = None,
@@ -766,11 +784,17 @@ class DCG_policy(Module):
                  **kwargs):
         super(DCG_policy, self).__init__()
         self.device = device
-        self.n_actions = action_space.n
+        self.action_space = action_space
+        self.n_agents = n_agents
+        self.use_parameter_sharing = kwargs['use_parameter_sharing']
+        self.model_keys= kwargs['model_keys']
+        self.representation_info_shape = {key: representation[key].output_shape for key in self.model_keys}
+        self.lstm = True if kwargs['rnn'] == "LSTM" else False
+        self.use_rnn = True if kwargs['use_rnn'] else False
+
         self.representation = representation
         self.target_representation = deepcopy(self.representation)
-        self.lstm = True if kwargs["rnn"] == "LSTM" else False
-        self.use_rnn = True if kwargs["use_rnn"] else False
+
         self.utility = utility
         self.target_utility = deepcopy(self.utility)
         self.payoffs = payoffs
@@ -779,28 +803,10 @@ class DCG_policy(Module):
         self.dcg_s = False
         if hidden_size_bias is not None:
             self.dcg_s = True
-            self.bias = BasicQhead(global_state_dim, 1, 0, hidden_size_bias,
+            state_dim = kwargs['state_dim']
+            self.bias = BasicQhead(state_dim, 1, 0, hidden_size_bias,
                                    normalize, initialize, activation, device)
             self.target_bias = deepcopy(self.bias)
-
-    def forward(self, observation: Tensor, agent_ids: Tensor,
-                *rnn_hidden: Tensor, avail_actions=None):
-        if self.use_rnn:
-            outputs = self.representation(observation, *rnn_hidden)
-            rnn_hidden = (outputs['rnn_hidden'], outputs['rnn_cell'])
-        else:
-            outputs = self.representation(observation)
-            rnn_hidden = None
-        q_inputs = torch.concat([outputs['state'], agent_ids], dim=-1)
-        evalQ = self.eval_Qhead(q_inputs)
-        if avail_actions is not None:
-            avail_actions = Tensor(avail_actions)
-            evalQ_detach = evalQ.clone().detach()
-            evalQ_detach[avail_actions == 0] = -9999999
-            argmax_action = evalQ_detach.argmax(dim=-1, keepdim=False)
-        else:
-            argmax_action = evalQ.argmax(dim=-1, keepdim=False)
-        return rnn_hidden, argmax_action, evalQ
 
     def copy_target(self):
         for ep, tp in zip(self.representation.parameters(), self.target_representation.parameters()):
