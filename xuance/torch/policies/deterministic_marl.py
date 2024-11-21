@@ -838,12 +838,13 @@ class DCG_policy(Module):
             hidden_states_n: The hidden states of the representations that what we want.
         """
         rnn_hidden_new, hidden_states = {}, {}
+        seq_len = observation[self.model_keys[0]].shape[1] if self.use_rnn else 1
         for key in self.model_keys:
             if self.use_rnn:
                 if use_target_net:
-                    outputs = self.target_representation[key](observation[key], *rnn_hidden)
+                    outputs = self.target_representation[key](observation[key], *rnn_hidden[key])
                 else:
-                    outputs = self.representation[key](observation[key], *rnn_hidden)
+                    outputs = self.representation[key](observation[key], *rnn_hidden[key])
                 rnn_hidden_new[key] = (outputs['rnn_hidden'], outputs['rnn_cell'])
             else:
                 if use_target_net:
@@ -853,9 +854,18 @@ class DCG_policy(Module):
                 rnn_hidden_new[key] = [None, None]
             hidden_states[key] = outputs['state']
         if self.use_parameter_sharing:
-            hidden_states_n = hidden_states[self.model_keys[0]].reshape(batch_size, self.n_agents, -1)
+            hidden_states_n = hidden_states[self.model_keys[0]].reshape(batch_size, self.n_agents, seq_len, -1)
+            if self.use_rnn:
+                hidden_states_n = hidden_states_n.transpose(1, 2).reshape(batch_size, seq_len, self.n_agents, -1)
+            else:
+                hidden_states_n = hidden_states_n.transpose(1, 2).reshape(batch_size, self.n_agents, -1)
         else:
-            hidden_states_n = itemgetter(*self.agent_keys)(hidden_states).reshape(batch_size, self.n_agents, -1)
+            if self.use_rnn:
+                hidden_states_n = torch.cat([hidden_states[key].reshape(batch_size, seq_len, 1, -1)
+                                             for key in self.agent_keys], dim=2)
+                hidden_states_n = hidden_states_n.reshape(batch_size, seq_len, self.n_agents, -1)
+            else:
+                hidden_states_n = itemgetter(*self.agent_keys)(hidden_states).reshape(batch_size, self.n_agents, -1)
         return rnn_hidden, hidden_states_n
 
     def copy_target(self):

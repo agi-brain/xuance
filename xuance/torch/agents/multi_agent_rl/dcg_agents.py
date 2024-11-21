@@ -89,6 +89,7 @@ class DCG_Agents(OffPolicyMARLAgents):
         with torch.no_grad():
             rnn_hidden_next, hidden_states = self.policy.get_hidden_states(batch_size, obs_input, rnn_hidden,
                                                                            use_target_net=False)
+            hidden_states = hidden_states.reshape([batch_size, self.n_agents, -1])
             actions = self.learner.act(hidden_states, avail_actions=avail_actions_input)
 
         actions_out = actions.reshape([batch_size, self.n_agents]).cpu().detach().numpy()

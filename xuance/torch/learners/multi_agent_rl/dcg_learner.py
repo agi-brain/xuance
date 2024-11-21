@@ -113,7 +113,7 @@ class DCG_Learner(LearnerMAS):
         sample_Tensor = self.build_training_data(sample=sample,
                                                  use_parameter_sharing=self.use_parameter_sharing,
                                                  use_actions_mask=self.use_actions_mask,
-                                                 use_global_state=True if self.config.agent=="DCG_S" else False)
+                                                 use_global_state=True if self.config.agent == "DCG_S" else False)
         batch_size = sample_Tensor['batch_size']
         state = sample_Tensor['state']
         state_next = sample_Tensor['state_next']
@@ -171,65 +171,79 @@ class DCG_Learner(LearnerMAS):
             self.policy.copy_target()
         return info
 
-    def update_recurrent(self, sample):
+    def update_rnn(self, sample):
         self.iterations += 1
-        state = torch.Tensor(sample['state']).to(self.device)
-        obs = torch.Tensor(sample['obs']).to(self.device)
-        actions = torch.Tensor(sample['actions']).to(self.device)
-        rewards = torch.Tensor(sample['rewards']).mean(dim=1, keepdims=False).to(self.device)
-        terminals = torch.Tensor(sample['terminals']).float().to(self.device)
-        avail_actions = torch.Tensor(sample['avail_actions']).float().to(self.device)
-        filled = torch.Tensor(sample['filled']).float().to(self.device)
-        batch_size = actions.shape[0]
-        episode_length = actions.shape[2]
-        IDs = torch.eye(self.n_agents).unsqueeze(1).unsqueeze(0).expand(batch_size, -1, episode_length + 1, -1).to(
-            self.device)
+        info = {}
 
-        rnn_hidden = self.policy.representation.init_hidden(batch_size * self.n_agents)
-        _, hidden_states = self.policy.get_hidden_states(batch_size, obs.reshape(-1, episode_length + 1, self.dim_obs),
-                                                         *rnn_hidden, use_target_net=False)
-        hidden_states = hidden_states.reshape(batch_size, self.n_agents, episode_length + 1, -1).transpose(1, 2)
-        batch_transitions = batch_size * episode_length
-        actions = actions.transpose(1, 2).reshape(batch_transitions, self.n_agents)
-        q_eval_a = self.q_dcg(hidden_states[:, :-1].reshape(batch_transitions, self.n_agents, self.dim_hidden_state),
-                              actions, states=state[:, :-1].reshape(batch_transitions, -1),
-                              use_target_net=False)
-        with torch.no_grad():
-            avail_a_next = avail_actions.transpose(1, 2)[:, 1:].reshape(batch_transitions, self.n_agents, self.dim_act)
-            hidden_states_next = hidden_states[:, 1:].reshape(batch_transitions, self.n_agents, self.dim_hidden_state)
-            action_next_greedy = torch.Tensor(self.act(hidden_states_next, avail_actions=avail_a_next)).to(self.device)
-            rnn_hidden_target = self.policy.target_representation.init_hidden(batch_size * self.n_agents)
-            _, hidden_states_tar = self.policy.get_hidden_states(batch_size, obs[:, :, 1:].reshape(-1, episode_length, self.dim_obs),
-                                                                 *rnn_hidden_target, use_target_net=True)
-            hidden_states_tar = hidden_states_tar.reshape(batch_size, self.n_agents, episode_length, -1).transpose(1, 2)
-            q_next_a = self.q_dcg(hidden_states_tar.reshape(batch_transitions, self.n_agents, self.dim_hidden_state),
-                                  action_next_greedy,
-                                  states=state[:, 1:].reshape(batch_transitions, -1),
-                                  use_target_net=True)
-        rewards = rewards.reshape(-1, 1)
-        terminals = terminals.reshape(-1, 1)
-        filled = filled.reshape(-1, 1)
-        q_target = rewards + (1 - terminals) * self.args.gamma * q_next_a
-        td_error = (q_eval_a - q_target.detach()) * filled
+        # prepare training data
+        sample_Tensor = self.build_training_data(sample=sample,
+                                                 use_parameter_sharing=self.use_parameter_sharing,
+                                                 use_actions_mask=self.use_actions_mask,
+                                                 use_global_state=True if self.config.agent == "DCG_S" else False)
+        batch_size = sample_Tensor['batch_size']
+        seq_len = sample['sequence_length']
+        state = sample_Tensor['state']
+        obs = sample_Tensor['obs']
+        actions = sample_Tensor['actions']
+        rewards = sample_Tensor['rewards']
+        terminals = sample_Tensor['terminals']
+        agent_mask = sample_Tensor['agent_mask']
+        avail_actions = sample_Tensor['avail_actions']
+        filled = sample_Tensor['filled'].reshape([-1, 1])
+        IDs = sample_Tensor['agent_ids']
+
+        if self.use_parameter_sharing:
+            key = self.model_keys[0]
+            bs_rnn = batch_size * self.n_agents
+            rewards_tot = rewards[key].mean(dim=1).reshape([-1, 1])
+            terminals_tot = terminals[key].all(dim=1, keepdim=False).float().reshape([-1, 1])
+            actions = actions[key].reshape(batch_size, self.n_agents, seq_len)
+        else:
+            bs_rnn = batch_size
+            rewards_tot = torch.stack(itemgetter(*self.agent_keys)(rewards), dim=1).mean(dim=1).reshape(-1, 1)
+            terminals_tot = torch.stack(itemgetter(*self.agent_keys)(terminals), dim=1).all(1).reshape([-1, 1]).float()
+            actions = itemgetter(*self.agent_keys)(actions).reshape(batch_size, self.n_agents, seq_len)
+
+        rnn_hidden = {k: self.policy.representation[k].init_hidden(bs_rnn) for k in self.model_keys}
+        _, hidden_states = self.policy.get_hidden_states(batch_size, obs, rnn_hidden, use_target_net=False)
+        actions = actions.transpose(1, 2).reshape(batch_size * seq_len, self.n_agents)
+        state_current = state[:, :-1] if self.config.agent == "DCG_S" else None
+        state_next = state[:, 1:] if self.config.agent == "DCG_S" else None
+        q_tot_eval = self.q_dcg(hidden_states[:, :-1].reshape(batch_size * seq_len, self.n_agents, -1),
+                                actions, states=state_current, use_target_net=False)
+
+        if self.use_actions_mask:
+            avail_a_next = avail_actions.transpose(1, 2)[:, 1:].reshape(batch_size * seq_len, self.n_agents, -1)
+        else:
+            avail_a_next = None
+        hidden_states_next = hidden_states[:, 1:].reshape(batch_size * seq_len, self.n_agents, -1)
+        action_next_greedy = torch.Tensor(self.act(hidden_states_next, avail_actions=avail_a_next)).to(self.device)
+        rnn_hidden_target = {k: self.policy.target_representation[k].init_hidden(bs_rnn) for k in self.model_keys}
+        _, hidden_states_tar = self.policy.get_hidden_states(batch_size, obs, rnn_hidden_target, use_target_net=True)
+        q_tot_next = self.q_dcg(hidden_states_tar[:, 1:].reshape(batch_size * seq_len, self.n_agents, -1),
+                                action_next_greedy, states=state_next, use_target_net=True)
+
+        q_tot_target = rewards_tot + (1 - terminals_tot) * self.gamma * q_tot_next
+        td_error = (q_tot_eval - q_tot_target.detach()) * filled
 
         # calculate the loss function
         loss = (td_error ** 2).sum() / filled.sum()
         self.optimizer.zero_grad()
         loss.backward()
-        if self.args.use_grad_clip:
-            torch.nn.utils.clip_grad_norm_(self.policy.parameters(), self.args.grad_clip_norm)
+        if self.use_grad_clip:
+            torch.nn.utils.clip_grad_norm_(self.policy.parameters_model, self.grad_clip_norm)
         self.optimizer.step()
         if self.scheduler is not None:
             self.scheduler.step()
 
-        if self.iterations % self.sync_frequency == 0:
-            self.policy.copy_target()
         lr = self.optimizer.state_dict()['param_groups'][0]['lr']
 
         info = {
             "learning_rate": lr,
             "loss_Q": loss.item(),
-            "predictQ": q_eval_a.mean().item()
+            "predictQ": q_tot_eval.mean().item()
         }
 
+        if self.iterations % self.sync_frequency == 0:
+            self.policy.copy_target()
         return info
