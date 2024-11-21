@@ -40,7 +40,6 @@ class QMIX_Agents(OffPolicyMARLAgents):
         normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
         initializer = torch.nn.init.orthogonal_
         activation = ActivationFunctions[self.config.activation]
-        device = self.device
 
         # build representations
         representation = self._build_representation(self.config.representation, self.observation_space, self.config)
@@ -48,13 +47,13 @@ class QMIX_Agents(OffPolicyMARLAgents):
         # build policies
         dim_state = self.state_space.shape[-1]
         mixer = QMIX_mixer(dim_state, self.config.hidden_dim_mixing_net,
-                           self.config.hidden_dim_hyper_net, self.n_agents, device)
-        if self.config.policy == "":
+                           self.config.hidden_dim_hyper_net, self.n_agents, self.device)
+        if self.config.policy == "Mixing_Q_network":
             policy = REGISTRY_Policy["Mixing_Q_network"](
                 action_space=self.action_space, n_agents=self.n_agents, representation=representation,
                 mixer=mixer, hidden_size=self.config.q_hidden_size,
                 normalize=normalize_fn, initialize=initializer, activation=activation,
-                device=device, use_distributed_training=self.distributed_training,
+                device=self.device, use_distributed_training=self.distributed_training,
                 use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
                 use_rnn=self.use_rnn, rnn=self.config.rnn if self.use_rnn else None)
         else:

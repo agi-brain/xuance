@@ -3,6 +3,7 @@ from .vdn_learner import VDN_Learner
 from .qmix_learner import QMIX_Learner
 from .wqmix_learner import WQMIX_Learner
 from .qtran_learner import QTRAN_Learner
+from .dcg_learner import DCG_Learner
 from .mfq_learner import MFQ_Learner
 
 from .coma_learner import COMA_Learner

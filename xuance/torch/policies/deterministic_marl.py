@@ -1,5 +1,8 @@
 import os
+from operator import itemgetter
+
 import torch
+from click.core import batch
 from torch.distributions import Categorical
 from torch.nn.functional import one_hot
 from copy import deepcopy
@@ -788,7 +791,7 @@ class DCG_policy(Module):
         self.n_agents = n_agents
         self.use_parameter_sharing = kwargs['use_parameter_sharing']
         self.model_keys= kwargs['model_keys']
-        self.representation_info_shape = {key: representation[key].output_shape for key in self.model_keys}
+        self.representation_info_shape = {key: representation[key].output_shapes for key in self.model_keys}
         self.lstm = True if kwargs['rnn'] == "LSTM" else False
         self.use_rnn = True if kwargs['use_rnn'] else False
 
@@ -807,6 +810,53 @@ class DCG_policy(Module):
             self.bias = BasicQhead(state_dim, 1, 0, hidden_size_bias,
                                    normalize, initialize, activation, device)
             self.target_bias = deepcopy(self.bias)
+
+    @property
+    def parameters_model(self):
+        parameters_model = list(self.representation.parameters()) + \
+                           list(self.utility.parameters()) + \
+                           list(self.payoffs.parameters())
+        if self.dcg_s:
+            parameters_model += list(self.bias.parameters())
+        return parameters_model
+
+    def get_hidden_states(self, batch_size: int,
+                          observation: Dict[str, Tensor],
+                          rnn_hidden: Optional[Dict[str, List[Tensor]]] = None,
+                          use_target_net=False):
+        """
+        Get the hidden states of the representations for all agents.
+
+        Args:
+            batch_size (int): The batch size.
+            observation (Dict[Tensor]): The input observations for the policies.
+            rnn_hidden (Optional[Dict[str, List[Tensor]]]): The hidden variables of the RNN.
+            use_target_net (bool): Whether to use a target network or not.
+
+        Returns:
+            rnn_hidden: The RNN hidden states for next step calculating.
+            hidden_states_n: The hidden states of the representations that what we want.
+        """
+        rnn_hidden_new, hidden_states = {}, {}
+        for key in self.model_keys:
+            if self.use_rnn:
+                if use_target_net:
+                    outputs = self.target_representation[key](observation[key], *rnn_hidden)
+                else:
+                    outputs = self.representation[key](observation[key], *rnn_hidden)
+                rnn_hidden_new[key] = (outputs['rnn_hidden'], outputs['rnn_cell'])
+            else:
+                if use_target_net:
+                    outputs = self.target_representation[key](observation[key])
+                else:
+                    outputs = self.representation[key](observation[key])
+                rnn_hidden_new[key] = [None, None]
+            hidden_states[key] = outputs['state']
+        if self.use_parameter_sharing:
+            hidden_states_n = hidden_states[self.model_keys[0]].reshape(batch_size, self.n_agents, -1)
+        else:
+            hidden_states_n = itemgetter(*self.agent_keys)(hidden_states).reshape(batch_size, self.n_agents, -1)
+        return rnn_hidden, hidden_states_n
 
     def copy_target(self):
         for ep, tp in zip(self.representation.parameters(), self.target_representation.parameters()):
