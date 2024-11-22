@@ -791,6 +791,7 @@ class DCG_policy(Module):
         self.n_agents = n_agents
         self.use_parameter_sharing = kwargs['use_parameter_sharing']
         self.model_keys= kwargs['model_keys']
+
         self.representation_info_shape = {key: representation[key].output_shapes for key in self.model_keys}
         self.lstm = True if kwargs['rnn'] == "LSTM" else False
         self.use_rnn = True if kwargs['use_rnn'] else False
@@ -861,11 +862,11 @@ class DCG_policy(Module):
                 hidden_states_n = hidden_states_n.transpose(1, 2).reshape(batch_size, self.n_agents, -1)
         else:
             if self.use_rnn:
-                hidden_states_n = torch.cat([hidden_states[key].reshape(batch_size, seq_len, 1, -1)
-                                             for key in self.agent_keys], dim=2)
+                hidden_states_n = torch.stack(itemgetter(*self.model_keys)(hidden_states), dim=-2)
                 hidden_states_n = hidden_states_n.reshape(batch_size, seq_len, self.n_agents, -1)
             else:
-                hidden_states_n = itemgetter(*self.agent_keys)(hidden_states).reshape(batch_size, self.n_agents, -1)
+                hidden_states_n = torch.stack(itemgetter(*self.model_keys)(hidden_states), dim=-2)
+                hidden_states_n = hidden_states_n.reshape(batch_size, self.n_agents, -1)
         return rnn_hidden, hidden_states_n
 
     def copy_target(self):

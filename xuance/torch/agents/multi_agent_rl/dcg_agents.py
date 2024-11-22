@@ -1,6 +1,8 @@
 import torch
+import numpy as np
 from torch.nn import Module
 from argparse import Namespace
+from operator import itemgetter
 from xuance.common import List, Optional
 from xuance.environment import DummyVecMultiAgentEnv
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
@@ -15,6 +17,7 @@ class DCG_Agents(OffPolicyMARLAgents):
         config: the Namespace variable that provides hyper-parameters and other settings.
         envs: the vectorized environments.
     """
+
     def __init__(self,
                  config: Namespace,
                  envs: DummyVecMultiAgentEnv):
@@ -56,7 +59,7 @@ class DCG_Agents(OffPolicyMARLAgents):
             policy = REGISTRY_Policy["DCG_Policy"](
                 action_space=self.action_space, n_agents=self.n_agents,
                 representation=representation, utility=utility, payoffs=payoffs, dcgraph=dcgraph,
-                hidden_size_bias=self.config.hidden_bias_dim if self.config.agent=="DCG_S" else None,
+                hidden_size_bias=self.config.hidden_bias_dim if self.config.agent == "DCG_S" else None,
                 normalize=normalize_fn, initializer=initializer, activation=activation, device=self.device,
                 use_distributed_training=self.distributed_training, use_parameter_sharing=self.use_parameter_sharing,
                 model_keys=self.model_keys, use_rnn=self.use_rnn, rnn=self.config.rnn if self.use_rnn else None)
@@ -64,7 +67,6 @@ class DCG_Agents(OffPolicyMARLAgents):
             raise AttributeError(f"DCG currently does not support the policy named {self.config.policy}.")
 
         return policy
-
 
     def action(self,
                obs_dict: List[dict],
@@ -89,6 +91,12 @@ class DCG_Agents(OffPolicyMARLAgents):
         with torch.no_grad():
             rnn_hidden_next, hidden_states = self.policy.get_hidden_states(batch_size, obs_input, rnn_hidden,
                                                                            use_target_net=False)
+            if self.use_actions_mask:
+                if self.use_parameter_sharing:
+                    avail_actions_input = avail_actions_input[self.model_keys[0]].reshape(batch_size, self.n_agents, -1)
+                else:
+                    avail_actions_input = np.stack(itemgetter(*self.agent_keys)(avail_actions_input),
+                                                   axis=-2).reshape(batch_size, self.n_agents, -1)
             hidden_states = hidden_states.reshape([batch_size, self.n_agents, -1])
             actions = self.learner.act(hidden_states, avail_actions=avail_actions_input)
 

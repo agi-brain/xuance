@@ -25,6 +25,8 @@ hidden_payoff_dim: 64  # hidden units of the payoff function
 bias_net: "Basic_MLP"
 hidden_bias_dim: [64, ]  # hidden units of the bias network with global states as input
 activation: "relu"
+use_parameter_sharing: True
+use_actions_mask: True
 
 low_rank_payoff: False  # low-rank approximation of payoff function
 payoff_rank: 5  # the rank K in the paper

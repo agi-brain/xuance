@@ -3,10 +3,9 @@ DCG: Deep coordination graphs
 Paper link: http://proceedings.mlr.press/v119/boehmer20a/boehmer20a.pdf
 Implementation: Pytorch
 """
-from operator import itemgetter
-
 import torch
 from torch import nn
+from operator import itemgetter
 from xuance.torch.learners import LearnerMAS
 from xuance.common import List
 from argparse import Namespace
@@ -122,28 +121,28 @@ class DCG_Learner(LearnerMAS):
         obs_next = sample_Tensor['obs_next']
         rewards = sample_Tensor['rewards']
         terminals = sample_Tensor['terminals']
-        agent_mask = sample_Tensor['agent_mask']
         avail_actions = sample_Tensor['avail_actions']
         avail_actions_next = sample_Tensor['avail_actions_next']
-        IDs = sample_Tensor['agent_ids']
 
         if self.use_parameter_sharing:
             key = self.model_keys[0]
-            bs = batch_size * self.n_agents
             rewards_tot = rewards[key].mean(dim=1).reshape(batch_size, 1)
             terminals_tot = terminals[key].all(dim=1, keepdim=False).float().reshape(batch_size, 1)
             actions = actions[key].reshape(batch_size, self.n_agents)
+            if self.use_actions_mask:
+                avail_actions_next = avail_actions_next[key].reshape(batch_size, self.n_agents, -1)
         else:
-            bs = batch_size
             rewards_tot = torch.stack(itemgetter(*self.agent_keys)(rewards), dim=1).mean(dim=-1, keepdim=True)
             terminals_tot = torch.stack(itemgetter(*self.agent_keys)(terminals), dim=1).all(dim=1, keepdim=True).float()
-            actions = itemgetter(*self.agent_keys)(actions).reshape(batch_size, self.n_agents)
+            actions = torch.stack(itemgetter(*self.agent_keys)(actions), dim=-1)
+            if self.use_actions_mask:
+                avail_actions_next = torch.stack(itemgetter(*self.agent_keys)(avail_actions_next), dim=-2)
 
         _, hidden_states = self.policy.get_hidden_states(batch_size, obs, use_target_net=False)
         q_tot_eval = self.q_dcg(hidden_states, actions, states=state, use_target_net=False)
 
         _, hidden_states_next = self.policy.get_hidden_states(batch_size, obs_next, use_target_net=False)
-        action_next_greedy = torch.Tensor(self.act(hidden_states_next)).to(self.device)
+        action_next_greedy = torch.Tensor(self.act(hidden_states_next, avail_actions_next)).to(self.device)
         _, hidden_states_target = self.policy.get_hidden_states(batch_size, obs_next, use_target_net=True)
         q_tot_next = self.q_dcg(hidden_states_target, action_next_greedy, states=state_next, use_target_net=True)
 
@@ -187,33 +186,35 @@ class DCG_Learner(LearnerMAS):
         actions = sample_Tensor['actions']
         rewards = sample_Tensor['rewards']
         terminals = sample_Tensor['terminals']
-        agent_mask = sample_Tensor['agent_mask']
         avail_actions = sample_Tensor['avail_actions']
         filled = sample_Tensor['filled'].reshape([-1, 1])
-        IDs = sample_Tensor['agent_ids']
 
         if self.use_parameter_sharing:
             key = self.model_keys[0]
             bs_rnn = batch_size * self.n_agents
             rewards_tot = rewards[key].mean(dim=1).reshape([-1, 1])
             terminals_tot = terminals[key].all(dim=1, keepdim=False).float().reshape([-1, 1])
-            actions = actions[key].reshape(batch_size, self.n_agents, seq_len)
+            actions = actions[key].reshape(batch_size, self.n_agents, seq_len).transpose(1, 2)
+            if self.use_actions_mask:
+                avail_actions = avail_actions[key].reshape(batch_size, self.n_agents, seq_len + 1, -1).transpose(1, 2)
         else:
             bs_rnn = batch_size
             rewards_tot = torch.stack(itemgetter(*self.agent_keys)(rewards), dim=1).mean(dim=1).reshape(-1, 1)
             terminals_tot = torch.stack(itemgetter(*self.agent_keys)(terminals), dim=1).all(1).reshape([-1, 1]).float()
-            actions = itemgetter(*self.agent_keys)(actions).reshape(batch_size, self.n_agents, seq_len)
+            actions = torch.stack(itemgetter(*self.agent_keys)(actions), dim=-1)
+            if self.use_actions_mask:
+                avail_actions = torch.stack(itemgetter(*self.agent_keys)(avail_actions), dim=-2)
 
         rnn_hidden = {k: self.policy.representation[k].init_hidden(bs_rnn) for k in self.model_keys}
         _, hidden_states = self.policy.get_hidden_states(batch_size, obs, rnn_hidden, use_target_net=False)
-        actions = actions.transpose(1, 2).reshape(batch_size * seq_len, self.n_agents)
         state_current = state[:, :-1] if self.config.agent == "DCG_S" else None
         state_next = state[:, 1:] if self.config.agent == "DCG_S" else None
         q_tot_eval = self.q_dcg(hidden_states[:, :-1].reshape(batch_size * seq_len, self.n_agents, -1),
-                                actions, states=state_current, use_target_net=False)
+                                actions.reshape(batch_size * seq_len, self.n_agents),
+                                states=state_current, use_target_net=False)
 
         if self.use_actions_mask:
-            avail_a_next = avail_actions.transpose(1, 2)[:, 1:].reshape(batch_size * seq_len, self.n_agents, -1)
+            avail_a_next = avail_actions[:, 1:].reshape(batch_size * seq_len, self.n_agents, -1)
         else:
             avail_a_next = None
         hidden_states_next = hidden_states[:, 1:].reshape(batch_size * seq_len, self.n_agents, -1)
