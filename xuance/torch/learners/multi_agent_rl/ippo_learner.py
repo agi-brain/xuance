@@ -6,9 +6,9 @@ Implementation: Pytorch
 import numpy as np
 import torch
 from torch import nn
-from xuance.common import Optional, List
 from argparse import Namespace
 from operator import itemgetter
+from xuance.common import Optional, List
 from xuance.torch import Tensor
 from xuance.torch.utils import ValueNorm
 from xuance.torch.learners import LearnerMAS

@@ -4,42 +4,150 @@ Paper link:
 https://ojs.aaai.org/index.php/AAAI/article/view/17353
 Implementation: Pytorch
 """
+import numpy as np
 import torch
 from torch import nn
-from xuance.torch.learners import LearnerMAS
-from xuance.common import Optional, Union
 from argparse import Namespace
+from operator import itemgetter
+from xuance.common import Optional, Union, List
+from xuance.torch import Tensor
 from xuance.torch.utils.value_norm import ValueNorm
-from xuance.torch.utils.operations import update_linear_decay
+from xuance.torch.learners import LearnerMAS
 
 
 class VDAC_Learner(LearnerMAS):
     def __init__(self,
                  config: Namespace,
-                 policy: nn.Module,
-                 optimizer: torch.optim.Optimizer,
-                 scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
-                 device: Optional[Union[int, str, torch.device]] = None,
-                 model_dir: str = "./",
-                 gamma: float = 0.99,
-                 ):
-        self.gamma = gamma
-        self.clip_range = config.clip_range
-        self.use_linear_lr_decay = config.use_linear_lr_decay
-        self.use_grad_clip, self.grad_clip_norm = config.use_grad_clip, config.grad_clip_norm
-        self.use_value_norm = config.use_value_norm
-        self.vf_coef, self.ent_coef = config.vf_coef, config.ent_coef
-        super(VDAC_Learner, self).__init__(config, policy, optimizer, scheduler, device, model_dir)
-        if self.use_value_norm:
-            self.value_normalizer = ValueNorm(1).to(device)
-        else:
-            self.value_normalizer = None
+                 model_keys: List[str],
+                 agent_keys: List[str],
+                 policy: nn.Module):
+        super(VDAC_Learner, self).__init__(config, model_keys, agent_keys, policy)
+        self.optimizer = torch.optim.Adam(self.policy.parameters_model, lr=config.learning_rate, eps=1e-5,
+                                          weight_decay=config.weight_decay)
+        self.scheduler = torch.optim.lr_scheduler.LinearLR(self.optimizer,
+                                                           start_factor=1.0, end_factor=config.end_factor_lr_decay,
+                                                           total_iters=self.config.running_steps)
         self.lr = config.learning_rate
         self.end_factor_lr_decay = config.end_factor_lr_decay
+        self.gamma = config.gamma
+        self.clip_range = config.clip_range
+        self.use_linear_lr_decay = config.use_linear_lr_decay
+        self.use_value_clip, self.value_clip_range = config.use_value_clip, config.value_clip_range
+        self.use_huber_loss, self.huber_delta = config.use_huber_loss, config.huber_delta
+        self.use_value_norm = config.use_value_norm
+        self.vf_coef, self.ent_coef = config.vf_coef, config.ent_coef
+        self.mse_loss = nn.MSELoss()
+        self.huber_loss = nn.HuberLoss(reduction="none", delta=self.huber_delta)
+        if self.use_value_norm:
+            self.value_normalizer = {key: ValueNorm(1).to(self.device) for key in self.model_keys}
+        else:
+            self.value_normalizer = None
 
-    def lr_decay(self, i_step):
-        if self.use_linear_lr_decay:
-            update_linear_decay(self.optimizer, i_step, self.running_steps, self.lr, self.end_factor_lr_decay)
+    def build_training_data(self, sample: Optional[dict],
+                            use_parameter_sharing: Optional[bool] = False,
+                            use_actions_mask: Optional[bool] = False,
+                            use_global_state: Optional[bool] = False):
+        """
+        Prepare the training data.
+
+        Parameters:
+            sample (dict): The raw sampled data.
+            use_parameter_sharing (bool): Whether to use parameter sharing for individual agent models.
+            use_actions_mask (bool): Whether to use actions mask for unavailable actions.
+            use_global_state (bool): Whether to use global state.
+
+        Returns:
+            sample_Tensor (dict): The formatted sampled data.
+        """
+        batch_size = sample['batch_size']
+        seq_length = sample['sequence_length'] if self.use_rnn else 1
+        state, avail_actions, filled, IDs = None, None, None, None
+        if use_parameter_sharing:
+            k = self.model_keys[0]
+            bs = batch_size * self.n_agents
+            obs_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['obs']), axis=1)).to(self.device)
+            actions_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['actions']), axis=1)).to(self.device)
+            values_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['values']), axis=1)).to(self.device)
+            returns_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['returns']), axis=1)).to(self.device)
+            advantages_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['advantages']), 1)).to(self.device)
+            log_pi_old_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['log_pi_old']), 1)).to(self.device)
+            ter_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['terminals']), 1)).float().to(self.device)
+            msk_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['agent_mask']), 1)).float().to(self.device)
+            if self.use_rnn:
+                obs = {k: obs_tensor.reshape(bs, seq_length, -1)}
+                if len(actions_tensor.shape) == 3:
+                    actions = {k: actions_tensor.reshape(bs, seq_length)}
+                elif len(actions_tensor.shape) == 4:
+                    actions = {k: actions_tensor.reshape(bs, seq_length, -1)}
+                else:
+                    raise AttributeError("Wrong actions shape.")
+                values = {k: values_tensor.reshape(bs, seq_length)}
+                returns = {k: returns_tensor.reshape(bs, seq_length)}
+                advantages = {k: advantages_tensor.reshape(bs, seq_length)}
+                log_pi_old = {k: log_pi_old_tensor.reshape(bs, seq_length)}
+                terminals = {k: ter_tensor.reshape(bs, seq_length)}
+                agent_mask = {k: msk_tensor.reshape(bs, seq_length)}
+                IDs = torch.eye(self.n_agents).unsqueeze(1).unsqueeze(0).expand(
+                    batch_size, -1, seq_length, -1).reshape(bs, seq_length, self.n_agents).to(self.device)
+            else:
+                obs = {k: obs_tensor.reshape(bs, -1)}
+                if len(actions_tensor.shape) == 2:
+                    actions = {k: actions_tensor.reshape(bs)}
+                elif len(actions_tensor.shape) == 3:
+                    actions = {k: actions_tensor.reshape(bs, -1)}
+                else:
+                    raise AttributeError("Wrong actions shape.")
+                values = {k: values_tensor.reshape(bs)}
+                returns = {k: returns_tensor.reshape(bs)}
+                advantages = {k: advantages_tensor.reshape(bs)}
+                log_pi_old = {k: log_pi_old_tensor.reshape(bs)}
+                terminals = {k: ter_tensor.reshape(bs)}
+                agent_mask = {k: msk_tensor.reshape(bs)}
+                IDs = torch.eye(self.n_agents).unsqueeze(0).expand(
+                    batch_size, -1, -1).reshape(bs, self.n_agents).to(self.device)
+
+            if use_actions_mask:
+                avail_a = np.stack(itemgetter(*self.agent_keys)(sample['avail_actions']), axis=1)
+                if self.use_rnn:
+                    avail_actions = {k: Tensor(avail_a.reshape([bs, seq_length, -1])).float().to(self.device)}
+                else:
+                    avail_actions = {k: Tensor(avail_a.reshape([bs, -1])).float().to(self.device)}
+
+        else:
+            obs = {k: Tensor(sample['obs'][k]).to(self.device) for k in self.agent_keys}
+            actions = {k: Tensor(sample['actions'][k]).to(self.device) for k in self.agent_keys}
+            values = {k: Tensor(sample['values'][k]).to(self.device) for k in self.agent_keys}
+            returns = {k: Tensor(sample['returns'][k]).to(self.device) for k in self.agent_keys}
+            advantages = {k: Tensor(sample['advantages'][k]).to(self.device) for k in self.agent_keys}
+            log_pi_old = {k: Tensor(sample['log_pi_old'][k]).to(self.device) for k in self.agent_keys}
+            terminals = {k: Tensor(sample['terminals'][k]).float().to(self.device) for k in self.agent_keys}
+            agent_mask = {k: Tensor(sample['agent_mask'][k]).float().to(self.device) for k in self.agent_keys}
+            if use_actions_mask:
+                avail_actions = {k: Tensor(sample['avail_actions'][k]).float().to(self.device) for k in self.agent_keys}
+
+        if use_global_state:
+            state = Tensor(sample['state']).to(self.device)
+
+        if self.use_rnn:
+            filled = Tensor(sample['filled']).float().to(self.device)
+
+        sample_Tensor = {
+            'batch_size': batch_size,
+            'state': state,
+            'obs': obs,
+            'actions': actions,
+            'values': values,
+            'returns': returns,
+            'advantages': advantages,
+            'log_pi_old': log_pi_old,
+            'terminals': terminals,
+            'agent_mask': agent_mask,
+            'avail_actions': avail_actions,
+            'agent_ids': IDs,
+            'filled': filled,
+            'seq_length': seq_length,
+        }
+        return sample_Tensor
 
     def update(self, sample):
         info = {}
@@ -89,7 +197,7 @@ class VDAC_Learner(LearnerMAS):
 
         return info
 
-    def update_recurrent(self, sample):
+    def update_rnn(self, sample):
         info = {}
         self.iterations += 1
         state = torch.Tensor(sample['state']).to(self.device)

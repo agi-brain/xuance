@@ -4,10 +4,10 @@ env_id: "simple_spread_v3"
 env_seed: 1
 continuous_action: False
 learner: "VDAC_Learner"
-policy: "Categorical_MAAC_Policy_Share"
+policy: "Categorical_MAAC_Policy"
 representation: "Basic_MLP"
 vectorize: "DummyVecMultiAgentEnv"
-runner: "Pettingzoo_Runner"
+runner: "MARL"
 
 # recurrent settings for Basic_RNN representation
 use_rnn: False
