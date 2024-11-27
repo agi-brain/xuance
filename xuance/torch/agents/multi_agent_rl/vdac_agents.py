@@ -1,31 +1,28 @@
 import torch
 import numpy as np
-from tqdm import tqdm
-from copy import deepcopy
-from operator import itemgetter
 from argparse import Namespace
-from xuance.common import List
+from xuance.common import Optional
 from xuance.environment import DummyVecMultiAgentEnv
+from xuance.torch import Module
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
-from xuance.torch.representations import REGISTRY_Representation
-from xuance.torch.policies import REGISTRY_Policy, QMIX_mixer
-from xuance.torch.learners import QMIX_Learner
-from xuance.torch.agents import MARLAgents
-from xuance.torch.agents.multi_agent_rl.iql_agents import IQL_Agents
-from xuance.common import MARL_OffPolicyBuffer, MARL_OffPolicyBuffer_RNN
+from xuance.torch.policies import REGISTRY_Policy, VDN_mixer, QMIX_mixer
+from xuance.torch.agents import OnPolicyMARLAgents
 
 
-class VDAC_Agents(MARLAgents):
+class VDAC_Agents(OnPolicyMARLAgents):
     """The implementation of VDAC agents.
 
     Args:
         config: the Namespace variable that provides hyper-parameters and other settings.
         envs: the vectorized environments.
-        device: the calculating device of the model, such as CPU or GPU.
     """
     def __init__(self,
                  config: Namespace,
                  envs: DummyVecMultiAgentEnv):
+        super(VDAC_Agents, self).__init__(config, envs)
+        self.state_space = envs.state_space
+        self.mixer = config.mixer
+
         self.gamma = config.gamma
         self.n_envs = envs.num_envs
         self.n_epochs = config.n_epochs
@@ -43,15 +40,7 @@ class VDAC_Agents(MARLAgents):
                       "rnn": config.rnn} if self.use_rnn else {}
         representation = REGISTRY_Representation[config.representation](*input_representation, **kwargs_rnn)
         # create policy
-        if config.mixer == "VDN":
-            mixer = VDN_mixer()
-        elif config.mixer == "QMIX":
-            mixer = QMIX_mixer(config.dim_state[0], config.hidden_dim_mixing_net, config.hidden_dim_hyper_net,
-                               config.n_agents, device)
-        elif config.mixer == "Independent":
-            mixer = None
-        else:
-            raise AttributeError(f"Mixer named {config.mixer} is not defined!")
+
         input_policy = get_policy_in_marl(config, representation, mixer=mixer)
         policy = REGISTRY_Policy[config.policy](*input_policy,
                                                 use_rnn=config.use_rnn,
@@ -77,6 +66,59 @@ class VDAC_Agents(MARLAgents):
                                           config.log_dir, config.model_dir)
         self.share_values = True if config.rew_shape[0] == 1 else False
         self.on_policy = True
+
+    def _build_policy(self) -> Module:
+        """
+        Build representation(s) and policy(ies) for agent(s)
+
+        Returns:
+            policy (torch.nn.Module): A dict of policies.
+        """
+        normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
+        initializer = torch.nn.init.orthogonal_
+        activation = ActivationFunctions[self.config.activation]
+        device = self.device
+        agent = self.config.agent
+        # build representations
+        A_representation = self._build_representation(self.config.representation, self.observation_space, self.config)
+        C_representation = self._build_representation(self.config.representation, self.observation_space, self.config)
+        # create mixer
+        if self.mixer == "VDN":
+            mixer = VDN_mixer()
+        elif self.mixer == "QMIX":
+            dim_state = self.state_space.shape[-1]
+            mixer = QMIX_mixer(dim_state, self.config.hidden_dim_mixing_net, self.config.hidden_dim_hyper_net,
+                               self.n_agents, self.device)
+        elif self.mixer == "Independent":
+            mixer = None
+        else:
+            raise AttributeError(f"Mixer named {self.mixer} is not supported in XuanCe!")
+        # build policies
+        if self.config.policy == "Categorical_MAAC_Policy":
+            policy = REGISTRY_Policy["Categorical_MAAC_Policy"](
+                action_space=self.action_space, n_agents=self.n_agents,
+                representation_actor=A_representation, representation_critic=C_representation,
+                actor_hidden_size=self.config.actor_hidden_size, critic_hidden_size=self.config.critic_hidden_size,
+                normalize=normalize_fn, initialize=initializer, activation=activation,
+                device=device, use_distributed_training=self.distributed_training,
+                use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
+                use_rnn=self.use_rnn, rnn=self.config.rnn if self.use_rnn else None)
+            self.continuous_control = False
+        elif self.config.policy == "Gaussian_MAAC_Policy":
+            policy = REGISTRY_Policy["Gaussian_MAAC_Policy"](
+                action_space=self.action_space, n_agents=self.n_agents,
+                representation_actor=A_representation, representation_critic=C_representation,
+                actor_hidden_size=self.config.actor_hidden_size, critic_hidden_size=self.config.critic_hidden_size,
+                normalize=normalize_fn, initialize=initializer, activation=activation,
+                activation_action=ActivationFunctions[self.config.activation_action],
+                device=device, use_distributed_training=self.distributed_training,
+                use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
+                use_rnn=self.use_rnn, rnn=self.config.rnn if self.use_rnn else None)
+            self.continuous_control = True
+        else:
+            raise AttributeError(f"{agent} currently does not support the policy named {self.config.policy}.")
+        return policy
+
 
     def act(self, obs_n, *rnn_hidden, avail_actions=None, state=None, test_mode=False):
         batch_size = len(obs_n)
