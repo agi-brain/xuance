@@ -71,7 +71,7 @@ class QTRAN_Learner(LearnerMAS):
             q_eval_greedy_a[key] = q_eval[key].gather(-1, actions_greedy[key].long().unsqueeze(-1)).reshape(bs)
 
             if self.use_actions_mask:
-                q_next[key][avail_actions_next[key] == 0] = -9999999
+                q_next[key][avail_actions_next[key] == 0] = -1e10
 
             if self.config.double_q:
                 _, _, act_next, _ = self.policy(observation=obs_next, agent_ids=IDs,
@@ -224,7 +224,7 @@ class QTRAN_Learner(LearnerMAS):
             q_next[key] = q_next_seq[key][:, 1:]
 
             if self.use_actions_mask:
-                q_next[key][avail_actions[key][:, 1:] == 0] = -9999999
+                q_next[key][avail_actions[key][:, 1:] == 0] = -1e10
 
             if self.config.double_q:
                 act_next = actions_greedy[key][:, 1:]

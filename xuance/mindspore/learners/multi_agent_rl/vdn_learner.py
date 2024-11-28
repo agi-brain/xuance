@@ -75,7 +75,7 @@ class VDN_Learner(LearnerMAS):
         q_next_a = {}
         for key in self.model_keys:
             if self.use_actions_mask:
-                q_next[key][avail_actions_next[key] == 0] = -9999999
+                q_next[key][avail_actions_next[key] == 0] = -1e10
 
             if self.config.double_q:
                 _, act_next, _ = self.policy(observation=obs_next, agent_ids=IDs,

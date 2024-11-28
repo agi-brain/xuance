@@ -1,7 +1,5 @@
 import torch
-import numpy as np
 from argparse import Namespace
-from xuance.common import Optional
 from xuance.environment import DummyVecMultiAgentEnv
 from xuance.torch import Module
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
@@ -57,7 +55,7 @@ class VDAC_Agents(OnPolicyMARLAgents):
         if self.config.policy == "Categorical_MAAC_Policy":
             policy = REGISTRY_Policy["Categorical_MAAC_Policy"](
                 action_space=self.action_space, n_agents=self.n_agents,
-                representation_actor=A_representation, representation_critic=C_representation,
+                representation_actor=A_representation, representation_critic=C_representation, mixer=mixer,
                 actor_hidden_size=self.config.actor_hidden_size, critic_hidden_size=self.config.critic_hidden_size,
                 normalize=normalize_fn, initialize=initializer, activation=activation,
                 device=device, use_distributed_training=self.distributed_training,
@@ -67,7 +65,7 @@ class VDAC_Agents(OnPolicyMARLAgents):
         elif self.config.policy == "Gaussian_MAAC_Policy":
             policy = REGISTRY_Policy["Gaussian_MAAC_Policy"](
                 action_space=self.action_space, n_agents=self.n_agents,
-                representation_actor=A_representation, representation_critic=C_representation,
+                representation_actor=A_representation, representation_critic=C_representation, mixer=mixer,
                 actor_hidden_size=self.config.actor_hidden_size, critic_hidden_size=self.config.critic_hidden_size,
                 normalize=normalize_fn, initialize=initializer, activation=activation,
                 activation_action=ActivationFunctions[self.config.activation_action],
@@ -78,30 +76,3 @@ class VDAC_Agents(OnPolicyMARLAgents):
         else:
             raise AttributeError(f"{agent} currently does not support the policy named {self.config.policy}.")
         return policy
-
-
-    def act(self, obs_n, *rnn_hidden, avail_actions=None, state=None, test_mode=False):
-        batch_size = len(obs_n)
-        agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(batch_size, -1, -1).to(self.device)
-        obs_in = torch.Tensor(obs_n).reshape([batch_size, self.n_agents, -1]).to(self.device)
-        if state is not None:
-            state = torch.Tensor(state).to(self.device)
-        if avail_actions is not None:
-            avail_actions = torch.Tensor(avail_actions).to(self.device)
-        if self.use_rnn:
-            batch_agents = batch_size * self.n_agents
-            hidden_state, dists, values_tot = self.policy(obs_in.reshape(batch_agents, 1, -1),
-                                                          agents_id.reshape(batch_agents, 1, -1),
-                                                          *rnn_hidden,
-                                                          avail_actions=avail_actions.reshape(batch_agents, 1, -1),
-                                                          state=state.unsqueeze(2))
-            actions = dists.stochastic_sample()
-            actions = actions.reshape(batch_size, self.n_agents)
-            values_tot = values_tot.reshape([batch_size, self.n_agents, 1])
-        else:
-            hidden_state, dists, values_tot = self.policy(obs_in, agents_id,
-                                                          avail_actions=avail_actions,
-                                                          state=state)
-            actions = dists.stochastic_sample()
-            values_tot = values_tot.reshape([batch_size, self.n_agents, 1])
-        return hidden_state, actions.detach().cpu().numpy(), values_tot.detach().cpu().numpy()

@@ -58,7 +58,7 @@ class IQL_Learner(LearnerMAS):
             q_eval_a = q_eval[key].gather(-1, actions[key].long().unsqueeze(-1)).reshape(bs)
 
             if self.use_actions_mask:
-                q_next[key][avail_actions_next[key] == 0] = -9999999
+                q_next[key][avail_actions_next[key] == 0] = -1e10
 
             if self.config.double_q:
                 _, actions_next_greedy, _ = self.policy(obs_next, IDs, agent_key=key, avail_actions=avail_actions)
@@ -129,7 +129,7 @@ class IQL_Learner(LearnerMAS):
             q_eval_a = q_eval[key][:, :-1].gather(-1, actions[key].long().unsqueeze(-1)).reshape(bs_rnn, seq_len)
             q_next = q_next_seq[key][:, 1:]
             if self.use_actions_mask:
-                q_next[avail_actions[key][:, 1:] == 0] = -9999999
+                q_next[avail_actions[key][:, 1:] == 0] = -1e10
 
             if self.config.double_q:
                 actions_next_greedy = actions_greedy[key][:, 1:].unsqueeze(-1)

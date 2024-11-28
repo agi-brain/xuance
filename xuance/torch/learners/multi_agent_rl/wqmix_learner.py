@@ -77,7 +77,7 @@ class WQMIX_Learner(LearnerMAS):
             else:
                 _, q_next_eval = self.policy.Qtarget(observation=obs_next, agent_ids=IDs, agent_key=key)
                 if self.use_actions_mask:
-                    q_next_eval[key][avail_actions_next[key] == 0] = -9999999
+                    q_next_eval[key][avail_actions_next[key] == 0] = -1e10
                 act_next[key] = q_next_eval[key].argmax(dim=-1, keepdim=True)
             q_eval_next_centralized_a[key] = q_eval_next_centralized[key].gather(-1, act_next[key]).reshape(bs)
 
@@ -187,7 +187,7 @@ class WQMIX_Learner(LearnerMAS):
                                                     agent_key=key, rnn_hidden=target_rnn_hidden)
                 q_next_eval = q_next_seq[key][:, 1:]
                 if self.use_actions_mask:
-                    q_next_eval[avail_actions[key][:, 1:] == 0] = -9999999
+                    q_next_eval[avail_actions[key][:, 1:] == 0] = -1e10
                 act_next = q_next_eval.argmax(dim=-1, keepdim=True)
             q_eval_next_centralized_a[key] = q_eval_next_centralized[key][:, 1:].gather(-1, act_next).reshape(bs_rnn, seq_len)
 

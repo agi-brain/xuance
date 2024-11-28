@@ -89,7 +89,7 @@ class BasicQnetwork(Module):
 
             if avail_actions is not None:
                 evalQ_detach = tf.stop_gradient(evalQ[key].clone())
-                evalQ_detach[avail_actions[key] == 0] = -9999999
+                evalQ_detach[avail_actions[key] == 0] = -1e10
                 argmax_action[key] = tf.argmax(evalQ_detach, axis=-1)
             else:
                 argmax_action[key] = tf.argmax(evalQ[key], axis=-1)

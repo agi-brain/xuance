@@ -115,7 +115,7 @@ class WQMIX_Learner(LearnerMAS):
             else:
                 _, q_next_eval = self.policy.Qtarget(observation=obs_next, agent_ids=IDs, agent_key=key)
                 if self.use_actions_mask:
-                    q_next_eval[key][avail_actions_next[key] == 0] = -9999999
+                    q_next_eval[key][avail_actions_next[key] == 0] = -1e10
                 act_next[key] = q_next_eval[key].argmax(dim=-1, keepdim=True)
             q_eval_next_centralized_a[key] = q_eval_next_centralized[key].gather(act_next[key], -1, -1).reshape(bs)
             q_eval_next_centralized_a[key] *= agent_mask[key]

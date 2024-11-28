@@ -124,7 +124,7 @@ class BasicQnetwork(Module):
 
             if avail_actions is not None:
                 evalQ_detach = evalQ[key].clone().detach()
-                evalQ_detach[avail_actions[key] == 0] = -9999999
+                evalQ_detach[avail_actions[key] == 0] = -1e10
                 argmax_action[key] = evalQ_detach.argmax(dim=-1, keepdim=False)
             else:
                 argmax_action[key] = evalQ[key].argmax(dim=-1, keepdim=False)
@@ -572,7 +572,7 @@ class Qtran_MixingQnetwork(BasicQnetwork):
 
             if avail_actions is not None:
                 evalQ_detach = evalQ[key].clone().detach()
-                evalQ_detach[avail_actions[key] == 0] = -9999999
+                evalQ_detach[avail_actions[key] == 0] = -1e10
                 argmax_action[key] = evalQ_detach.argmax(dim=-1, keepdim=False)
             else:
                 argmax_action[key] = evalQ[key].argmax(dim=-1, keepdim=False)

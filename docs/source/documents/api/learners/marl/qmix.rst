@@ -234,7 +234,7 @@ Source Code
                                                  IDs.reshape(-1, episode_length + 1, self.n_agents),
                                                  *target_rnn_hidden)
                 q_next = q_next[:, 1:].reshape(batch_size, self.n_agents, episode_length, self.dim_act)
-                q_next[avail_actions[:, :, 1:] == 0] = -9999999
+                q_next[avail_actions[:, :, 1:] == 0] = -1e10
 
                 # use double-q trick
                 if self.args.double_q:

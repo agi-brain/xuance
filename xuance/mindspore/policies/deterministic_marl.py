@@ -93,7 +93,7 @@ class BasicQnetwork(Module):
 
             if avail_actions is not None:
                 evalQ_detach = ops.stop_gradient(evalQ[key].clone())
-                evalQ_detach[avail_actions[key] == 0] = -9999999
+                evalQ_detach[avail_actions[key] == 0] = -1e10
                 argmax_action[key] = self.argmax(evalQ_detach)
             else:
                 argmax_action[key] = self.argmax(evalQ[key])
@@ -447,7 +447,7 @@ class Qtran_MixingQnetwork(Module):
         evalQ = self.eval_Qhead(q_inputs)
         if avail_actions is not None:
             evalQ_detach = deepcopy(evalQ)
-            evalQ_detach[avail_actions == 0] = -9999999
+            evalQ_detach[avail_actions == 0] = -1e10
             argmax_action = evalQ_detach.argmax(axis=-1, keepdim=False)
         else:
             argmax_action = evalQ.argmax(axis=-1, keepdim=False)
@@ -516,7 +516,7 @@ class DCG_policy(Module):
         evalQ = self.eval_Qhead(q_inputs)
         if avail_actions is not None:
             evalQ_detach = deepcopy(evalQ)
-            evalQ_detach[avail_actions == 0] = -9999999
+            evalQ_detach[avail_actions == 0] = -1e10
             argmax_action = evalQ_detach.argmax(axis=-1, keepdim=False)
         else:
             argmax_action = evalQ.argmax(axis=-1, keepdim=False)

@@ -284,7 +284,7 @@ Source Code
                                                      IDs.reshape(-1, episode_length + 1, self.n_agents),
                                                      *target_rnn_hidden)
                     q_next = q_next[:, 1:].reshape(batch_size, self.n_agents, episode_length, self.dim_act)
-                    q_next[avail_actions[:, :, 1:] == 0] = -9999999
+                    q_next[avail_actions[:, :, 1:] == 0] = -1e10
                     action_next_greedy = q_next.argmax(dim=-1, keepdim=True)
                 q_eval_next_centralized = self.policy.target_q_centralized(obs.reshape(-1, episode_length + 1, self.dim_obs),
                                                                            IDs.reshape(-1, episode_length + 1, self.n_agents),

@@ -93,7 +93,7 @@ class DCG_Learner(LearnerMAS):
         if avail_actions is not None:
             avail_actions = torch.Tensor(avail_actions)
             utility_detach = utility.clone().detach()
-            utility_detach[avail_actions == 0] = -9999999
+            utility_detach[avail_actions == 0] = -1e10
             actions_greedy = utility_detach.argmax(dim=-1)
         else:
             actions_greedy = utility.argmax(dim=-1)

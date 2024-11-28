@@ -2193,7 +2193,7 @@ Source Code
                 if avail_actions is not None:
                     avail_actions = torch.Tensor(avail_actions)
                     evalQ_detach = evalQ.clone().detach()
-                    evalQ_detach[avail_actions == 0] = -9999999
+                    evalQ_detach[avail_actions == 0] = -1e10
                     argmax_action = evalQ_detach.argmax(dim=-1, keepdim=False)
                 else:
                     argmax_action = evalQ.argmax(dim=-1, keepdim=False)
@@ -2297,7 +2297,7 @@ Source Code
                 if avail_actions is not None:
                     avail_actions = torch.Tensor(avail_actions)
                     evalQ_detach = evalQ.clone().detach()
-                    evalQ_detach[avail_actions == 0] = -9999999
+                    evalQ_detach[avail_actions == 0] = -1e10
                     argmax_action = evalQ_detach.argmax(dim=-1, keepdim=False)
                 else:
                     argmax_action = evalQ.argmax(dim=-1, keepdim=False)
@@ -2468,7 +2468,7 @@ Source Code
                 if avail_actions is not None:
                     avail_actions = torch.Tensor(avail_actions)
                     evalQ_detach = evalQ.clone().detach()
-                    evalQ_detach[avail_actions == 0] = -9999999
+                    evalQ_detach[avail_actions == 0] = -1e10
                     argmax_action = evalQ_detach.argmax(dim=-1, keepdim=False)
                 else:
                     argmax_action = evalQ.argmax(dim=-1, keepdim=False)
@@ -2769,7 +2769,7 @@ Source Code
                 if ('avail_actions' in kwargs.keys()) and (kwargs['avail_actions'] is not None):
                     evalQ_detach = evalQ.clone().detach()
                     avail_actions = kwargs['avail_actions']
-                    evalQ_detach[avail_actions == 0] = -9999999
+                    evalQ_detach[avail_actions == 0] = -1e10
                     argmax_action = evalQ_detach.argmax(dim=-1, keepdim=False)
                 else:
                     argmax_action = tf.argmax(evalQ, axis=-1)
@@ -2883,7 +2883,7 @@ Source Code
                 if ('avail_actions' in kwargs.keys()) and (kwargs['avail_actions'] is not None):
                     evalQ_detach = evalQ.clone().detach()
                     avail_actions = kwargs['avail_actions']
-                    evalQ_detach[avail_actions == 0] = -9999999
+                    evalQ_detach[avail_actions == 0] = -1e10
                     argmax_action = evalQ_detach.argmax(dim=-1, keepdim=False)
                 else:
                     argmax_action = tf.argmax(evalQ, axis=-1)
@@ -3385,7 +3385,7 @@ Source Code
                 evalQ = self.eval_Qhead(q_inputs)
                 if avail_actions is not None:
                     evalQ_detach = copy.deepcopy(evalQ)
-                    evalQ_detach[avail_actions == 0] = -9999999
+                    evalQ_detach[avail_actions == 0] = -1e10
                     argmax_action = evalQ_detach.argmax(axis=-1)
                 else:
                     argmax_action = evalQ.argmax(axis=-1)
@@ -3488,7 +3488,7 @@ Source Code
                 evalQ = self.eval_Qhead(q_inputs)
                 if avail_actions is not None:
                     evalQ_detach = copy.deepcopy(evalQ)
-                    evalQ_detach[avail_actions == 0] = -9999999
+                    evalQ_detach[avail_actions == 0] = -1e10
                     argmax_action = evalQ_detach.argmax(axis=-1)
                 else:
                     argmax_action = evalQ.argmax(axis=-1)
@@ -3608,7 +3608,7 @@ Source Code
                 evalQ = self.eval_Qhead(q_inputs)
                 if avail_actions is not None:
                     evalQ_detach = copy.deepcopy(evalQ)
-                    evalQ_detach[avail_actions == 0] = -9999999
+                    evalQ_detach[avail_actions == 0] = -1e10
                     argmax_action = evalQ_detach.argmax(dim=-1, keepdim=False)
                 else:
                     argmax_action = evalQ.argmax(dim=-1, keepdim=False)
@@ -3677,7 +3677,7 @@ Source Code
                 evalQ = self.eval_Qhead(q_inputs)
                 if avail_actions is not None:
                     evalQ_detach = copy.deepcopy(evalQ)
-                    evalQ_detach[avail_actions == 0] = -9999999
+                    evalQ_detach[avail_actions == 0] = -1e10
                     argmax_action = evalQ_detach.argmax(dim=-1, keepdim=False)
                 else:
                     argmax_action = evalQ.argmax(dim=-1, keepdim=False)

@@ -63,7 +63,7 @@ class VDN_Learner(LearnerMAS):
             q_eval_a[key] = q_eval[key].gather(-1, actions[key].long().unsqueeze(-1)).reshape(bs)
 
             if self.use_actions_mask:
-                q_next[key][avail_actions_next[key] == 0] = -9999999
+                q_next[key][avail_actions_next[key] == 0] = -1e10
 
             if self.config.double_q:
                 _, act_next, _ = self.policy(observation=obs_next, agent_ids=IDs,
@@ -143,7 +143,7 @@ class VDN_Learner(LearnerMAS):
             q_next[key] = q_next_seq[key][:, 1:]
 
             if self.use_actions_mask:
-                q_next[key][avail_actions[key][:, 1:] == 0] = -9999999
+                q_next[key][avail_actions[key][:, 1:] == 0] = -1e10
 
             if self.config.double_q:
                 act_next = {k: actions_greedy[k].unsqueeze(-1)[:, 1:] for k in self.model_keys}

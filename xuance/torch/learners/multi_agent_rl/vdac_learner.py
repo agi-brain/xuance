@@ -150,6 +150,7 @@ class VDAC_Learner(LearnerMAS):
         return sample_Tensor
 
     def update(self, sample):
+        return {}
         info = {}
         self.iterations += 1
         state = torch.Tensor(sample['state']).to(self.device)

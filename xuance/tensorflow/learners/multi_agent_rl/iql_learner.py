@@ -59,7 +59,7 @@ class IQL_Learner(LearnerMAS):
                 q_eval_a = tf.reshape(q_eval_a, [bs])
 
                 if self.use_actions_mask:
-                    q_next[key][avail_actions_next[key] == 0] = -9999999
+                    q_next[key][avail_actions_next[key] == 0] = -1e10
 
                 if self.config.double_q:
                     _, actions_next_greedy, _ = self.policy(obs_next, IDs, agent_key=key, avail_actions=avail_actions)

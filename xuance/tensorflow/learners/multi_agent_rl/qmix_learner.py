@@ -69,7 +69,7 @@ class QMIX_Learner(LearnerMAS):
                 q_eval_a[key] = tf.reshape(tf.gather(q_eval[key], tf.cast(actions[key][:, None], dtype=tf.int32),
                                                      axis=-1, batch_dims=-1), [bs])
                 if self.use_actions_mask:
-                    q_next[key][avail_actions_next[key] == 0] = -9999999
+                    q_next[key][avail_actions_next[key] == 0] = -1e10
 
                 if self.config.double_q:
                     _, act_next, _ = self.policy(observation=obs_next, agent_ids=IDs,

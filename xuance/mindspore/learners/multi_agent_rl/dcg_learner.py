@@ -138,7 +138,7 @@ class DCG_Learner(LearnerMAS):
         utility = Tensor(utility.numpy())
         if avail_actions is not None:
             utility_detach = copy.deepcopy(utility)
-            utility_detach[avail_actions == 0] = -9999999
+            utility_detach[avail_actions == 0] = -1e10
             actions_greedy = utility_detach.argmax(axis=-1)
         else:
             actions_greedy = utility.argmax(axis=-1)

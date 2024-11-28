@@ -81,7 +81,7 @@ class WQMIX_Learner(LearnerMAS):
                 else:
                     _, q_next_eval = self.policy.Qtarget(observation=obs_next, agent_ids=IDs, agent_key=key)
                     if self.use_actions_mask:
-                        q_next_eval[key][avail_actions_next[key] == 0] = -9999999
+                        q_next_eval[key][avail_actions_next[key] == 0] = -1e10
                     act_next[key] = tf.argmax(q_next_eval[key], axis=-1)
                 q_eval_next_centralized_a[key] = tf.reshape(tf.gather(q_eval_next_centralized[key], act_next[key],
                                                                       axis=-1, batch_dims=-1), [bs])
