@@ -9,7 +9,7 @@ import torch
 from torch import nn
 from argparse import Namespace
 from operator import itemgetter
-from xuance.common import Optional, Union, List
+from xuance.common import Optional, List
 from xuance.torch import Tensor
 from xuance.torch.utils.value_norm import ValueNorm
 from xuance.torch.learners import LearnerMAS
@@ -150,31 +150,64 @@ class VDAC_Learner(LearnerMAS):
         return sample_Tensor
 
     def update(self, sample):
-        return {}
-        info = {}
         self.iterations += 1
-        state = torch.Tensor(sample['state']).to(self.device)
-        obs = torch.Tensor(sample['obs']).to(self.device)
-        actions = torch.Tensor(sample['actions']).to(self.device)
-        returns = torch.Tensor(sample['returns']).to(self.device)
-        agent_mask = torch.Tensor(sample['agent_mask']).float().reshape(-1, self.n_agents, 1).to(self.device)
-        batch_size = obs.shape[0]
-        IDs = torch.eye(self.n_agents).unsqueeze(0).expand(batch_size, -1, -1).to(self.device)
+        info = {}
 
-        # actor loss
-        _, pi_dist, value_pred = self.policy(obs, IDs)
-        log_pi = pi_dist.log_prob(actions).unsqueeze(-1)
-        entropy = pi_dist.entropy().reshape(agent_mask.shape) * agent_mask
+        # prepare training data
+        sample_Tensor = self.build_training_data(sample=sample,
+                                                 use_parameter_sharing=self.use_parameter_sharing,
+                                                 use_actions_mask=self.use_actions_mask,
+                                                 use_global_state=True)
+        batch_size = sample_Tensor['batch_size']
+        state = sample_Tensor['state']
+        obs = sample_Tensor['obs']
+        actions = sample_Tensor['actions']
+        agent_mask = sample_Tensor['agent_mask']
+        avail_actions = sample_Tensor['avail_actions']
+        values = sample_Tensor['values']
+        returns = sample_Tensor['returns']
+        advantages = sample_Tensor['advantages']
+        log_pi_old = sample_Tensor['log_pi_old']
+        IDs = sample_Tensor['agent_ids']
 
-        targets = returns
-        advantages = targets - value_pred
-        td_error = value_pred - targets.detach()
+        bs = batch_size * self.n_agents if self.use_parameter_sharing else batch_size
 
-        pg_loss = -((advantages.detach() * log_pi) * agent_mask).sum() / agent_mask.sum()
-        vf_loss = ((td_error ** 2) * agent_mask).sum() / agent_mask.sum()
-        entropy_loss = (entropy * agent_mask).sum() / agent_mask.sum()
-        loss = pg_loss + self.vf_coef * vf_loss - self.ent_coef * entropy_loss
+        # feedforward
+        _, pi_dist_dict = self.policy(observation=obs, agent_ids=IDs, avail_actions=avail_actions)
+        _, value_pred_dict = self.policy.get_values(observation=obs, agent_ids=IDs)
+        if self.use_parameter_sharing:
+            values_n = value_pred_dict[self.model_keys[0]].reshape(batch_size, self.n_agents)
+        else:
+            values_n = torch.stack(itemgetter(*self.agent_keys)(value_pred_dict), dim=-1)
+        if self.config.mixer == "VDN":
+            values_tot = self.policy.value_tot(values_n)
+        elif self.config.mixer == "QMIX":
+            values_tot = self.policy.value_tot(values_n, state)
+        else:
+            raise NotImplementedError("Mixer not implemented.")
+        if self.use_parameter_sharing:
+            values_tot = values_tot.reshape(batch_size, 1).repeat(1, self.n_agents).reshape(bs)
 
+        loss_a, loss_e, loss_c = [], [], []
+        for key in self.model_keys:
+            mask_values = agent_mask[key]
+            # policy gradient loss
+            log_pi = pi_dist_dict[key].log_prob(actions[key])
+            pg_loss = -((advantages[key].detach() * log_pi) * mask_values).sum() / mask_values.sum()
+            loss_a.append(pg_loss)
+
+            # entropy loss
+            entropy = pi_dist_dict[key].entropy()
+            entropy_loss = (entropy * mask_values).sum() / mask_values.sum()
+            loss_e.append(entropy_loss)
+
+            # value loss
+            td_error = values_tot - returns[key].detach()
+            vf_loss = ((td_error ** 2) * mask_values).sum() / mask_values.sum()
+            loss_c.append(vf_loss)
+
+        # Total loss
+        loss = sum(loss_a) + self.vf_coef * sum(loss_c) - self.ent_coef * sum(loss_e)
         self.optimizer.zero_grad()
         loss.backward()
         if self.use_grad_clip:
@@ -189,11 +222,11 @@ class VDAC_Learner(LearnerMAS):
 
         info.update({
             "learning_rate": lr,
-            "pg_loss": pg_loss.item(),
-            "vf_loss": vf_loss.item(),
-            "entropy_loss": entropy_loss.item(),
+            "pg_loss": sum(loss_a).item(),
+            "vf_loss": sum(loss_c).item(),
+            "entropy_loss": sum(loss_e).item(),
             "loss": loss.item(),
-            "predict_value": value_pred.mean().item()
+            "predict_value": values_tot.mean().item()
         })
 
         return info

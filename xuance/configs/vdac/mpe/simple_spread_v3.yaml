@@ -49,7 +49,7 @@ gamma: 0.99  # Discount factor.
 # tricks
 use_linear_lr_decay: False  # If to use linear learning rate decay.
 end_factor_lr_decay: 0.5  # The end factor for learning rate scheduler.
-use_global_state: False  # If to use global state to replace merged observations.
+use_global_state: True  # If to use global state to replace merged observations.
 use_value_clip: True  # Limit the value range.
 value_clip_range: 0.2  # The value clip range.
 use_value_norm: False  # Use running mean and std to normalize rewards.

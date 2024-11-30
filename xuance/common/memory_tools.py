@@ -29,7 +29,7 @@ def create_memory(shape: Optional[Union[tuple, dict]],
         return None
     elif isinstance(shape, dict):
         memory = {}
-        for key, value in zip(shape.keys(), shape.values()):
+        for key, value in shape.items():
             if value is None:  # save an object type
                 memory[key] = np.zeros([n_envs, n_size], dtype=object)
             else:
@@ -55,7 +55,7 @@ def store_element(data: Optional[Union[np.ndarray, dict, float]],
     if data is None:
         return
     elif isinstance(data, dict):
-        for key, value in zip(data.keys(), data.values()):
+        for key, value in data.items():
             memory[key][:, ptr] = data[key]
     else:
         memory[:, ptr] = data
@@ -77,7 +77,7 @@ def sample_batch(memory: Optional[Union[np.ndarray, dict]],
         return None
     elif isinstance(memory, dict):
         batch = {}
-        for key, value in zip(memory.keys(), memory.values()):
+        for key, value in memory.items():
             batch[key] = value[index]
         return batch
     else:

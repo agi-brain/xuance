@@ -142,14 +142,12 @@ class MARL_OnPolicyBuffer(BaseBuffer):
 
     def store(self, **step_data):
         """ Stores a step of data into the replay buffer. """
-        for data_key in self.data_keys:
+        for data_key, data_value in step_data.items():
             if data_key in ['state']:
-                self.data[data_key][:, self.ptr] = step_data[data_key]
-                continue
-            if data_key in ['advantages', 'returns']:
+                self.data[data_key][:, self.ptr] = data_value
                 continue
             for agt_key in self.agent_keys:
-                self.data[data_key][agt_key][:, self.ptr] = step_data[data_key][agt_key]
+                self.data[data_key][agt_key][:, self.ptr] = data_value[agt_key]
         self.ptr = (self.ptr + 1) % self.n_size
         self.size = np.min([self.size + 1, self.n_size])
 
@@ -229,6 +227,8 @@ class MARL_OnPolicyBuffer(BaseBuffer):
                     adv_batch = self.data[data_key][agt_key][env_choices, step_choices]
                     if self.use_advantage_norm:
                         adv_batch_dict[agt_key] = (adv_batch - np.mean(adv_batch)) / (np.std(adv_batch) + 1e-8)
+                    else:
+                        adv_batch_dict[agt_key] = adv_batch
                 samples_dict[data_key] = adv_batch_dict
             elif data_key == "state":
                 samples_dict[data_key] = self.data[data_key][env_choices, step_choices]
@@ -360,17 +360,13 @@ class MARL_OnPolicyBuffer_RNN(MARL_OnPolicyBuffer):
         """
         envs_step = step_data['episode_steps']
         envs_choice = range(self.n_envs)
-        for data_key in self.data_keys:
-            if data_key == 'filled':
-                self.episode_data["filled"][envs_choice, envs_step] = True
-                continue
-            if data_key in ['advantages', 'returns']:
-                continue
+        self.episode_data["filled"][envs_choice, envs_step] = True
+        for data_key, data_value in step_data.items():
             if data_key == 'state':
-                self.episode_data[data_key][envs_choice, envs_step] = step_data[data_key]
+                self.episode_data[data_key][envs_choice, envs_step] = data_value
                 continue
             for agt_key in self.agent_keys:
-                self.episode_data[data_key][agt_key][envs_choice, envs_step] = step_data[data_key][agt_key]
+                self.episode_data[data_key][agt_key][envs_choice, envs_step] = data_value[agt_key]
 
     def store_episodes(self, i_env):
         """
@@ -770,12 +766,12 @@ class MARL_OffPolicyBuffer(BaseBuffer):
 
     def store(self, **step_data):
         """ Stores a step of data into the replay buffer. """
-        for data_key in self.data_keys:
+        for data_key, data_values in step_data.items():
             if data_key in ['state', 'state_next']:
-                self.data[data_key][:, self.ptr] = step_data[data_key]
+                self.data[data_key][:, self.ptr] = data_values
                 continue
             for agt_key in self.agent_keys:
-                self.data[data_key][agt_key][:, self.ptr] = step_data[data_key][agt_key]
+                self.data[data_key][agt_key][:, self.ptr] = data_values[agt_key]
         self.ptr = (self.ptr + 1) % self.n_size
         self.size = np.min([self.size + 1, self.n_size])
 
@@ -941,15 +937,13 @@ class MARL_OffPolicyBuffer_RNN(MARL_OffPolicyBuffer):
         """
         envs_step = step_data['episode_steps']
         envs_choice = range(self.n_envs)
-        for data_key in self.data_keys:
-            if data_key == "filled":
-                self.episode_data["filled"][envs_choice, envs_step] = True
-                continue
+        self.episode_data["filled"][envs_choice, envs_step] = True
+        for data_key, data_value in step_data.items():
             if data_key in ['state', 'state_next']:
-                self.episode_data[data_key][envs_choice, envs_step] = step_data[data_key]
+                self.episode_data[data_key][envs_choice, envs_step] = data_value
                 continue
             for agt_key in self.agent_keys:
-                self.episode_data[data_key][agt_key][envs_choice, envs_step] = step_data[data_key][agt_key]
+                self.episode_data[data_key][agt_key][envs_choice, envs_step] = data_value[agt_key]
 
     def store_episodes(self, i_env):
         """
