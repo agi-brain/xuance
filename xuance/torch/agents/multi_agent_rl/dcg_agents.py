@@ -31,6 +31,10 @@ class DCG_Agents(OffPolicyMARLAgents):
         self.memory = self._build_memory()  # build memory
         self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, self.policy)
 
+    def _build_learner(self, *args):
+        from xuance.torch.learners.multi_agent_rl.dcg_learner import DCG_Learner
+        return DCG_Learner(*args)
+
     def _build_policy(self) -> Module:
         """
         Build representation(s) and policy(ies) for agent(s)

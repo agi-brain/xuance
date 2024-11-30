@@ -208,7 +208,7 @@ class Agent(ABC):
     def _build_policy(self) -> Module:
         raise NotImplementedError
 
-    def _build_learner(self, *args) -> Module:
+    def _build_learner(self, *args):
         return REGISTRY_Learners[self.config.learner](*args)
 
     def action(self, observations):
