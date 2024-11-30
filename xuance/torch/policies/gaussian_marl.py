@@ -34,6 +34,7 @@ class MAAC_Policy(Module):
                  n_agents: int,
                  representation_actor: ModuleDict,
                  representation_critic: ModuleDict,
+                 mixer: Optional[Module] = None,
                  actor_hidden_size: Sequence[int] = None,
                  critic_hidden_size: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,
@@ -67,6 +68,8 @@ class MAAC_Policy(Module):
                                                normalize, initialize, activation, activation_action, device)
             self.critic[key] = CriticNet(dim_critic_in, critic_hidden_size, normalize, initialize, activation, device)
 
+        self.mixer = mixer
+
         # Prepare DDP module.
         self.distributed_training = use_distributed_training
         if self.distributed_training:
@@ -80,12 +83,17 @@ class MAAC_Policy(Module):
                                                                               device_ids=[self.rank])
                 self.actor[key] = DistributedDataParallel(module=self.actor[key], device_ids=[self.rank])
                 self.critic[key] = DistributedDataParallel(module=self.critic[key], device_ids=[self.rank])
+            if self.mixer is not None:
+                self.mixer = DistributedDataParallel(module=self.mixer, device_ids=[self.rank])
 
     @property
     def parameters_model(self):
         parameters = list(self.actor_representation.parameters()) + list(self.actor.parameters()) + list(
             self.critic_representation.parameters()) + list(self.critic.parameters())
-        return parameters
+        if self.mixer is None:
+            return parameters
+        else:
+            return parameters + list(self.mixer.parameters())
 
     def _get_actor_critic_input(self, dim_action, dim_actor_rep, dim_critic_rep, n_agents):
         """
@@ -178,6 +186,11 @@ class MAAC_Policy(Module):
             values[key] = self.critic[key](critic_in)
 
         return rnn_hidden_new, values
+
+    def value_tot(self, values_n: Tensor, global_state=None):
+        if global_state is not None:
+            global_state = torch.as_tensor(global_state).to(self.device)
+        return values_n if self.mixer is None else self.mixer(values_n, global_state)
 
 
 class Basic_ISAC_Policy(Module):

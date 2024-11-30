@@ -6,7 +6,6 @@ from gym.spaces import Discrete
 from xuance.common import Sequence, Optional, Callable, Union, Dict, List
 from xuance.torch.policies import CategoricalActorNet, ActorNet
 from xuance.torch.policies.core import CriticNet
-from xuance.torch.policies import VDN_mixer
 from xuance.torch.utils import ModuleType, CategoricalDistribution
 from xuance.torch import Tensor, Module, ModuleDict, DistributedDataParallel
 
@@ -36,7 +35,7 @@ class MAAC_Policy(Module):
                  n_agents: int,
                  representation_actor: ModuleDict,
                  representation_critic: ModuleDict,
-                 mixer: Optional[VDN_mixer] = None,
+                 mixer: Optional[Module] = None,
                  actor_hidden_size: Sequence[int] = None,
                  critic_hidden_size: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,
@@ -210,7 +209,7 @@ class MAAC_Policy_Share(MAAC_Policy):
                  action_space: Discrete,
                  n_agents: int,
                  representation: Module,
-                 mixer: Optional[VDN_mixer] = None,
+                 mixer: Optional[Module] = None,
                  actor_hidden_size: Sequence[int] = None,
                  critic_hidden_size: Sequence[int] = None,
                  normalize: Optional[ModuleType] = None,
