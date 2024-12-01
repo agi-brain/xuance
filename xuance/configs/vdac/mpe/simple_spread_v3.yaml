@@ -34,8 +34,8 @@ hidden_dim_hyper_net: 32  # hidden units of hyper network (when mixer is QMIX)
 
 seed: 1  # Random seed.
 parallels: 16  # The number of environments to run in parallel.
-buffer_size: 3200  # Number of the transitions (use_rnn is False), or the episodes (use_rnn is True) in replay buffer.
-n_epochs: 10  # Number of epochs to train.
+buffer_size: 16  # Number of the transitions (use_rnn is False), or the episodes (use_rnn is True) in replay buffer.
+n_epochs: 1  # Number of epochs to train.
 n_minibatch: 1 # Number of minibatch to sample and train.  batch_size = buffer_size // n_minibatch.
 learning_rate: 0.0007  # Learning rate.
 weight_decay: 0  # The steps to decay the greedy epsilon.
@@ -50,12 +50,12 @@ gamma: 0.99  # Discount factor.
 use_linear_lr_decay: False  # If to use linear learning rate decay.
 end_factor_lr_decay: 0.5  # The end factor for learning rate scheduler.
 use_global_state: True  # If to use global state to replace merged observations.
-use_value_clip: True  # Limit the value range.
+use_value_clip: False  # Limit the value range.
 value_clip_range: 0.2  # The value clip range.
-use_value_norm: True  # Use running mean and std to normalize rewards.
-use_huber_loss: True  # True: use huber loss; False: use MSE loss.
+use_value_norm: False  # Use running mean and std to normalize rewards.
+use_huber_loss: False  # True: use huber loss; False: use MSE loss.
 huber_delta: 10.0  # The threshold at which to change between delta-scaled L1 and L2 loss. (For huber loss).
-use_advnorm: True  # If to use advantage normalization.
+use_advnorm: False  # If to use advantage normalization.
 use_gae: True  # Use GAE trick.
 gae_lambda: 0.95  # The GAE lambda.
 use_grad_clip: True  # Gradient normalization.

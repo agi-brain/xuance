@@ -101,7 +101,8 @@ class VDAC_Agents(OnPolicyMARLAgents):
             'obs': {k: np.array([data[k] for data in obs_dict]) for k in self.agent_keys},
             'actions': {k: np.array([data[k] for data in actions_dict]) for k in self.agent_keys},
             # 'log_pi_old': log_pi_a,
-            'rewards': {k: np.array([data[k] for data in rewards_dict]) for k in self.agent_keys},
+            'rewards': {k: np.array([np.array(list(data.values())).mean() for data in rewards_dict])
+                        for k in self.agent_keys},
             'values': values_dict,
             'terminals': {k: np.array([data[k] for data in terminals_dict]) for k in self.agent_keys},
             'agent_mask': {k: np.array([data['agent_mask'][k] for data in info]) for k in self.agent_keys},
