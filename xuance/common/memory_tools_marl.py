@@ -9,7 +9,6 @@ class BaseBuffer(ABC):
     """
     Basic buffer for MARL algorithms.
     """
-
     def __init__(self, *args):
         self.agent_keys, self.state_space, self.obs_space, self.act_space, self.n_envs, self.buffer_size = args
         assert self.buffer_size % self.n_envs == 0, "buffer_size must be divisible by the number of envs (parallels)"
@@ -343,7 +342,7 @@ class MARL_OnPolicyBuffer_RNN(MARL_OnPolicyBuffer):
         }
         if self.store_global_state:
             self.episode_data.update({
-                'state': np.zeros((self.n_envs, self.max_eps_len) + self.state_space, np.float32)
+                'state': np.zeros((self.n_envs, self.max_eps_len) + self.state_space.shape, np.float32)
             })
         if self.use_actions_mask:
             self.episode_data.update({
@@ -362,6 +361,8 @@ class MARL_OnPolicyBuffer_RNN(MARL_OnPolicyBuffer):
         envs_choice = range(self.n_envs)
         self.episode_data["filled"][envs_choice, envs_step] = True
         for data_key, data_value in step_data.items():
+            if data_key == "episode_steps":
+                continue
             if data_key == 'state':
                 self.episode_data[data_key][envs_choice, envs_step] = data_value
                 continue
