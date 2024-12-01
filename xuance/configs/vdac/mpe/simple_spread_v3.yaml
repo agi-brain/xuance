@@ -2,9 +2,9 @@ agent: "VDAC"
 env_name: "mpe"
 env_id: "simple_spread_v3"
 env_seed: 1
-continuous_action: True
+continuous_action: False
 learner: "VDAC_Learner"
-policy: "Gaussian_MAAC_Policy"
+policy: "Categorical_MAAC_Policy"
 representation: "Basic_MLP"
 vectorize: "SubprocVecMultiAgentEnv"
 runner: "MARL"

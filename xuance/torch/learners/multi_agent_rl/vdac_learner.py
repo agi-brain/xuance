@@ -32,8 +32,12 @@ class VDAC_Learner(LearnerMAS):
         self.gamma = config.gamma
         self.clip_range = config.clip_range
         self.use_linear_lr_decay = config.use_linear_lr_decay
+        self.use_value_clip, self.value_clip_range = config.use_value_clip, config.value_clip_range
+        self.use_huber_loss, self.huber_delta = config.use_huber_loss, config.huber_delta
         self.use_value_norm = config.use_value_norm
         self.vf_coef, self.ent_coef = config.vf_coef, config.ent_coef
+        self.mse_loss = nn.MSELoss()
+        self.huber_loss = nn.HuberLoss(reduction="none", delta=self.huber_delta)
         if self.use_value_norm:
             self.value_normalizer = {key: ValueNorm(1).to(self.device) for key in self.model_keys}
         else:
@@ -163,18 +167,17 @@ class VDAC_Learner(LearnerMAS):
         values = sample_Tensor['values']
         returns = sample_Tensor['returns']
         advantages = sample_Tensor['advantages']
-        log_pi_old = sample_Tensor['log_pi_old']
         IDs = sample_Tensor['agent_ids']
 
         bs = batch_size * self.n_agents if self.use_parameter_sharing else batch_size
 
         # feedforward
         _, pi_dist_dict = self.policy(observation=obs, agent_ids=IDs, avail_actions=avail_actions)
-        _, value_pred_dict = self.policy.get_values(observation=obs, agent_ids=IDs)
+        _, values_pred_individual = self.policy.get_values(observation=obs, agent_ids=IDs)
         if self.use_parameter_sharing:
-            values_n = value_pred_dict[self.model_keys[0]].reshape(batch_size, self.n_agents)
+            values_n = values_pred_individual[self.model_keys[0]].reshape(batch_size, self.n_agents)
         else:
-            values_n = torch.stack(itemgetter(*self.agent_keys)(value_pred_dict), dim=-1)
+            values_n = torch.stack(itemgetter(*self.agent_keys)(values_pred_individual), dim=-1)
         if self.config.mixer == "VDN":
             values_tot = self.policy.value_tot(values_n)
         elif self.config.mixer == "QMIX":
@@ -183,6 +186,7 @@ class VDAC_Learner(LearnerMAS):
             raise NotImplementedError("Mixer not implemented.")
         if self.use_parameter_sharing:
             values_tot = values_tot.reshape(batch_size, 1).repeat(1, self.n_agents).reshape(bs)
+        values_pred_dict = {k: values_tot for k in self.model_keys}
 
         loss_a, loss_e, loss_c = [], [], []
         for key in self.model_keys:
@@ -198,9 +202,32 @@ class VDAC_Learner(LearnerMAS):
             loss_e.append(entropy_loss)
 
             # value loss
-            td_error = values_tot - returns[key].detach()
-            vf_loss = ((td_error ** 2) * mask_values).sum() / mask_values.sum()
-            loss_c.append(vf_loss)
+            value_pred_i = values_pred_dict[key].reshape(bs)
+            value_target = returns[key].reshape(bs)
+            values_i = values[key].reshape(bs)
+            if self.use_value_clip:
+                value_clipped = values_i + (value_pred_i - values_i).clamp(-self.value_clip_range,
+                                                                           self.value_clip_range)
+                if self.use_value_norm:
+                    self.value_normalizer[key].update(value_target.reshape(bs, 1))
+                    value_target = self.value_normalizer[key].normalize(value_target.reshape(bs, 1)).reshape(bs)
+                if self.use_huber_loss:
+                    loss_v = self.huber_loss(value_pred_i, value_target)
+                    loss_v_clipped = self.huber_loss(value_clipped, value_target)
+                else:
+                    loss_v = (value_pred_i - value_target) ** 2
+                    loss_v_clipped = (value_clipped - value_target) ** 2
+                loss_c_ = torch.max(loss_v, loss_v_clipped) * mask_values
+                loss_c.append(loss_c_.sum() / mask_values.sum())
+            else:
+                if self.use_value_norm:
+                    self.value_normalizer[key].update(value_target)
+                    value_target = self.value_normalizer[key].normalize(value_target)
+                if self.use_huber_loss:
+                    loss_v = self.huber_loss(value_pred_i, value_target) * mask_values
+                else:
+                    loss_v = ((value_pred_i - value_target) ** 2) * mask_values
+                loss_c.append(loss_v.sum() / mask_values.sum())
 
         # Total loss
         loss = sum(loss_a) + self.vf_coef * sum(loss_c) - self.ent_coef * sum(loss_e)
