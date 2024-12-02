@@ -5,6 +5,7 @@ from .wqmix_learner import WQMIX_Learner
 from .qtran_learner import QTRAN_Learner
 from .mfq_learner import MFQ_Learner
 
+from .iac_learner import IAC_Learner
 from .coma_learner import COMA_Learner
 from .vdac_learner import VDAC_Learner
 from .iddpg_learner import IDDPG_Learner

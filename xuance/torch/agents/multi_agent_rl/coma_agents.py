@@ -1,7 +1,5 @@
 import torch
 import numpy as np
-from tqdm import tqdm
-from copy import deepcopy
 from operator import itemgetter
 from argparse import Namespace
 from xuance.common import List, Optional
@@ -9,17 +7,15 @@ from xuance.environment import DummyVecMultiAgentEnv
 from xuance.torch import Module
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.policies import REGISTRY_Policy
-from xuance.torch.agents import MARLAgents
-from xuance.common import COMA_Buffer, COMA_Buffer_RNN
+from xuance.torch.agents import OnPolicyMARLAgents
 
 
-class COMA_Agents(MARLAgents):
+class COMA_Agents(OnPolicyMARLAgents):
     """The implementation of COMA agents.
 
     Args:
         config: the Namespace variable that provides hyper-parameters and other settings.
         envs: the vectorized environments.
-        device: the calculating device of the model, such as CPU or GPU.
     """
 
     def __init__(self,
@@ -30,27 +26,8 @@ class COMA_Agents(MARLAgents):
         self.egreedy = self.start_greedy
         self.delta_egreedy = (self.start_greedy - self.end_greedy) / (config.decay_step_greedy / self.n_envs)
 
-        self.n_epochs = config.n_epochs
-        self.n_minibatch = config.n_minibatch
-        self.use_global_state = config.use_global_state
-
-        # create policy, optimizer, and lr_scheduler.
-        self.policy = self._build_policy()
-
-        # create experience replay buffer
-        buffer = COMA_Buffer_RNN if self.use_rnn else COMA_Buffer
-        input_buffer = (config.n_agents, config.state_space.shape, config.obs_shape, config.act_shape, config.rew_shape,
-                        config.done_shape, envs.num_envs, config.buffer_size,
-                        config.use_gae, config.use_advnorm, config.gamma, config.gae_lambda)
-        memory = buffer(*input_buffer, max_episode_steps=envs.max_episode_steps,
-                        dim_act=config.dim_act, td_lambda=config.td_lambda)
-
-        self.buffer_size = memory.buffer_size
-        self.batch_size = self.buffer_size // self.n_minibatch
-
-        # initialize the hidden states of the RNN is use RNN-based representations.
-        self.rnn_hidden_actor, self.rnn_hidden_critic = self.init_rnn_hidden(self.n_envs)
-
+        self.policy = self._build_policy()  # build policy
+        self.memory = self._build_memory()  # build memory
         self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, self.policy)
 
     def _build_policy(self) -> Module:
@@ -66,14 +43,14 @@ class COMA_Agents(MARLAgents):
         device = self.device
 
         # build representations
-        representation_actor = self._build_representation(self.config.representation, self.config)
-        representation_critic = self._build_representation(self.config.representation_critic, self.config)
+        A_representation = self._build_representation(self.config.representation, self.observation_space, self.config)
+        C_representation = self._build_representation(self.config.representation, self.observation_space, self.config)
 
         # build policies
         if self.config.policy == "Categorical_COMA_Policy":
             policy = REGISTRY_Policy["Categorical_COMA_Policy"](
                 action_space=self.action_space, n_agents=self.n_agents,
-                representation_actor=representation_actor, representation_critic=representation_critic,
+                representation_actor=A_representation, representation_critic=C_representation,
                 actor_hidden_size=self.config.actor_hidden_size, critic_hidden_size=self.config.critic_hidden_size,
                 normalize=normalize_fn, initialize=initializer, activation=activation,
                 device=device, use_distributed_training=self.distributed_training,
@@ -93,30 +70,35 @@ class COMA_Agents(MARLAgents):
         Parameters:
             n_envs (int): The number of parallel environments.
         """
-        rnn_hidden_actor, rnn_hidden_critic = {}, {}
-        for key in self.model_keys:
-            if self.use_rnn:
-                batch = n_envs * self.n_agents if self.use_parameter_sharing else n_envs
-                rnn_hidden_actor[key] = self.policy.actor_representation[key].init_hidden(batch)
-                rnn_hidden_critic[key] = self.policy.critic_representation[key].init_hidden(batch)
-            else:
-                rnn_hidden_actor[key] = [None, None]
-                rnn_hidden_critic[key] = [None, None]
+        assert self.use_rnn is True, "This method cannot be called when self.use_rnn is False."
+        rnn_hidden_actor, rnn_hidden_critic = None, None
+        if self.use_rnn:
+            batch = n_envs * self.n_agents if self.use_parameter_sharing else n_envs
+            rnn_hidden_actor = {k: self.policy.actor_representation[k].init_hidden(batch) for k in self.model_keys}
+            rnn_hidden_critic = self.policy.critic_representation.init_hidden(batch)
         return rnn_hidden_actor, rnn_hidden_critic
 
-    def init_hidden_item(self, i_env):
+    def init_hidden_item(self,
+                         i_env: int,
+                         rnn_hidden_actor: Optional[dict] = None,
+                         rnn_hidden_critic: Optional[dict] = None):
         """
         Returns initialized hidden states of RNN for i-th environment.
 
         Parameters:
             i_env (int): The index of environment that to be selected.
+            rnn_hidden_actor (Optional[dict]): The RNN hidden states of actor representation.
+            rnn_hidden_critic (Optional[dict]): The RNN hidden states of critic representation.
         """
         assert self.use_rnn is True, "This method cannot be called when self.use_rnn is False."
-        for key in self.model_keys:
-            self.rnn_hidden_actor[key] = self.policy.actor_representation[key].init_hidden_item(
-                i_env, *self.rnn_hidden_actor[key])
-            self.rnn_hidden_critic[key] = self.policy.critic_representation[key].init_hidden_item(
-                i_env, *self.rnn_hidden_critic[key])
+        if self.use_parameter_sharing:
+            b_index = np.arange(i_env * self.n_agents, (i_env + 1) * self.n_agents)
+        else:
+            b_index = [i_env, ]
+        for k in self.model_keys:
+            rnn_hidden_actor[k] = self.policy.actor_representation[k].init_hidden_item(b_index, *rnn_hidden_actor[k])
+            rnn_hidden_critic = self.policy.critic_representation.init_hidden_item(b_index, *rnn_hidden_critic)
+        return rnn_hidden_actor, rnn_hidden_critic
 
     def action(self,
                obs_dict: List[dict],
@@ -238,23 +220,3 @@ class COMA_Agents(MARLAgents):
 
         target_values = values_n.gather(-1, actions_n.long())
         return hidden_state, target_values.detach().cpu().numpy()
-
-    def train(self, i_step, **kwargs):
-        if self.egreedy >= self.end_greedy:
-            self.egreedy = self.start_greedy - self.delta_egreedy * i_step
-        info_train = {}
-        if self.memory.full:
-            indexes = np.arange(self.buffer_size)
-            for _ in range(self.n_epochs):
-                np.random.shuffle(indexes)
-                for start in range(0, self.buffer_size, self.batch_size):
-                    end = start + self.batch_size
-                    sample_idx = indexes[start:end]
-                    sample = self.memory.sample(sample_idx)
-                    if self.use_rnn:
-                        info_train = self.learner.update_recurrent(sample, self.egreedy)
-                    else:
-                        info_train = self.learner.update(sample, self.egreedy)
-            self.memory.clear()
-        info_train["epsilon-greedy"] = self.egreedy
-        return info_train

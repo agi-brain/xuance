@@ -41,6 +41,7 @@ class VDAC_Agents(OnPolicyMARLAgents):
         activation = ActivationFunctions[self.config.activation]
         device = self.device
         agent = self.config.agent
+
         # build representations
         A_representation = self._build_representation(self.config.representation, self.observation_space, self.config)
         C_representation = self._build_representation(self.config.representation, self.observation_space, self.config)
@@ -55,6 +56,7 @@ class VDAC_Agents(OnPolicyMARLAgents):
             mixer = None
         else:
             raise AttributeError(f"Mixer named {self.mixer} is not supported in XuanCe!")
+
         # build policies
         if self.config.policy == "Categorical_MAAC_Policy":
             policy = REGISTRY_Policy["Categorical_MAAC_Policy"](

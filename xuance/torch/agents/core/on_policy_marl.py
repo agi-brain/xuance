@@ -96,6 +96,7 @@ class OnPolicyMARLAgents(MARLAgents):
         Parameters:
             n_envs (int): The number of parallel environments.
         """
+        assert self.use_rnn is True, "This method cannot be called when self.use_rnn is False."
         rnn_hidden_actor, rnn_hidden_critic = None, None
         if self.use_rnn:
             batch = n_envs * self.n_agents if self.use_parameter_sharing else n_envs

@@ -7,10 +7,10 @@ import torch
 from torch import nn
 from xuance.common import List
 from argparse import Namespace
-from xuance.torch.learners import LearnerMAS
+from xuance.torch.learners.multi_agent_rl.iac_learner import IAC_Learner
 
 
-class COMA_Learner(LearnerMAS):
+class COMA_Learner(IAC_Learner):
     def __init__(self,
                  config: Namespace,
                  model_keys: List[str],
@@ -28,12 +28,10 @@ class COMA_Learner(LearnerMAS):
                                                         total_iters=self.config.running_steps)
         }
         self.gamma = config.gamma
-        self.td_lambda = config.td_lambda
         self.sync_frequency = config.sync_frequency
+        self.n_actions = {k: self.policy.action_space[k].n for k in self.model_keys}
         self.use_global_state = config.use_global_state
         self.mse_loss = nn.MSELoss()
-        self.iterations_actor = self.iterations
-        self.iterations_critic = 0
 
     def update(self, sample, epsilon=0.0):
         self.iterations += 1

@@ -3,18 +3,15 @@ Independent Proximal Policy Optimization (IPPO)
 Paper link: https://arxiv.org/pdf/2103.01955.pdf
 Implementation: Pytorch
 """
-import numpy as np
 import torch
 from torch import nn
 from argparse import Namespace
-from operator import itemgetter
-from xuance.common import Optional, List
-from xuance.torch import Tensor
+from xuance.common import List
 from xuance.torch.utils import ValueNorm
-from xuance.torch.learners import LearnerMAS
+from xuance.torch.learners.multi_agent_rl.iac_learner import IAC_Learner
 
 
-class IPPO_Learner(LearnerMAS):
+class IPPO_Learner(IAC_Learner):
     def __init__(self,
                  config: Namespace,
                  model_keys: List[str],
@@ -42,112 +39,6 @@ class IPPO_Learner(LearnerMAS):
             self.value_normalizer = {key: ValueNorm(1).to(self.device) for key in self.model_keys}
         else:
             self.value_normalizer = None
-
-    def build_training_data(self, sample: Optional[dict],
-                            use_parameter_sharing: Optional[bool] = False,
-                            use_actions_mask: Optional[bool] = False,
-                            use_global_state: Optional[bool] = False):
-        """
-        Prepare the training data.
-
-        Parameters:
-            sample (dict): The raw sampled data.
-            use_parameter_sharing (bool): Whether to use parameter sharing for individual agent models.
-            use_actions_mask (bool): Whether to use actions mask for unavailable actions.
-            use_global_state (bool): Whether to use global state.
-
-        Returns:
-            sample_Tensor (dict): The formatted sampled data.
-        """
-        batch_size = sample['batch_size']
-        seq_length = sample['sequence_length'] if self.use_rnn else 1
-        state, avail_actions, filled, IDs = None, None, None, None
-        if use_parameter_sharing:
-            k = self.model_keys[0]
-            bs = batch_size * self.n_agents
-            obs_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['obs']), axis=1)).to(self.device)
-            actions_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['actions']), axis=1)).to(self.device)
-            values_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['values']), axis=1)).to(self.device)
-            returns_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['returns']), axis=1)).to(self.device)
-            advantages_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['advantages']), 1)).to(self.device)
-            log_pi_old_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['log_pi_old']), 1)).to(self.device)
-            ter_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['terminals']), 1)).float().to(self.device)
-            msk_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['agent_mask']), 1)).float().to(self.device)
-            if self.use_rnn:
-                obs = {k: obs_tensor.reshape(bs, seq_length, -1)}
-                if len(actions_tensor.shape) == 3:
-                    actions = {k: actions_tensor.reshape(bs, seq_length)}
-                elif len(actions_tensor.shape) == 4:
-                    actions = {k: actions_tensor.reshape(bs, seq_length, -1)}
-                else:
-                    raise AttributeError("Wrong actions shape.")
-                values = {k: values_tensor.reshape(bs, seq_length)}
-                returns = {k: returns_tensor.reshape(bs, seq_length)}
-                advantages = {k: advantages_tensor.reshape(bs, seq_length)}
-                log_pi_old = {k: log_pi_old_tensor.reshape(bs, seq_length)}
-                terminals = {k: ter_tensor.reshape(bs, seq_length)}
-                agent_mask = {k: msk_tensor.reshape(bs, seq_length)}
-                IDs = torch.eye(self.n_agents).unsqueeze(1).unsqueeze(0).expand(
-                    batch_size, -1, seq_length, -1).reshape(bs, seq_length, self.n_agents).to(self.device)
-            else:
-                obs = {k: obs_tensor.reshape(bs, -1)}
-                if len(actions_tensor.shape) == 2:
-                    actions = {k: actions_tensor.reshape(bs)}
-                elif len(actions_tensor.shape) == 3:
-                    actions = {k: actions_tensor.reshape(bs, -1)}
-                else:
-                    raise AttributeError("Wrong actions shape.")
-                values = {k: values_tensor.reshape(bs)}
-                returns = {k: returns_tensor.reshape(bs)}
-                advantages = {k: advantages_tensor.reshape(bs)}
-                log_pi_old = {k: log_pi_old_tensor.reshape(bs)}
-                terminals = {k: ter_tensor.reshape(bs)}
-                agent_mask = {k: msk_tensor.reshape(bs)}
-                IDs = torch.eye(self.n_agents).unsqueeze(0).expand(
-                    batch_size, -1, -1).reshape(bs, self.n_agents).to(self.device)
-
-            if use_actions_mask:
-                avail_a = np.stack(itemgetter(*self.agent_keys)(sample['avail_actions']), axis=1)
-                if self.use_rnn:
-                    avail_actions = {k: Tensor(avail_a.reshape([bs, seq_length, -1])).float().to(self.device)}
-                else:
-                    avail_actions = {k: Tensor(avail_a.reshape([bs, -1])).float().to(self.device)}
-
-        else:
-            obs = {k: Tensor(sample['obs'][k]).to(self.device) for k in self.agent_keys}
-            actions = {k: Tensor(sample['actions'][k]).to(self.device) for k in self.agent_keys}
-            values = {k: Tensor(sample['values'][k]).to(self.device) for k in self.agent_keys}
-            returns = {k: Tensor(sample['returns'][k]).to(self.device) for k in self.agent_keys}
-            advantages = {k: Tensor(sample['advantages'][k]).to(self.device) for k in self.agent_keys}
-            log_pi_old = {k: Tensor(sample['log_pi_old'][k]).to(self.device) for k in self.agent_keys}
-            terminals = {k: Tensor(sample['terminals'][k]).float().to(self.device) for k in self.agent_keys}
-            agent_mask = {k: Tensor(sample['agent_mask'][k]).float().to(self.device) for k in self.agent_keys}
-            if use_actions_mask:
-                avail_actions = {k: Tensor(sample['avail_actions'][k]).float().to(self.device) for k in self.agent_keys}
-
-        if use_global_state:
-            state = Tensor(sample['state']).to(self.device)
-
-        if self.use_rnn:
-            filled = Tensor(sample['filled']).float().to(self.device)
-
-        sample_Tensor = {
-            'batch_size': batch_size,
-            'state': state,
-            'obs': obs,
-            'actions': actions,
-            'values': values,
-            'returns': returns,
-            'advantages': advantages,
-            'log_pi_old': log_pi_old,
-            'terminals': terminals,
-            'agent_mask': agent_mask,
-            'avail_actions': avail_actions,
-            'agent_ids': IDs,
-            'filled': filled,
-            'seq_length': seq_length,
-        }
-        return sample_Tensor
 
     def update(self, sample):
         self.iterations += 1
