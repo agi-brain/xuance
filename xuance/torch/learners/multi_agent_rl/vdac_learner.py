@@ -30,7 +30,6 @@ class VDAC_Learner(LearnerMAS):
         self.lr = config.learning_rate
         self.end_factor_lr_decay = config.end_factor_lr_decay
         self.gamma = config.gamma
-        self.clip_range = config.clip_range
         self.use_linear_lr_decay = config.use_linear_lr_decay
         self.use_value_clip, self.value_clip_range = config.use_value_clip, config.value_clip_range
         self.use_huber_loss, self.huber_delta = config.use_huber_loss, config.huber_delta

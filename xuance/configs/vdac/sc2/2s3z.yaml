@@ -41,8 +41,6 @@ weight_decay: 0
 
 vf_coef: 1.0
 ent_coef: 0.01
-clip_range: 0.2
-clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
 gamma: 0.99  # discount factor
 
 # tricks
@@ -59,6 +57,7 @@ use_gae: True  # use GAE trick to calculate returns.
 gae_lambda: 0.95
 use_grad_clip: True  # gradient normalization
 grad_clip_norm: 10.0
+clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
 
 running_steps: 2000000
 eval_interval: 20000
