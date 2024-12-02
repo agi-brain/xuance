@@ -18,7 +18,7 @@ class IQL_Learner(LearnerMAS):
         super(IQL_Learner, self).__init__(config, model_keys, agent_keys, policy)
         self.optimizer = {key: optim.Adam(params=self.policy.parameters_model[key], lr=self.config.learning_rate,
                                           eps=1e-5) for key in self.model_keys}
-        self.scheduler = {key: optim.lr_scheduler.LinearLR(self.optimizer[key], start_factor=1.0, end_factor=0.5,
+        self.scheduler = {key: optim.lr_scheduler.LinearLR(self.optimizer[key], start_factor=1.0, end_factor=self.end_factor_lr_decay,
                                                            total_iters=self.config.running_steps)
                           for key in self.model_keys}
         self.gamma = config.gamma

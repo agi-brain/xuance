@@ -213,9 +213,9 @@ Source Code
                                                             dim_state=config.dim_state)
                     optimizer = [torch.optim.Adam(policy.parameters_actor, config.learning_rate_actor, eps=1e-5),
                                 torch.optim.Adam(policy.parameters_critic, config.learning_rate_critic, eps=1e-5)]
-                    scheduler = [torch.optim.lr_scheduler.LinearLR(optimizer[0], start_factor=1.0, end_factor=0.5,
+                    scheduler = [torch.optim.lr_scheduler.LinearLR(optimizer[0], start_factor=1.0, end_factor=self.end_factor_lr_decay,
                                                                 total_iters=get_total_iters(config.agent_name, config)),
-                                torch.optim.lr_scheduler.LinearLR(optimizer[1], start_factor=1.0, end_factor=0.5,
+                                torch.optim.lr_scheduler.LinearLR(optimizer[1], start_factor=1.0, end_factor=self.end_factor_lr_decay,
                                                                 total_iters=get_total_iters(config.agent_name, config))]
                     self.observation_space = envs.observation_space
                     self.action_space = envs.action_space

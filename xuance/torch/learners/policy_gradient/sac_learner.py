@@ -20,9 +20,13 @@ class SAC_Learner(Learner):
             'actor': torch.optim.Adam(self.policy.actor_parameters, self.config.learning_rate_actor),
             'critic': torch.optim.Adam(self.policy.critic_parameters, self.config.learning_rate_critic)}
         self.scheduler = {
-            'actor': torch.optim.lr_scheduler.LinearLR(self.optimizer['actor'], start_factor=1.0, end_factor=0.25,
+            'actor': torch.optim.lr_scheduler.LinearLR(self.optimizer['actor'],
+                                                       start_factor=1.0,
+                                                       end_factor=self.end_factor_lr_decay,
                                                        total_iters=self.config.running_steps),
-            'critic': torch.optim.lr_scheduler.LinearLR(self.optimizer['critic'], start_factor=1.0, end_factor=0.25,
+            'critic': torch.optim.lr_scheduler.LinearLR(self.optimizer['critic'],
+                                                        start_factor=1.0,
+                                                        end_factor=self.end_factor_lr_decay,
                                                         total_iters=self.config.running_steps)}
         self.mse_loss = nn.MSELoss()
         self.tau = config.tau

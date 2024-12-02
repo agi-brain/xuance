@@ -213,7 +213,7 @@ Source Code
                     input_policy = get_policy_in_marl(config, representation, config.agent_keys)
                     policy = REGISTRY_Policy[config.policy](*input_policy, gain=config.gain)
                     optimizer = torch.optim.Adam(policy.parameters(), config.learning_rate, eps=1e-5)
-                    scheduler = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=1.0, end_factor=0.5,
+                    scheduler = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=1.0, end_factor=self.end_factor_lr_decay,
                                                                 total_iters=get_total_iters(config.agent_name, config))
                     self.observation_space = envs.observation_space
                     self.action_space = envs.action_space
@@ -312,7 +312,7 @@ Source Code
                     representation = REGISTRY_Representation[config.representation](*input_representation)
                     input_policy = get_policy_in_marl(config, representation, config.agent_keys)
                     policy = REGISTRY_Policy[config.policy](*input_policy, gain=config.gain)
-                    lr_scheduler = MyLinearLR(config.learning_rate, start_factor=1.0, end_factor=0.5,
+                    lr_scheduler = MyLinearLR(config.learning_rate, start_factor=1.0, end_factor=self.end_factor_lr_decay,
                                               total_iters=get_total_iters(config.agent_name, config))
                     optimizer = tk.optimizers.Adam(lr_scheduler)
                     self.observation_space = envs.observation_space

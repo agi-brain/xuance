@@ -45,7 +45,7 @@ class VDAC_Agents(MARLAgents):
                                                 use_rnn=config.use_rnn,
                                                 rnn=config.rnn,
                                                 gain=config.gain)
-        lr_scheduler = MyLinearLR(config.learning_rate, start_factor=1.0, end_factor=0.5,
+        lr_scheduler = MyLinearLR(config.learning_rate, start_factor=1.0, end_factor=self.end_factor_lr_decay,
                                   total_iters=get_total_iters(config.agent_name, config))
         optimizer = tk.optimizers.Adam(lr_scheduler)
         self.observation_space = envs.observation_space

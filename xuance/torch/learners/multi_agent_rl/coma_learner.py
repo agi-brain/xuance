@@ -16,22 +16,27 @@ class COMA_Learner(IAC_Learner):
                  model_keys: List[str],
                  agent_keys: List[str],
                  policy: nn.Module):
-        super(COMA_Learner, self).__init__(config, model_keys, agent_keys, policy)
-        self.optimizer = {
-            'actor': torch.optim.Adam(self.policy.parameters_actor, config.learning_rate_actor, eps=1e-5),
-            'critic': torch.optim.Adam(self.policy.parameters_critic, config.learning_rate_critic, eps=1e-5)
-        }
-        self.scheduler = {
-            'actor': torch.optim.lr_scheduler.LinearLR(self.optimizer['actor'], start_factor=1.0, end_factor=0.5,
-                                                       total_iters=self.config.running_steps),
-            'critic': torch.optim.lr_scheduler.LinearLR(self.optimizer['critic'], start_factor=1.0, end_factor=0.5,
-                                                        total_iters=self.config.running_steps)
-        }
-        self.gamma = config.gamma
+        super(IAC_Learner).__init__(config, model_keys, agent_keys, policy)
         self.sync_frequency = config.sync_frequency
         self.n_actions = {k: self.policy.action_space[k].n for k in self.model_keys}
         self.use_global_state = config.use_global_state
         self.mse_loss = nn.MSELoss()
+
+    def build_optimizer(self):
+        self.optimizer = {
+            'actor': torch.optim.Adam(self.policy.parameters_actor, self.config.learning_rate_actor, eps=1e-5),
+            'critic': torch.optim.Adam(self.policy.parameters_critic, self.config.learning_rate_critic, eps=1e-5)
+        }
+        self.scheduler = {
+            'actor': torch.optim.lr_scheduler.LinearLR(self.optimizer['actor'],
+                                                       start_factor=1.0,
+                                                       end_factor=self.end_factor_lr_decay,
+                                                       total_iters=self.config.running_steps),
+            'critic': torch.optim.lr_scheduler.LinearLR(self.optimizer['critic'],
+                                                        start_factor=1.0,
+                                                        end_factor=self.end_factor_lr_decay,
+                                                        total_iters=self.config.running_steps)
+        }
 
     def update(self, sample, epsilon=0.0):
         self.iterations += 1

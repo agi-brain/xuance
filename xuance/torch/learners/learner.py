@@ -19,6 +19,10 @@ class Learner(ABC):
         self.distributed_training = config.distributed_training
 
         self.episode_length = config.episode_length
+        self.learning_rate = config.learning_rate if hasattr(config, 'learning_rate') else None
+        self.use_linear_lr_decay = config.use_linear_lr_decay if hasattr(config, 'use_linear_lr_decay') else False
+        self.end_factor_lr_decay = config.end_factor_lr_decay if hasattr(config, 'end_factor_lr_decay') else 0.5
+        self.gamma = config.gamma if hasattr(config, 'gamma') else 0.99
         self.use_rnn = config.use_rnn if hasattr(config, 'use_rnn') else False
         self.use_actions_mask = config.use_actions_mask if hasattr(config, 'use_actions_mask') else False
         self.policy = policy
@@ -110,6 +114,10 @@ class LearnerMAS(ABC):
         self.model_keys = model_keys
         self.agent_keys = agent_keys
         self.episode_length = config.episode_length
+        self.learning_rate = config.learning_rate if hasattr(config, 'learning_rate') else None
+        self.use_linear_lr_decay = config.use_linear_lr_decay if hasattr(config, 'use_linear_lr_decay') else False
+        self.end_factor_lr_decay = config.end_factor_lr_decay if hasattr(config, 'end_factor_lr_decay') else 0.5
+        self.gamma = config.gamma if hasattr(config, 'gamma') else 0.99
         self.use_rnn = config.use_rnn if hasattr(config, 'use_rnn') else False
         self.use_actions_mask = config.use_actions_mask if hasattr(config, 'use_actions_mask') else False
         self.policy = policy

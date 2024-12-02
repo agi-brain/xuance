@@ -153,11 +153,11 @@ Source Code
                     optimizer = [torch.optim.Adam(policy.parameters_actor, config.learning_rate_actor, eps=1e-5),
                                 torch.optim.Adam(policy.critic_net_A.parameters(), config.learning_rate_critic, eps=1e-5),
                                 torch.optim.Adam(policy.critic_net_B.parameters(), config.learning_rate_critic, eps=1e-5)]
-                    scheduler = [torch.optim.lr_scheduler.LinearLR(optimizer[0], start_factor=1.0, end_factor=0.5,
+                    scheduler = [torch.optim.lr_scheduler.LinearLR(optimizer[0], start_factor=1.0, end_factor=self.end_factor_lr_decay,
                                                                 total_iters=get_total_iters(config.agent_name, config)),
-                                torch.optim.lr_scheduler.LinearLR(optimizer[1], start_factor=1.0, end_factor=0.5,
+                                torch.optim.lr_scheduler.LinearLR(optimizer[1], start_factor=1.0, end_factor=self.end_factor_lr_decay,
                                                                 total_iters=get_total_iters(config.agent_name, config)),
-                                torch.optim.lr_scheduler.LinearLR(optimizer[2], start_factor=1.0, end_factor=0.5,
+                                torch.optim.lr_scheduler.LinearLR(optimizer[2], start_factor=1.0, end_factor=self.end_factor_lr_decay,
                                                                 total_iters=get_total_iters(config.agent_name, config))]
                     self.observation_space = envs.observation_space
                     self.action_space = envs.action_space
@@ -220,9 +220,9 @@ Source Code
                     representation = REGISTRY_Representation[config.representation](*input_representation)
                     input_policy = get_policy_in_marl(config, representation, config.agent_keys)
                     policy = REGISTRY_Policy[config.policy](*input_policy)
-                    lr_scheduler = [MyLinearLR(config.learning_rate_actor, start_factor=1.0, end_factor=0.5,
+                    lr_scheduler = [MyLinearLR(config.learning_rate_actor, start_factor=1.0, end_factor=self.end_factor_lr_decay,
                                                total_iters=get_total_iters(config.agent_name, config)),
-                                    MyLinearLR(config.learning_rate_critic, start_factor=1.0, end_factor=0.5,
+                                    MyLinearLR(config.learning_rate_critic, start_factor=1.0, end_factor=self.end_factor_lr_decay,
                                                total_iters=get_total_iters(config.agent_name, config))]
                     optimizer = [tk.optimizers.Adam(lr_scheduler[0]),
                                  tk.optimizers.Adam(lr_scheduler[1])]

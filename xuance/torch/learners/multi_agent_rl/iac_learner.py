@@ -21,15 +21,7 @@ class IAC_Learner(LearnerMAS):
                  agent_keys: List[str],
                  policy: nn.Module):
         super(IAC_Learner, self).__init__(config, model_keys, agent_keys, policy)
-        self.optimizer = torch.optim.Adam(self.policy.parameters_model, lr=config.learning_rate, eps=1e-5,
-                                          weight_decay=config.weight_decay)
-        self.scheduler = torch.optim.lr_scheduler.LinearLR(self.optimizer,
-                                                           start_factor=1.0, end_factor=config.end_factor_lr_decay,
-                                                           total_iters=self.config.running_steps)
-        self.lr = config.learning_rate
-        self.end_factor_lr_decay = config.end_factor_lr_decay
-        self.gamma = config.gamma
-        self.use_linear_lr_decay = config.use_linear_lr_decay
+        self.build_optimizer()
         self.use_value_clip, self.value_clip_range = config.use_value_clip, config.value_clip_range
         self.use_huber_loss, self.huber_delta = config.use_huber_loss, config.huber_delta
         self.use_value_norm = config.use_value_norm
@@ -40,6 +32,14 @@ class IAC_Learner(LearnerMAS):
             self.value_normalizer = {key: ValueNorm(1).to(self.device) for key in self.model_keys}
         else:
             self.value_normalizer = None
+
+    def build_optimizer(self):
+        self.optimizer = torch.optim.Adam(self.policy.parameters_model, lr=self.learning_rate, eps=1e-5,
+                                          weight_decay=self.config.weight_decay)
+        self.scheduler = torch.optim.lr_scheduler.LinearLR(self.optimizer,
+                                                           start_factor=1.0,
+                                                           end_factor=self.end_factor_lr_decay,
+                                                           total_iters=self.config.running_steps)
 
     def build_training_data(self, sample: Optional[dict],
                             use_parameter_sharing: Optional[bool] = False,

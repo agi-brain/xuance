@@ -17,9 +17,13 @@ class SPDQN_Learner(Learner):
         conactor_optimizer = torch.optim.Adam(self.policy.conactor.parameters(), self.config.learning_rate)
         qnetwork_optimizer = torch.optim.Adam(self.policy.qnetwork.parameters(), self.config.learning_rate)
         self.optimizers = [conactor_optimizer, qnetwork_optimizer]
-        conactor_lr_scheduler = torch.optim.lr_scheduler.LinearLR(conactor_optimizer, start_factor=1.0, end_factor=0.25,
+        conactor_lr_scheduler = torch.optim.lr_scheduler.LinearLR(conactor_optimizer,
+                                                                  start_factor=1.0,
+                                                                  end_factor=self.end_factor_lr_decay,
                                                                   total_iters=self.config.running_steps)
-        qnetwork_lr_scheduler = torch.optim.lr_scheduler.LinearLR(qnetwork_optimizer, start_factor=1.0, end_factor=0.25,
+        qnetwork_lr_scheduler = torch.optim.lr_scheduler.LinearLR(qnetwork_optimizer,
+                                                                  start_factor=1.0,
+                                                                  end_factor=self.end_factor_lr_decay,
                                                                   total_iters=self.config.running_steps)
         self.scheduler = [conactor_lr_scheduler, qnetwork_lr_scheduler]
         self.tau = config.tau

@@ -21,7 +21,6 @@ class VDAC_Learner(IAC_Learner):
         super(VDAC_Learner, self).__init__(config, model_keys, agent_keys, policy)
 
     def update(self, sample):
-        return {}
         self.iterations += 1
         info = {}
 

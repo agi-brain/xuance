@@ -21,10 +21,14 @@ class MATD3_Learner(LearnerMAS):
                   'critic': torch.optim.Adam(self.policy.parameters_critic[key], self.config.learning_rate_critic, eps=1e-5)}
             for key in self.model_keys}
         self.scheduler = {
-            key: {'actor': torch.optim.lr_scheduler.LinearLR(self.optimizer[key]['actor'], start_factor=1.0,
-                                                             end_factor=0.5, total_iters=self.config.running_steps),
-                  'critic': torch.optim.lr_scheduler.LinearLR(self.optimizer[key]['critic'], start_factor=1.0,
-                                                              end_factor=0.5, total_iters=self.config.running_steps)}
+            key: {'actor': torch.optim.lr_scheduler.LinearLR(self.optimizer[key]['actor'],
+                                                             start_factor=1.0,
+                                                             end_factor=self.end_factor_lr_decay,
+                                                             total_iters=self.config.running_steps),
+                  'critic': torch.optim.lr_scheduler.LinearLR(self.optimizer[key]['critic'],
+                                                              start_factor=1.0,
+                                                              end_factor=self.end_factor_lr_decay,
+                                                              total_iters=self.config.running_steps)}
             for key in self.model_keys}
         self.gamma = config.gamma
         self.tau = config.tau

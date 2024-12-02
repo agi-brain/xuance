@@ -44,9 +44,9 @@ class COMA_Agents(MARLAgents):
                                                 use_global_state=self.use_global_state,
                                                 dim_obs=config.dim_obs,
                                                 dim_state=config.dim_state)
-        lr_scheduler = [MyLinearLR(config.learning_rate_actor, start_factor=1.0, end_factor=0.5,
+        lr_scheduler = [MyLinearLR(config.learning_rate_actor, start_factor=1.0, end_factor=self.end_factor_lr_decay,
                                    total_iters=get_total_iters(config.agent_name, config)),
-                        MyLinearLR(config.learning_rate_critic, start_factor=1.0, end_factor=0.5,
+                        MyLinearLR(config.learning_rate_critic, start_factor=1.0, end_factor=self.end_factor_lr_decay,
                                    total_iters=get_total_iters(config.agent_name, config))]
         optimizer = [tk.optimizers.Adam(lr_scheduler[0]),
                      tk.optimizers.Adam(lr_scheduler[1])]

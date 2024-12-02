@@ -18,15 +18,16 @@ class DCG_Learner(LearnerMAS):
                  model_keys: List[str],
                  agent_keys: List[str],
                  policy: nn.Module):
-        self.gamma = config.gamma
-        self.sync_frequency = config.sync_frequency
-        self.mse_loss = nn.MSELoss()
         super(DCG_Learner, self).__init__(config, model_keys, agent_keys, policy)
-        self.optimizer = torch.optim.Adam(self.policy.parameters_model, config.learning_rate, eps=1e-5)
-        self.scheduler = torch.optim.lr_scheduler.LinearLR(self.optimizer, start_factor=1.0, end_factor=0.5,
+        self.optimizer = torch.optim.Adam(self.policy.parameters_model, self.learning_rate, eps=1e-5)
+        self.scheduler = torch.optim.lr_scheduler.LinearLR(self.optimizer,
+                                                           start_factor=1.0,
+                                                           end_factor=self.end_factor_lr_decay,
                                                            total_iters=self.config.running_steps)
         self.dim_hidden_state = policy.representation[self.model_keys[0]].output_shapes['state'][0]
         self.dim_act = max([self.policy.action_space[key].n for key in agent_keys])
+        self.sync_frequency = config.sync_frequency
+        self.mse_loss = nn.MSELoss()
 
     def get_graph_values(self, hidden_states, use_target_net=False):
         if use_target_net:

@@ -144,10 +144,10 @@ Source Code
                             self.args.learning_rate_critic)
                     else:
                         critic_optimizer = torch.optim.Adam(policy.critic.parameters(), self.args.learning_rate_critic)
-                    actor_lr_scheduler = torch.optim.lr_scheduler.LinearLR(actor_optimizer, start_factor=1.0, end_factor=0.25,
+                    actor_lr_scheduler = torch.optim.lr_scheduler.LinearLR(actor_optimizer, start_factor=1.0, end_factor=self.end_factor_lr_decay,
                                                                         total_iters=get_total_iters(self.agent_name,
                                                                                                     self.args))
-                    critic_lr_scheduler = torch.optim.lr_scheduler.LinearLR(critic_optimizer, start_factor=1.0, end_factor=0.25,
+                    critic_lr_scheduler = torch.optim.lr_scheduler.LinearLR(critic_optimizer, start_factor=1.0, end_factor=self.end_factor_lr_decay,
                                                                             total_iters=get_total_iters(self.agent_name,
                                                                                                         self.args))
                     self.agent = REGISTRY_Agent[self.agent_name](self.args, self.envs, policy,
@@ -156,16 +156,16 @@ Source Code
                 elif self.agent_name in ["PDQN", "MPDQN", "SPDQN"]:
                     conactor_optimizer = torch.optim.Adam(policy.conactor.parameters(), self.args.learning_rate)
                     qnetwork_optimizer = torch.optim.Adam(policy.qnetwork.parameters(), self.args.learning_rate)
-                    conactor_lr_scheduler = torch.optim.lr_scheduler.LinearLR(conactor_optimizer, start_factor=1.0, end_factor=0.25,
+                    conactor_lr_scheduler = torch.optim.lr_scheduler.LinearLR(conactor_optimizer, start_factor=1.0, end_factor=self.end_factor_lr_decay,
                                                                         total_iters=get_total_iters(self.agent_name, self.args))
-                    qnetwork_lr_scheduler = torch.optim.lr_scheduler.LinearLR(qnetwork_optimizer, start_factor=1.0, end_factor=0.25,
+                    qnetwork_lr_scheduler = torch.optim.lr_scheduler.LinearLR(qnetwork_optimizer, start_factor=1.0, end_factor=self.end_factor_lr_decay,
                                                                             total_iters=get_total_iters(self.agent_name, self.args))
                     self.agent = REGISTRY_Agent[self.agent_name](self.args, self.envs, policy,
                                                                 [conactor_optimizer, qnetwork_optimizer],
                                                                 [conactor_lr_scheduler, qnetwork_lr_scheduler], self.args.device)
                 else:
                     optimizer = torch.optim.Adam(policy.parameters(), self.args.learning_rate, eps=1e-5)
-                    lr_scheduler = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=1.0, end_factor=0.0,
+                    lr_scheduler = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=1.0, end_factor=self.end_factor_lr_decay,
                                                                     total_iters=get_total_iters(self.agent_name, self.args))
                     self.agent = REGISTRY_Agent[self.agent_name](self.args, self.envs, policy, optimizer, lr_scheduler,
                                                                 self.args.device)
@@ -274,12 +274,12 @@ Source Code
                     policy = REGISTRY_Policy[self.args.policy](*input_policy)
 
                 if self.agent_name in ["DDPG", "TD3", "SAC", "SACDIS"]:
-                    # actor_lr_scheduler = MyLinearLR(self.args.learning_rate_actor, start_factor=1.0, end_factor=0.25,
+                    # actor_lr_scheduler = MyLinearLR(self.args.learning_rate_actor, start_factor=1.0, end_factor=self.end_factor_lr_decay,
                     #                                 total_iters=get_total_iters(self.agent_name, self.args))
                     actor_lr_scheduler = tk.optimizers.schedules.ExponentialDecay(self.args.learning_rate_actor,
                                                                                 decay_steps=1000, decay_rate=0.9)
                     actor_optimizer = tk.optimizers.Adam(actor_lr_scheduler)
-                    # critic_lr_scheduler = MyLinearLR(self.args.learning_rate_critic, start_factor=1.0, end_factor=0.25,
+                    # critic_lr_scheduler = MyLinearLR(self.args.learning_rate_critic, start_factor=1.0, end_factor=self.end_factor_lr_decay,
                     #                                  total_iters=get_total_iters(self.agent_name, self.args))
                     critic_lr_scheduler = tk.optimizers.schedules.ExponentialDecay(self.args.learning_rate_critic,
                                                                                 decay_steps=1000, decay_rate=0.9)
@@ -297,7 +297,7 @@ Source Code
                                                                 [conactor_optimizer, qnetwork_optimizer],
                                                                 self.args.device)
                 else:
-                    # lr_scheduler = MyLinearLR(self.args.learning_rate, start_factor=1.0, end_factor=0.25,
+                    # lr_scheduler = MyLinearLR(self.args.learning_rate, start_factor=1.0, end_factor=self.end_factor_lr_decay,
                     #                           total_iters=get_total_iters(self.agent_name, self.args))
                     lr_scheduler = tk.optimizers.schedules.ExponentialDecay(self.args.learning_rate, decay_steps=1000,
                                                                             decay_rate=0.9)

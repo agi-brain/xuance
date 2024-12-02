@@ -18,11 +18,6 @@ class IPPO_Learner(IAC_Learner):
                  agent_keys: List[str],
                  policy: nn.Module):
         super(IPPO_Learner, self).__init__(config, model_keys, agent_keys, policy)
-        self.optimizer = torch.optim.Adam(self.policy.parameters_model, lr=config.learning_rate, eps=1e-5,
-                                          weight_decay=config.weight_decay)
-        self.scheduler = torch.optim.lr_scheduler.LinearLR(self.optimizer,
-                                                           start_factor=1.0, end_factor=config.end_factor_lr_decay,
-                                                           total_iters=self.config.running_steps)
         self.lr = config.learning_rate
         self.end_factor_lr_decay = config.end_factor_lr_decay
         self.gamma = config.gamma
