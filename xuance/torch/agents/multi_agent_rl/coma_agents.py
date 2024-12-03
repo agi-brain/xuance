@@ -167,7 +167,7 @@ class COMA_Agents(OnPolicyMARLAgents):
             values_dict (dict): The evaluated critic values (when test_mode is False).
         """
         n_env = len(obs_dict)
-        rnn_hidden_critic_new, log_pi_a_dict, values_dict = {}, {}, {}
+        rnn_hidden_critic_new, log_pi_a_dict, values_dict, actions_out = {}, {}, {}, None
 
         obs_input, agents_id, avail_actions_input = self._build_inputs(obs_dict, avail_actions_dict)
         rnn_hidden_actor_new, pi_dists = self.policy(observation=obs_input,
@@ -182,29 +182,25 @@ class COMA_Agents(OnPolicyMARLAgents):
             actions_dict = [{k: actions_out[e, i].cpu().detach().numpy() for i, k in enumerate(self.agent_keys)}
                             for e in range(n_env)]
             actions_onehot = {key: one_hot(actions_out, self.action_space[key].n)}
-            if not test_mode:
-                rnn_hidden_critic_new, values_out = self.policy.get_values(state=Tensor(state),
-                                                                           observation=obs_input,
-                                                                           actions=actions_onehot,
-                                                                           agent_ids=agents_id,
-                                                                           rnn_hidden=rnn_hidden_critic,
-                                                                           target=True)
-                values_out = values_out.gather(-1, actions_out.unsqueeze(-1)).reshape(n_env, self.n_agents)
-                values_out = values_out.cpu().detach().numpy()
-                values_dict = {k: values_out[:, i] for i, k in enumerate(self.agent_keys)}
         else:
+            agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(n_env, -1, -1).to(self.device)
+            bs = n_env * self.n_agents
+            agents_id = agents_id.reshape(bs, 1, -1) if self.use_rnn else agents_id.reshape(bs, -1)
             actions_sample = {k: pi_dists[k].sample() for k in self.agent_keys}
+            actions_out = torch.stack(itemgetter(*self.agent_keys)(actions_sample), dim=-1)
             actions_dict = [{k: actions_sample[k].cpu().detach().numpy()[e].reshape([]) for k in self.agent_keys}
                             for e in range(n_env)]
             actions_onehot = {k: one_hot(actions_sample[k], self.action_space[k].n) for k in self.agent_keys}
-            if not test_mode:
-                rnn_hidden_critic_new, values_out = self.policy.get_values(state=Tensor(state),
-                                                                           observation=obs_input,
-                                                                           actions=actions_onehot,
-                                                                           agent_ids=agents_id,
-                                                                           rnn_hidden=rnn_hidden_critic,
-                                                                           target=True)
-                values_dict = {k: values_out[k].cpu().detach().numpy().reshape([n_env]) for k in self.agent_keys}
+        if not test_mode:  # calculate target values
+            rnn_hidden_critic_new, values_out = self.policy.get_values(state=Tensor(state).to(self.device),
+                                                                       observation=obs_input,
+                                                                       actions=actions_onehot,
+                                                                       agent_ids=agents_id,
+                                                                       rnn_hidden=rnn_hidden_critic,
+                                                                       target=True)
+            values_out = values_out.gather(-1, actions_out.unsqueeze(-1)).reshape(n_env, self.n_agents)
+            values_out = values_out.cpu().detach().numpy()
+            values_dict = {k: values_out[:, i] for i, k in enumerate(self.agent_keys)}
         return {"rnn_hidden_actor": rnn_hidden_actor_new, "rnn_hidden_critic": rnn_hidden_critic_new,
                 "actions": actions_dict, "log_pi": log_pi_a_dict, "values": values_dict}
 
@@ -230,6 +226,12 @@ class COMA_Agents(OnPolicyMARLAgents):
         """
         n_env = 1
         rnn_hidden_critic_i = None
+        state = state.reshape(n_env, -1)
+
+        agents_id = torch.eye(self.n_agents).unsqueeze(0).repeat(n_env, 1, 1).to(self.device)
+        bs = n_env * self.n_agents
+        agents_id = agents_id.reshape(bs, 1, -1) if self.use_rnn else agents_id.reshape(bs, -1)
+
         if self.use_parameter_sharing:
             key = self.agent_keys[0]
             if self.use_rnn:
@@ -244,28 +246,30 @@ class COMA_Agents(OnPolicyMARLAgents):
             else:
                 obs_input = {key: np.array([itemgetter(*self.agent_keys)(obs_dict)])}
                 agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(n_env, -1, -1).to(self.device)
-
-            actions_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(actions_n)).reshape(n_env, self.n_agents))
+            actions_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(actions_n))).reshape(n_env, self.n_agents)
+            actions_tensor = actions_tensor.to(self.device)
             actions_onehot = {key: one_hot(actions_tensor.long(), self.action_space[key].n)}
-            rnn_hidden_critic_new, values_out = self.policy.get_values(state=Tensor(state.reshape(n_env, -1)),
-                                                                       observation=obs_input,
-                                                                       actions=actions_onehot,
-                                                                       agent_ids=agents_id,
-                                                                       rnn_hidden=rnn_hidden_critic_i,
-                                                                       target=True)
-            values_out = values_out.gather(-1, actions_tensor.unsqueeze(-1).long())
-            values_out = values_out.cpu().detach().numpy().reshape(self.n_agents)
-            values_dict = {k: values_out[i] for i, k in enumerate(self.agent_keys)}
         else:
             if self.use_rnn:
                 rnn_hidden_critic_i = {k: self.policy.critic_representation[k].get_hidden_item(
                     [i_env, ], *rnn_hidden_critic[k]) for k in self.agent_keys}
-            obs_input = {k: obs_dict[k][None, :] for k in self.agent_keys} if self.use_rnn else obs_dict
+                obs_input = {k: obs_dict[k][None, None, :] for k in self.agent_keys}
+            else:
+                obs_input = {k: obs_dict[k][None, :] for k in self.agent_keys}
+            actions_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(actions_n))).reshape(n_env, self.n_agents)
+            actions_tensor = actions_tensor.to(self.device)
+            actions_onehot = {k: one_hot(actions_tensor[:, i].long(), self.action_space[k].n)
+                              for i, k in enumerate(self.agent_keys)}
 
-            rnn_hidden_critic_new, values_out = self.policy.get_values(observation=obs_input,
-                                                                       rnn_hidden=rnn_hidden_critic_i)
-            values_dict = {k: values_out[k].cpu().detach().numpy().reshape([]) for k in self.agent_keys}
-
+        rnn_hidden_critic_new, values_out = self.policy.get_values(state=Tensor(state).to(self.device),
+                                                                   observation=obs_input,
+                                                                   actions=actions_onehot,
+                                                                   agent_ids=agents_id,
+                                                                   rnn_hidden=rnn_hidden_critic_i,
+                                                                   target=True)
+        values_out = values_out.gather(-1, actions_tensor.unsqueeze(-1).long())
+        values_out = values_out.cpu().detach().numpy().reshape(self.n_agents)
+        values_dict = {k: values_out[i] for i, k in enumerate(self.agent_keys)}
         return rnn_hidden_critic_new, values_dict
 
     def train_epochs(self, n_epochs=1):

@@ -68,13 +68,17 @@ class COMA_Learner(IAC_Learner):
         if self.use_parameter_sharing:
             key = self.model_keys[0]
             actions_onehot = {key: one_hot(actions[key].long(), self.n_actions[key])}
-            _, values_pred = self.policy.get_values(state=state, observation=obs, actions=actions_onehot,
-                                                    agent_ids=IDs, target=False)
-            values_pred = values_pred.reshape(bs, -1)
         else:
-            pass
+            IDs = torch.eye(self.n_agents).unsqueeze(0).repeat(batch_size, 1, 1).reshape(bs, -1).to(self.device)
+            actions_onehot = {k: one_hot(actions[k].long(), self.n_actions[k]) for k in self.agent_keys}
 
-        values_pred_dict = {k: values_pred for k in self.model_keys}
+        _, values_pred = self.policy.get_values(state=state, observation=obs, actions=actions_onehot,
+                                                agent_ids=IDs, target=False)
+
+        if self.use_parameter_sharing:
+            values_pred_dict = {k: values_pred.reshape(bs, -1) for k in self.model_keys}
+        else:
+            values_pred_dict = {k: values_pred[:, i] for i, k in enumerate(self.model_keys)}
 
         # calculate loss
         loss_a, loss_c = [], []
