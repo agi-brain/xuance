@@ -7,8 +7,6 @@ Implementation: Pytorch
 import torch
 from torch import nn
 from xuance.torch.learners import LearnerMAS
-
-
 from xuance.common import List
 from argparse import Namespace
 from operator import itemgetter
@@ -20,7 +18,6 @@ class QTRAN_Learner(LearnerMAS):
                  model_keys: List[str],
                  agent_keys: List[str],
                  policy: nn.Module):
-        self.gamma = config.gamma
         self.sync_frequency = config.sync_frequency
         self.mse_loss = nn.MSELoss()
         super(QTRAN_Learner, self).__init__(config, model_keys, agent_keys, policy)

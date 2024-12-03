@@ -24,7 +24,6 @@ class WQMIX_Learner(LearnerMAS):
                                                            end_factor=self.end_factor_lr_decay,
                                                            total_iters=self.config.running_steps)
         self.alpha = config.alpha
-        self.gamma = config.gamma
         self.sync_frequency = config.sync_frequency
         self.mse_loss = nn.MSELoss()
         self.n_actions = {k: self.policy.action_space[k].n for k in self.model_keys}

@@ -96,7 +96,6 @@ class OnPolicyMARLAgents(MARLAgents):
         Parameters:
             n_envs (int): The number of parallel environments.
         """
-        assert self.use_rnn is True, "This method cannot be called when self.use_rnn is False."
         rnn_hidden_actor, rnn_hidden_critic = None, None
         if self.use_rnn:
             batch = n_envs * self.n_agents if self.use_parameter_sharing else n_envs
@@ -177,8 +176,7 @@ class OnPolicyMARLAgents(MARLAgents):
             actions_dict = [{k: actions_out[e, i].cpu().detach().numpy() for i, k in enumerate(self.agent_keys)}
                             for e in range(n_env)]
             if not test_mode:
-                log_pi_a = pi_dists[key].log_prob(actions_sample).cpu().detach().numpy()
-                log_pi_a = log_pi_a.reshape(n_env, self.n_agents)
+                log_pi_a = pi_dists[key].log_prob(actions_sample).cpu().detach().numpy().reshape(n_env, self.n_agents)
                 log_pi_a_dict = {k: log_pi_a[:, i] for i, k in enumerate(self.agent_keys)}
                 values_out[key] = values_out[key].reshape(n_env, self.n_agents)
                 values_dict = {k: values_out[key][:, i].cpu().detach().numpy() for i, k in enumerate(self.agent_keys)}

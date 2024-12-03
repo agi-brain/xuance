@@ -1,8 +1,6 @@
 import os
 from operator import itemgetter
-
 import torch
-from click.core import batch
 from torch.distributions import Categorical
 from torch.nn.functional import one_hot
 from copy import deepcopy
