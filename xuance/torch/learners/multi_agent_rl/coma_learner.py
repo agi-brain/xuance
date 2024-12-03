@@ -17,10 +17,13 @@ class COMA_Learner(IAC_Learner):
                  model_keys: List[str],
                  agent_keys: List[str],
                  policy: nn.Module):
+        config.use_value_clip, config.value_clip_range = False, None
+        config.use_huber_loss, config.huber_delta = False, None
+        config.use_value_norm = False
+        config.vf_coef, config.ent_coef = None, None
         super(COMA_Learner, self).__init__(config, model_keys, agent_keys, policy)
         self.sync_frequency = config.sync_frequency
         self.n_actions = {k: self.policy.action_space[k].n for k in self.model_keys}
-        self.use_global_state = config.use_global_state
         self.mse_loss = nn.MSELoss()
         self.egreedy = 0.0
 
@@ -88,7 +91,7 @@ class COMA_Learner(IAC_Learner):
             advantages = (q_taken - baseline).detach()
             loss_a.append(-(advantages * log_pi_taken * mask_values).sum() / mask_values.sum())
 
-            td_error = (q_taken - returns[key]) * mask_values
+            td_error = (q_taken - returns[key].detach()) * mask_values
             loss_c.append((td_error ** 2).sum() / mask_values.sum())
 
         # update critic
@@ -129,7 +132,7 @@ class COMA_Learner(IAC_Learner):
 
         return info
 
-    def update_recurrent(self, sample, epsilon=0.0):
+    def update_rnn(self, sample, epsilon=0.0):
         self.iterations += 1
         state = torch.Tensor(sample['state']).to(self.device)
         obs = torch.Tensor(sample['obs']).to(self.device)
