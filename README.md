@@ -116,8 +116,12 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
   IDDPG [[Paper](https://proceedings.neurips.cc/paper/2017/file/68a9750337a418a86fe06c1991a1d64c-Paper.pdf)]
 - Multi-agent Deep Deterministic Policy Gradient -
   MADDPG [[Paper](https://proceedings.neurips.cc/paper/2017/file/68a9750337a418a86fe06c1991a1d64c-Paper.pdf)] [[Code](https://github.com/openai/maddpg)]
+- Independent Actor-Critic -
+  IAC [[Paper](https://ojs.aaai.org/index.php/AAAI/article/view/11794)] [[Code](https://github.com/oxwhirl/pymarl)]
 - Counterfactual Multi-agent Policy Gradient -
   COMA [[Paper](https://ojs.aaai.org/index.php/AAAI/article/view/11794)] [[Code](https://github.com/oxwhirl/pymarl)]
+- Value-Decomposition Actor-Critic -
+  VDAC [[Paper](https://ojs.aaai.org/index.php/AAAI/article/view/17353)] [[Code](https://github.com/hahayonghuming/VDACs.git)]
 - Independent Proximal Policy Optimization -
   IPPO [[Paper](https://proceedings.neurips.cc/paper_files/paper/2022/file/9c1535a02f0ce079433344e14d910597-Paper-Datasets_and_Benchmarks.pdf)] [[Code](https://github.com/marlbenchmark/on-policy)]
 - Multi-agent Proximal Policy Optimization -
