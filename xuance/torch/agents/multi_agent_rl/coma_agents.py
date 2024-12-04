@@ -1,6 +1,6 @@
-from tqdm import tqdm
 import torch
 import numpy as np
+from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
 from operator import itemgetter
@@ -105,42 +105,6 @@ class COMA_Agents(OnPolicyMARLAgents):
                                                 for k in self.agent_keys}
         self.memory.store(**experience_data)
 
-    def init_rnn_hidden(self, n_envs):
-        """
-        Returns initialized hidden states of RNN if use RNN-based representations.
-
-        Parameters:
-            n_envs (int): The number of parallel environments.
-        """
-        rnn_hidden_actor, rnn_hidden_critic = None, None
-        if self.use_rnn:
-            batch = n_envs * self.n_agents if self.use_parameter_sharing else n_envs
-            rnn_hidden_actor = {k: self.policy.actor_representation[k].init_hidden(batch) for k in self.model_keys}
-            rnn_hidden_critic = self.policy.critic_representation.init_hidden(batch)
-        return rnn_hidden_actor, rnn_hidden_critic
-
-    def init_hidden_item(self,
-                         i_env: int,
-                         rnn_hidden_actor: Optional[dict] = None,
-                         rnn_hidden_critic: Optional[dict] = None):
-        """
-        Returns initialized hidden states of RNN for i-th environment.
-
-        Parameters:
-            i_env (int): The index of environment that to be selected.
-            rnn_hidden_actor (Optional[dict]): The RNN hidden states of actor representation.
-            rnn_hidden_critic (Optional[dict]): The RNN hidden states of critic representation.
-        """
-        assert self.use_rnn is True, "This method cannot be called when self.use_rnn is False."
-        if self.use_parameter_sharing:
-            b_index = np.arange(i_env * self.n_agents, (i_env + 1) * self.n_agents)
-        else:
-            b_index = [i_env, ]
-        for k in self.model_keys:
-            rnn_hidden_actor[k] = self.policy.actor_representation[k].init_hidden_item(b_index, *rnn_hidden_actor[k])
-            rnn_hidden_critic = self.policy.critic_representation.init_hidden_item(b_index, *rnn_hidden_critic)
-        return rnn_hidden_actor, rnn_hidden_critic
-
     def action(self,
                obs_dict: List[dict],
                state: Optional[np.ndarray] = None,
@@ -191,13 +155,26 @@ class COMA_Agents(OnPolicyMARLAgents):
             actions_dict = [{k: actions_sample[k].cpu().detach().numpy()[e].reshape([]) for k in self.agent_keys}
                             for e in range(n_env)]
             actions_onehot = {k: one_hot(actions_sample[k], self.action_space[k].n) for k in self.agent_keys}
+
         if not test_mode:  # calculate target values
+            if self.use_rnn:
+                state = Tensor(state).reshape(n_env, 1, -1)
+                if self.use_parameter_sharing:
+                    actions_onehot = {k: actions_onehot[k].unsqueeze(1) for k in self.model_keys}
+                else:
+                    actions_onehot = {k: actions_onehot[k] for k in self.model_keys}
+            else:
+                state = Tensor(state).reshape(n_env, -1)
+
             rnn_hidden_critic_new, values_out = self.policy.get_values(state=Tensor(state).to(self.device),
                                                                        observation=obs_input,
                                                                        actions=actions_onehot,
                                                                        agent_ids=agents_id,
                                                                        rnn_hidden=rnn_hidden_critic,
                                                                        target=True)
+            if self.use_rnn:
+                values_out = values_out.reshape(n_env, self.n_agents, -1)
+                actions_out = actions_out.reshape(n_env, self.n_agents)
             values_out = values_out.gather(-1, actions_out.unsqueeze(-1)).reshape(n_env, self.n_agents)
             values_out = values_out.cpu().detach().numpy()
             values_dict = {k: values_out[:, i] for i, k in enumerate(self.agent_keys)}
@@ -225,29 +202,30 @@ class COMA_Agents(OnPolicyMARLAgents):
             values_dict: The critic values.
         """
         n_env = 1
+        bs = n_env * self.n_agents
         rnn_hidden_critic_i = None
-        state = state.reshape(n_env, -1)
 
         agents_id = torch.eye(self.n_agents).unsqueeze(0).repeat(n_env, 1, 1).to(self.device)
-        bs = n_env * self.n_agents
-        agents_id = agents_id.reshape(bs, 1, -1) if self.use_rnn else agents_id.reshape(bs, -1)
+        if self.use_rnn:
+            state = state.reshape(n_env, 1, -1)
+            agents_id = agents_id.reshape(bs, 1, -1)
+        else:
+            state = state.reshape(n_env, -1)
+            agents_id.reshape(bs, -1)
 
         if self.use_parameter_sharing:
             key = self.agent_keys[0]
+            actions_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(actions_n)))
             if self.use_rnn:
                 hidden_item_index = np.arange(i_env * self.n_agents, (i_env + 1) * self.n_agents)
                 rnn_hidden_critic_i = {key: self.policy.critic_representation[key].get_hidden_item(
                     hidden_item_index, *rnn_hidden_critic[key])}
-                batch_size = n_env * self.n_agents
                 obs_array = np.array(itemgetter(*self.agent_keys)(obs_dict))
-                obs_input = {key: obs_array.reshape([batch_size, 1, -1])}
-                agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(
-                    n_env, -1, -1).reshape(batch_size, 1, -1).to(self.device)
+                obs_input = {key: obs_array.reshape([bs, 1, -1])}
+                actions_tensor = actions_tensor.reshape(n_env, 1, self.n_agents).to(self.device)
             else:
                 obs_input = {key: np.array([itemgetter(*self.agent_keys)(obs_dict)])}
-                agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(n_env, -1, -1).to(self.device)
-            actions_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(actions_n))).reshape(n_env, self.n_agents)
-            actions_tensor = actions_tensor.to(self.device)
+                actions_tensor = actions_tensor.reshape(n_env, self.n_agents).to(self.device)
             actions_onehot = {key: one_hot(actions_tensor.long(), self.action_space[key].n)}
         else:
             if self.use_rnn:
@@ -267,6 +245,9 @@ class COMA_Agents(OnPolicyMARLAgents):
                                                                    agent_ids=agents_id,
                                                                    rnn_hidden=rnn_hidden_critic_i,
                                                                    target=True)
+        if self.use_rnn:
+            values_out = values_out.reshape(n_env, self.n_agents, -1)
+            actions_tensor = actions_tensor.reshape(n_env, self.n_agents)
         values_out = values_out.gather(-1, actions_tensor.unsqueeze(-1).long())
         values_out = values_out.cpu().detach().numpy().reshape(self.n_agents)
         values_dict = {k: values_out[i] for i, k in enumerate(self.agent_keys)}
@@ -281,7 +262,6 @@ class COMA_Agents(OnPolicyMARLAgents):
         """
         if self.egreedy >= self.end_greedy:
             self.egreedy = self.start_greedy - self.delta_egreedy * self.current_step
-        self.learner.egreedy = self.egreedy
         info_train = {}
         if self.memory.full:
             indexes = np.arange(self.buffer_size)
@@ -291,7 +271,10 @@ class COMA_Agents(OnPolicyMARLAgents):
                     end = start + self.batch_size
                     sample_idx = indexes[start:end]
                     sample = self.memory.sample(sample_idx)
-                    info_train = self.learner.update_rnn(sample) if self.use_rnn else self.learner.update(sample)
+                    if self.use_rnn:
+                        info_train = self.learner.update_rnn(sample, self.egreedy)
+                    else:
+                        info_train = self.learner.update(sample, self.egreedy)
             self.memory.clear()
         info_train["epsilon-greedy"] = self.egreedy
         return info_train

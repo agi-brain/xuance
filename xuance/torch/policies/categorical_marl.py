@@ -436,9 +436,9 @@ class COMA_Policy(Module):
         critic_inputs = []
 
         if self.use_rnn:
-            critic_inputs.append(state.unsqueeze(2).repeat(1, 1, self.n_agents, 1))
+            critic_inputs.append(state.unsqueeze(-2).repeat(1, 1, self.n_agents, 1))  # batch * T * N * dim_S
         else:
-            critic_inputs.append(state.unsqueeze(1).repeat(1, self.n_agents, 1))
+            critic_inputs.append(state.unsqueeze(-2).repeat(1, self.n_agents, 1))  # batch * N * dim_S
 
         obs_rep = {}
         for key in self.model_keys:
@@ -450,36 +450,36 @@ class COMA_Policy(Module):
                 rnn_hidden_new[key] = [None, None]
             obs_rep[key] = outputs['state']
 
+        agent_mask = (1 - torch.eye(self.n_agents, dtype=torch.float32, device=self.device)).unsqueeze(-1)
         if self.use_parameter_sharing:
             key = self.model_keys[0]
+            agent_mask = agent_mask.repeat(1, 1, self.n_actions[key]).reshape(self.n_agents, -1).unsqueeze(0)
             if self.use_rnn:
-                agent_mask = (1 - torch.eye(self.n_agents, dtype=torch.float32, device=self.device)).unsqueeze(-1)
-                agent_mask = agent_mask.repeat(1, 1, self.n_actions[key]).reshape(self.n_agents, -1).unsqueeze(0)
-                actions_input = actions[key].reshape(batch_size, self.n_actions, seq_len, -1).transpose(1, 2)
-                actions_input = actions_input.reshape(batch_size, seq_len, 1, -1).repeat(1, 1, self.n_agents, 1)
+                actions_input = actions[key].reshape(batch_size, seq_len, 1, -1).repeat(1, 1, self.n_agents, 1)
                 critic_inputs.append(obs_rep[key].reshape(batch_size, self.n_agents, seq_len, -1).transpose(1, 2))
                 critic_inputs.append(actions_input * agent_mask.unsqueeze(0))
                 critic_inputs.append(agent_ids.reshape(batch_size, self.n_agents, seq_len, -1).transpose(1, 2))
             else:
-                agent_mask = (1 - torch.eye(self.n_agents, dtype=torch.float32, device=self.device)).unsqueeze(-1)
-                agent_mask = agent_mask.repeat(1, 1, self.n_actions[key]).reshape(self.n_agents, -1).unsqueeze(0)
                 actions_input = actions[key].reshape(batch_size, 1, -1).repeat(1, self.n_agents, 1)
                 critic_inputs.append(obs_rep[key].reshape(batch_size, self.n_agents, -1))
                 critic_inputs.append(actions_input * agent_mask)
                 critic_inputs.append(agent_ids.reshape(batch_size, self.n_agents, -1))
             critic_inputs = torch.cat(critic_inputs, dim=-1)
         else:
+            agent_mask = torch.cat([agent_mask[i].repeat(1, self.n_actions[k])
+                                    for i, k in enumerate(self.model_keys)], dim=-1).unsqueeze(0)
             if self.use_rnn:
-                pass
-            else:
-                agent_mask = (1 - torch.eye(self.n_agents, dtype=torch.float32, device=self.device)).unsqueeze(-1)
-                agent_mask = torch.cat([agent_mask[i].repeat(1, self.n_actions[k])
-                                        for i, k in enumerate(self.model_keys)], dim=-1).unsqueeze(0)
+                agent_mask = agent_mask.unsqueeze(1)
                 actions_input = torch.cat(itemgetter(*self.model_keys)(actions),
-                                          dim=-1).unsqueeze(1).repeat(1, self.n_agents, 1)
-                critic_inputs.append(torch.stack(itemgetter(*self.model_keys)(obs_rep), dim=1))
-                critic_inputs.append(actions_input * agent_mask)
-                critic_inputs.append(agent_ids.reshape(batch_size, self.n_agents, -1))
+                                          dim=-1).unsqueeze(-2).repeat(1, 1, self.n_agents, 1)  # batch * T * N * A
+                agent_ids = agent_ids.reshape(batch_size, self.n_agents, seq_len, -1).transpose(1, 2)
+            else:
+                actions_input = torch.cat(itemgetter(*self.model_keys)(actions),
+                                          dim=-1).unsqueeze(1).repeat(1, self.n_agents, 1)  # batch_size * N * A
+                agent_ids = agent_ids.reshape(batch_size, self.n_agents, -1)  # batch_size * N * N
+            critic_inputs.append(torch.stack(itemgetter(*self.model_keys)(obs_rep), dim=-2))
+            critic_inputs.append(actions_input * agent_mask)
+            critic_inputs.append(agent_ids)
             critic_inputs = torch.cat(critic_inputs, dim=-1)
 
         values = self.target_critic(critic_inputs) if target else self.critic(critic_inputs)
