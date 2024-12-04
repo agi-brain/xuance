@@ -6,6 +6,7 @@ from .qtran_agents import QTRAN_Agents
 from .dcg_agents import DCG_Agents
 from .mfq_agents import MFQ_Agents
 
+from .iac_agents import IAC_Agents
 from .coma_agents import COMA_Agents
 from .vdac_agents import VDAC_Agents
 from .iddpg_agents import IDDPG_Agents

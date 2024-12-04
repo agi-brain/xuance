@@ -154,10 +154,8 @@ class IAC_Learner(LearnerMAS):
         # prepare training data
         sample_Tensor = self.build_training_data(sample=sample,
                                                  use_parameter_sharing=self.use_parameter_sharing,
-                                                 use_actions_mask=self.use_actions_mask,
-                                                 use_global_state=True)
+                                                 use_actions_mask=self.use_actions_mask)
         batch_size = sample_Tensor['batch_size']
-        state = sample_Tensor['state']
         obs = sample_Tensor['obs']
         actions = sample_Tensor['actions']
         agent_mask = sample_Tensor['agent_mask']
@@ -171,20 +169,7 @@ class IAC_Learner(LearnerMAS):
 
         # feedforward
         _, pi_dist_dict = self.policy(observation=obs, agent_ids=IDs, avail_actions=avail_actions)
-        _, values_pred_individual = self.policy.get_values(observation=obs, agent_ids=IDs)
-        if self.use_parameter_sharing:
-            values_n = values_pred_individual[self.model_keys[0]].reshape(batch_size, self.n_agents)
-        else:
-            values_n = torch.cat(itemgetter(*self.agent_keys)(values_pred_individual), dim=-1)
-        if self.config.mixer == "VDN":
-            values_tot = self.policy.value_tot(values_n)
-        elif self.config.mixer == "QMIX":
-            values_tot = self.policy.value_tot(values_n, state)
-        else:
-            raise NotImplementedError("Mixer not implemented.")
-        if self.use_parameter_sharing:
-            values_tot = values_tot.reshape(batch_size, 1).repeat(1, self.n_agents).reshape(bs)
-        values_pred_dict = {k: values_tot for k in self.model_keys}
+        _, values_pred_dict = self.policy.get_values(observation=obs, agent_ids=IDs)
 
         loss_a, loss_e, loss_c = [], [], []
         for key in self.model_keys:
@@ -227,6 +212,10 @@ class IAC_Learner(LearnerMAS):
                     loss_v = ((value_pred_i - value_target) ** 2) * mask_values
                 loss_c.append(loss_v.sum() / mask_values.sum())
 
+            info.update({
+                f"predict_value/{key}": value_pred_i.mean().item()
+            })
+
         # Total loss
         loss = sum(loss_a) + self.vf_coef * sum(loss_c) - self.ent_coef * sum(loss_e)
         self.optimizer.zero_grad()
@@ -247,7 +236,6 @@ class IAC_Learner(LearnerMAS):
             "vf_loss": sum(loss_c).item(),
             "entropy_loss": sum(loss_e).item(),
             "loss": loss.item(),
-            "predict_value": values_tot.mean().item()
         })
 
         return info
@@ -258,10 +246,8 @@ class IAC_Learner(LearnerMAS):
 
         sample_Tensor = self.build_training_data(sample=sample,
                                                  use_parameter_sharing=self.use_parameter_sharing,
-                                                 use_actions_mask=self.use_actions_mask,
-                                                 use_global_state=True)
+                                                 use_actions_mask=self.use_actions_mask)
         batch_size = sample_Tensor['batch_size']
-        state = sample_Tensor['state']
         bs_rnn = batch_size * self.n_agents if self.use_parameter_sharing else batch_size
         obs = sample_Tensor['obs']
         actions = sample_Tensor['actions']
@@ -282,24 +268,7 @@ class IAC_Learner(LearnerMAS):
 
         # feedforward
         _, pi_dist_dict = self.policy(obs, agent_ids=IDs, avail_actions=avail_actions, rnn_hidden=rnn_hidden_actor)
-        _, values_pred_individual = self.policy.get_values(obs, agent_ids=IDs, rnn_hidden=rnn_hidden_critic)
-        if self.use_parameter_sharing:
-            values_n = values_pred_individual[self.model_keys[0]].reshape(
-                batch_size, self.n_agents, seq_len).transpose(1, 2).reshape(-1, self.n_agents)
-        else:
-            values_n = torch.stack(itemgetter(*self.agent_keys)(values_pred_individual),
-                                   dim=2).reshape(-1, self.n_agents)
-        if self.config.mixer == "VDN":
-            values_tot = self.policy.value_tot(values_n)
-        elif self.config.mixer == "QMIX":
-            values_tot = self.policy.value_tot(values_n, state)
-        else:
-            raise NotImplementedError("Mixer not implemented.")
-        if self.use_parameter_sharing:
-            values_tot = values_tot.reshape(batch_size, 1, seq_len).repeat(1, self.n_agents, 1)
-        else:
-            values_tot = values_tot.reshape(batch_size, seq_len)
-        values_pred_dict = {k: values_tot for k in self.model_keys}
+        _, values_pred_dict = self.policy.get_values(obs, agent_ids=IDs, rnn_hidden=rnn_hidden_critic)
 
         # calculate losses for each agent
         loss_a, loss_e, loss_c = [], [], []
@@ -344,6 +313,10 @@ class IAC_Learner(LearnerMAS):
                     loss_v = (value_pred_i - value_target) ** 2
                 loss_c.append((loss_v * mask_values).sum() / mask_values.sum())
 
+            info.update({
+                f"predict_value/{key}": value_pred_i.mean().item()
+            })
+
         loss = sum(loss_a) + self.vf_coef * sum(loss_c) - self.ent_coef * sum(loss_e)
         self.optimizer.zero_grad()
         loss.backward()
@@ -363,7 +336,6 @@ class IAC_Learner(LearnerMAS):
             "vf_loss": sum(loss_c).item(),
             "entropy_loss": sum(loss_e).item(),
             "loss": loss.item(),
-            "predict_value": values_tot.mean().item()
         })
 
         return info

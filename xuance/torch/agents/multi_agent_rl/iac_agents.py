@@ -6,12 +6,12 @@ from xuance.environment import DummyVecMultiAgentEnv
 from xuance.common import List, Optional
 from xuance.torch import Module
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
-from xuance.torch.policies import REGISTRY_Policy, VDN_mixer, QMIX_mixer
+from xuance.torch.policies import REGISTRY_Policy
 from xuance.torch.agents import OnPolicyMARLAgents
 
 
-class VDAC_Agents(OnPolicyMARLAgents):
-    """The implementation of VDAC agents.
+class IAC_Agents(OnPolicyMARLAgents):
+    """The implementation of IAC agents.
 
     Args:
         config: the Namespace variable that provides hyper-parameters and other settings.
@@ -21,10 +21,7 @@ class VDAC_Agents(OnPolicyMARLAgents):
     def __init__(self,
                  config: Namespace,
                  envs: DummyVecMultiAgentEnv):
-        super(VDAC_Agents, self).__init__(config, envs)
-        self.state_space = envs.state_space
-        self.mixer = config.mixer
-
+        super(IAC_Agents, self).__init__(config, envs)
         self.policy = self._build_policy()  # build policy
         self.memory = self._build_memory()  # build memory
         self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, self.policy)
@@ -45,23 +42,12 @@ class VDAC_Agents(OnPolicyMARLAgents):
         # build representations
         A_representation = self._build_representation(self.config.representation, self.observation_space, self.config)
         C_representation = self._build_representation(self.config.representation, self.observation_space, self.config)
-        # create mixer
-        if self.mixer == "VDN":
-            mixer = VDN_mixer()
-        elif self.mixer == "QMIX":
-            dim_state = self.state_space.shape[-1]
-            mixer = QMIX_mixer(dim_state, self.config.hidden_dim_mixing_net, self.config.hidden_dim_hyper_net,
-                               self.n_agents, self.device)
-        elif self.mixer == "Independent":
-            mixer = None
-        else:
-            raise AttributeError(f"Mixer named {self.mixer} is not supported in XuanCe!")
 
         # build policies
         if self.config.policy == "Categorical_MAAC_Policy":
             policy = REGISTRY_Policy["Categorical_MAAC_Policy"](
                 action_space=self.action_space, n_agents=self.n_agents,
-                representation_actor=A_representation, representation_critic=C_representation, mixer=mixer,
+                representation_actor=A_representation, representation_critic=C_representation,
                 actor_hidden_size=self.config.actor_hidden_size, critic_hidden_size=self.config.critic_hidden_size,
                 normalize=normalize_fn, initialize=initializer, activation=activation,
                 device=device, use_distributed_training=self.distributed_training,
@@ -71,7 +57,7 @@ class VDAC_Agents(OnPolicyMARLAgents):
         elif self.config.policy == "Gaussian_MAAC_Policy":
             policy = REGISTRY_Policy["Gaussian_MAAC_Policy"](
                 action_space=self.action_space, n_agents=self.n_agents,
-                representation_actor=A_representation, representation_critic=C_representation, mixer=mixer,
+                representation_actor=A_representation, representation_critic=C_representation,
                 actor_hidden_size=self.config.actor_hidden_size, critic_hidden_size=self.config.critic_hidden_size,
                 normalize=normalize_fn, initialize=initializer, activation=activation,
                 activation_action=ActivationFunctions[self.config.activation_action],
@@ -152,20 +138,14 @@ class VDAC_Agents(OnPolicyMARLAgents):
                                                      avail_actions=avail_actions_input,
                                                      rnn_hidden=rnn_hidden_actor)
         if not test_mode:
-            rnn_hidden_critic_new, values_out = self.policy.get_values(observation=obs_input,
-                                                                       agent_ids=agents_id,
-                                                                       rnn_hidden=rnn_hidden_critic)
+            rnn_hidden_critic_new, values_dict = self.policy.get_values(observation=obs_input,
+                                                                        agent_ids=agents_id,
+                                                                        rnn_hidden=rnn_hidden_critic)
             if self.use_parameter_sharing:
-                values_n = values_out[self.model_keys[0]].reshape(n_env, self.n_agents)
+                values_dict = {k: values_dict[self.model_keys[0]].detach().cpu().numpy().reshape(n_env, -1)[:, i]
+                               for i, k in enumerate(self.agent_keys)}
             else:
-                values_n = torch.stack(itemgetter(*self.agent_keys)(values_out), dim=-1).reshape(n_env, self.n_agents)
-            if self.config.mixer == "VDN":
-                values_tot = self.policy.value_tot(values_n).reshape(n_env).cpu().detach().numpy()
-            elif self.config.mixer == "QMIX":
-                values_tot = self.policy.value_tot(values_n, state).reshape(n_env).cpu().detach().numpy()
-            else:
-                raise NotImplementedError(f"Mixer {self.config.mixer} for VDAC is not implemented.")
-            values_dict = {k: values_tot for k in self.agent_keys}
+                values_dict = {k: v.detach().cpu().numpy().reshape(n_env) for k, v in values_dict.items()}
 
         if self.use_parameter_sharing:
             key = self.agent_keys[0]
@@ -223,26 +203,17 @@ class VDAC_Agents(OnPolicyMARLAgents):
                 obs_input = {key: np.array([itemgetter(*self.agent_keys)(obs_dict)])}
                 agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(n_env, -1, -1).to(self.device)
 
-            rnn_hidden_critic_new, values_out = self.policy.get_values(observation=obs_input,
-                                                                       agent_ids=agents_id,
-                                                                       rnn_hidden=rnn_hidden_critic_i)
-            values_n = values_out[self.model_keys[0]].reshape(n_env, self.n_agents)
+            rnn_hidden_critic_new, values_dict = self.policy.get_values(observation=obs_input,
+                                                                        agent_ids=agents_id,
+                                                                        rnn_hidden=rnn_hidden_critic_i)
+            values_out = values_dict[key].detach().cpu().numpy().reshape(-1)
+            values_dict = {k: values_out[i] for i, k in enumerate(self.agent_keys)}
         else:
             if self.use_rnn:
                 rnn_hidden_critic_i = {k: self.policy.critic_representation[k].get_hidden_item(
                     [i_env, ], *rnn_hidden_critic[k]) for k in self.agent_keys}
             obs_input = {k: obs_dict[k][None, None, :] for k in self.agent_keys} if self.use_rnn else obs_dict
-
-            rnn_hidden_critic_new, values_out = self.policy.get_values(observation=obs_input,
-                                                                       rnn_hidden=rnn_hidden_critic_i)
-            values_n = torch.stack(itemgetter(*self.agent_keys)(values_out), dim=-1).reshape(n_env, self.n_agents)
-
-        if self.config.mixer == "VDN":
-            values_tot = self.policy.value_tot(values_n).reshape([]).cpu().detach().numpy()
-        elif self.config.mixer == "QMIX":
-            values_tot = self.policy.value_tot(values_n, state).reshape([]).cpu().detach().numpy()
-        else:
-            raise NotImplementedError(f"Mixer {self.config.mixer} for VDAC is not implemented.")
-        values_dict = {k: values_tot for k in self.agent_keys}
-
+            rnn_hidden_critic_new, values_dict = self.policy.get_values(observation=obs_input,
+                                                                        rnn_hidden=rnn_hidden_critic_i)
+            values_dict = {k: v.detach().cpu().numpy().reshape([]) for k, v in values_dict.items()}
         return rnn_hidden_critic_new, values_dict
