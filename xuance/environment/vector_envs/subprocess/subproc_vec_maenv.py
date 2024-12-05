@@ -37,6 +37,9 @@ def worker(remote, parent_remote, env_fn_wrappers, env_seed: int = None):
             elif cmd == 'get_env_info':
                 env_info = envs[0].env_info
                 remote.send(CloudpickleWrapper(env_info))
+            elif cmd == 'get_groups_info':
+                env_info = envs[0].groups_info
+                remote.send(CloudpickleWrapper(env_info))
             else:
                 raise NotImplementedError
     except KeyboardInterrupt:
@@ -99,6 +102,8 @@ class SubprocVecMultiAgentEnv(VecEnv):
 
         self.actions = None
         self.max_episode_steps = self.env_info['max_episode_steps']
+        self.remotes[0].send(('get_groups_info', None))
+        self.groups_info = self.remotes[0].recv().x
 
     def reset(self):
         self._assert_not_closed()

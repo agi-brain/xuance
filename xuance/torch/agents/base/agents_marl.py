@@ -52,7 +52,10 @@ class MARLAgents(ABC):
 
         # Environment attributes.
         self.envs = envs
-        self.envs.reset()
+        try:
+            self.envs.reset()
+        except:
+            pass
         self.n_agents = self.config.n_agents = envs.num_agents
         self.render = config.render
         self.fps = config.fps

@@ -118,13 +118,24 @@ class RawMultiAgentEnv(ABC):
         self.num_agents: Optional[int] = None  # Number of all agents, e.g., 4.
         self.max_episode_steps: Optional[int] = None
 
-    def get_env_info(self):
+    def get_env_info(self) -> Dict[str, Any]:
         return {'state_space': self.state_space,
                 'observation_space': self.observation_space,
                 'action_space': self.action_space,
                 'agents': self.agents,
                 'num_agents': self.num_agents,
                 'max_episode_steps': self.max_episode_steps}
+
+    def get_groups_info(self) -> Dict[str, Any]:
+        agent_groups: List[AgentKeys] = []  # e.g., [['red_0', 'red_1'], ['blue_0', 'blue_1']]. Default is empty.
+        num_groups: int = 1  # The number of groups.
+        return {'num_groups': num_groups,
+                'agent_groups': agent_groups,
+                'observation_space_groups': [{k: self.observation_space[k] for i, k in enumerate(group)}
+                                             for group in agent_groups],
+                'action_space_groups': [{k: self.action_space[k] for i, k in enumerate(group)}
+                                        for group in agent_groups],
+                'num_agents_groups': [len(group) for group in agent_groups]}
 
     def agent_mask(self):
         """Returns boolean mask variables indicating which agents are currently alive."""

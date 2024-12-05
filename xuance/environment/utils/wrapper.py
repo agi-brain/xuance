@@ -131,6 +131,7 @@ class XuanCeMultiAgentEnvWrapper(XuanCeEnvWrapper):
         self.num_agents = self.env.num_agents  # Number of all agents, e.g., 4.
         self._episode_score = {agent: 0.0 for agent in self.agents}
         self.env_info = self.env.get_env_info()
+        self.groups_info = self.env.get_groups_info()
 
     def reset(self, **kwargs) -> Tuple[dict, dict]:
         """Resets the environment with kwargs."""

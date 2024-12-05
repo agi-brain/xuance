@@ -21,6 +21,7 @@ class DummyVecMultiAgentEnv(VecEnv):
         VecEnv.__init__(self, len(env_fns), env.observation_space, env.action_space)
 
         self.env_info = env.env_info
+        self.groups_info = env.groups_info
         self.agents = env.agents
         self.num_agents = env.num_agents
         self.state_space = env.state_space  # Type: Box
