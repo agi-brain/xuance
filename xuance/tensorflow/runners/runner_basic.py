@@ -2,7 +2,7 @@ from xuance.environment import make_envs
 from xuance.tensorflow.utils.operations import set_seed
 
 
-class Runner_Base(object):
+class RunnerBase(object):
     def __init__(self, config):
         # set random seeds
         set_seed(config.seed)

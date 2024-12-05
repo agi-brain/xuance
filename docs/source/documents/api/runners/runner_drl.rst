@@ -1,4 +1,4 @@
-Runner_DRL
+RunnerDRL
 =========================================
 
 The definition of basic runner.
@@ -11,7 +11,7 @@ PyTorch
 ------------------------------------------
 
 .. py:class::
-    xuance.torch.runners.runner_drl.Runner_DRL(args)
+    xuance.torch.runners.runner_drl.RunnerDRL(args)
 
     Facilitate the training and evaluation of various algorithms in different environments.
 
@@ -19,12 +19,12 @@ PyTorch
     :type args: Namespace
 
 .. py:function::
-    xuance.torch.runners.runner_drl.Runner_DRL.run()
+    xuance.torch.runners.runner_drl.RunnerDRL.run()
 
     Orchestrate the execution of the task, handling either training or testing based on the specified mode in the configuration.
 
 .. py:function::
-    xuance.torch.runners.runner_drl.Runner_DRL.benchmark()
+    xuance.torch.runners.runner_drl.RunnerDRL.benchmark()
 
     Conduct benchmarking by training the agent for multiple epochs, evaluating its performance, and saving the best-performing model.
 
@@ -36,7 +36,7 @@ TensorFlow
 ------------------------------------------
 
 .. py:class::
-    xuance.tensorflow.runners.runner_drl.Runner_DRL(args)
+    xuance.tensorflow.runners.runner_drl.RunnerDRL(args)
 
     This class provides a structured framework for training, testing, and benchmarking TensorFlow-based reinforcement learning agents in different environments
 
@@ -44,12 +44,12 @@ TensorFlow
     :type args: Namespace
 
 .. py:function::
-    xuance.tensorflow.runners.runner_drl.Runner_DRL.run()
+    xuance.tensorflow.runners.runner_drl.RunnerDRL.run()
 
     Test and train modes.
 
 .. py:function::
-    xuance.tensorflow.runners.runner_drl.Runner_DRL.benchmark()
+    xuance.tensorflow.runners.runner_drl.RunnerDRL.benchmark()
 
     Assess the performance of the reinforcement learning agent over multiple training epochs,
     identify the best-performing model, and save it for potential future use.
@@ -62,7 +62,7 @@ MindSpore
 ------------------------------------------
 
 .. py:class::
-    xuance.mindspore.runners.runner_drl.Runner_DRL(args)
+    xuance.mindspore.runners.runner_drl.RunnerDRL(args)
 
     A general-purpose framework for configuring, training, and evaluating agents across different tasks.
 
@@ -70,13 +70,13 @@ MindSpore
     :type args: Namespace
 
 .. py:function::
-    xuance.mindspore.runners.runner_drl.Runner_DRL.run()
+    xuance.mindspore.runners.runner_drl.RunnerDRL.run()
 
     Encapsulate the logic for both testing and training modes,
     providing a execution flow, including model loading, testing, training, and cleanup
 
 .. py:function::
-    xuance.mindspore.runners.runner_drl.Runner_DRL.benchmark()
+    xuance.mindspore.runners.runner_drl.RunnerDRL.benchmark()
 
     A approach to benchmarking the agent over multiple training epochs,
     identifying the best-performing model, and saving it for further use.
@@ -108,12 +108,12 @@ Source Code
         from copy import deepcopy
 
 
-        class Runner_DRL(Runner_Base):
+        class RunnerDRL(RunnerBase):
             def __init__(self, args):
                 self.args = args
                 self.agent_name = self.args.agent
                 self.env_id = self.args.env_id
-                super(Runner_DRL, self).__init__(self.args)
+                super(RunnerDRL, self).__init__(self.args)
 
                 if self.env_id in ['Platform-v0']:
                     self.args.observation_space = self.envs.observation_space.spaces[0]
@@ -245,12 +245,12 @@ Source Code
         from copy import deepcopy
 
 
-        class Runner_DRL(Runner_Base):
+        class RunnerDRL(RunnerBase):
             def __init__(self, args):
                 self.args = args
                 self.agent_name = self.args.agent
                 self.env_id = self.args.env_id
-                super(Runner_DRL, self).__init__(self.args)
+                super(RunnerDRL, self).__init__(self.args)
 
                 if self.env_id in ['Platform-v0']:
                     self.args.observation_space = self.envs.observation_space.spaces[0]
@@ -384,12 +384,12 @@ Source Code
         from copy import deepcopy
 
 
-        class Runner_DRL(Runner_Base):
+        class RunnerDRL(RunnerBase):
             def __init__(self, args):
                 self.args = args
                 self.agent_name = self.args.agent
                 self.env_id = self.args.env_id
-                super(Runner_DRL, self).__init__(self.args)
+                super(RunnerDRL, self).__init__(self.args)
 
                 if self.env_id in ['Platform-v0']:
                     self.args.observation_space = self.envs.observation_space.spaces[0]

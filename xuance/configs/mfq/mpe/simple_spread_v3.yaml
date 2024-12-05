@@ -7,7 +7,7 @@ learner: "MFQ_Learner"
 policy: "MF_Q_network"
 representation: "Basic_Identical"
 vectorize: "DummyVecMultiAgentEnv"
-runner: "Pettingzoo_Runner"
+runner: "RunnerPettingzoo"
 
 use_rnn: False
 rnn:

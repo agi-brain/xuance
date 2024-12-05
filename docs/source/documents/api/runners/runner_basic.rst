@@ -1,7 +1,7 @@
-Runner_Base
+RunnerBase
 ======================================
 
-The basic class named Runner_Base, which is designed to handle running environments using the Xuance library. 
+The basic class named RunnerBase, which is designed to handle running environments using the XuanCe library.
 The class has an __init__ method to initialize some attributes, including setting random seeds and building environments. 
 Additionally, there's a run method that can be customzied by users.
 
@@ -13,13 +13,13 @@ PyTorch
 ------------------------------------------
 
 .. py:class::
-  xuance.torch.runners.runner_basic.Runner_Base(args)
+  xuance.torch.runners.runner_basic.RunnerBase(args)
 
   :param args: the arguments.
   :type args: Namespace
 
 .. py:function::
-  xuance.torch.runners.runner_basic.Runner_Base.run()
+  xuance.torch.runners.runner_basic.RunnerBase.run()
 
 
 .. raw:: html
@@ -31,13 +31,13 @@ TensorFlow
 ------------------------------------------
 
 .. py:class::
-  xuance.tensorflow.runners.runner_basic.Runner_Base(args)
+  xuance.tensorflow.runners.runner_basic.RunnerBase(args)
 
   :param args: the arguments.
   :type args: Namespace
 
 .. py:function::
-  xuance.tensorflow.runners.runner_basic.Runner_Base.run()
+  xuance.tensorflow.runners.runner_basic.RunnerBase.run()
 
 
 .. py:class::
@@ -62,13 +62,13 @@ MindSpore
 ------------------------------------------
 
 .. py:class::
-  xuance.mindspore.runners.runner_basic.Runner_Base(args)
+  xuance.mindspore.runners.runner_basic.RunnerBase(args)
 
   :param args: the arguments.
   :type args: Namespace
 
 .. py:function::
-  xuance.mindspore.runners.runner_basic.Runner_Base.run()
+  xuance.mindspore.runners.runner_basic.RunnerBase.run()
 
 .. raw:: html
 
@@ -87,7 +87,7 @@ Source Code
       from xuance.torch.utils.operations import set_seed
 
 
-      class Runner_Base(object):
+      class RunnerBase(object):
           def __init__(self, args):
               # set random seeds
               set_seed(args.seed)
@@ -110,7 +110,7 @@ Source Code
         import tensorflow.keras as tk
 
 
-        class Runner_Base(object):
+        class RunnerBase(object):
             def __init__(self, args):
                 # set random seeds
                 set_seed(args.seed)
@@ -146,7 +146,7 @@ Source Code
         from xuance.mindspore.utils.operations import set_seed
 
 
-        class Runner_Base(object):
+        class RunnerBase(object):
             def __init__(self, args):
                 # set random seeds
                 set_seed(args.seed)

@@ -11,13 +11,13 @@ PyTorch
 ------------------------------------------
 
 .. py:class::
-    xuance.torch.runners.runner_football.Football_Runner(args)
+    xuance.torch.runners.runner_football.RunnerFootball(args)
 
     :param args: the arguments.
     :type args: Namespace
 
 .. py:function::
-    xuance.torch.runners.runner_football.Football_Runner.get_agent_num()
+    xuance.torch.runners.runner_football.RunnerFootball.get_agent_num()
 
     Return the number of agents and adversaries in the environment.
 
@@ -25,7 +25,7 @@ PyTorch
     :rtype: tuple
 
 .. py:function::
-    xuance.torch.runners.runner_football.Football_Runner.get_battles_info()
+    xuance.torch.runners.runner_football.RunnerFootball.get_battles_info()
 
     Calculate and return information about the total number of battles in the environment and the number of battles won.
 
@@ -33,7 +33,7 @@ PyTorch
     :rtype: tuple
 
 .. py:function::
-    xuance.torch.runners.runner_football.Football_Runner.get_battles_result(last_battles_info)
+    xuance.torch.runners.runner_football.RunnerFootball.get_battles_result(last_battles_info)
 
     Provide the win rate based on changes in the total number of battles and battles won between the last recorded point in time and the current state of the environment.
 
@@ -43,7 +43,7 @@ PyTorch
     :rtype: float
 
 .. py:function::
-    xuance.torch.runners.runner_football.Football_Runner.run_episodes(test_mode)
+    xuance.torch.runners.runner_football.RunnerFootball.run_episodes(test_mode)
 
     Execute a series of episodes in the environment, either for training or testing purposes.
 
@@ -53,7 +53,7 @@ PyTorch
     :rtype: float
 
 .. py:function::
-    xuance.torch.runners.runner_football.Football_Runner.test_episodes(test_T, n_test_runs)
+    xuance.torch.runners.runner_football.RunnerFootball.test_episodes(test_T, n_test_runs)
 
     Run multiple testing cycles in a testing mode and calculate statistics such as test scores and win rates.
 
@@ -65,7 +65,7 @@ PyTorch
     :rtype: tuple
 
 .. py:function::
-    xuance.torch.runners.runner_football.Football_Runner.benchmark()
+    xuance.torch.runners.runner_football.RunnerFootball.benchmark()
 
     This method conducts a thorough performance evaluation throughout the training and testing processes,
     providing comprehensive assessment results and statistics..
@@ -84,14 +84,14 @@ Source Code
 
     .. code-block:: python
 
-        from .runner_sc2 import SC2_Runner
+        from .runner_sc2 import RunnerSC2
         import numpy as np
         from copy import deepcopy
         import time
         import wandb
 
 
-        class Football_Runner(SC2_Runner):
+        class RunnerFootball(RunnerSC2):
             def __init__(self, args):
                 self.num_agents, self.num_adversaries = 0, 0
                 if args.test:
@@ -99,7 +99,7 @@ Source Code
                     args.render = True
                 else:
                     args.render = False
-                super(Football_Runner, self).__init__(args)
+                super(RunnerFootball, self).__init__(args)
 
             def get_agent_num(self):
                 return self.envs.num_agents, self.envs.num_adversaries

@@ -7,7 +7,7 @@ learner: "MADDPG_Learner"
 policy: "MADDPG_Policy"
 representation: "Basic_Identical"
 vectorize: "DummyVecMultiAgentEnv"
-runner: "Pettingzoo_Runner"
+runner: "RunnerPettingzoo"
 on_policy: False
 
 representation_hidden_size: []  # the units for each hidden layer

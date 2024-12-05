@@ -4,7 +4,7 @@ import time
 from pathlib import Path
 import wandb
 from torch.utils.tensorboard import SummaryWriter
-from .runner_basic import Runner_Base, make_envs
+from .runner_basic import RunnerBase, make_envs
 from xuance.torch.agents import REGISTRY_Agents
 from xuance.common import get_time_string
 from gymnasium.spaces.box import Box
@@ -13,7 +13,7 @@ import numpy as np
 from copy import deepcopy
 
 
-class Pettingzoo_Runner(Runner_Base):
+class RunnerPettingzoo(RunnerBase):
     def __init__(self, args):
         self.args = args if type(args) == list else [args]
         self.fps = args[0].fps if type(args) == list else args.fps
@@ -38,7 +38,7 @@ class Pettingzoo_Runner(Runner_Base):
                 continue
             else:
                 self.args_base = arg
-                super(Pettingzoo_Runner, self).__init__(arg)
+                super(RunnerPettingzoo, self).__init__(arg)
                 self.running_steps = arg.running_steps
                 self.training_frequency = arg.training_frequency
                 self.train_per_step = arg.train_per_step

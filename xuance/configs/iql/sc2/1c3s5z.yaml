@@ -7,7 +7,7 @@ learner: "IQL_Learner"
 policy: "Basic_Q_network_marl"
 representation: "Basic_RNN"
 vectorize: "Subproc_StarCraft2"
-runner: "StarCraft2_Runner"
+runner: "RunnerStarCraft2"
 
 # recurrent settings for Basic_RNN representation
 use_rnn: True

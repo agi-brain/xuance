@@ -1,6 +1,6 @@
-from .runner_pettingzoo import Pettingzoo_Runner
+from .runner_pettingzoo import RunnerPettingzoo
 
 
-class MAgent_Runner(Pettingzoo_Runner):
+class RunnerMAgent(RunnerPettingzoo):
     def __init__(self, args):
-        super(MAgent_Runner, self).__init__(args)
+        super(RunnerMAgent, self).__init__(args)

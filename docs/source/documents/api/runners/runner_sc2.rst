@@ -12,13 +12,13 @@ PyTorch
 ------------------------------------------
 
 .. py:class::
-    xuance.torch.runners.runner_sc2.SC2_Runner(args)
+    xuance.torch.runners.runner_sc2.RunnerSC2(args)
 
     :param args: the arguments.
     :type args: Namespace
 
 .. py:function::
-    xuance.torch.runners.runner_sc2.SC2_Runner.init_rnn_hidden()
+    xuance.torch.runners.runner_sc2.RunnerSC2.init_rnn_hidden()
 
     Initialize the hidden states of recurrent neural networks used in the agent's policy and critic.
 
@@ -26,7 +26,7 @@ PyTorch
     :rtype: tuple
 
 .. py:function::
-    xuance.torch.runners.runner_sc2.SC2_Runner.get_agent_num()
+    xuance.torch.runners.runner_sc2.RunnerSC2.get_agent_num()
 
     Retrieve the number of agents and enemies in the environment.
 
@@ -34,7 +34,7 @@ PyTorch
     :rtype: tuple
 
 .. py:function::
-    xuance.torch.runners.runner_sc2.SC2_Runner.log_infos(info, x_index)
+    xuance.torch.runners.runner_sc2.RunnerSC2.log_infos(info, x_index)
 
     Log information during training or testing.
 
@@ -44,7 +44,7 @@ PyTorch
     :type x_index: int
 
 .. py:function::
-    xuance.torch.runners.runner_sc2.SC2_Runner.log_videos(info, fps, x_index)
+    xuance.torch.runners.runner_sc2.RunnerSC2.log_videos(info, fps, x_index)
 
     Log video data during training or testing.
 
@@ -56,7 +56,7 @@ PyTorch
     :type x_index: int
 
 .. py:function::
-    xuance.torch.runners.runner_sc2.SC2_Runner.get_actions(obs_n, avail_actions, *rnn_hidden, state, test_mode)
+    xuance.torch.runners.runner_sc2.RunnerSC2.get_actions(obs_n, avail_actions, *rnn_hidden, state, test_mode)
 
     Obtain actions from the agents based on their observations and hidden states.
 
@@ -77,7 +77,7 @@ PyTorch
     :rtype: dict
 
 .. py:function::
-    xuance.torch.runners.runner_sc2.SC2_Runner.get_battles_info()
+    xuance.torch.runners.runner_sc2.RunnerSC2.get_battles_info()
 
     Aggregate information about battles in the environment.
 
@@ -86,7 +86,7 @@ PyTorch
     :rtype: tuple
 
 .. py:function::
-    xuance.torch.runners.runner_sc2.SC2_Runner.get_battles_result(last_battles_info)
+    xuance.torch.runners.runner_sc2.RunnerSC2.get_battles_result(last_battles_info)
 
     Calculate and return various statistics related to battles based on the provided information.
 
@@ -97,7 +97,7 @@ PyTorch
     :rtype: tuple
 
 .. py:function::
-    xuance.torch.runners.runner_sc2.SC2_Runner.run_episodes(test_mode)
+    xuance.torch.runners.runner_sc2.RunnerSC2.run_episodes(test_mode)
 
     Execute a series of episodes in the environment, either for training or testing purposes.
 
@@ -107,7 +107,7 @@ PyTorch
     :rtype: float
 
 .. py:function::
-    xuance.torch.runners.runner_sc2.SC2_Runner.test_episodes(test_T, n_test_runs)
+    xuance.torch.runners.runner_sc2.RunnerSC2.test_episodes(test_T, n_test_runs)
 
     Run multiple testing cycles in a testing mode and calculate statistics such as test scores and win rates.
 
@@ -119,17 +119,17 @@ PyTorch
     :rtype: tuple
 
 .. py:function::
-    xuance.torch.runners.runner_sc2.SC2_Runner.run()
+    xuance.torch.runners.runner_sc2.RunnerSC2.run()
 
     Orchestrate the entire training or testing process.
 
 .. py:function::
-    xuance.torch.runners.runner_sc2.SC2_Runner.benchmark()
+    xuance.torch.runners.runner_sc2.RunnerSC2.benchmark()
 
     Perform a benchmarking process, which involves training and evaluating the models over multiple epochs.
 
 .. py:function::
-    xuance.torch.runners.runner_sc2.SC2_Runner.time_estimate(start)
+    xuance.torch.runners.runner_sc2.RunnerSC2.time_estimate(start)
 
     Estimate the time passed and the remaining time based on the elapsed time since a specified start time.
 
@@ -155,7 +155,7 @@ Source Code
         import os
         import socket
         from pathlib import Path
-        from .runner_basic import Runner_Base
+        from .runner_basic import RunnerBase
         from xuance.torch.agents import REGISTRY as REGISTRY_Agent
         import wandb
         from torch.utils.tensorboard import SummaryWriter
@@ -164,9 +164,9 @@ Source Code
         from copy import deepcopy
 
 
-        class SC2_Runner(Runner_Base):
+        class RunnerSC2(RunnerBase):
             def __init__(self, args):
-                super(SC2_Runner, self).__init__(args)
+                super(RunnerSC2, self).__init__(args)
                 self.fps = args.fps
                 self.args = args
                 self.render = args.render

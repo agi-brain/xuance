@@ -7,7 +7,7 @@ learner: "MFAC_Learner"
 policy: "Categorical_MFAC_Policy"
 representation: "Basic_Identical"
 vectorize: "DummyVecMultiAgentEnv"
-runner: "Pettingzoo_Runner"
+runner: "RunnerPettingzoo"
 
 # recurrent settings for Basic_RNN representation
 use_rnn: False

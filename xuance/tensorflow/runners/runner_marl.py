@@ -1,13 +1,13 @@
 import copy
 import numpy as np
-from xuance.tensorflow.runners import Runner_Base
+from xuance.tensorflow.runners import RunnerBase
 from xuance.tensorflow.agents import REGISTRY_Agents
 from xuance.environment import make_envs
 
 
-class Runner_MARL(Runner_Base):
+class RunnerMARL(RunnerBase):
     def __init__(self, config):
-        super(Runner_MARL, self).__init__(config)
+        super(RunnerMARL, self).__init__(config)
         self.agents = REGISTRY_Agents[config.agent](config, self.envs)
         self.config = config
 

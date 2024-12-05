@@ -7,7 +7,7 @@ learner: "MATD3_Learner"
 policy: "MATD3_Policy"
 representation: "Basic_Identical"
 vectorize: "DummyVecMultiAgentEnv"
-runner: "Pettingzoo_Runner"
+runner: "RunnerPettingzoo"
 
 representation_hidden_size: []  # the units for each hidden layer
 actor_hidden_size: [64, 64]

@@ -7,7 +7,7 @@ learner: "MAPPO_Clip_Learner"
 policy: "Gaussian_MAAC_Policy"
 representation: "Basic_MLP"
 vectorize: "DummyVecMultiAgentEnv"
-runner: "Pettingzoo_Runner"
+runner: "RunnerPettingzoo"
 
 # recurrent settings for Basic_RNN representation
 use_rnn: False

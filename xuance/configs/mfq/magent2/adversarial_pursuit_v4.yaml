@@ -11,7 +11,7 @@ learner: "MFQ_Learner"
 policy: "MF_Q_network"
 representation: "Basic_MLP"
 vectorize: "Dummy_MAgent"
-runner: "MAgent_Runner"
+runner: "RunnerMAgent"
 on_policy: False
 
 # recurrent settings for Basic_RNN representation

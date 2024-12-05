@@ -16,7 +16,7 @@ learner: "VDN_Learner"
 policy: "Mixing_Q_network"
 representation: "Basic_RNN"
 vectorize: "Dummy_Football"
-runner: "Football_Runner"
+runner: "RunnerFootball"
 
 # recurrent settings for Basic_RNN representation
 use_rnn: True

@@ -16,7 +16,7 @@ def parse_args():
     return parser.parse_args()
 
 
-class Football_Runner:
+class RunnerFootball:
     def __init__(self, config):
         set_seed(config.seed)  # Set the random seed.
         self.envs = make_envs(config)  # Make the environment.
@@ -170,7 +170,7 @@ if __name__ == "__main__":
     configs_dict = recursive_dict_update(configs_dict, parser.__dict__)
     configs = argparse.Namespace(**configs_dict)
 
-    runner = Football_Runner(configs)
+    runner = RunnerFootball(configs)
     if parser.benchmark:
         runner.benchmark()
     else:

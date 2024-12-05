@@ -4291,7 +4291,7 @@ MARL Implementations
                             policy: "Basic_Q_network_marl"
                             representation: "Basic_MLP"
                             vectorize: "DummyVecMultiAgentEnv"
-                            runner: "Pettingzoo_Runner"
+                            runner: "RunnerPettingzoo"
 
                             use_rnn: False
                             rnn:
@@ -4344,7 +4344,7 @@ MARL Implementations
                             policy: "Basic_Q_network_marl"
                             representation: "Basic_MLP"
                             vectorize: "Dummy_MAgent"
-                            runner: "MAgent_Runner"
+                            runner: "RunnerMAgent"
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
@@ -4394,7 +4394,7 @@ MARL Implementations
                             policy: "Basic_Q_network_marl"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
@@ -4447,7 +4447,7 @@ MARL Implementations
                             policy: "Basic_Q_network_marl"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
@@ -4500,7 +4500,7 @@ MARL Implementations
                             policy: "Basic_Q_network_marl"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
@@ -4552,7 +4552,7 @@ MARL Implementations
                             policy: "Basic_Q_network_marl"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
@@ -4605,7 +4605,7 @@ MARL Implementations
                             policy: "Basic_Q_network_marl"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
@@ -4658,7 +4658,7 @@ MARL Implementations
                             policy: "Basic_Q_network_marl"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
@@ -4711,7 +4711,7 @@ MARL Implementations
                             policy: "Basic_Q_network_marl"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
@@ -4764,7 +4764,7 @@ MARL Implementations
                             policy: "Basic_Q_network_marl"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
@@ -4817,7 +4817,7 @@ MARL Implementations
                             policy: "Basic_Q_network_marl"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
@@ -4870,7 +4870,7 @@ MARL Implementations
                             policy: "Basic_Q_network_marl"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
@@ -4936,7 +4936,7 @@ MARL Implementations
                             policy: "Basic_Q_network_marl"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_Football"
-                            runner: "Football_Runner"
+                            runner: "RunnerFootball"
 
                             # recurrent settings for Basic_RNN representation
                             use_rnn: True
@@ -4997,7 +4997,7 @@ MARL Implementations
                             policy: "Mixing_Q_network"
                             representation: "Basic_MLP"
                             vectorize: "DummyVecMultiAgentEnv"
-                            runner: "Pettingzoo_Runner"
+                            runner: "RunnerPettingzoo"
                             on_policy: False
 
                             use_rnn: False
@@ -5048,7 +5048,7 @@ MARL Implementations
                             policy: "Mixing_Q_network"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
@@ -5101,7 +5101,7 @@ MARL Implementations
                             policy: "Mixing_Q_network"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
@@ -5155,7 +5155,7 @@ MARL Implementations
                             policy: "Mixing_Q_network"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
@@ -5209,7 +5209,7 @@ MARL Implementations
                             policy: "Mixing_Q_network"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
@@ -5263,7 +5263,7 @@ MARL Implementations
                             policy: "Mixing_Q_network"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
@@ -5317,7 +5317,7 @@ MARL Implementations
                             policy: "Mixing_Q_network"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
@@ -5371,7 +5371,7 @@ MARL Implementations
                             policy: "Mixing_Q_network"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
@@ -5425,7 +5425,7 @@ MARL Implementations
                             policy: "Mixing_Q_network"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
@@ -5479,7 +5479,7 @@ MARL Implementations
                             policy: "Mixing_Q_network"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
@@ -5533,7 +5533,7 @@ MARL Implementations
                             policy: "Mixing_Q_network"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
@@ -5599,7 +5599,7 @@ MARL Implementations
                             policy: "Mixing_Q_network"
                             representation: "Basic_RNN"
                             vectorize: "Dummy_Football"
-                            runner: "Football_Runner"
+                            runner: "RunnerFootball"
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
@@ -5661,7 +5661,7 @@ MARL Implementations
                             policy: "Mixing_Q_network"
                             representation: "Basic_MLP"
                             vectorize: "DummyVecMultiAgentEnv"
-                            runner: "Pettingzoo_Runner"
+                            runner: "RunnerPettingzoo"
 
                             use_rnn: False
                             rnn:
@@ -5714,7 +5714,7 @@ MARL Implementations
                             policy: "Mixing_Q_network"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
@@ -5770,7 +5770,7 @@ MARL Implementations
                             policy: "Mixing_Q_network"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
@@ -5826,7 +5826,7 @@ MARL Implementations
                             policy: "Mixing_Q_network"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
@@ -5882,7 +5882,7 @@ MARL Implementations
                             policy: "Mixing_Q_network"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
@@ -5938,7 +5938,7 @@ MARL Implementations
                             policy: "Mixing_Q_network"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
@@ -5994,7 +5994,7 @@ MARL Implementations
                             policy: "Mixing_Q_network"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
@@ -6050,7 +6050,7 @@ MARL Implementations
                             policy: "Mixing_Q_network"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
@@ -6106,7 +6106,7 @@ MARL Implementations
                             policy: "Mixing_Q_network"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
@@ -6162,7 +6162,7 @@ MARL Implementations
                             policy: "Mixing_Q_network"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
@@ -6218,7 +6218,7 @@ MARL Implementations
                             policy: "Mixing_Q_network"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
@@ -6286,7 +6286,7 @@ MARL Implementations
                             policy: "Mixing_Q_network"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_Football"
-                            runner: "Football_Runner"
+                            runner: "RunnerFootball"
 
                             # recurrent settings for Basic_RNN representation
                             use_rnn: True
@@ -6350,7 +6350,7 @@ MARL Implementations
                             policy: "Weighted_Mixing_Q_network"
                             representation: "Basic_MLP"
                             vectorize: "DummyVecMultiAgentEnv"
-                            runner: "Pettingzoo_Runner"
+                            runner: "RunnerPettingzoo"
                             on_policy: False
 
                             use_rnn: False
@@ -6410,7 +6410,7 @@ MARL Implementations
                             policy: "Weighted_Mixing_Q_network"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
@@ -6468,7 +6468,7 @@ MARL Implementations
                             policy: "Weighted_Mixing_Q_network"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
@@ -6526,7 +6526,7 @@ MARL Implementations
                             policy: "Weighted_Mixing_Q_network"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
@@ -6584,7 +6584,7 @@ MARL Implementations
                             policy: "Weighted_Mixing_Q_network"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
@@ -6642,7 +6642,7 @@ MARL Implementations
                             policy: "Weighted_Mixing_Q_network"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
@@ -6700,7 +6700,7 @@ MARL Implementations
                             policy: "Weighted_Mixing_Q_network"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
@@ -6758,7 +6758,7 @@ MARL Implementations
                             policy: "Weighted_Mixing_Q_network"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
@@ -6816,7 +6816,7 @@ MARL Implementations
                             policy: "Weighted_Mixing_Q_network"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
@@ -6874,7 +6874,7 @@ MARL Implementations
                             policy: "Weighted_Mixing_Q_network"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
@@ -6932,7 +6932,7 @@ MARL Implementations
                             policy: "Weighted_Mixing_Q_network"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
@@ -6999,7 +6999,7 @@ MARL Implementations
                             policy: "Qtran_Mixing_Q_network"
                             representation: "Basic_MLP"
                             vectorize: "DummyVecMultiAgentEnv"
-                            runner: "Pettingzoo_Runner"
+                            runner: "RunnerPettingzoo"
 
                             use_rnn: False
                             rnn:
@@ -7058,7 +7058,7 @@ MARL Implementations
                             policy: "DCG_Policy"
                             representation: "Basic_MLP"
                             vectorize: "DummyVecMultiAgentEnv"
-                            runner: "Pettingzoo_Runner"
+                            runner: "RunnerPettingzoo"
                             on_policy: False
 
                             use_rnn: False
@@ -7117,7 +7117,7 @@ MARL Implementations
                             policy: "DCG_Policy"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
@@ -7179,7 +7179,7 @@ MARL Implementations
                             policy: "DCG_Policy"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
@@ -7241,7 +7241,7 @@ MARL Implementations
                             policy: "DCG_Policy"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
@@ -7303,7 +7303,7 @@ MARL Implementations
                             policy: "DCG_Policy"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
@@ -7365,7 +7365,7 @@ MARL Implementations
                             policy: "DCG_Policy"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
@@ -7427,7 +7427,7 @@ MARL Implementations
                             policy: "DCG_Policy"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
@@ -7489,7 +7489,7 @@ MARL Implementations
                             policy: "DCG_Policy"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
@@ -7551,7 +7551,7 @@ MARL Implementations
                             policy: "DCG_Policy"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
@@ -7613,7 +7613,7 @@ MARL Implementations
                             policy: "DCG_Policy"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
@@ -7675,7 +7675,7 @@ MARL Implementations
                             policy: "DCG_Policy"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
@@ -7745,7 +7745,7 @@ MARL Implementations
                             policy: "Independent_DDPG_Policy"
                             representation: "Basic_Identical"
                             vectorize: "DummyVecMultiAgentEnv"
-                            runner: "Pettingzoo_Runner"
+                            runner: "RunnerPettingzoo"
 
                             representation_hidden_size: [64, ]  # the units for each hidden layer
                             actor_hidden_size: [64, 64]
@@ -7789,7 +7789,7 @@ MARL Implementations
                             policy: "Independent_DDPG_Policy"
                             representation: "Basic_Identical"
                             vectorize: "DummyVecMultiAgentEnv"
-                            runner: "Pettingzoo_Runner"
+                            runner: "RunnerPettingzoo"
 
                             representation_hidden_size: [64, ]  # the units for each hidden layer
                             actor_hidden_size: [64, 64]
@@ -7833,7 +7833,7 @@ MARL Implementations
                             policy: "Independent_DDPG_Policy"
                             representation: "Basic_Identical"
                             vectorize: "DummyVecMultiAgentEnv"
-                            runner: "Pettingzoo_Runner"
+                            runner: "RunnerPettingzoo"
 
                             representation_hidden_size: []  # the units for each hidden layer
                             actor_hidden_size: [64, 64]
@@ -7885,7 +7885,7 @@ MARL Implementations
                             policy: "MADDPG_Policy"
                             representation: "Basic_Identical"
                             vectorize: "DummyVecMultiAgentEnv"
-                            runner: "Pettingzoo_Runner"
+                            runner: "RunnerPettingzoo"
                             on_policy: False
 
                             representation_hidden_size: []  # the units for each hidden layer
@@ -7930,7 +7930,7 @@ MARL Implementations
                             policy: "MADDPG_Policy"
                             representation: "Basic_Identical"
                             vectorize: "DummyVecMultiAgentEnv"
-                            runner: "Pettingzoo_Runner"
+                            runner: "RunnerPettingzoo"
 
                             representation_hidden_size: []  # the units for each hidden layer
                             actor_hidden_size: [64, 64]
@@ -7974,7 +7974,7 @@ MARL Implementations
                             policy: "MADDPG_Policy"
                             representation: "Basic_Identical"
                             vectorize: "DummyVecMultiAgentEnv"
-                            runner: "Pettingzoo_Runner"
+                            runner: "RunnerPettingzoo"
 
                             representation_hidden_size: []  # the units for each hidden layer
                             actor_hidden_size: [64, 64]
@@ -8027,7 +8027,7 @@ MARL Implementations
                             policy: "Gaussian_ISAC_Policy"
                             representation: "Basic_Identical"
                             vectorize: "DummyVecMultiAgentEnv"
-                            runner: "Pettingzoo_Runner"
+                            runner: "RunnerPettingzoo"
 
                             representation_hidden_size: [64, ]  # the units for each hidden layer
                             actor_hidden_size: [64, 64]
@@ -8072,7 +8072,7 @@ MARL Implementations
                             policy: "Gaussian_ISAC_Policy"
                             representation: "Basic_Identical"
                             vectorize: "DummyVecMultiAgentEnv"
-                            runner: "Pettingzoo_Runner"
+                            runner: "RunnerPettingzoo"
 
                             representation_hidden_size: [64, ]  # the units for each hidden layer
                             actor_hidden_size: [64, 64]
@@ -8117,7 +8117,7 @@ MARL Implementations
                             policy: "Gaussian_ISAC_Policy"
                             representation: "Basic_Identical"
                             vectorize: "DummyVecMultiAgentEnv"
-                            runner: "Pettingzoo_Runner"
+                            runner: "RunnerPettingzoo"
 
                             representation_hidden_size: [64, ]  # the units for each hidden layer
                             actor_hidden_size: [64, 64]
@@ -8170,7 +8170,7 @@ MARL Implementations
                             policy: "Gaussian_MASAC_Policy"
                             representation: "Basic_Identical"
                             vectorize: "DummyVecMultiAgentEnv"
-                            runner: "Pettingzoo_Runner"
+                            runner: "RunnerPettingzoo"
 
                             representation_hidden_size: [64, ]  # the units for each hidden layer
                             actor_hidden_size: [64, 64]
@@ -8216,7 +8216,7 @@ MARL Implementations
                             policy: "Gaussian_MASAC_Policy"
                             representation: "Basic_Identical"
                             vectorize: "DummyVecMultiAgentEnv"
-                            runner: "Pettingzoo_Runner"
+                            runner: "RunnerPettingzoo"
 
                             representation_hidden_size: [64, ]  # the units for each hidden layer
                             actor_hidden_size: [64, 64]
@@ -8262,7 +8262,7 @@ MARL Implementations
                             policy: "Gaussian_MASAC_Policy"
                             representation: "Basic_Identical"
                             vectorize: "DummyVecMultiAgentEnv"
-                            runner: "Pettingzoo_Runner"
+                            runner: "RunnerPettingzoo"
 
                             representation_hidden_size: [64, ]  # the units for each hidden layer
                             actor_hidden_size: [64, 64]
@@ -8317,7 +8317,7 @@ MARL Implementations
                             policy: "Categorical_MAAC_Policy"
                             representation: "Basic_MLP"
                             vectorize: "DummyVecMultiAgentEnv"
-                            runner: "Pettingzoo_Runner"
+                            runner: "RunnerPettingzoo"
 
                             use_rnn: False
                             rnn:
@@ -8385,7 +8385,7 @@ MARL Implementations
                             policy: "Categorical_MAAC_Policy"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
 
                             # recurrent settings for Basic_RNN representation
                             use_rnn: True
@@ -8454,7 +8454,7 @@ MARL Implementations
                             policy: "Categorical_MAAC_Policy"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: True
 
                             # recurrent settings for Basic_RNN representation
@@ -8526,7 +8526,7 @@ MARL Implementations
                             policy: "Categorical_MAAC_Policy"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
 
                             # recurrent settings for Basic_RNN representation
                             use_rnn: True
@@ -8595,7 +8595,7 @@ MARL Implementations
                             policy: "Categorical_MAAC_Policy"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
 
                             # recurrent settings for Basic_RNN representation
                             use_rnn: True
@@ -8664,7 +8664,7 @@ MARL Implementations
                             policy: "Categorical_MAAC_Policy"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: True
 
                             # recurrent settings for Basic_RNN representation
@@ -8734,7 +8734,7 @@ MARL Implementations
                             policy: "Categorical_MAAC_Policy"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: True
 
                             # recurrent settings for Basic_RNN representation
@@ -8804,7 +8804,7 @@ MARL Implementations
                             policy: "Categorical_MAAC_Policy"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: True
 
                             # recurrent settings for Basic_RNN representation
@@ -8874,7 +8874,7 @@ MARL Implementations
                             policy: "Categorical_MAAC_Policy"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: True
 
                             # recurrent settings for Basic_RNN representation
@@ -8944,7 +8944,7 @@ MARL Implementations
                             policy: "Categorical_MAAC_Policy"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: True
 
                             # recurrent settings for Basic_RNN representation
@@ -9014,7 +9014,7 @@ MARL Implementations
                             policy: "Categorical_MAAC_Policy"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: True
 
                             # recurrent settings for Basic_RNN representation
@@ -9097,7 +9097,7 @@ MARL Implementations
                             policy: "Categorical_MAAC_Policy"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_Football"
-                            runner: "Football_Runner"
+                            runner: "RunnerFootball"
 
                             # recurrent settings for Basic_RNN representation
                             use_rnn: True
@@ -9174,7 +9174,7 @@ MARL Implementations
                             policy: "Gaussian_MAAC_Policy"
                             representation: "Basic_MLP"
                             vectorize: "DummyVecMultiAgentEnv"
-                            runner: "Pettingzoo_Runner"
+                            runner: "RunnerPettingzoo"
 
                             # recurrent settings for Basic_RNN representation
                             use_rnn: False
@@ -9239,7 +9239,7 @@ MARL Implementations
                             policy: "Gaussian_MAAC_Policy"
                             representation: "Basic_MLP"
                             vectorize: "DummyVecMultiAgentEnv"
-                            runner: "Pettingzoo_Runner"
+                            runner: "RunnerPettingzoo"
 
                             # recurrent settings for Basic_RNN representation
                             use_rnn: False
@@ -9304,7 +9304,7 @@ MARL Implementations
                             policy: "Gaussian_MAAC_Policy"
                             representation: "Basic_MLP"
                             vectorize: "DummyVecMultiAgentEnv"
-                            runner: "Pettingzoo_Runner"
+                            runner: "RunnerPettingzoo"
 
                             # recurrent settings for Basic_RNN representation
                             use_rnn: False
@@ -9373,7 +9373,7 @@ MARL Implementations
                             policy: "Categorical_MAAC_Policy"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
 
                             # recurrent settings for Basic_RNN representation
                             use_rnn: True
@@ -9442,7 +9442,7 @@ MARL Implementations
                             policy: "Categorical_MAAC_Policy"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: True
 
                             # recurrent settings for Basic_RNN representation
@@ -9514,7 +9514,7 @@ MARL Implementations
                             policy: "Categorical_MAAC_Policy"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
 
                             # recurrent settings for Basic_RNN representation
                             use_rnn: True
@@ -9583,7 +9583,7 @@ MARL Implementations
                             policy: "Categorical_MAAC_Policy"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
 
                             # recurrent settings for Basic_RNN representation
                             use_rnn: True
@@ -9652,7 +9652,7 @@ MARL Implementations
                             policy: "Categorical_MAAC_Policy"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: True
 
                             # recurrent settings for Basic_RNN representation
@@ -9722,7 +9722,7 @@ MARL Implementations
                             policy: "Categorical_MAAC_Policy"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: True
 
                             # recurrent settings for Basic_RNN representation
@@ -9792,7 +9792,7 @@ MARL Implementations
                             policy: "Categorical_MAAC_Policy"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: True
 
                             # recurrent settings for Basic_RNN representation
@@ -9862,7 +9862,7 @@ MARL Implementations
                             policy: "Categorical_MAAC_Policy"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: True
 
                             # recurrent settings for Basic_RNN representation
@@ -9932,7 +9932,7 @@ MARL Implementations
                             policy: "Categorical_MAAC_Policy"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: True
 
                             # recurrent settings for Basic_RNN representation
@@ -10002,7 +10002,7 @@ MARL Implementations
                             policy: "Categorical_MAAC_Policy"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: True
 
                             # recurrent settings for Basic_RNN representation
@@ -10085,7 +10085,7 @@ MARL Implementations
                             policy: "Categorical_MAAC_Policy"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_Football"
-                            runner: "Football_Runner"
+                            runner: "RunnerFootball"
 
                             # recurrent settings for Basic_RNN representation
                             use_rnn: True
@@ -10163,7 +10163,7 @@ MARL Implementations
                             policy: "Categorical_MAAC_Policy"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_Football"
-                            runner: "Football_Runner"
+                            runner: "RunnerFootball"
 
                             # recurrent settings for Basic_RNN representation
                             use_rnn: True
@@ -10240,7 +10240,7 @@ MARL Implementations
                             policy: "MATD3_Policy"
                             representation: "Basic_Identical"
                             vectorize: "DummyVecMultiAgentEnv"
-                            runner: "Pettingzoo_Runner"
+                            runner: "RunnerPettingzoo"
 
                             representation_hidden_size: [64, ]  # the units for each hidden layer
                             actor_hidden_size: [64, 64]
@@ -10285,7 +10285,7 @@ MARL Implementations
                             policy: "MATD3_Policy"
                             representation: "Basic_Identical"
                             vectorize: "DummyVecMultiAgentEnv"
-                            runner: "Pettingzoo_Runner"
+                            runner: "RunnerPettingzoo"
 
                             representation_hidden_size: [64, ]  # the units for each hidden layer
                             actor_hidden_size: [64, 64]
@@ -10330,7 +10330,7 @@ MARL Implementations
                             policy: "MATD3_Policy"
                             representation: "Basic_Identical"
                             vectorize: "DummyVecMultiAgentEnv"
-                            runner: "Pettingzoo_Runner"
+                            runner: "RunnerPettingzoo"
 
                             representation_hidden_size: [64, ]  # the units for each hidden layer
                             actor_hidden_size: [64, 64]
@@ -10383,7 +10383,7 @@ MARL Implementations
                             policy: "Categorical_MAAC_Policy_Share"
                             representation: "Basic_MLP"
                             vectorize: "DummyVecMultiAgentEnv"
-                            runner: "Pettingzoo_Runner"
+                            runner: "RunnerPettingzoo"
 
                             # recurrent settings for Basic_RNN representation
                             use_rnn: False
@@ -10456,7 +10456,7 @@ MARL Implementations
                             policy: "Categorical_MAAC_Policy_Share"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
 
                             # recurrent settings for Basic_RNN representation
                             use_rnn: True
@@ -10530,7 +10530,7 @@ MARL Implementations
                             policy: "Categorical_MAAC_Policy_Share"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
 
                             # recurrent settings for Basic_RNN representation
                             use_rnn: True
@@ -10604,7 +10604,7 @@ MARL Implementations
                             policy: "Categorical_MAAC_Policy_Share"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
 
                             # recurrent settings for Basic_RNN representation
                             use_rnn: True
@@ -10678,7 +10678,7 @@ MARL Implementations
                             policy: "Categorical_MAAC_Policy_Share"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
 
                             # recurrent settings for Basic_RNN representation
                             use_rnn: True
@@ -10745,7 +10745,7 @@ MARL Implementations
                             policy: "Categorical_MAAC_Policy_Share"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: True
 
                             # recurrent settings for Basic_RNN representation
@@ -10819,7 +10819,7 @@ MARL Implementations
                             policy: "Categorical_MAAC_Policy_Share"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: True
 
                             # recurrent settings for Basic_RNN representation
@@ -10893,7 +10893,7 @@ MARL Implementations
                             policy: "Categorical_MAAC_Policy_Share"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: True
 
                             # recurrent settings for Basic_RNN representation
@@ -10967,7 +10967,7 @@ MARL Implementations
                             policy: "Categorical_MAAC_Policy_Share"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: True
 
                             # recurrent settings for Basic_RNN representation
@@ -11041,7 +11041,7 @@ MARL Implementations
                             policy: "Categorical_MAAC_Policy_Share"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: True
 
                             # recurrent settings for Basic_RNN representation
@@ -11115,7 +11115,7 @@ MARL Implementations
                             policy: "Categorical_MAAC_Policy_Share"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
                             on_policy: True
 
                             # recurrent settings for Basic_RNN representation
@@ -11199,7 +11199,7 @@ MARL Implementations
                             representation: "Basic_MLP"
                             representation_critic: "Basic_MLP"
                             vectorize: "DummyVecMultiAgentEnv"
-                            runner: "Pettingzoo_Runner"
+                            runner: "RunnerPettingzoo"
 
                             use_rnn: False
                             rnn:
@@ -11260,7 +11260,7 @@ MARL Implementations
                             policy: "Categorical_COMA_Policy"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
 
                             use_rnn: True
                             rnn: "GRU"
@@ -11323,7 +11323,7 @@ MARL Implementations
                             policy: "Categorical_COMA_Policy"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
 
                             use_rnn: True
                             rnn: "GRU"
@@ -11386,7 +11386,7 @@ MARL Implementations
                             policy: "Categorical_COMA_Policy"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
 
                             use_rnn: True
                             rnn: "GRU"
@@ -11449,7 +11449,7 @@ MARL Implementations
                             policy: "Categorical_COMA_Policy"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
 
                             use_rnn: True
                             rnn: "GRU"
@@ -11512,7 +11512,7 @@ MARL Implementations
                             policy: "Categorical_COMA_Policy"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
 
                             use_rnn: True
                             rnn: "GRU"
@@ -11575,7 +11575,7 @@ MARL Implementations
                             policy: "Categorical_COMA_Policy"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
 
                             use_rnn: True
                             rnn: "GRU"
@@ -11638,7 +11638,7 @@ MARL Implementations
                             policy: "Categorical_COMA_Policy"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
 
                             use_rnn: True
                             rnn: "GRU"
@@ -11701,7 +11701,7 @@ MARL Implementations
                             policy: "Categorical_COMA_Policy"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
 
                             use_rnn: True
                             rnn: "GRU"
@@ -11764,7 +11764,7 @@ MARL Implementations
                             policy: "Categorical_COMA_Policy"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
 
                             use_rnn: True
                             rnn: "GRU"
@@ -11827,7 +11827,7 @@ MARL Implementations
                             policy: "Categorical_COMA_Policy"
                             representation: "Basic_RNN"
                             vectorize: "Subproc_StarCraft2"
-                            runner: "StarCraft2_Runner"
+                            runner: "RunnerStarCraft2"
 
                             use_rnn: True
                             rnn: "GRU"
@@ -11898,7 +11898,7 @@ MARL Implementations
                             policy: "MF_Q_network"
                             representation: "Basic_Identical"
                             vectorize: "DummyVecMultiAgentEnv"
-                            runner: "Pettingzoo_Runner"
+                            runner: "RunnerPettingzoo"
 
                             use_rnn: False
                             rnn:
@@ -11955,7 +11955,7 @@ MARL Implementations
                             policy: "MF_Q_network"
                             representation: "Basic_MLP"
                             vectorize: "Dummy_MAgent"
-                            runner: "MAgent_Runner"
+                            runner: "RunnerMAgent"
                             on_policy: False
 
                             # recurrent settings for Basic_RNN representation
@@ -12014,7 +12014,7 @@ MARL Implementations
                             policy: "Categorical_MFAC_Policy"
                             representation: "Basic_Identical"
                             vectorize: "DummyVecMultiAgentEnv"
-                            runner: "Pettingzoo_Runner"
+                            runner: "RunnerPettingzoo"
 
                             # recurrent settings for Basic_RNN representation
                             use_rnn: False

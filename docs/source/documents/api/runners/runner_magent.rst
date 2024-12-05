@@ -1,8 +1,8 @@
 Runner_MAgent
 ==============================================
 
-Run a multi-agent environment, leveraging functionalities from the Pettingzoo_Runner parent class.
-MAgent_Runner makes some extensions to it.
+Run a multi-agent environment, leveraging functionalities from the RunnerPettingzoo parent class.
+RunnerMAgent makes some extensions to it.
 
 .. raw:: html
 
@@ -12,7 +12,7 @@ PyTorch
 ------------------------------------------
 
 .. py:class::
-  xuance.torch.runners.runner_magent.MAgent_Runner(args)
+  xuance.torch.runners.runner_magent.RunnerMAgent(args)
 
   :param args: the arguments.
   :type args: Namespace
@@ -31,11 +31,11 @@ Source Code
 
     .. code-block:: python
 
-        from .runner_pettingzoo import Pettingzoo_Runner
+        from .runner_pettingzoo import RunnerPettingzoo
 
 
-        class MAgent_Runner(Pettingzoo_Runner):
+        class RunnerMAgent(RunnerPettingzoo):
             def __init__(self, args):
-                super(MAgent_Runner, self).__init__(args)
+                super(RunnerMAgent, self).__init__(args)
                 self.fps = 50
 

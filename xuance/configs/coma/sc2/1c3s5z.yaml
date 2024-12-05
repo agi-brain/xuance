@@ -7,7 +7,7 @@ learner: "COMA_Learner"
 policy: "Categorical_COMA_Policy"
 representation: "Basic_RNN"
 vectorize: "Subproc_StarCraft2"
-runner: "StarCraft2_Runner"
+runner: "RunnerStarCraft2"
 
 # recurrent settings for Basic_RNN representation
 use_rnn: True

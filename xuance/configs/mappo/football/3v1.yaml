@@ -15,7 +15,7 @@ learner: "MAPPO_Clip_Learner"
 policy: "Categorical_MAAC_Policy"
 representation: "Basic_RNN"
 vectorize: "Subproc_Football"
-runner: "Football_Runner"
+runner: "RunnerFootball"
 
 # recurrent settings for Basic_RNN representation
 use_rnn: True

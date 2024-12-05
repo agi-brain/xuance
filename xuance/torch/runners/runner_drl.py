@@ -4,15 +4,15 @@ import numpy as np
 from copy import deepcopy
 
 from xuance.environment import make_envs
-from xuance.torch.runners import Runner_Base
+from xuance.torch.runners import RunnerBase
 from xuance.torch.agents import REGISTRY_Agents
 
 
-class Runner_DRL(Runner_Base):
+class RunnerDRL(RunnerBase):
     def __init__(self, config):
         self.config = config
         self.env_id = self.config.env_id
-        super(Runner_DRL, self).__init__(self.config)
+        super(RunnerDRL, self).__init__(self.config)
 
         if self.env_id in ['Platform-v0']:
             self.config.observation_space = self.envs.observation_space.spaces[0]

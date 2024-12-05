@@ -1,24 +1,24 @@
-from .runner_basic import Runner_Base
-from .runner_drl import Runner_DRL
-from .runner_marl import Runner_MARL
-from .runner_pettingzoo import Pettingzoo_Runner
-# from .runner_magent import MAgent_Runner
-from .runner_sc2 import SC2_Runner
-from .runner_football import Football_Runner
+from .runner_basic import RunnerBase
+from .runner_drl import RunnerDRL
+from .runner_marl import RunnerMARL
+from .runner_pettingzoo import RunnerPettingzoo
+# from .runner_magent import RunnerMAgent
+from .runner_sc2 import RunnerSC2
+from .runner_football import RunnerFootball
 
 REGISTRY_Runner = {
     "DL_toolbox": "PyTorch",
-    "DRL": Runner_DRL,
-    "MARL": Runner_MARL,
-    "Pettingzoo_Runner": Pettingzoo_Runner,
-    # "MAgent_Runner": MAgent_Runner,
-    "StarCraft2_Runner": SC2_Runner,
-    "Football_Runner": Football_Runner
+    "DRL": RunnerDRL,
+    "MARL": RunnerMARL,
+    "RunnerPettingzoo": RunnerPettingzoo,
+    # "RunnerMAgent": RunnerMAgent,
+    "RunnerStarCraft2": RunnerSC2,
+    "RunnerFootball": RunnerFootball
 }
 
 __all__ = [
-    "Runner_Base",
-    "Runner_DRL",
-    "Runner_MARL",
+    "RunnerBase",
+    "RunnerDRL",
+    "RunnerMARL",
     "REGISTRY_Runner"
 ]

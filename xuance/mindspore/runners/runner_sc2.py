@@ -1,12 +1,12 @@
 import time
 import numpy as np
-from xuance.mindspore.runners.runner_basic import Runner_Base
+from xuance.mindspore.runners.runner_basic import RunnerBase
 from xuance.mindspore.agents import REGISTRY_Agents
 
 
-class SC2_Runner(Runner_Base):
+class RunnerSC2(RunnerBase):
     def __init__(self, config):
-        super(SC2_Runner, self).__init__(config)
+        super(RunnerSC2, self).__init__(config)
         config.n_agents = self.envs.num_agents
         self.agents = REGISTRY_Agents[config.agent](config, self.envs)
         self.config = config

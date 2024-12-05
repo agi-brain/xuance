@@ -12,13 +12,13 @@ PyTorch
 ------------------------------------------
 
 .. py:class::
-    xuance.torch.runners.runner_pettingzoo.Pettingzoo_Runner(args)
+    xuance.torch.runners.runner_pettingzoo.RunnerPettingzoo(args)
 
     :param args: the arguments.
     :type args: Namespace
 
 .. py:function::
-    xuance.torch.runners.runner_pettingzoo.Pettingzoo_Runner.log_infos(info, x_index)
+    xuance.torch.runners.runner_pettingzoo.RunnerPettingzoo.log_infos(info, x_index)
 
     Log information during training or testing.
 
@@ -28,7 +28,7 @@ PyTorch
     :type x_index: int
 
 .. py:function::
-    xuance.torch.runners.runner_pettingzoo.Pettingzoo_Runner.log_videos(info, fps, x_index)
+    xuance.torch.runners.runner_pettingzoo.RunnerPettingzoo.log_videos(info, fps, x_index)
 
     Log video data during training or testing.
 
@@ -40,7 +40,7 @@ PyTorch
     :type x_index: int
 
 .. py:function::
-    xuance.torch.runners.runner_pettingzoo.Pettingzoo_Runner.print_infos(args)
+    xuance.torch.runners.runner_pettingzoo.RunnerPettingzoo.print_infos(args)
 
     Print information about each agent based on the provided arguments.
 
@@ -48,7 +48,7 @@ PyTorch
     :type args: Namespace
 
 .. py:function::
-    xuance.torch.runners.runner_pettingzoo.Pettingzoo_Runner.combine_env_actions(actions)
+    xuance.torch.runners.runner_pettingzoo.RunnerPettingzoo.combine_env_actions(actions)
 
     Combine actions from multiple agents in different environments into a list of dictionaries.
 
@@ -58,7 +58,7 @@ PyTorch
     :rtype: list
 
 .. py:function::
-    xuance.torch.runners.runner_pettingzoo.Pettingzoo_Runner.get_actions(obs_n, test_mode, act_mean_last, agent_mask, state)
+    xuance.torch.runners.runner_pettingzoo.RunnerPettingzoo.get_actions(obs_n, test_mode, act_mean_last, agent_mask, state)
 
     obtain actions, log probabilities, mean actions,
     one-hot representations of actions, and values from a set of multi-agent reinforcement learning agents.
@@ -77,7 +77,7 @@ PyTorch
     :rtype: dict
 
 .. py:function::
-    xuance.torch.runners.runner_pettingzoo.Pettingzoo_Runner.store_data(obs_n, next_obs_n, actions_dict, state, next_state, agent_mask, rew_n, done_n)
+    xuance.torch.runners.runner_pettingzoo.RunnerPettingzoo.store_data(obs_n, next_obs_n, actions_dict, state, next_state, agent_mask, rew_n, done_n)
 
     Store data related to the observed environment states,
     actions taken by agents, rewards received, and other relevant information in the memory of agent.
@@ -100,7 +100,7 @@ PyTorch
     :type done_n: np.ndarray
 
 .. py:function::
-    xuance.torch.runners.runner_pettingzoo.Pettingzoo_Runner.train_episode(n_episodes)
+    xuance.torch.runners.runner_pettingzoo.RunnerPettingzoo.train_episode(n_episodes)
 
     Train the model.
 
@@ -108,7 +108,7 @@ PyTorch
     :type n_episodes: int
 
 .. py:function::
-    xuance.torch.runners.runner_pettingzoo.Pettingzoo_Runner.test_episode(env_fn)
+    xuance.torch.runners.runner_pettingzoo.RunnerPettingzoo.test_episode(env_fn)
 
     Evaluate the performance of the trained model on a testing environment.
 
@@ -117,12 +117,12 @@ PyTorch
     :rtype: np.ndarray
 
 .. py:function::
-    xuance.torch.runners.runner_pettingzoo.Pettingzoo_Runner.run()
+    xuance.torch.runners.runner_pettingzoo.RunnerPettingzoo.run()
 
     Orchestrate the entire training or testing process.
 
 .. py:function::
-    xuance.torch.runners.runner_pettingzoo.Pettingzoo_Runner.benchmark()
+    xuance.torch.runners.runner_pettingzoo.RunnerPettingzoo.benchmark()
 
     Perform a benchmarking process, which involves training and evaluating the models over multiple epochs.
 
@@ -134,13 +134,13 @@ TensorFlow
 ------------------------------------------
 
 .. py:class::
-    xuance.tensorflow.runners.runner_pettingzoo.Pettingzoo_Runner(args)
+    xuance.tensorflow.runners.runner_pettingzoo.RunnerPettingzoo(args)
 
     :param args: the arguments.
     :type args: Namespace
 
 .. py:function::
-    xuance.tensorflow.runners.runner_pettingzoo.Pettingzoo_Runner.log_infos(info, x_index)
+    xuance.tensorflow.runners.runner_pettingzoo.RunnerPettingzoo.log_infos(info, x_index)
 
     Log information during training or testing.
 
@@ -150,7 +150,7 @@ TensorFlow
     :type x_index: int
 
 .. py:function::
-    xuance.tensorflow.runners.runner_pettingzoo.Pettingzoo_Runner.log_videos(info, fps, x_index)
+    xuance.tensorflow.runners.runner_pettingzoo.RunnerPettingzoo.log_videos(info, fps, x_index)
 
     Log video data during training or testing.
 
@@ -162,7 +162,7 @@ TensorFlow
     :type x_index: int
 
 .. py:function::
-    xuance.tensorflow.runners.runner_pettingzoo.Pettingzoo_Runner.print_infos(args)
+    xuance.tensorflow.runners.runner_pettingzoo.RunnerPettingzoo.print_infos(args)
 
     Print information about each agent based on the provided arguments.
 
@@ -170,7 +170,7 @@ TensorFlow
     :type args: Namespace
 
 .. py:function::
-    xuance.tensorflow.runners.runner_pettingzoo.Pettingzoo_Runner.combine_env_actions(actions)
+    xuance.tensorflow.runners.runner_pettingzoo.RunnerPettingzoo.combine_env_actions(actions)
 
     Combine actions from multiple agents in different environments into a list of dictionaries.
 
@@ -180,7 +180,7 @@ TensorFlow
     :rtype: list
 
 .. py:function::
-    xuance.tensorflow.runners.runner_pettingzoo.Pettingzoo_Runner.get_actions(obs_n, test_mode, act_mean_last, agent_mask, state)
+    xuance.tensorflow.runners.runner_pettingzoo.RunnerPettingzoo.get_actions(obs_n, test_mode, act_mean_last, agent_mask, state)
 
     obtain actions, log probabilities, mean actions,
     one-hot representations of actions, and values from a set of multi-agent reinforcement learning agents.
@@ -199,7 +199,7 @@ TensorFlow
     :rtype: dict
 
 .. py:function::
-    xuance.tensorflow.runners.runner_pettingzoo.Pettingzoo_Runner.store_data(obs_n, next_obs_n, actions_dict, state, next_state, agent_mask, rew_n, done_n)
+    xuance.tensorflow.runners.runner_pettingzoo.RunnerPettingzoo.store_data(obs_n, next_obs_n, actions_dict, state, next_state, agent_mask, rew_n, done_n)
 
     Store data related to the observed environment states,
     actions taken by agents, rewards received, and other relevant information in the memory of agent.
@@ -222,7 +222,7 @@ TensorFlow
     :type done_n: np.ndarray
 
 .. py:function::
-    xuance.tensorflow.runners.runner_pettingzoo.Pettingzoo_Runner.train_episode(n_episodes)
+    xuance.tensorflow.runners.runner_pettingzoo.RunnerPettingzoo.train_episode(n_episodes)
 
     Train the model.
 
@@ -230,7 +230,7 @@ TensorFlow
     :type n_episodes: int
 
 .. py:function::
-    xuance.tensorflow.runners.runner_pettingzoo.Pettingzoo_Runner.test_episode(env_fn)
+    xuance.tensorflow.runners.runner_pettingzoo.RunnerPettingzoo.test_episode(env_fn)
 
     Evaluate the performance of the trained model on a testing environment.
 
@@ -239,12 +239,12 @@ TensorFlow
     :rtype: np.ndarray
 
 .. py:function::
-    xuance.tensorflow.runners.runner_pettingzoo.Pettingzoo_Runner.run()
+    xuance.tensorflow.runners.runner_pettingzoo.RunnerPettingzoo.run()
 
     Orchestrate the entire training or testing process.
 
 .. py:function::
-    xuance.tensorflow.runners.runner_pettingzoo.Pettingzoo_Runner.benchmark()
+    xuance.tensorflow.runners.runner_pettingzoo.RunnerPettingzoo.benchmark()
 
     Perform a benchmarking process, which involves training and evaluating the models over multiple epochs.
 
@@ -256,13 +256,13 @@ MindSpore
 ------------------------------------------
 
 .. py:class::
-    xuance.mindspore.runners.runner_pettingzoo.Pettingzoo_Runner(args)
+    xuance.mindspore.runners.runner_pettingzoo.RunnerPettingzoo(args)
 
     :param args: the arguments.
     :type args: Namespace
 
 .. py:function::
-    xuance.mindspore.runners.runner_pettingzoo.Pettingzoo_Runner.log_infos(info, x_index)
+    xuance.mindspore.runners.runner_pettingzoo.RunnerPettingzoo.log_infos(info, x_index)
 
     Log information during training or testing.
 
@@ -272,7 +272,7 @@ MindSpore
     :type x_index: int
 
 .. py:function::
-    xuance.mindspore.runners.runner_pettingzoo.Pettingzoo_Runner.log_videos(info, fps, x_index)
+    xuance.mindspore.runners.runner_pettingzoo.RunnerPettingzoo.log_videos(info, fps, x_index)
 
     Log video data during training or testing.
 
@@ -284,7 +284,7 @@ MindSpore
     :type x_index: int
 
 .. py:function::
-    xuance.mindspore.runners.runner_pettingzoo.Pettingzoo_Runner.print_infos(args)
+    xuance.mindspore.runners.runner_pettingzoo.RunnerPettingzoo.print_infos(args)
 
     Print information about each agent based on the provided arguments.
 
@@ -292,7 +292,7 @@ MindSpore
     :type args: Namespace
 
 .. py:function::
-    xuance.mindspore.runners.runner_pettingzoo.Pettingzoo_Runner.combine_env_actions(actions)
+    xuance.mindspore.runners.runner_pettingzoo.RunnerPettingzoo.combine_env_actions(actions)
 
     Combine actions from multiple agents in different environments into a list of dictionaries.
 
@@ -300,7 +300,7 @@ MindSpore
     :type actions: Tensor
 
 .. py:function::
-    xuance.mindspore.runners.runner_pettingzoo.Pettingzoo_Runner.get_actions(obs_n, test_mode, act_mean_last, agent_mask, state)
+    xuance.mindspore.runners.runner_pettingzoo.RunnerPettingzoo.get_actions(obs_n, test_mode, act_mean_last, agent_mask, state)
 
     obtain actions, log probabilities, mean actions,
     one-hot representations of actions, and values from a set of multi-agent reinforcement learning agents.
@@ -319,7 +319,7 @@ MindSpore
     :rtype: dict
 
 .. py:function::
-    xuance.mindspore.runners.runner_pettingzoo.Pettingzoo_Runner.store_data(obs_n, next_obs_n, actions_dict, state, next_state, agent_mask, rew_n, done_n)
+    xuance.mindspore.runners.runner_pettingzoo.RunnerPettingzoo.store_data(obs_n, next_obs_n, actions_dict, state, next_state, agent_mask, rew_n, done_n)
 
     Store data related to the observed environment states,
     actions taken by agents, rewards received, and other relevant information in the memory of agent.
@@ -342,7 +342,7 @@ MindSpore
     :type done_n: np.ndarray
 
 .. py:function::
-    xuance.mindspore.runners.runner_pettingzoo.Pettingzoo_Runner.train_episode(n_episodes)
+    xuance.mindspore.runners.runner_pettingzoo.RunnerPettingzoo.train_episode(n_episodes)
 
     Train the model.
 
@@ -350,7 +350,7 @@ MindSpore
     :type n_episodes: int
 
 .. py:function::
-    xuance.mindspore.runners.runner_pettingzoo.Pettingzoo_Runner.test_episode(env_fn)
+    xuance.mindspore.runners.runner_pettingzoo.RunnerPettingzoo.test_episode(env_fn)
 
     Evaluate the performance of the trained model on a testing environment.
 
@@ -359,12 +359,12 @@ MindSpore
     :rtype: np.ndarray
 
 .. py:function::
-    xuance.mindspore.runners.runner_pettingzoo.Pettingzoo_Runner.run()
+    xuance.mindspore.runners.runner_pettingzoo.RunnerPettingzoo.run()
 
     Orchestrate the entire training or testing process.
 
 .. py:function::
-    xuance.mindspore.runners.runner_pettingzoo.Pettingzoo_Runner.benchmark()
+    xuance.mindspore.runners.runner_pettingzoo.RunnerPettingzoo.benchmark()
 
     Perform a benchmarking process, which involves training and evaluating the models over multiple epochs.
 
@@ -387,7 +387,7 @@ Source Code
         from pathlib import Path
         import wandb
         from torch.utils.tensorboard import SummaryWriter
-        from .runner_basic import Runner_Base, make_envs
+        from .runner_basic import RunnerBase, make_envs
         from xuance.torch.agents import REGISTRY as REGISTRY_Agent
         from gymnasium.spaces.box import Box
         from tqdm import tqdm
@@ -395,7 +395,7 @@ Source Code
         from copy import deepcopy
 
 
-        class Pettingzoo_Runner(Runner_Base):
+        class RunnerPettingzoo(RunnerBase):
             def __init__(self, args):
                 self.args = args if type(args) == list else [args]
                 self.fps = 20
@@ -422,7 +422,7 @@ Source Code
                         continue
                     else:
                         self.args_base = arg
-                        super(Pettingzoo_Runner, self).__init__(arg)
+                        super(RunnerPettingzoo, self).__init__(arg)
                         self.running_steps = arg.running_steps
                         self.training_frequency = arg.training_frequency
                         self.train_per_step = arg.train_per_step
@@ -821,7 +821,7 @@ Source Code
         from pathlib import Path
         import wandb
         from torch.utils.tensorboard import SummaryWriter
-        from .runner_basic import Runner_Base, make_envs
+        from .runner_basic import RunnerBase, make_envs
         from xuance.tensorflow.agents import REGISTRY as REGISTRY_Agent
         from gymnasium.spaces.box import Box
         from tqdm import tqdm
@@ -829,7 +829,7 @@ Source Code
         from copy import deepcopy
 
 
-        class Pettingzoo_Runner(Runner_Base):
+        class RunnerPettingzoo(RunnerBase):
             def __init__(self, args):
                 self.args = args if type(args) == list else [args]
                 self.fps = 20
@@ -856,7 +856,7 @@ Source Code
                         continue
                     else:
                         self.args_base = arg
-                        super(Pettingzoo_Runner, self).__init__(arg)
+                        super(RunnerPettingzoo, self).__init__(arg)
                         self.running_steps = arg.running_steps
                         self.training_frequency = arg.training_frequency
                         self.train_per_step = arg.train_per_step
@@ -1264,7 +1264,7 @@ Source Code
         from copy import deepcopy
 
 
-        class Pettingzoo_Runner(Runner_Base):
+        class RunnerPettingzoo(RunnerBase):
             def __init__(self, args):
                 self.args = args if type(args) == list else [args]
                 self.fps = 20
@@ -1291,7 +1291,7 @@ Source Code
                         continue
                     else:
                         self.args_base = arg
-                        super(Pettingzoo_Runner, self).__init__(arg)
+                        super(RunnerPettingzoo, self).__init__(arg)
                         self.running_steps = arg.running_steps
                         self.training_frequency = arg.training_frequency
                         self.train_per_step = arg.train_per_step
