@@ -6,14 +6,16 @@ continuous_action: True
 learner: "MADDPG_Learner"
 policy: "MADDPG_Policy"
 representation: "Basic_Identical"
-vectorize: "DummyVecMultiAgentEnv"
-runner: "RunnerPettingzoo"
+vectorize: "SubprocVecMultiAgentEnv"
+runner: "RunnerCompetition"
 
 representation_hidden_size: []  # the units for each hidden layer
 actor_hidden_size: [64, 64]
 critic_hidden_size: [64, 64]
 activation: 'leaky_relu'
 activation_action: 'sigmoid'
+use_parameter_sharing: True
+use_actions_mask: False
 
 seed: 1
 parallels: 16
@@ -29,14 +31,13 @@ end_noise: 0.01
 sigma: 0.1  # random noise for continuous actions
 start_training: 1000  # start training after n episodes
 running_steps: 10000000
-train_per_step: False  # True: train model per step; False: train model per episode.
-training_frequency: 1
+training_frequency: 25
 
-use_grad_clip: True
+use_grad_clip: False
 grad_clip_norm: 0.5
 
 eval_interval: 100000
 test_episode: 5
+
 log_dir: "./logs/maddpg/"
 model_dir: "./models/maddpg/"
-

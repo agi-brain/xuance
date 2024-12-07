@@ -11,16 +11,16 @@ class RunnerCompetition(object):
     def __init__(self, configs):
         self.configs = configs
         # set random seeds
-        set_seed(configs.seed)
+        set_seed(self.configs[0].seed)
 
         # build environments
         self.envs = make_envs(self.configs[0])
         self.envs.reset()
-        self.group_info = self.envs.groups_infos
-        self.groups = self.group_info['agent_groups']
-        self.num_groups = self.group_info['num_groups']
-        self.obs_space_groups = self.group_info['observation_space_groups']
-        self.act_space_groups = self.group_info['action_space_groups']
+        self.groups_info = self.envs.groups_info
+        self.groups = self.groups_info['agent_groups']
+        self.num_groups = self.groups_info['num_groups']
+        self.obs_space_groups = self.groups_info['observation_space_groups']
+        self.act_space_groups = self.groups_info['action_space_groups']
         assert len(configs) == self.num_groups, "Number of groups must be equal to the number of methods."
         self.agents = []
         for group in range(self.num_groups):

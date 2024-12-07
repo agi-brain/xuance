@@ -1,7 +1,7 @@
 import importlib
 import numpy as np
+from xuance.common import Dict, Any
 from xuance.environment import RawMultiAgentEnv
-
 
 TEAM_NAME_DICT = {
     "mpe.simple_adversary_v3": ['adversary', 'agent'],
@@ -24,6 +24,7 @@ class MPE_Env(RawMultiAgentEnv):
     Parameters:
         config: The configurations of the environment.
     """
+
     def __init__(self, config):
         super(MPE_Env, self).__init__()
         # Prepare raw environment
@@ -42,6 +43,8 @@ class MPE_Env(RawMultiAgentEnv):
         self.observation_space = {agent: self.env.observation_space(agent) for agent in self.agents}
         self.action_space = {agent: self.env.action_space(agent) for agent in self.agents}
         self.num_agents = self.env.num_agents
+        if "simple_push" in env_id:
+            self.agent_groups = [['agent_0'], ['adversary_0']]
         self.max_episode_steps = self.env.unwrapped.max_cycles
         self.individual_episode_reward = {k: 0.0 for k in self.agents}
         self._episode_step = 0

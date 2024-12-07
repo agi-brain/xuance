@@ -116,6 +116,7 @@ class RawMultiAgentEnv(ABC):
         self.observation_space: Optional[Dict[spaces.Space]] = None
         self.action_space: Optional[Dict[spaces.Space]] = None
         self.num_agents: Optional[int] = None  # Number of all agents, e.g., 4.
+        self.agent_groups: Optional[List[AgentKeys]] = None
         self.max_episode_steps: Optional[int] = None
 
     def get_env_info(self) -> Dict[str, Any]:
@@ -127,15 +128,13 @@ class RawMultiAgentEnv(ABC):
                 'max_episode_steps': self.max_episode_steps}
 
     def get_groups_info(self) -> Dict[str, Any]:
-        agent_groups: List[AgentKeys] = []  # e.g., [['red_0', 'red_1'], ['blue_0', 'blue_1']]. Default is empty.
-        num_groups: int = 1  # The number of groups.
-        return {'num_groups': num_groups,
-                'agent_groups': agent_groups,
+        return {'num_groups': len(self.agent_groups),
+                'agent_groups': self.agent_groups,
                 'observation_space_groups': [{k: self.observation_space[k] for i, k in enumerate(group)}
-                                             for group in agent_groups],
+                                             for group in self.agent_groups],
                 'action_space_groups': [{k: self.action_space[k] for i, k in enumerate(group)}
-                                        for group in agent_groups],
-                'num_agents_groups': [len(group) for group in agent_groups]}
+                                        for group in self.agent_groups],
+                'num_agents_groups': [len(group) for group in self.agent_groups]}
 
     def agent_mask(self):
         """Returns boolean mask variables indicating which agents are currently alive."""
