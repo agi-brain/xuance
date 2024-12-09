@@ -261,7 +261,6 @@ class Agent(ABC):
             wandb.finish()
         else:
             self.writer.close()
-        self.envs.close()
         if self.distributed_training:
             if dist.get_rank() == 0:
                 if os.path.exists(self.learner.snapshot_path):

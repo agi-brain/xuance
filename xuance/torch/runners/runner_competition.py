@@ -15,6 +15,7 @@ class RunnerCompetition(object):
 
         # build environments
         self.envs = make_envs(self.configs[0])
+        self.n_envs = self.envs.num_envs
         self.envs.reset()
         self.groups_info = self.envs.groups_info
         self.groups = self.groups_info['agent_groups']
@@ -34,8 +35,6 @@ class RunnerCompetition(object):
             _env = argparse.Namespace(**_env_info)
             self.agents.append(REGISTRY_Agents[self.configs[group].agent](self.configs[group], _env))
 
-        self.observation_space = self.envs.observation_space
-        self.n_envs = self.envs.num_envs
         self.rank = 0
         if self.agents[0].distributed_training:
             self.rank = int(os.environ['RANK'])
@@ -56,16 +55,14 @@ class RunnerCompetition(object):
                 agent.render = True
                 agent.load_model(agent.model_dir_load)
 
-            # ... Here is test ...
-            scores = self.agents.test(env_fn, self.config.test_episode)
+            scores = self.test(env_fn, self.configs[0].test_episode)
 
-            print(f"Mean Score: {np.mean(scores)}, Std: {np.std(scores)}")
+            print(f"Mean Score: {scores}, Std: {scores}")
             print("Finish testing.")
         else:
             n_train_steps = self.configs[0].running_steps // self.n_envs
 
-            # ... Here is train ...
-            self.agents.train(n_train_steps)
+            self.train(n_train_steps)
 
             print("Finish training.")
             for agent in self.agents:
@@ -73,6 +70,7 @@ class RunnerCompetition(object):
 
         for agent in self.agents:
             agent.finish()
+        self.envs.close()
 
     def benchmark(self):
         def env_fn():
@@ -85,40 +83,41 @@ class RunnerCompetition(object):
         test_episode = self.configs[0].test_episode
         num_epoch = int(train_steps / eval_interval)
 
-        # ... Here is test ...
-        test_scores = self.agents.test(env_fn, test_episode) if self.rank == 0 else 0.0
+        test_scores = self.test(env_fn, test_episode) if self.rank == 0 else 0.0
 
-        best_scores_info = {"mean": np.mean(test_scores),
-                            "std": np.std(test_scores),
-                            "step": self.agents[0].current_step}
+        best_scores_info = [{"mean": np.mean(test_scores[i]),
+                             "std": np.std(test_scores[i]),
+                             "step": self.agents[i].current_step} for i in range(self.num_groups)]
 
         for i_epoch in range(num_epoch):
             print("Epoch: %d/%d:" % (i_epoch, num_epoch))
 
             # ... Here is train ...
-            self.agents.train(eval_interval)
+            self.train(eval_interval)
 
             if self.rank == 0:
 
                 # ... Here is test ...
-                test_scores = self.agents.test(env_fn, test_episode)
+                test_scores = self.test(env_fn, test_episode)
 
-                if np.mean(test_scores) > best_scores_info["mean"]:
-                    best_scores_info = {"mean": np.mean(test_scores),
-                                        "std": np.std(test_scores),
-                                        "step": self.agents.current_step}
-                    # save best model
-                    for agent in self.agents:
-                        agent.save_model(model_name="best_model.pth")
+                for i in range(self.num_groups):
+                    if np.mean(test_scores) > best_scores_info[i]["mean"]:
+                        best_scores_info = {"mean": np.mean(test_scores[i]),
+                                            "std": np.std(test_scores[i]),
+                                            "step": self.agents[i].current_step}
+                        # save best model
+                        for agent in self.agents:
+                            agent.save_model(model_name="best_model.pth")
 
         # end benchmarking
         print("Best Model Score: %.2f, std=%.2f" % (best_scores_info["mean"], best_scores_info["std"]))
         for agent in self.agents:
             agent.finish()
+        self.envs.close()
 
     def train(self, eval_interval):
         return
 
-    def test(self, env_fn, test_episode):
-        scores = [None for handel in self.handles]
+    def test(self, env_fn, test_episode) -> list:
+        scores = [0.0 for group in range(self.num_groups)]
         return scores

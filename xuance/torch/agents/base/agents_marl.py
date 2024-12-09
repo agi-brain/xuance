@@ -11,6 +11,7 @@ from operator import itemgetter
 from gym.spaces import Space
 from torch import nn
 from torch.utils.tensorboard import SummaryWriter
+from torch.distributed import destroy_process_group
 from xuance.common import get_time_string, create_directory, space2shape, Optional, List, Dict, Union
 from xuance.environment import DummyVecMultiAgentEnv
 from xuance.torch import ModuleDict, REGISTRY_Representation, REGISTRY_Learners, Module
@@ -289,7 +290,13 @@ class MARLAgents(ABC):
             wandb.finish()
         else:
             self.writer.close()
-        self.envs.close()
+        if self.distributed_training:
+            if dist.get_rank() == 0:
+                if os.path.exists(self.learner.snapshot_path):
+                    if os.path.exists(os.path.join(self.learner.snapshot_path, "snapshot.pt")):
+                        os.remove(os.path.join(self.learner.snapshot_path, "snapshot.pt"))
+                    os.removedirs(self.learner.snapshot_path)
+            destroy_process_group()
 
 
 class RandomAgents(object):

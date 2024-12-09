@@ -89,6 +89,7 @@ class RunnerSC2(RunnerBase):
             self.agents.save_model("final_train_model.pth")
 
         self.agents.finish()
+        self.envs.close()
 
     def benchmark(self):
         test_interval = self.config.eval_interval
@@ -147,6 +148,7 @@ class RunnerSC2(RunnerBase):
         print("Best Win Rate: {}%".format(best_win_rate * 100))
 
         self.agents.finish()
+        self.envs.close()
 
     def time_estimate(self, start):
         current_step = self.agents.current_step

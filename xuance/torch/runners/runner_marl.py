@@ -33,8 +33,8 @@ class RunnerMARL(RunnerBase):
             print("Finish training.")
             self.agents.save_model("final_train_model.pth")
 
-        self.envs.close()
         self.agents.finish()
+        self.envs.close()
 
     def benchmark(self):
         def env_fn():
@@ -66,5 +66,5 @@ class RunnerMARL(RunnerBase):
 
         # end benchmarking
         print("Best Model Score: %.2f, std=%.2f" % (best_scores_info["mean"], best_scores_info["std"]))
-        self.envs.close()
         self.agents.finish()
+        self.envs.close()

@@ -80,6 +80,7 @@ class RunnerFootball(RunnerSC2):
             self.agents.save_model("final_train_model.pth")
 
         self.agents.finish()
+        self.envs.close()
 
     def benchmark(self):
         test_interval = self.config.eval_interval
@@ -136,5 +137,6 @@ class RunnerFootball(RunnerSC2):
         print("Best Win Rate: {}%".format(best_win_rate * 100))
 
         self.agents.finish()
+        self.envs.close()
 
 
