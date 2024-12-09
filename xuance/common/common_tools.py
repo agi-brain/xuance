@@ -235,10 +235,15 @@ def get_runner(method,
             print("Algorithm:", *agents_name_string)
             print("Environment:", args[0].env_name)
             print("Scenario:", args[0].env_id)
+        runner_name = args[0].runner
         for arg in args:
-            if arg.agent_name != "random":
-                runner = REGISTRY_Runner[arg.runner](args)
-                return runner
+            if arg.runner == runner_name:
+                runner_name = arg.runner
+            else:
+                raise AttributeError("The runner should remain consistent across different agents.")
+        if runner_name != "random":
+            runner = REGISTRY_Runner[runner_name](args)
+            return runner
         raise AttributeError("Both sides of policies are random!")
     else:
         args.agent_name = method

@@ -110,12 +110,21 @@ class RunnerCompetition(object):
                             agent.save_model(model_name="best_model.pth")
 
         # end benchmarking
-        print("Best Model Score: %.2f, std=%.2f" % (best_scores_info["mean"], best_scores_info["std"]))
-        for agent in self.agents:
-            agent.finish()
+        best_scores = [score["mean"] for score in best_scores_info]
+        std_list = [score["std"] for score in best_scores_info]
+        print(f"The training for {self.configs[0].env_name}/{self.configs[0].env_id} is finished.")
+        print("Algorithms: ", [config.agent for config in self.configs])
+        print("Best Model Score: ,", best_scores, "Std: ", std_list)
+        for i in range(self.num_groups):
+            self.agents[i].finish()
         self.envs.close()
 
-    def train(self, eval_interval):
+    def train(self, n_steps):
+        """
+        Train the model for numerous steps.
+        Args:
+            n_steps (int): Number of steps to train the model:
+        """
         return
 
     def test(self, env_fn, test_episode) -> list:
