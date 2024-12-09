@@ -22,6 +22,7 @@ class OffPolicyMARLAgents(MARLAgents):
                  config: Namespace,
                  envs: DummyVecMultiAgentEnv):
         super(OffPolicyMARLAgents, self).__init__(config, envs)
+        self.on_policy = False
         self.start_greedy = config.start_greedy if hasattr(config, "start_greedy") else None
         self.end_greedy = config.end_greedy if hasattr(config, "start_greedy") else None
         self.delta_egreedy: Optional[float] = None
@@ -185,7 +186,8 @@ class OffPolicyMARLAgents(MARLAgents):
                obs_dict: List[dict],
                avail_actions_dict: Optional[List[dict]] = None,
                rnn_hidden: Optional[dict] = None,
-               test_mode: Optional[bool] = False):
+               test_mode: Optional[bool] = False,
+               **kwargs):
         """
         Returns actions for agents.
 

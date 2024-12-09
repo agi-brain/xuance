@@ -154,11 +154,23 @@ class LearnerMAS(ABC):
         if use_parameter_sharing:
             k = self.model_keys[0]
             bs = batch_size * self.n_agents
-            obs_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['obs']), axis=1)).to(self.device)
-            actions_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['actions']), axis=1)).to(self.device)
-            rewards_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['rewards']), axis=1)).to(self.device)
-            ter_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['terminals']), 1)).float().to(self.device)
-            msk_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['agent_mask']), 1)).float().to(self.device)
+            if self.n_agents == 1:
+                obs_tensor = Tensor(sample['obs'][k]).to(self.device).unsqueeze(1)
+                actions_tensor = Tensor(sample['actions'][k]).to(self.device).unsqueeze(1)
+                rewards_tensor = Tensor(sample['rewards'][k]).to(self.device).unsqueeze(1)
+                ter_tensor = Tensor(sample['terminals'][k]).float().to(self.device).unsqueeze(1)
+                msk_tensor = Tensor(sample['agent_mask'][k]).float().to(self.device).unsqueeze(1)
+            else:
+                obs_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['obs']),
+                                             axis=1)).to(self.device)
+                actions_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['actions']),
+                                                 axis=1)).to(self.device)
+                rewards_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['rewards']),
+                                                 axis=1)).to(self.device)
+                ter_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['terminals']),
+                                             axis=1)).float().to(self.device)
+                msk_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['agent_mask']),
+                                             axis=1)).float().to(self.device)
             if self.use_rnn:
                 obs = {k: obs_tensor.reshape(bs, seq_length + 1, -1)}
                 if len(actions_tensor.shape) == 3:

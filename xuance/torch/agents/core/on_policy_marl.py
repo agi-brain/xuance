@@ -22,6 +22,7 @@ class OnPolicyMARLAgents(MARLAgents):
                  config: Namespace,
                  envs: DummyVecMultiAgentEnv):
         super(OnPolicyMARLAgents, self).__init__(config, envs)
+        self.on_policy = True
         self.continuous_control: bool = False
         self.n_epochs = config.n_epochs
         self.n_minibatch = config.n_minibatch
@@ -134,7 +135,8 @@ class OnPolicyMARLAgents(MARLAgents):
                avail_actions_dict: Optional[List[dict]] = None,
                rnn_hidden_actor: Optional[dict] = None,
                rnn_hidden_critic: Optional[dict] = None,
-               test_mode: Optional[bool] = False):
+               test_mode: Optional[bool] = False,
+               **kwargs):
         """
         Returns actions for agents.
 

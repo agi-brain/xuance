@@ -7,6 +7,7 @@ from .env_utils import (
     clear_mpi_env_vars,
     flatten_list,
     flatten_obs,
+    combine_actions,
     CloudpickleWrapper,
 )
 

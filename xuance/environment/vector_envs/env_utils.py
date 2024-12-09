@@ -119,6 +119,15 @@ def flatten_obs(obs):
         return np.stack(obs)
 
 
+def combine_actions(group_of_policy_out: list, n_envs: int):
+    actions_groups = [group['actions'] for group in group_of_policy_out]
+    actions_combined = [{} for _ in range(n_envs)]
+    for i_env in range(n_envs):
+        for actions in actions_groups:
+            actions_combined[i_env].update(actions[i_env])
+    return actions_combined
+
+
 class CloudpickleWrapper(object):
     """
     Uses cloudpickle to serialize contents (otherwise multiprocessing tries to use pickle)
