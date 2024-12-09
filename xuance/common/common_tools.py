@@ -218,7 +218,7 @@ def get_runner(method,
             if ('model_dir' in args[i_alg].__dict__) and ('log_dir' in args[i_alg].__dict__):
                 args[i_alg].model_dir = os.path.join(os.getcwd(),
                                                      args[i_alg].model_dir + notation + args[i_alg].env_id + '/',
-                                                     f"_side_{i_alg}/")
+                                                     f"side_{i_alg}/")
                 args[i_alg].log_dir = args[i_alg].log_dir + notation + args[i_alg].env_id + f"/side_{i_alg}/"
             else:
                 if config_path is not None:
