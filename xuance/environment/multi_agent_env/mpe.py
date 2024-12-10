@@ -45,6 +45,8 @@ class MPE_Env(RawMultiAgentEnv):
         self.num_agents = self.env.num_agents
         if "simple_push" in env_id:
             self.agent_groups = [['agent_0'], ['adversary_0']]
+        elif "simple_adversary" in env_id:
+            self.agent_groups = [['adversary_0'], ['agent_0', 'agent_1']]
         self.max_episode_steps = self.env.unwrapped.max_cycles
         self.individual_episode_reward = {k: 0.0 for k in self.agents}
         self._episode_step = 0
