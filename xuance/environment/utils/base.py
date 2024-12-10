@@ -116,7 +116,7 @@ class RawMultiAgentEnv(ABC):
         self.observation_space: Optional[Dict[spaces.Space]] = None
         self.action_space: Optional[Dict[spaces.Space]] = None
         self.num_agents: Optional[int] = None  # Number of all agents, e.g., 4.
-        self.agent_groups: Optional[List[AgentKeys]] = None
+        self.agent_groups: Optional[List[AgentKeys]] = []
         self.max_episode_steps: Optional[int] = None
 
     def get_env_info(self) -> Dict[str, Any]:

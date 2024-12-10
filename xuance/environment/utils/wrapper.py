@@ -129,6 +129,7 @@ class XuanCeMultiAgentEnvWrapper(XuanCeEnvWrapper):
         self._state_space: Optional[spaces.Space] = None
         self.agents = self.env.agents  # e.g., ['red_0', 'red_1', 'blue_0', 'blue_1'].
         self.num_agents = self.env.num_agents  # Number of all agents, e.g., 4.
+        self.agent_groups = self.env.agent_groups
         self._episode_score = {agent: 0.0 for agent in self.agents}
         self.env_info = self.env.get_env_info()
         self.groups_info = self.env.get_groups_info()
