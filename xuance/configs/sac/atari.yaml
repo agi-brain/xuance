@@ -1,4 +1,4 @@
-agent: "SACDIS"
+agent: "SAC"
 vectorize: "Dummy_Atari"
 env_name: "Atari"
 env_id: "ALE/Breakout-v5"

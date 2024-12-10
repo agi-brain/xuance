@@ -40,6 +40,7 @@ class SAC_Learner(Learner):
             self.alpha_optimizer = torch.optim.Adam([self.log_alpha], lr=config.learning_rate_actor)
 
     def update(self, **samples):
+        info = {}
         self.iterations += 1
         obs_batch = torch.as_tensor(samples['obs'], device=self.device)
         act_batch = torch.as_tensor(samples['actions'], device=self.device)
@@ -77,7 +78,7 @@ class SAC_Learner(Learner):
             self.alpha_optimizer.step()
             self.alpha = self.log_alpha.exp()
         else:
-            alpha_loss = 0
+            alpha_loss = torch.zeros([])
 
         if self.scheduler is not None:
             self.scheduler['actor'].step()
@@ -95,8 +96,6 @@ class SAC_Learner(Learner):
                 f"Qvalue/rank_{self.rank}": policy_q.mean().item(),
                 f"actor_lr/rank_{self.rank}": actor_lr,
                 f"critic_lr/rank_{self.rank}": critic_lr,
-                f"alpha_loss/rank_{self.rank}": alpha_loss.item(),
-                f"alpha/rank_{self.rank}": self.alpha.item(),
             }
         else:
             info = {
@@ -105,8 +104,13 @@ class SAC_Learner(Learner):
                 "Qvalue": policy_q.mean().item(),
                 "actor_lr": actor_lr,
                 "critic_lr": critic_lr,
-                "alpha_loss": alpha_loss.item(),
-                "alpha": self.alpha.item(),
             }
+        if self.use_automatic_entropy_tuning:
+            if self.distributed_training:
+                info.update({f"alpha_loss/rank_{self.rank}": alpha_loss.item(),
+                             f"alpha/rank_{self.rank}": self.alpha.item()})
+            else:
+                info.update({"alpha_loss": alpha_loss.item(),
+                             "alpha": self.alpha.item()})
 
         return info

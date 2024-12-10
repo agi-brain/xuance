@@ -43,6 +43,12 @@ class SAC_Agent(OffPolicyAgent):
                 normalize=normalize_fn, initialize=initializer, device=device,
                 use_distributed_training=self.distributed_training,
                 activation=activation, activation_action=ActivationFunctions[self.config.activation_action])
+        elif self.config.policy == "Categorical_SAC":
+            policy = REGISTRY_Policy["Categorical_SAC"](
+                action_space=self.action_space, representation=representation,
+                actor_hidden_size=self.config.actor_hidden_size, critic_hidden_size=self.config.critic_hidden_size,
+                normalize=normalize_fn, initialize=initializer, activation=activation, device=device,
+                use_distributed_training=self.distributed_training)
         else:
             raise AttributeError(f"SAC currently does not support the policy named {self.config.policy}.")
 
