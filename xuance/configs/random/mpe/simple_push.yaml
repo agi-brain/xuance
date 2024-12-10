@@ -3,7 +3,7 @@ env_name: "mpe"
 env_id: "simple_push_v3"
 env_seed: 1
 learner: "RANDOM"
-runner: "MARL"
+runner: "RunnerCompetition"
 
 model_dir: ""
 log_dir: ""

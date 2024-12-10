@@ -7,17 +7,24 @@ learner: "MAPPO_Clip_Learner"
 policy: "Gaussian_MAAC_Policy"
 representation: "Basic_MLP"
 vectorize: "DummyVecMultiAgentEnv"
-runner: "RunnerPettingzoo"
+runner: "RunnerCompetition"
 
 # recurrent settings for Basic_RNN representation
-use_rnn: False
-rnn:
-representation_hidden_size: [64, ]  # the units for each hidden layer
+use_rnn: False  # If to use recurrent neural network as representation. (The representation should be "Basic_RNN").
+rnn: "GRU"  # The type of recurrent layer.
+fc_hidden_sizes: [64, 64, 64]  # The hidden size of feed forward layer in RNN representation.
+recurrent_hidden_size: 64  # The hidden size of the recurrent layer.
+N_recurrent_layers: 1  # The number of recurrent layer.
+dropout: 0  # dropout should be a number in range [0, 1], the probability of an element being zeroed.
+normalize: "LayerNorm"  # Layer normalization.
+initialize: "orthogonal"  # Network initializer.
 gain: 0.01
 
+representation_hidden_size: [64, ]  # A list of hidden units for each layer of Basic_MLP representation networks.
 actor_hidden_size: [64, ]
 critic_hidden_size: [256, ]
 activation: "relu"
+activation_action: "sigmoid"  # The activation function for the last layer of the actor.
 use_parameter_sharing: True  # If to use parameter sharing for all agents' policies.
 use_actions_mask: False  # If to use actions mask for unavailable actions.
 
