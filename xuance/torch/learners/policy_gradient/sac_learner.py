@@ -5,16 +5,15 @@ Implementation: Pytorch
 """
 import torch
 from torch import nn
+import numpy as np
 from xuance.torch.learners import Learner
-from xuance.common import Optional
 from argparse import Namespace
 
 
 class SAC_Learner(Learner):
     def __init__(self,
                  config: Namespace,
-                 policy: nn.Module,
-                 target_entropy: Optional[float] = None):
+                 policy: nn.Module):
         super(SAC_Learner, self).__init__(config, policy)
         self.optimizer = {
             'actor': torch.optim.Adam(self.policy.actor_parameters, self.config.learning_rate_actor),
@@ -34,7 +33,7 @@ class SAC_Learner(Learner):
         self.alpha = config.alpha
         self.use_automatic_entropy_tuning = config.use_automatic_entropy_tuning
         if self.use_automatic_entropy_tuning:
-            self.target_entropy = target_entropy
+            self.target_entropy = -np.prod(policy.action_space.shape).item()
             self.log_alpha = nn.Parameter(torch.zeros(1, requires_grad=True, device=self.device))
             self.alpha = self.log_alpha.exp()
             self.alpha_optimizer = torch.optim.Adam([self.log_alpha], lr=config.learning_rate_actor)

@@ -126,9 +126,10 @@ class ISAC_Learner(LearnerMAS):
                 f"{key}/loss_actor": loss_a.item(),
                 f"{key}/loss_critic": loss_c.item(),
                 f"{key}/predictQ": policy_q.mean().item(),
-                f"{key}/alpha_loss": alpha_loss.item(),
-                f"{key}/alpha": self.alpha[key].item(),
             })
+            if self.use_automatic_entropy_tuning:
+                info.update({f"{key}/alpha_loss": alpha_loss.item(),
+                             f"{key}/alpha": self.alpha[key].item()})
 
         self.policy.soft_update(self.tau)
         return info
@@ -229,9 +230,10 @@ class ISAC_Learner(LearnerMAS):
                 f"{key}/loss_actor": loss_a.item(),
                 f"{key}/loss_critic": loss_c.item(),
                 f"{key}/predictQ": policy_q.mean().item(),
-                f"{key}/alpha_loss": alpha_loss.item(),
-                f"{key}/alpha": self.alpha[key].item(),
             })
+            if self.use_automatic_entropy_tuning:
+                info.update({f"{key}/alpha_loss": alpha_loss.item(),
+                             f"{key}/alpha": self.alpha[key].item()})
 
         self.policy.soft_update(self.tau)
         return info

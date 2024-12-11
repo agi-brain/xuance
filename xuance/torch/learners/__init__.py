@@ -7,7 +7,7 @@ from .qlearning_family import DQN_Learner, DuelDQN_Learner, DDQN_Learner, PerDQN
 
 from .multi_agent_rl import (IQL_Learner, VDN_Learner, QMIX_Learner, WQMIX_Learner, QTRAN_Learner, \
     IAC_Learner, VDAC_Learner, COMA_Learner, MFQ_Learner, MFAC_Learner, IPPO_Learner, MAPPO_Clip_Learner, \
-    IDDPG_Learner, MADDPG_Learner, MATD3_Learner, ISAC_Learner, MASAC_Learner)
+    IDDPG_Learner, MADDPG_Learner, MATD3_Learner, ISAC_Learner, ISACDIS_Learner, MASAC_Learner, MASACDIS_Learner)
 
 REGISTRY_Learners = {
     "BasicLearner": Learner,
@@ -48,7 +48,9 @@ REGISTRY_Learners = {
     "IPPO_Learner": IPPO_Learner,
     "MAPPO_Clip_Learner": MAPPO_Clip_Learner,
     "ISAC_Learner": ISAC_Learner,
+    "ISACDIS_Learner": ISACDIS_Learner,
     "MASAC_Learner": MASAC_Learner,
+    "MASACDIS_Learner": MASACDIS_Learner,
     "MATD3_Learner": MATD3_Learner,
 }
 
@@ -61,6 +63,8 @@ __all__ = [
     "DQN_Learner", "DuelDQN_Learner", "DDQN_Learner", "PerDQN_Learner", "C51_Learner", "QRDQN_Learner", "DRQN_Learner",
 
     "IQL_Learner", "VDN_Learner", "QMIX_Learner", "WQMIX_Learner", "QTRAN_Learner",
-    "IAC_Learner", "VDAC_Learner", "COMA_Learner", "MFQ_Learner", "MFAC_Learner", "IPPO_Learner", "MAPPO_Clip_Learner",
-    "IDDPG_Learner", "MADDPG_Learner", "MATD3_Learner", "ISAC_Learner", "MASAC_Learner"
+    "IAC_Learner", "VDAC_Learner", "COMA_Learner", "IPPO_Learner", "MAPPO_Clip_Learner",
+    "MFQ_Learner", "MFAC_Learner",
+    "IDDPG_Learner", "MADDPG_Learner", "MATD3_Learner",
+    "ISAC_Learner", "ISACDIS_Learner", "MASAC_Learner", "MADDPG_Learner"
 ]
