@@ -5,7 +5,7 @@ from xuance import get_runner
 import unittest
 
 n_steps = 10000
-device = 'cuda:0'
+device = 'cpu'
 test_mode = False
 
 
@@ -30,25 +30,30 @@ class TestValueBaseAlgo(unittest.TestCase):
         runner = get_runner(method="wqmix", env='mpe', env_id='simple_spread_v3', parser_args=args)
         runner.run()
 
-    # def test_qtran(self):
-    #     args = Namespace(**dict(dl_toolbox='torch', device=device, running_steps=n_steps, test_mode=test_mode))
-    #     runner = get_runner(method="qtran", env='mpe', env_id='simple_spread_v3', parser_args=args)
-    #     runner.run()
+    def test_qtran(self):
+        args = Namespace(**dict(dl_toolbox='torch', device=device, running_steps=n_steps, test_mode=test_mode))
+        runner = get_runner(method="qtran", env='mpe', env_id='simple_spread_v3', parser_args=args)
+        runner.run()
 
     # def test_dcg(self):
     #     args = Namespace(**dict(dl_toolbox='torch', device=device, running_steps=n_steps, test_mode=test_mode))
     #     runner = get_runner(method="dcg", env='mpe', env_id='simple_spread_v3', parser_args=args)
     #     runner.run()
 
-    # def test_vdac(self):
-    #     args = Namespace(**dict(dl_toolbox='torch', device=device, running_steps=n_steps, test_mode=test_mode))
-    #     runner = get_runner(method="vdac", env='mpe', env_id='simple_spread_v3', parser_args=args)
-    #     runner.run()
+    def test_iac(self):
+        args = Namespace(**dict(dl_toolbox='torch', device=device, running_steps=n_steps, test_mode=test_mode))
+        runner = get_runner(method="iac", env='mpe', env_id='simple_spread_v3', parser_args=args)
+        runner.run()
 
-    # def test_coma(self):
-    #     args = Namespace(**dict(dl_toolbox='torch', device=device, running_steps=n_steps, test_mode=test_mode))
-    #     runner = get_runner(method="coma", env='mpe', env_id='simple_spread_v3', parser_args=args)
-    #     runner.run()
+    def test_vdac(self):
+        args = Namespace(**dict(dl_toolbox='torch', device=device, running_steps=n_steps, test_mode=test_mode))
+        runner = get_runner(method="vdac", env='mpe', env_id='simple_spread_v3', parser_args=args)
+        runner.run()
+
+    def test_coma(self):
+        args = Namespace(**dict(dl_toolbox='torch', device=device, running_steps=n_steps, test_mode=test_mode))
+        runner = get_runner(method="coma", env='mpe', env_id='simple_spread_v3', parser_args=args)
+        runner.run()
 
     def test_ippo(self):
         args = Namespace(**dict(dl_toolbox='torch', device=device, running_steps=n_steps, test_mode=test_mode))
