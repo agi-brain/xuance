@@ -1,10 +1,57 @@
-To be released
+Version: 1.2.4
 ==============================================
 
-Date: Very Soon
+Date: 12 May, 2024
 ----------------------------------------------
 
-- Solve the issue about `avail_actions`;
+- Synchronized updated to the MindSpore based on version 1.2.3.
+- Added support for multi-GPU distributed training.
+- Updated VDAC, COMA, MFQ, MFAC, DCG, QTRAN, and other algorithms for version of 1.2.x.
+- Added IAC multi-agent reinforcement learning baseline algorithm.
+- Improved the training mechanism for multi-agent adversarial tasks.
+- Further standardized and optimized the underlying APIs.
+
+Version: 1.2.3
+==============================================
+
+Date: 12 May, 2024
+----------------------------------------------
+
+- Synchronized updates to the MindSpore version based on version 1.2.2.
+- Further standardized and optimized the underlying APIs.
+
+Version: 1.2.2
+==============================================
+
+Date: 12 May, 2024
+----------------------------------------------
+
+- Synchronized updates to the TensorFlow 2 version based on version 1.2.1.
+- Refactored the Agent module, distinguishing between on-policy and off-policy algorithms.
+- Further standardized and optimized the underlying APIs.
+
+Version: 1.2.1
+==============================================
+
+Date: 12 May, 2024
+----------------------------------------------
+
+- Update the MARL algorithms based on version 1.2.0.
+- Add support for non-parameter-sharing in multi-agent systems, with individual agent models indexed by name.
+- Improve the algorithms like MADDPG and MASAC with support for RNNs.
+
+Version: 1.2.0
+==============================================
+
+Date: 12 May, 2024
+----------------------------------------------
+
+- Modify the environment wrapper program to facilitate adding new environments.
+- Standardize the wrapping of existing single-agent and multi-agent environments.
+- Organize commonly used APIs into a unified structure.
+- Integrate the creation of representation, policy, and optimizer into each agent's initialization method.
+- Add support for non-parameter-sharing in MARL algorithms.
+- Standardize the naming of parameters in config files.
 
 Version: 1.1.1
 ==============================================
