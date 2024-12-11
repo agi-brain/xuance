@@ -11,7 +11,7 @@ Date: 12 May, 2024
 - Improved the training mechanism for multi-agent adversarial tasks.
 - Further standardized and optimized the underlying APIs.
 
-`https://pypi.org/project/xuance/1.2.4/ <https://pypi.org/project/xuance/1.2.4/>`_.
+Download: `https://pypi.org/project/xuance/1.2.4/ <https://pypi.org/project/xuance/1.2.4/>`_.
 
 Version: 1.2.3
 ==============================================
@@ -22,7 +22,7 @@ Date: 12 May, 2024
 - Synchronized updates to the MindSpore version based on version 1.2.2.
 - Further standardized and optimized the underlying APIs.
 
-`https://pypi.org/project/xuance/1.2.3/ <https://pypi.org/project/xuance/1.2.3/>`_.
+Download: `https://pypi.org/project/xuance/1.2.3/ <https://pypi.org/project/xuance/1.2.3/>`_.
 
 Version: 1.2.2
 ==============================================
@@ -34,7 +34,7 @@ Date: 12 May, 2024
 - Refactored the Agent module, distinguishing between on-policy and off-policy algorithms.
 - Further standardized and optimized the underlying APIs.
 
-`https://pypi.org/project/xuance/1.2.2/ <https://pypi.org/project/xuance/1.2.2/>`_.
+Download: `https://pypi.org/project/xuance/1.2.2/ <https://pypi.org/project/xuance/1.2.2/>`_.
 
 Version: 1.2.1
 ==============================================
@@ -46,7 +46,7 @@ Date: 12 May, 2024
 - Add support for non-parameter-sharing in multi-agent systems, with individual agent models indexed by name.
 - Improve the algorithms like MADDPG and MASAC with support for RNNs.
 
-`https://pypi.org/project/xuance/1.2.1/ <https://pypi.org/project/xuance/1.2.1/>`_.
+Download: `https://pypi.org/project/xuance/1.2.1/ <https://pypi.org/project/xuance/1.2.1/>`_.
 
 Version: 1.2.0
 ==============================================
@@ -61,7 +61,7 @@ Date: 12 May, 2024
 - Add support for non-parameter-sharing in MARL algorithms.
 - Standardize the naming of parameters in config files.
 
-`https://pypi.org/project/xuance/1.2.0/ <https://pypi.org/project/xuance/1.2.0/>`_.
+Download: `https://pypi.org/project/xuance/1.2.0/ <https://pypi.org/project/xuance/1.2.0/>`_.
 
 Version: 1.1.1
 ==============================================
