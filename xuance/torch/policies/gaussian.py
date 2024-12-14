@@ -232,6 +232,7 @@ class SACPolicy(Module):
                  device: Optional[Union[str, int, torch.device]] = None,
                  use_distributed_training: bool = False):
         super(SACPolicy, self).__init__()
+        self.action_space = action_space
         self.action_dim = action_space.shape[0]
         self.representation_info_shape = representation.output_shapes
 

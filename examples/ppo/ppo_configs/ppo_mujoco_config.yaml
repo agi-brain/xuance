@@ -7,6 +7,8 @@ render_mode: 'rgb_array' # Choices: 'human', 'rgb_array'.
 fps: 50  # The frames per second for the rendering videos in log file.
 test_mode: False  # Whether to run in test mode.
 device: "cuda:0"  # Choose an calculating device.
+distributed_training: False  # Whether to use multi-GPU for distributed training.
+master_port: '12355'  # The master port for current experiment when use distributed training.
 
 agent: "PPO_Clip"  # The agent name.
 env_name: "MuJoCo"  # The environment device.
