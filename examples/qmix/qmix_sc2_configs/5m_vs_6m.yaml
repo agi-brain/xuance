@@ -13,6 +13,7 @@ master_port: '12355'  # The master port for current experiment when use distribu
 agent: "QMIX"  # the learning algorithms_marl
 env_name: "StarCraft2"
 env_id: "5m_vs_6m"
+env_seed: 1
 learner: "QMIX_Learner"
 policy: "Mixing_Q_network"
 representation: "Basic_RNN"

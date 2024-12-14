@@ -12,6 +12,7 @@ master_port: '12355'  # The master port for current experiment when use distribu
 agent: "PPO_Clip"  # choice: PPO_Clip, PPO_KL
 env_name: "MetaDrive"
 env_id: "metadrive"
+env_seed: 1
 env_config:  # the configs for MetaDrive environment
   map: "C"  # see https://metadrive-simulator.readthedocs.io/en/latest/rl_environments.html#generalization-environment for choices
 render: False

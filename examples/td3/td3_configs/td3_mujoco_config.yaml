@@ -13,6 +13,7 @@ master_port: '12355'  # The master port for current experiment when use distribu
 agent: "TD3"
 env_name: "MuJoCo"
 env_id: "Ant-v4"
+env_seed: 1
 vectorize: "DummyVecEnv"
 representation: "Basic_Identical"
 policy: "TD3_Policy"

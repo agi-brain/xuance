@@ -11,6 +11,7 @@ device: "cuda:0"  # Choose an calculating device.
 agent: "PPO_Clip"  # The agent name.
 env_name: "MuJoCo"  # The environment device.
 env_id: "Ant-v4"  # The environment id.
+env_seed: 1
 vectorize: "DummyVecEnv"  # The vecrized method to create n parallel environments. Choices: DummyVecEnv, or SubprocVecEnv.
 learner: "PPOCLIP_Learner"
 policy: "Gaussian_AC"  # choice: Gaussian_AC for continuous actions, Categorical_AC for discrete actions.
