@@ -20,14 +20,20 @@ class OffPolicyAgent(Agent):
                  envs: DummyVecEnv):
         super(OffPolicyAgent, self).__init__(config, envs)
         self.start_greedy = config.start_greedy if hasattr(config, "start_greedy") else None
-        self.end_greedy = config.end_greedy if hasattr(config, "start_greedy") else None
-        self.delta_egreedy: Optional[float] = None
-        self.e_greedy: Optional[float] = None
+        self.end_greedy = config.end_greedy if hasattr(config, "end_greedy") else None
+        self.e_greedy = self.start_greedy
+        if (self.start_greedy is not None) and (self.end_greedy is not None):
+            self.delta_egreedy = (self.start_greedy - self.end_greedy) / (config.decay_step_greedy / self.n_envs)
+        else:
+            self.delta_egreedy = None
 
         self.start_noise = config.start_noise if hasattr(config, "start_noise") else None
         self.end_noise = config.end_noise if hasattr(config, "end_noise") else None
-        self.delta_noise: Optional[float] = None
-        self.noise_scale: Optional[float] = None
+        self.noise_scale = self.start_noise
+        if (self.start_noise is not None) and (self.end_noise is not None):
+            self.delta_noise = (self.start_noise - self.end_noise) / (config.running_steps / self.n_envs)
+        else:
+            self.delta_noise = None
         self.actions_low = self.action_space.low if hasattr(self.action_space, "low") else None
         self.actions_high = self.action_space.high if hasattr(self.action_space, "high") else None
 
@@ -80,7 +86,7 @@ class OffPolicyAgent(Agent):
             explore_actions = pi_actions + np.random.normal(size=pi_actions.shape) * self.noise_scale
             explore_actions = np.clip(explore_actions, self.actions_low, self.actions_high)
         else:
-            explore_actions = pi_actions
+            explore_actions = pi_actions.detach().cpu().numpy()
         return explore_actions
 
     def action(self, observations: np.ndarray,
