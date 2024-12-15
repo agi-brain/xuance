@@ -1,4 +1,3 @@
-import os
 from argparse import Namespace
 from xuance.environment.utils import XuanCeEnvWrapper, XuanCeMultiAgentEnvWrapper
 from xuance.environment.utils import RawEnvironment, RawMultiAgentEnv
