@@ -93,6 +93,7 @@ XuanCe contains four main parts:
    documents/usage/further_usage
    documents/usage/new_envs
    documents/usage/new_marl_envs
+   documents/usage/new_algorithm
 
 .. toctree::
    :maxdepth: 1

@@ -8,7 +8,7 @@ from xuance.torch.agents import OffPolicyAgent
 from xuance.torch.learners import Learner, REGISTRY_Learners
 
 
-# Step 1: Build a policy.
+# Step 1: Create a policy.
 class MyPolicy(nn.Module):
     """
     An example of self-defined policy.
@@ -17,6 +17,7 @@ class MyPolicy(nn.Module):
         representation (nn.Module): A neural network module responsible for extracting meaningful features from the raw observations provided by the environment.
         hidden_dim (int): Specifies the number of units in each hidden layer, determining the model’s capacity to capture complex patterns.
         n_actions (int): The total number of discrete actions available to the agent in the environment.
+        device (torch.device): The calculating device.
 
     Note: The inputs to the __init__ method are not rigidly defined. You can extend or modify them as needed to accommodate additional settings or configurations specific to your application.
     """
@@ -49,7 +50,7 @@ class MyPolicy(nn.Module):
             tp.data.copy_(ep)
 
 
-# Step 2: Build the learner.
+# Step 2: Create the learner.
 class MyLearner(Learner):
     def __init__(self, config, policy):
         super(MyLearner, self).__init__(config, policy)
@@ -93,7 +94,7 @@ class MyLearner(Learner):
         return info
 
 
-# Step 3: Build the agent.
+# Step 3: Create the agent.
 class MyAgent(OffPolicyAgent):
     def __init__(self, config, envs):
         super(MyAgent, self).__init__(config, envs)
