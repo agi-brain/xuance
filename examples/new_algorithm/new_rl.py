@@ -112,7 +112,7 @@ class MyAgent(OffPolicyAgent):
 
 
 if __name__ == '__main__':
-    config = get_configs(file_dir="./my_config.yaml")  # Get the config settings from .yaml file.
+    config = get_configs(file_dir="new_rl.yaml")  # Get the config settings from .yaml file.
     config = Namespace(**config)  # Convert the config from dict to argparse.
     envs = make_envs(config)  # Make vectorized environments.
     agent = MyAgent(config, envs)  # Instantiate your pre-build agent class.

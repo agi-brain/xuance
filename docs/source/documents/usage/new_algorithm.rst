@@ -134,6 +134,30 @@ Key Points:
 Step 3: Define the Agent
 -------------------------------------------------------------
 
+The agent combines the policy, learner, and environment interaction to create a complete RL pipeline.
+
+.. code-block:: python
+
+    class MyAgent(OffPolicyAgent):
+        def __init__(self, config, envs):
+            super(MyAgent, self).__init__(config, envs)
+            self.policy = self._build_policy()  # Build the policy module.
+            self.memory = self._build_memory()  # Build the replay buffer.
+            REGISTRY_Learners['MyLearner'] = MyLearner  # Registry your pre-defined learner.
+            self.learner = self._build_learner(self.config, self.policy)  # Build the learner.
+
+        def _build_policy(self):
+            # First create the representation module.
+            representation = self._build_representation("Basic_MLP", self.observation_space, self.config)
+            # Build your customized policy module.
+            policy = MyPolicy(representation, 64, self.action_space.n, self.config.device)
+            return policy
+
+Key Points:
+
+- Policy: Build the custom policy and learner defined earlier.
+- Memory: Build experience replay to break correlations in training data.
+- Learner: Register MyLearner for easy configuration.
 
 .. raw:: html
 
@@ -142,4 +166,28 @@ Step 3: Define the Agent
 Step 4: Build and Run Your Agent.
 -------------------------------------------------------------
 
+Finally, we can create the agent and make environments to train the model.
 
+.. code-block:: python
+
+    if __name__ == '__main__':
+        config = get_configs(file_dir="./new_rl.yaml")  # Get the config settings from .yaml file.
+        config = Namespace(**config)  # Convert the config from dict to argparse.
+        envs = make_envs(config)  # Make vectorized environments.
+        agent = MyAgent(config, envs)  # Instantiate your pre-build agent class.
+
+        if not config.test_mode:  # Training mode.
+            agent.train(config.running_steps // envs.num_envs)  # Train your agent.
+            agent.save_model("final_train_model.pth")  # After training, save the model.
+        else:  # Testing mode.
+            config.parallels = 1  # Test on one environment.
+            env_fn = lambda: make_envs(config)  # The method to create testing environment.
+            agent.load_model(agent.model_dir_load)  # Load pre-trained model.
+            scores = agent.test(env_fn, config.test_episode)  # Test your agent.
+
+        agent.finish()  # Finish the agent.
+        envs.close()  # Close the environments.
+
+The source code of this example can be visited at the following link:
+
+`https://github.com/agi-brain/xuance/blob/master/examples/new_algorithm/new_rl.py <https://github.com/agi-brain/xuance/blob/master/examples/new_algorithm/new_rl.py>`_
