@@ -7,9 +7,9 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = 'XuanCe'
-copyright = '2023, XuanCe contributors'
-author = 'XuanCe contributors'
-release = 'v1.2'
+copyright = '2023, Wenzhang Liu, etc.'
+author = 'Wenzhang Liu.'
+# release = 'v1.2'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
