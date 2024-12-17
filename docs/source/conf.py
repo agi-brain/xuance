@@ -42,19 +42,18 @@ exclude_patterns = []
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 html_theme = "furo"  # before that is renku, sphinx_rtd_theme
-html_static_path = ['_static']
+html_static_path = ['figures']
 html_theme_options = {
     "light_logo": "logo_2.png",
     "dark_logo": "logo_2.png",
 }
 
 favicons = [
-    {"href": "icon.svg"},  # => use `_static/icon.svg`
-    {"href": "https://xuance.readthedocs.io/en/latest/favicon_io/favicon-16x16.png"},
-    {"href": "https://xuance.readthedocs.io/en/latest/favicon_io/favicon-32x32.png"},
+    {"href": "favicon/favicon.svg"},  # => use `_static/icon.svg`
+    {"href": "https://xuance.readthedocs.io/en/latest/favicon/favicon-96x96.png"},
     {
         "rel": "apple-touch-icon",
-        "href": "https://xuance.readthedocs.io/en/latest/favicon_io/apple-touch-icon-180x180.png",
+        "href": "https://xuance.readthedocs.io/en/latest/favicon/apple-touch-icon.png",
     },
 ]
 
