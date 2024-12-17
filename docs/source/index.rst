@@ -4,13 +4,9 @@
    contain the root `toctree` directive.
 
 .. image:: figures/logo_1.png
-   :scale: 35%
+   :scale: 30%
    :align: center
    :target: https://github.com/agi-brain/xuance.git
-
-.. raw:: html
-
-   <br><hr>
 
 Welcome to XuanCe's documentation!
 ======================================
@@ -41,10 +37,6 @@ Currently, XuanCe has been open-sourced on GitHub:
 
 | **GitHub**: `https://github.com/agi-brain/xuance.git <https://github.com/agi-brain/xuance.git/>`_
 
-.. raw:: html
-
-   <br><hr>
-
 Why XuanCe?
 -----------------------------------------
 
@@ -61,10 +53,6 @@ This, in turn, facilitates developers in algorithm development and design. It ha
 - Fast running speed with vector envrionments.
 - Good visualization effect with tensorboard or wandb toolbox.
 
-.. raw:: html
-
-   <br><hr>
-
 The Framework of XuanCe
 ------------------------------------------
 
@@ -79,12 +67,9 @@ XuanCe contains four main parts:
 - Part II: Common tools. Reusable tools that are independent of the choice of DL toolbox.
 - Part III: Envrionments. The supported simulated environments.
 - Part IV: Algorithms. The key part to build DRL algorithms.
-
-.. raw:: html
-
-   <br><hr>
    
 .. toctree::
+   :hidden:
    :maxdepth: 1
    :caption: How to use:
 
@@ -96,16 +81,17 @@ XuanCe contains four main parts:
    documents/usage/new_algorithm
 
 .. toctree::
+   :hidden:
    :maxdepth: 1
    :caption: APIs:
 
-   
    documents/api/configs
    documents/api/common
    documents/api/environments
    documents/api/algorithms
 
 .. toctree::
+   :hidden:
    :maxdepth: 1
    :caption: Benchmarks
 
@@ -114,26 +100,8 @@ XuanCe contains four main parts:
    documents/benchmark/smac
 
 .. toctree::
+   :hidden:
    :maxdepth: 1
    :caption: Update
 
    documents/updating_logs
-
-
-.. .. toctree::
-..   :maxdepth: 1
-..   :caption: Algorithms:
-
-..   documents/algorithms/index_drl
-..   documents/algorithms/index_marl
-
-.. raw:: html
-
-   <br><hr>
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
