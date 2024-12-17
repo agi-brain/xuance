@@ -300,7 +300,7 @@ Source Code
 
 .. tabs::
 
-  .. group-tab:: PyTorch
+  .. tab:: PyTorch
 
     .. code-block:: python
 
@@ -417,7 +417,7 @@ Source Code
                             nn.init.constant_(weight, 0)
             return lstm, output_dim
 
-  .. group-tab:: TensorFlow
+  .. tab:: TensorFlow
 
     .. code-block:: python
 
@@ -532,7 +532,7 @@ Source Code
             return lstm, output_dim
 
 
-  .. group-tab:: MindSpore
+  .. tab:: MindSpore
 
     .. code-block:: python
 

@@ -140,7 +140,7 @@ Source Code
 
 .. tabs::
 
-  .. group-tab:: PyTorch
+  .. tab:: PyTorch
 
     .. code-block:: python
 

@@ -141,7 +141,7 @@ Source Code
 
 .. tabs::
 
-  .. group-tab:: PyTorch
+  .. tab:: PyTorch
 
     .. code-block:: python
 
@@ -263,7 +263,7 @@ Source Code
             input_list = itemgetter(*Policy_Inputs[policy_name])(input_dict)
             return list(input_list)
 
-  .. group-tab:: TensorFlow
+  .. tab:: TensorFlow
 
     .. code-block:: python
 
@@ -380,7 +380,7 @@ Source Code
             return list(input_list)
 
 
-  .. group-tab:: MindSpore
+  .. tab:: MindSpore
 
     .. code-block:: python
 

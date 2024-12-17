@@ -254,7 +254,7 @@ Source Code
 
 .. tabs::
 
-  .. group-tab:: PyTorch
+  .. tab:: PyTorch
 
     .. code-block:: python
 
@@ -362,7 +362,7 @@ Source Code
             else:
                 pass
 
-  .. group-tab:: TensorFlow
+  .. tab:: TensorFlow
 
     .. code-block:: python
 
@@ -468,7 +468,7 @@ Source Code
                 pass
 
 
-  .. group-tab:: MindSpore
+  .. tab:: MindSpore
 
     .. code-block:: python
 

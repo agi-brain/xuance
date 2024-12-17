@@ -151,7 +151,7 @@ Source Code
 
 .. tabs::
 
-    .. group-tab:: magent_env.py
+    .. tab:: magent_env.py
 
         .. code-block:: python
 
@@ -226,7 +226,7 @@ Source Code
 
 
 
-    .. group-tab:: magent_vec_env.py
+    .. tab:: magent_vec_env.py
 
         .. code-block:: python
 

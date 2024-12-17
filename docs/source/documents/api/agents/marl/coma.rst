@@ -146,7 +146,7 @@ Source Code
 
 .. tabs::
   
-    .. group-tab:: PyTorch
+    .. tab:: PyTorch
     
         .. code-block:: python
 
@@ -291,12 +291,12 @@ Source Code
                     return info_train
 
 
-    .. group-tab:: TensorFlow
+    .. tab:: TensorFlow
     
         .. code-block:: python3
 
 
-    .. group-tab:: MindSpore
+    .. tab:: MindSpore
 
         .. code-block:: python
 

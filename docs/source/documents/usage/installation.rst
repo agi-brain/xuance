@@ -31,43 +31,43 @@ Install via PyPI
 
 .. tabs::
 
-    .. group-tab:: No DL toolbox
+    .. tab:: No DL toolbox
 
         .. code-block:: bash
 
             pip install xuance
 
-    .. group-tab:: PyTorch
+    .. tab:: PyTorch
 
         .. code-block:: bash
 
             pip install xuance[torch]
 
-    .. group-tab:: TensorFlow
+    .. tab:: TensorFlow
 
         .. code-block:: bash
 
             pip install xuance[tensorflow]
 
-    .. group-tab:: MindSpore
+    .. tab:: MindSpore
 
         .. code-block:: bash
 
             pip install xuance[mindspore]
 
-    .. group-tab:: All DL toolbox
+    .. tab:: All DL toolbox
 
         .. code-block:: bash
 
             pip install xuance[all]
 
-    .. group-tab:: Atari
+    .. tab:: Atari
 
         .. code-block:: bash
 
             pip install xuance[atari]
 
-    .. group-tab:: Box2D
+    .. tab:: Box2D
 
         .. code-block:: bash
 

@@ -95,7 +95,7 @@ Source Code
 
 .. tabs::
 
-    .. group-tab:: minigrid_env.py
+    .. tab:: minigrid_env.py
 
         .. code-block:: python
 
@@ -173,7 +173,7 @@ Source Code
                     return observations
 
 
-    .. group-tab:: minigrid_vec_env.py
+    .. tab:: minigrid_vec_env.py
 
         .. code-block:: python
 

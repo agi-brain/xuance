@@ -162,7 +162,7 @@ Source Code
 
 .. tabs::
 
-    .. group-tab:: metadrive_env.py
+    .. tab:: metadrive_env.py
 
         .. code-block:: python
 
@@ -202,7 +202,7 @@ Source Code
                     info["episode_score"] = self._episode_score  # the accumulated rewards
                     return observation, reward, terminated, truncated, info
 
-    .. group-tab:: metadrive_vec_env.py
+    .. tab:: metadrive_vec_env.py
 
         .. code-block:: python
 

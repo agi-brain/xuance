@@ -278,7 +278,7 @@ Source Code
 
 .. tabs::
 
-    .. group-tab:: pettingzoo_env.py
+    .. tab:: pettingzoo_env.py
 
         .. code-block:: python
 
@@ -397,7 +397,7 @@ Source Code
                             return handles
 
 
-    .. group-tab:: pettingzoo_vec_env.py
+    .. tab:: pettingzoo_vec_env.py
 
         .. code-block:: python
 

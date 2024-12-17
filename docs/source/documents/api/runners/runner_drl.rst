@@ -74,7 +74,7 @@ Source Code
 
 .. tabs::
 
-  .. group-tab:: PyTorch
+  .. tab:: PyTorch
 
     .. code-block:: python
 
@@ -214,7 +214,7 @@ Source Code
                     self.agent.writer.close()
 
 
-  .. group-tab:: TensorFlow
+  .. tab:: TensorFlow
 
     .. code-block:: python
 
@@ -349,7 +349,7 @@ Source Code
 
 
 
-  .. group-tab:: MindSpore
+  .. tab:: MindSpore
 
     .. code-block:: python
 

@@ -499,7 +499,7 @@ Source Code
 
 .. tabs::
 
-  .. group-tab:: PyTorch
+  .. tab:: PyTorch
 
     .. code-block:: python
 
@@ -605,7 +605,7 @@ Source Code
                                   DiagGaussianDistribution), "KL Divergence should be measured by two same distribution with the same type"
                 return kl_div(self.distribution, other.distribution)
 
-  .. group-tab:: TensorFlow
+  .. tab:: TensorFlow
 
     .. code-block:: python
 
@@ -708,7 +708,7 @@ Source Code
                 return kl_div(self.distribution, other.distribution)
 
 
-  .. group-tab:: MindSpore
+  .. tab:: MindSpore
 
     .. code-block:: python
 

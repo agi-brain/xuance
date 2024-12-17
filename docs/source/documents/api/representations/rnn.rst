@@ -178,7 +178,7 @@ Source Code
 
 .. tabs::
   
-  .. group-tab:: PyTorch
+  .. tab:: PyTorch
     
     .. code-block:: python
 
@@ -260,7 +260,7 @@ Source Code
                 return (rnn_hidden[0][:, i], rnn_hidden[1][:, i]) if self.lstm else (rnn_hidden[0][:, i], None)
 
 
-  .. group-tab:: MindSpore
+  .. tab:: MindSpore
 
     .. code-block:: python
 

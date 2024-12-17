@@ -196,7 +196,7 @@ Source Code
 
 .. tabs::
 
-    .. group-tab:: drones_env.py
+    .. tab:: drones_env.py
 
         .. code-block:: python
 
@@ -311,7 +311,7 @@ Source Code
 
 
 
-    .. group-tab:: drones_vec_env.py
+    .. tab:: drones_vec_env.py
 
         .. code-block:: python
 
@@ -402,7 +402,7 @@ Source Code
                     except AttributeError:
                         self.max_episode_steps = 1000
 
-    .. group-tab:: drones_vec_env.py
+    .. tab:: drones_vec_env.py
 
         .. code-block:: python
 

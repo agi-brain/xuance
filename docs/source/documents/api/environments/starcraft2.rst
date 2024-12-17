@@ -205,7 +205,7 @@ Source Code
 
 .. tabs::
 
-    .. group-tab:: sc2_env.py
+    .. tab:: sc2_env.py
 
         .. code-block:: python
 
@@ -275,7 +275,7 @@ Source Code
                     return self.env.get_avail_actions()
 
 
-    .. group-tab:: sc2_vec_env.py
+    .. tab:: sc2_vec_env.py
 
         .. code-block:: python
 

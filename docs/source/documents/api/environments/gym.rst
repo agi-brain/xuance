@@ -401,7 +401,7 @@ Source Code
 
 .. tabs::
 
-    .. group-tab:: gym_env.py
+    .. tab:: gym_env.py
 
         .. code-block:: python
 
@@ -660,7 +660,7 @@ Source Code
                 def __getitem__(self, i):
                     return self._force()[..., i]
 
-    .. group-tab:: gym_vec_env.py
+    .. tab:: gym_vec_env.py
 
         .. code-block:: python
 

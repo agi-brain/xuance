@@ -233,7 +233,7 @@ Source Code
 
 .. tabs::
   
-    .. group-tab:: raw_env.py
+    .. tab:: raw_env.py
     
         .. code-block:: python
 
@@ -351,7 +351,7 @@ Source Code
                     return state
 
 
-    .. group-tab:: gfootball_env.py
+    .. tab:: gfootball_env.py
     
         .. code-block:: python
 
@@ -446,7 +446,7 @@ Source Code
 
 
 
-    .. group-tab:: gfootball_vec_env.py
+    .. tab:: gfootball_vec_env.py
     
         .. code-block:: python
 

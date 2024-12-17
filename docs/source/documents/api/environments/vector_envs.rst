@@ -303,7 +303,7 @@ Source Code
 
 .. tabs::
 
-    .. group-tab:: vector_env.py
+    .. tab:: vector_env.py
 
         .. code-block:: python
 
@@ -412,7 +412,7 @@ Source Code
                     self.closed = True
 
 
-    .. group-tab:: subproc_vec_env.py
+    .. tab:: subproc_vec_env.py
 
         .. code-block:: python
 
@@ -592,7 +592,7 @@ Source Code
                     if not self.closed:
                         self.close()
 
-    .. group-tab:: env_utils.py
+    .. tab:: env_utils.py
 
         .. code-block:: python
 

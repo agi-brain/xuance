@@ -177,7 +177,7 @@ Source Code
 
 .. tabs::
   
-    .. group-tab:: PyTorch
+    .. tab:: PyTorch
     
         .. code-block:: python
 
@@ -352,7 +352,7 @@ Source Code
                         self.epsilon = self.epsilon_final
 
 
-    .. group-tab:: TensorFlow
+    .. tab:: TensorFlow
     
         .. code-block:: python
 
@@ -523,7 +523,7 @@ Source Code
                         self.epsilon = self.epsilon_final
 
 
-    .. group-tab:: MindSpore
+    .. tab:: MindSpore
 
         .. code-block:: python
 
