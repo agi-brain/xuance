@@ -69,232 +69,224 @@ DQN-based Implementations
 
 .. tabs::
 
-    .. group-tab:: DQN
+    .. tab:: DQN
 
         .. tabs::
 
-            .. group-tab:: Classic Control
+            .. tab:: CartPole-v1
 
-                .. tabs::
+                .. code-block:: yaml
 
-                    .. group-tab:: CartPole-v1
+                    agent: "DQN"
+                    env_name: "Classic Control"
+                    env_id: "CartPole-v1"
+                    vectorize: "DummyVecEnv"
+                    policy: "Basic_Q_network"
+                    representation: "Basic_MLP"
+                    runner: "DRL"
 
-                        .. code-block:: yaml
+                    representation_hidden_size: [128,]
+                    q_hidden_size: [128,]
+                    activation: 'ReLU'
 
-                            agent: "DQN"
-                            env_name: "Classic Control"
-                            env_id: "CartPole-v1"
-                            vectorize: "DummyVecEnv"
-                            policy: "Basic_Q_network"
-                            representation: "Basic_MLP"
-                            runner: "DRL"
+                    seed: 1
+                    parallels: 10
+                    n_size: 10000
+                    batch_size: 256
+                    learning_rate: 0.001
+                    gamma: 0.99
 
-                            representation_hidden_size: [128,]
-                            q_hidden_size: [128,]
-                            activation: 'ReLU'
+                    start_greedy: 0.5
+                    end_greedy: 0.01
+                    decay_step_greedy: 10000
+                    sync_frequency: 50
+                    training_frequency: 1
+                    running_steps: 200000  # 200k
+                    start_training: 1000
 
-                            seed: 1
-                            parallels: 10
-                            n_size: 10000
-                            batch_size: 256
-                            learning_rate: 0.001
-                            gamma: 0.99
+                    use_obsnorm: False
+                    use_rewnorm: False
+                    obsnorm_range: 5
+                    rewnorm_range: 5
 
-                            start_greedy: 0.5
-                            end_greedy: 0.01
-                            decay_step_greedy: 10000
-                            sync_frequency: 50
-                            training_frequency: 1
-                            running_steps: 200000  # 200k
-                            start_training: 1000
+                    test_steps: 10000
+                    eval_interval: 20000
+                    test_episode: 1
+                    log_dir: "./logs/dqn/"
+                    model_dir: "./models/dqn/"
 
-                            use_obsnorm: False
-                            use_rewnorm: False
-                            obsnorm_range: 5
-                            rewnorm_range: 5
+            .. tab:: Acrobot-v1
 
-                            test_steps: 10000
-                            eval_interval: 20000
-                            test_episode: 1
-                            log_dir: "./logs/dqn/"
-                            model_dir: "./models/dqn/"
+                .. code-block:: yaml
 
-                    .. group-tab:: Acrobot-v1
+                    agent: "DQN"
+                    env_name: "Classic Control"
+                    env_id: "Acrobot-v1"
+                    vectorize: "DummyVecEnv"
+                    policy: "Basic_Q_network"
+                    representation: "Basic_MLP"
+                    runner: "DRL"
 
-                        .. code-block:: yaml
+                    representation_hidden_size: [128,]
+                    q_hidden_size: [128,]
+                    activation: 'ReLU'
 
-                            agent: "DQN"
-                            env_name: "Classic Control"
-                            env_id: "Acrobot-v1"
-                            vectorize: "DummyVecEnv"
-                            policy: "Basic_Q_network"
-                            representation: "Basic_MLP"
-                            runner: "DRL"
+                    seed: 1
+                    parallels: 10
+                    n_size: 10000
+                    batch_size: 256
+                    learning_rate: 0.001
+                    gamma: 0.99
 
-                            representation_hidden_size: [128,]
-                            q_hidden_size: [128,]
-                            activation: 'ReLU'
+                    start_greedy: 0.5
+                    end_greedy: 0.01
+                    decay_step_greedy: 10000
+                    sync_frequency: 50
+                    training_frequency: 1
+                    running_steps: 200000  # 200k
+                    start_training: 1000
 
-                            seed: 1
-                            parallels: 10
-                            n_size: 10000
-                            batch_size: 256
-                            learning_rate: 0.001
-                            gamma: 0.99
+                    use_obsnorm: False
+                    use_rewnorm: False
+                    obsnorm_range: 5
+                    rewnorm_range: 5
 
-                            start_greedy: 0.5
-                            end_greedy: 0.01
-                            decay_step_greedy: 10000
-                            sync_frequency: 50
-                            training_frequency: 1
-                            running_steps: 200000  # 200k
-                            start_training: 1000
+                    test_steps: 10000
+                    eval_interval: 20000
+                    test_episode: 1
+                    log_dir: "./logs/dqn/"
+                    model_dir: "./models/dqn/"
 
-                            use_obsnorm: False
-                            use_rewnorm: False
-                            obsnorm_range: 5
-                            rewnorm_range: 5
+            .. tab:: MountainCar-v0
 
-                            test_steps: 10000
-                            eval_interval: 20000
-                            test_episode: 1
-                            log_dir: "./logs/dqn/"
-                            model_dir: "./models/dqn/"
+                .. code-block:: yaml
 
-                    .. group-tab:: MountainCar-v0
+                    agent: "DQN"
+                    env_name: "Classic Control"
+                    env_id: "MountainCar-v0"
+                    vectorize: "DummyVecEnv"
+                    policy: "Basic_Q_network"
+                    representation: "Basic_MLP"
+                    runner: "DRL"
 
-                        .. code-block:: yaml
+                    representation_hidden_size: [256, ]
+                    q_hidden_size: [256, ]
+                    activation: 'LeakyReLU'
 
-                            agent: "DQN"
-                            env_name: "Classic Control"
-                            env_id: "MountainCar-v0"
-                            vectorize: "DummyVecEnv"
-                            policy: "Basic_Q_network"
-                            representation: "Basic_MLP"
-                            runner: "DRL"
+                    seed: 1
+                    parallels: 10
+                    n_size: 20000
+                    batch_size: 256
+                    learning_rate: 0.1
+                    gamma: 0.99
 
-                            representation_hidden_size: [256, ]
-                            q_hidden_size: [256, ]
-                            activation: 'LeakyReLU'
+                    start_greedy: 1.0
+                    end_greedy: 0.01
+                    sync_frequency: 200
+                    training_frequency: 2
+                    running_steps: 2000000  # 2M
+                    start_training: 1000
 
-                            seed: 1
-                            parallels: 10
-                            n_size: 20000
-                            batch_size: 256
-                            learning_rate: 0.1
-                            gamma: 0.99
+                    use_obsnorm: False
+                    use_rewnorm: False
+                    obsnorm_range: 5
+                    rewnorm_range: 5
 
-                            start_greedy: 1.0
-                            end_greedy: 0.01
-                            sync_frequency: 200
-                            training_frequency: 2
-                            running_steps: 2000000  # 2M
-                            start_training: 1000
+                    test_steps: 10000
+                    eval_interval: 50000
+                    test_episode: 5
+                    log_dir: "./logs/dqn/"
+                    model_dir: "./models/dqn/"
 
-                            use_obsnorm: False
-                            use_rewnorm: False
-                            obsnorm_range: 5
-                            rewnorm_range: 5
+            .. tab:: CarRacing-v2
 
-                            test_steps: 10000
-                            eval_interval: 50000
-                            test_episode: 5
-                            log_dir: "./logs/dqn/"
-                            model_dir: "./models/dqn/"
+                .. code-block:: yaml
 
-            .. group-tab:: Box2D
+                    agent: "DQN"
+                    env_name: "Box2D"
+                    env_id: "CarRacing-v2"
+                    vectorize: "DummyVecEnv"
+                    policy: "Basic_Q_network"
+                    representation: "Basic_CNN"
+                    runner: "DRL"
 
-                .. tabs::
+                    # the following three arguments are for "Basic_CNN" representation.
+                    filters: [16, 16, 32]  #  [16, 16, 32, 32]
+                    kernels: [8, 4, 3]  # [8, 6, 4, 4]
+                    strides: [4, 2, 1]  # [2, 2, 2, 2]
 
-                    .. group-tab:: CarRacing-v2
+                    q_hidden_size: [512,]
+                    activation: 'ReLU'
 
-                        .. code-block:: yaml
+                    seed: 1
+                    parallels: 2
+                    n_size: 10000
+                    batch_size: 32
+                    learning_rate: 0.0001
+                    gamma: 0.99
 
-                            agent: "DQN"
-                            env_name: "Box2D"
-                            env_id: "CarRacing-v2"
-                            vectorize: "DummyVecEnv"
-                            policy: "Basic_Q_network"
-                            representation: "Basic_CNN"
-                            runner: "DRL"
+                    start_greedy: 0.5
+                    end_greedy: 0.01
+                    decay_step_greedy: 50000
+                    sync_frequency: 500
+                    training_frequency: 1
+                    running_steps: 2000000
+                    start_training: 1000
 
-                            # the following three arguments are for "Basic_CNN" representation.
-                            filters: [16, 16, 32]  #  [16, 16, 32, 32]
-                            kernels: [8, 4, 3]  # [8, 6, 4, 4]
-                            strides: [4, 2, 1]  # [2, 2, 2, 2]
+                    use_obsnorm: False
+                    use_rewnorm: False
+                    obsnorm_range: 5
+                    rewnorm_range: 5
 
-                            q_hidden_size: [512,]
-                            activation: 'ReLU'
+                    test_steps: 10000
+                    eval_interval: 100000
+                    test_episode: 1
+                    log_dir: "./logs/dqn/"
+                    model_dir: "./models/dqn/"
 
-                            seed: 1
-                            parallels: 2
-                            n_size: 10000
-                            batch_size: 32
-                            learning_rate: 0.0001
-                            gamma: 0.99
+            .. tab:: LunarLander-v2
 
-                            start_greedy: 0.5
-                            end_greedy: 0.01
-                            decay_step_greedy: 50000
-                            sync_frequency: 500
-                            training_frequency: 1
-                            running_steps: 2000000
-                            start_training: 1000
+                .. code-block:: yaml
 
-                            use_obsnorm: False
-                            use_rewnorm: False
-                            obsnorm_range: 5
-                            rewnorm_range: 5
+                    agent: "DQN"
+                    env_name: "Box2D"
+                    env_id: "LunarLander-v2"
+                    vectorize: "DummyVecEnv"
+                    policy: "Basic_Q_network"
+                    representation: "Basic_MLP"
+                    runner: "DRL"
 
-                            test_steps: 10000
-                            eval_interval: 100000
-                            test_episode: 1
-                            log_dir: "./logs/dqn/"
-                            model_dir: "./models/dqn/"
+                    representation_hidden_size: [128,]
+                    q_hidden_size: [128,]
+                    activation: 'ReLU'
 
-                    .. group-tab:: LunarLander-v2
+                    seed: 1
+                    parallels: 10
+                    n_size: 10000
+                    batch_size: 256
+                    learning_rate: 0.001
+                    gamma: 0.99
 
-                        .. code-block:: yaml
+                    start_greedy: 0.5
+                    end_greedy: 0.01
+                    decay_step_greedy: 10000
+                    sync_frequency: 50
+                    training_frequency: 1
+                    running_steps: 200000
+                    start_training: 1000
 
-                            agent: "DQN"
-                            env_name: "Box2D"
-                            env_id: "LunarLander-v2"
-                            vectorize: "DummyVecEnv"
-                            policy: "Basic_Q_network"
-                            representation: "Basic_MLP"
-                            runner: "DRL"
+                    use_obsnorm: False
+                    use_rewnorm: False
+                    obsnorm_range: 5
+                    rewnorm_range: 5
 
-                            representation_hidden_size: [128,]
-                            q_hidden_size: [128,]
-                            activation: 'ReLU'
+                    test_steps: 10000
+                    eval_interval: 50000
+                    test_episode: 1
+                    log_dir: "./logs/dqn/"
+                    model_dir: "./models/dqn/"
 
-                            seed: 1
-                            parallels: 10
-                            n_size: 10000
-                            batch_size: 256
-                            learning_rate: 0.001
-                            gamma: 0.99
-
-                            start_greedy: 0.5
-                            end_greedy: 0.01
-                            decay_step_greedy: 10000
-                            sync_frequency: 50
-                            training_frequency: 1
-                            running_steps: 200000
-                            start_training: 1000
-
-                            use_obsnorm: False
-                            use_rewnorm: False
-                            obsnorm_range: 5
-                            rewnorm_range: 5
-
-                            test_steps: 10000
-                            eval_interval: 50000
-                            test_episode: 1
-                            log_dir: "./logs/dqn/"
-                            model_dir: "./models/dqn/"
-            
-            .. group-tab:: Atari
+            .. tab:: Atari
 
                 .. code-block:: yaml
 
@@ -344,252 +336,242 @@ DQN-based Implementations
                     log_dir: "./logs/dqn/"
                     model_dir: "./models/dqn/"
 
-    .. group-tab:: C51
+    .. tab:: C51
 
         .. tabs::
 
-            .. group-tab:: Classic Control
+            .. tab:: CartPole-v1
 
-                .. tabs::
+                .. code-block:: yaml
 
-                    .. group-tab:: CartPole-v1
+                    agent: "C51DQN"
+                    env_name: "Classic Control"
+                    env_id: "CartPole-v1"
+                    vectorize: "DummyVecEnv"
+                    policy: "C51_Q_network"
+                    representation: "Basic_MLP"
+                    runner: "DRL"
 
-                        .. code-block:: yaml
+                    representation_hidden_size: [128,]
+                    q_hidden_size: [128,]
+                    activation: 'ReLU'
 
-                            agent: "C51DQN"
-                            env_name: "Classic Control"
-                            env_id: "CartPole-v1"
-                            vectorize: "DummyVecEnv"
-                            policy: "C51_Q_network"
-                            representation: "Basic_MLP"
-                            runner: "DRL"
+                    seed: 1
+                    parallels: 10
+                    n_size: 20000
+                    batch_size: 256
+                    learning_rate: 0.001
+                    gamma: 0.99
+                    v_min: 0
+                    v_max: 200
+                    atom_num: 51
 
-                            representation_hidden_size: [128,]
-                            q_hidden_size: [128,]
-                            activation: 'ReLU'
+                    start_greedy: 0.5
+                    end_greedy: 0.01
+                    decay_step_greedy: 10000
+                    sync_frequency: 100
+                    training_frequency: 1
+                    running_steps: 200000
+                    start_training: 1000
 
-                            seed: 1
-                            parallels: 10
-                            n_size: 20000
-                            batch_size: 256
-                            learning_rate: 0.001
-                            gamma: 0.99
-                            v_min: 0
-                            v_max: 200
-                            atom_num: 51
+                    use_obsnorm: False
+                    use_rewnorm: False
+                    obsnorm_range: 5
+                    rewnorm_range: 5
 
-                            start_greedy: 0.5
-                            end_greedy: 0.01
-                            decay_step_greedy: 10000
-                            sync_frequency: 100
-                            training_frequency: 1
-                            running_steps: 200000
-                            start_training: 1000
+                    test_steps: 10000
+                    eval_interval: 50000
+                    test_episode: 1
+                    log_dir: "./logs/c51/"
+                    model_dir: "./models/c51/"
 
-                            use_obsnorm: False
-                            use_rewnorm: False
-                            obsnorm_range: 5
-                            rewnorm_range: 5
+            .. tab:: Acrobot-v1
 
-                            test_steps: 10000
-                            eval_interval: 50000
-                            test_episode: 1
-                            log_dir: "./logs/c51/"
-                            model_dir: "./models/c51/"
+                .. code-block:: yaml
 
-                    .. group-tab:: Acrobot-v1
+                    agent: "C51DQN"
+                    env_name: "Classic Control"
+                    env_id: "Acrobot-v1"
+                    vectorize: "DummyVecEnv"
+                    policy: "C51_Q_network"
+                    representation: "Basic_MLP"
+                    runner: "DRL"
 
-                        .. code-block:: yaml
+                    representation_hidden_size: [128,]
+                    q_hidden_size: [128,]
+                    activation: 'ReLU'
 
-                            agent: "C51DQN"
-                            env_name: "Classic Control"
-                            env_id: "Acrobot-v1"
-                            vectorize: "DummyVecEnv"
-                            policy: "C51_Q_network"
-                            representation: "Basic_MLP"
-                            runner: "DRL"
+                    seed: 1
+                    parallels: 10
+                    n_size: 20000
+                    batch_size: 256
+                    learning_rate: 0.001
+                    gamma: 0.99
+                    v_min: 0
+                    v_max: 200
+                    atom_num: 51
 
-                            representation_hidden_size: [128,]
-                            q_hidden_size: [128,]
-                            activation: 'ReLU'
+                    start_greedy: 0.5
+                    end_greedy: 0.01
+                    decay_step_greedy: 10000
+                    sync_frequency: 100
+                    training_frequency: 1
+                    running_steps: 300000
+                    start_training: 1000
 
-                            seed: 1
-                            parallels: 10
-                            n_size: 20000
-                            batch_size: 256
-                            learning_rate: 0.001
-                            gamma: 0.99
-                            v_min: 0
-                            v_max: 200
-                            atom_num: 51
+                    use_obsnorm: False
+                    use_rewnorm: False
+                    obsnorm_range: 5
+                    rewnorm_range: 5
 
-                            start_greedy: 0.5
-                            end_greedy: 0.01
-                            decay_step_greedy: 10000
-                            sync_frequency: 100
-                            training_frequency: 1
-                            running_steps: 300000
-                            start_training: 1000
-
-                            use_obsnorm: False
-                            use_rewnorm: False
-                            obsnorm_range: 5
-                            rewnorm_range: 5
-
-                            test_steps: 10000
-                            eval_interval: 50000
-                            test_episode: 1
-                            log_dir: "./logs/c51/"
-                            model_dir: "./models/c51/"
+                    test_steps: 10000
+                    eval_interval: 50000
+                    test_episode: 1
+                    log_dir: "./logs/c51/"
+                    model_dir: "./models/c51/"
 
 
-                    .. group-tab:: MountainCar-v0
+            .. tab:: MountainCar-v0
 
-                        .. code-block:: yaml
+                .. code-block:: yaml
 
-                            agent: "C51DQN"
-                            env_name: "Classic Control"
-                            env_id: "MountainCar-v0"
-                            vectorize: "DummyVecEnv"
-                            policy: "C51_Q_network"
-                            representation: "Basic_MLP"
-                            runner: "DRL"
+                    agent: "C51DQN"
+                    env_name: "Classic Control"
+                    env_id: "MountainCar-v0"
+                    vectorize: "DummyVecEnv"
+                    policy: "C51_Q_network"
+                    representation: "Basic_MLP"
+                    runner: "DRL"
 
-                            representation_hidden_size: [128,]
-                            q_hidden_size: [128,]
-                            activation: 'ReLU'
+                    representation_hidden_size: [128,]
+                    q_hidden_size: [128,]
+                    activation: 'ReLU'
 
-                            seed: 1
-                            parallels: 10
-                            n_size: 20000
-                            batch_size: 256
-                            learning_rate: 0.001
-                            gamma: 0.99
-                            v_min: 0
-                            v_max: 200
-                            atom_num: 51
+                    seed: 1
+                    parallels: 10
+                    n_size: 20000
+                    batch_size: 256
+                    learning_rate: 0.001
+                    gamma: 0.99
+                    v_min: 0
+                    v_max: 200
+                    atom_num: 51
 
-                            start_greedy: 0.5
-                            end_greedy: 0.01
-                            decay_step_greedy: 10000
-                            sync_frequency: 100
-                            training_frequency: 1
-                            running_steps: 200000
-                            start_training: 1000
+                    start_greedy: 0.5
+                    end_greedy: 0.01
+                    decay_step_greedy: 10000
+                    sync_frequency: 100
+                    training_frequency: 1
+                    running_steps: 200000
+                    start_training: 1000
 
-                            use_obsnorm: False
-                            use_rewnorm: False
-                            obsnorm_range: 5
-                            rewnorm_range: 5
+                    use_obsnorm: False
+                    use_rewnorm: False
+                    obsnorm_range: 5
+                    rewnorm_range: 5
 
-                            test_steps: 10000
-                            eval_interval: 50000
-                            test_episode: 1
-                            log_dir: "./logs/c51/"
-                            model_dir: "./models/c51/"
+                    test_steps: 10000
+                    eval_interval: 50000
+                    test_episode: 1
+                    log_dir: "./logs/c51/"
+                    model_dir: "./models/c51/"
 
-            
-            .. group-tab:: Box2D
+            .. tab:: CarRacing-v2
 
-                .. tabs::
+                .. code-block:: yaml
 
-                    .. group-tab:: CarRacing-v2
+                    agent: "C51DQN"
+                    env_name: "Box2D"
+                    env_id: "CarRacing-v2"
+                    vectorize: "DummyVecEnv"
+                    policy: "C51_Q_network"
+                    representation: "Basic_CNN"
+                    runner: "DRL"
 
-                        .. code-block:: yaml
+                    # the following three arguments are for "Basic_CNN" representation.
+                    filters: [16, 16, 32]  #  [16, 16, 32, 32]
+                    kernels: [8, 4, 3]  # [8, 6, 4, 4]
+                    strides: [4, 2, 1]  # [2, 2, 2, 2]
 
-                            agent: "C51DQN"
-                            env_name: "Box2D"
-                            env_id: "CarRacing-v2"
-                            vectorize: "DummyVecEnv"
-                            policy: "C51_Q_network"
-                            representation: "Basic_CNN"
-                            runner: "DRL"
+                    q_hidden_size: [512,]
+                    activation: 'ReLU'
 
-                            # the following three arguments are for "Basic_CNN" representation.
-                            filters: [16, 16, 32]  #  [16, 16, 32, 32]
-                            kernels: [8, 4, 3]  # [8, 6, 4, 4]
-                            strides: [4, 2, 1]  # [2, 2, 2, 2]
+                    seed: 1
+                    parallels: 2
+                    n_size: 10000
+                    batch_size: 32
+                    learning_rate: 0.0001
+                    gamma: 0.99
+                    v_min: 0
+                    v_max: 200
+                    atom_num: 51
 
-                            q_hidden_size: [512,]
-                            activation: 'ReLU'
+                    start_greedy: 0.5
+                    end_greedy: 0.01
+                    decay_step_greedy: 500000
+                    sync_frequency: 500
+                    training_frequency: 1
+                    running_steps: 200000
+                    start_training: 1000
 
-                            seed: 1
-                            parallels: 2
-                            n_size: 10000
-                            batch_size: 32
-                            learning_rate: 0.0001
-                            gamma: 0.99
-                            v_min: 0
-                            v_max: 200
-                            atom_num: 51
+                    use_obsnorm: False
+                    use_rewnorm: False
+                    obsnorm_range: 5
+                    rewnorm_range: 5
 
-                            start_greedy: 0.5
-                            end_greedy: 0.01
-                            decay_step_greedy: 500000
-                            sync_frequency: 500
-                            training_frequency: 1
-                            running_steps: 200000
-                            start_training: 1000
-
-                            use_obsnorm: False
-                            use_rewnorm: False
-                            obsnorm_range: 5
-                            rewnorm_range: 5
-
-                            test_steps: 10000
-                            eval_interval: 5000
-                            test_episode: 1
-                            log_dir: "./logs/c51/"
-                            model_dir: "./models/c51/"
+                    test_steps: 10000
+                    eval_interval: 5000
+                    test_episode: 1
+                    log_dir: "./logs/c51/"
+                    model_dir: "./models/c51/"
 
 
-                    .. group-tab:: LunarLander-v2
+            .. tab:: LunarLander-v2
 
-                        .. code-block:: yaml
+                .. code-block:: yaml
 
-                            agent: "C51DQN"
-                            env_name: "Box2D"
-                            env_id: "LunarLander-v2"
-                            vectorize: "DummyVecEnv"
-                            policy: "C51_Q_network"
-                            representation: "Basic_MLP"
-                            runner: "DRL"
+                    agent: "C51DQN"
+                    env_name: "Box2D"
+                    env_id: "LunarLander-v2"
+                    vectorize: "DummyVecEnv"
+                    policy: "C51_Q_network"
+                    representation: "Basic_MLP"
+                    runner: "DRL"
 
-                            representation_hidden_size: [128,]
-                            q_hidden_size: [128,]
-                            activation: 'ReLU'
+                    representation_hidden_size: [128,]
+                    q_hidden_size: [128,]
+                    activation: 'ReLU'
 
-                            seed: 1
-                            parallels: 10
-                            n_size: 20000
-                            batch_size: 256
-                            learning_rate: 0.001
-                            gamma: 0.99
-                            v_min: 0
-                            v_max: 200
-                            atom_num: 51
+                    seed: 1
+                    parallels: 10
+                    n_size: 20000
+                    batch_size: 256
+                    learning_rate: 0.001
+                    gamma: 0.99
+                    v_min: 0
+                    v_max: 200
+                    atom_num: 51
 
-                            start_greedy: 0.5
-                            end_greedy: 0.01
-                            decay_step_greedy: 10000
-                            sync_frequency: 100
-                            training_frequency: 1
-                            running_steps: 200000
-                            start_training: 1000
+                    start_greedy: 0.5
+                    end_greedy: 0.01
+                    decay_step_greedy: 10000
+                    sync_frequency: 100
+                    training_frequency: 1
+                    running_steps: 200000
+                    start_training: 1000
 
-                            use_obsnorm: False
-                            use_rewnorm: False
-                            obsnorm_range: 5
-                            rewnorm_range: 5
+                    use_obsnorm: False
+                    use_rewnorm: False
+                    obsnorm_range: 5
+                    rewnorm_range: 5
 
-                            test_steps: 10000
-                            eval_interval: 50000
-                            test_episode: 1
-                            log_dir: "./logs/c51/"
-                            model_dir: "./models/c51/"
+                    test_steps: 10000
+                    eval_interval: 50000
+                    test_episode: 1
+                    log_dir: "./logs/c51/"
+                    model_dir: "./models/c51/"
 
-            
-            .. group-tab:: Atari
+            .. tab:: Atari
 
                 .. code-block:: yaml
 
@@ -644,237 +626,226 @@ DQN-based Implementations
                     model_dir: "./models/c51/"
 
 
-    .. group-tab:: DoubleDQN
+    .. tab:: DoubleDQN
 
         .. tabs::
 
-            .. group-tab:: Classic Control
+            .. tab:: CartPole-v1
 
-                .. tabs::
+                .. code-block:: yaml
 
-                    .. group-tab:: CartPole-v1
+                    agent: "DDQN"
+                    env_name: "Classic Control"
+                    env_id: "CartPole-v1"
+                    vectorize: "DummyVecEnv"
+                    policy: "Basic_Q_network"
+                    representation: "Basic_MLP"
+                    runner: "DRL"
 
-                        .. code-block:: yaml
+                    representation_hidden_size: [128,]
+                    q_hidden_size: [128,]
+                    activation: 'ReLU'
 
-                            agent: "DDQN"
-                            env_name: "Classic Control"
-                            env_id: "CartPole-v1"
-                            vectorize: "DummyVecEnv"
-                            policy: "Basic_Q_network"
-                            representation: "Basic_MLP"
-                            runner: "DRL"
+                    seed: 1
+                    parallels: 10
+                    n_size: 20000
+                    batch_size: 128
+                    learning_rate: 0.001
+                    gamma: 0.99
 
-                            representation_hidden_size: [128,]
-                            q_hidden_size: [128,]
-                            activation: 'ReLU'
+                    start_greedy: 0.5
+                    end_greedy: 0.01
+                    decay_step_greedy: 10000
+                    sync_frequency: 100
+                    training_frequency: 1
+                    running_steps: 300000
+                    start_training: 1000
 
-                            seed: 1
-                            parallels: 10
-                            n_size: 20000
-                            batch_size: 128
-                            learning_rate: 0.001
-                            gamma: 0.99
+                    use_obsnorm: False
+                    use_rewnorm: False
+                    obsnorm_range: 5
+                    rewnorm_range: 5
 
-                            start_greedy: 0.5
-                            end_greedy: 0.01
-                            decay_step_greedy: 10000
-                            sync_frequency: 100
-                            training_frequency: 1
-                            running_steps: 300000
-                            start_training: 1000
+                    test_steps: 10000
+                    eval_interval: 50000
+                    test_episode: 1
+                    log_dir: "./logs/ddqn/"
+                    model_dir: "./models/ddqn/"
 
-                            use_obsnorm: False
-                            use_rewnorm: False
-                            obsnorm_range: 5
-                            rewnorm_range: 5
+            .. tab:: Acrobot-v1
 
-                            test_steps: 10000
-                            eval_interval: 50000
-                            test_episode: 1
-                            log_dir: "./logs/ddqn/"
-                            model_dir: "./models/ddqn/"
+                .. code-block:: yaml
 
-                    .. group-tab:: Acrobot-v1
+                    agent: "DDQN"
+                    env_name: "Classic Control"
+                    env_id: "Acrobot-v1"
+                    vectorize: "DummyVecEnv"
+                    policy: "Basic_Q_network"
+                    representation: "Basic_MLP"
+                    runner: "DRL"
 
-                        .. code-block:: yaml
+                    representation_hidden_size: [128,]
+                    q_hidden_size: [128,]
+                    activation: 'ReLU'
 
-                            agent: "DDQN"
-                            env_name: "Classic Control"
-                            env_id: "Acrobot-v1"
-                            vectorize: "DummyVecEnv"
-                            policy: "Basic_Q_network"
-                            representation: "Basic_MLP"
-                            runner: "DRL"
+                    seed: 1
+                    parallels: 10
+                    n_size: 20000
+                    batch_size: 128
+                    learning_rate: 0.001
+                    gamma: 0.99
 
-                            representation_hidden_size: [128,]
-                            q_hidden_size: [128,]
-                            activation: 'ReLU'
+                    start_greedy: 0.5
+                    end_greedy: 0.01
+                    decay_step_greedy: 10000
+                    sync_frequency: 100
+                    training_frequency: 1
+                    running_steps: 300000
+                    start_training: 1000
 
-                            seed: 1
-                            parallels: 10
-                            n_size: 20000
-                            batch_size: 128
-                            learning_rate: 0.001
-                            gamma: 0.99
+                    use_obsnorm: False
+                    use_rewnorm: False
+                    obsnorm_range: 5
+                    rewnorm_range: 5
 
-                            start_greedy: 0.5
-                            end_greedy: 0.01
-                            decay_step_greedy: 10000
-                            sync_frequency: 100
-                            training_frequency: 1
-                            running_steps: 300000
-                            start_training: 1000
+                    test_steps: 10000
+                    eval_interval: 50000
+                    test_episode: 1
+                    log_dir: "./logs/ddqn/"
+                    model_dir: "./models/ddqn/"
 
-                            use_obsnorm: False
-                            use_rewnorm: False
-                            obsnorm_range: 5
-                            rewnorm_range: 5
+            .. tab:: MountainCar-v0
 
-                            test_steps: 10000
-                            eval_interval: 50000
-                            test_episode: 1
-                            log_dir: "./logs/ddqn/"
-                            model_dir: "./models/ddqn/"
+                .. code-block:: yaml
 
-                    .. group-tab:: MountainCar-v0
+                    agent: "DDQN"
+                    env_name: "Classic Control"
+                    env_id: "MountainCar-v0"
+                    vectorize: "DummyVecEnv"
+                    policy: "Basic_Q_network"
+                    representation: "Basic_MLP"
+                    runner: "DRL"
 
-                        .. code-block:: yaml
+                    representation_hidden_size: [128,]
+                    q_hidden_size: [128,]
+                    activation: 'ReLU'
 
-                            agent: "DDQN"
-                            env_name: "Classic Control"
-                            env_id: "MountainCar-v0"
-                            vectorize: "DummyVecEnv"
-                            policy: "Basic_Q_network"
-                            representation: "Basic_MLP"
-                            runner: "DRL"
+                    seed: 1
+                    parallels: 10
+                    n_size: 20000
+                    batch_size: 128
+                    learning_rate: 0.001
+                    gamma: 0.99
 
-                            representation_hidden_size: [128,]
-                            q_hidden_size: [128,]
-                            activation: 'ReLU'
+                    start_greedy: 0.5
+                    end_greedy: 0.01
+                    decay_step_greedy: 10000
+                    sync_frequency: 100
+                    training_frequency: 1
+                    running_steps: 300000
+                    start_training: 1000
 
-                            seed: 1
-                            parallels: 10
-                            n_size: 20000
-                            batch_size: 128
-                            learning_rate: 0.001
-                            gamma: 0.99
+                    use_obsnorm: False
+                    use_rewnorm: False
+                    obsnorm_range: 5
+                    rewnorm_range: 5
 
-                            start_greedy: 0.5
-                            end_greedy: 0.01
-                            decay_step_greedy: 10000
-                            sync_frequency: 100
-                            training_frequency: 1
-                            running_steps: 300000
-                            start_training: 1000
+                    test_steps: 10000
+                    eval_interval: 50000
+                    test_episode: 1
+                    log_dir: "./logs/ddqn/"
+                    model_dir: "./models/ddqn/"
 
-                            use_obsnorm: False
-                            use_rewnorm: False
-                            obsnorm_range: 5
-                            rewnorm_range: 5
+            .. tab:: CarRacing-v2
 
-                            test_steps: 10000
-                            eval_interval: 50000
-                            test_episode: 1
-                            log_dir: "./logs/ddqn/"
-                            model_dir: "./models/ddqn/"
+                .. code-block:: yaml
 
+                    agent: "DDQN"
+                    env_name: "Box2D"
+                    env_id: "CarRacing-v2"
+                    vectorize: "DummyVecEnv"
+                    policy: "Basic_Q_network"
+                    representation: "Basic_CNN"
+                    runner: "DRL"
 
-            
-            .. group-tab:: Box2D
+                    # the following three arguments are for "Basic_CNN" representation.
+                    filters: [16, 16, 32]  #  [16, 16, 32, 32]
+                    kernels: [8, 4, 3]  # [8, 6, 4, 4]
+                    strides: [4, 2, 1]  # [2, 2, 2, 2]
 
-                .. tabs::
+                    q_hidden_size: [512,]
+                    activation: 'ReLU'
 
-                    .. group-tab:: CarRacing-v2
+                    seed: 1
+                    parallels: 2
+                    n_size: 10000
+                    batch_size: 32
+                    learning_rate: 0.0001
+                    gamma: 0.99
 
-                        .. code-block:: yaml
+                    start_greedy: 0.5
+                    end_greedy: 0.01
+                    decay_step_greedy: 50000
+                    sync_frequency: 500
+                    training_frequency: 1
+                    running_steps: 2000000
+                    start_training: 1000
 
-                            agent: "DDQN"
-                            env_name: "Box2D"
-                            env_id: "CarRacing-v2"
-                            vectorize: "DummyVecEnv"
-                            policy: "Basic_Q_network"
-                            representation: "Basic_CNN"
-                            runner: "DRL"
+                    use_obsnorm: False
+                    use_rewnorm: False
+                    obsnorm_range: 5
+                    rewnorm_range: 5
 
-                            # the following three arguments are for "Basic_CNN" representation.
-                            filters: [16, 16, 32]  #  [16, 16, 32, 32]
-                            kernels: [8, 4, 3]  # [8, 6, 4, 4]
-                            strides: [4, 2, 1]  # [2, 2, 2, 2]
-
-                            q_hidden_size: [512,]
-                            activation: 'ReLU'
-
-                            seed: 1
-                            parallels: 2
-                            n_size: 10000
-                            batch_size: 32
-                            learning_rate: 0.0001
-                            gamma: 0.99
-
-                            start_greedy: 0.5
-                            end_greedy: 0.01
-                            decay_step_greedy: 50000
-                            sync_frequency: 500
-                            training_frequency: 1
-                            running_steps: 2000000
-                            start_training: 1000
-
-                            use_obsnorm: False
-                            use_rewnorm: False
-                            obsnorm_range: 5
-                            rewnorm_range: 5
-
-                            test_steps: 10000
-                            eval_interval: 100000
-                            test_episode: 1
-                            log_dir: "./logs/ddqn/"
-                            model_dir: "./models/ddqn/"
+                    test_steps: 10000
+                    eval_interval: 100000
+                    test_episode: 1
+                    log_dir: "./logs/ddqn/"
+                    model_dir: "./models/ddqn/"
 
 
-                    .. group-tab:: LunarLander-v2
+            .. tab:: LunarLander-v2
 
-                        .. code-block:: yaml
+                .. code-block:: yaml
 
-                            agent: "DDQN"
-                            env_name: "Box2D"
-                            env_id: "LunarLander-v2"
-                            vectorize: "DummyVecEnv"
-                            policy: "Basic_Q_network"
-                            representation: "Basic_MLP"
-                            runner: "DRL"
+                    agent: "DDQN"
+                    env_name: "Box2D"
+                    env_id: "LunarLander-v2"
+                    vectorize: "DummyVecEnv"
+                    policy: "Basic_Q_network"
+                    representation: "Basic_MLP"
+                    runner: "DRL"
 
-                            representation_hidden_size: [128,]
-                            q_hidden_size: [128,]
-                            activation: 'ReLU'
+                    representation_hidden_size: [128,]
+                    q_hidden_size: [128,]
+                    activation: 'ReLU'
 
-                            seed: 1
-                            parallels: 10
-                            n_size: 10000
-                            batch_size: 256
-                            learning_rate: 0.001
-                            gamma: 0.99
+                    seed: 1
+                    parallels: 10
+                    n_size: 10000
+                    batch_size: 256
+                    learning_rate: 0.001
+                    gamma: 0.99
 
-                            start_greedy: 0.5
-                            end_greedy: 0.01
-                            decay_step_greedy: 10000
-                            sync_frequency: 50
-                            training_frequency: 1
-                            running_steps: 300000
-                            start_training: 1000
+                    start_greedy: 0.5
+                    end_greedy: 0.01
+                    decay_step_greedy: 10000
+                    sync_frequency: 50
+                    training_frequency: 1
+                    running_steps: 300000
+                    start_training: 1000
 
-                            use_obsnorm: False
-                            use_rewnorm: False
-                            obsnorm_range: 5
-                            rewnorm_range: 5
+                    use_obsnorm: False
+                    use_rewnorm: False
+                    obsnorm_range: 5
+                    rewnorm_range: 5
 
-                            test_steps: 10000
-                            eval_interval: 50000
-                            test_episode: 1
-                            log_dir: "./logs/ddqn/"
-                            model_dir: "./models/ddqn/"
+                    test_steps: 10000
+                    eval_interval: 50000
+                    test_episode: 1
+                    log_dir: "./logs/ddqn/"
+                    model_dir: "./models/ddqn/"
 
-            
-            .. group-tab:: Atari
+            .. tab:: Atari
 
                 .. code-block:: yaml
 
@@ -925,238 +896,228 @@ DQN-based Implementations
                     log_dir: "./logs/ddqn/"
                     model_dir: "./models/ddqn/"
 
-    .. group-tab:: DuelingDQN
+    .. tab:: DuelingDQN
 
         .. tabs::
 
-            .. group-tab:: Classic Control
+            .. tab:: CartPole-v1
 
-                .. tabs::
+                .. code-block:: yaml
 
-                    .. group-tab:: CartPole-v1
+                    agent: "Duel_DQN"
+                    env_name: "Classic Control"
+                    env_id: "CartPole-v1"
+                    vectorize: "DummyVecEnv"
+                    policy: "Duel_Q_network"
+                    representation: "Basic_MLP"
+                    runner: "DRL"
 
-                        .. code-block:: yaml
+                    representation_hidden_size: [128, ]
+                    q_hidden_size: [128, ]
+                    activation: 'ReLU'
 
-                            agent: "Duel_DQN"
-                            env_name: "Classic Control"
-                            env_id: "CartPole-v1"
-                            vectorize: "DummyVecEnv"
-                            policy: "Duel_Q_network"
-                            representation: "Basic_MLP"
-                            runner: "DRL"
+                    seed: 1
+                    parallels: 10
+                    n_size: 10000
+                    batch_size: 256
+                    learning_rate: 0.001
+                    gamma: 0.99
 
-                            representation_hidden_size: [128, ]
-                            q_hidden_size: [128, ]
-                            activation: 'ReLU'
+                    start_greedy: 0.5
+                    end_greedy: 0.01
+                    decay_step_greedy: 20000
+                    sync_frequency: 50
+                    training_frequency: 1
+                    running_steps: 500000
+                    start_training: 1000
 
-                            seed: 1
-                            parallels: 10
-                            n_size: 10000
-                            batch_size: 256
-                            learning_rate: 0.001
-                            gamma: 0.99
+                    use_obsnorm: False
+                    use_rewnorm: False
+                    obsnorm_range: 5
+                    rewnorm_range: 5
 
-                            start_greedy: 0.5
-                            end_greedy: 0.01
-                            decay_step_greedy: 20000
-                            sync_frequency: 50
-                            training_frequency: 1
-                            running_steps: 500000
-                            start_training: 1000
-
-                            use_obsnorm: False
-                            use_rewnorm: False
-                            obsnorm_range: 5
-                            rewnorm_range: 5
-
-                            test_steps: 10000
-                            eval_interval: 50000
-                            test_episode: 1
-                            log_dir: "./logs/dueldqn/"
-                            model_dir: "./models/dueldqn/"
+                    test_steps: 10000
+                    eval_interval: 50000
+                    test_episode: 1
+                    log_dir: "./logs/dueldqn/"
+                    model_dir: "./models/dueldqn/"
 
 
-                    .. group-tab:: Acrobot-v1
+            .. tab:: Acrobot-v1
 
-                        .. code-block:: yaml
+                .. code-block:: yaml
 
-                            agent: "Duel_DQN"
-                            env_name: "Classic Control"
-                            env_id: "Acrobot-v1"
-                            vectorize: "DummyVecEnv"
-                            policy: "Duel_Q_network"
-                            representation: "Basic_MLP"
-                            runner: "DRL"
+                    agent: "Duel_DQN"
+                    env_name: "Classic Control"
+                    env_id: "Acrobot-v1"
+                    vectorize: "DummyVecEnv"
+                    policy: "Duel_Q_network"
+                    representation: "Basic_MLP"
+                    runner: "DRL"
 
-                            representation_hidden_size: [128, ]
-                            q_hidden_size: [128, ]
-                            activation: 'ReLU'
+                    representation_hidden_size: [128, ]
+                    q_hidden_size: [128, ]
+                    activation: 'ReLU'
 
-                            seed: 1
-                            parallels: 10
-                            n_size: 10000
-                            batch_size: 256
-                            learning_rate: 0.001
-                            gamma: 0.99
+                    seed: 1
+                    parallels: 10
+                    n_size: 10000
+                    batch_size: 256
+                    learning_rate: 0.001
+                    gamma: 0.99
 
-                            start_greedy: 0.5
-                            end_greedy: 0.01
-                            decay_step_greedy: 20000
-                            sync_frequency: 50
-                            training_frequency: 1
-                            running_steps: 500000
-                            start_training: 1000
+                    start_greedy: 0.5
+                    end_greedy: 0.01
+                    decay_step_greedy: 20000
+                    sync_frequency: 50
+                    training_frequency: 1
+                    running_steps: 500000
+                    start_training: 1000
 
-                            use_obsnorm: False
-                            use_rewnorm: False
-                            obsnorm_range: 5
-                            rewnorm_range: 5
+                    use_obsnorm: False
+                    use_rewnorm: False
+                    obsnorm_range: 5
+                    rewnorm_range: 5
 
-                            test_steps: 10000
-                            eval_interval: 50000
-                            test_episode: 1
-                            log_dir: "./logs/dueldqn/"
-                            model_dir: "./models/dueldqn/"
-
-
-                    .. group-tab:: MountainCar-v0
-
-                        .. code-block:: yaml
-
-                            agent: "Duel_DQN"
-                            env_name: "Classic Control"
-                            env_id: "MountainCar-v0"
-                            vectorize: "DummyVecEnv"
-                            policy: "Duel_Q_network"
-                            representation: "Basic_MLP"
-                            runner: "DRL"
-
-                            representation_hidden_size: [128, ]
-                            q_hidden_size: [128, ]
-                            activation: 'ReLU'
-
-                            seed: 1
-                            parallels: 10
-                            n_size: 10000
-                            batch_size: 256
-                            learning_rate: 0.0001
-                            gamma: 0.99
-
-                            start_greedy: 0.5
-                            end_greedy: 0.01
-                            decay_step_greedy: 20000
-                            sync_frequency: 50
-                            training_frequency: 1
-                            running_steps: 300000
-                            start_training: 1000
-
-                            use_obsnorm: False
-                            use_rewnorm: False
-                            obsnorm_range: 5
-                            rewnorm_range: 5
-
-                            test_steps: 10000
-                            eval_interval: 50000
-                            test_episode: 1
-                            log_dir: "./logs/dueldqn/"
-                            model_dir: "./models/dueldqn/"
-
-            
-            .. group-tab:: Box2D
-
-                .. tabs::
-
-                    .. group-tab:: CarRacing-v2
-
-                        .. code-block:: yaml
-
-                            agent: "Duel_DQN"
-                            env_name: "Box2D"
-                            env_id: "CarRacing-v2"
-                            vectorize: "DummyVecEnv"
-                            policy: "Duel_Q_network"
-                            representation: "Basic_CNN"
-                            runner: "DRL"
-
-                            # the following three arguments are for "Basic_CNN" representation.
-                            filters: [16, 16, 32]  #  [16, 16, 32, 32]
-                            kernels: [8, 4, 3]  # [8, 6, 4, 4]
-                            strides: [4, 2, 1]  # [2, 2, 2, 2]
-
-                            q_hidden_size: [512,]
-                            activation: 'ReLU'
-
-                            seed: 1
-                            parallels: 2
-                            n_size: 10000
-                            batch_size: 32
-                            learning_rate: 0.0001
-                            gamma: 0.99
-
-                            start_greedy: 0.5
-                            end_greedy: 0.01
-                            decay_step_greedy: 50000
-                            sync_frequency: 500
-                            training_frequency: 1
-                            running_steps: 2000000
-                            start_training: 1000
-
-                            use_obsnorm: False
-                            use_rewnorm: False
-                            obsnorm_range: 5
-                            rewnorm_range: 5
-
-                            test_steps: 10000
-                            eval_interval: 100000
-                            test_episode: 1
-                            log_dir: "./logs/dueldqn/"
-                            model_dir: "./models/dueldqn/"
+                    test_steps: 10000
+                    eval_interval: 50000
+                    test_episode: 1
+                    log_dir: "./logs/dueldqn/"
+                    model_dir: "./models/dueldqn/"
 
 
-                    .. group-tab:: LunarLander-v2
+            .. tab:: MountainCar-v0
 
-                        .. code-block:: yaml
+                .. code-block:: yaml
 
-                            agent: "Duel_DQN"
-                            env_name: "Box2D"
-                            env_id: "LunarLander-v2"
-                            vectorize: "DummyVecEnv"
-                            policy: "Duel_Q_network"
-                            representation: "Basic_MLP"
-                            runner: "DRL"
+                    agent: "Duel_DQN"
+                    env_name: "Classic Control"
+                    env_id: "MountainCar-v0"
+                    vectorize: "DummyVecEnv"
+                    policy: "Duel_Q_network"
+                    representation: "Basic_MLP"
+                    runner: "DRL"
 
-                            representation_hidden_size: [128, ]
-                            q_hidden_size: [128, ]
-                            activation: 'ReLU'
+                    representation_hidden_size: [128, ]
+                    q_hidden_size: [128, ]
+                    activation: 'ReLU'
 
-                            seed: 1
-                            parallels: 10
-                            n_size: 10000
-                            batch_size: 256
-                            learning_rate: 0.001
-                            gamma: 0.99
+                    seed: 1
+                    parallels: 10
+                    n_size: 10000
+                    batch_size: 256
+                    learning_rate: 0.0001
+                    gamma: 0.99
 
-                            start_greedy: 0.5
-                            end_greedy: 0.01
-                            decay_step_greedy: 20000
-                            sync_frequency: 50
-                            training_frequency: 1
-                            running_steps: 500000
-                            start_training: 1000
+                    start_greedy: 0.5
+                    end_greedy: 0.01
+                    decay_step_greedy: 20000
+                    sync_frequency: 50
+                    training_frequency: 1
+                    running_steps: 300000
+                    start_training: 1000
 
-                            use_obsnorm: False
-                            use_rewnorm: False
-                            obsnorm_range: 5
-                            rewnorm_range: 5
+                    use_obsnorm: False
+                    use_rewnorm: False
+                    obsnorm_range: 5
+                    rewnorm_range: 5
 
-                            test_steps: 10000
-                            eval_interval: 50000
-                            test_episode: 1
-                            log_dir: "./logs/dueldqn/"
-                            model_dir: "./models/dueldqn/"
+                    test_steps: 10000
+                    eval_interval: 50000
+                    test_episode: 1
+                    log_dir: "./logs/dueldqn/"
+                    model_dir: "./models/dueldqn/"
 
-            
-            .. group-tab:: Atari
+            .. tab:: CarRacing-v2
+
+                .. code-block:: yaml
+
+                    agent: "Duel_DQN"
+                    env_name: "Box2D"
+                    env_id: "CarRacing-v2"
+                    vectorize: "DummyVecEnv"
+                    policy: "Duel_Q_network"
+                    representation: "Basic_CNN"
+                    runner: "DRL"
+
+                    # the following three arguments are for "Basic_CNN" representation.
+                    filters: [16, 16, 32]  #  [16, 16, 32, 32]
+                    kernels: [8, 4, 3]  # [8, 6, 4, 4]
+                    strides: [4, 2, 1]  # [2, 2, 2, 2]
+
+                    q_hidden_size: [512,]
+                    activation: 'ReLU'
+
+                    seed: 1
+                    parallels: 2
+                    n_size: 10000
+                    batch_size: 32
+                    learning_rate: 0.0001
+                    gamma: 0.99
+
+                    start_greedy: 0.5
+                    end_greedy: 0.01
+                    decay_step_greedy: 50000
+                    sync_frequency: 500
+                    training_frequency: 1
+                    running_steps: 2000000
+                    start_training: 1000
+
+                    use_obsnorm: False
+                    use_rewnorm: False
+                    obsnorm_range: 5
+                    rewnorm_range: 5
+
+                    test_steps: 10000
+                    eval_interval: 100000
+                    test_episode: 1
+                    log_dir: "./logs/dueldqn/"
+                    model_dir: "./models/dueldqn/"
+
+
+            .. tab:: LunarLander-v2
+
+                .. code-block:: yaml
+
+                    agent: "Duel_DQN"
+                    env_name: "Box2D"
+                    env_id: "LunarLander-v2"
+                    vectorize: "DummyVecEnv"
+                    policy: "Duel_Q_network"
+                    representation: "Basic_MLP"
+                    runner: "DRL"
+
+                    representation_hidden_size: [128, ]
+                    q_hidden_size: [128, ]
+                    activation: 'ReLU'
+
+                    seed: 1
+                    parallels: 10
+                    n_size: 10000
+                    batch_size: 256
+                    learning_rate: 0.001
+                    gamma: 0.99
+
+                    start_greedy: 0.5
+                    end_greedy: 0.01
+                    decay_step_greedy: 20000
+                    sync_frequency: 50
+                    training_frequency: 1
+                    running_steps: 500000
+                    start_training: 1000
+
+                    use_obsnorm: False
+                    use_rewnorm: False
+                    obsnorm_range: 5
+                    rewnorm_range: 5
+
+                    test_steps: 10000
+                    eval_interval: 50000
+                    test_episode: 1
+                    log_dir: "./logs/dueldqn/"
+                    model_dir: "./models/dueldqn/"
+
+            .. tab:: Atari
 
                 .. code-block:: yaml
 
@@ -1208,237 +1169,227 @@ DQN-based Implementations
                     model_dir: "./models/dueldqn/"
 
 
-    .. group-tab:: NoisyDQN
+    .. tab:: NoisyDQN
 
         .. tabs::
 
-            .. group-tab:: Classic Control
+            .. tab:: CartPole-v1
 
-                .. tabs::
+                .. code-block:: yaml
 
-                    .. group-tab:: CartPole-v1
+                    agent: "NoisyDQN"
+                    env_name: "Classic Control"
+                    env_id: "CartPole-v1"
+                    vectorize: "DummyVecEnv"
+                    policy: "Noisy_Q_network"
+                    representation: "Basic_MLP"
+                    runner: "DRL"
 
-                        .. code-block:: yaml
+                    representation_hidden_size: [128,]
+                    q_hidden_size: [128,]
+                    activation: 'ReLU'
 
-                            agent: "NoisyDQN"
-                            env_name: "Classic Control"
-                            env_id: "CartPole-v1"
-                            vectorize: "DummyVecEnv"
-                            policy: "Noisy_Q_network"
-                            representation: "Basic_MLP"
-                            runner: "DRL"
+                    seed: 1
+                    parallels: 10
+                    n_size: 20000
+                    batch_size: 128
+                    learning_rate: 0.001
+                    gamma: 0.99
 
-                            representation_hidden_size: [128,]
-                            q_hidden_size: [128,]
-                            activation: 'ReLU'
+                    start_noise: 0.05
+                    end_noise: 0.0
+                    decay_step_noise: 50000
+                    sync_frequency: 100
+                    training_frequency: 2
+                    running_steps: 500000
+                    start_training: 1000
 
-                            seed: 1
-                            parallels: 10
-                            n_size: 20000
-                            batch_size: 128
-                            learning_rate: 0.001
-                            gamma: 0.99
+                    use_obsnorm: False
+                    use_rewnorm: False
+                    obsnorm_range: 5
+                    rewnorm_range: 5
 
-                            start_noise: 0.05
-                            end_noise: 0.0
-                            decay_step_noise: 50000
-                            sync_frequency: 100
-                            training_frequency: 2
-                            running_steps: 500000
-                            start_training: 1000
-
-                            use_obsnorm: False
-                            use_rewnorm: False
-                            obsnorm_range: 5
-                            rewnorm_range: 5
-
-                            test_steps: 10000
-                            eval_interval: 50000
-                            test_episode: 1
-                            log_dir: "./logs/noisy_dqn/"
-                            model_dir: "./models/noisy_dqn/"
+                    test_steps: 10000
+                    eval_interval: 50000
+                    test_episode: 1
+                    log_dir: "./logs/noisy_dqn/"
+                    model_dir: "./models/noisy_dqn/"
 
 
-                    .. group-tab:: Acrobot-v1
+            .. tab:: Acrobot-v1
 
-                        .. code-block:: yaml
+                .. code-block:: yaml
 
-                            agent: "NoisyDQN"
-                            env_name: "Classic Control"
-                            env_id: "Acrobot-v1"
-                            vectorize: "DummyVecEnv"
-                            policy: "Noisy_Q_network"
-                            representation: "Basic_MLP"
-                            runner: "DRL"
+                    agent: "NoisyDQN"
+                    env_name: "Classic Control"
+                    env_id: "Acrobot-v1"
+                    vectorize: "DummyVecEnv"
+                    policy: "Noisy_Q_network"
+                    representation: "Basic_MLP"
+                    runner: "DRL"
 
-                            representation_hidden_size: [128,]
-                            q_hidden_size: [128,]
-                            activation: 'ReLU'
+                    representation_hidden_size: [128,]
+                    q_hidden_size: [128,]
+                    activation: 'ReLU'
 
-                            seed: 1
-                            parallels: 10
-                            n_size: 20000
-                            batch_size: 128
-                            learning_rate: 0.001
-                            gamma: 0.99
+                    seed: 1
+                    parallels: 10
+                    n_size: 20000
+                    batch_size: 128
+                    learning_rate: 0.001
+                    gamma: 0.99
 
-                            start_noise: 0.05
-                            end_noise: 0.0
-                            decay_step_noise: 50000
-                            sync_frequency: 100
-                            training_frequency: 2
-                            running_steps: 500000
-                            start_training: 1000
+                    start_noise: 0.05
+                    end_noise: 0.0
+                    decay_step_noise: 50000
+                    sync_frequency: 100
+                    training_frequency: 2
+                    running_steps: 500000
+                    start_training: 1000
 
-                            use_obsnorm: False
-                            use_rewnorm: False
-                            obsnorm_range: 5
-                            rewnorm_range: 5
+                    use_obsnorm: False
+                    use_rewnorm: False
+                    obsnorm_range: 5
+                    rewnorm_range: 5
 
-                            test_steps: 10000
-                            eval_interval: 50000
-                            test_episode: 1
-                            log_dir: "./logs/noisy_dqn/"
-                            model_dir: "./models/noisy_dqn/"
+                    test_steps: 10000
+                    eval_interval: 50000
+                    test_episode: 1
+                    log_dir: "./logs/noisy_dqn/"
+                    model_dir: "./models/noisy_dqn/"
 
 
-                    .. group-tab:: MountainCar-v0
+            .. tab:: MountainCar-v0
 
-                        .. code-block:: yaml
+                .. code-block:: yaml
 
-                            agent: "NoisyDQN"
-                            env_name: "Classic Control"
-                            env_id: "MountainCar-v0"
-                            vectorize: "DummyVecEnv"
-                            policy: "Noisy_Q_network"
-                            representation: "Basic_MLP"
-                            runner: "DRL"
+                    agent: "NoisyDQN"
+                    env_name: "Classic Control"
+                    env_id: "MountainCar-v0"
+                    vectorize: "DummyVecEnv"
+                    policy: "Noisy_Q_network"
+                    representation: "Basic_MLP"
+                    runner: "DRL"
 
-                            representation_hidden_size: [128,]
-                            q_hidden_size: [128,]
-                            activation: 'ReLU'
+                    representation_hidden_size: [128,]
+                    q_hidden_size: [128,]
+                    activation: 'ReLU'
 
-                            seed: 1
-                            parallels: 10
-                            n_size: 20000
-                            batch_size: 128
-                            learning_rate: 0.001
-                            gamma: 0.99
+                    seed: 1
+                    parallels: 10
+                    n_size: 20000
+                    batch_size: 128
+                    learning_rate: 0.001
+                    gamma: 0.99
 
-                            start_noise: 0.05
-                            end_noise: 0.0
-                            decay_step_noise: 50000
-                            sync_frequency: 100
-                            training_frequency: 2
-                            running_steps: 500000
-                            start_training: 1000
+                    start_noise: 0.05
+                    end_noise: 0.0
+                    decay_step_noise: 50000
+                    sync_frequency: 100
+                    training_frequency: 2
+                    running_steps: 500000
+                    start_training: 1000
 
-                            use_obsnorm: False
-                            use_rewnorm: False
-                            obsnorm_range: 5
-                            rewnorm_range: 5
+                    use_obsnorm: False
+                    use_rewnorm: False
+                    obsnorm_range: 5
+                    rewnorm_range: 5
 
-                            test_steps: 10000
-                            eval_interval: 50000
-                            test_episode: 1
-                            log_dir: "./logs/noisy_dqn/"
-                            model_dir: "./models/noisy_dqn/"
+                    test_steps: 10000
+                    eval_interval: 50000
+                    test_episode: 1
+                    log_dir: "./logs/noisy_dqn/"
+                    model_dir: "./models/noisy_dqn/"
 
-            
-            .. group-tab:: Box2D
+            .. tab:: CarRacing-v2
 
-                .. tabs::
+                .. code-block:: yaml
 
-                    .. group-tab:: CarRacing-v2
+                    agent: "NoisyDQN"
+                    env_name: "Box2D"
+                    env_id: "CarRacing-v2"
+                    vectorize: "DummyVecEnv"
+                    policy: "Noisy_Q_network"
+                    representation: "Basic_CNN"
+                    runner: "DRL"
 
-                        .. code-block:: yaml
+                    # the following three arguments are for "Basic_CNN" representation.
+                    filters: [16, 16, 32]  #  [16, 16, 32, 32]
+                    kernels: [8, 4, 3]  # [8, 6, 4, 4]
+                    strides: [4, 2, 1]  # [2, 2, 2, 2]
 
-                            agent: "NoisyDQN"
-                            env_name: "Box2D"
-                            env_id: "CarRacing-v2"
-                            vectorize: "DummyVecEnv"
-                            policy: "Noisy_Q_network"
-                            representation: "Basic_CNN"
-                            runner: "DRL"
+                    q_hidden_size: [512,]
+                    activation: 'ReLU'
 
-                            # the following three arguments are for "Basic_CNN" representation.
-                            filters: [16, 16, 32]  #  [16, 16, 32, 32]
-                            kernels: [8, 4, 3]  # [8, 6, 4, 4]
-                            strides: [4, 2, 1]  # [2, 2, 2, 2]
+                    seed: 1
+                    parallels: 2
+                    n_size: 10000
+                    batch_size: 32
+                    learning_rate: 0.0001
+                    gamma: 0.99
 
-                            q_hidden_size: [512,]
-                            activation: 'ReLU'
+                    start_noise: 0.05
+                    end_noise: 0.0
+                    decay_step_noise: 200000
+                    sync_frequency: 500
+                    training_frequency: 1
+                    running_steps: 2000000
+                    start_training: 1000
 
-                            seed: 1
-                            parallels: 2
-                            n_size: 10000
-                            batch_size: 32
-                            learning_rate: 0.0001
-                            gamma: 0.99
+                    use_obsnorm: False
+                    use_rewnorm: False
+                    obsnorm_range: 5
+                    rewnorm_range: 5
 
-                            start_noise: 0.05
-                            end_noise: 0.0
-                            decay_step_noise: 200000
-                            sync_frequency: 500
-                            training_frequency: 1
-                            running_steps: 2000000
-                            start_training: 1000
+                    test_steps: 10000
+                    eval_interval: 100000
+                    test_episode: 1
+                    log_dir: "./logs/noisy_dqn/"
+                    model_dir: "./models/noisy_dqn/"
 
-                            use_obsnorm: False
-                            use_rewnorm: False
-                            obsnorm_range: 5
-                            rewnorm_range: 5
+            .. tab:: LunarLander-v2
 
-                            test_steps: 10000
-                            eval_interval: 100000
-                            test_episode: 1
-                            log_dir: "./logs/noisy_dqn/"
-                            model_dir: "./models/noisy_dqn/"
+                .. code-block:: yaml
 
-                    .. group-tab:: LunarLander-v2
+                    agent: "NoisyDQN"
+                    env_name: "Box2D"
+                    env_id: "LunarLander-v2"
+                    vectorize: "DummyVecEnv"
+                    policy: "Noisy_Q_network"
+                    representation: "Basic_MLP"
+                    runner: "DRL"
 
-                        .. code-block:: yaml
+                    representation_hidden_size: [128,]
+                    q_hidden_size: [128,]
+                    activation: 'ReLU'
 
-                            agent: "NoisyDQN"
-                            env_name: "Box2D"
-                            env_id: "LunarLander-v2"
-                            vectorize: "DummyVecEnv"
-                            policy: "Noisy_Q_network"
-                            representation: "Basic_MLP"
-                            runner: "DRL"
+                    seed: 1
+                    parallels: 10
+                    n_size: 20000
+                    batch_size: 128
+                    learning_rate: 0.001
+                    gamma: 0.99
 
-                            representation_hidden_size: [128,]
-                            q_hidden_size: [128,]
-                            activation: 'ReLU'
+                    start_noise: 0.05
+                    end_noise: 0.0
+                    decay_step_noise: 50000
+                    sync_frequency: 100
+                    training_frequency: 2
+                    running_steps: 500000
+                    start_training: 1000
 
-                            seed: 1
-                            parallels: 10
-                            n_size: 20000
-                            batch_size: 128
-                            learning_rate: 0.001
-                            gamma: 0.99
+                    use_obsnorm: False
+                    use_rewnorm: False
+                    obsnorm_range: 5
+                    rewnorm_range: 5
 
-                            start_noise: 0.05
-                            end_noise: 0.0
-                            decay_step_noise: 50000
-                            sync_frequency: 100
-                            training_frequency: 2
-                            running_steps: 500000
-                            start_training: 1000
+                    test_steps: 10000
+                    eval_interval: 50000
+                    test_episode: 1
+                    log_dir: "./logs/noisy_dqn/"
+                    model_dir: "./models/noisy_dqn/"
 
-                            use_obsnorm: False
-                            use_rewnorm: False
-                            obsnorm_range: 5
-                            rewnorm_range: 5
-
-                            test_steps: 10000
-                            eval_interval: 50000
-                            test_episode: 1
-                            log_dir: "./logs/noisy_dqn/"
-                            model_dir: "./models/noisy_dqn/"
-
-            
-            .. group-tab:: Atari
+            .. tab:: Atari
 
                 .. code-block:: yaml
 
@@ -1489,251 +1440,241 @@ DQN-based Implementations
                     log_dir: "./logs/noisy_dqn/"
                     model_dir: "./models/noisy_dqn/"
 
-
-    .. group-tab:: PerDQN
+    .. tab:: PerDQN
 
         .. tabs::
 
-            .. group-tab:: Classic Control
+            .. tab:: CartPole-v1
 
-                .. tabs::
+                .. code-block:: yaml
 
-                    .. group-tab:: CartPole-v1
+                    agent: "PerDQN"
+                    env_name: "Classic Control"
+                    env_id: "CartPole-v1"
+                    vectorize: "DummyVecEnv"
+                    policy: "Basic_Q_network"
+                    representation: "Basic_MLP"
+                    runner: "DRL"
 
-                        .. code-block:: yaml
+                    representation_hidden_size: [128,]
+                    q_hidden_size: [128,]
+                    activation: 'ReLU'
 
-                            agent: "PerDQN"
-                            env_name: "Classic Control"
-                            env_id: "CartPole-v1"
-                            vectorize: "DummyVecEnv"
-                            policy: "Basic_Q_network"
-                            representation: "Basic_MLP"
-                            runner: "DRL"
+                    seed: 1
+                    parallels: 10
+                    n_size: 20000
+                    batch_size: 128
+                    learning_rate: 0.001
+                    gamma: 0.99
 
-                            representation_hidden_size: [128,]
-                            q_hidden_size: [128,]
-                            activation: 'ReLU'
+                    start_greedy: 0.5
+                    end_greedy: 0.1
+                    decay_step_greedy: 20000
+                    sync_frequency: 100
+                    training_frequency: 4
+                    running_steps: 500000
+                    start_training: 1000
 
-                            seed: 1
-                            parallels: 10
-                            n_size: 20000
-                            batch_size: 128
-                            learning_rate: 0.001
-                            gamma: 0.99
+                    use_obsnorm: False
+                    use_rewnorm: False
+                    obsnorm_range: 5
+                    rewnorm_range: 5
 
-                            start_greedy: 0.5
-                            end_greedy: 0.1
-                            decay_step_greedy: 20000
-                            sync_frequency: 100
-                            training_frequency: 4
-                            running_steps: 500000
-                            start_training: 1000
+                    PER_alpha: 0.5
+                    PER_beta0: 0.4
 
-                            use_obsnorm: False
-                            use_rewnorm: False
-                            obsnorm_range: 5
-                            rewnorm_range: 5
+                    test_steps: 10000
+                    eval_interval: 50000
+                    test_episode: 1
+                    log_dir: "./logs/perdqn/"
+                    model_dir: "./models/perdqn/"
 
-                            PER_alpha: 0.5
-                            PER_beta0: 0.4
+            .. tab:: Acrobot-v1
 
-                            test_steps: 10000
-                            eval_interval: 50000
-                            test_episode: 1
-                            log_dir: "./logs/perdqn/"
-                            model_dir: "./models/perdqn/"
+                .. code-block:: yaml
 
-                    .. group-tab:: Acrobot-v1
+                    agent: "PerDQN"
+                    env_name: "Classic Control"
+                    env_id: "Acrobot-v1"
+                    vectorize: "DummyVecEnv"
+                    policy: "Basic_Q_network"
+                    representation: "Basic_MLP"
+                    runner: "DRL"
 
-                        .. code-block:: yaml
+                    representation_hidden_size: [128,]
+                    q_hidden_size: [128,]
+                    activation: 'ReLU'
 
-                            agent: "PerDQN"
-                            env_name: "Classic Control"
-                            env_id: "Acrobot-v1"
-                            vectorize: "DummyVecEnv"
-                            policy: "Basic_Q_network"
-                            representation: "Basic_MLP"
-                            runner: "DRL"
+                    seed: 1
+                    parallels: 10
+                    n_size: 20000
+                    batch_size: 128
+                    learning_rate: 0.001
+                    gamma: 0.99
 
-                            representation_hidden_size: [128,]
-                            q_hidden_size: [128,]
-                            activation: 'ReLU'
+                    start_greedy: 0.5
+                    end_greedy: 0.1
+                    decay_step_greedy: 20000
+                    sync_frequency: 100
+                    training_frequency: 4
+                    running_steps: 500000
+                    start_training: 1000
 
-                            seed: 1
-                            parallels: 10
-                            n_size: 20000
-                            batch_size: 128
-                            learning_rate: 0.001
-                            gamma: 0.99
+                    use_obsnorm: False
+                    use_rewnorm: False
+                    obsnorm_range: 5
+                    rewnorm_range: 5
 
-                            start_greedy: 0.5
-                            end_greedy: 0.1
-                            decay_step_greedy: 20000
-                            sync_frequency: 100
-                            training_frequency: 4
-                            running_steps: 500000
-                            start_training: 1000
+                    PER_alpha: 0.5
+                    PER_beta0: 0.4
 
-                            use_obsnorm: False
-                            use_rewnorm: False
-                            obsnorm_range: 5
-                            rewnorm_range: 5
+                    test_steps: 10000
+                    eval_interval: 50000
+                    test_episode: 1
+                    log_dir: "./logs/perdqn/"
+                    model_dir: "./models/perdqn/"
 
-                            PER_alpha: 0.5
-                            PER_beta0: 0.4
+            .. tab:: MountainCar-v0
 
-                            test_steps: 10000
-                            eval_interval: 50000
-                            test_episode: 1
-                            log_dir: "./logs/perdqn/"
-                            model_dir: "./models/perdqn/"
+                .. code-block:: yaml
 
-                    .. group-tab:: MountainCar-v0
+                    agent: "PerDQN"
+                    env_name: "Classic Control"
+                    env_id: "MountainCar-v0"
+                    vectorize: "DummyVecEnv"
+                    policy: "Basic_Q_network"
+                    representation: "Basic_MLP"
+                    runner: "DRL"
 
-                        .. code-block:: yaml
+                    representation_hidden_size: [128,]
+                    q_hidden_size: [128,]
+                    activation: 'ReLU'
 
-                            agent: "PerDQN"
-                            env_name: "Classic Control"
-                            env_id: "MountainCar-v0"
-                            vectorize: "DummyVecEnv"
-                            policy: "Basic_Q_network"
-                            representation: "Basic_MLP"
-                            runner: "DRL"
+                    seed: 1
+                    parallels: 10
+                    n_size: 20000
+                    batch_size: 128
+                    learning_rate: 0.001
+                    gamma: 0.99
 
-                            representation_hidden_size: [128,]
-                            q_hidden_size: [128,]
-                            activation: 'ReLU'
+                    start_greedy: 0.5
+                    end_greedy: 0.1
+                    decay_step_greedy: 20000
+                    sync_frequency: 100
+                    training_frequency: 4
+                    running_steps: 500000
+                    start_training: 1000
 
-                            seed: 1
-                            parallels: 10
-                            n_size: 20000
-                            batch_size: 128
-                            learning_rate: 0.001
-                            gamma: 0.99
+                    use_obsnorm: False
+                    use_rewnorm: False
+                    obsnorm_range: 5
+                    rewnorm_range: 5
 
-                            start_greedy: 0.5
-                            end_greedy: 0.1
-                            decay_step_greedy: 20000
-                            sync_frequency: 100
-                            training_frequency: 4
-                            running_steps: 500000
-                            start_training: 1000
+                    PER_alpha: 0.5
+                    PER_beta0: 0.4
 
-                            use_obsnorm: False
-                            use_rewnorm: False
-                            obsnorm_range: 5
-                            rewnorm_range: 5
+                    test_steps: 10000
+                    eval_interval: 50000
+                    test_episode: 1
+                    log_dir: "./logs/perdqn/"
+                    model_dir: "./models/perdqn/"
 
-                            PER_alpha: 0.5
-                            PER_beta0: 0.4
+            .. tab:: CarRacing-v2
 
-                            test_steps: 10000
-                            eval_interval: 50000
-                            test_episode: 1
-                            log_dir: "./logs/perdqn/"
-                            model_dir: "./models/perdqn/"
+                .. code-block:: yaml
 
-            
-            .. group-tab:: Box2D
+                    agent: "PerDQN"
+                    env_name: "Box2D"
+                    env_id: "CarRacing-v2"
+                    vectorize: "DummyVecEnv"
+                    policy: "Basic_Q_network"
+                    representation: "Basic_CNN"
+                    runner: "DRL"
 
-                .. tabs::
+                    # the following three arguments are for "Basic_CNN" representation.
+                    filters: [16, 16, 32]  #  [16, 16, 32, 32]
+                    kernels: [8, 4, 3]  # [8, 6, 4, 4]
+                    strides: [4, 2, 1]  # [2, 2, 2, 2]
 
-                    .. group-tab:: CarRacing-v2
+                    q_hidden_size: [512,]
+                    activation: 'ReLU'
 
-                        .. code-block:: yaml
+                    seed: 1
+                    parallels: 2
+                    n_size: 10000
+                    batch_size: 32
+                    learning_rate: 0.0001
+                    gamma: 0.99
 
-                            agent: "PerDQN"
-                            env_name: "Box2D"
-                            env_id: "CarRacing-v2"
-                            vectorize: "DummyVecEnv"
-                            policy: "Basic_Q_network"
-                            representation: "Basic_CNN"
-                            runner: "DRL"
+                    start_greedy: 0.5
+                    end_greedy: 0.01
+                    decay_step_greedy: 50000
+                    sync_frequency: 500
+                    training_frequency: 1
+                    running_steps: 2000000
+                    start_training: 1000
 
-                            # the following three arguments are for "Basic_CNN" representation.
-                            filters: [16, 16, 32]  #  [16, 16, 32, 32]
-                            kernels: [8, 4, 3]  # [8, 6, 4, 4]
-                            strides: [4, 2, 1]  # [2, 2, 2, 2]
+                    use_obsnorm: False
+                    use_rewnorm: False
+                    obsnorm_range: 5
+                    rewnorm_range: 5
 
-                            q_hidden_size: [512,]
-                            activation: 'ReLU'
+                    PER_alpha: 0.5
+                    PER_beta0: 0.4
 
-                            seed: 1
-                            parallels: 2
-                            n_size: 10000
-                            batch_size: 32
-                            learning_rate: 0.0001
-                            gamma: 0.99
-
-                            start_greedy: 0.5
-                            end_greedy: 0.01
-                            decay_step_greedy: 50000
-                            sync_frequency: 500
-                            training_frequency: 1
-                            running_steps: 2000000
-                            start_training: 1000
-
-                            use_obsnorm: False
-                            use_rewnorm: False
-                            obsnorm_range: 5
-                            rewnorm_range: 5
-
-                            PER_alpha: 0.5
-                            PER_beta0: 0.4
-
-                            test_steps: 10000
-                            eval_interval: 100000
-                            test_episode: 1
-                            log_dir: "./logs/perdqn/"
-                            model_dir: "./models/perdqn/"
+                    test_steps: 10000
+                    eval_interval: 100000
+                    test_episode: 1
+                    log_dir: "./logs/perdqn/"
+                    model_dir: "./models/perdqn/"
 
 
-                    .. group-tab:: LunarLander-v2
+            .. tab:: LunarLander-v2
 
-                        .. code-block:: yaml
+                .. code-block:: yaml
 
-                            agent: "PerDQN"
-                            env_name: "Classic Control"
-                            env_id: "LunarLander-v2"
-                            vectorize: "DummyVecEnv"
-                            policy: "Basic_Q_network"
-                            representation: "Basic_MLP"
-                            runner: "DRL"
+                    agent: "PerDQN"
+                    env_name: "Classic Control"
+                    env_id: "LunarLander-v2"
+                    vectorize: "DummyVecEnv"
+                    policy: "Basic_Q_network"
+                    representation: "Basic_MLP"
+                    runner: "DRL"
 
-                            representation_hidden_size: [128,]
-                            q_hidden_size: [128,]
-                            activation: 'ReLU'
+                    representation_hidden_size: [128,]
+                    q_hidden_size: [128,]
+                    activation: 'ReLU'
 
-                            seed: 1
-                            parallels: 10
-                            n_size: 20000
-                            batch_size: 128
-                            learning_rate: 0.001
-                            gamma: 0.99
+                    seed: 1
+                    parallels: 10
+                    n_size: 20000
+                    batch_size: 128
+                    learning_rate: 0.001
+                    gamma: 0.99
 
-                            start_greedy: 0.5
-                            end_greedy: 0.1
-                            decay_step_greedy: 20000
-                            sync_frequency: 100
-                            training_frequency: 4
-                            running_steps: 500000
-                            start_training: 1000
+                    start_greedy: 0.5
+                    end_greedy: 0.1
+                    decay_step_greedy: 20000
+                    sync_frequency: 100
+                    training_frequency: 4
+                    running_steps: 500000
+                    start_training: 1000
 
-                            use_obsnorm: False
-                            use_rewnorm: False
-                            obsnorm_range: 5
-                            rewnorm_range: 5
+                    use_obsnorm: False
+                    use_rewnorm: False
+                    obsnorm_range: 5
+                    rewnorm_range: 5
 
-                            PER_alpha: 0.5
-                            PER_beta0: 0.4
+                    PER_alpha: 0.5
+                    PER_beta0: 0.4
 
-                            test_steps: 10000
-                            eval_interval: 50000
-                            test_episode: 1
-                            log_dir: "./logs/perdqn/"
-                            model_dir: "./models/perdqn/"
+                    test_steps: 10000
+                    eval_interval: 50000
+                    test_episode: 1
+                    log_dir: "./logs/perdqn/"
+                    model_dir: "./models/perdqn/"
 
-            .. group-tab:: Atari
+            .. tab:: Atari
 
                 .. code-block:: yaml
 
@@ -1788,241 +1729,232 @@ DQN-based Implementations
                     model_dir: "./models/perdqn/"
 
 
-    .. group-tab:: QRDQN
+    .. tab:: QRDQN
 
         .. tabs::
 
-            .. group-tab:: Classic Control
+            .. tab:: CartPole-v1
 
-                .. tabs::
+                .. code-block:: yaml
 
-                    .. group-tab:: CartPole-v1
+                    agent: "QRDQN"
+                    env_name: "Classic Control"
+                    env_id: "CartPole-v1"
+                    vectorize: "DummyVecEnv"
+                    policy: "QR_Q_network"
+                    representation: "Basic_MLP"
+                    runner: "DRL"
 
-                        .. code-block:: yaml
+                    representation_hidden_size: [128,]
+                    q_hidden_size: [128,]
+                    activation: 'ReLU'
 
-                            agent: "QRDQN"
-                            env_name: "Classic Control"
-                            env_id: "CartPole-v1"
-                            vectorize: "DummyVecEnv"
-                            policy: "QR_Q_network"
-                            representation: "Basic_MLP"
-                            runner: "DRL"
+                    seed: 1
+                    parallels: 10
+                    n_size: 20000
+                    batch_size: 256
+                    learning_rate: 0.001
+                    gamma: 0.99
+                    quantile_num: 20
 
-                            representation_hidden_size: [128,]
-                            q_hidden_size: [128,]
-                            activation: 'ReLU'
+                    start_greedy: 0.25
+                    end_greedy: 0.01
+                    decay_step_greedy: 30000
+                    sync_frequency: 100
+                    training_frequency: 1
+                    running_steps: 300000
+                    start_training: 1000
 
-                            seed: 1
-                            parallels: 10
-                            n_size: 20000
-                            batch_size: 256
-                            learning_rate: 0.001
-                            gamma: 0.99
-                            quantile_num: 20
+                    use_obsnorm: False
+                    use_rewnorm: False
+                    obsnorm_range: 5
+                    rewnorm_range: 5
 
-                            start_greedy: 0.25
-                            end_greedy: 0.01
-                            decay_step_greedy: 30000
-                            sync_frequency: 100
-                            training_frequency: 1
-                            running_steps: 300000
-                            start_training: 1000
-
-                            use_obsnorm: False
-                            use_rewnorm: False
-                            obsnorm_range: 5
-                            rewnorm_range: 5
-
-                            test_steps: 10000
-                            eval_interval: 50000
-                            test_episode: 1
-                            log_dir: "./logs/qrdqn/"
-                            model_dir: "./models/qrdqn/"
+                    test_steps: 10000
+                    eval_interval: 50000
+                    test_episode: 1
+                    log_dir: "./logs/qrdqn/"
+                    model_dir: "./models/qrdqn/"
 
 
-                    .. group-tab:: Acrobot-v1
+            .. tab:: Acrobot-v1
 
-                        .. code-block:: yaml
+                .. code-block:: yaml
 
-                            agent: "QRDQN"
-                            env_name: "Classic Control"
-                            env_id: "Acrobot-v1"
-                            vectorize: "DummyVecEnv"
-                            policy: "QR_Q_network"
-                            representation: "Basic_MLP"
-                            runner: "DRL"
+                    agent: "QRDQN"
+                    env_name: "Classic Control"
+                    env_id: "Acrobot-v1"
+                    vectorize: "DummyVecEnv"
+                    policy: "QR_Q_network"
+                    representation: "Basic_MLP"
+                    runner: "DRL"
 
-                            representation_hidden_size: [128,]
-                            q_hidden_size: [128,]
-                            activation: 'ReLU'
+                    representation_hidden_size: [128,]
+                    q_hidden_size: [128,]
+                    activation: 'ReLU'
 
-                            seed: 1
-                            parallels: 10
-                            n_size: 20000
-                            batch_size: 256
-                            learning_rate: 0.001
-                            gamma: 0.99
-                            quantile_num: 20
+                    seed: 1
+                    parallels: 10
+                    n_size: 20000
+                    batch_size: 256
+                    learning_rate: 0.001
+                    gamma: 0.99
+                    quantile_num: 20
 
-                            start_greedy: 0.25
-                            end_greedy: 0.01
-                            decay_step_greedy: 30000
-                            sync_frequency: 100
-                            training_frequency: 1
-                            running_steps: 300000
-                            start_training: 1000
+                    start_greedy: 0.25
+                    end_greedy: 0.01
+                    decay_step_greedy: 30000
+                    sync_frequency: 100
+                    training_frequency: 1
+                    running_steps: 300000
+                    start_training: 1000
 
-                            use_obsnorm: False
-                            use_rewnorm: False
-                            obsnorm_range: 5
-                            rewnorm_range: 5
+                    use_obsnorm: False
+                    use_rewnorm: False
+                    obsnorm_range: 5
+                    rewnorm_range: 5
 
-                            test_steps: 10000
-                            eval_interval: 50000
-                            test_episode: 1
-                            log_dir: "./logs/qrdqn/"
-                            model_dir: "./models/qrdqn/"
+                    test_steps: 10000
+                    eval_interval: 50000
+                    test_episode: 1
+                    log_dir: "./logs/qrdqn/"
+                    model_dir: "./models/qrdqn/"
 
-                    .. group-tab:: MountainCar-v0
+            .. tab:: MountainCar-v0
 
-                        .. code-block:: yaml
+                .. code-block:: yaml
 
-                            agent: "QRDQN"
-                            env_name: "Classic Control"
-                            env_id: "MountainCar-v0"
-                            vectorize: "DummyVecEnv"
-                            policy: "QR_Q_network"
-                            representation: "Basic_MLP"
-                            runner: "DRL"
+                    agent: "QRDQN"
+                    env_name: "Classic Control"
+                    env_id: "MountainCar-v0"
+                    vectorize: "DummyVecEnv"
+                    policy: "QR_Q_network"
+                    representation: "Basic_MLP"
+                    runner: "DRL"
 
-                            representation_hidden_size: [128,]
-                            q_hidden_size: [128,]
-                            activation: 'ReLU'
+                    representation_hidden_size: [128,]
+                    q_hidden_size: [128,]
+                    activation: 'ReLU'
 
-                            seed: 1
-                            parallels: 10
-                            n_size: 20000
-                            batch_size: 256
-                            learning_rate: 0.001
-                            gamma: 0.99
-                            quantile_num: 20
+                    seed: 1
+                    parallels: 10
+                    n_size: 20000
+                    batch_size: 256
+                    learning_rate: 0.001
+                    gamma: 0.99
+                    quantile_num: 20
 
-                            start_greedy: 0.25
-                            end_greedy: 0.01
-                            decay_step_greedy: 30000
-                            sync_frequency: 100
-                            training_frequency: 1
-                            running_steps: 300000
-                            start_training: 1000
+                    start_greedy: 0.25
+                    end_greedy: 0.01
+                    decay_step_greedy: 30000
+                    sync_frequency: 100
+                    training_frequency: 1
+                    running_steps: 300000
+                    start_training: 1000
 
-                            use_obsnorm: False
-                            use_rewnorm: False
-                            obsnorm_range: 5
-                            rewnorm_range: 5
+                    use_obsnorm: False
+                    use_rewnorm: False
+                    obsnorm_range: 5
+                    rewnorm_range: 5
 
-                            test_steps: 10000
-                            eval_interval: 50000
-                            test_episode: 1
-                            log_dir: "./logs/qrdqn/"
-                            model_dir: "./models/qrdqn/"
+                    test_steps: 10000
+                    eval_interval: 50000
+                    test_episode: 1
+                    log_dir: "./logs/qrdqn/"
+                    model_dir: "./models/qrdqn/"
 
-            .. group-tab:: Box2D
+            .. tab:: CarRacing-v2
 
-                .. tabs::
+                .. code-block:: yaml
 
-                    .. group-tab:: CarRacing-v2
+                    agent: "QRDQN"
+                    env_name: "Box2D"
+                    env_id: "CarRacing-v2"
+                    vectorize: "DummyVecEnv"
+                    policy: "QR_Q_network"
+                    representation: "Basic_CNN"
+                    runner: "DRL"
 
-                        .. code-block:: yaml
+                    # the following three arguments are for "Basic_CNN" representation.
+                    filters: [16, 16, 32]  #  [16, 16, 32, 32]
+                    kernels: [8, 4, 3]  # [8, 6, 4, 4]
+                    strides: [4, 2, 1]  # [2, 2, 2, 2]
 
-                            agent: "QRDQN"
-                            env_name: "Box2D"
-                            env_id: "CarRacing-v2"
-                            vectorize: "DummyVecEnv"
-                            policy: "QR_Q_network"
-                            representation: "Basic_CNN"
-                            runner: "DRL"
+                    q_hidden_size: [512,]
+                    activation: 'ReLU'
 
-                            # the following three arguments are for "Basic_CNN" representation.
-                            filters: [16, 16, 32]  #  [16, 16, 32, 32]
-                            kernels: [8, 4, 3]  # [8, 6, 4, 4]
-                            strides: [4, 2, 1]  # [2, 2, 2, 2]
+                    seed: 1
+                    parallels: 2
+                    n_size: 10000
+                    batch_size: 32
+                    learning_rate: 0.0001
+                    gamma: 0.99
+                    quantile_num: 20
 
-                            q_hidden_size: [512,]
-                            activation: 'ReLU'
+                    start_greedy: 0.5
+                    end_greedy: 0.01
+                    decay_step_greedy: 50000
+                    sync_frequency: 500
+                    training_frequency: 1
+                    running_steps: 2000000
+                    start_training: 1000
 
-                            seed: 1
-                            parallels: 2
-                            n_size: 10000
-                            batch_size: 32
-                            learning_rate: 0.0001
-                            gamma: 0.99
-                            quantile_num: 20
+                    use_obsnorm: False
+                    use_rewnorm: False
+                    obsnorm_range: 5
+                    rewnorm_range: 5
 
-                            start_greedy: 0.5
-                            end_greedy: 0.01
-                            decay_step_greedy: 50000
-                            sync_frequency: 500
-                            training_frequency: 1
-                            running_steps: 2000000
-                            start_training: 1000
-
-                            use_obsnorm: False
-                            use_rewnorm: False
-                            obsnorm_range: 5
-                            rewnorm_range: 5
-
-                            test_steps: 10000
-                            eval_interval: 100000
-                            test_episode: 1
-                            log_dir: "./logs/qrdqn/"
-                            model_dir: "./models/qrdqn/"
+                    test_steps: 10000
+                    eval_interval: 100000
+                    test_episode: 1
+                    log_dir: "./logs/qrdqn/"
+                    model_dir: "./models/qrdqn/"
 
 
-                    .. group-tab:: LunarLander-v2
+            .. tab:: LunarLander-v2
 
-                        .. code-block:: yaml
+                .. code-block:: yaml
 
-                            agent: "QRDQN"
-                            env_name: "Box2D"
-                            env_id: "LunarLander-v2"
-                            vectorize: "DummyVecEnv"
-                            policy: "QR_Q_network"
-                            representation: "Basic_MLP"
-                            runner: "DRL"
+                    agent: "QRDQN"
+                    env_name: "Box2D"
+                    env_id: "LunarLander-v2"
+                    vectorize: "DummyVecEnv"
+                    policy: "QR_Q_network"
+                    representation: "Basic_MLP"
+                    runner: "DRL"
 
-                            representation_hidden_size: [128,]
-                            q_hidden_size: [128,]
-                            activation: 'ReLU'
+                    representation_hidden_size: [128,]
+                    q_hidden_size: [128,]
+                    activation: 'ReLU'
 
-                            seed: 1
-                            parallels: 10
-                            n_size: 10000
-                            batch_size: 256
-                            learning_rate: 0.001
-                            gamma: 0.99
-                            quantile_num: 20
+                    seed: 1
+                    parallels: 10
+                    n_size: 10000
+                    batch_size: 256
+                    learning_rate: 0.001
+                    gamma: 0.99
+                    quantile_num: 20
 
-                            start_greedy: 0.5
-                            end_greedy: 0.01
-                            decay_step_greedy: 10000
-                            sync_frequency: 50
-                            training_frequency: 1
-                            running_steps: 200000
-                            start_training: 1000
+                    start_greedy: 0.5
+                    end_greedy: 0.01
+                    decay_step_greedy: 10000
+                    sync_frequency: 50
+                    training_frequency: 1
+                    running_steps: 200000
+                    start_training: 1000
 
-                            use_obsnorm: False
-                            use_rewnorm: False
-                            obsnorm_range: 5
-                            rewnorm_range: 5
+                    use_obsnorm: False
+                    use_rewnorm: False
+                    obsnorm_range: 5
+                    rewnorm_range: 5
 
-                            test_steps: 10000
-                            eval_interval: 50000
-                            test_episode: 1
-                            log_dir: "./logs/qrdqn/"
-                            model_dir: "./models/qrdqn/"
+                    test_steps: 10000
+                    eval_interval: 50000
+                    test_episode: 1
+                    log_dir: "./logs/qrdqn/"
+                    model_dir: "./models/qrdqn/"
 
-            
-            .. group-tab:: Atari
+            .. tab:: Atari
 
                 .. code-block:: yaml
 
@@ -2075,24 +2007,20 @@ DQN-based Implementations
                     model_dir: "./models/qrdqn/"
 
 
-.. raw:: html
-
-   <br><hr>
-
 Policy Gradient-based Implementations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. tabs::
 
-    .. group-tab:: PG
+    .. tab:: PG
 
         .. tabs::
 
-            .. group-tab:: Classic Control
+            .. tab:: Classic Control
 
                 .. tabs::
 
-                    .. group-tab:: CartPole-v1
+                    .. tab:: CartPole-v1
 
                         .. code-block:: yaml
 
@@ -2135,7 +2063,7 @@ Policy Gradient-based Implementations
                             log_dir: "./logs/pg/"
                             model_dir: "./models/pg/"
 
-                    .. group-tab:: Acrobot-v1
+                    .. tab:: Acrobot-v1
 
                         .. code-block:: yaml
 
@@ -2178,7 +2106,7 @@ Policy Gradient-based Implementations
                             log_dir: "./logs/pg/"
                             model_dir: "./models/pg/"
 
-                    .. group-tab:: Pendulum-v1
+                    .. tab:: Pendulum-v1
 
                         .. code-block:: yaml
 
@@ -2221,7 +2149,7 @@ Policy Gradient-based Implementations
                             log_dir: "./logs/pg/"
                             model_dir: "./models/pg/"
 
-                    .. group-tab:: MountainCar-v0
+                    .. tab:: MountainCar-v0
 
                         .. code-block:: yaml
 
@@ -2265,11 +2193,11 @@ Policy Gradient-based Implementations
                             model_dir: "./models/pg/"
 
 
-            .. group-tab:: Box2D
+            .. tab:: Box2D
 
                 .. tabs::
 
-                    .. group-tab:: BipedalWalker-v3
+                    .. tab:: BipedalWalker-v3
 
                         .. code-block:: yaml
 
@@ -2312,7 +2240,7 @@ Policy Gradient-based Implementations
                             log_dir: "./logs/pg/"
                             model_dir: "./models/pg/"
 
-                    .. group-tab:: LunarLander-v2
+                    .. tab:: LunarLander-v2
 
                         .. code-block:: yaml
 
@@ -2355,7 +2283,7 @@ Policy Gradient-based Implementations
                             log_dir: "./logs/pg/"
                             model_dir: "./models/pg/"
 
-            .. group-tab:: MuJoCo
+            .. tab:: MuJoCo
 
                 .. code-block:: yaml
 
@@ -2397,16 +2325,16 @@ Policy Gradient-based Implementations
                     test_episode: 5
                     log_dir: "./logs/pg/"
                     model_dir: "./models/pg/"
- 
-    .. group-tab:: PPG
+
+    .. tab:: PPG
 
         .. tabs::
 
-            .. group-tab:: Classic Control
+            .. tab:: Classic Control
 
                 .. tabs::
 
-                    .. group-tab:: CartPole-v1
+                    .. tab:: CartPole-v1
 
                         .. code-block:: yaml
 
@@ -2453,7 +2381,7 @@ Policy Gradient-based Implementations
                             log_dir: "./logs/ppg/"
                             model_dir: "./models/ppg/"
 
-                    .. group-tab:: Acrobot-v1
+                    .. tab:: Acrobot-v1
 
                         .. code-block:: yaml
 
@@ -2501,7 +2429,7 @@ Policy Gradient-based Implementations
                             model_dir: "./models/ppg/"
 
 
-                    .. group-tab:: Pendulum-v1
+                    .. tab:: Pendulum-v1
 
                         .. code-block:: yaml
 
@@ -2549,7 +2477,7 @@ Policy Gradient-based Implementations
                             model_dir: "./models/ppg/"
 
 
-                    .. group-tab:: MountainCar-v0
+                    .. tab:: MountainCar-v0
 
                         .. code-block:: yaml
 
@@ -2597,11 +2525,11 @@ Policy Gradient-based Implementations
                             model_dir: "./models/ppg/"
 
 
-            .. group-tab:: Box2D
+            .. tab:: Box2D
 
                 .. tabs::
 
-                    .. group-tab:: BipedalWalker-v3
+                    .. tab:: BipedalWalker-v3
 
                         .. code-block:: yaml
 
@@ -2649,7 +2577,7 @@ Policy Gradient-based Implementations
                             model_dir: "./models/ppg/"
 
 
-                    .. group-tab:: LunarLander-v2
+                    .. tab:: LunarLander-v2
 
                         .. code-block:: yaml
 
@@ -2696,7 +2624,7 @@ Policy Gradient-based Implementations
                             log_dir: "./logs/ppg/"
                             model_dir: "./models/ppg/"
 
-            .. group-tab:: MuJoCo
+            .. tab:: MuJoCo
 
                 .. code-block:: yaml
 
@@ -2746,15 +2674,15 @@ Policy Gradient-based Implementations
 
 
 
-    .. group-tab:: PPO
+    .. tab:: PPO
 
         .. tabs::
 
-            .. group-tab:: Classic Control
+            .. tab:: Classic Control
 
                 .. tabs::
 
-                    .. group-tab:: CartPole-v1
+                    .. tab:: CartPole-v1
 
                         .. code-block:: yaml
 
@@ -2803,7 +2731,7 @@ Policy Gradient-based Implementations
                             model_dir: "./models/ppo/"
 
 
-                    .. group-tab:: Acrobot-v1
+                    .. tab:: Acrobot-v1
 
                         .. code-block:: yaml
 
@@ -2852,7 +2780,7 @@ Policy Gradient-based Implementations
                             model_dir: "./models/ppo/"
 
 
-                    .. group-tab:: Pendulum-v1
+                    .. tab:: Pendulum-v1
 
                         .. code-block:: yaml
 
@@ -2901,7 +2829,7 @@ Policy Gradient-based Implementations
                             model_dir: "./models/ppo/"
 
 
-                    .. group-tab:: MountainCar-v0
+                    .. tab:: MountainCar-v0
 
                         .. code-block:: yaml
 
@@ -2950,11 +2878,11 @@ Policy Gradient-based Implementations
                             model_dir: "./models/ppo/"
 
 
-            .. group-tab:: Box2D
+            .. tab:: Box2D
 
                 .. tabs::
 
-                    .. group-tab:: BipedalWalker-v3
+                    .. tab:: BipedalWalker-v3
 
                         .. code-block:: yaml
 
@@ -3002,7 +2930,7 @@ Policy Gradient-based Implementations
                             log_dir: "./logs/ppo/"
                             model_dir: "./models/ppo/"
 
-                    .. group-tab:: CarRacing-v2
+                    .. tab:: CarRacing-v2
 
                         .. code-block:: yaml
 
@@ -3053,7 +2981,7 @@ Policy Gradient-based Implementations
                             log_dir: "./logs/ppo/"
                             model_dir: "./models/ppo/"
 
-                    .. group-tab:: LunarLander-v2
+                    .. tab:: LunarLander-v2
 
                         .. code-block:: yaml
 
@@ -3101,7 +3029,7 @@ Policy Gradient-based Implementations
                             log_dir: "./logs/ppo/"
                             model_dir: "./models/ppo/"
 
-            .. group-tab:: Atari
+            .. tab:: Atari
 
                 .. code-block:: yaml
 
@@ -3158,7 +3086,7 @@ Policy Gradient-based Implementations
                     model_dir: "./models/ppo/"
 
 
-            .. group-tab:: MuJoCo
+            .. tab:: MuJoCo
 
                 .. code-block:: yaml
 
@@ -3208,15 +3136,15 @@ Policy Gradient-based Implementations
 
 
 
-    .. group-tab:: A2C
+    .. tab:: A2C
 
         .. tabs::
 
-            .. group-tab:: Classic Control
+            .. tab:: Classic Control
 
                 .. tabs::
 
-                    .. group-tab:: CartPole-v1
+                    .. tab:: CartPole-v1
 
                         .. code-block:: yaml
 
@@ -3262,7 +3190,7 @@ Policy Gradient-based Implementations
                             model_dir: "./models/a2c/"
 
 
-                    .. group-tab:: Acrobot-v1
+                    .. tab:: Acrobot-v1
 
                         .. code-block:: yaml
 
@@ -3308,7 +3236,7 @@ Policy Gradient-based Implementations
                             model_dir: "./models/a2c/"
 
 
-                    .. group-tab:: Pendulum-v1
+                    .. tab:: Pendulum-v1
 
                         .. code-block:: yaml
 
@@ -3354,7 +3282,7 @@ Policy Gradient-based Implementations
                             model_dir: "./models/a2c/"
 
 
-                    .. group-tab:: MountainCar-v0
+                    .. tab:: MountainCar-v0
 
                         .. code-block:: yaml
 
@@ -3400,11 +3328,11 @@ Policy Gradient-based Implementations
                             model_dir: "./models/a2c/"
 
 
-            .. group-tab:: Box2D
+            .. tab:: Box2D
 
                 .. tabs::
 
-                    .. group-tab:: BipedalWalker-v3
+                    .. tab:: BipedalWalker-v3
 
                         .. code-block:: yaml
 
@@ -3449,7 +3377,7 @@ Policy Gradient-based Implementations
                             model_dir: "./models/a2c/"
 
 
-                    .. group-tab:: LunarLander-v2
+                    .. tab:: LunarLander-v2
 
                         .. code-block:: yaml
 
@@ -3494,7 +3422,7 @@ Policy Gradient-based Implementations
                             model_dir: "./models/a2c/"
 
 
-            .. group-tab:: Atari
+            .. tab:: Atari
 
                 .. code-block:: yaml
 
@@ -3548,7 +3476,7 @@ Policy Gradient-based Implementations
                     model_dir: "./models/a2c/"
 
 
-            .. group-tab:: MuJoCo
+            .. tab:: MuJoCo
 
                 .. code-block:: yaml
 
@@ -3595,15 +3523,15 @@ Policy Gradient-based Implementations
 
 
 
-    .. group-tab:: SAC
+    .. tab:: SAC
 
         .. tabs::
 
-            .. group-tab:: Classic Control
+            .. tab:: Classic Control
 
                 .. tabs::
 
-                    .. group-tab:: CartPole-v1
+                    .. tab:: CartPole-v1
 
                         .. code-block:: yaml
 
@@ -3648,7 +3576,7 @@ Policy Gradient-based Implementations
                             model_dir: "./models/sac/"
 
 
-                    .. group-tab:: Acrobot-v1
+                    .. tab:: Acrobot-v1
 
                         .. code-block:: yaml
 
@@ -3693,7 +3621,7 @@ Policy Gradient-based Implementations
                             model_dir: "./models/sac/"
 
 
-                    .. group-tab:: Pendulum-v1
+                    .. tab:: Pendulum-v1
 
                         .. code-block:: yaml
 
@@ -3737,7 +3665,7 @@ Policy Gradient-based Implementations
                             model_dir: "./models/sac/"
 
 
-                    .. group-tab:: MountainCar-v0
+                    .. tab:: MountainCar-v0
 
                         .. code-block:: yaml
 
@@ -3782,11 +3710,11 @@ Policy Gradient-based Implementations
                             model_dir: "./models/sac/"
 
 
-            .. group-tab:: Box2D
+            .. tab:: Box2D
 
                 .. tabs::
 
-                    .. group-tab:: BipedalWalker-v3
+                    .. tab:: BipedalWalker-v3
 
                         .. code-block:: yaml
 
@@ -3830,7 +3758,7 @@ Policy Gradient-based Implementations
                             model_dir: "./models/sac/"
 
 
-                    .. group-tab:: LunarLander-v2
+                    .. tab:: LunarLander-v2
 
                         .. code-block:: yaml
 
@@ -3875,7 +3803,7 @@ Policy Gradient-based Implementations
                             model_dir: "./models/sac/"
 
 
-            .. group-tab:: Atari
+            .. tab:: Atari
 
                 .. code-block:: yaml
 
@@ -3928,7 +3856,7 @@ Policy Gradient-based Implementations
                     model_dir: "./models/sac/"
 
 
-            .. group-tab:: MuJoCo
+            .. tab:: MuJoCo
 
                 .. code-block:: yaml
 
@@ -3975,15 +3903,15 @@ Policy Gradient-based Implementations
 
 
 
-    .. group-tab:: DDPG
+    .. tab:: DDPG
 
         .. tabs::
 
-            .. group-tab:: Classic Control
+            .. tab:: Classic Control
 
                 .. tabs::
 
-                    .. group-tab:: Pendulum-v1
+                    .. tab:: Pendulum-v1
 
                         .. code-block:: yaml
 
@@ -4026,11 +3954,11 @@ Policy Gradient-based Implementations
                             log_dir: "./logs/ddpg/"
                             model_dir: "./models/ddpg/"
 
-            .. group-tab:: Box2D
+            .. tab:: Box2D
 
                 .. tabs::
 
-                    .. group-tab:: BipedalWalker-v3
+                    .. tab:: BipedalWalker-v3
 
                         .. code-block:: yaml
 
@@ -4073,7 +4001,7 @@ Policy Gradient-based Implementations
                             log_dir: "./logs/ddpg/"
                             model_dir: "./models/ddpg/"
 
-            .. group-tab:: MuJoCo
+            .. tab:: MuJoCo
 
                 .. code-block:: yaml
 
@@ -4118,15 +4046,15 @@ Policy Gradient-based Implementations
 
 
 
-    .. group-tab:: TD3
+    .. tab:: TD3
 
         .. tabs::
 
-            .. group-tab:: Classic Control
+            .. tab:: Classic Control
 
                 .. tabs::
 
-                    .. group-tab:: Pendulum-v1
+                    .. tab:: Pendulum-v1
 
                         .. code-block:: yaml
 
@@ -4169,11 +4097,11 @@ Policy Gradient-based Implementations
                             log_dir: "./logs/td3/"
                             model_dir: "./models/td3/"
 
-            .. group-tab:: Box2D
+            .. tab:: Box2D
 
                 .. tabs::
 
-                    .. group-tab:: BipedalWalker-v3
+                    .. tab:: BipedalWalker-v3
 
                         .. code-block:: yaml
 
@@ -4216,7 +4144,7 @@ Policy Gradient-based Implementations
                             log_dir: "./logs/td3/"
                             model_dir: "./models/td3/"
 
-            .. group-tab:: MuJoCo
+            .. tab:: MuJoCo
 
                 .. code-block:: yaml
 
@@ -4270,15 +4198,15 @@ MARL Implementations
 
 .. tabs::
 
-    .. group-tab:: IQL
+    .. tab:: IQL
 
         .. tabs::
 
-            .. group-tab:: MPE
+            .. tab:: MPE
 
                 .. tabs::
 
-                    .. group-tab:: simple_spread_v3
+                    .. tab:: simple_spread_v3
 
                         .. code-block:: yaml
 
@@ -4323,11 +4251,11 @@ MARL Implementations
                             model_dir: "./models/iql/"
 
 
-            .. group-tab:: Magent2
+            .. tab:: Magent2
 
                 .. tabs::
 
-                    .. group-tab:: adversarial_pursuit_v4
+                    .. tab:: adversarial_pursuit_v4
 
                         .. code-block:: yaml
 
@@ -4377,11 +4305,11 @@ MARL Implementations
                             log_dir: "./logs/iql/"
                             model_dir: "./models/iql/"
 
-            .. group-tab:: SC2
+            .. tab:: SC2
 
                 .. tabs::
 
-                    .. group-tab:: 1c3s5z
+                    .. tab:: 1c3s5z
 
                         .. code-block:: yaml
 
@@ -4433,7 +4361,7 @@ MARL Implementations
                             log_dir: "./logs/iql/"
                             model_dir: "./models/iql/"
 
-                    .. group-tab:: 2m_vs_1z
+                    .. tab:: 2m_vs_1z
 
                         .. code-block:: yaml
 
@@ -4487,7 +4415,7 @@ MARL Implementations
                             model_dir: "./models/iql/"
 
 
-                    .. group-tab:: 2s3z
+                    .. tab:: 2s3z
 
                         .. code-block:: yaml
 
@@ -4539,7 +4467,7 @@ MARL Implementations
                             log_dir: "./logs/iql/"
                             model_dir: "./models/iql/"
 
-                    .. group-tab:: 3m
+                    .. tab:: 3m
 
                         .. code-block:: yaml
 
@@ -4592,7 +4520,7 @@ MARL Implementations
                             model_dir: "./models/iql/"
 
 
-                    .. group-tab:: 5m_vs_6m
+                    .. tab:: 5m_vs_6m
 
                         .. code-block:: yaml
 
@@ -4645,7 +4573,7 @@ MARL Implementations
                             model_dir: "./models/iql/"
 
 
-                    .. group-tab:: 8m
+                    .. tab:: 8m
 
                         .. code-block:: yaml
 
@@ -4698,7 +4626,7 @@ MARL Implementations
                             model_dir: "./models/iql/"
 
 
-                    .. group-tab:: 8m_vd_9m
+                    .. tab:: 8m_vd_9m
 
                         .. code-block:: yaml
 
@@ -4751,7 +4679,7 @@ MARL Implementations
                             model_dir: "./models/iql/"
 
 
-                    .. group-tab:: 25m
+                    .. tab:: 25m
 
                         .. code-block:: yaml
 
@@ -4804,7 +4732,7 @@ MARL Implementations
                             model_dir: "./models/iql/"
 
 
-                    .. group-tab:: corridor
+                    .. tab:: corridor
 
                         .. code-block:: yaml
 
@@ -4856,8 +4784,8 @@ MARL Implementations
                             log_dir: "./logs/iql/"
                             model_dir: "./models/iql/"
 
-                    
-                    .. group-tab:: MMM2
+
+                    .. tab:: MMM2
 
                         .. code-block:: yaml
 
@@ -4910,11 +4838,11 @@ MARL Implementations
                             model_dir: "./models/iql/"
 
 
-            .. group-tab:: Football
+            .. tab:: Football
 
                 .. tabs::
 
-                    .. group-tab:: 3v1
+                    .. tab:: 3v1
 
                         .. code-block:: yaml
 
@@ -4975,16 +4903,16 @@ MARL Implementations
                             model_dir: "./models/iql/"
                             videos_dir: "./videos/iql/"
 
-    
-    .. group-tab:: VDN
+
+    .. tab:: VDN
 
         .. tabs::
 
-            .. group-tab:: MPE
+            .. tab:: MPE
 
                 .. tabs::
 
-                    .. group-tab:: simple_spread_v3
+                    .. tab:: simple_spread_v3
 
                         .. code-block:: yaml
 
@@ -5030,11 +4958,11 @@ MARL Implementations
                             model_dir: "./models/vdn/"
 
 
-            .. group-tab:: SC2
+            .. tab:: SC2
 
                 .. tabs::
 
-                    .. group-tab:: 1c3s5z
+                    .. tab:: 1c3s5z
 
                         .. code-block:: yaml
 
@@ -5087,7 +5015,7 @@ MARL Implementations
                             log_dir: "./logs/vdn/"
                             model_dir: "./models/vdn/"
 
-                    .. group-tab:: 2m_vs_1z
+                    .. tab:: 2m_vs_1z
 
                         .. code-block:: yaml
 
@@ -5141,7 +5069,7 @@ MARL Implementations
                             model_dir: "./models/vdn/"
 
 
-                    .. group-tab:: 2s3z
+                    .. tab:: 2s3z
 
                         .. code-block:: yaml
 
@@ -5195,7 +5123,7 @@ MARL Implementations
                             model_dir: "./models/vdn/"
 
 
-                    .. group-tab:: 3m
+                    .. tab:: 3m
 
                         .. code-block:: yaml
 
@@ -5249,7 +5177,7 @@ MARL Implementations
                             model_dir: "./models/vdn/"
 
 
-                    .. group-tab:: 5m_vs_6m
+                    .. tab:: 5m_vs_6m
 
                         .. code-block:: yaml
 
@@ -5303,7 +5231,7 @@ MARL Implementations
                             model_dir: "./models/vdn/"
 
 
-                    .. group-tab:: 8m
+                    .. tab:: 8m
 
                         .. code-block:: yaml
 
@@ -5357,7 +5285,7 @@ MARL Implementations
                             model_dir: "./models/vdn/"
 
 
-                    .. group-tab:: 8m_vd_9m
+                    .. tab:: 8m_vd_9m
 
                         .. code-block:: yaml
 
@@ -5411,7 +5339,7 @@ MARL Implementations
                             model_dir: "./models/vdn/"
 
 
-                    .. group-tab:: 25m
+                    .. tab:: 25m
 
                         .. code-block:: yaml
 
@@ -5465,7 +5393,7 @@ MARL Implementations
                             model_dir: "./models/vdn/"
 
 
-                    .. group-tab:: corridor
+                    .. tab:: corridor
 
                         .. code-block:: yaml
 
@@ -5518,8 +5446,8 @@ MARL Implementations
                             log_dir: "./logs/vdn/"
                             model_dir: "./models/vdn/"
 
-                    
-                    .. group-tab:: MMM2
+
+                    .. tab:: MMM2
 
                         .. code-block:: yaml
 
@@ -5573,11 +5501,11 @@ MARL Implementations
                             model_dir: "./models/vdn/"
 
 
-            .. group-tab:: Football
+            .. tab:: Football
 
                 .. tabs::
 
-                    .. group-tab:: 3v1
+                    .. tab:: 3v1
 
                         .. code-block:: yaml
 
@@ -5639,16 +5567,16 @@ MARL Implementations
                             model_dir: "./models/vdn/"
                             videos_dir: "./videos/vdn/"
 
-    
-    .. group-tab:: QMIX
+
+    .. tab:: QMIX
 
         .. tabs::
 
-            .. group-tab:: MPE
+            .. tab:: MPE
 
                 .. tabs::
 
-                    .. group-tab:: simple_spread_v3
+                    .. tab:: simple_spread_v3
 
                         .. code-block:: yaml
 
@@ -5696,11 +5624,11 @@ MARL Implementations
                             model_dir: "./models/qmix/"
 
 
-            .. group-tab:: SC2
+            .. tab:: SC2
 
                 .. tabs::
 
-                    .. group-tab:: 1c3s5z
+                    .. tab:: 1c3s5z
 
                         .. code-block:: yaml
 
@@ -5756,7 +5684,7 @@ MARL Implementations
                             log_dir: "./logs/qmix/"
                             model_dir: "./models/qmix/"
 
-                    .. group-tab:: 2m_vs_1z
+                    .. tab:: 2m_vs_1z
 
                         .. code-block:: yaml
 
@@ -5812,7 +5740,7 @@ MARL Implementations
                             log_dir: "./logs/qmix/"
                             model_dir: "./models/qmix/"
 
-                    .. group-tab:: 2s3z
+                    .. tab:: 2s3z
 
                         .. code-block:: yaml
 
@@ -5868,7 +5796,7 @@ MARL Implementations
                             log_dir: "./logs/qmix/"
                             model_dir: "./models/qmix/"
 
-                    .. group-tab:: 3m
+                    .. tab:: 3m
 
                         .. code-block:: yaml
 
@@ -5924,7 +5852,7 @@ MARL Implementations
                             log_dir: "./logs/qmix/"
                             model_dir: "./models/qmix/"
 
-                    .. group-tab:: 5m_vs_6m
+                    .. tab:: 5m_vs_6m
 
                         .. code-block:: yaml
 
@@ -5980,7 +5908,7 @@ MARL Implementations
                             log_dir: "./logs/qmix/"
                             model_dir: "./models/qmix/"
 
-                    .. group-tab:: 8m
+                    .. tab:: 8m
 
                         .. code-block:: yaml
 
@@ -6036,7 +5964,7 @@ MARL Implementations
                             log_dir: "./logs/qmix/"
                             model_dir: "./models/qmix/"
 
-                    .. group-tab:: 8m_vd_9m
+                    .. tab:: 8m_vd_9m
 
                         .. code-block:: yaml
 
@@ -6092,7 +6020,7 @@ MARL Implementations
                             log_dir: "./logs/qmix/"
                             model_dir: "./models/qmix/"
 
-                    .. group-tab:: 25m
+                    .. tab:: 25m
 
                         .. code-block:: yaml
 
@@ -6148,7 +6076,7 @@ MARL Implementations
                             log_dir: "./logs/qmix/"
                             model_dir: "./models/qmix/"
 
-                    .. group-tab:: corridor
+                    .. tab:: corridor
 
                         .. code-block:: yaml
 
@@ -6204,7 +6132,7 @@ MARL Implementations
                             log_dir: "./logs/qmix/"
                             model_dir: "./models/qmix/"
 
-                    .. group-tab:: MMM2
+                    .. tab:: MMM2
 
                         .. code-block:: yaml
 
@@ -6260,11 +6188,11 @@ MARL Implementations
                             log_dir: "./logs/qmix/"
                             model_dir: "./models/qmix/"
 
-            .. group-tab:: Football
+            .. tab:: Football
 
                 .. tabs::
 
-                    .. group-tab:: 3v1
+                    .. tab:: 3v1
 
                         .. code-block:: yaml
 
@@ -6329,15 +6257,15 @@ MARL Implementations
                             videos_dir: "./videos/qmix/"
 
 
-    .. group-tab:: WQMIX
+    .. tab:: WQMIX
 
         .. tabs::
 
-            .. group-tab:: MPE
+            .. tab:: MPE
 
                 .. tabs::
 
-                    .. group-tab:: simple_spread_v3
+                    .. tab:: simple_spread_v3
 
                         .. code-block:: yaml
 
@@ -6393,11 +6321,11 @@ MARL Implementations
                             log_dir: "./logs/wqmix/"
                             model_dir: "./models/wqmix/"
 
-            .. group-tab:: SC2
+            .. tab:: SC2
 
                 .. tabs::
 
-                    .. group-tab:: 1c3s5z
+                    .. tab:: 1c3s5z
 
                         .. code-block:: yaml
 
@@ -6455,7 +6383,7 @@ MARL Implementations
                             log_dir: "./logs/wqmix/"
                             model_dir: "./models/wqmix/"
 
-                    .. group-tab:: 2m_vs_1z
+                    .. tab:: 2m_vs_1z
 
                         .. code-block:: yaml
 
@@ -6513,7 +6441,7 @@ MARL Implementations
                             log_dir: "./logs/wqmix/"
                             model_dir: "./models/wqmix/"
 
-                    .. group-tab:: 2s3z
+                    .. tab:: 2s3z
 
                         .. code-block:: yaml
 
@@ -6571,7 +6499,7 @@ MARL Implementations
                             log_dir: "./logs/wqmix/"
                             model_dir: "./models/wqmix/"
 
-                    .. group-tab:: 3m
+                    .. tab:: 3m
 
                         .. code-block:: yaml
 
@@ -6629,7 +6557,7 @@ MARL Implementations
                             log_dir: "./logs/wqmix/"
                             model_dir: "./models/wqmix/"
 
-                    .. group-tab:: 5m_vs_6m
+                    .. tab:: 5m_vs_6m
 
                         .. code-block:: yaml
 
@@ -6687,7 +6615,7 @@ MARL Implementations
                             log_dir: "./logs/wqmix/"
                             model_dir: "./models/wqmix/"
 
-                    .. group-tab:: 8m
+                    .. tab:: 8m
 
                         .. code-block:: yaml
 
@@ -6745,7 +6673,7 @@ MARL Implementations
                             log_dir: "./logs/wqmix/"
                             model_dir: "./models/wqmix/"
 
-                    .. group-tab:: 8m_vd_9m
+                    .. tab:: 8m_vd_9m
 
                         .. code-block:: yaml
 
@@ -6803,7 +6731,7 @@ MARL Implementations
                             log_dir: "./logs/wqmix/"
                             model_dir: "./models/wqmix/"
 
-                    .. group-tab:: 25m
+                    .. tab:: 25m
 
                         .. code-block:: yaml
 
@@ -6861,7 +6789,7 @@ MARL Implementations
                             log_dir: "./logs/wqmix/"
                             model_dir: "./models/wqmix/"
 
-                    .. group-tab:: corridor
+                    .. tab:: corridor
 
                         .. code-block:: yaml
 
@@ -6919,7 +6847,7 @@ MARL Implementations
                             log_dir: "./logs/wqmix/"
                             model_dir: "./models/wqmix/"
 
-                    .. group-tab:: MMM2
+                    .. tab:: MMM2
 
                         .. code-block:: yaml
 
@@ -6978,15 +6906,15 @@ MARL Implementations
                             model_dir: "./models/wqmix/"
 
 
-    .. group-tab:: QTRAN
+    .. tab:: QTRAN
 
         .. tabs::
 
-            .. group-tab:: MPE
+            .. tab:: MPE
 
                 .. tabs::
 
-                    .. group-tab:: simple_spread_v3
+                    .. tab:: simple_spread_v3
 
                         .. code-block:: yaml
 
@@ -7037,15 +6965,15 @@ MARL Implementations
                             model_dir: "./models/qtran/"
 
 
-    .. group-tab:: DCG
+    .. tab:: DCG
 
         .. tabs::
 
-            .. group-tab:: MPE
+            .. tab:: MPE
 
                 .. tabs::
 
-                    .. group-tab:: simple_spread_v3
+                    .. tab:: simple_spread_v3
 
                         .. code-block:: yaml
 
@@ -7100,11 +7028,11 @@ MARL Implementations
                             log_dir: "./logs/dcg/"
                             model_dir: "./models/dcg/"
 
-            .. group-tab:: SC2
+            .. tab:: SC2
 
                 .. tabs::
 
-                    .. group-tab:: 1c3s5z
+                    .. tab:: 1c3s5z
 
                         .. code-block:: yaml
 
@@ -7166,7 +7094,7 @@ MARL Implementations
                             log_dir: "./logs/dcg/"
                             model_dir: "./models/dcg/"
 
-                    .. group-tab:: 2m_vs_1z
+                    .. tab:: 2m_vs_1z
 
                         .. code-block:: yaml
 
@@ -7228,7 +7156,7 @@ MARL Implementations
                             log_dir: "./logs/dcg/"
                             model_dir: "./models/dcg/"
 
-                    .. group-tab:: 2s3z
+                    .. tab:: 2s3z
 
                         .. code-block:: yaml
 
@@ -7290,7 +7218,7 @@ MARL Implementations
                             log_dir: "./logs/dcg/"
                             model_dir: "./models/dcg/"
 
-                    .. group-tab:: 3m
+                    .. tab:: 3m
 
                         .. code-block:: yaml
 
@@ -7352,7 +7280,7 @@ MARL Implementations
                             log_dir: "./logs/dcg/"
                             model_dir: "./models/dcg/"
 
-                    .. group-tab:: 5m_vs_6m
+                    .. tab:: 5m_vs_6m
 
                         .. code-block:: yaml
 
@@ -7414,7 +7342,7 @@ MARL Implementations
                             log_dir: "./logs/dcg/"
                             model_dir: "./models/dcg/"
 
-                    .. group-tab:: 8m
+                    .. tab:: 8m
 
                         .. code-block:: yaml
 
@@ -7476,7 +7404,7 @@ MARL Implementations
                             log_dir: "./logs/dcg/"
                             model_dir: "./models/dcg/"
 
-                    .. group-tab:: 8m_vd_9m
+                    .. tab:: 8m_vd_9m
 
                         .. code-block:: yaml
 
@@ -7538,7 +7466,7 @@ MARL Implementations
                             log_dir: "./logs/dcg/"
                             model_dir: "./models/dcg/"
 
-                    .. group-tab:: 25m
+                    .. tab:: 25m
 
                         .. code-block:: yaml
 
@@ -7600,7 +7528,7 @@ MARL Implementations
                             log_dir: "./logs/dcg/"
                             model_dir: "./models/dcg/"
 
-                    .. group-tab:: corridor
+                    .. tab:: corridor
 
                         .. code-block:: yaml
 
@@ -7662,7 +7590,7 @@ MARL Implementations
                             log_dir: "./logs/dcg/"
                             model_dir: "./models/dcg/"
 
-                    .. group-tab:: MMM2
+                    .. tab:: MMM2
 
                         .. code-block:: yaml
 
@@ -7724,15 +7652,15 @@ MARL Implementations
                             log_dir: "./logs/dcg/"
                             model_dir: "./models/dcg/"
 
-    .. group-tab:: IDDPG
+    .. tab:: IDDPG
 
         .. tabs::
 
-            .. group-tab:: MPE
+            .. tab:: MPE
 
                 .. tabs::
 
-                    .. group-tab:: simple_adversary_v3
+                    .. tab:: simple_adversary_v3
 
                         .. code-block:: yaml
 
@@ -7776,7 +7704,7 @@ MARL Implementations
                             log_dir: "./logs/iddpg/"
                             model_dir: "./models/iddpg/"
 
-                    .. group-tab:: simple_push_v3
+                    .. tab:: simple_push_v3
 
                         .. code-block:: yaml
 
@@ -7820,7 +7748,7 @@ MARL Implementations
                             log_dir: "./logs/iddpg/"
                             model_dir: "./models/iddpg/"
 
-                    .. group-tab:: simple_spread_v3
+                    .. tab:: simple_spread_v3
 
                         .. code-block:: yaml
 
@@ -7864,15 +7792,15 @@ MARL Implementations
                             log_dir: "./logs/iddpg/"
                             model_dir: "./models/iddpg/"
 
-    .. group-tab:: MADDPG
+    .. tab:: MADDPG
 
         .. tabs::
 
-            .. group-tab:: MPE
+            .. tab:: MPE
 
                 .. tabs::
 
-                    .. group-tab:: simple_adversary_v3
+                    .. tab:: simple_adversary_v3
 
                         .. code-block:: yaml
 
@@ -7917,7 +7845,7 @@ MARL Implementations
                             log_dir: "./logs/maddpg/"
                             model_dir: "./models/maddpg/"
 
-                    .. group-tab:: simple_push_v3
+                    .. tab:: simple_push_v3
 
                         .. code-block:: yaml
 
@@ -7961,7 +7889,7 @@ MARL Implementations
                             log_dir: "./logs/maddpg/"
                             model_dir: "./models/maddpg/"
 
-                    .. group-tab:: simple_spread_v3
+                    .. tab:: simple_spread_v3
 
                         .. code-block:: yaml
 
@@ -8006,15 +7934,15 @@ MARL Implementations
                             model_dir: "./models/maddpg/"
 
 
-    .. group-tab:: ISAC
+    .. tab:: ISAC
 
         .. tabs::
 
-            .. group-tab:: MPE
+            .. tab:: MPE
 
                 .. tabs::
 
-                    .. group-tab:: simple_adversary_v3
+                    .. tab:: simple_adversary_v3
 
                         .. code-block:: yaml
 
@@ -8059,7 +7987,7 @@ MARL Implementations
                             log_dir: "./logs/isac/"
                             model_dir: "./models/isac/"
 
-                    .. group-tab:: simple_push_v3
+                    .. tab:: simple_push_v3
 
                         .. code-block:: yaml
 
@@ -8104,7 +8032,7 @@ MARL Implementations
                             log_dir: "./logs/isac/"
                             model_dir: "./models/isac/"
 
-                    .. group-tab:: simple_spread_v3
+                    .. tab:: simple_spread_v3
 
                         .. code-block:: yaml
 
@@ -8149,15 +8077,15 @@ MARL Implementations
                             log_dir: "./logs/isac/"
                             model_dir: "./models/isac/"
 
-    .. group-tab:: MASAC
+    .. tab:: MASAC
 
         .. tabs::
 
-            .. group-tab:: MPE
+            .. tab:: MPE
 
                 .. tabs::
 
-                    .. group-tab:: simple_adversary_v3
+                    .. tab:: simple_adversary_v3
 
                         .. code-block:: yaml
 
@@ -8203,7 +8131,7 @@ MARL Implementations
                             model_dir: "./models/masac/"
 
 
-                    .. group-tab:: simple_push_v3
+                    .. tab:: simple_push_v3
 
                         .. code-block:: yaml
 
@@ -8249,7 +8177,7 @@ MARL Implementations
                             model_dir: "./models/masac/"
 
 
-                    .. group-tab:: simple_spread_v3
+                    .. tab:: simple_spread_v3
 
                         .. code-block:: yaml
 
@@ -8296,15 +8224,15 @@ MARL Implementations
 
 
 
-    .. group-tab:: IPPO
+    .. tab:: IPPO
 
         .. tabs::
 
-            .. group-tab:: MPE
+            .. tab:: MPE
 
                 .. tabs::
 
-                    .. group-tab:: simple_spread_v3
+                    .. tab:: simple_spread_v3
 
                         .. code-block:: yaml
 
@@ -8368,11 +8296,11 @@ MARL Implementations
                             model_dir: "./models/ippo/"
 
 
-            .. group-tab:: SC2
+            .. tab:: SC2
 
                 .. tabs::
 
-                    .. group-tab:: 1c3s5z
+                    .. tab:: 1c3s5z
 
                         .. code-block:: yaml
 
@@ -8441,7 +8369,7 @@ MARL Implementations
                             model_dir: "./models/ippo/"
 
 
-                    .. group-tab:: 2m_vs_1z
+                    .. tab:: 2m_vs_1z
 
                         .. code-block:: yaml
 
@@ -8513,7 +8441,7 @@ MARL Implementations
                             model_dir: "./models/ippo/"
 
 
-                    .. group-tab:: 2s3z
+                    .. tab:: 2s3z
 
                         .. code-block:: yaml
 
@@ -8582,7 +8510,7 @@ MARL Implementations
                             model_dir: "./models/ippo/"
 
 
-                    .. group-tab:: 3m
+                    .. tab:: 3m
 
                         .. code-block:: yaml
 
@@ -8651,7 +8579,7 @@ MARL Implementations
                             model_dir: "./models/ippo/"
 
 
-                    .. group-tab:: 5m_vs_6m
+                    .. tab:: 5m_vs_6m
 
                         .. code-block:: yaml
 
@@ -8721,7 +8649,7 @@ MARL Implementations
                             model_dir: "./models/ippo/"
 
 
-                    .. group-tab:: 8m
+                    .. tab:: 8m
 
                         .. code-block:: yaml
 
@@ -8791,7 +8719,7 @@ MARL Implementations
                             model_dir: "./models/ippo/"
 
 
-                    .. group-tab:: 8m_vd_9m
+                    .. tab:: 8m_vd_9m
 
                         .. code-block:: yaml
 
@@ -8861,7 +8789,7 @@ MARL Implementations
                             model_dir: "./models/ippo/"
 
 
-                    .. group-tab:: 25m
+                    .. tab:: 25m
 
                         .. code-block:: yaml
 
@@ -8931,7 +8859,7 @@ MARL Implementations
                             model_dir: "./models/ippo/"
 
 
-                    .. group-tab:: corridor
+                    .. tab:: corridor
 
                         .. code-block:: yaml
 
@@ -9000,8 +8928,8 @@ MARL Implementations
                             log_dir: "./logs/ippo/"
                             model_dir: "./models/ippo/"
 
-                    
-                    .. group-tab:: MMM2
+
+                    .. tab:: MMM2
 
                         .. code-block:: yaml
 
@@ -9071,11 +8999,11 @@ MARL Implementations
                             model_dir: "./models/ippo/"
 
 
-            .. group-tab:: Football
+            .. tab:: Football
 
                 .. tabs::
 
-                    .. group-tab:: 3v1
+                    .. tab:: 3v1
 
                         .. code-block:: yaml
 
@@ -9153,15 +9081,15 @@ MARL Implementations
                             videos_dir: "./videos/ippo/"
 
 
-    .. group-tab:: MAPPO
+    .. tab:: MAPPO
 
         .. tabs::
 
-            .. group-tab:: MPE
+            .. tab:: MPE
 
                 .. tabs::
 
-                    .. group-tab:: simple_adversary_v3
+                    .. tab:: simple_adversary_v3
 
                         .. code-block:: yaml
 
@@ -9226,7 +9154,7 @@ MARL Implementations
                             model_dir: "./models/mappo/"
 
 
-                    .. group-tab:: simple_push_v3
+                    .. tab:: simple_push_v3
 
                         .. code-block:: yaml
 
@@ -9291,7 +9219,7 @@ MARL Implementations
                             model_dir: "./models/mappo/"
 
 
-                    .. group-tab:: simple_spread_v3
+                    .. tab:: simple_spread_v3
 
                         .. code-block:: yaml
 
@@ -9356,11 +9284,11 @@ MARL Implementations
                             model_dir: "./models/mappo/"
 
 
-            .. group-tab:: SC2
+            .. tab:: SC2
 
                 .. tabs::
 
-                    .. group-tab:: 1c3s5z
+                    .. tab:: 1c3s5z
 
                         .. code-block:: yaml
 
@@ -9429,7 +9357,7 @@ MARL Implementations
                             model_dir: "./models/mappo/"
 
 
-                    .. group-tab:: 2m_vs_1z
+                    .. tab:: 2m_vs_1z
 
                         .. code-block:: yaml
 
@@ -9501,7 +9429,7 @@ MARL Implementations
                             model_dir: "./models/mappo/"
 
 
-                    .. group-tab:: 2s3z
+                    .. tab:: 2s3z
 
                         .. code-block:: yaml
 
@@ -9570,7 +9498,7 @@ MARL Implementations
                             model_dir: "./models/mappo/"
 
 
-                    .. group-tab:: 3m
+                    .. tab:: 3m
 
                         .. code-block:: yaml
 
@@ -9639,7 +9567,7 @@ MARL Implementations
                             model_dir: "./models/mappo/"
 
 
-                    .. group-tab:: 5m_vs_6m
+                    .. tab:: 5m_vs_6m
 
                         .. code-block:: yaml
 
@@ -9709,7 +9637,7 @@ MARL Implementations
                             model_dir: "./models/mappo/"
 
 
-                    .. group-tab:: 8m
+                    .. tab:: 8m
 
                         .. code-block:: yaml
 
@@ -9779,7 +9707,7 @@ MARL Implementations
                             model_dir: "./models/mappo/"
 
 
-                    .. group-tab:: 8m_vd_9m
+                    .. tab:: 8m_vd_9m
 
                         .. code-block:: yaml
 
@@ -9849,7 +9777,7 @@ MARL Implementations
                             model_dir: "./models/mappo/"
 
 
-                    .. group-tab:: 25m
+                    .. tab:: 25m
 
                         .. code-block:: yaml
 
@@ -9919,7 +9847,7 @@ MARL Implementations
                             model_dir: "./models/mappo/"
 
 
-                    .. group-tab:: corridor
+                    .. tab:: corridor
 
                         .. code-block:: yaml
 
@@ -9988,8 +9916,8 @@ MARL Implementations
                             log_dir: "./logs/mappo/"
                             model_dir: "./models/mappo/"
 
-                    
-                    .. group-tab:: MMM2
+
+                    .. tab:: MMM2
 
                         .. code-block:: yaml
 
@@ -10059,11 +9987,11 @@ MARL Implementations
                             model_dir: "./models/mappo/"
 
 
-            .. group-tab:: Football
+            .. tab:: Football
 
                 .. tabs::
 
-                    .. group-tab:: 1v1
+                    .. tab:: 1v1
 
                         .. code-block:: yaml
 
@@ -10140,8 +10068,8 @@ MARL Implementations
                             model_dir: "./models/mappo/"
                             videos_dir: "./videos/mappo/"
 
-                    
-                    .. group-tab:: 3v1
+
+                    .. tab:: 3v1
 
                         .. code-block:: yaml
 
@@ -10219,15 +10147,15 @@ MARL Implementations
                             videos_dir: "./videos/mappo/"
 
 
-    .. group-tab:: MATD3
+    .. tab:: MATD3
 
         .. tabs::
 
-            .. group-tab:: MPE
+            .. tab:: MPE
 
                 .. tabs::
 
-                    .. group-tab:: simple_adversary_v3
+                    .. tab:: simple_adversary_v3
 
                         .. code-block:: yaml
 
@@ -10272,7 +10200,7 @@ MARL Implementations
                             model_dir: "./models/matd3/"
 
 
-                    .. group-tab:: simple_push_v3
+                    .. tab:: simple_push_v3
 
                         .. code-block:: yaml
 
@@ -10317,7 +10245,7 @@ MARL Implementations
                             model_dir: "./models/matd3/"
 
 
-                    .. group-tab:: simple_spread_v3
+                    .. tab:: simple_spread_v3
 
                         .. code-block:: yaml
 
@@ -10362,15 +10290,15 @@ MARL Implementations
                             model_dir: "./models/matd3/"
 
 
-    .. group-tab:: VDAC
+    .. tab:: VDAC
 
         .. tabs::
 
-            .. group-tab:: MPE
+            .. tab:: MPE
 
                 .. tabs::
 
-                    .. group-tab:: simple_spread_v3
+                    .. tab:: simple_spread_v3
 
                         .. code-block:: yaml
 
@@ -10439,11 +10367,11 @@ MARL Implementations
                             model_dir: "./models/vdac/"
 
 
-            .. group-tab:: SC2
+            .. tab:: SC2
 
                 .. tabs::
 
-                    .. group-tab:: 1c3s5z
+                    .. tab:: 1c3s5z
 
                         .. code-block:: yaml
 
@@ -10517,7 +10445,7 @@ MARL Implementations
                             model_dir: "./models/vdac/"
 
 
-                    .. group-tab:: 2m_vs_1z
+                    .. tab:: 2m_vs_1z
 
                         .. code-block:: yaml
 
@@ -10591,7 +10519,7 @@ MARL Implementations
                             model_dir: "./models/vdac/"
 
 
-                    .. group-tab:: 2s3z
+                    .. tab:: 2s3z
 
                         .. code-block:: yaml
 
@@ -10665,7 +10593,7 @@ MARL Implementations
                             model_dir: "./models/vdac/"
 
 
-                    .. group-tab:: 3m
+                    .. tab:: 3m
 
                         .. code-block:: yaml
 
@@ -10732,7 +10660,7 @@ MARL Implementations
                             model_dir: "./models/vdac/"
 
 
-                    .. group-tab:: 5m_vs_6m
+                    .. tab:: 5m_vs_6m
 
                         .. code-block:: yaml
 
@@ -10806,7 +10734,7 @@ MARL Implementations
                             model_dir: "./models/vdac/"
 
 
-                    .. group-tab:: 8m
+                    .. tab:: 8m
 
                         .. code-block:: yaml
 
@@ -10880,7 +10808,7 @@ MARL Implementations
                             model_dir: "./models/vdac/"
 
 
-                    .. group-tab:: 8m_vd_9m
+                    .. tab:: 8m_vd_9m
 
                         .. code-block:: yaml
 
@@ -10954,7 +10882,7 @@ MARL Implementations
                             model_dir: "./models/vdac/"
 
 
-                    .. group-tab:: 25m
+                    .. tab:: 25m
 
                         .. code-block:: yaml
 
@@ -11028,7 +10956,7 @@ MARL Implementations
                             model_dir: "./models/vdac/"
 
 
-                    .. group-tab:: corridor
+                    .. tab:: corridor
 
                         .. code-block:: yaml
 
@@ -11101,8 +11029,8 @@ MARL Implementations
                             log_dir: "./logs/vdac/"
                             model_dir: "./models/vdac/"
 
-                    
-                    .. group-tab:: MMM2
+
+                    .. tab:: MMM2
 
                         .. code-block:: yaml
 
@@ -11177,15 +11105,15 @@ MARL Implementations
 
 
 
-    .. group-tab:: COMA
+    .. tab:: COMA
 
         .. tabs::
 
-            .. group-tab:: MPE
+            .. tab:: MPE
 
                 .. tabs::
 
-                    .. group-tab:: simple_spread_v3
+                    .. tab:: simple_spread_v3
 
                         .. code-block:: yaml
 
@@ -11243,11 +11171,11 @@ MARL Implementations
                             model_dir: "./models/coma/"
 
 
-            .. group-tab:: SC2
+            .. tab:: SC2
 
                 .. tabs::
 
-                    .. group-tab:: 1c3s5z
+                    .. tab:: 1c3s5z
 
                         .. code-block:: yaml
 
@@ -11310,7 +11238,7 @@ MARL Implementations
                             model_dir: "./models/coma/"
 
 
-                    .. group-tab:: 2m_vs_1z
+                    .. tab:: 2m_vs_1z
 
                         .. code-block:: yaml
 
@@ -11373,7 +11301,7 @@ MARL Implementations
                             model_dir: "./models/coma/"
 
 
-                    .. group-tab:: 2s3z
+                    .. tab:: 2s3z
 
                         .. code-block:: yaml
 
@@ -11436,7 +11364,7 @@ MARL Implementations
                             model_dir: "./models/coma/"
 
 
-                    .. group-tab:: 3m
+                    .. tab:: 3m
 
                         .. code-block:: yaml
 
@@ -11499,7 +11427,7 @@ MARL Implementations
                             model_dir: "./models/coma/"
 
 
-                    .. group-tab:: 5m_vs_6m
+                    .. tab:: 5m_vs_6m
 
                         .. code-block:: yaml
 
@@ -11562,7 +11490,7 @@ MARL Implementations
                             model_dir: "./models/coma/"
 
 
-                    .. group-tab:: 8m
+                    .. tab:: 8m
 
                         .. code-block:: yaml
 
@@ -11625,7 +11553,7 @@ MARL Implementations
                             model_dir: "./models/coma/"
 
 
-                    .. group-tab:: 8m_vd_9m
+                    .. tab:: 8m_vd_9m
 
                         .. code-block:: yaml
 
@@ -11688,7 +11616,7 @@ MARL Implementations
                             model_dir: "./models/coma/"
 
 
-                    .. group-tab:: 25m
+                    .. tab:: 25m
 
                         .. code-block:: yaml
 
@@ -11751,7 +11679,7 @@ MARL Implementations
                             model_dir: "./models/coma/"
 
 
-                    .. group-tab:: corridor
+                    .. tab:: corridor
 
                         .. code-block:: yaml
 
@@ -11813,8 +11741,8 @@ MARL Implementations
                             log_dir: "./logs/coma/"
                             model_dir: "./models/coma/"
 
-                    
-                    .. group-tab:: MMM2
+
+                    .. tab:: MMM2
 
                         .. code-block:: yaml
 
@@ -11877,15 +11805,15 @@ MARL Implementations
                             model_dir: "./models/coma/"
 
 
-    .. group-tab:: MFQ
+    .. tab:: MFQ
 
         .. tabs::
 
-            .. group-tab:: MPE
+            .. tab:: MPE
 
                 .. tabs::
 
-                    .. group-tab:: simple_spread_v3
+                    .. tab:: simple_spread_v3
 
                         .. code-block:: yaml
 
@@ -11934,11 +11862,11 @@ MARL Implementations
                             model_dir: "./models/mfq/"
 
 
-            .. group-tab:: Magent2
+            .. tab:: Magent2
 
                 .. tabs::
 
-                    .. group-tab:: adversarial_pursuit_v4
+                    .. tab:: adversarial_pursuit_v4
 
                         .. code-block:: yaml
 
@@ -11993,15 +11921,15 @@ MARL Implementations
                             model_dir: "./models/mfq/"
 
 
-    .. group-tab:: MFAC
+    .. tab:: MFAC
 
         .. tabs::
 
-            .. group-tab:: MPE
+            .. tab:: MPE
 
                 .. tabs::
 
-                    .. group-tab:: simple_spread_v3
+                    .. tab:: simple_spread_v3
 
                         .. code-block:: yaml
 
