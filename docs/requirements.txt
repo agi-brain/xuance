@@ -1,5 +1,5 @@
 furo
-sphinx_tabs
+sphinx-tabs
 sphinx_copybutton
 myst-parser
 sphinx-design
