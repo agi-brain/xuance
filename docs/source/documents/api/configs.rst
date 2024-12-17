@@ -397,7 +397,6 @@ DQN-based Implementations
                             log_dir: "./logs/c51/"
                             model_dir: "./models/c51/"
 
-
                     .. tab:: Acrobot-v1
 
                         .. code-block:: yaml

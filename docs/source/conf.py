@@ -39,6 +39,12 @@ extensions = [
 templates_path = ['_templates']
 exclude_patterns = []
 
+# add for Sphinx Configuration of Sphinx Tabs¶ (By WZLIU)
+sphinx_tabs_valid_builders = ['linkcheck']
+sphinx_tabs_disable_tab_closing = True
+sphinx_tabs_disable_css_loading = True
+
+
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
