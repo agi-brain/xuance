@@ -16,7 +16,6 @@ release = 'v1.2'
 
 extensions = [
     # Sphinx's own extensions
-    "furo",
     "sphinx.ext.autodoc",
     "sphinx.ext.extlinks",
     "sphinx.ext.intersphinx",
