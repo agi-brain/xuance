@@ -30,6 +30,7 @@ extensions = [
     'sphinx_tabs.tabs',
     "sphinx_design",
     "sphinx_inline_tabs",
+    "sphinx_favicon",
 ]
 
 templates_path = ['_templates']
@@ -47,7 +48,15 @@ html_theme_options = {
     "dark_logo": "logo_2.png",
 }
 
-html_favicon = 'favicon.jpeg'
+favicons = [
+    {"href": "icon.svg"},  # => use `_static/icon.svg`
+    {"href": "https://xuance.readthedocs.io/en/latest/favicon_io/favicon-16x16.png"},
+    {"href": "https://xuance.readthedocs.io/en/latest/favicon_io/favicon-32x32.png"},
+    {
+        "rel": "apple-touch-icon",
+        "href": "https://xuance.readthedocs.io/en/latest/favicon_io/apple-touch-icon-180x180.png",
+    },
+]
 
 # The master toctree document.
 master_doc = 'index'
