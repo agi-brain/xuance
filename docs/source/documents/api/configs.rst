@@ -202,7 +202,6 @@ DQN-based Implementations
                             log_dir: "./logs/dqn/"
                             model_dir: "./models/dqn/"
 
-            
             .. tab:: Box2D
 
                 .. tabs::
