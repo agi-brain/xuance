@@ -3,10 +3,6 @@ DCG_Learner
 
 A DCG (Deep Coordination Graphs) learner for multi-agent reinforcement learning.
 
-.. raw:: html
-
-    <br><hr>
-
 PyTorch
 ------------------------------------------
 
@@ -105,10 +101,6 @@ PyTorch
   :return: The information of the training.
   :rtype: dict
 
-.. raw:: html
-
-    <br><hr>
-
 TensorFlow
 ------------------------------------------
 
@@ -194,10 +186,6 @@ TensorFlow
   :return: The information of the training.
   :rtype: dict
 
-.. raw:: html
-
-    <br><hr>
-
 MindSpore
 ------------------------------------------
 
@@ -282,10 +270,6 @@ MindSpore
   :type sample: dict
   :return: The information of the training.
   :rtype: dict
-
-.. raw:: html
-
-    <br><hr>
 
 Source Code
 -----------------

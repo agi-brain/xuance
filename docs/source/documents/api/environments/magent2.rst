@@ -8,10 +8,6 @@ MAgent2
 .. image:: ../../../figures/magent/tiger_deer.gif
     :height: 150px
 
-.. raw:: html
-
-    <br><hr>
-
 magent_env.py
 -------------------------------------------------
 
@@ -49,10 +45,6 @@ magent_env.py
     :type actions: np.ndarray
     :return: the next step data, including local observations, global state, rewards, terminated variables, truncated variables, and the other information.
     :rtype: tuple
-
-.. raw:: html
-
-    <br><hr>
 
 magent_vec_env.py
 -------------------------------------------------
@@ -153,10 +145,6 @@ magent_vec_env.py
 
     :return: the agent mask.
     :rtype: np.ndarray
-
-.. raw:: html
-
-    <br><hr>
 
 Source Code
 ---------------------------------------------

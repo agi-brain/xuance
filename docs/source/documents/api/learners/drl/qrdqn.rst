@@ -1,10 +1,6 @@
 QRDQN_Learner
 =====================================
 
-.. raw:: html
-
-    <br><hr>
-
 PyTorch
 ------------------------------------------
 
@@ -39,10 +35,6 @@ PyTorch
   :type terminal_batch: np.ndarray
   :return: The information of the training.
   :rtype: dict
-
-.. raw:: html
-
-    <br><hr>
 
 TensorFlow
 ------------------------------------------
@@ -79,10 +71,6 @@ TensorFlow
   :return: The information of the training.
   :rtype: dict
 
-.. raw:: html
-
-    <br><hr>
-
 MindSpore
 ------------------------------------------
 
@@ -117,10 +105,6 @@ MindSpore
   :type terminal_batch: np.ndarray
   :return: The information of the training.
   :rtype: dict
-
-.. raw:: html
-
-    <br><hr>
 
 Source Code
 -----------------

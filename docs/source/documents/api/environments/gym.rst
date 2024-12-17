@@ -37,10 +37,6 @@ MuJoCo
 .. image:: ../../../figures/mujoco/humanoid.gif
     :height: 150px
 
-.. raw:: html
-
-    <br><hr>
-
 gym_env.py
 -----------------------------------------------
 
@@ -244,10 +240,6 @@ gym_env.py
     :return: the selected frame or frames at the specified index i.
     :rtype: np.ndarray
 
-.. raw:: html
-
-    <br><hr>
-
 gym_vec_env.py
 -----------------------------------------------
 
@@ -403,10 +395,6 @@ gym_vec_env.py
     Parallelize execution of multiple Atari environments using subprocesses.
 
     :param env_fns: environment function.
-
-.. raw:: html
-
-    <br><hr>
 
 Source Code
 ------------------------------------------------

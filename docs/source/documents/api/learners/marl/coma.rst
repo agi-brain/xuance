@@ -4,10 +4,6 @@ COMA_Learner
 The implementation of a COMA (Counterfactual Multi-Agent Policy Gradients) learner.
 This algorithm is used for training cooperative multi-agent systems..
 
-.. raw:: html
-
-    <br><hr>
-
 PyTorch
 ------------------------------------------
 
@@ -58,10 +54,6 @@ PyTorch
   :return: The information of the training.
   :rtype: dict
 
-.. raw:: html
-
-    <br><hr>
-
 TensorFlow
 ------------------------------------------
 
@@ -96,10 +88,6 @@ TensorFlow
   :return: The information of the training.
   :rtype: dict
 
-.. raw:: html
-
-    <br><hr>
-
 MindSpore
 ------------------------------------------
 
@@ -133,10 +121,6 @@ MindSpore
   :type epsilon: float
   :return: The information of the training.
   :rtype: dict
-
-.. raw:: html
-
-    <br><hr>
 
 Source Code
 -----------------

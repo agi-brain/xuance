@@ -4,10 +4,6 @@ QTRAN_Learner
 An implementation of the QTRAN (Learning to Factorize with Transformation
 for Cooperative Multi-Agent Reinforcement Learning) algorithm.
 
-.. raw:: html
-
-    <br><hr>
-
 PyTorch
 ------------------------------------------
 
@@ -41,10 +37,6 @@ PyTorch
   :return: The information of the training.
   :rtype: dict
 
-.. raw:: html
-
-    <br><hr>
-
 TensorFlow
 ------------------------------------------
 
@@ -76,10 +68,6 @@ TensorFlow
   :return: The information of the training.
   :rtype: dict
 
-.. raw:: html
-
-    <br><hr>
-
 MindSpore
 ------------------------------------------
 
@@ -110,10 +98,6 @@ MindSpore
   :type sample: dict
   :return: The information of the training.
   :rtype: dict
-
-.. raw:: html
-
-    <br><hr>
 
 Source Code
 -----------------

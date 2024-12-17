@@ -12,10 +12,6 @@ You can choose two ways to install XuanCe.
 
     XuanCe can be installed on MacOS and be compatible with both Intel and Apple's M CPUs.
 
-.. raw:: html
-
-   <br><hr>
-
 Install via PyPI
 ---------------------------------------------
 
@@ -115,43 +111,43 @@ Alternatively, you can install XuanCe from its GitHub repository.
 
 .. tabs::
 
-    .. group-tab:: No DL toolbox
+    .. tab:: No DL toolbox
 
         .. code-block:: bash
 
             pip install -e .
 
-    .. group-tab:: PyTorch
+    .. tab:: PyTorch
 
         .. code-block:: bash
 
             pip install -e .[torch]
 
-    .. group-tab:: TensorFlow
+    .. tab:: TensorFlow
 
         .. code-block:: bash
 
             pip install -e .[tensorflow]
 
-    .. group-tab:: MindSpore
+    .. tab:: MindSpore
 
         .. code-block:: bash
 
             pip install -e .[mindspore]
 
-    .. group-tab:: All DL toolbox
+    .. tab:: All DL toolbox
 
         .. code-block:: bash
 
             pip install -e .[all]
 
-    .. group-tab:: Atari
+    .. tab:: Atari
 
         .. code-block:: bash
 
             pip install -e .[atari]
 
-    .. group-tab:: Box2D
+    .. tab:: Box2D
 
         .. code-block:: bash
 
@@ -206,10 +202,6 @@ Alternatively, you can install XuanCe from its GitHub repository.
 .. _PyTorch: https://pytorch.org/get-started/locally/
 .. _TensorFlow2: https://www.tensorflow.org/install
 .. _MindSpore: https://www.mindspore.cn/install/en
-
-.. raw:: html
-
-   <br><hr>
 
 Testing whether the installation was successful
 --------------------------------------------------------------------

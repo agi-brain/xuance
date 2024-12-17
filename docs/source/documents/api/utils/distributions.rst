@@ -3,10 +3,6 @@ Distributions
 
 This module defines implementations of probability distributions for use in DRL algorithms.
 
-.. raw:: html
-
-    <br><hr>
-
 PyTorch
 ---------------------------------------
 
@@ -198,10 +194,6 @@ PyTorch
   :return: the KL divergence between two distributions.
   :rtype: torch.Tensor
 
-.. raw:: html
-
-    <br><hr>
-
 TensorFlow
 -------------------------------------------------------------
 
@@ -391,10 +383,6 @@ TensorFlow
   :return: the KL divergence between two distributions.
   :rtype: tf.Tensor
 
-.. raw:: html
-
-    <br><hr>
-
 MindSpore
 ------------------------------------------------------------
 
@@ -505,10 +493,6 @@ MindSpore
   :param other: the other distribution.
   :return: the KL divergence between the two probability distribution.
   :rtype: ms.Tensor
-
-.. raw:: html
-
-    <br><hr>
 
 Source Code
 -----------------

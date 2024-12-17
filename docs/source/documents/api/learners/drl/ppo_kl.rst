@@ -1,10 +1,6 @@
 PPOKL_Learner
 =====================================
 
-.. raw:: html
-
-    <br><hr>
-
 PyTorch
 ------------------------------------------
 
@@ -43,10 +39,6 @@ PyTorch
   :type old_dists: list
   :return: The information of the training.
   :rtype: dict
-
-.. raw:: html
-
-    <br><hr>
 
 TensorFlow
 ------------------------------------------
@@ -87,10 +79,6 @@ TensorFlow
   :return: The information of the training.
   :rtype: dict
 
-.. raw:: html
-
-    <br><hr>
-
 MindSpore
 ------------------------------------------
 
@@ -128,10 +116,6 @@ MindSpore
   :type old_logp: np.ndarray
   :return: The information of the training.
   :rtype: dict
-
-.. raw:: html
-
-    <br><hr>
 
 Source Code
 -----------------

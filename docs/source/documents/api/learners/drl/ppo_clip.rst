@@ -1,10 +1,6 @@
 PPOCLIP_Learner
 =====================================
 
-.. raw:: html
-
-    <br><hr>
-
 PyTorch
 ------------------------------------------
 
@@ -50,10 +46,6 @@ PyTorch
   :return: The information of the training.
   :rtype: dict
 
-.. raw:: html
-
-    <br><hr>
-
 TensorFlow
 ------------------------------------------
 
@@ -93,10 +85,6 @@ TensorFlow
   :return: The information of the training.
   :rtype: dict
 
-.. raw:: html
-
-    <br><hr>
-
 MindSpore
 ------------------------------------------
 
@@ -135,10 +123,6 @@ MindSpore
   :type old_logp: tensor
   :return: The information of the training.
   :rtype: dict
-
-.. raw:: html
-
-    <br><hr>
 
 Source Code
 -----------------

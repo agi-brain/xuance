@@ -1,10 +1,6 @@
 IPPO_Agents
 =====================================
 
-.. raw:: html
-
-    <br><hr>
-
 PyTorch
 ------------------------------------------
 
@@ -61,10 +57,6 @@ PyTorch
     :type kwargs: dict
     :return: **info_train** - the information of the training process.
     :rtype: dict
-
-.. raw:: html
-
-    <br><hr>
 
 TensorFlow
 ------------------------------------------
@@ -124,10 +116,6 @@ TensorFlow
     :rtype: dict
 
 
-.. raw:: html
-
-    <br><hr>
-
 MindSpore
 ------------------------------------------
 
@@ -182,10 +170,6 @@ MindSpore
     :type kwargs: dict
     :return: **info_train** - the information of the training process.
     :rtype: dict
-
-.. raw:: html
-
-    <br><hr>
 
 Source Code
 -----------------

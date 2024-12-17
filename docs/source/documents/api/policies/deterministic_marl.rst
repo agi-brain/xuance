@@ -4,10 +4,6 @@ Deterministic-MARL
 This module defines several classes for different types of actor-networks, Q-networks, 
 and policies in a multi-agent reinforcement learning setting. 
 
-.. raw:: html
-
-    <br><hr>
-
 PyTorch
 ------------------------------------------
 
@@ -689,10 +685,6 @@ PyTorch
   :param tau: The soft update factor for the update of target networks, default is 0.005.
   :type tau: float
 
-.. raw:: html
-
-    <br><hr>
-
 TensorFlow
 ------------------------------------------
 
@@ -1370,10 +1362,6 @@ TensorFlow
 
   :param tau: The soft update factor for the update of target networks.
   :type tau: float
-
-.. raw:: html
-
-    <br><hr>
 
 MindSpore
 ------------------------------------------
@@ -2109,10 +2097,6 @@ MindSpore
 
   :param tau: The soft update factor for the update of target networks.
   :type tau: float
-
-.. raw:: html
-
-    <br><hr>
 
 Source Code
 -----------------

@@ -3,10 +3,6 @@ IDDPG_Learner
 
 An Independent Deep Deterministic Policy Gradient (IDDPG) learner.
 
-.. raw:: html
-
-    <br><hr>
-
 PyTorch
 ------------------------------------------
 
@@ -41,10 +37,6 @@ PyTorch
   :type sample: dict
   :return: The information of the training.
   :rtype: dict
-
-.. raw:: html
-
-    <br><hr>
 
 TensorFlow
 ------------------------------------------
@@ -81,10 +73,6 @@ TensorFlow
   :return: The information of the training.
   :rtype: dict
 
-.. raw:: html
-
-    <br><hr>
-
 MindSpore
 ------------------------------------------
 
@@ -117,10 +105,6 @@ MindSpore
   :type sample: dict
   :return: The information of the training.
   :rtype: dict
-
-.. raw:: html
-
-    <br><hr>
 
 Source Code
 -----------------

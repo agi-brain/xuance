@@ -3,10 +3,6 @@ Memory for MARL
 
 This module defines different type of classes used to implement the experience replay buffer for MARL algorithms.
 
-.. raw:: html
-
-    <br><hr>
-
 Basic Memory Tools for MARL
 ---------------------------------------------------------
 
@@ -59,10 +55,6 @@ Basic Memory Tools for MARL
 
     :param args: The input arguments.
     :type args: tuple
-
-.. raw:: html
-
-    <br><hr>
 
 
 On-Policy Buffer for MARL
@@ -396,10 +388,6 @@ On-Policy Buffer for MARL
     :param value_normalizer: The function handle that normalizes the values.
 
 
-.. raw:: html
-
-    <br><hr>
-
 Off-Policy Buffer for MARL
 --------------------------------------------------
 
@@ -563,10 +551,6 @@ Off-Policy Buffer for MARL
     :return: A dict of data that includes the episodes data for training.
     :rtype: dict
 
-
-.. raw:: html
-
-    <br><hr>
 
 
 Source Code

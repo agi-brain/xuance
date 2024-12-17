@@ -3,10 +3,6 @@ StarCraft2 Multi-Agent Challenge
 
 .. image:: ../../../figures/smac/smac.png
 
-.. raw:: html
-
-    <br><hr>
-
 
 sc2_env.py
 -------------------------------------------------
@@ -59,10 +55,6 @@ sc2_env.py
 
     :return: an array indicating that if all actions are available for each agent in each environment.
     :rtype: np.ndarray
-
-.. raw:: html
-
-    <br><hr>
 
 sc2_vec_env.py
 -------------------------------------------------
@@ -207,10 +199,6 @@ sc2_vec_env.py
     xuance.environment.starcraft2.sc2_vec_env.DummyVecEnv_StarCraft2.__del__()
 
     The __del__ method ensures that the environment is properly closed when the object is deleted.
-
-.. raw:: html
-
-    <br><hr>
 
 Source Code
 ---------------------------------------------

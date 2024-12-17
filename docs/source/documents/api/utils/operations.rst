@@ -3,10 +3,6 @@ Operations
 
 This module provides utility functions related to DRL.
 
-.. raw:: html
-
-    <br><hr>
-
 PyTorch
 ----------------------------------
 
@@ -93,10 +89,6 @@ PyTorch
   :type distribution_list: list
   :return: A merged distribution.
 
-.. raw:: html
-
-    <br><hr>
-
 TensorFlow
 ------------------------------------------
 
@@ -170,10 +162,6 @@ TensorFlow
   :param distribution_list: Input distribution list.
   :type distribution_list: list
   :return: A merged distribution.
-
-.. raw:: html
-
-    <br><hr>
 
 MindSpore
 ----------------------------------------------
@@ -260,10 +248,6 @@ MindSpore
   :param distribution_list: Input distribution list.
   :type distribution_list: list
   :return: A merged distribution.
-
-.. raw:: html
-
-    <br><hr>
 
 Source Code
 -----------------

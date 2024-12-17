@@ -7,10 +7,6 @@ This tutorial walks you through the process of creating, training,
 and testing a custom off-policy reinforcement learning (RL) agent using the XuanCe framework.
 The demo involves defining a custom policy, learner, and agent while using XuanCe’s modular architecture for RL experiments.
 
-.. raw:: html
-
-   <br><hr>
-
 Step 1: Define the Policy Module
 -------------------------------------------------------------
 
@@ -66,10 +62,6 @@ Key Points:
 - representation module: Extracts state features, decoupling feature engineering from Q-value computation.
 - networks: The policy uses a feedforward neural network to calculate actions and estimate Q-values.
 - device: The device choice should align with that of the other modules.
-
-.. raw:: html
-
-   <br><hr>
 
 Step 2: Define the Learner
 -------------------------------------------------------------
@@ -127,10 +119,6 @@ Key Points:
 - update: In this method, we can get a batch of samples and use them to calculate loss values and back propagation.
 - info: The users can add arbitrarily .
 
-.. raw:: html
-
-   <br><hr>
-
 Step 3: Define the Agent
 -------------------------------------------------------------
 
@@ -158,10 +146,6 @@ Key Points:
 - Policy: Build the custom policy and learner defined earlier.
 - Memory: Build experience replay to break correlations in training data.
 - Learner: Register MyLearner for easy configuration.
-
-.. raw:: html
-
-   <br><hr>
 
 Step 4: Build and Run Your Agent.
 -------------------------------------------------------------

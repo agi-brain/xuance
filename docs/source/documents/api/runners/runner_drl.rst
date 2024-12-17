@@ -3,10 +3,6 @@ RunnerDRL
 
 The definition of basic runner.
 
-.. raw:: html
-
-    <br><hr>
-
 PyTorch
 ------------------------------------------
 
@@ -27,10 +23,6 @@ PyTorch
     xuance.torch.runners.runner_drl.RunnerDRL.benchmark()
 
     Conduct benchmarking by training the agent for multiple epochs, evaluating its performance, and saving the best-performing model.
-
-.. raw:: html
-
-    <br><hr>
 
 TensorFlow
 ------------------------------------------
@@ -54,10 +46,6 @@ TensorFlow
     Assess the performance of the reinforcement learning agent over multiple training epochs,
     identify the best-performing model, and save it for potential future use.
 
-.. raw:: html
-
-    <br><hr>
-
 MindSpore
 ------------------------------------------
 
@@ -80,10 +68,6 @@ MindSpore
 
     A approach to benchmarking the agent over multiple training epochs,
     identifying the best-performing model, and saving it for further use.
-
-.. raw:: html
-
-    <br><hr>
 
 Source Code
 -----------------

@@ -5,10 +5,6 @@ In this module, we define several classes related to the components of the MARL 
 such as the Q-networks, actor networks, critic policies, and the policies.
 These policies are used to generate actions from continuous aciton spaces, and calculate the values.
 
-.. raw:: html
-
-    <br><hr>
-
 PyTorch
 ------------------------------------------
 
@@ -378,10 +374,6 @@ PyTorch
   :type agent_ids: torch.Tensor
   :return: The target critic values.
   :rtype: torch.Tensor
-
-.. raw:: html
-
-    <br><hr>
 
 
 TensorFlow
@@ -755,10 +747,6 @@ TensorFlow
   :type agent_ids: tf.Tensor
   :return: The target critic values.
   :rtype: tf.Tensor
-
-.. raw:: html
-
-    <br><hr>
 
 
 MindSpore
@@ -1184,10 +1172,6 @@ MindSpore
 
   :param tau: The soft update factor for the update of target networks.
   :type tau: float
-
-.. raw:: html
-
-    <br><hr>
 
 Source Code
 -----------------

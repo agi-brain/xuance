@@ -4,10 +4,6 @@ Runner_Pettingzoo
 A python script for a reinforcement learning framework using PettingZoo.
 This script define a training and testing pipeline for multi-agent reinforcement learning using various algorithms..
 
-.. raw:: html
-
-    <br><hr>
-
 PyTorch
 ------------------------------------------
 
@@ -125,10 +121,6 @@ PyTorch
     xuance.torch.runners.runner_pettingzoo.RunnerPettingzoo.benchmark()
 
     Perform a benchmarking process, which involves training and evaluating the models over multiple epochs.
-
-.. raw:: html
-
-    <br><hr>
 
 TensorFlow
 ------------------------------------------
@@ -248,10 +240,6 @@ TensorFlow
 
     Perform a benchmarking process, which involves training and evaluating the models over multiple epochs.
 
-.. raw:: html
-
-    <br><hr>
-
 MindSpore
 ------------------------------------------
 
@@ -367,10 +355,6 @@ MindSpore
     xuance.mindspore.runners.runner_pettingzoo.RunnerPettingzoo.benchmark()
 
     Perform a benchmarking process, which involves training and evaluating the models over multiple epochs.
-
-.. raw:: html
-
-    <br><hr>
 
 Source Code
 -----------------

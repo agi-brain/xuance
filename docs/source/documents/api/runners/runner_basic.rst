@@ -5,10 +5,6 @@ The basic class named RunnerBase, which is designed to handle running environmen
 The class has an __init__ method to initialize some attributes, including setting random seeds and building environments. 
 Additionally, there's a run method that can be customzied by users.
 
-.. raw:: html
-
-    <br><hr>
-
 PyTorch
 ------------------------------------------
 
@@ -21,10 +17,6 @@ PyTorch
 .. py:function::
   xuance.torch.runners.runner_basic.RunnerBase.run()
 
-
-.. raw:: html
-
-    <br><hr>
 
 
 TensorFlow
@@ -54,10 +46,6 @@ TensorFlow
   :param total_iters: The number of iterations for decaying learning rate.
   :type total_iters: int
 
-.. raw:: html
-
-    <br><hr>
-
 MindSpore
 ------------------------------------------
 
@@ -69,10 +57,6 @@ MindSpore
 
 .. py:function::
   xuance.mindspore.runners.runner_basic.RunnerBase.run()
-
-.. raw:: html
-
-    <br><hr>
 
 Source Code
 -----------------

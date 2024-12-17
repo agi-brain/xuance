@@ -9,10 +9,6 @@ In this module, we provide two basic categorical policies ( ``ActorPolicy`` and 
 and numerous specially-made policies (e.g., ``PPGActorCritic``, ``SACDISPolicy``, etc.).
 You can also customize the other categorical policies for single agent DRL here.
 
-.. raw:: html
-
-    <br><hr>
-
 PyTorch
 ------------------------------------------
 
@@ -307,10 +303,6 @@ PyTorch
 
   :param tau: The soft update factor for the update of target networks.
   :type tau: float
-
-.. raw:: html
-
-    <br><hr>
 
 TensorFlow
 ------------------------------------------
@@ -607,10 +599,6 @@ TensorFlow
   :param tau: The soft update factor for the update of target networks.
   :type tau: float
 
-.. raw:: html
-
-    <br><hr>
-
 MindSpore
 ------------------------------------------
 
@@ -870,10 +858,6 @@ MindSpore
 
   :param tau: The soft update factor for the update of target networks.
   :type tau: float
-
-.. raw:: html
-
-    <br><hr>
 
 Source Code
 -----------------

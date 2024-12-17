@@ -10,10 +10,6 @@ Make Environments
 
     :return: The vectorized environments that run in parallel.
 
-.. raw:: html
-
-    <br><hr>
-
 Source code
 -----------------------------------------
 

@@ -4,10 +4,6 @@ Input Reformation
 
 This module defines functions related to configuring and obtaining input specifications for reinforcement learning policies and representations.
 
-.. raw:: html
-
-    <br><hr>
-
 PyTorch
 --------------------------------------------------
 
@@ -54,10 +50,6 @@ PyTorch
   :return: a list of input specifications.
   :rtype: list
 
-.. raw:: html
-
-    <br><hr>
-
 TensorFlow
 -------------------------------------------------
 
@@ -102,10 +94,6 @@ TensorFlow
   :return: a list of input specifications.
   :rtype: list
 
-.. raw:: html
-
-    <br><hr>
-
 MindSpore
 ---------------------------------------------------
 
@@ -147,10 +135,6 @@ MindSpore
   :type qtran_mixer: nn.Cell
   :return: a list of input specifications.
   :rtype: list
-
-.. raw:: html
-
-    <br><hr>
 
 Source Code
 -----------------

@@ -81,10 +81,6 @@ vector_env.py
 
     Close the vectorized environment.
 
-.. raw:: html
-
-    <br><hr>
-
 subproc_vec_env.py
 -------------------------------------------------
 
@@ -201,10 +197,6 @@ subproc_vec_env.py
 
     Raises an exception if an operation is attempted on the environment after it has been closed.
 
-.. raw:: html
-
-    <br><hr>
-
 
 env_utils.py
 -------------------------------------------------
@@ -305,10 +297,6 @@ env_utils.py
     deserialize the object's state, reconstructing the original object, and assigning it to the instance variable self.x
 
     :param ob: the serialized state of the object as a byte stream.
-
-.. raw:: html
-
-    <br><hr>
 
 Source Code
 ---------------------------------------------

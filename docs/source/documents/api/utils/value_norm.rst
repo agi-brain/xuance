@@ -5,10 +5,6 @@ This module defines a class named ValueNorm.
 This module is used for normalizing vectors of observations, specifically across certain dimensions (norm_axes). 
 The normalization is performed using a running mean and running mean square with exponential decay.
 
-.. raw:: html
-
-    <br><hr>
-
 .. py:class::
   xuance.torch.utils.value_norm.ValueNorm(input_shape, norm_axes, beta, per_element_update, epsilon)
 
@@ -63,10 +59,6 @@ The normalization is performed using a running mean and running mean square with
   :type input_vector: np.ndarray, torch.Tensor
   :return: the denormalized vector.
   :rtype: np.ndarray, torch.Tensor
-
-.. raw:: html
-
-    <br><hr>
 
 Source Code
 -----------------

@@ -3,10 +3,6 @@ Neural Network Layers
 
 This module defines utility functions to create blocks commonly used in neural network architectures.
 
-.. raw:: html
-
-    <br><hr>
-
 PyTorch
 ---------------------------------------------------
 
@@ -109,10 +105,6 @@ PyTorch
   :return: A tuple containing the LSTM module and the output dimension.
   :rtype: tuple
 
-.. raw:: html
-
-    <br><hr>
-
 TensorFlow
 --------------------------------
 
@@ -214,10 +206,6 @@ TensorFlow
   :return: A tuple containing the LSTM module and the output dimension.
   :rtype: tuple
 
-.. raw:: html
-
-    <br><hr>
-
 MindSpore
 ------------------------------------
 
@@ -306,10 +294,6 @@ MindSpore
   :type initialize: ms.Tensor
   :return: A tuple containing the LSTM module and the output dimension.
   :rtype: tuple
-
-.. raw:: html
-
-    <br><hr>
 
 Source Code
 -----------------

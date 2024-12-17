@@ -4,10 +4,6 @@ Google Research Football
 .. image:: ../../../figures/football/gfootball.png
 
 
-.. raw:: html
-
-    <br><hr>
-
 
 raw_env.py
 -------------------------------------------------
@@ -45,10 +41,6 @@ raw_env.py
 
     :return: the global state.
     :rtype: np.ndarray
-
-.. raw:: html
-
-    <br><hr>
 
 
 gfootball_env.py
@@ -99,10 +91,6 @@ gfootball_env.py
 
     :return: the global state.
     :rtype: np.ndarray
-
-.. raw:: html
-
-    <br><hr>
 
 
 gfootball_vec_env.py
@@ -239,10 +227,6 @@ gfootball_vec_env.py
     :return: an array indicating that if all actions are available for each agent in each environment.
     :rtype: np.ndarray
 
-
-.. raw:: html
-
-    <br><hr>
 
 Source Code
 ---------------------------------------------

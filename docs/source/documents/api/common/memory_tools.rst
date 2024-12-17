@@ -3,10 +3,6 @@ Memory
 
 This module defines different type of classes used to implement the experience replay buffer for DRL with single agent.
 
-.. raw:: html
-
-    <br><hr>
-
 Basic Memory Tools
 -----------------------------------
 
@@ -132,10 +128,6 @@ Basic Memory Tools
   :return: The current length of the replay buffer.
   :rtype: int
 
-.. raw:: html
-
-    <br><hr>
-
 On-Policy Buffer for DRL
 ---------------------------------------------------------
 
@@ -243,10 +235,6 @@ On-Policy Buffer for DRL
 
   Clear the whole buffer.
 
-
-.. raw:: html
-
-    <br><hr>
 
 Off-Policy Buffer for DRL
 ---------------------------------------------------------
@@ -448,10 +436,6 @@ Off-Policy Buffer for DRL
 
   Clear the whole buffer.
 
-
-.. raw:: html
-
-    <br><hr>
 
 Source Code
 -----------------

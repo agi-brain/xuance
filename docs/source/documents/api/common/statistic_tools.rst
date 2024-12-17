@@ -77,10 +77,6 @@ This module defines two functions and a class related to computing mean and stan
   :param batch_count: The number of batch data.
   :type batch_count: int
 
-.. raw:: html
-
-    <br><hr>
-
 Source Code
 -----------------
 

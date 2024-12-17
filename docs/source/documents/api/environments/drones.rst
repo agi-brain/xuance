@@ -8,10 +8,6 @@ Drones
 .. image:: ../../../figures/drones/marl.gif
     :height: 150px
 
-.. raw:: html
-
-    <br><hr>
-
 This environment is forked from the gym-pybullet-drones,
 which is a gym environment with pybullet physics for reinforcement learning of multi-agent quadcopter control.
 It supports both single and multiple drones control.
@@ -27,10 +23,6 @@ You also have permission to customize the scenarios and tasks in this environmen
 
 | **Official link**: `https://github.com/utiasDSL/gym-pybullet-drones.git <https://github.com/utiasDSL/gym-pybullet-drones.git>`_
 | **Paper link**: `https://arxiv.org/pdf/2103.02142.pdf <https://arxiv.org/pdf/2103.02142.pdf>`_
-
-.. raw:: html
-
-    <br><hr>
 
 Installation
 -------------------------------------------------
@@ -65,10 +57,6 @@ During the installation of gym-pybullet-drones, you might encounter the errors l
 
     pip install numpy==1.24.0
     pip install scipy==1.12.0
-
-.. raw:: html
-
-    <br><hr>
 
 Try an Example
 -------------------------------------------------
@@ -118,10 +106,6 @@ Open the terminal and type the python command:
 
     python demo_drones.py --benchmark 0 --test 1
 
-
-.. raw:: html
-
-    <br><hr>
 
 drones_env.py
 -------------------------------------------------
@@ -187,10 +171,6 @@ drones_env.py
              a termination indicator, a truncation indicator, and additional environment-related information.
     :rtype: tuple
 
-.. raw:: html
-
-    <br><hr>
-
 drones_vec__env.py
 -------------------------------------------------
 
@@ -210,10 +190,6 @@ drones_vec__env.py
     Extends the functionality of a dummy vectorized environment
 
     :param env_fns: environment function.
-
-.. raw:: html
-
-    <br><hr>
 
 Source Code
 ------------------------------------------------

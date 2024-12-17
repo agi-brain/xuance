@@ -1,10 +1,6 @@
 PDQN_Agent
 =====================================
 
-.. raw:: html
-
-    <br><hr>
-
 PyTorch
 ------------------------------------------
 
@@ -65,10 +61,6 @@ PyTorch
     :return: **scores** - The accumulated scores of these episodes.
     :rtype: list
 
-.. raw:: html
-
-    <br><hr>
-
 TensorFlow
 ------------------------------------------
 
@@ -127,10 +119,6 @@ TensorFlow
     :return: **scores** - The accumulated scores of these episodes.
     :rtype: list
 
-.. raw:: html
-
-    <br><hr>
-
 MindSpore
 ------------------------------------------
 
@@ -186,10 +174,6 @@ MindSpore
 
     :param episode: the current episode number.
     :type episode: int
-
-.. raw:: html
-
-    <br><hr>
 
 Source Code
 -----------------

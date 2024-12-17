@@ -1,10 +1,6 @@
 Quick Start
 =======================
 
-.. raw:: html
-
-   <br><hr>
-
 Run a DRL example
 -----------------------
 
@@ -56,11 +52,6 @@ Run a DRL example
     .. code-block:: bash
 
         python example.py  # or python example.py --device 'cpu'
-
-
-.. raw:: html
-
-   <br><hr>
 
 Run an MARL example
 -----------------------

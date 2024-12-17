@@ -8,10 +8,6 @@ The mixers, in particular, are responsible for combining the individual agent va
 The use of hypernetworks and feedforward networks in the mixers adds flexibility for capturing complex interactions among agents. 
 The QTRAN classes provide a structure for modeling joint action-observation values and joint observation values in a multi-agent setting.
 
-.. raw:: html
-
-    <br><hr>
-
 PyTorch
 ------------------------------------------
 
@@ -159,10 +155,6 @@ PyTorch
   :type actions_n: torch.Tensor
   :return: The evaluated counterfactual Q values.
   :rtype: torch.Tensor
-
-.. raw:: html
-
-    <br><hr>
 
 TensorFlow
 ------------------------------------------
@@ -312,10 +304,6 @@ TensorFlow
   :return: The evaluated counterfactual Q values.
   :rtype: tf.Tensor
 
-.. raw:: html
-
-    <br><hr>
-
 
 MindSpore
 ------------------------------------------
@@ -459,10 +447,6 @@ MindSpore
   :type actions_n: torch.Tensor
   :return: The evaluated counterfactual Q values.
   :rtype: torch.Tensor
-
-.. raw:: html
-
-    <br><hr>
 
 
 

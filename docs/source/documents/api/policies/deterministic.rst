@@ -3,10 +3,6 @@ Deterministic
 
 This module defines several classes for different types of actor-networks, Q-networks, and policies in a single-agent deep reinforcement learning setting.
 
-.. raw:: html
-
-    <br><hr>
-
 PyTorch
 ------------------------------------------
 
@@ -962,10 +958,6 @@ PyTorch
   This is a mechanism for slowly updating the target networks towards the current networks.
 
 
-.. raw:: html
-
-    <br><hr>
-
 TensorFlow
 ------------------------------------------
 
@@ -1915,10 +1907,6 @@ TensorFlow
   Copies the parameters of the evaluation Q-head and representation to the target Q-head and representation. 
   This is a mechanism for slowly updating the target networks towards the current networks.
 
-
-.. raw:: html
-
-    <br><hr>
 
 MindSpore
 ------------------------------------------
@@ -2874,10 +2862,6 @@ MindSpore
   Copies the parameters of the evaluation Q-head and representation to the target Q-head and representation. 
   This is a mechanism for slowly updating the target networks towards the current networks.
   
-
-.. raw:: html
-
-    <br><hr>
 
 Source Code
 -----------------

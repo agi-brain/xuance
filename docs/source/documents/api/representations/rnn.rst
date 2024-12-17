@@ -9,10 +9,6 @@ To instantiate these classes, you need to specify the input dimension (`input_di
 
 Similarly, when implementing these classes in PyTorch, you also need to specify the device type (`device`) to determine whether the model runs on CPU or GPU.
 
-.. raw:: html
-
-    <br><hr>
-
 PyTorch
 ------------------------------------------
 
@@ -99,10 +95,6 @@ PyTorch
     :return: The selected hidden states.
     :rtype: torch.Tensor
 
-.. raw:: html
-
-    <br><hr>
-
 
 MindSpore
 ------------------------------------------
@@ -180,10 +172,6 @@ MindSpore
   :param rnn_hidden: The RNN hidden states.
   :return: The selected hidden states.
   :rtype: ms.Tensor
-
-.. raw:: html
-
-    <br><hr>
 
 Source Code
 -----------------

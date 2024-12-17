@@ -3,10 +3,6 @@ MAPPO_Learner
 
 A learner class for the Multi-Agent Proximal Policy Optimization (MAPPO) algorithm implemented.
 
-.. raw:: html
-
-    <br><hr>
-
 PyTorch
 ------------------------------------------
 
@@ -58,10 +54,6 @@ PyTorch
   :return: The information of the training.
   :rtype: dict
 
-.. raw:: html
-
-    <br><hr>
-
 TensorFlow
 ------------------------------------------
 
@@ -101,10 +93,6 @@ TensorFlow
   :return: The information of the training.
   :rtype: dict
 
-.. raw:: html
-
-    <br><hr>
-
 MindSpore
 ------------------------------------------
 
@@ -143,10 +131,6 @@ MindSpore
   :type sample: dict
   :return: The information of the training.
   :rtype: dict
-
-.. raw:: html
-
-    <br><hr>
 
 Source Code
 -----------------

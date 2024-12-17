@@ -3,11 +3,6 @@ New Multi-Agent Environment
 
 In XuanCe, users also have the flexibility to create and run their own customized environments with multiple agents in addition to utilizing the provided ones.
 
-
-.. raw:: html
-
-   <br><hr>
-
 Step 1: Create a New Multi-Agent Environment
 -------------------------------------------------------------
 

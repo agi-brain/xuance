@@ -3,10 +3,6 @@ Runner_SC2
 
 This part constructs a reinforcement learning framework for training and testing agents in a StarCraft II environment.
 
-.. raw:: html
-
-    <br><hr>
-
 
 PyTorch
 ------------------------------------------
@@ -137,10 +133,6 @@ PyTorch
     :type start: int
     :return: the time passed, the estimated time left.
     :rtype: tuple
-
-.. raw:: html
-
-    <br><hr>
 
 
 Source Code

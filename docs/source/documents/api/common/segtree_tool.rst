@@ -116,10 +116,6 @@ They are often employed in algorithms that involve prioritized replay in DRL, wh
     :type end: int
     :return: min(arr[start], ...,  arr[end]).
 
-.. raw:: html
-
-    <br><hr>
-
 
 Source Code
 -----------------

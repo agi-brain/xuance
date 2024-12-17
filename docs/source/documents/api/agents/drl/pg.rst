@@ -1,10 +1,6 @@
 PG_Agent
 =====================================
 
-.. raw:: html
-
-    <br><hr>
-
 PyTorch
 ------------------------------------------
 
@@ -53,10 +49,6 @@ PyTorch
   :return: **scores** - The accumulated scores of these episodes.
   :rtype: list
 
-.. raw:: html
-
-    <br><hr>
-
 TensorFlow
 ------------------------------------------
 
@@ -103,10 +95,6 @@ TensorFlow
   :return: **scores** - The accumulated scores of these episodes.
   :rtype: list
 
-.. raw:: html
-
-    <br><hr>
-
 MindSpore
 ------------------------------------------
 
@@ -146,10 +134,6 @@ MindSpore
     :type test_episodes: int
     :return: The accumulated scores of these episodes.
     :rtype: list
-
-.. raw:: html
-
-    <br><hr>
 
 Source Code
 -----------------

@@ -13,10 +13,6 @@ MPE
 .. image:: ../../../figures/mpe/mpe_simple_world_comm.gif
     :height: 150px
 
-.. raw:: html
-
-    <br><hr>
-
 pettingzoo_env.py
 -----------------------------------------------
 
@@ -109,10 +105,6 @@ pettingzoo_env.py
     Retrieve the handles associated with the agents.
 
     :return: the handles associated with the agents.
-
-.. raw:: html
-
-    <br><hr>
 
 pettingzoo_vec_env.py
 -----------------------------------------------
@@ -280,10 +272,6 @@ pettingzoo_vec_env.py
 
     :return: an array representing available actions for each agent.
     :rtype: np.ndarray
-
-.. raw:: html
-
-    <br><hr>
 
 Source Code
 ---------------------------------------------

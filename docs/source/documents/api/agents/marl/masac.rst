@@ -1,10 +1,6 @@
 MASAC_Agents
 =====================================
 
-.. raw:: html
-
-    <br><hr>
-
 PyTorch
 ------------------------------------------
 
@@ -40,10 +36,6 @@ PyTorch
     :return: **info_train** - the information of the training process.
     :rtype: dict
 
-.. raw:: html
-
-    <br><hr>
-
 TensorFlow
 ------------------------------------------
 
@@ -78,10 +70,6 @@ TensorFlow
     :type i_episode: int
     :return: **info_train** - the information of the training process.
     :rtype: dict
-
-.. raw:: html
-
-    <br><hr>
 
 MindSpore
 ------------------------------------------
@@ -121,10 +109,6 @@ MindSpore
     :type i_episode: int
     :return: **info_train** - the information of the training process.
     :rtype: dict
-
-.. raw:: html
-
-    <br><hr>
 
 Source Code
 -----------------

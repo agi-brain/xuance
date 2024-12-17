@@ -1,10 +1,6 @@
 MPDQN_Learner
 =====================================
 
-.. raw:: html
-
-    <br><hr>
-
 PyTorch
 ------------------------------------------
 
@@ -42,10 +38,6 @@ PyTorch
   :return: None.
   :rtype: dict
 
-.. raw:: html
-
-    <br><hr>
-
 TensorFlow
 ------------------------------------------
 
@@ -81,10 +73,6 @@ TensorFlow
   :return: None.
   :rtype: dict
 
-.. raw:: html
-
-    <br><hr>
-
 MindSpore
 ------------------------------------------
 
@@ -119,10 +107,6 @@ MindSpore
   :type terminal_batch: np.ndarray
   :return: None.
   :rtype: dict
-
-.. raw:: html
-
-    <br><hr>
 
 Source Code
 -----------------

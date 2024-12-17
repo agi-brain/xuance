@@ -10,10 +10,6 @@ Minigrid
 .. image:: ../../../figures/minigrid/playground.gif
     :height: 150px
 
-.. raw:: html
-
-    <br><hr>
-
 minigrid_env.py
 -------------------------------------------------
 
@@ -74,10 +70,6 @@ minigrid_env.py
     :return: flattened observation vectors.
     :rtype: np.ndarray
 
-.. raw:: html
-
-    <br><hr>
-
 minigrid_vec__env.py
 -------------------------------------------------
 
@@ -97,10 +89,6 @@ minigrid_vec__env.py
     Extends the functionality of a dummy vectorized environment
 
     :param env_fns: environment function.
-
-.. raw:: html
-
-    <br><hr>
 
 Source Code
 ------------------------------------------------

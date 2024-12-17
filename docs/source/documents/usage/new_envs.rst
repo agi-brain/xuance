@@ -3,11 +3,6 @@ New Environment
 
 In XuanCe, users have the flexibility to create and run their own customized environments in addition to utilizing the provided ones.
 
-
-.. raw:: html
-
-   <br><hr>
-
 Step 1: Create a New Environment
 -------------------------------------------------------------
 

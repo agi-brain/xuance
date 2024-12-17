@@ -6,10 +6,6 @@ MetaDrive is an autonomous driving simulator that supports generating infinite s
 | **Official link**: `https://metadriverse.github.io/metadrive/ <https://metadriverse.github.io/metadrive/>`_
 | **Paper link**: `https://arxiv.org/pdf/2109.12674.pdf <https://arxiv.org/pdf/2109.12674.pdf>`_
 
-.. raw:: html
-
-    <br><hr>
-
 Installation
 -----------------------------------------------
 
@@ -29,10 +25,6 @@ Then, you can choose one of the listed methods to finish the installation of Met
     git clone https://github.com/metadriverse/metadrive.git
     cd metadrive
     pip install -e .
-
-.. raw:: html
-
-    <br><hr>
 
 Try an Example
 -----------------------------------------------
@@ -95,10 +87,6 @@ Open the terminal the type the python command:
 
     **Solution**: You can hold on the F key to accelerate the simulation.
 
-.. raw:: html
-
-    <br><hr>
-
 metadrive_env.py
 -----------------------------------------------
 
@@ -145,10 +133,6 @@ metadrive_env.py
     :return: the next step data, including local observations, rewards, terminated variables, truncated variables, and the other information.
     :rtype: tuple
 
-.. raw:: html
-
-    <br><hr>
-
 metadrive_vec_env.py
 -----------------------------------------------
 
@@ -172,10 +156,6 @@ metadrive_vec_env.py
     This class in derivated from the xuance.environment.gym.gym_vec_env.DummyVecEnv_Gym.
 
     :param env_fns: environment function.
-
-.. raw:: html
-
-    <br><hr>
 
 Source Code
 ------------------------------------------------

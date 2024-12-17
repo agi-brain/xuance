@@ -5,10 +5,6 @@ In this module, we define several classes related to the components of the DRL p
 such as the Q-networks, actor networks, critic policies, and the policies.
 These policies are used to generate actions from continuous aciton spaces, and calculate the values.
 
-.. raw:: html
-
-    <br><hr>
-
 PyTorch
 ------------------------------------------
 
@@ -323,10 +319,6 @@ PyTorch
   :type tau: float
 
 
-.. raw:: html
-
-    <br><hr>
-
 
 
 TensorFlow
@@ -639,10 +631,6 @@ TensorFlow
   :param tau: The soft update factor for the update of target networks.
   :type tau: float
 
-.. raw:: html
-
-    <br><hr>
-
 
 
 MindSpore
@@ -902,10 +890,6 @@ MindSpore
 
   :param tau: The soft update factor for the update of target networks.
   :type tau: float
-
-.. raw:: html
-
-    <br><hr>
 
 
 Source Code

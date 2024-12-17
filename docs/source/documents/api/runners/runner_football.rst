@@ -3,10 +3,6 @@ Runner_Football
 
 A generic framework for training and testing reinforcement learning in the Football environment.
 
-.. raw:: html
-
-    <br><hr>
-
 PyTorch
 ------------------------------------------
 
@@ -69,10 +65,6 @@ PyTorch
 
     This method conducts a thorough performance evaluation throughout the training and testing processes,
     providing comprehensive assessment results and statistics..
-
-.. raw:: html
-
-    <br><hr>
 
 
 Source Code

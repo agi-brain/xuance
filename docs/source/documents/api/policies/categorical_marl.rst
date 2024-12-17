@@ -4,10 +4,6 @@ Categorical-MARL
 Here, we provide several neural network modules for categorical MARL policies with discrete action space.
 Each policy can generate actions from a categorical distribution, or generate a categorical distribution directly.
 
-.. raw:: html
-
-    <br><hr>
-
 PyTorch
 ------------------------------------------
 
@@ -316,10 +312,6 @@ PyTorch
   :type agent_ids: torch.Tensor
   :return: The evaluated values of the observations and mean-actions pairs.
   :rtype: torch.Tensor
-
-.. raw:: html
-
-    <br><hr>
 
 TensorFlow
 ------------------------------------------
@@ -651,10 +643,6 @@ TensorFlow
   :return: The evaluated values of the observations and mean-actions pairs.
   :rtype: tf.Tensor
 
-.. raw:: html
-
-    <br><hr>
-
 MindSpore
 ------------------------------------------
 
@@ -946,10 +934,6 @@ MindSpore
   :type agent_ids: ms.Tensor
   :return: The evaluated values of the observations and mean-actions pairs.
   :rtype: ms.Tensor
-
-.. raw:: html
-
-    <br><hr>
 
 Source Code
 -----------------

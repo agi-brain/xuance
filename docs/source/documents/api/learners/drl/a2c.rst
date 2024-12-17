@@ -1,10 +1,6 @@
 A2C_Learner
 =====================================
 
-.. raw:: html
-
-    <br><hr>
-
 PyTorch
 ------------------------------------------
 
@@ -42,10 +38,6 @@ PyTorch
   :return: The information of the training.
   :rtype: dict
 
-.. raw:: html
-
-    <br><hr>
-
 TensorFlow
 ------------------------------------------
 
@@ -80,10 +72,6 @@ TensorFlow
   :type adv_batch: np.ndarray
   :return: The training information.
   :rtype: dict
-
-.. raw:: html
-
-    <br><hr>
 
 MindSpore
 ------------------------------------------
@@ -121,10 +109,6 @@ MindSpore
   :type adv_batch: np.ndarray
   :return: The information of the training.
   :rtype: dict
-
-.. raw:: html
-
-    <br><hr>
 
 Source Code
 -----------------

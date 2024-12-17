@@ -4,10 +4,6 @@ Coordination-Graph
 A key part for deep coordination graph-based algorithms, 
 where utility functions and payoffs are computed based on the interactions between different agents.
 
-.. raw:: html
-
-    <br><hr>
-
 PyTorch
 ------------------------------------------
 
@@ -79,10 +75,6 @@ PyTorch
   :param device: The calculating device.
   :type device: str
 
-.. raw:: html
-
-    <br><hr>
-
 TensorFlow
 ------------------------------------------
 
@@ -150,10 +142,6 @@ TensorFlow
   xuance.tensorflow.policies.coordination_graph.Coordination_Graph.set_coordination_graph()
 
   Sets up the coordination graph, including the assignment of edges and related tensors.
-
-.. raw:: html
-
-    <br><hr>
 
 
 MindSpore
@@ -223,10 +211,6 @@ MindSpore
   xuance.mindspore.policies.coordination_graph.Coordination_Graph.set_coordination_graph()
 
   Sets up the coordination graph, including the assignment of edges and related tensors.
-
-.. raw:: html
-
-    <br><hr>
 
 
 Source Code

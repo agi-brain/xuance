@@ -1,10 +1,6 @@
 QMIX_Agents
 =====================================
 
-.. raw:: html
-
-    <br><hr>
-
 PyTorch
 ------------------------------------------
 
@@ -43,10 +39,6 @@ PyTorch
     :type i_step: int
     :return: **info_train** - the information of the training process.
     :rtype: dict
-
-.. raw:: html
-
-    <br><hr>
 
 TensorFlow
 ------------------------------------------
@@ -89,10 +81,6 @@ TensorFlow
     :return: **info_train** - the information of the training process.
     :rtype: dict
 
-.. raw:: html
-
-    <br><hr>
-
 MindSpore
 ------------------------------------------
 
@@ -129,10 +117,6 @@ MindSpore
     :rtype: dict
 
     
-.. raw:: html
-
-    <br><hr>
-
 Source Code
 -----------------
 

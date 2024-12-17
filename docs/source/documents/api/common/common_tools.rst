@@ -100,12 +100,6 @@ and creating a predefined runner for DRL implementations.
     :return: The discounted cumulative returns for each step.
     :rtype: np.ndarray, list
 
-
-.. raw:: html
-
-    <br><hr>
-
-
 Source Code
 -----------------
 

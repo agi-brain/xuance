@@ -7,10 +7,6 @@ and facilitate further algorithm development and implementation of their own rei
 this section will take the PPO algorithm training on the MuJoCo environment task as an example,
 and provide a detailed introduction on how to call the API from the bottom level to implement reinforcement learning model training.
 
-.. raw:: html
-
-   <br><hr>
-
 Step 1: Create config file
 --------------------------------
 
@@ -75,11 +71,6 @@ Here we show a config file named "ppo_configs/ppo_mujoco_config.yaml" for MuJoCo
     log_dir: "./logs/ppo/"  # The main directory of log files.
     model_dir: "./models/ppo/"  # The main directory of model files.
 
-
-.. raw:: html
-
-   <br><hr>
-
 Step 2: Get the attributes of the example
 ----------------------------------------------
 
@@ -135,10 +126,6 @@ Then, the ``recursive_dict_update`` method of "XuanCe" is called.
 This method can update the configurations of the .yaml file from the ``parser`` variable.
 
 Finally, convert the dictionary variable as ``Namespace`` type.
-
-.. raw:: html
-
-   <br><hr>
 
 Step 3: Create environment, PPO Agent, and run the task
 --------------------------------------------------------

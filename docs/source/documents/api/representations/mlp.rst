@@ -8,10 +8,6 @@ To instantiate this class, you need to specify the input dimension (`input_dim`)
 
 When implementing this class in PyTorch, you also need to specify the device type (`device`) to determine whether the model runs on CPU or GPU.
 
-.. raw:: html
-
-    <br><hr>
-
 PyTorch
 ------------------------------------------
 
@@ -58,10 +54,6 @@ PyTorch
     :type observations: np.ndarray
     :return: The features output by the representation model.
     :rtype: dict
-
-.. raw:: html
-
-    <br><hr>
 
 TensorFlow
 ------------------------------------------
@@ -118,10 +110,6 @@ TensorFlow
   :return: The features output by the representation model.
   :rtype: dict
 
-.. raw:: html
-
-    <br><hr>
-
 MindSpore
 ------------------------------------------
 
@@ -172,10 +160,6 @@ MindSpore
   :type observations: ms.Tensor
   :return: The features output by the representation model.
   :rtype: dict
-
-.. raw:: html
-
-    <br><hr>
 
 Source Code
 -----------------
