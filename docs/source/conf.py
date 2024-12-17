@@ -42,7 +42,7 @@ exclude_patterns = []
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 html_theme = "furo"  # before that is renku, sphinx_rtd_theme
-html_static_path = ['_static']
+html_static_path = ['figures']
 html_theme_options = {
     "light_logo": "logo_2.png",
     "dark_logo": "logo_2.png",
