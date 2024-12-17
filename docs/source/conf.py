@@ -15,7 +15,6 @@ release = 'v1.2'
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 extensions = [
-    'renku_sphinx_theme',
     'sphinx_copybutton',
     'sphinx_tabs.tabs',
 ]
@@ -28,14 +27,12 @@ exclude_patterns = []
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-# import sphinx_rtd_theme
-# html_theme = "sphinx_rtd_theme"
-# html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
-html_theme = "renku"  # furo is suggested
-import renku_sphinx_theme
-html_theme_path = [renku_sphinx_theme.get_path()]
-html_logo = "figures/logo_2.png"
-
+html_theme = "furo"  # before that is renku, sphinx_rtd_theme
+html_static_path = ['figures']
+html_theme_options = {
+    "light_logo": "logo_2.png",
+    "dark_logo": "logo_2.png",
+}
 
 # The master toctree document.
 master_doc = 'index'
