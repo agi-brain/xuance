@@ -69,15 +69,15 @@ DQN-based Implementations
 
 .. tabs::
 
-    .. tab:: DQN
+    .. group-tab:: DQN
 
         .. tabs::
 
-            .. tab:: Classic Control
+            .. group-tab:: Classic Control
 
                 .. tabs::
 
-                    .. tab:: CartPole-v1
+                    .. group-tab:: CartPole-v1
 
                         .. code-block:: yaml
 
@@ -119,7 +119,7 @@ DQN-based Implementations
                             log_dir: "./logs/dqn/"
                             model_dir: "./models/dqn/"
 
-                    .. tab:: Acrobot-v1
+                    .. group-tab:: Acrobot-v1
 
                         .. code-block:: yaml
 
@@ -161,7 +161,7 @@ DQN-based Implementations
                             log_dir: "./logs/dqn/"
                             model_dir: "./models/dqn/"
 
-                    .. tab:: MountainCar-v0
+                    .. group-tab:: MountainCar-v0
 
                         .. code-block:: yaml
 
@@ -202,11 +202,11 @@ DQN-based Implementations
                             log_dir: "./logs/dqn/"
                             model_dir: "./models/dqn/"
 
-            .. tab:: Box2D
+            .. group-tab:: Box2D
 
                 .. tabs::
 
-                    .. tab:: CarRacing-v2
+                    .. group-tab:: CarRacing-v2
 
                         .. code-block:: yaml
 
@@ -252,7 +252,7 @@ DQN-based Implementations
                             log_dir: "./logs/dqn/"
                             model_dir: "./models/dqn/"
 
-                    .. tab:: LunarLander-v2
+                    .. group-tab:: LunarLander-v2
 
                         .. code-block:: yaml
 
@@ -294,7 +294,7 @@ DQN-based Implementations
                             log_dir: "./logs/dqn/"
                             model_dir: "./models/dqn/"
             
-            .. tab:: Atari
+            .. group-tab:: Atari
 
                 .. code-block:: yaml
 
@@ -344,15 +344,15 @@ DQN-based Implementations
                     log_dir: "./logs/dqn/"
                     model_dir: "./models/dqn/"
 
-    .. tab:: C51
+    .. group-tab:: C51
 
         .. tabs::
 
-            .. tab:: Classic Control
+            .. group-tab:: Classic Control
 
                 .. tabs::
 
-                    .. tab:: CartPole-v1
+                    .. group-tab:: CartPole-v1
 
                         .. code-block:: yaml
 
@@ -397,7 +397,7 @@ DQN-based Implementations
                             log_dir: "./logs/c51/"
                             model_dir: "./models/c51/"
 
-                    .. tab:: Acrobot-v1
+                    .. group-tab:: Acrobot-v1
 
                         .. code-block:: yaml
 
@@ -443,7 +443,7 @@ DQN-based Implementations
                             model_dir: "./models/c51/"
 
 
-                    .. tab:: MountainCar-v0
+                    .. group-tab:: MountainCar-v0
 
                         .. code-block:: yaml
 
@@ -489,11 +489,11 @@ DQN-based Implementations
                             model_dir: "./models/c51/"
 
             
-            .. tab:: Box2D
+            .. group-tab:: Box2D
 
                 .. tabs::
 
-                    .. tab:: CarRacing-v2
+                    .. group-tab:: CarRacing-v2
 
                         .. code-block:: yaml
 
@@ -543,7 +543,7 @@ DQN-based Implementations
                             model_dir: "./models/c51/"
 
 
-                    .. tab:: LunarLander-v2
+                    .. group-tab:: LunarLander-v2
 
                         .. code-block:: yaml
 
@@ -589,7 +589,7 @@ DQN-based Implementations
                             model_dir: "./models/c51/"
 
             
-            .. tab:: Atari
+            .. group-tab:: Atari
 
                 .. code-block:: yaml
 
@@ -644,15 +644,15 @@ DQN-based Implementations
                     model_dir: "./models/c51/"
 
 
-    .. tab:: DoubleDQN
+    .. group-tab:: DoubleDQN
 
         .. tabs::
 
-            .. tab:: Classic Control
+            .. group-tab:: Classic Control
 
                 .. tabs::
 
-                    .. tab:: CartPole-v1
+                    .. group-tab:: CartPole-v1
 
                         .. code-block:: yaml
 
@@ -694,7 +694,7 @@ DQN-based Implementations
                             log_dir: "./logs/ddqn/"
                             model_dir: "./models/ddqn/"
 
-                    .. tab:: Acrobot-v1
+                    .. group-tab:: Acrobot-v1
 
                         .. code-block:: yaml
 
@@ -736,7 +736,7 @@ DQN-based Implementations
                             log_dir: "./logs/ddqn/"
                             model_dir: "./models/ddqn/"
 
-                    .. tab:: MountainCar-v0
+                    .. group-tab:: MountainCar-v0
 
                         .. code-block:: yaml
 
@@ -780,11 +780,11 @@ DQN-based Implementations
 
 
             
-            .. tab:: Box2D
+            .. group-tab:: Box2D
 
                 .. tabs::
 
-                    .. tab:: CarRacing-v2
+                    .. group-tab:: CarRacing-v2
 
                         .. code-block:: yaml
 
@@ -831,7 +831,7 @@ DQN-based Implementations
                             model_dir: "./models/ddqn/"
 
 
-                    .. tab:: LunarLander-v2
+                    .. group-tab:: LunarLander-v2
 
                         .. code-block:: yaml
 
@@ -874,7 +874,7 @@ DQN-based Implementations
                             model_dir: "./models/ddqn/"
 
             
-            .. tab:: Atari
+            .. group-tab:: Atari
 
                 .. code-block:: yaml
 
@@ -925,15 +925,15 @@ DQN-based Implementations
                     log_dir: "./logs/ddqn/"
                     model_dir: "./models/ddqn/"
 
-    .. tab:: DuelingDQN
+    .. group-tab:: DuelingDQN
 
         .. tabs::
 
-            .. tab:: Classic Control
+            .. group-tab:: Classic Control
 
                 .. tabs::
 
-                    .. tab:: CartPole-v1
+                    .. group-tab:: CartPole-v1
 
                         .. code-block:: yaml
 
@@ -976,7 +976,7 @@ DQN-based Implementations
                             model_dir: "./models/dueldqn/"
 
 
-                    .. tab:: Acrobot-v1
+                    .. group-tab:: Acrobot-v1
 
                         .. code-block:: yaml
 
@@ -1019,7 +1019,7 @@ DQN-based Implementations
                             model_dir: "./models/dueldqn/"
 
 
-                    .. tab:: MountainCar-v0
+                    .. group-tab:: MountainCar-v0
 
                         .. code-block:: yaml
 
@@ -1062,11 +1062,11 @@ DQN-based Implementations
                             model_dir: "./models/dueldqn/"
 
             
-            .. tab:: Box2D
+            .. group-tab:: Box2D
 
                 .. tabs::
 
-                    .. tab:: CarRacing-v2
+                    .. group-tab:: CarRacing-v2
 
                         .. code-block:: yaml
 
@@ -1113,7 +1113,7 @@ DQN-based Implementations
                             model_dir: "./models/dueldqn/"
 
 
-                    .. tab:: LunarLander-v2
+                    .. group-tab:: LunarLander-v2
 
                         .. code-block:: yaml
 
@@ -1156,7 +1156,7 @@ DQN-based Implementations
                             model_dir: "./models/dueldqn/"
 
             
-            .. tab:: Atari
+            .. group-tab:: Atari
 
                 .. code-block:: yaml
 
@@ -1208,15 +1208,15 @@ DQN-based Implementations
                     model_dir: "./models/dueldqn/"
 
 
-    .. tab:: NoisyDQN
+    .. group-tab:: NoisyDQN
 
         .. tabs::
 
-            .. tab:: Classic Control
+            .. group-tab:: Classic Control
 
                 .. tabs::
 
-                    .. tab:: CartPole-v1
+                    .. group-tab:: CartPole-v1
 
                         .. code-block:: yaml
 
@@ -1259,7 +1259,7 @@ DQN-based Implementations
                             model_dir: "./models/noisy_dqn/"
 
 
-                    .. tab:: Acrobot-v1
+                    .. group-tab:: Acrobot-v1
 
                         .. code-block:: yaml
 
@@ -1302,7 +1302,7 @@ DQN-based Implementations
                             model_dir: "./models/noisy_dqn/"
 
 
-                    .. tab:: MountainCar-v0
+                    .. group-tab:: MountainCar-v0
 
                         .. code-block:: yaml
 
@@ -1345,11 +1345,11 @@ DQN-based Implementations
                             model_dir: "./models/noisy_dqn/"
 
             
-            .. tab:: Box2D
+            .. group-tab:: Box2D
 
                 .. tabs::
 
-                    .. tab:: CarRacing-v2
+                    .. group-tab:: CarRacing-v2
 
                         .. code-block:: yaml
 
@@ -1395,7 +1395,7 @@ DQN-based Implementations
                             log_dir: "./logs/noisy_dqn/"
                             model_dir: "./models/noisy_dqn/"
 
-                    .. tab:: LunarLander-v2
+                    .. group-tab:: LunarLander-v2
 
                         .. code-block:: yaml
 
@@ -1438,7 +1438,7 @@ DQN-based Implementations
                             model_dir: "./models/noisy_dqn/"
 
             
-            .. tab:: Atari
+            .. group-tab:: Atari
 
                 .. code-block:: yaml
 
@@ -1490,15 +1490,15 @@ DQN-based Implementations
                     model_dir: "./models/noisy_dqn/"
 
 
-    .. tab:: PerDQN
+    .. group-tab:: PerDQN
 
         .. tabs::
 
-            .. tab:: Classic Control
+            .. group-tab:: Classic Control
 
                 .. tabs::
 
-                    .. tab:: CartPole-v1
+                    .. group-tab:: CartPole-v1
 
                         .. code-block:: yaml
 
@@ -1543,7 +1543,7 @@ DQN-based Implementations
                             log_dir: "./logs/perdqn/"
                             model_dir: "./models/perdqn/"
 
-                    .. tab:: Acrobot-v1
+                    .. group-tab:: Acrobot-v1
 
                         .. code-block:: yaml
 
@@ -1588,7 +1588,7 @@ DQN-based Implementations
                             log_dir: "./logs/perdqn/"
                             model_dir: "./models/perdqn/"
 
-                    .. tab:: MountainCar-v0
+                    .. group-tab:: MountainCar-v0
 
                         .. code-block:: yaml
 
@@ -1634,11 +1634,11 @@ DQN-based Implementations
                             model_dir: "./models/perdqn/"
 
             
-            .. tab:: Box2D
+            .. group-tab:: Box2D
 
                 .. tabs::
 
-                    .. tab:: CarRacing-v2
+                    .. group-tab:: CarRacing-v2
 
                         .. code-block:: yaml
 
@@ -1688,7 +1688,7 @@ DQN-based Implementations
                             model_dir: "./models/perdqn/"
 
 
-                    .. tab:: LunarLander-v2
+                    .. group-tab:: LunarLander-v2
 
                         .. code-block:: yaml
 
@@ -1733,7 +1733,7 @@ DQN-based Implementations
                             log_dir: "./logs/perdqn/"
                             model_dir: "./models/perdqn/"
 
-            .. tab:: Atari
+            .. group-tab:: Atari
 
                 .. code-block:: yaml
 
@@ -1788,15 +1788,15 @@ DQN-based Implementations
                     model_dir: "./models/perdqn/"
 
 
-    .. tab:: QRDQN
+    .. group-tab:: QRDQN
 
         .. tabs::
 
-            .. tab:: Classic Control
+            .. group-tab:: Classic Control
 
                 .. tabs::
 
-                    .. tab:: CartPole-v1
+                    .. group-tab:: CartPole-v1
 
                         .. code-block:: yaml
 
@@ -1840,7 +1840,7 @@ DQN-based Implementations
                             model_dir: "./models/qrdqn/"
 
 
-                    .. tab:: Acrobot-v1
+                    .. group-tab:: Acrobot-v1
 
                         .. code-block:: yaml
 
@@ -1883,7 +1883,7 @@ DQN-based Implementations
                             log_dir: "./logs/qrdqn/"
                             model_dir: "./models/qrdqn/"
 
-                    .. tab:: MountainCar-v0
+                    .. group-tab:: MountainCar-v0
 
                         .. code-block:: yaml
 
@@ -1926,11 +1926,11 @@ DQN-based Implementations
                             log_dir: "./logs/qrdqn/"
                             model_dir: "./models/qrdqn/"
 
-            .. tab:: Box2D
+            .. group-tab:: Box2D
 
                 .. tabs::
 
-                    .. tab:: CarRacing-v2
+                    .. group-tab:: CarRacing-v2
 
                         .. code-block:: yaml
 
@@ -1978,7 +1978,7 @@ DQN-based Implementations
                             model_dir: "./models/qrdqn/"
 
 
-                    .. tab:: LunarLander-v2
+                    .. group-tab:: LunarLander-v2
 
                         .. code-block:: yaml
 
@@ -2022,7 +2022,7 @@ DQN-based Implementations
                             model_dir: "./models/qrdqn/"
 
             
-            .. tab:: Atari
+            .. group-tab:: Atari
 
                 .. code-block:: yaml
 
@@ -2084,15 +2084,15 @@ Policy Gradient-based Implementations
 
 .. tabs::
 
-    .. tab:: PG
+    .. group-tab:: PG
 
         .. tabs::
 
-            .. tab:: Classic Control
+            .. group-tab:: Classic Control
 
                 .. tabs::
 
-                    .. tab:: CartPole-v1
+                    .. group-tab:: CartPole-v1
 
                         .. code-block:: yaml
 
@@ -2135,7 +2135,7 @@ Policy Gradient-based Implementations
                             log_dir: "./logs/pg/"
                             model_dir: "./models/pg/"
 
-                    .. tab:: Acrobot-v1
+                    .. group-tab:: Acrobot-v1
 
                         .. code-block:: yaml
 
@@ -2178,7 +2178,7 @@ Policy Gradient-based Implementations
                             log_dir: "./logs/pg/"
                             model_dir: "./models/pg/"
 
-                    .. tab:: Pendulum-v1
+                    .. group-tab:: Pendulum-v1
 
                         .. code-block:: yaml
 
@@ -2221,7 +2221,7 @@ Policy Gradient-based Implementations
                             log_dir: "./logs/pg/"
                             model_dir: "./models/pg/"
 
-                    .. tab:: MountainCar-v0
+                    .. group-tab:: MountainCar-v0
 
                         .. code-block:: yaml
 
@@ -2265,11 +2265,11 @@ Policy Gradient-based Implementations
                             model_dir: "./models/pg/"
 
 
-            .. tab:: Box2D
+            .. group-tab:: Box2D
 
                 .. tabs::
 
-                    .. tab:: BipedalWalker-v3
+                    .. group-tab:: BipedalWalker-v3
 
                         .. code-block:: yaml
 
@@ -2312,7 +2312,7 @@ Policy Gradient-based Implementations
                             log_dir: "./logs/pg/"
                             model_dir: "./models/pg/"
 
-                    .. tab:: LunarLander-v2
+                    .. group-tab:: LunarLander-v2
 
                         .. code-block:: yaml
 
@@ -2355,7 +2355,7 @@ Policy Gradient-based Implementations
                             log_dir: "./logs/pg/"
                             model_dir: "./models/pg/"
 
-            .. tab:: MuJoCo
+            .. group-tab:: MuJoCo
 
                 .. code-block:: yaml
 
@@ -2398,15 +2398,15 @@ Policy Gradient-based Implementations
                     log_dir: "./logs/pg/"
                     model_dir: "./models/pg/"
  
-    .. tab:: PPG
+    .. group-tab:: PPG
 
         .. tabs::
 
-            .. tab:: Classic Control
+            .. group-tab:: Classic Control
 
                 .. tabs::
 
-                    .. tab:: CartPole-v1
+                    .. group-tab:: CartPole-v1
 
                         .. code-block:: yaml
 
@@ -2453,7 +2453,7 @@ Policy Gradient-based Implementations
                             log_dir: "./logs/ppg/"
                             model_dir: "./models/ppg/"
 
-                    .. tab:: Acrobot-v1
+                    .. group-tab:: Acrobot-v1
 
                         .. code-block:: yaml
 
@@ -2501,7 +2501,7 @@ Policy Gradient-based Implementations
                             model_dir: "./models/ppg/"
 
 
-                    .. tab:: Pendulum-v1
+                    .. group-tab:: Pendulum-v1
 
                         .. code-block:: yaml
 
@@ -2549,7 +2549,7 @@ Policy Gradient-based Implementations
                             model_dir: "./models/ppg/"
 
 
-                    .. tab:: MountainCar-v0
+                    .. group-tab:: MountainCar-v0
 
                         .. code-block:: yaml
 
@@ -2597,11 +2597,11 @@ Policy Gradient-based Implementations
                             model_dir: "./models/ppg/"
 
 
-            .. tab:: Box2D
+            .. group-tab:: Box2D
 
                 .. tabs::
 
-                    .. tab:: BipedalWalker-v3
+                    .. group-tab:: BipedalWalker-v3
 
                         .. code-block:: yaml
 
@@ -2649,7 +2649,7 @@ Policy Gradient-based Implementations
                             model_dir: "./models/ppg/"
 
 
-                    .. tab:: LunarLander-v2
+                    .. group-tab:: LunarLander-v2
 
                         .. code-block:: yaml
 
@@ -2696,7 +2696,7 @@ Policy Gradient-based Implementations
                             log_dir: "./logs/ppg/"
                             model_dir: "./models/ppg/"
 
-            .. tab:: MuJoCo
+            .. group-tab:: MuJoCo
 
                 .. code-block:: yaml
 
@@ -2746,15 +2746,15 @@ Policy Gradient-based Implementations
 
 
 
-    .. tab:: PPO
+    .. group-tab:: PPO
 
         .. tabs::
 
-            .. tab:: Classic Control
+            .. group-tab:: Classic Control
 
                 .. tabs::
 
-                    .. tab:: CartPole-v1
+                    .. group-tab:: CartPole-v1
 
                         .. code-block:: yaml
 
@@ -2803,7 +2803,7 @@ Policy Gradient-based Implementations
                             model_dir: "./models/ppo/"
 
 
-                    .. tab:: Acrobot-v1
+                    .. group-tab:: Acrobot-v1
 
                         .. code-block:: yaml
 
@@ -2852,7 +2852,7 @@ Policy Gradient-based Implementations
                             model_dir: "./models/ppo/"
 
 
-                    .. tab:: Pendulum-v1
+                    .. group-tab:: Pendulum-v1
 
                         .. code-block:: yaml
 
@@ -2901,7 +2901,7 @@ Policy Gradient-based Implementations
                             model_dir: "./models/ppo/"
 
 
-                    .. tab:: MountainCar-v0
+                    .. group-tab:: MountainCar-v0
 
                         .. code-block:: yaml
 
@@ -2950,11 +2950,11 @@ Policy Gradient-based Implementations
                             model_dir: "./models/ppo/"
 
 
-            .. tab:: Box2D
+            .. group-tab:: Box2D
 
                 .. tabs::
 
-                    .. tab:: BipedalWalker-v3
+                    .. group-tab:: BipedalWalker-v3
 
                         .. code-block:: yaml
 
@@ -3002,7 +3002,7 @@ Policy Gradient-based Implementations
                             log_dir: "./logs/ppo/"
                             model_dir: "./models/ppo/"
 
-                    .. tab:: CarRacing-v2
+                    .. group-tab:: CarRacing-v2
 
                         .. code-block:: yaml
 
@@ -3053,7 +3053,7 @@ Policy Gradient-based Implementations
                             log_dir: "./logs/ppo/"
                             model_dir: "./models/ppo/"
 
-                    .. tab:: LunarLander-v2
+                    .. group-tab:: LunarLander-v2
 
                         .. code-block:: yaml
 
@@ -3101,7 +3101,7 @@ Policy Gradient-based Implementations
                             log_dir: "./logs/ppo/"
                             model_dir: "./models/ppo/"
 
-            .. tab:: Atari
+            .. group-tab:: Atari
 
                 .. code-block:: yaml
 
@@ -3158,7 +3158,7 @@ Policy Gradient-based Implementations
                     model_dir: "./models/ppo/"
 
 
-            .. tab:: MuJoCo
+            .. group-tab:: MuJoCo
 
                 .. code-block:: yaml
 
@@ -3208,15 +3208,15 @@ Policy Gradient-based Implementations
 
 
 
-    .. tab:: A2C
+    .. group-tab:: A2C
 
         .. tabs::
 
-            .. tab:: Classic Control
+            .. group-tab:: Classic Control
 
                 .. tabs::
 
-                    .. tab:: CartPole-v1
+                    .. group-tab:: CartPole-v1
 
                         .. code-block:: yaml
 
@@ -3262,7 +3262,7 @@ Policy Gradient-based Implementations
                             model_dir: "./models/a2c/"
 
 
-                    .. tab:: Acrobot-v1
+                    .. group-tab:: Acrobot-v1
 
                         .. code-block:: yaml
 
@@ -3308,7 +3308,7 @@ Policy Gradient-based Implementations
                             model_dir: "./models/a2c/"
 
 
-                    .. tab:: Pendulum-v1
+                    .. group-tab:: Pendulum-v1
 
                         .. code-block:: yaml
 
@@ -3354,7 +3354,7 @@ Policy Gradient-based Implementations
                             model_dir: "./models/a2c/"
 
 
-                    .. tab:: MountainCar-v0
+                    .. group-tab:: MountainCar-v0
 
                         .. code-block:: yaml
 
@@ -3400,11 +3400,11 @@ Policy Gradient-based Implementations
                             model_dir: "./models/a2c/"
 
 
-            .. tab:: Box2D
+            .. group-tab:: Box2D
 
                 .. tabs::
 
-                    .. tab:: BipedalWalker-v3
+                    .. group-tab:: BipedalWalker-v3
 
                         .. code-block:: yaml
 
@@ -3449,7 +3449,7 @@ Policy Gradient-based Implementations
                             model_dir: "./models/a2c/"
 
 
-                    .. tab:: LunarLander-v2
+                    .. group-tab:: LunarLander-v2
 
                         .. code-block:: yaml
 
@@ -3494,7 +3494,7 @@ Policy Gradient-based Implementations
                             model_dir: "./models/a2c/"
 
 
-            .. tab:: Atari
+            .. group-tab:: Atari
 
                 .. code-block:: yaml
 
@@ -3548,7 +3548,7 @@ Policy Gradient-based Implementations
                     model_dir: "./models/a2c/"
 
 
-            .. tab:: MuJoCo
+            .. group-tab:: MuJoCo
 
                 .. code-block:: yaml
 
@@ -3595,15 +3595,15 @@ Policy Gradient-based Implementations
 
 
 
-    .. tab:: SAC
+    .. group-tab:: SAC
 
         .. tabs::
 
-            .. tab:: Classic Control
+            .. group-tab:: Classic Control
 
                 .. tabs::
 
-                    .. tab:: CartPole-v1
+                    .. group-tab:: CartPole-v1
 
                         .. code-block:: yaml
 
@@ -3648,7 +3648,7 @@ Policy Gradient-based Implementations
                             model_dir: "./models/sac/"
 
 
-                    .. tab:: Acrobot-v1
+                    .. group-tab:: Acrobot-v1
 
                         .. code-block:: yaml
 
@@ -3693,7 +3693,7 @@ Policy Gradient-based Implementations
                             model_dir: "./models/sac/"
 
 
-                    .. tab:: Pendulum-v1
+                    .. group-tab:: Pendulum-v1
 
                         .. code-block:: yaml
 
@@ -3737,7 +3737,7 @@ Policy Gradient-based Implementations
                             model_dir: "./models/sac/"
 
 
-                    .. tab:: MountainCar-v0
+                    .. group-tab:: MountainCar-v0
 
                         .. code-block:: yaml
 
@@ -3782,11 +3782,11 @@ Policy Gradient-based Implementations
                             model_dir: "./models/sac/"
 
 
-            .. tab:: Box2D
+            .. group-tab:: Box2D
 
                 .. tabs::
 
-                    .. tab:: BipedalWalker-v3
+                    .. group-tab:: BipedalWalker-v3
 
                         .. code-block:: yaml
 
@@ -3830,7 +3830,7 @@ Policy Gradient-based Implementations
                             model_dir: "./models/sac/"
 
 
-                    .. tab:: LunarLander-v2
+                    .. group-tab:: LunarLander-v2
 
                         .. code-block:: yaml
 
@@ -3875,7 +3875,7 @@ Policy Gradient-based Implementations
                             model_dir: "./models/sac/"
 
 
-            .. tab:: Atari
+            .. group-tab:: Atari
 
                 .. code-block:: yaml
 
@@ -3928,7 +3928,7 @@ Policy Gradient-based Implementations
                     model_dir: "./models/sac/"
 
 
-            .. tab:: MuJoCo
+            .. group-tab:: MuJoCo
 
                 .. code-block:: yaml
 
@@ -3975,15 +3975,15 @@ Policy Gradient-based Implementations
 
 
 
-    .. tab:: DDPG
+    .. group-tab:: DDPG
 
         .. tabs::
 
-            .. tab:: Classic Control
+            .. group-tab:: Classic Control
 
                 .. tabs::
 
-                    .. tab:: Pendulum-v1
+                    .. group-tab:: Pendulum-v1
 
                         .. code-block:: yaml
 
@@ -4026,11 +4026,11 @@ Policy Gradient-based Implementations
                             log_dir: "./logs/ddpg/"
                             model_dir: "./models/ddpg/"
 
-            .. tab:: Box2D
+            .. group-tab:: Box2D
 
                 .. tabs::
 
-                    .. tab:: BipedalWalker-v3
+                    .. group-tab:: BipedalWalker-v3
 
                         .. code-block:: yaml
 
@@ -4073,7 +4073,7 @@ Policy Gradient-based Implementations
                             log_dir: "./logs/ddpg/"
                             model_dir: "./models/ddpg/"
 
-            .. tab:: MuJoCo
+            .. group-tab:: MuJoCo
 
                 .. code-block:: yaml
 
@@ -4118,15 +4118,15 @@ Policy Gradient-based Implementations
 
 
 
-    .. tab:: TD3
+    .. group-tab:: TD3
 
         .. tabs::
 
-            .. tab:: Classic Control
+            .. group-tab:: Classic Control
 
                 .. tabs::
 
-                    .. tab:: Pendulum-v1
+                    .. group-tab:: Pendulum-v1
 
                         .. code-block:: yaml
 
@@ -4169,11 +4169,11 @@ Policy Gradient-based Implementations
                             log_dir: "./logs/td3/"
                             model_dir: "./models/td3/"
 
-            .. tab:: Box2D
+            .. group-tab:: Box2D
 
                 .. tabs::
 
-                    .. tab:: BipedalWalker-v3
+                    .. group-tab:: BipedalWalker-v3
 
                         .. code-block:: yaml
 
@@ -4216,7 +4216,7 @@ Policy Gradient-based Implementations
                             log_dir: "./logs/td3/"
                             model_dir: "./models/td3/"
 
-            .. tab:: MuJoCo
+            .. group-tab:: MuJoCo
 
                 .. code-block:: yaml
 
@@ -4270,15 +4270,15 @@ MARL Implementations
 
 .. tabs::
 
-    .. tab:: IQL
+    .. group-tab:: IQL
 
         .. tabs::
 
-            .. tab:: MPE
+            .. group-tab:: MPE
 
                 .. tabs::
 
-                    .. tab:: simple_spread_v3
+                    .. group-tab:: simple_spread_v3
 
                         .. code-block:: yaml
 
@@ -4323,11 +4323,11 @@ MARL Implementations
                             model_dir: "./models/iql/"
 
 
-            .. tab:: Magent2
+            .. group-tab:: Magent2
 
                 .. tabs::
 
-                    .. tab:: adversarial_pursuit_v4
+                    .. group-tab:: adversarial_pursuit_v4
 
                         .. code-block:: yaml
 
@@ -4377,11 +4377,11 @@ MARL Implementations
                             log_dir: "./logs/iql/"
                             model_dir: "./models/iql/"
 
-            .. tab:: SC2
+            .. group-tab:: SC2
 
                 .. tabs::
 
-                    .. tab:: 1c3s5z
+                    .. group-tab:: 1c3s5z
 
                         .. code-block:: yaml
 
@@ -4433,7 +4433,7 @@ MARL Implementations
                             log_dir: "./logs/iql/"
                             model_dir: "./models/iql/"
 
-                    .. tab:: 2m_vs_1z
+                    .. group-tab:: 2m_vs_1z
 
                         .. code-block:: yaml
 
@@ -4487,7 +4487,7 @@ MARL Implementations
                             model_dir: "./models/iql/"
 
 
-                    .. tab:: 2s3z
+                    .. group-tab:: 2s3z
 
                         .. code-block:: yaml
 
@@ -4539,7 +4539,7 @@ MARL Implementations
                             log_dir: "./logs/iql/"
                             model_dir: "./models/iql/"
 
-                    .. tab:: 3m
+                    .. group-tab:: 3m
 
                         .. code-block:: yaml
 
@@ -4592,7 +4592,7 @@ MARL Implementations
                             model_dir: "./models/iql/"
 
 
-                    .. tab:: 5m_vs_6m
+                    .. group-tab:: 5m_vs_6m
 
                         .. code-block:: yaml
 
@@ -4645,7 +4645,7 @@ MARL Implementations
                             model_dir: "./models/iql/"
 
 
-                    .. tab:: 8m
+                    .. group-tab:: 8m
 
                         .. code-block:: yaml
 
@@ -4698,7 +4698,7 @@ MARL Implementations
                             model_dir: "./models/iql/"
 
 
-                    .. tab:: 8m_vd_9m
+                    .. group-tab:: 8m_vd_9m
 
                         .. code-block:: yaml
 
@@ -4751,7 +4751,7 @@ MARL Implementations
                             model_dir: "./models/iql/"
 
 
-                    .. tab:: 25m
+                    .. group-tab:: 25m
 
                         .. code-block:: yaml
 
@@ -4804,7 +4804,7 @@ MARL Implementations
                             model_dir: "./models/iql/"
 
 
-                    .. tab:: corridor
+                    .. group-tab:: corridor
 
                         .. code-block:: yaml
 
@@ -4857,7 +4857,7 @@ MARL Implementations
                             model_dir: "./models/iql/"
 
                     
-                    .. tab:: MMM2
+                    .. group-tab:: MMM2
 
                         .. code-block:: yaml
 
@@ -4910,11 +4910,11 @@ MARL Implementations
                             model_dir: "./models/iql/"
 
 
-            .. tab:: Football
+            .. group-tab:: Football
 
                 .. tabs::
 
-                    .. tab:: 3v1
+                    .. group-tab:: 3v1
 
                         .. code-block:: yaml
 
@@ -4976,15 +4976,15 @@ MARL Implementations
                             videos_dir: "./videos/iql/"
 
     
-    .. tab:: VDN
+    .. group-tab:: VDN
 
         .. tabs::
 
-            .. tab:: MPE
+            .. group-tab:: MPE
 
                 .. tabs::
 
-                    .. tab:: simple_spread_v3
+                    .. group-tab:: simple_spread_v3
 
                         .. code-block:: yaml
 
@@ -5030,11 +5030,11 @@ MARL Implementations
                             model_dir: "./models/vdn/"
 
 
-            .. tab:: SC2
+            .. group-tab:: SC2
 
                 .. tabs::
 
-                    .. tab:: 1c3s5z
+                    .. group-tab:: 1c3s5z
 
                         .. code-block:: yaml
 
@@ -5087,7 +5087,7 @@ MARL Implementations
                             log_dir: "./logs/vdn/"
                             model_dir: "./models/vdn/"
 
-                    .. tab:: 2m_vs_1z
+                    .. group-tab:: 2m_vs_1z
 
                         .. code-block:: yaml
 
@@ -5141,7 +5141,7 @@ MARL Implementations
                             model_dir: "./models/vdn/"
 
 
-                    .. tab:: 2s3z
+                    .. group-tab:: 2s3z
 
                         .. code-block:: yaml
 
@@ -5195,7 +5195,7 @@ MARL Implementations
                             model_dir: "./models/vdn/"
 
 
-                    .. tab:: 3m
+                    .. group-tab:: 3m
 
                         .. code-block:: yaml
 
@@ -5249,7 +5249,7 @@ MARL Implementations
                             model_dir: "./models/vdn/"
 
 
-                    .. tab:: 5m_vs_6m
+                    .. group-tab:: 5m_vs_6m
 
                         .. code-block:: yaml
 
@@ -5303,7 +5303,7 @@ MARL Implementations
                             model_dir: "./models/vdn/"
 
 
-                    .. tab:: 8m
+                    .. group-tab:: 8m
 
                         .. code-block:: yaml
 
@@ -5357,7 +5357,7 @@ MARL Implementations
                             model_dir: "./models/vdn/"
 
 
-                    .. tab:: 8m_vd_9m
+                    .. group-tab:: 8m_vd_9m
 
                         .. code-block:: yaml
 
@@ -5411,7 +5411,7 @@ MARL Implementations
                             model_dir: "./models/vdn/"
 
 
-                    .. tab:: 25m
+                    .. group-tab:: 25m
 
                         .. code-block:: yaml
 
@@ -5465,7 +5465,7 @@ MARL Implementations
                             model_dir: "./models/vdn/"
 
 
-                    .. tab:: corridor
+                    .. group-tab:: corridor
 
                         .. code-block:: yaml
 
@@ -5519,7 +5519,7 @@ MARL Implementations
                             model_dir: "./models/vdn/"
 
                     
-                    .. tab:: MMM2
+                    .. group-tab:: MMM2
 
                         .. code-block:: yaml
 
@@ -5573,11 +5573,11 @@ MARL Implementations
                             model_dir: "./models/vdn/"
 
 
-            .. tab:: Football
+            .. group-tab:: Football
 
                 .. tabs::
 
-                    .. tab:: 3v1
+                    .. group-tab:: 3v1
 
                         .. code-block:: yaml
 
@@ -5640,15 +5640,15 @@ MARL Implementations
                             videos_dir: "./videos/vdn/"
 
     
-    .. tab:: QMIX
+    .. group-tab:: QMIX
 
         .. tabs::
 
-            .. tab:: MPE
+            .. group-tab:: MPE
 
                 .. tabs::
 
-                    .. tab:: simple_spread_v3
+                    .. group-tab:: simple_spread_v3
 
                         .. code-block:: yaml
 
@@ -5696,11 +5696,11 @@ MARL Implementations
                             model_dir: "./models/qmix/"
 
 
-            .. tab:: SC2
+            .. group-tab:: SC2
 
                 .. tabs::
 
-                    .. tab:: 1c3s5z
+                    .. group-tab:: 1c3s5z
 
                         .. code-block:: yaml
 
@@ -5756,7 +5756,7 @@ MARL Implementations
                             log_dir: "./logs/qmix/"
                             model_dir: "./models/qmix/"
 
-                    .. tab:: 2m_vs_1z
+                    .. group-tab:: 2m_vs_1z
 
                         .. code-block:: yaml
 
@@ -5812,7 +5812,7 @@ MARL Implementations
                             log_dir: "./logs/qmix/"
                             model_dir: "./models/qmix/"
 
-                    .. tab:: 2s3z
+                    .. group-tab:: 2s3z
 
                         .. code-block:: yaml
 
@@ -5868,7 +5868,7 @@ MARL Implementations
                             log_dir: "./logs/qmix/"
                             model_dir: "./models/qmix/"
 
-                    .. tab:: 3m
+                    .. group-tab:: 3m
 
                         .. code-block:: yaml
 
@@ -5924,7 +5924,7 @@ MARL Implementations
                             log_dir: "./logs/qmix/"
                             model_dir: "./models/qmix/"
 
-                    .. tab:: 5m_vs_6m
+                    .. group-tab:: 5m_vs_6m
 
                         .. code-block:: yaml
 
@@ -5980,7 +5980,7 @@ MARL Implementations
                             log_dir: "./logs/qmix/"
                             model_dir: "./models/qmix/"
 
-                    .. tab:: 8m
+                    .. group-tab:: 8m
 
                         .. code-block:: yaml
 
@@ -6036,7 +6036,7 @@ MARL Implementations
                             log_dir: "./logs/qmix/"
                             model_dir: "./models/qmix/"
 
-                    .. tab:: 8m_vd_9m
+                    .. group-tab:: 8m_vd_9m
 
                         .. code-block:: yaml
 
@@ -6092,7 +6092,7 @@ MARL Implementations
                             log_dir: "./logs/qmix/"
                             model_dir: "./models/qmix/"
 
-                    .. tab:: 25m
+                    .. group-tab:: 25m
 
                         .. code-block:: yaml
 
@@ -6148,7 +6148,7 @@ MARL Implementations
                             log_dir: "./logs/qmix/"
                             model_dir: "./models/qmix/"
 
-                    .. tab:: corridor
+                    .. group-tab:: corridor
 
                         .. code-block:: yaml
 
@@ -6204,7 +6204,7 @@ MARL Implementations
                             log_dir: "./logs/qmix/"
                             model_dir: "./models/qmix/"
 
-                    .. tab:: MMM2
+                    .. group-tab:: MMM2
 
                         .. code-block:: yaml
 
@@ -6260,11 +6260,11 @@ MARL Implementations
                             log_dir: "./logs/qmix/"
                             model_dir: "./models/qmix/"
 
-            .. tab:: Football
+            .. group-tab:: Football
 
                 .. tabs::
 
-                    .. tab:: 3v1
+                    .. group-tab:: 3v1
 
                         .. code-block:: yaml
 
@@ -6329,15 +6329,15 @@ MARL Implementations
                             videos_dir: "./videos/qmix/"
 
 
-    .. tab:: WQMIX
+    .. group-tab:: WQMIX
 
         .. tabs::
 
-            .. tab:: MPE
+            .. group-tab:: MPE
 
                 .. tabs::
 
-                    .. tab:: simple_spread_v3
+                    .. group-tab:: simple_spread_v3
 
                         .. code-block:: yaml
 
@@ -6393,11 +6393,11 @@ MARL Implementations
                             log_dir: "./logs/wqmix/"
                             model_dir: "./models/wqmix/"
 
-            .. tab:: SC2
+            .. group-tab:: SC2
 
                 .. tabs::
 
-                    .. tab:: 1c3s5z
+                    .. group-tab:: 1c3s5z
 
                         .. code-block:: yaml
 
@@ -6455,7 +6455,7 @@ MARL Implementations
                             log_dir: "./logs/wqmix/"
                             model_dir: "./models/wqmix/"
 
-                    .. tab:: 2m_vs_1z
+                    .. group-tab:: 2m_vs_1z
 
                         .. code-block:: yaml
 
@@ -6513,7 +6513,7 @@ MARL Implementations
                             log_dir: "./logs/wqmix/"
                             model_dir: "./models/wqmix/"
 
-                    .. tab:: 2s3z
+                    .. group-tab:: 2s3z
 
                         .. code-block:: yaml
 
@@ -6571,7 +6571,7 @@ MARL Implementations
                             log_dir: "./logs/wqmix/"
                             model_dir: "./models/wqmix/"
 
-                    .. tab:: 3m
+                    .. group-tab:: 3m
 
                         .. code-block:: yaml
 
@@ -6629,7 +6629,7 @@ MARL Implementations
                             log_dir: "./logs/wqmix/"
                             model_dir: "./models/wqmix/"
 
-                    .. tab:: 5m_vs_6m
+                    .. group-tab:: 5m_vs_6m
 
                         .. code-block:: yaml
 
@@ -6687,7 +6687,7 @@ MARL Implementations
                             log_dir: "./logs/wqmix/"
                             model_dir: "./models/wqmix/"
 
-                    .. tab:: 8m
+                    .. group-tab:: 8m
 
                         .. code-block:: yaml
 
@@ -6745,7 +6745,7 @@ MARL Implementations
                             log_dir: "./logs/wqmix/"
                             model_dir: "./models/wqmix/"
 
-                    .. tab:: 8m_vd_9m
+                    .. group-tab:: 8m_vd_9m
 
                         .. code-block:: yaml
 
@@ -6803,7 +6803,7 @@ MARL Implementations
                             log_dir: "./logs/wqmix/"
                             model_dir: "./models/wqmix/"
 
-                    .. tab:: 25m
+                    .. group-tab:: 25m
 
                         .. code-block:: yaml
 
@@ -6861,7 +6861,7 @@ MARL Implementations
                             log_dir: "./logs/wqmix/"
                             model_dir: "./models/wqmix/"
 
-                    .. tab:: corridor
+                    .. group-tab:: corridor
 
                         .. code-block:: yaml
 
@@ -6919,7 +6919,7 @@ MARL Implementations
                             log_dir: "./logs/wqmix/"
                             model_dir: "./models/wqmix/"
 
-                    .. tab:: MMM2
+                    .. group-tab:: MMM2
 
                         .. code-block:: yaml
 
@@ -6978,15 +6978,15 @@ MARL Implementations
                             model_dir: "./models/wqmix/"
 
 
-    .. tab:: QTRAN
+    .. group-tab:: QTRAN
 
         .. tabs::
 
-            .. tab:: MPE
+            .. group-tab:: MPE
 
                 .. tabs::
 
-                    .. tab:: simple_spread_v3
+                    .. group-tab:: simple_spread_v3
 
                         .. code-block:: yaml
 
@@ -7037,15 +7037,15 @@ MARL Implementations
                             model_dir: "./models/qtran/"
 
 
-    .. tab:: DCG
+    .. group-tab:: DCG
 
         .. tabs::
 
-            .. tab:: MPE
+            .. group-tab:: MPE
 
                 .. tabs::
 
-                    .. tab:: simple_spread_v3
+                    .. group-tab:: simple_spread_v3
 
                         .. code-block:: yaml
 
@@ -7100,11 +7100,11 @@ MARL Implementations
                             log_dir: "./logs/dcg/"
                             model_dir: "./models/dcg/"
 
-            .. tab:: SC2
+            .. group-tab:: SC2
 
                 .. tabs::
 
-                    .. tab:: 1c3s5z
+                    .. group-tab:: 1c3s5z
 
                         .. code-block:: yaml
 
@@ -7166,7 +7166,7 @@ MARL Implementations
                             log_dir: "./logs/dcg/"
                             model_dir: "./models/dcg/"
 
-                    .. tab:: 2m_vs_1z
+                    .. group-tab:: 2m_vs_1z
 
                         .. code-block:: yaml
 
@@ -7228,7 +7228,7 @@ MARL Implementations
                             log_dir: "./logs/dcg/"
                             model_dir: "./models/dcg/"
 
-                    .. tab:: 2s3z
+                    .. group-tab:: 2s3z
 
                         .. code-block:: yaml
 
@@ -7290,7 +7290,7 @@ MARL Implementations
                             log_dir: "./logs/dcg/"
                             model_dir: "./models/dcg/"
 
-                    .. tab:: 3m
+                    .. group-tab:: 3m
 
                         .. code-block:: yaml
 
@@ -7352,7 +7352,7 @@ MARL Implementations
                             log_dir: "./logs/dcg/"
                             model_dir: "./models/dcg/"
 
-                    .. tab:: 5m_vs_6m
+                    .. group-tab:: 5m_vs_6m
 
                         .. code-block:: yaml
 
@@ -7414,7 +7414,7 @@ MARL Implementations
                             log_dir: "./logs/dcg/"
                             model_dir: "./models/dcg/"
 
-                    .. tab:: 8m
+                    .. group-tab:: 8m
 
                         .. code-block:: yaml
 
@@ -7476,7 +7476,7 @@ MARL Implementations
                             log_dir: "./logs/dcg/"
                             model_dir: "./models/dcg/"
 
-                    .. tab:: 8m_vd_9m
+                    .. group-tab:: 8m_vd_9m
 
                         .. code-block:: yaml
 
@@ -7538,7 +7538,7 @@ MARL Implementations
                             log_dir: "./logs/dcg/"
                             model_dir: "./models/dcg/"
 
-                    .. tab:: 25m
+                    .. group-tab:: 25m
 
                         .. code-block:: yaml
 
@@ -7600,7 +7600,7 @@ MARL Implementations
                             log_dir: "./logs/dcg/"
                             model_dir: "./models/dcg/"
 
-                    .. tab:: corridor
+                    .. group-tab:: corridor
 
                         .. code-block:: yaml
 
@@ -7662,7 +7662,7 @@ MARL Implementations
                             log_dir: "./logs/dcg/"
                             model_dir: "./models/dcg/"
 
-                    .. tab:: MMM2
+                    .. group-tab:: MMM2
 
                         .. code-block:: yaml
 
@@ -7724,15 +7724,15 @@ MARL Implementations
                             log_dir: "./logs/dcg/"
                             model_dir: "./models/dcg/"
 
-    .. tab:: IDDPG
+    .. group-tab:: IDDPG
 
         .. tabs::
 
-            .. tab:: MPE
+            .. group-tab:: MPE
 
                 .. tabs::
 
-                    .. tab:: simple_adversary_v3
+                    .. group-tab:: simple_adversary_v3
 
                         .. code-block:: yaml
 
@@ -7776,7 +7776,7 @@ MARL Implementations
                             log_dir: "./logs/iddpg/"
                             model_dir: "./models/iddpg/"
 
-                    .. tab:: simple_push_v3
+                    .. group-tab:: simple_push_v3
 
                         .. code-block:: yaml
 
@@ -7820,7 +7820,7 @@ MARL Implementations
                             log_dir: "./logs/iddpg/"
                             model_dir: "./models/iddpg/"
 
-                    .. tab:: simple_spread_v3
+                    .. group-tab:: simple_spread_v3
 
                         .. code-block:: yaml
 
@@ -7864,15 +7864,15 @@ MARL Implementations
                             log_dir: "./logs/iddpg/"
                             model_dir: "./models/iddpg/"
 
-    .. tab:: MADDPG
+    .. group-tab:: MADDPG
 
         .. tabs::
 
-            .. tab:: MPE
+            .. group-tab:: MPE
 
                 .. tabs::
 
-                    .. tab:: simple_adversary_v3
+                    .. group-tab:: simple_adversary_v3
 
                         .. code-block:: yaml
 
@@ -7917,7 +7917,7 @@ MARL Implementations
                             log_dir: "./logs/maddpg/"
                             model_dir: "./models/maddpg/"
 
-                    .. tab:: simple_push_v3
+                    .. group-tab:: simple_push_v3
 
                         .. code-block:: yaml
 
@@ -7961,7 +7961,7 @@ MARL Implementations
                             log_dir: "./logs/maddpg/"
                             model_dir: "./models/maddpg/"
 
-                    .. tab:: simple_spread_v3
+                    .. group-tab:: simple_spread_v3
 
                         .. code-block:: yaml
 
@@ -8006,15 +8006,15 @@ MARL Implementations
                             model_dir: "./models/maddpg/"
 
 
-    .. tab:: ISAC
+    .. group-tab:: ISAC
 
         .. tabs::
 
-            .. tab:: MPE
+            .. group-tab:: MPE
 
                 .. tabs::
 
-                    .. tab:: simple_adversary_v3
+                    .. group-tab:: simple_adversary_v3
 
                         .. code-block:: yaml
 
@@ -8059,7 +8059,7 @@ MARL Implementations
                             log_dir: "./logs/isac/"
                             model_dir: "./models/isac/"
 
-                    .. tab:: simple_push_v3
+                    .. group-tab:: simple_push_v3
 
                         .. code-block:: yaml
 
@@ -8104,7 +8104,7 @@ MARL Implementations
                             log_dir: "./logs/isac/"
                             model_dir: "./models/isac/"
 
-                    .. tab:: simple_spread_v3
+                    .. group-tab:: simple_spread_v3
 
                         .. code-block:: yaml
 
@@ -8149,15 +8149,15 @@ MARL Implementations
                             log_dir: "./logs/isac/"
                             model_dir: "./models/isac/"
 
-    .. tab:: MASAC
+    .. group-tab:: MASAC
 
         .. tabs::
 
-            .. tab:: MPE
+            .. group-tab:: MPE
 
                 .. tabs::
 
-                    .. tab:: simple_adversary_v3
+                    .. group-tab:: simple_adversary_v3
 
                         .. code-block:: yaml
 
@@ -8203,7 +8203,7 @@ MARL Implementations
                             model_dir: "./models/masac/"
 
 
-                    .. tab:: simple_push_v3
+                    .. group-tab:: simple_push_v3
 
                         .. code-block:: yaml
 
@@ -8249,7 +8249,7 @@ MARL Implementations
                             model_dir: "./models/masac/"
 
 
-                    .. tab:: simple_spread_v3
+                    .. group-tab:: simple_spread_v3
 
                         .. code-block:: yaml
 
@@ -8296,15 +8296,15 @@ MARL Implementations
 
 
 
-    .. tab:: IPPO
+    .. group-tab:: IPPO
 
         .. tabs::
 
-            .. tab:: MPE
+            .. group-tab:: MPE
 
                 .. tabs::
 
-                    .. tab:: simple_spread_v3
+                    .. group-tab:: simple_spread_v3
 
                         .. code-block:: yaml
 
@@ -8368,11 +8368,11 @@ MARL Implementations
                             model_dir: "./models/ippo/"
 
 
-            .. tab:: SC2
+            .. group-tab:: SC2
 
                 .. tabs::
 
-                    .. tab:: 1c3s5z
+                    .. group-tab:: 1c3s5z
 
                         .. code-block:: yaml
 
@@ -8441,7 +8441,7 @@ MARL Implementations
                             model_dir: "./models/ippo/"
 
 
-                    .. tab:: 2m_vs_1z
+                    .. group-tab:: 2m_vs_1z
 
                         .. code-block:: yaml
 
@@ -8513,7 +8513,7 @@ MARL Implementations
                             model_dir: "./models/ippo/"
 
 
-                    .. tab:: 2s3z
+                    .. group-tab:: 2s3z
 
                         .. code-block:: yaml
 
@@ -8582,7 +8582,7 @@ MARL Implementations
                             model_dir: "./models/ippo/"
 
 
-                    .. tab:: 3m
+                    .. group-tab:: 3m
 
                         .. code-block:: yaml
 
@@ -8651,7 +8651,7 @@ MARL Implementations
                             model_dir: "./models/ippo/"
 
 
-                    .. tab:: 5m_vs_6m
+                    .. group-tab:: 5m_vs_6m
 
                         .. code-block:: yaml
 
@@ -8721,7 +8721,7 @@ MARL Implementations
                             model_dir: "./models/ippo/"
 
 
-                    .. tab:: 8m
+                    .. group-tab:: 8m
 
                         .. code-block:: yaml
 
@@ -8791,7 +8791,7 @@ MARL Implementations
                             model_dir: "./models/ippo/"
 
 
-                    .. tab:: 8m_vd_9m
+                    .. group-tab:: 8m_vd_9m
 
                         .. code-block:: yaml
 
@@ -8861,7 +8861,7 @@ MARL Implementations
                             model_dir: "./models/ippo/"
 
 
-                    .. tab:: 25m
+                    .. group-tab:: 25m
 
                         .. code-block:: yaml
 
@@ -8931,7 +8931,7 @@ MARL Implementations
                             model_dir: "./models/ippo/"
 
 
-                    .. tab:: corridor
+                    .. group-tab:: corridor
 
                         .. code-block:: yaml
 
@@ -9001,7 +9001,7 @@ MARL Implementations
                             model_dir: "./models/ippo/"
 
                     
-                    .. tab:: MMM2
+                    .. group-tab:: MMM2
 
                         .. code-block:: yaml
 
@@ -9071,11 +9071,11 @@ MARL Implementations
                             model_dir: "./models/ippo/"
 
 
-            .. tab:: Football
+            .. group-tab:: Football
 
                 .. tabs::
 
-                    .. tab:: 3v1
+                    .. group-tab:: 3v1
 
                         .. code-block:: yaml
 
@@ -9153,15 +9153,15 @@ MARL Implementations
                             videos_dir: "./videos/ippo/"
 
 
-    .. tab:: MAPPO
+    .. group-tab:: MAPPO
 
         .. tabs::
 
-            .. tab:: MPE
+            .. group-tab:: MPE
 
                 .. tabs::
 
-                    .. tab:: simple_adversary_v3
+                    .. group-tab:: simple_adversary_v3
 
                         .. code-block:: yaml
 
@@ -9226,7 +9226,7 @@ MARL Implementations
                             model_dir: "./models/mappo/"
 
 
-                    .. tab:: simple_push_v3
+                    .. group-tab:: simple_push_v3
 
                         .. code-block:: yaml
 
@@ -9291,7 +9291,7 @@ MARL Implementations
                             model_dir: "./models/mappo/"
 
 
-                    .. tab:: simple_spread_v3
+                    .. group-tab:: simple_spread_v3
 
                         .. code-block:: yaml
 
@@ -9356,11 +9356,11 @@ MARL Implementations
                             model_dir: "./models/mappo/"
 
 
-            .. tab:: SC2
+            .. group-tab:: SC2
 
                 .. tabs::
 
-                    .. tab:: 1c3s5z
+                    .. group-tab:: 1c3s5z
 
                         .. code-block:: yaml
 
@@ -9429,7 +9429,7 @@ MARL Implementations
                             model_dir: "./models/mappo/"
 
 
-                    .. tab:: 2m_vs_1z
+                    .. group-tab:: 2m_vs_1z
 
                         .. code-block:: yaml
 
@@ -9501,7 +9501,7 @@ MARL Implementations
                             model_dir: "./models/mappo/"
 
 
-                    .. tab:: 2s3z
+                    .. group-tab:: 2s3z
 
                         .. code-block:: yaml
 
@@ -9570,7 +9570,7 @@ MARL Implementations
                             model_dir: "./models/mappo/"
 
 
-                    .. tab:: 3m
+                    .. group-tab:: 3m
 
                         .. code-block:: yaml
 
@@ -9639,7 +9639,7 @@ MARL Implementations
                             model_dir: "./models/mappo/"
 
 
-                    .. tab:: 5m_vs_6m
+                    .. group-tab:: 5m_vs_6m
 
                         .. code-block:: yaml
 
@@ -9709,7 +9709,7 @@ MARL Implementations
                             model_dir: "./models/mappo/"
 
 
-                    .. tab:: 8m
+                    .. group-tab:: 8m
 
                         .. code-block:: yaml
 
@@ -9779,7 +9779,7 @@ MARL Implementations
                             model_dir: "./models/mappo/"
 
 
-                    .. tab:: 8m_vd_9m
+                    .. group-tab:: 8m_vd_9m
 
                         .. code-block:: yaml
 
@@ -9849,7 +9849,7 @@ MARL Implementations
                             model_dir: "./models/mappo/"
 
 
-                    .. tab:: 25m
+                    .. group-tab:: 25m
 
                         .. code-block:: yaml
 
@@ -9919,7 +9919,7 @@ MARL Implementations
                             model_dir: "./models/mappo/"
 
 
-                    .. tab:: corridor
+                    .. group-tab:: corridor
 
                         .. code-block:: yaml
 
@@ -9989,7 +9989,7 @@ MARL Implementations
                             model_dir: "./models/mappo/"
 
                     
-                    .. tab:: MMM2
+                    .. group-tab:: MMM2
 
                         .. code-block:: yaml
 
@@ -10059,11 +10059,11 @@ MARL Implementations
                             model_dir: "./models/mappo/"
 
 
-            .. tab:: Football
+            .. group-tab:: Football
 
                 .. tabs::
 
-                    .. tab:: 1v1
+                    .. group-tab:: 1v1
 
                         .. code-block:: yaml
 
@@ -10141,7 +10141,7 @@ MARL Implementations
                             videos_dir: "./videos/mappo/"
 
                     
-                    .. tab:: 3v1
+                    .. group-tab:: 3v1
 
                         .. code-block:: yaml
 
@@ -10219,15 +10219,15 @@ MARL Implementations
                             videos_dir: "./videos/mappo/"
 
 
-    .. tab:: MATD3
+    .. group-tab:: MATD3
 
         .. tabs::
 
-            .. tab:: MPE
+            .. group-tab:: MPE
 
                 .. tabs::
 
-                    .. tab:: simple_adversary_v3
+                    .. group-tab:: simple_adversary_v3
 
                         .. code-block:: yaml
 
@@ -10272,7 +10272,7 @@ MARL Implementations
                             model_dir: "./models/matd3/"
 
 
-                    .. tab:: simple_push_v3
+                    .. group-tab:: simple_push_v3
 
                         .. code-block:: yaml
 
@@ -10317,7 +10317,7 @@ MARL Implementations
                             model_dir: "./models/matd3/"
 
 
-                    .. tab:: simple_spread_v3
+                    .. group-tab:: simple_spread_v3
 
                         .. code-block:: yaml
 
@@ -10362,15 +10362,15 @@ MARL Implementations
                             model_dir: "./models/matd3/"
 
 
-    .. tab:: VDAC
+    .. group-tab:: VDAC
 
         .. tabs::
 
-            .. tab:: MPE
+            .. group-tab:: MPE
 
                 .. tabs::
 
-                    .. tab:: simple_spread_v3
+                    .. group-tab:: simple_spread_v3
 
                         .. code-block:: yaml
 
@@ -10439,11 +10439,11 @@ MARL Implementations
                             model_dir: "./models/vdac/"
 
 
-            .. tab:: SC2
+            .. group-tab:: SC2
 
                 .. tabs::
 
-                    .. tab:: 1c3s5z
+                    .. group-tab:: 1c3s5z
 
                         .. code-block:: yaml
 
@@ -10517,7 +10517,7 @@ MARL Implementations
                             model_dir: "./models/vdac/"
 
 
-                    .. tab:: 2m_vs_1z
+                    .. group-tab:: 2m_vs_1z
 
                         .. code-block:: yaml
 
@@ -10591,7 +10591,7 @@ MARL Implementations
                             model_dir: "./models/vdac/"
 
 
-                    .. tab:: 2s3z
+                    .. group-tab:: 2s3z
 
                         .. code-block:: yaml
 
@@ -10665,7 +10665,7 @@ MARL Implementations
                             model_dir: "./models/vdac/"
 
 
-                    .. tab:: 3m
+                    .. group-tab:: 3m
 
                         .. code-block:: yaml
 
@@ -10732,7 +10732,7 @@ MARL Implementations
                             model_dir: "./models/vdac/"
 
 
-                    .. tab:: 5m_vs_6m
+                    .. group-tab:: 5m_vs_6m
 
                         .. code-block:: yaml
 
@@ -10806,7 +10806,7 @@ MARL Implementations
                             model_dir: "./models/vdac/"
 
 
-                    .. tab:: 8m
+                    .. group-tab:: 8m
 
                         .. code-block:: yaml
 
@@ -10880,7 +10880,7 @@ MARL Implementations
                             model_dir: "./models/vdac/"
 
 
-                    .. tab:: 8m_vd_9m
+                    .. group-tab:: 8m_vd_9m
 
                         .. code-block:: yaml
 
@@ -10954,7 +10954,7 @@ MARL Implementations
                             model_dir: "./models/vdac/"
 
 
-                    .. tab:: 25m
+                    .. group-tab:: 25m
 
                         .. code-block:: yaml
 
@@ -11028,7 +11028,7 @@ MARL Implementations
                             model_dir: "./models/vdac/"
 
 
-                    .. tab:: corridor
+                    .. group-tab:: corridor
 
                         .. code-block:: yaml
 
@@ -11102,7 +11102,7 @@ MARL Implementations
                             model_dir: "./models/vdac/"
 
                     
-                    .. tab:: MMM2
+                    .. group-tab:: MMM2
 
                         .. code-block:: yaml
 
@@ -11177,15 +11177,15 @@ MARL Implementations
 
 
 
-    .. tab:: COMA
+    .. group-tab:: COMA
 
         .. tabs::
 
-            .. tab:: MPE
+            .. group-tab:: MPE
 
                 .. tabs::
 
-                    .. tab:: simple_spread_v3
+                    .. group-tab:: simple_spread_v3
 
                         .. code-block:: yaml
 
@@ -11243,11 +11243,11 @@ MARL Implementations
                             model_dir: "./models/coma/"
 
 
-            .. tab:: SC2
+            .. group-tab:: SC2
 
                 .. tabs::
 
-                    .. tab:: 1c3s5z
+                    .. group-tab:: 1c3s5z
 
                         .. code-block:: yaml
 
@@ -11310,7 +11310,7 @@ MARL Implementations
                             model_dir: "./models/coma/"
 
 
-                    .. tab:: 2m_vs_1z
+                    .. group-tab:: 2m_vs_1z
 
                         .. code-block:: yaml
 
@@ -11373,7 +11373,7 @@ MARL Implementations
                             model_dir: "./models/coma/"
 
 
-                    .. tab:: 2s3z
+                    .. group-tab:: 2s3z
 
                         .. code-block:: yaml
 
@@ -11436,7 +11436,7 @@ MARL Implementations
                             model_dir: "./models/coma/"
 
 
-                    .. tab:: 3m
+                    .. group-tab:: 3m
 
                         .. code-block:: yaml
 
@@ -11499,7 +11499,7 @@ MARL Implementations
                             model_dir: "./models/coma/"
 
 
-                    .. tab:: 5m_vs_6m
+                    .. group-tab:: 5m_vs_6m
 
                         .. code-block:: yaml
 
@@ -11562,7 +11562,7 @@ MARL Implementations
                             model_dir: "./models/coma/"
 
 
-                    .. tab:: 8m
+                    .. group-tab:: 8m
 
                         .. code-block:: yaml
 
@@ -11625,7 +11625,7 @@ MARL Implementations
                             model_dir: "./models/coma/"
 
 
-                    .. tab:: 8m_vd_9m
+                    .. group-tab:: 8m_vd_9m
 
                         .. code-block:: yaml
 
@@ -11688,7 +11688,7 @@ MARL Implementations
                             model_dir: "./models/coma/"
 
 
-                    .. tab:: 25m
+                    .. group-tab:: 25m
 
                         .. code-block:: yaml
 
@@ -11751,7 +11751,7 @@ MARL Implementations
                             model_dir: "./models/coma/"
 
 
-                    .. tab:: corridor
+                    .. group-tab:: corridor
 
                         .. code-block:: yaml
 
@@ -11814,7 +11814,7 @@ MARL Implementations
                             model_dir: "./models/coma/"
 
                     
-                    .. tab:: MMM2
+                    .. group-tab:: MMM2
 
                         .. code-block:: yaml
 
@@ -11877,15 +11877,15 @@ MARL Implementations
                             model_dir: "./models/coma/"
 
 
-    .. tab:: MFQ
+    .. group-tab:: MFQ
 
         .. tabs::
 
-            .. tab:: MPE
+            .. group-tab:: MPE
 
                 .. tabs::
 
-                    .. tab:: simple_spread_v3
+                    .. group-tab:: simple_spread_v3
 
                         .. code-block:: yaml
 
@@ -11934,11 +11934,11 @@ MARL Implementations
                             model_dir: "./models/mfq/"
 
 
-            .. tab:: Magent2
+            .. group-tab:: Magent2
 
                 .. tabs::
 
-                    .. tab:: adversarial_pursuit_v4
+                    .. group-tab:: adversarial_pursuit_v4
 
                         .. code-block:: yaml
 
@@ -11993,15 +11993,15 @@ MARL Implementations
                             model_dir: "./models/mfq/"
 
 
-    .. tab:: MFAC
+    .. group-tab:: MFAC
 
         .. tabs::
 
-            .. tab:: MPE
+            .. group-tab:: MPE
 
                 .. tabs::
 
-                    .. tab:: simple_spread_v3
+                    .. group-tab:: simple_spread_v3
 
                         .. code-block:: yaml
 
