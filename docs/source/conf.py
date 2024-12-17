@@ -47,7 +47,7 @@ html_theme_options = {
     "dark_logo": "logo_2.png",
 }
 
-html_favicon = 'figures/favicon.jpeg'
+html_favicon = 'favicon.jpeg'
 
 # The master toctree document.
 master_doc = 'index'
