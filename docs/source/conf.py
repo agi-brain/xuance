@@ -18,14 +18,19 @@ master_doc = 'index'
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 extensions = [
-    "sphinx.ext.duration",
-    "sphinx.ext.doctest",
+    # Sphinx's own extensions
     "sphinx.ext.autodoc",
-    "sphinx.ext.autosummary",
+    "sphinx.ext.extlinks",
     "sphinx.ext.intersphinx",
-    "sphinx_tabs.tabs",
+    "sphinx.ext.mathjax",
+    "sphinx.ext.todo",
+    "sphinx.ext.viewcode",
+    # Our custom extension, only meant for Furo's own documentation.
+    "furo.sphinxext",
+    # External stuff
+    "myst_parser",
     "sphinx_copybutton",
-    "notfound.extension",
+    'sphinx_tabs.tabs',
     "sphinx_design",
     "sphinx_inline_tabs",
     "sphinx_favicon",
