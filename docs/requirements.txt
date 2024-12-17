@@ -1,3 +1,6 @@
 furo
 sphinx_tabs
 sphinx_copybutton
+myst-parser
+sphinx-design
+sphinx-inline-tabs
