@@ -4,3 +4,4 @@ sphinx_copybutton
 myst-parser
 sphinx-design
 sphinx-inline-tabs
+sphinx_favicon
