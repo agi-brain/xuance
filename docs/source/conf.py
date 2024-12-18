@@ -41,12 +41,12 @@ extensions = [
     "notfound.extension",
 ]
 
-# autodoc_mock_imports = [
-#     "numpy",
-#     "scipy",
-#     "mpi4py",
-#     "gym",
-# ]
+autodoc_mock_imports = [
+    "numpy",
+    "scipy",
+    "mpi4py",
+    "gym",
+]
 
 templates_path = ['_templates']
 exclude_patterns = []
