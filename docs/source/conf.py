@@ -50,8 +50,13 @@ exclude_patterns = []
 html_theme = "furo"  # before that is renku, sphinx_rtd_theme
 html_static_path = ['figures']
 html_theme_options = {
+    # logo
     "light_logo": "logo_2.png",
     "dark_logo": "logo_2.png",
+    #
+    "source_repository": "https://github.com/agi-brain/xuance",
+    "source_branch": "master",
+    "source_directory": "docs/source",
 }
 
 favicons = [
