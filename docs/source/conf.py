@@ -46,7 +46,8 @@ exclude_patterns = []
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_theme = "furo"  # before that is renku, sphinx_rtd_theme
+html_theme = "furo"  # sphinx_rtd_theme (before that is renku)
+html_title = "XuanCe"
 html_static_path = ['figures']
 html_theme_options = {
     # logo
