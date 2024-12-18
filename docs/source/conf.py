@@ -38,6 +38,7 @@ extensions = [
     'sphinx_tabs.tabs',
     "sphinx_design",
     "sphinx_favicon",
+    "notfound.extension",
 ]
 
 templates_path = ['_templates']
