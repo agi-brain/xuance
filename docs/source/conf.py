@@ -6,6 +6,12 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
+import os
+import sys
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
+print("[DOCS] skrl library path: {}".format(sys.path[0]))
+
 project = 'XuanCe'
 copyright = '2023, Wenzhang Liu, etc.'
 author = 'Wenzhang Liu.'
