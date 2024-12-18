@@ -9,11 +9,13 @@ build:
   os: ubuntu-22.04  # Specify the operating system
   tools:
     python: "3.7"  # Specify the Python version
-    conda: "22.11"  # Enable Conda
     # You can also specify other tool versions:
     # nodejs: "20"
     # rust: "1.70"
     # golang: "1.20"
+
+conda:
+  environment: environment.yaml
 
 # Build documentation in the "docs/" directory with Sphinx
 sphinx:
@@ -34,7 +36,3 @@ sphinx:
 python:
    install:
    - requirements: docs/requirements.txt
-
-conda:
-  install:
-  - requirements: docs/environment.txt  # Use the environment.yml file to set up the environment
