@@ -1,0 +1,6 @@
+name: my-docs-env
+channels:
+  - conda-forge
+dependencies:
+  - python=3.10
+  - mpi4py
