@@ -6,3 +6,4 @@ sphinx-notfound-page
 myst-parser
 sphinx-design
 sphinx-favicon
+numpy
