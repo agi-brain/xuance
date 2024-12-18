@@ -15,7 +15,8 @@ build:
     # golang: "1.20"
 
 conda:
-  environment: environment.yml
+  install:
+    - requirements: environment.txt
 
 # Build documentation in the "docs/" directory with Sphinx
 sphinx:
