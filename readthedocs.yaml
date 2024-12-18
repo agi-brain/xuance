@@ -36,4 +36,5 @@ python:
    - requirements: docs/requirements.txt
 
 conda:
-  environment: docs/environment.yaml  # Use the environment.yml file to set up the environment
+  install:
+  - requirements: docs/environment.txt  # Use the environment.yml file to set up the environment
