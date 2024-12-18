@@ -1,3 +1,4 @@
+furo
 sphinx-tabs
 sphinx-autobuild
 sphinx-copybutton
