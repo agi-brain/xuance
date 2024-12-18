@@ -1,0 +1,35 @@
+dl_toolbox: "torch"  # The deep learning toolbox. Choices: "torch", "mindspore", "tensorflow"
+project_name: "XuanCe_Benchmark"
+logger: "tensorboard"  # Choices: "tensorboard", "wandb".
+wandb_user_name: "your_user_name"
+render: True
+render_mode: 'rgb_array' # Choices: 'human', 'rgb_array'.
+fps: 50  # The frames per second for the rendering videos in log file.
+test_mode: False  # Whether to run in test mode.
+device: "cpu"  # Choose an calculating device. PyTorch: "cpu", "cuda:0"; TensorFlow: "cpu"/"CPU", "gpu"/"GPU"; MindSpore: "CPU", "GPU", "Ascend", "Davinci".
+distributed_training: False  # Whether to use multi-GPU for distributed training.
+master_port: '12355'  # The master port for current experiment when use distributed training.
+
+agent:  # The agent name.
+env_name:  # The environment device.
+env_id:  # The environment id.
+env_seed: 1  # The random seed to initialize the first environment.
+vectorize: "DummyVecEnv"  # The vectorized method to create n parallel environments.
+policy:  # choice: Gaussian_AC for continuous actions, Categorical_AC for discrete actions.
+representation: "Basic_MLP"  # The representation name.
+
+representation_hidden_size: [256,]  # The size of hidden layers for representation network.
+actor_hidden_size: [256,]  # The size of hidden layers for actor network.
+critic_hidden_size: [256,]  # The size of hidden layers for critic network.
+activation: "leaky_relu"  # The activation function for each hidden layer.
+activation_action: 'tanh'  # The activation function for the last layer of actor network.
+
+seed: 1  # The random seed.
+parallels: 8  # The number of environments to run in parallel.
+running_steps: 1000000  # The total running steps for all environments.
+learning_rate: 0.0004  # The learning rate.
+
+eval_interval: 5000  # Evaluate interval when use benchmark method.
+test_episode: 5  # The test episodes.
+log_dir: "./logs/"  # The main directory of log files.
+model_dir: "./models/"  # The main directory of model files.

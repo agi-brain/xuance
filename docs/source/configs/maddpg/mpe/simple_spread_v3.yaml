@@ -1,0 +1,43 @@
+agent: "MADDPG"  # the learning algorithms_marl
+env_name: "mpe"
+env_id: "simple_spread_v3"
+env_seed: 1
+continuous_action: True
+learner: "MADDPG_Learner"
+policy: "MADDPG_Policy"
+representation: "Basic_Identical"
+vectorize: "SubprocVecMultiAgentEnv"
+runner: "MARL"
+
+representation_hidden_size: []  # the units for each hidden layer
+actor_hidden_size: [64, 64]
+critic_hidden_size: [64, 64]
+activation: 'leaky_relu'
+activation_action: 'sigmoid'
+use_parameter_sharing: True
+use_actions_mask: False
+
+seed: 1
+parallels: 16
+buffer_size: 100000
+batch_size: 256
+learning_rate_actor: 0.01  # learning rate for actor
+learning_rate_critic: 0.001  # learning rate for critic
+gamma: 0.95  # discount factor
+tau: 0.001  # soft update for target networks
+
+start_noise: 1.0
+end_noise: 0.01
+sigma: 0.1  # random noise for continuous actions
+start_training: 1000  # start training after n episodes
+running_steps: 10000000
+training_frequency: 25
+
+use_grad_clip: False
+grad_clip_norm: 0.5
+
+eval_interval: 100000
+test_episode: 5
+
+log_dir: "./logs/maddpg/"
+model_dir: "./models/maddpg/"

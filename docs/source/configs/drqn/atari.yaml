@@ -1,0 +1,55 @@
+agent: "DRQN"
+vectorize: "Dummy_Atari"
+env_name: "Atari"
+env_id: "ALE/Breakout-v5"
+env_seed: 1
+obs_type: "grayscale"  # choice for Atari env: ram, rgb, grayscale
+img_size: [84, 84]  # default is 210 x 160 in gym[Atari]
+num_stack: 4  # frame stack trick
+frame_skip: 4  # frame skip trick
+noop_max: 30  # Do no-op action for a number of steps in [1, noop_max].
+policy: "DRQN_Policy"
+representation: "Basic_CNN"
+learner: "DRQN_Learner"
+runner: "DRL"
+rnn: "LSTM"
+
+# the following three arguments are for "Basic_CNN" representation.
+filters: [32, 64, 64]  #  [16, 16, 32, 32]
+kernels: [8, 4, 3]  # [8, 6, 4, 4]
+strides: [4, 2, 1]  # [2, 2, 2, 2]
+
+recurrent_hidden_size: 512
+recurrent_layer_N: 1
+dropout: 0
+activation: 'relu'
+
+seed: 1
+parallels: 5
+buffer_size: 5000
+batch_size: 8  # batch size for training
+learning_rate: 0.0001
+gamma: 0.99
+
+start_greedy: 0.5
+end_greedy: 0.05
+decay_step_greedy: 1000000
+sync_frequency: 500
+training_frequency: 1
+running_steps: 10000000
+start_training: 10000
+lookup_length: 50
+
+use_grad_clip: False  # gradient normalization
+grad_clip_norm: 0.5
+use_actions_mask: False
+use_obsnorm: False
+use_rewnorm: False
+obsnorm_range: 5
+rewnorm_range: 5
+
+test_steps: 10000
+eval_interval: 100000
+test_episode: 1
+log_dir: "./logs/drqn/"
+model_dir: "./models/drqn/"

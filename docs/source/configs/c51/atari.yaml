@@ -1,0 +1,54 @@
+agent: "C51DQN"
+vectorize: "Dummy_Atari"
+env_name: "Atari"
+env_id: "ALE/Breakout-v5"
+env_seed: 1
+obs_type: "grayscale"  # choice for Atari env: ram, rgb, grayscale
+img_size: [84, 84]  # default is 210 x 160 in gym[Atari]
+num_stack: 4  # frame stack trick
+frame_skip: 4  # frame skip trick
+noop_max: 30  # Do no-op action for a number of steps in [1, noop_max].
+learner: "C51_Learner"
+policy: "C51_Q_network"
+representation: "Basic_CNN"
+runner: "DRL"
+
+# the following three arguments are for "Basic_CNN" representation.
+filters: [32, 64, 64]  #  [16, 16, 32, 32]
+kernels: [8, 4, 3]  # [8, 6, 4, 4]
+strides: [4, 2, 1]  # [2, 2, 2, 2]
+
+q_hidden_size: [512, ]
+activation: "relu"
+
+seed: 1069
+parallels: 5
+buffer_size: 500000
+batch_size: 32  # 64
+learning_rate: 0.0001
+gamma: 0.99
+v_min: 0
+v_max: 200
+atom_num: 51
+
+start_greedy: 0.5
+end_greedy: 0.05
+decay_step_greedy: 10000000  # 10M
+sync_frequency: 500
+training_frequency: 1
+running_steps: 50000000  # 50M
+start_training: 10000
+
+use_grad_clip: False  # gradient normalization
+grad_clip_norm: 0.5
+use_actions_mask: False
+use_obsnorm: False
+use_rewnorm: False
+obsnorm_range: 5
+rewnorm_range: 5
+
+test_steps: 10000
+eval_interval: 500000
+test_episode: 3
+log_dir: "./logs/c51/"
+model_dir: "./models/c51/"

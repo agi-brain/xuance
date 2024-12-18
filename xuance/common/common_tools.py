@@ -13,6 +13,7 @@ EPS = 1e-8
 
 def recursive_dict_update(basic_dict, target_dict):
     """Update the dict values.
+
     Args:
         basic_dict: the original dict variable that to be updated.
         target_dict: the target dict variable with new values.
@@ -284,14 +285,16 @@ def create_directory(path):
         current_dir = current_dir + dir_split[i] + "/"
 
 
-def combined_shape(length, shape=None):
+def combined_shape(length: int, shape=None):
     """Expand the original shape.
+
     Args:
-        length: the length of first dimension to expand.
-        shape: the target shape to be expanded.
+        length (int): The length of the first dimension to prepend.
+        shape (int, list, tuple, or None): The target shape to be expanded.
+                                           It can be an integer, a sequence, or None.
 
     Returns:
-        A new shape that is expanded from shape.
+        tuple: A new shape expanded from the input shape.
 
     Examples
     --------
@@ -300,11 +303,11 @@ def combined_shape(length, shape=None):
         >>> shape_2 = 3
         >>> shape_3 = [4, 5]
         >>> combined(length, shape_1)
-            (2, )
+        (2, )
         >>> combined(length, shape_2)
-            (2, 3)
+        (2, 3)
         >>> combined(length, shape_3)
-            (2, 4, 5)
+        (2, 4, 5)
     """
     if shape is None:
         return (length,)

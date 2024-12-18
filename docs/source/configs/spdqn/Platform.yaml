@@ -1,0 +1,45 @@
+agent: "SPDQN"
+env_name: "Platform"
+env_id: "Platform-v0"
+env_seed: 1
+max_episode_steps: 200
+vectorize: "NOREQUIRED"
+learner: "SPDQN_Learner"
+policy: "SPDQN_Policy"
+render: False
+representation: "Basic_MLP"
+runner: "DRL"
+
+representation_hidden_size: [128,]
+conactor_hidden_size: [128,]
+qnetwork_hidden_size: [128, ]
+activation: "relu"
+activation_action: 'tanh'
+
+buffer_size: 20000
+batch_size: 128
+learning_rate: 0.001
+gamma: 0.99
+tau: 0.005
+
+start_noise: 0.1
+end_noise: 0.1
+training_frequency: 1
+running_steps: 30000
+start_training: 1000
+
+test_steps: 10000
+eval_interval: 1000
+test_episode: 5
+
+use_grad_clip: False  # gradient normalization
+clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+grad_clip_norm: 0.5
+use_actions_mask: False
+use_obsnorm: False
+use_rewnorm: False
+obsnorm_range: 5
+rewnorm_range: 5
+
+log_dir: "./logs/spdqn/"
+model_dir: "./models/spdqn/"

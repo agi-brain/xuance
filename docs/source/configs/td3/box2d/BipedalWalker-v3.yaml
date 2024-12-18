@@ -1,0 +1,45 @@
+agent: "TD3"
+env_name: "Box2D"
+env_id: "BipedalWalker-v3"
+env_seed: 1
+vectorize: "DummyVecEnv"
+representation: "Basic_Identical"
+policy: "TD3_Policy"
+learner: "TD3_Learner"
+runner: "DRL"
+
+representation_hidden_size:
+actor_hidden_size: [256, 256]
+critic_hidden_size: [256, 256]
+activation: "leaky_relu"
+activation_action: 'tanh'
+
+seed: 1
+parallels: 10
+buffer_size: 200000
+batch_size: 256
+learning_rate_actor: 0.0005
+learning_rate_critic: 0.001
+gamma: 0.99
+tau: 0.005
+actor_update_delay: 3
+
+start_noise: 0.25
+end_noise: 0.05
+training_frequency: 2
+running_steps: 2000000
+start_training: 2000
+
+use_grad_clip: False  # gradient normalization
+clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+grad_clip_norm: 0.5
+use_obsnorm: False
+use_rewnorm: False
+obsnorm_range: 5
+rewnorm_range: 5
+
+test_steps: 10000
+eval_interval: 50000
+test_episode: 5
+log_dir: "./logs/td3/"
+model_dir: "./models/td3/"

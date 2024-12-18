@@ -1,7 +1,9 @@
 furo
+sphinx
 sphinx-tabs
-sphinx_copybutton
+sphinx-autobuild
+sphinx-notfound-page
+sphinx-copybutton
 myst-parser
 sphinx-design
-sphinx-inline-tabs
-sphinx_favicon
+sphinx-favicon

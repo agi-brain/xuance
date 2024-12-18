@@ -1,0 +1,42 @@
+agent: "NoisyDQN"
+env_name: "Classic Control"
+env_id: "Acrobot-v1"
+env_seed: 1
+vectorize: "DummyVecEnv"
+learner: "DQN_Learner"
+policy: "Noisy_Q_network"
+representation: "Basic_MLP"
+runner: "DRL"
+
+representation_hidden_size: [128,]
+q_hidden_size: [128,]
+activation: 'relu'
+
+seed: 1
+parallels: 10
+buffer_size: 200000
+batch_size: 128
+learning_rate: 0.001
+gamma: 0.99
+
+start_noise: 0.05
+end_noise: 0.0
+decay_step_noise: 500000
+sync_frequency: 100
+training_frequency: 2
+running_steps: 500000
+start_training: 1000
+
+use_obsnorm: False
+use_rewnorm: False
+obsnorm_range: 5
+rewnorm_range: 5
+
+use_grad_clip: False  # gradient normalization
+grad_clip_norm: 0.5
+use_actions_mask: False
+test_steps: 10000
+eval_interval: 50000
+test_episode: 1
+log_dir: "./logs/noisy_dqn/"
+model_dir: "./models/noisy_dqn/"

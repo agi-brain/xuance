@@ -32,18 +32,11 @@ extensions = [
     "sphinx_copybutton",
     'sphinx_tabs.tabs',
     "sphinx_design",
-    "sphinx_inline_tabs",
     "sphinx_favicon",
 ]
 
 templates_path = ['_templates']
 exclude_patterns = []
-
-# add for Sphinx Configuration of Sphinx Tabs¶ (By WZLIU)
-sphinx_tabs_valid_builders = ['linkcheck']
-sphinx_tabs_disable_tab_closing = True
-sphinx_tabs_disable_css_loading = True
-
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
@@ -57,10 +50,10 @@ html_theme_options = {
 
 favicons = [
     {"href": "favicon/favicon.svg"},  # => use `_static/icon.svg`
-    {"href": "https://xuance.readthedocs.io/en/latest/favicon/favicon-96x96.png"},
+    {"href": "favicon/favicon-96x96.png"},
     {
         "rel": "apple-touch-icon",
-        "href": "https://xuance.readthedocs.io/en/latest/favicon/apple-touch-icon.png",
+        "href": "favicon/apple-touch-icon.png",
     },
 ]
 

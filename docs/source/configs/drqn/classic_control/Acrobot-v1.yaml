@@ -1,0 +1,46 @@
+agent: "DRQN"  # deep recurrent Q-networks
+env_name: "Classic Control"
+env_id: "Acrobot-v1"
+env_seed: 1
+vectorize: "DummyVecEnv"
+policy: "DRQN_Policy"
+representation: "Basic_MLP"
+learner: "DRQN_Learner"
+runner: "DRL"
+rnn: "LSTM"
+
+representation_hidden_size: [128,]
+recurrent_hidden_size: 128
+recurrent_layer_N: 1
+dropout: 0
+activation: 'relu'
+
+seed: 1
+parallels: 10
+buffer_size: 100000
+batch_size: 8  # batch size for training
+learning_rate: 0.001
+gamma: 0.99
+
+start_greedy: 0.5
+end_greedy: 0.01
+decay_step_greedy: 10000
+sync_frequency: 50
+training_frequency: 1
+running_steps: 300000
+start_training: 1000
+lookup_length: 50
+
+use_grad_clip: False  # gradient normalization
+grad_clip_norm: 0.5
+use_actions_mask: False
+use_obsnorm: False
+use_rewnorm: False
+obsnorm_range: 5
+rewnorm_range: 5
+
+test_steps: 10000
+eval_interval: 50000
+test_episode: 3
+log_dir: "./logs/drqn/"
+model_dir: "./models/drqn/"

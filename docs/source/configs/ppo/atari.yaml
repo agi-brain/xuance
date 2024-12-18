@@ -1,0 +1,56 @@
+agent: "PPO_Clip"  # Choice: PPO_Clip, PPO_KL
+vectorize: "Dummy_Atari"
+env_name: "Atari"
+env_id: "ALE/Breakout-v5"
+env_seed: 1
+obs_type: "grayscale"  # choice for Atari env: ram, rgb, grayscale
+img_size: [84, 84]  # default is 210 x 160 in gym[Atari]
+num_stack: 4  # frame stack trick
+frame_skip: 4  # frame skip trick
+noop_max: 30  # Do no-op action for a number of steps in [1, noop_max].
+representation: "AC_CNN_Atari"  # CNN and FC layers
+policy: "Categorical_AC"
+learner: "PPOCLIP_Learner"
+runner: "DRL"
+
+# Good HyperParameters for Atari Games, Do not change them.
+filters: [32, 64, 64]
+kernels: [8, 4, 3]
+strides: [4, 2, 1]
+fc_hidden_sizes: [512, ]  # fully connected layer hidden sizes.
+actor_hidden_size: []
+critic_hidden_size: []
+activation: "relu"
+
+seed: 1
+parallels: 8
+running_steps: 10000000  # 10M
+horizon_size: 128  # the horizon size for an environment, buffer_size = horizon_size * parallels.
+n_epochs: 4
+n_minibatch: 4
+learning_rate: 0.00025
+
+vf_coef: 0.25
+ent_coef: 0.01
+target_kl: 0.25  # for PPO_KL agent
+kl_coef: 1.0  # for PPO_KL agent
+clip_range: 0.2  # for PPO_Clip agent
+gamma: 0.99
+use_gae: True
+gae_lambda: 0.95  # gae_lambda: Lambda parameter for calculating N-step advantage
+use_advnorm: True
+
+use_grad_clip: True  # gradient normalization
+clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+grad_clip_norm: 0.5
+use_actions_mask: False
+use_obsnorm: False
+use_rewnorm: False
+obsnorm_range: 5
+rewnorm_range: 5
+
+test_steps: 10000
+eval_interval: 100000
+test_episode: 3
+log_dir: "./logs/ppo/"
+model_dir: "./models/ppo/"

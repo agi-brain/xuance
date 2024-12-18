@@ -1,0 +1,46 @@
+agent: "NoisyDQN"
+env_name: "Box2D"
+env_id: "CarRacing-v2"
+env_seed: 1
+vectorize: "DummyVecEnv"
+learner: "DQN_Learner"
+policy: "Noisy_Q_network"
+representation: "Basic_CNN"
+runner: "DRL"
+
+# the following three arguments are for "Basic_CNN" representation.
+filters: [16, 16, 32]  #  [16, 16, 32, 32]
+kernels: [8, 4, 3]  # [8, 6, 4, 4]
+strides: [4, 2, 1]  # [2, 2, 2, 2]
+
+q_hidden_size: [512,]
+activation: 'relu'
+
+seed: 1
+parallels: 2
+buffer_size: 20000
+batch_size: 32
+learning_rate: 0.0001
+gamma: 0.99
+
+start_noise: 0.05
+end_noise: 0.0
+decay_step_noise: 2000000
+sync_frequency: 500
+training_frequency: 1
+running_steps: 2000000
+start_training: 1000
+
+use_grad_clip: False  # gradient normalization
+grad_clip_norm: 0.5
+use_actions_mask: False
+use_obsnorm: False
+use_rewnorm: False
+obsnorm_range: 5
+rewnorm_range: 5
+
+test_steps: 10000
+eval_interval: 100000
+test_episode: 1
+log_dir: "./logs/noisy_dqn/"
+model_dir: "./models/noisy_dqn/"

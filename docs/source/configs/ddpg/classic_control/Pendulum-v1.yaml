@@ -1,0 +1,43 @@
+agent: "DDPG"
+env_name: "Classic Control"
+env_id: "Pendulum-v1"
+env_seed: 1
+vectorize: "DummyVecEnv"
+policy: "DDPG_Policy"
+representation: "Basic_MLP"
+learner: "DDPG_Learner"
+runner: "DRL"
+
+representation_hidden_size: [256,]
+actor_hidden_size: [256,]
+critic_hidden_size: [256,]
+activation: "relu"
+activation_action: 'tanh'
+
+seed: 1
+parallels: 10
+buffer_size: 200000
+batch_size: 256
+learning_rate_actor: 0.001
+learning_rate_critic: 0.001
+gamma: 0.98
+tau: 0.005
+
+start_noise: 0.1
+end_noise: 0.1
+training_frequency: 1
+running_steps: 500000
+start_training: 1000
+
+use_grad_clip: False  # gradient normalization
+grad_clip_norm: 0.5
+use_obsnorm: False
+use_rewnorm: False
+obsnorm_range: 5
+rewnorm_range: 5
+
+test_steps: 10000
+eval_interval: 50000
+test_episode: 3
+log_dir: "./logs/ddpg/"
+model_dir: "./models/ddpg/"

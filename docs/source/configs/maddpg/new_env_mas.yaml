@@ -1,0 +1,44 @@
+agent: "MADDPG"  # the learning algorithms_marl
+env_name: "NewEnv_MAS"
+env_id: "scenarios_0"
+env_seed: 1
+max_episode_steps: 200
+render: False
+sleep: 0.01
+continuous_action: True
+learner: "MADDPG_Learner"
+policy: "MADDPG_Policy"
+representation: "Basic_Identical"
+vectorize: "Dummy_NewEnv_MAS"
+runner: "MARL"
+on_policy: False
+
+actor_hidden_size: [64, 64]
+critic_hidden_size: [64, 64]
+activation: 'leaky_relu'
+activation_action: 'tanh'
+
+seed: 1
+parallels: 16
+buffer_size: 1000000
+batch_size: 1024
+learning_rate_actor: 0.001  # learning rate for actor
+learning_rate_critic: 0.001  # learning rate for critic
+gamma: 0.99  # discount factor
+tau: 0.005  # soft update for target networks
+
+start_noise: 0.1
+end_noise: 0.1
+sigma: 0.1
+start_training: 2000  # start training after n episodes
+running_steps: 1000000
+train_per_step: True  # True: train model per step; False: train model per episode.
+training_frequency: 1
+
+use_grad_clip: True
+grad_clip_norm: 0.5
+
+eval_interval: 10000
+test_episode: 5
+log_dir: "./logs/maddpg/"
+model_dir: "./models/maddpg/"

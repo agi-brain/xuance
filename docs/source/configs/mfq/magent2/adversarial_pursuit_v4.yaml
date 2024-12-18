@@ -1,0 +1,51 @@
+agent: "MFQ"  # the learning algorithms_marl
+env_name: "MAgent2"
+env_id: "adversarial_pursuit_v4"
+env_seed: 1
+minimap_mode: False
+max_cycles: 500
+extra_features: False
+map_size: 45
+render_mode: "rgb_array"
+learner: "MFQ_Learner"
+policy: "MF_Q_network"
+representation: "Basic_MLP"
+vectorize: "Dummy_MAgent"
+runner: "RunnerMAgent"
+on_policy: False
+
+# recurrent settings for Basic_RNN representation
+use_rnn: False
+rnn: "GRU"
+recurrent_layer_N: 1
+fc_hidden_sizes: [64, ]
+recurrent_hidden_size: 64
+N_recurrent_layers: 1
+
+representation_hidden_size: [512, ]  # the units for each hidden layer
+q_hidden_size: [512, ]
+activation: "relu"
+
+seed: 1
+parallels: 10
+buffer_size: 2000
+batch_size: 256
+learning_rate: 0.001
+gamma: 0.95  # discount factor
+temperature: 0.1  # softmax for policy
+
+start_greedy: 0.0
+end_greedy: 0.95
+decay_step_greedy: 5000
+start_training: 1000  # start training after n episodes
+running_steps: 1000000
+train_per_step: False  # True: train model per step; False: train model per episode.
+training_frequency: 1
+sync_frequency: 200
+
+n_tests: 5
+test_episodes: 10
+eval_interval: 10000
+test_episode: 5
+log_dir: "./logs/mfq/"
+model_dir: "./models/mfq/"

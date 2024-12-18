@@ -1,0 +1,48 @@
+agent: "PPG"
+env_name: "Box2D"
+env_id: "LunarLander-v2"
+env_seed: 1
+vectorize: "DummyVecEnv"
+representation: "Basic_MLP"
+policy: "Categorical_PPG"
+learner: "PPG_Learner"
+runner: "DRL"
+
+representation_hidden_size: [128,]
+actor_hidden_size: [128,]
+critic_hidden_size: [128,]
+activation: "relu"
+
+seed: 1
+parallels: 10
+running_steps: 300000
+horizon_size: 256  # the horizon size for an environment, buffer_size = horizon_size * parallels.
+n_epochs: 1
+policy_nepoch: 4
+value_nepoch: 8 
+aux_nepoch: 8
+n_minibatch: 1
+learning_rate: 0.0004
+
+ent_coef: 0.01
+clip_range: 0.2
+kl_beta: 1.0
+gamma: 0.98
+use_gae: True
+gae_lambda: 0.95
+use_advnorm: True
+
+use_grad_clip: False  # gradient normalization
+clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+grad_clip_norm: 0.5
+use_actions_mask: False
+use_obsnorm: True
+use_rewnorm: True
+obsnorm_range: 5
+rewnorm_range: 5
+
+test_steps: 10000
+eval_interval: 50000
+test_episode: 1
+log_dir: "./logs/ppg/"
+model_dir: "./models/ppg/"
