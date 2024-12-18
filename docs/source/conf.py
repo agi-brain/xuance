@@ -10,7 +10,7 @@ import os
 import sys
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
-print("[DOCS] skrl library path: {}".format(sys.path[0]))
+print("[DOCS] xuance library path: {}".format(sys.path[0]))
 
 project = 'XuanCe'
 copyright = '2023, Wenzhang Liu, etc.'
@@ -32,7 +32,6 @@ extensions = [
     "sphinx.ext.todo",
     "sphinx.ext.viewcode",
     # Our custom extension, only meant for Furo's own documentation.
-    "furo.sphinxext",
     # External stuff
     "myst_parser",
     "sphinx_copybutton",
