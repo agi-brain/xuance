@@ -1,4 +1,4 @@
-name: my-docs-env
+name: xuance-docs-env
 channels:
   - conda-forge
 dependencies:

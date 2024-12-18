@@ -35,5 +35,4 @@ python:
      - requirements: docs/requirements.txt
 
 conda:
-  environment: environment.yml  # Reference your Conda environment file
-  
+  environment: docs/environment.yml
