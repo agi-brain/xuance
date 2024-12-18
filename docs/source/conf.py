@@ -54,9 +54,9 @@ html_theme_options = {
     "light_logo": "logo_2.png",
     "dark_logo": "logo_2.png",
     #
-    "source_repository": "https://github.com/agi-brain/xuance.git",
-    "source_branch": "master",
-    "source_directory": "docs/",
+    # "source_repository": "https://github.com/agi-brain/xuance.git",
+    # "source_branch": "master",
+    # "source_directory": "docs/",
 }
 
 favicons = [
