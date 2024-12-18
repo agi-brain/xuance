@@ -69,6 +69,24 @@ DQN-based Implementations
 
 .. tabs::
 
+    .. tab:: 1
+
+        .. tabs::
+
+            .. tab:: 1.1
+
+            .. tab:: 1.2
+
+    .. tab:: 2
+
+        .. tabs::
+
+            .. tab:: 2.1
+
+            .. tab:: 2.2
+
+.. tabs::
+
     .. tab:: DQN
 
         .. tabs::
