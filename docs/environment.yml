@@ -3,7 +3,7 @@ channels:
   - defaults
   - conda-forge
 dependencies:
-  - python=3.7
+  - python=3.8
   - pip>=20.1  # pip is needed as dependency
   - pip:
     - black==20.8b1
