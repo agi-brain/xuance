@@ -46,6 +46,8 @@ autodoc_mock_imports = [
     "scipy",
     "mpi4py",
     "gym",
+    "operator",
+    "typing",
 ]
 
 templates_path = ['_templates']
