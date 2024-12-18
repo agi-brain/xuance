@@ -7,3 +7,4 @@ sphinx-copybutton
 myst-parser
 sphinx-design
 sphinx-favicon
+xuance
