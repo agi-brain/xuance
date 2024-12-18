@@ -13,7 +13,7 @@ dependencies:
   - sphinx-autobuild
   - sphinx-copybutton
   - sphinx-notfound-page
-  - myst_parser
+  - myst-parser
   - sphinx-design
   - sphinx-favicon
 prefix: /home/docs/.conda/envs/xuance_env
