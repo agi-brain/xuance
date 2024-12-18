@@ -1,6 +1,6 @@
 Common Tools
 ----------------------
 
-.. automodule:: xuance.common.common_tools
+.. automodule:: xuance.torch.agents.base.agent
     :members:
 

@@ -41,6 +41,11 @@ extensions = [
     "notfound.extension",
 ]
 
+autodoc_mock_imports = [
+    "numpy",
+    "scipy",
+]
+
 templates_path = ['_templates']
 exclude_patterns = []
 
