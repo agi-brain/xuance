@@ -6,8 +6,8 @@ dependencies:
   - rasterio==1.2
   - python=3.10
   - pip>=20.1  # pip is needed as dependency
-      - pip:
-      - black==20.8b1
+  - pip:
+    - black==20.8b1
   - mpi4py
   - furo
   - sphinx-tabs
