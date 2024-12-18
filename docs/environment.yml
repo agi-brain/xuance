@@ -4,7 +4,7 @@ channels:
   - conda-forge
 dependencies:
   - rasterio==1.2
-  - python=3.10
+  - python=3.7
   - pip>=20.1  # pip is needed as dependency
   - pip:
     - black==20.8b1
