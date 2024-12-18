@@ -1,5 +1,5 @@
 Common Tools
 ----------------------
 
-.. automodule:: xuance.common.common_tools
+.. automodule:: xuance.commons.common_tools
     :members:
