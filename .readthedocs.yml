@@ -6,13 +6,16 @@ version: 2
 
 # Set the OS, Python version and other tools you might need
 build:
-  os: ubuntu-22.04  # Specify the operating system
+  os: "ubuntu-24.04"  # Specify the operating system
   tools:
-    python: "3.10"  # Specify the Python version
+    python: "mambaforge-22.9"  # Specify the Python version
     # You can also specify other tool versions:
     # nodejs: "20"
     # rust: "1.70"
     # golang: "1.20"
+
+conda:
+  environment: docs/environment.yml
 
 # Build documentation in the "docs/" directory with Sphinx
 sphinx:
@@ -30,9 +33,5 @@ sphinx:
 # Optional but recommended, declare the Python requirements required
 # to build your documentation
 # See https://docs.readthedocs.io/en/stable/guides/reproducible-builds.html
-conda:
-   install:
-     - requirements: docs/requirements.txt
 
-#conda:
-#  environment: docs/environment.yml
+
