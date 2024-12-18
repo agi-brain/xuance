@@ -8,7 +8,7 @@ version: 2
 build:
   os: ubuntu-22.04  # Specify the operating system
   tools:
-    python: "3.7"  # Specify the Python version
+    python: "3.10"  # Specify the Python version
     # You can also specify other tool versions:
     # nodejs: "20"
     # rust: "1.70"

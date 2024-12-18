@@ -2,7 +2,7 @@ name: xuance-docs-env
 channels:
   - conda-forge
 dependencies:
-  - python=3.7
+  - python=3.10
   - sphinx
   - sphinx-autodoc-typehints
   - mpi4py
