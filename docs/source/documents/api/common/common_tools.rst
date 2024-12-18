@@ -1,6 +1,6 @@
 Common Tools
 ----------------------
 
-.. automodule:: xuance.torch.utils.value_norm
+.. automodule:: xuance.common.common_tools
     :members:
 

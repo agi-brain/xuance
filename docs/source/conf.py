@@ -44,6 +44,8 @@ extensions = [
 autodoc_mock_imports = [
     "numpy",
     "scipy",
+    "mpi4py",
+    "gym",
 ]
 
 templates_path = ['_templates']
