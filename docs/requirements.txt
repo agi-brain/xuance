@@ -1,10 +1,6 @@
-furo
-sphinx
 sphinx-tabs
 sphinx-autobuild
-sphinx-notfound-page
 sphinx-copybutton
 myst-parser
 sphinx-design
 sphinx-favicon
-xuance
