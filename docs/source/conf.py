@@ -41,12 +41,16 @@ extensions = [
     "notfound.extension",
 ]
 
-autodoc_mock_imports = [
-    "numpy",
-    "scipy",
-    "mpi4py",
-    "gym",
-]
+# Mock mpi4py for local builds if needed
+on_rtd = os.environ.get('READTHEDOCS') == 'True'
+
+if not on_rtd:
+    autodoc_mock_imports = [
+        "numpy",
+        "scipy",
+        "mpi4py",
+        "gym",
+    ]
 
 templates_path = ['_templates']
 exclude_patterns = []
