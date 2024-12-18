@@ -8,5 +8,12 @@ dependencies:
   - pip:
     - black==20.8b1
   - mpi4py
+  - furo
+  - sphinx-tabs
+  - sphinx-autobuild
+  - sphinx-copybutton
+  - sphinx-notfound-page
   - myst_parser
+  - sphinx-design
+  - sphinx-favicon
 prefix: /home/docs/.conda/envs/xuance_env
