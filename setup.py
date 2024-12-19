@@ -54,7 +54,7 @@ setup(
                   "box2d-py==2.3.5"],  # for box2d
     },
     install_requires=[
-        "numpy>=1.21.6",
+        "numpy<1.23.0,>=1.21.6",
         "scipy==1.7.3",
         "PyYAML",  # default version is 6.0
         "gym==0.26.2",

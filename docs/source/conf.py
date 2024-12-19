@@ -13,8 +13,8 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..",
 print("[DOCS] xuance library path: {}".format(sys.path[0]))
 
 project = 'XuanCe'
-copyright = '2023, Wenzhang Liu, etc.'
-author = 'Wenzhang Liu.'
+copyright = '2023, XuanCe Contributors.'
+author = 'Wenzhang Liu, Wenzhe Cai, Kun Jiang, Guangran Cheng, Yuanda Wang, Jiawei Wang, Jingyu Cao, Lele Xu, Chaoxu Mu, Changyin Sun.'
 release = 'v1.2'
 
 # The master toctree document.
