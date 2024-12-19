@@ -1,7 +1,7 @@
 StarCraft2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. image:: ../../../figures/smac/smac.png
+.. image:: ../../../../figures/smac/smac.png
 
 
 APIs

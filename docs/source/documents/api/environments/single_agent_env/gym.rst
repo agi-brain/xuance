@@ -4,37 +4,37 @@ Gym
 Box2D
 '''''''''''''''''''''''''''''''''''''''
 
-.. image:: ../../../figures/box2d/car_racing.gif
+.. image:: ../../../../figures/box2d/car_racing.gif
     :height: 120px
-.. image:: ../../../figures/box2d/lunar_lander.gif
+.. image:: ../../../../figures/box2d/lunar_lander.gif
     :height: 120px
-.. image:: ../../../figures/box2d/bipedal_walker.gif
+.. image:: ../../../../figures/box2d/bipedal_walker.gif
     :height: 120px
 
 Atari
 '''''''''''''''''''''''''''''''''''''''''
 
-.. image:: ../../../figures/atari/adventure.gif
+.. image:: ../../../../figures/atari/adventure.gif
     :height: 150px
-.. image:: ../../../figures/atari/air_raid.gif
+.. image:: ../../../../figures/atari/air_raid.gif
     :height: 150px
-.. image:: ../../../figures/atari/alien.gif
+.. image:: ../../../../figures/atari/alien.gif
     :height: 150px
-.. image:: ../../../figures/atari/boxing.gif
+.. image:: ../../../../figures/atari/boxing.gif
     :height: 150px
-.. image:: ../../../figures/atari/breakout.gif
+.. image:: ../../../../figures/atari/breakout.gif
     :height: 150px
 
 MuJoCo
 '''''''''''''''''''''''''''''''''''''''''
 
-.. image:: ../../../figures/mujoco/ant.gif
+.. image:: ../../../../figures/mujoco/ant.gif
     :height: 150px
-.. image:: ../../../figures/mujoco/half_cheetah.gif
+.. image:: ../../../../figures/mujoco/half_cheetah.gif
     :height: 150px
-.. image:: ../../../figures/mujoco/hopper.gif
+.. image:: ../../../../figures/mujoco/hopper.gif
     :height: 150px
-.. image:: ../../../figures/mujoco/humanoid.gif
+.. image:: ../../../../figures/mujoco/humanoid.gif
     :height: 150px
 
 APIs for Gym Environments

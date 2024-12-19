@@ -1,13 +1,13 @@
 Minigrid
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. image:: ../../../figures/minigrid/crossing.gif
+.. image:: ../../../../figures/minigrid/crossing.gif
     :height: 150px
-.. image:: ../../../figures/minigrid/memory.gif
+.. image:: ../../../../figures/minigrid/memory.gif
     :height: 150px
-.. image:: ../../../figures/minigrid/lockedroom.gif
+.. image:: ../../../../figures/minigrid/lockedroom.gif
     :height: 150px
-.. image:: ../../../figures/minigrid/playground.gif
+.. image:: ../../../../figures/minigrid/playground.gif
     :height: 150px
 
 APIs for MiniGrid Env

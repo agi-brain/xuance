@@ -1,11 +1,11 @@
 Drones
 ^^^^^^^^^^^^^^^
 
-.. image:: ../../../figures/drones/helix.gif
+.. image:: ../../../../figures/drones/helix.gif
     :height: 150px
-.. image:: ../../../figures/drones/rl.gif
+.. image:: ../../../../figures/drones/rl.gif
     :height: 150px
-.. image:: ../../../figures/drones/marl.gif
+.. image:: ../../../../figures/drones/marl.gif
     :height: 150px
 
 This environment is forked from the gym-pybullet-drones,

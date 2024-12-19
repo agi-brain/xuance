@@ -1,7 +1,7 @@
 Google Research Football
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. image:: ../../../figures/football/gfootball.png
+.. image:: ../../../../figures/football/gfootball.png
 
 APIs
 '''''''''''''
