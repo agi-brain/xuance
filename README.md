@@ -64,7 +64,7 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
 
 - Deep Q Network - DQN [[Paper](https://www.nature.com/articles/nature14236)]
 - DQN with Double Q-learning - Double DQN [[Paper](https://ojs.aaai.org/index.php/AAAI/article/view/10295)]
-- DQN with Dueling network - Dueling DQN [[Paper](http://proceedings.mlr.press/v48/wangf16.pdf)]
+- DQN with Dueling Network - Dueling DQN [[Paper](http://proceedings.mlr.press/v48/wangf16.pdf)]
 - DQN with Prioritized Experience Replay - PER [[Paper](https://arxiv.org/pdf/1511.05952.pdf)]
 - DQN with Parameter Space Noise for Exploration - NoisyNet [[Paper](https://arxiv.org/pdf/1706.01905.pdf)]
 - Deep Recurrent Q-Netwrk - DRQN [[Paper](https://cdn.aaai.org/ocs/11673/11673-51288-1-PB.pdf)]
@@ -76,22 +76,20 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
   PPG [[Paper](http://proceedings.mlr.press/v139/cobbe21a/cobbe21a.pdf)] [[Code](https://github.com/openai/phasic-policy-gradient)]
 - Advantage Actor Critic -
   A2C [[Paper](http://proceedings.mlr.press/v48/mniha16.pdf)] [[Code](https://github.com/openai/baselines/tree/master/baselines/a2c)]
-- Soft actor-critic based on maximum entropy -
-  SAC [[Paper](http://proceedings.mlr.press/v80/haarnoja18b/haarnoja18b.pdf)] [[Code](http://github.com/haarnoja/sac)]
-- Soft actor-critic for discrete actions -
-  SAC-Discrete [[Paper](https://arxiv.org/pdf/1910.07207.pdf)] [[Code](https://github.com/p-christ/Deep-Reinforcement-Learning-Algorithms-with-PyTorch)]
-- Proximal Policy Optimization with clipped objective -
+- Soft Actor-Critic - SAC [[Paper](http://proceedings.mlr.press/v80/haarnoja18b/haarnoja18b.pdf)] [[Code](http://github.com/haarnoja/sac)]
+- Soft Actor-Critic for Discrete Actions - SAC-Discrete [[Paper](https://arxiv.org/pdf/1910.07207.pdf)] [[Code](https://github.com/p-christ/Deep-Reinforcement-Learning-Algorithms-with-PyTorch)]
+- Proximal Policy Optimization with Clipped Objective -
   PPO-Clip [[Paper](https://arxiv.org/pdf/1707.06347.pdf)] [[Code]( https://github.com/berkeleydeeprlcourse/homework/tree/master/hw4)]
-- Proximal Policy Optimization with KL divergence -
+- Proximal Policy Optimization with KL Divergence -
   PPO-KL [[Paper](https://arxiv.org/pdf/1707.06347.pdf)] [[Code]( https://github.com/berkeleydeeprlcourse/homework/tree/master/hw4)]
 - Deep Deterministic Policy Gradient -
   DDPG [[Paper](https://arxiv.org/pdf/1509.02971.pdf)] [[Code](https://github.com/openai/baselines/tree/master/baselines/ddpg)]
 - Twin Delayed Deep Deterministic Policy Gradient -
   TD3 [[Paper](http://proceedings.mlr.press/v80/fujimoto18a/fujimoto18a.pdf)][[Code](https://github.com/sfujim/TD3)]
-- Parameterised deep Q network - P-DQN [[Paper](https://arxiv.org/pdf/1810.06394.pdf)]
-- Multi-pass parameterised deep Q network -
+- Parameterised Deep Q-Network - P-DQN [[Paper](https://arxiv.org/pdf/1810.06394.pdf)]
+- Multi-pass Parameterised Deep Q-network -
   MP-DQN [[Paper](https://arxiv.org/pdf/1905.04388.pdf)] [[Code](https://github.com/cycraig/MP-DQN)]
-- Split parameterised deep Q network - SP-DQN [[Paper](https://arxiv.org/pdf/1810.06394.pdf)]
+- Split Parameterised Deep Q-Network - SP-DQN [[Paper](https://arxiv.org/pdf/1810.06394.pdf)]
 
 </details>
 
