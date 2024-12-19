@@ -58,6 +58,8 @@ autodoc_mock_imports = [
     "mpi4py",  # default version is 3.1.3
     "torch",
     "tensorflow",
+    "tensorflow_probability",
+    "tensorflow-addons",
     "mindspore",
 ]
 
