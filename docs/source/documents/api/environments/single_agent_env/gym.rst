@@ -37,8 +37,10 @@ MuJoCo
 .. image:: ../../../../figures/mujoco/humanoid.gif
     :height: 150px
 
-APIs for Gym Environments
+APIs
 '''''''''''''''''''''''''''''''''''''''''
 
 .. automodule:: xuance.environment.single_agent_env.gym
     :members:
+    :undoc-members:
+    :show-inheritance:

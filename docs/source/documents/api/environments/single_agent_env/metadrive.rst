@@ -87,9 +87,11 @@ Open the terminal the type the python command:
 
     **Solution**: You can hold on the F key to accelerate the simulation.
 
-APIs for MetaDrive Env
+APIs
 '''''''''''''''''''''''''''''''''''''''''
 
 .. automodule:: xuance.environment.single_agent_env.metadrive
     :members:
+    :undoc-members:
+    :show-inheritance:
 

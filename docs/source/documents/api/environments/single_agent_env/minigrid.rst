@@ -10,8 +10,10 @@ Minigrid
 .. image:: ../../../../figures/minigrid/playground.gif
     :height: 150px
 
-APIs for MiniGrid Env
+APIs
 '''''''''''''''''''''''''''''''''''''''''
 
 .. automodule:: xuance.environment.single_agent_env.minigrid
     :members:
+    :undoc-members:
+    :show-inheritance:
