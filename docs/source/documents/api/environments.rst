@@ -9,30 +9,13 @@ Each simulation environment contains a rich variety of task scenarios, as shown 
 .. toctree::
     :hidden:
 
+    single agent environments <environments/single_agent_env>
+    multi-agent environments <environments/multi_agent_env>
+    vectorization <environments/vector_envs>
     utils <environments/utils>
-    make_envs <environments/__init__>
-    Vectorized Environments <environments/vector_envs>
-    Gym <environments/gym>
-    Gym Platform <environments/gym_platform>
-    Minigrid <environments/minigrid>
-    Drones <environments/drones>
-    MetaDrive <environments/metadrive>
-    PettingZoo <environments/pettingzoo>
-    SMAC <environments/starcraft2>
-    MAgent2 <environments/magent2>
-    Google Research Football <environments/football>
     
 
+* :doc:`single agent environments <environments/single_agent_env>`.
+* :doc:`multi-agent environments <environments/multi_agent_env>`.
+* :doc:`vectorization <environments/vector_envs>`.
 * :doc:`utils <environments/utils>`.
-* :doc:`make_envs <environments/__init__>`.
-* :doc:`Vectorized Environments <environments/vector_envs>`.
-* :doc:`Gym <environments/gym>`.
-* :doc:`Gym Platform <environments/gym_platform>`.
-* :doc:`Minigrid <environments/minigrid>`.
-* :doc:`Drones <environments/drones>`.
-* :doc:`MetaDrive <environments/metadrive>`.
-* :doc:`PettingZoo <environments/pettingzoo>`.
-* :doc:`SMAC <environments/starcraft2>`.
-* :doc:`MAgent2 <environments/magent2>`.
-* :doc:`Google Research Football <environments/football>`.
-

@@ -1,10 +1,5 @@
-XuanCeEnvWrapper
-========================================================
+Environment Wrappers of XuanCe
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-
-
-
-XuanCeMultiAgentEnvWrapper
-========================================================
-
-
+.. automodule:: xuance.environment.utils.wrapper
+    :members:

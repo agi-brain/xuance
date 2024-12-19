@@ -4,9 +4,9 @@ utils
 .. toctree::
     :hidden:
 
-    RawEnvironment <utils/base>
-    XuanCeEnvWrapper <utils/wrapper>
+    Base Class <utils/base>
+    Wrappers <utils/wrapper>
 
 
-* :doc:`RawEnvironment <utils/base>`
-* :doc:`XuanCeEnvWrapper <utils/wrapper>`
+* :doc:`Base Class <utils/base>`
+* :doc:`Wrappers <utils/wrapper>`
