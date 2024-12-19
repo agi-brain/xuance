@@ -3,6 +3,7 @@ Agents
 
 .. toctree::
     :hidden:
+    :maxdepth: 2
 
     Base Agent <agents/base>
     Core Agent <agents/core>
