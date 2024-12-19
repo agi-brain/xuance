@@ -6,3 +6,5 @@ sphinx-notfound-page
 myst-parser
 sphinx-design
 sphinx-favicon
+numpy>=1.21,<1.25
+opencv-python-headless>=4.5,<4.6

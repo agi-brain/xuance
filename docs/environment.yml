@@ -16,6 +16,5 @@ dependencies:
   - sphinx-design
   - sphinx-favicon
   - opencv
-  - numpy>=1.21,<1.25
-  - opencv-python-headless>=4.5,<4.6
+  - numpy
 prefix: /home/docs/.conda/envs/xuance_env
