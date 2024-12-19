@@ -7,7 +7,6 @@ dependencies:
   - pip>=20.1  # pip is needed as dependency
   - pip:
     - black==20.8b1
-  - mpi4py
   - furo
   - sphinx-tabs
   - sphinx-autobuild
