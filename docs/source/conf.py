@@ -43,19 +43,19 @@ extensions = [
 
 autodoc_mock_imports = [
     "numpy",
-    "scipy==1.7.3",
-    "gym==0.26.2",
-    "gymnasium==0.28.1",
-    "gym-notices==0.0.8",
-    "pygame==2.1.0",
-    "tqdm==4.62.3",
-    "pyglet==1.5.15",
-    "pettingzoo>=1.23.0",  # for MARL
-    "tensorboard>=2.11.2",  # logger
-    "wandb==0.15.3",
-    "moviepy==1.0.3",
+    "scipy",
+    "gym",
+    "gymnasium",
+    "gym-notices",
+    "pygame",
+    "tqdm",
+    "pyglet",
+    "pettingzoo",  # for MARL
+    "tensorboard",  # logger
+    "wandb",
+    "moviepy",
     "imageio",  # default version is 2.9.0
-    "opencv-python==4.5.4.58",
+    "opencv-python",
     "mpi4py",  # default version is 3.1.3
 ]
 
