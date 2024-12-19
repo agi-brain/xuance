@@ -1,6 +1,5 @@
 import importlib
 import numpy as np
-from xuance.common import Dict, Any
 from xuance.environment import RawMultiAgentEnv
 
 TEAM_NAME_DICT = {

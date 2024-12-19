@@ -7,10 +7,15 @@ import time
 import numpy as np
 from gym.spaces import Box
 from xuance.environment import RawEnvironment
-from gym_pybullet_drones.envs.CtrlAviary import CtrlAviary
-from gym_pybullet_drones.envs.VelocityAviary import VelocityAviary
-from gym_pybullet_drones.envs.HoverAviary import HoverAviary as HoverAviary_Official
-from gym_pybullet_drones.utils.enums import DroneModel, Physics, ActionType, ObservationType
+try:
+    from gym_pybullet_drones.envs.CtrlAviary import CtrlAviary
+    from gym_pybullet_drones.envs.VelocityAviary import VelocityAviary
+    from gym_pybullet_drones.envs.HoverAviary import HoverAviary as HoverAviary_Official
+    from gym_pybullet_drones.utils.enums import DroneModel, Physics, ActionType, ObservationType
+except ImportError:
+    HoverAviary_Official = None
+    print("The module of gym-pybullet-drones might not be installed."
+          "You can installed it from github: https://github.com/utiasDSL/gym-pybullet-drones.")
 
 
 class HoverAviary(HoverAviary_Official):

@@ -1,8 +1,11 @@
 import gym
-import rware
 from gym.spaces import Box
 import numpy as np
 from xuance.environment import RawMultiAgentEnv
+try:
+    import rware
+except ImportError:
+    print("rware is not installed. You can install that via: pip install rware")
 
 
 class RoboticWarehouseEnv(RawMultiAgentEnv):

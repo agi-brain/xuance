@@ -1,5 +1,9 @@
 import gym
-import gym_platform
+try:
+    import gym_platform
+except ImportError:
+    print("The module of gym_platform is not installed."
+          "You can install it from the github repository: https://github.com/cycraig/gym-platform.git.")
 
 
 class PlatformEnv:

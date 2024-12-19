@@ -1,7 +1,11 @@
 import numpy as np
-from smac.env import StarCraft2Env
 from xuance.environment import RawMultiAgentEnv
 from gym.spaces import Box, Discrete
+try:
+    from smac.env import StarCraft2Env
+except ImportError:
+    print("The module smac might not be installed. You can install that via: "
+          "pip install git+https://github.com/oxwhirl/smac.git")
 
 
 class StarCraft2_Env(RawMultiAgentEnv):

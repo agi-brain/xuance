@@ -9,7 +9,41 @@ from xuance.environment.vector_envs import REGISTRY_VEC_ENV
 
 
 def make_envs(config: Namespace):
+    """
+    Creates and returns a set of environments based on the provided configuration.
+
+    This function supports single-agent, multi-agent, and vectorized environments and handles
+    the initialization of the environment(s) based on the configuration settings. The function
+    also manages distributed training setups and environment vectorization.
+
+    Parameters:
+    -----------
+    config : Namespace
+        A configuration object containing the necessary settings to initialize the environment.
+        The configuration should contain the following attributes:
+        - env_name (str): The name of the environment to create.
+        - env_seed (int): The seed value for environment initialization.
+        - distributed_training (bool): Whether to use distributed training.
+        - parallels (int): The number of parallel environments for vectorized setups.
+        - vectorize (str): The type of vectorization to apply (e.g., 'DummyVecEnv', 'SubprocVecEnv', etc.).
+
+    Returns:
+        List of environments based on the configuration settings.
+    """
     def _thunk(env_seed: int = None):
+        """
+        Function that creates and returns an environment based on the config settings.
+
+        Parameters:
+        -----------
+        env_seed : int, optional
+            The seed to use for environment initialization. Defaults to `None`.
+
+        Returns:
+        --------
+        environment
+            The created environment based on the configuration settings (single-agent or multi-agent).
+        """
         config.env_seed = env_seed
         if config.env_name in REGISTRY_ENV.keys():
             if config.env_name == "Platform":

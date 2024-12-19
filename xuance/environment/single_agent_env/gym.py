@@ -1,7 +1,11 @@
 import gym
 import numpy as np
 from collections import deque
-import cv2
+try:
+    import cv2
+except ImportError:
+    print("The module opencv-python might not be installed."
+          "Please ensure you have installed opencv-python via `pip install opencv-python==4.5.4.58`.")
 
 
 class Gym_Env(gym.Wrapper):

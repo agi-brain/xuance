@@ -8,8 +8,14 @@ from gym.spaces import Box
 import time
 from operator import itemgetter
 from xuance.environment import RawMultiAgentEnv
-from gym_pybullet_drones.utils.enums import DroneModel, Physics, ActionType, ObservationType
-from gym_pybullet_drones.envs.MultiHoverAviary import MultiHoverAviary as MultiHoverAviary_Official
+try:
+    from gym_pybullet_drones.utils.enums import DroneModel, Physics, ActionType, ObservationType
+    from gym_pybullet_drones.envs.MultiHoverAviary import MultiHoverAviary as MultiHoverAviary_Official
+except ImportError:
+    DroneModel, Physics, ActionType, ObservationType = None, None, None, None
+    MultiHoverAviary_Official = object
+    print("The module of gym-pybullet-drones might not be installed."
+          "You can installed it from github: https://github.com/utiasDSL/gym-pybullet-drones.")
 
 
 class MultiHoverAviary(MultiHoverAviary_Official):
@@ -18,18 +24,18 @@ class MultiHoverAviary(MultiHoverAviary_Official):
     ################################################################################
 
     def __init__(self,
-                 drone_model: DroneModel = DroneModel.CF2X,
+                 drone_model: DroneModel = DroneModel.CF2X if hasattr(DroneModel, 'CF2X') else None,
                  num_drones: int = 2,
                  neighbourhood_radius: float = np.inf,
                  initial_xyzs=None,
                  initial_rpys=None,
-                 physics: Physics = Physics.PYB,
+                 physics: Physics = Physics.PYB if hasattr(Physics, 'PYB') else None,
                  pyb_freq: int = 240,
                  ctrl_freq: int = 30,
                  gui=False,
                  record=False,
-                 obs: ObservationType = ObservationType.KIN,
-                 act: ActionType = ActionType.RPM
+                 obs: ObservationType = ObservationType.KIN if hasattr(ObservationType, 'KIN') else None,
+                 act: ActionType = ActionType.RPM if hasattr(ActionType, 'RPM') else None,
                  ):
         """Initialization of a multi-agent RL environment.
 

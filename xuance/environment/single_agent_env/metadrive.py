@@ -1,5 +1,9 @@
 from xuance.environment import RawEnvironment
-from metadrive.envs.metadrive_env import MetaDriveEnv
+try:
+    from metadrive.envs.metadrive_env import MetaDriveEnv
+except ImportError:
+    print("The module metadrive might not be installed."
+          "You can install it with `pip install metadrive`.")
 
 
 class MetaDrive_Env(RawEnvironment):

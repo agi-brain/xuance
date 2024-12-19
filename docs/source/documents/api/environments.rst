@@ -9,13 +9,20 @@ Each simulation environment contains a rich variety of task scenarios, as shown 
 .. toctree::
     :hidden:
 
-    single-agent <environments/single_agent_env>
-    multi-agent <environments/multi_agent_env>
+    Single-Agent Env <environments/single_agent_env>
+    Multi-Agent Env <environments/multi_agent_env>
     vectorization <environments/vector_envs>
     utils <environments/utils>
-    
 
-* :doc:`single-agent <environments/single_agent_env>`.
-* :doc:`multi-agent <environments/multi_agent_env>`.
+* :doc:`Single-Agent Env <environments/single_agent_env>`.
+* :doc:`Multi-Agent Env <environments/multi_agent_env>`.
 * :doc:`vectorization <environments/vector_envs>`.
 * :doc:`utils <environments/utils>`.
+
+Make Environment
+-------------------------
+
+.. automodule:: xuance.environment
+    :members: make_envs
+    :undoc-members:
+    :show-inheritance:
