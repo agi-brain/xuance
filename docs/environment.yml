@@ -15,5 +15,4 @@ dependencies:
   - myst-parser
   - sphinx-design
   - sphinx-favicon
-  - opencv-python
 prefix: /home/docs/.conda/envs/xuance_env
