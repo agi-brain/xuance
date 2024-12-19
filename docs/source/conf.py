@@ -42,6 +42,7 @@ extensions = [
 ]
 
 autodoc_mock_imports = [
+    "opencv-python",
     "numpy",
     "scipy",
     "gym",
@@ -55,8 +56,9 @@ autodoc_mock_imports = [
     "wandb",
     "moviepy",
     "imageio",  # default version is 2.9.0
-    "opencv-python",
     "mpi4py",  # default version is 3.1.3
+    # environments
+    "minigrid",
 ]
 
 templates_path = ['_templates']
