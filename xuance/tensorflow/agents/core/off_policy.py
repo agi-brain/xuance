@@ -1,10 +1,9 @@
-from tqdm import tqdm
 import numpy as np
+from tqdm import tqdm
 from copy import deepcopy
-from xuance.common import Optional
 from argparse import Namespace
+from xuance.common import Optional, DummyOffPolicyBuffer, DummyOffPolicyBuffer_Atari
 from xuance.environment import DummyVecEnv
-from xuance.common import DummyOffPolicyBuffer, DummyOffPolicyBuffer_Atari
 from xuance.tensorflow import Module
 from xuance.tensorflow.agents.base import Agent
 
