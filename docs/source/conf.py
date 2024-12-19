@@ -42,7 +42,7 @@ extensions = [
 ]
 
 autodoc_mock_imports = [
-    "numpy>=1.21.6",
+    "numpy",
     "scipy==1.7.3",
     "gym==0.26.2",
     "gymnasium==0.28.1",
