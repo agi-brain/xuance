@@ -56,6 +56,9 @@ autodoc_mock_imports = [
     "moviepy",
     "imageio",  # default version is 2.9.0
     "mpi4py",  # default version is 3.1.3
+    "torch",
+    "tensorflow",
+    "mindspore",
 ]
 
 templates_path = ['_templates']
@@ -75,7 +78,7 @@ html_theme_options = {
     "source_repository": "https://github.com/agi-brain/xuance",
     "source_branch": "../tree/master",
     "source_directory": "docs/source",
-    "top_of_page_buttons": ["edit"],
+    "top_of_page_buttons": ["view", "edit"],
 }
 
 favicons = [

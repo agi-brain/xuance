@@ -88,7 +88,7 @@ XuanCe contains four main parts:
    documents/api/configs
    documents/api/common
    documents/api/environments
-   documents/api/algorithms
+   documents/api/agents
 
 .. toctree::
    :hidden:
