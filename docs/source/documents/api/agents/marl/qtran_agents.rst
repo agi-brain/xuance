@@ -1,4 +1,4 @@
-Q-transformation (QTRAN)
+Q-Transformation (QTRAN)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 PyTorch

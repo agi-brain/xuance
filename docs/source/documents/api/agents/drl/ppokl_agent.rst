@@ -1,4 +1,4 @@
-Proximal Policy Optimization with KL divergence (PPO-KL)
+Proximal Policy Optimization with KL Divergence (PPO-KL)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 PyTorch

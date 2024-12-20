@@ -1,4 +1,4 @@
-DQN with Parameter Space Noise for Exploration (NoisyDQN)
+DQN with Noisy Layers (NoisyDQN)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 PyTorch

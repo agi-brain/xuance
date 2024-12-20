@@ -1,5 +1,5 @@
-Double Deep Q-Network (DDQN)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Double Deep Q-Network (Double DQN)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 PyTorch
 ''''''''''''

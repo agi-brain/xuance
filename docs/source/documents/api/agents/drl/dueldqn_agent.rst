@@ -1,5 +1,5 @@
-DQN with Dueling network (DuelDQN)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Dueling Deep Q-Network (Dueling DQN)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 PyTorch
 ''''''''''''

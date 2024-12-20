@@ -1,4 +1,4 @@
-Mean-Field Q-learning (MFQ)
+Mean-Field Q-Learning (MFQ)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 PyTorch

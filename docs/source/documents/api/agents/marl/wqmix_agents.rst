@@ -1,4 +1,4 @@
-Weighted Q-mixing Networks (WQMIX)
+Weighted Q-Mixing Networks (WQMIX)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 PyTorch

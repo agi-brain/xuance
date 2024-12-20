@@ -1,4 +1,4 @@
-Proximal Policy Optimization with clipped objective (PPO-Clip)
+Proximal Policy Optimization with Clipped Objective (PPO-Clip)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 PyTorch

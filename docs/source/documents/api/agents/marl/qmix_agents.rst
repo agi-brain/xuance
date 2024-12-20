@@ -1,4 +1,4 @@
-Q-mixing networks (QMIX)
+Q-Mixing Networks (QMIX)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 PyTorch
