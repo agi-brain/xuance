@@ -71,13 +71,12 @@ XuanCe contains four main parts:
 .. toctree::
    :hidden:
    :maxdepth: 1
-   :caption: How to use:
+   :caption: Tutorial:
 
    documents/usage/installation
    documents/usage/basic_usage
    documents/usage/further_usage
    documents/usage/new_envs
-   documents/usage/new_marl_envs
    documents/usage/new_algorithm
 
 .. toctree::
@@ -101,7 +100,10 @@ XuanCe contains four main parts:
 
 .. toctree::
    :hidden:
-   :maxdepth: 1
-   :caption: Update
+   :caption: Development
 
-   documents/updating_logs
+   Github <https://github.com/agi-brain/xuance.git>
+   documents/release_log
+   Contribute to XuanCe <https://github.com/agi-brain/xuance/pulls>
+   Contribute to the Docs (English) <https://github.com/agi-brain/xuance/tree/master/docs>
+   Contribute to the Docs (Chinese) <https://github.com/agi-brain/xuance-docs-zh_CN/tree/master/docs>

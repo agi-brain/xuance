@@ -15,4 +15,5 @@ dependencies:
   - myst-parser
   - sphinx-design
   - sphinx-favicon
+  - sphinx_github_changelog
 prefix: /home/docs/.conda/envs/xuance_env

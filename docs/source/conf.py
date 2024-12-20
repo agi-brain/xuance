@@ -9,13 +9,15 @@
 import os
 import sys
 
+import xuance
+
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 print("[DOCS] xuance library path: {}".format(sys.path[0]))
 
 project = 'XuanCe'
 copyright = '2023, XuanCe Contributors.'
 author = 'Wenzhang Liu, Wenzhe Cai, Kun Jiang, Guangran Cheng, Yuanda Wang, Jiawei Wang, Jingyu Cao, Lele Xu, Chaoxu Mu, Changyin Sun.'
-release = 'v1.2'
+release = xuance.__version__
 
 # The master toctree document.
 master_doc = 'index'
@@ -39,6 +41,7 @@ extensions = [
     "sphinx_design",
     "sphinx_favicon",
     "notfound.extension",
+    "sphinx_github_changelog"
 ]
 
 autodoc_mock_imports = [
@@ -61,6 +64,7 @@ autodoc_mock_imports = [
     "tensorflow_probability",
     "tensorflow-addons",
     "mindspore",
+    "xuance",
 ]
 
 templates_path = ['_templates']
@@ -91,3 +95,7 @@ favicons = [
         "href": "figures/favicon/apple-touch-icon.png",
     },
 ]
+
+# -- Generate Changelog -------------------------------------------------
+
+sphinx_github_changelog_token = os.environ.get("SPHINX_GITHUB_CHANGELOG_TOKEN")

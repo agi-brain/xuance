@@ -1,10 +1,10 @@
-New Multi-Agent Environment
-=========================================================
+Build Multi-Agent Environment
+---------------------------------
 
 In XuanCe, users also have the flexibility to create and run their own customized environments with multiple agents in addition to utilizing the provided ones.
 
 Step 1: Create a New Multi-Agent Environment
--------------------------------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 First, you need to prepare an original environment, i.e., an Partial Observed Markov decision process (POMDP).
 Then define a new environment based on the basic class ``RawMultiAgentEnv`` of XuanCe.
@@ -71,7 +71,7 @@ Here is an example:
 
 
 Step 2: Create the Config File and Read the Configurations
--------------------------------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Then, you need to create a YAML file by following the step 1 in :doc:`Further Usage <further_usage>`.
 
@@ -166,7 +166,7 @@ Then, read the configurations:
 
 
 Step 3: Add the Environment to the Registry
--------------------------------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 After defining a new class of environment, you need to add it to the ``REGISTRY_MULTI_AGENT_ENV``.
 
@@ -177,7 +177,7 @@ After defining a new class of environment, you need to add it to the ``REGISTRY_
 
 
 Step 4: Make Your Environment and Run it with XuanCe
--------------------------------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 You can now make your environment and run it directly with XuanCe's algorithms.
 
