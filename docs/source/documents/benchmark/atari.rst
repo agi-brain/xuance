@@ -4,15 +4,15 @@ Atari benchmarks
 Environments
 --------------------------
 
-.. image:: ../../figures/atari/adventure.gif
+.. image:: ../../_static/figures/atari/adventure.gif
     :height: 150px
-.. image:: ../../figures/atari/air_raid.gif
+.. image:: ../../_static/figures/atari/air_raid.gif
     :height: 150px
-.. image:: ../../figures/atari/alien.gif
+.. image:: ../../_static/figures/atari/alien.gif
     :height: 150px
-.. image:: ../../figures/atari/boxing.gif
+.. image:: ../../_static/figures/atari/boxing.gif
     :height: 150px
-.. image:: ../../figures/atari/breakout.gif
+.. image:: ../../_static/figures/atari/breakout.gif
     :height: 150px
 
 Results

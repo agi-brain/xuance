@@ -4,7 +4,7 @@ SMAC benchmarks
 Scenarios
 --------------------------
 
-.. image:: ../../figures/smac/smac.png
+.. image:: ../../_static/figures/smac/smac.png
     :height: 150px
 
 The evaulated maps are listed as follows:

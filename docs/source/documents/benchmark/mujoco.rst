@@ -4,13 +4,13 @@ MuJoCo benchmarks
 Scenarios
 --------------------------
 
-.. image:: ../../figures/mujoco/ant.gif
+.. image:: ../../_static/figures/mujoco/ant.gif
     :height: 150px
-.. image:: ../../figures/mujoco/half_cheetah.gif
+.. image:: ../../_static/figures/mujoco/half_cheetah.gif
     :height: 150px
-.. image:: ../../figures/mujoco/hopper.gif
+.. image:: ../../_static/figures/mujoco/hopper.gif
     :height: 150px
-.. image:: ../../figures/mujoco/humanoid.gif
+.. image:: ../../_static/figures/mujoco/humanoid.gif
     :height: 150px
 
 ==========================
