@@ -1,5 +1,5 @@
 <div align="center">
-<img src="docs/source/figures/logo_1.png" width="480" height="auto" align=center />
+<img src="docs/source/_static/figures/logo_1.png" width="480" height="auto" align=center />
 </div>
 
 # XuanCe: A Comprehensive and Unified Deep Reinforcement Learning Library
@@ -143,13 +143,13 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
 
 <table rules="none" align="center"><tr>
 <td> <center>
-<img src="./docs/source/figures/toy/cart_pole.gif" height=100" /><br/><font color="AAAAAA">Cart Pole</font>
+<img src="docs/source/_static/figures/toy/cart_pole.gif" height=100" /><br/><font color="AAAAAA">Cart Pole</font>
 </center></td>
 <td> <center>
-<img src="./docs/source/figures/toy/pendulum.gif" height=100" /> <br/> <font color="AAAAAA">Pendulum</font>
+<img src="docs/source/_static/figures/toy/pendulum.gif" height=100" /> <br/> <font color="AAAAAA">Pendulum</font>
 </center> </td>
 <td> <center>
-<img src="./docs/source/figures/toy/acrobot.gif" height=100" /> <br/> <font color="AAAAAA">Acrobot</font>
+<img src="docs/source/_static/figures/toy/acrobot.gif" height=100" /> <br/> <font color="AAAAAA">Acrobot</font>
 </center> </td>
 <td> <center>
 <br/> <font color="AAAAAA">...</font>
@@ -165,13 +165,13 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
 
 <table rules="none" align="center"><tr>
 <td> <center>
-<img src="./docs/source/figures/box2d/bipedal_walker.gif" height=100" /><br/><font color="AAAAAA">Bipedal Walker</font>
+<img src="docs/source/_static/figures/box2d/bipedal_walker.gif" height=100" /><br/><font color="AAAAAA">Bipedal Walker</font>
 </center></td>
 <td> <center>
-<img src="./docs/source/figures/box2d/car_racing.gif" height=100" /> <br/> <font color="AAAAAA">Car Racing</font>
+<img src="docs/source/_static/figures/box2d/car_racing.gif" height=100" /> <br/> <font color="AAAAAA">Car Racing</font>
 </center> </td>
 <td> <center>
-<img src="./docs/source/figures/box2d/lunar_lander.gif" height=100" /> <br/> <font color="AAAAAA">Lunar Lander</font>
+<img src="docs/source/_static/figures/box2d/lunar_lander.gif" height=100" /> <br/> <font color="AAAAAA">Lunar Lander</font>
 </center> </td>
 </tr>
 </table>
@@ -185,16 +185,16 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
 
 <table rules="none" align="center"><tr>
 <td> <center>
-<img src="./docs/source/figures/mujoco/ant.gif" height=100" /><br/><font color="AAAAAA">Ant</font>
+<img src="docs/source/_static/figures/mujoco/ant.gif" height=100" /><br/><font color="AAAAAA">Ant</font>
 </center></td>
 <td> <center>
-<img src="./docs/source/figures/mujoco/half_cheetah.gif" height=100" /> <br/> <font color="AAAAAA">HalfCheetah</font>
+<img src="docs/source/_static/figures/mujoco/half_cheetah.gif" height=100" /> <br/> <font color="AAAAAA">HalfCheetah</font>
 </center> </td>
 <td> <center>
-<img src="./docs/source/figures/mujoco/hopper.gif" height=100" /> <br/> <font color="AAAAAA">Hopper</font>
+<img src="docs/source/_static/figures/mujoco/hopper.gif" height=100" /> <br/> <font color="AAAAAA">Hopper</font>
 </center> </td>
 <td> <center>
-<img src="./docs/source/figures/mujoco/humanoid.gif" height=100" /> <br/> <font color="AAAAAA">Humanoid</font>
+<img src="docs/source/_static/figures/mujoco/humanoid.gif" height=100" /> <br/> <font color="AAAAAA">Humanoid</font>
 </center> </td>
 <td> <center>
 <br/> <font color="AAAAAA">...</font>
@@ -210,19 +210,19 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
 
 <table rules="none" align="center"><tr>
 <td> <center>
-<img src="./docs/source/figures/atari/breakout.gif" height=100" /><br/><font color="AAAAAA">Breakout</font>
+<img src="docs/source/_static/figures/atari/breakout.gif" height=100" /><br/><font color="AAAAAA">Breakout</font>
 </center></td>
 <td> <center>
-<img src="./docs/source/figures/atari/boxing.gif" height=100" /> <br/> <font color="AAAAAA">Boxing</font>
+<img src="docs/source/_static/figures/atari/boxing.gif" height=100" /> <br/> <font color="AAAAAA">Boxing</font>
 </center> </td>
 <td> <center>
-<img src="./docs/source/figures/atari/alien.gif" height=100" /> <br/> <font color="AAAAAA">Alien</font>
+<img src="docs/source/_static/figures/atari/alien.gif" height=100" /> <br/> <font color="AAAAAA">Alien</font>
 </center> </td>
 <td> <center>
-<img src="./docs/source/figures/atari/adventure.gif" height=100" /> <br/> <font color="AAAAAA">Adventure</font>
+<img src="docs/source/_static/figures/atari/adventure.gif" height=100" /> <br/> <font color="AAAAAA">Adventure</font>
 </center> </td>
 <td> <center>
-<img src="./docs/source/figures/atari/air_raid.gif" height=100" /> <br/> <font color="AAAAAA">Air Raid</font>
+<img src="docs/source/_static/figures/atari/air_raid.gif" height=100" /> <br/> <font color="AAAAAA">Air Raid</font>
 </center> </td>
 <td> <center>
 <br/> <font color="AAAAAA">...</font>
@@ -239,16 +239,16 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
 
 <table rules="none" align="center"><tr>
 <td> <center>
-<img src="./docs/source/figures/minigrid/crossing.gif" height=100" /><br/><font color="AAAAAA">Crossing</font>
+<img src="docs/source/_static/figures/minigrid/crossing.gif" height=100" /><br/><font color="AAAAAA">Crossing</font>
 </center></td>
 <td> <center>
-<img src="./docs/source/figures/minigrid/memory.gif" height=100" /> <br/> <font color="AAAAAA">Memory</font>
+<img src="docs/source/_static/figures/minigrid/memory.gif" height=100" /> <br/> <font color="AAAAAA">Memory</font>
 </center> </td>
 <td> <center>
-<img src="./docs/source/figures/minigrid/lockedroom.gif" height=100" /> <br/> <font color="AAAAAA">Locked Room</font>
+<img src="docs/source/_static/figures/minigrid/lockedroom.gif" height=100" /> <br/> <font color="AAAAAA">Locked Room</font>
 </center> </td>
 <td> <center>
-<img src="./docs/source/figures/minigrid/playground.gif" height=100" /> <br/> <font color="AAAAAA">Playground</font>
+<img src="docs/source/_static/figures/minigrid/playground.gif" height=100" /> <br/> <font color="AAAAAA">Playground</font>
 </center> </td>
 <td> <center>
 <br/> <font color="AAAAAA">...</font>
@@ -266,13 +266,13 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
 
 <table rules="none" align="center"><tr>
 <td> <center>
-<img src="./docs/source/figures/drones/helix.gif" height=100" /><br/><font color="AAAAAA">Helix</font>
+<img src="docs/source/_static/figures/drones/helix.gif" height=100" /><br/><font color="AAAAAA">Helix</font>
 </center></td>
 <td> <center>
-<img src="./docs/source/figures/drones/rl.gif" height=100" /> <br/> <font color="AAAAAA">Single-Agent Hover</font>
+<img src="docs/source/_static/figures/drones/rl.gif" height=100" /> <br/> <font color="AAAAAA">Single-Agent Hover</font>
 </center> </td>
 <td> <center>
-<img src="./docs/source/figures/drones/marl.gif" height=100" /> <br/> <font color="AAAAAA">Multi-Agent Hover</font>
+<img src="docs/source/_static/figures/drones/marl.gif" height=100" /> <br/> <font color="AAAAAA">Multi-Agent Hover</font>
 </center> </td>
 <td> <center>
 <br/> <font color="AAAAAA">...</font>
@@ -288,13 +288,13 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
 
 <table rules="none" align="center"><tr>
 <td> <center>
-<img src="./docs/source/figures/mpe/mpe_simple_push.gif" height=100" /><br/><font color="AAAAAA">Simple Push</font>
+<img src="docs/source/_static/figures/mpe/mpe_simple_push.gif" height=100" /><br/><font color="AAAAAA">Simple Push</font>
 </center></td>
 <td> <center>
-<img src="./docs/source/figures/mpe/mpe_simple_reference.gif" height=100" /> <br/> <font color="AAAAAA">Simple Reference</font>
+<img src="docs/source/_static/figures/mpe/mpe_simple_reference.gif" height=100" /> <br/> <font color="AAAAAA">Simple Reference</font>
 </center> </td>
 <td> <center>
-<img src="./docs/source/figures/mpe/mpe_simple_spread.gif" height=100" /> <br/> <font color="AAAAAA">Simple Spread</font>
+<img src="docs/source/_static/figures/mpe/mpe_simple_spread.gif" height=100" /> <br/> <font color="AAAAAA">Simple Spread</font>
 </center> </td>
 <td> <center>
 <br/> <font color="AAAAAA">...</font>
@@ -348,13 +348,13 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
 ### [SMAC](https://github.com/oxwhirl/smac)
 
 <div align="center">
-<img src="docs/source/figures/smac/smac.png" width="715" height="auto" align=center />
+<img src="docs/source/_static/figures/smac/smac.png" width="715" height="auto" align=center />
 </div>
 
 ### [Google Research Football](https://github.com/google-research/football)
 
 <div align="center">
-<img src="docs/source/figures/football/gfootball.png" width="720" height="auto" align=center />
+<img src="docs/source/_static/figures/football/gfootball.png" width="720" height="auto" align=center />
 </div>
 
 ## :point_right: Installation
@@ -431,7 +431,7 @@ command.
 $ tensorboard --logdir ./logs/dqn/torch/CartPole-v0
 ```
 <div align="center">
-<img src="docs/source/figures/log/tensorboard.png" width="700" height="auto" align=center />
+<img src="docs/source/_static/figures/log/tensorboard.png" width="700" height="auto" align=center />
 </div>
 
 #### Weights & Biases (wandb)
@@ -443,7 +443,7 @@ How to use wandb online? :arrow_right: [https://github.com/wandb/wandb.git/](htt
 How to use wandb offline? :arrow_right: [https://github.com/wandb/server.git/](https://github.com/wandb/server.git/)
 
 <div align="center">
-<img src="docs/source/figures/log/wandb.png" width="700" height="auto" align=center />
+<img src="docs/source/_static/figures/log/wandb.png" width="700" height="auto" align=center />
 </div>
 
 <!-- If everything going well, you should get a similar display like below. 
@@ -465,10 +465,10 @@ Welcome to join the official communication group with QQ app (Group number: 5524
 
 <table rules="none" align="center"><tr>
 <td> <center>
-<img src="docs/source/figures/QQ_group.jpeg" width="200" height="auto" /><br/><font color="AAAAAA">QQ group</font>
+<img src="docs/source/_static/figures/QQ_group.jpeg" width="200" height="auto" /><br/><font color="AAAAAA">QQ group</font>
 </center></td>
 <td> <center>
-<img src="docs/source/figures/Official_Account.jpg" width="200" height="auto" /> <br/> <font color="AAAAAA">Official account (WeChat)</font>
+<img src="docs/source/_static/figures/Official_Account.jpg" width="200" height="auto" /> <br/> <font color="AAAAAA">Official account (WeChat)</font>
 </center> </td>
 </tr>
 </table>

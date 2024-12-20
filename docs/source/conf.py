@@ -71,11 +71,11 @@ exclude_patterns = []
 
 html_theme = "furo"  # sphinx_rtd_theme (before that is renku)
 html_title = "XuanCe"
-html_static_path = ['figures']
+html_static_path = ['_static']
 html_theme_options = {
     # logo
-    "light_logo": "logo_2.png",
-    "dark_logo": "logo_2.png",
+    "light_logo": "figures/logo_2.png",
+    "dark_logo": "figures/logo_2.png",
     #
     "source_repository": "https://github.com/agi-brain/xuance",
     "source_branch": "../tree/master",
@@ -84,10 +84,10 @@ html_theme_options = {
 }
 
 favicons = [
-    {"href": "favicon/favicon.svg"},  # => use `_static/icon.svg`
-    {"href": "favicon/favicon-96x96.png"},
+    {"href": "figures/favicon/favicon.svg"},  # => use `_static/icon.svg`
+    {"href": "figures/favicon/favicon-96x96.png"},
     {
         "rel": "apple-touch-icon",
-        "href": "favicon/apple-touch-icon.png",
+        "href": "figures/favicon/apple-touch-icon.png",
     },
 ]

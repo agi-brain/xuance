@@ -1,6 +1,8 @@
 Base Agent
 -------------
 
+To create a new Agent, you need to build a class inherit from ``xuance.torch.agents.agent.Agent`` , ``xuance.tensorflow.agents.agent.Agent``, or ``xuance.mindspore.agents.agent.Agent``.
+
 PyTorch
 ^^^^^^^^^^^^^
 
