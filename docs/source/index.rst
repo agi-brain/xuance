@@ -84,15 +84,15 @@ XuanCe contains four main parts:
    :maxdepth: 1
    :caption: APIs:
 
+   documents/api/runners
    documents/api/agents
    documents/api/learners
    documents/api/policies
    documents/api/representations
-   documents/api/utils
    documents/api/environments
    documents/api/configs
    documents/api/common
-   documents/api/runners
+   documents/api/utils
 
 .. toctree::
    :hidden:
