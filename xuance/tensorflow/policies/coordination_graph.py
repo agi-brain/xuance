@@ -2,7 +2,11 @@ import numpy as np
 import tensorflow.keras as tk
 import tensorflow as tf
 import torch
-import torch_scatter
+from xuance.tensorflow import Module
+try:
+    import torch_scatter
+except ImportError:
+    print("The module torch_scatter is not installed.")
 
 
 class DCG_utility(Module):

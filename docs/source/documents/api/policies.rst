@@ -7,9 +7,9 @@ Policies
 
     policies/core
     policies/deterministic
-    policies/deterministic_marl
     policies/categorical
-    policies/categorical_marl
     policies/gaussian
+    policies/deterministic_marl
+    policies/categorical_marl
     policies/gaussian_marl
     policies/coordination_graph

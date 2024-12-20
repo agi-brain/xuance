@@ -1,9 +1,12 @@
 import torch
 import torch.nn as nn
 import numpy as np
-import torch_scatter
 from xuance.common import Optional, Union
 from xuance.torch import Tensor
+try:
+    import torch_scatter
+except ImportError:
+    print("The module torch_scatter is not installed.")
 
 
 class DCG_utility(nn.Module):

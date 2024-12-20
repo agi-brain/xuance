@@ -1,8 +1,11 @@
 import mindspore as ms
 import mindspore.nn as nn
-import torch_scatter
 import torch
 import numpy as np
+try:
+    import torch_scatter
+except ImportError:
+    print("The module torch_scatter is not installed.")
 
 
 class DCG_utility(nn.Cell):
