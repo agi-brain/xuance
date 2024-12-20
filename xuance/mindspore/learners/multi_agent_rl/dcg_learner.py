@@ -7,9 +7,12 @@ from xuance.mindspore import ms, Module, Tensor, optim
 from xuance.mindspore.learners import LearnerMAS
 from xuance.common import List
 from argparse import Namespace
-import torch_scatter
 import torch
 import copy
+try:
+    import torch_scatter
+except ImportError:
+    print("The module torch_scatter is not installed.")
 
 
 class DCG_Learner(LearnerMAS):
