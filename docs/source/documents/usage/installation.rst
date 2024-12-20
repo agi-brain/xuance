@@ -8,7 +8,7 @@ Before installing **XuanCe**, you should install Anaconda_ to prepare a python e
 After that, open a terminal and install **XuanCe** by the following steps.
 You can choose two ways to install XuanCe.
 
-.. attention::
+.. note::
 
     XuanCe can be installed on MacOS and be compatible with both Intel and Apple's M CPUs.
 
