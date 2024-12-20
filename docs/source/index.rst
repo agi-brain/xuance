@@ -3,13 +3,13 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-.. .. image:: figures/logo_1.png
+Welcome to XuanCe's Documentation!
+======================================
+
+.. .. image:: /_static/figures/logo_1.png
    :scale: 30%
    :align: center
    :target: https://github.com/agi-brain/xuance.git
-
-Welcome to XuanCe!
-======================================
 
 **XuanCe** is an open-source ensemble of Deep Reinforcement Learning (DRL) algorithm implementations.
 
@@ -84,15 +84,15 @@ XuanCe contains four main parts:
    :maxdepth: 1
    :caption: APIs:
 
-   documents/api/configs
-   documents/api/common
-   documents/api/environments
    documents/api/agents
    documents/api/learners
    documents/api/policies
    documents/api/representations
-   documents/api/runners
    documents/api/utils
+   documents/api/environments
+   documents/api/configs
+   documents/api/common
+   documents/api/runners
 
 .. toctree::
    :hidden:
