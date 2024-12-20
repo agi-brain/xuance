@@ -10,7 +10,7 @@ You can choose two ways to install XuanCe.
 
 .. note::
 
-    XuanCe can be installed on MacOS and be compatible with both Intel and Apple's M CPUs.
+    Note: XuanCe can be installed on MacOS and be compatible with both Intel and Apple's M CPUs.
 
 Install via PyPI
 ---------------------------------------------
@@ -153,9 +153,9 @@ Alternatively, you can install XuanCe from its GitHub repository.
 
             pip install -e .[box2d]
 
-.. note::
+.. attention::
 
-    Note: Some extra packages should be installed manually for further usage.
+    Some extra packages should be installed manually for further usage.
 
 .. tip::
 
