@@ -71,7 +71,7 @@ exclude_patterns = []
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 html_theme = "furo"  # sphinx_rtd_theme (before that is renku)
-html_title = "XuanCe"
+html_title = f"<div style='text-align: center;'><strong>{project}</strong></div>"
 html_static_path = ['_static']
 html_theme_options = {
     # logo
