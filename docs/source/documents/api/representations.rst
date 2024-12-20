@@ -2,8 +2,7 @@ Representations
 ================
 
 .. toctree::
-    :hidden:
-    :maxdepth: 2
+    :maxdepth: 1
 
     representations/mlp
     representations/cnn

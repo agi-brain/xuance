@@ -91,6 +91,8 @@ XuanCe contains four main parts:
    documents/api/learners
    documents/api/policies
    documents/api/representations
+   documents/api/runners
+   documents/api/utils
 
 .. toctree::
    :hidden:

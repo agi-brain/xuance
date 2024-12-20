@@ -2,8 +2,7 @@ Policies
 =============
 
 .. toctree::
-    :hidden:
-    :maxdepth: 2
+    :maxdepth: 1
 
     policies/core
     policies/deterministic
