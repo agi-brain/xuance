@@ -8,6 +8,7 @@ dependencies:
   - pip:
     - black==20.8b1
     - sphinx_github_changelog
+    - xuance
   - furo
   - sphinx-tabs
   - sphinx-autobuild

@@ -64,7 +64,6 @@ autodoc_mock_imports = [
     "tensorflow_probability",
     "tensorflow-addons",
     "mindspore",
-    "xuance",
 ]
 
 templates_path = ['_templates']
