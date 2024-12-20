@@ -9,15 +9,13 @@
 import os
 import sys
 
-import xuance
-
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 print("[DOCS] xuance library path: {}".format(sys.path[0]))
 
 project = 'XuanCe'
 copyright = '2023, XuanCe Contributors.'
 author = 'Wenzhang Liu, Wenzhe Cai, Kun Jiang, Guangran Cheng, Yuanda Wang, Jiawei Wang, Jingyu Cao, Lele Xu, Chaoxu Mu, Changyin Sun.'
-release = xuance.__version__
+release = "1.2"
 
 # The master toctree document.
 master_doc = 'index'
