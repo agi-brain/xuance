@@ -71,7 +71,7 @@ exclude_patterns = []
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 html_theme = "furo"  # sphinx_rtd_theme (before that is renku)
-html_title = f"<div style='text-align: center;'><strong>{project}</strong></div>"
+html_title = f"<div style='text-align: center; font-size: 20px'><strong>{project}</strong></div>"
 html_static_path = ['_static']
 html_theme_options = {
     # logo
@@ -83,6 +83,9 @@ html_theme_options = {
     "source_directory": "docs/source",
     "top_of_page_buttons": ["view", "edit"],
 }
+html_css_files = [
+    'css/xuance.css',  # Name of xuance CSS file
+]
 
 favicons = [
     {"href": "figures/favicon/favicon.svg"},  # => use `_static/icon.svg`

@@ -1,0 +1,29 @@
+.nowrap {
+    white-space: nowrap;
+}
+
+.sidebar-brand-text {
+    font-size: 1.25rem !important;
+}
+
+tbody > tr > th.stub {
+    font-weight: normal;
+    text-align: left;
+}
+
+/* Set the Font Size */
+body {
+    font-size: 16px; /* Set the base font size */
+}
+
+h1 {
+    font-size: 1.8em; /* Adjust heading sizes as needed */
+}
+
+h2 {
+    font-size: 1.6em;
+}
+
+h3 {
+    font-size: 1.4em;
+}
