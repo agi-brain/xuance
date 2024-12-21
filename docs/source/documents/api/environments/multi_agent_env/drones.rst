@@ -13,16 +13,16 @@ which is a gym environment with pybullet physics for reinforcement learning of m
 It supports both single and multiple drones control.
 According to the official repository, it provides the following five kinds of action types:
 
-| rpm: rounds per minutes (RPMs);
-| pid: PID control;
-| vel: Velocity input (using PID control);
-| one_d_rpm: 1D (identical input to all motors) with RPMs;
-| one_d_pid: 1D (identical input to all motors) with PID control.
+- rpm: rounds per minutes (RPMs);
+- pid: PID control;
+- vel: Velocity input (using PID control);
+- one_d_rpm: 1D (identical input to all motors) with RPMs;
+- one_d_pid: 1D (identical input to all motors) with PID control.
 
 You also have permission to customize the scenarios and tasks in this environment for your needs.
 
-| **Official link**: `https://github.com/utiasDSL/gym-pybullet-drones.git <https://github.com/utiasDSL/gym-pybullet-drones.git>`_
-| **Paper link**: `https://arxiv.org/pdf/2103.02142.pdf <https://arxiv.org/pdf/2103.02142.pdf>`_
+| **Official Address**: `https://github.com/utiasDSL/gym-pybullet-drones.git <https://github.com/utiasDSL/gym-pybullet-drones.git>`_
+| **Paper**: `https://arxiv.org/pdf/2103.02142.pdf <https://arxiv.org/pdf/2103.02142.pdf>`_
 
 Installation
 ''''''''''''''''''''''
@@ -58,7 +58,7 @@ During the installation of gym-pybullet-drones, you might encounter the errors l
     pip install numpy==1.24.0
     pip install scipy==1.12.0
 
-Try an Example
+Try An Example
 '''''''''''''''''''''''
 
 Create a python file named, e.g., "demo_drones.py".
@@ -105,6 +105,10 @@ Open the terminal and type the python command:
 .. code-block:: bash
 
     python demo_drones.py --benchmark 0 --test 1
+
+.. raw:: html
+
+    <br><br>
 
 APIs
 '''''''''''''''''''
