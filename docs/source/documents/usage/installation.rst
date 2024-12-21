@@ -3,10 +3,10 @@ Installation
 
 The library can be run at Linux, Windows, MacOS, and EulerOS, etc. It is easy to install XuanCe.
 
-Before installing **XuanCe**, you should install Anaconda_ to prepare a python environment (recommend).
+Before installing **XuanCe**, it is recommended to set up a Python environment using Anaconda_.
 
-After that, open a terminal and install **XuanCe** by the following steps.
-You can choose two ways to install XuanCe.
+Once ready, open a terminal and follow these steps to install **XuanCe**.
+You can choose between two installation methods: from PyPI or GitHub repository.
 
 .. note::
 
@@ -238,6 +238,6 @@ Then, test the installation of xuance by typing:
         pip install mpi4py
 
 
-If no error or warning messages are displayed, it indicates that XuanCe has been successfully installed.
-You can proceed to the next step and start using it.
+If no errors or warnings appear, XuanCe has been successfully installed.
+You can move on to the next step and begin using it.
 
