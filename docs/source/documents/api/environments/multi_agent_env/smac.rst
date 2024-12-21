@@ -48,6 +48,21 @@ or `https://starcraft2.blizzard.com <http://battle.net/sc2/en/legacy-of-the-void
 For more information about SMAC environment, you can visit its homepage
 `https://github.com/oxwhirl/smac.git <https://github.com/oxwhirl/smac.git>`_.
 
+Citation
+''''''''''''''''
+
+The BibTex format of SMAC environment is listed as follows. Please cite the SMAC paper if you use it in your research.
+
+::
+
+    @article{samvelyan19smac,
+      title = {{The} {StarCraft} {Multi}-{Agent} {Challenge}},
+      author = {Mikayel Samvelyan and Tabish Rashid and Christian Schroeder de Witt and Gregory Farquhar and Nantas Nardelli and Tim G. J. Rudner and Chia-Man Hung and Philiph H. S. Torr and Jakob Foerster and Shimon Whiteson},
+      journal = {CoRR},
+      volume = {abs/1902.04043},
+      year = {2019},
+    }
+
 APIs
 ''''''''''''''''
 
