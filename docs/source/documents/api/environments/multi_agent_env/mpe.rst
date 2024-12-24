@@ -1,4 +1,4 @@
-Multi-Agent Particle Environment (MPE)
+Multi-Agent Particle Environment
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The Multi-Agent Particle Environment (MPE) is a lightweight and customizable simulation environment designed
