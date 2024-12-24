@@ -20,19 +20,21 @@ Official link: `https://github.com/semitable/robotic-warehouse.git <https://gith
 Installation
 ''''''''''''''''
 
-Install from PyPI:
+Method 1: Install from PyPI:
 
 .. code-block:: bash
 
     pip install rware
 
-Install from GitHub repository:
+Method 2: Install from GitHub repository:
 
 .. code-block:: bash
 
     git clone git@github.com:uoe-agents/robotic-warehouse.git
     cd robotic-warehouse
     pip install -e .
+
+To learn more about installation, see the `official tutorialofficial tutorial <https://github.com/semitable/robotic-warehouse?tab=readme-ov-file#installation>`_.
 
 APIs
 ''''''''''''''
