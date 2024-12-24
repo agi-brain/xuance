@@ -34,10 +34,6 @@ Install from GitHub repository:
     cd robotic-warehouse
     pip install -e .
 
-.. raw:: html
-
-    <br><br>
-
 APIs
 ''''''''''''''
 
