@@ -6,6 +6,17 @@ It serves as a testbed for studying cooperative, competitive, and mixed interact
 The environment is designed to model tasks commonly found in real-world warehouses,
 such as navigation, item retrieval, obstacle avoidance, and task allocation.
 
+.. image:: ../../../../_static/figures/rware/rware.gif
+    :height: 150px
+.. image:: ../../../../_static/figures/rware/collision1.gif
+    :height: 150px
+.. image:: ../../../../_static/figures/rware/collision2.gif
+    :height: 150px
+.. image:: ../../../../_static/figures/rware/collision3.gif
+    :height: 150px
+
+Official link: `https://github.com/semitable/robotic-warehouse.git <https://github.com/semitable/robotic-warehouse.git>`_.
+
 Installation
 ''''''''''''''''
 
