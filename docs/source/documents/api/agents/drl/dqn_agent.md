@@ -159,7 +159,9 @@ Agent.finish()  # Finish the training.
 }
 ```
 
-## API (PyTroch)
+## APIs
+
+### PyTorch
 
 ```{eval-rst}
 .. automodule:: xuance.torch.agents.qlearning_family.dqn_agent
@@ -168,7 +170,7 @@ Agent.finish()  # Finish the training.
     :show-inheritance:
 ```
 
-## API (TensorFlow2)
+### TensorFlow2
 
 ```{eval-rst}
 .. automodule:: xuance.tensorflow.agents.qlearning_family.dqn_agent
@@ -177,7 +179,7 @@ Agent.finish()  # Finish the training.
     :show-inheritance:
 ```
 
-## API (MindSpore)
+### MindSpore
 
 ```{eval-rst}
 .. automodule:: xuance.mindspore.agents.qlearning_family.dqn_agent
