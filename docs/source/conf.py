@@ -42,6 +42,16 @@ extensions = [
     "sphinx_github_changelog"
 ]
 
+source_suffix = {
+    '.rst': 'restructuredtext',
+    '.txt': 'markdown',
+    '.md': 'markdown',
+}
+
+myst_enable_extensions = [
+    "dollarmath",  # Enables $...$ for inline and $$...$$ for block math
+]
+
 autodoc_mock_imports = [
     "numpy",
     "scipy",

@@ -24,12 +24,12 @@ Each ``agent`` module inherits from the ``core`` module, while the ``core`` modu
     :hidden:
     :maxdepth: 2
 
-    Base Agent <agents/base>
-    Core Agent <agents/core>
     DRL <agents/drl>
     MARL <agents/marl>
+    Base Agent <agents/base>
+    Core Agent <agents/core>
 
-* :doc:`Base Agent <agents/base>`.
-* :doc:`Core Agent <agents/core>`.
 * :doc:`DRL <agents/drl>`.
 * :doc:`MARL <agents/marl>`.
+* :doc:`Base Agent <agents/base>`.
+* :doc:`Core Agent <agents/core>`.
