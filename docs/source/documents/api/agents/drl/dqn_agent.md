@@ -10,7 +10,7 @@ DQN is a **off-policy**, **model-free** algorithm, it deals with **discrete acti
 
 Paper Link: [https://www.nature.com/articles/nature14236](https://www.nature.com/articles/nature14236).
 
-## **Q-Learning**
+## Q-Learning
 
 [**Q-Learning**](https://link.springer.com/article/10.1007/bf00992698) 
 is a model-free RL algorithm where the agent learns a Q-value function $Q(s, a)$, 
@@ -24,7 +24,7 @@ $$
 
 Here, $\alpha$ is the learning rate, $r$ is the reward, $\gamma$ is the discount factor, and $s'$ is the next state.
 
-## **Deep Q-Netowrk**
+## Deep Q-Netowrk
 
 Instead of storing the Q-values in a table 
 ([**tabular Q-learning**](https://en.wikipedia.org/wiki/Q-learning#/media/File:Q-Learning_Matrix_Initialized_and_After_Training.png)), 
@@ -62,13 +62,13 @@ Strengths of DQN:
 - Stabilizes Q-learning through techniques like experience replay and target networks.
 - Demonstrated capability to outperform humans in several Atari games.
 
-## **Algorithm**
+## Algorithm
 
 The full algorithm for training DQN is presented in Algorithm 1:
 
 ![DQN Algorithm](./../../../../_static/figures/pseucodes/pseucode-DQN.png "DQN Algorithm")
 
-## **Run DQN in XuanCe**
+## Run DQN in XuanCe
 
 Before running DQN in XuanCe, you need to prepare a conda environment and install ``xuance`` following 
 the [**installation steps**](https://xuance.readthedocs.io/en/latest/documents/usage/installation.html).
@@ -132,7 +132,7 @@ Agent.save_model("final_train_model.pth")  # Save the model to model_dir.
 Agent.finish()  # Finish the training.
 ```
 
-## **Citation**
+## Citation
 
 ```{code-block} bash
 @article{mnih2015human,
@@ -147,7 +147,7 @@ Agent.finish()  # Finish the training.
 }
 ```
 
-## **APIs**
+## APIs
 
 ### PyTorch
 
