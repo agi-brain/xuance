@@ -66,7 +66,11 @@ Strengths of DQN:
 
 The full algorithm for training DQN is presented in Algorithm 1:
 
-![DQN Algorithm](./../../../../_static/figures/pseucodes/pseucode-DQN.png "DQN Algorithm")
+```{eval-rst}
+.. image:: ./../../../../_static/figures/pseucodes/pseucode-DQN.png
+    :width: 80%
+    :align: center
+```
 
 ## Run DQN in XuanCe
 
