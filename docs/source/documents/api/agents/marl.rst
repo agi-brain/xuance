@@ -25,21 +25,21 @@ MARL Agents
     MFQ <marl/mfq_agents>
     MFAC <marl/mfac_agents>
 
-* :doc:`Independent Q-Learning (IQL) <marl/iql_agents>`.
-* :doc:`Value Decomposition Networks (VDN) <marl/vdn_agents>`.
-* :doc:`Q-Mixing Networks (QMIX) <marl/qmix_agents>`.
-* :doc:`Weighted Q-Mixing Networks (WQMIX) <marl/wqmix_agents>`.
-* :doc:`Q-Transformation (QTRAN) <marl/qtran_agents>`.
-* :doc:`Deep Coordination Graphs (DCG) <marl/dcg_agents>`.
-* :doc:`Independent Deep Deterministic Policy Gradient (IDDPG) <marl/iddpg_agents>`.
-* :doc:`Multi-agent Deep Deterministic Policy Gradient (MADDPG) <marl/maddpg_agents>`.
-* :doc:`Independent Soft Actor-Critic (ISAC) <marl/isac_agents>`.
-* :doc:`Multi-agent Soft Actor-Critic (MASAC) <marl/masac_agents>`.
-* :doc:`Independent Proximal Policy Optimization (IPPO) <marl/ippo_agents>`.
-* :doc:`Multi-agent Proximal Policy Optimization (MAPPO) <marl/mappo_agents>`.
-* :doc:`Multi-agent Twin Delayed Deep Deterministic Policy Gradient (MATD3) <marl/matd3_agents>`.
-* :doc:`Independent Actor-Critic (IAC) <marl/iac_agents>`.
-* :doc:`Counterfactual Multi-agent Policy Gradient (COMA) <marl/coma_agents>`.
-* :doc:`Value-Decomposition Actor-Critic (VDAC) <marl/vdac_agents>`.
-* :doc:`Mean-Field Q-Learning (MFQ) <marl/mfq_agents>`.
-* :doc:`Mean-Field Actor-Critic (MFAC) <marl/mfac_agents>`.
+* :class:`IQL_Agents` : :doc:`Independent Q-Learning (IQL) <marl/iql_agents>`.
+* :class:`VDN_Agents` : :doc:`Value Decomposition Networks (VDN) <marl/vdn_agents>`.
+* :class:`QMIX_Agents` : :doc:`Q-Mixing Networks (QMIX) <marl/qmix_agents>`.
+* :class:`WQMIX_Agents` : :doc:`Weighted Q-Mixing Networks (WQMIX) <marl/wqmix_agents>`.
+* :class:`QTRAN_Agents` : :doc:`Q-Transformation (QTRAN) <marl/qtran_agents>`.
+* :class:`DCG_Agents` : :doc:`Deep Coordination Graphs (DCG) <marl/dcg_agents>`.
+* :class:`IDDPG_Agents` : :doc:`Independent Deep Deterministic Policy Gradient (IDDPG) <marl/iddpg_agents>`.
+* :class:`MADDPG_Agents` : :doc:`Multi-agent Deep Deterministic Policy Gradient (MADDPG) <marl/maddpg_agents>`.
+* :class:`ISAC_Agents` : :doc:`Independent Soft Actor-Critic (ISAC) <marl/isac_agents>`.
+* :class:`MASAC_Agents` : :doc:`Multi-agent Soft Actor-Critic (MASAC) <marl/masac_agents>`.
+* :class:`IPPO_Agents` : :doc:`Independent Proximal Policy Optimization (IPPO) <marl/ippo_agents>`.
+* :class:`MAPPO_Agents` : :doc:`Multi-agent Proximal Policy Optimization (MAPPO) <marl/mappo_agents>`.
+* :class:`MATD3_Agents` : :doc:`Multi-agent Twin Delayed Deep Deterministic Policy Gradient (MATD3) <marl/matd3_agents>`.
+* :class:`IAC_Agents` : :doc:`Independent Actor-Critic (IAC) <marl/iac_agents>`.
+* :class:`COMA_Agents` : :doc:`Counterfactual Multi-agent Policy Gradient (COMA) <marl/coma_agents>`.
+* :class:`VDAC_Agents` : :doc:`Value-Decomposition Actor-Critic (VDAC) <marl/vdac_agents>`.
+* :class:`MFQ_Agents` : :doc:`Mean-Field Q-Learning (MFQ) <marl/mfq_agents>`.
+* :class:`MFAC_Agents` : :doc:`Mean-Field Actor-Critic (MFAC) <marl/mfac_agents>`.
