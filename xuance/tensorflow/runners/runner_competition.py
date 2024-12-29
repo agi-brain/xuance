@@ -1,5 +1,5 @@
 import os
-import argparse
+from argparse import Namespace
 from copy import deepcopy
 import numpy as np
 from tqdm import tqdm
@@ -29,14 +29,13 @@ class RunnerCompetition(object):
         assert len(configs) == self.num_groups, "Number of groups must be equal to the number of methods."
         self.agents = []
         for group in range(self.num_groups):
-            _env_info = dict(num_agents=len(self.groups[group]),
+            _env = Namespace(num_agents=len(self.groups[group]),
                              num_envs=self.envs.num_envs,
                              agents=self.groups[group],
                              state_space=self.envs.state_space,
                              observation_space=self.obs_space_groups[group],
                              action_space=self.act_space_groups[group],
                              max_episode_steps=self.envs.max_episode_steps)
-            _env = argparse.Namespace(**_env_info)
             self.agents.append(REGISTRY_Agents[self.configs[group].agent](self.configs[group], _env))
 
         self.distributed_training = self.agents[0].distributed_training
