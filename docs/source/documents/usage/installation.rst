@@ -37,19 +37,19 @@ Install via PyPI
 
             pip install xuance
 
-    .. tab:: PyTorch
+    .. tab:: |_3| |torch| |_3|
 
         .. code-block:: bash
 
             pip install xuance[torch]
 
-    .. tab:: TensorFlow
+    .. tab:: |_3| |tensorflow| |_3|
 
         .. code-block:: bash
 
             pip install xuance[tensorflow]
 
-    .. tab:: MindSpore
+    .. tab:: |_3| |mindspore| |_3|
 
         .. code-block:: bash
 
@@ -60,18 +60,6 @@ Install via PyPI
         .. code-block:: bash
 
             pip install xuance[all]
-
-    .. tab:: Atari
-
-        .. code-block:: bash
-
-            pip install xuance[atari]
-
-    .. tab:: Box2D
-
-        .. code-block:: bash
-
-            pip install xuance[box2d]
 
 
 Install from GitHub repository
@@ -117,7 +105,7 @@ Alternatively, you can install XuanCe from its GitHub repository.
 
             pip install -e .
 
-    .. tab:: |torch|
+    .. tab:: |_4| |torch| |_4|
 
         .. code-block:: bash
 
@@ -140,18 +128,6 @@ Alternatively, you can install XuanCe from its GitHub repository.
         .. code-block:: bash
 
             pip install -e .[all]
-
-    .. tab:: Atari
-
-        .. code-block:: bash
-
-            pip install -e .[atari]
-
-    .. tab:: Box2D
-
-        .. code-block:: bash
-
-            pip install -e .[box2d]
 
 .. attention::
 

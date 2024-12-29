@@ -74,14 +74,49 @@ autodoc_mock_imports = [
     "mindspore",
 ]
 
+pygments_style = "tango"
+pygments_dark_style = "zenburn"
+
+intersphinx_disabled_domains = ["std"]
 templates_path = ['_templates']
 exclude_patterns = []
+rst_prolog = """
+.. include:: <s5defs.txt>
+
+.. |_1| unicode:: 0xA0
+    :trim:
+
+.. |_2| unicode:: 0xA0 0xA0
+    :trim:
+
+.. |_3| unicode:: 0xA0 0xA0 0xA0
+    :trim:
+
+.. |_4| unicode:: 0xA0 0xA0 0xA0 0xA0
+    :trim:
+
+.. |_5| unicode:: 0xA0 0xA0 0xA0 0xA0 0xA0
+    :trim:
+
+.. |torch| image:: /_static/figures/DL_tools_logo/pytorch.svg
+    :width: 18
+    :align: middle
+
+.. |tensorflow| image:: /_static/figures/DL_tools_logo/tensorflow.svg
+    :width: 20
+    :align: middle
+
+.. |mindspore| image:: /_static/figures/DL_tools_logo/mindspore.svg
+    :width: 36
+    :align: middle
+"""
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 html_theme = "furo"  # sphinx_rtd_theme (before that is renku)
 html_title = f"<div style='text-align: center; font-size: 20px'><strong>{project}</strong></div>"
+html_scaled_image_link = False
 html_static_path = ['_static']
 html_theme_options = {
     # logo
@@ -109,19 +144,3 @@ favicons = [
 # -- Generate Changelog -------------------------------------------------
 
 sphinx_github_changelog_token = os.environ.get("SPHINX_GITHUB_CHANGELOG_TOKEN")
-
-rst_prolog = """
-.. include:: <s5defs.txt>
-
-.. |torch| image:: /_static/figures/DL_tools_logo/pytorch.svg
-    :width: 16
-    :align: middle
-    
-.. |tensorflow| image:: /_static/figures/DL_tools_logo/tensorflow.svg
-    :width: 18
-    :align: middle
-    
-.. |mindspore| image:: /_static/figures/DL_tools_logo/mindspore.svg
-    :width: 32
-    :align: middle
-"""

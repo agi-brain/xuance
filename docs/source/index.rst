@@ -74,7 +74,8 @@ That is why this project exists: to provide clean, easy-to-understand implementa
 We hope it can help uncover some of the "magic" behind DRL and make it a bit less mysterious.
 
 We are also working to make XuanCe compatible with popular deep learning frameworks like
-PyTorch_ ( |torch| ), TensorFlow_ ( |tensorflow| ), and MindSpore_ ( |mindspore|). Our goal is to turn it into a full-fledged DRL "zoo" where you can explore and experiment with a wide variety of algorithms.
+PyTorch_ (|_1| |torch| |_1|), TensorFlow_ (|_1| |tensorflow| |_1|), and MindSpore_ (|_1| |mindspore| |_1|).
+Our goal is to turn it into a full-fledged DRL "zoo" where you can explore and experiment with a wide variety of algorithms.
 
 .. _PyTorch: https://pytorch.org/
 .. _TensorFlow: https://www.tensorflow.org/
