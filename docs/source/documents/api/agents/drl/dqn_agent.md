@@ -1,14 +1,23 @@
 # Deep Q-Network (DQN)
 
-Deep Q-Network (DQN) is a foundational algorithm in DRL that integrates Q-learning,
+**Paper Link:** [**https://www.nature.com/articles/nature14236**](https://www.nature.com/articles/nature14236).
+
+Deep Q-Network (DQN) is a foundational model-free algorithm in DRL that integrates Q-learning,
 a popular reinforcement learning method, with deep neural networks.
 It was first introduced by a team at DeepMind in 2015 
 and demonstrated remarkable success in playing Atari games directly from pixel inputs, 
 achieving superhuman performance in many cases.
 
-DQN is a **off-policy**, **model-free** algorithm, it deals with **discrete action space**.
+This table lists some key features about DQN algorithm:
 
-Paper Link: [https://www.nature.com/articles/nature14236](https://www.nature.com/articles/nature14236).
+| Features of DQN   | Results | Description                                              |
+|-------------------|---------|----------------------------------------------------------|
+| On-policy         | ❌       | The evaluate policy is the same as the target policy.    |
+| Off-policy        | ✅       | The evaluate policy is different from the target policy. | 
+| Model-free        | ✅       | No need to prepare an environment dynamics model.        | 
+| Model-based       | ❌       | Need an environment model to train the policy.           | 
+| Discrete Action   | ✅       | Deal with discrete action space.                         |   
+| Continuous Action | ❌       | Deal with continuous action space.                       |    
 
 ## Q-Learning
 

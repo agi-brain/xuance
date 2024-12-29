@@ -1,6 +1,20 @@
 Agents
 =============================================
 
+.. toctree::
+    :hidden:
+    :maxdepth: 2
+
+    DRL <agents/drl>
+    MARL <agents/marl>
+    Wrappers (Base) <agents/base>
+    Wrappers (Core) <agents/core>
+
+* :doc:`DRL <agents/drl>`.
+* :doc:`MARL <agents/marl>`.
+* :doc:`Base Agent <agents/base>`.
+* :doc:`Core Agent <agents/core>`.
+
 Agent is an entity or a decision-making component that interacts with an environment or other agents to learn and perform tasks.
 
 For DRL algorithms, agent represents the decision-maker that seeks to maximize a reward signal over time by interacting with the environment.
@@ -19,17 +33,3 @@ The type of agents' interactions could be:
 
 Overall, in XuanCe, the ``agent`` module contains some key components, including ``policy``, ``learner``, ``memory``, etc.
 Each ``agent`` module inherits from the ``core`` module, while the ``core`` module inherits from the ``base`` module.
-
-.. toctree::
-    :hidden:
-    :maxdepth: 2
-
-    DRL <agents/drl>
-    MARL <agents/marl>
-    Base Agent <agents/base>
-    Core Agent <agents/core>
-
-* :doc:`DRL <agents/drl>`.
-* :doc:`MARL <agents/marl>`.
-* :doc:`Base Agent <agents/base>`.
-* :doc:`Core Agent <agents/core>`.

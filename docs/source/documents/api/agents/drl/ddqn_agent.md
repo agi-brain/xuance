@@ -1,15 +1,26 @@
 # Double Deep Q-Network (Double DQN)
 
+**Paper Link:** 
+[**AAAI**](https://ojs.aaai.org/index.php/AAAI/article/view/10295), 
+[**ArXiv**](https://arxiv.org/pdf/1509.06461),
+[**Double Q-learnig**](https://proceedings.neurips.cc/paper_files/paper/2010/file/091d584fced301b442654dd8c23b3fc9-Paper.pdf)
+
 Double Deep Q-Network (Double DQN) is an enhancement of the original Deep Q-Network (DQN) algorithm, 
 designed to address the issue of overestimation of Q-values, which is a common problem in Q-learning-based methods. 
 Overestimation occurs when the Q-learning algorithm selects actions based on 
 a maximum Q-value that might be overestimated due to noise or approximation errors. 
 This can lead to suboptimal policies and unstable training.
 
-Paper Link: 
-[**AAAI**](https://ojs.aaai.org/index.php/AAAI/article/view/10295), 
-[**ArXiv**](https://arxiv.org/pdf/1509.06461),
-[**Double Q-learnig**](https://proceedings.neurips.cc/paper_files/paper/2010/file/091d584fced301b442654dd8c23b3fc9-Paper.pdf)
+This table lists some key features about Double DQN algorithm:
+
+| Features of Double DQN | Results | Description                                              |
+|------------------------|---------|----------------------------------------------------------|
+| On-policy              | ❌       | The evaluate policy is the same as the target policy.    |
+| Off-policy             | ✅       | The evaluate policy is different from the target policy. | 
+| Model-free             | ✅       | No need to prepare an environment dynamics model.        | 
+| Model-based            | ❌       | Need an environment model to train the policy.           | 
+| Discrete Action        | ✅       | Deal with discrete action space.                         |   
+| Continuous Action      | ❌       | Deal with continuous action space.                       |
 
 ## The Risk of Overestimating
 
