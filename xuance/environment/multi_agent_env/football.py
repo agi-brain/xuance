@@ -27,7 +27,6 @@ try:
     from gfootball.env import config as gf_config
 except ImportError:
     FootballEnv = object
-    print("Please install gfootball: https://github.com/google-research/football")
 
 GFOOTBALL_ENV_ID = {
     "1v1": "1_vs_1_easy",

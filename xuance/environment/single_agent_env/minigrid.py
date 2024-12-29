@@ -5,8 +5,7 @@ import numpy as np
 try:
     from minigrid.wrappers import RGBImgPartialObsWrapper, ImgObsWrapper
 except ImportError:
-    print("The module minigrid might not be installed."
-          "You can install it via `pip install minigrid`")
+    pass
 
 
 class MiniGridEnv(RawEnvironment):

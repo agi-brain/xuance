@@ -2,8 +2,7 @@ import gym
 try:
     import gym_platform
 except ImportError:
-    print("The module of gym_platform is not installed."
-          "You can install it from the github repository: https://github.com/cycraig/gym-platform.git.")
+    pass
 
 
 class PlatformEnv:

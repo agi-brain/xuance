@@ -14,9 +14,6 @@ try:
     from gym_pybullet_drones.utils.enums import DroneModel, Physics, ActionType, ObservationType
 except ImportError:
     HoverAviary_Official = None
-    print("The module of gym-pybullet-drones might not be installed."
-          "You can installed it from github: https://github.com/utiasDSL/gym-pybullet-drones.")
-
 
 class HoverAviary(HoverAviary_Official):
     """Single agent RL problem: hover at position."""

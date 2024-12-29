@@ -14,8 +14,6 @@ try:
 except ImportError:
     DroneModel, Physics, ActionType, ObservationType = None, None, None, None
     MultiHoverAviary_Official = object
-    print("The module of gym-pybullet-drones might not be installed."
-          "You can installed it from github: https://github.com/utiasDSL/gym-pybullet-drones.")
 
 
 class MultiHoverAviary(MultiHoverAviary_Official):

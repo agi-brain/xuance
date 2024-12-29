@@ -5,7 +5,7 @@ from xuance.environment import RawMultiAgentEnv
 try:
     import rware
 except ImportError:
-    print("rware is not installed. You can install that via: pip install rware")
+    pass
 
 
 class RoboticWarehouseEnv(RawMultiAgentEnv):
