@@ -1,8 +1,6 @@
-DQN with Quantile Regression (QRDQN)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+# DQN with Quantile Regression (QRDQN)
 
-PyTorch
-''''''''''''
+### PyTorch
 
 .. automodule:: xuance.torch.agents.qlearning_family.qrdqn_agent
     :members:

@@ -11,7 +11,7 @@ Overestimation occurs when the Q-learning algorithm selects actions based on
 a maximum Q-value that might be overestimated due to noise or approximation errors. 
 This can lead to suboptimal policies and unstable training.
 
-This table lists some key features about Double DQN algorithm:
+This table lists some general features about Double DQN algorithm:
 
 | Features of Double DQN | Values | Description                                              |
 |------------------------|--------|----------------------------------------------------------|

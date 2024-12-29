@@ -6,7 +6,7 @@ Noisy DQN is a variant of the traditional Deep Q-Network (DQN)
 that introduces noise into the weights of the Q-network to improve exploration during the learning process. 
 This is aimed at addressing one of the key challenges in reinforcement learning: balancing exploration and exploitation.
 
-This table lists some key features about Noisy DQN algorithm:
+This table lists some general features about Noisy DQN algorithm:
 
 | Features of Noisy DQN | Values | Description                                              |
 |-----------------------|--------|----------------------------------------------------------|

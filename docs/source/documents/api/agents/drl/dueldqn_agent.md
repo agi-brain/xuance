@@ -7,7 +7,7 @@ that aims to enhance the efficiency and stability of Q-value estimation.
 It introduces a new neural network architecture to separately estimate the state-value function 
 and the action advantage function, addressing key limitations of traditional DQNs.
 
-This table lists some key features about Dueling DQN algorithm:
+This table lists some general features about Dueling DQN algorithm:
 
 | Features of Dueling DQN | Values | Description                                              |
 |-------------------------|--------|----------------------------------------------------------|

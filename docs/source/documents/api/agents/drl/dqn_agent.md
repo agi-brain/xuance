@@ -8,7 +8,7 @@ It was first introduced by a team at DeepMind in 2015
 and demonstrated remarkable success in playing Atari games directly from pixel inputs, 
 achieving superhuman performance in many cases.
 
-This table lists some key features about DQN algorithm:
+This table lists some general features about DQN algorithm:
 
 | Features of DQN   | Values | Description                                              |
 |-------------------|--------|----------------------------------------------------------|
