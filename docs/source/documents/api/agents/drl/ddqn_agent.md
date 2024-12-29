@@ -13,20 +13,20 @@ This can lead to suboptimal policies and unstable training.
 
 This table lists some key features about Double DQN algorithm:
 
-| Features of Double DQN | Results | Description                                              |
-|------------------------|---------|----------------------------------------------------------|
-| On-policy              | ❌       | The evaluate policy is the same as the target policy.    |
-| Off-policy             | ✅       | The evaluate policy is different from the target policy. | 
-| Model-free             | ✅       | No need to prepare an environment dynamics model.        | 
-| Model-based            | ❌       | Need an environment model to train the policy.           | 
-| Discrete Action        | ✅       | Deal with discrete action space.                         |   
-| Continuous Action      | ❌       | Deal with continuous action space.                       |
+| Features of Double DQN | Values | Description                                              |
+|------------------------|--------|----------------------------------------------------------|
+| On-policy              | ❌      | The evaluate policy is the same as the target policy.    |
+| Off-policy             | ✅      | The evaluate policy is different from the target policy. | 
+| Model-free             | ✅      | No need to prepare an environment dynamics model.        | 
+| Model-based            | ❌      | Need an environment model to train the policy.           | 
+| Discrete Action        | ✅      | Deal with discrete action space.                         |   
+| Continuous Action      | ❌      | Deal with continuous action space.                       |
 
 ## The Risk of Overestimating
 
 In standard DQN, overestimation occurs due to the use of a single Q-network for both selecting and evaluating actions. 
 
-As introduced before, [**DQN**](dqn_agent.md) updates the Q-value for a state-action pair $Q(s, a)$ 
+As introduced before, [**DQN**](dqn_agent.md#deep-q-netowrk) updates the Q-value for a state-action pair $Q(s, a)$ 
 by using the maximum of Q-value of the next state $\max_{a'}Q(s', a')$ as part of the target. 
 
 If the Q-network overestimates one or more state-action values, the overestimation propagates and accumulates over time.
@@ -62,10 +62,7 @@ $$
 
 Finally, don't forget to update the target networks: $\theta^{-} \leftarrow \theta$.
 
-## Run Double DQN in XuanCe
-
-Before running Double DQN in XuanCe, you need to prepare a conda environment and install ``xuance`` following 
-the [**installation steps**](https://xuance.readthedocs.io/en/latest/documents/usage/installation.html).
+## Framework
 
 The overall agent-environment interaction of Double DQN, as implemented in XuanCe, is illustrated in the figure below.
 
@@ -75,9 +72,14 @@ The overall agent-environment interaction of Double DQN, as implemented in XuanC
     :align: center
 ```
 
+## Run Double DQN in XuanCe
+
+Before running Double DQN in XuanCe, you need to prepare a conda environment and install ``xuance`` following 
+the [**installation steps**](./../../../usage/installation.rst#install-via-pypi).
+
 ### Run Build-in Demos
 
-After completing the installation, you can open a Python console and run DQN directly using the following commands:
+After completing the installation, you can open a Python console and run Double DQN directly using the following commands:
 
 ```python3
 import xuance
@@ -104,15 +106,15 @@ runner.run()  # Or runner.benchmark()
 ```
 
 To learn more about the configurations, please visit the 
-[**tutorial of configs**](https://xuance.readthedocs.io/en/latest/documents/api/configs/configuration_examples.html).
+[**tutorial of configs**](./../../configs/configuration_examples.rst).
 
 ### Run With Customized Environment
 
 If you would like to run XuanCe's Double DQN in your own environment that was not included in XuanCe, 
 you need to define the new environment following the steps in 
-[**New Environment Tutorial**](https://xuance.readthedocs.io/en/latest/documents/usage/new_envs.html#step-1-create-a-new-environment).
-Then, [**prepapre the configuration file**](https://xuance.readthedocs.io/en/latest/documents/usage/new_envs.html#step-2-create-the-config-file-and-read-the-configurations) 
-``dqn_myenv.yaml``.
+[**New Environment Tutorial**](./../../../usage/new_envs.rst).
+Then, [**prepapre the configuration file**](./../../../usage/new_envs.rst#step-2-create-the-config-file-and-read-the-configurations) 
+``ddqn_myenv.yaml``.
 
 After that, you can run Double DQN in your own environment with the following code:
 

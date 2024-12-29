@@ -10,14 +10,14 @@ achieving superhuman performance in many cases.
 
 This table lists some key features about DQN algorithm:
 
-| Features of DQN   | Results | Description                                              |
-|-------------------|---------|----------------------------------------------------------|
-| On-policy         | ❌       | The evaluate policy is the same as the target policy.    |
-| Off-policy        | ✅       | The evaluate policy is different from the target policy. | 
-| Model-free        | ✅       | No need to prepare an environment dynamics model.        | 
-| Model-based       | ❌       | Need an environment model to train the policy.           | 
-| Discrete Action   | ✅       | Deal with discrete action space.                         |   
-| Continuous Action | ❌       | Deal with continuous action space.                       |    
+| Features of DQN   | Values | Description                                              |
+|-------------------|--------|----------------------------------------------------------|
+| On-policy         | ❌      | The evaluate policy is the same as the target policy.    |
+| Off-policy        | ✅      | The evaluate policy is different from the target policy. | 
+| Model-free        | ✅      | No need to prepare an environment dynamics model.        | 
+| Model-based       | ❌      | Need an environment model to train the policy.           | 
+| Discrete Action   | ✅      | Deal with discrete action space.                         |   
+| Continuous Action | ❌      | Deal with continuous action space.                       |    
 
 ## Q-Learning
 
@@ -81,10 +81,7 @@ The full algorithm for training DQN is presented in Algorithm 1:
     :align: center
 ```
 
-## Run DQN in XuanCe
-
-Before running DQN in XuanCe, you need to prepare a conda environment and install ``xuance`` following 
-the [**installation steps**](https://xuance.readthedocs.io/en/latest/documents/usage/installation.html).
+## Framework
 
 The overall agent-environment interaction of DQN, as implemented in XuanCe, is illustrated in the figure below.
 
@@ -93,6 +90,11 @@ The overall agent-environment interaction of DQN, as implemented in XuanCe, is i
     :width: 100%
     :align: center
 ```
+
+## Run DQN in XuanCe
+
+Before running DQN in XuanCe, you need to prepare a conda environment and install ``xuance`` following 
+the [**installation steps**](./../../../usage/installation.rst#install-via-pypi).
 
 ### Run Build-in Demos
 
@@ -123,15 +125,15 @@ runner.run()  # Or runner.benchmark()
 ```
 
 To learn more about the configurations, please visit the 
-[**tutorial of configs**](https://xuance.readthedocs.io/en/latest/documents/api/configs/configuration_examples.html).
+[**tutorial of configs**](./../../configs/configuration_examples.rst).
 
 ### Run With Customized Environment
 
 If you would like to run XuanCe's DQN in your own environment that was not included in XuanCe, 
 you need to define the new environment following the steps in 
-[**New Environment Tutorial**](https://xuance.readthedocs.io/en/latest/documents/usage/new_envs.html#step-1-create-a-new-environment).
-Then, [**prepapre the configuration file**](https://xuance.readthedocs.io/en/latest/documents/usage/new_envs.html#step-2-create-the-config-file-and-read-the-configurations) 
-``dqn_myenv.yaml``.
+[**New Environment Tutorial**](./../../../usage/new_envs.rst).
+Then, [**prepapre the configuration file**](./../../../usage/new_envs.rst#step-2-create-the-config-file-and-read-the-configurations) 
+ ``dqn_myenv.yaml``.
 
 After that, you can run DQN in your own environment with the following code:
 

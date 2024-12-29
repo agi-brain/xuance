@@ -9,16 +9,16 @@ and the action advantage function, addressing key limitations of traditional DQN
 
 This table lists some key features about Dueling DQN algorithm:
 
-| Features of Dueling DQN | Results | Description                                              |
-|-------------------------|---------|----------------------------------------------------------|
-| On-policy               | ❌       | The evaluate policy is the same as the target policy.    |
-| Off-policy              | ✅       | The evaluate policy is different from the target policy. | 
-| Model-free              | ✅       | No need to prepare an environment dynamics model.        | 
-| Model-based             | ❌       | Need an environment model to train the policy.           | 
-| Discrete Action         | ✅       | Deal with discrete action space.                         |   
-| Continuous Action       | ❌       | Deal with continuous action space.                       |
+| Features of Dueling DQN | Values | Description                                              |
+|-------------------------|--------|----------------------------------------------------------|
+| On-policy               | ❌      | The evaluate policy is the same as the target policy.    |
+| Off-policy              | ✅      | The evaluate policy is different from the target policy. | 
+| Model-free              | ✅      | No need to prepare an environment dynamics model.        | 
+| Model-based             | ❌      | Need an environment model to train the policy.           | 
+| Discrete Action         | ✅      | Deal with discrete action space.                         |   
+| Continuous Action       | ❌      | Deal with continuous action space.                       |
 
-## Key Idea of Dueling DQN
+## Key Ideas of Dueling DQN
 
 Let $V(s)$ represent the overall value of state $s$. 
 $A(s, a)$ is the advantage function that measures the relative benefit of taking a specific action $a$ given state $s$.
@@ -43,10 +43,7 @@ The architecture of Dueling DQN can be illustrated as the following figure:
     :align: center
 ```
 
-## Run Dueling DQN in XuanCe
-
-Before running Dueling DQN in XuanCe, you need to prepare a conda environment and install ``xuance`` following 
-the [**installation steps**](https://xuance.readthedocs.io/en/latest/documents/usage/installation.html).
+## Framework
 
 The overall agent-environment interaction of Dueling DQN, as implemented in XuanCe, is illustrated in the figure below.
 
@@ -56,9 +53,14 @@ The overall agent-environment interaction of Dueling DQN, as implemented in Xuan
     :align: center
 ```
 
+## Run Dueling DQN in XuanCe
+
+Before running Dueling DQN in XuanCe, you need to prepare a conda environment and install ``xuance`` following 
+the [**installation steps**](./../../../usage/installation.rst#install-via-pypi).
+
 ### Run Build-in Demos
 
-After completing the installation, you can open a Python console and run DQN directly using the following commands:
+After completing the installation, you can open a Python console and run Dueling DQN directly using the following commands:
 
 ```python3
 import xuance
@@ -85,14 +87,14 @@ runner.run()  # Or runner.benchmark()
 ```
 
 To learn more about the configurations, please visit the 
-[**tutorial of configs**](https://xuance.readthedocs.io/en/latest/documents/api/configs/configuration_examples.html).
+[**tutorial of configs**](./../../configs/configuration_examples.rst).
 
 ### Run With Customized Environment
 
 If you would like to run XuanCe's Dueling DQN in your own environment that was not included in XuanCe, 
 you need to define the new environment following the steps in 
-[**New Environment Tutorial**](https://xuance.readthedocs.io/en/latest/documents/usage/new_envs.html#step-1-create-a-new-environment).
-Then, [**prepapre the configuration file**](https://xuance.readthedocs.io/en/latest/documents/usage/new_envs.html#step-2-create-the-config-file-and-read-the-configurations) 
+[**New Environment Tutorial**](./../../../usage/new_envs.rst).
+Then, [**prepapre the configuration file**](./../../../usage/new_envs.rst#step-2-create-the-config-file-and-read-the-configurations) 
 ``duelqn_myenv.yaml``.
 
 After that, you can run Dueling DQN in your own environment with the following code:
