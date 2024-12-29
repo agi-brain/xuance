@@ -8,14 +8,14 @@ by prioritizing certain experiences during training.
 
 This table lists some general features about PER DQN algorithm:
 
-| Features of Noisy DQN | Values | Description                                              |
-|-----------------------|--------|----------------------------------------------------------|
-| On-policy             | ❌      | The evaluate policy is the same as the target policy.    |
-| Off-policy            | ✅      | The evaluate policy is different from the target policy. | 
-| Model-free            | ✅      | No need to prepare an environment dynamics model.        | 
-| Model-based           | ❌      | Need an environment model to train the policy.           | 
-| Discrete Action       | ✅      | Deal with discrete action space.                         |   
-| Continuous Action     | ❌      | Deal with continuous action space.                       |
+| Features of PER DQN | Values | Description                                              |
+|---------------------|--------|----------------------------------------------------------|
+| On-policy           | ❌      | The evaluate policy is the same as the target policy.    |
+| Off-policy          | ✅      | The evaluate policy is different from the target policy. | 
+| Model-free          | ✅      | No need to prepare an environment dynamics model.        | 
+| Model-based         | ❌      | Need an environment model to train the policy.           | 
+| Discrete Action     | ✅      | Deal with discrete action space.                         |   
+| Continuous Action   | ❌      | Deal with continuous action space.                       |
 
 ## Method
 
@@ -71,7 +71,7 @@ The full algorithm for training PER DQN is presented in Algorithm 1:
     :align: center
 ```
 
-## Run DQN in XuanCe
+## Run PER DQN in XuanCe
 
 Before running PER DQN in XuanCe, you need to prepare a conda environment and install ``xuance`` following 
 the [**installation steps**](./../../../usage/installation.rst#install-via-pypi).
