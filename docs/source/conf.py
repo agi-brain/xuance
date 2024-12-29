@@ -109,3 +109,19 @@ favicons = [
 # -- Generate Changelog -------------------------------------------------
 
 sphinx_github_changelog_token = os.environ.get("SPHINX_GITHUB_CHANGELOG_TOKEN")
+
+rst_prolog = """
+.. include:: <s5defs.txt>
+
+.. |torch| image:: /_static/figures/DL_tools_logo/pytorch.svg
+    :width: 16
+    :align: middle
+    
+.. |tensorflow| image:: /_static/figures/DL_tools_logo/tensorflow.svg
+    :width: 18
+    :align: middle
+    
+.. |mindspore| image:: /_static/figures/DL_tools_logo/mindspore.svg
+    :width: 32
+    :align: middle
+"""

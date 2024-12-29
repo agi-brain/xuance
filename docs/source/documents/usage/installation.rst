@@ -117,19 +117,19 @@ Alternatively, you can install XuanCe from its GitHub repository.
 
             pip install -e .
 
-    .. tab:: PyTorch
+    .. tab:: |torch|
 
         .. code-block:: bash
 
             pip install -e .[torch]
 
-    .. tab:: TensorFlow
+    .. tab:: |tensorflow|
 
         .. code-block:: bash
 
             pip install -e .[tensorflow]
 
-    .. tab:: MindSpore
+    .. tab:: |mindspore|
 
         .. code-block:: bash
 
