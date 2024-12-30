@@ -3,7 +3,7 @@
 **Paper Link:** [**Download PDF**](https://proceedings.neurips.cc/paper_files/paper/1999/file/464d828b85b0bed98e80ade0a5c43b0f-Paper.pdf)
 
 The Policy Gradient (PG) algorithm, introduced by 
-[Richard Sutton](https://scholar.google.com/citations?user=6m4wv6gAAAAJ&hl=zh-TW&oi=ao) et al. 
+[Richard Sutton](http://www.incompleteideas.net/) et al. 
 in their seminal 1999 paper 
 "Policy Gradient Methods for Reinforcement Learning with Function Approximation", 
 is a foundational approach in reinforcement learning for optimizing policies directly. 
