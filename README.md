@@ -459,11 +459,9 @@ You can put your questions, advices, or the bugs you have found in the [Issues](
 
 ### Social Accounts.
 
-Discord invite link: [https://discord.gg/JGgPVXrZ](https://discord.gg/JGgPVXrZ).
-
-QQ App's group number: 552432695.
-
-WeChat account: "玄策 RLlib".
+- Discord invite link: [https://discord.gg/JGgPVXrZ](https://discord.gg/JGgPVXrZ).
+- QQ App's group number: 552432695.
+- WeChat account: "玄策 RLlib".
 
 <details open>
 <summary>(QR code for QQ group and WeChat official account)</summary>
