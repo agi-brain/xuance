@@ -3,7 +3,9 @@
 **Paper Link:** [**https://proceedings.mlr.press/v139/cobbe21a**](https://proceedings.mlr.press/v139/cobbe21a)
 
 The Phasic Policy Gradient (PPG) algorithm is an advanced reinforcement learning method designed to improve the efficiency of policy optimization. 
-It builds upon the widely used Proximal Policy Optimization (PPO) framework by introducing a two-phase training approach, 
+It builds upon the 
+[**PPO**](ppoclip_agent.md) 
+framework by introducing a two-phase training approach, 
 which decouples the policy optimization from auxiliary value function learning.
 
 | Features of PG    | Values | Description                                              |
