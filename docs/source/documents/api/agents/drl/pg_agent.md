@@ -1,6 +1,25 @@
 # Policy Gradient (PG)
 
-**Paper Link:** [**https://proceedings.neurips.cc/paper_files/paper/1999/file/464d828b85b0bed98e80ade0a5c43b0f-Paper.pdf**](https://proceedings.neurips.cc/paper_files/paper/1999/file/464d828b85b0bed98e80ade0a5c43b0f-Paper.pdf)
+**Paper Link:** [**Download PDF**](https://proceedings.neurips.cc/paper_files/paper/1999/file/464d828b85b0bed98e80ade0a5c43b0f-Paper.pdf)
+
+The Policy Gradient (PG) algorithm, introduced by 
+[Richard Sutton](https://scholar.google.com/citations?user=6m4wv6gAAAAJ&hl=zh-TW&oi=ao) et al. 
+in their seminal 1999 paper 
+"Policy Gradient Methods for Reinforcement Learning with Function Approximation", 
+is a foundational approach in reinforcement learning for optimizing policies directly. 
+It is particularly effective in scenarios where value-based methods like Q-learning struggle, 
+such as high-dimensional or continuous action spaces.
+
+| Features of PG    | Values | Description                                              |
+|-------------------|--------|----------------------------------------------------------|
+| On-policy         | ✅      | The evaluate policy is the same as the target policy.    |
+| Off-policy        | ❌      | The evaluate policy is different from the target policy. | 
+| Model-free        | ✅      | No need to prepare an environment dynamics model.        | 
+| Model-based       | ❌      | Need an environment model to train the policy.           | 
+| Discrete Action   | ✅      | Deal with discrete action space.                         |   
+| Continuous Action | ✅      | Deal with continuous action space.                       |
+
+## Method
 
 ## Citation
 
