@@ -15,10 +15,10 @@ DRL Agent
     QR-DQN <drl/qrdqn_agent>
     DRQN <drl/drqn_agent>
     PG <drl/pg_agent>
-    PPG <drl/ppg_agent>
     A2C <drl/a2c_agent>
     PPO-KL <drl/ppokl_agent>
     PPO-Clip <drl/ppoclip_agent>
+    PPG <drl/ppg_agent>
     SAC <drl/sac_agent>
     DDPG <drl/ddpg_agent>
     TD3 <drl/td3_agent>
@@ -40,10 +40,10 @@ DRL Agent
 **Policy-based:**
 
 * :class:`PG_Agent` : :doc:`Policy Gradient (PG) <drl/pg_agent>`.
-* :class:`PPG_Agent` : :doc:`Phasic Policy Gradient (PPG) <drl/ppg_agent>`.
 * :class:`A2C_Agent` : :doc:`Advantage Actor Critic (A2C) <drl/a2c_agent>`.
 * :class:`PPOKL_Agent` : :doc:`Proximal Policy Optimization with KL Divergence (PPO-KL) <drl/ppokl_agent>`.
 * :class:`PPOCLIP_Agent` : :doc:`Proximal Policy Optimization with Clipped Objective (PPO-Clip) <drl/ppoclip_agent>`.
+* :class:`PPG_Agent` : :doc:`Phasic Policy Gradient (PPG) <drl/ppg_agent>`.
 * :class:`SAC_Agent` : :doc:`Soft Actor-Critic (SAC) <drl/sac_agent>`.
 * :class:`DDPG_Agent` : :doc:`Deep Deterministic Policy Gradient (DDPG) <drl/ddpg_agent>`.
 * :class:`TD3_Agent` : :doc:`Twin Delayed Deep Deterministic Policy Gradient (TD3) <drl/td3_agent>`.

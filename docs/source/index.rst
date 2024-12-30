@@ -116,10 +116,10 @@ List of Algorithms
 **Policy-based:**
 
 * :class:`PG_Agent` : :doc:`Policy Gradient (PG) <documents/api/agents/drl/pg_agent>`.
-* :class:`PPG_Agent` : :doc:`Phasic Policy Gradient (PPG) <documents/api/agents/drl/ppg_agent>`.
 * :class:`A2C_Agent` : :doc:`Advantage Actor Critic (A2C) <documents/api/agents/drl/a2c_agent>`.
 * :class:`PPOKL_Agent` : :doc:`Proximal Policy Optimization with KL Divergence (PPO-KL) <documents/api/agents/drl/ppokl_agent>`.
 * :class:`PPOCLIP_Agent` : :doc:`Proximal Policy Optimization with Clipped Objective (PPO-Clip) <documents/api/agents/drl/ppoclip_agent>`.
+* :class:`PPG_Agent` : :doc:`Phasic Policy Gradient (PPG) <documents/api/agents/drl/ppg_agent>`.
 * :class:`SAC_Agent` : :doc:`Soft Actor-Critic (SAC) <documents/api/agents/drl/sac_agent>`.
 * :class:`DDPG_Agent` : :doc:`Deep Deterministic Policy Gradient (DDPG) <documents/api/agents/drl/ddpg_agent>`.
 * :class:`TD3_Agent` : :doc:`Twin Delayed Deep Deterministic Policy Gradient (TD3) <documents/api/agents/drl/td3_agent>`.
