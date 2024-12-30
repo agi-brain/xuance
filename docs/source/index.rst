@@ -86,18 +86,20 @@ Our goal is to turn it into a full-fledged DRL "zoo" where you can explore and e
 Why XuanCe?
 -----------------------------------------
 
-XuanCe is designed to simplify the implementation and design process of deep reinforcement learning algorithms.
-It could help researchers interested in deep reinforcement learning to quickly understand and grasp the fundamental principles. 
-This, in turn, facilitates developers in algorithm development and design. It has the following key features. 
+XuanCe is designed to streamline the implementation and development of deep reinforcement learning algorithms.
+It empowers researchers to quickly grasp fundamental principles,
+making it easier to dive into algorithm design and development.
+Here are its key features:
 
-- Highly modularized.
-- Easy to learn, and easy to install.
-- Felxible for model combination.
-- Abundant algorithms with various tasks.
-- supports bith DRL and MARL tasks.
-- High compatible for different users. (PyTorch, TensorFlow, MindSpore, CPU, GPU, Linux, Windows, MacOS, etc.)
-- Fast running speed with vector envrionments.
-- Good visualization effect with tensorboard or wandb toolbox.
+- **Highly Modular**: Designed with a modular structure to enhance flexibility and scalability.
+- **User-Friendly**: Easy to learn, install, and use, making it accessible for users of all levels.
+- **Flexible Model Integration**: Supports seamless combination and customization of models.
+- **Diverse Algorithms**: Offers a rich collection of algorithms catering to various tasks.
+- **Versatile Task Support**: Handles both deep reinforcement learning (DRL) and multi-agent reinforcement learning (MARL) scenarios.
+- **Broad Compatibility**: Supports PyTorch, TensorFlow, MindSpore, and runs efficiently on CPU, GPU, and across Linux, Windows, and macOS.
+- **High Performance**: Delivers fast execution speeds, leveraging vectorized environments for efficiency.
+- **Distributed Training**: Enables multi-GPU training for scaling up experiments.
+- **Enhanced Visualization**: Provides intuitive and comprehensive visualization with tools like TensorBoard and Weights & Biases (wandb).
 
 List of Algorithms
 -------------------
