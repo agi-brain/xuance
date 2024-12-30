@@ -453,15 +453,10 @@ How to use wandb offline? :arrow_right: [https://github.com/wandb/server.git/](h
 
 ## Community
 
-### [Github Issue](https://github.com/agi-brain/xuance/issues)
-
-You can put your questions, advices, or the bugs you have found in the [Issues](https://github.com/agi-brain/xuance/issues). 
-
-### Social Accounts.
-
-- Discord invite link: [https://discord.gg/JGgPVXrZ](https://discord.gg/JGgPVXrZ).
-- QQ App's group number: 552432695.
-- WeChat account: "玄策 RLlib".
+- GitHub Issue: [https://github.com/agi-brain/xuance/issues](https://github.com/agi-brain/xuance/issues)
+- Discord invite link: [https://discord.gg/JGgPVXrZ](https://discord.gg/JGgPVXrZ)
+- QQ App's group number: 552432695
+- WeChat account: "玄策 RLlib"
 
 <details open>
 <summary>(QR code for QQ group and WeChat official account)</summary>
