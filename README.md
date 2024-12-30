@@ -463,7 +463,7 @@ Discord invite link: [https://discord.gg/JGgPVXrZ](https://discord.gg/JGgPVXrZ).
 
 QQ App's group number: 552432695.
 
-The official WeChat account: "玄策 RLlib".
+WeChat account: "玄策 RLlib".
 
 <details open>
 <summary>(QR code for QQ group and WeChat official account)</summary>
