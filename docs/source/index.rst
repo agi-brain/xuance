@@ -109,8 +109,8 @@ List of Algorithms
 * :class:`DuelDQN_Agent` : :doc:`Dueling Deep Q-Network (Dueling DQN) <documents/api/agents/drl/dueldqn_agent>`.
 * :class:`NoisyDQN_Agent` : :doc:`DQN with Noisy Layers (Noisy DQN) <documents/api/agents/drl/noisydqn_agent>`.
 * :class:`PerDQN_Agent` : :doc:`DQN with Prioritized Experience Replay (PER DQN) <documents/api/agents/drl/perdqn_agent>`.
-* :class:`QRDQN_Agent` : :doc:`DQN with Quantile Regression (QR-DQN) <documents/api/agents/drl/qrdqn_agent>`.
 * :class:`C51_Agent` : :doc:`Categorical 51 DQN (C51) <documents/api/agents/drl/c51_agent>`.
+* :class:`QRDQN_Agent` : :doc:`DQN with Quantile Regression (QR-DQN) <documents/api/agents/drl/qrdqn_agent>`.
 * :class:`DRQN_Agent` : :doc:`Deep Recurrent Q-Network (DRQN) <documents/api/agents/drl/drqn_agent>`.
 
 **Policy-based:**

@@ -11,8 +11,8 @@ DRL Agent
     Dueling DQN <drl/dueldqn_agent>
     Noisy DQN <drl/noisydqn_agent>
     PER DQN <drl/perdqn_agent>
-    QR-DQN <drl/qrdqn_agent>
     C51 <drl/c51_agent>
+    QR-DQN <drl/qrdqn_agent>
     DRQN <drl/drqn_agent>
     PG <drl/pg_agent>
     PPG <drl/ppg_agent>
@@ -33,8 +33,8 @@ DRL Agent
 * :class:`DuelDQN_Agent` : :doc:`Dueling Deep Q-Network (Dueling DQN) <drl/dueldqn_agent>`.
 * :class:`NoisyDQN_Agent` : :doc:`DQN with Noisy Layers (Noisy DQN) <drl/noisydqn_agent>`.
 * :class:`PerDQN_Agent` : :doc:`DQN with Prioritized Experience Replay (PER DQN) <drl/perdqn_agent>`.
-* :class:`QRDQN_Agent` : :doc:`DQN with Quantile Regression (QR-DQN) <drl/qrdqn_agent>`.
 * :class:`C51_Agent` : :doc:`Categorical 51 DQN (C51) <drl/c51_agent>`.
+* :class:`QRDQN_Agent` : :doc:`DQN with Quantile Regression (QR-DQN) <drl/qrdqn_agent>`.
 * :class:`DRQN_Agent` : :doc:`Deep Recurrent Q-Network (DRQN) <drl/drqn_agent>`.
 
 **Policy-based:**
