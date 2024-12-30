@@ -174,8 +174,10 @@ XuanCe contains four main parts:
    documents/usage/new_envs
    documents/usage/new_algorithm
 
+APIs of XuanCe
+----------------
+
 .. toctree::
-   :hidden:
    :maxdepth: 1
    :caption: APIs:
 
