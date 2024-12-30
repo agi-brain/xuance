@@ -461,7 +461,9 @@ You can put your questions, advices, or the bugs you have found in the [Issues](
 
 Discord invite link: [https://discord.gg/JGgPVXrZ](https://discord.gg/JGgPVXrZ).
 
-Welcome to join the official communication group with QQ app (Group number: 552432695), and the official account ("玄策 RLlib") on WeChat.
+QQ App's group number: 552432695.
+
+The official WeChat account: "玄策 RLlib".
 
 <details open>
 <summary>(QR code for QQ group and WeChat official account)</summary>
