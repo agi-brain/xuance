@@ -456,7 +456,6 @@ How to use wandb offline? :arrow_right: [https://github.com/wandb/server.git/](h
 - GitHub issues: [https://github.com/agi-brain/xuance/issues](https://github.com/agi-brain/xuance/issues)
 - Discord invite link: [https://discord.gg/JGgPVXrZ](https://discord.gg/JGgPVXrZ)
 - Slack invite link: [https://join.slack.com/t/xuancerllib/](https://join.slack.com/t/xuancerllib/shared_invite/zt-2x2r98msi-iMX6mSVcgWwXYj95abcXIw)
-- 
 - QQ App's group number: 552432695
 - WeChat account: "玄策 RLlib"
 
@@ -474,6 +473,10 @@ How to use wandb offline? :arrow_right: [https://github.com/wandb/server.git/](h
 </table>
 
 </details>
+
+```note
+You can also post your questions on [Stack Overflow](https://stackoverflow.com/).
+```
 
 [@TFBestPractices](https://twitter.com/TFBestPractices/status/1665770204398223361)
 
