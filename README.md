@@ -459,6 +459,8 @@ How to use wandb offline? :arrow_right: [https://github.com/wandb/server.git/](h
 - QQ App's group number: 552432695
 - WeChat account: "玄策 RLlib"
 
+(Note: You can also post your questions on [Stack Overflow](https://stackoverflow.com/).)
+
 <details open>
 <summary>(QR code for QQ group and WeChat official account)</summary>
 
@@ -473,10 +475,6 @@ How to use wandb offline? :arrow_right: [https://github.com/wandb/server.git/](h
 </table>
 
 </details>
-
-```note
-You can also post your questions on [Stack Overflow](https://stackoverflow.com/).
-```
 
 [@TFBestPractices](https://twitter.com/TFBestPractices/status/1665770204398223361)
 
