@@ -20,52 +20,26 @@ Gymnasium retains backward compatibility with Gym while introducing significant 
 
 ## Classic Control
 
-```{eval-rst}
-.. image:: ../../../../_static/figures/classic_control/cart_pole.gif
-    :height: 120px
-.. image:: ../../../../_static/figures/classic_control/pendulum.gif
-    :height: 120px
-.. image:: ../../../../_static/figures/classic_control/acrobot.gif
-    :height: 120px
+```{raw} html
+    :file: lists/classic_control_list.html
 ```
 
 ## Box2D
 
-```{eval-rst}
-.. image:: ../../../../_static/figures/box2d/car_racing.gif
-    :height: 120px
-.. image:: ../../../../_static/figures/box2d/lunar_lander.gif
-    :height: 120px
-.. image:: ../../../../_static/figures/box2d/bipedal_walker.gif
-    :height: 120px
-```
-
-## Atari
-
-```{eval-rst}
-.. image:: ../../../../_static/figures/atari/adventure.gif
-    :height: 150px
-.. image:: ../../../../_static/figures/atari/air_raid.gif
-    :height: 150px
-.. image:: ../../../../_static/figures/atari/alien.gif
-    :height: 150px
-.. image:: ../../../../_static/figures/atari/boxing.gif
-    :height: 150px
-.. image:: ../../../../_static/figures/atari/breakout.gif
-    :height: 150px
+```{raw} html
+    :file: lists/box2d_list.html
 ```
 
 ## MuJoCo
 
-```{eval-rst}
-.. image:: ../../../../_static/figures/mujoco/ant.gif
-    :height: 150px
-.. image:: ../../../../_static/figures/mujoco/half_cheetah.gif
-    :height: 150px
-.. image:: ../../../../_static/figures/mujoco/hopper.gif
-    :height: 150px
-.. image:: ../../../../_static/figures/mujoco/humanoid.gif
-    :height: 150px
+```{raw} html
+    :file: lists/mujoco_list.html
+```
+
+## Atari
+
+```{raw} html
+    :file: lists/atari_list.html
 ```
 
 ## APIs
