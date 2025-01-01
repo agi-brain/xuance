@@ -144,13 +144,13 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
 
 <table rules="none" align="center"><tr>
 <td> <center>
-<img src="docs/source/_static/figures/toy/cart_pole.gif" height=100" /><br/><font color="AAAAAA">Cart Pole</font>
+<img src="docs/source/_static/figures/classic_control/cart_pole.gif" height=100" /><br/><font color="AAAAAA">Cart Pole</font>
 </center></td>
 <td> <center>
-<img src="docs/source/_static/figures/toy/pendulum.gif" height=100" /> <br/> <font color="AAAAAA">Pendulum</font>
+<img src="docs/source/_static/figures/classic_control/pendulum.gif" height=100" /> <br/> <font color="AAAAAA">Pendulum</font>
 </center> </td>
 <td> <center>
-<img src="docs/source/_static/figures/toy/acrobot.gif" height=100" /> <br/> <font color="AAAAAA">Acrobot</font>
+<img src="docs/source/_static/figures/classic_control/acrobot.gif" height=100" /> <br/> <font color="AAAAAA">Acrobot</font>
 </center> </td>
 <td> <center>
 <br/> <font color="AAAAAA">...</font>

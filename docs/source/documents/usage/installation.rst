@@ -10,7 +10,7 @@ You can choose between two installation methods: from PyPI or GitHub repository.
 
 .. note::
 
-    Note: XuanCe can be installed on MacOS and be compatible with both Intel and Apple's M CPUs.
+    XuanCe can be installed on MacOS and be compatible with both Intel and Apple's M CPUs.
 
 Install via PyPI
 ---------------------------------------------
