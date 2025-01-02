@@ -312,7 +312,8 @@ As an external package, it needs to be installed separately.
 After installing XuanCe, you need to install Atari dependencies via the following command:
 
 ```{code-block} bash
-pip install gymnasium[accept-rom-license], gymnasium[atari], atari-py==0.2.9, ale-py==0.7.5
+pip install gymnasium[accept-rom-license] gymnasium[atari]
+pip install atari-py==0.2.9 ale-py==0.7.5
 ```
 
 ```{eval-rst}
@@ -328,7 +329,13 @@ pip install gymnasium[accept-rom-license], gymnasium[atari], atari-py==0.2.9, al
     
     .. code-block:: bash
         
-        pip install 'gymnasium[accept-rom-license]', 'gymnasium[atari]', atari-py==0.2.9, ale-py==0.7.5
+        pip install 'gymnasium[accept-rom-license]' 'gymnasium[atari]'
+    
+    And then, reinstall atari-py and ale-py:
+    
+    .. code-block:: bash
+        
+        pip install atari-py==0.2.9 ale-py==0.7.5
 ```
 
 ### Arguments
