@@ -6,7 +6,7 @@ developed as an enhanced and actively maintained fork of
 It provides a standardized interface for building and benchmarking DRL algorithms while addressing the limitations of the original Gym. 
 Gymnasium retains backward compatibility with Gym while introducing significant improvements to modernize the toolkit.
 
-**Official Documentation**: [**https://gymnasium.farama.org/**](https://gymnasium.farama.org/)
+**Official documentation:** [**https://gymnasium.farama.org/**](https://gymnasium.farama.org/).
 
 ```{eval-rst}
 .. note::
@@ -14,7 +14,8 @@ Gymnasium retains backward compatibility with Gym while introducing significant 
     Gymnasium is a community-driven fork of OpenAI's Gym, actively maintained by the Farama Foundation. 
     It offers enhanced APIs, richer info outputs, clear termination criteria, and modern Python support. 
     Unlike Gym, whose updates have slowed, Gymnasium ensures compatibility with new RL libraries, 
-    improved documentation, and ongoing support for future advancements.
+    improved documentation, and ongoing support for future advancements. 
+    You can visit original Gym's documentation from this link: `https://www.gymlibrary.dev/ <https://www.gymlibrary.dev/>`_
 
 ```
 
@@ -297,6 +298,11 @@ To run a DRL demo with Classic Control environment, you can see the [Quick Start
 ```
 
 ### Feaures
+
+The Atari environment contains 62 different tasks, which are simulated via the 
+[Arcade Learning Environment (ALE)](https://www.jair.org/index.php/jair/article/view/10819).
+
+
 
 ### Installation
 
