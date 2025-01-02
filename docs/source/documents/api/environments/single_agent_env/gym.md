@@ -306,6 +306,31 @@ The Atari environment contains 62 different tasks, which are simulated via the
 
 ### Installation
 
+The Atari environment is not included with the installation of XuanCe. 
+As an external package, it needs to be installed separately.
+
+After installing XuanCe, you need to install Atari dependencies via the following command:
+
+```{code-block} bash
+pip install gymnasium[accept-rom-license], gymnasium[atari], atari-py==0.2.9, ale-py==0.7.5
+```
+
+```{eval-rst}
+.. note::
+
+    If you're using macOS and encounter the following error:
+    
+    .. code-block:: bash
+        
+        zsh: no matches found: gymnasium[accept-rom-license]
+        
+    You can resolve it by typing the command as follows:
+    
+    .. code-block:: bash
+        
+        pip install 'gymnasium[accept-rom-license]', 'gymnasium[atari]', atari-py==0.2.9, ale-py==0.7.5
+```
+
 ### Arguments
 
 ### Run in XuanCe
