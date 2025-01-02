@@ -26,6 +26,7 @@ master_doc = 'index'
 extensions = [
     # Sphinx's own extensions
     "sphinx.ext.autodoc",
+    "sphinx.ext.napoleon",
     "sphinx.ext.extlinks",
     "sphinx.ext.intersphinx",
     "sphinx.ext.mathjax",

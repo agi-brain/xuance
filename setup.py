@@ -60,7 +60,7 @@ setup(
         "gym==0.26.2",
         "gymnasium==0.28.1",
         "gym-notices==0.0.8",
-        "pygame==2.1.0",
+        "pygame>=2.1.0",
         "tqdm==4.62.3",
         "pyglet==1.5.15",
         "pettingzoo>=1.23.0",  # for MARL

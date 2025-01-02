@@ -55,7 +55,11 @@ def make_envs(config: Namespace):
         else:
             raise AttributeError(f"The environment named {config.env_name} cannot be created.")
 
-    if config.distributed_training:
+    distributed_training = config.distributed_training if hasattr(config, "distributed_training") else False
+    if not hasattr(config, "render_mode"):
+        config.render_mode = "human"
+
+    if distributed_training:
         # rank = int(os.environ['RANK'])  # for torch.nn.parallel.DistributedDataParallel
         rank = 1
         config.env_seed += rank * config.parallels
