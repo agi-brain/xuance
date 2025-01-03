@@ -107,10 +107,12 @@ class Atari_Env(gym.Wrapper):
     """
 
     def __init__(self, config):
+        full_action_space = config.full_action_space if hasattr(config, 'full_action_space') else False
         self.env = gym.make(config.env_id,
                             render_mode=config.render_mode,
                             obs_type=config.obs_type,
-                            frameskip=config.frame_skip)
+                            frameskip=config.frame_skip,
+                            full_action_space=full_action_space)
         self.env.action_space.seed(seed=config.env_seed)
         self.env.unwrapped.reset(seed=config.env_seed)
         self.max_episode_steps = self.env._max_episode_steps if hasattr(self.env, '_max_episode_steps') else None
