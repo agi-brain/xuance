@@ -21,9 +21,9 @@ class ValueNorm(Module):
         self.reset_parameters()
 
     def reset_parameters(self):
-        self.running_mean.set_data(ops.zeros(self.running_mean.shape))
-        self.running_mean_sq.set_data(ops.zeros(self.running_mean_sq.shape))
-        self.debiasing_term.set_data(ops.zeros(self.debiasing_term.shape))
+        self.running_mean.set_data(ops.zeros(self.running_mean.shape, dtype=ms.float32))
+        self.running_mean_sq.set_data(ops.zeros(self.running_mean_sq.shape, dtype=ms.float32))
+        self.debiasing_term.set_data(ops.zeros(self.debiasing_term.shape, dtype=ms.float32))
 
     def running_mean_var(self):
         debiased_mean = self.running_mean / self.debiasing_term.clamp(min=self.epsilon)
