@@ -1,6 +1,7 @@
 import torch
 from argparse import Namespace
-from xuance.environment import DummyVecEnv
+from xuance.common import Union
+from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.torch import Module
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.policies import REGISTRY_Policy
@@ -17,7 +18,7 @@ class DQN_Agent(OffPolicyAgent):
 
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecEnv):
+                 envs: Union[DummyVecEnv, SubprocVecEnv]):
         super(DQN_Agent, self).__init__(config, envs)
         self.start_greedy, self.end_greedy = config.start_greedy, config.end_greedy
         self.e_greedy = config.start_greedy

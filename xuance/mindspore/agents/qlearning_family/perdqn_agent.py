@@ -1,9 +1,9 @@
 from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
-from xuance.environment import DummyVecEnv
+from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.mindspore.agents.qlearning_family import DQN_Agent
-from xuance.common import PerOffPolicyBuffer
+from xuance.common import Union, PerOffPolicyBuffer
 
 
 class PerDQN_Agent(DQN_Agent):
@@ -16,7 +16,7 @@ class PerDQN_Agent(DQN_Agent):
 
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecEnv):
+                 envs: Union[DummyVecEnv, SubprocVecEnv]):
         super(PerDQN_Agent, self).__init__(config, envs)
         self.PER_beta0 = config.PER_beta0
         self.PER_beta = config.PER_beta0

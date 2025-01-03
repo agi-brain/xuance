@@ -4,8 +4,8 @@ from tqdm import tqdm
 from copy import deepcopy
 from operator import itemgetter
 from argparse import Namespace
-from xuance.common import List
-from xuance.environment import DummyVecMultiAgentEnv
+from xuance.common import List, Union
+from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.representations import REGISTRY_Representation
 from xuance.torch.policies import REGISTRY_Policy, QMIX_mixer
@@ -25,7 +25,7 @@ class MFAC_Agents(MARLAgents):
     """
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecMultiAgentEnv):
+                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv]):
         self.gamma = config.gamma
         self.n_envs = envs.num_envs
         self.n_size = config.buffer_size

@@ -4,7 +4,7 @@ from copy import deepcopy
 from argparse import Namespace
 from operator import itemgetter
 from xuance.common import MARL_OnPolicyBuffer, MARL_OnPolicyBuffer_RNN, Optional, List, Union
-from xuance.environment import DummyVecMultiAgentEnv
+from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.tensorflow import Module
 from xuance.tensorflow.agents.base import MARLAgents
 
@@ -19,7 +19,7 @@ class OnPolicyMARLAgents(MARLAgents):
 
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecMultiAgentEnv):
+                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv]):
         super(OnPolicyMARLAgents, self).__init__(config, envs)
         self.continuous_control: bool = False
         self.n_epochs = config.n_epochs

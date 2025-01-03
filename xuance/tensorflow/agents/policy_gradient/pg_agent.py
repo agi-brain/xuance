@@ -1,6 +1,7 @@
 import numpy as np
 from argparse import Namespace
-from xuance.environment import DummyVecEnv
+from xuance.common import Union
+from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.tensorflow import Module
 from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
 from xuance.tensorflow.policies import REGISTRY_Policy
@@ -17,7 +18,7 @@ class PG_Agent(OnPolicyAgent):
 
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecEnv):
+                 envs: Union[DummyVecEnv, SubprocVecEnv]):
         super(PG_Agent, self).__init__(config, envs)
         self.memory = self._build_memory()  # build memory
         self.policy = self._build_policy()  # build policy

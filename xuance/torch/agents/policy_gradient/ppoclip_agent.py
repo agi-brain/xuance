@@ -2,7 +2,8 @@ import torch
 from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
-from xuance.environment import DummyVecEnv
+from xuance.common import Union
+from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.torch import Module
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.policies import REGISTRY_Policy
@@ -19,7 +20,7 @@ class PPOCLIP_Agent(OnPolicyAgent):
 
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecEnv):
+                 envs: Union[DummyVecEnv, SubprocVecEnv]):
         super(PPOCLIP_Agent, self).__init__(config, envs)
         self.auxiliary_info_shape = {"old_logp": ()}
         self.memory = self._build_memory(self.auxiliary_info_shape)  # build memory

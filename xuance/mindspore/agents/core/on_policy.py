@@ -2,8 +2,8 @@ import numpy as np
 from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
-from xuance.common import Optional, DummyOnPolicyBuffer, DummyOnPolicyBuffer_Atari
-from xuance.environment import DummyVecEnv
+from xuance.common import Optional, Union, DummyOnPolicyBuffer, DummyOnPolicyBuffer_Atari
+from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.mindspore import Module
 from xuance.mindspore.utils import split_distributions
 from xuance.mindspore.agents.base import Agent
@@ -18,7 +18,7 @@ class OnPolicyAgent(Agent):
     """
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecEnv):
+                 envs: Union[DummyVecEnv, SubprocVecEnv]):
         super(OnPolicyAgent, self).__init__(config, envs)
         self.horizon_size = config.horizon_size
         self.n_epochs = config.n_epochs

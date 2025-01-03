@@ -8,8 +8,8 @@ from argparse import Namespace
 from mpi4py import MPI
 from gym.spaces import Dict, Space
 from torch.utils.tensorboard import SummaryWriter
-from xuance.common import get_time_string, create_directory, RunningMeanStd, space2shape, EPS, Optional
-from xuance.environment import DummyVecEnv
+from xuance.common import get_time_string, create_directory, RunningMeanStd, space2shape, EPS, Optional, Union
+from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.tensorflow import REGISTRY_Representation, REGISTRY_Learners, Module
 from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
 
@@ -23,7 +23,7 @@ class Agent(ABC):
     """
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecEnv):
+                 envs: Union[DummyVecEnv, SubprocVecEnv]):
         # Training settings.
         self.config = config
         self.use_rnn = config.use_rnn if hasattr(config, "use_rnn") else False

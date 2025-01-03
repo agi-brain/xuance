@@ -1,6 +1,6 @@
 from argparse import Namespace
-from xuance.common import Optional, List
-from xuance.environment import DummyVecMultiAgentEnv
+from xuance.common import Optional, List, Union
+from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.mindspore import Module
 from xuance.mindspore.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
 from xuance.mindspore.policies import REGISTRY_Policy
@@ -17,7 +17,7 @@ class IDDPG_Agents(OffPolicyMARLAgents):
 
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecMultiAgentEnv):
+                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv]):
         super(IDDPG_Agents, self).__init__(config, envs)
 
         self.start_noise, self.end_noise = config.start_noise, config.end_noise

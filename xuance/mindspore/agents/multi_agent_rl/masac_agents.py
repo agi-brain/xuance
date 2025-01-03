@@ -1,5 +1,6 @@
 from argparse import Namespace
-from xuance.environment import DummyVecMultiAgentEnv
+from xuance.common import Union
+from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.mindspore import Module
 from xuance.mindspore.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
 from xuance.mindspore.policies import REGISTRY_Policy
@@ -15,7 +16,7 @@ class MASAC_Agents(ISAC_Agents):
     """
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecMultiAgentEnv):
+                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv]):
         super(MASAC_Agents, self).__init__(config, envs)
 
     def _build_policy(self) -> Module:

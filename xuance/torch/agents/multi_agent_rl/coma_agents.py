@@ -5,8 +5,8 @@ from copy import deepcopy
 from argparse import Namespace
 from operator import itemgetter
 from torch.nn.functional import one_hot
-from xuance.common import List, Optional
-from xuance.environment import DummyVecMultiAgentEnv
+from xuance.common import List, Optional, Union
+from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.torch import Module, Tensor
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.policies import REGISTRY_Policy
@@ -23,7 +23,7 @@ class COMA_Agents(OnPolicyMARLAgents):
 
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecMultiAgentEnv):
+                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv]):
         super(COMA_Agents, self).__init__(config, envs)
         self.start_greedy, self.end_greedy = config.start_greedy, config.end_greedy
         self.egreedy = self.start_greedy

@@ -2,7 +2,8 @@ import numpy as np
 from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
-from xuance.environment import DummyVecEnv
+from xuance.common import Union
+from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.tensorflow import tf, Module
 from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
 from xuance.tensorflow.policies import REGISTRY_Policy
@@ -20,7 +21,7 @@ class PPG_Agent(OnPolicyAgent):
 
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecEnv):
+                 envs: Union[DummyVecEnv, SubprocVecEnv]):
         super(PPG_Agent, self).__init__(config, envs)
         self.continuous_control = False
         self.policy_nepoch = config.policy_nepoch

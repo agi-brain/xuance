@@ -2,12 +2,12 @@ import numpy as np
 from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
-from xuance.environment import DummyVecEnv
+from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.mindspore import Module
 from xuance.mindspore.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
 from xuance.mindspore.policies import REGISTRY_Policy
 from xuance.mindspore.agents import OffPolicyAgent
-from xuance.common import RecurrentOffPolicyBuffer, EpisodeBuffer
+from xuance.common import Union, RecurrentOffPolicyBuffer, EpisodeBuffer
 
 
 class DRQN_Agent(OffPolicyAgent):
@@ -20,7 +20,7 @@ class DRQN_Agent(OffPolicyAgent):
 
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecEnv):
+                 envs: Union[DummyVecEnv, SubprocVecEnv]):
         super(DRQN_Agent, self).__init__(config, envs)
 
         self.start_greedy, self.end_greedy = config.start_greedy, config.end_greedy

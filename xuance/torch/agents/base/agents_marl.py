@@ -13,7 +13,7 @@ from torch import nn
 from torch.utils.tensorboard import SummaryWriter
 from torch.distributed import destroy_process_group
 from xuance.common import get_time_string, create_directory, space2shape, Optional, List, Dict, Union
-from xuance.environment import DummyVecMultiAgentEnv
+from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.torch import ModuleDict, REGISTRY_Representation, REGISTRY_Learners, Module
 from xuance.torch.learners import learner
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions, init_distributed_mode
@@ -28,7 +28,7 @@ class MARLAgents(ABC):
     """
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecMultiAgentEnv):
+                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv]):
         # Training settings.
         self.config = config
         self.use_rnn = config.use_rnn if hasattr(config, "use_rnn") else False

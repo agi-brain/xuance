@@ -1,5 +1,6 @@
 from argparse import Namespace
-from xuance.environment import DummyVecEnv
+from xuance.common import Union
+from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.tensorflow import Module
 from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
 from xuance.tensorflow.policies import REGISTRY_Policy
@@ -15,7 +16,7 @@ class QRDQN_Agent(DQN_Agent):
     """
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecEnv):
+                 envs: Union[DummyVecEnv, SubprocVecEnv]):
         super(QRDQN_Agent, self).__init__(config, envs)
 
     def _build_policy(self) -> Module:

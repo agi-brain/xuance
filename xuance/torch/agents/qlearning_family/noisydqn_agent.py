@@ -3,7 +3,8 @@ import numpy as np
 from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
-from xuance.environment import DummyVecEnv
+from xuance.common import Union
+from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.torch import Module
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.policies import REGISTRY_Policy
@@ -20,7 +21,7 @@ class NoisyDQN_Agent(Agent):
     """
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecEnv):
+                 envs: Union[DummyVecEnv, SubprocVecEnv]):
         super(NoisyDQN_Agent, self).__init__(config, envs)
 
         self.start_noise, self.end_noise = config.start_noise, config.end_noise

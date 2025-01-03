@@ -2,8 +2,8 @@ import numpy as np
 import torch
 from argparse import Namespace
 from operator import itemgetter
-from xuance.environment import DummyVecMultiAgentEnv
-from xuance.common import List, Optional
+from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
+from xuance.common import List, Optional, Union
 from xuance.torch import Module
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.policies import REGISTRY_Policy
@@ -20,7 +20,7 @@ class IAC_Agents(OnPolicyMARLAgents):
 
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecMultiAgentEnv):
+                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv]):
         super(IAC_Agents, self).__init__(config, envs)
         self.policy = self._build_policy()  # build policy
         self.memory = self._build_memory()  # build memory

@@ -4,7 +4,7 @@ from copy import deepcopy
 from argparse import Namespace
 from operator import itemgetter
 from xuance.common import Optional, List, Union, MARL_OffPolicyBuffer, MARL_OffPolicyBuffer_RNN
-from xuance.environment import DummyVecMultiAgentEnv
+from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.torch import Tensor, Module
 from xuance.torch.utils.distributions import Categorical
 from xuance.torch.agents.base import MARLAgents
@@ -20,7 +20,7 @@ class OffPolicyMARLAgents(MARLAgents):
 
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecMultiAgentEnv):
+                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv]):
         super(OffPolicyMARLAgents, self).__init__(config, envs)
         self.on_policy = False
         self.start_greedy = config.start_greedy if hasattr(config, "start_greedy") else None

@@ -1,5 +1,6 @@
 from argparse import Namespace
-from xuance.environment import DummyVecMultiAgentEnv
+from xuance.common import Union
+from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.tensorflow import Module
 from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
 from xuance.tensorflow.policies import REGISTRY_Policy, QMIX_mixer
@@ -16,7 +17,7 @@ class QMIX_Agents(OffPolicyMARLAgents):
 
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecMultiAgentEnv):
+                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv]):
         super(QMIX_Agents, self).__init__(config, envs)
         self.state_space = envs.state_space
         self.use_global_state = True

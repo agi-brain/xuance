@@ -9,7 +9,7 @@ from operator import itemgetter
 from gym.spaces import Space
 from torch.utils.tensorboard import SummaryWriter
 from xuance.common import get_time_string, create_directory, space2shape, Optional, List, Dict, Union
-from xuance.environment import DummyVecMultiAgentEnv
+from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.tensorflow import Module, REGISTRY_Representation, REGISTRY_Learners
 from xuance.tensorflow.learners import learner
 from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
@@ -18,7 +18,7 @@ from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions, Ini
 class MARLAgents(ABC):
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecMultiAgentEnv):
+                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv]):
         # Training settings.
         self.config = config
         self.use_rnn = config.use_rnn if hasattr(config, "use_rnn") else False

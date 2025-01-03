@@ -3,7 +3,8 @@
 # This can be a first RL algorithm code for the starters.
 import torch
 from argparse import Namespace
-from xuance.environment import DummyVecEnv
+from xuance.common import Union
+from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.torch import Module
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.policies import REGISTRY_Policy
@@ -20,7 +21,7 @@ class A2C_Agent(OnPolicyAgent):
 
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecEnv):
+                 envs: Union[DummyVecEnv, SubprocVecEnv]):
         super(A2C_Agent, self).__init__(config, envs)
         self.memory = self._build_memory()  # build memory
         self.policy = self._build_policy()  # build policy

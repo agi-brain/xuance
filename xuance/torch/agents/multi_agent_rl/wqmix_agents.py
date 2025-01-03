@@ -1,6 +1,7 @@
 import torch
 from argparse import Namespace
-from xuance.environment import DummyVecMultiAgentEnv
+from xuance.common import Union
+from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.torch import Module
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.policies import REGISTRY_Policy, QMIX_mixer, QMIX_FF_mixer
@@ -16,7 +17,7 @@ class WQMIX_Agents(QMIX_Agents):
     """
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecMultiAgentEnv):
+                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv]):
         super(WQMIX_Agents, self).__init__(config, envs)
 
     def _build_policy(self) -> Module:

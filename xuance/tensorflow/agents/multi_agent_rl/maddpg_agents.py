@@ -1,5 +1,6 @@
 from argparse import Namespace
-from xuance.environment import DummyVecMultiAgentEnv
+from xuance.common import Union
+from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.tensorflow import Module
 from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
 from xuance.tensorflow.policies import REGISTRY_Policy
@@ -15,7 +16,7 @@ class MADDPG_Agents(IDDPG_Agents):
     """
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecMultiAgentEnv):
+                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv]):
         super(MADDPG_Agents, self).__init__(config, envs)
 
     def _build_policy(self) -> Module:

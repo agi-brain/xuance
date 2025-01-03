@@ -1,8 +1,8 @@
 import numpy as np
 from tqdm import tqdm
 from argparse import Namespace
-from xuance.common import DummyOffPolicyBuffer, DummyOffPolicyBuffer_Atari
-from xuance.environment import DummyVecMultiAgentEnv
+from xuance.common import Union, DummyOffPolicyBuffer, DummyOffPolicyBuffer_Atari
+from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.tensorflow import tk, Module
 from xuance.tensorflow.agents import MARLAgents
 from xuance.tensorflow.learners import DQN_Learner
@@ -11,7 +11,7 @@ from xuance.tensorflow.learners import DQN_Learner
 class QTRAN_Agents(MARLAgents):
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecMultiAgentEnv,
+                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv],
                  device: str = "cpu:0"):
         self.gamma = config.gamma
         self.start_greedy, self.end_greedy = config.start_greedy, config.end_greedy

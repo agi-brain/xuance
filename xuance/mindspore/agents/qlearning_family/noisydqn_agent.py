@@ -2,12 +2,12 @@ import numpy as np
 from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
-from xuance.environment import DummyVecEnv
+from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.mindspore import Module
 from xuance.mindspore.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
 from xuance.mindspore.policies import REGISTRY_Policy
 from xuance.mindspore.agents import Agent
-from xuance.common import DummyOffPolicyBuffer, DummyOffPolicyBuffer_Atari
+from xuance.common import Union, DummyOffPolicyBuffer, DummyOffPolicyBuffer_Atari
 
 
 class NoisyDQN_Agent(Agent):
@@ -19,7 +19,7 @@ class NoisyDQN_Agent(Agent):
     """
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecEnv):
+                 envs: Union[DummyVecEnv, SubprocVecEnv]):
         super(NoisyDQN_Agent, self).__init__(config, envs)
 
         self.start_noise, self.end_noise = config.start_noise, config.end_noise

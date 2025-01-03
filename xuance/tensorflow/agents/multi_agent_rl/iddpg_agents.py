@@ -1,6 +1,6 @@
 from argparse import Namespace
-from xuance.common import Optional, List
-from xuance.environment import DummyVecMultiAgentEnv
+from xuance.common import Optional, List, Union
+from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.tensorflow import Module
 from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
 from xuance.tensorflow.policies import REGISTRY_Policy
@@ -17,7 +17,7 @@ class IDDPG_Agents(OffPolicyMARLAgents):
 
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecMultiAgentEnv):
+                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv]):
         super(IDDPG_Agents, self).__init__(config, envs)
 
         self.start_noise, self.end_noise = config.start_noise, config.end_noise

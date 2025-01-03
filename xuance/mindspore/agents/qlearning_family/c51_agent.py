@@ -1,5 +1,6 @@
 from argparse import Namespace
-from xuance.environment import DummyVecEnv
+from xuance.common import Union
+from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.mindspore import Module
 from xuance.mindspore.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
 from xuance.mindspore.agents.qlearning_family.dqn_agent import DQN_Agent
@@ -15,7 +16,7 @@ class C51_Agent(DQN_Agent):
     """
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecEnv):
+                 envs: Union[DummyVecEnv, SubprocVecEnv]):
         super(C51_Agent, self).__init__(config, envs)
 
     def _build_policy(self) -> Module:

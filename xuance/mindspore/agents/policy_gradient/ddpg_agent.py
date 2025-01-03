@@ -1,7 +1,7 @@
 import numpy as np
 from argparse import Namespace
-from xuance.common import Optional
-from xuance.environment import DummyVecEnv
+from xuance.common import Optional, Union
+from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.mindspore import Module
 from xuance.mindspore.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
 from xuance.mindspore.policies import REGISTRY_Policy
@@ -18,7 +18,7 @@ class DDPG_Agent(OffPolicyAgent):
 
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecEnv):
+                 envs: Union[DummyVecEnv, SubprocVecEnv]):
         super(DDPG_Agent, self).__init__(config, envs)
         self.start_noise, self.end_noise = config.start_noise, config.end_noise
         self.noise_scale = config.start_noise

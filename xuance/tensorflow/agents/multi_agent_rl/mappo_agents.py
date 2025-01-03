@@ -1,8 +1,8 @@
 import numpy as np
 from argparse import Namespace
 from operator import itemgetter
-from xuance.common import Optional, List
-from xuance.environment import DummyVecMultiAgentEnv
+from xuance.common import Optional, List, Union
+from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.tensorflow import Module
 from xuance.tensorflow.utils import NormalizeFunctions, ActivationFunctions, InitializeFunctions
 from xuance.tensorflow.policies import REGISTRY_Policy
@@ -19,7 +19,7 @@ class MAPPO_Agents(IPPO_Agents):
 
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecMultiAgentEnv):
+                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv]):
         super(MAPPO_Agents, self).__init__(config, envs)
 
     def _build_policy(self) -> Module:

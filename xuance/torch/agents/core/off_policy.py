@@ -2,8 +2,8 @@ import numpy as np
 from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
-from xuance.common import Optional, DummyOffPolicyBuffer, DummyOffPolicyBuffer_Atari
-from xuance.environment import DummyVecEnv
+from xuance.common import Optional, Union, DummyOffPolicyBuffer, DummyOffPolicyBuffer_Atari
+from xuance.environment import DummyVecEnv, SubprocVecEnv
 from xuance.torch import Module
 from xuance.torch.agents.base import Agent
 
@@ -17,7 +17,7 @@ class OffPolicyAgent(Agent):
     """
     def __init__(self,
                  config: Namespace,
-                 envs: DummyVecEnv):
+                 envs: Union[DummyVecEnv, SubprocVecEnv]):
         super(OffPolicyAgent, self).__init__(config, envs)
         self.start_greedy = config.start_greedy if hasattr(config, "start_greedy") else None
         self.end_greedy = config.end_greedy if hasattr(config, "end_greedy") else None
