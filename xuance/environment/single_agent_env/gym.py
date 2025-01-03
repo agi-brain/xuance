@@ -113,7 +113,7 @@ class Atari_Env(gym.Wrapper):
                             frameskip=config.frame_skip)
         self.env.action_space.seed(seed=config.env_seed)
         self.env.unwrapped.reset(seed=config.env_seed)
-        self.max_episode_steps = self.env._max_episode_steps
+        self.max_episode_steps = self.env._max_episode_steps if hasattr(self.env, '_max_episode_steps') else None
         super(Atari_Env, self).__init__(self.env)
         # self.env.seed(config.env_seed)
         self.num_stack = config.num_stack
@@ -147,47 +147,44 @@ class Atari_Env(gym.Wrapper):
         self.env.close()
 
     def render(self, render_mode):
-        return self.env.unwrapped.render(render_mode)
+        return self.env.render(render_mode)
 
     def reset(self):
         info = {}
         if self.was_real_done:
-            self.env.unwrapped.reset()
+            self.env.reset()
             # Execute NoOp actions
             num_noops = np.random.randint(0, self.noop_max)
             for _ in range(num_noops):
-                obs, _, done, _ = self.env.unwrapped.step(0)
+                obs, _, done, _, _ = self.env.step(0)
                 if done:
-                    self.env.unwrapped.reset()
+                    self.env.reset()
             # try to fire
-            obs, _, done, _ = self.env.unwrapped.step(1)
+            obs, _, done, _, _ = self.env.step(1)
             if done:
-                obs = self.env.unwrapped.reset()
+                obs = self.env.reset()
             # stack reset observations
             for _ in range(self.num_stack):
                 self.frames.append(self.observation(obs))
 
             self._episode_step = 0
         else:
-            obs, _, done, _ = self.env.unwrapped.step(0)
+            obs, _, done, _, _ = self.env.step(0)
             for _ in range(self.num_stack):
                 self.frames.append(self.observation(obs))
 
-        self.lifes = self.env.unwrapped.ale.lives()
+        self.lifes = self.env.ale.lives()
         self.was_real_done = False
         return self._get_obs(), info
 
     def step(self, actions):
-        observation, reward, terminated, info = self.env.unwrapped.step(actions)
+        observation, reward, terminated, truncated, info = self.env.step(actions)
         self.frames.append(self.observation(observation))
-        lives = self.env.unwrapped.ale.lives()
+        lives = self.env.ale.lives()
         # avoid environment bug
-        if self._episode_step >= self.max_episode_steps:
-            terminated = True
         self.was_real_done = terminated
         if (lives < self.lifes) and (lives > 0):
             terminated = True
-        truncated = self.was_real_done
         self.lifes = lives
         self._episode_step += 1
         return self._get_obs(), self.reward(reward), terminated, truncated, info

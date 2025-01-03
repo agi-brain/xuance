@@ -46,10 +46,9 @@ setup(
             "tensorflow==2.6.0",
             "mindspore==2.2.14"  # mindspore might be installed manually.
         ],
-        "atari": ["gym[accept-rom-license]",
-                  "gym[atari]",
-                  "atari-py==0.2.9",  # for Atari
-                  "ale-py==0.7.5"],
+        "atari": ["gymnasium[accept-rom-license]==0.28.1",
+                  "gymnasium[atari]==0.28.1",
+                  "ale-py==0.8.1"],
         "box2d": ["swig==4.2.1",
                   "box2d-py==2.3.5"],  # for box2d
     },
