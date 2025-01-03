@@ -74,7 +74,7 @@ class C51Qhead(Module):
                  activation: Optional[ModuleType] = None
                  ):
         super(C51Qhead, self).__init__()
-        self.action_dim = action_dim
+        self.action_dim = int(action_dim)
         self.atom_num = atom_num
         layers = []
         input_shape = (state_dim,)
@@ -86,7 +86,7 @@ class C51Qhead(Module):
         self._softmax = ms.ops.Softmax(axis=-1)
 
     def construct(self, x: ms.tensor):
-        dist_logits = self.model(x).view(-1, self.action_dim, self.atom_num)
+        dist_logits = self.model(x).reshape([-1, self.action_dim, self.atom_num])
         dist_probs = self._softmax(dist_logits)
         return dist_probs
 
@@ -102,8 +102,8 @@ class QRDQNhead(Module):
                  activation: Optional[ModuleType] = None
                  ):
         super(QRDQNhead, self).__init__()
-        self.action_dim = action_dim
-        self.atom_num = atom_num
+        self.action_dim = int(action_dim)
+        self.atom_num = int(atom_num)
         layers = []
         input_shape = (state_dim,)
         for h in hidden_sizes:
@@ -113,7 +113,7 @@ class QRDQNhead(Module):
         self.model = nn.SequentialCell(*layers)
 
     def construct(self, x: ms.tensor):
-        return self.model(x).view(-1, self.action_dim, self.atom_num)
+        return self.model(x).reshape([-1, self.action_dim, self.atom_num])
 
 
 class BasicRecurrent(Module):

@@ -29,7 +29,6 @@ class ActorPolicy(Module):
                  initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None
                  ):
-        assert isinstance(action_space, Discrete)
         super(ActorPolicy, self).__init__()
         self.action_dim = action_space.n
         self.representation = representation
