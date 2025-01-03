@@ -19,6 +19,7 @@ class VDAC_Learner(IAC_Learner):
                  agent_keys: List[str],
                  policy: nn.Module):
         super(VDAC_Learner, self).__init__(config, model_keys, agent_keys, policy)
+        self.use_global_state = True if self.policy.mixer == "QMIX" else False
 
     def update(self, sample):
         self.iterations += 1
@@ -28,7 +29,7 @@ class VDAC_Learner(IAC_Learner):
         sample_Tensor = self.build_training_data(sample=sample,
                                                  use_parameter_sharing=self.use_parameter_sharing,
                                                  use_actions_mask=self.use_actions_mask,
-                                                 use_global_state=True)
+                                                 use_global_state=self.use_global_state)
         batch_size = sample_Tensor['batch_size']
         state = sample_Tensor['state']
         obs = sample_Tensor['obs']
@@ -132,7 +133,7 @@ class VDAC_Learner(IAC_Learner):
         sample_Tensor = self.build_training_data(sample=sample,
                                                  use_parameter_sharing=self.use_parameter_sharing,
                                                  use_actions_mask=self.use_actions_mask,
-                                                 use_global_state=True)
+                                                 use_global_state=self.use_global_state)
         batch_size = sample_Tensor['batch_size']
         state = sample_Tensor['state']
         bs_rnn = batch_size * self.n_agents if self.use_parameter_sharing else batch_size
