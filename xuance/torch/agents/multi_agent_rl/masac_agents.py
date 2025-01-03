@@ -1,6 +1,6 @@
 import torch
 from argparse import Namespace
-from xuance.common import Union
+from xuance.common import Optional, Union
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.torch import Module
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
@@ -56,3 +56,37 @@ class MASAC_Agents(ISAC_Agents):
             raise AttributeError(f"{agent} currently does not support the policy named {self.config.policy}.")
 
         return policy
+
+    def init_rnn_hidden(self, n_envs):
+        """
+        Returns initialized hidden states of RNN if use RNN-based representations.
+
+        Parameters:
+            n_envs (int): The number of parallel environments.
+
+        Returns:
+            rnn_hidden_states: The hidden states for RNN.
+        """
+        rnn_hidden_states = None
+        if self.use_rnn:
+            batch = n_envs * self.n_agents if self.use_parameter_sharing else n_envs
+            rnn_hidden_states = {k: self.policy.actor_representation[k].init_hidden(batch) for k in self.model_keys}
+        return rnn_hidden_states
+
+    def init_hidden_item(self, i_env: int,
+                         rnn_hidden: Optional[dict] = None):
+        """
+        Returns initialized hidden states of RNN for i-th environment.
+
+        Parameters:
+            i_env (int): The index of environment that to be selected.
+            rnn_hidden (Optional[dict]): The RNN hidden states of actor representation.
+        """
+        assert self.use_rnn is True, "This method cannot be called when self.use_rnn is False."
+        if self.use_parameter_sharing:
+            batch_index = list(range(i_env * self.n_agents, (i_env + 1) * self.n_agents))
+        else:
+            batch_index = [i_env, ]
+        for key in self.model_keys:
+            rnn_hidden[key] = self.policy.actor_representation[key].init_hidden_item(batch_index, *rnn_hidden[key])
+        return rnn_hidden

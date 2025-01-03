@@ -856,6 +856,7 @@ class MARL_OffPolicyBuffer_RNN(MARL_OffPolicyBuffer):
                                                        n_envs, buffer_size, batch_size, **kwargs)
         self.episode_data = {}
         self.clear_episodes()
+        self.episode_data_keys = self.episode_data.keys()
 
     def clear(self):
         """
@@ -940,6 +941,8 @@ class MARL_OffPolicyBuffer_RNN(MARL_OffPolicyBuffer):
         envs_choice = range(self.n_envs)
         self.episode_data["filled"][envs_choice, envs_step] = True
         for data_key, data_value in step_data.items():
+            if data_key not in self.episode_data:
+                continue
             if data_key in ['state', 'state_next']:
                 self.episode_data[data_key][envs_choice, envs_step] = data_value
                 continue

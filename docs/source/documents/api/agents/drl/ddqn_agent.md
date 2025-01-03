@@ -62,6 +62,18 @@ $$
 
 Finally, don't forget to update the target networks: $\theta^{-} \leftarrow \theta$.
 
+## Compare with DQN
+
+To figure out the difference between DQN and Double DQN more clearly, 
+we can rewrite the calculating of target value in DQN and compare them from the formulae listed as following:
+
+$$
+\begin{align}
+    & y = r + \gamma Q(s', \arg\max_{a'}Q(s', a'; \theta^{-}); \theta^{-}) & \hspace{1cm} \text{(DQN)}\\
+    & y = r + \gamma Q(s', \arg\max_{a'}Q(s', a'; \theta); \theta^{-}) & \hspace{1cm} \text{(Double DQN)}
+\end{align}
+$$
+
 ## Framework
 
 The overall agent-environment interaction of Double DQN, as implemented in XuanCe, is illustrated in the figure below.
