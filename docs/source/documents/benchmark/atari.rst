@@ -1,22 +1,8 @@
 Atari benchmarks
 ==========================
 
-Environments
---------------------------
-
-.. image:: ../../_static/figures/atari/adventure.gif
-    :height: 150px
-.. image:: ../../_static/figures/atari/air_raid.gif
-    :height: 150px
-.. image:: ../../_static/figures/atari/alien.gif
-    :height: 150px
-.. image:: ../../_static/figures/atari/boxing.gif
-    :height: 150px
-.. image:: ../../_static/figures/atari/breakout.gif
-    :height: 150px
-
-Results
---------------------------
+We have tested DQN and PPO of XuanCe in Atari environments.
+The benchmark results are listed as follows.
 
 +------------------+--------------------+-----------------------+-----------------+-------------------+--------------------+----------------------+--------------------+
 |                  | DQN                                                                              | PPO                                                            |

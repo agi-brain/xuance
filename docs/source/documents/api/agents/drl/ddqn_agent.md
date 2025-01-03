@@ -65,7 +65,9 @@ Finally, don't forget to update the target networks: $\theta^{-} \leftarrow \the
 ## Compare with DQN
 
 To figure out the difference between DQN and Double DQN more clearly, 
-we can rewrite the calculating of target value in DQN and compare them from the formulae listed as following:
+we can rewrite the 
+[calculating of target value](dqn_agent.md#deep-q-netowrk) 
+in DQN and compare them from the formulae listed as following:
 
 $$
 \begin{align}
@@ -73,6 +75,10 @@ $$
     & y = r + \gamma Q(s', \arg\max_{a'}Q(s', a'; \theta); \theta^{-}) & \hspace{1cm} \text{(Double DQN)}
 \end{align}
 $$
+
+It can be found that the main difference between DQN and Double DQN is the greedy action that is evaluated by the target Q-network.
+DQN evaluates the greedy action according to the target Q-network itself, 
+while Double DQN evaluates the greedy action according to the online Q-network.
 
 ## Framework
 
