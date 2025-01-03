@@ -11,7 +11,7 @@ from xuance.tensorflow.agents.base import MARLAgents
 
 
 class OffPolicyMARLAgents(MARLAgents):
-    """The core class for on-policy algorithm with single agent.
+    """The core class for off-policy algorithm with multiple agents.
 
     Args:
         config: the Namespace variable that provides hyper-parameters and other settings.

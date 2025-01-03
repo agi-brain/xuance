@@ -9,7 +9,7 @@ from xuance.torch.agents.base import Agent
 
 
 class OffPolicyAgent(Agent):
-    """The core class for on-policy algorithm with single agent.
+    """The core class for off-policy algorithm with single agent.
 
     Args:
         config: the Namespace variable that provides hyper-parameters and other settings.
