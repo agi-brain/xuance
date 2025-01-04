@@ -42,6 +42,14 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
 :book: **[Full Documentation](https://xuance.readthedocs.io/en/latest/)**
 | **[中文文档](https://xuance.readthedocs.io/zh/latest/)** :book:
 
+- [**Features**](#features-of-xuance)
+- [**Algorithms**](#currently-included-algorithms)
+- [**Environments**](#currently-supported-environments)
+- [**Installation**](#point_right-installation)
+- [**Usage**](#point_right-quickly-start)
+- [**Community**](#community)
+- [**Citation**](#citations)
+
 ## Why XuanCe?
 
 ### Features of XuanCe
