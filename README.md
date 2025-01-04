@@ -298,9 +298,11 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
 <img src="docs/source/_static/figures/mpe/mpe_simple_spread.gif" height=100" /> <br/> <font color="AAAAAA">Simple Spread</font>
 </center> </td>
 <td> <center>
-<img src="docs/source/_static/figures/mpe/mpe_simple_adversary.gif" height=100" /><br/><font color="AAAAAA">Simple Adversary</font>
-</center></td>
+<img src="docs/source/_static/figures/mpe/mpe_simple_adversary.gif" height=100" /> <br/> <font color="AAAAAA">Simple Adversary</font>
+</center> </td>
+<td> <center>
 <br/> <font color="AAAAAA">...</font>
+</center> </td>
 </tr>
 </table>
 
