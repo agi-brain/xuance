@@ -1,6 +1,7 @@
 Agents
 =============================================
 
+```{eval-rst}
 .. toctree::
     :hidden:
     :maxdepth: 2
@@ -9,11 +10,12 @@ Agents
     MARL <agents/marl>
     Wrappers (Base) <agents/base>
     Wrappers (Core) <agents/core>
+```
 
-* :doc:`DRL <agents/drl>`.
-* :doc:`MARL <agents/marl>`.
-* :doc:`Base Agent <agents/base>`.
-* :doc:`Core Agent <agents/core>`.
+- [**DRL**](agents/drl.rst)
+- [**MARL**](agents/marl.rst)
+- [**Base Agent**](agents/base.rst)
+- [**Core Agent**](agents/core.rst)
 
 Agent is an entity or a decision-making component that interacts with an environment or other agents to learn and perform tasks.
 

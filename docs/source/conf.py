@@ -128,6 +128,12 @@ html_theme_options = {
     "source_branch": "../tree/master",
     "source_directory": "docs/source",
     "top_of_page_buttons": ["view", "edit"],
+    # color
+    # "light_css_variables": {
+    #     "color-brand-primary": "#7C4DFF",
+    #     "color-brand-content": "#7C4DFF",
+    # },
+    "navigation_with_keys": True,  # Controls whether the user can navigate the documentation using the keyboard’s left and right arrows.
 }
 html_css_files = [
     'css/xuance.css',  # Name of xuance CSS file
