@@ -161,6 +161,13 @@ MPE is included as part of the PettingZoo library. To install it, run:
 pip install pettingzoo[mpe]
 ```
 
+```{eval-rst}
+.. note::
+
+    In XuanCe, the installation of MPE environment is included in the installation of xuance.
+    Hence, by default, the library can run MPE tasks directly without the need to install pettingzoo[mpe] solely.
+```
+
 To verify your installation, run:
 
 ```{code-block} python3
