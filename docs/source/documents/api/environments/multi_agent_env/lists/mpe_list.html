@@ -1,0 +1,96 @@
+<style>
+  .env-grid-mpe {
+    display: flex; /* Align items horizontally */
+    justify-content: center; /* Space items evenly, with equal space between each */
+    flex-wrap: wrap; /* Allow items to wrap to the next line if the container is too small */
+    gap: 10px 20px; /* Add space between items */
+  }
+
+  .env-grid-mpe__cell {
+    text-align: center; /* Center the content inside each item */
+  }
+
+  .cell__image-container img {
+    max-width: 100%; /* Make sure the images don't overflow */
+    height: auto; /* Maintain aspect ratio */
+  }
+</style>
+
+<div class="env-grid-mpe">
+
+            <a href="https://pettingzoo.farama.org/environments/mpe/simple_spread">
+                <div class="env-grid-mpe__cell">
+                    <div class="cell__image-container">
+                        <img src="../../../../_static/figures/mpe/mpe_simple_spread.gif" width="150px">
+                    </div>
+                    <div class="cell__title">
+                        <span>Simple Spread</span>
+                    </div>
+                </div>
+            </a>
+
+            <a href="https://pettingzoo.farama.org/environments/mpe/simple_adversary">
+                <div class="env-grid-mpe__cell">
+                    <div class="cell__image-container">
+                        <img src="../../../../_static/figures/mpe/mpe_simple_adversary.gif" width="150px">
+                    </div>
+                    <div class="cell__title">
+                        <span>Simple Adversary</span>
+                    </div>
+                </div>
+            </a>
+
+            <a href="https://pettingzoo.farama.org/environments/mpe/simple_push">
+                <div class="env-grid-mpe__cell">
+                    <div class="cell__image-container">
+                        <img src="../../../../_static/figures/mpe/mpe_simple_push.gif" width="150px">
+                    </div>
+                    <div class="cell__title">
+                        <span>Simple Push</span>
+                    </div>
+                </div>
+            </a>
+
+            <a href="https://pettingzoo.farama.org/environments/mpe/simple_reference">
+                <div class="env-grid-mpe__cell">
+                    <div class="cell__image-container">
+                        <img src="../../../../_static/figures/mpe/mpe_simple_reference.gif" width="150px">
+                    </div>
+                    <div class="cell__title">
+                        <span>Simple Reference</span>
+                    </div>
+                </div>
+            </a>
+
+</div>
+
+
+<style>
+  .button-container {
+    display: flex; /* Use Flexbox for alignment */
+    justify-content: center; /* Center horizontally */
+    align-items: center; /* Center vertically */
+    height: 100px; /* Set a height to align vertically (adjust as needed) */
+  }
+
+  .more-btn {
+    padding: 5px 10px;
+    font-size: 14px;
+    color: white;
+    background-color: #145e49; /* Button background color */
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    text-align: center;
+  }
+
+  .more-btn:hover {
+    background-color: #266b84; /* Darker shade on hover */
+  }
+</style>
+
+<div class="button-container">
+  <a href="https://pettingzoo.farama.org/environments/mpe/">
+    <button class="more-btn">See More MPE Tasks</button>
+  </a>
+</div>
