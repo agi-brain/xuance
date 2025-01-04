@@ -16,6 +16,8 @@ MARL Agents
     MADDPG <marl/maddpg_learner>
     ISAC <marl/isac_learner>
     MASAC <marl/masac_learner>
+    ISAC-DIS <marl/isacdis_learner>
+    MASAC-DIS <marl/masacdis_learner>
     IPPO <marl/ippo_learner>
     MAPPO <marl/mappo_learner>
     MATD3 <marl/matd3_learner>

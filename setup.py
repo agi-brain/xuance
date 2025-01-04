@@ -49,8 +49,11 @@ setup(
         "atari": ["gymnasium[accept-rom-license]==0.28.1",
                   "gymnasium[atari]==0.28.1",
                   "ale-py==0.8.1"],
-        "box2d": ["swig==4.2.1",
-                  "box2d-py==2.3.5"],  # for box2d
+        "box2d": ["swig==4.3.0",
+                  "gymnasium[box2d]==0.28.1"],  # for box2d
+        "minigrid": ["minigrid==3.0.0"],
+        "metadrive": ["metadrive"],
+        "rware": ["rware"],
     },
     install_requires=[
         "numpy<1.23.0,>=1.21.6",
