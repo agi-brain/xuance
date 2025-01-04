@@ -491,6 +491,8 @@ How to use wandb offline? :arrow_right: [https://github.com/wandb/server.git/](h
 
 ### Citations
 
+If you use XuanCe in your research or development, please cite the paper:
+
 ```
 @article{liu2023xuance,
   title={XuanCe: A Comprehensive and Unified Deep Reinforcement Learning Library},
