@@ -27,6 +27,15 @@ Install via PyPI
     
     conda activate xuance_env
 
+.. note::
+
+    In step 2, it is recommended to pre-install mpi4py via Conda before installing XuanCe.
+    Otherwise, the installation may fail to build the mpi4py wheel.
+
+    .. code-block:: bash
+
+        conda install mpi4py  # recommended
+
 **Step 3**: Install the library.
 
 .. tabs::
@@ -82,6 +91,7 @@ Alternatively, you can install XuanCe from its GitHub repository.
 .. code-block:: bash
 
     conda activate xuance_env
+    conda install mpi4py  # recommended
 
 **Step 3**: Download the source code of XuanCe from GitHub.
 
@@ -132,6 +142,7 @@ Alternatively, you can install XuanCe from its GitHub repository.
 .. attention::
 
     Some extra packages should be installed manually for further usage.
+    See `Install external dependencies <#id1>`_
 
 .. tip::
 
