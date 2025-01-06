@@ -10,13 +10,13 @@ device: "cuda:0"  # Choose an calculating device. PyTorch: "cpu", "cuda:0"; Tens
 distributed_training: False  # Whether to use multi-GPU for distributed training.
 master_port: '12355'  # The master port for current experiment when use distributed training.
 
-agent: "QMIX"  # the learning algorithms_marl
+agent: "DCG"  # the learning algorithms_marl
 env_name: "RoboticWarehouse"
 env_id: "rware-tiny-2ag-v1"
 env_seed: 1
 max_episode_steps: 100
-learner: "QMIX_Learner"
-policy: "Mixing_Q_network"
+learner: "DCG_Learner"
+policy: "DCG_Policy"
 representation: "Basic_MLP"
 vectorize: "Dummy_RoboticWarehouse"
 runner: "MARL"
@@ -53,5 +53,5 @@ grad_clip_norm: 0.5
 eval_interval: 100000
 test_episode: 5
 
-log_dir: "./logs/qmix/"
-model_dir: "./models/qmix/"
+log_dir: "./logs/dcg/"
+model_dir: "./models/dcg/"

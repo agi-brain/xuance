@@ -10,12 +10,12 @@ device: "cuda:0"  # Choose an calculating device. PyTorch: "cpu", "cuda:0"; Tens
 distributed_training: False  # Whether to use multi-GPU for distributed training.
 master_port: '12355'  # The master port for current experiment when use distributed training.
 
-agent: "QMIX"  # the learning algorithms_marl
+agent: "DCG"  # the learning algorithms_marl
 env_name: "StarCraft2"
 env_id: "8m"
 env_seed: 1
-learner: "QMIX_Learner"
-policy: "Mixing_Q_network"
+learner: "DCG_Learner"
+policy: "DCG_Policy"
 representation: "Basic_RNN"
 vectorize: "Subproc_StarCraft2"
 
@@ -30,12 +30,19 @@ dropout: 0
 
 representation_hidden_size: [64, ]
 q_hidden_size: [64, ]  # the units for each hidden layer
+hidden_utility_dim: 64  # hidden units of the utility function
+hidden_payoff_dim: 64  # hidden units of the payoff function
+bias_net: "Basic_MLP"
+hidden_bias_dim: [64, ]  # hidden units of the bias network with global states as input
 activation: "relu"
 use_parameter_sharing: True
 use_actions_mask: True
 
-hidden_dim_mixing_net: 32  # hidden units of mixing network
-hidden_dim_hyper_net: 32  # hidden units of hyper network
+low_rank_payoff: False  # low-rank approximation of payoff function
+payoff_rank: 5  # the rank K in the paper
+graph_type: "FULL"  # specific type of the coordination graph
+n_msg_iterations: 8  # number of iterations for message passing during belief propagation
+msg_normalized: True  # Message normalization during greedy action selection (Kok and Vlassis, 2006)
 
 seed: 1
 parallels: 8
@@ -47,7 +54,7 @@ double_q: True  # use double q learning
 
 start_greedy: 1.0
 end_greedy: 0.05
-decay_step_greedy: 500000
+decay_step_greedy: 50000
 start_training: 1000  # start training after n episodes
 running_steps: 1000000  # 1M
 n_epochs: 8  # The number of training epochs after interaction.
@@ -59,5 +66,5 @@ grad_clip_norm: 0.5
 eval_interval: 10000
 test_episode: 16
 
-log_dir: "./logs/qmix/"
-model_dir: "./models/qmix/"
+log_dir: "./logs/dcg/"
+model_dir: "./models/dcg/"

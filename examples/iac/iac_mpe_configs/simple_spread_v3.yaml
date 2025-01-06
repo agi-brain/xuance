@@ -10,12 +10,12 @@ device: "cuda:0"  # Choose an calculating device. PyTorch: "cpu", "cuda:0"; Tens
 distributed_training: False  # Whether to use multi-GPU for distributed training.
 master_port: '12355'  # The master port for current experiment when use distributed training.
 
-agent: "IPPO"
+agent: "IAC"
 env_name: "mpe"
 env_id: "simple_spread_v3"
 env_seed: 1
 continuous_action: True
-learner: "IPPO_Learner"
+learner: "IAC_Learner"
 policy: "Gaussian_MAAC_Policy"
 representation: "Basic_MLP"
 vectorize: "SubprocVecMultiAgentEnv"
@@ -50,8 +50,6 @@ weight_decay: 0  # The steps to decay the greedy epsilon.
 
 vf_coef: 0.5  # Coefficient factor for critic loss.
 ent_coef: 0.01  # Coefficient factor for entropy loss.
-target_kl: 0.25  # For MAPPO_KL learner.
-clip_range: 0.2  # The clip range for ratio in MAPPO_Clip learner.
 gamma: 0.99  # Discount factor.
 
 # tricks
@@ -74,5 +72,5 @@ running_steps: 10000000  # The total running steps.
 eval_interval: 100000  # The interval between every two trainings.
 test_episode: 5  # The episodes to test in each test period.
 
-log_dir: "./logs/ippo/"
-model_dir: "./models/ippo/"
+log_dir: "./logs/iac/"
+model_dir: "./models/iac/"

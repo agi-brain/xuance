@@ -14,9 +14,9 @@ agent: "COMA"
 env_name: "mpe"
 env_id: "simple_spread_v3"
 env_seed: 1
-continuous_action: True
+continuous_action: False
 learner: "COMA_Learner"
-policy: "Gaussian_MAAC_Policy"
+policy: "Categorical_COMA_Policy"
 representation: "Basic_MLP"
 vectorize: "SubprocVecMultiAgentEnv"
 
@@ -45,8 +45,14 @@ parallels: 16  # The number of environments to run in parallel.
 buffer_size: 3200  # Number of the transitions (use_rnn is False), or the episodes (use_rnn is True) in replay buffer.
 n_epochs: 10  # Number of epochs to train.
 n_minibatch: 1 # Number of minibatch to sample and train.  batch_size = buffer_size // n_minibatch.
-learning_rate: 0.0007  # Learning rate.
+learning_rate_actor: 0.0007  # Learning rate of actor.
+learning_rate_critic: 0.0007  # Learning rate of critic.
 weight_decay: 0  # The steps to decay the greedy epsilon.
+
+start_greedy: 0.5  # The start value of greedy epsilon.
+end_greedy: 0.01  # The end value of greedy epsilon.
+decay_step_greedy: 2500000  # The steps to decay the greedy epsilon.
+sync_frequency: 200  # The frequency to synchronize target networks.
 
 vf_coef: 0.5  # Coefficient factor for critic loss.
 ent_coef: 0.01  # Coefficient factor for entropy loss.
@@ -72,5 +78,5 @@ running_steps: 10000000  # The total running steps.
 eval_interval: 100000  # The interval between every two trainings.
 test_episode: 5  # The episodes to test in each test period.
 
-log_dir: "./logs/iac/"
-model_dir: "./models/iac/"
+log_dir: "./logs/coma/"
+model_dir: "./models/coma/"

@@ -4,11 +4,11 @@ from copy import deepcopy
 from xuance.common import get_configs, recursive_dict_update
 from xuance.environment import make_envs
 from xuance.torch.utils.operations import set_seed
-from xuance.torch.agents import MADDPG_Agents
+from xuance.torch.agents import MATD3_Agents
 
 
 def parse_args():
-    parser = argparse.ArgumentParser("Example of XuanCe: MADDPG for MPE.")
+    parser = argparse.ArgumentParser("Example of XuanCe: MATD3 for MPE.")
     parser.add_argument("--env-id", type=str, default="simple_spread_v3")
     parser.add_argument("--test", type=int, default=0)
     parser.add_argument("--benchmark", type=int, default=1)
@@ -18,13 +18,13 @@ def parse_args():
 
 if __name__ == "__main__":
     parser = parse_args()
-    configs_dict = get_configs(file_dir=f"maddpg_mpe_configs/{parser.env_id}.yaml")
+    configs_dict = get_configs(file_dir=f"matd3_mpe_configs/{parser.env_id}.yaml")
     configs_dict = recursive_dict_update(configs_dict, parser.__dict__)
     configs = argparse.Namespace(**configs_dict)
 
     set_seed(configs.seed)
     envs = make_envs(configs)
-    Agent = MADDPG_Agents(config=configs, envs=envs)
+    Agent = MATD3_Agents(config=configs, envs=envs)
 
     train_information = {"Deep learning toolbox": configs.dl_toolbox,
                          "Calculating device": configs.device,

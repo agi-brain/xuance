@@ -4,11 +4,11 @@ import numpy as np
 from xuance.common import get_configs, recursive_dict_update
 from xuance.environment import make_envs
 from xuance.torch.utils.operations import set_seed
-from xuance.torch.agents import IPPO_Agents
+from xuance.torch.agents import IAC_Agents
 
 
 def parse_args():
-    parser = argparse.ArgumentParser("Example: IPPO of XuanCe for SMAC environments.")
+    parser = argparse.ArgumentParser("Example: IAC of XuanCe for SMAC environments.")
     parser.add_argument("--env-id", type=str, default="3m")
     parser.add_argument("--test", type=int, default=0)
     parser.add_argument("--benchmark", type=int, default=1)
@@ -21,7 +21,7 @@ class RunnerSC2:
         set_seed(config.seed)  # Set the random seed.
         self.envs = make_envs(config)  # Make the environment.
         self.n_envs = self.envs.num_envs  # Get the number of parallel envs.
-        self.agents = IPPO_Agents(config=config, envs=self.envs)  # Create the Independent PPO agents.
+        self.agents = IAC_Agents(config=config, envs=self.envs)  # Create the Independent PPO agents.
         self.config = config
         self.running_steps = config.running_steps
         self.num_agents, self.num_enemies = self.get_agent_num()
@@ -177,7 +177,7 @@ class RunnerSC2:
 
 if __name__ == "__main__":
     parser = parse_args()
-    configs_dict = get_configs(file_dir=f"ippo_sc2_configs/{parser.env_id}.yaml")
+    configs_dict = get_configs(file_dir=f"iac_sc2_configs/{parser.env_id}.yaml")
     configs_dict = recursive_dict_update(configs_dict, parser.__dict__)
     configs = argparse.Namespace(**configs_dict)
 

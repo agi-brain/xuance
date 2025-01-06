@@ -4,11 +4,11 @@ from copy import deepcopy
 from xuance.common import get_configs, recursive_dict_update
 from xuance.environment import make_envs
 from xuance.torch.utils.operations import set_seed
-from xuance.torch.agents import IPPO_Agents
+from xuance.torch.agents import IAC_Agents
 
 
 def parse_args():
-    parser = argparse.ArgumentParser("Example of XuanCe: IPPO for MPE.")
+    parser = argparse.ArgumentParser("Example of XuanCe: IAC for MPE.")
     parser.add_argument("--env-id", type=str, default="simple_spread_v3")
     parser.add_argument("--test", type=int, default=0)
     parser.add_argument("--benchmark", type=int, default=1)
@@ -18,13 +18,13 @@ def parse_args():
 
 if __name__ == "__main__":
     parser = parse_args()
-    configs_dict = get_configs(file_dir="ippo_mpe_configs/simple_spread_v3.yaml")
+    configs_dict = get_configs(file_dir="iac_mpe_configs/simple_spread_v3.yaml")
     configs_dict = recursive_dict_update(configs_dict, parser.__dict__)
     configs = argparse.Namespace(**configs_dict)
 
     set_seed(configs.seed)  # Set the random seed.
     envs = make_envs(configs)  # Make the environment.
-    Agents = IPPO_Agents(config=configs, envs=envs)  # Create the Independent PPO agents.
+    Agents = IAC_Agents(config=configs, envs=envs)  # Create the Independent PPO agents.
 
     train_information = {"Deep learning toolbox": configs.dl_toolbox,
                          "Calculating device": configs.device,

@@ -4,7 +4,7 @@ from copy import deepcopy
 from xuance.common import get_configs, recursive_dict_update
 from xuance.environment import make_envs
 from xuance.torch.utils.operations import set_seed
-from xuance.torch.agents import QMIX_Agents
+from xuance.torch.agents import DCG_Agents
 
 
 def parse_args():
@@ -18,13 +18,13 @@ def parse_args():
 
 if __name__ == "__main__":
     parser = parse_args()
-    configs_dict = get_configs(file_dir=f"qmix_rware_configs/{parser.env_id}.yaml")
+    configs_dict = get_configs(file_dir=f"dcg_rware_configs/{parser.env_id}.yaml")
     configs_dict = recursive_dict_update(configs_dict, parser.__dict__)
     configs = argparse.Namespace(**configs_dict)
 
     set_seed(configs.seed)  # Set the random seed.
     envs = make_envs(configs)  # Make the environment.
-    Agents = QMIX_Agents(config=configs, envs=envs)  # Create the Independent PPO agents.
+    Agents = DCG_Agents(config=configs, envs=envs)  # Create the Independent PPO agents.
 
     train_information = {"Deep learning toolbox": configs.dl_toolbox,
                          "Calculating device": configs.device,

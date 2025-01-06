@@ -10,11 +10,11 @@ device: "cuda:0"  # Choose an calculating device. PyTorch: "cpu", "cuda:0"; Tens
 distributed_training: False  # Whether to use multi-GPU for distributed training.
 master_port: '12355'  # The master port for current experiment when use distributed training.
 
-agent: "IPPO"
+agent: "IAC"
 env_name: "StarCraft2"
 env_id: "corridor"
 env_seed: 1
-learner: "IPPO_Learner"
+learner: "IAC_Learner"
 policy: "Categorical_MAAC_Policy"
 representation: "Basic_RNN"
 vectorize: "Subproc_StarCraft2"
@@ -47,9 +47,6 @@ weight_decay: 0
 
 vf_coef: 1.0
 ent_coef: 0.01
-target_kl: 0.25
-clip_range: 0.2
-clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
 gamma: 0.99  # discount factor
 
 # tricks
@@ -71,5 +68,5 @@ running_steps: 10000000  # 10M
 eval_interval: 100000
 test_episode: 16
 
-log_dir: "./logs/ippo/"
-model_dir: "./models/ippo/"
+log_dir: "./logs/iac/"
+model_dir: "./models/iac/"

@@ -10,13 +10,13 @@ device: "cuda:0"  # Choose an calculating device. PyTorch: "cpu", "cuda:0"; Tens
 distributed_training: False  # Whether to use multi-GPU for distributed training.
 master_port: '12355'  # The master port for current experiment when use distributed training.
 
-agent: "MADDPG"  # the learning algorithms_marl
+agent: "MATD3"  # the learning algorithms_marl
 env_name: "mpe"
 env_id: "simple_spread_v3"
 env_seed: 1
 continuous_action: True
-learner: "MADDPG_Learner"
-policy: "MADDPG_Policy"
+learner: "MATD3_Learner"
+policy: "MATD3_Policy"
 representation: "Basic_Identical"
 vectorize: "SubprocVecMultiAgentEnv"
 
@@ -36,6 +36,7 @@ learning_rate_actor: 0.01  # learning rate for actor
 learning_rate_critic: 0.001  # learning rate for critic
 gamma: 0.95  # discount factor
 tau: 0.001  # soft update for target networks
+actor_update_delay: 2
 
 start_noise: 1.0
 end_noise: 0.01
@@ -50,5 +51,5 @@ grad_clip_norm: 0.5
 eval_interval: 100000
 test_episode: 5
 
-log_dir: "./logs/maddpg/"
-model_dir: "./models/maddpg/"
+log_dir: "./logs/matd3/"
+model_dir: "./models/matd3/"
