@@ -380,8 +380,13 @@ You can install the SMAC package directly from the GitHub:
     By default, the game is expected to be in ~/StarCraftII/ directory.
     This can be changed by setting the environment variable SC2PATH.
 
-For more information about SMAC environment, you can visit its homepage
-`https://github.com/oxwhirl/smac.git <https://github.com/oxwhirl/smac.git>`_.
+**Step 3: SMAC Maps**
+
+Once you have installed ``smac`` and StarCraft II, you need to download the
+`SMAC Maps <https://github.com/oxwhirl/smac/releases/download/v0.1-beta1/SMAC_Maps.zip>`_,
+and extract it to the ``$SC2PATH/Maps$`` directory.
+If you installed ``smac`` via git, simply copy the ``SMAC_Maps`` directory
+from ``smac/env/starcraft2/maps/`` into ``$SC2PATH/Maps`` directory.
 
 Google Research Football
 ^^^^^^^^^^^^^^^^^^^^^^^^^
