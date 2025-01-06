@@ -63,7 +63,8 @@ class COMA_Learner(IAC_Learner):
         bs = batch_size * self.n_agents if self.use_parameter_sharing else batch_size
 
         # feedforward
-        _, pi_dist_dict = self.policy(observation=obs, agent_ids=IDs, avail_actions=avail_actions, epsilon=epsilon)
+        _, pi_probs = self.policy(observation=obs, agent_ids=IDs, avail_actions=avail_actions, epsilon=epsilon)
+
         if self.use_parameter_sharing:
             key = self.model_keys[0]
             actions_onehot = {key: one_hot(actions[key].long(), self.n_actions[key])}
@@ -84,11 +85,12 @@ class COMA_Learner(IAC_Learner):
         for key in self.model_keys:
             mask_values = agent_mask[key]
 
-            pi_probs = pi_dist_dict[key].probs
             if self.use_actions_mask:
-                pi_probs[avail_actions[key] == 0] = 0
-            baseline = (pi_probs * values_pred_dict[key]).sum(-1).reshape(bs)
-            pi_taken = pi_probs.gather(-1, actions[key].unsqueeze(-1).long())
+                pi_probs[key][avail_actions[key] == 0] = 0.0  # mask out the unavailable actions.
+                pi_probs[key] = pi_probs[key] / pi_probs[key].sum(dim=-1, keepdim=True)  # re-normalize the actions.
+                pi_probs[key][avail_actions[key] == 0] = 0.0
+            baseline = (pi_probs[key] * values_pred_dict[key]).sum(-1).reshape(bs)
+            pi_taken = pi_probs[key].gather(-1, actions[key].unsqueeze(-1).long())
             q_taken = values_pred_dict[key].gather(-1, actions[key].unsqueeze(-1).long()).reshape(bs)
             log_pi_taken = torch.log(pi_taken).reshape(bs)
             advantages = (q_taken - baseline).detach()
@@ -164,8 +166,8 @@ class COMA_Learner(IAC_Learner):
         rnn_hidden_critic = {k: self.policy.critic_representation[k].init_hidden(bs_rnn) for k in self.model_keys}
 
         # feedforward
-        _, pi_dist_dict = self.policy(observation=obs, agent_ids=IDs, avail_actions=avail_actions,
-                                      rnn_hidden=rnn_hidden_actor, epsilon=epsilon)
+        _, pi_probs = self.policy(observation=obs, agent_ids=IDs, avail_actions=avail_actions,
+                                  rnn_hidden=rnn_hidden_actor, epsilon=epsilon)
         actions_onehot = {k: one_hot(actions[k].long(), self.n_actions[k]) for k in self.model_keys}
         _, values_pred = self.policy.get_values(state=state, observation=obs, actions=actions_onehot,
                                                 agent_ids=IDs, rnn_hidden=rnn_hidden_critic, target=False)
@@ -180,11 +182,12 @@ class COMA_Learner(IAC_Learner):
         for key in self.model_keys:
             mask_values = agent_mask[key] * filled
 
-            pi_probs = pi_dist_dict[key].probs
             if self.use_actions_mask:
-                pi_probs[avail_actions[key] == 0] = 0
-            baseline = (pi_probs * values_pred_dict[key]).sum(-1).reshape(bs_rnn, seq_len)
-            pi_taken = pi_probs.gather(-1, actions[key].unsqueeze(-1).long())
+                pi_probs[key][avail_actions[key] == 0] = 0.0  # mask out the unavailable actions.
+                pi_probs[key] = pi_probs[key] / pi_probs[key].sum(dim=-1, keepdim=True)  # re-normalize the actions.
+                pi_probs[key][avail_actions[key] == 0] = 0.0
+            baseline = (pi_probs[key] * values_pred_dict[key]).sum(-1).reshape(bs_rnn, seq_len)
+            pi_taken = pi_probs[key].gather(-1, actions[key].unsqueeze(-1).long())
             q_taken = values_pred_dict[key].gather(-1, actions[key].unsqueeze(-1).long()).reshape(bs_rnn, seq_len)
             log_pi_taken = torch.log(pi_taken).reshape(bs_rnn, seq_len)
             advantages = (q_taken - baseline).detach()
