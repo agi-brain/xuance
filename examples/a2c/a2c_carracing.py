@@ -4,12 +4,12 @@ from copy import deepcopy
 from xuance.common import get_configs, recursive_dict_update
 from xuance.environment import make_envs
 from xuance.torch.utils.operations import set_seed
-from xuance.torch.agents import DQN_Agent
+from xuance.torch.agents import A2C_Agent
 
 
 def parse_args():
-    parser = argparse.ArgumentParser("Example of XuanCe: DQN for atari.")
-    parser.add_argument("--env-id", type=str, default="ALE/Breakout-v5")
+    parser = argparse.ArgumentParser("Example of XuanCe: A2C for Car Racing.")
+    parser.add_argument("--env-id", type=str, default="CarRacing-v2")
     parser.add_argument("--test", type=int, default=0)
     parser.add_argument("--benchmark", type=int, default=1)
 
@@ -18,13 +18,13 @@ def parse_args():
 
 if __name__ == "__main__":
     parser = parse_args()
-    configs_dict = get_configs(file_dir="dqn_configs/dqn_atari.yaml")
+    configs_dict = get_configs(file_dir="a2c_configs/a2c_carracing.yaml")
     configs_dict = recursive_dict_update(configs_dict, parser.__dict__)
     configs = argparse.Namespace(**configs_dict)
 
     set_seed(configs.seed)
     envs = make_envs(configs)
-    Agent = DQN_Agent(config=configs, envs=envs)
+    Agent = A2C_Agent(config=configs, envs=envs)
 
     train_information = {"Deep learning toolbox": configs.dl_toolbox,
                          "Calculating device": configs.device,
