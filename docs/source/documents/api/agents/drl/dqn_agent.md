@@ -94,7 +94,7 @@ The overall agent-environment interaction of DQN, as implemented in XuanCe, is i
 ## Run DQN in XuanCe
 
 Before running DQN in XuanCe, you need to prepare a conda environment and install ``xuance`` following 
-the [**installation steps**](./../../../usage/installation.rst#install-via-pypi).
+the [**installation steps**](./../../../usage/installation.rst#install-xuance).
 
 ### Run Build-in Demos
 
