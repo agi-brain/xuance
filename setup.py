@@ -46,6 +46,10 @@ setup(
             "tensorflow==2.6.0",
             "mindspore==2.2.14"  # mindspore might be installed manually.
         ],
+        "tune": [
+            "optuna>=4.1.0",
+            "optuna-dashboard>=0.17.0",
+        ],
         "atari": ["gymnasium[accept-rom-license]==0.28.1",
                   "gymnasium[atari]==0.28.1",
                   "ale-py==0.8.1"],

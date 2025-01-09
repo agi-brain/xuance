@@ -28,3 +28,9 @@ __all__ = [
     # segtree_tool
     "SegmentTree", "SumSegmentTree", "MinSegmentTree",
 ]
+
+try:
+    from xuance.common.tuning_tools import HyperParameterTuner
+    __all__.append("HyperParameterTuner")
+except:
+    pass
