@@ -4,6 +4,25 @@ from typing import Any, List, Optional, Union
 
 @dataclass
 class Hyperparameter:
+    """
+    Represents a hyperparameter for algorithm tuning.
+
+    This dataclass defines the structure of a hyperparameter, including its name, type, distribution,
+    whether it should be sampled on a logarithmic scale, and its default value.
+
+    Attributes:
+        name (str): The name of the hyperparameter.
+        type (str): The type of the hyperparameter. Supported types include 'int', 'float', and 'categorical'.
+        distribution (Union[List[Any], tuple]): The possible values or range for the hyperparameter.
+            - For 'categorical' types, this should be a list of possible values.
+            - For 'int' and 'float' types, this should be a tuple defining the range (min, max).
+        log (bool, optional): Indicates whether the hyperparameter should be sampled on a logarithmic scale.
+            This is typically used for hyperparameters like learning rates that span several orders of magnitude.
+            Defaults to False.
+        default (Optional[Any], optional): The default value of the hyperparameter if no tuning is performed.
+            This provides a fallback value to ensure the algorithm can run with standard settings.
+            Defaults to None.
+    """
     name: str  # The name of the hyperparameter.
     type: str  # 'int', 'float', 'categorical'.
     distribution: Union[List[Any], tuple]  # Possible values or range.
