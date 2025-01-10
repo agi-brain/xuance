@@ -22,7 +22,7 @@ This table lists some general features about P-DQN algorithm:
 The hybrid action is defiend by the following hierarchical structure. Firstly we choose a high level action $\mathcal{k}$ from a discrete set $[K]$; upon choosing $\mathcal{k}$, we further choose a low level parameter $\mathcal{x_k}\in\mathcal{\mathcal{X}_k}$ which is associated with the $k$-th high level action.Here $\mathcal{X}_k$ is a continuous set for all $k\in[K]$.
 
 $$
-\mathcal{A}=\left \{ (k,x_k)|x_k \in \mathcal{X}_k \quad for\; all\;k\in[K] \right \}
+\mathcal{A}=\{ (k,x_k)|x_k \in \mathcal{X}_k \quad for\; all\;k\in[K] \}
 $$
 
 ## Key Idea of P-DQN
