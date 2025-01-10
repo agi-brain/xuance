@@ -3,11 +3,21 @@ import importlib
 from copy import deepcopy
 from argparse import Namespace
 from xuance.environment import make_envs
-from xuance.common import get_configs, Union, Any, Optional, List
+from xuance.common import get_configs, Optional, List
 from xuance.common.tuning_tools.hyperparameters import Hyperparameter, AlgorithmHyperparametersRegistry
 
 
 def build_search_space(trail: optuna.trial, hyperparameters: List[Hyperparameter]) -> dict:
+    '''
+    Build search space for tuning the hyperparameters.
+
+    Args:
+        trail: Optuna trial object.
+        hyperparameters: The list of hyperparameters.
+
+    Returns:
+        search_space: The dict of the suggested values.
+    '''
     search_space = {}
     for param in hyperparameters:
         if isinstance(param.distribution, list) or param.type == "categorical":
@@ -30,6 +40,16 @@ def build_search_space(trail: optuna.trial, hyperparameters: List[Hyperparameter
 
 
 def set_hyperparameters(hyperparameters: List[Hyperparameter], overrides: dict) -> List[Hyperparameter]:
+    '''
+    Set hyperparameters to override the given hyperparameters.
+
+    Args:
+        hyperparameters: The hyperparameters that need to be overridden.
+        overrides: The overrides values.
+
+    Returns:
+        hyperparameters: The updated hyperparameters.
+    '''
     for param in hyperparameters:
         if param.name in overrides.keys():
             new_distribution = overrides[param.name]
@@ -75,9 +95,11 @@ class HyperParameterTuner:
         AlgorithmHyperparametersRegistry.register_algorithm(self.configs_dict['agent'], params)
 
     def list_hyperparameters(self) -> List[Hyperparameter]:
+        """List the hyperparameters of the selected algorithm."""
         return AlgorithmHyperparametersRegistry.get_hyperparameters(self.agent_name)
 
     def select_hyperparameter(self, hyperparameter_names: List[str]) -> List[Hyperparameter]:
+        """Select hyperparameters of the selected algorithm by listing the hyperparameters' names"""
         all_hyperparams = self.list_hyperparameters()
         selected_hyperparams = [param for param in all_hyperparams if param.name in hyperparameter_names]
         if not selected_hyperparams:
