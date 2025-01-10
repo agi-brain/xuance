@@ -1,35 +1,43 @@
 import optuna
 import importlib
 from copy import deepcopy
-from typing import Optional, List
 from argparse import Namespace
 from xuance.environment import make_envs
-from xuance.common import get_configs
+from xuance.common import get_configs, Union, Any, Optional, List
 from xuance.common.tuning_tools.hyperparameters import Hyperparameter, AlgorithmHyperparametersRegistry
 
 
 def build_search_space(trail: optuna.trial, hyperparameters: List[Hyperparameter]) -> dict:
     search_space = {}
     for param in hyperparameters:
-        if param.type == "float":
-            if param.log:
-                search_space[param.name] = trail.suggest_loguniform(param.name,
-                                                                    low=param.distribution[0],
-                                                                    high=param.distribution[1])
-            else:
-                search_space[param.name] = trail.suggest_uniform(param.name,
-                                                                 low=param.distribution[0],
-                                                                 high=param.distribution[1])
-        elif param.type == "int":
-            if isinstance(param.distribution, list):
-                search_space[param.name] = trail.suggest_categorical(param.name, param.distribution)
-            else:
-                search_space[param.name] = trail.suggest_int(param.name, param.distribution[0], param.distribution[1])
-        elif param.type == "categorical":
+        if isinstance(param.distribution, list) or param.type == "categorical":
             search_space[param.name] = trail.suggest_categorical(param.name, param.distribution)
         else:
-            raise ValueError(f"Unsupported hyperparameter type: {param.type}")
+            if param.type == "float":
+                if param.log:
+                    search_space[param.name] = trail.suggest_loguniform(param.name,
+                                                                        low=param.distribution[0],
+                                                                        high=param.distribution[1])
+                else:
+                    search_space[param.name] = trail.suggest_uniform(param.name,
+                                                                     low=param.distribution[0],
+                                                                     high=param.distribution[1])
+            elif param.type == "int":
+                search_space[param.name] = trail.suggest_int(param.name, param.distribution[0], param.distribution[1])
+            else:
+                raise ValueError(f"Unsupported hyperparameter type: {param.type}")
     return search_space
+
+
+def set_hyperparameters(hyperparameters: List[Hyperparameter], overrides: dict) -> List[Hyperparameter]:
+    for param in hyperparameters:
+        if param.name in overrides.keys():
+            new_distribution = overrides[param.name]
+            if isinstance(new_distribution, tuple) or isinstance(new_distribution, list):
+                param.distribution = new_distribution
+            else:
+                raise ValueError(f"Unsupported distribution type for {param.name}: {type(new_distribution)}")
+    return hyperparameters
 
 
 class HyperParameterTuner:
