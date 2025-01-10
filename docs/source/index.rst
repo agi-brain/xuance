@@ -208,6 +208,6 @@ APIs of XuanCe
 
    Github <https://github.com/agi-brain/xuance.git>
    documents/release_log
-   Contribute to XuanCe <https://github.com/agi-brain/xuance/pulls>
+   documents/CONTRIBUTING
    Contribute to the Docs (EN) <https://github.com/agi-brain/xuance/tree/master/docs>
    Contribute to the Docs (CN) <https://github.com/agi-brain/xuance-docs-zh_CN/tree/master/docs>
