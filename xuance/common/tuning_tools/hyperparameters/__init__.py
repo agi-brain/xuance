@@ -4,9 +4,9 @@ from typing import Any, List, Optional, Union
 
 @dataclass
 class Hyperparameter:
-    name: str
-    type: str  # 'int', 'float', 'categorical'
-    distribution: Union[List[Any], tuple]  # Possible values or range
+    name: str  # The name of the hyperparameter.
+    type: str  # 'int', 'float', 'categorical'.
+    distribution: Union[List[Any], tuple]  # Possible values or range.
     log: bool = False  # A flag to sample the value from the log domain or not.
     default: Optional[Any] = None  # Default value.
 
