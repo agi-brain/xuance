@@ -99,6 +99,7 @@ Here are its key features:
 - **Broad Compatibility**: Supports PyTorch, TensorFlow, MindSpore, and runs efficiently on CPU, GPU, and across Linux, Windows, and macOS.
 - **High Performance**: Delivers fast execution speeds, leveraging vectorized environments for efficiency.
 - **Distributed Training**: Enables multi-GPU training for scaling up experiments.
+- **Hyperparameters Tuning**: Supports automatic tuning tools that guide hyperparameter configuration.
 - **Enhanced Visualization**: Provides intuitive and comprehensive visualization with tools like TensorBoard and Weights & Biases (wandb).
 
 List of Algorithms
