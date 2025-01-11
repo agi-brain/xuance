@@ -1,7 +1,7 @@
 from . import Hyperparameter
 
 
-ddqn_hyperparams = [
+dueldqn_hyperparams = [
     Hyperparameter(
         name="representation_hidden_size",  # The choice of representation network structure (for MLP).
         type="list",

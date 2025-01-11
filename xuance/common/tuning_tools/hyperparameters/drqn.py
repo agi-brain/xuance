@@ -1,7 +1,13 @@
 from . import Hyperparameter
 
 
-ddqn_hyperparams = [
+drqn_hyperparams = [
+    Hyperparameter(
+        name="rnn",  # The choice of recurrent neural networks.
+        type="categorical",
+        distribution=["LSTM", "GRU"],
+        default="LSTM"
+    ),
     Hyperparameter(
         name="representation_hidden_size",  # The choice of representation network structure (for MLP).
         type="list",
@@ -9,10 +15,22 @@ ddqn_hyperparams = [
         default=[128, ]
     ),
     Hyperparameter(
-        name="q_hidden_size",  # The choice of policy network structure.
+        name="recurrent_hidden_size",  # The hidden size of the recurrent network.
         type="list",
-        distribution=[[64, ], [128, ], [256, ], [512, ]],
-        default=[256, ]
+        distribution=[32, 64, 128, 256, 512],
+        default=128
+    ),
+    Hyperparameter(
+        name="recurrent_layer_N",  # The number of layers of the recurrent network.
+        type="list",
+        distribution=[1, 2, 3],
+        default=1
+    ),
+    Hyperparameter(
+        name="dropout",  # The probability of an element being zeroed.
+        type="float",
+        distribution=(0, 1),
+        default=0
     ),
     Hyperparameter(
         name="activation",  # The choice of activation function.
@@ -91,6 +109,14 @@ ddqn_hyperparams = [
         log=True,
         default=1000
     ),
+    Hyperparameter(
+        name="lookup_length",  # The length of history data.
+        type="int",
+        distribution=(1, 100),
+        log=False,
+        default=50
+    ),
+
     Hyperparameter(
         name="use_grad_clip",  # Whether to use gradient clip.
         type="bool",

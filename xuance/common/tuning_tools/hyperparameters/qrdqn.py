@@ -1,7 +1,7 @@
 from . import Hyperparameter
 
 
-ddqn_hyperparams = [
+qrdqn_hyperparams = [
     Hyperparameter(
         name="representation_hidden_size",  # The choice of representation network structure (for MLP).
         type="list",
@@ -47,6 +47,13 @@ ddqn_hyperparams = [
         distribution=(0.9, 0.999),
         log=False,
         default=0.99
+    ),
+    Hyperparameter(
+        name="quantile_num",  # The number of quantile.
+        type="int",
+        distribution=[10, 20, 30],
+        log=False,
+        default=20
     ),
 
     Hyperparameter(

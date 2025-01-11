@@ -1,7 +1,7 @@
 from . import Hyperparameter
 
 
-ddqn_hyperparams = [
+noisydqn_hyperparams = [
     Hyperparameter(
         name="representation_hidden_size",  # The choice of representation network structure (for MLP).
         type="list",
@@ -50,21 +50,21 @@ ddqn_hyperparams = [
     ),
 
     Hyperparameter(
-        name="start_greedy",  # The start greedy for exploration.
+        name="start_noise",  # The start noise.
         type="float",
-        distribution=(0.1, 1.0),
-        log=False,
-        default=0.5
-    ),
-    Hyperparameter(
-        name="end_greedy",  # The end greedy for exploration.
-        type="float",
-        distribution=(0.01, 0.5),  # Note: The start_greedy should be no less than end_greedy.
+        distribution=(0.0, 0.1),
         log=False,
         default=0.05
     ),
     Hyperparameter(
-        name="decay_step_greedy",  # Steps for greedy decay.
+        name="end_noise",  # The end noise.
+        type="float",
+        distribution=(0.0, 0.1),  # Note: The start_greedy should be no less than end_greedy.
+        log=False,
+        default=0.0
+    ),
+    Hyperparameter(
+        name="decay_step_noise",  # Steps for noise decay.
         type="int",
         distribution=(1000000, 20000000),
         log=True,

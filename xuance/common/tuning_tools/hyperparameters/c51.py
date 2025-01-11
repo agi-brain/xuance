@@ -1,7 +1,7 @@
 from . import Hyperparameter
 
 
-ddqn_hyperparams = [
+c51_hyperparams = [
     Hyperparameter(
         name="representation_hidden_size",  # The choice of representation network structure (for MLP).
         type="list",
@@ -47,6 +47,27 @@ ddqn_hyperparams = [
         distribution=(0.9, 0.999),
         log=False,
         default=0.99
+    ),
+    Hyperparameter(
+        name="v_min",  # The lower bound of value distribution.
+        type="float",
+        distribution=(0, 10),
+        log=False,
+        default=0
+    ),
+    Hyperparameter(
+        name="v_max",  # The upper bound of value distribution.
+        type="float",
+        distribution=(100, 500),
+        log=False,
+        default=100
+    ),
+    Hyperparameter(
+        name="atom_num",  # The number of atoms.
+        type="int",
+        distribution=[5, 11, 21, 51],
+        log=False,
+        default=51
     ),
 
     Hyperparameter(

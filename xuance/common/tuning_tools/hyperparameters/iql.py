@@ -1,7 +1,7 @@
 from . import Hyperparameter
 
 
-ddqn_hyperparams = [
+iql_hyperparams = [
     Hyperparameter(
         name="representation_hidden_size",  # The choice of representation network structure (for MLP).
         type="list",
@@ -26,20 +26,20 @@ ddqn_hyperparams = [
         type="int",
         distribution=(10000, 1000000),
         log=True,
-        default=500000
+        default=100000
     ),
     Hyperparameter(
         name="batch_size",  # Size of a batch data for training.
         type="int",
-        distribution=[32, 64, 128],
-        default=64
+        distribution=[32, 64, 128, 256, 512],
+        default=256
     ),
     Hyperparameter(
         name="learning_rate",  # The learning rate.
         type="float",
         distribution=(1e-5, 1e-2),
         log=True,
-        default=1e-4
+        default=1e-3
     ),
     Hyperparameter(
         name="gamma",  # The discount factor.
@@ -48,13 +48,20 @@ ddqn_hyperparams = [
         log=False,
         default=0.99
     ),
+    Hyperparameter(
+        name="double_q",  # The discount factor.
+        type="bool",
+        distribution=[True, False],
+        log=False,
+        default=True
+    ),
 
     Hyperparameter(
         name="start_greedy",  # The start greedy for exploration.
         type="float",
         distribution=(0.1, 1.0),
         log=False,
-        default=0.5
+        default=1.0
     ),
     Hyperparameter(
         name="end_greedy",  # The end greedy for exploration.
@@ -71,11 +78,11 @@ ddqn_hyperparams = [
         default=10000000
     ),
     Hyperparameter(
-        name="sync_frequency",  # Frequency to update the target network.
+        name="start_training",  # When to start training.
         type="int",
-        distribution=[50, 100, 500, 1000],
-        log=False,
-        default=100
+        distribution=(0, 1000000),
+        log=True,
+        default=1000
     ),
     Hyperparameter(
         name="training_frequency",  # Frequency to train the model when the agent interacts with the environment.
@@ -85,12 +92,13 @@ ddqn_hyperparams = [
         default=1
     ),
     Hyperparameter(
-        name="start_training",  # When to start training.
+        name="sync_frequency",  # Frequency to update the target network.
         type="int",
-        distribution=(0, 1000000),
-        log=True,
-        default=1000
+        distribution=[50, 100, 500, 1000],
+        log=False,
+        default=100
     ),
+
     Hyperparameter(
         name="use_grad_clip",  # Whether to use gradient clip.
         type="bool",
@@ -106,32 +114,11 @@ ddqn_hyperparams = [
         default=0.5
     ),
     Hyperparameter(
-        name="use_obsnorm",  # Whether to use observation normalization trick.
+        name="use_parameter_sharing",  # Normalization for gradient.
         type="bool",
         distribution=[True, False],
         log=False,
-        default=False
-    ),
-    Hyperparameter(
-        name="obsnorm_range",  # The range of normalized observations.
-        type="float",
-        distribution=(1, 10),
-        log=False,
-        default=5
-    ),
-    Hyperparameter(
-        name="use_rewnorm",  # Whether to use reward normalization trick.
-        type="bool",
-        distribution=[True, False],
-        log=False,
-        default=False
-    ),
-    Hyperparameter(
-        name="rewnorm_range",  # The range of normalized rewards.
-        type="float",
-        distribution=(1, 10),
-        log=False,
-        default=5
+        default=True
     ),
     # Other hyperparameters...
 ]

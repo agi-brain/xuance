@@ -1,7 +1,7 @@
 from . import Hyperparameter
 
 
-ddqn_hyperparams = [
+perdqn_hyperparams = [
     Hyperparameter(
         name="representation_hidden_size",  # The choice of representation network structure (for MLP).
         type="list",
@@ -132,6 +132,21 @@ ddqn_hyperparams = [
         distribution=(1, 10),
         log=False,
         default=5
+    ),
+
+    Hyperparameter(
+        name="PER_alpha",
+        type="float",
+        distribution=(0.1, 1.0),
+        log=False,
+        default=0.5
+    ),
+    Hyperparameter(
+        name="PER_beta0",
+        type="float",
+        distribution=(0.1, 1.0),
+        log=False,
+        default=0.4
     ),
     # Other hyperparameters...
 ]

@@ -1,7 +1,7 @@
 from . import Hyperparameter
 
 
-ddqn_hyperparams = [
+sac_hyperparams = [
     Hyperparameter(
         name="representation_hidden_size",  # The choice of representation network structure (for MLP).
         type="list",
@@ -9,10 +9,16 @@ ddqn_hyperparams = [
         default=[128, ]
     ),
     Hyperparameter(
-        name="q_hidden_size",  # The choice of policy network structure.
+        name="actor_hidden_size",  # The choice of policy network structure.
         type="list",
         distribution=[[64, ], [128, ], [256, ], [512, ]],
-        default=[256, ]
+        default=[128, ]
+    ),
+    Hyperparameter(
+        name="critic_hidden_size",  # The choice of policy network structure.
+        type="list",
+        distribution=[[64, ], [128, ], [256, ], [512, ]],
+        default=[128, ]
     ),
     Hyperparameter(
         name="activation",  # The choice of activation function.
@@ -20,26 +26,40 @@ ddqn_hyperparams = [
         distribution=["relu", "leaky_relu", "tanh", "sigmoid"],
         default="relu"
     ),
+    Hyperparameter(
+        name="activation_action",  # The choice of activation function.
+        type="categorical",
+        distribution=["relu", "leaky_relu", "tanh", "sigmoid"],
+        default="tanh"
+    ),
 
     Hyperparameter(
         name="buffer_size",  # The size of replay buffer.
         type="int",
         distribution=(10000, 1000000),
         log=True,
-        default=500000
+        default=200000
     ),
     Hyperparameter(
-        name="batch_size",  # Size of a batch data for training.
+        name="batch_size",  # The horizon size for an environment.
         type="int",
-        distribution=[32, 64, 128],
-        default=64
+        distribution=[32, 64, 128, 256, 512],
+        log=False,
+        default=256
     ),
     Hyperparameter(
-        name="learning_rate",  # The learning rate.
+        name="learning_rate_actor",  # The learning rate.
         type="float",
         distribution=(1e-5, 1e-2),
         log=True,
-        default=1e-4
+        default=1e-3
+    ),
+    Hyperparameter(
+        name="learning_rate_critic",  # The learning rate.
+        type="float",
+        distribution=(1e-5, 1e-2),
+        log=True,
+        default=1e-3
     ),
     Hyperparameter(
         name="gamma",  # The discount factor.
@@ -48,35 +68,28 @@ ddqn_hyperparams = [
         log=False,
         default=0.99
     ),
-
     Hyperparameter(
-        name="start_greedy",  # The start greedy for exploration.
+        name="alpha",
         type="float",
-        distribution=(0.1, 1.0),
-        log=False,
-        default=0.5
-    ),
-    Hyperparameter(
-        name="end_greedy",  # The end greedy for exploration.
-        type="float",
-        distribution=(0.01, 0.5),  # Note: The start_greedy should be no less than end_greedy.
-        log=False,
-        default=0.05
-    ),
-    Hyperparameter(
-        name="decay_step_greedy",  # Steps for greedy decay.
-        type="int",
-        distribution=(1000000, 20000000),
+        distribution=(0.001, 1.0),
         log=True,
-        default=10000000
+        default=0.2
     ),
     Hyperparameter(
-        name="sync_frequency",  # Frequency to update the target network.
-        type="int",
-        distribution=[50, 100, 500, 1000],
-        log=False,
-        default=100
+        name="use_automatic_entropy_tuning",
+        type="bool",
+        distribution=[True, False],
+        log=True,
+        default=True
     ),
+    Hyperparameter(
+        name="tau",  # Soft update factor for target networks.
+        type="float",
+        distribution=(0.0001, 0.5),
+        log=True,
+        default=0.005
+    ),
+
     Hyperparameter(
         name="training_frequency",  # Frequency to train the model when the agent interacts with the environment.
         type="int",
@@ -91,6 +104,7 @@ ddqn_hyperparams = [
         log=True,
         default=1000
     ),
+
     Hyperparameter(
         name="use_grad_clip",  # Whether to use gradient clip.
         type="bool",
