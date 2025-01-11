@@ -1,7 +1,7 @@
 from . import Hyperparameter
 
 
-iac_hyperparams = [
+vdac_hyperparams = [
     Hyperparameter(
         name="representation_hidden_size",  # The choice of representation network structure (for MLP).
         type="list",
@@ -25,6 +25,28 @@ iac_hyperparams = [
         type="categorical",
         distribution=["relu", "leaky_relu", "tanh", "sigmoid"],
         default="relu"
+    ),
+
+    Hyperparameter(
+        name="mixer",  # choices: VDN (sum), QMIX (monotonic).
+        type="categorical",
+        distribution=['VDN', 'QMIX'],
+        log=False,
+        default='VDN'
+    ),
+    Hyperparameter(
+        name="hidden_dim_mixing_net",  # The hidden units of mixing network (when mixer is QMIX)
+        type="int",
+        distribution=[32, 64, 128, 256, 512],
+        log=False,
+        default=32
+    ),
+    Hyperparameter(
+        name="hidden_dim_hyper_net",  # The hidden units of hyper network (when mixer is QMIX).
+        type="int",
+        distribution=[32, 64, 128, 256, 512],
+        log=False,
+        default=32
     ),
 
     Hyperparameter(
@@ -53,7 +75,7 @@ iac_hyperparams = [
         type="float",
         distribution=(1e-5, 1e-2),
         log=True,
-        default=1e-4
+        default=5e-4
     ),
 
     Hyperparameter(
@@ -142,7 +164,7 @@ iac_hyperparams = [
         default=False
     ),
     Hyperparameter(
-        name="use_gae_trick",  # Whether to use GAE trick.
+        name="use_gae",  # Whether to use GAE trick.
         type="bool",
         distribution=[True, False],
         log=False,

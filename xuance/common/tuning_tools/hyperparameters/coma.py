@@ -1,7 +1,7 @@
 from . import Hyperparameter
 
 
-iac_hyperparams = [
+coma_hyperparams = [
     Hyperparameter(
         name="representation_hidden_size",  # The choice of representation network structure (for MLP).
         type="list",
@@ -12,13 +12,13 @@ iac_hyperparams = [
         name="actor_hidden_size",  # The choice of policy network structure.
         type="list",
         distribution=[[64, ], [128, ], [256, ], [512, ]],
-        default=[64, ]
+        default=[128, ]
     ),
     Hyperparameter(
         name="critic_hidden_size",  # The choice of policy network structure.
         type="list",
         distribution=[[64, ], [128, ], [256, ], [512, ]],
-        default=[64, ]
+        default=[128, ]
     ),
     Hyperparameter(
         name="activation",  # The choice of activation function.
@@ -49,11 +49,47 @@ iac_hyperparams = [
         default=1
     ),
     Hyperparameter(
-        name="learning_rate",  # The learning rate.
+        name="learning_rate_actor",  # The learning rate for actor.
         type="float",
         distribution=(1e-5, 1e-2),
         log=True,
-        default=1e-4
+        default=7e-4
+    ),
+    Hyperparameter(
+        name="learning_rate_critic",  # The learning rate for critic.
+        type="float",
+        distribution=(1e-5, 1e-2),
+        log=True,
+        default=7e-4
+    ),
+
+    Hyperparameter(
+        name="start_greedy",  # The start greedy for exploration.
+        type="float",
+        distribution=(0.1, 1.0),
+        log=False,
+        default=0.5
+    ),
+    Hyperparameter(
+        name="end_greedy",  # The end greedy for exploration.
+        type="float",
+        distribution=(0.01, 0.5),  # Note: The start_greedy should be no less than end_greedy.
+        log=False,
+        default=0.01
+    ),
+    Hyperparameter(
+        name="decay_step_greedy",  # Steps for greedy decay.
+        type="int",
+        distribution=(1000000, 20000000),
+        log=True,
+        default=10000000
+    ),
+    Hyperparameter(
+        name="sync_frequency",  # Frequency to update the target network.
+        type="int",
+        distribution=[50, 100, 500, 1000],
+        log=False,
+        default=200
     ),
 
     Hyperparameter(
@@ -93,56 +129,14 @@ iac_hyperparams = [
         default=0.5
     ),
     Hyperparameter(
-        name="use_global_state",  # Whether to use global state to replace merged observations.
+        name="use_adv_norm",  # Whether to use advantage normalization.
         type="bool",
         distribution=[True, False],
         log=False,
         default=True
     ),
     Hyperparameter(
-        name="use_value_clip",  # Limit the value range.
-        type="bool",
-        distribution=[True, False],
-        log=False,
-        default=False
-    ),
-    Hyperparameter(
-        name="value_clip_range",  # The value clip range.
-        type="float",
-        distribution=(0.0, 10.0),
-        log=False,
-        default=0.2
-    ),
-    Hyperparameter(
-        name="use_value_norm",  # Use running mean and std to normalize rewards.
-        type="bool",
-        distribution=[True, False],
-        log=False,
-        default=False
-    ),
-    Hyperparameter(
-        name="use_huber_loss",  # True: use huber loss; False: use MSE loss.
-        type="bool",
-        distribution=[True, False],
-        log=False,
-        default=False
-    ),
-    Hyperparameter(
-        name="huber_delta",  # The threshold at which to change between delta-scaled L1 and L2 loss. (For huber loss).
-        type="float",
-        distribution=(0.0, 20.0),
-        log=False,
-        default=10.0
-    ),
-    Hyperparameter(
-        name="use_adv_norm",  # Whether to use advantage normalization.
-        type="bool",
-        distribution=[True, False],
-        log=False,
-        default=False
-    ),
-    Hyperparameter(
-        name="use_gae_trick",  # Whether to use GAE trick.
+        name="use_gae",  # Whether to use GAE trick.
         type="bool",
         distribution=[True, False],
         log=False,

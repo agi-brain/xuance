@@ -1,7 +1,7 @@
 from . import Hyperparameter
 
 
-ippo_hyperparams = [
+mappo_hyperparams = [
     Hyperparameter(
         name="representation_hidden_size",  # The choice of representation network structure (for MLP).
         type="list",

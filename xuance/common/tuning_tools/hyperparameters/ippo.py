@@ -1,7 +1,7 @@
 from . import Hyperparameter
 
 
-iac_hyperparams = [
+ippo_hyperparams = [
     Hyperparameter(
         name="representation_hidden_size",  # The choice of representation network structure (for MLP).
         type="list",
@@ -39,7 +39,7 @@ iac_hyperparams = [
         type="int",
         distribution=[1, 3, 5, 10],
         log=False,
-        default=1
+        default=10
     ),
     Hyperparameter(
         name="n_minibatch",  # The number of minibatchs.
@@ -53,7 +53,7 @@ iac_hyperparams = [
         type="float",
         distribution=(1e-5, 1e-2),
         log=True,
-        default=1e-4
+        default=7e-4
     ),
 
     Hyperparameter(
@@ -61,7 +61,7 @@ iac_hyperparams = [
         type="float",
         distribution=(0.001, 0.5),
         log=False,
-        default=0.1
+        default=0.5
     ),
     Hyperparameter(
         name="ent_coef",  # Coefficient factor for entropy loss.
@@ -69,6 +69,20 @@ iac_hyperparams = [
         distribution=(0.001, 0.5),
         log=False,
         default=0.01
+    ),
+    Hyperparameter(
+        name="target_kl",  # The target KL value. (For MAPPO-KL)
+        type="float",
+        distribution=(0.001, 0.5),
+        log=False,
+        default=0.25
+    ),
+    Hyperparameter(
+        name="clip_range",  # The clip range for ratio. (For PPO-CLIP)
+        type="float",
+        distribution=(0.0, 1.0),
+        log=False,
+        default=0.2
     ),
     Hyperparameter(
         name="gamma",  # The discount factor.
@@ -97,14 +111,14 @@ iac_hyperparams = [
         type="bool",
         distribution=[True, False],
         log=False,
-        default=True
+        default=False
     ),
     Hyperparameter(
         name="use_value_clip",  # Limit the value range.
         type="bool",
         distribution=[True, False],
         log=False,
-        default=False
+        default=True
     ),
     Hyperparameter(
         name="value_clip_range",  # The value clip range.
@@ -118,14 +132,14 @@ iac_hyperparams = [
         type="bool",
         distribution=[True, False],
         log=False,
-        default=False
+        default=True
     ),
     Hyperparameter(
         name="use_huber_loss",  # True: use huber loss; False: use MSE loss.
         type="bool",
         distribution=[True, False],
         log=False,
-        default=False
+        default=True
     ),
     Hyperparameter(
         name="huber_delta",  # The threshold at which to change between delta-scaled L1 and L2 loss. (For huber loss).
@@ -139,7 +153,7 @@ iac_hyperparams = [
         type="bool",
         distribution=[True, False],
         log=False,
-        default=False
+        default=True
     ),
     Hyperparameter(
         name="use_gae",  # Whether to use GAE trick.
@@ -153,7 +167,7 @@ iac_hyperparams = [
         type="float",
         distribution=(0.0, 0.999),
         log=False,
-        default=0.8
+        default=0.95
     ),
     Hyperparameter(
         name="use_grad_clip",  # Whether to use gradient clip.

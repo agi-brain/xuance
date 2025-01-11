@@ -1,24 +1,24 @@
 from . import Hyperparameter
 
 
-a2c_hyperparams = [
+iac_hyperparams = [
     Hyperparameter(
         name="representation_hidden_size",  # The choice of representation network structure (for MLP).
         type="list",
         distribution=[[64, ], [128, ], [256, ], [512, ]],
-        default=[128, ]
+        default=[64, ]
     ),
     Hyperparameter(
         name="actor_hidden_size",  # The choice of policy network structure.
         type="list",
         distribution=[[64, ], [128, ], [256, ], [512, ]],
-        default=[256, ]
+        default=[64, ]
     ),
     Hyperparameter(
         name="critic_hidden_size",  # The choice of policy network structure.
         type="list",
         distribution=[[64, ], [128, ], [256, ], [512, ]],
-        default=[256, ]
+        default=[64, ]
     ),
     Hyperparameter(
         name="activation",  # The choice of activation function.
@@ -28,11 +28,11 @@ a2c_hyperparams = [
     ),
 
     Hyperparameter(
-        name="horizon_size",  # The horizon size for an environment.
+        name="buffer_size",  # The size of the replay buffer.
         type="int",
-        distribution=[32, 64, 128, 256],
+        distribution=[32, 64, 128, 256, 512],
         log=False,
-        default=128
+        default=32
     ),
     Hyperparameter(
         name="n_epochs",  # The number of epochs.
@@ -61,7 +61,7 @@ a2c_hyperparams = [
         type="float",
         distribution=(0.001, 0.5),
         log=False,
-        default=0.25
+        default=0.1
     ),
     Hyperparameter(
         name="ent_coef",  # Coefficient factor for entropy loss.
@@ -77,69 +77,104 @@ a2c_hyperparams = [
         log=False,
         default=0.99
     ),
+
+    Hyperparameter(
+        name="use_linear_lr_decay",  # Whether to use linear learning rate decay.
+        type="bool",
+        distribution=[True, False],
+        log=False,
+        default=False
+    ),
+    Hyperparameter(
+        name="end_factor_lr_decay",  # The end factor for the decayed learning rate.
+        type="float",
+        distribution=(0.0, 1.0),
+        log=False,
+        default=0.5
+    ),
+    Hyperparameter(
+        name="use_global_state",  # Whether to use global state to replace merged observations.
+        type="bool",
+        distribution=[True, False],
+        log=False,
+        default=True
+    ),
+    Hyperparameter(
+        name="use_value_clip",  # Limit the value range.
+        type="bool",
+        distribution=[True, False],
+        log=False,
+        default=False
+    ),
+    Hyperparameter(
+        name="value_clip_range",  # The value clip range.
+        type="float",
+        distribution=(0.0, 10.0),
+        log=False,
+        default=0.2
+    ),
+    Hyperparameter(
+        name="use_value_norm",  # Use running mean and std to normalize rewards.
+        type="bool",
+        distribution=[True, False],
+        log=False,
+        default=False
+    ),
+    Hyperparameter(
+        name="use_huber_loss",  # True: use huber loss; False: use MSE loss.
+        type="bool",
+        distribution=[True, False],
+        log=False,
+        default=False
+    ),
+    Hyperparameter(
+        name="huber_delta",  # The threshold at which to change between delta-scaled L1 and L2 loss. (For huber loss).
+        type="float",
+        distribution=(0.0, 20.0),
+        log=False,
+        default=10.0
+    ),
+    Hyperparameter(
+        name="use_adv_norm",  # Whether to use advantage normalization.
+        type="bool",
+        distribution=[True, False],
+        log=False,
+        default=False
+    ),
     Hyperparameter(
         name="use_gae",  # Whether to use GAE trick.
         type="bool",
         distribution=[True, False],
         log=False,
-        default=False
+        default=True
     ),
     Hyperparameter(
         name="gae_lambda",  # The GAE lambda.
         type="float",
-        distribution=(0.9, 0.999),
+        distribution=(0.0, 0.999),
         log=False,
-        default=0.95
+        default=0.8
     ),
-    Hyperparameter(
-        name="use_advnorm",  # Whether to use advantage normalization trick.
-        type="bool",
-        distribution=[True, False],
-        log=False,
-        default=True
-    ),
-
     Hyperparameter(
         name="use_grad_clip",  # Whether to use gradient clip.
         type="bool",
         distribution=[True, False],
         log=False,
-        default=False
+        default=True
     ),
     Hyperparameter(
         name="grad_clip_norm",  # Normalization for gradient.
         type="float",
-        distribution=(0.1, 1.0),
+        distribution=(0.1, 10.0),
         log=False,
-        default=0.5
+        default=10.0
     ),
     Hyperparameter(
-        name="use_obsnorm",  # Whether to use observation normalization trick.
+        name="use_parameter_sharing",  # Whether to use parameter sharing for all agents' policies.
         type="bool",
         distribution=[True, False],
         log=False,
         default=True
-    ),
-    Hyperparameter(
-        name="obsnorm_range",  # The range of normalized observations.
-        type="float",
-        distribution=(1, 10),
-        log=False,
-        default=5
-    ),
-    Hyperparameter(
-        name="use_rewnorm",  # Whether to use reward normalization trick.
-        type="bool",
-        distribution=[True, False],
-        log=False,
-        default=True
-    ),
-    Hyperparameter(
-        name="rewnorm_range",  # The range of normalized rewards.
-        type="float",
-        distribution=(1, 10),
-        log=False,
-        default=5
     ),
     # Other hyperparameters...
 ]

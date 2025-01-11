@@ -1,7 +1,7 @@
 from . import Hyperparameter
 
 
-maddpg_hyperparams = [
+matd3_hyperparams = [
     Hyperparameter(
         name="actor_hidden_size",  # The choice of actor network structure.
         type="list",
@@ -61,6 +61,13 @@ maddpg_hyperparams = [
         distribution=(0.0001, 0.5),
         log=True,
         default=0.001
+    ),
+    Hyperparameter(
+        name="actor_update_delay",  # The delay steps for actor update.
+        type="int",
+        distribution=[1, 2, 3, 5, 10],
+        log=False,
+        default=2
     ),
 
     Hyperparameter(

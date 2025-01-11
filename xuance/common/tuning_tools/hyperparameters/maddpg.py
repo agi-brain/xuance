@@ -1,7 +1,7 @@
 from . import Hyperparameter
 
 
-iddpg_hyperparams = [
+maddpg_hyperparams = [
     Hyperparameter(
         name="actor_hidden_size",  # The choice of actor network structure.
         type="list",

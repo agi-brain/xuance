@@ -1,7 +1,7 @@
 from . import Hyperparameter
 
 
-iddpg_hyperparams = [
+isac_hyperparams = [
     Hyperparameter(
         name="actor_hidden_size",  # The choice of actor network structure.
         type="list",
@@ -62,28 +62,21 @@ iddpg_hyperparams = [
         log=True,
         default=0.001
     ),
-
     Hyperparameter(
-        name="start_noise",  # The start greedy for exploration.
+        name="alpha",
         type="float",
-        distribution=(0.1, 1.0),
-        log=False,
-        default=1.0
-    ),
-    Hyperparameter(
-        name="end_noise",  # The end greedy for exploration.
-        type="float",
-        distribution=(0.001, 0.5),  # Note: The start_greedy should be no less than end_greedy.
-        log=False,
+        distribution=(0.001, 1.0),
+        log=True,
         default=0.01
     ),
     Hyperparameter(
-        name="sigma",  # Random noise for continuous actions.
-        type="float",
-        distribution=(0.001, 0.5),  # Note: The start_greedy should be no less than end_greedy.
-        log=False,
-        default=0.1
+        name="use_automatic_entropy_tuning",
+        type="bool",
+        distribution=[True, False],
+        log=True,
+        default=True
     ),
+
     Hyperparameter(
         name="start_training",  # When to start training.
         type="int",
@@ -111,7 +104,7 @@ iddpg_hyperparams = [
         type="float",
         distribution=(0.1, 1.0),
         log=False,
-        default=0.5
+        default=10
     ),
     Hyperparameter(
         name="use_parameter_sharing",  # Normalization for gradient.
