@@ -7,9 +7,10 @@ n_steps = 10000
 test_episodes = 2
 n_trials = 2
 
-test_methods_drl_off_policy = ['dqn', 'ddqn', 'dueldqn', 'noisydqn', 'perdqn', 'c51', 'qrdqn', 'drqn']
+test_methods_drl_discrete = ['dqn', 'ddqn', 'dueldqn', 'noisydqn', 'perdqn', 'c51', 'qrdqn', 'drqn',
+                             'pg', 'a2c', 'ppo', 'ppg']
 
-test_methods_drl_on_policy = ['pg', 'a2c', 'ppo', 'ppg', 'sac', 'ddpg', 'td3']
+test_methods_drl_continuous = ['pg', 'a2c', 'ppo', 'ppg', 'sac', 'ddpg', 'td3']
 
 test_methods_marl_value_decomposition = ['iql', 'vdn', 'qmix', 'wqmix', 'qtran', 'dcg']
 
@@ -22,7 +23,7 @@ hyperpamameters = ['learning_rate']
 
 class TestValueBaseAlgo(unittest.TestCase):
     def test_drl_off_policy(self):
-        for method in test_methods_drl_off_policy:
+        for method in test_methods_drl_discrete:
             tuner = HyperParameterTuner(method=method,
                                         config_path=f'../../examples/{method}/{method}_configs/{method}_cartpole.yaml',
                                         running_steps=n_steps,
@@ -31,9 +32,9 @@ class TestValueBaseAlgo(unittest.TestCase):
             tuner.tune(selected_hyperparameters, n_trials=n_trials, pruner=None)
 
     def test_drl_on_policy(self):
-        for method in test_methods_drl_on_policy:
+        for method in test_methods_drl_continuous:
             tuner = HyperParameterTuner(method=method,
-                                        config_path=f'../../examples/{method}/{method}_configs/{method}_cartpole.yaml',
+                                        config_path=f'../../examples/{method}/{method}_configs/{method}_pendulum.yaml',
                                         running_steps=n_steps,
                                         test_episodes=test_episodes)
             selected_hyperparameters = tuner.select_hyperparameter(hyperpamameters)

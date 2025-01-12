@@ -8,8 +8,8 @@ from xuance.torch.agents import DuelDQN_Agent
 
 
 def parse_args():
-    parser = argparse.ArgumentParser("Example of XuanCe: Double DQN for Car Racing.")
-    parser.add_argument("--env-id", type=str, default="CarRacing-v2")
+    parser = argparse.ArgumentParser("Example of XuanCe: Double DQN for CartPole.")
+    parser.add_argument("--env-id", type=str, default="CartPole-v1")
     parser.add_argument("--test", type=int, default=0)
     parser.add_argument("--benchmark", type=int, default=1)
 
@@ -18,7 +18,7 @@ def parse_args():
 
 if __name__ == "__main__":
     parser = parse_args()
-    configs_dict = get_configs(file_dir="dueldqn_configs/dueldqn_carracing.yaml")
+    configs_dict = get_configs(file_dir="dueldqn_configs/dueldqn_cartpole.yaml")
     configs_dict = recursive_dict_update(configs_dict, parser.__dict__)
     configs = argparse.Namespace(**configs_dict)
 
