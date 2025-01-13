@@ -62,6 +62,7 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
 - :key: High compatibility for different users. (PyTorch, TensorFlow2, MindSpore, CPU, GPU, Linux, Windows, MacOS, etc.)
 - :zap: Fast running speed with parallel environments. 
 - :computer: Distributed training with multi-GPUs.
+- 🎛️ Support automatically hyperparameters tuning.
 - :chart_with_upwards_trend: Good visualization effect with [tensorboard](https://www.tensorflow.org/tensorboard) or [wandb](https://wandb.ai/site) tool.
 
 ## Currently Included Algorithms
@@ -465,6 +466,7 @@ How to use wandb offline? :arrow_right: [https://github.com/wandb/server.git/](h
 ## Community
 
 - GitHub issues: [https://github.com/agi-brain/xuance/issues](https://github.com/agi-brain/xuance/issues)
+- Github discussions: [https://github.com/orgs/agi-brain/discussions](https://github.com/orgs/agi-brain/discussions)
 - Discord invite link: [https://discord.gg/HJn2TBQS7y](https://discord.gg/HJn2TBQS7y)
 - Slack invite link: [https://join.slack.com/t/xuancerllib/](https://join.slack.com/t/xuancerllib/shared_invite/zt-2x2r98msi-iMX6mSVcgWwXYj95abcXIw)
 - QQ App's group number: 552432695
