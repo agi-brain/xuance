@@ -1,0 +1,54 @@
+dl_toolbox: "torch"  # The deep learning toolbox. Choices: "torch", "mindspore", "tensorlayer"
+project_name: "XuanCe_Benchmark"
+logger: "tensorboard"  # Choices: tensorboard, wandb.
+wandb_user_name: "your_user_name"
+render: True
+render_mode: 'rgb_array' # Choices: 'human', 'rgb_array'.
+fps: 50
+test_mode: False
+device: "cuda:0"  # Choose an calculating device. PyTorch: "cpu", "cuda:0"; TensorFlow: "cpu"/"CPU", "gpu"/"GPU"; MindSpore: "CPU", "GPU", "Ascend", "Davinci".
+distributed_training: False  # Whether to use multi-GPU for distributed training.
+master_port: '12355'  # The master port for current experiment when use distributed training.
+
+agent: "Duel_DQN"
+env_name: "Classic Control"
+env_id: "CartPole-v1"
+env_seed: 1
+vectorize: "DummyVecEnv"
+policy: "Duel_Q_network"
+representation: "Basic_MLP"
+learner: "DuelDQN_Learner"
+runner: "DRL"
+
+representation_hidden_size: [128, ]
+q_hidden_size: [128, ]
+activation: 'relu'
+
+seed: 1
+parallels: 10
+buffer_size: 100000
+batch_size: 256
+learning_rate: 0.001
+gamma: 0.99
+
+start_greedy: 0.5
+end_greedy: 0.01
+decay_step_greedy: 200000
+sync_frequency: 50
+training_frequency: 1
+running_steps: 500000
+start_training: 1000
+
+use_grad_clip: False  # gradient normalization
+grad_clip_norm: 0.5
+use_actions_mask: False
+use_obsnorm: False
+use_rewnorm: False
+obsnorm_range: 5
+rewnorm_range: 5
+
+test_steps: 10000
+eval_interval: 50000
+test_episode: 1
+log_dir: "./logs/dueldqn/"
+model_dir: "./models/dueldqn/"

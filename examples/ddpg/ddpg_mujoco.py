@@ -17,7 +17,7 @@ def parse_args():
 
 if __name__ == "__main__":
     parser = parse_args()
-    configs_dict = get_configs(file_dir="ddpg_configs/ddpg_mujoco_config.yaml")
+    configs_dict = get_configs(file_dir="ddpg_configs/ddpg_mujoco.yaml")
     configs_dict = recursive_dict_update(configs_dict, parser.__dict__)
     configs = argparse.Namespace(**configs_dict)
 

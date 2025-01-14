@@ -72,7 +72,7 @@ def parse_args():
 
 if __name__ == "__main__":
     parser = parse_args()
-    configs_dict = get_configs(file_dir="new_configs/ippo_new_configs.yaml")
+    configs_dict = get_configs(file_dir="new_configs/ippo_new_env.yaml")
     configs_dict = recursive_dict_update(configs_dict, parser.__dict__)
     configs = argparse.Namespace(**configs_dict)
 

@@ -15,15 +15,9 @@ ddqn_hyperparams = [
         default=[256, ]
     ),
     Hyperparameter(
-        name="q_hidden_size",  # The choice of policy network structure.
-        type="list",
-        distribution=[[64, ], [128, ], [256, ], [512, ]],
-        default=[256, ]
-    ),
-    Hyperparameter(
         name="activation",  # The choice of activation function.
         type="categorical",
-        distribution=["relu", "tanh", "sigmoid"],
+        distribution=["relu", "leaky_relu", "tanh", "sigmoid"],
         default="relu"
     ),
 
@@ -100,7 +94,7 @@ ddqn_hyperparams = [
     Hyperparameter(
         name="use_grad_clip",  # Whether to use gradient clip.
         type="bool",
-        distribution=(True, False),
+        distribution=[True, False],
         log=False,
         default=False
     ),
@@ -114,7 +108,7 @@ ddqn_hyperparams = [
     Hyperparameter(
         name="use_obsnorm",  # Whether to use observation normalization trick.
         type="bool",
-        distribution=(True, False),
+        distribution=[True, False],
         log=False,
         default=False
     ),
@@ -128,7 +122,7 @@ ddqn_hyperparams = [
     Hyperparameter(
         name="use_rewnorm",  # Whether to use reward normalization trick.
         type="bool",
-        distribution=(True, False),
+        distribution=[True, False],
         log=False,
         default=False
     ),
