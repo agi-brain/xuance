@@ -52,7 +52,7 @@ The full algorithm for training TD3 is presented in Algorithm 1:
 ![链接网址](./../../../../_static/figures/pseucodes/pseucode-TD3.png)
 
 ## Run TD3 in XuanCe
-Before running TD3 in XuanCe, you need to prepare a conda environment and install ```xuance``` following the
+Before running TD3 in XuanCe, you need to prepare a conda environment and install ```xuance``` following the  
  [**installation steps**](./../../../usage/installation.rst#install-xuance).
 ### Run Build-in Demos
 After completing the installation, you can open a Python console and run TD3 directly using the following commands:
