@@ -10,7 +10,7 @@ This table lists some general features about SAC algorithm:
 | Off-policy              | ✅      | The evaluate policy is different from the target policy. |
 | Model-free              | ✅      | No need to prepare an environment dynamics model.        |
 | Model-based             | ❌      | Need an environment model to train the policy.           |
-| Discrete Action         | ❌      | Deal with discrete action space.                         |
+| Discrete Action         | ✅      | Deal with discrete action space.                         |
 | Continuous Action       | ✅      | Deal with continuous action space.                       |
 
 ## Key Ideas of SAC
