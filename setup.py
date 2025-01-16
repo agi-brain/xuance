@@ -49,6 +49,7 @@ setup(
         "tune": [
             "optuna>=4.1.0",
             "optuna-dashboard>=0.17.0",
+            "plotly>=5.24.1",
         ],
         "atari": ["gymnasium[accept-rom-license]==0.28.1",
                   "gymnasium[atari]==0.28.1",

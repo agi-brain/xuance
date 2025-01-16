@@ -6,7 +6,7 @@ tuner = HyperParameterTuner(method='dqn',
                             running_steps=1000,
                             test_episodes=2)
 
-selected_hyperparameters = tuner.select_hyperparameter(['learning_rate'])
+selected_hyperparameters = tuner.select_hyperparameter(['learning_rate', 'gamma'])
 
 overrides = {
     'learning_rate': [0.001, 0.0001, 0.00001],  # Categorical: Search in the set of {0.001, 0.0001, 0.00001}.
