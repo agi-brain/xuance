@@ -7,7 +7,7 @@ learner: "COMA_Learner"
 policy: "Categorical_COMA_Policy"  # Name of policy.
 representation: "Basic_MLP"  # Name of representation.
 representation_critic: "Basic_MLP"  # Name of representation for critic.
-vectorize: "SubprocVecMultiAgentEnv"  # Method to vectorize the environment.
+vectorize: "DummyVecMultiAgentEnv"  # Method to vectorize the environment.
 runner: "MARL"  # Runner.
 
 # recurrent settings for Basic_RNN representation
