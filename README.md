@@ -21,6 +21,10 @@
 [![gymnasium](https://img.shields.io/badge/gymnasium-%3E%3D0.28.1-blue)](https://www.gymlibrary.dev/)
 [![pettingzoo](https://img.shields.io/badge/PettingZoo-%3E%3D1.23.0-blue)](https://pettingzoo.farama.org/)
 
+**[Full Documentation](https://xuance.readthedocs.io/en/latest/)**
+| **[README_CN.md](README_CN.md)**
+| **[中文文档](https://xuance.readthedocs.io/zh/latest/)** |
+
 **XuanCe** is an open-source ensemble of Deep Reinforcement Learning (DRL) algorithm implementations.
 
 We call it as **Xuan-Ce (玄策)** in Chinese.
@@ -39,10 +43,7 @@ and hope it can really become a zoo full of DRL algorithms.
 
 Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16248.pdf)
 
-:book: **[Full Documentation](https://xuance.readthedocs.io/en/latest/)**
-| **[README_CN.md](README_CN.md)** :book:
-| **[中文文档](https://xuance.readthedocs.io/zh/latest/)** :book:
-
+**Contents:**
 - [**Features**](#features-of-xuance)
 - [**Algorithms**](#currently-included-algorithms)
 - [**Environments**](#currently-supported-environments)
