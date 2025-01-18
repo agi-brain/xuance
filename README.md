@@ -23,7 +23,7 @@
 
 **[Full Documentation](https://xuance.readthedocs.io/en/latest/)**
 | **[README_CN.md](README_CN.md)**
-| **[中文文档](https://xuance.readthedocs.io/zh/latest/)** |
+| **[中文文档](https://xuance.readthedocs.io/zh/latest/)**
 
 **XuanCe** is an open-source ensemble of Deep Reinforcement Learning (DRL) algorithm implementations.
 

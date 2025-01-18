@@ -21,6 +21,10 @@
 [![gymnasium](https://img.shields.io/badge/gymnasium-%3E%3D0.28.1-blue)](https://www.gymlibrary.dev/)
 [![pettingzoo](https://img.shields.io/badge/PettingZoo-%3E%3D1.23.0-blue)](https://pettingzoo.farama.org/)
 
+**[README.md](README.md)**
+|**[英文文档](https://xuance.readthedocs.io/en/latest/)**
+| **[中文文档](https://xuance.readthedocs.io/zh/latest/)**
+
 **XuanCe** 是一个开源的深度强化学习（DRL）算法集合。
 
 我们将其称为 **Xuan-Ce（玄策）**。
@@ -32,9 +36,7 @@
 
 论文链接：[https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16248.pdf)
 
-:book: **[英文文档](https://xuance.readthedocs.io/en/latest/)**
-| **[中文文档](https://xuance.readthedocs.io/zh/latest/)** :book:
-
+目录：
 - [**项目特性**](#features-of-xuance)
 - [**已实现算法**](#currently-included-algorithms)
 - [**已支持环境**](#currently-supported-environments)
