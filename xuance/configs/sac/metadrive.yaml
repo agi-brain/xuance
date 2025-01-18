@@ -5,7 +5,7 @@ env_seed: 1
 env_config:  # the configs for MetaDrive environment
   map: "C"  # see https://metadrive-simulator.readthedocs.io/en/latest/rl_environments.html#generalization-environment for choices
 render: False
-vectorize: "SubprocVecEnv"
+vectorize: "DummyVecEnv"
 learner: "SAC_Learner"
 policy: "Gaussian_SAC"
 representation: "Basic_Identical"

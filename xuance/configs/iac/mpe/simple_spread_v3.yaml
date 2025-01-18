@@ -6,7 +6,7 @@ continuous_action: False
 learner: "IAC_Learner"
 policy: "Categorical_MAAC_Policy"
 representation: "Basic_MLP"
-vectorize: "SubprocVecMultiAgentEnv"
+vectorize: "DummyVecMultiAgentEnv"
 runner: "MARL"
 
 # recurrent settings for Basic_RNN representation
