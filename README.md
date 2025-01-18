@@ -40,6 +40,7 @@ and hope it can really become a zoo full of DRL algorithms.
 Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16248.pdf)
 
 :book: **[Full Documentation](https://xuance.readthedocs.io/en/latest/)**
+| **[README_CN.md](README_CN.md)** :book:
 | **[中文文档](https://xuance.readthedocs.io/zh/latest/)** :book:
 
 - [**Features**](#features-of-xuance)
@@ -220,19 +221,19 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
 
 <table rules="none" align="center"><tr>
 <td> <center>
-<img src="docs/source/_static/figures/atari/breakout.gif" height=100" /><br/><font color="AAAAAA">Breakout</font>
-</center></td>
+<img src="docs/source/_static/figures/atari/adventure.gif" height=100" /> <br/> <font color="AAAAAA">Adventure</font>
+</center> </td>
 <td> <center>
-<img src="docs/source/_static/figures/atari/boxing.gif" height=100" /> <br/> <font color="AAAAAA">Boxing</font>
+<img src="docs/source/_static/figures/atari/air_raid.gif" height=100" /> <br/> <font color="AAAAAA">Air Raid</font>
 </center> </td>
 <td> <center>
 <img src="docs/source/_static/figures/atari/alien.gif" height=100" /> <br/> <font color="AAAAAA">Alien</font>
 </center> </td>
 <td> <center>
-<img src="docs/source/_static/figures/atari/adventure.gif" height=100" /> <br/> <font color="AAAAAA">Adventure</font>
-</center> </td>
+<img src="docs/source/_static/figures/atari/amidar.gif" height=100" /><br/><font color="AAAAAA">Amidar</font>
+</center></td>
 <td> <center>
-<img src="docs/source/_static/figures/atari/air_raid.gif" height=100" /> <br/> <font color="AAAAAA">Air Raid</font>
+<img src="docs/source/_static/figures/atari/assault.gif" height=100" /> <br/> <font color="AAAAAA">Assault</font>
 </center> </td>
 <td> <center>
 <br/> <font color="AAAAAA">...</font>
@@ -249,16 +250,16 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
 
 <table rules="none" align="center"><tr>
 <td> <center>
-<img src="docs/source/_static/figures/minigrid/crossing.gif" height=100" /><br/><font color="AAAAAA">Crossing</font>
+<img src="docs/source/_static/figures/minigrid/GoToDoorEnv.gif" height=100" /><br/><font color="AAAAAA">GoToDoorEnv</font>
 </center></td>
 <td> <center>
-<img src="docs/source/_static/figures/minigrid/memory.gif" height=100" /> <br/> <font color="AAAAAA">Memory</font>
+<img src="docs/source/_static/figures/minigrid/LockedRoomEnv.gif" height=100" /> <br/> <font color="AAAAAA">LockedRoomEnv</font>
 </center> </td>
 <td> <center>
-<img src="docs/source/_static/figures/minigrid/lockedroom.gif" height=100" /> <br/> <font color="AAAAAA">Locked Room</font>
+<img src="docs/source/_static/figures/minigrid/MemoryEnv.gif" height=100" /> <br/> <font color="AAAAAA">MemoryEnv</font>
 </center> </td>
 <td> <center>
-<img src="docs/source/_static/figures/minigrid/playground.gif" height=100" /> <br/> <font color="AAAAAA">Playground</font>
+<img src="docs/source/_static/figures/minigrid/PlaygroundEnv.gif" height=100" /> <br/> <font color="AAAAAA">PlaygroundEnv</font>
 </center> </td>
 <td> <center>
 <br/> <font color="AAAAAA">...</font>
