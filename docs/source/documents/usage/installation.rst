@@ -515,4 +515,6 @@ During the installation of gym-pybullet-drones, you might encounter the errors l
 DCG algorithm dependency (torch-scatter)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+.. code-block:: bash
 
+    pip install torch-scatter
