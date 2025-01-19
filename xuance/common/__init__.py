@@ -30,8 +30,9 @@ __all__ = [
 ]
 
 try:
-    from xuance.common.tuning_tools import set_hyperparameters, HyperParameterTuner
+    from xuance.common.tuning_tools import set_hyperparameters, HyperParameterTuner, MultiObjectiveTuner
     __all__.append("set_hyperparameters")
     __all__.append("HyperParameterTuner")
+    __all__.append("MultiObjectiveTuner")
 except:
     pass
