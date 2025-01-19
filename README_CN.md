@@ -25,14 +25,14 @@
 |**[英文文档](https://xuance.readthedocs.io/en/latest/)**
 | **[中文文档](https://xuance.readthedocs.io/zh/latest/)**
 
-**XuanCe** 是一个开源的深度强化学习（DRL）算法集合。
+**XuanCe** 是一个开源的深度强化学习（DRL）算法库。
 
 我们将其称为 **Xuan-Ce（玄策）**。
-“**玄（Xuan）**”寓意神奇且多变的魔盒，“**策（Ce）**”意为策略。
+“**玄（Xuan）**”寓意玄妙的，“**策（Ce）**”意为策略。
 
-由于 DRL 算法通常对超参数敏感、效果易随技巧（tricks）的不同而差异较大，训练过程本身也不够稳定，因此 DRL 算法有时显得难以捉摸，带有“玄”的感觉。本项目致力于提供深入、优质、易懂的 DRL 算法实现，希望能揭示强化学习中这些“魔法”背后的原理。
+由于 DRL 算法通常对超参数敏感、效果易随技巧（tricks）的不同而差异较大，训练过程本身也不够稳定，因此 DRL 算法有时显得难以捉摸，带有“玄学”的意味。本项目致力于提供深入、优质、易懂的 DRL 算法实现，希望能揭示强化学习中这些“玄学”背后的原理。
 
-我们期望它能兼容多种深度学习框架（**[PyTorch](https://pytorch.org/)**、**[TensorFlow](https://www.tensorflow.org/)** 和 **[MindSpore](https://www.mindspore.cn/en)**），并希望它能够成为涵盖多种 DRL 算法的“动物园”。
+我们期望它能兼容多种深度学习框架（**[PyTorch](https://pytorch.org/)**、**[TensorFlow](https://www.tensorflow.org/)** 和 **[MindSpore](https://www.mindspore.cn/en)**），并希望它能够成为涵盖多种 DRL 算法的智能决策框架。
 
 论文链接：[https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16248.pdf)
 
