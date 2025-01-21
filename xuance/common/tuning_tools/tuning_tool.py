@@ -331,4 +331,3 @@ class MultiObjectiveTuner(HyperParameterTuner):
         print("Number of finished trials: ", len(study.trials))
 
         return study
-    
