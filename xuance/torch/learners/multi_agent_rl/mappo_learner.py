@@ -8,7 +8,6 @@ import torch
 from torch import nn
 from xuance.common import List
 from argparse import Namespace
-from operator import itemgetter
 from xuance.torch.learners.multi_agent_rl.ippo_learner import IPPO_Learner
 
 
@@ -56,7 +55,7 @@ class MAPPO_Clip_Learner(IPPO_Learner):
             if self.use_global_state:
                 critic_input = {k: state.reshape(batch_size, -1) for k in self.agent_keys}
             else:
-                joint_obs = torch.concat(itemgetter(*self.agent_keys)(obs), dim=-1)
+                joint_obs = self.get_joint_input(obs)
                 critic_input = {k: joint_obs for k in self.agent_keys}
 
         # feedforward
@@ -171,7 +170,7 @@ class MAPPO_Clip_Learner(IPPO_Learner):
             if self.use_global_state:
                 critic_input = {k: state.reshape(batch_size, seq_len, -1) for k in self.agent_keys}
             else:
-                joint_obs = torch.concat(itemgetter(*self.agent_keys)(obs), dim=-1).reshape(batch_size, seq_len, -1)
+                joint_obs = self.get_joint_input(obs, (batch_size, seq_len, -1))
                 critic_input = {k: joint_obs for k in self.agent_keys}
 
         rnn_hidden_actor = {k: self.policy.actor_representation[k].init_hidden(bs_rnn) for k in self.model_keys}
