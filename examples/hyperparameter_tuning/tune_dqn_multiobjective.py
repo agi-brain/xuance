@@ -16,5 +16,5 @@ selected_hyperparameters = set_hyperparameters(selected_hyperparameters, overrid
 
 study = tuner.tune(selected_hyperparameters, n_trials=30, pruner=None, directions=['maximize', 'maximize'],
                    selected_objectives=['test_score', 'Qloss'])
-fig = plot_pareto_front(study, target_names=["scores", "returns"])
+fig = plot_pareto_front(study, target_names=["scores", "loss"])
 fig.show()
