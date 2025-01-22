@@ -2,8 +2,9 @@ import optuna
 import importlib
 from copy import deepcopy
 from argparse import Namespace
+from operator import itemgetter
 from xuance.environment import make_envs
-from xuance.common import get_configs, Optional, List, Union
+from xuance.common import get_configs, Optional, List
 from xuance.common.tuning_tools.hyperparameters import Hyperparameter, AlgorithmHyperparametersRegistry
 
 
@@ -291,14 +292,53 @@ class MultiObjectiveTuner(HyperParameterTuner):
     """
     A class to facilitate multi-objective hyperparameter tuning for reinforcement learning algorithms using Optuna.
     """
-    def __init__(self, *args):
-        super(MultiObjectiveTuner, self).__init__(*args)
+    def __init__(self, **kwargs):
+        super(MultiObjectiveTuner, self).__init__(**kwargs)
+
+    def objective(self, trial: optuna.trial, selected_hyperparameters: List[Hyperparameter],
+                  selected_objectives: List[str] = None) -> float:
+        """
+        Define the objective function for Optuna optimization.
+
+        This function builds the search space, updates the configuration with suggested
+        hyperparameters, initializes the environment and agent, trains the agent, evaluates
+        its performance, and returns the mean score as the objective value.
+
+        Args:
+            trial (optuna.trial.Trial): The Optuna trial object used for suggesting hyperparameter values.
+            selected_hyperparameters (List[Hyperparameter]): A list of Hyperparameter instances selected for tuning.
+            selected_objectives (List[str]): A list of objectives selected for tuning.
+
+        Returns:
+            float: The mean score obtained from evaluating the agent's policy.
+
+        Example:
+            >>> tuner = HyperParameterTuner(method='dqn', config_path='config.yaml')
+            >>> hyperparams = tuner.select_hyperparameter(['learning_rate', 'gamma'])
+            >>> study = optuna.create_study(direction="maximize")
+            >>> study.optimize(lambda trial: tuner.objective(trial, hyperparams), n_trials=10)
+        """
+        search_space = build_search_space(trial, selected_hyperparameters)
+        config_trail = deepcopy(self.configs_dict)
+        config_trail.update(search_space)
+        configs_trail = Namespace(**config_trail)
+        envs_trail = make_envs(configs_trail)
+        agent_trail = self.agent(configs_trail, envs_trail)
+        train_info = agent_trail.train(train_steps=self.running_steps)
+        scores = agent_trail.test(env_fn=self.eval_env_fn, test_episodes=self.test_episodes)
+        agent_trail.finish()
+        envs_trail.close()
+        scores_mean = sum(scores) / len(scores)
+        train_info["test_score"] = scores_mean
+        objectives = itemgetter(*selected_objectives)(train_info)
+        return objectives
 
     def tune(self,
              selected_hyperparameters: List[Hyperparameter],
              n_trials: int = 1,
              pruner: Optional[optuna.pruners.BasePruner] = None,
-             directions: Optional[list] = None) -> optuna.study.Study:
+             directions: Optional[list] = None,
+             selected_objectives: List[str] = None,) -> optuna.study.Study:
         """
         Start the hyperparameter tuning process.
 
@@ -311,6 +351,7 @@ class MultiObjectiveTuner(HyperParameterTuner):
             pruner (Optional[optuna.pruners.BasePruner], optional): An Optuna pruner to terminate unpromising trials early.
                 Defaults to None.
             directions: The optimization directions. Default is None.
+            selected_objectives (List[str]): A list of objectives selected for tuning.
 
         Returns:
             optuna.study.Study: The Optuna study object containing the results of the optimization.
@@ -318,13 +359,13 @@ class MultiObjectiveTuner(HyperParameterTuner):
         Example:
             >>> tuner = HyperParameterTuner(method='dqn', config_path='config.yaml')
             >>> hyperparams = tuner.select_hyperparameter(['learning_rate', 'gamma'])
-            >>> study = tuner.tune(selected_hyperparameters=hyperparams, n_trials=30)
+            >>> study = tuner.tune(selected_hyperparameters=hyperparams, n_trials=30, selected_objectives=['test_score', 'loss'])
             >>> print(study.best_params)
         """
         study = optuna.create_study(directions=directions, pruner=pruner)
 
         def objective_wrapper(trial):
-            return self.objective(trial, selected_hyperparameters)
+            return self.objective(trial, selected_hyperparameters, selected_objectives)
 
         study.optimize(objective_wrapper, n_trials=n_trials)
 
