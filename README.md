@@ -71,9 +71,6 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
 
 ### :point_right: DRL
 
-<details open>
-<summary>(Click to show supported DRL algorithms)</summary>
-
 - Deep Q Network - DQN [[Paper](https://www.nature.com/articles/nature14236)]
 - DQN with Double Q-learning - Double DQN [[Paper](https://ojs.aaai.org/index.php/AAAI/article/view/10295)]
 - DQN with Dueling Network - Dueling DQN [[Paper](http://proceedings.mlr.press/v48/wangf16.pdf)]
@@ -103,12 +100,7 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
   MP-DQN [[Paper](https://arxiv.org/pdf/1905.04388.pdf)] [[Code](https://github.com/cycraig/MP-DQN)]
 - Split Parameterised Deep Q-Network - SP-DQN [[Paper](https://arxiv.org/pdf/1810.06394.pdf)]
 
-</details>
-
 ### :point_right: Multi-Agent Reinforcement Learning (MARL)
-
-<details open>
-<summary>(Click to show supported MARL algorithms)</summary>
 
 - Independent Q-learning -
   IQL [[Paper](https://hal.science/file/index/docid/720669/filename/Matignon2012independent.pdf)] [[Code](https://github.com/oxwhirl/pymarl)]
@@ -144,14 +136,9 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
 - Multi-agent Soft Actor-Critic - MASAC [[Paper](https://arxiv.org/pdf/2104.06655.pdf)]
 - Multi-agent Twin Delayed Deep Deterministic Policy Gradient - MATD3 [[Paper](https://arxiv.org/pdf/1910.01465.pdf)]
 
-</details>
-
 ## Currently Supported Environments
 
 ### [Classic Control](https://www.gymlibrary.dev/environments/classic_control/)
-
-<details open>
-<summary>(Click to hide)</summary>
 
 <table rules="none" align="center"><tr>
 <td> <center>
@@ -168,12 +155,7 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
 </tr>
 </table>
 
-</details>
-
 ### [Box2D](https://www.gymlibrary.dev/environments/box2d/)
-
-<details open>
-<summary>(Click to hide)</summary>
 
 <table rules="none" align="center"><tr>
 <td> <center>
@@ -188,12 +170,7 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
 </tr>
 </table>
 
-</details>
-
 ### [MuJoCo Environments](https://www.gymlibrary.dev/environments/mujoco/)
-
-<details open>
-<summary>(Click to hide)</summary>
 
 <table rules="none" align="center"><tr>
 <td> <center>
@@ -213,12 +190,8 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
 </center> </td>
 </tr>
 </table>
-</details>
 
 ### [Atari Environments](https://www.gymlibrary.dev/environments/atari/)
-
-<details open>
-<summary>(Click to hide)</summary>
 
 <table rules="none" align="center"><tr>
 <td> <center>
@@ -242,12 +215,7 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
 </tr>
 </table>
 
-</details>
-
 ### [Minigrid Environments](https://minigrid.farama.org/)
-
-<details open>
-<summary>(Click to hide)</summary>
 
 <table rules="none" align="center"><tr>
 <td> <center>
@@ -267,14 +235,10 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
 </center> </td>
 </tr>
 </table>
-</details>
 
 ### [Drones Environments](https://github.com/utiasDSL/gym-pybullet-drones)
 
 [XuanCe's documentation for the installation and usage of gym-pybullet-drones](https://xuance.readthedocs.io/en/latest/documents/api/environments/drones.html).
-
-<details open>
-<summary>(Click to hide)</summary>
 
 <table rules="none" align="center"><tr>
 <td> <center>
@@ -291,12 +255,8 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
 </center> </td>
 </tr>
 </table>
-</details>
 
 ### [MPE Environments](https://pettingzoo.farama.org/environments/mpe/)
-
-<details open>
-<summary>(Click to hide)</summary>
 
 <table rules="none" align="center"><tr>
 <td> <center>
@@ -316,8 +276,6 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
 </center> </td>
 </tr>
 </table>
-
-</details>
 
 [//]: # (### [Magent2]&#40;https://magent2.farama.org/&#41;)
 
@@ -490,8 +448,6 @@ How to use wandb offline? :arrow_right: [https://github.com/wandb/server.git/](h
 </table>
 
 </details>
-
-[@TFBestPractices](https://twitter.com/TFBestPractices/status/1665770204398223361)
 
 ### Citations
 
