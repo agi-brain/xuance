@@ -138,7 +138,7 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
 
 ## Currently Supported Environments
 
-### [Classic Control](https://www.gymlibrary.dev/environments/classic_control/)
+### [Classic Control](https://xuance.readthedocs.io/en/latest/documents/api/environments/single_agent_env/gym.html#classic-control)
 
 <table rules="none" align="center"><tr>
 <td> <center>
@@ -155,7 +155,7 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
 </tr>
 </table>
 
-### [Box2D](https://www.gymlibrary.dev/environments/box2d/)
+### [Box2D](https://xuance.readthedocs.io/en/latest/documents/api/environments/single_agent_env/gym.html#box2d)
 
 <table rules="none" align="center"><tr>
 <td> <center>
@@ -170,7 +170,7 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
 </tr>
 </table>
 
-### [MuJoCo Environments](https://www.gymlibrary.dev/environments/mujoco/)
+### [MuJoCo Environments](https://xuance.readthedocs.io/en/latest/documents/api/environments/single_agent_env/gym.html#mujoco)
 
 <table rules="none" align="center"><tr>
 <td> <center>
@@ -191,7 +191,7 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
 </tr>
 </table>
 
-### [Atari Environments](https://www.gymlibrary.dev/environments/atari/)
+### [Atari Environments](https://xuance.readthedocs.io/en/latest/documents/api/environments/single_agent_env/gym.html#atari)
 
 <table rules="none" align="center"><tr>
 <td> <center>
@@ -215,7 +215,7 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
 </tr>
 </table>
 
-### [Minigrid Environments](https://minigrid.farama.org/)
+### [Minigrid Environments](https://xuance.readthedocs.io/en/latest/documents/api/environments/single_agent_env/minigrid.html)
 
 <table rules="none" align="center"><tr>
 <td> <center>
@@ -236,9 +236,7 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
 </tr>
 </table>
 
-### [Drones Environments](https://github.com/utiasDSL/gym-pybullet-drones)
-
-[XuanCe's documentation for the installation and usage of gym-pybullet-drones](https://xuance.readthedocs.io/en/latest/documents/api/environments/drones.html).
+### [Drones Environments](https://xuance.readthedocs.io/en/latest/documents/api/environments/multi_agent_env/drones.html)
 
 <table rules="none" align="center"><tr>
 <td> <center>
@@ -256,7 +254,7 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
 </tr>
 </table>
 
-### [MPE Environments](https://pettingzoo.farama.org/environments/mpe/)
+### [MPE Environments](https://xuance.readthedocs.io/en/latest/documents/api/environments/multi_agent_env/mpe.html)
 
 <table rules="none" align="center"><tr>
 <td> <center>
@@ -318,13 +316,13 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
 [//]: # ()
 [//]: # (</details>)
 
-### [SMAC](https://github.com/oxwhirl/smac)
+### [SMAC](https://xuance.readthedocs.io/en/latest/documents/api/environments/multi_agent_env/smac.html)
 
 <div align="center">
 <img src="docs/source/_static/figures/smac/smac.png" width="715" height="auto" align=center />
 </div>
 
-### [Google Research Football](https://github.com/google-research/football)
+### [Google Research Football](https://xuance.readthedocs.io/en/latest/documents/api/environments/multi_agent_env/football.html)
 
 <div align="center">
 <img src="docs/source/_static/figures/football/gfootball.png" width="720" height="auto" align=center />
