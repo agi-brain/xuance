@@ -340,21 +340,21 @@ environment.
 
 After that, open a terminal and install **XuanCe** by the following steps.
 
-**Step 1**: Create a new conda environment (python>=3.7 is suggested):
+**Step 1**: Create and activate a new conda environment (python>=3.7 is suggested):
 
-```commandline
-conda create -n xuance_env python=3.7
+```bash
+conda create -n xuance_env python=3.8 && conda activate xuance_env
 ```
 
-**Step 2**: Activate conda environment:
+**Step 2**: Install the mpi4py dependency:
 
-```commandline
-conda activate xuance_env
+```bash
+conda install mpi4py
 ```
 
 **Step 3**: Install the library:
 
-```commandline
+```bash
 pip install xuance
 ```
 
@@ -365,6 +365,7 @@ deep learning tools, you can type `pip install xuance[torch]` for [PyTorch](http
 and `pip install xuance[all]` for all dependencies.
 
 Note: Some extra packages should be installed manually for further usage.
+Click [**here**](https://xuance.readthedocs.io/en/latest/documents/usage/installation.html) to see more details for installation.
 
 ## :point_right: Quickly Start
 
