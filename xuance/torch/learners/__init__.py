@@ -1,6 +1,6 @@
 from .learner import Learner, LearnerMAS
 from .policy_gradient import PG_Learner, A2C_Learner, PPOCLIP_Learner, PPOKL_Learner, PPG_Learner, DDPG_Learner, \
-    TD3_Learner, SAC_Learner, SACDIS_Learner, PDQN_Learner, MPDQN_Learner, SPDQN_Learner
+    TD3_Learner, SAC_Learner, SACDIS_Learner, PDQN_Learner, MPDQN_Learner, SPDQN_Learner,NPG_Learner
 
 from .qlearning_family import DQN_Learner, DuelDQN_Learner, DDQN_Learner, PerDQN_Learner, C51_Learner, QRDQN_Learner, \
     DRQN_Learner
@@ -24,6 +24,7 @@ REGISTRY_Learners = {
     "PDQN_Learner": PDQN_Learner,
     "MPDQN_Learner": MPDQN_Learner,
     "SPDQN_Learner": SPDQN_Learner,
+    "NPG_Learner": NPG_Learner,
 
     "DQN_Learner": DQN_Learner,
     "DuelDQN_Learner": DuelDQN_Learner,
@@ -58,7 +59,7 @@ __all__ = [
     "REGISTRY_Learners", "Learner", "LearnerMAS",
 
     "PG_Learner", "A2C_Learner", "PPOCLIP_Learner", "PPOKL_Learner", "PPG_Learner", "DDPG_Learner", "TD3_Learner",
-    "SAC_Learner", "SACDIS_Learner", "PDQN_Learner", "MPDQN_Learner", "SPDQN_Learner",
+    "SAC_Learner", "SACDIS_Learner", "PDQN_Learner", "MPDQN_Learner", "SPDQN_Learner","NPG_Learner",
 
     "DQN_Learner", "DuelDQN_Learner", "DDQN_Learner", "PerDQN_Learner", "C51_Learner", "QRDQN_Learner", "DRQN_Learner",
 
