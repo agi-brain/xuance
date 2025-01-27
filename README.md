@@ -151,8 +151,8 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
 <img src="docs/source/_static/figures/classic_control/acrobot.gif" height=100" /> <br/> <font color="AAAAAA">Acrobot</font>
 </center> </td>
 <td> <center>
-<br/> <font color="AAAAAA">...</font>
-</tr>
+<img src="docs/source/_static/figures/classic_control/mountain_car.gif" height=100" /> <br/> <font color="AAAAAA">MountainCar</font>
+</center> </td>
 </table>
 
 ### [Box2D](https://xuance.readthedocs.io/en/latest/documents/api/environments/single_agent_env/gym.html#box2d)
@@ -183,7 +183,13 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
 <img src="docs/source/_static/figures/mujoco/hopper.gif" height=100" /> <br/> <font color="AAAAAA">Hopper</font>
 </center> </td>
 <td> <center>
+<img src="docs/source/_static/figures/mujoco/humanoid_standup.gif" height=100" /> <br/> <font color="AAAAAA">HumanoidStandup</font>
+</center> </td>
+<td> <center>
 <img src="docs/source/_static/figures/mujoco/humanoid.gif" height=100" /> <br/> <font color="AAAAAA">Humanoid</font>
+</center> </td>
+<td> <center>
+<img src="docs/source/_static/figures/mujoco/inverted_pendulum.gif" height=100" /> <br/> <font color="AAAAAA">InvertedPendulum</font>
 </center> </td>
 <td> <center>
 <br/> <font color="AAAAAA">...</font>
@@ -208,6 +214,12 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
 </center></td>
 <td> <center>
 <img src="docs/source/_static/figures/atari/assault.gif" height=100" /> <br/> <font color="AAAAAA">Assault</font>
+</center> </td>
+<td> <center>
+<img src="docs/source/_static/figures/atari/asterix.gif" height=100" /> <br/> <font color="AAAAAA">Asterix</font>
+</center> </td>
+<td> <center>
+<img src="docs/source/_static/figures/atari/asteroids.gif" height=100" /> <br/> <font color="AAAAAA">Asteroids</font>
 </center> </td>
 <td> <center>
 <br/> <font color="AAAAAA">...</font>
