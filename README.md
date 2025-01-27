@@ -266,6 +266,12 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
 </tr>
 </table>
 
+### [MetaDrive](https://xuance.readthedocs.io/en/latest/documents/api/environments/single_agent_env/metadrive.html)
+
+<div align="center">
+<img src="docs/source/_static/figures/metadrive/metadeive_teaser_1.gif" width="auto" height="120" align=center />
+</div>
+
 ### [MPE Environments](https://xuance.readthedocs.io/en/latest/documents/api/environments/multi_agent_env/mpe.html)
 
 <table rules="none" align="center"><tr>
@@ -280,6 +286,27 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
 </center> </td>
 <td> <center>
 <img src="docs/source/_static/figures/mpe/mpe_simple_adversary.gif" height=100" /> <br/> <font color="AAAAAA">Simple Adversary</font>
+</center> </td>
+<td> <center>
+<br/> <font color="AAAAAA">...</font>
+</center> </td>
+</tr>
+</table>
+
+### [Robotic Warehouse](https://xuance.readthedocs.io/en/latest/documents/api/environments/multi_agent_env/robotic_warehouse.html)
+
+<table rules="none" align="center"><tr>
+<td> <center>
+<img src="docs/source/_static/figures/rware/rware.gif" height=100" /><br/><font color="AAAAAA">Example 1</font>
+</center></td>
+<td> <center>
+<img src="docs/source/_static/figures/rware/collision1.gif" height=100" /> <br/> <font color="AAAAAA">Example 2</font>
+</center> </td>
+<td> <center>
+<img src="docs/source/_static/figures/rware/collision2.gif" height=100" /> <br/> <font color="AAAAAA">Example 3</font>
+</center> </td>
+<td> <center>
+<img src="docs/source/_static/figures/rware/collision3.gif" height=100" /> <br/> <font color="AAAAAA">Example 4</font>
 </center> </td>
 <td> <center>
 <br/> <font color="AAAAAA">...</font>
