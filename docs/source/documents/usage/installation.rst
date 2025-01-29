@@ -515,6 +515,58 @@ During the installation of gym-pybullet-drones, you might encounter the errors l
 DCG algorithm dependency (torch-scatter)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+The DCG algorithm in the XuanCe project relies on the torch-scatter library.
+In most cases, you can install it directly using the following command:
+
 .. code-block:: bash
 
     pip install torch-scatter
+
+However, on certain systems (e.g., specific operating systems or hardware environments),
+this command may result in installation errors.
+To ensure compatibility, follow the steps below to correctly install torch-scatter:
+
+**1. Check Your PyTorch and CUDA Versions**
+
+Use the following command to check the installed version of PyTorch and CUDA in your environment:
+
+.. code-block:: bash
+
+    python -c "import torch; print(torch.__version__, torch.version.cuda)"
+
+Take note of the PyTorch version (e.g., 2.0.1) and the CUDA version (e.g., 11.8) as they will be needed to select the appropriate version of torch-scatter.
+
+**2. Refer to the Official torch-scatter Installation Guide**
+
+Visit the `official torch-scatter installation page <https://pypi.org/project/torch-scatter/>`_ (internet connection required).
+Find the installation command that matches your PyTorch and CUDA versions. For example:
+
+- If your PyTorch version is 2.0.1 and CUDA version is 11.8, run:
+
+.. code-block:: bash
+
+    pip install torch-scatter -f https://data.pyg.org/whl/torch-2.0.1+cu118.html
+
+- If you are using the CPU-only version of PyTorch, choose the +cpu installation link, such as:
+
+.. code-block:: bash
+
+    pip install torch-scatter -f https://data.pyg.org/whl/torch-2.0.1+cpu.html
+
+**3. Troubleshooting Compatibility Issues**
+
+If you encounter issues during installation, ensure the following:
+- PyTorch is correctly installed and the version matches the selected torch-scatter wheel.
+- Your Python and pip versions are up to date. You can update pip using:
+
+.. code-block:: bash
+
+    python -m pip install --upgrade pip
+
+**4. Verify Installation**
+
+After installation, verify that torch-scatter is installed successfully by running:
+
+.. code-block:: bash
+
+    python -c "import torch_scatter; print('torch-scatter installed successfully')"

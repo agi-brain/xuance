@@ -73,6 +73,9 @@ autodoc_mock_imports = [
     "tensorflow_probability",
     "tensorflow-addons",
     "mindspore",
+    "optuna",
+    "optuna-dashboard",
+    "plotly",
 ]
 
 pygments_style = "tango"
