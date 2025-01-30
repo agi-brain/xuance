@@ -24,11 +24,15 @@ Here we show a config file named "ppo_configs/ppo_mujoco_config.yaml" for MuJoCo
     fps: 50  # The frames per second for the rendering videos in log file.
     test_mode: False  # Whether to run in test mode.
     device: "cuda:0"  # Choose an calculating device.
+    distributed_training: False  # Whether to use multi-GPU for distributed training.
+    master_port: '12355'  # The master port for current experiment when use distributed training.
 
     agent: "PPO_Clip"  # The agent name.
     env_name: "MuJoCo"  # The environment device.
     env_id: "Ant-v4"  # The environment id.
-    vectorize: "DummyVecEnv"  # The vectorized method to create n parallel environments. Choices: DummyVecEnv, or SubprocVecEnv.
+    env_seed: 1
+    vectorize: "DummyVecEnv"  # The vecrized method to create n parallel environments. Choices: DummyVecEnv, or SubprocVecEnv.
+    learner: "PPOCLIP_Learner"
     policy: "Gaussian_AC"  # choice: Gaussian_AC for continuous actions, Categorical_AC for discrete actions.
     representation: "Basic_MLP"  # The representation name.
 
@@ -42,7 +46,7 @@ Here we show a config file named "ppo_configs/ppo_mujoco_config.yaml" for MuJoCo
     parallels: 16  # The number of environments to run in parallel.
     running_steps: 1000000  # The total running steps for all environments.
     horizon_size: 256  # the horizon size for an environment, buffer_size = horizon_size * parallels.
-    n_epoch: 16  # The number of training epochs.
+    n_epochs: 16  # The number of training epochs.
     n_minibatch: 8  # The number of minibatch for each training epoch. batch_size = buffer_size // n_minibatch.
     learning_rate: 0.0004  # The learning rate.
 
@@ -70,6 +74,7 @@ Here we show a config file named "ppo_configs/ppo_mujoco_config.yaml" for MuJoCo
     test_episode: 5  # The test episodes.
     log_dir: "./logs/ppo/"  # The main directory of log files.
     model_dir: "./models/ppo/"  # The main directory of model files.
+
 
 Step 2: Get the attributes of the example
 ----------------------------------------------
