@@ -2,7 +2,10 @@
 
 **Paper Link:** [**https://homes.cs.washington.edu/~sham/papers/rl/natural.pdf**](https://homes.cs.washington.edu/~sham/papers/rl/natural.pdf)
 
-Natural Policy Gradient (NPG) is an algorithm in Reinforcement Learning (RL) that aims to optimize the policy by using Fisher Information Matrix (FIM) and directly maximizing the expected return. It was developed by Sham Kakade in 2001. NPG has been widely used in various RL problems, including robotics, finance, and game theory.
+Natural Policy Gradient (NPG) is an algorithm in DRL that aims to optimize the policy 
+by using Fisher Information Matrix (FIM) and directly maximizing the expected return. 
+It was developed by Sham Kakade in 2001. 
+NPG has been widely used in various RL problems, including robotics, finance, and game theory.
 
 This table lists some general features about NPG algorithm:
 
@@ -169,6 +172,3 @@ Agent.finish()  # Finish the training.
     :undoc-members:
     :show-inheritance:
 ```
-
-
-
