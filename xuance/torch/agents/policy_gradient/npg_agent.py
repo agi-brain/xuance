@@ -7,7 +7,14 @@ from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.policies import REGISTRY_Policy
 from xuance.torch.agents import OnPolicyAgent
 
+
 class NPG_Agent(OnPolicyAgent):
+    """The implementation of NPG agent.
+
+    Args:
+        config: the Namespace variable that provides hyper-parameters and other settings.
+        envs: the vectorized environments.
+    """
     def __init__(self,
                  config: Namespace,
                  envs: Union[DummyVecEnv, SubprocVecEnv]):
@@ -17,6 +24,19 @@ class NPG_Agent(OnPolicyAgent):
         self.learner = self._build_learner(self.config, self.policy)  # build learner
 
     def _build_policy(self) -> Module:
+        """Builds the policy network based on the configuration.
+
+        This method constructs the policy network using the specified configuration parameters,
+        including normalization, initialization, activation functions, and device placement.
+        It supports different types of policies, such as Categorical Actor-Critic (Categorical_AC)
+        and Gaussian Actor-Critic (Gaussian_AC).
+
+        Returns:
+            Module: The constructed policy network.
+
+        Raises:
+            AttributeError: If the specified policy type is not supported.
+        """
         normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
         initializer = torch.nn.init.orthogonal_
         activation = ActivationFunctions[self.config.activation]
@@ -43,4 +63,3 @@ class NPG_Agent(OnPolicyAgent):
             raise AttributeError(f"NPG currently does not support the policy named {self.config.policy}.")
 
         return policy
-
