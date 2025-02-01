@@ -119,6 +119,7 @@ List of Algorithms
 **Policy-based:**
 
 * :class:`PG_Agent` : :doc:`Policy Gradient (PG) <documents/api/agents/drl/pg_agent>`.
+* :class:`NPG_Agent` : :doc:`Natural Policy Gradient (NPG) <documents/api/agents/drl/npg_agent>`.
 * :class:`A2C_Agent` : :doc:`Advantage Actor Critic (A2C) <documents/api/agents/drl/a2c_agent>`.
 * :class:`PPOKL_Agent` : :doc:`Proximal Policy Optimization with KL Divergence (PPO-KL) <documents/api/agents/drl/ppokl_agent>`.
 * :class:`PPOCLIP_Agent` : :doc:`Proximal Policy Optimization with Clipped Objective (PPO-Clip) <documents/api/agents/drl/ppoclip_agent>`.
