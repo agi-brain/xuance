@@ -1,6 +1,6 @@
 # Natural Policy Gradient (NPG)
 
-**Paper Link:** [**https://homes.cs.washington.edu/~sham/papers/rl/natural.pdf**](https://homes.cs.washington.edu/~sham/papers/rl/natural.pdf)
+**Paper Link:** [**https://proceedings.neurips.cc/paper_files/paper/2001/file/4b86abe48d358ecf194c56c69108433e-Paper.pdf**](https://proceedings.neurips.cc/paper_files/paper/2001/file/4b86abe48d358ecf194c56c69108433e-Paper.pdf)
 
 Natural Policy Gradient (NPG) is an algorithm in DRL that aims to optimize the policy 
 by using Fisher Information Matrix (FIM) and directly maximizing the expected return. 
