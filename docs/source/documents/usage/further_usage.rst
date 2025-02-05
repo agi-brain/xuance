@@ -231,4 +231,7 @@ The source code of this example can be visited at the following link:
 
 `https://github.com/agi-brain/xuance/blob/master/examples/ppo/ppo_mujoco.py <https://github.com/agi-brain/xuance/blob/master/examples/ppo/ppo_mujoco.py>`_
 
+Distributed training with multi-GPUs
+--------------------------------------
 
+XuanCe support training with multiple GPUs to make full use of GPU resource.
