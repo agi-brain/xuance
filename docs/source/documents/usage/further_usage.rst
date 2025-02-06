@@ -234,4 +234,9 @@ The source code of this example can be visited at the following link:
 Distributed training with multi-GPUs
 --------------------------------------
 
-XuanCe support training with multiple GPUs to make full use of GPU resource.
+XuanCe supports multi-GPU training to maximize GPU resource utilization, enabling more efficient DRL model training.
+
+To train DRL models using multiple GPUs, you need to set ``distributed_training`` to True,
+the following parameters are relevant:
+- distributed_training (bool): Specifies whether to enable multi-GPU distributed training. Set to True to activate distributed training; otherwise, it remains disabled.
+- master_port (int): Defines the master port for the current experiment when distributed training is enabled.`: The master port for current experiment when use distributed training.
