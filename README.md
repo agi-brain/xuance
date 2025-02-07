@@ -43,18 +43,17 @@ and hope it can really become a zoo full of DRL algorithms.
 
 Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16248.pdf)
 
-**Contents:**
-- [**Features**](#features-of-xuance)
-- [**Algorithms**](#currently-included-algorithms)
-- [**Environments**](#currently-supported-environments)
+## Table of Contents:
+
+- [**Features**](#features)
+- [**Algorithms**](#algorithms)
+- [**Environments**](#environments)
 - [**Installation**](#point_right-installation)
-- [**Usage**](#point_right-quickly-start)
+- [**Quickly Start**](#point_right-quickly-start)
 - [**Community**](#community)
 - [**Citation**](#citations)
 
-## Why XuanCe?
-
-### Features of XuanCe
+## Features
 
 - :school_satchel: Highly modularized.
 - :thumbsup: Easy to [learn](https://xuance.readthedocs.io/en/latest/), easy for [installation](https://xuance.readthedocs.io/en/latest/documents/usage/installation.html), and easy for [usage](https://xuance.readthedocs.io/en/latest/documents/usage/basic_usage.html).
@@ -67,7 +66,7 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
 - 🎛️ Support automatically hyperparameters tuning.
 - :chart_with_upwards_trend: Good visualization effect with [tensorboard](https://www.tensorflow.org/tensorboard) or [wandb](https://wandb.ai/site) tool.
 
-## Currently Included Algorithms
+## Algorithms
 
 ### :point_right: DRL
 
@@ -138,7 +137,7 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
 - Multi-agent Soft Actor-Critic - MASAC [[Paper](https://arxiv.org/pdf/2104.06655.pdf)]
 - Multi-agent Twin Delayed Deep Deterministic Policy Gradient - MATD3 [[Paper](https://arxiv.org/pdf/1910.01465.pdf)]
 
-## Currently Supported Environments
+## Environments
 
 ### [Classic Control](https://xuance.readthedocs.io/en/latest/documents/api/environments/single_agent_env/gym.html#classic-control)
 
@@ -489,7 +488,7 @@ How to use wandb offline? :arrow_right: [https://github.com/wandb/server.git/](h
 
 </details>
 
-### Citations
+## Citations
 
 If you use XuanCe in your research or development, please cite the paper:
 
