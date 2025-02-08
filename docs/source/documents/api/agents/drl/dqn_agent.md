@@ -94,7 +94,7 @@ The overall agent-environment interaction of DQN, as implemented in XuanCe, is i
 ## Run DQN in XuanCe
 
 Before running DQN in XuanCe, you need to prepare a conda environment and install ``xuance`` following 
-the [**installation steps**](./../../../usage/installation.rst#install-via-pypi).
+the [**installation steps**](./../../../usage/installation.rst#install-xuance).
 
 ### Run Build-in Demos
 
@@ -149,7 +149,7 @@ configs = argparse.Namespace(**configs_dict)
 REGISTRY_ENV[configs.env_name] = MyNewEnv
 
 envs = make_envs(configs)  # Make parallel environments.
-Agent = DQN_Agent(config=configs, envs=envs)  # Create a DDPG agent from XuanCe.
+Agent = DQN_Agent(config=configs, envs=envs)  # Create a DQN agent from XuanCe.
 Agent.train(configs.running_steps // configs.parallels)  # Train the model for numerous steps.
 Agent.save_model("final_train_model.pth")  # Save the model to model_dir.
 Agent.finish()  # Finish the training.

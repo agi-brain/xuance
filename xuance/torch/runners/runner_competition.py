@@ -198,6 +198,7 @@ class RunnerCompetition(object):
 
             self.current_step += self.n_envs
             for agent in self.agents:
+                agent.current_step += self.n_envs
                 if not agent.on_policy:
                     agent._update_explore_factor()
 
@@ -288,6 +289,8 @@ class RunnerCompetition(object):
                                 agent.memory.finish_path(i, **terminal_data)
                     if not test_mode:
                         self.current_step += info[i]["episode_step"]
+                        for agent in self.agents:
+                            agent.current_step += info[i]["episode_step"]
                     for i_group in range(self.num_groups):
                         episode_score = float(np.mean(itemgetter(*self.groups[i_group])(info[i]["episode_score"])))
                         scores[i_group].append(episode_score)

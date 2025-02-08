@@ -39,7 +39,7 @@ Installation and Usage
 Step 1: Install required packages
 ........................................
 
-Linux:
+* **Linux:**
 
 .. code-block:: bash
 
@@ -49,7 +49,7 @@ Linux:
 
     python3 -m pip install --upgrade pip setuptools psutil wheel
 
-macOS:
+* **MacOS:**
 
 .. code-block:: bash
 
@@ -57,7 +57,7 @@ macOS:
 
     python3 -m pip install --upgrade pip setuptools psutil wheel
 
-Windows:
+* **Windows:**
 
 .. code-block::
 

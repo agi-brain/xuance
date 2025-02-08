@@ -21,6 +21,10 @@
 [![gymnasium](https://img.shields.io/badge/gymnasium-%3E%3D0.28.1-blue)](https://www.gymlibrary.dev/)
 [![pettingzoo](https://img.shields.io/badge/PettingZoo-%3E%3D1.23.0-blue)](https://pettingzoo.farama.org/)
 
+**[Full Documentation](https://xuance.readthedocs.io/en/latest/)**
+| **[README_CN.md](README_CN.md)**
+| **[中文文档](https://xuance.readthedocs.io/zh/latest/)**
+
 **XuanCe** is an open-source ensemble of Deep Reinforcement Learning (DRL) algorithm implementations.
 
 We call it as **Xuan-Ce (玄策)** in Chinese.
@@ -39,37 +43,32 @@ and hope it can really become a zoo full of DRL algorithms.
 
 Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16248.pdf)
 
-:book: **[Full Documentation](https://xuance.readthedocs.io/en/latest/)**
-| **[中文文档](https://xuance.readthedocs.io/zh/latest/)** :book:
+## Table of Contents:
 
-- [**Features**](#features-of-xuance)
-- [**Algorithms**](#currently-included-algorithms)
-- [**Environments**](#currently-supported-environments)
+- [**Features**](#features)
+- [**Algorithms**](#algorithms)
+- [**Environments**](#environments)
 - [**Installation**](#point_right-installation)
-- [**Usage**](#point_right-quickly-start)
+- [**Quickly Start**](#point_right-quickly-start)
 - [**Community**](#community)
 - [**Citation**](#citations)
 
-## Why XuanCe?
-
-### Features of XuanCe
+## Features
 
 - :school_satchel: Highly modularized.
 - :thumbsup: Easy to [learn](https://xuance.readthedocs.io/en/latest/), easy for [installation](https://xuance.readthedocs.io/en/latest/documents/usage/installation.html), and easy for [usage](https://xuance.readthedocs.io/en/latest/documents/usage/basic_usage.html).
 - :twisted_rightwards_arrows: Flexible for model combination.
-- :tada: Abundant [algorithms](https://xuance.readthedocs.io/en/latest/documents/api/agents/agents.html) with various tasks.
+- :tada: Abundant [algorithms](https://xuance.readthedocs.io/en/latest/#list-of-algorithms) with various tasks.
 - :couple: Supports both DRL and MARL tasks.
 - :key: High compatibility for different users. (PyTorch, TensorFlow2, MindSpore, CPU, GPU, Linux, Windows, MacOS, etc.)
 - :zap: Fast running speed with parallel environments. 
 - :computer: Distributed training with multi-GPUs.
+- 🎛️ Support automatically hyperparameters tuning.
 - :chart_with_upwards_trend: Good visualization effect with [tensorboard](https://www.tensorflow.org/tensorboard) or [wandb](https://wandb.ai/site) tool.
 
-## Currently Included Algorithms
+## Algorithms
 
 ### :point_right: DRL
-
-<details open>
-<summary>(Click to show supported DRL algorithms)</summary>
 
 - Deep Q Network - DQN [[Paper](https://www.nature.com/articles/nature14236)]
 - DQN with Double Q-learning - Double DQN [[Paper](https://ojs.aaai.org/index.php/AAAI/article/view/10295)]
@@ -81,6 +80,8 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
 - Distributional Reinforcement Learning - C51 [[Paper](http://proceedings.mlr.press/v70/bellemare17a/bellemare17a.pdf)]
 - Vanilla Policy Gradient -
   PG [[Paper](https://proceedings.neurips.cc/paper_files/paper/1999/file/464d828b85b0bed98e80ade0a5c43b0f-Paper.pdf)]
+- Natural Policy Gradient -
+  NPG [[Paper](https://proceedings.neurips.cc/paper_files/paper/2001/file/4b86abe48d358ecf194c56c69108433e-Paper.pdf)]
 - Phasic Policy Gradient -
   PPG [[Paper](http://proceedings.mlr.press/v139/cobbe21a/cobbe21a.pdf)] [[Code](https://github.com/openai/phasic-policy-gradient)]
 - Advantage Actor Critic -
@@ -100,12 +101,7 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
   MP-DQN [[Paper](https://arxiv.org/pdf/1905.04388.pdf)] [[Code](https://github.com/cycraig/MP-DQN)]
 - Split Parameterised Deep Q-Network - SP-DQN [[Paper](https://arxiv.org/pdf/1810.06394.pdf)]
 
-</details>
-
 ### :point_right: Multi-Agent Reinforcement Learning (MARL)
-
-<details open>
-<summary>(Click to show supported MARL algorithms)</summary>
 
 - Independent Q-learning -
   IQL [[Paper](https://hal.science/file/index/docid/720669/filename/Matignon2012independent.pdf)] [[Code](https://github.com/oxwhirl/pymarl)]
@@ -141,14 +137,9 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
 - Multi-agent Soft Actor-Critic - MASAC [[Paper](https://arxiv.org/pdf/2104.06655.pdf)]
 - Multi-agent Twin Delayed Deep Deterministic Policy Gradient - MATD3 [[Paper](https://arxiv.org/pdf/1910.01465.pdf)]
 
-</details>
+## Environments
 
-## Currently Supported Environments
-
-### [Classic Control](https://www.gymlibrary.dev/environments/classic_control/)
-
-<details open>
-<summary>(Click to hide)</summary>
+### [Classic Control](https://xuance.readthedocs.io/en/latest/documents/api/environments/single_agent_env/gym.html#classic-control)
 
 <table rules="none" align="center"><tr>
 <td> <center>
@@ -161,16 +152,11 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
 <img src="docs/source/_static/figures/classic_control/acrobot.gif" height=100" /> <br/> <font color="AAAAAA">Acrobot</font>
 </center> </td>
 <td> <center>
-<br/> <font color="AAAAAA">...</font>
-</tr>
+<img src="docs/source/_static/figures/classic_control/mountain_car.gif" height=100" /> <br/> <font color="AAAAAA">MountainCar</font>
+</center> </td>
 </table>
 
-</details>
-
-### [Box2D](https://www.gymlibrary.dev/environments/box2d/)
-
-<details open>
-<summary>(Click to hide)</summary>
+### [Box2D](https://xuance.readthedocs.io/en/latest/documents/api/environments/single_agent_env/gym.html#box2d)
 
 <table rules="none" align="center"><tr>
 <td> <center>
@@ -185,12 +171,7 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
 </tr>
 </table>
 
-</details>
-
-### [MuJoCo Environments](https://www.gymlibrary.dev/environments/mujoco/)
-
-<details open>
-<summary>(Click to hide)</summary>
+### [MuJoCo Environments](https://xuance.readthedocs.io/en/latest/documents/api/environments/single_agent_env/gym.html#mujoco)
 
 <table rules="none" align="center"><tr>
 <td> <center>
@@ -203,30 +184,23 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
 <img src="docs/source/_static/figures/mujoco/hopper.gif" height=100" /> <br/> <font color="AAAAAA">Hopper</font>
 </center> </td>
 <td> <center>
+<img src="docs/source/_static/figures/mujoco/humanoid_standup.gif" height=100" /> <br/> <font color="AAAAAA">HumanoidStandup</font>
+</center> </td>
+<td> <center>
 <img src="docs/source/_static/figures/mujoco/humanoid.gif" height=100" /> <br/> <font color="AAAAAA">Humanoid</font>
+</center> </td>
+<td> <center>
+<img src="docs/source/_static/figures/mujoco/inverted_pendulum.gif" height=100" /> <br/> <font color="AAAAAA">InvertedPendulum</font>
 </center> </td>
 <td> <center>
 <br/> <font color="AAAAAA">...</font>
 </center> </td>
 </tr>
 </table>
-</details>
 
-### [Atari Environments](https://www.gymlibrary.dev/environments/atari/)
-
-<details open>
-<summary>(Click to hide)</summary>
+### [Atari Environments](https://xuance.readthedocs.io/en/latest/documents/api/environments/single_agent_env/gym.html#atari)
 
 <table rules="none" align="center"><tr>
-<td> <center>
-<img src="docs/source/_static/figures/atari/breakout.gif" height=100" /><br/><font color="AAAAAA">Breakout</font>
-</center></td>
-<td> <center>
-<img src="docs/source/_static/figures/atari/boxing.gif" height=100" /> <br/> <font color="AAAAAA">Boxing</font>
-</center> </td>
-<td> <center>
-<img src="docs/source/_static/figures/atari/alien.gif" height=100" /> <br/> <font color="AAAAAA">Alien</font>
-</center> </td>
 <td> <center>
 <img src="docs/source/_static/figures/atari/adventure.gif" height=100" /> <br/> <font color="AAAAAA">Adventure</font>
 </center> </td>
@@ -234,44 +208,48 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
 <img src="docs/source/_static/figures/atari/air_raid.gif" height=100" /> <br/> <font color="AAAAAA">Air Raid</font>
 </center> </td>
 <td> <center>
+<img src="docs/source/_static/figures/atari/alien.gif" height=100" /> <br/> <font color="AAAAAA">Alien</font>
+</center> </td>
+<td> <center>
+<img src="docs/source/_static/figures/atari/amidar.gif" height=100" /><br/><font color="AAAAAA">Amidar</font>
+</center></td>
+<td> <center>
+<img src="docs/source/_static/figures/atari/assault.gif" height=100" /> <br/> <font color="AAAAAA">Assault</font>
+</center> </td>
+<td> <center>
+<img src="docs/source/_static/figures/atari/asterix.gif" height=100" /> <br/> <font color="AAAAAA">Asterix</font>
+</center> </td>
+<td> <center>
+<img src="docs/source/_static/figures/atari/asteroids.gif" height=100" /> <br/> <font color="AAAAAA">Asteroids</font>
+</center> </td>
+<td> <center>
 <br/> <font color="AAAAAA">...</font>
 </center> </td>
 </tr>
 </table>
 
-</details>
-
-### [Minigrid Environments](https://minigrid.farama.org/)
-
-<details open>
-<summary>(Click to hide)</summary>
+### [Minigrid Environments](https://xuance.readthedocs.io/en/latest/documents/api/environments/single_agent_env/minigrid.html)
 
 <table rules="none" align="center"><tr>
 <td> <center>
-<img src="docs/source/_static/figures/minigrid/crossing.gif" height=100" /><br/><font color="AAAAAA">Crossing</font>
+<img src="docs/source/_static/figures/minigrid/GoToDoorEnv.gif" height=100" /><br/><font color="AAAAAA">GoToDoorEnv</font>
 </center></td>
 <td> <center>
-<img src="docs/source/_static/figures/minigrid/memory.gif" height=100" /> <br/> <font color="AAAAAA">Memory</font>
+<img src="docs/source/_static/figures/minigrid/LockedRoomEnv.gif" height=100" /> <br/> <font color="AAAAAA">LockedRoomEnv</font>
 </center> </td>
 <td> <center>
-<img src="docs/source/_static/figures/minigrid/lockedroom.gif" height=100" /> <br/> <font color="AAAAAA">Locked Room</font>
+<img src="docs/source/_static/figures/minigrid/MemoryEnv.gif" height=100" /> <br/> <font color="AAAAAA">MemoryEnv</font>
 </center> </td>
 <td> <center>
-<img src="docs/source/_static/figures/minigrid/playground.gif" height=100" /> <br/> <font color="AAAAAA">Playground</font>
+<img src="docs/source/_static/figures/minigrid/PlaygroundEnv.gif" height=100" /> <br/> <font color="AAAAAA">PlaygroundEnv</font>
 </center> </td>
 <td> <center>
 <br/> <font color="AAAAAA">...</font>
 </center> </td>
 </tr>
 </table>
-</details>
 
-### [Drones Environments](https://github.com/utiasDSL/gym-pybullet-drones)
-
-[XuanCe's documentation for the installation and usage of gym-pybullet-drones](https://xuance.readthedocs.io/en/latest/documents/api/environments/drones.html).
-
-<details open>
-<summary>(Click to hide)</summary>
+### [Drones Environments](https://xuance.readthedocs.io/en/latest/documents/api/environments/multi_agent_env/drones.html)
 
 <table rules="none" align="center"><tr>
 <td> <center>
@@ -288,12 +266,14 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
 </center> </td>
 </tr>
 </table>
-</details>
 
-### [MPE Environments](https://pettingzoo.farama.org/environments/mpe/)
+### [MetaDrive](https://xuance.readthedocs.io/en/latest/documents/api/environments/single_agent_env/metadrive.html)
 
-<details open>
-<summary>(Click to hide)</summary>
+<div align="center">
+<img src="docs/source/_static/figures/metadrive/metadeive_teaser_1.gif" width="auto" height="120" align=center />
+</div>
+
+### [MPE Environments](https://xuance.readthedocs.io/en/latest/documents/api/environments/multi_agent_env/mpe.html)
 
 <table rules="none" align="center"><tr>
 <td> <center>
@@ -314,7 +294,26 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
 </tr>
 </table>
 
-</details>
+### [Robotic Warehouse](https://xuance.readthedocs.io/en/latest/documents/api/environments/multi_agent_env/robotic_warehouse.html)
+
+<table rules="none" align="center"><tr>
+<td> <center>
+<img src="docs/source/_static/figures/rware/rware.gif" height=100" /><br/><font color="AAAAAA">Example 1</font>
+</center></td>
+<td> <center>
+<img src="docs/source/_static/figures/rware/collision1.gif" height=100" /> <br/> <font color="AAAAAA">Example 2</font>
+</center> </td>
+<td> <center>
+<img src="docs/source/_static/figures/rware/collision2.gif" height=100" /> <br/> <font color="AAAAAA">Example 3</font>
+</center> </td>
+<td> <center>
+<img src="docs/source/_static/figures/rware/collision3.gif" height=100" /> <br/> <font color="AAAAAA">Example 4</font>
+</center> </td>
+<td> <center>
+<br/> <font color="AAAAAA">...</font>
+</center> </td>
+</tr>
+</table>
 
 [//]: # (### [Magent2]&#40;https://magent2.farama.org/&#41;)
 
@@ -357,13 +356,13 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
 [//]: # ()
 [//]: # (</details>)
 
-### [SMAC](https://github.com/oxwhirl/smac)
+### [SMAC](https://xuance.readthedocs.io/en/latest/documents/api/environments/multi_agent_env/smac.html)
 
 <div align="center">
 <img src="docs/source/_static/figures/smac/smac.png" width="715" height="auto" align=center />
 </div>
 
-### [Google Research Football](https://github.com/google-research/football)
+### [Google Research Football](https://xuance.readthedocs.io/en/latest/documents/api/environments/multi_agent_env/football.html)
 
 <div align="center">
 <img src="docs/source/_static/figures/football/gfootball.png" width="720" height="auto" align=center />
@@ -379,21 +378,21 @@ environment.
 
 After that, open a terminal and install **XuanCe** by the following steps.
 
-**Step 1**: Create a new conda environment (python>=3.7 is suggested):
+**Step 1**: Create and activate a new conda environment (python>=3.7 is suggested):
 
-```commandline
-conda create -n xuance_env python=3.7
+```bash
+conda create -n xuance_env python=3.8 && conda activate xuance_env
 ```
 
-**Step 2**: Activate conda environment:
+**Step 2**: Install the mpi4py dependency:
 
-```commandline
-conda activate xuance_env
+```bash
+conda install mpi4py
 ```
 
 **Step 3**: Install the library:
 
-```commandline
+```bash
 pip install xuance
 ```
 
@@ -404,6 +403,7 @@ deep learning tools, you can type `pip install xuance[torch]` for [PyTorch](http
 and `pip install xuance[all]` for all dependencies.
 
 Note: Some extra packages should be installed manually for further usage.
+Click [**here**](https://xuance.readthedocs.io/en/latest/documents/usage/installation.html) to see more details for installation.
 
 ## :point_right: Quickly Start
 
@@ -465,7 +465,8 @@ How to use wandb offline? :arrow_right: [https://github.com/wandb/server.git/](h
 ## Community
 
 - GitHub issues: [https://github.com/agi-brain/xuance/issues](https://github.com/agi-brain/xuance/issues)
-- Discord invite link: [https://discord.gg/JGgPVXrZ](https://discord.gg/JGgPVXrZ)
+- Github discussions: [https://github.com/orgs/agi-brain/discussions](https://github.com/orgs/agi-brain/discussions)
+- Discord invite link: [https://discord.gg/HJn2TBQS7y](https://discord.gg/HJn2TBQS7y)
 - Slack invite link: [https://join.slack.com/t/xuancerllib/](https://join.slack.com/t/xuancerllib/shared_invite/zt-2x2r98msi-iMX6mSVcgWwXYj95abcXIw)
 - QQ App's group number: 552432695
 - WeChat account: "玄策 RLlib"
@@ -487,9 +488,7 @@ How to use wandb offline? :arrow_right: [https://github.com/wandb/server.git/](h
 
 </details>
 
-[@TFBestPractices](https://twitter.com/TFBestPractices/status/1665770204398223361)
-
-### Citations
+## Citations
 
 If you use XuanCe in your research or development, please cite the paper:
 

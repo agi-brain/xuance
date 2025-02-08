@@ -366,7 +366,7 @@ class COMA_Policy(Module):
 
     def forward(self, observation: Dict[str, Tensor], agent_ids: Optional[Tensor] = None,
                 avail_actions: Dict[str, Tensor] = None, agent_key: str = None,
-                rnn_hidden: Optional[Dict[str, List[Tensor]]] = None, epsilon=0.0):
+                rnn_hidden: Optional[Dict[str, List[Tensor]]] = None, epsilon=0.0, test_mode=False):
         """
         Returns actions of the policy.
 
@@ -382,7 +382,7 @@ class COMA_Policy(Module):
             rnn_hidden_new (Optional[Dict[str, List[Tensor]]]): The new RNN hidden states of actor representation.
             act_probs (dict): The probabilities of the actions.
         """
-        rnn_hidden_new, pi_logits, act_probs, pi_dists = {}, {}, {}, {}
+        rnn_hidden_new, pi_logits, act_probs = {}, {}, {}
         agent_list = self.model_keys if agent_key is None else [agent_key]
 
         if avail_actions is not None:
@@ -402,18 +402,12 @@ class COMA_Policy(Module):
                 actor_input = outputs['state']
 
             pi_logits[key] = self.actor[key](actor_input)
-            if avail_actions is not None:
-                avail_actions = Tensor(avail_actions)
-                pi_logits[key][avail_actions == 0] = -1e10
             act_probs[key] = nn.functional.softmax(pi_logits[key], dim=-1)
-            act_probs[key] = (1 - epsilon) * act_probs[key] + epsilon * 1 / self.n_actions[key]
-            if avail_actions is not None:
-                avail_actions = Tensor(avail_actions)
-                act_probs[key][avail_actions == 0] = 0.0
 
-            pi_dists[key] = Categorical(act_probs[key])
+            if not test_mode:
+                act_probs[key] = (1 - epsilon) * act_probs[key] + epsilon * 1 / self.n_actions[key]
 
-        return rnn_hidden_new, pi_dists
+        return rnn_hidden_new, act_probs
 
     def get_values(self, state: Tensor, observation: Dict[str, Tensor], actions: Dict[str, Tensor],
                    agent_ids: Tensor = None, rnn_hidden: Optional[Dict[str, List[Tensor]]] = None, target=False):

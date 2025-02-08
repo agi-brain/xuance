@@ -49,7 +49,7 @@ class VDAC_Learner(IAC_Learner):
         if self.use_parameter_sharing:
             values_n = values_pred_individual[self.model_keys[0]].reshape(batch_size, self.n_agents)
         else:
-            values_n = torch.cat(itemgetter(*self.agent_keys)(values_pred_individual), dim=-1)
+            values_n = self.get_joint_input(values_pred_individual)
         if self.config.mixer == "VDN":
             values_tot = self.policy.value_tot(values_n)
         elif self.config.mixer == "QMIX":
@@ -161,8 +161,11 @@ class VDAC_Learner(IAC_Learner):
             values_n = values_pred_individual[self.model_keys[0]].reshape(
                 batch_size, self.n_agents, seq_len).transpose(1, 2).reshape(-1, self.n_agents)
         else:
-            values_n = torch.stack(itemgetter(*self.agent_keys)(values_pred_individual),
-                                   dim=2).reshape(-1, self.n_agents)
+            if self.n_agents == 1:
+                values_n = values_pred_individual[self.agent_keys[0]].reshape(-1, self.n_agents)
+            else:
+                values_n = torch.stack(itemgetter(*self.agent_keys)(values_pred_individual),
+                                       dim=2).reshape(-1, self.n_agents)
         if self.config.mixer == "VDN":
             values_tot = self.policy.value_tot(values_n)
         elif self.config.mixer == "QMIX":

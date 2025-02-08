@@ -227,6 +227,7 @@ class OffPolicyMARLAgents(MARLAgents):
         Parameters:
             n_steps (int): The number of steps to train the model.
         """
+        return_info = {}
         if self.use_rnn:
             with tqdm(total=n_steps) as process_bar:
                 step_start, step_last = deepcopy(self.current_step), deepcopy(self.current_step)
@@ -236,10 +237,11 @@ class OffPolicyMARLAgents(MARLAgents):
                     if self.current_step >= self.start_training:
                         train_info = self.train_epochs(n_epochs=self.n_epochs)
                         self.log_infos(train_info, self.current_step)
+                        return_info.update(train_info)
                     process_bar.update((self.current_step - step_last) // self.n_envs)
                     step_last = deepcopy(self.current_step)
                 process_bar.update(n_steps - process_bar.last_print_n)
-            return
+            return return_info
 
         obs_dict = self.envs.buf_obs
         avail_actions = self.envs.buf_avail_actions if self.use_actions_mask else None
@@ -257,6 +259,7 @@ class OffPolicyMARLAgents(MARLAgents):
             if self.current_step >= self.start_training and self.current_step % self.training_frequency == 0:
                 train_info = self.train_epochs(n_epochs=self.n_epochs)
                 self.log_infos(train_info, self.current_step)
+                return_info.update(train_info)
             obs_dict = deepcopy(next_obs_dict)
             if self.use_global_state:
                 state = deepcopy(next_state)
@@ -282,9 +285,11 @@ class OffPolicyMARLAgents(MARLAgents):
                         step_info[f"Train-Results/Episode-Rewards/rank_{self.rank}"] = {
                             "env-%d" % i: np.mean(itemgetter(*self.agent_keys)(info[i]["episode_score"]))}
                     self.log_infos(step_info, self.current_step)
+                    return_info.update(step_info)
 
             self.current_step += self.n_envs
             self._update_explore_factor()
+        return return_info
 
     def run_episodes(self, env_fn=None, n_episodes: int = 1, test_mode: bool = False):
         """

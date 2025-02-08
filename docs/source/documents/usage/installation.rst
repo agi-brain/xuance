@@ -12,31 +12,22 @@ You can choose between two installation methods: from PyPI or GitHub repository.
 
     XuanCe can be installed on MacOS and be compatible with both Intel and Apple's M CPUs.
 
-Install via PyPI
+Install XuanCe
 ---------------------------------------------
 
-**Step 1**: Create a new conda environment (python>=3.7 is suggested).
+**Step 1**: Create and activate a new conda environment (python>=3.7 is suggested).
 
 .. code-block:: bash
 
-    conda create -n xuance_env python=3.7
+    conda create -n xuance_env python=3.8 && conda activate xuance_env
 
-**Step 2**: Activate conda environment.
+**Step 2**: Install the ``mpi4py`` dependency.
 
 .. code-block:: bash
     
-    conda activate xuance_env
+    conda install mpi4py
 
-.. note::
-
-    In step 2, it is recommended to pre-install mpi4py via Conda before installing XuanCe.
-    Otherwise, the installation may fail to build the mpi4py wheel.
-
-    .. code-block:: bash
-
-        conda install mpi4py  # recommended
-
-**Step 3**: Install the library.
+**Step 3**: Install ``xuance``.
 
 .. tabs::
 
@@ -70,42 +61,7 @@ Install via PyPI
 
             pip install xuance[all]
 
-
-Install from GitHub repository
----------------------------------------------
-
-Alternatively, you can install XuanCe from its GitHub repository.
-
-.. note::
-
-    Note: The steps 1-2 are the same as above.
-
-**Step 1**: Create a new conda environment (python>=3.7 is suggested).
-
-.. code-block:: bash
-
-    conda create -n xuance_env python=3.7
-
-**Step 2**: Activate conda environment.
-
-.. code-block:: bash
-
-    conda activate xuance_env
-    conda install mpi4py  # recommended
-
-**Step 3**: Download the source code of XuanCe from GitHub.
-
-.. code-block:: bash
-
-    git clone https://github.com/agi-brain/xuance.git
-
-**Step 4**: Change directory to the xuance.
-
-.. code-block:: bash
-
-    cd xuance
-
-**Step 5**: Install xuance.
+Alternatively, you can also install ``xuance`` from its GitHub repository.
 
 .. tabs::
 
@@ -113,48 +69,46 @@ Alternatively, you can install XuanCe from its GitHub repository.
 
         .. code-block:: bash
 
+            git clone https://github.com/agi-brain/xuance.git
+            cd xuance
             pip install -e .
 
     .. tab:: |_4| |torch| |_4|
 
         .. code-block:: bash
 
+            git clone https://github.com/agi-brain/xuance.git
+            cd xuance
             pip install -e .[torch]
 
     .. tab:: |tensorflow|
 
         .. code-block:: bash
 
+            git clone https://github.com/agi-brain/xuance.git
+            cd xuance
             pip install -e .[tensorflow]
 
     .. tab:: |mindspore|
 
         .. code-block:: bash
 
+            git clone https://github.com/agi-brain/xuance.git
+            cd xuance
             pip install -e .[mindspore]
 
     .. tab:: All DL toolbox
 
         .. code-block:: bash
 
+            git clone https://github.com/agi-brain/xuance.git
+            cd xuance
             pip install -e .[all]
 
 .. attention::
 
     Some extra packages should be installed manually for further usage.
     See `Install external dependencies <#id1>`_
-
-.. tip::
-
-    If your IP address is in Chinese mainland, you can install it with a mirror image to speed up the installation,
-    for example, you can choose one of the following commands to finish installation.
-
-    .. code-block:: bash
-
-        pip install xuance -i https://pypi.tuna.tsinghua.edu.cn/simple
-        pip install xuance -i https://pypi.mirrors.ustc.edu.cn/simple
-        pip install xuance -i http://mirrors.aliyun.com/pypi/simple/
-        pip install xuance -i http://pypi.douban.com/simple/
 
 .. error::
 
@@ -184,13 +138,24 @@ Alternatively, you can install XuanCe from its GitHub repository.
 
         pip install mpi4py
 
+.. tip::
+
+    If your IP address is in Chinese mainland, you can install it with a mirror image to speed up the installation,
+    for example, you can choose one of the following commands to finish installation.
+
+    .. code-block:: bash
+
+        pip install xuance -i https://pypi.tuna.tsinghua.edu.cn/simple
+        pip install xuance -i https://pypi.mirrors.ustc.edu.cn/simple
+        pip install xuance -i http://mirrors.aliyun.com/pypi/simple/
+        pip install xuance -i http://pypi.douban.com/simple/
 
 .. _Anaconda: https://www.anaconda.com/download
 .. _PyTorch: https://pytorch.org/get-started/locally/
 .. _TensorFlow2: https://www.tensorflow.org/install
 .. _MindSpore: https://www.mindspore.cn/install/en
 
-Testing whether the installation was successful
+Test the installation
 --------------------------------------------------------------------
 
 After installing XuanCe, you can enter the Python runtime environment by typing "python" in the terminal.
@@ -415,8 +380,13 @@ You can install the SMAC package directly from the GitHub:
     By default, the game is expected to be in ~/StarCraftII/ directory.
     This can be changed by setting the environment variable SC2PATH.
 
-For more information about SMAC environment, you can visit its homepage
-`https://github.com/oxwhirl/smac.git <https://github.com/oxwhirl/smac.git>`_.
+**Step 3: SMAC Maps**
+
+Once you have installed ``smac`` and StarCraft II, you need to download the
+`SMAC Maps <https://github.com/oxwhirl/smac/releases/download/v0.1-beta1/SMAC_Maps.zip>`_,
+and extract it to the ``$SC2PATH/Maps$`` directory.
+If you installed ``smac`` via git, simply copy the ``SMAC_Maps`` directory
+from ``smac/env/starcraft2/maps/`` into ``$SC2PATH/Maps`` directory.
 
 Google Research Football
 ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -545,4 +515,58 @@ During the installation of gym-pybullet-drones, you might encounter the errors l
 DCG algorithm dependency (torch-scatter)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+The DCG algorithm in the XuanCe project relies on the torch-scatter library.
+In most cases, you can install it directly using the following command:
 
+.. code-block:: bash
+
+    pip install torch-scatter
+
+However, on certain systems (e.g., specific operating systems or hardware environments),
+this command may result in installation errors.
+To ensure compatibility, follow the steps below to correctly install torch-scatter:
+
+**1. Check Your PyTorch and CUDA Versions**
+
+Use the following command to check the installed version of PyTorch and CUDA in your environment:
+
+.. code-block:: bash
+
+    python -c "import torch; print(torch.__version__, torch.version.cuda)"
+
+Take note of the PyTorch version (e.g., 2.0.1) and the CUDA version (e.g., 11.8) as they will be needed to select the appropriate version of torch-scatter.
+
+**2. Refer to the Official torch-scatter Installation Guide**
+
+Visit the `official torch-scatter installation page <https://pypi.org/project/torch-scatter/>`_ (internet connection required).
+Find the installation command that matches your PyTorch and CUDA versions. For example:
+
+- If your PyTorch version is 2.0.1 and CUDA version is 11.8, run:
+
+.. code-block:: bash
+
+    pip install torch-scatter -f https://data.pyg.org/whl/torch-2.0.1+cu118.html
+
+- If you are using the CPU-only version of PyTorch, choose the +cpu installation link, such as:
+
+.. code-block:: bash
+
+    pip install torch-scatter -f https://data.pyg.org/whl/torch-2.0.1+cpu.html
+
+**3. Troubleshooting Compatibility Issues**
+
+If you encounter issues during installation, ensure the following:
+- PyTorch is correctly installed and the version matches the selected torch-scatter wheel.
+- Your Python and pip versions are up to date. You can update pip using:
+
+.. code-block:: bash
+
+    python -m pip install --upgrade pip
+
+**4. Verify Installation**
+
+After installation, verify that torch-scatter is installed successfully by running:
+
+.. code-block:: bash
+
+    python -c "import torch_scatter; print('torch-scatter installed successfully')"

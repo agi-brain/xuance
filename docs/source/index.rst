@@ -99,6 +99,7 @@ Here are its key features:
 - **Broad Compatibility**: Supports PyTorch, TensorFlow, MindSpore, and runs efficiently on CPU, GPU, and across Linux, Windows, and macOS.
 - **High Performance**: Delivers fast execution speeds, leveraging vectorized environments for efficiency.
 - **Distributed Training**: Enables multi-GPU training for scaling up experiments.
+- **Hyperparameters Tuning**: Supports automatically hyperparameters tuning.
 - **Enhanced Visualization**: Provides intuitive and comprehensive visualization with tools like TensorBoard and Weights & Biases (wandb).
 
 List of Algorithms
@@ -118,6 +119,7 @@ List of Algorithms
 **Policy-based:**
 
 * :class:`PG_Agent` : :doc:`Policy Gradient (PG) <documents/api/agents/drl/pg_agent>`.
+* :class:`NPG_Agent` : :doc:`Natural Policy Gradient (NPG) <documents/api/agents/drl/npg_agent>`.
 * :class:`A2C_Agent` : :doc:`Advantage Actor Critic (A2C) <documents/api/agents/drl/a2c_agent>`.
 * :class:`PPOKL_Agent` : :doc:`Proximal Policy Optimization with KL Divergence (PPO-KL) <documents/api/agents/drl/ppokl_agent>`.
 * :class:`PPOCLIP_Agent` : :doc:`Proximal Policy Optimization with Clipped Objective (PPO-Clip) <documents/api/agents/drl/ppoclip_agent>`.
@@ -208,6 +210,6 @@ APIs of XuanCe
 
    Github <https://github.com/agi-brain/xuance.git>
    documents/release_log
-   Contribute to XuanCe <https://github.com/agi-brain/xuance/pulls>
+   documents/CONTRIBUTING
    Contribute to the Docs (EN) <https://github.com/agi-brain/xuance/tree/master/docs>
    Contribute to the Docs (CN) <https://github.com/agi-brain/xuance-docs-zh_CN/tree/master/docs>

@@ -9,6 +9,7 @@ from xuance.common import List, Optional, Union
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.torch import Module, Tensor
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
+from xuance.torch.utils.distributions import Categorical
 from xuance.torch.policies import REGISTRY_Policy
 from xuance.torch.agents import OnPolicyMARLAgents
 
@@ -135,14 +136,21 @@ class COMA_Agents(OnPolicyMARLAgents):
         rnn_hidden_critic_new, log_pi_a_dict, values_dict, actions_out = {}, {}, {}, None
 
         obs_input, agents_id, avail_actions_input = self._build_inputs(obs_dict, avail_actions_dict)
-        rnn_hidden_actor_new, pi_dists = self.policy(observation=obs_input,
+        rnn_hidden_actor_new, pi_probs = self.policy(observation=obs_input,
                                                      agent_ids=agents_id,
                                                      avail_actions=avail_actions_input,
                                                      rnn_hidden=rnn_hidden_actor,
-                                                     epsilon=self.egreedy)
+                                                     epsilon=self.egreedy,
+                                                     test_mode=test_mode)
+
         if self.use_parameter_sharing:
             key = self.agent_keys[0]
-            actions_sample = pi_dists[key].sample()
+            pi_probs[key][Tensor(avail_actions_input[key]) == 0] = 0.0
+            if test_mode:
+                actions_sample = pi_probs[key].max(dim=-1)[1]
+            else:
+                pi_dists = Categorical(probs=pi_probs[key])
+                actions_sample = pi_dists.sample()
             actions_out = actions_sample.reshape(n_env, self.n_agents)
             actions_dict = [{k: actions_out[e, i].cpu().detach().numpy() for i, k in enumerate(self.agent_keys)}
                             for e in range(n_env)]
@@ -151,7 +159,13 @@ class COMA_Agents(OnPolicyMARLAgents):
             agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(n_env, -1, -1).to(self.device)
             bs = n_env * self.n_agents
             agents_id = agents_id.reshape(bs, 1, -1) if self.use_rnn else agents_id.reshape(bs, -1)
-            actions_sample = {k: pi_dists[k].sample() for k in self.agent_keys}
+            for k in self.agent_keys:
+                pi_probs[k][Tensor(avail_actions_input[k]) == 0] = 0.0
+            if test_mode:
+                actions_sample = {k: pi_probs[k].max(dim=-1)[1] for k in self.agent_keys}
+            else:
+                pi_dists = {k: Categorical(probs=pi_probs[k]) for k in self.agent_keys}
+                actions_sample = {k: pi_dists[k].sample() for k in self.agent_keys}
             actions_out = torch.stack(itemgetter(*self.agent_keys)(actions_sample), dim=-1)
             actions_dict = [{k: actions_sample[k].cpu().detach().numpy()[e].reshape([]) for k in self.agent_keys}
                             for e in range(n_env)]
@@ -159,13 +173,13 @@ class COMA_Agents(OnPolicyMARLAgents):
 
         if not test_mode:  # calculate target values
             if self.use_rnn:
-                state = Tensor(state).reshape(n_env, 1, -1)
+                state = Tensor(np.array(state)).reshape(n_env, 1, -1)
                 if self.use_parameter_sharing:
                     actions_onehot = {k: actions_onehot[k].unsqueeze(1) for k in self.model_keys}
                 else:
                     actions_onehot = {k: actions_onehot[k] for k in self.model_keys}
             else:
-                state = Tensor(state).reshape(n_env, -1)
+                state = Tensor(np.array(state)).reshape(n_env, -1)
 
             rnn_hidden_critic_new, values_out = self.policy.get_values(state=Tensor(state).to(self.device),
                                                                        observation=obs_input,

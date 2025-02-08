@@ -972,17 +972,17 @@ MARL algorithms
 
                     .. group-tab:: simple_spread_v3
 
-                        .. literalinclude:: ../../../_static/configs/maddpg/mpe/simple_spread_v3.yaml
+                        .. literalinclude:: ../../../_static/configs/matd3/mpe/simple_spread_v3.yaml
                             :language: yaml
 
                     .. group-tab:: simple_push_v3
 
-                        .. literalinclude:: ../../../_static/configs/maddpg/mpe/simple_push_v3.yaml
+                        .. literalinclude:: ../../../_static/configs/matd3/mpe/simple_push_v3.yaml
                             :language: yaml
 
                     .. group-tab:: simple_adversary_v3
 
-                        .. literalinclude:: ../../../_static/configs/maddpg/mpe/simple_adversary_v3.yaml
+                        .. literalinclude:: ../../../_static/configs/matd3/mpe/simple_adversary_v3.yaml
                             :language: yaml
 
     .. group-tab:: MFQ
