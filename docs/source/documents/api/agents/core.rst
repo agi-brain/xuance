@@ -50,22 +50,22 @@ TensorFlow2
 MindSpore
 ^^^^^^^^^^^^^
 
-.. automodule:: xuance.mindpore.agents.core.off_policy
+.. automodule:: xuance.mindspore.agents.core.off_policy
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. automodule:: xuance.mindpore.agents.core.off_policy_marl
+.. automodule:: xuance.mindspore.agents.core.off_policy_marl
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. automodule:: xuance.mindpore.agents.core.on_policy
+.. automodule:: xuance.mindspore.agents.core.on_policy
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. automodule:: xuance.mindpore.agents.core.on_policy_marl
+.. automodule:: xuance.mindspore.agents.core.on_policy_marl
     :members:
     :undoc-members:
     :show-inheritance:
