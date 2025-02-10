@@ -9,12 +9,11 @@ class BaseComm(Module):
         return
 
 
-class NoneComm():
+class NoneComm(Module):
     def __init__(self):
-        pass
+        super().__init__()
 
     def forward(self):
         pass
 
 
-    
