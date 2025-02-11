@@ -8,6 +8,7 @@ from .mfq_learner import MFQ_Learner
 from .iac_learner import IAC_Learner
 from .coma_learner import COMA_Learner
 from .vdac_learner import VDAC_Learner
+from .ic3net_learner import IC3Net_Learner
 from .iddpg_learner import IDDPG_Learner
 from .isac_learner import ISAC_Learner
 from .isacdis_learner import ISACDIS_Learner

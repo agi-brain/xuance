@@ -33,6 +33,7 @@ from .multi_agent_rl import DCG_Agents
 from .multi_agent_rl import IAC_Agents
 from .multi_agent_rl import VDAC_Agents
 from .multi_agent_rl import COMA_Agents
+from .multi_agent_rl import IC3Net_Agents
 from .multi_agent_rl import IDDPG_Agents
 from .multi_agent_rl import MADDPG_Agents
 from .multi_agent_rl import MFQ_Agents
@@ -78,6 +79,7 @@ REGISTRY_Agents = {
     "IAC": IAC_Agents,
     "VDAC": VDAC_Agents,
     "COMA": COMA_Agents,
+    "IC3Net": IC3Net_Agents,
     "IDDPG": IDDPG_Agents,
     "MADDPG": MADDPG_Agents,
     "MFQ": MFQ_Agents,
@@ -101,7 +103,7 @@ __all__ = [
     "NoisyDQN_Agent", "C51_Agent", "QRDQN_Agent", "PerDQN_Agent", "DRQN_Agent","NPG_Agent",
 
     "IQL_Agents", "VDN_Agents", "QMIX_Agents", "WQMIX_Agents", "QTRAN_Agents", "DCG_Agents",
-    "IAC_Agents", "VDAC_Agents", "COMA_Agents", "IDDPG_Agents", "MADDPG_Agents",
+    "IAC_Agents", "VDAC_Agents", "COMA_Agents", "IDDPG_Agents", "MADDPG_Agents", "IC3Net_Agents",
     "MFQ_Agents", "MFAC_Agents", "IPPO_Agents", "MAPPO_Agents",
     "ISAC_Agents", "MASAC_Agents", "MATD3_Agents"
 ]
