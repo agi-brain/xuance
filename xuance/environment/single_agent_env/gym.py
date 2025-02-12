@@ -184,9 +184,12 @@ class Atari_Env(gym.Wrapper):
         self.frames.append(self.observation(observation))
         lives = self.env.ale.lives()
         # avoid environment bug
+        if self._episode_step >= self.max_episode_steps:
+            terminated = True
         self.was_real_done = terminated
         if (lives < self.lifes) and (lives > 0):
             terminated = True
+        truncated = self.was_real_done
         self.lifes = lives
         self._episode_step += 1
         return self._get_obs(), self.reward(reward), terminated, truncated, info
