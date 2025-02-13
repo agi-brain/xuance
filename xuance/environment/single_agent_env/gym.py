@@ -30,7 +30,7 @@ class Gym_Env(gym.Wrapper):
         self.reward_range = self.env.reward_range
         self.max_episode_steps = self.env._max_episode_steps
 
-    def render(self, mode):
+    def render(self, *args):
         return self.env.render()
 
     def reset(self):
@@ -136,8 +136,8 @@ class Atari_Env(gym.Wrapper):
     def close(self):
         self.env.close()
 
-    def render(self, render_mode):
-        return self.env.render(render_mode)
+    def render(self, *args, **kwargs):
+        return self.env.render()
 
     def reset(self):
         info = {}
