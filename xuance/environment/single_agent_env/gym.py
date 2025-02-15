@@ -103,7 +103,7 @@ class Atari_Env(gym.Wrapper):
                             full_action_space=full_action_space)
         self.env.action_space.seed(seed=config.env_seed)
         self.env.unwrapped.reset(seed=config.env_seed)
-        self.max_episode_steps = self.env._max_episode_steps if hasattr(self.env, '_max_episode_steps') else None
+        self.max_episode_steps = self.env._max_episode_steps if hasattr(self.env, '_max_episode_steps') else 1e5
         super(Atari_Env, self).__init__(self.env)
         # self.env.seed(config.env_seed)
         self.num_stack = config.num_stack
