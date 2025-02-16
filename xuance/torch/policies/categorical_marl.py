@@ -424,6 +424,14 @@ class MAAC_Policy_With_Communication(MAAC_Policy):
         return rnn_hidden_new, values
 
 
+class IC3Net(MAAC_Policy):
+    def __init__(self):
+        super(IC3Net, self).__init__()
+
+    def forward(self):
+        pass
+
+
 class COMA_Policy(Module):
     """
     COMA_Policy: Counterfactual Multi-Agent Actor-Critic Policy with categorical distributions.
