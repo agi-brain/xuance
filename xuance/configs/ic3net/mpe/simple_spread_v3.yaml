@@ -4,7 +4,7 @@ env_id: "simple_spread_v3"
 env_seed: 1
 continuous_action: False
 learner: "IC3Net_Learner"
-policy: "Categorical_MAAC_Policy"
+policy: "IC3NetPolicy"
 representation: "Basic_RNN"
 vectorize: "DummyVecMultiAgentEnv"
 runner: "MARL"
