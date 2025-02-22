@@ -498,6 +498,15 @@ class IC3NetPolicy(MAAC_Policy_With_Communication):
                 outputs = self.actor_representation[key](observation[key])
                 rnn_hidden_new[key] = [None, None]
 
+            # Here to encode messages to send to others
+            if self.use_parameter_sharing:
+                communicator_input = torch.concat([outputs['state'], agent_ids], dim=-1)
+            else:
+                communicator_input = outputs['state']
+
+            msg_to_send = self.communicators(communicator_input)
+            msg_receive = self.communicators.receive(msg_to_send, key)
+
             if self.use_parameter_sharing:
                 actor_input = torch.concat([outputs['state'], agent_ids], dim=-1)
             else:
