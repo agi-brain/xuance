@@ -417,7 +417,8 @@ class OnPolicyMARLAgents(MARLAgents):
                         if all(terminated_dict[i].values()):
                             value_next = {key: 0.0 for key in self.agent_keys}
                         else:
-                            _, value_next = self.values_next(i_env=i, obs_dict=obs_dict[i], state=state[i],
+                            _, value_next = self.values_next(i_env=i, obs_dict=obs_dict[i],
+                                                             state=None if state is None else state[i],
                                                              rnn_hidden_critic=rnn_hidden_critic)
                         self.memory.finish_path(i_env=i, i_step=info[i]['episode_step'], value_next=value_next,
                                                 value_normalizer=self.learner.value_normalizer)
