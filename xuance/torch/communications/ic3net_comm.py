@@ -28,6 +28,7 @@ class Ic3NetComm(Module):
         self.n_action_heads = n_action_heads
         self.init_std = init_std
         self.recurrent = recurrent
+        self.comm_init = comm_init
         self.device = device
         self.use_parameter_sharing = kwargs['use_parameter_sharing']
 
