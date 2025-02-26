@@ -130,8 +130,8 @@ class IDDPG_Agents(OffPolicyMARLAgents):
         else:
             for key in self.agent_keys:
                 actions[key] = actions[key].reshape(batch_size, -1).cpu().detach().numpy()
-                if not test_mode:
-                    actions = self.exploration(batch_size, actions)
+            if not test_mode:
+                actions = self.exploration(batch_size, actions)
             actions_dict = [{k: actions[k][i] for k in self.agent_keys} for i in range(batch_size)]
 
         return {"hidden_state": hidden_state, "actions": actions_dict}

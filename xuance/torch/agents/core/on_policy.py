@@ -109,7 +109,8 @@ class OnPolicyAgent(Agent):
                 train_info = self.learner.update(**samples)
         return train_info
 
-    def train(self, train_steps: int) -> None:
+    def train(self, train_steps: int) -> dict:
+        return_info = {}
         obs = self.envs.buf_obs
         for _ in tqdm(range(train_steps)):
             step_info = {}
@@ -129,6 +130,7 @@ class OnPolicyAgent(Agent):
                         self.memory.finish_path(vals[i], i)
                 train_info = self.train_epochs(self.n_epochs)
                 self.log_infos(train_info, self.current_step)
+                return_info.update(train_info)
                 self.memory.clear()
 
             self.returns = self.gamma * self.returns + rewards
@@ -156,7 +158,9 @@ class OnPolicyAgent(Agent):
                             step_info[f"Train-Episode-Rewards/rank_{self.rank}"] = {
                                 f"env-{i}": infos[i]["episode_score"]}
                         self.log_infos(step_info, self.current_step)
+                        return_info.update(step_info)
             self.current_step += self.n_envs
+        return return_info
 
     def test(self, env_fn, test_episodes: int) -> list:
         test_envs = env_fn()

@@ -15,6 +15,7 @@ DRL Agent
     QR-DQN <drl/qrdqn_agent>
     DRQN <drl/drqn_agent>
     PG <drl/pg_agent>
+    NPG <drl/npg_agent>
     A2C <drl/a2c_agent>
     PPO-KL <drl/ppokl_agent>
     PPO-Clip <drl/ppoclip_agent>
@@ -40,6 +41,7 @@ DRL Agent
 **Policy-based:**
 
 * :class:`PG_Agent` : :doc:`Policy Gradient (PG) <drl/pg_agent>`.
+* :class:`NPG_Agent` : :doc:`Natural Policy Gradient (NPG) <drl/npg_agent>`.
 * :class:`A2C_Agent` : :doc:`Advantage Actor Critic (A2C) <drl/a2c_agent>`.
 * :class:`PPOKL_Agent` : :doc:`Proximal Policy Optimization with KL Divergence (PPO-KL) <drl/ppokl_agent>`.
 * :class:`PPOCLIP_Agent` : :doc:`Proximal Policy Optimization with Clipped Objective (PPO-Clip) <drl/ppoclip_agent>`.

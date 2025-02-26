@@ -120,6 +120,7 @@ class OffPolicyAgent(Agent):
         return train_info
 
     def train(self, train_steps):
+        return_info = {}
         obs = self.envs.buf_obs
         for _ in tqdm(range(train_steps)):
             step_info = {}
@@ -133,6 +134,7 @@ class OffPolicyAgent(Agent):
             if self.current_step > self.start_training and self.current_step % self.training_frequency == 0:
                 train_info = self.train_epochs(n_epochs=self.n_epochs)
                 self.log_infos(train_info, self.current_step)
+                return_info.update(train_info)
 
             self.returns = self.gamma * self.returns + rewards
             obs = deepcopy(next_obs)
@@ -154,9 +156,11 @@ class OffPolicyAgent(Agent):
                             step_info[f"Train-Episode-Rewards/rank_{self.rank}"] = {
                                 f"env-{i}": infos[i]["episode_score"]}
                         self.log_infos(step_info, self.current_step)
+                        return_info.update(step_info)
 
             self.current_step += self.n_envs
             self._update_explore_factor()
+        return return_info
 
     def test(self, env_fn, test_episodes: int) -> list:
         test_envs = env_fn()

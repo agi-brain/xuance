@@ -3,7 +3,7 @@ from optuna.visualization import plot_optimization_history
 
 tuner = HyperParameterTuner(method='dqn',
                             config_path='../dqn/dqn_configs/dqn_cartpole.yaml',
-                            running_steps=1000,
+                            running_steps=10000,
                             test_episodes=2)
 
 selected_hyperparameters = tuner.select_hyperparameter(['learning_rate', 'gamma'])

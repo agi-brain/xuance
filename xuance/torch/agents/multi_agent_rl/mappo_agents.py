@@ -30,9 +30,11 @@ class MAPPO_Agents(IPPO_Agents):
         Returns:
             policy (torch.nn.Module): A dict of policies.
         """
+        self.continuous_control = self.config.continuous_action
         normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
         initializer = torch.nn.init.orthogonal_
         activation = ActivationFunctions[self.config.activation]
+        activation_action = ActivationFunctions[self.config.activation_action] if self.continuous_control else None
         device = self.device
         # build representations
         A_representation = self._build_representation(self.config.representation, self.observation_space, self.config)
@@ -40,30 +42,21 @@ class MAPPO_Agents(IPPO_Agents):
             dim_obs_all = sum(self.state_space.shape)
         else:
             dim_obs_all = sum([sum(self.observation_space[k].shape) for k in self.agent_keys])
-        space_critic_in = {k: (dim_obs_all, ) for k in self.agent_keys}
+        space_critic_in = {k: (dim_obs_all,) for k in self.agent_keys}
         C_representation = self._build_representation(self.config.representation, space_critic_in, self.config)
         # build policies
-        if self.config.policy == "Categorical_MAAC_Policy":
-            policy = REGISTRY_Policy["Categorical_MAAC_Policy"](
-                action_space=self.action_space, n_agents=self.n_agents,
-                representation_actor=A_representation, representation_critic=C_representation,
-                actor_hidden_size=self.config.actor_hidden_size, critic_hidden_size=self.config.critic_hidden_size,
-                normalize=normalize_fn, initialize=initializer, activation=activation,
-                device=device, use_distributed_training=self.distributed_training,
-                use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
-                use_rnn=self.use_rnn, rnn=self.config.rnn if self.use_rnn else None)
-            self.continuous_control = False
-        elif self.config.policy == "Gaussian_MAAC_Policy":
-            policy = REGISTRY_Policy["Gaussian_MAAC_Policy"](
-                action_space=self.action_space, n_agents=self.n_agents,
-                representation_actor=A_representation, representation_critic=C_representation,
-                actor_hidden_size=self.config.actor_hidden_size, critic_hidden_size=self.config.critic_hidden_size,
-                normalize=normalize_fn, initialize=initializer, activation=activation,
-                activation_action=ActivationFunctions[self.config.activation_action],
-                device=device, use_distributed_training=self.distributed_training,
-                use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
-                use_rnn=self.use_rnn, rnn=self.config.rnn if self.use_rnn else None)
-            self.continuous_control = True
+        policy_settings = dict(
+            action_space=self.action_space, n_agents=self.n_agents,
+            representation_actor=A_representation, representation_critic=C_representation,
+            actor_hidden_size=self.config.actor_hidden_size, critic_hidden_size=self.config.critic_hidden_size,
+            normalize=normalize_fn, initialize=initializer,
+            activation=activation, activation_action=activation_action,
+            device=device, use_distributed_training=self.distributed_training,
+            use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
+            use_rnn=self.use_rnn, rnn=self.config.rnn if self.use_rnn else None
+        )
+        if self.config.policy in ["Categorical_MAAC_Policy", "Gaussian_MAAC_Policy"]:
+            policy = REGISTRY_Policy[self.config.policy](**policy_settings)
         else:
             raise AttributeError(f"MAPPO currently does not support the policy named {self.config.policy}.")
         return policy

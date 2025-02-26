@@ -7,7 +7,6 @@ from torch import nn
 from xuance.common import List
 from argparse import Namespace
 from xuance.torch.learners.multi_agent_rl.isac_learner import ISAC_Learner
-from operator import itemgetter
 
 
 class MASAC_Learner(ISAC_Learner):
@@ -44,9 +43,9 @@ class MASAC_Learner(ISAC_Learner):
             terminals[key] = terminals[key].reshape(batch_size * self.n_agents)
         else:
             bs = batch_size
-            obs_joint = torch.concat(itemgetter(*self.agent_keys)(obs), dim=-1).reshape(batch_size, -1)
-            next_obs_joint = torch.concat(itemgetter(*self.agent_keys)(obs_next), dim=-1).reshape(batch_size, -1)
-            actions_joint = torch.concat(itemgetter(*self.agent_keys)(actions), dim=-1).reshape(batch_size, -1)
+            obs_joint = self.get_joint_input(obs, (batch_size, -1))
+            next_obs_joint = self.get_joint_input(obs_next, (batch_size, -1))
+            actions_joint = self.get_joint_input(actions, (batch_size, -1))
 
         # train the model
         _, actions_eval, log_pi_eval = self.policy(observation=obs, agent_ids=IDs)
@@ -55,7 +54,7 @@ class MASAC_Learner(ISAC_Learner):
             key = self.model_keys[0]
             actions_next_joint = actions_next[key].reshape(batch_size, self.n_agents, -1).reshape(batch_size, -1)
         else:
-            actions_next_joint = torch.concat(itemgetter(*self.model_keys)(actions_next), -1).reshape(batch_size, -1)
+            actions_next_joint = self.get_joint_input(actions_next, (batch_size, -1))
         _, _, action_q_1, action_q_2 = self.policy.Qaction(joint_observation=obs_joint, joint_actions=actions_joint,
                                                            agent_ids=IDs)
         _, _, target_q = self.policy.Qtarget(joint_observation=next_obs_joint, joint_actions=actions_next_joint,
@@ -86,8 +85,7 @@ class MASAC_Learner(ISAC_Learner):
             else:
                 actions_eval_detach_others = {k: actions_eval[k] if k == key else actions_eval[k].detach()
                                               for k in self.model_keys}
-                actions_eval_joint = torch.concat(itemgetter(*self.model_keys)(actions_eval_detach_others),
-                                                  dim=-1).reshape(batch_size, -1)
+                actions_eval_joint = self.get_joint_input(actions_eval_detach_others, (batch_size, -1))
             _, _, policy_q_1, policy_q_2 = self.policy.Qpolicy(joint_observation=obs_joint,
                                                                joint_actions=actions_eval_joint,
                                                                agent_ids=IDs, agent_key=key)
@@ -160,8 +158,8 @@ class MASAC_Learner(ISAC_Learner):
             IDs_t = IDs[:, :-1]
         else:
             bs_rnn, IDs_t = batch_size, None
-            obs_joint = torch.concat(itemgetter(*self.agent_keys)(obs), dim=-1).reshape(batch_size, seq_len + 1, -1)
-            actions_joint = torch.concat(itemgetter(*self.agent_keys)(actions), dim=-1).reshape(batch_size, seq_len, -1)
+            obs_joint = self.get_joint_input(obs, (batch_size, seq_len + 1, -1))
+            actions_joint = self.get_joint_input(actions, (batch_size, seq_len, -1))
 
         # initial hidden states for rnn
         rnn_hidden_actor = {k: self.policy.actor_representation[k].init_hidden(bs_rnn) for k in self.model_keys}
@@ -173,8 +171,7 @@ class MASAC_Learner(ISAC_Learner):
             actions_eval_joint = actions_eval[key].reshape(batch_size, self.n_agents, seq_len + 1, -1).transpose(
                 1, 2).reshape(batch_size, seq_len + 1, -1)
         else:
-            actions_eval_joint = torch.concat(itemgetter(*self.agent_keys)(actions_eval),
-                                              dim=-1).reshape(batch_size, seq_len + 1, -1)
+            actions_eval_joint = self.get_joint_input(actions_eval, (batch_size, seq_len + 1, -1))
         _, _, action_q_1, action_q_2 = self.policy.Qaction(joint_observation=obs_joint[:, :-1],
                                                            joint_actions=actions_joint,
                                                            agent_ids=IDs_t,
@@ -210,8 +207,8 @@ class MASAC_Learner(ISAC_Learner):
             else:
                 actions_eval_detach_others = {k: actions_eval[k] if k == key else actions_eval[k].detach()
                                               for k in self.model_keys}
-                actions_eval_joint = torch.concat(itemgetter(*self.model_keys)(actions_eval_detach_others),
-                                                  dim=-1).reshape(batch_size, seq_len + 1, -1)[:, :-1]
+                actions_eval_joint = self.get_joint_input(actions_eval_detach_others,
+                                                          (batch_size, seq_len + 1, -1))[:, :-1]
             _, _, policy_q_1, policy_q_2 = self.policy.Qpolicy(joint_observation=obs_joint[:, :-1],
                                                                joint_actions=actions_eval_joint,
                                                                agent_ids=IDs_t, agent_key=key,

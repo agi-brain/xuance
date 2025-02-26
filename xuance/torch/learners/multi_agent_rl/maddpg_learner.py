@@ -10,7 +10,6 @@ from torch import nn
 from xuance.torch.learners import LearnerMAS
 from xuance.common import List
 from argparse import Namespace
-from operator import itemgetter
 
 
 class MADDPG_Learner(LearnerMAS):
@@ -64,9 +63,9 @@ class MADDPG_Learner(LearnerMAS):
             terminals[key] = terminals[key].reshape(batch_size * self.n_agents)
         else:
             bs = batch_size
-            obs_joint = torch.concat(itemgetter(*self.agent_keys)(obs), dim=-1).reshape(batch_size, -1)
-            next_obs_joint = torch.concat(itemgetter(*self.agent_keys)(obs_next), dim=-1).reshape(batch_size, -1)
-            actions_joint = torch.concat(itemgetter(*self.agent_keys)(actions), dim=-1).reshape(batch_size, -1)
+            obs_joint = self.get_joint_input(obs, (batch_size, -1))
+            next_obs_joint = self.get_joint_input(obs_next, (batch_size, -1))
+            actions_joint = self.get_joint_input(actions, (batch_size, -1))
 
         # get actions
         _, actions_eval = self.policy(observation=obs, agent_ids=IDs)
@@ -76,7 +75,7 @@ class MADDPG_Learner(LearnerMAS):
             key = self.model_keys[0]
             actions_next_joint = actions_next[key].reshape(batch_size, self.n_agents, -1).reshape(batch_size, -1)
         else:
-            actions_next_joint = torch.concat(itemgetter(*self.model_keys)(actions_next), -1).reshape(batch_size, -1)
+            actions_next_joint = self.get_joint_input(actions_next, (batch_size, -1))
         _, q_eval = self.policy.Qpolicy(joint_observation=obs_joint, joint_actions=actions_joint, agent_ids=IDs)
         _, q_next = self.policy.Qtarget(joint_observation=next_obs_joint, joint_actions=actions_next_joint,
                                         agent_ids=IDs)
@@ -102,7 +101,7 @@ class MADDPG_Learner(LearnerMAS):
                 act_eval = actions_eval[key].reshape(batch_size, self.n_agents, -1).reshape(batch_size, -1)
             else:
                 a_joint = {k: actions_eval[k] if k == key else actions[k] for k in self.agent_keys}
-                act_eval = torch.concat(itemgetter(*self.agent_keys)(a_joint), dim=-1).reshape(batch_size, -1)
+                act_eval = self.get_joint_input(a_joint, (batch_size, -1))
             _, q_policy = self.policy.Qpolicy(joint_observation=obs_joint, joint_actions=act_eval,
                                               agent_ids=IDs, agent_key=key)
             q_policy_i = q_policy[key].reshape(bs)
@@ -160,8 +159,8 @@ class MADDPG_Learner(LearnerMAS):
             IDs_t = IDs[:, :-1]
         else:
             bs_rnn, IDs_t = batch_size, None
-            obs_joint = torch.concat(itemgetter(*self.agent_keys)(obs), dim=-1).reshape(batch_size, seq_len + 1, -1)
-            actions_joint = torch.concat(itemgetter(*self.agent_keys)(actions), dim=-1).reshape(batch_size, seq_len, -1)
+            obs_joint = self.get_joint_input(obs, (batch_size, seq_len + 1, -1))
+            actions_joint = self.get_joint_input(actions, (batch_size, seq_len, -1))
 
         # initial hidden states for rnn
         rnn_hidden_actor = {k: self.policy.actor_representation[k].init_hidden(bs_rnn) for k in self.model_keys}
@@ -177,8 +176,7 @@ class MADDPG_Learner(LearnerMAS):
             actions_next_joint = actions_next[key].reshape(batch_size, self.n_agents, seq_len + 1, -1).transpose(
                 1, 2).reshape(batch_size, seq_len + 1, -1)
         else:
-            actions_next_joint = torch.concat(itemgetter(*self.agent_keys)(actions_next),
-                                              dim=-1).reshape(batch_size, seq_len + 1, -1)
+            actions_next_joint = self.get_joint_input(actions_next, (batch_size, seq_len + 1, -1))
         _, q_eval = self.policy.Qpolicy(joint_observation=obs_joint[:, :-1], joint_actions=actions_joint,
                                         agent_ids=IDs_t, rnn_hidden=rnn_hidden_critic)
         _, q_next = self.policy.Qtarget(joint_observation=obs_joint, joint_actions=actions_next_joint, agent_ids=IDs,
@@ -206,7 +204,7 @@ class MADDPG_Learner(LearnerMAS):
                     batch_size, self.n_agents, seq_len, -1).transpose(1, 2).reshape(batch_size, seq_len, -1)
             else:
                 a_dict = {k: actions_eval[k][:, :-1] if k == key else actions[k] for k in self.agent_keys}
-                act_eval = torch.concat(itemgetter(*self.agent_keys)(a_dict), dim=-1).reshape(batch_size, seq_len, -1)
+                act_eval = self.get_joint_input(a_dict, (batch_size, seq_len, -1))
             _, q_policy = self.policy.Qpolicy(joint_observation=obs_joint[:, :-1], joint_actions=act_eval,
                                               agent_key=key, agent_ids=IDs_t, rnn_hidden=rnn_hidden_critic)
             q_policy_i = q_policy[key].reshape(bs_rnn, seq_len)

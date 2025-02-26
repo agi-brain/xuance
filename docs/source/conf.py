@@ -15,7 +15,7 @@ print("[DOCS] xuance library path: {}".format(sys.path[0]))
 project = 'XuanCe'
 copyright = '2023, XuanCe Contributors.'
 author = 'Wenzhang Liu, etc.'
-release = "1.2.5"
+release = "1.2.6"
 
 # The master toctree document.
 master_doc = 'index'
@@ -73,6 +73,9 @@ autodoc_mock_imports = [
     "tensorflow_probability",
     "tensorflow-addons",
     "mindspore",
+    "optuna",
+    "optuna-dashboard",
+    "plotly",
 ]
 
 pygments_style = "tango"

@@ -30,7 +30,7 @@ class Gym_Env(gym.Wrapper):
         self.reward_range = self.env.reward_range
         self.max_episode_steps = self.env._max_episode_steps
 
-    def render(self, mode):
+    def render(self, *args):
         return self.env.render()
 
     def reset(self):
@@ -92,18 +92,6 @@ class Atari_Env(gym.Wrapper):
         Frame skipping: Return only every `skip`-th frame.
         Observation resize: Warp frames from 210x160 to 84x84 as done in the Nature paper and later work.
         Frame Stacking: Stack k last frames. Returns lazy array, which is much more memory efficient.
-
-    Args:
-        env_id (str): The environment id of Atari, such as "Breakout-v5", "Pong-v5", etc.
-        env_seed (int): The random seed to set up the environment.
-        obs_type: This argument determines what observations are returned by the environment. Its values are:
-                    ram: The 128 Bytes of RAM are returned
-                    rgb: An RGB rendering of the game is returned
-                    grayscale: A grayscale rendering is returned
-        frame_skip (int): int or a tuple of two ints. This argument controls stochastic frame skipping, as described in the section on stochasticity.
-        num_stack (int): int, the number of stacked frames if you use the frame stacking trick.
-        image_size (int): This argument determines the size of observation image, default is [210, 160].
-        noop_max (int): max times of noop action for env.reset().
     """
 
     def __init__(self, config):
@@ -115,7 +103,7 @@ class Atari_Env(gym.Wrapper):
                             full_action_space=full_action_space)
         self.env.action_space.seed(seed=config.env_seed)
         self.env.unwrapped.reset(seed=config.env_seed)
-        self.max_episode_steps = self.env._max_episode_steps if hasattr(self.env, '_max_episode_steps') else None
+        self.max_episode_steps = self.env._max_episode_steps if hasattr(self.env, '_max_episode_steps') else 1e5
         super(Atari_Env, self).__init__(self.env)
         # self.env.seed(config.env_seed)
         self.num_stack = config.num_stack
@@ -148,8 +136,8 @@ class Atari_Env(gym.Wrapper):
     def close(self):
         self.env.close()
 
-    def render(self, render_mode):
-        return self.env.render(render_mode)
+    def render(self, *args, **kwargs):
+        return self.env.render()
 
     def reset(self):
         info = {}
@@ -184,9 +172,13 @@ class Atari_Env(gym.Wrapper):
         self.frames.append(self.observation(observation))
         lives = self.env.ale.lives()
         # avoid environment bug
+        if self.max_episode_steps is not None:
+            if self._episode_step >= self.max_episode_steps:
+                terminated = True
         self.was_real_done = terminated
         if (lives < self.lifes) and (lives > 0):
             terminated = True
+        truncated = self.was_real_done
         self.lifes = lives
         self._episode_step += 1
         return self._get_obs(), self.reward(reward), terminated, truncated, info

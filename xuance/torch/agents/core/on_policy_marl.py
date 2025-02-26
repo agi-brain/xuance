@@ -278,6 +278,7 @@ class OnPolicyMARLAgents(MARLAgents):
         Parameters:
             n_steps (int): The number of steps to train the model.
         """
+        return_info = {}
         if self.use_rnn:
             with tqdm(total=n_steps) as process_bar:
                 step_start, step_last = deepcopy(self.current_step), deepcopy(self.current_step)
@@ -286,10 +287,11 @@ class OnPolicyMARLAgents(MARLAgents):
                     self.run_episodes(None, n_episodes=self.n_envs, test_mode=False)
                     train_info = self.train_epochs(n_epochs=self.n_epochs)
                     self.log_infos(train_info, self.current_step)
+                    return_info.update(train_info)
                     process_bar.update((self.current_step - step_last) // self.n_envs)
                     step_last = deepcopy(self.current_step)
                 process_bar.update(n_steps - process_bar.last_print_n)
-            return
+            return return_info
 
         obs_dict = self.envs.buf_obs
         avail_actions = self.envs.buf_avail_actions if self.use_actions_mask else None
@@ -314,6 +316,7 @@ class OnPolicyMARLAgents(MARLAgents):
                                             value_normalizer=self.learner.value_normalizer)
             train_info = self.train_epochs(n_epochs=self.n_epochs)
             self.log_infos(train_info, self.current_step)
+            return_info.update(train_info)
             obs_dict, avail_actions = deepcopy(next_obs_dict), deepcopy(next_avail_actions)
             state = self.envs.buf_state if self.use_global_state else None
 
@@ -342,8 +345,10 @@ class OnPolicyMARLAgents(MARLAgents):
                         step_info[f"Train-Results/Episode-Rewards/rank_{self.rank}"] = {
                             "env-%d" % i: np.mean(itemgetter(*self.agent_keys)(info[i]["episode_score"]))}
                     self.log_infos(step_info, self.current_step)
+                    return_info.update(step_info)
 
             self.current_step += self.n_envs
+        return return_info
 
     def run_episodes(self, env_fn=None, n_episodes: int = 1, test_mode: bool = False):
         """
@@ -412,7 +417,8 @@ class OnPolicyMARLAgents(MARLAgents):
                         if all(terminated_dict[i].values()):
                             value_next = {key: 0.0 for key in self.agent_keys}
                         else:
-                            _, value_next = self.values_next(i_env=i, obs_dict=obs_dict[i], state=state[i],
+                            _, value_next = self.values_next(i_env=i, obs_dict=obs_dict[i],
+                                                             state=None if state is None else state[i],
                                                              rnn_hidden_critic=rnn_hidden_critic)
                         self.memory.finish_path(i_env=i, i_step=info[i]['episode_step'], value_next=value_next,
                                                 value_normalizer=self.learner.value_normalizer)
