@@ -355,12 +355,11 @@ class MAAC_Policy_Share(MAAC_Policy):
         return rnn_hidden_new, values
 
 
-class IC3NetPolicy(MAAC_Policy):
+class IC3NetPolicy(MAAC_Policy_Share):
     def __init__(self,
                  action_space: Optional[Dict[str, Discrete]],
                  n_agents: int,
-                 representation_actor: ModuleDict,
-                 representation_critic: ModuleDict,
+                 representation: ModuleDict,
                  mixer: Optional[Module] = None,
                  communicators: Optional[Module] = None,
                  actor_hidden_size: Sequence[int] = None,
@@ -371,9 +370,10 @@ class IC3NetPolicy(MAAC_Policy):
                  device: Optional[Union[str, int, torch.device]] = None,
                  use_distributed_training: bool = False,
                  **kwargs):
-        super(IC3NetPolicy, self).__init__(action_space, n_agents, representation_actor, representation_critic, mixer,
+        super(IC3NetPolicy, self).__init__(action_space, n_agents, representation, mixer,
                                            actor_hidden_size, critic_hidden_size, normalize, initialize,
                                            activation, device, use_distributed_training, **kwargs)
+        self.communicators = communicators
 
     def _get_actor_critic_input(self, dim_action, dim_actor_rep, dim_critic_rep, n_agents):
         """
@@ -420,6 +420,8 @@ class IC3NetPolicy(MAAC_Policy):
 
         if avail_actions is not None:
             avail_actions = {key: Tensor(avail_actions[key]) for key in agent_list}
+
+        observation = self.communicators.forward_state_encoder(observation)
 
         for key in agent_list:
             if self.use_rnn:

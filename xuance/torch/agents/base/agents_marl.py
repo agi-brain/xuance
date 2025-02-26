@@ -178,7 +178,7 @@ class MARLAgents(ABC):
                 self.writer.add_video(k, v, fps=fps, global_step=x_index)
                 
     def _build_representation(self, representation_key: str,
-                              input_space: Union[Dict[str, Space], tuple],
+                              input_space: Union[Dict[str, Space], Dict[str, tuple]],
                               config: Namespace) -> Module:
         """
         Build representation for policies.
