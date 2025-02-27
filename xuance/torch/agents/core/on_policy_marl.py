@@ -302,6 +302,7 @@ class OnPolicyMARLAgents(MARLAgents):
             actions_dict, log_pi_a_dict = policy_out['actions'], policy_out['log_pi']
             values_dict = policy_out['values']
             next_obs_dict, rewards_dict, terminated_dict, truncated, info = self.envs.step(actions_dict)
+            next_state = self.envs.buf_state if self.use_global_state else None
             next_avail_actions = self.envs.buf_avail_actions if self.use_actions_mask else None
             self.store_experience(obs_dict, avail_actions, actions_dict, log_pi_a_dict, rewards_dict, values_dict,
                                   terminated_dict, info, **{'state': state})
@@ -310,15 +311,15 @@ class OnPolicyMARLAgents(MARLAgents):
                     if all(terminated_dict[i].values()):
                         value_next = {key: 0.0 for key in self.agent_keys}
                     else:
-                        state_i = state[i] if self.use_global_state else None
-                        _, value_next = self.values_next(i_env=i, obs_dict=next_obs_dict[i], state=state_i)
+                        next_state_i = next_state[i] if self.use_global_state else None
+                        _, value_next = self.values_next(i_env=i, obs_dict=next_obs_dict[i], state=next_state_i)
                     self.memory.finish_path(i_env=i, value_next=value_next,
                                             value_normalizer=self.learner.value_normalizer)
             train_info = self.train_epochs(n_epochs=self.n_epochs)
             self.log_infos(train_info, self.current_step)
             return_info.update(train_info)
             obs_dict, avail_actions = deepcopy(next_obs_dict), deepcopy(next_avail_actions)
-            state = self.envs.buf_state if self.use_global_state else None
+            state = deepcopy(next_state) if self.use_global_state else None
 
             for i in range(self.n_envs):
                 if all(terminated_dict[i].values()) or truncated[i]:
@@ -388,6 +389,7 @@ class OnPolicyMARLAgents(MARLAgents):
             actions_dict, log_pi_a_dict = policy_out['actions'], policy_out['log_pi']
             values_dict = policy_out['values']
             next_obs_dict, rewards_dict, terminated_dict, truncated, info = envs.step(actions_dict)
+            next_state = envs.buf_state if self.use_global_state else None
             next_avail_actions = envs.buf_avail_actions if self.use_actions_mask else None
             if test_mode:
                 if self.config.render_mode == "rgb_array" and self.render:
@@ -398,7 +400,7 @@ class OnPolicyMARLAgents(MARLAgents):
                 self.store_experience(obs_dict, avail_actions, actions_dict, log_pi_a_dict, rewards_dict, values_dict,
                                       terminated_dict, info, **{'state': state})
             obs_dict, avail_actions = deepcopy(next_obs_dict), deepcopy(next_avail_actions)
-            state = envs.buf_state if self.use_global_state else None
+            state = deepcopy(next_state) if self.use_global_state else None
 
             for i in range(num_envs):
                 if all(terminated_dict[i].values()) or truncated[i]:
