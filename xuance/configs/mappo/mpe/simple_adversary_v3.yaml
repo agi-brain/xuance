@@ -6,7 +6,7 @@ continuous_action: True
 learner: "MAPPO_Clip_Learner"
 policy: "Gaussian_MAAC_Policy"
 representation: "Basic_MLP"
-vectorize: "DummyVecMultiAgentEnv"
+vectorize: "SubprocVecMultiAgentEnv"
 runner: "RunnerCompetition"
 
 # recurrent settings for Basic_RNN representation

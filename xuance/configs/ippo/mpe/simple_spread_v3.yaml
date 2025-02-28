@@ -6,7 +6,7 @@ continuous_action: True  # If to use continuous control.
 learner: "IPPO_Learner"  # The learner name.
 policy: "Gaussian_MAAC_Policy"  # The policy name.
 representation: "Basic_MLP"  # The representation name.
-vectorize: "DummyVecMultiAgentEnv"  # The method to vectorize your environment such that can run in parallel.
+vectorize: "SubprocVecMultiAgentEnv"  # The method to vectorize your environment such that can run in parallel.
 runner: "MARL"  # The runner.
 
 # recurrent settings for Basic_RNN representation.
