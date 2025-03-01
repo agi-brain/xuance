@@ -33,5 +33,8 @@ NormalizeFunctions = {
 }
 
 InitializeFunctions = {
-    "orthogonal": torch.nn.init.orthogonal_
+    "orthogonal": torch.nn.init.orthogonal_,
+    "normal": torch.nn.init.normal_,
+    "zeros": torch.nn.init.zeros_,
+    "ones": torch.nn.init.ones_,
 }

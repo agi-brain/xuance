@@ -30,7 +30,6 @@ class MAPPO_Agents(IPPO_Agents):
         Returns:
             policy (torch.nn.Module): A dict of policies.
         """
-        self.continuous_control = self.config.continuous_action
         normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
         initializer = torch.nn.init.orthogonal_
         activation = ActivationFunctions[self.config.activation]
@@ -57,6 +56,7 @@ class MAPPO_Agents(IPPO_Agents):
         )
         if self.config.policy in ["Categorical_MAAC_Policy", "Gaussian_MAAC_Policy"]:
             policy = REGISTRY_Policy[self.config.policy](**policy_settings)
+            self.continuous_control = True if "Gaussian" in self.config.policy else False
         else:
             raise AttributeError(f"MAPPO currently does not support the policy named {self.config.policy}.")
         return policy
