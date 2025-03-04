@@ -1,10 +1,18 @@
-from tqdm import tqdm
-import torch
-import numpy as np
-from copy import deepcopy
 from argparse import Namespace
+from copy import deepcopy
 from operator import itemgetter
-from xuance.common import MARL_OnPolicyBuffer, MARL_OnPolicyBuffer_RNN, Optional, List, Union
+
+import numpy as np
+import torch
+from tqdm import tqdm
+
+from xuance.common import (
+    List,
+    MARL_OnPolicyBuffer,
+    MARL_OnPolicyBuffer_RNN,
+    Optional,
+    Union,
+)
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.torch import Module
 from xuance.torch.agents.base import MARLAgents
@@ -366,7 +374,7 @@ class OnPolicyMARLAgents(MARLAgents):
         envs = self.envs if env_fn is None else env_fn()
         num_envs = envs.num_envs
         videos, episode_videos = [[] for _ in range(num_envs)], []
-        episode_count, scores, best_score = 0, [0.0 for _ in range(num_envs)], -np.inf
+        episode_count, scores, best_score = 0, [], -np.inf
         obs_dict, info = envs.reset()
         avail_actions = envs.buf_avail_actions if self.use_actions_mask else None
         state = envs.buf_state if self.use_global_state else None
