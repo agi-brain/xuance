@@ -444,7 +444,7 @@ It is specifically designed for RL research, particularly for MARL scenarios.
 .. attention::
 
     All python packages including ``gfootball`` environment should be installed in a same conda environment.
-    See `https://xuance.readthedocs.io/en/latest/documents/usage/installation.html#install-via-pypi <https://xuance.readthedocs.io/en/latest/documents/usage/installation.html#install-via-pypi>`_.
+    See `https://xuance.readthedocs.io/en/latest/documents/usage/installation.html#install-xuance <https://xuance.readthedocs.io/en/latest/documents/usage/installation.html#install-xuance>`_.
 
 
 Robotic Warehouse

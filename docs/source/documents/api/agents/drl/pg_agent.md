@@ -52,7 +52,7 @@ This formulation enables the policy to be updated by following the gradient of t
 ## Run PG in XuanCe
 
 Before running PG in XuanCe, you need to prepare a conda environment and install ``xuance`` following 
-the [**installation steps**](./../../../usage/installation.rst#install-via-pypi).
+the [**installation steps**](./../../../usage/installation.rst#install-xuance).
 
 ### Run Build-in Demos
 
