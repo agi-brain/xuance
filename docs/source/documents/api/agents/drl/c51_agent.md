@@ -89,7 +89,7 @@ The full algorithm for training C51 is presented in Algorithm 1.
 ## Run C51 in XuanCe
 
 Before running C51 in XuanCe, you need to prepare a conda environment and install ``xuance`` following 
-the [**installation steps**](./../../../usage/installation.rst#install-via-pypi).
+the [**installation steps**](./../../../usage/installation.rst#install-xuance).
 
 ### Run Build-in Demos
 

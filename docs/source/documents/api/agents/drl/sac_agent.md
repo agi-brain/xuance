@@ -36,7 +36,7 @@ where τ is a small positive number, typically taken to be 0.005. This soft upda
 ## Algorithm
 The full algorithm for training TD3 is presented in Algorithm 1:
 ![链接网址](./../../../../_static/figures/pseucodes/pseucode-SAC.png)  
-**Supplement:**TD3 and SAC share similarities in multiple aspects, including network architecture, the design of dual Q-networks, soft update mechanisms, training stability, applicable scenarios, implementation characteristics, optimization objectives, and practical value. These similarities enable both of them to perform remarkably well when handling tasks in continuous action spaces. However, they differ in exploration mechanisms and policy types, which determines their applicability and performance in different tasks.  
+**Supplement:** TD3 and SAC share similarities in multiple aspects, including network architecture, the design of dual Q-networks, soft update mechanisms, training stability, applicable scenarios, implementation characteristics, optimization objectives, and practical value. These similarities enable both of them to perform remarkably well when handling tasks in continuous action spaces. However, they differ in exploration mechanisms and policy types, which determines their applicability and performance in different tasks.  
 Check out the [TD3](./td3_agent.md)   algorithm.
 
 ## Run SAC in XuanCe
