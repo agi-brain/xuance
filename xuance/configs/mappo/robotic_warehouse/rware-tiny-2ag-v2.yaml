@@ -1,6 +1,6 @@
 agent: "MAPPO"
 env_name: "RoboticWarehouse"
-env_id: "rware-tiny-2ag-v1"
+env_id: "rware-tiny-2ag-v2"
 env_seed: 1
 max_episode_steps: 100
 learner: "MAPPO_Clip_Learner"

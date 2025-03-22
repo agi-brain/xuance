@@ -1,5 +1,5 @@
-import gym
-from gym.spaces import Box
+import gymnasium as gym
+from gymnasium.spaces import Box
 import numpy as np
 from xuance.environment import RawMultiAgentEnv
 try:
@@ -39,7 +39,7 @@ class RoboticWarehouseEnv(RawMultiAgentEnv):
 
     def reset(self):
         """Reset your environment, and return initialized observations and other information."""
-        obs = self.env.reset()
+        obs, info = self.env.reset()
         obs = np.array(obs)
         obs_dict = {k: obs[i] for i, k in enumerate(self.agents)}
         info = {}
@@ -49,13 +49,11 @@ class RoboticWarehouseEnv(RawMultiAgentEnv):
     def step(self, actions):
         """Execute the actions and get next observations, rewards, and other information."""
         actions_list = [actions[k] for k in self.agents]
-        observation, reward, terminated, info = self.env.step(actions_list)
+        observation, reward, terminated, truncated, info = self.env.step(actions_list)
         obs_dict = {k: observation[i] for i, k in enumerate(self.agents)}
         reward_dict = {k: reward[i] for i, k in enumerate(self.agents)}
-        terminated_dict = {k: terminated[i] for i, k in enumerate(self.agents)}
+        terminated_dict = {k: terminated for k in self.agents}
         self._episode_step += 1  # initialize the current step
-
-        truncated = True if (self._episode_step >= self.max_episode_steps) else False
 
         return obs_dict, reward_dict, terminated_dict, truncated, info
 
