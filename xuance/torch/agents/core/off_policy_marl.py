@@ -306,7 +306,7 @@ class OffPolicyMARLAgents(MARLAgents):
         envs = self.envs if env_fn is None else env_fn()
         num_envs = envs.num_envs
         videos, episode_videos = [[] for _ in range(num_envs)], []
-        episode_count, scores, best_score = 0, [0.0 for _ in range(num_envs)], -np.inf
+        episode_count, scores, best_score = 0, [], -np.inf
         obs_dict, info = envs.reset()
         state = envs.buf_state.copy() if self.use_global_state else None
         avail_actions = envs.buf_avail_actions if self.use_actions_mask else None

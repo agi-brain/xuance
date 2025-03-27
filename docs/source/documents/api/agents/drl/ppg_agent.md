@@ -64,7 +64,7 @@ enabling the value function and policy to learn more effectively without directl
 ## Run PPG in XuanCe
 
 Before running PPG in XuanCe, you need to prepare a conda environment and install ``xuance`` following 
-the [**installation steps**](./../../../usage/installation.rst#install-via-pypi).
+the [**installation steps**](./../../../usage/installation.rst#install-xuance).
 
 ### Run Build-in Demos
 

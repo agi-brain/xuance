@@ -90,7 +90,7 @@ The full algorithm for training QR-DQN is presented in Algorithm 1:
 ## Run QR-DQN in XuanCe
 
 Before running QR-DQN in XuanCe, you need to prepare a conda environment and install ``xuance`` following 
-the [**installation steps**](./../../../usage/installation.rst#install-via-pypi).
+the [**installation steps**](./../../../usage/installation.rst#install-xuance).
 
 ### Run Build-in Demos
 

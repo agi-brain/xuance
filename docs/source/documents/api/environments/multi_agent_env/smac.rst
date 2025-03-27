@@ -6,7 +6,7 @@ StarCraft Multi-Agent Challenge
 The StarCraft multi-agent challenge (SMAC) is `WhiRL's <https://whirl.cs.ox.ac.uk/>`_ environment for research of cooperative MARL algorithms.
 SMAC uses StarCraft II, a real-time strategy game developed by Blizzard Entertainment, as its underlying environment.
 
-**GitHub repository:** `**https://github.com/oxwhirl/smac.git** <https://github.com/oxwhirl/smac.git>`_
+**GitHub repository:** `https://github.com/oxwhirl/smac.git <https://github.com/oxwhirl/smac.git>`_
 
 Installation
 ''''''''''''''''

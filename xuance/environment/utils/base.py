@@ -154,8 +154,8 @@ class RawMultiAgentEnv(ABC):
         Resets the environment with kwargs.
 
         Returns:
-            observation (np.ndarray or list): The initial observations of the agent.
-            info (dict): The information about the environment.
+            observation (MultiAgentDict): The initial observations of the agent.
+            info (MultiAgentDict): The information about the environment.
         """
         raise NotImplementedError
 

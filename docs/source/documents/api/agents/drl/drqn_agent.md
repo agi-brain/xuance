@@ -47,7 +47,7 @@ Differences between DQN and DRQN:
 ## Run DRQN in XuanCe
 
 Before running DRQN in XuanCe, you need to prepare a conda environment and install ``xuance`` following 
-the [**installation steps**](./../../../usage/installation.rst#install-via-pypi).
+the [**installation steps**](./../../../usage/installation.rst#install-xuance).
 
 ### Run Build-in Demos
 

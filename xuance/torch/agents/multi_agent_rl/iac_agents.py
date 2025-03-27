@@ -1,3 +1,4 @@
+
 import numpy as np
 import torch
 from argparse import Namespace
@@ -6,7 +7,6 @@ from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.common import List, Optional, Union
 from xuance.torch import Module
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
-from xuance.torch.communications import IC3NetComm
 from xuance.torch.policies import REGISTRY_Policy
 from xuance.torch.agents import OnPolicyMARLAgents
 
@@ -41,27 +41,31 @@ class IAC_Agents(OnPolicyMARLAgents):
         agent = self.config.agent
 
         # build representations
-        rep_input_space = {k: (self.config.obs_encode_dim, ) for k in self.agent_keys}
-        representation = self._build_representation(self.config.representation, rep_input_space, self.config)
+        A_representation = self._build_representation(self.config.representation, self.observation_space, self.config)
+        C_representation = self._build_representation(self.config.representation, self.observation_space, self.config)
 
-        # build communicators
-        communicators = IC3NetComm(self.observation_space, self.action_space, self.config.obs_encode_dim, self.n_agents,
-                                   self.config.communicator_hidden_size, self.config.n_action_heads,
-                                   self.config.comm_mask_zero, self.config.comm_passes,
-                                   init_std=0.2, recurrent=self.config.use_rnn, comm_init=self.config.comm_init,
-                                   device=self.device, use_distributed_training=self.distributed_training,
-                                   use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
-                                   continuous=self.config.continuous)
         # build policies
-        if self.config.policy == "IC3NetPolicy":
-            policy = REGISTRY_Policy["IC3NetPolicy"](
+        if self.config.policy == "Categorical_MAAC_Policy":
+            policy = REGISTRY_Policy["Categorical_MAAC_Policy"](
                 action_space=self.action_space, n_agents=self.n_agents,
-                representation=representation, communicators=communicators,
+                representation_actor=A_representation, representation_critic=C_representation,
                 actor_hidden_size=self.config.actor_hidden_size, critic_hidden_size=self.config.critic_hidden_size,
                 normalize=normalize_fn, initialize=initializer, activation=activation,
                 device=device, use_distributed_training=self.distributed_training,
                 use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
                 use_rnn=self.use_rnn, rnn=self.config.rnn if self.use_rnn else None)
+            self.continuous_control = False
+        elif self.config.policy == "Gaussian_MAAC_Policy":
+            policy = REGISTRY_Policy["Gaussian_MAAC_Policy"](
+                action_space=self.action_space, n_agents=self.n_agents,
+                representation_actor=A_representation, representation_critic=C_representation,
+                actor_hidden_size=self.config.actor_hidden_size, critic_hidden_size=self.config.critic_hidden_size,
+                normalize=normalize_fn, initialize=initializer, activation=activation,
+                activation_action=ActivationFunctions[self.config.activation_action],
+                device=device, use_distributed_training=self.distributed_training,
+                use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
+                use_rnn=self.use_rnn, rnn=self.config.rnn if self.use_rnn else None)
+            self.continuous_control = True
         else:
             raise AttributeError(f"{agent} currently does not support the policy named {self.config.policy}.")
         return policy
@@ -107,7 +111,8 @@ class IAC_Agents(OnPolicyMARLAgents):
                avail_actions_dict: Optional[List[dict]] = None,
                rnn_hidden_actor: Optional[dict] = None,
                rnn_hidden_critic: Optional[dict] = None,
-               test_mode: Optional[bool] = False):
+               test_mode: Optional[bool] = False,
+               **kwargs):
         """
         Returns actions for agents.
 

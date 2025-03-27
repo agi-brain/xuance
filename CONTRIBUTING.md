@@ -9,10 +9,10 @@ Thank you for your interest in contributing to **XuanCe**! We welcome and apprec
   - [Suggesting Enhancements](#suggesting-enhancements)
   - [Contributing Code](#contributing-code)
 - [Coding Guidelines](#coding-guidelines)
-- [Setting Up the Development Environment](#setting-up-the-development-environment)
 - [Pull Request Process](#pull-request-process)
 - [Code of Conduct](#code-of-conduct)
-- [Need Help?](#need-help)
+- [Contributing to Documentation](#contributing-to-documentation)
+- [Contact Us](#contact-us)
 
 ## How to Contribute
 
