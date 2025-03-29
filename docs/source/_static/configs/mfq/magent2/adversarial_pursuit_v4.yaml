@@ -37,7 +37,7 @@ temperature: 0.1  # softmax for policy
 start_greedy: 0.0
 end_greedy: 0.95
 decay_step_greedy: 5000
-start_training: 1000  # start training after n episodes
+start_training: 1000  # start training after n steps
 running_steps: 1000000
 train_per_step: False  # True: train model per step; False: train model per episode.
 training_frequency: 1

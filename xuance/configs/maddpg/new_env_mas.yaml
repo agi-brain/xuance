@@ -30,7 +30,7 @@ tau: 0.005  # soft update for target networks
 start_noise: 0.1
 end_noise: 0.1
 sigma: 0.1
-start_training: 2000  # start training after n episodes
+start_training: 2000  # start training after n steps
 running_steps: 1000000
 train_per_step: True  # True: train model per step; False: train model per episode.
 training_frequency: 1

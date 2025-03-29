@@ -30,7 +30,7 @@ actor_update_delay: 2
 start_noise: 1.0
 end_noise: 0.01
 sigma: 0.1
-start_training: 1000  # start training after n episodes
+start_training: 1000  # start training after n steps
 running_steps: 10000000
 training_frequency: 25
 

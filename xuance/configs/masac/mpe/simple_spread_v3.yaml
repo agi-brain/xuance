@@ -39,7 +39,7 @@ tau: 0.001  # soft update for target networks
 alpha: 0.01
 use_automatic_entropy_tuning: True
 
-start_training: 1000  # start training after n episodes
+start_training: 1000  # start training after n steps
 running_steps: 10000000
 training_frequency: 25
 
