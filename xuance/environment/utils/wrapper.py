@@ -17,6 +17,9 @@ class XuanCeEnvWrapper:
         self._max_episode_steps: Optional[int] = None
         self._episode_step = 0
         self._episode_score = 0.0
+        self._is_continuous = isinstance(self._action_space, spaces.Box)
+        self._action_low = self.action_space.low if hasattr(self._action_space, "low") else None
+        self._action_high = self.action_space.high if hasattr(self._action_space, "high") else None
 
     @property
     def action_space(self):
@@ -85,6 +88,8 @@ class XuanCeEnvWrapper:
 
     def step(self, action):
         """Steps through the environment with action."""
+        if self._is_continuous:
+            action = (action + 1.0) * 0.5 * (self._action_high - self._action_low) + self._action_low
         observation, reward, terminated, truncated, info = self.env.step(action)
         self._episode_step += 1
         self._episode_score += reward
