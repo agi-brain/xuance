@@ -210,7 +210,8 @@ class DreamerV3Agent(OffPolicyAgent):
                 store the last data and reset all
                 (o_t, a_t = 0 for dones, r_t, term_t, trunc_t, is_first_t)
                 """
-                acts[done_idxes] = np.zeros((len(done_idxes), ))
+                extra_shape = () if not self.is_continuous else self.act_shape
+                acts[done_idxes] = np.zeros((len(done_idxes),) + extra_shape)
                 if self.atari:  # use truncs to train in xc_atari
                     terms = deepcopy(truncs)
                 self.memory.store(obs, acts, self._process_reward(rews), terms, truncs, is_first)
