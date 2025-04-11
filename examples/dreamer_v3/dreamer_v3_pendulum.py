@@ -4,7 +4,7 @@ from copy import deepcopy
 from xuance.torch.utils.operations import set_seed
 from xuance.common import get_configs, recursive_dict_update
 from xuance.environment import make_envs
-from common import DreamerV3Agent
+from xuance.torch.agents import DreamerV3Agent
 
 def parse_args():
     parser = argparse.ArgumentParser("Example of XuanCe: DreamerV3 for Pendulum.")

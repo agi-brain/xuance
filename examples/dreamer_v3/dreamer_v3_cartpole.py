@@ -4,14 +4,14 @@ from copy import deepcopy
 from xuance.torch.utils.operations import set_seed
 from xuance.common import get_configs, recursive_dict_update
 from xuance.environment import make_envs
-from common import DreamerV3Agent
+from xuance.torch.agents import DreamerV3Agent
 
 def parse_args():
     parser = argparse.ArgumentParser("Example of XuanCe: DreamerV3 for CartPole.")
     parser.add_argument("--env-id", type=str, default="CartPole-v1")
     parser.add_argument("--log-dir", type=str, default="./logs/CartPole-v1/")
     parser.add_argument("--model-dir", type=str, default="./models/CartPole-v1/")
-    parser.add_argument("--device", type=str, default="cuda:0")
+    parser.add_argument("--device", type=str, default="cpu")
 
     # 10k
     parser.add_argument("--running-steps", type=int, default=10_000)  # 10k

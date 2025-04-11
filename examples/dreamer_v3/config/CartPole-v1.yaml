@@ -16,7 +16,7 @@ env_id: "CartPole-v1"
 env_seed: 1
 vectorize: "DummyVecEnv"
 representation: "DreamerV3WorldModel"
-learner: "DreamerV3Learner"
+learner: "DreamerV3_Learner"
 policy: "DreamerV3Policy"
 runner: "DRL"
 
@@ -25,7 +25,7 @@ distribution:
   validate_args: false
   type: auto
 pixel: False
-env:
+env_config:
   screen_size: 64
 activation: 'silu'
 

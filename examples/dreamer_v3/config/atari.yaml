@@ -21,7 +21,7 @@ num_stack: 1  # frame stack trick
 frame_skip: 4  # frame skip trick  (action_repeat = 4 for atari100k)
 noop_max: 30
 representation: "DreamerV3WorldModel"
-learner: "DreamerV3Learner"
+learner: "DreamerV3_Learner"
 policy: "DreamerV3Policy"
 runner: "DRL"
 
@@ -30,7 +30,7 @@ distribution:
   validate_args: false
   type: auto
 pixel: True
-env:
+env_config:
   screen_size: 64
 activation: 'silu'
 
