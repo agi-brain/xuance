@@ -89,7 +89,7 @@
 
 ### :point_right: Model-Based Reinforcement Learning (MBRL)
 
-- DreamerV3 [[Paper](https://www.nature.com/articles/s41586-025-08744-2.pdf)[Code](https://github.com/danijar/dreamerv3.git)]
+- DreamerV3 [[Paper](https://www.nature.com/articles/s41586-025-08744-2.pdf)] [[Code](https://github.com/danijar/dreamerv3.git)]
 
 ### :point_right: 多智能体强化学习（MARL）
 
