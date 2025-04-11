@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from xuance.common import Optional, Sequence, Tuple, Type, Union, Callable
+from xuance.common import Optional, Sequence, Tuple, Type, Union, Callable, Any
 
 ModuleType = Type[nn.Module]
 
@@ -110,3 +110,30 @@ def lstm_block(input_dim: int,
                 else:
                     nn.init.constant_(weight, 0)
     return lstm, output_dim
+
+
+class Moments(nn.Module):
+    def __init__(
+        self,
+        decay: float = 0.99,
+        max_: float = 1e8,
+        percentile_low: float = 0.05,
+        percentile_high: float = 0.95,
+    ) -> None:
+        super().__init__()
+        self._decay = decay
+        self._max = torch.tensor(max_)
+        self._percentile_low = percentile_low
+        self._percentile_high = percentile_high
+        self.register_buffer("low", torch.zeros((), dtype=torch.float32))
+        self.register_buffer("high", torch.zeros((), dtype=torch.float32))
+
+    def forward(self, x: torch.Tensor) -> Any:
+        gathered_x = x.float().detach()
+        low = torch.quantile(gathered_x, self._percentile_low)
+        high = torch.quantile(gathered_x, self._percentile_high)
+        self.low = self._decay * self.low + (1 - self._decay) * low
+        self.high = self._decay * self.high + (1 - self._decay) * high
+        invscale = torch.max(1 / self._max, self.high - self.low)
+        return self.low.detach(), invscale.detach()
+

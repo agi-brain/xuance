@@ -45,6 +45,8 @@ from .gaussian_marl import Basic_ISAC_Policy as Gaussian_ISAC
 from .gaussian_marl import MASAC_Policy as Gaussian_MASAC
 from .gaussian_marl import MAAC_Policy as Gaussain_MAAC
 
+from .dreamer import DreamerV3Policy
+
 Mixer = {
     "VDN": VDN_mixer,
     "QMIX": QMIX_mixer,
@@ -74,6 +76,8 @@ REGISTRY_Policy = {
     "MPDQN_Policy": MPDQNPolicy,
     "SPDQN_Policy": SPDQNPolicy,
     "DRQN_Policy": DRQNPolicy,
+    # ↓ Model-based DRL ↓ #
+    "DreamerV3_Policy": DreamerV3Policy,
     # ↓ Multi-Agent DRL ↓ #
     "Basic_Q_network_marl": BasicQnetwork_marl,
     "Mixing_Q_network": MixingQnetwork,
@@ -110,4 +114,5 @@ __all__ = [
     "MeanFieldActorCriticPolicy", "COMA_Policy", "Categorical_MAAC_Policy", "Categorical_MAAC_Policy_Share", "IC3NetPolicy",
     "Categorical_ISAC", "Categorical_MASAC",
     "Gaussian_ISAC", "Gaussian_MASAC", "Gaussain_MAAC",
+    "DreamerV3Policy",
 ]

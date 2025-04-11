@@ -23,6 +23,9 @@ from .qlearning_family import QRDQN_Agent
 from .qlearning_family import PerDQN_Agent
 from .qlearning_family import DRQN_Agent
 
+'''Model-based Reinforcement Learning'''
+from .model_based import DreamerV3Agent
+
 '''Multi-Agent Reinforcement Learning Algorithms'''
 from .multi_agent_rl import IQL_Agents
 from .multi_agent_rl import VDN_Agents
@@ -66,6 +69,8 @@ REGISTRY_Agents = {
     "DRQN": DRQN_Agent,
     "NPG": NPG_Agent,
 
+    "DreamerV3": DreamerV3Agent,
+
     "RANDOM": RandomAgents,
     "IQL": IQL_Agents,
     "VDN": VDN_Agents,
@@ -101,6 +106,8 @@ __all__ = [
     "PG_Agent", "A2C_Agent", "PPOCLIP_Agent", "PPOKL_Agent", "PPG_Agent", "DDPG_Agent", "TD3_Agent", "PDQN_Agent",
     "MPDQN_Agent", "SPDQN_Agent", "SAC_Agent", "DQN_Agent", "DuelDQN_Agent", "DDQN_Agent",
     "NoisyDQN_Agent", "C51_Agent", "QRDQN_Agent", "PerDQN_Agent", "DRQN_Agent","NPG_Agent",
+
+    "DreamerV3Agent",
 
     "IQL_Agents", "VDN_Agents", "QMIX_Agents", "WQMIX_Agents", "QTRAN_Agents", "DCG_Agents",
     "IAC_Agents", "VDAC_Agents", "COMA_Agents", "IDDPG_Agents", "MADDPG_Agents", "IC3Net_Agents",

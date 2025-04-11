@@ -5,6 +5,8 @@ from .policy_gradient import PG_Learner, A2C_Learner, PPOCLIP_Learner, PPOKL_Lea
 from .qlearning_family import DQN_Learner, DuelDQN_Learner, DDQN_Learner, PerDQN_Learner, C51_Learner, QRDQN_Learner, \
     DRQN_Learner
 
+from .model_based import DreamerV3_Learner
+
 from .multi_agent_rl import (IQL_Learner, VDN_Learner, QMIX_Learner, WQMIX_Learner, QTRAN_Learner, \
     IAC_Learner, VDAC_Learner, COMA_Learner, IC3Net_Learner, MFQ_Learner, MFAC_Learner, IPPO_Learner, MAPPO_Clip_Learner, \
     IDDPG_Learner, MADDPG_Learner, MATD3_Learner, ISAC_Learner, ISACDIS_Learner, MASAC_Learner, MASACDIS_Learner)
@@ -33,6 +35,8 @@ REGISTRY_Learners = {
     "C51_Learner": C51_Learner,
     "QRDQN_Learner": QRDQN_Learner,
     "DRQN_Learner": DRQN_Learner,
+
+    "DreamerV3_Learner": DreamerV3_Learner,
 
     "IQL_Learner": IQL_Learner,
     "VDN_Learner": VDN_Learner,
@@ -63,6 +67,8 @@ __all__ = [
     "SAC_Learner", "SACDIS_Learner", "PDQN_Learner", "MPDQN_Learner", "SPDQN_Learner","NPG_Learner",
 
     "DQN_Learner", "DuelDQN_Learner", "DDQN_Learner", "PerDQN_Learner", "C51_Learner", "QRDQN_Learner", "DRQN_Learner",
+
+    "DreamerV3_Learner",
 
     "IQL_Learner", "VDN_Learner", "QMIX_Learner", "WQMIX_Learner", "QTRAN_Learner",
     "IAC_Learner", "VDAC_Learner", "COMA_Learner", "IPPO_Learner", "MAPPO_Clip_Learner", "IC3Net_Learner",

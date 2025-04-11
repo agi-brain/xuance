@@ -7,7 +7,7 @@ import torch
 from torch import nn
 from xuance.torch.learners import Learner
 from argparse import Namespace
-from xuance.torch.utils.operations import merge_distributions
+from xuance.torch.utils import merge_distributions
 
 
 class PPG_Learner(Learner):
