@@ -64,9 +64,6 @@
 
 ### :point_right: DRL
 
-<details open>
-<summary>（点击以查看支持的 DRL 算法）</summary>
-
 - Deep Q Network - DQN [[论文](https://www.nature.com/articles/nature14236)]
 - DQN with Double Q-learning - Double DQN [[论文](https://ojs.aaai.org/index.php/AAAI/article/view/10295)]
 - DQN with Dueling Network - Dueling DQN [[论文](http://proceedings.mlr.press/v48/wangf16.pdf)]
@@ -76,6 +73,8 @@
 - DQN with Quantile Regression - QRDQN [[论文](https://ojs.aaai.org/index.php/AAAI/article/view/11791)]
 - Distributional Reinforcement Learning - C51 [[论文](http://proceedings.mlr.press/v70/bellemare17a/bellemare17a.pdf)]
 - Vanilla Policy Gradient - PG [[论文](https://proceedings.neurips.cc/paper_files/paper/1999/file/464d828b85b0bed98e80ade0a5c43b0f-Paper.pdf)]
+- Natural Policy Gradient -
+  NPG [[Paper](https://proceedings.neurips.cc/paper_files/paper/2001/file/4b86abe48d358ecf194c56c69108433e-Paper.pdf)]
 - Phasic Policy Gradient - PPG [[论文](http://proceedings.mlr.press/v139/cobbe21a/cobbe21a.pdf)] [[代码](https://github.com/openai/phasic-policy-gradient)]
 - Advantage Actor Critic - A2C [[论文](http://proceedings.mlr.press/v48/mniha16.pdf)] [[代码](https://github.com/openai/baselines/tree/master/baselines/a2c)]
 - Soft Actor-Critic - SAC [[论文](http://proceedings.mlr.press/v80/haarnoja18b/haarnoja18b.pdf)] [[代码](http://github.com/haarnoja/sac)]
@@ -88,12 +87,11 @@
 - Multi-pass Parameterised Deep Q-Network - MP-DQN [[论文](https://arxiv.org/pdf/1905.04388.pdf)] [[代码](https://github.com/cycraig/MP-DQN)]
 - Split Parameterised Deep Q-Network - SP-DQN [[论文](https://arxiv.org/pdf/1810.06394.pdf)]
 
-</details>
+### :point_right: Model-Based Reinforcement Learning (MBRL)
+
+- DreamerV3 [[Paper](https://www.nature.com/articles/s41586-025-08744-2.pdf)[Code](https://github.com/danijar/dreamerv3.git)]
 
 ### :point_right: 多智能体强化学习（MARL）
-
-<details open>
-<summary>（点击以查看支持的 MARL 算法）</summary>
 
 - Independent Q-learning - IQL [[论文](https://hal.science/file/index/docid/720669/filename/Matignon2012independent.pdf)] [[代码](https://github.com/oxwhirl/pymarl)]
 - Value Decomposition Networks - VDN [[论文](https://arxiv.org/pdf/1706.05296.pdf)] [[代码](https://github.com/oxwhirl/pymarl)]
@@ -113,8 +111,6 @@
 - Independent Soft Actor-Critic - ISAC
 - Multi-agent Soft Actor-Critic - MASAC [[论文](https://arxiv.org/pdf/2104.06655.pdf)]
 - Multi-agent Twin Delayed Deep Deterministic Policy Gradient - MATD3 [[论文](https://arxiv.org/pdf/1910.01465.pdf)]
-
-</details>
 
 ## 已支持环境
 

@@ -101,6 +101,10 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
   MP-DQN [[Paper](https://arxiv.org/pdf/1905.04388.pdf)] [[Code](https://github.com/cycraig/MP-DQN)]
 - Split Parameterised Deep Q-Network - SP-DQN [[Paper](https://arxiv.org/pdf/1810.06394.pdf)]
 
+### :point_right: Model-Based Reinforcement Learning (MBRL)
+
+- DreamerV3 [[Paper](https://www.nature.com/articles/s41586-025-08744-2.pdf)[Code](https://github.com/danijar/dreamerv3.git)]
+
 ### :point_right: Multi-Agent Reinforcement Learning (MARL)
 
 - Independent Q-learning -
