@@ -1,5 +1,5 @@
 from xuance.common import Dict, Any
-from .wrapper import XuanCeEnvWrapper, XuanCeMultiAgentEnvWrapper
+from .wrapper import XuanCeEnvWrapper, XuanCeAtariEnvWrapper, XuanCeMultiAgentEnvWrapper
 from .base import RawEnvironment, RawMultiAgentEnv, MultiAgentDict, AgentKeys
 
 
@@ -12,6 +12,7 @@ __all__ = [
     "RawEnvironment",
     "RawMultiAgentEnv",
     "XuanCeEnvWrapper",
+    "XuanCeAtariEnvWrapper",
     "XuanCeMultiAgentEnvWrapper",
     "EnvironmentDict",
     "MultiAgentDict",

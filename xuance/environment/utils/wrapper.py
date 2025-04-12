@@ -123,6 +123,23 @@ class XuanCeEnvWrapper:
         return self.env
 
 
+class XuanCeAtariEnvWrapper(XuanCeEnvWrapper):
+    """
+    Wraps an Atari environment that can run in XuanCe.
+    """
+    def __init__(self, env, **kwargs):
+        super().__init__(env, **kwargs)
+
+    def reset(self, **kwargs):
+        """Resets the environment with kwargs."""
+        if self.env.was_real_done:
+            self._episode_step = 0
+            self._episode_score = 0.0
+        obs, info = self.env.reset(**kwargs)
+        info["episode_step"] = self._episode_step
+        return obs, info
+
+
 class XuanCeMultiAgentEnvWrapper(XuanCeEnvWrapper):
     """
     Wraps an environment for multi-agent system that can run in XuanCe.
