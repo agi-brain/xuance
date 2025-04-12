@@ -26,7 +26,7 @@ class Atari_Env(gym.Wrapper):
                             full_action_space=full_action_space)
         self.env.action_space.seed(seed=config.env_seed)
         self.env.unwrapped.reset(seed=config.env_seed)
-        self.max_episode_steps = self.env._max_episode_steps if hasattr(self.env, '_max_episode_steps') else 1e5
+        self.max_episode_steps = self.env._max_episode_steps if hasattr(self.env, '_max_episode_steps') else 1e6
         super(Atari_Env, self).__init__(self.env)
         # self.env.seed(config.env_seed)
         self.num_stack = config.num_stack
@@ -80,7 +80,6 @@ class Atari_Env(gym.Wrapper):
             for _ in range(self.num_stack):
                 self.frames.append(self.observation(obs))
 
-            self._episode_step = 0
         else:
             obs, _, done, _, _ = self.env.step(0)
             for _ in range(self.num_stack):
@@ -95,15 +94,11 @@ class Atari_Env(gym.Wrapper):
         self.frames.append(self.observation(observation))
         lives = self.env.ale.lives()
         # avoid environment bug
-        if self.max_episode_steps is not None:
-            if self._episode_step >= self.max_episode_steps:
-                terminated = True
         self.was_real_done = terminated
         if (lives < self.lifes) and (lives > 0):
             terminated = True
         truncated = self.was_real_done
         self.lifes = lives
-        self._episode_step += 1
         return self._get_obs(), self.reward(reward), terminated, truncated, info
 
     def _get_obs(self):
@@ -119,7 +114,7 @@ class Atari_Env(gym.Wrapper):
             return frame
 
     def reward(self, reward):
-        return np.sign(reward)
+        return reward
 
 
 class LazyFrames(object):

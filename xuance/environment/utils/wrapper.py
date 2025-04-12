@@ -86,17 +86,6 @@ class XuanCeEnvWrapper:
         """Returns the environment render_mode."""
         return self.env.render_mode
 
-    def step(self, action):
-        """Steps through the environment with action."""
-        if self._is_continuous:
-            action = (action + 1.0) * 0.5 * (self._action_high - self._action_low) + self._action_low
-        observation, reward, terminated, truncated, info = self.env.step(action)
-        self._episode_step += 1
-        self._episode_score += reward
-        info["episode_step"] = self._episode_step  # current episode step
-        info["episode_score"] = self._episode_score  # the accumulated rewards
-        return observation, reward, terminated, truncated, info
-
     def reset(self, **kwargs):
         """Resets the environment with kwargs."""
         try:
@@ -108,6 +97,17 @@ class XuanCeEnvWrapper:
         self._episode_score = 0.0
         info["episode_step"] = self._episode_step
         return obs, info
+
+    def step(self, action):
+        """Steps through the environment with action."""
+        if self._is_continuous:
+            action = (action + 1.0) * 0.5 * (self._action_high - self._action_low) + self._action_low
+        observation, reward, terminated, truncated, info = self.env.step(action)
+        self._episode_step += 1
+        self._episode_score += reward
+        info["episode_step"] = self._episode_step  # current episode step
+        info["episode_score"] = self._episode_score  # the accumulated rewards
+        return observation, reward, terminated, truncated, info
 
     def render(self, *args, **kwargs):
         """Renders the environment."""
