@@ -12,7 +12,6 @@ from xuance.torch.policies import DreamerV3Policy
 
 import numpy as np
 from tqdm import tqdm
-import gym as gym_old
 import gymnasium as gym
 from argparse import Namespace
 from xuance.common import Optional
@@ -27,8 +26,7 @@ class DreamerV3Agent(OffPolicyAgent):
         self.atari = True if self.config.env_name == "Atari" else False
 
         # continuous or not
-        self.is_continuous = (isinstance(self.envs.action_space, gym.spaces.Box) or
-                              isinstance(self.envs.action_space, gym_old.spaces.Box))
+        self.is_continuous = (isinstance(self.envs.action_space, gym.spaces.Box))
         self.is_multidiscrete = isinstance(self.envs.action_space, gym.spaces.MultiDiscrete)
         self.config.is_continuous = self.is_continuous  # add to config
 

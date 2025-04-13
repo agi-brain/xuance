@@ -1,5 +1,5 @@
 from copy import deepcopy
-from gym.spaces import Box
+from gymnasium.spaces import Box
 from xuance.common import Sequence, Optional, Callable, Union
 from xuance.mindspore import Module, Tensor, ops
 from xuance.mindspore.utils import ModuleType

@@ -1,5 +1,5 @@
 import numpy as np
-from gym.spaces import Space
+from gymnasium.spaces import Space
 from copy import deepcopy
 from xuance.common import Sequence, Optional, Union
 from xuance.tensorflow import tf, tk, Module, Tensor

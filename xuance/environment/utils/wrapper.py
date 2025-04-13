@@ -1,5 +1,5 @@
 from xuance.common import Optional, Tuple, SupportsFloat
-from gym import spaces
+from gymnasium import spaces
 
 
 class XuanCeEnvWrapper:

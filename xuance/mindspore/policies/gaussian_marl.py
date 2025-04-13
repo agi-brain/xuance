@@ -1,6 +1,6 @@
 import numpy as np
 from copy import deepcopy
-from gym.spaces import Box
+from gymnasium.spaces import Box
 from xuance.common import Sequence, Optional, Callable, Union, Dict, List
 from xuance.mindspore.utils import ModuleType
 from xuance.mindspore import Tensor, Module, ModuleDict, ops

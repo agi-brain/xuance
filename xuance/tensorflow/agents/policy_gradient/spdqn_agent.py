@@ -1,9 +1,9 @@
-import gym
+import gymnasium as gym
 import numpy as np
 from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
-from gym import spaces
+from gymnasium import spaces
 from xuance.common import DummyOffPolicyBuffer
 from xuance.environment.single_agent_env import Gym_Env
 from xuance.tensorflow import tk, Module

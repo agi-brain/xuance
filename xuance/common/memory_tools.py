@@ -1,6 +1,6 @@
 import random
 import numpy as np
-from gym import Space
+from gymnasium import Space
 from abc import ABC, abstractmethod
 from xuance.common import Optional, Union
 from xuance.common import space2shape, discount_cumsum

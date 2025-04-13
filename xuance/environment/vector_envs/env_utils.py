@@ -1,9 +1,8 @@
 import contextlib
 import os
-from collections import OrderedDict
-
-import gym
+import gymnasium as gym
 import numpy as np
+from collections import OrderedDict
 
 
 def tile_images(images):

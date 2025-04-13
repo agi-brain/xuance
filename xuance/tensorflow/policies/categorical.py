@@ -1,6 +1,6 @@
 import numpy as np
 from copy import deepcopy
-from gym.spaces import Discrete
+from gymnasium.spaces import Discrete
 from xuance.common import Sequence, Optional, Union
 from xuance.tensorflow import tf, tk, Module
 from .core import CategoricalActorNet as ActorNet

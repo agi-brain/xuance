@@ -5,7 +5,7 @@ Note: The version of Python should be >= 3.10.
 """
 import time
 import numpy as np
-from gym.spaces import Box
+from gymnasium.spaces import Box
 from xuance.environment import RawEnvironment
 try:
     from gym_pybullet_drones.envs.CtrlAviary import CtrlAviary

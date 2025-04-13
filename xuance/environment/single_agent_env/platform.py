@@ -1,4 +1,4 @@
-import gym
+import gymnasium as gym
 try:
     import gym_platform
 except ImportError:

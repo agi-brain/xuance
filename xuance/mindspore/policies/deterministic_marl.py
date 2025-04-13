@@ -1,10 +1,10 @@
 import mindspore as ms
 from mindspore.nn.probability.distribution import Categorical
 from copy import deepcopy
-from gym.spaces import Discrete, Box
-from xuance.common import Sequence, Optional, Callable, Union, Dict, List
+from gymnasium.spaces import Discrete, Box
+from xuance.common import Sequence, Optional, Callable, Dict, List
 from xuance.mindspore.utils import ModuleType
-from xuance.mindspore import Tensor, Module, ModuleDict, ops
+from xuance.mindspore import Tensor, Module, ops
 from .core import BasicQhead, ActorNet, CriticNet, VDN_mixer, QTRAN_base, QMIX_FF_mixer
 
 

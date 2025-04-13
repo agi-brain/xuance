@@ -1,6 +1,6 @@
 import numpy as np
 from xuance.environment import RawMultiAgentEnv
-from gym.spaces import Box, Discrete
+from gymnasium.spaces import Box, Discrete
 try:
     from smac.env import StarCraft2Env
 except ImportError:

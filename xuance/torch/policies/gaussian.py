@@ -3,7 +3,7 @@ import torch
 import numpy as np
 from xuance.common import Sequence, Optional, Callable, Union
 from copy import deepcopy
-from gym.spaces import Box
+from gymnasium.spaces import Box
 from xuance.torch import Module, Tensor, DistributedDataParallel
 from xuance.torch.utils import ModuleType
 from .core import GaussianActorNet as ActorNet

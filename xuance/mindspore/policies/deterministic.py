@@ -1,7 +1,7 @@
 import mindspore.nn as nn
 import numpy as np
 from copy import deepcopy
-from gym.spaces import Space, Discrete
+from gymnasium.spaces import Space, Discrete
 from xuance.common import Sequence, Optional, Callable, Union
 from xuance.mindspore import ms, Module, Tensor, ops
 from xuance.mindspore.utils import ModuleType

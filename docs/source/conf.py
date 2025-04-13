@@ -56,9 +56,7 @@ myst_enable_extensions = [
 autodoc_mock_imports = [
     "numpy",
     "scipy",
-    "gym",
     "gymnasium",
-    "gym-notices",
     "pygame",
     "tqdm",
     "pyglet",

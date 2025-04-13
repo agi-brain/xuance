@@ -4,7 +4,7 @@ import torch.nn as nn
 import numpy as np
 from copy import deepcopy
 from operator import itemgetter
-from gym.spaces import Discrete
+from gymnasium.spaces import Discrete
 from xuance.common import Sequence, Optional, Callable, Union, Dict, List
 from xuance.torch.policies import CategoricalActorNet, ActorNet
 from xuance.torch.policies.core import CriticNet, BasicQhead
