@@ -1,6 +1,7 @@
 import gymnasium as gym
 import numpy as np
 from collections import deque
+from xuance.environment.single_agent_env.gym import LazyFrames
 try:
     import cv2
 except ImportError:
@@ -9,33 +10,43 @@ except ImportError:
 
 
 class Atari_Env(gym.Wrapper):
-    """
-    We modify the Atari environment to accelerate the training with some tricks:
-        Episode termination: Make end-of-life == end-of-episode, but only reset on true game over. Done by DeepMind for the DQN and co. since it helps value estimation.
-        Frame skipping: Return only every `skip`-th frame.
-        Observation resize: Warp frames from 210x160 to 84x84 as done in the Nature paper and later work.
-        Frame Stacking: Stack k last frames. Returns lazy array, which is much more memory efficient.
-    Args:
-        env_id: The environment id of Atari, such as "Breakout-v5", "Pong-v5", etc.
-        seed: random seed.
-        obs_type: This argument determines what observations are returned by the environment. Its values are:
-                    ram: The 128 Bytes of RAM are returned
-                    rgb: An RGB rendering of the game is returned
-                    grayscale: A grayscale rendering is returned
-        frame_skip: int or a tuple of two ints. This argument controls stochastic frame skipping, as described in the section on stochasticity.
-        num_stack: int, the number of stacked frames if you use the frame stacking trick.
-        image_size: This argument determines the size of observation image, default is [210, 160].
-        noop_max: max times of noop action for env.reset().
-    """
+    """Modified Atari environment with training optimizations.
 
+    Implements several enhancements from DeepMind's Nature paper:
+    - Episode termination: Treats end-of-life as end-of-episode (resets only on true game over)
+    - Frame skipping: Returns only every `skip`-th frame
+    - Observation resizing: Warps frames from 210x160 to configurable size
+    - Frame stacking: Efficiently stacks last k frames using lazy arrays
+
+    Note:
+        All configurations should be set in the provided config object.
+    """
     def __init__(self, config, **kwargs):
+        """Initializes the Atari environment wrapper.
+
+        Args:
+            config: Configuration object containing:
+                env_id: Atari environment ID (e.g., "ALE/Breakout-v5")
+                env_seed: Random seed for environment
+                obs_type: Observation type ("ram"/"rgb"/"grayscale")
+                frame_skip: Frame skip interval (int or tuple for stochastic skipping)
+                num_stack: Number of frames to stack
+                img_size: Target observation dimensions (default: [210, 160])
+                noop_max: Maximum no-op actions during reset
+                render_mode: Rendering mode (None/"human"/"rgb_array")
+                full_action_space: Whether to use full action space
+            **kwargs: Additional arguments passed to gym.make()
+        """
+        full_action_space = config.full_action_space if hasattr(config, 'full_action_space') else False
         self.env = gym.make(config.env_id,
                             render_mode=config.render_mode,
                             obs_type=config.obs_type,
-                            frameskip=config.frame_skip)
+                            frameskip=config.frame_skip,
+                            full_action_space=full_action_space)
         self.env.action_space.seed(seed=config.env_seed)
-        self.env.unwrapped.reset(seed=config.env_seed)
-        self.max_episode_steps = self.env._max_episode_steps if hasattr(self.env, '_max_episode_steps') else 1e6
+        self.env.seed(seed=config.env_seed)
+        self.env.reset(seed=config.env_seed)
+        self.max_episode_steps = self.env._max_episode_steps if hasattr(self.env, '_max_episode_steps') else 1e5
         super(Atari_Env, self).__init__(self.env)
         # self.env.seed(seed)
         self.num_stack = config.num_stack
@@ -69,25 +80,42 @@ class Atari_Env(gym.Wrapper):
         self._episode_score = 0.0
 
     def close(self):
+        """Closes the underlying environment and releases resources."""
         self.env.close()
 
-    def render(self, render_mode):
-        return self.env.unwrapped.render(render_mode)
+    def render(self, **kwargs):
+        """Renders the environment.
+
+        Returns:
+            Rendered frame according to specified mode
+        """
+        return self.env.render()
 
     def reset(self):
+        """Resets the environment with random no-op actions.
+
+        Performs:
+        1. Environment reset
+        2. Random number of no-op actions
+        3. Initial fire action (if available)
+        4. Frame stacking initialization
+
+        Returns:
+            tuple: (stacked_observations, info_dict)
+        """
         info = {}
         if self.was_real_done:
-            self.env.unwrapped.reset()
+            self.env.reset()
             # Execute NoOp actions
             num_noops = np.random.randint(0, self.noop_max)
             for _ in range(num_noops):
-                obs, _, done, _ = self.env.unwrapped.step(0)
+                obs, _, done, _, _ = self.env.step(0)
                 if done:
-                    self.env.unwrapped.reset()
+                    self.env.reset()
             # try to fire
-            obs, _, done, _ = self.env.unwrapped.step(1)
+            obs, _, done, _, _ = self.env.step(1)
             if done:
-                obs = self.env.unwrapped.reset()
+                obs = self.env.reset()
             # stack reset observations
             for _ in range(self.num_stack):
                 self.frames.append(self.observation(obs))
@@ -96,7 +124,7 @@ class Atari_Env(gym.Wrapper):
             self._episode_score = 0.0
             info["episode_step"] = 0
         else:
-            obs, _, done, _ = self.env.unwrapped.step(0)
+            obs, _, done, _, _ = self.env.step(0)
             for _ in range(self.num_stack):
                 self.frames.append(self.observation(obs))
 
@@ -105,7 +133,15 @@ class Atari_Env(gym.Wrapper):
         return self._get_obs(), info
 
     def step(self, actions):
-        observation, reward, terminated, info = self.env.unwrapped.step(actions)
+        """Executes one environment step.
+
+        Args:
+            actions: Action to execute
+
+        Returns:
+            tuple: (observation, reward, terminated, truncated, info)
+        """
+        observation, reward, terminated, truncated, info = self.env.step(actions)
         self.frames.append(self.observation(observation))
         lives = self.env.unwrapped.ale.lives()
         # avoid environment bug
@@ -123,10 +159,26 @@ class Atari_Env(gym.Wrapper):
         return self._get_obs(), self.reward(reward), terminated, truncated, info
 
     def _get_obs(self):
+        """Returns stacked observations as LazyFrames.
+
+        Returns:
+            LazyFrames: Stacked frame observations
+
+        Raises:
+            AssertionError: If frame stack is incomplete
+        """
         assert len(self.frames) == self.num_stack
         return LazyFrames(list(self.frames))
 
     def observation(self, frame):
+        """Processes raw frame into desired observation format.
+
+        Args:
+            frame: Raw environment frame
+
+        Returns:
+            Processed observation (resized grayscale/RGB or raw RAM)
+        """
         if self.grayscale:
             return np.expand_dims(cv2.resize(frame, self.image_size, interpolation=cv2.INTER_AREA), -1)
         elif self.rgb:
@@ -135,34 +187,12 @@ class Atari_Env(gym.Wrapper):
             return frame
 
     def reward(self, reward):
+        """Applies reward shaping for training.
+
+        Args:
+            reward: Original environment reward
+
+        Returns:
+            Shaped reward (sign function in this implementation)
+        """
         return np.sign(reward)
-
-
-class LazyFrames(object):
-    """
-    This object ensures that common frames between the observations are only stored once.
-    It exists purely to optimize memory usage which can be huge for DQN's 1M frames replay buffers.
-    This object should only be converted to numpy array before being passed to the model.
-    """
-
-    def __init__(self, frames):
-        self._frames = frames
-        self._out = None
-
-    def _force(self):
-        if self._out is None:
-            self._out = np.concatenate(self._frames, axis=-1)
-            self._frames = None
-        return self._out
-
-    def __array__(self, dtype=None):
-        out = self._force()
-        if dtype is not None:
-            out = out.astype(dtype)
-        return out
-
-    def __len__(self):
-        return len(self._force())
-
-    def __getitem__(self, i):
-        return self._force()[..., i]
