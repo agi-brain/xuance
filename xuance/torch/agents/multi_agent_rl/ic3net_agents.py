@@ -66,6 +66,44 @@ class IC3Net_Agents(IAC_Agents):
             raise AttributeError(f"{agent} currently does not support the policy named {self.config.policy}.")
         return policy
 
+    def init_rnn_hidden(self, n_envs):
+        """
+        Returns initialized hidden states of RNN if use RNN-based representations.
+
+        Parameters:
+            n_envs (int): The number of parallel environments.
+        """
+        rnn_hidden = None
+        if self.use_rnn:
+            batch = n_envs * self.n_agents if self.use_parameter_sharing else n_envs
+            rnn_hidden = {k: self.policy.representation[k].init_hidden(batch) for k in self.model_keys}
+        return rnn_hidden, None
+
+    def init_hidden_item(self,
+                         i_env: int,
+                         rnn_hidden_actor: Optional[dict] = None,
+                         rnn_hidden_critic: Optional[dict] = None):
+        """
+        Returns initialized hidden states of RNN for i-th environment.
+
+        Parameters:
+            i_env (int): The index of environment that to be selected.
+            rnn_hidden_actor (Optional[dict]): The RNN hidden states of actor representation.
+            rnn_hidden_critic (Optional[dict]): The RNN hidden states of critic representation.
+        """
+        assert self.use_rnn is True, "This method cannot be called when self.use_rnn is False."
+        if self.use_parameter_sharing:
+            b_index = np.arange(i_env * self.n_agents, (i_env + 1) * self.n_agents)
+        else:
+            b_index = [i_env, ]
+        for k in self.model_keys:
+            rnn_hidden_actor[k] = self.policy.actor_representation[k].init_hidden_item(b_index, *rnn_hidden_actor[k])
+        if rnn_hidden_critic is None:
+            return rnn_hidden_actor, None
+        for k in self.model_keys:
+            rnn_hidden_critic[k] = self.policy.critic_representation[k].init_hidden_item(b_index, *rnn_hidden_critic[k])
+        return rnn_hidden_actor, rnn_hidden_critic
+
     def store_experience(self, obs_dict, avail_actions, actions_dict, log_pi_a, rewards_dict, values_dict,
                          terminals_dict, info, **kwargs):
         """

@@ -425,10 +425,10 @@ class IC3NetPolicy(MAAC_Policy_Share):
 
         for key in agent_list:
             if self.use_rnn:
-                outputs = self.actor_representation[key](observation[key], *rnn_hidden[key])
+                outputs = self.representation[key](observation[key], *rnn_hidden[key])
                 rnn_hidden_new[key] = (outputs['rnn_hidden'], outputs['rnn_cell'])
             else:
-                outputs = self.actor_representation[key](observation[key])
+                outputs = self.representation[key](observation[key])
                 rnn_hidden_new[key] = [None, None]
 
             # Here to encode messages to send to others
