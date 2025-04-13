@@ -145,7 +145,8 @@ class COMA_Agents(OnPolicyMARLAgents):
 
         if self.use_parameter_sharing:
             key = self.agent_keys[0]
-            pi_probs[key][Tensor(avail_actions_input[key]) == 0] = 0.0
+            if self.use_actions_mask:
+                pi_probs[key][Tensor(avail_actions_input[key]) == 0] = 0.0
             if test_mode:
                 actions_sample = pi_probs[key].max(dim=-1)[1]
             else:
@@ -159,8 +160,9 @@ class COMA_Agents(OnPolicyMARLAgents):
             agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(n_env, -1, -1).to(self.device)
             bs = n_env * self.n_agents
             agents_id = agents_id.reshape(bs, 1, -1) if self.use_rnn else agents_id.reshape(bs, -1)
-            for k in self.agent_keys:
-                pi_probs[k][Tensor(avail_actions_input[k]) == 0] = 0.0
+            if self.use_actions_mask:
+                for k in self.agent_keys:
+                    pi_probs[k][Tensor(avail_actions_input[k]) == 0] = 0.0
             if test_mode:
                 actions_sample = {k: pi_probs[k].max(dim=-1)[1] for k in self.agent_keys}
             else:
