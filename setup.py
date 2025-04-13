@@ -64,7 +64,7 @@ setup(
         "numpy<1.23.0,>=1.21.6",
         "scipy==1.7.3",
         "PyYAML",  # default version is 6.0
-        "gymnasium==0.28.1",
+        "gymnasium==1.1.1",
         "pygame>=2.1.0",
         "tqdm==4.62.3",
         "pyglet==1.5.15",

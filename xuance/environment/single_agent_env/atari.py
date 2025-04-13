@@ -75,7 +75,6 @@ class Atari_Env(gym.Wrapper):
         # assert len(self.env.unwrapped.get_action_meanings()) >= 3
         self.action_space = self.env.action_space
         self.metadata = self.env.metadata
-        self.reward_range = self.env.reward_range
         self._render_mode = config.render_mode
         self._episode_step = 0
         self._episode_score = 0.0

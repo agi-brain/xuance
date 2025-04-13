@@ -12,7 +12,6 @@ class XuanCeEnvWrapper:
         self.env = env
         self._action_space: Optional[spaces.Space] = None
         self._observation_space: Optional[spaces.Space] = None
-        self._reward_range: Optional[Tuple[SupportsFloat, SupportsFloat]] = None
         self._metadata: Optional[dict] = None
         self._max_episode_steps: Optional[int] = None
         self._episode_step = 0
@@ -44,18 +43,6 @@ class XuanCeEnvWrapper:
     def observation_space(self, space: spaces.Space):
         """Sets the observation space."""
         self._observation_space = space
-
-    @property
-    def reward_range(self) -> Tuple[SupportsFloat, SupportsFloat]:
-        """Return the reward range of the environment."""
-        if self._reward_range is None:
-            return self.env.reward_range
-        return self._reward_range
-
-    @reward_range.setter
-    def reward_range(self, value: Tuple[SupportsFloat, SupportsFloat]):
-        """Sets reward range."""
-        self._reward_range = value
 
     @property
     def metadata(self) -> dict:
