@@ -91,7 +91,7 @@ class Atari_Env(gym.Wrapper):
         """
         return self.env.render()
 
-    def reset(self):
+    def reset(self, *args):
         """Resets the environment with random no-op actions.
 
         Performs:
