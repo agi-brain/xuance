@@ -43,6 +43,7 @@ class Atari_Env(gym.Wrapper):
                             obs_type=config.obs_type,
                             frameskip=config.frame_skip,
                             full_action_space=full_action_space)
+        self.env.metadata['render_fps'] = config.fps
         self.env.action_space.seed(seed=config.env_seed)
         self.env.seed(seed=config.env_seed)
         self.env.reset(seed=config.env_seed)
@@ -83,7 +84,7 @@ class Atari_Env(gym.Wrapper):
         """Closes the underlying environment and releases resources."""
         self.env.close()
 
-    def render(self, **kwargs):
+    def render(self, *args, **kwargs):
         """Renders the environment.
 
         Returns:
