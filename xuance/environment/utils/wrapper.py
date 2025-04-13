@@ -139,6 +139,17 @@ class XuanCeAtariEnvWrapper(XuanCeEnvWrapper):
         info["episode_step"] = self._episode_step
         return obs, info
 
+    def step(self, action):
+        """Steps through the environment with action."""
+        if self._is_continuous:
+            action = (action + 1.0) * 0.5 * (self._action_high - self._action_low) + self._action_low
+        observation, reward, terminated, truncated, info = self.env.step(action)
+        self._episode_step = self.env._episode_step
+        self._episode_score = self.env._episode_score
+        info["episode_step"] = self._episode_step  # current episode step
+        info["episode_score"] = self._episode_score  # the accumulated rewards
+        return observation, reward, terminated, truncated, info
+
 
 class XuanCeMultiAgentEnvWrapper(XuanCeEnvWrapper):
     """

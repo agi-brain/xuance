@@ -15,20 +15,29 @@ class Atari_Env(gym.Wrapper):
         Frame skipping: Return only every `skip`-th frame.
         Observation resize: Warp frames from 210x160 to 84x84 as done in the Nature paper and later work.
         Frame Stacking: Stack k last frames. Returns lazy array, which is much more memory efficient.
+    Args:
+        env_id: The environment id of Atari, such as "Breakout-v5", "Pong-v5", etc.
+        seed: random seed.
+        obs_type: This argument determines what observations are returned by the environment. Its values are:
+                    ram: The 128 Bytes of RAM are returned
+                    rgb: An RGB rendering of the game is returned
+                    grayscale: A grayscale rendering is returned
+        frame_skip: int or a tuple of two ints. This argument controls stochastic frame skipping, as described in the section on stochasticity.
+        num_stack: int, the number of stacked frames if you use the frame stacking trick.
+        image_size: This argument determines the size of observation image, default is [210, 160].
+        noop_max: max times of noop action for env.reset().
     """
 
-    def __init__(self, config):
-        full_action_space = config.full_action_space if hasattr(config, 'full_action_space') else False
+    def __init__(self, config, **kwargs):
         self.env = gym.make(config.env_id,
                             render_mode=config.render_mode,
                             obs_type=config.obs_type,
-                            frameskip=config.frame_skip,
-                            full_action_space=full_action_space)
+                            frameskip=config.frame_skip)
         self.env.action_space.seed(seed=config.env_seed)
         self.env.unwrapped.reset(seed=config.env_seed)
         self.max_episode_steps = self.env._max_episode_steps if hasattr(self.env, '_max_episode_steps') else 1e6
         super(Atari_Env, self).__init__(self.env)
-        # self.env.seed(config.env_seed)
+        # self.env.seed(seed)
         self.num_stack = config.num_stack
         self.obs_type = config.obs_type
         self.frames = deque([], maxlen=self.num_stack)
@@ -39,12 +48,14 @@ class Atari_Env(gym.Wrapper):
         self.grayscale, self.rgb = False, False
         if self.obs_type == "rgb":
             self.rgb = True
-            self.observation_space = gym.spaces.Box(
-                low=0, high=255, shape=(config.img_size[0], config.img_size[1], 3 * self.num_stack), dtype=np.uint8)
+            self.observation_space = gym.spaces.Box(low=0, high=255,
+                                                    shape=(config.img_size[0], config.img_size[1], 3 * self.num_stack),
+                                                    dtype=np.uint8)
         elif self.obs_type == "grayscale":
             self.grayscale = True
-            self.observation_space = gym.spaces.Box(
-                low=0, high=255, shape=(config.img_size[0], config.img_size[1], self.num_stack), dtype=np.uint8)
+            self.observation_space = gym.spaces.Box(low=0, high=255,
+                                                    shape=(config.img_size[0], config.img_size[1], self.num_stack),
+                                                    dtype=np.uint8)
         else:  # ram type
             self.observation_space = self.env.observation_space
         # assert self.env.unwrapped.get_action_meanings()[0] == "NOOP"
@@ -55,50 +66,60 @@ class Atari_Env(gym.Wrapper):
         self.reward_range = self.env.reward_range
         self._render_mode = config.render_mode
         self._episode_step = 0
+        self._episode_score = 0.0
 
     def close(self):
         self.env.close()
 
-    def render(self, *args, **kwargs):
-        return self.env.render()
+    def render(self, render_mode):
+        return self.env.unwrapped.render(render_mode)
 
     def reset(self):
         info = {}
         if self.was_real_done:
-            self.env.reset()
+            self.env.unwrapped.reset()
             # Execute NoOp actions
             num_noops = np.random.randint(0, self.noop_max)
             for _ in range(num_noops):
-                obs, _, done, _, _ = self.env.step(0)
+                obs, _, done, _ = self.env.unwrapped.step(0)
                 if done:
-                    self.env.reset()
+                    self.env.unwrapped.reset()
             # try to fire
-            obs, _, done, _, _ = self.env.step(1)
+            obs, _, done, _ = self.env.unwrapped.step(1)
             if done:
-                obs = self.env.reset()
+                obs = self.env.unwrapped.reset()
             # stack reset observations
             for _ in range(self.num_stack):
                 self.frames.append(self.observation(obs))
 
+            self._episode_step = 0
+            self._episode_score = 0.0
+            info["episode_step"] = 0
         else:
-            obs, _, done, _, _ = self.env.step(0)
+            obs, _, done, _ = self.env.unwrapped.step(0)
             for _ in range(self.num_stack):
                 self.frames.append(self.observation(obs))
 
-        self.lifes = self.env.ale.lives()
+        self.lifes = self.env.unwrapped.ale.lives()
         self.was_real_done = False
         return self._get_obs(), info
 
     def step(self, actions):
-        observation, reward, terminated, truncated, info = self.env.step(actions)
+        observation, reward, terminated, info = self.env.unwrapped.step(actions)
         self.frames.append(self.observation(observation))
-        lives = self.env.ale.lives()
+        lives = self.env.unwrapped.ale.lives()
         # avoid environment bug
+        if self._episode_step >= self.max_episode_steps:
+            terminated = True
         self.was_real_done = terminated
         if (lives < self.lifes) and (lives > 0):
             terminated = True
         truncated = self.was_real_done
         self.lifes = lives
+        self._episode_step += 1
+        self._episode_score += reward
+        info["episode_score"] = self._episode_score
+        info["episode_step"] = self._episode_step
         return self._get_obs(), self.reward(reward), terminated, truncated, info
 
     def _get_obs(self):
@@ -114,7 +135,7 @@ class Atari_Env(gym.Wrapper):
             return frame
 
     def reward(self, reward):
-        return reward
+        return np.sign(reward)
 
 
 class LazyFrames(object):
