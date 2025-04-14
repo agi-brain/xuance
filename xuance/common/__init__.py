@@ -6,7 +6,7 @@ from xuance.common.memory_tools import create_memory, store_element, sample_batc
     DummyOnPolicyBuffer, DummyOnPolicyBuffer_Atari, DummyOffPolicyBuffer, DummyOffPolicyBuffer_Atari, \
     RecurrentOffPolicyBuffer, PerOffPolicyBuffer, SequentialReplayBuffer
 from xuance.common.memory_tools_marl import BaseBuffer, MARL_OnPolicyBuffer, MARL_OnPolicyBuffer_RNN, \
-    MeanField_OnPolicyBuffer, MeanField_OffPolicyBuffer, COMA_Buffer, COMA_Buffer_RNN, \
+    MeanField_OnPolicyBuffer, MeanField_OffPolicyBuffer, I3CNet_Buffer, I3CNet_Buffer_RNN, \
     MARL_OffPolicyBuffer, MARL_OffPolicyBuffer_RNN
 from xuance.common.segtree_tool import SegmentTree, SumSegmentTree, MinSegmentTree
 
@@ -25,7 +25,7 @@ __all__ = [
     "SequentialReplayBuffer",
     # memory_tools_marl
     "BaseBuffer", "MARL_OnPolicyBuffer", "MARL_OnPolicyBuffer_RNN", "MARL_OffPolicyBuffer", "MARL_OffPolicyBuffer_RNN",
-    "MeanField_OnPolicyBuffer", "MeanField_OffPolicyBuffer", "COMA_Buffer", "COMA_Buffer_RNN",
+    "MeanField_OnPolicyBuffer", "MeanField_OffPolicyBuffer", "I3CNet_Buffer", "I3CNet_Buffer_RNN",
     # segtree_tool
     "SegmentTree", "SumSegmentTree", "MinSegmentTree",
 ]

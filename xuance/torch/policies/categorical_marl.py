@@ -425,7 +425,7 @@ class IC3NetPolicy(MAAC_Policy_Share):
 
         for key in agent_list:
             if self.use_rnn:
-                outputs = self.representation[key](observation[key], *rnn_hidden[key])
+                outputs = self.representation[key](observation[key], *rnn_hidden[key])  # RNN (LSTM or GRU)
                 rnn_hidden_new[key] = (outputs['rnn_hidden'], outputs['rnn_cell'])
             else:
                 outputs = self.representation[key](observation[key])
