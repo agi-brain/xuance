@@ -72,10 +72,10 @@ class IC3NetComm(Module):
         for key in self.model_keys:
             x = Tensor(observations[key]).to(self.device)
             x = self.encoder[key](x)
-            if not self.recurrent:
-                obs_encode[key] = self.tanh(x)
-            else:
+            if self.recurrent:
                 obs_encode[key] = x
+            else:
+                obs_encode[key] = self.tanh(x)
         return obs_encode
 
     def forward(self, hidden_features: Tensor):

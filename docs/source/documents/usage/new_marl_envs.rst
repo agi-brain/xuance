@@ -14,7 +14,7 @@ Here is an example:
 .. code-block:: python
 
     import numpy as np
-    from gym.spaces import Box
+    from gymnasium.spaces import Box
     from xuance.environment import RawMultiAgentEnv
 
     class MyNewMultiAgentEnv(RawMultiAgentEnv):

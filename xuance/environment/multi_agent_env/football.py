@@ -18,7 +18,7 @@ Football Academy - with a total of 11 scenarios
     - academy_single_goal_versus_lazy: Full 11 versus 11 games, where the opponents cannot move but they can only intercept the ball if it is close enough to them. Our center back defender has the ball at first.
 """
 import numpy as np
-from gym.spaces import Box
+from gymnasium.spaces import Box
 from xuance.environment import RawMultiAgentEnv
 try:
     import gfootball.env as football_env

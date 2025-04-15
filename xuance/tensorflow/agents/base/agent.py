@@ -6,7 +6,7 @@ from abc import ABC
 from pathlib import Path
 from argparse import Namespace
 from mpi4py import MPI
-from gym.spaces import Dict, Space
+from gymnasium.spaces import Dict, Space
 from torch.utils.tensorboard import SummaryWriter
 from xuance.common import get_time_string, create_directory, RunningMeanStd, space2shape, EPS, Optional, Union
 from xuance.environment import DummyVecEnv, SubprocVecEnv

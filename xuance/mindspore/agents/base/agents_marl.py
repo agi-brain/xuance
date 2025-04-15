@@ -6,7 +6,7 @@ from abc import ABC
 from pathlib import Path
 from argparse import Namespace
 from operator import itemgetter
-from gym.spaces import Space
+from gymnasium.spaces import Space
 from torch.utils.tensorboard import SummaryWriter
 from xuance.common import get_time_string, create_directory, space2shape, Optional, List, Dict, Union
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv

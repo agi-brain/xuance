@@ -26,3 +26,6 @@ dataset/
 
 demo_mindspore.py
 mnist.npz
+
+*-checkpoint.ipynb
+/.ipynb_checkpoints

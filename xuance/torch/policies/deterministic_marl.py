@@ -4,7 +4,7 @@ import torch
 from torch.distributions import Categorical
 from torch.nn.functional import one_hot
 from copy import deepcopy
-from gym.spaces import Discrete, Box
+from gymnasium.spaces import Discrete, Box
 from xuance.common import Sequence, Optional, Callable, Union, Dict, List
 from xuance.torch.policies import BasicQhead, ActorNet, CriticNet, VDN_mixer, QMIX_FF_mixer
 from xuance.torch.utils import ModuleType

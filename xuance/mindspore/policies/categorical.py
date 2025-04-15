@@ -1,6 +1,5 @@
-import mindspore as ms
 from copy import deepcopy
-from gym.spaces import Discrete
+from gymnasium.spaces import Discrete
 from xuance.common import Sequence, Optional, Callable, Union
 from xuance.mindspore import Module, Tensor, ops
 from xuance.mindspore.utils import ModuleType

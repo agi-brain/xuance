@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 from copy import deepcopy
-from gym.spaces import Discrete
+from gymnasium.spaces import Discrete
 from xuance.common import Sequence, Optional, Callable, Union
 from xuance.torch import Module, Tensor, DistributedDataParallel
 from xuance.torch.utils import ModuleType

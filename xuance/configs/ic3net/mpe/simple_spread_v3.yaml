@@ -34,6 +34,7 @@ continuous: False  # Whether to use continuous actions.
 comm_mask_zero: True  # Whether communication should be there.
 comm_passes: 1  # Number of comm passes per step over the model.
 comm_init: 'zeros'
+dim_message: 64  # Dimension of message.
 
 seed: 1  # Random seed.
 parallels: 16  # The number of environments to run in parallel.

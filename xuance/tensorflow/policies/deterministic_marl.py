@@ -1,6 +1,6 @@
 import numpy as np
 from copy import deepcopy
-from gym.spaces import Space, Discrete, Box
+from gymnasium.spaces import Space, Discrete, Box
 from xuance.common import Sequence, Optional, Union, Dict, List
 from xuance.tensorflow.representations import Basic_Identical
 from xuance.tensorflow import tf, tk, tfp, Tensor, Module

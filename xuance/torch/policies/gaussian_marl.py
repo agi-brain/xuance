@@ -2,7 +2,7 @@ import os
 import torch
 import numpy as np
 from copy import deepcopy
-from gym.spaces import Box
+from gymnasium.spaces import Box
 from xuance.common import Sequence, Optional, Callable, Union, Dict, List
 from xuance.torch.utils import ModuleType
 from xuance.torch import Tensor, Module, ModuleDict, DistributedDataParallel

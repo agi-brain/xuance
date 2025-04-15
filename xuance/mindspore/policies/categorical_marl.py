@@ -1,7 +1,7 @@
 import mindspore as ms
 import mindspore.nn as nn
 from copy import deepcopy
-from gym.spaces import Discrete
+from gymnasium.spaces import Discrete
 from xuance.common import Sequence, Optional, Callable, Union, Dict, List
 from xuance.mindspore.policies import CategoricalActorNet, ActorNet
 from xuance.mindspore.policies.core import CriticNet

@@ -4,7 +4,7 @@ GitHub: https://github.com/utiasDSL/gym-pybullet-drones.git
 Note: The version of Python should be >= 3.10.
 """
 import numpy as np
-from gym.spaces import Box
+from gymnasium.spaces import Box
 import time
 from operator import itemgetter
 from xuance.environment import RawMultiAgentEnv

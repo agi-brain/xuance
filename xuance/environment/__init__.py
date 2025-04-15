@@ -1,5 +1,5 @@
 from argparse import Namespace
-from xuance.environment.utils import XuanCeEnvWrapper, XuanCeMultiAgentEnvWrapper
+from xuance.environment.utils import XuanCeEnvWrapper, XuanCeAtariEnvWrapper, XuanCeMultiAgentEnvWrapper
 from xuance.environment.utils import RawEnvironment, RawMultiAgentEnv
 from xuance.environment.vector_envs import DummyVecEnv, DummyVecEnv_Atari, DummyVecMultiAgentEnv
 from xuance.environment.vector_envs import SubprocVecEnv, SubprocVecEnv_Atari, SubprocVecMultiAgentEnv
@@ -48,6 +48,8 @@ def make_envs(config: Namespace):
         if config.env_name in REGISTRY_ENV.keys():
             if config.env_name == "Platform":
                 return REGISTRY_ENV[config.env_name](config)
+            elif config.env_name == "Atari":
+                return XuanCeAtariEnvWrapper(REGISTRY_ENV[config.env_name](config))
             else:
                 return XuanCeEnvWrapper(REGISTRY_ENV[config.env_name](config))
         elif config.env_name in REGISTRY_MULTI_AGENT_ENV.keys():

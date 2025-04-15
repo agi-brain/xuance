@@ -9,7 +9,7 @@ REGISTRY_ENV: Optional[EnvironmentDict] = {
 }
 
 try:
-    from xuance.environment.single_agent_env.gym import Atari_Env
+    from xuance.environment.single_agent_env.atari import Atari_Env
     REGISTRY_ENV['Atari'] = Atari_Env
 except Exception as error:
     REGISTRY_ENV["Atari"] = str(error)

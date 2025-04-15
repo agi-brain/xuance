@@ -51,7 +51,7 @@ use_advnorm: True
 use_gae: True
 gae_lambda: 0.95
 
-start_training: 1000  # start training after n episodes
+start_training: 1000  # start training after n steps
 running_steps: 10000000
 train_per_step: True
 training_frequency: 1

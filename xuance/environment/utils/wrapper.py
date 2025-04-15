@@ -1,5 +1,5 @@
 from xuance.common import Optional, Tuple, SupportsFloat
-from gym import spaces
+from gymnasium import spaces
 
 
 class XuanCeEnvWrapper:
@@ -12,11 +12,13 @@ class XuanCeEnvWrapper:
         self.env = env
         self._action_space: Optional[spaces.Space] = None
         self._observation_space: Optional[spaces.Space] = None
-        self._reward_range: Optional[Tuple[SupportsFloat, SupportsFloat]] = None
         self._metadata: Optional[dict] = None
         self._max_episode_steps: Optional[int] = None
         self._episode_step = 0
         self._episode_score = 0.0
+        self._is_continuous = isinstance(self._action_space, spaces.Box)
+        self._action_low = self.action_space.low if hasattr(self._action_space, "low") else None
+        self._action_high = self.action_space.high if hasattr(self._action_space, "high") else None
 
     @property
     def action_space(self):
@@ -41,18 +43,6 @@ class XuanCeEnvWrapper:
     def observation_space(self, space: spaces.Space):
         """Sets the observation space."""
         self._observation_space = space
-
-    @property
-    def reward_range(self) -> Tuple[SupportsFloat, SupportsFloat]:
-        """Return the reward range of the environment."""
-        if self._reward_range is None:
-            return self.env.reward_range
-        return self._reward_range
-
-    @reward_range.setter
-    def reward_range(self, value: Tuple[SupportsFloat, SupportsFloat]):
-        """Sets reward range."""
-        self._reward_range = value
 
     @property
     def metadata(self) -> dict:
@@ -83,15 +73,6 @@ class XuanCeEnvWrapper:
         """Returns the environment render_mode."""
         return self.env.render_mode
 
-    def step(self, action):
-        """Steps through the environment with action."""
-        observation, reward, terminated, truncated, info = self.env.step(action)
-        self._episode_step += 1
-        self._episode_score += reward
-        info["episode_step"] = self._episode_step  # current episode step
-        info["episode_score"] = self._episode_score  # the accumulated rewards
-        return observation, reward, terminated, truncated, info
-
     def reset(self, **kwargs):
         """Resets the environment with kwargs."""
         try:
@@ -103,6 +84,17 @@ class XuanCeEnvWrapper:
         self._episode_score = 0.0
         info["episode_step"] = self._episode_step
         return obs, info
+
+    def step(self, action):
+        """Steps through the environment with action."""
+        if self._is_continuous:
+            action = (action + 1.0) * 0.5 * (self._action_high - self._action_low) + self._action_low
+        observation, reward, terminated, truncated, info = self.env.step(action)
+        self._episode_step += 1
+        self._episode_score += reward
+        info["episode_step"] = self._episode_step  # current episode step
+        info["episode_score"] = self._episode_score  # the accumulated rewards
+        return observation, reward, terminated, truncated, info
 
     def render(self, *args, **kwargs):
         """Renders the environment."""
@@ -116,6 +108,34 @@ class XuanCeEnvWrapper:
     def unwrapped(self):
         """Returns the base environment of the wrapper."""
         return self.env
+
+
+class XuanCeAtariEnvWrapper(XuanCeEnvWrapper):
+    """
+    Wraps an Atari environment that can run in XuanCe.
+    """
+    def __init__(self, env, **kwargs):
+        super().__init__(env, **kwargs)
+
+    def reset(self, **kwargs):
+        """Resets the environment with kwargs."""
+        if self.env.was_real_done:
+            self._episode_step = 0
+            self._episode_score = 0.0
+        obs, info = self.env.reset(**kwargs)
+        info["episode_step"] = self._episode_step
+        return obs, info
+
+    def step(self, action):
+        """Steps through the environment with action."""
+        if self._is_continuous:
+            action = (action + 1.0) * 0.5 * (self._action_high - self._action_low) + self._action_low
+        observation, reward, terminated, truncated, info = self.env.step(action)
+        self._episode_step = self.env._episode_step
+        self._episode_score = self.env._episode_score
+        info["episode_step"] = self._episode_step  # current episode step
+        info["episode_score"] = self._episode_score  # the accumulated rewards
+        return observation, reward, terminated, truncated, info
 
 
 class XuanCeMultiAgentEnvWrapper(XuanCeEnvWrapper):

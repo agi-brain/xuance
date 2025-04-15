@@ -1,6 +1,6 @@
 import numpy as np
 from copy import deepcopy
-from gym.spaces import Space, Discrete
+from gymnasium.spaces import Space, Discrete
 from xuance.common import Sequence, Optional, Union, Callable
 from xuance.tensorflow import tf, tk, Module, Tensor
 from .core import BasicQhead, BasicRecurrent, DuelQhead, C51Qhead, QRDQNhead, ActorNet, CriticNet

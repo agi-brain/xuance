@@ -4,7 +4,7 @@ import torch.nn as nn
 import numpy as np
 from copy import deepcopy
 from operator import itemgetter
-from gym.spaces import Discrete
+from gymnasium.spaces import Discrete
 from xuance.common import Sequence, Optional, Callable, Union, Dict, List
 from xuance.torch.policies import CategoricalActorNet, ActorNet
 from xuance.torch.policies.core import CriticNet, BasicQhead
@@ -425,10 +425,10 @@ class IC3NetPolicy(MAAC_Policy_Share):
 
         for key in agent_list:
             if self.use_rnn:
-                outputs = self.actor_representation[key](observation[key], *rnn_hidden[key])
+                outputs = self.representation[key](observation[key], *rnn_hidden[key])  # RNN (LSTM or GRU)
                 rnn_hidden_new[key] = (outputs['rnn_hidden'], outputs['rnn_cell'])
             else:
-                outputs = self.actor_representation[key](observation[key])
+                outputs = self.representation[key](observation[key])
                 rnn_hidden_new[key] = [None, None]
 
             # Here to encode messages to send to others

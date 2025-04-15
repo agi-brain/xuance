@@ -1,7 +1,7 @@
 import argparse
 import numpy as np
 from copy import deepcopy
-from gym.spaces import Box
+from gymnasium.spaces import Box
 from xuance.common import get_configs, recursive_dict_update
 from xuance.environment import make_envs, RawMultiAgentEnv, REGISTRY_MULTI_AGENT_ENV
 from xuance.torch.utils.operations import set_seed

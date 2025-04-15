@@ -2,9 +2,10 @@ import os
 import random
 import torch
 import numpy as np
-import torch.nn as nn
+from torch import nn, Tensor
 from torch.distributed import init_process_group
-from .distributions import CategoricalDistribution, DiagGaussianDistribution
+from torch.distributions import Independent, OneHotCategoricalStraightThrough
+from xuance.common import Dict, Any, Optional
 
 
 def init_distributed_mode(master_port: str = None):
@@ -138,83 +139,195 @@ def assign_from_flat_params(flat_params: torch.Tensor, model: nn.Module) -> nn.M
     return model
 
 
-def split_distributions(distribution):
-    """Splits a batch of distributions into individual instances.
+# Adapted from: https://github.com/NM512/dreamerv3-torch/blob/main/tools.py#L929
+def init_weights(m):
+    if isinstance(m, nn.Linear):
+        in_num = m.in_features
+        out_num = m.out_features
+        denoms = (in_num + out_num) / 2.0
+        scale = 1.0 / denoms
+        std = np.sqrt(scale) / 0.87962566103423978
+        nn.init.trunc_normal_(m.weight.data, mean=0.0, std=std, a=-2.0 * std, b=2.0 * std)
+        if hasattr(m.bias, "data"):
+            m.bias.data.fill_(0.0)
+    elif isinstance(m, nn.Conv2d) or isinstance(m, nn.ConvTranspose2d):
+        space = m.kernel_size[0] * m.kernel_size[1]
+        in_num = space * m.in_channels
+        out_num = space * m.out_channels
+        denoms = (in_num + out_num) / 2.0
+        scale = 1.0 / denoms
+        std = np.sqrt(scale) / 0.87962566103423978
+        nn.init.trunc_normal_(m.weight.data, mean=0.0, std=std, a=-2.0, b=2.0)
+        if hasattr(m.bias, "data"):
+            m.bias.data.fill_(0.0)
+    elif isinstance(m, nn.LayerNorm):
+        m.weight.data.fill_(1.0)
+        if hasattr(m.bias, "data"):
+            m.bias.data.fill_(0.0)
 
-    This function separates a batch of distributions (either `CategoricalDistribution`
-    or `DiagGaussianDistribution`) into individual distribution objects.
+
+# Adapted from: https://github.com/NM512/dreamerv3-torch/blob/main/tools.py#L957
+def uniform_init_weights(given_scale):
+    def f(m):
+        if isinstance(m, nn.Linear):
+            in_num = m.in_features
+            out_num = m.out_features
+            denoms = (in_num + out_num) / 2.0
+            scale = given_scale / denoms
+            limit = np.sqrt(3 * scale)
+            nn.init.uniform_(m.weight.data, a=-limit, b=limit)
+            if hasattr(m.bias, "data"):
+                m.bias.data.fill_(0.0)
+        elif isinstance(m, nn.LayerNorm):
+            m.weight.data.fill_(1.0)
+            if hasattr(m.bias, "data"):
+                m.bias.data.fill_(0.0)
+
+    return f
+
+
+def sym_log(x: Tensor) -> Tensor:
+    """Computes the symmetric logarithm of a tensor.
+
+    This function applies a logarithm transformation while preserving the sign of the input.
+    The operation is defined as: sign(x) * log(1 + |x|).
+    Ref: https://github.com/danijar/dreamerv3/blob/8fa35f83eee1ce7e10f3dee0b766587d0a713a60/dreamerv3/jaxutils.py
 
     Args:
-        distribution (CategoricalDistribution or DiagGaussianDistribution): The input
-            distribution batch to be split.
+        x: Input tensor of any shape.
 
     Returns:
-        np.ndarray: A reshaped array of individual distribution instances.
-
-    Raises:
-        NotImplementedError: If the distribution type is not supported.
+        A tensor of the same shape as input, with symmetric logarithm applied element-wise.
     """
-    return_list = []
-    if isinstance(distribution, CategoricalDistribution):
-        shape = distribution.logits.shape
-        logits = distribution.logits.view(-1, shape[-1])
-        for logit in logits:
-            dist = CategoricalDistribution(logits.shape[-1])
-            dist.set_param(logits=logit.unsqueeze(0).detach())
-            return_list.append(dist)
-    elif isinstance(distribution, DiagGaussianDistribution):
-        shape = distribution.mu.shape
-        means = distribution.mu.view(-1, shape[-1])
-        std = distribution.std
-        for mu in means:
-            dist = DiagGaussianDistribution(shape[-1])
-            dist.set_param(mu.detach(), std.detach())
-            return_list.append(dist)
-    else:
-        raise NotImplementedError
-    return np.array(return_list).reshape(shape[:-1])
+    return torch.sign(x) * torch.log(1 + torch.abs(x))
 
 
-def merge_distributions(distribution_list):
-    """Merges a list of individual distributions back into a batch distribution.
+def sym_exp(x: Tensor) -> Tensor:
+    """Computes the symmetric exponential of a tensor.
 
-    This function reconstructs a batched distribution from a list (or array) of
-    individual distributions, supporting both categorical and diagonal Gaussian distributions.
+    This function applies an exponential transformation while preserving the sign of the input.
+    The operation is defined as: sign(x) * (exp(|x|) - 1).
 
     Args:
-        distribution_list (list or np.ndarray): A list or array of individual distribution instances.
+        x: Input tensor of any shape.
 
     Returns:
-        CategoricalDistribution or DiagGaussianDistribution: A merged batch distribution.
-
-    Raises:
-        NotImplementedError: If the distribution type is not supported.
+        A tensor of the same shape as input, with symmetric exponential applied element-wise.
     """
-    if isinstance(distribution_list[0], CategoricalDistribution):
-        logits = torch.cat([dist.logits for dist in distribution_list], dim=0)
-        action_dim = logits.shape[-1]
-        dist = CategoricalDistribution(action_dim)
-        dist.set_param(logits=logits.detach())
-        return dist
-    elif isinstance(distribution_list[0], DiagGaussianDistribution):
-        shape = distribution_list.shape
-        distribution_list = distribution_list.reshape([-1])
-        mu = torch.cat([dist.mu for dist in distribution_list], dim=0)
-        std = torch.cat([dist.std for dist in distribution_list], dim=0)
-        action_dim = distribution_list[0].mu.shape[-1]
-        dist = DiagGaussianDistribution(action_dim)
-        mu = mu.view(shape + (action_dim,))
-        std = std.view(shape + (action_dim,))
-        dist.set_param(mu, std)
-        return dist
-    elif isinstance(distribution_list[0, 0], CategoricalDistribution):
-        shape = distribution_list.shape
-        distribution_list = distribution_list.reshape([-1])
-        logits = torch.cat([dist.logits for dist in distribution_list], dim=0)
-        action_dim = logits.shape[-1]
-        dist = CategoricalDistribution(action_dim)
-        logits = logits.view(shape + (action_dim,))
-        dist.set_param(logits=logits.detach())
-        return dist
-    else:
-        pass
+    return torch.sign(x) * (torch.exp(torch.abs(x)) - 1)
+
+
+def two_hot_encoder(tensor: Tensor, support_range: int = 300, num_buckets: Optional[int] = None) -> Tensor:
+    """Encode a tensor representing a floating point number `x` as a tensor with all zeros except for two entries in the
+    indexes of the two buckets closer to `x` in the support of the distribution.
+    Check https://arxiv.org/pdf/2301.04104v1.pdf equation 9 for more details.
+
+    Args:
+        tensor (Tensor): tensor to encode of shape (..., batch_size, 1)
+        support_range (int): range of the support of the distribution, going from -support_range to support_range
+        num_buckets (int): number of buckets in the support of the distribution
+
+    Returns:
+        Tensor: tensor of shape (..., batch_size, support_size)
+    """
+    if tensor.shape == torch.Size([]):
+        tensor = tensor.unsqueeze(0)
+    if num_buckets is None:
+        num_buckets = support_range * 2 + 1
+    if num_buckets % 2 == 0:
+        raise ValueError("support_size must be odd")
+    tensor = tensor.clip(-support_range, support_range)
+    buckets = torch.linspace(-support_range, support_range, num_buckets, device=tensor.device)
+    bucket_size = buckets[1] - buckets[0] if len(buckets) > 1 else 1.0
+
+    right_idxs = torch.bucketize(tensor, buckets)
+    left_idxs = (right_idxs - 1).clip(min=0)
+
+    two_hot = torch.zeros(tensor.shape[:-1] + (num_buckets,), device=tensor.device)
+    left_value = torch.abs(buckets[right_idxs] - tensor) / bucket_size
+    right_value = 1 - left_value
+    two_hot.scatter_add_(-1, left_idxs, left_value)
+    two_hot.scatter_add_(-1, right_idxs, right_value)
+
+    return two_hot
+
+
+def two_hot_decoder(tensor: torch.Tensor, support_range: int) -> torch.Tensor:
+    """Decode a tensor representing a two-hot vector as a tensor of floating point numbers.
+
+    Args:
+        tensor (Tensor): tensor to decode of shape (..., batch_size, support_size)
+        support_range (int): range of the support of the values, going from -support_range to support_range
+
+    Returns:
+        Tensor: tensor of shape (..., batch_size, 1)
+    """
+    num_buckets = tensor.shape[-1]
+    if num_buckets % 2 == 0:
+        raise ValueError("support_size must be odd")
+    support = torch.linspace(-support_range, support_range, num_buckets).to(tensor.device)
+    return torch.sum(tensor * support, dim=-1, keepdim=True)
+
+
+def compute_stochastic_state(logits: Tensor, discrete: int = 32, sample=True) -> Tensor:
+    """
+    Compute the stochastic state from the logits computed by the transition or representaiton model.
+
+    Args:
+        logits (Tensor): logits from either the representation model or the transition model.
+        discrete (int, optional): the size of the Categorical variables.
+            Defaults to 32.
+        sample (bool): whether or not to sample the stochastic state.
+            Default to True.
+
+    Returns:
+        The sampled stochastic state.
+    """
+    logits = logits.view(*logits.shape[:-1], -1, discrete)
+    dist = Independent(OneHotCategoricalStraightThrough(logits=logits), 1)
+    stochastic_state = dist.rsample() if sample else dist.mode
+    return stochastic_state
+
+
+def compute_lambda_values(
+    rewards: Tensor,
+    values: Tensor,
+    continues: Tensor,
+    lmbda: float = 0.95,
+):
+    vals = [values[-1:]]
+    interm = rewards + continues * values * (1 - lmbda)
+    for t in reversed(range(len(continues))):
+        vals.append(interm[t] + continues[t] * lmbda * vals[-1])
+    ret = torch.cat(list(reversed(vals))[:-1])
+    return ret
+
+
+class dotdict(dict):
+    """
+    A dictionary supporting dot notation.
+    """
+
+    __getattr__ = dict.get
+    __setattr__ = dict.__setitem__
+    __delattr__ = dict.__delitem__
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for k, v in self.items():
+            if isinstance(v, dict):
+                self[k] = dotdict(v)
+
+    def __getstate__(self):
+        return self
+
+    def __setstate__(self, state):
+        self.update(state)
+
+    def as_dict(self) -> Dict[str, Any]:
+        _copy = dict(self)
+        for k, v in _copy.items():
+            if isinstance(v, dotdict):
+                _copy[k] = v.as_dict()
+        return _copy
+

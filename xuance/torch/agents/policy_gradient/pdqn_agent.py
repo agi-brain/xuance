@@ -1,10 +1,10 @@
-import gym
+import gymnasium as gym
 import torch
 import numpy as np
 from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
-from gym import spaces
+from gymnasium import spaces
 from xuance.environment.single_agent_env import Gym_Env
 from xuance.torch import Module
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions

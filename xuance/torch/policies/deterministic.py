@@ -4,7 +4,7 @@ import numpy as np
 import torch.nn as nn
 from xuance.common import Sequence, Optional, Callable, Union
 from copy import deepcopy
-from gym.spaces import Space, Discrete
+from gymnasium.spaces import Space, Discrete
 from xuance.torch import Module, Tensor, DistributedDataParallel
 from xuance.torch.utils import ModuleType
 from .core import BasicQhead, BasicRecurrent, DuelQhead, C51Qhead, QRDQNhead, ActorNet, CriticNet

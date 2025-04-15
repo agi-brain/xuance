@@ -1,5 +1,5 @@
 import numpy as np
-from gym.spaces import Space
+from gymnasium.spaces import Space
 from copy import deepcopy
 from xuance.common import Sequence, Optional, Union
 from xuance.tensorflow import tf, tk, Module, Tensor
@@ -206,7 +206,7 @@ class PPGActorCritic(Module):
         critic_outputs = self.critic_representation(observation)
         a_mean = self.actor(policy_outputs['state'])
         value = self.critic(critic_outputs['state'])
-        aux_value = self.aux_critic(policy_outputs)
+        aux_value = self.aux_critic(policy_outputs['state'])
         return policy_outputs, a_mean, value[:, 0], aux_value[:, 0]
 
 

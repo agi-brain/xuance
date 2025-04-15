@@ -1,6 +1,6 @@
 from xuance.environment import RawEnvironment
 import gymnasium as gym
-from gym.spaces import Box
+from gymnasium.spaces import Box
 import numpy as np
 try:
     from minigrid.wrappers import RGBImgPartialObsWrapper, ImgObsWrapper
