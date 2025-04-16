@@ -471,6 +471,83 @@ class MARL_OnPolicyBuffer_RNN(MARL_OnPolicyBuffer):
         return samples_dict
 
 
+class I3CNet_Buffer(MARL_OnPolicyBuffer):
+    def __init__(self):
+        super(I3CNet_Buffer, self).__init__()
+
+
+class I3CNet_Buffer_RNN(MARL_OnPolicyBuffer_RNN):
+    def __init__(self,
+                 agent_keys: List[str],
+                 state_space: Dict[str, Space] = None,
+                 obs_space: Dict[str, Dict[str, Space]] = None,
+                 act_space: Dict[str, Dict[str, Space]] = None,
+                 n_envs: int = 1,
+                 buffer_size: int = 1,
+                 max_episode_steps: int = 1,
+                 use_gae: Optional[bool] = False,
+                 use_advnorm: Optional[bool] = False,
+                 gamma: Optional[float] = None,
+                 gae_lam: Optional[float] = None,
+                 **kwargs):
+        self.msg_shape = {k: (kwargs['dim_message']) for k in agent_keys}
+        super(I3CNet_Buffer_RNN, self).__init__(agent_keys, state_space, obs_space, act_space, n_envs, buffer_size,
+                                                max_episode_steps, use_gae, use_advnorm, gamma, gae_lam, **kwargs)
+
+    def clear(self):
+        self.data = {
+            'obs': {k: np.zeros((self.buffer_size, self.max_eps_len) + self.obs_shape[k], np.float32)
+                    for k in self.agent_keys},
+            'actions': {k: np.zeros((self.buffer_size, self.max_eps_len) + self.act_shape[k], np.float32)
+                        for k in self.agent_keys},
+            'message': {k: np.zeros((self.buffer_size, self.max_eps_len) + self.act_shape[k], np.float32)
+                        for k in self.agent_keys},
+            'rewards': {k: np.zeros((self.buffer_size, self.max_eps_len), np.float32) for k in self.agent_keys},
+            'returns': {k: np.zeros((self.buffer_size, self.max_eps_len), np.float32) for k in self.agent_keys},
+            'values': {k: np.zeros((self.buffer_size, self.max_eps_len), np.float32) for k in self.agent_keys},
+            'advantages': {k: np.zeros((self.buffer_size, self.max_eps_len), np.float32) for k in self.agent_keys},
+            'log_pi_old': {k: np.zeros((self.buffer_size, self.max_eps_len), np.float32) for k in self.agent_keys},
+            'terminals': {k: np.zeros((self.buffer_size, self.max_eps_len), np.bool_) for k in self.agent_keys},
+            'agent_mask': {k: np.zeros((self.buffer_size, self.max_eps_len), np.bool_) for k in self.agent_keys},
+            'filled': np.zeros((self.buffer_size, self.max_eps_len), np.bool_)
+        }
+        if self.store_global_state:
+            self.data.update({
+                'state': np.zeros((self.buffer_size, self.max_eps_len) + self.state_space.shape, np.float32)
+            })
+        if self.use_actions_mask:
+            self.data.update({
+                'avail_actions': {k: np.zeros((self.buffer_size, self.max_eps_len) + self.avail_actions_shape[k],
+                                              dtype=np.bool_) for k in self.agent_keys}
+            })
+        self.ptr, self.size = 0, 0
+
+    def clear_episodes(self):
+        self.episode_data = {
+            'obs': {k: np.zeros((self.n_envs, self.max_eps_len) + self.obs_shape[k], np.float32)
+                    for k in self.agent_keys},
+            'actions': {k: np.zeros((self.n_envs, self.max_eps_len) + self.act_shape[k], np.float32)
+                        for k in self.agent_keys},
+            'rewards': {k: np.zeros((self.n_envs, self.max_eps_len), np.float32) for k in self.agent_keys},
+            'returns': {k: np.zeros((self.n_envs, self.max_eps_len), np.float32) for k in self.agent_keys},
+            'values': {k: np.zeros((self.n_envs, self.max_eps_len), np.float32) for k in self.agent_keys},
+            'advantages': {k: np.zeros((self.n_envs, self.max_eps_len), np.float32) for k in self.agent_keys},
+            'log_pi_old': {k: np.zeros((self.n_envs, self.max_eps_len), np.float32) for k in self.agent_keys},
+            'terminals': {k: np.zeros((self.n_envs, self.max_eps_len), np.bool_) for k in self.agent_keys},
+            'agent_mask': {k: np.zeros((self.n_envs, self.max_eps_len), np.bool_) for k in self.agent_keys},
+            'filled': np.zeros((self.n_envs, self.max_eps_len), np.bool_)
+        }
+        if self.store_global_state:
+            self.episode_data.update({
+                'state': np.zeros((self.n_envs, self.max_eps_len) + self.state_space.shape, np.float32)
+            })
+        if self.use_actions_mask:
+            self.episode_data.update({
+                'avail_actions': {k: np.zeros((self.n_envs, self.max_eps_len) + self.avail_actions_shape[k],
+                                              dtype=np.bool_) for k in self.agent_keys}
+            })
+
+
 class MeanField_OnPolicyBuffer(MARL_OnPolicyBuffer):
     """
     Replay buffer for on-policy Mean-Field MARL algorithms (Mean-Field Actor-Critic).
@@ -520,162 +597,6 @@ class MeanField_OnPolicyBuffer(MARL_OnPolicyBuffer):
         if self.size == 0:
             return
         self.start_ids[i_env] = self.ptr
-
-
-class COMA_Buffer(MARL_OnPolicyBuffer):
-    def __init__(self, n_agents, state_space, obs_space, act_space, rew_space, done_space, n_envs, buffer_size,
-                 use_gae, use_advnorm, gamma, gae_lam, **kwargs):
-        self.dim_act = kwargs['dim_act']
-        self.td_lambda = kwargs['td_lambda']
-        super(COMA_Buffer, self).__init__(n_agents, state_space, obs_space, act_space, rew_space, done_space, n_envs,
-                                          buffer_size, use_gae, use_advnorm, gamma, gae_lam, **kwargs)
-
-    def clear(self):
-        self.data = {
-            'obs': np.zeros((self.n_envs, self.n_size, self.n_agents) + self.obs_space).astype(np.float32),
-            'actions': np.zeros((self.n_envs, self.n_size, self.n_agents) + self.act_space).astype(np.float32),
-            'actions_onehot': np.zeros((self.n_envs, self.n_size, self.n_agents, self.dim_act)).astype(np.float32),
-            'rewards': np.zeros((self.n_envs, self.n_size,) + self.rew_space).astype(np.float32),
-            'returns': np.zeros((self.n_envs, self.n_size,) + self.rew_space).astype(np.float32),
-            'values': np.zeros((self.n_envs, self.n_size, self.n_agents, 1)).astype(np.float32),
-            'log_pi_old': np.zeros((self.n_envs, self.n_size, self.n_agents,)).astype(np.float32),
-            'terminals': np.zeros((self.n_envs, self.n_size,) + self.done_space).astype(np.bool_),
-            'agent_mask': np.ones((self.n_envs, self.n_size, self.n_agents)).astype(np.bool_),
-        }
-        if self.state_space is not None:
-            self.data.update({'state': np.zeros((self.n_envs, self.n_size,) + self.state_space).astype(np.float32)})
-        self.ptr, self.size = 0, 0
-        self.start_ids = np.zeros(self.n_envs, np.int64)  # the start index of the last episode for each env.
-
-    def finish_path(self, value, i_env, value_normalizer=None):  # when an episode is finished
-        """
-        Build td-lambda targets.
-        """
-        if self.size == 0:
-            return
-        if self.full:
-            path_slice = np.arange(self.start_ids[i_env], self.n_size).astype(np.int32)
-        else:
-            path_slice = np.arange(self.start_ids[i_env], self.ptr).astype(np.int32)
-
-        # calculate advantages and returns
-        rewards = np.array(self.data['rewards'][i_env, path_slice])
-        vs = np.append(np.array(self.data['values'][i_env, path_slice]), [value], axis=0)
-        dones = np.array(self.data['terminals'][i_env, path_slice])[:, :, None]
-        returns = np.zeros_like(vs)
-        step_nums = len(path_slice)
-        for t in reversed(range(step_nums)):
-            returns[t] = self.td_lambda * self.gamma * returns[t + 1] + \
-                         rewards[t] + (1 - self.td_lambda) * self.gamma * vs[t + 1] * (1 - dones[t])
-        self.data['returns'][i_env, path_slice] = returns[:-1]
-        self.start_ids[i_env] = self.ptr
-
-
-class COMA_Buffer_RNN(MARL_OnPolicyBuffer_RNN):
-    """
-    Replay buffer for on-policy MARL algorithms.
-
-    Args:
-        n_agents: number of agents.
-        state_space: global state space, type: Discrete, Box.
-        obs_space: observation space for one agent (suppose same obs space for group agents).
-        act_space: action space for one agent (suppose same actions space for group agents).
-        rew_space: reward space.
-        done_space: terminal variable space.
-        n_envs: number of parallel environments.
-        buffer_size: buffer size of transition data for one environment.
-        use_gae: whether to use GAE trick.
-        use_advnorm: whether to use Advantage normalization trick.
-        gamma: discount factor.
-        gae_lam: gae lambda.
-        **kwargs: other args.
-    """
-
-    def __init__(self, n_agents, state_space, obs_space, act_space, rew_space, done_space, n_envs, buffer_size,
-                 use_gae, use_advnorm, gamma, gae_lam, **kwargs):
-        self.td_lambda = kwargs['td_lambda']
-        super(COMA_Buffer_RNN, self).__init__(n_agents, state_space, obs_space, act_space, rew_space, done_space,
-                                              n_envs, buffer_size, use_gae, use_advnorm, gamma, gae_lam, **kwargs)
-
-    def clear(self):
-        self.data = {
-            'obs': np.zeros((self.buffer_size, self.n_agents, self.max_eps_len + 1) + self.obs_space, np.float32),
-            'actions': np.zeros((self.buffer_size, self.n_agents, self.max_eps_len) + self.act_space, np.float32),
-            'actions_onehot': np.zeros((self.buffer_size, self.n_agents, self.max_eps_len, self.dim_act)).astype(
-                np.float32),
-            'rewards': np.zeros((self.buffer_size, self.n_agents, self.max_eps_len) + self.rew_space, np.float32),
-            'returns': np.zeros((self.buffer_size, self.n_agents, self.max_eps_len) + self.rew_space, np.float32),
-            'values': np.zeros((self.buffer_size, self.n_agents, self.max_eps_len) + self.rew_space, np.float32),
-            'advantages': np.zeros((self.buffer_size, self.n_agents, self.max_eps_len) + self.rew_space, np.float32),
-            'log_pi_old': np.zeros((self.buffer_size, self.n_agents, self.max_eps_len,), np.float32),
-            'terminals': np.zeros((self.buffer_size, self.max_eps_len) + self.done_space, np.bool_),
-            'avail_actions': np.ones((self.buffer_size, self.n_agents, self.max_eps_len + 1, self.dim_act), np.bool_),
-            'filled': np.zeros((self.buffer_size, self.max_eps_len, 1), np.bool_)
-        }
-        if self.state_space is not None:
-            self.data.update({'state': np.zeros(
-                (self.buffer_size, self.max_eps_len + 1) + self.state_space, np.float32)})
-        self.ptr, self.size = 0, 0
-
-    def clear_episodes(self):
-        self.episode_data = {
-            'obs': np.zeros((self.n_envs, self.n_agents, self.max_eps_len + 1) + self.obs_space, dtype=np.float32),
-            'actions': np.zeros((self.n_envs, self.n_agents, self.max_eps_len) + self.act_space, dtype=np.float32),
-            'actions_onehot': np.zeros((self.n_envs, self.n_agents, self.max_eps_len, self.dim_act), dtype=np.float32),
-            'rewards': np.zeros((self.n_envs, self.n_agents, self.max_eps_len) + self.rew_space, dtype=np.float32),
-            'returns': np.zeros((self.n_envs, self.n_agents, self.max_eps_len) + self.rew_space, np.float32),
-            'values': np.zeros((self.n_envs, self.n_agents, self.max_eps_len) + self.rew_space, np.float32),
-            'advantages': np.zeros((self.n_envs, self.n_agents, self.max_eps_len) + self.rew_space, np.float32),
-            'log_pi_old': np.zeros((self.n_envs, self.n_agents, self.max_eps_len,), np.float32),
-            'terminals': np.zeros((self.n_envs, self.max_eps_len) + self.done_space, dtype=np.bool_),
-            'avail_actions': np.ones((self.n_envs, self.n_agents, self.max_eps_len + 1, self.dim_act), dtype=np.bool_),
-            'filled': np.zeros((self.n_envs, self.max_eps_len, 1), dtype=np.bool_),
-        }
-        if self.state_space is not None:
-            self.episode_data.update({
-                'state': np.zeros((self.n_envs, self.max_eps_len + 1) + self.state_space, dtype=np.float32)
-            })
-
-    def store_transitions(self, t_envs, *transition_data):
-        obs_n, actions_dict, state, rewards, terminated, avail_actions = transition_data
-        self.episode_data['obs'][:, :, t_envs] = obs_n
-        self.episode_data['actions'][:, :, t_envs] = actions_dict['actions_n']
-        self.episode_data['actions_onehot'][:, :, t_envs] = actions_dict['act_n_onehot']
-        self.episode_data['rewards'][:, :, t_envs] = rewards
-        self.episode_data['values'][:, :, t_envs] = actions_dict['values']
-        self.episode_data['log_pi_old'][:, :, t_envs] = actions_dict['log_pi']
-        self.episode_data['terminals'][:, t_envs] = terminated
-        self.episode_data['avail_actions'][:, :, t_envs] = avail_actions
-        if self.state_space is not None:
-            self.episode_data['state'][:, t_envs] = state
-
-    def finish_path(self, i_env, next_t, *terminal_data, value_next=None, value_normalizer=None):
-        obs_next, state_next, available_actions, filled = terminal_data
-        self.episode_data['obs'][i_env, :, next_t] = obs_next[i_env]
-        self.episode_data['state'][i_env, next_t] = state_next[i_env]
-        self.episode_data['avail_actions'][i_env, :, next_t] = available_actions[i_env]
-        self.episode_data['filled'][i_env] = filled[i_env]
-
-        """
-        when an episode is finished, build td-lambda targets.
-        """
-        if next_t > self.max_eps_len:
-            path_slice = np.arange(0, self.max_eps_len).astype(np.int32)
-        else:
-            path_slice = np.arange(0, next_t).astype(np.int32)
-        # calculate advantages and returns
-        rewards = np.array(self.episode_data['rewards'][i_env, :, path_slice])
-        vs = np.append(np.array(self.episode_data['values'][i_env, :, path_slice]),
-                       [value_next.reshape(self.n_agents, 1)], axis=0)
-        dones = np.array(self.episode_data['terminals'][i_env, path_slice])[:, :, None]
-        returns = np.zeros_like(vs)
-        step_nums = len(path_slice)
-
-        for t in reversed(range(step_nums)):
-            returns[t] = self.td_lambda * self.gamma * returns[t + 1] + \
-                         rewards[t] + (1 - self.td_lambda) * self.gamma * vs[t + 1] * (1 - dones[t])
-
-        self.episode_data['returns'][i_env, :, path_slice] = returns[:-1]
 
 
 class MARL_OffPolicyBuffer(BaseBuffer):

@@ -3,7 +3,7 @@ import torch
 from argparse import Namespace
 from operator import itemgetter
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
-from xuance.common import List, Optional, Union
+from xuance.common import List, Optional, Union, I3CNet_Buffer, I3CNet_Buffer_RNN
 from xuance.torch import Module
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.communications import IC3NetComm
@@ -26,6 +26,30 @@ class IC3Net_Agents(IAC_Agents):
         self.policy = self._build_policy()  # build policy
         self.memory = self._build_memory()  # build memory
         self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, self.policy)
+
+    def _build_memory(self):
+        """Build replay buffer for models training
+        """
+        if self.use_actions_mask:
+            avail_actions_shape = {key: (self.action_space[key].n,) for key in self.agent_keys}
+        else:
+            avail_actions_shape = None
+        input_buffer = dict(agent_keys=self.agent_keys,
+                            state_space=self.state_space if self.use_global_state else None,
+                            obs_space=self.observation_space,
+                            act_space=self.action_space,
+                            n_envs=self.n_envs,
+                            buffer_size=self.config.buffer_size,
+                            use_gae=self.config.use_gae,
+                            use_advnorm=self.config.use_advnorm,
+                            gamma=self.config.gamma,
+                            gae_lam=self.config.gae_lambda,
+                            avail_actions_shape=avail_actions_shape,
+                            use_actions_mask=self.use_actions_mask,
+                            max_episode_steps=self.episode_length,
+                            dim_message=self.config.dim_message)
+        Buffer = I3CNet_Buffer_RNN if self.use_rnn else I3CNet_Buffer
+        return Buffer(**input_buffer)
 
     def _build_policy(self) -> Module:
         """
@@ -145,7 +169,8 @@ class IC3Net_Agents(IAC_Agents):
                avail_actions_dict: Optional[List[dict]] = None,
                rnn_hidden_actor: Optional[dict] = None,
                rnn_hidden_critic: Optional[dict] = None,
-               test_mode: Optional[bool] = False):
+               test_mode: Optional[bool] = False,
+               **kwargs):
         """
         Returns actions for agents.
 
@@ -252,3 +277,4 @@ class IC3Net_Agents(IAC_Agents):
                                                                         rnn_hidden=rnn_hidden_critic_i)
             values_dict = {k: v.detach().cpu().numpy().reshape([]) for k, v in values_dict.items()}
         return rnn_hidden_critic_new, values_dict
+
