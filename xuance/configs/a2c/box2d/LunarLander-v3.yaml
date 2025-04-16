@@ -1,6 +1,6 @@
 agent: "A2C"  # The learning algorithms.
 env_name: "Box2D"  # Environment name.
-env_id: "LunarLander-v2"  # Environment id
+env_id: "LunarLander-v3"  # Environment id
 env_seed: 1  # The random seed of the environment.
 vectorize: "DummyVecEnv"  # Method to vectorize the environment.
 learner: "A2C_Learner"  # Name of learner.
