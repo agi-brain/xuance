@@ -11,7 +11,8 @@ def parse_args():
     parser.add_argument("--env-id", type=str, default="CartPole-v1")
     parser.add_argument("--log-dir", type=str, default="./logs/CartPole-v1/")
     parser.add_argument("--model-dir", type=str, default="./models/CartPole-v1/")
-    parser.add_argument("--device", type=str, default="cpu")
+    parser.add_argument("--device", type=str, default="cuda:0")
+    parser.add_argument("--harmony", type=bool, default=True)
 
     # 10k
     parser.add_argument("--running-steps", type=int, default=10_000)  # 10k

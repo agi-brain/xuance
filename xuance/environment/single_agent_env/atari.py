@@ -1,4 +1,5 @@
 import gymnasium as gym
+import ale_py
 import numpy as np
 from collections import deque
 from xuance.environment.single_agent_env.gym import LazyFrames
@@ -45,7 +46,7 @@ class Atari_Env(gym.Wrapper):
                             full_action_space=full_action_space)
         self.env.metadata['render_fps'] = config.fps
         self.env.action_space.seed(seed=config.env_seed)
-        self.env.seed(seed=config.env_seed)
+        # self.env.seed(seed=config.env_seed)
         self.env.reset(seed=config.env_seed)
         self.max_episode_steps = self.env._max_episode_steps if hasattr(self.env, '_max_episode_steps') else 1e5
         super(Atari_Env, self).__init__(self.env)

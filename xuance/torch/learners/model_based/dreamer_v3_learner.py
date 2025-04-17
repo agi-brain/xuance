@@ -1,4 +1,6 @@
 import torch
+from pyglet.resource import model
+
 from xuance.common import Tuple, Union
 from xuance.torch.learners import Learner
 from xuance.torch.policies import DreamerV3Policy
@@ -29,9 +31,16 @@ class DreamerV3_Learner(Learner):
         self.kl_regularizer = self.config.world_model.kl_regularizer  # 1.0
         self.continue_scale_factor = self.config.world_model.continue_scale_factor  # 1.0
 
+        model_parameters = list(self.policy.world_model.parameters())
+        if self.config.harmony:
+            model_parameters += [
+                self.policy.harmonizer_s1.get_harmony(),
+                self.policy.harmonizer_s2.get_harmony(),
+                self.policy.harmonizer_s3.get_harmony()
+            ]
         # optimizers
         self.optimizer = {
-            'model': torch.optim.Adam(self.policy.world_model.parameters(), self.config.learning_rate_model),
+            'model': torch.optim.Adam(model_parameters, self.config.learning_rate_model),
             'actor': torch.optim.Adam(self.policy.actor.parameters(), self.config.learning_rate_actor),
             'critic': torch.optim.Adam(self.policy.critic.parameters(), self.config.learning_rate_critic)
         }
@@ -66,23 +75,36 @@ class DreamerV3_Learner(Learner):
         observation_loss = -po.log_prob(obs)
         reward_loss = -pr.log_prob(rews)
         # KL balancing
-        dyn_loss = kl = kl_div(  # prior -> post
+        dyn_loss = kl_div(  # prior -> post
             Independent(OneHotCategoricalStraightThrough(logits=posteriors_logits.detach()), 1),
             Independent(OneHotCategoricalStraightThrough(logits=priors_logits), 1),
         )
         free_nats = torch.full_like(dyn_loss, self.config.world_model.kl_free_nats)
-        dyn_loss = self.kl_dynamic * torch.maximum(dyn_loss, free_nats)
+        dyn_loss = torch.maximum(dyn_loss, free_nats)
         repr_loss = kl_div(  # post -> prior
             Independent(OneHotCategoricalStraightThrough(logits=posteriors_logits), 1),
             Independent(OneHotCategoricalStraightThrough(logits=priors_logits.detach()), 1),
         )
-        repr_loss = self.kl_representation * torch.maximum(repr_loss, free_nats)
-        kl_loss = dyn_loss + repr_loss
+        repr_loss = torch.maximum(repr_loss, free_nats)
+
         if pc is not None and cont is not None:
             continue_loss = self.continue_scale_factor * -pc.log_prob(cont)
         else:
             continue_loss = torch.zeros_like(reward_loss)
-        model_loss = (self.kl_regularizer * kl_loss + observation_loss + reward_loss + continue_loss).mean()
+
+        if self.config.harmony:
+            repr_loss *= self.kl_representation / (self.kl_representation + self.kl_dynamic)
+            dyn_loss *= self.kl_dynamic / (self.kl_representation + self.kl_dynamic)
+            kl_loss = dyn_loss + repr_loss
+            observation_loss = self.policy.harmonizer_s1(observation_loss)
+            reward_loss = self.policy.harmonizer_s2(reward_loss)
+            kl_loss = self.policy.harmonizer_s3(kl_loss)
+        else:
+            repr_loss *= self.kl_representation
+            dyn_loss *= self.kl_dynamic
+            kl_loss = dyn_loss + repr_loss
+            kl_loss *= self.kl_regularizer
+        model_loss = (kl_loss + observation_loss + reward_loss + continue_loss).mean()
 
         self.optimizer['model'].zero_grad()
         model_loss.backward()
@@ -132,4 +154,8 @@ class DreamerV3_Learner(Learner):
 
             "step/gradient_step": self.gradient_step
         }
+        if self.config.harmony:
+            info.update({'harmonizer/s1': self.policy.harmonizer_s1.get_harmony().item()})
+            info.update({'harmonizer/s2': self.policy.harmonizer_s2.get_harmony().item()})
+            info.update({'harmonizer/s3': self.policy.harmonizer_s3.get_harmony().item()})
         return info
