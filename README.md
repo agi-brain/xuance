@@ -69,76 +69,52 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
 
 ### :point_right: DRL
 
-- Deep Q Network - DQN [[Paper](https://www.nature.com/articles/nature14236)]
-- DQN with Double Q-learning - Double DQN [[Paper](https://ojs.aaai.org/index.php/AAAI/article/view/10295)]
-- DQN with Dueling Network - Dueling DQN [[Paper](http://proceedings.mlr.press/v48/wangf16.pdf)]
-- DQN with Prioritized Experience Replay - PER [[Paper](https://arxiv.org/pdf/1511.05952.pdf)]
-- DQN with Parameter Space Noise for Exploration - NoisyNet [[Paper](https://arxiv.org/pdf/1706.01905.pdf)]
-- Deep Recurrent Q-Netwrk - DRQN [[Paper](https://cdn.aaai.org/ocs/11673/11673-51288-1-PB.pdf)]
-- DQN with Quantile Regression - QRDQN [[Paper](https://ojs.aaai.org/index.php/AAAI/article/view/11791)]
-- Distributional Reinforcement Learning - C51 [[Paper](http://proceedings.mlr.press/v70/bellemare17a/bellemare17a.pdf)]
-- Vanilla Policy Gradient -
-  PG [[Paper](https://proceedings.neurips.cc/paper_files/paper/1999/file/464d828b85b0bed98e80ade0a5c43b0f-Paper.pdf)]
-- Natural Policy Gradient -
-  NPG [[Paper](https://proceedings.neurips.cc/paper_files/paper/2001/file/4b86abe48d358ecf194c56c69108433e-Paper.pdf)]
-- Phasic Policy Gradient -
-  PPG [[Paper](http://proceedings.mlr.press/v139/cobbe21a/cobbe21a.pdf)] [[Code](https://github.com/openai/phasic-policy-gradient)]
-- Advantage Actor Critic -
-  A2C [[Paper](http://proceedings.mlr.press/v48/mniha16.pdf)] [[Code](https://github.com/openai/baselines/tree/master/baselines/a2c)]
-- Soft Actor-Critic - SAC [[Paper](http://proceedings.mlr.press/v80/haarnoja18b/haarnoja18b.pdf)] [[Code](http://github.com/haarnoja/sac)]
-- Soft Actor-Critic for Discrete Actions - SAC-Discrete [[Paper](https://arxiv.org/pdf/1910.07207.pdf)] [[Code](https://github.com/p-christ/Deep-Reinforcement-Learning-Algorithms-with-PyTorch)]
-- Proximal Policy Optimization with Clipped Objective -
-  PPO-Clip [[Paper](https://arxiv.org/pdf/1707.06347.pdf)] [[Code]( https://github.com/berkeleydeeprlcourse/homework/tree/master/hw4)]
-- Proximal Policy Optimization with KL Divergence -
-  PPO-KL [[Paper](https://arxiv.org/pdf/1707.06347.pdf)] [[Code]( https://github.com/berkeleydeeprlcourse/homework/tree/master/hw4)]
-- Deep Deterministic Policy Gradient -
-  DDPG [[Paper](https://arxiv.org/pdf/1509.02971.pdf)] [[Code](https://github.com/openai/baselines/tree/master/baselines/ddpg)]
-- Twin Delayed Deep Deterministic Policy Gradient -
-  TD3 [[Paper](http://proceedings.mlr.press/v80/fujimoto18a/fujimoto18a.pdf)][[Code](https://github.com/sfujim/TD3)]
-- Parameterised Deep Q-Network - P-DQN [[Paper](https://arxiv.org/pdf/1810.06394.pdf)]
-- Multi-pass Parameterised Deep Q-network -
-  MP-DQN [[Paper](https://arxiv.org/pdf/1905.04388.pdf)] [[Code](https://github.com/cycraig/MP-DQN)]
-- Split Parameterised Deep Q-Network - SP-DQN [[Paper](https://arxiv.org/pdf/1810.06394.pdf)]
+- **DQN**: Deep Q Network [[Paper](https://www.nature.com/articles/nature14236)]
+- **Double DQN**: DQN with Double Q-learning [[Paper](https://ojs.aaai.org/index.php/AAAI/article/view/10295)]
+- **Dueling DQN**: DQN with Dueling Network [[Paper](http://proceedings.mlr.press/v48/wangf16.pdf)]
+- **PER**: DQN with Prioritized Experience Replay [[Paper](https://arxiv.org/pdf/1511.05952.pdf)]
+- **NoisyDQN**: DQN with Parameter Space Noise for Exploration [[Paper](https://arxiv.org/pdf/1706.01905.pdf)]
+- **DRQN**: Deep Recurrent Q-Netwrk [[Paper](https://cdn.aaai.org/ocs/11673/11673-51288-1-PB.pdf)]
+- **QRDQN**: DQN with Quantile Regression [[Paper](https://ojs.aaai.org/index.php/AAAI/article/view/11791)]
+- **C51**: Distributional Reinforcement Learning [[Paper](http://proceedings.mlr.press/v70/bellemare17a/bellemare17a.pdf)]
+- **PG**: Vanilla Policy Gradient [[Paper](https://proceedings.neurips.cc/paper_files/paper/1999/file/464d828b85b0bed98e80ade0a5c43b0f-Paper.pdf)]
+- **NPG**: Natural Policy Gradient [[Paper](https://proceedings.neurips.cc/paper_files/paper/2001/file/4b86abe48d358ecf194c56c69108433e-Paper.pdf)]
+- **PPG**: Phasic Policy Gradient [[Paper](http://proceedings.mlr.press/v139/cobbe21a/cobbe21a.pdf)] [[Code](https://github.com/openai/phasic-policy-gradient)]
+- **A2C**: Advantage Actor Critic [[Paper](http://proceedings.mlr.press/v48/mniha16.pdf)] [[Code](https://github.com/openai/baselines/tree/master/baselines/a2c)]
+- **SAC**: Soft Actor-Critic [[Paper](http://proceedings.mlr.press/v80/haarnoja18b/haarnoja18b.pdf)] [[Code](http://github.com/haarnoja/sac)]
+- **SAC-Discrete**: Soft Actor-Critic for Discrete Actions [[Paper](https://arxiv.org/pdf/1910.07207.pdf)] [[Code](https://github.com/p-christ/Deep-Reinforcement-Learning-Algorithms-with-PyTorch)]
+- **PPO-Clip**: Proximal Policy Optimization with Clipped Objective [[Paper](https://arxiv.org/pdf/1707.06347.pdf)] [[Code]( https://github.com/berkeleydeeprlcourse/homework/tree/master/hw4)]
+- **PPO-KL**: Proximal Policy Optimization with KL Divergence [[Paper](https://arxiv.org/pdf/1707.06347.pdf)] [[Code]( https://github.com/berkeleydeeprlcourse/homework/tree/master/hw4)]
+- **DDPG**: Deep Deterministic Policy Gradient [[Paper](https://arxiv.org/pdf/1509.02971.pdf)] [[Code](https://github.com/openai/baselines/tree/master/baselines/ddpg)]
+- **TD3**: Twin Delayed Deep Deterministic Policy Gradient [[Paper](http://proceedings.mlr.press/v80/fujimoto18a/fujimoto18a.pdf)][[Code](https://github.com/sfujim/TD3)]
+- **P-DQN**: Parameterised Deep Q-Network [[Paper](https://arxiv.org/pdf/1810.06394.pdf)]
+- **MP-DQN**: Multi-pass Parameterised Deep Q-network [[Paper](https://arxiv.org/pdf/1905.04388.pdf)] [[Code](https://github.com/cycraig/MP-DQN)]
+- **SP-DQN**: Split Parameterised Deep Q-Network [[Paper](https://arxiv.org/pdf/1810.06394.pdf)]
 
 ### :point_right: Model-Based Reinforcement Learning (MBRL)
 
-- DreamerV3 [[Paper](https://www.nature.com/articles/s41586-025-08744-2.pdf)] [[Code](https://github.com/danijar/dreamerv3.git)]
+- **DreamerV3** [[Paper](https://www.nature.com/articles/s41586-025-08744-2.pdf)] [[Code](https://github.com/danijar/dreamerv3.git)]
 
 ### :point_right: Multi-Agent Reinforcement Learning (MARL)
 
-- Independent Q-learning -
-  IQL [[Paper](https://hal.science/file/index/docid/720669/filename/Matignon2012independent.pdf)] [[Code](https://github.com/oxwhirl/pymarl)]
-- Value Decomposition Networks -
-  VDN [[Paper](https://arxiv.org/pdf/1706.05296.pdf)] [[Code](https://github.com/oxwhirl/pymarl)]
-- Q-mixing networks -
-  QMIX [[Paper](http://proceedings.mlr.press/v80/rashid18a/rashid18a.pdf)] [[Code](https://github.com/oxwhirl/pymarl)]
-- Weighted Q-mixing networks -
-  WQMIX [[Paper](https://proceedings.neurips.cc/paper/2020/file/73a427badebe0e32caa2e1fc7530b7f3-Paper.pdf)] [[Code](https://github.com/oxwhirl/wqmix)]
-- Q-transformation -
-  QTRAN [[Paper](http://proceedings.mlr.press/v97/son19a/son19a.pdf)] [[Code](https://github.com/Sonkyunghwan/QTRAN)]
-- Deep Coordination Graphs -
-  DCG [[Paper](http://proceedings.mlr.press/v119/boehmer20a/boehmer20a.pdf)] [[Code](https://github.com/wendelinboehmer/dcg)]
-- Independent Deep Deterministic Policy Gradient -
-  IDDPG [[Paper](https://proceedings.neurips.cc/paper/2017/file/68a9750337a418a86fe06c1991a1d64c-Paper.pdf)]
-- Multi-agent Deep Deterministic Policy Gradient -
-  MADDPG [[Paper](https://proceedings.neurips.cc/paper/2017/file/68a9750337a418a86fe06c1991a1d64c-Paper.pdf)] [[Code](https://github.com/openai/maddpg)]
-- Independent Actor-Critic -
-  IAC [[Paper](https://ojs.aaai.org/index.php/AAAI/article/view/11794)] [[Code](https://github.com/oxwhirl/pymarl)]
-- Counterfactual Multi-agent Policy Gradient -
-  COMA [[Paper](https://ojs.aaai.org/index.php/AAAI/article/view/11794)] [[Code](https://github.com/oxwhirl/pymarl)]
-- Value-Decomposition Actor-Critic -
-  VDAC [[Paper](https://ojs.aaai.org/index.php/AAAI/article/view/17353)] [[Code](https://github.com/hahayonghuming/VDACs.git)]
-- Independent Proximal Policy Optimization -
-  IPPO [[Paper](https://proceedings.neurips.cc/paper_files/paper/2022/file/9c1535a02f0ce079433344e14d910597-Paper-Datasets_and_Benchmarks.pdf)] [[Code](https://github.com/marlbenchmark/on-policy)]
-- Multi-agent Proximal Policy Optimization -
-  MAPPO [[Paper](https://proceedings.neurips.cc/paper_files/paper/2022/file/9c1535a02f0ce079433344e14d910597-Paper-Datasets_and_Benchmarks.pdf)] [[Code](https://github.com/marlbenchmark/on-policy)]
-- Mean-Field Q-learning -
-  MFQ [[Paper](http://proceedings.mlr.press/v80/yang18d/yang18d.pdf)] [[Code](https://github.com/mlii/mfrl)]
-- Mean-Field Actor-Critic -
-  MFAC [[Paper](http://proceedings.mlr.press/v80/yang18d/yang18d.pdf)] [[Code](https://github.com/mlii/mfrl)]
-- Independent Soft Actor-Critic - ISAC
-- Multi-agent Soft Actor-Critic - MASAC [[Paper](https://arxiv.org/pdf/2104.06655.pdf)]
-- Multi-agent Twin Delayed Deep Deterministic Policy Gradient - MATD3 [[Paper](https://arxiv.org/pdf/1910.01465.pdf)]
+- **IQL**: Independent Q-learning [[Paper](https://hal.science/file/index/docid/720669/filename/Matignon2012independent.pdf)] [[Code](https://github.com/oxwhirl/pymarl)]
+- **VDN**: Value Decomposition Networks [[Paper](https://arxiv.org/pdf/1706.05296.pdf)] [[Code](https://github.com/oxwhirl/pymarl)]
+- **QMIX**: Q-mixing networks [[Paper](http://proceedings.mlr.press/v80/rashid18a/rashid18a.pdf)] [[Code](https://github.com/oxwhirl/pymarl)]
+- **WQMIX**: Weighted Q-mixing networks [[Paper](https://proceedings.neurips.cc/paper/2020/file/73a427badebe0e32caa2e1fc7530b7f3-Paper.pdf)] [[Code](https://github.com/oxwhirl/wqmix)]
+- **QTRAN**: Q-transformation [[Paper](http://proceedings.mlr.press/v97/son19a/son19a.pdf)] [[Code](https://github.com/Sonkyunghwan/QTRAN)]
+- **DCG**: Deep Coordination Graphs [[Paper](http://proceedings.mlr.press/v119/boehmer20a/boehmer20a.pdf)] [[Code](https://github.com/wendelinboehmer/dcg)]
+- **IDDPG**: Independent Deep Deterministic Policy Gradient [[Paper](https://proceedings.neurips.cc/paper/2017/file/68a9750337a418a86fe06c1991a1d64c-Paper.pdf)]
+- **MADDPG**: Multi-agent Deep Deterministic Policy Gradient [[Paper](https://proceedings.neurips.cc/paper/2017/file/68a9750337a418a86fe06c1991a1d64c-Paper.pdf)] [[Code](https://github.com/openai/maddpg)]
+- **IAC**: Independent Actor-Critic [[Paper](https://ojs.aaai.org/index.php/AAAI/article/view/11794)] [[Code](https://github.com/oxwhirl/pymarl)]
+- **COMA**: Counterfactual Multi-agent Policy Gradient [[Paper](https://ojs.aaai.org/index.php/AAAI/article/view/11794)] [[Code](https://github.com/oxwhirl/pymarl)]
+- **VDAC**: Value-Decomposition Actor-Critic [[Paper](https://ojs.aaai.org/index.php/AAAI/article/view/17353)] [[Code](https://github.com/hahayonghuming/VDACs.git)]
+- **IPPO**: Independent Proximal Policy Optimization [[Paper](https://proceedings.neurips.cc/paper_files/paper/2022/file/9c1535a02f0ce079433344e14d910597-Paper-Datasets_and_Benchmarks.pdf)] [[Code](https://github.com/marlbenchmark/on-policy)]
+- **MAPPO**: Multi-agent Proximal Policy Optimization [[Paper](https://proceedings.neurips.cc/paper_files/paper/2022/file/9c1535a02f0ce079433344e14d910597-Paper-Datasets_and_Benchmarks.pdf)] [[Code](https://github.com/marlbenchmark/on-policy)]
+- **MFQ**: Mean-Field Q-learning [[Paper](http://proceedings.mlr.press/v80/yang18d/yang18d.pdf)] [[Code](https://github.com/mlii/mfrl)]
+- **MFAC**: Mean-Field Actor-Critic [[Paper](http://proceedings.mlr.press/v80/yang18d/yang18d.pdf)] [[Code](https://github.com/mlii/mfrl)]
+- **ISAC**: Independent Soft Actor-Critic
+- **MASAC**: Multi-agent Soft Actor-Critic [[Paper](https://arxiv.org/pdf/2104.06655.pdf)]
+- **MATD3**: Multi-agent Twin Delayed Deep Deterministic Policy Gradient [[Paper](https://arxiv.org/pdf/1910.01465.pdf)]
 
 ## Environments
 
