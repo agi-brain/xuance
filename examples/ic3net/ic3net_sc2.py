@@ -3,8 +3,8 @@ import argparse
 import numpy as np
 from xuance.common import get_configs, recursive_dict_update
 from xuance.environment import make_envs
+from xuance.torch.agents import IC3Net_Agents
 from xuance.torch.utils.operations import set_seed
-from debug.comm.ic3net_agents import IC3NetAgents
 
 
 def parse_args():
@@ -21,7 +21,7 @@ class RunnerSC2:
         set_seed(config.seed)  # Set the random seed.
         self.envs = make_envs(config)  # Make the environment.
         self.n_envs = self.envs.num_envs  # Get the number of parallel envs.
-        self.agents = IC3NetAgents(config=config, envs=self.envs)  # Create the IC3Net agents.
+        self.agents = IC3Net_Agents(config=config, envs=self.envs)  # Create the IC3Net agents.
         self.config = config
         self.running_steps = config.running_steps
         self.num_agents, self.num_enemies = self.get_agent_num()

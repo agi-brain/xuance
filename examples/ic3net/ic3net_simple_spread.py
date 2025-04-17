@@ -3,8 +3,8 @@ import numpy as np
 from copy import deepcopy
 from xuance.common import get_configs, recursive_dict_update
 from xuance.environment import make_envs
+from xuance.torch.agents import IC3Net_Agents
 from xuance.torch.utils.operations import set_seed
-from debug.comm.ic3net_agents import IC3NetAgents
 
 
 def parse_args():
@@ -24,7 +24,7 @@ if __name__ == "__main__":
 
     set_seed(configs.seed)  # Set the random seed.
     envs = make_envs(configs)  # Make the environment.
-    Agents = IC3NetAgents(config=configs, envs=envs)  # Create the Independent PPO agents.
+    Agents = IC3Net_Agents(config=configs, envs=envs)  # Create the Independent PPO agents.
 
     train_information = {"Deep learning toolbox": configs.dl_toolbox,
                          "Calculating device": configs.device,
