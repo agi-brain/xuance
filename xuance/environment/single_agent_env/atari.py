@@ -8,6 +8,13 @@ except ImportError:
     print("The module opencv-python might not be installed."
           "Please ensure you have installed opencv-python via `pip install opencv-python==4.5.4.58`.")
 
+try:
+    import ale_py
+    gym.register_envs(ale_py)
+except ImportError:
+    print("The module ale-py might not be installed."
+          "If you want to run Atari 2600 benchmarks, please ensure you have installed ale-py via `pip install ale-py`.")
+
 
 class Atari_Env(gym.Wrapper):
     """Modified Atari environment with training optimizations.
@@ -45,7 +52,6 @@ class Atari_Env(gym.Wrapper):
                             full_action_space=full_action_space)
         self.env.metadata['render_fps'] = config.fps
         self.env.action_space.seed(seed=config.env_seed)
-        self.env.seed(seed=config.env_seed)
         self.env.reset(seed=config.env_seed)
         self.max_episode_steps = self.env._max_episode_steps if hasattr(self.env, '_max_episode_steps') else 1e5
         super(Atari_Env, self).__init__(self.env)
