@@ -83,6 +83,9 @@ class IC3Net_Learner(LearnerMAS):
         }
         return sample_Tensor
 
+    def update(self, sample):
+        pass
+
     def update_rnn(self, sample):
         self.iterations += 1
         info = {}
