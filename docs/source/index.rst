@@ -45,17 +45,14 @@ XuanCe: A Comprehensive and Unified Deep Reinforcement Learning Library
         <img alt="MindSpore" src="https://img.shields.io/badge/MindSpore-%3E%3D1.10.1-blue">
    </a>
 
-   <a href="https://www.anaconda.com/download">
-        <img alt="Python" src="https://img.shields.io/badge/Python-3.7%7C3.8%7C3.9%7C3.10-yellow">
-   </a>
-   <a href="https://www.gymlibrary.dev/">
-        <img alt="gym" src="https://img.shields.io/badge/gym-%3E%3D0.21.0-blue">
-   </a>
    <a href="https://www.gymlibrary.dev/">
         <img alt="gymnasium" src="https://img.shields.io/badge/gymnasium-%3E%3D0.28.1-blue">
    </a>
    <a href="https://pettingzoo.farama.org/">
         <img alt="pettingzoo" src="https://img.shields.io/badge/PettingZoo-%3E%3D1.23.0-blue">
+   </a>
+   <a href="https://img.shields.io/pypi/pyversions/xuance">
+        <img alt="Python" src="https://img.shields.io/pypi/pyversions/xuance">
    </a>
 
 .. raw:: html
