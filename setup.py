@@ -11,7 +11,7 @@ setup(
                 "configs/*/*/*.yaml",
                 "environment/magent2/libmagent.so",  # for magent2 environment on linux
                 "environment/magent2/magent.dll",  # for magent2 environment on Windows
-                "environment/magent2/libmagent.dylib"  # for magent2 environment on MacOS (for Intel CPU)
+                "environment/magent2/libmagent.dylib"  # for magent2 environment on macOS (for Intel CPU)
             ]
     },
     version="1.2.6",
@@ -53,9 +53,9 @@ setup(
         ],
         "atari": ["gymnasium[accept-rom-license]==1.1.1",
                   "gymnasium[atari]==1.1.1",
-                  "ale-py==0.9.0"],
+                  "ale-py==0.10.1"],
         "box2d": ["swig==4.3.0",
-                  "gymnasium[box2d]==0.28.1"],  # for box2d
+                  "gymnasium[box2d]==1.1.1"],  # for Box2D
         "minigrid": ["minigrid==3.0.0"],
         "metadrive": ["metadrive"],
         "rware": ["rware"],
