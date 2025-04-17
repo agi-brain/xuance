@@ -490,7 +490,7 @@ class I3CNet_Buffer_RNN(MARL_OnPolicyBuffer_RNN):
                  gamma: Optional[float] = None,
                  gae_lam: Optional[float] = None,
                  **kwargs):
-        self.msg_shape = {k: (kwargs['dim_message']) for k in agent_keys}
+        self.msg_shape = {k: (kwargs['dim_message'],) for k in agent_keys}
         super(I3CNet_Buffer_RNN, self).__init__(agent_keys, state_space, obs_space, act_space, n_envs, buffer_size,
                                                 max_episode_steps, use_gae, use_advnorm, gamma, gae_lam, **kwargs)
 
@@ -500,7 +500,7 @@ class I3CNet_Buffer_RNN(MARL_OnPolicyBuffer_RNN):
                     for k in self.agent_keys},
             'actions': {k: np.zeros((self.buffer_size, self.max_eps_len) + self.act_shape[k], np.float32)
                         for k in self.agent_keys},
-            'message': {k: np.zeros((self.buffer_size, self.max_eps_len) + self.act_shape[k], np.float32)
+            'message': {k: np.zeros((self.buffer_size, self.max_eps_len) + self.msg_shape[k], np.float32)
                         for k in self.agent_keys},
             'rewards': {k: np.zeros((self.buffer_size, self.max_eps_len), np.float32) for k in self.agent_keys},
             'returns': {k: np.zeros((self.buffer_size, self.max_eps_len), np.float32) for k in self.agent_keys},
@@ -527,6 +527,8 @@ class I3CNet_Buffer_RNN(MARL_OnPolicyBuffer_RNN):
             'obs': {k: np.zeros((self.n_envs, self.max_eps_len) + self.obs_shape[k], np.float32)
                     for k in self.agent_keys},
             'actions': {k: np.zeros((self.n_envs, self.max_eps_len) + self.act_shape[k], np.float32)
+                        for k in self.agent_keys},
+            'message': {k: np.zeros((self.buffer_size, self.max_eps_len) + self.msg_shape[k], np.float32)
                         for k in self.agent_keys},
             'rewards': {k: np.zeros((self.n_envs, self.max_eps_len), np.float32) for k in self.agent_keys},
             'returns': {k: np.zeros((self.n_envs, self.max_eps_len), np.float32) for k in self.agent_keys},
