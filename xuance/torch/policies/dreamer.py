@@ -6,6 +6,7 @@ from xuance.common import Any, Dict, Tuple, Sequence, List
 from xuance.torch import Tensor, Module
 from xuance.torch.utils.distributions import MSEDistribution, SymLogDistribution, TwoHotEncodingDistribution, BernoulliSafeMode
 from xuance.torch.utils import dotdict, Moments, compute_lambda_values
+from xuance.torch.utils.harmonizer import Harmonizer
 
 
 class DreamerV3Policy(Module):  # checked
@@ -39,6 +40,10 @@ class DreamerV3Policy(Module):  # checked
             self.config.actor.moments.percentile.low,
             self.config.actor.moments.percentile.high,
         )
+
+        self.harmonizer_s1 = Harmonizer(self.device)
+        self.harmonizer_s2 = Harmonizer(self.device)
+        self.harmonizer_s3 = Harmonizer(self.device)
 
     def model_forward(self,
                       obs: Tensor,

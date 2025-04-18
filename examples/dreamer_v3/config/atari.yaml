@@ -26,6 +26,8 @@ policy: "DreamerV3Policy"
 runner: "DRL"
 
 # world_model & actor_critic start
+harmony: False
+
 distribution:
   validate_args: false
   type: auto
