@@ -94,6 +94,7 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
 ### :point_right: Model-Based Reinforcement Learning (MBRL)
 
 - **DreamerV3** [[Paper](https://www.nature.com/articles/s41586-025-08744-2.pdf)] [[Code](https://github.com/danijar/dreamerv3.git)]
+- **HarmonyDream** [[Paper](https://proceedings.mlr.press/v235/ma24o.html)] [[Code](https://github.com/thuml/HarmonyDream.git)]
 
 ### :point_right: Multi-Agent Reinforcement Learning (MARL)
 
