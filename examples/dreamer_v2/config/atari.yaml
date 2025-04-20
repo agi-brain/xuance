@@ -1,0 +1,162 @@
+dl_toolbox: "torch"  # The deep learning toolbox. Choices: "torch", "mindspore", "tensorlayer"
+project_name: "XuanCe_New_Algorithm"
+logger: "tensorboard"  # Choices: tensorboard, wandb.
+wandb_user_name: "your_user_name"
+render: False
+render_mode: 'rgb_array' # Choices: 'human', 'rgb_array'.
+fps: 50
+test_mode: False
+device: "cpu"
+distributed_training: False  # Whether to use multi-GPU for distributed training.
+master_port: '12355'  # The master port for current experiment when use distributed training.
+
+agent: "DreamerV2"
+vectorize: "Dummy_Atari"
+env_name: "Atari"
+env_id: "ALE/Pong-v5"
+env_seed: 1
+obs_type: "grayscale"  # choice for Atari env: ram, rgb, grayscale
+img_size: [ 64, 64 ]  # default is 210 x 160 in gym[Atari]
+num_stack: 1  # frame stack trick
+frame_skip: 4  # frame skip trick  (action_repeat = 4 for atari100k)
+noop_max: 30
+representation: "DreamerV2WorldModel"
+learner: "DreamerV2_Learner"
+policy: "DreamerV2Policy"
+runner: "DRL"
+
+# world_model & actor_critic start
+harmony: False
+
+distribution:
+  validate_args: false
+  type: auto
+pixel: True
+env_config:
+  screen_size: 64
+activation: 'elu'
+
+actor:
+  optimizer:
+    _target_: torch.optim.Adam
+    lr: 8.0e-05
+    eps: 1.0e-05
+    weight_decay: 1.0e-06
+    betas:
+      - 0.9
+      - 0.999
+  ent_coef: 0.001  # 1e-3
+  min_std: 0.1
+  init_std: 0.0
+  objective_mix: 1.0  # 1.0 for discrete action; 0.0 for continuous control
+  dense_act: torch.nn.ELU
+  mlp_layers: 4
+  layer_norm: false
+  dense_units: 400
+  clip_gradients: 100.0
+critic:
+  optimizer:
+    _target_: torch.optim.Adam
+    lr: 8.0e-05
+    eps: 1.0e-05
+    weight_decay: 1.0e-06
+    betas:
+      - 0.9
+      - 0.999
+  dense_act: torch.nn.ELU
+  mlp_layers: 4
+  layer_norm: false
+  dense_units: 400
+  hard_update_freq: 100  # 100 grad_step per hard_update
+  clip_gradients: 100.0
+world_model:
+  optimizer:
+    _target_: torch.optim.Adam
+    lr: 0.0003
+    eps: 1.0e-05
+    weight_decay: 1.0e-06
+    betas:
+      - 0.9
+      - 0.999
+  discrete_size: 32
+  stochastic_size: 32
+  kl_balancing_alpha: 0.8
+  kl_free_nats: 1.0
+  kl_free_avg: true
+  kl_regularizer: 1.0
+  discount_scale_factor: 1.0
+  use_continues: true
+  clip_gradients: 100.0
+  encoder:
+    cnn_channels_multiplier: 48
+    cnn_act: torch.nn.ELU
+    dense_act: torch.nn.ELU
+    mlp_layers: 4
+    layer_norm: false
+    dense_units: 400
+  recurrent_model:
+    recurrent_state_size: 600
+    layer_norm: true
+    dense_units: 400
+  transition_model:
+    hidden_size: 600
+    dense_act: torch.nn.ELU
+    layer_norm: false
+  representation_model:
+    hidden_size: 600
+    dense_act: torch.nn.ELU
+    layer_norm: false
+  observation_model:
+    cnn_channels_multiplier: 48
+    cnn_act: torch.nn.ELU
+    dense_act: torch.nn.ELU
+    mlp_layers: 4
+    layer_norm: false
+    dense_units: 400
+  reward_model:
+    dense_act: torch.nn.ELU
+    mlp_layers: 4
+    layer_norm: false
+    dense_units: 400
+  discount_model:
+    learnable: true
+    dense_act: torch.nn.ELU
+    mlp_layers: 4
+    layer_norm: false
+    dense_units: 400
+
+gamma: 0.999
+lmbda: 0.95
+horizon: 15
+# world_model & actor_critic end
+
+seed: 1
+parallels: 1
+buffer_size: 2000000  # 2e6
+batch_size: 16
+seq_len: 50
+learning_rate_model: 0.0003  # 3e-4
+learning_rate_actor: 0.00008  # 8e-5
+learning_rate_critic: 0.00008  # 8e-5
+
+replay_ratio: 0.2  # gradient_step / replay_step
+running_steps: 100000  # 100k
+start_training: 1024
+
+# TODO prefill: 5w in atari in official
+pretrain_steps: 100  # TODO ?
+
+use_grad_clip: False  # gradient normalization
+clip_type: 1
+grad_clip_norm: 100.0
+use_actions_mask: False
+use_obsnorm: False
+use_rewnorm: False
+obsnorm_range: 5
+rewnorm_range: 5
+
+test_steps: 10000
+eval_interval: 2000
+test_episode: 3
+log_dir: "./logs/Pong-v5/"
+model_dir: "./models/Pong-v5/"
