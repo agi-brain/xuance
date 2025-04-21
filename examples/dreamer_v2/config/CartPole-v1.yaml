@@ -36,13 +36,11 @@ actor:
   min_std: 0.1
   init_std: 0.0
   objective_mix: 1.0  # 1.0 for discrete action; 0.0 for continuous control
-  dense_act: torch.nn.ELU
   mlp_layers: 4
   layer_norm: false
   dense_units: 400
   clip_gradients: 100.0
 critic:
-  dense_act: torch.nn.ELU
   mlp_layers: 4
   layer_norm: false
   dense_units: 400
@@ -60,8 +58,6 @@ world_model:
   clip_gradients: 100.0
   encoder:
     cnn_channels_multiplier: 48
-    cnn_act: torch.nn.ELU
-    dense_act: torch.nn.ELU
     mlp_layers: 4
     layer_norm: false
     dense_units: 400
@@ -71,27 +67,21 @@ world_model:
     dense_units: 400
   transition_model:
     hidden_size: 200
-    dense_act: torch.nn.ELU
     layer_norm: false
   representation_model:
     hidden_size: 200
-    dense_act: torch.nn.ELU
     layer_norm: false
   observation_model:
     cnn_channels_multiplier: 48
-    cnn_act: torch.nn.ELU
-    dense_act: torch.nn.ELU
     mlp_layers: 4
     layer_norm: false
     dense_units: 400
   reward_model:
-    dense_act: torch.nn.ELU
     mlp_layers: 4
     layer_norm: false
     dense_units: 400
   discount_model:
     learnable: true
-    dense_act: torch.nn.ELU
     mlp_layers: 4
     layer_norm: false
     dense_units: 400

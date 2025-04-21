@@ -12,11 +12,11 @@ def parse_args():
     parser.add_argument("--log-dir", type=str, default="./logs/CartPole-v1/")
     parser.add_argument("--model-dir", type=str, default="./models/CartPole-v1/")
     parser.add_argument("--device", type=str, default="cuda:0")
-    parser.add_argument("--harmony", type=bool, default=True)
+    parser.add_argument("--harmony", type=bool, default=False)
 
     # 10k
-    parser.add_argument("--running-steps", type=int, default=50_000)  # 50k
-    parser.add_argument("--eval-interval", type=int, default=200)  # 50 logs
+    parser.add_argument("--running-steps", type=int, default=20_000)  # 20k
+    parser.add_argument("--eval-interval", type=int, default=400)  # 50 logs
     parser.add_argument("--replay-ratio", type=int, default=1)
 
     # parallels & benchmark

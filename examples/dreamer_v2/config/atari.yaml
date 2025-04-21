@@ -41,7 +41,6 @@ actor:
   min_std: 0.1
   init_std: 0.0
   objective_mix: 1.0  # 1.0 for discrete action; 0.0 for continuous control
-  dense_act: torch.nn.ELU
   mlp_layers: 4
   layer_norm: false
   dense_units: 400
@@ -65,8 +64,6 @@ world_model:
   clip_gradients: 100.0
   encoder:
     cnn_channels_multiplier: 48
-    cnn_act: torch.nn.ELU
-    dense_act: torch.nn.ELU
     mlp_layers: 4
     layer_norm: false
     dense_units: 400
@@ -76,27 +73,21 @@ world_model:
     dense_units: 400
   transition_model:
     hidden_size: 600
-    dense_act: torch.nn.ELU
     layer_norm: false
   representation_model:
     hidden_size: 600
-    dense_act: torch.nn.ELU
     layer_norm: false
   observation_model:
     cnn_channels_multiplier: 48
-    cnn_act: torch.nn.ELU
-    dense_act: torch.nn.ELU
     mlp_layers: 4
     layer_norm: false
     dense_units: 400
   reward_model:
-    dense_act: torch.nn.ELU
     mlp_layers: 4
     layer_norm: false
     dense_units: 400
   discount_model:
     learnable: true
-    dense_act: torch.nn.ELU
     mlp_layers: 4
     layer_norm: false
     dense_units: 400
@@ -115,7 +106,7 @@ learning_rate_model: 0.0002  # 2e-4
 learning_rate_actor: 0.00004  # 4e-5
 learning_rate_critic: 0.0001  # 1e-4
 
-replay_ratio: 0.2  # gradient_step / replay_step
+replay_ratio: 1  # gradient_step / replay_step
 running_steps: 100000  # 100k
 start_training: 1024
 

@@ -1,5 +1,5 @@
 import copy
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 import gymnasium as gym
 import numpy as np
@@ -10,7 +10,6 @@ from torch.distributions import (
     Distribution,
     Independent,
     Normal,
-    OneHotCategorical,
     OneHotCategoricalStraightThrough,
     TanhTransform,
     TransformedDistribution,
@@ -241,7 +240,7 @@ class MLPDecoder(nn.Module):
 # checked
 class RecurrentModel(nn.Module):
     """Recurrent model for the model-base Dreamer-V3 agent.
-    This implementation uses the `sheeprl.models.models.LayerNormGRUCell`, which combines
+    This implementation uses the `models.LayerNormGRUCell`, which combines
     the standard GRUCell from PyTorch with the `nn.LayerNorm`, where the normalization is applied
     right after having computed the projection from the input to the weight space.
 

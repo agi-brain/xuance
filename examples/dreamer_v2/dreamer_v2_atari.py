@@ -12,7 +12,7 @@ def parse_args():
     parser.add_argument("--log-dir", type=str, default="./logs/Boxing-v5/")
     parser.add_argument("--model-dir", type=str, default="./models/Boxing-v5/")
     parser.add_argument("--device", type=str, default="cuda:0")
-    # parser.add_argument("--harmony", type=bool, default=False)
+    parser.add_argument("--harmony", type=bool, default=False)
 
     # atari100k, ratio=1, gradient_step=100k
     parser.add_argument("--running-steps", type=int, default=100_000)  # 100k
