@@ -29,6 +29,7 @@ class DreamerV2_Learner(Learner):
         self.kl_free_nats = self.config.world_model.kl_free_nats  # 1.0
         self.kl_regularizer = self.config.world_model.kl_regularizer  # 1.0
         self.continue_scale_factor = self.config.world_model.discount_scale_factor  # 1.0
+        self.use_continues = self.config.use_continues
 
         model_parameters = list(self.policy.world_model.parameters())
         if self.config.harmony:
@@ -92,7 +93,7 @@ class DreamerV2_Learner(Learner):
             loss_lhs = torch.maximum(lhs, free_nats).mean()
             loss_rhs = torch.maximum(rhs, free_nats).mean()
         kl_loss = self.kl_balancing_alpha * loss_lhs + (1 - self.kl_balancing_alpha) * loss_rhs
-        if pc is not None and cont is not None:
+        if pc is not None and cont is not None and self.use_continues:
             continue_loss = self.continue_scale_factor * -pc.log_prob(cont).mean()
         else:
             continue_loss = torch.zeros_like(reward_loss)

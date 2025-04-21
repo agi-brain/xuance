@@ -485,8 +485,8 @@ class Actor(nn.Module):
             self.mlp_heads = nn.ModuleList([nn.Linear(dense_units, action_dim) for action_dim in actions_dim])
         self.actions_dim = actions_dim
         self.is_continuous = is_continuous
-        self.init_std = torch.tensor(init_std)
-        self.min_std = min_std
+        self.init_std = torch.tensor(init_std)  # 0.0
+        self.min_std = min_std  # 0.1
         self.distribution_config = distribution_config
         self._expl_amount = expl_amount
         self._expl_decay = expl_decay
@@ -523,6 +523,7 @@ class Actor(nn.Module):
                 actions_dist = Normal(mean, std)
                 actions_dist = Independent(actions_dist, 1)
             elif self.distribution == "trunc_normal":
+                # std: [0.1, 2.1] ??
                 std = 2 * torch.sigmoid((std + self.init_std) / 2) + self.min_std
                 dist = TruncatedNormal(torch.tanh(mean), std, -1, 1)
                 actions_dist = Independent(dist, 1)
@@ -531,7 +532,7 @@ class Actor(nn.Module):
             if not greedy:
                 actions = actions_dist.rsample()
             else:
-                actions = actions_dist.mode
+                actions = actions_dist.mean  # TruncatedNormal'> does not implement mode
             actions = [actions]
             actions_dist = [actions_dist]
         else:

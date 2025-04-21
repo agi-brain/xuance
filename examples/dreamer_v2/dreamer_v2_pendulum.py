@@ -4,15 +4,15 @@ from copy import deepcopy
 from xuance.torch.utils.operations import set_seed
 from xuance.common import get_configs, recursive_dict_update
 from xuance.environment import make_envs
-from xuance.torch.agents import DreamerV3Agent
+from xuance.torch.agents import DreamerV2Agent
 
 def parse_args():
-    parser = argparse.ArgumentParser("Example of XuanCe: DreamerV3 for Pendulum.")
+    parser = argparse.ArgumentParser("Example of XuanCe: DreamerV2 for Pendulum.")
     parser.add_argument("--env-id", type=str, default="Pendulum-v1")
     parser.add_argument("--log-dir", type=str, default="./logs/Pendulum-v1/")
     parser.add_argument("--model-dir", type=str, default="./models/Pendulum-v1/")
     parser.add_argument("--device", type=str, default="cuda:0")
-    parser.add_argument("--harmony", type=bool, default=True)
+    parser.add_argument("--harmony", type=bool, default=False)
 
     # 10k
     parser.add_argument("--running-steps", type=int, default=10_000)  # 10k
@@ -29,13 +29,13 @@ def parse_args():
 
 if __name__ == '__main__':
     parser = parse_args()
-    configs_dict = get_configs(file_dir="config/Pendulum-v1_TODO.yaml")
+    configs_dict = get_configs(file_dir="config/Pendulum-v1.yaml")
     configs_dict = recursive_dict_update(configs_dict, parser.__dict__)
     configs = argparse.Namespace(**configs_dict)
 
     set_seed(configs.seed)
     envs = make_envs(configs)
-    Agent = DreamerV3Agent(config=configs, envs=envs)
+    Agent = DreamerV2Agent(config=configs, envs=envs)
 
     train_information = {"Deep learning toolbox": configs.dl_toolbox,
                          "Calculating device": configs.device,

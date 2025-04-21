@@ -241,7 +241,10 @@ class DreamerV2Policy(Module):  # checked
         po = Independent(Normal(reconstructed_obs, 1), len(reconstructed_obs.shape[2:]))
         pr = Independent(Normal(self.world_model.reward_model(latent_states), 1), 1)
         # error due to not support of Boolean()
-        pc = Independent(Bernoulli(logits=self.world_model.continue_model(latent_states)), 1)
+        if self.config.world_model.use_continues:
+            pc = Independent(Bernoulli(logits=self.world_model.continue_model(latent_states)), 1)
+        else:
+            pc = None
 
         # -> [seq, batch, 32, 32]
         priors_logits = priors_logits.view(*priors_logits.shape[:-1], self.stoch_size, self.disc_size)
@@ -284,10 +287,13 @@ class DreamerV2Policy(Module):  # checked
             imagined_trajectories[i] = imagined_latent_state
         predicted_target_values = self.target_critic(imagined_trajectories)
         predicted_rewards = self.world_model.reward_model(imagined_trajectories)
-        continues = logits_to_probs(self.world_model.continue_model(imagined_trajectories), is_binary=True)  # diff to v3
-        # diff to v3(v3: no self.config.gamma here, but mult gamma before passing to 'compute_lambda_values')
-        true_continue = (1 - terms).reshape(1, -1, 1) * self.config.gamma
-        continues = torch.cat((true_continue, continues[1:]))
+        if self.config.world_model.use_continues:
+            continues = logits_to_probs(self.world_model.continue_model(imagined_trajectories), is_binary=True)  # diff to v3
+            # diff to v3(v3: no self.config.gamma here, but mult gamma before passing to 'compute_lambda_values')
+            true_continue = (1 - terms).reshape(1, -1, 1) * self.config.gamma
+            continues = torch.cat((true_continue, continues[1:]))
+        else:
+            continues = torch.ones_like(predicted_rewards.detach()) * self.config.gamma
 
         # Compute the lambda_values, by passing as last value the value of the last imagined state
         # (horizon, batch_size * seq_len, 1)

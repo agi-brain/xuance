@@ -366,7 +366,7 @@ CONST_LOG_INV_SQRT_2PI = math.log(CONST_INV_SQRT_2PI)
 CONST_LOG_SQRT_2PI_E = 0.5 * math.log(2 * math.pi * math.e)
 
 
-class TruncatedStandardNormal(Distribution):
+class TruncatedStandardNormal(torch.distributions.Distribution):
     """
     Truncated Standard Normal distribution
     https://people.sc.fsu.edu/~jburkardt/presentations/truncated_normal.pdf
