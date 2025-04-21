@@ -43,14 +43,12 @@ end_noise: 0.1
 training_frequency: 1
 running_steps: 1000000
 
-
 use_grad_clip: False  # gradient normalization
 clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
 grad_clip_norm: 0.5
 
 normalize_reward_offline: False # this just for offline RL
 normalize_obs_offline : True # this just for offline RL
-
 
 use_obsnorm: False # this for online RL
 use_rewnorm: False # this for online RL
@@ -60,5 +58,5 @@ rewnorm_range: 5
 test_steps: 10000
 eval_interval: 5000
 test_episode: 10
-log_dir: "./logs/td3_bc/halfcheetah"
-model_dir: "./models/td3_bc/halfcheetah"
+log_dir: "./logs/td3_bc/"
+model_dir: "./models/td3_bc/"

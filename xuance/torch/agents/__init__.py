@@ -24,7 +24,7 @@ from .qlearning_family import PerDQN_Agent
 from .qlearning_family import DRQN_Agent
 
 '''Model-based Reinforcement Learning'''
-from .model_based import DreamerV3Agent
+from .model_based_rl import DreamerV3Agent
 
 '''Multi-Agent Reinforcement Learning Algorithms'''
 from .multi_agent_rl import IQL_Agents
@@ -47,7 +47,7 @@ from .multi_agent_rl import ISAC_Agents
 from .multi_agent_rl import MASAC_Agents
 from .multi_agent_rl import MATD3_Agents
 
-from .offline import TD3_BC_Agent
+from .offline_rl import TD3_BC_Agent
 
 REGISTRY_Agents = {
     "PG": PG_Agent,

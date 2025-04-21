@@ -1,5 +1,5 @@
 agent: "TD3_BC_Agent"
-env_name: "Mujoco"
+env_name: "MuJoCo"
 env_id: "halfcheetah-medium-replay-v2"
 env_seed: 0
 dataset: "halfcheetah-medium-replay-v2"
@@ -7,7 +7,7 @@ vectorize: "DummyVecEnv"
 representation: "Basic_Identical"
 policy: "TD3_Policy"
 learner: "TD3_BC_Learner"
-runner: "DRL"
+runner: "OfflineRL"
 
 representation_hidden_size:  # If you choose Basic_Identical representation, then ignore this value
 actor_hidden_size: [256, 256]
@@ -16,7 +16,6 @@ activation: "relu"
 activation_action: 'tanh'
 
 seed: 0
-parallels: 1  # number of environments ,  but offline is 1
 buffer_size: 10000000
 batch_size: 256
 learning_rate_actor: 0.0003

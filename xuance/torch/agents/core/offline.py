@@ -36,11 +36,10 @@ class OfflineAgent(Agent):
     def _build_policy(self) -> Module:
         raise NotImplementedError
 
-
     def train_epochs(self, n_epochs=1):
         train_info = {}
-        for _ in range(n_epochs):  # 26
-            samples = self.memory.sample()  # [batch, ~]
+        for _ in range(n_epochs):
+            samples = self.memory.sample()
             train_info = self.learner.update(**samples)
         return train_info
 
