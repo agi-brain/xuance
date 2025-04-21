@@ -4,7 +4,7 @@ env_id: "simple_spread_v3"  # Choose of environment id.
 env_seed: 1  # The random seed for the first environment.
 continuous_action: False  # Whether to use continuous actions for MPE.
 learner: "IC3Net_Learner"  # The name of learner.
-policy: "Categorical_IC3Net_Policy"
+policy: "IC3Net_Policy"
 representation: "Basic_RNN"  # Choose of representation module.
 vectorize: "SubprocVecMultiAgentEnv"  # Method to vectorize the environments.
 runner: "MARL"  # The runner.
