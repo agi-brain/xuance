@@ -4,10 +4,10 @@ from copy import deepcopy
 from xuance.torch.utils.operations import set_seed
 from xuance.common import get_configs, recursive_dict_update
 from xuance.environment import make_envs
-from xuance.torch.agents import DreamerV3Agent
+from xuance.torch.agents import DreamerV2Agent
 
 def parse_args():
-    parser = argparse.ArgumentParser("Example of XuanCe: DreamerV3 for CartPole.")
+    parser = argparse.ArgumentParser("Example of XuanCe: DreamerV2 for CartPole.")
     parser.add_argument("--env-id", type=str, default="CartPole-v1")
     parser.add_argument("--log-dir", type=str, default="./logs/CartPole-v1/")
     parser.add_argument("--model-dir", type=str, default="./models/CartPole-v1/")
@@ -15,7 +15,7 @@ def parse_args():
     parser.add_argument("--harmony", type=bool, default=True)
 
     # 10k
-    parser.add_argument("--running-steps", type=int, default=10_000)  # 10k
+    parser.add_argument("--running-steps", type=int, default=50_000)  # 50k
     parser.add_argument("--eval-interval", type=int, default=200)  # 50 logs
     parser.add_argument("--replay-ratio", type=int, default=1)
 
@@ -28,13 +28,13 @@ def parse_args():
 
 if __name__ == '__main__':
     parser = parse_args()
-    configs_dict = get_configs(file_dir="config/CartPole-v1_TODO.yaml")
+    configs_dict = get_configs(file_dir="config/CartPole-v1.yaml")
     configs_dict = recursive_dict_update(configs_dict, parser.__dict__)
     configs = argparse.Namespace(**configs_dict)
 
     set_seed(configs.seed)
     envs = make_envs(configs)
-    Agent = DreamerV3Agent(config=configs, envs=envs)
+    Agent = DreamerV2Agent(config=configs, envs=envs)
 
     train_information = {"Deep learning toolbox": configs.dl_toolbox,
                          "Calculating device": configs.device,

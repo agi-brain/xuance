@@ -6,13 +6,13 @@ render: False
 render_mode: 'rgb_array' # Choices: 'human', 'rgb_array'.
 fps: 50
 test_mode: False
-device: "cuda:0"
+device: "cpu"
 distributed_training: False  # Whether to use multi-GPU for distributed training.
 master_port: '12355'  # The master port for current experiment when use distributed training.
 
 agent: "DreamerV2"
 env_name: "Classic Control"
-env_id: "Pendulum-v1"
+env_id: "CartPole-v1"
 env_seed: 1
 vectorize: "DummyVecEnv"
 representation: "DreamerV2WorldModel"
@@ -35,7 +35,7 @@ actor:
   ent_coef: 0.0001  # 1e-4
   min_std: 0.1
   init_std: 0.0
-  objective_mix: 0.0  # 1.0 for discrete action; 0.0 for continuous control
+  objective_mix: 1.0  # 1.0 for discrete action; 0.0 for continuous control
   dense_act: torch.nn.ELU
   mlp_layers: 4
   layer_norm: false
@@ -56,7 +56,7 @@ world_model:
   kl_free_avg: true
   kl_regularizer: 1.0
   discount_scale_factor: 1.0
-  use_continues: false  # false in dmc
+  use_continues: true  # false in dmc; true in cartpole (important)!!!
   clip_gradients: 100.0
   encoder:
     cnn_channels_multiplier: 48
@@ -106,12 +106,12 @@ parallels: 1
 buffer_size: 2000000  # 2e6
 batch_size: 16
 seq_len: 50
-learning_rate_model: 0.0003  # 3e-4
-learning_rate_actor: 0.00008  # 8e-5
-learning_rate_critic: 0.00008  # 8e-5
+learning_rate_model: 0.0001  # 1e-4
+learning_rate_actor: 0.00003  # 3e-5
+learning_rate_critic: 0.00003  # 3e-5
 
 replay_ratio: 0.2  # gradient_step / replay_step
-running_steps: 10000  # 10k
+running_steps: 50000  # 50k
 start_training: 1024
 
 use_grad_clip: False  # gradient normalization
@@ -126,5 +126,5 @@ rewnorm_range: 5
 test_steps: 10000
 eval_interval: 200
 test_episode: 3
-log_dir: "./logs/Pendulum-v1/"
-model_dir: "./models/Pendulum-v1/"
+log_dir: "./logs/CartPole-v1/"
+model_dir: "./models/CartPole-v1/"

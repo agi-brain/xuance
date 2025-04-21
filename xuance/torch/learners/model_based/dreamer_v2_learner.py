@@ -20,7 +20,6 @@ class DreamerV2_Learner(Learner):
         # config
         self.config = dotdict(vars(config))
         self.is_continuous = self.config.is_continuous
-        self.tau = self.config.critic.tau
         self.gamma = self.config.gamma
         self.hard_update_freq = self.config.critic.hard_update_freq
 
@@ -29,7 +28,7 @@ class DreamerV2_Learner(Learner):
         self.kl_free_nats = self.config.world_model.kl_free_nats  # 1.0
         self.kl_regularizer = self.config.world_model.kl_regularizer  # 1.0
         self.continue_scale_factor = self.config.world_model.discount_scale_factor  # 1.0
-        self.use_continues = self.config.use_continues
+        self.use_continues = self.config.world_model.use_continues
 
         model_parameters = list(self.policy.world_model.parameters())
         if self.config.harmony:
