@@ -4,16 +4,18 @@ env_id: "Pendulum-v1"
 env_seed: 1
 vectorize: "DummyVecEnv"
 representation: "DreamerV3WorldModel"
-learner: "DreamerV3Learner"
+learner: "DreamerV3_Learner"
 policy: "DreamerV3Policy"
 runner: "DRL"
 
 # world_model & actor_critic start
+harmony: False
+
 distribution:
   validate_args: false
   type: auto
 pixel: False
-env:
+env_config:
   screen_size: 64
 activation: 'silu'
 
@@ -140,5 +142,5 @@ rewnorm_range: 5
 test_steps: 10000
 eval_interval: 200
 test_episode: 3
-log_dir: "./logs/Pendulum-v1/"
-model_dir: "./models/Pendulum-v1/"
+log_dir: "./logs/dreamer-v3/"
+model_dir: "./models/dreamer-v3/"

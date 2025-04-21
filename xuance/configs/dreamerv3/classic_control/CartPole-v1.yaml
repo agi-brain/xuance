@@ -9,6 +9,8 @@ policy: "DreamerV3Policy"
 runner: "DRL"
 
 # world_model & actor_critic start
+harmony: False
+
 distribution:
   validate_args: false
   type: auto
@@ -140,5 +142,6 @@ rewnorm_range: 5
 test_steps: 10000
 eval_interval: 200
 test_episode: 3
-log_dir: "./logs/CartPole-v1/"
-model_dir: "./models/CartPole-v1/"
+
+log_dir: "./logs/dreamer-v3/"
+model_dir: "./models/dreamer-v3/"

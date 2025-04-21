@@ -1,17 +1,5 @@
-dl_toolbox: "torch"  # The deep learning toolbox. Choices: "torch", "mindspore", "tensorlayer"
-project_name: "XuanCe_Benchmark"
-logger: "tensorboard"  # Choices: tensorboard, wandb.
-wandb_user_name: "your_user_name"
-render: False
-render_mode: 'rgb_array' # Choices: 'human', 'rgb_array'.
-fps: 50
-test_mode: False
-device: "cuda:0"  # Choose an calculating device. PyTorch: "cpu", "cuda:0"; TensorFlow: "cpu"/"CPU", "gpu"/"GPU"; MindSpore: "CPU", "GPU", "Ascend", "Davinci".
-distributed_training: False  # Whether to use multi-GPU for distributed training.
-master_port: '12355'  # The master port for current experiment when use distributed training.
-
 agent: "TD3_BC_Agent"
-env_name: "Mujoco"
+env_name: "MuJoCo"
 env_id: "halfcheetah-medium-replay-v2"
 env_seed: 0
 dataset: "halfcheetah-medium-replay-v2"
@@ -19,7 +7,7 @@ vectorize: "DummyVecEnv"
 representation: "Basic_Identical"
 policy: "TD3_Policy"
 learner: "TD3_BC_Learner"
-runner: "DRL"
+runner: "OfflineRL"
 
 representation_hidden_size:  # If you choose Basic_Identical representation, then ignore this value
 actor_hidden_size: [256, 256]
@@ -28,7 +16,6 @@ activation: "relu"
 activation_action: 'tanh'
 
 seed: 0
-parallels: 1  # number of environments ,  but offline is 1
 buffer_size: 10000000
 batch_size: 256
 learning_rate_actor: 0.0003
@@ -43,12 +30,14 @@ end_noise: 0.1
 training_frequency: 1
 running_steps: 1000000
 
+
 use_grad_clip: False  # gradient normalization
 clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
 grad_clip_norm: 0.5
 
 normalize_reward_offline: False # this just for offline RL
 normalize_obs_offline : True # this just for offline RL
+
 
 use_obsnorm: False # this for online RL
 use_rewnorm: False # this for online RL
@@ -58,5 +47,5 @@ rewnorm_range: 5
 test_steps: 10000
 eval_interval: 5000
 test_episode: 10
-log_dir: "./logs/td3_bc/"
-model_dir: "./models/td3_bc/"
+log_dir: "./logs/td3_bc/halfcheetah"
+model_dir: "./models/td3_bc/halfcheetah"

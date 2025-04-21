@@ -8,6 +8,7 @@ from xuance.common.memory_tools import create_memory, store_element, sample_batc
 from xuance.common.memory_tools_marl import BaseBuffer, MARL_OnPolicyBuffer, MARL_OnPolicyBuffer_RNN, \
     MeanField_OnPolicyBuffer, MeanField_OffPolicyBuffer, I3CNet_Buffer, I3CNet_Buffer_RNN, \
     MARL_OffPolicyBuffer, MARL_OffPolicyBuffer_RNN
+from xuance.common.memory_offline import OfflineBuffer_D4RL
 from xuance.common.segtree_tool import SegmentTree, SumSegmentTree, MinSegmentTree
 
 __all__ = [
@@ -26,6 +27,7 @@ __all__ = [
     # memory_tools_marl
     "BaseBuffer", "MARL_OnPolicyBuffer", "MARL_OnPolicyBuffer_RNN", "MARL_OffPolicyBuffer", "MARL_OffPolicyBuffer_RNN",
     "MeanField_OnPolicyBuffer", "MeanField_OffPolicyBuffer", "I3CNet_Buffer", "I3CNet_Buffer_RNN",
+    "OfflineBuffer_D4RL",
     # segtree_tool
     "SegmentTree", "SumSegmentTree", "MinSegmentTree",
 ]
@@ -35,5 +37,14 @@ try:
     __all__.append("set_hyperparameters")
     __all__.append("HyperParameterTuner")
     __all__.append("MultiObjectiveTuner")
+except:
+    pass
+
+try:
+    from xuance.common.offline_util import load_d4rl_dataset, compute_mean_std, normalize_states, return_range
+    __all__.append("load_d4rl_dataset")
+    __all__.append("compute_mean_std")
+    __all__.append("normalize_states")
+    __all__.append("return_range")
 except:
     pass

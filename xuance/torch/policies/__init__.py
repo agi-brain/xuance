@@ -87,7 +87,7 @@ REGISTRY_Policy = {
     "DCG_Policy": DCG_policy,
     "Categorical_MAAC_Policy": Categorical_MAAC_Policy,
     "Categorical_MAAC_Policy_Share": Categorical_MAAC_Policy_Share,
-    "IC3NetPolicy": IC3Net_Policy,
+    "IC3Net_Policy": IC3Net_Policy,
     "Categorical_COMA_Policy": COMA_Policy,
     "Categorical_ISAC_Policy": Categorical_ISAC,
     "Categorical_MASAC_Policy": Categorical_MASAC,
