@@ -265,6 +265,7 @@ class IC3Net_Agents(MARLAgents):
                                                                        agent_ids=agents_id,
                                                                        rnn_hidden=rnn_hidden_critic,
                                                                        message_input=message_input)
+            values_dict = {k: values_out[k].cpu().detach().numpy() for k in self.agent_keys}
 
         if self.use_parameter_sharing:
             key = self.agent_keys[0]
