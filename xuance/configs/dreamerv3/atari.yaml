@@ -145,5 +145,5 @@ rewnorm_range: 5
 test_steps: 10000
 eval_interval: 2000
 test_episode: 3
-log_dir: "./logs/Pong-v5/"
-model_dir: "./models/Pong-v5/"
+log_dir: "./logs/dreamer-v3/"
+model_dir: "./models/dreamer-v3/"
