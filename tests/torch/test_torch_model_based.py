@@ -4,7 +4,7 @@ from argparse import Namespace
 from xuance import get_runner
 import unittest
 
-n_steps = 10000
+n_steps = 1000
 device = 'cuda:0'
 test_mode = False
 
@@ -17,7 +17,7 @@ class TestValueBaseAlgo(unittest.TestCase):
 
     def test_harmony_dream(self):
         args = Namespace(dl_toolbox='torch', device=device, running_steps=n_steps, test_mode=test_mode)
-        args.harmony_dream = True
+        args.harmony = True
         runner = get_runner(method="dreamerv3", env='classic_control', env_id='CartPole-v1', parser_args=args)
         runner.run()
 
