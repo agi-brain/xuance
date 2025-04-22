@@ -6,6 +6,7 @@ from xuance.common import get_configs, recursive_dict_update
 from xuance.environment import make_envs
 from xuance.torch.agents import DreamerV2Agent
 
+
 def parse_args():
     parser = argparse.ArgumentParser("Example of XuanCe: DreamerV2 for Pendulum.")
     parser.add_argument("--env-id", type=str, default="Pendulum-v1")
