@@ -1,12 +1,12 @@
-agent: "C51DQN"
-env_name: "Box2D"
+agent: "C51DQN"  # Name of agent
+env_name: "Box2D"  # Name of environment.
 env_id: "LunarLander-v2"
-env_seed: 1
-vectorize: "DummyVecEnv"
-learner: "C51_Learner"
-policy: "C51_Q_network"
+env_seed: 1  # Random seed for the environment.
+vectorize: "DummyVecEnv"  # Method to vectorize the environment.
+learner: "C51_Learner"  # Name of the learner.
+policy: "C51_Q_network"  # Name of the policy.
 representation: "Basic_MLP"
-runner: "DRL"
+runner: "DRL"  # Name of the runner.
 
 representation_hidden_size: [128,]
 q_hidden_size: [128,]
@@ -33,13 +33,13 @@ start_training: 1000
 use_grad_clip: False  # gradient normalization
 grad_clip_norm: 0.5
 use_actions_mask: False
-use_obsnorm: False
-use_rewnorm: False
+use_obsnorm: False  # Whether to use observation normalization trick.
+use_rewnorm: False  # Whether to use reward normalization trick.
 obsnorm_range: 5
 rewnorm_range: 5
 
 test_steps: 10000
 eval_interval: 50000
 test_episode: 1
-log_dir: "./logs/c51/"
-model_dir: "./models/c51/"
+log_dir: "./logs/c51/"  # The directory to store logger file.
+model_dir: "./models/c51/"  # The directory to store model file.

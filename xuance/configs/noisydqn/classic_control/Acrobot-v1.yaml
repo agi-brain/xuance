@@ -27,8 +27,8 @@ training_frequency: 2
 running_steps: 500000
 start_training: 1000
 
-use_obsnorm: False
-use_rewnorm: False
+use_obsnorm: False  # Whether to use observation normalization trick.
+use_rewnorm: False  # Whether to use reward normalization trick.
 obsnorm_range: 5
 rewnorm_range: 5
 

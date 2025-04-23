@@ -96,8 +96,8 @@ use_grad_clip: False  # gradient normalization
 clip_type: 1
 grad_clip_norm: 100.0
 use_actions_mask: False
-use_obsnorm: False
-use_rewnorm: False
+use_obsnorm: False  # Whether to use observation normalization trick.
+use_rewnorm: False  # Whether to use reward normalization trick.
 obsnorm_range: 5
 rewnorm_range: 5
 
