@@ -10,14 +10,14 @@ runner: "DRL"  # Name of the runner.
 
 representation_hidden_size: [128,]
 q_hidden_size: [128,]
-activation: 'relu'
+activation: 'relu'  # The activation function for hidden layers.
 
-seed: 1
-parallels: 10
-buffer_size: 200000
-batch_size: 256
-learning_rate: 0.001
-gamma: 0.99
+seed: 1  # The random seed.
+parallels: 10  # Number of environments that to be implemented in parallel.
+buffer_size: 200000  # The size of replay buffer
+batch_size: 256  # The batch size for training.
+learning_rate: 0.001  # The learning rate.
+gamma: 0.99  # The discount factor.
 v_min: 0
 v_max: 200
 atom_num: 51
@@ -31,12 +31,12 @@ running_steps: 300000
 start_training: 1000
 
 use_grad_clip: False  # gradient normalization
-grad_clip_norm: 0.5
-use_actions_mask: False
+grad_clip_norm: 0.5  # The norm value for gradient clip.
+use_actions_mask: False  # Whether to use actions mask when the environment provides available actions values.
 use_obsnorm: False  # Whether to use observation normalization trick.
 use_rewnorm: False  # Whether to use reward normalization trick.
-obsnorm_range: 5
-rewnorm_range: 5
+obsnorm_range: 5  # The observation normalization range.
+rewnorm_range: 5  # The reward normalization range.
 
 test_steps: 10000
 eval_interval: 50000

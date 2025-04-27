@@ -13,15 +13,15 @@ filters: [16, 16, 32]  #  [16, 16, 32, 32]
 kernels: [8, 4, 3]  # [8, 6, 4, 4]
 strides: [4, 2, 1]  # [2, 2, 2, 2]
 
-q_hidden_size: [512,]
-activation: 'relu'
+q_hidden_size: [512,]  # The hidden units for Q-network.
+activation: 'relu'  # The activation function for hidden layers.
 
-seed: 1
-parallels: 2
-buffer_size: 20000
-batch_size: 32
-learning_rate: 0.0001
-gamma: 0.99
+seed: 1  # The random seed.
+parallels: 2  # Number of environments that to be implemented in parallel.
+buffer_size: 20000  # The size of replay buffer
+batch_size: 32  # The batch size for training.
+learning_rate: 0.0001  # The learning rate.
+gamma: 0.99  # The discount factor.  # The discount factor.
 v_min: 0
 v_max: 200
 atom_num: 51
@@ -35,12 +35,12 @@ running_steps: 200000
 start_training: 1000
 
 use_grad_clip: False  # gradient normalization
-grad_clip_norm: 0.5
-use_actions_mask: False
+grad_clip_norm: 0.5  # The norm value for gradient clip.
+use_actions_mask: False  # Whether to use actions mask when the environment provides available actions values.
 use_obsnorm: False  # Whether to use observation normalization trick.
 use_rewnorm: False  # Whether to use reward normalization trick.
-obsnorm_range: 5
-rewnorm_range: 5
+obsnorm_range: 5  # The observation normalization range.
+rewnorm_range: 5  # The reward normalization range.
 
 test_steps: 10000
 eval_interval: 5000
