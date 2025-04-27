@@ -15,7 +15,7 @@ env_name: "StarCraft2"
 env_id: "3m"
 env_seed: 1
 learner: "IC3Net_Learner"
-policy: "Categorical_IC3Net_Policy"
+policy: "IC3Net_Policy"
 representation: "Basic_RNN"
 vectorize: "Subproc_StarCraft2"
 

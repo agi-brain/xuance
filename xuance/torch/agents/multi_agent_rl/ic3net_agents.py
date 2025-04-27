@@ -292,7 +292,7 @@ class IC3Net_Agents(MARLAgents):
         rnn_hidden_critic_i = {k: self.policy.critic_representation[k].get_hidden_item(
                 [i_env, ], *rnn_hidden_critic[k]) for k in self.agent_keys}
         obs_input = {k: obs_dict[k][None, :] for k in self.agent_keys} if self.use_rnn else obs_dict
-        message_input = {k: receive_message[k].transpose(1, 0, 2) for k in self.model_keys}
+        message_input = {k: receive_message[k][:, i_env:i_env+1,:].transpose(1, 0, 2) for k in self.model_keys}
         obs_input = self.policy.observation_encode(obs_input)
         obs_input = {k: obs_input[k].detach().cpu().numpy() for k in self.model_keys}
         critic_input = self._build_critic_inputs(batch_size=1, obs_batch=obs_input, state=state)
