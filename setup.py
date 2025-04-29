@@ -66,7 +66,7 @@ setup(
         "PyYAML",  # default version is 6.0
         "gymnasium==1.1.1",
         "pygame>=2.1.0",
-        "tqdm==4.62.3",
+        "tqdm==4.66.3",
         "pyglet==1.5.15",
         "pettingzoo>=1.23.0",  # for MARL
         "tensorboard>=2.11.2",  # logger
