@@ -1,7 +1,7 @@
 agent: "MATD3"  # the learning algorithms_marl
 env_name: "mpe"
 env_id: "simple_push_v3"
-env_seed: 1
+env_seed: 1  # The random seed of the environment.
 continuous_action: True
 learner: "MATD3_Learner"
 policy: "MATD3_Policy"

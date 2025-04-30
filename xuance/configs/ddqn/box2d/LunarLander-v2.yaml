@@ -1,7 +1,7 @@
 agent: "DDQN"
 env_name: "Box2D"
 env_id: "LunarLander-v2"
-env_seed: 1
+env_seed: 1  # The random seed of the environment.
 vectorize: "DummyVecEnv"
 policy: "Basic_Q_network"
 representation: "Basic_MLP"

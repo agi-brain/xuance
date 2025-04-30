@@ -1,8 +1,8 @@
 agent: "QTRAN_base"  # Options: QTRAN_base, QTRAN_alt
-env_name: "StarCraft2"
+env_name: "StarCraft2"  # Name of the environment.
 env_id: "2m_vs_1z"
-env_seed: 1
-fps: 15
+env_seed: 1  # The random seed of the environment.
+fps: 15  # Frames per second.
 learner: "QTRAN_Learner"
 policy: "Qtran_Mixing_Q_network"
 representation: "Basic_RNN"

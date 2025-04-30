@@ -1,7 +1,7 @@
 agent: "ISAC"  # the learning algorithms_marl
 env_name: "mpe"
 env_id: "simple_adversary_v3"
-env_seed: 1
+env_seed: 1  # The random seed of the environment.
 continuous_action: True
 learner: "ISAC_Learner"
 policy: "Gaussian_ISAC_Policy"

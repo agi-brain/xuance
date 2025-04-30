@@ -1,7 +1,7 @@
 agent: "PPO_Clip"  # choice: PPO_Clip, PPO_KL
 env_name: "MiniGrid"
 env_id: "MiniGrid-Empty-5x5-v0"
-env_seed: 1
+env_seed: 1  # The random seed of the environment.
 RGBImgPartialObsWrapper: False
 ImgObsWrapper: False
 vectorize: "DummyVecEnv"

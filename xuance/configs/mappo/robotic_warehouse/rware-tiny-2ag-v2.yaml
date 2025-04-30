@@ -1,7 +1,7 @@
 agent: "MAPPO"
 env_name: "RoboticWarehouse"
 env_id: "rware-tiny-2ag-v2"
-env_seed: 1
+env_seed: 1  # The random seed of the environment.
 max_episode_steps: 100
 learner: "MAPPO_Clip_Learner"
 policy: "Categorical_MAAC_Policy"

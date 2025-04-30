@@ -1,7 +1,7 @@
 agent: "QRDQN"
 env_name: "Box2D"
 env_id: "LunarLander-v2"
-env_seed: 1
+env_seed: 1  # The random seed of the environment.
 vectorize: "DummyVecEnv"
 learner: "QRDQN_Learner"
 policy: "QR_Q_network"

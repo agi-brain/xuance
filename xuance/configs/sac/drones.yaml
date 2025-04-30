@@ -1,7 +1,7 @@
 agent: "SAC"
 env_name: "Drones"
 env_id: "HoverAviary"
-env_seed: 1
+env_seed: 1  # The random seed of the environment.
 obs_type: 'kin'
 act_type: 'one_d_rpm'
 num_drones: 1

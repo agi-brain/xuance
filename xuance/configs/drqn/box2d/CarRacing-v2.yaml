@@ -1,7 +1,7 @@
 agent: "DRQN"
 env_name: "Box2D"
 env_id: "CarRacing-v2"
-env_seed: 1
+env_seed: 1  # The random seed of the environment.
 vectorize: "DummyVecEnv"
 policy: "DRQN_Policy"
 representation: "Basic_CNN"

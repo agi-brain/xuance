@@ -1,7 +1,7 @@
 agent: "IDDPG"  # the learning algorithms_marl
 env_name: "mpe"
 env_id: "simple_spread_v3"
-env_seed: 1
+env_seed: 1  # The random seed of the environment.
 continuous_action: True
 learner: "IDDPG_Learner"
 policy: "Independent_DDPG_Policy"

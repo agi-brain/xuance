@@ -3,7 +3,7 @@ global_state: False
 # environment settings
 env_name: "Football"
 scenario: "academy_3_vs_1_with_keeper"
-env_seed: 1
+env_seed: 1  # The random seed of the environment.
 use_stacked_frames: False  # Whether to use stacked_frames
 num_agent: 3
 num_adversary: 0
@@ -11,7 +11,7 @@ obs_type: "simple115v2"  # representation used to build the observation, choices
 rewards_type: "scoring,checkpoints"  # comma separated list of rewards to be added
 smm_width: 96  # width of super minimap
 smm_height: 72  # height of super minimap
-fps: 15
+fps: 15  # Frames per second.
 learner: "VDN_Learner"
 policy: "Mixing_Q_network"
 representation: "Basic_RNN"

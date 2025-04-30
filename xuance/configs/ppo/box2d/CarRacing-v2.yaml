@@ -1,7 +1,7 @@
 agent: "PPO_Clip"  # Choice: PPO_Clip, PPO_KL
 env_name: "Box2D"
 env_id: "CarRacing-v2"
-env_seed: 1
+env_seed: 1  # The random seed of the environment.
 vectorize: "DummyVecEnv"
 representation: "Basic_CNN"
 policy: "Categorical_AC"

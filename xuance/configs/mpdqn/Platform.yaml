@@ -1,7 +1,7 @@
 agent: "MPDQN"
 env_name: "Platform"
 env_id: "Platform-v0"
-env_seed: 1
+env_seed: 1  # The random seed of the environment.
 max_episode_steps: 200
 vectorize: "NOREQUIRED"
 render: False

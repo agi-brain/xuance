@@ -1,7 +1,7 @@
 agent: "VDAC"
 env_name: "mpe"
 env_id: "simple_spread_v3"
-env_seed: 1
+env_seed: 1  # The random seed of the environment.
 continuous_action: False
 learner: "VDAC_Learner"
 policy: "Categorical_MAAC_Policy"

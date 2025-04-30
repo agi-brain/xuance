@@ -2,7 +2,7 @@ agent: "DreamerV2"
 vectorize: "Dummy_Atari"
 env_name: "Atari"
 env_id: "ALE/Pong-v5"
-env_seed: 1
+env_seed: 1  # The random seed of the environment.
 obs_type: "grayscale"  # choice for Atari env: ram, rgb, grayscale
 img_size: [ 64, 64 ]  # default is 210 x 160 in gym[Atari]
 num_stack: 1  # frame stack trick

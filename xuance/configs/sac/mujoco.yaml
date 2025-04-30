@@ -1,7 +1,7 @@
 agent: "SAC"
 env_name: "MuJoCo"
 env_id: "Ant-v4"
-env_seed: 1
+env_seed: 1  # The random seed of the environment.
 vectorize: "DummyVecEnv"
 learner: "SAC_Learner"
 policy: "Gaussian_SAC"

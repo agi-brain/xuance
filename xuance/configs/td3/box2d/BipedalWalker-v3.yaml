@@ -1,7 +1,7 @@
 agent: "TD3"
 env_name: "Box2D"
 env_id: "BipedalWalker-v3"
-env_seed: 1
+env_seed: 1  # The random seed of the environment.
 vectorize: "DummyVecEnv"
 representation: "Basic_Identical"
 policy: "TD3_Policy"

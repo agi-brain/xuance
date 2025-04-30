@@ -1,7 +1,7 @@
 agent: "QMIX"  # the learning algorithms_marl
 env_name: "mpe"
 env_id: "simple_spread_v3"
-env_seed: 1
+env_seed: 1  # The random seed of the environment.
 continuous_action: False
 learner: "QMIX_Learner"
 policy: "Mixing_Q_network"
