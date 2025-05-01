@@ -2,15 +2,15 @@ agent: "IQL"  # the learning algorithms_marl
 env_name: "mpe"
 env_id: "simple_spread_v3"
 env_seed: 1
-continuous_action: False
+continuous_action: False  # Continuous action space or not.
 learner: "IQL_Learner"
 policy: "Basic_Q_network_marl"
 representation: "Basic_MLP"
 vectorize: "DummyVecMultiAgentEnv"
-runner: "MARL"
+runner: "MARL"  # Runner
 
-use_rnn: False
-rnn: "GRU"
+use_rnn: False  # Whether to use recurrent neural networks.
+rnn: "GRU"  # Choice of recurrent networks: GRU or LSTM.
 recurrent_layer_N: 1
 fc_hidden_sizes: [64, ]
 recurrent_hidden_size: 64

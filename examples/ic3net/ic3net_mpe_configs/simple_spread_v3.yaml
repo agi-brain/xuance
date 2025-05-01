@@ -21,7 +21,7 @@ representation: "Basic_RNN"
 vectorize: "SubprocVecMultiAgentEnv"  # The method to vectorize your environment such that can run in parallel.
 
 # recurrent settings for Basic_RNN representation.
-use_rnn: True
+use_rnn: True  # Whether to use recurrent neural networks.
 rnn: "LSTM"
 fc_hidden_sizes: [64, 64, 64]
 recurrent_hidden_size: 64

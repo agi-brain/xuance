@@ -7,10 +7,10 @@ learner: "MAPPO_Clip_Learner"
 policy: "Categorical_MAAC_Policy"
 representation: "Basic_MLP"
 vectorize: "Dummy_RoboticWarehouse"
-runner: "MARL"
+runner: "MARL"  # Runner
 
 # recurrent settings for Basic_RNN representation
-use_rnn: False
+use_rnn: False  # Whether to use recurrent neural networks.
 rnn:
 representation_hidden_size: [64, ]  # the units for each hidden layer
 gain: 0.01

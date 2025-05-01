@@ -7,9 +7,9 @@ learner: "QMIX_Learner"
 policy: "Mixing_Q_network"
 representation: "Basic_MLP"
 vectorize: "Dummy_RoboticWarehouse"
-runner: "MARL"
+runner: "MARL"  # Runner
 
-use_rnn: False
+use_rnn: False  # Whether to use recurrent neural networks.
 rnn:
 representation_hidden_size: [64, ]
 q_hidden_size: [128, ]  # the units for each hidden layer

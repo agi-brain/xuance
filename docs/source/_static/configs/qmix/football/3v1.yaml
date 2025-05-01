@@ -17,8 +17,8 @@ vectorize: "Subproc_Football"
 runner: "RunnerFootball"
 
 # recurrent settings for Basic_RNN representation
-use_rnn: True
-rnn: "GRU"
+use_rnn: True  # Whether to use recurrent neural networks.
+rnn: "GRU"  # Choice of recurrent networks: GRU or LSTM.
 recurrent_layer_N: 1
 fc_hidden_sizes: [128, ]
 recurrent_hidden_size: 128

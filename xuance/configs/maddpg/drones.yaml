@@ -14,7 +14,7 @@ learner: "MADDPG_Learner"
 policy: "MADDPG_Policy"
 representation: "Basic_Identical"
 vectorize: "Dummy_Drone_MAS"
-runner: "MARL"
+runner: "MARL"  # Runner
 on_policy: False
 
 actor_hidden_size: [256, 256]

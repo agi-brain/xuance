@@ -20,7 +20,7 @@ representation: "Basic_RNN"
 vectorize: "Subproc_StarCraft2"
 
 # recurrent settings for Basic_RNN representation
-use_rnn: True
+use_rnn: True  # Whether to use recurrent neural networks.
 rnn: "LSTM"
 recurrent_layer_N: 1
 fc_hidden_sizes: [64, 64, 64]

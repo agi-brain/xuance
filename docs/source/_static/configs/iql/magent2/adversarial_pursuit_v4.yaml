@@ -14,7 +14,7 @@ vectorize: "Dummy_MAgent"
 runner: "RunnerMAgent"
 
 # recurrent settings for Basic_RNN representation
-use_rnn: False
+use_rnn: False  # Whether to use recurrent neural networks.
 rnn:
 representation_hidden_size: [64, ]
 q_hidden_size: [64, ]  # the units for each hidden layer

@@ -15,8 +15,8 @@ runner: "RunnerMAgent"
 on_policy: False
 
 # recurrent settings for Basic_RNN representation
-use_rnn: False
-rnn: "GRU"
+use_rnn: False  # Whether to use recurrent neural networks.
+rnn: "GRU"  # Choice of recurrent networks: GRU or LSTM.
 recurrent_layer_N: 1
 fc_hidden_sizes: [64, ]
 recurrent_hidden_size: 64
