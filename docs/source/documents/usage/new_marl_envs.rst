@@ -85,14 +85,18 @@ Here is an example of configurations for DDPG algorithm, named "ippo_new_configs
     wandb_user_name: "your_user_name"
     render: True
     render_mode: 'rgb_array' # Choices: 'human', 'rgb_array'.
+    fps: 15
     test_mode: False
-    device: "cuda:0"
+    device: "cuda:0"  # Choose an calculating device. PyTorch: "cpu", "cuda:0"; TensorFlow: "cpu"/"CPU", "gpu"/"GPU"; MindSpore: "CPU", "GPU", "Ascend", "Davinci".
+    distributed_training: False  # Whether to use multi-GPU for distributed training.
+    master_port: '12355'  # The master port for current experiment when use distributed training.
 
     agent: "IPPO"
     env_name: "MyNewMultiAgentEnv"
     env_id: "new_env_id"
-    fps: 50
-    continuous_action: True
+    env_seed: 1
+    continuous_action: True  # Continuous action space or not.
+    learner: "IPPO_Learner"  # The learner name.
     policy: "Gaussian_MAAC_Policy"
     representation: "Basic_MLP"
     vectorize: "DummyVecMultiAgentEnv"
