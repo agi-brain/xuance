@@ -1,5 +1,5 @@
 agent: "DCG"  # Options: DCG, DCG_S
-env_name: "mpe"
+env_name: "mpe"  # Name of the environment.
 env_id: "simple_spread_v3"
 env_seed: 1
 continuous_action: False  # Continuous action space or not.
