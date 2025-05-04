@@ -13,7 +13,7 @@ runner: "DRL"
 representation_hidden_size: [128,]
 conactor_hidden_size: [128,]
 qnetwork_hidden_size: [128, ]
-activation: "relu"
+activation: "relu"  # The activation function of each hidden layer.
 activation_action: 'tanh'
 
 buffer_size: 20000

@@ -15,7 +15,7 @@ strides: [4, 2, 1]  # [2, 2, 2, 2]
 fc_hidden_sizes: [512, ]  # fully connected layer hidden sizes.
 actor_hidden_size: []
 critic_hidden_size: []
-activation: "relu"
+activation: "relu"  # The activation function of each hidden layer.
 
 seed: 1
 parallels: 2

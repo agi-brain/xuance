@@ -39,7 +39,7 @@ dropout: 0
 
 representation_hidden_size: [128, ]
 q_hidden_size: [128, ]  # the units for each hidden layer
-activation: "relu"
+activation: "relu"  # The activation function of each hidden layer.
 use_parameter_sharing: True
 use_actions_mask: False
 

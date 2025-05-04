@@ -33,7 +33,7 @@ gain: 0.01
 
 actor_hidden_size: []
 critic_hidden_size: []
-activation: "relu"
+activation: "relu"  # The activation function of each hidden layer.
 use_parameter_sharing: False  # If to use parameter sharing for all agents' policies.
 use_actions_mask: True  # If to use actions mask for unavailable actions.
 dim_message: 64

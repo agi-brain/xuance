@@ -33,7 +33,7 @@ hidden_utility_dim: 64  # hidden units of the utility function
 hidden_payoff_dim: 64  # hidden units of the payoff function
 bias_net: "Basic_MLP"
 hidden_bias_dim: [64, ]  # hidden units of the bias network with global states as input
-activation: "relu"
+activation: "relu"  # The activation function of each hidden layer.
 use_parameter_sharing: True
 use_actions_mask: True
 

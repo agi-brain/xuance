@@ -24,7 +24,7 @@ N_recurrent_layers: 1
 
 representation_hidden_size: [512, ]  # the units for each hidden layer
 q_hidden_size: [512, ]
-activation: "relu"
+activation: "relu"  # The activation function of each hidden layer.
 
 seed: 1
 parallels: 10

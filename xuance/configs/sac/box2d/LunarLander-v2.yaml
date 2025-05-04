@@ -11,7 +11,7 @@ runner: "DRL"
 representation_hidden_size: [256,]
 actor_hidden_size: [128,128,]
 critic_hidden_size: [128,128,]
-activation: "relu"
+activation: "relu"  # The activation function of each hidden layer.
 
 seed: 1
 parallels: 10

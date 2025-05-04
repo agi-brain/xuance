@@ -24,7 +24,7 @@ runner: "DRL"
 representation_hidden_size:  # If you choose Basic_Identical representation, then ignore this value
 actor_hidden_size: [256, 256]
 critic_hidden_size: [256, 256]
-activation: "relu"
+activation: "relu"  # The activation function of each hidden layer.
 activation_action: 'tanh'
 
 seed: 0
