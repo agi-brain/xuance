@@ -17,7 +17,7 @@ on_policy: False
 # recurrent settings for Basic_RNN representation
 use_rnn: False  # Whether to use recurrent neural networks.
 rnn: "GRU"  # Choice of recurrent networks: GRU or LSTM.
-recurrent_layer_N: 1
+N_recurrent_layers: 1  # Number of recurrent layers.
 fc_hidden_sizes: [64, ]
 recurrent_hidden_size: 64
 N_recurrent_layers: 1
