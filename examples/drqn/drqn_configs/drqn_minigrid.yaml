@@ -25,7 +25,7 @@ rnn: "LSTM"
 representation_hidden_size: [128,]
 recurrent_hidden_size: 128
 N_recurrent_layers: 1  # Number of recurrent layers.
-dropout: 0
+dropout: 0  # dropout should be a number in range [0, 1], the probability of an element being zeroed.
 activation: 'relu'
 
 seed: 1

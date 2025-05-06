@@ -20,7 +20,6 @@ rnn: "GRU"  # Choice of recurrent networks: GRU or LSTM.
 N_recurrent_layers: 1  # Number of recurrent layers.
 fc_hidden_sizes: [64, ]
 recurrent_hidden_size: 64
-N_recurrent_layers: 1
 
 representation_hidden_size: [512, ]  # the units for each hidden layer
 q_hidden_size: [512, ]
