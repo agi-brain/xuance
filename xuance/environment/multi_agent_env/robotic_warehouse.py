@@ -14,7 +14,7 @@ class RoboticWarehouseEnv(RawMultiAgentEnv):
     """
     def __init__(self, config):
         super(RoboticWarehouseEnv, self).__init__()
-        self.env = gym.make(config.env_id)
+        self.env = gym.make(config.env_id, render_mode=config.render_mode)
         self.num_agents = len(self.env.action_space)  # the number of agents
         self.agents = [f'agent_{i}' for i in range(self.num_agents)]
         self.seed = config.env_seed  # random seed
@@ -34,7 +34,7 @@ class RoboticWarehouseEnv(RawMultiAgentEnv):
 
     def render(self, render_mode):
         """Render the environment, and return the images"""
-        return self.env.render(render_mode)
+        return self.env.env.env.render(mode=render_mode)
 
     def reset(self):
         """Reset your environment, and return initialized observations and other information."""
