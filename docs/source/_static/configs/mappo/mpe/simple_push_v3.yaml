@@ -1,8 +1,8 @@
 agent: "MAPPO"
-env_name: "mpe"
+env_name: "mpe"  # Name of the environment.
 env_id: "simple_push_v3"
 env_seed: 1
-continuous_action: True
+continuous_action: True  # Continuous action space or not.
 learner: "MAPPO_Clip_Learner"
 policy: "Gaussian_MAAC_Policy"
 representation: "Basic_MLP"
@@ -23,7 +23,7 @@ gain: 0.01
 representation_hidden_size: [64, ]  # A list of hidden units for each layer of Basic_MLP representation networks.
 actor_hidden_size: [64, ]
 critic_hidden_size: [256, ]
-activation: "relu"
+activation: "relu"  # The activation function of each hidden layer.
 activation_action: "sigmoid"  # The activation function for the last layer of the actor.
 use_parameter_sharing: True  # If to use parameter sharing for all agents' policies.
 use_actions_mask: False  # If to use actions mask for unavailable actions.

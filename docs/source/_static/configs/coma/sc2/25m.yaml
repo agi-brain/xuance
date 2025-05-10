@@ -9,13 +9,12 @@ representation: "Basic_RNN"
 vectorize: "Subproc_StarCraft2"
 runner: "RunnerStarCraft2"
 
-use_rnn: True
-rnn: "GRU"
-recurrent_layer_N: 1
+use_rnn: True  # Whether to use recurrent neural networks.
+rnn: "GRU"  # Choice of recurrent networks: GRU or LSTM.
+N_recurrent_layers: 1  # Number of recurrent layers.
 fc_hidden_sizes: [64, ]
 recurrent_hidden_size: 64
-N_recurrent_layers: 1
-dropout: 0
+dropout: 0  # dropout should be a number in range [0, 1], the probability of an element being zeroed.
 normalize: "LayerNorm"
 initialize: "orthogonal"
 gain: 0.01

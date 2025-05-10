@@ -15,8 +15,8 @@ kernels: [8, 4, 3]  # [8, 6, 4, 4]
 strides: [4, 2, 1]  # [2, 2, 2, 2]
 
 recurrent_hidden_size: 512
-recurrent_layer_N: 1
-dropout: 0
+N_recurrent_layers: 1  # Number of recurrent layers.
+dropout: 0  # dropout should be a number in range [0, 1], the probability of an element being zeroed.
 activation: 'relu'
 
 seed: 1

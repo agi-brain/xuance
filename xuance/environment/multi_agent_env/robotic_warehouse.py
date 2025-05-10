@@ -14,11 +14,10 @@ class RoboticWarehouseEnv(RawMultiAgentEnv):
     """
     def __init__(self, config):
         super(RoboticWarehouseEnv, self).__init__()
-        self.env = gym.make(config.env_id)
-        self.num_agents = self.env.env.n_agents  # the number of agents
+        self.env = gym.make(config.env_id, render_mode=config.render_mode)
+        self.num_agents = len(self.env.action_space)  # the number of agents
         self.agents = [f'agent_{i}' for i in range(self.num_agents)]
         self.seed = config.env_seed  # random seed
-        self.env.seed(self.seed)
         self.env.reset(seed=self.seed)
 
         self.observation_space = {k: self.env.observation_space[i] for i, k in enumerate(self.agents)}
@@ -26,7 +25,7 @@ class RoboticWarehouseEnv(RawMultiAgentEnv):
         self.dim_state = sum([self.observation_space[k].shape[-1] for k in self.agents])
         self.state_space = Box(-np.inf, np.inf, shape=[self.dim_state, ], dtype=np.float32)
 
-        self.max_episode_steps = self.env.env.max_steps
+        self.max_episode_steps = config.max_episode_steps
         self._episode_step = 0  # initialize the current step
 
     def close(self):
@@ -35,7 +34,7 @@ class RoboticWarehouseEnv(RawMultiAgentEnv):
 
     def render(self, render_mode):
         """Render the environment, and return the images"""
-        return self.env.render(render_mode)
+        return self.env.env.env.render(mode=render_mode)
 
     def reset(self):
         """Reset your environment, and return initialized observations and other information."""

@@ -146,3 +146,9 @@ Here is the example of DDPG algorithm:
     Agent.train(configs.running_steps // configs.parallels)  # Train the model for numerous steps.
     Agent.save_model("final_train_model.pth")  # Save the model to model_dir.
     Agent.finish()  # Finish the training.
+
+
+Full code
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The full code for the above steps can be visited in this link: `https://github.com/agi-brain/xuance/blob/master/examples/new_environments/ddpg_new_env.py <https://github.com/agi-brain/xuance/blob/master/examples/new_environments/ddpg_new_env.py>`_

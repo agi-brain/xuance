@@ -1,0 +1,52 @@
+agent: "TD3_BC_Agent"
+env_name: "Mujoco"
+env_id: "walker2d-medium-expert-v2"
+env_seed: 0
+dataset: "walker2d-medium-expert-v2"
+vectorize: "DummyVecEnv"
+representation: "Basic_Identical"
+policy: "TD3_Policy"
+learner: "TD3_BC_Learner"
+runner: "DRL"
+
+representation_hidden_size:  # If you choose Basic_Identical representation, then ignore this value
+actor_hidden_size: [256, 256]
+critic_hidden_size: [256, 256]
+activation: "relu"  # The activation function of each hidden layer.
+activation_action: 'tanh'
+
+seed: 0
+parallels: 1  # number of environments
+buffer_size: 10000000
+batch_size: 256
+learning_rate_actor: 0.0003
+actor_update_delay: 2
+learning_rate_critic: 0.0003
+gamma: 0.99
+tau: 0.005
+alpha: 2.5  # Coefficient for Q function in actor loss
+
+start_noise: 0.1
+end_noise: 0.1
+training_frequency: 1
+running_steps: 1000000
+
+
+use_grad_clip: False  # gradient normalization
+clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
+grad_clip_norm: 0.5
+
+normalize_reward_offline: False # this just for offline RL
+normalize_obs_offline : True # this just for offline RL
+
+
+use_obsnorm: False # this for online RL
+use_rewnorm: False # this for online RL
+obsnorm_range: 5
+rewnorm_range: 5
+
+test_steps: 10000
+eval_interval: 5000
+test_episode: 10
+log_dir: "./logs/td3_bc/walker2d"
+model_dir: "./models/td3_bc/walker2d"

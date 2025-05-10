@@ -1,27 +1,17 @@
-from argparse import Namespace
-from copy import deepcopy
-from operator import itemgetter
-from typing import Dict
-
-import gymnasium
-import numpy as np
 import torch
+import numpy as np
+import gymnasium as gym
 from gymnasium import Space
 from tqdm import tqdm
-
-from xuance.common import (
-    List,
-    Optional,
-    Union, space2shape, I3CNet_Buffer_RNN,
-)
+from copy import deepcopy
+from operator import itemgetter
+from argparse import Namespace
+from xuance.common import List, Optional, Dict, Union, space2shape, I3CNet_Buffer_RNN
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
+from xuance.torch import Module, REGISTRY_Policy, ModuleDict
 from xuance.torch.communications import IC3NetComm
-from xuance.torch.learners import IC3Net_Learner
-from xuance.torch.policies.categorical_marl import IC3Net_Policy
-from xuance.torch.utils import ActivationFunctions
-from xuance.torch import Module, REGISTRY_Policy, ModuleDict, REGISTRY_Learners
+from xuance.torch.utils import ActivationFunctions, NormalizeFunctions
 from xuance.torch.agents.base import MARLAgents
-from xuance.torch.utils import NormalizeFunctions
 
 
 class IC3Net_Agents(MARLAgents):
@@ -61,7 +51,7 @@ class IC3Net_Agents(MARLAgents):
                             use_actions_mask=self.use_actions_mask,
                             max_episode_steps=self.episode_length,
                             config=self.config,
-                            dim_message = self.config.dim_message)
+                            dim_message=self.config.dim_message)
         Buffer = I3CNet_Buffer_RNN
         return Buffer(**input_buffer)
 
@@ -90,16 +80,15 @@ class IC3Net_Agents(MARLAgents):
 
         # build representations
         communicator = self._build_communicator(self.observation_space, self.config)
-        space_actor_in = {agent: gymnasium.spaces.Box(-np.inf, np.inf, (self.config.recurrent_hidden_size,), dtype=np.float32) for agent in self.observation_space}
+        space_actor_in = {agent: gym.spaces.Box(-np.inf, np.inf, (self.config.recurrent_hidden_size,), dtype=np.float32) for agent in self.observation_space}
         dim_obs_all = sum([sum(space_actor_in[k].shape) for k in self.agent_keys])
         space_critic_in = {k: (dim_obs_all,) for k in self.agent_keys}
         A_representation = self._build_representation(self.config.representation, space_actor_in, self.config)
         C_representation = self._build_representation(self.config.representation, space_critic_in, self.config)
 
         # build policies
-        if self.config.policy == "Categorical_IC3Net_Policy":
-            REGISTRY_Policy["Categorical_IC3Net_Policy"] = IC3Net_Policy
-            policy = REGISTRY_Policy["Categorical_IC3Net_Policy"](
+        if self.config.policy == "IC3Net_Policy":
+            policy = REGISTRY_Policy[self.config.policy](
                 action_space=self.action_space, n_agents=self.n_agents,
                 representation_actor=A_representation, representation_critic=C_representation,
                 actor_hidden_size=self.config.actor_hidden_size, critic_hidden_size=self.config.critic_hidden_size,
@@ -111,10 +100,6 @@ class IC3Net_Agents(MARLAgents):
         else:
             raise AttributeError(f"{agent} currently does not support the policy named {self.config.policy}.")
         return policy
-
-    def _build_learner(self, *args):
-        REGISTRY_Learners["IC3Net_Learner"] = IC3Net_Learner
-        return REGISTRY_Learners[self.config.learner](*args)
 
     def store_experience(self, obs_dict, avail_actions, actions_dict, log_pi_a, rewards_dict, values_dict,
                          terminals_dict, info, receive_msg, **kwargs):
@@ -265,6 +250,7 @@ class IC3Net_Agents(MARLAgents):
                                                                        agent_ids=agents_id,
                                                                        rnn_hidden=rnn_hidden_critic,
                                                                        message_input=message_input)
+            values_dict = {k: values_out[k].cpu().detach().numpy() for k in self.agent_keys}
 
         if self.use_parameter_sharing:
             key = self.agent_keys[0]
@@ -306,7 +292,7 @@ class IC3Net_Agents(MARLAgents):
         rnn_hidden_critic_i = {k: self.policy.critic_representation[k].get_hidden_item(
                 [i_env, ], *rnn_hidden_critic[k]) for k in self.agent_keys}
         obs_input = {k: obs_dict[k][None, :] for k in self.agent_keys} if self.use_rnn else obs_dict
-        message_input = {k: receive_message[k].transpose(1, 0, 2) for k in self.model_keys}
+        message_input = {k: receive_message[k][:, i_env:i_env+1,:].transpose(1, 0, 2) for k in self.model_keys}
         obs_input = self.policy.observation_encode(obs_input)
         obs_input = {k: obs_input[k].detach().cpu().numpy() for k in self.model_keys}
         critic_input = self._build_critic_inputs(batch_size=1, obs_batch=obs_input, state=state)

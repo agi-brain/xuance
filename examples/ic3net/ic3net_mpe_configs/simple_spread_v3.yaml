@@ -16,12 +16,12 @@ env_id: "simple_spread_v3"  # The environment id.
 env_seed: 1
 continuous_action: False  # If to use continuous control.
 learner: "IC3Net_Learner"
-policy: "Categorical_IC3Net_Policy"
+policy: "IC3Net_Policy"
 representation: "Basic_RNN"
 vectorize: "SubprocVecMultiAgentEnv"  # The method to vectorize your environment such that can run in parallel.
 
 # recurrent settings for Basic_RNN representation.
-use_rnn: True
+use_rnn: True  # Whether to use recurrent neural networks.
 rnn: "LSTM"
 fc_hidden_sizes: [64, 64, 64]
 recurrent_hidden_size: 64

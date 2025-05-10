@@ -1,7 +1,7 @@
 agent: "SPDQN"
 env_name: "Platform"
 env_id: "Platform-v0"
-env_seed: 1
+env_seed: 1  # The random seed of the environment.
 max_episode_steps: 200
 vectorize: "NOREQUIRED"
 learner: "SPDQN_Learner"
@@ -13,7 +13,7 @@ runner: "DRL"
 representation_hidden_size: [128,]
 conactor_hidden_size: [128,]
 qnetwork_hidden_size: [128, ]
-activation: "relu"
+activation: "relu"  # The activation function of each hidden layer.
 activation_action: 'tanh'
 
 buffer_size: 20000
@@ -36,8 +36,8 @@ use_grad_clip: False  # gradient normalization
 clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
 grad_clip_norm: 0.5
 use_actions_mask: False
-use_obsnorm: False
-use_rewnorm: False
+use_obsnorm: False  # Whether to use observation normalization trick.
+use_rewnorm: False  # Whether to use reward normalization trick.
 obsnorm_range: 5
 rewnorm_range: 5
 

@@ -7,17 +7,17 @@ learner: "MAPPO_Clip_Learner"
 policy: "Categorical_MAAC_Policy"
 representation: "Basic_MLP"
 vectorize: "Dummy_RoboticWarehouse"
-runner: "MARL"
+runner: "MARL"  # Runner
 
 # recurrent settings for Basic_RNN representation
-use_rnn: False
+use_rnn: False  # Whether to use recurrent neural networks.
 rnn:
 representation_hidden_size: [64, ]  # the units for each hidden layer
 gain: 0.01
 
 actor_hidden_size: [64, ]
 critic_hidden_size: [256, ]
-activation: "relu"
+activation: "relu"  # The activation function of each hidden layer.
 use_parameter_sharing: True  # If to use parameter sharing for all agents' policies.
 use_actions_mask: False  # If to use actions mask for unavailable actions.
 

@@ -1,7 +1,7 @@
 agent: "NPG"
 env_name: "Classic Control"
 env_id: "Pendulum-v1"
-env_seed: 1
+env_seed: 1  # The random seed of the environment.
 representation: "Basic_MLP"
 vectorize: "DummyVecEnv"
 policy: "Gaussian_AC"
@@ -30,8 +30,8 @@ use_grad_clip: True  # gradient normalization
 clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
 grad_clip_norm: 0.5
 use_actions_mask: False
-use_obsnorm: True
-use_rewnorm: True
+use_obsnorm: True  # Whether to use observation normalization trick.
+use_rewnorm: True  # Whether to use reward normalization trick.
 obsnorm_range: 5
 rewnorm_range: 5
 

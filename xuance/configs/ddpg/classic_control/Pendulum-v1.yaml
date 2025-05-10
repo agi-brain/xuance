@@ -1,7 +1,7 @@
 agent: "DDPG"
 env_name: "Classic Control"
 env_id: "Pendulum-v1"
-env_seed: 1
+env_seed: 1  # The random seed of the environment.
 vectorize: "DummyVecEnv"
 policy: "DDPG_Policy"
 representation: "Basic_MLP"
@@ -11,7 +11,7 @@ runner: "DRL"
 representation_hidden_size: [256,]
 actor_hidden_size: [256,]
 critic_hidden_size: [256,]
-activation: "relu"
+activation: "relu"  # The activation function of each hidden layer.
 activation_action: 'tanh'
 
 seed: 1
@@ -31,8 +31,8 @@ start_training: 1000
 
 use_grad_clip: False  # gradient normalization
 grad_clip_norm: 0.5
-use_obsnorm: False
-use_rewnorm: False
+use_obsnorm: False  # Whether to use observation normalization trick.
+use_rewnorm: False  # Whether to use reward normalization trick.
 obsnorm_range: 5
 rewnorm_range: 5
 

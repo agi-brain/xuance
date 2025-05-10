@@ -1,7 +1,7 @@
 agent: "DreamerV3"
 env_name: "Classic Control"
 env_id: "CartPole-v1"
-env_seed: 1
+env_seed: 1  # The random seed of the environment.
 vectorize: "DummyVecEnv"
 representation: "DreamerV3WorldModel"
 learner: "DreamerV3_Learner"
@@ -9,6 +9,8 @@ policy: "DreamerV3Policy"
 runner: "DRL"
 
 # world_model & actor_critic start
+harmony: False
+
 distribution:
   validate_args: false
   type: auto
@@ -132,13 +134,14 @@ use_grad_clip: False  # gradient normalization
 clip_type: 1
 grad_clip_norm: 100.0
 use_actions_mask: False
-use_obsnorm: False
-use_rewnorm: False
+use_obsnorm: False  # Whether to use observation normalization trick.
+use_rewnorm: False  # Whether to use reward normalization trick.
 obsnorm_range: 5
 rewnorm_range: 5
 
 test_steps: 10000
 eval_interval: 200
 test_episode: 3
-log_dir: "./logs/CartPole-v1/"
-model_dir: "./models/CartPole-v1/"
+
+log_dir: "./logs/dreamer-v3/"
+model_dir: "./models/dreamer-v3/"

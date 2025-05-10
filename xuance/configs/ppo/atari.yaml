@@ -2,7 +2,7 @@ agent: "PPO_Clip"  # Choice: PPO_Clip, PPO_KL
 vectorize: "Dummy_Atari"
 env_name: "Atari"
 env_id: "ALE/Breakout-v5"
-env_seed: 1
+env_seed: 1  # The random seed of the environment.
 obs_type: "grayscale"  # choice for Atari env: ram, rgb, grayscale
 img_size: [84, 84]  # default is 210 x 160 in gym[Atari]
 num_stack: 4  # frame stack trick
@@ -20,7 +20,7 @@ strides: [4, 2, 1]
 fc_hidden_sizes: [512, ]  # fully connected layer hidden sizes.
 actor_hidden_size: []
 critic_hidden_size: []
-activation: "relu"
+activation: "relu"  # The activation function of each hidden layer.
 
 seed: 1
 parallels: 8
@@ -44,8 +44,8 @@ use_grad_clip: True  # gradient normalization
 clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
 grad_clip_norm: 0.5
 use_actions_mask: False
-use_obsnorm: False
-use_rewnorm: False
+use_obsnorm: False  # Whether to use observation normalization trick.
+use_rewnorm: False  # Whether to use reward normalization trick.
 obsnorm_range: 5
 rewnorm_range: 5
 

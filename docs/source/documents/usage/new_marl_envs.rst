@@ -85,14 +85,18 @@ Here is an example of configurations for DDPG algorithm, named "ippo_new_configs
     wandb_user_name: "your_user_name"
     render: True
     render_mode: 'rgb_array' # Choices: 'human', 'rgb_array'.
+    fps: 15
     test_mode: False
-    device: "cuda:0"
+    device: "cuda:0"  # Choose an calculating device. PyTorch: "cpu", "cuda:0"; TensorFlow: "cpu"/"CPU", "gpu"/"GPU"; MindSpore: "CPU", "GPU", "Ascend", "Davinci".
+    distributed_training: False  # Whether to use multi-GPU for distributed training.
+    master_port: '12355'  # The master port for current experiment when use distributed training.
 
     agent: "IPPO"
     env_name: "MyNewMultiAgentEnv"
     env_id: "new_env_id"
-    fps: 50
-    continuous_action: True
+    env_seed: 1
+    continuous_action: True  # Continuous action space or not.
+    learner: "IPPO_Learner"  # The learner name.
     policy: "Gaussian_MAAC_Policy"
     representation: "Basic_MLP"
     vectorize: "DummyVecMultiAgentEnv"
@@ -193,3 +197,9 @@ Here is the example of IPPO algorithm:
     Agent.train(configs.running_steps // configs.parallels)  # Train the model for numerous steps.
     Agent.save_model("final_train_model.pth")  # Save the model to model_dir.
     Agent.finish()  # Finish the training.
+
+
+Full code
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The full code for the above steps can be visited in this link: `https://github.com/agi-brain/xuance/blob/master/examples/new_environments/ippo_new_env.py <https://github.com/agi-brain/xuance/blob/master/examples/new_environments/ippo_new_env.py>`_

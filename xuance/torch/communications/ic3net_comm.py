@@ -45,6 +45,16 @@ class IC3NetComm(Module):
         observations = torch.as_tensor(observations, dtype=torch.float32, device=self.device)
         return observations + msg
 
+    def build_critic_input(self, observations: torch.Tensor, msg: dict, model_keys) -> torch.Tensor:
+        for key in model_keys:
+            msg[key] = torch.as_tensor(msg[key], dtype=torch.float32, device=self.device)
+            for i in range(self.comm_passes):
+                msg[key] = self.msg_encoder[i](msg[key])
+                msg[key] = self.tanh(msg[key])
+        observations = torch.as_tensor(observations, dtype=torch.float32, device=self.device)
+        msg = torch.cat(list(msg.values()), dim=-1)
+        return observations + msg
+
     def get_message(self, hidden_state: torch.Tensor) -> torch.Tensor:
         prob = self.gate(hidden_state)
         msg = hidden_state * prob

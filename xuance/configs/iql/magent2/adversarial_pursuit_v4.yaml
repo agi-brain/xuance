@@ -1,7 +1,7 @@
 agent: "IQL"  # the learning algorithms_marl
 env_name: "MAgent2"
 env_id: "adversarial_pursuit_v4"
-env_seed: 1
+env_seed: 1  # The random seed of the environment.
 minimap_mode: False
 max_cycles: 500
 extra_features: False
@@ -14,11 +14,11 @@ vectorize: "Dummy_MAgent"
 runner: "RunnerMAgent"
 
 # recurrent settings for Basic_RNN representation
-use_rnn: False
+use_rnn: False  # Whether to use recurrent neural networks.
 rnn:
 representation_hidden_size: [64, ]
 q_hidden_size: [64, ]  # the units for each hidden layer
-activation: "relu"
+activation: "relu"  # The activation function of each hidden layer.
 
 seed: 1
 parallels: 10

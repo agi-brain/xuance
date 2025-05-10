@@ -93,7 +93,9 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
 
 ### :point_right: Model-Based Reinforcement Learning (MBRL)
 
+- **DreamerV2** [[Paper](https://openreview.net/pdf?id=0oabwyZbOu)] [[Code](https://github.com/danijar/dreamerv2.git)]
 - **DreamerV3** [[Paper](https://www.nature.com/articles/s41586-025-08744-2.pdf)] [[Code](https://github.com/danijar/dreamerv3.git)]
+- **HarmonyDream** [[Paper](https://proceedings.mlr.press/v235/ma24o.html)] [[Code](https://github.com/thuml/HarmonyDream.git)]
 
 ### :point_right: Multi-Agent Reinforcement Learning (MARL)
 
@@ -115,6 +117,7 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
 - **ISAC**: Independent Soft Actor-Critic
 - **MASAC**: Multi-agent Soft Actor-Critic [[Paper](https://arxiv.org/pdf/2104.06655.pdf)]
 - **MATD3**: Multi-agent Twin Delayed Deep Deterministic Policy Gradient [[Paper](https://arxiv.org/pdf/1910.01465.pdf)]
+- **IC3Net**: Individualized Controlled Continuous Communication Model [[Paper](https://arxiv.org/pdf/1812.09755)] [[Code](https://github.com/IC3Net/IC3Net.git)]
 
 ## Environments
 

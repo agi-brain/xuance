@@ -468,7 +468,8 @@ class IC3Net_Policy(Module):
         agent_list = self.model_keys if agent_key is None else [agent_key]
 
         for key in agent_list:
-            outputs = self.critic_representation[key](observation[key], *rnn_hidden[key])
+            critic_input = self.communicator[key].build_critic_input(observation[key], message_input, self.model_keys)
+            outputs = self.critic_representation[key](critic_input, *rnn_hidden[key])
             rnn_hidden_new[key] = (outputs['rnn_hidden'], outputs['rnn_cell'])
 
             if self.use_parameter_sharing:

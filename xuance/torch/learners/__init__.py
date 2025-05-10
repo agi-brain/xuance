@@ -5,11 +5,13 @@ from .policy_gradient import PG_Learner, A2C_Learner, PPOCLIP_Learner, PPOKL_Lea
 from .qlearning_family import DQN_Learner, DuelDQN_Learner, DDQN_Learner, PerDQN_Learner, C51_Learner, QRDQN_Learner, \
     DRQN_Learner
 
-from .model_based import DreamerV3_Learner
+from .model_based import DreamerV2_Learner, DreamerV3_Learner
 
 from .multi_agent_rl import (IQL_Learner, VDN_Learner, QMIX_Learner, WQMIX_Learner, QTRAN_Learner, \
     IAC_Learner, VDAC_Learner, COMA_Learner, IC3Net_Learner, MFQ_Learner, MFAC_Learner, IPPO_Learner, MAPPO_Clip_Learner, \
     IDDPG_Learner, MADDPG_Learner, MATD3_Learner, ISAC_Learner, ISACDIS_Learner, MASAC_Learner, MASACDIS_Learner)
+
+from .offline import TD3_BC_Learner
 
 REGISTRY_Learners = {
     "BasicLearner": Learner,
@@ -36,6 +38,7 @@ REGISTRY_Learners = {
     "QRDQN_Learner": QRDQN_Learner,
     "DRQN_Learner": DRQN_Learner,
 
+    "DreamerV2_Learner": DreamerV2_Learner,
     "DreamerV3_Learner": DreamerV3_Learner,
 
     "IQL_Learner": IQL_Learner,
@@ -58,6 +61,8 @@ REGISTRY_Learners = {
     "MASAC_Learner": MASAC_Learner,
     "MASACDIS_Learner": MASACDIS_Learner,
     "MATD3_Learner": MATD3_Learner,
+
+    "TD3BC_Learner": TD3_BC_Learner,
 }
 
 __all__ = [
@@ -68,11 +73,13 @@ __all__ = [
 
     "DQN_Learner", "DuelDQN_Learner", "DDQN_Learner", "PerDQN_Learner", "C51_Learner", "QRDQN_Learner", "DRQN_Learner",
 
-    "DreamerV3_Learner",
+    "DreamerV2_Learner", "DreamerV3_Learner",
 
     "IQL_Learner", "VDN_Learner", "QMIX_Learner", "WQMIX_Learner", "QTRAN_Learner",
     "IAC_Learner", "VDAC_Learner", "COMA_Learner", "IPPO_Learner", "MAPPO_Clip_Learner", "IC3Net_Learner",
     "MFQ_Learner", "MFAC_Learner",
     "IDDPG_Learner", "MADDPG_Learner", "MATD3_Learner",
-    "ISAC_Learner", "ISACDIS_Learner", "MASAC_Learner", "MADDPG_Learner"
+    "ISAC_Learner", "ISACDIS_Learner", "MASAC_Learner", "MADDPG_Learner",
+
+    "TD3_BC_Learner"
 ]

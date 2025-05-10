@@ -1,7 +1,7 @@
 agent: "PPO_Clip"  # choice: PPO_Clip, PPO_KL
 env_name: "MetaDrive"
 env_id: "metadrive"
-env_seed: 1
+env_seed: 1  # The random seed of the environment.
 env_config:  # the configs for MetaDrive environment
   map: "C"  # see https://metadrive-simulator.readthedocs.io/en/latest/rl_environments.html#generalization-environment for choices
 render: False
@@ -39,8 +39,8 @@ use_grad_clip: True  # gradient normalization
 clip_type: 1  # Gradient clip for Mindspore: 0: ms.ops.clip_by_value; 1: ms.nn.ClipByNorm()
 grad_clip_norm: 0.5
 use_actions_mask: False
-use_obsnorm: True
-use_rewnorm: True
+use_obsnorm: True  # Whether to use observation normalization trick.
+use_rewnorm: True  # Whether to use reward normalization trick.
 obsnorm_range: 5
 rewnorm_range: 5
 

@@ -2,7 +2,7 @@ agent: "NoisyDQN"
 vectorize: "Dummy_Atari"
 env_name: "Atari"
 env_id: "ALE/Breakout-v5"
-env_seed: 1
+env_seed: 1  # The random seed of the environment.
 obs_type: "grayscale"  # choice for Atari env: ram, rgb, grayscale
 img_size: [84, 84]  # default is 210 x 160 in gym[Atari]
 num_stack: 4  # frame stack trick
@@ -19,7 +19,7 @@ kernels: [8, 4, 3]  # [8, 6, 4, 4]
 strides: [4, 2, 1]  # [2, 2, 2, 2]
 
 q_hidden_size: [512, ]
-activation: "relu"
+activation: "relu"  # The activation function of each hidden layer.
 
 seed: 1069
 parallels: 5
@@ -39,8 +39,8 @@ start_training: 10000
 use_grad_clip: False  # gradient normalization
 grad_clip_norm: 0.5
 use_actions_mask: False
-use_obsnorm: False
-use_rewnorm: False
+use_obsnorm: False  # Whether to use observation normalization trick.
+use_rewnorm: False  # Whether to use reward normalization trick.
 obsnorm_range: 5
 rewnorm_range: 5
 

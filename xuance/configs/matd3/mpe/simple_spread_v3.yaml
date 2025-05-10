@@ -1,13 +1,13 @@
 agent: "MATD3"  # the learning algorithms_marl
-env_name: "mpe"
+env_name: "mpe"  # Name of the environment.
 env_id: "simple_spread_v3"
-env_seed: 1
-continuous_action: True
+env_seed: 1  # The random seed of the environment.
+continuous_action: True  # Continuous action space or not.
 learner: "MATD3_Learner"
 policy: "MATD3_Policy"
 representation: "Basic_Identical"
 vectorize: "DummyVecMultiAgentEnv"
-runner: "MARL"
+runner: "MARL"  # Runner
 
 representation_hidden_size: []  # the units for each hidden layer
 actor_hidden_size: [64, 64]

@@ -1,16 +1,16 @@
 agent: "IAC"
-env_name: "mpe"
+env_name: "mpe"  # Name of the environment.
 env_id: "simple_spread_v3"
 env_seed: 1
-continuous_action: False
+continuous_action: False  # Continuous action space or not.
 learner: "IAC_Learner"
 policy: "Categorical_MAAC_Policy"
 representation: "Basic_MLP"
 vectorize: "SubprocVecMultiAgentEnv"
-runner: "MARL"
+runner: "MARL"  # Runner
 
 # recurrent settings for Basic_RNN representation
-use_rnn: False
+use_rnn: False  # Whether to use recurrent neural networks.
 rnn: "GRU"  # The type of recurrent layer.
 fc_hidden_sizes: [64, 64, 64]  # The hidden size of feed forward layer in RNN representation.
 recurrent_hidden_size: 64  # The hidden size of the recurrent layer.

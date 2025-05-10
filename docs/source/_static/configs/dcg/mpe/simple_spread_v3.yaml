@@ -1,21 +1,20 @@
 agent: "DCG"  # Options: DCG, DCG_S
-env_name: "mpe"
+env_name: "mpe"  # Name of the environment.
 env_id: "simple_spread_v3"
 env_seed: 1
-continuous_action: False
+continuous_action: False  # Continuous action space or not.
 learner: "DCG_Learner"
 policy: "DCG_Policy"
 representation: "Basic_MLP"
 vectorize: "DummyVecMultiAgentEnv"
-runner: "MARL"
+runner: "MARL"  # Runner
 
-use_rnn: False
-rnn: "GRU"
-recurrent_layer_N: 1
+use_rnn: False  # Whether to use recurrent neural networks.
+rnn: "GRU"  # Choice of recurrent networks: GRU or LSTM.
+N_recurrent_layers: 1  # Number of recurrent layers.
 fc_hidden_sizes: [64, ]
 recurrent_hidden_size: 32
-N_recurrent_layers: 1
-dropout: 0
+dropout: 0  # dropout should be a number in range [0, 1], the probability of an element being zeroed.
 
 representation_hidden_size: [32, ]
 q_hidden_size: [128, ]  # the units for each hidden layer
@@ -23,7 +22,7 @@ hidden_utility_dim: 256  # hidden units of the utility function
 hidden_payoff_dim: 256  # hidden units of the payoff function
 bias_net: "Basic_MLP"
 hidden_bias_dim: [256, ]  # hidden units of the bias network with global states as input
-activation: "relu"
+activation: "relu"  # The activation function of each hidden layer.
 
 low_rank_payoff: False  # low-rank approximation of payoff function
 payoff_rank: 5  # the rank K in the paper

@@ -1,7 +1,7 @@
 agent: "NoisyDQN"
 env_name: "Classic Control"
 env_id: "Acrobot-v1"
-env_seed: 1
+env_seed: 1  # The random seed of the environment.
 vectorize: "DummyVecEnv"
 learner: "DQN_Learner"
 policy: "Noisy_Q_network"
@@ -27,8 +27,8 @@ training_frequency: 2
 running_steps: 500000
 start_training: 1000
 
-use_obsnorm: False
-use_rewnorm: False
+use_obsnorm: False  # Whether to use observation normalization trick.
+use_rewnorm: False  # Whether to use reward normalization trick.
 obsnorm_range: 5
 rewnorm_range: 5
 

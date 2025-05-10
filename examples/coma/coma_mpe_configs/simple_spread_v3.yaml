@@ -11,10 +11,10 @@ distributed_training: False  # Whether to use multi-GPU for distributed training
 master_port: '12355'  # The master port for current experiment when use distributed training.
 
 agent: "COMA"
-env_name: "mpe"
+env_name: "mpe"  # Name of the environment.
 env_id: "simple_spread_v3"
 env_seed: 1
-continuous_action: False
+continuous_action: False  # Continuous action space or not.
 learner: "COMA_Learner"
 policy: "Categorical_COMA_Policy"
 representation: "Basic_MLP"

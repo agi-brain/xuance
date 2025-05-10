@@ -14,7 +14,7 @@ runner: "DRL"
 representation_hidden_size:
 actor_hidden_size: [512, 512]
 critic_hidden_size: [512, 512]
-activation: "relu"
+activation: "relu"  # The activation function of each hidden layer.
 activation_action: 'tanh'
 
 seed: 1
