@@ -7,7 +7,6 @@ from einops.layers.torch import Rearrange
 from xuance.common import Sequence
 from xuance.torch import Module
 
-
 # helpers
 
 def pair(t):
