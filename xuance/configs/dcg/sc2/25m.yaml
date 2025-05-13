@@ -3,8 +3,8 @@ env_name: "StarCraft2"  # Name of the environment.
 env_id: "25m"
 env_seed: 1  # The random seed of the environment.
 fps: 15  # Frames per second.
-learner: "DCG_Learner"
-policy: "DCG_Policy"
+learner: "DCG_Learner"  # Name of learner
+policy: "DCG_Policy"  # Name of policy
 representation: "Basic_RNN"
 vectorize: "Subproc_StarCraft2"
 runner: "RunnerStarCraft2"
