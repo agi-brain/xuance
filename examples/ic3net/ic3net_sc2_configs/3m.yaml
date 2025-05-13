@@ -50,7 +50,8 @@ gamma: 0.98  # discount factor
 
 # tricks
 use_linear_lr_decay: True  # if use linear learning rate decay
-end_factor_lr_decay: 0.1
+end_factor_lr_decay: 0.5
+lr_decay_steps: 1000
 use_global_state: False  # if use global state to calculate values
 use_value_clip: True  # limit the value range
 value_clip_range: 0.2

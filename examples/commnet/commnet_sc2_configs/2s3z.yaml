@@ -10,12 +10,12 @@ device: "cuda:0"  # Choose an calculating device. PyTorch: "cpu", "cuda:0"; Tens
 distributed_training: False  # Whether to use multi-GPU for distributed training.
 master_port: '12355'  # The master port for current experiment when use distributed training.
 
-agent: "IC3Net"
+agent: "CommNet"
 env_name: "StarCraft2"
 env_id: "2s3z"
 env_seed: 1
-learner: "IC3Net_Learner"
-policy: "IC3Net_Policy"
+learner: "CommNet_Learner"
+policy: "CommNet_Policy"
 representation: "Basic_RNN"
 vectorize: "Subproc_StarCraft2"
 
@@ -25,7 +25,7 @@ rnn: "LSTM"
 N_recurrent_layers: 1  # Number of recurrent layers.
 fc_hidden_sizes: [64]
 recurrent_hidden_size: 64
-dropout: 0  # dropout should be a number in range [0, 1], the probability of an element being zeroed.
+dropout: 0
 normalize: "LayerNorm"
 initialize: "orthogonal"
 gain: 0.01
@@ -36,12 +36,12 @@ activation: "relu"  # The activation function of each hidden layer.
 use_parameter_sharing: False  # If to use parameter sharing for all agents' policies.
 use_actions_mask: True  # If to use actions mask for unavailable actions.
 
-seed: 1
+seed: 5
 parallels: 8
 buffer_size: 128
 n_epochs: 15
 n_minibatch: 1
-learning_rate: 0.0001  # 7e-4
+learning_rate: 0.0002  # 7e-4
 weight_decay: 0
 
 vf_coef: 0.1
@@ -50,7 +50,7 @@ gamma: 0.99  # discount factor
 
 # tricks
 use_linear_lr_decay: True  # if use linear learning rate decay
-end_factor_lr_decay: 0.5
+end_factor_lr_decay: 0.2
 lr_decay_steps: 500
 use_global_state: False  # if use global state to calculate values
 use_value_clip: True  # limit the value range
@@ -64,7 +64,7 @@ gae_lambda: 0.95
 use_grad_clip: True  # gradient normalization
 grad_clip_norm: 10.0
 dim_message: 64   # message encode dim which is same to the recurrent dim
-comm_passes: 2    # the number of the message encode times
+comm_passes: 1    # the number of the message encode times
 
 running_steps: 2000000
 eval_interval: 20000

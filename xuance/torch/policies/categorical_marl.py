@@ -419,7 +419,7 @@ class IC3Net_Policy(Module):
     @property
     def parameters_model(self):
         parameters = list(self.actor_representation.parameters()) + list(self.actor.parameters()) + list(
-            self.critic_representation.parameters()) + list(self.critic.parameters())
+            self.critic_representation.parameters()) + list(self.critic.parameters()) + list(self.communicator.parameters())
         if self.mixer is not None:
             parameters += list(self.mixer.parameters())
         return parameters
@@ -432,51 +432,39 @@ class IC3Net_Policy(Module):
             dim_critic_in += n_agents
         return dim_actor_in, dim_actor_out, dim_critic_in, dim_critic_out
 
-    def observation_encode(self, observation: Dict[str, np.ndarray]):
-        obs_encode = {k: self.communicator[k].forward_state_encoder(observation[k]) for k in self.model_keys}
-        return obs_encode
-
     def forward(self, observation: Dict[str, Tensor], agent_ids: Optional[Tensor] = None,
                 avail_actions: Dict[str, Tensor] = None, agent_key: str = None,
-                rnn_hidden: Optional[Dict[str, List[Tensor]]] = None,
-                message_input: Optional[Dict[str, Tensor]] = None):
-        rnn_hidden_new, pi_dists, message = {}, {}, {}
+                rnn_hidden: Optional[Dict[str, List[Tensor]]] = None, alive_ally: Optional[dict] = None):
+        rnn_hidden_new, pi_dists = {}, {}
         agent_list = self.model_keys if agent_key is None else [agent_key]
 
         if avail_actions is not None:
             avail_actions = {key: Tensor(avail_actions[key]) for key in agent_list}
 
+        # calculate message_receive
+        message_receive = {k: self.communicator[k](k, observation[k], rnn_hidden, alive_ally) for k in self.model_keys}
+
         for key in agent_list:
-            actor_input = self.communicator[key].build_actor_input(observation[key], message_input[key])
-            outputs = self.actor_representation[key](actor_input, *rnn_hidden[key])
+            outputs = self.actor_representation[key](message_receive[key], *rnn_hidden[key])
             rnn_hidden_new[key] = (outputs['rnn_hidden'], outputs['rnn_cell'])
-            message[key] = self.communicator[key].get_message(outputs['rnn_hidden']).detach().cpu().numpy()
-
-            if self.use_parameter_sharing:
-                actor_input = torch.concat([outputs['state'], agent_ids], dim=-1)
-            else:
-                actor_input = outputs['state']
-
+            actor_input = outputs['state']
             avail_actions_input = None if avail_actions is None else avail_actions[key]
             pi_dists[key] = self.actor[key](actor_input, avail_actions_input)
-        return rnn_hidden_new, pi_dists, message
+        return rnn_hidden_new, pi_dists
 
     def get_values(self, observation: Dict[str, Tensor], agent_ids: Tensor = None, agent_key: str = None,
-                   rnn_hidden: Optional[Dict[str, List[Tensor]]] = None,
-                   message_input: Optional[Dict[str, Tensor]] = None):
+                   rnn_hidden: Optional[Dict[str, List[Tensor]]] = None, alive_ally: Optional[dict] = None):
         rnn_hidden_new, values = {}, {}
         agent_list = self.model_keys if agent_key is None else [agent_key]
 
+        # calculate message_receive
+        message_receive = {k: self.communicator[k](self.model_keys, observation[k], rnn_hidden, alive_ally) for k in self.model_keys}
+        message = {k: torch.cat(list(message_receive.values()), dim=-1) for k in self.model_keys}
+
         for key in agent_list:
-            critic_input = self.communicator[key].build_critic_input(observation[key], message_input, self.model_keys)
-            outputs = self.critic_representation[key](critic_input, *rnn_hidden[key])
+            outputs = self.critic_representation[key](message[key], *rnn_hidden[key])
             rnn_hidden_new[key] = (outputs['rnn_hidden'], outputs['rnn_cell'])
-
-            if self.use_parameter_sharing:
-                critic_input = torch.concat([outputs['state'], agent_ids], dim=-1)
-            else:
-                critic_input = outputs['state']
-
+            critic_input = outputs['state']
             values[key] = self.critic[key](critic_input)
 
         return rnn_hidden_new, values
