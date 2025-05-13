@@ -7,21 +7,24 @@ from tqdm import tqdm
 from copy import deepcopy
 from operator import itemgetter
 from argparse import Namespace
+
+from examples.commnet.commnet_learner import CommNet_Learner
+from examples.commnet.commnet_policy import CommNet_Policy
 from xuance.common import List, Optional, Union, MARL_OnPolicyBuffer_RNN, space2shape
 import gymnasium as gym
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
-from xuance.torch import Module, REGISTRY_Policy, ModuleDict
-from xuance.torch.communications import IC3NetComm
+from xuance.torch import Module, REGISTRY_Policy, ModuleDict, REGISTRY_Learners
+from xuance.torch.communications.comm_net import CommNet
 from xuance.torch.utils import ActivationFunctions, NormalizeFunctions
 from xuance.torch.agents.base import MARLAgents
 
 
-class IC3Net_Agents(MARLAgents):
+class CommNet_Agents(MARLAgents):
 
     def __init__(self,
                  config: Namespace,
                  envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv]):
-        super(IC3Net_Agents, self).__init__(config, envs)
+        super(CommNet_Agents, self).__init__(config, envs)
         self.on_policy = True
         self.continuous_control: bool = False
         self.n_epochs = config.n_epochs
@@ -68,7 +71,7 @@ class IC3Net_Agents(MARLAgents):
                 model_keys=self.model_keys,
                 n_agents=self.n_agents,
                 device=self.device)
-            communicator[key] = IC3NetComm(**input_communicator)
+            communicator[key] = CommNet(**input_communicator)
         return communicator
 
     def _build_policy(self) -> Module:
@@ -88,7 +91,8 @@ class IC3Net_Agents(MARLAgents):
         C_representation = self._build_representation(self.config.representation, space_critic_in, self.config)
 
         # build policies
-        if self.config.policy == "IC3Net_Policy":
+        if self.config.policy == "CommNet_Policy":
+            REGISTRY_Policy["CommNet_Policy"] = CommNet_Policy
             policy = REGISTRY_Policy[self.config.policy](
                 action_space=self.action_space, n_agents=self.n_agents,
                 representation_actor=A_representation, representation_critic=C_representation,
@@ -101,6 +105,10 @@ class IC3Net_Agents(MARLAgents):
         else:
             raise AttributeError(f"{agent} currently does not support the policy named {self.config.policy}.")
         return policy
+
+    def _build_learner(self, *args):
+        REGISTRY_Learners["CommNet_Learner"] = CommNet_Learner
+        return REGISTRY_Learners[self.config.learner](*args)
 
     def store_experience(self, obs_dict, avail_actions, actions_dict, log_pi_a, rewards_dict, values_dict,
                          terminals_dict, info, **kwargs):
@@ -355,7 +363,8 @@ class IC3Net_Agents(MARLAgents):
                         else:
                             _, value_next = self.values_next(i_env=i, obs_dict=obs_dict[i],
                                                              state=None if state is None else state[i],
-                                                             rnn_hidden_critic=rnn_hidden_critic, info=info[i])
+                                                             rnn_hidden_critic=rnn_hidden_critic,
+                                                             info=info[i])
                         self.memory.finish_path(i_env=i, i_step=info[i]['episode_step'], value_next=value_next,
                                                 value_normalizer=self.learner.value_normalizer)
                         if self.use_rnn:
