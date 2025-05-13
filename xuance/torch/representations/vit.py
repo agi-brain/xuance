@@ -4,6 +4,8 @@ import torch
 from torch import nn
 from einops import rearrange, repeat
 from einops.layers.torch import Rearrange
+from torch.nn import ModuleList
+
 from xuance.common import Sequence
 from xuance.torch import Module
 
