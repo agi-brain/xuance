@@ -235,6 +235,13 @@ class Agent(ABC):
             strides=config.strides if hasattr(config, "strides") else None,
             filters=config.filters if hasattr(config, "filters") else None,
             fc_hidden_sizes=config.fc_hidden_sizes if hasattr(config, "fc_hidden_sizes") else None,
+            image_patch_size = config.image_patch_size if hasattr(config, "image_patch_size") else None,
+            frame_patch_size = config.frame_patch_size if hasattr(config, "frame_patch_size") else None,
+            final_dim = config.final_dim if hasattr(config, "final_dim") else None,
+            embedding_dim = config.embedding_dim if hasattr(config, "embedding_dim") else None,
+            depth = config.depth if hasattr(config, "depth") else None,
+            heads = config.heads if hasattr(config, "heads") else None,
+            FFN_dim = config.FFN_dim if hasattr(config, "FFN_dim") else None,
             device=self.device)
         representation = REGISTRY_Representation[representation_key](**input_representations)
         if representation_key not in REGISTRY_Representation:
