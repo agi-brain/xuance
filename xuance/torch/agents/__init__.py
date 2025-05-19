@@ -47,6 +47,7 @@ from .multi_agent_rl import MAPPO_Agents
 from .multi_agent_rl import ISAC_Agents
 from .multi_agent_rl import MASAC_Agents
 from .multi_agent_rl import MATD3_Agents
+from .multi_agent_rl import CommNet_Agents
 
 from .offline_rl import TD3_BC_Agent
 
@@ -88,7 +89,6 @@ REGISTRY_Agents = {
     "IAC": IAC_Agents,
     "VDAC": VDAC_Agents,
     "COMA": COMA_Agents,
-    "IC3Net": IC3Net_Agents,
     "IDDPG": IDDPG_Agents,
     "MADDPG": MADDPG_Agents,
     "MFQ": MFQ_Agents,
@@ -98,6 +98,8 @@ REGISTRY_Agents = {
     "ISAC": ISAC_Agents,
     "MASAC": MASAC_Agents,
     "MATD3": MATD3_Agents,
+    "IC3Net": IC3Net_Agents,
+    "CommNet": CommNet_Agents,
 
     "TD3BC": TD3_BC_Agent,
 }
@@ -116,7 +118,7 @@ __all__ = [
     "DreamerV2Agent", "DreamerV3Agent",
 
     "IQL_Agents", "VDN_Agents", "QMIX_Agents", "WQMIX_Agents", "QTRAN_Agents", "DCG_Agents",
-    "IAC_Agents", "VDAC_Agents", "COMA_Agents", "IDDPG_Agents", "MADDPG_Agents", "IC3Net_Agents",
+    "IAC_Agents", "VDAC_Agents", "COMA_Agents", "IDDPG_Agents", "MADDPG_Agents", "IC3Net_Agents", "CommNet_Agents",
     "MFQ_Agents", "MFAC_Agents", "IPPO_Agents", "MAPPO_Agents",
     "ISAC_Agents", "MASAC_Agents", "MATD3_Agents",
 
