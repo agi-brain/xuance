@@ -2,8 +2,11 @@ import numpy as np
 import torch
 
 from torch import nn
-from einops import rearrange, repeat
-from einops.layers.torch import Rearrange
+try:
+    from einops import rearrange, repeat
+    from einops.layers.torch import Rearrange
+except:
+    pass
 from torch.nn import ModuleList
 
 from xuance.common import Sequence
