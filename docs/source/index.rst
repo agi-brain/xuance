@@ -107,21 +107,21 @@ List of Algorithms
 * :class:`DQN_Agent` : :doc:`Deep Q-Network (DQN) <documents/api/agents/drl/dqn_agent>`.
 * :class:`DDQN_Agent` : :doc:`Double Deep Q-Network (Double DQN) <documents/api/agents/drl/ddqn_agent>`.
 * :class:`DuelDQN_Agent` : :doc:`Dueling Deep Q-Network (Dueling DQN) <documents/api/agents/drl/dueldqn_agent>`.
-* :class:`NoisyDQN_Agent` : :doc:`DQN with Noisy Layers (Noisy DQN) <documents/api/agents/drl/noisydqn_agent>`.
 * :class:`PerDQN_Agent` : :doc:`DQN with Prioritized Experience Replay (PER DQN) <documents/api/agents/drl/perdqn_agent>`.
-* :class:`C51_Agent` : :doc:`Categorical 51 DQN (C51) <documents/api/agents/drl/c51_agent>`.
-* :class:`QRDQN_Agent` : :doc:`DQN with Quantile Regression (QR-DQN) <documents/api/agents/drl/qrdqn_agent>`.
+* :class:`NoisyDQN_Agent` : :doc:`DQN with Noisy Layers (Noisy DQN) <documents/api/agents/drl/noisydqn_agent>`.
 * :class:`DRQN_Agent` : :doc:`Deep Recurrent Q-Network (DRQN) <documents/api/agents/drl/drqn_agent>`.
+* :class:`QRDQN_Agent` : :doc:`DQN with Quantile Regression (QR-DQN) <documents/api/agents/drl/qrdqn_agent>`.
+* :class:`C51_Agent` : :doc:`Categorical 51 DQN (C51) <documents/api/agents/drl/c51_agent>`.
 
 **Policy-based:**
 
 * :class:`PG_Agent` : :doc:`Policy Gradient (PG) <documents/api/agents/drl/pg_agent>`.
 * :class:`NPG_Agent` : :doc:`Natural Policy Gradient (NPG) <documents/api/agents/drl/npg_agent>`.
-* :class:`A2C_Agent` : :doc:`Advantage Actor Critic (A2C) <documents/api/agents/drl/a2c_agent>`.
-* :class:`PPOKL_Agent` : :doc:`Proximal Policy Optimization with KL Divergence (PPO-KL) <documents/api/agents/drl/ppokl_agent>`.
-* :class:`PPOCLIP_Agent` : :doc:`Proximal Policy Optimization with Clipped Objective (PPO-Clip) <documents/api/agents/drl/ppoclip_agent>`.
 * :class:`PPG_Agent` : :doc:`Phasic Policy Gradient (PPG) <documents/api/agents/drl/ppg_agent>`.
+* :class:`A2C_Agent` : :doc:`Advantage Actor Critic (A2C) <documents/api/agents/drl/a2c_agent>`.
 * :class:`SAC_Agent` : :doc:`Soft Actor-Critic (SAC) <documents/api/agents/drl/sac_agent>`.
+* :class:`PPOCLIP_Agent` : :doc:`Proximal Policy Optimization with Clipped Objective (PPO-Clip) <documents/api/agents/drl/ppoclip_agent>`.
+* :class:`PPOKL_Agent` : :doc:`Proximal Policy Optimization with KL Divergence (PPO-KL) <documents/api/agents/drl/ppokl_agent>`.
 * :class:`DDPG_Agent` : :doc:`Deep Deterministic Policy Gradient (DDPG) <documents/api/agents/drl/ddpg_agent>`.
 * :class:`TD3_Agent` : :doc:`Twin Delayed Deep Deterministic Policy Gradient (TD3) <documents/api/agents/drl/td3_agent>`.
 * :class:`PDQN_Agent` : :doc:`Parameterised Deep Q-Network (P-DQN) <documents/api/agents/drl/pdqn_agent>`.
@@ -138,16 +138,17 @@ List of Algorithms
 * :class:`DCG_Agents` : :doc:`Deep Coordination Graphs (DCG) <documents/api/agents/marl/dcg_agents>`.
 * :class:`IDDPG_Agents` : :doc:`Independent Deep Deterministic Policy Gradient (IDDPG) <documents/api/agents/marl/iddpg_agents>`.
 * :class:`MADDPG_Agents` : :doc:`Multi-agent Deep Deterministic Policy Gradient (MADDPG) <documents/api/agents/marl/maddpg_agents>`.
-* :class:`ISAC_Agents` : :doc:`Independent Soft Actor-Critic (ISAC) <documents/api/agents/marl/isac_agents>`.
-* :class:`MASAC_Agents` : :doc:`Multi-agent Soft Actor-Critic (MASAC) <documents/api/agents/marl/masac_agents>`.
-* :class:`IPPO_Agents` : :doc:`Independent Proximal Policy Optimization (IPPO) <documents/api/agents/marl/ippo_agents>`.
-* :class:`MAPPO_Agents` : :doc:`Multi-agent Proximal Policy Optimization (MAPPO) <documents/api/agents/marl/mappo_agents>`.
-* :class:`MATD3_Agents` : :doc:`Multi-agent Twin Delayed Deep Deterministic Policy Gradient (MATD3) <documents/api/agents/marl/matd3_agents>`.
 * :class:`IAC_Agents` : :doc:`Independent Actor-Critic (IAC) <documents/api/agents/marl/iac_agents>`.
 * :class:`COMA_Agents` : :doc:`Counterfactual Multi-agent Policy Gradient (COMA) <documents/api/agents/marl/coma_agents>`.
 * :class:`VDAC_Agents` : :doc:`Value-Decomposition Actor-Critic (VDAC) <documents/api/agents/marl/vdac_agents>`.
+* :class:`IPPO_Agents` : :doc:`Independent Proximal Policy Optimization (IPPO) <documents/api/agents/marl/ippo_agents>`.
+* :class:`MAPPO_Agents` : :doc:`Multi-agent Proximal Policy Optimization (MAPPO) <documents/api/agents/marl/mappo_agents>`.
 * :class:`MFQ_Agents` : :doc:`Mean-Field Q-Learning (MFQ) <documents/api/agents/marl/mfq_agents>`.
 * :class:`MFAC_Agents` : :doc:`Mean-Field Actor-Critic (MFAC) <documents/api/agents/marl/mfac_agents>`.
+* :class:`ISAC_Agents` : :doc:`Independent Soft Actor-Critic (ISAC) <documents/api/agents/marl/isac_agents>`.
+* :class:`MASAC_Agents` : :doc:`Multi-agent Soft Actor-Critic (MASAC) <documents/api/agents/marl/masac_agents>`.
+* :class:`MATD3_Agents` : :doc:`Multi-agent Twin Delayed Deep Deterministic Policy Gradient (MATD3) <documents/api/agents/marl/matd3_agents>`.
+* :class:`IC3Net_Agents` : :doc:`Individual Controlled Continuous Communication Model (IC3Net) <documents/api/agents/marl/ic3net_agents>`.
 
 The Framework of XuanCe
 ------------------------------------------
