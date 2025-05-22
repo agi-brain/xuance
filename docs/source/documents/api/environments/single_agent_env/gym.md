@@ -297,7 +297,7 @@ To run a DRL demo with MuJoCo environment, you can refer to the [Quick Start](..
     :file: lists/atari_list.html
 ```
 
-### Feaures
+### Features
 
 The Atari environment contains 62 different tasks, which are simulated via the 
 [Arcade Learning Environment (ALE)](https://www.jair.org/index.php/jair/article/view/10819).
