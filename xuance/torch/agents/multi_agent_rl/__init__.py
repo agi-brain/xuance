@@ -5,6 +5,7 @@ from .wqmix_agents import WQMIX_Agents
 from .qtran_agents import QTRAN_Agents
 from .dcg_agents import DCG_Agents
 from .mfq_agents import MFQ_Agents
+from .commnet_agents import CommNet_Agents
 
 from .iac_agents import IAC_Agents
 from .coma_agents import COMA_Agents

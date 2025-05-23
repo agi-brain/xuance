@@ -8,13 +8,13 @@ from xuance.torch.learners import LearnerMAS
 from xuance.torch.utils import ValueNorm
 
 
-class IC3Net_Learner(LearnerMAS):
+class CommNet_Learner(LearnerMAS):
     def __init__(self,
                  config: Namespace,
                  model_keys: List[str],
                  agent_keys: List[str],
                  policy: nn.Module):
-        super(IC3Net_Learner, self).__init__(config, model_keys, agent_keys, policy)
+        super(CommNet_Learner, self).__init__(config, model_keys, agent_keys, policy)
         self.use_global_state = self.config.use_global_state
         self.build_optimizer()
         self.use_value_clip, self.value_clip_range = config.use_value_clip, config.value_clip_range
@@ -110,18 +110,12 @@ class IC3Net_Learner(LearnerMAS):
         rnn_hidden_actor = {k: self.policy.actor_representation[k].init_hidden(bs_rnn) for k in self.model_keys}
         rnn_hidden_critic = {k: self.policy.critic_representation[k].init_hidden(bs_rnn) for k in self.model_keys}
 
-        if self.use_global_state:
-            critic_input = {k: state.reshape(batch_size, seq_len, -1) for k in self.agent_keys}
-        else:
-            joint_obs = self.get_joint_input(obs, (batch_size, seq_len, -1))
-            critic_input = {k: joint_obs for k in self.agent_keys}
-
         total_loss = 0
         # feedforward
         for i in range(seq_len):
             obs_i = {k: obs[k][:, i:i+1, :] for k in self.model_keys}
             if self.config.use_actions_mask:
-                avail_actions_i = {k: avail_actions[k][:, i:i + 1, :] for k in self.model_keys}
+                avail_actions_i = {k: avail_actions[k][:, i:i+1, :] for k in self.model_keys}
             else:
                 avail_actions_i = None
             agent_mask_i = {k: agent_mask[k][:, i:i+1, :] for k in self.model_keys}

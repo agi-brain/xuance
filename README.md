@@ -74,7 +74,7 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
 - **Dueling DQN**: DQN with Dueling Network [[Paper](http://proceedings.mlr.press/v48/wangf16.pdf)]
 - **PER**: DQN with Prioritized Experience Replay [[Paper](https://arxiv.org/pdf/1511.05952.pdf)]
 - **NoisyDQN**: DQN with Parameter Space Noise for Exploration [[Paper](https://arxiv.org/pdf/1706.01905.pdf)]
-- **DRQN**: Deep Recurrent Q-Netwrk [[Paper](https://cdn.aaai.org/ocs/11673/11673-51288-1-PB.pdf)]
+- **DRQN**: Deep Recurrent Q-Network [[Paper](https://cdn.aaai.org/ocs/11673/11673-51288-1-PB.pdf)]
 - **QRDQN**: DQN with Quantile Regression [[Paper](https://ojs.aaai.org/index.php/AAAI/article/view/11791)]
 - **C51**: Distributional Reinforcement Learning [[Paper](http://proceedings.mlr.press/v70/bellemare17a/bellemare17a.pdf)]
 - **PG**: Vanilla Policy Gradient [[Paper](https://proceedings.neurips.cc/paper_files/paper/1999/file/464d828b85b0bed98e80ade0a5c43b0f-Paper.pdf)]
@@ -118,6 +118,7 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
 - **MASAC**: Multi-agent Soft Actor-Critic [[Paper](https://arxiv.org/pdf/2104.06655.pdf)]
 - **MATD3**: Multi-agent Twin Delayed Deep Deterministic Policy Gradient [[Paper](https://arxiv.org/pdf/1910.01465.pdf)]
 - **IC3Net**: Individualized Controlled Continuous Communication Model [[Paper](https://arxiv.org/pdf/1812.09755)] [[Code](https://github.com/IC3Net/IC3Net.git)]
+- **CommNet**: Communication Neural Net [[Paper](https://proceedings.neurips.cc/paper_files/paper/2016/file/55b1927fdafef39c48e5b73b5d61ea60-Paper.pdf)][[Code](https://github.com/cts198859/deeprl_network.git)]
 
 ### :point_right: Contrastive Reinforcement Learning (CRL)
 - **CURL**: Contrastive Unsupervised Representation Learning for Sample-Efficient Reinforcement Learning [[Paper](http://proceedings.mlr.press/v119/laskin20a/laskin20a.pdf)] [[Code](https://github.com/MishaLaskin/curl/blob/master/curl_sac.py)]

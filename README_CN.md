@@ -113,6 +113,7 @@
 - **MASAC**: Multi-agent Soft Actor-Critic [[论文](https://arxiv.org/pdf/2104.06655.pdf)]
 - **MATD3**: Multi-agent Twin Delayed Deep Deterministic Policy Gradient [[论文](https://arxiv.org/pdf/1910.01465.pdf)]
 - **IC3Net**: Individualized Controlled Continuous Communication Model [[论文](https://arxiv.org/pdf/1812.09755)] [[源码](https://github.com/IC3Net/IC3Net.git)]
+- **CommNet**: Communication Neural Net [[Paper](https://proceedings.neurips.cc/paper_files/paper/2016/file/55b1927fdafef39c48e5b73b5d61ea60-Paper.pdf)][[源码](https://github.com/cts198859/deeprl_network.git)]
 
 ## 已支持环境
 

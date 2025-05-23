@@ -59,7 +59,7 @@ setup(
         "minigrid": ["minigrid==3.0.0"],
         "metadrive": ["metadrive"],
         "rware": ["rware"],
-        "einops": ["einops"],  # default version is 0.8.1 for ViT
+        "einops": ["einops==0.8.1"],  # default version is 0.8.1 for ViT
     },
     install_requires=[
         "numpy<1.23.0,>=1.21.6",

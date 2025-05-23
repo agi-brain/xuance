@@ -123,16 +123,16 @@ hafner_initialization: True
 # world_model & actor_critic end
 
 seed: 1
-parallels: 1
-buffer_size: 1000000  # 1e6
+parallels: 16
+buffer_size: 2000000  # 1e6
 batch_size: 16
 seq_len: 64
 learning_rate_model: 0.0001  # 1e-4
 learning_rate_actor: 0.00008  # 8e-5
 learning_rate_critic: 0.00008  # 8e-5
 
-replay_ratio: 1  # gradient_step / replay_step
-running_steps: 100000  # 100k
+replay_ratio: 0.0625  # gradient_step / replay_step
+running_steps: 5000000  # 100k
 start_training: 1024
 
 use_grad_clip: False  # gradient normalization
