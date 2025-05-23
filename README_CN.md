@@ -115,6 +115,9 @@
 - **IC3Net**: Individualized Controlled Continuous Communication Model [[论文](https://arxiv.org/pdf/1812.09755)] [[源码](https://github.com/IC3Net/IC3Net.git)]
 - **CommNet**: Communication Neural Net [[Paper](https://proceedings.neurips.cc/paper_files/paper/2016/file/55b1927fdafef39c48e5b73b5d61ea60-Paper.pdf)][[源码](https://github.com/cts198859/deeprl_network.git)]
 
+### :point_right: Contrastive Reinforcement Learning (CRL)
+- **CURL**: Contrastive Unsupervised Representation Learning for Sample-Efficient Reinforcement Learning [[Paper](http://proceedings.mlr.press/v119/laskin20a/laskin20a.pdf)] [[源码](https://github.com/MishaLaskin/curl/blob/master/curl_sac.py)]
+
 ## 已支持环境
 
 ### [Classic Control](https://www.gymlibrary.dev/environments/classic_control/)
