@@ -120,6 +120,8 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
 - **IC3Net**: Individualized Controlled Continuous Communication Model [[Paper](https://arxiv.org/pdf/1812.09755)] [[Code](https://github.com/IC3Net/IC3Net.git)]
 - **CommNet**: Communication Neural Net [[Paper](https://proceedings.neurips.cc/paper_files/paper/2016/file/55b1927fdafef39c48e5b73b5d61ea60-Paper.pdf)][[Code](https://github.com/cts198859/deeprl_network.git)]
 
+### :point_right: Contrastive Reinforcement Learning (CRL)
+- **CURL**: Contrastive Unsupervised Representation Learning for Sample-Efficient Reinforcement Learning [[Paper](http://proceedings.mlr.press/v119/laskin20a/laskin20a.pdf)] [[Code](https://github.com/MishaLaskin/curl/blob/master/curl_sac.py)]
 ## Environments
 
 ### [Classic Control](https://xuance.readthedocs.io/en/latest/documents/api/environments/single_agent_env/gym.html#classic-control)
@@ -300,12 +302,12 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
 
 [//]: # (### [Magent2]&#40;https://magent2.farama.org/&#41;)
 
-[//]: # ()
+[//]: #
 [//]: # (<details open>)
 
 [//]: # (<summary>&#40;Click to hide&#41;</summary>)
 
-[//]: # ()
+[//]: #
 [//]: # (<table rules="none" align="center"><tr>)
 
 [//]: # (<td> <center>)
@@ -336,7 +338,7 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
 
 [//]: # (</table>)
 
-[//]: # ()
+[//]: #
 [//]: # (</details>)
 
 ### [SMAC](https://xuance.readthedocs.io/en/latest/documents/api/environments/multi_agent_env/smac.html)
@@ -483,3 +485,5 @@ If you use XuanCe in your research or development, please cite the paper:
   year={2023}
 }
 ```
+
+[[Code]: 
