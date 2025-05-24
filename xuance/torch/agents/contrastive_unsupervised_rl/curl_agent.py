@@ -39,32 +39,24 @@ class CURL_Agent(OffPolicyAgent):
         initializer = torch.nn.init.orthogonal_
 
         representation = self._build_representation(self.config.representation, self.observation_space, self.config)
-        target_representation = self._build_representation(self.config.representation, self.observation_space, self.config)
+        # target_representation = self._build_representation(self.config.representation, self.observation_space, self.config)
         policy = REGISTRY_Policy[self.config.policy](
             action_space=self.action_space, representation=representation, hidden_size=self.config.q_hidden_size,
             normalize=normalize_fn, initialize=initializer, activation=activation, device=self.device,
             use_distributed_training=self.distributed_training)
 
-        target_policy = REGISTRY_Policy[self.config.policy](
-            action_space=self.action_space, representation=target_representation, hidden_size=self.config.q_hidden_size,
-            normalize=normalize_fn, initialize=initializer, activation=activation, device=self.device,
-            use_distributed_training=self.distributed_training)
-
-        target_representation.load_state_dict(representation.state_dict())
-        for param in target_representation.parameters():
-            param.requires_grad = False
+        # target_policy = REGISTRY_Policy[self.config.policy](
+        #     action_space=self.action_space, representation=target_representation, hidden_size=self.config.q_hidden_size,
+        #     normalize=normalize_fn, initialize=initializer, activation=activation, device=self.device,
+        #     use_distributed_training=self.distributed_training)
+        #
+        # target_representation.load_state_dict(representation.state_dict())
+        # for param in target_representation.parameters():
+        #     param.requires_grad = False
 
         return CURL_Policy(
-            observation_space=self.observation_space,
-            action_space=self.action_space,
-            representation=representation,
-            target_representation=target_representation,
-            hidden_size=self.config.q_hidden_size,
-            normalize=normalize_fn,
-            activation=activation,
             device=self.device,
             policy = policy,
-            target_policy = target_policy,
         )
 
     def _build_learner(self, config: Namespace, policy: nn.Module):
@@ -96,26 +88,20 @@ class CURL_Agent(OffPolicyAgent):
 class CURL_Policy(nn.Module):
 
     def __init__(self,
-                 observation_space: Space,
-                 action_space: Space,
-                 representation: nn.Module,
-                 target_representation: nn.Module,
-                 hidden_size: int,
-                 normalize: Optional[str] = None,
-                 activation: Optional[str] = 'ReLU',
                  device: str = 'cuda:0',
-                 policy: nn.Module = None,
-                 target_policy: nn.Module = None):
+                 policy: nn.Module = None,):
         super(CURL_Policy, self).__init__()
 
         self.device = device
+        self.policy = policy
+        self.representation = self.policy.representation.to(device)
+        self.target_representation = self.policy.target_representation.to(device)
 
-        self.representation = representation.to(device)
-        self.target_representation = target_representation.to(device)
+        self.q_net = self.policy.eval_Qhead.to(device)
 
-        self.q_net = policy
 
-        self.target_q_net = target_policy
+        self.target_q_net = self.policy.target_Qhead.to(device)
+        self.action_dim = policy.action_dim
 
 
         self.target_q_net.load_state_dict(self.q_net.state_dict())
@@ -124,12 +110,16 @@ class CURL_Policy(nn.Module):
 
     def forward(self, x: torch.Tensor):
         features = self.representation(x)
-        return self.q_net(features)
+        evalQ = self.q_net(features['state'])
+        argmax_action = evalQ.argmax(dim=-1)
+        return features,argmax_action, evalQ
 
     def target(self, x: torch.Tensor):
         with torch.no_grad():
             features = self.target_representation(x)
-            return self.target_q_net(features)
+            evalQ = self.q_net(features['state'])
+            argmax_action = evalQ.argmax(dim=-1)
+            return features, argmax_action, evalQ
 
     def copy_target(self):
         self.target_q_net.load_state_dict(self.q_net.state_dict())

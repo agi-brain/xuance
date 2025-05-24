@@ -3,8 +3,8 @@ import numpy as np
 from copy import deepcopy
 from xuance.common import get_configs, recursive_dict_update
 from xuance.environment import make_envs
+from xuance.torch.agents.contrastive_unsupervised_rl import CURL_Agent
 from xuance.torch.utils.operations import set_seed
-from xuance.torch.agents import DQN_Agent
 
 
 def parse_args():
@@ -24,7 +24,7 @@ if __name__ == "__main__":
 
     set_seed(configs.seed)
     envs = make_envs(configs)
-    Agent = DQN_Agent(config=configs, envs=envs)
+    Agent = CURL_Agent(config=configs, envs=envs)
 
     train_information = {"Deep learning toolbox": configs.dl_toolbox,
                          "Calculating device": configs.device,
