@@ -119,10 +119,13 @@ Paper link: [https://arxiv.org/pdf/2312.16248.pdf](https://arxiv.org/pdf/2312.16
 - **MATD3**: Multi-agent Twin Delayed Deep Deterministic Policy Gradient [[Paper](https://arxiv.org/pdf/1910.01465.pdf)]
 - **IC3Net**: Individualized Controlled Continuous Communication Model [[Paper](https://arxiv.org/pdf/1812.09755)] [[Code](https://github.com/IC3Net/IC3Net.git)]
 - **CommNet**: Communication Neural Net [[Paper](https://proceedings.neurips.cc/paper_files/paper/2016/file/55b1927fdafef39c48e5b73b5d61ea60-Paper.pdf)][[Code](https://github.com/cts198859/deeprl_network.git)]
+- **TarMAC**: Targeted Multi-Agent Communication [[Paper](https://proceedings.mlr.press/v97/das19a)]
 
 ### :point_right: Contrastive Reinforcement Learning (CRL)
+
 - **CURL**: Contrastive Unsupervised Representation Learning for Sample-Efficient Reinforcement Learning [[Paper](http://proceedings.mlr.press/v119/laskin20a/laskin20a.pdf)] [[Code](https://github.com/MishaLaskin/curl/blob/master/curl_sac.py)]
 - **SPR**: Data-Efficient Reinforcement Learning with Self-Predictive Representations [[Paper]](https://arxiv.org/abs/2007.05929) [[Code]](https://github.com/mila-iqia/spr)
+
 ## Environments
 
 ### [Classic Control](https://xuance.readthedocs.io/en/latest/documents/api/environments/single_agent_env/gym.html#classic-control)
