@@ -140,6 +140,7 @@ class CURL_Learner(Learner):
             "predictQ": predictQ.mean().item(),
             "learning_rate": lr,
         }
+        # print(info)
         if self.distributed_training:
             info = {f"{k}/rank_{self.rank}": v for k, v in info.items()}
 
