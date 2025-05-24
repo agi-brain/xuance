@@ -117,6 +117,7 @@
 
 ### :point_right: Contrastive Reinforcement Learning (CRL)
 - **CURL**: Contrastive Unsupervised Representation Learning for Sample-Efficient Reinforcement Learning [[Paper](http://proceedings.mlr.press/v119/laskin20a/laskin20a.pdf)] [[源码](https://github.com/MishaLaskin/curl/blob/master/curl_sac.py)]
+- **SPR**: Data-Efficient Reinforcement Learning with Self-Predictive Representations [[Paper]](https://arxiv.org/abs/2007.05929) [[源码]](https://github.com/mila-iqia/spr)
 
 ## 已支持环境
 
