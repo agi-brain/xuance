@@ -2,7 +2,10 @@ import torch
 import torch.nn as nn
 from xuance.torch.learners import Learner
 from argparse import Namespace
-from torchvision import transforms
+try:
+    from torchvision import transforms
+except:
+    pass
 
 
 class FrameStackTransform:

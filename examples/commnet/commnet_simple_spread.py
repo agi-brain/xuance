@@ -2,7 +2,7 @@ import argparse
 import numpy as np
 from copy import deepcopy
 
-from examples.commnet.commnet_agents import CommNet_Agents
+from xuance.torch.agents import CommNet_Agents
 from xuance.common import get_configs, recursive_dict_update
 from xuance.environment import make_envs
 from xuance.torch.utils.operations import set_seed
@@ -13,6 +13,7 @@ def parse_args():
     parser.add_argument("--env-id", type=str, default="simple_spread_v3")
     parser.add_argument("--test", type=int, default=0)
     parser.add_argument("--benchmark", type=int, default=1)
+    parser.add_argument("--device", type=str, default='cpu')
 
     return parser.parse_args()
 

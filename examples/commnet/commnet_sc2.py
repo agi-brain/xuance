@@ -2,7 +2,7 @@ import time
 import argparse
 import numpy as np
 
-from examples.commnet.commnet_agents import CommNet_Agents
+from xuance.torch.agents import CommNet_Agents
 from xuance.common import get_configs, recursive_dict_update
 from xuance.environment import make_envs
 from xuance.torch.utils.operations import set_seed

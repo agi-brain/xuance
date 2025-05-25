@@ -3,8 +3,13 @@ from torch import optim
 import torch
 import torch.nn as nn
 from xuance.torch.learners import Learner
-from torchvision import transforms
 import torch.nn.functional as F
+try:
+    from torchvision import transforms
+except:
+    pass
+
+
 class FrameStackTransform:
     def __init__(self):
         self.transform = transforms.Compose([

@@ -8,8 +8,7 @@ from copy import deepcopy
 from operator import itemgetter
 from argparse import Namespace
 
-from examples.commnet.commnet_learner import CommNet_Learner
-from examples.commnet.commnet_policy import CommNet_Policy
+from xuance.torch.learners import CommNet_Learner
 from xuance.common import List, Optional, Union, MARL_OnPolicyBuffer_RNN, space2shape
 import gymnasium as gym
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
@@ -92,7 +91,6 @@ class CommNet_Agents(MARLAgents):
 
         # build policies
         if self.config.policy == "CommNet_Policy":
-            REGISTRY_Policy["CommNet_Policy"] = CommNet_Policy
             policy = REGISTRY_Policy[self.config.policy](
                 action_space=self.action_space, n_agents=self.n_agents,
                 representation_actor=A_representation, representation_critic=C_representation,
