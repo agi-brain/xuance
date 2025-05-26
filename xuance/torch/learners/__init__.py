@@ -9,7 +9,8 @@ from .model_based import DreamerV2_Learner, DreamerV3_Learner
 from .contrastive_unsupervised_rl import CURL_Learner
 
 from .multi_agent_rl import (IQL_Learner, VDN_Learner, QMIX_Learner, WQMIX_Learner, QTRAN_Learner, \
-    IAC_Learner, VDAC_Learner, COMA_Learner, IC3Net_Learner, CommNet_Learner, MFQ_Learner, MFAC_Learner, IPPO_Learner, MAPPO_Clip_Learner, \
+    IAC_Learner, VDAC_Learner, COMA_Learner, MFQ_Learner, MFAC_Learner, IPPO_Learner, MAPPO_Clip_Learner, \
+    IC3Net_Learner, CommNet_Learner, TarMAC_Learner, \
     IDDPG_Learner, MADDPG_Learner, MATD3_Learner, ISAC_Learner, ISACDIS_Learner, MASAC_Learner, MASACDIS_Learner)
 
 from .offline import TD3_BC_Learner
@@ -61,8 +62,10 @@ REGISTRY_Learners = {
     "MASAC_Learner": MASAC_Learner,
     "MASACDIS_Learner": MASACDIS_Learner,
     "MATD3_Learner": MATD3_Learner,
-    "IC3Net_Learner": IC3Net_Learner,
+
     "CommNet_Learner": CommNet_Learner,
+    "IC3Net_Learner": IC3Net_Learner,
+    "TarMac_Learner": TarMAC_Learner,
 
     "TD3BC_Learner": TD3_BC_Learner,
 
@@ -80,10 +83,11 @@ __all__ = [
     "DreamerV2_Learner", "DreamerV3_Learner",
 
     "IQL_Learner", "VDN_Learner", "QMIX_Learner", "WQMIX_Learner", "QTRAN_Learner",
-    "IAC_Learner", "VDAC_Learner", "COMA_Learner", "IPPO_Learner", "MAPPO_Clip_Learner", "IC3Net_Learner", "CommNet_Learner",
+    "IAC_Learner", "VDAC_Learner", "COMA_Learner", "IPPO_Learner", "MAPPO_Clip_Learner",
     "MFQ_Learner", "MFAC_Learner",
     "IDDPG_Learner", "MADDPG_Learner", "MATD3_Learner",
     "ISAC_Learner", "ISACDIS_Learner", "MASAC_Learner", "MADDPG_Learner",
+    "IC3Net_Learner", "CommNet_Learner", "TarMAC_Learner",
 
     "TD3_BC_Learner",
 

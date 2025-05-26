@@ -2,10 +2,10 @@ import time
 import argparse
 import numpy as np
 
-from examples.tarmac.tarmac_agents import TarMAC_Agents
 from xuance.common import get_configs, recursive_dict_update
 from xuance.environment import make_envs
 from xuance.torch.utils.operations import set_seed
+from xuance.torch.agents import TarMAC_Agents
 
 
 def parse_args():

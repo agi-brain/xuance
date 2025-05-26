@@ -1,15 +1,3 @@
-dl_toolbox: "torch"  # The deep learning toolbox. Choices: "torch", "mindspore", "tensorlayer"
-project_name: "XuanCe_Benchmark"
-logger: "tensorboard"  # Choices: tensorboard, wandb.
-wandb_user_name: "your_user_name"
-render: True
-render_mode: 'rgb_array' # Choices: 'human', 'rgb_array'.
-fps: 15
-test_mode: False
-device: "cuda:0"  # Choose an calculating device. PyTorch: "cpu", "cuda:0"; TensorFlow: "cpu"/"CPU", "gpu"/"GPU"; MindSpore: "CPU", "GPU", "Ascend", "Davinci".
-distributed_training: False  # Whether to use multi-GPU for distributed training.
-master_port: '12355'  # The master port for current experiment when use distributed training.
-
 agent: "TarMAC"  # The agent name.
 env_name: "mpe"  # The environment name.
 env_id: "simple_spread_v3"  # The environment id.
@@ -19,6 +7,7 @@ learner: "TarMAC_Learner"
 policy: "TarMAC_Policy"
 representation: "Basic_RNN"
 vectorize: "SubprocVecMultiAgentEnv"  # The method to vectorize your environment such that can run in parallel.
+runner: "MARL"
 
 # recurrent settings for Basic_RNN representation.
 use_rnn: True  # Whether to use recurrent neural networks.

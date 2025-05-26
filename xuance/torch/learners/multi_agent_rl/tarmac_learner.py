@@ -195,3 +195,4 @@ class TarMAC_Learner(LearnerMAS):
         })
 
         return info
+

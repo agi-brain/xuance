@@ -8,8 +8,7 @@ from copy import deepcopy
 from operator import itemgetter
 from argparse import Namespace
 
-from examples.tarmac.tarmac_learner import TarMAC_Learner
-from examples.tarmac.tarmac_policy import TarMAC_Policy
+from xuance.torch.learners import TarMAC_Learner
 from xuance.common import List, Optional, Union, MARL_OnPolicyBuffer_RNN, space2shape
 import gymnasium as gym
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
@@ -93,7 +92,6 @@ class TarMAC_Agents(MARLAgents):
 
         # build policies
         if self.config.policy == "TarMAC_Policy":
-            REGISTRY_Policy["TarMAC_Policy"] = TarMAC_Policy
             policy = REGISTRY_Policy[self.config.policy](
                 action_space=self.action_space, n_agents=self.n_agents,
                 representation_actor=A_representation, representation_critic=C_representation,
