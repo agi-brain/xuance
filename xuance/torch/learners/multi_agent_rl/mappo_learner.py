@@ -139,7 +139,8 @@ class MAPPO_Clip_Learner(IPPO_Learner):
 
         sample_Tensor = self.build_training_data(sample=sample,
                                                  use_parameter_sharing=self.use_parameter_sharing,
-                                                 use_actions_mask=self.use_actions_mask)
+                                                 use_actions_mask=self.use_actions_mask,
+                                                 use_global_state=self.use_global_state)
         batch_size = sample_Tensor['batch_size']
         state = sample_Tensor['state']
         bs_rnn = batch_size * self.n_agents if self.use_parameter_sharing else batch_size

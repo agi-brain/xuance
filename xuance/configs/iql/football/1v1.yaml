@@ -1,0 +1,59 @@
+agent: "IQL"  # the learning algorithms_marl
+global_state: False
+# environment settings
+env_name: "Football"
+scenario: "1_vs_1_easy"
+env_seed: 1  # The random seed of the environment.
+use_stacked_frames: False  # Whether to use stacked_frames
+num_agent: 1
+num_adversary: 0
+obs_type: "simple115v2"  # representation used to build the observation, choices: ["simple115v2", "extracted", "pixels_gray", "pixels"]
+rewards_type: "scoring,checkpoints"  # comma separated list of rewards to be added
+smm_width: 96  # width of super minimap
+smm_height: 72  # height of super minimap
+fps: 15  # Frames per second.
+max_episode_steps: 1000
+learner: "IQL_Learner"
+policy: "Basic_Q_network_marl"
+representation: "Basic_RNN"
+vectorize: "Subproc_Football"
+runner: "RunnerFootball"
+
+# recurrent settings for Basic_RNN representation
+use_rnn: True  # Whether to use recurrent neural networks.
+rnn: "GRU"  # Choice of recurrent networks: GRU or LSTM.
+N_recurrent_layers: 1  # Number of recurrent layers.
+fc_hidden_sizes: [128, ]
+recurrent_hidden_size: 128
+dropout: 0  # dropout should be a number in range [0, 1], the probability of an element being zeroed.
+
+representation_hidden_size: [128, ]
+q_hidden_size: [128, ]  # the units for each hidden layer
+activation: "relu"  # The activation function of each hidden layer.
+use_parameter_sharing: True
+use_actions_mask: True
+
+seed: 1
+parallels: 50
+buffer_size: 5000
+batch_size: 32
+learning_rate: 0.0007
+gamma: 0.99  # discount factor
+double_q: True  # use double q learning
+
+start_greedy: 1.0
+end_greedy: 0.05
+decay_step_greedy: 1000000
+start_training: 1000  # start training after n steps
+running_steps: 25000000  # 25M
+training_frequency: 60
+sync_frequency: 200
+
+use_grad_clip: False
+grad_clip_norm: 0.5
+
+eval_interval: 250000
+test_episode: 50
+log_dir: "./logs/iql/"
+model_dir: "./models/iql/"
+videos_dir: "./videos/iql/"

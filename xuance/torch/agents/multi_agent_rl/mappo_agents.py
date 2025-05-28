@@ -74,26 +74,24 @@ class MAPPO_Agents(IPPO_Agents):
         Returns:
             critic_input: The represented observations.
         """
-        if self.use_global_state:
-            if self.use_parameter_sharing:
-                key = self.model_keys[0]
-                bs = batch_size * self.n_agents
-                state_n = np.stack([state for _ in range(self.n_agents)], axis=1).reshape([bs, -1])
-                critic_input = {key: state_n}
+        if self.use_parameter_sharing:
+            bs = batch_size * self.n_agents
+            if self.use_global_state:
+                critic_input = np.stack([state for _ in range(self.n_agents)], axis=1).reshape([bs, -1])
             else:
-                critic_input = {k: state for k in self.model_keys}
+                key = self.model_keys[0]
+                critic_input = obs_batch[key].reshape([batch_size, self.n_agents, -1]).reshape([batch_size, 1, -1])
+                critic_input = np.repeat(critic_input, repeats=self.n_agents, axis=1)
         else:
-            if self.use_parameter_sharing:
-                key = self.model_keys[0]
-                bs = batch_size * self.n_agents
-                joint_obs = obs_batch[key].reshape([batch_size, self.n_agents, -1]).reshape([batch_size, 1, -1])
-                joint_obs = np.repeat(joint_obs, repeats=self.n_agents, axis=1)
+            bs = batch_size
+            if self.use_global_state:
+                critic_input = np.array(state)
             else:
-                bs = batch_size
-                joint_obs = np.stack(itemgetter(*self.agent_keys)(obs_batch), axis=1)
-            joint_obs = joint_obs.reshape([bs, 1, -1]) if self.use_rnn else joint_obs.reshape([bs, -1])
-            critic_input = {k: joint_obs for k in self.model_keys}
-        return critic_input
+                critic_input = np.stack(itemgetter(*self.agent_keys)(obs_batch), axis=1)
+
+        critic_input = critic_input.reshape([bs, 1, -1]) if self.use_rnn else critic_input.reshape([bs, -1])
+        critic_input_dict = {k: critic_input for k in self.model_keys}
+        return critic_input_dict
 
     def action(self,
                obs_dict: List[dict],

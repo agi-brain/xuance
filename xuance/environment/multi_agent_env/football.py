@@ -176,10 +176,13 @@ class GFootball_Env(RawMultiAgentEnv):
         self.num_adversaries = config.num_adversary
         obs_shape_i = (self.env.observation_space.shape[-1], )
         self.observation_space = {k: Box(-np.inf, np.inf, obs_shape_i) for k in self.agents}
-        self.action_space = {k: self.env.action_space[i] for i, k in enumerate(self.agents)}
-        self.max_episode_steps = config.episode_length
+        try:
+            self.action_space = {k: self.env.action_space[i] for i, k in enumerate(self.agents)}
+        except:
+            self.action_space = {k: self.env.action_space for i, k in enumerate(self.agents)}
+        self.max_episode_steps = config.max_episode_steps
         self._episode_step = 0
-        self.env.reset(seed=config.env_seed)
+        self.env.reset()
         state_shape = self.state().shape
         self.state_space = Box(-np.inf, np.inf, state_shape)
 
