@@ -1,7 +1,8 @@
 import torch
 from argparse import Namespace
 from xuance.environment.single_agent_env import Gym_Env
-from xuance.torch import Module
+from xuance.common import Optional
+from xuance.torch import Module, BaseCallback
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.policies import REGISTRY_Policy
 from xuance.torch.agents.policy_gradient.pdqn_agent import PDQN_Agent
@@ -16,8 +17,9 @@ class MPDQN_Agent(PDQN_Agent):
     """
     def __init__(self,
                  config: Namespace,
-                 envs: Gym_Env):
-        super(MPDQN_Agent, self).__init__(config, envs)
+                 envs: Gym_Env,
+                 callback: Optional[BaseCallback] = None):
+        super(MPDQN_Agent, self).__init__(config, envs, callback)
 
     def _build_policy(self) -> Module:
         normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None

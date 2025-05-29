@@ -6,6 +6,7 @@ from xuance.common import Optional, List, Union
 from argparse import Namespace
 from operator import itemgetter
 from xuance.torch import Tensor
+from xuance.torch.utils.callback import BaseCallback
 
 MAX_GPUs = 100
 
@@ -13,7 +14,8 @@ MAX_GPUs = 100
 class Learner(ABC):
     def __init__(self,
                  config: Namespace,
-                 policy: torch.nn.Module):
+                 policy: torch.nn.Module,
+                 callback: BaseCallback):
         self.value_normalizer = None
         self.config = config
         self.distributed_training = config.distributed_training
@@ -28,6 +30,7 @@ class Learner(ABC):
         self.policy = policy
         self.optimizer: Union[dict, list, Optional[torch.optim.Optimizer]] = None
         self.scheduler: Union[dict, list, Optional[torch.optim.lr_scheduler.LinearLR]] = None
+        self.callback = callback
 
         if self.distributed_training:
             self.world_size = int(os.environ['WORLD_SIZE'])
@@ -104,7 +107,8 @@ class LearnerMAS(ABC):
                  config: Namespace,
                  model_keys: List[str],
                  agent_keys: List[str],
-                 policy: torch.nn.Module):
+                 policy: torch.nn.Module,
+                 callback: BaseCallback):
         self.value_normalizer = None
         self.config = config
         self.n_agents = config.n_agents
@@ -123,6 +127,8 @@ class LearnerMAS(ABC):
         self.policy = policy
         self.optimizer: Union[dict, list, Optional[torch.optim.Optimizer]] = None
         self.scheduler: Union[dict, list, Optional[torch.optim.lr_scheduler.LinearLR]] = None
+        self.callback = callback
+
         self.use_grad_clip = config.use_grad_clip
         self.grad_clip_norm = config.grad_clip_norm
         self.device = config.device

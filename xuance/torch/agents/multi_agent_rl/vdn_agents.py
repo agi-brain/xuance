@@ -1,9 +1,9 @@
 import torch
 from argparse import Namespace
-from xuance.common import Union
+from xuance.common import Union, Optional
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.torch import Module
-from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
+from xuance.torch.utils import NormalizeFunctions, ActivationFunctions, BaseCallback
 from xuance.torch.policies import REGISTRY_Policy, VDN_mixer
 from xuance.torch.agents import OffPolicyMARLAgents
 
@@ -17,7 +17,8 @@ class VDN_Agents(OffPolicyMARLAgents):
     """
     def __init__(self,
                  config: Namespace,
-                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv]):
+                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv],
+                 callback: Optional[BaseCallback] = None):
         super(VDN_Agents, self).__init__(config, envs)
 
         self.start_greedy, self.end_greedy = config.start_greedy, config.end_greedy
@@ -26,7 +27,7 @@ class VDN_Agents(OffPolicyMARLAgents):
 
         self.policy = self._build_policy()  # build policy
         self.memory = self._build_memory()  # build memory
-        self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, self.policy)
+        self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, self.policy, self.callback)
 
     def _build_policy(self) -> Module:
         """

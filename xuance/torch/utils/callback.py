@@ -1,8 +1,10 @@
 from abc import ABC
 
 
-class Callback(ABC):
+class BaseCallback(ABC):
     def on_train_start(self, *args, **kwargs): pass
+
+    def on_train_log(self, *args, **kwargs): pass
 
     def on_train_step(self, *args, **kwargs): pass
 

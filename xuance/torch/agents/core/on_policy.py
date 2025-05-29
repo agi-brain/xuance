@@ -4,7 +4,7 @@ from copy import deepcopy
 from argparse import Namespace
 from xuance.common import Optional, Union, DummyOnPolicyBuffer, DummyOnPolicyBuffer_Atari
 from xuance.environment import DummyVecEnv, SubprocVecEnv
-from xuance.torch import Module
+from xuance.torch import Module, BaseCallback
 from xuance.torch.utils import split_distributions
 from xuance.torch.agents.base import Agent
 
@@ -18,8 +18,9 @@ class OnPolicyAgent(Agent):
     """
     def __init__(self,
                  config: Namespace,
-                 envs: Union[DummyVecEnv, SubprocVecEnv]):
-        super(OnPolicyAgent, self).__init__(config, envs)
+                 envs: Union[DummyVecEnv, SubprocVecEnv],
+                 callback: Optional[BaseCallback] = None):
+        super(OnPolicyAgent, self).__init__(config, envs, callback)
         self.horizon_size = config.horizon_size
         self.n_epochs = config.n_epochs
         self.n_minibatch = config.n_minibatch

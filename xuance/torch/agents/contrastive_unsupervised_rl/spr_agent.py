@@ -1,25 +1,26 @@
-from typing import Union
-
 import torch
 import torch.nn as nn
-
-from xuance.torch import REGISTRY_Policy
+from argparse import Namespace
+from xuance.common import Union, Optional
+from xuance.torch import REGISTRY_Policy, BaseCallback
 from xuance.torch.agents import OffPolicyAgent
 from xuance.torch.learners.contrastive_unsupervised_rl.spr_learner import SPR_Learner
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
-from argparse import Namespace
 from xuance.environment import DummyVecEnv, SubprocVecEnv
 from torchvision import transforms
 
 
 class SPR_Agent(OffPolicyAgent):
 
-    def __init__(self, config: Namespace, envs: Union[DummyVecEnv, SubprocVecEnv]):
-        super().__init__(config, envs)
+    def __init__(self,
+                 config: Namespace,
+                 envs: Union[DummyVecEnv, SubprocVecEnv],
+                 callback: Optional[BaseCallback] = None):
+        super().__init__(config, envs, callback)
         self._init_exploration_params(config)
         self.policy = self._build_policy()
         self.memory = self._build_memory()
-        self.learner = self._build_learner(config, self.policy)
+        self.learner = self._build_learner(self.config, self.policy, callback)
 
     def _init_exploration_params(self, config: Namespace):
         self.e_greedy = config.start_greedy
@@ -40,14 +41,15 @@ class SPR_Agent(OffPolicyAgent):
             policy=policy,
         )
 
-    def _build_learner(self, config: Namespace, policy: nn.Module):
+    def _build_learner(self, config: Namespace, policy: nn.Module, callback: Optional[BaseCallback] = None):
         return SPR_Learner(
             config=config,
             policy=policy,
             temperature=config.temperature,
             tau=config.tau,
             repr_lr=config.repr_lr,
-            prediction_steps=config.prediction_steps
+            prediction_steps=config.prediction_steps,
+            callback=callback,
         )
 
 class SPR_Policy(nn.Module):

@@ -2,7 +2,7 @@ import numpy as np
 from tqdm import tqdm
 from argparse import Namespace
 from xuance.common import Optional, DummyOffPolicyBuffer, OfflineBuffer_D4RL
-from xuance.torch import Module
+from xuance.torch import Module, BaseCallback
 from xuance.torch.agents.base import Agent
 
 
@@ -15,8 +15,9 @@ class OfflineAgent(Agent):
     """
     def __init__(self,
                  config: Namespace,
-                 envs):
-        super(OfflineAgent, self).__init__(config, envs)
+                 envs,
+                 callback: Optional[BaseCallback] = None):
+        super(OfflineAgent, self).__init__(config, envs, callback)
         self.auxiliary_info_shape = None
         self.buffer_size = self.config.buffer_size
         self.batch_size = self.config.batch_size

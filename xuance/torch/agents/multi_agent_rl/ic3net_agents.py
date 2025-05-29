@@ -1,18 +1,16 @@
-from typing import Dict
-
 import torch
 import numpy as np
+import gymnasium as gym
 from gymnasium import Space
 from tqdm import tqdm
 from copy import deepcopy
 from operator import itemgetter
 from argparse import Namespace
-from xuance.common import List, Optional, Union, MARL_OnPolicyBuffer_RNN, space2shape
-import gymnasium as gym
+from xuance.common import Dict, List, Optional, Union, MARL_OnPolicyBuffer_RNN, space2shape
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.torch import Module, REGISTRY_Policy, ModuleDict
 from xuance.torch.communications import IC3NetComm
-from xuance.torch.utils import ActivationFunctions, NormalizeFunctions
+from xuance.torch.utils import ActivationFunctions, NormalizeFunctions, BaseCallback
 from xuance.torch.agents.base import MARLAgents
 
 
@@ -20,8 +18,9 @@ class IC3Net_Agents(MARLAgents):
 
     def __init__(self,
                  config: Namespace,
-                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv]):
-        super(IC3Net_Agents, self).__init__(config, envs)
+                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv],
+                 callback: Optional[BaseCallback] = None):
+        super(IC3Net_Agents, self).__init__(config, envs, callback)
         self.on_policy = True
         self.continuous_control: bool = False
         self.n_epochs = config.n_epochs
@@ -30,7 +29,7 @@ class IC3Net_Agents(MARLAgents):
         self.batch_size = self.buffer_size // self.n_minibatch
         self.memory = self._build_memory()
         self.policy = self._build_policy()
-        self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, self.policy)
+        self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, self.policy, self.callback)
 
     def _build_memory(self):
         """Build replay buffer for models training

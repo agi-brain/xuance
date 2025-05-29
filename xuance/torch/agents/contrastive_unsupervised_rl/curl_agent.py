@@ -1,14 +1,9 @@
-from typing import Optional
-
 import torch
 from argparse import Namespace
-
-from gymnasium import Space
 from torch import nn
-
-from xuance.common import Union
+from xuance.common import Union, Optional
 from xuance.environment import DummyVecEnv, SubprocVecEnv
-from xuance.torch import REGISTRY_Policy
+from xuance.torch import REGISTRY_Policy, BaseCallback
 from xuance.torch.learners import CURL_Learner
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.agents import OffPolicyAgent
@@ -18,14 +13,15 @@ class CURL_Agent(OffPolicyAgent):
 
     def __init__(self,
                  config: Namespace,
-                 envs: Union[DummyVecEnv, SubprocVecEnv]):
-        super(CURL_Agent, self).__init__(config, envs)
+                 envs: Union[DummyVecEnv, SubprocVecEnv],
+                 callback: Optional[BaseCallback] = None):
+        super(CURL_Agent, self).__init__(config, envs, callback)
 
         self._init_exploration_params(config)
 
         self.policy = self._build_policy()
         self.memory = self._build_memory()
-        self.learner = self._build_learner(config, self.policy)
+        self.learner = self._build_learner(self.config, self.policy, self.callback)
 
     def _init_exploration_params(self, config: Namespace):
 
@@ -48,10 +44,11 @@ class CURL_Agent(OffPolicyAgent):
             policy = policy,
         )
 
-    def _build_learner(self, config: Namespace, policy: nn.Module):
+    def _build_learner(self, config: Namespace, policy: nn.Module, callback: Optional[BaseCallback] = None):
         return CURL_Learner(
             config=config,
             policy=policy,
+            callback=callback,
         )
 
     def _learn(self, batch_size: int):

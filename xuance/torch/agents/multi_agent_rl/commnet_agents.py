@@ -12,7 +12,7 @@ from xuance.torch.learners import CommNet_Learner
 from xuance.common import List, Optional, Union, MARL_OnPolicyBuffer_RNN, space2shape
 import gymnasium as gym
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
-from xuance.torch import Module, REGISTRY_Policy, ModuleDict, REGISTRY_Learners
+from xuance.torch import Module, REGISTRY_Policy, ModuleDict, REGISTRY_Learners, BaseCallback
 from xuance.torch.communications.comm_net import CommNet
 from xuance.torch.utils import ActivationFunctions, NormalizeFunctions
 from xuance.torch.agents.base import MARLAgents
@@ -22,8 +22,9 @@ class CommNet_Agents(MARLAgents):
 
     def __init__(self,
                  config: Namespace,
-                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv]):
-        super(CommNet_Agents, self).__init__(config, envs)
+                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv],
+                 callback: Optional[BaseCallback] = None):
+        super(CommNet_Agents, self).__init__(config, envs, callback)
         self.on_policy = True
         self.continuous_control: bool = False
         self.n_epochs = config.n_epochs
@@ -32,7 +33,7 @@ class CommNet_Agents(MARLAgents):
         self.batch_size = self.buffer_size // self.n_minibatch
         self.memory = self._build_memory()
         self.policy = self._build_policy()
-        self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, self.policy)
+        self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, self.policy, self.callback)
 
     def _build_memory(self):
         """Build replay buffer for models training

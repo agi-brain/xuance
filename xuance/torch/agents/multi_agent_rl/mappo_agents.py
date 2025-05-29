@@ -5,7 +5,7 @@ from operator import itemgetter
 from xuance.common import List, Optional, Union
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.torch import Module
-from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
+from xuance.torch.utils import NormalizeFunctions, ActivationFunctions, BaseCallback
 from xuance.torch.policies import REGISTRY_Policy
 from xuance.torch.agents.multi_agent_rl.ippo_agents import IPPO_Agents
 
@@ -20,8 +20,9 @@ class MAPPO_Agents(IPPO_Agents):
 
     def __init__(self,
                  config: Namespace,
-                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv]):
-        super(MAPPO_Agents, self).__init__(config, envs)
+                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv],
+                 callback: Optional[BaseCallback] = None):
+        super(MAPPO_Agents, self).__init__(config, envs, callback)
 
     def _build_policy(self) -> Module:
         """

@@ -14,7 +14,7 @@ from torch.utils.tensorboard import SummaryWriter
 from torch.distributed import destroy_process_group
 from xuance.common import get_time_string, create_directory, space2shape, Optional, List, Dict, Union
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
-from xuance.torch import ModuleDict, REGISTRY_Representation, REGISTRY_Learners, Module
+from xuance.torch import ModuleDict, REGISTRY_Representation, REGISTRY_Learners, Module, BaseCallback
 from xuance.torch.learners import learner
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions, init_distributed_mode
 
@@ -28,27 +28,28 @@ class MARLAgents(ABC):
     """
     def __init__(self,
                  config: Namespace,
-                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv]):
+                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv],
+                 callback: Optional[BaseCallback] = None):
         # Training settings.
         self.config = config
-        self.use_rnn = config.use_rnn if hasattr(config, "use_rnn") else False
+        self.use_rnn = getattr(config, "use_rnn", False)
         self.use_parameter_sharing = config.use_parameter_sharing
-        self.use_actions_mask = config.use_actions_mask if hasattr(config, "use_actions_mask") else False
-        self.use_global_state = config.use_global_state if hasattr(config, "use_global_state") else False
+        self.use_actions_mask = getattr(config, "use_actions_mask", False)
+        self.use_global_state = getattr(config, "use_global_state", False)
         self.distributed_training = config.distributed_training
         if self.distributed_training:
             self.world_size = int(os.environ['WORLD_SIZE'])
             self.rank = int(os.environ['RANK'])
-            master_port = config.master_port if hasattr(config, "master_port") else None
+            master_port = getattr(config, "master_port", None)
             init_distributed_mode(master_port=master_port)
         else:
             self.world_size = 1
             self.rank = 0
 
         self.gamma = config.gamma
-        self.start_training = config.start_training if hasattr(config, "start_training") else 1
-        self.training_frequency = config.training_frequency if hasattr(config, "training_frequency") else 1
-        self.n_epochs = config.n_epochs if hasattr(config, "n_epochs") else 1
+        self.start_training = getattr(config, "start_training", 1)
+        self.training_frequency = getattr(config, "training_frequency", 1)
+        self.n_epochs = getattr(config, "n_epochs", 1)
         self.device = config.device
 
         # Environment attributes.
@@ -65,7 +66,7 @@ class MARLAgents(ABC):
         self.state_space = envs.state_space if self.use_global_state else None
         self.observation_space = envs.observation_space
         self.action_space = envs.action_space
-        self.episode_length = config.episode_length if hasattr(config, "episode_length") else envs.max_episode_steps
+        self.episode_length = getattr(config, "episode_length", envs.max_episode_steps)
         self.config.episode_length = self.episode_length
         self.current_step = 0
         self.current_episode = np.zeros((self.n_envs,), np.int32)
@@ -127,6 +128,7 @@ class MARLAgents(ABC):
         self.policy: Optional[nn.Module] = None
         self.learner: Optional[learner] = None
         self.memory: Optional[object] = None
+        self.callback = callback or BaseCallback()
 
     def store_experience(self, *args, **kwargs):
         raise NotImplementedError
@@ -198,21 +200,20 @@ class MARLAgents(ABC):
                 hidden_sizes = {'fc_hidden_sizes': self.config.fc_hidden_sizes,
                                 'recurrent_hidden_size': self.config.recurrent_hidden_size}
             else:
-                hidden_sizes = config.representation_hidden_size if hasattr(config,
-                                                                            "representation_hidden_size") else None
+                hidden_sizes = getattr(config, "representation_hidden_size", None)
             input_representations = dict(
                 input_shape=space2shape(input_space[key]),
                 hidden_sizes=hidden_sizes,
                 normalize=NormalizeFunctions[config.normalize] if hasattr(config, "normalize") else None,
                 initialize=nn.init.orthogonal_,
                 activation=ActivationFunctions[config.activation],
-                kernels=config.kernels if hasattr(config, "kernels") else None,
-                strides=config.strides if hasattr(config, "strides") else None,
-                filters=config.filters if hasattr(config, "filters") else None,
-                fc_hidden_sizes=config.fc_hidden_sizes if hasattr(config, "fc_hidden_sizes") else None,
-                N_recurrent_layers=config.N_recurrent_layers if hasattr(config, "N_recurrent_layers") else None,
-                rnn=config.rnn if hasattr(config, "rnn") else None,
-                dropout=config.dropout if hasattr(config, "dropout") else None,
+                kernels=getattr(config, "kernels", None),
+                strides=getattr(config, "strides", None),
+                filters=getattr(config, "filters", None),
+                fc_hidden_sizes=getattr(config, "fc_hidden_sizes", None),
+                N_recurrent_layers=getattr(config, "N_recurrent_layers", None),
+                rnn=getattr(config, "rnn", None),
+                dropout=getattr(config, "dropout", None),
                 device=self.device)
             representation[key] = REGISTRY_Representation[representation_key](**input_representations)
             if representation_key not in REGISTRY_Representation:

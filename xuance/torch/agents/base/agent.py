@@ -13,7 +13,7 @@ from torch.utils.tensorboard import SummaryWriter
 from torch.distributed import destroy_process_group
 from xuance.common import get_time_string, create_directory, RunningMeanStd, space2shape, EPS, Optional, Union
 from xuance.environment import DummyVecEnv, SubprocVecEnv
-from xuance.torch import REGISTRY_Representation, REGISTRY_Learners, Module
+from xuance.torch import REGISTRY_Representation, REGISTRY_Learners, Module, BaseCallback
 from xuance.torch.utils import nn, NormalizeFunctions, ActivationFunctions, init_distributed_mode
 
 
@@ -27,25 +27,26 @@ class Agent(ABC):
 
     def __init__(self,
                  config: Namespace,
-                 envs: Union[DummyVecEnv, SubprocVecEnv]):
+                 envs: Union[DummyVecEnv, SubprocVecEnv],
+                 callback: Optional[BaseCallback] = None):
         # Training settings.
         self.config = config
-        self.use_rnn = config.use_rnn if hasattr(config, "use_rnn") else False
-        self.use_actions_mask = config.use_actions_mask if hasattr(config, "use_actions_mask") else False
+        self.use_rnn = getattr(config, "use_rnn", False)
+        self.use_actions_mask = getattr(config, "use_actions_mask", False)
         self.distributed_training = config.distributed_training
         if self.distributed_training:
             self.world_size = int(os.environ['WORLD_SIZE'])
             self.rank = int(os.environ['RANK'])
-            master_port = config.master_port if hasattr(config, "master_port") else None
+            master_port = getattr(config, "master_port", None)
             init_distributed_mode(master_port=master_port)
         else:
             self.world_size = 1
             self.rank = 0
 
         self.gamma = config.gamma
-        self.start_training = config.start_training if hasattr(config, "start_training") else 1
-        self.training_frequency = config.training_frequency if hasattr(config, "training_frequency") else 1
-        self.n_epochs = config.n_epochs if hasattr(config, "n_epochs") else 1
+        self.start_training = getattr(config, "start_training", 1)
+        self.training_frequency = getattr(config, "training_frequency", 1)
+        self.n_epochs = getattr(config, "n_epochs", 1)
         self.device = config.device
 
         # Environment attributes.
@@ -126,6 +127,7 @@ class Agent(ABC):
         self.policy: Optional[Module] = None
         self.learner: Optional[Module] = None
         self.memory: Optional[object] = None
+        self.callback = callback or BaseCallback()
 
     def save_model(self, model_name):
         if self.distributed_training:
@@ -227,21 +229,21 @@ class Agent(ABC):
         """
         input_representations = dict(
             input_shape=space2shape(input_space),
-            hidden_sizes=config.representation_hidden_size if hasattr(config, "representation_hidden_size") else None,
+            hidden_sizes=getattr(config, "representation_hidden_size", None),
             normalize=NormalizeFunctions[config.normalize] if hasattr(config, "normalize") else None,
             initialize=nn.init.orthogonal_,
             activation=ActivationFunctions[config.activation],
-            kernels=config.kernels if hasattr(config, "kernels") else None,
-            strides=config.strides if hasattr(config, "strides") else None,
-            filters=config.filters if hasattr(config, "filters") else None,
-            fc_hidden_sizes=config.fc_hidden_sizes if hasattr(config, "fc_hidden_sizes") else None,
-            image_patch_size = config.image_patch_size if hasattr(config, "image_patch_size") else None,
-            frame_patch_size = config.frame_patch_size if hasattr(config, "frame_patch_size") else None,
-            final_dim = config.final_dim if hasattr(config, "final_dim") else None,
-            embedding_dim = config.embedding_dim if hasattr(config, "embedding_dim") else None,
-            depth = config.depth if hasattr(config, "depth") else None,
-            heads = config.heads if hasattr(config, "heads") else None,
-            FFN_dim = config.FFN_dim if hasattr(config, "FFN_dim") else None,
+            kernels=getattr(config, "kernels", None),
+            strides=getattr(config, "strides", None),
+            filters=getattr(config, "filters", None),
+            fc_hidden_sizes=getattr(config, "fc_hidden_sizes", None),
+            image_patch_size=getattr(config, "image_patch_size", None),
+            frame_patch_size=getattr(config, "frame_patch_size", None),
+            final_dim=getattr(config, "final_dim", None),
+            embedding_dim=getattr(config, "embedding_dim", None),
+            depth=getattr(config, "depth", None),
+            heads=getattr(config, "heads", None),
+            FFN_dim=getattr(config, "FFN_dim", None),
             device=self.device)
         representation = REGISTRY_Representation[representation_key](**input_representations)
         if representation_key not in REGISTRY_Representation:

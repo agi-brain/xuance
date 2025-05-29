@@ -5,7 +5,7 @@ from argparse import Namespace
 from operator import itemgetter
 from xuance.common import List, Optional, Union
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
-from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
+from xuance.torch.utils import NormalizeFunctions, ActivationFunctions, BaseCallback
 from xuance.torch.policies import REGISTRY_Policy
 from xuance.torch.agents import OffPolicyMARLAgents
 
@@ -20,8 +20,9 @@ class DCG_Agents(OffPolicyMARLAgents):
 
     def __init__(self,
                  config: Namespace,
-                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv]):
-        super(DCG_Agents, self).__init__(config, envs)
+                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv],
+                 callback: Optional[BaseCallback] = None):
+        super(DCG_Agents, self).__init__(config, envs, callback)
         self.state_space = envs.state_space
         self.use_global_state = True if config.agent == "DCG_S" else False
         self.delta_egreedy = (self.start_greedy - self.end_greedy) / config.decay_step_greedy
@@ -29,7 +30,7 @@ class DCG_Agents(OffPolicyMARLAgents):
         # build policy, optimizers, schedulers
         self.policy = self._build_policy()  # build policy
         self.memory = self._build_memory()  # build memory
-        self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, self.policy)
+        self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, self.policy, self.callback)
 
     def _build_learner(self, *args):
         from xuance.torch.learners.multi_agent_rl.dcg_learner import DCG_Learner

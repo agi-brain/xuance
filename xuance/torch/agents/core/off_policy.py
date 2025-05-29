@@ -4,7 +4,7 @@ from copy import deepcopy
 from argparse import Namespace
 from xuance.common import Optional, Union, DummyOffPolicyBuffer, DummyOffPolicyBuffer_Atari
 from xuance.environment import DummyVecEnv, SubprocVecEnv
-from xuance.torch import Module
+from xuance.torch import Module, BaseCallback
 from xuance.torch.agents.base import Agent
 
 
@@ -14,28 +14,30 @@ class OffPolicyAgent(Agent):
     Args:
         config: the Namespace variable that provides hyper-parameters and other settings.
         envs: the vectorized environments.
+        callback: the callback class that.
     """
     def __init__(self,
                  config: Namespace,
-                 envs: Union[DummyVecEnv, SubprocVecEnv]):
-        super(OffPolicyAgent, self).__init__(config, envs)
-        self.start_greedy = config.start_greedy if hasattr(config, "start_greedy") else None
-        self.end_greedy = config.end_greedy if hasattr(config, "end_greedy") else None
+                 envs: Union[DummyVecEnv, SubprocVecEnv],
+                 callback: Optional[BaseCallback] = None):
+        super(OffPolicyAgent, self).__init__(config, envs, callback)
+        self.start_greedy = getattr(config, "start_greedy", None)
+        self.end_greedy = getattr(config, "end_greedy", None)
         self.e_greedy = self.start_greedy
         if (self.start_greedy is not None) and (self.end_greedy is not None):
             self.delta_egreedy = (self.start_greedy - self.end_greedy) / (config.decay_step_greedy / self.n_envs)
         else:
             self.delta_egreedy = None
 
-        self.start_noise = config.start_noise if hasattr(config, "start_noise") else None
-        self.end_noise = config.end_noise if hasattr(config, "end_noise") else None
+        self.start_noise = getattr(config, "start_noise", None)
+        self.end_noise = getattr(config, "end_noise", None)
         self.noise_scale = self.start_noise
         if (self.start_noise is not None) and (self.end_noise is not None):
             self.delta_noise = (self.start_noise - self.end_noise) / (config.running_steps / self.n_envs)
         else:
             self.delta_noise = None
-        self.actions_low = self.action_space.low if hasattr(self.action_space, "low") else None
-        self.actions_high = self.action_space.high if hasattr(self.action_space, "high") else None
+        self.actions_low = getattr(self.action_space, "low", None)
+        self.actions_high = getattr(self.action_space, "high", None)
 
         self.auxiliary_info_shape = None
         self.memory: Optional[DummyOffPolicyBuffer] = None
@@ -44,7 +46,7 @@ class OffPolicyAgent(Agent):
         self.batch_size = self.config.batch_size
 
     def _build_memory(self, auxiliary_info_shape=None):
-        self.atari = True if self.config.env_name == "Atari" else False
+        self.atari = self.config.env_name == "Atari"
         Buffer = DummyOffPolicyBuffer_Atari if self.atari else DummyOffPolicyBuffer
         input_buffer = dict(observation_space=self.observation_space,
                             action_space=self.action_space,

@@ -7,7 +7,7 @@ from operator import itemgetter
 from torch.nn.functional import one_hot
 from xuance.common import List, Optional, Union
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
-from xuance.torch import Module, Tensor
+from xuance.torch import Module, Tensor, BaseCallback
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.utils.distributions import Categorical
 from xuance.torch.policies import REGISTRY_Policy
@@ -24,8 +24,9 @@ class COMA_Agents(OnPolicyMARLAgents):
 
     def __init__(self,
                  config: Namespace,
-                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv]):
-        super(COMA_Agents, self).__init__(config, envs)
+                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv],
+                 callback: Optional[BaseCallback] = None):
+        super(COMA_Agents, self).__init__(config, envs, callback)
         self.start_greedy, self.end_greedy = config.start_greedy, config.end_greedy
         self.egreedy = self.start_greedy
         self.delta_egreedy = (self.start_greedy - self.end_greedy) / config.decay_step_greedy
@@ -36,7 +37,7 @@ class COMA_Agents(OnPolicyMARLAgents):
 
         self.policy = self._build_policy()  # build policy
         self.memory = self._build_memory()  # build memory
-        self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, self.policy)
+        self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, self.policy, self.callback)
         self.learner.egreedy = self.egreedy
 
     def _build_policy(self) -> Module:

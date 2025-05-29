@@ -1,20 +1,12 @@
-from argparse import Namespace
-from copy import deepcopy
-from operator import itemgetter
-
 import numpy as np
 import torch
+from argparse import Namespace
 from tqdm import tqdm
-
-from xuance.common import (
-    List,
-    MARL_OnPolicyBuffer,
-    MARL_OnPolicyBuffer_RNN,
-    Optional,
-    Union,
-)
+from copy import deepcopy
+from operator import itemgetter
+from xuance.common import List, MARL_OnPolicyBuffer, MARL_OnPolicyBuffer_RNN, Optional, Union
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
-from xuance.torch import Module
+from xuance.torch import Module, BaseCallback
 from xuance.torch.agents.base import MARLAgents
 
 
@@ -28,8 +20,9 @@ class OnPolicyMARLAgents(MARLAgents):
 
     def __init__(self,
                  config: Namespace,
-                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv]):
-        super(OnPolicyMARLAgents, self).__init__(config, envs)
+                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv],
+                 callback: Optional[BaseCallback] = None):
+        super(OnPolicyMARLAgents, self).__init__(config, envs, callback)
         self.on_policy = True
         self.continuous_control: bool = False
         self.n_epochs = config.n_epochs

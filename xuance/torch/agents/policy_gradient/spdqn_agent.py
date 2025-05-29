@@ -5,8 +5,9 @@ from tqdm import tqdm
 from copy import deepcopy
 from argparse import Namespace
 from gymnasium import spaces
+from xuance.common import Optional
 from xuance.environment.single_agent_env import Gym_Env
-from xuance.torch import Module
+from xuance.torch import Module, BaseCallback
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.policies import REGISTRY_Policy
 from xuance.torch.agents import Agent
@@ -23,8 +24,9 @@ class SPDQN_Agent(PDQN_Agent, Agent):
     """
     def __init__(self,
                  config: Namespace,
-                 envs: Gym_Env,):
-        Agent.__init__(self, config, envs)
+                 envs: Gym_Env,
+                 callback: Optional[BaseCallback] = None):
+        Agent.__init__(self, config, envs, callback)
         self.start_noise, self.end_noise = config.start_noise, config.end_noise
         self.noise_scale = config.start_noise
         self.delta_noise = (self.start_noise - self.end_noise) / (config.running_steps / self.n_envs)
@@ -58,7 +60,7 @@ class SPDQN_Agent(PDQN_Agent, Agent):
                                            n_envs=self.n_envs,
                                            buffer_size=config.buffer_size,
                                            batch_size=config.batch_size)
-        self.learner = self._build_learner(self.config, self.policy)
+        self.learner = self._build_learner(self.config, self.policy, self.callback)
 
         self.num_disact = self.action_space.spaces[0].n
         self.conact_sizes = np.array([self.action_space.spaces[i].shape[0] for i in range(1, self.num_disact + 1)])
