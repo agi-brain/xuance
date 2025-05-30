@@ -13,8 +13,9 @@ from torch.utils.tensorboard import SummaryWriter
 from torch.distributed import destroy_process_group
 from xuance.common import get_time_string, create_directory, RunningMeanStd, space2shape, EPS, Optional, Union
 from xuance.environment import DummyVecEnv, SubprocVecEnv
-from xuance.torch import REGISTRY_Representation, REGISTRY_Learners, Module, BaseCallback
+from xuance.torch import REGISTRY_Representation, REGISTRY_Learners, Module
 from xuance.torch.utils import nn, NormalizeFunctions, ActivationFunctions, init_distributed_mode
+from .callback import BaseCallback
 
 
 class Agent(ABC):

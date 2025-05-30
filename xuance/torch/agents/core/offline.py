@@ -2,8 +2,8 @@ import numpy as np
 from tqdm import tqdm
 from argparse import Namespace
 from xuance.common import Optional, DummyOffPolicyBuffer, OfflineBuffer_D4RL
-from xuance.torch import Module, BaseCallback
-from xuance.torch.agents.base import Agent
+from xuance.torch import Module
+from xuance.torch.agents.base import Agent, BaseCallback
 
 
 class OfflineAgent(Agent):

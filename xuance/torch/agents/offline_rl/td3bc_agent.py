@@ -4,7 +4,8 @@ from copy import deepcopy
 from argparse import Namespace
 from xuance.common import Union, Optional
 from xuance.environment import DummyVecEnv, SubprocVecEnv
-from xuance.torch import Module, REGISTRY_Learners, BaseCallback
+from xuance.torch import Module, REGISTRY_Learners
+from xuance.torch.agents import BaseCallback
 from xuance.torch.agents.core import OfflineAgent
 from xuance.torch.policies import REGISTRY_Policy
 from xuance.torch.learners import TD3_BC_Learner
@@ -29,7 +30,7 @@ class TD3_BC_Agent(OfflineAgent):
         super(TD3_BC_Agent, self).__init__(config, envs, callback)
         self.policy = self._build_policy()
         REGISTRY_Learners["TD3_BC_Learner"] = TD3_BC_Learner
-        self.learner = self._build_learner(self.config, self.policy, self.callback)  # build learner
+        self.learner = self._build_learner(self.config, self.policy)  # build learner
         self.dataset = None
 
     def load_dataset(self, dataset):

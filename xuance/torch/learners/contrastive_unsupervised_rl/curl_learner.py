@@ -2,7 +2,6 @@ import torch
 import torch.nn as nn
 from xuance.common import Optional
 from xuance.torch.learners import Learner
-from xuance.torch.utils import BaseCallback
 from argparse import Namespace
 try:
     from torchvision import transforms
@@ -35,9 +34,8 @@ class FrameStackTransform:
 class CURL_Learner(Learner):
     def __init__(self,
                  config: Namespace,
-                 policy: nn.Module,
-                 callback: Optional[BaseCallback] = None):
-        super(CURL_Learner, self).__init__(config, policy, callback)
+                 policy: nn.Module):
+        super(CURL_Learner, self).__init__(config, policy)
 
         self.temperature = config.temperature  #  temperature of InfoNCE Loss
         self.tau = config.tau  # moment update coefficient

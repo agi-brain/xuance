@@ -5,10 +5,10 @@ from copy import deepcopy
 from argparse import Namespace
 from xuance.common import Union, Optional
 from xuance.environment import DummyVecEnv, SubprocVecEnv
-from xuance.torch import Module, BaseCallback
+from xuance.torch import Module
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.policies import REGISTRY_Policy
-from xuance.torch.agents import Agent
+from xuance.torch.agents import Agent, BaseCallback
 from xuance.common import DummyOffPolicyBuffer, DummyOffPolicyBuffer_Atari
 
 
@@ -43,7 +43,7 @@ class NoisyDQN_Agent(Agent):
         self.atari = True if config.env_name == "Atari" else False
         Buffer = DummyOffPolicyBuffer_Atari if self.atari else DummyOffPolicyBuffer
         self.memory = Buffer(**input_buffer)
-        self.learner = self._build_learner(self.config, self.policy, self.callback)
+        self.learner = self._build_learner(self.config, self.policy)
 
     def _build_policy(self) -> Module:
         normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None

@@ -5,9 +5,9 @@ from argparse import Namespace
 from operator import itemgetter
 from xuance.common import Optional, List, Union, MARL_OffPolicyBuffer, MARL_OffPolicyBuffer_RNN
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
-from xuance.torch import Tensor, Module, BaseCallback
+from xuance.torch import Tensor, Module
 from xuance.torch.utils.distributions import Categorical
-from xuance.torch.agents.base import MARLAgents
+from xuance.torch.agents.base import MARLAgents, BaseCallback
 
 
 class OffPolicyMARLAgents(MARLAgents):

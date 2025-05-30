@@ -1,3 +1,4 @@
+from .base.callback import BaseCallback
 from .base import Agent, MARLAgents, RandomAgents
 from .core import OnPolicyAgent, OffPolicyAgent, OffPolicyMARLAgents, OnPolicyMARLAgents
 
@@ -108,7 +109,7 @@ REGISTRY_Agents = {
 }
 
 __all__ = [
-    "Agent", "MARLAgents", "RandomAgents",
+    "BaseCallback", "Agent", "MARLAgents", "RandomAgents",
 
     "OnPolicyAgent", "OffPolicyAgent", "OffPolicyMARLAgents", "OnPolicyMARLAgents",
 

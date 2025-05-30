@@ -5,10 +5,10 @@ from copy import deepcopy
 from argparse import Namespace
 from xuance.common import Union, Optional
 from xuance.environment import DummyVecEnv, SubprocVecEnv
-from xuance.torch import Module, BaseCallback
+from xuance.torch import Module
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.policies import REGISTRY_Policy
-from xuance.torch.agents import OffPolicyAgent
+from xuance.torch.agents import OffPolicyAgent, BaseCallback
 from xuance.common import RecurrentOffPolicyBuffer, EpisodeBuffer
 
 
@@ -33,7 +33,7 @@ class DRQN_Agent(OffPolicyAgent):
         self.policy = self._build_policy()  # build policy
         self.auxiliary_info_shape = {}
         self.memory = self._build_memory(auxiliary_info_shape=self.auxiliary_info_shape)  # build memory
-        self.learner = self._build_learner(self.config, self.policy, self.callback)  # build learner
+        self.learner = self._build_learner(self.config, self.policy)  # build learner
         self.lstm = True if config.rnn == "LSTM" else False
 
     def _build_memory(self, auxiliary_info_shape=None):

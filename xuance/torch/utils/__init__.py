@@ -20,7 +20,6 @@ from .operations import (init_distributed_mode, update_linear_decay, set_seed,
                          two_hot_encoder, two_hot_decoder, compute_stochastic_state, compute_lambda_values,
                          dotdict)
 from .value_norm import ValueNorm
-from .callback import BaseCallback
 
 ActivationFunctions = {
     "relu": nn.ReLU,

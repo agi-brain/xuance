@@ -3,7 +3,7 @@ from copy import deepcopy
 from argparse import Namespace
 from xuance.common import Union, Optional, PerOffPolicyBuffer
 from xuance.environment import DummyVecEnv, SubprocVecEnv
-from xuance.torch import BaseCallback
+from xuance.torch.agents import BaseCallback
 from xuance.torch.agents.qlearning_family import DQN_Agent
 
 
@@ -33,7 +33,7 @@ class PerDQN_Agent(DQN_Agent):
                                          buffer_size=config.buffer_size,
                                          batch_size=config.batch_size,
                                          alpha=config.PER_alpha)
-        self.learner = self._build_learner(self.config, self.policy, self.callback)
+        self.learner = self._build_learner(self.config, self.policy)
 
     def train_epochs(self, n_epochs=1):
         train_info = {}

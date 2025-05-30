@@ -2,12 +2,11 @@ import torch
 import torch.nn as nn
 from argparse import Namespace
 from xuance.common import Union, Optional
-from xuance.torch import REGISTRY_Policy, BaseCallback
-from xuance.torch.agents import OffPolicyAgent
+from xuance.torch import REGISTRY_Policy
+from xuance.torch.agents import OffPolicyAgent, BaseCallback
 from xuance.torch.learners.contrastive_unsupervised_rl.spr_learner import SPR_Learner
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.environment import DummyVecEnv, SubprocVecEnv
-from torchvision import transforms
 
 
 class SPR_Agent(OffPolicyAgent):
@@ -20,7 +19,7 @@ class SPR_Agent(OffPolicyAgent):
         self._init_exploration_params(config)
         self.policy = self._build_policy()
         self.memory = self._build_memory()
-        self.learner = self._build_learner(self.config, self.policy, callback)
+        self.learner = self._build_learner(self.config, self.policy)
 
     def _init_exploration_params(self, config: Namespace):
         self.e_greedy = config.start_greedy

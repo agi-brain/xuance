@@ -3,10 +3,10 @@ from argparse import Namespace
 from torch import nn
 from xuance.common import Union, Optional
 from xuance.environment import DummyVecEnv, SubprocVecEnv
-from xuance.torch import REGISTRY_Policy, BaseCallback
+from xuance.torch import REGISTRY_Policy
 from xuance.torch.learners import CURL_Learner
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
-from xuance.torch.agents import OffPolicyAgent
+from xuance.torch.agents import OffPolicyAgent, BaseCallback
 
 
 class CURL_Agent(OffPolicyAgent):
@@ -21,7 +21,7 @@ class CURL_Agent(OffPolicyAgent):
 
         self.policy = self._build_policy()
         self.memory = self._build_memory()
-        self.learner = self._build_learner(self.config, self.policy, self.callback)
+        self.learner = self._build_learner(self.config, self.policy)
 
     def _init_exploration_params(self, config: Namespace):
 

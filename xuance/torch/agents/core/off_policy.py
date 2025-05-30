@@ -4,8 +4,8 @@ from copy import deepcopy
 from argparse import Namespace
 from xuance.common import Optional, Union, DummyOffPolicyBuffer, DummyOffPolicyBuffer_Atari
 from xuance.environment import DummyVecEnv, SubprocVecEnv
-from xuance.torch import Module, BaseCallback
-from xuance.torch.agents.base import Agent
+from xuance.torch import Module
+from xuance.torch.agents.base import Agent, BaseCallback
 
 
 class OffPolicyAgent(Agent):

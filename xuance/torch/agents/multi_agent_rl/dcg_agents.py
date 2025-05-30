@@ -5,9 +5,9 @@ from argparse import Namespace
 from operator import itemgetter
 from xuance.common import List, Optional, Union
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
-from xuance.torch.utils import NormalizeFunctions, ActivationFunctions, BaseCallback
+from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.policies import REGISTRY_Policy
-from xuance.torch.agents import OffPolicyMARLAgents
+from xuance.torch.agents import OffPolicyMARLAgents, BaseCallback
 
 
 class DCG_Agents(OffPolicyMARLAgents):
@@ -30,7 +30,7 @@ class DCG_Agents(OffPolicyMARLAgents):
         # build policy, optimizers, schedulers
         self.policy = self._build_policy()  # build policy
         self.memory = self._build_memory()  # build memory
-        self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, self.policy, self.callback)
+        self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, self.policy)
 
     def _build_learner(self, *args):
         from xuance.torch.learners.multi_agent_rl.dcg_learner import DCG_Learner

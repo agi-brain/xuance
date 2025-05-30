@@ -10,8 +10,8 @@ from xuance.common import Dict, List, Optional, Union, MARL_OnPolicyBuffer_RNN, 
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.torch import Module, REGISTRY_Policy, ModuleDict
 from xuance.torch.communications import IC3NetComm
-from xuance.torch.utils import ActivationFunctions, NormalizeFunctions, BaseCallback
-from xuance.torch.agents.base import MARLAgents
+from xuance.torch.utils import ActivationFunctions, NormalizeFunctions
+from xuance.torch.agents.base import MARLAgents, BaseCallback
 
 
 class IC3Net_Agents(MARLAgents):
@@ -29,7 +29,7 @@ class IC3Net_Agents(MARLAgents):
         self.batch_size = self.buffer_size // self.n_minibatch
         self.memory = self._build_memory()
         self.policy = self._build_policy()
-        self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, self.policy, self.callback)
+        self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, self.policy)
 
     def _build_memory(self):
         """Build replay buffer for models training

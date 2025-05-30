@@ -6,8 +6,8 @@ from copy import deepcopy
 from operator import itemgetter
 from xuance.common import List, MARL_OnPolicyBuffer, MARL_OnPolicyBuffer_RNN, Optional, Union
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
-from xuance.torch import Module, BaseCallback
-from xuance.torch.agents.base import MARLAgents
+from xuance.torch import Module
+from xuance.torch.agents.base import MARLAgents, BaseCallback
 
 
 class OnPolicyMARLAgents(MARLAgents):

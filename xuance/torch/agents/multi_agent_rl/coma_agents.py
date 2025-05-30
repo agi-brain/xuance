@@ -7,11 +7,11 @@ from operator import itemgetter
 from torch.nn.functional import one_hot
 from xuance.common import List, Optional, Union
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
-from xuance.torch import Module, Tensor, BaseCallback
+from xuance.torch import Module, Tensor
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.utils.distributions import Categorical
 from xuance.torch.policies import REGISTRY_Policy
-from xuance.torch.agents import OnPolicyMARLAgents
+from xuance.torch.agents import OnPolicyMARLAgents, BaseCallback
 
 
 class COMA_Agents(OnPolicyMARLAgents):
@@ -37,7 +37,7 @@ class COMA_Agents(OnPolicyMARLAgents):
 
         self.policy = self._build_policy()  # build policy
         self.memory = self._build_memory()  # build memory
-        self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, self.policy, self.callback)
+        self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, self.policy)
         self.learner.egreedy = self.egreedy
 
     def _build_policy(self) -> Module:

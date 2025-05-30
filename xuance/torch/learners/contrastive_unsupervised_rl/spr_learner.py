@@ -33,8 +33,8 @@ class FrameStackTransform:
 
 class SPR_Learner(Learner):
 
-    def __init__(self, config, policy, temperature=0.1, tau=0.99, repr_lr=1e-4, prediction_steps=3, callback=None):
-        super().__init__(config, policy, callback)
+    def __init__(self, config, policy, temperature=0.1, tau=0.99, repr_lr=1e-4, prediction_steps=3):
+        super().__init__(config, policy)
         self.temperature = temperature
         self.tau = tau
         self.prediction_steps = prediction_steps

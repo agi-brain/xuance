@@ -4,10 +4,10 @@ from argparse import Namespace
 from xuance.common import Optional
 from xuance.common import Union
 from xuance.environment import DummyVecEnv, SubprocVecEnv
-from xuance.torch import Module, BaseCallback
+from xuance.torch import Module
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
 from xuance.torch.policies import REGISTRY_Policy
-from xuance.torch.agents import OffPolicyAgent
+from xuance.torch.agents import OffPolicyAgent, BaseCallback
 
 
 class DDPG_Agent(OffPolicyAgent):
@@ -29,7 +29,7 @@ class DDPG_Agent(OffPolicyAgent):
 
         self.policy = self._build_policy()  # build policy
         self.memory = self._build_memory()  # build memory
-        self.learner = self._build_learner(self.config, self.policy, self.callback)  # build learner
+        self.learner = self._build_learner(self.config, self.policy)  # build learner
 
     def _build_policy(self) -> Module:
         normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None

@@ -14,9 +14,10 @@ from torch.utils.tensorboard import SummaryWriter
 from torch.distributed import destroy_process_group
 from xuance.common import get_time_string, create_directory, space2shape, Optional, List, Dict, Union
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
-from xuance.torch import ModuleDict, REGISTRY_Representation, REGISTRY_Learners, Module, BaseCallback
+from xuance.torch import ModuleDict, REGISTRY_Representation, REGISTRY_Learners, Module
 from xuance.torch.learners import learner
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions, init_distributed_mode
+from .callback import BaseCallback
 
 
 class MARLAgents(ABC):
