@@ -92,7 +92,7 @@ class DRQN_Agent(OffPolicyAgent):
             obs = self._process_observation(obs)
             policy_out = self.action(obs, self.egreedy, self.rnn_hidden)
             acts, self.rnn_hidden = policy_out['actions'], policy_out['rnn_hidden_next']
-            next_obs, rewards, terminals, trunctions, infos = self.envs.step(acts)
+            next_obs, rewards, terminals, truncations, infos = self.envs.step(acts)
 
             if (self.current_step > self.start_training) and (self.current_step % self.training_frequency == 0):
                 # training
@@ -103,8 +103,8 @@ class DRQN_Agent(OffPolicyAgent):
             for i in range(self.n_envs):
                 episode_data[i].put(
                     [self._process_observation(obs[i]), acts[i], self._process_reward(rewards[i]), terminals[i]])
-                if terminals[i] or trunctions[i]:
-                    if self.atari and (~trunctions[i]):
+                if terminals[i] or truncations[i]:
+                    if self.atari and (~truncations[i]):
                         pass
                     else:
                         self.rnn_hidden = self.policy.init_hidden_item(self.rnn_hidden, i)
@@ -144,7 +144,7 @@ class DRQN_Agent(OffPolicyAgent):
             obs = self._process_observation(obs)
             policy_out = self.action(obs, egreedy=0.0, rnn_hidden=rnn_hidden)
             acts, rnn_hidden = policy_out['actions'], policy_out['rnn_hidden_next']
-            next_obs, rewards, terminals, trunctions, infos = test_envs.step(acts)
+            next_obs, rewards, terminals, truncations, infos = test_envs.step(acts)
             if self.config.render_mode == "rgb_array" and self.render:
                 images = test_envs.render(self.config.render_mode)
                 for idx, img in enumerate(images):
@@ -152,8 +152,8 @@ class DRQN_Agent(OffPolicyAgent):
 
             obs = deepcopy(next_obs)
             for i in range(num_envs):
-                if terminals[i] or trunctions[i]:
-                    if self.atari and (~trunctions[i]):
+                if terminals[i] or truncations[i]:
+                    if self.atari and (~truncations[i]):
                         pass
                     else:
                         obs[i] = infos[i]["reset_obs"]

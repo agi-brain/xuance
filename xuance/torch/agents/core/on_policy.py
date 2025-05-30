@@ -119,7 +119,7 @@ class OnPolicyAgent(Agent):
             obs = self._process_observation(obs)
             policy_out = self.action(obs, return_dists=False, return_logpi=False)
             acts, vals = policy_out['actions'], policy_out['values']
-            next_obs, rewards, terminals, trunctions, infos = self.envs.step(acts)
+            next_obs, rewards, terminals, truncations, infos = self.envs.step(acts)
             aux_info = self.get_aux_info()
             self.memory.store(obs, acts, self._process_reward(rewards), vals, terminals, aux_info)
             if self.memory.full:
@@ -137,10 +137,10 @@ class OnPolicyAgent(Agent):
             self.returns = self.gamma * self.returns + rewards
             obs = deepcopy(next_obs)
             for i in range(self.n_envs):
-                if terminals[i] or trunctions[i]:
+                if terminals[i] or truncations[i]:
                     self.ret_rms.update(self.returns[i:i + 1])
                     self.returns[i] = 0.0
-                    if self.atari and (~trunctions[i]):
+                    if self.atari and (~truncations[i]):
                         pass
                     else:
                         if terminals[i]:
@@ -178,7 +178,7 @@ class OnPolicyAgent(Agent):
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
             policy_out = self.action(obs)
-            next_obs, rewards, terminals, trunctions, infos = test_envs.step(policy_out['actions'])
+            next_obs, rewards, terminals, truncations, infos = test_envs.step(policy_out['actions'])
             if self.config.render_mode == "rgb_array" and self.render:
                 images = test_envs.render(self.config.render_mode)
                 for idx, img in enumerate(images):
@@ -186,8 +186,8 @@ class OnPolicyAgent(Agent):
 
             obs = deepcopy(next_obs)
             for i in range(num_envs):
-                if terminals[i] or trunctions[i]:
-                    if self.atari and (~trunctions[i]):
+                if terminals[i] or truncations[i]:
+                    if self.atari and (~truncations[i]):
                         pass
                     else:
                         obs[i] = infos[i]["reset_obs"]

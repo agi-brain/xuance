@@ -125,13 +125,13 @@ class OffPolicyAgent(Agent):
         return_info = {}
         obs = self.envs.buf_obs
         for _ in tqdm(range(train_steps)):
-            step_info = {}
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
             policy_out = self.action(obs, test_mode=False)
             acts = policy_out['actions']
-            next_obs, rewards, terminals, trunctions, infos = self.envs.step(acts)
+            next_obs, rewards, terminals, truncations, infos = self.envs.step(acts)
 
+            self.callback.on_train_step(self.current_step, obs, acts, next_obs, rewards, terminals, truncations, infos)
             self.memory.store(obs, acts, self._process_reward(rewards), terminals, self._process_observation(next_obs))
             if self.current_step > self.start_training and self.current_step % self.training_frequency == 0:
                 train_info = self.train_epochs(n_epochs=self.n_epochs)
@@ -141,8 +141,8 @@ class OffPolicyAgent(Agent):
             self.returns = self.gamma * self.returns + rewards
             obs = deepcopy(next_obs)
             for i in range(self.n_envs):
-                if terminals[i] or trunctions[i]:
-                    if self.atari and (~trunctions[i]):
+                if terminals[i] or truncations[i]:
+                    if self.atari and (~truncations[i]):
                         pass
                     else:
                         obs[i] = infos[i]["reset_obs"]
@@ -150,16 +150,11 @@ class OffPolicyAgent(Agent):
                         self.ret_rms.update(self.returns[i:i + 1])
                         self.returns[i] = 0.0
                         self.current_episode[i] += 1
-                        if self.use_wandb:
-                            step_info[f"Episode-Steps/rank_{self.rank}/env-{i}"] = infos[i]["episode_step"]
-                            step_info[f"Train-Episode-Rewards/rank_{self.rank}/env-{i}"] = infos[i]["episode_score"]
-                        else:
-                            step_info[f"Episode-Steps/rank_{self.rank}"] = {f"env-{i}": infos[i]["episode_step"]}
-                            step_info[f"Train-Episode-Rewards/rank_{self.rank}"] = {
-                                f"env-{i}": infos[i]["episode_score"]}
-                        self.log_infos(step_info, self.current_step)
-                        return_info.update(step_info)
+                        episode_info = self.callback.on_train_episode_info(infos, i, self.rank, self.use_wandb)
+                        self.log_infos(episode_info, self.current_step)
+                        return_info.update(episode_info)
 
+            self.callback.on_train_step_end(self.current_step, infos, return_info)
             self.current_step += self.n_envs
             self._update_explore_factor()
         return return_info
@@ -168,7 +163,7 @@ class OffPolicyAgent(Agent):
         test_envs = env_fn()
         num_envs = test_envs.num_envs
         videos, episode_videos = [[] for _ in range(num_envs)], []
-        current_episode, scores, best_score = 0, [], -np.inf
+        current_episode, current_step, scores, best_score = 0, 0, [], -np.inf
         obs, infos = test_envs.reset()
         if self.config.render_mode == "rgb_array" and self.render:
             images = test_envs.render(self.config.render_mode)
@@ -179,7 +174,11 @@ class OffPolicyAgent(Agent):
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
             policy_out = self.action(obs, test_mode=True)
-            next_obs, rewards, terminals, trunctions, infos = test_envs.step(policy_out['actions'])
+            next_obs, rewards, terminals, truncations, infos = test_envs.step(policy_out['actions'])
+            self.callback.on_test_step(obs, rewards, terminals, truncations, infos,
+                                       current_train_step=self.current_step,
+                                       current_step=current_step,
+                                       current_episode=current_episode)
             if self.config.render_mode == "rgb_array" and self.render:
                 images = test_envs.render(self.config.render_mode)
                 for idx, img in enumerate(images):
@@ -187,8 +186,8 @@ class OffPolicyAgent(Agent):
 
             obs = deepcopy(next_obs)
             for i in range(num_envs):
-                if terminals[i] or trunctions[i]:
-                    if self.atari and (~trunctions[i]):
+                if terminals[i] or truncations[i]:
+                    if self.atari and (~truncations[i]):
                         pass
                     else:
                         obs[i] = infos[i]["reset_obs"]
@@ -199,6 +198,7 @@ class OffPolicyAgent(Agent):
                             episode_videos = videos[i].copy()
                         if self.config.test_mode:
                             print("Episode: %d, Score: %.2f" % (current_episode, infos[i]["episode_score"]))
+            current_step += num_envs
 
         if self.config.render_mode == "rgb_array" and self.render:
             # time, height, width, channel -> time, channel, height, width
@@ -213,6 +213,8 @@ class OffPolicyAgent(Agent):
             "Test-Episode-Rewards/Std-Score": np.std(scores)
         }
         self.log_infos(test_info, self.current_step)
+        self.callback.on_test_end(current_step=current_step, current_episode=current_episode,
+                                  scores=scores, best_score=best_score)
 
         test_envs.close()
 

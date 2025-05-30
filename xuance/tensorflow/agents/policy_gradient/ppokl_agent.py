@@ -72,7 +72,7 @@ class PPOKL_Agent(OnPolicyAgent):
             obs = self._process_observation(obs)
             policy_out = self.action(obs, return_dists=True, return_logpi=False)
             acts, vals = policy_out['actions'], policy_out['values']
-            next_obs, rewards, terminals, trunctions, infos = self.envs.step(acts)
+            next_obs, rewards, terminals, truncations, infos = self.envs.step(acts)
             aux_info = self.get_aux_info(policy_out)
             self.memory.store(obs, acts, self._process_reward(rewards), vals, terminals, aux_info)
             if self.memory.full:
@@ -89,10 +89,10 @@ class PPOKL_Agent(OnPolicyAgent):
             self.returns = self.gamma * self.returns + rewards
             obs = deepcopy(next_obs)
             for i in range(self.n_envs):
-                if terminals[i] or trunctions[i]:
+                if terminals[i] or truncations[i]:
                     self.ret_rms.update(self.returns[i:i + 1])
                     self.returns[i] = 0.0
-                    if self.atari and (~trunctions[i]):
+                    if self.atari and (~truncations[i]):
                         pass
                     else:
                         if terminals[i]:

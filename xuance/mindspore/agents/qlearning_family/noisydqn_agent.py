@@ -81,7 +81,7 @@ class NoisyDQN_Agent(Agent):
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
             acts = self.action(obs)
-            next_obs, rewards, terminals, trunctions, infos = self.envs.step(acts)
+            next_obs, rewards, terminals, truncations, infos = self.envs.step(acts)
 
             self.memory.store(obs, acts, self._process_reward(rewards), terminals, self._process_observation(next_obs))
             if self.current_step > self.start_training and self.current_step % self.training_frequency == 0:
@@ -90,8 +90,8 @@ class NoisyDQN_Agent(Agent):
 
             obs = deepcopy(next_obs)
             for i in range(self.n_envs):
-                if terminals[i] or trunctions[i]:
-                    if self.atari and (~trunctions[i]):
+                if terminals[i] or truncations[i]:
+                    if self.atari and (~truncations[i]):
                         pass
                     else:
                         obs[i] = infos[i]["reset_obs"]
@@ -127,7 +127,7 @@ class NoisyDQN_Agent(Agent):
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
             acts = self.action(obs)
-            next_obs, rewards, terminals, trunctions, infos = test_envs.step(acts)
+            next_obs, rewards, terminals, truncations, infos = test_envs.step(acts)
             if self.config.render_mode == "rgb_array" and self.render:
                 images = test_envs.render(self.config.render_mode)
                 for idx, img in enumerate(images):
@@ -135,8 +135,8 @@ class NoisyDQN_Agent(Agent):
 
             obs = deepcopy(next_obs)
             for i in range(num_envs):
-                if terminals[i] or trunctions[i]:
-                    if self.atari and (~trunctions[i]):
+                if terminals[i] or truncations[i]:
+                    if self.atari and (~truncations[i]):
                         pass
                     else:
                         obs[i] = infos[i]["reset_obs"]
