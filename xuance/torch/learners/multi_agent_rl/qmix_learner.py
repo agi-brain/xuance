@@ -16,11 +16,12 @@ class QMIX_Learner(LearnerMAS):
                  config: Namespace,
                  model_keys: List[str],
                  agent_keys: List[str],
-                 policy: nn.Module):
+                 policy: nn.Module,
+                 callback):
         self.gamma = config.gamma
         self.sync_frequency = config.sync_frequency
         self.mse_loss = nn.MSELoss()
-        super(QMIX_Learner, self).__init__(config, model_keys, agent_keys, policy)
+        super(QMIX_Learner, self).__init__(config, model_keys, agent_keys, policy, callback)
         self.optimizer = torch.optim.Adam(self.policy.parameters_model, config.learning_rate, eps=1e-5)
         self.scheduler = torch.optim.lr_scheduler.LinearLR(self.optimizer,
                                                            start_factor=1.0,

@@ -16,12 +16,13 @@ class COMA_Learner(IAC_Learner):
                  config: Namespace,
                  model_keys: List[str],
                  agent_keys: List[str],
-                 policy: nn.Module):
+                 policy: nn.Module,
+                 callback):
         config.use_value_clip, config.value_clip_range = False, None
         config.use_huber_loss, config.huber_delta = False, None
         config.use_value_norm = False
         config.vf_coef, config.ent_coef = None, None
-        super(COMA_Learner, self).__init__(config, model_keys, agent_keys, policy)
+        super(COMA_Learner, self).__init__(config, model_keys, agent_keys, policy, callback)
         self.sync_frequency = config.sync_frequency
         self.n_actions = {k: self.policy.action_space[k].n for k in self.model_keys}
         self.mse_loss = nn.MSELoss()

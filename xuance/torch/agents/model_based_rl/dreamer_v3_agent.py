@@ -56,7 +56,7 @@ class DreamerV3Agent(OffPolicyAgent):
         REGISTRY_Policy["DreamerV3Policy"] = DreamerV3Policy
         self.policy = self._build_policy()
         self.memory = self._build_memory()
-        self.learner = self._build_learner(self.config, self.policy, self.act_shape)
+        self.learner = self._build_learner(self.config, self.policy, self.act_shape, self.callback)
 
         # train_player & train_states; make sure train & test to be independent
         self.train_player: PlayerDV3 = self.model.player

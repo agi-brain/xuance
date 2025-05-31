@@ -15,8 +15,9 @@ class MASACDIS_Learner(ISAC_Learner):
                  config: Namespace,
                  model_keys: List[str],
                  agent_keys: List[str],
-                 policy: nn.Module):
-        super(MASACDIS_Learner, self).__init__(config, model_keys, agent_keys, policy)
+                 policy: nn.Module,
+                 callback):
+        super(MASACDIS_Learner, self).__init__(config, model_keys, agent_keys, policy, callback)
 
     def update(self, sample):
         self.iterations += 1

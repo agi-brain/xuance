@@ -14,8 +14,9 @@ class IQL_Learner(LearnerMAS):
                  config: Namespace,
                  model_keys: List[str],
                  agent_keys: List[str],
-                 policy: nn.Module):
-        super(IQL_Learner, self).__init__(config, model_keys, agent_keys, policy)
+                 policy: nn.Module,
+                 callback):
+        super(IQL_Learner, self).__init__(config, model_keys, agent_keys, policy, callback)
         self.optimizer = {key: torch.optim.Adam(self.policy.parameters_model[key], config.learning_rate, eps=1e-5)
                           for key in self.model_keys}
         self.scheduler = {key: torch.optim.lr_scheduler.LinearLR(self.optimizer[key],

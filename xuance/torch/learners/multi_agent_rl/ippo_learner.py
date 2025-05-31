@@ -16,8 +16,9 @@ class IPPO_Learner(IAC_Learner):
                  config: Namespace,
                  model_keys: List[str],
                  agent_keys: List[str],
-                 policy: nn.Module):
-        super(IPPO_Learner, self).__init__(config, model_keys, agent_keys, policy)
+                 policy: nn.Module,
+                 callback):
+        super(IPPO_Learner, self).__init__(config, model_keys, agent_keys, policy, callback)
         self.lr = config.learning_rate
         self.end_factor_lr_decay = config.end_factor_lr_decay
         self.gamma = config.gamma

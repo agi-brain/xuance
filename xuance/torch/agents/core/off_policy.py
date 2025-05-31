@@ -122,7 +122,7 @@ class OffPolicyAgent(Agent):
         return train_info
 
     def train(self, train_steps):
-        return_info = {}
+        train_info, episode_info = {}, {}
         obs = self.envs.buf_obs
         for _ in tqdm(range(train_steps)):
             self.obs_rms.update(obs)
@@ -134,9 +134,9 @@ class OffPolicyAgent(Agent):
             self.callback.on_train_step(self.current_step, obs, acts, next_obs, rewards, terminals, truncations, infos)
             self.memory.store(obs, acts, self._process_reward(rewards), terminals, self._process_observation(next_obs))
             if self.current_step > self.start_training and self.current_step % self.training_frequency == 0:
-                train_info = self.train_epochs(n_epochs=self.n_epochs)
-                self.log_infos(train_info, self.current_step)
-                return_info.update(train_info)
+                update_info = self.train_epochs(n_epochs=self.n_epochs)
+                self.log_infos(update_info, self.current_step)
+                train_info.update(update_info)
 
             self.returns = self.gamma * self.returns + rewards
             obs = deepcopy(next_obs)
@@ -150,14 +150,21 @@ class OffPolicyAgent(Agent):
                         self.ret_rms.update(self.returns[i:i + 1])
                         self.returns[i] = 0.0
                         self.current_episode[i] += 1
-                        episode_info = self.callback.on_train_episode_info(infos, i, self.rank, self.use_wandb)
+                        if self.use_wandb:
+                            episode_info[f"Episode-Steps/rank_{self.rank}/env-{i}"] = infos[i]["episode_step"]
+                            episode_info[f"Train-Episode-Rewards/rank_{self.rank}/env-{i}"] = infos[i]["episode_score"]
+                        else:
+                            episode_info[f"Episode-Steps/rank_{self.rank}"] = {f"env-{i}": infos[i]["episode_step"]}
+                            episode_info[f"Train-Episode-Rewards/rank_{self.rank}"] = {
+                                f"env-{i}": infos[i]["episode_score"]}
                         self.log_infos(episode_info, self.current_step)
-                        return_info.update(episode_info)
+                        train_info.update(episode_info)
+                        self.callback.on_train_episode_info(infos, i, self.rank, self.use_wandb)
 
-            self.callback.on_train_step_end(self.current_step, infos, return_info)
+            self.callback.on_train_step_end(self.current_step, infos, train_info)
             self.current_step += self.n_envs
             self._update_explore_factor()
-        return return_info
+        return train_info
 
     def test(self, env_fn, test_episodes: int) -> list:
         test_envs = env_fn()

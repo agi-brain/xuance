@@ -12,8 +12,9 @@ from argparse import Namespace
 class TD3_Learner(Learner):
     def __init__(self,
                  config: Namespace,
-                 policy: nn.Module):
-        super(TD3_Learner, self).__init__(config, policy)
+                 policy: nn.Module,
+                 callback):
+        super(TD3_Learner, self).__init__(config, policy, callback)
         self.optimizer = {
             'actor': torch.optim.Adam(self.policy.actor_parameters, self.config.learning_rate_actor),
             'critic': torch.optim.Adam(self.policy.critic_parameters, self.config.learning_rate_critic)}

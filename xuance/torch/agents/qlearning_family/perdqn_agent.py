@@ -33,7 +33,7 @@ class PerDQN_Agent(DQN_Agent):
                                          buffer_size=config.buffer_size,
                                          batch_size=config.batch_size,
                                          alpha=config.PER_alpha)
-        self.learner = self._build_learner(self.config, self.policy)
+        self.learner = self._build_learner(self.config, self.policy, self.callback)
 
     def train_epochs(self, n_epochs=1):
         train_info = {}

@@ -16,8 +16,9 @@ class MAPPO_Clip_Learner(IPPO_Learner):
                  config: Namespace,
                  model_keys: List[str],
                  agent_keys: List[str],
-                 policy: nn.Module):
-        super(MAPPO_Clip_Learner, self).__init__(config, model_keys, agent_keys, policy)
+                 policy: nn.Module,
+                 callback):
+        super(MAPPO_Clip_Learner, self).__init__(config, model_keys, agent_keys, policy, callback)
 
     def update(self, sample):
         self.iterations += 1

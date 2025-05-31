@@ -22,7 +22,7 @@ class NPG_Agent(OnPolicyAgent):
         super(NPG_Agent, self).__init__(config, envs, callback)
         self.memory = self._build_memory()  # build memory
         self.policy = self._build_policy()  # build policy
-        self.learner = self._build_learner(self.config, self.policy)  # build learner
+        self.learner = self._build_learner(self.config, self.policy, self.callback)  # build learner
 
     def _build_policy(self) -> Module:
         """Builds the policy network based on the configuration.

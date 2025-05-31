@@ -9,7 +9,7 @@ class NPG_Learner(Learner):
                  config: Namespace,
                  policy: nn.Module
                  ):
-        super(NPG_Learner, self).__init__(config, policy)
+        super(NPG_Learner, self).__init__(config, policy, callback)
         self.actor_optimizer = torch.optim.Adam(self.policy.actor.parameters(), config.learning_rate, eps=1e-5)
         self.critic_optimizer = torch.optim.Adam(self.policy.critic.parameters(), config.learning_rate, eps=1e-5)
         self.actor_scheduler = torch.optim.lr_scheduler.LinearLR(self.actor_optimizer,

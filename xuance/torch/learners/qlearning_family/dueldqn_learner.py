@@ -12,8 +12,9 @@ from argparse import Namespace
 class DuelDQN_Learner(Learner):
     def __init__(self,
                  config: Namespace,
-                 policy: nn.Module):
-        super(DuelDQN_Learner, self).__init__(config, policy)
+                 policy: nn.Module,
+                 callback):
+        super(DuelDQN_Learner, self).__init__(config, policy, callback)
         self.optimizer = torch.optim.Adam(self.policy.parameters(), self.config.learning_rate, eps=1e-5)
         self.scheduler = torch.optim.lr_scheduler.LinearLR(self.optimizer,
                                                            start_factor=1.0,

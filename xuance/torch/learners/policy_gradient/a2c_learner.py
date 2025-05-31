@@ -11,8 +11,9 @@ from xuance.torch.learners import Learner
 class A2C_Learner(Learner):
     def __init__(self,
                  config: Namespace,
-                 policy: nn.Module):
-        super(A2C_Learner, self).__init__(config, policy)
+                 policy: nn.Module,
+                 callback):
+        super(A2C_Learner, self).__init__(config, policy, callback)
         self.optimizer = torch.optim.Adam(self.policy.parameters(), config.learning_rate, eps=1e-5)
         self.scheduler = torch.optim.lr_scheduler.LinearLR(self.optimizer,
                                                            start_factor=1.0,

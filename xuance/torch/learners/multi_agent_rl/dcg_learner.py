@@ -20,8 +20,9 @@ class DCG_Learner(LearnerMAS):
                  config: Namespace,
                  model_keys: List[str],
                  agent_keys: List[str],
-                 policy: nn.Module):
-        super(DCG_Learner, self).__init__(config, model_keys, agent_keys, policy)
+                 policy: nn.Module,
+                 callback):
+        super(DCG_Learner, self).__init__(config, model_keys, agent_keys, policy, callback)
         self.optimizer = torch.optim.Adam(self.policy.parameters_model, self.learning_rate, eps=1e-5)
         self.scheduler = torch.optim.lr_scheduler.LinearLR(self.optimizer,
                                                            start_factor=1.0,

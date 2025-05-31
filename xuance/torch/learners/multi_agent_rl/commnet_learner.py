@@ -13,8 +13,9 @@ class CommNet_Learner(LearnerMAS):
                  config: Namespace,
                  model_keys: List[str],
                  agent_keys: List[str],
-                 policy: nn.Module):
-        super(CommNet_Learner, self).__init__(config, model_keys, agent_keys, policy)
+                 policy: nn.Module,
+                 callback):
+        super(CommNet_Learner, self).__init__(config, model_keys, agent_keys, policy, callback)
         self.use_global_state = self.config.use_global_state
         self.build_optimizer()
         self.use_value_clip, self.value_clip_range = config.use_value_clip, config.value_clip_range

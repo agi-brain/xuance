@@ -19,7 +19,7 @@ class SPR_Agent(OffPolicyAgent):
         self._init_exploration_params(config)
         self.policy = self._build_policy()
         self.memory = self._build_memory()
-        self.learner = self._build_learner(self.config, self.policy)
+        self.learner = self._build_learner(self.config, self.policy, self.callback)
 
     def _init_exploration_params(self, config: Namespace):
         self.e_greedy = config.start_greedy

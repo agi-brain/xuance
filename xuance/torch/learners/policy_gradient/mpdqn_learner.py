@@ -12,8 +12,9 @@ from argparse import Namespace
 class MPDQN_Learner(Learner):
     def __init__(self,
                  config: Namespace,
-                 policy: nn.Module):
-        super(MPDQN_Learner, self).__init__(config, policy)
+                 policy: nn.Module,
+                 callback):
+        super(MPDQN_Learner, self).__init__(config, policy, callback)
         conactor_optimizer = torch.optim.Adam(self.policy.conactor.parameters(), self.config.learning_rate)
         qnetwork_optimizer = torch.optim.Adam(self.policy.qnetwork.parameters(), self.config.learning_rate)
         self.optimizers = [conactor_optimizer, qnetwork_optimizer]

@@ -17,8 +17,9 @@ class VDAC_Learner(IAC_Learner):
                  config: Namespace,
                  model_keys: List[str],
                  agent_keys: List[str],
-                 policy: nn.Module):
-        super(VDAC_Learner, self).__init__(config, model_keys, agent_keys, policy)
+                 policy: nn.Module,
+                 callback):
+        super(VDAC_Learner, self).__init__(config, model_keys, agent_keys, policy, callback)
         self.use_global_state = True if self.policy.mixer == "QMIX" else False
 
     def update(self, sample):

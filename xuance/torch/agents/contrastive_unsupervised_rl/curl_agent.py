@@ -21,7 +21,7 @@ class CURL_Agent(OffPolicyAgent):
 
         self.policy = self._build_policy()
         self.memory = self._build_memory()
-        self.learner = self._build_learner(self.config, self.policy)
+        self.learner = self._build_learner(self.config, self.policy, self.callback)
 
     def _init_exploration_params(self, config: Namespace):
 

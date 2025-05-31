@@ -29,7 +29,7 @@ class TD3_BC_Agent(OfflineAgent):
         super(TD3_BC_Agent, self).__init__(config, envs, callback)
         self.policy = self._build_policy()
         REGISTRY_Learners["TD3_BC_Learner"] = TD3_BC_Learner
-        self.learner = self._build_learner(self.config, self.policy)  # build learner
+        self.learner = self._build_learner(self.config, self.policy, self.callback)  # build learner
         self.dataset = None
 
     def load_dataset(self, dataset):

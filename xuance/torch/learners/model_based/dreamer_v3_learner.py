@@ -13,8 +13,9 @@ class DreamerV3_Learner(Learner):
     def __init__(self,
                  config: Namespace,
                  policy: DreamerV3Policy,
-                 action_shape: Union[int, Tuple[int, ...]]):
-        super(DreamerV3_Learner, self).__init__(config, policy)
+                 action_shape: Union[int, Tuple[int, ...]],
+                 callback):
+        super(DreamerV3_Learner, self).__init__(config, policy, callback)
         self.policy = policy  # for code completion
         self.action_shape = action_shape
 
