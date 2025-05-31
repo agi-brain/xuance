@@ -69,8 +69,8 @@ class DQN_Learner(Learner):
                 "predictQ": predictQ.mean().item(),
                 "learning_rate": lr,
             })
-        info = self.callback.on_update_end(info=info, iterations=self.iterations,
-                                           evaluate_Q_value=evalQ,
-                                           current_Q_value=predictQ,
-                                           target_Q_value=targetQ)
+        info.update(self.callback.on_update_end(info=info, iterations=self.iterations,
+                                                evaluate_Q_value=evalQ,
+                                                current_Q_value=predictQ,
+                                                target_Q_value=targetQ))
         return info

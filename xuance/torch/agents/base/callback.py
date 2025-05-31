@@ -14,17 +14,15 @@ class BaseCallback(ABC):
             iterations (int): Number of update iterations that have performed.
             **kwargs: Additional optional keyword arguments.
         """
-        info = {}
-        return info
+        return {}
 
-    def on_update_end(self, info, **kwargs):
+    def on_update_end(self, **kwargs):
         """Called after the policy update is completed.
 
         Args:
-            info: Information of the update of the policy.
             **kwargs: Optional keyword arguments.
         """
-        return info
+        return {}
 
     def on_train_step(self, current_step, obs, acts, next_obs, rewards, terminals, truncations, infos, **kwargs):
         """Called after each training step (i.e., after collecting one transition).
@@ -42,13 +40,13 @@ class BaseCallback(ABC):
         """
         return
 
-    def on_train_step_end(self, current_step, infos, return_info):
+    def on_train_step_end(self, current_step, envs_info, train_info):
         """Called after a training step is completed (includes update, logging, etc.).
 
         Args:
             current_step (int): The current global training step.
-            infos: Information collected during the step.
-            return_info: Return values from the step or update.
+            envs_info: Environment information.
+            train_info: Training information.
         """
         return
 
