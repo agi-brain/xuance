@@ -34,8 +34,8 @@ class DQN_Learner(Learner):
         rew_batch = torch.as_tensor(samples['rewards'], device=self.device)
         ter_batch = torch.as_tensor(samples['terminals'], dtype=torch.float, device=self.device)
         info = self.callback.on_update_start(self.iterations,
-                                             obs=obs_batch, act=act_batch, next_obs=next_batch,
-                                             rew=rew_batch, termination=ter_batch)
+                                             policy=self.policy, obs=obs_batch, act=act_batch,
+                                             next_obs=next_batch, rew=rew_batch, termination=ter_batch)
 
         _, _, evalQ = self.policy(obs_batch)
         _, _, targetQ = self.policy.target(next_batch)
@@ -69,8 +69,7 @@ class DQN_Learner(Learner):
                 "predictQ": predictQ.mean().item(),
                 "learning_rate": lr,
             })
-        info.update(self.callback.on_update_end(info=info, iterations=self.iterations,
-                                                evaluate_Q_value=evalQ,
-                                                current_Q_value=predictQ,
-                                                target_Q_value=targetQ))
+        info.update(self.callback.on_update_end(self.iterations,
+                                                policy=self.policy, info=info,
+                                                evalQ=evalQ, predictQ=predictQ, targetQ=targetQ))
         return info

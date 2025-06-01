@@ -16,10 +16,11 @@ class BaseCallback(ABC):
         """
         return {}
 
-    def on_update_end(self, **kwargs):
+    def on_update_end(self, iterations, **kwargs):
         """Called after the policy update is completed.
 
         Args:
+            iterations (int): Number of update iterations that have performed.
             **kwargs: Optional keyword arguments.
         """
         return {}
