@@ -71,5 +71,5 @@ class DuelDQN_Learner(Learner):
             })
         info.update(self.callback.on_update_end(self.iterations,
                                                 policy=self.policy, info=info,
-                                                evalQ=evalQ, predictQ=predictQ, targetQ=targetQ))
+                                                evalQ=evalQ, predictQ=predictQ, targetQ=targetQ, loss=loss))
         return info

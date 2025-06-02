@@ -71,5 +71,6 @@ class QRDQN_Learner(Learner):
         info.update(self.callback.on_update_end(self.iterations,
                                                 policy=self.policy, info=info,
                                                 evalZ=evalZ, targetA=targetA, targetZ=targetZ,
-                                                current_quantile=current_quantile, target_quantile=target_quantile))
+                                                current_quantile=current_quantile, target_quantile=target_quantile,
+                                                loss=loss))
         return info

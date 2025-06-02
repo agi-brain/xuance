@@ -75,5 +75,6 @@ class PerDQN_Learner(Learner):
             })
         info.update(self.callback.on_update_end(self.iterations,
                                                 policy=self.policy, info=info,
-                                                evalQ=evalQ, predictQ=predictQ, targetQ=targetQ))
+                                                evalQ=evalQ, predictQ=predictQ, targetQ=targetQ, td_error=td_error,
+                                                loss=loss))
         return np.abs(td_error.cpu().detach().numpy()), info

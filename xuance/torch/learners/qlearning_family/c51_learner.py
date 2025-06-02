@@ -76,5 +76,5 @@ class C51_Learner(Learner):
                                                 evalZ=evalZ, targetA=targetA, targetZ=targetZ,
                                                 current_dist=current_dist, target_dist=target_dist,
                                                 current_supports=current_supports, next_supports=next_supports,
-                                                projection=projection))
+                                                projection=projection, loss=loss))
         return info

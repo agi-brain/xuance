@@ -105,6 +105,9 @@ class CURL_Learner(Learner):
         next_obs = torch.as_tensor(samples['obs_next'], device=self.device)
         rew = torch.as_tensor(samples['rewards'], device=self.device)
         done = torch.as_tensor(samples['terminals'], dtype=torch.float, device=self.device)
+        info = self.callback.on_update_start(self.iterations,
+                                             policy=self.policy, obs=obs, act=act,
+                                             next_obs=next_obs, rew=rew, termination=done)
 
         # --------------------- update CURL---------------------
         curl_loss = self._compute_contrastive_loss(obs)
@@ -131,22 +134,25 @@ class CURL_Learner(Learner):
         if self.scheduler is not None:
             self.scheduler.step()
 
-
         if self.iterations % self.sync_frequency == 0:
             self.policy.copy_target()
-
 
         lr = self.q_optim.state_dict()['param_groups'][0]['lr']
 
 
-        info = {
+        info.update({
             "curl_loss": curl_loss.item(),
             "q_loss": q_loss.item(),
             "predictQ": predictQ.mean().item(),
             "learning_rate": lr,
-        }
+        })
         # print(info)
         if self.distributed_training:
-            info = {f"{k}/rank_{self.rank}": v for k, v in info.items()}
+            info.update({f"{k}/rank_{self.rank}": v for k, v in info.items()})
+
+        info.update(self.callback.on_update_end(self.iterations,
+                                                policy=self.policy, info=info,
+                                                curl_loss=curl_loss, q_loss=q_loss,
+                                                evalQ=evalQ, predictQ=predictQ, targetQ=targetQ))
 
         return info

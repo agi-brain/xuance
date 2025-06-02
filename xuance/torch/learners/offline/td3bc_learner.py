@@ -31,12 +31,14 @@ class TD3_BC_Learner(Learner):
 
     def update(self, **samples):
         self.iterations += 1
-        info = {}
         obs_batch = torch.as_tensor(samples['obs'], device=self.device)
         act_batch = torch.as_tensor(samples['actions'], device=self.device)
         next_batch = torch.as_tensor(samples['obs_next'], device=self.device)
         rew_batch = torch.as_tensor(samples['rewards'], device=self.device)
         ter_batch = torch.as_tensor(samples['terminals'], dtype=torch.float, device=self.device)
+        info = self.callback.on_update_start(self.iterations,
+                                             policy=self.policy, obs=obs_batch, act=act_batch,
+                                             next_obs=next_batch, rew=rew_batch, termination=ter_batch)
 
         # critic update
         action_q_A, action_q_B = self.policy.Qaction(obs_batch, act_batch)
@@ -54,11 +56,12 @@ class TD3_BC_Learner(Learner):
             self.scheduler['critic'].step()
 
         # actor update
+        pi, policy_q, p_loss, lambda_ = None, None, None, None
         if self.iterations % self.actor_update_delay == 0:
             pi = self.policy.actor(obs_batch)
             policy_q = self.policy.Qpolicy(obs_batch)
-            lmbda = self.alpha / policy_q.abs().mean().detach()
-            p_loss = -lmbda * policy_q.mean() + self.mse_loss(pi, act_batch)
+            lambda_ = self.alpha / policy_q.abs().mean().detach()
+            p_loss = -lambda_ * policy_q.mean() + self.mse_loss(pi, act_batch)
             self.optimizer['actor'].zero_grad()
             p_loss.backward()
             if self.use_grad_clip:
@@ -89,6 +92,12 @@ class TD3_BC_Learner(Learner):
                 "actor_lr": actor_lr,
                 "critic_lr": critic_lr
             })
+
+        info.update(self.callback.on_update_end(self.iterations,
+                                                policy=self.policy, info=info,
+                                                action_q_A=action_q_A, action_q_B=action_q_B,
+                                                next_q=next_q, target_q=target_q, q_loss=q_loss,
+                                                pi=pi, policy_q=policy_q, p_loss=p_loss, lambda_=lambda_))
 
         return info
 

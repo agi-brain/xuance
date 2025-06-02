@@ -68,6 +68,11 @@ class DreamerV2_Learner(Learner):
         acts = torch.cat((torch.zeros_like(acts[:1]), acts[:-1]), 0)  # bug fixed ones_like -> zeros_like
         cont = 1 - terms
 
+        info = self.callback.on_update_start(self.gradient_step,
+                                             policy=self.policy, obs=obs, act=acts,
+                                             is_first=is_first, rew=rews, termination=terms, truncation=truncs,
+                                             cont=cont)
+
         po, pr, pc, priors_logits, posteriors_logits, recurrent_states, posteriors =\
             self.policy.model_forward(obs, acts, is_first)
 
@@ -135,7 +140,7 @@ class DreamerV2_Learner(Learner):
         # if self.gradient_step % 100 == 0:
         #     print(f'gradient_step: {self.gradient_step}')
 
-        info = {
+        info.update({
             "model_loss/model_loss": model_loss.item(),
             "model_loss/obs_loss": observation_loss.mean().item(),
             "model_loss/rew_loss": reward_loss.mean().item(),
@@ -150,9 +155,21 @@ class DreamerV2_Learner(Learner):
             "critic_loss/lambda_values": lambda_values.mean().item(),
 
             "step/gradient_step": self.gradient_step
-        }
+        })
+
         if self.config.harmony:
-            info.update({'harmonizer/s1': self.policy.harmonizer_s1.get_harmony().item()})
-            info.update({'harmonizer/s2': self.policy.harmonizer_s2.get_harmony().item()})
-            info.update({'harmonizer/s3': self.policy.harmonizer_s3.get_harmony().item()})
+            info.update({'harmonizer/s1': self.policy.harmonizer_s1.get_harmony().item(),
+                         'harmonizer/s2': self.policy.harmonizer_s2.get_harmony().item(),
+                         'harmonizer/s3': self.policy.harmonizer_s3.get_harmony().item()})
+
+        info.update(self.callback.on_update_end(self.gradient_step,
+                                                policy=self.policy, info=info,
+                                                po=po, pr=pr, pc=pc, priors_logits=priors_logits,
+                                                posteriors_logits=posteriors_logits, recurrent_states=recurrent_states,
+                                                posteriors=posteriors, observation_loss=observation_loss,
+                                                reward_loss=reward_loss, lhs=lhs, rhs=rhs,
+                                                free_nats=free_nats, loss_lhs=loss_lhs, loss_rhs=loss_rhs,
+                                                kl_loss=kl_loss, continue_loss=continue_loss, model_loss=model_loss,
+                                                out=out, actor_loss=actor_loss, critic_loss=critic_loss))
+
         return info
