@@ -27,8 +27,10 @@ class PG_Learner(Learner):
         obs_batch = torch.as_tensor(samples['obs'], device=self.device)
         act_batch = torch.as_tensor(samples['actions'], device=self.device)
         ret_batch = torch.as_tensor(samples['returns'], device=self.device)
+        info = self.callback.on_update_start(self.iterations,
+                                             policy=self.policy, obs=obs_batch, act=act_batch, returns=ret_batch)
 
-        _, a_dist, _ = self.policy(obs_batch)
+        outputs, a_dist, _ = self.policy(obs_batch)
         log_prob = a_dist.log_prob(act_batch)
 
         a_loss = -(ret_batch * log_prob).mean()
@@ -47,16 +49,19 @@ class PG_Learner(Learner):
         lr = self.optimizer.state_dict()['param_groups'][0]['lr']
 
         if self.distributed_training:
-            info = {
+            info.update({
                 f"actor-loss/rank_{self.rank}": a_loss.item(),
                 f"entropy/rank_{self.rank}": e_loss.item(),
                 f"learning_rate/rank_{self.rank}": lr
-            }
+            })
         else:
-            info = {
+            info.update({
                 "actor-loss": a_loss.item(),
                 "entropy": e_loss.item(),
                 "learning_rate": lr
-            }
-
+            })
+        info.update(self.callback.on_update_end(self.iterations,
+                                                policy=self.policy, info=info, rep_output=outputs,
+                                                a_dist=a_dist, log_prob=log_prob,
+                                                a_loss=a_loss, e_loss=e_loss, loss=loss))
         return info

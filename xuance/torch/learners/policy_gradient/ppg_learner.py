@@ -35,6 +35,9 @@ class PPG_Learner(Learner):
         adv_batch = torch.as_tensor(samples['advantages'], device=self.device)
         old_dist = merge_distributions(samples['aux_batch']['old_dist'])
         old_logp_batch = old_dist.log_prob(act_batch).detach()
+        info = self.callback.on_update_start(self.iterations,
+                                             policy=self.policy, obs=obs_batch, act=act_batch, advantages=adv_batch,
+                                             old_dist=old_dist, old_logp=old_logp_batch)
 
         outputs, a_dist, _, _ = self.policy(obs_batch)
         log_prob = a_dist.log_prob(act_batch)
@@ -57,26 +60,31 @@ class PPG_Learner(Learner):
         cr = ((ratio < 1 - self.clip_range).sum() + (ratio > 1 + self.clip_range).sum()) / ratio.shape[0]
 
         if self.distributed_training:
-            info = {
+            info.update({
                 f"actor-loss/rank_{self.rank}": a_loss.item(),
                 f"entropy/rank_{self.rank}": e_loss.item(),
                 f"learning_rate/rank_{self.rank}": lr,
                 f"clip_ratio/rank_{self.rank}": cr,
-            }
+            })
         else:
-            info = {
+            info.update({
                 "actor-loss": a_loss.item(),
                 "entropy": e_loss.item(),
                 "learning_rate": lr,
                 "clip_ratio": cr,
-            }
-
+            })
+        info.update(self.callback.on_update_end(self.iterations, method="update_policy",
+                                                policy=self.policy, info=info, rep_output=outputs,
+                                                a_dist=a_dist, log_prob=log_prob,
+                                                ratio=ratio, surrogate1=surrogate1, surrogate2=surrogate2,
+                                                a_loss=a_loss, e_loss=e_loss, loss=loss))
         return info
 
     def update_critic(self, **samples):
         self.value_iterations += 1
         obs_batch = torch.as_tensor(samples['obs'], device=self.device)
         ret_batch = torch.as_tensor(samples['returns'], device=self.device)
+        info = self.callback.on_update_start(self.iterations, policy=self.policy, obs=obs_batch, returns=ret_batch)
 
         _, _, v_pred, _ = self.policy(obs_batch)
         loss = self.mse_loss(v_pred, ret_batch)
@@ -87,15 +95,20 @@ class PPG_Learner(Learner):
         self.optimizer.step()
 
         if self.distributed_training:
-            info = {f"critic-loss/rank_{self.rank}": loss.item()}
+            info.update({f"critic-loss/rank_{self.rank}": loss.item()})
         else:
-            info = {"critic-loss": loss.item()}
+            info.update({"critic-loss": loss.item()})
+        info.update(self.callback.on_update_end(self.iterations, method="update_critic",
+                                                policy=self.policy, info=info, v_pred=v_pred,
+                                                loss=loss))
         return info
 
     def update_auxiliary(self, **samples):
         obs_batch = torch.as_tensor(samples['obs'], device=self.device)
         ret_batch = torch.as_tensor(samples['returns'], device=self.device)
         old_dist = merge_distributions(samples['aux_batch']['old_dist'])
+        info = self.callback.on_update_start(self.iterations,
+                                             policy=self.policy, obs=obs_batch, returns=ret_batch, old_dist=old_dist)
 
         outputs, a_dist, v, aux_v = self.policy(obs_batch)
         aux_loss = self.mse_loss(v.detach(), aux_v)
@@ -109,9 +122,19 @@ class PPG_Learner(Learner):
         self.optimizer.step()
 
         if self.distributed_training:
-            info = {f"kl-loss/rank_{self.rank}": loss.item()}
+            info.update({f"aux-loss/rank_{self.rank}": aux_loss.item(),
+                         f"kl-loss/rank_{self.rank}": kl_loss.item(),
+                         f"value-loss/rank_{self.rank}": value_loss.item(),
+                         f"loss/rank_{self.rank}": loss.item()})
         else:
-            info = {"kl-loss": loss.item()}
+            info.update({"aux-loss": aux_loss.item(),
+                         "kl-loss": kl_loss.item(),
+                         "value-loss": value_loss.item(),
+                         "loss": loss.item()})
+        info.update(self.callback.on_update_end(self.iterations, method="update_auxiliary",
+                                                policy=self.policy, info=info, rep_output=outputs,
+                                                a_dist=a_dist, v_pred=v, v_aux=aux_v,
+                                                aux_loss=aux_loss, kl_loss=kl_loss, value_loss=value_loss, loss=loss))
         return info
 
     def update(self, *args):

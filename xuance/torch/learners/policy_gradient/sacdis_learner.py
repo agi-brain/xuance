@@ -45,6 +45,9 @@ class SACDIS_Learner(Learner):
         next_batch = torch.as_tensor(samples['obs_next'], device=self.device)
         rew_batch = torch.as_tensor(samples['rewards'], device=self.device).unsqueeze(-1)
         ter_batch = torch.as_tensor(samples['terminals'], dtype=torch.float, device=self.device).reshape([-1, 1])
+        info = self.callback.on_update_start(self.iterations,
+                                             policy=self.policy, obs=obs_batch, act=act_batch,
+                                             next_obs=next_batch, rew=rew_batch, termination=ter_batch)
 
         # actor update
         action_prob, log_pi, policy_q_1, policy_q_2 = self.policy.Qpolicy(obs_batch)
@@ -91,21 +94,21 @@ class SACDIS_Learner(Learner):
         critic_lr = self.optimizer['critic'].state_dict()['param_groups'][0]['lr']
 
         if self.distributed_training:
-            info = {
+            info.update({
                 f"Qloss/rank_{self.rank}": q_loss.item(),
                 f"Ploss/rank_{self.rank}": p_loss.item(),
                 f"Qvalue/rank_{self.rank}": policy_q.mean().item(),
                 f"actor_lr/rank_{self.rank}": actor_lr,
                 f"critic_lr/rank_{self.rank}": critic_lr,
-            }
+            })
         else:
-            info = {
+            info.update({
                 "Qloss": q_loss.item(),
                 "Ploss": p_loss.item(),
                 "Qvalue": policy_q.mean().item(),
                 "actor_lr": actor_lr,
                 "critic_lr": critic_lr,
-            }
+            })
         if self.use_automatic_entropy_tuning:
             if self.distributed_training:
                 info.update({f"alpha_loss/rank_{self.rank}": alpha_loss.item(),
@@ -114,4 +117,13 @@ class SACDIS_Learner(Learner):
                 info.update({"alpha_loss": alpha_loss.item(),
                              "alpha": self.alpha.item()})
 
+        info.update(self.callback.on_update_end(self.iterations,
+                                                policy=self.policy, info=info,
+                                                action_prob=action_prob, log_pi=log_pi,
+                                                policy_q_1=policy_q_1, policy_q_2=policy_q_2,
+                                                policy_q=policy_q, p_loss=p_loss,
+                                                action_q_1=action_q_1, action_q_2=action_q_2,
+                                                action_prob_next=action_prob_next, log_pi_next=log_pi_next,
+                                                target_q=target_q, backup=backup, q_loss=q_loss,
+                                                alpha_loss=alpha_loss, alpha=self.alpha))
         return info

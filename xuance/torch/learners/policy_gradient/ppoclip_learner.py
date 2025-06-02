@@ -32,6 +32,9 @@ class PPOCLIP_Learner(Learner):
         ret_batch = torch.as_tensor(samples['returns'], device=self.device)
         adv_batch = torch.as_tensor(samples['advantages'], device=self.device)
         old_logp_batch = torch.as_tensor(samples['aux_batch']['old_logp'], device=self.device)
+        info = self.callback.on_update_start(self.iterations,
+                                             policy=self.policy, obs=obs_batch, act=act_batch,
+                                             returns=ret_batch, advantages=adv_batch, old_logp=old_logp_batch)
 
         outputs, a_dist, v_pred = self.policy(obs_batch)
         log_prob = a_dist.log_prob(act_batch)
@@ -58,22 +61,26 @@ class PPOCLIP_Learner(Learner):
         cr = ((ratio < 1 - self.clip_range).sum() + (ratio > 1 + self.clip_range).sum()) / ratio.shape[0]
         
         if self.distributed_training:
-            info = {
+            info.update({
                 f"actor_loss/rank_{self.rank}": a_loss.item(),
                 f"critic_loss/rank_{self.rank}": c_loss.item(),
                 f"entropy/rank_{self.rank}": e_loss.item(),
                 f"learning_rate/rank_{self.rank}": lr,
                 f"predict_value/rank_{self.rank}": v_pred.mean().item(),
                 f"clip_ratio/rank_{self.rank}": cr
-            }
+            })
         else:
-            info = {
+            info.update({
                 "actor_loss": a_loss.item(),
                 "critic_loss": c_loss.item(),
                 "entropy": e_loss.item(),
                 "learning_rate": lr,
                 "predict_value": v_pred.mean().item(),
                 "clip_ratio": cr
-            }
-
+            })
+        info.update(self.callback.on_update_end(self.iterations,
+                                                policy=self.policy, info=info, rep_output=outputs,
+                                                a_dist=a_dist, v_pred=v_pred, log_prob=log_prob,
+                                                ratio=ratio, surrogate1=surrogate1, surrogate2=surrogate2,
+                                                a_loss=a_loss, c_loss=c_loss, e_loss=e_loss, loss=loss))
         return info

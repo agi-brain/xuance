@@ -35,8 +35,11 @@ class PPOKL_Learner(Learner):
         ret_batch = torch.as_tensor(samples['returns'], device=self.device)
         adv_batch = torch.as_tensor(samples['advantages'], device=self.device)
         old_dists = samples['aux_batch']['old_dist']
+        info = self.callback.on_update_start(self.iterations,
+                                             policy=self.policy, obs=obs_batch, act=act_batch,
+                                             returns=ret_batch, advantages=adv_batch, old_dists=old_dists)
 
-        _, a_dist, v_pred = self.policy(obs_batch)
+        outputs, a_dist, v_pred = self.policy(obs_batch)
         log_prob = a_dist.log_prob(act_batch)
         old_dist = merge_distributions(old_dists)
         kl = a_dist.kl_divergence(old_dist).mean()
@@ -64,23 +67,26 @@ class PPOKL_Learner(Learner):
         lr = self.optimizer.state_dict()['param_groups'][0]['lr']
 
         if self.distributed_training:
-            info = {
+            info.update({
                 f"actor-loss/rank_{self.rank}": a_loss.item(),
                 f"critic-loss/rank_{self.rank}": c_loss.item(),
                 f"entropy/rank_{self.rank}": e_loss.item(),
                 f"learning_rate/rank_{self.rank}": lr,
                 f"kl/rank_{self.rank}": kl.item(),
                 f"predict_value/rank_{self.rank}": v_pred.mean().item()
-            }
+            })
         else:
-            info = {
+            info.update({
                 "actor-loss": a_loss.item(),
                 "critic-loss": c_loss.item(),
                 "entropy": e_loss.item(),
                 "learning_rate": lr,
                 "kl": kl.item(),
                 "predict_value": v_pred.mean().item()
-            }
-
+            })
+        info.update(self.callback.on_update_end(self.iterations,
+                                                policy=self.policy, info=info, rep_output=outputs,
+                                                a_dist=a_dist, v_pred=v_pred, log_prob=log_prob, kl=kl, ratio=ratio,
+                                                a_loss=a_loss, c_loss=c_loss, e_loss=e_loss, loss=loss))
         return info
 
