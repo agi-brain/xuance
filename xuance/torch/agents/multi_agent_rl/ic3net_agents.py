@@ -29,7 +29,7 @@ class IC3Net_Agents(MARLAgents):
         self.batch_size = self.buffer_size // self.n_minibatch
         self.memory = self._build_memory()
         self.policy = self._build_policy()
-        self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, self.policy)
+        self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, self.policy, self.callback)
 
     def _build_memory(self):
         """Build replay buffer for models training
