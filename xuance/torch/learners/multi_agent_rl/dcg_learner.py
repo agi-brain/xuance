@@ -111,7 +111,6 @@ class DCG_Learner(LearnerMAS):
 
     def update(self, sample):
         self.iterations += 1
-        info = {}
 
         # prepare training data
         sample_Tensor = self.build_training_data(sample=sample,
@@ -143,6 +142,11 @@ class DCG_Learner(LearnerMAS):
             if self.use_actions_mask:
                 avail_actions_next = torch.stack(itemgetter(*self.agent_keys)(avail_actions_next), dim=-2)
 
+        info = self.callback.on_update_start(self.iterations, method="update",
+                                             policy=self.policy, sample_Tensor=sample_Tensor,
+                                             rewards_tot=rewards_tot, terminals_tot=terminals_tot, actions=actions,
+                                             avail_actions_next=avail_actions_next)
+
         _, hidden_states = self.policy.get_hidden_states(batch_size, obs, use_target_net=False)
         q_tot_eval = self.q_dcg(hidden_states, actions, states=state, use_target_net=False)
 
@@ -165,19 +169,27 @@ class DCG_Learner(LearnerMAS):
 
         lr = self.optimizer.state_dict()['param_groups'][0]['lr']
 
-        info = {
+        info.update({
             "learning_rate": lr,
             "loss_Q": loss.item(),
             "predictQ": q_tot_eval.mean().item()
-        }
+        })
 
         if self.iterations % self.sync_frequency == 0:
             self.policy.copy_target()
+
+        info.update(self.callback.on_update_end(self.iterations, method="update",
+                                                policy=self.policy, info=info,
+                                                hidden_states=hidden_states, q_tot_eval=q_tot_eval,
+                                                hidden_states_next=hidden_states_next,
+                                                action_next_greedy=action_next_greedy,
+                                                hidden_states_target=hidden_states_target,
+                                                q_tot_next=q_tot_next, q_tot_target=q_tot_target, loss=loss))
+
         return info
 
     def update_rnn(self, sample):
         self.iterations += 1
-        info = {}
 
         # prepare training data
         sample_Tensor = self.build_training_data(sample=sample,
@@ -209,6 +221,12 @@ class DCG_Learner(LearnerMAS):
             actions = torch.stack(itemgetter(*self.agent_keys)(actions), dim=-1)
             if self.use_actions_mask:
                 avail_actions = torch.stack(itemgetter(*self.agent_keys)(avail_actions), dim=-2)
+
+        info = self.callback.on_update_start(self.iterations, method="update_rnn",
+                                             policy=self.policy, sample_Tensor=sample_Tensor,
+                                             bs_rnn=bs_rnn, rewards_tot=rewards_tot, terminals_tot=terminals_tot,
+                                             actions=actions, avail_actions=avail_actions)
+
 
         rnn_hidden = {k: self.policy.representation[k].init_hidden(bs_rnn) for k in self.model_keys}
         _, hidden_states = self.policy.get_hidden_states(batch_size, obs, rnn_hidden, use_target_net=False)
@@ -244,12 +262,21 @@ class DCG_Learner(LearnerMAS):
 
         lr = self.optimizer.state_dict()['param_groups'][0]['lr']
 
-        info = {
+        info.update({
             "learning_rate": lr,
             "loss_Q": loss.item(),
             "predictQ": q_tot_eval.mean().item()
-        }
+        })
 
         if self.iterations % self.sync_frequency == 0:
             self.policy.copy_target()
+
+        info.update(self.callback.on_update_end(self.iterations, method="update_rnn",
+                                                policy=self.policy, info=info,
+                                                hidden_states=hidden_states, q_tot_eval=q_tot_eval,
+                                                hidden_states_next=hidden_states_next,
+                                                action_next_greedy=action_next_greedy,
+                                                hidden_states_target=hidden_states_tar,
+                                                q_tot_next=q_tot_next, q_tot_target=q_tot_target, loss=loss))
+
         return info

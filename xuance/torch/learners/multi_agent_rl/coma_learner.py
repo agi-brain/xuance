@@ -62,7 +62,8 @@ class COMA_Learner(IAC_Learner):
 
         bs = batch_size * self.n_agents if self.use_parameter_sharing else batch_size
 
-        info = self.callback.on_update_start(self.iterations, policy=self.policy, sample_Tensor=sample_Tensor)
+        info = self.callback.on_update_start(self.iterations, method="update",
+                                             policy=self.policy, sample_Tensor=sample_Tensor, bs=bs)
 
         # feedforward
         _, pi_probs = self.policy(observation=obs, agent_ids=IDs, avail_actions=avail_actions, epsilon=epsilon)
@@ -101,12 +102,12 @@ class COMA_Learner(IAC_Learner):
             td_error = (q_taken - returns[key].detach()) * mask_values
             loss_c.append((td_error ** 2).sum() / mask_values.sum())
 
-            info.update(self.callback.on_update_agent_wise(self.iterations, key, info=info,
+            info.update(self.callback.on_update_agent_wise(self.iterations, key, info=info, method="update",
                                                            mask_values=mask_values, pi_probs=pi_probs,
                                                            baseline=baseline, pi_taken=pi_taken,
                                                            q_taken=q_taken, log_pi_taken=log_pi_taken,
                                                            advantages=advantages, loss_a=loss_a,
-                                                           td_error=td_error, loss_c=loss_c))
+                                                           td_error=td_error))
 
         # update critic
         loss_critic = sum(loss_c)
@@ -144,7 +145,8 @@ class COMA_Learner(IAC_Learner):
             "advantage": advantages.mean().item(),
         })
 
-        info.update(self.callback.on_update_end(self.iterations, policy=self.policy, info=info,
+        info.update(self.callback.on_update_end(self.iterations, method="update",
+                                                policy=self.policy, info=info,
                                                 loss_critic=loss_critic, loss_coma=loss_coma))
 
         return info
@@ -173,8 +175,9 @@ class COMA_Learner(IAC_Learner):
         else:
             IDs = torch.eye(self.n_agents).unsqueeze(0).unsqueeze(0).repeat(batch_size, seq_len, 1, 1).to(self.device)
 
-        info = self.callback.on_update_start(self.iterations, policy=self.policy, sample_Tensor=sample_Tensor,
-                                             filled=filled, IDs=IDs)
+        info = self.callback.on_update_start(self.iterations, method="update_rnn",
+                                             policy=self.policy, sample_Tensor=sample_Tensor,
+                                             bs_rnn=bs_rnn, filled=filled, IDs=IDs)
 
         rnn_hidden_actor = {k: self.policy.actor_representation[k].init_hidden(bs_rnn) for k in self.model_keys}
         rnn_hidden_critic = {k: self.policy.critic_representation[k].init_hidden(bs_rnn) for k in self.model_keys}
@@ -210,12 +213,12 @@ class COMA_Learner(IAC_Learner):
             td_error = (q_taken - returns[key].detach()) * mask_values
             loss_c.append((td_error ** 2).sum() / mask_values.sum())
 
-            info.update(self.callback.on_update_agent_wise(self.iterations, key, info=info,
+            info.update(self.callback.on_update_agent_wise(self.iterations, key, info=info, method="update_rnn",
                                                            mask_values=mask_values, pi_probs=pi_probs,
                                                            baseline=baseline, pi_taken=pi_taken,
                                                            q_taken=q_taken, log_pi_taken=log_pi_taken,
                                                            advantages=advantages, loss_a=loss_a,
-                                                           td_error=td_error, loss_c=loss_c))
+                                                           td_error=td_error))
 
         # update critic
         loss_critic = sum(loss_c)
@@ -253,7 +256,8 @@ class COMA_Learner(IAC_Learner):
             "advantage": advantages.mean().item(),
         })
 
-        info.update(self.callback.on_update_end(self.iterations, policy=self.policy, info=info,
+        info.update(self.callback.on_update_end(self.iterations, method="update_rnn",
+                                                policy=self.policy, info=info,
                                                 loss_critic=loss_critic, loss_coma=loss_coma))
 
         return info
