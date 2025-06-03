@@ -45,7 +45,6 @@ class COMA_Learner(IAC_Learner):
 
     def update(self, sample, epsilon=0.0):
         self.iterations += 1
-        info = {}
 
         # prepare training data
         sample_Tensor = self.build_training_data(sample=sample,
@@ -62,6 +61,8 @@ class COMA_Learner(IAC_Learner):
         IDs = sample_Tensor['agent_ids']
 
         bs = batch_size * self.n_agents if self.use_parameter_sharing else batch_size
+
+        info = self.callback.on_update_start(self.iterations, policy=self.policy, sample_Tensor=sample_Tensor)
 
         # feedforward
         _, pi_probs = self.policy(observation=obs, agent_ids=IDs, avail_actions=avail_actions, epsilon=epsilon)
@@ -100,6 +101,13 @@ class COMA_Learner(IAC_Learner):
             td_error = (q_taken - returns[key].detach()) * mask_values
             loss_c.append((td_error ** 2).sum() / mask_values.sum())
 
+            info.update(self.callback.on_update_agent_wise(self.iterations, key, info=info,
+                                                           mask_values=mask_values, pi_probs=pi_probs,
+                                                           baseline=baseline, pi_taken=pi_taken,
+                                                           q_taken=q_taken, log_pi_taken=log_pi_taken,
+                                                           advantages=advantages, loss_a=loss_a,
+                                                           td_error=td_error, loss_c=loss_c))
+
         # update critic
         loss_critic = sum(loss_c)
         self.optimizer['critic'].zero_grad()
@@ -128,19 +136,21 @@ class COMA_Learner(IAC_Learner):
         learning_rate_actor = self.optimizer['actor'].state_dict()['param_groups'][0]['lr']
         learning_rate_critic = self.optimizer['critic'].state_dict()['param_groups'][0]['lr']
 
-        info = {
+        info.update({
             "learning_rate_actor": learning_rate_actor,
             "learning_rate_critic": learning_rate_critic,
             "actor_loss": loss_coma.item(),
             "critic_loss": loss_critic.item(),
             "advantage": advantages.mean().item(),
-        }
+        })
+
+        info.update(self.callback.on_update_end(self.iterations, policy=self.policy, info=info,
+                                                loss_critic=loss_critic, loss_coma=loss_coma))
 
         return info
 
     def update_rnn(self, sample, epsilon=0.0):
         self.iterations += 1
-        info = {}
 
         sample_Tensor = self.build_training_data(sample=sample,
                                                  use_parameter_sharing=self.use_parameter_sharing,
@@ -162,6 +172,9 @@ class COMA_Learner(IAC_Learner):
             filled = filled.unsqueeze(1).expand(batch_size, self.n_agents, seq_len).reshape(bs_rnn, seq_len)
         else:
             IDs = torch.eye(self.n_agents).unsqueeze(0).unsqueeze(0).repeat(batch_size, seq_len, 1, 1).to(self.device)
+
+        info = self.callback.on_update_start(self.iterations, policy=self.policy, sample_Tensor=sample_Tensor,
+                                             filled=filled, IDs=IDs)
 
         rnn_hidden_actor = {k: self.policy.actor_representation[k].init_hidden(bs_rnn) for k in self.model_keys}
         rnn_hidden_critic = {k: self.policy.critic_representation[k].init_hidden(bs_rnn) for k in self.model_keys}
@@ -197,6 +210,13 @@ class COMA_Learner(IAC_Learner):
             td_error = (q_taken - returns[key].detach()) * mask_values
             loss_c.append((td_error ** 2).sum() / mask_values.sum())
 
+            info.update(self.callback.on_update_agent_wise(self.iterations, key, info=info,
+                                                           mask_values=mask_values, pi_probs=pi_probs,
+                                                           baseline=baseline, pi_taken=pi_taken,
+                                                           q_taken=q_taken, log_pi_taken=log_pi_taken,
+                                                           advantages=advantages, loss_a=loss_a,
+                                                           td_error=td_error, loss_c=loss_c))
+
         # update critic
         loss_critic = sum(loss_c)
         self.optimizer['critic'].zero_grad()
@@ -225,12 +245,15 @@ class COMA_Learner(IAC_Learner):
         learning_rate_actor = self.optimizer['actor'].state_dict()['param_groups'][0]['lr']
         learning_rate_critic = self.optimizer['critic'].state_dict()['param_groups'][0]['lr']
 
-        info = {
+        info.update({
             "learning_rate_actor": learning_rate_actor,
             "learning_rate_critic": learning_rate_critic,
             "actor_loss": loss_coma.item(),
             "critic_loss": loss_critic.item(),
             "advantage": advantages.mean().item(),
-        }
+        })
+
+        info.update(self.callback.on_update_end(self.iterations, policy=self.policy, info=info,
+                                                loss_critic=loss_critic, loss_coma=loss_coma))
 
         return info

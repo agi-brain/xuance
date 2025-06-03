@@ -7,6 +7,9 @@ class BaseCallback(ABC):
     Users can inherit this class to implement custom logic during different stages
     of training and evaluation.
     """
+    def __init__(self, *args, **kwargs):
+        self.logger = kwargs.get('logger')
+
     def on_update_start(self, iterations, **kwargs):
         """Called before the policy update begins.
 
@@ -25,23 +28,16 @@ class BaseCallback(ABC):
         """
         return {}
 
-    def on_train_step(self, current_step, obs, acts, next_obs, rewards, terminals, truncations, infos, **kwargs):
+    def on_train_step(self, current_step, **kwargs):
         """Called after each training step (i.e., after collecting one transition).
 
         Args:
             current_step (int): The current global training step.
-            obs: Observations from the environment.
-            acts: Actions taken by the agent.
-            next_obs: Observations after the actions.
-            rewards: Rewards received.
-            terminals: Whether the state is terminal.
-            truncations: Whether the episode was truncated.
-            infos: Extra information from the environment.
             **kwargs: Additional optional information.
         """
         return
 
-    def on_train_step_end(self, current_step, envs_info, train_info):
+    def on_train_step_end(self, current_step, **kwargs):
         """Called after a training step is completed (includes update, logging, etc.).
 
         Args:
@@ -82,3 +78,11 @@ class BaseCallback(ABC):
             **kwargs: Optional keyword arguments.
         """
         return
+
+
+class MultiAgentBaseCallback(BaseCallback):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def on_update_agent_wise(self, iterations, agent_key, **kwargs):
+        return {}
