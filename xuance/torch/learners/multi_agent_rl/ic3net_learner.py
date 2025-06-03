@@ -86,7 +86,6 @@ class IC3Net_Learner(LearnerMAS):
 
     def update_rnn(self, sample):
         self.iterations += 1
-        info = {}
 
         sample_Tensor = self.build_training_data(sample=sample,
                                                  use_parameter_sharing=self.use_parameter_sharing,
@@ -107,6 +106,10 @@ class IC3Net_Learner(LearnerMAS):
 
         if self.use_parameter_sharing:
             filled = filled.unsqueeze(1).expand(batch_size, self.n_agents, seq_len).reshape(bs_rnn, seq_len)
+
+        info = self.callback.on_update_start(self.iterations, method="update_rnn",
+                                             policy=self.policy, sample_Tensor=sample_Tensor,
+                                             bs_rnn=bs_rnn, filled=filled)
 
         rnn_hidden_actor = {k: self.policy.actor_representation[k].init_hidden(bs_rnn) for k in self.model_keys}
         rnn_hidden_critic = {k: self.policy.critic_representation[k].init_hidden(bs_rnn) for k in self.model_keys}
@@ -178,8 +181,14 @@ class IC3Net_Learner(LearnerMAS):
                     f"predict_value/{key}": value_pred_i.mean().item()
                 })
 
-            loss = sum(loss_a) + self.vf_coef * sum(loss_c) - self.ent_coef * sum(loss_e)
-            total_loss += loss
+                loss = sum(loss_a) + self.vf_coef * sum(loss_c) - self.ent_coef * sum(loss_e)
+                total_loss += loss
+                info.update(self.callback.on_update_agent_wise(self.iterations, key, info=info, method="update_rnn",
+                                                               mask_values=mask_values, log_pi=log_pi,
+                                                               pg_loss=pg_loss, entropy=entropy,
+                                                               entropy_loss=entropy_loss, value_pred_i=value_pred_i,
+                                                               value_target=value_target, values_i=values_i))
+
         self.optimizer.zero_grad()
         total_loss.backward()
         if self.use_grad_clip:
@@ -200,5 +209,7 @@ class IC3Net_Learner(LearnerMAS):
             "entropy_loss": sum(loss_e).item(),
             "loss": loss.item(),
         })
+
+        info.update(self.callback.on_update_end(self.iterations, method="update_rnn", policy=self.policy, info=info))
 
         return info

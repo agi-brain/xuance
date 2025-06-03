@@ -172,7 +172,7 @@ class CommNet_Learner(LearnerMAS):
 
                 info.update({f"predict_value/{key}": value_pred_i.mean().item()})
 
-                info.update({self.callback.on_update_agent_wise(self.iterations, key, info=info,
+                info.update({self.callback.on_update_agent_wise(self.iterations, key, info=info, method="update_rnn",
                                                                 mask_values=mask_values, log_pi=log_pi,
                                                                 pg_loss=pg_loss, entropy=entropy,
                                                                 entropy_loss=entropy_loss, value_pred_i=value_pred_i,
@@ -202,6 +202,6 @@ class CommNet_Learner(LearnerMAS):
             "loss": loss.item(),
         })
 
-        info.update(self.callback.on_update_end(self.iterations, policy=self.policy, info=info))
+        info.update(self.callback.on_update_end(self.iterations, method="update_rnn", policy=self.policy, info=info))
 
         return info

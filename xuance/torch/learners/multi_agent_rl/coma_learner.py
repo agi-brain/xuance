@@ -145,9 +145,7 @@ class COMA_Learner(IAC_Learner):
             "advantage": advantages.mean().item(),
         })
 
-        info.update(self.callback.on_update_end(self.iterations, method="update",
-                                                policy=self.policy, info=info,
-                                                loss_critic=loss_critic, loss_coma=loss_coma))
+        info.update(self.callback.on_update_end(self.iterations, method="update", policy=self.policy, info=info))
 
         return info
 
@@ -256,8 +254,6 @@ class COMA_Learner(IAC_Learner):
             "advantage": advantages.mean().item(),
         })
 
-        info.update(self.callback.on_update_end(self.iterations, method="update_rnn",
-                                                policy=self.policy, info=info,
-                                                loss_critic=loss_critic, loss_coma=loss_coma))
+        info.update(self.callback.on_update_end(self.iterations, method="update_rnn", policy=self.policy, info=info))
 
         return info

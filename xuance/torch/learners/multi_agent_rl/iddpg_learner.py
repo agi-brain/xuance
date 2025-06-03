@@ -37,7 +37,6 @@ class IDDPG_Learner(LearnerMAS):
 
     def update(self, sample):
         self.iterations += 1
-        info = {}
 
         # prepare training data.
         sample_Tensor = self.build_training_data(sample,
@@ -58,6 +57,9 @@ class IDDPG_Learner(LearnerMAS):
             terminals[key] = terminals[key].reshape(batch_size * self.n_agents)
         else:
             bs = batch_size
+
+        info = self.callback.on_update_start(self.iterations, method="update",
+                                             policy=self.policy, sample_Tensor=sample_Tensor, bs=bs)
 
         # feedforward
         _, actions_eval = self.policy(observation=obs, agent_ids=IDs)
@@ -104,12 +106,17 @@ class IDDPG_Learner(LearnerMAS):
                 f"{key}/predictQ": q_eval[key].mean().item()
             })
 
+            info.update(self.callback.on_update_agent_wise(self.iterations, key, info=info, method="update",
+                                                           mask_values=mask_values, q_policy_i=q_policy_i,
+                                                           loss_a=loss_a, q_eval_a=q_eval_a, q_next_i=q_next_i,
+                                                           q_target=q_target, td_error=td_error, loss_c=loss_c))
+
         self.policy.soft_update(self.tau)
+        info.update(self.callback.on_update_end(self.iterations, method="update", policy=self.policy, info=info))
         return info
 
     def update_rnn(self, sample):
         self.iterations += 1
-        info = {}
 
         # prepare training data
         sample_Tensor = self.build_training_data(sample=sample,
@@ -133,6 +140,9 @@ class IDDPG_Learner(LearnerMAS):
             terminals[key] = terminals[key].reshape(batch_size * self.n_agents, seq_len)
         else:
             bs_rnn = batch_size
+
+        info = self.callback.on_update_start(self.iterations, method="update_rnn",
+                                             policy=self.policy, sample_Tensor=sample_Tensor, bs_rnn=bs_rnn)
 
         # feedforward
         rnn_hidden_actor = {k: self.policy.actor_representation[k].init_hidden(bs_rnn) for k in self.model_keys}
@@ -187,5 +197,11 @@ class IDDPG_Learner(LearnerMAS):
                 f"{key}/predictQ": q_eval[key].mean().item()
             })
 
+            info.update(self.callback.on_update_agent_wise(self.iterations, key, info=info, method="update_rnn",
+                                                           mask_values=mask_values, q_policy_i=q_policy_i,
+                                                           loss_a=loss_a, q_eval_a=q_eval_a, q_next_i=q_next_i,
+                                                           q_target=q_target, td_error=td_error, loss_c=loss_c))
+
         self.policy.soft_update(self.tau)
+        info.update(self.callback.on_update_end(self.iterations, method="update_rnn", policy=self.policy, info=info))
         return info

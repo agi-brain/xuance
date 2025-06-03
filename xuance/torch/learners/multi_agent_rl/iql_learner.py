@@ -30,7 +30,6 @@ class IQL_Learner(LearnerMAS):
 
     def update(self, sample):
         self.iterations += 1
-        info = {}
 
         # prepare training data
         sample_Tensor = self.build_training_data(sample=sample,
@@ -54,10 +53,14 @@ class IQL_Learner(LearnerMAS):
         else:
             bs = batch_size
 
+        info = self.callback.on_update_start(self.iterations, method="update",
+                                             policy=self.policy, sample_Tensor=sample_Tensor, bs=bs)
+
         _, _, q_eval = self.policy(observation=obs, agent_ids=IDs, avail_actions=avail_actions)
         _, q_next = self.policy.Qtarget(observation=obs_next, agent_ids=IDs)
 
         for key in self.model_keys:
+            mask_values = agent_mask[key]
             q_eval_a = q_eval[key].gather(-1, actions[key].long().unsqueeze(-1)).reshape(bs)
 
             if self.use_actions_mask:
@@ -72,8 +75,8 @@ class IQL_Learner(LearnerMAS):
             q_target = rewards[key] + (1 - terminals[key]) * self.gamma * q_next_a
 
             # calculate the loss function
-            td_error = (q_eval_a - q_target.detach()) * agent_mask[key]
-            loss = (td_error ** 2).sum() / agent_mask[key].sum()
+            td_error = (q_eval_a - q_target.detach()) * mask_values
+            loss = (td_error ** 2).sum() / mask_values.sum()
             self.optimizer[key].zero_grad()
             loss.backward()
             if self.use_grad_clip:
@@ -90,13 +93,20 @@ class IQL_Learner(LearnerMAS):
                 f"{key}/predictQ": q_eval_a.mean().item()
             })
 
+            info.update(self.callback.on_update_agent_wise(self.iterations, key, info=info, method="update",
+                                                           mask_values=mask_values, q_eval_a=q_eval_a,
+                                                           q_next_a=q_next_a, q_target=q_target,
+                                                           td_error=td_error, loss=loss))
+
         if self.iterations % self.sync_frequency == 0:
             self.policy.copy_target()
+
+        info.update(self.callback.on_update_end(self.iterations, method="update", policy=self.policy, info=info))
+
         return info
 
     def update_rnn(self, sample):
         self.iterations += 1
-        info = {}
 
         # prepare training data
         sample_Tensor = self.build_training_data(sample=sample,
@@ -122,6 +132,9 @@ class IQL_Learner(LearnerMAS):
         else:
             bs_rnn = batch_size
 
+        info = self.callback.on_update_start(self.iterations, method="update_rnn",
+                                             policy=self.policy, sample_Tensor=sample_Tensor, bs_rnn=bs_rnn)
+
         rnn_hidden = {k: self.policy.representation[k].init_hidden(bs_rnn) for k in self.model_keys}
         _, actions_greedy, q_eval = self.policy(observation=obs, agent_ids=IDs, avail_actions=avail_actions,
                                                 rnn_hidden=rnn_hidden)
@@ -129,6 +142,8 @@ class IQL_Learner(LearnerMAS):
         _, q_next_seq = self.policy.Qtarget(observation=obs, agent_ids=IDs, rnn_hidden=target_rnn_hidden)
 
         for key in self.model_keys:
+            mask_values = agent_mask[key] * filled
+            # calculate the target Q values
             q_eval_a = q_eval[key][:, :-1].gather(-1, actions[key].long().unsqueeze(-1)).reshape(bs_rnn, seq_len)
             q_next = q_next_seq[key][:, 1:]
             if self.use_actions_mask:
@@ -143,7 +158,6 @@ class IQL_Learner(LearnerMAS):
             q_target = rewards[key] + (1 - terminals[key]) * self.gamma * q_next_a
 
             # calculate the loss function
-            mask_values = agent_mask[key] * filled
             td_errors = (q_eval_a - q_target.detach()) * mask_values
             loss = (td_errors ** 2).sum() / mask_values.sum()
             self.optimizer[key].zero_grad()
@@ -162,6 +176,14 @@ class IQL_Learner(LearnerMAS):
                 f"{key}/predictQ": q_eval_a.mean().item()
             })
 
+            info.update(self.callback.on_update_agent_wise(self.iterations, key, info=info, method="update_rnn",
+                                                           mask_values=mask_values, q_eval_a=q_eval_a,
+                                                           q_next_a=q_next_a, q_target=q_target,
+                                                           td_error=td_errors, loss=loss))
+
         if self.iterations % self.sync_frequency == 0:
             self.policy.copy_target()
+
+        info.update(self.callback.on_update_end(self.iterations, method="update_rnn", policy=self.policy, info=info))
+
         return info
