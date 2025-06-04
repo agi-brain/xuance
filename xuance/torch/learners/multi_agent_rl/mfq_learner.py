@@ -46,6 +46,9 @@ class MFQ_Learner(LearnerMAS):
 
         act_mean = act_mean.unsqueeze(1).repeat([1, self.n_agents, 1])
         act_mean_next = act_mean_next.unsqueeze(1).repeat([1, self.n_agents, 1])
+
+        info = self.callback.on_update_start(self.iterations, method="update", policy=self.policy)
+
         _, _, q_eval = self.policy(obs, act_mean, IDs)
         q_eval_a = q_eval.gather(-1, actions.long().reshape([self.args.batch_size, self.n_agents, 1]))
         q_next = self.policy.target_Q(obs_next, act_mean_next, IDs)
@@ -69,10 +72,12 @@ class MFQ_Learner(LearnerMAS):
 
         lr = self.optimizer.state_dict()['param_groups'][0]['lr']
 
-        info = {
+        info.update({
             "learning_rate": lr,
             "loss_Q": loss.item(),
             "predictQ": q_eval_a.mean().item()
-        }
+        })
+
+        info.update(self.callback.on_update_end(self.iterations, method="update", policy=self.policy, info=info))
 
         return info

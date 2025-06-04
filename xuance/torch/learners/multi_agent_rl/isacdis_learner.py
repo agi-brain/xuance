@@ -46,7 +46,6 @@ class ISACDIS_Learner(LearnerMAS):
 
     def update(self, sample):
         self.iterations += 1
-        info = {}
 
         # Prepare training data.
         sample_Tensor = self.build_training_data(sample,
@@ -67,6 +66,9 @@ class ISACDIS_Learner(LearnerMAS):
             terminals[key] = terminals[key].reshape(batch_size * self.n_agents)
         else:
             bs = batch_size
+
+        info = self.callback.on_update_start(self.iterations, method="update",
+                                             policy=self.policy, sample_Tensor=sample_Tensor, bs=bs)
 
         # feedforward
         _, _, action_q_1, action_q_2 = self.policy.Qaction(observation=obs, agent_ids=IDs)
@@ -130,7 +132,17 @@ class ISACDIS_Learner(LearnerMAS):
                 info.update({f"{key}/alpha_loss": alpha_loss.item(),
                              f"{key}/alpha": self.alpha[key].item()})
 
+            info.update(self.callback.on_update_agent_wise(self.iterations, key, info=info, method="update",
+                                                           mask_values=mask_values,
+                                                           action_q_1_a=action_q_1_a, action_q_2_a=action_q_2_a,
+                                                           target_value=target_value, backup=backup,
+                                                           td_error_1=td_error_1, td_error_2=td_error_2,
+                                                           action_prob=action_prob, log_pi=log_pi,
+                                                           policy_q_1=policy_q_1, policy_q_2=policy_q_2,
+                                                           policy_q=policy_q))
+
         self.policy.soft_update(self.tau)
+        info.update(self.callback.on_update_end(self.iterations, method="update", policy=self.policy, info=info))
         return info
 
     def update_rnn(self, sample):

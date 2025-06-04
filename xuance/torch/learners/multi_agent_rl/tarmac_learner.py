@@ -86,7 +86,6 @@ class TarMAC_Learner(LearnerMAS):
 
     def update_rnn(self, sample):
         self.iterations += 1
-        info = {}
 
         sample_Tensor = self.build_training_data(sample=sample,
                                                  use_parameter_sharing=self.use_parameter_sharing,
@@ -107,6 +106,9 @@ class TarMAC_Learner(LearnerMAS):
 
         if self.use_parameter_sharing:
             filled = filled.unsqueeze(1).expand(batch_size, self.n_agents, seq_len).reshape(bs_rnn, seq_len)
+
+        info = self.callback.on_update_start(self.iterations, method="update_rnn", policy=self.policy,
+                                             sample_Tensor=sample_Tensor, bs_rnn=bs_rnn, filled=filled, IDs=IDs)
 
         rnn_hidden_actor = {k: self.policy.actor_representation[k].init_hidden(bs_rnn) for k in self.model_keys}
         rnn_hidden_critic = {k: self.policy.critic_representation[k].init_hidden(bs_rnn) for k in self.model_keys}
@@ -168,9 +170,14 @@ class TarMAC_Learner(LearnerMAS):
                         loss_v = (value_pred_i - value_target) ** 2
                     loss_c.append((loss_v * mask_values).sum() / mask_values.sum())
 
-                info.update({
-                    f"predict_value/{key}": value_pred_i.mean().item()
-                })
+                info.update({f"predict_value/{key}": value_pred_i.mean().item()})
+
+                info.update({self.callback.on_update_agent_wise(self.iterations, key, info=info, method="update_rnn",
+                                                                mask_values=mask_values, log_pi=log_pi,
+                                                                pg_loss=pg_loss, entropy=entropy,
+                                                                entropy_loss=entropy_loss, value_pred_i=value_pred_i,
+                                                                value_target=value_target, values_i=values_i,
+                                                                loss_v=loss_v)})
 
             loss = sum(loss_a) + self.vf_coef * sum(loss_c) - self.ent_coef * sum(loss_e)
             total_loss += loss
@@ -194,6 +201,9 @@ class TarMAC_Learner(LearnerMAS):
             "entropy_loss": sum(loss_e).item(),
             "loss": loss.item(),
         })
+
+        info.update(self.callback.on_update_end(self.iterations, method="update_rnn", policy=self.policy, info=info,
+                                                total_loss=total_loss))
 
         return info
 

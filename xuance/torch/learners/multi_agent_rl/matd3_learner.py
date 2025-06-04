@@ -37,7 +37,6 @@ class MATD3_Learner(LearnerMAS):
 
     def update(self, sample):
         self.iterations += 1
-        info = {}
 
         # prepare training data
         sample_Tensor = self.build_training_data(sample,
@@ -64,6 +63,10 @@ class MATD3_Learner(LearnerMAS):
             obs_joint = self.get_joint_input(obs, (batch_size, -1))
             next_obs_joint = self.get_joint_input(obs_next, (batch_size, -1))
             actions_joint = self.get_joint_input(actions, (batch_size, -1))
+
+        info = self.callback.on_update_start(self.iterations, method="update", policy=self.policy,
+                                             sample_Tensor=sample_Tensor, bs=bs, obs_joint=obs_joint,
+                                             next_obs_joint=next_obs_joint, actions_joint=actions_joint)
 
         # get values
         _, actions_next = self.policy.Atarget(next_observation=obs_next, agent_ids=IDs)
@@ -102,6 +105,12 @@ class MATD3_Learner(LearnerMAS):
                 f"{key}/predictQ_B": q_eval_B[key].mean().item()
             })
 
+            info.update(self.callback.on_update_agent_wise(self.iterations, key, info=info, method="update_critic",
+                                                           mask_values=mask_values,
+                                                           q_eval_A_i=q_eval_A_i, q_eval_B_i=q_eval_B_i,
+                                                           q_target=q_target, q_next_i=q_next_i,
+                                                           td_error_A=td_error_A, td_error_B=td_error_B))
+
         # update actor(s)
         if self.iterations % self.actor_update_delay == 0:
             _, actions_eval = self.policy(observation=obs, agent_ids=IDs)
@@ -131,13 +140,15 @@ class MATD3_Learner(LearnerMAS):
                     f"{key}/loss_actor": loss_a.item(),
                     f"{key}/q_policy": q_policy_i.mean().item(),
                 })
+                info.update(self.callback.on_update_agent_wise(self.iterations, key, info=info, method="update_actor",
+                                                               mask_values=mask_values, q_policy_i=q_policy_i))
             self.policy.soft_update(self.tau)
 
+        info.update(self.callback.on_update_end(self.iterations, method="update", policy=self.policy, info=info))
         return info
 
     def update_rnn(self, sample):
         self.iterations += 1
-        info = {}
 
         # prepare training data
         sample_Tensor = self.build_training_data(sample=sample,
@@ -168,6 +179,10 @@ class MATD3_Learner(LearnerMAS):
             bs_rnn, IDs_t = batch_size, None
             obs_joint = self.get_joint_input(obs, (batch_size, seq_len + 1, -1))
             actions_joint = self.get_joint_input(actions, (batch_size, seq_len, -1))
+
+        info = self.callback.on_update_start(self.iterations, method="update_rnn", policy=self.policy,
+                                             sample_Tensor=sample_Tensor, bs_rnn=bs_rnn,
+                                             obs_joint=obs_joint, actions_joint=actions_joint)
 
         # initial hidden states for rnn
         rnn_hidden_actor = {k: self.policy.actor_representation[k].init_hidden(bs_rnn) for k in self.model_keys}
@@ -211,6 +226,12 @@ class MATD3_Learner(LearnerMAS):
                 f"{key}/predictQ_B": q_eval_B[key].mean().item()
             })
 
+            info.update(self.callback.on_update_agent_wise(self.iterations, key, info=info, method="update_rnn_critic",
+                                                           mask_values=mask_values,
+                                                           q_eval_A_i=q_eval_A_i, q_eval_B_i=q_eval_B_i,
+                                                           q_target=q_target, q_next_i=q_next_i,
+                                                           td_error_A=td_error_A, td_error_B=td_error_B))
+
         # update actor(s)
         if self.iterations % self.actor_update_delay == 0:
             _, actions_eval = self.policy(observation=obs, agent_ids=IDs, rnn_hidden=rnn_hidden_actor)
@@ -241,6 +262,8 @@ class MATD3_Learner(LearnerMAS):
                     f"{key}/loss_actor": loss_a.item(),
                     f"{key}/q_policy": q_policy_i.mean().item(),
                 })
+                info.update(self.callback.on_update_agent_wise(self.iterations, key, info=info, method="update_rnn_actor",
+                                                               mask_values=mask_values, q_policy_i=q_policy_i))
             self.policy.soft_update(self.tau)
-
+        info.update(self.callback.on_update_end(self.iterations, method="update_rnn", policy=self.policy, info=info))
         return info

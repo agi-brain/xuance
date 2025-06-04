@@ -46,7 +46,6 @@ class ISAC_Learner(LearnerMAS):
 
     def update(self, sample):
         self.iterations += 1
-        info = {}
 
         # Prepare training data.
         sample_Tensor = self.build_training_data(sample,
@@ -67,6 +66,9 @@ class ISAC_Learner(LearnerMAS):
             terminals[key] = terminals[key].reshape(batch_size * self.n_agents)
         else:
             bs = batch_size
+
+        info = self.callback.on_update_start(self.iterations, method="update",
+                                             policy=self.policy, sample_Tensor=sample_Tensor, bs=bs)
 
         # feedforward
         _, actions_eval, log_pi_eval = self.policy(observation=obs, agent_ids=IDs)
@@ -132,12 +134,21 @@ class ISAC_Learner(LearnerMAS):
                 info.update({f"{key}/alpha_loss": alpha_loss.item(),
                              f"{key}/alpha": self.alpha[key].item()})
 
+            info.update(self.callback.on_update_agent_wise(self.iterations, key, info=info, method="update",
+                                                           mask_values=mask_values,
+                                                           action_q_1_i=action_q_1_i, action_q_2_i=action_q_2_i,
+                                                           log_pi_next_eval=log_pi_next_eval, next_q_i=next_q_i,
+                                                           target_value=target_value, backup=backup,
+                                                           td_error_1=td_error_1, td_error_2=td_error_2,
+                                                           policy_q_1=policy_q_1, policy_q_2=policy_q_2,
+                                                           log_pi_eval_i=log_pi_eval_i, policy_q=policy_q))
+
         self.policy.soft_update(self.tau)
+        info.update(self.callback.on_update_end(self.iterations, method="update", policy=self.policy, info=info))
         return info
 
     def update_rnn(self, sample):
         self.iterations += 1
-        info = {}
 
         # prepare training data
         sample_Tensor = self.build_training_data(sample=sample,
@@ -162,6 +173,9 @@ class ISAC_Learner(LearnerMAS):
             IDs_t = IDs[:, :-1]
         else:
             bs_rnn, IDs_t = batch_size, None
+
+        info = self.callback.on_update_start(self.iterations, method="update_rnn",
+                                             policy=self.policy, sample_Tensor=sample_Tensor, bs_rnn=bs_rnn)
 
         # initial hidden states for rnn
         rnn_hidden_actor = {k: self.policy.actor_representation[k].init_hidden(bs_rnn) for k in self.model_keys}
@@ -236,5 +250,15 @@ class ISAC_Learner(LearnerMAS):
                 info.update({f"{key}/alpha_loss": alpha_loss.item(),
                              f"{key}/alpha": self.alpha[key].item()})
 
+            info.update(self.callback.on_update_agent_wise(self.iterations, key, info=info, method="update_rnn",
+                                                           mask_values=mask_values,
+                                                           action_q_1_i=action_q_1_i, action_q_2_i=action_q_2_i,
+                                                           log_pi_next_eval=log_pi_next_eval, next_q_i=next_q_i,
+                                                           target_value=target_value, backup=backup,
+                                                           td_error_1=td_error_1, td_error_2=td_error_2,
+                                                           policy_q_1=policy_q_1, policy_q_2=policy_q_2,
+                                                           log_pi_eval_i=log_pi_eval_i, policy_q=policy_q))
+
         self.policy.soft_update(self.tau)
+        info.update(self.callback.on_update_end(self.iterations, method="update_rnn", policy=self.policy, info=info))
         return info

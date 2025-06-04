@@ -31,7 +31,6 @@ class QTRAN_Learner(LearnerMAS):
 
     def update(self, sample):
         self.iterations += 1
-        info = {}
 
         # prepare training data
         sample_Tensor = self.build_training_data(sample=sample,
@@ -61,12 +60,17 @@ class QTRAN_Learner(LearnerMAS):
             rewards_tot = torch.stack(itemgetter(*self.agent_keys)(rewards), dim=1).mean(dim=-1, keepdim=True)
             terminals_tot = torch.stack(itemgetter(*self.agent_keys)(terminals), dim=1).all(dim=1, keepdim=True).float()
 
+        info = self.callback.on_update_start(self.iterations, method="update",
+                                             policy=self.policy, sample_Tensor=sample_Tensor, bs=bs,
+                                             rewards_tot=rewards_tot, terminals_tot=terminals_tot)
+
         _, hidden_state, actions_greedy, q_eval = self.policy(obs, agent_ids=IDs, avail_actions=avail_actions)
         _, hidden_state_next, q_next = self.policy.Qtarget(obs_next, agent_ids=IDs)
 
         q_eval_a, q_eval_greedy_a, q_next_a = {}, {}, {}
         actions_next_greedy = {}
         for key in self.model_keys:
+            mask_values = agent_mask[key]
             q_eval_a[key] = q_eval[key].gather(-1, actions[key].long().unsqueeze(-1)).reshape(bs)
             q_eval_greedy_a[key] = q_eval[key].gather(-1, actions_greedy[key].long().unsqueeze(-1)).reshape(bs)
 
@@ -82,9 +86,14 @@ class QTRAN_Learner(LearnerMAS):
                 actions_next_greedy[key] = q_next[key].argmax(dim=-1, keepdim=False)
                 q_next_a[key] = q_next[key].max(dim=-1, keepdim=True).values.reshape(bs)
 
-            q_eval_a[key] *= agent_mask[key]
-            q_eval_greedy_a[key] *= agent_mask[key]
-            q_next_a[key] *= agent_mask[key]
+            q_eval_a[key] *= mask_values
+            q_eval_greedy_a[key] *= mask_values
+            q_next_a[key] *= mask_values
+
+            info.update(self.callback.on_update_agent_wise(self.iterations, key, info=info, method="update",
+                                                           mask_values=mask_values, q_eval_a=q_eval_a,
+                                                           q_eval_greedy_a=q_eval_greedy_a))
+
 
         if self.config.agent == "QTRAN_base":
             # -- TD Loss --
@@ -172,11 +181,15 @@ class QTRAN_Learner(LearnerMAS):
             "loss": loss.item()
         })
 
+        info.update(self.callback.on_update_end(self.iterations, method="update", policy=self.policy, info=info,
+                                                v_joint=v_joint, y_dqn=y_dqn, q_tot_greedy=q_tot_greedy,
+                                                q_joint_greedy_hat=q_joint_greedy_hat, error_opt=error_opt,
+                                                error_nopt=error_nopt))
+
         return info
 
     def update_rnn(self, sample):
         self.iterations += 1
-        info = {}
 
         # prepare training data
         sample_Tensor = self.build_training_data(sample=sample,
@@ -206,6 +219,10 @@ class QTRAN_Learner(LearnerMAS):
             rewards_tot = torch.stack(itemgetter(*self.agent_keys)(rewards), dim=1).mean(dim=1).reshape(-1, 1)
             terminals_tot = torch.stack(itemgetter(*self.agent_keys)(terminals), dim=1).all(1).reshape([-1, 1]).float()
 
+        info = self.callback.on_update_start(self.iterations, method="update_rnn",
+                                             policy=self.policy, sample_Tensor=sample_Tensor, bs_rnn=bs_rnn,
+                                             rewards_tot=rewards_tot, terminals_tot=terminals_tot)
+
         rnn_hidden = {k: self.policy.representation[k].init_hidden(bs_rnn) for k in self.model_keys}
         _, hidden_state, actions_greedy, q_eval = self.policy(obs, agent_ids=IDs, avail_actions=avail_actions,
                                                               rnn_hidden=rnn_hidden)
@@ -215,6 +232,7 @@ class QTRAN_Learner(LearnerMAS):
         q_eval_a, q_eval_greedy_a, q_next, q_next_a = {}, {}, {}, {}
         actions_greedy_eval, actions_next_greedy = {}, {}
         for key in self.model_keys:
+            mask_values = agent_mask[key]
             hidden_state[key] = hidden_state[key][:, :-1]
             hidden_state_next[key] = hidden_state_next[key][:, :-1]
             actions_greedy_eval[key] = actions_greedy[key][:, :-1]
@@ -234,9 +252,14 @@ class QTRAN_Learner(LearnerMAS):
                 actions_next_greedy[key] = q_next[key].argmax(dim=-1, keepdim=False)
                 q_next_a[key] = q_next[key].max(dim=-1, keepdim=True).values.reshape(bs_rnn, seq_len)
 
-            q_eval_a[key] *= agent_mask[key]
-            q_eval_greedy_a[key] *= agent_mask[key]
-            q_next_a[key] *= agent_mask[key]
+            q_eval_a[key] *= mask_values
+            q_eval_greedy_a[key] *= mask_values
+            q_next_a[key] *= mask_values
+
+            info.update(self.callback.on_update_agent_wise(self.iterations, key, info=info, method="update_rnn",
+                                                           mask_values=mask_values, q_eval_a=q_eval_a,
+                                                           q_eval_greedy_a=q_eval_greedy_a, q_next=q_next,
+                                                           q_next_a=q_next_a))
 
         if self.config.agent == "QTRAN_base":
             # -- TD Loss --
@@ -327,6 +350,11 @@ class QTRAN_Learner(LearnerMAS):
             "loss_nopt": loss_nopt.item(),
             "loss": loss.item()
         })
+
+        info.update(self.callback.on_update_end(self.iterations, method="update_rnn", policy=self.policy, info=info,
+                                                v_joint=v_joint, y_dqn=y_dqn, q_tot_greedy=q_tot_greedy,
+                                                q_joint_greedy_hat=q_joint_greedy_hat, error_opt=error_opt,
+                                                error_nopt=error_nopt))
 
         return info
 

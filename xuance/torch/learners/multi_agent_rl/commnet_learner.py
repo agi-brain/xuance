@@ -107,8 +107,8 @@ class CommNet_Learner(LearnerMAS):
         if self.use_parameter_sharing:
             filled = filled.unsqueeze(1).expand(batch_size, self.n_agents, seq_len).reshape(bs_rnn, seq_len)
 
-        info = self.callback.on_update_start(self.iterations, policy=self.policy, sample_Tensor=sample_Tensor,
-                                             bs_rnn=bs_rnn, filled=filled, IDs=IDs)
+        info = self.callback.on_update_start(self.iterations, method="update_rnn", policy=self.policy,
+                                             sample_Tensor=sample_Tensor, bs_rnn=bs_rnn, filled=filled, IDs=IDs)
 
         rnn_hidden_actor = {k: self.policy.actor_representation[k].init_hidden(bs_rnn) for k in self.model_keys}
         rnn_hidden_critic = {k: self.policy.critic_representation[k].init_hidden(bs_rnn) for k in self.model_keys}
@@ -202,6 +202,7 @@ class CommNet_Learner(LearnerMAS):
             "loss": loss.item(),
         })
 
-        info.update(self.callback.on_update_end(self.iterations, method="update_rnn", policy=self.policy, info=info))
+        info.update(self.callback.on_update_end(self.iterations, method="update_rnn", policy=self.policy, info=info,
+                                                total_loss=total_loss))
 
         return info

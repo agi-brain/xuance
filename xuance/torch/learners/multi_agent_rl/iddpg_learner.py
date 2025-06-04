@@ -108,8 +108,8 @@ class IDDPG_Learner(LearnerMAS):
 
             info.update(self.callback.on_update_agent_wise(self.iterations, key, info=info, method="update",
                                                            mask_values=mask_values, q_policy_i=q_policy_i,
-                                                           loss_a=loss_a, q_eval_a=q_eval_a, q_next_i=q_next_i,
-                                                           q_target=q_target, td_error=td_error, loss_c=loss_c))
+                                                           q_eval_a=q_eval_a, q_next_i=q_next_i,
+                                                           q_target=q_target, td_error=td_error))
 
         self.policy.soft_update(self.tau)
         info.update(self.callback.on_update_end(self.iterations, method="update", policy=self.policy, info=info))
@@ -199,8 +199,8 @@ class IDDPG_Learner(LearnerMAS):
 
             info.update(self.callback.on_update_agent_wise(self.iterations, key, info=info, method="update_rnn",
                                                            mask_values=mask_values, q_policy_i=q_policy_i,
-                                                           loss_a=loss_a, q_eval_a=q_eval_a, q_next_i=q_next_i,
-                                                           q_target=q_target, td_error=td_error, loss_c=loss_c))
+                                                           q_eval_a=q_eval_a, q_next_i=q_next_i,
+                                                           q_target=q_target, td_error=td_error))
 
         self.policy.soft_update(self.tau)
         info.update(self.callback.on_update_end(self.iterations, method="update_rnn", policy=self.policy, info=info))

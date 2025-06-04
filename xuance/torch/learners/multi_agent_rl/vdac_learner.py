@@ -24,7 +24,6 @@ class VDAC_Learner(IAC_Learner):
 
     def update(self, sample):
         self.iterations += 1
-        info = {}
 
         # prepare training data
         sample_Tensor = self.build_training_data(sample=sample,
@@ -43,6 +42,9 @@ class VDAC_Learner(IAC_Learner):
         IDs = sample_Tensor['agent_ids']
 
         bs = batch_size * self.n_agents if self.use_parameter_sharing else batch_size
+
+        info = self.callback.on_update_start(self.iterations, method="update",
+                                             policy=self.policy, sample_Tensor=sample_Tensor, bs=bs)
 
         # feedforward
         _, pi_dist_dict = self.policy(observation=obs, agent_ids=IDs, avail_actions=avail_actions)
@@ -102,6 +104,12 @@ class VDAC_Learner(IAC_Learner):
                     loss_v = ((value_pred_i - value_target) ** 2) * mask_values
                 loss_c.append(loss_v.sum() / mask_values.sum())
 
+            info.update(self.callback.on_update_agent_wise(self.iterations, key, info=info, method="update",
+                                                           mask_values=mask_values, log_pi=log_pi, pg_loss=pg_loss,
+                                                           entropy=entropy, entropy_loss=entropy_loss,
+                                                           value_pred_i=value_pred_i, value_target=value_target,
+                                                           values_i=values_i, loss_v=loss_v))
+
         # Total loss
         loss = sum(loss_a) + self.vf_coef * sum(loss_c) - self.ent_coef * sum(loss_e)
         self.optimizer.zero_grad()
@@ -125,11 +133,12 @@ class VDAC_Learner(IAC_Learner):
             "predict_value": values_tot.mean().item()
         })
 
+        info.update(self.callback.on_update_end(self.iterations, method="update", policy=self.policy, info=info))
+
         return info
 
     def update_rnn(self, sample):
         self.iterations += 1
-        info = {}
 
         sample_Tensor = self.build_training_data(sample=sample,
                                                  use_parameter_sharing=self.use_parameter_sharing,
@@ -151,6 +160,9 @@ class VDAC_Learner(IAC_Learner):
 
         if self.use_parameter_sharing:
             filled = filled.unsqueeze(1).expand(batch_size, self.n_agents, seq_len).reshape(bs_rnn, seq_len)
+
+        info = self.callback.on_update_start(self.iterations, method="update_rnn",
+                                             policy=self.policy, sample_Tensor=sample_Tensor, bs_rnn=bs_rnn)
 
         rnn_hidden_actor = {k: self.policy.actor_representation[k].init_hidden(bs_rnn) for k in self.model_keys}
         rnn_hidden_critic = {k: self.policy.critic_representation[k].init_hidden(bs_rnn) for k in self.model_keys}
@@ -222,6 +234,13 @@ class VDAC_Learner(IAC_Learner):
                     loss_v = (value_pred_i - value_target) ** 2
                 loss_c.append((loss_v * mask_values).sum() / mask_values.sum())
 
+            info.update({self.callback.on_update_agent_wise(self.iterations, key, info=info, method="update_rnn",
+                                                            mask_values=mask_values, log_pi=log_pi,
+                                                            pg_loss=pg_loss, entropy=entropy,
+                                                            entropy_loss=entropy_loss, value_pred_i=value_pred_i,
+                                                            value_target=value_target, values_i=values_i,
+                                                            loss_v=loss_v)})
+
         loss = sum(loss_a) + self.vf_coef * sum(loss_c) - self.ent_coef * sum(loss_e)
         self.optimizer.zero_grad()
         loss.backward()
@@ -243,5 +262,7 @@ class VDAC_Learner(IAC_Learner):
             "loss": loss.item(),
             "predict_value": values_tot.mean().item()
         })
+
+        info.update(self.callback.on_update_end(self.iterations, method="update_rnn", policy=self.policy, info=info))
 
         return info

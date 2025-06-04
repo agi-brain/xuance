@@ -30,7 +30,6 @@ class VDN_Learner(LearnerMAS):
 
     def update(self, sample):
         self.iterations += 1
-        info = {}
 
         # prepare training data
         sample_Tensor = self.build_training_data(sample=sample,
@@ -57,11 +56,16 @@ class VDN_Learner(LearnerMAS):
             rewards_tot = torch.stack(itemgetter(*self.agent_keys)(rewards), dim=1).mean(dim=-1, keepdim=True)
             terminals_tot = torch.stack(itemgetter(*self.agent_keys)(terminals), dim=1).all(dim=1, keepdim=True).float()
 
+        info = self.callback.on_update_start(self.iterations, method="update",
+                                             policy=self.policy, sample_Tensor=sample_Tensor, bs=bs,
+                                             rewards_tot=rewards_tot, terminals_tot=terminals_tot)
+
         _, _, q_eval = self.policy(observation=obs, agent_ids=IDs, avail_actions=avail_actions)
         _, q_next = self.policy.Qtarget(observation=obs_next, agent_ids=IDs)
 
         q_eval_a, q_next_a = {}, {}
         for key in self.model_keys:
+            mask_values = agent_mask[key]
             q_eval_a[key] = q_eval[key].gather(-1, actions[key].long().unsqueeze(-1)).reshape(bs)
 
             if self.use_actions_mask:
@@ -74,8 +78,12 @@ class VDN_Learner(LearnerMAS):
             else:
                 q_next_a[key] = q_next[key].max(dim=-1, keepdim=True).values.reshape(bs)
 
-            q_eval_a[key] *= agent_mask[key]
-            q_next_a[key] *= agent_mask[key]
+            q_eval_a[key] *= mask_values
+            q_next_a[key] *= mask_values
+
+            info.update(self.callback.on_update_agent_wise(self.iterations, key, info=info, method="update",
+                                                           mask_values=mask_values, q_eval_a=q_eval_a,
+                                                           q_next_a=q_next_a))
 
         q_tot_eval = self.policy.Q_tot(q_eval_a)
         q_tot_next = self.policy.Qtarget_tot(q_next_a)
@@ -101,11 +109,15 @@ class VDN_Learner(LearnerMAS):
 
         if self.iterations % self.sync_frequency == 0:
             self.policy.copy_target()
+
+        info.update(self.callback.on_update_end(self.iterations, method="update", policy=self.policy, info=info,
+                                                q_tot_eval=q_tot_eval, q_tot_next=q_tot_next,
+                                                q_tot_target=q_tot_target))
+
         return info
 
     def update_rnn(self, sample):
         self.iterations += 1
-        info = {}
 
         # prepare training data
         sample_Tensor = self.build_training_data(sample=sample,
@@ -132,6 +144,10 @@ class VDN_Learner(LearnerMAS):
             rewards_tot = torch.stack(itemgetter(*self.agent_keys)(rewards), dim=1).mean(dim=1).reshape(-1, 1)
             terminals_tot = torch.stack(itemgetter(*self.agent_keys)(terminals), dim=1).all(1).reshape([-1, 1]).float()
 
+        info = self.callback.on_update_start(self.iterations, method="update_rnn",
+                                             policy=self.policy, sample_Tensor=sample_Tensor, bs_rnn=bs_rnn,
+                                             rewards_tot=rewards_tot, terminals_tot=terminals_tot)
+
         # calculate the individual Q values.
         rnn_hidden = {k: self.policy.representation[k].init_hidden(bs_rnn) for k in self.model_keys}
         _, actions_greedy, q_eval = self.policy(obs, agent_ids=IDs, avail_actions=avail_actions, rnn_hidden=rnn_hidden)
@@ -141,6 +157,7 @@ class VDN_Learner(LearnerMAS):
 
         q_eval_a, q_next, q_next_a = {}, {}, {}
         for key in self.model_keys:
+            mask_values = agent_mask[key]
             q_eval_a[key] = q_eval[key][:, :-1].gather(-1, actions[key].long().unsqueeze(-1)).reshape(bs_rnn, seq_len)
             q_next[key] = q_next_seq[key][:, 1:]
 
@@ -153,8 +170,8 @@ class VDN_Learner(LearnerMAS):
             else:
                 q_next_a[key] = q_next[key].max(dim=-1, keepdim=True).values.reshape(bs_rnn, seq_len)
 
-            q_eval_a[key] = q_eval_a[key] * agent_mask[key]
-            q_next_a[key] = q_next_a[key] * agent_mask[key]
+            q_eval_a[key] = q_eval_a[key] * mask_values
+            q_next_a[key] = q_next_a[key] * mask_values
 
             if self.use_parameter_sharing:
                 q_eval_a[key] = q_eval_a[key].reshape(batch_size, self.n_agents, seq_len).transpose(1, 2).reshape(-1, self.n_agents)
@@ -162,6 +179,10 @@ class VDN_Learner(LearnerMAS):
             else:
                 q_eval_a[key] = q_eval_a[key].reshape(-1, 1)
                 q_next_a[key] = q_next_a[key].reshape(-1, 1)
+
+            info.update(self.callback.on_update_agent_wise(self.iterations, key, info=info, method="update_rnn",
+                                                           mask_values=mask_values, q_eval_a=q_eval_a,
+                                                           q_next_a=q_next_a, q_next=q_next))
 
         # calculate the total Q values.
         q_tot_eval = self.policy.Q_tot(q_eval_a)
@@ -189,4 +210,9 @@ class VDN_Learner(LearnerMAS):
 
         if self.iterations % self.sync_frequency == 0:
             self.policy.copy_target()
+
+        info.update(self.callback.on_update_end(self.iterations, method="update_rnn", policy=self.policy, info=info,
+                                                q_tot_eval=q_tot_eval, q_tot_next=q_tot_next,
+                                                q_tot_target=q_tot_target, td_errors=td_errors))
+
         return info
