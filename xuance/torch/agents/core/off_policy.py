@@ -122,7 +122,7 @@ class OffPolicyAgent(Agent):
         return train_info
 
     def train(self, train_steps):
-        train_info, episode_info = {}, {}
+        train_info = {}
         obs = self.envs.buf_obs
         for _ in tqdm(range(train_steps)):
             self.obs_rms.update(obs)
@@ -158,12 +158,15 @@ class OffPolicyAgent(Agent):
                         self.returns[i] = 0.0
                         self.current_episode[i] += 1
                         if self.use_wandb:
-                            episode_info[f"Episode-Steps/rank_{self.rank}/env-{i}"] = infos[i]["episode_step"]
-                            episode_info[f"Train-Episode-Rewards/rank_{self.rank}/env-{i}"] = infos[i]["episode_score"]
+                            episode_info = {
+                                f"Episode-Steps/rank_{self.rank}/env-{i}": infos[i]["episode_step"],
+                                f"Train-Episode-Rewards/rank_{self.rank}/env-{i}": infos[i]["episode_score"]
+                            }
                         else:
-                            episode_info[f"Episode-Steps/rank_{self.rank}"] = {f"env-{i}": infos[i]["episode_step"]}
-                            episode_info[f"Train-Episode-Rewards/rank_{self.rank}"] = {
-                                f"env-{i}": infos[i]["episode_score"]}
+                            episode_info = {
+                                f"Episode-Steps/rank_{self.rank}": {f"env-{i}": infos[i]["episode_step"]},
+                                f"Train-Episode-Rewards/rank_{self.rank}": {f"env-{i}": infos[i]["episode_score"]}
+                            }
                         self.log_infos(episode_info, self.current_step)
                         train_info.update(episode_info)
                         self.callback.on_train_episode_info(envs=self.envs, policy=self.policy, env_id=i,
