@@ -53,7 +53,8 @@ class TarMAC_Learner(LearnerMAS):
         advantages = {k: Tensor(sample['advantages'][k]).to(self.device) for k in self.agent_keys}
         log_pi_old = {k: Tensor(sample['log_pi_old'][k]).to(self.device) for k in self.agent_keys}
         terminals = {k: Tensor(sample['terminals'][k]).float().to(self.device) for k in self.agent_keys}
-        agent_mask = {k: Tensor(sample['agent_mask'][k]).unsqueeze(dim=-1).float().to(self.device) for k in self.agent_keys}
+        agent_mask = {k: Tensor(sample['agent_mask'][k]).unsqueeze(dim=-1).float().to(self.device) for k in
+                      self.agent_keys}
         if use_actions_mask:
             avail_actions = {k: Tensor(sample['avail_actions'][k]).float().to(self.device) for k in self.agent_keys}
 
@@ -116,15 +117,17 @@ class TarMAC_Learner(LearnerMAS):
         total_loss = 0
         # feedforward
         for i in range(seq_len):
-            obs_i = {k: obs[k][:, i:i+1, :] for k in self.model_keys}
+            obs_i = {k: obs[k][:, i:i + 1, :] for k in self.model_keys}
             if self.config.use_actions_mask:
-                avail_actions_i = {k: avail_actions[k][:, i:i+1, :] for k in self.model_keys}
+                avail_actions_i = {k: avail_actions[k][:, i:i + 1, :] for k in self.model_keys}
             else:
                 avail_actions_i = None
-            agent_mask_i = {k: agent_mask[k][:, i:i+1, :] for k in self.model_keys}
-            rnn_hidden_actor_new, pi_dist_dict = self.policy(obs_i, agent_ids=IDs, avail_actions=avail_actions_i, rnn_hidden=rnn_hidden_actor, alive_ally=agent_mask_i)
-            rnn_hidden_critic_new, values_pred_dict = self.policy.get_values(obs_i, agent_ids=IDs, rnn_hidden=rnn_hidden_critic,
-                                                         alive_ally=agent_mask_i)
+            agent_mask_i = {k: agent_mask[k][:, i:i + 1, :] for k in self.model_keys}
+            rnn_hidden_actor_new, pi_dist_dict = self.policy(obs_i, agent_ids=IDs, avail_actions=avail_actions_i,
+                                                             rnn_hidden=rnn_hidden_actor, alive_ally=agent_mask_i)
+            rnn_hidden_critic_new, values_pred_dict = self.policy.get_values(obs_i, agent_ids=IDs,
+                                                                             rnn_hidden=rnn_hidden_critic,
+                                                                             alive_ally=agent_mask_i)
             rnn_hidden_actor, rnn_hidden_critic = rnn_hidden_actor_new, rnn_hidden_critic_new
 
             # calculate losses for each agent
@@ -132,8 +135,8 @@ class TarMAC_Learner(LearnerMAS):
             for key in self.model_keys:
                 mask_values = agent_mask[key].squeeze() * filled
                 # policy gradient loss
-                log_pi = pi_dist_dict[key].log_prob(actions[key][:, i:i+1]).reshape(bs_rnn, -1)
-                pg_loss = -((advantages[key][:, i:i+1].detach() * log_pi) * mask_values).sum() / mask_values.sum()
+                log_pi = pi_dist_dict[key].log_prob(actions[key][:, i:i + 1]).reshape(bs_rnn, -1)
+                pg_loss = -((advantages[key][:, i:i + 1].detach() * log_pi) * mask_values).sum() / mask_values.sum()
                 loss_a.append(pg_loss)
 
                 # entropy loss
@@ -143,8 +146,8 @@ class TarMAC_Learner(LearnerMAS):
 
                 # value loss
                 value_pred_i = values_pred_dict[key].reshape(bs_rnn, -1)
-                value_target = returns[key][:, i:i+1].reshape(bs_rnn, -1)
-                values_i = values[key][:, i:i+1].reshape(bs_rnn, -1)
+                value_target = returns[key][:, i:i + 1].reshape(bs_rnn, -1)
+                values_i = values[key][:, i:i + 1].reshape(bs_rnn, -1)
                 if self.use_value_clip:
                     value_clipped = values_i + (value_pred_i - values_i).clamp(-self.value_clip_range,
                                                                                self.value_clip_range)
@@ -172,12 +175,12 @@ class TarMAC_Learner(LearnerMAS):
 
                 info.update({f"predict_value/{key}": value_pred_i.mean().item()})
 
-                info.update({self.callback.on_update_agent_wise(self.iterations, key, info=info, method="update_rnn",
-                                                                mask_values=mask_values, log_pi=log_pi,
-                                                                pg_loss=pg_loss, entropy=entropy,
-                                                                entropy_loss=entropy_loss, value_pred_i=value_pred_i,
-                                                                value_target=value_target, values_i=values_i,
-                                                                loss_v=loss_v)})
+                info.update(self.callback.on_update_agent_wise(self.iterations, key, info=info, method="update_rnn",
+                                                               mask_values=mask_values, log_pi=log_pi,
+                                                               pg_loss=pg_loss, entropy=entropy,
+                                                               entropy_loss=entropy_loss, value_pred_i=value_pred_i,
+                                                               value_target=value_target, values_i=values_i,
+                                                               loss_v=loss_v))
 
             loss = sum(loss_a) + self.vf_coef * sum(loss_c) - self.ent_coef * sum(loss_e)
             total_loss += loss
@@ -206,4 +209,3 @@ class TarMAC_Learner(LearnerMAS):
                                                 total_loss=total_loss))
 
         return info
-

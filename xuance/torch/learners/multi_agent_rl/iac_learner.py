@@ -330,12 +330,12 @@ class IAC_Learner(LearnerMAS):
                 f"predict_value/{key}": value_pred_i.mean().item()
             })
 
-            info.update({self.callback.on_update_agent_wise(self.iterations, key, info=info, method="update_rnn",
-                                                            mask_values=mask_values, log_pi=log_pi,
-                                                            pg_loss=pg_loss, entropy=entropy,
-                                                            entropy_loss=entropy_loss, value_pred_i=value_pred_i,
-                                                            value_target=value_target, values_i=values_i,
-                                                            loss_v=loss_v)})
+            info.update(self.callback.on_update_agent_wise(self.iterations, key, info=info, method="update_rnn",
+                                                           mask_values=mask_values, log_pi=log_pi,
+                                                           pg_loss=pg_loss, entropy=entropy,
+                                                           entropy_loss=entropy_loss, value_pred_i=value_pred_i,
+                                                           value_target=value_target, values_i=values_i,
+                                                           loss_v=loss_v))
 
         loss = sum(loss_a) + self.vf_coef * sum(loss_c) - self.ent_coef * sum(loss_e)
         self.optimizer.zero_grad()
