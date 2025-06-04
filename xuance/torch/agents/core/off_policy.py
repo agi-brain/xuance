@@ -131,12 +131,19 @@ class OffPolicyAgent(Agent):
             acts = policy_out['actions']
             next_obs, rewards, terminals, truncations, infos = self.envs.step(acts)
 
-            self.callback.on_train_step(self.current_step, obs, acts, next_obs, rewards, terminals, truncations, infos)
+            self.callback.on_train_step(self.current_step, envs=self.envs, policy=self.policy,
+                                        obs=obs, policy_out=policy_out, acts=acts, next_obs=next_obs, rewards=rewards,
+                                        terminals=terminals, truncations=truncations, infos=infos,
+                                        train_steps=train_steps)
+
             self.memory.store(obs, acts, self._process_reward(rewards), terminals, self._process_observation(next_obs))
             if self.current_step > self.start_training and self.current_step % self.training_frequency == 0:
                 update_info = self.train_epochs(n_epochs=self.n_epochs)
                 self.log_infos(update_info, self.current_step)
                 train_info.update(update_info)
+                self.callback.on_train_epochs_end(self.current_step, policy=self.policy, memory=self.memory,
+                                                  current_episode=self.current_episode, train_steps=train_steps,
+                                                  update_info=update_info)
 
             self.returns = self.gamma * self.returns + rewards
             obs = deepcopy(next_obs)
@@ -159,17 +166,22 @@ class OffPolicyAgent(Agent):
                                 f"env-{i}": infos[i]["episode_score"]}
                         self.log_infos(episode_info, self.current_step)
                         train_info.update(episode_info)
-                        self.callback.on_train_episode_info(infos, i, self.rank, self.use_wandb)
+                        self.callback.on_train_episode_info(envs=self.envs, policy=self.policy, env_id=i,
+                                                            infos=infos, rank=self.rank, use_wandb=self.use_wandb,
+                                                            current_step=self.current_step,
+                                                            current_episode=self.current_episode,
+                                                            train_steps=train_steps)
 
-            self.callback.on_train_step_end(self.current_step, infos, train_info)
             self.current_step += self.n_envs
             self._update_explore_factor()
+            self.callback.on_train_step_end(self.current_step, envs=self.envs, policy=self.policy,
+                                            train_steps=train_steps, train_info=train_info)
         return train_info
 
     def test(self, env_fn, test_episodes: int) -> list:
         test_envs = env_fn()
         num_envs = test_envs.num_envs
-        videos, episode_videos = [[] for _ in range(num_envs)], []
+        videos, episode_videos, images = [[] for _ in range(num_envs)], [], None
         current_episode, current_step, scores, best_score = 0, 0, [], -np.inf
         obs, infos = test_envs.reset()
         if self.config.render_mode == "rgb_array" and self.render:
@@ -182,14 +194,16 @@ class OffPolicyAgent(Agent):
             obs = self._process_observation(obs)
             policy_out = self.action(obs, test_mode=True)
             next_obs, rewards, terminals, truncations, infos = test_envs.step(policy_out['actions'])
-            self.callback.on_test_step(obs, rewards, terminals, truncations, infos,
-                                       current_train_step=self.current_step,
-                                       current_step=current_step,
-                                       current_episode=current_episode)
             if self.config.render_mode == "rgb_array" and self.render:
                 images = test_envs.render(self.config.render_mode)
                 for idx, img in enumerate(images):
                     videos[idx].append(img)
+
+            self.callback.on_test_step(envs=test_envs, policy=self.policy, images=images,
+                                       obs=obs, policy_out=policy_out, next_obs=next_obs, rewards=rewards,
+                                       terminals=terminals, truncations=truncations, infos=infos,
+                                       current_train_step=self.current_step,
+                                       current_step=current_step, current_episode=current_episode)
 
             obs = deepcopy(next_obs)
             for i in range(num_envs):
@@ -220,7 +234,10 @@ class OffPolicyAgent(Agent):
             "Test-Episode-Rewards/Std-Score": np.std(scores)
         }
         self.log_infos(test_info, self.current_step)
-        self.callback.on_test_end(current_step=current_step, current_episode=current_episode,
+
+        self.callback.on_test_end(envs=test_envs, policy=self.policy,
+                                  current_train_step=self.current_step,
+                                  current_step=current_step, current_episode=current_episode,
                                   scores=scores, best_score=best_score)
 
         test_envs.close()

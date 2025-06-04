@@ -17,7 +17,7 @@ from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.torch import ModuleDict, REGISTRY_Representation, REGISTRY_Learners, Module
 from xuance.torch.learners import learner
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions, init_distributed_mode
-from .callback import BaseCallback
+from .callback import MultiAgentBaseCallback
 
 
 class MARLAgents(ABC):
@@ -30,7 +30,7 @@ class MARLAgents(ABC):
     def __init__(self,
                  config: Namespace,
                  envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv],
-                 callback: Optional[BaseCallback] = None):
+                 callback: Optional[MultiAgentBaseCallback] = None):
         # Training settings.
         self.config = config
         self.use_rnn = getattr(config, "use_rnn", False)
@@ -129,7 +129,7 @@ class MARLAgents(ABC):
         self.policy: Optional[nn.Module] = None
         self.learner: Optional[learner] = None
         self.memory: Optional[object] = None
-        self.callback = callback or BaseCallback()
+        self.callback = callback or MultiAgentBaseCallback()
 
     def store_experience(self, *args, **kwargs):
         raise NotImplementedError

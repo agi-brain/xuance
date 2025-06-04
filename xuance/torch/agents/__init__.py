@@ -1,4 +1,4 @@
-from .base.callback import BaseCallback
+from .base.callback import BaseCallback, MultiAgentBaseCallback
 from .base import Agent, MARLAgents, RandomAgents
 from .core import OnPolicyAgent, OffPolicyAgent, OffPolicyMARLAgents, OnPolicyMARLAgents, OfflineAgent
 

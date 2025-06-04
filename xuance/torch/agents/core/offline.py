@@ -45,14 +45,16 @@ class OfflineAgent(Agent):
         return train_info
 
     def train(self, train_steps):
-        return_info = {}
+        train_info = {}
         for _ in tqdm(range(train_steps)):
             if self.current_step > self.start_training and self.current_step % self.training_frequency == 0:
-                train_info = self.train_epochs(n_epochs=self.n_epochs)  # self.n_epochs = 16
-                self.log_infos(train_info, self.current_step)
-                return_info.update(train_info)
+                update_info = self.train_epochs(n_epochs=self.n_epochs)  # self.n_epochs = 16
+                self.log_infos(update_info, self.current_step)
+                train_info.update(update_info)
+                self.callback.on_train_epochs_end(self.current_step, policy=self.policy, memory=self.memory,
+                                                  train_info=train_info, train_steps=train_steps)
             self.current_step += 1
-        return return_info
+        return train_info
 
     def action(self, observations: np.ndarray):
         raise NotImplementedError

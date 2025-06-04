@@ -37,6 +37,19 @@ class BaseCallback(ABC):
         """
         return
 
+    def on_train_epochs_end(self, current_step, **kwargs):
+        """Called after each training epoch (i.e., after collecting one transition).
+        Args:
+            current_step (int): The current global training step.
+            **kwargs: Additional optional information.
+        """
+        return
+
+    def on_train_episode_info(self, **kwargs):
+        """Called at the termination or truncation of one episode for an environment.
+        """
+        return
+
     def on_train_step_end(self, current_step, **kwargs):
         """Called after a training step is completed (includes update, logging, etc.).
 
@@ -44,20 +57,6 @@ class BaseCallback(ABC):
             current_step (int): The current global training step.
             envs_info: Environment information.
             train_info: Training information.
-        """
-        return
-
-    def on_train_episode_info(self, env_infos, env_id, rank, use_wandb):
-        """Called at the termination or truncation of one episode for an environment.
-
-        Args:
-            env_infos: Raw information from the environment.
-            env_id: ID of the current environment instance.
-            rank: Worker or process ID (for distributed training).
-            use_wandb (bool): Whether to log the data to Weights & Biases.
-
-        Returns:
-            Dict[str, Union[Dict[str, Any], Any]]: A dictionary of episode-level metrics.
         """
         return
 
