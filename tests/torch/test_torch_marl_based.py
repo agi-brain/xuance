@@ -95,12 +95,12 @@ class TestValueBaseAlgo(unittest.TestCase):
         runner = get_runner(method="commnet", env='mpe', env_id='simple_spread_v3', parser_args=args)
         runner.run()
 
-    def test_ic3net(self):
+    def test_commnet(self):
         args = Namespace(dl_toolbox='torch', device=device, running_steps=n_steps, test_mode=test_mode)
         runner = get_runner(method="ic3net", env='mpe', env_id='simple_spread_v3', parser_args=args)
         runner.run()
 
-    def test_ic3net(self):
+    def test_tarmac(self):
         args = Namespace(dl_toolbox='torch', device=device, running_steps=n_steps, test_mode=test_mode)
         runner = get_runner(method="tarmac", env='mpe', env_id='simple_spread_v3', parser_args=args)
         runner.run()
