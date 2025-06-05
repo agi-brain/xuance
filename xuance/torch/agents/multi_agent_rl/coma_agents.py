@@ -271,6 +271,246 @@ class COMA_Agents(OnPolicyMARLAgents):
         values_dict = {k: values_out[i] for i, k in enumerate(self.agent_keys)}
         return rnn_hidden_critic_new, values_dict
 
+    def train(self, n_steps):
+        """
+        Train the model for numerous steps.
+
+        Parameters:
+            n_steps (int): The number of steps to train the model.
+        """
+        train_info = {}
+        if self.use_rnn:
+            with tqdm(total=n_steps) as process_bar:
+                step_start, step_last = deepcopy(self.current_step), deepcopy(self.current_step)
+                n_steps_all = n_steps * self.n_envs
+                while step_last - step_start < n_steps_all:
+                    self.run_episodes(None, n_episodes=self.n_envs, test_mode=False)
+                    update_info = self.train_epochs(n_epochs=self.n_epochs)
+                    self.log_infos(update_info, self.current_step)
+                    train_info.update(update_info)
+
+                    self.callback.on_train_epochs_end(self.current_step, policy=self.policy, memory=self.memory,
+                                                      current_episode=self.current_episode, n_steps=n_steps,
+                                                      update_info=update_info)
+
+                    process_bar.update((self.current_step - step_last) // self.n_envs)
+                    step_last = deepcopy(self.current_step)
+                process_bar.update(n_steps - process_bar.last_print_n)
+                self.callback.on_train_step_end(self.current_step, envs=self.envs, policy=self.policy,
+                                                n_steps=n_steps, train_info=train_info)
+            return train_info
+
+        obs_dict = self.envs.buf_obs
+        avail_actions = self.envs.buf_avail_actions if self.use_actions_mask else None
+        state = self.envs.buf_state if self.use_global_state else None
+        for _ in tqdm(range(n_steps)):
+            policy_out = self.action(obs_dict=obs_dict, state=state, avail_actions_dict=avail_actions, test_mode=False)
+            actions_dict, log_pi_a_dict = policy_out['actions'], policy_out['log_pi']
+            values_dict = policy_out['values']
+            next_obs_dict, rewards_dict, terminated_dict, truncated, info = self.envs.step(actions_dict)
+            next_state = self.envs.buf_state.copy() if self.use_global_state else None
+            next_avail_actions = self.envs.buf_avail_actions if self.use_actions_mask else None
+
+            self.callback.on_train_step(self.current_step, envs=self.envs, policy=self.policy,
+                                        obs=obs_dict, policy_out=policy_out, acts=actions_dict, next_obs=next_obs_dict,
+                                        rewards=rewards_dict, state=state, next_state=next_state,
+                                        avail_actions=avail_actions, next_avail_actions=next_avail_actions,
+                                        terminals=terminated_dict, truncations=truncated, infos=info,
+                                        n_steps=n_steps, values_dict=values_dict)
+
+            self.store_experience(obs_dict, avail_actions, actions_dict, log_pi_a_dict, rewards_dict, values_dict,
+                                  terminated_dict, info, **{'state': state})
+            if self.memory.full:
+                for i in range(self.n_envs):
+                    if all(terminated_dict[i].values()):
+                        value_next = {key: 0.0 for key in self.agent_keys}
+                    else:
+                        state_i = state[i] if self.use_global_state else None
+                        _, value_next = self.values_next(i_env=i, obs_dict=next_obs_dict[i],
+                                                         state=state_i, actions_n=actions_dict[i])
+                    self.memory.finish_path(i_env=i, value_next=value_next,
+                                            value_normalizer=self.learner.value_normalizer)
+            update_info = self.train_epochs(n_epochs=self.n_epochs)
+            self.log_infos(update_info, self.current_step)
+            train_info.update(update_info)
+            obs_dict, avail_actions = deepcopy(next_obs_dict), deepcopy(next_avail_actions)
+            state = self.envs.buf_state if self.use_global_state else None
+
+            for i in range(self.n_envs):
+                if all(terminated_dict[i].values()) or truncated[i]:
+                    if all(terminated_dict[i].values()):
+                        value_next = {key: 0.0 for key in self.agent_keys}
+                    else:
+                        state_i = state[i] if self.use_global_state else None
+                        _, value_next = self.values_next(i_env=i, obs_dict=obs_dict[i],
+                                                         state=state_i, actions_n=actions_dict[i])
+                    self.memory.finish_path(i_env=i, value_next=value_next,
+                                            value_normalizer=self.learner.value_normalizer)
+                    obs_dict[i] = info[i]["reset_obs"]
+                    self.envs.buf_obs[i] = info[i]["reset_obs"]
+                    if self.use_actions_mask:
+                        avail_actions[i] = info[i]["reset_avail_actions"]
+                        self.envs.buf_avail_actions[i] = info[i]["reset_avail_actions"]
+                    if self.use_global_state:
+                        state[i] = info[i]["reset_state"]
+                        self.envs.buf_state[i] = info[i]["reset_state"]
+                    self.current_episode[i] += 1
+                    if self.use_wandb:
+                        episode_info = {
+                            f"Train-Results/Episode-Steps/rank_{self.rank}/env-%d" % i: info[i]["episode_step"],
+                            f"Train-Results/Episode-Rewards/rank_{self.rank}/env-%d" % i: info[i]["episode_score"]
+                        }
+                    else:
+                        episode_info = {
+                            f"Train-Results/Episode-Steps/rank_{self.rank}": {"env-%d" % i: info[i]["episode_step"]},
+                            f"Train-Results/Episode-Rewards/rank_{self.rank}": {
+                                "env-%d" % i: np.mean(itemgetter(*self.agent_keys)(info[i]["episode_score"]))}
+                        }
+                    self.log_infos(episode_info, self.current_step)
+                    train_info.update(episode_info)
+                    self.callback.on_train_episode_info(envs=self.envs, policy=self.policy, env_id=i,
+                                                        infos=info, rank=self.rank, use_wandb=self.use_wandb,
+                                                        current_step=self.current_step,
+                                                        current_episode=self.current_episode,
+                                                        n_steps=n_steps)
+            self.current_step += self.n_envs
+            self.callback.on_train_step_end(self.current_step, envs=self.envs, policy=self.policy,
+                                            n_steps=n_steps, train_info=train_info)
+        return train_info
+
+    def run_episodes(self, env_fn=None, n_episodes: int = 1, test_mode: bool = False):
+        """
+        Run some episodes when use RNN.
+
+        Parameters:
+            env_fn: The function that can make some testing environments.
+            n_episodes (int): Number of episodes.
+            test_mode (bool): Whether to test the model.
+
+        Returns:
+            Scores: The episode scores.
+        """
+        envs = self.envs if env_fn is None else env_fn()
+        num_envs = envs.num_envs
+        videos, episode_videos, images = [[] for _ in range(num_envs)], [], None
+        current_episode, current_step, scores, best_score = 0, 0, [0.0 for _ in range(num_envs)], -np.inf
+        obs_dict, info = envs.reset()
+        avail_actions = envs.buf_avail_actions if self.use_actions_mask else None
+        state = envs.buf_state if self.use_global_state else None
+        if test_mode:
+            if self.config.render_mode == "rgb_array" and self.render:
+                images = envs.render(self.config.render_mode)
+                for idx, img in enumerate(images):
+                    videos[idx].append(img)
+        else:
+            if self.use_rnn:
+                self.memory.clear_episodes()
+        rnn_hidden_actor, rnn_hidden_critic = self.init_rnn_hidden(num_envs)
+
+        while current_episode < n_episodes:
+            policy_out = self.action(obs_dict=obs_dict, state=state, avail_actions_dict=avail_actions,
+                                     rnn_hidden_actor=rnn_hidden_actor, rnn_hidden_critic=rnn_hidden_critic,
+                                     test_mode=test_mode)
+            rnn_hidden_actor, rnn_hidden_critic = policy_out['rnn_hidden_actor'], policy_out['rnn_hidden_critic']
+            actions_dict, log_pi_a_dict = policy_out['actions'], policy_out['log_pi']
+            values_dict = policy_out['values']
+            next_obs_dict, rewards_dict, terminated_dict, truncated, info = envs.step(actions_dict)
+            next_state = envs.buf_state if self.use_global_state else None
+            next_avail_actions = envs.buf_avail_actions if self.use_actions_mask else None
+            if test_mode:
+                if self.config.render_mode == "rgb_array" and self.render:
+                    images = envs.render(self.config.render_mode)
+                    for idx, img in enumerate(images):
+                        videos[idx].append(img)
+            else:
+                self.store_experience(obs_dict, avail_actions, actions_dict, log_pi_a_dict, rewards_dict, values_dict,
+                                      terminated_dict, info, **{'state': state})
+
+            self.callback.on_test_step(envs=envs, policy=self.policy, images=images, test_mode=test_mode,
+                                       obs=obs_dict, policy_out=policy_out, acts=actions_dict,
+                                       next_obs=next_obs_dict, rewards=rewards_dict,
+                                       terminals=terminated_dict, truncations=truncated, infos=info,
+                                       state=state, next_state=next_state,
+                                       current_train_step=self.current_step, n_episodes=n_episodes,
+                                       current_step=current_step, current_episode=current_episode)
+
+            obs_dict, avail_actions = deepcopy(next_obs_dict), deepcopy(next_avail_actions)
+            state = envs.buf_state if self.use_global_state else None
+
+            for i in range(num_envs):
+                if all(terminated_dict[i].values()) or truncated[i]:
+                    current_episode += 1
+                    episode_score = float(np.mean(itemgetter(*self.agent_keys)(info[i]["episode_score"])))
+                    scores.append(episode_score)
+                    if test_mode:
+                        if self.use_rnn:
+                            rnn_hidden_actor, _ = self.init_hidden_item(i, rnn_hidden_actor)
+                        if best_score < episode_score:
+                            best_score = episode_score
+                            episode_videos = videos[i].copy()
+                        if self.config.test_mode:
+                            print("Episode: %d, Score: %.2f" % (current_episode, episode_score))
+                    else:
+                        if all(terminated_dict[i].values()):
+                            value_next = {key: 0.0 for key in self.agent_keys}
+                        else:
+                            _, value_next = self.values_next(i_env=i, obs_dict=obs_dict[i],
+                                                             state=state[i], actions_n=actions_dict[i],
+                                                             rnn_hidden_critic=rnn_hidden_critic)
+                        self.memory.finish_path(i_env=i, i_step=info[i]['episode_step'], value_next=value_next,
+                                                value_normalizer=self.learner.value_normalizer)
+                        if self.use_rnn:
+                            rnn_hidden_actor, rnn_hidden_critic = self.init_hidden_item(i, rnn_hidden_actor,
+                                                                                        rnn_hidden_critic)
+                        if self.use_wandb:
+                            episode_info = {
+                                "Train-Results/Episode-Steps/env-%d" % i: info[i]["episode_step"],
+                                "Train-Results/Episode-Rewards/env-%d" % i: info[i]["episode_score"]
+                            }
+                        else:
+                            episode_info = {
+                                "Train-Results/Episode-Steps": {"env-%d" % i: info[i]["episode_step"]},
+                                "Train-Results/Episode-Rewards": {
+                                    "env-%d" % i: np.mean(itemgetter(*self.agent_keys)(info[i]["episode_score"]))}
+                            }
+                        self.current_step += info[i]["episode_step"]
+                        self.log_infos(episode_info, self.current_step)
+                        self.callback.on_train_episode_info(envs=self.envs, policy=self.policy, env_id=i,
+                                                            infos=info, rank=self.rank, use_wandb=self.use_wandb,
+                                                            current_step=self.current_step,
+                                                            current_episode=self.current_episode,
+                                                            n_episodes=n_episodes)
+                    obs_dict[i] = info[i]["reset_obs"]
+                    envs.buf_obs[i] = info[i]["reset_obs"]
+                    if self.use_actions_mask:
+                        avail_actions[i] = info[i]["reset_avail_actions"]
+                        envs.buf_avail_actions[i] = info[i]["reset_avail_actions"]
+            current_step += num_envs
+
+        if test_mode:
+            if self.config.render_mode == "rgb_array" and self.render:
+                # time, height, width, channel -> time, channel, height, width
+                videos_info = {"Videos_Test": np.array([episode_videos], dtype=np.uint8).transpose((0, 1, 4, 2, 3))}
+                self.log_videos(info=videos_info, fps=self.fps, x_index=self.current_step)
+
+            if self.config.test_mode:
+                print("Best Score: %.2f" % best_score)
+
+            test_info = {
+                "Test-Results/Episode-Rewards/Mean-Score": np.mean(scores),
+                "Test-Results/Episode-Rewards/Std-Score": np.std(scores),
+            }
+            self.log_infos(test_info, self.current_step)
+
+            self.callback.on_test_end(envs=envs, policy=self.policy,
+                                      current_train_step=self.current_step,
+                                      current_step=current_step, current_episode=current_episode,
+                                      scores=scores, best_score=best_score)
+
+            if env_fn is not None:
+                envs.close()
+        return scores
+
     def train_epochs(self, n_epochs=1):
         """
         Train the model for numerous epochs.
@@ -293,190 +533,9 @@ class COMA_Agents(OnPolicyMARLAgents):
                         info_train = self.learner.update_rnn(sample, self.egreedy)
                     else:
                         info_train = self.learner.update(sample, self.egreedy)
+            self.callback.on_train_epochs_end(self.current_step, policy=self.policy, memory=self.memory,
+                                              current_episode=self.current_episode, n_epochs=n_epochs,
+                                              buffer_size=self.buffer_size, update_info=info_train)
             self.memory.clear()
         info_train["epsilon-greedy"] = self.egreedy
         return info_train
-
-    def train(self, n_steps):
-        """
-        Train the model for numerous steps.
-
-        Parameters:
-            n_steps (int): The number of steps to train the model.
-        """
-        if self.use_rnn:
-            with tqdm(total=n_steps) as process_bar:
-                step_start, step_last = deepcopy(self.current_step), deepcopy(self.current_step)
-                n_steps_all = n_steps * self.n_envs
-                while step_last - step_start < n_steps_all:
-                    self.run_episodes(None, n_episodes=self.n_envs, test_mode=False)
-                    train_info = self.train_epochs(n_epochs=self.n_epochs)
-                    self.log_infos(train_info, self.current_step)
-                    process_bar.update((self.current_step - step_last) // self.n_envs)
-                    step_last = deepcopy(self.current_step)
-                process_bar.update(n_steps - process_bar.last_print_n)
-            return
-
-        obs_dict = self.envs.buf_obs
-        avail_actions = self.envs.buf_avail_actions if self.use_actions_mask else None
-        state = self.envs.buf_state if self.use_global_state else None
-        for _ in tqdm(range(n_steps)):
-            step_info = {}
-            policy_out = self.action(obs_dict=obs_dict, state=state, avail_actions_dict=avail_actions, test_mode=False)
-            actions_dict, log_pi_a_dict = policy_out['actions'], policy_out['log_pi']
-            values_dict = policy_out['values']
-            next_obs_dict, rewards_dict, terminated_dict, truncated, info = self.envs.step(actions_dict)
-            next_avail_actions = self.envs.buf_avail_actions if self.use_actions_mask else None
-            self.store_experience(obs_dict, avail_actions, actions_dict, log_pi_a_dict, rewards_dict, values_dict,
-                                  terminated_dict, info, **{'state': state})
-            if self.memory.full:
-                for i in range(self.n_envs):
-                    if all(terminated_dict[i].values()):
-                        value_next = {key: 0.0 for key in self.agent_keys}
-                    else:
-                        state_i = state[i] if self.use_global_state else None
-                        _, value_next = self.values_next(i_env=i, obs_dict=next_obs_dict[i],
-                                                         state=state_i, actions_n=actions_dict[i])
-                    self.memory.finish_path(i_env=i, value_next=value_next,
-                                            value_normalizer=self.learner.value_normalizer)
-            train_info = self.train_epochs(n_epochs=self.n_epochs)
-            self.log_infos(train_info, self.current_step)
-            obs_dict, avail_actions = deepcopy(next_obs_dict), deepcopy(next_avail_actions)
-            state = self.envs.buf_state if self.use_global_state else None
-
-            for i in range(self.n_envs):
-                if all(terminated_dict[i].values()) or truncated[i]:
-                    if all(terminated_dict[i].values()):
-                        value_next = {key: 0.0 for key in self.agent_keys}
-                    else:
-                        state_i = state[i] if self.use_global_state else None
-                        _, value_next = self.values_next(i_env=i, obs_dict=obs_dict[i],
-                                                         state=state_i, actions_n=actions_dict[i])
-                    self.memory.finish_path(i_env=i, value_next=value_next,
-                                            value_normalizer=self.learner.value_normalizer)
-                    obs_dict[i] = info[i]["reset_obs"]
-                    self.envs.buf_obs[i] = info[i]["reset_obs"]
-                    if self.use_actions_mask:
-                        avail_actions[i] = info[i]["reset_avail_actions"]
-                        self.envs.buf_avail_actions[i] = info[i]["reset_avail_actions"]
-                    if self.use_global_state:
-                        state[i] = info[i]["reset_state"]
-                        self.envs.buf_state[i] = info[i]["reset_state"]
-                    if self.use_wandb:
-                        step_info[f"Train-Results/Episode-Steps/rank_{self.rank}/env-%d" % i] = info[i]["episode_step"]
-                        step_info[f"Train-Results/Episode-Rewards/rank_{self.rank}/env-%d" % i] = info[i]["episode_score"]
-                    else:
-                        step_info[f"Train-Results/Episode-Steps/rank_{self.rank}"] = {"env-%d" % i: info[i]["episode_step"]}
-                        step_info[f"Train-Results/Episode-Rewards/rank_{self.rank}"] = {
-                            "env-%d" % i: np.mean(itemgetter(*self.agent_keys)(info[i]["episode_score"]))}
-                    self.log_infos(step_info, self.current_step)
-
-            self.current_step += self.n_envs
-
-    def run_episodes(self, env_fn=None, n_episodes: int = 1, test_mode: bool = False):
-        """
-        Run some episodes when use RNN.
-
-        Parameters:
-            env_fn: The function that can make some testing environments.
-            n_episodes (int): Number of episodes.
-            test_mode (bool): Whether to test the model.
-
-        Returns:
-            Scores: The episode scores.
-        """
-        envs = self.envs if env_fn is None else env_fn()
-        num_envs = envs.num_envs
-        videos, episode_videos = [[] for _ in range(num_envs)], []
-        episode_count, scores, best_score = 0, [0.0 for _ in range(num_envs)], -np.inf
-        obs_dict, info = envs.reset()
-        avail_actions = envs.buf_avail_actions if self.use_actions_mask else None
-        state = envs.buf_state if self.use_global_state else None
-        if test_mode:
-            if self.config.render_mode == "rgb_array" and self.render:
-                images = envs.render(self.config.render_mode)
-                for idx, img in enumerate(images):
-                    videos[idx].append(img)
-        else:
-            if self.use_rnn:
-                self.memory.clear_episodes()
-        rnn_hidden_actor, rnn_hidden_critic = self.init_rnn_hidden(num_envs)
-
-        while episode_count < n_episodes:
-            step_info = {}
-            policy_out = self.action(obs_dict=obs_dict, state=state, avail_actions_dict=avail_actions,
-                                     rnn_hidden_actor=rnn_hidden_actor, rnn_hidden_critic=rnn_hidden_critic,
-                                     test_mode=test_mode)
-            rnn_hidden_actor, rnn_hidden_critic = policy_out['rnn_hidden_actor'], policy_out['rnn_hidden_critic']
-            actions_dict, log_pi_a_dict = policy_out['actions'], policy_out['log_pi']
-            values_dict = policy_out['values']
-            next_obs_dict, rewards_dict, terminated_dict, truncated, info = envs.step(actions_dict)
-            next_avail_actions = envs.buf_avail_actions if self.use_actions_mask else None
-            if test_mode:
-                if self.config.render_mode == "rgb_array" and self.render:
-                    images = envs.render(self.config.render_mode)
-                    for idx, img in enumerate(images):
-                        videos[idx].append(img)
-            else:
-                self.store_experience(obs_dict, avail_actions, actions_dict, log_pi_a_dict, rewards_dict, values_dict,
-                                      terminated_dict, info, **{'state': state})
-            obs_dict, avail_actions = deepcopy(next_obs_dict), deepcopy(next_avail_actions)
-            state = envs.buf_state if self.use_global_state else None
-
-            for i in range(num_envs):
-                if all(terminated_dict[i].values()) or truncated[i]:
-                    episode_count += 1
-                    episode_score = float(np.mean(itemgetter(*self.agent_keys)(info[i]["episode_score"])))
-                    scores.append(episode_score)
-                    if test_mode:
-                        if self.use_rnn:
-                            rnn_hidden_actor, _ = self.init_hidden_item(i, rnn_hidden_actor)
-                        if best_score < episode_score:
-                            best_score = episode_score
-                            episode_videos = videos[i].copy()
-                        if self.config.test_mode:
-                            print("Episode: %d, Score: %.2f" % (episode_count, episode_score))
-                    else:
-                        if all(terminated_dict[i].values()):
-                            value_next = {key: 0.0 for key in self.agent_keys}
-                        else:
-                            _, value_next = self.values_next(i_env=i, obs_dict=obs_dict[i],
-                                                             state=state[i], actions_n=actions_dict[i],
-                                                             rnn_hidden_critic=rnn_hidden_critic)
-                        self.memory.finish_path(i_env=i, i_step=info[i]['episode_step'], value_next=value_next,
-                                                value_normalizer=self.learner.value_normalizer)
-                        if self.use_rnn:
-                            rnn_hidden_actor, rnn_hidden_critic = self.init_hidden_item(i, rnn_hidden_actor,
-                                                                                        rnn_hidden_critic)
-                        if self.use_wandb:
-                            step_info["Train-Results/Episode-Steps/env-%d" % i] = info[i]["episode_step"]
-                            step_info["Train-Results/Episode-Rewards/env-%d" % i] = info[i]["episode_score"]
-                        else:
-                            step_info["Train-Results/Episode-Steps"] = {"env-%d" % i: info[i]["episode_step"]}
-                            step_info["Train-Results/Episode-Rewards"] = {
-                                "env-%d" % i: np.mean(itemgetter(*self.agent_keys)(info[i]["episode_score"]))}
-                        self.current_step += info[i]["episode_step"]
-                        self.log_infos(step_info, self.current_step)
-                    obs_dict[i] = info[i]["reset_obs"]
-                    envs.buf_obs[i] = info[i]["reset_obs"]
-                    if self.use_actions_mask:
-                        avail_actions[i] = info[i]["reset_avail_actions"]
-                        envs.buf_avail_actions[i] = info[i]["reset_avail_actions"]
-
-        if test_mode:
-            if self.config.render_mode == "rgb_array" and self.render:
-                # time, height, width, channel -> time, channel, height, width
-                videos_info = {"Videos_Test": np.array([episode_videos], dtype=np.uint8).transpose((0, 1, 4, 2, 3))}
-                self.log_videos(info=videos_info, fps=self.fps, x_index=self.current_step)
-
-            if self.config.test_mode:
-                print("Best Score: %.2f" % best_score)
-
-            test_info = {
-                "Test-Results/Episode-Rewards/Mean-Score": np.mean(scores),
-                "Test-Results/Episode-Rewards/Std-Score": np.std(scores),
-            }
-            self.log_infos(test_info, self.current_step)
-            if env_fn is not None:
-                envs.close()
-        return scores

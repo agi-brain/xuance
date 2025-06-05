@@ -333,6 +333,7 @@ class OnPolicyMARLAgents(MARLAgents):
                     if self.use_global_state:
                         state[i] = info[i]["reset_state"]
                         self.envs.buf_state[i] = info[i]["reset_state"]
+                    self.current_episode[i] += 1
                     if self.use_wandb:
                         episode_info = {
                             f"Train-Results/Episode-Steps/rank_{self.rank}/env-%d" % i: info[i]["episode_step"],

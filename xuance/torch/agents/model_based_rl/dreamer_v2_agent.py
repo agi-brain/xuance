@@ -148,11 +148,10 @@ class DreamerV2Agent(OffPolicyAgent):
         return train_info
 
     def train(self, train_steps):  # each train still uses old rssm_states until episode end
-        return_info = {}
+        train_info = {}
         obs, rews, terms, truncs, is_first = self.train_states
 
         for _ in tqdm(range(train_steps)):
-            step_info = {}
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
             if self.current_step < self.start_training:  # ramdom_sample before training
@@ -164,6 +163,12 @@ class DreamerV2Agent(OffPolicyAgent):
             """(o1, a1, r1, term1, trunc1, is_first1), acts: real_acts"""
             self.memory.store(obs, acts, self._process_reward(rews), terms, truncs, is_first)
             next_obs, rews, terms, truncs, infos = self.envs.step(acts)
+
+            self.callback.on_train_step(self.current_step, envs=self.envs, policy=self.policy,
+                                        obs=obs, acts=acts, next_obs=next_obs, rewards=rews,
+                                        terminals=terms, truncations=truncs, infos=infos,
+                                        train_steps=train_steps)
+
             """
             set to zeros after the first step
             (o2, a1, r2, term2, trunc2, is_first2)
@@ -183,14 +188,23 @@ class DreamerV2Agent(OffPolicyAgent):
                         self.returns[i] = 0.0
                         self.current_episode[i] += 1
                         if self.use_wandb:
-                            step_info[f"Episode-Steps/rank_{self.rank}/env-{i}"] = infos[i]["episode_step"]
-                            step_info[f"Train-Episode-Rewards/rank_{self.rank}/env-{i}"] = infos[i]["episode_score"]
+                            episode_info = {
+                                f"Episode-Steps/rank_{self.rank}/env-{i}": infos[i]["episode_step"],
+                                f"Train-Episode-Rewards/rank_{self.rank}/env-{i}": infos[i]["episode_score"]
+                            }
                         else:
-                            step_info[f"Episode-Steps/rank_{self.rank}"] = {f"env-{i}": infos[i]["episode_step"]}
-                            step_info[f"Train-Episode-Rewards/rank_{self.rank}"] = {
-                                f"env-{i}": infos[i]["episode_score"]}
-                        self.log_infos(step_info, self.current_step)
-                        return_info.update(step_info)
+                            episode_info = {
+                                f"Episode-Steps/rank_{self.rank}": {f"env-{i}": infos[i]["episode_step"]},
+                                f"Train-Episode-Rewards/rank_{self.rank}": {f"env-{i}": infos[i]["episode_score"]}
+                            }
+                        self.log_infos(episode_info, self.current_step)
+                        train_info.update(episode_info)
+                        self.callback.on_train_episode_info(envs=self.envs, policy=self.policy, env_id=i,
+                                                            infos=infos, rank=self.rank, use_wandb=self.use_wandb,
+                                                            current_step=self.current_step,
+                                                            current_episode=self.current_episode,
+                                                            train_steps=train_steps)
+
             self.current_step += self.n_envs
             if len(done_idxes) > 0:
                 """
@@ -218,14 +232,21 @@ class DreamerV2Agent(OffPolicyAgent):
             if self.current_step > self.start_training:
                 # count current_step when start_training
                 n_epochs = max(int((self.current_step - self.start_training) * self.replay_ratio - self.gradient_step), 0)
-                train_info = self.train_epochs(n_epochs=n_epochs)
+                update_info = self.train_epochs(n_epochs=n_epochs)
                 self.gradient_step += n_epochs
-                if train_info is not None:
-                    self.log_infos(train_info, self.current_step)
-                    return_info.update(train_info)
+                if update_info is not None:
+                    self.log_infos(update_info, self.current_step)
+                    train_info.update(train_info)
+                    self.callback.on_train_epochs_end(self.current_step, policy=self.policy, memory=self.memory,
+                                                      current_episode=self.current_episode, train_steps=train_steps,
+                                                      update_info=update_info)
+
+            self.callback.on_train_step_end(self.current_step, envs=self.envs, policy=self.policy,
+                                            train_steps=train_steps, train_info=train_info)
+
         # save the train_states for next train
         self.train_states = [obs, rews, terms, truncs, is_first]
-        return return_info
+        return train_info
 
     def test(self, env_fn, test_episodes: int) -> list:
         test_envs = env_fn()
@@ -233,15 +254,14 @@ class DreamerV2Agent(OffPolicyAgent):
         # copy the total network for test
         test_player = deepcopy(self.train_player)
         test_player.init_states(num_envs=num_envs)
-        videos, episode_videos = [[] for _ in range(num_envs)], []
-        current_episode, scores, best_score = 0, [], -np.inf
+        videos, episode_videos, images = [[] for _ in range(num_envs)], [], None
+        current_episode, current_step, scores, best_score = 0, 0, [], -np.inf
         obs, infos = test_envs.reset()
         if self.config.render_mode == "rgb_array" and self.render:
             images = test_envs.render(self.config.render_mode)
             for idx, img in enumerate(images):
                 videos[idx].append(img)
-        is_done = np.zeros(num_envs)
-        while is_done.sum() < test_episodes:
+        while current_episode < test_episodes:
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
             acts = self.action(obs, test_mode=True, player=test_player)
@@ -250,6 +270,12 @@ class DreamerV2Agent(OffPolicyAgent):
                 images = test_envs.render(self.config.render_mode)
                 for idx, img in enumerate(images):
                     videos[idx].append(img)
+
+            self.callback.on_test_step(envs=test_envs, policy=self.policy, images=images,
+                                       obs=obs, next_obs=next_obs, rewards=rews,
+                                       terminals=terms, truncations=truncs, infos=infos,
+                                       current_train_step=self.current_step,
+                                       current_step=current_step, current_episode=current_episode)
 
             obs = deepcopy(next_obs)
             done_idxes = []
@@ -260,14 +286,14 @@ class DreamerV2Agent(OffPolicyAgent):
                     else:
                         done_idxes.append(i)
                         obs[i] = infos[i]["reset_obs"]
-                        if is_done[i] != 1:
-                            is_done[i] = 1
-                            scores.append(infos[i]["episode_score"])
+                        scores.append(infos[i]["episode_score"])
+                        current_episode += 1
                         if best_score < infos[i]["episode_score"]:
                             best_score = infos[i]["episode_score"]
                             episode_videos = videos[i].copy()
                         if self.config.test_mode:
                             print("Episode: %d, Score: %.2f" % (current_episode, infos[i]["episode_score"]))
+            current_step += num_envs
             if len(done_idxes) > 0:
                 test_player.init_states(reset_envs=done_idxes, num_envs=num_envs)
 
@@ -287,6 +313,10 @@ class DreamerV2Agent(OffPolicyAgent):
 
         test_envs.close()
 
+        self.callback.on_test_end(envs=test_envs, policy=self.policy,
+                                  current_train_step=self.current_step,
+                                  current_step=current_step, current_episode=current_episode,
+                                  scores=scores, best_score=best_score)
 
         return scores
 

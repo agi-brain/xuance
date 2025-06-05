@@ -150,11 +150,10 @@ class DreamerV3Agent(OffPolicyAgent):
         return train_info
 
     def train(self, train_steps):  # each train still uses old rssm_states until episode end
-        return_info = {}
+        train_info = {}
         obs, rews, terms, truncs, is_first = self.train_states
 
         for _ in tqdm(range(train_steps)):
-            step_info = {}
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
             if self.current_step < self.start_training:  # ramdom_sample before training
@@ -166,6 +165,12 @@ class DreamerV3Agent(OffPolicyAgent):
             """(o1, a1, r1, term1, trunc1, is_first1), acts: real_acts"""
             self.memory.store(obs, acts, self._process_reward(rews), terms, truncs, is_first)
             next_obs, rews, terms, truncs, infos = self.envs.step(acts)
+
+            self.callback.on_train_step(self.current_step, envs=self.envs, policy=self.policy,
+                                        obs=obs, acts=acts, next_obs=next_obs, rewards=rews,
+                                        terminals=terms, truncations=truncs, infos=infos,
+                                        train_steps=train_steps)
+
             """
             set to zeros after the first step
             (o2, a1, r2, term2, trunc2, is_first2)
@@ -185,14 +190,22 @@ class DreamerV3Agent(OffPolicyAgent):
                         self.returns[i] = 0.0
                         self.current_episode[i] += 1
                         if self.use_wandb:
-                            step_info[f"Episode-Steps/rank_{self.rank}/env-{i}"] = infos[i]["episode_step"]
-                            step_info[f"Train-Episode-Rewards/rank_{self.rank}/env-{i}"] = infos[i]["episode_score"]
+                            episode_info = {
+                                f"Episode-Steps/rank_{self.rank}/env-{i}": infos[i]["episode_step"],
+                                f"Train-Episode-Rewards/rank_{self.rank}/env-{i}": infos[i]["episode_score"]
+                            }
                         else:
-                            step_info[f"Episode-Steps/rank_{self.rank}"] = {f"env-{i}": infos[i]["episode_step"]}
-                            step_info[f"Train-Episode-Rewards/rank_{self.rank}"] = {
-                                f"env-{i}": infos[i]["episode_score"]}
-                        self.log_infos(step_info, self.current_step)
-                        return_info.update(step_info)
+                            episode_info = {
+                                f"Episode-Steps/rank_{self.rank}": {f"env-{i}": infos[i]["episode_step"]},
+                                f"Train-Episode-Rewards/rank_{self.rank}": {f"env-{i}": infos[i]["episode_score"]}
+                            }
+                        self.log_infos(episode_info, self.current_step)
+                        train_info.update(episode_info)
+                        self.callback.on_train_episode_info(envs=self.envs, policy=self.policy, env_id=i,
+                                                            infos=infos, rank=self.rank, use_wandb=self.use_wandb,
+                                                            current_step=self.current_step,
+                                                            current_episode=self.current_episode,
+                                                            train_steps=train_steps)
             self.current_step += self.n_envs
             if len(done_idxes) > 0:
                 """
@@ -220,14 +233,20 @@ class DreamerV3Agent(OffPolicyAgent):
             if self.current_step > self.start_training:
                 # count current_step when start_training
                 n_epochs = max(int((self.current_step - self.start_training) * self.replay_ratio - self.gradient_step), 0)
-                train_info = self.train_epochs(n_epochs=n_epochs)
+                update_info = self.train_epochs(n_epochs=n_epochs)
                 self.gradient_step += n_epochs
                 if train_info is not None:
-                    self.log_infos(train_info, self.current_step)
-                    return_info.update(train_info)
+                    self.log_infos(update_info, self.current_step)
+                    train_info.update(update_info)
+                    self.callback.on_train_epochs_end(self.current_step, policy=self.policy, memory=self.memory,
+                                                      current_episode=self.current_episode, train_steps=train_steps,
+                                                      update_info=update_info)
+
+            self.callback.on_train_step_end(self.current_step, envs=self.envs, policy=self.policy,
+                                            train_steps=train_steps, train_info=train_info)
         # save the train_states for next train
         self.train_states = [obs, rews, terms, truncs, is_first]
-        return return_info
+        return train_info
 
     def test(self, env_fn, test_episodes: int) -> list:
         test_envs = env_fn()

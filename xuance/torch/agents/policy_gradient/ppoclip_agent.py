@@ -69,15 +69,21 @@ class PPOCLIP_Agent(OnPolicyAgent):
         return aux_info
 
     def train(self, train_steps):
+        train_info = {}
         obs = self.envs.buf_obs
         for _ in tqdm(range(train_steps)):
-            step_info = {}
             self.obs_rms.update(obs)
             obs = self._process_observation(obs)
             policy_out = self.action(obs, return_dists=False, return_logpi=True)
             acts, value, logps = policy_out['actions'], policy_out['values'], policy_out['log_pi']
             next_obs, rewards, terminals, truncations, infos = self.envs.step(acts)
             aux_info = self.get_aux_info(policy_out)
+
+            self.callback.on_train_step(self.current_step, envs=self.envs, policy=self.policy,
+                                        obs=obs, policy_out=policy_out, acts=acts, vals=value, next_obs=next_obs,
+                                        rewards=rewards, terminals=terminals, truncations=truncations,
+                                        infos=infos, aux_info=aux_info, train_steps=train_steps)
+
             self.memory.store(obs, acts, self._process_reward(rewards), value, terminals, aux_info)
             if self.memory.full:
                 vals = self.get_terminated_values(next_obs)
@@ -86,8 +92,12 @@ class PPOCLIP_Agent(OnPolicyAgent):
                         self.memory.finish_path(0.0, i)
                     else:
                         self.memory.finish_path(vals[i], i)
-                train_info = self.train_epochs(n_epochs=self.n_epochs)
-                self.log_infos(train_info, self.current_step)
+                update_info = self.train_epochs(self.n_epochs)
+                self.log_infos(update_info, self.current_step)
+                train_info.update(update_info)
+                self.callback.on_train_epochs_end(self.current_step, policy=self.policy, memory=self.memory,
+                                                  current_episode=self.current_episode, train_steps=train_steps,
+                                                  update_info=update_info)
                 self.memory.clear()
 
             self.returns = self.gamma * self.returns + rewards
@@ -108,10 +118,23 @@ class PPOCLIP_Agent(OnPolicyAgent):
                         self.envs.buf_obs[i] = obs[i]
                         self.current_episode[i] += 1
                         if self.use_wandb:
-                            step_info["Episode-Steps/env-%d" % i] = infos[i]["episode_step"]
-                            step_info["Train-Episode-Rewards/env-%d" % i] = infos[i]["episode_score"]
+                            episode_info = {
+                                f"Episode-Steps/rank_{self.rank}/env-{i}": infos[i]["episode_step"],
+                                f"Train-Episode-Rewards/rank_{self.rank}/env-{i}": infos[i]["episode_score"]
+                            }
                         else:
-                            step_info["Episode-Steps"] = {"env-%d" % i: infos[i]["episode_step"]}
-                            step_info["Train-Episode-Rewards"] = {"env-%d" % i: infos[i]["episode_score"]}
-                        self.log_infos(step_info, self.current_step)
+                            episode_info = {
+                                f"Episode-Steps/rank_{self.rank}": {f"env-{i}": infos[i]["episode_step"]},
+                                f"Train-Episode-Rewards/rank_{self.rank}": {f"env-{i}": infos[i]["episode_score"]}
+                            }
+                        self.log_infos(episode_info, self.current_step)
+                        train_info.update(episode_info)
+                        self.callback.on_train_episode_info(envs=self.envs, policy=self.policy, env_id=i,
+                                                            infos=infos, rank=self.rank, use_wandb=self.use_wandb,
+                                                            current_step=self.current_step,
+                                                            current_episode=self.current_episode,
+                                                            train_steps=train_steps)
             self.current_step += self.n_envs
+            self.callback.on_train_step_end(self.current_step, envs=self.envs, policy=self.policy,
+                                            train_steps=train_steps, train_info=train_info)
+        return train_info

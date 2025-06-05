@@ -67,8 +67,8 @@ class TD3_BC_Agent(OfflineAgent):
     def test(self, env_fn, test_episodes):
         test_envs = env_fn()
         num_envs = test_envs.num_envs
-        videos, episode_videos = [[] for _ in range(num_envs)], []
-        current_episode, scores, best_score = 0, [], -np.inf
+        videos, episode_videos, images = [[] for _ in range(num_envs)], [], None
+        current_episode, current_step, scores, best_score = 0, 0, [], -np.inf
         for env_test in test_envs.envs:
             env_test.env.env.seed(self.config.env_seed)
         obs, infos = test_envs.reset()
@@ -87,6 +87,12 @@ class TD3_BC_Agent(OfflineAgent):
                 for idx, img in enumerate(images):
                     videos[idx].append(img)
 
+            self.callback.on_test_step(envs=test_envs, policy=self.policy, images=images,
+                                       obs=obs, actions=actions, next_obs=next_obs, rewards=rewards,
+                                       terminals=terminated, truncations=truncated, infos=infos,
+                                       current_train_step=self.current_step,
+                                       current_step=current_step, current_episode=current_episode)
+
             obs = deepcopy(next_obs)
             for i in range(self.n_envs):
                 if terminated[i] or truncated[i]:
@@ -100,6 +106,7 @@ class TD3_BC_Agent(OfflineAgent):
 
                     if self.config.test_mode:
                         print("Episode: %d, Score: %.2f" % (current_episode, infos[i]["episode_score"]))
+            current_step += num_envs
 
         if self.config.render_mode == "rgb_array" and self.render:
             videos_info = {"Videos_Test": np.array([episode_videos], dtype=np.uint8).transpose((0, 1, 4, 2, 3))}
@@ -119,5 +126,11 @@ class TD3_BC_Agent(OfflineAgent):
             "Normalized_Returns_Std": np.std(normalized_returns)
         }
         self.log_infos(test_info, self.current_step)
+
+        self.callback.on_test_end(envs=test_envs, policy=self.policy,
+                                  current_train_step=self.current_step,
+                                  current_step=current_step, current_episode=current_episode,
+                                  scores=scores, best_score=best_score)
+
         test_envs.close()
         return normalized_returns
