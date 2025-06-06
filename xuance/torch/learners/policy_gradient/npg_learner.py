@@ -7,8 +7,8 @@ from argparse import Namespace
 class NPG_Learner(Learner):
     def __init__(self,
                  config: Namespace,
-                 policy: nn.Module
-                 ):
+                 policy: nn.Module,
+                 callback):
         super(NPG_Learner, self).__init__(config, policy, callback)
         self.actor_optimizer = torch.optim.Adam(self.policy.actor.parameters(), config.learning_rate, eps=1e-5)
         self.critic_optimizer = torch.optim.Adam(self.policy.critic.parameters(), config.learning_rate, eps=1e-5)
@@ -70,7 +70,7 @@ class NPG_Learner(Learner):
 
             # Logger
         lr_actor = self.actor_optimizer.state_dict()['param_groups'][0]['lr']
-        lr_critic = self.critic_scheduler.state_dict()['param_groups'][0]['lr']
+        lr_critic = self.actor_optimizer.state_dict()['param_groups'][0]['lr']
 
         if self.distributed_training:
             info.update({
