@@ -7,10 +7,15 @@ learner: "MFQ_Learner"
 policy: "MF_Q_network"
 representation: "Basic_Identical"
 vectorize: "DummyVecMultiAgentEnv"
-runner: "RunnerPettingzoo"
+runner: "MARL"
 
 use_rnn: False  # Whether to use recurrent neural networks.
-rnn:
+rnn: "GRU"  # Choice of recurrent networks: GRU or LSTM.
+N_recurrent_layers: 1  # Number of recurrent layers.
+fc_hidden_sizes: [64, ]
+recurrent_hidden_size: 64
+dropout: 0  # dropout should be a number in range [0, 1], the probability of an element being zeroed.
+
 representation_hidden_size: [64, ]
 q_hidden_size: [64, ]  # the units for each hidden layer
 activation: "relu"  # The activation function of each hidden layer.
@@ -29,15 +34,13 @@ end_greedy: 0.05
 decay_step_greedy: 2500000
 start_training: 1000  # start training after n steps
 running_steps: 10000000  # 10M
-train_per_step: False  # True: train model per step; False: train model per episode.
-training_frequency: 1
+training_frequency: 25
 sync_frequency: 100
 
 use_grad_clip: False
 grad_clip_norm: 0.5
-
-n_tests: 5
-test_period: 100
+use_parameter_sharing: True
+use_actions_mask: False
 
 eval_interval: 100000
 test_episode: 5
