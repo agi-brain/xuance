@@ -1,31 +1,25 @@
 import torch
-import numpy as np
-from tqdm import tqdm
-from copy import deepcopy
-from operator import itemgetter
 from argparse import Namespace
-from xuance.common import List, Union
+from xuance.common import Union, Optional
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
+from xuance.torch import Module
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
-from xuance.torch.representations import REGISTRY_Representation
-from xuance.torch.policies import REGISTRY_Policy, QMIX_mixer
-from xuance.torch.learners import QMIX_Learner
-from xuance.torch.agents import MARLAgents
-from xuance.torch.agents.multi_agent_rl.iql_agents import IQL_Agents
-from xuance.common import MARL_OffPolicyBuffer, MARL_OffPolicyBuffer_RNN
+from xuance.torch.policies import REGISTRY_Policy
+from xuance.torch.agents import OffPolicyMARLAgents, BaseCallback
 
 
-class MFQ_Agents(MARLAgents):
+class MFQ_Agents(OffPolicyMARLAgents):
     """The implementation of Mean-Field Q agents.
 
     Args:
-        config: the Namespace variable that provides hyper-parameters and other settings.
+        config: the Namespace variable that provides hyperparameters and other settings.
         envs: the vectorized environments.
-        device: the calculating device of the model, such as CPU or GPU.
+        callback: A user-defined callback function object to inject custom logic during training.
     """
     def __init__(self,
                  config: Namespace,
-                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv]):
+                 envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv],
+                 callback: Optional[BaseCallback] = None):
         self.gamma = config.gamma
 
         self.start_greedy, self.end_greedy = config.start_greedy, config.end_greedy

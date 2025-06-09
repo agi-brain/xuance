@@ -14,8 +14,11 @@ class OffPolicyMARLAgents(MARLAgents):
     """The core class for off-policy algorithm with multiple agents.
 
     Args:
-        config: the Namespace variable that provides hyper-parameters and other settings.
+        config: the Namespace variable that provides hyperparameters and other settings.
         envs: the vectorized environments.
+        callback: A user-defined callback function object to inject custom logic during training.
+                It can be used for logging, early stopping, model saving, or visualization.
+                If not provided, a default no-op callback is used.
     """
 
     def __init__(self,

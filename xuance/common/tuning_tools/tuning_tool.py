@@ -282,7 +282,7 @@ class HyperParameterTuner:
 
         study.optimize(objective_wrapper, n_trials=n_trials)
 
-        print("Best hyper-parameters: ", study.best_params)
+        print("Best hyperparameters: ", study.best_params)
         print("Best value: ", study.best_value)
 
         return study

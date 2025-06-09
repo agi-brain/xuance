@@ -18,7 +18,7 @@ class PDQN_Agent(Agent):
     """The implementation of PDQN agent.
 
     Args:
-        config: the Namespace variable that provides hyper-parameters and other settings.
+        config: the Namespace variable that provides hyperparameters and other settings.
         envs: the environments.
     """
 

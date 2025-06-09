@@ -11,8 +11,9 @@ class MADDPG_Agents(IDDPG_Agents):
     """The implementation of MADDPG agents.
 
     Args:
-        config: The Namespace variable that provides hyper-parameters and other settings.
-        envs: The vectorized environments.
+        config: The Namespace variable that provides hyperparameters and other settings.
+        envs: the vectorized environments.
+        callback: A user-defined callback function object to inject custom logic during training.
     """
     def __init__(self,
                  config: Namespace,

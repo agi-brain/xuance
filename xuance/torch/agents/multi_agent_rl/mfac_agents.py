@@ -19,7 +19,7 @@ class MFAC_Agents(MARLAgents):
     """The implementation of Mean-Field AC agents.
 
     Args:
-        config: the Namespace variable that provides hyper-parameters and other settings.
+        config: the Namespace variable that provides hyperparameters and other settings.
         envs: the vectorized environments.
         device: the calculating device of the model, such as CPU or GPU.
     """

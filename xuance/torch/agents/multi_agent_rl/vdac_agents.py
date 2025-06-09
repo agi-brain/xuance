@@ -14,8 +14,9 @@ class VDAC_Agents(OnPolicyMARLAgents):
     """The implementation of VDAC agents.
 
     Args:
-        config: the Namespace variable that provides hyper-parameters and other settings.
+        config: the Namespace variable that provides hyperparameters and other settings.
         envs: the vectorized environments.
+        callback: A user-defined callback function object to inject custom logic during training.
     """
 
     def __init__(self,
