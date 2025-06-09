@@ -21,7 +21,7 @@ class BasicQnetwork(Module):
         representation (ModuleDict): A dict of the representation module for all agents.
         hidden_size (Sequence[int]): List of hidden units for fully connect layers.
         normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
-        initialize (Optional[Callable[..., Tensor]]): The parameters initializer.
+        initialize (Optional[Callable[..., Tensor]]): The parameters' initializer.
         activation (Optional[ModuleType]): The activation function for each layer.
         device (Optional[Union[str, int, torch.device]]): The calculating device.
         use_distributed_training (bool): Whether to use multi-GPU for distributed training.
@@ -880,6 +880,21 @@ class DCG_policy(Module):
 
 
 class MFQnetwork(Module):
+    """
+    The base class to implement Mean Field Reinforcement Learning - MFQ.
+
+    Args:
+        action_space (Optional[Dict[str, Discrete]]): The action space, which type is gym.spaces.Discrete.
+        n_agents (int): The number of agents.
+        representation (ModuleDict): A dict of the representation module for all agents.
+        hidden_size (Sequence[int]): List of hidden units for fully connect layers.
+        normalize (Optional[ModuleType]): The layer normalization over a minibatch of inputs.
+        initialize (Optional[Callable[..., Tensor]]): The parameters' initializer.
+        activation (Optional[ModuleType]): The activation function for each layer.
+        device (Optional[Union[str, int, torch.device]]): The calculating device.
+        use_distributed_training (bool): Whether to use multi-GPU for distributed training.
+        **kwargs: Other arguments.
+    """
     def __init__(self,
                  action_space: Discrete,
                  n_agents: int,
@@ -888,17 +903,51 @@ class MFQnetwork(Module):
                  normalize: Optional[ModuleType] = None,
                  initialize: Optional[Callable[..., Tensor]] = None,
                  activation: Optional[ModuleType] = None,
-                 device: Optional[Union[str, int, torch.device]] = None):
+                 device: Optional[Union[str, int, torch.device]] = None,
+                 use_distributed_training: bool = False,
+                 **kwargs):
         super(MFQnetwork, self).__init__()
         self.device = device
-        self.n_actions = action_space.n
+        self.action_space = action_space
+        self.n_agents = n_agents
+        self.n_actions_list = [a_space.n for a_space in self.action_space.values()]
+        self.n_actions_max = max(self.n_actions_list)
+        self.use_parameter_sharing = kwargs['use_parameter_sharing']
+        self.model_keys = kwargs['model_keys']
+        self.representation_info_shape = {key: representation[key].output_shapes for key in self.model_keys}
+        self.lstm = True if kwargs["rnn"] == "LSTM" else False
+        self.use_rnn = True if kwargs["use_rnn"] else False
+
         self.representation = representation
         self.target_representation = deepcopy(self.representation)
-        self.representation_info_shape = self.representation.output_shapes
 
-        self.eval_Qhead = BasicQhead(self.representation.output_shapes['state'][0] + self.n_actions, self.n_actions,
-                                     n_agents, hidden_size, normalize, initialize, activation, device)
-        self.target_Qhead = deepcopy(self.eval_Qhead)
+        self.dim_input_Q, self.n_actions = {}, {}
+        self.eval_Qhead, self.target_Qhead = ModuleDict(), ModuleDict()
+        for key in self.model_keys:
+            self.dim_input_Q[key] = self.representation_info_shape[key]['state'][0] + self.n_actions_max
+            if self.use_parameter_sharing:
+                self.dim_input_Q[key] += self.n_agents
+            self.eval_Qhead[key] = BasicQhead(self.dim_input_Q[key], self.n_actions[key], hidden_size,
+                                              normalize, initialize, activation, device)
+            self.target_Qhead[key] = deepcopy(self.eval_Qhead[key])
+
+        # Prepare DDP module.
+        self.distributed_training = use_distributed_training
+        if self.distributed_training:
+            self.rank = int(os.environ["RANK"])
+            for key in self.model_keys:
+                if self.representation[key]._get_name() != "Basic_Identical":
+                    self.representation[key] = DistributedDataParallel(module=self.representation[key],
+                                                                       device_ids=[self.rank])
+                self.eval_Qhead[key] = DistributedDataParallel(module=self.eval_Qhead[key], device_ids=[self.rank])
+
+    @property
+    def parameters_model(self):
+        parameters_model = {}
+        for key in self.model_keys:
+            parameters_model[key] = list(self.representation[key].parameters()) + list(
+                self.eval_Qhead[key].parameters())
+        return parameters_model
 
     def forward(self, observation: Tensor, actions_mean: Tensor, agent_ids: Tensor):
         outputs = self.representation(observation)

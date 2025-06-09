@@ -1,6 +1,7 @@
 import torch
+import numpy as np
 from argparse import Namespace
-from xuance.common import Union, Optional
+from xuance.common import Union, Optional, MeanField_OffPolicyBuffer
 from xuance.environment import DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv
 from xuance.torch import Module
 from xuance.torch.utils import NormalizeFunctions, ActivationFunctions
@@ -20,48 +21,67 @@ class MFQ_Agents(OffPolicyMARLAgents):
                  config: Namespace,
                  envs: Union[DummyVecMultiAgentEnv, SubprocVecMultiAgentEnv],
                  callback: Optional[BaseCallback] = None):
-        self.gamma = config.gamma
+        super(MFQ_Agents).__init__(config, envs, callback)
 
         self.start_greedy, self.end_greedy = config.start_greedy, config.end_greedy
-        self.egreedy = self.start_greedy
         self.delta_egreedy = (self.start_greedy - self.end_greedy) / config.decay_step_greedy
-        self.use_rnn, self.rnn = config.use_rnn, config.rnn
-        self.rnn_hidden = None
+        self.e_greedy = self.start_greedy
 
-        input_representation = get_repre_in(config)
-        representation = REGISTRY_Representation[config.representation](*input_representation)
-        input_policy = get_policy_in_marl(config, representation)
-        policy = REGISTRY_Policy[config.policy](*input_policy)
-        optimizer = torch.optim.Adam(policy.parameters(), config.learning_rate, eps=1e-5)
-        scheduler = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=1.0, end_factor=self.end_factor_lr_decay,
-                                                      total_iters=get_total_iters(config.agent_name, config))
-        self.observation_space = envs.observation_space
-        self.action_space = envs.action_space
-        self.representation_info_shape = policy.representation.output_shapes
-        self.auxiliary_info_shape = {}
+        self.policy = self._build_policy()  # build policy
+        self.memory = self._build_memory()  # build memory
+        self.learner = self._build_learner(self.config, self.model_keys, self.agent_keys, self.policy, self.callback)
 
-        if config.state_space is not None:
-            config.dim_state, state_shape = config.state_space.shape, config.state_space.shape
+    def _build_memory(self):
+        """Build replay buffer for models training
+                """
+        if self.use_actions_mask:
+            avail_actions_shape = {key: (self.action_space[key].n,) for key in self.agent_keys}
         else:
-            config.dim_state, state_shape = None, None
-        memory = MeanField_OffPolicyBuffer(config.n_agents,
-                                           state_shape,
-                                           config.obs_shape,
-                                           config.act_shape,
-                                           config.act_prob_shape,
-                                           config.rew_shape,
-                                           config.done_shape,
-                                           envs.num_envs,
-                                           config.buffer_size,
-                                           config.batch_size)
-        learner = MFQ_Learner(config, policy, optimizer, scheduler,
-                              config.device, config.model_dir, config.gamma,
-                              config.sync_frequency)
-        super(MFQ_Agents, self).__init__(config, envs, policy, memory, learner, device,
-                                         config.log_dir, config.model_dir)
-        self.on_policy = False
+            avail_actions_shape = None
+        memory = MeanField_OffPolicyBuffer(self.config.n_agents,
+                                           self.config.state_shape,
+                                           self.config.obs_shape,
+                                           self.config.act_shape,
+                                           self.config.act_prob_shape,
+                                           self.config.rew_shape,
+                                           self.config.done_shape,
+                                           self.envs.num_envs,
+                                           self.config.buffer_size,
+                                           self.config.batch_size)
+        return memory
 
-    def act(self, obs_n, *rnn_hidden, test_mode=False, act_mean=None, agent_mask=None, avail_actions=None):
+    def _build_policy(self) -> Module:
+        """
+        Build representation(s) and policy(ies) for agent(s)
+
+        Returns:
+            policy (torch.nn.Module): A dict of policies.
+        """
+        normalize_fn = NormalizeFunctions[self.config.normalize] if hasattr(self.config, "normalize") else None
+        initializer = torch.nn.init.orthogonal_
+        activation = ActivationFunctions[self.config.activation]
+        device = self.device
+
+        # build representations
+        representation = self._build_representation(self.config.representation, self.observation_space, self.config)
+
+        # build policies
+        if self.config.policy == "MF_Q_network":
+            policy = REGISTRY_Policy["MF_Q_network"](
+                action_space=self.action_space, n_agents=self.n_agents,
+                representation=representation,
+                hidden_size=self.config.q_hidden_size,
+                normalize=normalize_fn, initialize=initializer, activation=activation, device=device,
+                use_distributed_training=self.distributed_training,
+                use_parameter_sharing=self.use_parameter_sharing, model_keys=self.model_keys,
+                use_rnn=self.use_rnn, rnn=self.config.rnn if self.use_rnn else None)
+        else:
+            raise AttributeError(f"MFQ currently does not support the policy named {self.config.policy}.")
+
+        return policy
+
+
+def act(self, obs_n, *rnn_hidden, test_mode=False, act_mean=None, agent_mask=None, avail_actions=None):
         batch_size = obs_n.shape[0]
         agents_id = torch.eye(self.n_agents).unsqueeze(0).expand(batch_size, -1, -1).to(self.device)
         obs_in = torch.Tensor(obs_n).to(self.device)
