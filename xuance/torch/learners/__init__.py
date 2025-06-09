@@ -6,7 +6,7 @@ from .qlearning_family import DQN_Learner, DuelDQN_Learner, DDQN_Learner, PerDQN
     DRQN_Learner
 
 from .model_based import DreamerV2_Learner, DreamerV3_Learner
-from .contrastive_unsupervised_rl import CURL_Learner
+from .contrastive_unsupervised_rl import CURL_Learner,SPR_Learner,DrQ_Learner
 
 from .multi_agent_rl import (IQL_Learner, VDN_Learner, QMIX_Learner, WQMIX_Learner, QTRAN_Learner, \
     IAC_Learner, VDAC_Learner, COMA_Learner, MFQ_Learner, MFAC_Learner, IPPO_Learner, MAPPO_Clip_Learner, \
@@ -70,6 +70,8 @@ REGISTRY_Learners = {
     "TD3BC_Learner": TD3_BC_Learner,
 
     "CURL_Learner": CURL_Learner,
+    "SPR_Learner": SPR_Learner,
+    "DrQ_Learner": DrQ_Learner
 }
 
 __all__ = [
@@ -91,5 +93,5 @@ __all__ = [
 
     "TD3_BC_Learner",
 
-    "CURL_Learner",
+    "CURL_Learner","SPR_Learner","DrQ_Learner"
 ]
