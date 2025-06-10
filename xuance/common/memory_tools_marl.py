@@ -945,32 +945,46 @@ class MeanField_OffPolicyBuffer(MARL_OffPolicyBuffer):
     Replay buffer for off-policy Mean-Field MARL algorithms (Mean-Field Q-Learning).
 
     Args:
-        n_agents: number of agents.
-        state_space: global state space, type: Discrete, Box.
-        obs_space: observation space for one agent (suppose same obs space for group agents).
-        act_space: action space for one agent (suppose same actions space for group agents).
-        prob_shape: the data shape of the action probabilities.
-        rew_space: reward space.
-        done_space: terminal variable space.
-        n_envs: number of parallel environments.
-        buffer_size: buffer size of total experience data.
-        batch_size: batch size of transition data for a sample.
-    """
+        agent_keys (List[str]): Keys that identify each agent.
+        state_space (Dict[str, Space]): Global state space, type: Discrete, Box.
+        obs_space (Dict[str, Dict[str, Space]]): Observation space for one agent (suppose same obs space for group agents).
+        act_space (Dict[str, Dict[str, Space]]): Action space for one agent (suppose same actions space for group agents).
+        n_envs (int): Number of parallel environments.
+        buffer_size (int): Buffer size of total experience data.
+        batch_size (int): Batch size of transition data for a sample.
+        **kwargs: Other arguments.
 
-    def __init__(self, n_agents, state_space, obs_space, act_space, prob_shape, rew_space, done_space,
-                 n_envs, buffer_size, batch_size):
-        self.prob_shape = prob_shape
-        super(MeanField_OffPolicyBuffer, self).__init__(n_agents, state_space, obs_space, act_space, rew_space,
-                                                        done_space, n_envs, buffer_size, batch_size)
+    Example:
+        >> state_space=None
+        >> obs_space={'agent_0': Box(-inf, inf, (18,), float32),
+                      'agent_1': Box(-inf, inf, (18,), float32),
+                      'agent_2': Box(-inf, inf, (18,), float32)},
+        >> act_space={'agent_0': Box(0.0, 1.0, (5,), float32),
+                      'agent_1': Box(0.0, 1.0, (5,), float32),
+                      'agent_2': Box(0.0, 1.0, (5,), float32)},
+        >> n_envs=50,
+        >> buffer_size=10000,
+        >> batch_size=256,
+        >> agent_keys=['agent_0', 'agent_1', 'agent_2'],
+        >> memory = MARL_OffPolicyBuffer(agent_keys=agent_keys, state_space=state_space, obs_space=obs_space,
+                                         act_space=act_space, n_envs=n_envs, buffer_size=buffer_size,
+                                         batch_size=batch_size)
+    """
+    def __init__(self,
+                 agent_keys: List[str],
+                 state_space: Dict[str, Space] = None,
+                 obs_space: Dict[str, Dict[str, Space]] = None,
+                 act_space: Dict[str, Dict[str, Space]] = None,
+                 n_envs: int = 1,
+                 buffer_size: int = 1,
+                 batch_size: int = 1,
+                 **kwargs):
+        self.n_actions_max = kwargs.get('n_actions_max')
+        self.prob_space = (self.n_actions_max,)
+        super(MeanField_OffPolicyBuffer, self).__init__(agent_keys, state_space, obs_space, act_space,
+                                                        n_envs, buffer_size, batch_size, **kwargs)
 
     def clear(self):
         super(MeanField_OffPolicyBuffer, self).clear()
-        self.data.update({"act_mean": np.zeros((self.n_envs, self.n_size,) + self.prob_shape).astype(np.float32)})
-
-    def sample(self):
-        env_choices = np.random.choice(self.n_envs, self.batch_size)
-        step_choices = np.random.choice(self.size, self.batch_size)
-        samples = {k: self.data[k][env_choices, step_choices] for k in self.keys}
-        next_index = (step_choices + 1) % self.n_size
-        samples.update({'act_mean_next': self.data['act_mean'][env_choices, next_index]})
-        return samples
+        self.data["actions_mean"] = {k: create_memory(space2shape(self.prob_space), self.n_envs, self.n_size)
+                                     for k in self.agent_keys}

@@ -926,6 +926,7 @@ class MFQnetwork(Module):
         for key in self.model_keys:
             self.dim_input_Q[key] = self.representation_info_shape[key]['state'][0] + self.n_actions_max
             if self.use_parameter_sharing:
+                self.n_actions[key] = self.action_space[key].n
                 self.dim_input_Q[key] += self.n_agents
             self.eval_Qhead[key] = BasicQhead(self.dim_input_Q[key], self.n_actions[key], hidden_size,
                                               normalize, initialize, activation, device)
@@ -949,16 +950,68 @@ class MFQnetwork(Module):
                 self.eval_Qhead[key].parameters())
         return parameters_model
 
-    def forward(self, observation: Tensor, actions_mean: Tensor, agent_ids: Tensor):
-        outputs = self.representation(observation)
-        q_inputs = torch.concat([outputs['state'], actions_mean, agent_ids], dim=-1)
-        evalQ = self.eval_Qhead(q_inputs)
-        argmax_action = evalQ.argmax(dim=-1, keepdim=False)
-        return outputs, argmax_action, evalQ
+    def forward(self, observation: Dict[str, Tensor], agent_ids: Tensor = None,
+                actions_mean: Dict[str, Tensor] = None,
+                avail_actions: Dict[str, Tensor] = None, agent_key: str = None,
+                rnn_hidden: Optional[Dict[str, List[Tensor]]] = None):
+        """
+        Returns actions of the policy.
+
+        Parameters:
+            observation (Dict[Tensor]): The input observations for the policies.
+            agent_ids (Tensor): The agents' ids (for parameter sharing).
+            actions_mean (Dict[str, Tensor]): The mean of the agents' actions.
+            avail_actions (Dict[str, Tensor]): Actions mask values, default is None.
+            agent_key (str): Calculate actions for specified agent.
+            rnn_hidden (Optional[Dict[str, List[Tensor]]]): The hidden variables of the RNN.
+
+        Returns:
+            rnn_hidden_new (Optional[Dict[str, List[Tensor]]]): The new hidden variables of the RNN.
+            argmax_action (Dict[str, Tensor]): The actions output by the policies.
+            evalQ (Dict[str, Tensor])： The evaluations of observation-action pairs.
+        """
+        rnn_hidden_new, argmax_action, evalQ = {}, {}, {}
+        agent_list = self.model_keys if agent_key is None else [agent_key]
+
+        actions_mean = {key: Tensor(actions_mean[key]).to(self.device) for key in agent_list}
+        if avail_actions is not None:
+            avail_actions = {key: Tensor(avail_actions[key]).to(self.device) for key in agent_list}
+
+        for key in agent_list:
+            if self.use_rnn:
+                outputs = self.representation[key](observation[key], *rnn_hidden[key])
+                rnn_hidden_new[key] = (outputs['rnn_hidden'], outputs['rnn_cell'])
+            else:
+                outputs = self.representation[key](observation[key])
+                rnn_hidden_new[key] = [None, None]
+
+            q_inputs = torch.cat([outputs['state'], actions_mean[key]], dim=-1)
+
+            if self.use_parameter_sharing:
+                q_inputs = torch.concat([q_inputs, agent_ids], dim=-1)
+
+            evalQ[key] = self.eval_Qhead[key](q_inputs)
+
+            if avail_actions is not None:
+                evalQ_detach = evalQ[key].clone().detach()
+                evalQ_detach[avail_actions[key] == 0] = -1e10
+                argmax_action[key] = evalQ_detach.argmax(dim=-1, keepdim=False)
+            else:
+                argmax_action[key] = evalQ[key].argmax(dim=-1, keepdim=False)
+
+        return rnn_hidden_new, argmax_action, evalQ
 
     def sample_actions(self, logits: Tensor):
-        dist = Categorical(logits=logits)
-        return dist.sample()
+        if self.use_parameter_sharing:
+            dist_a = Categorical(logits=logits[self.model_keys[0]])
+            sampled_actions = one_hot(dist_a.sample()).reshape([-1, self.n_agents, self.n_actions_max])
+        else:
+            sampled_actions_list = []
+            for key in self.model_keys:
+                dist_a = Categorical(logits=logits[key])
+                sampled_actions_list.append(one_hot(dist_a.sample()))
+            sampled_actions = torch.stack(sampled_actions_list)
+        return sampled_actions
 
     def target_Q(self, observation: Tensor, actions_mean: Tensor, agent_ids: Tensor):
         outputs = self.target_representation(observation)

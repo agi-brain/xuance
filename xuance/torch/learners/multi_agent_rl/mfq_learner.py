@@ -7,27 +7,31 @@ Implementation: Pytorch
 import torch
 from torch import nn
 from xuance.torch.learners import LearnerMAS
-from xuance.common import Optional, Union
+from xuance.common import List, Optional, Union
 from argparse import Namespace
 
 
 class MFQ_Learner(LearnerMAS):
     def __init__(self,
                  config: Namespace,
+                 model_keys: List[str],
+                 agent_keys: List[str],
                  policy: nn.Module,
-                 optimizer: torch.optim.Optimizer,
-                 scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
-                 device: Optional[Union[int, str, torch.device]] = None,
-                 model_dir: str = "./",
-                 gamma: float = 0.99,
-                 sync_frequency: int = 100
-                 ):
-        self.gamma = gamma
+                 callback):
+        super(MFQ_Learner, self).__init__(config, model_keys, agent_keys, policy, callback)
+        self.optimizer = {key: torch.optim.Adam(self.policy.parameters_model[key], config.learning_rate, eps=1e-5)
+                          for key in self.model_keys}
+        self.scheduler = {key: torch.optim.lr_scheduler.LinearLR(self.optimizer[key],
+                                                                 start_factor=1.0,
+                                                                 end_factor=self.end_factor_lr_decay,
+                                                                 total_iters=self.config.running_steps)
+                          for key in self.model_keys}
+        self.gamma = config.gamma
+        self.sync_frequency = config.sync_frequency
+        self.n_actions = {k: self.policy.action_space[k].n for k in self.model_keys}
         self.temperature = config.temperature
-        self.sync_frequency = sync_frequency
         self.mse_loss = nn.MSELoss()
         self.softmax = torch.nn.Softmax(dim=-1)
-        super(MFQ_Learner, self).__init__(config, policy, optimizer, scheduler, device, model_dir)
 
     def get_boltzmann_policy(self, q):
         return self.softmax(q / self.temperature)

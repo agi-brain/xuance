@@ -222,6 +222,7 @@ class OffPolicyMARLAgents(MARLAgents):
 
         if not test_mode:  # get random actions
             actions_dict = self.exploration(batch_size, actions_dict, avail_actions_dict)
+
         return {"hidden_state": hidden_state, "actions": actions_dict}
 
     def train(self, n_steps):
