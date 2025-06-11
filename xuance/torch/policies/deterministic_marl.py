@@ -1004,13 +1004,14 @@ class MFQnetwork(Module):
     def sample_actions(self, logits: Tensor):
         if self.use_parameter_sharing:
             dist_a = Categorical(logits=logits[self.model_keys[0]])
-            sampled_actions = one_hot(dist_a.sample()).reshape([-1, self.n_agents, self.n_actions_max])
+            sampled_actions = one_hot(dist_a.sample(), num_classes=self.n_actions_max)
         else:
             sampled_actions_list = []
             for key in self.model_keys:
                 dist_a = Categorical(logits=logits[key])
-                sampled_actions_list.append(one_hot(dist_a.sample()))
+                sampled_actions_list.append(one_hot(dist_a.sample(), num_classes=self.n_actions_max))
             sampled_actions = torch.stack(sampled_actions_list)
+        sampled_actions = sampled_actions.reshape([-1, self.n_agents, self.n_actions_max])
         return sampled_actions
 
     def target_Q(self, observation: Tensor, actions_mean: Tensor, agent_ids: Tensor):

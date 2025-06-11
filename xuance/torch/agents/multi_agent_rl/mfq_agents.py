@@ -32,7 +32,7 @@ class MFQ_Agents(OffPolicyMARLAgents):
 
         self.n_actions_list = [a_space.n for a_space in self.action_space.values()]
         self.n_actions_max = max(self.n_actions_list)
-        self.actions_mean = {k: np.zeros([self.n_envs, self.n_actions_max]) for k in self.agent_keys}
+        self.actions_mean = [{k: np.zeros(self.n_actions_max) for k in self.agent_keys} for _ in range(self.n_envs)]
 
         self.start_greedy, self.end_greedy = config.start_greedy, config.end_greedy
         self.delta_egreedy = (self.start_greedy - self.end_greedy) / config.decay_step_greedy
@@ -91,6 +91,28 @@ class MFQ_Agents(OffPolicyMARLAgents):
 
         return policy
 
+    def _build_inputs_mean_mask(self,
+                                agent_mask: Optional[dict] = None,
+                                act_mean_dict=None):
+        batch_size = len(act_mean_dict)
+        agent_mask_array = np.array([itemgetter(*self.agent_keys)(data) for data in agent_mask])
+        # get mean actions as input
+        if self.use_parameter_sharing:
+            key = self.agent_keys[0]
+            mean_actions_array = np.array([itemgetter(*self.agent_keys)(data) for data in act_mean_dict])
+            if self.use_rnn:
+                mean_actions_input = {key: mean_actions_array.reshape([batch_size * self.n_agents, 1, -1])}
+            else:
+                mean_actions_input = {key: mean_actions_array.reshape([batch_size * self.n_agents, -1])}
+        else:
+            if self.use_rnn:
+                mean_actions_input = {k: np.stack([data[k] for data in act_mean_dict]).reshape([batch_size, 1, -1])
+                                      for k in self.agent_keys}
+            else:
+                mean_actions_input = {k: np.stack([data[k] for data in act_mean_dict]).reshape(batch_size, -1)
+                                      for k in self.agent_keys}
+        return mean_actions_input, agent_mask_array
+
     def store_experience(self, obs_dict, avail_actions, actions_dict, obs_next_dict,
                          avail_actions_next, rewards_dict, terminals_dict, info, **kwargs):
         """
@@ -112,7 +134,7 @@ class MFQ_Agents(OffPolicyMARLAgents):
             'obs_next': {k: np.array([data[k] for data in obs_next_dict]) for k in self.agent_keys},
             'rewards': {k: np.array([data[k] for data in rewards_dict]) for k in self.agent_keys},
             'terminals': {k: np.array([data[k] for data in terminals_dict]) for k in self.agent_keys},
-            'agent_mask': kwargs['agent_mask'],
+            'agent_mask': {k: np.array([data[k] for data in kwargs['agent_mask']]) for k in self.agent_keys},
         }
         if self.use_rnn:
             experience_data['episode_steps'] = np.array([data['episode_step'] - 1 for data in info])
@@ -124,36 +146,21 @@ class MFQ_Agents(OffPolicyMARLAgents):
                                                 for k in self.agent_keys}
             experience_data['avail_actions_next'] = {k: np.array([data[k] for data in avail_actions_next])
                                                      for k in self.agent_keys}
-        experience_data['actions_mean'] = kwargs['actions_mean']
+        experience_data['actions_mean'] = {k: np.array([data[k] for data in kwargs['actions_mean']]) for k in self.agent_keys}
         self.memory.store(**experience_data)
 
     def action(self,
                obs_dict: List[dict],
-               agent_mask: Optional[dict] = None,
+               agent_mask: Optional[List[dict]] = None,
+               act_mean_dict: Optional[List[dict]] = None,
                avail_actions_dict: Optional[List[dict]] = None,
                rnn_hidden: Optional[dict] = None,
-               test_mode: Optional[bool] = False,
-               act_mean_dict=None):
+               test_mode: Optional[bool] = False):
         batch_size = len(obs_dict)
-        # get mean actions as input
-        if self.use_parameter_sharing:
-            mean_actions_array = itemgetter(*self.agent_keys)(act_mean_dict)
-            key = self.agent_keys[0]
-            if self.use_rnn:
-                mean_actions_input = {key: np.reshape(mean_actions_array, (batch_size * self.n_agents, 1, -1))}
-            else:
-                mean_actions_input = {key: np.reshape(mean_actions_array, (batch_size * self.n_agents, -1))}
-        else:
-            if self.use_rnn:
-                mean_actions_input = {k: act_mean_dict[k].reshape([batch_size, 1, -1]) for k in self.agent_keys}
-            else:
-                mean_actions_input = {k: act_mean_dict[k].reshape([batch_size, -1]) for k in self.agent_keys}
-        # get agent masks as tensor
-        agent_mask_array = np.array(itemgetter(*self.agent_keys)(agent_mask))
-        agent_mask_tensor = torch.Tensor(agent_mask_array).transpose(0, 1).to(self.device)
-        agent_mask_repeat = agent_mask_tensor.unsqueeze(-1).repeat(1, 1, self.n_actions_max)
-        # get other regular inputs
+        mean_actions_input, agent_mask_array = self._build_inputs_mean_mask(agent_mask, act_mean_dict)
         obs_input, agents_id, avail_actions_input = self._build_inputs(obs_dict, avail_actions_dict)
+        agent_mask_tensor = torch.tensor(agent_mask_array, dtype=torch.float32, device=self.device)
+        agent_mask_repeat = agent_mask_tensor.unsqueeze(-1).repeat(1, 1, self.n_actions_max)
 
         hidden_state, actions, q_output = self.policy(observation=obs_input,
                                                       agent_ids=agents_id,
@@ -172,7 +179,8 @@ class MFQ_Agents(OffPolicyMARLAgents):
         actions_neighbors_sum = actions_sum - actions_sample
         actions_mean_masked = actions_neighbors_sum * agent_mask_repeat / agent_alive_neighbors
         actions_mean_masked = actions_mean_masked.cpu().detach().numpy()
-        actions_mean_dict = {k: actions_mean_masked[:, i, :] for i, k in enumerate(self.agent_keys)}
+        actions_mean_dict = [{k: actions_mean_masked[e, i] for i, k in enumerate(self.agent_keys)}
+                             for e in range(batch_size)]
 
         if self.use_parameter_sharing:
             key = self.agent_keys[0]
@@ -217,7 +225,7 @@ class MFQ_Agents(OffPolicyMARLAgents):
             return train_info
 
         obs_dict = self.envs.buf_obs
-        agent_mask_dict = {k: np.array([data['agent_mask'][k] for data in self.envs.buf_info]) for k in self.agent_keys}
+        agent_mask_dict = [data['agent_mask'] for data in self.envs.buf_info]
         actions_mean_dict = self.actions_mean
         avail_actions = self.envs.buf_avail_actions if self.use_actions_mask else None
         state = self.envs.buf_state.copy() if self.use_global_state else None
@@ -242,17 +250,16 @@ class MFQ_Agents(OffPolicyMARLAgents):
                                   rewards_dict, terminated_dict, info,
                                   **{'state': state, 'next_state': next_state,
                                      'actions_mean': actions_mean_dict, 'agent_mask': agent_mask_dict})
-            # if self.current_step >= self.start_training and self.current_step % self.training_frequency == 0:
-            #     update_info = self.train_epochs(n_epochs=self.n_epochs)
-            #     self.log_infos(update_info, self.current_step)
-            #     train_info.update(update_info)
-            #     self.callback.on_train_epochs_end(self.current_step, policy=self.policy, memory=self.memory,
-            #                                       current_episode=self.current_episode, n_steps=n_steps,
-            #                                       update_info=update_info)
+            if self.current_step >= self.start_training and self.current_step % self.training_frequency == 0:
+                update_info = self.train_epochs(n_epochs=self.n_epochs)
+                self.log_infos(update_info, self.current_step)
+                train_info.update(update_info)
+                self.callback.on_train_epochs_end(self.current_step, policy=self.policy, memory=self.memory,
+                                                  current_episode=self.current_episode, n_steps=n_steps,
+                                                  update_info=update_info)
 
             obs_dict = deepcopy(next_obs_dict)
-            self.actions_mean = deepcopy(actions_mean_dict)
-            agent_mask_dict = {k: np.array([data['agent_mask'][k] for data in info]) for k in self.agent_keys}
+            agent_mask_dict = [data['agent_mask'] for data in info]
             if self.use_global_state:
                 state = deepcopy(next_state)
             if self.use_actions_mask:
@@ -270,7 +277,8 @@ class MFQ_Agents(OffPolicyMARLAgents):
                         self.envs.buf_avail_actions[i] = info[i]["reset_avail_actions"]
                     self.envs.buf_info[i]["agent_mask"] = [{k: True for k in self.agent_keys}
                                                            for _ in range(self.n_envs)]
-                    #####################
+                    agent_mask_dict[i] = {k: True for k in self.agent_keys}
+                    actions_mean_dict[i] = {k: np.zeros(self.n_actions_max) for k in self.agent_keys}
                     self.current_episode[i] += 1
                     if self.use_wandb:
                         episode_info = {
@@ -293,6 +301,7 @@ class MFQ_Agents(OffPolicyMARLAgents):
 
             self.current_step += self.n_envs
             self._update_explore_factor()
+            self.actions_mean = deepcopy(actions_mean_dict)
             self.callback.on_train_step_end(self.current_step, envs=self.envs, policy=self.policy,
                                             n_steps=n_steps, train_info=train_info)
         return train_info
