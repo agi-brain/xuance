@@ -26,7 +26,6 @@ buffer_size: 200000
 batch_size: 256
 learning_rate: 0.001
 gamma: 0.95  # discount factor
-double_q: True  # use double q learning
 temperature: 0.1  # softmax for policy
 
 start_greedy: 1.0

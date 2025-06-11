@@ -5,7 +5,9 @@ http://proceedings.mlr.press/v80/yang18d/yang18d.pdf
 Implementation: Pytorch
 """
 import torch
-from torch import nn
+import numpy as np
+from operator import itemgetter
+from torch import nn, Tensor
 from xuance.torch.learners import LearnerMAS
 from xuance.common import List, Optional, Union
 from argparse import Namespace
@@ -36,24 +38,85 @@ class MFQ_Learner(LearnerMAS):
     def get_boltzmann_policy(self, q):
         return self.softmax(q / self.temperature)
 
+    def build_actions_mean_input(self, sample: Optional[dict], use_parameter_sharing: Optional[bool] = False):
+        batch_size = sample['batch_size']
+        seq_length = sample['sequence_length'] if self.use_rnn else 1
+        actions_mean, actions_mean_next = None, None
+        if use_parameter_sharing:
+            k = self.model_keys[0]
+            bs = batch_size * self.n_agents
+            if self.n_agents == 1:
+                actions_mean_tensor = Tensor(sample['actions_mean'][k]).to(self.device).unsqueeze(1)
+                actions_mean_next_tensor = Tensor(sample['actions_mean_next'][k]).to(self.device).unsqueeze(1)
+            else:
+                actions_mean_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['actions_mean']),
+                                                      axis=1)).to(self.device)
+                actions_mean_next_tensor = Tensor(np.stack(itemgetter(*self.agent_keys)(sample['actions_mean_next']),
+                                                           axis=1)).to(self.device)
+            if self.use_rnn:
+                actions_mean = {k: actions_mean_tensor.reshape(bs, seq_length + 1, -1)}
+            else:
+                actions_mean = {k: actions_mean_tensor.reshape(bs, -1)}
+                actions_mean_next = {k: actions_mean_next_tensor.reshape(bs, -1)}
+        else:
+            actions_mean = {k: Tensor(sample['actions_mean'][k]).to(self.device) for k in self.agent_keys}
+            if not self.use_rnn:
+                actions_mean_next = {k: Tensor(sample['actions_mean_next'][k]).to(self.device) for k in self.agent_keys}
+
+        return actions_mean, actions_mean_next
+
     def update(self, sample):
         self.iterations += 1
-        obs = torch.Tensor(sample['obs']).to(self.device)
-        actions = torch.Tensor(sample['actions']).to(self.device)
-        obs_next = torch.Tensor(sample['obs_next']).to(self.device)
-        act_mean = torch.Tensor(sample['act_mean']).to(self.device)
-        act_mean_next = torch.Tensor(sample['act_mean_next']).to(self.device)
-        rewards = torch.Tensor(sample['rewards']).to(self.device)
-        terminals = torch.Tensor(sample['terminals']).float().reshape(-1, self.n_agents, 1).to(self.device)
-        agent_mask = torch.Tensor(sample['agent_mask']).float().reshape(-1, self.n_agents, 1).to(self.device)
-        IDs = torch.eye(self.n_agents).unsqueeze(0).expand(self.args.batch_size, -1, -1).to(self.device)
 
-        act_mean = act_mean.unsqueeze(1).repeat([1, self.n_agents, 1])
-        act_mean_next = act_mean_next.unsqueeze(1).repeat([1, self.n_agents, 1])
+        # prepare training data
+        act_mean, act_mean_next = self.build_actions_mean_input(sample=sample,
+                                                                use_parameter_sharing=self.use_parameter_sharing)
+        sample_Tensor = self.build_training_data(sample=sample,
+                                                 use_parameter_sharing=self.use_parameter_sharing,
+                                                 use_actions_mask=self.use_actions_mask)
+
+        batch_size = sample_Tensor['batch_size']
+        obs = sample_Tensor['obs']
+        actions = sample_Tensor['actions']
+        obs_next = sample_Tensor['obs_next']
+        rewards = sample_Tensor['rewards']
+        terminals = sample_Tensor['terminals']
+        agent_mask = sample_Tensor['agent_mask']
+        avail_actions = sample_Tensor['avail_actions']
+        avail_actions_next = sample_Tensor['avail_actions_next']
+        IDs = sample_Tensor['agent_ids']
+        if self.use_parameter_sharing:
+            key = self.model_keys[0]
+            bs = batch_size * self.n_agents
+            rewards[key] = rewards[key].reshape(batch_size * self.n_agents)
+            terminals[key] = terminals[key].reshape(batch_size * self.n_agents)
+        else:
+            bs = batch_size
 
         info = self.callback.on_update_start(self.iterations, method="update", policy=self.policy)
 
-        _, _, q_eval = self.policy(obs, act_mean, IDs)
+        _, _, q_eval = self.policy(observation=obs, agent_ids=IDs, actions_mean=act_mean, avail_actions=avail_actions)
+        _, q_next = self.policy.Qtarget(observation=obs_next, actions_mean=act_mean_next, agent_ids=IDs)
+
+        for key in self.model_keys:
+            mask_values = agent_mask[key]
+            q_eval_a = q_eval[key].gather(-1, actions[key].long().unsqueeze(-1)).reshape(bs)
+
+            if self.use_actions_mask:
+                q_next[key][avail_actions_next[key] == 0] = -1e10
+
+            shape = q_next[key].shape
+            pi = self.get_boltzmann_policy(q_next[key])
+            v_mf = torch.bmm(q_next[key].reshape([-1, 1, shape[-1]])), pi.unsqueeze(-1).reshape([-1, shape[-1], 1])
+            v_mf = v_mf.reshape(*(list(shape[0:-1]) + [1]))
+            q_target = rewards + (1 - terminals) * self.args.gamma * v_mf
+
+
+
+
+
+
+
         q_eval_a = q_eval.gather(-1, actions.long().reshape([self.args.batch_size, self.n_agents, 1]))
         q_next = self.policy.target_Q(obs_next, act_mean_next, IDs)
         shape = q_next.shape

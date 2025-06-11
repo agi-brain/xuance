@@ -146,7 +146,10 @@ class MFQ_Agents(OffPolicyMARLAgents):
                                                 for k in self.agent_keys}
             experience_data['avail_actions_next'] = {k: np.array([data[k] for data in avail_actions_next])
                                                      for k in self.agent_keys}
-        experience_data['actions_mean'] = {k: np.array([data[k] for data in kwargs['actions_mean']]) for k in self.agent_keys}
+        experience_data['actions_mean'] = {k: np.array([data[k] for data in kwargs['actions_mean']])
+                                           for k in self.agent_keys}
+        experience_data['actions_mean_next'] = {k: np.array([data[k] for data in kwargs['actions_mean_next']])
+                                           for k in self.agent_keys}
         self.memory.store(**experience_data)
 
     def action(self,
@@ -233,7 +236,7 @@ class MFQ_Agents(OffPolicyMARLAgents):
             policy_out = self.action(obs_dict=obs_dict, agent_mask=agent_mask_dict, act_mean_dict=actions_mean_dict,
                                      avail_actions_dict=avail_actions, test_mode=False)
             actions_dict = policy_out['actions']
-            actions_mean_dict = policy_out['actions_mean']
+            actions_mean_next_dict = policy_out['actions_mean']
             next_obs_dict, rewards_dict, terminated_dict, truncated, info = self.envs.step(actions_dict)
             next_state = self.envs.buf_state.copy() if self.use_global_state else None
             next_avail_actions = self.envs.buf_avail_actions if self.use_actions_mask else None
@@ -248,8 +251,8 @@ class MFQ_Agents(OffPolicyMARLAgents):
 
             self.store_experience(obs_dict, avail_actions, actions_dict, next_obs_dict, next_avail_actions,
                                   rewards_dict, terminated_dict, info,
-                                  **{'state': state, 'next_state': next_state,
-                                     'actions_mean': actions_mean_dict, 'agent_mask': agent_mask_dict})
+                                  **{'state': state, 'next_state': next_state, 'agent_mask': agent_mask_dict,
+                                     'actions_mean': actions_mean_dict, 'actions_mean_next': actions_mean_next_dict})
             if self.current_step >= self.start_training and self.current_step % self.training_frequency == 0:
                 update_info = self.train_epochs(n_epochs=self.n_epochs)
                 self.log_infos(update_info, self.current_step)
@@ -260,6 +263,7 @@ class MFQ_Agents(OffPolicyMARLAgents):
 
             obs_dict = deepcopy(next_obs_dict)
             agent_mask_dict = [data['agent_mask'] for data in info]
+            actions_mean_dict = deepcopy(actions_mean_next_dict)
             if self.use_global_state:
                 state = deepcopy(next_state)
             if self.use_actions_mask:

@@ -9,6 +9,7 @@ class BaseBuffer(ABC):
     """
     Basic buffer for MARL algorithms.
     """
+
     def __init__(self, *args):
         self.agent_keys, self.state_space, self.obs_space, self.act_space, self.n_envs, self.buffer_size = args
         assert self.buffer_size % self.n_envs == 0, "buffer_size must be divisible by the number of envs (parallels)"
@@ -187,13 +188,15 @@ class MARL_OnPolicyBuffer(BaseBuffer):
             if self.use_gae:
                 for t in reversed(range(step_nums)):
                     if use_value_norm:
-                        vs_t, vs_next = value_normalizer[key_vn].denormalize(vs[t]), value_normalizer[key_vn].denormalize(vs[t + 1])
+                        vs_t, vs_next = value_normalizer[key_vn].denormalize(vs[t]), value_normalizer[
+                            key_vn].denormalize(vs[t + 1])
                     else:
                         vs_t, vs_next = vs[t], vs[t + 1]
                     delta = rewards[t] + (1 - dones[t]) * self.gamma * vs_next - vs_t
                     last_gae_lam = delta + (1 - dones[t]) * self.gamma * self.gae_lambda * last_gae_lam
                     returns[t] = last_gae_lam + vs_t
-                advantages = returns - value_normalizer[key_vn].denormalize(vs[:-1]) if use_value_norm else returns - vs[:-1]
+                advantages = returns - value_normalizer[key_vn].denormalize(
+                    vs[:-1]) if use_value_norm else returns - vs[:-1]
             else:
                 returns_ = np.append(returns, [value_next[key]], axis=0)
                 for t in reversed(range(step_nums)):
@@ -432,7 +435,8 @@ class MARL_OnPolicyBuffer_RNN(MARL_OnPolicyBuffer):
                     delta = rewards[t] + (1 - dones[t]) * self.gamma * vs_next - vs_t
                     last_gae_lam = delta + (1 - dones[t]) * self.gamma * self.gae_lambda * last_gae_lam
                     returns[t] = last_gae_lam + vs_t
-                advantages = returns - value_normalizer[key_vn].denormalize(vs[:-1]) if use_value_norm else returns - vs[:-1]
+                advantages = returns - value_normalizer[key_vn].denormalize(
+                    vs[:-1]) if use_value_norm else returns - vs[:-1]
             else:
                 returns_ = np.append(returns, [value_next[key]], axis=0)
                 for t in reversed(range(step_nums)):
@@ -970,6 +974,7 @@ class MeanField_OffPolicyBuffer(MARL_OffPolicyBuffer):
                                          act_space=act_space, n_envs=n_envs, buffer_size=buffer_size,
                                          batch_size=batch_size)
     """
+
     def __init__(self,
                  agent_keys: List[str],
                  state_space: Dict[str, Space] = None,
@@ -988,3 +993,5 @@ class MeanField_OffPolicyBuffer(MARL_OffPolicyBuffer):
         super(MeanField_OffPolicyBuffer, self).clear()
         self.data["actions_mean"] = {k: create_memory(space2shape(self.prob_space), self.n_envs, self.n_size)
                                      for k in self.agent_keys}
+        self.data["actions_mean_next"] = {k: create_memory(space2shape(self.prob_space), self.n_envs, self.n_size)
+                                          for k in self.agent_keys}

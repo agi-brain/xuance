@@ -1014,10 +1014,41 @@ class MFQnetwork(Module):
         sampled_actions = sampled_actions.reshape([-1, self.n_agents, self.n_actions_max])
         return sampled_actions
 
-    def target_Q(self, observation: Tensor, actions_mean: Tensor, agent_ids: Tensor):
-        outputs = self.target_representation(observation)
-        q_inputs = torch.concat([outputs['state'], actions_mean, agent_ids], dim=-1)
-        return self.target_Qhead(q_inputs)
+    def Qtarget(self, observation: Dict[str, Tensor], actions_mean: Dict[str, Tensor],
+                agent_ids: Dict[str, Tensor],
+                agent_key: str = None,
+                rnn_hidden: Optional[Dict[str, List[Tensor]]] = None):
+        """
+        Returns the Q^target of next observations and actions pairs.
+
+        Parameters:
+            observation (Dict[Tensor]): The observations.
+            actions_mean (Dict[str, Tensor]): The mean of each agent's neighbors.
+            agent_ids (Dict[Tensor]): The agents' ids (for parameter sharing).
+            agent_key (str): Calculate actions for specified agent.
+            rnn_hidden (Optional[Dict[str, List[Tensor]]]): The hidden variables of the RNN.
+
+        Returns:
+            rnn_hidden_new (Optional[Dict[str, List[Tensor]]]): The new hidden variables of the RNN.
+            q_target: The evaluations of Q^target.
+        """
+        rnn_hidden_new, q_target = {}, {}
+        agent_list = self.model_keys if agent_key is None else [agent_key]
+        actions_mean = {key: Tensor(actions_mean[key]).to(self.device) for key in agent_list}
+        for key in agent_list:
+            if self.use_rnn:
+                outputs = self.target_representation[key](observation[key], *rnn_hidden[key])
+                rnn_hidden_new[key] = (outputs['rnn_hidden'], outputs['rnn_cell'])
+            else:
+                outputs = self.target_representation[key](observation[key])
+                rnn_hidden_new[key] = None
+
+            q_inputs = torch.cat([outputs['state'], actions_mean[key]], dim=-1)
+            if self.use_parameter_sharing:
+                q_inputs = torch.concat([q_inputs, agent_ids], dim=-1)
+
+            q_target[key] = self.target_Qhead[key](q_inputs)
+        return rnn_hidden_new, q_target
 
     def copy_target(self):
         for ep, tp in zip(self.representation.parameters(), self.target_representation.parameters()):
